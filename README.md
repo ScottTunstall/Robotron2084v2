@@ -7,8 +7,8 @@ bottom](docs/images/gameplay.png)
 (`net10.0`, desktop OpenGL) — **not an emulator, and not a re-skin.** Nothing here
 runs 6809 code: every robot, every timer, every explosion and every colour is
 re-derived from the original assembly listings, cross-checked against the shipped
-ROM image and a 1982-vs-R5 annotated disassembly, and then validated by playtest,
-by unit tests and by render gates.
+ROM image and the author's own annotated 6809 disassembly, and then validated by
+playtest, by unit tests and by render gates.
 
 This repository is one person's reverse-engineering study of the machine — *"I
 don't need you to emulate Robotron's hardware, just the functionality and
@@ -27,9 +27,11 @@ The house rules, learned the hard way over ~90 documented decode rounds:
   robot trail, the font that was mirrored inside every byte, four separate
   explosion errors and the spheroid's missing animation frame.
 - **Source hierarchy.** The original 1982 6809 listings are the **Gospel** for
-  *semantics*; the annotated disassembly is a **guide** for locating code in the
-  released build and for byte-level data — its comments are leads, and at least one
-  of them is flatly wrong. Sprite/table bytes come from the verified ROM image.
+  *semantics*; the author's own **annotated 6809 disassembly** (`asm/robomame.asm`,
+  the blue-label R5 build, committed in this repo) is a **guide** for locating code
+  in the released build and for byte-level data — its comments are leads, and at
+  least one of them is flatly wrong. Sprite/table bytes come from the verified ROM
+  image, at the offsets the author's **sprite editor** supplies (below).
 - **Model the game, not the hardware.** No blitter, no DMA quirks, no beam tracking,
   no watchdog, no 4bpp screen RAM, no coin door, no self-test/service mode. The
   *visible* consequences of the hardware — colour cycling, the palettes, the
@@ -99,9 +101,10 @@ write it up, including what was wrong before.
 | `tests/Robotron2084.Tests/` | **270 tests** — ROM contracts (timings, counts, layouts), not smoke checks |
 | `docs/arcade-fidelity-notes.md` | The master decode log (91 sections, ROM-vs-port, with retractions) |
 | `docs/handoff-*.md`, `status.md`, `rebuild-ledger.md` | Session handoffs, the current state, and the per-checkpoint ledger |
+| `asm/robomame.asm` | The author's own annotated 6809 disassembly of the blue-label ROM — the locator and second witness behind most of the notes |
 | `tools/SpriteExtractor/` | Sprite/table extraction (148 PNGs) + the inline passthrough art |
 | `tools/*.py` | Render gates and helpers (`verify-playfield`, `verify-fonts`, `extract-fonts`, `generate-mgcb`, `screenshot-map`) |
-| `ref/`, `asm/` | *Not committed* (git-ignored): the ROM image, the original listings and the annotated disassembly — supply your own to regenerate assets |
+| `ref/` | Committed research notes (palette, MAME, wave tables, the sprite list). `ref/rom/` and `ref/original-source/` are **git-ignored** — supply your own ROM image and listings to regenerate assets |
 
 ## Build & run
 
@@ -137,11 +140,15 @@ reverse-engineering study and is not affiliated with or endorsed by the rights
 holders. The ROM image and the original source listings are **not** distributed here;
 you need your own copy of the ROM to regenerate assets.
 
-**The reverse engineering is the author's.** The hardware facts, the sprite repository
-(and the byte→RGB palette conversion adapted from Sean Riddle's Williams ripper), the
-spec, the playtests and every "no, it doesn't look like that" came from the person
-driving this project — the AI agents did the reading, the writing, the tests and the
-digging, and the author decided what was true.
+**The reverse engineering, the tooling and the truth are the author's.** The
+hardware facts; the **sprite editor** (`WmsGfxSpriteEditor`), whose
+`RobotronBlueLabelSpriteRepository` is the definitive name/offset/width/height list
+for every sprite and whose `RobotronPaletteService` is the palette guide (following
+seanriddle.com's byte→RGB conversion); the **annotated 6809 disassembly**
+(`asm/robomame.asm`) that ships in this repo; the spec; and every playtest and every
+*"no, it doesn't look like that"* — all of that came from the person driving this
+project. The AI agents did the reading, the writing, the tests and the digging; the
+author decided what was true.
 
 **Built in tandem with AI coding agents** — sessions on this repository have been run
 with **GitHub Copilot**, **Qwen 3.8** and **DeepSeek**, all of them working from the
