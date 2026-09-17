@@ -1,0 +1,651 @@
+# STATUS — continuation point (2026-09-17)
+
+Read this first if resuming. Current state: the "Where we are" and "Next steps"
+sections below. Detailed resume docs: `rebuild-ledger.md` (checkpoint log — every
+commit, gates, next step), **`docs/handoff-2026-09-17.md` (CURRENT session handoff —
+written for a fresh AI: read order, hard rules, the FIVE gates, every remaining
+work item with exact files/steps, and the traps that have already bitten)**,
+`docs/arcade-fidelity-notes.md` (master ROM-vs-port research log — §58 HUD, §59 two
+players, §60 the font bug).
+`docs/handoff-2026-09-16.md` and `docs/handoff-2026-09-13.md` are previous handoffs.
+Historical: `plan.md` = the original rebuild plan, `ledger.md` = its decision log
+(D-001…D-018), `ref/mame-notes.md` = MAME driver notes, `ref/robowaves.md` = wave tables.
+`spec.txt` is **BANNED** (D-007) — never read or use it.
+
+## PROTOCOL (every session)
+
+- **SOURCE HIERARCHY — the author's directive (2026-09-16): `ref/original-source/*.ASM`
+  (the 1982 original listings) is the GOSPEL and the authority for SEMANTICS.
+  `asm/robomame.asm` (the disassembly) is a GUIDE ONLY** — use it to locate code in
+  the R5 build and for R5-specific addresses/data, but never as the authority for
+  what something MEANS and never trust its comments (at least one is flatly wrong:
+  the `$5C23` comment contradicts its own `BNE`). The source names its fields and
+  documents its structs (`RRDX2.ASM`'s `XSIZE`/`YSIZE`/`SLOPE`, for example) where
+  the disasm only has anonymous `$BA`/`$BB` — that naming is what resolves
+  ambiguity. When the two disagree on meaning, the source wins. Byte-level DATA
+  (sprite/tables) still comes from the verified ROM image.
+
+- **THE ARCADE IS ALWAYS THE STANDARD (author directive, 2026-09-16): *"It ALWAYS has
+  to be like the arcade. Don't cut corners unless it's ABSOLUTELY something
+  impossible."*** Never ship a stand-in, approximation or "good enough" while the real
+  arcade art or behaviour can still be recovered — dig until it is recovered, or prove
+  it is genuinely unreachable and say which. Never *offer* a deliberate deviation from
+  the Gospel as a convenience option. If the author's playtest disagrees with the ROM,
+  that is evidence the ROM decode is WRONG — keep looking rather than defending it.
+  Two examples from one afternoon: the tank's birth art was declared "impossible to
+  extract" and was not (notes §52), and the tank shell had been extracted at the wrong
+  size for months (notes §54).
+
+- **BEEP only when the author is actually needed** (narrowed 2026-09-16 — author:
+  *"Please stop beeping unless you need my attention."*) — specifically:
+  (a) a question/decision/confirmation is blocked on them, (b) they need to CHECK
+  THE GAMEPLAY (playtest a build), or (c) something genuinely needs them. **Do NOT
+  beep because a turn or phase finished, and not for routine progress** (that
+  clause was removed). Run it at the END of the message that needs them:
+  `powershell -NoProfile -Command "[console]::beep(1000,300); [console]::beep(1400,300)"`
+  (verified working on the author's machine, 2026-09-13).
+- Project resume docs: **`docs/handoff-2026-09-17.md` (current handoff — read this
+  one)** and `docs/arcade-fidelity-notes.md` (master ROM-vs-port research log).
+  `docs/handoff-2026-09-16.md` and `docs/handoff-2026-09-13.md` are historical.
+- Gates before any commit: `dotnet build Robotron2084.slnx` (0 warnings),
+  `./tests/Robotron2084.Tests/bin/Debug/net10.0/Robotron2084.Tests.exe` (NOT `dotnet test`),
+  `timeout 12 ./src/Robotron2084/bin/Debug/net10.0/Robotron2084.exe` (smoke).
+- **Playfield render gate (notes §40)**: `python tools/verify-playfield.py` —
+  launches the game, presses SPACE, asserts the ring interior is not black.
+  Run it whenever the draw path or any `.fx` changes; the plain smoke test
+  only covers the title screen and missed the M4 "only the wall renders" bug.
+- **Font glyph gate (notes §60)**: `python tools/verify-fonts.py` — re-decodes the
+  ROM and compares every pixel of all 546 font PNGs (78 glyphs x master + 6
+  cycling variants). Run it after ANY font regeneration; the glyphs were mirrored
+  inside each byte for a day while every other check stayed green.
+
+## The task
+Translate **Robotron 2084** (1982, Williams, 6809) into a **MonoGame .NET 10 OpenGL** desktop app that
+**plays the same game**, implemented **idiomatically in MonoGame** — *not* a line-by-line ROM port.
+Primary behaviour reference: original source (`ref/original-source/`, historicalsource/robotron @ da11ac0,
+28 .ASM modules). Byte-level data source: verified blue-label ROM image (below).
+**The user is the author of the reverse engineering — "trust me"; their hardware facts are authoritative.**
+
+## PRINCIPLE: model the game, not the hardware (user re-confirmed 2026-08-30)
+> "I don't need you to emulate robotron's hardware, just the functionality and gameplay.
+>  But you definitely don't need to emulate the restrictions of the ancient hardware."
+
+- **DO NOT model** (hardware mechanisms / 6809-era restrictions): ROM/RAM bus switch ($C900),
+  blitter/DMA ($CA00-$CA07), beam tracking ($CB00, D-015), watchdog ($CBFF), PIA registers ($C8xx),
+  4bpp screen-RAM storage, pair-major row packing (D-005), 1 MHz CPU timing, 16-line/frame DMA limits,
+  staged line buffers, task-script machinery *as a mechanism*, ROM image loading as a runtime concept.
+- **DO NOT model either — the OPERATOR side (D-019, author 2026-09-17):** the self-test /
+  service (adjustment) mode and everything coin related. No `RRTEST*.ASM` screens, no switch /
+  ROM / RAM / colour-RAM tests, no CMOS settings or **bookkeeping totals** (credits, coins,
+  "men played", average time/turns per credit), no free play or coin-door handling, no credit
+  counting. *"This game is to look and play like the arcade but we don't need self test code or
+  coin counting etc."* The coin-door START 1 / START 2 buttons ARE kept (they are how a player
+  picks one or two players — `1` / `2` on the title screen), but nothing behind them.
+- **DO model** (game functionality / what the player experiences): 304×256 screen, the 16-colour
+  palette, 50 fps pacing, entities + their behaviours, waves + spawn counts, collision/scoring,
+  pre-game screens, text, the *visible* partial-blit effects (D-015 — implemented as idiomatic
+  effects, not as blits).
+- The memory/screen layout sections below exist **to read data out of the ROM image** — they are
+  reference knowledge, not a spec to emulate.
+
+## Where we are (2026-09-17)
+
+### Session 3 (2026-09-17) — read this BEFORE the bullets below
+
+- **EXPLOSIONS: "WHEN YOU SHOOT ENEMIES VERTICALLY AREN'T THEY SUPPOSED TO EXPLODE
+  HORIZONTALLY? AND VICE VERSA?" — they are, and the two axes were swapped (notes §69).**
+  Another of my decode errors (§61, inherited by §67): it read `EXSTV`'s first byte as the
+  shot's *vertical* component, but it is the **X step** — so a shot with no X step is a
+  **vertical** shot, and that is the branch that reaches the **HORIZONTAL** explosion. The
+  disassembly agrees at `$5C1F`: a **vertical** shot builds its split from `$A6` (the
+  collision's **column**) against the picture's **WIDTH**; a **horizontal** shot uses
+  `$A7` (the **row**) against the HEIGHT. **So shoot up/down → the sprite is cut into
+  COLUMNS flying apart left/right; shoot sideways → cut into ROWS flying apart up/down.**
+  A diagonal is unchanged (§67's two halves leaning opposite ways). One line changed in
+  `Explosion.Dispatch`.
+- **THE REMAINING TIMING TRUNCATIONS ARE GONE — AND THE PORT NOW HAS EXACTLY ONE
+  DELIBERATE DEVIATION FROM THE ARCADE (notes §70).** §65 left four "under 1-3%"
+  approximations; they are now on the exact clock as well (the human's step, the
+  enforcer's five grow pictures — which were changing ~6% early — the tank shell's life
+  and the spark's life). The one thing that STAYS non-arcade is the **human walk: 16
+  ROM frames a step instead of the Gospel's 8** (`RRH11`: `NAP 8,HUMAN` with the
+  position committed every pass = one pixel every 8 frames). That is your round-8
+  instruction ("the mommies are walking too fast"), not a decode shortcut, so I have
+  left it — **say the word and it reverts to the arcade's 8 in one line.**
+- **THE EXPLOSION IS ONE FAN THAT OPENS BOTH WAYS (notes §71).** Your report *"the
+  vertical explosion only explodes upwards — it's meant to be up AND down at the same
+  time"* was right again: §67's two-half split came from a **stale 1982 comment** (the
+  `$473F` header mentions a `B` direction for a bottom half; the routine never reads
+  `B`). The Gospel's own writer does `base = YCENT − step*YOF + step/2` and then marches
+  its segments DOWN by `step` — the base climbs as the step grows, so **one fan opens up
+  and down at once**. The diagonal case is unchanged in *direction* (rows + a lean) but
+  the whole fan now leans the one way, twice as far as before.
+- **YOUR NEXT TWO REPORTS, BOTH FIXED (notes §72).**
+  1. *"When the brain progs a human, the brain sometimes turns into a square block!"* —
+     the ROM's `DRAW_BRAIN_IN_PROGGING_STATE` ($1DAF) does **two** blits: it fills the
+     brain's rectangle with colour `$BB` (slot 11) **and then draws the brain's own
+     picture on top** (`JMP $D018`). §46/§47 read only the first blit, so the port drew
+     the bare block. The block is a **backdrop** — the brain now appears as a slot-11
+     card with the brain on it, as the arcade's does.
+  2. *"the vertical explosion works sometimes, but doesn't last very long"* — the fan's
+     **unit** was wrong for the vertical-shot engine: §71 counted it in byte columns
+     (2 px), but `RRHX4`'s `WRITE` walks the picture's **pixels** (`ASLA` "DOUBLE FOR
+     PIXEL WIDTH", `DECA`). At twice the arcade's rate the fan left the playfield by
+     its third frame and showed as a sparse comb. It now spans `x21..x99` instead of
+     `x0..x245` at the same moment, keeps 7-8 of its 8 strips on screen to the last
+     frame, and its first frame reconstitutes the sprite exactly (`x50..x57`).
+     **A measured check, not a guess:** a throwaway dump (deleted before commit) printed
+     the visible strips for both engines at every split and position; the lifetime was
+     re-derived too (`RRS22`'s `TIMER == 2` gate is ONE video field — `IRQV` counts
+     twice per field — so 15 frames ≈ 0.30 s is right and unchanged).
+- **THE EXPLOSION FAN IS MIRRORED NOW (notes §73) — your "not mirrored" report.**
+  *"one side of the explosion is not mirrored on the other side … the half going UP is
+  bigger than the half going DOWN, and … going LEFT is bigger than … RIGHT"*. The port was
+  anchoring the fan at the **hit point**, and a laser only just reaches its target when it
+  strikes, so the hit is always at the sprite's **near edge** — the up (or left) half got
+  nearly all the strips and reached ~20 px while the other reached ~1 px. The ROM has the
+  other path for exactly this case: **`NWCENT`** ("NO GOOD") uses the picture's **MIDDLE**,
+  so the two halves are equal by construction. `Explosion.Start` now takes the middle for
+  every kill. The zombie-strips at frame 0 still reconstitute the sprite exactly, and the
+  **appears** always used this centre path (which is why a wave's materialisation never
+  looked wrong). New tests pin it from both axes: `reachUp == reachDown`,
+  `reachLeft == reachRight`.
+- **…AND THE DIAGONAL FAN IS A MIRRORED CHEVRON NOW (notes §74) — your "still lop-sided".**
+  §73 fixed the *reach*; what was left was the **lean**. The explosion has **three** engines
+  and I had only ever read two: `RRX7` (rows), `RRHX4` (columns) and **`RRDX2` (diagonals)**.
+  `RRDX2` places the strips from `XCENT − YOFF*XSIZE` and adds `XSIZE` per strip — so a
+  strip's sideways shift is `(i − YOF) * XSIZE`, measured from the fan's **fixed point**, and
+  the rows above it lean one way while the rows below lean the other. The port was shifting
+  by `i * drift`, shearing the whole fan to one side; with the clip, the strips at one end
+  left the playfield and were dropped, so half the burst vanished. **Straight shots are
+  unchanged** (their slope is 0) and the frame-0 reconstruction is untouched.
+- **THE FAN WAS BEING DRAWN AT HALF SIZE — and you confirmed the fix ("That worked!", notes §75).**
+  `Explosion.Draw` divided the *texture* dimensions by `SpecScale`, but a texture is already in
+  **art pixels** (`SpriteSet.CentredIn` is what scales it), so the fan spanned half the
+  picture's rows and sampled every other one — while the anchor still came from the bounds, so
+  `split` clamped to `extent−1`: five steps of reach above and **zero** below. Both §73 (the
+  middle anchor) and §74 (the chevron) were right *in the model* and invisible on screen,
+  because this unit error was discarding half the result before it was drawn. The fan now
+  **draws the whole picture**, every row, centred where the art was — so expect explosions to
+  look fuller than the last build.
+- **HUMANS CAN NO LONGER SPAWN ON AN ELECTRODE (notes §77.1).** You were right — they were placed
+  with a bare random point and no checks at all, and since a human won't step into a live
+  electrode it was stuck there for the rest of the wave. Humans now use the same placement rule
+  the electrodes and grunts get.
+- **THE QUARKS' TANK DROP — I re-verified the whole algorithm and it matches the ROM** (the first
+  countdown, the inter-drop roll, the re-roll after every drop, the 3-frame body, the wave's
+  `TDPTIM` table and the 20-tank cap all line up). **One suspect left**, and it is the kind you
+  reported: the ROM rolls the *number of tanks* from the wave's **enforcer** number (`ENFNUM`),
+  while the port hands the quark the wave table's **tank** column — if that column is bigger, the
+  quark drops proportionally more tanks. Notes §77.2 has the table and the next step.
+- **Gates as of this state:** 0 warnings (Debug + Release), **247 tests (246 pass +
+  1 skipped)**, 12 s launch smoke OK, `tools/verify-playfield.py` PASS, and the fifth gate
+  `python tools/verify-fonts.py` PASS.
+- **SOUND IS OFF BY DEFAULT (notes §68).** Author: *"The sound annoys me — can you disable
+  it with a feature flag … So many beeps is annoying."* `Sound.Enabled` (in
+  `Audio/Sound.cs`) is the master switch and now defaults to **false**; set it to `true`,
+  or launch with `ROBOTRON2084_SOUND=1`, to hear it again. The stub beeper is the only
+  sink we have (§36.2, blocked on you for the real note table), so nothing is lost — the
+  sequencer, the ROM sound tables and their tests all still run.
+- **AUTHOR PLAYTEST 2026-09-17: "the explosions are completely wrong and the grunts move
+  fast too early" — both were my decode errors (notes §67).** The explosion is a
+  **two-half SPLIT** at the collision (the disassembly's own header: the top half flies
+  UP, the bottom half DOWN, each leaning its own way) — not the single downward fan §61
+  built. The grunt speed-up's `×7/8` applies **only while it stays at or above the
+  floor** (the port clamped down to the floor a kill early) and the ROM does **not**
+  re-roll the survivors' pending countdowns (the port did, so every kill lurched the
+  wave forward). Wave 1 now ramps 20→17→14→12→10 and stops.
+- **THE PLAYER'S DEATH IS THE GOSPEL'S NOW (notes §66)** — it was a wall-clock 2-second
+  placeholder drawing the player in its normal colours. RRX7's `PDTHV`: ten iterations of
+  a SOLID-colour flash (`$99` = slot 9 for 2 frames, then a random `PDCTAB` colour — slots
+  0/1/3/7 — for 6 frames), then the slot-12 fade where the DECAY colour process is killed
+  off and `FF F6 AD A4 5B 52 09 00` is written into slot 12 a byte per 4 frames, ending
+  with the player drawn black and erased. 129.6 port ticks. `DeathTimer.cs` is deleted; new
+  `GamePalette.SuspendSlot`/`ResumeSlot` is the ROM's `KILL OFF DECAY`/`COLST`.
+  **It cannot be seen yet: `PlayerInvincibleForTesting` is still ON.**
+- **THE SHORT-DELAY SWEEP IS FINISHED (notes §65)** — the systemic `PortTicks()` truncation
+  found in §52. The **grunt** body was running 20% fast (as were the prog and cruise
+  missile, the spark's flicker and move interval, the brain's body and reprogram,
+  the hulk's step, the electrode shrivel), and the **six palette colour processes**
+  were counted in port ticks, so every colour cycle — the current player's score, the
+  mini man, the posts, the wall — shimmered 20% too fast. All now run on ROM frames.
+  **Expect the robots to feel slightly slower than the last build you played: that is
+  the arcade's rate.**
+- **SPHEROID + QUARK DEATH BURSTS (notes §64)** — they were the last enemies dying with the
+  invented/generic strip explosion. Both use ONE ROM routine (the quark's `CIRKV` is
+  `$1143: JMP $12FA`, i.e. the spheroid's `CIRKP` entered past its setup): the enemy's own
+  pictures play as SOLID SILHOUETTES (spheroid in `$AA` = slot 10, the player-score slot;
+  quark in `$DD` = slot 13) and then its "1000" picture appears down-right of the death
+  spot. `P1KD` turned out to be a ROM constant pointing at the very "1000" art the port
+  already ships for the rescue marker.
+- **WAVE-START MATERIALISATION + the per-wave WALL/LASER-COLLIDE colours (notes §62/§63)**
+  — while the author was away. (a) The robots no longer pop in: RRG23's `APPEAR` makes ONE
+  appear record per FRAME, every FOURTH one with the horizontal column fan, anchored on the
+  robot's own centre, while the robots are held OFF (`ROBOFF`) for the whole sequence — so
+  an assembling robot neither acts nor draws itself until its chain converges. (b) `GTWCOL`
+  has FOUR per-wave tables, not the two the port knew: `WALCOL` is the BORDER colour (the
+  wave-1 border is ORANGE, not the port's cyan; wave 9's is BLACK), and `LASCOL` — RRF.ASM's
+  "LASER WALL COLLIDE COLOR" — is the FLARE where a laser runs off the field (`LASDIE`),
+  which the port never drew. Both wrap every 10 waves. Verified on screen.
+- **EXPLOSIONS ARE THE GOSPEL'S NOW (notes §61, `e72b424`)** — the biggest item on the
+  author's list, and the port had been wrong in KIND: one symmetric fan for every kill.
+  RRX7's `EXSTV` is the dispatch: a diagonal shot fans the sprite's ROWS at 45 degrees
+  (RRDX2), a pure vertical shot the ROWS with no lean (RRX7), a pure horizontal shot its
+  COLUMNS (RRHX4); a non-laser kill is a row fan. The fan is anchored at the IMPACT (the
+  laser/robot overlap centre — the ROM's `CENTMP`), the step is the ROM's own 16-bit
+  accumulator (`$100` a frame: 15 draws, steps 2..16; the APPEAR runs backwards from
+  `$1000` and converges), the pool is TEN records shared by explosions and appears, and
+  strips outside the playfield are DROPPED, keeping the sprite's bottom rows.
+  **§35.3 CORRECTED:** the player death is NOT a strip cascade — `PDEATH` is RRX7's
+  `PDTHV` (the player drawn solid in $99/PDCTAB colours, then the DECAY process killed
+  and the fade table written to slot 12) — so **that fade is the §33 death-fade
+  mechanism**, still open with the author. Next explosion item: the wave-start APPEAR.
+- **D-019: NO operator/service subsystem** (author: *"we do not need the service test or
+  coin tests for this game ... we don't need self test code or coin counting etc."*) — no
+  self-test/adjustment screens, no ROM/RAM/colour-RAM tests, no CMOS settings, no
+  bookkeeping totals, no coin/free-play handling. START 1 / START 2 stay (they pick 1 or
+  2 players). In `ledger.md` and in the DO-NOT-MODEL list above.
+- **THE HUD IS NOW THE ARCADE'S (notes §58)** — the author asked to start here ("the
+  score and lives display ... are not correct"). Decoded end to end from
+  `DRAW_PLAYER_SCORES` ($DC13), `DRAW_LIVES_REMAINING` ($34E0) and the `$6291` string
+  table: score at P1 col 21 / P2 col 85 on **row 14**, seven large-font digits with the
+  ROM's leading-zero blanking (6 px blank vs a 7 px glyph) and the **last two digits
+  always drawn** (a fresh game shows "00"); the CURRENT player's score in **slot 10 — a
+  cycling slot** and an idle player's in slot 1; the spare men as the **6x8 mini man
+  picture** (`MNPIC`, $3592/$3596) 8 px apart beside the score, capped at 7, with its own
+  palette slots (its body is slot 11, so it shimmers); and the wave indicator at the
+  **bottom** of the screen as "<n>  WAVE" (string 104). The old top-right "LEVEL n" is
+  gone — in a 2P game that space belongs to player 2. **The port's previous layout
+  (left-anchored score, full-size player sprites as life icons at the bottom-left) was
+  never the arcade's.**
+- **TWO-PLAYER MODE (notes §59)**: `1` starts a one-player game, `2` a two-player game
+  (the arcade's START 1 / START 2; fire is kept as a 1P alias). `Level/GameSession` +
+  `Level/PlayerSlot` hold each player's score, lives, wave and rescues, and the turn
+  passes on a death while the other player has men (ROM `PLE1B`), with the ROM's
+  "PLAYER n GAME OVER" pause and the "PLAYER n" turn announcement; a wave clear keeps
+  the SAME player (the ROM never touches CURPLR there); both scores are offered to the
+  high-score table at the end. `PlayerSlot.Input` is per-slot deliberately, so the
+  SIMULTANEOUS mode the author wants later is a matter of plugging in a second input
+  source and giving each player a field.
+  **Caveat: the turn-passing paths cannot be playtested while
+  `PlayerInvincibleForTesting` is ON** (a life can never end) — that switch is still the
+  author-gated item, and the turn rules are covered by `GameSessionTests` until then.
+- **FONT BUG FOUND AND FIXED (notes §60)** — the author looked at the new score digits
+  and said "the font characters don't look correct". Every committed glyph PNG had the
+  two pixels of each byte **swapped**: `tools/extract-fonts.py` wrote the LOW nibble to
+  the LEFT pixel. All 546 PNGs regenerated, `tools/SpriteExtractor` now skips font
+  glyphs entirely, and `tools/verify-fonts.py` is the new guard (it re-decodes the ROM
+  and compares every pixel of all 78 glyphs + 6 cycling variants each).
+- **Open with the author:** playtest the new HUD (1P and 2P), the 2P turn flow (needs
+  `PlayerInvincibleForTesting` OFF), and the font shapes.
+
+### Session 2 (2026-09-16) — read this BEFORE the bullets below
+
+- **Latest CODE commit `391befb` (with docs `f74691b` and this file's own commit on top).** Gates green: 0 warnings, **201 tests (200 pass + 1
+  skipped)**, 12 s launch smoke OK, `tools/verify-playfield.py` PASS (~3% lit).
+- **`docs/handoff-2026-09-16.md` was the read-first doc at the time** — the section-4
+  addendum lists today's commits, section 5 has three new work items (B0 PortTicks
+  sweep, B0b blocked tank art, B0c the open quark question) and section 7 has the three
+  traps that cost time today. `docs/handoff-2026-09-13.md` is historical only.
+- **Done since the bullets below were written** (all in `docs/arcade-fidelity-notes.md`
+  §45–§52): electrode/post types are wave-dependent (§45); brains, progs and cruise
+  missiles re-derived from the Gospel (§46); the blitter's COLOUR/REMAP modes decoded and
+  a pixel shader built for the progs and posts (§47); the brain's BMUT reprogram
+  animation implemented (§48); progs and cruise missiles are BLITTER objects, not
+  sprites (§49); **every** enemy kill vector mapped — no enemy blinks when it dies, and
+  "flashing X" in the spec means PALETTE CYCLING, not a visibility toggle, so five
+  invented blink constants were deleted (§50); the quark's motion re-derived as a
+  random-speed drift (§51, corrected in §52); the quark's body cadence was 17% fast and
+  tanks now play their ROM **birth** sequence (§52). The tank's birth ART was then FOUND
+  as well — "cannot be extracted" was a PARSER verdict (Pass B cannot read 6-byte
+  animated descriptors), not missing data (§52, `99f5c00`). Finally the **spheroid and
+  enforcer MOTION models are now the Gospel's** (§56): the spheroid accumulates a random
+  acceleration and damps it by a 64th per body (so its speed is emergent), clamps at the
+  walls instead of reflecting, and leaves by a sideways run at exactly 2 px/frame with no
+  burst; the enforcer uses ENFNV's proportional approach (`v = 2 x offset`, so it crawls
+  as it arrives) with both countdowns in BODIES and a 45-frame grow-up. Neither robot had
+  a speed constant in the ROM, so `SpheroidSpeed` and the enforcer's step are deleted.
+  **Then the PROG TRAIL was fixed from two more author reports (§57) — and the real
+  fault was a RENDERING bug, not a decode.** `SpriteSet` binds its pixel shader with a
+  bare `Passes[0].Apply()`, which is DEVICE state: with `SpriteSortMode.Immediate` the
+  binding outlives the draw that made it, so the ghost card fill ran through
+  `SolidRemap` in the previous silhouette's colour — black. `UsePassThrough()` now
+  rebinds the pass-through pass before/after every non-remap draw. **The same leak is
+  the cause of the earlier "the human that has been progged is solid black" report**
+  (same helper): §53 was right that the colour pairs are correct, the renderer was
+  wrong. The trail is also SEVEN ghosts now (was six — `PD` = 7 with `SPSIZE` = 31 puts
+  the ring at byte offsets 17..29), each frozen in the pose it was born with.
+- **Open with the author:** the quark's perceived speed (the port matches the Gospel and
+  the unit is proven five ways — **do not re-litigate without new evidence**, §52); the
+  spheroid's and enforcer's motion models (§56) and the fixed prog trail (§57 — worth
+  also checking a brain reprogramming a human, which uses the same draw path); movement
+  models can only be judged by PLAYING, never by a screenshot;
+  `PlayerInvincibleForTesting`
+  is still ON.
+
+- **The 12-phase spec.txt rebuild: COMPLETE** (2026-09-05) — the game builds, runs,
+  and passes its gates.
+- **Arcade-fidelity ROM-port follow-up: COMPLETE through playtest round 13** as of the
+  bullets below, which predate the session-2 block above (newest commit `74a5c3f`). Every entity's behaviour/tempo/spawn rule/collision/score is
+  implemented and ROM-verified where the author flagged it; rounds logged in
+  `docs/arcade-fidelity-notes.md` (progress (11)–§31).
+- **Gates green: build 0 warnings; 201 tests (200 pass + 1 skipped); launch smoke OK;**
+  **playfield render check OK (`tools/verify-playfield.py` — new §40 guard).**
+- **`GameplayConstants.PlayerInvincibleForTesting` is STILL ON (temporary)** — flip it
+  off when the author confirms gameplay, then un-skip the contact test (Next steps #2).
+- Frills: spark flicker DONE (614d36a); **explosions (RRX7) DONE (§35)** — the dying
+  sprite shatters into 16 horizontal strips that fan out over 16 ticks, biased by the
+  killing laser's direction (ROM: 7 × 242-byte slots, $BA per-strip offset grows per
+  frame; see notes §35 — **fan MAGNITUDE "fixed" 2026-09-16 (`a070290`) but that
+  model was then RETRACTED — see notes §35.1-§35.5.** The authoritative decode is
+  §35.5 (Gospel: `ref/original-source/RRDX2.ASM`, `RDXORG $4680`): the draw loop's
+  `ADDD XSIZE` reads the 16-bit word `(XSIZE, YSIZE_high)`, so one step advances
+  BOTH axes — a deliberate 45° diagonal, not the straight-down fan the port draws.
+  `EXSTZ` = start an explosion (rows diverge), `APSTZ` = start an appear (rows
+  converge) — so `$46E6` is an APPEAR and the player-death cascade is ~12 APPEAR
+  records, not explosions. Straight shots use RRX7's struct (no XSIZE) = a
+  vertical row-spread. The fan is impact-anchored and rows are DROPPED by four
+  clip passes (YMAX 234, YMIN 24, XMAX $8F, XMIN 7). Work order in
+  `docs/handoff-2026-09-16.md` B1); colour-cycle shader BUILT, wired & TICKED (M4 — unrolled .fx, ps_3_0, six
+  named Live10..15 uniforms; author go-ahead 2026-09-16) and the "only the wall
+  renders" regression it introduced is **FIXED (notes §40)**: the effect had
+  declared its own vertex shader, which replaced SpriteBatch's for the rest of
+  the batch and performed no projection, so every entity (and even the
+  effect-less HUD text and life icons) fell outside the clip volume. The pass
+  is now **pixel-shader only**, which leaves SpriteBatch's own sprite VS bound
+  and preserves pixel-perfect rendering. **Verified on screen** via
+  `tools/screenshot-map.py` + a driven SPACE press: entities, electrodes, the
+  player, "LEVEL 1" and the life icons all draw, in live (cycling) palette
+  colours. **If a custom VS is ever needed, the draw must move to
+  `SpriteBatch.Begin(effect: ...)`.** A playtest by the author is the one
+  outstanding check; font glyphs drawn
+  in cycling slots use marker-baked variants through the same effect —
+  blitter-remap semantics (notes §39);
+  red screen BLOCKED on author's answer to the §33 question (which mechanism:
+  full-screen flash vs per-wave wall slot vs slot-12 death fade). Frills session 2
+  (notes §36) researched the remaining frills: **score font — UNBLOCKED & DONE
+  (notes §38)** (the author's sprite-editor offsets pin the glyph ROM source:
+  large font @0xEC93, small @0xEA2B, same 4bpp format as sprites; all 78 glyph
+  PNGs + 468 cycling-slot marker variants regenerated from the ROM and the
+  HUD now draws the real arcade score font — large digits, 7-px advance,
+  leading zeros suppressed, slot-1 blue; cycling variants for the demo-screen
+  text, notes §39)
+  and **sounds**
+  (single-voice priority sequencer, $D3C7; 29 call sites decoded; the
+  note→frequency map is sound-board hardware, not in the CPU ROM). Optional
+  checks done: hulk tempo (already ROM-derived, no action), tank shells +
+  electrode placement (documented; shell-speed + electrode-model questions
+  parked to author). Remaining unblocked: marquee (needs author asset).
+- **Sound engine DONE with flagged stub (notes §37)**: `Audio/SoundEngine.cs`
+  (line-for-line port of the $D3C7/$D3E0/$D3B6 sequencer — priority
+  preemption, (dur,len,note) entries, one tick ≈ one vblank),
+  `Audio/SoundTables.cs` (every decoded ROM table with its address),
+  `Audio/MonoGameSoundSink.cs` (8-bit square waves; **STUB scale** 110×2^(n/12)
+  Hz — the real note table is sound-board hardware → BLOCKED on author), wired
+  into laser fire / robot death / player death / shell fire / shell bounce /
+  brain spawn / bonus life. 171 tests (170 pass + 1 skipped).
+
+## ROM folder locations
+- **Source (verified blue-label set):** `E:\roms\MAME ALL ROMS - DO NOT DELETE\robotron\`
+  - 12 game ROMs (4KB each): `2084_rom_1b_3005-13.e4` … `2084_rom_12b_3005-24.e7`
+    (label = ROM number + board socket: .e4/.c4/.a4 = board positions E4/C4/A4, etc.)
+  - 2 decoder PROMs (512B): `decoder_rom_4.3g` (universal horizontal, P/N A-5342-09694),
+    `decoder_rom_6.3c` (universal vertical, P/N A-5342-09821)
+  - Subsets: `robotron12/`, `robotrontd/`, `robotronun/` (clone ROMs — do not use for our build)
+  - **All 12 game ROMs' CRC32+SHA1 verified against MAME master (2026-08-30) → confirmed solid blue label.**
+- **Repo (byte-level extraction authority):** `ref/rom/robotron64k.bin` — 64KB image, 12 ROMs at their
+  CPU offsets, $09000-$0CFFF (CPU $9000-$CFFF) zeroed. In the working tree (gitignored —
+  `ref/` is reference-only per D-1, author directive 2026-09-05; NOT committed, deliberately).
+- **Original source:** `ref/original-source/` (28 .ASM modules @ da11ac0).
+- **Disassembly:** `asm/robomame.asm` (user's annotated 64K listing; 34-byte delta vs verified ROM — see live thread).
+
+## Memory layout (REFERENCE for extraction — NOT to be emulated)
+Main-CPU 64K address space (MAME `williams_b1` → `main_map_blitter`; user's RRF.ASM equates agree):
+
+| CPU range | Contents | Port relevance |
+|---|---|---|
+| $0000–$8FFF | ROM1–9 (36K) when switch=ROM; **48K RAM (video + main) when switch=RAM** | read code/data only |
+| $9000–$BFFF | RAM (always) — game state; base-page RAM $9800 | RAM layout docs (disasm lists it) |
+| $C000–$C00F | palette RAM (CRAM), 16×4-bit, write-only | palette concept (see screen layout) |
+| $C804–$C807 | PIA-A (user: PIA2) — keyboard/panel | ignore (input in MonoGame) |
+| $C80C–$C80F | PIA-B (user: PIA0) — panel; port B $C80E = sound tokens | ignore (D-003) |
+| $C900 | ROM/RAM select (RWCNTL) | ignore |
+| $CA00–$CA07 | blitter (DMACTL/CON/ORG/DES/SIZ) | ignore |
+| $CB00 | vertical beam counter (read) | ignore (D-015) |
+| $CBFF | watchdog (write) | ignore |
+| $CC00–$CFFF | CMOS battery-backed NVRAM (BCD, 4-bit writes, checksum $CC8C) | **functionality: persisted credits/settings** |
+| $D000–$FFFF | ROM10–12 (12K), always ROM | read data only |
+
+- RAM model: MAME uses one 48K block (`m_videoram`) at $0000–$BFFF. Layout (user-confirmed):
+  - **$0000–$97FF: screen RAM (38K)** — 304×256 pair-major 4bpp = 2 px/byte, **256 bytes per
+    2-pixel column**, 152 columns = **exactly 38,912 B (38K)**
+  - **$9800+: game state** (palette copy $9800–$980F, entity lists, credits, …)
+- Known RAM addresses (from disasm annotations — resolve against DP=$98 where `_d`): base-page RAM
+  $9800–$980F (palette copy), entity list pointers $9811–$9823, task list $9815, task alloc $D1E3,
+  credits $984F–$9851, player object ~$985A, `num_players` $9840 (direct $40).
+- **Sound CPU (separate 64K — out of scope):** MC6808 @ 3.579545 MHz (÷4 → ≈894.886 kHz),
+  `video_sound_rom_3_std_767.ic12` @ $F000 (4K).
+- **PROMs (separate 4K — not needed):** the two decoder PROMs above.
+- **Clocks:** master 12 MHz; 6809E = 12 MHz / 3 / 4 = **1.0 MHz**. Game logic tick = 50 fps (user RE).
+  MAME raster: 8 MHz pixel clock, 512×260, visible 6..298 × 7..247 — reference only.
+
+## Screen layout (game functionality — DO model the look)
+- **304 × 256 pixels, 16 colours, 4 bits/pixel** (user's hardware RE — authoritative, D-004;
+  corrected from 255 on 2026-08-30).
+  MAME's raw geometry (293×241 visible in 512×260) is an emulator approximation — ignore.
+- The **16-colour palette is a game feature** — keep it. The 4bpp storage format is not:
+  the port can render into a 304×256 texture using the 16-colour palette (SpriteBatch/tiles),
+  no pair-major packing (D-005).
+- **Palette chain (RESOLVED — full details in `ref/palette-notes.md`):** pixel nibble → ROM default
+  16-colour palette at **$DA51** (`00 07 17 C7 1F 3F 38 C0 A4 FF 38 17 CC 81 81 07`, byte-verified
+  against the ripper's "Robotron @da51" table) → copied to RAM **$9800** at startup (code $D795)
+  → $9800 drives the colour hardware ($C000) → **analog resistor network** (NOT the decoder PROMs):
+  8-bit value = 3-bit R (1200/560/330Ω) + 3-bit G (same) + 2-bit B (560/330Ω) → monitor. MAME models
+  it in `williams_state::palette_init` (`src/mame/williams/williams_v.cpp` @340). **T-008:** port that
+  → 256-entry base palette constants; 16-slot RAM palette (mutable — the game rewrites it for
+  colour-cycling/red-screen effects).
+- Screen RAM: **$0000–$97FF** (38K, user-confirmed) — pair-major: each byte = 2 px side-by-side,
+  **256-byte vertical 2-px columns, 152 columns**; incrementing the 256-byte page bit (bit 8 of the
+  address) moves the view one column (2 px) right — user-confirmed 2026-08-30. Historical context
+  only (port renders a 304×256 texture, no pair packing, D-005).
+- Beam/vertical counter: not modelled (D-015).
+- 50 fps pacing; original per-frame speeds → px/s via ×50 (D-012, `Speeds.cs`).
+- Player object coordinate ranges: **x 7..140, y 24..223** (object coords → pixels still open, Q-001).
+- Text: message strings live in ROM (e.g. "…IN YOUR PATH" @ ~$83A0), phrases via RRET.ASM table,
+  text colour is a script action; font glyphs in ROM (big ASCII font).
+
+## The verified ROM + live thread (34-byte discrepancy)
+- Cross-check of `asm/robomame.asm` (46,160 uniquely listed ROM bytes) vs verified image:
+  **34 mismatches in 8 small local regions — 99.93% match** → the disassembly targets the blue label.
+- Pattern: local byte-shifts (disasm byte N = ROM byte N±k in a few-byte window), e.g.
+  0x7904–0x7907 ROM `8E 79 75 10` vs disasm `10 8E 79 75`.
+- **Regions:** `115B-115D, 135F, 2C4A, 41F0-41F3, 4D1C-4D1F, 7904-7907, 8392+83A1-83AD, 8411, E316-E317`
+- **Rule:** use the verified ROM image as byte-level authority; near those 8 regions re-derive
+  addresses from the image (annotations may be off by 1–4 bytes).
+- Open question for the user: *hand edits in the disasm, or a dump quirk?* (one question, not a blocker)
+
+## Disassembly coverage (extraction aid)
+- ROM: 46,160 bytes listed; unlisted ~2.9KB (read from image):
+  `07C7-07D4, 1174-117C, 1FCC-1FFB, 28DA-28FD, 305C-3070, 3237-3278, 382B-3835, 41E6-41EF,
+   41F4-420D, 4CF1-4D0F, 5CF9-5D47, 6395-6934(1440B), 6F67-6F98, 6FD5-7088, 7A08-7A1B,
+   7B5A-7B6F, 7B72-7B83, 7B86-7B8F, 80F0-80FD, 8870-88BE, D4A8-D4FB, DE8A-DEDD, E194-E1E2,
+   E46C-E589, F7F0-F887, FFD7-FFEF`
+- $9000–$CFFF (CPU): fully listed in the disasm (16,384/16,384) = RAM layout documentation
+  (initial values + semantics).
+
+## Facts settled this session
+- **DP register = $98** for main game code (base-page RAM at $9800, `SETDP RAM>>8` in RRF.ASM).
+  Disasm header `_d` EQUs are **direct-page offsets, not absolute addresses**
+  (`credits_d $0051` → $9851, `num_players_d $0040` → $9840). Port does not model DP.
+- **Palette:** $DA51 ROM default → $9800 RAM (runtime source) — user-confirmed + code-verified.
+  Full colour construction: pixel nibble → 16-entry RAM palette (8-bit values) → 256-entry
+  **resistor-network** palette (3/3/2 bits: R/G taps 1200/560/330Ω, B taps 560/330Ω) → analog RGB.
+  The 7641-5 decoder PROMs are decoder timing, **not** colour. $DA51 bytes verified byte-identical to
+  the ripper's built-in "Robotron @da51" palette. → **`ref/palette-notes.md`** (MAME code, ripper
+  snippets, the 16 default colours with approx RGB, port plan).
+- **Screen = 304 × 256** (user-confirmed 2026-08-30, correcting the earlier 255). Explains the
+  pair-major layout: each 2-px column is exactly a 256-byte block, so carry into bit 8 of the address
+  moves a pixel column along.
+- **Sprite storage format (T-007) — VERIFIED:** entry = 4 bytes **[width][height][ptr_hi][ptr_lo]**
+  (width = bytes/row, 2 px/byte; height = pixels; pointer big-endian to first frame data). Entries
+  sit in tables of consecutive 4-byte entries; frames contiguous, pitch = w×h bytes. All 17 known
+  entries + every frame pitch verified against the ROM image (skull 12×11 @$043B, 5-frame 12×5
+  table @$0485, mommies 8×14, daddies 10×13, mikeys 6×11, …) → ALL OK. → `ref/palette-notes.md`.
+- **Credits:** runtime `total_credits` = **$9851** (direct $51); **persisted in CMOS $CD00** (BCD,
+  2 bytes, byte 0 = high nibble) — user-confirmed + code-verified ($2729). Also `paid_credits` $CD14,
+  `credits_played` $CD2C, `bonus_credit_counter` $984F, `units_required_for_credit_counter` $9850;
+  unit settings CMOS: $CC0C (units for credit), $CC0E (units for bonus credit), $CC10 (min units for
+  any credit) — all BCD.
+- **Waves (ref/robowaves.md, seanriddle.com):** wave setup routine **$2B7C** (unique data for waves
+  1–40, then repeats 21–40); enemy counts table **$2E24** (Grunts 1–40, then Electrodes, Mommies, …);
+  ~12 other params table **$2C12** (9 decrease with wave, 3 increase; modified by difficulty).
+  Wave = 8-bit, wraps after 255 (shown 55); display is 2 decimal digits (100 shown as 0).
+  Full 40-wave count table captured in the repo.
+- **Partial-blit fx (deferred, D-015):** explosions ≈1 row/frame reveal, 16-frame life (→ 50 rows/s,
+  0.32 s, fire-and-forget); appearances ≈½ row/frame (→ 25 rows/s, tracks its object). Mechanism
+  details in plan §2b. First release: instant sprites; Phase 3: `RevealEffect` (SpriteBatch
+  source-rect clip).
+- **MAME set = blue label:** `robotron` = Release 5 solid blue (verified). Other sets: `robotronyo`
+  (R4 yellow), `robotronr3` (R3 censored proto), `robotron87` (1987 "shot in the corner" fix, R6),
+  `robotron12` (2012 "wave 201 start" hack), `robotrontd` (2015 tie-die V2). Same 3005-13..24 labels
+  exist on yellow/red with **different data** — do not mix (see ref/mame-notes.md).
+
+## File map
+```
+C:/Users/scott/source/repos/Robotron2084/        (git repo, branch main)
+  plan.md            original rebuild plan (phases, mechanism mapping, §2b partial blits)
+  ledger.md          original RE decision log (D-001…D-018, Q-001…Q-005, T-001…T-032) — historical
+  rebuild-ledger.md  rebuild + arcade-fidelity checkpoint log (every commit, gates, next step)
+  status.md          ← this file
+  docs/handoff-2026-09-13.md      current session handoff (state, playtest checklists, constants)
+  docs/arcade-fidelity-notes.md   master ROM-vs-port research log (resume: after §31)
+  .gitignore
+  asm/robomame.asm   user's annotated 64K disassembly (blue label; 34-byte delta — see above)
+  ref/original-source/   28 .ASM modules — primary behaviour reference
+  ref/mame-notes.md      MAME driver notes (versions, ROM layout + hashes, memory map, clocks)
+  ref/robowaves.md       40-wave enemy tables + $2B7C/$2E24/$2C12 notes (seanriddle.com)
+  ref/palette-notes.md   colour chain (resistor network), MAME palette_init, 16 default colours,
+                         sprite storage format (4-byte header, Linear layout)
+  ref/rom/robotron64k.bin  64KB verified image — byte-level authority (gitignored per D-1)
+  spec.txt           BANNED (D-007)
+
+E:\roms\MAME ALL ROMS - DO NOT DELETE\robotron    verified blue-label ROMs + decoder PROMs (source)
+
+C:\Users\scott\source\repos\WmsGfxSpriteRipper    Sean Riddle's Williams sprite ripper (MFC C++);
+    Form1.h @787 built-in palettes ("Robotron @da51" verified vs ROM), @871-901 4-bit RGB conversion
+
+/tmp/romtool/        scratch C# tool (hash verify, 64K build, disasm cross-check, wave parse)
+                     (/tmp = C:/Users/scott/AppData/Local/Temp)
+/tmp/williams.cpp    MAME driver scratch copy (mamedev/mame @ master)
+```
+
+- **THE TUNNEL'S BARS ARE ITS PALETTE — the ROM's colour-cycling RAMP (notes §86).**
+  Author: *"Its not the colours at fault, its the size of the bars making up the tunnel -
+  they looked a bit slim."* **Measured, not eyeballed:** the arcade reference's centre column
+  is **40 bright / 39 dark runs — 4.32 ROWS bright against 0.86 dark** (bars of five rows with a
+  one-row seam, three to a colour cycle); the port drew fifteen ONE-ROW stripes with no dark runs
+  at all. The ring geometry was not at fault (§85's one-ROM-pixel edges and tiling rows stand) —
+  **the walk leaves one palette slot per ROW**, so the bar structure is the PALETTE's, and the
+  arcade's slots hold a RAMP with **three of the fifteen blacked out**. The tables are in the
+  walker's own ROM block ($576D: twelve ramp descriptors + data): `$59B1` picks a ramp and a
+  window at random, `$59D0` writes fifteen consecutive values into slots 1-15, blacks `1+A`,
+  `6+A`, `11+A` with `A` walking 4,3,2,1,0, and slides the window one value a pass. New
+  `Rendering/TunnelPalette.cs` (generated from the ROM's tables) + `WaveClearState` wiring
+  (colour processes suspended while the ramp owns the palette, `CRTAB` restored after). **The port
+  now measures 38 bright / 38 dark runs at 3.96 / 1.57 rows — the arcade's bar structure.**
+  **§85.2's "just a colour-shifted photo" verdict is CORRECTED:** it compared only the bright
+  pixels' hue mix and threw away the run structure that carried the answer.
+
+- **THE PROG'S STEP IS 2 COLUMNS, AND THE QUARK'S FIRST TANK COUNTS ANIMATION CYCLES
+  (notes §87).** Author: *"Fix the prog movement, the quark birth speed."* (a) `PRGAL/PRGAR`'s
+  ±2 delta is added to `OX16` — a `column*256 + row` SCREEN ADDRESS — so it moves two COLUMNS
+  (4 px) a body, and the vertical tables' ±4 ROWS give the same 4 px: the port stepped 2 spec px
+  (half speed, the reported "horizontal movement seems a little slow") and read the column as a
+  pixel. The aim offsets and wrap margin are columns too (±28 columns = ±56 px). (b) The quark's
+  `DEC PD2,U` sits on the WRAP branch of its idle animation, so the first tank is due 1..TDPTIM
+  cycles of SIX BODIES: measured, the first drop went from **0-47 ticks to 139-379 ticks** while
+  the drop-phase cadence was already right. §77.2's "tank column" suspicion is cleared.
+  **Flagged:** RRS22's SLEEP dispatcher (`DEC PTIME,U / BNE`) makes `NAP n` wake every n passes,
+  contradicting §83's two-frames-per-pass for the tunnel; one unit is wrong for every
+  task-driven body and it needs the same MAME measurement.
+
+- **THE FAMILY WALKS FROM THE FIRST MOMENT OF A WAVE, AND THEY STAY OFF THE POSTS
+  (notes §88).** Author: *"At the start of the level, the family members wait too long before
+  they start moving. Also can you check if they should spawn on top of electrodes? I don't think
+  they should."* The ROM creates the family BEFORE the robots assemble, writes the stagger
+  (`SEED&7+1`) straight into the process timer so the wake-up IS the first step, and `HUMAN` is
+  the one robot routine with **no STATUS check** — the port held them behind `RobotsFrozen` (the
+  2 s grace) plus an extra step period (~2.4 s of standing). Fixed, with the corollary that no
+  brain or hulk may touch a human while the robots are held (the ROM's collision process is
+  created immediately before `CLR STATUS`). The electrodes: the ROM's own placement is a bare
+  `RANDXY`, so the arcade CAN leave a human stuck inside a post — the port's rule against it is a
+  **deliberate deviation at the author's request** (the second, after the human walk period), now
+  documented as one and made airtight: the last-resort placement scan used to stride by the whole
+  entity size and then fall through to an UNCHECKED random point. Two new tests cover six levels
+  × 120 seeds.
+
+- **SESSION 3 WRAP-UP — read this first (notes §89).** The day's traps in the order they bit
+  (a header is a lead not evidence; a hit is not a centre; textures are ART px and bounds are
+  PORT px; an effect owns its palette and tables; an accumulating effect must accumulate; map
+  geometry onto the real 640x400 screen; thickness is mapping; compare reference STRUCTURE not
+  hue mix; a ROM coordinate's X byte is a COLUMN; a countdown can be gated on an animation
+  wrap; a gate is per ROUTINE; an unchecked fallback breaks its caller), **the port's exactly
+  TWO deliberate deviations** (the human walk period 16 vs `NAP 8`; humans never spawning on an
+  electrode), and the open questions (the task-pass unit — needs a MAME measurement; the scoring
+  report's laser-hit question; A8 the progging brain's pose; §72.6's `2W−1`; the tunnel's
+  `PassFifths`). End-of-session gates: 0 warnings both configurations, **266 tests, 0 failed,
+  1 skipped**, smoke OK, both render gates PASS.
+
+## Next steps (priority order, 2026-09-17)
+
+0. **Session-3 carry-over — what is actually left (the rest of this list is history):**
+   the ONE open algorithmic question is **what a task pass is worth** (notes §87.4/A9: `NAP n`
+   wakes on the n-th pass per RRS22's `SLEEP`, but §83 needed two frames per pass for the
+   tunnel's ~2 s — it decides the body length of every task-driven object and needs a MAME
+   measurement, not a guess). Then **simultaneous two-player** (the author's stated wish;
+   `PlayerSlot.Input` is already per-slot and nothing but `SwitchToPlayerWithMen` assumes
+   alternation). **DONE since this list was written:** the spheroid bubble burst + the quark's
+   `CIRKV` burst (§64), the whole wave-complete tunnel (§79-§86), the prog's step and the
+   quark's drop timer (§87), and the family's start of wave (§88). The ROM's colour processes
+   **are** modelled — `Rendering/PaletteAnimator.cs` drives slots 10-15, and §86 suspends and
+   resumes them while the tunnel's ramp owns the palette.
+1. **Author playtest round 16 (what shipped TODAY, all of it unplayed):** the tunnel (its bars,
+   its 2-second pace, and the fact that it now runs over a colour-cycling ramp palette — the
+   colours sweep through the wheel), the progs walking **twice as fast horizontally as the last
+   build**, quarks whose first tank now arrives 2-6 s after they appear rather than instantly,
+   and a family that starts walking the moment a wave starts (and never stands on an electrode).
+   Older items still worth a look: the materialisation (§62/§63), wave 9's invisible border
+   (faithful — slot 0), and the explosions' shot-direction shatter (notes §35).
+2. **Flip `GameplayConstants.PlayerInvincibleForTesting` to `false`** once gameplay is
+   confirmed; un-skip `PlayerWalksIntoElectrode_BothStartDying`
+   (`tests/Robotron2084.Tests/Level/PlayFieldCollisionTests.cs`) and update
+   `PlayerInvincibilityTests` (it asserts the flag is on).
+3. **Frills (author: last)** — DONE: spark flicker (SPKP0..3, 614d36a), explosions
+   (RRX7, §35), **score font (§38)** — real ROM glyphs extracted (author's
+   sprite-editor offsets; tools/extract-fonts.py) and wired into the HUD.
+   Researched in session 2 (notes §36), now **BLOCKED on author**:
+   - **Sounds: engine DONE with a flagged stub (notes §37)** — sequencer + event
+     wiring built and wired (laser / robot death / player death / shell fire /
+     shell bounce / brain spawn / bonus life); 171 tests green. The note→
+     frequency + waveform map is sound-board hardware (not in the CPU ROM). Need
+     author: the note table (or a recording to match by ear) to replace the stub
+     scale in `MonoGameSoundSink.StubFrequency`.
+   - **Red screen** (RRFRED) — still BLOCKED on the §33 question.
+   - **Marquee** — needs an author asset.
+   Colour-cycle shader built & wired (M4) — TICKED with the author's go-ahead
+   (2026-09-16); font glyphs in cycling slots now draw through the same
+   effect (notes §39). The M4 regression that hid every sprite is FIXED
+   (notes §40 — the effect no longer declares a vertex shader; it must stay
+   pixel-shader-only, or the draw must move to `SpriteBatch.Begin(effect:)`).
+4. Optional ROM checks (never flagged by the author): hulk tempo — DONE (already
+   ROM-derived, no action). Tank-shell speed + electrode placement — researched
+   (notes §36.3/36.4); both parked behind the author (shell: constant vs
+   accuracy-table scaling; electrode: player-distance vs per-wave safe-rectangle).
+
+## Tool working notes
+- Disasm parser rule that works: a byte = **full whitespace-delimited field of exactly two hex digits**
+  (followed by space/EOL). NEVER consume hex-looking runs inside mnemonics ("ADDD" contains AD+DD —
+  that bug caused a false 1,649-mismatch count; the true count is 34).
+- ROM hole in the 64K image: $9000–$CFFF (16K) zeroed. RAM initial values = disasm listing of that range.
+- CRC32 = standard (poly 0xEDB88320 reflected, init/fin xor 0xFFFFFFFF) — matches MAME.
+- Bash `/tmp` = `C:/Users/scott/AppData/Local/Temp` (C# needs the Windows path).
