@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""
+Extract the arcade small/large font glyphs from ref/rom/robotron64k.bin into
+Content/Sprites/Font_S_*.png / Font_L_*.png (regenerates the hand-drawn
+placeholders — same file names, so Content.mgcb / SpriteContentPaths stay
+valid).
+
+Offsets + dimensions come from the author's sprite editor
+(WmsGfxSpriteEditor.Roms.Robotron2084/Shared/Sprites/
+RobotronBlueLabelSpriteRepository.cs; data sourced from
+seanriddle.com/robotronsprites.txt). Format: 4bpp linear, 2 px/byte,
+row-major — "blitted same as the sprites" (author, 2026-09-16), which means
+the HIGH nibble of a byte is the LEFT pixel: every glyph written before
+2026-09-17 had the two pixels of each byte SWAPPED, so the score digits
+rendered as broken shapes (author: "the font characters don't look
+correct"). `tools/verify-fonts.py` now guards the committed PNGs against
+the ROM.
+Notes: docs/arcade-fidelity-notes.md §36.1, §38, §60.
+
+Output: RGBA8. Non-zero nibble = white opaque; zero = transparent. The
+port tints at draw time (P1 score = palette slot 1 blue, P2 = slot 10).
+
+Cycling variants (notes §39 — blitter remap semantics): the arcade blits
+glyphs with a palette INDEX; if that slot is a colour-cycling slot (10-15)
+the text cycles too. The port's M4 shader remaps marker-baked colours to
+the live slot colours, so for every glyph this script also emits six
+marker-baked variants `Font_<L|S>_<ch>_10.png` .. `_15.png` (glyph pixels =
+the slot's marker RGB, the exact RobotronColor.FromByte of the
+CyclingSlotMarker byte) for drawing through the colour-cycle effect.
+"""
+from PIL import Image
+
+ROM = "ref/rom/robotron64k.bin"
+OUT = "src/Robotron2084/Content/Sprites"
+# (offset, width_bytes, height) — decimal offsets, from the author's editor.
+SMALL = {
+    "0": (59947, 2, 5), "1": (59958, 2, 5), "2": (59969, 2, 5),
+    "3": (59980, 2, 5), "4": (59991, 2, 5), "5": (60002, 2, 5),
+    "6": (60013, 2, 5), "7": (60024, 2, 5), "8": (60035, 2, 5),
+    "9": (60046, 2, 5), "A": (60119, 2, 5), "B": (60130, 2, 5),
+    "C": (60141, 2, 5), "D": (60152, 2, 5), "E": (60163, 2, 5),
+    "F": (60174, 2, 5), "G": (60185, 2, 5), "H": (60196, 2, 5),
+    "I": (60207, 2, 5), "J": (60218, 2, 5), "K": (60229, 2, 5),
+    "L": (60240, 2, 5), "M": (60251, 3, 5), "N": (60267, 2, 5),
+    "O": (60278, 2, 5), "P": (60289, 2, 5), "Q": (60300, 2, 5),
+    "R": (60311, 2, 5), "S": (60322, 2, 5), "T": (60333, 2, 5),
+    "U": (60344, 2, 5), "V": (60355, 2, 5), "W": (60366, 3, 5),
+    "X": (60382, 2, 5), "Y": (60393, 2, 5), "Z": (60404, 2, 5),
+    "(": (60415, 2, 5), ")": (60426, 2, 5),
+}
+
+LARGE = {
+    "0": (60563, 3, 6), "1": (60582, 3, 6), "2": (60601, 3, 6),
+    "3": (60620, 3, 6), "4": (60639, 3, 6), "5": (60658, 3, 6),
+    "6": (60677, 3, 6), "7": (60696, 3, 6), "8": (60715, 3, 6),
+    "9": (60734, 3, 6), "A": (60864, 3, 6), "B": (60883, 3, 6),
+    "C": (60902, 3, 6), "D": (60921, 3, 6), "E": (60940, 3, 6),
+    "F": (60959, 3, 6), "G": (60978, 3, 6), "H": (60997, 3, 6),
+    "I": (61016, 3, 6), "J": (61035, 3, 6), "K": (61054, 3, 6),
+    "L": (61073, 3, 6), "M": (61092, 3, 6), "N": (61111, 3, 6),
+    "O": (61130, 3, 6), "P": (61149, 3, 6), "Q": (61168, 3, 6),
+    "R": (61187, 3, 6), "S": (61206, 3, 6), "T": (61225, 3, 6),
+    "U": (61244, 3, 6), "V": (61263, 3, 6), "W": (61282, 3, 6),
+    "X": (61301, 3, 6), "Y": (61320, 3, 6), "Z": (61339, 3, 6),
+    "(": (61358, 2, 6), ")": (61371, 2, 6), ":": (61383, 1, 5),
+    "arrowleft": (61403, 3, 6),
+}
+
+# char -> file name suffix (must match the existing PNG file names)
+NAME = {
+    "(": "(", ")": ")", ":": "colon", "arrowleft": "arrowleft",
+}
+NAME.update({c: c for c in "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"})
+
+# Cycling-slot marker bytes — must match GamePalette.CyclingSlotMarkers.
+CYCLE_MARKERS = {10: 0xC4, 11: 0xF4, 12: 0xCC, 13: 0x81, 14: 0x45, 15: 0x2F}
+
+
+def marker_rgb(value):
+    """Robotron 8-bit colour byte (BBGGGRRR) -> RGB, = RobotronColor.FromByte."""
+    red = (value & 0x07) << 1
+    if red > 6:
+        red += 1
+    green = (value & 0x38) >> 2
+    if green > 6:
+        green += 1
+    blue = (value & 0xC0) >> 6
+    return (min(255, red << 4), min(255, green << 4), min(255, blue * 5 << 4))
+
+
+def glyph_pixels(data, offset, width_bytes, height):
+    """Yield (x, y, set) for every pixel of the glyph.
+
+    HIGH nibble = LEFT pixel (the arcade stores two pixels per byte, and every
+    other extraction path in this repo — tools/SpriteExtractor, the author's
+    sprite editor — reads them left-to-right within the byte).
+    """
+    for row in range(height):
+        for byte_i in range(width_bytes):
+            b = data[offset + row * width_bytes + byte_i]
+            yield byte_i * 2, row, ((b >> 4) & 0xF) != 0
+            yield byte_i * 2 + 1, row, (b & 0xF) != 0
+
+
+def write_png(prefix, table, data):
+    for char, (offset, width_bytes, height) in table.items():
+        # Master glyph: white on transparent (tinted at draw time).
+        img = Image.new("RGBA", (width_bytes * 2, height), (0, 0, 0, 0))
+        px = img.load()
+        for x, y, set_ in glyph_pixels(data, offset, width_bytes, height):
+            if set_:
+                px[x, y] = (255, 255, 255, 255)
+        name = f"{prefix}_{NAME[char]}.png"
+        img.save(f"{OUT}/{name}")
+        print(f"  {name}")
+        # Cycling-slot variants: marker-baked for the M4 colour-cycle shader
+        # (notes §39) — the glyph pixel colour IS the slot's marker colour.
+        for slot in range(10, 16):
+            vimg = Image.new("RGBA", (width_bytes * 2, height), (0, 0, 0, 0))
+            vpx = vimg.load()
+            for x, y, set_ in glyph_pixels(data, offset, width_bytes, height):
+                if set_:
+                    rgb = marker_rgb(CYCLE_MARKERS[slot])
+                    vpx[x, y] = (rgb[0], rgb[1], rgb[2], 255)
+            vname = f"{prefix}_{NAME[char]}_{slot}.png"
+            vimg.save(f"{OUT}/{vname}")
+
+
+def main():
+    data = open(ROM, "rb").read()
+    print("small font ->", OUT)
+    write_png("Font_S", SMALL, data)
+    print("large font ->", OUT)
+    write_png("Font_L", LARGE, data)
+
+
+if __name__ == "__main__":
+    main()
