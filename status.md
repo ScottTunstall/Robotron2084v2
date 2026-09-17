@@ -108,10 +108,16 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   gate only on the SPIN phase (the ROM gates `CIRCLE` and neither `CIRC2L` nor `CIRC3L` — a gate is
   per routine, §88). One side-effect to expect: the spin's rotation is 15 frames, not 12, so a
   spheroid's FIRST enforcer now arrives a quarter of a rotation later.
-- **Also flagged (NOT changed): the generic mover runs 20% fast.** `OPB80` adds the velocity once
-  per ROM **frame**, but the port adds it once per 60 Hz **tick** — so the spheroid, the sparks and
-  the missiles travel 60/50 = 20% faster than the arcade. It is a systemic change across several
-  entities, so it is parked for your call rather than folded into an animation fix (notes §91.3).
+- **Also flagged, NOT changed — three items parked as A10/A11/A12 (notes §91.3, all three in the
+  handoff's work table).** (**A10**) The generic mover runs **20% fast**: `OPB80` adds the velocity
+  once per ROM **frame**, but the port adds it once per 60 Hz **tick**, so the spheroid, the sparks
+  and the missiles travel 60/50 faster than the arcade — a systemic change across several entities,
+  parked for your call. (**A11**) The spheroid's drop countdown re-arm: `CIRC2L`'s `BRA $11DB`
+  re-arms `RMAx(CDPTIM/4)` and the `$11E5` chain then DECrements the fresh value in the SAME body, so
+  the arcade's cadence is `RND(1..CDPTIM/4) − 1` wraps — and a countdown that reaches 0 becomes
+  `$FF` (a ~2-minute stall). Needs a MAME measurement before it is touched. (**A12**) The escape's
+  exit columns are the port's own mapping of `XMIN+3`/`XMAX-10` (the left measured from the wall,
+  the right absolutely) and interact with A9 — also unmeasured.
 - **"WHEN I SHOOT THE PROGS THE EXPLOSION EFFECT LOOKS WEIRD" — two defects, and the loud one
   was the ART (notes §90).** (1) **`ProgBurst.png` decoded to NOISE.** It is the port's only
   *inline* sprite (`PGXPIC` is not in the R5 ROM, so `tools/SpriteExtractor` carries the
@@ -654,10 +660,14 @@ C:\Users\scott\source\repos\WmsGfxSpriteRipper    Sean Riddle's Williams sprite 
    `CIRKV` burst (§64), the whole wave-complete tunnel (§79-§86), the prog's step and the
    quark's drop timer (§87), the family's start of wave (§88), the prog's death — the
    `PGXPIC` + `EXST` strip explosion plus the corrupt `ProgBurst` art (§90) — and the
-   spheroid's picture chain (§91). **NEW OPEN QUESTION (A10, notes §91.3):** the generic mover
+   spheroid's picture chain (§91). **NEW OPEN QUESTIONS, all three parked in the handoff's
+   work table and detailed in notes §91.3:** (**A10**, needs your go-ahead) the generic mover
    adds its velocity once per 60 Hz tick where the ROM's `OPB80` adds it once per ROM FRAME, so
-   the spheroid, the sparks and the missiles all move 20% fast — a systemic change that needs
-   your go-ahead. The ROM's colour
+   the spheroid, the sparks and the missiles all move **20% fast** — a systemic sweep;
+   (**A11**, needs a MAME measurement) the spheroid's drop-countdown re-arm is decremented again
+   in the same body by the ROM, and a countdown that reaches 0 becomes `$FF` (a ~2-minute stall);
+   (**A12**, needs a measurement) the escape's exit columns are the port's own mapping and
+   interact with A9. The ROM's colour
    processes **are** modelled — `Rendering/PaletteAnimator.cs` drives slots 10-15, and §86
    suspends and resumes them while the tunnel's ramp owns the palette.
 1. **Author playtest round 16 (what shipped TODAY, all of it unplayed):** the tunnel (its bars,

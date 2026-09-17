@@ -1671,6 +1671,11 @@ done and the PHASE E checklist from (18) is implemented on top.
    rows held eight bytes instead of six, so the PNG writer walked a misaligned
    stream and `ProgBurst.png` decoded to noise until §90.1 fixed it; the
    extractor now rejects inline data whose length is not exactly `w x h`.
+   **⚠ And a full extractor run rewrites `docs/sprite-map.md` with its 78 FONT
+   rows removed** (a row is emitted per sprite the tool writes, and font glyphs
+   are skipped — `tools/extract-fonts.py` owns them, §60), so regenerating
+   sprites always shows an unrelated 78-line diff. Parked as B26: either commit
+   that cleanup or make the generator skip the font ROWS too.
 
 PHASE E entities (the (18) checklist; RRB10 decode there):
 - **Brain** (`Brain.cs`): body every `PortTicks(16 + BRNSPD)` ticks
@@ -7167,17 +7172,19 @@ escape's exit test) living on the wrap pass. `internal PictureIndex` / `IsEscapi
 hooks; `SpheroidAnimationTests` pins the rate (at least 3 ticks between picture changes), the 0..4
 escape set, the 0..7 drop set and the `CIRP4` birth.
 
-### 91.3 Left alone, and why
+### 91.3 Left alone, and why — parked as A10, A11 and A12
 
-- **The mover's rate.** `OPB80` integrates the velocity once per ROM FRAME, but the port integrates
-  it once per 60 Hz port TICK, so everything on the generic mover (spheroid, spark, missile)
-  travels 60/50 = **20% faster than the arcade**. That is a systemic change with its own
+- **A10 — the mover's rate.** `OPB80` integrates the velocity once per ROM FRAME, but the port
+  integrates it once per 60 Hz port TICK, so everything on the generic mover (spheroid, spark,
+  missile) travels 60/50 = **20% faster than the arcade**. That is a systemic change with its own
   verification, so it is flagged for the author rather than folded into an animation fix.
-- **CIRC2L's re-arm re-enters its `DEC`** — `BRA $11DB` → `RMAx(CDPTIM/4)` → the `$11E5` chain
-  decrements the fresh countdown in the SAME body — so the arcade's cadence is
+- **A11 — CIRC2L's re-arm re-enters its `DEC`** — `BRA $11DB` → `RMAx(CDPTIM/4)` → the `$11E5`
+  chain decrements the fresh countdown in the SAME body — so the arcade's cadence is
   `RND(1..CDPTIM/4) − 1` wraps, and a countdown that reaches 0 becomes `$FF` on the next wrap (a
   ~2-minute stall that would stop a wave clearing). The port re-arms without the extra `DEC`. This
   needs a MAME measurement before it is touched.
-- **The exit columns** are still the port's own mapping (`SpheroidEscapeExitLeftColumn` measured from
-  the wall, `…RightColumn` measured absolutely) — the port's 320x200 spec space is not the ROM's
-  143-column buffer, and moving a vanishing point without a measurement would be guesswork.
+- **A12 — the escape exit columns** are still the port's own mapping
+  (`SpheroidEscapeExitLeftColumn` measured from the wall, `…RightColumn` measured absolutely) — the
+  port's 320x200 spec space is not the ROM's 143-column buffer, and moving a vanishing point without
+  a measurement would be guesswork. It also has to be checked against A9 (the task-pass length),
+  because the exit test only runs once per five-picture cycle.
