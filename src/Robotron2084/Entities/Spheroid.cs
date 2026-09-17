@@ -16,23 +16,39 @@ namespace Robotron2084.Entities;
 /// the walls rather than reflecting (the generic mover rejects an out-of-bounds
 /// axis, notes §43/§56). It flies OVER electrodes.
 ///
-/// Its phases, each body being `NAP 2` = 3 ROM frames:
-/// - CIRCLE (spin, 4 pictures): the drop countdown PD2 = RND(1..CDPTIM)
-///   decrements only on a full 4-picture wrap, so it counts ROTATIONS (12 frames);
-/// - CIRC2 (drop, 8 pictures): PD2 = RND(1..CDPTIM/4) rotations between drops,
+/// Its phases, each body being `NAP 2` = 3 ROM frames, and each advancing the
+/// picture pointer by one (`OPICT += 4`) on ITS OWN body clock:
+/// - CIRCLE (spin, pictures CIRP0..CIRP4): the drop countdown PD2 = RND(1..CDPTIM)
+///   decrements only on a full 5-picture wrap, so it counts ROTATIONS (15 frames);
+/// - CIRC2 (drop, CIRP0..CIRP7): PD2 = RND(1..CDPTIM/4) rotations between drops,
 ///   each of which drops one enforcer (ENFDRP) unless 8 are already out, until
 ///   the allotment (RND(1..ENFNUM) halved, rounded up = 1..5) is exhausted;
 /// - CIRC3 (escape): OYV = 0 and OXV = exactly 1 column/frame, a straight
-///   sideways run that ends once the column passes XMIN+3 or XMAX-10, whereupon
-///   the object is removed with NO death animation (`CIR4`: KILLOF + SUCIDE).
-/// A laser hit instead bursts it into the 7-step bubble (still to build,
-/// notes §50).
+///   sideways run that spins the SAME five pictures the idle phase does and ends
+///   once the column passes XMIN+3 or XMAX-10 — a test that itself runs only on
+///   the wrap pass — whereupon the object is removed with NO death animation
+///   (`CIR4`: KILLOF + SUCIDE).
+/// A laser hit instead bursts it into the 7-step bubble (notes §50/§64).
 /// </summary>
 public sealed class Spheroid : IEntity, IArtSource
 {
     /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.SpheroidCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.SpheroidCollisionSize.Height));
+
+    /// <summary>
+    /// The LAST picture of the idle spin and of the escape, i.e. the pointer value
+    /// whose `OPICT += 4` wraps: `CIRCLE`/`CIRC3L` both compare against `CIRP4`
+    /// (`CMPD #$1502` at R5 $11B6 / $1239 with the `BLS` that stores). So those two
+    /// phases spin FIVE pictures, CIRP0..CIRP4 — §56.2 read the boundary as "wraps
+    /// past CIRP3" and gave the port a four-picture spin (author, 2026-09-17: the
+    /// spheroid "after giving birth to all the enforcers, looks weird animation
+    /// wise", notes §90).
+    /// </summary>
+    private const int SpinLastPicture = 4;
+
+    /// <summary>ROM `CIRC2L`'s wrap boundary: `CMPD #$150E` = CIRP7, so the drop phase spins all EIGHT pictures.</summary>
+    private const int DropLastPicture = 7;
 
     private readonly Random _random;
     private readonly int _dropDelayRomTicks;
@@ -47,7 +63,7 @@ public sealed class Spheroid : IEntity, IArtSource
     private int _bodyFifths;
     private int _enforcersRemaining; // PD3: ceil(RND(1..ENFNUM)/2) = 1..5, never 0
     private int _dropRotationsRemaining; // PD2, counted in full picture ROTATIONS
-    private int _rotation; // OPICT: 0..3 while spinning, 0..7 while dropping
+    private int _rotation; // OPICT: 0..4 while spinning/escaping, 0..7 while dropping
     private bool _dropping; // CIRCLE (spin) -> CIRC2 (drop)
     private bool _escaping; // CIRC3: sideways run, then vanish
     private int _escapeDirection;
@@ -74,6 +90,10 @@ public sealed class Spheroid : IEntity, IArtSource
         // R5 CIRSTL: PD2 = RND(1..CDPTIM) starts the SPIN phase's countdown; CIRNAC
         // (called there too) rolls the first accelerations and the re-roll timer.
         _dropRotationsRemaining = random.Next(1, dropDelayRomTicks + 1);
+        // `MKPROB CIRCLE,CIRP4,CIRKIL` → MPROB's `LDD ,U++ / STD OLDPIC,X /
+        // STD OPICT,X` puts CIRP4 in the new object's picture, so a spheroid is BORN
+        // showing the medium ring and its FIRST body is already a wrap pass.
+        _rotation = SpinLastPicture;
         RollAccelerations();
     }
 
@@ -82,6 +102,15 @@ public sealed class Spheroid : IEntity, IArtSource
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>
+    /// Test hook: the picture the object is pointing at (`OPICT`) — 0..4 while
+    /// spinning or escaping, 0..7 while dropping.
+    /// </summary>
+    internal int PictureIndex => _rotation;
+
+    /// <summary>Test hook: true once CIRC3's sideways exit run has started.</summary>
+    internal bool IsEscaping => _escaping;
 
     /// <summary>
     /// Laser kill (ROM RRC11 `CIRKIL`): `JSR KILOFP` (image and process off)
@@ -99,29 +128,17 @@ public sealed class Spheroid : IEntity, IArtSource
             return;
         }
 
-        Rectangle bounds = field.Wall.PlayfieldBounds;
-
-        // CIRC3: the escape is a straight sideways run — OYV = 0, OXV = ±$0100,
-        // exactly 1 column = 2 arcade px per frame — which ends once the column
-        // passes XMIN+3 or XMAX-10; CIR4 then removes the object with no burst.
-        if (_escaping)
-        {
-            AdvancePosition(field);
-            _rotation = (_rotation + 1) % 4;
-            if (_position.X <= bounds.X + ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitLeftColumn) ||
-                _position.X >= ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitRightColumn))
-            {
-                LifeState = EntityLifeState.Dead;
-            }
-
-            return;
-        }
-
         // The generic mover ($OPB80, notes §43) runs EVERY frame, independently of
-        // how often this object's own process wakes up.
+        // how often this object's own process wakes up — the escape included, whose
+        // OXV is a fixed ±1 column/frame.
         AdvancePosition(field);
 
-        // The CIRCLE body is `NAP 2` = 3 ROM frames (notes §43: NAP n is n + 1 frames).
+        // Every phase's process is `NAP 2` = 3 ROM frames = 3.6 port ticks (notes
+        // §43: `NAP n` is n + 1 frames), so the PICTURE and the phase's own logic
+        // step on the body clock. The escape used to advance its picture on every
+        // port tick instead — 3.6x the arcade's rate, a 15 Hz strobe of a picture
+        // that is still growing — which is what the author saw once a spheroid had
+        // dropped its last enforcer (notes §90).
         _bodyFifths += 5;
         if (_bodyFifths < GameplayConstants.SpheroidBodyRomFrames * 6)
         {
@@ -130,50 +147,93 @@ public sealed class Spheroid : IEntity, IArtSource
 
         _bodyFifths -= GameplayConstants.SpheroidBodyRomFrames * 6;
 
-        // CIRCLE/CIRC2L: `OPICT += 4` then wrap at the phase's last picture — 4
-        // pictures while spinning, 8 once dropping. The drop countdown (PD2) is
-        // decremented only on the wrap pass, so it counts ROTATIONS, not bodies.
-        _rotation = (_rotation + 1) % (_dropping ? 8 : 4);
-        AccelerateAndDamp();
+        // ROM `ADDD #4 / CMPD #<last> / BLS …`: the picture advances one entry a body
+        // unless it is already at the phase's LAST picture. That body is the WRAP
+        // pass: the phase's own countdown (or, for the escape, the X exit test) lives
+        // there, and on some branches the store is SKIPPED so the picture is held.
+        int lastPicture = _dropping && !_escaping ? DropLastPicture : SpinLastPicture;
+        bool wrapPass = _rotation >= lastPicture;
 
+        if (_escaping)
+        {
+            // CIRC3L. The exit test sits INSIDE the wrap branch, so it is evaluated
+            // once per five-picture cycle, not every body — the ROM's `CMPA #XMIN+3` /
+            // `CMPA #XMAX-10`; a spheroid that runs out of field before its next wrap
+            // pass just stops at the wall (the mover rejects the step) and leaves on it.
+            if (wrapPass)
+            {
+                Rectangle bounds = field.Wall.PlayfieldBounds;
+                if (_position.X <= bounds.X + ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitLeftColumn) ||
+                    _position.X >= ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitRightColumn))
+                {
+                    LifeState = EntityLifeState.Dead; // CIR4: KILLOF + SUCIDE — removed, no burst
+                    return;
+                }
+
+                _rotation = 0;
+                return;
+            }
+
+            _rotation++;
+            return;
+        }
+
+        // CIRGO (accumulate, clamp, damp) and the PD7 re-roll run once per BODY in
+        // both CIRCLE and CIRC2L; CIRC3L never calls them (its velocity is fixed).
+        AccelerateAndDamp();
         if (--_accelBodiesRemaining <= 0)
         {
             RollAccelerations();
         }
 
-        // `TST STATUS / BNE CIRC1`: a frozen game keeps spinning (and accelerating)
-        // but never advances the drop countdown.
-        if (_rotation != 0 || field.RobotsFrozen)
+        if (!wrapPass)
         {
+            _rotation++;
+            return;
+        }
+
+        // ---- the WRAP pass: the phase's countdown ----------------------------------
+        // CIRCLE's `TST STATUS / BNE CIRC1` stores the wrap target (CIRP0) without
+        // decrementing, so a held game keeps spinning and accelerating but the SPIN
+        // countdown does not advance. CIRC2L and CIRC3L have no such test — the check
+        // is per routine, not per object (§88's trap) — so a dropping spheroid keeps
+        // counting through a pause. The port used to gate both phases.
+        if (!_dropping && field.RobotsFrozen)
+        {
+            _rotation = 0;
             return;
         }
 
         if (--_dropRotationsRemaining > 0)
         {
+            _rotation = 0;
             return;
         }
 
         if (!_dropping)
         {
-            // CIRC1 -> CIRC2: start dropping, on a fresh RND(1..CDPTIM/4) countdown.
+            // CIRCLE -> CIRC2 (`BEQ CIRC2`): the pointer is NOT stored on this branch,
+            // so the drop phase carries the SAME pointer on — CIRP4 held for this body,
+            // then CIRP5, CIRP6, CIRP7. (The port used to restart the cycle at CIRP0.)
             _dropping = true;
             RerollDropCountdown();
             return;
         }
 
-        // CIRC2L: drop one enforcer unless the arcade's 8-enforcer cap is reached;
-        // a capped drop is NOT deferred, it simply re-rolls the countdown.
+        // CIRC2L: `ENFCNT >= 8` and the ROM's `$42 >= 17` test gate the drop; a capped
+        // drop is NOT deferred, it just re-rolls the countdown.
         if (field.CanDropEnforcer)
         {
             field.SpawnEnforcer(_position);
             if (--_enforcersRemaining <= 0)
             {
-                StartEscape();
+                StartEscape(); // CIRC3 — the pointer stays on CIRP7; the first escape body wraps it
                 return;
             }
         }
 
         RerollDropCountdown();
+        _rotation = 0;
     }
 
     /// <summary>ROM CIRNAC: re-roll both accelerations and the 1..15-body re-roll timer.</summary>
@@ -191,11 +251,14 @@ public sealed class Spheroid : IEntity, IArtSource
     private void RerollDropCountdown() =>
         _dropRotationsRemaining = 1 + _random.Next(0, _dropDelayRomTicks / 4);
 
-    /// <summary>ROM CIRC3: Y velocity 0, X velocity exactly ±1 column per frame, forever.</summary>
+    /// <summary>
+    /// ROM CIRC3: Y velocity 0, X velocity exactly ±1 column per frame, forever. The
+    /// picture pointer is deliberately NOT touched — the ROM leaves it on CIRP7 (the
+    /// last drop-phase picture) and the first escape body wraps it to CIRP0.
+    /// </summary>
     private void StartEscape()
     {
         _escaping = true;
-        _rotation = 0;
         _velocityXFp = _escapeDirection * GameplayConstants.SpheroidMaxVelocityXFp;
         _velocityYFp = 0;
         _remainderXFp = 0;
@@ -267,9 +330,9 @@ public sealed class Spheroid : IEntity, IArtSource
         // No death animation: the ROM turns the object off and bursts it
         // immediately (notes §50) — see Kill().
 
-        // ROM animation: `OPICT += 4` per body, wrapping at CIRP3 while spinning
-        // (pictures 0..3) and at CIRP7 while dropping (0..7) — one picture per
-        // 3-frame body, NOT a fixed tick clock (notes §56).
+        // ROM animation: `OPICT += 4` per body, wrapping at CIRP4 while spinning or
+        // escaping (pictures 0..4) and at CIRP7 while dropping (0..7) — one picture
+        // per 3-frame body, NOT a fixed tick clock (notes §56, §90).
         sprites.DrawSprite(spriteBatch, sprites.SpheroidFrames[_rotation % sprites.SpheroidFrames.Length], Bounds, Color.White);
     }
 

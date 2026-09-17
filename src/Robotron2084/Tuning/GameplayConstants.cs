@@ -555,8 +555,14 @@ public static class GameplayConstants
     /// <summary>ROM BCMCNT cap: a brain fires only while fewer than 8 missiles fly.</summary>
     public const int CruiseMissileMax = 8;
 
-    /// <summary>PHASE E: the prog's phony-burst pop (PGXPIC) duration, ticks.</summary>
-    public const int ProgBurstTicks = 20;
+    /// <summary>
+    /// ROM PGXPIC: `FCB 6,16` — the prog's PHONY burst card, 6 BYTES x 16 rows =
+    /// 12x16 px. PRGKIL swaps the object's picture descriptor to this card and then
+    /// calls the ordinary `EXST`, so the card is what the strip explosion shatters,
+    /// and `EXSTV` sizes its record from the picture — see
+    /// <see cref="Entities.Prog.ExplosionBounds"/> (notes §90).
+    /// </summary>
+    public static readonly (int Width, int Height) ProgBurstSize = (12, 16);
 
     // ---- BMUT: a brain reprogramming a human (notes §46, §47) ----
     // The ROM's 20-iteration loop, each iteration doing TWO redraws of the

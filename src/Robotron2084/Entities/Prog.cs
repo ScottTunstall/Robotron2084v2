@@ -53,13 +53,16 @@ namespace Robotron2084.Entities;
 /// figure, and `$00AA` a black card carrying a slot-A figure. Notes §53 has the
 /// decode; do not swap them without the author's say-so.
 ///
-/// On a laser hit it blows into the PHONY burst picture (PGXPIC — solid blit)
-/// at its clamped position for a short pop, then is gone. PROG = 100 pts.
+/// On a laser hit `PRGKIL` erases the whole trail, swaps the object's picture to
+/// the PHONY burst (`PGXPIC` — a 12×16 SOLID card), clamps the position to
+/// `(XMAX-5, YMAX-15)`, and then calls the ordinary `EXST` — so a prog dies like
+/// every other robot, with the same direction-dispatched strip explosion, only fed
+/// the phony card instead of the human it used to be. PROG = 100 pts.
 ///
 /// Contact with the player KILLS the player (it is an enemy robot — the
 /// arcade's progs hunt the player down).
 /// </summary>
-public sealed class Prog : IEntity
+public sealed class Prog : IExplodable
 {
     /// <summary>ROM body: NAP 3 game ticks per step.</summary>
     private const int BodyPeriodRomTicks = 3;
@@ -116,7 +119,6 @@ public sealed class Prog : IEntity
     private int _frameStep; // 0..3 into the ABAC table (ROM ODATA)
     private int _offsetX;   // ROM PD4: persistent aim-offset on X, re-rolled by GPOFF
     private int _offsetY;   // ROM PD5: persistent aim-offset on Y
-    private int _burstTicksRemaining;
 
     /// <summary>
     /// One shadow-ring entry: a position this prog vacated, plus the pose it was
@@ -179,34 +181,46 @@ public sealed class Prog : IEntity
 
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Starts the phony-burst death (PGXPIC pop, then gone).</summary>
+    /// <summary>
+    /// ROM PRGKIL: `JSR KILL` then `STD OPICT,X` = `PGXPIC`. The object is GONE the
+    /// instant it is hit (`KILROB`), and the only thing left is the strip explosion
+    /// of the picture it swapped in — the field's, because
+    /// <see cref="CurrentFrameArt"/> is now the phony card. There is no Dying state:
+    /// the port used to draw the whole card as a 20-tick static pop here instead of
+    /// running the ROM's explosion (notes §90).
+    /// </summary>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (LifeState == EntityLifeState.Alive)
         {
-            return;
+            LifeState = EntityLifeState.Dead;
         }
-
-        LifeState = EntityLifeState.Dying;
-        _burstTicksRemaining = GameplayConstants.ProgBurstTicks;
-        // (ROM PRGKIL also clamps the burst to (XMAX-5, YMAX-15); a prog is
-        // always inside the play area, so its position already is.)
     }
+
+    /// <summary>
+    /// ROM PRGKIL: the picture the death explosion shatters is `PGXPIC`, the phony
+    /// burst card — NOT the human art the prog was walking in.
+    /// </summary>
+    public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.ProgBurst;
+
+    /// <summary>
+    /// ROM PRGKIL swaps the picture to the 12×16 `PGXPIC` descriptor and leaves
+    /// `OBJX/OBJY` alone, and `EXSTV` takes its record's rect as `UL = OBJX/OBJY` with
+    /// the PICTURE's W/H (`LDD ,X`) — so the explosion is the CARD's rect at the
+    /// prog's corner, not the (smaller) human box it was standing in. The ROM also
+    /// clamps that corner to `(XMAX-5, YMAX-15)`; a prog is always inside the play
+    /// area, so the port's corner already is.
+    /// </summary>
+    public Rectangle ExplosionBounds => new(
+        _position.X,
+        _position.Y,
+        ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Width),
+        ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Height));
 
     public void Update(GameTime gameTime, PlayField field)
     {
         if (LifeState == EntityLifeState.Dead)
         {
-            return;
-        }
-
-        if (LifeState == EntityLifeState.Dying)
-        {
-            if (--_burstTicksRemaining <= 0)
-            {
-                LifeState = EntityLifeState.Dead;
-            }
-
             return;
         }
 
@@ -354,15 +368,8 @@ public sealed class Prog : IEntity
 
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (LifeState != EntityLifeState.Alive)
         {
-            return;
-        }
-
-        if (LifeState == EntityLifeState.Dying)
-        {
-            // The PHONY burst picture (PGXPIC, solid blit) in place of the human.
-            sprites.DrawSprite(spriteBatch, sprites.ProgBurst, Bounds, Color.White);
             return;
         }
 

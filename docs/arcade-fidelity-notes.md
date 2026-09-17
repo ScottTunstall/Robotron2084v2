@@ -1667,6 +1667,10 @@ done and the PHASE E checklist from (18) is implemented on top.
    for the source's PGXD pattern finds nothing), so `ProgBurst` is an inline
    pass-C extra carrying the original source's 96 bytes (12×16, solid).
    The mgcb's `PremultiplyAlpha=True` pipeline is correct for these.
+   **⚠ That inline array was MIS-TRANSCRIBED when it was written** — its middle
+   rows held eight bytes instead of six, so the PNG writer walked a misaligned
+   stream and `ProgBurst.png` decoded to noise until §90.1 fixed it; the
+   extractor now rejects inline data whose length is not exactly `w x h`.
 
 PHASE E entities (the (18) checklist; RRB10 decode there):
 - **Brain** (`Brain.cs`): body every `PortTicks(16 + BRNSPD)` ticks
@@ -1689,6 +1693,10 @@ PHASE E entities (the (18) checklist; RRB10 decode there):
   (`ProgBurstTicks = 20` pop, clamped position is inherent — progs are
   always inside the field) then gone; 100 pts; **contact kills the player**
   (enemy robot, arcade-faithful).
+  **⚠ The death line is SUPERSEDED by §90:** the pop was a decode shortcut —
+  `PRGKIL` swaps the picture to `PGXPIC` and calls the ordinary `EXST`, so a prog
+  dies in the same strip explosion as every other robot (and §90.1 found the
+  `ProgBurst` art itself was corrupt: the inline `PGXD` copy had 8-byte rows).
 - **CruiseMissile** (`CruiseMissile.cs`): 50% horizontal / 25% vertical /
   25% diagonal, every component signed toward the player ±6 px noise
   (GCMDSX/GCMDY); re-aims every `PortTicks(RND(1..7))` (GCMRND); REFLECTS
@@ -4434,17 +4442,18 @@ Body = `NAP 2` = 3 ROM frames. Phases, in the order the ROM runs them:
 
 | phase | pictures | countdown |
 |---|---|---|
-| CIRCLE (spin) | 4 (`OPICT += 4`, wraps past `CIRP3`) | PD2 = `RND(1..CDPTIM)` → CIRC2 |
-| CIRC2 (drop) | 8 (wraps past `CIRP7`) | PD2 = `RND(1..CDPTIM/4)` per drop |
-| CIRC3 (escape) | 4 | none — ends on the X exit test |
+| CIRCLE (spin) | 5, `CIRP0..CIRP4` (`OPICT += 4`, wraps when the next entry would pass `CIRP4`) | PD2 = `RND(1..CDPTIM)` → CIRC2 |
+| CIRC2 (drop) | 8 (`CIRP0..CIRP7`, wraps past `CIRP7`) | PD2 = `RND(1..CDPTIM/4)` per drop |
+| CIRC3 (escape) | 5, the same `CIRP0..CIRP4` as the spin | none — ends on the X exit test, which is itself on the wrap pass |
+
+⚠ **The two 5s were 4s here until §91.** `CMPD #CIRP4 / BLS` (source) — `CMPD #$1502 / BLS $11C7` (R5) — STORES `CIRP4`, so it is part of both cycles; reading the boundary as "wraps past `CIRP3`" gave the port a four-picture spin and a four-picture escape, and the drop phase's pictures the port had right by accident.
 
 **The countdown counts ROTATIONS, not bodies.** In both CIRCLE and CIRC2L the
 `DEC PD2,U / BEQ` sits on the branch taken only when the picture WRAPS
-(`ADDD #4 / CMPD #CIRP3 / BLS`), so a step is a full 4-picture spin (12 frames)
+(`ADDD #4 / CMPD #CIRP… / BLS`), so a step is a full 5-picture spin (15 frames)
 or a full 8-picture spin (24 frames). The port had the structure right by
-accident (it counted whole animation cycles) but the wrong period (8 x 2 vblanks
-= 16 frames) and the wrong picture count (it spun 8 pictures in the phase that
-spins 4).
+accident (it counted whole animation cycles) but the wrong period and the wrong
+picture count (it spun 8 pictures in the phase that spins 5).
 
 **`TST STATUS / BNE CIRC1`** skips only the PD2 decrement: a frozen game keeps
 spinning AND keeps accelerating — it is the generic mover, not this code, that
@@ -4475,11 +4484,14 @@ fraction is not consumed either.
 
 **The escape is not a flee.** `CIRC3` sets `OYV = 0` and `OXV = ±$0100` exactly
 (the sign is `SEED` bit 7 — a coin flip here, the port has no LFSR state), then
-rotates 4 pictures until `OX16 <= XMIN+3` or `>= XMAX-10`, where `XMIN = 7` and
-`XMAX = $8F` (RRF.ASM:69) — buffer columns 10 and 133. `CIR4` then runs
-`KILLOF` + `SUCIDE`: the object is removed with NO burst and no score. So a
-spheroid ALWAYS leaves sideways at exactly 2 px/frame, never "toward the nearest
-wall", and never explodes at the end of its life.
+spins the same FIVE pictures the idle phase does (`CIRP0..CIRP4`) until
+`OX16 <= XMIN+3` or `>= XMAX-10`, where `XMIN = 7` and `XMAX = $8F` (RRF.ASM:69)
+— buffer columns 10 and 133. That X test sits INSIDE the wrap branch, so it runs
+once per five-picture cycle (the object can overshoot the column and, at the
+wall, wait there for its next wrap pass — §91). `CIR4` then runs `KILLOF` +
+`SUCIDE`: the object is removed with NO burst and no score. So a spheroid ALWAYS
+leaves sideways at exactly 2 px/frame, never "toward the nearest wall", and
+never explodes at the end of its life.
 
 ### 56.3 Enforcer — ENFNV / ENFSHT (RRC11)
 
@@ -7016,3 +7028,156 @@ evidence the DECODE is wrong — that rule is what found §73, §75, §85, §86,
 0 warnings (Debug **and** Release) · **266 tests, 0 failed, 1 skipped** · the 12 s launch smoke OK ·
 `tools/verify-playfield.py` PASS · `tools/verify-fonts.py` PASS. Both configurations are built, so
 a launch cannot pick up a stale binary.
+
+## 90. The PROG's death — the phony card SHATTERS, and the card itself was corrupt (2026-09-17)
+
+Author: *"Now, when I shoot the progs (after they have been programmed) the explosion effect looks
+weird."* Two defects, and the louder one was in the ART.
+
+### 90.1 The `ProgBurst` art was NOISE — a transcription slip in the extractor
+
+`ProgBurst` is the port's only **inline** art: PGXPIC is not in the R5 ROM (R5 re-drew the picture;
+a byte search for the source's `PGXD` pattern finds nothing), so `tools/SpriteExtractor` carries the
+pre-R5 source's bytes in the program itself —
+`("ProgBurst", 0, 6, 16, new byte[] { … })`. The writer takes `bytesPerRow = w = 6` and reads
+`data[y*6 + (x>>1)]`, so it consumes exactly 96 bytes for a 16-row × 6-byte picture — and the array
+held **114**: nine of its sixteen rows had been written as EIGHT bytes, as if
+`FDB $AA00,$0000,$0AA0` were four 16-bit values instead of three. (Seven rows — 0, 6, 7, 11, 12,
+13, 15 — were the right length, which is why it read as deliberate.) Nothing complained: the writer
+just read the first 96 bytes of a longer array, so the rows ran out of step and the PNG decoded to
+a ragged field of slot-10/slot-11 noise — a purple blob. Confirmed by decoding the committed PNG
+back to palette indices and diffing against `PGXD` (16/16 rows matched the source listing after the
+fix; before it, 12/16 were garbage or shifted).
+
+**The root cause is a missing guard, so the guard was added:** the extras loop now rejects inline
+data whose length is not exactly `w x h`. Any future hand-copied sprite fails loudly instead of
+silently emitting a plausible-looking PNG of noise.
+
+### 90.2 The death is `PGXPIC` + the ordinary `EXST` — not a static pop
+
+The port had the prog enter a `Dying` state and draw the whole card in place for
+`ProgBurstTicks = 20` ticks, then vanish. The Gospel (RRB10 `PRGKIL`):
+
+```
+PRGKIL LDA  PCFLG
+       BNE  PGKILX            ; the player-contact path: the PLAYER dies, not the prog
+       LDA  #PD+10            ; erase the SEVEN trail images (PD+10 .. SPSIZE, step 2)
+PRGKL  PSHS A / LDD A,X / JSR PCTOFF / …
+       JSR  KILL              ; erase the prog's own image
+       LDD  #PGXPIC           ; "BLOW PHONY PICT"
+       STD  OPICT,X           ; ← the object's PICTURE DESCRIPTOR is replaced
+       LDA  #XMAX-5 / CMPA OBJX,X / BHS PGK1 / STA OBJX,X    ; clamp X
+PGK1   LDA  #YMAX-15 / CMPA OBJY,X / BHS PGK2 / STA OBJY,X   ; clamp Y
+PGK2   JSR  EXST              ; ← the ORDINARY explosion
+       JSR  KILROB            ; free the object
+       LDD  #PGKSND / JSR SNDLD
+       LDD  #$0110 / JSR SCORE
+```
+
+`PGXPIC` is a normal picture descriptor (`FCB 6,16` + `FDB PGXD`), so the swap is exactly what any
+robot's `OPICT` holds. `EXST` is a **3-byte RAM vector** (`RRF.ASM:262`: `EXST RMB 3` at
+`RXORG` = $5B40) whose contents are `JMP EXSTV` (RRX7.ASM:33) — the download-to-RAM module pattern
+the marquee and the high-score code use too. So **a prog dies like every other robot**: the same
+direction dispatch, the same fan, the same ten-record pool, the same dropped strips — except that
+`EXSTV` sizes its record from the **picture descriptor** (`LDD ,X` = 6,16 = 12×16) while `UL` stays
+`OBJX/OBJY`. That is the whole point of the swap: the human art would have shattered into a human;
+the phony card shatters instead.
+
+The port matches now: `Prog : IExplodable`, `CurrentFrameArt` = `sprites.ProgBurst`, `Kill()` →
+`Dead` at once (no `Dying` phase at all, like the enforcer), and the field's `SpawnExplosion` runs
+the standard strip explosion. The record's rect comes from a new defaulted interface member,
+`IExplodable.ExplosionBounds` (default = `Bounds`, so no other entity changes): for a prog it is the
+**card's** rect at the prog's corner. Using `Bounds` would have centred the 12×16 card inside the
+converted human's smaller box (8×14 for a Mom, 10×13 for a Dad), i.e. 1 art px up-left of where the
+ROM draws it.
+
+Two smaller things fell out of the same decode:
+
+- **The prog kill was SILENT.** `SoundTables.RobotDeath` is precisely the ROM's `PGKSND` ($1ADA,
+  priority 208, `(1,4,$14),(2,4,$17)` — §37), and it is played by the strip-explosion branch that a
+  prog never reached. It does now.
+- **The `(XMAX-5, YMAX-15)` clamp is NOT modelled**, deliberately: it keeps the DMA write inside the
+  screen buffer, and a prog is always inside the playfield already (and the port drops any strip
+  that leaves it, §35).
+
+Also worth recording: the ROM erases the seven trail images *before* the swap, so the trail goes
+with the prog. The port gets that for free — a `Dead` prog is not drawn.
+
+### 90.3 Lesson
+
+**Art that is hand-transcribed from a listing needs a length check.** Every other sprite in the
+pipeline is sliced out of the ROM by `offset + w*h`, so its size cannot be wrong; the one inline
+picture had no such constraint, and a writer that reads exactly `w*h` bytes from a longer array will
+happily produce a PNG of noise. And **a "death effect" is not a drawing job**: when a kill routine
+ends in `JSR EXST`, the enemy's death IS the standard explosion — the only per-enemy input is which
+picture the record is handed.
+
+## 91. The SPHEROID's picture chain — five pictures, one a body, and the escape (2026-09-17)
+
+Author: *"The spheroid, after giving birth to all the enforcers, looks weird animation wise."*
+**Author confirmed the fix: *"Yeah that's it!"*** (2026-09-17) — the escape now pulses at the
+arcade's rate and its picture set matches. The escape phase was advancing its picture on every PORT
+TICK instead of once per BODY (3.6x the arcade's rate), and §56.2's picture counts were one short in
+the two phases that wrap at `CIRP4`.
+
+### 91.1 The chain, from the ROM (two witnesses)
+
+`MKPROB CIRCLE,CIRP4,CIRKIL` (RRC11:29) → `MPROB`'s `LDD ,U++ / STD OLDPIC,X / STD OPICT,X`
+(RRS22:427-431) puts **CIRP4** in a new spheroid's `OPICT` — so a spheroid is BORN showing the
+fourth picture, and its own first body is already a wrap pass.
+
+| phase | advance | wraps when the next entry would pass | pictures |
+|---|---|---|---|
+| CIRCLE (`ANIMATE_SPHEROID`) | `OPICT += 4` a body | `CIRP4` (`CMPD #$1502 / BLS $11C7`) | 0..4 |
+| CIRC2L (`DROP_ENFORCER`) | `OPICT += 4` a body | `CIRP7` (`CMPD #$150E / BLS $120E`) | 0..7 |
+| CIRC3L (`TIME_FOR_SPHEROID_TO_EXIT_PRONTO`) | `OPICT += 4` a body | `CIRP4` (`CMPD #$1502 / BLS $124C`) | 0..4 |
+
+The art explains why the counts differ: the eight pictures are ONE growth animation — a dot, a
+plus, a small ring with a pupil, a ring with a cross-hole, a bigger plain ring (`CIRP4`), a big
+ring, an opening ring with tabs, and finally the fragments (`CIRP7`). The idle spin therefore
+PULSES from the dot up to the medium ring and snaps back, while the drop phase grows all the way to
+the burst — which is the pose the enforcer pops out of.
+
+`BLS` (branch if lower or same) is what settles the count: the value being stored is `OPICT+4`, so
+`CIRP4` itself IS stored — five pictures, not four. §56.2 read the boundary as "wraps past `CIRP3`"
+and gave the port four.
+
+### 91.2 What the port had wrong
+
+1. **The escape strobed.** The escape branch did `AdvancePosition(); _rotation = (_rotation + 1) % 4;`
+   with NO body clock, so the picture changed every 1/60 s (a 15 Hz flicker through four growth
+   frames) instead of every `NAP 2` body (3.6 ticks). This is the defect the author saw.
+2. **The picture count.** The spin and the escape used 4 pictures (`% 4`); the ROM cycles
+   `CIRP0..CIRP4`. The idle pulse never reached the medium ring.
+3. **The phase transitions.** CIRCLE's `BEQ CIRC2` does NOT store the wrap target, so the drop
+   phase carries the pointer on from `CIRP4` into `CIRP5`; the port restarted the cycle at
+   `CIRP0`. And `StartEscape` reset the pointer to 0 where the ROM leaves it on `CIRP7` (the first
+   escape body wraps it).
+4. **The X exit test** sits inside the escape's wrap branch — once per five-picture cycle — so the
+   spheroid can overshoot columns 10/133, and at the wall it waits for its next wrap pass. The port
+   tested every frame and left at exactly the threshold.
+5. **The freeze gate.** `CIRCLE` has `TST STATUS / BNE CIRC1` (which skips only the DEC); `CIRC2L`
+   and `CIRC3L` have no such test — a gate is per ROUTINE, not per object (§88's trap) — so a
+   dropping spheroid keeps counting through a pause. The port gated both phases.
+6. **The birth picture**: a spheroid now starts on `CIRP4`, as the ROM creates it, not on the dot.
+
+`Spheroid` now runs the chain the way the ROM does: ONE `_rotation` pointer advanced at most one
+entry per body, with the phase's last picture deciding the wrap, and the phase logic (and the
+escape's exit test) living on the wrap pass. `internal PictureIndex` / `IsEscaping` are the test
+hooks; `SpheroidAnimationTests` pins the rate (at least 3 ticks between picture changes), the 0..4
+escape set, the 0..7 drop set and the `CIRP4` birth.
+
+### 91.3 Left alone, and why
+
+- **The mover's rate.** `OPB80` integrates the velocity once per ROM FRAME, but the port integrates
+  it once per 60 Hz port TICK, so everything on the generic mover (spheroid, spark, missile)
+  travels 60/50 = **20% faster than the arcade**. That is a systemic change with its own
+  verification, so it is flagged for the author rather than folded into an animation fix.
+- **CIRC2L's re-arm re-enters its `DEC`** — `BRA $11DB` → `RMAx(CDPTIM/4)` → the `$11E5` chain
+  decrements the fresh countdown in the SAME body — so the arcade's cadence is
+  `RND(1..CDPTIM/4) − 1` wraps, and a countdown that reaches 0 becomes `$FF` on the next wrap (a
+  ~2-minute stall that would stop a wave clearing). The port re-arms without the extra `DEC`. This
+  needs a MAME measurement before it is touched.
+- **The exit columns** are still the port's own mapping (`SpheroidEscapeExitLeftColumn` measured from
+  the wall, `…RightColumn` measured absolutely) — the port's 320x200 spec space is not the ROM's
+  143-column buffer, and moving a vanishing point without a measurement would be guesswork.

@@ -12,7 +12,8 @@ namespace Robotron2084.Tests;
 /// PHASE E (arcade-fidelity-notes (18)): brains (ROM BRNORG $1AC0 — nearest
 /// human target, 1px/body chase, ABAC, cruise missiles, touch-conversion to
 /// progs), progs (straight-line walkers that keep the human's art/box and
-/// die in a phony burst), cruise missiles (50/25/25 direction roll,
+/// die in a strip explosion of the phony burst card, notes §90),
+/// cruise missiles (50/25/25 direction roll,
 /// wall-reflected, 25 pts), plus the round-6 autofire cadence and the P
 /// "skip level" port key.
 /// </summary>
@@ -506,6 +507,35 @@ public sealed class PlayFieldPhaseETests
     }
 
     [Fact]
+    public void ShootingAProg_LeavesNoDyingPop_AndTheFieldShattersTheBurstCard()
+    {
+        // ROM PRGKIL (RRB10): erase the seven trail images, `JSR KILL`, swap the picture
+        // descriptor to `PGXPIC` ("BLOW PHONY PICT"), clamp the corner to
+        // (XMAX-5, YMAX-15), then `JSR EXST` — the EVERYDAY explosion, fed the phony
+        // card. The port instead drew the card as a 20-tick static pop in a Dying
+        // state, which the author saw as "the explosion effect looks weird"
+        // (2026-09-17, notes §90). There is no Dying phase any more.
+        PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
+        Rectangle inner = field.Wall.PlayfieldBounds;
+        var prog = new Prog(new IntVector2(inner.X + 120, inner.Y + 120), HumanKind.Mom, new Random(21));
+        field.AddProg(prog);
+        IntVector2 spot = prog.Position;
+
+        Assert.True(field.PlayerLasers.TryFire(new IntVector2(spot.X + 3, spot.Y - 12), Direction8.Down, out _));
+        field.Update(new GameTime());
+
+        Assert.Equal(EntityLifeState.Dead, prog.LifeState); // instant off, no pop
+        Assert.Equal(0, field.ProgCount);
+        Explosion explosion = Assert.Single(field.Explosions);
+        // UL = OBJX/OBJY with the PICTURE's W/H: the 12x16 card's rect at the prog's
+        // corner, NOT the smaller human box it was walking in.
+        Assert.Equal(spot.X, explosion.Position.X);
+        Assert.Equal(spot.Y, explosion.Position.Y);
+        Assert.Equal(ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Width), explosion.Bounds.Width);
+        Assert.Equal(ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Height), explosion.Bounds.Height);
+    }
+
+    [Fact]
     public void CruiseMissile_ReflectsOffWalls_AndStaysInside_OverManyTicks()
     {
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
@@ -558,8 +588,19 @@ public sealed class PlayFieldPhaseETests
         field.AddProg(prog);
         Assert.True(field.PlayerLasers.TryFire(new IntVector2(progSpot.X + 5, progSpot.Y - 12), Direction8.Down, out PlayerLaser? l2));
         field.Update(new GameTime());
-        Assert.Equal(EntityLifeState.Dying, prog.LifeState);
+
+        // ROM PRGKIL: `JSR KILL` then the picture swap, so the prog is gone AT ONCE
+        // (no Dying pop) and what remains is the ordinary strip explosion of the
+        // 12x16 PGXPIC card it swapped in (notes §90).
+        Assert.Equal(EntityLifeState.Dead, prog.LifeState);
         Assert.Equal(600, field.Score.Score); // +100
+        Assert.Equal(2, field.Explosions.Count); // the brain's and the prog's
+        Explosion card = field.Explosions[1];
+        Assert.Equal(progSpot.X, card.Position.X);
+        Assert.Equal(progSpot.Y, card.Position.Y); // UL = OBJX/OBJY, unchanged by PRGKIL
+        Assert.Equal(ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Width), card.Bounds.Width);
+        Assert.Equal(ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Height), card.Bounds.Height);
+        Assert.Equal(StripFanAxis.Columns, card.Axis); // a vertical shot -> the H family
     }
 
     [Fact]
@@ -578,7 +619,7 @@ public sealed class PlayFieldPhaseETests
         Assert.False(field.IsLevelCleared);
 
         // Kill them: brain 2-second blink-off (real elapsed time), prog
-        // burst, missile instant off.
+        // instant off (PRGKIL), missile instant off.
         brain.Kill();
         prog.Kill();
         missile.Destroy();

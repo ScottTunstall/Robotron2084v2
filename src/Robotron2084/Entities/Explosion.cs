@@ -122,12 +122,15 @@ public sealed class Explosion : IEntity
     /// ROM `MAKE_ENEMY_EXPLODE` ($5C1F) → `CREATE_EXPLOSION` ($F0D7) /
     /// `CREATE_DIRECTIONAL_EXPLOSION` ($473F), and the sources' `EXSTZ`: starts the
     /// explosion for a killed object. The killing laser's direction picks the axis
-    /// and the lean (see <see cref="Dispatch"/>).
+    /// and the lean (see <see cref="Dispatch"/>), and the record's rect is
+    /// <see cref="IExplodable.ExplosionBounds"/> — the ROM's `UL = OBJX/OBJY` with the
+    /// W/H of the picture the object is pointing at (a prog's `PGXPIC` card is bigger
+    /// than the human box it was standing in).
     /// </summary>
     public static Explosion StartExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {
         (StripFanAxis axis, int slope) = Dispatch(direction);
-        return Start(dead.CurrentFrameArt, dead.Bounds, Kind.Explode, axis, slope, clip);
+        return Start(dead.CurrentFrameArt, dead.ExplosionBounds, Kind.Explode, axis, slope, clip);
     }
 
     /// <summary>

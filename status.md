@@ -90,6 +90,52 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
 
 ## Where we are (2026-09-17)
 
+### Session 4 (2026-09-17, evening) — the PROG's death and the SPHEROID's escape (notes §90/§91)
+
+- **"THE SPHEROID, AFTER GIVING BIRTH TO ALL THE ENFORCERS, LOOKS WEIRD ANIMATION WISE" — the
+  escape was strobing (notes §91), and *"Yeah that's it!"* confirms the fix.** The escape phase
+  (`CIRC3`) advanced its picture on every
+  **port tick** instead of once per `NAP 2` **body** — 3.6× the arcade's rate, a 15 Hz flicker
+  through four growth frames as it ran for the exit. It also had the picture COUNT wrong: `CIRCLE`
+  and `CIRC3L` both wrap at **`CIRP4`** (`CMPD #$1502 / BLS` — the `BLS` STORES `CIRP4`), so those
+  phases cycle **five** pictures, `CIRP0..CIRP4`, not §56.2's four (the idle pulse never reached
+  the medium ring — the art is one growth animation: dot → plus → small ring → ring-with-hole →
+  medium ring → big ring → opening ring → fragments). `Spheroid` now runs the ROM's chain: one
+  pointer, advanced one entry per body, with the phase's last picture deciding the wrap, the
+  countdown (and the escape's X exit test, once per five-picture cycle rather than every frame) on
+  the wrap pass, the drop phase continuing from `CIRP4` into `CIRP5` (the port restarted at the
+  dot), a spheroid born on `CIRP4` (MPROB stores the `MKPROB` picture in `OPICT`), and the freeze
+  gate only on the SPIN phase (the ROM gates `CIRCLE` and neither `CIRC2L` nor `CIRC3L` — a gate is
+  per routine, §88). One side-effect to expect: the spin's rotation is 15 frames, not 12, so a
+  spheroid's FIRST enforcer now arrives a quarter of a rotation later.
+- **Also flagged (NOT changed): the generic mover runs 20% fast.** `OPB80` adds the velocity once
+  per ROM **frame**, but the port adds it once per 60 Hz **tick** — so the spheroid, the sparks and
+  the missiles travel 60/50 = 20% faster than the arcade. It is a systemic change across several
+  entities, so it is parked for your call rather than folded into an animation fix (notes §91.3).
+- **"WHEN I SHOOT THE PROGS THE EXPLOSION EFFECT LOOKS WEIRD" — two defects, and the loud one
+  was the ART (notes §90).** (1) **`ProgBurst.png` decoded to NOISE.** It is the port's only
+  *inline* sprite (`PGXPIC` is not in the R5 ROM, so `tools/SpriteExtractor` carries the
+  original source's `PGXD` bytes in the program), and nine of that array's sixteen rows had
+  been written as EIGHT bytes instead of six — as if `FDB $AA00,$0000,$0AA0` were four 16-bit
+  values. The writer reads exactly `w*h` = 96 bytes, so it walked a misaligned stream out of a
+  114-byte array and emitted a plausible-looking PNG of slot-10/11 noise. Fixed from the
+  listing and verified by decoding the PNG back to palette indices and diffing all 16 rows
+  against `PGXD`; **the extractor now rejects inline data whose length is not exactly `w x h`**,
+  which is the guard that would have caught it. (2) **The death was wrong in KIND.** The port
+  put the prog in a `Dying` state and drew the whole 12×16 card as a 20-tick static "pop", but
+  `PRGKIL` erases the seven trail images, swaps the object's **picture descriptor** to `PGXPIC`,
+  clamps the corner and then calls the ordinary `EXST` (a RAM vector = `JMP EXSTV`) — so a prog
+  dies in the **same direction-dispatched strip explosion as every other robot**, only fed the
+  phony card instead of the human it was. `Prog` is now `IExplodable` (art = `ProgBurst`,
+  `Kill()` instant, no `Dying` phase) and the new defaulted `IExplodable.ExplosionBounds` gives
+  `EXSTV`'s rect — `UL = OBJX/OBJY` with the **picture's** W/H, i.e. the card's rect at the
+  prog's corner rather than the card centred in the smaller human box. The prog kill also now
+  plays the sound it was missing (`PGKSND` = `SoundTables.RobotDeath`).
+- **Gates as of this state:** 0 warnings (Debug + Release), **270 tests, 0 failed, 1 skipped**
+  (new: `ShootingAProg_LeavesNoDyingPop_AndTheFieldShattersTheBurstCard`, plus
+  `SpheroidAnimationTests` × 3), 12 s launch smoke OK, `tools/verify-playfield.py` PASS.
+  **Needs your eye** — shoot a prog and watch a spheroid run out of enforcers.
+
 ### Session 3 (2026-09-17) — read this BEFORE the bullets below
 
 - **EXPLOSIONS: "WHEN YOU SHOOT ENEMIES VERTICALLY AREN'T THEY SUPPOSED TO EXPLODE
@@ -606,14 +652,23 @@ C:\Users\scott\source\repos\WmsGfxSpriteRipper    Sean Riddle's Williams sprite 
    `PlayerSlot.Input` is already per-slot and nothing but `SwitchToPlayerWithMen` assumes
    alternation). **DONE since this list was written:** the spheroid bubble burst + the quark's
    `CIRKV` burst (§64), the whole wave-complete tunnel (§79-§86), the prog's step and the
-   quark's drop timer (§87), and the family's start of wave (§88). The ROM's colour processes
-   **are** modelled — `Rendering/PaletteAnimator.cs` drives slots 10-15, and §86 suspends and
-   resumes them while the tunnel's ramp owns the palette.
+   quark's drop timer (§87), the family's start of wave (§88), the prog's death — the
+   `PGXPIC` + `EXST` strip explosion plus the corrupt `ProgBurst` art (§90) — and the
+   spheroid's picture chain (§91). **NEW OPEN QUESTION (A10, notes §91.3):** the generic mover
+   adds its velocity once per 60 Hz tick where the ROM's `OPB80` adds it once per ROM FRAME, so
+   the spheroid, the sparks and the missiles all move 20% fast — a systemic change that needs
+   your go-ahead. The ROM's colour
+   processes **are** modelled — `Rendering/PaletteAnimator.cs` drives slots 10-15, and §86
+   suspends and resumes them while the tunnel's ramp owns the palette.
 1. **Author playtest round 16 (what shipped TODAY, all of it unplayed):** the tunnel (its bars,
    its 2-second pace, and the fact that it now runs over a colour-cycling ramp palette — the
    colours sweep through the wheel), the progs walking **twice as fast horizontally as the last
    build**, quarks whose first tank now arrives 2-6 s after they appear rather than instantly,
    and a family that starts walking the moment a wave starts (and never stands on an electrode).
+   **Shooting a prog now shatters the 12×16 PHONY CARD in the ordinary strip explosion (§90)**
+   instead of flashing a 20-tick blob — and the card's art itself was noise before this build.
+   **A spheroid that has dropped its last enforcer now pulses at the arcade's rate while it runs
+   for the exit, and its idle pulse reaches the medium ring again (§91).**
    Older items still worth a look: the materialisation (§62/§63), wave 9's invisible border
    (faithful — slot 0), and the explosions' shot-direction shatter (notes §35).
 2. **Flip `GameplayConstants.PlayerInvincibleForTesting` to `false`** once gameplay is

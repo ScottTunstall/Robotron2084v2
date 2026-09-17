@@ -86,12 +86,12 @@ public sealed class SpheroidEnforcerTimingTests
     [Fact]
     public void Spheroid_NeverDropsBeforeTheMinimumBouncePhase()
     {
-        // Minimum initial countdown = RND(1..CDPTIM) = 1 step = 16 ROM
-        // vblanks = PortTicks(16) = 19 port ticks (notes §29). The start
-        // grace freezes everything until the 121st frame, so the earliest
-        // possible drop is tick 139 (unfreeze at 121, 19 decrements,
-        // decrement-then-check: 121..139). No drop through tick 138 for
-        // every seed pins that floor.
+        // Minimum initial countdown = RND(1..CDPTIM) = 1 step, and a step is now a
+        // full FIVE-picture wrap (CIRCLE advances `OPICT += 4` per `NAP 2` body and
+        // wraps at CIRP4, notes §90): 5 x 3 = 15 ROM frames = 18 port ticks. (It was
+        // 16 frames while §56.2 mis-read the boundary as CIRP3.) The start grace
+        // freezes everything until the 121st frame, so the earliest possible drop is
+        // around tick 139; no drop through tick 138 for every seed pins that floor.
         for (int seed = 1; seed <= 8; seed++)
         {
             PlayField field = CreateField(seed, spheroids: 1);
