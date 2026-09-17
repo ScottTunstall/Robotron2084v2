@@ -1,0 +1,28 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{csproj,props,targets,xml,json}]
+indent_size = 2
+
+[*.cs]
+# Directives & ordering
+dotnet_sort_system_directives_first = true
+csharp_using_directive_placement = outside_namespace:silent
+
+# Naming follows .NET/C# conventions (defaults); keep identifiers meaningful.
+dotnet_diagnostic.CS8618.severity = error
+
+# Roslynator: enforce the style rules that matter for this codebase
+dotnet_diagnostic.RCS1090.severity = warning
+dotnet_diagnostic.RCS1102.severity = warning
+dotnet_diagnostic.RCS1168.severity = warning
+dotnet_diagnostic.RCS1192.severity = warning
+dotnet_diagnostic.RCS1216.severity = warning
+dotnet_diagnostic.RCS1220.severity = warning
