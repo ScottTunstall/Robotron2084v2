@@ -24,6 +24,13 @@ public sealed class WaveClearState : IGameState
     private readonly int _clearedWave;
 
     /// <summary>
+    /// Phase 12.1 (notes §94): when true the tunnel belongs to the ATTRACT demo
+    /// and the game resumes in <see cref="AttractState"/> (the machine keeps
+    /// playing itself) instead of <see cref="PlayingState"/>.
+    /// </summary>
+    private readonly bool _attract;
+
+    /// <summary>
     /// The arcade's wave-complete effect (notes §79): a hatched, colour-cycling tunnel that
     /// expands from the screen's centre line out to its corners and then erases itself in
     /// black. This replaces the port's old "LEVEL n COMPLETE" text — the ROM shows no text
@@ -43,12 +50,13 @@ public sealed class WaveClearState : IGameState
 
     private int _ticksRemaining = GameplayConstants.WaveClearDisplayTicks;
 
-    public WaveClearState(SpriteSet sprites, HighScoreStore highScores, GameSession session, int clearedWave)
+    public WaveClearState(SpriteSet sprites, HighScoreStore highScores, GameSession session, int clearedWave, bool attract = false)
     {
         _sprites = sprites;
         _highScores = highScores;
         _session = session;
         _clearedWave = clearedWave;
+        _attract = attract;
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -71,7 +79,9 @@ public sealed class WaveClearState : IGameState
         if (--_ticksRemaining <= 0 && _tunnel.Finished)
         {
             RestorePalette();
-            manager.TransitionTo(new PlayingState(_sprites, _highScores, _session));
+            manager.TransitionTo(_attract
+                ? new AttractState(_sprites, _highScores, _session.Current.Input)
+                : new PlayingState(_sprites, _highScores, _session));
         }
     }
 

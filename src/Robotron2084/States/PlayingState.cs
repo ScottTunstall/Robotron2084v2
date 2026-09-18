@@ -178,123 +178,27 @@ public sealed class PlayingState : IGameState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _field.Draw(spriteBatch, _sprites);
-        DrawHud(spriteBatch);
-    }
-
-    /// <summary>
-    /// The arcade HUD (notes §58): in the top band, each player's score at their
-    /// own column (P1 col 21, P2 col 85) with their spare men as mini man icons
-    /// immediately to its right (P1 col 46, P2 col 110); at the bottom, the
-    /// "<c>n  WAVE</c>" indicator.
-    /// </summary>
-    private void DrawHud(SpriteBatch spriteBatch)
-    {
-        // The ROM's HUD row is eight rows above the top wall (row 14 vs 22), so the
-        // port measures from ITS wall band (inner bounds minus the wall thickness).
-        int wallTop = InnerBounds.Top - ScreenSize.Scaled(GameplayConstants.WallThicknessSpecPixels);
-        int hudY = wallTop - ScreenSize.Scaled(GameplayConstants.HudRowAboveWallPixels);
-
-        foreach (PlayerSlot player in _session.Players)
-        {
-            bool isPlayerOne = player.Number == 1;
-            int scoreColumn = isPlayerOne ? GameplayConstants.HudScoreOriginColumnP1 : GameplayConstants.HudScoreOriginColumnP2;
-            int menColumn = isPlayerOne ? GameplayConstants.HudMenOriginColumnP1 : GameplayConstants.HudMenOriginColumnP2;
-
-            // ROM $DC13/$DC19: the player whose turn it is blits their score with
-            // $AA (slot 10 — one of the colour-CYCLING slots); an idle player's
-            // uses $11 (slot 1).
-            int slot = ReferenceEquals(player, _session.Current)
-                ? GameplayConstants.HudScoreSlotCurrent
-                : GameplayConstants.HudScoreSlotIdle;
-
-            DrawScore(spriteBatch, player.Score, GameplayConstants.ArcadeX(scoreColumn * 2), hudY, slot);
-            DrawSpareMen(spriteBatch, player.DisplayedMen, GameplayConstants.ArcadeX(menColumn * 2), hudY);
-        }
-
-        DrawWaveMessage(spriteBatch, _session.Current.Wave);
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds);
+        ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
 
         if (_playerOutMessageTicks > 0)
         {
             // ROM string 75: "PLAYER n" at $3F79 then "GAME OVER" at $3E86.
             int messageSlot = GameplayConstants.PostSlotForWave(_session.Current.Wave);
-            DrawMessageText(spriteBatch, $"PLAYER {_playerOutNumber}", GameplayConstants.PlayerTurnMessageColumn, GameplayConstants.PlayerGameOverMessageRow, messageSlot);
-            DrawMessageText(spriteBatch, "GAME OVER", GameplayConstants.GameOverMessageColumn, GameplayConstants.GameOverMessageRow, messageSlot);
+            ArcadeHud.DrawMessageText(spriteBatch, _sprites, $"PLAYER {_playerOutNumber}", GameplayConstants.PlayerTurnMessageColumn, GameplayConstants.PlayerGameOverMessageRow, messageSlot);
+            ArcadeHud.DrawMessageText(spriteBatch, _sprites, "GAME OVER", GameplayConstants.GameOverMessageColumn, GameplayConstants.GameOverMessageRow, messageSlot);
         }
         else if (_turnMessageTicks > 0)
         {
             // ROM string 103: "PLAYER n" at $3F7A, in the wave's POST colour
             // (PLS0D: LDA PSTCOL / STA TEXCOL), for NAP 115.
-            DrawMessageText(
+            ArcadeHud.DrawMessageText(
                 spriteBatch,
+                _sprites,
                 $"PLAYER {_session.Current.Number}",
                 GameplayConstants.PlayerTurnMessageColumn,
                 GameplayConstants.PlayerTurnMessageRow,
                 GameplayConstants.PostSlotForWave(_session.Current.Wave));
         }
-    }
-
-    /// <summary>
-    /// ROM $DC13 → $6096: the score as seven large-font glyphs at the cursor, a
-    /// drawn digit advancing 7 px and a suppressed leading zero 6 px.
-    /// </summary>
-    private void DrawScore(SpriteBatch spriteBatch, int score, int originX, int y, int slot)
-    {
-        foreach (ScoreFormatter.ScoreGlyph glyph in ScoreFormatter.Layout(
-            score,
-            originX,
-            ScreenSize.Scaled(GameplayConstants.HudScoreDigitAdvancePixels),
-            ScreenSize.Scaled(GameplayConstants.HudScoreBlankAdvancePixels)))
-        {
-            _sprites.DrawGlyphSlot(spriteBatch, _sprites.FontLarge, glyph.Digit, glyph.X, y, slot);
-        }
-    }
-
-    /// <summary>ROM $34E0: the spare-man icons, 8 px apart.</summary>
-    private void DrawSpareMen(SpriteBatch spriteBatch, int count, int originX, int y)
-    {
-        int pitch = ScreenSize.Scaled(GameplayConstants.HudMenPitchPixels);
-
-        for (int i = 0; i < count; i++)
-        {
-            _sprites.DrawMiniMan(spriteBatch, originX + (i * pitch), y);
-        }
-    }
-
-    /// <summary>
-    /// ROM string 104: the wave number in $AA at the BOTTOM of the screen (row
-    /// 238, well below the playfield), then +6 px, then " WAVE" in $BB. The ROM
-    /// draws it at each wave start and leaves it up while the wave runs.
-    /// </summary>
-    private void DrawWaveMessage(SpriteBatch spriteBatch, int wave)
-    {
-        int x = GameplayConstants.ArcadeX(GameplayConstants.HudWaveTextColumn * 2);
-        int y = GameplayConstants.ArcadeY(GameplayConstants.HudWaveTextRow);
-        const int numberSlot = GameplayConstants.HudScoreSlotCurrent;
-
-        if (wave >= 10)
-        {
-            x = _sprites.DrawSmallFontText(spriteBatch, ((wave / 10) % 10).ToString(), x, y, numberSlot);
-        }
-        else
-        {
-            // PRINT_BCD_NUMBER with $D1 = 2 (string 104's $15 op): a leading zero
-            // advances without drawing — 4 px in the small font.
-            x += ScreenSize.Scaled(GameplayConstants.HudSmallFontBlankAdvancePixels);
-        }
-
-        x = _sprites.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberSlot);
-        x += ScreenSize.Scaled(GameplayConstants.HudWaveNumberGapPixels);
-        _sprites.DrawSmallFontText(spriteBatch, " WAVE", x, y, GameplayConstants.HudWaveTextSlot);
-    }
-
-    /// <summary>Draws one of the ROM's message strings at its own cursor column/row.</summary>
-    private void DrawMessageText(SpriteBatch spriteBatch, string text, int arcadeColumn, int arcadeRow, int slot)
-    {
-        _sprites.DrawSmallFontText(
-            spriteBatch,
-            text,
-            GameplayConstants.ArcadeX(arcadeColumn * 2),
-            GameplayConstants.ArcadeY(arcadeRow),
-            slot);
     }
 }

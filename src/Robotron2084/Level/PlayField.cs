@@ -209,14 +209,16 @@ public sealed class PlayField
 
     public void SpawnEnforcer(IntVector2 position) => _enforcers.Add(new Enforcer(position, _random, Parameters.EnforcerFireDelay));
 
-    public void SpawnTank(IntVector2 position)
+    public Tank SpawnTank(IntVector2 position)
     {
         // Keep the birth inside the playfield (the quark can be hugging a wall).
         Rectangle bounds = Wall.PlayfieldBounds;
         position = new IntVector2(
             Math.Clamp(position.X, bounds.X, bounds.Right - Tank.CollisionWidth),
             Math.Clamp(position.Y, bounds.Y, bounds.Bottom - Tank.CollisionHeight));
-        _tanks.Add(new Tank(position, _random, Parameters.TankFireDelay));
+        Tank tank = new(position, _random, Parameters.TankFireDelay);
+        _tanks.Add(tank);
+        return tank;
     }
 
     public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition) =>
@@ -273,6 +275,47 @@ public sealed class PlayField
         }
 
         return nearest?.Position;
+    }
+
+    /// <summary>
+    /// Phase 12.1 (attract demo, notes §94): the nearest ALIVE robot's position
+    /// to <paramref name="from"/>, measured the same Manhattan way as
+    /// <see cref="NearestHumanPositionTo"/>, or null when the field is clear.
+    /// Every robot kind counts — a brain falls back to hunting the player once
+    /// the family is gone (GETHTG), so none are safe to ignore. Used only by
+    /// the attract demo's phony player; the ROM's own AI lives in the OS ROM.
+    /// </summary>
+    public IntVector2? NearestLivingRobotPositionTo(IntVector2 from)
+    {
+        IntVector2? nearest = null;
+        int nearestDistance = int.MaxValue;
+
+        void Consider(IEntity entity)
+        {
+            if (entity.LifeState != EntityLifeState.Alive)
+            {
+                return;
+            }
+
+            int distance = Math.Abs(entity.Position.X - from.X) + Math.Abs(entity.Position.Y - from.Y);
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearest = entity.Position;
+            }
+        }
+
+        foreach (Grunt g in _grunts) Consider(g);
+        foreach (Hulk h in _hulks) Consider(h);
+        foreach (Spheroid s in _spheroids) Consider(s);
+        foreach (Enforcer e in _enforcers) Consider(e);
+        foreach (Quark q in _quarks) Consider(q);
+        foreach (Tank t in _tanks) Consider(t);
+        foreach (Brain b in _brains) Consider(b);
+        foreach (Prog p in _progs) Consider(p);
+        foreach (CruiseMissile m in _missiles) Consider(m);
+
+        return nearest;
     }
 
     // ---- Per-tick update (plan 9.1) ----

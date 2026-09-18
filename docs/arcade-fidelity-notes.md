@@ -7289,3 +7289,81 @@ STD OXV,X` = ±$100 in 1/256 column/frame = ±0.25 column/frame. A scratch harne
 speed: **0.248-0.250 columns/frame** — exactly $100. Six of the twelve seeds die
 on the first wrap pass: they spawn past the exit column, and the ROM's CIRC3L X
 test sends them straight to `CIRC4 / KILLOF` — faithful to the source.
+
+## 94. Attract mode (the demo): what the arcade actually does, and what the port builds (2026-09-17)
+
+Author: "ignore the gameplay, just get the SCOTTOTRON 2084 out and the demo in —
+the one that says ROBOTRON 2084 PROTECT THE LAST HUMAN FAMILY". Research first,
+per the golden rule.
+
+### 94.1 The arcade's attract architecture (Gospel + disassembly)
+
+Three distinct pieces, all in the ROM:
+
+1. **The storyline movie** — `RRSCRIPT.ASM` (`STORYLINE_SCRIPT`, $7FA3–$83B1 in
+   the disassembly). A scripted text crawl that introduces the family (MOMMY,
+   DADDY, MIKEY), the grunt, the hulk, the spheroid, the quark, the enforcer,
+   the tank, the brain, the cruise missile, the prog, the electrodes — with
+   character sprites blitted in (`MESS` ops) and names printed under them
+   (`PRINT_CHARACTER_NAME_FROM_SCRIPT` $7A60). Ten action opcodes in the jump
+   table at $7A08 (clear-area $7A9C, newline $7AB6, introduce-characters $7AC1,
+   delay-task $7AC7, print-name $7A60, conclude $7A84, colour $7A5A, 14-grunt
+   demo $7A29, blink-off $7A1C). The big multi-colour "ROBOTRON 2084" logo is
+   drawn as STAGGERED BLITTER ART (the disassembly's `DRAW_STAGGERED_IMAGE` at
+   $F124: "also used to draw the word ROBOTRON forming up in large letters on
+   title screen") — it is bitmap art, not font text.
+
+2. **The title screen** — the disassembly's $79AF/$79CF/$799B block ("the
+   ROBOTRON: 2084 - SAVE THE LAST HUMAN FAMILY attract screen"):
+   - $79AF: free all objects, reset text fields, clear screen, start the
+     palette-animation task, `CLR $3F` (current player = 1), wall colour $CC,
+     then $26D2 = **draw the playfield wall + the player's lives + the score**
+     — the title sits ON the playfield (empty, no robots).
+   - $79CF: print string **128** in the LARGE font. String 128's bytes at
+     $6EC8: `04 AA` (text colour slot 10 = $AA), `12 36 24` (CURSAB), text
+     "ROBOTRON?:2084" — the large font renders its two special bytes as blanks,
+     so the visible title is **ROBOTRON 2084** (no colon).
+   - $799B loop (blink): print string **129** = "SAVE THE LAST HUMAN FAMILY"
+     (bytes at $6EDD, same colour slot 10), then run the script's tail.
+
+3. **The auto-play demo** — the CMOS **"FANCY ATTRACT MODE"** switch (CMOS
+   $CC13, read by $5BA8 `GET_FANCY_ATTRACT_MODE_FLAG`; adjustment menu label at
+   $68B6). When on, the machine plays a full game against itself: the OS ROM
+   writes the player's joystick/fire into **ATRSW2/ATRSW3 ($14/$15)** — the
+   "phony player control" bytes the GAME ROM reads in place of the real PIA
+   inputs when STATUS says attract (RRC11 `PLAYRV`, `LSPROC`; RRF/RRG23
+   joystick reads). The demo's explosions/objects are created via the
+   `CREATE_???_IF_FANCY_ATTRACT_MODE_ON` helpers ($5BB1/$5BBB). When the demo
+   loses all its men the OS silently starts a new game — no high-score entry.
+
+### 94.2 The tagline: the ROM says SAVE, not PROTECT
+
+RRET.ASM:982 and RRSCRIPT.ASM:913 both spell it "SAVE THE LAST HUMAN FAMILY";
+the string table entry 129 at $6ECC is the same. The author remembered "PROTECT"
+— the ROM is the standard, so the port prints **SAVE THE LAST HUMAN FAMILY**
+(flagged in the handoff so the author can see why it reads SAVE).
+
+### 94.3 What the port builds (Phase 12.1)
+
+- **TitleScreenState** — arcade look: the playfield wall + HUD (score 0, three
+  men) drawn first (the ROM's $26D2 order), then "ROBOTRON 2084" and "SAVE THE
+  LAST HUMAN FAMILY" in the LARGE font, colour slot 10 (the ROM's $AA). The
+  blinking start prompt and the 5-second high-score swap stay (port
+  conventions). After `TitleIdleSeconds` (12 s) of no start press the port
+  enters **AttractState** — the arcade's idle behaviour, minus the CMOS switch.
+- **AttractState** — a real game played by a **DemoPlayerInputSource**: 1P
+  session, wave clears advance (through the same tunnel `WaveClearState`, now
+  with an `attract` flag), a death rebuilds the field, losing all men silently
+  starts a new session (the OS ROM's behaviour — never a high-score entry).
+  Any human start/fire press exits back to the title.
+- **DemoPlayerInputSource (placeholder AI)** — the arcade's real phony-player
+  algorithm lives in the OS ROM, which is DISASSEMBLY-ONLY and its ATRSW2
+  writes are not decoded in `robomame.asm`. Per the golden rule this is NOT
+  invented to look arcade: it is an explicitly-labelled placeholder — flee the
+  nearest robot when it is close, drift to the centre otherwise, fire at the
+  nearest robot in range, all 8-way/integer, with a small random stutter.
+  **Flagged: decode the OS ROM's ATRSW2 writer to replace it.**
+- **Deferred (flagged):** the storyline text-crawl movie and the staggered-art
+  "ROBOTRON 2084" logo bitmap. The port's title uses the large FONT for both
+  lines (the ROM's string-128 path), which is the ROM's own large-font title
+  text; the art logo and the script engine are a later phase.

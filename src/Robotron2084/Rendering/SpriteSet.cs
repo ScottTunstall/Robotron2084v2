@@ -425,6 +425,37 @@ public sealed class SpriteSet
     }
 
     /// <summary>
+    /// Draws a string in the arcade's LARGE font (the score digits, the title
+    /// screen's "ROBOTRON 2084" / "SAVE THE LAST HUMAN FAMILY", notes §94.1) in
+    /// one palette slot, returning the X after the last glyph. Glyphs advance
+    /// their width + 1 (the ROM's large-font advance, the same rule the score
+    /// uses — <c>HudScoreDigitAdvancePixels</c>); a space advances the same as
+    /// the small font's blank; an unknown character is skipped.
+    /// </summary>
+    public int DrawLargeFontText(SpriteBatch spriteBatch, string text, int x, int y, int slot)
+    {
+        foreach (char character in text)
+        {
+            if (character == ' ')
+            {
+                x += ScreenSize.Scaled(GameplayConstants.HudSmallFontBlankAdvancePixels);
+                continue;
+            }
+
+            int index = GlyphIndex(character);
+            if (index < 0 || index >= FontLarge.Length)
+            {
+                continue;
+            }
+
+            DrawGlyphSlot(spriteBatch, FontLarge, index, x, y, slot);
+            x += ScreenSize.Scaled(FontLarge[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+        }
+
+        return x;
+    }
+
+    /// <summary>
     /// Index into <see cref="FontSmall"/> (or <see cref="FontLarge"/>) for an
     /// ASCII character, or -1 for one the font has no glyph for. The ROM indexes
     /// its font tables by (ASCII - $30) and substitutes the 1-px ':' glyph for a

@@ -487,6 +487,15 @@ public static class GameplayConstants
     public const int GameOverMinPauseSeconds = 3; // spec-stated
     public const int TitleHighScoreCycleSeconds = 5;
 
+    // Attract mode (Phase 12.1, notes §94) — the arcade's attract cycle: idle
+    // title, then the machine plays itself (CMOS "FANCY ATTRACT MODE" when on).
+    public const int TitleWallSlot = 12; // ROM title screen: $79C8 LDA #$CC / STA $8F — the wall is solid slot 12
+    public const int TitleIdleSeconds = 12; // port choice: how long the title sits before the demo takes over
+    public const int DemoThreatDistanceSpecPixels = 60; // AI: flee a robot closer than this (arcade AI is OS-ROM-only, §94.3)
+    public const int DemoFireRangeSpecPixels = 120; // AI: fire at the nearest robot within this
+    public const int DemoWallClearanceSpecPixels = 24; // AI: steer away from a wall within this
+    public const int DemoStutterChanceDenominator = 16; // AI: 1-in-N ticks of deliberate pause (feels alive, not robotic)
+
     // Playfield layout (Phase 10.5)
     public const int PlayfieldMarginSpecPixels = 20;
 

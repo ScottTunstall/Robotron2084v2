@@ -59,6 +59,14 @@ Historical: `plan.md` = the original rebuild plan, `ledger.md` = its decision lo
   variants were deleted — §92 draws them through the shader's GlyphCycle pass).
   Run it after ANY font regeneration; the glyphs were mirrored
   inside each byte for a day while every other check stayed green.
+- **Attract gate (notes §94)**: `python tools/verify-attract.py` — launches the
+  game and checks the WHOLE attract loop end to end: the title screen has
+  content (the ROM strings + men + score), the attract demo has taken over
+  after the 12 s idle timeout (real wave content, not the title), and a fire
+  press during the demo hands back to the title. ~30 s. Run it whenever the
+  title screen, the demo AI, or any state transition changes; it saves
+  `attract-title.png` / `attract-demo.png` / `attract-back-to-title.png`
+  (gitignored) for the author's eyes.
 
 ## The task
 Translate **Robotron 2084** (1982, Williams, 6809) into a **MonoGame .NET 10 OpenGL** desktop app that
@@ -90,6 +98,48 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   reference knowledge, not a spec to emulate.
 
 ## Where we are (2026-09-17)
+
+### Session 5 (2026-09-17, night) — THE TITLE SCREEN AND THE ATTRACT DEMO (notes §94)
+
+- **"Ignore the gameplay, just get the SCOTTOTRON 2084 out and the demo in."**
+  The arcade's attract is two things: the TITLE SCREEN and the FANCY ATTRACT
+  MODE (the machine playing a real game by itself). Both are in now, and the
+  machine cycles title → demo → (you press anything) → title.
+- **The title screen is the ROM's.** $79C7/$79AF set the wall to $CC (slot 12),
+  draw the wall + the player's lives + the score, then print string 128
+  "ROBOTRON 2084" and string 129 in the LARGE font, colour $AA = slot 10.
+  **The tagline is "SAVE THE LAST HUMAN FAMILY"** — the author remembered
+  "PROTECT"; the ROM says SAVE (RRET.ASM:982 / RRSCRIPT.ASM:913), and the ROM
+  wins. `TitleScreenState` draws the wall in `TitleWallSlot = 12`, a real 1P
+  session's score and men, and the two strings centred via the new
+  `SpriteSet.DrawLargeFontText`. The port's conventions stay: **1** = one
+  player, **2** = two, the blinking prompt, the 5-second high-score swap.
+  After `TitleIdleSeconds = 12` with nobody at the machine, the demo takes
+  over (the arcade's attract runs while the cabinet sits idle).
+- **The demo is the machine playing a REAL 1P game.** `AttractState` runs a
+  genuine session driven by `DemoPlayerInputSource`, the port's phony player.
+  **Labelled placeholder, deliberately:** the arcade's AI is the OS ROM's
+  writer of the fake joystick/fire bytes ATRSW2/ATRSW3 — that ROM is
+  disassembly-only and its writer is not decoded in `robomame.asm`, so we do
+  not have the arcade's AI and we say so in the code. The stand-in: flee a
+  robot within 60 spec px (steering clear of the walls), fire at a robot
+  within 120, drift to the field's centre otherwise, and pause one tick in
+  sixteen so it does not look robotic. Wave clears go through the real
+  tunnel (`WaveClearState` gained an `attract` flag) and back to the demo;
+  a death rebuilds the field for the next man; losing ALL men silently starts
+  a NEW demo game — no high-score entry (the OS ROM just replays the demo);
+  and any human START/FIRE press takes the machine back to the title.
+- **Supporting changes:** the shared HUD left `PlayingState` for `Hud/ArcadeHud`
+  (title + demo + play all use it); `PlayField.NearestLivingRobotPositionTo`
+  (Manhattan — the ROM's GETHTG rule, notes §90) feeds the AI; `SpawnTank` now
+  returns the tank. New gate `tools/verify-attract.py` (the sixth) checks the
+  whole loop with PNG captures.
+- **Gates as of this state:** 0 warnings, **278 tests, 0 failed, 1 skipped**
+  (+8: 5 demo-AI, 3 nearest-robot), 12 s launch smoke OK, `verify-playfield.py`
+  PASS, `verify-fonts.py` PASS, `verify-attract.py` PASS (title 4.4% lit →
+  demo 3.0% lit after the 12 s idle → fire → title again).
+  **Needs your eye:** the demo's judgement calls are the placeholder's, not the
+  arcade's — how well it plays, and whether the title screen reads right.
 
 ### Session 4 (2026-09-17, evening) — the PROG's death and the SPHEROID's escape (notes §90/§91)
 
@@ -675,14 +725,25 @@ C:\Users\scott\source\repos\WmsGfxSpriteRipper    Sean Riddle's Williams sprite 
    per ROM FRAME on a sixths accumulator with raw per-frame velocities; the sweep also caught
    ENFNV's `ASLB/ROLA` as a signed HALVE (the enforcer had been 4x fast) and measured the
    spheroid's escape at the ROM's `CIRC3` `$100` = 0.25 col/frame (the "±1 column/frame"
-   wording in the §91 bullet above is superseded). **TWO OPEN QUESTIONS remain, parked in the
+   wording in the §91 bullet above is superseded) — and **the title screen +
+   attract demo, DONE (notes §94, author's priority this session)**: the ROM's
+   title ("ROBOTRON 2084" / "SAVE THE LAST HUMAN FAMILY" over the $CC wall with
+   the score and men) and a real 1P game the machine plays itself after 12 s
+   idle, driven by the labelled-placeholder `DemoPlayerInputSource` (the
+   arcade's real AI is the OS ROM's ATRSW2 writer — undecodable from what we
+   have), with wave clears through the tunnel and any human input back to the
+   title. **TWO OPEN QUESTIONS remain, parked in the
    handoff's work table and detailed in notes §91.3:** (**A11**, needs a MAME measurement) the spheroid's drop-countdown re-arm is decremented again
    in the same body by the ROM, and a countdown that reaches 0 becomes `$FF` (a ~2-minute stall);
    (**A12**, needs a measurement) the escape's exit columns are the port's own mapping and
    interact with A9. The ROM's colour
    processes **are** modelled — `Rendering/PaletteAnimator.cs` drives slots 10-15, and §86
    suspends and resumes them while the tunnel's ramp owns the palette.
-1. **Author playtest round 16 (what shipped TODAY, all of it unplayed):** the tunnel (its bars,
+1. **Author playtest (what shipped, all of it unplayed):** FIRST the new attract —
+   launch, watch the title screen ("ROBOTRON 2084" / "SAVE THE LAST HUMAN FAMILY",
+   `attract-title.png`), wait ~12 s and watch the machine play itself
+   (`attract-demo.png`), and confirm any key brings the title back. Then the rest:
+   the tunnel (its bars,
    its 2-second pace, and the fact that it now runs over a colour-cycling ramp palette — the
    colours sweep through the wheel), the progs walking **twice as fast horizontally as the last
    build**, quarks whose first tank now arrives 2-6 s after they appear rather than instantly,

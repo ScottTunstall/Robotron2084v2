@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Hud;
 using Robotron2084.Input;
 using Robotron2084.Level;
 using Robotron2084.Persistence;
@@ -10,22 +11,38 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>
-/// Title screen (spec): black background, "ScottOTron 2084" in a large font,
-/// and a blinking "Press 1 or 2 to start" prompt. **1** starts a one-player
-/// game and **2** a two-player game (the arcade's START 1 / START 2 buttons,
-/// ROM RRG23 START1/START2); fire is kept as a one-player alias for the
-/// port's existing muscle memory. Phase 11.7: every 5 seconds the prompt is
-/// swapped for the saved top-10 high-score list.
+/// The arcade title screen (notes §94.1): the ROM draws the playfield wall +
+/// the player's lives + the score FIRST ($26D2, wall colour $CC), then prints
+/// string 128 — "ROBOTRON 2084" — and, in its blink loop, string 129 —
+/// "SAVE THE LAST HUMAN FAMILY" — both in the LARGE font, colour slot 10
+/// (the ROM's $AA). The ROM's tagline is SAVE, not PROTECT (RRET.ASM:982).
+///
+/// Port conventions kept on top: **1** starts a one-player game and **2** a
+/// two-player game (the arcade's START 1 / START 2 buttons, ROM RRG23
+/// START1/START2; fire is the one-player alias), a blinking start prompt, and
+/// every 5 seconds the prompt swaps for the saved top-10 high-score list
+/// (Phase 11.7). After <see cref="GameplayConstants.TitleIdleSeconds"/> of
+/// no start press the arcade's attract demo takes over (Phase 12.1, notes §94).
 /// </summary>
 public sealed class TitleScreenState : IGameState
 {
+    private static readonly int Margin = ScreenSize.Scaled(GameplayConstants.PlayfieldMarginSpecPixels);
+    private static readonly Rectangle InnerBounds = new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
+
+    private const string TitleLineOne = "ROBOTRON 2084";
+    private const string TitleLineTwo = "SAVE THE LAST HUMAN FAMILY";
+
     private readonly IPlayerInputSource _input;
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
+    private readonly PlayfieldWall _titleWall;
+    private readonly GameSession _titleSession;
     private readonly TimeSpan _blinkDuration = TimeSpan.FromSeconds(GameplayConstants.TitleBlinkIntervalSeconds);
     private readonly TimeSpan _cycleDuration = TimeSpan.FromSeconds(GameplayConstants.TitleHighScoreCycleSeconds);
+    private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(GameplayConstants.TitleIdleSeconds);
     private TimeSpan _blinkElapsed;
     private TimeSpan _cycleElapsed;
+    private TimeSpan _idleElapsed;
     private bool _showPrompt = true;
     private bool _showHighScores;
     private bool _previousFire;
@@ -38,6 +55,15 @@ public sealed class TitleScreenState : IGameState
         _input = input;
         _sprites = sprites;
         _highScores = highScores;
+
+        // The ROM's title wall is a solid $CC (slot 12), not a wave colour.
+        _titleWall = new PlayfieldWall(InnerBounds, new WallColorCycle(
+            GameplayConstants.DefaultWallPalette,
+            TimeSpan.FromMilliseconds(GameplayConstants.WallStepDurationMilliseconds)));
+
+        // A 1P session at score 0 with the starting men: the ROM prints the
+        // player's score and spare men under the title exactly as in play.
+        _titleSession = GameSession.NewGame(input, 1);
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -72,6 +98,13 @@ public sealed class TitleScreenState : IGameState
         _previousStartOne = input.StartOnePlayerPressed;
         _previousStartTwo = input.StartTwoPlayersPressed;
 
+        // Any button held means a human is at the machine — the arcade's
+        // attract only runs while the cabinet sits idle.
+        if (input.FirePressed || input.StartOnePlayerPressed || input.StartTwoPlayersPressed)
+        {
+            _idleElapsed = TimeSpan.Zero;
+        }
+
         // Blink the prompt every second (spec).
         _blinkElapsed += gameTime.ElapsedGameTime;
         while (_blinkElapsed >= _blinkDuration)
@@ -91,22 +124,27 @@ public sealed class TitleScreenState : IGameState
                 _cachedEntries = _highScores.Load();
             }
         }
+
+        // Idle long enough: the machine starts playing itself (notes §94.3).
+        _idleElapsed += gameTime.ElapsedGameTime;
+        if (_idleElapsed >= _idleDuration)
+        {
+            _idleElapsed = TimeSpan.Zero;
+            manager.TransitionTo(new AttractState(_sprites, _highScores, _input));
+        }
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        // The caller clears to black; this state only draws its content (spec).
-        const float logoScale = 2.0f;
-        spriteBatch.DrawString(
-            font,
-            "ScottOTron 2084",
-            CenteredHorizontal(font.MeasureString("ScottOTron 2084"), logoScale, ScreenSize.Scaled(40)),
-            Color.White,
-            0f,
-            Vector2.Zero,
-            logoScale,
-            SpriteEffects.None,
-            0f);
+        // The caller clears to black. ROM order: wall + lives + score FIRST
+        // ($26D2), the title strings on top.
+        _titleWall.Draw(spriteBatch, _sprites.WallPixel, _sprites.SlotColor(GameplayConstants.TitleWallSlot));
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _titleSession, InnerBounds);
+
+        int slot = GameplayConstants.HudScoreSlotCurrent; // the ROM's $AA (slot 10)
+        int lineOneY = GameplayConstants.ArcadeY(54);     // string 128's cursor row
+        DrawCenteredLargeText(spriteBatch, TitleLineOne, lineOneY, slot);
+        DrawCenteredLargeText(spriteBatch, TitleLineTwo, lineOneY + ScreenSize.Scaled(14), slot);
 
         if (_showHighScores)
         {
@@ -128,6 +166,30 @@ public sealed class TitleScreenState : IGameState
                 SpriteEffects.None,
                 0f);
         }
+    }
+
+    /// <summary>Centres a large-font line horizontally and prints it in one slot.</summary>
+    private void DrawCenteredLargeText(SpriteBatch spriteBatch, string text, int y, int slot)
+    {
+        int width = 0;
+        foreach (char character in text)
+        {
+            if (character == ' ')
+            {
+                width += ScreenSize.Scaled(GameplayConstants.HudSmallFontBlankAdvancePixels);
+                continue;
+            }
+
+            int index = SpriteSet.GlyphIndex(character);
+            if (index < 0 || index >= _sprites.FontLarge.Length)
+            {
+                continue;
+            }
+
+            width += ScreenSize.Scaled(_sprites.FontLarge[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+        }
+
+        _sprites.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
     }
 
     private void DrawTopTen(SpriteBatch spriteBatch, SpriteFont font)

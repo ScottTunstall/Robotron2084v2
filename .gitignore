@@ -432,3 +432,6 @@ FodyWeavers.xsd
 
 # render-gate screenshot artifact (tools/verify-playfield.py)
 playfield-check.png
+attract-title.png
+attract-demo.png
+attract-back-to-title.png
