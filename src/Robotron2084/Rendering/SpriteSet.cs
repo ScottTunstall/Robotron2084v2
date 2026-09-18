@@ -133,19 +133,6 @@ public sealed class SpriteSet
     public Texture2D[] FontSmall { get; }
 
     /// <summary>
-    /// The same glyphs with their OPAQUE pixels marker-baked for each of the six
-    /// colour-CYCLING slots (10-15): <c>[glyph, slot - FontSlots.FirstCyclingSlot]</c>.
-    /// Draw them with <see cref="DrawGlyphCycling"/> so the colour-cycle effect
-    /// remaps the marker to the slot's live colour (notes §39) — the arcade
-    /// blitter draws glyph SHAPES in one slot, so a glyph drawn in a cycling slot
-    /// cycles with the palette. The current player's score is drawn this way
-    /// (ROM $DC19 blits it in $AA = slot 10; notes §58.1).
-    /// </summary>
-    public Texture2D[,] FontLargeCycling { get; }
-
-    public Texture2D[,] FontSmallCycling { get; }
-
-    /// <summary>
     /// The arcade's mini man picture — the LIVES icon (notes §58.2). ROM MNPIC
     /// (`$3592` metadata, `$3596` pixels): 3 bytes x 8 rows = 6x8 px, one icon per
     /// spare man, 8 px apart, next to that player's score. It is NOT the 8x12
@@ -220,8 +207,6 @@ public sealed class SpriteSet
         MiniMan = BuildMiniMan(factory);
         FontLarge = LoadGlyphs(content, "Sprites/Font_L", 40);
         FontSmall = LoadGlyphs(content, "Sprites/Font_S", 38);
-        FontLargeCycling = LoadCyclingGlyphs(content, "Sprites/Font_L", 40);
-        FontSmallCycling = LoadCyclingGlyphs(content, "Sprites/Font_S", 38);
     }
 
     /// <summary>
@@ -304,21 +289,6 @@ public sealed class SpriteSet
         return glyphs;
     }
 
-    private static Texture2D[,] LoadCyclingGlyphs(ContentManager content, string prefix, int count)
-    {
-        var glyphs = new Texture2D[count, FontSlots.LastCyclingSlot - FontSlots.FirstCyclingSlot + 1];
-        for (int i = 0; i < count; i++)
-        {
-            for (int slot = FontSlots.FirstCyclingSlot; slot <= FontSlots.LastCyclingSlot; slot++)
-            {
-                glyphs[i, slot - FontSlots.FirstCyclingSlot] =
-                    content.Load<Texture2D>(string.Concat(prefix, '_', GlyphSuffixes[i], '_', slot));
-            }
-        }
-
-        return glyphs;
-    }
-
     /// <summary>
     /// Draws a font glyph in a STATIC palette slot (0-9): the white master
     /// glyph tinted with the slot's live colour (static slots never change,
@@ -333,25 +303,34 @@ public sealed class SpriteSet
     }
 
     /// <summary>
-    /// Draws a font glyph in a COLOUR-CYCLING slot (10-15): pass the
-    /// marker-baked variant from <see cref="FontLargeCycling"/> /
-    /// <see cref="FontSmallCycling"/> — the colour-cycle effect remaps the
-    /// baked marker to the slot's LIVE colour, so the text cycles like the
-    /// arcade blitter (notes §39). Without the effect (M4 off) it falls
-    /// back to a plain draw of the marker colour.
+    /// Draws a font glyph in a COLOUR-CYCLING slot (10-15): the white master
+    /// through the colour-cycle effect's <c>GlyphCycle</c> pass (notes §92) —
+    /// the pass alpha-clips the master and paints every pixel with the slot's
+    /// LIVE colour (the same blitter semantics as §39's marker-baked variants,
+    /// which the pass makes unnecessary). Without the effect (M4 off) it falls
+    /// back to a CPU tint of the slot's live colour, so the glyph still cycles
+    /// with the palette.
     /// </summary>
-    public void DrawGlyphCycling(SpriteBatch spriteBatch, Texture2D glyph, int x, int y)
+    public void DrawGlyphCycling(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot)
     {
-        if (ColorCycleEffect is { } effect)
-        {
-            Palette?.UpdateEffectColors(effect);
-            effect.CurrentTechnique.Passes[0].Apply();
-        }
-
         int w = ScreenSize.Scaled(glyph.Width);
         int h = ScreenSize.Scaled(glyph.Height);
+        if (ColorCycleEffect is { } effect &&
+            effect.Techniques["GlyphCycle"] is { } technique)
+        {
+            Palette?.UpdateEffectColors(effect);
+            effect.Parameters["SlotId"].SetValue((float)(slot - FontSlots.FirstCyclingSlot));
+            technique.Passes[0].Apply();
+        }
+
+        // Without the effect the draw degrades to a CPU tint of the slot's live
+        // colour (exact for the white master, and it cycles with the palette).
+        Color tint = ColorCycleEffect is null ? Palette?.Color(slot) ?? Color.White : Color.White;
+        spriteBatch.Draw(glyph, new Rectangle(x, y, w, h), tint);
+
+        // Hand the pass-through back immediately: this pass is DEVICE state, and
+        // the caller's next draw is not a glyph-cycle (same as DrawSpriteSolid).
         UsePassThrough();
-        spriteBatch.Draw(glyph, new Rectangle(x, y, w, h), Color.White);
     }
 
     /// <summary>
@@ -378,15 +357,14 @@ public sealed class SpriteSet
 
     /// <summary>
     /// Draws one arcade-font glyph in palette SLOT <paramref name="slot"/>,
-    /// picking the right path (notes §58.1): a static slot (0-9) tints the white
-    /// master glyph with the slot's live colour; a cycling slot (10-15) draws the
-    /// marker-baked variant through the colour-cycle effect, so the glyph cycles
-    /// with the palette exactly as the arcade's solid blit does.
+    /// picking the right path (notes §58.1, §92): a static slot (0-9) tints the
+    /// white master glyph with the slot's live colour; a cycling slot (10-15)
+    /// draws the master through the effect's slot-indexed pass, so the glyph
+    /// cycles with the palette exactly as the arcade's solid blit does.
     /// </summary>
     public void DrawGlyphSlot(
         SpriteBatch spriteBatch,
         Texture2D[] glyphs,
-        Texture2D[,] cyclingGlyphs,
         int glyphIndex,
         int x,
         int y,
@@ -394,7 +372,7 @@ public sealed class SpriteSet
     {
         if (FontSlots.IsCycling(slot))
         {
-            DrawGlyphCycling(spriteBatch, cyclingGlyphs[glyphIndex, slot - FontSlots.FirstCyclingSlot], x, y);
+            DrawGlyphCycling(spriteBatch, glyphs[glyphIndex], x, y, slot);
         }
         else
         {
@@ -439,7 +417,7 @@ public sealed class SpriteSet
                 continue;
             }
 
-            DrawGlyphSlot(spriteBatch, FontSmall, FontSmallCycling, index, x, y, slot);
+            DrawGlyphSlot(spriteBatch, FontSmall, index, x, y, slot);
             x += ScreenSize.Scaled(FontSmall[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
         }
 

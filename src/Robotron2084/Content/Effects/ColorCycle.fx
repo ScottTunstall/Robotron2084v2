@@ -43,6 +43,10 @@ float4 Live15 : register(c5);
 // technique below; not read by MainPS.
 float4 RemapColor : register(c6);
 
+// The glyph's cycling slot, 0-5 = slots 10-15 (notes 92). Used by the
+// GlyphCycle technique below; not read by MainPS/SolidRemapPS.
+float4 SlotId : register(c7);
+
 struct PSInput
 {
     float2 TextureCoordinate : TEXCOORD0;
@@ -144,5 +148,35 @@ technique SolidRemap
     pass SolidRemapPass
     {
         PixelShader = compile ps_3_0 SolidRemapPS();
+    }
+}
+
+// Arcade font glyphs drawn in a colour-cycling slot (10-15) (notes 92):
+// the glyph texture is the WHITE MASTER — every non-transparent pixel
+// becomes the slot's live colour. MainPS cannot do this: a white texel
+// matches no marker, so the 468 marker-baked variants existed only to
+// give MainPS something to match. This pass makes the marker unnecessary:
+// alpha-clip the master, then select the slot's live colour by SlotId.
+// PIXEL SHADER ONLY, for the same reason as the other two techniques.
+float4 GlyphCyclePS(PSInput input) : COLOR
+{
+    float4 t = tex2D(SpriteTexture, input.TextureCoordinate);
+    clip(t.a - 0.5f);
+
+    float4 live = Live10;
+    if (SlotId.x > 0.5f) live = Live11;
+    if (SlotId.x > 1.5f) live = Live12;
+    if (SlotId.x > 2.5f) live = Live13;
+    if (SlotId.x > 3.5f) live = Live14;
+    if (SlotId.x > 4.5f) live = Live15;
+
+    return float4(live.rgb, t.a);
+}
+
+technique GlyphCycle
+{
+    pass GlyphCyclePass
+    {
+        PixelShader = compile ps_3_0 GlyphCyclePS();
     }
 }

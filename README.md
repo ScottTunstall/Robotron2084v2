@@ -67,7 +67,7 @@ A few that cost real time, and what they taught:
 
 - **The font was mirrored inside every byte** (a nibble-order slip in the glyph
   extractor) while every test stayed green — hence `tools/verify-fonts.py`, which
-  re-decodes the ROM and compares all **546** glyph PNGs pixel-for-pixel.
+  re-decodes the ROM and compares all **78** font master PNGs pixel-for-pixel
 - **The prog's trail rendered as a black card.** Not a decode error at all: a pixel
   shader pass was being bound on the device by an earlier draw and outliving it, so
   the card fill ran in the previous silhouette's colour. (The same class of leak had
@@ -125,7 +125,7 @@ dotnet build Robotron2084.slnx                                     # 0 warnings
 ./tests/Robotron2084.Tests/bin/Debug/net10.0/Robotron2084.Tests.exe # 270 tests
 ./src/Robotron2084/bin/Debug/net10.0/Robotron2084.exe              # launch smoke
 python tools/verify-playfield.py                                   # a started wave really draws
-python tools/verify-fonts.py                                       # all 546 glyphs, pixel for pixel
+python tools/verify-fonts.py                                       # all 78 glyph masters, pixel for pixel
 ```
 
 *(The test project is run through its executable, not `dotnet test` — the runner is a

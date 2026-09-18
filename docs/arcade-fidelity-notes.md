@@ -7188,3 +7188,63 @@ escape set, the 0..7 drop set and the `CIRP4` birth.
   port's 320x200 spec space is not the ROM's 143-column buffer, and moving a vanishing point without
   a measurement would be guesswork. It also has to be checked against A9 (the task-pass length),
   because the exit test only runs once per five-picture cycle.
+
+## 92. The cycling FONT GLYPHS: 468 baked textures become a slot-indexed shader path (2026-09-17)
+
+(B9 — "Delete the 468 baked font cycling variants if the shader can avoid them.")
+
+### 92.1 What the baked variants were
+
+Section 39 gave every glyph blitted in a cycling slot (10-15) a marker-baked texture per slot:
+78 glyphs x 6 = 468 PNGs (`Font_<L|S>_<ch>_10..15.png`) whose glyph pixels carry the slot's
+MARKER RGB (the de-duplicated RobotronPaletteService values C4/F4/CC/81/45/2F —
+`GamePalette.CyclingSlotMarkers`). The M4 colour-cycle shader's main pass remaps a texel whose
+RGB equals one of those markers to the slot's live colour (the `Live10..Live15` uniforms).
+For ENTITY SPRITES that stays the mechanism: the marker-baked sprite PNGs are the arcade's
+palette indices made into pixels, and the shader's six literal comparisons are the blitter's
+"which slot am I" test.
+
+But the font masters are WHITE on transparent. For a white glyph, `MainPS` matches no marker,
+so the only reason a variant existed was to hand the shader a marker to match: the variant's
+pixel colour adds no information (the alpha channel is identical across all seven variants of
+a glyph), and the draw had to look up a second texture per slot.
+
+### 92.2 The fix: the shader already has everything it needs
+
+The effect already receives the six live colours as uniforms (`GamePalette.UpdateEffectColors`).
+A glyph drawn in slot 10..15 is exactly "every non-transparent pixel of the master becomes that
+slot's live colour", so `ColorCycle.fx` gains a THIRD technique, `GlyphCycle` — a PIXEL-ONLY
+pass (the section 40 rule: no vertex shader, so `Apply()` cannot clobber SpriteBatch's
+projection for the rest of the batch):
+
+- `float4 GlyphCyclePS`: `clip(t.a - 0.5f)` (the same alpha test as `SolidRemapPS`), then
+  selects the live colour from a new `SlotId` uniform (`register(c7)`, 0-5 = slots 10-15) with
+  an UNROLLED if-chain (no arrays — the section 34 TPGParser restriction), and returns
+  `float4(live.rgb, t.a)`.
+
+`SpriteSet`:
+
+- `FontLargeCycling` / `FontSmallCycling` and `LoadCyclingGlyphs` are deleted; the masters are
+  the only font textures.
+- `DrawGlyphCycling` takes the slot: sets `SlotId`, applies the `GlyphCycle` pass, draws the
+  white master, then `UsePassThrough()` (the pass binding OUTLIVES the draw — the section 40
+  trap). Without the effect (M4 off) it falls back to a CPU tint of the master with
+  `Palette.Color(slot)` — the glyph still cycles with the live palette (the old fallback drew
+  the fixed marker colour, which never cycled at all).
+- `DrawGlyphSlot` drops the `cyclingGlyphs` parameter (callers: `PlayingState.DrawScore`,
+  `SpriteSet`'s small-font helper).
+
+The markers stay where they belong: the entity sprite PNGs, `GamePalette.CyclingSlotMarkers`
+(the shader's six literal comparisons) and the
+`AllSixCyclingMarkersAreDistinctFromTheFixedSlots` test, all unchanged.
+
+### 92.3 Tools and gates
+
+- `tools/extract-fonts.py`: writes masters only (`CYCLE_MARKERS` / `marker_rgb` deleted);
+  docstring updated.
+- `tools/verify-fonts.py`: checks the 78 masters, not 546.
+- The 468 variant PNGs are deleted; `Content.mgcb` + `SpriteContentPaths.cs` regenerated with
+  `tools/generate-mgcb.py`.
+- Gate 5's expectation changes from "546 font glyph PNGs" to "78 font glyph PNGs" (status.md +
+  the handoff).
+

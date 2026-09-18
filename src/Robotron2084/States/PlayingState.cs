@@ -245,7 +245,7 @@ public sealed class PlayingState : IGameState
             ScreenSize.Scaled(GameplayConstants.HudScoreDigitAdvancePixels),
             ScreenSize.Scaled(GameplayConstants.HudScoreBlankAdvancePixels)))
         {
-            _sprites.DrawGlyphSlot(spriteBatch, _sprites.FontLarge, _sprites.FontLargeCycling, glyph.Digit, glyph.X, y, slot);
+            _sprites.DrawGlyphSlot(spriteBatch, _sprites.FontLarge, glyph.Digit, glyph.X, y, slot);
         }
     }
 

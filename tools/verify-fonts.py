@@ -11,9 +11,11 @@ right SIZE and the right COUNT, so the content pipeline, the tests and the
 render gates were all happy while the score digits looked like broken shapes
 (author: "the font characters don't look correct").
 
-This script decodes the ROM directly and compares every committed glyph pixel,
-including the six colour-cycle marker variants, so a bad regeneration fails
-loudly instead of quietly shipping.
+This script decodes the ROM directly and compares every committed glyph
+pixel (the white masters — notes §92 deleted the 468 colour-cycle marker
+variants, so a glyph drawn in a cycling slot now goes through the shader's
+GlyphCycle pass), so a bad regeneration fails loudly instead of quietly
+shipping.
 
 Usage:
     python tools/verify-fonts.py
@@ -86,14 +88,6 @@ def main() -> int:
 
             expect(f"{ef.OUT}/{prefix}_{name}.png", width, height, master)
 
-            for slot in range(10, 16):
-                rgb = ef.marker_rgb(ef.CYCLE_MARKERS[slot])
-
-                def variant(x, y, offset=offset, width_bytes=width_bytes, rgb=rgb):
-                    return (*rgb, 255) if nibble_at(rom, offset, width_bytes, x, y) else None
-
-                expect(f"{ef.OUT}/{prefix}_{name}_{slot}.png", width, height, variant)
-
     if failures:
         print(f"FAIL: {len(failures)} font glyph problem(s); {checked} file(s) OK")
         for line in failures[:40]:
@@ -103,7 +97,7 @@ def main() -> int:
         print("Regenerate with: python tools/extract-fonts.py")
         return 1
 
-    print(f"PASS: {checked} font glyph PNGs match the ROM (masters + 6 cycling variants)")
+    print(f"PASS: {checked} font glyph PNGs match the ROM")
     return 0
 
 

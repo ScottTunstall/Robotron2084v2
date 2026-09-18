@@ -54,9 +54,10 @@ Historical: `plan.md` = the original rebuild plan, `ledger.md` = its decision lo
   launches the game, presses SPACE, asserts the ring interior is not black.
   Run it whenever the draw path or any `.fx` changes; the plain smoke test
   only covers the title screen and missed the M4 "only the wall renders" bug.
-- **Font glyph gate (notes §60)**: `python tools/verify-fonts.py` — re-decodes the
-  ROM and compares every pixel of all 546 font PNGs (78 glyphs x master + 6
-  cycling variants). Run it after ANY font regeneration; the glyphs were mirrored
+- **Font glyph gate (notes §60, §92)**: `python tools/verify-fonts.py` — re-decodes the
+  ROM and compares every pixel of all 78 font master PNGs (the 468 cycling-slot
+  variants were deleted — §92 draws them through the shader's GlyphCycle pass).
+  Run it after ANY font regeneration; the glyphs were mirrored
   inside each byte for a day while every other check stayed green.
 
 ## The task
@@ -137,6 +138,15 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   `EXSTV`'s rect — `UL = OBJX/OBJY` with the **picture's** W/H, i.e. the card's rect at the
   prog's corner rather than the card centred in the smaller human box. The prog kill also now
   plays the sound it was missing (`PGKSND` = `SoundTables.RobotDeath`).
+- **The 468 baked font cycling variants are deleted (notes §92, handoff B9)** — the shader
+  already receives the six live colours as uniforms, and a cycling-slot glyph is exactly
+  "every non-transparent pixel of the white master becomes the slot's live colour", so
+  `ColorCycle.fx` gained a pixel-only `GlyphCycle` pass (a new `SlotId` c7, 0-5 = slots
+  10-15; unrolled if-chain — no arrays, notes §34). `FontLargeCycling`/`FontSmallCycling`
+  are gone, `DrawGlyphSlot` drops its `cyclingGlyphs` parameter, and the M4-off fallback now
+  tints the master with the slot's live palette colour (the old one drew the fixed marker,
+  which never cycled). `extract-fonts.py` writes masters only and gate 5 checks the 78
+  masters (was 546). The entity sprite markers are unchanged.
 - **Gates as of this state:** 0 warnings (Debug + Release), **270 tests, 0 failed, 1 skipped**
   (new: `ShootingAProg_LeavesNoDyingPop_AndTheFieldShattersTheBurstCard`, plus
   `SpheroidAnimationTests` × 3), 12 s launch smoke OK, `tools/verify-playfield.py` PASS.

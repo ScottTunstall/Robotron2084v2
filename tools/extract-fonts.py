@@ -20,13 +20,12 @@ Notes: docs/arcade-fidelity-notes.md §36.1, §38, §60.
 Output: RGBA8. Non-zero nibble = white opaque; zero = transparent. The
 port tints at draw time (P1 score = palette slot 1 blue, P2 = slot 10).
 
-Cycling variants (notes §39 — blitter remap semantics): the arcade blits
+Cycling slots (notes §39, §92 — blitter remap semantics): the arcade blits
 glyphs with a palette INDEX; if that slot is a colour-cycling slot (10-15)
-the text cycles too. The port's M4 shader remaps marker-baked colours to
-the live slot colours, so for every glyph this script also emits six
-marker-baked variants `Font_<L|S>_<ch>_10.png` .. `_15.png` (glyph pixels =
-the slot's marker RGB, the exact RobotronColor.FromByte of the
-CyclingSlotMarker byte) for drawing through the colour-cycle effect.
+the text cycles too. The port draws the WHITE MASTERS through the
+M4 shader's GlyphCycle pass (a slot-indexed uniform selects the slot's
+live colour), so no marker-baked variants are emitted — the 468 of them
+were deleted in notes §92.
 """
 from PIL import Image
 
@@ -72,22 +71,6 @@ NAME = {
 }
 NAME.update({c: c for c in "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"})
 
-# Cycling-slot marker bytes — must match GamePalette.CyclingSlotMarkers.
-CYCLE_MARKERS = {10: 0xC4, 11: 0xF4, 12: 0xCC, 13: 0x81, 14: 0x45, 15: 0x2F}
-
-
-def marker_rgb(value):
-    """Robotron 8-bit colour byte (BBGGGRRR) -> RGB, = RobotronColor.FromByte."""
-    red = (value & 0x07) << 1
-    if red > 6:
-        red += 1
-    green = (value & 0x38) >> 2
-    if green > 6:
-        green += 1
-    blue = (value & 0xC0) >> 6
-    return (min(255, red << 4), min(255, green << 4), min(255, blue * 5 << 4))
-
-
 def glyph_pixels(data, offset, width_bytes, height):
     """Yield (x, y, set) for every pixel of the glyph.
 
@@ -113,17 +96,6 @@ def write_png(prefix, table, data):
         name = f"{prefix}_{NAME[char]}.png"
         img.save(f"{OUT}/{name}")
         print(f"  {name}")
-        # Cycling-slot variants: marker-baked for the M4 colour-cycle shader
-        # (notes §39) — the glyph pixel colour IS the slot's marker colour.
-        for slot in range(10, 16):
-            vimg = Image.new("RGBA", (width_bytes * 2, height), (0, 0, 0, 0))
-            vpx = vimg.load()
-            for x, y, set_ in glyph_pixels(data, offset, width_bytes, height):
-                if set_:
-                    rgb = marker_rgb(CYCLE_MARKERS[slot])
-                    vpx[x, y] = (rgb[0], rgb[1], rgb[2], 255)
-            vname = f"{prefix}_{NAME[char]}_{slot}.png"
-            vimg.save(f"{OUT}/{vname}")
 
 
 def main():
