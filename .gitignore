@@ -429,3 +429,6 @@ FodyWeavers.xsd
 *.msp
 /ref/original-source
 /ref/rom
+
+# render-gate screenshot artifact (tools/verify-playfield.py)
+playfield-check.png
