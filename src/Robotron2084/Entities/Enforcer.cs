@@ -14,9 +14,10 @@ namespace Robotron2084.Entities;
 /// down (a) a re-aim timer, RND(1..31) passes, and (b) a spark-fire timer,
 /// RND(1..ENSTIM) passes. Each re-aim picks a destination in a 32x32 spec-pixel
 /// zone to the player's DOWN-RIGHT (player + RND(0..31) on each axis,
-/// clamped to the field) and the enforcer glides at ~1.0 spec px/tick toward
-/// it until the timer runs out — so it loiter-circles near the player rather
-/// than converging on it head-on. Fires SPARKs at the player when the fire
+/// clamped to the field) and the enforcer glides toward it at a velocity
+/// proportional to the remaining distance (delta/2 in 1/256 column units per
+/// ROM frame, notes §93) until the timer runs out — so it loiter-circles
+/// near the player rather than converging on it head-on. Fires SPARKs at the player when the fire
 /// timer hits zero (the timer re-arms even when the 20-spark global cap
 /// swallows the shot — R5 $1404). Flies over electrodes.
 ///
@@ -37,14 +38,15 @@ public sealed class Enforcer : IEntity, IExplodable
     private IntVector2 _position;
 
     /// <summary>
-    /// Velocity in 1/256 PORT units per TICK, carried by a remainder like the
-    /// quark's, because the ROM's mover integrates it EVERY FRAME (notes §43 fact
-    /// 2) while the enforcer's own logic only runs once per body.
+    /// Velocity in 1/256 PORT units per ROM FRAME, carried by a remainder like
+    /// the quark's, because the ROM's mover integrates it once per frame (notes
+    /// §43 fact 2, §93) while the enforcer's own logic only runs once per body.
     /// </summary>
     private IntVector2 _velocityFp;
 
     private IntVector2 _remainderFp;
     private int _bodyFifths;
+    private int _moverSixths; // OPB80 cadence: one velocity integration per 6 sixths = 1 ROM frame
     private int _reaimBodiesRemaining;
     private int _fireCooldownBodies;
     private int _growthFifthsRemaining;
@@ -60,6 +62,9 @@ public sealed class Enforcer : IEntity, IExplodable
         // seeds PD6 with RMAX(ENSTIM) — both countdowns are in BODIES.
         _reaimBodiesRemaining = 0;
         _fireCooldownBodies = 1 + random.Next(0, _fireDelayRomTicks);
+        // The mover moves it from its first active frame (notes §93); the
+        // accumulator does not advance during the immobile grow-up.
+        _moverSixths = 6;
     }
 
     public IntVector2 Position => _position;
@@ -104,10 +109,16 @@ public sealed class Enforcer : IEntity, IExplodable
             }
         }
 
-        // Glide toward the current destination every TICK: the ROM's OS
-        // integrates the velocity EVERY frame (notes §43 fact 2), and only the
-        // 4-frame body re-aims.
-        AdvancePosition(field);
+        // Glide toward the current destination: the ROM's OS integrates the velocity
+        // once per ROM frame (notes §43 fact 2) — a frame is 6/5 of a tick, so every
+        // 6 sixths, not every tick (that ran the enforcer 20% fast, notes §93) — and
+        // only the 4-frame body re-aims.
+        _moverSixths += 5;
+        if (_moverSixths >= 6)
+        {
+            _moverSixths -= 6;
+            AdvancePosition(field);
+        }
 
         _bodyFifths += 5;
         if (_bodyFifths < GameplayConstants.EnforcerBodyRomFrames * 6)
@@ -140,11 +151,12 @@ public sealed class Enforcer : IEntity, IExplodable
 
     /// <summary>
     /// ROM `ENFNV`: the target is the PLAYER plus a random 0..31 per axis — in
-    /// COLUMNS on X (HSEED&gt;&gt;3 added to PX's column byte) and ROWS on Y — and the
-    /// velocity is set to TWICE that offset (`SUBB OX16,X / SBCA #0 / ASLB / ROLA`).
-    /// The enforcer therefore advances <c>(target - pos)/128</c> per frame: quick
-    /// when far, CRAWLING as it arrives. That is the "near-zone crawl" the port's
-    /// notes named but could not reproduce with a constant step.
+    /// COLUMNS on X and ROWS on Y — and the velocity is set to the offset
+    /// HALVED, signed: `SUBB OX16,X / SBCA #0 / ASLB / ROLA` is a signed
+    /// divide-by-2, so <c>OXV = (target - pos)/2</c> in 1/256 column/frame =
+    /// <c>(target - pos)/128</c> port px/frame: quick when far, CRAWLING as it
+    /// arrives. That is the "near-zone crawl" the port's notes named but could
+    /// not reproduce with a constant step.
     /// </summary>
     private void RollVelocity(PlayField field)
     {
@@ -156,10 +168,12 @@ public sealed class Enforcer : IEntity, IExplodable
 
         IntVector2 delta = new(targetX - _position.X, targetY - _position.Y);
 
-        // 2 x delta in 1/256 COLUMNS per FRAME, and a column is 4 port units, so
-        // that is delta/128 units per frame = 2 x delta in 1/256 units per frame;
-        // a tick is 5/6 of a frame, hence the 5/3.
-        _velocityFp = new IntVector2(delta.X * 5 / 3, delta.Y * 5 / 3);
+        // OXV = delta/2 in 1/256 COLUMNS per FRAME (the signed halve above), and a
+        // column is 4 port units, so that is delta/128 port px per frame = delta/2
+        // in 1/256-px (fp) units per frame. The mover integrates once per ROM frame
+        // (notes §93), so the velocity is the raw per-frame value — no 5/6 tick
+        // scaling (that belonged to the old per-tick integration).
+        _velocityFp = new IntVector2(delta.X / 2, delta.Y / 2);
     }
 
     /// <summary>

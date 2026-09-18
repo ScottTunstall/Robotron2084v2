@@ -28,11 +28,12 @@ namespace Robotron2084.Entities;
 /// going off course" — and since the jitter is comparable to the delta at close
 /// range, a spark can start out moving AWAY from the player.
 ///
-/// **Speed** comes from the mover (RRSCRIPT.ASM MONOP:
-/// <c>LDD OBJX,X / ADDA OXV,X / ADDB OYV,X / STD OBJX,X</c>) — it adds the
-/// **high byte** of each 16-bit velocity to the screen position. So
-/// <c>OXV = 4 x delta</c> means the spark covers <c>delta/64</c> columns per
-/// move, and <c>PD2 = a</c> bends that by <c>a/256</c> columns per move.
+/// **Speed** comes from the generic mover (RRS22.ASM OPB80:
+/// <c>ADDD OXV,X / STD OX16,X</c>) — it adds the **full 16-bit velocity** to the
+/// 16-bit world position **once per ROM frame** (notes §43, §93). So
+/// <c>OXV = 4 x delta</c> means the spark covers <c>delta/64</c> px per frame,
+/// and <c>PD2 = a</c> bends the velocity by <c>a/256</c> px per frame on each
+/// move.
 ///
 /// Life = <c>PD7 = (HSEED &amp; $F) + $14</c> = 20..35 MOVES x 4 vblanks
 /// = 80..140 ROM ticks (1.6-2.8 s arcade) — NOT the spec's 10-15 s (playtest
@@ -52,14 +53,15 @@ public sealed class Spark : IEntity
 {
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
     private readonly Random _random;
-    private readonly int _stepScale; // VelocityScale x move interval: fp units per port px
+    private readonly int _stepScale; // fixed point: 1 port px = 256 fp units
     private readonly IntVector2 _accelerationFp; // ROM PD2/PD4, 1/256 px per move, CONSTANT
-    private IntVector2 _velocityFp; // ROM OXV/OYV, 1/256 px per move
+    private IntVector2 _velocityFp; // ROM OXV/OYV, 1/256 px per frame
     private IntVector2 _positionRemainderFp; // carries the sub-pixel part so the step never drifts
     private IntVector2 _position;
     private int _remainingLifeFifths;
     private int _moveFifths;   // 4 ROM frames = 4.8 ticks (notes §52)
     private int _flickerFifths; // the 4-frame flicker clock, also exact
+    private int _moverSixths;  // OPB80 cadence: one velocity integration per 6 sixths = 1 ROM frame
 
     /// <param name="position">Spawn position (the firing enforcer's position).</param>
     /// <param name="playerPosition">The player — the ROM aims at it, with jitter.</param>
@@ -100,7 +102,7 @@ public sealed class Spark : IEntity
         _velocityFp = new IntVector2(deltaX * fpPerPortPxPerMove, deltaY * fpPerPortPxPerMove);
 
         // PD2/PD4: the CONSTANT per-axis acceleration, (seed & $1F) - 16 in the
-        // same subpixel units => a/64 port px per move => a x 4 in fp.
+        // same subpixel units => a/64 port px per frame of velocity per move => a x 4 in fp.
         _accelerationFp = new IntVector2(
             _random.Next(-GameplayConstants.SparkAccelRomRange, GameplayConstants.SparkAccelRomRange) * fpPerPortPxPerMove,
             _random.Next(-GameplayConstants.SparkAccelRomRange, GameplayConstants.SparkAccelRomRange) * fpPerPortPxPerMove);
@@ -110,6 +112,9 @@ public sealed class Spark : IEntity
         _remainingLifeFifths = _random.Next(
             GameplayConstants.SparkLifeMinRomTicks,
             GameplayConstants.SparkLifeMaxRomTicks + 1) * 6;
+
+        // The mover moves the spark from the first frame (notes §93).
+        _moverSixths = 6;
     }
 
     public IntVector2 Position => _position;
@@ -125,11 +130,12 @@ public sealed class Spark : IEntity
     /// <summary>ROM frame SPKP0..3: one frame per 4-vblank body pass (NAP 4), cycling.</summary>
     internal int FrameIndex => _flickerFifths / (GameplayConstants.SparkFramePeriodRomTicks * 6) % SpriteSet.SparkFrameCount;
 
-    /// <summary>ROM OXV/OYV (1/256 port px per move) — exposed for the ballistic test.</summary>
+    /// <summary>ROM OXV/OYV (1/256 port px per frame) — exposed for the ballistic test.</summary>
     internal IntVector2 VelocityFp => _velocityFp;
 
     /// <summary>
-    /// ROM PD2/PD4: the spark's per-axis acceleration (1/256 port px per move),
+    /// ROM PD2/PD4: the spark's per-axis acceleration (1/256 port px per frame of
+    /// velocity, applied once per move),
     /// chosen once at spawn and CONSTANT for the spark's life.
     /// </summary>
     internal IntVector2 AccelerationFp => _accelerationFp;
@@ -166,17 +172,34 @@ public sealed class Spark : IEntity
         }
 
         // Mover (RRS22.ASM OPB80): the full 16-bit velocity is added to the
-        // 16-bit world position once per frame. The port carries the sub-pixel
-        // remainder so the step never drifts.
-        _positionRemainderFp = new IntVector2(
-            _positionRemainderFp.X + _velocityFp.X,
-            _positionRemainderFp.Y + _velocityFp.Y);
+        // 16-bit world position once per ROM frame — a frame is 6/5 of a tick, so
+        // the integration runs every 6 sixths, not every tick (that ran the spark
+        // 60/50 = 20% fast, notes §93). The port carries the sub-pixel remainder so
+        // the step never drifts.
+        _moverSixths += 5;
+        if (_moverSixths >= 6)
+        {
+            _moverSixths -= 6;
+            _positionRemainderFp = new IntVector2(
+                _positionRemainderFp.X + _velocityFp.X,
+                _positionRemainderFp.Y + _velocityFp.Y);
 
-        int stepX = _positionRemainderFp.X / _stepScale;
-        int stepY = _positionRemainderFp.Y / _stepScale;
-        _positionRemainderFp = new IntVector2(
-            _positionRemainderFp.X - (stepX * _stepScale),
-            _positionRemainderFp.Y - (stepY * _stepScale));
+            int stepX = _positionRemainderFp.X / _stepScale;
+            int stepY = _positionRemainderFp.Y / _stepScale;
+            _positionRemainderFp = new IntVector2(
+                _positionRemainderFp.X - (stepX * _stepScale),
+                _positionRemainderFp.Y - (stepY * _stepScale));
+
+            MoveBy(field, stepX, stepY);
+            return;
+        }
+
+        MoveBy(field, 0, 0);
+    }
+
+    /// <summary>Applies one (possibly zero) mover step and the wall rejection.</summary>
+    private void MoveBy(PlayField field, int stepX, int stepY)
+    {
 
         // Port safety cap (the ROM relies on its 16-bit velocity saturating).
         stepX = Math.Clamp(stepX, -GameplayConstants.SparkMaxSpeed, GameplayConstants.SparkMaxSpeed);

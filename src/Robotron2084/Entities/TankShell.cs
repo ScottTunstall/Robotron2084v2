@@ -29,14 +29,17 @@ public sealed class TankShell : IEntity
     private static readonly int BoxWidth = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Width);
     private static readonly int BoxHeight = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Height);
     private IntVector2 _position;
-    private IntVector2 _velocity;
+    private IntVector2 _velocity; // ROM OXV/OYV: port px per ROM FRAME (the generic mover's step)
     private int _remainingLifeFifths;
+    private int _moverSixths; // OPB80 cadence: one velocity integration per 6 sixths = 1 ROM frame
 
     public TankShell(IntVector2 position, IntVector2 towardPlayerDirection, Random random)
     {
         _position = position;
-        // Aimed at the player with ±1 px/tick jitter per axis ("not very
-        // accurate"); the ROM sets its velocity once at creation too.
+        // Aimed at the player with ±1 px/frame jitter per axis ("not very
+        // accurate"); the ROM sets its velocity once at creation too. The
+        // speed is a per-FRAME value — the generic mover integrates it once per
+        // ROM frame, not per tick (notes §93).
         _velocity = new IntVector2(
             Math.Sign(towardPlayerDirection.X) * GameplayConstants.TankShellSpeed + random.Next(-1, 2),
             Math.Sign(towardPlayerDirection.Y) * GameplayConstants.TankShellSpeed + random.Next(-1, 2));
@@ -44,6 +47,8 @@ public sealed class TankShell : IEntity
         // Held in exact 6ths (notes §52/§65): 48 frames is 57.6 port ticks, which
         // truncated PortTicks(48) = 57 cut short.
         _remainingLifeFifths = (random.Next(0, 32) + GameplayConstants.TankShellLifeBaseRomTicks) * 6;
+        // The mover moves it from the first frame (notes §93).
+        _moverSixths = 6;
     }
 
     public IntVector2 Position => _position;
@@ -78,27 +83,35 @@ public sealed class TankShell : IEntity
             return;
         }
 
-        // Straight-line flight; bounces off the four border walls (R5
-        // 4F94-4FCD: COM the delta — the X wall is checked before the Y wall —
-        // then the shell keeps flying. It never exits the playfield.)
-        IntVector2 next = _position + _velocity;
-        Rectangle bounds = field.Wall.PlayfieldBounds;
-        BouncedThisUpdate = false;
-        if (next.X < bounds.X || next.X + BoxWidth > bounds.Right)
+        // Straight-line flight: the generic mover (OPB80, notes §43/§93) integrates
+        // the velocity once per ROM frame — a frame is 6/5 of a tick, so every 6
+        // sixths, not every tick (that ran the shell 60/50 = 20% fast). Bounces off
+        // the four border walls (R5 4F94-4FCD: COM the delta — the X wall is
+        // checked before the Y wall — then the shell keeps flying. It never exits
+        // the playfield.)
+        _moverSixths += 5;
+        if (_moverSixths >= 6)
         {
-            _velocity = new IntVector2(-_velocity.X, _velocity.Y);
-            BouncedThisUpdate = true;
-        }
-        else if (next.Y < bounds.Y || next.Y + BoxHeight > bounds.Bottom)
-        {
-            _velocity = new IntVector2(_velocity.X, -_velocity.Y);
-            BouncedThisUpdate = true;
-        }
+            _moverSixths -= 6;
+            IntVector2 next = _position + _velocity;
+            Rectangle bounds = field.Wall.PlayfieldBounds;
+            BouncedThisUpdate = false;
+            if (next.X < bounds.X || next.X + BoxWidth > bounds.Right)
+            {
+                _velocity = new IntVector2(-_velocity.X, _velocity.Y);
+                BouncedThisUpdate = true;
+            }
+            else if (next.Y < bounds.Y || next.Y + BoxHeight > bounds.Bottom)
+            {
+                _velocity = new IntVector2(_velocity.X, -_velocity.Y);
+                BouncedThisUpdate = true;
+            }
 
-        next = _position + _velocity;
-        _position = new IntVector2(
-            Math.Clamp(next.X, bounds.X, bounds.Right - BoxWidth),
-            Math.Clamp(next.Y, bounds.Y, bounds.Bottom - BoxHeight));
+            next = _position + _velocity;
+            _position = new IntVector2(
+                Math.Clamp(next.X, bounds.X, bounds.Right - BoxWidth),
+                Math.Clamp(next.Y, bounds.Y, bounds.Bottom - BoxHeight));
+        }
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)

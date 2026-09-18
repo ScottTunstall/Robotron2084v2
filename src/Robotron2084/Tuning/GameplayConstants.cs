@@ -411,15 +411,15 @@ public static class GameplayConstants
     //   is REJECTED, not clamped — the object keeps its last valid coordinate on
     //   that axis while the other axis still moves.)
     // Port units: 1 ROM column = 2 arcade px = Scaled(2) port px = 4 port px,
-    // so one move advances deltaPort/64 port px and the acceleration is
-    // a/64 port px per move. Both live in 1/256-px fixed point.
+    // so one frame advances deltaPort/64 port px and the acceleration is
+    // a/64 port px per frame of velocity. Both live in 1/256-px fixed point.
     public const int SparkMoveIntervalRomTicks = 4;   // NAP 4
-    public const int SparkVelocityScale = 256;        // fixed point: 1 px/move = 256
-    public const int SparkAimDivisor = 64;            // ROM: the delta is covered in 64 moves
+    public const int SparkVelocityScale = 256;        // fixed point: 1 px/frame = 256
+    public const int SparkAimDivisor = 64;            // ROM: the delta is covered in 64 frames
     public const int SparkJitterColumns = 16;         // (seed & $1F) - 16 → -16..+15
     public const int SparkLeftWallJitterColumns = 16; // XMIN+$10: no X jitter this near the wall
     public const int SparkAccelRomRange = 16;         // PD2/PD4 = (seed & $1F) - 16
-    public const int SparkMaxSpeed = 8;               // port safety cap on the px/tick step
+    public const int SparkMaxSpeed = 8;               // port safety cap on the px/frame step
     public const int SparkLifeMinRomTicks = 80;
     public const int SparkLifeMaxRomTicks = 140;
     // Spark flicker: the ROM SPARK process advances OPICT by one 4-byte

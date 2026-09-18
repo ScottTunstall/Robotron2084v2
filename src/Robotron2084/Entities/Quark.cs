@@ -34,16 +34,17 @@ public sealed class Quark : IEntity, IArtSource
     private IntVector2 _position;
 
     /// <summary>
-    /// Velocity in 1/256 PORT px per TICK (ROM OXV/OYV are in 1/256 px per
-    /// FRAME; rescaled at roll time). A fraction of a pixel, which is why the
-    /// remainder below exists.
+    /// Velocity in 1/256 PORT px per ROM FRAME (ROM OXV/OYV, integrated by the
+    /// generic mover once per frame — notes §43 fact 2, §93). A fraction of a
+    /// pixel, which is why the remainder below exists.
     /// </summary>
     private IntVector2 _velocityFp;
 
-    /// <summary>Sub-pixel carry, so a 0.03 px/tick drift still accumulates into movement.</summary>
+    /// <summary>Sub-pixel carry, so a 0.03 px/frame drift still accumulates into movement.</summary>
     private IntVector2 _remainderFp;
 
     private int _bodyFifths;             // ROM NAP 3 + the body vblank, in exact 6/5 ticks
+    private int _moverSixths;            // OPB80 cadence: one velocity integration per 6 sixths
     private int _reaimBodiesRemaining;   // ROM PD7: counts down in BODIES
     private int _animationFrame;         // ROM OPICT index, SQP0..SQP8
     private int _tanksRemaining;
@@ -72,6 +73,9 @@ public sealed class Quark : IEntity, IArtSource
         // the first frame, the body does not NAP first. Seeding the accumulator
         // at one full body makes the first Update run a body immediately.
         _bodyFifths = BodyFifths;
+        // The mover moves it from the first frame too, so the mover accumulator
+        // starts at one full frame (notes §93).
+        _moverSixths = 6;
     }
 
     /// <summary>
@@ -102,9 +106,16 @@ public sealed class Quark : IEntity, IArtSource
         }
 
         // The ROM's mover (RRS22 OPB80) advances EVERY object once per FRAME,
-        // independent of the object's own NAP. The quark's velocity is a
-        // fraction of a pixel, so the sub-pixel carry does the work here.
-        AdvancePosition(field);
+        // independent of the object's own NAP. A frame is 6/5 of a tick, so the
+        // integration runs every 6 sixths — not every tick, which ran the quark
+        // 60/50 = 20% fast (notes §93). The quark's velocity is a fraction of a
+        // pixel, so the sub-pixel carry does the work inside.
+        _moverSixths += 5;
+        if (_moverSixths >= 6)
+        {
+            _moverSixths -= 6;
+            AdvancePosition(field);
+        }
 
         // A body is QuarkBodyRomTicks ROM FRAMES, and a ROM frame is 6/5 of a
         // port tick — so it is 4.8 ticks, not the 4 that `PortTicks(4)`'s
@@ -218,8 +229,8 @@ public sealed class Quark : IEntity, IArtSource
 
     /// <summary>
     /// One axis's magnitude: <c>RND(1..SQSPD) × scale</c> in 1/256-px-per-FRAME
-    /// units, rescaled to 1/256 PORT px per TICK (the port runs at 60Hz where the
-    /// arcade ran 50).
+    /// units, in PORT px (the arcade's own per-frame value — the mover integrates
+    /// it once per ROM frame, notes §93; there is no 60Hz rescaling).
     ///
     /// The <paramref name="coordinateUnitArcadePixels"/> argument is the size of
     /// a world-coordinate unit on that axis, and the two axes differ: the video
@@ -232,7 +243,7 @@ public sealed class Quark : IEntity, IArtSource
     private int AxisVelocityFp(int scale, bool positive, int coordinateUnitArcadePixels)
     {
         int roll = 1 + _random.Next(_quarkSpeedRom);
-        int fp = roll * scale * ScreenSize.Scaled(coordinateUnitArcadePixels) * 5 / 6;
+        int fp = roll * scale * ScreenSize.Scaled(coordinateUnitArcadePixels);
         return positive ? fp : -fp;
     }
 
@@ -240,7 +251,7 @@ public sealed class Quark : IEntity, IArtSource
     private void StartFlee()
     {
         _fleeing = true;
-        int fp = GameplayConstants.QuarkFleeVelocityRom * ScreenSize.Scaled(1) * 5 / 6;
+        int fp = GameplayConstants.QuarkFleeVelocityRom * ScreenSize.Scaled(1);
         _velocityFp = new IntVector2(0, _random.Next(2) == 0 ? fp : -fp);
         _remainderFp = IntVector2.Zero;
     }

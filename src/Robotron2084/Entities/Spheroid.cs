@@ -61,6 +61,7 @@ public sealed class Spheroid : IEntity, IArtSource
     private int _accelY; // PD6: -32..+31, in 1/256 row per frame per body
     private int _accelBodiesRemaining; // PD7: RANDU(15) = 1..15 bodies until a re-roll
     private int _bodyFifths;
+    private int _moverSixths; // OPB80 cadence: one velocity integration per 6 sixths = 1 ROM frame
     private int _enforcersRemaining; // PD3: ceil(RND(1..ENFNUM)/2) = 1..5, never 0
     private int _dropRotationsRemaining; // PD2, counted in full picture ROTATIONS
     private int _rotation; // OPICT: 0..4 while spinning/escaping, 0..7 while dropping
@@ -90,6 +91,9 @@ public sealed class Spheroid : IEntity, IArtSource
         // R5 CIRSTL: PD2 = RND(1..CDPTIM) starts the SPIN phase's countdown; CIRNAC
         // (called there too) rolls the first accelerations and the re-roll timer.
         _dropRotationsRemaining = random.Next(1, dropDelayRomTicks + 1);
+        // The mover moves it from the first frame (notes §93), so the mover
+        // accumulator starts at one full frame.
+        _moverSixths = 6;
         // `MKPROB CIRCLE,CIRP4,CIRKIL` → MPROB's `LDD ,U++ / STD OLDPIC,X /
         // STD OPICT,X` puts CIRP4 in the new object's picture, so a spheroid is BORN
         // showing the medium ring and its FIRST body is already a wrap pass.
@@ -128,10 +132,17 @@ public sealed class Spheroid : IEntity, IArtSource
             return;
         }
 
-        // The generic mover ($OPB80, notes §43) runs EVERY frame, independently of
-        // how often this object's own process wakes up — the escape included, whose
-        // OXV is a fixed ±1 column/frame.
-        AdvancePosition(field);
+        // The generic mover ($OPB80, notes §43) runs once per ROM FRAME, independently
+        // of how often this object's own process wakes up — the escape included, whose
+        // OXV is a fixed ±1 column/frame. A frame is 6/5 of a tick, so the velocity is
+        // integrated every 6 sixths, not every tick: integrating per tick ran the
+        // spheroid 60/50 = 20% fast (notes §93).
+        _moverSixths += 5;
+        if (_moverSixths >= 6)
+        {
+            _moverSixths -= 6;
+            AdvancePosition(field);
+        }
 
         // Every phase's process is `NAP 2` = 3 ROM frames = 3.6 port ticks (notes
         // §43: `NAP n` is n + 1 frames), so the PICTURE and the phase's own logic

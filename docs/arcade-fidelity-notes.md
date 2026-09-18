@@ -7248,3 +7248,44 @@ The markers stay where they belong: the entity sprite PNGs, `GamePalette.Cycling
 - Gate 5's expectation changes from "546 font glyph PNGs" to "78 font glyph PNGs" (status.md +
   the handoff).
 
+
+## 93. The generic mover runs on the ROM's FRAME clock — and the enforcer's aim was a 4x misread (2026-09-17)
+
+(A10 — "the generic mover is 20% fast": `OPB80` adds the velocity once per ROM
+FRAME, the port added it once per 60 Hz tick. Author playtest was fine with the
+gameplay; the sweep was taken to the arcade's clock.)
+
+### 93.1 One integration per ROM frame
+
+A ROM frame is 6/5 of a port tick, so each generic-mover entity carries a SIXTHS
+accumulator: `+= 5` per tick, integrate the velocity once and subtract 6 when it
+reaches 6. The constructor seeds the accumulator at 6, so the object moves on its
+FIRST frame — the ROM's mover moves the object from the frame after creation, and
+the port's first `Update` is that frame. Entities: `Spheroid`, `Enforcer`, `Quark`,
+`Spark`, `TankShell` (the five users of the generic mover, notes §43).
+
+The velocities are now RAW per-frame values; the 5/6 per-tick rescales are gone:
+`Quark.AxisVelocityFp`/`StartFlee` (dropped `* 5 / 6`), `Enforcer.RollVelocity`
+(dropped 5/3), the `TankShell` speed is per-frame, and the spark's constants are
+documented per-frame (its 4-frame MOVE period is unchanged — the mover just
+integrates between moves as the ROM does).
+
+### 93.2 The enforcer's aim: `ASLB / ROLA` HALVES, it does not double
+
+Re-checked the aim constant against the Gospel while sweeping: ENFNV's
+`SUBB OX16,X / SBCA #0 / ASLB / ROLA / STD OXV,X` is a signed SHIFT RIGHT —
+`OXV = (target − pos)/2` in 1/256 column/frame. The port's comment had read the
+same instruction sequence as a doubling (that would be ASL/ROL), so the enforcer
+glided 4x the arcade speed. `_velocityFp = delta / 2` (fp units per frame) =
+Δcol/128 port px/frame, the value the docstring had carried all along ("advances
+(target − pos)/128 per frame").
+
+### 93.3 Measured: the spheroid's escape is the ROM's $100
+
+The §91 status text called the escape's OXV "a fixed ±1 column/frame" — the
+Gospel says otherwise: RRC11 `CIRC3` does `LDD #$100 / TST SEED / (BPL|NEGA) /
+STD OXV,X` = ±$100 in 1/256 column/frame = ±0.25 column/frame. A scratch harness
+(deleted before commit) drove 12 seeded spheroids to the escape and measured the
+speed: **0.248-0.250 columns/frame** — exactly $100. Six of the twelve seeds die
+on the first wrap pass: they spawn past the exit column, and the ROM's CIRC3L X
+test sends them straight to `CIRC4 / KILLOF` — faithful to the source.

@@ -670,11 +670,13 @@ C:\Users\scott\source\repos\WmsGfxSpriteRipper    Sean Riddle's Williams sprite 
    `CIRKV` burst (§64), the whole wave-complete tunnel (§79-§86), the prog's step and the
    quark's drop timer (§87), the family's start of wave (§88), the prog's death — the
    `PGXPIC` + `EXST` strip explosion plus the corrupt `ProgBurst` art (§90) — and the
-   spheroid's picture chain (§91). **NEW OPEN QUESTIONS, all three parked in the handoff's
-   work table and detailed in notes §91.3:** (**A10**, needs your go-ahead) the generic mover
-   adds its velocity once per 60 Hz tick where the ROM's `OPB80` adds it once per ROM FRAME, so
-   the spheroid, the sparks and the missiles all move **20% fast** — a systemic sweep;
-   (**A11**, needs a MAME measurement) the spheroid's drop-countdown re-arm is decremented again
+   spheroid's picture chain (§91) — and **A10, DONE (notes §93)**: the five generic-mover
+   entities (spheroid, enforcer, quark, spark, tank shell) now integrate their velocity once
+   per ROM FRAME on a sixths accumulator with raw per-frame velocities; the sweep also caught
+   ENFNV's `ASLB/ROLA` as a signed HALVE (the enforcer had been 4x fast) and measured the
+   spheroid's escape at the ROM's `CIRC3` `$100` = 0.25 col/frame (the "±1 column/frame"
+   wording in the §91 bullet above is superseded). **TWO OPEN QUESTIONS remain, parked in the
+   handoff's work table and detailed in notes §91.3:** (**A11**, needs a MAME measurement) the spheroid's drop-countdown re-arm is decremented again
    in the same body by the ROM, and a countdown that reaches 0 becomes `$FF` (a ~2-minute stall);
    (**A12**, needs a measurement) the escape's exit columns are the port's own mapping and
    interact with A9. The ROM's colour
