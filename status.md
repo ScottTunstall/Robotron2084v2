@@ -54,19 +54,21 @@ Historical: `plan.md` = the original rebuild plan, `ledger.md` = its decision lo
   launches the game, presses SPACE, asserts the ring interior is not black.
   Run it whenever the draw path or any `.fx` changes; the plain smoke test
   only covers the title screen and missed the M4 "only the wall renders" bug.
-- **Font glyph gate (notes §60, §92)**: `python tools/verify-fonts.py` — re-decodes the
-  ROM and compares every pixel of all 78 font master PNGs (the 468 cycling-slot
-  variants were deleted — §92 draws them through the shader's GlyphCycle pass).
+- **Font glyph gate (notes §60, §92, §96.2)**: `python tools/verify-fonts.py` — re-decodes
+  the ROM and compares every pixel of all **82** font master PNGs (the 468 cycling-slot
+  variants were deleted — §92 draws them through the shader's GlyphCycle pass; §96.2
+  added the large font's '!' ',' '.' '-' and corrected the ':').
   Run it after ANY font regeneration; the glyphs were mirrored
   inside each byte for a day while every other check stayed green.
-- **Attract gate (notes §94)**: `python tools/verify-attract.py` — launches the
-  game and checks the WHOLE attract loop end to end: the title screen has
-  content (the ROM strings + men + score), the attract demo has taken over
-  after the 12 s idle timeout (real wave content, not the title), and a fire
-  press during the demo hands back to the title. ~30 s. Run it whenever the
-  title screen, the demo AI, or any state transition changes; it saves
-  `attract-title.png` / `attract-demo.png` / `attract-back-to-title.png`
-  (gitignored) for the author's eyes.
+- **Attract gate (notes §94, §96)**: `python tools/verify-attract.py` — launches the
+  game and checks the attract sequence end to end: the title screen has content
+  (the ROM strings + men + score), the STORYLINE MOVIE has taken over after the
+  12 s idle timeout (the ROM's HISTO text crawl — ~8.7% of the interior lit against
+  the title's 1.8%), and a fire press hands back to the title. ~35 s. `--full`
+  (~2.5 min) also waits out the movie and checks the attract DEMO. Run it whenever
+  the title screen, the movie, the demo AI, or any state transition changes; it
+  saves `attract-title.png` / `attract-story.png` / `attract-demo.png` /
+  `attract-back-to-title.png` (gitignored) for the author's eyes.
 
 ## The task
 Translate **Robotron 2084** (1982, Williams, 6809) into a **MonoGame .NET 10 OpenGL** desktop app that
@@ -97,7 +99,43 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
 - The memory/screen layout sections below exist **to read data out of the ROM image** — they are
   reference knowledge, not a spec to emulate.
 
-## Where we are (2026-09-17)
+## Where we are (2026-09-19)
+
+### Session 6 (2026-09-19) — THE FULL ATTRACT MOVIE (the intro screen and the whole storyline, notes §96)
+
+- **"I want you to do the intro screen. ROBOTRON 2084, INSPIRED BY HIS NEVER ENDING
+  QUEST FOR PROGRESS (etc.) — make it arcade faithful."** The intro screen IS the ROM's
+  HISTO page script, so §95's decode became the implementation: the port now RUNS the
+  arcade's own storyline — the story text crawl, the hero walking on and shooting, the
+  family (MUMMY/DADDY/MIKEY with their name popups and the two deaths), the 14 grunts,
+  the hulk's bounce, the spheroid/tank/enforcer scene with the brain reprogramming a
+  human into a prog, and the score posts — all driven by the ROM's bytes.
+- **Two interpreters, no transcription.** `Level/Attract/AttractPageMachine` is SPWAKE
+  ($79DD) and `Level/Attract/AttractObjectMachine` is the object level ($7B58, all 28
+  opcodes); both are MonoGame-free and unit-tested. `tools/extract-attract-scripts.py`
+  generates `Level/Attract/AttractMovieData.cs` from the ROM: HISTO, the object scripts,
+  the walk tables, ANATAB, the font width bytes, the twelve message strings and the four
+  score-post masks.
+- **The sequence is now title → STORYLINE MOVIE → the §94 demo game → title** (the
+  arcade's FAMPAG/SPGSUB → HISTO → RUNIT). The movie is ~4785 ROM frames ≈ 96 s.
+- **The author's report — "the player animations on the demo are not quite right" — was
+  TWO defects, both caught by building it (notes §96.5/§96.6):** the generated `AnimTable`
+  was **12 bytes instead of 4** (the generator's writer never truncated a short table, so
+  ANATAB ran on into the following code and the hero cycled through arbitrary player
+  frames), and MONO's colour operands were used as raw **slot values** where they are
+  doubled-nibble **slot numbers** (`$BB` = slot 11) — an `IndexOutOfRangeException` in
+  `StorylineState.DrawObjects` that killed the process ~80 s into the movie.
+- **New art/figures:** the LARGE font's punctuation ('!' ',' '.' '-' at $3B-$40, plus a
+  corrected ':'), the font's own pen advance (width + 1 px, not texture width + 1), the
+  attract cruise missile (already extracted) and the four score-post masks; the story's
+  title band uses the ROM's own row 36 (`$36,$24` is column 54, ROW 36 — §94.1 read the
+  column as the row), which is why it survives the movie's clear-at-row-48.
+- **Gates:** 0 warnings, **284 tests, 0 failed, 1 skipped** (+6), smoke OK,
+  `verify-playfield.py` PASS, `verify-fonts.py` PASS (82), `verify-attract.py` PASS — now
+  title → story → (fire) → title, with `--full` adding the demo phase.
+- **Needs your eye:** the movie end to end (it is 96 s — start a build, wait 12 s, watch),
+  the hero's walk, and whether the title screen should also move to the ROM's row 36
+  (§96.3 flags it; that screen was left exactly as you signed it off).
 
 ### Session 5 (2026-09-17, night) — THE TITLE SCREEN AND THE ATTRACT DEMO (notes §94)
 

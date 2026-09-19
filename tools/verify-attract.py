@@ -51,11 +51,16 @@ INSET_FRACTION = 0.14
 PIXEL_STEP = 2
 # Title interior: two large-font lines + three men + the score block.
 TITLE_MIN_LIT = 150
+# Storyline interior: the ROM's story text crawl is a dense block of large-font
+# glyphs — far MORE lit than the title screen's two lines.
+STORY_MIN_LIT = 4000
 # Demo interior: the player plus the wave's robots.
 DEMO_MIN_LIT = 200
 MAX_INTERIOR_FRACTION = 0.5
 # The C# side reads TitleIdleSeconds from GameplayConstants; keep them in sync.
 TITLE_IDLE_SECONDS = 12
+# The ROM's HISTO script is ~4785 frames at 50 Hz (~96 s); allow slack.
+MOVIE_SECONDS = 100
 
 
 def repo_root() -> str:
@@ -178,6 +183,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exe", default=default_exe())
     parser.add_argument("--keep", action="store_true", help="do not kill the game")
+    parser.add_argument("--full", action="store_true",
+                        help="also wait out the movie and check the attract demo (~2.5 min total)")
     args = parser.parse_args()
 
     if not os.path.exists(args.exe):
@@ -220,25 +227,44 @@ def main() -> int:
                 return 1
             print("PASS: title screen has content")
 
-            # ---- Phase 2: the attract demo ----------------------------------
-            print(f"sitting out the {TITLE_IDLE_SECONDS}s idle timeout for the attract demo...")
-            time.sleep(TITLE_IDLE_SECONDS + 3.0)
-            demo = ImageGrab.grab(bbox=(left, top, right, bottom)).convert("RGB")
-            demo.save("attract-demo.png")
-            lit, total, fraction = lit_samples(demo)
-            print(f"demo interior: {lit} lit samples of {total} "
-                  f"({100.0 * fraction:.3f}%)  [saved attract-demo.png]")
-            if lit < DEMO_MIN_LIT:
-                print(f"FAIL: demo interior has no wave content (< {DEMO_MIN_LIT} lit "
-                      "samples) — the attract demo never took over")
+            # ---- Phase 2: the storyline movie ---------------------------------
+            print(f"sitting out the {TITLE_IDLE_SECONDS}s idle timeout for the attract movie...")
+            time.sleep(TITLE_IDLE_SECONDS + 10.0)
+            story = ImageGrab.grab(bbox=(left, top, right, bottom)).convert("RGB")
+            story.save("attract-story.png")
+            lit, total, fraction = lit_samples(story)
+            print(f"story interior: {lit} lit samples of {total} "
+                  f"({100.0 * fraction:.3f}%)  [saved attract-story.png]")
+            if lit < STORY_MIN_LIT:
+                print(f"FAIL: story interior has too little content (< {STORY_MIN_LIT} lit "
+                      "samples) — the attract movie never took over")
                 return 1
             if fraction > MAX_INTERIOR_FRACTION:
-                print(f"FAIL: demo interior is {100.0 * fraction:.1f}% lit — the capture "
+                print(f"FAIL: story interior is {100.0 * fraction:.1f}% lit — the capture "
                       "is not the game window (something in front of it?)")
                 return 1
-            print("PASS: the attract demo is playing")
+            print("PASS: the attract movie is playing")
 
-            # ---- Phase 3: a human at the cabinet takes the machine back ------
+            # ---- Phase 3 (--full): the demo game follows the movie -----------
+            if args.full:
+                print(f"waiting out the movie ({MOVIE_SECONDS}s) for the attract demo...")
+                time.sleep(MOVIE_SECONDS)
+                demo = ImageGrab.grab(bbox=(left, top, right, bottom)).convert("RGB")
+                demo.save("attract-demo.png")
+                lit, total, fraction = lit_samples(demo)
+                print(f"demo interior: {lit} lit samples of {total} "
+                      f"({100.0 * fraction:.3f}%)  [saved attract-demo.png]")
+                if lit < DEMO_MIN_LIT:
+                    print(f"FAIL: demo interior has no wave content (< {DEMO_MIN_LIT} lit "
+                          "samples) — the attract demo never took over")
+                    return 1
+                if fraction > MAX_INTERIOR_FRACTION:
+                    print(f"FAIL: demo interior is {100.0 * fraction:.1f}% lit — the capture "
+                          "is not the game window (something in front of it?)")
+                    return 1
+                print("PASS: the attract demo is playing")
+
+            # ---- Phase 4: a human at the cabinet takes the machine back ------
             press_space(hwnd)
             time.sleep(1.0)
             back = ImageGrab.grab(bbox=(left, top, right, bottom)).convert("RGB")
@@ -252,7 +278,8 @@ def main() -> int:
                 return 1
             print("PASS: fire during attract returns to the title screen")
 
-        print("PASS: attract mode (title -> demo -> title) works")
+        suffix = " (title -> story" + (" -> demo" if args.full else "") + " -> title)"
+        print("PASS: attract mode" + suffix + " works")
         return 0
     finally:
         if not args.keep:

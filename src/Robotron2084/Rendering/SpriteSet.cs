@@ -120,6 +120,21 @@ public sealed class SpriteSet
     public Texture2D TankShell { get; }
 
     /// <summary>
+    /// The attract movie's CRUISE MISSILE — ROM `CRUSB` ($86BA, the 9x2 picture
+    /// the movie's own CRUSM descriptor points at; notes §95.6). The playfield's
+    /// cruise missile is a different picture (<see cref="MissileSmallFrames"/>).
+    /// </summary>
+    public Texture2D AttractCruise { get; }
+
+    /// <summary>
+    /// The attract movie's four SCORE POSTS — ROM `POSTS` images 12, 0, 4 and 8
+    /// (notes §95.6): the main post and the three that fork off it in the POSTER
+    /// script. They are WHITE masks because the movie only ever draws them SOLID,
+    /// through MONO's colour pair.
+    /// </summary>
+    public Texture2D[] PostFrames { get; }
+
+    /// <summary>
     /// Arcade font glyphs, extracted from the ROM (notes §38; offsets from
     /// the author's sprite editor): index 0..9 = '0'..'9', 10..35 = 'A'..'Z',
     /// then '(', ')', and (large only) ':' and 'arrowleft'. The LARGE font is
@@ -203,9 +218,17 @@ public sealed class SpriteSet
         LaserDiagonalMain = factory.Create(6, 6, PixelArtFactory.BuildLaserDiagonalMainPattern(Color.White));
         LaserDiagonalAnti = factory.Create(6, 6, PixelArtFactory.BuildLaserDiagonalAntiPattern(Color.White));
         TankShell = content.Load<Texture2D>("Sprites/TankShell");
+        AttractCruise = content.Load<Texture2D>("Sprites/AttractCruise");
+        PostFrames =
+        [
+            content.Load<Texture2D>("Sprites/AttractPost_1"),
+            content.Load<Texture2D>("Sprites/AttractPost_2"),
+            content.Load<Texture2D>("Sprites/AttractPost_3"),
+            content.Load<Texture2D>("Sprites/AttractPost_4"),
+        ];
         WallPixel = factory.CreateSolid(1, 1, Color.White);
         MiniMan = BuildMiniMan(factory);
-        FontLarge = LoadGlyphs(content, "Sprites/Font_L", 40);
+        FontLarge = LoadGlyphs(content, "Sprites/Font_L", GlyphSuffixes.Length);
         FontSmall = LoadGlyphs(content, "Sprites/Font_S", 38);
     }
 
@@ -266,9 +289,13 @@ public sealed class SpriteSet
     }
 
     /// <summary>
-    /// Font glyph file-name suffixes in ROM order (notes §38): '0'..'9',
+    /// Font glyph file-name suffixes in ROM order (notes §38, §96): '0'..'9',
     /// 'A'..'Z', '(', ')', ':' (the large font has the colon; the small
-    /// font stops after the parens).
+    /// font stops after the parens), then the LARGE font's punctuation —
+    /// '!', ',', '.', '-' — which the ROM's own table carries between '9' and
+    /// 'A' and the story movie's text crawl prints. The punctuation is APPENDED
+    /// so every existing index (and every caller's expectation of it) is
+    /// unchanged.
     /// </summary>
     private static readonly string[] GlyphSuffixes =
     [
@@ -276,6 +303,7 @@ public sealed class SpriteSet
         "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
         "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
         "(", ")", "colon", "arrowleft",
+        "exclaim", "comma", "period", "hyphen",
     ];
 
     private static Texture2D[] LoadGlyphs(ContentManager content, string prefix, int count)
@@ -458,9 +486,10 @@ public sealed class SpriteSet
     /// <summary>
     /// Index into <see cref="FontSmall"/> (or <see cref="FontLarge"/>) for an
     /// ASCII character, or -1 for one the font has no glyph for. The ROM indexes
-    /// its font tables by (ASCII - $30) and substitutes the 1-px ':' glyph for a
+    /// its font tables by (ASCII - $30) and substitutes its blank glyph for a
     /// space, so the table order is '0'-'9', 'A'-'Z', then '(' ')' (':' and the
-    /// arrow exist in the large font only).
+    /// arrow exist in the large font only), then the LARGE font's punctuation
+    /// '!' ',' '.' '-' (notes §96 — indices 40-43, appended so nothing moves).
     /// </summary>
     public static int GlyphIndex(char c) => c switch
     {
@@ -469,6 +498,10 @@ public sealed class SpriteSet
         '(' => 36,
         ')' => 37,
         ':' => 38,
+        '!' => 40,
+        ',' => 41,
+        '.' => 42,
+        '-' => 43,
         _ => -1,
     };
 

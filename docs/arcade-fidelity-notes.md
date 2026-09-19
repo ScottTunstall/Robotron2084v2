@@ -7620,3 +7620,139 @@ FAMMM = `COLOR $AA, CURSAB ($25,$84), "SAVE THE LAST HUMAN FAMILY"`.
   PSHAKE, $868D BRAING, $86A4 CRUSER): now fully parsed and recorded in 95.5 — nothing
   left to resolve there. (Corrected opcode table for any future re-parsing: INCIM = 0
   operands; LFIRE/RFIRE = 2 operands (delay, count).)
+## 96. THE ATTRACT MOVIE, BUILT — and the four defects it flushed out (2026-09-19)
+
+**Author: "I want you to do the intro screen. ROBOTRON 2084, INSPIRED BY HIS NEVER
+ENDING QUEST FOR PROGRESS (etc.) — make it arcade faithful."** §95 was the decode
+(B28); this section is the implementation, and — as usual — building it found four
+things that reading it had not.
+
+### 96.1 What shipped
+
+- **`tools/extract-attract-scripts.py`** generates **`Level/Attract/AttractMovieData.cs`**
+  (never hand-edited): the page script HISTO ($7FA3, 1044 B), the object-script block
+  ($83B7, 982 B, addressed by `ScriptBase`), HUMANA/HLKANA ($03CF/$01CC, 52 B each),
+  ANATAB ($7DEF, 4 B), the LARGE font's 47 width bytes ($EC34 → each glyph's width), the
+  twelve message strings (the ROM's pointer table at $6377, numbers 115-126), and the
+  four score-post mask PNGs (see 96.4).
+- **`Level/Attract/AttractPageMachine`** is SPWAKE ($79DD): a byte < 10 is an action
+  (CURSAB/CLEARM/NEWLIN/SCRPT/SNOOZE/MESS/DONE/COLOR/GRUNTS/DONE2), ≥ $5F is a sleep of
+  that many frames, anything else is a LARGE-font character printed at `NAP 3`. It builds
+  a TEXT LAYER (cells of (x, y, char, slot)) because the ROM blits straight to the screen;
+  CLEARM/BLKCLR delete the cells inside the cleared rectangle.
+- **`Level/Attract/AttractObjectMachine`** is the object level ($7B58): all 28 opcodes,
+  each object a `MovieObject` (position in 1/256 columns / 1/256 rows = the ROM's
+  OX16/OY16, velocity = OXV/OYV, IMAG, on/off the list) driven by one or more
+  `MovieProcess` tasks (GHOST/FORK). Velocity is integrated once per ROM frame for every
+  object ON the list — MONO's object is off it (HIB), which is exactly why MONOP moves its
+  own object.
+- **`Level/Attract/AttractMovie`** runs both on the ROM's frame clock (the §52/§93
+  exact-sixths accumulator: +5 a tick, a frame every 6).
+- **`States/StorylineState`** draws it: the title's solid $CC wall, the HUD, the title
+  string 128, the objects, the explosions (the port's own `Explosion` engine fed the dead
+  object's picture and `Direction8.Left` — EXPP sets `LASDIR = $FF00`, a pure horizontal
+  shot, which §69's dispatch turns into the ROW-splitting fan), then the text layer and the
+  score-row name popups.
+- **The sequence**: title (12 s idle) → **storyline movie** → the §94 phony-player demo →
+  title. `TitleScreenState` transitions into `StorylineState`; DONE2 hands over to
+  `AttractState`.
+
+### 96.2 The LARGE font's pen advance, and the punctuation the port was missing
+
+`BLIT_LARGE_CHARACTER` ($6023) advances the pen by **(width + 1) pixels**: `LDA ,Y / INCA
+/ CLRB / LSRA / LEAX D,X` shifts A only (an 8-bit shift), so `D` is `(width+1)/2`
+**columns** ($0100 per column) and the carry toggles the odd-pixel shift flag — the
+effective pen step is `width + 1` px, not "texture width + 1". The `FontWidths` table in
+the generated data is what the movie uses, so its line breaks land where the ROM's do.
+
+The ROM's font table ($EC34, indexed by `charCode - $30`) also carries **punctuation the
+port never extracted**: $3A space (3 px), $3B '!', $3C ',', $3D '.', $3E a solid 10x6
+block, $3F ':', $40 '-'. Without them the intro printed blanks for every comma, period and
+colon. They are now `Font_L_exclaim/comma/period/hyphen.png` plus a **corrected
+`Font_L_colon`** (the old entry pointed at the table's $5D slot — a 2x5 fragment — instead
+of $3F), appended at `GlyphIndex` 40-43 so nothing that already existed moved. Gate 5 now
+checks **82** masters.
+
+### 96.3 The title band: the ROM's row 36 (and what §94.1 misread)
+
+`SPGSUB` (the block every attract screen starts with) prints TITLEM at the cursor
+**($36, $24) = column 54, row 36** — and the page script's CLEARM only clears from **row
+48** down, so "ROBOTRON 2084" stays up while the story text scrolls under it. §94.1 read
+that 54 as the ROW (it is the column), which is why the port's title screen draws it at
+`ArcadeY(54)` — below the movie's clear line, where it would be erased. The story band
+therefore draws string 128 at the ROM's own `StoryTitleRow = 36` (centred — the port's
+convention); the title screen keeps its own placement, untouched, so nothing already signed
+off moved. **Flagged for the author:** if the title screen should also use row 36 (and
+FAMMM's own row $84), that is a separate, visible change.
+
+### 96.4 Three picture orders are not address order, and the POSTS table
+
+The port's sprite PNGs are stored in ROM-ADDRESS order, and for most descriptors the ROM's
+picture table is that same order — but not for three (`MovieArtTextures`):
+- **hulk** ($0CF9): hulk1,2,3,7,8,9,4,5,6 — its LEFT block is files 1-3, its RIGHT 7-9 and
+  its DOWN/UP 4-6 (which is why the playfield's `Hulk` walks 6,7,8 for right);
+- **enforcer** ($18D2): starts at $1921 (Enforcer_2, the first GROW picture) and ends at
+  $18EA (Enforcer_1, the full one the grow-up finishes on);
+- **grunt** ($4063): $4073, $40B4, $4073 — ROM image 2 IS image 0, so the movie's `SETIM 2`
+  draws Grunt_1 (the port ships a third distinct grunt picture at $40F5, which the movie's
+  table does not use).
+
+**POSTS** ($7E8F, 36 images, "4 IMAGES EACH POST, 4 BYTES EACH") has its table at **$3B05**
+with 4-byte records. Only the records the POSTER script actually selects are well-formed —
+images **12** (the main post), **0**, **4** and **8** (the three that fork off it) — and
+each is `(widthBytes=5, height=9, data)`, with the four data blobs tiling $3B95..$3C49
+contiguously, which is what confirms the reading. Those four are extracted as
+`AttractPost_1..4.png` (white masks: the movie draws them SOLID through MONO's colour
+pair). **Open:** the records between each pair of real ones are not referenced by any
+script and their layout is not resolved.
+
+### 96.5 THE BUG the author caught: "the player animations … are not quite right"
+
+The generated `AnimTable` had **12 bytes instead of 4**. The generator's byte-array writer
+sliced `rom[start+i : start+i+12]` and never truncated to the requested length, so ANATAB
+came out as `00 01 00 02 5F 20 0A C6 0D 20 06 C6` — the four real bytes followed by the
+first eight bytes of the code after it. `AnimTable.Length` was therefore 12, `WalkCycle`
+cycled 0-11, and the BR* walker set picture numbers like 95, 32, 10, 198, 13 — drawn as
+`PlayerFrames[index % 12]`, i.e. **arbitrary player frames**, mostly the wrong direction.
+The cycle is now `0,1,0,2` on the direction's base (0/3/6/9) exactly as BANA2 has it, and
+`AttractMovieTests` asserts both the in-range picture and the `0,1,0,2` sequence so a bad
+regeneration cannot come back quietly. (The same padding made the 52-byte HUMANA/HLKANA
+arrays 60 bytes; harmless there — the wrap keeps the index inside 0-51 — but wrong, now
+exact.)
+
+### 96.6 THE CRASH: MONO's colour operands are palette SLOTS, not slot values
+
+`MONO $BB,$BB,56,1` passes **doubled-nibble palette values** ($BB = slot 11, $AA = 10,
+$DD = 13, $FF = 15, 0 = "no box") — the same encoding as the page script's `COLOR`, which
+the page machine already divided by 16 and the object machine did not. `GamePalette.Color
+(221)` then threw `IndexOutOfRangeException` out of `StorylineState.DrawObjects` and killed
+the process mid-movie (≈80 s in, in the brain scene). Both colours are now `>> 4`. This was
+the other half of the author's report: the build they watched died part-way through.
+
+### 96.7 The message strings, verified
+
+The MESS number indexes the ROM's pointer table at **$6377** (index 0 = 115 MMOM), and the
+twelve strings 115-126 are decoded straight out of the ROM by the generator: MOMMY, DADDY,
+MIKEY, "GRUNT - 100", "INDESTRUCTABLE HULK", "SPHEREOID - 1000 QUARK - 1000", "ENFORCER -
+150   TANK - 200", "BRAIN - 500     CRUISE MISSILE - 25", COINMF, "PROG - 100", EXTMES,
+and 126 = the empty NULMES that clears the row. §95.8's "119/122/126 unresolved" is closed:
+119 is the HULK text, 122 the BRAIN text, 126 the empty string.
+
+### 96.8 Open items
+
+- **PDEAD** (opcode 27) is implemented as HIB + end-of-process; the ROM then calls
+  **PKPRCV**, which is not decoded, so the score posts vanish instead of playing whatever it
+  does. Not guessed.
+- **The POSTS table's spare records** (96.4).
+- **The title screen's own layout** (96.3) — currently untouched.
+- Everything §95.10 listed that this session did not need (the RUNIT/LOGORG loop, the CMOS
+  FANCY ATTRACT flag) is still open.
+
+### 96.9 Gates after this change
+
+0 warnings (Debug + Release), **284 tests, 0 failed, 1 skipped** (+6: movie-engine and
+page/object-machine cases), 12 s launch smoke OK, `verify-playfield.py` PASS,
+`verify-fonts.py` PASS (**82** glyphs), `verify-attract.py` PASS — and it now covers the
+movie: title → story band (≈8.7% of the interior lit, against the title's 1.8%) → fire →
+title, with `--full` (~2.5 min) adding "wait out the movie → the attract demo". The whole
+movie is ~4785 ROM frames ≈ **96 s**, so the demo starts ≈108 s after launch.

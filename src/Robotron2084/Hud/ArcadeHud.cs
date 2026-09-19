@@ -88,6 +88,35 @@ public static class ArcadeHud
     }
 
     /// <summary>
+    /// The ROM's title string (128, TITLEM: "ROBOTRON 2084") and its tagline
+    /// (129, FAMMM: "SAVE THE LAST HUMAN FAMILY"), both in the LARGE font in
+    /// slot $AA. The caller places them; the title screen and the attract
+    /// movie's story band each use their own rows (notes §94.1, §96.3).
+    /// </summary>
+    public static void DrawCenteredLargeText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int y, int slot)
+    {
+        int width = 0;
+        foreach (char character in text)
+        {
+            if (character == ' ')
+            {
+                width += ScreenSize.Scaled(GameplayConstants.HudSmallFontBlankAdvancePixels);
+                continue;
+            }
+
+            int index = SpriteSet.GlyphIndex(character);
+            if (index < 0 || index >= sprites.FontLarge.Length)
+            {
+                continue;
+            }
+
+            width += ScreenSize.Scaled(sprites.FontLarge[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+        }
+
+        sprites.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
+    }
+
+    /// <summary>
     /// ROM $DC13 → $6096: the score as seven large-font glyphs at the cursor, a
     /// drawn digit advancing 7 px and a suppressed leading zero 6 px.
     /// </summary>

@@ -10,6 +10,10 @@ public static class SpriteContentPaths
     public static readonly string[] All =
     [
         "Sprites/AttractCruise",
+        "Sprites/AttractPost_1",
+        "Sprites/AttractPost_2",
+        "Sprites/AttractPost_3",
+        "Sprites/AttractPost_4",
         "Sprites/Brain_1",
         "Sprites/Brain_10",
         "Sprites/Brain_11",
@@ -108,6 +112,10 @@ public static class SpriteContentPaths
         "Sprites/Font_L_Z",
         "Sprites/Font_L_arrowleft",
         "Sprites/Font_L_colon",
+        "Sprites/Font_L_comma",
+        "Sprites/Font_L_exclaim",
+        "Sprites/Font_L_hyphen",
+        "Sprites/Font_L_period",
         "Sprites/Font_S_(",
         "Sprites/Font_S_)",
         "Sprites/Font_S_0",

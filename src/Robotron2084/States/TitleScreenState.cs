@@ -125,12 +125,15 @@ public sealed class TitleScreenState : IGameState
             }
         }
 
-        // Idle long enough: the machine starts playing itself (notes §94.3).
+        // Idle long enough: the machine starts playing itself (notes §94.3) — and
+        // the arcade plays its STORY first: the ROM's FAMPAG/SPGSUB prints the
+        // title, then the page script runs HISTO, whose DONE2 hands over to the
+        // phony-player game (notes §95.1/§96).
         _idleElapsed += gameTime.ElapsedGameTime;
         if (_idleElapsed >= _idleDuration)
         {
             _idleElapsed = TimeSpan.Zero;
-            manager.TransitionTo(new AttractState(_sprites, _highScores, _input));
+            manager.TransitionTo(new StorylineState(_sprites, _highScores, _input, new Random()));
         }
     }
 

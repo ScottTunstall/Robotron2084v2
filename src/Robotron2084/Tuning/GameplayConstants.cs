@@ -491,6 +491,16 @@ public static class GameplayConstants
     // title, then the machine plays itself (CMOS "FANCY ATTRACT MODE" when on).
     public const int TitleWallSlot = 12; // ROM title screen: $79C8 LDA #$CC / STA $8F — the wall is solid slot 12
     public const int TitleIdleSeconds = 12; // port choice: how long the title sits before the demo takes over
+    public const int TitleLineOneRow = 54; // port title screen: string 128's row (the ROM's cursor is (54,36) — see notes §96.3)
+    public const int TitleLineTwoRowOffset = 14; // the tagline, 14 rows below the title
+    /// <summary>
+    /// ROM `SPGSUB` ($79AF) prints string 128 at the cursor (54, 36) — column 54,
+    /// row 36 — and every attract-movie screen keeps it: the page script's CLEARM
+    /// only clears from row 48 down, so the story text scrolls UNDER the title.
+    /// The movie's story band therefore uses the ROM's own row (notes §96.3); the
+    /// title screen keeps the port's own placement of the pair.
+    /// </summary>
+    public const int StoryTitleRow = 36;
     public const int DemoThreatDistanceSpecPixels = 60; // AI: flee a robot closer than this (arcade AI is OS-ROM-only, §94.3)
     public const int DemoFireRangeSpecPixels = 120; // AI: fire at the nearest robot within this
     public const int DemoWallClearanceSpecPixels = 24; // AI: steer away from a wall within this

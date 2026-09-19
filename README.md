@@ -49,6 +49,7 @@ The house rules, learned the hard way over ~90 documented decode rounds:
 | **Humans** | Mommy, Daddy and Mikey, walking their ROM cadence, rescued or lost for score — and converted into progs when a brain catches them |
 | **Effects** | The three-engine strip explosion (rows, columns, diagonal chevron), the wave-start materialisation ("appear"), the wave-complete colour-cycling **tunnel**, the death bursts, the player's own `PDTHV` flash-and-fade |
 | **Presentation** | The arcade HUD (score layout, blanked leading zeros, the mini-man spare lives, "<n> WAVE"), arcade font glyphs, 1- and 2-player alternating games with the ROM's turn-passing and "PLAYER n" announcement |
+| **Attract** | The arcade's whole attract sequence, driven by its own script: the title screen, then the **story movie** — the 2084 text crawl, the hero, the family and their name popups, the grunts, the hulk, the spheroid/tank/enforcer scene with a human reprogrammed into a prog, and the score posts (~96 s) — then the machine's phony-player demo game. Both script interpreters run the ROM's own bytes |
 | **Sound** | The ROM's priority sound sequencer ($D3C7/$D3E0) and decoded sound tables run for real — but the note→frequency map lives on the sound board, not in the CPU ROM, so the sink is a **stub beeper and is OFF by default** (`ROBOTRON2084_SOUND=1` to hear it) |
 
 **Deliberately absent:** self-test / adjustment / bookkeeping screens, coin counting,
@@ -59,7 +60,7 @@ similarly blocked on hardware knowledge.
 
 The interesting part of this project is not the code — it is the **decode log**. Every
 finding, every false start and every retraction lives in
-[`docs/arcade-fidelity-notes.md`](docs/arcade-fidelity-notes.md): **91 numbered
+[`docs/arcade-fidelity-notes.md`](docs/arcade-fidelity-notes.md): **96 numbered
 sections** of ROM forensics, most of them ending in "…and the previous section was
 wrong".
 
@@ -67,7 +68,7 @@ A few that cost real time, and what they taught:
 
 - **The font was mirrored inside every byte** (a nibble-order slip in the glyph
   extractor) while every test stayed green — hence `tools/verify-fonts.py`, which
-  re-decodes the ROM and compares all **78** font master PNGs pixel-for-pixel
+  re-decodes the ROM and compares all **82** font master PNGs pixel-for-pixel
 - **The prog's trail rendered as a black card.** Not a decode error at all: a pixel
   shader pass was being bound on the device by an earlier draw and outliving it, so
   the card fill ran in the previous silhouette's colour. (The same class of leak had

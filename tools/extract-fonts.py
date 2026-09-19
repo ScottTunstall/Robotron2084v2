@@ -61,13 +61,27 @@ LARGE = {
     "R": (61187, 3, 6), "S": (61206, 3, 6), "T": (61225, 3, 6),
     "U": (61244, 3, 6), "V": (61263, 3, 6), "W": (61282, 3, 6),
     "X": (61301, 3, 6), "Y": (61320, 3, 6), "Z": (61339, 3, 6),
-    "(": (61358, 2, 6), ")": (61371, 2, 6), ":": (61383, 1, 5),
+    "(": (61358, 2, 6), ")": (61371, 2, 6), ":": (60838, 2, 6),
     "arrowleft": (61403, 3, 6),
+    # The PUNCTUATION the ROM's own large-font table carries between '9' and 'A'
+    # (notes §96). BLIT_LARGE_CHARACTER indexes the table at $EC34 by
+    # (charCode - $30), so the ROM's codes are: $3A space, $3B '!', $3C ',',
+    # $3D '.', $3E a solid 10x6 block, $3F ':', $40 '-'. Each table entry is a
+    # pointer to a 1-byte WIDTH (in pixels) followed by 6 rows of
+    # ceil(width/2) bytes, and the port's offset below is the pointer + 1.
+    # The story movie's text crawl needs ',' '.' ':' '-' '!' — without them the
+    # intro screen printed blanks for every punctuation mark. (The old ':' entry
+    # pointed at the table's $5D slot instead, a 2x5 fragment; it is fixed here.)
+    "!": (60766, 2, 6),  # $3B — pointer $ED5D, width 2 px
+    ",": (60781, 2, 6),  # $3C — pointer $ED6C, width 2 px
+    ".": (60794, 2, 6),  # $3D — pointer $ED79, width 2 px
+    "-": (60851, 2, 6),  # $40 — pointer $EDB2, width 3 px
 }
 
 # char -> file name suffix (must match the existing PNG file names)
 NAME = {
     "(": "(", ")": ")", ":": "colon", "arrowleft": "arrowleft",
+    "!": "exclaim", ",": "comma", ".": "period", "-": "hyphen",
 }
 NAME.update({c: c for c in "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"})
 

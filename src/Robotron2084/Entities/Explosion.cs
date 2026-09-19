@@ -243,7 +243,12 @@ public sealed class Explosion : IEntity
 
     internal int Slope => _slope;
 
-    public void Update(GameTime gameTime, PlayField field)
+    /// <summary>
+    /// One ROM frame of the record's life. <paramref name="field"/> is unused —
+    /// the strips carry their own art and clipping — and is kept only for the
+    /// playfield's call shape; the attract movie's explosions pass nothing.
+    /// </summary>
+    public void Update(GameTime gameTime, PlayField? field = null)
     {
         if (LifeState != EntityLifeState.Alive)
         {
