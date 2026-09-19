@@ -732,17 +732,28 @@ C:\Users\scott\source\repos\WmsGfxSpriteRipper    Sean Riddle's Williams sprite 
    idle, driven by the labelled-placeholder `DemoPlayerInputSource` (the
    arcade's real AI is the OS ROM's ATRSW2 writer — undecodable from what we
    have), with wave clears through the tunnel and any human input back to the
-   title. **TWO OPEN QUESTIONS remain, parked in the
+   title. **The author playtested that build: "i expected a proper demo mode"** —
+   the arcade plays a SCRIPTED STORYLINE first, and notes §95 now decodes it
+   completely (build = handoff work table **B28**, pending): the story text
+   crawl with the hero, the family, 14 grunts, the hulk, the spheroid scene
+   with the brain reprogramming MUMMY, the score posts, then the phony game.
+   **TWO OPEN QUESTIONS remain, parked in the
    handoff's work table and detailed in notes §91.3:** (**A11**, needs a MAME measurement) the spheroid's drop-countdown re-arm is decremented again
    in the same body by the ROM, and a countdown that reaches 0 becomes `$FF` (a ~2-minute stall);
    (**A12**, needs a measurement) the escape's exit columns are the port's own mapping and
    interact with A9. The ROM's colour
    processes **are** modelled — `Rendering/PaletteAnimator.cs` drives slots 10-15, and §86
    suspends and resumes them while the tunnel's ramp owns the palette.
-1. **Author playtest (what shipped, all of it unplayed):** FIRST the new attract —
-   launch, watch the title screen ("ROBOTRON 2084" / "SAVE THE LAST HUMAN FAMILY",
-   `attract-title.png`), wait ~12 s and watch the machine play itself
-   (`attract-demo.png`), and confirm any key brings the title back. Then the rest:
+1. **BUILD THE STORYLINE MOVIE (B28, notes §95) — the author's call on the first
+   demo: "i expected a proper demo mode".** Follow §95.9: embed the HISTO and
+   object-script bytes verbatim from the ROM, write the two interpreters, render
+   the movie between the title's 12 s idle and the §94 demo game, extract the
+   missing sprites (POINTS/SKULLV/POSTS/SQUARE + verify CRUSM/YOU), resolve the
+   §95.10 open items as they come up, keep all six gates green. Then **the author
+   playtest**: watch the full movie (mummy, daddy, mikey, grunts, hulk, brain,
+   posts) and confirm it reads like the arcade. (The earlier playtest of the
+   partial attract is DONE: title OK, demo OK, but not "a proper demo mode".)
+   Then the rest:
    the tunnel (its bars,
    its 2-second pace, and the fact that it now runs over a colour-cycling ramp palette — the
    colours sweep through the wheel), the progs walking **twice as fast horizontally as the last

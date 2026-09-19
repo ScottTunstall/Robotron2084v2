@@ -7367,3 +7367,256 @@ the string table entry 129 at $6ECC is the same. The author remembered "PROTECT"
   "ROBOTRON 2084" logo bitmap. The port's title uses the large FONT for both
   lines (the ROM's string-128 path), which is the ROM's own large-font title
   text; the art logo and the script engine are a later phase.
+
+## 95. THE FULL ATTRACT MOVIE (the "storyline") — complete decode of the ROM's scripted demo (2026-09-17)
+
+**Author: "i expected a proper demo mode … do the full demo — bring on mummy, daddy etc."**
+The arcade's attract is NOT just "phony player plays a game". It is a **scripted movie**
+(the HISTO storyline: the story text crawl with the family, the 14 grunts, the hulk, the
+spheroid/enforcer/tank scene, the brain reprogramming a human into a prog, the score
+posts) followed by the phony-player game. §94 built only the phony-player part. This
+section is the COMPLETE decode of the movie so it can be implemented without
+re-deriving anything. **Source hierarchy: RRSCRIPT.ASM (the 1982 listing) is the GOSPEL
+for the engine's semantics; the R5 ROM bytes (verified image) are the data authority —
+and every script byte below was verified against the ROM, which matches the Gospel.**
+
+### 95.1 The machine flow (R5 addresses)
+
+- **$799D** = FAMPAG (title screen + the "dumb player" family walk): sets ATFLAG bit 8,
+  calls $79AF (GNCIDE/INT20V/SCRCLR/COLST/credits-process, STATUS&=$F3, CLR CURPLR,
+  **WALCOL=$CC**, TDISPV), prints string 128 (large) then string 129 (large), then loads
+  script **$83B2 (DUMPLR)** and runs the page interpreter.
+- **$79AF** = SPGSUB (the "clear and set up" block, shared).
+- **$79D6** = `LDX #$7FA3` — the main page entry: **HISTO, the storyline, starts at $7FA3.**
+- **$79DD–$7A07** = SPWAKE, the page-script interpreter (byte stream; ≤8 = action via
+  the jump table at **$7A08** = SCMTAB; ≥$5F = SLEEP that many frames; else printable
+  char → **$5F93 = BLIT_LARGE_CHARACTER** — the story text is the LARGE font — then
+  NAP 3 between chars).
+- **$7A08–$7A9C** = the SCMTAB action routines (CURSAP/CLRMP/NEWLNP/SCRPP/SLEPP/MESSP/
+  ENDP/COLORP/GRNTME/DONE2P — read the disassembly for the exact R5 behaviour).
+- **$7B0F (approx)** = GRPROC (the 14-grunt spawner; §94 mapped its surroundings).
+- **DONE2 (opcode 9)** at the end of a page script: `ATFLAG &= $7F; if 0 → RUNIT (the
+  phony-player game) else → HISTRY (the story)**. ACCHNG (the coin handler) increments
+  ATFLAG: first coin → FAMPAG (title + family walk), later coins → just counted. So
+  the arcade cycles: title → storyline movie → phony game → … (the exact RUNIT/LOGORG
+  loop and the CMOS "FANCY ATTRACT MODE" flag are OS-level — read $7A08–$7A9C when you
+  build the port's state machine).
+
+### 95.2 PAGE-SCRIPT opcodes (the SPAGE level — RRSCRIPT.ASM "SPAGE PROCESSOR")
+
+Byte < 9 → action; 9 = LASCOM/DONE2; ≥ $5F → SLEEP n; else → print char (large font,
+NAP 3 per char). Actions (SCMTAB order):
+- **0 CURSAB**: 2 bytes (X col, Y row) → text cursor.
+- **1 CLEARM**: byte = clear width; cursor → (LEFT=$14, TOP=$20); then byte = Y range;
+  BLKCLR colour $74 over (LEFT, TOP, width, yrange−$10) — the top $10 rows stay for
+  the title.
+- **2 NEWLIN**: cursor = (LEFT, Y+11).
+- **3 SCRPT**: 2-byte pointer → **OSTART**: start an OBJECT script (see 95.3).
+- **4 SNOOZE**: byte = SLEEP n frames.
+- **5 MESS**: byte = X offset, byte = message number → clear the old message area then
+  print the ROM string-table entry with WRD5V (SMALL font) at (X, row $D8=216).
+- **6 DONE**: end → OINIT/GNCIDE → LOGORG (the attract controller).
+- **7 COLOR**: byte = TEXCOL (text colour slot = high nibble: $AA→10, $DD→13, $FF→15,
+  $33→3, $55→5, $BB→11, $CC→12, $EE→14).
+- **8 GRUNTS**: start GRPROC — 14 grunts, one every NAP $10 frames, each spawned from a
+  random one of the four grunt scripts GS1–GS4 (R5: $84F5/$8517/$8540/$8567).
+- **9 DONE2**: as in 95.1.
+
+### 95.3 OBJECT-SCRIPT opcodes (the SCRIPT/SPROC level — RRSCRIPT.ASM "MNEMONICS")
+
+Per-object process; the object is a **descriptor** (95.6) + a position + an image number.
+- **1 SETOB** 2B ptr | **2 SETIM** 1B img | **3/4/5/6 MLEFT/MRIGHT/MDOWN/MUP** 1B steps
+  (steps run through the descriptor's walk table, 8 frames/step, animated) |
+  **7 SETPOS** 1B X, 1B Y (columns/rows) | **8 SETXV** 2B signed (1/256 col/frame) |
+  **9 SETYV** 2B | **10 CYCLE** 2B (frames per image, image count) | **11 REST** 1B
+  frames | **12 DIE** kill object+process | **13 EXP** kill + horizontal-laser strip
+  explosion (EXST) | **14 JUMP** 2B script address | **15 HIB** erase from screen+list |
+  **16 REBORN** restore to list (image resync) | **17 FORK** 2B ptr — start a NEW
+  object+process from that script | **18 LFIRE / 19 RFIRE** 2B (delay frames, count) —
+  fire `count` lasers left/right from the object (velocity ∓$280 = 0.97 col/frame);
+  the (delay,count) reading matches every Gospel comment (e.g. `RFIRE $B,$10` "SHOOT
+  THE 14 GRUNTS" × LOOPER 14) — VERIFY against the R5 action code when porting |
+  **20 LOOPER** 1B count + 2B label — repeat from the label | **21 GHOST** 2B ptr —
+  parallel process, own script pointer, SAME object | **22 SETRP** 2B signed (dx,dy)
+  relative move, no animation | **23 GDIE** kill process only | **24 INCIM** next
+  image (0 operands) | **25 MONO** 4B (box colour, object colour, time frames, special:
+  1 = brain-in-box) — hide the object, then each 3 frames move it by its velocity and
+  redraw it in a coloured box (this is the brain's reprogramming square) |
+  **26 RPROG** random-walk the object's Y for 64 frames then die (the "shake") |
+  **27 PDEAD** hide + PKPRCV (check the R5 disassembly — used to retire the score
+  posts).
+
+Walk-table semantics (ANAHUM, the human walker at $7DF3–$7DFE in R5): each direction
+is a 12-byte cycle of 3-byte entries `(dx, dy, image×4)` (+1 guard byte); the walker
+NAPs 8 frames per step, applies (dx,dy) to the 16.16 position (dx is the low byte
+sign-extended, dy the high), and sets image = byte>>2 with wrap at the descriptor's
+image count. (The 1982 source's `HUMANA RMB 2` is a RESERVED placeholder — the tables
+live in the ROM, at 95.7.)
+
+### 95.4 THE STORYLINE (HISTO @ $7FA3 in the R5 ROM — verified byte-for-byte vs Gospel)
+
+Scene order (text is verbatim; colours are slots; sleeps are ROM frames @50 Hz):
+1. **Prologue** (clear from row 56, colour 13): "INSPIRED BY HIS NEVER ENDING / QUEST
+   FOR PROGRESS, / IN **2084** [slot10] **MAN PERFECTS THE ROBOTRONS**[slot10]: [sleep
+   32, newline×2, colour 15] A ROBOT SPECIES SO ADVANCED THAT / MAN IS INFERIOR TO HIS
+   OWN CREATION. [32, colour 13] GUIDED BY THEIR INFALLIBLE LOGIC, / THE **ROBOTRONS**
+   CONCLUDE: [48, colour 10] THE HUMAN RACE IS INEFFICIENT, / AND THEREFORE MUST BE
+   DESTROYED. [112]
+2. **The player** (new clear, colour 13; **SCRPT PLAYRR** — the hero walks in and
+   shoots): "YOU ARE THE LAST HOPE OF MANKIND. [96, colour 15] DUE TO A GENETIC
+   ENGINEERING ERROR, / YOU POSSESS SUPERHUMAN POWERS. [colour 13] YOUR MISSION IS TO
+   **STOP THE ROBOTRONS**[10], / AND **SAVE THE LAST HUMAN FAMILY**[10]:
+   **SCRPT FAMSCR**" — then names pop up in the score row: "MOMMY" (X28), 88 fr,
+   "DADDY" (X24), 88 fr, "MIKEY" (X20), 112 fr, clear.
+3. **The grunts** (clear, colour 3, **GRUNTS** = 14 walk in from the right): "THE
+   FORCE OF GROUND ROVING / UNIT NETWORK TERMINATOR (GRUNT[10] ROBOTRONS) [colour 3]
+   SEEK TO / DESTROY YOU." [255]
+4. **The hulk** (clear, colour 5, **SCRPT SCHULK** — walks in from the left, bounces):
+   "THE [10] HULK[10] HULK ROBOTRONS [colour 5] SEEK OUT / AND ELIMINATE THE LAST
+   HUMAN FAMILY." [249, name clear, 128]
+5. **Spheroids & quarks** (clear row 112, colour 13, **SCRPT SCSC**): a spheroid (CIRC)
+   drifts in from the right while its products appear — a SQUARE box, a TANKG→TANK
+   that rolls right and EXPLODES, an ENF enforcer that walks and is SHOT (EXP), and
+   **DADD2: MUMMY is reprogrammed** — the BRAIN walks in with its CRUSER missile,
+   enters the MONO reprogramming box (brain-in-box), the human shakes (RPROG) and
+   becomes a PROG (PShADOW clones) that walks off right at $2/256 col/frame. Text:
+   "THE [10] SPHEREOID[10] AND QUARKS [13] ARE PROGRAMMED TO MANUFACTURE / **ENFORCER
+   AND TANK ROBOTRONS**[10]." [160, name clear]
+6. **The brain** (clear, colour 15): "BEWARE OF THE INGENIOUS / [10] BRAIN[10] BRAIN
+   ROBOTRONS [15] THAT POSSESS / THE POWER TO REPROGRAM / HUMANS INTO SINISTER
+   **PROGS**[10]. [115, "PROG" name, 128, **SCRPT POSTER** — the four score posts rise
+   in coloured boxes (slots 15/10/12/13) and PDEAD]"
+7. **The electrodes** (clear row 100, colour 13): "AS YOU STRUGGLE TO SAVE / HUMANITY,
+   BE SURE TO AVOID / **ELECTRODES**[10] IN YOUR PATH." [208] [173] **DONE** → the
+   phony-player game.
+
+**DUMPLR @ $83B2** (the title's "dumb player", runs after the title prints):
+`SCRPT $83B8, SLEEP 255, DONE2` — $83B8 is the first object script. Its first byte is
+the stale FDB $1587 (HELPME's OLD address — zero in R5; the real HELPME data is at
+$8715, see 95.5).
+
+### 95.5 Object scripts in the R5 ROM (all verified by parsing; addresses are the
+FDB targets of the HISTO SCRPT opcodes)
+
+| label | R5 addr | what it is (Gospel name) |
+|---|---|---|
+| PLAYRR | $83B7 | the hero: SETOB YOU($7E97), pos (24,160), GHOST PSHOOT, walks right 96, pauses, left 80, right 104, looks around (SETIM 0/3/6 = walk-cycle facing images), descends, fires, ends MRIGHT 128 + **EXP** (explodes into an electrode) |
+| PSHOOT | $840F | the hero's gun: bursts of RFIRE/LFIRE (delay,count) × LOOPER — right, left, 14× right "SHOOT THE 14 GRUNTS", left ×10 "HIT THE MUTHA" (the hulk), 3× right, left ×2 barrages, 3× right "SHOOT ELECTRODES", GDIE |
+| FAMSCR | $8477 | MUMMY($7E41) at (24,160), FORK DADDP($84AD) + FORK MIKEP($84C6), MRIGHT 40, then a POINTS score-popup ($7EB5) follows her; then DADDY's turn: appears, REST 64, MRIGHT 48, MUP 16, MRIGHT 16, MDOWN 19, MLEFT 18 — then **MOMDED**: HIB, SETOB SKULLV($7EB9), REBORN, REST 128, DIE (Mummy is killed — the skull stays 2.5 s) |
+| DADDP | $84AD | DADDY($7E53): hidden 112 fr, walks right 30, then a POINTS popup |
+| MIKEP | $84C6 | MIKEY($7E61): hidden 216 fr, right 21, POINTS popup; then REBORN at (24,160), REST 192, the "VOODOO" steps (right4, down8, right16, down24, left1), **JUMP MOMDED** (Mikey dies too) |
+| GS1..GS4 | $84F5/$8517/$8540/$8567 | the four grunt personalities: SETOB GRUNT($7E8B), pos (134,133)/(136,144)/(136,188)/(136,177), each a LOOPER-2 loop of REST + SETRP (small left/down steps) + SETIM (3-image trot); then **GSSS1** ($858B): final steps and **EXP** (shot by the hero) |
+| SCHULK | $85A1 | HULK($7E6F) at (16,192), GHOST HBOUNC($85B1: SETRP −2,0 ×10 = the bounce), MRIGHT 28, MUP 16, MRIGHT 54, DIE |
+| SCSC | $85BD | CIRC($7EA9) at (136,135), FORK SQP($85D6: SQUARE($7EA5) at (10,180), X-vel +$C0/256, CYCLE 2×96 fr, DIE) + FORK TKP($85E3: TANKG($7EAD) appears, 3× (REST 20, SETRP 0,−1, INCIM), becomes TANK($7EB1), rolls right +$80/256, CYCLE 2×112, **EXP**) + FORK ENP($8603: ENF($7E93) at (128,135) appears, 5× INCIM, left −$60/256, REST 48, **EXP**) + FORK DADD2($861A) |
+| DADD2 | $861A | the reprogramming: MUMMY($7E41) at (10,180) hidden 192 fr, walks right 32, FORK BRAING @ $868D (BRAIN $7E7D at (10,160): MRIGHT 16, FORK CRUSER @ $86A4 (CRUSM descriptor $86B0, missile at (26,164), X-vel +$60/256, 64 fr, DIE), MDOWN 10, MRIGHT 26, **MONO $BB,$BB,56,1** = the brain box, MRIGHT 11, **EXP**), the human: MDOWN 10, MLEFT 8, MRIGHT 26, SETRP 3,−2, REST 2, GHOST PSHAKE @ $868C (a single RPROG = the shake), **MONO $AA,$BB,40,0**, FORK PSHADO @ $8648 (three MOMMY clones images 3/1/2 at (49,188) walking off right at +$2/256 in $EE boxes, DIE), SETXV +$2/256, **MONO $0,$AA,44,0**, DIE (now a prog) |
+| POSTER | $86CC | the score posts: POSTS($7E8F, 36 images) at (134,193) image 12, hidden 72 fr, then FORK POST1–3 at (104/114/124, 193) images 0/4/8 each MONO (box colour 0, post colour slot 15/10/12, ~141 fr) and the main post MONO slot 13 — each ends **PDEAD** |
+| HELPME | $8715 | the title's dumb-player family: MUMMY at (80,104) + FORK DUMYOU (the hero walks LEFT 128 from (104,106)) + FORK DAD1/MIK1/MOM2/MIK2 — the family files past, each leaving a POINTS popup (images 0-4), REST 80, DIE. (R5's DUMPLR FDB $1587 is STALE — points to zeros; the live data is here.) |
+
+FORK targets inside DADD2/BRAING (PSHAKE/PSHADO/PSHAD1/PSHAD2/CRUSER) are at
+$8640–$86CC; parse them with the corrected opcode table (INCIM = 0 operands;
+LFIRE/RFIRE = 2 operands).
+
+### 95.6 Object descriptors (R5, all verified against the scripts' FDB pointers)
+
+Format: FDB base-image-ptr, FCB n-images, FCB bytes-per-image, [FDB walk-L, FDB walk-R,
+FDB walk-D, FDB walk-U, FDB walk-table-ptr] for the walking family (14-byte total).
+
+| desc | R5 addr | base | imgs | bpp | notes |
+|---|---|---|---|---|---|
+| MOMMY | $7E41 | $000E | 12 | 4 | walk $7DF3/$7DF6/$7DFA/$7DFE, table $0018 |
+| CRUSM | $86B0 (inline after CRUSER) | art at **$86BA** (18 B: `DD×8 DA A0 DD×6 DA A0`) | 1 | 4 | the cruise missile |
+| DADDY | $7E53 | $0010 | 12 | 4 | table $0018 |
+| MIKEY | $7E61 | $0012 | 12 | 4 | table $0018 |
+| HULK | $7E6F | $0014 | 12 | 4 | table $0016 |
+| BRAIN | $7E7D | $1AC3 | 12 | 4 | BRL/R/D/U $7D76/$7D7F/$7D89/$7D92 (02,08) |
+| GRUNT | $7E8B | $3891 | 3 | 4 | |
+| POSTS | $7E8F | $3893 | 36 | 4 | the score-value poster |
+| ENF | $7E93 | $1148 | 6 | 4 | |
+| YOU | $7E97 | $26D5 | 12 | 4 | BRL/R/D/U $7D76/$7D7F/$7D89/$7D92 (01,02) |
+| SQUARE | $7EA5 | $4B06 | 9 | 4 | the reprogramming box |
+| CIRC | $7EA9 | $1146 | 8 | 4 | |
+| TANKG | $7EAD | $4B08 | 5 | 6 | |
+| TANK | $7EB1 | $4B0A | 4 | 4 | |
+| POINTS | $7EB5 | $000C | 5 | 4 | the score-popup text ("1000" etc.) |
+| SKULLV | $7EB9 | $001A | 1 | 4 | the skull |
+
+Sprite data: 1 byte = 2 pixels (bpp/2 bytes per row), base addresses above, in
+`ref/robotron64k.bin`. Most already exist in the port (grunt, enforcer, spheroid,
+tank, brain, hulk and the family walk art are all already extracted). NEW to extract:
+POINTS ($000C), SKULLV ($001A), POSTS ($3893), SQUARE ($4B06), the CRUSER missile
+(18 art bytes at $86BA — compare with the port's existing cruise-missile art),
+YOU ($26D5 — compare with the port's player art; the storyline hero is the same
+sprite as the playable one). (The $7E4F descriptor — base $1ACB, 1 img, 4bpp — is
+NOT referenced by any movie script; do not use it.)
+
+### 95.7 The walk tables (the animated family steps) — extracted from the ROM
+
+The 14-byte human descriptors point at **$0018**, which is itself a 16-bit pointer to
+**$03CF** (HUMANA); the hulk's **$0016** → **$01CC** (HLKANA). Each table = 4
+directions × (4 × 3-byte entries + 1 guard byte); entry = (dx, dy, image×4); 8 frames
+per step. (1982 source: `HUMANA RMB 2` — the source never shipped the data, the ROM
+does.)
+
+```
+HUMANA @ $03CF:  00FE00 04FF00 00FE00 08FF00 | 0C0200 100100 0C0200 140100 FF
+                         | 180001 1C0001 180001 200001 FF | 2400FF 2800FF 2400FF 2C00FF FF
+HLKANA @ $01CC:  00FD00 04FC00 00FD00 08FC00 | 0C0300 100400 0C0300 140400 FF
+                         | 180002 1C0002 180002 200002 FF | 1800FE 1C00FE 1800FE 2000FE FF
+                     (segments are 13 bytes: L @+0, R @+13, D @+26, U @+39)
+```
+
+### 95.8 Message strings (the MESS name popups, small font, score row $D8)
+
+String-table indices (RRFRED.ASM): 115=MOMMY (`PMOM` 'MOMMY'), 116=DADDY, 117=MIKEY,
+118=GRUNT (in RRSCRIPT), 119=HULK, 120=SPHEREOID ('SPHEREOID '), 121=ENFORCER
+('ENFORCER '), 122=BRAIN, 124=PROG ('PROG '), 126=NULMES (empty), 128=TITLEM,
+129=FAMMM. 123 and 125 are unreferenced by the movie — dump the ROM string table to
+confirm exact text/lengths of 119/122/126 before printing them. TITLEM/FAMMM are page
+SCRIPTS (RRET.ASM $79CF/$79A5 paths): TITLE = `COLOR $AA, CURSAB ($36,$24), "ROBOTRON:2084"`;
+FAMMM = `COLOR $AA, CURSAB ($25,$84), "SAVE THE LAST HUMAN FAMILY"`.
+
+### 95.9 BUILD PLAN for the port (what the implementing session does)
+
+1. **Embed the data, don't retype it.** Dump HISTO ($7FA3–$83B1) and the object-script
+   block ($83B7–$878D) VERBATIM from `ref/robotron64k.bin` into generated C# arrays
+   (like the font pipeline). The Gospel is only for the ENGINE semantics.
+2. **Two tiny interpreters** (pure C#, unit-testable, no MonoGame): a PageScriptEngine
+   (95.2) and an ObjectScriptEngine (95.3) over a `MovieSprite` (pos 16.16, image index,
+   descriptor, optional box). The page engine's outputs: set-text-cursor,
+   print-char-queue (one char / 3 frames, large font, live slot colour), clear-rect,
+   message-popup, sleep, spawn-object-script, grunts.
+3. **Render the movie in AttractState** (or a new `StorylineState` before it): wall
+   $CC + score/men HUD (ArcadeHud) + the text + the movie sprites. All timings are ROM
+   frames (50 Hz) → sixths accumulator (×5/6 per tick, as in §93). SETPOS/SETRP are in
+   COLUMNS/ROWS (1 col = 2 spec px = 4 port px). EXP → the port's existing Explosion
+   (horizontal-laser layout). MONO → draw a filled box in the two given slots with the
+   sprite inside (the brain box uses the brain art).
+4. **Sprites**: reuse port art where it exists; extract POINTS/SKULLV/POSTS/SQUARE
+   (and verify CRUSM/YOU against the port's existing missile/player art) via the
+   SpriteExtractor convention (base + geometry from 95.6).
+5. **Sequence**: title (12 s idle) → **storyline movie (~60-90 s, let it run to DONE)**
+   → phony-player demo game (the existing §94 machine) → back to the title (and loop).
+   Any human input skips to the title as today.
+6. **Tests**: engine-level tests with the real embedded script bytes (page engine
+   replays HISTO to DONE in the right order; object engine walks a grunt to EXP; the
+   family scene spawns exactly MUMMY+DADDY+MIKEY and two deaths); keep gate 6
+   (verify-attract.py) green — extend it to also assert movie content (e.g. after ~20 s
+   on the title, the screen shows text crawl + a walking figure).
+
+### 95.10 OPEN ITEMS (do not guess — resolve in this order)
+
+- **PDEAD** (opcode 27) → PKPRCV: read the R5 disassembly for what it does to the
+  score posts (likely the score-count-up); approximate with a fade if it's exotic.
+- **LFIRE/RFIRE second byte**: (delay, count) matches every Gospel comment — confirm
+  against the R5 action code (find it via the SCTABL object-opcode table in the
+  disassembly) before wiring lasers.
+- **GRPROC in R5** (≈$7B0F): confirm its GSTRTS table points at $84F5/$8517/$8540/
+  $8567 and its spawn rate (NAP $10).
+- **The RUNIT/LOGORG loop + CMOS FANCY ATTRACT flag** ($7A08–$7A9C actions): determines
+  the exact arcade cycle (movie → game → movie? coin behaviour). For the port, 95.9's
+  title→movie→game→title loop is the author-approved shape.
+- **String table 119/122/126 exact bytes** (95.8).
+- **The DADD2/BRAING fork targets** ($8648 PSHADO, $8666 PSHAD1, $867B PSHAD2, $868C
+  PSHAKE, $868D BRAING, $86A4 CRUSER): now fully parsed and recorded in 95.5 — nothing
+  left to resolve there. (Corrected opcode table for any future re-parsing: INCIM = 0
+  operands; LFIRE/RFIRE = 2 operands (delay, count).)
