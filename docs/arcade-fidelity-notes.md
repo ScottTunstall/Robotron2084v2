@@ -7744,6 +7744,13 @@ and 126 = the empty NULMES that clears the row. §95.8's "119/122/126 unresolved
   **PKPRCV**, which is not decoded, so the score posts vanish instead of playing whatever it
   does. Not guessed.
 - **The POSTS table's spare records** (96.4).
+- **FAMPAG's DUMPLR half is NOT implemented** — the arcade's title screen also plays the
+  "dumb player": $799D prints the title, then runs page script DUMPLR ($83B2 =
+  `SCRPT $8715, SLEEP $FF, DONE2`), which starts HELPME ($8715) — MUMMY walking past the
+  title with DADDY/MIKEY/the hero and their score popups — and only then falls into HISTO.
+  The port's title screen goes straight to HISTO after its 12 s. The script and the
+  engine to run it are both here; it is wiring, not decode. (Also: FAMMM, string 129,
+  belongs at the ROM's own cursor (col 37, row $84) — see 96.3.)
 - **The title screen's own layout** (96.3) — currently untouched.
 - Everything §95.10 listed that this session did not need (the RUNIT/LOGORG loop, the CMOS
   FANCY ATTRACT flag) is still open.

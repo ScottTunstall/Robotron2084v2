@@ -136,6 +136,10 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
 - **Needs your eye:** the movie end to end (it is 96 s — start a build, wait 12 s, watch),
   the hero's walk, and whether the title screen should also move to the ROM's row 36
   (§96.3 flags it; that screen was left exactly as you signed it off).
+- **Known open (notes §96.8):** PDEAD's `PKPRCV` (the posts vanish rather than playing it),
+  the POSTS table's unreferenced records, and FAMPAG's DUMPLR half — the arcade's title
+  ALSO walks the "dumb player" family past the title (HELPME $8715) before HISTO starts;
+  the script and the engine both exist, so that is wiring, not decode.
 
 ### Session 5 (2026-09-17, night) — THE TITLE SCREEN AND THE ATTRACT DEMO (notes §94)
 
