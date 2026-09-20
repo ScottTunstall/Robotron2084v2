@@ -30,23 +30,50 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private static readonly Rectangle InnerBounds = new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
 
     private const string TitleLineOne = "ROBOTRON 2084";
-    private const string TitleLineTwo = "SAVE THE LAST HUMAN FAMILY";
 
     /// <summary>
-    /// The port's own credit, which the author asked to sit under the ROM's two strings (notes
-    /// §102.2). The arcade's title screen is the two ROM strings and nothing else, so this is a
-    /// deliberate, labelled addition to the cabinet's screen — in the SMALL font, so it reads as
-    /// a subtitle to the large-font title rather than as part of the arcade's message.
+    /// The ROM's own DEFAULT attract message (<c>def_wel_msg</c>, ROM $6F65) — what a fresh
+    /// cabinet shows until an operator sets their own in CMOS ($CC24 first line, $CC56 second,
+    /// 25 characters each). The presentation page prints the two lines character by character
+    /// in the LARGE font, line 1 in slot 8 and line 2 in slot 9 (ROM $8822-$8836, notes §103).
+    /// </summary>
+    private const string WelcomeLineOne = "PRESENTED BY";
+    private const string WelcomeLineTwo = "WILLIAMS ELECTRONICS INC.";
+
+    /// <summary>
+    /// The ROM's own credit strings under the message (notes §103): "DESIGNED BY VID KIDZ" and
+    /// "FOR WILLIAMS ELECTRONICS INC." are at ROM $6D85 (with a copy at $7F50 for the copyright).
+    /// The reference screen prints them in the SMALL font.
+    /// </summary>
+    private const string DesignedByLine = "DESIGNED BY VID KIDZ";
+    private const string ForWilliamsLine = "FOR WILLIAMS ELECTRONICS INC.";
+    private const string CopyrightLine = "COPYRIGHT 1982 WILLIAMS ELECTRONICS INC.";
+
+    /// <summary>
+    /// The port's own credit, which the author asked to sit among these lines (notes §102.1). The
+    /// arcade's presentation page has no such line, so this one is a deliberate, labelled
+    /// addition — in the SMALL font, like the cabinet's own credit lines.
     /// </summary>
     private const string CreditLine = "REVERSE ENGINEERING AND DEVELOPMENT BY SCOTT TUNSTALL";
+
+    // Layout of the presentation page (notes §103). The top third is kept clear for the
+    // ROBOTRON: wordmark and the 2084 logo, which are drawn from the ROM's own graphics once
+    // that art is recovered; until then the ROM's title string stands in for the wordmark.
+    private const int WordmarkRow = 30;
+    private const int WelcomeRowOne = 132;
+    private const int WelcomeRowTwo = 152;
+    private const int DesignedByRow = 186;
+    private const int ForWilliamsRow = 204;
+    private const int CopyrightRow = 222;
+    private const int CreditRow = 246;
+    private const int MenuRow = 280;
 
     private readonly IPlayerInputSource _input;
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
     private readonly ControlSettings _controls;
     private readonly GameServices _services;
-    private readonly PlayfieldWall _titleWall;
-    private readonly GameSession _titleSession;
+    private readonly HighScorePalette _colour = new();
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(GameplayConstants.TitleIdleSeconds);
     private TimeSpan _idleElapsed;
     private bool _previousFire;
@@ -61,18 +88,25 @@ public sealed class TitleScreenState : IGameState, IAttractState
         _highScores = services.HighScores;
         _controls = services.Controls;
 
-        // The ROM's title wall is a solid $CC (slot 12), not a wave colour.
-        _titleWall = new PlayfieldWall(InnerBounds, new WallColorCycle(
-            GameplayConstants.DefaultWallPalette,
-            TimeSpan.FromMilliseconds(GameplayConstants.WallStepDurationMilliseconds)));
-
-        // A 1P session at score 0 with the starting men: the ROM prints the
-        // player's score and spare men under the title exactly as in play.
-        _titleSession = GameSession.NewGame(_input, 1);
+        // The presentation page runs the arcade's attract colour processes (notes §103.3):
+        // slot 8 walks COLTAB, so the welcome message and the credit lines shimmer through
+        // the oranges the reference screenshot shows, instead of the static grey and white
+        // their CRTAB defaults are. The tables and the process set are the decoded ones
+        // (§98.5) — the attract page's own call set has not been decoded separately.
+        if (_sprites.Palette is { } palette)
+        {
+            _colour.StartProcesses(palette);
+            _colour.StartRamps(palette);
+        }
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
+        if (_sprites.Palette is { } live)
+        {
+            _colour.Update(live);
+        }
+
         PlayerInputState input = _input.Poll();
 
         // The arcade's coin-door buttons: START 1 / START 2 pick the number of
@@ -97,6 +131,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
         if (mode is { } chosen)
         {
+            StopColours();
             manager.TransitionTo(PlayingState.StartNewGame(_controls, chosen, _sprites, _highScores));
             return;
         }
@@ -127,28 +162,35 @@ public sealed class TitleScreenState : IGameState, IAttractState
         if (_idleElapsed >= _idleDuration)
         {
             _idleElapsed = TimeSpan.Zero;
+            StopColours();
             manager.TransitionTo(new StorylineState(_services, new Random()));
         }
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        // The caller clears to black. ROM order: wall + lives + score FIRST
-        // ($26D2), the title strings on top.
-        _titleWall.Draw(spriteBatch, _sprites.WallPixel, _sprites.SlotColor(GameplayConstants.TitleWallSlot));
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _titleSession, InnerBounds);
-
+        // The caller clears to black. This is the ROM's Williams PRESENTATION page (notes §103):
+        // the logos, the operator's welcome message (two 25-character lines) and the credit
+        // strings. The arcade draws a border of 28 moving "W" logos round it and a "CREDITS: n"
+        // line under the message; the author asked for neither (this port has no credits), and
+        // neither the playfield wall nor the score/men belong to this page — the cabinet's other
+        // attract page carries those.
         int slot = GameplayConstants.HudScoreSlotCurrent; // the ROM's $AA (slot 10)
-        int lineOneY = GameplayConstants.ArcadeY(54);     // string 128's cursor row
-        DrawCenteredLargeText(spriteBatch, TitleLineOne, lineOneY, slot);
-        DrawCenteredLargeText(spriteBatch, TitleLineTwo, lineOneY + ScreenSize.Scaled(14), slot);
-        DrawCenteredSmallText(spriteBatch, CreditLine, lineOneY + ScreenSize.Scaled(24), slot);
 
-        // Port-only menu (notes §101): the arcade's title has no such list, and its
-        // START buttons still work exactly as they did. Drawn in the arcade's own
-        // small font, in the title's colour, so it sits inside the cabinet's look.
-        // The author moved the list up three option lines so it clears the wall (notes §102.2).
-        int y = ScreenSize.Scaled(92);
+        // Interims for the wordmark: the ROM's own title string, until the logo art is recovered.
+        DrawCenteredLargeText(spriteBatch, TitleLineOne, WordmarkRow, slot);
+
+        // The welcome message, exactly as $8822-$8836 prints it: LARGE font, slot 8 then slot 9.
+        DrawCenteredLargeText(spriteBatch, WelcomeLineOne, WelcomeRowOne, 8);
+        DrawCenteredLargeText(spriteBatch, WelcomeLineTwo, WelcomeRowTwo, 9);
+        DrawCenteredSmallText(spriteBatch, DesignedByLine, DesignedByRow, 8);
+        DrawCenteredSmallText(spriteBatch, ForWilliamsLine, ForWilliamsRow, 8);
+        DrawCenteredSmallText(spriteBatch, CopyrightLine, CopyrightRow, 8);
+        DrawCenteredSmallText(spriteBatch, CreditLine, CreditRow, 9);
+
+        // Port-only menu (notes §101): the arcade's presentation page has no such list, and its
+        // START buttons still work exactly as they did.
+        int y = MenuRow;
         foreach (string option in Options)
         {
             DrawCenteredSmallText(spriteBatch, option, y, slot);
@@ -166,6 +208,19 @@ public sealed class TitleScreenState : IGameState, IAttractState
     ];
 
     /// <summary>Draws an arcade-small-font line centred on the canvas.</summary>
+    /// <summary>
+    /// The ROM's colour processes die with the page, and the page after it sets its own slots
+    /// (<c>FAMPAG</c>) — so both ways off this screen stand the ROM's CRTAB values back up and
+    /// hand slots 10-15 back to the in-game animator (notes §103.3).
+    /// </summary>
+    private void StopColours()
+    {
+        if (_sprites.Palette is { } palette)
+        {
+            _colour.Stop(palette);
+        }
+    }
+
     private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int slot)
     {
         int width = 0;

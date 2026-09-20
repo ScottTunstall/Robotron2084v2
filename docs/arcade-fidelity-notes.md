@@ -8734,3 +8734,61 @@ Release build: text bands at y 84-94 (line one), 112-122 (line two), 132-140 (th
 184-192, 212-220 and 240-248, with the bottom wall clear.
 
 No new tests — layout only, **402 tests, 0 failed, 0 skipped**.
+
+### 103. THE WILLIAMS PRESENTATION PAGE — and the logos the ROM does not draw (author, 2026-09-20)
+
+**Author:** *"Change the SAVE THE LAST HUMAN FAMILY page to look like the attached image. You do not
+need the W's moving around the border … The sprite data for the ROBOTRON and 2084 logo beneath it — I
+haven't found where that lives in the ROM so you will need to look at the disassembly."* Then
+*"this game doesn't use credits so you don't need the credits symbol"*, and — asked directly — **drop
+"SAVE THE LAST HUMAN FAMILY" to match the reference exactly**, with the port's F1/F2/F3/F10 menu at
+the bottom.
+
+#### 103.1 The page IS in the ROM (`$87F8` onward)
+
+- The two lines "PRESENTED BY" / "WILLIAMS ELECTRONICS INC." are **the ROM's attract-mode welcome
+  message**, not fixed text. `$87F8 JSR $6F06` tests the CMOS flag: if the operator has set a
+  message it copies CMOS `$CC24` (line 1) / `$CC56` (line 2), otherwise the ROM's own default via
+  `def_wel_msg_ptr` ($6F0F → `def_wel_msg` $6F65). `$8842` then prints each line **character by
+  character in the LARGE font** (`BLIT_LARGE_CHARACTER`, $5F93) in slot **$86 = 8** for line 1 and
+  **$96 = 9** for line 2 — and the port's page prints the DEFAULT message in exactly those slots.
+- `$8838` prints string `$70` ("CREDITS: n", the count in `$51`) in the small font. **Dropped**: the
+  port has no credits at all (D-019), as the author asked.
+- The border is `$87D9`'s 28 moving "W" logos (`DRAW_WILLIAMS_LOGO_TEMPLATE` $8934 → `RENDER_GRAPHIC`
+  $8D69 over the plotting instructions at $8CF4). **Dropped** at the author's request.
+- "DESIGNED BY VID KIDZ" and "COPYRIGHT 1982 WILLIAMS ELECTRONICS INC." are ROM strings at
+  $6D85/$6DB5 (another copy at $7F50); they print in the SMALL font, as the reference shows.
+- This page has **no playfield wall and no score/men** — those belong to the cabinet's *other*
+  attract page (`$79C7`/`$79AF`, §94) — so `TitleScreenState` no longer draws them, and the
+  `$CC` wall, the 1P `GameSession` it showed and the `SAVE THE LAST HUMAN FAMILY` string (ROM string
+  129) all went with them.
+
+#### 103.2 STILL OPEN — the wordmark art
+
+`RENDER_GRAPHIC` has exactly three call sites and **all three are the "W"**: `$784A` and `$78FA` build
+and use the moving-logo template, `$893D` draws the border logo. The big **ROBOTRON: / 2084 wordmark
+is NOT drawn by any of them**, so it is not a plotting-instruction graphic — it is almost certainly a
+blitted IMAGE, and `ref/rom/` holds only the 64K CPU ROM (`robotron64k.bin`), whose 215 extracted
+sprites (`docs/sprite-map.md`) do not include it. Until that art is recovered (a video-ROM dump, or
+tracing the reference image at arcade scale) the page prints the ROM's own title string — "ROBOTRON
+2084", string 128 — where the wordmark belongs, and the top third of the page is kept clear for the
+two logos.
+
+No new tests — presentation only, **402 tests, 0 failed, 0 skipped**; the attract gate's title
+capture went from 5.6% to 7.2% lit with the new text block.
+
+#### 103.3 The page'S COLOUR CYCLING (author: *"I want the same colour cycling on the ROBOTRON: 2084
+page as the arcade has"*)
+
+The reference screenshot shows the message and the credit lines in ORANGE, where their CRTAB
+defaults are grey and white (`$A4` = slot 8, `$FF` = slot 9) — which proves the attract page starts
+colour processes over the LOW slots as well as the six the game uses. The presentation page now runs
+the arcade's owned **decoded** set: `HighScorePalette.StartProcesses` (new: `Start` minus FRAMER's
+blanking, which is the table page's BUILD rather than the colour set's) plus `StartRamps`, so slot 8
+walks `COLTAB` while 9/10/12/13 ramp. `TitleScreenState.Update` steps it, and both ways off the page
+call `Stop`, which stands CRTAB back up and hands slots 10-15 to the in-game animator again.
+
+**Flagged:** the attract page's OWN process call set has not been decoded separately — this runs the
+tables and process set decoded from the high-score page (§98.5), which give the same shimmer.
+Verified on screen: with the page up, the message reads green/pink and the menu red, where the
+static defaults would have been grey and white.

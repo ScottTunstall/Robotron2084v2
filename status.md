@@ -364,6 +364,28 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   labelled as such in the code: the arcade's title is the two ROM strings and nothing else. It is
   drawn in the arcade's small font one line under "SAVE THE LAST HUMAN FAMILY", in the title's own
   slot, and is the widest text the page carries (53 characters, ~530 of 640).
+- **2026-09-20 — THE WILLIAMS PRESENTATION PAGE (notes §103).** Author: *"Change the SAVE THE LAST
+  HUMAN FAMILY page to look like the attached image. You do not need the W's moving around the
+  border … I haven't found where that [logo] lives in the ROM so you will need to look at the
+  disassembly"*, then *"this game doesn't use credits so you don't need the credits symbol"*, and,
+  asked directly, **drop "SAVE THE LAST HUMAN FAMILY" to match the reference exactly** with the
+  port's menu at the bottom. **The screen is the ROM's own** (`$87F8`+): "PRESENTED BY" / "WILLIAMS
+  ELECTRONICS INC." are the attract-mode WELCOME MESSAGE (CMOS `$CC24`/`$CC56`, default
+  `def_wel_msg` $6F65), printed a character at a time in the LARGE font in slot 8 then slot 9 — the
+  port's page now prints the ROM's default in exactly those slots. The "CREDITS: n" line ($8838)
+  and the 28 moving "W" logos ($87D9) are dropped as asked; the Vid Kidz/copyright strings ($6D85/
+  $6DB5) print in the small font. The wall and the score/men are gone from this page (they belong
+  to the cabinet's other attract page, §94). **Open:** the big ROBOTRON:/2084 wordmark —
+  `RENDER_GRAPHIC`'s three call sites are all the "W", so the wordmark is a blitted IMAGE, not a
+  plotting graphic, and `ref/rom/` has only the 64K CPU ROM; the ROM's own "ROBOTRON 2084" string
+  stands in at the top until that art is recovered. **And the page cycles colours now** (notes
+  §103.3, author: *"I want the same colour cycling on the ROBOTRON: 2084 page as the arcade has"*):
+  the reference shows the message and credits in ORANGE where their CRTAB defaults are grey/white,
+  which proves the attract page drives the LOW slots too — so the page runs the arcade's own decoded
+  process set via a new `HighScorePalette.StartProcesses` (no FRAMER blanking) plus `StartRamps`,
+  stepping it each tick and restoring CRTAB on the way out. Flagged: the attract page's own call set
+  is not separately decoded; this uses the high-score page's (validated §98.5) set. Still **402
+tests**.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36
