@@ -8,8 +8,22 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// Dropped by Quarks only (never at level start). ROM behaviour (notes
-/// §4.8/§11.5/§52): dropped onto the MINI tank picture and BORN — `MTANK`
+/// A tank — the slow, thick-skinned robot that only Quarks drop (never at level
+/// start). A dropped tank is BORN: it grows through four mini-tank pictures and
+/// cannot move, aim or fire until the birth finishes. It then re-aims at random
+/// intervals of 1..31 bodies; about 38% of those aims chase the player and the
+/// rest pick a random point in the field (and it only moves vertically when it
+/// is more than 16 arcade px off its target on that axis). It steps one arcade
+/// pixel per body on each active axis, and its walk animation runs backwards
+/// while it moves left. It never flashes.
+///
+/// Its first shot comes after this wave's firing interval plus a random delay,
+/// and every shot after that waits exactly the interval. Firing is also gated on
+/// the field's cap of 20 shells at once, so late in a wave a tank can stop
+/// firing altogether. A laser kills it outright, with no death animation.
+/// </summary>
+/// <remarks>
+/// ROM behaviour (notes §4.8/§11.5/§52): dropped onto the MINI tank picture and BORN — `MTANK`
 /// plays the four mini-tank pictures, one per NAP 12 ROM frames, during which
 /// the tank does not move, aim or fire. Only then does it re-aim every
 /// RND(1..31) ticks; each aim roll (RND 0..255 ≤ $60, i.e. ~38%) makes it seek
@@ -20,7 +34,7 @@ namespace Robotron2084.Entities;
 /// gated on the arcade's 20-shells-per-wave counter (the fizzle bug: the
 /// count only drops when a shell is killed, so late in the wave tanks
 /// simply stop firing). Walk animation runs backwards when moving left.
-/// </summary>
+/// </remarks>
 public sealed class Tank : IEntity, IExplodable
 {
     /// <summary>Collision box = the ROM picture dimensions (14x16 arcade px), top-left anchored at <see cref="Position"/>.</summary>
@@ -31,9 +45,10 @@ public sealed class Tank : IEntity, IExplodable
     internal static int CollisionHeight => CollisionSize.Height;
 
     /// <summary>
-    /// ROM 4E11: a tank moves vertically only when its target is more than
-    /// 16 arcade pixels (= 32 screen px) away on that axis.
+    /// A tank moves vertically only when its target is more than 16 arcade
+    /// pixels (= 32 screen px) away on that axis.
     /// </summary>
+    /// <remarks>ROM 4E11.</remarks>
     private const int VerticalMoveThresholdScreenPx = 32;
 
     private readonly Random _random;
@@ -48,13 +63,19 @@ public sealed class Tank : IEntity, IExplodable
     /// <summary>Sub-tick carry for the body, in exact 6ths of a tick (a ROM frame is 6/5 tick).</summary>
     private int _bodyFifths;
 
-    /// <summary>ROM `MTANK` birth: which grow picture is showing (0..TankGrowSteps).</summary>
+    /// <summary>Which grow (birth) picture is showing, 0..TankGrowSteps.</summary>
+    /// <remarks>ROM `MTANK` birth.</remarks>
     private int _growStep;
 
     /// <summary>Sub-tick carry for the grow step, in exact 6ths of a tick (a ROM frame is 6/5 tick).</summary>
     private int _growFifths;
 
-    /// <param name="fireDelayRomTicks">ROM TNKSHT for this wave (notes §11.2).</param>
+    /// <summary>Creates a tank at <paramref name="position"/>; it must be born before it can move or fire.</summary>
+    /// <param name="position">Top-left of the tank.</param>
+    /// <param name="random">The random source: the aim rolls, the destinations and the first-fire delay.</param>
+    /// <param name="fireDelayRomTicks">This wave's firing interval, in ROM frames.</param>
+    /// <param name="speedBonus">Unused by this entity (kept for the field's uniform spawn shape).</param>
+    /// <remarks>ROM TNKSHT for this wave (notes §11.2).</remarks>
     public Tank(IntVector2 position, Random random, int fireDelayRomTicks = 32, int speedBonus = 0)
     {
         _position = position;
@@ -70,14 +91,17 @@ public sealed class Tank : IEntity, IExplodable
         _fireCooldownBodies = fireDelayRomTicks + random.Next(0, 32);
     }
 
+    /// <summary>Top-left of the tank (the ROM's OBJX/OBJY).</summary>
     public IntVector2 Position => _position;
 
     /// <summary>
     /// The collision box. While the tank is being BORN it is the CURRENT birth
-    /// picture's size — the ROM bounds and collides against the frame it is
-    /// showing, and every mini-tank picture is smaller than the tank (notes §53),
+    /// picture's size — every mini-tank picture is smaller than the full tank,
     /// so a growing tank is genuinely a smaller target.
     /// </summary>
+    /// <remarks>
+    /// The ROM bounds and collides against the frame it is showing (notes §53).
+    /// </remarks>
     public Rectangle Bounds
     {
         get
@@ -92,15 +116,28 @@ public sealed class Tank : IEntity, IExplodable
         }
     }
 
+    /// <summary>Alive until shot or until it walks into an electrode; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>
+    /// Kills the tank: it goes straight to Dead, with no death animation, so the
+    /// explosion the playfield draws is the entire visual.
+    /// </summary>
+    /// <remarks>
     /// Laser kill (ROM RRTK4 `TNKIL`): `JSR HVEXST` (explode) then `JSR
     /// KILROB` and `JSR KILL` — the object is gone immediately. Same shape as
     /// the brain's BRNKIL, and again with no death animation (notes §50).
-    /// </summary>
+    /// </remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
+    /// <summary>
+    /// Runs one step when the tank's clocks say so: the birth animation first (frozen),
+    /// then the body — fire, move one pixel on each active axis, advance the tread frame and
+    /// re-aim when the direction timer expires. Held still entirely while
+    /// <see cref="PlayField.RobotsFrozen"/>.
+    /// </summary>
+    /// <param name="gameTime">Unused — the birth and body clocks are counted in ROM frames.</param>
+    /// <param name="field">The playfield: the player to aim at, the wall to bounce off and the shell cap.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -207,6 +244,8 @@ public sealed class Tank : IEntity, IExplodable
         }
     }
 
+    /// <summary>The next re-aim interval: a random 1..31 bodies.</summary>
+    /// <remarks>ROM TANKND.</remarks>
     private static int NextAimInterval(Random random) => random.Next(1, 32);
 
     /// <summary>One ROM grow step in 6ths of a port tick (`TankGrowRomFrames` x 6).</summary>
@@ -216,10 +255,14 @@ public sealed class Tank : IEntity, IExplodable
     internal bool IsBeingBorn => _growStep < GameplayConstants.TankGrowSteps;
 
     /// <summary>
-    /// ROM ANIMATE_TANK (4E11-4E46): RND(0..255) ≤ $60 (~38%) → destination =
-    /// player; otherwise a random point in the playfield. Vertical component
-    /// only when the target is more than 16 arcade px away vertically.
+    /// Picks the next destination: about 38% of the time the player, otherwise a
+    /// random point in the playfield. The vertical component is set only when the
+    /// target is more than 16 arcade px away vertically.
     /// </summary>
+    /// <remarks>
+    /// ROM ANIMATE_TANK (4E11-4E46): RND(0..255) ≤ $60 (~38%) → destination =
+    /// player; otherwise a random point in the playfield.
+    /// </remarks>
     private void PickDestination(PlayField field)
     {
         _destination = _random.Next(256) <= 96
@@ -233,6 +276,7 @@ public sealed class Tank : IEntity, IExplodable
         _step = new IntVector2(dx, dy);
     }
 
+    /// <summary>A random point inside the playfield, inset by the tank's own box.</summary>
     private IntVector2 RandomPointIn(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -241,6 +285,9 @@ public sealed class Tank : IEntity, IExplodable
             _random.Next(bounds.Y + CollisionSize.Height, bounds.Bottom - CollisionSize.Height + 1));
     }
 
+    /// <summary>Draws the birth pictures while it is being born, else the tread frame (backwards when moving left).</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set, which holds the tank and birth frames.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -278,6 +325,9 @@ public sealed class Tank : IEntity, IExplodable
         sprites.DrawSprite(spriteBatch, sprites.TankFrames[frame], Bounds, Color.White);
     }
 
+    /// <summary>The frame an explosion would copy (see <see cref="IArtSource"/>): the birth picture while being born, else the tread frame.</summary>
+    /// <param name="sprites">The shared sprite set, which holds the tank and birth frames.</param>
+    /// <returns>The birth picture while it is being born, else the current tread frame.</returns>
     public Texture2D CurrentFrameArt(SpriteSet sprites)
     {
         if (_growStep < GameplayConstants.TankGrowSteps)

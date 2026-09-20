@@ -8,29 +8,36 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// Dropped by Spheroids (never present at level start). R5 behaviour
-/// (notes §17): a short GROW-UP phase (5 spawn-animation steps x 8 ticks,
-/// ~40 ROM ticks, immobile), then an AI pass every 3 ROM ticks that counts
-/// down (a) a re-aim timer, RND(1..31) passes, and (b) a spark-fire timer,
-/// RND(1..ENSTIM) passes. Each re-aim picks a destination in a 32x32 spec-pixel
-/// zone to the player's DOWN-RIGHT (player + RND(0..31) on each axis,
-/// clamped to the field) and the enforcer glides toward it at a velocity
-/// proportional to the remaining distance (delta/2 in 1/256 column units per
-/// ROM frame, notes §93) until the timer runs out — so it loiter-circles
-/// near the player rather than converging on it head-on. Fires SPARKs at the player when the fire
-/// timer hits zero (the timer re-arms even when the 20-spark global cap
-/// swallows the shot — R5 $1404). Flies over electrodes.
+/// An enforcer — a spheroid's offspring, never present when a wave starts. It begins life immobile
+/// while it GROWS through five spawn pictures (about 40 ticks, roughly 0.8 s), and then flies around
+/// firing sparks.
 ///
-/// Deliberate simplifications (documented): the ROM's sub-pixel 16-bit
-/// velocity (swoop ~1.1-1.9 px/tick away from the zone, crawl near it) is
-/// approximated by a constant 8-way step. The 5-frame spawn animation IS in
-/// the R5 content (ENGD1..5 = riddle-list enforcer2..6, verified byte-
-/// identical in the ROM at $1921-$19FD) and is played 8 ticks per frame
-/// over the 40-tick grow-up, ending on the full ENFD0 picture.
+/// Its movement is deliberately indirect: every so often it picks a point in a 32x32-pixel zone
+/// down-right of the player and glides at it with a speed proportional to how far away it still is —
+/// fast at a distance, crawling as it closes — so it loiter-circles near the player instead of running
+/// straight into him. When its fire timer expires it shoots a spark at the player, even if the global
+/// spark limit swallows the shot (the timer re-arms either way). It flies over electrodes.
+///
+/// A laser destroys it instantly — no flash, no death animation — and the field bursts it.
 /// </summary>
+/// <remarks>
+/// R5 behaviour, notes §17: a short GROW-UP phase (5 spawn-animation steps x 8 ticks, ~40 ROM ticks,
+/// immobile), then an AI pass every 3 ROM ticks that counts down (a) a re-aim timer, RND(1..31) passes,
+/// and (b) a spark-fire timer, RND(1..ENSTIM) passes. Each re-aim picks a destination in a 32x32
+/// spec-pixel zone to the player's DOWN-RIGHT (player + RND(0..31) on each axis, clamped to the field)
+/// and the enforcer glides toward it at a velocity proportional to the remaining distance (delta/2 in
+/// 1/256 column units per ROM frame, notes §93) until the timer runs out. Firing: `ENFSHT` re-arms the
+/// countdown before the 20-spark global cap is checked (R5 $1404), so a swallowed shot is simply lost.
+///
+/// The grow-up is the ROM's 5-frame spawn animation (ENGD1..5 = the riddle-list enforcer2..6, verified
+/// byte-identical in the ROM at $1921-$19FD), played 8 ticks per frame over the 40-tick grow-up, ending
+/// on the full ENFD0 picture.
+/// </remarks>
 public sealed class Enforcer : IEntity, IExplodable
 {
-    /// <summary>Collision box = the ROM picture dimensions (10x11 arcade px), top-left anchored at <see cref="Position"/>.</summary>
+    /// <summary>The collision box: the enforcer picture's own size, 10x11 arcade px, in port pixels,
+    /// top-left anchored at <see cref="Position"/>.</summary>
+    /// <remarks>The ROM picture's dimensions.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.EnforcerCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.EnforcerCollisionSize.Height));
     private readonly Random _random;
@@ -38,10 +45,11 @@ public sealed class Enforcer : IEntity, IExplodable
     private IntVector2 _position;
 
     /// <summary>
-    /// Velocity in 1/256 PORT units per ROM FRAME, carried by a remainder like
-    /// the quark's, because the ROM's mover integrates it once per frame (notes
-    /// §43 fact 2, §93) while the enforcer's own logic only runs once per body.
+    /// Velocity in 1/256 port units per ROM frame, carried by a remainder (like the quark's)
+    /// so the sub-pixel part is not lost between integrations.
     /// </summary>
+    /// <remarks>The ROM's mover integrates it once per frame while the enforcer's own logic
+    /// only runs once per body (notes §43 fact 2, §93).</remarks>
     private IntVector2 _velocityFp;
 
     private IntVector2 _remainderFp;
@@ -51,7 +59,12 @@ public sealed class Enforcer : IEntity, IExplodable
     private int _fireCooldownBodies;
     private int _growthFifthsRemaining;
 
-    /// <param name="fireDelayRomTicks">ROM ENSTIM for this wave (notes §11.2/§17): fire interval = RND(1..ENSTIM) AI passes x 3 ticks.</param>
+    /// <summary>Creates an enforcer at <paramref name="position"/>; it is immobile until its grow-up finishes.</summary>
+    /// <param name="position">Top-left of the enforcer.</param>
+    /// <param name="random">The random source for the re-aim destination and the fire timer.</param>
+    /// <param name="fireDelayRomTicks">This wave's fire delay, in ROM frames: the interval is rolled as RND(1..this).</param>
+    /// <param name="speedBonus">Unused by this entity (kept for the field's uniform spawn shape).</param>
+    /// <remarks>ROM ENSTIM for this wave (notes §11.2/§17): fire interval = RND(1..ENSTIM) AI passes x 3 ticks.</remarks>
     public Enforcer(IntVector2 position, Random random, int fireDelayRomTicks = 24, int speedBonus = 0)
     {
         _position = position;
@@ -67,22 +80,31 @@ public sealed class Enforcer : IEntity, IExplodable
         _moverSixths = 6;
     }
 
+    /// <summary>Top-left of the enforcer.</summary>
+    /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position => _position;
 
+    /// <summary>The enforcer picture's own 10x11 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
+    /// <summary>Alive until shot or until it walks into an electrode; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>
-    /// Laser kill (ROM RRC11 `ENFKIL`): `JSR KILOFP` (kill the object and its
-    /// process, image off) then `JSR EXST` — so the enforcer is gone
-    /// IMMEDIATELY and the field bursts it. There is NO death animation: the
-    /// port used to play a 2-second blink, which the author reported
-    /// (2026-09-16, "enforcers shouldn't flash when hit") — same defect class as
-    /// the grunt in §44.
-    /// </summary>
+    /// <summary>Kills the enforcer: it is gone at once, and the field bursts it. There is no death animation.</summary>
+    /// <remarks>
+    /// ROM RRC11 `ENFKIL`: `JSR KILOFP` (kill the object and its process, image off) then `JSR EXST`. The
+    /// port used to play a 2-second blink, which the author reported (2026-09-16, "enforcers shouldn't flash
+    /// when hit") — the same defect class as the grunt in §44.
+    /// </remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
+    /// <summary>
+    /// Runs one step of the enforcer's life when its clocks say so: the grow-up counts down (immobile and
+    /// silent), the mover slides it toward the destination once per ROM frame, and each AI body re-aims and
+    /// fires a spark. Held completely still while <see cref="PlayField.RobotsFrozen"/>. 
+    /// </summary>
+    /// <param name="gameTime">Unused — every clock here is counted in ROM frames.</param>
+    /// <param name="field">The playfield: the player to aim at, the wall, and the spawn helpers.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (LifeState != EntityLifeState.Alive)
@@ -150,14 +172,17 @@ public sealed class Enforcer : IEntity, IExplodable
     }
 
     /// <summary>
-    /// ROM `ENFNV`: the target is the PLAYER plus a random 0..31 per axis — in
-    /// COLUMNS on X and ROWS on Y — and the velocity is set to the offset
-    /// HALVED, signed: `SUBB OX16,X / SBCA #0 / ASLB / ROLA` is a signed
-    /// divide-by-2, so <c>OXV = (target - pos)/2</c> in 1/256 column/frame =
-    /// <c>(target - pos)/128</c> port px/frame: quick when far, CRAWLING as it
-    /// arrives. That is the "near-zone crawl" the port's notes named but could
-    /// not reproduce with a constant step.
+    /// Picks the next destination — the player plus a random offset — and sets the velocity toward it: quick
+    /// at a distance, crawling as it arrives.
     /// </summary>
+    /// <param name="field">The playfield: the player to aim past, and the wall to clamp to.</param>
+    /// <remarks>
+    /// ROM `ENFNV` (`RRC11.ASM`): the target is the PLAYER plus a random 0..31 per axis — in COLUMNS on X and
+    /// ROWS on Y — and the velocity is set to the offset HALVED, signed: `SUBB OX16,X / SBCA #0 / ASLB / ROLA`
+    /// is a signed divide-by-2, so <c>OXV = (target - pos)/2</c> in 1/256 column/frame =
+    /// <c>(target - pos)/128</c> port px/frame. That is the "near-zone crawl" the port's notes named but
+    /// could not reproduce with a constant step.
+    /// </remarks>
     private void RollVelocity(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -177,10 +202,11 @@ public sealed class Enforcer : IEntity, IExplodable
     }
 
     /// <summary>
-    /// The ROM's mover (RRS22 OPB80, notes §43): the velocity is added every frame,
-    /// and an axis whose step would leave the playfield is REJECTED — the object
-    /// keeps that coordinate and slides along the wall, with no bounce.
+    /// Moves the enforcer by one frame's worth of velocity. An axis whose step would leave the playfield is
+    /// refused, so it slides along the wall instead of bouncing off it.
     /// </summary>
+    /// <param name="field">The playfield wall.</param>
+    /// <remarks>The ROM's generic mover (RRS22 `OPB80`, notes §43).</remarks>
     private void AdvancePosition(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -202,8 +228,14 @@ public sealed class Enforcer : IEntity, IExplodable
         }
     }
 
-    // R5 $13B5: destination = player + RND(0..31) on each axis (a 32x32
-    // zone down-right of the player), clamped to the playfield.
+    /// <summary>
+    /// NOT CALLED — the destination roll in <see cref="RollVelocity"/> computes this same target inline. Kept
+    /// pending a decision on whether to delete it; a reader should not treat it as live behaviour.
+    /// </summary>
+    /// <param name="field">The playfield: the player to aim past, and the wall to clamp to.</param>
+    /// <returns>A point in the zone down-right of the player, inside the playfield.</returns>
+    /// <remarks>R5 $13B5: destination = player + RND(0..31) on each axis (a 32x32 zone down-right of the
+    /// player), clamped to the playfield.</remarks>
     private IntVector2 PickDestination(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -214,27 +246,26 @@ public sealed class Enforcer : IEntity, IExplodable
         return new IntVector2(x, y);
     }
 
-    /// <summary>ROM ENFNV: `ANDA #$1F` — the re-aim countdown is 0..31 BODIES (0 re-aims again next body).</summary>
+    /// <summary>Rolls the re-aim countdown, in bodies: 0..31 (0 means re-aim again next body).</summary>
+    /// <remarks>ROM ENFNV: `ANDA #$1F` — the re-aim countdown is 0..31 BODIES (0 re-aims again next body).</remarks>
     private static int NextReaimBodies(Random random) => random.Next(0, 32);
 
-    /// <summary>
-    /// Which of the five grow pictures is showing (0..4), -1 once the grow-up has
-    /// finished. The ROM changes pictures every 9 frames, so the index is derived
-    /// from the exact-6ths countdown (notes §65 — the old `PortTicks(9)` = 10
-    /// switched them ~6% early inside a correctly-timed growth).
-    /// </summary>
+    /// <summary>Which of the five grow-up pictures is showing (0..4), or -1 once the grow-up has finished (test hook).</summary>
+    /// <remarks>The ROM changes pictures every 9 frames, so the index is derived from the exact-6ths countdown
+    /// (notes §65 — the old `PortTicks(9)` = 10 switched them ~6% early inside a correctly-timed growth).</remarks>
     internal int GrowFrameIndex => _growthFifthsRemaining > 0
         ? (GameplayConstants.EnforcerGrowUpRomFrames * 6 - _growthFifthsRemaining)
             / (GameplayConstants.EnforcerGrowStepRomFrames * 6)
         : -1;
 
-    /// <summary>
-    /// ROM ENFSHT: `RMAX(ENSTIM)` — the shot countdown is RND(1..ENSTIM) BODIES, and
-    /// it re-arms BEFORE the cap check, so a shot swallowed by the 20-spark cap is
-    /// simply lost.
-    /// </summary>
+    /// <summary>The interval until the next shot: 1..the wave's fire delay, in bodies.</summary>
+    /// <remarks>ROM `ENFSHT`: `RMAX(ENSTIM)` — `RND(1..ENSTIM)` BODIES, re-armed BEFORE the cap check, so a
+    /// shot swallowed by the 20-spark cap is simply lost.</remarks>
     private int NextFireBodies(Random random) => random.Next(1, _fireDelayRomTicks + 1);
 
+    /// <summary>Draws the grow-up picture while it is growing, and the full picture afterwards; an enforcer never flashes.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set, which holds the enforcer frames.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState != EntityLifeState.Alive)
@@ -261,6 +292,9 @@ public sealed class Enforcer : IEntity, IExplodable
         sprites.DrawSprite(spriteBatch, art, Bounds, Color.White);
     }
 
+    /// <summary>The frame an explosion would copy: the grow-up picture while dropping, the full picture afterwards.</summary>
+    /// <param name="sprites">The shared sprite set, which holds the enforcer frames.</param>
+    /// <returns>The texture for the picture currently on screen.</returns>
     public Texture2D CurrentFrameArt(SpriteSet sprites)
     {
         Texture2D art = sprites.Enforcer;

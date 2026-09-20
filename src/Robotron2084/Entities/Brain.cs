@@ -9,6 +9,34 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
+/// A brain — the robot that hunts the human family and reprograms its victims
+/// into progs while firing cruise missiles at the player. It runs on a steady
+/// body clock (this wave's speed plus one frame of body execution); each body it
+/// moves, advances one walk frame and decrements its fire timer.
+///
+/// The chase is not a plain "step toward the target on both axes":
+/// <list type="bullet">
+/// <item>X has a <b>±2 arcade px dead zone</b> — a brain that is roughly aligned
+/// stops correcting horizontally.</item>
+/// <item>Y has <b>no dead zone</b> and an exact row match counts as "below", so
+/// a brain sharing the target's row oscillates ±1 px. That is the brain's
+/// signature hover/jitter.</item>
+/// <item>The step is checked against the picture box PER AXIS, so a brain at a
+/// wall can still slide along it instead of deadlocking.</item>
+/// <item>The animation facing comes from the step DELTAS (X wins), and a facing
+/// change RESETS the walk cycle to its first frame.</item>
+/// </list>
+///
+/// It targets the NEAREST living human by Manhattan distance, falling back to the
+/// player once the family is gone. Touching a human "programs" it into a PROG —
+/// the swap is the field's job (ResolveHumanCollisions). Cruise missiles are its
+/// weapon: when the fire timer expires and the 8-missile cap is free it fires one
+/// at brain + (3,4). A brain is worth 500 points.
+///
+/// Frozen while <see cref="PlayField.RobotsFrozen"/>; lasers kill it outright,
+/// with no blink.
+/// </summary>
+/// <remarks>
 /// The BRAIN (ROM RRB10 BRNORG $1AC0; decoded in arcade-fidelity-notes (18),
 /// cadence corrected in (26), movement re-derived from the Gospel in (46)).
 /// Steady-state body = the SLEEP(BRNSPD) count plus ONE vblank of body
@@ -41,39 +69,48 @@ namespace Robotron2084.Entities;
 /// Frozen while <see cref="PlayField.RobotsFrozen"/>; killable by lasers
 /// (the ROM's `BRNKIL` is `HVEXST` + `KILROB` + `KILL` — explode, off, no blink;
 /// notes §50).
-/// </summary>
+/// </remarks>
 public sealed class Brain : IEntity, IExplodable
 {
-    /// <summary>Body execution costs ~1 vblank (the body runs on its own frame);
-    /// period = BRNSPD (SLEEP) + 1 (notes 26).</summary>
+    /// <summary>How many extra ROM frames the brain's body adds to this wave's speed to make
+    /// one body period.</summary>
+    /// <remarks>Period = BRNSPD (SLEEP) + 1 (notes 26). Body execution costs ~1 vblank (the body
+    /// runs on its own frame); the period is this wave's speed plus this.</remarks>
     private const int BodyExecutionRomTicks = 1;
 
-    /// <summary>One ROM step = one arcade pixel per axis per body pass.</summary>
+    /// <summary>How far the brain steps on one axis per body, in port pixels: one arcade pixel.</summary>
+    /// <remarks>The ROM's step is one arcade pixel per axis per body pass.</remarks>
     private static readonly int StepPixels = ScreenSize.Scaled(1);
 
     /// <summary>
-    /// ROM BRNL1 approach DEAD ZONE: `LDA OBJX,Y / SUBA OBJX,X / ADDA #2 /
-    /// CMPA #4 / BLS BRN3A` skips the X step while |dx| &lt;= 2 arcade px — the
-    /// brain stops aligning horizontally once it is close, and hovers.
-    /// There is NO dead zone on Y: BRN3A always picks ±1 and an EXACT row
-    /// match counts as "target is below" (`BHS` is taken), so on a shared row
-    /// the brain drifts down one px, then up again. That vertical jitter is
-    /// the brain's signature look and comes straight out of the source.
+    /// The X approach dead zone: the brain skips its X step while |dx| &lt;= 2 arcade
+    /// px, so it stops aligning horizontally once it is close and hovers. There is
+    /// NO dead zone on Y: an exact row match counts as "target is below", so on a
+    /// shared row the brain drifts down one px, then up again — that vertical jitter
+    /// is the brain's signature look.
     /// </summary>
+    /// <remarks>
+    /// ROM BRNL1: `LDA OBJX,Y / SUBA OBJX,X / ADDA #2 / CMPA #4 / BLS BRN3A`. BRN3A
+    /// always picks ±1 and takes the `BHS` branch on an exact match.
+    /// </remarks>
     private static readonly int ApproachDeadZonePixels = ScreenSize.Scaled(2);
 
-    /// <summary>Collision box = the ROM picture (7 bytes x 16 rows = 14x16 arcade px).</summary>
+    /// <summary>The collision box: the brain picture's own size, 14x16 arcade px, in port pixels.</summary>
+    /// <remarks>The ROM picture (7 bytes x 16 rows = 14x16 arcade px).</remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.BrainCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.BrainCollisionSize.Height));
 
-    /// <summary>ABAC walk: BRNAL/BRNAR/BRNAD/BRNAU each run P1,P2,P1,P3 over the direction's 3 frames.</summary>
+    /// <summary>The walk cycle: each direction runs frame 1, 2, 1, 3 of its three pictures.</summary>
+    /// <remarks>The cycle is ABAC. ROM BRNAL/BRNAR/BRNAD/BRNAU each run P1,P2,P1,P3.</remarks>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
     /// <summary>
-    /// The four ABAC directions' picture bases, in <see cref="SpriteSet.BrainFrames"/> order:
-    /// BRNAL (left), BRNAR (right), BRNAD (down), BRNAU (up). Three frames each, so a base's
-    /// frame 0 is that direction's P1 — BRLP1 / BRRP1 / BRDP1 / BRUP1.
+    /// The four walk directions' picture bases, in <see cref="SpriteSet.BrainFrames"/> order:
+    /// left, right, down, up. Three frames each, so a base's frame 0 is that direction's first
+    /// picture.
     /// </summary>
+    /// <remarks>ROM BRNAL (left), BRNAR (right), BRNAD (down), BRNAU (up); a base's frame 0 is
+    /// that direction's P1 — BRLP1 / BRRP1 / BRDP1 / BRUP1.</remarks>
     private const int LeftDirectionBase = 0;
     private const int RightDirectionBase = 1;
     private const int DownDirectionBase = 2;
@@ -92,8 +129,12 @@ public sealed class Brain : IEntity, IExplodable
     private int _reprogramFifths;           // ReprogramStepRomTicks in exact 6ths (3 frames = 3.6)
     private bool _reprogramLifting;         // next redraw lifts the human's Y (+), then drops it (-)
 
-    /// <param name="brainSpeedRomTicks">ROM BRNSPD for this wave (wave table).</param>
-    /// <param name="fireDelayRomTicks">ROM BSHTIM for this wave (wave table).</param>
+    /// <summary>Creates a brain at <paramref name="position"/> with its facing, fire timer and hover state set up.</summary>
+    /// <param name="position">Top-left of the brain.</param>
+    /// <param name="random">The random source: the fire timer and the reprogramming jitter.</param>
+    /// <param name="brainSpeedRomTicks">How many ROM frames this wave's brain waits between bodies.</param>
+    /// <param name="fireDelayRomTicks">How many ROM frames this wave's brain waits between cruise missiles.</param>
+    /// <remarks>These are ROM BRNSPD and BSHTIM for this wave (wave table).</remarks>
     public Brain(IntVector2 position, Random random, int brainSpeedRomTicks, int fireDelayRomTicks)
     {
         _position = position;
@@ -103,21 +144,38 @@ public sealed class Brain : IEntity, IExplodable
         _fireBodiesRemaining = 1 + random.Next(fireDelayRomTicks);
     }
 
+    /// <summary>Top-left of the brain.</summary>
+    /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position => _position;
 
+    /// <summary>The brain picture's own 14x16 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
+    /// <summary>Alive until shot or until it walks into an electrode; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>
+    /// Kills the brain: it goes straight to Dead, with no death animation of any
+    /// kind.
+    /// </summary>
+    /// <remarks>
     /// Laser kill (ROM RRB10 `BRNKIL`): `JSR HVEXST` (explode) then `JSR
     /// KILROB` and `JSR KILL` on the process — the brain is gone immediately,
     /// with no death animation of any kind (notes §50). A brain killed while it
     /// is reprogramming a human releases the victim with a SKULL; the field
     /// handles that.
-    /// </summary>
+    /// </remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
+    /// <summary>
+    /// Runs one brain body when its body clock says so: chases the nearest human (or the player),
+    /// steps one pixel per axis under the X dead zone, advances the walk, and fires a cruise
+    /// missile when the fire timer expires. While reprogramming a human it runs the redraw loop
+    /// INSTEAD of all of that. Held still while <see cref="PlayField.RobotsFrozen"/>.
+    /// </summary>
+    /// <param name="gameTime">Unused — the body clock is counted in ROM frames.</param>
+    /// <param name="field">The playfield: the human list, the walls, and the missile cap and spawn hook.</param>
+    /// <remarks>The body clock is BRNSPD + 1 ROM frames, and the reprogramming redraw loop is ROM `BMUT`.</remarks>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -219,29 +277,34 @@ public sealed class Brain : IEntity, IExplodable
     }
 
     /// <summary>
-    /// ROM CKLIM/CKLIMV, split per axis: true when the object's PICTURE box
-    /// would still sit inside the playfield. See the call site for why this is
-    /// not the Gospel's combined test.
+    /// True when the object's PICTURE box would still sit inside the playfield on X.
+    /// See the call site for why the test is split per axis.
     /// </summary>
+    /// <remarks>ROM CKLIM/CKLIMV, split per axis; the Gospel's is a combined test.</remarks>
     private static bool FitsInsideX(Rectangle bounds, int x) =>
         x >= bounds.X && x + CollisionSize.Width <= bounds.Right;
 
+    /// <summary>True when a Y coordinate keeps the whole picture box inside the playfield.
+    /// (The X half above carries the explanation of why the check is split per axis.)</summary>
     private static bool FitsInsideY(Rectangle bounds, int y) =>
         y >= bounds.Y && y + CollisionSize.Height <= bounds.Bottom;
 
     /// <summary>
-    /// True while this brain is reprogramming a human (ROM BMUT). The field
-    /// must not hand it another victim, and the victim itself is off the human
-    /// list until the animation finishes.
+    /// True while this brain is reprogramming a human. The field must not hand it
+    /// another victim, and the victim itself is off the human list until the
+    /// animation finishes.
     /// </summary>
+    /// <remarks>ROM BMUT.</remarks>
     public bool IsReprogramming => _victim is not null;
 
     /// <summary>
     /// Gives up the current victim, if any — used when the brain is killed
-    /// mid-animation. The ROM's BRNKIL compares its own address against BMUT3
-    /// and, from that point on, frees the human and leaves a SKULL instead of a
-    /// prog (the conversion never completes).
+    /// mid-animation, so the human is freed and left as a SKULL instead of a prog
+    /// (the conversion never completes).
     /// </summary>
+    /// <returns>The victim this brain was reprogramming, or null if there was none.</returns>
+    /// <remarks>The ROM's BRNKIL compares the dead process's address against BMUT3 and, from that
+    /// point on, frees the human and leaves a SKULL.</remarks>
     internal Human? ReleaseVictim()
     {
         Human? victim = _victim;
@@ -250,10 +313,13 @@ public sealed class Brain : IEntity, IExplodable
     }
 
     /// <summary>
-    /// ROM BMUT entry, called by the field when the two objects' TOP-LEFT
-    /// CORNERS are within ±3px on both axes (BRNL1's tail — NOT a picture
-    /// overlap). Sets the human up beside the brain and starts the loop.
+    /// Starts the reprogramming: called by the field when the two objects' TOP-LEFT
+    /// CORNERS are within ±3px on both axes (NOT a picture overlap). Sets the human
+    /// up beside the brain and starts the redraw loop.
     /// </summary>
+    /// <param name="human">The victim, which is taken off the human list until the animation ends.</param>
+    /// <param name="playfieldBounds">The playfield bounds, used to place the human beside the brain.</param>
+    /// <remarks>ROM BMUT entry; the proximity test is BRNL1's tail.</remarks>
     internal void BeginReprogramming(Human human, Rectangle playfieldBounds)
     {
         _victim = human;
@@ -296,12 +362,12 @@ public sealed class Brain : IEntity, IExplodable
     }
 
     /// <summary>
-    /// ROM BMUTL: each iteration redraws the human TWICE — once with its Y
-    /// lifted by (SEED &amp; 7) and once with it dropped by the same, each
-    /// clamped into the playfield — then decrements the iteration counter. The
-    /// lift/drop are cumulative on the human's own Y, so it wanders; the clamps
-    /// at both edges keep it on screen.
+    /// Each iteration redraws the human TWICE — once with its Y lifted by a random
+    /// 0..7 and once with it dropped by the same, each clamped into the playfield —
+    /// then decrements the iteration counter. The lift/drop are cumulative on the
+    /// human's own Y, so it wanders; the clamps at both edges keep it on screen.
     /// </summary>
+    /// <remarks>ROM BMUTL: the lift/drop amount is `SEED &amp; 7`.</remarks>
     private void AdvanceReprogramming(PlayField field, Human victim)
     {
         // One ROM iteration every 3 frames = 3.6 ticks exactly (notes §52) —
@@ -344,9 +410,13 @@ public sealed class Brain : IEntity, IExplodable
         _victim = null;
     }
 
-    /// <summary>ABAC frame within the facing direction's 3-frame set.</summary>
+    /// <summary>The current walk frame, as an index into <see cref="SpriteSet.BrainFrames"/>.</summary>
+    /// <remarks>Chosen from the facing direction's 3-frame set, the ROM's four-step ABAC walk cycle.</remarks>
     internal int WalkFrameIndex => _directionBase * 3 + WalkCycle[_frameStep];
 
+    /// <summary>Draws the current walk frame — over a solid slot-11 block while it is reprogramming.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set, which holds the brain frames.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -377,6 +447,9 @@ public sealed class Brain : IEntity, IExplodable
         sprites.DrawSprite(spriteBatch, sprites.BrainFrames[WalkFrameIndex], Bounds, Color.White);
     }
 
+    /// <summary>The frame an explosion would copy (see <see cref="IArtSource"/>).</summary>
+    /// <param name="sprites">The shared sprite set, which holds the brain frames.</param>
+    /// <returns>The texture for the current walk frame.</returns>
     public Texture2D CurrentFrameArt(SpriteSet sprites)
         => sprites.BrainFrames[WalkFrameIndex];
 }

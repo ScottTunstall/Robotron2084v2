@@ -8,31 +8,39 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// The indestructible robot — RRH11's HULK process, ported step-for-step:
-/// takes ONE step per HLKSPD-tick cycle (horizontal steps alternate 3/4
-/// arcade-px in step with its animation, vertical 2 arcade-px); re-aims every
-/// RND(1..31) steps or immediately on wall contact (no move that cycle).
-/// Every re-aim flips the axis (the ROM alternates X/Y blocks) and aims the
-/// new direction at the target's coordinate on that axis plus a random
-/// -16..15 offset. Target (R5 $017C): each hulk rolls 50/50 at spawn —
-/// a family-list slot (empty at spawn time, since the ROM spawns hulks
-/// before the family, so the target is NULL and the hulk hunts the player;
-/// the ROM's actual NULL read chases a phantom at $7E01 — a documented
-/// bug we skip) or the last family-list slot (the last-spawned human,
-/// falling back to the player once that member dies or is rescued).
-/// <see cref="LifeState"/> is always <see cref="EntityLifeState.Alive"/>
-/// (a laser only knocks it back, spec: "pushed back... into the WALL but no
-/// further"). Like the ROM, a hulk walking over an electrode destroys the
-/// electrode (handled by the field).
+/// A hulk — the indestructible robot. It never dies and cannot be shot: a laser only knocks it
+/// backwards (clamped at the wall, never pushed through it), its <see cref="LifeState"/> is always
+/// <see cref="EntityLifeState.Alive"/>, and walking over an electrode destroys the ELECTRODE, not
+/// the hulk (the field resolves that).
 ///
-/// Animation (decoded 2026-09-13 from the ROM; see <see cref="LeftFrames"/>):
-/// each direction block walks an ABAC sequence over the nine verified hulk
-/// frames, restarting at the block's first frame on every direction change
-/// (ROM HND10: CLRA; STA PD4,U; OPICT = HLKLP1 + first image).
+/// It lumbers in big, slow steps — one per speed cycle: 3 or 4 arcade px sideways, alternating with
+/// its animation, or 2 arcade px up or down. It re-aims when its random step timer runs out, or
+/// immediately when the wall is in the way (no move that cycle). Each re-aim flips the axis it
+/// travels on and then aims along the new axis at the target's coordinate plus a random -16..+15
+/// offset, so it wanders rather than homing precisely.
+///
+/// What it hunts is decided when it is created: either the player, or a named human that falls back
+/// to the player once that member dies or is rescued (see the constructor's <c>target</c>).
 /// </summary>
+/// <remarks>
+/// RRH11.ASM's `HULK` process, ported step for step: `HULKND` re-aims, `HNDX`/`HNDY` pick the
+/// direction, `CKLIMV` rejects a step that would leave the playfield, `HULKIL` handles the laser
+/// knockback, and `HLKSPD` is the step period.
+///
+/// The target roll (R5 $017C): each hulk rolls 50/50 at spawn — a family-list slot, which is EMPTY
+/// at spawn time because the ROM spawns hulks before the family (so the target is NULL and the hulk
+/// hunts the player; the ROM's actual NULL read chases a phantom at $7E01 — a documented bug the
+/// port skips), or the last family-list slot, i.e. the last-spawned human.
+///
+/// Animation (decoded 2026-09-13 from the ROM; see <see cref="LeftFrames"/>): each direction block
+/// walks an ABAC sequence over the nine verified hulk frames, restarting at the block's first frame
+/// on every direction change (`HND10`: CLRA; STA PD4,U; OPICT = HLKLP1 + first image).
+/// </remarks>
 public sealed class Hulk : IEntity, IArtSource
 {
-    /// <summary>Collision box = the ROM picture dimensions (14x16 arcade px), top-left anchored at <see cref="Position"/>.</summary>
+    /// <summary>The collision box: the hulk picture's own size, 14x16 arcade px, in port pixels,
+    /// top-left anchored at <see cref="Position"/>.</summary>
+    /// <remarks>The ROM picture's dimensions.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.HulkCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.HulkCollisionSize.Height));
 
@@ -49,8 +57,12 @@ public sealed class Hulk : IEntity, IArtSource
     private IntVector2 _position;
     private Rectangle? _playfieldBounds; // cached from the last Update; used by ApplyKnockback
 
-    /// <param name="hulkSpeedRomTicks">ROM HLKSPD for this wave (notes §11.2) — the step period in ROM ticks.</param>
-    /// <param name="target">Who this hulk hunts: the player, or a human that falls back to the player when gone (R5 target roll, see class docs).</param>
+    /// <summary>Creates a hulk; it takes its first aim on its first update.</summary>
+    /// <param name="position">Top-left of the hulk.</param>
+    /// <param name="random">The random source, for the re-aim timer and the aim offsets.</param>
+    /// <param name="hulkSpeedRomTicks">How many ROM frames between steps — this wave's hulk speed.</param>
+    /// <param name="target">Returns who this hulk hunts right now: the player, or a human that falls back to the player once it is gone.</param>
+    /// <remarks>ROM `HLKSPD` (notes §11.2), which is 5..8 ROM frames — so the exact-6ths clock matters here too.</remarks>
     public Hulk(IntVector2 position, Random random, int hulkSpeedRomTicks, Func<IntVector2> target)
     {
         _position = position;
@@ -64,15 +76,13 @@ public sealed class Hulk : IEntity, IArtSource
         _currentFrameIndex = VerticalFrames[0];
     }
 
-    /// <summary>
-    /// Walk frames per direction block, 0-based indices into
-    /// <see cref="SpriteSet.HulkFrames"/> (the repo's hulk1..9). Verified
-    /// 2026-09-13 against the ROM: the animation table at $01CC (byte-identical
-    /// to RRH11's HLKAL/HLKAR/HLKAD/HLKAU) indexes the picture list HLKLP1
-    /// at $0CF9, whose nine data pointers read hulk1, hulk2, hulk3, hulk7,
-    /// hulk8, hulk9, hulk4, hulk5, hulk6 — so LEFT walks 1,2,1,3, RIGHT
+    /// <summary>The walk frames for each direction, as indices into <see cref="SpriteSet.HulkFrames"/> (the repo's hulk1..9).</summary>
+    /// <remarks>
+    /// Verified 2026-09-13 against the ROM: the animation table at $01CC (byte-identical to RRH11's
+    /// HLKAL/HLKAR/HLKAD/HLKAU) indexes the picture list HLKLP1 at $0CF9, whose nine data pointers read
+    /// hulk1, hulk2, hulk3, hulk7, hulk8, hulk9, hulk4, hulk5, hulk6 — so LEFT walks 1,2,1,3, RIGHT
     /// 7,8,7,9, and DOWN and UP both walk 4,5,4,6 (ABAC).
-    /// </summary>
+    /// </remarks>
     private static readonly int[] LeftFrames = { 0, 1, 0, 2 };
     private static readonly int[] RightFrames = { 6, 7, 6, 8 };
     private static readonly int[] VerticalFrames = { 3, 4, 3, 5 };
@@ -90,17 +100,28 @@ public sealed class Hulk : IEntity, IArtSource
     /// <summary>Current travel direction (test hook).</summary>
     internal Direction8 Direction => _direction;
 
+    /// <summary>Top-left of the hulk; settable for tests.</summary>
+    /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position
     {
         get => _position;
         internal set => _position = value; // test hook
     }
 
+    /// <summary>The hulk picture's own 14x16 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>Always Alive — indestructible (the enum's Dying/Dead are simply never used here).</summary>
     public EntityLifeState LifeState => EntityLifeState.Alive;
 
+    /// <summary>
+    /// One hulk cycle: the first call aims it (as the ROM does when the object is created), and
+    /// every later one either takes a step — showing that step's walk frame, moving by the block's
+    /// delta and re-aiming when the timer runs out — or, if the wall is in the way, re-aims instead
+    /// and stays put. Held completely still while <see cref="PlayField.RobotsFrozen"/>.
+    /// </summary>
+    /// <param name="gameTime">Unused — the steps are counted in ROM frames (HLKSPD).</param>
+    /// <param name="field">The playfield: the wall, and the frozen flag.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         _playfieldBounds = field.Wall.PlayfieldBounds;
@@ -152,11 +173,12 @@ public sealed class Hulk : IEntity, IArtSource
         }
     }
 
-    /// <summary>
-    /// ROM HULKND: reset the random step timer, FLIP the axis (previous
-    /// direction was an X-block -> seek Y, and vice versa), then aim along
-    /// the new axis at target + random offset, clamped/wrapped like the ROM.
-    /// </summary>
+    /// <summary>Re-rolls the step timer, switches to the other axis and picks a new direction, resetting the walk to the block's first frame.</summary>
+    /// <remarks>
+    /// ROM `HULKND`: reset the random step timer, FLIP the axis (previous direction was an X-block
+    /// -> seek Y, and vice versa), then aim along the new axis; `HND10` resets the walk to the
+    /// block's first frame (CLRA; STA PD4,U; OPICT = HLKLP1 + first image).
+    /// </remarks>
     private void Reaim(PlayField field)
     {
         _reaimStepsRemaining = _random.Next(1, 32);
@@ -168,11 +190,12 @@ public sealed class Hulk : IEntity, IArtSource
         _currentFrameIndex = FramesFor(_direction)[0];
     }
 
-    /// <summary>
-    /// ROM HNDX/HNDY: aim = target coordinate + RND(-16..15) on the current
-    /// axis; horizontal out-of-range clamps to the playfield, vertical
-    /// below-range wraps to the far side; move toward the adjusted point.
-    /// </summary>
+    /// <summary>Aims along the current axis at the target's coordinate plus a random -16..+15 offset.</summary>
+    /// <remarks>
+    /// ROM `HNDX`/`HNDY`: aim = target coordinate + RND(-16..15) on the current axis; a horizontal
+    /// aim out of range clamps to the playfield, a vertical one below range wraps to the far side;
+    /// then move toward the adjusted point.
+    /// </remarks>
     private void PickDirection(PlayField field)
     {
         IntVector2 target = _target();
@@ -196,13 +219,16 @@ public sealed class Hulk : IEntity, IArtSource
     }
 
     /// <summary>
-    /// Laser impact — ROM RRH11 HULKIL: the hulk is indestructible and is
-    /// pushed along the laser's travel direction, PER AXIS at ROM
-    /// magnitudes: X = ±1 arcade px, doubled to ±2 when SEED's sign bit is
-    /// clear (50%); Y = ±1, quadrupled to ±4 when LSEED &gt;= $C0 (75%).
-    /// A diagonal laser pushes both axes. Clamped at the wall (spec:
-    /// "pushed back ... into the WALL but no further").
+    /// Pushes the hulk along the laser's travel direction, stopping at the wall. A diagonal
+    /// laser pushes both axes.
     /// </summary>
+    /// <param name="direction">The laser's direction of travel, per axis (-1, 0 or +1).</param>
+    /// <remarks>
+    /// Spec: "pushed back ... into the WALL but no further".
+    ///
+    /// ROM RRH11 `HULKIL`: the hulk is pushed at ROM magnitudes — X = ±1 arcade px, doubled to ±2
+    /// when SEED's sign bit is clear (50%); Y = ±1, quadrupled to ±4 when LSEED >= $C0 (75%).
+    /// </remarks>
     public void ApplyKnockback(IntVector2 direction)
     {
         // ROM HULKIL: LDA LASDIR; TST SEED; BMI (skip) / ASLA -> x2 when the
@@ -219,16 +245,22 @@ public sealed class Hulk : IEntity, IArtSource
         }
     }
 
+    /// <summary>Draws the current walk picture solid; a hulk never flashes and never dies.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set, which holds the hulk frames.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         // Always solid: no flash, no death animation (indestructible).
         sprites.DrawSprite(spriteBatch, sprites.HulkFrames[_currentFrameIndex], Bounds, Color.White);
     }
 
-    /// <summary>
-    /// The hulk never shatters (it is indestructible), but it DOES materialise at
-    /// a wave start — RRG23's `APPEAR` creates an appear record for every robot,
-    /// and the hulk is on that list — so the engine can still blit its art.
-    /// </summary>
+    /// <summary>This hulk's current walk picture, for the appear effect.</summary>
+    /// <param name="sprites">The shared sprite set, which holds the hulk frames.</param>
+    /// <returns>The texture for the current walk frame.</returns>
+    /// <remarks>
+    /// The hulk never shatters (it is indestructible), but it DOES materialise at a wave start — the
+    /// appear pass gives every robot — the hulk included — an appear record, so the effect still needs
+    /// its art (see <see cref="IArtSource"/> and RRG23's `APPEAR`).
+    /// </remarks>
     public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.HulkFrames[_currentFrameIndex];
 }

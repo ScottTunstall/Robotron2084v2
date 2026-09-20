@@ -8,49 +8,52 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// One of the human family the player rescues (ROM RRH11; PHASE D). NOT an
-/// enemy: a robot kill (in the R5 ROM the hulk is the only one) leaves a
-/// skull &amp; crossbones; the player touches one to rescue it — the running
-/// save count pays the 1000-5000 bonus (ScoreValues.RescueBonus).
+/// One of the family the player rescues. Humans are not enemies: a robot that touches one kills it and
+/// leaves a skull behind, and the player rescues one by touching it — the running save count pays the
+/// 1000-5000 bonus.
 ///
-/// Walk (ROM HUMAN process + HUMATB, decoded): 8 direction blocks, each 4
-/// substeps of 2/1 alternating arcade-px steps (cardinals: 2,1 on the major
-/// axis; diagonals: 2,1 on X plus 1 on Y); one step per ROM step period —
-/// the ROM's is NAP 8, the playtest-doubled port value is 16 (round 8: the
-/// ROM-accurate pace read "mommies walking too fast"; same pattern as the
-/// spheroid/enforcer speed retunes); a new random direction every 1..128
-/// steps (LSEED&amp;$7F+1) or whenever the
-/// next step would leave the play area or land on a post/electrode
-/// (obstacle → no move, re-aim);
-/// staggered start 1..8 ticks (SEED&amp;7+1). Animation: 12 frames per member
-/// = 4 directions × 3 walk frames (same layout as the player frames); the
-/// diagonals reuse the left/right frame sets, exactly as the ROM's image
-/// numbers do. <b>Not</b> frozen by <see cref="PlayField.RobotsFrozen"/>: the
-/// ROM's HUMAN process is the one robot routine with no STATUS check, so the
-/// family walks while the robots are held for the wave-start appear and while
-/// the player is in the start grace (notes §88).
+/// They wander the field in short steps: a random direction for a random number of steps, or a new
+/// direction straight away if the next step would leave the play area or land on a standing electrode.
+/// Each member has its own walk art, staggered start and direction. Unlike the robots, humans do NOT
+/// wait for the wave to start — they set off immediately (see <see cref="Update"/>) — and a brain that
+/// touches one may reprogram it into a prog instead of killing it.
 /// </summary>
+/// <remarks>
+/// ROM RRH11 (PHASE D). Walk = the `HUMAN` process + `HUMATB`, decoded: 8 direction blocks, each 4
+/// substeps of 2/1 alternating arcade-px steps (cardinals: 2,1 on the major axis; diagonals: 2,1 on X plus
+/// 1 on Y); one step per step period — the ROM's is `NAP 8`, while the port's playtest-doubled value is 16
+/// (round 8: the ROM-accurate pace read "mommies walking too fast" — the same pattern as the
+/// spheroid/enforcer speed retunes). A new random direction comes every 1..128 steps (`LSEED&$7F+1`) or as
+/// soon as the next step would leave the play area or land on a post/electrode. The start is staggered
+/// 1..8 ticks (`SEED&7+1`). Animation: 12 frames per member = 4 directions x 3 walk frames (the same layout
+/// as the player's frames); the diagonals reuse the left/right frame sets, exactly as the ROM's image
+/// numbers do.
+/// </remarks>
 public sealed class Human : IEntity
 {
     /// <summary>
-    /// Step period in ROM frames. **This is the ONE deliberate gameplay override in
-    /// the port** (author, playtest round 8: "the mommies are walking too fast") —
-    /// the Gospel is explicit that the human's process is `NAP 8` AND that it stores
-    /// its new position on every pass (`HUM2 ... STD OX16,X`), i.e. one arcade pixel
-    /// every 8 frames. The port walks one pixel every 16 frames = half the arcade
-    /// rate, on the author's instruction, so DO NOT "fix" this to 8 without asking
-    /// (notes §70).
+    /// The step period, in ROM frames: how long each step is held. **This is the ONE
+    /// deliberate gameplay override in the port** — humans walk at half the arcade rate,
+    /// so DO NOT "fix" this to 8 without asking.
     /// </summary>
+    /// <remarks>
+    /// Author, playtest round 8: "the mommies are walking too fast". The Gospel is explicit
+    /// that the human's process is `NAP 8` AND that it stores its new position on every pass
+    /// (`HUM2 ... STD OX16,X`), i.e. one arcade pixel every 8 frames. The port walks one pixel
+    /// every 16 frames = half the arcade rate, on the author's instruction, so DO NOT "fix"
+    /// this to 8 without asking (notes §70).
+    /// </remarks>
     private const int StepPeriodRomTicks = 16;
 
     /// <summary>
-    /// ROM HUMATB verbatim: 8 direction blocks × 4 substeps of
+    /// The walk table: 8 direction blocks × 4 substeps of
     /// (delta X, delta Y, walk-frame index within the direction's 3-frame
-    /// set). Deltas are in arcade pixels (the ROM's "IMAGE #,DELTA X,DELTA Y"
-    /// table; the $FF "start over" entries are the end-of-block markers).
+    /// set). Deltas are in arcade pixels.
     /// Block order: LEFT, RIGHT, DOWN, UP, UP+LEFT, RIGHT+UP, RIGHT+DOWN,
     /// DOWN+LEFT.
     /// </summary>
+    /// <remarks>ROM HUMATB verbatim: the ROM's "IMAGE #,DELTA X,DELTA Y" table; the $FF
+    /// "start over" entries are the end-of-block markers.</remarks>
     private static readonly (int Dx, int Dy, int Frame)[] Steps =
     {
         // LEFT (ROM images 0,4,0,8)
@@ -72,13 +75,15 @@ public sealed class Human : IEntity
     };
 
     /// <summary>
-    /// Which 3-frame set each block animates from — the ROM's diagonals reuse
+    /// Which 3-frame set each block animates from — the diagonals reuse
     /// the cardinal frame sets (UP+LEFT/DOWN+LEFT → left set,
     /// RIGHT+UP/RIGHT+DOWN → right set): [L,R,D,U,L,R,R,L].
     /// </summary>
+    /// <remarks>The ROM's diagonals reuse the cardinals' frame sets.</remarks>
     private static readonly int[] FrameSet = { 0, 1, 2, 3, 0, 1, 1, 0 };
 
-    /// <summary>Collision box per member = the ROM picture dimensions (arcade px), scaled at use.</summary>
+    /// <summary>The member's collision box in arcade pixels, before scaling.</summary>
+    /// <remarks>The ROM picture's dimensions for the member.</remarks>
     private static (int Width, int Height) ArcadeCollisionSize(HumanKind kind) => kind switch
     {
         HumanKind.Mikey => GameplayConstants.MikeyCollisionSize,
@@ -90,8 +95,11 @@ public sealed class Human : IEntity
     /// The largest side of this member's box in port pixels — the square the spawner must keep
     /// clear (the boxes themselves are not square). Keeping a human off the electrodes is
     /// otherwise a trap: the walk refuses a step into a live electrode, so one placed inside
-    /// stands there for the rest of the wave (notes §77, §88).
+    /// stands there for the rest of the wave.
     /// </summary>
+    /// <param name="kind">The member whose box is measured.</param>
+    /// <returns>The square's side, in port pixels.</returns>
+    /// <remarks>Notes §77, §88.</remarks>
     internal static int SpawnSquarePortPixels(HumanKind kind)
     {
         (int width, int height) = ArcadeCollisionSize(kind);
@@ -108,6 +116,10 @@ public sealed class Human : IEntity
     private int _startStaggerTicks;
     private int _frame;          // 0..11 into the member's 12 frames
 
+    /// <summary>Creates one family member with its own stagger and starting direction.</summary>
+    /// <param name="position">Top-left of the human.</param>
+    /// <param name="kind">Which member — it decides the art and the collision box.</param>
+    /// <param name="random">The random source for the direction, the step count and the stagger.</param>
     public Human(IntVector2 position, HumanKind kind, Random random)
     {
         _position = position;
@@ -119,10 +131,14 @@ public sealed class Human : IEntity
         _stepFifths = 0;                             // the stagger's last tick IS the first step
     }
 
+    /// <summary>Which member this is (Mikey, Mum or Dad) — it decides the art and the box.</summary>
     public HumanKind Kind => _kind;
 
+    /// <summary>Top-left of the human.</summary>
+    /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position => _position;
 
+    /// <summary>This member's own picture box at <see cref="Position"/>.</summary>
     public Rectangle Bounds
     {
         get
@@ -132,17 +148,27 @@ public sealed class Human : IEntity
         }
     }
 
+    /// <summary>Alive until a robot kills it, the player rescues it, or a brain finishes reprogramming it.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Steps taken so far — test hook for the step cadence (notes §65/§70).</summary>
+    /// <summary>Steps taken so far — test hook for the step cadence.</summary>
+    /// <remarks>Notes §65, §70.</remarks>
     internal int StepCount { get; private set; }
 
-    /// <summary>Killed by a robot (hulk): instant off, no animation (ROM DMAOFF).</summary>
+    /// <summary>Killed by a robot: gone at once, with no death animation. The skull is the field's.</summary>
+    /// <remarks>ROM `DMAOFF` (image off).</remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
-    /// <summary>Rescued by the player (touch): instant off; the field awards the bonus.</summary>
+    /// <summary>Rescued by the player: gone at once, and the field awards the bonus.</summary>
     public void Rescue() => LifeState = EntityLifeState.Dead;
 
+    /// <summary>
+    /// Walks the current direction block one substep at a time: waits out the start stagger, then takes the
+    /// next step on the step clock — re-aiming instead of moving when the next step would leave the
+    /// playfield or land on a standing electrode.
+    /// </summary>
+    /// <param name="gameTime">Unused — the step period is counted in ROM frames.</param>
+    /// <param name="field">The playfield: the wall and the electrodes the walk refuses to enter.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         // NOTE: no `RobotsFrozen` gate. Every ROBOT routine checks the ROM's STATUS flag
@@ -208,6 +234,7 @@ public sealed class Human : IEntity
         }
     }
 
+    /// <summary>True when the human's next step would overlap an electrode that is still standing.</summary>
     private static bool OverlapsLivingElectrode(Rectangle next, PlayField field)
     {
         foreach (Electrode electrode in field.Electrodes)
@@ -221,6 +248,8 @@ public sealed class Human : IEntity
         return false;
     }
 
+    /// <summary>Picks a fresh direction and re-rolls how many steps to take before the next change.</summary>
+    /// <remarks>ROM: `LSEED&amp;$7F+1` steps, over the 8 direction blocks of `HUMATB`.</remarks>
     private void PickNewDirection()
     {
         _directionBlock = _random.Next(8);
@@ -229,6 +258,9 @@ public sealed class Human : IEntity
         _reDirStepsRemaining = 1 + _random.Next(128);
     }
 
+    /// <summary>Draws the walk frame — or, while a brain is working on this human, the flashing two-colour shape.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set, which holds the family frames.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState != EntityLifeState.Alive)
@@ -264,17 +296,18 @@ public sealed class Human : IEntity
     }
 
     /// <summary>
-    /// True while a brain is reprogramming this human (ROM BMUT): it is off the
-    /// human list — no longer a brain target, no longer rescuable, no longer
-    /// killable by a hulk — its walk is frozen, and the BRAIN drives its
-    /// position. It becomes a PROG when the animation finishes (never a skull).
+    /// True while a brain is working on this human: it does not walk, cannot be rescued or killed, and is
+    /// drawn as the flashing two-colour shape. It becomes a prog when the animation finishes — never a skull.
     /// </summary>
+    /// <remarks>ROM `BMUT`: the human comes off the human list while the brain drives it.</remarks>
     public bool IsBeingReprogrammed { get; private set; }
 
-    /// <summary>ROM BMUT entry: the human stops walking and is rendered as the flashing two-colour shape.</summary>
+    /// <summary>Starts being reprogrammed: the human stops walking and starts flashing.</summary>
+    /// <remarks>ROM `BMUT` entry.</remarks>
     internal void BeginReprogramming() => IsBeingReprogrammed = true;
 
-    /// <summary>ROM BMUT completion: the human's body is gone (PROGST makes the prog in its place).</summary>
+    /// <summary>Finishes reprogramming: the human is gone, and the field puts a prog in its place.</summary>
+    /// <remarks>ROM `BMUT` completion — `PROGST` makes the prog where the human was.</remarks>
     internal void FinishReprogramming()
     {
         IsBeingReprogrammed = false;
@@ -282,5 +315,6 @@ public sealed class Human : IEntity
     }
 
     /// <summary>Test-only positioning hook (InternalsVisibleTo the test assembly).</summary>
+    /// <param name="position">The position to move the human to.</param>
     internal void TeleportTo(IntVector2 position) => _position = position;
 }

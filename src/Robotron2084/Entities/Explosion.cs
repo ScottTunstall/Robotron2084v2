@@ -8,11 +8,12 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// Which way the dying sprite is cut up and fanned — the ROM has one module per
-/// axis (notes §61): <see cref="Rows"/> = RRX7/RRDX2 (the sprite's ROWS become
-/// strips that fan up and down), <see cref="Columns"/> = RRHX4 (its COLUMNS
-/// become strips that fan left and right).
+/// Which way the dying sprite is cut up and fanned: <see cref="Rows"/> cuts the
+/// sprite into its ROWS, which fan up and down; <see cref="Columns"/> cuts it into
+/// its COLUMNS, which fan left and right.
 /// </summary>
+/// <remarks>The ROM has one module per axis (notes §61): <see cref="Rows"/> = RRX7/RRDX2,
+/// <see cref="Columns"/> = RRHX4.</remarks>
 public enum StripFanAxis
 {
     Rows,
@@ -21,16 +22,33 @@ public enum StripFanAxis
 
 /// <summary>
 /// The playfield interior in the strip engine's units — X in ART PIXELS, Y in
-/// ROWS. The ROM's <c>XMIN 7</c>/<c>XMAX $8F</c>/<c>YMIN 24</c>/<c>YMAX 234</c>
-/// (RRF.ASM:67-70) are its own screen's columns/rows; these are the port's wall.
-/// Strips are DROPPED (never scaled) when they fall outside.
+/// ROWS. Strips are DROPPED (never scaled) when they fall outside.
 /// </summary>
+/// <remarks>The ROM's <c>XMIN 7</c>/<c>XMAX $8F</c>/<c>YMIN 24</c>/<c>YMAX 234</c>
+/// (RRF.ASM:67-70) are its own screen's columns/rows; these are the port's wall.</remarks>
 public readonly record struct StripClip(int MinX, int MaxX, int MinY, int MaxY);
 
 /// <summary>One strip to draw: the source index (row or column) and its top-left.</summary>
 public readonly record struct Strip(int SourceIndex, int X, int Y);
 
 /// <summary>
+/// The strip explosion and appear effect: the dying sprite is cut into its rows (or
+/// columns) and the strips fan out from the picture's middle, spreading further apart
+/// each frame until the effect ends. An APPEAR is the same record with the spacing
+/// running DOWN instead of up, so the strips CONVERGE onto the centre — the
+/// "materialise" effect a wave's robots use.
+///
+/// One explosion is a small fan that opens UP and DOWN at the same time, and the two
+/// halves are mirrored: they carry the same strips and reach equally far. A diagonal
+/// shot leans the halves opposite ways, making a chevron. At the first frame the
+/// spacing is 1 and the strips reconstruct the sprite exactly.
+///
+/// The port keeps the arcade's units: X in ART PIXELS and Y in ROWS, and one unit of spacing
+/// is ONE PIXEL along the fan axis, for the row cut and the column cut alike. The dead entity's
+/// frame is resolved at DRAW time (its animation is frozen, so "current frame" is the frame on
+/// screen at death), keeping this entity free of baked Texture2D references.
+/// </summary>
+/// <remarks>
 /// The arcade explosion — the ROM's `MAKE_ENEMY_EXPLODE` / `CREATE_EXPLOSION`
 /// ($F0D7) and `CREATE_DIRECTIONAL_EXPLOSION` ($473F), plus the sources'
 /// `EXSTZ`/`APGO`/`WRITE` (notes §35.5, §61, §67).
@@ -73,10 +91,11 @@ public readonly record struct Strip(int SourceIndex, int X, int Y);
 /// resolved at DRAW time (the dead entity's animation is frozen, so "current
 /// frame" = the frame on screen at death), keeping this entity free of baked
 /// Texture2D references.
-/// </summary>
+/// </remarks>
 public sealed class Explosion : IEntity
 {
-    /// <summary>Explode = YSIZER grows (the fan opens); Appear = it shrinks (it converges).</summary>
+    /// <summary>Explode = the spacing grows (the fan opens); Appear = it shrinks (it converges).</summary>
+    /// <remarks>The ROM's `YSIZER` accumulator.</remarks>
     public enum Kind
     {
         Explode,
@@ -93,6 +112,7 @@ public sealed class Explosion : IEntity
     private int _frames;
     private int _fifths;                  // the ROM-frame clock in 6ths (notes §52, §67.4)
 
+    /// <summary>Builds one record; the two static factories below are the only callers.</summary>
     private Explosion(
         Func<SpriteSet, Texture2D> art,
         Rectangle bounds,
@@ -119,14 +139,19 @@ public sealed class Explosion : IEntity
     }
 
     /// <summary>
-    /// ROM `MAKE_ENEMY_EXPLODE` ($5C1F) → `CREATE_EXPLOSION` ($F0D7) /
-    /// `CREATE_DIRECTIONAL_EXPLOSION` ($473F), and the sources' `EXSTZ`: starts the
-    /// explosion for a killed object. The killing laser's direction picks the axis
-    /// and the lean (see <see cref="Dispatch"/>), and the record's rect is
-    /// <see cref="IExplodable.ExplosionBounds"/> — the ROM's `UL = OBJX/OBJY` with the
-    /// W/H of the picture the object is pointing at (a prog's `PGXPIC` card is bigger
-    /// than the human box it was standing in).
+    /// Starts the explosion for a killed object. The killing laser's direction picks
+    /// the axis and the lean (see <see cref="Dispatch"/>), and the record's rect is
+    /// <see cref="IExplodable.ExplosionBounds"/> — the picture the object is pointing at,
+    /// which can be bigger than its collision box (a prog's phony card is bigger than the
+    /// human box it was standing in).
     /// </summary>
+    /// <param name="dead">The object being exploded; its art and explosion bounds are used.</param>
+    /// <param name="direction">The killing shot's direction, or null for a kill with no laser (the vertical fan).</param>
+    /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
+    /// <returns>The record to add to the playfield's explosion list.</returns>
+    /// <remarks>ROM `MAKE_ENEMY_EXPLODE` ($5C1F) → `CREATE_EXPLOSION` ($F0D7) /
+    /// `CREATE_DIRECTIONAL_EXPLOSION` ($473F), and the sources' `EXSTZ`. The rect is the ROM's
+    /// `UL = OBJX/OBJY` with the W/H of the picture the object is pointing at.</remarks>
     public static Explosion StartExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {
         (StripFanAxis axis, int slope) = Dispatch(direction);
@@ -134,33 +159,49 @@ public sealed class Explosion : IEntity
     }
 
     /// <summary>
-    /// ROM APSTZ/APSTV/HAPSTV: starts an APPEAR — the same record with the size
-    /// running DOWN, so the strips CONVERGE onto the centre. This is the ROM's
-    /// "materialise" effect: RRG23's `APPEAR` makes one per frame for the objects
-    /// in the robot list, so a wave's robots assemble instead of appearing.
+    /// Starts an APPEAR — the same record with the size running DOWN, so the strips
+    /// CONVERGE onto the centre. This is the "materialise" effect, so a wave's robots
+    /// assemble instead of just appearing.
     /// </summary>
+    /// <param name="source">The object materialising; its current art is used.</param>
+    /// <param name="bounds">The rect the strips are laid out in.</param>
+    /// <param name="axis">Which way the sprite is cut: rows or columns.</param>
+    /// <param name="slope">The diagonal lean, -1 / 0 / +1.</param>
+    /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
+    /// <returns>The record to add to the playfield's explosion list.</returns>
+    /// <remarks>ROM APSTZ/APSTV/HAPSTV; RRG23's `APPEAR` makes one per frame for the objects
+    /// in the robot list.</remarks>
     public static Explosion StartAppear(IArtSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
         => Start(source.CurrentFrameArt, bounds, Kind.Appear, axis, slope, clip);
 
     /// <summary>
-    /// Shared construction: the split — the fan's fixed point along the walk axis.
-    /// It is the picture's **MIDDLE**, i.e. the ROM's own centre invariant from
-    /// `EXST2`'s `NWCENT` path (`LDB 1,X / LSRB / STB YOF,U` — "NO GOOD" — with
-    /// `YCENT` then set to the picture's centre: `ADDB UL+1,U / STB YCENT,U`, so
-    /// `YCENT − spriteTop == YOF == H/2`).
-    ///
-    /// §73: the port used to anchor at the *collision point* (the ROM's other path,
-    /// taken when the hit's offset is inside the picture) and the author's playtest
-    /// says that is wrong — *"one side of the explosion is not mirrored on the other
-    /// side ... the explosion half going UP is bigger than the explosion half going
-    /// DOWN, and ... going LEFT is bigger than ... RIGHT"*. A laser hits the sprite's
-    /// NEAR edge, so an anchored fan is always lopsided (the up half had ~all the
-    /// strips and the down half ~none). With the middle anchor both halves carry half
-    /// the strips and reach equally far — and the sprite still reconstructs exactly at
-    /// step 1 ("1 UNIT IS MIN"), because `YCENT − YOF` is the picture's top either way.
-    /// The appears always used this centre path (§62), which is why they never looked
-    /// wrong.
+    /// Shared construction: the split — the fan's fixed point along the walk axis. It
+    /// is the picture's **MIDDLE**, so both halves carry half the strips and reach
+    /// equally far, and the sprite still reconstructs exactly at step 1.
     /// </summary>
+    /// <param name="art">Resolves the picture to cut up, at draw time.</param>
+    /// <param name="bounds">The rect the strips are laid out in.</param>
+    /// <param name="kind">Explode (the spacing grows) or Appear (it shrinks).</param>
+    /// <param name="axis">Which way the sprite is cut: rows or columns.</param>
+    /// <param name="slope">The diagonal lean, -1 / 0 / +1.</param>
+    /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
+    /// <returns>The new record.</returns>
+    /// <remarks>
+    /// The centre is the ROM's own centre invariant from `EXST2`'s `NWCENT` path
+    /// (`LDB 1,X / LSRB / STB YOF,U` — "NO GOOD" — with `YCENT` then set to the picture's
+    /// centre: `ADDB UL+1,U / STB YCENT,U`, so `YCENT − spriteTop == YOF == H/2`).
+    ///
+    /// §73: the port used to anchor at the *collision point* (the ROM's other path, taken
+    /// when the hit's offset is inside the picture) and the author's playtest says that is
+    /// wrong — *"one side of the explosion is not mirrored on the other side ... the
+    /// explosion half going UP is bigger than the explosion half going DOWN, and ... going
+    /// LEFT is bigger than ... RIGHT"*. A laser hits the sprite's NEAR edge, so an anchored
+    /// fan is always lopsided (the up half had ~all the strips and the down half ~none).
+    /// With the middle anchor both halves carry half the strips and reach equally far — and
+    /// the sprite still reconstructs exactly at step 1 ("1 UNIT IS MIN"), because
+    /// `YCENT − YOF` is the picture's top either way. The appears always used this centre
+    /// path (§62), which is why they never looked wrong.
+    /// </remarks>
     private static Explosion Start(
         Func<SpriteSet, Texture2D> art,
         Rectangle bounds,
@@ -171,6 +212,19 @@ public sealed class Explosion : IEntity
         => new(art, bounds, kind, axis, slope, clip);
 
     /// <summary>
+    /// Maps a killing shot's direction to the explosion it produces. The axis named is the
+    /// one the pieces MOVE along, which is ACROSS the shot, not along it:
+    /// <list type="bullet">
+    /// <item>shoot UP or DOWN → the sprite is cut into its COLUMNS, which fan apart
+    /// horizontally;</item>
+    /// <item>shoot LEFT or RIGHT, or kill with no laser direction, → cut into its ROWS,
+    /// which fan apart vertically;</item>
+    /// <item>a diagonal shot → the row split, with the halves leaning opposite ways.</item>
+    /// </list>
+    /// </summary>
+    /// <param name="direction">The killing shot's direction, or null for a kill with no laser.</param>
+    /// <returns>The fan axis and the lean: -1, 0 or +1.</returns>
+    /// <remarks>
     /// The ROM's explosion dispatch (RRX7.ASM's <c>EXSTV</c>, reached from
     /// <c>MAKE_ENEMY_EXPLODE</c> $5C1F) — **the engine is named for the axis the
     /// pieces MOVE, which is ACROSS the shot, not along it**. The source is
@@ -212,7 +266,7 @@ public sealed class Explosion : IEntity
     /// explosion" to mean "for a horizontal shot"); the author's question *"when you
     /// shoot enemies vertically aren't they supposed to explode horizontally?"* is
     /// what exposed it (notes §69).
-    /// </summary>
+    /// </remarks>
     internal static (StripFanAxis Axis, int Slope) Dispatch(Direction8? direction) => direction switch
     {
         // A pure vertical shot → the HORIZONTAL explosion: cut into columns.
@@ -228,19 +282,29 @@ public sealed class Explosion : IEntity
         _ => (StripFanAxis.Rows, 0),
     };
 
+    /// <summary>The dead entity's top-left, which is also where the fan is centred (its middle).</summary>
     public IntVector2 Position => new(_bounds.X, _bounds.Y);
 
+    /// <summary>The dead entity's own box.</summary>
     public Rectangle Bounds => _bounds;
 
+    /// <summary>Alive for the record's life: a fixed number of ROM frames for an explosion, or until the
+    /// spacing would reach 1 for an appear.</summary>
+    /// <remarks>The ROM's `FRAMES` counter ends an explosion; an appear ends on its size.</remarks>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
+    /// <summary>Explode or Appear (test hook).</summary>
     internal Kind Mode => _kind;
 
-    /// <summary>The current spacing (YSIZER's high byte) — test hook (notes §52, §67.4).</summary>
+    /// <summary>The current spacing (the sizer's high byte) — test hook.</summary>
+    /// <remarks>Notes §52, §67.4.</remarks>
     internal int Spacing => Math.Max(1, _sizer >> 8);
 
+    /// <summary>The axis the pieces fly along: Rows for a vertical fan, Columns for a horizontal one (test hook).</summary>
+    /// <remarks>The ROM calls them the V family (rows) and the H family (columns).</remarks>
     internal StripFanAxis Axis => _axis;
 
+    /// <summary>The diagonal lean, -1 / 0 / +1 (test hook — see <see cref="Dispatch"/>).</summary>
     internal int Slope => _slope;
 
     /// <summary>
@@ -248,6 +312,8 @@ public sealed class Explosion : IEntity
     /// the strips carry their own art and clipping — and is kept only for the
     /// playfield's call shape; the attract movie's explosions pass nothing.
     /// </summary>
+    /// <param name="gameTime">Unused — the record is stepped once per ROM frame.</param>
+    /// <param name="field">Unused — the strips carry their own art and clipping — and is kept only for the playfield's call shape.</param>
     public void Update(GameTime gameTime, PlayField? field = null)
     {
         if (LifeState != EntityLifeState.Alive)
@@ -293,6 +359,9 @@ public sealed class Explosion : IEntity
         _sizer = next;
     }
 
+    /// <summary>Draws the frame's strips, each from its own row or column of the dead entity's picture.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set, which resolves the dead entity's picture.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState != EntityLifeState.Alive)
@@ -340,8 +409,13 @@ public sealed class Explosion : IEntity
     /// Where a picture sits when it is drawn into an entity's bounds, in ART pixels:
     /// `SpriteSet.CentredIn` scales the texture by <see cref="ScreenSize.SpecScale"/> and
     /// centres it, so a picture's extent IS its texture's width/height and its top-left is
-    /// the bounds' centre minus half of it. The fan is laid out from here (notes §75).
+    /// the bounds' centre minus half of it. The fan is laid out from here.
     /// </summary>
+    /// <param name="bounds">The entity's bounds, in port pixels.</param>
+    /// <param name="textureWidth">The picture's width in art pixels.</param>
+    /// <param name="textureHeight">The picture's height in rows.</param>
+    /// <returns>The picture's extent and the top-left it is drawn at, in art pixels/rows.</returns>
+    /// <remarks>Notes §75.</remarks>
     internal static (int WidthArt, int HeightRows, int Left, int Top) PicturePlacement(
         Rectangle bounds, int textureWidth, int textureHeight)
     {
@@ -356,10 +430,29 @@ public sealed class Explosion : IEntity
     }
 
     /// <summary>
-    /// The strips for the current frame (art px / rows) — the ROM's `WRITE`
-    /// (RRX7/RRHX4/RRDX2), pure so the shape is unit-testable.
+    /// The strips for the current frame (art px / rows), pure so the shape is
+    /// unit-testable.
     ///
-    /// It is **ONE fan, not two halves**, and it opens BOTH ways at once:
+    /// It is **ONE fan, not two halves**, and it opens BOTH ways at once: the first strip
+    /// starts at the sprite's top row and each further one steps DOWN, while the whole
+    /// run's base climbs the other way as the spacing grows — so at spacing 1 the strips
+    /// reconstruct the sprite exactly, and after that the fan tears UP and DOWN.
+    ///
+    /// The fixed point is the picture's **MIDDLE**, so the two halves are MIRRORED: they
+    /// carry half the strips and the same reach each way. For a vertical shot the same
+    /// maths runs on columns, and a unit of spacing is one PIXEL there too.
+    ///
+    /// A diagonal shot leans the strips from that fixed point, so the rows above it lean
+    /// one way and the rows below it the other: a mirrored chevron.
+    ///
+    /// A strip that falls outside the playfield is DROPPED, not clamped. The dead entity
+    /// is drawn WHERE IT STOOD, with the fan's fixed point at the picture's middle.
+    /// </summary>
+    /// <param name="widthArt">The dead picture's width in art pixels.</param>
+    /// <param name="heightRows">The dead picture's height in rows.</param>
+    /// <returns>The strips to draw this frame, in draw order.</returns>
+    /// <remarks>
+    /// The ROM's `WRITE` (RRX7/RRHX4/RRDX2):
     ///
     /// <code>
     /// YSIZE  = YSIZER >> 8                       ; this frame's step (1, 2, 3, …)
@@ -394,7 +487,7 @@ public sealed class Explosion : IEntity
     /// A strip that falls outside the playfield is DROPPED (the ROM's clip passes), not
     /// clamped. The dead entity is drawn WHERE IT STOOD, with the fan's fixed point at
     /// the picture's middle.
-    /// </summary>
+    /// </remarks>
     internal IReadOnlyList<Strip> Layout(int widthArt, int heightRows)
     {
         bool rows = _axis == StripFanAxis.Rows;
@@ -468,7 +561,9 @@ public sealed class Explosion : IEntity
         return strips;
     }
 
-    /// <summary>ROM's per-strip clip: a strip outside the playfield is DROPPED.</summary>
+    /// <summary>True when the strip still lies inside the clip rectangle; a strip outside is DROPPED,
+    /// never clamped.</summary>
+    /// <remarks>The ROM's per-strip clip.</remarks>
     private bool IsInside(int x, int y, int widthArt, int heightRows)
     {
         if (_axis == StripFanAxis.Rows)

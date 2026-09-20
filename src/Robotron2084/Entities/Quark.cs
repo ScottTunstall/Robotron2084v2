@@ -8,6 +8,18 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
+/// A quark — the drifting, tank-dropping robot. It NEVER seeks the player: every
+/// body it rolls a fresh speed per axis and glides in that direction, flipping a
+/// sign only when it drifts too close to a wall, so it flies OVER electrodes and
+/// reflects off nothing.
+///
+/// At spawn it rolls how many tanks it will drop. The first drop comes after a
+/// random delay, then a shorter random delay before each later drop; once its
+/// tank allotment is gone it flees off the nearest wall edge (straight out, 2
+/// arcade px a frame) and DISAPPEARS — no death animation, and a laser kill just
+/// bursts it. Drops are gated on the field's 20-tanks-on-screen cap.
+/// </summary>
+/// <remarks>
 /// A random-speed DRIFT (RRTK4 `SQUARE`/`SQVEL`/`SQ3`, notes §51) — the quark
 /// NEVER seeks the player (the spec's "travels toward the player" is an
 /// oversimplification, and the §28 waypoint model that came from the R5 disasm
@@ -22,7 +34,7 @@ namespace Robotron2084.Entities;
 /// wall edge (SQ3: `OXV = 0`, `OYV = ±$0200` per frame = 2 px/frame) and
 /// DISAPPEARS (no death animation — a laser kill bursts it, notes §50).
 /// Drops are gated on the arcade's 20-tanks-on-screen cap.
-/// </summary>
+/// </remarks>
 public sealed class Quark : IEntity, IArtSource
 {
     /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
@@ -34,10 +46,11 @@ public sealed class Quark : IEntity, IArtSource
     private IntVector2 _position;
 
     /// <summary>
-    /// Velocity in 1/256 PORT px per ROM FRAME (ROM OXV/OYV, integrated by the
-    /// generic mover once per frame — notes §43 fact 2, §93). A fraction of a
-    /// pixel, which is why the remainder below exists.
+    /// Velocity in 1/256 PORT px per ROM FRAME, integrated once per frame by the
+    /// playfield's generic mover. A fraction of a pixel, which is why the
+    /// remainder below exists.
     /// </summary>
+    /// <remarks>ROM OXV/OYV (notes §43 fact 2, §93).</remarks>
     private IntVector2 _velocityFp;
 
     /// <summary>Sub-pixel carry, so a 0.03 px/frame drift still accumulates into movement.</summary>
@@ -52,9 +65,13 @@ public sealed class Quark : IEntity, IArtSource
     private bool _droppingTanks;
     private bool _fleeing;
 
-    /// <param name="maxDropsX2">ROM ENFNUM for this wave; the roll happens here (notes §11.2).</param>
-    /// <param name="dropDelayRomTicks">ROM TDPTIM for this wave.</param>
-    /// <param name="quarkSpeedRom">ROM SQSPD for this wave (the velocity roll's upper bound).</param>
+    /// <summary>Drops a quark at <paramref name="position"/> with its tank allotment and first drift already rolled.</summary>
+    /// <param name="position">Top-left of the quark.</param>
+    /// <param name="random">The random source: the allotment, the drift rolls and the flee direction.</param>
+    /// <param name="maxDropsX2">This wave's tank-allotment bound; the roll happens here.</param>
+    /// <param name="dropDelayRomTicks">This wave's drop delay, in ROM frames.</param>
+    /// <param name="quarkSpeedRom">This wave's drift-speed upper bound (the velocity roll's maximum).</param>
+    /// <remarks>These are ROM ENFNUM, TDPTIM and SQSPD for this wave (notes §11.2).</remarks>
     public Quark(IntVector2 position, Random random, int maxDropsX2 = 10, int dropDelayRomTicks = 12, int quarkSpeedRom = 50)
     {
         _position = position;
@@ -84,20 +101,36 @@ public sealed class Quark : IEntity, IArtSource
     /// </summary>
     private static int BodyFifths => GameplayConstants.QuarkBodyRomTicks * 6;
 
+    /// <summary>Top-left of the quark (the ROM's OBJX/OBJY).</summary>
     public IntVector2 Position => _position;
 
+    /// <summary>The quark picture's own 16x15 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
+    /// <summary>Alive until shot or until it flees off the field; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>
+    /// Kills the quark: it goes straight to Dead, so the field's explosion is the
+    /// whole visual — the burst is not a blink.
+    /// </summary>
+    /// <remarks>
     /// Laser kill (ROM RRTK4 `SQKIL`): `JSR KILOFP` then `MAKP CIRKV` with
     /// colours `$DDDD` over 8 steps — a bespoke shrink/burst, not a blink
     /// (notes §50). Until that animation is built the object bursts via the
     /// field's explosion.
-    /// </summary>
+    /// </remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
+    /// <summary>
+    /// Runs one body when its clock says so: moves on the generic mover's own frame clock,
+    /// advances the rotation, re-rolls the drift when the direction timer expires, and — once the
+    /// drop countdown (which counts animation CYCLES, not bodies, until the first tank is due)
+    /// runs out — drops a tank, or flees once the allotment is gone.
+    /// </summary>
+    /// <param name="gameTime">Unused — the mover and body clocks are counted in ROM frames.</param>
+    /// <param name="field">The playfield: the walls for the drift, the tank cap and the spawn hooks.</param>
+    /// <remarks>The direction timer is ROM PD7.</remarks>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -203,13 +236,16 @@ public sealed class Quark : IEntity, IArtSource
     }
 
     /// <summary>
-    /// ROM SQVEL: a fresh random SPEED per axis — <c>RND(1..SQSPD) × 4</c> on X
-    /// and <c>× 8</c> on Y, so Y is twice as fast per unit — with the sign
-    /// flipped AWAY FROM THE WALLS first, and only then taken from the seed bit
-    /// (X: set = negative, Y: set = POSITIVE — the opposite polarity
-    /// decorrelates the axes). PD7 = <c>(SEED &amp; $1F) + 1</c> BODIES to the
-    /// next re-roll.
+    /// Rolls a fresh random speed per axis — four times the roll on X and eight
+    /// times on Y, so Y is twice as fast per unit — with the sign flipped AWAY
+    /// FROM THE WALLS first, and only then taken from a coin flip (X: heads =
+    /// negative, Y: heads = POSITIVE — the opposite polarity decorrelates the
+    /// axes). The direction timer is then set to a random 1..32 bodies.
     /// </summary>
+    /// <remarks>
+    /// ROM SQVEL: <c>RND(1..SQSPD) × 4</c> on X and <c>× 8</c> on Y, and PD7 =
+    /// <c>(SEED &amp; $1F) + 1</c> BODIES to the next re-roll.
+    /// </remarks>
     private void RollVelocity(Rectangle bounds)
     {
         int lowX = bounds.X + ScreenSize.Scaled(GameplayConstants.QuarkWallMarginLowArcadePixels);
@@ -228,9 +264,9 @@ public sealed class Quark : IEntity, IArtSource
     }
 
     /// <summary>
-    /// One axis's magnitude: <c>RND(1..SQSPD) × scale</c> in 1/256-px-per-FRAME
-    /// units, in PORT px (the arcade's own per-frame value — the mover integrates
-    /// it once per ROM frame, notes §93; there is no 60Hz rescaling).
+    /// One axis's magnitude: the roll (1..this wave's speed) times the axis scale,
+    /// in 1/256-px-per-FRAME units, in PORT px (the arcade's own per-frame value,
+    /// with no 60Hz rescaling).
     ///
     /// The <paramref name="coordinateUnitArcadePixels"/> argument is the size of
     /// a world-coordinate unit on that axis, and the two axes differ: the video
@@ -240,6 +276,7 @@ public sealed class Quark : IEntity, IArtSource
     /// Dividing one column into two pixels is exactly why the ROM scales the Y
     /// velocity by 8 where X gets 4 — they come out the same speed on screen.
     /// </summary>
+    /// <remarks>The playfield's mover integrates this velocity once per ROM frame (notes §93).</remarks>
     private int AxisVelocityFp(int scale, bool positive, int coordinateUnitArcadePixels)
     {
         int roll = 1 + _random.Next(_quarkSpeedRom);
@@ -247,7 +284,8 @@ public sealed class Quark : IEntity, IArtSource
         return positive ? fp : -fp;
     }
 
-    /// <summary>ROM SQ3 (the exit): X stops dead, Y becomes ±$0200 per frame, one coin flip up or down.</summary>
+    /// <summary>Starts the exit run: X stops dead, Y becomes a fixed 2 arcade px per frame, from a coin flip up or down.</summary>
+    /// <remarks>ROM SQ3 (the exit): X stops dead, Y becomes ±$0200 per frame, one coin flip up or down.</remarks>
     private void StartFlee()
     {
         _fleeing = true;
@@ -284,17 +322,21 @@ public sealed class Quark : IEntity, IArtSource
         }
     }
 
+    /// <summary>True when an X coordinate keeps the quark's whole box inside the playfield.</summary>
     private bool IsInsideX(Rectangle bounds, int x) =>
         x >= bounds.X && x + CollisionSize.Width <= bounds.Right;
 
+    /// <summary>True when a Y coordinate keeps the quark's whole box inside the playfield.</summary>
     private bool IsInsideY(Rectangle bounds, int y) =>
         y >= bounds.Y && y + CollisionSize.Height <= bounds.Bottom;
 
     /// <summary>
-    /// ROM: the animation advances ONE picture per body, and the range depends on
-    /// the phase — SQP0..SQP4 while wandering, SQP0..SQP8 once it is dropping
-    /// tanks, and SQP8..SQP0 walking BACKWARDS during the exit.
+    /// Advances the animation ONE picture per body; the range depends on the phase —
+    /// five pictures while wandering, all nine once it is dropping tanks, and the same
+    /// nine walked BACKWARDS during the exit.
     /// </summary>
+    /// <remarks>The ROM's pictures are SQP0..SQP4 while wandering, SQP0..SQP8 while
+    /// dropping tanks, and SQP8..SQP0 during the exit.</remarks>
     private void AdvanceAnimation()
     {
         if (_fleeing)
@@ -307,6 +349,9 @@ public sealed class Quark : IEntity, IArtSource
         _animationFrame = _animationFrame >= last ? 0 : _animationFrame + 1;
     }
 
+    /// <summary>Draws the current rotation frame; a quark never flashes and never plays a death animation.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set, which holds the quark frames.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -326,5 +371,8 @@ public sealed class Quark : IEntity, IArtSource
         sprites.DrawSprite(spriteBatch, sprites.QuarkFrames[_animationFrame], Bounds, Color.White);
     }
 
+    /// <summary>The current rotation frame, for the death burst (see <see cref="IArtSource"/> and <see cref="ScoreBurst.ForQuark"/>).</summary>
+    /// <param name="sprites">The shared sprite set, which holds the quark frames.</param>
+    /// <returns>The texture for the current rotation frame.</returns>
     public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.QuarkFrames[_animationFrame];
 }

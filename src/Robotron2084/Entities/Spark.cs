@@ -8,47 +8,41 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// Enemy missile fired by an Enforcer. Arcade-faithful per the GOSPEL
-/// (<c>ref/original-source/RRC11.ASM</c>: ENFSHT + SPARK + SPKP0..3; the mover
-/// convention from RRSCRIPT.ASM's MONOP; notes 41).
+/// A spark — the missile an enforcer fires at the player. Its flight is BALLISTIC rather than straight
+/// or random: launched toward the player with jitter, then bent by a constant per-axis acceleration as
+/// it goes, so it flies a parabola and can even start out moving AWAY.
 ///
-/// The spark is **ballistic, not a random walk**. At spawn (ENFSHT) each axis
-/// gets two things, both in "subpixel" units:
-/// <list type="bullet">
-/// <item>a VELOCITY of <c>4 x (player coord + jitter - spark coord)</c>, where
-/// the jitter is <c>(seed &amp; $1F) - 16</c> = -16..+15 COLUMNS and the X jitter
-/// is forced to 0 when the player is within 16 columns of the left wall
-/// (<c>CMPA #XMIN+$10 / BHS ENFS2 / CLRB</c>);</item>
-/// <item>a CONSTANT acceleration <c>PD2/PD4 = (LSEED/HSEED &amp; $1F) - 16</c>,
-/// chosen independently per axis and fixed for the spark's whole life.</item>
-/// </list>
-/// Every move (<c>NAP 4</c> = 4 vblanks) the SPARK process does
-/// <c>OXV += PD2; OYV += PD4</c>, so the acceleration integrates into the
-/// velocity and the spark flies a PARABOLA. That is the arcade's "habit of
-/// going off course" — and since the jitter is comparable to the delta at close
-/// range, a spark can start out moving AWAY from the player.
-///
-/// **Speed** comes from the generic mover (RRS22.ASM OPB80:
-/// <c>ADDD OXV,X / STD OX16,X</c>) — it adds the **full 16-bit velocity** to the
-/// 16-bit world position **once per ROM frame** (notes §43, §93). So
-/// <c>OXV = 4 x delta</c> means the spark covers <c>delta/64</c> px per frame,
-/// and <c>PD2 = a</c> bends the velocity by <c>a/256</c> px per frame on each
-/// move.
-///
-/// Life = <c>PD7 = (HSEED &amp; $F) + $14</c> = 20..35 MOVES x 4 vblanks
-/// = 80..140 ROM ticks (1.6-2.8 s arcade) — NOT the spec's 10-15 s (playtest
-/// round 9: sparks "linger for a while").
-///
-/// Walls: the ROM mover REJECTS an axis update that would push the picture out
-/// of the playfield, so a spark slides/stops AT the wall and dies only when its
-/// life expires — no bounce, no wall-death.
-///
-/// NO Dying state: a player laser removes it IMMEDIATELY (25 pts).
-///
-/// Flicker (notes 32): the ROM advances OPICT one 4-byte entry (SPKP0..3) per
-/// body pass and re-runs every 4 vblanks (NAP 4) → a 4-frame flash, one frame
-/// per PortTicks(4) port ticks, no holds.
+/// It dies of old age, or instantly on a laser hit (25 points, no death animation). It does not bounce:
+/// the mover refuses a step that would leave the playfield, so a spark slides and then stops at the wall.
 /// </summary>
+/// <remarks>
+/// Arcade-faithful per the GOSPEL (<c>ref/original-source/RRC11.ASM</c>: `ENFSHT` + `SPARK` + `SPKP0`..3;
+/// the mover convention from RRSCRIPT.ASM's MONOP; notes 41).
+///
+/// At spawn (`ENFSHT`) each axis gets two things, both in "subpixel" units:
+/// <list type="bullet">
+/// <item>a VELOCITY of <c>4 x (player coord + jitter - spark coord)</c>, where the jitter is
+/// <c>(seed &amp; $1F) - 16</c> = -16..+15 COLUMNS and the X jitter is forced to 0 when the player is
+/// within 16 columns of the left wall (<c>CMPA #XMIN+$10 / BHS ENFS2 / CLRB</c>);</item>
+/// <item>a CONSTANT acceleration <c>PD2/PD4 = (LSEED/HSEED &amp; $1F) - 16</c>, chosen independently per
+/// axis and fixed for the spark's whole life.</item>
+/// </list>
+/// Every move (<c>NAP 4</c> = 4 vblanks) the `SPARK` process does <c>OXV += PD2; OYV += PD4</c>, so the
+/// acceleration integrates into the velocity — the arcade's "habit of going off course". Because the
+/// jitter is comparable to the delta at close range, a spark can start out moving AWAY from the player.
+///
+/// Speed comes from the generic mover (RRS22.ASM `OPB80`: <c>ADDD OXV,X / STD OX16,X</c>), which adds
+/// the full 16-bit velocity to the 16-bit world position once per ROM frame (notes §43, §93).
+///
+/// Life = <c>PD7 = (HSEED &amp; $F) + $14</c> = 20..35 MOVES x 4 vblanks = 80..140 ROM ticks (1.6-2.8 s),
+/// NOT the spec's 10-15 s (playtest round 9: sparks "linger for a while").
+///
+/// Walls: the mover REJECTS an axis update that would push the picture out of the playfield, so a spark
+/// slides and then stops AT the wall — no bounce, no wall-death.
+///
+/// Flicker (notes 32): the ROM advances `OPICT` one 4-byte entry (`SPKP0`..3) per body pass and re-runs
+/// every 4 vblanks (<c>NAP 4</c>) — a four-frame flash, one frame per PortTicks(4) port ticks, no holds.
+/// </remarks>
 public sealed class Spark : IEntity
 {
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
@@ -63,12 +57,13 @@ public sealed class Spark : IEntity
     private int _flickerFifths; // the 4-frame flicker clock, also exact
     private int _moverSixths;  // OPB80 cadence: one velocity integration per 6 sixths = 1 ROM frame
 
-    /// <param name="position">Spawn position (the firing enforcer's position).</param>
-    /// <param name="playerPosition">The player — the ROM aims at it, with jitter.</param>
-    /// <param name="random">Stand-in for the ROM's SEED/LSEED/HSEED rolls.</param>
-    /// <param name="playfieldBounds">Playfield bounds, used only for the ROM's
-    /// "no X jitter within 16 columns of the left wall" rule (XMIN+$10). Null
-    /// applies no suppression.</param>
+    /// <summary>Fires a spark, aimed at the player once, with jitter.</summary>
+    /// <param name="position">Where it appears — the firing enforcer's position.</param>
+    /// <param name="playerPosition">The player, which the spark is aimed at.</param>
+    /// <param name="random">The random source, standing in for the arcade's SEED/LSEED/HSEED rolls.</param>
+    /// <param name="playfieldBounds">The playfield, used only for the "no X jitter near the left wall" rule. Null applies no suppression.</param>
+    /// <remarks>`ENFSHT` (RRC11.ASM) aims with the player's position: the velocity is proportional to the distance,
+    /// per axis, and the per-axis acceleration is rolled once here and never changes.</remarks>
     public Spark(IntVector2 position, IntVector2 playerPosition, Random random, Rectangle? playfieldBounds = null)
     {
         _position = position;
@@ -117,8 +112,10 @@ public sealed class Spark : IEntity
         _moverSixths = 6;
     }
 
+    /// <summary>Top-left of the spark's collision box.</summary>
     public IntVector2 Position => _position;
 
+    /// <summary>The spark's 4x4 spec-pixel collision box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
 
     /// <summary>Only ever transitions Alive -> Dead (immediate removal, no death animation).</summary>
@@ -127,19 +124,25 @@ public sealed class Spark : IEntity
     /// <summary>Laser hit: removed from the screen immediately (25 pts).</summary>
     public void Destroy() => LifeState = EntityLifeState.Dead;
 
-    /// <summary>ROM frame SPKP0..3: one frame per 4-vblank body pass (NAP 4), cycling.</summary>
+    /// <summary>Which of the four flicker frames is showing (test hook).</summary>
+    /// <remarks>ROM `SPKP0`..3: one frame per 4-vblank body pass (<c>NAP 4</c>), cycling.</remarks>
     internal int FrameIndex => _flickerFifths / (GameplayConstants.SparkFramePeriodRomTicks * 6) % SpriteSet.SparkFrameCount;
 
-    /// <summary>ROM OXV/OYV (1/256 port px per frame) — exposed for the ballistic test.</summary>
+    /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
+    /// <remarks>ROM `OXV`/`OYV`.</remarks>
     internal IntVector2 VelocityFp => _velocityFp;
 
-    /// <summary>
-    /// ROM PD2/PD4: the spark's per-axis acceleration (1/256 port px per frame of
-    /// velocity, applied once per move),
-    /// chosen once at spawn and CONSTANT for the spark's life.
-    /// </summary>
+    /// <summary>The per-axis acceleration, in 1/256 port px per ROM frame of velocity, applied once per move (test hook).</summary>
+    /// <remarks>ROM `PD2`/`PD4`, rolled once at spawn and CONSTANT for the spark's life.</remarks>
     internal IntVector2 AccelerationFp => _accelerationFp;
 
+    /// <summary>
+    /// Runs the spark's clocks: the four-frame flicker, its life, the `SPARK` process (every 4
+    /// vblanks, where the constant acceleration is added to the velocity) and the generic mover, which
+    /// adds the velocity to the position once per ROM frame.
+    /// </summary>
+    /// <param name="gameTime">Unused — every clock here is counted in ROM frames.</param>
+    /// <param name="field">The playfield wall, which the spark stops against.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -198,6 +201,9 @@ public sealed class Spark : IEntity
     }
 
     /// <summary>Applies one (possibly zero) mover step and the wall rejection.</summary>
+    /// <param name="field">The playfield wall.</param>
+    /// <param name="stepX">This frame's whole-pixel step on X.</param>
+    /// <param name="stepY">This frame's whole-pixel step on Y.</param>
     private void MoveBy(PlayField field, int stepX, int stepY)
     {
 
@@ -227,6 +233,10 @@ public sealed class Spark : IEntity
         _position = new IntVector2(x, y);
     }
 
+    /// <summary>Draws the current flicker frame.
+    /// </summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set, which holds the spark frames.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState == EntityLifeState.Alive)

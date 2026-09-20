@@ -9,20 +9,29 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// The player. 8-way digital movement at 2/3 px/tick (X/Y), fires on the
-/// rising edge of the fire button — a press fires immediately, and HOLDING
-/// the button re-fires every <c>PlayerAutoFireTicks</c> (the 3-laser SLOT
-/// cap is the binding limit — spec "when the player hits the FIRE button",
-/// playtest 2026-09-13 round 6) — 2-second start grace (player acts,
-/// robots frozen),
+/// The player. 8-way digital movement at 2/3 px/tick (X/Y), firing on the rising
+/// edge of the fire button — a press fires immediately, and HOLDING the button
+/// re-fires every <c>PlayerAutoFireTicks</c> (the 3-laser slot cap is the binding
+/// limit) — plus a 2-second start grace (the player acts, the robots are frozen), a
 /// 2-second death animation with robot freeze, and post-respawn flickering
-/// invincibility (Phase 11.4).
+/// invincibility.
 ///
-/// Two-stick controls (user requirement, 2026-09-12/13 — deliberate
-/// deviation from the arcade's single 8-way joystick): movement (WASD)
-/// and aim/fire (IJKL) are independent. The character FACES (and the walk
-/// animation follows) its last MOVEMENT direction only; the aim direction
-/// drives the laser direction without affecting facing/animation (round 8).
+/// Two-stick controls (user requirement, 2026-09-12/13 — deliberate deviation from
+/// the arcade's single 8-way joystick): movement (WASD) and aim/fire (IJKL) are
+/// independent. The character FACES (and the walk animation follows) its last
+/// MOVEMENT direction only; the aim direction drives the laser direction without
+/// affecting facing or animation.
+///
+/// The walk animation picks one of 4 sequences of three pictures from the MOVEMENT
+/// stick — left, right, down and up, with the diagonals reusing the horizontal
+/// sequences — and holds each picture for 3 movement ticks. A direction change resets
+/// the sequence index, the animation is FROZEN while the stick is centred, and a wave
+/// starts on the first DOWN frame.
+/// </summary>
+/// <remarks>
+/// The auto-fire cadence comes from the spec's "when the player hits the FIRE button"
+/// and playtest 2026-09-13 round 6; the post-respawn invincibility is Phase 11.4; and the
+/// facing rule is playtest round 8.
 ///
 /// R5 animation (MOVE_PLAYER $2FD0, notes §17): the stick selects one of 4
 /// walk sequences over frames 1..12 (left 1,2,1,3 / right 4,5,4,6 / down
@@ -33,21 +42,23 @@ namespace Robotron2084.Entities;
 /// (WAVE_START_PLAYER points the metadata at $3603 = frame 7, first DOWN
 /// frame). Port frame N = R5 frame N (verified against the ROM image table
 /// $35EB + (N-1)*4, images $361B..$382B).
-/// </summary>
+/// </remarks>
 public sealed class Player : IEntity
 {
     /// <summary>
-    /// Collision box = the ROM picture dimensions (COL0V intersects the
-    /// PICTURE, not a 16x16 cell): 8x12 arcade px, top-left anchored at
-    /// <see cref="Position"/> (the art is drawn exactly there).
+    /// Collision box = the player picture's own dimensions (8x12 arcade px),
+    /// top-left anchored at <see cref="Position"/> (the art is drawn exactly there).
     /// </summary>
+    /// <remarks>ROM COL0V intersects the PICTURE, not a 16x16 cell.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.PlayerCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.PlayerCollisionSize.Height));
 
-    /// <summary>R5 walk cycle per direction: [f0, f1, f0, f2] (e.g. left = 1,2,1,3).</summary>
+    /// <summary>Walk cycle per direction: [f0, f1, f0, f2] (e.g. left = 1,2,1,3).</summary>
+    /// <remarks>The R5 walk cycle.</remarks>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
-    /// <summary>Each R5 animation frame is drawn for 3 movement ticks ($70 counts 0→2).</summary>
+    /// <summary>Each animation frame is drawn for 3 movement ticks.</summary>
+    /// <remarks>R5's `$70` counts 0→2.</remarks>
     private const int FrameTicksPerAnimationFrame = 3;
 
     private readonly TimeSpan _graceDuration = TimeSpan.FromSeconds(GameplayConstants.PlayerStartGraceSeconds);
@@ -66,7 +77,8 @@ public sealed class Player : IEntity
     private int _deathFlashSlot = GameplayConstants.PlayerDeathWhiteSlot;
     private int _deathFadeIndex;
 
-    /// <summary>The ROM's `PDTHV` stages: $99 white, a random PDCTAB colour, then the slot-12 fade.</summary>
+    /// <summary>The death animation's stages: a white flash, a random colour, then the fade.</summary>
+    /// <remarks>The ROM's `PDTHV` stages: $99 white, a random PDCTAB colour, then the slot-12 fade.</remarks>
     private enum DeathStage
     {
         White,
@@ -81,6 +93,10 @@ public sealed class Player : IEntity
     private int _animSequenceIndex;
     private int _animFrameTicks = 1;
 
+    /// <summary>Spawns the player at <paramref name="startPosition"/> with <paramref name="lives"/> men and the start grace running.</summary>
+    /// <param name="startPosition">Top-left of the player.</param>
+    /// <param name="lives">How many men the player starts with; a death takes one off.</param>
+    /// <param name="random">The random source for the death animation's colour, or null to create one.</param>
     public Player(IntVector2 startPosition, int lives, Random? random = null)
     {
         _position = startPosition;
@@ -90,20 +106,29 @@ public sealed class Player : IEntity
         IsInStartGracePeriod = true;
     }
 
+    /// <summary>Top-left of the player (the ROM's OBJX/OBJY).</summary>
     public IntVector2 Position => _position;
 
+    /// <summary>
+    /// The way the player is DRAWN and walks — his last MOVEMENT direction only.
+    /// The two-stick aim (round 8) deliberately does not touch it.
+    /// </summary>
     public Direction8 FacingDirection { get; private set; } = Direction8.Up;
 
+    /// <summary>Alive, Dying (the death animation's flash and fade), or Dead pending respawn.</summary>
+    /// <remarks>The ROM's `PDTHV` flash and fade.</remarks>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
+    /// <summary>Men remaining, including the one on screen; a death takes one off.</summary>
     public int Lives { get; private set; }
 
     /// <summary>
-    /// True when this update fired a laser (PlayField plays the ROM laser
-    /// sound off this — the ROM requests $26E6 in the fire path, R5 $273A).
+    /// True when this update fired a laser (PlayField plays the laser sound off this).
     /// </summary>
+    /// <remarks>The ROM requests $26E6 in the fire path, R5 $273A.</remarks>
     public bool LasersFiredThisUpdate { get; private set; }
 
+    /// <summary>True until the start grace expires: the player acts, the robots do not.</summary>
     public bool IsInStartGracePeriod { get; private set; }
 
     /// <summary>Phase 11.4: passes through hazards unharmed for a short time after a respawn.</summary>
@@ -114,15 +139,24 @@ public sealed class Player : IEntity
     /// per player so the attract DEMO can opt out: the machine plays by the
     /// arcade's rules, so its player must die when a robot, a missile or an
     /// electrode touches him — otherwise every contact path in the demo is dead
-    /// code (notes §97.5). While set, <see cref="Kill"/> is a complete no-op.
+    /// code. While set, <see cref="Kill"/> is a complete no-op.
     /// </summary>
+    /// <remarks>Notes §97.5.</remarks>
     public bool InvincibleForTesting { get; set; } = GameplayConstants.PlayerInvincibleForTesting;
 
+    /// <summary>The player picture's own 8x12 box at <see cref="Position"/> (the ROM intersects the PICTURE).</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>Awards an extra life (Phase 11.1, extra-life threshold crossings).</summary>
     public void AddLife() => Lives += 1;
 
+    /// <summary>
+    /// One tick of the player's life: while Dying it is the death animation instead; otherwise the
+    /// grace and invincibility clocks, the movement (per axis, refusing a step into the wall), the
+    /// fire button's edge and auto-fire, and the walk animation.
+    /// </summary>
+    /// <param name="gameTime">The elapsed time, used to run the start grace down.</param>
+    /// <param name="field">The playfield: the input, the walls and the laser slots.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -238,12 +272,14 @@ public sealed class Player : IEntity
     }
 
     /// <summary>
-    /// ROM LTAB muzzle offset (RRG23; notes 2026-09-12 (19) and 2026-09-13
-    /// (21)): spec px from the player cell's top-left, per facing. Replaces
-    /// the old uniform 10 spec-px offset, which made the laser visibly spawn
-    /// off the player (playtest 2026-09-13: "the laser's starting position
-    /// is wrong when it fires").
+    /// Where a shot of this facing leaves the player: spec px from the player cell's
+    /// top-left, per facing. (The port used a uniform 10 spec-px offset, which made the
+    /// laser visibly spawn off the player.)
     /// </summary>
+    /// <param name="direction">The direction the shot is fired in.</param>
+    /// <returns>The muzzle's offset from the player's top-left, in port pixels.</returns>
+    /// <remarks>ROM LTAB muzzle offset (RRG23; notes 2026-09-12 (19) and 2026-09-13 (21)).
+    /// Playtest 2026-09-13: "the laser's starting position is wrong when it fires".</remarks>
     private static IntVector2 MuzzleOffset(Direction8 direction)
     {
         (int x, int y) offset = direction switch
@@ -261,10 +297,13 @@ public sealed class Player : IEntity
     }
 
     /// <summary>
-    /// R5 stick→table rule: any leftward direction walks LEFT, any rightward
-    /// walks RIGHT, pure up/down walk UP/DOWN (diagonals reuse the horizontal
-    /// sequences — descriptor table $3031).
+    /// Which walk sequence a facing uses: any leftward direction walks LEFT, any
+    /// rightward walks RIGHT, pure up/down walk UP/DOWN (diagonals reuse the horizontal
+    /// sequences).
     /// </summary>
+    /// <param name="direction">The facing to map.</param>
+    /// <returns>The walk-sequence group: 0 left, 1 right, 2 down, 3 up.</returns>
+    /// <remarks>R5's stick→table rule; the descriptor table is at $3031.</remarks>
     internal static int WalkGroup(Direction8 direction) => direction switch
     {
         Direction8.Left or Direction8.UpLeft or Direction8.DownLeft => 0,
@@ -273,7 +312,8 @@ public sealed class Player : IEntity
         _ => 3,
     };
 
-    /// <summary>Current frame index into <c>SpriteSet.PlayerFrames</c> (R5 frame 1..12).</summary>
+    /// <summary>Current frame index into <c>SpriteSet.PlayerFrames</c> (frame 1..12).</summary>
+    /// <remarks>R5 frame 1..12.</remarks>
     internal int WalkFrameIndex => _animGroup * 3 + WalkCycle[_animSequenceIndex];
 
     /// <summary>Kills the player (contact with a live hazard). No-op while dying/dead.</summary>
@@ -304,6 +344,7 @@ public sealed class Player : IEntity
         Lives -= 1;
     }
     /// <summary>Respawn for "RESTART THE CURRENT LEVEL" (lives remaining).</summary>
+    /// <param name="startPosition">Where to place the player.</param>
     public void ResetForLevelRestart(IntVector2 startPosition)
     {
         _position = startPosition;
@@ -324,10 +365,11 @@ public sealed class Player : IEntity
     internal void TeleportTo(IntVector2 position) => _position = position;
 
     /// <summary>
-    /// The palette slot the dying player is drawn SOLID in (the ROM's `OPON`
-    /// colour): $99's slot 9, a random PDCTAB slot, or the fading slot 12.
-    /// Test hook (notes §66).
+    /// The palette slot the dying player is drawn SOLID in: the white flash's slot, a
+    /// random colour slot, or the fading slot. Test hook.
     /// </summary>
+    /// <remarks>The ROM's `OPON` colour: $99's slot 9, a random PDCTAB slot, or the fading
+    /// slot 12 (notes §66).</remarks>
     internal int DeathSolidSlot => _deathStage == DeathStage.Fade
         ? GameplayConstants.PlayerDeathFadeSlot
         : _deathFlashSlot;
@@ -335,8 +377,9 @@ public sealed class Player : IEntity
     /// <summary>
     /// Starts the death animation, ignoring `PlayerInvincibleForTesting` — the
     /// playtest flag that makes <see cref="Kill"/> a no-op, and which otherwise
-    /// makes the whole death sequence unreachable from a test (notes §66).
+    /// makes the whole death sequence unreachable from a test.
     /// </summary>
+    /// <remarks>Notes §66.</remarks>
     internal void StartDeathForTesting()
     {
         if (LifeState == EntityLifeState.Alive)
@@ -346,13 +389,14 @@ public sealed class Player : IEntity
     }
 
     /// <summary>
-    /// ROM RRX7 `PDTHV` (notes §66): the death is a solid-colour FLASH loop — $99
-    /// (slot 9) for 2 frames, then a random PDCTAB slot for 6 frames, ten times —
-    /// followed by the slot-12 FADE: the DECAY process is stopped, the player is
-    /// drawn solid in slot 12, and the eight fade bytes are written into slot 12
-    /// one per 4 frames. The trailing $00 ends the death, leaving the player
-    /// invisible (drawn in black) until the playfield respawns it.
+    /// One tick of the death animation: the solid-colour FLASH loop first — white
+    /// (slot 9) for 2 frames, then a random colour slot for 6 frames, ten times —
+    /// followed by the slot-12 FADE, whose eight bytes are written one per 4 frames.
+    /// The trailing zero byte ends the death, leaving the player invisible (drawn in
+    /// black) until the playfield respawns it.
     /// </summary>
+    /// <param name="field">The playfield, whose palette runs the fade.</param>
+    /// <remarks>ROM RRX7 `PDTHV` (notes §66); the DECAY process is stopped when the fade starts.</remarks>
     private void AdvanceDeath(PlayField field)
     {
         _deathFifths += 5;
@@ -407,11 +451,13 @@ public sealed class Player : IEntity
     }
 
     /// <summary>
-    /// PDTH2: the colour processes are restarted (`COLST` — nothing to do here,
-    /// they never stopped), the DECAY process is KILLED OFF for slot 12
-    /// (<see cref="GamePalette.SuspendSlot"/>), the player is drawn solid in slot
-    /// 12, and the fade table's first byte goes in immediately.
+    /// Starts the fade: the palette's slot-12 decay is suspended, the player is drawn
+    /// solid in slot 12, and the fade table's first byte goes in immediately.
     /// </summary>
+    /// <param name="field">The playfield, whose palette runs the fade.</param>
+    /// <remarks>ROM PDTH2: the colour processes are restarted (`COLST` — nothing to do here,
+    /// they never stopped) and the DECAY process is KILLED OFF for slot 12
+    /// (<see cref="GamePalette.SuspendSlot"/>).</remarks>
     private void BeginDeathFade(PlayField field)
     {
         _deathStage = DeathStage.Fade;
@@ -420,9 +466,18 @@ public sealed class Player : IEntity
         WriteDeathFade(field);
     }
 
+    /// <summary>Writes the next fade byte into the death colour's palette slot.</summary>
+    /// <param name="field">The playfield, whose palette holds the death slot.</param>
+    /// <remarks>ROM `PDTH3`.</remarks>
     private void WriteDeathFade(PlayField field) =>
         field.Palette?.SetSlot(GameplayConstants.PlayerDeathFadeSlot, GameplayConstants.PlayerDeathFadeValues[_deathFadeIndex]);
 
+    /// <summary>
+    /// Draws the walk frame — skipped on the hidden half of the invincibility flicker, and drawn as a
+    /// one-colour solid silhouette while the death animation is playing.
+    /// </summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set, which holds the player frames and slot colours.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState == EntityLifeState.Dead)

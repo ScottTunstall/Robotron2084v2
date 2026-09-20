@@ -8,24 +8,33 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// Enemy missile fired by Tanks — identical structure to <see cref="Spark"/>
-/// (4x4, immediate removal on laser hit) but with ROM-faithful flight (R5
-/// disasm 4E46-4FCF, notes §11.5): aimed ONCE at spawn (player-aimed delta
-/// with ±1 px/tick jitter — the port's approximation of the ROM's SHLSPD-based
-/// aim spread, which is still pending), then flies in a straight line,
-/// BOUNCES off all four border walls (delta sign-flip + sound, never leaves
-/// the playfield), and fizzles after (RND &amp; $1F) + $30 ROM ticks. Spec:
-/// "TANK SHELLS fly over electrodes" (missiles never collide with electrodes).
-/// The arcade's 20-shells-per-wave fire counter (the fizzle bug) lives on
-/// <see cref="PlayField"/>.
+/// The missile a tank fires at the player. It is aimed once, when it is created, and then flies
+/// in a straight line until it fizzles out — bouncing off the border walls rather than leaving
+/// the playfield, and passing over electrodes. A laser hit removes it instantly, with no death
+/// animation.
 /// </summary>
+/// <remarks>
+/// From the shell routines in RRTK4.ASM (`SHELL`, `SHELLP`, `SHLDIE`; R5 disassembly 4E46-4FCF,
+/// notes §11.5):
+///
+/// - it is AIMED ONCE, straight at the player, with ±1 px/frame of jitter on each axis ("not
+///   very accurate"). The arcade's spread comes from a `SHLSPD` table, so the port's jitter is an
+///   approximation and is still an open item;
+/// - it then flies straight (the ROM's generic mover, `OPB80`, in RRS22.ASM) and BOUNCES off all
+///   four border walls — the ROM negates the X delta in `XVNEG` and the Y delta in `YVNEG` and
+///   asks for the bounce sound;
+/// - it fizzles out after `(RND &amp; $1F) + $30` ROM frames.
+///
+/// Spec: "TANK SHELLS fly over electrodes" — a shell never collides with an electrode. The
+/// collision box is the shell picture's own size: `SHLP1` is `FCB 4,7`, i.e. 4 bytes wide (a
+/// byte is 2 pixels) by 7 rows = 8x7 px (notes §53). The arcade's 20-shells-per-wave fire
+/// counter (`TNKFIR`) and the fizzle bug that goes with it live on <see cref="PlayField"/>.
+/// </remarks>
 public sealed class TankShell : IEntity
 {
-    /// <summary>
-    /// The ROM bounds and collides a projectile against the picture it is showing:
-    /// `SHLP1` is `FCB 4,7` — 4 BYTES wide (a byte is 2 px) by 7 rows = 8x7 px
-    /// (notes §53).
-    /// </summary>
+    /// <summary>The collision box: the shell picture's own size, 8x7 arcade px, in port pixels.</summary>
+    /// <remarks>The ROM bounds and collides a projectile against the picture it is showing —
+    /// `SHLP1` is `FCB 4,7` — which is why the box is the art's size (notes §53).</remarks>
     private static readonly int BoxWidth = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Width);
     private static readonly int BoxHeight = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Height);
     private IntVector2 _position;
@@ -33,6 +42,11 @@ public sealed class TankShell : IEntity
     private int _remainingLifeFifths;
     private int _moverSixths; // OPB80 cadence: one velocity integration per 6 sixths = 1 ROM frame
 
+    /// <summary>Fires a shell from the given position, aimed once at the player.</summary>
+    /// <param name="position">Where the shell starts — the tank's muzzle, in port pixels.</param>
+    /// <param name="towardPlayerDirection">Direction from the tank to the player; only its SIGNS are used, so the aim is always a 45° line.</param>
+    /// <param name="random">Source of the ±1 px/frame aim jitter and of the fizzle time.</param>
+    /// <remarks>R5 4F82-4F8A: lifespan = `(RND &amp; $1F) + $30` ROM frames (48..79).</remarks>
     public TankShell(IntVector2 position, IntVector2 towardPlayerDirection, Random random)
     {
         _position = position;
@@ -51,8 +65,10 @@ public sealed class TankShell : IEntity
         _moverSixths = 6;
     }
 
+    /// <summary>Top-left of the collision box.</summary>
     public IntVector2 Position => _position;
 
+    /// <summary>The shell picture's own 8x7 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, BoxWidth, BoxHeight);
 
     /// <summary>Only ever transitions Alive -> Dead (immediate removal, no death animation).</summary>
@@ -62,11 +78,18 @@ public sealed class TankShell : IEntity
     public void Destroy() => LifeState = EntityLifeState.Dead;
 
     /// <summary>
-    /// Set when this update bounced off a border wall (R5 $4FCD requests the
-    /// bounce sound $4B16 there). PlayField reads + clears it.
+    /// True when this update bounced off a border wall, so the playfield can play the bounce
+    /// sound. The playfield reads it and clears it each tick.
     /// </summary>
+    /// <remarks>R5 $4FCD requests the bounce sound there.</remarks>
     public bool BouncedThisUpdate { get; private set; }
 
+    /// <summary>
+    /// Ages the shell, moves it one ROM frame's worth when the mover's clock says so, and bounces
+    /// it off the border walls; a shell past its lifespan is removed.
+    /// </summary>
+    /// <param name="gameTime">Unused — the shell's clocks are counted in ROM frames.</param>
+    /// <param name="field">The playfield wall the shell bounces off.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -114,6 +137,9 @@ public sealed class TankShell : IEntity
         }
     }
 
+    /// <summary>Draws the shell picture at its own size; it never flashes.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set, which holds the shell picture.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         // Solid; the spec requires no flashing for missiles. The picture IS the

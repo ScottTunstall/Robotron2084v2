@@ -6,18 +6,33 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// Shared wall logic for Spheroid and Quark — the two genuinely near-identical
-/// "glide, drop, flee and vanish" entities (plan 8.6). Kept as a small
-/// internal helper rather than a base class so each entity keeps its own
-/// independent lifecycle.
+/// Shared wall logic for the two entities that glide around the field and then make for a
+/// wall edge and vanish — <see cref="Spheroid"/> and <see cref="Quark"/> (plan 8.6). A small
+/// internal helper rather than a base class, so each entity keeps its own life cycle.
+///
+/// Note for callers: neither entity is stopped by an ELECTRODE. Only the playfield wall
+/// reflects them.
 /// </summary>
+/// <remarks>
+/// The spheroid's version is RRC11.ASM's `CIRCLE`, `CIRC2L`, `CIRC3L` and `CIRC4`; the
+/// quark's is RRTK4.ASM's `SQUARE` and `SQVEL`.
+/// </remarks>
 internal static class WallFleeHelper
 {
     /// <summary>
-    /// Advances <paramref name="position"/> by <paramref name="velocity"/>,
-    /// reflecting the X or Y component when that axis alone would cross the
-    /// wall (spheroids/quarks "glide" over electrodes — only the wall stops them).
+    /// Moves the entity by its velocity, bouncing back the X or the Y component when that axis
+    /// alone would cross the wall. A diagonal that still fits is left alone.
     /// </summary>
+    /// <param name="position">The entity's current top-left corner.</param>
+    /// <param name="velocity">This tick's step on each axis.</param>
+    /// <param name="width">The entity's box width, in port pixels.</param>
+    /// <param name="height">The entity's box height, in port pixels.</param>
+    /// <param name="wall">The playfield wall to test against.</param>
+    /// <param name="newVelocity">
+    /// The velocity after any reflection, so the caller can keep its movement direction — and
+    /// so its animation — in step with where it is actually going.
+    /// </param>
+    /// <returns>The entity's new top-left corner.</returns>
     public static IntVector2 MoveWithReflection(IntVector2 position, IntVector2 velocity, int width, int height, PlayfieldWall wall, out IntVector2 newVelocity)
     {
         IntVector2 v = velocity;
@@ -36,10 +51,17 @@ internal static class WallFleeHelper
     }
 
     /// <summary>
-    /// Moves one axis at a time toward the nearest wall edge; returns true
-    /// once the entity has reached the wall (ready to disappear, spec:
-    /// "moves to the closest WALL EDGE and DISAPPEARS").
+    /// Steps toward the nearest wall edge — whichever of the four is closest — and reports
+    /// whether the entity has arrived, which is when it disappears.
     /// </summary>
+    /// <param name="position">The entity's current top-left corner.</param>
+    /// <param name="width">The entity's box width, in port pixels.</param>
+    /// <param name="height">The entity's box height, in port pixels.</param>
+    /// <param name="speed">How many port pixels to move this tick.</param>
+    /// <param name="wall">The wall whose edges the entity is making for.</param>
+    /// <param name="newPosition">The position after the step.</param>
+    /// <returns>True once the entity's box has reached the wall and it should be removed.</returns>
+    /// <remarks>Spec: "moves to the closest WALL EDGE and DISAPPEARS".</remarks>
     public static bool FleeTowardNearestEdge(IntVector2 position, int width, int height, int speed, PlayfieldWall wall, out IntVector2 newPosition)
     {
         Rectangle outer = wall.OuterBounds;
