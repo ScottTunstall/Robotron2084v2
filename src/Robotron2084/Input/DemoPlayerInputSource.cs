@@ -20,7 +20,11 @@ namespace Robotron2084.Input;
 /// <item>it fires at the nearest robot while one is within
 /// <c>DemoFireRangeSpecPixels</c>;</item>
 /// <item>one tick in <c>DemoStutterChanceDenominator</c> it pauses (a human
-/// look, and it lets the demo settle into different shapes run to run).</item>
+/// look, and it lets the demo settle into different shapes run to run);</item>
+/// <item>a new direction must win <c>DemoDirectionSwitchTicks</c> ticks in a row
+/// before the stick follows it — the raw flee direction flips almost every tick
+/// and the arcade resets the walk animation on every facing change, so without
+/// the hysteresis the demo's man twitches instead of walking (notes §97.5).</item>
 /// </list>
 /// All motion is 8-way/integer, per the port's policy. The demo state binds the
 /// current field each tick (<see cref="Bind"/>) and then polls — the field must
@@ -30,6 +34,9 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
 {
     private readonly Random _random;
     private PlayField? _field;
+    private IntVector2 _heldMove;
+    private int _directionVotes;
+    private int _holdTicks;
 
     /// <param name="random">Optional seedable RNG (tests); the demo uses the default.</param>
     public DemoPlayerInputSource(Random? random = null)
@@ -68,6 +75,32 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
             // A robot past the fire range just gets ignored for movement — the
             // centre drift stays.
         }
+
+        // Stick hysteresis (notes §97.5): the flee direction is `sign(player − robot)`
+        // against a field that moves under it and against a nearest-robot pick that
+        // changes as robots die, so the raw value flipped on ~75% of ticks — and the
+        // arcade RESETS the walk animation on every facing change, which made the
+        // demo's man twitch instead of walk. A direction must win
+        // DemoDirectionSwitchTicks ticks in a row before the stick follows it.
+        if (move == _heldMove)
+        {
+            _directionVotes = 0;
+        }
+        else if (_heldMove == IntVector2.Zero || (_holdTicks <= 0 && ++_directionVotes >= GameplayConstants.DemoDirectionSwitchTicks))
+        {
+            // An empty stick is "no decision yet", not a direction to defend, so the
+            // first move (and the first stop) is adopted at once.
+            _heldMove = move;
+            _directionVotes = 0;
+            _holdTicks = move == IntVector2.Zero ? 0 : GameplayConstants.DemoDirectionHoldTicks;
+        }
+
+        if (_holdTicks > 0)
+        {
+            _holdTicks--;
+        }
+
+        move = _heldMove;
 
         if (move != IntVector2.Zero && _random.Next(GameplayConstants.DemoStutterChanceDenominator) == 0)
         {

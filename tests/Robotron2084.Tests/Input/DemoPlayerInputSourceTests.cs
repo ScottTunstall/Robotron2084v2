@@ -106,6 +106,41 @@ public sealed class DemoPlayerInputSourceTests
     }
 
     [Fact]
+    public void Poll_HoldsItsDirectionBeforeFollowingANewThreat()
+    {
+        PlayField field = EmptyField(FullBounds);
+        IntVector2 start = field.Player.Position;
+        field.SpawnEnforcer(start + new IntVector2(0, -ScreenSize.Scaled(30))); // above him → flee DOWN
+
+        var demo = new DemoPlayerInputSource(new Random(7));
+        demo.Bind(field);
+
+        // The first decision is adopted at once (an empty stick is not a direction).
+        Assert.Equal(new IntVector2(0, 1), demo.Poll().MoveDirection);
+
+        // Now the threat is on the other side of him, so the RAW flee direction is
+        // UP. The stick must not follow it yet: the arcade RESETS the walk animation
+        // on every facing change, and the raw direction flips against a moving field
+        // — which is what left the demo's man twitching instead of walking (notes
+        // §97.5). It may pause (the deliberate stutter), but it must not reverse.
+        field.Player.TeleportTo(start + new IntVector2(0, -ScreenSize.Scaled(40)));
+
+        for (int tick = 0; tick < GameplayConstants.DemoDirectionHoldTicks; tick++)
+        {
+            Assert.NotEqual(new IntVector2(0, -1), demo.Poll().MoveDirection);
+        }
+
+        IntVector2 move = IntVector2.Zero;
+        for (int tick = 0; tick < GameplayConstants.DemoDirectionHoldTicks + GameplayConstants.DemoDirectionSwitchTicks + 2
+            && move != new IntVector2(0, -1); tick++)
+        {
+            move = demo.Poll().MoveDirection;
+        }
+
+        Assert.Equal(new IntVector2(0, -1), move); // ...and eventually it does follow it
+    }
+
+    [Fact]
     public void Poll_NeverFleesIntoAWall()
     {
         // A small field so the player can be pushed close to the left wall.

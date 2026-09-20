@@ -109,6 +109,15 @@ public sealed class Player : IEntity
     /// <summary>Phase 11.4: passes through hazards unharmed for a short time after a respawn.</summary>
     public bool IsInvincible => _invincibilityTicksRemaining > 0;
 
+    /// <summary>
+    /// The TEMPORARY playtest aid of round 7 (<see cref="GameplayConstants.PlayerInvincibleForTesting"/>),
+    /// per player so the attract DEMO can opt out: the machine plays by the
+    /// arcade's rules, so its player must die when a robot, a missile or an
+    /// electrode touches him — otherwise every contact path in the demo is dead
+    /// code (notes §97.5). While set, <see cref="Kill"/> is a complete no-op.
+    /// </summary>
+    public bool InvincibleForTesting { get; set; } = GameplayConstants.PlayerInvincibleForTesting;
+
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>Awards an extra life (Phase 11.1, extra-life threshold crossings).</summary>
@@ -270,9 +279,9 @@ public sealed class Player : IEntity
     /// <summary>Kills the player (contact with a live hazard). No-op while dying/dead.</summary>
     public void Kill()
     {
-        if (GameplayConstants.PlayerInvincibleForTesting)
+        if (InvincibleForTesting)
         {
-            return; // TEMPORARY playtest aid (round 7) — see the constant.
+            return; // TEMPORARY playtest aid (round 7) — see the property / the constant.
         }
 
         if (LifeState != EntityLifeState.Alive)

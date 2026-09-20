@@ -160,6 +160,25 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   only synced at a wave clear / death, so every point scored in between (a kill, a rescue's
   1000-5000, an earned spare man) was invisible until the wave ended. New
   `PlayField.SyncInto(slot)` is called every tick by both states (+1 test, **286**).
+- **2026-09-20 — THE BRAIN'S REPROGRAMMING + THE DEMO'S STICK AND COLLISIONS (notes §97.4/§97.5).**
+  Author: *"in the attract mode the brain behaviour isn't right. When mummy is touched by the
+  brain, she isn't showing as being 'progged' and another brain flies over the screen!"* The
+  cause was one line: `RPROG` (opcode 26) returned "keep reading", so the GHOSTed ONE-BYTE
+  `PSHAKE` script ($868C) ran on into **BRAING** ($868D) — the shaking human's object executed
+  `SETOB BRAIN / SETPOS (10,160)` on ITSELF and then streaked off at `SETXV $0200` (the "second
+  brain"). `RunAction` also cancelled any action on a descriptor-less object (the same run-on,
+  one layer up). RPROG now owns the process until the shake ends (R5 $7CD9: 64 two-frame
+  iterations, base row restored, process freed) and only WALK needs a descriptor. Verified from
+  the object timeline: MUMMY boxed `$AA`/`$BB` + shaking over frames 3943-4062, then the solid
+  prog + three `$EE`-boxed clones from 4063. And *"in the demo where the 'AI' player is shooting
+  automatically, there's a lot of jerking on the player sprite and the collision detection isn't
+  working"*: **(a)** the AI's flee direction flipped on **1347 of 1800 ticks** and the port
+  RESETS the walk animation on every facing change (R5 $3003-3009) — a direction now needs 3
+  votes and must outlive the previous one by 9 ticks (**44** flips after); **(b)** the round-7
+  playtest aid (`PlayerInvincibleForTesting`) applied to the DEMO too, so its phony player
+  walked through robots, electrodes and missiles — the aid is per player now
+  (`Player.InvincibleForTesting`) and `AttractState` builds its field with it OFF. That also
+  un-skipped the round-7 electrode contact test (**0 skipped** from here on, +4 tests, **290**).
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

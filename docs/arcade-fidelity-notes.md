@@ -7798,11 +7798,14 @@ frame 256 exactly, and still there on 255).
 
 ## 97. The attract DEV KEYS, the hulk's kills verified, and the HUD counters handed over every tick (2026-09-20)
 
-**Author, three reports in one sitting: "I need you to add a key that takes me directly to
+**Author, five reports in one sitting: "I need you to add a key that takes me directly to
 the 'attract' mode with the humans and hulks so I can see if the code is working or not.
 How's about F1?" — "The hulk in the demo mode is not instantly killing daddy and mikey when
 it walks into them. Additionally when the player is rescuing family members in the attract
-mode, the score display is delayed."**
+mode, the score display is delayed." — "In the attract mode the brain behaviour isn't right.
+When mummy is touched by the brain, she isn't showing as being 'progged' and another brain
+flies over the screen!" — "in the demo where the 'AI' player is shooting automatically,
+there's a lot of jerking on the player sprite and the collision detection isn't working."**
 
 ### 97.1 The dev keys (port-only — nothing here is an arcade claim)
 
@@ -7861,11 +7864,77 @@ private `SyncSlotFromField` helpers are thin wrappers over it. The wave-clear an
 calls stay — the death path still zeroes `SAVCNT` AFTER the copy (`PLINIT`).
 `PlayFieldHumanTests.SyncInto_HandsLiveScoreLivesAndRescuesToThePlayersSlot` pins it.
 
-### 97.4 Gates
+### 97.4 The brain's reprogramming: a ONE-BYTE script must not run on into the NEXT one
 
-0 warnings (Debug + Release), **286 tests, 0 failed, 1 skipped** (+1), the 12 s launch smoke
-OK, `verify-playfield.py` PASS, `verify-fonts.py` PASS (82), `verify-attract.py` PASS (title
-→ story → title). The hulk scene was also watched end to end through the new F1/F3 keys —
-the skull is drawn with the hulk on top of it, and the DADDY art then MIKEY's skull appear
-in turn as he walks on. The `playfield-check.png` artifact the render gate leaves was
-deleted.
+**Author: "the brain behaviour isn't right. When mummy is touched by the brain, she isn't
+showing as being 'progged' and another brain flies over the screen!"** Two faults, one
+symptom, traced from the port's own object list (a temporary harness logging every object's
+descriptor, column, row, image and MONO state per ROM frame):
+
+- **`RPROG` (opcode 26) returned "keep reading"**, so the process ran on into the bytes that
+  FOLLOW the script it was running. `PSHAKE` ($868C) is a ONE-BYTE script (`FCB RPROG`) that
+  DADD2 GHOSTs onto the human being reprogrammed — and the byte after it is the start of
+  **BRAING** ($868D). The shaking mummy's object therefore executed `SETOB BRAIN / SETPOS
+  (10,160)` on ITSELF: the mummy became a brain at the brain's entry point wearing her MONO
+  box, and when her own script later ran `SETXV $0200` on that object it streaked off to the
+  right at 2 columns a frame — the author's "another brain flies over the screen". The ROM's
+  handler (R5 $7CD9) stores the base row and a `#$40` countdown, allocates its own two-frame
+  tasks (row = base + RND(0..7), then base − RND(0..7)), restores the base row at $7D11 and
+  FREES the process at $7D16 — it never returns to the script reader.
+- **`RunAction` began with "no descriptor, no action"**: it cancelled the action, and the
+  process then fell through to the next opcode — the same run-on, one layer up. Only the
+  WALK actions need a descriptor (its walk table and image count); MONO and RPROG drive any
+  object.
+
+With both fixed the scene is the ROM's: the mummy is boxed in `$AA`/`$BB`
+(`MONO $AA,$BB,40,0`), SHAKES for 128 ROM frames (64 two-frame iterations), then
+`MONO $0,$AA,44,0` turns her into the solid slot-10 PROG silhouette that streaks right —
+while `SETXV $0200` + `FORK PSHADO` sends three mummies in `$EE` boxes off at the same rate,
+and the score posts rise behind them. (The §95.5 parenthetical "+$2/256" for those two
+velocities is a misread of the operand's UNITS: `SETXV`'s operand is `$0200` = 2 COLUMNS per
+frame, which is what makes the prog and its shadows streak.)
+
+`AttractMovieTests.ObjectMachine_RprogIsAWholeScript_AndDoesNotRunOnIntoTheNext` pins the
+one-byte-script property on the real address.
+
+### 97.5 The attract demo: the stick, and the playtest aid that let it walk through robots
+
+**Author: "in the demo where the 'AI' player is shooting automatically, there's a lot of
+jerking on the player sprite and the collision detection isn't working."** Both were real;
+both measured off the demo's own playthrough (a temporary harness running `AttractState`'s
+field + `DemoPlayerInputSource` for 1800 ticks):
+
+- **The JERKING is the AI's stick, not the player.** The flee direction is
+  `sign(player − robot)` recomputed every tick against a field that moves under it and a
+  nearest-robot pick that changes as robots die — and the port's `Player` RESETS the walk
+  animation on every facing change (R5 $3003-3009). The raw direction flipped on **1347 of
+  1800 ticks**, so `_animSequenceIndex` never got past its first frame: the man twitched in
+  place instead of walking. A direction must now win `DemoDirectionSwitchTicks` (3) ticks in
+  a row AND must outlive the previous direction's `DemoDirectionHoldTicks` (9 — one whole
+  12-tick walk cycle) before the stick follows it; an empty stick means "no decision yet",
+  so the first move is adopted at once. Measured after: **44 flips in 1800 ticks**.
+- **"The collision detection isn't working" was the round-7 playtest aid.**
+  `PlayerInvincibleForTesting` (on, so the AUTHOR cannot die while playtesting) applied to
+  EVERY player — the attract demo's phony player included, so he walked through robots,
+  electrodes and missiles. The aid is per player now (`Player.InvincibleForTesting`, seeded
+  from the constant) and `AttractState` builds its field with it OFF: the machine plays by
+  the arcade's rules, so its man dies on contact and the demo's death path (rebuild the
+  field for the next man, and a silent new game when the men run out) is live code again.
+  Measured: the demo's player dies on the first overlapping tick.
+- That also brought back the electrode contact test, skipped since round 7 because "the
+  player can no longer start dying": it now builds its field with the aid off
+  (`PlayFieldCollisionTests.PlayerWalksIntoElectrode_BothStartDying`), and the suite's known
+  skip is GONE — 290 tests, 0 failed, **0 skipped** (the gate invariant changes; the aid
+  itself stays ON for the author's own game, which is what C2 in the handoff is about).
+
+### 97.6 Gates
+
+0 warnings (Debug + Release), **290 tests, 0 failed, 0 skipped** (+4, and the round-7 skip is
+gone), the 12 s launch smoke OK, `verify-playfield.py` PASS, `verify-fonts.py` PASS (82),
+`verify-attract.py` PASS (title → story → title). The hulk scene was watched through the new
+F1/F3 keys. The brain scene's reprogramming was verified from the OBJECT TIMELINE rather than
+by eye (the screenshot runs kept overshooting its 2.5 s window), which pins the descriptor,
+image and MONO state of every object per ROM frame: MUMMY boxed `$AA`/`$BB` and shaking over
+frames 3943-4062, then `MONO $0,$AA,44,0` (the solid prog) plus the three `$EE`-boxed clones
+from 4063, and the posts behind them. The `playfield-check.png` artifact the render gate
+leaves was deleted.

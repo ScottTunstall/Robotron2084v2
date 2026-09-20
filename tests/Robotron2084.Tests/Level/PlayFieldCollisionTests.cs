@@ -206,14 +206,14 @@ public sealed class PlayFieldCollisionTests
         Assert.False(field.LaserWallFlares[1].Dithered);
     }
 
-    // TEMPORARILY SKIPPED (playtest round 7): PlayerInvincibleForTesting =
-    // true, so the player can no longer start dying. RESTORE (remove the
-    // Skip) the moment the flag flips back to false — the electrode half
-    // of the assertion is unaffected by the flag.
-    [Fact(Skip = "temporarily invincible for playtest round 7 (PlayerInvincibleForTesting)")]
+    // The round-7 playtest aid (`PlayerInvincibleForTesting`) makes contact a no-op
+    // for the AUTHOR's game, so this test builds its field with the aid OFF — which
+    // is exactly what the attract demo does: the machine plays by the arcade's rules
+    // (notes §97.5).
+    [Fact]
     public void PlayerWalksIntoElectrode_BothStartDying()
     {
-        PlayField field = CreateEmptyField();
+        PlayField field = CreateEmptyField(playerInvincibleForTesting: false);
         var electrode = new Electrode(field.Player.Position); // directly on the player
         field.AddElectrode(electrode);
 
@@ -223,6 +223,24 @@ public sealed class PlayFieldCollisionTests
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
         Assert.Equal(EntityLifeState.Dying, field.Player.LifeState);
         Assert.Equal(livesBefore - 1, field.Player.Lives);
+    }
+
+    [Fact]
+    public void PlayerContactWithARobot_KillsUnlessThePlaytestAidIsOn()
+    {
+        // The author's "the collision detection isn't working" in the attract demo:
+        // the demo ran on the same playtest aid as their own game, so its player
+        // walked through every robot. The aid is per player now and the DEMO clears
+        // it (`AttractState`), so contact kills there and only there (notes §97.5).
+        PlayField aided = CreateEmptyField();
+        aided.AddGrunt(new Grunt(aided.Player.Position, speedBonus: 0));
+        aided.Update(new GameTime());
+        Assert.Equal(EntityLifeState.Alive, aided.Player.LifeState);
+
+        PlayField demo = CreateEmptyField(playerInvincibleForTesting: false);
+        demo.AddGrunt(new Grunt(demo.Player.Position, speedBonus: 0));
+        demo.Update(new GameTime());
+        Assert.Equal(EntityLifeState.Dying, demo.Player.LifeState);
     }
 
     [Fact]
@@ -267,7 +285,7 @@ public sealed class PlayFieldCollisionTests
 
     private static readonly GameTime Tick = new(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16));
 
-    private static PlayField CreateEmptyField()
+    private static PlayField CreateEmptyField(bool playerInvincibleForTesting = true)
     {
         var parameters = new LevelParameters(
             1,
@@ -280,6 +298,6 @@ public sealed class PlayFieldCollisionTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayField(parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3);
+        return new PlayField(parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3, playerInvincibleForTesting: playerInvincibleForTesting);
     }
 }

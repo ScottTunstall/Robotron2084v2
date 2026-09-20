@@ -505,6 +505,24 @@ public static class GameplayConstants
     public const int DemoFireRangeSpecPixels = 120; // AI: fire at the nearest robot within this
     public const int DemoWallClearanceSpecPixels = 24; // AI: steer away from a wall within this
     public const int DemoStutterChanceDenominator = 16; // AI: 1-in-N ticks of deliberate pause (feels alive, not robotic)
+    /// <summary>
+    /// AI stick hysteresis: a freshly computed flee/drift direction must win this
+    /// many ticks IN A ROW before the stick follows it. The flee direction is
+    /// `sign(player − robot)` recomputed against a moving field, so it flipped on
+    /// ~75% of ticks and the arcade's walk animation RESETS on every facing change
+    /// (R5 $3003-3009) — the demo's man twitched in place instead of walking
+    /// (notes §97.5).
+    /// </summary>
+    public const int DemoDirectionSwitchTicks = 3;
+
+    /// <summary>
+    /// AI stick minimum hold: once the stick follows a new direction it keeps it
+    /// this many ticks. The arcade's walk animation is a four-frame cycle at three
+    /// ticks a frame (twelve ticks), so a direction that lasts fewer ticks than that
+    /// can never show a complete walk — which is what the author saw as the demo's
+    /// man "jerking" (notes §97.5).
+    /// </summary>
+    public const int DemoDirectionHoldTicks = 9;
 
     // Playfield layout (Phase 10.5)
     public const int PlayfieldMarginSpecPixels = 20;

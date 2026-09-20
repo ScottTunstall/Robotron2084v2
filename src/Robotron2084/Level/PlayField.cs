@@ -84,7 +84,8 @@ public sealed class PlayField
         int startingLives,
         int startingScore = 0,
         int startingRescues = 0,
-        GamePalette? wallPalette = null)
+        GamePalette? wallPalette = null,
+        bool playerInvincibleForTesting = true)
     {
         Parameters = parameters;
         _gruntSpeedFloor = parameters.GruntSpeedFloor;
@@ -101,7 +102,7 @@ public sealed class PlayField
         Wall = new PlayfieldWall(innerBounds, cycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
-        Player = new Player(playerStart, startingLives);
+        Player = new Player(playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
         PlayerLasers = new LaserSlots();
         _previousPlayerPosition = playerStart;
 

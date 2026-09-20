@@ -178,6 +178,41 @@ public sealed class AttractMovieTests
     }
 
     [Fact]
+    public void ObjectMachine_RprogIsAWholeScript_AndDoesNotRunOnIntoTheNext()
+    {
+        var machine = new AttractObjectMachine(new Random(3));
+
+        // PSHAKE ($868C) is a ONE-BYTE script — `FCB RPROG` — GHOSTed onto the human
+        // the brain is reprogramming. RPROG OWNS the process until the shake ends:
+        // R5 $7CD9 stores the base row and a 64 countdown, allocates its own
+        // two-frame tasks (+RND(0..7) rows, then −RND(0..7)) and frees the process at
+        // $7D16 — it never returns to the script reader. Returning "keep reading"
+        // made the process run on into the bytes that FOLLOW PSHAKE, which are
+        // BRAING ($868D): the shaking human's object executed `SETOB BRAIN /
+        // SETPOS (10,160)` on itself, and the movie showed a SECOND brain streaking
+        // off across the screen instead of a reprogrammed mummy (notes §97.4).
+        machine.StartScript(0x868C);
+
+        MovieObject shaking = Assert.Single(machine.Objects);
+        Assert.Null(shaking.Descriptor); // nothing has run on into BRAING's SETOB
+
+        bool shook = false;
+        for (int frame = 0; frame < 300; frame++)
+        {
+            machine.StepFrame();
+
+            // The property: whatever else happens, the one-byte script never runs
+            // on into the bytes that follow it (which are BRAING's).
+            Assert.Null(shaking.Descriptor);
+            shook |= shaking.ShakeRowOffset != 0;
+        }
+
+        Assert.True(shook, "PSHAKE never moved the object's row");
+        Assert.Equal(0, shaking.ShakeRowOffset); // the shake ends by restoring the base row
+        Assert.False(shaking.Dead); // the ROM frees the ghost's metadata entry, not the object
+    }
+
+    [Fact]
     public void ObjectMachine_WalksAGruntAndExplodesIt()
     {
         var machine = new AttractObjectMachine(new Random(11));
