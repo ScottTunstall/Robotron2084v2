@@ -545,9 +545,10 @@ public static class GameplayConstants
     public const int HighScoreTodayHighlightSlot = 12;
     public const int HighScoreAllTimeSlot = 10;
     public const int HighScoreAllTimeHighlightSlot = 13;
-    public const int HighScoreFrameSlot = 8; // FRAMER's flavour $88 — the wall; LOOPP cycles slots 1-8
-                                             // (the wall's geometry and its grow/erase passes live in
-                                             // HighScoreTableLayout / HighScoreFrameAnimation)
+    // The wall is NOT one slot: FRAMER's flavour starts at $88 and GETA walks it down by
+    // $11 a stroke, so each of the eight visible strokes takes its own slot — see
+    // HighScoreTableLayout.FrameStrokeSlot (LOOPP then cycles slots 1-8, which is why the
+    // band reads as eight colours chasing at once).
 
     // The game-over message: RRG23 PLEND prints string 40 (GOMP = "GAME OVER") in
     // the LARGE font, colour $AA, at CURSAB $3E,$80, and waits NAP 120.

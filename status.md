@@ -241,6 +241,22 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   (**321**). **For the author's eye:** the cycling RATE — the port reads `NAP n` as n ROM frames
   (16 steps/s for COLTAB, a 1.26 s lap); if the arcade's page cycles visibly slower, the A9
   "a pass is two frames" reading halves it (notes §98.6).
+- **2026-09-20 follow-up 2 — THE WALL IS EIGHT COLOURS AT ONCE (notes §98.7).** Author: *"The
+  wall surrounding the scores does change colour, but the arcade wall is split into multiple
+  different cycling colours and this one isn't."* Real decode miss, in the one place §98.5 was
+  confident: `GETA`'s `SUBA #$11` subtracts the flavour **IN PLACE**, so MARQ's strokes walk
+  `$11, $88, $77, … $11, $88, …` — **a palette slot per stroke**, eight repeating. LOOPP's
+  register of **exactly eight** slots was the tell: the visible band is the last eight strokes
+  (the black pass eats strokes 0…48), i.e. slots **8…1**, so LOOPP's shift turns the band into a
+  colour chase — eight COLTAB colours visible at once, three frames apart. Also corrected: MARQ's
+  right edge is `RIGHT`/`RIGHT-1` (`DECA` before that `VLOW`), so the lit right column zigzags
+  across `right-2`/`right-1`, not `right-1`/`right`. New `HighScoreTableLayout.FrameStrokeSlot` +
+  `HighScoreFrameAnimation.DrawnStroke`/`ErasedStroke` replace the old outer/inner-RECT pair —
+  a single band between two rectangles could only ever be one colour, which was the shape of the
+  bug. `GameplayConstants.HighScoreFrameSlot` deleted. The old `DrawFrame` that refused to apply
+  before compaction is now replaced by a per-stroke `DrawStroke`. +1 test (a band of
+  `{8,7,6,5,4,3,2,1}`); pacing/geometry unchanged. **Cycle rate stands** (author: "seems OK, not
+  a deal breaker").
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

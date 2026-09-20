@@ -8158,3 +8158,70 @@ The alternative reading is §87.4/A9's open question — that a "pass" is TWO fr
 what the wave-complete tunnel needed to reach the author's ~2 s (§83) — and it would halve
 both rates. It does not change anything else on this page, so it is a one-constant decision:
 if the arcade's page cycles visibly slower than this, that is the knob.
+
+### 98.7 The wall is EIGHT colours at once — MARQ's flavour walks a slot a stroke (2026-09-20)
+
+**Author: "The wall surrounding the scores does change colour, but the arcade wall is split
+into multiple different cycling colours and this one isn't."** A real decode miss, and in
+the exact place §98.5 got confident: it read `GETA`'s flavour as a one-off `$11` → `$88`
+correction and concluded "the whole band is slot 8". It is not.
+
+#### `GETA` subtracts IN PLACE — so the flavour is a SLOT WALK
+
+`FRAMER` calls `GETA` once per stroke, with `A` = the flavour byte (`$88` is loaded once,
+when `LDA #$11`'s result first reaches the terminal word's high byte). Every later `GETA`
+does:
+
+```
+GETA:  SUBA #$11        ; A = A - $11, IN PLACE (A is the running flavour)
+       BEQ  GFLIP       ; only when it lands on 0 is $88 reloaded
+       ...
+```
+
+So the flavour the strokes are drawn in walks **`$11, $88, $77, $66, $55, $44, $33, $22,
+$11, $88, ...`** — one *slot* per stroke, eight of them repeating (`FrameStrokeSlot`):
+
+| stroke | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| flavour | `$11` | `$88` | `$77` | `$66` | `$55` | `$44` | `$33` | `$22` | `$11` | `$88` | `$77` |
+| slot | 1 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 8 | 7 |
+
+This is what §98.5's own LOOPP row was already telling us and nobody read: `OUTCOL` shifts a
+register of **exactly eight** slots and drops the new COLTAB colour into slot 8. A one-slot
+wall has nothing to shift INTO — eight slots only make sense because the band's eight
+strokes are slots 8…1, so the shift moves each stroke's colour one stroke outward and the
+band becomes a **colour chase**: eight colours visible at once, each one COLTAB-three-frames
+behind the stroke inside it. (Slots 9/10/12/13 are the lists and the highlights; 7 is the
+headers, which trail the wall's newest colour by one step — also only meaningful this way.)
+
+The erase pass retraces strokes 0…48 in flavour 0 (black), so the band left visible is
+strokes **49…56** = slots **8, 7, 6, 5, 4, 3, 2, 1** — innermost slot 8, outermost slot 1.
+
+#### Also corrected: the right edge sits one pixel in
+
+MARQ's vertical passes are not symmetric, and the R5 disassembly shows it (`GFLIP`'s case):
+`VHIGH` runs at the rectangle's left byte column and its `VLOW` at the column one to the
+RIGHT (`LEAX 1,X` on the same address = the row below — the two pixels of that byte); the
+right edge is `LDA RIGHT,U / BSR VHIGH / DECA / BSR VLOW`, so its high-nibble pixel is
+`RIGHT`'s left pixel and its low-nibble pixel is `RIGHT-1`'s right one. The lit right-hand
+column is therefore a zigzag across `right-2`/`right-1`, **not** `right-1`/`right`. §98.5's
+plain "light the pixel whose `x + y` is odd" rule still holds inside each edge; what changed
+is which two pixel columns the right edge spans (`DrawStroke`). The horizontal edges do run
+the full width (their odd/even passes pick the right pixel by parity as before).
+
+#### Port side
+
+`HighScoreTableLayout.FrameStrokeSlot` (the walk above) plus `HighScoreFrameAnimation.DrawnStroke`
+and `ErasedStroke` (the two pass frontiers) replace the old "outer rect / inner rect" pair —
+which was the shape of the BUG, because a single band between two rectangles can only ever be
+one colour. `HighScoreTableState.DrawFrame` now draws every stroke the erase pass has left,
+in that stroke's own slot (`DrawStroke`), so the band is eight colours that chase as LOOPP
+runs. `GameplayConstants.HighScoreFrameSlot` is deleted — the wall has no single slot.
+
+**Tests:** `HighScoreFrameAnimationTests` now pin the frontiers (a new test asserts the
+visible band is exactly `{8,7,6,5,4,3,2,1}`), and the layout tests pin the stroke walk. The
+grow/erase pacing, the terminal points and the 16-pixel band are unchanged.
+
+**Still open (unchanged from §98.6):** the cycle RATE. The author says the pace "seems OK,
+not a deal breaker", so `NAP n` = n ROM frames stands (LOOPP 3 frames/step, ramps 4) — §98.6's
+one-constant knob remains the place to revisit if a slower arcade lap is ever wanted.

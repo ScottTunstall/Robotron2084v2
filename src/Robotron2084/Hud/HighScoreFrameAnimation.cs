@@ -5,9 +5,11 @@ namespace Robotron2084.Hud;
 /// page's hatched wall, which is why the arcade's border appears to be drawn rather
 /// than to appear whole:
 /// <list type="number">
-/// <item>the growing pass: two strokes a ROM frame, colour `$88` (palette slot 8),
-/// from the smallest rectangle, (62,125)-(89,127), out to the terminal point
-/// (col 6, row 13)-(col 145, row 239);</item>
+/// <item>the growing pass: two strokes a ROM frame, out from the smallest rectangle,
+/// (62,125)-(89,127), to the terminal point (col 6, row 13)-(col 145, row 239); its flavour
+/// starts at `$88` and `GETA` walks it DOWN by `$11` a stroke, so each stroke takes its own
+/// palette slot (see <see cref="HighScoreTableLayout.FrameStrokeSlot"/>) and the eight visible
+/// ones are slots 8…1;</item>
 /// <item>the erase pass: the same walk again in flavour 0 (BLACK) — <c>FRCOND</c> does
 /// <c>CLR PD+14,U</c> — which restarts at stroke 0 and stops at (col 14, row 29), so it
 /// blacks the strokes it retraces and leaves the 8-column / 16-row band visible.</item>
@@ -37,18 +39,18 @@ public sealed class HighScoreFrameAnimation
     /// <summary>True once the erase pass has reached its terminal point — the wall is complete.</summary>
     public bool IsFinished => _erasing && _strokes >= HighScoreTableLayout.FrameEraseStrokeCount;
 
-    /// <summary>The outermost stroke drawn so far, in arcade pixels (the band's outside edge).</summary>
-    public (int Left, int Top, int Right, int Bottom) OuterRect =>
-        HighScoreTableLayout.FrameStroke(
-            _erasing ? HighScoreTableLayout.FrameLastStroke : _strokes - 1);
+    /// <summary>
+    /// The growing pass's frontier: the outermost stroke it has drawn, or -1 before it has
+    /// drawn any (notes §98.5 — the first two strokes are drawn before the first sleep).
+    /// </summary>
+    public int DrawnStroke => _erasing ? HighScoreTableLayout.FrameLastStroke : _strokes - 1;
 
     /// <summary>
-    /// The inside edge of the visible band: the erase pass's frontier, which erases the
-    /// strokes it retraces — before that pass starts, the band runs down to stroke 0.
+    /// The erase pass's frontier: the innermost stroke it has BLACKED, or -1 while that pass
+    /// has not started. Everything at or below this stroke is gone; the wall is what is left
+    /// between it and <see cref="DrawnStroke"/>.
     /// </summary>
-    public (int Left, int Top, int Right, int Bottom) InnerRect =>
-        HighScoreTableLayout.FrameStroke(
-            _erasing ? _strokes - 1 : HighScoreTableLayout.FrameFirstStroke);
+    public int ErasedStroke => _erasing ? _strokes - 1 : -1;
 
     /// <summary>Advances the pass by one port tick (call once per Update).</summary>
     public void Tick()

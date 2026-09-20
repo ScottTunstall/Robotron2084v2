@@ -271,43 +271,54 @@ public sealed class HighScoreTableState : IGameState
         score != 0 && _postedScores.Contains(score) ? highlightSlot : normalSlot;
 
     /// <summary>
-    /// The ROM's frame (`FRAMER` → `MARQ`, notes §98.5): the hatched band its two
-    /// passes leave behind, drawn in slot 8's LIVE colour — which is what makes the wall
-    /// cycle, because every wall pixel is palette index 8 and the LOOPP process keeps
-    /// rewriting that slot.
+    /// The ROM's frame (`FRAMER` → `MARQ`, notes §98.5/§98.7): the hatched band its two passes
+    /// leave behind, drawn STROKE BY STROKE because every stroke has its OWN palette slot —
+    /// MARQ's flavour walks down by `$11` a stroke (see
+    /// <see cref="HighScoreTableLayout.FrameStrokeSlot"/>), so the eight visible strokes are
+    /// slots 8…1 and the band carries eight cycling colours at once, which is what the author
+    /// sees on the cabinet ("the arcade wall is split into multiple different cycling colours").
+    /// LOOPP keeps rewriting slots 1-8, so all eight stripes cycle together, three frames apart.
     ///
-    /// MARQ hands the blitter packed pairs and lights exactly ONE pixel of each (see
-    /// <see cref="HighScoreTableLayout.FramePixelIsLit"/>), so the band is a fine
-    /// checkerboard rather than a solid colour. The erase pass paints those same pixels
-    /// black up to the rectangle <see cref="HighScoreFrameAnimation.InnerRect"/> reports,
-    /// so only the part of the band outside it is drawn.
+    /// The erase pass paints those same pixels black, so only the strokes above
+    /// <see cref="HighScoreFrameAnimation.ErasedStroke"/> are drawn.
     /// </summary>
     private void DrawFrame(SpriteBatch spriteBatch)
     {
-        (int outerLeft, int outerTop, int outerRight, int outerBottom) = _frame.OuterRect;
-        (int innerLeft, int innerTop, int innerRight, int innerBottom) = _frame.InnerRect;
-        Color colour = _sprites.SlotColor(GameplayConstants.HighScoreFrameSlot);
-
-        for (int y = outerTop; y <= outerBottom; y++)
+        for (int stroke = _frame.ErasedStroke + 1; stroke <= _frame.DrawnStroke; stroke++)
         {
-            int top = GameplayConstants.ArcadeY(y);
-            int height = GameplayConstants.ArcadeY(y + 1) - top;
-
-            if (y >= innerTop && y <= innerBottom)
-            {
-                DrawHatchedRow(spriteBatch, colour, outerLeft, Math.Min(innerLeft - 1, outerRight), y, top, height);
-                DrawHatchedRow(spriteBatch, colour, Math.Max(innerRight + 1, outerLeft), outerRight, y, top, height);
-            }
-            else
-            {
-                DrawHatchedRow(spriteBatch, colour, outerLeft, outerRight, y, top, height);
-            }
+            DrawStroke(spriteBatch, stroke);
         }
     }
 
-    /// <summary>One raster row of MARQ's hatch: every other arcade pixel of the run.</summary>
-    private void DrawHatchedRow(SpriteBatch spriteBatch, Color colour, int left, int right, int row, int top, int height)
+    /// <summary>
+    /// One MARQ stroke: four hatched edges in that stroke's slot, each two pixels thick. The
+    /// horizontal edges are the two rows of its top and bottom; the vertical ones are the two
+    /// pixel columns of its left edge and of its right one — which MARQ puts at `RIGHT-1` and
+    /// `RIGHT-2`, one pixel inside the rectangle's own right column: `VHIGH` runs at `RIGHT`
+    /// and lights the HIGH nibble (that byte's left pixel), and `VLOW` at the `DECA`-shifted
+    /// `RIGHT-1` lights the low one (the R5 disassembly's GFLIP case).
+    /// </summary>
+    private void DrawStroke(SpriteBatch spriteBatch, int stroke)
     {
+        Color colour = _sprites.SlotColor(HighScoreTableLayout.FrameStrokeSlot(stroke));
+        (int left, int top, int right, int bottom) = HighScoreTableLayout.FrameStroke(stroke);
+
+        DrawHatchedRow(spriteBatch, colour, left, right, top);
+        DrawHatchedRow(spriteBatch, colour, left, right, top + 1);
+        DrawHatchedRow(spriteBatch, colour, left, right, bottom - 1);
+        DrawHatchedRow(spriteBatch, colour, left, right, bottom);
+        DrawHatchedColumn(spriteBatch, colour, left, top, bottom);
+        DrawHatchedColumn(spriteBatch, colour, left + 1, top, bottom);
+        DrawHatchedColumn(spriteBatch, colour, right - 2, top, bottom);
+        DrawHatchedColumn(spriteBatch, colour, right - 1, top, bottom);
+    }
+
+    /// <summary>One raster row of MARQ's hatch: every other arcade pixel of the run.</summary>
+    private void DrawHatchedRow(SpriteBatch spriteBatch, Color colour, int left, int right, int row)
+    {
+        int top = GameplayConstants.ArcadeY(row);
+        int height = GameplayConstants.ArcadeY(row + 1) - top;
+
         for (int x = left; x <= right; x++)
         {
             if (!HighScoreTableLayout.FramePixelIsLit(x, row))
@@ -319,6 +330,27 @@ public sealed class HighScoreTableState : IGameState
             _sprites.DrawSolidRectangle(
                 spriteBatch,
                 new Rectangle(px, top, GameplayConstants.ArcadeX(x + 1) - px, height),
+                colour);
+        }
+    }
+
+    /// <summary>One pixel column of the same hatch — the strokes' vertical edges.</summary>
+    private void DrawHatchedColumn(SpriteBatch spriteBatch, Color colour, int column, int top, int bottom)
+    {
+        int px = GameplayConstants.ArcadeX(column);
+        int width = GameplayConstants.ArcadeX(column + 1) - px;
+
+        for (int y = top; y <= bottom; y++)
+        {
+            if (!HighScoreTableLayout.FramePixelIsLit(column, y))
+            {
+                continue;
+            }
+
+            int py = GameplayConstants.ArcadeY(y);
+            _sprites.DrawSolidRectangle(
+                spriteBatch,
+                new Rectangle(px, py, width, GameplayConstants.ArcadeY(y + 1) - py),
                 colour);
         }
     }

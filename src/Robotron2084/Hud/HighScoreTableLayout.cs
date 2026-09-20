@@ -81,10 +81,23 @@ public static class HighScoreTableLayout
     /// <summary>
     /// MARQ's hatch: of every pair of pixels its two horizontal passes and its two
     /// vertical passes light exactly ONE — the outer pixel taking the flavour's high
-    /// nibble (the high nibble of `$88`), the inner one the low — which works out as
-    /// this single checkerboard over the whole frame.
+    /// nibble, the inner one the low.
     /// </summary>
     public static bool FramePixelIsLit(int arcadeX, int arcadeY) => ((arcadeX + arcadeY) & 1) != 0;
+
+    /// <summary>
+    /// The palette slot stroke <paramref name="stroke"/> is drawn in. MARQ's flavour is a
+    /// packed byte whose nibbles are the outer and inner pixel's slot, and FRAMER walks it
+    /// DOWN a stroke at a time: `GETA`'s <c>SUBA #$11</c> subtracts IN PLACE (the `$88` is
+    /// only reloaded once that subtraction reaches zero), so the growing pass lays down
+    /// <c>$11, $88, $77, $66, $55, $44, $33, $22, $11 …</c> — A SLOT PER STROKE, eight of
+    /// them repeating. That is why <c>LOOPP</c> shifts a register of exactly EIGHT slots, and
+    /// why the arcade's wall reads as several colours at once (author: "the arcade wall is
+    /// split into multiple different cycling colours"): the eight visible strokes are slots
+    /// eight to one, each showing a COLTAB colour three frames apart in the walk.
+    /// </summary>
+    public static int FrameStrokeSlot(int stroke) =>
+        stroke <= 0 ? 1 : 8 - ((stroke - 1) % 8);
 
     /// <summary>The (column, row) of the ROM's cursor for today's rank <paramref name="index"/> (1-based).</summary>
     public static (int Column, int Row) TodayPosition(int index)
