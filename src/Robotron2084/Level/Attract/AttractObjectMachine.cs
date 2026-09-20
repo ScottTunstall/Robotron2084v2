@@ -138,7 +138,7 @@ public sealed class AttractObjectMachine
 
         public bool Alive { get; set; } = true;
 
-        /// <summary>One ROM frame of this process — the ROM's task wake-up.</summary>
+        /// <summary>One ROM frame of this process.</summary>
         public void Step(AttractObjectMachine machine)
         {
             if (Wait > 0 && --Wait > 0)

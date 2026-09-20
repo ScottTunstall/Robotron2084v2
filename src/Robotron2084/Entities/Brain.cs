@@ -11,9 +11,9 @@ namespace Robotron2084.Entities;
 /// <summary>A brain — a hovering robot that turns humans into progs and fires homing missiles.</summary>
 /// <seealso cref="PlayField"/>
 /// <seealso cref="Human"/>
-/// <remarks>ROM: RRB10.ASM's <c>BRNORG</c>/<c>BRNKIL</c> (notes §18). It wakes on a beat of
-/// 1 + this wave's <c>BRNSPD</c> frames; each wake-up takes one 1-px step per axis, advances the
-/// walk animation and ticks the missile timer (reload <c>BSHTIM</c>). X has a ±2 arcade px dead
+/// <remarks>ROM: RRB10.ASM's <c>BRNORG</c>/<c>BRNKIL</c> (notes §18). Its beat is 1 + this wave's
+/// <c>BRNSPD</c> frames: one 1-px step per axis, the walk animation advances and the missile timer
+/// ticks (reload <c>BSHTIM</c>). X has a ±2 arcade px dead
 /// zone, Y has none, so a brain on the target's row oscillates ±1 px. Each axis is wall-checked
 /// separately, so a blocked brain slides along the wall instead of freezing. Facing follows the move
 /// (X wins) and changing it restarts the walk pattern. It targets the nearest living human by
@@ -21,7 +21,7 @@ namespace Robotron2084.Entities;
 /// interval of N frames is due at 6 x N.</remarks>
 public sealed class Brain : IEntity, IExplodable
 {
-    /// <summary>Extra ROM frames added to this wave's brain speed to get the wake-up gap.</summary>
+    /// <summary>Extra ROM frames added to this wave's brain speed to get the beat.</summary>
     private const int BeatExecutionRomTicks = 1;
 
     /// <summary>How far the brain moves on each axis per step: one arcade px.</summary>
@@ -46,22 +46,22 @@ public sealed class Brain : IEntity, IExplodable
     private const int UpDirectionBase = 3;
 
     private readonly Random _random;
-    private readonly int _beatPeriod; // how long between wake-ups
+    private readonly int _beatPeriod; // how long between beats
     private readonly int _fireDelayRomTicks;
     private IntVector2 _position;
-    private int _beatTimer; // counts up toward the next wake-up
+    private int _beatTimer; // counts up toward the next beat
     private int _directionBase = DownDirectionBase; // starts facing down, like a freshly spawned brain
     private int _frameStep;         // index 0..3 into the current direction's 4-frame walk pattern
-    private int _fireBeatsRemaining; // wake-ups left before the next missile
+    private int _fireBeatsRemaining; // beats left before the next missile
     private Human? _victim;                 // the human currently being reprogrammed, if any
-    private int _reprogramRedrawsRemaining; // 2 redraws per iteration
+    private int _reprogramRedrawsRemaining;
     private int _reprogramTimer;           // Counts up to the next lift/drop step
     private bool _reprogramLifting;         // next redraw lifts the human's Y (+), then drops it (-)
 
     /// <summary>Creates a brain; it takes its first step on its first beat.</summary>
     /// <param name="position">Top-left of the brain.</param>
     /// <param name="random">The random source: the fire timer and the reprogramming jitter.</param>
-    /// <param name="brainSpeedRomTicks">How many ROM frames this wave's brain waits between wake-ups.</param>
+    /// <param name="brainSpeedRomTicks">How many ROM frames this wave's brain waits between beats.</param>
     /// <param name="fireDelayRomTicks">How many ROM frames this wave's brain waits between cruise missiles.</param>
     public Brain(IntVector2 position, Random random, int brainSpeedRomTicks, int fireDelayRomTicks)
     {
@@ -86,8 +86,8 @@ public sealed class Brain : IEntity, IExplodable
     /// <remarks>ROM: RRB10.ASM's <c>BRNKIL</c>. A brain killed mid-reprogram releases its victim.</remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
-    /// <summary>Runs a wake-up: chase, step, animate and count the missile timer down.</summary>
-    /// <param name="gameTime">Unused — the wake-up timer is counted in ticks.</param>
+    /// <summary>Runs one beat: chase, step, animate and count the missile timer down.</summary>
+    /// <param name="gameTime">Unused — the beat timer is counted in ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -127,7 +127,6 @@ public sealed class Brain : IEntity, IExplodable
             dx = Math.Sign(targetDx) * StepPixels;
         }
 
-        // Y has no dead zone, which is what makes a brain on the target's row jitter.
         int dy = target.Y >= _position.Y ? StepPixels : -StepPixels;
 
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -155,7 +154,6 @@ public sealed class Brain : IEntity, IExplodable
             _frameStep = 0;
         }
 
-        // The missile timer ticks once per wake-up, then reloads to a random 1..this wave's delay.
         if (--_fireBeatsRemaining <= 0)
         {
             if (field.CanFireCruiseMissile)
@@ -202,8 +200,7 @@ public sealed class Brain : IEntity, IExplodable
         _reprogramLifting = true;
         _reprogramTimer = GameplayConstants.ReprogramStepRomTicks * 6;
 
-        // The human goes just left of the brain, or 8px right if that would cross the left wall
-        // (and back to the left if that would cross the right). The side picked becomes the facing.
+        // Placement and facing (ROM: BMUT00/BMUT10).
         int humanWidth = human.Bounds.Width;
         int x = _position.X - humanWidth - ScreenSize.Scaled(1);
         int facingBase = LeftDirectionBase;
@@ -228,7 +225,6 @@ public sealed class Brain : IEntity, IExplodable
     /// <remarks>The lift/drop amount is a random 0..7 pixels each time (ROM: <c>BMUTL</c>).</remarks>
     private void AdvanceReprogramming(PlayField field, Human victim)
     {
-        // Counts up to the next iteration: 5 per tick, 6 per arcade frame.
         _reprogramTimer += 5;
         if (_reprogramTimer < GameplayConstants.ReprogramStepRomTicks * 6)
         {
@@ -238,7 +234,7 @@ public sealed class Brain : IEntity, IExplodable
         _reprogramTimer -= GameplayConstants.ReprogramStepRomTicks * 6;
 
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        int jitter = _random.Next(GameplayConstants.ReprogramJitterPixels); // a random 0..7 px
+        int jitter = _random.Next(GameplayConstants.ReprogramJitterPixels);
         int height = victim.Bounds.Height;
         int y = _reprogramLifting
             ? Math.Min(victim.Position.Y + jitter, bounds.Bottom - height)

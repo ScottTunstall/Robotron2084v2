@@ -44,6 +44,15 @@ Historical: `plan.md` = the original rebuild plan, `ledger.md` = its decision lo
   clause was removed). Run it at the END of the message that needs them:
   `powershell -NoProfile -Command "[console]::beep(1000,300); [console]::beep(1400,300)"`
   (verified working on the author's machine, 2026-09-13).
+
+- **THE COMMENT BAR (author directive, 2026-09-20): *"THE CODE SHOULD EXPLAIN HOW THE SYSTEM WORKS NOT
+  THE COMMENTS. Only COMPLEX code should be commented, unless you need to xref the original arcade
+  source."*** A comment earns its place only as (a) arithmetic the operands do not show or (b) a
+  `// ROM: <routine>` xref. No invented vocabulary — an entity's periodic action is a **beat** (the
+  name already in the code), never a "wake-up"; the ROM's own routine names stay (the attract
+  interpreter IS `SPWAKE`). Never restate the line below the comment, and never state a number the
+  code could change. Details and the remaining audit: notes §111, handoff B48h.
+
 - Project resume docs: **`docs/handoff-2026-09-17.md` (current handoff — read this
   one)** and `docs/arcade-fidelity-notes.md` (master ROM-vs-port research log).
   `docs/handoff-2026-09-16.md` and `docs/handoff-2026-09-13.md` are historical.
@@ -568,6 +577,17 @@ tests**.
   deriving both from `ScreenSize` / `GameplayConstants.ArcadeScreenWidth`/`ArcadeScreenHeight`. Same
   trigger: the 14 tests with baked 640x400 expectations and the python gates' hardcoded
   `scale = img.size[1] // 400`. Nothing is broken at 640x400 — hence a fix-up, not a bug.
+- **2026-09-20 — the comment bar (notes §111).** *"I am not happy with the terminology used like
+  'wake up' and adding information to comments that may be subject to change. THE CODE SHOULD EXPLAIN
+  HOW THE SYSTEM WORKS NOT THE COMMENTS. Only COMPLEX code should be commented, unless you need to
+  xref the original arcade source."* Applied at once to the three files that carried the metaphor
+  (`Entities/Brain.cs`, `Entities/Prog.cs`, `Level/Attract/AttractObjectMachine.cs`): the invented
+  "wake up"/"wake-up" is gone — a periodic activation is a **beat**, which is the name your own field
+  renames chose — and comments that only restated the line beneath them are deleted. The ROM's own
+  `SPWAKE` stays, because that is the ROM's word. Comments only; 0 warnings; **450 tests, 0 failed**.
+- **OPEN — the rest of the codebase under the new bar.** The same read as above over the rest of
+  `Entities/`, then `Hud/`, `Level/`, `Rendering/`, `States/`, `Input/`: delete any comment that
+  restates the code or states something the code could change. Not started.
 - **2026-09-20 — resolution must be one constant (notes §110).** *"the code should be designed to
   scale to ANY resolution chosen. I may use 640 x 400, but next week change to 1024 x 768 and the
   engine should not fail."* The design already routes everything through `Core/ScreenSize` (render

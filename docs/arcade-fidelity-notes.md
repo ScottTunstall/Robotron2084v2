@@ -6901,7 +6901,7 @@ robots' assembly and **before** the player's appear + `CLR STATUS`. Each member 
 ```
 
 so the **stagger (1..8 sleep units) is written straight into the process's own timer**, and the
-wake-up that ends it *runs the walk body* — the first step. And, crucially, `HUMAN` is the one
+first step the timer runs out on *is the walk body*. And, crucially, `HUMAN` is the one
 robot routine with **no `STATUS` check**: everything else waits (`RRP8`: `ROBOT LDA STATUS`;
 `RRH11`: `HULK LDA STATUS WAIT FOR STATUS TO GO`; `RRC11`: `TST STATUS DONT START EARLY GUYS`;
 `RRB10`'s brain, `RRTK4`'s quark, `RRX7`), while the humans just walk.
@@ -9428,3 +9428,34 @@ of `ScreenSize` for the one-constant claim to hold, and the python gates hardcod
 (`scale = img.size[1] // 400`). Both are listed follow-ups rather than done here.
 
 Verified back at `SpecScale` 2: 0 warnings, **411 tests, 0 failed, 0 skipped** (the new guard included).
+
+---
+
+### 111. THE COMMENT BAR: THE CODE EXPLAINS THE SYSTEM, COMMENTS ONLY SAY WHAT IT CANNOT (author, 2026-09-20)
+
+Author: *"I am not happy with the terminology used like 'wake up' and adding information to comments
+that may be subject to change. THE CODE SHOULD EXPLAIN HOW THE SYSTEM WORKS NOT THE COMMENTS. Only
+COMPLEX code should be commented, unless you need to xref the original arcade source."*
+
+Three rules follow, in the order they bite:
+
+1. **No invented vocabulary.** "Wake up" was mine, not the ROM's. Anything the port names gets the
+   plain word for the mechanic, or the name already in the code — the periodic activation of an entity
+   is a **beat** (`_beatTimer`, `BeatPeriod`: the author's own field names from §109.6). The ROM's own
+   routine names stay, because they are the ROM's: the attract interpreter really is `SPWAKE`, and
+   `NAP n` really does put a process to sleep and the ROM's dispatcher really does resume it.
+2. **A comment may not restate the code, and may not state anything the code could change.**
+   `_frameStep = 0; // a fresh direction restarts the walk at its first frame` is noise; so is a
+   second copy of the clock next to an accumulator the class remark already explains once.
+3. **Comments are for the complex lines and for the ROM xrefs.** The two things that earn one:
+   arithmetic the operands do not show (the explosion's diagonal lean, the `* 6` accumulator
+   conversions) and `// ROM: <routine>` — which rule 0 of §109.7 already makes mandatory.
+
+**Applied at once** to the files that carried the metaphor — `Entities/Brain.cs`, `Entities/Prog.cs`,
+`Level/Attract/AttractObjectMachine.cs`: "wake up"/"wake-up" is gone (a scan for `wake` now returns
+one hit, the ROM's `SPWAKE`), the comments that only restated the line below them are deleted, and the
+brain's placement narration is now the xref it should have been (`// Placement and facing (ROM:
+BMUT00/BMUT10).`). Comments only; Debug 0 warnings; **450 tests, 0 failed, 0 skipped**.
+
+**Still to do: the same read over the rest of the codebase** — the rest of `Entities/`, then `Hud/`,
+`Level/`, `Rendering/`, `States/` and `Input/`. Recorded in `status.md` and as B48h in the handoff.

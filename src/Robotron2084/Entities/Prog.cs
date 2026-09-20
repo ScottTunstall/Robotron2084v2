@@ -15,7 +15,7 @@ namespace Robotron2084.Entities;
 /// diagonally) 4 arcade px a beat, and does not home on the player: it rolls a persistent random aim
 /// offset and walks toward the player's position plus that offset, one axis at a time, re-rolling the
 /// offset occasionally and the direction on a blocked step. An aim point past the field's far edge
-/// wraps to the opposite edge, which is why a prog sometimes walks away. Each wake-up drops a ghost at
+/// wraps to the opposite edge, which is why a prog sometimes walks away. Each beat drops a ghost at
 /// the square it is leaving — the newest 7 are kept, each frozen in the pose it was dropped in — giving
 /// it a strobing afterimage trail. The leaving ghost is a coloured silhouette on black, the entering one
 /// black on colour: exact inverses by design, not a bug. A kill wipes the trail and swaps in the
@@ -23,11 +23,11 @@ namespace Robotron2084.Entities;
 /// frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Prog : IExplodable
 {
-    /// <summary>How many ROM frames pass between wake-ups.</summary>
+    /// <summary>How many ROM frames pass between beats.</summary>
     /// <remarks>The ROM re-runs the prog's step logic every 3 frames.</remarks>
     private const int BeatPeriodRomTicks = 3;
 
-    /// <summary>How many timer units between wake-ups (a tick adds 5; an arcade frame is 6 units).</summary>
+    /// <summary>The beat in timer units (a tick adds 5; an arcade frame is 6 units).</summary>
     private static int BeatPeriod => BeatPeriodRomTicks * 6;
 
     /// <summary>The horizontal step: 2 columns = 4 arcade px, the same distance as the vertical step.</summary>
@@ -52,7 +52,6 @@ public sealed class Prog : IExplodable
     private const int WrapMarginYRows = 18;
 
     /// <summary>Roll thresholds out of 256: above the first the offsets re-roll, above the second it re-aims.</summary>
-    /// <remarks>Roughly 3% of wake-ups re-roll the offsets and roughly 10% re-aim.</remarks>
     private const int ReOffsetThreshold256 = 0xF8;
     private const int ReDirectionThreshold256 = 0xE4;
 
@@ -71,8 +70,8 @@ public sealed class Prog : IExplodable
     private readonly HumanKind _kind;
     private readonly (int Width, int Height) _collisionSize;
     private IntVector2 _position;
-    private Direction8 _direction = Direction8.Down; // one of the 4 cardinal directions; set on the first wake-up
-    private int _beatTimer; // counts up toward the next wake-up
+    private Direction8 _direction = Direction8.Down; // set on the first beat
+    private int _beatTimer; // counts up toward the next beat
     private int _frameStep; // which entry of WalkCycle comes next (0-3)
     private int _offsetX;   // this prog's persistent aim-offset on X, re-rolled occasionally
     private int _offsetY;   // this prog's persistent aim-offset on Y
@@ -168,8 +167,8 @@ public sealed class Prog : IExplodable
         ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Width),
         ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Height));
 
-    /// <summary>Runs one wake-up: animate, maybe re-roll, drop a ghost, then step.</summary>
-    /// <param name="gameTime">Unused — the wake-up timer is counted in ticks.</param>
+    /// <summary>Runs one beat: animate, maybe re-roll, drop a ghost, then step.</summary>
+    /// <param name="gameTime">Unused — the beat timer is counted in ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -183,14 +182,13 @@ public sealed class Prog : IExplodable
             return;
         }
 
-        // Counts up to the next wake-up: 5 per tick, 6 per arcade frame.
         _beatTimer += 5;
         if (_beatTimer < BeatPeriod)
         {
             return;
         }
 
-        // The animation advances on every wake-up, even if the step below is refused.
+        // The animation advances on every beat, even if the step below is refused.
         _beatTimer -= BeatPeriod;
         _frameStep = (_frameStep + 1) % WalkCycle.Length;
 
@@ -203,7 +201,7 @@ public sealed class Prog : IExplodable
         if (_random.Next(256) > ReDirectionThreshold256)
         {
             _direction = PickDirection(field);
-            _frameStep = 0; // a fresh direction restarts the walk at its first frame
+            _frameStep = 0;
         }
 
         // Drop a ghost at the square being left, remembering its pose. Refused steps drop one too;
@@ -211,7 +209,7 @@ public sealed class Prog : IExplodable
         _ghosts.Insert(0, new Ghost(_position, WalkFrameIndex));
         if (_ghosts.Count > GameplayConstants.ProgGhostCount)
         {
-            _ghosts.RemoveAt(_ghosts.Count - 1); // drop the oldest ghost once the trail is full
+            _ghosts.RemoveAt(_ghosts.Count - 1);
         }
 
         // 2 columns (4px) on X or 4 rows (4px) on Y, on one axis only.
