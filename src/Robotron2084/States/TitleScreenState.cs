@@ -32,6 +32,14 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private const string TitleLineOne = "ROBOTRON 2084";
     private const string TitleLineTwo = "SAVE THE LAST HUMAN FAMILY";
 
+    /// <summary>
+    /// The port's own credit, which the author asked to sit under the ROM's two strings (notes
+    /// §102.2). The arcade's title screen is the two ROM strings and nothing else, so this is a
+    /// deliberate, labelled addition to the cabinet's screen — in the SMALL font, so it reads as
+    /// a subtitle to the large-font title rather than as part of the arcade's message.
+    /// </summary>
+    private const string CreditLine = "REVERSE ENGINEERING AND DEVELOPMENT BY SCOTT TUNSTALL";
+
     private readonly IPlayerInputSource _input;
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
@@ -134,11 +142,13 @@ public sealed class TitleScreenState : IGameState, IAttractState
         int lineOneY = GameplayConstants.ArcadeY(54);     // string 128's cursor row
         DrawCenteredLargeText(spriteBatch, TitleLineOne, lineOneY, slot);
         DrawCenteredLargeText(spriteBatch, TitleLineTwo, lineOneY + ScreenSize.Scaled(14), slot);
+        DrawCenteredSmallText(spriteBatch, CreditLine, lineOneY + ScreenSize.Scaled(24), slot);
 
         // Port-only menu (notes §101): the arcade's title has no such list, and its
         // START buttons still work exactly as they did. Drawn in the arcade's own
         // small font, in the title's colour, so it sits inside the cabinet's look.
-        int y = ScreenSize.Scaled(134);
+        // The author moved the list up three option lines so it clears the wall (notes §102.2).
+        int y = ScreenSize.Scaled(92);
         foreach (string option in Options)
         {
             DrawCenteredSmallText(spriteBatch, option, y, slot);

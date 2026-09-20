@@ -8691,3 +8691,46 @@ thinking a normal blue (non flashing)"*.
   §101.11 — a screenshot of the page; the OR runs are (0,0,240) exactly and identical in two shots
   1.4 s apart, while the highlighted line's own colour changes between them.
 - Still **402 tests, 0 failed, 0 skipped** — presentation only.
+
+#### 101.13 The rows move right, to sit centred (2026-09-20)
+
+**Author:** *"I think maybe the lines for the input define rows could move 3-4 characters to the
+right so that they are centred correctly? Apart from that it looks just fine."*
+
+The label and value columns were at canvas x 40 and 250; they are now **75 and 285** — three and a
+half small-font characters, as asked. A typical row (`P1 MOVE UP` + `W OR P1 LEFT STICK UP`) spans
+75..470, centred on 272 of the page's 640, instead of 40..460 centred on 250. It cannot go much
+further: the widest value the defaults plus any plausible key can produce,
+`NUMPAD8 OR P1 RIGHT STICK DOWN RIGHT`, already ends near x 615 (§101.10), so the right margin is
+the limit rather than taste.
+
+No new tests — presentation only, **402 tests, 0 failed, 0 skipped**.
+
+### 102. THE TITLE SCREEN'S CREDIT LINE, and the menu moved up (author, 2026-09-20)
+
+**Author:** *"I'd like on the SAVE THE LAST HUMAN FAMILY page the options to be moved up 3 lines as
+they overlap the wall. I'd also like REVERSE ENGINEERING AND DEVELOPMENT BY SCOTT TUNSTALL beneath
+"Save the last human family""*
+
+#### 102.1 The credit line is a DELIBERATE port-only addition
+
+The arcade's title screen is the ROM's two strings and nothing else — `FAMPAG` prints string 128
+"ROBOTRON 2084" and string 129 "SAVE THE LAST HUMAN FAMILY" (§94) and that is the whole page. The
+port therefore does NOT claim this line: it is the author's own credit, requested by name, and it
+is marked as such in the code (`TitleScreenState.CreditLine`). It is drawn in the arcade's **small**
+font, in the title's own slot (`HudScoreSlotCurrent` = the ROM's `$AA`, slot 10), one line below the
+ROM's second string (`ArcadeY(54) + Scaled(24)` = canvas y 132), so it reads as a subtitle to the
+large-font title rather than as part of the arcade's message. 53 characters at the small font's
+advance is about 530 of the page's 640, so it is the widest text the page carries and it is
+centred by the same helper the menu uses.
+
+#### 102.2 The menu moves up three option lines
+
+The port-only menu (§101) started at `Scaled(134)` = canvas y 268; the author found its lower rows
+overlapping the playfield wall. `TitleOptionRowStepPixels` is 14 spec px, so three option lines is
+`Scaled(42)` = 84 canvas px, and the list now starts at **`Scaled(92)`** = canvas y 184 — one line
+below the credit, with the four options at 184 / 212 / 240 / 268. Measured from a screenshot of the
+Release build: text bands at y 84-94 (line one), 112-122 (line two), 132-140 (the credit),
+184-192, 212-220 and 240-248, with the bottom wall clear.
+
+No new tests — layout only, **402 tests, 0 failed, 0 skipped**.

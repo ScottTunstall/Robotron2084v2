@@ -351,8 +351,19 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   TITLE` — hyphens render through the same large-font fallback the colon uses (the small font has
   no `-` either: its table stops at `)`), drawn in the arcade's own hyphen art. The separator
   colour went yellow -> amber -> **blue** (slot 7, `$C0` = (0,0,240), a fixed slot so it cannot
-  cycle) as the author looked at each; verified by pixel count in two screenshots. Still **402
-tests**.
+  cycle) as the author looked at each; verified by pixel count in two screenshots. Still
+  **402 tests**.
+- **2026-09-20 — the author's fifth look (notes §101.13/§102).** *"the lines for the input define
+  rows could move 3-4 characters to the right so that they are centred correctly … the options to
+  be moved up 3 lines as they overlap the wall. I'd also like REVERSE ENGINEERING AND DEVELOPMENT
+  BY SCOTT TUNSTALL beneath 'Save the last human family'."* The definitions page's two columns
+  moved from canvas x 40/250 to **75/285** (much further is impossible — the widest value, with a
+  full stick direction, already ends near x 615). The title's port-only menu moved up three option
+  lines, from `Scaled(134)` to **`Scaled(92)`** (canvas y 184), so it clears the playfield wall.
+  And the title screen gained the author's **credit line** — a DELIBERATE port-only addition,
+  labelled as such in the code: the arcade's title is the two ROM strings and nothing else. It is
+  drawn in the arcade's small font one line under "SAVE THE LAST HUMAN FAMILY", in the title's own
+  slot, and is the widest text the page carries (53 characters, ~530 of 640).
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

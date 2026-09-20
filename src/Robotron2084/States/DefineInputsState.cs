@@ -41,8 +41,10 @@ public sealed class DefineInputsState : IGameState
     private const int HintRow = 44;
     private const int FirstLineRow = 70;
     private const int LineStep = 26;
-    private const int LabelColumn = 40;
-    private const int ValueColumn = 250;
+    // The two columns sit 3-4 characters right of where they started: the author found the rows
+    // reading left of centre on the page (notes §102).
+    private const int LabelColumn = 75;
+    private const int ValueColumn = 285;
     private const int FooterRow = 302;
 
     // $99 is the palette's WHITE and no colour process drives it, so an unselected line sits
