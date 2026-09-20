@@ -29,14 +29,6 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private static readonly int Margin = ScreenSize.Scaled(GameplayConstants.PlayfieldMarginSpecPixels);
     private static readonly Rectangle InnerBounds = new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
 
-    private const string TitleLineOne = "ROBOTRON 2084";
-
-    /// <summary>
-    /// The ROM's own DEFAULT attract message (<c>def_wel_msg</c>, ROM $6F65) — what a fresh
-    /// cabinet shows until an operator sets their own in CMOS ($CC24 first line, $CC56 second,
-    /// 25 characters each). The presentation page prints the two lines character by character
-    /// in the LARGE font, line 1 in slot 8 and line 2 in slot 9 (ROM $8822-$8836, notes §103).
-    /// </summary>
     private const string WelcomeLineOne = "PRESENTED BY";
     private const string WelcomeLineTwo = "WILLIAMS ELECTRONICS INC.";
 
@@ -56,9 +48,9 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private const string CreditLine = "REVERSE ENGINEERING AND DEVELOPMENT BY SCOTT TUNSTALL";
 
-    // Layout of the presentation page (notes §103). The top third is kept clear for the
-    // ROBOTRON: wordmark and the 2084 logo, which are drawn from the ROM's own graphics once
-    // that art is recovered; until then the ROM's title string stands in for the wordmark.
+    // Layout of the presentation page (notes §103). The top third is reserved for the ROBOTRON:
+    // wordmark and the 2084 logo, which are NOT in the R5 ROM we hold (see §103.2) — the page
+    // deliberately leaves it empty rather than printing a stand-in.
     private const int WordmarkRow = 30;
     private const int WelcomeRowOne = 132;
     private const int WelcomeRowTwo = 152;
@@ -176,9 +168,6 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // neither the playfield wall nor the score/men belong to this page — the cabinet's other
         // attract page carries those.
         int slot = GameplayConstants.HudScoreSlotCurrent; // the ROM's $AA (slot 10)
-
-        // Interims for the wordmark: the ROM's own title string, until the logo art is recovered.
-        DrawCenteredLargeText(spriteBatch, TitleLineOne, WordmarkRow, slot);
 
         // The welcome message, exactly as $8822-$8836 prints it: LARGE font, slot 8 then slot 9.
         DrawCenteredLargeText(spriteBatch, WelcomeLineOne, WelcomeRowOne, 8);

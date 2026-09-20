@@ -8766,13 +8766,18 @@ the bottom.
 #### 103.2 STILL OPEN — the wordmark art
 
 `RENDER_GRAPHIC` has exactly three call sites and **all three are the "W"**: `$784A` and `$78FA` build
-and use the moving-logo template, `$893D` draws the border logo. The big **ROBOTRON: / 2084 wordmark
-is NOT drawn by any of them**, so it is not a plotting-instruction graphic — it is almost certainly a
-blitted IMAGE, and `ref/rom/` holds only the 64K CPU ROM (`robotron64k.bin`), whose 215 extracted
-sprites (`docs/sprite-map.md`) do not include it. Until that art is recovered (a video-ROM dump, or
-tracing the reference image at arcade scale) the page prints the ROM's own title string — "ROBOTRON
-2084", string 128 — where the wordmark belongs, and the top third of the page is kept clear for the
-two logos.
+and use the moving-logo template, `$893D` draws the border logo over the plotting instructions at
+$8CF4. The rest of the fancy-attract page (`$7817`-$79A0) is the W animation — its flavour table is
+at `$7975` (`3F 3F 3F 37 2F 27 1F 17 0F …`) and `$798B` its colour table, walked into `$980E` by the
+task set up at `$7904`/`$7908` — and **nothing there draws a ROBOTRON: wordmark**. Since the Williams
+blitter can only source CPU-addressable memory, a blitted wordmark would HAVE to be inside
+`robotron64k.bin`; it is not (the 215 sprites in `docs/sprite-map.md` and the whole attract page
+account for the art that is). **The reference screenshot is therefore a different
+release/variant** — `ref/mame-notes.md` records R1-R3 field-test builds — and `ref/rom/` holds only
+the R5 CPU ROM. So the wordmark is NOT recoverable from what we have: it needs either the reference
+image as a FILE in the repo (traced at arcade scale, the author's own sanctioned fallback) or the
+production program ROMs / a dump of that specific attract page. The page deliberately leaves the top
+third EMPTY rather than printing a stand-in — the author asked for the logo, not normal-font letters.
 
 No new tests — presentation only, **402 tests, 0 failed, 0 skipped**; the attract gate's title
 capture went from 5.6% to 7.2% lit with the new text block.
