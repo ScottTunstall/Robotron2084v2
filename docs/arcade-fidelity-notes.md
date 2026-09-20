@@ -8804,6 +8804,13 @@ at 292 so its four 28-px rows end at 376).
 the screenshot came from ever turns up, the sprites should be re-extracted from it and this script
 deleted.
 
+**First look, fixed (author: *"there's some extra pixels there, which are strobing — nothing in the
+"2084" logo strobes"*):** the tracer's snap set included `$CC` and `$81`, which are **cycling-slot
+marker colours** (`GamePalette.CyclingSlotMarkers`) as well as CRTAB entries — so the pixels that
+landed on them were remapped by the shader to slots 12/13/14's LIVE colours and strobed. The snap
+set now excludes every marker (10 slots remain), and the "is this artwork?" threshold went from
+`sum < 60` to `< 120`, which drops the capture's blur halo — the other source of stray pixels.
+
 No new tests — art and layout only, **402 tests, 0 failed, 0 skipped**; the attract gate's title
 capture is the visual check.
 

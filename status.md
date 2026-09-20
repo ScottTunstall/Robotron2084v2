@@ -394,6 +394,14 @@ tests**.
   `Title_2084` (79x34); `SpriteSet` loads them and the page draws them at the port's 2x sprite scale
   in the upper third, with the text rows moved up so all four menu lines fit. **Flagged in the notes
   as a traced stand-in** to be replaced if a dump of that release ever appears.
+- **2026-09-20 — the traced logos strobed, and why (notes §103.4).** Author: *"there's some extra
+  pixels there, which are strobing — nothing in the '2084' logo strobes."* The tracer's snap set
+  contained `$CC` and `$81`, which are cycling-slot MARKER colours as well as CRTAB entries, so the
+  texels that landed on them were remapped by the shader to slots 12/13/14's live colours and
+  strobed. The snap set now excludes all six markers (10 slots remain) and the artwork threshold
+  went from `sum < 60` to `< 120`, dropping the capture's blur halo — the other stray-pixel source.
+  Verified by inspection: both sprites contain **zero** marker-coloured texels (5 and 4 palettes,
+  all of them arcade reds/oranges/yellows), so the shader cannot remap anything.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36
