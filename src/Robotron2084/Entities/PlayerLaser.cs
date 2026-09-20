@@ -8,12 +8,23 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// One of the player's lasers: a fast, straight-line projectile that never changes direction
-/// and vanishes the moment it reaches the wall. Flying and the wall test are its own; what it
+/// The projectile the player fires. This is what appears on screen when the player presses
+/// fire: a short bolt of light that shoots out from the player in a straight line, at a fixed
+/// direction chosen when it was fired, and disappears the instant it either hits the playfield
+/// wall or hits an enemy. It is much faster than the player itself, and — unlike most other
+/// entities in this codebase — it has no death animation or explosion of its own: it just
+/// blinks out of existence.
+///
+/// Flying and the wall test are its own; what it
 /// HITS is resolved centrally by <see cref="PlayField"/>, which also frees its slot in
-/// <see cref="LaserSlots"/>. There is no death animation — the laser is simply gone.
+/// <see cref="LaserSlots"/> (the player can only have a few lasers in flight at once — see
+/// <see cref="LaserSlots.TryFire"/> for that cap). There is no death animation — the laser is simply gone.
 /// </summary>
 /// <remarks>
+/// <para>
+/// See the terminology glossary on <see cref="IEntity"/> for what "ROM frame", "R5" and
+/// "notes §NN" mean generally.
+/// </para>
 /// The collision box is a 4x4 spec-pixel square and the speed is 12 px/tick, far quicker than
 /// the player. The picture is one of the ROM's four laser shapes (R5 `$35BE-$35DC`: `LLPC`,
 /// `ULPC`, `DLLPC`, `ULLPC`), chosen for the direction by the ROM's `LTAB` table in RRG23.ASM.
@@ -77,7 +88,7 @@ public sealed class PlayerLaser : IEntity
     /// <summary>Draws the picture for this laser's direction.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set, which holds the four laser pictures.</param>
-    /// <remarks>ROM RRG23 `LTAB` (2026-09-12 (19)): each of the 8 directions picks one of the
+    /// <remarks>ROM RRG23 `LTAB` (notes §19): each of the 8 directions picks one of the
     /// four pictures — no flipping.</remarks>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
@@ -86,7 +97,7 @@ public sealed class PlayerLaser : IEntity
             return;
         }
 
-        // ROM LTAB (RRG23, notes 2026-09-12 (19)): each of the 8 directions
+        // ROM LTAB (RRG23, notes §19): each of the 8 directions
         // picks one of the four laser pictures — no flipping.
         Texture2D art = Direction switch
         {

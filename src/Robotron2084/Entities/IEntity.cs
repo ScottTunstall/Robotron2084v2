@@ -41,19 +41,30 @@ namespace Robotron2084.Entities;
 /// <b>Port tick.</b> This C# port instead runs a fixed 60-updates-per-second loop (one
 /// call to <see cref="Update"/> per tick) — a different, faster clock than the arcade's
 /// 50 Hz. See <see cref="Robotron2084.Tuning.GameplayConstants.PortTicks"/> for how ROM-frame
-/// delays are converted to port ticks, and for why many entities keep an integer field
-/// named <c>..Fifths</c> (e.g. <c>_bodyFifths</c>, <c>_stepFifths</c>) as the fixed-point
-/// clock that does that conversion exactly, tick by tick, without drift.
+/// delays are converted to port ticks.
 /// </description></item>
 /// <item><description>
-/// <b>"Body" / "one body".</b> This project's name for one full pass of an entity's own
+/// <b>Fields named "..Timer" (e.g. <c>_beatTimer</c>, <c>_stepTimer</c>).</b> Most entities
+/// count down (or up) to their next scheduled action using an internal clock like this. The
+/// name only tells you WHAT it's timing — HOW it's implemented is an internal detail: since
+/// a ROM-frame delay converts to a fractional number of port ticks (see <b>Port tick</b>
+/// above), these fields actually advance in a small fixed-point unit (1/5 of a port tick)
+/// rather than whole ticks, so the timer can fire at exactly the right moment on average
+/// instead of drifting early or late over a long play session. You don't need to know this
+/// to read the surrounding code — just treat a "..Timer" field as "counts up until it's
+/// time to act, then resets" — but if you're staring at a stray <c>+= 5</c> or <c>* 6</c>
+/// near one and wondering where the numbers come from, that's why (see
+/// <see cref="Robotron2084.Tuning.GameplayConstants.PortTicks"/> for the exact derivation).
+/// </description></item>
+/// <item><description>
+/// <b>"Beat" / "one beat".</b> This project's name for one full pass of an entity's own
 /// update routine, as opposed to something that happens every single port tick. It
 /// comes from the arcade's own scheduler: the ROM's cooperative multitasking primitive
 /// <c>NAP n</c> tells an object's routine to go back to sleep and not run again for
 /// <c>n</c> ROM frames, so most enemies only act — move, re-aim, advance an animation
-/// frame — once every few ROM frames rather than every frame. "A grunt's body runs every
+/// frame — once every few ROM frames rather than every frame. "A grunt's beat runs every
 /// 4 ROM frames" means its <c>NAP</c> period is 4, i.e. it only decides anything on
-/// 1-in-4 frames; port ticks between bodies just let a paused-looking entity's timers
+/// 1-in-4 frames; port ticks between beats just let a paused-looking entity's timers
 /// advance.
 /// </description></item>
 /// <item><description>
@@ -74,6 +85,7 @@ namespace Robotron2084.Entities;
 /// values that look arbitrary and the bugs that earlier attempts produced.
 /// </description></item>
 /// </list>
+/// </remarks>
 public interface IEntity
 {
     /// <summary>Top-left corner of the entity on screen.</summary>
@@ -98,9 +110,9 @@ public interface IEntity
     /// that spawn new entities.
     /// </param>
     /// <remarks>
-    /// The arcade runs each object once per ROM FRAME (50 Hz) while the port ticks at 60 Hz;
-    /// the sixths accumulator described in notes §52/§93 is what keeps an entity's speed on
-    /// the arcade's own clock.
+    /// The arcade runs each object once per ROM frame (50 Hz) while the port ticks at 60 Hz;
+    /// the fixed-point timer fields described above (see "Fields named '..Timer'") are what
+    /// keep an entity's speed on the arcade's own clock.
     /// </remarks>
     void Update(GameTime gameTime, PlayField field);
 

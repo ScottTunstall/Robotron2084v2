@@ -6,12 +6,12 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// Shared wall logic for the two entities that glide around the field and then make for a
-/// wall edge and vanish — <see cref="Spheroid"/> and <see cref="Quark"/> (plan 8.6). A small
-/// internal helper rather than a base class, so each entity keeps its own life cycle.
-///
-/// Note for callers: neither entity is stopped by an ELECTRODE. Only the playfield wall
-/// reflects them.
+/// Shared movement logic for the two enemies that drift around the arena bouncing off its
+/// outer wall, and — once they decide to leave — head straight for whichever wall edge is
+/// nearest and disappear when they reach it: <see cref="Spheroid"/> and <see cref="Quark"/>
+/// (plan 8.6). A static helper rather than a shared base class, so each entity keeps its own
+/// independent life cycle and state. Neither entity is stopped by an ELECTRODE — only the
+/// outer playfield wall affects them.
 /// </summary>
 /// <remarks>
 /// The spheroid's version is RRC11.ASM's `CIRCLE`, `CIRC2L`, `CIRC3L` and `CIRC4`; the
@@ -20,39 +20,11 @@ namespace Robotron2084.Entities;
 internal static class WallFleeHelper
 {
     /// <summary>
-    /// Moves the entity by its velocity, bouncing back the X or the Y component when that axis
-    /// alone would cross the wall. A diagonal that still fits is left alone.
-    /// </summary>
-    /// <param name="position">The entity's current top-left corner.</param>
-    /// <param name="velocity">This tick's step on each axis.</param>
-    /// <param name="width">The entity's box width, in port pixels.</param>
-    /// <param name="height">The entity's box height, in port pixels.</param>
-    /// <param name="wall">The playfield wall to test against.</param>
-    /// <param name="newVelocity">
-    /// The velocity after any reflection, so the caller can keep its movement direction — and
-    /// so its animation — in step with where it is actually going.
-    /// </param>
-    /// <returns>The entity's new top-left corner.</returns>
-    public static IntVector2 MoveWithReflection(IntVector2 position, IntVector2 velocity, int width, int height, PlayfieldWall wall, out IntVector2 newVelocity)
-    {
-        IntVector2 v = velocity;
-        if (wall.Intersects(new Rectangle(position.X + v.X, position.Y, width, height)))
-        {
-            v = new IntVector2(-v.X, v.Y);
-        }
-
-        if (wall.Intersects(new Rectangle(position.X, position.Y + v.Y, width, height)))
-        {
-            v = new IntVector2(v.X, -v.Y);
-        }
-
-        newVelocity = v;
-        return position + v;
-    }
-
-    /// <summary>
-    /// Steps toward the nearest wall edge — whichever of the four is closest — and reports
-    /// whether the entity has arrived, which is when it disappears.
+    /// Steps toward the nearest wall edge — whichever of the four (left, right, top, bottom)
+    /// the entity currently has the shortest distance to — and reports whether the entity has
+    /// arrived, which is when it disappears. This is how a spheroid or quark leaves the field
+    /// once it decides to flee: rather than picking a single fixed direction, it always heads
+    /// for whichever edge is currently closest.
     /// </summary>
     /// <param name="position">The entity's current top-left corner.</param>
     /// <param name="width">The entity's box width, in port pixels.</param>

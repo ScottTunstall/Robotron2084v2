@@ -8,26 +8,34 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// One of the family the player rescues. Humans are not enemies: a robot that touches one kills it and
-/// leaves a skull behind, and the player rescues one by touching it — the running save count pays the
-/// 1000-5000 bonus.
+/// One member of the human family the player is trying to rescue this wave (Mikey, Mom or Dad — see
+/// <see cref="HumanKind"/>). Humans are not enemies and never attack: they are the game's objective.
+/// A robot that touches one kills it and leaves a skull behind (a lost rescue), and the player
+/// rescues one simply by touching it — the running rescued-this-wave count pays an escalating
+/// 1000-5000 point bonus. See <see cref="IEntity"/> for the "beat" / "ROM frame" / "..Timer" /
+/// "notes §NN" terminology used throughout this class.
 ///
-/// They wander the field in short steps: a random direction for a random number of steps, or a new
-/// direction straight away if the next step would leave the play area or land on a standing electrode.
-/// Each member has its own walk art, staggered start and direction. Unlike the robots, humans do NOT
-/// wait for the wave to start — they set off immediately (see <see cref="Update"/>) — and a brain that
-/// touches one may reprogram it into a prog instead of killing it.
+/// They wander the field aimlessly in short steps: a random direction for a random number of steps,
+/// or a new direction straight away if the next step would leave the play area or land on a standing
+/// (not yet destroyed) electrode. Each member has its own walk art, staggered start and direction, so
+/// a group of humans doesn't all move in lockstep. Unlike the robots, humans do NOT wait for the wave
+/// to start — they set off immediately (see <see cref="Update"/>) — and a <see cref="Brain"/> that
+/// touches one may spend a few seconds "reprogramming" it into a <c>Prog</c> (a hostile impostor)
+/// instead of killing it outright; see <see cref="IsBeingReprogrammed"/>.
 /// </summary>
 /// <remarks>
-/// ROM RRH11 (PHASE D). Walk = the `HUMAN` process + `HUMATB`, decoded: 8 direction blocks, each 4
-/// substeps of 2/1 alternating arcade-px steps (cardinals: 2,1 on the major axis; diagonals: 2,1 on X plus
-/// 1 on Y); one step per step period — the ROM's is `NAP 8`, while the port's playtest-doubled value is 16
-/// (round 8: the ROM-accurate pace read "mommies walking too fast" — the same pattern as the
-/// spheroid/enforcer speed retunes). A new random direction comes every 1..128 steps (`LSEED&$7F+1`) or as
-/// soon as the next step would leave the play area or land on a post/electrode. The start is staggered
-/// 1..8 ticks (`SEED&7+1`). Animation: 12 frames per member = 4 directions x 3 walk frames (the same layout
-/// as the player's frames); the diagonals reuse the left/right frame sets, exactly as the ROM's image
-/// numbers do.
+/// Ported from the arcade's own human wander behaviour, routine for routine (ROM: RRH11.ASM, the
+/// `HUMAN` process and its `HUMATB` walk table). The walk cycles through 8 direction blocks (4
+/// cardinal, 4 diagonal), each made of 4 substeps that alternate 2-then-1 arcade pixels on the major
+/// axis (diagonals also add a steady 1px on the minor axis), one substep taken per step period. The
+/// arcade's own step period is faster than this port's: the ROM-accurate pace read as "mommies walking
+/// too fast" in playtesting, so this port deliberately halves the walk speed (see
+/// <see cref="StepPeriodRomTicks"/> — the same kind of deliberate retune applied to the spheroid and
+/// enforcer). A new random direction comes every 1-128 steps, or immediately if the next step would
+/// leave the playfield or land on a standing electrode. Each human's very first step is delayed by a
+/// small random stagger (1-8 ticks) so a group spawned together doesn't all move in lockstep. Animation:
+/// 12 frames per family member (4 directions times 3 walk frames, the same layout as the player's own
+/// frames); the diagonal directions reuse the left/right frame sets rather than having frames of their own.
 /// </remarks>
 public sealed class Human : IEntity
 {
@@ -37,40 +45,41 @@ public sealed class Human : IEntity
     /// so DO NOT "fix" this to 8 without asking.
     /// </summary>
     /// <remarks>
-    /// Author, playtest round 8: "the mommies are walking too fast". The Gospel is explicit
-    /// that the human's process is `NAP 8` AND that it stores its new position on every pass
-    /// (`HUM2 ... STD OX16,X`), i.e. one arcade pixel every 8 frames. The port walks one pixel
-    /// every 16 frames = half the arcade rate, on the author's instruction, so DO NOT "fix"
-    /// this to 8 without asking (notes §70).
+    /// The arcade's own step period is half this (one step every 8 ROM frames, moving one arcade
+    /// pixel each time). This port deliberately slows it to one step every 16 frames — the
+    /// ROM-accurate pace read as "the mommies are walking too fast" in playtesting. Do not "fix"
+    /// this back to 8 without asking (notes §70).
     /// </remarks>
     private const int StepPeriodRomTicks = 16;
 
     /// <summary>
-    /// The walk table: 8 direction blocks × 4 substeps of
-    /// (delta X, delta Y, walk-frame index within the direction's 3-frame
-    /// set). Deltas are in arcade pixels.
+    /// The walk table: one "block" of 4 substeps for each of the 8 possible travel directions (4
+    /// cardinal + 4 diagonal). Each substep is (delta X, delta Y, walk-frame index within the
+    /// direction's 3-frame set) — the human plays through a block's 4 substeps in order, one per
+    /// step, looping back to the first once it reaches the end (see <see cref="Update"/>'s
+    /// <c>_subStep</c> use). Deltas are in arcade pixels.
     /// Block order: LEFT, RIGHT, DOWN, UP, UP+LEFT, RIGHT+UP, RIGHT+DOWN,
     /// DOWN+LEFT.
     /// </summary>
-    /// <remarks>ROM HUMATB verbatim: the ROM's "IMAGE #,DELTA X,DELTA Y" table; the $FF
-    /// "start over" entries are the end-of-block markers.</remarks>
+    /// <remarks>Copied directly from the ROM's own walk table, which lists each substep as a picture
+    /// number plus its X/Y delta (ROM: `HUMATB`).</remarks>
     private static readonly (int Dx, int Dy, int Frame)[] Steps =
     {
-        // LEFT (ROM images 0,4,0,8)
+        // LEFT
         (-2, 0, 0), (-1, 0, 1), (-2, 0, 0), (-1, 0, 2),
-        // RIGHT (12,16,12,20)
+        // RIGHT
         (2, 0, 0), (1, 0, 1), (2, 0, 0), (1, 0, 2),
-        // DOWN (24,28,24,32)
+        // DOWN
         (0, 1, 0), (0, 1, 1), (0, 1, 0), (0, 1, 2),
-        // UP (36,40,36,44)
+        // UP
         (0, -1, 0), (0, -1, 1), (0, -1, 0), (0, -1, 2),
-        // UP+LEFT (0,8,0,8)
+        // UP+LEFT
         (-2, -1, 0), (-1, -1, 2), (-2, -1, 0), (-1, -1, 2),
-        // RIGHT+UP (12,16,12,20)
+        // RIGHT+UP
         (2, -1, 0), (1, -1, 1), (2, -1, 0), (1, -1, 2),
-        // RIGHT+DOWN (12,16,12,20)
+        // RIGHT+DOWN
         (2, 1, 0), (1, 1, 1), (2, 1, 0), (1, 1, 2),
-        // DOWN+LEFT (0,4,0,4)
+        // DOWN+LEFT
         (-2, 1, 0), (-1, 1, 1), (-2, 1, 0), (-1, 1, 1),
     };
 
@@ -79,7 +88,6 @@ public sealed class Human : IEntity
     /// the cardinal frame sets (UP+LEFT/DOWN+LEFT → left set,
     /// RIGHT+UP/RIGHT+DOWN → right set): [L,R,D,U,L,R,R,L].
     /// </summary>
-    /// <remarks>The ROM's diagonals reuse the cardinals' frame sets.</remarks>
     private static readonly int[] FrameSet = { 0, 1, 2, 3, 0, 1, 1, 0 };
 
     /// <summary>The member's collision box in arcade pixels, before scaling.</summary>
@@ -109,12 +117,12 @@ public sealed class Human : IEntity
     private readonly Random _random;
     private readonly HumanKind _kind;
     private IntVector2 _position;
-    private int _directionBlock; // 0..7, ROM table order (see Steps)
-    private int _subStep;        // 0..3 within the block
-    private int _stepFifths;     // the step period in exact 6ths (notes §52/§65)
-    private int _reDirStepsRemaining;
-    private int _startStaggerTicks;
-    private int _frame;          // 0..11 into the member's 12 frames
+    private int _directionBlock; // Which of the 8 direction blocks (see Steps) the human is currently walking.
+    private int _subStep;        // Which of the 4 substeps within that block comes next (0-3).
+    private int _stepTimer;     // Counts up to the next step, in fixed-point fifths of a port tick — see IEntity.
+    private int _reDirStepsRemaining; // Steps left before the human rolls a fresh direction.
+    private int _startStaggerTicks;   // Ticks left before this human's very first step (staggers group spawns).
+    private int _frame;          // Current walk picture index, 0-11 into this family member's 12 frames.
 
     /// <summary>Creates one family member with its own stagger and starting direction.</summary>
     /// <param name="position">Top-left of the human.</param>
@@ -126,9 +134,9 @@ public sealed class Human : IEntity
         _kind = kind;
         _random = random;
         _directionBlock = random.Next(8);
-        _reDirStepsRemaining = 1 + random.Next(128); // ROM: LSEED&$7F+1
-        _startStaggerTicks = 1 + random.Next(8);     // ROM: SEED&7+1
-        _stepFifths = 0;                             // the stagger's last tick IS the first step
+        _reDirStepsRemaining = 1 + random.Next(128); // A fresh direction comes every 1-128 steps.
+        _startStaggerTicks = 1 + random.Next(8);     // Wait 1-8 ticks before the very first step.
+        _stepTimer = 0;                             // The stagger's last tick doubles as the first step.
     }
 
     /// <summary>Which member this is (Mikey, Mum or Dad) — it decides the art and the box.</summary>
@@ -156,7 +164,7 @@ public sealed class Human : IEntity
     internal int StepCount { get; private set; }
 
     /// <summary>Killed by a robot: gone at once, with no death animation. The skull is the field's.</summary>
-    /// <remarks>ROM `DMAOFF` (image off).</remarks>
+    /// <remarks>The human's picture is simply switched off, with no death animation (ROM: `DMAOFF`).</remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
     /// <summary>Rescued by the player: gone at once, and the field awards the bonus.</summary>
@@ -171,12 +179,10 @@ public sealed class Human : IEntity
     /// <param name="field">The playfield: the wall and the electrodes the walk refuses to enter.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        // NOTE: no `RobotsFrozen` gate. Every ROBOT routine checks the ROM's STATUS flag
-        // (`ROBOT LDA STATUS`, `HULK LDA STATUS WAIT FOR STATUS TO GO`, `TST STATUS DONT START
-        // EARLY GUYS`) — but the HUMAN process does not, and `HUMSTV` creates the family
-        // BEFORE the appear sequence sets STATUS, so in the arcade they start walking while
-        // the robots are still assembling and while the player cannot move. Holding them with
-        // the robots is what made the family look asleep at the start of a wave (notes §88).
+        // Deliberately no "robots frozen" gate here: every robot in the original waits for a
+        // wave-start flag before it's allowed to move, but the human family is created before
+        // that flag is set, so in the arcade humans start wandering immediately — while the
+        // robots are still assembling and the player still can't move (notes §88).
         if (LifeState != EntityLifeState.Alive || IsBeingReprogrammed)
         {
             return;
@@ -190,24 +196,23 @@ public sealed class Human : IEntity
                 return;
             }
 
-            // The stagger's LAST tick is the first step: `HUMSTV` stores the stagger straight
-            // into the process's `PTIME`, so the wake-up — and therefore the walk body — runs
-            // then. Falling through here (with the step clock still at zero) leaves the
-            // following steps on the clean grid, which is what the ROM's uniform `NAP 8`
-            // cadence gives (notes §88).
+            // The stagger's very last tick doubles as the human's first step — it wakes up and
+            // walks on the same tick the stagger runs out, rather than waiting one extra tick
+            // after. That keeps every later step falling on the same clean, evenly-spaced
+            // schedule the arcade uses (notes §88).
         }
         else
         {
-            // 16 ROM frames = 19.2 port ticks, so the step runs on the exact-6ths
-            // accumulator rather than the truncated PortTicks(16) = 19 that walked a
-            // human 1% fast, one tick further ahead every 5 steps (notes §52/§65).
-            _stepFifths += 5;
-            if (_stepFifths < StepPeriodRomTicks * 6)
+            // A step's length in port ticks isn't a whole number (19.2, not 19), so it's tracked
+            // with the fixed-point fifths trick rather than rounded down — rounding down walked
+            // a human 1% too fast, drifting one tick further ahead every 5 steps (notes §52/§65).
+            _stepTimer += 5;
+            if (_stepTimer < StepPeriodRomTicks * 6)
             {
                 return;
             }
 
-            _stepFifths -= StepPeriodRomTicks * 6;
+            _stepTimer -= StepPeriodRomTicks * 6;
         }
 
         StepCount++;
@@ -215,13 +220,13 @@ public sealed class Human : IEntity
         (int dx, int dy, int frame) = Steps[_directionBlock * 4 + _subStep];
         _frame = 3 * FrameSet[_directionBlock] + frame;
 
-        // One arcade pixel per table step = SpecScale internal pixels.
+        // Each unit in the walk table is one arcade pixel.
         IntVector2 candidate = _position + new IntVector2(dx, dy) * ScreenSize.SpecScale;
         Rectangle next = Bounds with { X = candidate.X, Y = candidate.Y };
         if (field.Wall.Intersects(next) || OverlapsLivingElectrode(next, field))
         {
-            // ROM: obstacle (bounds CKLIM / a post via CKOBS) -> new direction,
-            // no move this step.
+            // Blocked by the wall or a standing electrode: pick a fresh direction instead of
+            // taking this step.
             PickNewDirection();
             return;
         }
@@ -249,7 +254,8 @@ public sealed class Human : IEntity
     }
 
     /// <summary>Picks a fresh direction and re-rolls how many steps to take before the next change.</summary>
-    /// <remarks>ROM: `LSEED&amp;$7F+1` steps, over the 8 direction blocks of `HUMATB`.</remarks>
+    /// <remarks>Rolls a random 1-128 steps before the next change, and a random one of the 8 blocks
+    /// in <see cref="Steps"/> to walk.</remarks>
     private void PickNewDirection()
     {
         _directionBlock = _random.Next(8);
@@ -277,12 +283,10 @@ public sealed class Human : IEntity
 
         if (IsBeingReprogrammed)
         {
-            // ROM BMUT's HUMON with D = $AABB: the blitter fills the frame
-            // rectangle with colour 1 ($AA = slot 10) and then draws the
-            // human's OWN picture as a solid shape in colour 2 ($BB = slot 11)
-            // (op $12 then op $1A — the disassembly's "solid colour with solid
-            // background" wrapper, notes §47). BOTH slots cycle, which is the
-            // "rapidly cycling background colour" its comment describes.
+            // While being reprogrammed, the human is drawn as a solid silhouette of its own walk
+            // picture in one colour, over a solid background rectangle in a second colour — and
+            // both colours are cycling palette slots, which is what produces the flashing effect
+            // (ROM: `BMUT`'s `HUMON`, notes §47).
             sprites.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[_frame],

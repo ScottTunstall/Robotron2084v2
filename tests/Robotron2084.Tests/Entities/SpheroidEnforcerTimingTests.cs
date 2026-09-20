@@ -12,7 +12,7 @@ namespace Robotron2084.Tests;
 /// "spheroids spawn enforcers WAY too fast" / 2026-09-13 "screen full of
 /// sparks"):
 /// - spheroid drop countdown decrements once per full 8-frame animation
-///   cycle (16 ROM vblanks per step; the 2-vblank body reaches the DEC only
+///   cycle (16 ROM vblanks per step; the 2-vblank beat reaches the DEC only
 ///   on the last-frame pass) and the randoms are RND(1..A), never 0;
 /// - spheroids always drop 1..5 enforcers (ENFNUM roll, ceil(v/2));
 /// - enforcers have a 40-ROM-tick grow-up (immobile), a 3-tick AI pass with
@@ -87,7 +87,7 @@ public sealed class SpheroidEnforcerTimingTests
     public void Spheroid_NeverDropsBeforeTheMinimumBouncePhase()
     {
         // Minimum initial countdown = RND(1..CDPTIM) = 1 step, and a step is now a
-        // full FIVE-picture wrap (CIRCLE advances `OPICT += 4` per `NAP 2` body and
+        // full FIVE-picture wrap (CIRCLE advances `OPICT += 4` per `NAP 2` beat and
         // wraps at CIRP4, notes §90): 5 x 3 = 15 ROM frames = 18 port ticks. (It was
         // 16 frames while §56.2 mis-read the boundary as CIRP3.) The start grace
         // freezes everything until the 121st frame, so the earliest possible drop is
@@ -167,10 +167,10 @@ public sealed class SpheroidEnforcerTimingTests
     [Fact]
     public void Enforcer_FireGaps_MatchTheRomRate()
     {
-        // Fire countdown = RND(1..ENSTIM) BODIES, a body being NAP 3 + 1 = 4 ROM
+        // Fire countdown = RND(1..ENSTIM) BEATS, a beat being NAP 3 + 1 = 4 ROM
         // frames (notes §43/§55), so with ENSTIM = 30 every gap sits in
         // [PortTicks(4), PortTicks(120)] = [4, 144] port ticks (allow a tick of
-        // slack for the 6/5 body accumulator), and (seeded, deterministic) at least
+        // slack for the 6/5 beat accumulator), and (seeded, deterministic) at least
         // one gap must exceed the old model's maximum of PortTicks(30) = 36.
         PlayField field = CreateField(11);
         Enforcer enforcer = new(new IntVector2(60, 60), new Random(1234), fireDelayRomTicks: 30);
@@ -201,8 +201,8 @@ public sealed class SpheroidEnforcerTimingTests
             int gap = fireTicks[i] - fireTicks[i - 1];
             Assert.InRange(
                 gap,
-                GameplayConstants.PortTicks(GameplayConstants.EnforcerBodyRomFrames) - 1,
-                GameplayConstants.PortTicks(GameplayConstants.EnforcerBodyRomFrames * 30) + 1);
+                GameplayConstants.PortTicks(GameplayConstants.EnforcerBeatRomFrames) - 1,
+                GameplayConstants.PortTicks(GameplayConstants.EnforcerBeatRomFrames * 30) + 1);
         }
 
         int maxGap = fireTicks.Zip(fireTicks.Skip(1), (a, b) => b - a).Max();

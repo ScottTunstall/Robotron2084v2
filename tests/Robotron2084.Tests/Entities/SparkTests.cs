@@ -103,7 +103,7 @@ public sealed class SparkTests
     public void Spark_Flicker_CyclesAllFourFrames_AtFourVblanksPerFrame()
     {
         // Notes 32: the ROM SPARK process advances OPICT one SPKP entry per
-        // body pass, re-running every 4 vblanks (NAP 4) → 4-frame flash.
+        // beat pass, re-running every 4 vblanks (NAP 4) → 4-frame flash.
         PlayField field = CreateField(4);
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 centre = new(inner.X + inner.Width / 2, inner.Y + inner.Height / 2);
@@ -179,7 +179,7 @@ public sealed class SparkTests
 
         int moveInterval = GameplayConstants.PortTicksCeil(GameplayConstants.SparkMoveIntervalRomTicks);
         var changes = new List<IntVector2>();
-        IntVector2 previous = spark.VelocityFp;
+        IntVector2 previous = spark.VelocitySubpixels;
 
         for (int move = 0; move < 6; move++)
         {
@@ -188,19 +188,19 @@ public sealed class SparkTests
                 field.Update(Frame());
             }
 
-            changes.Add(new IntVector2(spark.VelocityFp.X - previous.X, spark.VelocityFp.Y - previous.Y));
-            previous = spark.VelocityFp;
+            changes.Add(new IntVector2(spark.VelocitySubpixels.X - previous.X, spark.VelocitySubpixels.Y - previous.Y));
+            previous = spark.VelocitySubpixels;
         }
 
         // Every move must apply the SAME delta on each axis: constant acceleration.
-        IntVector2 expected = spark.AccelerationFp;
+        IntVector2 expected = spark.AccelerationSubpixels;
         Assert.All(changes, c => Assert.Equal(expected, c));
 
         // ...and it must be the acceleration the spark was built with, i.e. the
         // ROM's (seed & $1F) - 16 range scaled by the fixed-point factor.
-        int fpPerPortPxPerMove = GameplayConstants.SparkVelocityScale / GameplayConstants.SparkAimDivisor;
-        int maxAccelFp = GameplayConstants.SparkAccelRomRange * fpPerPortPxPerMove;
-        Assert.InRange(expected.X, -maxAccelFp, maxAccelFp);
-        Assert.InRange(expected.Y, -maxAccelFp, maxAccelFp);
+        int subpixelsPerPortPxPerMove = GameplayConstants.SparkVelocityScale / GameplayConstants.SparkAimDivisor;
+        int maxAccelSubpixels = GameplayConstants.SparkAccelRomRange * subpixelsPerPortPxPerMove;
+        Assert.InRange(expected.X, -maxAccelSubpixels, maxAccelSubpixels);
+        Assert.InRange(expected.Y, -maxAccelSubpixels, maxAccelSubpixels);
     }
 }

@@ -8,17 +8,17 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// The "1000".."5000" display left behind where the player rescued a human. It shows which
-/// rescue chain this was, is display only (no collisions, no score of its own — the points
-/// go to the session), and removes itself after a fixed linger.
+/// The floating "1000".."5000" number that pops up where the player rescues a human (see
+/// <see cref="HumanKind"/>). Its value climbs with how many humans have been rescued this
+/// life — 1000, 2000, 3000, 4000, capping at 5000 for the fifth rescue and beyond. Display
+/// only: it awards no score itself (that's already added elsewhere) and removes itself after
+/// a fixed time.
 /// </summary>
 /// <remarks>
-/// `HUMKIL`'s `PCFLG` path in RRH11.ASM: the picture is `P1000 + 4*min(SAVCNT,5)`, and it
-/// stays for 60 ticks.
-///
-/// The ROM also clamps the marker's X to XMAX-6 so the 12-pixel display cannot run off the
-/// right edge; here the display is centred in a box whose position is already wall-clamped
-/// (the human's), so the same result holds without an explicit clamp.
+/// ROM: `HUMKIL`'s `PCFLG` path (RRH11.ASM) picks `P1000 + 4*min(SAVCNT,5)` and holds it for
+/// 60 ROM frames, converted to port ticks by <see cref="GameplayConstants.PortTicks"/>. The
+/// ROM also clamps X to XMAX-6 so the display can't run off the right edge; here the human's
+/// already-wall-clamped position gives the same result without an explicit clamp.
 /// </remarks>
 public sealed class RescueScoreMarker : IEntity
 {

@@ -8,76 +8,90 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// A spark — the missile an enforcer fires at the player. Its flight is BALLISTIC rather than straight
-/// or random: launched toward the player with jitter, then bent by a constant per-axis acceleration as
-/// it goes, so it flies a parabola and can even start out moving AWAY.
+/// A hazard entity: the small flickering missile an "enforcer" (a floating gun-turret enemy)
+/// fires at the player. Touching one kills the player just like touching an enemy does. What
+/// makes it dangerous — and different from the player's own laser or a tank shell — is that its
+/// flight path is BALLISTIC rather than straight or random: it launches roughly toward the
+/// player's position (with some randomness thrown in, so its aim isn't perfect), and from then
+/// on a constant, fixed-at-launch per-axis acceleration steadily bends its path, so it flies a
+/// curve (a parabola) rather than a straight line, and can even start out moving AWAY from the
+/// player before curving back in — making it harder to predict and dodge than a shot that just
+/// beelines for you.
 ///
 /// It dies of old age, or instantly on a laser hit (25 points, no death animation). It does not bounce:
 /// the mover refuses a step that would leave the playfield, so a spark slides and then stops at the wall.
 /// </summary>
 /// <remarks>
-/// Arcade-faithful per the GOSPEL (<c>ref/original-source/RRC11.ASM</c>: `ENFSHT` + `SPARK` + `SPKP0`..3;
-/// the mover convention from RRSCRIPT.ASM's MONOP; notes 41).
+/// <para>
+/// See the terminology glossary on <see cref="IEntity"/> for what "ROM frame", the
+/// "..Timer" fixed-point clock and "notes §NN" mean generally. This class additionally uses a
+/// second, finer fixed-point scheme of its own (see the "subpixel" note below) to reproduce the
+/// ROM's sub-pixel-precise ballistic maths exactly — that is unrelated to the "..Timer" timing
+/// clocks and is explained where it's used.
+/// </para>
+/// Ported from the arcade's own spark behaviour, routine for routine (ROM: RRC11.ASM, the
+/// `ENFSHT`/`SPARK` routines and the `SPKP0`-`SPKP3` flicker frames, following the same
+/// shared-mover convention used elsewhere; notes §41).
 ///
-/// At spawn (`ENFSHT`) each axis gets two things, both in "subpixel" units:
+/// At spawn each axis gets two things, both in "subpixel" units — a fixed-point scheme
+/// (implemented below by <see cref="_stepScale"/> and <see cref="_positionRemainderSubpixels"/>) where
+/// each whole screen pixel is subdivided into 256 fractional steps, so slow, curving motion can
+/// be tracked precisely without floating point:
 /// <list type="bullet">
-/// <item>a VELOCITY of <c>4 x (player coord + jitter - spark coord)</c>, where the jitter is
-/// <c>(seed &amp; $1F) - 16</c> = -16..+15 COLUMNS and the X jitter is forced to 0 when the player is
-/// within 16 columns of the left wall (<c>CMPA #XMIN+$10 / BHS ENFS2 / CLRB</c>);</item>
-/// <item>a CONSTANT acceleration <c>PD2/PD4 = (LSEED/HSEED &amp; $1F) - 16</c>, chosen independently per
-/// axis and fixed for the spark's whole life.</item>
+/// <item>a VELOCITY of <c>4 x (player coord + jitter - spark coord)</c>, where the jitter is a
+/// random -16..+15 COLUMNS and the X jitter is forced to 0 when the player is within 16 columns
+/// of the left wall;</item>
+/// <item>a CONSTANT acceleration, rolled independently per axis as a random -16..+15 and fixed
+/// for the spark's whole life.</item>
 /// </list>
-/// Every move (<c>NAP 4</c> = 4 vblanks) the `SPARK` process does <c>OXV += PD2; OYV += PD4</c>, so the
-/// acceleration integrates into the velocity — the arcade's "habit of going off course". Because the
-/// jitter is comparable to the delta at close range, a spark can start out moving AWAY from the player.
+/// Every move (every 4 ROM frames) the acceleration is added into the velocity, so the spark's
+/// path steadily bends — the arcade's "habit of going off course". Because the jitter is
+/// comparable to the delta at close range, a spark can start out moving AWAY from the player.
 ///
-/// Speed comes from the generic mover (RRS22.ASM `OPB80`: <c>ADDD OXV,X / STD OX16,X</c>), which adds
-/// the full 16-bit velocity to the 16-bit world position once per ROM frame (notes §43, §93).
+/// Speed comes from the shared mover, which adds the full 16-bit velocity to the 16-bit world
+/// position once per ROM frame (notes §43, §93).
 ///
-/// Life = <c>PD7 = (HSEED &amp; $F) + $14</c> = 20..35 MOVES x 4 vblanks = 80..140 ROM ticks (1.6-2.8 s),
-/// NOT the spec's 10-15 s (playtest round 9: sparks "linger for a while").
+/// Life is a random 20-35 moves x 4 ROM frames each = 80-140 ROM frames (1.6-2.8 s) — a
+/// deliberate deviation from the spec's 10-15 s; don't revert without checking.
 ///
 /// Walls: the mover REJECTS an axis update that would push the picture out of the playfield, so a spark
 /// slides and then stops AT the wall — no bounce, no wall-death.
 ///
-/// Flicker (notes 32): the ROM advances `OPICT` one 4-byte entry (`SPKP0`..3) per body pass and re-runs
-/// every 4 vblanks (<c>NAP 4</c>) — a four-frame flash, one frame per PortTicks(4) port ticks, no holds.
+/// Flicker (notes §32): the ROM advances to the next of its 4 flicker pictures once per beat pass
+/// and re-runs every 4 ROM frames — a four-frame flash, one frame per PortTicks(4) port ticks, no holds.
 /// </remarks>
 public sealed class Spark : IEntity
 {
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
     private readonly Random _random;
-    private readonly int _stepScale; // fixed point: 1 port px = 256 fp units
-    private readonly IntVector2 _accelerationFp; // ROM PD2/PD4, 1/256 px per move, CONSTANT
-    private IntVector2 _velocityFp; // ROM OXV/OYV, 1/256 px per frame
-    private IntVector2 _positionRemainderFp; // carries the sub-pixel part so the step never drifts
+    private readonly int _stepScale; // fixed point: 1 port px = 256 subpixel units
+    private readonly IntVector2 _accelerationSubpixels; // the constant per-axis acceleration, in 1/256 px per move, rolled once at spawn (ROM: PD2/PD4)
+    private IntVector2 _velocitySubpixels; // current velocity, in 1/256 px per ROM frame (ROM: OXV/OYV)
+    private IntVector2 _positionRemainderSubpixels; // carries the sub-pixel part so the step never drifts
     private IntVector2 _position;
-    private int _remainingLifeFifths;
-    private int _moveFifths;   // 4 ROM frames = 4.8 ticks (notes §52)
-    private int _flickerFifths; // the 4-frame flicker clock, also exact
-    private int _moverSixths;  // OPB80 cadence: one velocity integration per 6 sixths = 1 ROM frame
+    private int _remainingLife;
+    private int _accelerationTimer;   // counts up toward the next time acceleration is added to velocity, every 4 ROM frames
+    private int _flickerTimer; // the 4-frame flicker clock, also exact
+    private int _moveTimer;  // counts up to one ROM frame's worth of ticks so the mover integrates velocity once per frame, not once per tick
 
     /// <summary>Fires a spark, aimed at the player once, with jitter.</summary>
     /// <param name="position">Where it appears — the firing enforcer's position.</param>
     /// <param name="playerPosition">The player, which the spark is aimed at.</param>
     /// <param name="random">The random source, standing in for the arcade's SEED/LSEED/HSEED rolls.</param>
     /// <param name="playfieldBounds">The playfield, used only for the "no X jitter near the left wall" rule. Null applies no suppression.</param>
-    /// <remarks>`ENFSHT` (RRC11.ASM) aims with the player's position: the velocity is proportional to the distance,
-    /// per axis, and the per-axis acceleration is rolled once here and never changes.</remarks>
+    /// <remarks>The spark aims at the player's position: the velocity is proportional to the distance,
+    /// per axis, and the per-axis acceleration is rolled once here and never changes (ROM: `ENFSHT`).</remarks>
     public Spark(IntVector2 position, IntVector2 playerPosition, Random random, Rectangle? playfieldBounds = null)
     {
         _position = position;
         _random = random;
-        // CONFIRMED 2026-09-16: the generic object mover (RRS22.ASM OPB80:
-        // `ADDD OXV,X / STD OX16,X`, looping the whole object list) applies the
-        // FULL 16-bit velocity to the position ONCE PER FRAME — so OXV is a
-        // per-FRAME step, not a per-process-pass one. An earlier version spread
-        // the step across the NAP 4 interval and therefore ran 4x too slow.
+        // The shared object mover applies the FULL 16-bit velocity to the position
+        // ONCE PER FRAME — a per-FRAME step, not a per-process-pass one. Spreading
+        // the step across the 4-frame move interval instead runs the spark 4x too slow.
         _stepScale = GameplayConstants.SparkVelocityScale;
 
-        // ENFSHT: jitter = (seed & $1F) - 16 => -16..+15 COLUMNS per axis, and
-        // the X jitter is suppressed when the player hugs the left wall
-        // (CMPA #XMIN+$10 / BHS ENFS2 / CLRB).
+        // The aim jitter is a random -16..+15 COLUMNS per axis, and the X jitter
+        // is suppressed when the player hugs the left wall.
         int jitterX = _random.Next(-GameplayConstants.SparkJitterColumns, GameplayConstants.SparkJitterColumns);
         int jitterY = _random.Next(-GameplayConstants.SparkJitterColumns, GameplayConstants.SparkJitterColumns);
         if (playfieldBounds is { } bounds &&
@@ -91,25 +105,27 @@ public sealed class Spark : IEntity
         int deltaX = playerPosition.X + (jitterX * columnPortPx) - position.X;
         int deltaY = playerPosition.Y + (jitterY * columnPortPx) - position.Y;
 
-        // OXV = 4 x delta, and the mover adds its HIGH byte, so a move covers
-        // delta/64 columns = deltaPort/64 port px. In fp: deltaPort x 256/64.
-        int fpPerPortPxPerMove = GameplayConstants.SparkVelocityScale / GameplayConstants.SparkAimDivisor;
-        _velocityFp = new IntVector2(deltaX * fpPerPortPxPerMove, deltaY * fpPerPortPxPerMove);
+        // The initial velocity is 4x the aim delta, and the mover only acts on
+        // its high byte, so a move actually covers delta/64 columns = deltaPort/64
+        // port px. Converted to our subpixel fixed point: deltaPort x 256/64.
+        int subpixelsPerPortPxPerMove = GameplayConstants.SparkVelocityScale / GameplayConstants.SparkAimDivisor;
+        _velocitySubpixels = new IntVector2(deltaX * subpixelsPerPortPxPerMove, deltaY * subpixelsPerPortPxPerMove);
 
-        // PD2/PD4: the CONSTANT per-axis acceleration, (seed & $1F) - 16 in the
-        // same subpixel units => a/64 port px per frame of velocity per move => a x 4 in fp.
-        _accelerationFp = new IntVector2(
-            _random.Next(-GameplayConstants.SparkAccelRomRange, GameplayConstants.SparkAccelRomRange) * fpPerPortPxPerMove,
-            _random.Next(-GameplayConstants.SparkAccelRomRange, GameplayConstants.SparkAccelRomRange) * fpPerPortPxPerMove);
+        // The CONSTANT per-axis acceleration: a random -16..+15 in the same
+        // subpixel units, i.e. a/64 port px added to the velocity per move (a x 4 in subpixels).
+        _accelerationSubpixels = new IntVector2(
+            _random.Next(-GameplayConstants.SparkAccelRomRange, GameplayConstants.SparkAccelRomRange) * subpixelsPerPortPxPerMove,
+            _random.Next(-GameplayConstants.SparkAccelRomRange, GameplayConstants.SparkAccelRomRange) * subpixelsPerPortPxPerMove);
 
-        // PD7 = (HSEED & $F) + $14 moves x 4 vblanks = 80..140 ROM frames, held in
-        // exact 6ths (notes §52/§65 — PortTicks() truncates each one by up to 0.8).
-        _remainingLifeFifths = _random.Next(
+        // Lifespan: a random 20-35 moves of 4 ROM frames each = 80-140 ROM frames,
+        // held in exact 6ths (notes §52/§65) rather than rounded to whole ticks,
+        // which would cut each move slightly short.
+        _remainingLife = _random.Next(
             GameplayConstants.SparkLifeMinRomTicks,
             GameplayConstants.SparkLifeMaxRomTicks + 1) * 6;
 
         // The mover moves the spark from the first frame (notes §93).
-        _moverSixths = 6;
+        _moveTimer = 6;
     }
 
     /// <summary>Top-left of the spark's collision box.</summary>
@@ -125,20 +141,19 @@ public sealed class Spark : IEntity
     public void Destroy() => LifeState = EntityLifeState.Dead;
 
     /// <summary>Which of the four flicker frames is showing (test hook).</summary>
-    /// <remarks>ROM `SPKP0`..3: one frame per 4-vblank body pass (<c>NAP 4</c>), cycling.</remarks>
-    internal int FrameIndex => _flickerFifths / (GameplayConstants.SparkFramePeriodRomTicks * 6) % SpriteSet.SparkFrameCount;
+    /// <remarks>The ROM's 4 flicker pictures, one shown per 4-ROM-frame cycle.</remarks>
+    internal int FrameIndex => _flickerTimer / (GameplayConstants.SparkFramePeriodRomTicks * 6) % SpriteSet.SparkFrameCount;
 
     /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
-    /// <remarks>ROM `OXV`/`OYV`.</remarks>
-    internal IntVector2 VelocityFp => _velocityFp;
+    internal IntVector2 VelocitySubpixels => _velocitySubpixels;
 
     /// <summary>The per-axis acceleration, in 1/256 port px per ROM frame of velocity, applied once per move (test hook).</summary>
-    /// <remarks>ROM `PD2`/`PD4`, rolled once at spawn and CONSTANT for the spark's life.</remarks>
-    internal IntVector2 AccelerationFp => _accelerationFp;
+    /// <remarks>Rolled once at spawn and CONSTANT for the spark's life.</remarks>
+    internal IntVector2 AccelerationSubpixels => _accelerationSubpixels;
 
     /// <summary>
-    /// Runs the spark's clocks: the four-frame flicker, its life, the `SPARK` process (every 4
-    /// vblanks, where the constant acceleration is added to the velocity) and the generic mover, which
+    /// Runs the spark's clocks: the four-frame flicker, its life, the move step (every 4 ROM frames,
+    /// where the constant acceleration is added to the velocity) and the shared mover, which
     /// adds the velocity to the position once per ROM frame.
     /// </summary>
     /// <param name="gameTime">Unused — every clock here is counted in ROM frames.</param>
@@ -150,48 +165,49 @@ public sealed class Spark : IEntity
             return;
         }
 
-        _flickerFifths += 5;
+        _flickerTimer += 5;
 
-        // Life: 20..35 ROM cycles x 4 vblanks = 80..140 ROM frames, in exact 6ths.
-        _remainingLifeFifths -= 5;
-        if (_remainingLifeFifths <= 0)
+        // Life: a random 20..35 moves of 4 ROM frames each = 80..140 ROM frames, in exact 6ths.
+        _remainingLife -= 5;
+        if (_remainingLife <= 0)
         {
             LifeState = EntityLifeState.Dead;
             return;
         }
 
-        // SPARK: once per move, OXV += PD2 and OYV += PD4. The acceleration is
-        // CONSTANT for the spark's life, so the velocity integrates it and the
-        // path is a parabola — this is the arcade's flight, not a random walk.
-        // The move interval is 4 ROM frames = 4.8 ticks exactly (notes §52) —
-        // `PortTicks(4)` = 4 made the flight 20% fast.
-        _moveFifths += 5;
-        if (_moveFifths >= GameplayConstants.SparkMoveIntervalRomTicks * 6)
+        // Once per move, the constant acceleration is added into the velocity on
+        // each axis. Because the acceleration is CONSTANT for the spark's whole
+        // life, the velocity integrates it and the path curves into a parabola —
+        // this is the arcade's flight, not a random walk. The move interval is
+        // 4 ROM frames = 4.8 ticks exactly (notes §52) — rounding it to 4 whole
+        // ticks made the flight 20% too fast.
+        _accelerationTimer += 5;
+        if (_accelerationTimer >= GameplayConstants.SparkMoveIntervalRomTicks * 6)
         {
-            _moveFifths -= GameplayConstants.SparkMoveIntervalRomTicks * 6;
-            _velocityFp = new IntVector2(
-                _velocityFp.X + _accelerationFp.X,
-                _velocityFp.Y + _accelerationFp.Y);
+            _accelerationTimer -= GameplayConstants.SparkMoveIntervalRomTicks * 6;
+            _velocitySubpixels = new IntVector2(
+                _velocitySubpixels.X + _accelerationSubpixels.X,
+                _velocitySubpixels.Y + _accelerationSubpixels.Y);
         }
 
-        // Mover (RRS22.ASM OPB80): the full 16-bit velocity is added to the
-        // 16-bit world position once per ROM frame — a frame is 6/5 of a tick, so
-        // the integration runs every 6 sixths, not every tick (that ran the spark
-        // 60/50 = 20% fast, notes §93). The port carries the sub-pixel remainder so
-        // the step never drifts.
-        _moverSixths += 5;
-        if (_moverSixths >= 6)
+        // Shared mover: the full velocity is added to the world position once per
+        // ROM frame — a frame is 6/5 of a tick, so the integration runs every 6
+        // fifth-ticks, not every tick (running it every tick made the spark 20% too
+        // fast, notes §93). The port carries the sub-pixel remainder so the step
+        // never drifts.
+        _moveTimer += 5;
+        if (_moveTimer >= 6)
         {
-            _moverSixths -= 6;
-            _positionRemainderFp = new IntVector2(
-                _positionRemainderFp.X + _velocityFp.X,
-                _positionRemainderFp.Y + _velocityFp.Y);
+            _moveTimer -= 6;
+            _positionRemainderSubpixels = new IntVector2(
+                _positionRemainderSubpixels.X + _velocitySubpixels.X,
+                _positionRemainderSubpixels.Y + _velocitySubpixels.Y);
 
-            int stepX = _positionRemainderFp.X / _stepScale;
-            int stepY = _positionRemainderFp.Y / _stepScale;
-            _positionRemainderFp = new IntVector2(
-                _positionRemainderFp.X - (stepX * _stepScale),
-                _positionRemainderFp.Y - (stepY * _stepScale));
+            int stepX = _positionRemainderSubpixels.X / _stepScale;
+            int stepY = _positionRemainderSubpixels.Y / _stepScale;
+            _positionRemainderSubpixels = new IntVector2(
+                _positionRemainderSubpixels.X - (stepX * _stepScale),
+                _positionRemainderSubpixels.Y - (stepY * _stepScale));
 
             MoveBy(field, stepX, stepY);
             return;
@@ -207,16 +223,16 @@ public sealed class Spark : IEntity
     private void MoveBy(PlayField field, int stepX, int stepY)
     {
 
-        // Port safety cap (the ROM relies on its 16-bit velocity saturating).
+        // Port safety cap (the ROM relies on its velocity naturally topping out at
+        // the limit of its own number range; this cap reproduces that ceiling).
         stepX = Math.Clamp(stepX, -GameplayConstants.SparkMaxSpeed, GameplayConstants.SparkMaxSpeed);
         stepY = Math.Clamp(stepY, -GameplayConstants.SparkMaxSpeed, GameplayConstants.SparkMaxSpeed);
 
-        // Walls: OPB80 REJECTS an axis update that would leave the playfield
-        // (`CMPA #XMIN / BLO` and the width check against XMAX) — it does NOT
-        // clamp. The object keeps its last valid coordinate on that axis while
-        // the other axis keeps moving, which is why a spark slides along and
-        // then stops at a wall instead of sticking to the edge. It dies only
-        // when its life expires — no bounce, no wall-death.
+        // Walls: the mover REJECTS an axis update that would leave the playfield —
+        // it does NOT clamp. The object keeps its last valid coordinate on that
+        // axis while the other axis keeps moving, which is why a spark slides
+        // along and then stops at a wall instead of sticking to the edge. It dies
+        // only when its life expires — no bounce, no wall-death.
         Rectangle inner = field.Wall.PlayfieldBounds;
         int x = _position.X;
         int y = _position.Y;

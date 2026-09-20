@@ -8,7 +8,7 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// R5 grunt stagger (notes §29): body every 4 vblanks; the move countdown
+/// R5 grunt stagger (notes §29): beat every 4 vblanks; the move countdown
 /// re-rolls to RND(1..ROBSPD) (never 0) on each step; a step moves 8 screen
 /// px on each axis past a 4-screen-px dead zone (axes independent); the
 /// RWDP frame advances ONLY on a step (DRAW_GRUNT is in the step branch —
@@ -57,7 +57,7 @@ public sealed class GruntAnimationTests
         // Lone grunt 200px left of the player on the same row: x steps must
         // be exactly +8 each time, y must never move (dead zone).
         IntVector2 player = field.Player.Position;
-        Grunt grunt = new(new IntVector2(player.X - 200, player.Y), moveLimitRomBodies: 15, random: new Random(3));
+        Grunt grunt = new(new IntVector2(player.X - 200, player.Y), moveLimitBeats: 15, random: new Random(3));
         IntVector2 last = grunt.Position;
 
         int steps = 0;
@@ -87,7 +87,7 @@ public sealed class GruntAnimationTests
         ExpireGrace(field);
 
         IntVector2 player = field.Player.Position;
-        Grunt grunt = new(new IntVector2(player.X - 300, player.Y - 120), moveLimitRomBodies: 15, random: new Random(7));
+        Grunt grunt = new(new IntVector2(player.X - 300, player.Y - 120), moveLimitBeats: 15, random: new Random(7));
 
         IntVector2 last = grunt.Position;
         var stepTicks = new List<int>();
@@ -114,7 +114,7 @@ public sealed class GruntAnimationTests
             gaps.Add(gap);
         }
 
-        // Each gap = countdown re-roll (1..15 bodies) x 4-vblank body.
+        // Each gap = countdown re-roll (1..15 beats) x 4-vblank beat.
         Assert.InRange(minGap, GameplayConstants.PortTicks(4), GameplayConstants.PortTicksCeil(4) * 15);
         Assert.InRange(maxGap, GameplayConstants.PortTicks(4), GameplayConstants.PortTicksCeil(4) * 15);
         // The stagger: NOT a fixed period — at least two distinct gaps.
@@ -128,11 +128,11 @@ public sealed class GruntAnimationTests
         ExpireGrace(field);
 
         IntVector2 player = field.Player.Position;
-        // Huge re-roll limit: no steps for a long time — bodies keep firing.
+        // Huge re-roll limit: no steps for a long time — beats keep firing.
         // DRAW_GRUNT ($3A2B) is only reached from the step branch, so the
         // legs must FREEZE while the grunt is paused (playtest round 12:
         // "even when they are standing still, their legs are moving").
-        Grunt grunt = new(new IntVector2(player.X - 300, player.Y - 300), moveLimitRomBodies: 300, random: new Random(11));
+        Grunt grunt = new(new IntVector2(player.X - 300, player.Y - 300), moveLimitBeats: 300, random: new Random(11));
 
         Assert.Equal(1, grunt.WalkFrame);
         for (int tick = 0; tick < GameplayConstants.PortTicksCeil(4) * 10; tick++)
@@ -140,7 +140,7 @@ public sealed class GruntAnimationTests
             grunt.Update(Frame(), field);
         }
 
-        Assert.Equal(1, grunt.WalkFrame); // 10 body passes, no step, no frame change
+        Assert.Equal(1, grunt.WalkFrame); // 10 beat passes, no step, no frame change
 
         // Now let it walk: exactly one frame advance per completed step. (Check
         // that the frame CHANGED at least once rather than what it ended on: the

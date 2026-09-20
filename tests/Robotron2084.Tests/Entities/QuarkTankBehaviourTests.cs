@@ -14,7 +14,7 @@ namespace Robotron2084.Tests.Entities;
 /// model (speed proportional to distance, capped) was WRONG and made the quark
 /// a dart; <c>SQVEL</c> has no distance term at all.
 /// - quark = a random-speed DRIFT (RND(1..SQSPD) per axis, re-rolled every
-///   RND(1..32) bodies), never a constant-speed chase of the player;
+///   RND(1..32) beats), never a constant-speed chase of the player;
 /// - tank birth = quark position + (4, 12) screen px, clamped in-field, and
 ///   the tank picks its destination immediately (moves on its first frame).
 /// </summary>
@@ -170,7 +170,7 @@ public sealed class QuarkTankBehaviourTests
         Assert.InRange(tank.Position.X, grown.X - 2, grown.X + 2);
         Assert.InRange(tank.Position.Y, grown.Y - 2, grown.Y + 2);
 
-        // From here it is a normal tank, and it moves one pixel per axis per BODY
+        // From here it is a normal tank, and it moves one pixel per axis per BEAT
         // (TNKSPD 2 + 1 = 3 ROM frames ≈ 4 ticks) — not every tick like the port
         // used to.
         IntVector2 beforeStep = tank.Position;

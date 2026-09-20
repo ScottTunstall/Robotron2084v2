@@ -6,15 +6,15 @@ using Robotron2084.Level;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// The player's lasers, held as three numbered slots so the fire button can tell whether
-/// another shot is allowed. A slot frees the moment its laser is deactivated, so the next
-/// shot reuses it (spec: "Record these as SLOTs").
+/// Caps how many <see cref="PlayerLaser"/> shots the player can have in flight at once: a
+/// fixed-size array of <see cref="Capacity"/> slots, each empty or holding one live laser.
+/// Firing takes the first empty slot and fails if all are full; a slot frees up the moment
+/// its laser dies or leaves the field.
 /// </summary>
 /// <remarks>
-/// The arcade keeps each player laser in an object record of its own too (RRG23.ASM is
-/// "ROBOT GAME — player, lasers", and RRS22.ASM carries the <c>LASER</c> drawing routine),
-/// and the fire button only produces a new one while a slot is free — which is why three is
-/// the binding limit while the port's auto-fire is held down (notes (24).1).
+/// ROM: each player laser is its own object record (RRG23.ASM, drawn by RRS22.ASM's
+/// <c>LASER</c>); the fire button only creates one while a slot is free, which is why three
+/// is the binding limit even with auto-fire held down (notes (24).1).
 /// </remarks>
 public sealed class LaserSlots
 {

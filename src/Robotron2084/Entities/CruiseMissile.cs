@@ -8,42 +8,50 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// The missile a brain fires at the player. It does not fly straight: every so often it re-aims, and
-/// each re-aim moves it on ONE axis only — or on both — so it lurches along in a drunken zigzag rather
-/// than homing in. It bounces off the walls instead of leaving the field, leaves a short trail of
-/// marks behind it, and is removed instantly by a laser hit (25 points).
+/// The missile a <see cref="Brain"/> fires at the player when it gets close enough. It does not fly
+/// straight or home in smoothly: every so often it re-aims, and each re-aim moves it on ONE axis only
+/// — or on both — so it lurches along in a drunken zigzag that is still biased toward the player. It
+/// bounces off the walls instead of leaving the field, leaves a short trail of small marks (a rough
+/// visual streak, drawn as solid rectangles, not sprite art) behind it that fades as it moves, and is
+/// removed instantly by a laser hit (worth 25 points) — there is no death animation. Touching the
+/// player kills the player. See <see cref="IEntity"/> for the "beat" / "ROM frame" / "..Timer" /
+/// "notes §NN" terminology used throughout this class.
 /// </summary>
 /// <remarks>
-/// ROM RRB10 `BRNSHT`/`GCMDIR`/`CMISL`/`CMMOV`; the Gospel decode is in arcade-fidelity-notes (18) and
-/// (46). Fired at brain + (3,4). Its body is NAP 2 (3 ROM ticks) and each body calls `CMMOV` TWICE, so
-/// it travels 2 arcade px per body, one px per `CMMOV` — with the wall check repeated for each of the two
-/// steps, which is what lets it turn around flush against a wall instead of overshooting into it.
+/// Ported from the arcade's own missile behaviour (ROM: RRB10.ASM, the `BRNSHT`/`GCMDIR`/`CMISL`/`CMMOV`
+/// routines; the full decode is in arcade-fidelity-notes §18 and §46). It's fired from a point just
+/// below and right of the brain that shot it. Its update runs on its own short clock, and each update
+/// takes two one-pixel steps rather than one two-pixel step — the wall bounce is checked after each of
+/// the two, which is what lets it turn around flush against a wall instead of overshooting into it.
 ///
-/// `GCMDIR` gives it its odd character: X only moves when SEED's top bit is set, and Y moves unless X moved
-/// AND LSEED's top bit is set — so <b>50% of re-aims are Y-only, 25% X-only and 25% diagonal</b>, and the
-/// missile is never stationary. A moving component's sign follows the player's coordinate plus a
-/// (seed &amp; $F) - 6 nudge — asymmetric, -6..+9, not ±6 — and ties move positive (the ROM compares with
-/// `BHS`). The re-aim timer is RND(1..7) BODIES, decremented before the move.
+/// The re-aim gives it its odd, lurching character: on each re-aim there's a 50% chance it moves only
+/// vertically, a 25% chance only horizontally, and a 25% chance it moves on both axes at once (a true
+/// diagonal) — so it's never fully stationary between re-aims. Whichever axis is active steers loosely
+/// toward the player: the direction is the player's coordinate on that axis plus a small random nudge
+/// (biased slightly positive), compared against the missile's own coordinate.
 ///
-/// No lifetime: it bounces until a laser takes it (25 pts, instant off — missiles have no death
-/// animation). Contact with the player KILLS the player. Missiles are missiles, not robots: they keep
-/// flying while <see cref="PlayField.RobotsFrozen"/> (the same convention as sparks and shells).
+/// It has no lifetime of its own — it just keeps bouncing until a laser hits it, worth 25 points, with
+/// an instant removal and no death animation. Touching the player kills the player. Missiles are
+/// missiles, not robots, so they keep flying even while <see cref="PlayField.RobotsFrozen"/> is set
+/// (the same rule that applies to sparks and shells).
 ///
-/// CMMOV never blits the CMPIC/CMP1 pictures, so they are NOT the missile's appearance. It writes VIDEO
-/// MEMORY directly instead, one 16-bit word per step: `$AAAA` (two pixels of palette slot 10) at the new
-/// coordinate and `$DDDD` (two of slot 13) at the one it left. The video address is column-major
-/// (`column*256 + row`), so a word is two VERTICALLY adjacent pixels and the mark is 1px wide by 2px tall.
+/// The missile's own picture data in the ROM is never actually drawn — it exists purely to define the
+/// (small) collision box. What's drawn instead is a direct video-memory write of a colored dot at the
+/// new position each step, and on the original arcade hardware that write happens to color two pixels
+/// stacked vertically rather than side by side (an artifact of how the video memory was addressed), which
+/// is why each mark on screen is 1 pixel wide but 2 pixels tall. This port reproduces that by drawing
+/// small solid rectangles (see <see cref="Draw"/>) instead of sprite frames.
 ///
-/// The trail is a RING OF NINE marks, not a snake: every step `CMMOV` also erases the screen pixel it wrote
-/// nine steps ago, and `CMKIL` wipes the remaining nine, so the tail vanishes with the missile. (Getting this
-/// wrong twice is instructive: the ring first looked like "bookkeeping for the death erase", then like an
-/// unbounded video-memory history — the author's "the trail is too long" is what pointed at the erase in the
-/// middle of the loop.)
+/// The trail behind the missile is a fixed-size ring of the 9 most recent positions, not a
+/// continuously growing snake: each step also erases the mark from 9 steps ago, and destroying the
+/// missile wipes the rest of the ring at once, so the whole tail disappears along with the missile head.
 /// </remarks>
 public sealed class CruiseMissile : IEntity
 {
     /// <summary>The collision box's size, 6x4 arcade px, in port pixels; the box itself is offset up-left.</summary>
-    /// <remarks>The ROM's "FAT PHONY GUY" (`CMPIC FCB 3,4` = 6x4 px), offset up-left.</remarks>
+    /// <remarks>The disassembled ROM source affectionately labels this hitbox "FAT PHONY GUY" — it's
+    /// much bigger than the missile's actual 1x2px visible mark, offset up and to the left of the
+    /// tracked point, presumably to make the missile easier to hit with a laser.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.CruiseMissileCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.CruiseMissileCollisionSize.Height));
 
@@ -52,8 +60,8 @@ public sealed class CruiseMissile : IEntity
     /// column) — twice the Y step.
     /// </summary>
     /// <remarks>
-    /// ROM CMMOV step on X: `CMMV1 ADDA PD2,U` adds to the X COLUMN byte, so ONE
-    /// COLUMN per call — **2 arcade px**, not the 1 the port moved (notes §51).
+    /// The arcade moves the missile one whole video-memory "column" per step on this axis, and a
+    /// column is 2 arcade pixels wide (notes §51).
     /// </remarks>
     private static readonly int StepColumns = ScreenSize.Scaled(2);
 
@@ -63,30 +71,29 @@ public sealed class CruiseMissile : IEntity
     /// horizontally as vertically.
     /// </summary>
     /// <remarks>
-    /// ROM CMMOV step on Y: `ADDB PD2+1,U` adds to the Y ROW byte, so ONE ROW per
-    /// call — 1 arcade px. There is NO halving like the player's or the tank's, so
-    /// the missile really is twice as fast horizontally as vertically.
+    /// The arcade moves the missile one video-memory "row" per step on this axis, which is 1
+    /// arcade pixel — with no halving like the player's or the tank's vertical speed, so the
+    /// missile really does move twice as fast horizontally as vertically.
     /// </remarks>
     private static readonly int StepRows = ScreenSize.Scaled(1);
 
-    /// <summary>How many ROM frames one body takes: the body's own execution plus its sleep.</summary>
-    /// <remarks>ROM body: NAP 2 plus the body execution vblank.</remarks>
-    private const int BodyPeriodRomTicks = 3;
+    /// <summary>How many ROM frames one beat takes: the beat's own execution plus its sleep.</summary>
+    /// <remarks>ROM beat: NAP 2 plus the beat execution vblank.</remarks>
+    private const int BeatPeriodRomTicks = 3;
 
-    /// <summary>The body period in exact sixths of a port tick: 3 ROM frames = 3.6 ticks.</summary>
+    /// <summary>The beat period, converted to fifth-ticks (see <see cref="IEntity"/>): 3 ROM frames = 3.6 port ticks.</summary>
     /// <remarks>Notes §52, §65.</remarks>
-    private static int BodyFifths => BodyPeriodRomTicks * 6;
+    private static int BeatPeriod => BeatPeriodRomTicks * 6;
 
-    /// <summary>How many moves the missile makes per body: twice.</summary>
-    /// <remarks>ROM CMMOV calls per body.</remarks>
-    private const int MovesPerBody = 2;
+    /// <summary>How many moves the missile makes per beat: twice.</summary>
+    /// <remarks>ROM CMMOV calls per beat.</remarks>
+    private const int MovesPerBeat = 2;
 
-    /// <summary>The re-aim timer's upper bound, in bodies: the timer is rolled from 1 to this.</summary>
-    /// <remarks>ROM GCMDIR: re-aim timer = RND(1..7) bodies.</remarks>
-    private const int ReAimMaxBodies = 7;
+    /// <summary>The re-aim timer's upper bound, in beats: the timer is rolled from 1 to this.</summary>
+    /// <remarks>ROM GCMDIR: re-aim timer = RND(1..7) beats.</remarks>
+    private const int ReAimMaxBeats = 7;
 
-    /// <summary>Subtracted from each aim roll, making the nudge -6..+9.</summary>
-    /// <remarks>ROM GCMDIR aim nudge: (seed &amp; $F) - 6, i.e. -6..+9.</remarks>
+    /// <summary>Subtracted from each aim roll, making the random nudge run -6..+9 (not a symmetric ±6).</summary>
     private const int AimNoiseBase = 6;
     /// <summary>How many values an aim roll draws from (0..this-1).</summary>
     private const int AimNoiseRange = 16;
@@ -102,9 +109,9 @@ public sealed class CruiseMissile : IEntity
     private readonly List<IntVector2> _trail = new();
 
     private IntVector2 _position;
-    private IntVector2 _velocity; // per-axis ±StepColumns/±StepRows (0 = axis inactive this re-aim)
-    private int _bodyFifths;
-    private int _reAimBodiesRemaining;
+    private IntVector2 _velocity; // Current per-step move on each axis: ±StepColumns / ±StepRows, or 0 if that axis is idle this re-aim.
+    private int _beatTimer;
+    private int _reAimBeatsRemaining;
 
     /// <summary>Fires a missile, with its first direction already rolled.</summary>
     /// <param name="origin">Where it appears.</param>
@@ -116,7 +123,7 @@ public sealed class CruiseMissile : IEntity
         _position = origin;
         _random = random;
         _velocity = RollDirection(playerPosition);
-        _reAimBodiesRemaining = 1 + _random.Next(ReAimMaxBodies);
+        _reAimBeatsRemaining = 1 + _random.Next(ReAimMaxBeats);
     }
 
     /// <summary>The missile's TRUE coordinate (the fat box below is derived from it).</summary>
@@ -126,7 +133,7 @@ public sealed class CruiseMissile : IEntity
     /// The collision box: the missile's true corner shifted one pixel up and left, because the box is
     /// bigger than the point the missile tracks.
     /// </summary>
-    /// <remarks>The ROM's "FAT PHONY GUY" box (`CMPIC FCB 3,4` = 6x4 px), offset up-left (notes §51).</remarks>
+    /// <remarks>The "FAT PHONY GUY" hitbox (see <see cref="CollisionSize"/>), offset up and left (notes §51).</remarks>
     public Rectangle Bounds => new(
         _position.X + ScreenSize.Scaled(GameplayConstants.CruiseMissileBoxOffsetColumns * 2),
         _position.Y + ScreenSize.Scaled(GameplayConstants.CruiseMissileBoxOffsetRows),
@@ -140,7 +147,8 @@ public sealed class CruiseMissile : IEntity
     /// Removes the missile instantly — there is no death animation — and wipes its trail with it. The
     /// field awards the 25 points.
     /// </summary>
-    /// <remarks>ROM `CMKIL`: wipes the ring's remaining nine marks off-screen ("instant off").</remarks>
+    /// <remarks>Wipes the trail's remaining marks off-screen along with the missile itself, so nothing
+    /// is left behind (ROM: `CMKIL`).</remarks>
     public void Destroy()
     {
         LifeState = EntityLifeState.Dead;
@@ -148,10 +156,10 @@ public sealed class CruiseMissile : IEntity
     }
 
     /// <summary>
-    /// Runs one body when its 3-frame clock says so: re-aim if the timer has run out, then take the
-    /// body's two steps — each marking the position it leaves and dropping the ring's oldest mark.
+    /// Runs one beat when its 3-frame clock says so: re-aim if the timer has run out, then take the
+    /// beat's two steps — each marking the position it leaves and dropping the ring's oldest mark.
     /// </summary>
-    /// <param name="gameTime">Unused — the body is counted in ROM frames.</param>
+    /// <param name="gameTime">Unused — the beat is counted in ROM frames.</param>
     /// <param name="field">The playfield: the player it aims at and the wall it bounces off.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -160,24 +168,25 @@ public sealed class CruiseMissile : IEntity
             return;
         }
 
-        // ROM body: 3 ROM frames = 3.6 port ticks (exact 6ths, notes §52), not
-        // the truncated PortTicks(3) = 3 that made the missile 20% fast.
-        _bodyFifths += 5;
-        if (_bodyFifths < BodyFifths)
+        // A beat's length in port ticks isn't a whole number (3.6, not 3), so it's tracked with
+        // the fixed-point fifths trick rather than rounded down — rounding down made the
+        // missile move 20% too fast (notes §52).
+        _beatTimer += 5;
+        if (_beatTimer < BeatPeriod)
         {
             return;
         }
 
-        _bodyFifths -= BodyFifths;
+        _beatTimer -= BeatPeriod;
 
-        // ROM CMISL: the re-aim timer runs out first, then two CMMOVs.
-        if (--_reAimBodiesRemaining <= 0)
+        // The re-aim timer is checked first, then the two steps for this beat are taken (ROM: `CMISL`).
+        if (--_reAimBeatsRemaining <= 0)
         {
             _velocity = RollDirection(field.Player.Position);
-            _reAimBodiesRemaining = 1 + _random.Next(ReAimMaxBodies);
+            _reAimBeatsRemaining = 1 + _random.Next(ReAimMaxBeats);
         }
 
-        for (int move = 0; move < MovesPerBody; move++)
+        for (int move = 0; move < MovesPerBeat; move++)
         {
             Step(field);
         }
@@ -190,14 +199,14 @@ public sealed class CruiseMissile : IEntity
     /// it leaves is added to the trail.
     /// </summary>
     /// <remarks>
-    /// ROM CMMOV: one COLUMN on X and one ROW on Y, with a per-axis bounce off the
-    /// playfield. The direction component is negated and the step taken the other
-    /// way, so the missile turns around on the boundary rather than sticking to it.
-    /// The position it leaves is marked in the trail colour.
+    /// One column of movement on X and one row on Y, with each axis bouncing off the playfield
+    /// independently. When a step would cross the boundary, that axis's direction flips and the
+    /// step is retaken the other way, so the missile turns around right at the wall rather than
+    /// sticking to it. The mark left behind uses the trail's own colour.
     ///
-    /// The bounce tests the TRUE COORDINATE (`CMPA #XMIN` / `#XMAX-1`, `CMPB #YMIN`
-    /// / `#YMAX`) — the fat `OBJX` box is for collisions only, so it does NOT
-    /// overhang the wall here. The port used to bound with the box.
+    /// The bounce check uses the missile's true tracked point, not its oversized "FAT PHONY GUY"
+    /// collision box — that box exists only for laser hits and must not make the missile bounce
+    /// early.
     /// </remarks>
     private void Step(PlayField field)
     {
@@ -230,10 +239,8 @@ public sealed class CruiseMissile : IEntity
             _position = _position with { Y = Math.Clamp(y, bounds.Y, bounds.Bottom - rowPixels) };
         }
 
-        // ROM CMMOV: `LDY #$DDDD / STY [OX16,X]` — the position just left gets
-        // the trail mark (two pixels of slot 13), and the ring entry nine steps
-        // back is erased in the same pass (`LDY #0 / STY [A,U]`), so the tail
-        // never exceeds the ring.
+        // The position the missile just left gets a trail mark, and the oldest mark (from 9
+        // steps back) is dropped in the same pass, so the tail never grows past 9 marks.
         _trail.Add(leaving);
         if (_trail.Count > GameplayConstants.MissileTrailMarks)
         {
@@ -251,10 +258,10 @@ public sealed class CruiseMissile : IEntity
     /// <param name="player">The player's position, which each active axis aims at.</param>
     /// <returns>The per-step velocity on each axis; a zero component means that axis is idle.</returns>
     /// <remarks>
-    /// ROM `GCMDIR` — and its control flow is a little trap: <c>LDA SEED / BPL GCMDY</c> jumps to the START
-    /// of the Y block, so when SEED's top bit is clear the missile skips the X block AND the LSEED test as
-    /// well, meaning it always seeks on Y in that case. Only when X is armed does LSEED get a say, and a set
-    /// top bit then drops Y. Net: Y-only 50%, X-only 25%, diagonal 25% — Y is the missile's favoured axis.
+    /// A coin flip decides whether the missile only chases vertically (50% of re-aims), or considers
+    /// horizontal movement at all; when it does consider horizontal movement, a second coin flip decides
+    /// whether vertical movement is added on top too. Net effect: Y-only 50% of the time, X-only 25%,
+    /// and a true diagonal 25% — vertical is the missile's favoured axis (ROM: RRB10.ASM `GCMDIR`).
     /// </remarks>
     private IntVector2 RollDirection(IntVector2 player)
     {
@@ -270,7 +277,8 @@ public sealed class CruiseMissile : IEntity
 
     /// <summary>Aims one axis: the nudged roll is added to the target's coordinate and compared with
     /// this object's own coordinate — the sign to move in.</summary>
-    /// <remarks>ROM: (coord + (seed &amp; $F) - 6) >= mine ? +1 : -1.</remarks>
+    /// <remarks>If the nudged target coordinate is at or beyond the missile's own coordinate, it moves
+    /// in the positive direction; otherwise negative.</remarks>
     private int AimSign(int target, int mine)
     {
         int aim = target + _random.Next(AimNoiseRange) - AimNoiseBase;
@@ -283,8 +291,8 @@ public sealed class CruiseMissile : IEntity
     /// <summary>Draws the trail marks and the missile's head.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set, which supplies the two slots' live colours.</param>
-    /// <remarks>ROM `CMMOV`: `LDD #$AAAA / LDY OX16,X / STD ,Y` — a 16-bit video write, so the mark is
-    /// 1 arcade px wide and 2 TALL (column-major memory). The trail marks are slot 13 and the head slot 10.</remarks>
+    /// <remarks>Each mark is drawn 1 arcade pixel wide and 2 tall, matching the shape the original
+    /// hardware's video-memory writes produced. The trail uses one palette slot and the head another.</remarks>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState != EntityLifeState.Alive)
@@ -292,8 +300,7 @@ public sealed class CruiseMissile : IEntity
             return;
         }
 
-        // ROM CMMOV: `LDD #$AAAA / LDY OX16,X / STD ,Y` — a 16-bit video write,
-        // i.e. the mark is 1 arcade px wide and 2 TALL (column-major memory).
+        // Each mark is 1 arcade pixel wide and 2 tall (see the remarks above).
         int markWidth = ScreenSize.Scaled(GameplayConstants.MissileMarkArcadeWidth);
         int markHeight = ScreenSize.Scaled(GameplayConstants.MissileMarkArcadeHeight);
 
@@ -303,7 +310,8 @@ public sealed class CruiseMissile : IEntity
             sprites.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight), trailColor);
         }
 
-        // The CMPIC/CMP1 pictures are only ever the collision/erase descriptors.
+        // The missile's own ROM picture data is never actually drawn — it only defines the
+        // collision box — so its "sprite" here is just this solid dot.
         sprites.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(_position.X, _position.Y, markWidth, markHeight),

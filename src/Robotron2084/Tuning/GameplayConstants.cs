@@ -30,8 +30,8 @@ public static class GameplayConstants
     /// real-world pacing instead of its raw frame count.
     /// </para>
     /// <para>
-    /// <b>The "…Fifths" fields scattered through the entity classes</b> (e.g.
-    /// <c>Grunt._bodyFifths</c>, <c>Hulk._stepFifths</c>) exist because 1.2 is not a
+    /// <b>The "..Timer" fields scattered through the entity classes</b> (e.g.
+    /// <c>Grunt._beatTimer</c>, <c>Hulk._stepTimer</c>) internally rely on this: 1.2 is not a
     /// whole number: an entity can't just "count down 4.8 ticks". Floating-point
     /// accumulation would work but drifts out of sync over a long play session, so each
     /// entity instead keeps an integer counter in units of <i>one fifth of a port
@@ -265,12 +265,12 @@ public static class GameplayConstants
 
     // Spheroid (Phase 8.4 / 9.1; re-decoded from RRC11 CIRCLE/CIRNAC/CIRGO in
     // notes §56). There is NO constant speed: the spheroid accumulates a random
-    // acceleration and damps it by a 64th every body, so its speed is emergent.
+    // acceleration and damps it by a 64th every beat, so its speed is emergent.
     // The clamps below are the ROM's own velocity limits ($0100 / $0200 = 1
     // column/frame and 2 rows/frame, the same 2 arcade px/frame).
-    public const int SpheroidBodyRomFrames = 3; // `NAP 2` + 1
-    public const int SpheroidMaxVelocityXFp = 0x0100; // 1/256-column units per frame
-    public const int SpheroidMaxVelocityYFp = 0x0200; // 1/256-row units per frame
+    public const int SpheroidBeatRomFrames = 3; // `NAP 2` + 1
+    public const int SpheroidMaxVelocityXSubpixels = 0x0100; // 1/256-column units per frame
+    public const int SpheroidMaxVelocityYSubpixels = 0x0200; // 1/256-row units per frame
     // CIRC3L's exit test: `CMPA #XMIN+3` / `CMPA #XMAX-10` with XMIN=7 and
     // XMAX=$8F (RRF.ASM:69-70), i.e. column 10 / column 133 of the video buffer.
     public const int SpheroidEscapeExitLeftColumn = 10;
@@ -313,16 +313,16 @@ public static class GameplayConstants
     //           X >= XMAX-12 → -, Y <= YMIN+5 → +, Y >= YMAX-20 → - — and only
     //           otherwise taken from the seed bit (X: set = negative, Y: set =
     //           positive; the opposite polarity decorrelates the axes).
-    //   body:   NAP 3, and PD7 counts down in BODIES to the next SQVEL.
+    //   beat:   NAP 3, and PD7 counts down in BEATS to the next SQVEL.
     //
     // The port previously read those `×4`/`×8` shifts as multiplying the
     // distance to a waypoint (the §28 R5-only decode), which made the quark
     // ~20-40x too fast. The author reported it: "The quarks are WAY too fast."
-    public const int QuarkBodyRomTicks = 4;      // NAP 3 + the body vblank
+    public const int QuarkBeatRomTicks = 4;      // NAP 3 + the beat vblank
     public const int QuarkVelocityXScale = 4;    // ROM: two ASLB/ROLA pairs
     public const int QuarkVelocityYScale = 8;    // ROM: three
     public const int QuarkSubpixelsPerPixel = 256; // 16-bit world coordinates
-    public const int QuarkReaimMaxBodies = 32;   // ROM PD7 = (SEED & $1F) + 1
+    public const int QuarkReaimMaxBeats = 32;   // ROM PD7 = (SEED & $1F) + 1
     public const int QuarkWallMarginLowArcadePixels = 5;     // XMIN+5 / YMIN+5
     public const int QuarkWallMarginRightArcadePixels = 12;  // XMAX-12
     public const int QuarkWallMarginBottomArcadePixels = 20; // YMAX-20
@@ -386,7 +386,7 @@ public static class GameplayConstants
 
     /// <summary>
     /// ROM `ENFR0`: the enforcer's grow-up is FIVE spawn pictures at `NAP 8`
-    /// each = 5 x 9 ROM frames = **45** (a `NAP n` body is n+1 frames, as with the
+    /// each = 5 x 9 ROM frames = **45** (a `NAP n` beat is n+1 frames, as with the
     /// quark). The port used 40, treating each step as 8.
     /// </summary>
     public const int EnforcerGrowUpRomFrames = 45;
@@ -395,24 +395,24 @@ public static class GameplayConstants
     public const int EnforcerGrowStepRomFrames = 9;
 
     /// <summary>
-    /// ROM `ENFR1B`: `NAP 3` — the enforcer's logic body is 4 ROM frames (3 vblanks
-    /// plus the frame it runs in), and its re-aim and shot timers count BODIES.
+    /// ROM `ENFR1B`: `NAP 3` — the enforcer's logic beat is 4 ROM frames (3 vblanks
+    /// plus the frame it runs in), and its re-aim and shot timers count BEATS.
     /// </summary>
-    public const int EnforcerBodyRomFrames = 4;
+    public const int EnforcerBeatRomFrames = 4;
 
     /// <summary>
     /// ROM `TNKSPD` = **2**, and it is a CONSTANT, not a wave value: `LDA #2 / STA
     /// TNKSPD` in the per-level reset (RRG23:677). `TANK6` does `LDA TNKSPD / LDX
     /// #TANKL / JMP SLEEP`, so the tank's process re-runs every TNKSPD vblanks — a
-    /// body of 2 vblanks plus the frame it runs in = **3 ROM frames**.
+    /// beat of 2 vblanks plus the frame it runs in = **3 ROM frames**.
     /// </summary>
-    public const int TankBodyRomFrames = 3;
+    public const int TankBeatRomFrames = 3;
 
     /// <summary>
     /// ROM `TANK1`: `LDA PD4,U / CLRB / ASRA / RORB / ADDD OX16,X` — the X step is
     /// the direction byte HALVED, exactly like the player's table, so ±1 means 0.5
     /// COLUMNS = **1 arcade px**; `ADDB PD5,U` steps Y by 1 ROW = 1 px. Both axes
-    /// therefore move one pixel per BODY (the port moved one unit per tick, ~1.8x
+    /// therefore move one pixel per BEAT (the port moved one unit per tick, ~1.8x
     /// too fast).
     /// </summary>
     public const int TankStepArcadePixels = 1;
@@ -452,7 +452,7 @@ public static class GameplayConstants
     public const int SparkLifeMinRomTicks = 80;
     public const int SparkLifeMaxRomTicks = 140;
     // Spark flicker: the ROM SPARK process advances OPICT by one 4-byte
-    // picture entry (SPKP0..3) on every body pass and re-runs every 4
+    // picture entry (SPKP0..3) on every beat pass and re-runs every 4
     // vblanks (NAP 4) — a 4-frame flash, one frame per 4 vblanks (notes 32).
     public const int SparkFramePeriodRomTicks = 4;
 
@@ -659,7 +659,7 @@ public static class GameplayConstants
     // silhouette (HUMON with D = $AABB, op $12 then op $1A).
     public const int ReprogramIterations = 20;   // ROM: `LDA #20 / STA PD4,U`
     public const int ReprogramRedrawsPerIteration = 2;
-    public const int ReprogramStepRomTicks = 3;  // NAP 2 + the body vblank
+    public const int ReprogramStepRomTicks = 3;  // NAP 2 + the beat vblank
     public const int ReprogramJitterPixels = 8;  // ROM: SEED & 7, i.e. 0..7
 
     /// <summary>Blitter colour 1 for the reprogramming human ($AA = palette slot 10).</summary>
@@ -674,7 +674,7 @@ public static class GameplayConstants
     public const int ReprogramShapeSlot = 0x0B;
 
     // ---- The PROG's own colours (RRB10 PROG3/PROG4) ----
-    // A prog is drawn as TWO blitter colour pairs, not as a sprite. Each body:
+    // A prog is drawn as TWO blitter colour pairs, not as a sprite. Each beat:
     //   PROG3: `LDD #$EE00 / JSR HUMON` at the position it is LEAVING
     //   PROG4: `LDD #$00AA / JSR HUMON` at the position it is entering
     // i.e. a ghost (slot 14 block, black shape) behind it and a black block
@@ -685,7 +685,7 @@ public static class GameplayConstants
     // The shadow ring: PD+8 is the index and the entries run PD+10, PD+12, ...
     // wrapping at SPSIZE = 31. PD = 7 (RRF.ASM:551) and SPSIZE = PSIZE+16 = 31
     // (RRF.ASM:565), so those offsets are bytes 17, 19 ... 29 — SEVEN entries,
-    // and a ghost is erased by PCTOFF as its entry is reused 7 bodies later.
+    // and a ghost is erased by PCTOFF as its entry is reused 7 beats later.
     public const int ProgGhostCount = 7;
     public const int ProgBackgroundSlot = 0x00;   // $00 — black
     public const int ProgShapeSlot = 0x0A;        // $AA

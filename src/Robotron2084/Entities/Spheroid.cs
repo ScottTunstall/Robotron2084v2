@@ -8,14 +8,23 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// A spheroid — the gliding ring that gives birth to enforcers. It never aims: a
-/// random acceleration is re-rolled every 1..15 bodies and damped back toward a
-/// top speed of 1 column (2 arcade px) per frame on X and 2 rows per frame on Y —
-/// the same speed in pixels — so it eases up to speed, and it CLAMPS against the
-/// walls rather than reflecting. It flies OVER electrodes.
+/// A spheroid — a drifting ring on screen that is harmless in itself but is the
+/// enemy that gives birth to enforcers (a separate, dangerous entity). It never
+/// aims or shoots at the player: it simply glides, changing its own heading at
+/// random, until it has dropped its quota of enforcers, then makes a beeline for
+/// the edge of the screen and disappears. See the terminology glossary on
+/// <see cref="IEntity"/> for "beat", "ROM frame" and "fifths" — the units this
+/// class's timers are counted in.
+///
+/// Its glide is not steered toward anything: a random acceleration is re-rolled
+/// every 1..15 beats and damped back toward a top speed of 1 column (2 arcade px)
+/// per frame on X and 2 rows per frame on Y — the same speed in pixels — so it
+/// eases up to speed, and it CLAMPS against the walls (stops, rather than
+/// bouncing off) rather than reflecting. It flies OVER electrodes (the wall
+/// hazard other ground entities must avoid).
 ///
 /// It cycles through three phases, each stepping the picture pointer by one on
-/// its own body clock:
+/// its own beat clock:
 /// - spin (five ring pictures): the drop countdown decrements only on a full
 ///   five-picture wrap, so it counts ROTATIONS;
 /// - drop (eight pictures): a shorter rotation countdown between drops, each of
@@ -23,32 +32,16 @@ namespace Robotron2084.Entities;
 ///   (half of this wave's maximum, rounded up) is exhausted;
 /// - escape: a straight sideways run — X fixed at 1 column a frame, Y stopped —
 ///   which spins the same five pictures the spin phase does and ends once the
-///   spheroid leaves the field, whereupon it is removed with NO death animation.
+///   spheroid leaves the field, whereupon it is removed with NO death animation
+///   (it just vanishes off the edge; nothing plays).
 ///
 /// A laser hit instead bursts it (the bespoke bubble is still to be built).
 /// </summary>
 /// <remarks>
-/// The ROM's CIRCLE object (RRC11 `CIRCLE`, `CIRNAC`, `CIRGO`, `CIRC2L`, `CIRC3L`).
-/// It GLIDES: the velocity is ACCUMULATED from a random acceleration that is
-/// re-rolled every 1..15 bodies and damped back toward 64 x acceleration every
-/// body, so it eases up to a top speed of 1 COLUMN (2 arcade px) per frame on X
-/// and 2 ROWS per frame on Y — the same speed in pixels — and it CLAMPS against
-/// the walls rather than reflecting (the generic mover rejects an out-of-bounds
-/// axis, notes §43/§56). It flies OVER electrodes.
-///
-/// Its phases, each body being `NAP 2` = 3 ROM frames, and each advancing the
-/// picture pointer by one (`OPICT += 4`) on ITS OWN body clock:
-/// - CIRCLE (spin, pictures CIRP0..CIRP4): the drop countdown PD2 = RND(1..CDPTIM)
-///   decrements only on a full 5-picture wrap, so it counts ROTATIONS (15 frames);
-/// - CIRC2 (drop, CIRP0..CIRP7): PD2 = RND(1..CDPTIM/4) rotations between drops,
-///   each of which drops one enforcer (ENFDRP) unless 8 are already out, until
-///   the allotment (RND(1..ENFNUM) halved, rounded up = 1..5) is exhausted;
-/// - CIRC3 (escape): OYV = 0 and OXV = exactly 1 column/frame, a straight
-///   sideways run that spins the SAME five pictures the idle phase does and ends
-///   once the column passes XMIN+3 or XMAX-10 — a test that itself runs only on
-///   the wrap pass — whereupon the object is removed with NO death animation
-///   (`CIR4`: KILLOF + SUCIDE).
-/// A laser hit instead bursts it into the 7-step bubble (notes §50/§64).
+/// The arcade's CIRCLE object (ROM: RRC11.ASM, the `CIRCLE`/`CIRNAC`/`CIRGO`/`CIRC2L`/`CIRC3L`
+/// routines; notes §43/§56). It CLAMPS against the walls rather than bouncing (the
+/// generic mover rejects a step that would leave the field on either axis) and flies
+/// OVER electrodes. A laser hit instead bursts it into the 7-step bubble (notes §50/§64).
 /// </remarks>
 public sealed class Spheroid : IEntity, IArtSource
 {
@@ -60,36 +53,31 @@ public sealed class Spheroid : IEntity, IArtSource
     /// The last picture of the spin and of the escape, i.e. the pointer value whose
     /// step wraps. Those two phases therefore spin FIVE pictures, 0..4.
     /// </summary>
-    /// <remarks>
-    /// `CIRCLE`/`CIRC3L` both compare against `CIRP4` (`CMPD #$1502` at R5 $11B6 / $1239
-    /// with the `BLS` that stores), so the spin is CIRP0..CIRP4. §56.2 read the boundary
-    /// as "wraps past CIRP3" and gave the port a four-picture spin (author, 2026-09-17:
-    /// the spheroid "after giving birth to all the enforcers, looks weird animation
-    /// wise", notes §90).
-    /// </remarks>
+    /// <remarks>Both the spin and escape routines wrap after the fifth picture (index 4)
+    /// (ROM: `CIRCLE`/`CIRC3L`; notes §90).</remarks>
     private const int SpinLastPicture = 4;
 
     /// <summary>The drop phase's wrap boundary, so it spins all EIGHT pictures.</summary>
-    /// <remarks>ROM `CIRC2L`'s wrap boundary: `CMPD #$150E` = CIRP7.</remarks>
+    /// <remarks>The drop phase wraps after its eighth picture (ROM: `CIRC2L`).</remarks>
     private const int DropLastPicture = 7;
 
     private readonly Random _random;
     private readonly int _dropDelayRomTicks;
     private IntVector2 _position;
-    private int _velocityXFp; // OXV: 1/256 COLUMN per frame (a column is 2 arcade px)
-    private int _velocityYFp; // OYV: 1/256 ROW per frame
-    private int _remainderXFp;
-    private int _remainderYFp;
-    private int _accelX; // PD5: -16..+15, in 1/256 column per frame per body
-    private int _accelY; // PD6: -32..+31, in 1/256 row per frame per body
-    private int _accelBodiesRemaining; // PD7: RANDU(15) = 1..15 bodies until a re-roll
-    private int _bodyFifths;
-    private int _moverSixths; // OPB80 cadence: one velocity integration per 6 sixths = 1 ROM frame
-    private int _enforcersRemaining; // PD3: ceil(RND(1..ENFNUM)/2) = 1..5, never 0
-    private int _dropRotationsRemaining; // PD2, counted in full picture ROTATIONS
-    private int _rotation; // OPICT: 0..4 while spinning/escaping, 0..7 while dropping
-    private bool _dropping; // CIRCLE (spin) -> CIRC2 (drop)
-    private bool _escaping; // CIRC3: sideways run, then vanish
+    private int _velocityXSubpixels; // X velocity, in 1/256 column per frame (a column is 2 arcade px)
+    private int _velocityYSubpixels; // Y velocity, in 1/256 row per frame
+    private int _remainderXSubpixels;
+    private int _remainderYSubpixels;
+    private int _accelX; // current X acceleration: -16..+15, in 1/256 column per frame per beat
+    private int _accelY; // current Y acceleration: -32..+31, in 1/256 row per frame per beat
+    private int _accelBeatsRemaining; // beats left before the accelerations are re-rolled: 1..15
+    private int _beatTimer;
+    private int _moveTimer; // glide cadence: one velocity integration per 6 fifth-ticks = 1 ROM frame
+    private int _enforcersRemaining; // how many enforcers this spheroid still owes: 1..5, never 0
+    private int _dropRotationsRemaining; // rotations left until the next enforcer drop
+    private int _rotation; // current picture: 0..4 while spinning/escaping, 0..7 while dropping
+    private bool _dropping; // spinning -> dropping enforcers
+    private bool _escaping; // sideways run toward the edge of the field, then vanish
     private int _escapeDirection;
 
     /// <summary>Drops a spheroid at <paramref name="position"/> with its enforcer allotment already rolled; it is born mid-spin.</summary>
@@ -98,33 +86,34 @@ public sealed class Spheroid : IEntity, IArtSource
     /// <param name="maxDropsX2">This wave's enforcer-allotment bound; the roll happens here.</param>
     /// <param name="dropDelayRomTicks">This wave's rotation countdown, in ROM frames.</param>
     /// <remarks>
-    /// These are ROM ENFNUM and CDPTIM for this wave (notes §11.2/§17).
+    /// These are this wave's enforcer allotment bound and rotation delay (ROM: ENFNUM
+    /// and CDPTIM, notes §11.2/§17).
     ///
-    /// There is deliberately no speed parameter: the spheroid's speed IS the
-    /// accumulated and damped CIRGO velocity, so a "speed bonus" cannot be
-    /// expressed in this model (notes §56).
+    /// There is deliberately no speed parameter: the spheroid's speed IS its
+    /// accumulated, damped glide velocity, so a "speed bonus" cannot be expressed in
+    /// this model (notes §56).
     /// </remarks>
     public Spheroid(IntVector2 position, Random random, int maxDropsX2 = 10, int dropDelayRomTicks = 24)
     {
         _position = position;
         _random = random;
         _dropDelayRomTicks = dropDelayRomTicks;
-        // R5 $1193-119C: RMAX(ENFNUM) = RND(1..ENFNUM) (never 0), then LSR +
-        // carry = ceil(v/2) → 1..5 drops, never zero (notes §17).
+        // The enforcer allotment is a random roll (never 0), halved and rounded up, so
+        // a spheroid always owes 1..5 enforcers, never zero (notes §17).
         int roll = random.Next(1, maxDropsX2 + 1);
         _enforcersRemaining = (roll + 1) / 2;
-        // R5 CIRC3: the escape direction is the SIGN of the ROM's seed byte — a
-        // coin flip here, since the port has no matching LFSR state.
+        // The escape direction is effectively a coin flip (the arcade derives it from
+        // its own random-seed byte, which this port doesn't reproduce bit-for-bit).
         _escapeDirection = random.Next(2) == 0 ? -1 : 1;
-        // R5 CIRSTL: PD2 = RND(1..CDPTIM) starts the SPIN phase's countdown; CIRNAC
-        // (called there too) rolls the first accelerations and the re-roll timer.
+        // The spin phase's drop countdown starts as a random 1..(this wave's delay)
+        // rotations, and the same setup rolls the first accelerations and their
+        // re-roll timer.
         _dropRotationsRemaining = random.Next(1, dropDelayRomTicks + 1);
         // The mover moves it from the first frame (notes §93), so the mover
         // accumulator starts at one full frame.
-        _moverSixths = 6;
-        // `MKPROB CIRCLE,CIRP4,CIRKIL` → MPROB's `LDD ,U++ / STD OLDPIC,X /
-        // STD OPICT,X` puts CIRP4 in the new object's picture, so a spheroid is BORN
-        // showing the medium ring and its FIRST body is already a wrap pass.
+        _moveTimer = 6;
+        // A spheroid is BORN already showing the medium ring (the spin phase's last
+        // picture), so its very first beat is already a wrap pass.
         _rotation = SpinLastPicture;
         RollAccelerations();
     }
@@ -142,32 +131,28 @@ public sealed class Spheroid : IEntity, IArtSource
     /// Test hook: which picture the spheroid is showing — 0..4 while spinning or
     /// escaping, 0..7 while dropping.
     /// </summary>
-    /// <remarks>The ROM's `OPICT` pointer.</remarks>
+    /// <remarks>The ROM's current-picture pointer.</remarks>
     internal int PictureIndex => _rotation;
 
     /// <summary>Test hook: true once the sideways exit run has started.</summary>
-    /// <remarks>ROM CIRC3.</remarks>
+    /// <remarks>ROM: the `CIRC3` escape phase.</remarks>
     internal bool IsEscaping => _escaping;
 
     /// <summary>
     /// Kills the spheroid: it goes straight to Dead, so the field's explosion is
     /// the whole visual — there is no blink.
     /// </summary>
-    /// <remarks>
-    /// Laser kill (ROM RRC11 `CIRKIL`): `JSR KILOFP` (image and process off)
-    /// then `MAKP CIRKP` — a 7-frame BUBBLE BURST in slot 10's colour, followed
-    /// by the "1000" score picture for 30 steps in slot $FF. So there is no
-    /// blink here; the burst itself is still to be built (notes §50), and until
-    /// then the object simply bursts via the field's explosion.
-    /// </remarks>
+    /// <remarks>ROM: RRC11.ASM's `CIRKIL` plays a 7-frame bubble burst then a "1000"
+    /// score picture; the bespoke burst is still to be built (notes §50) — until then
+    /// it uses the field's generic explosion.</remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
     /// <summary>
-    /// Runs the spheroid: the generic mover's per-frame glide, then the body — the phase's own
+    /// Runs the spheroid: the generic mover's per-frame glide, then the beat — the phase's own
     /// logic (accelerate and damp, or drop an enforcer, or run for the exit) plus one picture
     /// step, with the phase's countdown living on the picture's WRAP pass.
     /// </summary>
-    /// <param name="gameTime">Unused — the mover and body clocks are counted in ROM frames.</param>
+    /// <param name="gameTime">Unused — the mover and beat clocks are counted in ROM frames.</param>
     /// <param name="field">The playfield: the walls to clamp against and the enforcer-drop cap.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -176,52 +161,49 @@ public sealed class Spheroid : IEntity, IArtSource
             return;
         }
 
-        // The generic mover ($OPB80, notes §43) runs once per ROM FRAME, independently
-        // of how often this object's own process wakes up — the escape included, whose
-        // OXV is a fixed ±1 column/frame. A frame is 6/5 of a tick, so the velocity is
-        // integrated every 6 sixths, not every tick: integrating per tick ran the
-        // spheroid 60/50 = 20% fast (notes §93).
-        _moverSixths += 5;
-        if (_moverSixths >= 6)
+        // The generic mover (notes §43) runs once per ROM FRAME, independently of how
+        // often this object's own process wakes up — the escape included, whose X
+        // velocity is a fixed ±1 column/frame. A frame is 6/5 of a tick, so the
+        // velocity is integrated every 6 fifth-ticks, not every tick: integrating per tick
+        // ran the spheroid 20% too fast (notes §93).
+        _moveTimer += 5;
+        if (_moveTimer >= 6)
         {
-            _moverSixths -= 6;
+            _moveTimer -= 6;
             AdvancePosition(field);
         }
 
-        // Every phase's process is `NAP 2` = 3 ROM frames = 3.6 port ticks (notes
-        // §43: `NAP n` is n + 1 frames), so the PICTURE and the phase's own logic
-        // step on the body clock. The escape used to advance its picture on every
-        // port tick instead — 3.6x the arcade's rate, a 15 Hz strobe of a picture
-        // that is still growing — which is what the author saw once a spheroid had
-        // dropped its last enforcer (notes §90).
-        _bodyFifths += 5;
-        if (_bodyFifths < GameplayConstants.SpheroidBodyRomFrames * 6)
+        // Every phase's process runs every 3 ROM frames = 3.6 port ticks (notes §43),
+        // so the picture and the phase's own logic step on that same beat clock,
+        // including the escape (notes §90).
+        _beatTimer += 5;
+        if (_beatTimer < GameplayConstants.SpheroidBeatRomFrames * 6)
         {
             return;
         }
 
-        _bodyFifths -= GameplayConstants.SpheroidBodyRomFrames * 6;
+        _beatTimer -= GameplayConstants.SpheroidBeatRomFrames * 6;
 
-        // ROM `ADDD #4 / CMPD #<last> / BLS …`: the picture advances one entry a body
-        // unless it is already at the phase's LAST picture. That body is the WRAP
-        // pass: the phase's own countdown (or, for the escape, the X exit test) lives
-        // there, and on some branches the store is SKIPPED so the picture is held.
+        // The picture advances one entry a beat unless it is already at the phase's
+        // LAST picture. That beat is the WRAP pass: the phase's own countdown (or, for
+        // the escape, the exit-toward-the-edge test) lives there, and on some branches
+        // the picture is deliberately held instead of advanced.
         int lastPicture = _dropping && !_escaping ? DropLastPicture : SpinLastPicture;
         bool wrapPass = _rotation >= lastPicture;
 
         if (_escaping)
         {
-            // CIRC3L. The exit test sits INSIDE the wrap branch, so it is evaluated
-            // once per five-picture cycle, not every body — the ROM's `CMPA #XMIN+3` /
-            // `CMPA #XMAX-10`; a spheroid that runs out of field before its next wrap
-            // pass just stops at the wall (the mover rejects the step) and leaves on it.
+            // The exit test sits INSIDE the wrap branch, so it is evaluated once per
+            // five-picture cycle, not every beat; a spheroid that runs out of field
+            // before its next wrap pass just stops at the wall (the mover rejects the
+            // step) and leaves on it. (ROM: `CIRC3L`.)
             if (wrapPass)
             {
                 Rectangle bounds = field.Wall.PlayfieldBounds;
                 if (_position.X <= bounds.X + ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitLeftColumn) ||
                     _position.X >= ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitRightColumn))
                 {
-                    LifeState = EntityLifeState.Dead; // CIR4: KILLOF + SUCIDE — removed, no burst
+                    LifeState = EntityLifeState.Dead; // removed at once, no burst (ROM: `CIR4`)
                     return;
                 }
 
@@ -233,10 +215,11 @@ public sealed class Spheroid : IEntity, IArtSource
             return;
         }
 
-        // CIRGO (accumulate, clamp, damp) and the PD7 re-roll run once per BODY in
-        // both CIRCLE and CIRC2L; CIRC3L never calls them (its velocity is fixed).
+        // Accumulate/clamp/damp the velocity, and re-roll the acceleration timer, once
+        // per beat while spinning or dropping; the escape never touches either (its
+        // velocity is fixed).
         AccelerateAndDamp();
-        if (--_accelBodiesRemaining <= 0)
+        if (--_accelBeatsRemaining <= 0)
         {
             RollAccelerations();
         }
@@ -248,11 +231,12 @@ public sealed class Spheroid : IEntity, IArtSource
         }
 
         // ---- the WRAP pass: the phase's countdown ----------------------------------
-        // CIRCLE's `TST STATUS / BNE CIRC1` stores the wrap target (CIRP0) without
-        // decrementing, so a held game keeps spinning and accelerating but the SPIN
-        // countdown does not advance. CIRC2L and CIRC3L have no such test — the check
-        // is per routine, not per object (§88's trap) — so a dropping spheroid keeps
-        // counting through a pause. The port used to gate both phases.
+        // While spinning, a frozen game holds the picture at its wrap target without
+        // decrementing the countdown, so a held spheroid keeps spinning and
+        // accelerating but its SPIN countdown does not advance. The drop and escape
+        // phases have no such freeze check of their own — the arcade's freeze test is
+        // per routine, not per object (§88's trap) — so a dropping spheroid keeps
+        // counting through a pause. The port used to (incorrectly) freeze both phases.
         if (!_dropping && field.RobotsFrozen)
         {
             _rotation = 0;
@@ -267,22 +251,23 @@ public sealed class Spheroid : IEntity, IArtSource
 
         if (!_dropping)
         {
-            // CIRCLE -> CIRC2 (`BEQ CIRC2`): the pointer is NOT stored on this branch,
-            // so the drop phase carries the SAME pointer on — CIRP4 held for this body,
-            // then CIRP5, CIRP6, CIRP7. (The port used to restart the cycle at CIRP0.)
+            // Switching from spin to drop does NOT reset the picture pointer, so the
+            // drop phase carries the SAME picture on for one more beat, then continues
+            // through the rest of its own set. (The port used to wrongly restart the
+            // cycle at picture 0.)
             _dropping = true;
             RerollDropCountdown();
             return;
         }
 
-        // CIRC2L: `ENFCNT >= 8` and the ROM's `$42 >= 17` test gate the drop; a capped
-        // drop is NOT deferred, it just re-rolls the countdown.
+        // A drop that is capped by the field's enforcer limit is NOT deferred — it
+        // just re-rolls the countdown and tries again next time.
         if (field.CanDropEnforcer)
         {
             field.SpawnEnforcer(_position);
             if (--_enforcersRemaining <= 0)
             {
-                StartEscape(); // CIRC3 — the pointer stays on CIRP7; the first escape body wraps it
+                StartEscape(); // the picture stays where it is; the first escape beat wraps it
                 return;
             }
         }
@@ -291,20 +276,20 @@ public sealed class Spheroid : IEntity, IArtSource
         _rotation = 0;
     }
 
-    /// <summary>Re-rolls both accelerations and the 1..15-body re-roll timer.</summary>
-    /// <remarks>ROM CIRNAC.</remarks>
+    /// <summary>Re-rolls both accelerations and the 1..15-beat re-roll timer.</summary>
+    /// <remarks>ROM: `CIRNAC`.</remarks>
     private void RollAccelerations()
     {
-        // PD5 = (HSEED &amp; $1F) - $10 → -16..+15 (1/256 column per frame per body).
-        // PD6 = ((LSEED ^ SEED) &amp; $3F) - $20 → -32..+31 — twice as large because a
-        // column is 2 px, so the two axes reach the same speed IN PIXELS.
+        // X acceleration: a random -16..+15, in 1/256 column per frame per beat.
+        // Y acceleration: a random -32..+31 — twice as large because a column is 2
+        // pixels, so the two axes reach the same speed IN PIXELS.
         _accelX = _random.Next(0, 32) - 16;
         _accelY = _random.Next(0, 64) - 32;
-        _accelBodiesRemaining = 1 + _random.Next(0, 15); // RANDU(15)
+        _accelBeatsRemaining = 1 + _random.Next(0, 15); // 1..15 beats until the next re-roll
     }
 
     /// <summary>Re-arms the drop countdown: a random 1..(this wave's delay / 4) rotations between drops.</summary>
-    /// <remarks>ROM CIRC2's re-arm: PD2 = RMAX(CDPTIM/4) = RND(1..CDPTIM/4) rotations between drops.</remarks>
+    /// <remarks>ROM: the `CIRC2` re-arm.</remarks>
     private void RerollDropCountdown() =>
         _dropRotationsRemaining = 1 + _random.Next(0, _dropDelayRomTicks / 4);
 
@@ -313,24 +298,24 @@ public sealed class Spheroid : IEntity, IArtSource
     /// forever. The picture pointer is deliberately NOT touched.
     /// </summary>
     /// <remarks>
-    /// ROM CIRC3. The ROM leaves the pointer on CIRP7 (the last drop-phase picture)
-    /// and the first escape body wraps it to CIRP0.
+    /// The arcade leaves the picture on the last drop-phase frame, and the first
+    /// escape beat wraps it back to the first spin picture (ROM: `CIRC3`).
     /// </remarks>
     private void StartEscape()
     {
         _escaping = true;
-        _velocityXFp = _escapeDirection * GameplayConstants.SpheroidMaxVelocityXFp;
-        _velocityYFp = 0;
-        _remainderXFp = 0;
-        _remainderYFp = 0;
+        _velocityXSubpixels = _escapeDirection * GameplayConstants.SpheroidMaxVelocityXSubpixels;
+        _velocityYSubpixels = 0;
+        _remainderXSubpixels = 0;
+        _remainderYSubpixels = 0;
     }
 
     /// <summary>Adds the acceleration, clamps to the top speed, then damps by a 64th.</summary>
-    /// <remarks>ROM CIRGO.</remarks>
+    /// <remarks>ROM: `CIRGO`.</remarks>
     private void AccelerateAndDamp()
     {
-        _velocityXFp = ClampThenDamp(_velocityXFp + _accelX, GameplayConstants.SpheroidMaxVelocityXFp);
-        _velocityYFp = ClampThenDamp(_velocityYFp + _accelY, GameplayConstants.SpheroidMaxVelocityYFp);
+        _velocityXSubpixels = ClampThenDamp(_velocityXSubpixels + _accelX, GameplayConstants.SpheroidMaxVelocityXSubpixels);
+        _velocityYSubpixels = ClampThenDamp(_velocityYSubpixels + _accelY, GameplayConstants.SpheroidMaxVelocityYSubpixels);
     }
 
     /// <summary>
@@ -338,16 +323,16 @@ public sealed class Spheroid : IEntity, IArtSource
     /// which is why the limit is the usual terminal state.
     /// </summary>
     /// <remarks>
-    /// ROM CIRGO's second half — `COMA COMB / ASLB ROLA / ASLB ROLA / TFR A,B / SEX /
-    /// ADDD OXV,X`: complement the 16-bit velocity, shift it left twice (so it is
-    /// -4v - 4), keep the HIGH byte sign-extended and add that. The velocity therefore
-    /// converges on 64 x acceleration, which is why the clamp (±$0100 = 1 column/frame
-    /// on X, ±$0200 = 2 rows/frame on Y) is the usual terminal state.
+    /// The arcade's damping arithmetic amounts to nudging the velocity toward -4x
+    /// itself minus a small constant each beat, which makes it converge on 64 times the
+    /// acceleration — and that is why the speed clamp (1 column/frame on X, 2
+    /// rows/frame on Y) ends up being the usual terminal state. (ROM: the second half
+    /// of `CIRGO`.)
     /// </remarks>
-    private static int ClampThenDamp(int velocityFp, int limitFp)
+    private static int ClampThenDamp(int velocitySubpixels, int limitSubpixels)
     {
-        velocityFp = Math.Clamp(velocityFp, -limitFp, limitFp);
-        return velocityFp + (((-4 * velocityFp) - 4) >> 8);
+        velocitySubpixels = Math.Clamp(velocitySubpixels, -limitSubpixels, limitSubpixels);
+        return velocitySubpixels + (((-4 * velocitySubpixels) - 4) >> 8);
     }
 
     /// <summary>
@@ -355,14 +340,14 @@ public sealed class Spheroid : IEntity, IArtSource
     /// step would leave the field is REJECTED — the old coordinate (and its fraction)
     /// is kept, so the spheroid slides along the wall instead of reflecting off it.
     /// </summary>
-    /// <remarks>The generic ROM mover ($OPB80, notes §43) integrates the velocity
-    /// EVERY frame, and the fraction lives in the coordinate's low byte.</remarks>
+    /// <remarks>The arcade's generic mover (notes §43) integrates the velocity EVERY
+    /// frame, and the fraction lives in the coordinate's low byte.</remarks>
     private void AdvancePosition(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
         _position = new IntVector2(
-            AdvanceAxis(_position.X, _velocityXFp, ref _remainderXFp, bounds.X, bounds.Right - CollisionSize.Width),
-            AdvanceAxis(_position.Y, _velocityYFp, ref _remainderYFp, bounds.Y, bounds.Bottom - CollisionSize.Height));
+            AdvanceAxis(_position.X, _velocityXSubpixels, ref _remainderXSubpixels, bounds.X, bounds.Right - CollisionSize.Width),
+            AdvanceAxis(_position.Y, _velocityYSubpixels, ref _remainderYSubpixels, bounds.Y, bounds.Bottom - CollisionSize.Height));
     }
 
     /// <summary>
@@ -370,17 +355,17 @@ public sealed class Spheroid : IEntity, IArtSource
     /// fraction kept for next time — unless the step would leave the field, in which case the
     /// coordinate AND the fraction are left exactly as they were.
     /// </summary>
-    private static int AdvanceAxis(int position, int velocityFp, ref int remainderFp, int min, int max)
+    private static int AdvanceAxis(int position, int velocitySubpixels, ref int remainderSubpixels, int min, int max)
     {
-        int nextRemainder = remainderFp + velocityFp;
+        int nextRemainder = remainderSubpixels + velocitySubpixels;
         int step = nextRemainder >> 8;
         int next = position + step;
         if (next < min || next > max)
         {
-            return position; // out of bounds: the ROM keeps the old coordinate AND fraction
+            return position; // out of bounds: keep the old coordinate AND its carried fraction
         }
 
-        remainderFp = nextRemainder - (step << 8);
+        remainderSubpixels = nextRemainder - (step << 8);
         return next;
     }
 
@@ -397,18 +382,15 @@ public sealed class Spheroid : IEntity, IArtSource
             return;
         }
 
-        // NO flash. spec.txt's "flashing light green" describes the SPHEROID'S
-        // LOOK, not a visibility toggle: its art is rendered in colour-cycling
-        // palette slots, so the shimmer comes from the palette (the M4 marker
-        // remap) exactly as in the arcade. Author, 2026-09-16: "The spheroid is
-        // rendered in a palette index which colour cycles, I think."
+        // No flash: spec.txt's "flashing light green" describes the spheroid's
+        // colour-cycling palette slot (the M4 marker remap), not a visibility toggle.
 
         // No death animation: the ROM turns the object off and bursts it
         // immediately (notes §50) — see Kill().
 
-        // ROM animation: `OPICT += 4` per body, wrapping at CIRP4 while spinning or
-        // escaping (pictures 0..4) and at CIRP7 while dropping (0..7) — one picture
-        // per 3-frame body, NOT a fixed tick clock (notes §56, §90).
+        // The picture advances one entry per beat, wrapping at the fifth picture while
+        // spinning or escaping (0..4) and at the eighth while dropping (0..7) — one
+        // picture per 3-frame beat, NOT a fixed tick clock (notes §56, §90).
         sprites.DrawSprite(spriteBatch, sprites.SpheroidFrames[_rotation % sprites.SpheroidFrames.Length], Bounds, Color.White);
     }
 

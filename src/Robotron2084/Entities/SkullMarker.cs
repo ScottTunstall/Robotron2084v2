@@ -8,13 +8,13 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// The skull and crossbones left behind where a robot killed a human. It is display only:
-/// it never collides with anything, scores nothing, and takes itself off the field after a
-/// fixed linger.
+/// The skull-and-crossbones icon left behind where a robot killed a rescuable human (see
+/// <see cref="HumanKind"/>) — a warning that this human is gone. Display only: no collisions,
+/// no score, just a fixed-time linger before it removes itself.
 /// </summary>
 /// <remarks>
-/// `HUMKIL` in RRH11.ASM: it draws the `SKULP` picture (12x11 px), plays `HKSND`, and sets a
-/// 90-tick countdown (PD2).
+/// ROM: `HUMKIL` (RRH11.ASM) draws `SKULP` (12x11 px), plays `HKSND`, and sets a 90-ROM-frame
+/// countdown (PD2), converted to port ticks by <see cref="GameplayConstants.PortTicks"/>.
 /// </remarks>
 public sealed class SkullMarker : IEntity
 {

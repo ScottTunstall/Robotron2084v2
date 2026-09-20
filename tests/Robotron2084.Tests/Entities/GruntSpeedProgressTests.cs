@@ -19,7 +19,7 @@ namespace Robotron2084.Tests;
 ///    the floor.
 /// 3. The floor reaches 1 = the arcade player's speed (player deltas ±1
 ///    arcade px/frame at $3031; a grunt at limit 1 steps 4 arcade px every
-///    4-vblank body = 1 arcade px/frame) — grunts end "at least as fast as
+///    4-vblank beat = 1 arcade px/frame) — grunts end "at least as fast as
 ///    the player" (author-verified against source + disasm).
 /// </summary>
 public sealed class GruntSpeedProgressTests
@@ -37,28 +37,28 @@ public sealed class GruntSpeedProgressTests
         startingLives: 3);
 
     private static Grunt CreateGruntAt(PlayField field, int x, int y, int seed) =>
-        new(new IntVector2(x, y), moveLimitRomBodies: 20, random: new Random(seed));
+        new(new IntVector2(x, y), moveLimitBeats: 20, random: new Random(seed));
 
     [Fact]
     public void SpeedUp_TruncatesTo7Eighths_AndRespectsTheCurrentFloor()
     {
         Grunt grunt = CreateGruntAt(CreateField(), 100, 100, 1);
-        Assert.Equal(20, grunt.MoveDelayRomTicks);
+        Assert.Equal(20, grunt.MoveDelayBeats);
 
         // 20 × 224/256 = 17.5 → the ROM's MUL high byte truncates to 17.
-        grunt.SpeedUp(floorRomBodies: 1);
-        Assert.Equal(17, grunt.MoveDelayRomTicks);
+        grunt.SpeedUp(floorBeats: 1);
+        Assert.Equal(17, grunt.MoveDelayBeats);
 
         // 17 × 7/8 = 14.875 → 14, which is BELOW the floor 19, so the ROM's
         // `BCS` branch leaves the limit UNCHANGED at 17 (it does not clamp UP to
         // the floor — that was the port's bug, and it made the grunts faster than
         // the arcade's).
-        grunt.SpeedUp(floorRomBodies: 19);
-        Assert.Equal(17, grunt.MoveDelayRomTicks);
+        grunt.SpeedUp(floorBeats: 19);
+        Assert.Equal(17, grunt.MoveDelayBeats);
 
         // With a floor the next step can respect, the limit does move.
-        grunt.SpeedUp(floorRomBodies: 14);
-        Assert.Equal(14, grunt.MoveDelayRomTicks);
+        grunt.SpeedUp(floorBeats: 14);
+        Assert.Equal(14, grunt.MoveDelayBeats);
 
         // And it stops there: 14 × 7/8 = 12 < 14. The in-flight countdown is
         // deliberately untouched by a kill (the ROM only changes the shared limit),
@@ -70,17 +70,17 @@ public sealed class GruntSpeedProgressTests
     {
         Grunt grunt = CreateGruntAt(CreateField(), 100, 100, 2);
 
-        grunt.WaveSpeedTick(floorRomBodies: 9);
-        Assert.Equal(16, grunt.MoveDelayRomTicks);
+        grunt.WaveSpeedTick(floorBeats: 9);
+        Assert.Equal(16, grunt.MoveDelayBeats);
 
-        grunt.WaveSpeedTick(floorRomBodies: 9);
-        Assert.Equal(12, grunt.MoveDelayRomTicks);
+        grunt.WaveSpeedTick(floorBeats: 9);
+        Assert.Equal(12, grunt.MoveDelayBeats);
 
-        grunt.WaveSpeedTick(floorRomBodies: 9);
-        Assert.Equal(9, grunt.MoveDelayRomTicks); // clamped, does not go below the floor
+        grunt.WaveSpeedTick(floorBeats: 9);
+        Assert.Equal(9, grunt.MoveDelayBeats); // clamped, does not go below the floor
 
-        grunt.WaveSpeedTick(floorRomBodies: 1);
-        Assert.Equal(5, grunt.MoveDelayRomTicks); // 9 − 4, floor 1
+        grunt.WaveSpeedTick(floorBeats: 1);
+        Assert.Equal(5, grunt.MoveDelayBeats); // 9 − 4, floor 1
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public sealed class GruntSpeedProgressTests
         Grunt? tracked = null;
         for (int i = 0; i < 30; i++)
         {
-            Grunt grunt = new(new IntVector2(100 + (i % 5) * 24, 100 + (i / 5) * 24), moveLimitRomBodies: 15, random: new Random(i));
+            Grunt grunt = new(new IntVector2(100 + (i % 5) * 24, 100 + (i / 5) * 24), moveLimitBeats: 15, random: new Random(i));
             if (i == 0)
             {
                 tracked = grunt;
@@ -104,7 +104,7 @@ public sealed class GruntSpeedProgressTests
             field.AddGrunt(grunt);
         }
 
-        Assert.Equal(15, tracked!.MoveDelayRomTicks);
+        Assert.Equal(15, tracked!.MoveDelayBeats);
 
         // 121 grace frames + 203 = 324 = PortTicks(270): one frame before the
         // first tick the floor must be untouched.
@@ -114,12 +114,12 @@ public sealed class GruntSpeedProgressTests
         }
 
         Assert.Equal(5, field.GruntSpeedFloor);
-        Assert.Equal(15, tracked.MoveDelayRomTicks);
+        Assert.Equal(15, tracked.MoveDelayBeats);
 
         field.Update(Frame()); // first level-progress tick (270 vblanks in)
 
         Assert.Equal(3, field.GruntSpeedFloor); // 5 − 2
-        Assert.Equal(11, tracked.MoveDelayRomTicks); // 15 − 4
+        Assert.Equal(11, tracked.MoveDelayBeats); // 15 − 4
 
         // 270 = PortTicks(225): one frame before the next tick, unchanged.
         for (int tick = 0; tick < GameplayConstants.PortTicks(225) - 1; tick++)
@@ -133,7 +133,7 @@ public sealed class GruntSpeedProgressTests
 
         // The $F0 toggle: this pass drops the floor by 1 and the limit by 2.
         Assert.Equal(2, field.GruntSpeedFloor); // 3 − 1
-        Assert.Equal(9, tracked.MoveDelayRomTicks); // 11 − 2
+        Assert.Equal(9, tracked.MoveDelayBeats); // 11 − 2
 
         // Third pass: back to −2 / −4.
         for (int tick = 0; tick < GameplayConstants.PortTicks(225); tick++)
@@ -142,7 +142,7 @@ public sealed class GruntSpeedProgressTests
         }
 
         Assert.Equal(1, field.GruntSpeedFloor); // 2 − 2 → 1 = the player's speed
-        Assert.Equal(5, tracked.MoveDelayRomTicks); // 9 − 4
+        Assert.Equal(5, tracked.MoveDelayBeats); // 9 − 4
     }
 
     [Fact]

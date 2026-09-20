@@ -10,7 +10,7 @@ namespace Robotron2084.Tests;
 
 /// <summary>
 /// PHASE E (arcade-fidelity-notes (18)): brains (ROM BRNORG $1AC0 — nearest
-/// human target, 1px/body chase, ABAC, cruise missiles, touch-conversion to
+/// human target, 1px/beat chase, ABAC, cruise missiles, touch-conversion to
 /// progs), progs (straight-line walkers that keep the human's art/box and
 /// die in a strip explosion of the phony burst card, notes §90),
 /// cruise missiles (50/25/25 direction roll,
@@ -58,7 +58,7 @@ public sealed class PlayFieldPhaseETests
     }
 
     [Fact]
-    public void Brain_StepsTowardNearestHuman_OneArcadePxPerAxisPerBody()
+    public void Brain_StepsTowardNearestHuman_OneArcadePxPerAxisPerBeat()
     {
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
@@ -72,9 +72,9 @@ public sealed class PlayFieldPhaseETests
         var brain = new Brain(brainSpot, new Random(2), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
-        // Body period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
-        // (notes 26: SLEEP(BRNSPD) + one body-execution vblank). In the
-        // 19-tick window exactly one body runs = 1 arcade px (2 screen px)
+        // Beat period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
+        // (notes 26: SLEEP(BRNSPD) + one beat-execution vblank). In the
+        // 19-tick window exactly one beat runs = 1 arcade px (2 screen px)
         // per axis toward the target.
         for (int tick = 0; tick < GameplayConstants.PortTicks(16); tick++)
         {
@@ -102,7 +102,7 @@ public sealed class PlayFieldPhaseETests
         var brain = new Brain(brainSpot, new Random(3), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
-        // One body in the 19-tick window (period PortTicks(9) = 10, notes 26).
+        // One beat in the 19-tick window (period PortTicks(9) = 10, notes 26).
         for (int tick = 0; tick < GameplayConstants.PortTicks(16); tick++)
         {
             field.Update(Frame());
@@ -322,7 +322,7 @@ public sealed class PlayFieldPhaseETests
         field.AddProg(prog);
         WarmUp(field); // expire the start grace (RobotsFrozen)
 
-        // The prog re-aims on small odds (3%/9% per body) and when blocked,
+        // The prog re-aims on small odds (3%/9% per beat) and when blocked,
         // so over a long window it WILL turn — the arcade property is that
         // every step is straight (one axis at a time, never diagonal).
         var path = new List<IntVector2> { prog.Position };
@@ -343,11 +343,11 @@ public sealed class PlayFieldPhaseETests
     }
 
     [Fact]
-    public void Prog_CoversFourPixelsOnEitherAxis_PerBody()
+    public void Prog_CoversFourPixelsOnEitherAxis_PerBeat()
     {
         // ROM PRGAL/PRGAR give (±2, 0) and PRGAD/PRGAU give (0, ±4) — but the X byte moves
         // OX16, a screen address, so it is TWO COLUMNS, not two pixels: a column is 2 px
-        // (§55). Both axes therefore cover the same 4 px a body, and the port's old 2 px
+        // (§55). Both axes therefore cover the same 4 px a beat, and the port's old 2 px
         // horizontal step walked at half the arcade's speed (notes §87).
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
@@ -368,7 +368,7 @@ public sealed class PlayFieldPhaseETests
             int dx = Math.Abs(prog.Position.X - spot.X);
             int dy = Math.Abs(prog.Position.Y - spot.Y);
 
-            // NAP 3 body (3.6 ticks): exactly one step per body, one axis only, 4 px either way.
+            // NAP 3 beat (3.6 ticks): exactly one step per beat, one axis only, 4 px either way.
             Assert.True(dx == 0 || dy == 0, $"seed {seed}: diagonal step {dx},{dy}");
             Assert.Equal(ScreenSize.Scaled(4), dx + dy);
 
@@ -388,9 +388,9 @@ public sealed class PlayFieldPhaseETests
     }
 
     [Fact]
-    public void CruiseMissile_MovesTwicePerBody_AndNeverStalls()
+    public void CruiseMissile_MovesTwicePerBeat_AndNeverStalls()
     {
-        // ROM CMISL: one body = NAP 2, doing TWO CMMOVs of 1px each. And
+        // ROM CMISL: one beat = NAP 2, doing TWO CMMOVs of 1px each. And
         // GCMDIR's `BPL GCMDY` jumps INTO the Y block, so a missile whose X
         // is not armed always seeks on Y — there is no "both axes zero" case.
         Rectangle inner = PlayFieldSpawnTests.InnerBounds;
@@ -427,9 +427,9 @@ public sealed class PlayFieldPhaseETests
         var missile = new CruiseMissile(spot, field.Player.Position, new Random(7));
         field.AddCruiseMissile(missile);
 
-        // The first body (2 x 1px CMMOV) lands on tick 4 (3 ROM frames = 3.6),
+        // The first beat (2 x 1px CMMOV) lands on tick 4 (3 ROM frames = 3.6),
         // and the re-aim timer cannot fire that early (RND(1..7) >= 1 decrement
-        // per body, re-aim on reaching 0).
+        // per beat, re-aim on reaching 0).
         for (int tick = 0; tick < GameplayConstants.PortTicksCeil(3); tick++)
         {
             field.Update(Frame());
@@ -438,14 +438,14 @@ public sealed class PlayFieldPhaseETests
         int dx = Math.Abs(missile.Position.X - spot.X);
         int dy = Math.Abs(missile.Position.Y - spot.Y);
 
-        // Two CMMOVs per body: `ADDA PD4` steps the X COLUMN byte (1 column = 2
-        // arcade px, notes §51) and `ADDB PD5` the Y ROW byte (1 px) — so a body is
+        // Two CMMOVs per beat: `ADDA PD4` steps the X COLUMN byte (1 column = 2
+        // arcade px, notes §51) and `ADDB PD5` the Y ROW byte (1 px) — so a beat is
         // 2 columns on X but only 2 rows on Y. The missile really is faster
         // horizontally than vertically; there is no halving here as there is for
         // the player and the tank.
         Assert.True(dx is 0 || dx == ScreenSize.Scaled(4), $"dx {dx} is not 0 or 4 arcade px");
         Assert.True(dy is 0 || dy == ScreenSize.Scaled(2), $"dy {dy} is not 0 or 2 arcade px");
-        Assert.True(dx != 0 || dy != 0, "missile did not move at all in its first body");
+        Assert.True(dx != 0 || dy != 0, "missile did not move at all in its first beat");
     }
 
     [Fact]
@@ -465,8 +465,8 @@ public sealed class PlayFieldPhaseETests
         var missile = new CruiseMissile(spot, field.Player.Position, new Random(7));
         field.AddCruiseMissile(missile);
 
-        // Two bodies = 4 CMMOVs = 4 marks (the missile flies on while the
-        // player's start grace freezes the robots). Bodies land on ticks 4 and 8.
+        // Two beats = 4 CMMOVs = 4 marks (the missile flies on while the
+        // player's start grace freezes the robots). Beats land on ticks 4 and 8.
         for (int tick = 0; tick < GameplayConstants.PortTicksCeil(3) * 2; tick++)
         {
             field.Update(Frame());
@@ -477,7 +477,7 @@ public sealed class PlayFieldPhaseETests
         for (int i = 1; i < missile.Trail.Count; i++)
         {
             // Marks are one CMMOV apart: one COLUMN on X (Scaled(2)) or one ROW on
-            // Y (Scaled(1)), except across a BODY boundary, where the re-aim may
+            // Y (Scaled(1)), except across a BEAT boundary, where the re-aim may
             // turn the missile and the offset becomes diagonal (both axes).
             // Nothing may be skipped entirely.
             int gap = Math.Abs(missile.Trail[i].X - missile.Trail[i - 1].X)
@@ -519,7 +519,7 @@ public sealed class PlayFieldPhaseETests
             field.Update(Frame());
         }
 
-        Assert.Equal(3, prog.GhostTrail.Count);   // one per body
+        Assert.Equal(3, prog.GhostTrail.Count);   // one per beat
         Assert.Equal(spot, prog.GhostTrail[^1]);  // newest first, so the spawn spot is last
         Assert.Equal(3, prog.GhostFrames.Count);
 

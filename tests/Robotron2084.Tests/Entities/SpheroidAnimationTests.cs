@@ -7,7 +7,7 @@ namespace Robotron2084.Tests;
 
 /// <summary>
 /// The spheroid's PICTURE CHAIN (notes §56.2 as corrected by §90) — `OPICT += 4` once
-/// per body (`NAP 2` = 3 ROM frames = 3.6 port ticks), where the wrap boundary decides
+/// per beat (`NAP 2` = 3 ROM frames = 3.6 port ticks), where the wrap boundary decides
 /// how many pictures a phase has:
 /// <list type="bullet">
 /// <item>`CIRCLE` (`ANIMATE_SPHEROID`) and `CIRC3L` both compare against `CIRP4`
@@ -73,7 +73,7 @@ public sealed class SpheroidAnimationTests
     }
 
     [Fact]
-    public void TheEscapeSpinsTheIdleFivePictures_OnePicturePerBody()
+    public void TheEscapeSpinsTheIdleFivePictures_OnePicturePerBeat()
     {
         // How long the escape lasts depends on where the seeded bounce leaves the
         // spheroid, so several seeds are tried (deterministically, in order) and the
@@ -98,7 +98,7 @@ public sealed class SpheroidAnimationTests
                     continue;
                 }
 
-                // One picture per `NAP 2` body: 3.6 port ticks each, which the
+                // One picture per `NAP 2` beat: 3.6 port ticks each, which the
                 // exact-6ths clock lands 3 and 4 ticks apart. The per-tick strobe was 1.
                 Assert.True(
                     tick - lastChangeTick >= 3,

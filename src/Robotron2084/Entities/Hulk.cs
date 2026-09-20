@@ -8,33 +8,41 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// A hulk — the indestructible robot. It never dies and cannot be shot: a laser only knocks it
-/// backwards (clamped at the wall, never pushed through it), its <see cref="LifeState"/> is always
+/// A hulk — the large, indestructible robot that slowly stalks the player or a human. It never dies
+/// and cannot be shot: a laser only knocks it backwards a short distance (clamped at the wall, never
+/// pushed through it — see <see cref="ApplyKnockback"/>), its <see cref="LifeState"/> is always
 /// <see cref="EntityLifeState.Alive"/>, and walking over an electrode destroys the ELECTRODE, not
-/// the hulk (the field resolves that).
+/// the hulk (the field resolves that — this class has no electrode-collision code of its own). A
+/// hulk touching the player kills the player. See <see cref="IEntity"/> for the "beat" / "ROM frame"
+/// / "..Timer" / "notes §NN" terminology used throughout this class.
 ///
-/// It lumbers in big, slow steps — one per speed cycle: 3 or 4 arcade px sideways, alternating with
-/// its animation, or 2 arcade px up or down. It re-aims when its random step timer runs out, or
-/// immediately when the wall is in the way (no move that cycle). Each re-aim flips the axis it
-/// travels on and then aims along the new axis at the target's coordinate plus a random -16..+15
-/// offset, so it wanders rather than homing precisely.
+/// It lumbers in big, slow steps rather than gliding smoothly — one step per speed cycle: 3 or 4
+/// arcade px sideways (alternating between the two each step, in step with its walk animation), or a
+/// flat 2 arcade px up or down. It only ever moves along ONE axis at a time (purely horizontal or
+/// purely vertical, never diagonal). It picks a fresh direction ("re-aims") when its random step
+/// timer runs out, or immediately if the wall is in the way of its next step (it simply stands still
+/// for that cycle instead). Each re-aim flips which axis it travels on (horizontal becomes vertical
+/// and vice versa) and then aims along that new axis at the target's coordinate plus a random
+/// -16..+15 pixel offset, so it wanders toward its target rather than beelining precisely at it.
 ///
 /// What it hunts is decided when it is created: either the player, or a named human that falls back
 /// to the player once that member dies or is rescued (see the constructor's <c>target</c>).
 /// </summary>
 /// <remarks>
-/// RRH11.ASM's `HULK` process, ported step for step: `HULKND` re-aims, `HNDX`/`HNDY` pick the
-/// direction, `CKLIMV` rejects a step that would leave the playfield, `HULKIL` handles the laser
-/// knockback, and `HLKSPD` is the step period.
+/// Ported from the arcade's own hulk behaviour, routine for routine (ROM: RRH11.ASM, the `HULK`
+/// process — <c>HULKND</c> re-aims, <c>HNDX</c>/<c>HNDY</c> pick the direction, <c>CKLIMV</c> rejects
+/// a step that would leave the playfield, <c>HULKIL</c> handles the laser knockback, and
+/// <c>HLKSPD</c> is the step period).
 ///
-/// The target roll (R5 $017C): each hulk rolls 50/50 at spawn — a family-list slot, which is EMPTY
-/// at spawn time because the ROM spawns hulks before the family (so the target is NULL and the hulk
-/// hunts the player; the ROM's actual NULL read chases a phantom at $7E01 — a documented bug the
-/// port skips), or the last family-list slot, i.e. the last-spawned human.
+/// One historical arcade quirk is worth knowing: each hulk decides who it hunts the instant it's
+/// created, by a 50/50 coin flip. But hulks are created before the human family exists yet, so the
+/// "hunt a human" branch has nothing to point at — it ends up hunting the player, same as the other
+/// branch, just by a different (and in the original ROM, slightly buggy) path. This port reproduces
+/// the same outcome (hunt the player) without reproducing the ROM's specific bug.
 ///
-/// Animation (decoded 2026-09-13 from the ROM; see <see cref="LeftFrames"/>): each direction block
-/// walks an ABAC sequence over the nine verified hulk frames, restarting at the block's first frame
-/// on every direction change (`HND10`: CLRA; STA PD4,U; OPICT = HLKLP1 + first image).
+/// The walk animation (decoded from the ROM; see <see cref="LeftFrames"/>) is not a plain 1-2-3-4
+/// cycle — each direction repeats a 4-step A-B-A-C pattern (frame A, then B, then A again, then C)
+/// drawn from the hulk's 9 sprite frames, restarting at frame A every time the hulk changes direction.
 /// </remarks>
 public sealed class Hulk : IEntity, IArtSource
 {
@@ -45,14 +53,14 @@ public sealed class Hulk : IEntity, IArtSource
         (ScreenSize.Scaled(GameplayConstants.HulkCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.HulkCollisionSize.Height));
 
     private readonly Random _random;
-    private readonly int _stepFifthsPerStep; // HLKSPD ROM frames in exact 6ths (notes §52)
+    private readonly int _stepPeriod; // how long one step takes, in the fixed-point "fifths" clock (see IEntity) — converted from the ROM's HLKSPD frame count
     private readonly Func<IntVector2> _target;
     private bool _aimed;
     private bool _horizontal;
-    private int _animEntry; // ROM PD4, 0..3: the next entry of the direction block
+    private int _animEntry; // which of the 4 frames in the current walk pattern comes up next (0-3)
     private int _currentFrameIndex; // 0-based index into SpriteSet.HulkFrames
     private int _reaimStepsRemaining;
-    private int _stepFifths;
+    private int _stepTimer;
     private Direction8 _direction;
     private IntVector2 _position;
     private Rectangle? _playfieldBounds; // cached from the last Update; used by ApplyKnockback
@@ -62,26 +70,26 @@ public sealed class Hulk : IEntity, IArtSource
     /// <param name="random">The random source, for the re-aim timer and the aim offsets.</param>
     /// <param name="hulkSpeedRomTicks">How many ROM frames between steps — this wave's hulk speed.</param>
     /// <param name="target">Returns who this hulk hunts right now: the player, or a human that falls back to the player once it is gone.</param>
-    /// <remarks>ROM `HLKSPD` (notes §11.2), which is 5..8 ROM frames — so the exact-6ths clock matters here too.</remarks>
+    /// <remarks>The step period (ROM: HLKSPD) is 5-8 ROM frames — not a whole number of port ticks — so
+    /// it goes through the exact fixed-point "fifths" conversion described on <see cref="IEntity"/>
+    /// rather than being rounded, which would make a hulk step slightly too fast.</remarks>
     public Hulk(IntVector2 position, Random random, int hulkSpeedRomTicks, Func<IntVector2> target)
     {
         _position = position;
         _random = random;
-        // HLKSPD is 5..8 ROM frames, i.e. 6..9.6 ticks: the exact-6ths clock is
-        // what keeps a wave-1 hulk (8 frames) from stepping 7% early.
-        _stepFifthsPerStep = hulkSpeedRomTicks * 6;
+        _stepPeriod = hulkSpeedRomTicks * 6;
         _target = target;
-        _reaimStepsRemaining = random.Next(1, 32); // ROM PD5 = (LSEED & $1F) + 1
-        _direction = Direction8.Up; // overwritten by the first aim (ROM runs HULKND at spawn)
+        _reaimStepsRemaining = random.Next(1, 32); // a fresh direction comes every 1-31 steps, chosen at random
+        _direction = Direction8.Up; // placeholder — the first Update() call picks the real starting direction
         _currentFrameIndex = VerticalFrames[0];
     }
 
     /// <summary>The walk frames for each direction, as indices into <see cref="SpriteSet.HulkFrames"/> (the repo's hulk1..9).</summary>
     /// <remarks>
-    /// Verified 2026-09-13 against the ROM: the animation table at $01CC (byte-identical to RRH11's
-    /// HLKAL/HLKAR/HLKAD/HLKAU) indexes the picture list HLKLP1 at $0CF9, whose nine data pointers read
-    /// hulk1, hulk2, hulk3, hulk7, hulk8, hulk9, hulk4, hulk5, hulk6 — so LEFT walks 1,2,1,3, RIGHT
-    /// 7,8,7,9, and DOWN and UP both walk 4,5,4,6 (ABAC).
+    /// Each direction plays 4 frames in an A-B-A-C pattern (not a simple 1-2-3-4 cycle), reusing only 3
+    /// of the 9 hulk pictures: LEFT plays hulk1, hulk2, hulk1, hulk3; RIGHT plays hulk7, hulk8, hulk7,
+    /// hulk9; UP and DOWN both play hulk4, hulk5, hulk4, hulk6. Verified against the ROM's own
+    /// animation tables (HLKAL/HLKAR/HLKAD/HLKAU) and picture list (HLKLP1).
     /// </remarks>
     private static readonly int[] LeftFrames = { 0, 1, 0, 2 };
     private static readonly int[] RightFrames = { 6, 7, 6, 8 };
@@ -91,7 +99,7 @@ public sealed class Hulk : IEntity, IArtSource
     {
         Direction8.Left => LeftFrames,
         Direction8.Right => RightFrames,
-        _ => VerticalFrames, // the ROM's DOWN and UP blocks use the same images
+        _ => VerticalFrames, // the ROM draws DOWN and UP with the same set of pictures
     };
 
     /// <summary>Current walk frame, 0-based index into <see cref="SpriteSet.HulkFrames"/> (test hook).</summary>
@@ -132,26 +140,26 @@ public sealed class Hulk : IEntity, IArtSource
 
         if (!_aimed)
         {
-            // ROM HULKST: the hulk's first HULKND seeks X (its initial
-            // picture address is not an X-block), so it starts horizontal.
+            // The very first move a hulk ever makes is always sideways, never up/down
+            // (the arcade does the same on spawn).
             _aimed = true;
             _horizontal = true;
             PickDirection(field);
-            _currentFrameIndex = FramesFor(_direction)[0]; // HND10: PD4 = 0, OPICT = first frame
+            _currentFrameIndex = FramesFor(_direction)[0]; // start the walk animation from its first frame
             return;
         }
 
-        _stepFifths += 5;
-        if (_stepFifths < _stepFifthsPerStep)
+        _stepTimer += 5;
+        if (_stepTimer < _stepPeriod)
         {
             return;
         }
 
-        _stepFifths -= _stepFifthsPerStep;
+        _stepTimer -= _stepPeriod;
 
-        // One big step per cycle (ROM HULK00/HULK0: show + move with the
-        // current entry's delta — horizontal 3/4 arcade px, vertical 2 —
-        // then advance the entry). The frame shown is the entry's frame.
+        // Take one step: show this cycle's walk frame, then move — sideways steps
+        // alternate 3px and 4px, up/down steps are a flat 2px — and advance to the
+        // next frame in the walk pattern.
         int[] frames = FramesFor(_direction);
         _currentFrameIndex = frames[_animEntry & 3];
         int stepArcadePx = _horizontal ? ((_animEntry & 1) == 0 ? 3 : 4) : 2;
@@ -159,14 +167,14 @@ public sealed class Hulk : IEntity, IArtSource
         IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.Scaled(stepArcadePx);
         if (field.Wall.Intersects(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
-            // ROM CKLIMV out-of-bounds: no move this cycle, take a new direction.
+            // That step would cross the wall — stay put this cycle and pick a new direction instead.
             Reaim(field);
             return;
         }
 
         _position = next;
 
-        // ROM PD5 velocity timer: a fresh direction every RND(1..31) steps.
+        // Countdown to the next scheduled direction change, regardless of the wall check above.
         if (--_reaimStepsRemaining <= 0)
         {
             Reaim(field);
@@ -175,26 +183,26 @@ public sealed class Hulk : IEntity, IArtSource
 
     /// <summary>Re-rolls the step timer, switches to the other axis and picks a new direction, resetting the walk to the block's first frame.</summary>
     /// <remarks>
-    /// ROM `HULKND`: reset the random step timer, FLIP the axis (previous direction was an X-block
-    /// -> seek Y, and vice versa), then aim along the new axis; `HND10` resets the walk to the
-    /// block's first frame (CLRA; STA PD4,U; OPICT = HLKLP1 + first image).
+    /// Restarts the random step-timer, switches from moving sideways to moving up/down (or back), aims
+    /// along that new axis, and resets the walk animation to its first frame (ROM: HULKND / HND10).
     /// </remarks>
     private void Reaim(PlayField field)
     {
         _reaimStepsRemaining = _random.Next(1, 32);
         _horizontal = !_horizontal;
         PickDirection(field);
-        // ROM HND10: a new direction resets the walk to the block's first
-        // frame (CLRA; STA PD4,U; OPICT = HLKLP1 + first image).
+        // A fresh direction always restarts the walk animation from its first frame.
         _animEntry = 0;
         _currentFrameIndex = FramesFor(_direction)[0];
     }
 
     /// <summary>Aims along the current axis at the target's coordinate plus a random -16..+15 offset.</summary>
     /// <remarks>
-    /// ROM `HNDX`/`HNDY`: aim = target coordinate + RND(-16..15) on the current axis; a horizontal
-    /// aim out of range clamps to the playfield, a vertical one below range wraps to the far side;
-    /// then move toward the adjusted point.
+    /// Aims at the target's position plus a small random offset (-16 to +15 px) on whichever axis the
+    /// hulk is currently travelling on, so it wanders toward the target rather than walking a perfectly
+    /// straight line at it. If that aim point would fall outside the playfield, it's adjusted back in:
+    /// a sideways aim is pulled back inside the wall, and an aim above the top wall is redirected to
+    /// the bottom wall instead (ROM: HNDX/HNDY).
     /// </remarks>
     private void PickDirection(PlayField field)
     {
@@ -209,7 +217,7 @@ public sealed class Hulk : IEntity, IArtSource
         else
         {
             int ty = target.Y + offset;
-            if (ty < bounds.Y) // ROM: target below YMIN>>2 -> seek YMAX instead
+            if (ty < bounds.Y) // aiming above the top wall — redirect to the bottom wall instead
             {
                 ty = bounds.Bottom - CollisionSize.Height;
             }
@@ -224,16 +232,13 @@ public sealed class Hulk : IEntity, IArtSource
     /// </summary>
     /// <param name="direction">The laser's direction of travel, per axis (-1, 0 or +1).</param>
     /// <remarks>
-    /// Spec: "pushed back ... into the WALL but no further".
-    ///
-    /// ROM RRH11 `HULKIL`: the hulk is pushed at ROM magnitudes — X = ±1 arcade px, doubled to ±2
-    /// when SEED's sign bit is clear (50%); Y = ±1, quadrupled to ±4 when LSEED >= $C0 (75%).
+    /// A laser can't kill a hulk, but it does shove it back a little (spec: "pushed back ... into the
+    /// WALL but no further"). The push is small and randomised: sideways it's normally 1 arcade px, but
+    /// doubles to 2px about half the time; up/down it's normally 1 arcade px, but quadruples to 4px
+    /// about three-quarters of the time (ROM: HULKIL).
     /// </remarks>
     public void ApplyKnockback(IntVector2 direction)
     {
-        // ROM HULKIL: LDA LASDIR; TST SEED; BMI (skip) / ASLA -> x2 when the
-        // sign bit is clear (50%); LDB LASDIR+1; CMPA LSEED #$C0; BHS (skip)
-        // / ASLB X2 -> x4 when LSEED < $C0 (75%).
         int dx = direction.X != 0 && _random.Next(2) == 0 ? direction.X * 2 : direction.X;
         int dy = direction.Y != 0 && _random.Next(4) < 3 ? direction.Y * 4 : direction.Y;
         _position += new IntVector2(ScreenSize.Scaled(dx), ScreenSize.Scaled(dy));
@@ -258,9 +263,9 @@ public sealed class Hulk : IEntity, IArtSource
     /// <param name="sprites">The shared sprite set, which holds the hulk frames.</param>
     /// <returns>The texture for the current walk frame.</returns>
     /// <remarks>
-    /// The hulk never shatters (it is indestructible), but it DOES materialise at a wave start — the
-    /// appear pass gives every robot — the hulk included — an appear record, so the effect still needs
-    /// its art (see <see cref="IArtSource"/> and RRG23's `APPEAR`).
+    /// The hulk never shatters (it is indestructible), but it does still materialise at the start of a
+    /// wave — every robot gets that "appear" effect, hulk included — so it still needs to supply its
+    /// current art (see <see cref="IArtSource"/>; ROM: RRG23's APPEAR).
     /// </remarks>
     public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.HulkFrames[_currentFrameIndex];
 }

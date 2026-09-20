@@ -8,61 +8,66 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// The missile a tank fires at the player. It is aimed once, when it is created, and then flies
-/// in a straight line until it fizzles out — bouncing off the border walls rather than leaving
-/// the playfield, and passing over electrodes. A laser hit removes it instantly, with no death
-/// animation.
+/// The tank's projectile — the missile a tank enemy fires at the player. It is aimed once, at
+/// the moment it's fired, and then flies in a straight line forever after (it never re-aims or
+/// homes in); instead of leaving the playfield when it reaches a wall it bounces off like a ball,
+/// and it passes harmlessly over electrode hazards rather than colliding with them. It
+/// disappears on its own after a random amount of time ("fizzles out"), or instantly if the
+/// player shoots it, with no death animation either way.
 /// </summary>
 /// <remarks>
-/// From the shell routines in RRTK4.ASM (`SHELL`, `SHELLP`, `SHLDIE`; R5 disassembly 4E46-4FCF,
-/// notes §11.5):
+/// <para>
+/// See the terminology glossary on <see cref="IEntity"/> for what "ROM frame", the
+/// "..Timer" fixed-point clock and "notes §NN" mean generally.
+/// </para>
+/// Ported from the arcade's own shell behaviour (ROM: RRTK4.ASM, the `SHELL`/`SHELLP`/`SHLDIE`
+/// routines; notes §11.5):
 ///
 /// - it is AIMED ONCE, straight at the player, with ±1 px/frame of jitter on each axis ("not
-///   very accurate"). The arcade's spread comes from a `SHLSPD` table, so the port's jitter is an
-///   approximation and is still an open item;
-/// - it then flies straight (the ROM's generic mover, `OPB80`, in RRS22.ASM) and BOUNCES off all
-///   four border walls — the ROM negates the X delta in `XVNEG` and the Y delta in `YVNEG` and
-///   asks for the bounce sound;
-/// - it fizzles out after `(RND &amp; $1F) + $30` ROM frames.
+///   very accurate"). The arcade's spread comes from a speed table the port doesn't yet
+///   reproduce exactly, so the port's jitter is an approximation and is still an open item;
+/// - it then flies straight (the ROM's shared straight-line mover) and BOUNCES off all four
+///   border walls, playing the bounce sound each time;
+/// - it fizzles out after a random 48-79 ROM frames.
 ///
 /// Spec: "TANK SHELLS fly over electrodes" — a shell never collides with an electrode. The
-/// collision box is the shell picture's own size: `SHLP1` is `FCB 4,7`, i.e. 4 bytes wide (a
-/// byte is 2 pixels) by 7 rows = 8x7 px (notes §53). The arcade's 20-shells-per-wave fire
-/// counter (`TNKFIR`) and the fizzle bug that goes with it live on <see cref="PlayField"/>.
+/// collision box is the shell picture's own size, 8x7 arcade px (notes §54). The arcade's
+/// 20-shells-per-wave fire counter and the fizzle bug that goes with it live on
+/// <see cref="PlayField"/>.
 /// </remarks>
 public sealed class TankShell : IEntity
 {
     /// <summary>The collision box: the shell picture's own size, 8x7 arcade px, in port pixels.</summary>
-    /// <remarks>The ROM bounds and collides a projectile against the picture it is showing —
-    /// `SHLP1` is `FCB 4,7` — which is why the box is the art's size (notes §53).</remarks>
+    /// <remarks>The ROM collides a projectile against the picture it is showing, which is why the box
+    /// is the art's own size, not a fixed cell (notes §54).</remarks>
     private static readonly int BoxWidth = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Width);
     private static readonly int BoxHeight = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Height);
     private IntVector2 _position;
-    private IntVector2 _velocity; // ROM OXV/OYV: port px per ROM FRAME (the generic mover's step)
-    private int _remainingLifeFifths;
-    private int _moverSixths; // OPB80 cadence: one velocity integration per 6 sixths = 1 ROM frame
+    private IntVector2 _velocity; // how far the shell moves per ROM frame, in port px per axis (ROM: OXV/OYV)
+    private int _remainingLife;
+    private int _moveTimer; // counts up to one ROM frame's worth of ticks so the shell moves once per frame, not once per tick
 
     /// <summary>Fires a shell from the given position, aimed once at the player.</summary>
     /// <param name="position">Where the shell starts — the tank's muzzle, in port pixels.</param>
     /// <param name="towardPlayerDirection">Direction from the tank to the player; only its SIGNS are used, so the aim is always a 45° line.</param>
     /// <param name="random">Source of the ±1 px/frame aim jitter and of the fizzle time.</param>
-    /// <remarks>R5 4F82-4F8A: lifespan = `(RND &amp; $1F) + $30` ROM frames (48..79).</remarks>
+    /// <remarks>The shell's lifespan is a random 48-79 ROM frames, rolled once here (ROM: notes §11.5).</remarks>
     public TankShell(IntVector2 position, IntVector2 towardPlayerDirection, Random random)
     {
         _position = position;
         // Aimed at the player with ±1 px/frame jitter per axis ("not very
-        // accurate"); the ROM sets its velocity once at creation too. The
-        // speed is a per-FRAME value — the generic mover integrates it once per
-        // ROM frame, not per tick (notes §93).
+        // accurate"); the velocity is set once here and never changes. It's a
+        // per-FRAME value — the mover below integrates it once per ROM frame,
+        // not per tick (notes §93).
         _velocity = new IntVector2(
             Math.Sign(towardPlayerDirection.X) * GameplayConstants.TankShellSpeed + random.Next(-1, 2),
             Math.Sign(towardPlayerDirection.Y) * GameplayConstants.TankShellSpeed + random.Next(-1, 2));
-        // R5 4F82-4F8A: lifespan = (RND & $1F) + $30 ROM frames (48..79).
-        // Held in exact 6ths (notes §52/§65): 48 frames is 57.6 port ticks, which
-        // truncated PortTicks(48) = 57 cut short.
-        _remainingLifeFifths = (random.Next(0, 32) + GameplayConstants.TankShellLifeBaseRomTicks) * 6;
+        // Lifespan: a random 48-79 ROM frames. Held in exact 6ths (notes
+        // §52/§65) rather than rounded to whole ticks, which would cut the
+        // shell's life slightly short.
+        _remainingLife = (random.Next(0, 32) + GameplayConstants.TankShellLifeBaseRomTicks) * 6;
         // The mover moves it from the first frame (notes §93).
-        _moverSixths = 6;
+        _moveTimer = 6;
     }
 
     /// <summary>Top-left of the collision box.</summary>
@@ -81,7 +86,7 @@ public sealed class TankShell : IEntity
     /// True when this update bounced off a border wall, so the playfield can play the bounce
     /// sound. The playfield reads it and clears it each tick.
     /// </summary>
-    /// <remarks>R5 $4FCD requests the bounce sound there.</remarks>
+    /// <remarks>The ROM plays the bounce sound at the same point in its own bounce logic.</remarks>
     public bool BouncedThisUpdate { get; private set; }
 
     /// <summary>
@@ -97,25 +102,26 @@ public sealed class TankShell : IEntity
             return;
         }
 
-        // Fizzles out after the ROM lifespan (4FBB: counter hits 0 -> remove;
-        // note the arcade counter at $98F1 is NOT decremented — fizzle bug).
-        _remainingLifeFifths -= 5;
-        if (_remainingLifeFifths <= 0)
+        // Fizzles out once its lifespan counter reaches zero. Note: the arcade's
+        // separate 20-shells-per-wave fire counter is NOT decremented when a shell
+        // fizzles this way — that's a ROM bug the port reproduces (see PlayField).
+        _remainingLife -= 5;
+        if (_remainingLife <= 0)
         {
             LifeState = EntityLifeState.Dead;
             return;
         }
 
-        // Straight-line flight: the generic mover (OPB80, notes §43/§93) integrates
-        // the velocity once per ROM frame — a frame is 6/5 of a tick, so every 6
-        // sixths, not every tick (that ran the shell 60/50 = 20% fast). Bounces off
-        // the four border walls (R5 4F94-4FCD: COM the delta — the X wall is
-        // checked before the Y wall — then the shell keeps flying. It never exits
-        // the playfield.)
-        _moverSixths += 5;
-        if (_moverSixths >= 6)
+        // Straight-line flight: the shared mover (notes §43/§93) integrates the
+        // velocity once per ROM frame — a frame is 6/5 of a tick, so every 6
+        // fifth-ticks, not every tick (running it every tick made the shell 20% too
+        // fast). Bounces off the four border walls by flipping the velocity's
+        // sign on the axis that hit — X is checked before Y — then the shell
+        // keeps flying; it never leaves the playfield.
+        _moveTimer += 5;
+        if (_moveTimer >= 6)
         {
-            _moverSixths -= 6;
+            _moveTimer -= 6;
             IntVector2 next = _position + _velocity;
             Rectangle bounds = field.Wall.PlayfieldBounds;
             BouncedThisUpdate = false;
