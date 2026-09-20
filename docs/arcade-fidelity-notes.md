@@ -9525,3 +9525,36 @@ and **canvas px** (the window's scaled blit). Nothing defines the four in one pl
 **To do alongside B48i:** define the four pixel spaces once — `ScreenSize`'s class remarks and/or a units
 table beside the constants — say what a column is where the constant is declared, and then make every
 "column" mention name its unit. Recorded as handoff B48j.
+
+---
+
+### 114. CLEAN CODE IS THE STANDARD (author, 2026-09-20)
+
+Author: *"we adhere to clean code here - at least the Single Responsibility Principle, method naming,
+well named variables, consistency throughout the codebase, no magic numbers, and above all, READABILITY
+FOR HUMANS."*
+
+This is the umbrella the last three directives hang off, and it settles the choices: when a comment and
+a rename would both fix a confusion, **rename** (§111); when a literal and a constant would both explain
+a number, **write the constant** (§112); when a unit is ambiguous, **name it** — in the identifier or the
+constant — rather than papering over it with prose (§113).
+
+In practice, for this codebase:
+
+- **Single responsibility** — one job per class and per method, and the name says WHICH job. The
+  precedent is CA1502 (§99, D-020): the two methods over the complexity limit were SPLIT, not
+  suppressed, and there are no suppressions anywhere in the repo.
+- **Method names** — a verb phrase in the domain's own words (`RollOffsets`, `PickDirection`,
+  `AdvanceReprogramming`), not `Process`/`Handle`/`Do`/`Step1`.
+- **Variables** — named for what they hold in the game's terms, unit included when it matters
+  (`jitterColumns`, `_velocitySubpixels`, `stepX`), and no single letters outside a tight loop.
+- **Consistency** — one idiom per concept across `src/`: if the timer unit is a constant, it is a
+  constant in EVERY entity that uses it, not in three of them; if a conversion is done one way in
+  `Spark`, it is done the same way in `Enforcer`.
+- **No magic numbers** — §112, in full.
+- **Readability for humans above all** — the reader is the target, not the compiler and not the diff. If
+  ten lines need four facts from three comments to follow, the code is wrong, not the reader.
+
+**Not a licence to churn**: no reformatting for its own sake and no rename sweeps without a reason — but
+any file opened for another reason gets this standard applied while it is open, and the parked work
+(B48i, B48j) is measured against it. Recorded in `status.md`, the ledger and the handoff (rule 11).

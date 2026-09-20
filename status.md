@@ -59,6 +59,15 @@ Historical: `plan.md` = the original rebuild plan, `ledger.md` = its decision lo
   and anything tunable lives in `Tuning/GameplayConstants.cs`. A raw `5`, `6` or `16` in an entity is a
   bug in waiting — and §111 no longer allows a comment to be the explanation. Details: notes §112.
 
+- **CLEAN CODE IS THE STANDARD (author directive, 2026-09-20): *"we adhere to clean code here - at least
+  the Single Responsibility Principle, method naming, well named variables, consistency throughout the
+  codebase, no magic numbers, and above all, READABILITY FOR HUMANS."*** This is the umbrella the other
+  directives hang off: rename before you comment (§111), write the constant instead of the literal
+  (§112), name the unit instead of explaining it (§113). Splitting beats suppressing (the CA1502
+  precedent, §99/D-020 — there are no suppressions in the repo). Not a licence to churn: no reformatting
+  for its own sake, but any file opened for another reason gets the standard while it is open.
+  Details: notes §114.
+
 - Project resume docs: **`docs/handoff-2026-09-17.md` (current handoff — read this
   one)** and `docs/arcade-fidelity-notes.md` (master ROM-vs-port research log).
   `docs/handoff-2026-09-16.md` and `docs/handoff-2026-09-13.md` are historical.
