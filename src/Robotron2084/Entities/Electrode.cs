@@ -7,38 +7,20 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>
-/// An electrode (also called a "post") — one of the small stationary hazard obstacles scattered
-/// around the playfield. It never moves (spec: "Electrodes are static and never move") and never
-/// attacks by itself; it is simply dangerous to touch. Touching one is lethal to whoever touches it
-/// (with one exception): a player laser destroys it outright, a walking grunt dies AND destroys it
-/// (both die), a walking hulk destroys it but the hulk itself is indestructible and unaffected (only
-/// the electrode dies), and the player touching it kills both the player and the electrode. Collision
-/// resolution (i.e. deciding who touched what and what happens) lives in <see cref="PlayField"/>, so
-/// this class itself knows nothing about who killed it — it only knows how to play its own death
-/// animation once told to.
-///
-/// Dying is a three-picture "shrivel": a brief sequence of shrinking/wilting pictures playing in
-/// place (not a blink/flicker, and not an explosion) before the electrode disappears — which is why
-/// this class is deliberately not <see cref="IExplodable"/> (unlike most other destroyable entities,
-/// which do burst apart when killed).
-/// </summary>
-/// <remarks>
-/// Ported from the arcade's own post-kill behaviour (ROM: RRP8.ASM, `PSTKIL` handing off to
-/// `PKPROC`, the shrivel process). The original is explicit that killing a post never triggers an
-/// explosion — it just marks the post dead, switches its picture off, and starts the shrivel; only
-/// the player-contact path does something extra (turning the player's own "hit" state on).
-/// </remarks>
+/// <summary>An electrode — a static hazard post that shrivels away when something kills it.</summary>
+/// <seealso cref="PlayField"/>
+/// <remarks>ROM: RRP8.ASM (<c>PSTKIL</c> hands off to <c>PKPROC</c>). A post never explodes — its
+/// picture switches off and it plays a 3-picture shrivel held 6, 3 and 2 frames — so this class is
+/// deliberately not <see cref="IExplodable"/>. Its picture family and colour are looked up per wave
+/// by RRG23.ASM's <c>GTWCOL</c> (notes §45). Timers count 5 per tick and 6 per arcade frame, so an
+/// interval of N frames is due at 6 x N.</remarks>
 public sealed class Electrode : IEntity
 {
-    /// <summary>The collision box: the post picture's own size, 10x9 arcade px, in port pixels, at <see cref="Position"/>.</summary>
-    /// <remarks>The ROM's post picture.</remarks>
+    /// <summary>The post picture's own 10x9 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.ElectrodeCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.ElectrodeCollisionSize.Height));
 
-    /// <summary>How long each shrivel picture is held, in ROM ticks. Three pictures: 6, 3, 2.</summary>
-    /// <remarks>Copied from the ROM's own three shrivel pictures and how long each one is held
-    /// (ROM: RRP8.ASM); the whole shrivel takes 11 ROM frames, about 0.22 seconds.</remarks>
+    /// <summary>How long each shrivel picture is held, in ROM frames.</summary>
     private static readonly int[] ShrivelSleepRomTicks = [6, 3, 2];
     private readonly int _wave;
     private int _shrivelStep;
@@ -47,34 +29,21 @@ public sealed class Electrode : IEntity
 
     /// <summary>Creates an electrode for the given wave.</summary>
     /// <param name="position">Top-left of the electrode.</param>
-    /// <param name="wave">The wave number; it decides both the post's picture family and its colour.</param>
-    /// <remarks>Both the picture family and the colour are looked up per wave (ROM: RRG23.ASM `GTWCOL`).</remarks>
+    /// <param name="wave">The wave number; it decides the post's picture family and its colour.</param>
     public Electrode(IntVector2 position, int wave = 1)
     {
         _position = position;
         _wave = wave;
     }
 
-    /// <summary>
-    /// Which of the 9 electrode picture sets this electrode draws (each set is one alive picture
-    /// plus its own 2-picture shrivel sequence), chosen by wave number. The arcade only names the
-    /// shapes of the first four — STAR, SNOWFLAKE, SQUARE, TRIANGLE — but its own per-wave table
-    /// (notes §45) cycles through 9 distinct sets over a 10-wave sequence before repeating.
-    /// </summary>
+    /// <summary>Which of the 9 electrode picture sets this electrode draws, chosen by wave number.</summary>
+    /// <remarks>The arcade names only the first four shapes; its own table cycles 9 sets over 10 waves.</remarks>
     internal int FamilyIndex => GameplayConstants.PostFamilyForWave(_wave);
 
-    /// <summary>
-    /// The palette slot the post is drawn in for this wave. "Palette slot" here means one of the
-    /// arcade hardware's shared colour-table entries; some slots are static and some continuously
-    /// cycle through several colours over time ("colour cycling"), so a wave whose electrode uses a
-    /// cycling slot will visibly shimmer even though nothing about the electrode itself is animating.
-    /// The post is drawn as a solid silhouette filled entirely in that slot's current colour.
-    /// </summary>
-    /// <remarks>Looked up per wave the same way as the picture family (ROM: RRG23.ASM `GTWCOL`,
-    /// notes §47).</remarks>
+    /// <summary>The palette slot the post is drawn in for this wave; the slot's colour may cycle.</summary>
     internal int TintSlot => GameplayConstants.PostSlotForWave(_wave);
 
-    /// <summary>Top-left of the electrode; the electrode itself never moves (spec).</summary>
+    /// <summary>Top-left of the electrode; it never moves.</summary>
     public IntVector2 Position => _position;
 
     /// <summary>The post picture's own 10x9 box at <see cref="Position"/>.</summary>
@@ -83,17 +52,7 @@ public sealed class Electrode : IEntity
     /// <summary>Alive until something kills it; Dying while the shrivel plays.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>
-    /// Starts the shrivel. The electrode is removed when the last picture's hold expires, so it
-    /// can no longer stop anything. Does nothing unless the electrode is alive.
-    /// </summary>
-    /// <remarks>
-    /// Steps through this electrode's own picture set's 3-picture death sequence (the first picture
-    /// is the same as the alive look, held briefly before the two genuinely shrinking pictures play),
-    /// holding each for its own length of time, then removes it (ROM: RRP8.ASM `PKPROC`). Which
-    /// picture set — see <see cref="FamilyIndex"/> — was decided once, per wave, when the electrode
-    /// was created; the shrivel just plays that set's own pictures, whichever ones they are.
-    /// </remarks>
+    /// <summary>Starts the shrivel; does nothing unless the electrode is alive.</summary>
     public void Kill()
     {
         if (LifeState != EntityLifeState.Alive)
@@ -106,12 +65,9 @@ public sealed class Electrode : IEntity
         _shrivelTimer = 0; // the first sleep is a full period (notes §52 clock)
     }
 
-    /// <summary>
-    /// Plays the shrivel: one step per death picture, each held for its own sleep, then the
-    /// electrode is removed. Does nothing unless it is dying.
-    /// </summary>
-    /// <param name="gameTime">Unused — the holds are counted in ROM frames (notes §52).</param>
-    /// <param name="field">Unused — nothing about the shrivel depends on the playfield.</param>
+    /// <summary>Plays the shrivel: one picture per hold, then the electrode is removed.</summary>
+    /// <param name="gameTime">Unused — the holds are counted in ticks.</param>
+    /// <param name="field">Unused.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (LifeState != EntityLifeState.Dying)
@@ -119,10 +75,7 @@ public sealed class Electrode : IEntity
             return;
         }
 
-        // Advances to the next death picture once this picture's hold time expires; past the
-        // last picture, the electrode is removed entirely. Each hold's length in port ticks
-        // isn't a whole number, so it's tracked with the fixed-point fifths trick rather than
-        // rounded down, which kept the timing exact instead of running slightly fast (notes §52).
+        // Counts up to the next shrivel picture: 5 per tick, 6 per arcade frame.
         _shrivelTimer += 5;
         if (_shrivelTimer < ShrivelSleepRomTicks[_shrivelStep] * 6)
         {
@@ -147,11 +100,9 @@ public sealed class Electrode : IEntity
         return sprites.ElectrodeFrames[frame];
     }
 
-    /// <summary>Draws the live or shrivel picture, as a solid silhouette in the wave's post colour.</summary>
+    /// <summary>Draws the live or shrivel picture, as a solid silhouette in the wave's slot colour.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set, which holds the post pictures.</param>
-    /// <remarks>The arcade draws it as a filled shape in the slot's colour, not as detailed sprite
-    /// art (notes §47).</remarks>
+    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -163,9 +114,7 @@ public sealed class Electrode : IEntity
     }
 
     /// <summary>This electrode's current picture, for the appear effect.</summary>
-    /// <param name="sprites">The shared sprite set, which holds the post pictures.</param>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The live frame, or the current shrivel frame while it is dying.</returns>
-    /// <remarks>See <see cref="IArtSource"/>: the appear engine blits whatever picture an object
-    /// is showing, so it can materialise an electrode too.</remarks>
     public Texture2D CurrentFrameArt(SpriteSet sprites) => CurrentArt(sprites);
 }

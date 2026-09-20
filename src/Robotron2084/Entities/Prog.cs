@@ -7,100 +7,55 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>
-/// A prog — a rescuable human that a <see cref="Brain"/> has "reprogrammed": once the
-/// conversion finishes, the human sprite is gone and a prog appears in its place, wearing
-/// that same human's look but now hostile — touching the player kills the player, exactly
-/// like any other enemy robot. It keeps the art and collision box of the human it became.
-///
-/// It walks in straight lines only — up, down, left or right, never diagonally — moving 4
-/// arcade pixels every time it wakes up (this codebase calls one such wake-up a "beat"; see
-/// <see cref="IEntity"/> for that and the "ROM frame"/"fifths" units used below), on
-/// whichever single axis it's currently walking.
-///
-/// It does NOT home in on the player directly. Instead, each prog rolls a persistent random
-/// offset from the player's position and walks toward THAT point instead — one prog might
-/// aim 20 pixels to the player's left, another 10 pixels above — and only ever chases either
-/// the X part of that offset or the Y part, never both at once, so a prog always walks in a
-/// straight cardinal line rather than diagonally at its aim point. This offset is re-rolled
-/// occasionally (making the prog change its aim over time) and re-picked immediately if a
-/// step is blocked; if the aim point would fall off the far edge of the playfield, it wraps
-/// to the opposite edge instead, which is what occasionally makes a prog turn and walk AWAY
-/// from the player for a while.
-///
-/// It is never drawn as an ordinary sprite. Instead it leaves a shimmering trail: as it
-/// walks, the square it's leaving is briefly painted as a solid colour block with a black
-/// silhouette on top, and the square it's entering as a black block with a coloured
-/// silhouette — and the last 7 of these "ghost" squares stay frozen on screen at once,
-/// fading only when overwritten by a newer one, giving a prog a strobing afterimage trail
-/// that makes it visually distinct from every other enemy.
-///
-/// A laser hit kills it the same way every other robot dies — it bursts into the shared
-/// strip explosion — except the burst uses a fixed stand-in picture rather than whatever
-/// human art the prog happened to be walking in. A prog is worth 100 points.
-/// </summary>
-/// <remarks>
-/// Ported from the arcade's own prog behaviour (ROM: RRB10.ASM's `PROGST`/`PROG`; notes
-/// §18, §46). The ROM measures its horizontal step in 2-pixel-wide "columns" (an artifact
-/// of how the original video hardware addresses the screen), so a step of "2 columns" is
-/// really 4 pixels — the same distance as the vertical step (notes §55/§87).
-///
-/// The trail's colour pairs are exact inverses of each other BY DESIGN, not a bug: the
-/// "leaving" ghost is a solid colour with a black silhouette, the "entering" ghost is a
-/// solid black with a coloured silhouette (notes §53). Don't "fix" this without checking.
-///
-/// On a laser kill, the arcade wipes the whole ghost trail, swaps in the fixed stand-in
-/// picture, nudges the position fully inside the playfield if it's overhanging an edge, and
-/// then runs the same shared strip-explosion effect every other robot uses (ROM: `PRGKIL`).
-/// </remarks>
+/// <summary>A prog — a reprogrammed human: it wears the human's art and hunts the player.</summary>
+/// <seealso cref="Human"/>
+/// <seealso cref="Explosion"/>
+/// <remarks>ROM: RRB10.ASM's <c>PROGST</c>/<c>PROG</c>/<c>GPOFF</c>/<c>GPDIR</c>/<c>PRGKIL</c>
+/// (notes §18). It keeps its victim's art and box, walks one cardinal direction at a time (never
+/// diagonally) 4 arcade px a beat, and does not home on the player: it rolls a persistent random aim
+/// offset and walks toward the player's position plus that offset, one axis at a time, re-rolling the
+/// offset occasionally and the direction on a blocked step. An aim point past the field's far edge
+/// wraps to the opposite edge, which is why a prog sometimes walks away. Each wake-up drops a ghost at
+/// the square it is leaving — the newest 7 are kept, each frozen in the pose it was dropped in — giving
+/// it a strobing afterimage trail. The leaving ghost is a coloured silhouette on black, the entering one
+/// black on colour: exact inverses by design, not a bug. A kill wipes the trail and swaps in the
+/// 12x16 <c>PGXPIC</c> card for the shared strip explosion. Timers count 5 per tick and 6 per arcade
+/// frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Prog : IExplodable
 {
-    /// <summary>How many ROM frames pass between two of the prog's wake-ups (see the class summary
-    /// for what a wake-up, called a "beat" in this codebase, is).</summary>
+    /// <summary>How many ROM frames pass between wake-ups.</summary>
     /// <remarks>The ROM re-runs the prog's step logic every 3 frames.</remarks>
     private const int BeatPeriodRomTicks = 3;
 
-    /// <summary>The wake-up period above, converted to the fixed-point "fifths" clock (see
-    /// <see cref="IEntity"/>): 3 ROM frames is 3.6 port ticks, not a whole number.</summary>
-    /// <remarks>Notes §52, §65.</remarks>
+    /// <summary>How many timer units between wake-ups (a tick adds 5; an arcade frame is 6 units).</summary>
     private static int BeatPeriod => BeatPeriodRomTicks * 6;
 
-    /// <summary>
-    /// The horizontal step size, in the arcade's own "columns" unit: 2 columns, which comes out to
-    /// four arcade pixels — the same distance the vertical step below covers.
-    /// </summary>
-    /// <remarks>
-    /// The arcade's own X step table moves 2 columns at a time, and a column is 2 arcade pixels, so
-    /// this is really a 4-pixel step, matching the vertical step exactly (notes §55/§87).
-    /// </remarks>
+    /// <summary>The horizontal step: 2 columns = 4 arcade px, the same distance as the vertical step.</summary>
+    /// <remarks>ROM: the X step table moves 2 columns at a time, and a column is 2 arcade px.</remarks>
     private const int StepXColumns = 2;
 
     /// <summary>The vertical step: ±4 rows on Y.</summary>
-    /// <remarks>The arcade's own Y step table.</remarks>
+    /// <remarks>ROM: the Y step table.</remarks>
     private const int StepYRows = 4;
 
-    /// <summary>Arcade pixels in one ROM column (the video buffer is `column*256 + row`).</summary>
+    /// <summary>Arcade pixels in one ROM column (the video buffer is <c>column*256 + row</c>).</summary>
     private const int ArcadePixelsPerColumn = 2;
 
     /// <summary>Half of the X aim-offset's range: (a roll of 1..15 minus this) times 4 columns.</summary>
-    /// <remarks>The arcade rolls a random 1..15, subtracts this, and scales by 4 columns, giving ±28
-    /// columns of offset in steps of 4 (ROM: `GPOFF`).</remarks>
+    /// <remarks>ROM: <c>GPOFF</c> gives ±28 columns of offset in steps of 4.</remarks>
     private const int OffsetXHalfRange = 8;
 
     /// <summary>The Y aim-offset's span: a roll of 1..18 gives -16..+18 rows in steps of 2.</summary>
-    /// <remarks>The arcade computes this from a random 1..18 roll (ROM: `GPOFF`).</remarks>
+    /// <remarks>ROM: <c>GPOFF</c> computes this from a random 1..18 roll.</remarks>
     private const int OffsetYSteps = 18;
 
-    /// <summary>The aim-wrap margin past the field's far edge, in columns (X) and rows (Y); beyond it the aim wraps to the opposite edge.</summary>
-    /// <remarks>The arcade wraps an aim point that falls this far past the field's far edge back to the
-    /// opposite edge (ROM: `GPDIR`).</remarks>
+    /// <summary>The aim-wrap margin past the field's far edge, in columns (X) and rows (Y).</summary>
+    /// <remarks>ROM: <c>GPDIR</c> wraps an aim past this margin to the opposite edge.</remarks>
     private const int WrapMarginXColumns = 0x30;
     private const int WrapMarginYRows = 18;
 
-    /// <summary>Roll thresholds out of 256: above the first, the aim offsets are re-rolled;
-    /// above the second, the prog re-aims.</summary>
-    /// <remarks>Roughly 3% of wake-ups re-roll the offsets and roughly 10% re-aim (ROM: the prog's
-    /// step routine).</remarks>
+    /// <summary>Roll thresholds out of 256: above the first the offsets re-roll, above the second it re-aims.</summary>
+    /// <remarks>Roughly 3% of wake-ups re-roll the offsets and roughly 10% re-aim.</remarks>
     private const int ReOffsetThreshold256 = 0xF8;
     private const int ReDirectionThreshold256 = 0xE4;
 
@@ -112,8 +67,7 @@ public sealed class Prog : IExplodable
         _ => GameplayConstants.DadCollisionSize,
     };
 
-    // The walk animation plays picture 1, then 2, then back to 1, then 3, then repeats
-    // (a "first, second, first, third" pattern) through the human's 3 walk pictures.
+    // The walk cycle: picture 1, 2, 1, 3 — the same A-B-A-C pattern the humans use.
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
     private readonly Random _random;
@@ -126,12 +80,8 @@ public sealed class Prog : IExplodable
     private int _offsetX;   // this prog's persistent aim-offset on X, re-rolled occasionally
     private int _offsetY;   // this prog's persistent aim-offset on Y
 
-    /// <summary>
-    /// One shadow-ring entry: a position this prog vacated, plus the pose it was
-    /// drawn in at that moment. A ghost is blitted once and never re-blitted, so it
-    /// keeps its creation pose for life.
-    /// </summary>
-    /// <remarks>The ROM blits a ghost with `HUMON` at `OPICT` and erases it with `PCTOFF`.</remarks>
+    /// <summary>One shadow-ring entry: a position the prog vacated and the pose it was drawn in.</summary>
+    /// <remarks>A ghost is blitted once and never re-blitted, so it keeps its creation pose for life.</remarks>
     private readonly record struct Ghost(IntVector2 Position, int FrameIndex);
 
     /// <summary>The shadow ring, NEWEST FIRST (see <see cref="Ghost"/>).</summary>
@@ -194,16 +144,9 @@ public sealed class Prog : IExplodable
     /// <summary>Alive until shot; never Dying (it dies by exploding, see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>
-    /// Kills the prog: it goes straight to Dead and leaves the strip explosion of the
-    /// phony burst card for the field to run (see <see cref="CurrentFrameArt"/>). There
-    /// is no Dying state.
-    /// </summary>
-    /// <remarks>
-    /// The object is GONE the moment it is hit, and the only thing left is the strip
-    /// explosion of the picture it swapped in — the field's, because
-    /// <see cref="CurrentFrameArt"/> is now the phony card (ROM: `PRGKIL`; notes §90).
-    /// </remarks>
+    /// <summary>Kills the prog outright; the strip explosion is the whole visual.</summary>
+    /// <remarks>ROM: <c>PRGKIL</c> — the object is gone immediately, leaving only the strip explosion
+    /// of the picture it swapped in.</remarks>
     public void Kill()
     {
         if (LifeState == EntityLifeState.Alive)
@@ -212,40 +155,25 @@ public sealed class Prog : IExplodable
         }
     }
 
-    /// <summary>
-    /// The picture the death explosion shatters: the phony burst card, NOT the human
-    /// art the prog was walking in.
-    /// </summary>
-    /// <param name="sprites">The shared sprite set, which holds the phony burst card.</param>
+    /// <summary>The picture the death explosion shatters: the phony burst card, not the human art.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The phony burst card.</returns>
-    /// <remarks>ROM PRGKIL swaps the object's picture to the 12×16 `PGXPIC`.</remarks>
+    /// <remarks>ROM: <c>PRGKIL</c> swaps the picture to the 12x16 <c>PGXPIC</c>.</remarks>
     public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.ProgBurst;
 
-    /// <summary>
-    /// The explosion's rect: the phony burst card's own size at the prog's corner,
-    /// not the (smaller) human box it was standing in.
-    /// </summary>
-    /// <remarks>
-    /// The arcade swaps the picture to the 12x16 phony burst card without moving the
-    /// object, and the explosion's rectangle is that same top-left corner with the
-    /// PICTURE's own width and height. The arcade also clamps that corner to stay just
-    /// inside the playfield; a prog is always inside the play area, so the port's
-    /// corner already is. (ROM: `PRGKIL`, `EXSTV`.)
-    /// </remarks>
+    /// <summary>The explosion's rect: the burst card's size at the prog's corner.</summary>
+    /// <remarks>ROM: <c>PRGKIL</c>/<c>EXSTV</c> swap the picture without moving the object, and the
+    /// explosion uses that corner with the PICTURE's own size. The arcade clamps the corner inside the
+    /// field; a prog is always inside it already.</remarks>
     public Rectangle ExplosionBounds => new(
         _position.X,
         _position.Y,
         ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Width),
         ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Height));
 
-    /// <summary>
-    /// Runs one wake-up when it's due: advances the walk animation, maybe rolls a fresh aim offset or
-    /// a fresh direction, pushes the ghost trail along, then takes one step in its current direction
-    /// — or picks a new direction instead if that step would leave the playfield. Held still while
-    /// <see cref="PlayField.RobotsFrozen"/>.
-    /// </summary>
-    /// <param name="gameTime">Unused — the wake-up timer is counted in ROM frames, not real time.</param>
-    /// <param name="field">The playfield: the player to aim off and the walls to stay inside.</param>
+    /// <summary>Runs one wake-up: animate, maybe re-roll, drop a ghost, then step.</summary>
+    /// <param name="gameTime">Unused — the wake-up timer is counted in ticks.</param>
+    /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -258,22 +186,18 @@ public sealed class Prog : IExplodable
             return;
         }
 
-        // Not time to wake up yet. (3 ROM frames is 3.6 port ticks, not a whole number —
-        // tracked exactly with the fixed-point "fifths" clock, see IEntity — rounding this
-        // down to 3 whole ticks used to make the prog run 20% too fast.)
+        // Counts up to the next wake-up: 5 per tick, 6 per arcade frame.
         _beatTimer += 5;
         if (_beatTimer < BeatPeriod)
         {
             return;
         }
 
-        // Advance the walk animation first — it always advances on a wake-up, even if the
-        // step below turns out to be refused.
+        // The animation advances on every wake-up, even if the step below is refused.
         _beatTimer -= BeatPeriod;
         _frameStep = (_frameStep + 1) % WalkCycle.Length;
 
-        // Re-roll the aim offset on ~3% of wake-ups, then possibly pick a fresh direction on
-        // ~10% — in that order, because picking a direction uses whatever offset is current.
+        // Re-roll the offsets first: picking a direction uses whatever offset is current.
         if (_random.Next(256) > ReOffsetThreshold256)
         {
             RollOffsets();
@@ -285,20 +209,15 @@ public sealed class Prog : IExplodable
             _frameStep = 0; // a fresh direction restarts the walk at its first frame
         }
 
-        // Drop a ghost at the position the prog is about to leave, and remember its pose too
-        // — this happens every wake-up regardless of whether the step below actually
-        // succeeds (a refused step just drops a ghost on top of where the prog already is).
-        // The trail keeps the most recent 7 ghosts and never redraws an older one, which is
-        // why it looks "frozen" rather than animated. (ROM: `PROG3`.)
+        // Drop a ghost at the square being left, remembering its pose. Refused steps drop one too;
+        // the trail keeps 7 and never redraws an older one (ROM: PROG3).
         _ghosts.Insert(0, new Ghost(_position, WalkFrameIndex));
         if (_ghosts.Count > GameplayConstants.ProgGhostCount)
         {
             _ghosts.RemoveAt(_ghosts.Count - 1); // drop the oldest ghost once the trail is full
         }
 
-        // Take the step: 2 columns (4px) on X or 4 rows (4px) on Y — always the same 4px
-        // distance regardless of axis, matching the class summary above. Only one axis moves,
-        // since the direction is always a single cardinal direction.
+        // 2 columns (4px) on X or 4 rows (4px) on Y, on one axis only.
         int stepX = ScreenSize.Scaled(StepXColumns * ArcadePixelsPerColumn);
         int stepY = ScreenSize.Scaled(StepYRows);
         IntVector2 step = _direction switch
@@ -317,48 +236,32 @@ public sealed class Prog : IExplodable
         }
         else
         {
-            // A step that would leave the playfield is dropped entirely, and the prog
-            // re-aims instead (ROM: `CKLIM` fails, falling through to `PROGND`/`GPDIR`).
+            // A refused step is dropped entirely and the prog re-aims (ROM: CKLIM fails → GPDIR).
             _direction = PickDirection(field);
             _frameStep = 0;
         }
     }
 
-    /// <summary>
-    /// True when the object's picture box is inside the playfield; a failure REJECTS
-    /// the whole move (it is not clamped, and the prog never slides along a wall).
-    /// </summary>
-    /// <remarks>ROM: `CKLIMV`.</remarks>
+    /// <summary>True when the box is inside the playfield; a failure rejects the whole move.</summary>
+    /// <remarks>ROM: <c>CKLIMV</c>.</remarks>
     private static bool FitsInside(Rectangle bounds, Rectangle box) =>
         box.X >= bounds.X
         && box.Y >= bounds.Y
         && box.Right <= bounds.Right
         && box.Bottom <= bounds.Bottom;
 
-    /// <summary>
-    /// Rolls the persistent aim offsets, in the playfield's own units — X in columns
-    /// (-28..+28, i.e. -56..+56 arcade px) and Y in rows (-16..+18). These are what stop a
-    /// prog from steering straight at you: it walks toward where you were plus its own
-    /// standing error.
-    /// </summary>
-    /// <remarks>ROM: `GPOFF`.</remarks>
+    /// <summary>Rolls the persistent aim offsets: X in columns (-28..+28), Y in rows (-16..+18).</summary>
+    /// <remarks>ROM: <c>GPOFF</c> — the offsets are the prog's standing error against the player.</remarks>
     private void RollOffsets()
     {
         _offsetX = (_random.Next(1, 16) - OffsetXHalfRange) * 4;
         _offsetY = ((19 - _random.Next(1, OffsetYSteps + 1)) * 2) - OffsetYSteps;
     }
 
-    /// <summary>
-    /// Picks the next cardinal direction: HALF of all re-aims consider X and half
-    /// consider Y, so a prog never walks diagonally. The chosen axis aims at your
-    /// coordinate plus this prog's offset; an aim point past the field's far edge by
-    /// the margin wraps to the opposite edge. Ties walk left/up ("equal" turns
-    /// around).
-    /// </summary>
+    /// <summary>Picks the next cardinal direction: half the re-aims consider X, half Y, so never diagonal.</summary>
     /// <param name="field">The playfield: the player and the bounds to aim and wrap against.</param>
     /// <returns>The direction to walk — always one of left, right, up or down.</returns>
-    /// <remarks>The arcade picks the axis with a coin flip and treats an exact match as "arrived", so
-    /// ties turn the prog around rather than leave it standing still. (ROM: `GPDIR`.)</remarks>
+    /// <remarks>ROM: <c>GPDIR</c> — an exact match counts as "arrived", so ties turn the prog around.</remarks>
     private Direction8 PickDirection(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -366,7 +269,7 @@ public sealed class Prog : IExplodable
 
         if (_random.Next(2) == 0)
         {
-            // The offset is in COLUMNS, so it becomes pixels first (notes §55).
+            // The offset is in columns, so convert to pixels first.
             int aimX = player.X + ScreenSize.Scaled(_offsetX * ArcadePixelsPerColumn);
             if (aimX > bounds.Right + ScreenSize.Scaled(WrapMarginXColumns * ArcadePixelsPerColumn))
             {
@@ -385,8 +288,7 @@ public sealed class Prog : IExplodable
         return aimY <= _position.Y ? Direction8.Up : Direction8.Down;
     }
 
-    /// <summary>The current walk picture: which of the facing direction's 3 human pictures to show,
-    /// following the "first, second, first, third" pattern described on <see cref="WalkCycle"/>.</summary>
+    /// <summary>The current walk picture: the facing direction's set, following <see cref="WalkCycle"/>.</summary>
     internal int WalkFrameIndex
     {
         get
@@ -402,12 +304,9 @@ public sealed class Prog : IExplodable
         }
     }
 
-    /// <summary>
-    /// Draws the ghost trail (oldest first, each in the pose it was frozen in) and then the prog
-    /// itself, all as the ROM's two-colour remap pairs — a prog is never drawn as a plain sprite.
-    /// </summary>
+    /// <summary>Draws the ghost trail (oldest first) and then the prog, all as two-colour remap pairs.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set, which holds the human frames and slot colours.</param>
+    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (LifeState != EntityLifeState.Alive)
@@ -423,10 +322,8 @@ public sealed class Prog : IExplodable
         };
         Texture2D art = frames[WalkFrameIndex];
 
-        // Oldest ghost first so the newer ones paint over it (a prog that's blocked draws
-        // its ghost and itself in the same spot), each shown in whatever walk pose it had
-        // the moment it was dropped — a ghost is drawn once and never updated again, so the
-        // trail looks like a series of frozen snapshots, not one smoothly animated shape.
+        // Oldest ghost first so newer ones paint over it; each is drawn once, in the pose it
+        // had when dropped, so the trail is frozen snapshots rather than an animation.
         for (int i = _ghosts.Count - 1; i >= 0; i--)
         {
             Ghost ghost = _ghosts[i];

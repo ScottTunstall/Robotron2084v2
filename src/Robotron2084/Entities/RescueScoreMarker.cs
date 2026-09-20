@@ -7,23 +7,13 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>
-/// The floating "1000".."5000" number that pops up where the player rescues a human (see
-/// <see cref="HumanKind"/>). Its value climbs with how many humans have been rescued this
-/// life — 1000, 2000, 3000, 4000, capping at 5000 for the fifth rescue and beyond. Display
-/// only: it awards no score itself (that's already added elsewhere) and removes itself after
-/// a fixed time.
-/// </summary>
-/// <remarks>
-/// ROM: `HUMKIL`'s `PCFLG` path (RRH11.ASM) picks `P1000 + 4*min(SAVCNT,5)` and holds it for
-/// 60 ROM frames, converted to port ticks by <see cref="GameplayConstants.PortTicks"/>. The
-/// ROM also clamps X to XMAX-6 so the display can't run off the right edge; here the human's
-/// already-wall-clamped position gives the same result without an explicit clamp.
-/// </remarks>
+/// <summary>The "1000".."5000" number shown where the player rescued a human. Display only.</summary>
+/// <seealso cref="Human"/>
+/// <remarks>ROM: <c>HUMKIL</c>'s <c>PCFLG</c> path (RRH11.ASM) picks <c>P1000 + 4*min(SAVCNT,5)</c>
+/// and holds it for 60 ROM frames.</remarks>
 public sealed class RescueScoreMarker : IEntity
 {
-    /// <summary>How long the display stays on the field, in ROM ticks.</summary>
-    /// <remarks>ROM: 60 ticks (HUMKIL's `PCFLG` path).</remarks>
+    /// <summary>How long the display stays on the field.</summary>
     private const int LifeRomTicks = 60;
 
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.EntitySizeSpecPixels);
@@ -36,12 +26,8 @@ public sealed class RescueScoreMarker : IEntity
     private int _ticksRemaining;
 
     /// <summary>Shows the display for one rescue.</summary>
-    /// <param name="position">The rescue spot (the human's top-left).</param>
-    /// <param name="rescuesThisLife">
-    /// How many humans this player has rescued this life, counting this one. The DISPLAY is
-    /// capped at 5000, which is not the same as capping the count, so the picture index is
-    /// clamped to 1..5.
-    /// </param>
+    /// <param name="position">The rescue spot.</param>
+    /// <param name="rescuesThisLife">How many humans rescued this life, counting this one; the display caps at 5000.</param>
     public RescueScoreMarker(IntVector2 position, int rescuesThisLife)
     {
         _position = position;
@@ -49,18 +35,18 @@ public sealed class RescueScoreMarker : IEntity
         _displayIndex = Math.Clamp(rescuesThisLife, 1, 5) - 1;
     }
 
-    /// <summary>The rescue spot, taken from the human that was saved.</summary>
+    /// <summary>The rescue spot.</summary>
     public IntVector2 Position => _position;
 
     /// <summary>The display's own box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
 
-    /// <summary>Alive until the linger runs out (see <see cref="EntityLifeState"/>).</summary>
+    /// <summary>Alive until the linger runs out.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Counts the linger down; the marker is pruned when it runs out.</summary>
-    /// <param name="gameTime">Unused — the linger is counted in ticks, not seconds.</param>
-    /// <param name="field">Unused — the marker touches nothing on the playfield.</param>
+    /// <summary>Counts the linger down.</summary>
+    /// <param name="gameTime">Unused — the linger is counted in ticks.</param>
+    /// <param name="field">Unused.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (--_ticksRemaining <= 0)

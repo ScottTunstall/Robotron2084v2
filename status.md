@@ -517,7 +517,7 @@ tests**.
   wrong references were fixed on the way: the appear engine is `APSTV`/`APSTZ` in RRX7/RRDX2 (not
   "RRG23's `APPEAR`"), the grunt "lumbs" (typo for lumbers) and a `TankShell` blurb calling its 8x7
   picture a "4x4". **One finding left alone:** `Enforcer.PickDestination` is dead code (see notes
-  §109.4) — a one-line deletion when you want it.
+  §109.4) — a one-line deletion when you want it (and since deleted by the author).
 - **2026-09-20 — the entity docs split into port summaries and arcade remarks (notes §109.5).**
   *"The xmldocs `<summary>` in the entity code is talking about the original arcade game's source code
   implementation. I don't want that for the summary — I want the summary to explain WHAT the current
@@ -530,6 +530,28 @@ tests**.
   `<param>`/`<returns>` text. Verified: an audit that prints any summary line still matching arcade
   markers reports only the four spec-file citations; `git diff -U0` over the folder is nothing but
   `///` and blank lines (no code moved), both builds 0 warnings, **410 tests**, all gates green.
+- **2026-09-20 — less explaining in the entities: the comments cut by 58% (notes §109.6).** *"I think
+  there's overexplaining in the entities as a whole. This talk of fifths, ticks vs beats — why is this
+  made so complicated when the code is simple?"* So: `<summary>` is now one line saying what the class
+  or member is or does; `<remarks>` keeps the arcade lineage only (source file, routines, addresses,
+  one `notes §` pointer, the hard numbers) with the history, re-quoted author lines and duplicate rules
+  deleted; and the timing rule appears **once per file** in one sentence (a tick is 6/5 of an arcade
+  frame, so ROM-timed counters work in sixth-ticks). **2,240 → 941 `///` lines**, every fact kept. Your
+  field renames landed at the same time (`_fifths` → `_beatTimer`/`_stepTimer`, `BodyFifths` →
+  `BeatPeriod`), and the four comments still saying "fixed-point fifths" now say sixth-ticks. The dead
+  `Enforcer.PickDestination` you deleted is off the books too. Comments only, both builds 0 warnings,
+  **410 tests**; `verify-fonts` and `verify-playfield` green — **`verify-attract` needs a re-run on a
+  clear desktop**: its capture came back showing another window that was over the game (the old §99
+  trap), not a regression.
+- **2026-09-20 — plain timer words, and class docs that stay about the class (notes §109.7).** *"I don't
+  like the term sixths or fifths — its not clear what its a fifth of … these are simple countdown
+  timers. Also the class docs seem to talk about other class's behaviour a lot … If you want to xref to
+  another class, use `<seealso>`."* "sixths", "fifths", "fixed-point" are gone from the Entities
+  folder entirely; a timer is now called what it is (a countdown) and the clock is one plain sentence per
+  file: *timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N*. And
+  every "the field does X with it" sentence is deleted, with `<seealso cref="PlayField"/>` (or `Brain`,
+  `Human`, `Tank`…) in its place where the reader would want to go — 21 classes got one. Comments only;
+  both builds 0 warnings; **410 tests**; `verify-fonts` green.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

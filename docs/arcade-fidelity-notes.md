@@ -9293,7 +9293,8 @@ it:
 + RND(0..31) per axis") and is fully documented, but nothing calls it — `RollVelocity` computes the same
 target inline, and that is the copy the enforcer actually uses. Left exactly as it is: deleting behaviour
 is the author's call, not a comment pass's, and the method is the clearer of the two copies if the
-velocity roll is ever reworked. It is a one-line deletion when the author wants it gone.
+velocity roll is ever reworked. **Update (2026-09-20): the author has since deleted it** — the folder now
+has `RollVelocity` alone.
 
 #### 109.5 The summaries describe the PORT; the arcade lives in `<remarks>` (author, 2026-09-20)
 
@@ -9325,3 +9326,57 @@ them the spec citations above, plus one "the port used to" clause that has since
 `remarks`. The pass is comments-only by construction — `git diff -U0 -- src/Robotron2084/Entities`
 filtered to lines that are not `///` returns nothing but blank lines — and both builds are 0 warnings with
 **410 tests, 0 failed, 0 skipped** and the playfield/font/attract gates green.
+
+#### 109.6 Less explaining: the entities' comments cut by 58% (author, 2026-09-20)
+
+**Author:** *"I think there's overexplaining in the entities as a whole. This talk of fifths, ticks vs
+beats — why is this made so complicated when the code is simple?"*
+
+Fair. §109.1-§109.5 had produced docs that were accurate and much too long: **2,240** `///` lines across
+the folder, carrying the SAME timing essay — "exact sixths", "`PortTicks(n)` truncates", "which made it
+20% fast", "the same bug the quark had" — in nearly every file. The prose is now:
+
+- **`<summary>` is one line**: what the class or member is or does, nothing else (`A grunt — the basic
+  robot. It lumbers toward the player in staggered bursts.` / `Top-left of the grunt.`).
+- **`<remarks>` carries the arcade lineage only** — source file, routine names, addresses, ONE `notes §`
+  pointer, and the hard numbers (frame counts, pixel sizes, slots). Deleted: the history ("the port used
+  to…"), the re-quoted author lines, and any rule already stated once in the same file.
+- **The timing rule is stated once per file**, in one sentence: timers count 5 per tick and 6 per arcade
+  frame, so an interval of N frames is due at 6 × N. At the accumulator the comment is one line
+  (`// Counts up to the next beat: 5 per tick, 6 per arcade frame.`).
+- **The names tell the story too**: the author renamed the clocks while this was in flight (`_fifths` →
+  `_beatTimer` / `_stepTimer`, `BodyFifths` → `BeatPeriod`, and so on).
+- **The regression warnings survive, one line each**: the human's deliberate 16-frame step ("do not 'fix'
+  this without asking") and the note that the cursor glyph is not one of the small font's 38.
+
+**Result: 2,240 → 941 `///` lines (58% fewer)**, with every fact from §109.1-§109.5 still present
+somewhere. Comments only — the pass's diff filtered to lines that are neither `///` nor `//` is blank
+lines alone, so no code moved. Debug and Release 0 warnings; **410 tests, 0 failed, 0 skipped**;
+`verify-fonts` 83/83 and `verify-playfield` green. **`verify-attract` tripped its own guard** — its story
+capture came back showing another window that was over the capture region (§99's trap), not the movie —
+so that one is left for a clear desktop; nothing in a comment pass can move a pixel.
+
+#### 109.7 "Sixths" was never clear, and a class doc stays about the class (author, 2026-09-20)
+
+**Author:** *"I don't like the term sixths or fifths — its not clear what its a fifth of. The terminology
+is not obvious, these are simple countdown timers. Also the class docs seem to talk about other class's
+behaviour a lot, they shouldn't. If you want to xref to another class, use `<seealso>`."*
+
+Two more cuts, still comments only:
+
+- **The fraction language is gone from the folder.** "sixths", "fifths", "sixth-ticks" and "fixed-point"
+  no longer appear anywhere under `Entities/` (a scan reports zero). A timer is now described as what it
+  is — a countdown to the next thing that happens — and the clock is stated once per file in one plain
+  sentence: *"Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at
+  6 x N."* Accumulators read `// Counts up to the next beat: 5 per tick, 6 per arcade frame.`, fields read
+  `// Counts up to the next step.`, and a period says how many timer units it holds.
+- **Class docs no longer narrate other classes.** Everything of the form "the field bursts it", "collision
+  resolution lives in `PlayField`", "a brain may reprogram it into a prog", "the field awards the points"
+  is deleted, and where a reader really would want to go there the class carries a
+  `<seealso cref="PlayField"/>` (or `Brain`, `Human`, `Tank`, `Human`, …) instead — 21 classes got one or
+  two. Kept: the entity's OWN rules that merely name another class, such as "flies over electrodes" or
+  "keeps flying while the robots are frozen", because those are its own movement and collision contract.
+
+Verified: banned-word scan 0; comments only (each changed line's code half is identical — the 12
+trailing-comment sites are the ones where the word sat on a code line); Debug + Release 0 warnings;
+**410 tests, 0 failed, 0 skipped**; `verify-fonts` 83/83.

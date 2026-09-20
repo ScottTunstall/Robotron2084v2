@@ -7,23 +7,18 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>
-/// The skull-and-crossbones icon left behind where a robot killed a rescuable human (see
-/// <see cref="HumanKind"/>) — a warning that this human is gone. Display only: no collisions,
-/// no score, just a fixed-time linger before it removes itself.
-/// </summary>
+/// <summary>The skull left where a robot killed a human. Display only; it lingers, then goes.</summary>
+/// <seealso cref="Human"/>
 /// <remarks>
-/// ROM: `HUMKIL` (RRH11.ASM) draws `SKULP` (12x11 px), plays `HKSND`, and sets a 90-ROM-frame
-/// countdown (PD2), converted to port ticks by <see cref="GameplayConstants.PortTicks"/>.
+/// ROM: <c>HUMKIL</c> (RRH11.ASM) draws <c>SKULP</c> (12x11 px), plays <c>HKSND</c> and sets a
+/// 90-ROM-frame countdown (PD2).
 /// </remarks>
 public sealed class SkullMarker : IEntity
 {
-    /// <summary>How long the skull stays on the field, in ROM ticks.</summary>
-    /// <remarks>ROM: PD2 = 90 ticks (HUMKIL, at HKIL10).</remarks>
+    /// <summary>How long the skull stays on the field.</summary>
     private const int LifeRomTicks = 90;
 
-    /// <summary>The display box: the skull picture's own size, 12x11 arcade px, in port pixels.</summary>
-    /// <remarks>The ROM's `SKULP` picture.</remarks>
+    /// <summary>The skull picture's own 12x11 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.SkullCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.SkullCollisionSize.Height));
 
@@ -31,25 +26,25 @@ public sealed class SkullMarker : IEntity
     private int _ticksRemaining;
 
     /// <summary>Leaves a skull at the given position.</summary>
-    /// <param name="position">Where the human was killed (its top-left).</param>
+    /// <param name="position">Where the human was killed.</param>
     public SkullMarker(IntVector2 position)
     {
         _position = position;
         _ticksRemaining = GameplayConstants.PortTicks(LifeRomTicks);
     }
 
-    /// <summary>The death spot, taken from the human that was killed.</summary>
+    /// <summary>The death spot.</summary>
     public IntVector2 Position => _position;
 
     /// <summary>The skull picture's own box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
-    /// <summary>Alive until the linger runs out (see <see cref="EntityLifeState"/>).</summary>
+    /// <summary>Alive until the linger runs out.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Counts the linger down; the marker is pruned when it runs out.</summary>
+    /// <summary>Counts the linger down.</summary>
     /// <param name="gameTime">Unused — the linger is counted in ticks, not seconds.</param>
-    /// <param name="field">Unused — the marker touches nothing on the playfield.</param>
+    /// <param name="field">Unused.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (--_ticksRemaining <= 0)
