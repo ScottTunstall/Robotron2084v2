@@ -271,6 +271,14 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36
   (§96.3 flags it; that screen was left exactly as you signed it off).
+- **PARKED by the author (2026-09-20, "not a deal breaker, it's something that can be fixed
+  later"): the wall's pattern on its INNER parts** (notes §98.8's open item). The MARQ
+  byte-diff cleared the interiors of all four bands (8 stripes, slots 8…1 inner→outer, 16 px,
+  hatch phase included), so the next places to look are the **four corners** and the **inner
+  boundary** (the erase's stroke 48 / the visible stroke 49) — neither was sampled — plus
+  MARQ's `VLOW` 1-row overshoot past `LOWER`, which the port does not model. The definitive
+  check needs a **photo or MAME capture of the arcade's own page**: diffing the port against
+  the decode cannot catch a misreading the port and the decode share.
 - **Known open (notes §96.8):** PDEAD's `PKPRCV` (the posts vanish rather than playing it),
   the POSTS table's unreferenced records, and FAMPAG's DUMPLR half — the arcade's title
   ALSO walks the "dumb player" family past the title (HELPME $8715) before HISTO starts;

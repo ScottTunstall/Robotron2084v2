@@ -8285,3 +8285,30 @@ adjacent stripes sharing a colour.
 **Tests:** `HighScorePageHoldTests` (+4) pin the 720-tick hold with a switch held down
 through it, the first clear check four ROM frames later, 255 checks of delay, and the
 release path. Suite: **326 tests, 0 failed, 0 skipped**.
+
+#### OPEN: the author's *"the wall's pattern on the inner parts looks off"* (2026-09-20)
+
+**Parked at the author's request (*"not a deal breaker… can be fixed later"*), but recorded
+here because the wall diff above does NOT clear it.** That diff proves the port matches
+*this* reading of MARQ byte for byte — but the Python model was written from the same reading
+of the R5, so a shared misreading would pass it. What the diff DID cover: the interior of all
+four bands (left `x 8..33`, right `x 272..296`, top/bottom `y 8..33`/`y 220..245`), i.e. 8
+stripes, slots 8…1 inner→outer, 16 px thick, hatch phase and all.
+
+**What it did NOT cover, and where to look next:**
+
+1. **The four corners** (`x 12..27 x y 13..29` and the three others) — never sampled, and the
+   one place where a stroke's horizontal and vertical hatches overlap; if the ROM really does
+   write only ONE nibble per byte (clobbering the other), the corners are where an "every
+   pixel vs every other pixel" difference would show up first.
+2. **The inner boundary** — the erase pass's last stroke (48) and the growing pass's first
+   visible one (49). MARQ's `VLOW` runs one row PAST `LOWER` (its count is `(LOWER-UPPER)/2+1`
+   starting at `UPPER+1`), so the arcade's erase leaves two extra black pixels at `(29, 224)`
+   and `(273, 224)`, and the growing pass's stroke 56 leaves two extra lit ones at `(13, 240)`
+   and `(289, 240)`. The port models neither. Those four pixels are far too small to be the
+   report, but they are the only *known* divergences in this area and they sit exactly on the
+   boundary the author named.
+3. **A reference image.** The fastest way to settle this is a photo of the arcade's own page
+   (or a MAME capture) at the same moment as a port capture: diffing those two, rather than
+   diffing the port against the decode, is the only check that can find a *shared* misreading.
+
