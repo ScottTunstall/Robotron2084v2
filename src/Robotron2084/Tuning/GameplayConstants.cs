@@ -533,10 +533,28 @@ public static class GameplayConstants
     // Wave clear (Phase 11.3)
     public const int WaveClearDisplayTicks = 90; // 1.5s at 60Hz fixed timestep
 
-    // High scores (Phase 11.7)
-    public const int HighScoreCapacity = 10;
-    public const int HighScoreInitialsLength = 3;
-    public const int HighScoreCursorBlinkTicks = 15;
+    // HIGH SCORE TABLE (notes §98) — RRTABLE's TABLE, RRTESTC's CMOS lists and
+    // RRET's texts; every value is a ROM constant.
+    public const int HighScoreHoldRomFrames = 200 * 3; // LDA #200 with NAP 3 = 600 frames = 12 s
+    public const int HighScoreLeaveTimeoutRomFrames = 255 * 4; // LDA #$FF with NAP 4, then it leaves anyway
+    public const int HighScoreHeaderSlot = 7; // SCRMEP: COLOR $77 = slot 7
+    public const int HighScoreListSlot = 9; // TABLE: TCOL1 $99
+    public const int HighScoreListHighlightSlot = 12; // TABLE: TCOL2 $CC — "you are here"
+    public const int HighScoreTopSlot = 10; // TABLE: TCOL1 $AA for the GOD score
+    public const int HighScoreTopHighlightSlot = 13; // TABLE: TCOL2 $DD
+    public const int HighScoreFrameSlot = 8; // FRAMER's flavour $88 (the frame, LOOPP cycles slots 1-8)
+    public const int HighScoreFrameLeftColumn = 6; // FRAMER walks (62,125)-(89,127) out to (6,13)-(145,239)
+    public const int HighScoreFrameTopRow = 13;
+    public const int HighScoreFrameRightColumn = 145;
+    public const int HighScoreFrameBottomRow = 239;
+    public const int HighScoreFrameThicknessPixels = 2; // MARQ: two raster rows on the horizontal edges
+
+    // The game-over message: RRG23 PLEND prints string 40 (GOMP = "GAME OVER") in
+    // the LARGE font, colour $AA, at CURSAB $3E,$80, and waits NAP 120.
+    public const int GameOverMessageRomFrames = 120;
+    public const int GameOverTextColumn = 62;
+    public const int GameOverTextRow = 128;
+    public const int GameOverTextSlot = 10;
 
     // Session / geometry values taken from spec.txt
     public const int StartingLives = 3; // spec-stated ("the PLAYER is awarded 3 lives")

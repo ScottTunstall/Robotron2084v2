@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Hud;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Rendering;
@@ -504,6 +505,46 @@ public sealed class SpriteSet
         '-' => 43,
         _ => -1,
     };
+
+    /// <summary>
+    /// The ROM's number printer (notes §58.1) in one font, for the high score
+    /// table's scores and ranks: the eight digit positions with a leading zero
+    /// SUPPRESSED while nothing has been printed yet — but the cursor still
+    /// advances (<paramref name="blankAdvancePixels"/>) — and the last two
+    /// positions always drawn. A drawn digit advances its own width + 1
+    /// (the ROM's blitter, §96.2). Returns the X after the number.
+    /// </summary>
+    public int DrawScoreDigits(
+        SpriteBatch spriteBatch,
+        Texture2D[] glyphs,
+        int score,
+        int x,
+        int y,
+        int slot,
+        int blankAdvancePixels)
+    {
+        foreach (ScoreFormatter.ScoreDigit digit in ScoreFormatter.Digits(score))
+        {
+            if (digit.Suppressed)
+            {
+                x += ScreenSize.Scaled(blankAdvancePixels);
+                continue;
+            }
+
+            DrawGlyphSlot(spriteBatch, glyphs, digit.Value, x, y, slot);
+            x += ScreenSize.Scaled(glyphs[digit.Value].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+        }
+
+        return x;
+    }
+
+    /// <summary>The high score table's LARGE-font score (<c>PRSCOR</c> → <c>WRD7V</c>): blank advance 6 px.</summary>
+    public int DrawLargeScore(SpriteBatch spriteBatch, int score, int x, int y, int slot) =>
+        DrawScoreDigits(spriteBatch, FontLarge, score, x, y, slot, GameplayConstants.HudScoreBlankAdvancePixels);
+
+    /// <summary>The high score table's SMALL-font score (<c>PRSCOR</c> → <c>WRD5V</c>): blank advance 4 px.</summary>
+    public int DrawSmallScore(SpriteBatch spriteBatch, int score, int x, int y, int slot) =>
+        DrawScoreDigits(spriteBatch, FontSmall, score, x, y, slot, GameplayConstants.HudSmallFontBlankAdvancePixels);
 
     /// <summary>
     /// Draws a ROM frame at SpecScale× arcade pixels, centered inside

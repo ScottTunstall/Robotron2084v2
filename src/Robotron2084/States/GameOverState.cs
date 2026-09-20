@@ -10,14 +10,20 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>
-/// Game-over screen (spec): black background, "GAME OVER" in a large font,
-/// pause at least 3 seconds, then the fire button returns to the title — or, when
-/// a score qualifies for the top 10, to the initials-entry screen (Phase 11.7).
+/// The end of a game: the arcade's own screen for it (notes §98.1). RRG23's
+/// <c>PLEND</c> — the last man gone — clears a block at (60, 126), prints string
+/// 40 (<c>GOMP</c> = "GAME OVER") in the LARGE font in colour <c>$AA</c> at
+/// <c>CURSAB $3E,$80</c> = (62, 128), holds it for <c>NAP 120</c> = 2.4 s and then
+/// runs <c>ENDPRC</c>, the high-score processing — with no key wait.
 ///
-/// A 2-player game hands every player's score to the high-score table, highest
-/// first (the arcade's high-score check examines both <c>ZP1SCR</c> and
-/// <c>ZP2SCR</c> — RRTESTC), so this state walks the list and lets each
-/// qualifying score be entered in turn.
+/// So this state no longer waits for fire and no longer draws its own XNA-font
+/// text: it holds the ROM's message, offers every player's score to the table
+/// (highest first — the ROM's <c>EGSUB</c> loop over <c>ZP1SCR</c>/<c>ZP2SCR</c>)
+/// and hands over to the table, which highlights the entries just posted.
+///
+/// The initials/name ENTRY screens the arcade interleaves here (<c>GODMSP</c>,
+/// <c>CONG</c>, <c>NOWMSP</c> + <c>GETLT</c>) are NOT implemented yet — notes
+/// §98.4. A posted score therefore carries the ROM's own blank name (`NULSCR`).
 /// </summary>
 public sealed class GameOverState : IGameState
 {
@@ -25,9 +31,8 @@ public sealed class GameOverState : IGameState
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
     private readonly List<int> _scores;
-    private readonly TimeSpan _minPause = TimeSpan.FromSeconds(GameplayConstants.GameOverMinPauseSeconds);
-    private TimeSpan _elapsed;
-    private bool _previousFire;
+    private readonly int _holdTicks = GameplayConstants.PortTicks(GameplayConstants.GameOverMessageRomFrames);
+    private int _elapsedTicks;
 
     public GameOverState(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, int score)
         : this(input, sprites, highScores, [score])
@@ -35,8 +40,8 @@ public sealed class GameOverState : IGameState
     }
 
     /// <param name="scores">
-    /// Every player's final score, highest first. Each one is offered to the
-    /// top-10 table in turn.
+    /// Every player's final score, highest first — the ROM's <c>EGSUB</c> runs once
+    /// per player, and each score is offered to the table in turn.
     /// </param>
     public GameOverState(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, IReadOnlyList<int> scores)
     {
@@ -51,48 +56,30 @@ public sealed class GameOverState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
-        _elapsed += gameTime.ElapsedGameTime;
-        if (_elapsed < _minPause)
+        if (++_elapsedTicks < _holdTicks)
         {
-            return; // fire is ignored during the minimum pause (spec)
+            return; // NAP 120: the message holds for 2.4 s, and the ROM waits for nothing here
         }
 
-        PlayerInputState input = _input.Poll();
-        bool firePressed = input.FirePressed;
-
-        if (firePressed && !_previousFire)
+        // ENDPRC → ENDGAM: offer each score, then the table (GOV → LOGG1 → TABORG).
+        HighScoreTable table = _highScores.Load();
+        foreach (int score in _scores)
         {
-            // Offer each score in turn; a player whose score does not qualify is
-            // simply skipped (the arcade checks both scores against the table).
-            while (_scores.Count > 0)
-            {
-                int score = _scores[0];
-                _scores.RemoveAt(0);
-                if (_highScores.QualifiesForTopTen(score, _highScores.Load()))
-                {
-                    manager.TransitionTo(new HighScoreEntryState(_input, _sprites, _highScores, score, _scores));
-                    return;
-                }
-            }
-
-            manager.TransitionTo(new TitleScreenState(_input, _sprites, _highScores));
+            table.Submit(score);
         }
 
-        _previousFire = firePressed;
+        _highScores.Save(table);
+        manager.TransitionTo(new HighScoreTableState(_input, _sprites, _highScores, _scores));
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        const float scale = 2.0f;
-        spriteBatch.DrawString(
-            font,
+        // ROM string 40 (GOMP): "GAME OVER" in the LARGE font, colour $AA, at (62, 128).
+        _sprites.DrawLargeFontText(
+            spriteBatch,
             "GAME OVER",
-            new Vector2((ScreenSize.Width - font.MeasureString("GAME OVER").X * scale) / 2, ScreenSize.Scaled(80)),
-            Color.White,
-            0f,
-            Vector2.Zero,
-            scale,
-            SpriteEffects.None,
-            0f);
+            GameplayConstants.ArcadeX(GameplayConstants.GameOverTextColumn * 2),
+            GameplayConstants.ArcadeY(GameplayConstants.GameOverTextRow),
+            GameplayConstants.GameOverTextSlot);
     }
 }

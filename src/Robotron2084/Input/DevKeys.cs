@@ -12,7 +12,8 @@ namespace Robotron2084.Input;
 /// rescuing the family and being killed by the robots);</item>
 /// <item><b>F3</b> — HELD, fast-forward the movie's ROM frame clock so a later
 /// scene (the hulk's walk, at ROM frame ~2574) can be reached without waiting
-/// out the text crawl.</item>
+/// out the text crawl;</item>
+/// <item><b>F4</b> — jump straight to the high score TABLE (notes §98).</item>
 /// </list>
 /// </summary>
 public static class DevKeys

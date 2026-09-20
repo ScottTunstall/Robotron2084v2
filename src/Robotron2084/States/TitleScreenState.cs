@@ -38,17 +38,13 @@ public sealed class TitleScreenState : IGameState
     private readonly PlayfieldWall _titleWall;
     private readonly GameSession _titleSession;
     private readonly TimeSpan _blinkDuration = TimeSpan.FromSeconds(GameplayConstants.TitleBlinkIntervalSeconds);
-    private readonly TimeSpan _cycleDuration = TimeSpan.FromSeconds(GameplayConstants.TitleHighScoreCycleSeconds);
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(GameplayConstants.TitleIdleSeconds);
     private TimeSpan _blinkElapsed;
-    private TimeSpan _cycleElapsed;
     private TimeSpan _idleElapsed;
     private bool _showPrompt = true;
-    private bool _showHighScores;
     private bool _previousFire;
     private bool _previousStartOne;
     private bool _previousStartTwo;
-    private IReadOnlyList<HighScoreEntry> _cachedEntries = Array.Empty<HighScoreEntry>();
 
     public TitleScreenState(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores)
     {
@@ -113,17 +109,9 @@ public sealed class TitleScreenState : IGameState
             _showPrompt = !_showPrompt;
         }
 
-        // Every N seconds: swap the prompt for the saved top-10 list (Phase 11.7).
-        _cycleElapsed += gameTime.ElapsedGameTime;
-        while (_cycleElapsed >= _cycleDuration)
-        {
-            _cycleElapsed -= _cycleDuration;
-            _showHighScores = !_showHighScores;
-            if (_showHighScores)
-            {
-                _cachedEntries = _highScores.Load();
-            }
-        }
+        // The port's old "top ten" swap lived here; the arcade's table is its
+        // own screen now (`HighScoreTableState`, notes §98) and the ROM's title
+        // page (`FAMPAG`/`SPGSUB`) shows the title and nothing else.
 
         // Idle long enough: the machine starts playing itself (notes §94.3) — and
         // the arcade plays its STORY first: the ROM's FAMPAG/SPGSUB prints the
@@ -148,12 +136,6 @@ public sealed class TitleScreenState : IGameState
         int lineOneY = GameplayConstants.ArcadeY(54);     // string 128's cursor row
         DrawCenteredLargeText(spriteBatch, TitleLineOne, lineOneY, slot);
         DrawCenteredLargeText(spriteBatch, TitleLineTwo, lineOneY + ScreenSize.Scaled(14), slot);
-
-        if (_showHighScores)
-        {
-            DrawTopTen(spriteBatch, font);
-            return;
-        }
 
         if (_showPrompt)
         {
@@ -193,28 +175,6 @@ public sealed class TitleScreenState : IGameState
         }
 
         _sprites.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
-    }
-
-    private void DrawTopTen(SpriteBatch spriteBatch, SpriteFont font)
-    {
-        const float scale = 0.75f;
-        string header = "HIGH SCORES";
-        spriteBatch.DrawString(font, header, CenteredHorizontal(font.MeasureString(header), scale, ScreenSize.Scaled(60)), Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-
-        if (_cachedEntries.Count == 0)
-        {
-            string empty = "no scores yet";
-            spriteBatch.DrawString(font, empty, CenteredHorizontal(font.MeasureString(empty), scale, ScreenSize.Scaled(75)), Color.LightGray, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-            return;
-        }
-
-        float y = ScreenSize.Scaled(75);
-        for (int i = 0; i < _cachedEntries.Count; i++)
-        {
-            string line = $"{i + 1,2}   {_cachedEntries[i].Initials}   {_cachedEntries[i].Score:D6}";
-            spriteBatch.DrawString(font, line, CenteredHorizontal(font.MeasureString(line), scale, y), Color.LightGray, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-            y += ScreenSize.Scaled(12);
-        }
     }
 
     private static Vector2 CenteredHorizontal(Vector2 unscaledSize, float scale, float y) =>

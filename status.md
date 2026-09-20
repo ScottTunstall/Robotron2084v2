@@ -160,6 +160,25 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   only synced at a wave clear / death, so every point scored in between (a kill, a rescue's
   1000-5000, an earned spare man) was invisible until the wave ended. New
   `PlayField.SyncInto(slot)` is called every tick by both states (+1 test, **286**).
+- **2026-09-20 — THE ARCADE'S HIGH SCORE TABLE (notes §98).** Author: *"add the high score
+  table - make it look like the arcade's. We don't need to have the 'input your name' part just
+  yet."* The port's Phase-11.7 placeholder (an XNA-font top-ten list swapped into the title, plus
+  a "NEW HIGH SCORE / ENTER INITIALS" screen) is DELETED. In its place: `HighScoreTableState`
+  draws RRTABLE's own screen — "ROBOTRON HEROES" (slot 7) over TODAY's ten rows in the LARGE
+  font (5 per column × 2, from (26,53), 9 rows/52 columns apart), "ALL TIME HEROES" over the
+  36-row SMALL-font list (12 per column × 3, from (20,136), 7 rows/40 columns apart), each row
+  "N) XXX score" with the score at the ROM's fixed 11/12-column offset from the post-rank
+  cursor, the operator's top entry at (21,122) as "( WILLY ELKTRIX ) 151782", the ROM's
+  50%-dithered frame, the `CLSET` "you are here" highlight, a 12 s hold and a switch-to-leave.
+  The model is RRTESTC's: TODAY's (10, reloaded from the ROM's `TODTAB` every run) + ALL-TIME
+  (36, persisted) + the top entry, all seeded from the ROM's factory tables (`GODCHK`/`TODCHK`/
+  `ALLCHK` insertion). The game-over screen is RRG23's too (string 40 "GAME OVER", large font,
+  slot 10, (62,128), 2.4 s — no key wait) and the attract cycle ends in the table (`LOGG1`'s
+  `JSR SCRCLR / JSR TABORG`), so: title → movie → demo → **table** → title, and a real game over
+  → table with the posted scores highlighted. Open (notes §98.4): the frame's grow/erase
+  animation + the LOOPP/COLA/COLC/COLD palette cycling, the initials/name entry screens, the
+  score-field alignment question — and whether the arcade's attract demo posts its score.
+  New dev key **F4** jumps straight to the table. +10 tests (**300**).
 - **2026-09-20 — THE BRAIN'S REPROGRAMMING + THE DEMO'S STICK AND COLLISIONS (notes §97.4/§97.5).**
   Author: *"in the attract mode the brain behaviour isn't right. When mummy is touched by the
   brain, she isn't showing as being 'progged' and another brain flies over the screen!"* The

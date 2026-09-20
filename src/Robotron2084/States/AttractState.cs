@@ -105,8 +105,13 @@ public sealed class AttractState : IGameState
 
             if (!_session.AnyMenLeft)
             {
-                // The OS ROM's behaviour: the demo just starts over, silently.
-                _session = GameSession.NewGame(_demoInput, 1);
+                // RRG23 PLEND: the last man gone ends the game — "GAME OVER", then
+                // ENDPRC → GOV → LOGG1, whose first act is the high score TABLE
+                // (`JSR SCRCLR / JSR TABORG`), and only then the family page again
+                // (notes §98.1). The demo's own score is NOT posted (notes §98.4,
+                // open question).
+                manager.TransitionTo(new HighScoreTableState(_humanInput, _sprites, _highScores));
+                return;
             }
 
             _field = BuildField();

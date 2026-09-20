@@ -7938,3 +7938,100 @@ image and MONO state of every object per ROM frame: MUMMY boxed `$AA`/`$BB` and 
 frames 3943-4062, then `MONO $0,$AA,44,0` (the solid prog) plus the three `$EE`-boxed clones
 from 4063, and the posts behind them. The `playfield-check.png` artifact the render gate
 leaves was deleted.
+
+## 98. THE HIGH SCORE TABLE — the arcade's own screen (2026-09-20)
+
+**Author: "I want you to add the high score table - make it look like the arcade's. We don't
+need to have the 'input your name' part just yet."** The port's old Phase-11.7 "top ten" was
+a placeholder in every sense: an XNA `SpriteFont` list swapped into the title screen every
+5 seconds, and a "NEW HIGH SCORE / ENTER INITIALS" screen. The arcade has a real SCREEN for
+this, and the decode is in `RRTABLE.ASM` (the table's own module, `TABORG`) + `RRTESTC.ASM`
+(the CMOS lists) + `RRLOG.ASM` (where it sits in the attract cycle) + `RRET.ASM` (its text).
+This section is the decode; the port's implementation follows it.
+
+### 98.1 Where it sits: the attract cycle
+
+`RRLOG` `LOGER` → (`LOGG1`) **`JSR SCRCLR` → `JSR TABORG`** (the table) → `JMP FAMPAG` (the
+title page: `SPGSUB` prints TITLEM + the prompt, then `DUMPLR` runs the dumb player) → the
+page script's `DONE2` (`DONE2P`: `LDA ATFLAG / ANDA #$7F / LBEQ RUNIT`) → `RUNIT` (the logo
++ the phony game) → the game's end → `PLEND` (RRG23: "GAME OVER" for `NAP 120`, then
+`ENDPRC`) → `ENDGAM` (the score processing) → `JMP GOV` = `LOGORG` = the attract entry again.
+So the arcade's cycle is **TABLE → title (+dumb player) → movie → demo → TABLE → …**, and a
+real game lands on the table the same way (RRG23 `PLEND` → `ENDPRC`). The port's title-swap
+placeholder is therefore DELETED, and the table takes its place: after a game over and at the
+end of each attract cycle.
+
+### 98.2 The two lists (RRTESTC / RRF)
+
+| ROM | what it is | size | where the screen gets it |
+|---|---|---|---|
+| `GODSCR`/`GODINT` | the operator's "GOD" score: a NAME (up to 23 chars, `LDA #23`) + a score | 1 | printed on its own, in its own colours |
+| `CMSCOR` (→ `TODAYS`) | the ALL-TIME list, 7 bytes (14 nibbles) per entry: 3 initials + a check nibble + 4 BCD score bytes | 36 shown (12 per column × 3) | the small-font list, ranks 2-37 |
+| `TODAYS` (→ `TODEND`) | "TODAY'S" list, same entry format | 10 shown (5 per column × 2) | the large-font list, ranks 1-10 |
+
+- **`SCRSIZ EQU 14`** — "NUMBER OF NIBBLES IN A SCORE ENTRY": the CMOS is nibble-addressed, so
+  an entry is 4 bytes of text (3 chars + a check nibble in the top of the 4th) + 4 bytes of
+  packed BCD score = 7 digits (the 4th's high nibble is the check).
+- **The check byte** (`FSCCK`) sums the other nibbles; `CKHS` (the power-up check) walks the
+  all-time list, REMOVES any entry whose check fails (up to 50) and then RELOADS today's list
+  from the ROM's own `TODTAB` — so "today" is reset at power-up and the all-time list is the
+  persistent one.
+- **The ROM's own factory tables** (what the port seeds, so no operator input is needed —
+  D-019): `DEFHSR`/`DEFGOD` = the top score **"WILLY ELKTRIX" 151782**; `DEFHSR` + `DEFSC2` =
+  the all-time list VID 122145, KID 122135, DON 18280, VIV 18280, GWW 18105, CRB 18055,
+  MDR 17565, BAC 17256, "W R" 17070, MPT 16060, SUE 15520, MOM 14480, DAD 14479, SFD 14478,
+  AKD 14477, CWK 13330, TMH 13270, EJS 13120, RAY 13065, GAY 12965, RKM 12855, CNS 12755;
+  `TODTAB` = today's **DRJ 52127, LED 50218, EPJ 41255, JER 41250, KID 31920, MLG 31919,
+  SSR 26645, UNA 26635, JRS 25250, CJM 24110** (10). Everything past those is the ROM's blank
+  entry (`NULSCR` = three spaces + 0).
+- **`EGSUB` (ENDGAM)** offers each player's score in turn: `GODCHK` (beats the top → it becomes
+  the new top and the old one drops into the list) → else `TODCHK` (beats today's lowest →
+  insert) → else `ALLCHK` (beats the all-time lowest → insert, with the "5 ENTRIES MAXIMUM /
+  LOWEST ENTRY REPLACED" rule, which counts entries with the SAME INITIALS).
+
+### 98.3 The screen (RRTABLE `TABLE`) — every cursor, font and colour
+
+| what | ROM | decoded |
+|---|---|---|
+| frame | `JSR FRAMER` | `MARQ` draws the rectangle **(col 6, row 13)-(col 145, row 239)** in flavour `$88` (slot 8, dithered), 2 frames a step, growing from (62,125)-(89,127); a second pass redraws it with flavour **0** (black) at **(14,29)-(137,223)** |
+| today header | `SCRMEP` (110) | `COLOR $77` = slot 7, `CURSAB $35,$25` = **(col 53, row 37)** "ROBOTRON HEROES" |
+| today list | `PRJNK` | LARGE font, `LDX #$1A35` = **(26, 53)**, **5 per column × 2 columns**, spacing **9 rows / 52 columns**, index from **1** |
+| all-time header | `SCRMEP` (110) | `CURSAB $35,$6E` = **(53, 110)** "ALL TIME HEROES" |
+| top ("GOD") score | `TABLE` | `TCOL1 $99`/`TCOL2 $CC` (slots 9/12), at `LDX #$157A` = **(21, 122)**: `( NAME ) SCORE` |
+| all-time list | `PRJNK` | SMALL font, `LDX #$1488` = **(20, 136)**, **12 per column × 3 columns**, spacing **7 rows / 40 columns**, index from **2** |
+| each row | `INDMEP` (111) + `PRSCOR` | `SBLANK, NUMB, RPAREN, SPACE` = " N) " rank, then the 3 initials, then the score at a **fixed offset of 11 columns (font 7) / 12 columns (font 5)** from the post-rank cursor |
+| hold | `LDA #200` + `NAP 3` | 200 iterations of 3 frames = **600 ROM frames = 12 s**, then it waits for ANY switch (`PIA3 & 3 | PIA2`) with a 255-iteration timeout |
+| colours | `CLSET` | a row whose score EQUALS a current player's score (and is not the next CMOS entry) is drawn in `TCOL2` = the "you are here" highlight |
+| colour cycle | `LOOPP`/`COLA`/`COLC`/`COLD` | the frame's slots (PCRAM+1..8) step through `COLTAB` (`$37,$2F,…, $CB,$CA`) every 3 frames, and `PCS4` blacks every 5th slot |
+
+### 98.4 What this change ships, and what is still open
+
+Shipped: the two lists, the top score, the headers, the ranks/scores in the ROM's fonts and
+colours at the ROM's cursors, the "you are here" highlight, the 12-second hold and the
+switch-to-leave, the game-over message in the ROM's own form (message 40 `GOMP` = "GAME OVER"
+in the LARGE font, `TEXCOL $AA`, `CURSAB $3E,$80` = (62, 128), `NAP 120` = 2.4 s), the model
+(today's + all-time + the top entry, the ROM's factory defaults, `GODCHK`/`TODCHK`/`ALLCHK`
+insertion) and the store (the all-time list + the top entry persist; today's resets per run).
+
+**Open, in this order:**
+1. **The frame's ANIMATION** — `FRAMER`'s two grow/erase passes (2 frames a step) and the
+   `LOOPP`/`COLA`/`COLC`/`COLD` palette cycling of the frame's slots. The frame is drawn
+   STATICALLY in this pass (the final rectangle, slot 8, dithered).
+2. **The initials entry** (author: "not yet") — the arcade's screens are `CONG`/`NOWMSP`
+   ("YOU ARE A ROBOTRON HERO … ENTER YOUR INITIALS:") + `GETLT` (a 3-char entry at `$4680`,
+   `ALTBL` padding with spaces), `GODMSP` ("YOU ARE THE GREATEST … ENTER YOUR NAME (UP TO n
+   LETTERS)") and `ONLY5P` ("5 ENTRIES MAXIMUM / LOWEST ENTRY REPLACED"); today's list's rank
+   is accepted first, then the all-time's. Until then a posted score carries the ROM's own
+   blank initials (three spaces, `NULSCR`).
+3. **Open question:** does the arcade's ATTRACT demo post its score? `PLEND → ENDPRC` has no
+   attract check, but the initials screen would then block an idle cabinet — implausible. The
+   port keeps the demo silent (its existing behaviour) and shows the table at the end of the
+   cycle; settle it with a MAME measurement if it matters.
+4. **Open question: the score field's alignment.** The ROM prints a table score in TWO halves
+   (`PRSCOR`: `HIGH1P` for the high part, then the audit word `AUDM2` for the low one), which
+   right-aligns the trailing digits; the port uses the HUD's approved digit model (left-anchored
+   with leading zeros suppressed but still advancing, notes §58.1). With suppressed leading
+   zeros the port's row therefore reads "1) DRJ" + a gap + "52127", where the arcade may sit the
+   digits closer. The CURSORS and the offsets are the ROM's; the alignment inside the field is
+   the one thing the author should eyeball (it is the same model the score display already uses
+   during play, so it is at least self-consistent).

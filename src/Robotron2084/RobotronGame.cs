@@ -115,6 +115,10 @@ public sealed class RobotronGame : Game
         {
             _stateManager.TransitionTo(new AttractState(_sprites, _highScoreStore, _input));
         }
+        else if (Pressed(state, Keys.F4))
+        {
+            _stateManager.TransitionTo(new HighScoreTableState(_input, _sprites, _highScoreStore));
+        }
 
         _previousKeyboardState = state;
 
