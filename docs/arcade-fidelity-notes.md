@@ -8359,3 +8359,48 @@ build Debug + Release, tests, 12 s smoke, `verify-playfield`, `verify-fonts`, `v
 *"story interior is 81.1% lit — the capture is not the game window (something in front of
 it?)"*. It was right — a maximised browser was over the game's capture region, and the
 saved PNG showed the movie running correctly beside it. Re-run on a clear desktop: PASS.
+
+### 100. The brain FACES the human it programs (author, 2026-09-20)
+
+**Author: *"When the brain is progging a human, the brain does not face the human it is
+progging!"*** It did not, and the ROM is explicit about it — `BMUT` picks the brain's
+PICTURE at the same moment it picks where the human goes:
+
+```
+BMUT  LDA OX16,X / CMPA OBJX,Y / BCS BMUT10      ; brain vs human, by X
+BMUT00 LDA OX16,X                                ; the LEFT case
+       SUBA [OPICT,Y] / SUBA #1                  ; just left of the brain…
+       CMPA #XMIN / BLO BMUT10                   ; …unless that crosses XMIN
+       STA OX16,Y                                ; place the human on the left
+       LDD #BRLP1                                ; and the brain FACES LEFT
+       BRA BMUT1
+BMUT10 LDA OX16,X / ADDA #8 / CMPA #XMAX-4 / BHS BMUT00
+       STA OX16,Y                                ; the human goes 8px to the right
+       LDD #BRRP1                                ; and the brain FACES RIGHT
+BMUT1  STD OPICT,X                               ; <- the picture is STORED
+```
+
+`BRLP1`/`BRRP1` are each direction's **frame 0** (`BRNAL FDB BRLP1,BRLP2,BRLP1,BRLP3` and
+`BRNAR FDB BRRP1,…`), so the brain holds the left- or right-facing pose for the whole 20
+iterations — and `DRAW_BRAIN_IN_PROGGING_STATE` (notes §72) draws that picture over the
+`$BB` block, so the facing is visible.
+
+**Why the port missed it:** `Brain.BeginReprogramming` did the *placement* exactly as
+`BMUT00`/`BMUT10` do (left of the brain, or 8px right when XMIN blocks it, Y = brain Y + 2),
+but never touched the animation base — so the brain kept whatever facing the chase happened
+to give it on the frame it caught the human. Notes §47 had read "the brain is not drawn as a
+sprite while it reprograms", which hid the problem until §72 restored the sprite-over-block
+draw. The fallen-through `BHS BMUT00` matters too: the right-hand case that does not fit
+goes BACK to the left picture, not to "whatever it had".
+
+**The fix:** the four ABAC bases are now named (`LeftDirectionBase`/`RightDirectionBase`/
+`DownDirectionBase`/`UpDirectionBase` = BRNAL/BRNAR/BRNAD/BRNAU, in
+`SpriteSet.BrainFrames` order) and `BeginReprogramming` sets the base from the placement the
+loop above already computes, with `_frameStep = 0` — the picture is that direction's P1.
+Checked against the art itself, not the address order alone: `Brain_1.png`/`Brain_4.png` are
+mirror images, and the ROM's table puts BRNAL (left) first.
+
+**Tests:** the existing catch test now asserts the brain faces LEFT when the human lands on
+its left (`WalkFrameIndex` 0 = BRLP1), and a new test puts the brain against the left wall
+so the human cannot fit — asserting the human goes 8px right and the brain faces RIGHT
+(`WalkFrameIndex` 3 = BRRP1). Suite: **327 tests, 0 failed, 0 skipped**; all six gates green.

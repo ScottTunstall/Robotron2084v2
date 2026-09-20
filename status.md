@@ -281,6 +281,15 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   `AttractObjectMachine.ReadOp` 34 → 8 (the 28-opcode ROM table split into six families behind a
   range dispatch). Bodies moved verbatim, comments and ROM citations intact; 326 tests and all
   six gates green.
+- **2026-09-20 — THE BRAIN FACES THE HUMAN IT PROGRAMS (notes §100).** Author: *"When the brain is
+  progging a human, the brain does not face the human it is progging!"* The ROM picks the brain's
+  PICTURE with the placement — `BMUT00 LDD #BRLP1` (BRNAL frame 0, facing LEFT) when the human
+  lands just left of the brain, `BMUT10 LDD #BRRP1` (BRNAR frame 0, RIGHT) when the XMIN case
+  puts it 8px right, and `BMUT1 STD OPICT,X` stores it — so the pose holds for the whole 20
+  iterations and shows through the `$BB` block (§72). `BeginReprogramming` did the placement but
+  never set the facing, so the brain kept whatever the chase gave it. The four ABAC bases are now
+  named (BRNAL/BRNAR/BRNAD/BRNAU, in `SpriteSet.BrainFrames` order) and set from the placement
+  with `_frameStep = 0` (the direction's P1). +1 test (**327**); all six gates green.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

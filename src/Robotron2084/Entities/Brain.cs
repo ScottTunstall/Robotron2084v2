@@ -69,12 +69,22 @@ public sealed class Brain : IEntity, IExplodable
     /// <summary>ABAC walk: BRNAL/BRNAR/BRNAD/BRNAU each run P1,P2,P1,P3 over the direction's 3 frames.</summary>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
+    /// <summary>
+    /// The four ABAC directions' picture bases, in <see cref="SpriteSet.BrainFrames"/> order:
+    /// BRNAL (left), BRNAR (right), BRNAD (down), BRNAU (up). Three frames each, so a base's
+    /// frame 0 is that direction's P1 — BRLP1 / BRRP1 / BRDP1 / BRUP1.
+    /// </summary>
+    private const int LeftDirectionBase = 0;
+    private const int RightDirectionBase = 1;
+    private const int DownDirectionBase = 2;
+    private const int UpDirectionBase = 3;
+
     private readonly Random _random;
     private readonly int _bodyFifthsPerStep; // (1 + BRNSPD) ROM frames in exact 6ths (notes §52)
     private readonly int _fireDelayRomTicks;
     private IntVector2 _position;
     private int _bodyFifths;
-    private int _directionBase = 2; // ROM PD6 init = BRNAD (down), BRNSTV
+    private int _directionBase = DownDirectionBase; // ROM PD6 init = BRNAD (down), BRNSTV
     private int _frameStep;         // ROM PD4: index 0..3 into the direction's 4-entry table
     private int _fireBodiesRemaining;
     private Human? _victim;                 // ROM PD2: the human being reprogrammed
@@ -181,7 +191,9 @@ public sealed class Brain : IEntity, IExplodable
         //      DELTAS with X taking precedence, the direction's 4-entry ABAC
         //      table is indexed by a byte offset advancing by 2 (0,2,4,6),
         //      and a DIRECTION CHANGE RESETS THE INDEX to 0 ----
-        int nextBase = dx != 0 ? (dx > 0 ? 1 : 0) : (dy < 0 ? 3 : 2);
+        int nextBase = dx != 0
+            ? (dx > 0 ? RightDirectionBase : LeftDirectionBase)
+            : (dy < 0 ? UpDirectionBase : DownDirectionBase);
         if (nextBase == _directionBase)
         {
             _frameStep = (_frameStep + 1) % WalkCycle.Length;
@@ -253,16 +265,32 @@ public sealed class Brain : IEntity, IExplodable
         // ROM BMUT's placement: the human goes just LEFT of the brain (brain X
         // minus the human's own picture width minus 1), or, if that would cross
         // XMIN, 8px to its RIGHT; its Y is the brain's Y + 2.
+        //
+        // The placement PICKS THE BRAIN'S PICTURE and BMUT1 stores it
+        // (`STD OPICT,X`): BMUT00 loads BRLP1 (BRNAL's frame 0 — facing LEFT)
+        // and BMUT10 loads BRRP1 (BRNAR's frame 0 — facing RIGHT), so the brain
+        // faces the human for the whole animation. BMUT10's own out-of-bounds
+        // `BHS BMUT00` sends the right-hand case back to the left one, which is
+        // why the fallback below re-selects the left facing too.
         int humanWidth = human.Bounds.Width;
         int x = _position.X - humanWidth - ScreenSize.Scaled(1);
+        int facingBase = LeftDirectionBase;
         if (x < playfieldBounds.X)
         {
             x = _position.X + ScreenSize.Scaled(8);
+            facingBase = RightDirectionBase;
             if (x >= playfieldBounds.Right - ScreenSize.Scaled(4))
             {
                 x = _position.X - humanWidth - ScreenSize.Scaled(1);
+                facingBase = LeftDirectionBase;
             }
         }
+
+        // The picture is the direction's FIRST frame (BRLP1/BRRP1): no walk
+        // step is taken while progging, and the chase recomputes both the base
+        // and the step when it resumes.
+        _directionBase = facingBase;
+        _frameStep = 0;
 
         human.TeleportTo(new IntVector2(x, _position.Y + ScreenSize.Scaled(2)));
     }

@@ -198,6 +198,11 @@ public sealed class PlayFieldPhaseETests
         Assert.Equal(brain.Position.X - human.Bounds.Width - ScreenSize.Scaled(1), human.Position.X);
         Assert.Equal(brain.Position.Y + ScreenSize.Scaled(2), human.Position.Y);
 
+        // …and the placement SETS THE BRAIN'S PICTURE (BMUT00 `LDD #BRLP1` /
+        // BMUT1 `STD OPICT,X`): the human went to its LEFT, so the brain faces
+        // LEFT — BRLP1 is BRNAL's frame 0, i.e. the left base's first frame.
+        Assert.Equal(0, brain.WalkFrameIndex);
+
         // The animation is 20 iterations x 2 redraws x 3 ROM frames = 144 ticks
         // on the exact-6ths clock (notes §52; PortTicks(3) = 3 would have made it
         // 120). Through it the brain must not move (it is a solid block, not a
@@ -224,6 +229,33 @@ public sealed class PlayFieldPhaseETests
         Assert.Equal(1, field.ProgCount);
         Assert.Equal(HumanKind.Mom, field.Progs[0].Kind);
         Assert.Empty(field.Skulls);
+    }
+
+    [Fact]
+    public void Brain_ProggingAHumanItCannotGetLeftOf_FacesRightInstead()
+    {
+        // BMUT00 places the human at brainX - humanWidth - 1 and, when that
+        // would cross XMIN, BMUT10 puts it 8px to the RIGHT and loads BRRP1
+        // instead — the brain faces the human either way (author, 2026-09-20:
+        // "the brain does not face the human it is progging").
+        PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
+        WarmUp(field);
+
+        Rectangle inner = field.Wall.PlayfieldBounds;
+        IntVector2 humanSpot = new(inner.X + 2, inner.Y + 200);
+        var human = new Human(humanSpot, HumanKind.Dad, new Random(7));
+        field.AddHuman(human);
+
+        var brain = new Brain(humanSpot, new Random(8), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        field.AddBrain(brain);
+
+        field.Update(Frame());
+
+        Assert.True(brain.IsReprogramming);
+        // The human could not fit on the left, so it went right…
+        Assert.Equal(brain.Position.X + ScreenSize.Scaled(8), human.Position.X);
+        // …and the brain's picture is BRNAR's frame 0 (BRRP1) — facing RIGHT.
+        Assert.Equal(3, brain.WalkFrameIndex);
     }
 
     [Fact]
