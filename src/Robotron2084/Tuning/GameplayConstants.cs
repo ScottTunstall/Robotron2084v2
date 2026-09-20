@@ -12,19 +12,48 @@ namespace Robotron2084.Tuning;
 public static class GameplayConstants
 {
     /// <summary>
-    /// ROM tempo conversion (M5 full fidelity): the arcade runs at 50Hz
-    /// (author's RE — mame-notes); this port runs a 60Hz fixed timestep.
-    /// All ROM tick-based delays (wave tables, drop timers, fire rates) are
-    /// converted with this so the game keeps the arcade's pacing.
+    /// Converts a delay from "ROM frames" (the original 1982 arcade hardware's timing
+    /// unit) to "port ticks" (this project's timing unit), so every timer in this port
+    /// waits for the same real-world length of time the arcade did.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Why this exists.</b> The original Robotron: 2084 arcade board redraws the
+    /// screen 50 times a second, and its game logic is driven directly off that redraw
+    /// signal (the "vertical blank", or "vblank", interrupt) — so the ROM code counts
+    /// delays in "ROM frames" (1 ROM frame = 1/50 second). This C# port instead runs a
+    /// fixed 60-updates-per-second game loop, so its own timing unit — a "port tick" —
+    /// is 1/60 second, a different length of time. Since 60/50 reduces to 6/5, one ROM
+    /// frame of arcade time is exactly 6/5 = 1.2 port ticks. <c>PortTicks(romTicks)</c>
+    /// converts a ROM-frame delay (read from the disassembly, e.g. "wait ROBSPD frames")
+    /// into the equivalent number of port ticks, so the port reproduces the arcade's
+    /// real-world pacing instead of its raw frame count.
+    /// </para>
+    /// <para>
+    /// <b>The "…Fifths" fields scattered through the entity classes</b> (e.g.
+    /// <c>Grunt._bodyFifths</c>, <c>Hulk._stepFifths</c>) exist because 1.2 is not a
+    /// whole number: an entity can't just "count down 4.8 ticks". Floating-point
+    /// accumulation would work but drifts out of sync over a long play session, so each
+    /// entity instead keeps an integer counter in units of <i>one fifth of a port
+    /// tick</i> — the smallest unit for which both a port tick (5 fifths) and a ROM
+    /// frame (6 fifths, since 6/5 tick = 6 fifths) are whole numbers. Every
+    /// <see cref="Microsoft.Xna.Framework.GameTime"/> tick the entity adds 5 to the
+    /// counter; when the counter reaches <c>romFrames * 6</c> (i.e. it has accumulated
+    /// exactly as many fifths as the ROM delay is worth), the timed action fires and
+    /// that many fifths are subtracted, carrying any remainder forward. That keeps the
+    /// long-run average exactly on the arcade's clock, with no drift and no floating
+    /// point — see notes §52 in <c>docs/arcade-fidelity-notes.md</c> for the derivation
+    /// and the bug (entities running 17-20% fast) that this pattern replaced.
+    /// </para>
+    /// </remarks>
     public static int PortTicks(int romTicks) => romTicks * 6 / 5;
 
     /// <summary>
-    /// The FIRST tick on which a <paramref name="romFrames"/>-period clock running on
-    /// the exact-6ths accumulator (see the idiom in the entity bodies, notes §52)
-    /// fires: <c>ceil(romFrames * 6 / 5)</c>. Use this in tests that tick to a
-    /// boundary — `PortTicks` TRUNCATES, so it is always one tick too early for a
-    /// short period (PortTicks(3) = 3 but the step lands on tick 4).
+    /// The FIRST port tick on which a <paramref name="romFrames"/>-period clock running
+    /// on the "fifths" accumulator described on <see cref="PortTicks"/> fires:
+    /// <c>ceil(romFrames * 6 / 5)</c>. Use this in tests that tick to a boundary —
+    /// <see cref="PortTicks"/> TRUNCATES, so it is always one tick too early for a short
+    /// period (<c>PortTicks(3)</c> = 3, but the step actually lands on tick 4).
     /// </summary>
     public static int PortTicksCeil(int romFrames) => (romFrames * 6 + 4) / 5;
 
@@ -769,6 +798,15 @@ public static class GameplayConstants
     public const int PausedMessageRow = 120;
     // Port-only: the title's F-key menu, and how far apart its lines sit.
     public const int TitleOptionRowStepPixels = 14;
+
+    /// <summary>
+    /// How long each of the presentation page's two TEXT PANES is shown before they swap (author,
+    /// 2026-09-20). The page has no room for the arcade's message and credits and the port's credit
+    /// and F-key menu at once — and the arcade's two message lines want an empty row between them
+    /// (the ROM's own cursors, `$86`/`$96`, are 16 rows apart on an 8-row line grid) — so each pane
+    /// gets the whole band to itself. Notes §107.
+    /// </summary>
+    public const int TitleTextSwapSeconds = 3;
 
     /// <summary>
     /// ROM RRG23 PLS0D: the "PLAYER n" message is drawn and the game waits

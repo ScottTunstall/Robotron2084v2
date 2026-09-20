@@ -154,6 +154,7 @@ public static class SpriteContentPaths
         "Sprites/Font_S_X",
         "Sprites/Font_S_Y",
         "Sprites/Font_S_Z",
+        "Sprites/Font_S_cursorright",
         "Sprites/Grunt_1",
         "Sprites/Grunt_2",
         "Sprites/Grunt_3",
@@ -244,6 +245,7 @@ public static class SpriteContentPaths
         "Sprites/Tank_3",
         "Sprites/Tank_4",
         "Sprites/Title_2084",
-        "Sprites/Title_Wordmark",
+        "Sprites/Title_Wordmark_Core",
+        "Sprites/Title_Wordmark_Rim",
     ];
 }

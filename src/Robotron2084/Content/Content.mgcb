@@ -1762,6 +1762,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Font_S_Z.png
 
+#begin Sprites/Font_S_cursorright.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Font_S_cursorright.png
+
 #begin Sprites/Grunt_1.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -2842,7 +2854,7 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Title_2084.png
 
-#begin Sprites/Title_Wordmark.png
+#begin Sprites/Title_Wordmark_Core.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2852,4 +2864,16 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Title_Wordmark.png
+/build:Sprites/Title_Wordmark_Core.png
+
+#begin Sprites/Title_Wordmark_Rim.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Title_Wordmark_Rim.png

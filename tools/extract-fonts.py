@@ -46,6 +46,19 @@ SMALL = {
     "U": (60344, 2, 5), "V": (60355, 2, 5), "W": (60366, 3, 5),
     "X": (60382, 2, 5), "Y": (60393, 2, 5), "Z": (60404, 2, 5),
     "(": (60415, 2, 5), ")": (60426, 2, 5),
+    # The GAME ADJUSTMENT page's CURSOR (notes §108.4): SMALL_CHARACTER_TABLE
+    # entry 45 — pointer $EC14, a width byte ($07) then 5 rows of 4 bytes, so the
+    # record ends exactly at the next entry's pointer ($EC29). SHOW_GAME_ADJUSTMENT_CURSOR
+    # ($71FE) prints text string $2C at column $0C on the setting's row, and that
+    # string @$6790 is `04 99` (set text colour to palette entry 9 — the service
+    # palette's white) `5D` (the glyph) `04 66` (back to entry 6, the settings'
+    # green) — the art is a hyphen and a `>` chevron, 6 px of it.
+    #
+    # It is written next to the other small glyphs, but it is NOT one of
+    # FontSmall's 38 (that array stops at the parens), so SpriteSet loads it on
+    # its own as `CursorArrow` and the DEFINE INPUTS page draws it instead of the
+    # large font's `arrowleft`, which is the ROM's LEFT arrow (notes §108.5).
+    "cursorright": (60437, 4, 5),
 }
 
 LARGE = {
@@ -82,6 +95,7 @@ LARGE = {
 NAME = {
     "(": "(", ")": ")", ":": "colon", "arrowleft": "arrowleft",
     "!": "exclaim", ",": "comma", ".": "period", "-": "hyphen",
+    "cursorright": "cursorright",
 }
 NAME.update({c: c for c in "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"})
 

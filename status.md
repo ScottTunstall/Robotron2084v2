@@ -402,6 +402,134 @@ tests**.
   went from `sum < 60` to `< 120`, dropping the capture's blur halo — the other stray-pixel source.
   Verified by inspection: both sprites contain **zero** marker-coloured texels (5 and 4 palettes,
   all of them arcade reds/oranges/yellows), so the shader cannot remap anything.
+- **2026-09-20 — the wordmark colour-cycles (notes §104).** *"On the title screen, the ROBOTRON in
+  very large letters above the 2084 icon should colour cycle."* Its colours were **baked** into the
+  trace, so nothing could move them. The arcade instead blits a SHAPE in a colour taken from the
+  LIVE palette (blitter op `$1A`, the port's `DrawSpriteSolid` — the same mechanism that puts 28
+  differently-coloured W logos round the real page: `$87E1` *"A = colour to draw W in"*), and
+  §103.3's colour processes rewrite those slots — so the art had to become masks.
+  `tools/extract-title-logos.py` now emits **`Title_Wordmark_Core`** (the letters' body) and
+  **`Title_Wordmark_Rim`** (their one-pixel rim) as WHITE MASKS, split by a single erosion because
+  the source capture is too soft for a per-texel colour test (its blends are the orange the first
+  trace had to snap somewhere); the coloured sprite is deleted and the content pipeline
+  regenerated (237 sprites). The page draws the body in **slot 1** and the rim in **slot 4** — both
+  inside `LOOPP`'s `COLTAB` walk of slots 1-8, neither one of the ROM's message slots (8/9) — so the
+  wordmark cycles with the page and no new timer exists. The shift register's first state is `$17`
+  red + `$3F` yellow, i.e. the page comes up exactly like the reference screenshot, and the pair
+  then travels the arcade's table three steps apart (measured: magenta/green, orange/blue,
+  pink/magenta, violet, blue, green/orange, red/yellow, repeat). The "2084" mark keeps its traced
+  colours. Also tidied in the same file: the stale class doc (it still described §94's wall +
+  "SAVE THE LAST HUMAN FAMILY" page) and the dead `InnerBounds`/`CenteredHorizontal`/`using ...Hud`
+  left by §103. Still **402 tests**, all six gates green.
+- **2026-09-20 — the start keys on every intro screen (notes §105).** *"On each of the intro
+  screens is it checking for F1, F2, F3, F10? (F1 start 1P game, F2 start 2p alternating, F3 start
+  2P simultaneous, F10 define inputs) - if not, they should."* **They already do, on all four**:
+  the shell handles those keys on any state carrying the `IAttractState` marker, and the whole
+  attract cycle carries it (title, storyline movie, demo game, high score table); outside the cycle
+  the cabinet's rule applies instead (no key restarts the machine under a player mid-game). Checked
+  cell by cell on screen — 16 cells, all as expected — with a temporary harness, using the HUD's
+  second score block for a 2P start and SPACE-after-F1 (fire hands an attract screen back to the
+  title, but is just a shot in a game) for the two screens that already look like a live field.
+  **New guard:** `AttractScreenTests` (+2 tests, **404**) fails if a future screen is neither an
+  attract screen nor listed as deliberately not one — proved by adding a throwaway state.
+- **2026-09-20 — the presentation page's own colour set (notes §106).** *"On the screen with the
+  large 2084 (tell me what its name is) the PRESENTED BY WILLIAMS ELECTRONICS and DESIGNED BY VID
+  KIDZ text actually cycles between orange and white."* **The screen is `TitleScreenState`** — the
+  Williams PRESENTATION page (the cabinet's other attract page is the wall with "ROBOTRON 2084").
+  The report decoded straight out of the ROM: `$8A3A` copies seven bytes ($8A70: red, blue,
+  red-orange, green, magenta, **orange**, yellow) into palette entries **1-7**, and `$8A4F` sets
+  **one** of them to WHITE every **3 frames**, stepping 2…7,1 — a white flash running through the
+  seven. The text is drawn in entry **6** (the ROM's operand `$66`), so it is orange with a white
+  flash for 3 frames in 21. New `PresentationPagePalette` replays it, `TitleScreenState` draws the
+  message and the ROM's credit strings in slot 6 (the port's own lines stay slot 9 white), and the
+  wordmark now cycles on the page's own art step (7…1, one step per 28 frames) with its rim one
+  entry behind — at the wrap, the reference's own red body on a yellow rim. **This supersedes
+  §103.3's stand-in** (the high score page's COLTAB walk) and §104.2's wordmark slots; §103.3's
+  approximation is flagged in the notes as such. Verified on screen by burst capture (message
+  orange 21 frames of 24, white 3; wordmark walking blue → red → yellow → magenta → green).
+  **+6 tests (410)**, all six gates green.
+- **2026-09-20 — the page's text alternates (notes §107).** *"There should be an empty row between
+  PRESENTED BY and WILLIAMS ELECTRONICS INC. … ALTERNATE the [arcade text set] with the [port
+  credit + shortcut keys] … render the shortcut key text in orange and white too"*, then *"Swap
+  between the two text sets every 3 seconds."* **The empty row is the arcade's own**: the ROM
+  prints the welcome lines from cursors `$86`/`$96` — the low byte is the row — so they are 16 rows
+  apart on the LARGE font's 8-row grid = exactly one blank line, where §103's layout had them 18
+  canvas px apart (a 12-px glyph, 6-px gap). So the page now has **two panes swapping every 3 s**
+  (`GameplayConstants.TitleTextSwapSeconds`): the arcade's (welcome lines at 176/212 with the empty
+  row, credit strings at 244/260/276) and the port's (the credit line at 176, the F-key menu at
+  220/248/276/304). Both are drawn in the page's own text slot (the ROM's `$66`), so the port's
+  lines flash orange and white with the arcade's; the old static white slot 9 is gone. Wordmark,
+  2084 mark and the colour cycling are unaffected by a swap. **Verified on a Release build** (the
+  author's Debug instance holds that exe — expected copy errors, not a build problem): ARCADE ~3 s
+  → PORT ~3 s, repeating. Still **410 tests**; playfield/font/attract gates green on Release.
+- **2026-09-20 — the credit block and the copyright's own colour (notes §107.3).** *"designed by vid
+  kidz for williams electronics etc should be rendered in the small font. Then an empty row, then a
+  copyright 1982 williams electronics inc. message (in a different cycling colour)"* The credit
+  lines were already the SMALL font (they go through `DrawSmallFontText` — the arcade's 4x5 glyphs,
+  as the reference shows); what changed is the block's shape: an **empty row** now sits between "FOR
+  WILLIAMS ELECTRONICS INC." (260) and the copyright, which moved to **292** — the same gap the
+  reference screenshot has — and the copyright is drawn in **its own entry, slot 2: the page's
+  BLUE** (`$C0`). That is the colour the ROM's own string script writes for its `CREDITS:` line
+  (`04 22` at `$6D95`, blue in the reference), and it cycles with the page — the white chase sweeps
+  through it. Measured on screen: four orange lines, an empty row, then the copyright in blue.
+- **2026-09-20 — the DEFINE INPUTS page in the arcade's adjustment-page dress (notes §108).**
+  *"Change the DEFINE INPUTS page to look like the screenshot (different text of course) - headings
+  and instructional text in WHITE, the changeable inputs in GREEN."* So: a centred **LARGE-font white**
+  heading, the eight input rows in the **small font, green** (label column + value column), a cursor at
+  the left of the current line, and the instructions in white under the list, with `F10 - TITLE` on its
+  own below a blank row (the screenshot's separated "PRESS ADVANCE TO EXIT"). The cycling highlight is
+  gone — the cursor marks the line. The OR keeps its §101.12 blue. **The page
+  now writes its own three palette entries on entry**: F10 is handled by the shell, so the screen it
+  came from never stands its colours down (the presentation page leaves entry 6 = its ORANGE, the
+  table zeroes all sixteen) — the first build came out orange for that reason. New
+  `SpriteSet.MeasureSmallText`/`MeasureLargeText` replace the duplicated centring loops in the title
+  page and this one. Still **410 tests**; all six gates green.
+- **2026-09-20 — the instructions go small, and the cursor becomes the arcade's own `->` (notes
+  §108.4/§108.5).** *"The instructional text at the bottom of the page should be in small white font.
+  Also the arrow that shows what row you're on is pointing the wrong way."* The three instruction lines
+  are now the **small font** (still white, slot 9), with only the heading left large — and
+  `R - DEFAULTS` joined the second line. The cursor is the arcade's **own glyph**: the ROM's GAME
+  ADJUSTMENT page prints text string `$2C` in the SMALL font at column `$0C` on the current row —
+  `SHOW_GAME_ADJUSTMENT_CURSOR` (`$71FE`), commented *"Display '->' cursor"* — and that string is
+  `04 99` (colour 9) `5D` (one character: `SMALL_CHARACTER_TABLE` entry 45) `04 66` (back to the
+  settings' green). Entry 45's record (`$EC14`, width `$07`, five rows of four bytes, ending exactly at
+  the next pointer `$EC29`) decodes to a hyphen and a `>` chevron, so the cursor reads **"->"**. It is
+  extracted as `Font_S_cursorright.png` (`tools/verify-fonts.py` now guards **83** glyphs) and drawn
+  via the new `SpriteSet.CursorArrow` in slot 9 — the very entry the ROM sets. **§108.1 had the old
+  glyph backwards:** the large font's glyph 39 is the ROM's *"<-" left arrow* (`$EC90`) and its art is
+  a directionless 5x5 cross, so the first attempt's horizontal flip changed nothing visible;
+  `SpriteSet.ArrowGlyphIndex` is deleted. Verified from the Release capture's pixels: the drawn shape
+  is the ROM's glyph exactly. Still **410 tests**; **Debug and Release 0 warnings**, and the tests plus
+  all three verify tools are green on both.
+- **2026-09-20 — a plain-English, cross-referenced read of the Entities folder (notes §109).**
+  *"Think you should go over the entities folder and ensure all the comments are in PLAIN ENGLISH,
+  xref'ing the original arcade source where you can (e.g. if a method maps to a function in the source
+  code, make sure you reference the method). Also some methods and constructors are missing
+  summaries."* Comments only — no logic moved (both builds 0 warnings, 410 tests, all gates green).
+  A short Python scan (nothing warns today because `GenerateDocumentationFile` is off) found **35
+  members with no summary**: the interface plumbing (`Position`/`Bounds`/`LifeState`/`Update`/`Draw`) on
+  every implementation, all four constructors whose `<param>` blocks had no `<summary>` above them, and
+  the internal test hooks/private helpers. It now reports **none**. Each entity's comments name its
+  source file and routine family (`ROBOT`/`ROB0`..`ROB11` in RRP8 for the grunt, `PSTKIL`/`PKPROC` for
+  the electrode, `CIRCLE`/`CIRGO`/`CIRC3L` for the spheroid, `ENFNV`/`ENFSHT` for the enforcer,
+  `BMUT`/`GCMDIR`… for the brain, `SQUARE`/`SQVEL`/`TNKDRP` for the quark, `MOVE_PLAYER`/`LTAB`/`LASDIE`
+  for the player, `EXSTV`/`APSTV`/`PDTHV` for the explosions, `OPB80` for every generic mover). Three
+  wrong references were fixed on the way: the appear engine is `APSTV`/`APSTZ` in RRX7/RRDX2 (not
+  "RRG23's `APPEAR`"), the grunt "lumbs" (typo for lumbers) and a `TankShell` blurb calling its 8x7
+  picture a "4x4". **One finding left alone:** `Enforcer.PickDestination` is dead code (see notes
+  §109.4) — a one-line deletion when you want it.
+- **2026-09-20 — the entity docs split into port summaries and arcade remarks (notes §109.5).**
+  *"The xmldocs `<summary>` in the entity code is talking about the original arcade game's source code
+  implementation. I don't want that for the summary — I want the summary to explain WHAT the current
+  class or method does … The original source code MUST be referenced in the `<remarks>` section."* So
+  every doc block in `Entities/` is now split: the `<summary>` says what the class or member IS or does
+  in this port's terms (behaviour, units, the rules a caller must know, with shorthand like ABAC or
+  "the animation pointer" spelt out), and the `<remarks>` carries the arcade lineage that used to lead
+  the summary — source file, routine names, R5 addresses, `notes §` pointers, decode history, author
+  quotes, deviations — moved rather than deleted. Public and internal members also gained
+  `<param>`/`<returns>` text. Verified: an audit that prints any summary line still matching arcade
+  markers reports only the four spec-file citations; `git diff -U0` over the folder is nothing but
+  `///` and blank lines (no code moved), both builds 0 warnings, **410 tests**, all gates green.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

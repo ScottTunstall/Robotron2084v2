@@ -111,18 +111,6 @@ public sealed class HighScorePalette
             palette.SetSlot(slot, 0x00);
         }
 
-        StartProcesses(palette);
-    }
-
-    /// <summary>
-    /// The page's colour processes WITHOUT the FRAMER blanking — the wall's cycle plus the
-    /// slots they own, leaving every other slot as it is. FRAMER's zeroing is the table
-    /// page's BUILD, not the colour set's, so a page that is simply lit (the presentation
-    /// screen, notes §103.3) wants this one: the message lines in slots 8 and 9 and the
-    /// credit lines go on shimmering while slot 8 walks <c>COLTAB</c>.
-    /// </summary>
-    public void StartProcesses(GamePalette palette)
-    {
         foreach (int slot in OwnedSlots)
         {
             palette.SuspendSlot(slot);

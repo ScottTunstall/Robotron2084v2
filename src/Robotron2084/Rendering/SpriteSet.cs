@@ -149,6 +149,20 @@ public sealed class SpriteSet
     public Texture2D[] FontSmall { get; }
 
     /// <summary>
+    /// The arcade's GAME ADJUSTMENT CURSOR (notes §108.4): the small font's own
+    /// "->" glyph — the 46th entry of the ROM's SMALL_CHARACTER_TABLE (pointer
+    /// `$EC14`: a 7px width byte then 5 rows of 4), which SHOW_GAME_ADJUSTMENT_CURSOR
+    /// (`$71FE`) prints at column `$0C` on the row the move lever is on. The record
+    /// ends exactly where the next table entry's pointer (`$EC29`) begins.
+    ///
+    /// It is NOT one of <see cref="FontSmall"/>'s 38 glyphs — that array stops at
+    /// the parens, because the ROM's table order and the port's differ — so it
+    /// loads on its own (see <c>Content/Sprites/Font_S_cursorright.png</c>, guarded
+    /// against the ROM by <c>tools/verify-fonts.py</c>).
+    /// </summary>
+    public Texture2D CursorArrow { get; }
+
+    /// <summary>
     /// The arcade's mini man picture — the LIVES icon (notes §58.2). ROM MNPIC
     /// (`$3592` metadata, `$3596` pixels): 3 bytes x 8 rows = 6x8 px, one icon per
     /// spare man, 8 px apart, next to that player's score. It is NOT the 8x12
@@ -161,13 +175,24 @@ public sealed class SpriteSet
     public Texture2D WallPixel { get; }
 
     /// <summary>
-    /// The attract page's two logos — "ROBOTRON:" and the "2084" mark — at 1x arcade pixels,
+    /// The attract page's wordmark — "ROBOTRON:" — as two WHITE MASKS at 1x arcade pixels,
     /// TRACED from the author's arcade screenshot by <c>tools/extract-title-logos.py</c> (notes
-    /// §103.4): the R5 CPU ROM we hold does not contain this artwork.
+    /// §103.4): the R5 CPU ROM we hold does not contain this artwork. <see cref="TitleWordmarkCore"/>
+    /// is the letters' body and <see cref="TitleWordmarkRim"/> the one-pixel rim round them,
+    /// because the arcade blits a shape in a colour taken from the LIVE palette — so the page
+    /// draws each mask in a palette slot and the wordmark colour-cycles with the page's own
+    /// colour processes (notes §104).
     /// </summary>
-    public Texture2D TitleWordmark { get; }
+    public Texture2D TitleWordmarkCore { get; }
 
-    /// <summary>The "2084" mark beneath the wordmark (see <see cref="TitleWordmark"/>).</summary>
+    /// <summary>The one-pixel rim round the wordmark's letters (see <see cref="TitleWordmarkCore"/>).</summary>
+    public Texture2D TitleWordmarkRim { get; }
+
+    /// <summary>
+    /// The "2084" mark beneath the wordmark — COLOUR art, traced the same way and snapped to the
+    /// arcade's own palette (notes §103.4). Unlike the wordmark it keeps its own colours: the
+    /// author asked for the wordmark to cycle, not for this.
+    /// </summary>
     public Texture2D Title2084 { get; }
 
     /// <summary>
@@ -218,7 +243,8 @@ public sealed class SpriteSet
         DadFrames = LoadRange(content, "Sprites/Daddy", 12);
         BrainFrames = LoadRange(content, "Sprites/Brain", 12);
         ProgBurst = content.Load<Texture2D>("Sprites/ProgBurst");
-        TitleWordmark = content.Load<Texture2D>("Sprites/Title_Wordmark");
+        TitleWordmarkCore = content.Load<Texture2D>("Sprites/Title_Wordmark_Core");
+        TitleWordmarkRim = content.Load<Texture2D>("Sprites/Title_Wordmark_Rim");
         Title2084 = content.Load<Texture2D>("Sprites/Title_2084");
         MissileSmallFrames =
         [
@@ -243,6 +269,7 @@ public sealed class SpriteSet
         MiniMan = BuildMiniMan(factory);
         FontLarge = LoadGlyphs(content, "Sprites/Font_L", GlyphSuffixes.Length);
         FontSmall = LoadGlyphs(content, "Sprites/Font_S", 38);
+        CursorArrow = content.Load<Texture2D>("Sprites/Font_S_cursorright");
     }
 
     /// <summary>
@@ -335,12 +362,13 @@ public sealed class SpriteSet
     /// glyph tinted with the slot's live colour (static slots never change,
     /// so a tint is exact). Notes §38, §39.
     /// </summary>
-    public void DrawGlyphStatic(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot)
+    public void DrawGlyphStatic(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot,
+        SpriteEffects effects = SpriteEffects.None)
     {
         Color tint = Palette?.Color(slot) ?? Color.White;
         int w = ScreenSize.Scaled(glyph.Width);
         int h = ScreenSize.Scaled(glyph.Height);
-        spriteBatch.Draw(glyph, new Rectangle(x, y, w, h), tint);
+        spriteBatch.Draw(glyph, new Rectangle(x, y, w, h), null, tint, 0f, Vector2.Zero, effects, 0f);
     }
 
     /// <summary>
@@ -409,7 +437,8 @@ public sealed class SpriteSet
         int glyphIndex,
         int x,
         int y,
-        int slot)
+        int slot,
+        SpriteEffects effects = SpriteEffects.None)
     {
         if (FontSlots.IsCycling(slot))
         {
@@ -417,7 +446,7 @@ public sealed class SpriteSet
         }
         else
         {
-            DrawGlyphStatic(spriteBatch, glyphs[glyphIndex], x, y, slot);
+            DrawGlyphStatic(spriteBatch, glyphs[glyphIndex], x, y, slot, effects);
         }
     }
 
@@ -528,6 +557,38 @@ public sealed class SpriteSet
         '-' => 43,
         _ => -1,
     };
+
+    /// <summary>
+    /// The width of a string in the arcade's SMALL font, in SPEC pixels: each glyph advances its own
+    /// width + 1 (the ROM's $6009 rule) and a space advances the blank's 2 (the ROM blits its 1-px
+    /// ':' glyph for a space). The states that CENTRE a line use this rather than assuming a fixed
+    /// advance — the glyph widths differ, and the LARGE font's differ from the small one's.
+    /// </summary>
+    public int MeasureSmallText(string text) => MeasureText(FontSmall, text);
+
+    /// <summary>The same measurement for the LARGE font (the score's own advance rule).</summary>
+    public int MeasureLargeText(string text) => MeasureText(FontLarge, text);
+
+    private static int MeasureText(Texture2D[] glyphs, string text)
+    {
+        int width = 0;
+        foreach (char character in text)
+        {
+            if (character == ' ')
+            {
+                width += GameplayConstants.HudSmallFontBlankAdvancePixels;
+                continue;
+            }
+
+            int index = GlyphIndex(character);
+            if (index >= 0 && index < glyphs.Length)
+            {
+                width += glyphs[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels;
+            }
+        }
+
+        return width;
+    }
 
     /// <summary>
     /// The high score table's number printer (notes §98.5, from the author's photo
