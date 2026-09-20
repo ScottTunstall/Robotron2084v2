@@ -161,6 +161,16 @@ public sealed class SpriteSet
     public Texture2D WallPixel { get; }
 
     /// <summary>
+    /// The attract page's two logos — "ROBOTRON:" and the "2084" mark — at 1x arcade pixels,
+    /// TRACED from the author's arcade screenshot by <c>tools/extract-title-logos.py</c> (notes
+    /// §103.4): the R5 CPU ROM we hold does not contain this artwork.
+    /// </summary>
+    public Texture2D TitleWordmark { get; }
+
+    /// <summary>The "2084" mark beneath the wordmark (see <see cref="TitleWordmark"/>).</summary>
+    public Texture2D Title2084 { get; }
+
+    /// <summary>
     /// M4: when set, entity draws run through the colour-cycle pixel shader
     /// (remaps the six cycling-slot marker colours to their live palette
     /// colours). Null = plain draws.
@@ -208,6 +218,8 @@ public sealed class SpriteSet
         DadFrames = LoadRange(content, "Sprites/Daddy", 12);
         BrainFrames = LoadRange(content, "Sprites/Brain", 12);
         ProgBurst = content.Load<Texture2D>("Sprites/ProgBurst");
+        TitleWordmark = content.Load<Texture2D>("Sprites/Title_Wordmark");
+        Title2084 = content.Load<Texture2D>("Sprites/Title_2084");
         MissileSmallFrames =
         [
             content.Load<Texture2D>("Sprites/MissileSmall_0"),

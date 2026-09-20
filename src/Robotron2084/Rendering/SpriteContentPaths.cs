@@ -243,5 +243,7 @@ public static class SpriteContentPaths
         "Sprites/Tank_2",
         "Sprites/Tank_3",
         "Sprites/Tank_4",
+        "Sprites/Title_2084",
+        "Sprites/Title_Wordmark",
     ];
 }

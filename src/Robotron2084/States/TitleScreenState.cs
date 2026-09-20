@@ -48,17 +48,18 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private const string CreditLine = "REVERSE ENGINEERING AND DEVELOPMENT BY SCOTT TUNSTALL";
 
-    // Layout of the presentation page (notes §103). The top third is reserved for the ROBOTRON:
-    // wordmark and the 2084 logo, which are NOT in the R5 ROM we hold (see §103.2) — the page
-    // deliberately leaves it empty rather than printing a stand-in.
+    // Layout of the presentation page (notes §103). The art is drawn at the port's 2x sprite
+    // scale, which is why the logo rows are 58 and 68 px tall. The menu steps by
+    // Scaled(TitleOptionRowStepPixels) = 28, so its four rows need 84 px — hence MenuRow 292.
     private const int WordmarkRow = 30;
-    private const int WelcomeRowOne = 132;
-    private const int WelcomeRowTwo = 152;
-    private const int DesignedByRow = 186;
-    private const int ForWilliamsRow = 204;
-    private const int CopyrightRow = 222;
-    private const int CreditRow = 246;
-    private const int MenuRow = 280;
+    private const int Logo2084Row = 96;
+    private const int WelcomeRowOne = 176;
+    private const int WelcomeRowTwo = 194;
+    private const int DesignedByRow = 220;
+    private const int ForWilliamsRow = 236;
+    private const int CopyrightRow = 252;
+    private const int CreditRow = 270;
+    private const int MenuRow = 292;
 
     private readonly IPlayerInputSource _input;
     private readonly SpriteSet _sprites;
@@ -169,6 +170,11 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // attract page carries those.
         int slot = GameplayConstants.HudScoreSlotCurrent; // the ROM's $AA (slot 10)
 
+        // The two logos, traced from the author's arcade screenshot (notes §103.4) — the R5 CPU
+        // ROM we hold has no attract wordmark (§103.2). Drawn at the port's 2x sprite scale.
+        DrawCentredLogo(spriteBatch, _sprites.TitleWordmark, WordmarkRow);
+        DrawCentredLogo(spriteBatch, _sprites.Title2084, Logo2084Row);
+
         // The welcome message, exactly as $8822-$8836 prints it: LARGE font, slot 8 then slot 9.
         DrawCenteredLargeText(spriteBatch, WelcomeLineOne, WelcomeRowOne, 8);
         DrawCenteredLargeText(spriteBatch, WelcomeLineTwo, WelcomeRowTwo, 9);
@@ -208,6 +214,15 @@ public sealed class TitleScreenState : IGameState, IAttractState
         {
             _colour.Stop(palette);
         }
+    }
+
+    /// <summary>Centres one traced logo horizontally, at the port's 2x sprite scale.</summary>
+    private void DrawCentredLogo(SpriteBatch spriteBatch, Texture2D texture, int y)
+    {
+        int width = texture.Width * ScreenSize.SpecScale;
+        int height = texture.Height * ScreenSize.SpecScale;
+        var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
+        _sprites.DrawSprite(spriteBatch, texture, bounds, Color.White);
     }
 
     private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int slot)

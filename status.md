@@ -386,6 +386,14 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   stepping it each tick and restoring CRTAB on the way out. Flagged: the attract page's own call set
   is not separately decoded; this uses the high-score page's (validated §98.5) set. Still **402
 tests**.
+- **2026-09-20 — THE LOGOS ARE IN (notes §103.4, author: *"OK, do it"*).** The ROM cannot supply the
+  wordmark (§103.2), so it is **traced from the author's own reference screenshot**, which is now in
+  the repo as `ref/title-reference.png` (recovered from VS Code's attachment cache). New
+  `tools/extract-title-logos.py` crops the measured bands, point-samples each source block, snaps
+  every texel to the nearest arcade CRTAB colour and writes `Title_Wordmark` (213x29 arcade px) and
+  `Title_2084` (79x34); `SpriteSet` loads them and the page draws them at the port's 2x sprite scale
+  in the upper third, with the text rows moved up so all four menu lines fit. **Flagged in the notes
+  as a traced stand-in** to be replaced if a dump of that release ever appears.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36
