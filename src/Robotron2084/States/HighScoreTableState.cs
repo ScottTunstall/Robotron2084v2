@@ -46,9 +46,11 @@ public sealed class HighScoreTableState : IGameState
     private readonly int[] _postedScores;
     private readonly HighScorePalette _colour = new();
     private readonly HighScoreFrameAnimation _frame = new();
+    private readonly HighScorePrintSequence _print = new();
     private readonly int _holdTicks = GameplayConstants.PortTicks(GameplayConstants.HighScoreHoldRomFrames);
     private readonly int _leaveTicks = GameplayConstants.PortTicks(GameplayConstants.HighScoreLeaveTimeoutRomFrames);
     private int _elapsedTicks;
+    private bool _rampsStarted;
     private bool _previousFire;
     private bool _previousStartOne;
     private bool _previousStartTwo;
@@ -84,8 +86,28 @@ public sealed class HighScoreTableState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
-        _elapsedTicks++;
         _frame.Tick();
+
+        // RRTABLE's order: FRAMER draws the wall on an EMPTY page (SCRCLR ran before
+        // TABORG), and only when it returns does PRJNK print the lists four rows a ROM
+        // frame, then the top entry, then the headers — and only THEN do the four ramp
+        // processes start and the 600-frame hold begin (notes §98.6).
+        _print.Tick(_frame.IsFinished, _table.Today.Count, _table.AllTime.Count);
+
+        if (_print.IsDone)
+        {
+            if (!_rampsStarted)
+            {
+                _rampsStarted = true;
+                if (_sprites.Palette is { } livePalette)
+                {
+                    _colour.StartRamps(livePalette);
+                }
+            }
+
+            // The ROM's hold counts from the MAKPs, i.e. from the finished page.
+            _elapsedTicks++;
+        }
 
         if (_sprites.Palette is { } live)
         {
@@ -102,8 +124,9 @@ public sealed class HighScoreTableState : IGameState
         _previousStartTwo = input.StartTwoPlayersPressed;
 
         // The ROM: hold 600 frames, then wait for ANY switch (with a 255 × 4 frame
-        // timeout), then back to the family page.
-        if (pressed || _elapsedTicks >= _holdTicks + _leaveTicks)
+        // timeout), then back to the family page. A press during the printing is
+        // ignored — PRJNK has no switch check (the page finishes building first).
+        if ((pressed && _print.IsDone) || _elapsedTicks >= _holdTicks + _leaveTicks)
         {
             if (_sprites.Palette is { } palette)
             {
@@ -118,12 +141,23 @@ public sealed class HighScoreTableState : IGameState
     {
         DrawFrame(spriteBatch);
 
-        DrawHeader(spriteBatch, "ROBOTRON HEROES", HighScoreTableLayout.TodayHeaderRow);
-        DrawTodayList(spriteBatch);
+        // Nothing but the wall until the frame's passes have finished, then the page
+        // prints itself in the ROM's own order: today's list, the top entry, the
+        // all-time list, the headers (PRJNK + TABLE + SCRMES).
+        DrawTodayList(spriteBatch, _print.TodayRows);
 
-        DrawHeader(spriteBatch, "ALL TIME HEROES", HighScoreTableLayout.AllTimeHeaderRow);
-        DrawTopEntry(spriteBatch);
-        DrawAllTimeList(spriteBatch);
+        if (_print.TopPrinted)
+        {
+            DrawTopEntry(spriteBatch);
+        }
+
+        DrawAllTimeList(spriteBatch, _print.AllTimeRows);
+
+        if (_print.HeadersPrinted)
+        {
+            DrawHeader(spriteBatch, "ROBOTRON HEROES", HighScoreTableLayout.TodayHeaderRow);
+            DrawHeader(spriteBatch, "ALL TIME HEROES", HighScoreTableLayout.AllTimeHeaderRow);
+        }
     }
 
     private static int ColumnX(int column) => GameplayConstants.ArcadeX(column * 2);
@@ -140,11 +174,11 @@ public sealed class HighScoreTableState : IGameState
             GameplayConstants.HighScoreHeaderSlot);
     }
 
-    private void DrawTodayList(SpriteBatch spriteBatch)
+    private void DrawTodayList(SpriteBatch spriteBatch, int printedRows)
     {
         IReadOnlyList<HighScoreEntry> entries = _table.Today;
 
-        for (int rank = 1; rank <= HighScoreTableLayout.TodayRows && rank <= entries.Count; rank++)
+        for (int rank = 1; rank <= HighScoreTableLayout.TodayRows && rank <= entries.Count && rank <= printedRows; rank++)
         {
             (int column, int row) = HighScoreTableLayout.TodayPosition(rank);
             int x = ColumnX(column);
@@ -171,11 +205,11 @@ public sealed class HighScoreTableState : IGameState
         }
     }
 
-    private void DrawAllTimeList(SpriteBatch spriteBatch)
+    private void DrawAllTimeList(SpriteBatch spriteBatch, int printedRows)
     {
         IReadOnlyList<HighScoreEntry> entries = _table.AllTime;
 
-        for (int rank = 2; rank <= HighScoreTableLayout.AllTimeRows + 1 && rank - 2 < entries.Count; rank++)
+        for (int rank = 2; rank <= HighScoreTableLayout.AllTimeRows + 1 && rank - 2 < entries.Count && rank - 1 <= printedRows; rank++)
         {
             (int column, int row) = HighScoreTableLayout.AllTimePosition(rank);
             int x = ColumnX(column);

@@ -17,27 +17,83 @@ public sealed class HighScorePaletteTests
         var palette = new GamePalette();
         var cycle = new HighScorePalette();
         cycle.Start(palette);
+        cycle.StartRamps(palette);
+        return (palette, cycle);
+    }
+
+    /// <summary>Started but with the four ramps still to come (the ROM's page order).</summary>
+    private static (GamePalette Palette, HighScorePalette Cycle) FrameOnly()
+    {
+        var palette = new GamePalette();
+        var cycle = new HighScorePalette();
+        cycle.Start(palette);
         return (palette, cycle);
     }
 
     [Fact]
-    public void Start_BlacksThePaletteThenWritesEachProcessesCurrentByte()
+    public void Start_BlacksThePaletteAndStartsOnlyTheWallsCycle()
     {
-        (GamePalette palette, _) = Started();
+        (GamePalette palette, _) = FrameOnly();
 
         // FRAMER zeroes PCRAM..PCRAM+15 before anything is drawn (the page comes up
         // from black)...
         Assert.Equal(0x00, palette.SlotValue(0));
         Assert.Equal(0x00, palette.SlotValue(11));
 
-        // ...then each process writes its table's current byte at once (LOOPP's shift
-        // register pushes slot 8's old — zero — value down into slot 7).
+        // ...then MAKP LOOPP's first store shifts slot 8's old — zero — value into slot 7.
         Assert.Equal(HighScorePalette.CycleTable[0], palette.SlotValue(8));
         Assert.Equal(0x00, palette.SlotValue(7));
+
+        // The four ramps are NOT running yet: the ROM starts them after the page has
+        // printed (MAKP DECAZ/COLA/COLC/COLD follow WRD7V), so the printed rows sit in
+        // black slots until then.
+        Assert.Equal(0x00, palette.SlotValue(9));
+        Assert.Equal(0x00, palette.SlotValue(10));
+        Assert.Equal(0x00, palette.SlotValue(12));
+        Assert.Equal(0x00, palette.SlotValue(13));
+    }
+
+    [Fact]
+    public void StartRamps_BringsTheFourRampsUpInTheirOwnPhases()
+    {
+        (GamePalette palette, HighScorePalette cycle) = Started();
+
+        cycle.StartRamps(palette);
+
+        Assert.True(cycle.RampsStarted);
         Assert.Equal(HighScorePalette.RampTable[7], palette.SlotValue(9));   // DECAZ starts at CATAB+7
         Assert.Equal(HighScorePalette.RampTable[0], palette.SlotValue(10));  // COLA starts at CATAB
         Assert.Equal(HighScorePalette.AccentTable[7], palette.SlotValue(12)); // COLC starts at CCTAB+7
         Assert.Equal(HighScorePalette.AccentTable[0], palette.SlotValue(13)); // COLD starts at CCTAB
+
+        // Starting them twice is a no-op (the ROM's MAKPs happen once).
+        for (int tick = 0; tick < 5; tick++)
+        {
+            cycle.Update(palette);
+        }
+
+        byte stepped = (byte)palette.SlotValue(9);
+        cycle.StartRamps(palette);
+        Assert.Equal(stepped, palette.SlotValue(9));
+    }
+
+    [Fact]
+    public void TheRampsDoNotRunBeforeTheyAreStarted()
+    {
+        (GamePalette palette, HighScorePalette cycle) = FrameOnly();
+
+        for (int tick = 0; tick < 100; tick++)
+        {
+            cycle.Update(palette);
+        }
+
+        Assert.Equal(0x00, palette.SlotValue(9));
+        Assert.Equal(0x00, palette.SlotValue(10));
+        Assert.Equal(0x00, palette.SlotValue(12));
+        Assert.Equal(0x00, palette.SlotValue(13));
+
+        // ...the wall's cycle runs regardless (it comes up with the frame).
+        Assert.NotEqual(0x00, palette.SlotValue(8));
     }
 
     [Fact]

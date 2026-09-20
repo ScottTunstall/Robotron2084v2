@@ -8115,3 +8115,46 @@ lists; the constants are now `HighScoreTodaySlot`/`…Highlight` (9/12) and
 step, the ramp wrap at the terminator and the hand-back; `HighScoreFrameAnimationTests` (4)
 pin both passes' pacing, their terminal rectangles and the 16-pixel band; the layout tests
 gain the stroke geometry and the hatch rule. Suite: **314 tests, 0 failed, 0 skipped**.
+
+### 98.6 The page PRINTS ITSELF — RRTABLE's order, and where the cycling starts (2026-09-20)
+
+**Author: "The palette isn't cycling and the scores are being shown as the wall expands."**
+The second half is a real decode miss, and it is the more interesting one: `TABLE` does not
+put a finished page on screen, it BUILDS one, and the port had been drawing every element
+from the first frame.
+
+#### The order (`TABLE` → `FRAMER` → `PRJNK` → `WRD7V` → the `MAKP`s)
+
+| # | ROM | what it is, in ROM frames |
+|---|---|---|
+| 1 | `MAKP LOOPP` | the wall's cycle comes first; the palette is then zeroed by FRAMER, so the page starts black |
+| 2 | `JSR FRAMER` | **53 frames (~1.06 s) with NOTHING else on screen** — the wall grows from (col 62, row 125) out to (col 6, row 13), then the black pass eats the middle back to (col 14, row 29) |
+| 3 | `JSR PRJNK` (today) | TODAY'S list, **four rows a ROM frame** — `TOD44`'s `LDA #4 / STA PD+17,U` counts entries and `TOD66`'s `NAP 1` sleeps between groups. The first group prints the moment the call is made, and the last group of a list does not sleep (`TOD22` walks to the next column, or falls out of `PRJNK`) → 10 rows = 2 frames |
+| 4 | `TABLE`'s own prints | the top entry `( WILLY ELKTRIX ) 151782` — `PR57V` calls, no sleep |
+| 5 | `JSR PRJNK` (all-time) | the 36-row list in the SMALL font, four rows a frame → 8 frames |
+| 6 | `LDA #SCRMES / JSR WRD7V` | the two headers are the LAST thing printed |
+| 7 | `MAKP DECAZ/COLA/COLC/COLD` | only NOW do the four colour ramps exist — until this point slots 9/10/12/13 hold the zeroes FRAMER left, so the rows that have just been printed are BLACK (invisible) and come up dark red as `DECAZ`/`COLA` write their first `$07` |
+| 8 | `LDA #200 / STA PD,U` | the 600-frame hold, now counting from the finished page |
+
+Port side: `Hud/HighScorePrintSequence` (the phases + the 4-rows-per-frame clock, unit-tested),
+`HighScoreTableState.Draw` printing in that order and drawing nothing but the wall while the
+frame's passes run, and `HighScorePalette.StartRamps` as the ROM's second `MAKP` group —
+`Start` now only clears the palette and starts `LOOPP`. A key press during the printing is
+IGNORED (PRJNK has no switch check; the page finishes building first), and the hold counts
+from the moment the page is complete.
+
+Measured on the running port (a temporary probe sampling the wall, a header and two list
+rows every 100 ms, then eight screenshots): nothing but the wall for ~1.0 s; the text prints
+invisibly and becomes red at ~1.2 s; from then on the wall steps through COLTAB and the two
+lists ramp out of phase — the all-time list reaching white while today's is still red, which
+is `COLA` and `DECAZ` seven steps apart.
+
+#### The cycling rate — and the one number to re-check with the author
+
+The port reads a `NAP n` delay as n ROM frames (the model the entity bodies and the 600-frame
+hold already use), so `LOOPP` puts a new COLTAB colour into slot 8 every 3 frames (16 steps a
+second, a 1.26 s lap through all 21) and the four ramps step every 4 frames (1.12 s a lap).
+The alternative reading is §87.4/A9's open question — that a "pass" is TWO frames, which is
+what the wave-complete tunnel needed to reach the author's ~2 s (§83) — and it would halve
+both rates. It does not change anything else on this page, so it is a one-constant decision:
+if the arcade's page cycles visibly slower than this, that is the knob.

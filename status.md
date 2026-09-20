@@ -223,6 +223,24 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   `NOINTS` prints the second list without re-setting them), and the author's photo settled
   §98.4's alignment question — the table's numbers PACK (no advance for a suppressed leading
   zero) and the ranks are unpadded. +14 tests (**314**).
+- **2026-09-20 follow-up — THE PAGE BUILDS ITSELF (notes §98.6).** Author: *"The palette isn't
+  cycling and the scores are being shown as the wall expands."* The second half was REAL and the
+  port had it wrong: `TABLE` does not put a finished page up, it BUILDS one, and the port drew
+  every element from frame 0. The ROM's order, now implemented: `MAKP LOOPP` → `JSR FRAMER`
+  (**53 ROM frames with nothing else on screen** — the wall grows, then the black pass eats the
+  middle) → `JSR PRJNK` for TODAY's list **four rows a ROM frame** (`TOD44`'s `LDA #4` + `TOD66`'s
+  `NAP 1`; the first group prints at once and a list's last group does not sleep) → the top entry
+  → the all-time list (four rows a frame) → **the headers LAST** (`SCRMES`/`WRD7V`) → and only THEN
+  `MAKP DECAZ/COLA/COLC/COLD` and the 600-frame hold. Because the ramps come last, the rows that
+  have just printed sit in the zeroes FRAMER left — so the text is drawn INVISIBLE for the ~0.2 s
+  it takes to print and comes up dark red as `DECAZ`/`COLA` write their first `$07`. New
+  `Hud/HighScorePrintSequence` (phases + the four-rows-a-frame clock), `HighScorePalette.Start`
+  split from `StartRamps`, and a press during the printing is ignored (PRJNK has no switch check).
+  Measured with a temporary probe + eight screenshots: wall alone for ~1.0 s, text red at ~1.2 s,
+  then the two lists ramping out of phase (the all-time list white while today's is red). +7 tests
+  (**321**). **For the author's eye:** the cycling RATE — the port reads `NAP n` as n ROM frames
+  (16 steps/s for COLTAB, a 1.26 s lap); if the arcade's page cycles visibly slower, the A9
+  "a pass is two frames" reading halves it (notes §98.6).
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

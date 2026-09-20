@@ -64,6 +64,12 @@ public sealed class HighScorePalette
     /// <summary>The slots the page takes over from the in-game colour animator.</summary>
     public static readonly int[] OwnedSlots = [10, 12, 13];
 
+    /// <summary>
+    /// The first of the four processes the ROM starts AFTER the page is printed
+    /// (<c>MAKP DECAZ/COLA/COLC/COLD</c>); everything before it comes up with the frame.
+    /// </summary>
+    private const int RampProcessStart = 1;
+
     private sealed class Process
     {
         public int Slot;
@@ -75,10 +81,13 @@ public sealed class HighScorePalette
 
     private readonly Process[] _processes;
 
+    /// <summary>True once the four ramp processes have been started (the ROM's second MAKP group).</summary>
+    public bool RampsStarted { get; private set; }
+
     public HighScorePalette()
     {
         // The ROM's DECAZ and COLC are started with an out-of-phase table pointer
-        // (`LDX #CATAB+7` "OUT OF PHASE PLEASE", `LDX #CCTAB+7`).
+        // (`LDX #CATAB+7` "OUT OF PHASE PLEASE", `LDX #CCTAB+7").
         _processes =
         [
             new() { Slot = LoopSlot, Table = CycleTable, RomFramesPerStep = 3 },
@@ -90,9 +99,10 @@ public sealed class HighScorePalette
     }
 
     /// <summary>
-    /// The page's <c>FRAMER</c> clear plus each process's first write: the palette comes
-    /// up black (the ROM zeroes all sixteen slots) and the processes then put their
-    /// table's current byte in. <see cref="Stop"/> is the other half.
+    /// The page's <c>FRAMER</c> clear plus the wall's cycle: the ROM starts
+    /// <c>MAKP LOOPP</c> BEFORE it draws the frame, so slots 1-8 come alive first and the
+    /// palette comes up black (FRAMER zeroes all sixteen slots). The four ramps the
+    /// text uses do not exist yet — see <see cref="StartRamps"/>.
     /// </summary>
     public void Start(GamePalette palette)
     {
@@ -106,17 +116,40 @@ public sealed class HighScorePalette
             palette.SuspendSlot(slot);
         }
 
-        foreach (Process process in _processes)
+        Apply(palette, _processes[0], _processes[0].Table[_processes[0].Index]);
+    }
+
+    /// <summary>
+    /// The ROM's second <c>MAKP</c> group — <c>DECAZ</c>/<c>COLA</c>/<c>COLC</c>/<c>COLD</c>,
+    /// started once the page has finished printing and before the 600-frame hold. Until
+    /// this runs, slots 9/10/12/13 are the zeroes FRAMER left behind, which is why the
+    /// printed rows are invisible for their first few frames.
+    /// </summary>
+    public void StartRamps(GamePalette palette)
+    {
+        if (RampsStarted)
         {
-            Apply(palette, process, process.Table[process.Index]);
+            return;
+        }
+
+        RampsStarted = true;
+        for (int i = RampProcessStart; i < _processes.Length; i++)
+        {
+            Apply(palette, _processes[i], _processes[i].Table[_processes[i].Index]);
         }
     }
 
     /// <summary>Advances every process by one port tick (call once per Update).</summary>
     public void Update(GamePalette palette)
     {
-        foreach (Process process in _processes)
+        for (int i = 0; i < _processes.Length; i++)
         {
+            if (i >= RampProcessStart && !RampsStarted)
+            {
+                continue; // the ramps do not exist until the page has finished printing
+            }
+
+            Process process = _processes[i];
             process.Fifths += SixthsPerPortTick;
             int period = process.RomFramesPerStep * SixthsPerRomFrame;
             if (process.Fifths < period)
