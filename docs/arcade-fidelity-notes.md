@@ -8588,3 +8588,39 @@ F1/F2/F3. `BoundPlayerInputSource` is a thin `IPlayerInputSource` over one playe
 `Hud/DefineInputsModelTests`, `Hud/PauseToggleTests`. Suite: **400 tests, 0 failed, 0 skipped**;
 all six gates green (`verify-attract`'s first run failed its own guard — a window over the capture
 region — and passed on the re-run, the §98.8 lesson again).
+
+#### 101.9 The author's first-look corrections (2026-09-20)
+
+**Author:** *"I don't like the control name flashing fast when unselected. Leave it as a static
+colour - white is fine. I do like the input entered flashing though. Also, there's no separation
+between player 1's controls and player 2's controls - there should be a few blank lines I think.
+There's also no text saying 'Use up and down to move between P1 and P2's controls'."*
+
+Four changes, all on the definitions page:
+
+1. **Unselected names are static WHITE.** They were drawn in `HudScoreSlotCurrent`, one of the
+   palette slots the ROM's colour processes drive, so all sixteen unfocused rows shimmered. They
+   now use **slot 9** (`$99` — the palette's white, which no process writes; `PlayerDeathWhiteSlot`
+   is the same value). Only the HIGHLIGHTED line cycles, which is the half the author wanted kept.
+   Checked numerically rather than by eye: two screenshots 1.4 s apart, the label band of rows 1-3
+   identical in both (`(240,240,240)`) while row 0's colour changed between the captures.
+2. **Two blank lines between the sections.** `DefineInputsModel.SpacerLines = 2` — one gap after
+   player 1's block, one before PAUSE — so the page is 21 lines (`PlayerTwoLine = 10`,
+   `PauseLine = 20`). The spacers are real lines (the window scrolls over them) but the cursor
+   STEPS OVER them (`PreviousLine`/`NextLine`, both wrapping), so Up/Down can never land on a blank
+   and `Assign`'s advance clears the gap too. Verified: with the cursor on player 2's first line,
+   the window's two middle rows have **zero lit pixels**.
+3. **Every line carries its player** — `P1 MOVE UP` … `P2 SHOOT RIGHT`; PAUSE stays bare, being
+   shared. The floating "PLAYER n" heading above the list is DELETED: it named the section of the
+   *highlighted* line, so as soon as a scroll left player 1's tail and player 2's head on screen
+   together — the case the blank gap now makes obvious — the heading contradicted the rows beneath
+   it. Per-row labels cannot be misread at any scroll position. (The value column's `P1`/`P2` is
+   the DEVICE pad, which is a different fact and may legitimately differ from the row's player.)
+4. **A hint line** under the title, in the arcade's small font: `USE UP AND DOWN TO MOVE BETWEEN P1
+   AND P2` (row 44). It is spelled with letters, digits and spaces only — the small font has no
+   apostrophe (§101.3) — and it replaced `UP DN SCROLL` in the footers, which are now
+   `ENTER SET THE INPUT   DEL CLEAR` / `R DEFAULTS   F10 TITLE`.
+
+**+1 test** (the cursor steps over the blanks; the line map grew to 21) — **401 tests, 0 failed,
+0 skipped** — and all six gates green. The highlighted row's colour at capture time was
+`(64,240,160)` in one screenshot and `(144,208,0)` in the next, i.e. the cycling slot doing its job.

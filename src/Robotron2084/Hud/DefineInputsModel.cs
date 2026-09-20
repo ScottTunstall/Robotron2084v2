@@ -7,11 +7,11 @@ namespace Robotron2084.Hud;
 /// split the high score page uses (<see cref="HighScorePrintSequence"/>): the state
 /// draws and reads hardware, this decides what a keypress MEANS.
 ///
-/// The page is ONE column of lines: player 1's eight stick lines, then player 2's
-/// eight, then the machine's single PAUSE line — seventeen in all, of which only
-/// <see cref="VisibleLines"/> are on screen at once. The author's ask was exactly that:
-/// two side-by-side columns made the screen feel full, so player 2's section sits
-/// BENEATH player 1's and the cursor SCROLLS between them.
+/// The page is ONE column of lines: player 1's eight stick lines, two blank lines, player
+/// 2's eight, two more blank lines, then the machine's single PAUSE line — twenty-one in
+/// all, of which only <see cref="VisibleLines"/> are on screen at once. The author's ask was
+/// exactly that: two side-by-side columns made the screen feel full, so player 2's section
+/// sits BENEATH player 1's and the cursor SCROLLS between them.
 ///
 /// Setting an input is deliberately TWO steps (the author's choice): <c>Enter</c> arms
 /// the highlighted line, then the next thing pressed becomes the binding. Without it
@@ -23,13 +23,23 @@ public sealed class DefineInputsModel
     /// <summary>Lines per player: the four MOVE and four SHOOT directions of one stick pair.</summary>
     public const int LinesPerPlayer = 8;
 
-    /// <summary>The PAUSE line's index — the last line, after both players.</summary>
-    public const int PauseLine = 2 * LinesPerPlayer;
+    /// <summary>
+    /// Blank lines between the sections. The author's ask: player 1's block and player 2's
+    /// ran together on screen, so there are gaps the cursor skips over (and which make the
+    /// section boundary obvious when a scroll leaves both blocks visible).
+    /// </summary>
+    public const int SpacerLines = 2;
 
-    /// <summary>Every line on the page.</summary>
+    /// <summary>Player 2's first line — player 1's block, then the gap.</summary>
+    public const int PlayerTwoLine = LinesPerPlayer + SpacerLines;
+
+    /// <summary>The PAUSE line's index — the last line, after both players and a gap.</summary>
+    public const int PauseLine = PlayerTwoLine + LinesPerPlayer + SpacerLines;
+
+    /// <summary>Every line on the page, blank spacers included.</summary>
     public const int LineCount = PauseLine + 1;
 
-    /// <summary>How many lines fit on screen — one player's section, heading and all.</summary>
+    /// <summary>How many lines fit on screen at once.</summary>
     public const int VisibleLines = LinesPerPlayer;
 
     /// <summary>True once Enter has armed the highlighted line for capture.</summary>
@@ -44,12 +54,23 @@ public sealed class DefineInputsModel
     /// <summary>True while the highlight is on the shared PAUSE line.</summary>
     public bool IsPauseLine => Line == PauseLine;
 
-    /// <summary>Which player owns a line: 0 for player 1, 1 for player 2 (the PAUSE line has none).</summary>
-    public static int PlayerOf(int line) => line < LinesPerPlayer ? 0 : 1;
+    /// <summary>
+    /// Which player owns an ACTION line: 0 for player 1, 1 for player 2. The PAUSE line and
+    /// the blank spacers have no owner — call <see cref="ActionOf"/> first.
+    /// </summary>
+    public static int PlayerOf(int line) => line < PlayerTwoLine ? 0 : 1;
 
-    /// <summary>The action a line sets, or null on the PAUSE line.</summary>
-    public static InputAction? ActionOf(int line) =>
-        line < PauseLine ? InputActions.All[line % LinesPerPlayer] : null;
+    /// <summary>The action a line sets, or null on a blank spacer or on the PAUSE line.</summary>
+    public static InputAction? ActionOf(int line) => line switch
+    {
+        < LinesPerPlayer => InputActions.All[line],
+        _ when line >= PlayerTwoLine && line < PlayerTwoLine + LinesPerPlayer =>
+            InputActions.All[line - PlayerTwoLine],
+        _ => null,
+    };
+
+    /// <summary>True for the blank lines that separate the sections (never highlightable).</summary>
+    public static bool IsSpacer(int line) => line != PauseLine && ActionOf(line) is null;
 
     /// <summary>The highlighted action, or null on the PAUSE line.</summary>
     public InputAction? HighlightedAction => ActionOf(Line);
@@ -64,24 +85,50 @@ public sealed class DefineInputsModel
     public void CancelArm() => IsArmed = false;
 
     /// <summary>
-    /// Scrolls the highlight up one line, wrapping round the whole page (player 1's
-    /// MOVE UP is directly below the PAUSE line), and brings it into the window.
+    /// Scrolls the highlight up one line, wrapping round the whole page and stepping over
+    /// the blank spacers, and brings it into the window.
     /// </summary>
     public void MoveUp()
     {
         if (!IsArmed)
         {
-            MoveTo(Line == 0 ? PauseLine : Line - 1);
+            MoveTo(PreviousLine(Line));
         }
     }
 
-    /// <summary>Scrolls the highlight down one line, wrapping, and brings it into the window.</summary>
+    /// <summary>Scrolls the highlight down one line, wrapping and skipping the spacers.</summary>
     public void MoveDown()
     {
         if (!IsArmed)
         {
-            MoveTo(Line == PauseLine ? 0 : Line + 1);
+            MoveTo(NextLine(Line));
         }
+    }
+
+    /// <summary>The nearest line above that is not a blank spacer, wrapping round the page.</summary>
+    private static int PreviousLine(int line)
+    {
+        int candidate = line;
+        do
+        {
+            candidate = candidate == 0 ? PauseLine : candidate - 1;
+        }
+        while (IsSpacer(candidate) && candidate != line);
+
+        return candidate;
+    }
+
+    /// <summary>The nearest line below that is not a blank spacer, wrapping round the page.</summary>
+    private static int NextLine(int line)
+    {
+        int candidate = line;
+        do
+        {
+            candidate = candidate == PauseLine ? 0 : candidate + 1;
+        }
+        while (IsSpacer(candidate) && candidate != line);
+
+        return candidate;
     }
 
     /// <summary>
@@ -99,7 +146,7 @@ public sealed class DefineInputsModel
         SetLine(settings, Line, binding);
         if (Line < PauseLine)
         {
-            MoveTo(Line + 1);
+            MoveTo(NextLine(Line));
         }
 
         IsArmed = false;

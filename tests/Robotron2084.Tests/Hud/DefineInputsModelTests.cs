@@ -7,9 +7,9 @@ namespace Robotron2084.Tests.Hud;
 
 /// <summary>
 /// The DEFINE INPUTS page's logic (notes §101): one column — player 1's eight stick
-/// lines, then player 2's, then PAUSE — of which eight are on screen at a time, and the
-/// author's two-step flow: Enter arms a line, the next input becomes its binding, and
-/// the highlight moves on.
+/// lines, blank lines, player 2's eight, blank lines, then PAUSE — of which eight are on
+/// screen at a time, and the author's two-step flow: Enter arms a line, the next input
+/// becomes its binding, and the highlight moves on (stepping over the blanks).
 /// </summary>
 public sealed class DefineInputsModelTests
 {
@@ -25,19 +25,55 @@ public sealed class DefineInputsModelTests
     }
 
     [Fact]
-    public void ThePageIsSeventeenLines_BothPlayersThenPause()
+    public void ThePageIsTwentyOneLines_WithGapsBetweenTheSections()
     {
         Assert.Equal(8, InputActions.All.Length);
         Assert.Equal(8, DefineInputsModel.LinesPerPlayer);
-        Assert.Equal(16, DefineInputsModel.PauseLine);
-        Assert.Equal(17, DefineInputsModel.LineCount);
+        Assert.Equal(2, DefineInputsModel.SpacerLines);
+        Assert.Equal(10, DefineInputsModel.PlayerTwoLine);
+        Assert.Equal(20, DefineInputsModel.PauseLine);
+        Assert.Equal(21, DefineInputsModel.LineCount);
 
         Assert.Equal(0, DefineInputsModel.PlayerOf(0));
         Assert.Equal(1, DefineInputsModel.PlayerOf(15));
         Assert.Equal(InputAction.MoveUp, DefineInputsModel.ActionOf(0));
         Assert.Equal(InputAction.ShootRight, DefineInputsModel.ActionOf(7));
-        Assert.Equal(InputAction.MoveUp, DefineInputsModel.ActionOf(8)); // player 2's section starts here
+        Assert.True(DefineInputsModel.IsSpacer(8)); // the blank lines between player 1 and player 2
+        Assert.True(DefineInputsModel.IsSpacer(9));
+        Assert.Equal(InputAction.MoveUp, DefineInputsModel.ActionOf(DefineInputsModel.PlayerTwoLine));
+        Assert.Equal(InputAction.ShootRight, DefineInputsModel.ActionOf(17));
+        Assert.True(DefineInputsModel.IsSpacer(18)); // and before PAUSE
+        Assert.True(DefineInputsModel.IsSpacer(19));
+        Assert.False(DefineInputsModel.IsSpacer(DefineInputsModel.PauseLine));
         Assert.Null(DefineInputsModel.ActionOf(DefineInputsModel.PauseLine));
+    }
+
+    [Fact]
+    public void TheCursorStepsOverTheBlankSpacers_NeverLandingOnOne()
+    {
+        var model = new DefineInputsModel();
+
+        for (int i = 0; i < DefineInputsModel.LinesPerPlayer; i++)
+        {
+            model.MoveDown();
+        }
+
+        // Seven steps through player 1, then straight onto player 2's first line.
+        Assert.Equal(DefineInputsModel.PlayerTwoLine, model.Line);
+        Assert.Equal(InputAction.MoveUp, model.HighlightedAction);
+
+        for (int i = 0; i < DefineInputsModel.LinesPerPlayer; i++)
+        {
+            model.MoveDown();
+        }
+
+        Assert.True(model.IsPauseLine); // the gap before PAUSE is stepped over too
+
+        model.MoveDown();
+        Assert.Equal(0, model.Line); // and the wrap round the page
+
+        model.MoveUp();
+        Assert.True(model.IsPauseLine); // back up over the gap
     }
 
     [Fact]
@@ -113,9 +149,9 @@ public sealed class DefineInputsModelTests
             model.MoveDown();
         }
 
-        Assert.Equal(DefineInputsModel.LinesPerPlayer, model.Line);
-        Assert.True(model.FirstVisibleLine > 0);                                  // the P1 section has moved up
-        Assert.True(model.FirstVisibleLine <= DefineInputsModel.LinesPerPlayer);  // and the cursor is in the window
+        Assert.Equal(DefineInputsModel.PlayerTwoLine, model.Line);
+        Assert.True(model.FirstVisibleLine > 0);                                    // the P1 section has moved up
+        Assert.True(model.FirstVisibleLine <= DefineInputsModel.PlayerTwoLine);     // and the cursor is in the window
     }
 
     [Fact]

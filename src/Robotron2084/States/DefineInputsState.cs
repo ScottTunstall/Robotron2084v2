@@ -15,10 +15,12 @@ namespace Robotron2084.States;
 /// to the board, so there is nothing here to be faithful to, only the author's request
 /// for a page where each player can lay their own controls out.
 ///
-/// One column of lines with player 2's eight beneath player 1's, eight of them on screen
-/// at a time: the cursor keys scroll between the sections (the author's ask, after the
-/// first side-by-side version felt too full). Each line is one of the arcade's two
-/// sticks — MOVE UP away through SHOOT RIGHT — and the shared PAUSE line is last.
+/// One column of lines with player 2's eight beneath player 1's — with blank lines between
+/// the sections — and eight of them on screen at a time: the cursor keys scroll between the
+/// sections (the author's ask, after the first side-by-side version felt too full). Each line
+/// is one of the arcade's two sticks — MOVE UP away through SHOOT RIGHT — and the shared
+/// PAUSE line is last. Unselected names sit in the palette's WHITE; the highlighted line
+/// cycles (the author kept that, and lost only the flashing of the unselected names).
 ///
 /// Enter arms the highlighted line and the next thing pressed — key, gamepad button or
 /// stick direction — becomes that line's binding for its own device, which is why
@@ -31,19 +33,23 @@ public sealed class DefineInputsState : IGameState
 {
     private const string Title = "DEFINE INPUTS";
     private const string ArmedPrompt = "PRESS AN INPUT";
-    private const string FooterOne = "UP DN SCROLL   ENTER SET THE INPUT";
-    private const string FooterTwo = "DEL CLEAR   R DEFAULTS   F10 TITLE";
+    private const string Hint = "USE UP AND DOWN TO MOVE BETWEEN P1 AND P2";
+    private const string FooterOne = "ENTER SET THE INPUT   DEL CLEAR";
+    private const string FooterTwo = "R DEFAULTS   F10 TITLE";
 
     private const int TitleRow = 12;
-    private const int SectionRow = 44;
+    private const int HintRow = 44;
     private const int FirstLineRow = 70;
     private const int LineStep = 26;
     private const int LabelColumn = 40;
     private const int ValueColumn = 300;
-    private const int FooterRow = 300;
+    private const int FooterRow = 302;
 
-    private const int LabelSlot = GameplayConstants.HudScoreSlotCurrent;  // the title's $AA
-    private const int HighlightSlot = GameplayConstants.TitleWallSlot;    // the title's $CC
+    // $99 is the palette's WHITE and no colour process drives it, so an unselected line sits
+    // still (the author: the flashing names were the thing to lose, the entered input's
+    // flashing is the thing to keep). The highlight is the title's $CC, which cycles.
+    private const int LabelSlot = 9;
+    private const int HighlightSlot = GameplayConstants.TitleWallSlot;
 
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
@@ -137,7 +143,7 @@ public sealed class DefineInputsState : IGameState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         DrawText(spriteBatch, Title, CenteredX(Title), TitleRow, HighlightSlot);
-        DrawText(spriteBatch, SectionHeading(), LabelColumn, SectionRow, HighlightSlot);
+        DrawText(spriteBatch, Hint, CenteredX(Hint), HintRow, LabelSlot);
 
         int last = Math.Min(_model.FirstVisibleLine + DefineInputsModel.VisibleLines, DefineInputsModel.LineCount);
         int row = 0;
@@ -150,9 +156,14 @@ public sealed class DefineInputsState : IGameState
         DrawText(spriteBatch, FooterTwo, CenteredX(FooterTwo), FooterRow + 16, LabelSlot);
     }
 
-    /// <summary>One line: its label, and its value — or the armed prompt.</summary>
+    /// <summary>One line: its label, and its value — or the armed prompt. Spacers stay blank.</summary>
     private void DrawLine(SpriteBatch spriteBatch, int line, int y)
     {
+        if (DefineInputsModel.IsSpacer(line))
+        {
+            return;
+        }
+
         bool cursor = _model.IsCursorOn(line);
         // The highlight hides itself while armed (IsCursorOn), so the armed line is
         // identified by its prompt rather than by its colour.
@@ -163,19 +174,11 @@ public sealed class DefineInputsState : IGameState
         DrawText(spriteBatch, ValueText(armed, ValueOf(line)), ValueColumn, y, slot);
     }
 
-    /// <summary>The heading for the section the highlighted line is in.</summary>
-    private string SectionHeading()
-    {
-        // The PAUSE line has no player, so it names itself; otherwise name the player
-        // whose line the cursor is on, which is the line the author is acting on.
-        if (_model.IsPauseLine)
-        {
-            return "PAUSE";
-        }
-
-        return $"PLAYER {DefineInputsModel.PlayerOf(_model.Line) + 1}";
-    }
-
+    /// <summary>
+    /// One line's LABEL — always with its player on it, so a window that leaves the tail of
+    /// one block and the head of the next on screen together can never be misread (the
+    /// author: *"there's no separation between player 1's controls and player 2's"*).
+    /// </summary>
     private static string LabelOf(int line)
     {
         if (line == DefineInputsModel.PauseLine)
@@ -183,7 +186,7 @@ public sealed class DefineInputsState : IGameState
             return "PAUSE";
         }
 
-        return DefineInputsModel.ActionOf(line)!.Value.Label();
+        return $"P{DefineInputsModel.PlayerOf(line) + 1} {DefineInputsModel.ActionOf(line)!.Value.Label()}";
     }
 
     private string ValueOf(int line) => line == DefineInputsModel.PauseLine

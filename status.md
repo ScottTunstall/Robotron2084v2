@@ -312,6 +312,18 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   (**400**); all six gates green. Two real bugs the screenshots caught: the armed "PRESS AN INPUT"
   prompt could never draw (`IsCursorOn` suppresses the cursor while armed, and the draw condition
   required both), and `>` is not in the small font so the cursor arrow never appeared.
+- **2026-09-20 — the author's first look at that page (notes §101.9).** *"I don't like the control
+  name flashing fast when unselected. Leave it as a static colour - white is fine … there's no
+  separation between player 1's controls and player 2's controls - there should be a few blank
+  lines … There's also no text saying 'Use up and down to move between P1 and P2's controls'."*
+  Unselected names are now **static white** (slot 9 — they were in a cycling slot, which is why
+  sixteen rows shimmered); the highlighted line still cycles, which is what the author kept.
+  **Two blank lines** split the sections (the page is 21 lines and the cursor steps over the
+  gaps); the floating "PLAYER n" heading is gone and every row is labelled `P1`/`P2` instead,
+  because the heading contradicted the rows whenever one scroll showed both blocks; and the page
+  says `USE UP AND DOWN TO MOVE BETWEEN P1 AND P2` under the title. Verified numerically (two
+  screenshots 1.4 s apart: identical label pixels, changed highlight) and by the blank rows
+  having zero lit pixels. **401 tests**, all six gates green.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36
