@@ -605,6 +605,15 @@ tests**.
   xmldoc for every `Spark*` constant (`SparkVelocityScale`, `SparkAimDivisor`, `SparkAccelRomRange`,
   `SparkMaxSpeed`, `SparkLifeMin/MaxRomTicks`, `SparkFramePeriodRomTicks`, `SparkMoveIntervalRomTicks`) —
   that is the "poor explanations" half. Full write-up: notes §112, handoff B48i.
+- **NEXT SESSION (2026-09-21) — SECOND JOB: what DOES "column" mean? (notes §113, handoff B48j).**
+  *"Does that mean pixels? Its not clear what a 'column' means."* Answer, and the reason it matters:
+  the ROM's video buffer is `column*256 + row` with **4 bits per pixel**, so **1 column = 2 pixels**
+  (a prog's 2-column step is 4 px; the spark's ±16 columns is ±32 px). But the word is overloaded — the
+  ROM's X unit, a text cursor's X step, and a table's list column — and it sits on top of four pixel
+  spaces (**arcade px** 304x256, **spec px** 320x200, **internal px** = the 640x400 canvas, **canvas
+  px**) that are never defined in one place. `Spark.cs`'s `columnPortPx = ScreenSize.Scaled(2)` calls a
+  column *2 spec px* while `ArcadePixelsPerColumn` calls it *2 arcade px* — one of them is wrong. Define
+  the units once, then make every "column" say which one it means.
 - **2026-09-20 — resolution must be one constant (notes §110).** *"the code should be designed to
   scale to ANY resolution chosen. I may use 640 x 400, but next week change to 1024 x 768 and the
   engine should not fail."* The design already routes everything through `Core/ScreenSize` (render

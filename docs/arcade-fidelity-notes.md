@@ -9490,3 +9490,38 @@ explanations" half of the complaint.
 
 **Recorded, not done** — parked by the author for the next session: handoff row B48i and `status.md`'s
 next-session reminder.
+
+---
+
+### 113. WHAT IS A "COLUMN"? — AND THE FOUR PIXEL SPACES (author, 2026-09-20)
+
+Author: *"And what does the term 'columns' mean? Does that mean pixels? Its not clear what a 'column'
+means. Make a note to address that tomorrow too."*
+
+**The answer, from the ROM's own addressing.** X is counted in **columns**, not pixels: the video buffer
+is `column*256 + row` — one byte per (column, row) — and a byte holds **TWO** horizontal pixels (4 bits
+per pixel, so `$EF` is two colours in one byte, which is what the tunnel's packed vertical edges prove).
+So **1 column = 2 pixels**, and a column is the ROM's unit for anything horizontal: a prog's step of 2
+columns is 4 px; the spark's ±16 columns of jitter is ±32 px and its 16-column wall rule is 32 px; the
+tank grows +2 columns / +6 rows; the tunnel's vertical edges are one column (2 px of packed nibbles);
+and text cursors are columns too (`LDX #$1A35` = column 26, row 53). The constant already exists —
+`GameplayConstants.ArcadePixelsPerColumn = 2`, added with the window work — and it is what
+`Quark.cs`, `CruiseMissile.cs`, `Prog.cs` and `TunnelEffect.cs` were all reaching for.
+
+**Why it is still unclear — three senses of the word and four pixel spaces.** "Column" here can mean
+(a) the ROM's X unit, 2 pixels (*"a column is 2 arcade px"*); (b) a text cursor's X step (*"9 rows /
+52 columns apart"*, *"the value column"* — the same 2-px unit, but spoken of as characters); or (c) a
+table's list column (*"5 per column × 2 columns"* — pure layout, nothing to do with the video buffer).
+On top of that the pixel spaces pile up: **arcade px** (the ROM's 304x256), **spec px** (spec.txt's
+320x200 — what `ScreenSize.Scaled` takes), **internal/port px** (spec x `SpecScale` = the 640x400 canvas)
+and **canvas px** (the window's scaled blit). Nothing defines the four in one place, and the entities use
+"arcade px", "spec px" and "port px" interchangeably in prose.
+
+**The tell that it is a bug risk rather than pedantry:** `Spark.cs` writes
+`int columnPortPx = ScreenSize.Scaled(2);` — a column as 2 **spec** pixels — while
+`GameplayConstants.ArcadePixelsPerColumn` says a column is 2 **arcade** pixels, and the arcade screen is
+304x256 against the spec's 320x200. One of the two is wrong.
+
+**To do alongside B48i:** define the four pixel spaces once — `ScreenSize`'s class remarks and/or a units
+table beside the constants — say what a column is where the constant is declared, and then make every
+"column" mention name its unit. Recorded as handoff B48j.
