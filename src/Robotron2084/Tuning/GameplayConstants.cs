@@ -731,6 +731,11 @@ public static class GameplayConstants
     public const int ArcadeScreenWidth = 304;
     public const int ArcadeScreenHeight = 256;
 
+    /// <summary>Arcade pixels in one ROM column — the video buffer is addressed as <c>column*256 + row</c>.</summary>
+    /// <remarks>Conversions that the ROM expresses in COLUMNS multiply by this, never by
+    /// <see cref="ScreenSize.SpecScale"/>: a column is two arcade pixels whatever the render scale is.</remarks>
+    public const int ArcadePixelsPerColumn = 2;
+
     // The HUD is the arcade's, from DRAW_PLAYER_SCORES ($DC13, called by
     // $34AF), DRAW_LIVES_REMAINING ($34E0) and the $6291 string table:
     //

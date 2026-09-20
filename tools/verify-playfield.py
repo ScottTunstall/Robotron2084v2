@@ -45,10 +45,17 @@ WM_KEYUP = 0x0101
 VK_SPACE = 0x20
 SPACE_SCAN = 0x39
 
-# Wall band thickness (screen margin) as a fraction of the client area, plus
+# Wall band thickness (screen margin) as a fraction of the CANVAS, plus
 # slack for the HUD strip. The interior test region must sit well inside the
 # wall ring so the ring itself cannot satisfy the check.
 INSET_FRACTION = 0.14
+# The game's canvas is the spec's 320x200 space, fitted into the client area at ONE
+# uniform scale and CENTRED with black bars (Core/Presentation). The capture is a grab
+# of the whole client, so the bands have to be measured inside the CANVAS — at SpecScale
+# 3 or 4, or with letterbox bars, the same spec-pixel band sits at a different screen
+# offset, and a client-relative inset would drift off the playfield.
+SPEC_WIDTH = 320
+SPEC_HEIGHT = 200
 # A healthy started wave draws the player, ~9 robots, humans and electrodes;
 # at any integer scale that is thousands of pixels. 200 is a safe floor.
 MIN_INTERIOR_PIXELS = 200
@@ -94,6 +101,36 @@ def client_rect(hwnd: int):
     origin = wt.POINT(r.left, r.top)
     user32.ClientToScreen(hwnd, ctypes.byref(origin))
     return origin.x, origin.y, origin.x + r.right, origin.y + r.bottom
+
+
+def canvas_rect(client_width: int, client_height: int):
+    """(left, top, width, height) of the game canvas in the client area.
+
+    Mirrors Core/Presentation.CanvasDestination: the largest uniform fit of the 320x200 spec
+    space, centred, so the canvas is a known band however many pixels the window has — and it
+    is the same size at SpecScale 2, 3 and 4, because the window opens at canvas x integer."""
+    scale = min(client_width / SPEC_WIDTH, client_height / SPEC_HEIGHT)
+    width = max(1, round(SPEC_WIDTH * scale))
+    height = max(1, round(SPEC_HEIGHT * scale))
+    return (client_width - width) // 2, (client_height - height) // 2, width, height
+
+
+def lit_samples(img) -> tuple:
+    """(lit, total, fraction) inside the canvas, inset so the wall ring cannot satisfy it."""
+    client_width, client_height = img.size
+    cx, cy, cw, ch = canvas_rect(client_width, client_height)
+    ix0, iy0 = int(cw * INSET_FRACTION), int(ch * INSET_FRACTION)
+    ix1, iy1 = cx + cw - ix0, cy + ch - iy0
+    ix0, iy0 = cx + ix0, cy + iy0
+    px = img.load()
+    lit = 0
+    for y in range(iy0, iy1, PIXEL_STEP):
+        for x in range(ix0, ix1, PIXEL_STEP):
+            p = px[x, y]
+            if p[0] + p[1] + p[2] > 24:
+                lit += 1
+    total = ((ix1 - ix0) // PIXEL_STEP) * ((iy1 - iy0) // PIXEL_STEP)
+    return lit, total, lit / max(total, 1)
 
 
 class KEYBDINPUT(ctypes.Structure):
@@ -209,24 +246,15 @@ def main() -> int:
         with WindowRaised(hwnd):
             left, top, right, bottom = client_rect(hwnd)
             w, h = right - left, bottom - top
+            cx, cy, cw, ch = canvas_rect(w, h)
             print(f"client area: {w}x{h} at {left},{top}")
+            print(f"canvas: {cw}x{ch} at +{cx},+{cy} "
+                  f"({SPEC_WIDTH}x{SPEC_HEIGHT} spec px at {cw / SPEC_WIDTH:.3f}x)")
 
             img = ImageGrab.grab(bbox=(left, top, right, bottom)).convert("RGB")
             img.save(args.png)
 
-        ix0, iy0 = int(w * INSET_FRACTION), int(h * INSET_FRACTION)
-        ix1, iy1 = w - ix0, h - iy0
-        px = img.load()
-
-        lit = 0
-        for y in range(iy0, iy1, PIXEL_STEP):
-            for x in range(ix0, ix1, PIXEL_STEP):
-                p = px[x, y]
-                if p[0] + p[1] + p[2] > 24:
-                    lit += 1
-
-        total = ((ix1 - ix0) // PIXEL_STEP) * ((iy1 - iy0) // PIXEL_STEP)
-        fraction = lit / max(total, 1)
+        lit, total, fraction = lit_samples(img)
         print(f"playfield interior: {lit} lit samples of {total} "
               f"({100.0 * fraction:.3f}%)  [saved {args.png}]")
 

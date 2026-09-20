@@ -1,3 +1,4 @@
+using Robotron2084.Core;
 using Robotron2084.Rendering;
 using Xunit;
 
@@ -146,9 +147,10 @@ public sealed class TunnelEffectTests
                 $"ROM pixel {pixel} must be at least one port pixel wide");
         }
 
-        // The ROM's 256 rows fill the port's whole 400-pixel screen height, and no more.
+        // The ROM's 256 rows fill the port's whole screen height, and no more.
         Assert.Equal(0, TunnelEffect.RowY(0));
-        Assert.Equal(400, TunnelEffect.RowY(256));
+        Assert.Equal(ScreenSize.Height, TunnelEffect.RowY(256));
+        Assert.Equal(ScreenSize.Width, TunnelEffect.PixelX(304));
     }
 
     [Fact]

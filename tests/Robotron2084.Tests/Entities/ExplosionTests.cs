@@ -22,8 +22,12 @@ public sealed class ExplosionTests
 {
     private static readonly StripClip Clip = new(MinX: 20, MaxX: 300, MinY: 20, MaxY: 180);
 
-    /// <summary>The test sprite: 16x24 port px = 8x12 art px, at (100,200) = art (50,100).</summary>
-    private static readonly Rectangle Sprite = new(100, 200, 16, 24);
+    /// <summary>An 8x12-art-pixel picture at art (50,100); its collision box is the same extent in port px.</summary>
+    private static readonly Rectangle Sprite = new(
+        ScreenSize.Scaled(SpriteLeft),
+        ScreenSize.Scaled(SpriteTop),
+        ScreenSize.Scaled(WidthArt),
+        ScreenSize.Scaled(HeightRows));
     private const int WidthArt = 8;
     private const int HeightRows = 12;
     private const int SpriteLeft = 50;
@@ -158,25 +162,31 @@ public sealed class ExplosionTests
         // A picture smaller than its collision box is drawn CENTRED in it
         // (SpriteSet.CentredIn), so the fan has to start from the ART's own top-left.
         // At spacing 1 the fan IS the picture, so strip 0 lands exactly where the art
-        // sits: 22x30 port-px bounds are 11x15 art px, holding an 8x12 picture, so the
-        // art starts one pixel in on both axes (notes §75).
+        // sits: BOUNDS 11x15 art px holding an 8x12 picture, so the art starts one
+        // pixel in on both axes (notes §75).
+        Rectangle bounds = new(
+            ScreenSize.Scaled(SpriteLeft),
+            ScreenSize.Scaled(SpriteTop),
+            ScreenSize.Scaled(WidthArt + 3),
+            ScreenSize.Scaled(HeightRows + 3));
+
         var explosion = Explosion.StartExplosion(
-            new FakeDead(new Rectangle(100, 200, 22, 30)),
+            new FakeDead(bounds),
             direction: Direction8.Left,
             clip: Clip);
 
         IReadOnlyList<Strip> strips = Strips(explosion);
 
         Assert.Equal(HeightRows, strips.Count);
-        Assert.Equal(51, strips[0].X);
-        Assert.Equal(101, strips[0].Y);
-        Assert.Equal(101 + (HeightRows - 1), strips[^1].Y);
+        Assert.Equal(SpriteLeft + 1, strips[0].X);
+        Assert.Equal(SpriteTop + 1, strips[0].Y);
+        Assert.Equal(SpriteTop + 1 + (HeightRows - 1), strips[^1].Y);
 
         // And the placement helper agrees with the draw path's own convention: a
         // texture's dimensions ARE the picture's extent in art pixels.
         Assert.Equal(
-            (8, 12, 51, 101),
-            Explosion.PicturePlacement(new Rectangle(100, 200, 22, 30), 8, 12));
+            (WidthArt, HeightRows, SpriteLeft + 1, SpriteTop + 1),
+            Explosion.PicturePlacement(bounds, WidthArt, HeightRows));
     }
 
     [Fact]
@@ -243,7 +253,9 @@ public sealed class ExplosionTests
     {
         // The sprite sits on the TOP wall, so the leading part of the fan leaves the
         // playfield and those strips are DROPPED (the ROM's clip passes).
-        Explosion explosion = NewExplosion(Direction8.Left, sprite: new Rectangle(100, 40, 16, 24));
+        var onTheWall = new Rectangle(
+            ScreenSize.Scaled(SpriteLeft), ScreenSize.Scaled(20), ScreenSize.Scaled(WidthArt), ScreenSize.Scaled(HeightRows));
+        Explosion explosion = NewExplosion(Direction8.Left, sprite: onTheWall);
 
         IReadOnlyList<Strip> strips = Strips(explosion, frames: 2); // spacing 3
 

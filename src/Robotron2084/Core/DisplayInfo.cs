@@ -3,15 +3,19 @@ using Microsoft.Xna.Framework;
 
 namespace Robotron2084.Core;
 
-/// <summary>
-/// Desktop work-area size in pixels. MonoGame 3.8.5 exposes no screen-bounds
-/// API, so the Windows work area is queried directly (taskbar excluded).
-/// </summary>
+/// <summary>The desktop's geometry in pixels: the work area and the monitor's resolution.</summary>
+/// <remarks>Port-only. MonoGame 3.8.5 exposes no screen-bounds API, so both are queried from Windows;
+/// the work area excludes the taskbar.</remarks>
 public static class DisplayInfo
 {
     private const int SpiGetWorkArea = 48;
     private const int SmCxScreen = 0;
     private const int SmCyScreen = 1;
+
+    /// <summary>The primary monitor's resolution in pixels.</summary>
+    /// <remarks>Full screen sets the backbuffer to this, so the game runs at the desktop's own mode.</remarks>
+    public static Point DesktopResolution =>
+        new(Math.Max(1, GetSystemMetrics(SmCxScreen)), Math.Max(1, GetSystemMetrics(SmCyScreen)));
 
     /// <summary>Available desktop area (work area) as width/height in pixels.</summary>
     public static Point WorkArea
@@ -23,9 +27,7 @@ public static class DisplayInfo
                 return new Point(workArea.Width, workArea.Height);
             }
 
-            int width = GetSystemMetrics(SmCxScreen);
-            int height = GetSystemMetrics(SmCyScreen);
-            return new Point(Math.Max(1, width), Math.Max(1, height));
+            return DesktopResolution;
         }
     }
 

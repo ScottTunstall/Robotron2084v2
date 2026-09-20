@@ -11,15 +11,15 @@ using Robotron2084.States;
 
 namespace Robotron2084;
 
-/// <summary>
-/// Application shell (Phase 10.6). The whole game is a ScreenSize.Width x
-/// ScreenSize.Height image (the spec's 320x200 space widened by SpecScale)
-/// rendered into a render target, then blitted to the window
-/// at an integer scale — F11 cycles the scale, Escape exits. Owns the three
-/// shared instances every state transition passes onward: SpriteSet,
-/// CompositePlayerInputSource, and HighScoreStore (created once in
-/// LoadContent).
-/// </summary>
+/// <summary>The application shell: it owns the window and the fixed-timestep loop and runs one game state at a time.</summary>
+/// <remarks>Port-only (no arcade counterpart). Every state draws into a <see cref="ScreenSize.Width"/> x
+/// <see cref="ScreenSize.Height"/> canvas, which is blitted to the window at ONE uniform scale and centred
+/// there, so the picture is never stretched and the window may be any size. <b>F8</b> cycles the canvas fit
+/// (Integer = the largest whole multiple, Fill = the exact fraction), <b>F11</b> and <b>Alt+Enter</b> toggle
+/// full screen, <b>Escape</b> exits. It also owns the shared instances every state passes onward:
+/// <see cref="SpriteSet"/>, the input source and the high score store, all created once in LoadContent.</remarks>
+/// <seealso cref="Presentation"/>
+/// <seealso cref="ScreenSize"/>
 public sealed class RobotronGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
@@ -36,8 +36,10 @@ public sealed class RobotronGame : Game
     private GameStateManager _stateManager = null!;
 
     private KeyboardState _previousKeyboardState;
-    private int _maxScale = 1;
-    private int _scale = 1;
+    private ScaleMode _scaleMode = ScaleMode.Integer;
+    private bool _fullScreen;
+    private int _windowedScale = 1;
+    private Rectangle _canvas = new(0, 0, ScreenSize.Width, ScreenSize.Height);
 
     public RobotronGame()
     {
@@ -49,12 +51,14 @@ public sealed class RobotronGame : Game
     protected override void Initialize()
     {
         Window.Title = "ScottOTron 2084";
-        Window.AllowUserResizing = false;
+        Window.AllowUserResizing = true;
+        Window.ClientSizeChanged += (_, _) => FitCanvas();
 
+        // The windowed window is the canvas at the largest whole multiple that fits the
+        // desktop; the author can drag it to any size afterwards and the fit follows.
         Point workArea = DisplayInfo.WorkArea;
-        _maxScale = ScreenSize.MaxIntegerScale(workArea.X, workArea.Y);
-        _scale = _maxScale;
-        ApplyScale();
+        _windowedScale = ScreenSize.MaxIntegerScale(workArea.X, workArea.Y);
+        ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, fullScreen: false);
 
         base.Initialize();
     }
@@ -103,11 +107,19 @@ public sealed class RobotronGame : Game
             Exit();
         }
 
-        // F11 press (not held): cycle integer scale up, wrapping to 1x.
-        if (_previousKeyboardState.IsKeyDown(Keys.F11) && !state.IsKeyDown(Keys.F11))
+        // ---- presentation keys (port-only) ----------------------------------------
+        // F11 is the Windows convention for full screen and Alt+Enter is the game
+        // convention; F8 cycles the canvas fit between the largest whole multiple
+        // (crisp, the default) and the exact uniform fraction (fills the window).
+        bool altHeld = state.IsKeyDown(Keys.LeftAlt) || state.IsKeyDown(Keys.RightAlt);
+        if (Pressed(state, Keys.F11) || (altHeld && Pressed(state, Keys.Enter)))
         {
-            _scale = _scale == _maxScale ? 1 : _scale + 1;
-            ApplyScale();
+            ToggleFullScreen();
+        }
+        else if (Pressed(state, Keys.F8))
+        {
+            _scaleMode = Presentation.Next(_scaleMode);
+            FitCanvas();
         }
 
         // ---- attract DEV KEYS (port-only; notes §97, re-keyed in §101) ---------
@@ -171,31 +183,47 @@ public sealed class RobotronGame : Game
         _stateManager.Draw(_spriteBatch, _font);
         _spriteBatch.End();
 
-        // 2. Blit the scene to the window (integer-scaled, point-sampled).
-        // The render target is ScreenSize.Width x ScreenSize.Height; the
-        // backbuffer is that times _scale, so the blit must draw it into the
-        // full backbuffer (a 1:1 draw leaves the scene in the top-left
-        // 1/_scale corner — the "fraction of the window" playtest bug).
+        // 2. Blit the scene to the window at the canvas's fit: uniform, centred, the bars
+        // black. The client area can change at any moment (a dragged window, a monitor
+        // switch), so the fit is re-solved here — it is pure arithmetic.
+        FitCanvas();
         GraphicsDevice.SetRenderTarget(null);
         GraphicsDevice.Clear(Color.Black);
 
         _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp);
-        _spriteBatch.Draw(
-            _playfield,
-            new Rectangle(0, 0, ScreenSize.Width * _scale, ScreenSize.Height * _scale),
-            Color.White);
+        _spriteBatch.Draw(_playfield, _canvas, Color.White);
         _spriteBatch.End();
 
         base.Draw(gameTime);
     }
 
-    private void ApplyScale()
+    /// <summary>Sizes the backbuffer, and with it the window, and switches the screen mode with it.</summary>
+    private void ApplyBackBuffer(int width, int height, bool fullScreen)
     {
-        // Resizing the backbuffer resizes the (non-resizable) window to match.
-        _graphics.PreferredBackBufferWidth = ScreenSize.Width * _scale;
-        _graphics.PreferredBackBufferHeight = ScreenSize.Height * _scale;
+        _fullScreen = fullScreen;
+        _graphics.PreferredBackBufferWidth = width;
+        _graphics.PreferredBackBufferHeight = height;
+        _graphics.IsFullScreen = fullScreen;
         _graphics.ApplyChanges();
+        FitCanvas();
     }
+
+    /// <summary>Switches between the windowed window and borderless full screen at the desktop's own mode.</summary>
+    private void ToggleFullScreen()
+    {
+        if (_fullScreen)
+        {
+            ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, fullScreen: false);
+            return;
+        }
+
+        Point desktop = DisplayInfo.DesktopResolution;
+        ApplyBackBuffer(desktop.X, desktop.Y, fullScreen: true);
+    }
+
+    /// <summary>Re-solves where the canvas sits in the window's current client area.</summary>
+    private void FitCanvas() =>
+        _canvas = Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, _scaleMode);
 
     /// <summary>True on the tick <paramref name="key"/> goes down (press, not hold).</summary>
     private bool Pressed(KeyboardState current, Keys key) =>

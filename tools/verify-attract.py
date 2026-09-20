@@ -49,6 +49,12 @@ SPACE_SCAN = 0x39
 
 INSET_FRACTION = 0.14
 PIXEL_STEP = 2
+# The game's canvas is the spec's 320x200 space, fitted into the client area at ONE uniform
+# scale and CENTRED with black bars (Core/Presentation), so that is the band to measure — never
+# the client's own corners (the window opens at canvas x integer scale, so this is the same
+# region at SpecScale 2, 3 and 4).
+SPEC_WIDTH = 320
+SPEC_HEIGHT = 200
 # Title interior: two large-font lines + three men + the score block.
 TITLE_MIN_LIT = 150
 # Storyline interior: the ROM's story text crawl is a dense block of large-font
@@ -97,6 +103,15 @@ def client_rect(hwnd: int):
     origin = wt.POINT(r.left, r.top)
     user32.ClientToScreen(hwnd, ctypes.byref(origin))
     return origin.x, origin.y, origin.x + r.right, origin.y + r.bottom
+
+
+def canvas_rect(client_width: int, client_height: int):
+    """(left, top, width, height) of the game canvas in the client area (mirrors
+    Core/Presentation.CanvasDestination: one uniform scale, centred, bars where it does not fit)."""
+    scale = min(client_width / SPEC_WIDTH, client_height / SPEC_HEIGHT)
+    width = max(1, round(SPEC_WIDTH * scale))
+    height = max(1, round(SPEC_HEIGHT * scale))
+    return (client_width - width) // 2, (client_height - height) // 2, width, height
 
 
 class KEYBDINPUT(ctypes.Structure):
@@ -164,10 +179,12 @@ class WindowRaised:
 
 
 def lit_samples(img) -> tuple:
-    """(lit, total, fraction) for the interior region, same inset as verify-playfield."""
+    """(lit, total, fraction) inside the canvas, same inset as verify-playfield."""
     w, h = img.size
-    ix0, iy0 = int(w * INSET_FRACTION), int(h * INSET_FRACTION)
-    ix1, iy1 = w - ix0, h - iy0
+    cx, cy, cw, ch = canvas_rect(w, h)
+    ix0, iy0 = int(cw * INSET_FRACTION), int(ch * INSET_FRACTION)
+    ix1, iy1 = cx + cw - ix0, cy + ch - iy0
+    ix0, iy0 = cx + ix0, cy + iy0
     px = img.load()
     lit = 0
     for y in range(iy0, iy1, PIXEL_STEP):
@@ -208,7 +225,10 @@ def main() -> int:
 
         with WindowRaised(hwnd):
             left, top, right, bottom = client_rect(hwnd)
+            cx, cy, cw, ch = canvas_rect(right - left, bottom - top)
             print(f"client area: {right - left}x{bottom - top} at {left},{top}")
+            print(f"canvas: {cw}x{ch} at +{cx},+{cy} "
+                  f"({SPEC_WIDTH}x{SPEC_HEIGHT} spec px at {cw / SPEC_WIDTH:.3f}x)")
 
             # ---- Phase 1: the title screen ---------------------------------
             time.sleep(1.5)

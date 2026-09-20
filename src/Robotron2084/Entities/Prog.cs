@@ -38,9 +38,6 @@ public sealed class Prog : IExplodable
     /// <remarks>ROM: the Y step table.</remarks>
     private const int StepYRows = 4;
 
-    /// <summary>Arcade pixels in one ROM column (the video buffer is <c>column*256 + row</c>).</summary>
-    private const int ArcadePixelsPerColumn = 2;
-
     /// <summary>Half of the X aim-offset's range: (a roll of 1..15 minus this) times 4 columns.</summary>
     /// <remarks>ROM: <c>GPOFF</c> gives ±28 columns of offset in steps of 4.</remarks>
     private const int OffsetXHalfRange = 8;
@@ -218,7 +215,7 @@ public sealed class Prog : IExplodable
         }
 
         // 2 columns (4px) on X or 4 rows (4px) on Y, on one axis only.
-        int stepX = ScreenSize.Scaled(StepXColumns * ArcadePixelsPerColumn);
+        int stepX = ScreenSize.Scaled(StepXColumns * GameplayConstants.ArcadePixelsPerColumn);
         int stepY = ScreenSize.Scaled(StepYRows);
         IntVector2 step = _direction switch
         {
@@ -270,8 +267,8 @@ public sealed class Prog : IExplodable
         if (_random.Next(2) == 0)
         {
             // The offset is in columns, so convert to pixels first.
-            int aimX = player.X + ScreenSize.Scaled(_offsetX * ArcadePixelsPerColumn);
-            if (aimX > bounds.Right + ScreenSize.Scaled(WrapMarginXColumns * ArcadePixelsPerColumn))
+            int aimX = player.X + ScreenSize.Scaled(_offsetX * GameplayConstants.ArcadePixelsPerColumn);
+            if (aimX > bounds.Right + ScreenSize.Scaled(WrapMarginXColumns * GameplayConstants.ArcadePixelsPerColumn))
             {
                 aimX = bounds.Left;
             }

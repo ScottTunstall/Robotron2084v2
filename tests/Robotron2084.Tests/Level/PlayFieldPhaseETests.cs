@@ -68,21 +68,21 @@ public sealed class PlayFieldPhaseETests
 
         // 30 arcade px left of (where the human is now) → steps right/up.
         IntVector2 humanSpot = field.Humans[0].Position;
-        IntVector2 brainSpot = new(humanSpot.X - 60, humanSpot.Y - 40);
+        IntVector2 brainSpot = new(humanSpot.X - ScreenSize.Scaled(30), humanSpot.Y - ScreenSize.Scaled(20));
         var brain = new Brain(brainSpot, new Random(2), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
         // Beat period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
         // (notes 26: SLEEP(BRNSPD) + one beat-execution vblank). In the
-        // 19-tick window exactly one beat runs = 1 arcade px (2 screen px)
+        // 19-tick window exactly one beat runs = 1 arcade px (Scaled(1) port px)
         // per axis toward the target.
         for (int tick = 0; tick < GameplayConstants.PortTicks(16); tick++)
         {
             field.Update(Frame());
         }
 
-        Assert.Equal(brainSpot.X + 2, brain.Position.X);
-        Assert.Equal(brainSpot.Y + 2, brain.Position.Y);
+        Assert.Equal(brainSpot.X + ScreenSize.Scaled(1), brain.Position.X);
+        Assert.Equal(brainSpot.Y + ScreenSize.Scaled(1), brain.Position.Y);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public sealed class PlayFieldPhaseETests
         // on Y and compares with BHS, so "level with the target" counts as
         // "target is below". That ±1px vertical jitter is the arcade brain's
         // hover; the port used to hold the row perfectly still.
-        IntVector2 brainSpot = new(playerSpot.X + 60, playerSpot.Y);
+        IntVector2 brainSpot = new(playerSpot.X + ScreenSize.Scaled(30), playerSpot.Y);
         var brain = new Brain(brainSpot, new Random(3), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
@@ -108,8 +108,8 @@ public sealed class PlayFieldPhaseETests
             field.Update(Frame());
         }
 
-        Assert.Equal(playerSpot.X + 58, brain.Position.X);
-        Assert.Equal(playerSpot.Y + 2, brain.Position.Y);
+        Assert.Equal(brainSpot.X - ScreenSize.Scaled(1), brain.Position.X);
+        Assert.Equal(brainSpot.Y + ScreenSize.Scaled(1), brain.Position.Y);
     }
 
     [Fact]
@@ -120,10 +120,10 @@ public sealed class PlayFieldPhaseETests
 
         WarmUp(field);
 
-        // 1 arcade px (2 screen px) to the right of the player: INSIDE the
+        // 1 arcade px (Scaled(1) port px) to the right of the player: INSIDE the
         // ROM's ±2px X dead zone (BRNL1: dx+2 <= 4), so X must not correct —
         // but Y has no dead zone and must still step down 1 px.
-        IntVector2 brainSpot = new(playerSpot.X + 2, playerSpot.Y - 100);
+        IntVector2 brainSpot = new(playerSpot.X + ScreenSize.Scaled(1), playerSpot.Y - ScreenSize.Scaled(50));
         var brain = new Brain(brainSpot, new Random(21), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
@@ -133,7 +133,7 @@ public sealed class PlayFieldPhaseETests
         }
 
         Assert.Equal(brainSpot.X, brain.Position.X);      // dead zone holds X
-        Assert.Equal(brainSpot.Y + 2, brain.Position.Y);  // Y keeps closing
+        Assert.Equal(brainSpot.Y + ScreenSize.Scaled(1), brain.Position.Y);  // Y keeps closing
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public sealed class PlayFieldPhaseETests
         WarmUp(field);
 
         // Player below and to the RIGHT of where the brain will sit.
-        field.Player.TeleportTo(new IntVector2(inner.Right - 10, inner.Y + 260));
+        field.Player.TeleportTo(new IntVector2(inner.Right - ScreenSize.Scaled(5), inner.Y + ScreenSize.Scaled(130)));
 
         // Brain flush against the RIGHT wall, so its +X step is out of bounds.
         // The Gospel's CKLIM undoes BOTH axes on failure, which pins it there
@@ -153,7 +153,7 @@ public sealed class PlayFieldPhaseETests
         // down) — the author's "the brains seem to get stuck at the bottom
         // wall". The port rejects per axis, like the ROM's own generic mover
         // (RRS22 OPB80), so the brain creeps down the wall instead.
-        IntVector2 brainSpot = new(inner.Right - ScreenSize.Scaled(GameplayConstants.BrainCollisionSize.Width), inner.Y + 160);
+        IntVector2 brainSpot = new(inner.Right - ScreenSize.Scaled(GameplayConstants.BrainCollisionSize.Width), inner.Y + ScreenSize.Scaled(80));
         var brain = new Brain(brainSpot, new Random(22), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
@@ -163,7 +163,7 @@ public sealed class PlayFieldPhaseETests
         }
 
         Assert.Equal(brainSpot.X, brain.Position.X);          // the wall still holds
-        Assert.Equal(brainSpot.Y + 2, brain.Position.Y);      // but it is not stuck
+        Assert.Equal(brainSpot.Y + ScreenSize.Scaled(1), brain.Position.Y);      // but it is not stuck
     }
 
     [Fact]

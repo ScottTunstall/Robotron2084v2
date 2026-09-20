@@ -90,8 +90,10 @@ public sealed class QuarkTankBehaviourTests
         // The port used to derive the speed from the DISTANCE to a waypoint (the
         // R5-only decode), which darted at up to +/-16 px/tick -- the author's
         // "The quarks are WAY too fast.", and would blow both bounds below.
-        Assert.True(maxAxisSeen <= 4, $"axis step {maxAxisSeen} is too large for a sub-pixel drift");
-        Assert.True(pathLength <= aliveTicksSampled * 3.5,
+        // Both bounds are in port px, so they follow the render scale: the peak step stays
+        // under 2 arcade px on one axis, and the average path under 3.5 px a tick at 2x.
+        Assert.True(maxAxisSeen <= ScreenSize.Scaled(2), $"axis step {maxAxisSeen} is too large for a sub-pixel drift");
+        Assert.True(pathLength <= aliveTicksSampled * 3.5 * ScreenSize.SpecScale,
             $"average path {pathLength / (double)aliveTicksSampled:F2} units/tick — that is a dart, not a drift");
     }
 

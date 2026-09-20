@@ -552,6 +552,31 @@ tests**.
   every "the field does X with it" sentence is deleted, with `<seealso cref="PlayField"/>` (or `Brain`,
   `Human`, `Tank`…) in its place where the reader would want to go — 21 classes got one. Comments only;
   both builds 0 warnings; **410 tests**; `verify-fonts` green.
+- **2026-09-20 — resolution: 640x400 is the floor (notes §110, SUPERSEDING that section's change).**
+  *"Undo the rendering code you changed there. The minimum resolution this game will run at is 640 x 400
+  and no lower. You do not need to break the working rendering code to accommodate tiny screens."* Done:
+  `TunnelEffect`'s ROM-pixel mapping is back to its literals (`640f/304f`, `400f/256f`), `SpecScale` is
+  back to 2 (640x400), and the guard test that came with my change is removed. Scaling above the canvas
+  stays the window's job — the integer-scale blit, windowed or full screen (the author's own work).
+  Left from the experiment: the measurement that a 3x canvas builds clean but fails 14 tests on baked
+  expectations, which is worth knowing and not worth chasing.
+- **PARKED for a later session — fix up before the game is finished (author, 2026-09-20).** *"Note it as
+  something to be fixed next time, when we continue tomorrow. Or left until last as something to fix up
+  before finishing the game."* The item: `TunnelEffect` maps ROM pixels with literal ratios
+  (`640f/304f`, `400f/256f`) that are only right at the 640x400 canvas, so if the canvas ever changes
+  (a `SpecScale` of 3 = 960x600) the tunnel is drawn at 640x400 inside the larger canvas — fix by
+  deriving both from `ScreenSize` / `GameplayConstants.ArcadeScreenWidth`/`ArcadeScreenHeight`. Same
+  trigger: the 14 tests with baked 640x400 expectations and the python gates' hardcoded
+  `scale = img.size[1] // 400`. Nothing is broken at 640x400 — hence a fix-up, not a bug.
+- **2026-09-20 — resolution must be one constant (notes §110).** *"the code should be designed to
+  scale to ANY resolution chosen. I may use 640 x 400, but next week change to 1024 x 768 and the
+  engine should not fail."* The design already routes everything through `Core/ScreenSize` (render
+  target, window integer scale, `ArcadeX/ArcadeY`), with one exception: `TunnelEffect` held the
+  literal `640f/304f` and `400f/256f`, so a 3× canvas would have drawn the wave tunnel at 640x400
+  inside 960x600. It now derives from `ScreenSize`, guarded by a new test. **Measured at 3×:** build
+  clean, 397/411 tests pass; the 14 failures are baked expectations (400 vs 600, 222 vs 223, 100 vs
+  64 …) rather than engine faults — writing those in terms of `ScreenSize` (and the python gates'
+  hardcoded `// 400`) is the remaining work. Back at 2×: **411 tests, 0 failed**, 0 warnings.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

@@ -320,7 +320,9 @@ public sealed class Explosion : IEntity
 
         // The diagonal lean is half the current step, signed by the shot's diagonal: strip i shifts
         // sideways in proportion to its distance from the split, so the two halves lean opposite ways.
-        int drift = _slope * ((spacing >> 1) * ScreenSize.SpecScale);
+        // The lean is measured in COLUMNS of the picture the ROM cuts up, which is an art-pixel distance;
+        // scaling it by SpecScale instead made the chevron open wider as the render scale rose.
+        int drift = _slope * ((spacing >> 1) * GameplayConstants.ArcadePixelsPerColumn);
 
         for (int i = 0; i < extent; i++)
         {

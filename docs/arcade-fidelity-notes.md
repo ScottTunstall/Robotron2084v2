@@ -9380,3 +9380,51 @@ Two more cuts, still comments only:
 Verified: banned-word scan 0; comments only (each changed line's code half is identical — the 12
 trailing-comment sites are the ones where the word sat on a code line); Debug + Release 0 warnings;
 **410 tests, 0 failed, 0 skipped**; `verify-fonts` 83/83.
+
+### 110. RESOLUTION: ONE CONSTANT, AND THE LAST PLACE THAT WASN'T (author, 2026-09-20)
+
+> **SUPERSEDED the same day by the author's ruling:** *"Undo the rendering code you changed there. The
+> minimum resolution this game will run at is 640 x 400 and no lower. You do not need to break the
+> working rendering code to accommodate tiny screens."* So `TunnelEffect`'s ROM-pixel mapping is back to
+> its literals (`640f/304f`, `400f/256f`), `ScreenSize.SpecScale` is back to **2** (the 640x400 canvas),
+> and the guard test added with the change is gone. What stands from this section is the *measurement*
+> only: at a 3x canvas the build was clean and 14 tests failed on baked expectations — useful to know,
+> not work to chase. Scaling ABOVE 640x400 is the window's job (the integer-scale blit), windowed or
+> full screen, and the author is doing that work in `RobotronGame`/`DisplayInfo` directly.
+
+**PARKED — fix up before the game is finished** (author, 2026-09-20: *"Note it as something to be fixed
+next time, when we continue tomorrow. Or left until last as something to fix up before finishing the
+game."*):
+
+- `TunnelEffect` maps ROM pixels with literal ratios (`640f/304f` across, `400f/256f` down), which are
+  only right while the canvas is 640x400. If the canvas itself ever moves (a `SpecScale` of 3 is
+  960x600), the wave-complete tunnel is drawn at 640x400 inside the larger canvas — and the fix is the
+  one-liner that was reverted here: `ScreenSize.Width / GameplayConstants.ArcadeScreenWidth` and
+  `ScreenSize.Height / GameplayConstants.ArcadeScreenHeight`.
+- Same tidy-up, same trigger: the 14 tests that fail at a 3x canvas on baked expectations (400 → 600,
+  222 → 223, 202 → 203, 51 → 33, nine 100 → 64 in one `Assert.All`), and the python gates' hardcoded
+  `scale = img.size[1] // 400`. None of it is broken at 640x400, which is why it is a fix-up rather than
+a bug.
+
+**Author:** *"the code should be designed to scale to ANY resolution chosen. I may use 640 x 400, but
+next week change to 1024 x 768 and the engine should not fail."*
+
+The design already says this — `Core/ScreenSize` is the single source of truth (`SpecScale`,
+`SpecWidth`/`SpecHeight`, `Scaled()`, `MaxIntegerScale()`) and the game is rendered into a
+`RenderTarget2D(ScreenSize.Width, ScreenSize.Height)` that `RobotronGame` blits to the window at an
+INTEGER scale (the largest that fits the work area; F11 cycles it) — **except `TunnelEffect`**, which
+held the one literal canvas in the codebase: `RomPixelToScreenX = 640f / 304f` and
+`RomPixelToScreenY = 400f / 256f`. A `SpecScale` of 3 would have drawn the wave-complete tunnel at
+640x400 inside a 960x600 canvas. Both are now `ScreenSize.Width / ArcadeScreenWidth` and
+`ScreenSize.Height / ArcadeScreenHeight`, and
+`TunnelEffectTests.TheRomPixelMappingSpansTheWholeCanvasAtAnyRenderScale` pins the invariant: the last
+ROM pixel lands exactly on the canvas edge whatever the scale is.
+
+**Measured, not assumed:** with `SpecScale` set to 3 the build is clean (0 warnings) and **397 of 411
+tests pass — 14 fail**, and every failure is a baked expectation rather than an engine fault — an
+assertion that `ScreenSize.Height == 400` (it is 600), `222 → 223` and `202 → 203` (rounding),
+`51 → 33`, and nine `100 → 64` inside one `Assert.All`. Those expectations have to be written in terms
+of `ScreenSize` for the one-constant claim to hold, and the python gates hardcode the canvas as well
+(`scale = img.size[1] // 400`). Both are listed follow-ups rather than done here.
+
+Verified back at `SpecScale` 2: 0 warnings, **411 tests, 0 failed, 0 skipped** (the new guard included).
