@@ -84,6 +84,11 @@ public sealed class AttractState : IGameState
         _demoInput.Bind(_field);
         _field.Update(gameTime);
 
+        // The demo's HUD is drawn from the session slot, so the live counters go
+        // over every tick (notes §97) — a rescue's 1000-5000 points showed up in
+        // the score only at the next wave clear / death before this.
+        SyncSlotFromField();
+
         if (_field.IsLevelCleared)
         {
             PlayerSlot slot = _session.Current;
@@ -108,13 +113,7 @@ public sealed class AttractState : IGameState
         }
     }
 
-    private void SyncSlotFromField()
-    {
-        PlayerSlot slot = _session.Current;
-        slot.Score = _field.Score.Score;
-        slot.Lives = _field.Player.Lives;
-        slot.Rescues = _field.RescuesThisLife;
-    }
+    private void SyncSlotFromField() => _field.SyncInto(_session.Current);
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {

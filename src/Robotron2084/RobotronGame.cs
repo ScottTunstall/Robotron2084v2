@@ -100,6 +100,22 @@ public sealed class RobotronGame : Game
             ApplyScale();
         }
 
+        // ---- attract DEV KEYS (port-only; notes §97) -------------------------
+        // F1 and F2 drop straight into the attract sequence — F1 the storyline
+        // movie (the family and the hulk), F2 the phony-player demo game — so a
+        // scene can be inspected without sitting out the title's 12-second idle.
+        // F3 HELD fast-forwards the movie, which is how the hulk's walk (ROM
+        // frame ~2574) is reached in seconds rather than after the text crawl.
+        DevKeys.AttractFastForward = state.IsKeyDown(Keys.F3);
+        if (Pressed(state, Keys.F1))
+        {
+            _stateManager.TransitionTo(new StorylineState(_sprites, _highScoreStore, _input, new Random()));
+        }
+        else if (Pressed(state, Keys.F2))
+        {
+            _stateManager.TransitionTo(new AttractState(_sprites, _highScoreStore, _input));
+        }
+
         _previousKeyboardState = state;
 
         _paletteAnimator.Update();
@@ -143,4 +159,8 @@ public sealed class RobotronGame : Game
         _graphics.PreferredBackBufferHeight = ScreenSize.Height * _scale;
         _graphics.ApplyChanges();
     }
+
+    /// <summary>True on the tick <paramref name="key"/> goes down (press, not hold).</summary>
+    private bool Pressed(KeyboardState current, Keys key) =>
+        _previousKeyboardState.IsKeyDown(key) && !current.IsKeyDown(key);
 }

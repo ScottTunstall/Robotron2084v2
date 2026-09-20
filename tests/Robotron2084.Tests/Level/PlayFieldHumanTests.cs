@@ -157,7 +157,37 @@ public sealed class PlayFieldHumanTests
     }
 
     [Fact]
+    public void SyncInto_HandsLiveScoreLivesAndRescuesToThePlayersSlot()
+    {
+        // The HUD draws the SESSION's slots, and the ROM reads the score, the men
+        // and SAVCNT out of the player's data block every time it draws — so the
+        // hand-over happens every tick (notes §97). Syncing only at a wave clear
+        // left the displayed score stale for the rest of the wave, which is what
+        // the attract demo's rescue bonus looked like.
+        PlayField field = CreateField(HumanWave(0, 0, 1));
+        PlayerSlot slot = new(1, new FakeInputSource(), lives: 3, wave: 1);
+
+        field.Update(new GameTime());
+        field.SyncInto(slot);
+        Assert.Equal(0, slot.Score);
+        Assert.Equal(0, slot.Rescues);
+        Assert.Equal(field.Player.Lives, slot.Lives);
+
+        Human human = field.Humans[0];
+        human.TeleportTo(field.Player.Position);
+        field.Update(new GameTime());
+        field.Player.AddLife(); // an earned spare man must reach the HUD too
+        field.SyncInto(slot);
+
+        Assert.Equal(ScoreValues.RescueBonus(1), slot.Score);
+        Assert.Equal(1, slot.Rescues);
+        Assert.Equal(field.Player.Lives, slot.Lives);
+        Assert.Equal(field.RescuesThisLife, slot.Rescues);
+    }
+
+    [Fact]
     public void Hulk_Contact_KillsHuman_LeavesSkull_NoScore()
+
     {
         PlayField field = CreateField(HumanWave(0, 0, 1, hulks: 1));
 

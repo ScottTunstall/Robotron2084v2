@@ -117,6 +117,9 @@ dotnet build Robotron2084.slnx                     # 0 warnings, warnings-as-err
 **Controls:** `WASD` move · `IJKL` aim *and* fire (8-way; Space also fires) ·
 `1` / `2` start a one- or two-player game · `P` skip a wave (port test key) ·
 `F11` cycle window scale · `Esc` quit.
+**Attract dev keys (port-only, notes §97):** `F1` jump straight into the attract
+storyline movie · `F2` jump straight into the attract demo game · `F3` (held)
+fast-forward the movie 8× — the hulk's walk arrives in ~7 s instead of ~51 s.
 **Sound:** off by default; `set ROBOTRON2084_SOUND=1` to enable it.
 
 ### The gates (run before every checkpoint)

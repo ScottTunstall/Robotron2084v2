@@ -133,8 +133,36 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
 - **Gates:** 0 warnings, **284 tests, 0 failed, 1 skipped** (+6), smoke OK,
   `verify-playfield.py` PASS, `verify-fonts.py` PASS (82), `verify-attract.py` PASS — now
   title → story → (fire) → title, with `--full` adding the demo phase.
-- **Needs your eye:** the movie end to end (it is 96 s — start a build, wait 12 s, watch),
-  the hero's walk, and whether the title screen should also move to the ROM's row 36
+- **2026-09-20 follow-up — the walk PHASE (notes §96.10).** Author: *"In the demo mode, I
+  think either the humans are walking too fast, or the hulk is walking too fast, because
+  the human only dies after the hulk walks past him!"* Both rates are the ROM's exactly
+  (measured: hulk 3.5 px per 8 frames, family 1.5 px per 8 frames) — the walk ACTION slept
+  the full step period after its LAST step, where `ANA2`/`BANA2` only sleep while steps
+  remain (`DEC / BNE`, then `JMP [LEV2,U]`). Every MOVE opcode cost one extra period, so
+  `FAMSCR`'s six MOVEs ran the mother's scripted death 48 frames late while `SCHULK`'s
+  three put the hulk 24 frames early: the skull appeared five columns AFTER he passed her.
+  Now they meet (both at column 59 on frame 2996, the skull on 3001) exactly as the arcade's
+  choreography was written. An action that completes also returns into the script in the
+  same pass now (the ROM's `JMP [LEV2,U]`). +1 test (**285**).
+- **2026-09-20 — attract DEV KEYS, the hulk verified, the HUD live (notes §97).** Author:
+  *"I need you to add a key that takes me directly to the 'attract' mode with the humans and
+  hulks … How's about F1?"* — **F1** jumps straight into the attract STORYLINE movie, **F2**
+  into the attract DEMO game (the phony player), **F3** HELD runs the movie's ROM frame clock
+  8× so the hulk's walk is reached in ~7 s instead of ~51 s (`Input/DevKeys.cs` +
+  `RobotronGame.Update`; port-only, no arcade claim). The author's other two reports:
+  **(a)** *"the hulk in the demo mode is not instantly killing daddy and mikey when it walks
+  into them"* is the §96.10 phase error, VERIFIED fixed from the port's own timeline —
+  MIKEY's skull lands on frame 2675 with the hulk's box on him, the `FAMSCR` walk (the phase
+  that wears the DADDY art) on 2994 with the hulk at c59, and the demo game's own
+  hulk-vs-family kills happen on the FIRST overlapping tick (waves 2-3 measured);
+  **(b)** *"when the player is rescuing family members in the attract mode, the score display
+  is delayed"* was REAL and not only in attract: the HUD draws the session slots, which were
+  only synced at a wave clear / death, so every point scored in between (a kill, a rescue's
+  1000-5000, an earned spare man) was invisible until the wave ended. New
+  `PlayField.SyncInto(slot)` is called every tick by both states (+1 test, **286**).
+- **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
+  press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
+  game), the hero's walk, and whether the title screen should also move to the ROM's row 36
   (§96.3 flags it; that screen was left exactly as you signed it off).
 - **Known open (notes §96.8):** PDEAD's `PKPRCV` (the posts vanish rather than playing it),
   the POSTS table's unreferenced records, and FAMPAG's DUMPLR half — the arcade's title

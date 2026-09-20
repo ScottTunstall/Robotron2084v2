@@ -153,6 +153,31 @@ public sealed class AttractMovieTests
     }
 
     [Fact]
+    public void ObjectMachine_WalkCostsExactlyOneStepPeriodPerStep()
+    {
+        var machine = new AttractObjectMachine(new Random(4));
+
+        // DUMYOU again: 128 left steps at YOU's 2-frame nap, then DIE — so the
+        // object is gone on frame 256 exactly. ANA2/BANA2 only SLEEP again while
+        // steps remain (`DEC ... / BNE` then `JMP [LEV2,U]`), so waiting once more
+        // after the LAST step would push every following opcode a period late and
+        // drag the script's phase with it (notes §96.10: the hulk reached a human
+        // half a second before her scripted death).
+        machine.StartScript(0x8739);
+        machine.StepFrame();
+        Assert.NotEmpty(machine.Objects);
+
+        for (int frame = 0; frame < 255; frame++)
+        {
+            machine.StepFrame();
+        }
+
+        Assert.NotEmpty(machine.Objects);
+        machine.StepFrame();
+        Assert.Empty(machine.Objects);
+    }
+
+    [Fact]
     public void ObjectMachine_WalksAGruntAndExplodesIt()
     {
         var machine = new AttractObjectMachine(new Random(11));

@@ -92,6 +92,13 @@ public sealed class PlayingState : IGameState
 
         _field.Update(gameTime);
 
+        // The HUD is drawn from the session's slots, and the ROM reads the score,
+        // the men and SAVCNT out of the player's own data block every time it
+        // draws — so hand the live counters over EVERY tick (notes §97). Syncing
+        // only at a wave clear / death left the displayed score (and an earned
+        // spare man) stale for the rest of the wave.
+        SyncSlotFromField();
+
         PlayerInputState input = _session.Current.Input.Poll();
 
         // Wave clear (Phase 11.3) — checked before the death check. The P key
@@ -167,13 +174,7 @@ public sealed class PlayingState : IGameState
     }
 
     /// <summary>Copies the live field's counters back into the current player's slot.</summary>
-    private void SyncSlotFromField()
-    {
-        PlayerSlot slot = _session.Current;
-        slot.Score = _field.Score.Score;
-        slot.Lives = _field.Player.Lives;
-        slot.Rescues = _field.RescuesThisLife;
-    }
+    private void SyncSlotFromField() => _field.SyncInto(_session.Current);
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {

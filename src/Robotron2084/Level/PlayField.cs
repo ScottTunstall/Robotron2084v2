@@ -132,6 +132,21 @@ public sealed class PlayField
     public ScoreBoard Score { get; }
 
     /// <summary>
+    /// Hands the live counters back to the player's session slot. The ROM keeps
+    /// the score, the men and SAVCNT in the player's own data block and the HUD
+    /// reads them from there every time it draws, so the port must copy them
+    /// across every TICK, not only at a wave clear or a death — otherwise the
+    /// displayed score (and the spare-men icons) lag behind the field, which is
+    /// what the rescue bonus looked like in the attract demo (notes §97).
+    /// </summary>
+    public void SyncInto(PlayerSlot slot)
+    {
+        slot.Score = Score.Score;
+        slot.Lives = Player.Lives;
+        slot.Rescues = RescuesThisLife;
+    }
+
+    /// <summary>
     /// True during the player's 2-second start grace period AND during the
     /// player's death animation (spec: "ALL ROBOTS ARE IMMOBILE" in both
     /// cases) — robots still tick their death timers, they just don't move,

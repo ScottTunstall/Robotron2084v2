@@ -74,6 +74,18 @@ public sealed class StorylineState : IGameState
 
         _movie.Update(gameTime);
 
+        // F3 held (dev key, notes §97): run the movie's ROM frame clock extra
+        // times so a later scene can be reached without waiting out the text
+        // crawl. The clock itself is untouched — this is the same accumulator,
+        // just stepped more often.
+        if (DevKeys.AttractFastForward)
+        {
+            for (int i = 1; i < DevKeys.AttractFastForwardMultiplier; i++)
+            {
+                _movie.Update(gameTime);
+            }
+        }
+
         foreach (MovieExplosion exploded in _movie.Objects.DrainExplosions())
         {
             // EXPP: the explosion takes the picture the object was showing and the

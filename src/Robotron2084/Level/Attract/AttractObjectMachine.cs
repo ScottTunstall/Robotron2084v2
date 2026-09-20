@@ -149,7 +149,13 @@ public sealed class AttractObjectMachine
             if (Action != MovieAction.None)
             {
                 RunAction(machine);
-                return;
+                if (Wait > 0 || !Alive || Action != MovieAction.None)
+                {
+                    return;
+                }
+
+                // The action finished: the ROM returns into the script loop with
+                // `JMP [LEV2,U]`, i.e. the next opcode runs in this same pass.
             }
 
             while (Alive && ReadOp(machine))
@@ -376,18 +382,24 @@ public sealed class AttractObjectMachine
             switch (Action)
             {
                 case MovieAction.Walk:
+                    // ANA2 / BANA2: move, DEC the step count, and only SLEEP again
+                    // while steps remain — the LAST step falls straight through to
+                    // the script (`JMP [LEV2,U]`). Sleeping once more after it put
+                    // every walk a step period behind and dragged the whole script
+                    // phase with it (the hulk reaching a human 0.5 s before her
+                    // scripted death, notes §96.10).
                     if (descriptor.Walk == MovieWalk.BrainStep)
                     {
                         BrainStep(descriptor);
-                        Wait = descriptor.StepNap;
+                        Wait = --StepsLeft > 0 ? descriptor.StepNap : 0;
                     }
                     else
                     {
                         TableStep(descriptor.Walk);
-                        Wait = WalkStepFrames;
+                        Wait = --StepsLeft > 0 ? WalkStepFrames : 0;
                     }
 
-                    if (--StepsLeft <= 0)
+                    if (StepsLeft <= 0)
                     {
                         Action = MovieAction.None;
                     }

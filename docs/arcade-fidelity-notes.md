@@ -7763,3 +7763,109 @@ page/object-machine cases), 12 s launch smoke OK, `verify-playfield.py` PASS,
 movie: title → story band (≈8.7% of the interior lit, against the title's 1.8%) → fire →
 title, with `--full` (~2.5 min) adding "wait out the movie → the attract demo". The whole
 movie is ~4785 ROM frames ≈ **96 s**, so the demo starts ≈108 s after launch.
+
+### 96.10 The walker's LAST step costs no extra period — the author's "the human only dies after the hulk walks past him"
+
+**Author: "In the demo mode, I think either the humans are walking too fast, or the hulk is
+walking too fast, because the human only dies after the hulk walks past him!"** Neither
+rate was wrong — the PHASE was. Measured from the port's own timeline, the walk rates are
+exactly the ROM's: the hulk covers 3.5 px per 8 frames (HLKANA's 3,4,3,4) and the family
+1.5 px per 8 frames (HUMANA's 2,1,2,1), frame for frame. What was wrong is one line of my
+walk action: it slept the full step period **after the last step**, where the ROM does not.
+`ANA2` is `BSR ANASUB / DEC USER+2,U / BNE ANA1 / JMP [LEV2,U]` — the sleep happens at the
+TOP of the loop, so the final step falls straight through into the script. Every MOVE
+opcode therefore cost the port one extra step period (8 frames for the ANA walkers, the
+descriptor's nap for the BR ones), and every walk-driven script ran late:
+
+- `FAMSCR` has six MOVEs → the mother's scripted death was **48 frames late**;
+- `SCHULK` has three before the hulk reaches her → the hulk was **24 frames early**;
+
+which is a ~24-frame (0.5 s) phase error — exactly the "the hulk has already gone past"
+gap the author saw. The timeline before the fix: at frame 3046 the skull appears with the
+hulk at column 67 and the human at 58, i.e. five columns clear of her. After it: at frame
+2996 the human and the hulk are BOTH at column 59, and the skull appears on 3001 with the
+hulk at 60 — the human dies as he reaches her, which is what the arcade's choreography was
+written for. (That the two scripts line up to within a few frames by themselves is the
+proof the timing is now the ROM's: nothing was nudged to make it happen.)
+
+Also fixed in the same pass: when an action completes, the ROM returns into the script loop
+with `JMP [LEV2,U]`, so the next opcode runs in that SAME pass — the port was spending a
+frame there too.
+
+`AttractMovieTests.ObjectMachine_WalkCostsExactlyOneStepPeriodPerStep` pins the property
+with a real script (DUMYOU: 128 steps × 2 frames, then DIE → the object must be gone on
+frame 256 exactly, and still there on 255).
+
+## 97. The attract DEV KEYS, the hulk's kills verified, and the HUD counters handed over every tick (2026-09-20)
+
+**Author, three reports in one sitting: "I need you to add a key that takes me directly to
+the 'attract' mode with the humans and hulks so I can see if the code is working or not.
+How's about F1?" — "The hulk in the demo mode is not instantly killing daddy and mikey when
+it walks into them. Additionally when the player is rescuing family members in the attract
+mode, the score display is delayed."**
+
+### 97.1 The dev keys (port-only — nothing here is an arcade claim)
+
+The attract sequence is ~108 s from launch to the demo game, and the hulk does not walk on
+until ~51 s into the movie, which makes checking a choreography change painful. `F1`, `F2`
+and `F3` are now handled in `RobotronGame.Update` (like `F11` and `Escape`) through the new
+`Input/DevKeys.cs`:
+
+| key | what it does |
+|---|---|
+| **F1** | jumps straight into the attract STORYLINE movie (`StorylineState`) from any state |
+| **F2** | jumps straight into the attract DEMO game (`AttractState`, the phony player) |
+| **F3** | HELD: steps the movie's ROM frame clock 8× — the hulk's walk arrives in ~7 s instead of ~51 s |
+
+F1/F2 still honour the arcade's coin-door rule (fire/start hands back to the title), and F3
+changes only HOW OFTEN the movie's own exact-sixths accumulator is stepped, never the clock
+itself. Nothing else in the game reads these keys.
+
+### 97.2 "The hulk is not instantly killing daddy and mikey": that was §96.10, and it is verified
+
+The report is the SAME phase error §96.10 fixed, seen in the build the author had before it
+(every MOVE opcode cost one extra step period, so `FAMSCR`'s six MOVEs put its scripted
+death ~48 frames behind the hulk while `MIKEP`'s six put Mikey's the same distance behind
+him — the hulk walks over both and the skulls arrive about a second later, which is exactly
+"not instantly killing them when it walks into them"). Verified after the fix from the
+port's own timeline — a temporary harness (since deleted) replayed the ROM's HISTO with a
+fixed seed and logged every object's column/row per ROM frame:
+
+| the author's "…" | skull appears | hulk | the human | contact |
+|---|---|---|---|---|
+| **MIKEY** (`MIKEP`) | ROM frame **2675** | c37-38, r192 | Mikey c39, r192 | boxes overlap from 2673 |
+| **DADDY** (`FAMSCR`'s last walk — the phase that wears the DADDY art; its `MOMDED` label is the script's own) | ROM frame **2994** | c59, r160 | at c59, r163 | boxes overlap from 2990 |
+
+So both skulls appear with the hulk standing on the human — the 2-4 frame lag is the
+script's own, and the two scripts line up by themselves (nothing was nudged). **The demo
+game is clean too:** the same harness ran `AttractState`'s field + `DemoPlayerInputSource`
+(waves 2-3, 5-6 hulks with a mom/dad/mikey each) and every family death happened on the
+FIRST tick a hulk's picture box overlapped the human's — no delay on that path, because the
+field resolves the hulk-vs-`HPTR` test every tick and the box IS the ROM's picture
+(`RRH11`'s `HULK … LDU OPICT,X / LDX #HPTR / JSR COL0`).
+
+### 97.3 The HUD's score and men were stale for a whole wave — the slot is synced every tick now
+
+**"When the player is rescuing family members in the attract mode, the score display is
+delayed"** — and not only in attract. `ArcadeHud.DrawScoresAndMen` draws the SESSION's
+`PlayerSlot`s, but `PlayingState` and `AttractState` only copied the field's counters into
+the slot at a WAVE CLEAR or a DEATH. Every point scored in between — a kill, a rescue's
+1000-5000 bonus, the extra man a threshold crossing earns — stayed invisible until the wave
+ended, which is exactly what the author saw on the demo's rescues. The ROM has no such gap:
+the score, the men (`PLAS`) and `SAVCNT` live in the player's own data block and
+`DRAW_PLAYER_SCORES` ($DC13) reads them there every time it draws.
+
+The hand-over is now per TICK: new `PlayField.SyncInto(PlayerSlot)` (score, `Player.Lives`,
+`RescuesThisLife`) is called from both states immediately after `_field.Update`, and the two
+private `SyncSlotFromField` helpers are thin wrappers over it. The wave-clear and death
+calls stay — the death path still zeroes `SAVCNT` AFTER the copy (`PLINIT`).
+`PlayFieldHumanTests.SyncInto_HandsLiveScoreLivesAndRescuesToThePlayersSlot` pins it.
+
+### 97.4 Gates
+
+0 warnings (Debug + Release), **286 tests, 0 failed, 1 skipped** (+1), the 12 s launch smoke
+OK, `verify-playfield.py` PASS, `verify-fonts.py` PASS (82), `verify-attract.py` PASS (title
+→ story → title). The hulk scene was also watched end to end through the new F1/F3 keys —
+the skull is drawn with the hulk on top of it, and the DADDY art then MIKEY's skull appear
+in turn as he walks on. The `playfield-check.png` artifact the render gate leaves was
+deleted.
