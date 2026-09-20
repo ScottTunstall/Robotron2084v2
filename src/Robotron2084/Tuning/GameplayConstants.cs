@@ -538,16 +538,16 @@ public static class GameplayConstants
     public const int HighScoreHoldRomFrames = 200 * 3; // LDA #200 with NAP 3 = 600 frames = 12 s
     public const int HighScoreLeaveTimeoutRomFrames = 255 * 4; // LDA #$FF with NAP 4, then it leaves anyway
     public const int HighScoreHeaderSlot = 7; // SCRMEP: COLOR $77 = slot 7
-    public const int HighScoreListSlot = 9; // TABLE: TCOL1 $99
-    public const int HighScoreListHighlightSlot = 12; // TABLE: TCOL2 $CC — "you are here"
-    public const int HighScoreTopSlot = 10; // TABLE: TCOL1 $AA for the GOD score
-    public const int HighScoreTopHighlightSlot = 13; // TABLE: TCOL2 $DD
-    public const int HighScoreFrameSlot = 8; // FRAMER's flavour $88 (the frame, LOOPP cycles slots 1-8)
-    public const int HighScoreFrameLeftColumn = 6; // FRAMER walks (62,125)-(89,127) out to (6,13)-(145,239)
-    public const int HighScoreFrameTopRow = 13;
-    public const int HighScoreFrameRightColumn = 145;
-    public const int HighScoreFrameBottomRow = 239;
-    public const int HighScoreFrameThicknessPixels = 2; // MARQ: two raster rows on the horizontal edges
+    // TABLE sets TWO colour pairs: TCOL1/TCOL2 = $99/$CC ($D8/$D9 at ROM $DF4F) for
+    // TODAY'S list, then $AA/$DD ($DF75) for the top entry AND the all-time list —
+    // NOINTS prints the second list without changing them again.
+    public const int HighScoreTodaySlot = 9;
+    public const int HighScoreTodayHighlightSlot = 12;
+    public const int HighScoreAllTimeSlot = 10;
+    public const int HighScoreAllTimeHighlightSlot = 13;
+    public const int HighScoreFrameSlot = 8; // FRAMER's flavour $88 — the wall; LOOPP cycles slots 1-8
+                                             // (the wall's geometry and its grow/erase passes live in
+                                             // HighScoreTableLayout / HighScoreFrameAnimation)
 
     // The game-over message: RRG23 PLEND prints string 40 (GOMP = "GAME OVER") in
     // the LARGE font, colour $AA, at CURSAB $3E,$80, and waits NAP 120.

@@ -48,6 +48,44 @@ public static class HighScoreTableLayout
     public const int TodayRows = TodayPerColumn * TodayColumns;
     public const int AllTimeRows = AllTimePerColumn * AllTimeColumns;
 
+    // ---- the frame (`FRAMER` → `MARQ`, notes §98.5) -------------------------------
+    // FRAMER hands MARQ two inclusive corners and walks them apart, two strokes a ROM
+    // frame: stroke 0 is (col 62, row 125)-(col 89, row 127), and every step takes the
+    // upper-left up-left by one column and two rows while the lower-right goes the same
+    // way out, so a stroke is always 28 columns wide and 3 rows tall. Pass 1 stops when
+    // the upper-left reaches the terminal point `$060D` = (col 6, row 13); the erase pass
+    // restarts at stroke 0 with flavour 0 (black) and stops at `$0E1D` = (col 14, row 29).
+    // What is left visible is the band between those two — 8 columns and 16 rows thick.
+    public const int FrameStartColumn = 62;
+    public const int FrameStartRow = 125;
+    public const int FrameHalfWidthColumns = 27;
+    public const int FrameStrokesPerRomFrame = 2;
+    public const int FrameFirstStroke = 0;
+    public const int FrameLastStroke = 56;       // (col 6, row 13)
+    public const int FrameEraseLastStroke = 48;  // (col 14, row 29)
+    public const int FrameStrokeCount = FrameLastStroke + 1;
+    public const int FrameEraseStrokeCount = FrameEraseLastStroke + 1;
+
+    /// <summary>
+    /// Stroke <paramref name="stroke"/>'s rectangle in ARCADE PIXELS, inclusive: MARQ's
+    /// corners are (column, row) units and one column is two pixels.
+    /// </summary>
+    public static (int Left, int Top, int Right, int Bottom) FrameStroke(int stroke) =>
+    (
+        2 * (FrameStartColumn - stroke),
+        FrameStartRow - (2 * stroke),
+        2 * (FrameStartColumn + FrameHalfWidthColumns + stroke) + 1,
+        FrameStartRow + 2 + (2 * stroke)
+    );
+
+    /// <summary>
+    /// MARQ's hatch: of every pair of pixels its two horizontal passes and its two
+    /// vertical passes light exactly ONE — the outer pixel taking the flavour's high
+    /// nibble (the high nibble of `$88`), the inner one the low — which works out as
+    /// this single checkerboard over the whole frame.
+    /// </summary>
+    public static bool FramePixelIsLit(int arcadeX, int arcadeY) => ((arcadeX + arcadeY) & 1) != 0;
+
     /// <summary>The (column, row) of the ROM's cursor for today's rank <paramref name="index"/> (1-based).</summary>
     public static (int Column, int Row) TodayPosition(int index)
     {

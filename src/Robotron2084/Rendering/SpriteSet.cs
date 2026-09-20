@@ -507,27 +507,18 @@ public sealed class SpriteSet
     };
 
     /// <summary>
-    /// The ROM's number printer (notes §58.1) in one font, for the high score
-    /// table's scores and ranks: the eight digit positions with a leading zero
-    /// SUPPRESSED while nothing has been printed yet — but the cursor still
-    /// advances (<paramref name="blankAdvancePixels"/>) — and the last two
-    /// positions always drawn. A drawn digit advances its own width + 1
-    /// (the ROM's blitter, §96.2). Returns the X after the number.
+    /// The high score table's number printer (notes §98.5, from the author's photo
+    /// of the arcade): the SIGNIFICANT digits only, packed from the cursor — the
+    /// table does NOT use the in-play score display's blanked-leading-zero field
+    /// (a row reads "1) DRJ 52127", not "1) DRJ   52127"), which is what makes the
+    /// rows' digits line up. Returns the X after the number.
     /// </summary>
-    public int DrawScoreDigits(
-        SpriteBatch spriteBatch,
-        Texture2D[] glyphs,
-        int score,
-        int x,
-        int y,
-        int slot,
-        int blankAdvancePixels)
+    public int DrawTableNumber(SpriteBatch spriteBatch, Texture2D[] glyphs, int value, int x, int y, int slot)
     {
-        foreach (ScoreFormatter.ScoreDigit digit in ScoreFormatter.Digits(score))
+        foreach (ScoreFormatter.ScoreDigit digit in ScoreFormatter.Digits(value))
         {
             if (digit.Suppressed)
             {
-                x += ScreenSize.Scaled(blankAdvancePixels);
                 continue;
             }
 
@@ -538,13 +529,13 @@ public sealed class SpriteSet
         return x;
     }
 
-    /// <summary>The high score table's LARGE-font score (<c>PRSCOR</c> → <c>WRD7V</c>): blank advance 6 px.</summary>
-    public int DrawLargeScore(SpriteBatch spriteBatch, int score, int x, int y, int slot) =>
-        DrawScoreDigits(spriteBatch, FontLarge, score, x, y, slot, GameplayConstants.HudScoreBlankAdvancePixels);
+    /// <summary>The high score table's LARGE-font score (<c>PRSCOR</c> → <c>WRD7V</c>).</summary>
+    public int DrawLargeTableNumber(SpriteBatch spriteBatch, int value, int x, int y, int slot) =>
+        DrawTableNumber(spriteBatch, FontLarge, value, x, y, slot);
 
-    /// <summary>The high score table's SMALL-font score (<c>PRSCOR</c> → <c>WRD5V</c>): blank advance 4 px.</summary>
-    public int DrawSmallScore(SpriteBatch spriteBatch, int score, int x, int y, int slot) =>
-        DrawScoreDigits(spriteBatch, FontSmall, score, x, y, slot, GameplayConstants.HudSmallFontBlankAdvancePixels);
+    /// <summary>The high score table's SMALL-font score (<c>PRSCOR</c> → <c>WRD5V</c>).</summary>
+    public int DrawSmallTableNumber(SpriteBatch spriteBatch, int value, int x, int y, int slot) =>
+        DrawTableNumber(spriteBatch, FontSmall, value, x, y, slot);
 
     /// <summary>
     /// Draws a ROM frame at SpecScale× arcade pixels, centered inside

@@ -17,13 +17,16 @@ namespace Robotron2084.States;
 /// <item>TODAY'S ten rows in the LARGE font, 5 per column × 2 columns, from
 /// (26, 53), 9 rows / 52 columns apart — each row " N) XXX  1234567";</item>
 /// <item>"ALL TIME HEROES" (slot 7) at (53, 110);</item>
-/// <item>the operator's top entry at (21, 122) in $AA (or $DD when it is the
-/// score you just posted) as "( NAME ) 1234567";</item>
+/// <item>the operator's top entry at (21, 122) in $AA/$DD (the ROM's SECOND colour
+/// pair, which the all-time list below it shares) as "( NAME ) 1234567";</item>
 /// <item>the ALL-TIME thirty-six rows in the SMALL font, 12 per column ×
 /// 3 columns, from (20, 136), 7 rows / 40 columns apart, ranks 2-37;</item>
-/// <item>a 50%-dithered frame in slot 8 between the ROM's corners — see the
-/// open items in §98.4: the frame's grow/erase animation and the LOOPP/COLA/
-/// COLC/COLD palette cycling are NOT implemented yet.</item>
+/// <item>a hatched frame in slot 8 between the ROM's corners, drawn the way the ROM
+/// draws it — see <see cref="HighScoreFrameAnimation"/> and <see cref="DrawFrame"/>
+/// (<c>FRAMER</c> grows it, then an erase pass in black leaves the band);</item>
+/// <item>and the page's own colour processes, which are what make the arcade's page
+/// move: <see cref="HighScorePalette"/> cycles the wall's slot through COLTAB, ramps
+/// the two lists and their highlights, and drags the headers along a slot behind.</item>
 /// </list>
 ///
 /// A row whose score is one of the scores this session just posted is drawn in
@@ -41,6 +44,8 @@ public sealed class HighScoreTableState : IGameState
     private readonly HighScoreStore _store;
     private readonly HighScoreTable _table;
     private readonly int[] _postedScores;
+    private readonly HighScorePalette _colour = new();
+    private readonly HighScoreFrameAnimation _frame = new();
     private readonly int _holdTicks = GameplayConstants.PortTicks(GameplayConstants.HighScoreHoldRomFrames);
     private readonly int _leaveTicks = GameplayConstants.PortTicks(GameplayConstants.HighScoreLeaveTimeoutRomFrames);
     private int _elapsedTicks;
@@ -68,11 +73,24 @@ public sealed class HighScoreTableState : IGameState
         // The ROM's own score processing (EGSUB) has already happened by the time
         // the table is drawn; a save here is the CMOS write.
         store.Save(_table);
+
+        // RRTABLE's TABLE starts the page's colour processes before it draws anything
+        // (MAKP LOOPP comes first, the other four after the lists are printed).
+        if (_sprites.Palette is { } palette)
+        {
+            _colour.Start(palette);
+        }
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
         _elapsedTicks++;
+        _frame.Tick();
+
+        if (_sprites.Palette is { } live)
+        {
+            _colour.Update(live);
+        }
 
         PlayerInputState input = _input.Poll();
         bool pressed = (input.FirePressed && !_previousFire)
@@ -87,6 +105,11 @@ public sealed class HighScoreTableState : IGameState
         // timeout), then back to the family page.
         if (pressed || _elapsedTicks >= _holdTicks + _leaveTicks)
         {
+            if (_sprites.Palette is { } palette)
+            {
+                _colour.Stop(palette);
+            }
+
             manager.TransitionTo(new TitleScreenState(_input, _sprites, _store));
         }
     }
@@ -126,7 +149,7 @@ public sealed class HighScoreTableState : IGameState
             (int column, int row) = HighScoreTableLayout.TodayPosition(rank);
             int x = ColumnX(column);
             int y = RowY(row);
-            int slot = SlotFor(entries[rank - 1], GameplayConstants.HighScoreListSlot, GameplayConstants.HighScoreListHighlightSlot);
+            int slot = SlotFor(entries[rank - 1], GameplayConstants.HighScoreTodaySlot, GameplayConstants.HighScoreTodayHighlightSlot);
 
             int afterRank = DrawRank(spriteBatch, rank, x, y, slot, large: true);
             _sprites.DrawLargeFontText(spriteBatch, entries[rank - 1].Initials, afterRank, y, slot);
@@ -138,7 +161,7 @@ public sealed class HighScoreTableState : IGameState
             // the 22 px the offset leaves.
             if (entries[rank - 1].Score != 0)
             {
-                _sprites.DrawLargeScore(
+                _sprites.DrawLargeTableNumber(
                     spriteBatch,
                     entries[rank - 1].Score,
                     afterRank + ScreenSize.Scaled(HighScoreTableLayout.TodayScoreOffsetColumns * 2),
@@ -157,14 +180,14 @@ public sealed class HighScoreTableState : IGameState
             (int column, int row) = HighScoreTableLayout.AllTimePosition(rank);
             int x = ColumnX(column);
             int y = RowY(row);
-            int slot = SlotFor(entries[rank - 2], GameplayConstants.HighScoreListSlot, GameplayConstants.HighScoreListHighlightSlot);
+            int slot = SlotFor(entries[rank - 2], GameplayConstants.HighScoreAllTimeSlot, GameplayConstants.HighScoreAllTimeHighlightSlot);
 
             int afterRank = DrawRank(spriteBatch, rank, x, y, slot, large: false);
             _sprites.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, slot);
 
             if (entries[rank - 2].Score != 0)
             {
-                _sprites.DrawSmallScore(
+                _sprites.DrawSmallTableNumber(
                     spriteBatch,
                     entries[rank - 2].Score,
                     afterRank + ScreenSize.Scaled(HighScoreTableLayout.AllTimeScoreOffsetColumns * 2),
@@ -180,23 +203,23 @@ public sealed class HighScoreTableState : IGameState
         // not see the name (GA2); the port always has a name, so it always prints
         // "( NAME )" then the score.
         int y = RowY(HighScoreTableLayout.TopRow);
-        int slot = SlotFor(_table.Top.Score, GameplayConstants.HighScoreTopSlot, GameplayConstants.HighScoreTopHighlightSlot);
+        int slot = SlotFor(_table.Top.Score, GameplayConstants.HighScoreAllTimeSlot, GameplayConstants.HighScoreAllTimeHighlightSlot);
 
         int x = ColumnX(HighScoreTableLayout.TopColumn);
         x = _sprites.DrawLargeFontText(spriteBatch, "(", x, y, slot);
         x = _sprites.DrawLargeFontText(spriteBatch, _table.Top.Name, x, y, slot);
         x = _sprites.DrawLargeFontText(spriteBatch, ")", x, y, slot);
-        _sprites.DrawLargeScore(spriteBatch, _table.Top.Score, x + ScreenSize.Scaled(GameplayConstants.HudSmallFontBlankAdvancePixels), y, slot);
+        _sprites.DrawLargeTableNumber(spriteBatch, _table.Top.Score, x + ScreenSize.Scaled(GameplayConstants.HudSmallFontBlankAdvancePixels), y, slot);
     }
 
     /// <summary>
-    /// The ROM's message 111 (`INDMEP`): a space, the rank in its digit count, ')' and
-    /// a space. The score that follows is placed from the ROW's column (the ROM's fixed
-    /// offset), so the rank only has to LOOK right.
+    /// The ROM's message 111 (`INDMEP`): the rank, ')' and a space. The arcade's
+    /// rows are NOT padded (its 10) sits a glyph further right than its 9)), which
+    /// is what the author's photo of the cabinet shows.
     /// </summary>
     private int DrawRank(SpriteBatch spriteBatch, int rank, int x, int y, int slot, bool large)
     {
-        string text = $" {rank,2}) ";
+        string text = $"{rank}) ";
         return large
             ? _sprites.DrawLargeFontText(spriteBatch, text, x, y, slot)
             : _sprites.DrawSmallFontText(spriteBatch, text, x, y, slot);
@@ -214,28 +237,55 @@ public sealed class HighScoreTableState : IGameState
         score != 0 && _postedScores.Contains(score) ? highlightSlot : normalSlot;
 
     /// <summary>
-    /// The ROM's frame (`FRAMER` → `MARQ`): the rectangle between (col 6, row 13)
-    /// and (col 145, row 239), two raster rows thick on the horizontal edges and
-    /// dithered 2-px blocks on the vertical ones, in slot 8. The ROM animates it
-    /// (grow, then an erase pass) and cycles its slot — notes §98.4.
+    /// The ROM's frame (`FRAMER` → `MARQ`, notes §98.5): the hatched band its two
+    /// passes leave behind, drawn in slot 8's LIVE colour — which is what makes the wall
+    /// cycle, because every wall pixel is palette index 8 and the LOOPP process keeps
+    /// rewriting that slot.
+    ///
+    /// MARQ hands the blitter packed pairs and lights exactly ONE pixel of each (see
+    /// <see cref="HighScoreTableLayout.FramePixelIsLit"/>), so the band is a fine
+    /// checkerboard rather than a solid colour. The erase pass paints those same pixels
+    /// black up to the rectangle <see cref="HighScoreFrameAnimation.InnerRect"/> reports,
+    /// so only the part of the band outside it is drawn.
     /// </summary>
     private void DrawFrame(SpriteBatch spriteBatch)
     {
+        (int outerLeft, int outerTop, int outerRight, int outerBottom) = _frame.OuterRect;
+        (int innerLeft, int innerTop, int innerRight, int innerBottom) = _frame.InnerRect;
         Color colour = _sprites.SlotColor(GameplayConstants.HighScoreFrameSlot);
-        int thickness = ScreenSize.Scaled(GameplayConstants.HighScoreFrameThicknessPixels);
-        int left = ColumnX(GameplayConstants.HighScoreFrameLeftColumn);
-        int top = RowY(GameplayConstants.HighScoreFrameTopRow);
-        int right = ColumnX(GameplayConstants.HighScoreFrameRightColumn);
-        int bottom = RowY(GameplayConstants.HighScoreFrameBottomRow);
 
-        _sprites.DrawSolidRectangle(spriteBatch, new Rectangle(left, top, right - left + thickness, thickness), colour);
-        _sprites.DrawSolidRectangle(spriteBatch, new Rectangle(left, bottom, right - left + thickness, thickness), colour);
-
-        // The vertical edges are the "linky" dither: 2 px of colour, 2 px of gap.
-        for (int y = top; y <= bottom; y += 2 * thickness)
+        for (int y = outerTop; y <= outerBottom; y++)
         {
-            _sprites.DrawSolidRectangle(spriteBatch, new Rectangle(left, y, thickness, thickness), colour);
-            _sprites.DrawSolidRectangle(spriteBatch, new Rectangle(right, y, thickness, thickness), colour);
+            int top = GameplayConstants.ArcadeY(y);
+            int height = GameplayConstants.ArcadeY(y + 1) - top;
+
+            if (y >= innerTop && y <= innerBottom)
+            {
+                DrawHatchedRow(spriteBatch, colour, outerLeft, Math.Min(innerLeft - 1, outerRight), y, top, height);
+                DrawHatchedRow(spriteBatch, colour, Math.Max(innerRight + 1, outerLeft), outerRight, y, top, height);
+            }
+            else
+            {
+                DrawHatchedRow(spriteBatch, colour, outerLeft, outerRight, y, top, height);
+            }
+        }
+    }
+
+    /// <summary>One raster row of MARQ's hatch: every other arcade pixel of the run.</summary>
+    private void DrawHatchedRow(SpriteBatch spriteBatch, Color colour, int left, int right, int row, int top, int height)
+    {
+        for (int x = left; x <= right; x++)
+        {
+            if (!HighScoreTableLayout.FramePixelIsLit(x, row))
+            {
+                continue;
+            }
+
+            int px = GameplayConstants.ArcadeX(x);
+            _sprites.DrawSolidRectangle(
+                spriteBatch,
+                new Rectangle(px, top, GameplayConstants.ArcadeX(x + 1) - px, height),
+                colour);
         }
     }
 }

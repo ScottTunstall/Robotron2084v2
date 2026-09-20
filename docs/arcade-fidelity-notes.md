@@ -8014,9 +8014,10 @@ in the LARGE font, `TEXCOL $AA`, `CURSAB $3E,$80` = (62, 128), `NAP 120` = 2.4 s
 insertion) and the store (the all-time list + the top entry persist; today's resets per run).
 
 **Open, in this order:**
-1. **The frame's ANIMATION** — `FRAMER`'s two grow/erase passes (2 frames a step) and the
-   `LOOPP`/`COLA`/`COLC`/`COLD` palette cycling of the frame's slots. The frame is drawn
-   STATICALLY in this pass (the final rectangle, slot 8, dithered).
+1. ~~**The frame's ANIMATION** — `FRAMER`'s two grow/erase passes (2 frames a step) and the
+   `LOOPP`/`COLA`/`COLC`/`COLD` palette cycling of the frame's slots.~~ **SHIPPED §98.5** — and
+   the decode there is a CORRECTION of this line: the frame is not a rectangle drawn twice, it
+   is a HATCHED BAND 8 columns / 16 rows thick.
 2. **The initials entry** (author: "not yet") — the arcade's screens are `CONG`/`NOWMSP`
    ("YOU ARE A ROBOTRON HERO … ENTER YOUR INITIALS:") + `GETLT` (a 3-char entry at `$4680`,
    `ALTBL` padding with spaces), `GODMSP` ("YOU ARE THE GREATEST … ENTER YOUR NAME (UP TO n
@@ -8027,11 +8028,90 @@ insertion) and the store (the all-time list + the top entry persist; today's res
    attract check, but the initials screen would then block an idle cabinet — implausible. The
    port keeps the demo silent (its existing behaviour) and shows the table at the end of the
    cycle; settle it with a MAME measurement if it matters.
-4. **Open question: the score field's alignment.** The ROM prints a table score in TWO halves
-   (`PRSCOR`: `HIGH1P` for the high part, then the audit word `AUDM2` for the low one), which
-   right-aligns the trailing digits; the port uses the HUD's approved digit model (left-anchored
-   with leading zeros suppressed but still advancing, notes §58.1). With suppressed leading
-   zeros the port's row therefore reads "1) DRJ" + a gap + "52127", where the arcade may sit the
-   digits closer. The CURSORS and the offsets are the ROM's; the alignment inside the field is
-   the one thing the author should eyeball (it is the same model the score display already uses
-   during play, so it is at least self-consistent).
+4. ~~**Open question: the score field's alignment.**~~ **SETTLED §98.5 (author's photo):** the
+   arcade's table PACKS its digits — the ROM prints each half of a score from the cursor with
+   no advance for a suppressed leading zero, so the port's table now uses its own
+   `DrawTableNumber` (packing) instead of the HUD's digits, and its ranks are unpadded.
+   (The ROM prints a table score in two halves — `PRSCOR`: `HIGH1P` for the high part, then
+   the audit word `AUDM2` for the low one — where the HUD's model left-anchors its digits
+   with suppressed leading zeros STILL advancing, notes §58.1, so the port's row read
+   "1) DRJ" + a gap + "52127".)
+
+
+### 98.5 The page MOVES — the hatched wall and the colour processes (2026-09-20)
+
+**Author: "There's colour cycling going on on the page, and there's a hatched 'wall'
+surrounding the scores, that also cycles."** Both were in the ROM all along and §98.4's
+item 1 simply had not been built; but the author's words also corrected the SHAPE of the
+frame, so this section is both the decode and a correction of §98.3's frame row.
+
+#### The wall is MARQ's hatch, 16 pixels thick — not two rectangles
+
+`FRAMER` is one walk, run twice (ROM `$E1E3`, source `RRTABLE.ASM FRAMER`):
+
+| | ROM | decoded |
+|---|---|---|
+| pass 1 | `LDA #$11`, terminal `$060D` | flavour `$11`; `GETA` turns it into **`$88`** as soon as the terminal word's high byte is 6 (i.e. only the FIRST stroke is slot 1, and the rest are slot 8). Strokes go (col 62, row 125)-(col 89, row 127) out to **(col 6, row 13)-(col 145, row 239)** |
+| pass 2 | `CLR PD+14,U`, terminal `$0E1D` | flavour **0 — black**: the SAME walk again, from stroke 0 up to **(col 14, row 29)-(col 137, row 223)** |
+| pace | `LDA #2 / STA PD+15,U` + `NAP 1` | **two strokes a ROM frame**, and both passes draw their first two before the first sleep (57 strokes then 49 = 53 ROM frames ≈ 1.06 s) |
+
+A stroke's outline is two pixels thick and the next stroke is two pixels further out, so the
+strokes TILE the annulus between the start rectangle and the current one. Pass 2 retraces
+exactly the strokes inside (col 14, row 29)-(col 137, row 223) and blacks them, so what is
+left visible is the band between the two terminal points: **8 columns (16 px) wide and 16
+rows tall, all the way round** — the author's "wall" — and it is drawn as a HATCH, because
+MARQ lights exactly one pixel of each packed pair:
+
+- `HHIGH` writes the flavour's HIGH nibble (`$88` → `$80`) at every byte column of a row —
+  i.e. the even pixel of each pair — and `HLOW` writes the low nibble (`$08`) at the row
+  below, i.e. its odd pixels;
+- `VHIGH` writes the high nibble every other row of the leftmost byte column and `VLOW`
+  writes the low nibble on the rows in between, one byte over (the right edge mirrors them:
+  `DECA` before its `VLOW`).
+
+Over the whole band those four passes come to a single rule — light the pixel whose
+`x + y` is ODD (`HighScoreTableLayout.FramePixelIsLit`). So the wall is a fine checkerboard
+of ONE palette colour on black, never a solid stroke: on a CRT it reads as the arcade's
+mesh, which is also why the author's photo shows what looks like two tones.
+
+**Corrections to §98.3/§98.4:** the frame is NOT a slot-8 rectangle plus a slot-14/15 inner
+one (that reading came from the photo's tones and from `RRM1`'s `$EF`, which belongs to the
+WAVE-CLEAR marquee, not to this screen), and the second pass is black rather than a second
+band. §98.4 item 1's "the final rectangle, slot 8, dithered" was the placeholder this
+replaces; `HighScoreFrameAnimation` now runs the real two passes and `DrawFrame` draws the
+band between the two live frontiers, so the wall is seen GROWING and then being eaten from
+the middle — verified with eight screenshots at 30× slow (the growth is only a second).
+
+#### The colour processes: why the page pulses
+
+`TABLE` starts five processes of its own (`MAKP LOOPP` before the frame is drawn; `MAKP
+DECAZ`/`COLA`/`COLC`/`COLD` after the lists are printed). `HighScorePalette` replays them
+on the exact-6ths clock (notes §52 — a 3-frame process steps every 3.6 ticks, a 4-frame one
+every 4.8), and the palette they write is the SAME 16-slot `GamePalette` the screen is
+drawn from, so every element recolours for free:
+
+| process | slot | table | step | what the page does |
+|---|---|---|---|---|
+| `LOOPP` | 1-8 | `COLTAB` `$E2FE` (21) | 3 frames | `OUTCOL` shifts slots 2…8 down into 1…7 and puts the next byte in **8** — the wall's colour history walks down the ramp, so slot 7 (the headers) trails the wall by one step |
+| `DECAZ` | 9 | `CATAB` `$E2C2` from index 7 | 4 frames | today's list, OUT of phase (`LDX #CATAB+7` "OUT OF PHASE PLEASE") |
+| `COLA` | 10 | `CATAB` from index 0 | 4 frames | the top entry and the all-time list, in phase |
+| `COLC` | 12 | `CCTAB` `$E2D1` from index 7 | 4 frames | the "you are here" highlight, out of phase |
+| `COLD` | 13 | `CCTAB` from index 0 | 4 frames | the second highlight, in phase |
+
+Both ramps end in a `$00` terminator and the ROM sends the process back to the table's
+START (never forward past it), which is what makes them pulse white instead of stopping —
+`HighScorePalette.Advance` is that walk. The page also comes up from BLACK: `FRAMER` zeroes
+`PCRAM`…`PCRAM+15` before anything is drawn, and slots 10/12/13 are taken over from the
+in-game `PaletteAnimator` (port-level: the ROM kills the game's colour processes with the
+game), then handed back by `Stop` when the page exits to the title.
+
+**Also corrected here:** `TABLE` sets its colour pairs as `$99`/`$CC` (today's list) and
+then `$AA`/`$DD` (the top entry AND the all-time list — `NOINTS` prints the second list
+without changing them again; ROM `$DF4F`/`$DF75`). The port had used the first pair for both
+lists; the constants are now `HighScoreTodaySlot`/`…Highlight` (9/12) and
+`HighScoreAllTimeSlot`/`…Highlight` (10/13).
+
+**Tests:** `HighScorePaletteTests` (7) pin the clear, the shift register, the 3.6/4.8-tick
+step, the ramp wrap at the terminator and the hand-back; `HighScoreFrameAnimationTests` (4)
+pin both passes' pacing, their terminal rectangles and the 16-pixel band; the layout tests
+gain the stroke geometry and the hatch rule. Suite: **314 tests, 0 failed, 0 skipped**.

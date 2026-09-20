@@ -198,6 +198,31 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   walked through robots, electrodes and missiles — the aid is per player now
   (`Player.InvincibleForTesting`) and `AttractState` builds its field with it OFF. That also
   un-skipped the round-7 electrode contact test (**0 skipped** from here on, +4 tests, **290**).
+- **2026-09-20 — THE TABLE'S WALL AND THE PAGE'S COLOUR CYCLING (notes §98.5).** Author:
+  *"There's colour cycling going on on the page, and there's a hatched 'wall' surrounding the
+  scores, that also cycles."* Both are the ROM's and neither was built. **The wall** is
+  `FRAMER`'s two passes, and the author's words corrected its SHAPE: it is not a rectangle
+  (nor the two concentric marquees the last pass guessed from the photo's tones): each pass
+  draws ~57 stroke OUTLINES, two a ROM frame, growing from (col 62, row 125)-(col 89, row 127)
+  to a terminal point — `$060D` = (col 6, row 13)-(col 145, row 239) for the growing pass, then
+  the SAME walk again in flavour 0 (BLACK, `CLR PD+14,U`) up to `$0E1D` = (col 14, row 29). The
+  strokes tile the annulus and the erase pass retraces the inner ones, so what is left is a
+  16-pixel band round the page — a HATCH, because MARQ lights exactly one pixel of every packed
+  pair (the flavour's high nibble on one, its low on the next), i.e. one checkerboard of a
+  single palette colour on black (`HighScoreFrameAnimation` + `HighScoreTableLayout.FrameStroke`
+  / `FramePixelIsLit`). Verified with eight screenshots at 30× slow: the wall GROWS out, then
+  the black pass eats the middle out. **The cycling** is the five processes `TABLE` starts for
+  itself (`HighScorePalette`): `LOOPP` shifts COLTAB into slots 1-8 every 3 ROM frames — the
+  wall is slot 8 and the headers (slot 7) trail it by one step — while `DECAZ`/`COLA` ramp the
+  lists' slots 9/10 and `COLC`/`COLD` the highlight slots 12/13 from CATAB/CCTAB every 4 frames,
+  OUT of phase for the DECAZ/COLC pair, with their `$00` terminators sending each ramp back to
+  its table's start (so they pulse rather than stop). `FRAMER` also zeroes all sixteen slots, so
+  the page comes up from black, and the page takes slots 10/12/13 off the in-game animator and
+  hands them back when it leaves. **Two corrections while in there:** the two lists do NOT share
+  a colour pair (today is `$99`/`$CC`, the top entry AND the all-time list are `$AA`/`$DD` —
+  `NOINTS` prints the second list without re-setting them), and the author's photo settled
+  §98.4's alignment question — the table's numbers PACK (no advance for a suppressed leading
+  zero) and the ranks are unpadded. +14 tests (**314**).
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36
