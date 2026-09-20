@@ -8225,3 +8225,63 @@ grow/erase pacing, the terminal points and the 16-pixel band are unchanged.
 **Still open (unchanged from §98.6):** the cycle RATE. The author says the pace "seems OK,
 not a deal breaker", so `NAP n` = n ROM frames stands (LOOPP 3 frames/step, ramps 4) — §98.6's
 one-constant knob remains the place to revisit if a slower arcade lap is ever wanted.
+
+### 98.8 The page's EXIT is the ROM's: it waits for RELEASED switches, and a press can never shorten it (2026-09-20)
+
+While re-checking every line of `TABLE` against the R5 after §98.7, the page's exit logic
+turned out to be the opposite of the ROM's. Two loops, at the end of `TABLE`:
+
+```
+       LDA    #200
+       STA    PD,U              NUMBER OF FRAMES TO FREEZE
+TAB888 NAP    3,TABLE6           ; 200 x NAP 3 = 600 frames — and NO switch check at all
+TABLE6 DEC    PD,U
+       BNE    TAB888
+       LDA    #$FF
+       STA    PD,U
+TAB777 NAP    4,TAB999           ; only from here are the switches read
+TAB999 LDA    PIA3
+       ANDA   #$3      ONLY 2 SWS HERE
+       ORAA   PIA2     ANY PRESSED?
+       BEQ    TABLE7   NONE PRESSED      <- LEAVE
+       DEC    PD,U     1 LESS COUNT
+       BNE    TAB777
+TABLE7 JMP    [PD+18,U]          RETURN
+```
+
+The R5 matches the listing byte for byte (the hold at `$E02F`, the check at `$E04B`), so:
+
+1. **the 600-frame hold has no switch check at all** — a press cannot shorten the page;
+2. **the page leaves when the switches are CLEAR** (`BEQ $E059`), not when one is pressed;
+3. **a switch that is still held DELAYS the exit**, one `$FF` countdown step per four-frame
+   check (≈ 20 s worst case) — which is the point of the loop: the page is followed by the
+   title/attract, and that must not be skipped because a button is still bent from the game
+   that just ended.
+
+**The polarity is settled by `$3031`.** The check ORs PIA-B's low two bits (the two side
+fire switches) with all of PIA-A, so "a switch" means any of the four stick bits, either
+fire button or either START — and a SET bit is a PRESSED switch, because `MOVE_PLAYER`
+(`$2FD0`) masks PIA-A to its four stick bits and indexes the 16-entry movement descriptor
+table at `$3031`, whose entry 1 (bit 0 = PIA-A bit 0 = "Move up") is the up delta `00 FF`.
+A zero read therefore means *nothing* is down.
+
+**What the port did — both halves wrong:** it left as soon as a press arrived *after the
+printing*, so a press skipped the page (the ROM never allows that), and with nothing pressed
+it sat for the whole `255 × 4` frame timeout instead of leaving at the first clear check. On
+the arcade an idle cabinet's page is up for exactly 12 s; the port's was up for 32 s. New
+`Hud/HighScorePageHold` (the two loops on the §52 exact-6ths clock, unit-tested) owns it
+now, and `HighScoreTableState` polls the input every tick but only *uses* it after the hold,
+feeding it the **level** — not the edge — of the switches.
+
+**The wall, verified against MARQ itself.** §98.7's rewrite was checked the hard way: a
+temporary tool re-implemented `FRAMER`/`MARQ` in Python from the R5's own byte writes
+(`STA ,X` writes the high-nibble pixel only — the other nibble is zeroed; `STA ,X++` steps
+TWO rows, which is the hatch), ran both passes over the byte grid, and diffed every arcade
+pixel of all four wall bands against a live screenshot: **0 pixels the ROM lights that the
+port does not, 0 the port lights that the ROM does not, and no slot ever drew another
+slot's colour.** `COLTAB`'s duplicate bytes (`47 47`, `87 87`, `C7 C7`) show up exactly as
+adjacent stripes sharing a colour.
+
+**Tests:** `HighScorePageHoldTests` (+4) pin the 720-tick hold with a switch held down
+through it, the first clear check four ROM frames later, 255 checks of delay, and the
+release path. Suite: **326 tests, 0 failed, 0 skipped**.

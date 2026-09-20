@@ -257,6 +257,16 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   before compaction is now replaced by a per-stroke `DrawStroke`. +1 test (a band of
   `{8,7,6,5,4,3,2,1}`); pacing/geometry unchanged. **Cycle rate stands** (author: "seems OK, not
   a deal breaker").
+- **2026-09-20 follow-up 3 — THE PAGE'S EXIT WAS BACKWARDS (notes §98.8).** Re-reading `TABLE`
+  against the R5 after the wall work: `TAB888`'s 600-frame hold has **no switch check at all**
+  (a press can never shorten the page), and `TAB999` then **leaves when the switches are CLEAR**
+  (`BEQ $E059`) — a still-held switch *delays* the exit by one `$FF` count per four-frame check.
+  The polarity is settled by `$3031`: `MOVE_PLAYER` indexes the movement table with PIA-A's four
+  stick bits and entry 1 (bit 0 = "Move up") is the up delta, so a **set bit is a PRESSED
+  switch**. The port had it inverted twice over: a press skipped the page, and an idle cabinet
+  sat 32 s instead of 12 s. New `Hud/HighScorePageHold` + 4 tests (**326**). Also verified §98.7
+  the hard way: a Python re-implementation of `FRAMER`/`MARQ` from the R5's byte writes diffed
+  against a live screenshot — **0 pixels wrong in any of the four wall bands, no slot mis-coloured**.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

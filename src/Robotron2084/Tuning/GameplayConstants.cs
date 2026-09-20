@@ -536,7 +536,8 @@ public static class GameplayConstants
     // HIGH SCORE TABLE (notes §98) — RRTABLE's TABLE, RRTESTC's CMOS lists and
     // RRET's texts; every value is a ROM constant.
     public const int HighScoreHoldRomFrames = 200 * 3; // LDA #200 with NAP 3 = 600 frames = 12 s
-    public const int HighScoreLeaveTimeoutRomFrames = 255 * 4; // LDA #$FF with NAP 4, then it leaves anyway
+    public const int HighScoreLeaveCheckRomFrames = 4; // TAB777's NAP 4 between switch reads
+    public const int HighScoreLeaveChecks = 255; // LDA #$FF: one DEC per check THAT FINDS A SWITCH DOWN
     public const int HighScoreHeaderSlot = 7; // SCRMEP: COLOR $77 = slot 7
     // TABLE sets TWO colour pairs: TCOL1/TCOL2 = $99/$CC ($D8/$D9 at ROM $DF4F) for
     // TODAY'S list, then $AA/$DD ($DF75) for the top entry AND the all-time list —

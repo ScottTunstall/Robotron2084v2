@@ -47,13 +47,8 @@ public sealed class HighScoreTableState : IGameState
     private readonly HighScorePalette _colour = new();
     private readonly HighScoreFrameAnimation _frame = new();
     private readonly HighScorePrintSequence _print = new();
-    private readonly int _holdTicks = GameplayConstants.PortTicks(GameplayConstants.HighScoreHoldRomFrames);
-    private readonly int _leaveTicks = GameplayConstants.PortTicks(GameplayConstants.HighScoreLeaveTimeoutRomFrames);
-    private int _elapsedTicks;
+    private readonly HighScorePageHold _hold = new();
     private bool _rampsStarted;
-    private bool _previousFire;
-    private bool _previousStartOne;
-    private bool _previousStartTwo;
 
     /// <param name="postedScores">
     /// The scores this session just offered to the table (highest first) — the
@@ -86,6 +81,10 @@ public sealed class HighScoreTableState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
+        // The switches are only READ after the 600-frame hold (TAB888 has no check),
+        // but polling every tick keeps the input source's own edge state moving.
+        PlayerInputState input = _input.Poll();
+
         _frame.Tick();
 
         // RRTABLE's order: FRAMER draws the wall on an EMPTY page (SCRCLR ran before
@@ -105,36 +104,44 @@ public sealed class HighScoreTableState : IGameState
                 }
             }
 
-            // The ROM's hold counts from the MAKPs, i.e. from the finished page.
-            _elapsedTicks++;
+            // TAB888's 200 x NAP 3 with NO switch check at all, then TAB777/TAB999 —
+            // which leave the moment the switches are CLEAR and are delayed, not
+            // shortened, by a switch that is held (see HighScorePageHold). The port
+            // used to leave on a press, which is the opposite of the ROM.
+            if (_hold.Tick(AnySwitchHeld(input)))
+            {
+                Leave(manager);
+                return;
+            }
         }
 
         if (_sprites.Palette is { } live)
         {
             _colour.Update(live);
         }
+    }
 
-        PlayerInputState input = _input.Poll();
-        bool pressed = (input.FirePressed && !_previousFire)
-            || (input.StartOnePlayerPressed && !_previousStartOne)
-            || (input.StartTwoPlayersPressed && !_previousStartTwo);
+    /// <summary>
+    /// The ROM's PIA read at TAB999: PIA-B's two bits <c>OR</c> the whole of PIA-A, so
+    /// any switch at all counts — either stick, either fire button, START 1 or START 2.
+    /// A SET bit is a PRESSED switch (the $3031 movement table), and the port's own
+    /// test keys (P) are not arcade switches, so they do not hold the page up.
+    /// </summary>
+    private static bool AnySwitchHeld(PlayerInputState input) =>
+        input.FirePressed
+        || input.StartOnePlayerPressed
+        || input.StartTwoPlayersPressed
+        || input.MoveDirection != IntVector2.Zero
+        || input.AimDirection != IntVector2.Zero;
 
-        _previousFire = input.FirePressed;
-        _previousStartOne = input.StartOnePlayerPressed;
-        _previousStartTwo = input.StartTwoPlayersPressed;
-
-        // The ROM: hold 600 frames, then wait for ANY switch (with a 255 × 4 frame
-        // timeout), then back to the family page. A press during the printing is
-        // ignored — PRJNK has no switch check (the page finishes building first).
-        if ((pressed && _print.IsDone) || _elapsedTicks >= _holdTicks + _leaveTicks)
+    private void Leave(GameStateManager manager)
+    {
+        if (_sprites.Palette is { } palette)
         {
-            if (_sprites.Palette is { } palette)
-            {
-                _colour.Stop(palette);
-            }
-
-            manager.TransitionTo(new TitleScreenState(_input, _sprites, _store));
+            _colour.Stop(palette);
         }
+
+        manager.TransitionTo(new TitleScreenState(_input, _sprites, _store));
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
