@@ -34,8 +34,8 @@ public sealed class DefineInputsState : IGameState
     private const string Title = "DEFINE INPUTS";
     private const string ArmedPrompt = "PRESS AN INPUT";
     private const string Hint = "USE UP AND DOWN TO MOVE BETWEEN P1 AND P2";
-    private const string FooterOne = "ENTER: SET THE INPUT   DEL: CLEAR";
-    private const string FooterTwo = "R: DEFAULTS   F10: TITLE";
+    private const string FooterOne = "ENTER - SET THE INPUT   DEL - CLEAR";
+    private const string FooterTwo = "R - DEFAULTS   F10 - TITLE";
 
     private const int TitleRow = 12;
     private const int HintRow = 44;
@@ -51,10 +51,11 @@ public sealed class DefineInputsState : IGameState
     private const int LabelSlot = 9;
     private const int HighlightSlot = GameplayConstants.TitleWallSlot;
 
-    // The word OR between one line's two devices gets the arcade's YELLOW ($3F, slot 5 — one of
-    // the fixed 0-9 slots), so "W OR P1 LEFT STICK UP" reads as two alternatives rather than as
-    // one long white string (the author's ask).
-    private const int SeparatorSlot = 5;
+    // The word OR between one line's two devices gets the arcade's BLUE ($C0, slot 7 — one of the
+    // fixed 0-9 slots, so it can never cycle). "W OR P1 LEFT STICK UP" then reads as two
+    // alternatives rather than as one long white string. Slot 5's yellow was the first choice
+    // (too bright for the author) and slot 4's amber the second (wrong hue).
+    private const int SeparatorSlot = 7;
 
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;

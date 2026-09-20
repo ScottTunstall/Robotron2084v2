@@ -336,15 +336,23 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   `controls.ini` that set it. **402 tests**, all six gates green.
 - **2026-09-20 — the author's third look (notes §101.11).** *"I think the word OR should be in a
   different colour. Also change ENTER SET THE INPUT to ENTER: SET THE INPUT, DEL CLEAR to DEL:
-  CLEAR, R DEFAULTS TO R: DEFAULTS."* The `OR` between a line's two devices is now the arcade's
-  **yellow** (slot 5, one of the fixed 0-9 slots, so it never cycles) — the value is drawn as three
-  runs: key, `OR`, pad. The colon was the interesting half: the arcade's SMALL font has exactly 38
+  CLEAR, R DEFAULTS TO R: DEFAULTS."* The `OR` between a line's two devices is now drawn in a
+  colour of its own (the value became three runs: key, `OR`, pad) — and the colon was the
+  interesting half: the arcade's SMALL font has exactly 38
   glyphs (digits, A-Z and the two brackets, matching the ROM's `(code - $30)` indexing of its font
   table), so it has **no** `:` at all — which is why the page's first vocabulary came out as
   `P1LSUP`. The ROM's `:` lives in the LARGE font, and `DrawSmallFontText` now falls back to that
   glyph, so the footers print with the arcade's own colon art (one row taller than the capitals)
   instead of dropping it or inventing a glyph. `F10: TITLE` got one too, for consistency. No model
   change, so no new tests — still **402**.
+- **2026-09-20 — the author's fourth look (notes §101.12).** *"Replace the colons with hyphens -
+  it doesn't look right. Also the yellow colour, can you change it to something a little less
+  bright?"* The footers are now `ENTER - SET THE INPUT   DEL - CLEAR` / `R - DEFAULTS   F10 -
+  TITLE` — hyphens render through the same large-font fallback the colon uses (the small font has
+  no `-` either: its table stops at `)`), drawn in the arcade's own hyphen art. The separator
+  colour went yellow -> amber -> **blue** (slot 7, `$C0` = (0,0,240), a fixed slot so it cannot
+  cycle) as the author looked at each; verified by pixel count in two screenshots. Still **402
+tests**.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

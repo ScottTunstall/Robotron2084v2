@@ -8654,12 +8654,13 @@ use some whitespace?"*
 **Author:** *"I think the word OR should be in a different colour. Also change ENTER SET THE INPUT
 to ENTER: SET THE INPUT, DEL CLEAR to DEL: CLEAR, R DEFAULTS TO R: DEFAULTS."*
 
-1. **The OR is now the arcade's YELLOW.** The value is drawn as three runs instead of one string:
-   the keyboard binding in the line's slot, the word `OR` in **slot 5** (`$3F` = (240,240,0) — one of
-   the fixed 0-9 slots, so it never cycles), then the gamepad binding. A line now reads as two
-   alternatives at a glance, including on the highlighted line where the value's own colour is
-   cycling. Verified by counting pixels in a screenshot: 6624 yellow pixels on the page (at 3x
-   scale) and the layout otherwise unchanged.
+1. **The OR is now the arcade's own colour, not the value's.** The value is drawn as three runs
+   instead of one string: the keyboard binding in the line's slot, the word `OR` in a slot of its
+   own, then the gamepad binding. A line reads as two alternatives at a glance, including on the
+   highlighted line where the value's own colour is cycling. Verified by counting pixels in a
+   screenshot: the OR runs are exactly the separator slot's colour, and the layout is otherwise
+   unchanged. (The colour itself took three goes — see §101.12: bright yellow, amber, then the
+   plain blue the author settled on.)
 2. **The colons are the arcade's own glyphs — from the other font.** The small font genuinely has
    no `:`: `tools/extract-fonts.py`'s `SMALL` table is 38 glyphs (`0`-`9`, `A`-`Z`, `(`, `)`), which
    is the order the ROM's `BLIT_SMALL_CHARACTER` indexes by (code - $30), and `FontSmall` is loaded
@@ -8673,3 +8674,20 @@ to ENTER: SET THE INPUT, DEL CLEAR to DEL: CLEAR, R DEFAULTS TO R: DEFAULTS."*
 3. **No new tests:** nothing in the model changed (`ActionBinding.DisplayName` still says
    `W OR P1 LEFT STICK UP`, and that is what the page draws, in three colours) — **402 tests,
    0 failed, 0 skipped**.
+
+#### 101.12 Hyphens instead of colons, and BLUE for the separator (2026-09-20)
+
+**Author:** *"Replace the colons with hyphens - it doesn't look right. Also the yellow colour, can
+you change it to something a little less bright?"* and then *"I don't like orange for OR - I was
+thinking a normal blue (non flashing)"*.
+
+- The footers are now `ENTER - SET THE INPUT   DEL - CLEAR` / `R - DEFAULTS   F10 - TITLE`. The
+  hyphen is the same story as the colon in §101.11 — the small font has no `-` either (the
+  extractor's `SMALL` table stops at `)`), and `DrawSmallFontText`'s large-font fallback (index 43,
+  `$40`, 2x6 px) draws the arcade's own hyphen in its place.
+- The separator is **slot 7** (`$C0` = (0,0,240)) — the palette's plain blue, and one of the fixed
+  0-9 slots, so it can never cycle (the colour processes only ever write 10-15). Three tries got
+  here: slot 5's `$3F` yellow, then slot 4's `$1F` amber, then blue. Verified the same way as
+  §101.11 — a screenshot of the page; the OR runs are (0,0,240) exactly and identical in two shots
+  1.4 s apart, while the highlighted line's own colour changes between them.
+- Still **402 tests, 0 failed, 0 skipped** — presentation only.
