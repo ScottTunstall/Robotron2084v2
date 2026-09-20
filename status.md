@@ -47,9 +47,12 @@ Historical: `plan.md` = the original rebuild plan, `ledger.md` = its decision lo
 - Project resume docs: **`docs/handoff-2026-09-17.md` (current handoff — read this
   one)** and `docs/arcade-fidelity-notes.md` (master ROM-vs-port research log).
   `docs/handoff-2026-09-16.md` and `docs/handoff-2026-09-13.md` are historical.
-- Gates before any commit: `dotnet build Robotron2084.slnx` (0 warnings),
-  `./tests/Robotron2084.Tests/bin/Debug/net10.0/Robotron2084.Tests.exe` (NOT `dotnet test`),
+- Gates before any commit: `dotnet build Robotron2084.slnx` (0 warnings), `./tests/Robotron2084.Tests/bin/Debug/net10.0/Robotron2084.Tests.exe` (NOT `dotnet test`),
   `timeout 12 ./src/Robotron2084/bin/Debug/net10.0/Robotron2084.exe` (smoke).
+- **The build also enforces CA1502: cyclomatic complexity > 25 is an ERROR** (notes §99, D-020).
+  The rule is off by default in .NET 10, so `.editorconfig` sets its severity to `error` and
+  `CodeMetricsConfig.txt` (an `AdditionalFile`) carries the 25. Split the method — the two that
+  broke it were refactored, and there are NO suppressions anywhere.
 - **Playfield render gate (notes §40)**: `python tools/verify-playfield.py` —
   launches the game, presses SPACE, asserts the ring interior is not black.
   Run it whenever the draw path or any `.fx` changes; the plain smoke test
@@ -267,6 +270,17 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   sat 32 s instead of 12 s. New `Hud/HighScorePageHold` + 4 tests (**326**). Also verified §98.7
   the hard way: a Python re-implementation of `FRAMER`/`MARQ` from the R5's byte writes diffed
   against a live screenshot — **0 pixels wrong in any of the four wall bands, no slot mis-coloured**.
+- **2026-09-20 — CYCLOMATIC COMPLEXITY > 25 IS NOW A BUILD ERROR (notes §99, D-020).** Author:
+  *"Can you make the cyclomatic complexity threshold of 25 a build error? CA1502 I think it is.
+  I want well designed code."* CA1502 is off by default in .NET 10, and its threshold is not an
+  editorconfig key: severity goes in `.editorconfig`, the 25 goes in `CodeMetricsConfig.txt`,
+  and that file is registered as an `AdditionalFile` in `Directory.Build.props`. The wiring was
+  verified both ways (threshold 60 = clean, 25 = the hits) so the file is proven to be READ.
+  Two methods were over 25 and NEITHER was suppressed: `PlayField.ResolveCollisions` 46 → 2 (each
+  ROM collision phase from plan 9.2 is now its own method, plus `KillPlayerOnContact<T>`) and
+  `AttractObjectMachine.ReadOp` 34 → 8 (the 28-opcode ROM table split into six families behind a
+  range dispatch). Bodies moved verbatim, comments and ROM citations intact; 326 tests and all
+  six gates green.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

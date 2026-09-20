@@ -5,4 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+
+  <!-- CA1502's threshold lives in a code-metrics config file, not in .editorconfig
+       (notes §99). MSBuildThisFileDirectory keeps the path correct from every project. -->
+  <ItemGroup>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)CodeMetricsConfig.txt" />
+  </ItemGroup>
 </Project>

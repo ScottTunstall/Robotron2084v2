@@ -8312,3 +8312,50 @@ stripes, slots 8…1 inner→outer, 16 px thick, hatch phase and all.
    (or a MAME capture) at the same moment as a port capture: diffing those two, rather than
    diffing the port against the decode, is the only check that can find a *shared* misreading.
 
+### 99. Cyclomatic complexity is now a BUILD ERROR at 25 (author, 2026-09-20)
+
+**Author: *"Can you make the cyclomatic complexity threshold of 25 a build error? CA1502 I think
+it is. I want well designed code."*** It is CA1502, and the wiring is not obvious — the rule is
+**off by default in .NET 10**, and its threshold is *not* an `.editorconfig` key:
+
+| what | where |
+|---|---|
+| severity (error) | `.editorconfig`: `dotnet_diagnostic.CA1502.severity = error` |
+| threshold 25 | `CodeMetricsConfig.txt` (repo root), one line: `CA1502: 25` |
+| registration | `Directory.Build.props`: `<AdditionalFiles Include="$(MSBuildThisFileDirectory)CodeMetricsConfig.txt" />` |
+
+`$(MSBuildThisFileDirectory)` matters: the props file is imported by both projects, so a bare
+relative path would resolve against each project's own folder.
+
+**The config file was verified, not assumed.** With `CA1502: 60` in it the solution builds
+clean; at `25` it reports exactly the two methods below. That two-way test is the only way to
+know the file is being read at all — an ignored `CodeMetricsConfig.txt` would have silently
+fallen back to the rule's own default of 25 and looked identical.
+
+Complexity here is the documented metric: **1 + branch points** (`if`, loops, `case`s in a
+`switch`) — `&&`/`||` do not add.
+
+#### What it found — and what was done about it
+
+Two methods in the whole solution were over 25. Neither was suppressed; both were split.
+
+| method | before | after | how |
+|---|---|---|---|
+| `PlayField.ResolveCollisions` | **46** | 2 | each ROM collision phase (plan 9.2's numbered list) moved into its own method: `ResolveLaserCollisions` (phases 2-6), `ResolveRobotVsElectrodeCollisions` (7), `ResolvePlayerVsElectrodeCollision` (8), `ResolvePlayerVsRobotCollisions` (9), `ResolvePlayerVsMissileCollisions` (10); the repeated "the player dies on contact with this list" shape became the generic `KillPlayerOnContact<T>(List<T>) where T : IEntity`. `ResolveCollisions` is now the plan's list: alive-check, five calls, `ResolveHumanCollisions()`, hit-stop. |
+| `AttractObjectMachine.ReadOp` | **34** | 8 | the 28-entry ROM opcode table split into the families it already reads as — `ReadObjectOp` (0-6), `ReadPlacementOp` (7-9), `ReadLifetimeOp` (10-13), `ReadFlowOp` (14-19), `ReadLoopOp` (20-21), `ReadStateOp` (22-27) — with `ReadOp` a range dispatch into them and `HaltOnUnknownOpcode()` as the shared "not in the ROM's table" end state. |
+
+Both moves are behaviour-preserving by construction: the phase bodies and the opcode bodies
+are the original code, moved verbatim with their comments (the ROM citations moved with them).
+The one deliberate change is `break` → `return` in phase 8's loop and the per-list player
+re-check inside `KillPlayerOnContact` — identical outcomes, since a second `Player.Kill()` on
+an already-Dying player would restart the death animation, which is exactly what the ROM's
+per-collision `PCFLG` test prevents.
+
+`PlayField`'s collision phases are gameplay code, so they were checked beyond the compiler:
+the suite (326 tests, including the attract movie's object-machine tests) and all six gates —
+build Debug + Release, tests, 12 s smoke, `verify-playfield`, `verify-fonts`, `verify-attract`.
+
+**A gate's own guard earned its keep here:** the first `verify-attract` run FAILED with
+*"story interior is 81.1% lit — the capture is not the game window (something in front of
+it?)"*. It was right — a maximised browser was over the game's capture region, and the
+saved PNG showed the movie running correctly beside it. Re-run on a clear desktop: PASS.

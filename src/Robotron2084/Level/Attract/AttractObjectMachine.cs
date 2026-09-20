@@ -165,9 +165,32 @@ public sealed class AttractObjectMachine
 
         // ---- the ROM's object opcodes (notes §95.3, the R5 $7B58 table) -----
 
+        /// <summary>
+        /// Runs the opcode at the script cursor (notes §95.3) and returns true while the
+        /// process should keep reading — the ROM's <c>JMP [LEV2,U]</c> — or false when the
+        /// opcode has slept it or ended it. The ROM's table is a 28-entry vector list; here
+        /// it is split into the families it already reads as, so that no one method is a
+        /// wall of cases.
+        /// </summary>
         private bool ReadOp(AttractObjectMachine machine)
         {
-            switch (machine.Read(this))
+            int opcode = machine.Read(this);
+            return opcode switch
+            {
+                <= 6 => ReadObjectOp(machine, opcode),    // 0 NOP · 1 SETOB · 2 SETIM · 3-6 M*
+                <= 9 => ReadPlacementOp(machine, opcode), // 7 SETPOS · 8 SETXV · 9 SETYV
+                <= 13 => ReadLifetimeOp(machine, opcode), // 10 CYCLE · 11 REST · 12 DIE · 13 EXP
+                <= 19 => ReadFlowOp(machine, opcode),     // 14-17 JUMP/HIB/REBORN/FORK · 18-19 FIRE
+                <= 21 => ReadLoopOp(machine, opcode),     // 20 LOOPER · 21 GHOST
+                <= 27 => ReadStateOp(machine, opcode),    // 22-27 SETRP · GDIE · INCIM · MONO…
+                _ => HaltOnUnknownOpcode(),
+            };
+        }
+
+        /// <summary>Family 0-6: what the object IS (descriptor, image) and its four walks.</summary>
+        private bool ReadObjectOp(AttractObjectMachine machine, int opcode)
+        {
+            switch (opcode)
             {
                 case 0: // The table's RTS entry — a NOP.
                     return true;
@@ -193,6 +216,16 @@ public sealed class AttractObjectMachine
                 case 6: // MUP
                     return BeginWalk(machine.Read(this), 3);
 
+                default:
+                    return HaltOnUnknownOpcode();
+            }
+        }
+
+        /// <summary>Family 7-9: where the object is and how it drifts.</summary>
+        private bool ReadPlacementOp(AttractObjectMachine machine, int opcode)
+        {
+            switch (opcode)
+            {
                 case 7: // SETPOS — column, row.
                 {
                     int column = machine.Read(this);
@@ -210,6 +243,16 @@ public sealed class AttractObjectMachine
                     Object.YVelocity = machine.ReadSignedWord(this);
                     return true;
 
+                default:
+                    return HaltOnUnknownOpcode();
+            }
+        }
+
+        /// <summary>Family 10-13: how long the object lives and how its picture advances.</summary>
+        private bool ReadLifetimeOp(AttractObjectMachine machine, int opcode)
+        {
+            switch (opcode)
+            {
                 case 10: // CYCLE — frames per image, number of advances.
                     CycleFrames = machine.Read(this);
                     CycleLeft = machine.Read(this);
@@ -235,6 +278,16 @@ public sealed class AttractObjectMachine
                     KillObject();
                     return false;
 
+                default:
+                    return HaltOnUnknownOpcode();
+            }
+        }
+
+        /// <summary>Family 14-19: the script's own flow — jumps, forks and gunfire.</summary>
+        private bool ReadFlowOp(AttractObjectMachine machine, int opcode)
+        {
+            switch (opcode)
+            {
                 case 14: // JUMP
                     Pc = machine.ReadWord(this) - AttractMovieData.ScriptBase;
                     return true;
@@ -267,6 +320,16 @@ public sealed class AttractObjectMachine
                     return false;
                 }
 
+                default:
+                    return HaltOnUnknownOpcode();
+            }
+        }
+
+        /// <summary>Family 20-21: the LOOPER block and the GHOST second process.</summary>
+        private bool ReadLoopOp(AttractObjectMachine machine, int opcode)
+        {
+            switch (opcode)
+            {
                 case 20: // LOOPER — `count` passes over the block from the label.
                 {
                     int count = machine.Read(this);
@@ -295,6 +358,16 @@ public sealed class AttractObjectMachine
                     return true;
                 }
 
+                default:
+                    return HaltOnUnknownOpcode();
+            }
+        }
+
+        /// <summary>Family 22-27: the object's own state — moves, the MONO box, the shakes.</summary>
+        private bool ReadStateOp(AttractObjectMachine machine, int opcode)
+        {
+            switch (opcode)
+            {
                 case 22: // SETRP — a relative move in whole columns/rows, no animation.
                 {
                     int dx = (sbyte)machine.Read(this);
@@ -348,11 +421,18 @@ public sealed class AttractObjectMachine
                     return false;
 
                 default:
-                    // Not an opcode the ROM's table has: stop rather than run off
-                    // the end of the script block.
-                    Alive = false;
-                    return false;
+                    return HaltOnUnknownOpcode();
             }
+        }
+
+        /// <summary>
+        /// Not an opcode the ROM's table has: stop rather than run off the end of the script
+        /// block (the same end state as GDIE/PDEAD).
+        /// </summary>
+        private bool HaltOnUnknownOpcode()
+        {
+            Alive = false;
+            return false;
         }
 
         private bool BeginWalk(int steps, int direction)

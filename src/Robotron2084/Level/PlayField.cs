@@ -432,6 +432,48 @@ public sealed class PlayField
     {
         bool playerWasAlive = Player.LifeState == EntityLifeState.Alive;
 
+        // 2-6. Player lasers, in the ROM's order (1 — lasers vs wall — is inside
+        //      PlayerLaser.Update). A laser is consumed by the FIRST thing it hits.
+        ResolveLaserCollisions();
+
+        // 7. A grunt or a hulk walking onto an electrode.
+        ResolveRobotVsElectrodeCollisions();
+
+        // 8. The player vs an electrode.
+        ResolvePlayerVsElectrodeCollision();
+
+        // 9. The player vs the enemy walkers.
+        ResolvePlayerVsRobotCollisions();
+
+        // 10. The player vs the enemy missiles.
+        ResolvePlayerVsMissileCollisions();
+
+        // No "Player vs spheroid/enforcer/quark/tank" contact kill — the spec
+        // never states contact with these robots kills the player (they harm
+        // only via dropped units/missiles).
+
+        // 11. Humans (PHASE D): hulk contact kills (the R5 ROM's only robot
+        //     that checks the human list — RRH11 HULK COL0 on HPTR); player
+        //     contact RESCUES (RRG23 COLCHK: the human path leaves PCFLG set
+        //     for the human's kill vector → bonus, no skull, player unharmed).
+        ResolveHumanCollisions();
+
+        // Phase 11.5: the instant the player went Alive -> Dying this frame: hit-stop.
+        if (playerWasAlive && Player.LifeState == EntityLifeState.Dying)
+        {
+            _hitStopTicksRemaining = GameplayConstants.HitStopTicks;
+            // R5 $30EF (KILL_PLAYER): the death sound ($26D9, p238).
+            Sound.Play(SoundTables.PlayerDeath);
+        }
+    }
+
+    /// <summary>
+    /// Phases 2-6 (plan 9.2): the player's lasers, in the ROM's order — the order IS the
+    /// behaviour, because <see cref="ResolveLaserHits{T}"/> consumes a laser on the first
+    /// thing it hits, so it cannot hit two things in one frame.
+    /// </summary>
+    private void ResolveLaserCollisions()
+    {
         // 2. Player lasers vs electrodes. (1 — lasers vs wall — is inside PlayerLaser.Update.)
         ResolveLaserHits(_electrodes, static e => e.Kill(), ScoreValues.Electrode);
 
@@ -481,8 +523,11 @@ public sealed class PlayField
         ResolveLaserHits(_sparks, static s => s.Destroy(), ScoreValues.Spark);
         ResolveLaserHits(_tankShells, t => { t.Destroy(); _shellsFiredThisWave--; }, ScoreValues.TankShell);
         ResolveLaserHits(_missiles, static m => m.Destroy(), ScoreValues.CruiseMissile);
+    }
 
-        // 7. Grunt/hulk walking onto an electrode.
+    /// <summary>Phase 7: a grunt or a hulk walking onto an electrode (RRP8 PSTKIL).</summary>
+    private void ResolveRobotVsElectrodeCollisions()
+    {
         foreach (Grunt grunt in _grunts)
         {
             if (grunt.LifeState != EntityLifeState.Alive)
@@ -525,117 +570,89 @@ public sealed class PlayField
                 }
             }
         }
+    }
 
-        // 8. Player vs electrode — "KILL THE PLAYER AND THE ELECTRODE".
-        //    Phase 11.4: while invincible the player passes through unharmed.
-        if (Player.LifeState == EntityLifeState.Alive && !Player.IsInvincible)
+    /// <summary>
+    /// Phase 8: the player vs an electrode — "KILL THE PLAYER AND THE ELECTRODE".
+    /// Phase 11.4: while invincible the player passes through unharmed.
+    /// </summary>
+    private void ResolvePlayerVsElectrodeCollision()
+    {
+        if (Player.LifeState != EntityLifeState.Alive || Player.IsInvincible)
         {
-            foreach (Electrode electrode in _electrodes)
-            {
-                if (electrode.LifeState != EntityLifeState.Alive)
-                {
-                    continue;
-                }
-
-                if (Player.Bounds.Overlaps(electrode.Bounds))
-                {
-                    Player.Kill();
-                    electrode.Kill();
-                    break;
-                }
-            }
+            return;
         }
 
-        // 9. Player vs grunt/hulk/brain/prog — only the player dies (the
-        //    robots are unaffected). Brains and progs are enemy walkers:
-        //    contact kills in the arcade.
-        if (Player.LifeState == EntityLifeState.Alive && !Player.IsInvincible)
+        foreach (Electrode electrode in _electrodes)
         {
-            foreach (Grunt grunt in _grunts)
+            if (electrode.LifeState != EntityLifeState.Alive)
             {
-                if (grunt.LifeState == EntityLifeState.Alive && Player.Bounds.Overlaps(grunt.Bounds))
-                {
-                    Player.Kill();
-                    break;
-                }
+                continue;
             }
 
-            foreach (Hulk hulk in _hulks)
+            if (Player.Bounds.Overlaps(electrode.Bounds))
             {
-                if (Player.LifeState == EntityLifeState.Alive && Player.Bounds.Overlaps(hulk.Bounds))
-                {
-                    Player.Kill();
-                    break;
-                }
-            }
-
-            foreach (Brain brain in _brains)
-            {
-                if (brain.LifeState == EntityLifeState.Alive && Player.Bounds.Overlaps(brain.Bounds))
-                {
-                    Player.Kill();
-                    break;
-                }
-            }
-
-            foreach (Prog prog in _progs)
-            {
-                if (prog.LifeState == EntityLifeState.Alive && Player.Bounds.Overlaps(prog.Bounds))
-                {
-                    Player.Kill();
-                    break;
-                }
+                Player.Kill();
+                electrode.Kill();
+                return;
             }
         }
+    }
 
-        // 10. Player vs spark/tank shell — the missile is NOT removed (spec:
-        //     only lasers remove missiles; it expires on its own lifetime).
-        if (Player.LifeState == EntityLifeState.Alive && !Player.IsInvincible)
+    /// <summary>
+    /// Phase 9: the player vs grunt/hulk/brain/prog — only the player dies (the robots are
+    /// unaffected). Brains and progs are enemy walkers: contact kills in the arcade.
+    /// </summary>
+    private void ResolvePlayerVsRobotCollisions()
+    {
+        if (Player.LifeState != EntityLifeState.Alive || Player.IsInvincible)
         {
-            foreach (Spark spark in _sparks)
-            {
-                if (spark.LifeState == EntityLifeState.Alive && Player.Bounds.Overlaps(spark.Bounds))
-                {
-                    Player.Kill();
-                    break;
-                }
-            }
-
-            foreach (TankShell shell in _tankShells)
-            {
-                if (Player.LifeState == EntityLifeState.Alive && Player.Bounds.Overlaps(shell.Bounds))
-                {
-                    Player.Kill();
-                    break;
-                }
-            }
-
-            foreach (CruiseMissile missile in _missiles)
-            {
-                if (missile.LifeState == EntityLifeState.Alive && Player.Bounds.Overlaps(missile.Bounds))
-                {
-                    Player.Kill();
-                    break;
-                }
-            }
+            return;
         }
 
-        // No "Player vs spheroid/enforcer/quark/tank" contact kill — the spec
-        // never states contact with these robots kills the player (they harm
-        // only via dropped units/missiles).
+        KillPlayerOnContact(_grunts);
+        KillPlayerOnContact(_hulks);
+        KillPlayerOnContact(_brains);
+        KillPlayerOnContact(_progs);
+    }
 
-        // 11. Humans (PHASE D): hulk contact kills (the R5 ROM's only robot
-        //     that checks the human list — RRH11 HULK COL0 on HPTR); player
-        //     contact RESCUES (RRG23 COLCHK: the human path leaves PCFLG set
-        //     for the human's kill vector → bonus, no skull, player unharmed).
-        ResolveHumanCollisions();
-
-        // Phase 11.5: the instant the player went Alive -> Dying this frame: hit-stop.
-        if (playerWasAlive && Player.LifeState == EntityLifeState.Dying)
+    /// <summary>
+    /// Phase 10: the player vs spark/tank shell/cruise missile. The missile is NOT removed
+    /// (spec: only lasers remove missiles; it expires on its own lifetime).
+    /// </summary>
+    private void ResolvePlayerVsMissileCollisions()
+    {
+        if (Player.LifeState != EntityLifeState.Alive || Player.IsInvincible)
         {
-            _hitStopTicksRemaining = GameplayConstants.HitStopTicks;
-            // R5 $30EF (KILL_PLAYER): the death sound ($26D9, p238).
-            Sound.Play(SoundTables.PlayerDeath);
+            return;
+        }
+
+        KillPlayerOnContact(_sparks);
+        KillPlayerOnContact(_tankShells);
+        KillPlayerOnContact(_missiles);
+    }
+
+    /// <summary>
+    /// The player dies on contact with any of these — and only the player does. The state is
+    /// re-checked before every list because a list earlier in the same phase may already have
+    /// started the death (the ROM tests PCFLG per collision, and a second <c>Kill</c> would
+    /// restart the death animation).
+    /// </summary>
+    private void KillPlayerOnContact<T>(List<T> entities)
+        where T : IEntity
+    {
+        foreach (T entity in entities)
+        {
+            if (Player.LifeState != EntityLifeState.Alive)
+            {
+                return;
+            }
+
+            if (entity.LifeState == EntityLifeState.Alive && Player.Bounds.Overlaps(entity.Bounds))
+            {
+                Player.Kill();
+                return;
+            }
         }
     }
 
