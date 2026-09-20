@@ -8648,3 +8648,28 @@ use some whitespace?"*
    `controls.ini` that set exactly that (which also proved the INI reader takes the full names).
 4. **Tests:** one new (`ALineWithBothDevices_SaysOrBetweenThem`, which also pins that the unbound
    line is `NONE` and not `-`) — **402 tests, 0 failed, 0 skipped**.
+
+#### 101.11 The colon, and the OR in its own colour (2026-09-20)
+
+**Author:** *"I think the word OR should be in a different colour. Also change ENTER SET THE INPUT
+to ENTER: SET THE INPUT, DEL CLEAR to DEL: CLEAR, R DEFAULTS TO R: DEFAULTS."*
+
+1. **The OR is now the arcade's YELLOW.** The value is drawn as three runs instead of one string:
+   the keyboard binding in the line's slot, the word `OR` in **slot 5** (`$3F` = (240,240,0) — one of
+   the fixed 0-9 slots, so it never cycles), then the gamepad binding. A line now reads as two
+   alternatives at a glance, including on the highlighted line where the value's own colour is
+   cycling. Verified by counting pixels in a screenshot: 6624 yellow pixels on the page (at 3x
+   scale) and the layout otherwise unchanged.
+2. **The colons are the arcade's own glyphs — from the other font.** The small font genuinely has
+   no `:`: `tools/extract-fonts.py`'s `SMALL` table is 38 glyphs (`0`-`9`, `A`-`Z`, `(`, `)`), which
+   is the order the ROM's `BLIT_SMALL_CHARACTER` indexes by (code - $30), and `FontSmall` is loaded
+   with exactly that count, so `DrawSmallFontText` used to SKIP a colon — the reason the page's
+   first vocabulary reached the screen as `P1LSUP` (§101.3). The ROM's `:` is in the **LARGE** font
+   (`extract-fonts.py`: offset 60838, 2x6 px, the same table `BLIT_LARGE_CHARACTER` uses).
+   `DrawSmallFontText` now falls back to the large font's glyph when the small font has none, so
+   `ENTER: SET THE INPUT` prints with the arcade's own colon art — one row taller than the capitals,
+   exactly as the arcade's two fonts differ — rather than dropping the character or inventing a
+   glyph. `F10: TITLE` got a colon too, for the sake of the row reading consistently.
+3. **No new tests:** nothing in the model changed (`ActionBinding.DisplayName` still says
+   `W OR P1 LEFT STICK UP`, and that is what the page draws, in three colours) — **402 tests,
+   0 failed, 0 skipped**.

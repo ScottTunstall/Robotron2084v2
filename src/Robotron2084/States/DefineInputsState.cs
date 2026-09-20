@@ -34,8 +34,8 @@ public sealed class DefineInputsState : IGameState
     private const string Title = "DEFINE INPUTS";
     private const string ArmedPrompt = "PRESS AN INPUT";
     private const string Hint = "USE UP AND DOWN TO MOVE BETWEEN P1 AND P2";
-    private const string FooterOne = "ENTER SET THE INPUT   DEL CLEAR";
-    private const string FooterTwo = "R DEFAULTS   F10 TITLE";
+    private const string FooterOne = "ENTER: SET THE INPUT   DEL: CLEAR";
+    private const string FooterTwo = "R: DEFAULTS   F10: TITLE";
 
     private const int TitleRow = 12;
     private const int HintRow = 44;
@@ -50,6 +50,11 @@ public sealed class DefineInputsState : IGameState
     // flashing is the thing to keep). The highlight is the title's $CC, which cycles.
     private const int LabelSlot = 9;
     private const int HighlightSlot = GameplayConstants.TitleWallSlot;
+
+    // The word OR between one line's two devices gets the arcade's YELLOW ($3F, slot 5 — one of
+    // the fixed 0-9 slots), so "W OR P1 LEFT STICK UP" reads as two alternatives rather than as
+    // one long white string (the author's ask).
+    private const int SeparatorSlot = 5;
 
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
@@ -171,7 +176,46 @@ public sealed class DefineInputsState : IGameState
         int slot = cursor ? HighlightSlot : LabelSlot;
 
         DrawText(spriteBatch, LabelOf(line), LabelColumn, y, slot);
-        DrawText(spriteBatch, ValueText(armed, ValueOf(line)), ValueColumn, y, slot);
+        DrawValue(spriteBatch, line, armed, slot, y);
+    }
+
+    /// <summary>
+    /// The value column: the keyboard binding, then the word OR in its own colour when the line
+    /// has both devices, then the gamepad binding — or the armed prompt, or NONE.
+    /// </summary>
+    private void DrawValue(SpriteBatch spriteBatch, int line, bool armed, int slot, int y)
+    {
+        if (armed)
+        {
+            DrawText(spriteBatch, ArmedPrompt, ValueColumn, y, slot);
+            return;
+        }
+
+        ActionBinding binding = BindingOf(line);
+        bool key = binding.Key.Kind != InputBindingKind.None;
+        bool pad = binding.Pad.Kind != InputBindingKind.None;
+
+        if (!key && !pad)
+        {
+            DrawText(spriteBatch, "NONE", ValueColumn, y, slot);
+            return;
+        }
+
+        int x = ValueColumn;
+        if (key)
+        {
+            x = DrawText(spriteBatch, binding.Key.DisplayName, x, y, slot);
+        }
+
+        if (key && pad)
+        {
+            x = DrawText(spriteBatch, " OR ", x, y, SeparatorSlot);
+        }
+
+        if (pad)
+        {
+            DrawText(spriteBatch, binding.Pad.DisplayName, x, y, slot);
+        }
     }
 
     /// <summary>
@@ -189,14 +233,11 @@ public sealed class DefineInputsState : IGameState
         return $"P{DefineInputsModel.PlayerOf(line) + 1} {DefineInputsModel.ActionOf(line)!.Value.Label()}";
     }
 
-    private string ValueOf(int line) => line == DefineInputsModel.PauseLine
-        ? _settings.Pause.DisplayName
-        : _settings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.ActionOf(line)!.Value].DisplayName;
+    private ActionBinding BindingOf(int line) => line == DefineInputsModel.PauseLine
+        ? new ActionBinding(_settings.Pause, InputBinding.None)
+        : _settings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.ActionOf(line)!.Value];
 
-    /// <summary>The value column, or the armed prompt while the line is waiting for its input.</summary>
-    private static string ValueText(bool armed, string value) => armed ? ArmedPrompt : value;
-
-    private void DrawText(SpriteBatch spriteBatch, string text, int x, int y, int slot) =>
+    private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int slot) =>
         _sprites.DrawSmallFontText(spriteBatch, text, x, y, slot);
 
     private static int CenteredX(string text) => (ScreenSize.Width - ScreenSize.Scaled((text.Length * 5) - 1)) / 2;

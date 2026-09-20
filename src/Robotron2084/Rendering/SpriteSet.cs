@@ -441,13 +441,24 @@ public sealed class SpriteSet
             }
 
             int index = GlyphIndex(character);
-            if (index < 0 || index >= FontSmall.Length)
+            if (index >= 0 && index < FontSmall.Length)
             {
+                DrawGlyphSlot(spriteBatch, FontSmall, index, x, y, slot);
+                x += ScreenSize.Scaled(FontSmall[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
                 continue;
             }
 
-            DrawGlyphSlot(spriteBatch, FontSmall, index, x, y, slot);
-            x += ScreenSize.Scaled(FontSmall[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+            // The arcade's SMALL font stops at ')' — 38 glyphs: digits, A-Z and the two brackets
+            // — so it has no ':' of its own (the ROM's ':' lives in the LARGE font). Rather than
+            // drop the character, draw the large font's glyph in its place: that is the arcade's
+            // own artwork, and it is why the DEFINE INPUTS page can print "ENTER: SET THE INPUT"
+            // (notes §101.11). The colon is one row taller than the capitals, exactly as the two
+            // arcade fonts differ.
+            if (index >= 0 && index < FontLarge.Length)
+            {
+                DrawGlyphSlot(spriteBatch, FontLarge, index, x, y, slot);
+                x += ScreenSize.Scaled(FontLarge[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+            }
         }
 
         return x;
