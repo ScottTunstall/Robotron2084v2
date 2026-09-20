@@ -25,7 +25,7 @@ namespace Robotron2084.States;
 /// ROM prints it in SPGSUB and the page script never clears above row 48), the
 /// character objects, then the story text and the score-row name popups on top.
 /// </summary>
-public sealed class StorylineState : IGameState
+public sealed class StorylineState : IGameState, IAttractState
 {
     private static readonly int Margin = ScreenSize.Scaled(GameplayConstants.PlayfieldMarginSpecPixels);
     private static readonly Rectangle InnerBounds = new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
@@ -34,6 +34,7 @@ public sealed class StorylineState : IGameState
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
     private readonly IPlayerInputSource _humanInput;
+    private readonly GameServices _services;
     private readonly PlayfieldWall _wall;
     private readonly GameSession _session;
     private readonly AttractMovie _movie;
@@ -42,16 +43,17 @@ public sealed class StorylineState : IGameState
     private bool _previousStartOne;
     private bool _previousStartTwo;
 
-    public StorylineState(SpriteSet sprites, HighScoreStore highScores, IPlayerInputSource humanInput, Random random)
+    public StorylineState(GameServices services, Random random)
     {
-        _sprites = sprites;
-        _highScores = highScores;
-        _humanInput = humanInput;
+        _services = services;
+        _sprites = services.Sprites;
+        _highScores = services.HighScores;
+        _humanInput = services.Input;
 
         _wall = new PlayfieldWall(InnerBounds, new WallColorCycle(
             GameplayConstants.DefaultWallPalette,
             TimeSpan.FromMilliseconds(GameplayConstants.WallStepDurationMilliseconds)));
-        _session = GameSession.NewGame(humanInput, 1);
+        _session = GameSession.NewGame(_humanInput, 1);
         _movie = new AttractMovie(AttractMovieData.Histo, random);
     }
 
@@ -64,7 +66,7 @@ public sealed class StorylineState : IGameState
             (human.StartOnePlayerPressed && !_previousStartOne) ||
             (human.StartTwoPlayersPressed && !_previousStartTwo))
         {
-            manager.TransitionTo(new TitleScreenState(_humanInput, _sprites, _highScores));
+            manager.TransitionTo(new TitleScreenState(_services));
             return;
         }
 
@@ -122,7 +124,7 @@ public sealed class StorylineState : IGameState
         // starts its phony-player game.
         if (_movie.Finished)
         {
-            manager.TransitionTo(new AttractState(_sprites, _highScores, _humanInput));
+            manager.TransitionTo(new AttractState(_services));
         }
     }
 

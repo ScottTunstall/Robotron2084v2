@@ -763,6 +763,12 @@ public static class GameplayConstants
     public const int PlayerGameOverMessageRow = 134;  // string 75: cursor $3F79 (the name)
     public const int GameOverMessageColumn = 62;      // string 40 / 75: cursor $3E80/$3E86
     public const int GameOverMessageRow = 128;
+    // Port-only (notes §101): the PAUSE banner, on the same centre line the ROM's own
+    // messages use, so it looks like one of them.
+    public const int PausedMessageColumn = 62;
+    public const int PausedMessageRow = 120;
+    // Port-only: the title's F-key menu, and how far apart its lines sit.
+    public const int TitleOptionRowStepPixels = 14;
 
     /// <summary>
     /// ROM RRG23 PLS0D: the "PLAYER n" message is drawn and the game waits

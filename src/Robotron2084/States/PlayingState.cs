@@ -37,6 +37,7 @@ public sealed class PlayingState : IGameState
     private readonly GameSession _session;
     private readonly LevelParameterGenerator _generator = new();
     private readonly Random _random = new();
+    private readonly PauseToggle _pause = new();
     private PlayField _field;
     private bool _restartHandled;       // one-shot so the death branch fires exactly once
     private int _turnMessageTicks;      // "PLAYER n" at a 2-player turn start (ROM NAP 115)
@@ -50,6 +51,21 @@ public sealed class PlayingState : IGameState
         _session = session;
         _field = BuildField();
         AnnounceTurn();
+    }
+
+    /// <summary>
+    /// Starts a game in one of the port's three modes (notes §101), giving each player
+    /// their OWN input source — which is the point of the DEFINITIONS page, since player
+    /// 2 no longer has to share player 1's controls. The mode is what F1/F2/F3 select on
+    /// the title and from anywhere in the attract cycle; TWO PLAYER SIMULTANEOUS is
+    /// carried as far as this call and the second input (the author asked for the mode
+    /// now and the simultaneous field later).
+    /// </summary>
+    public static PlayingState StartNewGame(ControlSettings controls, GameMode mode, SpriteSet sprites, HighScoreStore highScores)
+    {
+        var playerOne = new BoundPlayerInputSource(controls, 0);
+        var playerTwo = new BoundPlayerInputSource(controls, 1);
+        return new PlayingState(sprites, highScores, GameSession.NewGame(mode, playerOne, playerTwo, controls));
     }
 
     /// <summary>Builds the playfield for whoever's turn it is, from their own state.</summary>
@@ -77,6 +93,15 @@ public sealed class PlayingState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
+        // The port's PAUSE (notes §101) — port-only, the arcade has none. The field is
+        // frozen but the toggle still polls, or the key that paused could never unpause.
+        InputSnapshot snapshot = InputSnapshot.Read();
+        _pause.Tick(_session.Controls.PauseHeld(snapshot.Keys, snapshot.PadOne, snapshot.PadTwo));
+        if (_pause.IsPaused)
+        {
+            return;
+        }
+
         // "PLAYER n GAME OVER" is a WAIT in the ROM (NAP $60): the field behind it
         // is frozen and the next player's wave has not been built yet.
         if (_playerOutMessageTicks > 0)
@@ -181,6 +206,19 @@ public sealed class PlayingState : IGameState
         _field.Draw(spriteBatch, _sprites);
         ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds);
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
+
+        if (_pause.IsPaused)
+        {
+            // Port-only banner, in the wave's own message colour so it reads as part of
+            // the cabinet's vocabulary rather than a debug overlay.
+            ArcadeHud.DrawMessageText(
+                spriteBatch,
+                _sprites,
+                "PAUSED",
+                GameplayConstants.PausedMessageColumn,
+                GameplayConstants.PausedMessageRow,
+                GameplayConstants.PostSlotForWave(_session.Current.Wave));
+        }
 
         if (_playerOutMessageTicks > 0)
         {

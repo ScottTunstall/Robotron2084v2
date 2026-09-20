@@ -115,22 +115,34 @@ dotnet build Robotron2084.slnx                     # 0 warnings, warnings-as-err
 ```
 
 **Controls:** `WASD` move · `IJKL` aim *and* fire (8-way; Space also fires) ·
-`1` / `2` start a one- or two-player game · `P` skip a wave (port test key) ·
-`F11` cycle window scale · `Esc` quit.
-**Attract dev keys (port-only, notes §97/§98):** `F1` jump straight into the attract
-storyline movie · `F2` jump straight into the attract demo game · `F3` (held)
+`1` / `2` start a one- or two-player game · `F11` cycle window scale · `Esc` quit.
+**The title screen (notes §101):** `F1` one player game · `F2` two player game
+(alternate) · `F3` two player game (simultaneous — the mode is offered, the sharing
+is not built yet) · `F10` define inputs. All four work from **every** attract
+screen — title, storyline movie, demo game and high score table — and `P` pauses a
+game (the arcade has no pause; port-only).
+**Define inputs (`F10`, notes §101):** every MOVE/SHOOT UP, DN, LEFT, RIGHT of both
+players on its own line. `Up`/`Down` scroll (player 2's block is beneath player 1's,
+then the pause line), `Enter` arms the highlighted line and the next key, pad button
+or stick push becomes it, `Del` clears the line, `R` restores the factory scheme and
+`F10` saves and returns. Definitions live in
+`%LocalAppData%\Robotron2084\controls.ini`, hand-editable and reloaded at start-up.
+**Attract dev keys (port-only, notes §97/§98):** `F5` jump straight into the attract
+storyline movie · `F6` jump straight into the attract demo game · `F7` (held)
 fast-forward the movie 8× — the hulk's walk arrives in ~7 s instead of ~51 s ·
-`F4` jump straight to the high score table.
+`F4` jump straight to the high score table · `Ins` skip a wave (the port's old `P`
+test key moved when `P` became PAUSE).
 **Sound:** off by default; `set ROBOTRON2084_SOUND=1` to enable it.
 
 ### The gates (run before every checkpoint)
 
 ```bash
 dotnet build Robotron2084.slnx                                     # 0 warnings
-./tests/Robotron2084.Tests/bin/Debug/net10.0/Robotron2084.Tests.exe # 270 tests
+./tests/Robotron2084.Tests/bin/Debug/net10.0/Robotron2084.Tests.exe # 400 tests
 ./src/Robotron2084/bin/Debug/net10.0/Robotron2084.exe              # launch smoke
 python tools/verify-playfield.py                                   # a started wave really draws
-python tools/verify-fonts.py                                       # all 78 glyph masters, pixel for pixel
+python tools/verify-fonts.py                                       # all 82 glyph masters, pixel for pixel
+python tools/verify-attract.py                                     # title -> storyline -> title, end to end
 ```
 
 *(The test project is run through its executable, not `dotnet test` — the runner is a

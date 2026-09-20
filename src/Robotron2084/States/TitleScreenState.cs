@@ -24,7 +24,7 @@ namespace Robotron2084.States;
 /// (Phase 11.7). After <see cref="GameplayConstants.TitleIdleSeconds"/> of
 /// no start press the arcade's attract demo takes over (Phase 12.1, notes §94).
 /// </summary>
-public sealed class TitleScreenState : IGameState
+public sealed class TitleScreenState : IGameState, IAttractState
 {
     private static readonly int Margin = ScreenSize.Scaled(GameplayConstants.PlayfieldMarginSpecPixels);
     private static readonly Rectangle InnerBounds = new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
@@ -35,22 +35,23 @@ public sealed class TitleScreenState : IGameState
     private readonly IPlayerInputSource _input;
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
+    private readonly ControlSettings _controls;
+    private readonly GameServices _services;
     private readonly PlayfieldWall _titleWall;
     private readonly GameSession _titleSession;
-    private readonly TimeSpan _blinkDuration = TimeSpan.FromSeconds(GameplayConstants.TitleBlinkIntervalSeconds);
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(GameplayConstants.TitleIdleSeconds);
-    private TimeSpan _blinkElapsed;
     private TimeSpan _idleElapsed;
-    private bool _showPrompt = true;
     private bool _previousFire;
     private bool _previousStartOne;
     private bool _previousStartTwo;
 
-    public TitleScreenState(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores)
+    public TitleScreenState(GameServices services)
     {
-        _input = input;
-        _sprites = sprites;
-        _highScores = highScores;
+        _services = services;
+        _input = services.Input;
+        _sprites = services.Sprites;
+        _highScores = services.HighScores;
+        _controls = services.Controls;
 
         // The ROM's title wall is a solid $CC (slot 12), not a wave colour.
         _titleWall = new PlayfieldWall(InnerBounds, new WallColorCycle(
@@ -59,7 +60,7 @@ public sealed class TitleScreenState : IGameState
 
         // A 1P session at score 0 with the starting men: the ROM prints the
         // player's score and spare men under the title exactly as in play.
-        _titleSession = GameSession.NewGame(input, 1);
+        _titleSession = GameSession.NewGame(_input, 1);
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -70,23 +71,25 @@ public sealed class TitleScreenState : IGameState
         // players (ROM RRG23 START1/START2 → PLRCNT), and the ROM then runs the
         // alternating 2-player game. Fire is kept as a 1-player alias (a port
         // convention — spec.txt's "press fire", which the arcade does not have).
-        int playerCount = 0;
+        // The shell's F1/F2/F3 (notes §101) are the same three modes and work from
+        // every attract screen, this one included.
+        GameMode? mode = null;
         if (input.StartOnePlayerPressed && !_previousStartOne)
         {
-            playerCount = 1;
+            mode = GameMode.OnePlayer;
         }
         else if (input.StartTwoPlayersPressed && !_previousStartTwo)
         {
-            playerCount = 2;
+            mode = GameMode.TwoPlayerAlternate;
         }
         else if (input.FirePressed && !_previousFire)
         {
-            playerCount = 1;
+            mode = GameMode.OnePlayer;
         }
 
-        if (playerCount > 0)
+        if (mode is { } chosen)
         {
-            manager.TransitionTo(new PlayingState(_sprites, _highScores, GameSession.NewGame(_input, playerCount)));
+            manager.TransitionTo(PlayingState.StartNewGame(_controls, chosen, _sprites, _highScores));
             return;
         }
 
@@ -101,13 +104,8 @@ public sealed class TitleScreenState : IGameState
             _idleElapsed = TimeSpan.Zero;
         }
 
-        // Blink the prompt every second (spec).
-        _blinkElapsed += gameTime.ElapsedGameTime;
-        while (_blinkElapsed >= _blinkDuration)
-        {
-            _blinkElapsed -= _blinkDuration;
-            _showPrompt = !_showPrompt;
-        }
+        // Blink removed with the port's old prompt: the F-key menu is a menu, and
+        // flickering it every second made it hard to read (notes §101).
 
         // The port's old "top ten" swap lived here; the arcade's table is its
         // own screen now (`HighScoreTableState`, notes §98) and the ROM's title
@@ -121,7 +119,7 @@ public sealed class TitleScreenState : IGameState
         if (_idleElapsed >= _idleDuration)
         {
             _idleElapsed = TimeSpan.Zero;
-            manager.TransitionTo(new StorylineState(_sprites, _highScores, _input, new Random()));
+            manager.TransitionTo(new StorylineState(_services, new Random()));
         }
     }
 
@@ -137,20 +135,46 @@ public sealed class TitleScreenState : IGameState
         DrawCenteredLargeText(spriteBatch, TitleLineOne, lineOneY, slot);
         DrawCenteredLargeText(spriteBatch, TitleLineTwo, lineOneY + ScreenSize.Scaled(14), slot);
 
-        if (_showPrompt)
+        // Port-only menu (notes §101): the arcade's title has no such list, and its
+        // START buttons still work exactly as they did. Drawn in the arcade's own
+        // small font, in the title's colour, so it sits inside the cabinet's look.
+        int y = ScreenSize.Scaled(134);
+        foreach (string option in Options)
         {
-            const float promptScale = 1.0f;
-            spriteBatch.DrawString(
-                font,
-                "Press 1 or 2 to start",
-                CenteredHorizontal(font.MeasureString("Press 1 or 2 to start"), promptScale, ScreenSize.Scaled(110)),
-                Color.LightGray,
-                0f,
-                Vector2.Zero,
-                promptScale,
-                SpriteEffects.None,
-                0f);
+            DrawCenteredSmallText(spriteBatch, option, y, slot);
+            y += ScreenSize.Scaled(GameplayConstants.TitleOptionRowStepPixels);
         }
+    }
+
+    /// <summary>The title's port-only menu, in the author's order (notes §101).</summary>
+    private static readonly string[] Options =
+    [
+        "F1 ONE PLAYER GAME",
+        "F2 TWO PLAYER GAME (ALTERNATE)",
+        "F3 TWO PLAYER (SIMULTANEOUS)",
+        "F10 DEFINE INPUTS",
+    ];
+
+    /// <summary>Draws an arcade-small-font line centred on the canvas.</summary>
+    private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int slot)
+    {
+        int width = 0;
+        foreach (char character in text)
+        {
+            if (character == ' ')
+            {
+                width += ScreenSize.Scaled(GameplayConstants.HudSmallFontBlankAdvancePixels);
+                continue;
+            }
+
+            int index = SpriteSet.GlyphIndex(character);
+            if (index >= 0 && index < _sprites.FontSmall.Length)
+            {
+                width += ScreenSize.Scaled(_sprites.FontSmall[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+            }
+        }
+
+        _sprites.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
     }
 
     /// <summary>Centres a large-font line horizontally and prints it in one slot.</summary>

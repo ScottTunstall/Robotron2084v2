@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Input;
+using Robotron2084.Level;
 using Robotron2084.Persistence;
 using Robotron2084.Rendering;
 using Robotron2084.States;
@@ -29,6 +30,9 @@ public sealed class RobotronGame : Game
     private PaletteAnimator _paletteAnimator = null!;
     private IPlayerInputSource _input = null!;
     private HighScoreStore _highScoreStore = null!;
+    private ControlSettings _controlSettings = null!;
+    private ControlSettingsStore _controlSettingsStore = null!;
+    private GameServices _services = null!;
     private GameStateManager _stateManager = null!;
 
     private KeyboardState _previousKeyboardState;
@@ -73,9 +77,15 @@ public sealed class RobotronGame : Game
             Palette = palette,
             ColorCycleEffect = Content.Load<Effect>("Effects/ColorCycle"),
         };
-        _input = new CompositePlayerInputSource(new KeyboardPlayerInputSource(), new GamePadPlayerInputSource(PlayerIndex.One));
+        // The port's control definitions (notes §101) are read from controls.ini at
+        // startup and edited by the DEFINE INPUTS page; player 1's are what the menus
+        // and the attract sequence read.
+        _controlSettingsStore = new ControlSettingsStore();
+        _controlSettings = _controlSettingsStore.Load();
+        _input = new BoundPlayerInputSource(_controlSettings, playerIndex: 0);
         _highScoreStore = new HighScoreStore();
-        _stateManager = new GameStateManager(new TitleScreenState(_input, _sprites, _highScoreStore));
+        _services = new GameServices(_sprites, _highScoreStore, _controlSettings, _input);
+        _stateManager = new GameStateManager(new TitleScreenState(_services));
 
         // Arcade-faithful sound (notes §36.2): the single sound-board voice as
         // a priority sequencer, ticked once per port tick. NOTE the
@@ -100,24 +110,47 @@ public sealed class RobotronGame : Game
             ApplyScale();
         }
 
-        // ---- attract DEV KEYS (port-only; notes §97) -------------------------
-        // F1 and F2 drop straight into the attract sequence — F1 the storyline
-        // movie (the family and the hulk), F2 the phony-player demo game — so a
-        // scene can be inspected without sitting out the title's 12-second idle.
-        // F3 HELD fast-forwards the movie, which is how the hulk's walk (ROM
-        // frame ~2574) is reached in seconds rather than after the text crawl.
-        DevKeys.AttractFastForward = state.IsKeyDown(Keys.F3);
-        if (Pressed(state, Keys.F1))
+        // ---- attract DEV KEYS (port-only; notes §97, re-keyed in §101) ---------
+        // F5 and F6 drop straight into the attract sequence — F5 the storyline movie
+        // (the family and the hulk), F6 the phony-player demo game — so a scene can be
+        // inspected without sitting out the title's 12-second idle. F7 HELD fast-forwards
+        // the movie, which is how the hulk's walk (ROM frame ~2574) is reached in seconds
+        // rather than after the text crawl. They used to be F1/F2/F3, which are now the
+        // author's game-start keys (below).
+        DevKeys.AttractFastForward = state.IsKeyDown(Keys.F7);
+        if (Pressed(state, Keys.F5))
         {
-            _stateManager.TransitionTo(new StorylineState(_sprites, _highScoreStore, _input, new Random()));
+            _stateManager.TransitionTo(new StorylineState(_services, new Random()));
         }
-        else if (Pressed(state, Keys.F2))
+        else if (Pressed(state, Keys.F6))
         {
-            _stateManager.TransitionTo(new AttractState(_sprites, _highScoreStore, _input));
+            _stateManager.TransitionTo(new AttractState(_services));
         }
         else if (Pressed(state, Keys.F4))
         {
-            _stateManager.TransitionTo(new HighScoreTableState(_input, _sprites, _highScoreStore));
+            _stateManager.TransitionTo(new HighScoreTableState(_services));
+        }
+
+        // ---- the author's start keys, live on EVERY attract screen (notes §101) ---
+        // F1 one player, F2 two players alternating turns, F3 the arcade's two-player
+        // game (selected now, played later), F10 the DEFINE INPUTS page. Handling them
+        // here rather than in the title means the attract movie, the demo and the high
+        // score table can all be interrupted by a real player sitting down.
+        if (_stateManager.Current is IAttractState)
+        {
+            GameMode? mode = Pressed(state, Keys.F1) ? GameMode.OnePlayer
+                : Pressed(state, Keys.F2) ? GameMode.TwoPlayerAlternate
+                : Pressed(state, Keys.F3) ? GameMode.TwoPlayerSimultaneous
+                : null;
+
+            if (mode is { } chosen)
+            {
+                _stateManager.TransitionTo(PlayingState.StartNewGame(_controlSettings, chosen, _sprites, _highScoreStore));
+            }
+            else if (Pressed(state, Keys.F10))
+            {
+                _stateManager.TransitionTo(new DefineInputsState(_services, _controlSettingsStore));
+            }
         }
 
         _previousKeyboardState = state;
@@ -166,5 +199,5 @@ public sealed class RobotronGame : Game
 
     /// <summary>True on the tick <paramref name="key"/> goes down (press, not hold).</summary>
     private bool Pressed(KeyboardState current, Keys key) =>
-        _previousKeyboardState.IsKeyDown(key) && !current.IsKeyDown(key);
+        !_previousKeyboardState.IsKeyDown(key) && current.IsKeyDown(key);
 }

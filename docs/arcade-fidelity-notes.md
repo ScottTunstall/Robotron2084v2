@@ -8404,3 +8404,187 @@ mirror images, and the ROM's table puts BRNAL (left) first.
 its left (`WalkFrameIndex` 0 = BRLP1), and a new test puts the brain against the left wall
 so the human cannot fit — asserting the human goes 8px right and the brain faces RIGHT
 (`WalkFrameIndex` 3 = BRRP1). Suite: **327 tests, 0 failed, 0 skipped**; all six gates green.
+
+### 101. THE TITLE MENU, THE DEFINITIONS PAGE AND PAUSE — all port-only, all built (author, 2026-09-20)
+
+**Author:** *"On the start page (SAVE THE LAST HUMAN FAMILY) I want you to have the following
+options: F1 ONE PLAYER GAME, F2 TWO PLAYER GAME (ALTERNATE) F3 TWO PLAYER (SIMULTANEOUS) AND F10
+DEFINE INPUTS. Ensure that F1, F2, F3 work throughout all of the attract modes. Don't worry about
+the TWO PLAYER SIMULTANEOUS functionality just yet. Then I want you to create a DEFINE INPUTS page
+where player one and player two can define the following: MOVE UP, MOVE DOWN, MOVE LEFT, MOVE
+RIGHT, SHOOT UP, SHOOT DOWN, SHOOT LEFT, SHOOT RIGHT. Each of these should be on their own line.
+You can use the UP AND DOWN cursor keys to move between them. Both keyboard and gamepad should be
+accepted. Whatever input you select should be displayed next to the relevant move/shoot."*
+Then, over the session: *"Screen is a bit 'full' — hows about we use cursor up and cursor down to
+SCROLL to the player 2 section which is beneath player 1?"*, *"The inputs should be saved to a
+.INI file and loaded next time game started"*, and *"There should be only 1 pause key. Also, use
+the full text 'LEFT STICK' instead of abbreviations."*
+
+**None of this exists on the cabinet** — the arcade has no menu, no rebindable controls and no
+pause. What the arcade DOES fix is the shape of the fiction: the title screen prints the ROM's
+two strings (string 128 "ROBOTRON 2084", string 129 "SAVE THE LAST HUMAN FAMILY", §94), and the
+cabinet's own player select is the **START 1 / START 2** buttons with `1`/`2` on the coin door.
+So the port keeps the ROM's screen and adds the menu UNDER it, and the arcade's start buttons
+keep working (§101.6). Everything here is a **labelled port-only feature**, in the same class as
+the dev keys of §97 — nothing in this section is offered as arcade behaviour.
+
+#### 101.1 The options, and "throughout all of the attract modes"
+
+`TitleScreenState.Options` is now exactly the author's four lines: `F1 ONE PLAYER GAME`,
+`F2 TWO PLAYER GAME (ALTERNATE)`, `F3 TWO PLAYER (SIMULTANEOUS)`, `F10 DEFINE INPUTS`, drawn with
+the small font at `Scaled(134)` stepping `TitleOptionRowStepPixels` (14), i.e. 268/282/296/310 on
+the 400-pixel canvas — inside the `$CC` wall (§94) with room below.
+
+"Throughout all of the attract modes" is the interesting half. The attract cycle is title →
+storyline movie → demo game → title (§94/§96) and the high score table joins it (§98), so the
+keys are handled **not** by the title but by `RobotronGame.Update`: if
+`_stateManager.Current is IAttractState` — a new marker interface implemented by
+`TitleScreenState`, `StorylineState`, `AttractState` and `HighScoreTableState` — then
+F1/F2/F3 call `PlayingState.StartNewGame(...)` and F10 pushes `DefineInputsState`. Nothing about
+the states themselves changed; the arcade's own "fire or start returns to the title" rule
+(§94) still applies inside the movie and the demo.
+
+- **F1** → `GameMode.OnePlayer`.
+- **F2** → `GameMode.TwoPlayerAlternate` — the arcade's own two-player mode (§59): player 2
+  waits for player 1's man to be lost, and the HUD swaps to their slot.
+- **F3** → `GameMode.TwoPlayerSimultaneous`. **The author explicitly deferred the gameplay**
+  (*"Don't worry about the TWO PLAYER SIMULTANEOUS functionality just yet"*), so the mode exists
+  in `Level/GameMode.cs` and the menu offers it, but it starts a one-player field for now —
+  the ROM's PLRCNT=2 field with two live players is the follow-up (§101.7).
+
+#### 101.2 The definitions page, and why it SCROLLS
+
+Seventeen lines: player 1's eight actions, player 2's eight, then the machine's single PAUSE line
+(`DefineInputsModel.LinesPerPlayer = 8`, `PauseLine = 16`, `LineCount = 17`). Eight lines are on
+screen at a time (`VisibleLines = 8`), from row 70 stepping 26, with the action in the label
+column (40) and its value at column 300, `IsCursorOn` driving the highlight.
+
+That is the author's second request: the first cut was two COLUMNS of eight (one per player) and
+the author's verdict was *"the screen is a bit 'full'"* — so the second player's block now lives
+BENEATH the first, and the cursor scrolls the window. `MoveTo` moves `FirstVisibleLine` the
+minimum needed to keep the highlight visible, `MoveUp`/`MoveDown` wrap round the whole seventeen,
+and the heading line names the section of the **highlighted** line (PLAYER 1 / PLAYER 2 / PAUSE) —
+naming the top of the window instead, which is what the first cut did, mislabels the screen the
+moment a scroll leaves rows of both players visible.
+
+#### 101.3 The two-step capture, and how an input is named
+
+`Enter` arms the highlighted line (the value column then shows **PRESS AN INPUT**), and the next
+input that goes down is captured by `ControlCapture.NewlyPressed` — keys first in a fixed order,
+then each pad's stick directions, then the real buttons (A, B, X, Y, LB, RB, both thumb clicks,
+Back, Start, BigButton, and the D-pad). `Back` (or pad B) cancels. Arming exists so that a stick
+push can be captured as a **direction** rather than as a raw axis, and so that everything the
+page itself uses (Up/Down/Enter/Del/R/F10) is still available while idle; scrolling is dead while
+armed so no key is uncapturable.
+
+A value is stored as `InputBinding` (`Key`, `GamePadButton`, `GamePadLeftStick`,
+`GamePadRightStick` + a direction code + a pad index) and rendered by `DisplayName` in the
+vocabulary the page, the INI file and a human all share:
+
+| what was pressed | the value |
+|---|---|
+| a key | `W`, `INSERT`, `NUMPAD8` |
+| a pad button | `P1 A`, `P2 RIGHTSHOULDER` |
+| a stick direction | `P1 LEFT STICK UP`, `P2 RIGHT STICK UP LT` |
+| nothing | `NONE` |
+
+**The character set is the constraint.** The arcade's small font's `GlyphIndex` carries digits
+0-9, A-Z, `(`, `)`, `:`, `!`, `,`, `.`, `-` — but `FontSmall` only ships indices 0..37 and
+`DrawSmallFontText` SKIPS anything out of range, so on screen the only usable characters are
+**digits, A-Z, the two brackets and the space**. `:` `-` `.` `!` `,` are LARGE-font-only. That is
+why the vocabulary is uppercase and space-separated and why the footers were rewritten
+(`UP DN SCROLL   ENTER SET THE INPUT`): the first cut's `P1:LS:UP` and its `-` separators reached
+the screen as `P1LSUP`. For the same reason the cursor's `>` arrow had to go — `>` is not in the
+font at all, so it never drew (found by screenshot, §101.8). `TryParse` still ACCEPTS the old
+colon/dash spellings and the `LS`/`RS` abbreviations so a hand-edited file keeps loading, and the
+author's later *"use the full text 'LEFT STICK'"* made the **written** form the spelled-out one.
+
+#### 101.4 One pause key, and skip-level moves to INS
+
+**Author:** *"There should be only 1 pause key."* The first cut stored PAUSE as an
+`ActionBinding` (a key slot and a pad slot, like a player line); it is now a single
+`InputBinding` — whichever device captured it is the one it lives on — written to the INI as one
+`input=` value, and the page's PAUSE line shows one value (`P` by default). `ControlSettings.PauseHeld`
+is an `InputBinding.IsHeld`, and `PauseToggle` keeps it an **edge detector**: the key toggles the
+game in and out of pause however long it is held, and a pause that is entered and left while the
+game is not running cannot re-pause the next one. `PlayingState.Update` returns early while
+paused (the field does not tick, the HUD still draws) and the screen shows the port's PAUSE
+banner via `ArcadeHud.DrawMessageText`.
+
+**The knock-on:** the port's long-standing skip-level test key was `P` (notes §97's dev keys),
+so it moved to **`Insert`** — noted in the README, in `ControlSettings.ReadPlayer`'s comment and
+in §101.7, because a playtester who reaches for `P` will now pause the game.
+
+#### 101.5 The INI file
+
+`Persistence/ControlSettingsStore` writes `%LocalAppData%\Robotron2084\controls.ini` — plain
+text, ASCII, no BOM, `;`-commented header, and the values are exactly what the page displays:
+
+```
+[player1]
+moveup.key=W
+moveup.pad=P1 LEFT STICK UP
+...
+[pause]
+input=P
+```
+
+- Each player line is a key/pad PAIR, so `moveup.key=-` clears the keyboard slot and leaves the
+  stick alone (`AssignSlot` sets one slot — the trap a test pins).
+- `[pause]` is a single `input=` value; the older `key=`/`pad=` names are still read (last one
+  wins) so a file written by the first cut still loads.
+- A missing, unreadable or corrupt file falls back to the factory scheme; an unrecognised line is
+  IGNORED rather than guessed (a bad key name leaves that slot at its default), and a partial file
+  keeps defaults for everything it does not mention.
+- The header is deliberately non-ASCII-free, because it is meant to be hand-edited on any editor.
+
+#### 101.6 The factory scheme
+
+| | player 1 | player 2 |
+|---|---|---|
+| move | `W A S D` + pad 1 left stick | `UP DOWN LEFT RIGHT` + pad 2 left stick |
+| shoot | `I J K L` + pad 1 right stick | `NUMPAD8/5/4/6` + pad 2 right stick |
+
+`ReadPlayer` then adds the port's hardwired extras on top: **Space** fires, and the arcade's own
+start buttons (`1`/`2`, Numpad 1/2, pad Start/Back) stay unbindable because the title also offers
+F1/F2/F3. `BoundPlayerInputSource` is a thin `IPlayerInputSource` over one player's
+`ControlSettings`; the old `KeyboardPlayerInputSource` / `GamePadPlayerInputSource` /
+`CompositePlayerInputSource` trio is deleted, since one bound source now covers both devices.
+
+#### 101.7 What is NOT built
+
+- **Two-player simultaneous gameplay** — the mode exists and the menu offers it, but it starts a
+  one-player field (the author deferred it explicitly). The work is the ROM's PLRCNT=2 field:
+  two players sharing one wave, both score slots live, the respawn-in-place rule.
+- **Re-binding the start buttons** — deliberately not offered (§101.6).
+- **A help page or any on-screen legend beyond the two footers** — the arcade has none.
+
+#### 101.8 Bugs the verification found (all fixed here)
+
+1. **The armed prompt could never draw.** `DrawLine` computed `cursor = _model.IsCursorOn(line)`
+   and then `ValueText(cursor && _model.IsArmed, …)` — but `IsCursorOn` is `Line == line && !IsArmed`,
+   so the two conditions were mutually exclusive and **PRESS AN INPUT** was unreachable. The
+   armed test is now `IsArmed && Line == line`, independent of the highlight (which still hides
+   itself while armed, so the prompt is what identifies the line).
+2. **`>` is not in the small font** — the cursor's arrow never appeared in any screenshot.
+   Removed; the highlight colour is the indicator.
+3. **The heading named the wrong section** when a scroll left rows of both players visible (§101.2).
+4. **A pad BUTTON's value is two words, the parser demanded three.** `TryParse` required
+   `parts.Length >= 3` before it would look at the pad form, so a round trip through
+   `DisplayName` broke `P1 A`. The pad form is now `>= 2` and the stick form (three or four words)
+   is separated into `TryStick`.
+5. **The title menu was off-canvas.** It was first drawn at `Scaled(190)` = 380 px of a 400 px
+   canvas, so exactly one option was visible. Moved to `Scaled(134)`.
+6. **The advance past the last line wrapped to the top** (setting PAUSE threw the cursor back to
+   player 1's first line and scrolled the page). It now stays put; `Up`/`Down` still wrap.
+7. **A harness trap, not a product bug:** the temporary key-injection script sent `Down` as a bare
+   scancode `0x50`, which SDL (MonoGame's desktop backend) reads as **numpad-2**, so the cursor
+   never moved and the first screenshots showed an apparently dead page. The extended-key bit must
+   be set. Recorded because it cost an hour and will bite again.
+
+**Tests:** `Input/InputBindingTests`, `Input/PlayerControlsTests`, `Input/ControlCaptureTests`
+(with `Input/TestPads.cs` — MonoGame's `GamePadState` cannot be built from the XNA
+`ThumbSticks`/`Buttons`/`Triggers` trio), `Persistence/ControlSettingsStoreTests`,
+`Hud/DefineInputsModelTests`, `Hud/PauseToggleTests`. Suite: **400 tests, 0 failed, 0 skipped**;
+all six gates green (`verify-attract`'s first run failed its own guard — a window over the capture
+region — and passed on the re-run, the §98.8 lesson again).

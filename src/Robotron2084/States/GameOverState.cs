@@ -30,12 +30,13 @@ public sealed class GameOverState : IGameState
     private readonly IPlayerInputSource _input;
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
+    private readonly ControlSettings _controls;
     private readonly List<int> _scores;
     private readonly int _holdTicks = GameplayConstants.PortTicks(GameplayConstants.GameOverMessageRomFrames);
     private int _elapsedTicks;
 
     public GameOverState(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, int score)
-        : this(input, sprites, highScores, [score])
+        : this(input, sprites, highScores, [score], null)
     {
     }
 
@@ -43,16 +44,17 @@ public sealed class GameOverState : IGameState
     /// Every player's final score, highest first — the ROM's <c>EGSUB</c> runs once
     /// per player, and each score is offered to the table in turn.
     /// </param>
-    public GameOverState(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, IReadOnlyList<int> scores)
+    public GameOverState(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, IReadOnlyList<int> scores, ControlSettings? controls = null)
     {
         _input = input;
         _sprites = sprites;
         _highScores = highScores;
+        _controls = controls ?? ControlSettings.Defaults();
         _scores = [.. scores];
     }
 
     public static GameOverState FromSession(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, GameSession session) =>
-        new(input, sprites, highScores, session.ScoresHighestFirst());
+        new(input, sprites, highScores, session.ScoresHighestFirst(), session.Controls);
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
@@ -69,7 +71,7 @@ public sealed class GameOverState : IGameState
         }
 
         _highScores.Save(table);
-        manager.TransitionTo(new HighScoreTableState(_input, _sprites, _highScores, _scores));
+        manager.TransitionTo(new HighScoreTableState(new GameServices(_sprites, _highScores, _controls, _input), _scores));
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)

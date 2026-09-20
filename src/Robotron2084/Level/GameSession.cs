@@ -17,13 +17,24 @@ namespace Robotron2084.Level;
 /// </summary>
 public sealed class GameSession
 {
-    private GameSession(PlayerSlot[] players)
+    private GameSession(PlayerSlot[] players, GameMode mode)
     {
         Players = players;
+        Mode = mode;
     }
 
     /// <summary>Player 1 first; length 1 or 2 (ROM PLRCNT).</summary>
     public IReadOnlyList<PlayerSlot> Players { get; }
+
+    /// <summary>How this game was started (notes §101) — the port's three modes.</summary>
+    public GameMode Mode { get; }
+
+    /// <summary>
+    /// The port's control definitions, carried with the game (notes §101) so that every
+    /// state holding the session — the playfield, a wave clear, the high score table —
+    /// can read the PAUSE key without each of them being handed the settings separately.
+    /// </summary>
+    public ControlSettings Controls { get; private init; } = ControlSettings.Defaults();
 
     /// <summary>Index into <see cref="Players"/> of the player whose turn it is (ROM CURPLR).</summary>
     public int CurrentIndex { get; private set; }
@@ -38,8 +49,9 @@ public sealed class GameSession
     public bool AnyMenLeft => Players.Any(p => p.HasMen);
 
     /// <summary>
-    /// A fresh game: <paramref name="playerCount"/> players (1 or 2) at wave 1 with
-    /// the CMOS "ships per credit" lives (ROM START1/START2 → <c>ZP1LAS = NSHIP</c>).
+    /// A fresh game by player count: the arcade's START 1 / START 2 (ROM PLRCNT) — a thin
+    /// wrapper over the mode-based factory, kept because the START buttons are still how
+    /// the cabinet starts a game.
     /// </summary>
     public static GameSession NewGame(IPlayerInputSource input, int playerCount, IPlayerInputSource? secondPlayerInput = null)
     {
@@ -48,17 +60,31 @@ public sealed class GameSession
             throw new ArgumentOutOfRangeException(nameof(playerCount), playerCount, "Robotron is a 1 or 2 player game (ROM PLRCNT).");
         }
 
+        return NewGame(
+            playerCount == 2 ? GameMode.TwoPlayerAlternate : GameMode.OnePlayer,
+            input,
+            secondPlayerInput);
+    }
+
+    /// <summary>
+    /// A fresh game in a given mode (notes §101): the mode picks the player count, and
+    /// each player gets their OWN input source — which is the point of the DEFINITIONS
+    /// page, since player 2 no longer has to share player 1's controls.
+    /// </summary>
+    public static GameSession NewGame(GameMode mode, IPlayerInputSource playerOne, IPlayerInputSource? playerTwo = null, ControlSettings? controls = null)
+    {
+        int playerCount = mode == GameMode.OnePlayer ? 1 : 2;
         var players = new PlayerSlot[playerCount];
         for (int i = 0; i < playerCount; i++)
         {
             players[i] = new PlayerSlot(
                 i + 1,
-                i == 0 ? input : secondPlayerInput ?? input,
+                i == 0 ? playerOne : playerTwo ?? playerOne,
                 GameplayConstants.StartingLives,
                 GameplayConstants.StartingLevelNumber);
         }
 
-        return new GameSession(players);
+        return new GameSession(players, mode) { Controls = controls ?? ControlSettings.Defaults() };
     }
 
     /// <summary>Rebuilds a session from carried-over player state (tests / save-style flows).</summary>
@@ -70,7 +96,7 @@ public sealed class GameSession
             throw new ArgumentException("a session has 1 or 2 players", nameof(players));
         }
 
-        return new GameSession(array) { CurrentIndex = currentIndex };
+        return new GameSession(array, GameMode.OnePlayer) { CurrentIndex = currentIndex };
     }
 
     /// <summary>

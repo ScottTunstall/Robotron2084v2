@@ -37,7 +37,7 @@ namespace Robotron2084.States;
 /// for any switch/start press — up to another 255 × 4 frames — before handing
 /// back to the title page (<c>FAMPAG</c>).
 /// </summary>
-public sealed class HighScoreTableState : IGameState
+public sealed class HighScoreTableState : IGameState, IAttractState
 {
     private readonly IPlayerInputSource _input;
     private readonly SpriteSet _sprites;
@@ -55,21 +55,17 @@ public sealed class HighScoreTableState : IGameState
     /// ROM's <c>ZP1SCR</c>/<c>ZP2SCR</c> at <c>CLSET</c> time: their rows are
     /// highlighted. Empty when the table is reached from the attract cycle.
     /// </param>
-    public HighScoreTableState(
-        IPlayerInputSource input,
-        SpriteSet sprites,
-        HighScoreStore store,
-        IReadOnlyList<int>? postedScores = null)
+    public HighScoreTableState(GameServices services, IReadOnlyList<int>? postedScores = null)
     {
-        _input = input;
-        _sprites = sprites;
-        _store = store;
+        _input = services.Input;
+        _sprites = services.Sprites;
+        _store = services.HighScores;
         _postedScores = [.. postedScores ?? []];
-        _table = store.Load();
+        _table = _store.Load();
 
         // The ROM's own score processing (EGSUB) has already happened by the time
         // the table is drawn; a save here is the CMOS write.
-        store.Save(_table);
+        _store.Save(_table);
 
         // RRTABLE's TABLE starts the page's colour processes before it draws anything
         // (MAKP LOOPP comes first, the other four after the lists are printed).
@@ -141,7 +137,7 @@ public sealed class HighScoreTableState : IGameState
             _colour.Stop(palette);
         }
 
-        manager.TransitionTo(new TitleScreenState(_input, _sprites, _store));
+        manager.TransitionTo(new TitleScreenState(new GameServices(_sprites, _store, ControlSettings.Defaults(), _input)));
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)

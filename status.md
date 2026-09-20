@@ -290,6 +290,28 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   never set the facing, so the brain kept whatever the chase gave it. The four ABAC bases are now
   named (BRNAL/BRNAR/BRNAD/BRNAU, in `SpriteSet.BrainFrames` order) and set from the placement
   with `_frameStep = 0` (the direction's P1). +1 test (**327**); all six gates green.
+- **2026-09-20 — THE TITLE MENU, THE DEFINITIONS PAGE AND PAUSE (notes §101).** Author: *"On the
+  start page (SAVE THE LAST HUMAN FAMILY) I want you to have the following options: F1 ONE PLAYER
+  GAME, F2 TWO PLAYER GAME (ALTERNATE) F3 TWO PLAYER (SIMULTANEOUS) AND F10 DEFINE INPUTS.
+  Ensure that F1, F2, F3 work throughout all of the attract modes … Then I want you to create a
+  DEFINE INPUTS page where player one and player two can define … MOVE UP … SHOOT RIGHT"* — and
+  then *"use cursor up and cursor down to SCROLL to the player 2 section which is beneath player
+  1"*, *"the inputs should be saved to a .INI file and loaded next time game started"*, *"There
+  should be only 1 pause key. Also, use the full text 'LEFT STICK' instead of abbreviations."*
+  **All port-only** (the cabinet has no menu, no rebinding, no pause) and all built: the title
+  offers the author's four lines, and F1/F2/F3/F10 are handled from **every** attract screen via a
+  new `IAttractState` marker (title, storyline movie, demo game, high score table). The DEFINE
+  INPUTS page lists 17 lines (both players' eight actions, then the shared PAUSE) in a SCROLLING
+  eight-line window with Enter-arms-then-press capture, `Del`/`R`/`F10`, and two small-font
+  footers; values are uppercase and space-separated (`W`, `NUMPAD8`, `P1 A`, `P1 LEFT STICK UP`)
+  **because the arcade's small font only has digits, A-Z and the two brackets on screen**. PAUSE
+  is a single binding (`P` by default) and skip-level therefore moved from `P` to **`INS`**.
+  Everything is saved to `%LocalAppData%\Robotron2084\controls.ini` (hand-editable, factory
+  scheme on a missing file, unrecognised lines ignored rather than guessed). Two-player
+  SIMULTANEOUS is offered but still starts a one-player field — deferred by the author. +11 tests
+  (**400**); all six gates green. Two real bugs the screenshots caught: the armed "PRESS AN INPUT"
+  prompt could never draw (`IsCursorOn` suppresses the cursor while armed, and the draw condition
+  required both), and `>` is not in the small font so the cursor arrow never appeared.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36
