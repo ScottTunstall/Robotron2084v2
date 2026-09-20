@@ -198,9 +198,10 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
 
     private static bool TryDirection(string name, out int dx, out int dy)
     {
+        string wanted = ExpandDirection(name);
         foreach ((string direction, int x, int y, _) in Directions)
         {
-            if (string.Equals(direction, name, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(direction, wanted, StringComparison.OrdinalIgnoreCase))
             {
                 dx = x;
                 dy = y;
@@ -214,19 +215,44 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     }
 
     /// <summary>
-    /// The eight stick directions, their screen-space deltas and their short names — all
-    /// two letters, because the page's value column shows them beside a key.
+    /// Spells an older two-letter direction out in full ("DN" -&gt; "DOWN", "UP LT" -&gt;
+    /// "UP LEFT") so a controls file hand-written before the author asked for full words
+    /// still loads. Anything already full, or unknown, is left alone.
+    /// </summary>
+    private static string ExpandDirection(string name)
+    {
+        var expanded = new List<string>();
+        foreach (string part in name.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            string upper = part.ToUpperInvariant();
+            expanded.Add(upper switch
+            {
+                "DN" => "DOWN",
+                "LT" => "LEFT",
+                "RT" => "RIGHT",
+                _ => upper,
+            });
+        }
+
+        return string.Join(' ', expanded);
+    }
+
+    /// <summary>
+    /// The eight stick directions, their screen-space deltas and their names. The author
+    /// asked for the directions to be spelled out rather than abbreviated, in the same
+    /// breath as the sticks themselves: the value column shows "P2 RIGHT STICK DOWN
+    /// RIGHT", not "P2 RS DN RT".
     /// </summary>
     private static readonly (string Name, int Dx, int Dy, int Code)[] Directions =
     [
         ("UP", 0, -1, DirectionCode(0, -1)),
-        ("DN", 0, 1, DirectionCode(0, 1)),
-        ("LT", -1, 0, DirectionCode(-1, 0)),
-        ("RT", 1, 0, DirectionCode(1, 0)),
-        ("UP LT", -1, -1, DirectionCode(-1, -1)),
-        ("UP RT", 1, -1, DirectionCode(1, -1)),
-        ("DN LT", -1, 1, DirectionCode(-1, 1)),
-        ("DN RT", 1, 1, DirectionCode(1, 1)),
+        ("DOWN", 0, 1, DirectionCode(0, 1)),
+        ("LEFT", -1, 0, DirectionCode(-1, 0)),
+        ("RIGHT", 1, 0, DirectionCode(1, 0)),
+        ("UP LEFT", -1, -1, DirectionCode(-1, -1)),
+        ("UP RIGHT", 1, -1, DirectionCode(1, -1)),
+        ("DOWN LEFT", -1, 1, DirectionCode(-1, 1)),
+        ("DOWN RIGHT", 1, 1, DirectionCode(1, 1)),
     ];
 }
 

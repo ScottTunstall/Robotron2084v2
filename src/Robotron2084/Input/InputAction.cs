@@ -81,17 +81,22 @@ public readonly record struct ActionBinding(InputBinding Key, InputBinding Pad)
     public bool IsHeld(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
         Key.IsHeld(keys, padOne, padTwo) || Pad.IsHeld(keys, padOne, padTwo);
 
-    /// <summary>The page's value column: "W  P1-LS-UP", or one device only, or "-".</summary>
+    /// <summary>
+    /// The page's value column: "W OR P1 LEFT STICK UP" when both devices are bound, the one
+    /// device when only it is, or "NONE". The word OR is spelled out because a bare gap read as
+    /// one long sentence (author: *"the controls don't clearly show that W OR stick up can be
+    /// used"*), and a hyphen could not substitute for it — the arcade's small font has no '-'.
+    /// </summary>
     public string DisplayName
     {
         get
         {
             if (Key.Kind == InputBindingKind.None)
             {
-                return Pad.Kind == InputBindingKind.None ? "-" : Pad.DisplayName;
+                return Pad.Kind == InputBindingKind.None ? "NONE" : Pad.DisplayName;
             }
 
-            return Pad.Kind == InputBindingKind.None ? Key.DisplayName : $"{Key.DisplayName}  {Pad.DisplayName}";
+            return Pad.Kind == InputBindingKind.None ? Key.DisplayName : $"{Key.DisplayName} OR {Pad.DisplayName}";
         }
     }
 }

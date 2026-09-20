@@ -8624,3 +8624,27 @@ Four changes, all on the definitions page:
 **+1 test** (the cursor steps over the blanks; the line map grew to 21) — **401 tests, 0 failed,
 0 skipped** — and all six gates green. The highlighted row's colour at capture time was
 `(64,240,160)` in one screenshot and `(144,208,0)` in the next, i.e. the cycling slot doing its job.
+
+#### 101.10 Full words, and an explicit OR (2026-09-20, the author's second look)
+
+**Author:** *"Instead of LT, DN use LEFT DOWN - there's space on screen. Don't use abbreviations
+for directions."* and then *"the controls don't clearly show that W OR stick up can be used. Maybe
+use some whitespace?"*
+
+1. **The directions are spelled out.** `InputBinding.Directions` now names them `UP`, `DOWN`,
+   `LEFT`, `RIGHT`, `UP LEFT`, `UP RIGHT`, `DOWN LEFT`, `DOWN RIGHT`, so a value reads
+   `P2 RIGHT STICK DOWN RIGHT`. `ExpandDirection` still ACCEPTS the old two-letter forms (`DN`,
+   `LT`, `RT`, singly or in a pair) when reading, so a `controls.ini` written before the change
+   still loads; the written form is always the full one.
+2. **The pair separator is the word OR.** `ActionBinding.DisplayName` put the two devices two
+   spaces apart, which read as one long sentence — hence the author's complaint. It is now
+   `W OR P1 LEFT STICK UP`. A hyphen could not have stood in for it (a first attempt at the
+   vocabulary used one) because the arcade's small font has no `-`, so `W-P1-...` would have
+   reached the screen as `WP1...`; for the same reason an unbound line now says **NONE** rather
+   than `-`, which was likewise invisible (§101.3).
+3. **The value column moved left** (300 → 250) to pay for the wider values, and the widest case
+   the factory scheme plus any plausible key can produce — `NUMPAD8 OR P1 RIGHT STICK DOWN RIGHT`
+   — ends around canvas x 580 of the page's 640, verified by screenshotting a hand-written
+   `controls.ini` that set exactly that (which also proved the INI reader takes the full names).
+4. **Tests:** one new (`ALineWithBothDevices_SaysOrBetweenThem`, which also pins that the unbound
+   line is `NONE` and not `-`) — **402 tests, 0 failed, 0 skipped**.

@@ -45,7 +45,7 @@ public sealed class ControlSettingsStoreTests
             Assert.Equal("P1 LEFT STICK UP", loaded[0][InputAction.MoveUp].Pad.DisplayName);
             Assert.Equal("P2 RIGHTSHOULDER", loaded[1][InputAction.ShootRight].Pad.DisplayName);
             Assert.Equal("NUMPAD6", loaded[1][InputAction.ShootRight].Key.DisplayName);
-            Assert.Equal("P2 LEFT STICK UP LT", loaded[1][InputAction.MoveLeft].Pad.DisplayName);
+            Assert.Equal("P2 LEFT STICK UP LEFT", loaded[1][InputAction.MoveLeft].Pad.DisplayName);
             Assert.Equal("ESCAPE", loaded.Pause.DisplayName);
         }
         finally
@@ -64,7 +64,7 @@ public sealed class ControlSettingsStoreTests
         Assert.Contains("[pause]", text);
         Assert.Contains("moveup.key=W", text);
         Assert.Contains("moveup.pad=P1 LEFT STICK UP", text);
-        Assert.Contains("shootright.pad=P2 RIGHT STICK RT", text);
+        Assert.Contains("shootright.pad=P2 RIGHT STICK RIGHT", text);
         Assert.Contains("input=P", text);
         // PAUSE is ONE value, not a key/pad pair (the author asked for a single pause key).
         Assert.DoesNotContain("pause.key", text);

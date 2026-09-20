@@ -324,6 +324,16 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   says `USE UP AND DOWN TO MOVE BETWEEN P1 AND P2` under the title. Verified numerically (two
   screenshots 1.4 s apart: identical label pixels, changed highlight) and by the blank rows
   having zero lit pixels. **401 tests**, all six gates green.
+- **2026-09-20 — the author's second look (notes §101.10).** *"Instead of LT, DN use LEFT DOWN -
+  there's space on screen. Don't use abbreviations for directions."* then *"the controls don't
+  clearly show that W OR stick up can be used. Maybe use some whitespace?"* The eight stick
+  directions are now spelled out (`P2 RIGHT STICK DOWN RIGHT`), with the old `DN`/`LT`/`RT` forms
+  still ACCEPTED when reading a controls file. A controlling line's value is now
+  `W OR P1 LEFT STICK UP` — the word OR, because a hyphen is not in the arcade's small font and
+  two spaces read as one sentence — and an unbound line says `NONE` rather than `-`, which was
+  invisible for the same reason. The value column moved left (300 → 250) to pay for the longer
+  text; the widest value ends around canvas x 580 of 640, checked on a screenshot of a hand-written
+  `controls.ini` that set it. **402 tests**, all six gates green.
 - **Needs your eye:** the movie end to end (it is 96 s — start a build and wait 12 s, or
   press **F1** to jump straight in and hold **F3** to skim; **F2** goes straight to the demo
   game), the hero's walk, and whether the title screen should also move to the ROM's row 36

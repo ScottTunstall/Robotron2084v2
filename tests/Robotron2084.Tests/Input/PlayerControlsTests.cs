@@ -49,7 +49,7 @@ public sealed class PlayerControlsTests
         Assert.Equal("P1 LEFT STICK UP", playerOne[InputAction.MoveUp].Pad.DisplayName);
         Assert.Equal("P1 RIGHT STICK UP", playerOne[InputAction.ShootUp].Pad.DisplayName);
         Assert.Equal("P2 LEFT STICK UP", playerTwo[InputAction.MoveUp].Pad.DisplayName);
-        Assert.Equal("P2 RIGHT STICK RT", playerTwo[InputAction.ShootRight].Pad.DisplayName);
+        Assert.Equal("P2 RIGHT STICK RIGHT", playerTwo[InputAction.ShootRight].Pad.DisplayName);
     }
 
     [Fact]

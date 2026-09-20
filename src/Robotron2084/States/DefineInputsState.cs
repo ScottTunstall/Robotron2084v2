@@ -42,7 +42,7 @@ public sealed class DefineInputsState : IGameState
     private const int FirstLineRow = 70;
     private const int LineStep = 26;
     private const int LabelColumn = 40;
-    private const int ValueColumn = 300;
+    private const int ValueColumn = 250;
     private const int FooterRow = 302;
 
     // $99 is the palette's WHITE and no colour process drives it, so an unselected line sits

@@ -22,8 +22,8 @@ public sealed class InputBindingTests
             { InputBinding.Button(0, Buttons.A), "P1 A" },
             { InputBinding.Button(1, Buttons.RightShoulder), "P2 RIGHTSHOULDER" },
             { InputBinding.Stick(0, rightStick: false, 0, -1), "P1 LEFT STICK UP" },
-            { InputBinding.Stick(0, rightStick: true, 0, 1), "P1 RIGHT STICK DN" },
-            { InputBinding.Stick(1, rightStick: true, -1, -1), "P2 RIGHT STICK UP LT" },
+            { InputBinding.Stick(0, rightStick: true, 0, 1), "P1 RIGHT STICK DOWN" },
+            { InputBinding.Stick(1, rightStick: true, -1, -1), "P2 RIGHT STICK UP LEFT" },
             { InputBinding.None, "NONE" },
         };
         return data;
@@ -109,5 +109,20 @@ public sealed class InputBindingTests
         GamePadState rightStickOnly = TestPads.Pad(rightStick: new Microsoft.Xna.Framework.Vector2(1f, 0f));
 
         Assert.False(binding.IsHeld(new KeyboardState(), rightStickOnly, new GamePadState()));
+    }
+
+    [Fact]
+    public void ALineWithBothDevices_SaysOrBetweenThem()
+    {
+        // The author: "the controls don't clearly show that W OR stick up can be used." Both
+        // halves are shown with the word between them; a hyphen could not have stood in for it,
+        // because the arcade's small font has no '-' and the two would have run together.
+        var both = new ActionBinding(InputBinding.Key(Keys.W), InputBinding.Stick(0, rightStick: false, 0, -1));
+        var padOnly = new ActionBinding(InputBinding.None, InputBinding.Stick(0, rightStick: false, 0, -1));
+
+        Assert.Equal("W OR P1 LEFT STICK UP", both.DisplayName);
+        Assert.Equal("W", new ActionBinding(InputBinding.Key(Keys.W), InputBinding.None).DisplayName);
+        Assert.Equal("P1 LEFT STICK UP", padOnly.DisplayName);
+        Assert.Equal("NONE", ActionBinding.None.DisplayName); // not "-": that glyph is not in the small font
     }
 }
