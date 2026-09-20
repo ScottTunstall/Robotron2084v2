@@ -9459,3 +9459,34 @@ BMUT00/BMUT10).`). Comments only; Debug 0 warnings; **450 tests, 0 failed, 0 ski
 
 **Still to do: the same read over the rest of the codebase** — the rest of `Entities/`, then `Hud/`,
 `Level/`, `Rendering/`, `States/` and `Input/`. Recorded in `status.md` and as B48h in the handoff.
+
+---
+
+### 112. HARD-CODED VALUES: THE SPARK, AND THE TIMER UNIT 5/6 (author, 2026-09-20)
+
+Author: *"The spark code is concerning me as there's so many hard coded values with poor explanations
+and no constants. Remember this: use constants with xmldocs rather than hard coded values."*
+
+**The rule:** every literal becomes a named constant whose `<summary>` says what it IS and where the
+number comes from — a ROM routine and the frames it counts, a measurement, or the author's own tuning —
+and anything tunable lives in `Tuning/GameplayConstants.cs`. A bare `5`, `6` or `16` in an entity is a
+bug in waiting, and §111 no longer allows a comment to be the explanation.
+
+**The worst offender is `Entities/Spark.cs`** (8 hits by itself), and the culprit is the port's timer
+unit: a tick adds **5**, an arcade frame is **6**, and both numbers are written out longhand in every
+entity. A scan of `src/Robotron2084/**/*.cs` for `+= 5`, `-= 5`, `* 6` and `= 6` finds **106** hits —
+`Spark.cs` 8, `Enforcer.cs` 7, then `Quark.cs`, `Spheroid.cs`, `TankShell.cs`, `Brain.cs` at 5 each.
+Nothing names them: there is no `TimerUnitsPerTick` and no `TimerUnitsPerRomFrame`, which is exactly
+why every file has to state the clock in prose (§109.6/§109.7's "timers count 5 per tick and 6 per
+arcade frame"). That is the wrong way round — the constants come first and the prose sentence goes.
+
+**And in `Spark.cs` itself:** `ScreenSize.Scaled(2)` and `ScreenSize.Scaled(2 * SparkLeftWallJitterColumns)`
+hard-code the arcade column although the constant already exists (`GameplayConstants.ArcadePixelsPerColumn`,
+added with the window work); `_moveTimer = 6` seeds a whole frame's worth of timer units with a bare
+literal; and the `Spark*` constants that do exist (`SparkVelocityScale`, `SparkAimDivisor`,
+`SparkAccelRomRange`, `SparkMaxSpeed`, `SparkLifeMin/MaxRomTicks`, `SparkFramePeriodRomTicks`,
+`SparkMoveIntervalRomTicks`) carry values with no derivation in their xmldocs — which is the "poor
+explanations" half of the complaint.
+
+**Recorded, not done** — parked by the author for the next session: handoff row B48i and `status.md`'s
+next-session reminder.

@@ -53,6 +53,12 @@ Historical: `plan.md` = the original rebuild plan, `ledger.md` = its decision lo
   interpreter IS `SPWAKE`). Never restate the line below the comment, and never state a number the
   code could change. Details and the remaining audit: notes §111, handoff B48h.
 
+- **CONSTANTS, NOT LITERALS (author directive, 2026-09-20): *"use constants with xmldocs rather than
+  hard coded values."*** Every literal is a named constant whose xmldoc says what it IS and where the
+  value comes from (a ROM routine and the frames it counts, a measurement, or the author's own tuning),
+  and anything tunable lives in `Tuning/GameplayConstants.cs`. A raw `5`, `6` or `16` in an entity is a
+  bug in waiting — and §111 no longer allows a comment to be the explanation. Details: notes §112.
+
 - Project resume docs: **`docs/handoff-2026-09-17.md` (current handoff — read this
   one)** and `docs/arcade-fidelity-notes.md` (master ROM-vs-port research log).
   `docs/handoff-2026-09-16.md` and `docs/handoff-2026-09-13.md` are historical.
@@ -588,6 +594,17 @@ tests**.
 - **OPEN — the rest of the codebase under the new bar.** The same read as above over the rest of
   `Entities/`, then `Hud/`, `Level/`, `Rendering/`, `States/`, `Input/`: delete any comment that
   restates the code or states something the code could change. Not started.
+- **NEXT SESSION (2026-09-21) — START HERE: the hard-coded values, `Entities/Spark.cs` first (notes
+  §112).** *"The spark code is concerning me as there's so many hard coded values with poor
+  explanations and no constants."* Two constants do most of the work: the port's timer unit (**5** per
+  tick, **6** per arcade frame) is written longhand **106** times across `src/` — worst in `Spark.cs`
+  (8 hits), `Enforcer.cs` (7), then `Quark.cs`/`Spheroid.cs`/`TankShell.cs`/`Brain.cs` (5 each). Add
+  `GameplayConstants.TimerUnitsPerTick`/`TimerUnitsPerRomFrame` with xmldocs, use them everywhere, and
+  delete the per-file prose sentence that exists only to explain them. Then `Spark.cs` itself:
+  `ScreenSize.Scaled(2)` → `ArcadePixelsPerColumn`, the bare `_moveTimer = 6` seed, and a derivation
+  xmldoc for every `Spark*` constant (`SparkVelocityScale`, `SparkAimDivisor`, `SparkAccelRomRange`,
+  `SparkMaxSpeed`, `SparkLifeMin/MaxRomTicks`, `SparkFramePeriodRomTicks`, `SparkMoveIntervalRomTicks`) —
+  that is the "poor explanations" half. Full write-up: notes §112, handoff B48i.
 - **2026-09-20 — resolution must be one constant (notes §110).** *"the code should be designed to
   scale to ANY resolution chosen. I may use 640 x 400, but next week change to 1024 x 768 and the
   engine should not fail."* The design already routes everything through `Core/ScreenSize` (render
