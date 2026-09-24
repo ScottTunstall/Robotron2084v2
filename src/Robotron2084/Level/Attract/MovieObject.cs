@@ -1,3 +1,5 @@
+using Robotron2084.Core;
+
 namespace Robotron2084.Level.Attract;
 
 /// <summary>
@@ -78,7 +80,7 @@ public sealed class MovieObject
 
     public int Row => (Y >> 8) + ShakeRowOffset;
 
-    public int ArcadeX => Column * 2;
+    public int ArcadeX => Column * ScreenSize.ArcadePixelsPerColumn;
 
     public int ArcadeY => Row;
 }

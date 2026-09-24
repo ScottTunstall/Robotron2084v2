@@ -34,7 +34,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     /// <summary>How far the missile steps along X per move, in port pixels — two arcade px.</summary>
     /// <remarks>The arcade moves it one video-memory column per step; a column is 2 arcade px wide.</remarks>
-    private static readonly int StepColumns = ScreenSize.Scaled(2);
+    private static readonly int StepColumns = ScreenSize.Columns(1);
 
     /// <summary>How far the missile steps along Y per move, in port pixels — one arcade px.</summary>
     private static readonly int StepRows = ScreenSize.Scaled(1);
@@ -87,7 +87,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>The collision box: the tracked point shifted one pixel up and left.</summary>
     /// <remarks>ROM: the "FAT PHONY GUY" hitbox, offset up and left of the tracked point.</remarks>
     public Rectangle Bounds => new(
-        _position.X + ScreenSize.Scaled(GameplayConstants.CruiseMissileBoxOffsetColumns * 2),
+        _position.X + ScreenSize.Columns(GameplayConstants.CruiseMissileBoxOffsetColumns),
         _position.Y + ScreenSize.Scaled(GameplayConstants.CruiseMissileBoxOffsetRows),
         CollisionSize.Width,
         CollisionSize.Height);
@@ -143,7 +143,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
         IntVector2 leaving = _position;
-        int columnPixels = ScreenSize.Scaled(2);
+        int columnPixels = ScreenSize.Columns(1);
         int rowPixels = ScreenSize.Scaled(1);
 
         if (_velocity.X != 0)

@@ -175,8 +175,8 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         }
 
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        int leftExit = bounds.X + ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitLeftColumn);
-        int rightExit = ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitRightColumn);
+        int leftExit = bounds.X + ScreenSize.Columns(GameplayConstants.SpheroidEscapeExitLeftColumn);
+        int rightExit = ScreenSize.Columns(GameplayConstants.SpheroidEscapeExitRightColumn);
         if (_position.X <= leftExit || _position.X >= rightExit)
         {
             LifeState = EntityLifeState.Dead; // removed at once, no burst (ROM: `CIR4`)

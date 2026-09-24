@@ -55,15 +55,13 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         int jitterX = _random.Next(-GameplayConstants.SparkJitterColumns, GameplayConstants.SparkJitterColumns);
         int jitterY = _random.Next(-GameplayConstants.SparkJitterColumns, GameplayConstants.SparkJitterColumns);
         if (playfieldBounds is { } bounds &&
-            playerPosition.X < bounds.X + ScreenSize.Scaled(2 * GameplayConstants.SparkLeftWallJitterColumns))
+            playerPosition.X < bounds.X + ScreenSize.Columns(GameplayConstants.SparkLeftWallJitterColumns))
         {
             jitterX = 0;
         }
 
-        // 1 ROM column = Scaled(2) port px.
-        int columnPortPx = ScreenSize.Scaled(2);
-        int deltaX = playerPosition.X + (jitterX * columnPortPx) - position.X;
-        int deltaY = playerPosition.Y + (jitterY * columnPortPx) - position.Y;
+        int deltaX = playerPosition.X + ScreenSize.Columns(jitterX) - position.X;
+        int deltaY = playerPosition.Y + ScreenSize.Columns(jitterY) - position.Y;
 
         // 4x the aim delta, in subpixels (the mover only acts on the velocity's high byte).
         int subpixelsPerPortPxPerMove = GameplayConstants.SparkVelocityScale / GameplayConstants.SparkAimDivisor;

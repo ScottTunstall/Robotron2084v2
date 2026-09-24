@@ -206,7 +206,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         bool yPositive = _position.Y <= lowY || (_position.Y < highY && _random.Next(2) != 0);
 
         _velocitySubpixels = new IntVector2(
-            AxisVelocitySubpixels(GameplayConstants.QuarkVelocityXScale, xPositive, coordinateUnitArcadePixels: 2),
+            AxisVelocitySubpixels(GameplayConstants.QuarkVelocityXScale, xPositive, coordinateUnitArcadePixels: ScreenSize.ArcadePixelsPerColumn),
             AxisVelocitySubpixels(GameplayConstants.QuarkVelocityYScale, yPositive, coordinateUnitArcadePixels: 1));
 
         _reaimBeatsRemaining = 1 + _random.Next(GameplayConstants.QuarkReaimMaxBeats);

@@ -136,7 +136,7 @@ public sealed class Tank : IExplodable, IRemovable
             // MTANK applies the current picture's (dx,dy) before advancing, so the mini tank
             // walks up-left and the full tank lands centred on the drop point (notes §53).
             (int columns, int rows) = GameplayConstants.TankGrowDeltas[_growStep];
-            _position += new IntVector2(ScreenSize.Scaled(columns * 2), ScreenSize.Scaled(rows));
+            _position += new IntVector2(ScreenSize.Columns(columns), ScreenSize.Scaled(rows));
 
             if (++_growStep < GameplayConstants.TankGrowSteps)
             {

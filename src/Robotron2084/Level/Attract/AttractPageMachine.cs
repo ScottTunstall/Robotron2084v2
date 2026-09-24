@@ -1,3 +1,5 @@
+using Robotron2084.Core;
+
 namespace Robotron2084.Level.Attract;
 
 /// <summary>
@@ -112,7 +114,7 @@ public sealed class AttractPageMachine
         switch (op)
         {
             case 0: // CURSAB — set the text cursor (column, row).
-                _cursorX = NextByte() * 2;
+                _cursorX = NextByte() * ScreenSize.ArcadePixelsPerColumn;
                 _cursorY = NextByte();
                 return;
 
@@ -141,7 +143,7 @@ public sealed class AttractPageMachine
 
             case 5: // MESS — a name popup in the score row.
             {
-                int x = NextByte() * 2;
+                int x = NextByte() * ScreenSize.ArcadePixelsPerColumn;
                 int number = NextByte();
                 ClearText(TextLeft, MessageRow, ClearWidth, MessageHeight);
                 Message = new MovieMessage(
