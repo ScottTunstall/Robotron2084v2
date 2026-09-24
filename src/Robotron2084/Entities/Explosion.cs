@@ -73,7 +73,7 @@ public sealed class Explosion : IEntity
     public static Explosion StartExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {
         (StripFanAxis axis, int slope) = Dispatch(direction);
-        return Start(() => dead.CurrentAnimationFrame, dead.ExplosionBounds, Kind.Explode, axis, slope, clip);
+        return new Explosion(() => dead.CurrentAnimationFrame, dead.ExplosionBounds, Kind.Explode, axis, slope, clip);
     }
 
     /// <summary>Starts an appear: the same record with the size running down, so the strips converge.</summary>
@@ -85,28 +85,7 @@ public sealed class Explosion : IEntity
     /// <returns>The new appear record.</returns>
     /// <remarks>ROM: RRG23.ASM's <c>APPEAR</c> makes one of these per frame for each robot.</remarks>
     public static Explosion StartAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
-        => Start(() => source.CurrentAnimationFrame, bounds, Kind.Appear, axis, slope, clip);
-
-    /// <summary>Shared construction, with the fan's fixed point at the picture's MIDDLE.</summary>
-    /// <param name="animationFrameOf">Resolves the picture to cut up, at draw time.</param>
-    /// <param name="bounds">The rect the strips are laid out in.</param>
-    /// <param name="kind">Explode (the spacing grows) or Appear (it shrinks).</param>
-    /// <param name="axis">Which way the sprite is cut: rows or columns.</param>
-    /// <param name="slope">The diagonal lean, -1 / 0 / +1.</param>
-    /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
-    /// <returns>The new record.</returns>
-    /// <remarks>The middle anchor matches the ROM's own centring logic, the picture's top plus half its
-    /// height, and keeps both halves equal. Anchoring at the collision point instead is lopsided,
-    /// because a shot strikes the sprite's near edge. Either way the sprite reconstructs exactly at
-    /// step 1 ("1 unit is the minimum"), so don't revert this without checking.</remarks>
-    private static Explosion Start(
-        Func<Texture2D> animationFrameOf,
-        Rectangle bounds,
-        Kind kind,
-        StripFanAxis axis,
-        int slope,
-        StripClip clip)
-        => new(animationFrameOf, bounds, kind, axis, slope, clip);
+        => new Explosion(() => source.CurrentAnimationFrame, bounds, Kind.Appear, axis, slope, clip);
 
     /// <summary>Maps a killing shot's direction to the fan axis and lean it produces.</summary>
     /// <param name="direction">The killing shot's direction, or null for a kill with no laser.</param>
@@ -268,7 +247,10 @@ public sealed class Explosion : IEntity
     /// once: the base climbs while the segments march down, so the fan tears UP and DOWN. The fixed
     /// point is the picture's MIDDLE, so the halves are mirrored — the same strips and the same reach
     /// each way — and a diagonal shot leans them opposite ways (a chevron). The same maths runs on
-    /// columns for a vertical shot. A strip outside the playfield is DROPPED, not clamped.</remarks>
+    /// columns for a vertical shot. The middle anchor matches the ROM's own centring logic, the
+    /// picture's top plus half its height, and keeps both halves equal; anchoring at the collision
+    /// point instead is lopsided, because a shot strikes the sprite's near edge. A strip outside the
+    /// playfield is DROPPED, not clamped.</remarks>
     internal IReadOnlyList<Strip> Layout(int pictureWidth, int pictureRows)
     {
         bool rows = _axis == StripFanAxis.Rows;
