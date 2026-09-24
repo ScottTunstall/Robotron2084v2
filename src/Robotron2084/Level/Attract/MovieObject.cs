@@ -3,8 +3,8 @@ namespace Robotron2084.Level.Attract;
 /// <summary>
 /// One object in the attract movie (notes §95.3): a picture, a position, a
 /// velocity, and (for the walking characters) a walker state. The movie's
-/// objects are the ROM's `OBJ` blocks — plain data; the SCRIPT process that
-/// drives one lives in <see cref="MovieProcess"/>.
+/// objects are the ROM's `OBJ` blocks — plain data; the process that drives one
+/// lives in <see cref="AttractObjectMachine"/>.
 ///
 /// Coordinates are the ROM's: <see cref="X"/> counts 1/256 COLUMNS and
 /// <see cref="Y"/> counts 1/256 ROWS, so the integer column is
