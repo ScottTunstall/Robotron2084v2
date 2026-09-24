@@ -171,17 +171,7 @@ public static class WaveTable
     /// <summary>One wave's full parameter row (waves 41+ repeat 21-40, ROM rule).</summary>
     public static WaveParameters ForWave(int waveNumber)
     {
-        int wave = waveNumber;
-        if (wave < 1)
-        {
-            wave = 1;
-        }
-
-        while (wave > WaveCount)
-        {
-            wave -= RepeatedCount;
-        }
-
+        int wave = ResolveWave(waveNumber);
         int i = wave - 1;
         return new WaveParameters(
             wave,
