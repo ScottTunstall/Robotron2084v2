@@ -21,25 +21,16 @@ public sealed class LevelParameterGenerator
     private readonly LevelTableRow[]? _table;
 
     public LevelParameterGenerator()
-        : this(new Random(), null)
+        : this(null)
     {
     }
 
-    public LevelParameterGenerator(Random random)
-        : this(random, null)
-    {
-    }
-
-    /// <param name="random">
-    /// Kept for API compatibility (the ROM tables are deterministic); the
-    /// optional CSV table does not need it either.
-    /// </param>
     /// <param name="levelTablePath">
     /// Optional CSV table (header: Level,GruntCount,HulkCount,SpheroidCount,
     /// QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark).
     /// <see langword="null"/> checks the default Content/LevelTable.csv location.
     /// </param>
-    public LevelParameterGenerator(Random random, string? levelTablePath)
+    public LevelParameterGenerator(string? levelTablePath)
     {
         _table = LoadTable(levelTablePath);
     }

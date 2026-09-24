@@ -80,7 +80,7 @@ public sealed class LevelParameterGeneratorTests
             "2,9,3,2,2,12,4,3\n");
         try
         {
-            var generator = new LevelParameterGenerator(new Random(1), path);
+            var generator = new LevelParameterGenerator(path);
 
             LevelParameters level1 = generator.Generate(1);
             Assert.Equal(5, level1.GruntCount);
@@ -111,7 +111,7 @@ public sealed class LevelParameterGeneratorTests
     public void Generate_MissingTable_FallsBackToRomWaveTable()
     {
         string path = Path.Combine(Path.GetTempPath(), $"robotron-missing-{Guid.NewGuid():N}.csv");
-        var generator = new LevelParameterGenerator(new Random(7), path);
+        var generator = new LevelParameterGenerator(path);
 
         LevelParameters p = generator.Generate(1);
 
@@ -129,7 +129,7 @@ public sealed class LevelParameterGeneratorTests
             "1,notanumber,2,1,1,10,3,2\n");
         try
         {
-            var generator = new LevelParameterGenerator(new Random(7), path);
+            var generator = new LevelParameterGenerator(path);
             LevelParameters p = generator.Generate(1);
 
             Assert.Equal(15, p.GruntCount);
