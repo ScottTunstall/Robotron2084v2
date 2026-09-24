@@ -90,7 +90,8 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Kills the brain outright: no death animation of any kind.</summary>
-    /// <remarks>ROM: RRB10.ASM's <c>BRNKIL</c>. A brain killed mid-reprogram releases its victim.</remarks>
+    /// <remarks>ROM: RRB10.ASM's <c>BRNKIL</c>. A brain killed mid-reprogram releases its victim: the field's
+    /// own human phase does that (see <see cref="PlayField.ReleaseVictimsOfDeadBrains"/>).</remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
     /// <summary>Runs one beat: chase, step, animate and count the missile timer down.</summary>
