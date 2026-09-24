@@ -24,6 +24,6 @@ public readonly record struct IntVector2(int X, int Y)
         return dx * dx + dy * dy;
     }
 
-    /// <summary>Hands off to <see cref="Rectangle"/>'s all-int constructor.</summary>
+    /// <summary>Converts to MonoGame's <see cref="Microsoft.Xna.Framework.Point"/>.</summary>
     public Microsoft.Xna.Framework.Point ToPoint() => new(X, Y);
 }
