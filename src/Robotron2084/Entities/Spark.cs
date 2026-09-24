@@ -91,7 +91,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Only ever transitions Alive -> Dead (immediate removal, no death animation).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Laser hit: removed at once (25 points).</summary>
+    /// <summary>Laser hit: removed at once.</summary>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
     /// <summary>Which of the four flicker frames is showing (test hook).</summary>

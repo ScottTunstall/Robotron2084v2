@@ -12,10 +12,12 @@ namespace Robotron2084.Entities;
 /// <seealso cref="PlayField"/>
 /// <seealso cref="PlayerLaser"/>
 /// <remarks>ROM: RRX7.ASM's death routine, RRG23.ASM's muzzle-offset table and the player-movement
-/// routine (notes §17). Movement is 8-way digital at 2/3 px a tick (X/Y); the fire button fires on its
+/// routine (notes §17). Movement is 8-way digital at the
+/// <c>PlayerSpeedX</c>/<c>PlayerSpeedY</c> rate; the fire button fires on its
 /// rising edge and then re-fires every <c>PlayerAutoFireTicks</c> while held, with the 3-laser slot cap
 /// as the binding limit. The two-stick controls are a deliberate deviation from the arcade's single
-/// 8-way joystick — movement (WASD) and aim/fire (IJKL) are independent — so don't revert it without
+/// 8-way joystick — movement and aim/fire have their own bindings (see
+/// <see cref="PlayerControls.Defaults"/>) — so don't revert it without
 /// checking. Facing follows MOVEMENT only; the aim sets the laser direction but never the facing or the
 /// walk animation. The walk uses 4 sequences of 3 pictures (left 1,2,1,3 / right 4,5,4,6 / down
 /// 7,8,7,9 / up 10,11,10,12; diagonals reuse the horizontal pair), each frame held 3 movement ticks,

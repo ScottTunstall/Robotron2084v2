@@ -15,11 +15,7 @@ namespace Robotron2084.Rendering;
 ///
 /// Arcade fidelity: ROM frames are drawn at SpecScale× arcade pixels (the
 /// screen is the spec's 320x200 space widened by SpecScale) and centered
-/// inside the entity's collision
-/// box. Frame counts per entity match the definitive sprite source
-/// (RobotronBlueLabelSpriteRepository): player/mummy/daddy/mikey 12
-/// (4 dirs x 3), hulk 9, spheroid 8, enforcer 6, quark 9, tank 4,
-/// electrode 27 variants, enforcer bullet (spark) 4, grunt 3.
+/// inside the entity's collision box.
 /// </summary>
 public sealed class SpriteSet
 {

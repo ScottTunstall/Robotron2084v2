@@ -9,8 +9,8 @@ namespace Robotron2084.Entities;
 
 /// <summary>The player's laser: a straight bolt, gone the moment it hits the wall or a robot.</summary>
 /// <seealso cref="LaserSlots"/>
-/// <remarks>The box is a 4x4 spec-pixel square and it flies at 12 px/tick, far quicker than the
-/// player. The picture is one of the ROM's four laser shapes (R5 $35BE-$35DC: <c>LLPC</c>,
+/// <remarks>The box is a 4x4 spec-pixel square and it flies at
+/// <see cref="GameplayConstants.LaserSpeed"/> px/tick, far quicker than the player. The picture is one of the ROM's four laser shapes (R5 $35BE-$35DC: <c>LLPC</c>,
 /// <c>ULPC</c>, <c>DLLPC</c>, <c>ULLPC</c>), chosen for the direction by <c>LTAB</c> (RRG23.ASM) and
 /// centred in the box — the arcade never flips the art (notes §19).</remarks>
 public sealed class PlayerLaser : IEntity, IAnimationFrameSource

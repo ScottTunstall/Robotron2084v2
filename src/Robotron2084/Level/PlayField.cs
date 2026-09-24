@@ -1321,7 +1321,7 @@ public sealed class PlayField
         }
     }
 
-    /// <summary>70% of the time: a point within Scaled(30) of a random inner edge; else uniform.</summary>
+    /// <summary>70% of the time: a point within SpheroidNearWallBiasDistance of a random inner edge; else uniform.</summary>
     private IntVector2 RandomSpheroidCandidate()
     {
         Rectangle inner = Wall.PlayfieldBounds;
