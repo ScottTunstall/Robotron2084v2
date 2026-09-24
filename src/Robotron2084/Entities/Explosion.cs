@@ -274,12 +274,11 @@ public sealed class Explosion : IEntity
 
         // One unit is ONE pixel of the picture along the fan axis, for BOTH families: counting the
         // horizontal family in byte columns (2 px) would fly it off at twice the ROM's rate.
-        const int unit = 1;
-        int step = spacing * unit;
+        int step = spacing;
 
         // The ROM's base: centre minus (size x offset) plus half a step. The "obscure bug" guard
         // (no half step when the offset is zero) is kept, though a middle-anchored fan never has one.
-        int half = split == 0 ? 0 : (spacing >> 1) * unit;
+        int half = split == 0 ? 0 : (spacing >> 1);
         int fanBase = centre - (spacing * split) + half;
 
         // The diagonal lean is half the current step, signed by the shot's diagonal: strip i shifts
