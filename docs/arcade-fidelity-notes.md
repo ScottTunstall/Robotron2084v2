@@ -9977,11 +9977,11 @@ but null handles, because the entities index into those runs). A test can now bu
 first time.
 
 **Verified:** 482 tests, 0 failed, 0 skipped; Debug and Release 0 warnings; 12 s launch smoke OK;
-`verify-playfield` PASS. `verify-attract` could NOT be judged on this build: its capture reads the
-SCREEN, and a browser window was over the game window for every attempt (the capture shows the movie
-rendering correctly in the game window, with the browser alongside it), so the gate reported "the capture
-is not the game window" at 66-94% lit. That is the screen-capture trap this project has hit before, not a
-regression — re-run it with nothing over the game window.
+`verify-playfield` and `verify-attract` PASS (the `--full` run too, which adds the demo game). The first
+three attempts failed with "the capture is not the game window" at 66-94% lit because a browser window was
+over the game window; with the desktop clear the story phase measures 8.7% lit and the demo 2.9% — exactly
+what every earlier run measured. That is the screen-capture trap this project has hit before, not a
+regression, and the gate is only meaningful while nothing covers the game window.
 
 **One thing the rename left behind, and only a scan caught it:** a stale copy of the pre-rename enum was
 still on disk as `MovieArt.cs`. It was **untracked**, so no diff showed it, and it **compiled** — a leftover
