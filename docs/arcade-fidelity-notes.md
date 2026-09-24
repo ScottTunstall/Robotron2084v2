@@ -9990,3 +9990,64 @@ second type in the same namespace is perfectly legal as long as nothing referenc
 and every gate were happy with. It is the same lesson as §120's orphaned `<summary>`: **neither a clean
 build nor a green gate can see leftover code.** The checks that can are the one-type-per-file scan in this
 section and `git status` for untracked files — worth running both after any rename.
+
+---
+
+## §122 — THE AUTHOR'S CODE REVIEW: 60 ITEMS LANDED, AND WHAT IS STILL OPEN (2026-09-24)
+
+The author wrote `docs/code-review-issues.md` — ~120 numbered items in sections A (bugs), B (comments),
+C (dead code), D (magic numbers and units), E (duplication), F (structure), G (naming), H (consistency),
+I (tests), J (decisions for the author) and K (tooling) — with eleven rules: **one item per commit with the
+item ID, Debug + Release + the tests after every item, never suppress, one type per file, keep every ROM
+cross-reference, and never fix a section-J item.** Their instruction for this session: *"Ignore C06 and C07
+- do the rest, as long as it keeps the game arcade faithful"* (C06 and C07 are really J01/J02).
+
+**Landed, one commit each** (`ad0a97d` … `fd66408`, 60 commits; 485 tests, 0 failed, 0 skipped, Debug and
+Release 0 warnings after every one):
+
+- **A01** the tank's tread advanced on every tick *and* on every beat, so it ran twice as fast as the ROM's
+  `TANK3` and kept advancing while frozen or being born — a red-first test over the frozen/born/beating states
+  caught it (`Tank.TreadFrameIndex` is the seam, because the test sprite set holds null textures) and the
+  per-tick increment is gone. **This changes what the tank looks like on screen.**
+- **A02** `TankShell.BouncedThisUpdate` kept the previous tick's value on the one tick in six where the shell
+  does not move, so the bounce sound played twice; it is now cleared at the top of `Update`.
+- **A03** the spheroid's two escape exits use different origins (`leftExit` adds `bounds.X`, `rightExit` does
+  not). **Not fixed** — a test pins the right exit (532 = `ScreenSize.Scaled(2 * 133)`) and the question is
+  with the author.
+- **B01-B33** every stale, duplicated, contradictory or historic comment: the `IArtSource` crefs, 33 orphaned
+  `sprites` param tags, duplicate summaries, plan phases and milestone codes ("Phase 11.3", "PHASE D", "M4",
+  "round 7"), the author's quotes and playtest history, the "tombstone" notes about constants that do not
+  exist, and comments that restated a value the code already holds.
+- **C01-C05, C08-C13** dead code: `WallFleeHelper`, 26 unreferenced `GameplayConstants`, `ScoreBurst._count`,
+  the unused `speedBonus` and `random` constructor parameters, Spark's no-op zero step, Explosion's
+  forwarding factory and its `const int unit = 1`.
+- **D01, D05-D12** the clock and the units: `Core/ArcadeClock` is now the one definition of the port's clock
+  unit (5 units a port tick, 6 a ROM frame — the same numbers that were written longhand in 22 files, and the
+  eight private copies of `SixthsPerPortTick`/`SixthsPerRomFrame` are gone); `ScreenSize.ArcadePixels`/
+  `ScreenSize.Columns` are the one way to convert arcade pixels and ROM columns, with
+  `ArcadePixelsPerColumn` moved from `Tuning` to `Core` to keep the dependency pointing one way.
+- **E10, G05, G12, G16, G18, H01, H02, H07, I05** one game-over coordinate pair, `Grunt.AnimationFrameIndexFor`,
+  `PlayerLaser.Kill` (and it implements `IRemovable`), `RescueBonus(rescuesThisLife)`, the missile's
+  `StepXPortPixels`/`StepYPortPixels`, the field-and-doc-on-one-line defects, and `NoSpriteSource` in its own file.
+- **K01 stage 1, K02.** K01's first stage: with `<GenerateDocumentationFile>` on, the build reports four
+  malformed XML docs (a `</see>` closed as `</summary>`, two unescaped `&`, a `paramref` for a parameter that
+  does not exist, an ambiguous cref) and ten constructors missing their `sprites` tag — all fixed. **Stage 2 is
+  with the author:** CS1591 then reports **419** public members with no summary, over the item's "stop and
+  report above ~150" threshold, so no summaries were written and the documentation flag was left OFF so the
+  build stays green. K02 added `tools/lint-conventions.ps1` (the one-type-per-file scan and the clock-literal
+  scan from `docs/coding-standards.md`; it exits non-zero on a hit).
+
+**Two questions for the author, and what they block:** **A04** — the laser-wall flare's dither is built with
+`ScreenSize.Scaled(2)` = 4 port px (2 arcade rows) while its comment says one arcade row; the code was left
+alone, and **D03** (naming that constant) waits on the answer. **A05** — START 1 and START 2 both read pad 1
+for either player, while fire reads the player's own pad; possibly intended (the cabinet has one START panel).
+
+**Still open** when this session ended: D02 (PlayField caps and timings), D04 (the entity literals),
+E01-E09/E11/E12 (the count helper, `NearestLivingRobotPositionTo`, `InnerBounds`, the start-button edge
+detector, player death reset, the subpixel scale of 256, the AppData path), F01/F02/F04 (splitting `PlayField`
+and `GameplayConstants`, the hard casts in the registry — F03 waits on J12 and F05 on J03), G01-G04 and
+G06-G11/G13-G15/G17/G19-G21 (the `RomTicks` → `RomFrames` sweep, the fifths/sixths vocabulary,
+`IsHitStopActive`, `Burst`/`Shatter`, the walk-facing enum, `Explosion` → `StripEffect`, the abbreviations),
+H03-H06 and H08-H10 (the entity member order, the `LifeState` guards, `GameplayConstants`' scattered fields,
+the state constructors), and I01-I04 (the test `PlayFieldBuilder`, the test folders, the phase-named test
+file). Every one of them is still in `docs/code-review-issues.md` with its own instructions.

@@ -1398,3 +1398,31 @@ C:\Users\scott\source\repos\WmsGfxSpriteRipper    Sean Riddle's Williams sprite 
 - ROM hole in the 64K image: $9000–$CFFF (16K) zeroed. RAM initial values = disasm listing of that range.
 - CRC32 = standard (poly 0xEDB88320 reflected, init/fin xor 0xFFFFFFFF) — matches MAME.
 - Bash `/tmp` = `C:/Users/scott/AppData/Local/Temp` (C# needs the Windows path).
+
+## CODE-REVIEW REMEDIATION (2026-09-24) — where it stands
+
+The author wrote `docs/code-review-issues.md` (~120 items, sections A-K plus J for their own decisions) and
+said: *"Ignore C06 and C07 - do the rest, as long as it keeps the game arcade faithful"* (C06/C07 are really
+J01/J02). **60 items are committed**, one per commit with the item ID, Debug + Release + the test exe run
+after every one (485 tests, 0 failed, 0 skipped; 0 warnings). See **notes §122** for the full account and
+**ledger D-027** for the decision.
+
+- **Landed:** A01-A03 · B01-B33 · C01-C05, C08-C13 · D01, D05-D12 · E10 · G05, G12, G16, G18 · H01, H02, H07
+  · I05 · K01 (stage 1) · K02.
+- **New code:** `Core/ArcadeClock` (the port's clock unit: 5 units a port tick, 6 a ROM frame — the single
+  definition), `ScreenSize.ArcadePixels`/`ScreenSize.Columns` (with `ArcadePixelsPerColumn` moved to `Core`),
+  `tools/lint-conventions.ps1` (the one-type-per-file and clock-literal scans; exits non-zero on a hit).
+- **Waiting on the author:** **A04** — the laser-wall flare dithers in 2-row bands while its comment says one
+  row (code untouched); **D03** waits on that answer. **A05** — START 1/START 2 read pad 1 whichever player is
+  playing, while fire reads the player's own pad (possibly intended). **K01 stage 2** — with
+  `<GenerateDocumentationFile>` on, CS1591 reports **419** public members with no summary, over the item's
+  "more than about 150 → stop and report" threshold, so none were written and the flag stays OFF (the build
+  must stay green). **C06/C07** are J01/J02.
+- **Still open:** D02-D04 · E01-E09, E11, E12 · F01-F05 (F03 waits on J12, F05 on J03) · G01-G04, G06-G11,
+  G13-G15, G17, G19-G21 · H03-H06, H08-H10 · I01-I04. Each has its own instructions in the work list; the
+  suggested order there is D, G, H, E, I, then F.
+
+**A01 matters for a playtest:** the tank's tread used to advance on every tick as well as every beat (twice
+`TANK3`'s rate, and it advanced while frozen or being born). It now advances on a beat only — that is a
+visible change to the tank.
+
