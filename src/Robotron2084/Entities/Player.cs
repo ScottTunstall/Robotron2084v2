@@ -291,8 +291,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
         _ => 3,
     };
 
-    /// <summary>Current frame index into <c>SpriteSet.PlayerFrames</c> (frame 1..12).</summary>
-    /// <remarks>Matches the arcade's own frame numbering, 1 through 12.</remarks>
+    /// <summary>0-based index into <see cref="SpriteSet.PlayerFrames"/>.</summary>
+    /// <remarks>The arcade numbers its frames 1 through 12, so arcade frame N is index N - 1.</remarks>
     internal int WalkFrameIndex => _animGroup * 3 + WalkCycle[_animSequenceIndex];
 
     /// <summary>Kills the player (contact with a live hazard). No-op while dying/dead.</summary>
