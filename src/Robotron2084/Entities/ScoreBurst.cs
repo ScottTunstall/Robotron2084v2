@@ -24,7 +24,6 @@ public sealed class ScoreBurst : IEntity
     private readonly SpriteSet _sprites;
     private readonly Texture2D[] _frames;
     private readonly Texture2D _points;
-    private readonly int _count;        // the ROM's countdown = the last picture's index
     private readonly int _burstSlot;
     private readonly int _pointsSlot;
     private readonly Rectangle _bounds;      // where the enemy was drawn
@@ -51,7 +50,6 @@ public sealed class ScoreBurst : IEntity
         _sprites = sprites;
         _frames = frames;
         _points = points;
-        _count = count;
         _burstSlot = burstSlot;
         _pointsSlot = pointsSlot;
         _bounds = bounds;
