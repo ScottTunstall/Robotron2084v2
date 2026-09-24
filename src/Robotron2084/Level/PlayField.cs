@@ -1278,9 +1278,6 @@ public sealed class PlayField
             _random.Next(inner.Y, inner.Bottom - size));
     }
 
-    // ---- PHASE D human spawning (ROM HUMSTV: kids, moms, dads; plain RANDXY —
-    //      no overlap or spacing constraints in the ROM) ----
-
     internal void SpawnBrains(IntVector2 playerStart)
     {
         // PHASE E: brains spawn with the wave (ROM $1AC0), like the hulks —
@@ -1297,6 +1294,9 @@ public sealed class PlayField
             Sound.Play(SoundTables.BrainWarpIn);
         }
     }
+
+    // ---- Human spawning (ROM HUMSTV: kids, moms, dads; plain RANDXY —
+    //      no overlap or spacing constraints in the ROM) ----
 
     private void SpawnHumans()
     {
