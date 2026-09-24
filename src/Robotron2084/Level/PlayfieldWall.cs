@@ -6,11 +6,15 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Level;
 
 /// <summary>
-/// The colour-cycling 4px (spec) border around the play area, rendered as a
+/// The 4px (spec) border around the play area, rendered as a
 /// ring of strips built from a 1x1 white pixel tinted per draw call.
 /// Entities live inside <see cref="PlayfieldBounds"/>; the ring itself spans
 /// from there out to <see cref="OuterBounds"/>.
 /// </summary>
+/// <remarks>
+/// The colour is supplied by the caller: the live game passes the wave's wall palette slot
+/// (<see cref="PlayField.Draw"/>), so the fallback cycle below is only ever seen where no palette is wired.
+/// </remarks>
 public sealed class PlayfieldWall
 {
     /// <summary>Wall strip thickness: spec's 4px widened by SpecScale (8 internal px at 2x).</summary>
