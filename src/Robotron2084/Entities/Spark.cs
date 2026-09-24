@@ -153,13 +153,10 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
                 _positionRemainderSubpixels.Y - (stepY * _stepScale));
 
             MoveBy(field, stepX, stepY);
-            return;
         }
-
-        MoveBy(field, 0, 0);
     }
 
-    /// <summary>Applies one (possibly zero) mover step and the wall rejection.</summary>
+    /// <summary>Applies one mover step and the wall rejection.</summary>
     /// <param name="field">The playfield wall.</param>
     /// <param name="stepX">This frame's whole-pixel step on X.</param>
     /// <param name="stepY">This frame's whole-pixel step on Y.</param>
