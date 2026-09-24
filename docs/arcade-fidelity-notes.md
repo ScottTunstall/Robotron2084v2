@@ -9980,5 +9980,13 @@ first time.
 `verify-playfield` PASS. `verify-attract` could NOT be judged on this build: its capture reads the
 SCREEN, and a browser window was over the game window for every attempt (the capture shows the movie
 rendering correctly in the game window, with the browser alongside it), so the gate reported "the capture
-is not the game window" at 66-94% lit. That is the trap in `ref/mame-notes.md`'s list, not a regression —
-re-run it with nothing over the game window.
+is not the game window" at 66-94% lit. That is the screen-capture trap this project has hit before, not a
+regression — re-run it with nothing over the game window.
+
+**One thing the rename left behind, and only a scan caught it:** a stale copy of the pre-rename enum was
+still on disk as `MovieArt.cs`. It was **untracked**, so no diff showed it, and it **compiled** — a leftover
+second type in the same namespace is perfectly legal as long as nothing references it, and the new
+`MovieAnimation` had taken all the references. So the file sat there as dead code that the build, the tests
+and every gate were happy with. It is the same lesson as §120's orphaned `<summary>`: **neither a clean
+build nor a green gate can see leftover code.** The checks that can are the one-type-per-file scan in this
+section and `git status` for untracked files — worth running both after any rename.
