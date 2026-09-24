@@ -62,24 +62,28 @@ public sealed class DefineInputsState : IGameState
 
     // The author's restyle (notes §108): the page reads like the arcade's GAME ADJUSTMENT page —
     // HEADINGS and INSTRUCTIONS in the palette's WHITE ($FF, slot 9), the lines' input text in its
-    // GREEN ($38, slot 6), and the selected line marked by the arcade's own "->" cursor rather than
-    // by a colour of its own. The word OR between a line's two devices keeps its own BLUE ($C0, slot
-    // 7), so "W OR P1 LEFT STICK UP" reads as two alternatives rather than as one long string (slot
-    // 5's yellow was tried first and rejected as too bright, slot 4's amber as the wrong hue — notes
-    // §101.12). All three are the palette's plain CRTAB values, so none of them cycles — and they
-    // are the very entries the arcade's page uses: its cursor string sets text colour $99 (entry 9)
-    // before printing the glyph and restores $66 (entry 6) after it (notes §108.4).
+    // GREEN ($38, slot 6), and the selected line marked by the arcade's own "->" cursor. The word OR
+    // between a line's two devices keeps its own BLUE ($C0, slot 7), so "W OR P1 LEFT STICK UP"
+    // reads as two alternatives rather than as one long string (slot 5's yellow was tried first and
+    // rejected as too bright, slot 4's amber as the wrong hue — notes §101.12). Those are the
+    // palette's plain CRTAB values, and they are the very entries the arcade's page uses: its
+    // cursor string sets text colour $99 (entry 9) before printing the glyph and restores $66
+    // (entry 6) after it (notes §108.4). The one thing on the page that COLOUR-CYCLES is the
+    // selected line's label — strobed in its own slot the way the intro pages cycle their text
+    // (notes §115) — while the line's value, the bound key or joystick input, stays on the page's
+    // static green.
     private const int InputSlot = 6;
     private const int SeparatorSlot = 7;
     private const int HeadingSlot = 9;
 
     /// <summary>
-    /// The three entries this page uses. It writes them itself on entry (see
+    /// The three entries this page draws with STATICALLY. It writes them itself on entry (see
     /// <see cref="RestorePalette"/>) because no slot can be assumed to hold its CRTAB value: the
     /// screen it is opened FROM leaves its own colours up — the presentation page writes entries 1-7
     /// (notes §106) and the high score table zeroes all sixteen (notes §98.6) — and F10 is handled by
-    /// the shell, so those pages never stand their colours down. Slots 10-15 are left alone: the
-    /// in-game animator owns those.
+    /// the shell, so those pages never stand their colours down. The selected line's label sits in
+    /// <see cref="DefineInputsHighlight.Slot"/>, which that process itself puts on its GREEN on entry
+    /// (notes §115). Slots 10-15 are left alone: the in-game animator owns those.
     /// </summary>
     private static readonly int[] OwnedSlots = [InputSlot, SeparatorSlot, HeadingSlot];
 
@@ -88,6 +92,7 @@ public sealed class DefineInputsState : IGameState
     private readonly GameServices _services;
     private readonly ControlSettings _settings;
     private readonly DefineInputsModel _model = new();
+    private readonly DefineInputsHighlight _highlight = new();
     private InputSnapshot _previous;
 
     public DefineInputsState(GameServices services, ControlSettingsStore controlStore)
@@ -98,6 +103,11 @@ public sealed class DefineInputsState : IGameState
         _controlStore = controlStore;
         _previous = InputSnapshot.Read();
         RestorePalette();
+
+        if (_sprites.Palette is { } palette)
+        {
+            _highlight.Start(palette);
+        }
     }
 
     /// <summary>
@@ -120,6 +130,11 @@ public sealed class DefineInputsState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
+        if (_sprites.Palette is { } palette)
+        {
+            _highlight.Update(palette);
+        }
+
         InputSnapshot now = InputSnapshot.Read();
 
         if (_model.IsArmed)
@@ -232,12 +247,14 @@ public sealed class DefineInputsState : IGameState
             DrawCursor(spriteBatch, y);
         }
 
-        // The highlight hides itself while armed (IsCursorOn), so the armed line is identified by
-        // its prompt rather than by its colour — and the arrow marks nothing while it is armed,
-        // because the next input pressed becomes the binding rather than moving the cursor.
+        // The arrow hides itself while armed (IsCursorOn): the next input pressed becomes the
+        // binding rather than moving the cursor, so the armed line is identified by its prompt.
         bool armed = _model.IsArmed && _model.Line == line;
 
-        DrawText(spriteBatch, LabelOf(line), LabelColumn, y, InputSlot);
+        // The selected line's label is the page's one cycling thing (notes §115): it strobes in the
+        // highlight's slot — while armed as well — and the line's value stays on the page's green.
+        int labelSlot = _model.Line == line ? DefineInputsHighlight.Slot : InputSlot;
+        DrawText(spriteBatch, LabelOf(line), LabelColumn, y, labelSlot);
         DrawValue(spriteBatch, line, armed, InputSlot, y);
     }
 

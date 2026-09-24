@@ -9558,3 +9558,176 @@ In practice, for this codebase:
 **Not a licence to churn**: no reformatting for its own sake and no rename sweeps without a reason — but
 any file opened for another reason gets this standard applied while it is open, and the parked work
 (B48i, B48j) is measured against it. Recorded in `status.md`, the ledger and the handoff (rule 11).
+
+### 115. THE DEFINE INPUTS PAGE STROBES ITS SELECTED LINE (author, 2026-09-24)
+
+**Author:** *"I want you to change the robotron define input page so that the selected input colour
+cycles (but not the keys or joystick button/input selected) - so 'move UP' will strobe. Ensure
+colour cycling is same as other intro pages."*
+
+The page is port-only (notes §101/§108), so there is no ROM counterpart to be faithful to — but the
+cycling it asked for is the intro pages' own idiom: a page-owned palette process on the ROM-frame
+clock, writing the slot the text is drawn in (the presentation page's white chase, notes §106; the
+high score table's ramp processes, notes §98.5). The selected line's LABEL (e.g. "P1 MOVE UP") now
+draws in palette slot 8, and a new process (`Rendering/DefineInputsHighlight`) chases a WHITE flash
+through it on the PRESENTATION PAGE'S OWN clock: a step every 3 ROM frames (ROM `$8A4F`/`$8A68`'s
+rate), the slot white for one step in seven (the presentation page chases through seven entries, so
+the text drawn in one of them — its ORANGE message slot 6 — is white for a seventh of the time, which
+is the author's "the PRESENTED BY … text actually cycles between orange and white"). The label
+therefore strokes green/white with the same rate and duty as the title page's message strokes
+orange/white.
+
+What does NOT cycle: the line's VALUE (the bound key or joystick input, e.g. "W OR P1 LEFT STICK
+UP") stays in the page's static GREEN (slot 6), as do the heading and instructions (WHITE, slot 9)
+and the OR separator (BLUE, slot 7) — the three plain CRTAB entries the arcade's own adjustment page
+uses (notes §108). The white "->" cursor is unchanged. Slot 8 was chosen because it is the one slot
+in 0-9 nothing else on the machine draws text in (the high score page's shift register passes
+through it but its exit restores every slot, notes §98.6), and slots 10-15 remain the in-game
+animator's (notes §108.2).
+
+Details: the page comes up green with no white on it, as the presentation page does (its table copy
+at ROM `$8A3A` runs before its first chase step); the first flash lands on the seventh step (~420 ms
+in). On exit the slot is left as the chase left it, exactly as this page already leaves its own
+entries (F10 is handled by the shell, so the page stands nothing down — notes §108.2); nothing else
+draws in slot 8, and re-entry puts it back on green before the first frame.
+
+Verified: new `DefineInputsHighlightTests` (the start colour, the 3-ROM-frame cadence, the
+one-in-seven duty, slot 8 the only slot the chase touches) — **455 tests, 0 failed, 0 skipped**;
+Debug and Release 0 warnings; smoke gate OK.
+
+### 116. THE HIGH SCORE INITIALS ENTRY — the arcade's screens and input model (2026-09-24)
+
+The open item from §98.4 (item 2, author: "not yet"). This section is the DECODE of the
+arcade's initials-entry path, read from `ref/original-source` before any port code: the
+game-end flow (`RRTESTC.ASM`), the four messages (`RRET.ASM`), the input routine
+(`RRTESTB.ASM` `GETLET`, loaded at `GETLET EQU ATMCK+3` per `RRF.ASM`), its timeout
+process (`TIMPRC`) and the all-time insertion rule (`SETBOT`).
+
+**The flow (RRTESTC: PLEND → ENDGAM → EGSUB → GOV).** After the GAME OVER message
+(§98.4: message 40, `NAP 120` = 2.4 s), `ENDGAM` runs each player's `EGSUB` in turn
+(P1 always; P2 after a `SCRCLR` + cocktail check in 2-player), then `JMP GOV` — the
+ATTRACT CYCLE entry. The table is NOT shown right away: `TABORG` runs at `LOGG1`, the
+end of the full attract cycle. The port's signed adaptation (§98) is
+GameOver → initials screen (when qualified) → table (posted scores highlighted) → title.
+
+`EGSUB` (the player path) does, in order: `TODCHK` (does the score beat today's lowest)
+and `ALLCHK` (all-time's lowest) — if NEITHER qualifies, it returns with no screen at
+all; it plays the entry jingle (`HSTUNE` "PLEBIAN HIGH" when today's list qualifies,
+`ULTUNE` "UPPER LEFT OR GOD" when only all-time does — the port's sound engine has no
+data, so this is silent); `SCRCLR`; prints message 95 (CONG, below) via `WRD7V`; seeds
+the 3-character store (`ALTBL`) with spaces; `JSR GETLET` with A=3 (three letters),
+B=0 (ALPHA ONLY), X=$4680 (the video echo region), Y=#ALTBL. After the entry it
+RE-CHECKS `TODCHK`/`ALLCHK` (another player's entry may have aged the score); if it no
+longer qualifies it prints ONLY5P (100) for `NAP $60` = 60 frames (1.2 s at the ROM's
+20 ms frame) and returns; otherwise it inserts — today via `SCTRNS` (bubble down, move
+3 chars + 4-byte score + check byte) and all-time via `SETBOT` (below).
+
+**The messages (RRET.ASM).** RRET.ASM holds the ROM's COMPLETE message pointer table
+(message 40 `GOMP` through 126+), so 94-100 needed no separate ROM extraction. Cursors
+are (column, row) with one column = two arcade pixels — the same units as the table
+page (§98.3). Messages print via `WRD7V`, whose default font is the LARGE 5×7; only
+`TELSUB` switches to `SFONT` (the small 3×5) for the instruction lines.
+
+- **CONG (95, `CONGP`) — the initials screen:** `COLOR $44` (both slots 4).
+  `SUB PRPLYR` = cursor (col 64, row 16) + "PLAYER " + `ZBLANK` + `NUMB` (the player
+  number from register B). Cursor (41, 48): "YOU ARE A " + `SUB ROHSUB` ("ROBOTRON
+  HERO"). Cursor (45, 88): `SUB ENTSSB` ("ENTER YOUR ") + "INITIALS" + `COLON`. Then
+  `SUB TELSUB` = `SFONT` + `COLOR $99` (white): cursor (47, 192) `SUB UPDNSB` ("USE
+  -MOVE- TO SELECT ") + "LETTER", then cursor (50, 204) "-FIRE UP- TO ENTER LETTER".
+  So the page is: "PLAYER 1" / "YOU ARE A ROBOTRON HERO" / "ENTER YOUR INITIALS:" in
+  the large font in slot 4 across the top third, and the two small-font white
+  instructions at the bottom.
+- **GODMSP (94)** — the operator's GOD name entry (the `GODESB` path): `COLOR $BB`
+  (slot 11), "YOU ARE THE GREATEST" (44, 40), `ROHSUB` (54, 56), "ENTER YOUR NAME"
+  (52, 88), "(UP TO n LETTERS)" (49, 104) with n = the CMOS `GA2` letter count (max
+  23), then `TELSUB`. OUT OF SCOPE for the port: there is no operator adjustment
+  screen (D-019), so its trigger does not exist.
+- **NOWMSP (96)** — `COLOR $99`, `PRPLYR` + number, "ALSO" at (67, 103), then the
+  shared `NOWSUB` tail ("ENTER YOUR INITIALS:" + `TELSUB`). Defined in the table but
+  NEVER printed: the ROM reuses the value 96 as a non-zero `EGRAM2` flag meaning "GOD
+  just entered".
+- **ONLY5P (100)** — `COLOR $BB` (slot 11): "5 ENTRIES MAXIMUM" (32, 112) + `SUB
+  PPSUB`, "LOWEST ENTRY REPLACED" (40, 144). Held `NAP $60` = 1.2 s. Shown when a
+  score is rejected at the per-initials limit, and after a lowest-entry replacement,
+  to explain what happened.
+
+**The input (GETLET, RRTESTB.ASM).** Arguments: A = letter count, B = $80 for all
+chars / 0 for alpha-only, X = video echo pointer, Y = store address (RAM or CMOS).
+The `PD` block holds the state: letters left, the mode, the echo pointer (PD+2), the
+store pointer (PD+4) and the return (PD+6). The PREVIEW letter is the byte in the
+store at the current position — cycling changes it in place, and every store position
+is seeded with a space (`$3A`) as it becomes current (`G0SUB`), so a never-touched
+position is already a valid blank.
+
+1. `GETLZZ`: wait for FIRE to be RELEASED (the screen comes up under a held fire).
+2. `MAKP TIMPRC` (the timeout process, below).
+3. Echo colour to white (`TEXCOL $99`); `G0SUB` — clear the region (a 4-column ×
+   7-row block at the echo pointer) and draw the FROB MARKERS (below).
+4. Main loop: `NAP 2`, then scan PIA2 (the player-1 port): bit 0 = UP, bit 1 = DOWN,
+   bit 6 = FIRE (`GETFIR`).
+5. UP/DOWN cycle the preview through the char set (`LUP`/`LDOWN`); each step re-prints
+   the letter at the echo. Holding the key auto-repeats: ten steps of (cycle +
+   `DELAY1`, where `DELAY1` is an 8192 × ~6-cycle loop ≈ 49 ms ≈ 2.5 ROM frames —
+   ~0.5 s to the first repeat) then one step per loop (≈ 50 ms/letter).
+6. FIRE commits (`G1LET`): take the markers away (`NOFROB`), print the letter at the
+   echo with `PR57V` (the LARGE font), advance the store pointer (`PUSHY`) and the
+   letter count; if that was the LAST letter, `G2LET` kills the timer process and
+   returns. Otherwise `G0SUB` re-marks and the loop continues.
+7. TYPOMATIC commit: with FIRE still held and letters remaining, `GETLT3`/`GETLT4`
+   count down 32 (`NAP 2` a tick → first repeat ≈ 64 frames ≈ 1.3 s) and thereafter
+   4 (≈ 8 frames ≈ 160 ms per commit).
+8. RUB (`$5E`, the `SLASH`/`LASCAR` code): in alpha-only mode, once at least one
+   letter is committed, the cycle wraps Z → RUB (up) and SPACE → RUB (down); FIRE
+   with RUB in preview DELETES the last committed letter (`GETRUB` — a space at that
+   position, the store pointer back one, the count up one, wait for fire release,
+   re-seed the markers).
+9. The alpha-only ring: SPACE ($3A) → A ($41) → … → Z ($5A) → RUB ($5E) → SPACE, with
+   codes $3B-$40 and $5D skipped; before the first commit the ring is SPACE → A → … →
+   Z → SPACE (no RUB).
+
+The char codes (RRTEXT.ASM): SPACE $3A, EXPT $3B, COMMA $3C, PERIOD $3D, ARROW $3E,
+COLON $3F, HYPHEN $40, LPAREN $5B, RPAREN $5C, FROB $5D, SLASH $5E.
+
+The FROB MARKERS are not glyphs: `G0SUB` writes the RAW video byte `$99` — both 4-bit
+pixels of one buffer cell, palette slot 9 (white), a 2-pixel dash — at +8 (eight rows
+below the echo pointer), +$108 (one column right, eight rows below) and +$208 (two
+columns right, eight rows below); `NOFROB` writes `$00`. The echo region $4680 =
+(column 70, row 128) — the screen's centre — so the markers sit at row 136, one under
+each letter of the row.
+
+UNRESOLVED (and why the port will differ by a few pixels): `PR57V`/`PR35V` are entries
+into the text program that is DATA-copied into RAM at $5F90 (`TXORG`, RRF.ASM) — the
+listing has the pointer table, not the routine — so the large font's per-letter cursor
+advance cannot be read from the source. The ROM's one-column marker stride is not a
+printable advance for a 5-px glyph, so the port lays its three cells at its own
+large-font advance and puts the white dash at the bottom of each cell.
+
+**The timeout (TIMPRC).** Alpha-only mode: `NAP $FF` + `NAP $FF` + `NAP $82` = 640 ROM
+frames (12.8 s), then `DEC` the letters-left and repeat — EACH remaining letter carries
+its own 12.8 s deadline, running whether or not the player types. When the count
+reaches zero by commits AND/OR timeouts: if the preview at the current position is RUB,
+store a space instead (a timed-out name must not end in RUB), then `KILL` and return
+to the caller. All-chars mode has no timeout (`TIMADV` spins on a PIA0 diagnostic
+bit). Because positions are pre-seeded with spaces, a timed-out letter simply stays
+what it shows.
+
+**The all-time rule (SETBOT).** The all-time list caps the entries sharing one set of
+initials at FIVE (FOUR when the initials match the GOD entry's): `SETBOT` counts the
+same-initials entries already in the list; at the cap it returns the fifth matching
+entry as the replacement target (carry set) — the beaten entry drops out and ONLY5P
+explains it ("5 ENTRIES MAXIMUM / LOWEST ENTRY REPLACED"). The TODAY's list (10) has
+NO per-initials cap — it keeps the day's ten best.
+
+**What the port does today, and the shape of the fix.** `GameOverState` holds GAME
+OVER for 2.4 s, then offers every session score to the table with BLANK initials
+(three spaces, `NULSCR`) and goes straight to `HighScoreTableState` — no initials
+screen (§98.4 item 2). The fix is the signed §98 flow: GameOver → (when a score
+qualifies) the CONG screen with the GETLET input model → the table with the posted
+scores highlighted → title. Two port decisions ride on it: input maps to PLAYER 1'S
+BOUND controls (the bound move-up/move-down letters cycle, the bound fire commits)
+instead of the arcade's hard-wired PIA2 — consistent with the Define Inputs page
+(§108) — and the arcade's 6809 typematic (32 → 4 counts) and the per-letter 640-frame
+deadline become the port's own countdowns on the ROM-frame clock. In 2-player the
+port's offering order is highest-first (the signed §98 deviation from the ROM's
+P1-then-P2), so the screen's "PLAYER n" line needs the player number passed with each
+offered score. `GODMSP`/`GODESB` (the full-name entry) stays out of scope (D-019).

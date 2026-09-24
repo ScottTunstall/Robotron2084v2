@@ -648,6 +648,33 @@ tests**.
   the POSTS table's unreferenced records, and FAMPAG's DUMPLR half — the arcade's title
   ALSO walks the "dumb player" family past the title (HELPME $8715) before HISTO starts;
   the script and the engine both exist, so that is wiring, not decode.
+- **2026-09-24 — THE DEFINE INPUTS PAGE STROBES ITS SELECTED LINE (notes §115, D-021).**
+  Author: *"…the selected input colour cycles (but not the keys or joystick button/input
+  selected) - so 'move UP' will strobe. Ensure colour cycling is same as other intro pages."*
+  The page is port-only, so the cycling borrows the intro pages' idiom (a page-owned palette
+  process on the ROM-frame clock): the selected line's LABEL draws in palette slot 8, chased by
+  a WHITE flash on the PRESENTATION PAGE'S OWN clock (3-ROM-frame steps, white one step in seven —
+  the same rate and duty as the title's orange/white message, notes §106). New
+  `Rendering/DefineInputsHighlight`; the line's VALUE (bound key or joystick input) and the
+  heading/instructions/OR separator stay on the page's static CRTAB slots (notes §108), and
+  slots 10-15 remain the in-game animator's. +5 tests (**455**); Debug/Release 0 warnings;
+  smoke gate OK.
+- **2026-09-24 — THE HIGH SCORE INITIALS ENTRY: ROM decode (notes §116).** Author
+  (away from keyboard): finish the define-inputs cycling, then move on to the high
+  score page, staying arcade faithful — the remaining arcade-faithful item there is the
+  initials entry (§98.4 item 2, "not yet"). Decoded from `ref/original-source`, no code
+  yet: the `ENDGAM`/`EGSUB` flow (the table itself is `LOGG1` at the end of the attract
+  cycle — the port's signed adaptation shows it right after); the four messages with
+  exact cursors/fonts/slots (RRET.ASM holds the full pointer table 40-126+ — CONG (95),
+  GODMSP (94) out of scope per D-019, NOWMSP (96) defined but never printed, ONLY5P
+  (100)); the `GETLET` input model (UP/DOWN cycle the preview letter held in the store
+  location, alpha ring SPACE→A-Z→RUB with RUB only after the first commit, FIRE commits
+  with typematic 32→4, FIRE on RUB deletes the last letter, `TIMPRC`'s 640-frame
+  per-letter deadline, the raw-$99 frob markers at the echo region $4680 = (col 70,
+  row 128)); and `SETBOT`'s all-time 5-entries-per-initials rule (today's list: no
+  cap). Port plan: GameOver → CONG screen (when qualified) → table (posted scores
+  highlighted) → title, input on player 1's BOUND controls (move-up/move-down cycle,
+  fire commits) — next step is the implementation.
 
 ### Session 5 (2026-09-17, night) — THE TITLE SCREEN AND THE ATTRACT DEMO (notes §94)
 
