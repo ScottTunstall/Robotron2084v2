@@ -28,7 +28,7 @@ public sealed class LaserSlotsTests
             Assert.True(slots.TryFire(new IntVector2(100 + i * 20, 100), Direction8.Up, out _));
         }
 
-        slots.Slots[0]!.Deactivate();
+        slots.Slots[0]!.Kill();
 
         Assert.True(slots.TryFire(new IntVector2(300, 300), Direction8.Right, out PlayerLaser? laser));
         Assert.NotNull(laser);

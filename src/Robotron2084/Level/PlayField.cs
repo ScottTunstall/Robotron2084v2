@@ -505,7 +505,7 @@ public sealed class PlayField
 
                 robot.LaserHit(this, target, laser.Direction);
                 AwardLaserScore(robot.Score);
-                laser.Deactivate();
+                laser.Kill();
                 break;
             }
         }

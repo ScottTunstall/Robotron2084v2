@@ -13,7 +13,7 @@ namespace Robotron2084.Entities;
 /// <see cref="GameplayConstants.LaserSpeed"/> px/tick, far quicker than the player. The picture is one of the ROM's four laser shapes (R5 $35BE-$35DC: <c>LLPC</c>,
 /// <c>ULPC</c>, <c>DLLPC</c>, <c>ULLPC</c>), chosen for the direction by <c>LTAB</c> (RRG23.ASM) and
 /// centred in the box — the arcade never flips the art (notes §19).</remarks>
-public sealed class PlayerLaser : IEntity, IAnimationFrameSource
+public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
 {
     private readonly SpriteSet _sprites;
 
@@ -45,7 +45,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Removes the laser at once, vacating its slot.</summary>
-    public void Deactivate() => LifeState = EntityLifeState.Dead;
+    public void Kill() => LifeState = EntityLifeState.Dead;
 
     /// <summary>Flies one step in <see cref="Direction"/> and dies at the wall.</summary>
     /// <param name="gameTime">Unused — the laser moves a fixed step per tick.</param>
@@ -63,7 +63,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource
         {
             // RRG23 LASDIE: a brief flare in the wave's LASCOL slot, then the wall colour.
             field.SpawnLaserWallFlare(Bounds, Direction);
-            Deactivate();
+            Kill();
         }
     }
 
