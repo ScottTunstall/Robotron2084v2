@@ -24,7 +24,9 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class CruiseMissile : IEntity, IRemovable
 {
-    private readonly SpriteSet _sprites;    /// <summary>The collision box's size, 6x4 arcade px, in port pixels; the box itself is offset up-left.</summary>
+    private readonly SpriteSet _sprites;
+
+    /// <summary>The collision box's size, 6x4 arcade px, in port pixels; the box itself is offset up-left.</summary>
     /// <remarks>The disassembly labels this hitbox "FAT PHONY GUY" — far bigger than the
     /// <see cref="GameplayConstants.MissileMarkArcadeWidth"/> x
     /// <see cref="GameplayConstants.MissileMarkArcadeHeight"/> arcade px mark, and offset up and

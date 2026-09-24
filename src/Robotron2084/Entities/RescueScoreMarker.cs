@@ -13,7 +13,9 @@ namespace Robotron2084.Entities;
 /// and holds it for 60 ROM frames.</remarks>
 public sealed class RescueScoreMarker : IEntity
 {
-    private readonly SpriteSet _sprites;    /// <summary>How long the display stays on the field.</summary>
+    private readonly SpriteSet _sprites;
+
+    /// <summary>How long the display stays on the field.</summary>
     private const int LifeRomTicks = 60;
 
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.EntitySizeSpecPixels);

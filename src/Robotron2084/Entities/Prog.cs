@@ -23,7 +23,9 @@ namespace Robotron2084.Entities;
 /// frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Prog : IExplodable, IRemovable
 {
-    private readonly SpriteSet _sprites;    /// <summary>How many ROM frames pass between beats.</summary>
+    private readonly SpriteSet _sprites;
+
+    /// <summary>How many ROM frames pass between beats.</summary>
     /// <remarks>The ROM re-runs the prog's step logic every 3 frames.</remarks>
     private const int BeatPeriodRomTicks = 3;
 

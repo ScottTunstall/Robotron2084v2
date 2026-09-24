@@ -21,7 +21,9 @@ namespace Robotron2084.Entities;
 /// interval of N frames is due at 6 x N.</remarks>
 public sealed class Brain : IEntity, IExplodable, IRemovable
 {
-    private readonly SpriteSet _sprites;    /// <summary>Extra ROM frames added to this wave's brain speed to get the beat.</summary>
+    private readonly SpriteSet _sprites;
+
+    /// <summary>Extra ROM frames added to this wave's brain speed to get the beat.</summary>
     private const int BeatExecutionRomTicks = 1;
 
     /// <summary>How far the brain moves on each axis per step: one arcade px.</summary>

@@ -160,7 +160,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="stepY">This frame's whole-pixel step on Y.</param>
     private void MoveBy(PlayField field, int stepX, int stepY)
     {
-
         // Safety cap, reproducing the ROM's own velocity ceiling.
         stepX = Math.Clamp(stepX, -GameplayConstants.SparkMaxSpeed, GameplayConstants.SparkMaxSpeed);
         stepY = Math.Clamp(stepY, -GameplayConstants.SparkMaxSpeed, GameplayConstants.SparkMaxSpeed);

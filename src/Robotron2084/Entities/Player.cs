@@ -27,7 +27,9 @@ namespace Robotron2084.Entities;
 /// an interval of N frames is due at 6 x N.</remarks>
 public sealed class Player : IEntity, IAnimationFrameSource
 {
-    private readonly SpriteSet _sprites;    /// <summary>Collision box = the player picture's own 8x12 arcade px.</summary>
+    private readonly SpriteSet _sprites;
+
+    /// <summary>Collision box = the player picture's own 8x12 arcade px.</summary>
     /// <remarks>The ROM collides against the player's PICTURE, not a fixed 16x16 cell.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.PlayerCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.PlayerCollisionSize.Height));

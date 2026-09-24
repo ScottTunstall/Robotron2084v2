@@ -15,7 +15,9 @@ namespace Robotron2084.Entities;
 /// centred in the box — the arcade never flips the art (notes §19).</remarks>
 public sealed class PlayerLaser : IEntity, IAnimationFrameSource
 {
-    private readonly SpriteSet _sprites;    private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
+    private readonly SpriteSet _sprites;
+
+    private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
 
     private IntVector2 _position;
 
