@@ -58,29 +58,11 @@ public static class GameplayConstants
     public static int PortTicksCeil(int romFrames) => (romFrames * 6 + 4) / 5;
 
     // Level generation (Phase 3.2 / 11.2)
-    public const int GruntCountMin = 3;
-    public const int GruntCountMax = 6;
-    public const int HulkCountMin = 1;
-    public const int HulkCountMax = 3;
-    public const int SpheroidCountMin = 1;
-    public const int SpheroidCountMax = 3;
-    public const int QuarkCountMin = 1;
-    public const int QuarkCountMax = 2;
-    public const int ElectrodeCountMin = 8;
-    public const int ElectrodeCountMax = 14;
-    public const int MaxEnforcersPerSpheroidMin = 1;
-    public const int MaxEnforcersPerSpheroidMax = 6; // spec-stated ("up to SIX")
-    public const int MaxTanksPerQuarkMin = 1;
-    public const int MaxTanksPerQuarkMax = 6; // spec-stated ("up to SIX")
-    public const int DifficultyGrowthCapLevels = 10;
     public const int EnemySpeedBonusCapPerLevel = 5;
     public const int SpawnPlacementMaxAttempts = 100;
 
     // Wall (Phase 6.1)
     public const int WallStepDurationMilliseconds = 150;
-
-    /// <summary>Game ticks per ROM sprite animation frame (placeholder — no ROM frame-duration table yet).</summary>
-    public const int SpriteFrameTicks = 10;
 
     /// <summary>Default 4-colour cyan cycle, dim to bright — never fully dark (spec-stated rule).</summary>
     public static readonly Color[] DefaultWallPalette =
@@ -249,7 +231,6 @@ public static class GameplayConstants
     public const int ElectrodeMinDistanceFromPlayer = 40; // spec-px (apply ScreenSize.Scaled at the use site)
 
     // Grunt (Phase 8.2 / 9.1)
-    public const int GruntSpeed = 3;
     // (No GruntDyingBlinkTicks: RRP8 ROBKIL is `JSR EXST` then `JSR KILROB` —
     // explode then off. NO enemy in this game blinks on death; see notes §50.)
     public const int GruntMinDistanceFromPlayer = 20; // spec-px, spec-stated
@@ -280,21 +261,11 @@ public static class GameplayConstants
     // colour-CYCLING palette slots, which is what spec.txt's "flashing light
     // green" describes and what the M4 marker remap already produces — author,
     // 2026-09-16. The invented visible-20/hidden-10 toggle is gone.)
-    public const int SpheroidDropCooldownMinTicks = 120;
-    public const int SpheroidDropCooldownMaxTicks = 300;
     public const int SpheroidMinDistanceFromPlayer = 100; // spec-px, spec-stated
     public const int SpheroidNearWallBiasPercent = 70;
     public const int SpheroidNearWallBiasDistance = 30; // spec-px
 
     // Enforcer (Phase 8.5; R5 retune 2026-09-12, notes §17)
-    // Swoop speed: the ROM's 16-bit fixed-point velocity gives ~1.1-1.9 spec
-    // px/tick away from the destination zone (50Hz); the port's constant
-    // step has no near-zone crawl, so the playtest value sits below the ROM
-    // range (playtest: "too fast" at 4, at 3, and at 2 — round 6
-    // 2026-09-13) — retuned to 1 internal px/tick = 0.5 spec px/tick at
-    // 60Hz. The arcade's near-destination crawl reads slower than the
-    // ROM's away-speed; the constant step can't reproduce it.
-    public const int EnforcerSpeed = 1;
     // No EnforcerDyingBlinkTicks: RRC11 ENFKIL does `JSR KILOFP` (image and
     // process gone immediately) then `JSR EXST` (explode) — the enforcer has no
     // death animation at all (author, 2026-09-16: "enforcers shouldn't flash
@@ -511,17 +482,10 @@ public static class GameplayConstants
     /// </summary>
     public static readonly (int Width, int Height) TankShellCollisionSize = (8, 7);
 
-    // Title / game-over screens (Phase 10.3 / 10.4 / 11.7)
-    public const int TitleBlinkIntervalSeconds = 1; // spec-stated
-    public const int GameOverMinPauseSeconds = 3; // spec-stated
-    public const int TitleHighScoreCycleSeconds = 5;
-
     // Attract mode (Phase 12.1, notes §94) — the arcade's attract cycle: idle
     // title, then the machine plays itself (CMOS "FANCY ATTRACT MODE" when on).
     public const int TitleWallSlot = 12; // ROM title screen: $79C8 LDA #$CC / STA $8F — the wall is solid slot 12
     public const int TitleIdleSeconds = 12; // port choice: how long the title sits before the demo takes over
-    public const int TitleLineOneRow = 54; // port title screen: string 128's row (the ROM's cursor is (54,36) — see notes §96.3)
-    public const int TitleLineTwoRowOffset = 14; // the tagline, 14 rows below the title
     /// <summary>
     /// ROM `SPGSUB` ($79AF) prints string 128 at the cursor (54, 36) — column 54,
     /// row 36 — and every attract-movie screen keeps it: the page script's CLEARM
