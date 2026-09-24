@@ -122,8 +122,8 @@ public sealed class QuarkTankBehaviourTests
         // TNKDRP: +2 COLUMNS and +6 ROWS, with the row decremented first unless the
         // quark sits on the top wall — this quark is mid-field, so it is +5 rows.
         IntVector2 spawn = quark.Position + new IntVector2(
-            GameplayConstants.TankBirthOffsetX,
-            GameplayConstants.TankBirthOffsetYOffTopWall);
+            ScreenSize.Columns(GameplayConstants.TankBirthOffsetColumns),
+            ScreenSize.Scaled(GameplayConstants.TankBirthOffsetRowsOffTopWall));
         Assert.Equal(spawn, tank.Position);
     }
 

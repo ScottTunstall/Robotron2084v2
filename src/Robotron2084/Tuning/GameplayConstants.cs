@@ -259,11 +259,14 @@ public static class GameplayConstants
     // first UNLESS the quark sits exactly on the
     // top wall (`CMPB #YMIN / BEQ TNKDP1 / DECB`), so a tank normally lands 5 rows
     // below its quark and 6 on the top wall.
-    public const int TankBirthOffsetX = 8;   // +2 columns = 4 arcade px
-    public const int TankBirthOffsetY = 12;  // +6 rows (quark on the TOP wall)
+    /// <summary>ROM `TNKDRP`: the tank lands 2 COLUMNS right of its quark.</summary>
+    public const int TankBirthOffsetColumns = 2;
 
-    /// <summary>ROM `TNKDRP`: +5 rows on the `DECB` path (quark not on the top wall).</summary>
-    public const int TankBirthOffsetYOffTopWall = 10;
+    /// <summary>ROM `TNKDRP`: 6 rows below the quark when it sits on the top wall (the `DECB` path is skipped).</summary>
+    public const int TankBirthOffsetRowsOnTopWall = 6;
+
+    /// <summary>ROM `TNKDRP`: 5 rows below the quark on the `DECB` path (quark not on the top wall).</summary>
+    public const int TankBirthOffsetRowsOffTopWall = 5;
 
     /// <summary>
     /// ROM `MTANK`: each grow picture's own (dx,dy) — descriptor bytes 4 and 5 of

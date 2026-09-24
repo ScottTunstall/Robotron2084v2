@@ -22,11 +22,17 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.GruntCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.GruntCollisionSize.Height));
 
-    /// <summary>How far one step moves the grunt on each active axis, in port pixels (4 arcade px).</summary>
-    private const int StepScreenPixels = 8;
+    /// <summary>How far one step moves the grunt on each active axis, in port pixels.</summary>
+    private static readonly int StepScreenPixels = ScreenSize.ArcadePixels(GruntStepArcadePixels);
 
-    /// <summary>The per-axis dead zone, in port pixels (2 arcade px).</summary>
-    private const int DeadZoneScreenPixels = 4;
+    /// <summary>The per-axis dead zone, in port pixels.</summary>
+    private static readonly int DeadZoneScreenPixels = ScreenSize.ArcadePixels(GruntDeadZoneArcadePixels);
+
+    /// <summary>The arcade pixels one grunt step covers (spec-stated).</summary>
+    private const int GruntStepArcadePixels = 4;
+
+    /// <summary>The arcade pixels the grunt keeps between itself and the player on each axis.</summary>
+    private const int GruntDeadZoneArcadePixels = 2;
 
     /// <summary>How many ROM frames one beat takes (4 vblanks).</summary>
     private const int BeatIntervalRomTicks = 4;

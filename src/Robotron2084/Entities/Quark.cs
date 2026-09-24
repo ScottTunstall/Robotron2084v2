@@ -177,12 +177,14 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         {
             _droppingTanks = true;
             _tanksRemaining--;
-            // A new tank appears 4 arcade px right and down, with a smaller Y offset when the
-            // quark is on the top wall so it does not spawn inside it (ROM: TNKDRP).
+            // A new tank appears 2 columns right and 5-6 rows down — 6 when the quark is on the
+            // top wall, where the ROM skips its `DECB` (ROM: TNKDRP).
             int rowOffset = _position.Y == field.Wall.PlayfieldBounds.Y
-                ? GameplayConstants.TankBirthOffsetY
-                : GameplayConstants.TankBirthOffsetYOffTopWall;
-            field.SpawnTank(_position + new IntVector2(GameplayConstants.TankBirthOffsetX, rowOffset));
+                ? GameplayConstants.TankBirthOffsetRowsOnTopWall
+                : GameplayConstants.TankBirthOffsetRowsOffTopWall;
+            field.SpawnTank(_position + new IntVector2(
+                ScreenSize.Columns(GameplayConstants.TankBirthOffsetColumns),
+                ScreenSize.Scaled(rowOffset)));
             if (_tanksRemaining == 0)
             {
                 StartFlee();
