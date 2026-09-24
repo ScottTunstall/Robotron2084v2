@@ -116,10 +116,24 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
 
         _beatTimer -= _beatPeriod;
 
+        AdvanceWalkAnimation(StepTowardTarget(field));
+
+        if (--_fireBeatsRemaining <= 0)
+        {
+            FireIfPossible(field);
+        }
+    }
+
+    /// <summary>Steps one pixel each way toward the target, where the playfield allows it.</summary>
+    /// <param name="field">The playfield, whose bounds the step is kept inside.</param>
+    /// <returns>The step it TRIED — the facing follows the intent, not whether a wall let it through.</returns>
+    /// <remarks>ROM: <c>BRNL1</c>. X steps toward the target but stops short inside the dead zone; Y always
+    /// steps, down when the target is level with it.</remarks>
+    private IntVector2 StepTowardTarget(PlayField field)
+    {
         // Nearest living human, else the player (ROM: GETHTG).
         IntVector2 target = field.NearestHumanPositionTo(_position) ?? field.Player.Position;
 
-        // X steps one px toward the target, but not inside the dead zone (ROM: BRNL1).
         int dx = 0;
         int targetDx = target.X - _position.X;
         if (Math.Abs(targetDx) > ApproachDeadZonePixels)
@@ -140,10 +154,18 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
             _position = _position with { Y = _position.Y + dy };
         }
 
-        // Facing follows the move (X wins); a change restarts the walk pattern (ROM: BRNDIR/BRNSD).
-        int nextBase = dx != 0
-            ? (dx > 0 ? RightDirectionBase : LeftDirectionBase)
-            : (dy < 0 ? UpDirectionBase : DownDirectionBase);
+        return new IntVector2(dx, dy);
+    }
+
+    /// <summary>Advances the walk pattern; the facing follows the step, and a change restarts the pattern.</summary>
+    /// <param name="step">This beat's attempted step.</param>
+    /// <remarks>ROM: <c>BRNDIR</c>/<c>BRNSD</c>.</remarks>
+    private void AdvanceWalkAnimation(IntVector2 step)
+    {
+        int nextBase = step.X != 0
+            ? (step.X > 0 ? RightDirectionBase : LeftDirectionBase)
+            : (step.Y < 0 ? UpDirectionBase : DownDirectionBase);
+
         if (nextBase == _directionBase)
         {
             _frameStep = (_frameStep + 1) % WalkCycle.Length;
@@ -153,17 +175,21 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
             _directionBase = nextBase;
             _frameStep = 0;
         }
+    }
 
-        if (--_fireBeatsRemaining <= 0)
+    /// <summary>Fires a cruise missile at the brain's own fixed offset, then re-arms the fire timer.</summary>
+    /// <param name="field">The playfield, which owns the missile cap and the new missile.</param>
+    /// <remarks>The re-arm takes place even when the cap blocks the shot, so a held-up brain keeps its
+    /// cadence (ROM: the brain's fire beat).</remarks>
+    private void FireIfPossible(PlayField field)
+    {
+        if (field.CanFireCruiseMissile)
         {
-            if (field.CanFireCruiseMissile)
-            {
-                field.SpawnCruiseMissile(_position + new IntVector2(
-                    3 * ScreenSize.SpecScale, 4 * ScreenSize.SpecScale));
-            }
-
-            _fireBeatsRemaining = 1 + _random.Next(_fireDelayRomTicks);
+            field.SpawnCruiseMissile(_position + new IntVector2(
+                3 * ScreenSize.SpecScale, 4 * ScreenSize.SpecScale));
         }
+
+        _fireBeatsRemaining = 1 + _random.Next(_fireDelayRomTicks);
     }
 
     /// <summary>True when the brain's picture box would still sit inside the playfield on X.</summary>

@@ -107,7 +107,22 @@ public sealed class RobotronGame : Game
             Exit();
         }
 
-        // ---- presentation keys (port-only) ----------------------------------------
+        HandlePresentationKeys(state);
+        HandleAttractDevKeys(state);
+        HandleStartKeys(state);
+
+        _previousKeyboardState = state;
+
+        _paletteAnimator.Update();
+        _stateManager.Update(gameTime);
+        Sound.Tick();
+        base.Update(gameTime);
+    }
+
+    /// <summary>The port-only presentation keys: full screen, and the canvas fit.</summary>
+    /// <param name="state">This tick's keyboard.</param>
+    private void HandlePresentationKeys(KeyboardState state)
+    {
         // F11 is the Windows convention for full screen and Alt+Enter is the game
         // convention; F8 cycles the canvas fit between the largest whole multiple
         // (crisp, the default) and the exact uniform fraction (fills the window).
@@ -121,16 +136,21 @@ public sealed class RobotronGame : Game
             _scaleMode = Presentation.Next(_scaleMode);
             FitCanvas();
         }
+    }
 
-        // ---- attract DEV KEYS (port-only; notes §97, re-keyed in §101) ---------
-        // F5 and F6 drop straight into the attract sequence — F5 the storyline movie
-        // (the family and the hulk), F6 the phony-player demo game — so a scene can be
-        // inspected without sitting out the title's 12-second idle. F7 HELD fast-forwards
-        // the movie, which is how the hulk's walk (ROM frame ~2574) is reached in seconds
-        // rather than after the text crawl. F4 jumps to the high score table and F9 to the
-        // end of a game, whose score ceremony (notes §116) is otherwise a whole game away.
-        // They used to be F1/F2/F3, which are now the author's game-start keys (below).
+    /// <summary>
+    /// The port-only attract dev keys (notes §97, re-keyed in §101): F5 the storyline movie, F6 the demo
+    /// game, F4 the high score table, F9 the end of a game, and F7 HELD to fast-forward the movie.
+    /// </summary>
+    /// <param name="state">This tick's keyboard.</param>
+    /// <remarks>F5 and F6 drop straight into the attract sequence so a scene can be inspected without
+    /// sitting out the title's 12-second idle, and F7 is how the hulk's walk (ROM frame ~2574) is reached
+    /// in seconds rather than after the text crawl. They used to be F1/F2/F3, which are now the author's
+    /// game-start keys.</remarks>
+    private void HandleAttractDevKeys(KeyboardState state)
+    {
         DevKeys.AttractFastForward = state.IsKeyDown(Keys.F7);
+
         if (Pressed(state, Keys.F5))
         {
             _stateManager.TransitionTo(new StorylineState(_services, new Random()));
@@ -145,41 +165,48 @@ public sealed class RobotronGame : Game
         }
         else if (Pressed(state, Keys.F9))
         {
-            // The end of a game — GAME OVER, the CONG initials screen and the table (notes §116) —
-            // is a whole game away otherwise, so F9 carries a score that has to qualify into it.
-            GameSession session = GameSession.NewGame(GameMode.OnePlayer, _input, controls: _controlSettings);
-            session.Current.Score = DevKeys.QualifyingScore;
-            _stateManager.TransitionTo(GameOverState.FromSession(_input, _sprites, _highScoreStore, session));
+            StartEndOfGameFlow();
         }
+    }
 
-        // ---- the author's start keys, live on EVERY attract screen (notes §101) ---
-        // F1 one player, F2 two players alternating turns, F3 the arcade's two-player
-        // game (selected now, played later), F10 the DEFINE INPUTS page. Handling them
-        // here rather than in the title means the attract movie, the demo and the high
-        // score table can all be interrupted by a real player sitting down.
-        if (_stateManager.Current is IAttractState)
+    /// <summary>Drops straight into the end of a game, with a score that has to qualify (notes §116).</summary>
+    /// <remarks>The GAME OVER page, the CONG initials screen and the table are otherwise a whole game away,
+    /// which is how the ceremony was verified.</remarks>
+    private void StartEndOfGameFlow()
+    {
+        GameSession session = GameSession.NewGame(GameMode.OnePlayer, _input, controls: _controlSettings);
+        session.Current.Score = DevKeys.QualifyingScore;
+        _stateManager.TransitionTo(GameOverState.FromSession(_input, _sprites, _highScoreStore, session));
+    }
+
+    /// <summary>
+    /// The author's start keys, live on EVERY attract screen (notes §101): F1 one player, F2 two players
+    /// alternating turns, F3 the arcade's two-player game (selected now, played later), F10 the DEFINE INPUTS
+    /// page.
+    /// </summary>
+    /// <param name="state">This tick's keyboard.</param>
+    /// <remarks>Handling them here rather than in the title means the attract movie, the demo and the high
+    /// score table can all be interrupted by a real player sitting down.</remarks>
+    private void HandleStartKeys(KeyboardState state)
+    {
+        if (_stateManager.Current is not IAttractState)
         {
-            GameMode? mode = Pressed(state, Keys.F1) ? GameMode.OnePlayer
-                : Pressed(state, Keys.F2) ? GameMode.TwoPlayerAlternate
-                : Pressed(state, Keys.F3) ? GameMode.TwoPlayerSimultaneous
-                : null;
-
-            if (mode is { } chosen)
-            {
-                _stateManager.TransitionTo(PlayingState.StartNewGame(_controlSettings, chosen, _sprites, _highScoreStore));
-            }
-            else if (Pressed(state, Keys.F10))
-            {
-                _stateManager.TransitionTo(new DefineInputsState(_services, _controlSettingsStore));
-            }
+            return;
         }
 
-        _previousKeyboardState = state;
+        GameMode? mode = Pressed(state, Keys.F1) ? GameMode.OnePlayer
+            : Pressed(state, Keys.F2) ? GameMode.TwoPlayerAlternate
+            : Pressed(state, Keys.F3) ? GameMode.TwoPlayerSimultaneous
+            : null;
 
-        _paletteAnimator.Update();
-        _stateManager.Update(gameTime);
-        Sound.Tick();
-        base.Update(gameTime);
+        if (mode is { } chosen)
+        {
+            _stateManager.TransitionTo(PlayingState.StartNewGame(_controlSettings, chosen, _sprites, _highScoreStore));
+        }
+        else if (Pressed(state, Keys.F10))
+        {
+            _stateManager.TransitionTo(new DefineInputsState(_services, _controlSettingsStore));
+        }
     }
 
     protected override void Draw(GameTime gameTime)

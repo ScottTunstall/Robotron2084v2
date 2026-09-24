@@ -1,8 +1,7 @@
-# Code metrics thresholds for the .NET code-analysis rules (see notes §99).
+# Code metrics thresholds for the .NET code-analysis rules (see notes §99, §120).
 #
 # CA1502 (avoid excessive complexity) — the author's rule: a method must stay at or
-# below 25, and anything above it is a BUILD ERROR (see .editorconfig). 25 is the
-# rule's own default, so this file is here to make that intent explicit and to be the
-# one place to change it. The rule counts 1 + branch points (if/while/do) + switch
-# cases, so a 26-way switch cannot be written without splitting it up.
-CA1502: 25
+# below 15, and anything above it is a BUILD ERROR (see .editorconfig). The rule
+# counts 1 + branch points (if/while/do) + switch cases, so a 16-way switch cannot be
+# written without splitting it up.
+CA1502: 15

@@ -19,7 +19,7 @@ csharp_using_directive_placement = outside_namespace:silent
 # Naming follows .NET/C# conventions (defaults); keep identifiers meaningful.
 dotnet_diagnostic.CS8618.severity = error
 
-# Cyclomatic complexity (notes §99). The threshold is 25, set in CodeMetricsConfig.txt
+# Cyclomatic complexity (notes §99, §120). The threshold is 15, set in CodeMetricsConfig.txt
 # and registered as an AdditionalFile in Directory.Build.props; this line is what makes a
 # breach an error rather than a disabled rule. The rule is OFF by default in .NET 10.
 dotnet_diagnostic.CA1502.severity = error

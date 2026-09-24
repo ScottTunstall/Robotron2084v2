@@ -129,6 +129,23 @@ public sealed class Player : IEntity, IArtSource
             return;
         }
 
+        AdvanceInvincibility(gameTime);
+
+        PlayerInputState input = field.Input.Poll();
+        IntVector2 move = input.MoveDirection;
+
+        // The aim drives the FIRE direction only — never the facing or the animation.
+        Direction8? aim = Direction8Extensions.FromDelta(input.AimDirection);
+
+        MoveFromInput(move, field);
+        UpdateFiring(input, aim, field);
+        AdvanceWalkAnimation(move);
+    }
+
+    /// <summary>Runs one tick of the invincibility countdown, its flicker, and the start-of-life grace.</summary>
+    /// <param name="gameTime">The elapsed time, used to run the start grace down.</param>
+    private void AdvanceInvincibility(GameTime gameTime)
+    {
         if (_invincibilityTicksRemaining > 0)
         {
             _invincibilityTicksRemaining--;
@@ -145,42 +162,57 @@ public sealed class Player : IEntity, IArtSource
                 IsInStartGracePeriod = false;
             }
         }
+    }
 
-        PlayerInputState input = field.Input.Poll();
-        IntVector2 move = input.MoveDirection;
-
-        // The aim drives the FIRE direction only — never the facing or the animation.
-        Direction8? aim = Direction8Extensions.FromDelta(input.AimDirection);
-
-        if (move != IntVector2.Zero)
+    /// <summary>Applies the stick for one tick: the facing follows it, and the wall bounds the move.</summary>
+    /// <param name="move">The stick's per-axis direction, -1 / 0 / +1.</param>
+    /// <param name="field">The playfield, whose wall bounds the move.</param>
+    private void MoveFromInput(IntVector2 move, PlayField field)
+    {
+        if (move == IntVector2.Zero)
         {
-            FacingDirection = Direction8Extensions.FromDelta(move)!.Value;
-            // Per-axis move with wall revert: never allowed to overlap the wall.
-            IntVector2 candidate = _position;
-            int dx = move.X * GameplayConstants.PlayerSpeedX;
-            if (dx != 0)
-            {
-                IntVector2 movedX = candidate + new IntVector2(dx, 0);
-                if (!field.Wall.Intersects(new Rectangle(movedX.X, movedX.Y, CollisionSize.Width, CollisionSize.Height)))
-                {
-                    candidate = movedX;
-                }
-            }
-
-            int dy = move.Y * GameplayConstants.PlayerSpeedY;
-            if (dy != 0)
-            {
-                IntVector2 movedY = candidate + new IntVector2(0, dy);
-                if (!field.Wall.Intersects(new Rectangle(movedY.X, movedY.Y, CollisionSize.Width, CollisionSize.Height)))
-                {
-                    candidate = movedY;
-                }
-            }
-
-            _position = candidate;
+            return;
         }
 
-        // A press fires at once; holding re-fires on the auto-fire cadence (TryFire no-ops when full).
+        FacingDirection = Direction8Extensions.FromDelta(move)!.Value;
+
+        // Per-axis move with wall revert: never allowed to overlap the wall.
+        IntVector2 candidate = _position;
+        int dx = move.X * GameplayConstants.PlayerSpeedX;
+        if (dx != 0)
+        {
+            candidate = StepAxis(candidate, new IntVector2(dx, 0), field.Wall);
+        }
+
+        int dy = move.Y * GameplayConstants.PlayerSpeedY;
+        if (dy != 0)
+        {
+            candidate = StepAxis(candidate, new IntVector2(0, dy), field.Wall);
+        }
+
+        _position = candidate;
+    }
+
+    /// <summary>Steps along one axis, unless the player's box would then overlap the wall.</summary>
+    /// <param name="from">The position to step from.</param>
+    /// <param name="delta">The step, on one axis only.</param>
+    /// <param name="wall">The wall the player must stay clear of.</param>
+    /// <returns>The stepped position, or <paramref name="from"/> when the wall blocks it.</returns>
+    private static IntVector2 StepAxis(IntVector2 from, IntVector2 delta, PlayfieldWall wall)
+    {
+        IntVector2 stepped = from + delta;
+        Rectangle box = new(stepped.X, stepped.Y, CollisionSize.Width, CollisionSize.Height);
+        return wall.Intersects(box) ? from : stepped;
+    }
+
+    /// <summary>Fires on the fire control: a fresh press at once, a held one on the auto-fire cadence.</summary>
+    /// <param name="input">This tick's controls.</param>
+    /// <param name="aim">The aim stick's direction, or null when it is centred.</param>
+    /// <param name="field">The playfield, which owns the laser slots.</param>
+    /// <remarks>A shot re-fires every <see cref="GameplayConstants.PlayerAutoFireTicks"/> ticks; the attempt
+    /// is a no-op when the three slots are full.</remarks>
+    private void UpdateFiring(PlayerInputState input, Direction8? aim, PlayField field)
+    {
         bool fire = input.FirePressed;
         if (fire && (!_wasFiring || --_autoFireTicksRemaining <= 0))
         {
@@ -195,28 +227,34 @@ public sealed class Player : IEntity, IArtSource
         }
 
         _wasFiring = fire;
+    }
 
-        // The animation only advances while the stick is not centred.
-        if (move != IntVector2.Zero)
+    /// <summary>Advances the walk cycle; with the stick centred the frame holds where it is.</summary>
+    /// <param name="move">The stick's per-axis direction, -1 / 0 / +1.</param>
+    private void AdvanceWalkAnimation(IntVector2 move)
+    {
+        if (move == IntVector2.Zero)
         {
-            int group = WalkGroup(FacingDirection);
-            if (group != _animGroup)
-            {
-                // A new direction resets the sequence index and the frame hold, so its first
-                // frame shows immediately.
-                _animGroup = group;
-                _animSequenceIndex = 0;
-                _animFrameTicks = 1;
-            }
-            else if (_animFrameTicks >= FrameTicksPerAnimationFrame)
-            {
-                _animFrameTicks = 1;
-                _animSequenceIndex = (_animSequenceIndex + 1) & 3;
-            }
-            else
-            {
-                _animFrameTicks++;
-            }
+            return;
+        }
+
+        int group = WalkGroup(FacingDirection);
+        if (group != _animGroup)
+        {
+            // A new direction resets the sequence index and the frame hold, so its first
+            // frame shows immediately.
+            _animGroup = group;
+            _animSequenceIndex = 0;
+            _animFrameTicks = 1;
+        }
+        else if (_animFrameTicks >= FrameTicksPerAnimationFrame)
+        {
+            _animFrameTicks = 1;
+            _animSequenceIndex = (_animSequenceIndex + 1) & 3;
+        }
+        else
+        {
+            _animFrameTicks++;
         }
     }
 

@@ -133,22 +133,7 @@ public sealed class Spheroid : IEntity, IArtSource, IRemovable
 
         if (_escaping)
         {
-            // The exit test is inside the wrap branch, so it runs once per 5-picture cycle (ROM: CIRC3L).
-            if (wrapPass)
-            {
-                Rectangle bounds = field.Wall.PlayfieldBounds;
-                if (_position.X <= bounds.X + ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitLeftColumn) ||
-                    _position.X >= ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitRightColumn))
-                {
-                    LifeState = EntityLifeState.Dead; // removed at once, no burst (ROM: `CIR4`)
-                    return;
-                }
-
-                _rotation = 0;
-                return;
-            }
-
-            _rotation++;
+            AdvanceEscapeBeat(field, wrapPass);
             return;
         }
 
@@ -165,9 +150,41 @@ public sealed class Spheroid : IEntity, IArtSource, IRemovable
             return;
         }
 
-        // While spinning, a frozen game holds the picture at its wrap target without
-        // decrementing the countdown; drop and escape have no such freeze check, because the
-        // arcade's freeze test is per routine, not per object.
+        AdvanceDropBeat(field);
+    }
+
+    /// <summary>One escape beat: step the picture, or leave for good once the far edge is reached.</summary>
+    /// <param name="field">The playfield, whose bounds the exit is measured against.</param>
+    /// <param name="wrapPass">True on the beat that lands on the phase's last picture.</param>
+    /// <remarks>The exit test lives inside the wrap branch, so it is tried once per picture cycle (ROM:
+    /// <c>CIRC3L</c>).</remarks>
+    private void AdvanceEscapeBeat(PlayField field, bool wrapPass)
+    {
+        if (!wrapPass)
+        {
+            _rotation++;
+            return;
+        }
+
+        Rectangle bounds = field.Wall.PlayfieldBounds;
+        int leftExit = bounds.X + ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitLeftColumn);
+        int rightExit = ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitRightColumn);
+        if (_position.X <= leftExit || _position.X >= rightExit)
+        {
+            LifeState = EntityLifeState.Dead; // removed at once, no burst (ROM: `CIR4`)
+            return;
+        }
+
+        _rotation = 0;
+    }
+
+    /// <summary>The wrap beat of the spin/drop cycle: hold the picture, release it, or drop an enforcer.</summary>
+    /// <param name="field">The playfield, which owns the enforcer cap and the new enforcer.</param>
+    /// <remarks>ROM: <c>CIRC2</c>. While spinning, a frozen game holds the picture at its wrap target without
+    /// decrementing the countdown; drop and escape have no such freeze check, because the arcade's freeze test
+    /// is per routine, not per object.</remarks>
+    private void AdvanceDropBeat(PlayField field)
+    {
         if (!_dropping && field.RobotsFrozen)
         {
             _rotation = 0;

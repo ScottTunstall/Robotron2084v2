@@ -685,42 +685,58 @@ public sealed class PlayField
         }
     }
 
-    /// <summary>PHASE D human collisions — see the call site in ResolveCollisions.</summary>
+    /// <summary>
+    /// PHASE D human collisions — see the call site in ResolveCollisions. The ROM's own four sub-phases, in
+    /// order: the victim a dying brain lets go, a brain's catch, a hulk's kill, and the player's rescue.
+    /// </summary>
+    /// <remarks>
+    /// A frozen game: the robots wait for STATUS, and the ROM only creates its collision process AFTER the
+    /// wave-start appear (<c>JSR ROBON / MAKP LSPROC / MAKP COLCHK / CLR STATUS</c>), so no robot may touch a
+    /// human while it is held. The family itself keeps walking (notes §88), which is why the gate exists.
+    /// </remarks>
     private void ResolveHumanCollisions()
     {
-        // A brain killed MID-reprogram releases its victim (ROM BRNKIL checks
-        // its own address against BMUT3 and, past it, frees the human and drops
-        // a SKULL — the conversion never completes and no prog appears).
-        foreach (Brain dyingBrain in _brains)
+        bool robotsHeld = RobotsFrozen;
+
+        ReleaseVictimsOfDeadBrains();
+        ResolveBrainCatches(robotsHeld);
+        ResolveHulkVsHumanCollisions(robotsHeld);
+        ResolvePlayerRescues();
+    }
+
+    /// <summary>A brain killed MID-reprogram releases its victim — the conversion never completes, no prog
+    /// appears, and a skull is left where she stands.</summary>
+    /// <remarks>ROM: <c>BRNKIL</c> checks its own address against <c>BMUT3</c> and, past it, frees the human
+    /// and drops a SKULL.</remarks>
+    private void ReleaseVictimsOfDeadBrains()
+    {
+        foreach (Brain brain in _brains)
         {
-            if (dyingBrain.LifeState == EntityLifeState.Alive)
+            if (brain.LifeState == EntityLifeState.Alive)
             {
                 continue;
             }
 
-            if (dyingBrain.ReleaseVictim() is { } released)
+            if (brain.ReleaseVictim() is { } released)
             {
                 released.FinishReprogramming();
                 _skulls.Add(new SkullMarker(released.Position));
             }
         }
+    }
 
-        // PHASE E BMUT: a brain that catches a human REPROGRAMS it — the human
-        // goes off the human list and the pair runs the ROM's 20-iteration
-        // animation (the brain stops, the human flashes two-colour and jiggles),
-        // ending in a PROG at the human's last position with no skull.
-        //
-        // The ROM's CATCH TEST is not a picture overlap: BRNL1's tail compares
-        // the two TOP-LEFT CORNERS, requiring |dX| <= 3 AND |dY| <= 3
-        // (`ADDB #3 / CMPB #$6 / BHI` then `ADDA #3 / CMPA #6 / BLS`). The old
-        // Bounds.Overlaps test fired as soon as the 14x16 brain box touched
-        // anything, so brains grabbed humans the source would not.
-        // A frozen game: the robots wait for STATUS, and the ROM only creates its collision
-        // process AFTER the wave-start appear (`JSR ROBON / MAKP LSPROC / MAKP COLCHK / CLR
-        // STATUS`), so no robot may touch a human while it is held. The family itself keeps
-        // walking (notes §88), which is why this gate matters.
-        bool robotsHeld = RobotsFrozen;
-
+    /// <summary>
+    /// A brain that catches a human REPROGRAMS her: she goes off the human list and the pair runs the ROM's
+    /// 20-iteration animation (the brain stops, the human flashes two-colour and jiggles), ending in a prog
+    /// at the human's last position with no skull.
+    /// </summary>
+    /// <param name="robotsHeld">True while the wave-start appear holds the robots.</param>
+    /// <remarks>The CATCH TEST is <c>BRNL1</c>'s tail comparing the two TOP-LEFT CORNERS, |dX| &lt;= 3 AND
+    /// |dY| &lt;= 3 (<c>ADDB #3 / CMPB #$6 / BHI</c> then <c>ADDA #3 / CMPA #6 / BLS</c>) — not a picture
+    /// overlap. A box test fires as soon as the 14x16 brain box touches anything, so brains would grab humans
+    /// the source would not.</remarks>
+    private void ResolveBrainCatches(bool robotsHeld)
+    {
         Rectangle playfieldBounds = Wall.PlayfieldBounds;
         foreach (Brain brain in _brains)
         {
@@ -736,7 +752,7 @@ public sealed class PlayField
 
             foreach (Human human in _humans)
             {
-                if (human.LifeState != EntityLifeState.Alive || human.IsBeingReprogrammed)
+                if (!IsGraspable(human))
                 {
                     continue;
                 }
@@ -751,10 +767,16 @@ public sealed class PlayField
                 break;
             }
         }
+    }
 
+    /// <summary>A hulk walking onto a human kills her: instantly off (ROM: <c>DMAOFF</c>), leaving a skull.</summary>
+    /// <param name="robotsHeld">True while the wave-start appear holds the robots.</param>
+    /// <remarks>ROM: <c>RRH11</c>'s <c>HULK</c>, the only robot whose collision phase walks the human list.</remarks>
+    private void ResolveHulkVsHumanCollisions(bool robotsHeld)
+    {
         foreach (Human human in _humans)
         {
-            if (human.LifeState != EntityLifeState.Alive || human.IsBeingReprogrammed)
+            if (!IsGraspable(human))
             {
                 continue;
             }
@@ -768,38 +790,48 @@ public sealed class PlayField
 
                 if (hulk.LifeState == EntityLifeState.Alive && Touches(hulk, human))
                 {
-                    human.Kill(); // instant off (ROM DMAOFF); the field leaves the skull
+                    human.Kill();
                     _skulls.Add(new SkullMarker(human.Position));
                     break;
-                }
-            }
-
-            if (human.LifeState != EntityLifeState.Alive)
-            {
-                continue;
-            }
-
-            if (Player.LifeState == EntityLifeState.Alive && Touches(Player, human))
-            {
-                human.Rescue();
-                RescuesThisLife++;
-                // ROM HUMKIL PCFLG path: 60-tick score display at the rescue
-                // spot showing min(SAVCNT,5) thousand (SAVCNT itself uncapped).
-                _rescueScores.Add(new RescueScoreMarker(human.Position, RescuesThisLife));
-                if (Score.Add(ScoreValues.RescueBonus(RescuesThisLife)))
-                {
-                    Player.AddLife(); // extra-life thresholds apply to rescue score too (ROM SCORE routine)
                 }
             }
         }
     }
 
     /// <summary>
-    /// For each laser still alive, find the first alive target it overlaps:
-    /// apply <paramref name="onKill"/>, deactivate the laser (consumed by the
-    /// first hit), and award score (an extra-life threshold crossing grants a
-    /// life, Phase 11.1).
+    /// The player touching a human RESCUES her: the bonus score, a running save count, and the score marker
+    /// that prints it.
     /// </summary>
+    /// <remarks>ROM: RRG23 <c>COLCHK</c>. The human path leaves <c>PCFLG</c> set for the human's kill vector,
+    /// so the touch is a bonus and no skull — the player is unharmed.</remarks>
+    private void ResolvePlayerRescues()
+    {
+        foreach (Human human in _humans)
+        {
+            if (!IsGraspable(human)
+                || Player.LifeState != EntityLifeState.Alive
+                || !Touches(Player, human))
+            {
+                continue;
+            }
+
+            human.Rescue();
+            RescuesThisLife++;
+            // ROM HUMKIL PCFLG path: 60-tick score display at the rescue
+            // spot showing min(SAVCNT,5) thousand (SAVCNT itself uncapped).
+            _rescueScores.Add(new RescueScoreMarker(human.Position, RescuesThisLife));
+            if (Score.Add(ScoreValues.RescueBonus(RescuesThisLife)))
+            {
+                Player.AddLife(); // extra-life thresholds apply to rescue score too (ROM SCORE routine)
+            }
+        }
+    }
+
+    /// <summary>True when a human is standing on the field and no brain has hold of her.</summary>
+    /// <param name="human">The human to test.</param>
+    private static bool IsGraspable(Human human) =>
+        human.LifeState == EntityLifeState.Alive && !human.IsBeingReprogrammed;
+
     /// <summary>
     /// ROM grunt speedup (3A94-3A9F): `LDB #$E0 / MUL` → the delay × 224/256
     /// (TRUNCATED), and applied ONLY while the result is still ≥ the current

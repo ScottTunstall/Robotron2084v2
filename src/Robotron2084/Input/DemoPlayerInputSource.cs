@@ -127,30 +127,45 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
     /// </summary>
     private static IntVector2 SteerClearOfWalls(IntVector2 move, IntVector2 position, Rectangle bounds, IntVector2 centre)
     {
-        int clearance = ScreenSize.Scaled(GameplayConstants.DemoWallClearanceSpecPixels);
-
-        if (move.X != 0 && position.X < bounds.X + clearance && move.X < 0)
-        {
-            move += new IntVector2(centre.X >= position.X ? 1 : -1, 0);
-        }
-
-        if (move.X != 0 && position.X > bounds.Right - clearance && move.X > 0)
-        {
-            move += new IntVector2(centre.X >= position.X ? 1 : -1, 0);
-        }
-
-        if (move.Y != 0 && position.Y < bounds.Y + clearance && move.Y < 0)
-        {
-            move += new IntVector2(0, centre.Y >= position.Y ? 1 : -1);
-        }
-
-        if (move.Y != 0 && position.Y > bounds.Bottom - clearance && move.Y > 0)
-        {
-            move += new IntVector2(0, centre.Y >= position.Y ? 1 : -1);
-        }
+        move = SteerClearOnX(move, position, bounds, centre);
+        move = SteerClearOnY(move, position, bounds, centre);
 
         return new IntVector2(
             Math.Clamp(move.X, -1, 1),
             Math.Clamp(move.Y, -1, 1));
+    }
+
+    /// <summary>Bends the X component toward the centre when the flee heads into the left or right wall.</summary>
+    /// <param name="move">The flee direction.</param>
+    /// <param name="position">The player's position.</param>
+    /// <param name="bounds">The playfield interior.</param>
+    /// <param name="centre">The field's centre, which the bend is toward.</param>
+    /// <returns>The direction, with its X component bent when it was heading into a wall.</returns>
+    private static IntVector2 SteerClearOnX(IntVector2 move, IntVector2 position, Rectangle bounds, IntVector2 centre)
+    {
+        int clearance = ScreenSize.Scaled(GameplayConstants.DemoWallClearanceSpecPixels);
+        bool headingIntoWall = (move.X < 0 && position.X < bounds.X + clearance)
+            || (move.X > 0 && position.X > bounds.Right - clearance);
+
+        return headingIntoWall
+            ? move + new IntVector2(centre.X >= position.X ? 1 : -1, 0)
+            : move;
+    }
+
+    /// <summary>Bends the Y component toward the centre when the flee heads into the top or bottom wall.</summary>
+    /// <param name="move">The flee direction.</param>
+    /// <param name="position">The player's position.</param>
+    /// <param name="bounds">The playfield interior.</param>
+    /// <param name="centre">The field's centre, which the bend is toward.</param>
+    /// <returns>The direction, with its Y component bent when it was heading into a wall.</returns>
+    private static IntVector2 SteerClearOnY(IntVector2 move, IntVector2 position, Rectangle bounds, IntVector2 centre)
+    {
+        int clearance = ScreenSize.Scaled(GameplayConstants.DemoWallClearanceSpecPixels);
+        bool headingIntoWall = (move.Y < 0 && position.Y < bounds.Y + clearance)
+            || (move.Y > 0 && position.Y > bounds.Bottom - clearance);
+
+        return headingIntoWall
+            ? move + new IntVector2(0, centre.Y >= position.Y ? 1 : -1)
+            : move;
     }
 }

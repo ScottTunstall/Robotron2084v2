@@ -9900,3 +9900,30 @@ table, which is the one slip a copy-paste row really makes (`Tank` vs `TankShell
 **Behaviour-preserving, and verified:** the registry's order reproduces the old explicit order for every
 laser phase and both contact phases. 7 new guard tests; **482 tests, 0 failed, 0 skipped**; Debug and
 Release 0 warnings; smoke, `verify-playfield` and `verify-attract` green.
+
+### 120. THE COMPLEXITY BUDGET IS 15, NOT 25 — and the seven methods that were over it (2026-09-24)
+
+Author: *"Make it so that a cyclomatic complexity above 15 fails the build."* §99/D-020 wired the rule up
+at its default 25; this tightens the budget. The change is **one line** — `CodeMetricsConfig.txt`'s
+`CA1502: 15`, which `.editorconfig`'s severity line turns into a build error — so the wiring §99
+described is now proven by construction: the stricter number took effect immediately and named every
+method that was over it.
+
+| Method | Was | Now | Split into |
+|---|---|---|---|
+| `PlayField.ResolveHumanCollisions` | 24 | 5 | `ReleaseVictimsOfDeadBrains` (D.1), `ResolveBrainCatches` (D.2), `ResolveHulkVsHumanCollisions` (D.3), `ResolvePlayerRescues` (D.4) — the ROM's own four human sub-phases, and `IsGraspable` for the "standing, and no brain has hold of her" test all four shared |
+| `Player.Update` | 18 | 3 | `AdvanceInvincibility`, `MoveFromInput` (+ `StepAxis`, the one wall-revert used by both axes), `UpdateFiring`, `AdvanceWalkAnimation` |
+| `Spheroid.Update` | 18 | 7 | `AdvanceEscapeBeat`, `AdvanceDropBeat` — the beat's two phases, with the mover clock left in `Update` |
+| `Brain.Update` | 17 | 6 | `StepTowardTarget` (returns the step it TRIED, because the facing follows the intent, not whether a wall let it through), `AdvanceWalkAnimation`, `FireIfPossible` |
+| `RobotronGame.Update` | 17 | 2 | `HandlePresentationKeys`, `HandleAttractDevKeys` (+ `StartEndOfGameFlow`), `HandleStartKeys` — the three groups the big comment blocks were already separating |
+| `DemoPlayerInputSource.SteerClearOfWalls` | 17 | 3 | `SteerClearOnX`, `SteerClearOnY` — one wall test per axis |
+| `Quark.Update` | 16 | 7 | `LeaveWhenClearOfTheField`, `AdvanceTankDrop` |
+
+Every split is a pure extraction in the ROM's own phase order, so the behaviour is unchanged: **482
+tests, 0 failed, 0 skipped**; Debug and Release 0 warnings (the test project's own methods are all under
+the budget already). No suppressions — the rule is still split-or-nothing.
+
+**One piece of dead documentation fell out with it:** an orphaned `<summary>` about the old
+`ResolveLaserHits<T>` had been left above `PlayField.SpeedUpGrunts` by §118's refactor. Two summaries on
+one member compile fine, which is exactly why it survived a clean build — worth knowing that a doc pass
+is not a build gate.

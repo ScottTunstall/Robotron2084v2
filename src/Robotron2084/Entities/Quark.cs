@@ -116,14 +116,7 @@ public sealed class Quark : IEntity, IArtSource, IRemovable
 
         if (_fleeing)
         {
-            // Once fleeing, it dies the moment it is fully off the top or bottom edge (ROM: SQ3L).
-            int low = field.Wall.PlayfieldBounds.Y + ScreenSize.Scaled(GameplayConstants.QuarkFleeExitLowArcadePixels);
-            int high = field.Wall.PlayfieldBounds.Bottom - ScreenSize.Scaled(GameplayConstants.QuarkFleeExitHighArcadePixels);
-            if (_position.Y <= low || _position.Y >= high)
-            {
-                LifeState = EntityLifeState.Dead;
-            }
-
+            LeaveWhenClearOfTheField(field);
             return;
         }
 
@@ -138,13 +131,34 @@ public sealed class Quark : IEntity, IArtSource, IRemovable
             return;
         }
 
-        // Before the first drop the countdown ticks once per animation cycle; after, per beat.
+        AdvanceTankDrop(field);
+    }
+
+    /// <summary>Leaves for good the moment the quark is fully off the top or bottom edge.</summary>
+    /// <param name="field">The playfield, whose bounds the exit is measured against.</param>
+    /// <remarks>ROM: <c>SQ3L</c>.</remarks>
+    private void LeaveWhenClearOfTheField(PlayField field)
+    {
+        int low = field.Wall.PlayfieldBounds.Y + ScreenSize.Scaled(GameplayConstants.QuarkFleeExitLowArcadePixels);
+        int high = field.Wall.PlayfieldBounds.Bottom - ScreenSize.Scaled(GameplayConstants.QuarkFleeExitHighArcadePixels);
+        if (_position.Y <= low || _position.Y >= high)
+        {
+            LifeState = EntityLifeState.Dead;
+        }
+    }
+
+    /// <summary>Counts the drop beat down, and drops a tank when it is due and the field allows another.</summary>
+    /// <param name="field">The playfield, which owns the tank cap and the new tank.</param>
+    /// <remarks>ROM: <c>SQ2</c>/<c>TNKDRP</c>. Before the first drop the countdown ticks once per animation
+    /// cycle, after it once per beat. The drop phase is never left: when the allotment runs out the quark
+    /// flees.</remarks>
+    private void AdvanceTankDrop(PlayField field)
+    {
         if (!_droppingTanks && _animationFrame != 0)
         {
             return;
         }
 
-        // The drop phase is never left: when the allotment runs out the quark flees (ROM: SQ2).
         if (--_dropBeatsRemaining > 0)
         {
             return;
