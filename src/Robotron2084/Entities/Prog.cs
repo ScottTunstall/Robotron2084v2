@@ -153,7 +153,6 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>The picture the death explosion shatters: the phony burst card, not the human art.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The phony burst card.</returns>
     /// <remarks>ROM: <c>PRGKIL</c> swaps the picture to the 12x16 <c>PGXPIC</c>.</remarks>
     public Texture2D CurrentAnimationFrame => _sprites.ProgBurst;
@@ -302,7 +301,6 @@ public sealed class Prog : IExplodable, IRemovable
 
     /// <summary>Draws the ghost trail (oldest first) and then the prog, all as two-colour remap pairs.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)

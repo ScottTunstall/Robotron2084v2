@@ -47,6 +47,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private bool _fleeing;               // True once the quark is running for the nearest edge to vanish.
 
     /// <summary>Drops a quark at <paramref name="position"/> with its tank allotment and first drift already rolled.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the quark.</param>
     /// <param name="random">The random source: the allotment, the drift rolls and the flee direction.</param>
     /// <param name="maxDropsX2">This wave's tank-allotment bound; the roll happens here.</param>
@@ -280,7 +281,6 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Draws the current rotation frame.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -292,7 +292,6 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The current rotation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
-    /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The texture for the current rotation frame.</returns>
     public Texture2D CurrentAnimationFrame => _sprites.QuarkFrames[_animationFrame];
 }

@@ -206,7 +206,6 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Draws the walk frame, or — while being reprogrammed — the flashing two-colour shape.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
@@ -232,7 +231,6 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The walk frame this human is showing — the art pixel-perfect collision compares.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
     public Texture2D CurrentAnimationFrame => FramesOf()[_frame];
 
     /// <summary>The three walk pictures this human's kind is drawn with (notes §49).</summary>

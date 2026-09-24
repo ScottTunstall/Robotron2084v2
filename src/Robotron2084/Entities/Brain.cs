@@ -59,6 +59,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     private bool _reprogramLifting;         // next redraw lifts the human's Y (+), then drops it (-)
 
     /// <summary>Creates a brain; it takes its first step on its first beat.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the brain.</param>
     /// <param name="random">The random source: the fire timer and the reprogramming jitter.</param>
     /// <param name="brainSpeedRomTicks">How many ROM frames this wave's brain waits between beats.</param>
@@ -297,7 +298,6 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
 
     /// <summary>Draws the current walk frame — over a solid block while it is reprogramming.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -315,7 +315,6 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     }
 
     /// <summary>The frame an explosion would copy (see <see cref="IAnimationFrameSource"/>).</summary>
-    /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The texture for the current walk frame.</returns>
     public Texture2D CurrentAnimationFrame
         => _sprites.BrainFrames[WalkFrameIndex];

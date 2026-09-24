@@ -56,7 +56,6 @@ public sealed class SkullMarker : IEntity
 
     /// <summary>Draws the skull in the picture's own colours.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set, which holds the skull picture.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)

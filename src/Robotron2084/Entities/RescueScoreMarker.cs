@@ -58,7 +58,6 @@ public sealed class RescueScoreMarker : IEntity
 
     /// <summary>Draws the "1000".."5000" picture this rescue earned.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set, which holds the display pictures.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)

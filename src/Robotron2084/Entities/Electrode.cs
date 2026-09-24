@@ -108,7 +108,6 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Draws the live or shrivel picture, as a solid silhouette in the wave's slot colour.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)

@@ -108,7 +108,6 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Draws the shell picture at its own size; it never flashes.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Alive)
@@ -118,6 +117,5 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The shell picture — it never flashes.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
     public Texture2D CurrentAnimationFrame => _sprites.TankShell;
 }

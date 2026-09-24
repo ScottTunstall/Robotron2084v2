@@ -54,6 +54,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private int _escapeDirection;
 
     /// <summary>Drops a spheroid at <paramref name="position"/> with its enforcer allotment already rolled; it is born mid-spin.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the spheroid.</param>
     /// <param name="random">The random source: the allotment, the accelerations and the escape direction.</param>
     /// <param name="maxDropsX2">This wave's enforcer-allotment bound; the roll happens here.</param>
@@ -299,7 +300,6 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Draws the current picture; its shimmer comes from cycling palette slots, not a flash.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -311,7 +311,6 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The current picture, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
-    /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The texture for the current rotation frame.</returns>
     public Texture2D CurrentAnimationFrame
         => _sprites.SpheroidFrames[_rotation % _sprites.SpheroidFrames.Length];

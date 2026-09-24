@@ -59,6 +59,7 @@ public sealed class Tank : IExplodable, IRemovable
     private int _growTimer;
 
     /// <summary>Creates a tank at <paramref name="position"/>; it must be born before it can move or fire.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the tank.</param>
     /// <param name="random">The random source: the aim rolls, the destinations and the first-fire delay.</param>
     /// <param name="fireDelayRomTicks">This wave's firing interval, in ROM frames.</param>
@@ -234,7 +235,6 @@ public sealed class Tank : IExplodable, IRemovable
 
     /// <summary>Draws the birth pictures while being born, else the tread frame.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)

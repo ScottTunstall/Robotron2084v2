@@ -208,7 +208,6 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     /// <summary>Draws the trail marks and the missile's head.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     /// <remarks>Each mark is <see cref="GameplayConstants.MissileMarkArcadeWidth"/> x
     /// <see cref="GameplayConstants.MissileMarkArcadeHeight"/> arcade px, as the hardware's video
     /// writes produced. The trail uses one palette slot and the head another.</remarks>

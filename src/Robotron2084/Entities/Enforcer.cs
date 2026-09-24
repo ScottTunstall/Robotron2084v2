@@ -38,6 +38,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private int _growthRemaining;
 
     /// <summary>Creates an enforcer; it is immobile until it has grown.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the enforcer.</param>
     /// <param name="random">The random source for the re-aim destination and the fire timer.</param>
     /// <param name="fireDelayRomTicks">This wave's fire delay, in ROM frames: the interval is a random 1..this.</param>
@@ -186,7 +187,6 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
 
     /// <summary>Draws the grow-up picture while it is growing, and the full picture afterwards.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)

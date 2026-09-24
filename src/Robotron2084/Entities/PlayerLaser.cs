@@ -66,7 +66,6 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource
 
     /// <summary>Draws the picture for this laser's direction.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
@@ -78,7 +77,6 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource
     }
 
     /// <summary>The picture for this laser's direction — the ROM's four laser arts (`LTAB`, notes §19).</summary>
-    /// <param name="sprites">The shared sprite set.</param>
     public Texture2D CurrentAnimationFrame => Direction switch
     {
         Direction8.Left or Direction8.Right => _sprites.LaserBar,

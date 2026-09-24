@@ -432,7 +432,6 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     /// <summary>Draws the walk frame, or a one-colour silhouette while dying.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)
@@ -460,6 +459,5 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
     public Texture2D CurrentAnimationFrame => _sprites.PlayerFrames[WalkFrameIndex];
 }

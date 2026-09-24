@@ -155,7 +155,6 @@ public sealed class ScoreBurst : IEntity
 
     /// <summary>Draws the current phase: the solid silhouette, or the solid "1000" once the enemy is gone.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)

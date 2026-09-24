@@ -35,6 +35,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     private int _moveTimer;  // counts up to one ROM frame's worth of ticks so the mover integrates velocity once per frame, not once per tick
 
     /// <summary>Fires a spark, aimed at the player once, with jitter.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where it appears — the firing enforcer's position.</param>
     /// <param name="playerPosition">The player, which the spark is aimed at.</param>
     /// <param name="random">The random source, standing in for the arcade's SEED/LSEED/HSEED rolls.</param>
@@ -186,7 +187,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Draws the current flicker frame.
     /// </summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Alive)
@@ -196,6 +196,5 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The flicker frame this spark is showing — the art pixel-perfect collision compares.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
     public Texture2D CurrentAnimationFrame => _sprites.SparkFrames[FrameIndex];
 }

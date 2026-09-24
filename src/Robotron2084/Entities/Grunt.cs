@@ -42,6 +42,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     private int _walkFrame = 1; // walk frame 1..4; a freshly spawned grunt starts on frame 1
 
     /// <summary>Creates a grunt, with its first stagger already rolled.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the grunt.</param>
     /// <param name="moveLimitBeats">This wave's re-roll limit: the upper bound of the random 1..N stagger.</param>
     /// <param name="random">The random source, or null to create one.</param>
@@ -165,13 +166,11 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     };
 
     /// <summary>This grunt's current walk picture, for the appear and explosion effects.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The texture for the current walk frame.</returns>
     public Texture2D CurrentAnimationFrame => _sprites.GruntFrames[WalkArtIndex(_walkFrame)];
 
     /// <summary>Draws the current walk picture in the art's own colours.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)

@@ -40,6 +40,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     private Rectangle? _playfieldBounds; // cached from the last Update; used by ApplyKnockback
 
     /// <summary>Creates a hulk; it takes its first aim on its first update.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the hulk.</param>
     /// <param name="random">The random source, for the re-aim timer and the aim offsets.</param>
     /// <param name="hulkSpeedRomTicks">How many ROM frames between steps — this wave's hulk speed.</param>
@@ -202,7 +203,6 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
 
     /// <summary>Draws the current walk picture solid.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         _sprites.DrawSprite(spriteBatch, _sprites.HulkFrames[_currentFrameIndex], Bounds, Color.White);
