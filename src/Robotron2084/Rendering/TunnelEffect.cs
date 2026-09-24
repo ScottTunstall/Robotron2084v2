@@ -78,11 +78,12 @@ public sealed class TunnelEffect
     private int _fifths;
 
     /// <summary>
-    /// The ROM's screen is 304 px (152 columns) by 256 rows, and the port's SCREEN is 640x400
-    /// real pixels, so a ROM pixel is 640/304 across and 400/256 down (notes §84).
+    /// The ROM's screen is 304 px (152 columns) by 256 rows, and the port's SCREEN is
+    /// <see cref="ScreenSize.Width"/>x<see cref="ScreenSize.Height"/> real pixels, so a ROM pixel is
+    /// that ratio across and that ratio down (notes §84).
     /// </summary>
-    private const float RomPixelToScreenX = 640f / 304f;
-    private const float RomPixelToScreenY = 400f / 256f;
+    private const float RomPixelToScreenX = ScreenSize.Width / (float)GameplayConstants.ArcadeScreenWidth;
+    private const float RomPixelToScreenY = ScreenSize.Height / (float)GameplayConstants.ArcadeScreenHeight;
 
     /// <summary>
     /// The port pixel a ROM pixel starts at, and the port row a ROM row starts at.
