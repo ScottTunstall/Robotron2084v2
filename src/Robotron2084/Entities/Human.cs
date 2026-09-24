@@ -256,7 +256,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Test-only positioning hook (InternalsVisibleTo the test assembly).</summary>
-    /// <param name="position">The position to move the human to.</param>
-    internal void TeleportTo(IntVector2 position) => _position = position;
+    /// <summary>The brain's hold on its victim: moves the human directly, without walking it.</summary>
+    /// <param name="position">Where the brain puts the human.</param>
+    /// <remarks>ROM: <c>BMUT</c>, the reprogramming lift and drop. A test can also use it to place one.</remarks>
+    internal void MoveTo(IntVector2 position) => _position = position;
 }

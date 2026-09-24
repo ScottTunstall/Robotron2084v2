@@ -251,7 +251,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         _directionBase = facingBase;
         _frameStep = 0;
 
-        human.TeleportTo(new IntVector2(x, _position.Y + ScreenSize.Scaled(2)));
+        human.MoveTo(new IntVector2(x, _position.Y + ScreenSize.Scaled(2)));
     }
 
     /// <summary>Runs one reprogramming iteration: lift the human, then drop it, then count down.</summary>
@@ -272,7 +272,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         int y = _reprogramLifting
             ? Math.Min(victim.Position.Y + jitter, bounds.Bottom - height)
             : Math.Max(victim.Position.Y - jitter, bounds.Y);
-        victim.TeleportTo(new IntVector2(victim.Position.X, y));
+        victim.MoveTo(new IntVector2(victim.Position.X, y));
 
         if (_reprogramLifting)
         {

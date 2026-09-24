@@ -125,7 +125,7 @@ public sealed class PlayFieldHumanTests
         PlayField field = CreateField(HumanWave(0, 0, 1));
         Human human = field.Humans[0];
         int scoreBefore = field.Score.Score;
-        human.TeleportTo(field.Player.Position);
+        human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
 
@@ -141,7 +141,7 @@ public sealed class PlayFieldHumanTests
         PlayField field = CreateField(HumanWave(0, 0, 5), startingRescues: 4);
         foreach (Human human in field.Humans)
         {
-            human.TeleportTo(field.Player.Position);
+            human.MoveTo(field.Player.Position);
         }
 
         int scoreBefore = field.Score.Score;
@@ -174,7 +174,7 @@ public sealed class PlayFieldHumanTests
         Assert.Equal(field.Player.Lives, slot.Lives);
 
         Human human = field.Humans[0];
-        human.TeleportTo(field.Player.Position);
+        human.MoveTo(field.Player.Position);
         field.Update(new GameTime());
         field.Player.AddLife(); // an earned spare man must reach the HUD too
         field.SyncInto(slot);
@@ -201,7 +201,7 @@ public sealed class PlayFieldHumanTests
 
         Human human = field.Humans[0];
         int scoreBefore = field.Score.Score;
-        human.TeleportTo(field.Hulks[0].Position);
+        human.MoveTo(field.Hulks[0].Position);
 
         field.Update(Frame());
 
@@ -224,7 +224,7 @@ public sealed class PlayFieldHumanTests
         }
 
         Human human = field.Humans[0];
-        human.TeleportTo(field.Hulks[0].Position);
+        human.MoveTo(field.Hulks[0].Position);
         field.Update(Frame());
         Assert.Single(field.Skulls);
 
@@ -244,7 +244,7 @@ public sealed class PlayFieldHumanTests
     {
         PlayField field = CreateField(HumanWave(0, 0, 1));
         Human human = field.Humans[0];
-        human.TeleportTo(field.Player.Position);
+        human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
 
@@ -274,13 +274,13 @@ public sealed class PlayFieldHumanTests
     public void RescueCount_CarriesIntoTheNextField_ViaStartingRescues()
     {
         PlayField first = CreateField(HumanWave(0, 0, 1));
-        first.Humans[0].TeleportTo(first.Player.Position);
+        first.Humans[0].MoveTo(first.Player.Position);
         first.Update(new GameTime());
         Assert.Equal(1, first.RescuesThisLife);
 
         PlayField next = CreateField(HumanWave(0, 0, 1), startingRescues: first.RescuesThisLife);
         int baseScore = next.Score.Score; // the next field starts at 0 score; anchor on its own base
-        next.Humans[0].TeleportTo(next.Player.Position);
+        next.Humans[0].MoveTo(next.Player.Position);
         next.Update(new GameTime());
 
         Assert.Equal(2, next.RescuesThisLife);

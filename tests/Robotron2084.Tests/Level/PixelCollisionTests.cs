@@ -48,7 +48,7 @@ public sealed class PixelCollisionTests
     {
         PlayField field = CreateField(new StubPixelCollision(touching: false));
         Human human = field.Humans[0];
-        human.TeleportTo(field.Player.Position);
+        human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
 
@@ -64,7 +64,7 @@ public sealed class PixelCollisionTests
 
         // Well outside the player's box, so nothing but the picture test could rescue this human.
         Rectangle inner = field.Wall.PlayfieldBounds;
-        human.TeleportTo(new IntVector2(inner.Center.X + ScreenSize.Scaled(60), inner.Center.Y));
+        human.MoveTo(new IntVector2(inner.Center.X + ScreenSize.Scaled(60), inner.Center.Y));
 
         field.Update(new GameTime());
 
@@ -76,7 +76,7 @@ public sealed class PixelCollisionTests
     {
         PlayField field = CreateField(new StubPixelCollision(touching: false, hasShape: false));
         Human human = field.Humans[0];
-        human.TeleportTo(field.Player.Position);
+        human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
 
@@ -88,7 +88,7 @@ public sealed class PixelCollisionTests
     {
         PlayField field = CreateField(null);
         Human human = field.Humans[0];
-        human.TeleportTo(field.Player.Position);
+        human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
 
