@@ -11,8 +11,9 @@ namespace Robotron2084.Level;
 /// field walks its lists in single loops instead of repeating each pass once per kind.
 /// </summary>
 /// <remarks>
-/// Adding an entity kind is therefore a field here plus a row in <see cref="RobotKinds"/> (and its class), not
-/// another edit in each of the field's passes. The field also holds the lists for the nearest-robot scan and
+/// Adding an entity kind is therefore a field for its list here plus a row in <see cref="RobotKinds"/> (and its
+/// class), not another edit in each of the field's passes — see <see cref="RobotKinds"/> for the whole list of
+/// steps. The field also holds the lists for the nearest-robot scan and
 /// the per-kind collision phases, which are typed and read as the ROM's own phases do.
 /// </remarks>
 /// <typeparam name="T">The entity type the list holds.</typeparam>

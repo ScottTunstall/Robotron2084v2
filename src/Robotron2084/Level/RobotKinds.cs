@@ -13,11 +13,13 @@ namespace Robotron2084.Level;
 /// things in one frame. The electrode's row is first for exactly that reason (notes §61).
 /// </para>
 /// <para>
-/// To add a robot kind: write the entity class, add its art, add a <see cref="RobotKind"/> value and a row here.
-/// Nothing else needs an edit unless the kind brings a NEW behaviour — a laser phase that is not one of the shapes
+/// To add a robot kind: write the entity class, add its art, add a <see cref="RobotKind"/> value and a row here,
+/// add a field for its list and a <c>ListOf</c> arm in <see cref="PlayField"/>, add that list to the field's
+/// update and draw orders, and add it to <c>NearestLivingRobotPositionTo</c>. A guard test fails until the enum,
+/// this registry, the field's list orders and its own hand-written tables agree. No further edit is needed for a
+/// kind that brings no NEW behaviour — a laser phase that is not one of the shapes
 /// below, an interaction with the electrodes the two existing ones do not have, or a contact rule the player
-/// phases do not already express. The update, draw and prune passes follow from
-/// <see cref="PlayField"/>'s list orders, which a guard test checks against this enum.
+/// phases do not already express.
 /// </para>
 /// </remarks>
 public static class RobotKinds
