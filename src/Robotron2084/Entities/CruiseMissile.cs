@@ -17,15 +17,18 @@ namespace Robotron2084.Entities;
 /// aims at the player's coordinate plus a random -6..+9 nudge. It has no lifetime of its own: only
 /// being hit removes it, leaving no animation, and it keeps flying while the robots are frozen. Its
 /// trail is a ring of the 9 most recent positions — each step erases the mark from 9 steps ago —
-/// drawn as solid rectangles 1 arcade px wide and 2 tall, because the arcade's own video-memory write
+/// drawn as solid rectangles <see cref="GameplayConstants.MissileMarkArcadeWidth"/> x
+/// <see cref="GameplayConstants.MissileMarkArcadeHeight"/> arcade px, because the arcade's own video-memory write
 /// coloured two stacked pixels; the ROM's missile picture exists only to define the collision box.
 /// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.
 /// </remarks>
 public sealed class CruiseMissile : IEntity, IRemovable
 {
     private readonly SpriteSet _sprites;    /// <summary>The collision box's size, 6x4 arcade px, in port pixels; the box itself is offset up-left.</summary>
-    /// <remarks>The disassembly labels this hitbox "FAT PHONY GUY" — far bigger than the missile's
-    /// 1x2px visible mark, and offset up and left of the tracked point.</remarks>
+    /// <remarks>The disassembly labels this hitbox "FAT PHONY GUY" — far bigger than the
+    /// <see cref="GameplayConstants.MissileMarkArcadeWidth"/> x
+    /// <see cref="GameplayConstants.MissileMarkArcadeHeight"/> arcade px mark, and offset up and
+    /// left of the tracked point.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.CruiseMissileCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.CruiseMissileCollisionSize.Height));
 
@@ -206,8 +209,9 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>Draws the trail marks and the missile's head.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    /// <remarks>Each mark is 1 arcade px wide and 2 tall, as the hardware's video writes produced.
-    /// The trail uses one palette slot and the head another.</remarks>
+    /// <remarks>Each mark is <see cref="GameplayConstants.MissileMarkArcadeWidth"/> x
+    /// <see cref="GameplayConstants.MissileMarkArcadeHeight"/> arcade px, as the hardware's video
+    /// writes produced. The trail uses one palette slot and the head another.</remarks>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
