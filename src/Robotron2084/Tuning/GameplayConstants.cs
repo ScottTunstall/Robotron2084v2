@@ -270,7 +270,6 @@ public static class GameplayConstants
     // process gone immediately) then `JSR EXST` (explode) — the enforcer has no
     // death animation at all (author, 2026-09-16: "enforcers shouldn't flash
     // when hit"). Same defect class as the grunt in §44.
-    // Flash: plan 8.5 says "same visible/hidden tick-toggle technique as Spheroid" -> uses SpheroidFlash* constants.
     public const int GlobalActiveSparkCap = 20; // R5 $1412: $14 (20) sparks max
 
     // Quark (Phase 8.6) — from the GOSPEL (RRTK4 `SQUARE` + `SQVEL`; notes §43,
