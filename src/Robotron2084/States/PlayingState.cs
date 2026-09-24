@@ -29,6 +29,9 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class PlayingState : IGameState
 {
+    /// <summary>The wave counter is one byte, so it wraps here (ROM <c>GEXX</c>).</summary>
+    private const int WaveCounterWrap = 255;
+
     private static readonly int Margin = ScreenSize.Scaled(GameplayConstants.PlayfieldMarginSpecPixels);
     private static readonly Rectangle InnerBounds = new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
 
@@ -153,7 +156,7 @@ public sealed class PlayingState : IGameState
         SyncSlotFromField();
 
         // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
-        slot.Wave = (slot.Wave % 255) + 1;
+        slot.Wave = (slot.Wave % WaveCounterWrap) + 1;
 
         manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session, clearedWave));
     }
