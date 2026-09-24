@@ -36,10 +36,10 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     /// <summary>How far the missile steps along X per move, in port pixels — two arcade px.</summary>
     /// <remarks>The arcade moves it one video-memory column per step; a column is 2 arcade px wide.</remarks>
-    private static readonly int StepColumns = ScreenSize.Columns(1);
+    private static readonly int StepXPortPixels = ScreenSize.Columns(1);
 
     /// <summary>How far the missile steps along Y per move, in port pixels — one arcade px.</summary>
-    private static readonly int StepRows = ScreenSize.Scaled(1);
+    private static readonly int StepYPortPixels = ScreenSize.Scaled(1);
 
     /// <summary>How many ROM frames one beat takes (NAP 2 plus the execution vblank).</summary>
     private const int BeatPeriodRomTicks = 3;
@@ -64,7 +64,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private readonly List<IntVector2> _trail = new();
 
     private IntVector2 _position;
-    private IntVector2 _velocity; // Current per-step move on each axis: ±StepColumns / ±StepRows, or 0 if that axis is idle this re-aim.
+    private IntVector2 _velocity; // Current per-step move on each axis: ±StepXPortPixels / ±StepYPortPixels, or 0 if that axis is idle this re-aim.
     private int _beatTimer;
     private int _reAimBeatsRemaining;
 
@@ -191,11 +191,11 @@ public sealed class CruiseMissile : IEntity, IRemovable
     {
         if (_random.Next(2) != 0)
         {
-            return new IntVector2(0, AimSign(player.Y, _position.Y) * StepRows);
+            return new IntVector2(0, AimSign(player.Y, _position.Y) * StepYPortPixels);
         }
 
-        int dx = AimSign(player.X, _position.X) * StepColumns;
-        int dy = _random.Next(2) == 0 ? AimSign(player.Y, _position.Y) * StepRows : 0;
+        int dx = AimSign(player.X, _position.X) * StepXPortPixels;
+        int dy = _random.Next(2) == 0 ? AimSign(player.Y, _position.Y) * StepYPortPixels : 0;
         return new IntVector2(dx, dy);
     }
 
