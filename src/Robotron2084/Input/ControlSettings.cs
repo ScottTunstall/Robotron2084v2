@@ -25,6 +25,43 @@ public sealed class ControlSettings
     /// </summary>
     public InputBinding Pause { get; set; } = InputBinding.Key(Keys.P);
 
+    /// <summary>
+    /// The port's fire alias: SPACE and the pad's A button, on top of the bound SHOOT directions.
+    /// Fixed, not rebindable — the DEFINITIONS page binds the eight stick directions and the pause
+    /// line, and these two are the fallbacks a player expects without setting anything up.
+    /// </summary>
+    private const Keys FireAliasKey = Keys.Space;
+
+    /// <inheritdoc cref="FireAliasKey"/>
+    private const Buttons FireAliasButton = Buttons.A;
+
+    /// <summary>How far the pad's trigger must be pulled to count as fire (a trigger is an axis).</summary>
+    private const float FireTriggerThreshold = 0.5f;
+
+    /// <summary>The port's skip-level test key. Fixed, like the other port-only keys in this block.</summary>
+    private const Keys SkipLevelKey = Keys.Insert;
+
+    /// <summary>
+    /// The keyboard keys that start player 1's game. Fixed, not rebindable: the arcade's START 1 /
+    /// START 2 are cabinet buttons on their own keys, and the title screen offers F1/F2/F3 as well.
+    /// </summary>
+    private const Keys StartOneKey = Keys.D1;
+
+    /// <inheritdoc cref="StartOneKey"/>
+    private const Keys StartOneNumPadKey = Keys.NumPad1;
+
+    /// <inheritdoc cref="StartOneKey"/>
+    private const Buttons StartOneButton = Buttons.Start;
+
+    /// <summary>The keyboard keys that start a two-player game. Fixed, like <see cref="StartOneKey"/>.</summary>
+    private const Keys StartTwoKey = Keys.D2;
+
+    /// <inheritdoc cref="StartTwoKey"/>
+    private const Keys StartTwoNumPadKey = Keys.NumPad2;
+
+    /// <inheritdoc cref="StartTwoKey"/>
+    private const Buttons StartTwoButton = Buttons.Back;
+
     /// <summary>The port's factory settings: see <see cref="PlayerControls.Defaults"/>.</summary>
     public static ControlSettings Defaults()
     {
@@ -63,16 +100,16 @@ public sealed class ControlSettings
         GamePadState own = playerIndex == 1 ? padTwo : padOne;
 
         bool fire = controls.Firing(keys, padOne, padTwo)
-            || keys.IsKeyDown(Keys.Space)
-            || own.IsButtonDown(Buttons.A)
-            || own.Triggers.Right > 0.5f;
+            || keys.IsKeyDown(FireAliasKey)
+            || own.IsButtonDown(FireAliasButton)
+            || own.Triggers.Right > FireTriggerThreshold;
 
         return new PlayerInputState(
             move,
             shoot,
             fire,
-            keys.IsKeyDown(Keys.Insert),
-            keys.IsKeyDown(Keys.D1) || keys.IsKeyDown(Keys.NumPad1) || padOne.IsButtonDown(Buttons.Start),
-            keys.IsKeyDown(Keys.D2) || keys.IsKeyDown(Keys.NumPad2) || padOne.IsButtonDown(Buttons.Back));
+            keys.IsKeyDown(SkipLevelKey),
+            keys.IsKeyDown(StartOneKey) || keys.IsKeyDown(StartOneNumPadKey) || padOne.IsButtonDown(StartOneButton),
+            keys.IsKeyDown(StartTwoKey) || keys.IsKeyDown(StartTwoNumPadKey) || padOne.IsButtonDown(StartTwoButton));
     }
 }
