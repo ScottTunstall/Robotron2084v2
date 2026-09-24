@@ -89,9 +89,9 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Alive until it is hit or flees off the field; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Kills the quark outright; the explosion is the whole visual.</summary>
-    /// <remarks>ROM: RRTK4.ASM's <c>SQKIL</c> plays a bespoke shrink-and-burst, not a blink. That
-    /// animation is not built yet, so the shared strip explosion stands in for it.</remarks>
+    /// <summary>Kills the quark outright; a laser hit plays its own burst instead of the strip explosion.</summary>
+    /// <remarks>ROM: RRTK4.ASM's <c>SQKIL</c> plays a bespoke shrink-and-burst, not a blink. <see cref="RobotKinds"/>
+    /// wires <see cref="ScoreBurst.ForQuark"/> to the laser phase.</remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
     /// <summary>Runs one beat: moves on the mover's clock, advances the rotation, re-rolls and drops.</summary>

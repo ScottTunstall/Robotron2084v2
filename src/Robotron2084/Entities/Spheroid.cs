@@ -16,9 +16,9 @@ namespace Robotron2084.Entities;
 /// electrodes. It steps the picture pointer one per beat through three phases: spin (5 pictures, the
 /// drop countdown on a full 5-picture wrap), drop (8 pictures, one enforcer per rotation until the
 /// allotment — half a random roll, rounded up — is gone) and escape (X fixed at 1 column a frame, Y
-/// stopped, running off the edge to vanish with no animation). A hit bursts it, standing in for the
-/// 7-frame bubble that is still to be built. Timers count 5 per tick and 6 per arcade frame, so an
-/// interval of N frames is due at 6 x N.</remarks>
+/// stopped, running off the edge to vanish with no animation). A laser hit plays its own bubble burst
+/// (<see cref="ScoreBurst.ForSpheroid"/>), not the strip explosion; see <see cref="RobotKinds"/>. Timers count
+/// 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
     private readonly SpriteSet _sprites;
@@ -102,9 +102,9 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: the `CIRC3` escape phase.</remarks>
     internal bool IsEscaping => _escaping;
 
-    /// <summary>Kills the spheroid outright; the explosion is the whole visual.</summary>
-    /// <remarks>ROM: <c>CIRKIL</c> plays a 7-frame bubble burst then a "1000"; the bespoke burst is
-    /// still to be built, so the generic explosion stands in.</remarks>
+    /// <summary>Kills the spheroid outright; a laser hit plays its own burst instead of the strip explosion.</summary>
+    /// <remarks>ROM: <c>CIRKIL</c> plays a 7-frame bubble burst then a "1000"; <see cref="RobotKinds"/> wires
+    /// <see cref="ScoreBurst.ForSpheroid"/> to the laser phase.</remarks>
     public void Kill() => LifeState = EntityLifeState.Dead;
 
     /// <summary>Runs the glide, then the beat: accelerate and damp, or drop, or escape.</summary>
