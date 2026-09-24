@@ -8,7 +8,7 @@ namespace Robotron2084.Level;
 /// </summary>
 /// <remarks>
 /// <para>
-/// THE ORDER OF <see cref="All"/> IS BEHAVIOUR. It is the order plan 9.2 (and the ROM's own phase list) resolves
+/// THE ORDER OF <see cref="All"/> IS BEHAVIOUR. It is the order the ROM's own collision phases resolve
 /// laser hits in, which matters because a laser is consumed by the first thing it meets — it cannot hit two
 /// things in one frame. The electrode's row is first for exactly that reason (notes §61).
 /// </para>
@@ -25,7 +25,7 @@ public static class RobotKinds
     /// <summary>Every kind, in the order the ROM's collision phases walk them.</summary>
     public static readonly RobotKindInfo[] All =
     [
-        // The electric posts come first, and a laser that reaches one is spent on it (plan 9.2 step 2).
+        // The electric posts come first, and a laser that reaches one is spent on it.
         new(RobotKind.Electrode,
             WaveCount: static parameters => parameters.ElectrodeCount,
             Score: ScoreValues.Electrode,

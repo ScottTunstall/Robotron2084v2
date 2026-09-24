@@ -3,7 +3,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Level;
 
 /// <summary>
-/// The run's score (Phase 11.1). Crosses an extra-life threshold every
+/// The run's score. Crosses an extra-life threshold every
 /// <see cref="GameplayConstants.ExtraLifeThresholdStep"/> points, repeating;
 /// <see cref="Add"/> reports the crossing so the caller can award a life.
 /// </summary>

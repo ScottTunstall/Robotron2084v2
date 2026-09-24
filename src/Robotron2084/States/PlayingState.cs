@@ -126,9 +126,8 @@ public sealed class PlayingState : IGameState
 
         PlayerInputState input = _session.Current.Input.Poll();
 
-        // Wave clear (Phase 11.3) — checked before the death check. The P key
-        // (port test key, 2026-09-13 round 6) takes the same path so waves can be
-        // playtested out of order.
+        // Wave clear — checked before the death check. The P key (the port's test
+        // key) takes the same path so waves can be skipped.
         if (_field.IsLevelCleared || input.SkipLevelPressed)
         {
             HandleWaveCleared(manager);

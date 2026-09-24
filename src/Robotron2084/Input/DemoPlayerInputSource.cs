@@ -8,7 +8,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Input;
 
 /// <summary>
-/// Phase 12.1 (notes §94.3): the PHONY PLAYER for the attract demo — the port's
+/// The PHONY PLAYER for the attract demo (notes §94.3) — the port's
 /// stand-in for the arcade's OS-ROM auto-play, which drives the game by writing
 /// the fake joystick/fire bytes into ATRSW2/ATRSW3 ($14/$15). The OS ROM is
 /// disassembly-only and its writer is not decoded in <c>robomame.asm</c>, so

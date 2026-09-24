@@ -1,8 +1,8 @@
 namespace Robotron2084.Level;
 
 /// <summary>
-/// Point values per kill — the arcade's exact values (M5, 2026-09-12;
-/// arcade-fidelity-notes §11.3). Decoded from the original source's SCORE
+/// Point values per kill — the arcade's exact values (arcade-fidelity-notes §11.3).
+/// Decoded from the original source's SCORE
 /// calls (A = trailing-zero count, B = BCD digits) and confirmed against the
 /// title-screen table (RRET.ASM) and the R5 disassembly:
 ///

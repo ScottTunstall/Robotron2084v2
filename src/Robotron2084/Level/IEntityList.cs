@@ -16,7 +16,7 @@ public interface IEntityList
     /// <param name="field">The field the entities live on and that advances them.</param>
     void UpdateAll(GameTime gameTime, PlayField field);
 
-    /// <summary>Removes the entities that have died (the ROM's list counts decrement, plan 9.1).</summary>
+    /// <summary>Removes the entities that have died (the ROM's list counts decrement).</summary>
     void PruneDead();
 
     /// <summary>Draws the list, in the order the entities sit in it.</summary>

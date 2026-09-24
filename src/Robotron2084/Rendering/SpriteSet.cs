@@ -86,7 +86,7 @@ public sealed class SpriteSet
     public Texture2D[] RescueScoreDisplays { get; }
 
     /// <summary>
-    /// PHASE D: the human family — 12 frames each (4 directions × 3 walk
+    /// The human family — 12 frames each (4 directions × 3 walk
     /// frames, same layout as the player frames; Mikey = Mikey_*, Mom =
     /// Mummy_*, Dad = Daddy_*).
     /// </summary>
@@ -97,7 +97,7 @@ public sealed class SpriteSet
     public Texture2D[] DadFrames { get; }
 
     /// <summary>
-    /// PHASE E: the brain's 12 walk frames (4 directions × 3, same layout as
+    /// The brain's 12 walk frames (4 directions × 3, same layout as
     /// the family), the prog's phony burst (PGXPIC — solid blit), and the
     /// cruise missile's two flicker frames (CMPIC/CMP1).
     /// </summary>
@@ -203,13 +203,13 @@ public sealed class SpriteSet
     public Texture2D Title2084 { get; }
 
     /// <summary>
-    /// M4: when set, entity draws run through the colour-cycle pixel shader
+    /// When set, entity draws run through the colour-cycle pixel shader
     /// (remaps the six cycling-slot marker colours to their live palette
     /// colours). Null = plain draws.
     /// </summary>
     public Effect? ColorCycleEffect { get; set; }
 
-    /// <summary>M4: the live 16-slot palette the effect remaps into (slots 10-15 cycle).</summary>
+    /// <summary>The live 16-slot palette the effect remaps into (slots 10-15 cycle).</summary>
     public GamePalette? Palette { get; set; }
 
     /// <summary>Loads the game's artwork.</summary>
@@ -402,7 +402,7 @@ public sealed class SpriteSet
     /// through the colour-cycle effect's <c>GlyphCycle</c> pass (notes §92) —
     /// the pass alpha-clips the master and paints every pixel with the slot's
     /// LIVE colour (the same blitter semantics as §39's marker-baked variants,
-    /// which the pass makes unnecessary). Without the effect (M4 off) it falls
+    /// which the pass makes unnecessary). Without the effect it falls
     /// back to a CPU tint of the slot's live colour, so the glyph still cycles
     /// with the palette.
     /// </summary>

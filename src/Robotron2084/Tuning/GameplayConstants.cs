@@ -57,11 +57,11 @@ public static class GameplayConstants
     /// </summary>
     public static int PortTicksCeil(int romFrames) => (romFrames * 6 + 4) / 5;
 
-    // Level generation (Phase 3.2 / 11.2)
+    // Level generation
     public const int EnemySpeedBonusCapPerLevel = 5;
     public const int SpawnPlacementMaxAttempts = 100;
 
-    // Wall (Phase 6.1)
+    // Wall
     public const int WallStepDurationMilliseconds = 150;
 
     /// <summary>Default 4-colour cyan cycle, dim to bright — never fully dark (spec-stated rule).</summary>
@@ -73,7 +73,7 @@ public static class GameplayConstants
         new(0, 255, 255),
     };
 
-    // Player (Phase 7.4 / 11.4 / 11.5)
+    // Player
     // R5 MOVE_PLAYER ($2FD0) deltas: vertical = 1 arcade px/tick; horizontal
     // = 0.5 arcade px/tick (X is 15.1 fixed point: FF/01 -> ASRA/RORB half
     // step). Diagonals apply BOTH, unnormalised. Scaled to the port's
@@ -111,7 +111,7 @@ public static class GameplayConstants
     public const int HitStopTicks = 10;
 
     /// <summary>
-    /// TEMPORARY playtest aid (2026-09-13 round 7): the player cannot be
+    /// TEMPORARY playtest aid: the player cannot be
     /// killed at all, so new robot types (brains/progs/missiles) can be
     /// playtested across whole waves. TURN THIS OFF (and re-verify the
     /// gates) once the gameplay is confirmed working.
@@ -126,10 +126,10 @@ public static class GameplayConstants
     /// </summary>
     public const int PlayerAutoFireTicks = 12;
 
-    // Player laser (Phase 7.1)
+    // Player laser
     public const int LaserSpeed = 12;
 
-    // Electrode (Phase 8.1)
+    // Electrode
     // (No "death animation seconds": the post does not fade or blink — it plays
     // its own 3-frame SHRIVEL, timing from RRP8's PKPROC table below.)
     // Post/electrode IMAGE per wave — RRG23.ASM `GTWCOL` ("GET WALL COLOR",
@@ -230,12 +230,12 @@ public static class GameplayConstants
     public static int LaserWallSlotForWave(int wave) => LaserWallSlotByWaveMod10[(wave - 1) % LaserWallSlotByWaveMod10.Length] & 0x0F;
     public const int ElectrodeMinDistanceFromPlayer = 40; // spec-px (apply ScreenSize.Scaled at the use site)
 
-    // Grunt (Phase 8.2 / 9.1)
+    // Grunt
     // (No GruntDyingBlinkTicks: RRP8 ROBKIL is `JSR EXST` then `JSR KILROB` —
     // explode then off. NO enemy in this game blinks on death; see notes §50.)
     public const int GruntMinDistanceFromPlayer = 20; // spec-px, spec-stated
 
-    // Hulk (Phase 8.3 / 9.1 / 9.2) — ROM RRH11: step period comes from the
+    // Hulk — ROM RRH11: step period comes from the
     // wave table (HLKSPD, in ROM ticks); step sizes are fixed by the ROM
     // animation table (horizontal 3/4 arcade px alternating, vertical 2).
     // Laser knockback (playtest 2026-09-13: the fixed 20-spec-px push made
@@ -244,7 +244,7 @@ public static class GameplayConstants
     // Hulk.ApplyKnockback (the magnitudes are ROM-intrinsic, no constant).
     public const int HulkMinDistanceFromPlayer = 35; // spec-px (spec gives a 30–40 range; 35 = midpoint)
 
-    // Spheroid (Phase 8.4 / 9.1; re-decoded from RRC11 CIRCLE/CIRNAC/CIRGO in
+    // Spheroid (re-decoded from RRC11 CIRCLE/CIRNAC/CIRGO in
     // notes §56). There is NO constant speed: the spheroid accumulates a random
     // acceleration and damps it by a 64th every beat, so its speed is emergent.
     // The clamps below are the ROM's own velocity limits ($0100 / $0200 = 1
@@ -265,14 +265,14 @@ public static class GameplayConstants
     public const int SpheroidNearWallBiasPercent = 70;
     public const int SpheroidNearWallBiasDistance = 30; // spec-px
 
-    // Enforcer (Phase 8.5; R5 retune 2026-09-12, notes §17)
+    // Enforcer (R5 retune, notes §17)
     // No EnforcerDyingBlinkTicks: RRC11 ENFKIL does `JSR KILOFP` (image and
     // process gone immediately) then `JSR EXST` (explode) — the enforcer has no
     // death animation at all (author, 2026-09-16: "enforcers shouldn't flash
     // when hit"). Same defect class as the grunt in §44.
     public const int GlobalActiveSparkCap = 20; // R5 $1412: $14 (20) sparks max
 
-    // Quark (Phase 8.6) — from the GOSPEL (RRTK4 `SQUARE` + `SQVEL`; notes §43,
+    // Quark — from the GOSPEL (RRTK4 `SQUARE` + `SQVEL`; notes §43,
     // §51). The quark DRIFTS: it is not waypoint-seeking and its speed is not
     // proportional to any distance.
     //
@@ -387,7 +387,7 @@ public static class GameplayConstants
     /// </summary>
     public const int TankStepArcadePixels = 1;
 
-    // Spark (Phase 8.8) — arcade-faithful per the GOSPEL (ref/original-source/
+    // Spark — arcade-faithful per the GOSPEL (ref/original-source/
     // RRC11.ASM: ENFSHT + SPARK + the SPKP0..3 pics; notes 41). A spark is a
     // BALLISTIC particle, NOT a random walk:
     //   ENFSHT: OXV = 4 x (player coord + jitter - spark coord) [subpixels];
@@ -467,7 +467,7 @@ public static class GameplayConstants
     public const int ScoreBurstPointsOffsetXSpecPixels = 2;
     public const int ScoreBurstPointsOffsetYSpecPixels = 5;
 
-    // Tank shell (Phase 8.9) — ROM R5 4F82-4F8A: lifespan = (RND & $1F) + $30
+    // Tank shell — ROM R5 4F82-4F8A: lifespan = (RND & $1F) + $30
     // ROM ticks (48..79); the shell flies straight, aimed once at spawn, and
     // bounces off all four walls (4F94-4FCD).
     public const int TankShellSpeed = 5;
@@ -481,7 +481,7 @@ public static class GameplayConstants
     /// </summary>
     public static readonly (int Width, int Height) TankShellCollisionSize = (8, 7);
 
-    // Attract mode (Phase 12.1, notes §94) — the arcade's attract cycle: idle
+    // Attract mode (notes §94) — the arcade's attract cycle: idle
     // title, then the machine plays itself (CMOS "FANCY ATTRACT MODE" when on).
     public const int TitleWallSlot = 12; // ROM title screen: $79C8 LDA #$CC / STA $8F — the wall is solid slot 12
     public const int TitleIdleSeconds = 12; // port choice: how long the title sits before the demo takes over
@@ -516,13 +516,13 @@ public static class GameplayConstants
     /// </summary>
     public const int DemoDirectionHoldTicks = 9;
 
-    // Playfield layout (Phase 10.5)
+    // Playfield layout
     public const int PlayfieldMarginSpecPixels = 20;
 
-    // Scoring (Phase 11.1) — per-kill point values live in Level/ScoreValues.cs per plan 11.1
+    // Scoring — per-kill point values live in Level/ScoreValues.cs
     public const int ExtraLifeThresholdStep = 10000;
 
-    // Wave clear (Phase 11.3)
+    // Wave clear
     public const int WaveClearDisplayTicks = 90; // 1.5s at 60Hz fixed timestep
 
     // HIGH SCORE TABLE (notes §98) — RRTABLE's TABLE, RRTESTC's CMOS lists and
@@ -591,7 +591,7 @@ public static class GameplayConstants
     public static readonly (int Width, int Height) DadCollisionSize = (10, 13);
     public static readonly (int Width, int Height) MikeyCollisionSize = (6, 11);
     public static readonly (int Width, int Height) SkullCollisionSize = (12, 11);
-    // PHASE E (notes (18) RRB10 decode): brain art = 7 bytes x 16 rows =
+    // Brain art (notes (18) RRB10 decode): 7 bytes x 16 rows =
     // 14x16 px; a prog re-draws its converted human's art and keeps that
     // human's per-kind box (see Prog.ArcadeCollisionSize); cruise missile =
     // the ROM's "FAT PHONY GUY" box (the 6x6 head inset 1 px = 4x4).

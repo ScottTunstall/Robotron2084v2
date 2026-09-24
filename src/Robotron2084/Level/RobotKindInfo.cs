@@ -10,8 +10,8 @@ namespace Robotron2084.Level;
 /// <remarks>
 /// This is the port's registry of the arcade's robot routines: the wave counts come from <see cref="LevelParameters"/>
 /// (the ROM's own wave tables), the scores from <see cref="ScoreValues"/> (notes §11.3), the spawn from the kind's
-/// own initialise routine (plan 9.1), and <see cref="LaserHit"/> from the collision phase that kind's routine runs
-/// (plan 9.2, notes §61, §64).
+/// own initialise routine, and <see cref="LaserHit"/> from the collision phase that kind's routine runs
+/// (notes §61, §64).
 /// </remarks>
 /// <param name="Kind">Which kind this row describes.</param>
 /// <param name="WaveCount">How many of them the wave table brings; null when only another robot makes them.</param>

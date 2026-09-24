@@ -89,8 +89,7 @@ public sealed class PlayerControls
             Axis(InputAction.ShootDown, InputAction.ShootUp, keys, padOne, padTwo));
 
     /// <summary>
-    /// True while ANY shoot action is held — the port's rule since round 7, when the
-    /// author asked for shooting without a separate fire button.
+    /// True while ANY shoot action is held (holding an aim key fires).
     /// </summary>
     public bool Firing(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
         ShootDirection(keys, padOne, padTwo) != IntVector2.Zero;

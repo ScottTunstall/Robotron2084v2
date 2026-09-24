@@ -10,11 +10,11 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Level;
 
 /// <summary>
-/// The central update/collision/draw hub (plan Phase 9). Individual entities
+/// The central update/collision/draw hub. Individual entities
 /// deliberately don't know about each other — the spec's per-frame draw order
 /// and every cross-entity collision rule live here.
 ///
-/// Per-tick update order (plan 9.1): hit-stop gate -> wall -> player velocity
+/// Per-tick update order: hit-stop gate -> wall -> player velocity
 /// estimate (before the player moves) -> player -> player lasers -> every
 /// entity list -> ResolveCollisions -> prune Dead entities.
 /// </summary>
@@ -40,13 +40,13 @@ public sealed class PlayField
     private readonly EntityList<Explosion> _explosions = new(); // RRX7 (notes 35): max 7, like the ROM slots
 
     /// <summary>
-    /// Every list, in the ROM's own update order (plan 9.1) — the field walks this ONE loop to advance its
+    /// Every list, in the ROM's own update order — the field walks this ONE loop to advance its
     /// entities and to drop the dead, so a new kind joins those passes by being in this array.
     /// </summary>
     private readonly IEntityList[] _updateOrder;
 
     /// <summary>
-    /// Every list drawn BEHIND the player's lasers, in plan 9.1's render order: the posts, the family and their
+    /// Every list drawn BEHIND the player's lasers, in the spec's render order: the posts, the family and their
     /// markers, then the robots.
     /// </summary>
     private readonly IEntityList[] _drawOrderBehindShots;
@@ -146,14 +146,14 @@ public sealed class PlayField
         PlayerLasers = new LaserSlots(Sprites);
         _previousPlayerPosition = playerStart;
 
-        // Spawn order per plan 9.1: the posts first, then the robots the wave table counts, then the family.
+        // Spawn order: the posts first, then the robots the wave table counts, then the family.
         // Each kind's own spawn is its registry row, so a new kind needs no edit here (notes §119).
         foreach (RobotKindInfo robot in RobotKinds.All)
         {
             robot.Spawn?.Invoke(this, playerStart);
         }
 
-        // PHASE D: humans (ROM HUMSTV — kids first, then moms, then dads,
+        // The human family spawns last (ROM HUMSTV — kids first, then moms, then dads,
         // random field positions, staggered starts).
         SpawnHumans();
     }
@@ -238,7 +238,7 @@ public sealed class PlayField
     public int MissileCount => _missiles.Count(e => e.LifeState != EntityLifeState.Dead);
 
     /// <summary>
-    /// Wave-clear condition (Phase 11.3): every grunt, spheroid, enforcer,
+    /// Wave-clear condition: every grunt, spheroid, enforcer,
     /// quark, tank, brain, and prog is gone, and no cruise missile is in
     /// flight (missiles never expire — they bounce until shot). Deliberately
     /// EXCLUDES hulks (indestructible — a level can never require killing
@@ -249,17 +249,17 @@ public sealed class PlayField
         GruntCount == 0 && SpheroidCount == 0 && EnforcerCount == 0 && QuarkCount == 0 && TankCount == 0
         && BrainCount == 0 && ProgCount == 0 && MissileCount == 0;
 
-    /// <summary>Phase 11.5: true while the hit-stop freeze-frame is running.</summary>
+    /// <summary>True while the hit-stop freeze-frame is running.</summary>
     public bool IsFrozen => _hitStopTicksRemaining > 0;
 
     /// <summary>
-    /// PHASE D: humans rescued (player touch) during this player's life. ROM
+    /// Humans rescued (player touch) during this player's life. ROM
     /// SAVCNT — reset on player death (PLINIT), carried across waves; each
     /// rescue pays ScoreValues.RescueBonus(count) (1000-5000, capped).
     /// </summary>
     public int RescuesThisLife { get; private set; }
 
-    // ---- Spawn hooks called by entities during their own Update (plan 9.3) ----
+    // ---- Spawn hooks called by entities during their own Update ----
 
     public void SpawnEnforcer(IntVector2 position) => _enforcers.Add(new Enforcer(Sprites, position, _random, Parameters.EnforcerFireDelay));
 
@@ -290,7 +290,7 @@ public sealed class PlayField
 
     public void SpawnCruiseMissile(IntVector2 origin) => _missiles.Add(new CruiseMissile(Sprites, origin, Player.Position, _random));
 
-    /// <summary>PHASE E BMUT: a brain's touch turns the human into a PROG at its spot.</summary>
+    /// <summary>ROM BMUT: a brain's touch turns the human into a PROG at its spot.</summary>
     public void SpawnProg(IntVector2 position, HumanKind kind) => _progs.Add(new Prog(Sprites, position, kind, _random));
 
     /// <summary>
@@ -300,7 +300,7 @@ public sealed class PlayField
     private static readonly int BrainCatchReach = ScreenSize.Scaled(3);
 
     /// <summary>
-    /// PHASE E: the nearest living human's position to <paramref name="from"/>
+    /// The nearest living human's position to <paramref name="from"/>
     /// (ROM GETHTG), or null when the family is gone (brains fall back to the
     /// player). GETHTG measures |dx| + |dy| — MANHATTAN, not Euclidean (the
     /// source sums the two absolute differences before comparing) — and from
@@ -332,8 +332,8 @@ public sealed class PlayField
     }
 
     /// <summary>
-    /// Phase 12.1 (attract demo, notes §94): the nearest ALIVE robot's position
-    /// to <paramref name="from"/>, measured the same Manhattan way as
+    /// The nearest ALIVE robot's position to <paramref name="from"/> for the
+    /// attract demo (notes §94), measured the same Manhattan way as
     /// <see cref="NearestHumanPositionTo"/>, or null when the field is clear.
     /// Every robot kind counts — a brain falls back to hunting the player once
     /// the family is gone (GETHTG), so none are safe to ignore. Used only by
@@ -372,11 +372,11 @@ public sealed class PlayField
         return nearest;
     }
 
-    // ---- Per-tick update (plan 9.1) ----
+    // ---- Per-tick update ----
 
     public void Update(GameTime gameTime)
     {
-        // Phase 11.5 hit-stop: everything else pauses this tick; Draw still
+        // Hit-stop: everything else pauses this tick; Draw still
         // runs against the frozen state (brief freeze-frame on player death).
         if (_hitStopTicksRemaining > 0)
         {
@@ -434,7 +434,7 @@ public sealed class PlayField
         }
     }
 
-    // ---- Collision resolution (plan 9.2 — order matters: a laser is consumed
+    // ---- Collision resolution (order matters: a laser is consumed
     //      by the FIRST thing it hits, not multiple things in one frame) ----
 
     private void ResolveCollisions()
@@ -459,13 +459,13 @@ public sealed class PlayField
         // never states contact with these robots kills the player (they harm
         // only via dropped units/missiles).
 
-        // 11. Humans (PHASE D): hulk contact kills (the R5 ROM's only robot
+        // 11. Human collisions: hulk contact kills (the R5 ROM's only robot
         //     that checks the human list — RRH11 HULK COL0 on HPTR); player
         //     contact RESCUES (RRG23 COLCHK: the human path leaves PCFLG set
         //     for the human's kill vector → bonus, no skull, player unharmed).
         ResolveHumanCollisions();
 
-        // Phase 11.5: the instant the player went Alive -> Dying this frame: hit-stop.
+        // The instant the player went Alive -> Dying this frame: hit-stop.
         if (playerWasAlive && Player.LifeState == EntityLifeState.Dying)
         {
             _hitStopTicksRemaining = GameplayConstants.HitStopTicks;
@@ -475,7 +475,7 @@ public sealed class PlayField
     }
 
     /// <summary>
-    /// Phases 2-6 (plan 9.2): the player's lasers against every robot kind, in <see cref="RobotKinds.All"/>'s
+    /// Phases 2-6: the player's lasers against every robot kind, in <see cref="RobotKinds.All"/>'s
     /// order — the order IS the behaviour, because a laser is spent on the first thing it meets and cannot hit
     /// two things in one frame.
     /// </summary>
@@ -620,7 +620,7 @@ public sealed class PlayField
 
     /// <summary>
     /// Phase 8: the player vs an electrode — "KILL THE PLAYER AND THE ELECTRODE".
-    /// Phase 11.4: while invincible the player passes through unharmed.
+    /// While invincible the player passes through unharmed.
     /// </summary>
     private void ResolvePlayerVsElectrodeCollision()
     {
@@ -646,7 +646,7 @@ public sealed class PlayField
     }
 
     /// <summary>
-    /// Phases 9 and 10 (plan 9.2): the player vs every robot kind that is fatal to touch — the walkers of phase
+    /// Phases 9 and 10: the player vs every robot kind that is fatal to touch — the walkers of phase
     /// 9 and the shots of phase 10, in <see cref="RobotKinds.All"/>'s order. Only the player dies (a missile is
     /// not removed: only a laser removes those).
     /// </summary>
@@ -691,7 +691,7 @@ public sealed class PlayField
     }
 
     /// <summary>
-    /// PHASE D human collisions — see the call site in ResolveCollisions. The ROM's own four sub-phases, in
+    /// Human collisions — see the call site in ResolveCollisions. The ROM's own four sub-phases, in
     /// order: the victim a dying brain lets go, a brain's catch, a hulk's kill, and the player's rescue.
     /// </summary>
     /// <remarks>
@@ -1037,7 +1037,7 @@ public sealed class PlayField
         }
     }
 
-    // ---- Draw order (plan 9.4, merged from the spec's two lists — a single
+    // ---- Draw order (merged from the spec's two lists — a single
     //      ordered pass satisfies both) ----
 
     public void Draw(SpriteBatch spriteBatch)
@@ -1098,7 +1098,7 @@ public sealed class PlayField
         Player.Draw(spriteBatch);
     }
 
-    // ---- Start-of-level spawning (plan 9.1 steps 5-9) ----
+    // ---- Start-of-level spawning ----
 
     internal void SpawnElectrodes(IntVector2 playerStart)
     {
@@ -1279,7 +1279,7 @@ public sealed class PlayField
 
     internal void SpawnBrains(IntVector2 playerStart)
     {
-        // PHASE E: brains spawn with the wave (ROM $1AC0), like the hulks —
+        // Brains spawn with the wave (ROM $1AC0), like the hulks —
         // anywhere in the field, not the wall and not on top of the player.
         for (int i = 0; i < Parameters.BrainCount; i++)
         {
@@ -1348,7 +1348,7 @@ public sealed class PlayField
         return new IntVector2(x, y);
     }
 
-    /// <summary>Advances every list the field holds, in the ROM's own update order (plan 9.1).</summary>
+    /// <summary>Advances every list the field holds, in the ROM's own update order.</summary>
     private void UpdateEntities(GameTime gameTime)
     {
         foreach (IEntityList list in _updateOrder)

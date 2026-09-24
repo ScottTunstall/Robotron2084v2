@@ -99,10 +99,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>True until the start grace expires.</summary>
     public bool IsInStartGracePeriod { get; private set; }
 
-    /// <summary>Phase 11.4: passes through hazards unharmed for a short time after a respawn.</summary>
+    /// <summary>Passes through hazards unharmed for a short time after a respawn.</summary>
     public bool IsInvincible => _invincibilityTicksRemaining > 0;
 
-    /// <summary>TEMPORARY round-7 playtest aid: while set, <see cref="Kill"/> is a complete no-op.</summary>
+    /// <summary>TEMPORARY playtest aid: while set, <see cref="Kill"/> is a complete no-op.</summary>
     /// <remarks>Per player, so the attract DEMO can opt out and the machine still plays by the
     /// arcade's rules (otherwise every contact path in the demo is dead code).</remarks>
     public bool InvincibleForTesting { get; set; } = GameplayConstants.PlayerInvincibleForTesting;
@@ -110,7 +110,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>The player picture's own 8x12 box at <see cref="Position"/> (the ROM intersects the PICTURE).</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
-    /// <summary>Awards an extra life (Phase 11.1, extra-life threshold crossings).</summary>
+    /// <summary>Awards an extra life when a score crosses an extra-life threshold.</summary>
     public void AddLife() => Lives += 1;
 
     /// <summary>One tick: the death animation while dying, else clocks, movement, firing and animation.</summary>
@@ -300,7 +300,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     {
         if (InvincibleForTesting)
         {
-            return; // TEMPORARY playtest aid (round 7) — see the property / the constant.
+            return; // TEMPORARY playtest aid — see the property and the constant.
         }
 
         if (LifeState != EntityLifeState.Alive)

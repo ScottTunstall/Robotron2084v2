@@ -10,7 +10,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>
-/// Inter-level screen (Phase 11.3): after the display time, the same player
+/// Inter-level screen: after the display time, the same player
 /// resumes at their next wave, carrying lives, score and rescue count over. The
 /// session rides through unchanged — a wave clear never passes the turn in the
 /// arcade (RRG23 GEXEC0 only advances the CURRENT player's PWAV), so a 2-player
@@ -24,8 +24,8 @@ public sealed class WaveClearState : IGameState
     private readonly int _clearedWave;
 
     /// <summary>
-    /// Phase 12.1 (notes §94): when true the tunnel belongs to the ATTRACT demo
-    /// and the game resumes in <see cref="AttractState"/> (the machine keeps
+    /// When true the tunnel belongs to the ATTRACT demo
+    /// (notes §94) and the game resumes in <see cref="AttractState"/> (the machine keeps
     /// playing itself) instead of <see cref="PlayingState"/>.
     /// </summary>
     private readonly bool _attract;

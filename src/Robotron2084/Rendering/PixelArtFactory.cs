@@ -7,7 +7,7 @@ namespace Robotron2084.Rendering;
 
 /// <summary>
 /// Builds every sprite at runtime as a pixel-array <see cref="Texture2D"/> —
-/// no Content pipeline assets needed (plan Phase 5). Entity silhouettes are
+/// no Content pipeline assets needed. Entity silhouettes are
 /// original art authored fresh for this project (simple symmetric shapes on
 /// a transparent background, in the spec's colour per entity); the four
 /// player laser pictures are ROM art (R5 $35BE-$35DC) built at arcade-pixel

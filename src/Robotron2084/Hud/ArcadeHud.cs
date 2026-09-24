@@ -9,7 +9,7 @@ namespace Robotron2084.Hud;
 
 /// <summary>
 /// The arcade HUD (notes §58), shared by the playing state, the attract demo
-/// (Phase 12.1) and the title screen: in the top band, each player's score at
+/// and the title screen: in the top band, each player's score at
 /// their own column (P1 col 21, P2 col 85) with their spare men as mini man
 /// icons immediately to its right (P1 col 46, P2 col 110); at the bottom, the
 /// "&lt;c&gt; WAVE" indicator (drawn by <see cref="DrawWaveMessage"/>, not by
