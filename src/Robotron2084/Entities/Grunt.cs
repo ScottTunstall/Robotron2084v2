@@ -44,14 +44,12 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <summary>Creates a grunt, with its first stagger already rolled.</summary>
     /// <param name="position">Top-left of the grunt.</param>
     /// <param name="moveLimitBeats">This wave's re-roll limit: the upper bound of the random 1..N stagger.</param>
-    /// <param name="speedBonus">Unused (kept for the uniform spawn shape).</param>
     /// <param name="random">The random source, or null to create one.</param>
     /// <remarks>ROM: <c>ROBSPD</c> — the stagger limit is a random 1..that many beats.</remarks>
     public Grunt(
         SpriteSet sprites,
         IntVector2 position,
         int moveLimitBeats = 15,
-        int speedBonus = 0,
         Random? random = null)
     {
         _sprites = sprites;

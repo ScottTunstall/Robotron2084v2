@@ -443,7 +443,7 @@ public sealed class ExplosionTests
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
         var electrode = new Electrode(TestSprites.Shared, spot);
         field.AddElectrode(electrode);
-        field.AddGrunt(new Grunt(TestSprites.Shared, spot, speedBonus: 0)); // standing on the electrode
+        field.AddGrunt(new Grunt(TestSprites.Shared, spot)); // standing on the electrode
 
         field.Update(new GameTime());
 
@@ -465,7 +465,7 @@ public sealed class ExplosionTests
         for (int i = 0; i < GameplayConstants.StripMaxConcurrent + 4; i++)
         {
             IntVector2 spot = new(bounds.X + 16 + (i * 12), bounds.Y + 60);
-            field.AddGrunt(new Grunt(TestSprites.Shared, spot, speedBonus: 0));
+            field.AddGrunt(new Grunt(TestSprites.Shared, spot));
             field.AddElectrode(new Electrode(TestSprites.Shared, spot));
         }
 

@@ -59,14 +59,12 @@ public sealed class Tank : IExplodable, IRemovable
     /// <param name="position">Top-left of the tank.</param>
     /// <param name="random">The random source: the aim rolls, the destinations and the first-fire delay.</param>
     /// <param name="fireDelayRomTicks">This wave's firing interval, in ROM frames.</param>
-    /// <param name="speedBonus">Unused (kept for the uniform spawn shape).</param>
     /// <remarks>ROM: <c>TNKSHT</c> — this wave's firing interval.</remarks>
     public Tank(
         SpriteSet sprites,
         IntVector2 position,
         Random random,
-        int fireDelayRomTicks = 32,
-        int speedBonus = 0)
+        int fireDelayRomTicks = 32)
     {
         _sprites = sprites;
         _position = position;

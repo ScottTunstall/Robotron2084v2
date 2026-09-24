@@ -40,14 +40,12 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <param name="position">Top-left of the enforcer.</param>
     /// <param name="random">The random source for the re-aim destination and the fire timer.</param>
     /// <param name="fireDelayRomTicks">This wave's fire delay, in ROM frames: the interval is a random 1..this.</param>
-    /// <param name="speedBonus">Unused (kept for the uniform spawn shape).</param>
     /// <remarks>ROM: <c>ENSTIM</c> — the interval is a random 1..that many AI passes.</remarks>
     public Enforcer(
         SpriteSet sprites,
         IntVector2 position,
         Random random,
-        int fireDelayRomTicks = 24,
-        int speedBonus = 0)
+        int fireDelayRomTicks = 24)
     {
         _sprites = sprites;
         _position = position;

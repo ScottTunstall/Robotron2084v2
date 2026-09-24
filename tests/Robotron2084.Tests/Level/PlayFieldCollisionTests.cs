@@ -233,12 +233,12 @@ public sealed class PlayFieldCollisionTests
         // walked through every robot. The aid is per player now and the DEMO clears
         // it (`AttractState`), so contact kills there and only there (notes §97.5).
         PlayField aided = CreateEmptyField();
-        aided.AddGrunt(new Grunt(TestSprites.Shared, aided.Player.Position, speedBonus: 0));
+        aided.AddGrunt(new Grunt(TestSprites.Shared, aided.Player.Position));
         aided.Update(new GameTime());
         Assert.Equal(EntityLifeState.Alive, aided.Player.LifeState);
 
         PlayField demo = CreateEmptyField(playerInvincibleForTesting: false);
-        demo.AddGrunt(new Grunt(TestSprites.Shared, demo.Player.Position, speedBonus: 0));
+        demo.AddGrunt(new Grunt(TestSprites.Shared, demo.Player.Position));
         demo.Update(new GameTime());
         Assert.Equal(EntityLifeState.Dying, demo.Player.LifeState);
     }
@@ -248,7 +248,7 @@ public sealed class PlayFieldCollisionTests
     {
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 200, field.Wall.PlayfieldBounds.Y + 100);
-        var grunt = new Grunt(TestSprites.Shared, spot, speedBonus: 0);
+        var grunt = new Grunt(TestSprites.Shared, spot);
         field.AddGrunt(grunt);
 
         Assert.True(field.PlayerLasers.TryFire(spot, Direction8.Down, out PlayerLaser? laser));
