@@ -493,7 +493,7 @@ public sealed class PlayFieldPhaseETests
 
         Assert.Equal(GameplayConstants.MissileTrailMarks, missile.Trail.Count);
 
-        missile.Destroy(); // CMKIL wipes the remaining marks
+        missile.Kill(); // CMKIL wipes the remaining marks
         Assert.Empty(missile.Trail);
     }
 
@@ -654,7 +654,7 @@ public sealed class PlayFieldPhaseETests
         // instant off (PRGKIL), missile instant off.
         brain.Kill();
         prog.Kill();
-        missile.Destroy();
+        missile.Kill();
         for (int tick = 0; tick < 200 && !field.IsLevelCleared; tick++)
         {
             field.Update(Frame());

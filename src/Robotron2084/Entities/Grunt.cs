@@ -15,7 +15,7 @@ namespace Robotron2084.Entities;
 /// more than 2 arcade px from the player (the axes are independent). The walk frame advances only on
 /// a step, and the survivors' speed-up is <c>RMXSPD</c> (notes §29). Timers count 5 per tick and 6 per
 /// arcade frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class Grunt : IEntity, IExplodable
+public sealed class Grunt : IEntity, IExplodable, IRemovable
 {
     /// <summary>The grunt picture's own 10x13 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =

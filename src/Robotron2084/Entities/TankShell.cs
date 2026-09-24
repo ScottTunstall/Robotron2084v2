@@ -17,7 +17,7 @@ namespace Robotron2084.Entities;
 /// bounce sound, and fizzles out after a random 48-79 ROM frames. A shell flies over electrodes and
 /// never collides with one, and its box is the picture's own 8x7 arcade px.
 /// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class TankShell : IEntity, IArtSource
+public sealed class TankShell : IEntity, IArtSource, IRemovable
 {
     /// <summary>The shell picture's own 8x7 arcade px box, in port pixels.</summary>
     private static readonly int BoxWidth = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Width);
@@ -54,7 +54,7 @@ public sealed class TankShell : IEntity, IArtSource
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Hit: removed from the screen immediately (spec + ROM).</summary>
-    public void Destroy() => LifeState = EntityLifeState.Dead;
+    public void Kill() => LifeState = EntityLifeState.Dead;
 
     /// <summary>True when this update bounced off a border wall, so the sound can be played.</summary>
     public bool BouncedThisUpdate { get; private set; }

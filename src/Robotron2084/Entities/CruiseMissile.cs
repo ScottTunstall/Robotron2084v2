@@ -21,7 +21,7 @@ namespace Robotron2084.Entities;
 /// coloured two stacked pixels; the ROM's missile picture exists only to define the collision box.
 /// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.
 /// </remarks>
-public sealed class CruiseMissile : IEntity
+public sealed class CruiseMissile : IEntity, IRemovable
 {
     /// <summary>The collision box's size, 6x4 arcade px, in port pixels; the box itself is offset up-left.</summary>
     /// <remarks>The disassembly labels this hitbox "FAT PHONY GUY" — far bigger than the missile's
@@ -92,7 +92,7 @@ public sealed class CruiseMissile : IEntity
 
     /// <summary>Removes the missile instantly and wipes its trail with it.</summary>
     /// <remarks>ROM: <c>CMKIL</c> — nothing is left behind.</remarks>
-    public void Destroy()
+    public void Kill()
     {
         LifeState = EntityLifeState.Dead;
         _trail.Clear();

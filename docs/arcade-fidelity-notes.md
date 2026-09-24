@@ -9830,7 +9830,7 @@ so the boxes cannot be the gate. **Gameplay consequence to feel in a playtest:**
 laser's hit areas are now picture-accurate and therefore slightly LARGER than the old 4x4 squares.
 
 **Scope of the change.** The eight entity-contact sites now call `PlayField.Touches`: every laser-vs-robot
-test (`ResolveLaserHits`), the laser-vs-hulk knockback, grunt/hulk vs electrode, player vs electrode,
+test (`ResolveLaserPhase`, notes §119), the laser-vs-hulk knockback, grunt/hulk vs electrode, player vs electrode,
 `KillPlayerOnContact` (grunt/hulk/brain/prog and spark/shell/missile), and hulk-vs-human and
 player-vs-human (the rescue). Left as boxes, deliberately: the BRAIN's catch (`BrainCatchReach` — the
 ROM's `BRNL1` compares a fixed offset, not a picture overlap, notes §47), every spawn-placement check
@@ -9851,3 +9851,52 @@ attract" and passes if there are 150+ lit samples — a wave-clear screen in the
 `WaveClearState` is deliberately NOT an attract screen (notes §105), so a fire press there does nothing.
 The gate can therefore pass without the hand-back having happened; that is pre-existing, and the
 non-`--full` run (fire during the movie) is the one that tests the hand-back.
+
+### 119. ADDING AN ENEMY IS NOW AN ENTITY CLASS AND ONE ROW — the robot registry (2026-09-24)
+
+The third thing the author asked for: *"change the code, if required, so that new enemy types can be
+added."* It was required. Adding a robot used to mean touching `PlayField` in six places — a field, the
+spawn call, the update loop, the prune loop, the draw loop, the laser phase, the contact phase — and
+missing one gave a robot that never moved, never died or never drew. Each of those was a hand-copied loop
+per kind, which is exactly the shape a new kind falls through.
+
+**The registry.** `Level/RobotKinds.cs` declares `RobotKind` (the twelve kinds the field keeps lists of)
+and one `RobotKindInfo` row per kind:
+
+| The row says | Where it used to live |
+|---|---|
+| `WaveCount` — how many the wave table brings, or null when only another robot makes them | six separate `Parameters.XCount` reads inside the six spawn methods |
+| `Score` — what a laser kill is worth | the `scoreValue` argument of each `ResolveLaserHits<T>` call |
+| `LaserHit` — what one laser does to one of them, the whole phase | the six `ResolveLaserHits<T>` calls, the hulk knockback and the two burst kills |
+| `KillsPlayerOnContact` | the two hand-written contact phases (walkers, then shots) |
+| `Spawn` — builds the wave's own at a chosen spot | the six `SpawnX` calls in the constructor |
+
+`RobotKinds.Of(kind)` is the lookup, and **the order of `All` is behaviour**: it is the order the laser
+phases resolve in, and a laser is spent on the first thing it meets, so a row that moved would change
+which robot a laser kills. The electrode's row is first for that reason (notes §61). The order matches
+the enum, which a guard test asserts.
+
+**The lists.** `Level/EntityList.cs` owns the passes EVERY list needs — `UpdateAll`, `PruneDead`,
+`DrawAll` — behind `IEntityList`, so `PlayField` walks its three orders (update, draw-behind-shots,
+draw-in-front-of-shots) in single loops instead of one loop per kind. `EntityList<T>` also keeps the
+typed reads the ROM's own phases do (`[index]`, `Last`, `Add`, `Any`, `foreach`), so the collision code
+is still written per kind. The materialisation guard ("the robots are OFF while the appear strips
+converge", notes §61.4) stays in ONE place — `PlayField.UpdateEntity`/`DrawEntity`, which each list calls
+back into — rather than in twelve `Update` overrides.
+
+**One removal with the refactor:** `Destroy()` became `IRemovable.Kill()` (`Entities/IRemovable.cs`).
+Three entities had a public `Destroy` and nine had a `Kill`, doing the same thing under two names; there
+is one idiom now, and `PlayField.Shatter`/`Burst` are the two ways a robot's kind can ask for it.
+
+**What a new kind still needs an edit for** — deliberately, because it is genuinely new behaviour: a
+laser phase that is not one of the shapes above (`Shatter`, the hulk knockback, one of the two bursts),
+a new electrode interaction, or a contact rule the field's phases do not already express. `ListOf(kind)`
+throws rather than guessing, and the guard test in `tests/.../Level/PlayFieldRobotRegistryTests.cs` fails
+until the enum, the registry, the three orders and the four hand-written tables (wave count, score,
+fatal-on-contact, entity type per kind) all agree — the same "forces the decision" pattern the
+`AttractScreenTests` use for `IGameState`. Wiring a kind to the wrong list is caught by the entity-type
+table, which is the one slip a copy-paste row really makes (`Tank` vs `TankShell`).
+
+**Behaviour-preserving, and verified:** the registry's order reproduces the old explicit order for every
+laser phase and both contact phases. 7 new guard tests; **482 tests, 0 failed, 0 skipped**; Debug and
+Release 0 warnings; smoke, `verify-playfield` and `verify-attract` green.

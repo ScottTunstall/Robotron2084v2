@@ -19,7 +19,7 @@ namespace Robotron2084.Entities;
 /// (X wins) and changing it restarts the walk pattern. It targets the nearest living human by
 /// Manhattan distance, else the player. Timers count 5 per tick and 6 per arcade frame, so an
 /// interval of N frames is due at 6 x N.</remarks>
-public sealed class Brain : IEntity, IExplodable
+public sealed class Brain : IEntity, IExplodable, IRemovable
 {
     /// <summary>Extra ROM frames added to this wave's brain speed to get the beat.</summary>
     private const int BeatExecutionRomTicks = 1;

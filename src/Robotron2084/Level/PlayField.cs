@@ -22,29 +22,47 @@ public sealed class PlayField
 {
     private static readonly int EntitySize = ScreenSize.Scaled(GameplayConstants.EntitySizeSpecPixels);
 
-    private readonly List<Electrode> _electrodes = new();
-    private readonly List<Grunt> _grunts = new();
-    private readonly List<Hulk> _hulks = new();
-    private readonly List<Spheroid> _spheroids = new();
-    private readonly List<Enforcer> _enforcers = new();
-    private readonly List<Quark> _quarks = new();
-    private readonly List<Tank> _tanks = new();
-    private readonly List<Spark> _sparks = new();
-    private readonly List<TankShell> _tankShells = new();
-    private readonly List<Human> _humans = new();
-    private readonly List<SkullMarker> _skulls = new();
-    private readonly List<RescueScoreMarker> _rescueScores = new();
-    private readonly List<Brain> _brains = new();
-    private readonly List<Prog> _progs = new();
-    private readonly List<CruiseMissile> _missiles = new();
-    private readonly List<Explosion> _explosions = new(); // RRX7 (notes 35): max 7, like the ROM slots
+    private readonly EntityList<Electrode> _electrodes = new();
+    private readonly EntityList<Grunt> _grunts = new();
+    private readonly EntityList<Hulk> _hulks = new();
+    private readonly EntityList<Spheroid> _spheroids = new();
+    private readonly EntityList<Enforcer> _enforcers = new();
+    private readonly EntityList<Quark> _quarks = new();
+    private readonly EntityList<Tank> _tanks = new();
+    private readonly EntityList<Spark> _sparks = new();
+    private readonly EntityList<TankShell> _tankShells = new();
+    private readonly EntityList<Human> _humans = new();
+    private readonly EntityList<SkullMarker> _skulls = new();
+    private readonly EntityList<RescueScoreMarker> _rescueScores = new();
+    private readonly EntityList<Brain> _brains = new();
+    private readonly EntityList<Prog> _progs = new();
+    private readonly EntityList<CruiseMissile> _missiles = new();
+    private readonly EntityList<Explosion> _explosions = new(); // RRX7 (notes 35): max 7, like the ROM slots
+
+    /// <summary>
+    /// Every list, in the ROM's own update order (plan 9.1) — the field walks this ONE loop to advance its
+    /// entities and to drop the dead, so a new kind joins those passes by being in this array.
+    /// </summary>
+    private readonly IEntityList[] _updateOrder;
+
+    /// <summary>
+    /// Every list drawn BEHIND the player's lasers, in plan 9.1's render order: the posts, the family and their
+    /// markers, then the robots.
+    /// </summary>
+    private readonly IEntityList[] _drawOrderBehindShots;
+
+    /// <summary>
+    /// Every list drawn IN FRONT of the player's lasers: the enemy shots, the explosions, then the bursts.
+    /// Between the two arrays the player's own lasers draw, and the player draws last (spec states that twice).
+    /// </summary>
+    private readonly IEntityList[] _drawOrderInFrontOfShots;
 
     // The spheroid's `CIRKP` and the quark's `CIRKV` bursts (notes §64): those two
     // enemies do NOT use the strip explosion — their own pictures play as a solid
     // silhouette and then their "1000" picture appears. The ROM's kill processes
     // take a free object slot, not one of the ten shared EX records, so these are
     // not capped.
-    private readonly List<ScoreBurst> _scoreBursts = new();
+    private readonly EntityList<ScoreBurst> _scoreBursts = new();
 
     // RRG23 `LASDIE` -> `LASDIH`/`LASDIV`: where a laser runs off the playfield the
     // ROM paints the end pixel(s) in the wave's LASCOL slot (RRF.ASM calls it
@@ -91,6 +109,20 @@ public sealed class PlayField
     {
         Parameters = parameters;
         _gruntSpeedFloor = parameters.GruntSpeedFloor;
+        _updateOrder =
+        [
+            _electrodes, _grunts, _hulks, _spheroids, _enforcers, _quarks, _tanks, _brains, _progs,
+            _sparks, _tankShells, _missiles, _humans, _skulls, _rescueScores, _explosions, _scoreBursts,
+        ];
+        _drawOrderBehindShots =
+        [
+            _electrodes, _skulls, _rescueScores, _humans, _grunts, _hulks, _spheroids, _enforcers,
+            _quarks, _tanks, _brains, _progs,
+        ];
+        _drawOrderInFrontOfShots =
+        [
+            _sparks, _tankShells, _missiles, _explosions, _scoreBursts,
+        ];
         // R5 $2A85-2B08: the wave-progress process self-reschedules every
         // 15 vblanks and an internal counter (18 on entry, then 15) gates
         // the speed update → first tick 18×15 = 270 vblanks in, then every
@@ -109,15 +141,13 @@ public sealed class PlayField
         PlayerLasers = new LaserSlots();
         _previousPlayerPosition = playerStart;
 
-        // Spawn order per plan 9.1: electrodes first, robots after (enforcers/tanks
-        // never spawn at level start — they're only dropped later).
-        SpawnElectrodes(playerStart);
-        SpawnGrunts(playerStart);
-        SpawnHulks(playerStart);
-        SpawnSpheroids(playerStart);
-        SpawnQuarks(playerStart);
-        // PHASE E: brains (ROM $1AC0 wave spawn; notes (18)).
-        SpawnBrains(playerStart);
+        // Spawn order per plan 9.1: the posts first, then the robots the wave table counts, then the family.
+        // Each kind's own spawn is its registry row, so a new kind needs no edit here (notes §119).
+        foreach (RobotKindInfo robot in RobotKinds.All)
+        {
+            robot.Spawn?.Invoke(this, playerStart);
+        }
+
         // PHASE D: humans (ROM HUMSTV — kids first, then moms, then dads,
         // random field positions, staggered starts).
         SpawnHumans();
@@ -380,17 +410,7 @@ public sealed class PlayField
         }
         PlayerLasers.Update(gameTime, this);
 
-        UpdateEntities(_electrodes, gameTime);
-        UpdateEntities(_grunts, gameTime);
-        UpdateEntities(_hulks, gameTime);
-        UpdateEntities(_spheroids, gameTime);
-        UpdateEntities(_enforcers, gameTime);
-        UpdateEntities(_quarks, gameTime);
-        UpdateEntities(_tanks, gameTime);
-        UpdateEntities(_brains, gameTime);
-        UpdateEntities(_progs, gameTime);
-        UpdateEntities(_sparks, gameTime);
-        UpdateEntities(_tankShells, gameTime);
+        UpdateEntities(gameTime);
         // R5 $4FCD: each wall bounce requests the bounce sound ($4B16, p200).
         foreach (TankShell shell in _tankShells)
         {
@@ -399,33 +419,14 @@ public sealed class PlayField
                 Sound.Play(SoundTables.ShellBounce);
             }
         }
-        UpdateEntities(_missiles, gameTime);
-        UpdateEntities(_humans, gameTime);
-        UpdateEntities(_skulls, gameTime);
-        UpdateEntities(_rescueScores, gameTime);
-        UpdateEntities(_explosions, gameTime);
-        UpdateEntities(_scoreBursts, gameTime);
 
         ResolveCollisions();
 
         // Prune: remove Dead entries from every list (pruning = count decrement, spec).
-        _electrodes.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _grunts.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _hulks.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _spheroids.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _enforcers.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _quarks.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _tanks.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _brains.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _progs.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _sparks.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _tankShells.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _missiles.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
-        _humans.RemoveAll(h => h.LifeState == EntityLifeState.Dead);
-        _skulls.RemoveAll(s => s.LifeState == EntityLifeState.Dead);
-        _rescueScores.RemoveAll(s => s.LifeState == EntityLifeState.Dead);
-        _scoreBursts.RemoveAll(b => b.LifeState == EntityLifeState.Dead);
-        _explosions.RemoveAll(e => e.LifeState == EntityLifeState.Dead);
+        foreach (IEntityList list in _updateOrder)
+        {
+            list.PruneDead();
+        }
     }
 
     // ---- Collision resolution (plan 9.2 — order matters: a laser is consumed
@@ -445,11 +446,9 @@ public sealed class PlayField
         // 8. The player vs an electrode.
         ResolvePlayerVsElectrodeCollision();
 
-        // 9. The player vs the enemy walkers.
-        ResolvePlayerVsRobotCollisions();
-
-        // 10. The player vs the enemy missiles.
-        ResolvePlayerVsMissileCollisions();
+        // 9-10. The player vs everything that is fatal to touch (the grunts, hulks,
+        //       brains and progs of phase 9 and the shots of phase 10).
+        ResolvePlayerVsContactKills();
 
         // No "Player vs spheroid/enforcer/quark/tank" contact kill — the spec
         // never states contact with these robots kills the player (they harm
@@ -471,62 +470,101 @@ public sealed class PlayField
     }
 
     /// <summary>
-    /// Phases 2-6 (plan 9.2): the player's lasers, in the ROM's order — the order IS the
-    /// behaviour, because <see cref="ResolveLaserHits{T}"/> consumes a laser on the first
-    /// thing it hits, so it cannot hit two things in one frame.
+    /// Phases 2-6 (plan 9.2): the player's lasers against every robot kind, in <see cref="RobotKinds.All"/>'s
+    /// order — the order IS the behaviour, because a laser is spent on the first thing it meets and cannot hit
+    /// two things in one frame.
     /// </summary>
     private void ResolveLaserCollisions()
     {
-        // 2. Player lasers vs electrodes. (1 — lasers vs wall — is inside PlayerLaser.Update.)
-        ResolveLaserHits(_electrodes, static e => e.Kill(), ScoreValues.Electrode);
+        foreach (RobotKindInfo robot in RobotKinds.All)
+        {
+            ResolveLaserPhase(robot);
+        }
+    }
 
-        // 3. Player lasers vs grunts (only lasers still alive after step 2).
-        //    Every grunt kill (laser or electrode) speeds up the survivors (ROM 3A94).
-        ResolveLaserHits(_grunts, g => { g.Kill(); SpeedUpGrunts(); }, ScoreValues.Grunt);
-
-        // 4. Player lasers vs hulks: knocked back, never killed, no score.
+    /// <summary>
+    /// One kind's laser phase: the first laser touching one of them is spent on it, the kind's row says what
+    /// happens to it, and the kill is scored (and may earn a spare man).
+    /// </summary>
+    /// <param name="robot">The kind's registry row.</param>
+    private void ResolveLaserPhase(RobotKindInfo robot)
+    {
         foreach (PlayerLaser laser in PlayerLasers.ActiveLasers)
         {
-            foreach (Hulk hulk in _hulks)
+            foreach (IEntity target in ListOf(robot.Kind).Entities)
             {
-                if (hulk.LifeState != EntityLifeState.Alive)
+                if (target.LifeState != EntityLifeState.Alive || !Touches(laser, target))
                 {
                     continue;
                 }
 
-                if (Touches(laser, hulk))
-                {
-                    hulk.ApplyKnockback(laser.Direction.ToIntVector());
-                    laser.Deactivate();
-                    break;
-                }
+                robot.LaserHit(this, target, laser.Direction);
+                AwardLaserScore(robot.Score);
+                laser.Deactivate();
+                break;
             }
         }
-
-        // 5. Player lasers vs spheroids/enforcers/quarks/tanks.
-        //    The spheroid and the quark have their OWN death sequence (notes §64):
-        //    their pictures burst as a solid silhouette and their "1000" picture
-        //    appears — they never use the strip explosion.
-        ResolveLaserHits(_spheroids, s =>
-        {
-            s.Kill();
-            SpawnScoreBurst(ScoreBurst.ForSpheroid(s.Bounds));
-        }, ScoreValues.Spheroid);
-        ResolveLaserHits(_enforcers, static e => e.Kill(), ScoreValues.Enforcer);
-        ResolveLaserHits(_quarks, q =>
-        {
-            q.Kill();
-            SpawnScoreBurst(ScoreBurst.ForQuark(q.Bounds));
-        }, ScoreValues.Quark);
-        ResolveLaserHits(_tanks, static t => t.Kill(), ScoreValues.Tank);
-        ResolveLaserHits(_brains, static b => b.Kill(), ScoreValues.Brain);
-        ResolveLaserHits(_progs, static p => p.Kill(), ScoreValues.Prog);
-
-        // 6. Player lasers vs sparks/tank shells: IMMEDIATE removal (no death animation).
-        ResolveLaserHits(_sparks, static s => s.Destroy(), ScoreValues.Spark);
-        ResolveLaserHits(_tankShells, t => { t.Destroy(); _shellsFiredThisWave--; }, ScoreValues.TankShell);
-        ResolveLaserHits(_missiles, static m => m.Destroy(), ScoreValues.CruiseMissile);
     }
+
+    /// <summary>A laser kill's score, and the spare man it may earn (R5 $DBF9).</summary>
+    /// <param name="value">What the kind is worth.</param>
+    private void AwardLaserScore(int value)
+    {
+        if (Score.Add(value))
+        {
+            Player.AddLife();
+            Sound.Play(SoundTables.BonusLife);
+        }
+    }
+
+    /// <summary>
+    /// The death of a robot whose picture shatters: the kill, the strip explosion (anchored at the picture's
+    /// middle — the ROM's <c>NWCENT</c> path, notes §73) and the ROM's robot-death sound (R5 $1F5B). The kinds'
+    /// rows call this one.
+    /// </summary>
+    /// <param name="target">The robot being killed.</param>
+    /// <param name="direction">The laser's direction, which picks the explosion's axis and lean.</param>
+    internal void Shatter(IEntity target, Direction8 direction)
+    {
+        ((IRemovable)target).Kill();
+        if (target is IExplodable explodable)
+        {
+            SpawnExplosion(explodable, direction);
+            Sound.Play(SoundTables.RobotDeath);
+        }
+    }
+
+    /// <summary>The death of a robot that plays its OWN burst instead of the strip explosion (notes §64).</summary>
+    /// <param name="target">The robot being killed.</param>
+    /// <param name="burst">The burst its kind's row built from it.</param>
+    internal void Burst(IEntity target, ScoreBurst burst)
+    {
+        ((IRemovable)target).Kill();
+        SpawnScoreBurst(burst);
+    }
+
+    /// <summary>The wave's shell count, which only a LASER kill decrements (the fizzle bug, notes §53).</summary>
+    internal void CountShellDestroyed() => _shellsFiredThisWave--;
+
+    /// <summary>The list a robot kind lives in — the one mapping from the registry to the field's lists.</summary>
+    /// <param name="kind">The kind to look up.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The kind has no list — a new kind needs one here.</exception>
+    internal IEntityList ListOf(RobotKind kind) => kind switch
+    {
+        RobotKind.Electrode => _electrodes,
+        RobotKind.Grunt => _grunts,
+        RobotKind.Hulk => _hulks,
+        RobotKind.Spheroid => _spheroids,
+        RobotKind.Enforcer => _enforcers,
+        RobotKind.Quark => _quarks,
+        RobotKind.Tank => _tanks,
+        RobotKind.Brain => _brains,
+        RobotKind.Prog => _progs,
+        RobotKind.Spark => _sparks,
+        RobotKind.TankShell => _tankShells,
+        RobotKind.CruiseMissile => _missiles,
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "No list holds this robot kind."),
+    };
 
     /// <summary>Phase 7: a grunt or a hulk walking onto an electrode (RRP8 PSTKIL).</summary>
     private void ResolveRobotVsElectrodeCollisions()
@@ -603,48 +641,36 @@ public sealed class PlayField
     }
 
     /// <summary>
-    /// Phase 9: the player vs grunt/hulk/brain/prog — only the player dies (the robots are
-    /// unaffected). Brains and progs are enemy walkers: contact kills in the arcade.
+    /// Phases 9 and 10 (plan 9.2): the player vs every robot kind that is fatal to touch — the walkers of phase
+    /// 9 and the shots of phase 10, in <see cref="RobotKinds.All"/>'s order. Only the player dies (a missile is
+    /// not removed: only a laser removes those; it expires on its own lifetime).
     /// </summary>
-    private void ResolvePlayerVsRobotCollisions()
+    private void ResolvePlayerVsContactKills()
     {
         if (Player.LifeState != EntityLifeState.Alive || Player.IsInvincible)
         {
             return;
         }
 
-        KillPlayerOnContact(_grunts);
-        KillPlayerOnContact(_hulks);
-        KillPlayerOnContact(_brains);
-        KillPlayerOnContact(_progs);
-    }
-
-    /// <summary>
-    /// Phase 10: the player vs spark/tank shell/cruise missile. The missile is NOT removed
-    /// (spec: only lasers remove missiles; it expires on its own lifetime).
-    /// </summary>
-    private void ResolvePlayerVsMissileCollisions()
-    {
-        if (Player.LifeState != EntityLifeState.Alive || Player.IsInvincible)
+        foreach (RobotKindInfo robot in RobotKinds.All)
         {
-            return;
+            if (robot.KillsPlayerOnContact)
+            {
+                KillPlayerOnContact(ListOf(robot.Kind));
+            }
         }
-
-        KillPlayerOnContact(_sparks);
-        KillPlayerOnContact(_tankShells);
-        KillPlayerOnContact(_missiles);
     }
 
     /// <summary>
     /// The player dies on contact with any of these — and only the player does. The state is
-    /// re-checked before every list because a list earlier in the same phase may already have
+    /// re-checked before every target because an earlier target in the same pass may already have
     /// started the death (the ROM tests PCFLG per collision, and a second <c>Kill</c> would
     /// restart the death animation).
     /// </summary>
-    private void KillPlayerOnContact<T>(List<T> entities)
-        where T : IEntity
+    /// <param name="robots">The kind's list.</param>
+    private void KillPlayerOnContact(IEntityList robots)
     {
-        foreach (T entity in entities)
+        foreach (IEntity entity in robots.Entities)
         {
             if (Player.LifeState != EntityLifeState.Alive)
             {
@@ -781,7 +807,7 @@ public sealed class PlayField
     /// <see cref="UpdateGruntSpeedProgress">). Applied to every surviving grunt,
     /// whose in-flight countdown is deliberately NOT touched (notes §67).
     /// </summary>
-    private void SpeedUpGrunts()
+    internal void SpeedUpGrunts()
     {
         int floor = _gruntSpeedFloor;
         foreach (Grunt grunt in _grunts)
@@ -845,44 +871,6 @@ public sealed class PlayField
         }
 
         return a.Bounds.Overlaps(b.Bounds);
-    }
-
-    private void ResolveLaserHits<T>(List<T> targets, Action<T> onKill, int scoreValue)
-        where T : IEntity
-    {
-        foreach (PlayerLaser laser in PlayerLasers.ActiveLasers)
-        {
-            foreach (T target in targets)
-            {
-                if (target.LifeState != EntityLifeState.Alive)
-                {
-                    continue;
-                }
-
-                if (Touches(laser, target))
-                {
-                    onKill(target);
-                    laser.Deactivate();
-                    if (target is IExplodable explodable)
-                    {
-                        // §73: the fan is anchored at the picture's MIDDLE (the ROM's
-                        // NWCENT centre path), so the kill point no longer steers it —
-                        // only the laser's direction picks the axis and the lean.
-                        SpawnExplosion(explodable, laser.Direction);
-                        // R5 $1F5B: the laser-hit/explosion area requests $1ADA (p208).
-                        Sound.Play(SoundTables.RobotDeath);
-                    }
-                    if (Score.Add(scoreValue))
-                    {
-                        Player.AddLife();
-                        // R5 $DBF9: the bonus-life ding ($D0C9, p239).
-                        Sound.Play(SoundTables.BonusLife);
-                    }
-
-                    break;
-                }
-            }
-        }
     }
 
     // ---- Explosions (RRDX2/RRX7/RRHX4 — notes §35.5, §61) ----
@@ -1054,69 +1042,10 @@ public sealed class PlayField
             }
         }
 
-        // 2. Electrodes.
-        foreach (Electrode electrode in _electrodes)
+        // 2-4. The posts, the family and their markers, then the robots — one loop over the field's draw order.
+        foreach (IEntityList list in _drawOrderBehindShots)
         {
-            electrode.Draw(spriteBatch, sprites);
-        }
-
-        // 3. Human family + skull markers (PHASE D) — markers first so a
-        //    human standing on a fresh marker draws over it.
-        foreach (SkullMarker skull in _skulls)
-        {
-            skull.Draw(spriteBatch, sprites);
-        }
-
-        foreach (RescueScoreMarker rescueScore in _rescueScores)
-        {
-            rescueScore.Draw(spriteBatch, sprites);
-        }
-
-        foreach (Human human in _humans)
-        {
-            human.Draw(spriteBatch, sprites);
-        }
-
-        // 4. Robots, in fixed sub-order so draw order is deterministic run to run.
-        foreach (Grunt grunt in _grunts)
-        {
-            DrawEntity(grunt, spriteBatch, sprites);
-        }
-
-        foreach (Hulk hulk in _hulks)
-        {
-            DrawEntity(hulk, spriteBatch, sprites);
-        }
-
-        foreach (Spheroid spheroid in _spheroids)
-        {
-            DrawEntity(spheroid, spriteBatch, sprites);
-        }
-
-        foreach (Enforcer enforcer in _enforcers)
-        {
-            DrawEntity(enforcer, spriteBatch, sprites);
-        }
-
-        foreach (Quark quark in _quarks)
-        {
-            DrawEntity(quark, spriteBatch, sprites);
-        }
-
-        foreach (Tank tank in _tanks)
-        {
-            DrawEntity(tank, spriteBatch, sprites);
-        }
-
-        // PHASE E: brains and progs (drawn with the robots, before lasers).
-        foreach (Brain brain in _brains)
-        {
-            DrawEntity(brain, spriteBatch, sprites);
-        }
-
-        foreach (Prog prog in _progs)
-        {
-            prog.Draw(spriteBatch, sprites);
+            list.DrawAll(spriteBatch, sprites, this);
         }
 
         // 5. Player lasers.
@@ -1125,34 +1054,10 @@ public sealed class PlayField
             laser?.Draw(spriteBatch, sprites);
         }
 
-        // 6. Enemy missiles (sparks, then tank shells).
-        foreach (Spark spark in _sparks)
+        // 6-7b. The enemy shots, then the explosions and the bursts — over the shots, under the player.
+        foreach (IEntityList list in _drawOrderInFrontOfShots)
         {
-            spark.Draw(spriteBatch, sprites);
-        }
-
-        foreach (TankShell shell in _tankShells)
-        {
-            shell.Draw(spriteBatch, sprites);
-        }
-
-        // PHASE E: cruise missiles (with the other missiles).
-        foreach (CruiseMissile missile in _missiles)
-        {
-            missile.Draw(spriteBatch, sprites);
-        }
-
-        // 7. Explosions (RRX7) — over the entities, under the player.
-        foreach (Explosion explosion in _explosions)
-        {
-            explosion.Draw(spriteBatch, sprites);
-        }
-
-        // 7b. Spheroid/quark death bursts (CIRKP/CIRKV, notes §64) — the dying
-        //     enemy's own pictures in a solid colour, then its "1000" picture.
-        foreach (ScoreBurst burst in _scoreBursts)
-        {
-            burst.Draw(spriteBatch, sprites);
+            list.DrawAll(spriteBatch, sprites, this);
         }
 
         // 8. Player — ALWAYS last (spec states this explicitly twice).
@@ -1161,7 +1066,7 @@ public sealed class PlayField
 
     // ---- Start-of-level spawning (plan 9.1 steps 5-9) ----
 
-    private void SpawnElectrodes(IntVector2 playerStart)
+    internal void SpawnElectrodes(IntVector2 playerStart)
     {
         for (int i = 0; i < Parameters.ElectrodeCount; i++)
         {
@@ -1174,7 +1079,7 @@ public sealed class PlayField
         }
     }
 
-    private void SpawnGrunts(IntVector2 playerStart)
+    internal void SpawnGrunts(IntVector2 playerStart)
     {
         for (int i = 0; i < Parameters.GruntCount; i++)
         {
@@ -1193,7 +1098,7 @@ public sealed class PlayField
         }
     }
 
-    private void SpawnHulks(IntVector2 playerStart)
+    internal void SpawnHulks(IntVector2 playerStart)
     {
         for (int i = 0; i < Parameters.HulkCount; i++)
         {
@@ -1232,11 +1137,11 @@ public sealed class PlayField
     /// Humans spawn after hulks, so this resolves lazily at re-aim time.
     /// </summary>
     private Func<IntVector2> LastHumanOrPlayer => () =>
-        _humans.Count > 0 && _humans[^1].LifeState == EntityLifeState.Alive
-            ? _humans[^1].Position
+        _humans.Count > 0 && _humans.Last.LifeState == EntityLifeState.Alive
+            ? _humans.Last.Position
             : Player.Position;
 
-    private void SpawnSpheroids(IntVector2 playerStart)
+    internal void SpawnSpheroids(IntVector2 playerStart)
     {
         for (int i = 0; i < Parameters.SpheroidCount; i++)
         {
@@ -1254,7 +1159,7 @@ public sealed class PlayField
         }
     }
 
-    private void SpawnQuarks(IntVector2 playerStart)
+    internal void SpawnQuarks(IntVector2 playerStart)
     {
         Rectangle bounds = Wall.PlayfieldBounds;
         for (int i = 0; i < Parameters.QuarkCount; i++)
@@ -1341,7 +1246,7 @@ public sealed class PlayField
     // ---- PHASE D human spawning (ROM HUMSTV: kids, moms, dads; plain RANDXY —
     //      no overlap or spacing constraints in the ROM) ----
 
-    private void SpawnBrains(IntVector2 playerStart)
+    internal void SpawnBrains(IntVector2 playerStart)
     {
         // PHASE E: brains spawn with the wave (ROM $1AC0), like the hulks —
         // anywhere in the field, not the wall and not on top of the player.
@@ -1409,17 +1314,24 @@ public sealed class PlayField
         return new IntVector2(x, y);
     }
 
-    private void UpdateEntities<T>(List<T> entities, GameTime gameTime)
-        where T : IEntity
+    /// <summary>Advances every list the field holds, in the ROM's own update order (plan 9.1).</summary>
+    private void UpdateEntities(GameTime gameTime)
     {
-        foreach (T entity in entities)
+        foreach (IEntityList list in _updateOrder)
         {
-            // A robot that is still assembling does not act yet (the ROM holds the
-            // robots OFF through the appear sequence).
-            if (entity.LifeState != EntityLifeState.Dead && !IsMaterialising(entity))
-            {
-                entity.Update(gameTime, this);
-            }
+            list.UpdateAll(gameTime, this);
+        }
+    }
+
+    /// <summary>
+    /// Advances ONE entity, unless it is still assembling — the ROM holds the robots OFF through the appear
+    /// sequence, and that guard lives here rather than in every kind's list (notes §62).
+    /// </summary>
+    internal void UpdateEntity(IEntity entity, GameTime gameTime)
+    {
+        if (entity.LifeState != EntityLifeState.Dead && !IsMaterialising(entity))
+        {
+            entity.Update(gameTime, this);
         }
     }
 
@@ -1494,7 +1406,10 @@ public sealed class PlayField
     internal int PendingAppearCount => _pendingAppear.Count;
 
     /// <summary>Draws an entity unless it is still materialising.</summary>
-    private void DrawEntity(IEntity entity, SpriteBatch spriteBatch, SpriteSet sprites)
+    /// <param name="entity">The entity to draw.</param>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The shared sprite set.</param>
+    internal void DrawEntity(IEntity entity, SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (!IsMaterialising(entity))
         {
@@ -1547,4 +1462,13 @@ public sealed class PlayField
     internal IReadOnlyList<Enforcer> Enforcers => _enforcers;
     internal IReadOnlyList<Spark> Sparks => _sparks;
     internal IReadOnlyList<Explosion> Explosions => _explosions;
+
+    /// <summary>Every list the field advances and prunes, in order.</summary>
+    internal IReadOnlyList<IEntityList> UpdateOrder => _updateOrder;
+
+    /// <summary>The lists drawn behind the player's lasers, in order.</summary>
+    internal IReadOnlyList<IEntityList> DrawOrderBehindShots => _drawOrderBehindShots;
+
+    /// <summary>The lists drawn in front of the player's lasers, in order.</summary>
+    internal IReadOnlyList<IEntityList> DrawOrderInFrontOfShots => _drawOrderInFrontOfShots;
 }

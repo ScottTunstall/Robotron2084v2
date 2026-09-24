@@ -20,7 +20,7 @@ namespace Robotron2084.Entities;
 /// is capped at 20 shells in play, so a late tank can stop firing. It never flashes and dies outright
 /// when hit. Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at
 /// 6 x N.</remarks>
-public sealed class Tank : IExplodable
+public sealed class Tank : IExplodable, IRemovable
 {
     /// <summary>Collision box = the ROM picture dimensions (14x16 arcade px), top-left anchored at <see cref="Position"/>.</summary>
     private static readonly (int Width, int Height) CollisionSize =

@@ -17,7 +17,7 @@ namespace Robotron2084.Entities;
 /// a standing electrode. Its 12 frames are 4 directions x 3 walk frames, the diagonals reusing the
 /// cardinal sets. Humans set off before the robots' wave-start flag. Timers count 5 per tick and 6
 /// per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class Human : IEntity, IArtSource
+public sealed class Human : IEntity, IArtSource, IRemovable
 {
     /// <summary>The step period in ROM frames. The ONE deliberate gameplay override — do not "fix" it.</summary>
     /// <remarks>The arcade steps every 8 frames and moves one arcade pixel; the port deliberately

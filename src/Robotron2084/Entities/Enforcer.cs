@@ -16,7 +16,7 @@ namespace Robotron2084.Entities;
 /// flies over electrodes and dies outright when hit, with no Dying state and no flash. The fire timer
 /// re-arms before the 20-spark cap is checked, so a shot the cap swallows is simply lost. Timers count
 /// 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class Enforcer : IEntity, IExplodable
+public sealed class Enforcer : IEntity, IExplodable, IRemovable
 {
     /// <summary>The enforcer picture's own 10x11 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =

@@ -20,7 +20,7 @@ namespace Robotron2084.Entities;
 /// allotment is gone it flees off the nearest edge at a fixed speed and disappears; being hit instead
 /// bursts it on the spot. Timers count 5 per tick and 6 per arcade frame, so an interval of N frames
 /// is due at 6 x N.</remarks>
-public sealed class Quark : IEntity, IArtSource
+public sealed class Quark : IEntity, IArtSource, IRemovable
 {
     /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
     private static readonly (int Width, int Height) CollisionSize =

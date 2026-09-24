@@ -20,7 +20,7 @@ namespace Robotron2084.Entities;
 /// deliberately, so don't revert it without checking. All the subpixel maths is in 1/256-px units,
 /// not floating point. Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is
 /// due at 6 x N.</remarks>
-public sealed class Spark : IEntity, IArtSource
+public sealed class Spark : IEntity, IArtSource, IRemovable
 {
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
     private readonly Random _random;
@@ -87,7 +87,7 @@ public sealed class Spark : IEntity, IArtSource
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Laser hit: removed at once (25 points).</summary>
-    public void Destroy() => LifeState = EntityLifeState.Dead;
+    public void Kill() => LifeState = EntityLifeState.Dead;
 
     /// <summary>Which of the four flicker frames is showing (test hook).</summary>
     /// <remarks>The ROM's 4 flicker pictures, one per 4-ROM-frame cycle.</remarks>

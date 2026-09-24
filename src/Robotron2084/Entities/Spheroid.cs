@@ -19,7 +19,7 @@ namespace Robotron2084.Entities;
 /// stopped, running off the edge to vanish with no animation). A hit bursts it, standing in for the
 /// 7-frame bubble that is still to be built. Timers count 5 per tick and 6 per arcade frame, so an
 /// interval of N frames is due at 6 x N.</remarks>
-public sealed class Spheroid : IEntity, IArtSource
+public sealed class Spheroid : IEntity, IArtSource, IRemovable
 {
     /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
     private static readonly (int Width, int Height) CollisionSize =

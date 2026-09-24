@@ -21,7 +21,7 @@ namespace Robotron2084.Entities;
 /// black on colour: exact inverses by design, not a bug. A kill wipes the trail and swaps in the
 /// 12x16 <c>PGXPIC</c> card for the shared strip explosion. Timers count 5 per tick and 6 per arcade
 /// frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class Prog : IExplodable
+public sealed class Prog : IExplodable, IRemovable
 {
     /// <summary>How many ROM frames pass between beats.</summary>
     /// <remarks>The ROM re-runs the prog's step logic every 3 frames.</remarks>
