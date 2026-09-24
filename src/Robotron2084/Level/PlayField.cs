@@ -64,6 +64,7 @@ public sealed class PlayField
     private int _appearSequence;
     private readonly Random _random;
     private readonly GamePalette? _wallPalette;
+    private readonly IPixelCollision? _pixelCollision;
     private IntVector2 _previousPlayerPosition;
     private int _hitStopTicksRemaining;
 
@@ -85,7 +86,8 @@ public sealed class PlayField
         int startingScore = 0,
         int startingRescues = 0,
         GamePalette? wallPalette = null,
-        bool playerInvincibleForTesting = true)
+        bool playerInvincibleForTesting = true,
+        IPixelCollision? pixelCollision = null)
     {
         Parameters = parameters;
         _gruntSpeedFloor = parameters.GruntSpeedFloor;
@@ -99,6 +101,7 @@ public sealed class PlayField
         Score = new ScoreBoard(startingScore);
         _random = random;
         _wallPalette = wallPalette;
+        _pixelCollision = pixelCollision;
         Wall = new PlayfieldWall(innerBounds, cycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
@@ -491,7 +494,7 @@ public sealed class PlayField
                     continue;
                 }
 
-                if (laser.Bounds.Overlaps(hulk.Bounds))
+                if (Touches(laser, hulk))
                 {
                     hulk.ApplyKnockback(laser.Direction.ToIntVector());
                     laser.Deactivate();
@@ -542,7 +545,7 @@ public sealed class PlayField
                     continue;
                 }
 
-                if (grunt.Bounds.Overlaps(electrode.Bounds))
+                if (Touches(grunt, electrode))
                 {
                     grunt.Kill();     // "both the grunt and the electrode die"
                     SpawnExplosion(grunt, null); // non-directional shatter (notes 35)
@@ -563,7 +566,7 @@ public sealed class PlayField
                     continue;
                 }
 
-                if (hulk.Bounds.Overlaps(electrode.Bounds))
+                if (Touches(hulk, electrode))
                 {
                     electrode.Kill(); // the electrode is DESTROYED; the hulk is unaffected
                     break;
@@ -590,7 +593,7 @@ public sealed class PlayField
                 continue;
             }
 
-            if (Player.Bounds.Overlaps(electrode.Bounds))
+            if (Touches(Player, electrode))
             {
                 Player.Kill();
                 electrode.Kill();
@@ -648,7 +651,7 @@ public sealed class PlayField
                 return;
             }
 
-            if (entity.LifeState == EntityLifeState.Alive && Player.Bounds.Overlaps(entity.Bounds))
+            if (entity.LifeState == EntityLifeState.Alive && Touches(Player, entity))
             {
                 Player.Kill();
                 return;
@@ -737,7 +740,7 @@ public sealed class PlayField
                     break; // ROM: `HULK LDA STATUS WAIT FOR STATUS TO GO`
                 }
 
-                if (hulk.LifeState == EntityLifeState.Alive && hulk.Bounds.Overlaps(human.Bounds))
+                if (hulk.LifeState == EntityLifeState.Alive && Touches(hulk, human))
                 {
                     human.Kill(); // instant off (ROM DMAOFF); the field leaves the skull
                     _skulls.Add(new SkullMarker(human.Position));
@@ -750,7 +753,7 @@ public sealed class PlayField
                 continue;
             }
 
-            if (Player.LifeState == EntityLifeState.Alive && Player.Bounds.Overlaps(human.Bounds))
+            if (Player.LifeState == EntityLifeState.Alive && Touches(Player, human))
             {
                 human.Rescue();
                 RescuesThisLife++;
@@ -829,6 +832,21 @@ public sealed class PlayField
     /// <summary>Current grunt-speed floor (tests; R5 $BE5D).</summary>
     internal int GruntSpeedFloor => _gruntSpeedFloor;
 
+    /// <summary>
+    /// The arcade's contact test between two entities (notes §118): their pictures' opaque pixels where
+    /// the two are drawn, or their collision boxes when the field has no art to compare (a headless test)
+    /// or one of them shows no picture of its own (the cruise missile).
+    /// </summary>
+    private bool Touches(IEntity a, IEntity b)
+    {
+        if (_pixelCollision is { } collision && collision.ShapeOf(a) is { } shapeA && collision.ShapeOf(b) is { } shapeB)
+        {
+            return collision.Overlaps(shapeA, shapeB);
+        }
+
+        return a.Bounds.Overlaps(b.Bounds);
+    }
+
     private void ResolveLaserHits<T>(List<T> targets, Action<T> onKill, int scoreValue)
         where T : IEntity
     {
@@ -841,7 +859,7 @@ public sealed class PlayField
                     continue;
                 }
 
-                if (laser.Bounds.Overlaps(target.Bounds))
+                if (Touches(laser, target))
                 {
                     onKill(target);
                     laser.Deactivate();

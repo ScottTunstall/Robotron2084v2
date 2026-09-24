@@ -17,7 +17,7 @@ namespace Robotron2084.Entities;
 /// bounce sound, and fizzles out after a random 48-79 ROM frames. A shell flies over electrodes and
 /// never collides with one, and its box is the picture's own 8x7 arcade px.
 /// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class TankShell : IEntity
+public sealed class TankShell : IEntity, IArtSource
 {
     /// <summary>The shell picture's own 8x7 arcade px box, in port pixels.</summary>
     private static readonly int BoxWidth = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Width);
@@ -110,7 +110,11 @@ public sealed class TankShell : IEntity
     {
         if (LifeState == EntityLifeState.Alive)
         {
-            sprites.DrawSprite(spriteBatch, sprites.TankShell, Bounds, Color.White);
+            sprites.DrawSprite(spriteBatch, CurrentFrameArt(sprites), Bounds, Color.White);
         }
     }
+
+    /// <summary>The shell picture — it never flashes.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
+    public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.TankShell;
 }

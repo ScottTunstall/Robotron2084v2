@@ -20,7 +20,7 @@ namespace Robotron2084.Entities;
 /// deliberately, so don't revert it without checking. All the subpixel maths is in 1/256-px units,
 /// not floating point. Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is
 /// due at 6 x N.</remarks>
-public sealed class Spark : IEntity
+public sealed class Spark : IEntity, IArtSource
 {
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
     private readonly Random _random;
@@ -188,7 +188,11 @@ public sealed class Spark : IEntity
     {
         if (LifeState == EntityLifeState.Alive)
         {
-            sprites.DrawSprite(spriteBatch, sprites.SparkFrames[FrameIndex], Bounds, Color.White);
+            sprites.DrawSprite(spriteBatch, CurrentFrameArt(sprites), Bounds, Color.White);
         }
     }
+
+    /// <summary>The flicker frame this spark is showing — the art pixel-perfect collision compares.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
+    public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.SparkFrames[FrameIndex];
 }

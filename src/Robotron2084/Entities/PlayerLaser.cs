@@ -13,7 +13,7 @@ namespace Robotron2084.Entities;
 /// player. The picture is one of the ROM's four laser shapes (R5 $35BE-$35DC: <c>LLPC</c>,
 /// <c>ULPC</c>, <c>DLLPC</c>, <c>ULLPC</c>), chosen for the direction by <c>LTAB</c> (RRG23.ASM) and
 /// centred in the box — the arcade never flips the art (notes §19).</remarks>
-public sealed class PlayerLaser : IEntity
+public sealed class PlayerLaser : IEntity, IArtSource
 {
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
 
@@ -73,17 +73,21 @@ public sealed class PlayerLaser : IEntity
             return;
         }
 
-        Texture2D art = Direction switch
-        {
-            Direction8.Left or Direction8.Right => sprites.LaserBar,
-            Direction8.Up or Direction8.Down => sprites.LaserColumn,
-            Direction8.UpLeft or Direction8.DownRight => sprites.LaserDiagonalMain,
-            Direction8.DownLeft or Direction8.UpRight => sprites.LaserDiagonalAnti,
-            _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}"),
-        };
+        Texture2D art = CurrentFrameArt(sprites);
 
         sprites.DrawSprite(spriteBatch, art, Bounds, Color.White);
     }
+
+    /// <summary>The picture for this laser's direction — the ROM's four laser arts (`LTAB`, notes §19).</summary>
+    /// <param name="sprites">The shared sprite set.</param>
+    public Texture2D CurrentFrameArt(SpriteSet sprites) => Direction switch
+    {
+        Direction8.Left or Direction8.Right => sprites.LaserBar,
+        Direction8.Up or Direction8.Down => sprites.LaserColumn,
+        Direction8.UpLeft or Direction8.DownRight => sprites.LaserDiagonalMain,
+        Direction8.DownLeft or Direction8.UpRight => sprites.LaserDiagonalAnti,
+        _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}"),
+    };
 
     /// <summary>Test-only positioning hook (InternalsVisibleTo the test assembly).</summary>
     internal void TeleportTo(IntVector2 position) => _position = position;

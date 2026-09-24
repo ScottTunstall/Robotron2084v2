@@ -17,7 +17,7 @@ namespace Robotron2084.Entities;
 /// a standing electrode. Its 12 frames are 4 directions x 3 walk frames, the diagonals reusing the
 /// cardinal sets. Humans set off before the robots' wave-start flag. Timers count 5 per tick and 6
 /// per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class Human : IEntity
+public sealed class Human : IEntity, IArtSource
 {
     /// <summary>The step period in ROM frames. The ONE deliberate gameplay override — do not "fix" it.</summary>
     /// <remarks>The arcade steps every 8 frames and moves one arcade pixel; the port deliberately
@@ -212,12 +212,7 @@ public sealed class Human : IEntity
             return;
         }
 
-        Texture2D[] frames = _kind switch
-        {
-            HumanKind.Mikey => sprites.MikeyFrames,
-            HumanKind.Mom => sprites.MomFrames,
-            _ => sprites.DadFrames,
-        };
+        Texture2D[] frames = FramesOf(sprites);
 
         if (IsBeingReprogrammed)
         {
@@ -233,6 +228,18 @@ public sealed class Human : IEntity
 
         sprites.DrawSprite(spriteBatch, frames[_frame], Bounds, Color.White);
     }
+
+    /// <summary>The walk frame this human is showing — the art pixel-perfect collision compares.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
+    public Texture2D CurrentFrameArt(SpriteSet sprites) => FramesOf(sprites)[_frame];
+
+    /// <summary>The three walk pictures this human's kind is drawn with (notes §49).</summary>
+    private Texture2D[] FramesOf(SpriteSet sprites) => _kind switch
+    {
+        HumanKind.Mikey => sprites.MikeyFrames,
+        HumanKind.Mom => sprites.MomFrames,
+        _ => sprites.DadFrames,
+    };
 
     /// <summary>True while this human is being reprogrammed: it cannot walk, be rescued or be killed.</summary>
     /// <remarks>ROM: <c>BMUT</c> — the human comes off the human list while the brain drives it.</remarks>

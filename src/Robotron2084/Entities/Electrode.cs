@@ -14,7 +14,7 @@ namespace Robotron2084.Entities;
 /// deliberately not <see cref="IExplodable"/>. Its picture family and colour are looked up per wave
 /// by RRG23.ASM's <c>GTWCOL</c> (notes §45). Timers count 5 per tick and 6 per arcade frame, so an
 /// interval of N frames is due at 6 x N.</remarks>
-public sealed class Electrode : IEntity
+public sealed class Electrode : IEntity, IArtSource
 {
     /// <summary>The post picture's own 10x9 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
@@ -110,7 +110,7 @@ public sealed class Electrode : IEntity
             return;
         }
 
-        sprites.DrawSpriteSolid(spriteBatch, CurrentArt(sprites), Bounds, sprites.SlotColor(TintSlot));
+        sprites.DrawSpriteSolid(spriteBatch, CurrentFrameArt(sprites), Bounds, sprites.SlotColor(TintSlot));
     }
 
     /// <summary>This electrode's current picture, for the appear effect.</summary>

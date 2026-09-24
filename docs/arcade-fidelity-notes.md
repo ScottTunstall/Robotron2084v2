@@ -9802,3 +9802,52 @@ were deleted; the F9 key stays for the author).
    as `SpriteSet.FontLarge[RubGlyphIndex]`; renaming the file would touch `tools/extract-fonts.py`,
    `tools/verify-fonts.py` and the generated `Content.mgcb`/`SpriteContentPaths.cs`, so it is left
    named as it is with the index documented.
+
+### 118. PIXEL-PERFECT COLLISION — the arcade's picture test replaces the boxes (2026-09-24)
+
+The author has wanted this since 2026-09-06 ("NEW: per-pixel collision"); PHASE C was SKIPPED as "rect
+collision is the POC". It is in now: every entity-vs-entity contact the playfield resolves compares the
+two **pictures' opaque pixels**, not their collision boxes.
+
+| ROM | port |
+|---|---|
+| `COL0` ($D85C) — walk both objects' picture bytes, `BEQ` = transparent, skip; hand the colliding pixel's screen address to the object's handler (`STU $A6`) | `Core/SpriteMask` (the mask + `Overlap`), `Level/IPixelCollision` + `Level/SpriteCollision` (the SpriteSet-backed test, one mask per texture, cached), `PlayField.Touches` |
+| `LDU OPICT,X` — the collision uses the object's CURRENT picture | `IArtSource.CurrentFrameArt`, which Electrode, Human, Player, PlayerLaser, Spark and TankShell now implement too (so "the picture I am showing" has ONE definition, used by both `Draw` and the collision) |
+| `LDA B,U / LDA B,Y` — a BYTE (two pixels) at a time, because the buffer is 4 bits per pixel | dropped with the packing (plan.md does not model 4bpp storage): one mask cell is one PICTURE pixel, a finer test than the arcade's |
+
+**The one definition of placement.** A sprite is centred in its collision box, and that arithmetic used
+to live only in the drawer; it is now `SpriteSet.ArtRect(bounds, picture)`, used by `DrawSprite`,
+`DrawSpriteSolid`, `DrawSpriteSolidWithBackground` AND the collision — so the picture the player sees is
+the picture the game collides with, and the two cannot drift apart.
+
+**The coarse test is on the DRAWN rectangles, never on the boxes** (the author asked). `SpriteMask.Overlap`
+first intersects the two drawn rects — an empty band returns false before any pixel work — and only then
+walks the shared band, leaving on the first pixel both pictures cover. A `Bounds` pre-filter would be
+wrong, because several pictures are drawn LARGER than the box that centres them: the spark is 8x7 art in
+the 4x4 spec box (`MissileSizeSpecPixels`), the player laser 6x1 / 2x6 / 6x6 in the same 4x4, the tank's
+birth frames bigger still. Those near-misses are exactly what the arcade counts (it compares pictures),
+so the boxes cannot be the gate. **Gameplay consequence to feel in a playtest:** the spark's and the
+laser's hit areas are now picture-accurate and therefore slightly LARGER than the old 4x4 squares.
+
+**Scope of the change.** The eight entity-contact sites now call `PlayField.Touches`: every laser-vs-robot
+test (`ResolveLaserHits`), the laser-vs-hulk knockback, grunt/hulk vs electrode, player vs electrode,
+`KillPlayerOnContact` (grunt/hulk/brain/prog and spark/shell/missile), and hulk-vs-human and
+player-vs-human (the rescue). Left as boxes, deliberately: the BRAIN's catch (`BrainCatchReach` — the
+ROM's `BRNL1` compares a fixed offset, not a picture overlap, notes §47), every spawn-placement check
+("no electrode overlap and 20 spec px from the start"), and the wall/geometry tests. **The cruise missile
+keeps its box**: it has no picture of its own (it is drawn as solid pixels; its ROM picture exists only
+to size the box), and `Touches` falls back to the boxes for a pair when either entity has no picture —
+as it also does in a headless test, where the field has no art source at all.
+
+**Verified:** 8 new tests — the mask and its overlap (`SpriteMaskTests`: transparent art not touching
+despite overlapping boxes, the render-scale block mapping, adjacent-but-apart) and the field's use of it
+(`PixelCollisionTests`: a stub test that says "no touch" leaves a human standing on the player's box
+alive, one that says "touch" rescues a human the boxes could never reach, an entity with no picture falls
+back to its box, and no test at all falls back to the boxes) — **475 tests, 0 failed, 0 skipped**;
+Debug + Release 0 warnings; smoke, `verify-playfield` and `verify-attract --full` green (the demo game
+runs thousands of real picture tests).
+**Noted about the gate, not the game:** `verify-attract.py --full`'s last phase presses fire "during
+attract" and passes if there are 150+ lit samples — a wave-clear screen in the demo satisfies that, and
+`WaveClearState` is deliberately NOT an attract screen (notes §105), so a fire press there does nothing.
+The gate can therefore pass without the hand-back having happened; that is pre-existing, and the
+non-`--full` run (fire during the movie) is the one that tests the hand-back.

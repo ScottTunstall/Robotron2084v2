@@ -23,7 +23,7 @@ namespace Robotron2084.Entities;
 /// wave starts on frame 7, the first DOWN frame. Port frame N = arcade frame N. Death is a ~2 s
 /// solid-colour flash loop then the slot-12 fade. Timers count 5 per tick and 6 per arcade frame, so
 /// an interval of N frames is due at 6 x N.</remarks>
-public sealed class Player : IEntity
+public sealed class Player : IEntity, IArtSource
 {
     /// <summary>Collision box = the player picture's own 8x12 arcade px.</summary>
     /// <remarks>The ROM collides against the player's PICTURE, not a fixed 16x16 cell.</remarks>
@@ -413,10 +413,14 @@ public sealed class Player : IEntity
             int slot = _deathStage == DeathStage.Fade
                 ? GameplayConstants.PlayerDeathFadeSlot
                 : _deathFlashSlot;
-            sprites.DrawSpriteSolid(spriteBatch, sprites.PlayerFrames[WalkFrameIndex], Bounds, sprites.SlotColor(slot));
+            sprites.DrawSpriteSolid(spriteBatch, CurrentFrameArt(sprites), Bounds, sprites.SlotColor(slot));
             return;
         }
 
-        sprites.DrawSprite(spriteBatch, sprites.PlayerFrames[WalkFrameIndex], Bounds, Color.White);
+        sprites.DrawSprite(spriteBatch, CurrentFrameArt(sprites), Bounds, Color.White);
     }
+
+    /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
+    public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.PlayerFrames[WalkFrameIndex];
 }
