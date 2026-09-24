@@ -53,12 +53,12 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         _position = position;
         _random = random;
         _fireDelayRomTicks = fireDelayRomTicks;
-        _growthRemaining = GameplayConstants.EnforcerGrowUpRomFrames * 6;
+        _growthRemaining = ArcadeClock.Units(GameplayConstants.EnforcerGrowUpRomFrames);
         // Both countdowns are in beats; the arcade re-aims as soon as the grow-up ends.
         _reaimBeatsRemaining = 0;
         _fireCooldownBeats = 1 + random.Next(0, _fireDelayRomTicks);
         // The mover starts on its first active frame; the accumulator is still while growing.
-        _moveTimer = 6;
+        _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
     /// <summary>Top-left of the enforcer.</summary>
@@ -92,7 +92,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         // Grow-up: immobile and silent; the carry keeps the pictures on the ROM's 9-frame mark.
         if (_growthRemaining > 0)
         {
-            _growthRemaining -= 5;
+            _growthRemaining -= ArcadeClock.UnitsPerPortTick;
             if (_growthRemaining > 0)
             {
                 return;
@@ -100,20 +100,20 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         }
 
         // One velocity integration per ROM frame.
-        _moveTimer += 5;
-        if (_moveTimer >= 6)
+        _moveTimer += ArcadeClock.UnitsPerPortTick;
+        if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
         {
-            _moveTimer -= 6;
+            _moveTimer -= ArcadeClock.UnitsPerRomFrame;
             AdvancePosition(field);
         }
 
-        _beatTimer += 5;
-        if (_beatTimer < GameplayConstants.EnforcerBeatRomFrames * 6)
+        _beatTimer += ArcadeClock.UnitsPerPortTick;
+        if (_beatTimer < ArcadeClock.Units(GameplayConstants.EnforcerBeatRomFrames))
         {
             return;
         }
 
-        _beatTimer -= GameplayConstants.EnforcerBeatRomFrames * 6;
+        _beatTimer -= ArcadeClock.Units(GameplayConstants.EnforcerBeatRomFrames);
 
         // Both countdowns tick once per beat (ROM: ENFR1).
         if (--_reaimBeatsRemaining <= 0)
@@ -178,8 +178,8 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
 
     /// <summary>Which of the five grow-up pictures is showing (0..4), or -1 once grown (test hook).</summary>
     internal int GrowFrameIndex => _growthRemaining > 0
-        ? (GameplayConstants.EnforcerGrowUpRomFrames * 6 - _growthRemaining)
-            / (GameplayConstants.EnforcerGrowStepRomFrames * 6)
+        ? (ArcadeClock.Units(GameplayConstants.EnforcerGrowUpRomFrames) - _growthRemaining)
+            / ArcadeClock.Units(GameplayConstants.EnforcerGrowStepRomFrames)
         : -1;
 
     /// <summary>The interval until the next shot: 1..the wave's fire delay, in beats.</summary>

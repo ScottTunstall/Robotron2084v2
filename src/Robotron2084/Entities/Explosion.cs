@@ -142,13 +142,13 @@ public sealed class Explosion : IEntity
         }
 
         // One step per ROM frame, not one per tick (see the remarks).
-        _timer += 5;
-        if (_timer < 6)
+        _timer += ArcadeClock.UnitsPerPortTick;
+        if (_timer < ArcadeClock.UnitsPerRomFrame)
         {
             return;
         }
 
-        _timer -= 6;
+        _timer -= ArcadeClock.UnitsPerRomFrame;
 
         if (_kind == Kind.Explode)
         {

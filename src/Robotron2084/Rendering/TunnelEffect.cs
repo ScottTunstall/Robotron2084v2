@@ -73,7 +73,7 @@ public sealed class TunnelEffect
     /// This is the one number in the tunnel taken from the measurement rather than the disassembly,
     /// and it is called out as such in the notes so a MAME measurement can settle it.
     /// </summary>
-    internal const int PassFifths = 2 * 6;
+    internal const int PassFifths = 2 * ArcadeClock.UnitsPerRomFrame;
 
     private int _fifths;
 
@@ -161,7 +161,7 @@ public sealed class TunnelEffect
 
         // One task pass per PassFifths — the exact-6ths accumulator §52/§65 use for every ROM
         // delay, so the pace is the ROM's unit rather than a rounded frame count.
-        _fifths += 5;
+        _fifths += ArcadeClock.UnitsPerPortTick;
         if (_fifths < PassFifths)
         {
             return;

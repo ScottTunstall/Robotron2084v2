@@ -75,11 +75,11 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
             _random.Next(-GameplayConstants.SparkAccelRomRange, GameplayConstants.SparkAccelRomRange) * subpixelsPerPortPxPerMove);
 
         // Life, in timer units: 5 per tick, 6 per arcade frame.
-        _remainingLife = _random.Next(
+        _remainingLife = ArcadeClock.Units(_random.Next(
             GameplayConstants.SparkLifeMinRomTicks,
-            GameplayConstants.SparkLifeMaxRomTicks + 1) * 6;
+            GameplayConstants.SparkLifeMaxRomTicks + 1));
 
-        _moveTimer = 6;
+        _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
     /// <summary>Top-left of the spark's collision box.</summary>
@@ -96,7 +96,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Which of the four flicker frames is showing (test hook).</summary>
     /// <remarks>The ROM's 4 flicker pictures, one per 4-ROM-frame cycle.</remarks>
-    internal int FrameIndex => _flickerTimer / (GameplayConstants.SparkFramePeriodRomTicks * 6) % SpriteSet.SparkFrameCount;
+    internal int FrameIndex => _flickerTimer / ArcadeClock.Units(GameplayConstants.SparkFramePeriodRomTicks) % SpriteSet.SparkFrameCount;
 
     /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
     internal IntVector2 VelocitySubpixels => _velocitySubpixels;
@@ -115,10 +115,10 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _flickerTimer += 5;
+        _flickerTimer += ArcadeClock.UnitsPerPortTick;
 
         // Life counts down: 5 per tick, 6 per arcade frame.
-        _remainingLife -= 5;
+        _remainingLife -= ArcadeClock.UnitsPerPortTick;
         if (_remainingLife <= 0)
         {
             LifeState = EntityLifeState.Dead;
@@ -126,20 +126,20 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         }
 
         // Every move the acceleration is added to the velocity, so the path curves into a parabola.
-        _accelerationTimer += 5;
-        if (_accelerationTimer >= GameplayConstants.SparkMoveIntervalRomTicks * 6)
+        _accelerationTimer += ArcadeClock.UnitsPerPortTick;
+        if (_accelerationTimer >= ArcadeClock.Units(GameplayConstants.SparkMoveIntervalRomTicks))
         {
-            _accelerationTimer -= GameplayConstants.SparkMoveIntervalRomTicks * 6;
+            _accelerationTimer -= ArcadeClock.Units(GameplayConstants.SparkMoveIntervalRomTicks);
             _velocitySubpixels = new IntVector2(
                 _velocitySubpixels.X + _accelerationSubpixels.X,
                 _velocitySubpixels.Y + _accelerationSubpixels.Y);
         }
 
         // The mover adds the velocity once per ROM frame, carrying the subpixel remainder.
-        _moveTimer += 5;
-        if (_moveTimer >= 6)
+        _moveTimer += ArcadeClock.UnitsPerPortTick;
+        if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
         {
-            _moveTimer -= 6;
+            _moveTimer -= ArcadeClock.UnitsPerRomFrame;
             _positionRemainderSubpixels = new IntVector2(
                 _positionRemainderSubpixels.X + _velocitySubpixels.X,
                 _positionRemainderSubpixels.Y + _velocitySubpixels.Y);

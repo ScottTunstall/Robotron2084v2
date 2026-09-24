@@ -149,13 +149,13 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         else
         {
             // Counts up to the next step: 5 per tick, 6 per arcade frame.
-            _stepTimer += 5;
-            if (_stepTimer < StepPeriodRomTicks * 6)
+            _stepTimer += ArcadeClock.UnitsPerPortTick;
+            if (_stepTimer < ArcadeClock.Units(StepPeriodRomTicks))
             {
                 return;
             }
 
-            _stepTimer -= StepPeriodRomTicks * 6;
+            _stepTimer -= ArcadeClock.Units(StepPeriodRomTicks);
         }
 
         StepCount++;

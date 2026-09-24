@@ -367,7 +367,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// slot's own colour-cycling ("decay") process while it runs, then resumes it.</remarks>
     private void AdvanceDeath(PlayField field)
     {
-        _deathTimer += 5;
+        _deathTimer += ArcadeClock.UnitsPerPortTick;
 
         int romFrames = _deathStage switch
         {
@@ -376,12 +376,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
             _ => GameplayConstants.PlayerDeathFadeRomFrames,
         };
 
-        if (_deathTimer < romFrames * 6)
+        if (_deathTimer < ArcadeClock.Units(romFrames))
         {
             return;
         }
 
-        _deathTimer -= romFrames * 6;
+        _deathTimer -= ArcadeClock.Units(romFrames);
 
         switch (_deathStage)
         {

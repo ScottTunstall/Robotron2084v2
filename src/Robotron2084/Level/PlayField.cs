@@ -393,7 +393,7 @@ public sealed class PlayField
         for (int i = _laserWallFlares.Count - 1; i >= 0; i--)
         {
             LaserWallFlare flare = _laserWallFlares[i];
-            flare.FifthsRemaining -= 5;
+            flare.FifthsRemaining -= ArcadeClock.UnitsPerPortTick;
             if (flare.FifthsRemaining <= 0)
             {
                 _laserWallFlares.RemoveAt(i);
@@ -1014,7 +1014,7 @@ public sealed class PlayField
         public bool Dithered { get; } = dithered;
 
         /// <summary>How long the flare lasts: <c>NAP 2</c>, two ROM frames, counted in the port's clock units (notes §52).</summary>
-        public int FifthsRemaining { get; set; } = 2 * 6;
+        public int FifthsRemaining { get; set; } = 2 * ArcadeClock.UnitsPerRomFrame;
     }
 
     /// <summary>Live laser-vs-wall flares (test hook — the ROM's LASCOL pixels).</summary>

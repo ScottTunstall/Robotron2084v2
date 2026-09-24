@@ -125,13 +125,13 @@ public sealed class ScoreBurst : IEntity
         }
 
         // Counts up to the next step: 5 per tick, 6 per arcade frame.
-        _timer += 5;
-        if (_timer < GameplayConstants.ScoreBurstRomFramesPerStep * 6)
+        _timer += ArcadeClock.UnitsPerPortTick;
+        if (_timer < ArcadeClock.Units(GameplayConstants.ScoreBurstRomFramesPerStep))
         {
             return;
         }
 
-        _timer -= GameplayConstants.ScoreBurstRomFramesPerStep * 6;
+        _timer -= ArcadeClock.Units(GameplayConstants.ScoreBurstRomFramesPerStep);
 
         if (!_showingPoints)
         {

@@ -44,8 +44,8 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
             Math.Sign(towardPlayerDirection.X) * GameplayConstants.TankShellSpeed + random.Next(-1, 2),
             Math.Sign(towardPlayerDirection.Y) * GameplayConstants.TankShellSpeed + random.Next(-1, 2));
         // Counts up to the fizzle: 5 per tick, 6 per arcade frame.
-        _remainingLife = (random.Next(0, 32) + GameplayConstants.TankShellLifeBaseRomTicks) * 6;
-        _moveTimer = 6;
+        _remainingLife = ArcadeClock.Units(random.Next(0, 32) + GameplayConstants.TankShellLifeBaseRomTicks);
+        _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
     /// <summary>Top-left of the collision box.</summary>
@@ -76,7 +76,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         }
 
         // Fizzles out at zero. The arcade does NOT decrement its per-wave shell counter here.
-        _remainingLife -= 5;
+        _remainingLife -= ArcadeClock.UnitsPerPortTick;
         if (_remainingLife <= 0)
         {
             LifeState = EntityLifeState.Dead;
@@ -84,10 +84,10 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         }
 
         // One velocity integration per ROM frame; X is bounced before Y (see the remarks).
-        _moveTimer += 5;
-        if (_moveTimer >= 6)
+        _moveTimer += ArcadeClock.UnitsPerPortTick;
+        if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
         {
-            _moveTimer -= 6;
+            _moveTimer -= ArcadeClock.UnitsPerRomFrame;
             IntVector2 next = _position + _velocity;
             Rectangle bounds = field.Wall.PlayfieldBounds;
             if (next.X < bounds.X || next.X + BoxWidth > bounds.Right)

@@ -28,7 +28,7 @@ public sealed class Prog : IExplodable, IRemovable
     private const int BeatPeriodRomTicks = 3;
 
     /// <summary>The beat in timer units (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => BeatPeriodRomTicks * 6;
+    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomTicks);
 
     /// <summary>The horizontal step: 2 columns = 4 arcade px, the same distance as the vertical step.</summary>
     /// <remarks>ROM: the X step table moves 2 columns at a time, and a column is 2 arcade px.</remarks>
@@ -183,7 +183,7 @@ public sealed class Prog : IExplodable, IRemovable
             return;
         }
 
-        _beatTimer += 5;
+        _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < BeatPeriod)
         {
             return;

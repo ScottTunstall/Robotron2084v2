@@ -125,7 +125,7 @@ public sealed class Tank : IExplodable, IRemovable
         // 12 ROM frames, and cannot move, aim or fire until it finishes.
         if (_growStep < GameplayConstants.TankGrowSteps)
         {
-            _growTimer += 5;
+            _growTimer += ArcadeClock.UnitsPerPortTick;
             if (_growTimer < GrowPeriod)
             {
                 return;
@@ -145,13 +145,13 @@ public sealed class Tank : IExplodable, IRemovable
         }
 
         // This wave's tank speed (2 vblanks) plus the 1 frame the process takes (ROM: TNKSPD).
-        _beatTimer += 5;
-        if (_beatTimer < GameplayConstants.TankBeatRomFrames * 6)
+        _beatTimer += ArcadeClock.UnitsPerPortTick;
+        if (_beatTimer < ArcadeClock.Units(GameplayConstants.TankBeatRomFrames))
         {
             return;
         }
 
-        _beatTimer -= GameplayConstants.TankBeatRomFrames * 6;
+        _beatTimer -= ArcadeClock.Units(GameplayConstants.TankBeatRomFrames);
 
         // One beat, always in this order (ROM: the TANK process).
         if (--_fireCooldownBeats <= 0)
@@ -204,7 +204,7 @@ public sealed class Tank : IExplodable, IRemovable
     private static int NextAimInterval(Random random) => random.Next(1, 32);
 
     /// <summary>How many timer units one grow step takes (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int GrowPeriod => GameplayConstants.TankGrowRomFrames * 6;
+    private static int GrowPeriod => ArcadeClock.Units(GameplayConstants.TankGrowRomFrames);
 
     /// <summary>True while the ROM birth sequence is still playing (test hook).</summary>
     internal bool IsBeingBorn => _growStep < GameplayConstants.TankGrowSteps;

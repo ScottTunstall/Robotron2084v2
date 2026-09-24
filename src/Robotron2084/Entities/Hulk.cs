@@ -56,7 +56,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         _sprites = sprites;
         _position = position;
         _random = random;
-        _stepPeriod = hulkSpeedRomTicks * 6;
+        _stepPeriod = ArcadeClock.Units(hulkSpeedRomTicks);
         _target = target;
         _reaimStepsRemaining = random.Next(1, 32); // a fresh direction comes every 1-31 steps, chosen at random
         _direction = Direction8.Up; // placeholder — the first Update() call picks the real starting direction
@@ -119,7 +119,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
             return;
         }
 
-        _stepTimer += 5;
+        _stepTimer += ArcadeClock.UnitsPerPortTick;
         if (_stepTimer < _stepPeriod)
         {
             return;

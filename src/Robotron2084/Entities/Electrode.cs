@@ -79,13 +79,13 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         }
 
         // Counts up to the next shrivel picture: 5 per tick, 6 per arcade frame.
-        _shrivelTimer += 5;
-        if (_shrivelTimer < ShrivelSleepRomTicks[_shrivelStep] * 6)
+        _shrivelTimer += ArcadeClock.UnitsPerPortTick;
+        if (_shrivelTimer < ArcadeClock.Units(ShrivelSleepRomTicks[_shrivelStep]))
         {
             return;
         }
 
-        _shrivelTimer -= ShrivelSleepRomTicks[_shrivelStep] * 6;
+        _shrivelTimer -= ArcadeClock.Units(ShrivelSleepRomTicks[_shrivelStep]);
 
         _shrivelStep++;
         if (_shrivelStep >= ShrivelSleepRomTicks.Length)

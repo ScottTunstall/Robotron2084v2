@@ -75,7 +75,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         _position = position;
         _random = random;
         _fireDelayRomTicks = fireDelayRomTicks;
-        _beatPeriod = (BeatExecutionRomTicks + brainSpeedRomTicks) * 6;
+        _beatPeriod = ArcadeClock.Units(BeatExecutionRomTicks + brainSpeedRomTicks);
         _fireBeatsRemaining = 1 + random.Next(fireDelayRomTicks);
     }
 
@@ -116,7 +116,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
             return;
         }
 
-        _beatTimer += 5;
+        _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < _beatPeriod)
         {
             return;
@@ -232,7 +232,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         human.BeginReprogramming();
         _reprogramRedrawsRemaining = GameplayConstants.ReprogramIterations * GameplayConstants.ReprogramRedrawsPerIteration;
         _reprogramLifting = true;
-        _reprogramTimer = GameplayConstants.ReprogramStepRomTicks * 6;
+        _reprogramTimer = ArcadeClock.Units(GameplayConstants.ReprogramStepRomTicks);
 
         // Placement and facing (ROM: BMUT00/BMUT10).
         int humanWidth = human.Bounds.Width;
@@ -259,13 +259,13 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <remarks>The lift/drop amount is a random 0..7 pixels each time (ROM: <c>BMUTL</c>).</remarks>
     private void AdvanceReprogramming(PlayField field, Human victim)
     {
-        _reprogramTimer += 5;
-        if (_reprogramTimer < GameplayConstants.ReprogramStepRomTicks * 6)
+        _reprogramTimer += ArcadeClock.UnitsPerPortTick;
+        if (_reprogramTimer < ArcadeClock.Units(GameplayConstants.ReprogramStepRomTicks))
         {
             return;
         }
 
-        _reprogramTimer -= GameplayConstants.ReprogramStepRomTicks * 6;
+        _reprogramTimer -= ArcadeClock.Units(GameplayConstants.ReprogramStepRomTicks);
 
         Rectangle bounds = field.Wall.PlayfieldBounds;
         int jitter = _random.Next(GameplayConstants.ReprogramJitterPixels);

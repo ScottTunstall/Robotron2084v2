@@ -80,7 +80,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _escapeDirection = random.Next(2) == 0 ? -1 : 1;
         // The first drop countdown, in rotations.
         _dropRotationsRemaining = random.Next(1, dropDelayRomTicks + 1);
-        _moveTimer = 6;
+        _moveTimer = ArcadeClock.UnitsPerRomFrame;
         // Born on the spin phase's last picture, so the first beat is already a wrap pass.
         _rotation = SpinLastPicture;
         RollAccelerations();
@@ -119,21 +119,21 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         }
 
         // Mover: once per ROM frame, not once per tick (see the remarks).
-        _moveTimer += 5;
-        if (_moveTimer >= 6)
+        _moveTimer += ArcadeClock.UnitsPerPortTick;
+        if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
         {
-            _moveTimer -= 6;
+            _moveTimer -= ArcadeClock.UnitsPerRomFrame;
             AdvancePosition(field);
         }
 
         // Every phase runs on the same 3-frame beat (see the remarks).
-        _beatTimer += 5;
-        if (_beatTimer < GameplayConstants.SpheroidBeatRomFrames * 6)
+        _beatTimer += ArcadeClock.UnitsPerPortTick;
+        if (_beatTimer < ArcadeClock.Units(GameplayConstants.SpheroidBeatRomFrames))
         {
             return;
         }
 
-        _beatTimer -= GameplayConstants.SpheroidBeatRomFrames * 6;
+        _beatTimer -= ArcadeClock.Units(GameplayConstants.SpheroidBeatRomFrames);
 
         // Wrap pass = the beat on the phase's last picture; the phase's countdown lives there.
         int lastPicture = _dropping && !_escaping ? DropLastPicture : SpinLastPicture;

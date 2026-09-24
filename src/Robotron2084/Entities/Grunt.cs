@@ -32,7 +32,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     private const int BeatIntervalRomTicks = 4;
 
     /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => BeatIntervalRomTicks * 6;
+    private static int BeatPeriod => ArcadeClock.Units(BeatIntervalRomTicks);
 
     private readonly Random _random;
     private IntVector2 _position;
@@ -120,7 +120,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
             return;
         }
 
-        _beatTimer += 5;
+        _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < BeatPeriod)
         {
             return;

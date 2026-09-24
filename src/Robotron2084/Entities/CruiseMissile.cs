@@ -43,7 +43,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private const int BeatPeriodRomTicks = 3;
 
     /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => BeatPeriodRomTicks * 6;
+    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomTicks);
 
     /// <summary>How many moves the missile makes per beat.</summary>
     private const int MovesPerBeat = 2;
@@ -114,7 +114,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
         }
 
         // Counts up to the next beat: 5 per tick, 6 per arcade frame.
-        _beatTimer += 5;
+        _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < BeatPeriod)
         {
             return;

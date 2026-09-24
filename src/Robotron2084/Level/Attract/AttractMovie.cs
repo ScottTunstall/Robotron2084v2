@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core;
 
 namespace Robotron2084.Level.Attract;
 
@@ -12,7 +13,7 @@ namespace Robotron2084.Level.Attract;
 /// </summary>
 public sealed class AttractMovie
 {
-    private int _sixths = 6; // seeded so the first tick runs a frame, as the ROM's first cycle does
+    private int _sixths = ArcadeClock.UnitsPerRomFrame; // seeded so the first tick runs a frame, as the ROM's first cycle does
 
     public AttractMovie(byte[] script, Random random)
     {
@@ -35,13 +36,13 @@ public sealed class AttractMovie
     /// <summary>Advances the movie by one port tick (0 or 1 ROM frames of work).</summary>
     public void Update(GameTime gameTime)
     {
-        _sixths += 5;
-        if (_sixths < 6)
+        _sixths += ArcadeClock.UnitsPerPortTick;
+        if (_sixths < ArcadeClock.UnitsPerRomFrame)
         {
             return;
         }
 
-        _sixths -= 6;
+        _sixths -= ArcadeClock.UnitsPerRomFrame;
         RomFrames++;
         Page.StepFrame();
         Objects.StepFrame();
