@@ -25,7 +25,7 @@ namespace Robotron2084.Rendering;
 /// </para>
 /// <para>
 /// Two rings are drawn per pass and the task's delay is 1, so it advances two rings a
-/// frame: about 0.9 s from start to clear.
+/// frame. <see cref="PassFifths"/> holds how long a pass takes.
 /// </para>
 /// <para>
 /// The colours are a packed byte — the LEFT nibble is colour 0 and the RIGHT nibble colour
