@@ -14,7 +14,8 @@ namespace Robotron2084.Entities;
 /// at the player with ±1 px/frame jitter per axis ("not very accurate") — the arcade's spread comes
 /// from a speed table the port does not yet reproduce, so the jitter is an approximation and still an
 /// open item. It then flies straight on the shared mover, bouncing off all four border walls with a
-/// bounce sound, and fizzles out after a random 48-79 ROM frames. A shell flies over electrodes and
+/// bounce sound. Only one axis is turned per integration, X before Y, so a corner is taken one axis
+/// at a time. It fizzles out after a random 48-79 ROM frames. A shell flies over electrodes and
 /// never collides with one, and its box is the picture's own 8x7 arcade px.
 /// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
