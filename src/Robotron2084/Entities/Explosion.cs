@@ -216,16 +216,14 @@ public sealed class Explosion : IEntity
     /// <param name="bounds">The entity's bounds, in screen pixels.</param>
     /// <param name="pictureWidth">The picture's width in pixels.</param>
     /// <param name="pictureRows">The picture's height in rows.</param>
-    /// <returns>The picture's extent and the top-left it is drawn at, in pixels and rows.</returns>
-    internal static (int Width, int Rows, int Left, int Top) PicturePlacement(
+    /// <returns>The top-left the picture is drawn at, in pixels and rows.</returns>
+    internal static (int Left, int Top) PicturePlacement(
         Rectangle bounds, int pictureWidth, int pictureRows)
     {
         int boundsWidth = bounds.Width / ScreenSize.SpecScale;
         int boundsRows = bounds.Height / ScreenSize.SpecScale;
 
         return (
-            pictureWidth,
-            pictureRows,
             (bounds.X / ScreenSize.SpecScale) + ((boundsWidth - pictureWidth) / 2),
             (bounds.Y / ScreenSize.SpecScale) + ((boundsRows - pictureRows) / 2));
     }
@@ -267,7 +265,7 @@ public sealed class Explosion : IEntity
         int split = extent / 2;
 
         // The picture is drawn centred in the bounds, so the fan must start from its own top-left.
-        (int _, int _, int spriteLeft, int spriteTop) = PicturePlacement(_bounds, pictureWidth, pictureRows);
+        (int spriteLeft, int spriteTop) = PicturePlacement(_bounds, pictureWidth, pictureRows);
 
         // The fixed point's own screen row/column.
         int centre = (rows ? spriteTop : spriteLeft) + split;

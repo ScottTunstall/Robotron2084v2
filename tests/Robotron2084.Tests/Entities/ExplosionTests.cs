@@ -182,10 +182,9 @@ public sealed class ExplosionTests
         Assert.Equal(SpriteTop + 1, strips[0].Y);
         Assert.Equal(SpriteTop + 1 + (HeightRows - 1), strips[^1].Y);
 
-        // And the placement helper agrees with the draw path's own convention: a
-        // texture's dimensions ARE the picture's extent in art pixels.
+        // And the placement helper agrees with the draw path's own convention.
         Assert.Equal(
-            (WidthArt, HeightRows, SpriteLeft + 1, SpriteTop + 1),
+            (SpriteLeft + 1, SpriteTop + 1),
             Explosion.PicturePlacement(bounds, WidthArt, HeightRows));
     }
 
