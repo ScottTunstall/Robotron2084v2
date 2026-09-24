@@ -1,7 +1,7 @@
 namespace Robotron2084.Level;
 
 /// <summary>
-/// All arcade parameters for one level. Since M5 (2026-09-12) these come
+/// All arcade parameters for one level. They come
 /// from the Release-5 ROM tables (<see cref="WaveTable"/> /
 /// arcade-fidelity-notes §11) — waves 1-40 unique, 41+ repeat 21-40.
 ///
@@ -46,7 +46,7 @@ public sealed record LevelParameters(
     int EnemySpeedBonus = 0)
 {
     /// <summary>
-    /// Fills every field from the ROM wave table (M5). The legacy
+    /// Fills every field from the ROM wave table. The legacy
     /// <c>MaxEnforcersPerSpheroid</c>/<c>MaxTanksPerQuark</c> fields are kept
     /// in sync with ceil(ENFNUM/2) for anything still reading them.
     /// </summary>

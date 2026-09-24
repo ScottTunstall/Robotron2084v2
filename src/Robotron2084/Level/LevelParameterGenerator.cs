@@ -5,13 +5,12 @@ namespace Robotron2084.Level;
 /// <summary>
 /// Produces the per-level parameters.
 ///
-/// M5 (2026-09-12): the source of truth is the arcade's own wave tables —
+/// The source of truth is the arcade's own wave tables —
 /// <see cref="WaveTable"/> (ROM $2E24 counts + $2C20 difficulty settings,
 /// verified byte-exact; arcade-fidelity-notes §11). Waves 1-40 are unique;
 /// waves 41+ repeat waves 21-40 (the ROM's rule, $2B7C).
 ///
-/// Optional designer-supplied table (Phase 11.2, kept as a purely additive
-/// override): if a LevelTable.csv is found (injected path, or
+/// Optional designer-supplied table: if a LevelTable.csv is found (injected path, or
 /// Content/LevelTable.csv next to the app), its count rows are used
 /// verbatim, cycling once past the last row. Any missing/malformed file
 /// falls back to the ROM tables.
