@@ -7,16 +7,20 @@ namespace Robotron2084.Persistence;
 /// Persists the port's control definitions (notes §101) in a plain INI file beside the
 /// high score table: <c>%LocalAppData%\Robotron2084\controls.ini</c>. The author asked
 /// for INI so the file can be read and hand-edited, and every value uses exactly the
-/// vocabulary the DEFINE INPUTS page shows ("W", "P1-LS-UP"), so the file and the page
-/// describe the same thing in the same words.
+/// vocabulary the DEFINE INPUTS page shows ("W", "P1 LEFT STICK UP"), so the file and the
+/// page describe the same thing in the same words.
 ///
 /// <code>
 /// [player1]
 /// moveup.key=W
-/// moveup.pad=P1-LS-UP
+/// moveup.pad=P1 LEFT STICK UP
 /// ...
+///
+/// [player2]
+/// ...
+///
 /// [pause]
-/// key=P
+/// input=P
 /// </code>
 ///
 /// A missing file, or one with anything unreadable in it, yields the factory scheme
