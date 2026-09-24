@@ -912,8 +912,6 @@ public sealed class PlayField
 
     // ---- Explosions (RRDX2/RRX7/RRHX4 — notes §35.5, §61) ----
 
-    // ---- Explosions (RRDX2/RRX7/RRHX4 — notes §35.5, §61) ----
-
     /// <summary>
     /// Spawns an explosion for a dying entity. The ROM's explosion and appear
     /// records share ONE pool of 10 <c>EX</c> blocks (RRDX2.ASM's `EX` struct,
