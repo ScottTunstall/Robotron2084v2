@@ -283,7 +283,7 @@ public sealed class Explosion : IEntity
         // sideways in proportion to its distance from the split, so the two halves lean opposite ways.
         // The lean is measured in COLUMNS of the picture the ROM cuts up, which is a pixel distance;
         // scaling it by SpecScale instead made the chevron open wider as the render scale rose.
-        int drift = _slope * ((spacing >> 1) * GameplayConstants.ArcadePixelsPerColumn);
+        int drift = _slope * ((spacing >> 1) * ScreenSize.ArcadePixelsPerColumn);
 
         for (int i = 0; i < extent; i++)
         {

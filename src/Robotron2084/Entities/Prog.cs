@@ -214,7 +214,7 @@ public sealed class Prog : IExplodable, IRemovable
         }
 
         // 2 columns (4px) on X or 4 rows (4px) on Y, on one axis only.
-        int stepX = ScreenSize.Scaled(StepXColumns * GameplayConstants.ArcadePixelsPerColumn);
+        int stepX = ScreenSize.Scaled(StepXColumns * ScreenSize.ArcadePixelsPerColumn);
         int stepY = ScreenSize.Scaled(StepYRows);
         IntVector2 step = _direction switch
         {
@@ -266,8 +266,8 @@ public sealed class Prog : IExplodable, IRemovable
         if (_random.Next(2) == 0)
         {
             // The offset is in columns, so convert to pixels first.
-            int aimX = player.X + ScreenSize.Scaled(_offsetX * GameplayConstants.ArcadePixelsPerColumn);
-            if (aimX > bounds.Right + ScreenSize.Scaled(WrapMarginXColumns * GameplayConstants.ArcadePixelsPerColumn))
+            int aimX = player.X + ScreenSize.Scaled(_offsetX * ScreenSize.ArcadePixelsPerColumn);
+            if (aimX > bounds.Right + ScreenSize.Scaled(WrapMarginXColumns * ScreenSize.ArcadePixelsPerColumn))
             {
                 aimX = bounds.Left;
             }

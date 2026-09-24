@@ -737,8 +737,8 @@ public static class GameplayConstants
     /// <summary>Arcade screen x (of 304) mapped to the port screen (proportional, integer math).</summary>
     public static int ArcadeX(int arcadePx) => arcadePx * ScreenSize.Width / ArcadeScreenWidth;
 
-    /// <summary>An arcade COLUMN to the port screen's x — a column is <see cref="ArcadePixelsPerColumn"/> arcade pixels.</summary>
-    public static int ArcadeColumnX(int column) => ArcadeX(column * ArcadePixelsPerColumn);
+    /// <summary>An arcade COLUMN to the port screen's x — a column is <see cref="ScreenSize.ArcadePixelsPerColumn"/> arcade pixels.</summary>
+    public static int ArcadeColumnX(int column) => ArcadeX(column * ScreenSize.ArcadePixelsPerColumn);
 
     /// <summary>Arcade screen y (of 256) mapped to the port screen (proportional, integer math).</summary>
     public static int ArcadeY(int arcadePx) => arcadePx * ScreenSize.Height / ArcadeScreenHeight;

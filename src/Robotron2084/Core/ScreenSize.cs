@@ -33,6 +33,10 @@ public static class ScreenSize
     /// <summary>Spec.txt playfield height in original pixels.</summary>
     public const int SpecHeight = 200;
 
+    /// <summary>Arcade (ROM) pixels in one ROM column: the video buffer is addressed as
+    /// <c>column * 256 + row</c> at 4bpp, so a column is two arcade pixels (notes §113).</summary>
+    public const int ArcadePixelsPerColumn = 2;
+
     /// <summary>Internal render width (SpecWidth × SpecScale — 640 at 2x).</summary>
     public const int Width = SpecWidth * SpecScale;
 
@@ -41,6 +45,12 @@ public static class ScreenSize
 
     /// <summary>Converts a spec.txt pixel value to internal pixels.</summary>
     public static int Scaled(int specPixels) => specPixels * SpecScale;
+
+    /// <summary>Arcade (ROM) pixels to port pixels on the playfield: one arcade pixel is one spec pixel.</summary>
+    public static int ArcadePixels(int arcadePixels) => Scaled(arcadePixels);
+
+    /// <summary>ROM columns to port pixels: a column is two arcade pixels.</summary>
+    public static int Columns(int columns) => Scaled(columns * ArcadePixelsPerColumn);
 
     /// <summary>
     /// Largest integer scale at which the playfield fits in the given
