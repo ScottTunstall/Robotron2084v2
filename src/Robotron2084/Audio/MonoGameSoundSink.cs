@@ -5,7 +5,7 @@ namespace Robotron2084.Audio;
 /// <summary>
 /// MonoGame <see cref="IAudioSink"/>: 8-bit mono square-wave tones.
 /// NOTE — the real note→frequency map is sound-board hardware (not in the
-/// CPU ROM, notes §36.2) and is BLOCKED on the author for the table. Until
+/// CPU ROM, notes §36.2) and is not decoded yet. Until
 /// then this sink uses a stub equal-temperament scale (110 Hz base, 2^(n/12))
 /// — a musically plausible stand-in, deliberately NOT arcade-faithful.
 /// </summary>

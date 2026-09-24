@@ -15,7 +15,7 @@ namespace Robotron2084.Rendering;
 /// <para>
 /// **Three of the fifteen slots are then blacked out** — slot `1+A`, `6+A` and `11+A` — and `A`
 /// walks 4,3,2,1,0 with every pass. That is one dark slot per group of five, spaced five rows
-/// apart on screen, and it is exactly what the author's arcade reference measures (a 4-row bar
+/// apart on screen, and it is what the arcade reference measures (a 4-row bar
 /// with a 1-row dark seam, three of them per fifteen-row colour cycle).
 /// </para>
 /// <para>

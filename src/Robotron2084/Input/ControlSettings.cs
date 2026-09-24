@@ -20,9 +20,8 @@ public sealed class ControlSettings
     public PlayerControls this[int playerIndex] => _players[playerIndex];
 
     /// <summary>
-    /// The global PAUSE binding, default <c>P</c>. ONE binding, not a key/pad pair: the
-    /// author asked for a single pause key, so whichever device the page captured it on
-    /// is the one it lives on (notes §101).
+    /// The global PAUSE binding, default <c>P</c>. ONE binding, not a key/pad pair: whichever
+    /// device the page captured it on is the one it lives on (notes §101).
     /// </summary>
     public InputBinding Pause { get; set; } = InputBinding.Key(Keys.P);
 
@@ -54,7 +53,7 @@ public sealed class ControlSettings
     /// are NOT bindable (the arcade's START 1 / START 2 have their own keys, and the
     /// title also offers F1/F2/F3), so they stay hardwired here, as do the two
     /// long-standing port aliases: Space as a fire button and <c>Insert</c> as the
-    /// skip-level test key (the author moved it off <c>P</c> when P became PAUSE).
+    /// skip-level test key (<c>P</c> is PAUSE, not skip-level).
     /// </summary>
     public PlayerInputState ReadPlayer(int playerIndex, KeyboardState keys, GamePadState padOne, GamePadState padTwo)
     {

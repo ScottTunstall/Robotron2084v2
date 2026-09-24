@@ -77,7 +77,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     /// "P1 A", "P2 RIGHT STICK UP". Uppercase and SPACE-separated on purpose — the
     /// arcade's small font carries digits, A-Z and the two brackets and nothing else, so
     /// a lowercase name or a "P1-LS-UP" would reach the screen as "P1LSUP" (notes §101).
-    /// The author asked for the sticks to be spelled out rather than abbreviated.
+    /// The stick and direction words are spelled out rather than abbreviated for that reason.
     /// </summary>
     public string DisplayName => Kind switch
     {
@@ -197,7 +197,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
 
     /// <summary>
     /// Spells an older two-letter direction out in full ("DN" -&gt; "DOWN", "UP LT" -&gt;
-    /// "UP LEFT") so a controls file hand-written before the author asked for full words
+    /// "UP LEFT") so a controls file hand-written with the abbreviations
     /// still loads. Anything already full, or unknown, is left alone.
     /// </summary>
     private static string ExpandDirection(string name)
@@ -219,8 +219,8 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     }
 
     /// <summary>
-    /// The eight stick directions, their screen-space deltas and their names. The author
-    /// asked for the directions to be spelled out rather than abbreviated, in the same
+    /// The eight stick directions, their screen-space deltas and their names. The directions
+    /// are spelled out rather than abbreviated, in the same
     /// breath as the sticks themselves: the value column shows "P2 RIGHT STICK DOWN
     /// RIGHT", not "P2 RS DN RT".
     /// </summary>

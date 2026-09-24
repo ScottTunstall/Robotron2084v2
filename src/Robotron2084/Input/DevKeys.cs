@@ -19,9 +19,8 @@ namespace Robotron2084.Input;
 /// a score high enough to qualify (notes §116).</item>
 /// </list>
 ///
-/// They were F1/F2/F3 until the author asked for those to be the game's start keys
-/// (ONE PLAYER / TWO PLAYER ALTERNATE / TWO PLAYER SIMULTANEOUS) on every attract
-/// screen.
+/// F1/F2/F3 are the game's start keys (ONE PLAYER / TWO PLAYER ALTERNATE / TWO PLAYER
+/// SIMULTANEOUS) on every attract screen, so the dev keys sit above them.
 /// </summary>
 public static class DevKeys
 {

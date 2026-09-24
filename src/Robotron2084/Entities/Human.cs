@@ -22,8 +22,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     private readonly SpriteSet _sprites;
     /// <summary>The step period in ROM frames. The ONE deliberate gameplay override — do not "fix" it.</summary>
     /// <remarks>The arcade steps every 8 frames and moves one arcade pixel; the port deliberately
-    /// slows this to 16, because the ROM-accurate pace read as "the mommies are walking too fast" in
-    /// playtesting. Do not change it back to 8 without asking (notes §70).</remarks>
+    /// slows this to 16, because the ROM-accurate pace reads as too fast (notes §70).</remarks>
     private const int StepPeriodRomTicks = 16;
 
     /// <summary>The walk table: 4 substeps for each of the 8 travel directions, in arcade pixels.</summary>

@@ -14,13 +14,10 @@ public static class Sound
     private static SoundEngine? _engine;
 
     /// <summary>
-    /// MASTER SWITCH for the port's audio — **OFF by default**, on the author's
-    /// request (2026-09-17: *"The sound annoys me — can you disable it with a
-    /// feature flag or a conditional compilation? So many beeps is annoying"*).
-    /// The only sink the port has is the STUB square-wave beeper (notes §36.2): the
-    /// real note→frequency map is sound-board hardware, not in the CPU ROM, and is
-    /// still blocked on the author, so what you hear is deliberately NOT the arcade.
-    /// There is therefore nothing worth hearing until that table lands.
+    /// MASTER SWITCH for the port's audio — **OFF by default**. The only sink the port has is the STUB
+    /// square-wave beeper (notes §36.2): the real note→frequency map is sound-board hardware, not in the CPU
+    /// ROM, so what you hear is deliberately NOT the arcade, and there is nothing worth hearing until that
+    /// table lands.
     /// <para>
     /// To hear it: set this to <c>true</c>, or start the game with the environment
     /// variable <c>ROBOTRON2084_SOUND=1</c> (no rebuild needed). The sequencer,

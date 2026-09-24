@@ -55,7 +55,7 @@ public sealed class RobotronGame : Game
         Window.ClientSizeChanged += (_, _) => FitCanvas();
 
         // The windowed window is the canvas at the largest whole multiple that fits the
-        // desktop; the author can drag it to any size afterwards and the fit follows.
+        // desktop; the window can be dragged to any size afterwards and the fit follows.
         Point workArea = DisplayInfo.WorkArea;
         _windowedScale = ScreenSize.MaxIntegerScale(workArea.X, workArea.Y);
         ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, fullScreen: false);
@@ -94,7 +94,7 @@ public sealed class RobotronGame : Game
         // Arcade-faithful sound (notes §36.2): the single sound-board voice as
         // a priority sequencer, ticked once per port tick. NOTE the
         // note→frequency map is sound-board hardware not in the CPU ROM —
-        // the sink currently plays a stub scale (BLOCKED on the author).
+        // the sink currently plays a stub scale until that table is decoded.
         Sound.Initialize(new MonoGameSoundSink());
     }
 
@@ -145,8 +145,8 @@ public sealed class RobotronGame : Game
     /// <param name="state">This tick's keyboard.</param>
     /// <remarks>F5 and F6 drop straight into the attract sequence so a scene can be inspected without
     /// sitting out the title's 12-second idle, and F7 is how the hulk's walk (ROM frame ~2574) is reached
-    /// in seconds rather than after the text crawl. They used to be F1/F2/F3, which are now the author's
-    /// game-start keys.</remarks>
+    /// in seconds rather than after the text crawl. F1/F2/F3 are the game-start keys, so the dev
+    /// keys sit above them.</remarks>
     private void HandleAttractDevKeys(KeyboardState state)
     {
         DevKeys.AttractFastForward = state.IsKeyDown(Keys.F7);
@@ -180,7 +180,7 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>
-    /// The author's start keys, live on EVERY attract screen (notes §101): F1 one player, F2 two players
+    /// The game's start keys, live on EVERY attract screen (notes §101): F1 one player, F2 two players
     /// alternating turns, F3 the arcade's two-player game (selected now, played later), F10 the DEFINE INPUTS
     /// page.
     /// </summary>

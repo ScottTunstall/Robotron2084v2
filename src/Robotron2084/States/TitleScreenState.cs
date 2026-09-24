@@ -18,9 +18,8 @@ namespace Robotron2084.States;
 /// COLOUR — the page's OWN decoded set (notes §106): the ROM writes seven colours into palette
 /// entries 1-7 (`$8A3A` copying the table at `$8A70`) and chases a WHITE flash through them every
 /// three frames (`$8A4F`). The message and the page's credit strings are drawn in entry 6 (the
-/// text operand `$66`), so they are ORANGE with a white sweep — the author's own report — and the
-/// traced wordmark cycles through the same seven (notes §104). §103.3 ran the high score page's
-/// process set here as a stand-in while this was undecoded. The ROM's OTHER attract page (the wall
+/// text operand `$66`), so they are ORANGE with a white sweep, and the
+/// traced wordmark cycles through the same seven (notes §104). The ROM's OTHER attract page (the wall
 /// + "ROBOTRON 2084" + "SAVE THE LAST HUMAN FAMILY", notes §94.1) is a different screen and is not
 /// drawn here.
 ///
@@ -30,11 +29,11 @@ namespace Robotron2084.States;
 /// <see cref="GameplayConstants.TitleIdleSeconds"/> of no start press the arcade's attract movie
 /// takes over (notes §95/§96).
 ///
-/// TEXT (author, 2026-09-20; notes §107): the page's two text panes alternate every
+/// TEXT (notes §107): the page's two text panes alternate every
 /// <see cref="GameplayConstants.TitleTextSwapSeconds"/> — the arcade's own lines (the welcome
 /// message, with an empty row between its two lines as the arcade prints it, and the credit strings
 /// in the SMALL font with the copyright an empty row below them in a colour of its own), then the
-/// port's own (the author's credit and the F-key menu). There is no room for both at once, and the
+/// port's own (its credit line and the F-key menu). There is no room for both at once, and the
 /// port's lines are drawn in the page's text slot so they flash orange and white like the arcade's.
 /// </summary>
 public sealed class TitleScreenState : IGameState, IAttractState
@@ -52,7 +51,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private const string CopyrightLine = "COPYRIGHT 1982 WILLIAMS ELECTRONICS INC.";
 
     /// <summary>
-    /// The port's own credit, which the author asked to sit among these lines (notes §102.1). The
+    /// The port's own credit line, which sits among these (notes §102.1). The
     /// arcade's presentation page has no such line, so this one is a deliberate, labelled
     /// addition — in the SMALL font, like the cabinet's own credit lines.
     /// </summary>
@@ -60,9 +59,9 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     // Layout of the presentation page (notes §103/§107). The art is drawn at the port's 2x sprite
     // scale, which is why the wordmark is 58 canvas px tall. The page's TEXT alternates between two
-    // panes, swapping every TitleTextSwapSeconds (author, 2026-09-20): there is no room for both at
+    // panes, swapping every TitleTextSwapSeconds: there is no room for both at
     // once — and that is exactly what lets the arcade's two message lines have an EMPTY ROW between
-    // them, as the author asked (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
+    // them (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
     // an 8-row line grid, i.e. one blank line).
     private const int WordmarkRow = 30;
     private const int Logo2084Row = 96;
@@ -76,7 +75,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private const int ForWilliamsRow = 260;
     private const int CopyrightRow = 292;
 
-    // Pane 2 — the port's own lines: the author's credit and the F-key menu (notes §101/§102.1).
+    // Pane 2 — the port's own lines: its credit and the F-key menu (notes §101/§102.1).
     private const int CreditRow = 176;
     private const int MenuRow = 220;
 
@@ -84,17 +83,16 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// The palette entry the page's text is drawn in: the ROM's text colour operand (notes §106) —
     /// `$884E`'s `LDA #$66` for the two welcome lines, and the same `$66` in front of "DESIGNED BY
     /// VID KIDZ" in the string table at `$6D75`. The page's own table makes entry 6 ORANGE, and the
-    /// page's white chase sweeps through it — which is what the author saw as the text "cycling
-    /// between orange and white". The port's OWN lines use it too (author, 2026-09-20: "render the
-    /// shortcut key text in orange and white too"), so the whole page's text flashes together.
+    /// page's white chase sweeps through it — so the text reads as "cycling
+    /// between orange and white". The port's OWN lines use it too, so the whole
+    /// page's text flashes together.
     /// </summary>
     private const int TextSlot = PresentationPagePalette.TextSlot;
 
     /// <summary>
-    /// The copyright line's OWN colour (author, 2026-09-20: *"a copyright 1982 williams electronics
-    /// inc. message (in a different cycling colour)"*). Slot 2 is the page's own BLUE (`$C0`) — the
+    /// The copyright line's OWN colour. Slot 2 is the page's own BLUE (`$C0`) — the
     /// colour the ROM's string script writes for a credit line (`04 22` in front of "CREDITS: n" at
-    /// `$6D95`), which is the blue the author's reference screenshot shows on that very line. It is
+    /// `$6D95`), which is the blue an arcade reference screenshot shows on that very line. It is
     /// one of the seven entries the page writes, so it cycles with everything else: the white chase
     /// sweeps through it, exactly as it sweeps through the orange above (notes §106).
     /// </summary>
@@ -128,10 +126,8 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
         // The presentation page runs its OWN decoded colour set (notes §106): entries 1-7 come
         // from the ROM's seven-byte table ($8A70) with a white flash chasing through them every
-        // 3 frames, and the message sits in entry 6. §103.3 ran the HIGH SCORE page's process set
-        // here as a stand-in while this was undecoded — the two look nothing alike (that one walks
-        // slot 8 through the whole COLTAB hue wheel), and the author's report that the message
-        // "cycles between orange and white" is what the real page's chase does.
+        // 3 frames, and the message sits in entry 6. The message reads as "cycling between orange
+        // and white", which is what this chase does (notes §106).
         if (_sprites.Palette is { } palette)
         {
             _colour.Start(palette);
@@ -220,11 +216,11 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // The caller clears to black. This is the ROM's Williams PRESENTATION page (notes §103):
         // the logos, the operator's welcome message (two 25-character lines) and the credit
         // strings. The arcade draws a border of 28 moving "W" logos round it and a "CREDITS: n"
-        // line under the message; the author asked for neither (this port has no credits), and
+        // line under the message; this port has neither (it has no credits), and
         // neither the playfield wall nor the score/men belong to this page — the cabinet's other
         // attract page carries those.
 
-        // The two logos, traced from the author's arcade screenshot (notes §103.4) — the R5 CPU
+        // The two logos, traced from an arcade screenshot (notes §103.4) — the R5 CPU
         // ROM we hold has no attract wordmark (§103.2). The wordmark's masks are drawn in the two
         // entries the page's art cycle is on this step, so it colour-cycles through the page's own
         // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
@@ -236,7 +232,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
         // The page's text: ONE of its two panes, alternating every TitleTextSwapSeconds
         // (notes §107). Both are drawn in the page's own text slot — the ROM's operand `$66`, entry
-        // 6, ORANGE with the white flash sweeping through it (notes §106) — so the author's credit
+        // 6, ORANGE with the white flash sweeping through it (notes §106) — so the port's credit
         // and the shortcut keys flash with the arcade's own lines.
         if (_arcadeText)
         {
@@ -252,7 +248,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// Pane 1 — the arcade's own lines: the operator's welcome message and the credit strings, all
     /// in the page's text colour (the ROM's `$66` — notes §106) except the copyright, which gets an
     /// entry of its own. The two message lines are ONE EMPTY ROW apart, as the arcade prints them,
-    /// and the copyright sits an empty row below the two credit lines (author, 2026-09-20).
+    /// and the copyright sits an empty row below the two credit lines.
     /// </summary>
     private void DrawArcadeText(SpriteBatch spriteBatch)
     {
@@ -264,7 +260,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     }
 
     /// <summary>
-    /// Pane 2 — the port's own lines: the author's credit (notes §102.1) and the F-key menu
+    /// Pane 2 — the port's own lines: its credit (notes §102.1) and the F-key menu
     /// (notes §101). Port-only and labelled as such; they take the arcade pane's place, and the
     /// arcade's START buttons keep working exactly as they did either way.
     /// </summary>
@@ -280,7 +276,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         }
     }
 
-    /// <summary>The title's port-only menu, in the author's order (notes §101).</summary>
+    /// <summary>The title's port-only menu (notes §101).</summary>
     private static readonly string[] Options =
     [
         "F1 ONE PLAYER GAME",

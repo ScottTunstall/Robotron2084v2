@@ -401,14 +401,8 @@ public sealed class AttractObjectMachine
                 }
 
                 case 26: // RPROG — the 64-step vertical shake.
-                    // PSHAKE ($868C) is a ONE-BYTE script: the shake IS the whole
-                    // ghost, and the ROM's RPROG owns the process until it ends
-                    // (`Alive = false` in StepRprog). Returning "keep reading" made
-                    // the process run on into the bytes that FOLLOW $868C — which
-                    // are BRAING ($868D), so the shaking human's object executed
-                    // `SETOB BRAIN / SETPOS (10,160)` on itself and the demo showed
-                    // a second brain streaking off across the screen instead of a
-                    // reprogrammed mummy (notes §97.4).
+                    // PSHAKE ($868C) is a ONE-BYTE script: RPROG owns the process
+                    // until it ends, so return false (stop reading).
                     RprogLeft = 0x40;
                     RprogPhase = false;
                     Action = MovieAction.Rprog;
@@ -465,10 +459,9 @@ public sealed class AttractObjectMachine
             {
                 case MovieAction.Walk:
                     // Only the WALK actions need the descriptor (its walk table and
-                    // image count); MONO and RPROG drive any object. The old guard
-                    // cancelled the whole action on a descriptor-less object, and the
-                    // process then fell through and read the NEXT script's opcodes as
-                    // its own (notes §97.4).
+                    // image count); MONO and RPROG drive any object. A descriptor-less
+                    // walk must STOP the action: carrying on would read the next
+                    // script's opcodes as its own (notes §97.4).
                     if (Object.Descriptor is not { } descriptor)
                     {
                         Action = MovieAction.None;
@@ -477,10 +470,9 @@ public sealed class AttractObjectMachine
 
                     // ANA2 / BANA2: move, DEC the step count, and only SLEEP again
                     // while steps remain — the LAST step falls straight through to
-                    // the script (`JMP [LEV2,U]`). Sleeping once more after it put
-                    // every walk a step period behind and dragged the whole script
-                    // phase with it (the hulk reaching a human 0.5 s before her
-                    // scripted death, notes §96.10).
+                    // the script (`JMP [LEV2,U]`). Sleeping once more after it would
+                    // put every walk a step period behind and drag the whole script's
+                    // later phases with it (notes §96.10).
                     if (descriptor.Walk == MovieWalk.BrainStep)
                     {
                         BrainStep(descriptor);

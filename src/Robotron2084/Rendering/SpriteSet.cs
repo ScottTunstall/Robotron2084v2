@@ -109,8 +109,7 @@ public sealed class SpriteSet
 
     /// <summary>
     /// Player laser art — the four ROM pictures (R5 $35BE-$35DC, byte-identical
-    /// to old source RRG23 LLPC/ULPC/DLLPC/ULLPC; author ROM-verified
-    /// 2026-09-13). Built at arcade-pixel size (1 art pixel = 1 texture pixel);
+    /// to old source RRG23 LLPC/ULPC/DLLPC/ULLPC). Built at arcade-pixel size (1 art pixel = 1 texture pixel);
     /// <see cref="DrawSprite"/> scales by SpecScale and centers in the laser's
     /// 4x4 (spec) collision box. ROM LTAB picks one per direction, no flipping:
     /// L/R = bar, U/D = column (left pixel lit), UL/DR = main diagonal,
@@ -124,7 +123,7 @@ public sealed class SpriteSet
 
     public Texture2D LaserDiagonalAnti { get; }
 
-    /// <summary>ROM tank shell (author-located 2026-09-12: raw data $4FF2, 7×16 = 14×16 px; notes §11.5).</summary>
+    /// <summary>ROM tank shell (raw data $4FF2, 7×16 = 14×16 px; notes §11.5).</summary>
     public Texture2D TankShell { get; }
 
     /// <summary>
@@ -143,8 +142,8 @@ public sealed class SpriteSet
     public Texture2D[] PostFrames { get; }
 
     /// <summary>
-    /// Arcade font glyphs, extracted from the ROM (notes §38; offsets from
-    /// the author's sprite editor): index 0..9 = '0'..'9', 10..35 = 'A'..'Z',
+    /// Arcade font glyphs, extracted from the ROM (notes §38; the offsets come from
+    /// WmsGfxSpriteEditor's font editor): index 0..9 = '0'..'9', 10..35 = 'A'..'Z',
     /// then '(', ')', and (large only) ':' and 'arrowleft'. The LARGE font is
     /// the score font
     /// (6×6 px, ROM10-12 @0xEC93); the SMALL font (4×5 px, @0xEA2B) is the
@@ -183,7 +182,7 @@ public sealed class SpriteSet
 
     /// <summary>
     /// The attract page's wordmark — "ROBOTRON:" — as two WHITE MASKS at 1x arcade pixels,
-    /// TRACED from the author's arcade screenshot by <c>tools/extract-title-logos.py</c> (notes
+    /// TRACED from an arcade screenshot by <c>tools/extract-title-logos.py</c> (notes
     /// §103.4): the R5 CPU ROM we hold does not contain this artwork. <see cref="TitleWordmarkCore"/>
     /// is the letters' body and <see cref="TitleWordmarkRim"/> the one-pixel rim round them,
     /// because the arcade blits a shape in a colour taken from the LIVE palette — so the page
@@ -197,8 +196,8 @@ public sealed class SpriteSet
 
     /// <summary>
     /// The "2084" mark beneath the wordmark — COLOUR art, traced the same way and snapped to the
-    /// arcade's own palette (notes §103.4). Unlike the wordmark it keeps its own colours: the
-    /// author asked for the wordmark to cycle, not for this.
+    /// arcade's own palette (notes §103.4). Unlike the wordmark it keeps its own colours: only the
+    /// wordmark cycles.
     /// </summary>
     public Texture2D Title2084 { get; }
 
@@ -435,11 +434,7 @@ public sealed class SpriteSet
     /// remap has to bind this itself, because <c>Apply()</c> writes the pixel
     /// shader straight to the device and the binding OUTLIVES the draw that made
     /// it (the same class as notes §40's vertex-shader bug), so the next plain
-    /// fill or sprite is rendered through whatever pass was bound last. That is
-    /// what made the prog's ghost frames black: the card fill ran through
-    /// <c>SolidRemap</c>, i.e. in the black silhouette colour, so the trail lost
-    /// its colour cycle (author, 2026-09-16: "It should be a black silhouette on
-    /// a colourful block").
+    /// fill or sprite would be rendered through whatever pass was bound last.
     /// </summary>
     private void UsePassThrough()
     {
@@ -625,7 +620,7 @@ public sealed class SpriteSet
     }
 
     /// <summary>
-    /// The high score table's number printer (notes §98.5, from the author's photo
+    /// The high score table's number printer (notes §98.5, from a photo
     /// of the arcade): the SIGNIFICANT digits only, packed from the cursor — the
     /// table does NOT use the in-play score display's blanked-leading-zero field
     /// (a row reads "1) DRJ 52127", not "1) DRJ   52127"), which is what makes the
@@ -724,7 +719,7 @@ public sealed class SpriteSet
     {
         // The frame is a plain fill, so it must bind the pass-through EXPLICITLY:
         // otherwise it is drawn through whatever pass was bound last and comes out
-        // in that colour (the black-ghost-card bug).
+        // in that colour.
         UsePassThrough();
         spriteBatch.Draw(WallPixel, DrawnRect(bounds, texture), background);
         DrawSpriteSolid(spriteBatch, texture, bounds, shape);

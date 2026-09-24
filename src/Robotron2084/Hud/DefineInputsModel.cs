@@ -9,11 +9,11 @@ namespace Robotron2084.Hud;
 ///
 /// The page is ONE column of lines: player 1's eight stick lines, two blank lines, player
 /// 2's eight, two more blank lines, then the machine's single PAUSE line — twenty-one in
-/// all, of which only <see cref="VisibleLines"/> are on screen at once. The author's ask was
-/// exactly that: two side-by-side columns made the screen feel full, so player 2's section
+/// all, of which only <see cref="VisibleLines"/> are on screen at once. Two side-by-side
+/// columns made the screen feel full, so player 2's section
 /// sits BENEATH player 1's and the cursor SCROLLS between them.
 ///
-/// Setting an input is deliberately TWO steps (the author's choice): <c>Enter</c> arms
+/// Setting an input is deliberately TWO steps: <c>Enter</c> arms
 /// the highlighted line, then the next thing pressed becomes the binding. Without it
 /// the cursor keys could never be bound, since they are how the page is scrolled.
 /// Scrolling is therefore only live while nothing is armed.
@@ -24,8 +24,8 @@ public sealed class DefineInputsModel
     public const int LinesPerPlayer = 8;
 
     /// <summary>
-    /// Blank lines between the sections. The author's ask: player 1's block and player 2's
-    /// ran together on screen, so there are gaps the cursor skips over (and which make the
+    /// Blank lines between the sections, so player 1's block and player 2's do not
+    /// run together on screen: the cursor skips the gaps (and they make the
     /// section boundary obvious when a scroll leaves both blocks visible).
     /// </summary>
     public const int SpacerLines = 2;
@@ -132,8 +132,8 @@ public sealed class DefineInputsModel
     }
 
     /// <summary>
-    /// Gives the highlighted line its new binding and, as the author's two-step flow
-    /// expects, moves on to the next line and disarms. The PAUSE line has nowhere to go,
+    /// Gives the highlighted line its new binding and, in the two-step flow,
+    /// moves on to the next line and disarms. The PAUSE line has nowhere to go,
     /// so the highlight stays there. Returns false when the page was not armed.
     /// </summary>
     public bool Assign(ControlSettings settings, InputBinding binding)

@@ -5,8 +5,8 @@ namespace Robotron2084.Audio;
 /// (priority, (dur, len, note)…) table a ROM call site loads with
 /// <c>LDD #addr</c> before <c>JSR $D04B</c> (→ $D3C7). The note→frequency
 /// map is sound-board hardware (NOT in the CPU ROM) — the port uses a
-/// stub scale in <see cref="MonoGameSoundSink"/> (BLOCKED on the author
-/// for the real table; see notes §36.2 question).
+/// stub scale in <see cref="MonoGameSoundSink"/> until that table is decoded
+/// (notes §36.2).
 /// </summary>
 public static class SoundTables
 {

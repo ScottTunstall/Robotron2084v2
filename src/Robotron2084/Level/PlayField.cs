@@ -1309,8 +1309,8 @@ public sealed class PlayField
         for (int i = 0; i < count; i++)
         {
             // A human refuses to step into a live electrode (Human.Update mirrors the
-            // ROM's walk), so one scattered ON TOP of an electrode is stuck there for
-            // the rest of the wave — the author's report. Keep humans off electrodes
+            // ROM's walk), so one scattered ON TOP of an electrode would be stuck there for
+            // the rest of the wave. Keep humans off electrodes
             // the same way the electrodes and grunts are placed (notes §77), and clear
             // the member's OWN box, not the generic entity square (notes §88).
             IntVector2 position = FindSpawnPoint(

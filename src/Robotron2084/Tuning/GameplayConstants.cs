@@ -119,10 +119,9 @@ public static class GameplayConstants
     public static bool PlayerInvincibleForTesting => true; // flip to false when playtesting is done (a property, not const, so the guard below doesn't fold to unreachable)
 
     /// <summary>
-    /// Playtest 2026-09-13 round 6 ("he stops firing after a while even
-    /// when I press SPACE"): a press fires immediately (arcade rising edge)
-    /// and HOLDING the fire button re-fires every this many ticks; the
-    /// 3-laser SLOT cap (LaserSlots) is the real binding limit.
+    /// A press fires immediately (the arcade's rising edge) and HOLDING the fire
+    /// button re-fires every this many ticks; the 3-laser SLOT cap (LaserSlots)
+    /// is the real binding limit.
     /// </summary>
     public const int PlayerAutoFireTicks = 12;
 
@@ -165,9 +164,7 @@ public static class GameplayConstants
     /// 7 = $11 = slot 1 = RED (the ROM's own CRTAB: slot 1 = $07), 10 = $AA = 10.
     /// The ROM makes the post a SOLID silhouette in this slot's live colour
     /// (`PSTKON` → `OPON1` → `MPCTON`, blitter op $1A), so slots 10-15 — the
-    /// colour-cycling ones — make that wave's posts cycle. Confirmed by the author
-    /// 2026-09-16; see notes §47 for the fix and why the old colour-byte reading
-    /// (which made wave 1 white and wave 3 dark green) was wrong.
+    /// colour-cycling ones — make that wave's posts cycle (notes §47).
     /// </summary>
     public static readonly byte[] PostSlotByWaveMod10 =
     [
@@ -238,8 +235,7 @@ public static class GameplayConstants
     // Hulk — ROM RRH11: step period comes from the
     // wave table (HLKSPD, in ROM ticks); step sizes are fixed by the ROM
     // animation table (horizontal 3/4 arcade px alternating, vertical 2).
-    // Laser knockback (playtest 2026-09-13: the fixed 20-spec-px push made
-    // the hulk "jump too far"): now the ROM RRH11 HULKIL per-axis random
+    // Laser knockback is the ROM RRH11 HULKIL per-axis random
     // push — X ±1/±2 arcade px (50/50), Y ±1/±4 (25/75); see
     // Hulk.ApplyKnockback (the magnitudes are ROM-intrinsic, no constant).
     public const int HulkMinDistanceFromPlayer = 35; // spec-px (spec gives a 30–40 range; 35 = midpoint)
@@ -284,10 +280,6 @@ public static class GameplayConstants
     //           otherwise taken from the seed bit (X: set = negative, Y: set =
     //           positive; the opposite polarity decorrelates the axes).
     //   beat:   NAP 3, and PD7 counts down in BEATS to the next SQVEL.
-    //
-    // The port previously read those `×4`/`×8` shifts as multiplying the
-    // distance to a waypoint (the §28 R5-only decode), which made the quark
-    // ~20-40x too fast. The author reported it: "The quarks are WAY too fast."
     public const int QuarkBeatRomTicks = 4;      // NAP 3 + the beat vblank
     public const int QuarkVelocityXScale = 4;    // ROM: two ASLB/ROLA pairs
     public const int QuarkVelocityYScale = 8;    // ROM: three
@@ -307,10 +299,9 @@ public static class GameplayConstants
 
 
     // $4CAC (`TNKDRP`): the tank's blitter address = the quark's + `ADDD #$0206`,
-    // i.e. **+2 COLUMNS and +6 ROWS — not +2 px**. A column is 2 px (notes §53
-    // proves it five ways), so the X offset is 4 arcade px = 8 screen units; the
-    // port used 4 units = 1 column, the same half-width slip the cruise missile
-    // carries. The ROW is decremented first UNLESS the quark sits exactly on the
+    // i.e. **+2 COLUMNS and +6 ROWS — not +2 px**. A column is 2 px (notes §53),
+    // so the X offset is 4 arcade px = 8 screen units. The ROW is decremented
+    // first UNLESS the quark sits exactly on the
     // top wall (`CMPB #YMIN / BEQ TNKDP1 / DECB`), so a tank normally lands 5 rows
     // below its quark and 6 on the top wall.
     // (No TankFlash*: the tank does NOT flash — author, 2026-09-16: "Quarks and
@@ -429,8 +420,7 @@ public static class GameplayConstants
     // Explosion / appear — the RRDX2 "DIAGONAL EXPLOSIONS" engine (notes §35.5,
     // §61). The records come from ONE pool of 10 (`EX` at DXTAB, `RMB
     // ((10-1)*EXSIZE)`) shared by explosions and appears, so that is the cap on
-    // the pair TOGETHER (the old "7 x 242 bytes" note came from the disasm's
-    // data-region read and does not match the Gospel's 51-byte struct).
+    // the pair TOGETHER (notes §35.5).
     //
     // The sizes are the ROM's 16-bit fixed-point accumulators: the HIGH byte is
     // the step (rows for a row fan, columns for a column fan), so:
@@ -500,9 +490,9 @@ public static class GameplayConstants
     /// <summary>
     /// AI stick hysteresis: a freshly computed flee/drift direction must win this
     /// many ticks IN A ROW before the stick follows it. The flee direction is
-    /// `sign(player − robot)` recomputed against a moving field, so it flipped on
-    /// ~75% of ticks and the arcade's walk animation RESETS on every facing change
-    /// (R5 $3003-3009) — the demo's man twitched in place instead of walking
+    /// `sign(player − robot)` recomputed against a moving field, so without hysteresis it flipped on
+    /// ~75% of ticks; the arcade's walk animation RESETS on every facing change
+    /// (R5 $3003-3009), which makes the demo's man twitch in place instead of walking
     /// (notes §97.5).
     /// </summary>
     public const int DemoDirectionSwitchTicks = 3;
@@ -511,8 +501,7 @@ public static class GameplayConstants
     /// AI stick minimum hold: once the stick follows a new direction it keeps it
     /// this many ticks. The arcade's walk animation is a four-frame cycle at three
     /// ticks a frame (twelve ticks), so a direction that lasts fewer ticks than that
-    /// can never show a complete walk — which is what the author saw as the demo's
-    /// man "jerking" (notes §97.5).
+    /// can never show a complete walk (notes §97.5).
     /// </summary>
     public const int DemoDirectionHoldTicks = 9;
 
@@ -563,17 +552,15 @@ public static class GameplayConstants
     // Session / geometry values taken from spec.txt
     public const int StartingLives = 3; // spec-stated ("the PLAYER is awarded 3 lives")
     public const int StartingLevelNumber = 1; // spec-stated ("assigned level 1")
-    // The spec's 16x16 entity box is no longer a collision box — see the
-    // per-entity *CollisionSize table below (playtest 2026-09-13: "the entity
-    // rectangles are way too big"). Still used for the spawn-candidate grid
+    // The spec's 16x16 entity box is not a collision box — see the
+    // per-entity *CollisionSize table below. Still used for the spawn-candidate grid
     // (the largest entity box is 16 spec-px wide) and the pixel-art factory
     // pattern size.
     public const int EntitySizeSpecPixels = 16; // spec-stated (16x16 entities)
     public const int MissileSizeSpecPixels = 4; // spec-stated (4x4 lasers/missiles)
     public const int WallThicknessSpecPixels = 4; // spec-stated ("4px width" wall)
 
-    // ---- Collision boxes (playtest 2026-09-13 round 5: "the entity
-    // rectangles are way too big") ----
+    // ---- Collision boxes ----
     // The ROM (COL0V, RRS22 ~1038) intersects each object's PICTURE
     // dimensions — ADDD OBJW,U / ADDD [OPICT,X] — not a fixed square: the
     // collision box IS the art. Sizes are the live-frame dimensions from
@@ -724,8 +711,8 @@ public static class GameplayConstants
     //   wave    "<n>  WAVE" at col 62 / row 238 (the BOTTOM), string 104,
     //           small font, number in $AA and " WAVE" in $BB
     //
-    // The row-20 in the old comment here was a bad decode: the ROM's row is 14,
-    // which is what keeps the HUD clear of the port's 40-px wall band.
+    // The ROM's HUD row is 14, which keeps the score clear of the port's 40-px
+    // wall band.
     public const int HudScoreOriginColumnP1 = 21;     // arcade byte column
     public const int HudScoreOriginColumnP2 = 85;     // = P1 + 64 (P2ORG - P1ORG)
     public const int HudMenOriginColumnP1 = 46;
@@ -777,8 +764,8 @@ public static class GameplayConstants
     public const int TitleOptionRowStepPixels = 14;
 
     /// <summary>
-    /// How long each of the presentation page's two TEXT PANES is shown before they swap (author,
-    /// 2026-09-20). The page has no room for the arcade's message and credits and the port's credit
+    /// How long each of the presentation page's two TEXT PANES is shown before they swap.
+    /// The page has no room for the arcade's message and credits and the port's credit
     /// and F-key menu at once — and the arcade's two message lines want an empty row between them
     /// (the ROM's own cursors, `$86`/`$96`, are 16 rows apart on an 8-row line grid) — so each pane
     /// gets the whole band to itself. Notes §107.

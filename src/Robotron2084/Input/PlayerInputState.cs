@@ -12,7 +12,7 @@ namespace Robotron2084.Input;
 /// is zero the player fires in their current facing direction.
 ///
 /// <see cref="SkipLevelPressed"/> is a port-only playtest input: it clears the
-/// current level immediately, so the author can jump between waves. No arcade
+/// current level immediately, so waves can be jumped between. No arcade
 /// counterpart.
 ///
 /// <see cref="StartOnePlayerPressed"/> / <see cref="StartTwoPlayersPressed"/>

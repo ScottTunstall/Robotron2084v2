@@ -4,8 +4,8 @@ namespace Robotron2084.Input;
 
 /// <summary>
 /// One line of the definitions page: the action's KEYBOARD binding and its GAMEPAD
-/// binding. Two slots, because the port has always accepted either device at the same
-/// time (the old <c>CompositePlayerInputSource</c>): arming a line and pressing a key
+/// binding. Two slots, because the port accepts either device at the same
+/// time: arming a line and pressing a key
 /// replaces the keyboard slot and leaves the pad slot alone, and vice versa.
 /// </summary>
 public readonly record struct ActionBinding(InputBinding Key, InputBinding Pad)
@@ -31,9 +31,8 @@ public readonly record struct ActionBinding(InputBinding Key, InputBinding Pad)
 
     /// <summary>
     /// The page's value column: "W OR P1 LEFT STICK UP" when both devices are bound, the one
-    /// device when only it is, or "NONE". The word OR is spelled out because a bare gap read as
-    /// one long sentence (author: *"the controls don't clearly show that W OR stick up can be
-    /// used"*), and a hyphen could not substitute for it — the arcade's small font has no '-'.
+    /// device when only it is, or "NONE". The word OR is spelled out because a bare gap reads as
+    /// one long sentence, and a hyphen cannot substitute for it — the arcade's small font has no '-'.
     /// </summary>
     public string DisplayName
     {

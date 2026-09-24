@@ -5,8 +5,8 @@ namespace Robotron2084.Persistence;
 
 /// <summary>
 /// Persists the port's control definitions (notes §101) in a plain INI file beside the
-/// high score table: <c>%LocalAppData%\Robotron2084\controls.ini</c>. The author asked
-/// for INI so the file can be read and hand-edited, and every value uses exactly the
+/// high score table: <c>%LocalAppData%\Robotron2084\controls.ini</c>. The INI form is
+/// deliberate: the file can be read and hand-edited, and every value uses exactly the
 /// vocabulary the DEFINE INPUTS page shows ("W", "P1 LEFT STICK UP"), so the file and the
 /// page describe the same thing in the same words.
 ///
@@ -136,8 +136,8 @@ public sealed class ControlSettingsStore
     {
         if (section == "pause")
         {
-            // PAUSE is a single binding with no dot in its name (the author asked for one
-            // pause key), so any of these names, old or new, sets the whole line.
+            // PAUSE is a single binding with no dot in its name, so any of these names,
+            // old or new, sets the whole line.
             if (name is "input" or "key" or "pad")
             {
                 settings.Pause = binding;

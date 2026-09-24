@@ -11,10 +11,10 @@ namespace Robotron2084.States;
 
 /// <summary>
 /// The DEFINE INPUTS page (notes §101) — port-only: the cabinet's two sticks are wired
-/// to the board, so there is nothing here to be faithful to, only the author's request
-/// for a page where each player can lay their own controls out.
+/// to the board, so there is nothing here to be faithful to — the page is where each
+/// player lays their own controls out.
 ///
-/// Its LOOK is the arcade's, though (author, 2026-09-20; notes §108): it reads like the GAME
+/// Its LOOK is the arcade's, though (notes §108): it reads like the GAME
 /// ADJUSTMENT page in the cabinet's service mode — a centred heading, a left column of setting
 /// names with their values in a second column, that page's own "->" cursor at the left of the line
 /// the cursor is on, and the instructions under the list. Headings and instructions are the palette's
@@ -22,7 +22,7 @@ namespace Robotron2084.States;
 ///
 /// One column of lines with player 2's eight beneath player 1's — with blank lines between
 /// the sections — and eight of them on screen at a time: the cursor keys scroll between the
-/// sections (the author's ask, after the first side-by-side version felt too full). Each line
+/// sections. Each line
 /// is one of the arcade's two sticks — MOVE UP away through SHOOT RIGHT — and the shared
 /// PAUSE line is last.
 ///
@@ -45,27 +45,24 @@ public sealed class DefineInputsState : IGameState
     private const int FirstLineRow = 70;
     private const int LineStep = 26;
 
-    // The two columns sit 3-4 characters right of where they started: the author found the rows
-    // reading left of centre on the page (notes §102). The cursor sits just left of the label
+    // The two columns are centred on the page (notes §102). The cursor sits just left of the label
     // column, exactly where the arcade's GAME ADJUSTMENT page prints its cursor (column $0C), and it
-    // is that page's own cursor glyph — the small font's "->" (author, 2026-09-20: *"the arrow that
-    // shows what row you're on is pointing the wrong way"*; notes §108.4).
+    // is that page's own cursor glyph — the small font's "->" (notes §108.4).
     private const int CursorColumn = 57;
     private const int LabelColumn = 75;
     private const int ValueColumn = 285;
 
     // The instructions and the exit line sit under the list in the SMALL font, the way the arcade's
-    // adjustment page ends — the exit line on its own, a blank line below them (author, 2026-09-20).
+    // adjustment page ends — the exit line on its own, a blank line below them.
     private const int InstructionsRow = 294;
     private const int SetAndClearRow = 312;
     private const int ExitRow = 342;
 
-    // The author's restyle (notes §108): the page reads like the arcade's GAME ADJUSTMENT page —
+    // The page's own colours (notes §108): the page reads like the arcade's GAME ADJUSTMENT page —
     // HEADINGS and INSTRUCTIONS in the palette's WHITE ($FF, slot 9), the lines' input text in its
     // GREEN ($38, slot 6), and the selected line marked by the arcade's own "->" cursor. The word OR
     // between a line's two devices keeps its own BLUE ($C0, slot 7), so "W OR P1 LEFT STICK UP"
-    // reads as two alternatives rather than as one long string (slot 5's yellow was tried first and
-    // rejected as too bright, slot 4's amber as the wrong hue — notes §101.12). Those are the
+    // reads as two alternatives rather than as one long string (notes §101.12). Those are the
     // palette's plain CRTAB values, and they are the very entries the arcade's page uses: its
     // cursor string sets text colour $99 (entry 9) before printing the glyph and restores $66
     // (entry 6) after it (notes §108.4). The one thing on the page that COLOUR-CYCLES is the
@@ -225,8 +222,8 @@ public sealed class DefineInputsState : IGameState
         _sprites.DrawLargeFontText(spriteBatch, text, CenteredX(text, large: true), y, HeadingSlot);
 
     /// <summary>
-    /// An instruction line under the list: the arcade's SMALL font, centred, in the page's WHITE —
-    /// the author's ask of 2026-09-20 (the heading keeps the large font; these do not).
+    /// An instruction line under the list: the arcade's SMALL font, centred, in the page's WHITE
+    /// (the heading keeps the large font; these do not).
     /// </summary>
     private void DrawInstruction(SpriteBatch spriteBatch, string text, int y) =>
         DrawText(spriteBatch, text, CenteredX(text), y, HeadingSlot);
@@ -308,8 +305,7 @@ public sealed class DefineInputsState : IGameState
 
     /// <summary>
     /// One line's LABEL — always with its player on it, so a window that leaves the tail of
-    /// one block and the head of the next on screen together can never be misread (the
-    /// author: *"there's no separation between player 1's controls and player 2's"*).
+    /// one block and the head of the next on screen together can never be misread.
     /// </summary>
     private static string LabelOf(int line)
     {

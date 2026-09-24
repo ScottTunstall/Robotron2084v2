@@ -13,8 +13,7 @@ namespace Robotron2084.Rendering;
 /// | `$89DA` | the border "W" logos step their colour operand `$77 → $66 → … → $11 → $77`, i.e. one entry per step down through 7…1 |
 ///
 /// The seven entries are red, blue, red-orange, green, magenta, ORANGE and yellow, so the page's
-/// text is ORANGE with a white flash sweeping through it — which is exactly the author's report of
-/// 2026-09-20 ("the PRESENTED BY … text actually cycles between orange and white") — and the art
+/// text is ORANGE with a white flash sweeping through it, and the art
 /// around it cycles through the seven.
 ///
 /// **Two clocks, both on notes §52's exact-6ths accumulator** (a ROM frame is 6/5 of a port tick):

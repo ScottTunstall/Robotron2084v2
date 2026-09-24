@@ -92,8 +92,7 @@ public static class HighScoreTableLayout
     /// only reloaded once that subtraction reaches zero), so the growing pass lays down
     /// <c>$11, $88, $77, $66, $55, $44, $33, $22, $11 …</c> — A SLOT PER STROKE, eight of
     /// them repeating. That is why <c>LOOPP</c> shifts a register of exactly EIGHT slots, and
-    /// why the arcade's wall reads as several colours at once (author: "the arcade wall is
-    /// split into multiple different cycling colours"): the eight visible strokes are slots
+    /// why the arcade's wall reads as several colours at once: the eight visible strokes are slots
     /// eight to one, each showing a COLTAB colour three frames apart in the walk.
     /// </summary>
     public static int FrameStrokeSlot(int stroke) =>

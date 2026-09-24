@@ -3,12 +3,12 @@ namespace Robotron2084.Level;
 /// <summary>
 /// How a game was started (notes §101). The arcade has one two-player game — both
 /// players at once, on their own sticks — so <see cref="TwoPlayerSimultaneous"/> is the
-/// faithful one; the author also asked for an ALTERNATE (take-turns) two-player game,
-/// which is what the port has been doing with its turn logic all along.
+/// faithful one; <see cref="TwoPlayerAlternate"/> is the port's own take-turns
+/// two-player game, which is what its turn logic implements.
 ///
 /// <see cref="TwoPlayerSimultaneous"/> is wired as far as mode selection and the two
-/// inputs; the field itself still runs one player at a time (the author asked for the
-/// mode now and the simultaneous play later).
+/// inputs; the field itself still runs one player at a time, so it currently plays as
+/// the alternate game.
 /// </summary>
 public enum GameMode
 {

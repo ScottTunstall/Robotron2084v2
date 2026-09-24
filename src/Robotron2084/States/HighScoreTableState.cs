@@ -108,8 +108,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
             // TAB888's 200 x NAP 3 with NO switch check at all, then TAB777/TAB999 —
             // which leave the moment the switches are CLEAR and are delayed, not
-            // shortened, by a switch that is held (see HighScorePageHold). The port
-            // used to leave on a press, which is the opposite of the ROM.
+            // shortened, by a switch that is held (see HighScorePageHold).
             if (_hold.Tick(AnySwitchHeld(input)))
             {
                 Leave(manager);
@@ -258,7 +257,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// <summary>
     /// The ROM's message 111 (`INDMEP`): the rank, ')' and a space. The arcade's
     /// rows are NOT padded (its 10) sits a glyph further right than its 9)), which
-    /// is what the author's photo of the cabinet shows.
+    /// is what the cabinet shows.
     /// </summary>
     private int DrawRank(SpriteBatch spriteBatch, int rank, int x, int y, int slot, bool large)
     {
@@ -284,8 +283,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// leave behind, drawn STROKE BY STROKE because every stroke has its OWN palette slot —
     /// MARQ's flavour walks down by `$11` a stroke (see
     /// <see cref="HighScoreTableLayout.FrameStrokeSlot"/>), so the eight visible strokes are
-    /// slots 8…1 and the band carries eight cycling colours at once, which is what the author
-    /// sees on the cabinet ("the arcade wall is split into multiple different cycling colours").
+    /// slots 8…1, so the band carries eight cycling colours at once.
     /// LOOPP keeps rewriting slots 1-8, so all eight stripes cycle together, three frames apart.
     ///
     /// The erase pass paints those same pixels black, so only the strokes above

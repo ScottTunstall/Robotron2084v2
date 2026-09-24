@@ -65,14 +65,13 @@ public sealed class TunnelEffect
     ///
     /// `ALLOCATE_TASK` ($D1E3) documents its delay as *"A x 16 Millisec"* and `$571E` passes
     /// `A = 1`, which at the ROM's own unit would put the whole effect — 54 passes over the two
-    /// phases — at under a second. The author's playtest of the arcade says it runs **about two
+    /// phases — at under a second. On the arcade the effect runs **about two
     /// seconds at least**, so the task list is walked SLOWER than one cycle per field: a pass is
     /// **two ROM frames** (2.4 port ticks on §52's exact-6ths clock), which lands the effect at
     /// 54 x 2.4 = ~130 ticks = ~2.2 s.
     ///
-    /// This is the one number in the tunnel taken from the playtest rather than the disassembly,
-    /// and it is called out as such in the notes (and in the handoff) so a MAME measurement can
-    /// settle it.
+    /// This is the one number in the tunnel taken from the measurement rather than the disassembly,
+    /// and it is called out as such in the notes so a MAME measurement can settle it.
     /// </summary>
     internal const int PassFifths = 2 * 6;
 
@@ -139,8 +138,8 @@ public sealed class TunnelEffect
     /// <summary>
     /// Every ring drawn so far. **The ROM never erases the rings it has passed** — each pass
     /// draws one more, so the screen accumulates concentric rectangles two pixels apart and by
-    /// the end the whole area is a filled hatched field. Drawing only the CURRENT ring left a
-    /// handful of small rectangles instead (the author's report).
+    /// the end the whole area is a filled hatched field. Drawing only the CURRENT ring leaves a
+    /// handful of small rectangles instead.
     /// </summary>
     private readonly List<Ring> _rings = new();
 

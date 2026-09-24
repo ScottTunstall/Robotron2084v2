@@ -95,8 +95,8 @@ public static class ScoreFormatter
 
     /// <summary>
     /// The digits of the score with the ROM's leading-zero suppression applied,
-    /// in reading order — the shape the old port code used ("100", and "00" for a
-    /// score of 0). Kept for callers that only need the digits, not the layout.
+    /// in reading order ("100", and "00" for a score of 0). Kept for callers that
+    /// only need the digits, not the layout.
     /// </summary>
     public static int[] DrawnDigits(int score) =>
         Digits(score).Where(d => !d.Suppressed).Select(d => d.Value).ToArray();

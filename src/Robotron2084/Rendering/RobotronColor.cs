@@ -4,11 +4,11 @@ namespace Robotron2084.Rendering;
 
 /// <summary>
 /// Robotron 8-bit colour byte (BBGGGRRR) to RGB conversion.
-/// Ported verbatim from the author's WmsGfxSpriteEditor
+/// Ported verbatim from WmsGfxSpriteEditor's
 /// <c>RobotronPaletteService</c> (Shared/Palettes), which credits Sean
 /// Riddle's Williams ripper algorithm
 /// (https://www.seanriddle.com/ripper.html). No 6809/Williams hardware
-/// modelling — plain RGB, per author directive (arcade-fidelity-notes §0.6).
+/// modelling — plain RGB (arcade-fidelity-notes §0.6).
 /// Accepts ANY 8-bit code, not just the 16 default palette entries (the
 /// colour-cycle processes write intermediate codes at runtime).
 /// </summary>
