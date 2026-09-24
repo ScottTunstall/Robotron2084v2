@@ -259,7 +259,7 @@ public sealed class Tank : IExplodable, IRemovable
         _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
-    /// <summary>The frame an explosion would copy (see <see cref="IArtSource"/>): the birth picture while being born, else the tread frame.</summary>
+    /// <summary>The frame an explosion would copy (see <see cref="IAnimationFrameSource"/>): the birth picture while being born, else the tread frame.</summary>
     /// <remarks>The walk frame advances once per beat and plays backwards while moving left
     /// (ROM: TANK3 takes the direction from the X step's sign).</remarks>
     public Texture2D CurrentAnimationFrame

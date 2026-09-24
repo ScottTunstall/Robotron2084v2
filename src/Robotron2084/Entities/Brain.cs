@@ -314,7 +314,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
-    /// <summary>The frame an explosion would copy (see <see cref="IArtSource"/>).</summary>
+    /// <summary>The frame an explosion would copy (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The texture for the current walk frame.</returns>
     public Texture2D CurrentAnimationFrame

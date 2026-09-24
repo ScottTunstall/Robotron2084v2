@@ -310,7 +310,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
-    /// <summary>The current picture, for the death burst (see <see cref="IArtSource"/>).</summary>
+    /// <summary>The current picture, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The texture for the current rotation frame.</returns>
     public Texture2D CurrentAnimationFrame
