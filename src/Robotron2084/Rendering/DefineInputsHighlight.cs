@@ -1,3 +1,5 @@
+using Robotron2084.Core;
+
 namespace Robotron2084.Rendering;
 
 /// <summary>
@@ -17,12 +19,6 @@ public sealed class DefineInputsHighlight
     /// slot 8 but its exit restores every slot to CRTAB (notes §98.6).
     /// </summary>
     public const int Slot = 8;
-
-    /// <summary>A port tick advances a ROM-frame clock by 5 sixths (notes §52).</summary>
-    private const int SixthsPerPortTick = 5;
-
-    /// <summary>One ROM frame in sixths of a port tick.</summary>
-    private const int SixthsPerRomFrame = 6;
 
     /// <summary>The page's GREEN (CRTAB slot 6) — the label's colour between flashes.</summary>
     private const byte Green = 0x38;
@@ -59,8 +55,8 @@ public sealed class DefineInputsHighlight
     /// <summary>Advances the chase by one port tick (call once per Update).</summary>
     public void Update(GamePalette palette)
     {
-        _chaseSixths += SixthsPerPortTick;
-        int period = RomFramesPerStep * SixthsPerRomFrame;
+        _chaseSixths += ArcadeClock.UnitsPerPortTick;
+        int period = ArcadeClock.Units(RomFramesPerStep);
         if (_chaseSixths < period)
         {
             return;

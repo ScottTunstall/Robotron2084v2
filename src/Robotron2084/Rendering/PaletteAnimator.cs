@@ -1,3 +1,5 @@
+using Robotron2084.Core;
+
 namespace Robotron2084.Rendering;
 
 /// <summary>
@@ -26,9 +28,6 @@ namespace Robotron2084.Rendering;
 /// </summary>
 public sealed class PaletteAnimator
 {
-    /// <summary>A port tick advances a ROM-frame clock by 5 sixths (notes §52).</summary>
-    private const int SixthsPerPortTick = 5;
-
     /// <summary>The ROM's LF flash period in ROM frames (every 3rd flash is the random hue).</summary>
     private const int LaserFlashRomFrames = 2;
 
@@ -76,8 +75,8 @@ public sealed class PaletteAnimator
     {
         // LF (slot 10): a white flash every 2 ROM frames, and every 6th frame a
         // random hue from the COLTAB ramp INSTEAD of the white one.
-        _laserFlashFifths += SixthsPerPortTick;
-        int flashPeriod = LaserFlashRomFrames * 6;
+        _laserFlashFifths += ArcadeClock.UnitsPerPortTick;
+        int flashPeriod = ArcadeClock.Units(LaserFlashRomFrames);
         while (_laserFlashFifths >= flashPeriod)
         {
             _laserFlashFifths -= flashPeriod;
@@ -103,13 +102,13 @@ public sealed class PaletteAnimator
                 continue;
             }
 
-            p.Fifths += SixthsPerPortTick;
-            if (p.Fifths < p.RomFramesPerStep * 6)
+            p.Fifths += ArcadeClock.UnitsPerPortTick;
+            if (p.Fifths < ArcadeClock.Units(p.RomFramesPerStep))
             {
                 continue;
             }
 
-            p.Fifths -= p.RomFramesPerStep * 6;
+            p.Fifths -= ArcadeClock.Units(p.RomFramesPerStep);
             _palette.SetSlot(p.Slot, p.Table[p.Index]);
             p.Index = (p.Index + 1) % p.Table.Length;
         }

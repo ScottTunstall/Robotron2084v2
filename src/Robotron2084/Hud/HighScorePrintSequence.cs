@@ -1,3 +1,5 @@
+using Robotron2084.Core;
+
 namespace Robotron2084.Hud;
 
 /// <summary>
@@ -26,12 +28,6 @@ public sealed class HighScorePrintSequence
 {
     /// <summary>The ROM's <c>LDA #4</c>: four entries per sleep.</summary>
     public const int RowsPerGroup = 4;
-
-    /// <summary>A port tick advances a ROM-frame clock by 5 sixths (notes §52).</summary>
-    private const int SixthsPerPortTick = 5;
-
-    /// <summary>One ROM frame in sixths of a port tick.</summary>
-    private const int SixthsPerRomFrame = 6;
 
     private enum Phase
     {
@@ -89,10 +85,10 @@ public sealed class HighScorePrintSequence
             return;
         }
 
-        _fifths += SixthsPerPortTick;
-        while (_fifths >= SixthsPerRomFrame)
+        _fifths += ArcadeClock.UnitsPerPortTick;
+        while (_fifths >= ArcadeClock.UnitsPerRomFrame)
         {
-            _fifths -= SixthsPerRomFrame;
+            _fifths -= ArcadeClock.UnitsPerRomFrame;
             Advance(todayCount, allTimeCount);
         }
     }

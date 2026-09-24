@@ -1,3 +1,5 @@
+using Robotron2084.Core;
+
 namespace Robotron2084.Rendering;
 
 /// <summary>
@@ -30,12 +32,6 @@ namespace Robotron2084.Rendering;
 /// </summary>
 public sealed class HighScorePalette
 {
-    /// <summary>A port tick advances a ROM-frame clock by 5 sixths (notes §52).</summary>
-    private const int SixthsPerPortTick = 5;
-
-    /// <summary>One ROM frame in sixths of a port tick.</summary>
-    private const int SixthsPerRomFrame = 6;
-
     /// <summary>The slot <c>LOOPP</c> shifts through — its value is the wall's own slot.</summary>
     private const int LoopSlot = 0;
 
@@ -150,8 +146,8 @@ public sealed class HighScorePalette
             }
 
             Process process = _processes[i];
-            process.Fifths += SixthsPerPortTick;
-            int period = process.RomFramesPerStep * SixthsPerRomFrame;
+            process.Fifths += ArcadeClock.UnitsPerPortTick;
+            int period = ArcadeClock.Units(process.RomFramesPerStep);
             if (process.Fifths < period)
             {
                 continue;

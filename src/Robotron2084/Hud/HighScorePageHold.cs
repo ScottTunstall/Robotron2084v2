@@ -1,3 +1,4 @@
+using Robotron2084.Core;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Hud;
@@ -41,12 +42,6 @@ namespace Robotron2084.Hud;
 /// </summary>
 public sealed class HighScorePageHold
 {
-    /// <summary>A port tick advances a ROM-frame clock by 5 sixths (notes §52).</summary>
-    private const int SixthsPerPortTick = 5;
-
-    /// <summary>One ROM frame in sixths of a port tick.</summary>
-    private const int SixthsPerRomFrame = 6;
-
     private int _holdSixths;
     private int _checkSixths;
     private int _checks;
@@ -69,8 +64,8 @@ public sealed class HighScorePageHold
     {
         if (!HoldIsOver)
         {
-            _holdSixths += SixthsPerPortTick;
-            if (_holdSixths < SixthsPerRomFrame * GameplayConstants.HighScoreHoldRomFrames)
+            _holdSixths += ArcadeClock.UnitsPerPortTick;
+            if (_holdSixths < ArcadeClock.Units(GameplayConstants.HighScoreHoldRomFrames))
             {
                 return false;
             }
@@ -82,13 +77,13 @@ public sealed class HighScorePageHold
             return false;
         }
 
-        _checkSixths += SixthsPerPortTick;
-        if (_checkSixths < SixthsPerRomFrame * GameplayConstants.HighScoreLeaveCheckRomFrames)
+        _checkSixths += ArcadeClock.UnitsPerPortTick;
+        if (_checkSixths < ArcadeClock.Units(GameplayConstants.HighScoreLeaveCheckRomFrames))
         {
             return false;
         }
 
-        _checkSixths -= SixthsPerRomFrame * GameplayConstants.HighScoreLeaveCheckRomFrames;
+        _checkSixths -= ArcadeClock.Units(GameplayConstants.HighScoreLeaveCheckRomFrames);
 
         if (!anySwitchHeld)
         {

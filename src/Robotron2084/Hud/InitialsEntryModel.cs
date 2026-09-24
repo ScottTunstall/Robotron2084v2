@@ -1,3 +1,4 @@
+using Robotron2084.Core;
 using Robotron2084.Input;
 using Robotron2084.Persistence;
 
@@ -39,38 +40,32 @@ public sealed class InitialsEntryModel
         Typematic,
     }
 
-    /// <summary>A port tick advances the entry's ROM-frame clock by 5 sixths (notes §52).</summary>
-    private const int SixthsPerPortTick = 5;
-
-    /// <summary>One ROM frame in sixths of a port tick.</summary>
-    private const int SixthsPerRomFrame = 6;
-
     /// <summary>GETLZZ's <c>NAP 4</c>: the fire switch is looked at once every four frames until it is up.</summary>
-    private const int FireReleaseCheckSixths = 4 * SixthsPerRomFrame;
+    private const int FireReleaseCheckSixths = 4 * ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>GETLT1's <c>NAP 2</c>: the main loop reads the switches every two frames.</summary>
-    private const int MainLoopSixths = 2 * SixthsPerRomFrame;
+    private const int MainLoopSixths = 2 * ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>GETLT3's <c>NAP 2</c> between two typematic counts.</summary>
-    private const int TypematicStepSixths = 2 * SixthsPerRomFrame;
+    private const int TypematicStepSixths = 2 * ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>How often a held direction is looked at — LUP/LDOWN poll their own switch inside the delay loop.</summary>
-    private const int CyclePollSixths = SixthsPerRomFrame;
+    private const int CyclePollSixths = ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>LUP/LDOWN's <c>DELAY1</c> loop — 8192 turns of a six-cycle loop, about 49 ms, i.e. two and a half ROM frames.</summary>
-    private const int CycleDelaySixths = SixthsPerRomFrame * 5 / 2;
+    private const int CycleDelaySixths = ArcadeClock.UnitsPerRomFrame * 5 / 2;
 
     /// <summary>LUP's <c>LDA #10</c>: ten <c>DELAY1</c> turns pass before the second cycle.</summary>
     private const int FastRepeatCount = 10;
 
     /// <summary>A repeat after those ten costs <c>DELAY1</c> plus LUP's <c>NAP 1</c>.</summary>
-    private const int CyclePeriodSixths = CycleDelaySixths + SixthsPerRomFrame;
+    private const int CyclePeriodSixths = CycleDelaySixths + ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>The first repeat's period: the ten <c>DELAY1</c> turns of the <c>DECA / BNE LUP1</c> loop.</summary>
     private const int FirstCyclePeriodSixths = FastRepeatCount * CycleDelaySixths;
 
     /// <summary>TIMPRC's deadline for one letter: <c>NAP $FF</c> + <c>NAP $FF</c> + <c>NAP $82</c> = 640 ROM frames (12.8 s).</summary>
-    private const int LetterTimeoutSixths = (0xFF + 0xFF + 0x82) * SixthsPerRomFrame;
+    private const int LetterTimeoutSixths = (0xFF + 0xFF + 0x82) * ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>GETRET's typematic count for the first auto-repeat (<c>ANDA #$80 / ADDA #$20</c>).</summary>
     private const int FirstTypematicCounts = 0x20;
@@ -137,7 +132,7 @@ public sealed class InitialsEntryModel
     /// </summary>
     private void AdvanceTimeout()
     {
-        _timeoutSixths += SixthsPerPortTick;
+        _timeoutSixths += ArcadeClock.UnitsPerPortTick;
         if (_timeoutSixths < LetterTimeoutSixths)
         {
             return;
@@ -160,7 +155,7 @@ public sealed class InitialsEntryModel
     /// <summary>Runs the current phase once its own period has elapsed.</summary>
     private void Step(PlayerInputState input)
     {
-        _sixths += SixthsPerPortTick;
+        _sixths += ArcadeClock.UnitsPerPortTick;
         if (_sixths < _periodSixths)
         {
             return;

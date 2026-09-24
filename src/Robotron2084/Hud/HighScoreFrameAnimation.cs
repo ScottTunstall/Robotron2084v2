@@ -1,3 +1,5 @@
+using Robotron2084.Core;
+
 namespace Robotron2084.Hud;
 
 /// <summary>
@@ -21,12 +23,6 @@ namespace Robotron2084.Hud;
 /// </summary>
 public sealed class HighScoreFrameAnimation
 {
-    /// <summary>A port tick advances a ROM-frame clock by 5 sixths (notes §52).</summary>
-    private const int SixthsPerPortTick = 5;
-
-    /// <summary>One ROM frame in sixths of a port tick.</summary>
-    private const int SixthsPerRomFrame = 6;
-
     /// <summary>
     /// Strokes drawn so far by the pass that is running, and which pass that is. Both
     /// passes have drawn <see cref="HighScoreTableLayout.FrameStrokesPerRomFrame"/> of
@@ -60,10 +56,10 @@ public sealed class HighScoreFrameAnimation
             return;
         }
 
-        _fifths += SixthsPerPortTick;
-        while (_fifths >= SixthsPerRomFrame)
+        _fifths += ArcadeClock.UnitsPerPortTick;
+        while (_fifths >= ArcadeClock.UnitsPerRomFrame)
         {
-            _fifths -= SixthsPerRomFrame;
+            _fifths -= ArcadeClock.UnitsPerRomFrame;
             Advance(HighScoreTableLayout.FrameStrokesPerRomFrame);
         }
     }

@@ -1,8 +1,10 @@
+using Robotron2084.Core;
+
 namespace Robotron2084.Rendering;
 
 /// <summary>
-/// The Williams presentation page's OWN colour set (notes §106) — the thing notes §103.3 could
-/// not decode and covered with the high score page's process set. Every call site here is the
+/// The Williams presentation page's OWN colour set (notes §106) — the seven colours and the two
+/// clocks the page runs. Every call site here is the
 /// ROM's, on the page that prints the welcome message (`$87A6` onward):
 ///
 /// | ROM | what it does |
@@ -24,12 +26,6 @@ namespace Robotron2084.Rendering;
 /// </summary>
 public sealed class PresentationPagePalette
 {
-    /// <summary>A port tick advances a ROM-frame clock by 5 sixths (notes §52).</summary>
-    private const int SixthsPerPortTick = 5;
-
-    /// <summary>One ROM frame in sixths of a port tick.</summary>
-    private const int SixthsPerRomFrame = 6;
-
     /// <summary>
     /// The seven entries the page's own code writes (ROM `$8A70`), in slot order: red, blue,
     /// red-orange, green, magenta, orange, yellow. Slots 1..7 are the page's; 8..15 keep CRTAB.
@@ -93,7 +89,7 @@ public sealed class PresentationPagePalette
     /// <summary>Advances both clocks by one port tick (call once per Update).</summary>
     public void Update(GamePalette palette)
     {
-        _chaseSixths += SixthsPerPortTick;
+        _chaseSixths += ArcadeClock.UnitsPerPortTick;
         if (StepDue(ref _chaseSixths, ChaseRomFramesPerStep))
         {
             _chaseSlot = _chaseSlot >= LastSlot ? FirstSlot : _chaseSlot + 1;
@@ -101,7 +97,7 @@ public sealed class PresentationPagePalette
             palette.SetSlot(_chaseSlot, ChaseColor); // ...and then whitens the current entry
         }
 
-        _artSixths += SixthsPerPortTick;
+        _artSixths += ArcadeClock.UnitsPerPortTick;
         if (StepDue(ref _artSixths, ArtRomFramesPerStep))
         {
             _artStep = (_artStep + 1) % _slotCount;
@@ -123,7 +119,7 @@ public sealed class PresentationPagePalette
     /// <summary>True when a clock's accumulator has reached <paramref name="romFrames"/> frames.</summary>
     private static bool StepDue(ref int sixths, int romFrames)
     {
-        int period = romFrames * SixthsPerRomFrame;
+        int period = ArcadeClock.Units(romFrames);
         if (sixths < period)
         {
             return false;
