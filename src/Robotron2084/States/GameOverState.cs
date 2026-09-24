@@ -17,44 +17,42 @@ namespace Robotron2084.States;
 /// runs <c>ENDPRC</c>, the high-score processing — with no key wait.
 ///
 /// So this state no longer waits for fire and no longer draws its own XNA-font
-/// text: it holds the ROM's message, offers every player's score to the table
-/// (highest first — the ROM's <c>EGSUB</c> loop over <c>ZP1SCR</c>/<c>ZP2SCR</c>)
-/// and hands over to the table, which highlights the entries just posted.
-///
-/// The initials/name ENTRY screens the arcade interleaves here (<c>GODMSP</c>,
-/// <c>CONG</c>, <c>NOWMSP</c> + <c>GETLT</c>) are NOT implemented yet — notes
-/// §98.4. A posted score therefore carries the ROM's own blank name (`NULSCR`).
+/// text: it holds the ROM's message and hands over to <see cref="ScoreEntryCeremony"/>,
+/// which offers every player's final score to the table in turn — through the CONG
+/// initials screen when a score qualifies (notes §116) — and ends on the table itself,
+/// with the entries just posted highlighted.
 /// </summary>
 public sealed class GameOverState : IGameState
 {
-    private readonly IPlayerInputSource _input;
-    private readonly SpriteSet _sprites;
-    private readonly HighScoreStore _highScores;
-    private readonly ControlSettings _controls;
-    private readonly List<int> _scores;
+    private readonly GameServices _services;
+    private readonly IReadOnlyList<FinalScore> _scores;
     private readonly int _holdTicks = GameplayConstants.PortTicks(GameplayConstants.GameOverMessageRomFrames);
     private int _elapsedTicks;
 
-    public GameOverState(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, int score)
-        : this(input, sprites, highScores, [score], null)
+    /// <summary>Builds the screen for a finished game's scores.</summary>
+    /// <param name="input">Player 1's input, which the states that follow read.</param>
+    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="highScores">The high score store the ceremony writes to.</param>
+    /// <param name="scores">Every player's final score, highest first — the ROM's <c>EGSUB</c> runs once per player.</param>
+    /// <param name="controls">The port's control definitions.</param>
+    public GameOverState(
+        IPlayerInputSource input,
+        SpriteSet sprites,
+        HighScoreStore highScores,
+        IReadOnlyList<FinalScore> scores,
+        ControlSettings? controls = null)
     {
+        _services = new GameServices(sprites, highScores, controls ?? ControlSettings.Defaults(), input);
+        _scores = scores;
     }
 
-    /// <param name="scores">
-    /// Every player's final score, highest first — the ROM's <c>EGSUB</c> runs once
-    /// per player, and each score is offered to the table in turn.
-    /// </param>
-    public GameOverState(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, IReadOnlyList<int> scores, ControlSettings? controls = null)
-    {
-        _input = input;
-        _sprites = sprites;
-        _highScores = highScores;
-        _controls = controls ?? ControlSettings.Defaults();
-        _scores = [.. scores];
-    }
-
+    /// <summary>Builds the screen from a session that has just ended.</summary>
+    /// <param name="input">Player 1's input.</param>
+    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="highScores">The high score store.</param>
+    /// <param name="session">The finished game, which supplies the final scores and the controls.</param>
     public static GameOverState FromSession(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, GameSession session) =>
-        new(input, sprites, highScores, session.ScoresHighestFirst(), session.Controls);
+        new(input, sprites, highScores, session.FinalScoresHighestFirst(), session.Controls);
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
@@ -63,24 +61,18 @@ public sealed class GameOverState : IGameState
             return; // NAP 120: the message holds for 2.4 s, and the ROM waits for nothing here
         }
 
-        // ENDPRC → ENDGAM: offer each score, then the table (GOV → LOGG1 → TABORG).
-        HighScoreTable table = _highScores.Load();
-        foreach (int score in _scores)
-        {
-            table.Submit(score);
-        }
-
-        _highScores.Save(table);
-        manager.TransitionTo(new HighScoreTableState(new GameServices(_sprites, _highScores, _controls, _input), _scores));
+        // ENDPRC → ENDGAM → GOV: the scores are offered to the table in turn, and the table itself is
+        // the end of the ceremony (notes §98).
+        manager.TransitionTo(new ScoreEntryCeremony(_services, _scores).NextScreen());
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         // ROM string 40 (GOMP): "GAME OVER" in the LARGE font, colour $AA, at (62, 128).
-        _sprites.DrawLargeFontText(
+        _services.Sprites.DrawLargeFontText(
             spriteBatch,
             "GAME OVER",
-            GameplayConstants.ArcadeX(GameplayConstants.GameOverTextColumn * 2),
+            GameplayConstants.ArcadeColumnX(GameplayConstants.GameOverTextColumn),
             GameplayConstants.ArcadeY(GameplayConstants.GameOverTextRow),
             GameplayConstants.GameOverTextSlot);
     }

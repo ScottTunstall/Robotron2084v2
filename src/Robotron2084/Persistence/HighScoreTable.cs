@@ -22,10 +22,11 @@ public sealed record TopScoreEntry(string Name, int Score);
 /// table at every power-up — that is exactly what <c>CKHS</c> does
 /// (`LDX #TODTAB / LDY #TODAYS / CMSMVV`).
 ///
-/// Scores are offered by <see cref="Submit"/>, which follows <c>EGSUB</c>:
-/// <c>GODCHK</c> (beat the top → the new top, the old one drops into the
-/// all-time list) → else <c>TODCHK</c> AND <c>ALLCHK</c> (each list takes the
-/// score when it beats that list's lowest entry).
+/// Scores are offered by <see cref="Submit"/> with the initials their player typed on the CONG
+/// screen (notes §116), which follows <c>EGSUB</c>: <c>GODCHK</c> (beat the top → the new top, the
+/// old one drops into the all-time list) → else <c>TODCHK</c> AND <c>ALLCHK</c> (each list takes the
+/// score when it beats that list's lowest entry). The all-time list additionally caps how many
+/// entries may share one set of initials (<c>SETBOT</c>).
 /// </summary>
 public sealed class HighScoreTable
 {
@@ -40,6 +41,16 @@ public sealed class HighScoreTable
 
     /// <summary>ROM `LDA #23` — the operator's GOD name's length (`GODSCR`).</summary>
     public const int TopNameLength = 23;
+
+    /// <summary>
+    /// ROM `SETBOT`'s cap: the all-time list keeps at most this many entries sharing one set of
+    /// initials, and a score that beats the lowest of a full set replaces it (`ONLY5P` explains the
+    /// replacement). TODAY's list has no such cap — it keeps the day's ten best.
+    /// </summary>
+    public const int AllTimeInitialsCap = 5;
+
+    /// <summary>ROM `SETBOT`'s `LDA #4` — the cap when the initials are the top entry's own.</summary>
+    public const int AllTimeTopInitialsCap = 4;
 
     private readonly List<HighScoreEntry> _today;
     private readonly List<HighScoreEntry> _allTime;
@@ -66,7 +77,11 @@ public sealed class HighScoreTable
     public IReadOnlyList<HighScoreEntry> AllTime => _allTime;
 
     /// <summary>What offering a finished score did — the ROM's `GODCHK`/`TODCHK`/`ALLCHK` answers.</summary>
-    public readonly record struct SubmitResult(bool BecomesTop, bool EnteredToday, bool EnteredAllTime);
+    /// <param name="BecomesTop">True when the score beat the top entry and took its place (`GODCHK`).</param>
+    /// <param name="EnteredToday">True when TODAY's list took the score (`TODCHK`).</param>
+    /// <param name="EnteredAllTime">True when the all-time list took the score (`ALLCHK`).</param>
+    /// <param name="EntriesMaximum">True when the per-initials cap applied, which is what the ONLY5P page explains (`SETBOT`/`SETBZZ`).</param>
+    public readonly record struct SubmitResult(bool BecomesTop, bool EnteredToday, bool EnteredAllTime, bool EntriesMaximum);
 
     /// <summary>ROM `DEFHSR`/`DEFGOD` — the factory "GOD" score: "WILLY ELKTRIX", 151782.</summary>
     public static TopScoreEntry FactoryTop { get; } = new("WILLY ELKTRIX", 151782);
@@ -132,33 +147,132 @@ public sealed class HighScoreTable
     public static HighScoreTable FromSaved(TopScoreEntry? top, IReadOnlyList<HighScoreEntry>? allTime) =>
         new(top ?? FactoryTop, FactoryToday, Pad(allTime, AllTimeCapacity, FactoryAllTime));
 
+    /// <summary>Whether a finished score beats any of TODAY's ten entries (ROM `TODCHK`).</summary>
+    public bool QualifiesForToday(int score) => Beats(_today, score);
+
+    /// <summary>Whether a finished score beats the top entry or any all-time entry (ROM `GODCHK` and `ALLCHK`).</summary>
+    public bool QualifiesForAllTime(int score) => score > Top.Score || Beats(_allTime, score);
+
+    /// <summary>Whether a finished score earns an initials screen at all (ROM `EGSUB1`: `TODCHK`, then `ALLCHK`).</summary>
+    public bool Qualifies(int score) => QualifiesForToday(score) || QualifiesForAllTime(score);
+
     /// <summary>
-    /// Offers a finished score (ROM `EGSUB`). A score that beats the top becomes
-    /// the new top and pushes the old one into the all-time list; otherwise it is
-    /// offered to BOTH lists, and each takes it when it beats that list's lowest
-    /// entry. With no initials entry yet the ROM's blank name is used
-    /// (`NULSCR` = three spaces).
+    /// Offers a finished score under the initials its player entered (ROM `EGSUB`). A score that
+    /// beats the top becomes the new top, the old top dropping into the all-time list's rank 1, and
+    /// is then offered to TODAY's list as well; any other score is offered to BOTH lists, and each
+    /// takes it when it beats that list's lowest entry.
     /// </summary>
-    public SubmitResult Submit(int score)
+    /// <param name="score">The score to offer.</param>
+    /// <param name="initials">The name to enter it under — <see cref="InitialsLength"/> characters, as the CONG screen's entry produces.</param>
+    public SubmitResult Submit(int score, string initials)
     {
         if (score > Top.Score)
         {
-            Insert(_allTime, new HighScoreEntry(Top.Name[..System.Math.Min(InitialsLength, Top.Name.Length)], Top.Score), AllTimeCapacity);
-            Top = new TopScoreEntry(new string(' ', InitialsLength), score);
-            return new SubmitResult(BecomesTop: true, EnteredToday: false, EnteredAllTime: false);
+            TakeTopEntry(score, initials);
+            bool today = Insert(_today, new HighScoreEntry(initials, score), TodayCapacity);
+            return new SubmitResult(
+                BecomesTop: true,
+                EnteredToday: today,
+                EnteredAllTime: false,
+                EntriesMaximum: EnforceAllTimeInitialsCap(initials));
         }
 
-        var entry = new HighScoreEntry(new string(' ', InitialsLength), score);
-        bool today = Insert(_today, entry, TodayCapacity);
-        bool allTime = Insert(_allTime, entry, AllTimeCapacity);
-        return new SubmitResult(BecomesTop: false, today, allTime);
+        int cap = TopCarriesInitials(initials) ? AllTimeTopInitialsCap : AllTimeInitialsCap;
+        bool intoToday = Insert(_today, new HighScoreEntry(initials, score), TodayCapacity);
+        (bool intoAllTime, bool maximum) = InsertAllTime(score, initials, cap);
+        return new SubmitResult(
+            BecomesTop: false,
+            EnteredToday: intoToday,
+            EnteredAllTime: intoAllTime,
+            EntriesMaximum: maximum);
     }
+
+    /// <summary>
+    /// ROM `GODCHK`: the old top's initials and score move into the all-time list's rank 1 (the list's
+    /// last entry drops off) and the new score takes the top under the initials just entered.
+    /// </summary>
+    private void TakeTopEntry(int score, string initials)
+    {
+        _allTime.Insert(0, new HighScoreEntry(InitialsOf(Top.Name), Top.Score));
+        Fill(_allTime, AllTimeCapacity);
+        Top = new TopScoreEntry(initials, score);
+    }
+
+    /// <summary>
+    /// ROM `ALLCHK` → `SETBOT` → `SCTRNS`: inserts when the score beats the list's lowest entry,
+    /// having first applied the per-initials cap — a full set of initials can only be beaten from
+    /// inside, by outscoring the lowest of them, which is the entry the score replaces.
+    /// </summary>
+    private (bool Entered, bool Maximum) InsertAllTime(int score, string initials, int cap)
+    {
+        if (!Beats(_allTime, score))
+        {
+            return (false, false);
+        }
+
+        bool atCap = CountInitials(_allTime, initials) >= cap;
+        if (atCap)
+        {
+            int lowest = LowestInitialsIndex(_allTime, initials);
+            if (score <= _allTime[lowest].Score)
+            {
+                return (false, true);
+            }
+
+            _allTime.RemoveAt(lowest);
+        }
+
+        return (Insert(_allTime, new HighScoreEntry(initials, score), AllTimeCapacity), atCap);
+    }
+
+    /// <summary>
+    /// ROM `GETHM3`'s top-entry branch (`LDA #5 / BSR SETBZZ`): the initials a score has just put on
+    /// the top entry are capped in the list beneath it, and the fifth match is removed.
+    /// </summary>
+    private bool EnforceAllTimeInitialsCap(string initials)
+    {
+        if (CountInitials(_allTime, initials) < AllTimeInitialsCap)
+        {
+            return false;
+        }
+
+        _allTime.RemoveAt(LowestInitialsIndex(_allTime, initials));
+        return true;
+    }
+
+    /// <summary>ROM `SETBOT`'s first test: whether the entered initials are the top entry's own.</summary>
+    private bool TopCarriesInitials(string initials) => InitialsOf(Top.Name) == initials;
+
+    /// <summary>The three initials a name starts with (the ROM's `GODINT`, three CMOS characters).</summary>
+    private static string InitialsOf(string name) =>
+        name.Length >= InitialsLength ? name[..InitialsLength] : name.PadRight(InitialsLength);
+
+    /// <summary>Whether a score beats a full list's lowest entry — the ROM's `TODCK1`/`ALCK1` walk to the bottom.</summary>
+    private static bool Beats(List<HighScoreEntry> list, int score) => score > list[^1].Score;
+
+    /// <summary>How many of a list's entries carry these initials.</summary>
+    private static int CountInitials(List<HighScoreEntry> list, string initials)
+    {
+        int count = 0;
+        foreach (HighScoreEntry entry in list)
+        {
+            if (entry.Initials == initials)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    /// <summary>The index of the list's lowest-scoring entry carrying these initials — the fifth `SETBOT` finds.</summary>
+    private static int LowestInitialsIndex(List<HighScoreEntry> list, string initials) =>
+        list.FindLastIndex(entry => entry.Initials == initials);
 
     /// <summary>
     /// Inserts in descending order when the score beats the list's lowest entry
     /// (or the list has room), then truncates — the ROM's "bubble down, drop the
-    /// bottom" rule. (Its extra "5 ENTRIES MAXIMUM" rule counts entries with the
-    /// SAME INITIALS and belongs with the initials entry, notes §98.4.)
+    /// bottom" rule (`BUBDN` + `SCTRNS`).
     /// </summary>
     private static bool Insert(List<HighScoreEntry> list, HighScoreEntry entry, int capacity)
     {

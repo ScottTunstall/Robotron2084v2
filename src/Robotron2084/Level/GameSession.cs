@@ -122,6 +122,10 @@ public sealed class GameSession
         return true;
     }
 
+    /// <summary>Every player's final score with their player number, highest first — the order the end-game ceremony offers them to the high score table (notes §98).</summary>
+    public FinalScore[] FinalScoresHighestFirst() =>
+        [.. Players.Select(player => new FinalScore(player.Number, player.Score)).OrderByDescending(score => score.Score)];
+
     /// <summary>Every player's score, highest first — what the game-over flow checks.</summary>
-    public int[] ScoresHighestFirst() => Players.Select(p => p.Score).OrderByDescending(s => s).ToArray();
+    public int[] ScoresHighestFirst() => [.. FinalScoresHighestFirst().Select(score => score.Score)];
 }

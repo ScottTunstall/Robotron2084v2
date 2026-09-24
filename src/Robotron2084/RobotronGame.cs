@@ -127,8 +127,9 @@ public sealed class RobotronGame : Game
         // (the family and the hulk), F6 the phony-player demo game — so a scene can be
         // inspected without sitting out the title's 12-second idle. F7 HELD fast-forwards
         // the movie, which is how the hulk's walk (ROM frame ~2574) is reached in seconds
-        // rather than after the text crawl. They used to be F1/F2/F3, which are now the
-        // author's game-start keys (below).
+        // rather than after the text crawl. F4 jumps to the high score table and F9 to the
+        // end of a game, whose score ceremony (notes §116) is otherwise a whole game away.
+        // They used to be F1/F2/F3, which are now the author's game-start keys (below).
         DevKeys.AttractFastForward = state.IsKeyDown(Keys.F7);
         if (Pressed(state, Keys.F5))
         {
@@ -141,6 +142,14 @@ public sealed class RobotronGame : Game
         else if (Pressed(state, Keys.F4))
         {
             _stateManager.TransitionTo(new HighScoreTableState(_services));
+        }
+        else if (Pressed(state, Keys.F9))
+        {
+            // The end of a game — GAME OVER, the CONG initials screen and the table (notes §116) —
+            // is a whole game away otherwise, so F9 carries a score that has to qualify into it.
+            GameSession session = GameSession.NewGame(GameMode.OnePlayer, _input, controls: _controlSettings);
+            session.Current.Score = DevKeys.QualifyingScore;
+            _stateManager.TransitionTo(GameOverState.FromSession(_input, _sprites, _highScoreStore, session));
         }
 
         // ---- the author's start keys, live on EVERY attract screen (notes §101) ---

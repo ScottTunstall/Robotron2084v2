@@ -9731,3 +9731,74 @@ deadline become the port's own countdowns on the ROM-frame clock. In 2-player th
 port's offering order is highest-first (the signed §98 deviation from the ROM's
 P1-then-P2), so the screen's "PLAYER n" line needs the player number passed with each
 offered score. `GODMSP`/`GODESB` (the full-name entry) stays out of scope (D-019).
+
+### 117. THE HIGH SCORE INITIALS ENTRY IS IN — CONG, GETLET, the score ceremony and ONLY5P (2026-09-24)
+
+§116's decode, implemented. The arcade's flow is now the port's: **GAME OVER (2.4 s) → the CONG
+initials screen for every score that qualifies → the table, with the scores just posted highlighted
+→ title.** `ENDGAM`'s `EGSUB` is `States/ScoreEntryCeremony` (every player's final score offered in
+turn, the store saved after each insertion — the arcade's CMOS write); the screen is
+`States/InitialsEntryState` + `Hud/InitialsEntryLayout`; the input model is `Hud/InitialsEntryModel`
+(MonoGame-free, 10 unit tests); the ONLY5P page is `States/EntriesMaximumState`; and the table gained
+`Submit(score, initials)`, `QualifiesForToday`/`QualifiesForAllTime`/`Qualifies` (`TODCHK`/`ALLCHK`)
+and `SETBOT`'s per-initials cap (`AllTimeInitialsCap` 5, `AllTimeTopInitialsCap` 4).
+
+| ROM | port |
+|---|---|
+| `ENDGAM` / `EGSUB` | `ScoreEntryCeremony` + `GameOverState`; `Level/FinalScore` carries the player number |
+| CONG (message 95) | `InitialsEntryState` + `InitialsEntryLayout` |
+| `GETLET` | `InitialsEntryModel` (+ `GameplayConstants.EntriesMaximumHoldRomFrames`) |
+| ONLY5P (message 100) | `EntriesMaximumState` |
+| `SETBOT` / `SETBZZ` | `HighScoreTable.InsertAllTime` / `EnforceAllTimeInitialsCap` |
+| the rub marker (code `$5E`) | `SpriteSet.RubGlyphIndex` + `DrawRubMarker` |
+
+**Port decisions (all signed in §116; recorded here as shipped).**
+- The three cells are laid out at the port's OWN large-font advance (a glyph plus the ROM's 1-px gap =
+  7 arcade px) with G0SUB's white dash under **each** cell, because the ROM's echo pointer advances one
+  COLUMN (2 px) and its markers sit at +8/+$108/+$208 from it — a 6-px glyph cannot live in a 2-px
+  stride, and `PR57V`'s own advance is inside the RAM text program we do not hold.
+- The input is **player 1's BOUND controls** — the bound move up/down cycle, the bound fire commits —
+  rather than the arcade's hard-wired PIA2, consistent with the definitions page (§108).
+- The ceremony offers the scores HIGHEST FIRST (the §98 deviation), so the CONG page's "PLAYER n" line
+  needs the player number passed with each score.
+- GETLET's CPU-timed loops become ROM-frame clocks: `DELAY1`'s ~49 ms loop is 2.5 frames (the ten turns
+  LUP/LDOWN spend before the first repeat = ~0.5 s, then one per 3.5), and the typematic is the ROM's
+  own 32 counts of two frames, then 4 (~160 ms). Alpha-only is the only mode the port uses
+  (`LDD #$300`), so the ROM's `$80` "all characters" paths are not modelled.
+- **The last letter is never typed automatically** (`GETLT4`'s `DECA / BEQ GETLT3`), so a player who
+  holds fire types the name up to the last letter and must release and press again to finish — the
+  ROM's own behaviour, pinned by a test.
+- A NEW shared helper, `GameplayConstants.ArcadeColumnX(column)`, is the one place a ROM (column, row)
+  cursor becomes canvas x (a column is two arcade pixels); `HighScoreTableState` and the new screens
+  all use it.
+
+**What the SCREEN caught that the unit tests could not.** The table state re-loads the table from the
+store, and the store deliberately does NOT persist TODAY's list (the ROM reloads `TODTAB` at power-up),
+so the score the ceremony had just inserted into today's list vanished the moment the table was drawn:
+the first build showed the posting in the ALL-TIME list only. `ScoreEntryCeremony` now hands
+`HighScoreTableState` the very table it wrote into (its new `table` parameter; null = load from the
+store, which is what the attract cycle and F4 want). Seen on screen after the fix: "B 45000" at
+today's rank 3 and all-time rank 4, both in the `CLSET` highlight, with CJM 24110 dropped off the
+bottom of today's ten — exactly `SCTRNS`'s bubble-down.
+
+**Dev key F9** jumps straight into the end-game flow — a one-player session carrying
+`DevKeys.QualifyingScore`, which beats both lists' bottoms, so the initials screen always appears.
+The ceremony is otherwise a whole game away, and F9 is how the screens above were verified (the probes
+were deleted; the F9 key stays for the author).
+
+**Parked / open.**
+1. **`ENDGAM`'s `GNCIDE` + `CRINIT` are not modelled.** The ROM kills the colour processes before these
+   pages (`JSR GNCIDE  ; KILL COLOR PROCS ETC.`) and re-loads the standard colours (`PLS0 JSR CRINIT`
+   is the same call a life start makes, before `GTWCOL`), so on the cabinet the GAME OVER text and the
+   ONLY5P page are STATIC; the port's `PaletteAnimator` is global, so slots 10-15 keep cycling on those
+   pages (their ink is slot 4 for CONG, slot 11 for ONLY5P). Modelling it means suspending slots 10-15
+   from the game-over page until the next game begins — worth doing with the author's eye, because it
+   also freezes the existing GAME OVER screen.
+2. The two places the port is knowingly a few pixels off, both for the reason in the first decision:
+   the markers' one-dash-per-cell placement, and the CONG page's cell advance.
+3. Whether the attract DEMO posts its score (§98.4 item 3) — unchanged: it does not.
+4. **`Font_L_arrowleft` is a misnomer** the sprite editor gave the ROM's `$5E` art (a plus/cross, the
+   table entry at `$EFDA`, 5x6 px): it is the rub marker and nothing else draws it. The port loads it
+   as `SpriteSet.FontLarge[RubGlyphIndex]`; renaming the file would touch `tools/extract-fonts.py`,
+   `tools/verify-fonts.py` and the generated `Content.mgcb`/`SpriteContentPaths.cs`, so it is left
+   named as it is with the index documented.

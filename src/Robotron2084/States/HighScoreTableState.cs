@@ -55,13 +55,19 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// ROM's <c>ZP1SCR</c>/<c>ZP2SCR</c> at <c>CLSET</c> time: their rows are
     /// highlighted. Empty when the table is reached from the attract cycle.
     /// </param>
-    public HighScoreTableState(GameServices services, IReadOnlyList<int>? postedScores = null)
+    /// <param name="table">
+    /// The table to draw. The score ceremony hands over the very table it has just written the
+    /// session's scores into, because TODAY's list is deliberately NOT persisted (the ROM reloads it
+    /// from <c>TODTAB</c> at power-up) and a reload would lose the scores just posted. Null loads it
+    /// from the store, which is what the attract cycle and the F4 key want.
+    /// </param>
+    public HighScoreTableState(GameServices services, IReadOnlyList<int>? postedScores = null, HighScoreTable? table = null)
     {
         _input = services.Input;
         _sprites = services.Sprites;
         _store = services.HighScores;
         _postedScores = [.. postedScores ?? []];
-        _table = _store.Load();
+        _table = table ?? _store.Load();
 
         // The ROM's own score processing (EGSUB) has already happened by the time
         // the table is drawn; a save here is the CMOS write.
@@ -163,7 +169,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         }
     }
 
-    private static int ColumnX(int column) => GameplayConstants.ArcadeX(column * 2);
+    private static int ColumnX(int column) => GameplayConstants.ArcadeColumnX(column);
 
     private static int RowY(int row) => GameplayConstants.ArcadeY(row);
 

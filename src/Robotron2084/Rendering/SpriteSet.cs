@@ -27,6 +27,14 @@ public sealed class SpriteSet
     /// <summary>Number of spark (enforcer bullet) frames — SPKP0..3 in the ROM (notes 32).</summary>
     public const int SparkFrameCount = 4;
 
+    /// <summary>
+    /// Index into <see cref="FontLarge"/> of the ROM's rub marker — the large-font table's own art for
+    /// code <c>$5E</c> (notes §116). The initials entry cycles to it to delete a committed letter, and
+    /// no other screen prints that character. Its file keeps the sprite editor's name,
+    /// <c>Font_L_arrowleft</c>, which is the only "arrow" in the ROM's large font.
+    /// </summary>
+    public const int RubGlyphIndex = 39;
+
     /// <summary>Representative player frame: frame 7 = first of the down-facing set (frames 1-3 left, 4-6 right, 7-9 down, 10-12 up).</summary>
     public Texture2D Player { get; }
 
@@ -535,6 +543,14 @@ public sealed class SpriteSet
 
         return x;
     }
+
+    /// <summary>
+    /// Draws the arcade's rub marker — the ROM's own <c>$5E</c> glyph — at (x, y) in one palette slot
+    /// (notes §116): what the initials entry shows when the letter in the cursor's cell is the delete
+    /// marker rather than a character.
+    /// </summary>
+    public void DrawRubMarker(SpriteBatch spriteBatch, int x, int y, int slot) =>
+        DrawGlyphSlot(spriteBatch, FontLarge, RubGlyphIndex, x, y, slot);
 
     /// <summary>
     /// Index into <see cref="FontSmall"/> (or <see cref="FontLarge"/>) for an

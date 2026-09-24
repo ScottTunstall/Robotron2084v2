@@ -35,7 +35,7 @@ public sealed class HighScoreTableTests
     {
         HighScoreTable table = HighScoreTable.CreateFactory();
 
-        HighScoreTable.SubmitResult result = table.Submit(40000);
+        HighScoreTable.SubmitResult result = table.Submit(40000, "ABC");
 
         Assert.False(result.BecomesTop);
         Assert.True(result.EnteredToday);
@@ -53,7 +53,7 @@ public sealed class HighScoreTableTests
         HighScoreTable table = HighScoreTable.CreateFactory();
 
         // 30000 beats today's lowest (CJM 24110) AND the all-time table's blank tail.
-        HighScoreTable.SubmitResult result = table.Submit(30000);
+        HighScoreTable.SubmitResult result = table.Submit(30000, "ABC");
 
         Assert.True(result.EnteredToday);
         Assert.True(result.EnteredAllTime);
@@ -63,7 +63,7 @@ public sealed class HighScoreTableTests
         Assert.Contains(table.AllTime, e => e.Score == 30000);
 
         // A score that beats only the blanks enters the all-time list alone.
-        Assert.True(table.Submit(20000).EnteredAllTime);
+        Assert.True(table.Submit(20000, "ABC").EnteredAllTime);
     }
 
     [Fact]
@@ -71,11 +71,11 @@ public sealed class HighScoreTableTests
     {
         HighScoreTable table = HighScoreTable.CreateFactory();
 
-        HighScoreTable.SubmitResult result = table.Submit(200000);
+        HighScoreTable.SubmitResult result = table.Submit(200000, "ACE");
 
         Assert.True(result.BecomesTop);
         Assert.Equal(200000, table.Top.Score);
-        Assert.Equal(new string(' ', HighScoreTable.InitialsLength), table.Top.Name); // no name entry yet (notes §98.4)
+        Assert.Equal("ACE", table.Top.Name);
 
         // The old "GOD" entry drops into the all-time list, and the list stays full.
         Assert.Equal(("WIL", 151782), (table.AllTime[0].DisplayName, table.AllTime[0].Score));
@@ -88,11 +88,56 @@ public sealed class HighScoreTableTests
         HighScoreTable table = HighScoreTable.CreateFactory();
 
         // Zero beats nothing, not even the blank rows the full table ends with.
-        HighScoreTable.SubmitResult result = table.Submit(0);
+        HighScoreTable.SubmitResult result = table.Submit(0, "ABC");
 
         Assert.False(result.BecomesTop);
         Assert.False(result.EnteredToday);
         Assert.False(result.EnteredAllTime);
+    }
+
+    [Fact]
+    public void Qualifies_IsTheRomsTodchkAndAllchk()
+    {
+        HighScoreTable table = HighScoreTable.CreateFactory();
+
+        // Zero beats nothing: TODAY's lowest is CJM 24110 and the all-time tail is blank (NULSCR).
+        Assert.False(table.Qualifies(0));
+        Assert.False(table.QualifiesForToday(HighScoreTable.FactoryToday[^1].Score));
+        Assert.True(table.Qualifies(25000));
+        Assert.True(table.QualifiesForToday(25000));
+        Assert.True(table.QualifiesForAllTime(25000));
+
+        // Beating the top entry counts as qualifying on its own (GODCHK).
+        Assert.True(table.QualifiesForAllTime(table.Top.Score + 1));
+    }
+
+    [Fact]
+    public void Submit_CapsHowManyAllTimeEntriesShareOneSetOfInitials()
+    {
+        HighScoreTable table = HighScoreTable.CreateFactory();
+
+        // The all-time tail is blank, so five "ABC" scores fit and the cap never fires.
+        for (int i = 0; i < HighScoreTable.AllTimeInitialsCap; i++)
+        {
+            HighScoreTable.SubmitResult entered = table.Submit(26000 + i, "ABC");
+            Assert.True(entered.EnteredAllTime);
+            Assert.False(entered.EntriesMaximum);
+        }
+
+        // A sixth that cannot beat the lowest of the full set is turned away, and the page says why (SETBOT/GETHM4).
+        HighScoreTable.SubmitResult turnedAway = table.Submit(25999, "ABC");
+
+        Assert.True(turnedAway.EntriesMaximum);
+        Assert.False(turnedAway.EnteredAllTime);
+        Assert.DoesNotContain(table.AllTime, e => e.Score == 25999);
+
+        // One that does beat it replaces it — the set stays five strong.
+        HighScoreTable.SubmitResult replaced = table.Submit(26100, "ABC");
+
+        Assert.True(replaced.EntriesMaximum);
+        Assert.True(replaced.EnteredAllTime);
+        Assert.Equal(HighScoreTable.AllTimeInitialsCap, table.AllTime.Count(e => e.Initials == "ABC"));
+        Assert.DoesNotContain(table.AllTime, e => e.Score == 26000);
     }
 
     [Fact]
@@ -102,8 +147,8 @@ public sealed class HighScoreTableTests
         try
         {
             HighScoreTable saved = HighScoreTable.CreateFactory();
-            saved.Submit(200000);           // a new top (and the old top drops into the list)
-            saved.Submit(12345);            // today's only
+            saved.Submit(200000, "ACE");     // a new top (and the old top drops into the list)
+            saved.Submit(12345, "ABC");      // today's only
             HighScoreStore.Save(path, saved);
 
             HighScoreTable loaded = HighScoreStore.Load(path);

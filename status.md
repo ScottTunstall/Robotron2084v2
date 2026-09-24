@@ -675,6 +675,24 @@ tests**.
   cap). Port plan: GameOver → CONG screen (when qualified) → table (posted scores
   highlighted) → title, input on player 1's BOUND controls (move-up/move-down cycle,
   fire commits) — next step is the implementation.
+- **2026-09-24 — THE HIGH SCORE INITIALS ENTRY IS IMPLEMENTED (notes §117).** The arcade's flow is
+  now the port's: GAME OVER (2.4 s) → the CONG initials screen for every score that qualifies → the
+  table with the posted scores highlighted → title. New `States/ScoreEntryCeremony` (`ENDGAM`'s
+  `EGSUB` queue, saved after each insertion — the CMOS write), `States/InitialsEntryState` +
+  `Hud/InitialsEntryLayout` (message 95's cursors, fonts and colours), `Hud/InitialsEntryModel`
+  (`GETLET`: the up/down ring with the rub marker, fire commits, the typematic 32→4, the 640-frame
+  per-letter deadline — 10 unit tests) and `States/EntriesMaximumState` (`ONLY5P`).
+  `HighScoreTable` gained `Submit(score, initials)`, `Qualifies*` (`TODCHK`/`ALLCHK`) and `SETBOT`'s
+  5-per-initials all-time cap (4 for the top entry's own). The input is player 1's BOUND controls;
+  the three cells sit at the port's own large-font advance because the ROM's echo stride is one
+  column (2 px) — the §116 decisions. **A bug only the screen could show:** the table state
+  re-loaded the table from the store, which deliberately does not persist TODAY's list, so a score
+  just posted vanished from today's list — the ceremony now hands its live table over. New dev key
+  **F9** jumps into the end-game flow, which is how the screens were verified (the posting in both
+  lists under the `CLSET` highlight, today's tenth entry dropped off). +12 tests (**467, 0 failed,
+  0 skipped**); Debug/Release 0 warnings; smoke, playfield and attract gates green. **Open:**
+  `GNCIDE`/`CRINIT` are not modelled, so slots 10-15 keep cycling on these pages where the cabinet's
+  are static, and the markers/cell advance are knowingly a few pixels from the ROM's (notes §117).
 
 ### Session 5 (2026-09-17, night) — THE TITLE SCREEN AND THE ATTRACT DEMO (notes §94)
 

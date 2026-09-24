@@ -29,13 +29,17 @@ public sealed class AttractScreenTests
     /// <summary>
     /// The screens that are NOT attract screens: where a game is being played (or paused in
     /// front of), the arcade's own rule applies instead — no key restarts the machine under a
-    /// player mid-game — plus the port-only definitions page.
+    /// player mid-game — and so do the screens that finish a game, which the cabinet also runs
+    /// outside the attract cycle: the game-over message, the CONG initials entry (notes §116) and
+    /// the ONLY5P page, plus the port-only definitions page.
     /// </summary>
     private static readonly Type[] NotAttractScreens =
     [
         typeof(PlayingState),
         typeof(WaveClearState),
         typeof(GameOverState),
+        typeof(InitialsEntryState),
+        typeof(EntriesMaximumState),
         typeof(DefineInputsState),
     ];
 

@@ -13,7 +13,10 @@ namespace Robotron2084.Input;
 /// <item><b>F7</b> — HELD, fast-forward the movie's ROM frame clock so a later
 /// scene (the hulk's walk, at ROM frame ~2574) can be reached without waiting
 /// out the text crawl;</item>
-/// <item><b>F4</b> — jump straight to the high score TABLE (notes §98).</item>
+/// <item><b>F4</b> — jump straight to the high score TABLE (notes §98);</item>
+/// <item><b>F9</b> — jump straight to the END OF A GAME: the GAME OVER page and
+/// the score ceremony that follows it (the initials screen and the table), carrying
+/// a score high enough to qualify (notes §116).</item>
 /// </list>
 ///
 /// They were F1/F2/F3 until the author asked for those to be the game's start keys
@@ -24,6 +27,12 @@ public static class DevKeys
 {
     /// <summary>How many times a tick the movie's frame clock runs while F3 is held.</summary>
     public const int AttractFastForwardMultiplier = 8;
+
+    /// <summary>
+    /// The score the F9 end-game jump carries: it beats TODAY's lowest entry (CJM 24110) and the
+    /// all-time list's blank tail, so both list checks pass and the initials screen always appears.
+    /// </summary>
+    public const int QualifyingScore = 45000;
 
     /// <summary>True while F3 is held (set by the app shell every tick).</summary>
     public static bool AttractFastForward { get; set; }

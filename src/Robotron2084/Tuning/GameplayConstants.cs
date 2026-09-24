@@ -587,6 +587,16 @@ public static class GameplayConstants
     public const int GameOverTextRow = 128;
     public const int GameOverTextSlot = 10;
 
+    // INITIALS ENTRY (notes §116) — RRTESTC's ENDGAM/EGSUB, RRET's messages 95 (CONG) and 100
+    // (ONLY5P), and RRTESTB's GETLET. The page's geometry is InitialsEntryLayout's and the input
+    // model's own clocks are InitialsEntryModel's; these two are what the states need.
+
+    /// <summary>ONLY5P's <c>NAP $60</c>: the "5 ENTRIES MAXIMUM" page is held for 60 ROM frames (1.2 s).</summary>
+    public const int EntriesMaximumHoldRomFrames = 0x60;
+
+    /// <summary>ONLY5P's <c>COLOR $BB</c> — the page's ink, slot 11.</summary>
+    public const int EntriesMaximumSlot = 11;
+
     // Session / geometry values taken from spec.txt
     public const int StartingLives = 3; // spec-stated ("the PLAYER is awarded 3 lives")
     public const int StartingLevelNumber = 1; // spec-stated ("assigned level 1")
@@ -825,6 +835,9 @@ public static class GameplayConstants
 
     /// <summary>Arcade screen x (of 304) mapped to the port screen (proportional, integer math).</summary>
     public static int ArcadeX(int arcadePx) => arcadePx * ScreenSize.Width / ArcadeScreenWidth;
+
+    /// <summary>An arcade COLUMN to the port screen's x — a column is <see cref="ArcadePixelsPerColumn"/> arcade pixels.</summary>
+    public static int ArcadeColumnX(int column) => ArcadeX(column * ArcadePixelsPerColumn);
 
     /// <summary>Arcade screen y (of 256) mapped to the port screen (proportional, integer math).</summary>
     public static int ArcadeY(int arcadePx) => arcadePx * ScreenSize.Height / ArcadeScreenHeight;
