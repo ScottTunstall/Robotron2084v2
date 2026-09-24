@@ -19,7 +19,7 @@ public sealed class QuarkDropTimerTests
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     private static PlayField CreateField(int seed) =>
-        new(
+        new(TestSprites.Shared, 
             new LevelParameters(LevelNumber: 7, SpheroidCount: 0, MaxDropsX2: 10, SpheroidDropDelay: 18,
                 QuarkDropDelay: 16),
             new FakeInputSource(),
@@ -40,7 +40,7 @@ public sealed class QuarkDropTimerTests
         PlayField field = CreateField(2);
         Rectangle bounds = field.Wall.PlayfieldBounds;
 
-        var quark = new Quark(
+        var quark = new Quark(TestSprites.Shared, 
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(4),
             maxDropsX2: 10, dropDelayRomTicks: 1, quarkSpeedRom: 50);
         field.AddQuark(quark);
@@ -69,7 +69,7 @@ public sealed class QuarkDropTimerTests
         PlayField field = CreateField(1);
         Rectangle bounds = field.Wall.PlayfieldBounds;
 
-        var quark = new Quark(
+        var quark = new Quark(TestSprites.Shared, 
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(11),
             maxDropsX2: 10, dropDelayRomTicks: 16, quarkSpeedRom: 50);
         field.AddQuark(quark);

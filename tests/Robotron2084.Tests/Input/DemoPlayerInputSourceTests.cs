@@ -32,7 +32,7 @@ public sealed class DemoPlayerInputSourceTests
     private static PlayField EmptyFieldWithInput(Rectangle bounds, IPlayerInputSource input)
     {
         var parameters = new LevelParameters(LevelNumber: 1);
-        return new PlayField(parameters, input, bounds, new WallColorCycle(), new Random(1234), startingLives: 3);
+        return new PlayField(TestSprites.Shared, parameters, input, bounds, new WallColorCycle(), new Random(1234), startingLives: 3);
     }
 
     [Fact]

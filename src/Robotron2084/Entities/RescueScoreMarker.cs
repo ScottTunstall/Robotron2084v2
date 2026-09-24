@@ -13,7 +13,7 @@ namespace Robotron2084.Entities;
 /// and holds it for 60 ROM frames.</remarks>
 public sealed class RescueScoreMarker : IEntity
 {
-    /// <summary>How long the display stays on the field.</summary>
+    private readonly SpriteSet _sprites;    /// <summary>How long the display stays on the field.</summary>
     private const int LifeRomTicks = 60;
 
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.EntitySizeSpecPixels);
@@ -28,8 +28,9 @@ public sealed class RescueScoreMarker : IEntity
     /// <summary>Shows the display for one rescue.</summary>
     /// <param name="position">The rescue spot.</param>
     /// <param name="rescuesThisLife">How many humans rescued this life, counting this one; the display caps at 5000.</param>
-    public RescueScoreMarker(IntVector2 position, int rescuesThisLife)
+    public RescueScoreMarker(SpriteSet sprites, IntVector2 position, int rescuesThisLife)
     {
+        _sprites = sprites;
         _position = position;
         _ticksRemaining = GameplayConstants.PortTicks(LifeRomTicks);
         _displayIndex = Math.Clamp(rescuesThisLife, 1, 5) - 1;
@@ -58,13 +59,13 @@ public sealed class RescueScoreMarker : IEntity
     /// <summary>Draws the "1000".."5000" picture this rescue earned.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set, which holds the display pictures.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
 
-        sprites.DrawSprite(spriteBatch, sprites.RescueScoreDisplays[_displayIndex], Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, _sprites.RescueScoreDisplays[_displayIndex], Bounds, Color.White);
     }
 }

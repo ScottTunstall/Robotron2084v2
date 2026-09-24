@@ -31,7 +31,7 @@ public class MaterialisationTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayField(parameters, new FakeInputSource(), InnerBounds, new WallColorCycle(), new Random(1234), startingLives: 3);
+        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), InnerBounds, new WallColorCycle(), new Random(1234), startingLives: 3);
     }
 
     private static void Advance(PlayField field, int ticks)

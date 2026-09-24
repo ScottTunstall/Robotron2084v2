@@ -20,8 +20,9 @@ namespace Robotron2084.Entities;
 /// allotment is gone it flees off the nearest edge at a fixed speed and disappears; being hit instead
 /// bursts it on the spot. Timers count 5 per tick and 6 per arcade frame, so an interval of N frames
 /// is due at 6 x N.</remarks>
-public sealed class Quark : IEntity, IArtSource, IRemovable
+public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 {
+    private readonly SpriteSet _sprites;
     /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.QuarkCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.QuarkCollisionSize.Height));
@@ -53,8 +54,15 @@ public sealed class Quark : IEntity, IArtSource, IRemovable
     /// <param name="quarkSpeedRom">This wave's drift-speed upper bound (the velocity roll's maximum).</param>
     /// <remarks>ROM: <c>ENFNUM</c>, <c>TDPTIM</c> and <c>SQSPD</c> — this wave's allotment bound,
     /// drop delay and drift-speed cap.</remarks>
-    public Quark(IntVector2 position, Random random, int maxDropsX2 = 10, int dropDelayRomTicks = 12, int quarkSpeedRom = 50)
+    public Quark(
+        SpriteSet sprites,
+        IntVector2 position,
+        Random random,
+        int maxDropsX2 = 10,
+        int dropDelayRomTicks = 12,
+        int quarkSpeedRom = 50)
     {
+        _sprites = sprites;
         _position = position;
         _random = random;
         _dropDelayRomTicks = dropDelayRomTicks;
@@ -273,18 +281,18 @@ public sealed class Quark : IEntity, IArtSource, IRemovable
     /// <summary>Draws the current rotation frame.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)
         {
             return;
         }
 
-        sprites.DrawSprite(spriteBatch, sprites.QuarkFrames[_animationFrame], Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The current rotation frame, for the death burst (see <see cref="IArtSource"/>).</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The texture for the current rotation frame.</returns>
-    public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.QuarkFrames[_animationFrame];
+    public Texture2D CurrentAnimationFrame => _sprites.QuarkFrames[_animationFrame];
 }

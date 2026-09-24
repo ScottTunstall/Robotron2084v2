@@ -662,7 +662,7 @@ public sealed class SpriteSet
     public void DrawSprite(SpriteBatch spriteBatch, Texture2D texture, Rectangle bounds, Color tint)
     {
         UsePassThrough();
-        spriteBatch.Draw(texture, ArtRect(bounds, texture), null, tint, 0f, Vector2.Zero, SpriteEffects.None, 0f);
+        spriteBatch.Draw(texture, DrawnRect(bounds, texture), null, tint, 0f, Vector2.Zero, SpriteEffects.None, 0f);
     }
 
     /// <summary>
@@ -687,7 +687,7 @@ public sealed class SpriteSet
         }
 
         // Without the effect the draw degrades to a tint (exact for white art).
-        spriteBatch.Draw(texture, ArtRect(bounds, texture), null, color, 0f, Vector2.Zero, SpriteEffects.None, 0f);
+        spriteBatch.Draw(texture, DrawnRect(bounds, texture), null, color, 0f, Vector2.Zero, SpriteEffects.None, 0f);
 
         // Hand the pass-through back immediately: this pass is DEVICE state, and
         // the caller's next draw (usually a card fill) is not a remap.
@@ -726,7 +726,7 @@ public sealed class SpriteSet
         // otherwise it is drawn through whatever pass was bound last and comes out
         // in that colour (the black-ghost-card bug).
         UsePassThrough();
-        spriteBatch.Draw(WallPixel, ArtRect(bounds, texture), background);
+        spriteBatch.Draw(WallPixel, DrawnRect(bounds, texture), background);
         DrawSpriteSolid(spriteBatch, texture, bounds, shape);
     }
 
@@ -734,17 +734,17 @@ public sealed class SpriteSet
     public Color SlotColor(int slot) => Palette?.Color(slot) ?? Color.White;
 
     /// <summary>
-    /// The rectangle a picture is DRAWN in inside an entity's collision box: centred in the box, at the
+    /// The rectangle an animation frame is DRAWN in inside an entity's collision box: centred in the box, at the
     /// render scale. It is the ONE definition of where a sprite sits in its box — the drawer uses it, and so
     /// does pixel-perfect collision (<see cref="SpriteMask.Overlap"/>), so the two cannot drift apart
     /// (notes §118).
     /// </summary>
     /// <param name="bounds">The entity's collision box, in screen pixels.</param>
-    /// <param name="picture">The picture being drawn.</param>
-    public static Rectangle ArtRect(Rectangle bounds, Texture2D picture)
+    /// <param name="animationFrame">The animation frame being drawn.</param>
+    public static Rectangle DrawnRect(Rectangle bounds, Texture2D animationFrame)
     {
-        int w = ScreenSize.Scaled(picture.Width);
-        int h = ScreenSize.Scaled(picture.Height);
+        int w = ScreenSize.Scaled(animationFrame.Width);
+        int h = ScreenSize.Scaled(animationFrame.Height);
         return new Rectangle(
             bounds.X + (bounds.Width - w) / 2,
             bounds.Y + (bounds.Height - h) / 2,

@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Level;
+using Robotron2084.Rendering;
 
 namespace Robotron2084.Entities;
 
@@ -14,7 +15,12 @@ public sealed class LaserSlots
     /// <summary>How many lasers the player can have in flight at once.</summary>
     public const int Capacity = 3;
 
+    private readonly SpriteSet _sprites;
     private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
+
+    /// <summary>Wires the slots to the artwork their lasers are drawn with.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
+    public LaserSlots(SpriteSet sprites) => _sprites = sprites;
 
     /// <summary>Every slot in order; null means empty. Exposed for tests and diagnostics.</summary>
     public IReadOnlyList<PlayerLaser?> Slots => _slots;
@@ -30,7 +36,7 @@ public sealed class LaserSlots
         {
             if (_slots[i] is null || _slots[i]!.LifeState != EntityLifeState.Alive)
             {
-                laser = new PlayerLaser(position, direction);
+                laser = new PlayerLaser(_sprites, position, direction);
                 _slots[i] = laser;
                 return true;
             }

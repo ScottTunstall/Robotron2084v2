@@ -25,7 +25,7 @@ public sealed class QuarkTankBehaviourTests
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     private static PlayField CreateField(int seed) =>
-        new(
+        new(TestSprites.Shared, 
             new LevelParameters(
                 LevelNumber: 1,
                 SpheroidCount: 0,
@@ -43,7 +43,7 @@ public sealed class QuarkTankBehaviourTests
         PlayField field = CreateField(1);
         Rectangle bounds = field.Wall.PlayfieldBounds;
 
-        var quark = new Quark(new IntVector2(bounds.X + 20, bounds.Y + 8), new Random(4), maxDropsX2: 10, dropDelayRomTicks: 60);
+        var quark = new Quark(TestSprites.Shared, new IntVector2(bounds.X + 20, bounds.Y + 8), new Random(4), maxDropsX2: 10, dropDelayRomTicks: 60);
         field.AddQuark(quark);
 
         IntVector2 prev = quark.Position;
@@ -103,7 +103,7 @@ public sealed class QuarkTankBehaviourTests
         PlayField field = CreateField(1);
 
         // Random(10): first Next(2) == 1 → exactly one tank to drop.
-        var quark = new Quark(new IntVector2(300, 200), new Random(10), maxDropsX2: 1, dropDelayRomTicks: 1);
+        var quark = new Quark(TestSprites.Shared, new IntVector2(300, 200), new Random(10), maxDropsX2: 1, dropDelayRomTicks: 1);
         field.AddQuark(quark);
 
         // Robots are frozen during the 2 s player start grace (120 ticks); the

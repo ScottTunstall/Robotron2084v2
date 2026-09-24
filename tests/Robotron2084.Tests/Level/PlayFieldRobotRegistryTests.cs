@@ -89,7 +89,7 @@ public sealed class PlayFieldRobotRegistryTests
         QuarkCount: 13);
 
     private static PlayField CreateField() =>
-        new(
+        new(TestSprites.Shared, 
             new LevelParameters(LevelNumber: 1),
             new FakeInputSource(),
             PlayFieldSpawnTests.InnerBounds,

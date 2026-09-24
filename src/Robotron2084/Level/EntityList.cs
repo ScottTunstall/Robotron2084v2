@@ -60,11 +60,11 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
     public void PruneDead() => _items.RemoveAll(entity => entity.LifeState == EntityLifeState.Dead);
 
     /// <inheritdoc/>
-    public void DrawAll(SpriteBatch spriteBatch, SpriteSet sprites, PlayField field)
+    public void DrawAll(SpriteBatch spriteBatch, PlayField field)
     {
         foreach (T entity in _items)
         {
-            field.DrawEntity(entity, spriteBatch, sprites);
+            field.DrawEntity(entity, spriteBatch);
         }
     }
 }

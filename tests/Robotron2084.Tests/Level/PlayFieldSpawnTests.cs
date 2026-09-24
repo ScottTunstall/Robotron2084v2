@@ -91,7 +91,7 @@ public sealed class PlayFieldSpawnTests
             MaxTanksPerQuark: 2,
             EnemySpeedBonus: 0);
 
-        return new PlayField(parameters, new FakeInputSource(), InnerBounds, new WallColorCycle(), new Random(1234), startingLives: 3);
+        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), InnerBounds, new WallColorCycle(), new Random(1234), startingLives: 3);
     }
 
     private static void AssertAllAreFartherThan<T>(IReadOnlyList<T> entities, IntVector2 playerStart, int minSpecPixels)

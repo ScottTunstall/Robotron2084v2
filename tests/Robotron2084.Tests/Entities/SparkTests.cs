@@ -28,7 +28,7 @@ public sealed class SparkTests
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     private static PlayField CreateField(int seed) =>
-        new(
+        new(TestSprites.Shared, 
             new LevelParameters(
                 LevelNumber: 1,
                 SpheroidCount: 0,

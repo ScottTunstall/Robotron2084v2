@@ -22,6 +22,7 @@ namespace Robotron2084.Entities;
 /// 6 x N.</remarks>
 public sealed class Tank : IExplodable, IRemovable
 {
+    private readonly SpriteSet _sprites;
     /// <summary>Collision box = the ROM picture dimensions (14x16 arcade px), top-left anchored at <see cref="Position"/>.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.TankCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.TankCollisionSize.Height));
@@ -60,8 +61,14 @@ public sealed class Tank : IExplodable, IRemovable
     /// <param name="fireDelayRomTicks">This wave's firing interval, in ROM frames.</param>
     /// <param name="speedBonus">Unused (kept for the uniform spawn shape).</param>
     /// <remarks>ROM: <c>TNKSHT</c> — this wave's firing interval.</remarks>
-    public Tank(IntVector2 position, Random random, int fireDelayRomTicks = 32, int speedBonus = 0)
+    public Tank(
+        SpriteSet sprites,
+        IntVector2 position,
+        Random random,
+        int fireDelayRomTicks = 32,
+        int speedBonus = 0)
     {
+        _sprites = sprites;
         _position = position;
         _random = random;
         _fireDelayRomTicks = fireDelayRomTicks;
@@ -229,7 +236,7 @@ public sealed class Tank : IExplodable, IRemovable
     /// <summary>Draws the birth pictures while being born, else the tread frame.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)
         {
@@ -246,31 +253,29 @@ public sealed class Tank : IExplodable, IRemovable
                 _position.Y,
                 ScreenSize.Scaled(gw),
                 ScreenSize.Scaled(gh));
-            sprites.DrawSprite(spriteBatch, sprites.TankGrowFrames[_growStep], birth, Color.White);
+            _sprites.DrawSprite(spriteBatch, _sprites.TankGrowFrames[_growStep], birth, Color.White);
             return;
         }
 
-        // The walk frame advances once per beat and plays backwards while moving left
-        // (ROM: TANK3 takes the direction from the X step's sign).
-        int frames = sprites.TankFrames.Length;
-        int forward = _animationTicks % frames;
-        int frame = _step.X < 0 ? frames - 1 - forward : forward;
-        sprites.DrawSprite(spriteBatch, sprites.TankFrames[frame], Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The frame an explosion would copy (see <see cref="IArtSource"/>): the birth picture while being born, else the tread frame.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
-    /// <returns>The birth picture while it is being born, else the current tread frame.</returns>
-    public Texture2D CurrentFrameArt(SpriteSet sprites)
+    /// <remarks>The walk frame advances once per beat and plays backwards while moving left
+    /// (ROM: TANK3 takes the direction from the X step's sign).</remarks>
+    public Texture2D CurrentAnimationFrame
     {
-        if (_growStep < GameplayConstants.TankGrowSteps)
+        get
         {
-            return sprites.TankGrowFrames[_growStep];
-        }
+            if (_growStep < GameplayConstants.TankGrowSteps)
+            {
+                return _sprites.TankGrowFrames[_growStep];
+            }
 
-        int frames = sprites.TankFrames.Length;
-        int forward = _animationTicks % frames;
-        int frame = _step.X < 0 ? frames - 1 - forward : forward;
-        return sprites.TankFrames[frame];
+            int frames = _sprites.TankFrames.Length;
+            int forward = _animationTicks % frames;
+            int frame = _step.X < 0 ? frames - 1 - forward : forward;
+            return _sprites.TankFrames[frame];
+        }
     }
 }

@@ -94,7 +94,11 @@ public sealed class PlayField
     private int _gruntSpeedFloorStep = 2; // the ROM's $F0 toggle: −2/−4 then −1/−2
     private int _gruntProgressTimer;
 
+    /// <summary>The artwork this field's entities are built and drawn with — the field owns it because it builds them.</summary>
+    internal SpriteSet Sprites { get; }
+
     public PlayField(
+        SpriteSet sprites,
         LevelParameters parameters,
         IPlayerInputSource input,
         Rectangle innerBounds,
@@ -107,6 +111,7 @@ public sealed class PlayField
         bool playerInvincibleForTesting = true,
         IPixelCollision? pixelCollision = null)
     {
+        Sprites = sprites;
         Parameters = parameters;
         _gruntSpeedFloor = parameters.GruntSpeedFloor;
         _updateOrder =
@@ -137,8 +142,8 @@ public sealed class PlayField
         Wall = new PlayfieldWall(innerBounds, cycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
-        Player = new Player(playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
-        PlayerLasers = new LaserSlots();
+        Player = new Player(Sprites, playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
+        PlayerLasers = new LaserSlots(Sprites);
         _previousPlayerPosition = playerStart;
 
         // Spawn order per plan 9.1: the posts first, then the robots the wave table counts, then the family.
@@ -256,7 +261,7 @@ public sealed class PlayField
 
     // ---- Spawn hooks called by entities during their own Update (plan 9.3) ----
 
-    public void SpawnEnforcer(IntVector2 position) => _enforcers.Add(new Enforcer(position, _random, Parameters.EnforcerFireDelay));
+    public void SpawnEnforcer(IntVector2 position) => _enforcers.Add(new Enforcer(Sprites, position, _random, Parameters.EnforcerFireDelay));
 
     public Tank SpawnTank(IntVector2 position)
     {
@@ -265,7 +270,7 @@ public sealed class PlayField
         position = new IntVector2(
             Math.Clamp(position.X, bounds.X, bounds.Right - Tank.CollisionWidth),
             Math.Clamp(position.Y, bounds.Y, bounds.Bottom - Tank.CollisionHeight));
-        Tank tank = new(position, _random, Parameters.TankFireDelay);
+        Tank tank = new(Sprites, position, _random, Parameters.TankFireDelay);
         _tanks.Add(tank);
         return tank;
     }
@@ -273,20 +278,20 @@ public sealed class PlayField
     public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition) =>
         // Wall bounds are passed through for the ROM's left-wall jitter rule
         // (RRC11.ASM ENFSHT: no X jitter within 16 columns of the wall).
-        _sparks.Add(new Spark(origin, playerPosition, _random, Wall.PlayfieldBounds));
+        _sparks.Add(new Spark(Sprites, origin, playerPosition, _random, Wall.PlayfieldBounds));
 
     public void SpawnTankShell(IntVector2 origin, IntVector2 towardPlayerDirection)
     {
         _shellsFiredThisWave++; // ROM INC on fire; only a laser kill decrements (fizzle bug)
-        _tankShells.Add(new TankShell(origin, towardPlayerDirection, _random));
+        _tankShells.Add(new TankShell(Sprites, origin, towardPlayerDirection, _random));
         // R5 $4F8C: shell creation requests the fire sound ($4B11, p200).
         Sound.Play(SoundTables.ShellFire);
     }
 
-    public void SpawnCruiseMissile(IntVector2 origin) => _missiles.Add(new CruiseMissile(origin, Player.Position, _random));
+    public void SpawnCruiseMissile(IntVector2 origin) => _missiles.Add(new CruiseMissile(Sprites, origin, Player.Position, _random));
 
     /// <summary>PHASE E BMUT: a brain's touch turns the human into a PROG at its spot.</summary>
-    public void SpawnProg(IntVector2 position, HumanKind kind) => _progs.Add(new Prog(position, kind, _random));
+    public void SpawnProg(IntVector2 position, HumanKind kind) => _progs.Add(new Prog(Sprites, position, kind, _random));
 
     /// <summary>
     /// ROM BRNL1's catch reach: the brain and human TOP-LEFT CORNERS must be
@@ -720,7 +725,7 @@ public sealed class PlayField
             if (brain.ReleaseVictim() is { } released)
             {
                 released.FinishReprogramming();
-                _skulls.Add(new SkullMarker(released.Position));
+                _skulls.Add(new SkullMarker(Sprites, released.Position));
             }
         }
     }
@@ -791,7 +796,7 @@ public sealed class PlayField
                 if (hulk.LifeState == EntityLifeState.Alive && Touches(hulk, human))
                 {
                     human.Kill();
-                    _skulls.Add(new SkullMarker(human.Position));
+                    _skulls.Add(new SkullMarker(Sprites, human.Position));
                     break;
                 }
             }
@@ -819,7 +824,7 @@ public sealed class PlayField
             RescuesThisLife++;
             // ROM HUMKIL PCFLG path: 60-tick score display at the rescue
             // spot showing min(SAVCNT,5) thousand (SAVCNT itself uncapped).
-            _rescueScores.Add(new RescueScoreMarker(human.Position, RescuesThisLife));
+            _rescueScores.Add(new RescueScoreMarker(Sprites, human.Position, RescuesThisLife));
             if (Score.Add(ScoreValues.RescueBonus(RescuesThisLife)))
             {
                 Player.AddLife(); // extra-life thresholds apply to rescue score too (ROM SCORE routine)
@@ -1038,20 +1043,20 @@ public sealed class PlayField
     //      ordered pass satisfies both; explosions/human family are deferred
     //      per spec's "to be added later") ----
 
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         // 1. Wall — arcade-faithful: the ROM's per-wave WALL colour slot (RRG23
         //    `GTWCOL` -> `WALCOL`, solid fill); the placeholder WallColorCycle
         //    has no palette to read, and is only used when no live palette is
         //    wired in (unit tests).
-        Wall.Draw(spriteBatch, sprites.WallPixel,
+        Wall.Draw(spriteBatch, Sprites.WallPixel,
             _wallPalette is { } p ? p.Color(GameplayConstants.WallSlotForWave(Parameters.LevelNumber)) : null);
 
         // 1b. Laser-vs-wall flares (RRG23 LASDIE): painted OVER the wall, in the
         //     wave's LASCOL slot, exactly as the ROM writes those pixels.
         if (_laserWallFlares.Count > 0)
         {
-            Color flareColor = sprites.SlotColor(GameplayConstants.LaserWallSlotForWave(Parameters.LevelNumber));
+            Color flareColor = Sprites.SlotColor(GameplayConstants.LaserWallSlotForWave(Parameters.LevelNumber));
             int arcadeRow = ScreenSize.Scaled(2); // one arcade pixel row = 2 port px
             foreach (LaserWallFlare flare in _laserWallFlares)
             {
@@ -1061,7 +1066,7 @@ public sealed class PlayField
                     // next left as WALCOL. Draw only the LASCOL rows.
                     for (int y = flare.Bounds.Y; y < flare.Bounds.Bottom; y += arcadeRow * 2)
                     {
-                        sprites.DrawSolidRectangle(
+                        Sprites.DrawSolidRectangle(
                             spriteBatch,
                             new Rectangle(flare.Bounds.X, y, flare.Bounds.Width, arcadeRow),
                             flareColor);
@@ -1069,7 +1074,7 @@ public sealed class PlayField
                 }
                 else
                 {
-                    sprites.DrawSolidRectangle(spriteBatch, flare.Bounds, flareColor);
+                    Sprites.DrawSolidRectangle(spriteBatch, flare.Bounds, flareColor);
                 }
             }
         }
@@ -1077,23 +1082,23 @@ public sealed class PlayField
         // 2-4. The posts, the family and their markers, then the robots — one loop over the field's draw order.
         foreach (IEntityList list in _drawOrderBehindShots)
         {
-            list.DrawAll(spriteBatch, sprites, this);
+            list.DrawAll(spriteBatch, this);
         }
 
         // 5. Player lasers.
         foreach (PlayerLaser? laser in PlayerLasers.Slots)
         {
-            laser?.Draw(spriteBatch, sprites);
+            laser?.Draw(spriteBatch);
         }
 
         // 6-7b. The enemy shots, then the explosions and the bursts — over the shots, under the player.
         foreach (IEntityList list in _drawOrderInFrontOfShots)
         {
-            list.DrawAll(spriteBatch, sprites, this);
+            list.DrawAll(spriteBatch, this);
         }
 
         // 8. Player — ALWAYS last (spec states this explicitly twice).
-        Player.Draw(spriteBatch, sprites);
+        Player.Draw(spriteBatch);
     }
 
     // ---- Start-of-level spawning (plan 9.1 steps 5-9) ----
@@ -1107,7 +1112,7 @@ public sealed class PlayField
                 static _ => default,
                 rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.Scaled(GameplayConstants.ElectrodeMinDistanceFromPlayer))
                          && _electrodes.All(e => !e.Bounds.Overlaps(rect)));
-            _electrodes.Add(new Electrode(position, Parameters.LevelNumber));
+            _electrodes.Add(new Electrode(Sprites, position, Parameters.LevelNumber));
         }
     }
 
@@ -1124,7 +1129,7 @@ public sealed class PlayField
             // ROM: stagger — step countdown re-rolled RND(1..ROBSPD) bodies
             // every 4-vblank body; survivors' limit drops ×7/8 (floored at
             // RMXSPD) each time a grunt dies (notes §29).
-            var grunt = new Grunt(position, Parameters.GruntMoveDelay, random: _random);
+            var grunt = new Grunt(Sprites, position, Parameters.GruntMoveDelay, random: _random);
             _grunts.Add(grunt);
             QueueMaterialise(grunt);
         }
@@ -1156,7 +1161,7 @@ public sealed class PlayField
             // and the hulk falls back to the player (R5 $010D/$0113).
             Func<IntVector2> target =
                 _random.Next(2) == 0 ? LastHumanOrPlayer : () => Player.Position;
-            var hulk = new Hulk(position, _random, Parameters.HulkSpeed, target);
+            var hulk = new Hulk(Sprites, position, _random, Parameters.HulkSpeed, target);
             _hulks.Add(hulk);
             QueueMaterialise(hulk);
         }
@@ -1185,7 +1190,7 @@ public sealed class PlayField
                 rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.Scaled(GameplayConstants.SpheroidMinDistanceFromPlayer)));
             // ROM (notes §11.2): the spheroid rolls its own drop count from ENFNUM
             // (MaxDropsX2) at spawn; CDPTIM sets its drop tempo.
-            var spheroid = new Spheroid(position, _random, Parameters.MaxDropsX2, Parameters.SpheroidDropDelay);
+            var spheroid = new Spheroid(Sprites, position, _random, Parameters.MaxDropsX2, Parameters.SpheroidDropDelay);
             _spheroids.Add(spheroid);
             QueueMaterialise(spheroid);
         }
@@ -1204,7 +1209,7 @@ public sealed class PlayField
                 x,
                 top ? bounds.Y : bounds.Bottom - ScreenSize.Scaled(GameplayConstants.QuarkCollisionSize.Height));
             // ROM: same ENFNUM roll as the spheroid; TDPTIM sets the tank-drop tempo.
-            var quark = new Quark(position, _random, Parameters.MaxDropsX2, Parameters.QuarkDropDelay, Parameters.QuarkMove);
+            var quark = new Quark(Sprites, position, _random, Parameters.MaxDropsX2, Parameters.QuarkDropDelay, Parameters.QuarkMove);
             _quarks.Add(quark);
             QueueMaterialise(quark);
         }
@@ -1287,7 +1292,7 @@ public sealed class PlayField
             IntVector2 position = FindSpawnPoint(
                 static _ => default,
                 rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.Scaled(GameplayConstants.HulkMinDistanceFromPlayer)));
-            var brain = new Brain(position, _random, Parameters.BrainSpeed, Parameters.BrainFireDelay);
+            var brain = new Brain(Sprites, position, _random, Parameters.BrainSpeed, Parameters.BrainFireDelay);
             _brains.Add(brain);
             QueueMaterialise(brain);
             // R5 $4607 (PLAY_BRAIN_WAVE_WARP_IN_SOUNDS): $4143, priority 255.
@@ -1315,7 +1320,7 @@ public sealed class PlayField
                 static _ => default,
                 rect => _electrodes.All(e => !e.Bounds.Overlaps(rect)),
                 Human.SpawnSquarePortPixels(kind));
-            _humans.Add(new Human(position, kind, _random));
+            _humans.Add(new Human(Sprites, position, kind, _random));
         }
     }
 
@@ -1386,10 +1391,10 @@ public sealed class PlayField
             StripFanAxis axis = (_appearSequence & 3) == 3 ? StripFanAxis.Columns : StripFanAxis.Rows;
             _appearSequence++;
 
-            if (robot is IArtSource art)
+            if (robot is IAnimationFrameSource frameSource)
             {
                 Rectangle bounds = robot.Bounds;
-                Explosion appear = Explosion.StartAppear(art, bounds, axis, slope: 0, StripClipBounds);
+                Explosion appear = Explosion.StartAppear(frameSource, bounds, axis, slope: 0, StripClipBounds);
                 _explosions.Add(appear);
                 _assembling[robot] = appear;
             }
@@ -1440,12 +1445,11 @@ public sealed class PlayField
     /// <summary>Draws an entity unless it is still materialising.</summary>
     /// <param name="entity">The entity to draw.</param>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
-    internal void DrawEntity(IEntity entity, SpriteBatch spriteBatch, SpriteSet sprites)
+    internal void DrawEntity(IEntity entity, SpriteBatch spriteBatch)
     {
         if (!IsMaterialising(entity))
         {
-            entity.Draw(spriteBatch, sprites);
+            entity.Draw(spriteBatch);
         }
     }
 

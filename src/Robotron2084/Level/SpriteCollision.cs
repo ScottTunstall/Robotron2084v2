@@ -10,20 +10,20 @@ namespace Robotron2084.Level;
 /// derived from its texture the first time it is asked for and kept, because a picture never changes
 /// shape — only which picture an entity is showing does.
 /// </summary>
-public sealed class SpriteCollision(SpriteSet sprites) : IPixelCollision
+public sealed class SpriteCollision : IPixelCollision
 {
     private readonly Dictionary<Texture2D, SpriteMask> _masks = [];
 
     /// <inheritdoc/>
     public PictureShape? ShapeOf(IEntity entity)
     {
-        if (entity is not IArtSource art)
+        if (entity is not IAnimationFrameSource frameSource)
         {
             return null;
         }
 
-        Texture2D picture = art.CurrentFrameArt(sprites);
-        return new PictureShape(MaskOf(picture), SpriteSet.ArtRect(entity.Bounds, picture));
+        Texture2D animationFrame = frameSource.CurrentAnimationFrame;
+        return new PictureShape(MaskOf(animationFrame), SpriteSet.DrawnRect(entity.Bounds, animationFrame));
     }
 
     /// <inheritdoc/>

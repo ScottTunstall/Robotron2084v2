@@ -23,7 +23,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class CruiseMissile : IEntity, IRemovable
 {
-    /// <summary>The collision box's size, 6x4 arcade px, in port pixels; the box itself is offset up-left.</summary>
+    private readonly SpriteSet _sprites;    /// <summary>The collision box's size, 6x4 arcade px, in port pixels; the box itself is offset up-left.</summary>
     /// <remarks>The disassembly labels this hitbox "FAT PHONY GUY" — far bigger than the missile's
     /// 1x2px visible mark, and offset up and left of the tracked point.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
@@ -68,8 +68,9 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <param name="playerPosition">The player's position, used for the first aim.</param>
     /// <param name="random">The random source for the aim and the re-aim timer.</param>
     /// <remarks>ROM: fired at brain + (3,4) arcade px.</remarks>
-    public CruiseMissile(IntVector2 origin, IntVector2 playerPosition, Random random)
+    public CruiseMissile(SpriteSet sprites, IntVector2 origin, IntVector2 playerPosition, Random random)
     {
+        _sprites = sprites;
         _position = origin;
         _random = random;
         _velocity = RollDirection(playerPosition);
@@ -207,7 +208,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <param name="sprites">The shared sprite set.</param>
     /// <remarks>Each mark is 1 arcade px wide and 2 tall, as the hardware's video writes produced.
     /// The trail uses one palette slot and the head another.</remarks>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
         {
@@ -217,16 +218,16 @@ public sealed class CruiseMissile : IEntity, IRemovable
         int markWidth = ScreenSize.Scaled(GameplayConstants.MissileMarkArcadeWidth);
         int markHeight = ScreenSize.Scaled(GameplayConstants.MissileMarkArcadeHeight);
 
-        Color trailColor = sprites.SlotColor(GameplayConstants.MissileTrailSlot);
+        Color trailColor = _sprites.SlotColor(GameplayConstants.MissileTrailSlot);
         foreach (IntVector2 mark in _trail)
         {
-            sprites.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight), trailColor);
+            _sprites.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight), trailColor);
         }
 
         // The ROM's missile picture only defines the collision box; the head is a solid dot.
-        sprites.DrawSolidRectangle(
+        _sprites.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(_position.X, _position.Y, markWidth, markHeight),
-            sprites.SlotColor(GameplayConstants.MissileHeadSlot));
+            _sprites.SlotColor(GameplayConstants.MissileHeadSlot));
     }
 }

@@ -40,7 +40,7 @@ public sealed class PlayerDeathTests
             EnemySpeedBonus: 0);
 
         var palette = new GamePalette();
-        PlayField field = new(
+        PlayField field = new(TestSprites.Shared, 
             parameters,
             new FakeInputSource(),
             PlayFieldSpawnTests.InnerBounds,

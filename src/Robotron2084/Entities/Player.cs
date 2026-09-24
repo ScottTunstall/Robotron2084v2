@@ -23,9 +23,9 @@ namespace Robotron2084.Entities;
 /// wave starts on frame 7, the first DOWN frame. Port frame N = arcade frame N. Death is a ~2 s
 /// solid-colour flash loop then the slot-12 fade. Timers count 5 per tick and 6 per arcade frame, so
 /// an interval of N frames is due at 6 x N.</remarks>
-public sealed class Player : IEntity, IArtSource
+public sealed class Player : IEntity, IAnimationFrameSource
 {
-    /// <summary>Collision box = the player picture's own 8x12 arcade px.</summary>
+    private readonly SpriteSet _sprites;    /// <summary>Collision box = the player picture's own 8x12 arcade px.</summary>
     /// <remarks>The ROM collides against the player's PICTURE, not a fixed 16x16 cell.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.PlayerCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.PlayerCollisionSize.Height));
@@ -70,8 +70,9 @@ public sealed class Player : IEntity, IArtSource
     /// <param name="startPosition">Top-left of the player.</param>
     /// <param name="lives">How many men the player starts with; a death takes one off.</param>
     /// <param name="random">The random source for the death animation's colour, or null to create one.</param>
-    public Player(IntVector2 startPosition, int lives, Random? random = null)
+    public Player(SpriteSet sprites, IntVector2 startPosition, int lives, Random? random = null)
     {
+        _sprites = sprites;
         _position = startPosition;
         _random = random ?? new Random();
         Lives = lives;
@@ -432,7 +433,7 @@ public sealed class Player : IEntity, IArtSource
     /// <summary>Draws the walk frame, or a one-colour silhouette while dying.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)
         {
@@ -451,14 +452,14 @@ public sealed class Player : IEntity, IArtSource
             int slot = _deathStage == DeathStage.Fade
                 ? GameplayConstants.PlayerDeathFadeSlot
                 : _deathFlashSlot;
-            sprites.DrawSpriteSolid(spriteBatch, CurrentFrameArt(sprites), Bounds, sprites.SlotColor(slot));
+            _sprites.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.SlotColor(slot));
             return;
         }
 
-        sprites.DrawSprite(spriteBatch, CurrentFrameArt(sprites), Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.PlayerFrames[WalkFrameIndex];
+    public Texture2D CurrentAnimationFrame => _sprites.PlayerFrames[WalkFrameIndex];
 }

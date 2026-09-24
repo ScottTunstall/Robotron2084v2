@@ -41,7 +41,7 @@ public sealed class PlayFieldPhaseETests
     }
 
     private static PlayField CreateField(LevelParameters parameters, IPlayerInputSource? input = null) =>
-        new(parameters, input ?? new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3);
+        new(TestSprites.Shared, parameters, input ?? new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3);
 
     private static LevelParameters BrainWave(int brains, int moms = 0, int dads = 0, int mikeys = 0) => new(
         LevelNumber: 1,
@@ -63,13 +63,13 @@ public sealed class PlayFieldPhaseETests
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
 
-        field.AddHuman(new Human(new IntVector2(inner.X + 300, inner.Y + 150), HumanKind.Mom, new Random(1)));
+        field.AddHuman(new Human(TestSprites.Shared, new IntVector2(inner.X + 300, inner.Y + 150), HumanKind.Mom, new Random(1)));
         WarmUp(field); // expire the start grace (RobotsFrozen)
 
         // 30 arcade px left of (where the human is now) → steps right/up.
         IntVector2 humanSpot = field.Humans[0].Position;
         IntVector2 brainSpot = new(humanSpot.X - ScreenSize.Scaled(30), humanSpot.Y - ScreenSize.Scaled(20));
-        var brain = new Brain(brainSpot, new Random(2), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(2), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
         // Beat period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
@@ -99,7 +99,7 @@ public sealed class PlayFieldPhaseETests
         // "target is below". That ±1px vertical jitter is the arcade brain's
         // hover; the port used to hold the row perfectly still.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.Scaled(30), playerSpot.Y);
-        var brain = new Brain(brainSpot, new Random(3), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(3), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
         // One beat in the 19-tick window (period PortTicks(9) = 10, notes 26).
@@ -124,7 +124,7 @@ public sealed class PlayFieldPhaseETests
         // ROM's ±2px X dead zone (BRNL1: dx+2 <= 4), so X must not correct —
         // but Y has no dead zone and must still step down 1 px.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.Scaled(1), playerSpot.Y - ScreenSize.Scaled(50));
-        var brain = new Brain(brainSpot, new Random(21), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(21), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
         for (int tick = 0; tick < GameplayConstants.PortTicks(12); tick++)
@@ -154,7 +154,7 @@ public sealed class PlayFieldPhaseETests
         // wall". The port rejects per axis, like the ROM's own generic mover
         // (RRS22 OPB80), so the brain creeps down the wall instead.
         IntVector2 brainSpot = new(inner.Right - ScreenSize.Scaled(GameplayConstants.BrainCollisionSize.Width), inner.Y + ScreenSize.Scaled(80));
-        var brain = new Brain(brainSpot, new Random(22), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(22), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
         for (int tick = 0; tick < GameplayConstants.PortTicks(12); tick++)
@@ -177,11 +177,11 @@ public sealed class PlayFieldPhaseETests
 
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 humanSpot = new(inner.X + 200, inner.Y + 200);
-        var human = new Human(humanSpot, HumanKind.Mom, new Random(4));
+        var human = new Human(TestSprites.Shared, humanSpot, HumanKind.Mom, new Random(4));
         field.AddHuman(human);
 
         // Corners coincident — well inside the ROM's ±3px catch reach.
-        var brain = new Brain(humanSpot, new Random(5), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(5), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
         field.Update(Frame());
@@ -243,10 +243,10 @@ public sealed class PlayFieldPhaseETests
 
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 humanSpot = new(inner.X + 2, inner.Y + 200);
-        var human = new Human(humanSpot, HumanKind.Dad, new Random(7));
+        var human = new Human(TestSprites.Shared, humanSpot, HumanKind.Dad, new Random(7));
         field.AddHuman(human);
 
-        var brain = new Brain(humanSpot, new Random(8), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(8), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
         field.Update(Frame());
@@ -269,9 +269,9 @@ public sealed class PlayFieldPhaseETests
 
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 humanSpot = new(inner.X + 200, inner.Y + 200);
-        var human = new Human(humanSpot, HumanKind.Dad, new Random(31));
+        var human = new Human(TestSprites.Shared, humanSpot, HumanKind.Dad, new Random(31));
         field.AddHuman(human);
-        var brain = new Brain(humanSpot, new Random(32), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(32), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
         field.Update(Frame());
@@ -296,13 +296,13 @@ public sealed class PlayFieldPhaseETests
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 humanSpot = new(inner.X + 200, inner.Y + 200);
-        var human = new Human(humanSpot, HumanKind.Mom, new Random(14));
+        var human = new Human(TestSprites.Shared, humanSpot, HumanKind.Mom, new Random(14));
         field.AddHuman(human);
 
         // Boxes overlap (the human is well inside the brain's frame) but the
         // corners are 20px apart → the ROM's reach does not cover it.
         IntVector2 offset = new(ScreenSize.Scaled(20), 0);
-        var brain = new Brain(humanSpot - offset, new Random(15), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, humanSpot - offset, new Random(15), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
         field.AddBrain(brain);
 
         field.Update(Frame());
@@ -318,7 +318,7 @@ public sealed class PlayFieldPhaseETests
         // NOT the field center: the player stands there, and prog contact
         // kills the player (RobotsFrozen would stop the simulation).
         IntVector2 spot = new(inner.X + 100, inner.Y + 100);
-        var prog = new Prog(spot, HumanKind.Dad, new Random(6));
+        var prog = new Prog(TestSprites.Shared, spot, HumanKind.Dad, new Random(6));
         field.AddProg(prog);
         WarmUp(field); // expire the start grace (RobotsFrozen)
 
@@ -357,7 +357,7 @@ public sealed class PlayFieldPhaseETests
         for (int seed = 0; seed < 12; seed++)
         {
             IntVector2 spot = new(inner.X + 60, inner.Y + 60);
-            var prog = new Prog(spot, HumanKind.Dad, new Random(seed));
+            var prog = new Prog(TestSprites.Shared, spot, HumanKind.Dad, new Random(seed));
             field.AddProg(prog);
 
             for (int tick = 0; tick < GameplayConstants.PortTicksCeil(3); tick++)
@@ -398,7 +398,7 @@ public sealed class PlayFieldPhaseETests
         int xArmed = 0;
         for (int seed = 0; seed < 400; seed++)
         {
-            var missile = new CruiseMissile(
+            var missile = new CruiseMissile(TestSprites.Shared, 
                 new IntVector2(inner.X + 200, inner.Y + 150),
                 new IntVector2(inner.X + 300, inner.Y + 150),
                 new Random(seed));
@@ -424,7 +424,7 @@ public sealed class PlayFieldPhaseETests
         WarmUp(field);
 
         IntVector2 spot = new(inner.X + 200, inner.Y + 150);
-        var missile = new CruiseMissile(spot, field.Player.Position, new Random(7));
+        var missile = new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(7));
         field.AddCruiseMissile(missile);
 
         // The first beat (2 x 1px CMMOV) lands on tick 4 (3 ROM frames = 3.6),
@@ -462,7 +462,7 @@ public sealed class PlayFieldPhaseETests
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 200, inner.Y + 150);
-        var missile = new CruiseMissile(spot, field.Player.Position, new Random(7));
+        var missile = new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(7));
         field.AddCruiseMissile(missile);
 
         // Two beats = 4 CMMOVs = 4 marks (the missile flies on while the
@@ -511,7 +511,7 @@ public sealed class PlayFieldPhaseETests
         WarmUp(field);
 
         IntVector2 spot = new(inner.X + 200, inner.Y + 100);
-        var prog = new Prog(spot, HumanKind.Dad, new Random(6));
+        var prog = new Prog(TestSprites.Shared, spot, HumanKind.Dad, new Random(6));
         field.AddProg(prog);
 
         for (int tick = 0; tick < GameplayConstants.PortTicksCeil(3) * 3; tick++)
@@ -549,7 +549,7 @@ public sealed class PlayFieldPhaseETests
         // (2026-09-17, notes §90). There is no Dying phase any more.
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
-        var prog = new Prog(new IntVector2(inner.X + 120, inner.Y + 120), HumanKind.Mom, new Random(21));
+        var prog = new Prog(TestSprites.Shared, new IntVector2(inner.X + 120, inner.Y + 120), HumanKind.Mom, new Random(21));
         field.AddProg(prog);
         IntVector2 spot = prog.Position;
 
@@ -574,7 +574,7 @@ public sealed class PlayFieldPhaseETests
         Rectangle inner = field.Wall.PlayfieldBounds;
         // Off the player's center spot so the simulation stays live.
         IntVector2 spot = new(inner.X + 100, inner.Y + 300);
-        var missile = new CruiseMissile(spot, field.Player.Position, new Random(7));
+        var missile = new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(7));
         field.AddCruiseMissile(missile);
 
         for (int tick = 0; tick < 1200; tick++)
@@ -591,7 +591,7 @@ public sealed class PlayFieldPhaseETests
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 250, inner.Y + 120);
-        var missile = new CruiseMissile(spot, field.Player.Position, new Random(8));
+        var missile = new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(8));
         field.AddCruiseMissile(missile);
 
         Assert.True(field.PlayerLasers.TryFire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down, out PlayerLaser? laser));
@@ -608,7 +608,7 @@ public sealed class PlayFieldPhaseETests
         Rectangle inner = field.Wall.PlayfieldBounds;
 
         IntVector2 brainSpot = new(inner.X + 150, inner.Y + 120);
-        var brain = new Brain(brainSpot, new Random(9), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(9), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
         field.AddBrain(brain);
         Assert.True(field.PlayerLasers.TryFire(new IntVector2(brainSpot.X + 7, brainSpot.Y - 12), Direction8.Down, out PlayerLaser? l1));
         field.Update(new GameTime());
@@ -616,7 +616,7 @@ public sealed class PlayFieldPhaseETests
         Assert.Equal(500, field.Score.Score);
 
         IntVector2 progSpot = new(inner.X + 300, inner.Y + 120);
-        var prog = new Prog(progSpot, HumanKind.Dad, new Random(10));
+        var prog = new Prog(TestSprites.Shared, progSpot, HumanKind.Dad, new Random(10));
         field.AddProg(prog);
         Assert.True(field.PlayerLasers.TryFire(new IntVector2(progSpot.X + 5, progSpot.Y - 12), Direction8.Down, out PlayerLaser? l2));
         field.Update(new GameTime());
@@ -642,11 +642,11 @@ public sealed class PlayFieldPhaseETests
         Rectangle inner = field.Wall.PlayfieldBounds;
         Assert.True(field.IsLevelCleared); // empty wave
 
-        var brain = new Brain(new IntVector2(inner.X + 100, inner.Y + 100), new Random(11), 0, 40);
+        var brain = new Brain(TestSprites.Shared, new IntVector2(inner.X + 100, inner.Y + 100), new Random(11), 0, 40);
         field.AddBrain(brain);
-        var prog = new Prog(new IntVector2(inner.X + 200, inner.Y + 100), HumanKind.Dad, new Random(12));
+        var prog = new Prog(TestSprites.Shared, new IntVector2(inner.X + 200, inner.Y + 100), HumanKind.Dad, new Random(12));
         field.AddProg(prog);
-        var missile = new CruiseMissile(new IntVector2(inner.X + 300, inner.Y + 100), field.Player.Position, new Random(13));
+        var missile = new CruiseMissile(TestSprites.Shared, new IntVector2(inner.X + 300, inner.Y + 100), field.Player.Position, new Random(13));
         field.AddCruiseMissile(missile);
         Assert.False(field.IsLevelCleared);
 

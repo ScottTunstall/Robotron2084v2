@@ -20,8 +20,9 @@ namespace Robotron2084.Entities;
 /// deliberately, so don't revert it without checking. All the subpixel maths is in 1/256-px units,
 /// not floating point. Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is
 /// due at 6 x N.</remarks>
-public sealed class Spark : IEntity, IArtSource, IRemovable
+public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
+    private readonly SpriteSet _sprites;
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
     private readonly Random _random;
     private readonly int _stepScale; // 1 port px = 256 subpixel units
@@ -39,8 +40,14 @@ public sealed class Spark : IEntity, IArtSource, IRemovable
     /// <param name="playerPosition">The player, which the spark is aimed at.</param>
     /// <param name="random">The random source, standing in for the arcade's SEED/LSEED/HSEED rolls.</param>
     /// <param name="playfieldBounds">The playfield, used only for the "no X jitter near the left wall" rule. Null applies no suppression.</param>
-    public Spark(IntVector2 position, IntVector2 playerPosition, Random random, Rectangle? playfieldBounds = null)
+    public Spark(
+        SpriteSet sprites,
+        IntVector2 position,
+        IntVector2 playerPosition,
+        Random random,
+        Rectangle? playfieldBounds = null)
     {
+        _sprites = sprites;
         _position = position;
         _random = random;
         // A per-frame step, not per move-pass: spreading it over the move interval runs 4x slow.
@@ -184,15 +191,15 @@ public sealed class Spark : IEntity, IArtSource, IRemovable
     /// </summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Alive)
         {
-            sprites.DrawSprite(spriteBatch, CurrentFrameArt(sprites), Bounds, Color.White);
+            _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
         }
     }
 
     /// <summary>The flicker frame this spark is showing — the art pixel-perfect collision compares.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.SparkFrames[FrameIndex];
+    public Texture2D CurrentAnimationFrame => _sprites.SparkFrames[FrameIndex];
 }

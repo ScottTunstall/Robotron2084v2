@@ -21,7 +21,7 @@ public sealed class GruntAnimationTests
 
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
-    private static PlayField CreateField() => new(
+    private static PlayField CreateField() => new(TestSprites.Shared, 
         new LevelParameters(LevelNumber: 1),
         new FakeInputSource(),
         PlayFieldSpawnTests.InnerBounds,
@@ -57,7 +57,7 @@ public sealed class GruntAnimationTests
         // Lone grunt 200px left of the player on the same row: x steps must
         // be exactly +8 each time, y must never move (dead zone).
         IntVector2 player = field.Player.Position;
-        Grunt grunt = new(new IntVector2(player.X - 200, player.Y), moveLimitBeats: 15, random: new Random(3));
+        Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 200, player.Y), moveLimitBeats: 15, random: new Random(3));
         IntVector2 last = grunt.Position;
 
         int steps = 0;
@@ -87,7 +87,7 @@ public sealed class GruntAnimationTests
         ExpireGrace(field);
 
         IntVector2 player = field.Player.Position;
-        Grunt grunt = new(new IntVector2(player.X - 300, player.Y - 120), moveLimitBeats: 15, random: new Random(7));
+        Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 300, player.Y - 120), moveLimitBeats: 15, random: new Random(7));
 
         IntVector2 last = grunt.Position;
         var stepTicks = new List<int>();
@@ -132,7 +132,7 @@ public sealed class GruntAnimationTests
         // DRAW_GRUNT ($3A2B) is only reached from the step branch, so the
         // legs must FREEZE while the grunt is paused (playtest round 12:
         // "even when they are standing still, their legs are moving").
-        Grunt grunt = new(new IntVector2(player.X - 300, player.Y - 300), moveLimitBeats: 300, random: new Random(11));
+        Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 300, player.Y - 300), moveLimitBeats: 300, random: new Random(11));
 
         Assert.Equal(1, grunt.WalkFrame);
         for (int tick = 0; tick < GameplayConstants.PortTicksCeil(4) * 10; tick++)

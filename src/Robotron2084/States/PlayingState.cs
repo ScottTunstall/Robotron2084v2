@@ -74,7 +74,7 @@ public sealed class PlayingState : IGameState
         PlayerSlot slot = _session.Current;
         LevelParameters parameters = _generator.Generate(slot.Wave);
         WallColorCycle cycle = new(GameplayConstants.DefaultWallPalette, TimeSpan.FromMilliseconds(GameplayConstants.WallStepDurationMilliseconds));
-        _field = new PlayField(parameters, slot.Input, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Palette, pixelCollision: new SpriteCollision(_sprites));
+        _field = new PlayField(_sprites, parameters, slot.Input, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Palette, pixelCollision: new SpriteCollision());
         _restartHandled = false;
         return _field;
     }
@@ -203,7 +203,7 @@ public sealed class PlayingState : IGameState
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        _field.Draw(spriteBatch, _sprites);
+        _field.Draw(spriteBatch);
         ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds);
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
 

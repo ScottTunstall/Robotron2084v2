@@ -35,7 +35,7 @@ public sealed class HulkAnimationTests
         // LEFT; re-aims (RND 1..31 steps or wall contact) flip the axis.
         IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 120, bounds.Y + 120);
-        var hulk = new Hulk(spot, new Random(19), hulkSpeedRomTicks: 2, () => center);
+        var hulk = new Hulk(TestSprites.Shared, spot, new Random(19), hulkSpeedRomTicks: 2, () => center);
         field.AddHulk(hulk);
 
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // end start grace; first unfrozen update = the spawn aim
@@ -114,7 +114,7 @@ public sealed class HulkAnimationTests
             MaxEnforcersPerSpheroid: 1,
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
-        return new PlayField(
+        return new PlayField(TestSprites.Shared, 
             parameters,
             new FakeInputSource(),
             PlayFieldSpawnTests.InnerBounds,

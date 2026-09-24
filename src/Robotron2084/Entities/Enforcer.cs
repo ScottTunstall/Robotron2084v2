@@ -18,6 +18,7 @@ namespace Robotron2084.Entities;
 /// 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Enforcer : IEntity, IExplodable, IRemovable
 {
+    private readonly SpriteSet _sprites;
     /// <summary>The enforcer picture's own 10x11 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.EnforcerCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.EnforcerCollisionSize.Height));
@@ -41,8 +42,14 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <param name="fireDelayRomTicks">This wave's fire delay, in ROM frames: the interval is a random 1..this.</param>
     /// <param name="speedBonus">Unused (kept for the uniform spawn shape).</param>
     /// <remarks>ROM: <c>ENSTIM</c> — the interval is a random 1..that many AI passes.</remarks>
-    public Enforcer(IntVector2 position, Random random, int fireDelayRomTicks = 24, int speedBonus = 0)
+    public Enforcer(
+        SpriteSet sprites,
+        IntVector2 position,
+        Random random,
+        int fireDelayRomTicks = 24,
+        int speedBonus = 0)
     {
+        _sprites = sprites;
         _position = position;
         _random = random;
         _fireDelayRomTicks = fireDelayRomTicks;
@@ -181,35 +188,30 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <summary>Draws the grow-up picture while it is growing, and the full picture afterwards.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
 
-        Microsoft.Xna.Framework.Graphics.Texture2D art = sprites.Enforcer;
-        if (LifeState == EntityLifeState.Alive && _growthRemaining > 0)
-        {
-            int frame = Math.Clamp(GrowFrameIndex, 0, sprites.EnforcerFrames.Length - 2); // frames 2..6 (1-based) = ENGD1..5
-            art = sprites.EnforcerFrames[1 + frame];
-        }
-
-        sprites.DrawSprite(spriteBatch, art, Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The frame an explosion would copy: the grow-up picture, or the full picture once grown.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
-    /// <returns>The texture for the picture currently on screen.</returns>
-    public Texture2D CurrentFrameArt(SpriteSet sprites)
+    /// <summary>The picture on screen: a grow-up frame while it grows, else the full picture.</summary>
+    /// <remarks>The grow frames are the ROM's ENGD1..5, which are frames 2..6 (1-based) of the set.</remarks>
+    public Texture2D CurrentAnimationFrame
     {
-        Texture2D art = sprites.Enforcer;
-        if (LifeState == EntityLifeState.Alive && _growthRemaining > 0)
+        get
         {
-            int frame = Math.Clamp(GrowFrameIndex, 0, sprites.EnforcerFrames.Length - 2); // frames 2..6 (1-based) = ENGD1..5
-            art = sprites.EnforcerFrames[1 + frame];
-        }
+            if (LifeState != EntityLifeState.Alive || _growthRemaining <= 0)
+            {
+                return _sprites.Enforcer;
+            }
 
-        return art;
+            int frame = Math.Clamp(GrowFrameIndex, 0, _sprites.EnforcerFrames.Length - 2);
+            return _sprites.EnforcerFrames[1 + frame];
+        }
     }
 }

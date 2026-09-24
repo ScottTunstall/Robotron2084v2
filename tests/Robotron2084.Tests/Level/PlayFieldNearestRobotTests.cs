@@ -19,7 +19,7 @@ public sealed class PlayFieldNearestRobotTests
     private static PlayField EmptyField()
     {
         var parameters = new LevelParameters(LevelNumber: 1);
-        return new PlayField(parameters, new FakeInputSource(), Bounds, new WallColorCycle(), new Random(42), startingLives: 3);
+        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), Bounds, new WallColorCycle(), new Random(42), startingLives: 3);
     }
 
     [Fact]

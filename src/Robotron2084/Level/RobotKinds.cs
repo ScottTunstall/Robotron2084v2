@@ -56,7 +56,7 @@ public static class RobotKinds
         new(RobotKind.Spheroid,
             WaveCount: static parameters => parameters.SpheroidCount,
             Score: ScoreValues.Spheroid,
-            LaserHit: static (field, target, direction) => field.Burst(target, ScoreBurst.ForSpheroid(target.Bounds)),
+            LaserHit: static (field, target, direction) => field.Burst(target, ScoreBurst.ForSpheroid(field.Sprites, target.Bounds)),
             Spawn: static (field, playerStart) => field.SpawnSpheroids(playerStart)),
 
         new(RobotKind.Enforcer,
@@ -67,7 +67,7 @@ public static class RobotKinds
         new(RobotKind.Quark,
             WaveCount: static parameters => parameters.QuarkCount,
             Score: ScoreValues.Quark,
-            LaserHit: static (field, target, direction) => field.Burst(target, ScoreBurst.ForQuark(target.Bounds)),
+            LaserHit: static (field, target, direction) => field.Burst(target, ScoreBurst.ForQuark(field.Sprites, target.Bounds)),
             Spawn: static (field, playerStart) => field.SpawnQuarks(playerStart)),
 
         new(RobotKind.Tank,

@@ -15,7 +15,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class SkullMarker : IEntity
 {
-    /// <summary>How long the skull stays on the field.</summary>
+    private readonly SpriteSet _sprites;    /// <summary>How long the skull stays on the field.</summary>
     private const int LifeRomTicks = 90;
 
     /// <summary>The skull picture's own 12x11 arcade px box, in port pixels.</summary>
@@ -27,8 +27,9 @@ public sealed class SkullMarker : IEntity
 
     /// <summary>Leaves a skull at the given position.</summary>
     /// <param name="position">Where the human was killed.</param>
-    public SkullMarker(IntVector2 position)
+    public SkullMarker(SpriteSet sprites, IntVector2 position)
     {
+        _sprites = sprites;
         _position = position;
         _ticksRemaining = GameplayConstants.PortTicks(LifeRomTicks);
     }
@@ -56,13 +57,13 @@ public sealed class SkullMarker : IEntity
     /// <summary>Draws the skull in the picture's own colours.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set, which holds the skull picture.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
 
-        sprites.DrawSprite(spriteBatch, sprites.Skull, Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, _sprites.Skull, Bounds, Color.White);
     }
 }

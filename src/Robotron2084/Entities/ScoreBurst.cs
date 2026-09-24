@@ -21,8 +21,9 @@ namespace Robotron2084.Entities;
 /// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class ScoreBurst : IEntity
 {
-    private readonly Func<SpriteSet, Texture2D[]> _frames;
-    private readonly Func<SpriteSet, Texture2D> _points;
+    private readonly SpriteSet _sprites;
+    private readonly Texture2D[] _frames;
+    private readonly Texture2D _points;
     private readonly int _count;        // the ROM's countdown = the last picture's index
     private readonly int _burstSlot;
     private readonly int _pointsSlot;
@@ -39,13 +40,15 @@ public sealed class ScoreBurst : IEntity
 
     /// <summary>Builds one burst — both static factories funnel through here.</summary>
     private ScoreBurst(
-        Func<SpriteSet, Texture2D[]> frames,
-        Func<SpriteSet, Texture2D> points,
+        SpriteSet sprites,
+        Texture2D[] frames,
+        Texture2D points,
         int count,
         int burstSlot,
         int pointsSlot,
         Rectangle bounds)
     {
+        _sprites = sprites;
         _frames = frames;
         _points = points;
         _count = count;
@@ -63,24 +66,28 @@ public sealed class ScoreBurst : IEntity
     }
 
     /// <summary>Creates the burst a killed spheroid leaves: silhouette in the player's score colour, points in slot 15.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="bounds">Where the spheroid was drawn when it died.</param>
-    public static ScoreBurst ForSpheroid(Rectangle bounds) => new(
-        frames: static sprites => sprites.SpheroidFrames,
-        points: static sprites => sprites.RescueScoreDisplays[0],
+    public static ScoreBurst ForSpheroid(SpriteSet sprites, Rectangle bounds) => new(
+        sprites,
+        frames: sprites.SpheroidFrames,
+        points: sprites.RescueScoreDisplays[0],
         count: GameplayConstants.ScoreBurstSpheroidCount,
         burstSlot: GameplayConstants.ScoreBurstSpheroidBurstSlot,
         pointsSlot: GameplayConstants.ScoreBurstSpheroidPointsSlot,
-        bounds);
+        bounds: bounds);
 
     /// <summary>Creates the burst a killed quark leaves: both phases in the same slot-13 colour.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="bounds">Where the quark was drawn when it died.</param>
-    public static ScoreBurst ForQuark(Rectangle bounds) => new(
-        frames: static sprites => sprites.QuarkFrames,
-        points: static sprites => sprites.RescueScoreDisplays[0],
+    public static ScoreBurst ForQuark(SpriteSet sprites, Rectangle bounds) => new(
+        sprites,
+        frames: sprites.QuarkFrames,
+        points: sprites.RescueScoreDisplays[0],
         count: GameplayConstants.ScoreBurstQuarkCount,
         burstSlot: GameplayConstants.ScoreBurstQuarkBurstSlot,
         pointsSlot: GameplayConstants.ScoreBurstQuarkPointsSlot,
-        bounds);
+        bounds: bounds);
 
     /// <summary>The dead enemy's top-left corner; the burst is drawn at the size it died at.</summary>
     public IntVector2 Position => new(_bounds.X, _bounds.Y);
@@ -151,7 +158,7 @@ public sealed class ScoreBurst : IEntity
     /// <summary>Draws the current phase: the solid silhouette, or the solid "1000" once the enemy is gone.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
         {
@@ -160,14 +167,13 @@ public sealed class ScoreBurst : IEntity
 
         if (_showingPoints)
         {
-            sprites.DrawSpriteSolid(spriteBatch, _points(sprites), _pointsBounds, sprites.SlotColor(_pointsSlot));
+            _sprites.DrawSpriteSolid(spriteBatch, _points, _pointsBounds, _sprites.SlotColor(_pointsSlot));
             return;
         }
 
-        Texture2D[] frames = _frames(sprites);
-        if (_frameIndex < frames.Length)
+        if (_frameIndex < _frames.Length)
         {
-            sprites.DrawSpriteSolid(spriteBatch, frames[_frameIndex], _bounds, sprites.SlotColor(_burstSlot));
+            _sprites.DrawSpriteSolid(spriteBatch, _frames[_frameIndex], _bounds, _sprites.SlotColor(_burstSlot));
         }
     }
 }

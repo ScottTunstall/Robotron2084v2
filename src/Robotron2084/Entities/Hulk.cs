@@ -19,8 +19,9 @@ namespace Robotron2084.Entities;
 /// and re-aims when its random step timer runs out or the wall blocks it. A step's walk frame follows
 /// a 4-step A-B-A-C pattern (see <see cref="LeftFrames"/>). Timers count 5 per tick and 6 per arcade
 /// frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class Hulk : IEntity, IArtSource
+public sealed class Hulk : IEntity, IAnimationFrameSource
 {
+    private readonly SpriteSet _sprites;
     /// <summary>The hulk picture's own 14x16 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.HulkCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.HulkCollisionSize.Height));
@@ -44,8 +45,14 @@ public sealed class Hulk : IEntity, IArtSource
     /// <param name="hulkSpeedRomTicks">How many ROM frames between steps — this wave's hulk speed.</param>
     /// <param name="target">Returns who this hulk hunts right now: the player, or a human that falls back to the player once it is gone.</param>
     /// <remarks>The step period (ROM: <c>HLKSPD</c>) is 5-8 ROM frames.</remarks>
-    public Hulk(IntVector2 position, Random random, int hulkSpeedRomTicks, Func<IntVector2> target)
+    public Hulk(
+        SpriteSet sprites,
+        IntVector2 position,
+        Random random,
+        int hulkSpeedRomTicks,
+        Func<IntVector2> target)
     {
+        _sprites = sprites;
         _position = position;
         _random = random;
         _stepPeriod = hulkSpeedRomTicks * 6;
@@ -196,14 +203,12 @@ public sealed class Hulk : IEntity, IArtSource
     /// <summary>Draws the current walk picture solid.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
-        sprites.DrawSprite(spriteBatch, sprites.HulkFrames[_currentFrameIndex], Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, _sprites.HulkFrames[_currentFrameIndex], Bounds, Color.White);
     }
 
     /// <summary>This hulk's current walk picture, for the appear effect.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
-    /// <returns>The texture for the current walk frame.</returns>
     /// <remarks>It never shatters, but it still materialises at the start of a wave.</remarks>
-    public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.HulkFrames[_currentFrameIndex];
+    public Texture2D CurrentAnimationFrame => _sprites.HulkFrames[_currentFrameIndex];
 }

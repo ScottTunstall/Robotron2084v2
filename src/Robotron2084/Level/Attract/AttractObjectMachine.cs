@@ -271,7 +271,7 @@ public sealed class AttractObjectMachine
 
                 case 13: // EXP — remove the object and explode where it stood.
                     machine._explosions.Add(new MovieExplosion(
-                        Object.Descriptor?.Art ?? MovieArt.Grunt,
+                        Object.Descriptor?.Animation ?? MovieAnimation.Grunt,
                         Object.ImageIndex,
                         Object.Column,
                         ExplosionRow));

@@ -34,7 +34,7 @@ public sealed class PixelCollisionTests
         HulkCount: 0);
 
     private static PlayField CreateField(IPixelCollision? collision) =>
-        new(
+        new(TestSprites.Shared, 
             OneMikey,
             new FakeInputSource(),
             PlayFieldSpawnTests.InnerBounds,

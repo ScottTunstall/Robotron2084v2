@@ -38,7 +38,7 @@ public sealed class HulkKnockbackTests
             MaxEnforcersPerSpheroid: 1,
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
-        return new PlayField(
+        return new PlayField(TestSprites.Shared, 
             parameters,
             new FakeInputSource(),
             PlayFieldSpawnTests.InnerBounds,
@@ -55,7 +55,7 @@ public sealed class HulkKnockbackTests
 
         foreach (Direction8 direction in Enum.GetValues<Direction8>())
         {
-            var hulk = new Hulk(spot, new Random(1000 + (int)direction), hulkSpeedRomTicks: 2, () => spot);
+            var hulk = new Hulk(TestSprites.Shared, spot, new Random(1000 + (int)direction), hulkSpeedRomTicks: 2, () => spot);
             field.AddHulk(hulk);
             field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // caches the playfield bounds
 
@@ -116,7 +116,7 @@ public sealed class HulkKnockbackTests
 
         // Top-left corner, pushed outward (up-left): the hulk may sit on the
         // wall (spec: "pushed back into the WALL") but never leave the field.
-        var hulk = new Hulk(new IntVector2(b.X, b.Y), new Random(7), hulkSpeedRomTicks: 2, () => new IntVector2(b.X, b.Y));
+        var hulk = new Hulk(TestSprites.Shared, new IntVector2(b.X, b.Y), new Random(7), hulkSpeedRomTicks: 2, () => new IntVector2(b.X, b.Y));
         field.AddHulk(hulk);
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3)));
 

@@ -21,7 +21,7 @@ namespace Robotron2084.Entities;
 /// interval of N frames is due at 6 x N.</remarks>
 public sealed class Brain : IEntity, IExplodable, IRemovable
 {
-    /// <summary>Extra ROM frames added to this wave's brain speed to get the beat.</summary>
+    private readonly SpriteSet _sprites;    /// <summary>Extra ROM frames added to this wave's brain speed to get the beat.</summary>
     private const int BeatExecutionRomTicks = 1;
 
     /// <summary>How far the brain moves on each axis per step: one arcade px.</summary>
@@ -63,8 +63,14 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <param name="random">The random source: the fire timer and the reprogramming jitter.</param>
     /// <param name="brainSpeedRomTicks">How many ROM frames this wave's brain waits between beats.</param>
     /// <param name="fireDelayRomTicks">How many ROM frames this wave's brain waits between cruise missiles.</param>
-    public Brain(IntVector2 position, Random random, int brainSpeedRomTicks, int fireDelayRomTicks)
+    public Brain(
+        SpriteSet sprites,
+        IntVector2 position,
+        Random random,
+        int brainSpeedRomTicks,
+        int fireDelayRomTicks)
     {
+        _sprites = sprites;
         _position = position;
         _random = random;
         _fireDelayRomTicks = fireDelayRomTicks;
@@ -292,7 +298,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <summary>Draws the current walk frame — over a solid block while it is reprogramming.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)
         {
@@ -302,15 +308,15 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         if (IsReprogramming)
         {
             // A solid block under the picture (ROM: DRAW_BRAIN_IN_PROGGING_STATE).
-            sprites.DrawSolidRectangle(spriteBatch, Bounds, sprites.SlotColor(GameplayConstants.ReprogramShapeSlot));
+            _sprites.DrawSolidRectangle(spriteBatch, Bounds, _sprites.SlotColor(GameplayConstants.ReprogramShapeSlot));
         }
 
-        sprites.DrawSprite(spriteBatch, sprites.BrainFrames[WalkFrameIndex], Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The frame an explosion would copy (see <see cref="IArtSource"/>).</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The texture for the current walk frame.</returns>
-    public Texture2D CurrentFrameArt(SpriteSet sprites)
-        => sprites.BrainFrames[WalkFrameIndex];
+    public Texture2D CurrentAnimationFrame
+        => _sprites.BrainFrames[WalkFrameIndex];
 }

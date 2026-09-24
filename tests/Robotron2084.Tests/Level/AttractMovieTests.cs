@@ -77,7 +77,7 @@ public sealed class AttractMovieTests
     public void Storyline_ReachesDoneAndPlaysEveryScene()
     {
         var movie = new AttractMovie(AttractMovieData.Histo, new Random(3));
-        var seen = new HashSet<MovieArt>();
+        var seen = new HashSet<MovieAnimation>();
         var messages = new HashSet<string>();
         bool exploded = false;
 
@@ -88,7 +88,7 @@ public sealed class AttractMovieTests
             {
                 if (item.Descriptor is { } descriptor)
                 {
-                    seen.Add(descriptor.Art);
+                    seen.Add(descriptor.Animation);
                 }
             }
 
@@ -101,17 +101,17 @@ public sealed class AttractMovieTests
         }
 
         Assert.True(movie.Finished, "HISTO never reached DONE2");
-        Assert.Contains(MovieArt.Player, seen);     // the hero walks on and shoots
-        Assert.Contains(MovieArt.Grunt, seen);      // the 14 grunts
-        Assert.Contains(MovieArt.Hulk, seen);       // the hulk bounces in
-        Assert.Contains(MovieArt.Spheroid, seen);   // the spheroid scene
-        Assert.Contains(MovieArt.Enforcer, seen);
-        Assert.Contains(MovieArt.Tank, seen);
-        Assert.Contains(MovieArt.Brain, seen);      // the reprogramming
-        Assert.Contains(MovieArt.Posts, seen);      // the score posts
-        Assert.Contains(MovieArt.Mummy, seen);
-        Assert.Contains(MovieArt.Daddy, seen);
-        Assert.Contains(MovieArt.Mikey, seen);
+        Assert.Contains(MovieAnimation.Player, seen);     // the hero walks on and shoots
+        Assert.Contains(MovieAnimation.Grunt, seen);      // the 14 grunts
+        Assert.Contains(MovieAnimation.Hulk, seen);       // the hulk bounces in
+        Assert.Contains(MovieAnimation.Spheroid, seen);   // the spheroid scene
+        Assert.Contains(MovieAnimation.Enforcer, seen);
+        Assert.Contains(MovieAnimation.Tank, seen);
+        Assert.Contains(MovieAnimation.Brain, seen);      // the reprogramming
+        Assert.Contains(MovieAnimation.Posts, seen);      // the score posts
+        Assert.Contains(MovieAnimation.Mummy, seen);
+        Assert.Contains(MovieAnimation.Daddy, seen);
+        Assert.Contains(MovieAnimation.Mikey, seen);
         Assert.True(exploded, "no EXP ever fired");
         Assert.Contains("MOMMY", messages);
         Assert.Contains("DADDY", messages);
@@ -225,7 +225,7 @@ public sealed class AttractMovieTests
         for (int i = 0; i < 4; i++)
         {
             machine.StepFrame();
-            grunt ??= machine.Objects.FirstOrDefault(o => o.Descriptor?.Art == MovieArt.Grunt);
+            grunt ??= machine.Objects.FirstOrDefault(o => o.Descriptor?.Animation == MovieAnimation.Grunt);
         }
 
         Assert.NotNull(grunt);
@@ -240,7 +240,7 @@ public sealed class AttractMovieTests
 
         Assert.True(grunt.X < startX, "the grunt did not walk left");
         MovieExplosion explosion = Assert.Single(explosions);
-        Assert.Equal(MovieArt.Grunt, explosion.Art);
+        Assert.Equal(MovieAnimation.Grunt, explosion.Animation);
         Assert.Equal(0xA6, explosion.Row); // EXPP's ACTHIT+6
     }
 

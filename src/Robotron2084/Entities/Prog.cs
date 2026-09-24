@@ -23,7 +23,7 @@ namespace Robotron2084.Entities;
 /// frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Prog : IExplodable, IRemovable
 {
-    /// <summary>How many ROM frames pass between beats.</summary>
+    private readonly SpriteSet _sprites;    /// <summary>How many ROM frames pass between beats.</summary>
     /// <remarks>The ROM re-runs the prog's step logic every 3 frames.</remarks>
     private const int BeatPeriodRomTicks = 3;
 
@@ -117,8 +117,9 @@ public sealed class Prog : IExplodable, IRemovable
     /// <param name="position">Top-left of the prog.</param>
     /// <param name="kind">Which human it became; this picks the art and the collision box.</param>
     /// <param name="random">The random source: the aim offsets and the re-aim rolls.</param>
-    public Prog(IntVector2 position, HumanKind kind, Random random)
+    public Prog(SpriteSet sprites, IntVector2 position, HumanKind kind, Random random)
     {
+        _sprites = sprites;
         _position = position;
         _kind = kind;
         _random = random;
@@ -155,7 +156,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The phony burst card.</returns>
     /// <remarks>ROM: <c>PRGKIL</c> swaps the picture to the 12x16 <c>PGXPIC</c>.</remarks>
-    public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.ProgBurst;
+    public Texture2D CurrentAnimationFrame => _sprites.ProgBurst;
 
     /// <summary>The explosion's rect: the burst card's size at the prog's corner.</summary>
     /// <remarks>ROM: <c>PRGKIL</c>/<c>EXSTV</c> swap the picture without moving the object, and the
@@ -302,7 +303,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>Draws the ghost trail (oldest first) and then the prog, all as two-colour remap pairs.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
         {
@@ -311,31 +312,31 @@ public sealed class Prog : IExplodable, IRemovable
 
         Texture2D[] frames = _kind switch
         {
-            HumanKind.Mikey => sprites.MikeyFrames,
-            HumanKind.Mom => sprites.MomFrames,
-            _ => sprites.DadFrames,
+            HumanKind.Mikey => _sprites.MikeyFrames,
+            HumanKind.Mom => _sprites.MomFrames,
+            _ => _sprites.DadFrames,
         };
-        Texture2D art = frames[WalkFrameIndex];
+        Texture2D picture = frames[WalkFrameIndex];
 
         // Oldest ghost first so newer ones paint over it; each is drawn once, in the pose it
         // had when dropped, so the trail is frozen snapshots rather than an animation.
         for (int i = _ghosts.Count - 1; i >= 0; i--)
         {
             Ghost ghost = _ghosts[i];
-            sprites.DrawSpriteSolidWithBackground(
+            _sprites.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[ghost.FrameIndex],
                 BoundsAt(ghost.Position),
-                sprites.SlotColor(GameplayConstants.ProgGhostBackgroundSlot),
-                sprites.SlotColor(GameplayConstants.ProgGhostShapeSlot));
+                _sprites.SlotColor(GameplayConstants.ProgGhostBackgroundSlot),
+                _sprites.SlotColor(GameplayConstants.ProgGhostShapeSlot));
         }
 
-        sprites.DrawSpriteSolidWithBackground(
+        _sprites.DrawSpriteSolidWithBackground(
             spriteBatch,
-            art,
+            picture,
             Bounds,
-            sprites.SlotColor(GameplayConstants.ProgBackgroundSlot),
-            sprites.SlotColor(GameplayConstants.ProgShapeSlot));
+            _sprites.SlotColor(GameplayConstants.ProgBackgroundSlot),
+            _sprites.SlotColor(GameplayConstants.ProgShapeSlot));
     }
 
     /// <summary>This prog's box placed at an arbitrary position (used for the frozen ghosts).</summary>

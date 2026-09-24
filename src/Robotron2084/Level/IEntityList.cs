@@ -1,7 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Entities;
-using Robotron2084.Rendering;
 
 namespace Robotron2084.Level;
 
@@ -22,7 +21,6 @@ public interface IEntityList
 
     /// <summary>Draws the list, in the order the entities sit in it.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="field">The field, whose materialisation guards decide what may be drawn.</param>
-    void DrawAll(SpriteBatch spriteBatch, SpriteSet sprites, PlayField field);
+    void DrawAll(SpriteBatch spriteBatch, PlayField field);
 }

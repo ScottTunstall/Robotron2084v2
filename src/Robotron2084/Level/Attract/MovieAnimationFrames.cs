@@ -4,7 +4,7 @@ using Robotron2084.Rendering;
 namespace Robotron2084.Level.Attract;
 
 /// <summary>
-/// Maps a movie object's (art, ROM image index) to the port's texture, including
+/// Maps a movie object's (animation, ROM image index) to the port's texture, including
 /// the three pictures whose ROM table lists them in a different order to the
 /// port's files (notes §96.4).
 ///
@@ -25,7 +25,7 @@ namespace Robotron2084.Level.Attract;
 /// table does not use).</item>
 /// </list>
 /// </summary>
-public static class MovieArtTextures
+public static class MovieAnimationFrames
 {
     private static readonly int[] HulkImages = [0, 1, 2, 6, 7, 8, 3, 4, 5];
 
@@ -34,24 +34,24 @@ public static class MovieArtTextures
     private static readonly int[] GruntImages = [0, 1, 0];
 
     /// <summary>The texture a movie object draws, or null when there is none.</summary>
-    public static Texture2D? Resolve(SpriteSet sprites, MovieArt art, int imageIndex)
+    public static Texture2D? Resolve(SpriteSet sprites, MovieAnimation animation, int imageIndex)
     {
-        Texture2D[]? frames = Frames(sprites, art);
+        Texture2D[]? frames = Frames(sprites, animation);
         if (frames is null || frames.Length == 0)
         {
-            return art switch
+            return animation switch
             {
-                MovieArt.Skull => sprites.Skull,
-                MovieArt.Cruise => sprites.AttractCruise,
+                MovieAnimation.Skull => sprites.Skull,
+                MovieAnimation.Cruise => sprites.AttractCruise,
                 _ => null,
             };
         }
 
-        int[]? remap = art switch
+        int[]? remap = animation switch
         {
-            MovieArt.Hulk => HulkImages,
-            MovieArt.Enforcer => EnforcerImages,
-            MovieArt.Grunt => GruntImages,
+            MovieAnimation.Hulk => HulkImages,
+            MovieAnimation.Enforcer => EnforcerImages,
+            MovieAnimation.Grunt => GruntImages,
             _ => null,
         };
 
@@ -64,22 +64,22 @@ public static class MovieArtTextures
         return frames[index % frames.Length];
     }
 
-    private static Texture2D[]? Frames(SpriteSet sprites, MovieArt art) => art switch
+    private static Texture2D[]? Frames(SpriteSet sprites, MovieAnimation animation) => animation switch
     {
-        MovieArt.Mummy => sprites.MomFrames,
-        MovieArt.Daddy => sprites.DadFrames,
-        MovieArt.Mikey => sprites.MikeyFrames,
-        MovieArt.Hulk => sprites.HulkFrames,
-        MovieArt.Brain => sprites.BrainFrames,
-        MovieArt.Grunt => sprites.GruntFrames,
-        MovieArt.Enforcer => sprites.EnforcerFrames,
-        MovieArt.Player => sprites.PlayerFrames,
-        MovieArt.Quark => sprites.QuarkFrames,
-        MovieArt.Spheroid => sprites.SpheroidFrames,
-        MovieArt.TankGrow => sprites.TankGrowFrames,
-        MovieArt.Tank => sprites.TankFrames,
-        MovieArt.Points => sprites.RescueScoreDisplays,
-        MovieArt.Posts => sprites.PostFrames,
+        MovieAnimation.Mummy => sprites.MomFrames,
+        MovieAnimation.Daddy => sprites.DadFrames,
+        MovieAnimation.Mikey => sprites.MikeyFrames,
+        MovieAnimation.Hulk => sprites.HulkFrames,
+        MovieAnimation.Brain => sprites.BrainFrames,
+        MovieAnimation.Grunt => sprites.GruntFrames,
+        MovieAnimation.Enforcer => sprites.EnforcerFrames,
+        MovieAnimation.Player => sprites.PlayerFrames,
+        MovieAnimation.Quark => sprites.QuarkFrames,
+        MovieAnimation.Spheroid => sprites.SpheroidFrames,
+        MovieAnimation.TankGrow => sprites.TankGrowFrames,
+        MovieAnimation.Tank => sprites.TankFrames,
+        MovieAnimation.Points => sprites.RescueScoreDisplays,
+        MovieAnimation.Posts => sprites.PostFrames,
         _ => null,
     };
 }

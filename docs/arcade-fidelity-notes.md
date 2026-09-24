@@ -9927,3 +9927,58 @@ the budget already). No suppressions — the rule is still split-or-nothing.
 `ResolveLaserHits<T>` had been left above `PlayField.SpeedUpGrunts` by §118's refactor. Two summaries on
 one member compile fine, which is exactly why it survived a clean build — worth knowing that a doc pass
 is not a build gate.
+
+### 121. ONE TYPE PER FILE, AND THE SPRITE SET GOES IN THROUGH THE CONSTRUCTOR (author, 2026-09-24)
+
+Three structural directives in one message: *"I don't think the code is quite right yet. There should be
+one class or record per file. I don't know why we're using the term 'Art' for Animation Frames, and
+unsure why spriteset has to be passed via a method to entities instead of via constructor — its not like
+we have multiple spritesets is it?"*
+
+**One class or record per file.** Eighteen files held more than one top-level type; **40 types** moved
+into their own files, in `src` and in the tests. The biggest were `Explosion.cs` (the strip engine plus
+`StripFanAxis`/`StripClip`/`Strip`), `MovieArt.cs` (the enum plus `MovieWalk`/`MovieDescriptor`/
+`MovieDescriptors`), `RobotKinds.cs` (`RobotKind`/`RobotKindInfo`/`RobotKinds`), `SoundEngine.cs` (plus
+`SoundEntry`/`SoundSequence`/`IAudioSink`) and `InputBinding.cs` (plus `InputBindingKind`/`GamePadSticks`).
+Pure moves, no behaviour change. A one-line scan proves it stays true:
+
+```powershell
+Get-ChildItem -Recurse -Path src,tests -Filter *.cs |
+  Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
+  Where-Object { (Select-String -Path $_.FullName -Pattern '^(public|internal)\s+(sealed\s+|abstract\s+|static\s+|readonly\s+|partial\s+|record\s+)*\b(class|record|enum|interface|struct)\b').Count -gt 1 }
+```
+
+**"Art" was the wrong word for an animation frame.** The author's term is **AnimationFrame**, so:
+`IArtSource` → `IAnimationFrameSource` (and `CurrentFrameArt(SpriteSet)` → a **`CurrentAnimationFrame`
+property**), `SpriteSet.ArtRect` → `SpriteSet.DrawnRect`, `MovieArt` → `MovieAnimation`,
+`MovieArtTextures` → `MovieAnimationFrames`, `MovieDescriptor.Art` → `.Animation`,
+`MovieExplosion.Art` → `.Animation`. The name is a deliberate choice, not a synonym: **"frame" alone was
+already taken** by the ROM-frame clock (`RomFrames`, `SpheroidBeatRomFrames`), so an animation frame says
+so in full. `MovieAnimation` is the set rather than a frame — a Mummy is 12 images and the ROM's own word
+for the thing behind it is the *picture table*. What is left of the word is prose and units only ("pixel
+art", "the art's own colours"), which is what it means.
+
+**The sprite set goes in through the constructor** (`SpriteSet` first, matching `PlayingState(SpriteSet
+sprites, …)`), so `IEntity.Draw(SpriteBatch)`, `IEntityList.DrawAll(batch, field)`, `PlayField.Draw(batch)`
+and the ~40 call sites that threaded `sprites` around all lose the parameter. Two constructor clean-ups
+fell out: `LaserSlots` takes the set (it builds the lasers), and `ScoreBurst`'s
+`Func<SpriteSet, Texture2D[]>` hooks became the frame arrays themselves, because its factories now
+receive the set.
+
+**The problem this exposed, and the clean fix.** The test project has no graphics device (it can never
+load the 237 textures), so every entity construction in the suite would have needed a `SpriteSet` it
+cannot build. The honest fix was **not** a pragma or a null-filled fake: `SpriteSet`'s constructor took
+`(GraphicsDevice, ContentManager)` and so could not exist headlessly at all. It now takes an
+**`ISpriteSource`** — `Load`/`LoadAll` by content asset name, and `Create`/`CreateSolid` for the few
+pictures the port draws itself — whose production implementation is `ContentSpriteSource`. `SpriteSet` has
+no device dependency left, `SpriteMask`'s two-pass `LoadRange`/`LoadGlyphs` helpers are gone, and the
+test project owns the only "no artwork" case (`NoSpriteSource`, which keeps the right NUMBER of frames
+but null handles, because the entities index into those runs). A test can now build a `SpriteSet` for the
+first time.
+
+**Verified:** 482 tests, 0 failed, 0 skipped; Debug and Release 0 warnings; 12 s launch smoke OK;
+`verify-playfield` PASS. `verify-attract` could NOT be judged on this build: its capture reads the
+SCREEN, and a browser window was over the game window for every attempt (the capture shows the movie
+rendering correctly in the game window, with the browser alongside it), so the gate reported "the capture
+is not the game window" at 66-94% lit. That is the trap in `ref/mame-notes.md`'s list, not a regression —
+re-run it with nothing over the game window.

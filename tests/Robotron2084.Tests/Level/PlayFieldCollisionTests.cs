@@ -14,7 +14,7 @@ public sealed class PlayFieldCollisionTests
     {
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(spot);
+        var electrode = new Electrode(TestSprites.Shared, spot);
         field.AddElectrode(electrode);
 
         // The laser moves 12 px on its first Update before collisions resolve;
@@ -41,7 +41,7 @@ public sealed class PlayFieldCollisionTests
         // 6, 3, 2 vblanks — and then the image is turned off (DMAOFF). It is a
         // shape collapse, NOT a blink (the old port toggled visibility for 2 s).
         PlayField field = CreateEmptyField();
-        var electrode = new Electrode(new IntVector2(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100));
+        var electrode = new Electrode(TestSprites.Shared, new IntVector2(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100));
         field.AddElectrode(electrode);
 
         electrode.Kill();
@@ -80,7 +80,7 @@ public sealed class PlayFieldCollisionTests
         // An electrode is WAVE-derived — both its picture family and its colour —
         // and each family owns 3 consecutive pictures (alive + the two shrivel
         // frames) out of the 27 electrode PNGs.
-        var electrode = new Electrode(new IntVector2(100, 100), wave: 3);
+        var electrode = new Electrode(TestSprites.Shared, new IntVector2(100, 100), wave: 3);
         Assert.Equal(2, electrode.FamilyIndex);
         Assert.True((electrode.FamilyIndex * GameplayConstants.PostPicturesPerFamily) + GameplayConstants.PostPicturesPerFamily <= 27);
 
@@ -104,7 +104,7 @@ public sealed class PlayFieldCollisionTests
         Assert.Equal(15, GameplayConstants.PostSlotForWave(1));
         Assert.Equal(11, GameplayConstants.PostSlotForWave(3));
         Assert.Equal(1, GameplayConstants.PostSlotForWave(7)); // slot 1 = RED in the ROM's own CRTAB
-        Assert.Equal(new Electrode(new IntVector2(0, 0), wave: 1).TintSlot, GameplayConstants.PostSlotForWave(1));
+        Assert.Equal(new Electrode(TestSprites.Shared, new IntVector2(0, 0), wave: 1).TintSlot, GameplayConstants.PostSlotForWave(1));
         Assert.True(GameplayConstants.PostSlotForWave(1) >= 10); // 10-15 are the cycling slots
     }
 
@@ -214,7 +214,7 @@ public sealed class PlayFieldCollisionTests
     public void PlayerWalksIntoElectrode_BothStartDying()
     {
         PlayField field = CreateEmptyField(playerInvincibleForTesting: false);
-        var electrode = new Electrode(field.Player.Position); // directly on the player
+        var electrode = new Electrode(TestSprites.Shared, field.Player.Position); // directly on the player
         field.AddElectrode(electrode);
 
         int livesBefore = field.Player.Lives;
@@ -233,12 +233,12 @@ public sealed class PlayFieldCollisionTests
         // walked through every robot. The aid is per player now and the DEMO clears
         // it (`AttractState`), so contact kills there and only there (notes §97.5).
         PlayField aided = CreateEmptyField();
-        aided.AddGrunt(new Grunt(aided.Player.Position, speedBonus: 0));
+        aided.AddGrunt(new Grunt(TestSprites.Shared, aided.Player.Position, speedBonus: 0));
         aided.Update(new GameTime());
         Assert.Equal(EntityLifeState.Alive, aided.Player.LifeState);
 
         PlayField demo = CreateEmptyField(playerInvincibleForTesting: false);
-        demo.AddGrunt(new Grunt(demo.Player.Position, speedBonus: 0));
+        demo.AddGrunt(new Grunt(TestSprites.Shared, demo.Player.Position, speedBonus: 0));
         demo.Update(new GameTime());
         Assert.Equal(EntityLifeState.Dying, demo.Player.LifeState);
     }
@@ -248,7 +248,7 @@ public sealed class PlayFieldCollisionTests
     {
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 200, field.Wall.PlayfieldBounds.Y + 100);
-        var grunt = new Grunt(spot, speedBonus: 0);
+        var grunt = new Grunt(TestSprites.Shared, spot, speedBonus: 0);
         field.AddGrunt(grunt);
 
         Assert.True(field.PlayerLasers.TryFire(spot, Direction8.Down, out PlayerLaser? laser));
@@ -269,7 +269,7 @@ public sealed class PlayFieldCollisionTests
     {
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 200, field.Wall.PlayfieldBounds.Y + 200);
-        var hulk = new Hulk(spot, new Random(7), 8, static () => IntVector2.Zero);
+        var hulk = new Hulk(TestSprites.Shared, spot, new Random(7), 8, static () => IntVector2.Zero);
         field.AddHulk(hulk);
         IntVector2 positionBefore = hulk.Position;
 
@@ -298,6 +298,6 @@ public sealed class PlayFieldCollisionTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayField(parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3, playerInvincibleForTesting: playerInvincibleForTesting);
+        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3, playerInvincibleForTesting: playerInvincibleForTesting);
     }
 }

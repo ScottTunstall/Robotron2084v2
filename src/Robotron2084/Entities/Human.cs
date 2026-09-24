@@ -17,8 +17,9 @@ namespace Robotron2084.Entities;
 /// a standing electrode. Its 12 frames are 4 directions x 3 walk frames, the diagonals reusing the
 /// cardinal sets. Humans set off before the robots' wave-start flag. Timers count 5 per tick and 6
 /// per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class Human : IEntity, IArtSource, IRemovable
+public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 {
+    private readonly SpriteSet _sprites;
     /// <summary>The step period in ROM frames. The ONE deliberate gameplay override — do not "fix" it.</summary>
     /// <remarks>The arcade steps every 8 frames and moves one arcade pixel; the port deliberately
     /// slows this to 16, because the ROM-accurate pace read as "the mommies are walking too fast" in
@@ -82,8 +83,9 @@ public sealed class Human : IEntity, IArtSource, IRemovable
     /// <param name="position">Top-left of the human.</param>
     /// <param name="kind">Which member — it decides the art and the collision box.</param>
     /// <param name="random">The random source for the direction, the step count and the stagger.</param>
-    public Human(IntVector2 position, HumanKind kind, Random random)
+    public Human(SpriteSet sprites, IntVector2 position, HumanKind kind, Random random)
     {
+        _sprites = sprites;
         _position = position;
         _kind = kind;
         _random = random;
@@ -205,40 +207,40 @@ public sealed class Human : IEntity, IArtSource, IRemovable
     /// <summary>Draws the walk frame, or — while being reprogrammed — the flashing two-colour shape.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
 
-        Texture2D[] frames = FramesOf(sprites);
+        Texture2D[] frames = FramesOf();
 
         if (IsBeingReprogrammed)
         {
             // Reprogrammed: a solid silhouette over a solid background, both cycling slots.
-            sprites.DrawSpriteSolidWithBackground(
+            _sprites.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[_frame],
                 Bounds,
-                sprites.SlotColor(GameplayConstants.ReprogramBackgroundSlot),
-                sprites.SlotColor(GameplayConstants.ReprogramShapeSlot));
+                _sprites.SlotColor(GameplayConstants.ReprogramBackgroundSlot),
+                _sprites.SlotColor(GameplayConstants.ReprogramShapeSlot));
             return;
         }
 
-        sprites.DrawSprite(spriteBatch, frames[_frame], Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, frames[_frame], Bounds, Color.White);
     }
 
     /// <summary>The walk frame this human is showing — the art pixel-perfect collision compares.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    public Texture2D CurrentFrameArt(SpriteSet sprites) => FramesOf(sprites)[_frame];
+    public Texture2D CurrentAnimationFrame => FramesOf()[_frame];
 
     /// <summary>The three walk pictures this human's kind is drawn with (notes §49).</summary>
-    private Texture2D[] FramesOf(SpriteSet sprites) => _kind switch
+    private Texture2D[] FramesOf() => _kind switch
     {
-        HumanKind.Mikey => sprites.MikeyFrames,
-        HumanKind.Mom => sprites.MomFrames,
-        _ => sprites.DadFrames,
+        HumanKind.Mikey => _sprites.MikeyFrames,
+        HumanKind.Mom => _sprites.MomFrames,
+        _ => _sprites.DadFrames,
     };
 
     /// <summary>True while this human is being reprogrammed: it cannot walk, be rescued or be killed.</summary>

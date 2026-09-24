@@ -25,7 +25,7 @@ public sealed class PlayerAnimationAndAimTests
         public PlayerInputState Poll() => State;
     }
 
-    private static PlayField CreateField(IPlayerInputSource input) => new(
+    private static PlayField CreateField(IPlayerInputSource input) => new(TestSprites.Shared, 
         new LevelParameters(LevelNumber: 1),
         input,
         PlayFieldSpawnTests.InnerBounds,

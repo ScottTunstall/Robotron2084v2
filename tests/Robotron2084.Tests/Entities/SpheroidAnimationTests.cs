@@ -36,7 +36,7 @@ public sealed class SpheroidAnimationTests
     /// first drop ends the drop phase and the spheroid escapes almost at once.
     /// </summary>
     private static PlayField CreateField(int seed) =>
-        new(
+        new(TestSprites.Shared, 
             new LevelParameters(
                 LevelNumber: 1,
                 SpheroidCount: 1,

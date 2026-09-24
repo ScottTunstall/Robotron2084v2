@@ -17,6 +17,7 @@ namespace Robotron2084.Entities;
 /// arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Grunt : IEntity, IExplodable, IRemovable
 {
+    private readonly SpriteSet _sprites;
     /// <summary>The grunt picture's own 10x13 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.GruntCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.GruntCollisionSize.Height));
@@ -46,8 +47,14 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <param name="speedBonus">Unused (kept for the uniform spawn shape).</param>
     /// <param name="random">The random source, or null to create one.</param>
     /// <remarks>ROM: <c>ROBSPD</c> — the stagger limit is a random 1..that many beats.</remarks>
-    public Grunt(IntVector2 position, int moveLimitBeats = 15, int speedBonus = 0, Random? random = null)
+    public Grunt(
+        SpriteSet sprites,
+        IntVector2 position,
+        int moveLimitBeats = 15,
+        int speedBonus = 0,
+        Random? random = null)
     {
+        _sprites = sprites;
         _position = position;
         _moveLimitBeats = moveLimitBeats;
         _random = random ?? new Random();
@@ -162,19 +169,18 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <summary>This grunt's current walk picture, for the appear and explosion effects.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The texture for the current walk frame.</returns>
-    public Texture2D CurrentFrameArt(SpriteSet sprites)
-        => sprites.GruntFrames[WalkArtIndex(_walkFrame)];
+    public Texture2D CurrentAnimationFrame => _sprites.GruntFrames[WalkArtIndex(_walkFrame)];
 
     /// <summary>Draws the current walk picture in the art's own colours.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)
         {
             return;
         }
 
-        sprites.DrawSprite(spriteBatch, sprites.GruntFrames[WalkArtIndex(_walkFrame)], Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, _sprites.GruntFrames[WalkArtIndex(_walkFrame)], Bounds, Color.White);
     }
 }

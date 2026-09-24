@@ -17,8 +17,9 @@ namespace Robotron2084.Entities;
 /// bounce sound, and fizzles out after a random 48-79 ROM frames. A shell flies over electrodes and
 /// never collides with one, and its box is the picture's own 8x7 arcade px.
 /// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class TankShell : IEntity, IArtSource, IRemovable
+public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 {
+    private readonly SpriteSet _sprites;
     /// <summary>The shell picture's own 8x7 arcade px box, in port pixels.</summary>
     private static readonly int BoxWidth = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Width);
     private static readonly int BoxHeight = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Height);
@@ -32,8 +33,9 @@ public sealed class TankShell : IEntity, IArtSource, IRemovable
     /// <param name="towardPlayerDirection">Direction from the tank to the player; only its SIGNS are used, so the aim is always a 45° line.</param>
     /// <param name="random">Source of the ±1 px/frame aim jitter and of the fizzle time.</param>
     /// <remarks>ROM: the lifespan is a random 48-79 ROM frames, rolled once here.</remarks>
-    public TankShell(IntVector2 position, IntVector2 towardPlayerDirection, Random random)
+    public TankShell(SpriteSet sprites, IntVector2 position, IntVector2 towardPlayerDirection, Random random)
     {
+        _sprites = sprites;
         _position = position;
         // Aimed once, with ±1 px/frame jitter per axis ("not very accurate").
         _velocity = new IntVector2(
@@ -106,15 +108,15 @@ public sealed class TankShell : IEntity, IArtSource, IRemovable
     /// <summary>Draws the shell picture at its own size; it never flashes.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Alive)
         {
-            sprites.DrawSprite(spriteBatch, CurrentFrameArt(sprites), Bounds, Color.White);
+            _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
         }
     }
 
     /// <summary>The shell picture — it never flashes.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    public Texture2D CurrentFrameArt(SpriteSet sprites) => sprites.TankShell;
+    public Texture2D CurrentAnimationFrame => _sprites.TankShell;
 }

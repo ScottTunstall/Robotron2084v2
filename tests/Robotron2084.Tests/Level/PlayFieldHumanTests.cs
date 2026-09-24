@@ -26,7 +26,7 @@ public sealed class PlayFieldHumanTests
         HulkCount: hulks);
 
     private static PlayField CreateField(LevelParameters parameters, int startingRescues = 0) =>
-        new(parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3, startingRescues: startingRescues);
+        new(TestSprites.Shared, parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3, startingRescues: startingRescues);
 
     /// <summary>
     /// One port tick. The player's start grace is WALL-CLOCK, so a `new GameTime()`
@@ -100,7 +100,7 @@ public sealed class PlayFieldHumanTests
         }
 
         Rectangle inner = field.Wall.PlayfieldBounds;
-        var human = new Human(new IntVector2(inner.Center.X, inner.Center.Y), HumanKind.Mom, new Random(7));
+        var human = new Human(TestSprites.Shared, new IntVector2(inner.Center.X, inner.Center.Y), HumanKind.Mom, new Random(7));
 
         List<int> starts = new();
         int seen = 0;

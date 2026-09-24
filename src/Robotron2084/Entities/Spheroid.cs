@@ -19,8 +19,9 @@ namespace Robotron2084.Entities;
 /// stopped, running off the edge to vanish with no animation). A hit bursts it, standing in for the
 /// 7-frame bubble that is still to be built. Timers count 5 per tick and 6 per arcade frame, so an
 /// interval of N frames is due at 6 x N.</remarks>
-public sealed class Spheroid : IEntity, IArtSource, IRemovable
+public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
+    private readonly SpriteSet _sprites;
     /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(GameplayConstants.SpheroidCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.SpheroidCollisionSize.Height));
@@ -60,8 +61,14 @@ public sealed class Spheroid : IEntity, IArtSource, IRemovable
     /// <remarks>ROM: <c>ENFNUM</c> and <c>CDPTIM</c> — this wave's allotment bound and rotation
     /// delay. There is deliberately no speed parameter: the spheroid's speed IS its accumulated,
     /// damped glide velocity, so a "speed bonus" cannot be expressed in this model.</remarks>
-    public Spheroid(IntVector2 position, Random random, int maxDropsX2 = 10, int dropDelayRomTicks = 24)
+    public Spheroid(
+        SpriteSet sprites,
+        IntVector2 position,
+        Random random,
+        int maxDropsX2 = 10,
+        int dropDelayRomTicks = 24)
     {
+        _sprites = sprites;
         _position = position;
         _random = random;
         _dropDelayRomTicks = dropDelayRomTicks;
@@ -293,19 +300,19 @@ public sealed class Spheroid : IEntity, IArtSource, IRemovable
     /// <summary>Draws the current picture; its shimmer comes from cycling palette slots, not a flash.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState == EntityLifeState.Dead)
         {
             return;
         }
 
-        sprites.DrawSprite(spriteBatch, sprites.SpheroidFrames[_rotation % sprites.SpheroidFrames.Length], Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The current picture, for the death burst (see <see cref="IArtSource"/>).</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <returns>The texture for the current rotation frame.</returns>
-    public Texture2D CurrentFrameArt(SpriteSet sprites)
-        => sprites.SpheroidFrames[_rotation % sprites.SpheroidFrames.Length];
+    public Texture2D CurrentAnimationFrame
+        => _sprites.SpheroidFrames[_rotation % _sprites.SpheroidFrames.Length];
 }

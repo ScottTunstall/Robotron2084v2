@@ -47,13 +47,13 @@ public sealed class ExplosionTests
         {
         }
 
-        public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+        public void Draw(SpriteBatch spriteBatch)
         {
         }
 
         // Draw-time only; the lifecycle/geometry tests never draw.
-        public Texture2D CurrentFrameArt(SpriteSet sprites)
-            => throw new NotSupportedException("no texture in unit tests");
+        public Texture2D CurrentAnimationFrame =>
+            throw new NotSupportedException("no texture in unit tests");
     }
 
     private static Explosion NewExplosion(Direction8? direction = null, Rectangle? sprite = null) =>
@@ -423,7 +423,7 @@ public sealed class ExplosionTests
         // "electrodes shouldn't explode when hit, they shrivel."
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(spot);
+        var electrode = new Electrode(TestSprites.Shared, spot);
         field.AddElectrode(electrode);
 
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
@@ -441,9 +441,9 @@ public sealed class ExplosionTests
         // shrivels instead (PSTKIL, above) — one explosion, not two.
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(spot);
+        var electrode = new Electrode(TestSprites.Shared, spot);
         field.AddElectrode(electrode);
-        field.AddGrunt(new Grunt(spot, speedBonus: 0)); // standing on the electrode
+        field.AddGrunt(new Grunt(TestSprites.Shared, spot, speedBonus: 0)); // standing on the electrode
 
         field.Update(new GameTime());
 
@@ -465,8 +465,8 @@ public sealed class ExplosionTests
         for (int i = 0; i < GameplayConstants.StripMaxConcurrent + 4; i++)
         {
             IntVector2 spot = new(bounds.X + 16 + (i * 12), bounds.Y + 60);
-            field.AddGrunt(new Grunt(spot, speedBonus: 0));
-            field.AddElectrode(new Electrode(spot));
+            field.AddGrunt(new Grunt(TestSprites.Shared, spot, speedBonus: 0));
+            field.AddElectrode(new Electrode(TestSprites.Shared, spot));
         }
 
         field.Update(new GameTime());
@@ -487,6 +487,6 @@ public sealed class ExplosionTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayField(parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3);
+        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3);
     }
 }

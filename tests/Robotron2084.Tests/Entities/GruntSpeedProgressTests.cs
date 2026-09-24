@@ -28,7 +28,7 @@ public sealed class GruntSpeedProgressTests
 
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
-    private static PlayField CreateField(int wave = 1) => new(
+    private static PlayField CreateField(int wave = 1) => new(TestSprites.Shared, 
         LevelParameters.FromWave(wave, WaveTable.ForWave(wave)),
         new FakeInputSource(),
         PlayFieldSpawnTests.InnerBounds,
@@ -37,7 +37,7 @@ public sealed class GruntSpeedProgressTests
         startingLives: 3);
 
     private static Grunt CreateGruntAt(PlayField field, int x, int y, int seed) =>
-        new(new IntVector2(x, y), moveLimitBeats: 20, random: new Random(seed));
+        new(TestSprites.Shared, new IntVector2(x, y), moveLimitBeats: 20, random: new Random(seed));
 
     [Fact]
     public void SpeedUp_TruncatesTo7Eighths_AndRespectsTheCurrentFloor()
@@ -95,7 +95,7 @@ public sealed class GruntSpeedProgressTests
         Grunt? tracked = null;
         for (int i = 0; i < 30; i++)
         {
-            Grunt grunt = new(new IntVector2(100 + (i % 5) * 24, 100 + (i / 5) * 24), moveLimitBeats: 15, random: new Random(i));
+            Grunt grunt = new(TestSprites.Shared, new IntVector2(100 + (i % 5) * 24, 100 + (i / 5) * 24), moveLimitBeats: 15, random: new Random(i));
             if (i == 0)
             {
                 tracked = grunt;

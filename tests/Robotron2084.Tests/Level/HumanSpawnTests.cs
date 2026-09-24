@@ -20,7 +20,7 @@ public sealed class HumanSpawnTests
 
     /// <summary>The ROM's own wave table, so the family, electrodes and robots are the arcade's.</summary>
     private static PlayField CreateField(int seed, int level) =>
-        new(
+        new(TestSprites.Shared, 
             LevelParameters.FromWave(level, WaveTable.ForWave(level)),
             new FakeInputSource(),
             PlayFieldSpawnTests.InnerBounds,

@@ -2,7 +2,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Level;
-using Robotron2084.Rendering;
 
 namespace Robotron2084.Entities;
 
@@ -37,6 +36,5 @@ public interface IEntity
 
     /// <summary>Draws the entity at its current position.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The shared sprite set.</param>
-    void Draw(SpriteBatch spriteBatch, SpriteSet sprites);
+    void Draw(SpriteBatch spriteBatch);
 }

@@ -30,7 +30,7 @@ public sealed class ScoreBurstTests
     public void TheBurstShowsTheEnemysPictures_FromTwo_UpToTheRomCount()
     {
         var bounds = new Rectangle(100, 200, 16, 15);
-        ScoreBurst burst = ScoreBurst.ForSpheroid(bounds);
+        ScoreBurst burst = ScoreBurst.ForSpheroid(TestSprites.Shared, bounds);
 
         Assert.Equal(ScoreBurst.FirstBurstFrameIndex, burst.FrameIndex);
         Assert.False(burst.ShowingPoints);
@@ -64,7 +64,7 @@ public sealed class ScoreBurstTests
         // `NAP 2` = 2 ROM frames = 12 sixths, and a port tick is 5 sixths, so a
         // step lands every 2-3 ticks (2.4). PortTicks(2) would also be 2 here,
         // but the accumulator is the repo's rule for short ROM delays (§52).
-        ScoreBurst burst = ScoreBurst.ForSpheroid(new Rectangle(0, 0, 16, 15));
+        ScoreBurst burst = ScoreBurst.ForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
 
         // Picture 2 is shown from the kill itself; each step is 2 ROM frames.
         Assert.Equal(ScoreBurst.FirstBurstFrameIndex, burst.FrameIndex);
@@ -81,7 +81,7 @@ public sealed class ScoreBurstTests
     [Fact]
     public void ThePointsValueShowsForThirtySteps_ThenTheBurstIsGone()
     {
-        ScoreBurst burst = ScoreBurst.ForSpheroid(new Rectangle(0, 0, 16, 15));
+        ScoreBurst burst = ScoreBurst.ForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
 
         // 36 steps in total (6 burst + 30 points) x 12 sixths = 432 sixths, and
         // 5 sixths accrue a tick => 86 ticks leave it alive, the 87th kills it.
@@ -96,7 +96,7 @@ public sealed class ScoreBurstTests
     public void ThePointsValueSits_OneColumnRight_FiveRowsDown()
     {
         var bounds = new Rectangle(100, 200, 16, 15);
-        ScoreBurst burst = ScoreBurst.ForQuark(bounds);
+        ScoreBurst burst = ScoreBurst.ForQuark(TestSprites.Shared, bounds);
 
         // The ROM adds #$0105 to the blitter's column:row destination.
         Assert.Equal(
@@ -114,11 +114,11 @@ public sealed class ScoreBurstTests
         // `LDD #$FFAA`: $AA = slot 10 (the current player's score slot) for the
         // dying silhouette and $FF = slot 15 for the points value; the quark's
         // `LDD #$DDDD` uses slot 13 for both. All three cycle with the palette.
-        ScoreBurst spheroid = ScoreBurst.ForSpheroid(new Rectangle(0, 0, 16, 15));
+        ScoreBurst spheroid = ScoreBurst.ForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
         Assert.Equal(10, spheroid.BurstSlot);
         Assert.Equal(15, spheroid.PointsSlot);
 
-        ScoreBurst quark = ScoreBurst.ForQuark(new Rectangle(0, 0, 16, 15));
+        ScoreBurst quark = ScoreBurst.ForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
         Assert.Equal(13, quark.BurstSlot);
         Assert.Equal(13, quark.PointsSlot);
     }
@@ -128,7 +128,7 @@ public sealed class ScoreBurstTests
     {
         // The quark has NINE pictures (SQP0..SQP8) and `LDA #8`, so its burst
         // reaches index 8 — one further than the spheroid's.
-        ScoreBurst burst = ScoreBurst.ForQuark(new Rectangle(0, 0, 16, 15));
+        ScoreBurst burst = ScoreBurst.ForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
         int last = burst.FrameIndex;
         while (!burst.ShowingPoints && last < 20)
         {
@@ -153,7 +153,7 @@ public sealed class ScoreBurstTests
             MaxTanksPerQuark: 0,
             EnemySpeedBonus: 0);
 
-        return new PlayField(parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(7), startingLives: 3);
+        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(7), startingLives: 3);
     }
 
     /// <summary>Drains the wave-start appear chain so only kill effects remain.</summary>

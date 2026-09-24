@@ -20,7 +20,7 @@ public sealed class PlayerInvincibilityTests
     {
         Assert.True(GameplayConstants.PlayerInvincibleForTesting); // the flag must be on for this test to mean anything
 
-        var player = new Player(new IntVector2(100, 100), 3);
+        var player = new Player(TestSprites.Shared, new IntVector2(100, 100), 3);
 
         player.Kill();
         player.Kill();
@@ -34,7 +34,7 @@ public sealed class PlayerInvincibilityTests
     {
         // What the attract demo does: the machine plays by the arcade's rules, so
         // its player dies on contact and the demo's death path is live code.
-        var player = new Player(new IntVector2(100, 100), 3) { InvincibleForTesting = false };
+        var player = new Player(TestSprites.Shared, new IntVector2(100, 100), 3) { InvincibleForTesting = false };
 
         player.Kill();
 

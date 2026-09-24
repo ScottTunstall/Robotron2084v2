@@ -20,7 +20,7 @@ public sealed class PlayFieldMovementTests
     {
         PlayField field = CreateEmptyField();
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        var shell = new TankShell(
+        var shell = new TankShell(TestSprites.Shared, 
             new IntVector2(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2),
             new IntVector2(1, 0),
             new Random(1234));
@@ -47,7 +47,7 @@ public sealed class PlayFieldMovementTests
         PlayField field = CreateEmptyField();
         Rectangle bounds = field.Wall.PlayfieldBounds;
         // X velocity is -5 plus a -1..1 jitter: always leftward (-6..-4).
-        var shell = new TankShell(
+        var shell = new TankShell(TestSprites.Shared, 
             new IntVector2(bounds.X + 80, bounds.Y + bounds.Height / 2),
             new IntVector2(-1, 0),
             new Random(42));
@@ -77,7 +77,7 @@ public sealed class PlayFieldMovementTests
         // but hunt the playfield center so the aim is unbounded.
         IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 100, bounds.Y + 100);
-        var hulk = new Hulk(spot, new Random(7), hulkSpeedRomTicks: 8, () => center);
+        var hulk = new Hulk(TestSprites.Shared, spot, new Random(7), hulkSpeedRomTicks: 8, () => center);
         field.AddHulk(hulk);
 
         // End the player's start grace period (robots are frozen during it).
@@ -104,7 +104,7 @@ public sealed class PlayFieldMovementTests
         Rectangle bounds = field.Wall.PlayfieldBounds;
         // Right up against the left wall, hunting a point that keeps it aimed left.
         IntVector2 spot = new(bounds.X + 4, bounds.Y + bounds.Height / 2 - 16);
-        var hulk = new Hulk(spot, new Random(11), hulkSpeedRomTicks: 5, () => spot);
+        var hulk = new Hulk(TestSprites.Shared, spot, new Random(11), hulkSpeedRomTicks: 5, () => spot);
         field.AddHulk(hulk);
 
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // end grace
@@ -136,6 +136,6 @@ public sealed class PlayFieldMovementTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayField(parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3);
+        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3);
     }
 }

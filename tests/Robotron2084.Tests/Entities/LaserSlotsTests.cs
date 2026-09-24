@@ -9,7 +9,7 @@ public sealed class LaserSlotsTests
     [Fact]
     public void TryFire_AllowsThreeLiveLasersThenRefusesTheFourth()
     {
-        LaserSlots slots = new();
+        LaserSlots slots = new(TestSprites.Shared);
 
         Assert.True(slots.TryFire(new IntVector2(100, 100), Direction8.Up, out _));
         Assert.True(slots.TryFire(new IntVector2(120, 100), Direction8.Up, out _));
@@ -21,7 +21,7 @@ public sealed class LaserSlotsTests
     [Fact]
     public void TryFire_AfterDeactivation_ReusesTheFreedSlot()
     {
-        LaserSlots slots = new();
+        LaserSlots slots = new(TestSprites.Shared);
 
         for (int i = 0; i < LaserSlots.Capacity; i++)
         {

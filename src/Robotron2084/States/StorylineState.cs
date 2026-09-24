@@ -93,20 +93,20 @@ public sealed class StorylineState : IGameState, IAttractState
             // EXPP: the explosion takes the picture the object was showing and the
             // direction of a pure HORIZONTAL laser ($FF00), which the Gospel's
             // dispatch turns into the ROW-splitting fan.
-            Texture2D? art = MovieArtTextures.Resolve(_sprites, exploded.Art, exploded.ImageIndex);
-            if (art is null)
+            Texture2D? animationFrame = MovieAnimationFrames.Resolve(_sprites, exploded.Animation, exploded.ImageIndex);
+            if (animationFrame is null)
             {
                 continue;
             }
 
             _explosions.Add(Explosion.StartExplosion(
                 new MovieExplosionSource(
-                    art,
+                    animationFrame,
                     new Rectangle(
                         GameplayConstants.ArcadeX(exploded.Column * 2),
                         GameplayConstants.ArcadeY(exploded.Row),
-                        ScreenSize.Scaled(art.Width),
-                        ScreenSize.Scaled(art.Height))),
+                        ScreenSize.Scaled(animationFrame.Width),
+                        ScreenSize.Scaled(animationFrame.Height))),
                 Direction8.Left,
                 Clip));
         }
@@ -144,7 +144,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         foreach (Explosion explosion in _explosions)
         {
-            explosion.Draw(spriteBatch, _sprites);
+            explosion.Draw(spriteBatch);
         }
 
         foreach (MovieTextCell cell in _movie.Page.Text)
@@ -202,8 +202,8 @@ public sealed class StorylineState : IGameState, IAttractState
                 continue;
             }
 
-            Texture2D? art = MovieArtTextures.Resolve(_sprites, descriptor.Art, item.ImageIndex);
-            if (art is null)
+            Texture2D? animationFrame = MovieAnimationFrames.Resolve(_sprites, descriptor.Animation, item.ImageIndex);
+            if (animationFrame is null)
             {
                 continue;
             }
@@ -211,8 +211,8 @@ public sealed class StorylineState : IGameState, IAttractState
             var bounds = new Rectangle(
                 GameplayConstants.ArcadeX(item.ArcadeX),
                 GameplayConstants.ArcadeY(item.ArcadeY),
-                ScreenSize.Scaled(art.Width),
-                ScreenSize.Scaled(art.Height));
+                ScreenSize.Scaled(animationFrame.Width),
+                ScreenSize.Scaled(animationFrame.Height));
 
             if (item.MonoActive)
             {
@@ -224,15 +224,15 @@ public sealed class StorylineState : IGameState, IAttractState
                     _sprites.DrawSolidRectangle(spriteBatch, bounds, _sprites.SlotColor(item.MonoBoxSlot));
                 }
 
-                _sprites.DrawSpriteSolid(spriteBatch, art, bounds, _sprites.SlotColor(item.MonoImageSlot));
+                _sprites.DrawSpriteSolid(spriteBatch, animationFrame, bounds, _sprites.SlotColor(item.MonoImageSlot));
                 if (item.MonoBrain)
                 {
-                    _sprites.DrawSprite(spriteBatch, art, bounds, Color.White);
+                    _sprites.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
                 }
             }
             else
             {
-                _sprites.DrawSprite(spriteBatch, art, bounds, Color.White);
+                _sprites.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
             }
         }
     }
@@ -261,13 +261,13 @@ public sealed class StorylineState : IGameState, IAttractState
 
         public EntityLifeState LifeState => EntityLifeState.Dead;
 
-        public Texture2D CurrentFrameArt(SpriteSet sprites) => _art;
+        public Texture2D CurrentAnimationFrame => _art;
 
         public void Update(GameTime gameTime, PlayField field)
         {
         }
 
-        public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+        public void Draw(SpriteBatch spriteBatch)
         {
         }
     }

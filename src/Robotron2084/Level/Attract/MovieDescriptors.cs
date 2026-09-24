@@ -27,22 +27,22 @@ public static class MovieDescriptors
     /// <summary>Every descriptor the movie's scripts reference, by ROM address.</summary>
     public static readonly (int Address, MovieDescriptor Descriptor)[] All =
     [
-        (Mommy, new MovieDescriptor(MovieArt.Mummy, 12, MovieWalk.Human)),
-        (Daddy, new MovieDescriptor(MovieArt.Daddy, 12, MovieWalk.Human)),
-        (Mikey, new MovieDescriptor(MovieArt.Mikey, 12, MovieWalk.Human)),
-        (Hulk, new MovieDescriptor(MovieArt.Hulk, 12, MovieWalk.Hulk)),
-        (Brain, new MovieDescriptor(MovieArt.Brain, 12, MovieWalk.BrainStep, 2, 8)),
-        (Grunt, new MovieDescriptor(MovieArt.Grunt, 3)),
-        (Posts, new MovieDescriptor(MovieArt.Posts, 36)),
-        (Enforcer, new MovieDescriptor(MovieArt.Enforcer, 6)),
-        (You, new MovieDescriptor(MovieArt.Player, 12, MovieWalk.BrainStep, 1, 2)),
-        (Square, new MovieDescriptor(MovieArt.Quark, 9)),
-        (Circle, new MovieDescriptor(MovieArt.Spheroid, 8)),
-        (TankGrow, new MovieDescriptor(MovieArt.TankGrow, 5)),
-        (Tank, new MovieDescriptor(MovieArt.Tank, 4)),
-        (Points, new MovieDescriptor(MovieArt.Points, 5)),
-        (Skull, new MovieDescriptor(MovieArt.Skull, 1)),
-        (Cruise, new MovieDescriptor(MovieArt.Cruise, 1)),
+        (Mommy, new MovieDescriptor(MovieAnimation.Mummy, 12, MovieWalk.Human)),
+        (Daddy, new MovieDescriptor(MovieAnimation.Daddy, 12, MovieWalk.Human)),
+        (Mikey, new MovieDescriptor(MovieAnimation.Mikey, 12, MovieWalk.Human)),
+        (Hulk, new MovieDescriptor(MovieAnimation.Hulk, 12, MovieWalk.Hulk)),
+        (Brain, new MovieDescriptor(MovieAnimation.Brain, 12, MovieWalk.BrainStep, 2, 8)),
+        (Grunt, new MovieDescriptor(MovieAnimation.Grunt, 3)),
+        (Posts, new MovieDescriptor(MovieAnimation.Posts, 36)),
+        (Enforcer, new MovieDescriptor(MovieAnimation.Enforcer, 6)),
+        (You, new MovieDescriptor(MovieAnimation.Player, 12, MovieWalk.BrainStep, 1, 2)),
+        (Square, new MovieDescriptor(MovieAnimation.Quark, 9)),
+        (Circle, new MovieDescriptor(MovieAnimation.Spheroid, 8)),
+        (TankGrow, new MovieDescriptor(MovieAnimation.TankGrow, 5)),
+        (Tank, new MovieDescriptor(MovieAnimation.Tank, 4)),
+        (Points, new MovieDescriptor(MovieAnimation.Points, 5)),
+        (Skull, new MovieDescriptor(MovieAnimation.Skull, 1)),
+        (Cruise, new MovieDescriptor(MovieAnimation.Cruise, 1)),
     ];
 
     /// <summary>Resolves a SETOB operand, or null when the address is not a movie descriptor.</summary>

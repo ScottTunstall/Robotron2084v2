@@ -13,17 +13,18 @@ namespace Robotron2084.Entities;
 /// player. The picture is one of the ROM's four laser shapes (R5 $35BE-$35DC: <c>LLPC</c>,
 /// <c>ULPC</c>, <c>DLLPC</c>, <c>ULLPC</c>), chosen for the direction by <c>LTAB</c> (RRG23.ASM) and
 /// centred in the box — the arcade never flips the art (notes §19).</remarks>
-public sealed class PlayerLaser : IEntity, IArtSource
+public sealed class PlayerLaser : IEntity, IAnimationFrameSource
 {
-    private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
+    private readonly SpriteSet _sprites;    private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
 
     private IntVector2 _position;
 
     /// <summary>Starts a laser travelling in the given direction.</summary>
     /// <param name="position">Where it starts — the player's muzzle offset for that direction.</param>
     /// <param name="direction">The direction it travels in; it never changes.</param>
-    public PlayerLaser(IntVector2 position, Direction8 direction)
+    public PlayerLaser(SpriteSet sprites, IntVector2 position, Direction8 direction)
     {
+        _sprites = sprites;
         _position = position;
         Direction = direction;
     }
@@ -66,26 +67,24 @@ public sealed class PlayerLaser : IEntity, IArtSource
     /// <summary>Draws the picture for this laser's direction.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The shared sprite set.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
 
-        Texture2D art = CurrentFrameArt(sprites);
-
-        sprites.DrawSprite(spriteBatch, art, Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The picture for this laser's direction — the ROM's four laser arts (`LTAB`, notes §19).</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    public Texture2D CurrentFrameArt(SpriteSet sprites) => Direction switch
+    public Texture2D CurrentAnimationFrame => Direction switch
     {
-        Direction8.Left or Direction8.Right => sprites.LaserBar,
-        Direction8.Up or Direction8.Down => sprites.LaserColumn,
-        Direction8.UpLeft or Direction8.DownRight => sprites.LaserDiagonalMain,
-        Direction8.DownLeft or Direction8.UpRight => sprites.LaserDiagonalAnti,
+        Direction8.Left or Direction8.Right => _sprites.LaserBar,
+        Direction8.Up or Direction8.Down => _sprites.LaserColumn,
+        Direction8.UpLeft or Direction8.DownRight => _sprites.LaserDiagonalMain,
+        Direction8.DownLeft or Direction8.UpRight => _sprites.LaserDiagonalAnti,
         _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}"),
     };
 
