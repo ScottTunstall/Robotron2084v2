@@ -676,7 +676,6 @@ public static class GameplayConstants
     public const int MissileHeadSlot = 0x0A;   // $AA
     public const int MissileTrailSlot = 0x0D;  // $DD
 
-    /// <summary>Arcade px covered by one CMMOV video write: a 16-bit word = 1 x 2.</summary>
     /// <summary>
     /// ROM CMMOV's mark: `LDD #$AAAA / LDY OX16,X / STD ,Y` — a 16-BIT write at
     /// the video address. The video is column-major (`column*256 + row`) with 2 px
