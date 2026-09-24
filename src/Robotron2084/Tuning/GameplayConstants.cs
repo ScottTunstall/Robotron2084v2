@@ -488,10 +488,9 @@ public static class GameplayConstants
     // band reads as eight colours chasing at once).
 
     // The game-over message: RRG23 PLEND prints string 40 (GOMP = "GAME OVER") in
-    // the LARGE font, colour $AA, at CURSAB $3E,$80, and waits NAP 120.
+    // the LARGE font, colour $AA, at CURSAB $3E,$80, and waits NAP 120. Its cursor is
+    // the Messages block's GameOverMessageColumn/Row.
     public const int GameOverMessageRomFrames = 120;
-    public const int GameOverTextColumn = 62;
-    public const int GameOverTextRow = 128;
     public const int GameOverTextSlot = 10;
 
     // INITIALS ENTRY (notes §116) — RRTESTC's ENDGAM/EGSUB, RRET's messages 95 (CONG) and 100

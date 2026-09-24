@@ -72,8 +72,8 @@ public sealed class GameOverState : IGameState
         _services.Sprites.DrawLargeFontText(
             spriteBatch,
             "GAME OVER",
-            GameplayConstants.ArcadeColumnX(GameplayConstants.GameOverTextColumn),
-            GameplayConstants.ArcadeY(GameplayConstants.GameOverTextRow),
+                GameplayConstants.ArcadeColumnX(GameplayConstants.GameOverMessageColumn),
+                GameplayConstants.ArcadeY(GameplayConstants.GameOverMessageRow),
             GameplayConstants.GameOverTextSlot);
     }
 }
