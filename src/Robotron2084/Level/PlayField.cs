@@ -1038,8 +1038,7 @@ public sealed class PlayField
     }
 
     // ---- Draw order (plan 9.4, merged from the spec's two lists — a single
-    //      ordered pass satisfies both; explosions/human family are deferred
-    //      per spec's "to be added later") ----
+    //      ordered pass satisfies both) ----
 
     public void Draw(SpriteBatch spriteBatch)
     {
