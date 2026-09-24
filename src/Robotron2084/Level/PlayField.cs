@@ -1013,7 +1013,7 @@ public sealed class PlayField
         /// <summary>True for `LASDIV` (a top/bottom wall): LASCOL dithered with WALCOL.</summary>
         public bool Dithered { get; } = dithered;
 
-        /// <summary>`NAP 2` = 2 ROM frames = 12 sixths (notes §52).;</summary>
+        /// <summary>How long the flare lasts: <c>NAP 2</c>, two ROM frames, counted in the port's clock units (notes §52).</summary>
         public int FifthsRemaining { get; set; } = 2 * 6;
     }
 
