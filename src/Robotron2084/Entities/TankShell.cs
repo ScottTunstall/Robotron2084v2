@@ -66,6 +66,8 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="field">The playfield wall.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
+        BouncedThisUpdate = false;
+
         if (LifeState == EntityLifeState.Dead)
         {
             return;
@@ -86,7 +88,6 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
             _moveTimer -= 6;
             IntVector2 next = _position + _velocity;
             Rectangle bounds = field.Wall.PlayfieldBounds;
-            BouncedThisUpdate = false;
             if (next.X < bounds.X || next.X + BoxWidth > bounds.Right)
             {
                 _velocity = new IntVector2(-_velocity.X, _velocity.Y);

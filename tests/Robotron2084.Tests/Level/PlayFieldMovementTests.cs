@@ -69,6 +69,53 @@ public sealed class PlayFieldMovementTests
     }
 
     [Fact]
+    public void TankShell_ReportsNoBounceOnATickWhereItDoesNotMove()
+    {
+        PlayField field = CreateEmptyField();
+        Rectangle bounds = field.Wall.PlayfieldBounds;
+
+        // The mover earns 5 a tick and needs 6, so a shell moves on 5 ticks in 6.
+        // A bounce is only real on a tick that moves; on the tick with no move the
+        // flag must be clear, or PlayField asks for the bounce sound a second time.
+        // Measure the speed off a probe first (X is +5 with a -1..1 jitter) so the
+        // bounce can be dropped exactly on the 6th move, whose next tick is one of
+        // the no-move ticks.
+        var probe = new TankShell(
+            TestSprites.Shared,
+            new IntVector2(bounds.X + 100, bounds.Y + bounds.Height / 2),
+            new IntVector2(1, 0),
+            new Random(7));
+        probe.Update(new GameTime(), field);
+
+        int stepX = probe.Position.X - (bounds.X + 100);
+        int boxWidth = probe.Bounds.Width;
+        Assert.True(stepX > 0, "the shell should fly to the right");
+
+        var shell = new TankShell(
+            TestSprites.Shared,
+            new IntVector2(bounds.Right - boxWidth - (5 * stepX), bounds.Y + bounds.Height / 2),
+            new IntVector2(1, 0),
+            new Random(7));
+        field.AddTankShell(shell);
+
+        for (int tick = 0; tick < 12; tick++)
+        {
+            IntVector2 before = shell.Position;
+            shell.Update(new GameTime(), field);
+            bool moved = shell.Position != before;
+
+            if (tick == 5)
+            {
+                Assert.True(shell.BouncedThisUpdate, "the shell should have bounced off the right wall on its 6th move");
+            }
+            else if (!moved)
+            {
+                Assert.False(shell.BouncedThisUpdate, $"the shell reported a bounce on tick {tick + 1}, where it did not move");
+            }
+        }
+    }
+
+    [Fact]
     public void Hulk_StaysPutForOneStepPeriodThenSteps_PortTicksOfHulkSpeed()
     {
         PlayField field = CreateEmptyField();
