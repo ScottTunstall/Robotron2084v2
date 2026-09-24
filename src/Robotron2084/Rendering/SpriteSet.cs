@@ -19,6 +19,22 @@ namespace Robotron2084.Rendering;
 /// </summary>
 public sealed class SpriteSet
 {
+    /// <summary>The colour-cycle shader's technique for a cycling glyph; must match
+    /// <c>Content/Effects/ColorCycle.fx</c>.</summary>
+    private const string GlyphCycleTechnique = "GlyphCycle";
+
+    /// <summary>The colour-cycle shader's glyph technique's slot parameter; must match
+    /// <c>Content/Effects/ColorCycle.fx</c>.</summary>
+    private const string GlyphSlotParameter = "SlotId";
+
+    /// <summary>The colour-cycle shader's technique for a solid fill; must match
+    /// <c>Content/Effects/ColorCycle.fx</c>.</summary>
+    private const string SolidRemapTechnique = "SolidRemap";
+
+    /// <summary>The colour-cycle shader's solid technique's colour parameter; must match
+    /// <c>Content/Effects/ColorCycle.fx</c>.</summary>
+    private const string SolidColorParameter = "RemapColor";
+
     /// <summary>Number of spark (enforcer bullet) frames — SPKP0..3 in the ROM (notes 32).</summary>
     public const int SparkFrameCount = 4;
 
@@ -406,10 +422,10 @@ public sealed class SpriteSet
         int w = ScreenSize.Scaled(glyph.Width);
         int h = ScreenSize.Scaled(glyph.Height);
         if (ColorCycleEffect is { } effect &&
-            effect.Techniques["GlyphCycle"] is { } technique)
+            effect.Techniques[GlyphCycleTechnique] is { } technique)
         {
             Palette?.UpdateEffectColors(effect);
-            effect.Parameters["SlotId"].SetValue((float)(slot - FontSlots.FirstCyclingSlot));
+            effect.Parameters[GlyphSlotParameter].SetValue((float)(slot - FontSlots.FirstCyclingSlot));
             technique.Passes[0].Apply();
         }
 
@@ -671,9 +687,9 @@ public sealed class SpriteSet
     public void DrawSpriteSolid(SpriteBatch spriteBatch, Texture2D texture, Rectangle bounds, Color color)
     {
         if (ColorCycleEffect is { } effect &&
-            effect.Techniques["SolidRemap"] is { } technique)
+            effect.Techniques[SolidRemapTechnique] is { } technique)
         {
-            effect.Parameters["RemapColor"].SetValue(color.ToVector4());
+            effect.Parameters[SolidColorParameter].SetValue(color.ToVector4());
             technique.Passes[0].Apply();
         }
 
