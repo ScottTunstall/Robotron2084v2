@@ -164,7 +164,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <param name="romFrame">The walk frame, 1..4.</param>
     /// <returns>The index into <see cref="SpriteSet.GruntFrames"/>.</returns>
     /// <remarks>Walk frames 1/2/3/4 map to pictures 1/2/1/3, so only three pictures are unique.</remarks>
-    internal static int WalkArtIndex(int romFrame) => romFrame switch
+    internal static int AnimationFrameIndexFor(int romFrame) => romFrame switch
     {
         2 => 1,
         4 => 2,
@@ -173,7 +173,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
 
     /// <summary>This grunt's current walk picture, for the appear and explosion effects.</summary>
     /// <returns>The texture for the current walk frame.</returns>
-    public Texture2D CurrentAnimationFrame => _sprites.GruntFrames[WalkArtIndex(_walkFrame)];
+    public Texture2D CurrentAnimationFrame => _sprites.GruntFrames[AnimationFrameIndexFor(_walkFrame)];
 
     /// <summary>Draws the current walk picture in the art's own colours.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
@@ -184,6 +184,6 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
             return;
         }
 
-        _sprites.DrawSprite(spriteBatch, _sprites.GruntFrames[WalkArtIndex(_walkFrame)], Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, _sprites.GruntFrames[AnimationFrameIndexFor(_walkFrame)], Bounds, Color.White);
     }
 }

@@ -45,7 +45,7 @@ public sealed class GruntAnimationTests
     [InlineData(4, 2)] // RWDP4 → RWDD3
     public void RomArtTable_MapsTheFourRWDPFramesOntoThreeRepoFrames(int romFrame, int repoIndex)
     {
-        Assert.Equal(repoIndex, Grunt.WalkArtIndex(romFrame));
+        Assert.Equal(repoIndex, Grunt.AnimationFrameIndexFor(romFrame));
     }
 
     [Fact]
