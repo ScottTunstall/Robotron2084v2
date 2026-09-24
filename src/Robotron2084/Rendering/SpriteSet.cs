@@ -35,6 +35,40 @@ public sealed class SpriteSet
     /// <c>Content/Effects/ColorCycle.fx</c>.</summary>
     private const string SolidColorParameter = "RemapColor";
 
+    /// <summary>Pictures in the player's walk cycle: 4 directions × 3 frames.</summary>
+    private const int PlayerFrameCount = 12;
+
+    /// <summary>The player picture drawn before the walk starts — the first DOWN-facing frame
+    /// (frames 1-3 left, 4-6 right, 7-9 down, 10-12 up).</summary>
+    private const int FirstDownFacingPlayerFrame = 6;
+
+    /// <summary>Pictures in one walk cycle of a family member or the brain — 4 directions x 3 frames.</summary>
+    private const int WalkCycleFrameCount = 12;
+
+    /// <summary>Pictures in the grunt's walk cycle.</summary>
+    private const int GruntFrameCount = 3;
+
+    /// <summary>Pictures in the hulk's walk cycle.</summary>
+    private const int HulkFrameCount = 9;
+
+    /// <summary>Pictures in the spheroid's spin/drop cycle.</summary>
+    private const int SpheroidFrameCount = 8;
+
+    /// <summary>Pictures in the enforcer's walk cycle.</summary>
+    private const int EnforcerFrameCount = 6;
+
+    /// <summary>Pictures in the quark's spin/drop cycle.</summary>
+    private const int QuarkFrameCount = 9;
+
+    /// <summary>Pictures in the tank's walk cycle.</summary>
+    private const int TankFrameCount = 4;
+
+    /// <summary>The electrode picture variants (nine families of three, see notes §47).</summary>
+    private const int ElectrodeFrameCount = 27;
+
+    /// <summary>Glyphs the small font's table carries up to the closing bracket.</summary>
+    private const int SmallFontGlyphCount = 38;
+
     /// <summary>Number of spark (enforcer bullet) frames — SPKP0..3 in the ROM (notes 32).</summary>
     public const int SparkFrameCount = 4;
 
@@ -228,24 +262,24 @@ public sealed class SpriteSet
     /// all in a headless test.</param>
     public SpriteSet(ISpriteSource source)
     {
-        PlayerFrames = source.LoadAll(NumberedNames("Sprites/Player", 12));
-        Player = PlayerFrames[6];
-        GruntFrames = source.LoadAll(NumberedNames("Sprites/Grunt", 3));
+        PlayerFrames = source.LoadAll(NumberedNames("Sprites/Player", PlayerFrameCount));
+        Player = PlayerFrames[FirstDownFacingPlayerFrame];
+        GruntFrames = source.LoadAll(NumberedNames("Sprites/Grunt", GruntFrameCount));
         Grunt = GruntFrames[0];
-        HulkFrames = source.LoadAll(NumberedNames("Sprites/Hulk", 9));
+        HulkFrames = source.LoadAll(NumberedNames("Sprites/Hulk", HulkFrameCount));
         Hulk = HulkFrames[0];
-        SpheroidFrames = source.LoadAll(NumberedNames("Sprites/Spheroid", 8));
-        EnforcerFrames = source.LoadAll(NumberedNames("Sprites/Enforcer", 6));
+        SpheroidFrames = source.LoadAll(NumberedNames("Sprites/Spheroid", SpheroidFrameCount));
+        EnforcerFrames = source.LoadAll(NumberedNames("Sprites/Enforcer", EnforcerFrameCount));
         Enforcer = EnforcerFrames[0];
-        QuarkFrames = source.LoadAll(NumberedNames("Sprites/Quark", 9));
-        TankFrames = source.LoadAll(NumberedNames("Sprites/Tank", 4));
+        QuarkFrames = source.LoadAll(NumberedNames("Sprites/Quark", QuarkFrameCount));
+        TankFrames = source.LoadAll(NumberedNames("Sprites/Tank", TankFrameCount));
         Tank = TankFrames[0];
 
         // ROM MTNKP1..4 (notes §53): the four birth pictures. Each is a
         // different size, so the drawer reads each texture's own dimensions
         // rather than the tank's collision box.
         TankGrowFrames = source.LoadAll(NumberedNames("Sprites/TankGrow", GameplayConstants.TankGrowSteps));
-        ElectrodeFrames = source.LoadAll(NumberedNames("Sprites/Electrode", 27));
+        ElectrodeFrames = source.LoadAll(NumberedNames("Sprites/Electrode", ElectrodeFrameCount));
         Electrode = ElectrodeFrames[0];
         SparkFrames = source.LoadAll(NumberedNames("Sprites/Spark", SparkFrameCount));
         Spark = SparkFrames[0];
@@ -258,10 +292,10 @@ public sealed class SpriteSet
             "Sprites/Score_4000",
             "Sprites/Score_5000",
         ]);
-        MikeyFrames = source.LoadAll(NumberedNames("Sprites/Mikey", 12));
-        MomFrames = source.LoadAll(NumberedNames("Sprites/Mummy", 12));
-        DadFrames = source.LoadAll(NumberedNames("Sprites/Daddy", 12));
-        BrainFrames = source.LoadAll(NumberedNames("Sprites/Brain", 12));
+        MikeyFrames = source.LoadAll(NumberedNames("Sprites/Mikey", WalkCycleFrameCount));
+        MomFrames = source.LoadAll(NumberedNames("Sprites/Mummy", WalkCycleFrameCount));
+        DadFrames = source.LoadAll(NumberedNames("Sprites/Daddy", WalkCycleFrameCount));
+        BrainFrames = source.LoadAll(NumberedNames("Sprites/Brain", WalkCycleFrameCount));
         ProgBurst = source.Load("Sprites/ProgBurst");
         TitleWordmarkCore = source.Load("Sprites/Title_Wordmark_Core");
         TitleWordmarkRim = source.Load("Sprites/Title_Wordmark_Rim");
@@ -288,7 +322,7 @@ public sealed class SpriteSet
         WallPixel = source.CreateSolid(1, 1, Color.White);
         MiniMan = BuildMiniMan(source);
         FontLarge = source.LoadAll(GlyphNames("Sprites/Font_L", GlyphSuffixes.Length));
-        FontSmall = source.LoadAll(GlyphNames("Sprites/Font_S", 38));
+        FontSmall = source.LoadAll(GlyphNames("Sprites/Font_S", SmallFontGlyphCount));
         CursorArrow = source.Load("Sprites/Font_S_cursorright");
     }
 
