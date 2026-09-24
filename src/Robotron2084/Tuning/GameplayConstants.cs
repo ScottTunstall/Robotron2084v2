@@ -129,8 +129,6 @@ public static class GameplayConstants
     public const int LaserSpeed = 12;
 
     // Electrode
-    // (No "death animation seconds": the post does not fade or blink — it plays
-    // its own 3-frame SHRIVEL, timing from RRP8's PKPROC table below.)
     // Post/electrode IMAGE per wave — RRG23.ASM `GTWCOL` ("GET WALL COLOR",
     // which sets all four per-wave values): `LDU #WCTAB / LDA PWAV,X / DECA`,
     // wrap the wave into 1..10 (`GTWL CMPA #9 / BLS / SUBA #10`), then
@@ -228,8 +226,6 @@ public static class GameplayConstants
     public const int ElectrodeMinDistanceFromPlayer = 40; // spec-px (apply ScreenSize.Scaled at the use site)
 
     // Grunt
-    // (No GruntDyingBlinkTicks: RRP8 ROBKIL is `JSR EXST` then `JSR KILROB` —
-    // explode then off. NO enemy in this game blinks on death; see notes §50.)
     public const int GruntMinDistanceFromPlayer = 20; // spec-px, spec-stated
 
     // Hulk — ROM RRH11: step period comes from the
@@ -252,20 +248,11 @@ public static class GameplayConstants
     // XMAX=$8F (RRF.ASM:69-70), i.e. column 10 / column 133 of the video buffer.
     public const int SpheroidEscapeExitLeftColumn = 10;
     public const int SpheroidEscapeExitRightColumn = 133;
-    // (No SpheroidDyingBlinkTicks: CIRKIL runs a 7-frame bubble burst — notes §50.)
-    // (No SpheroidFlash*: the spheroid does NOT flash. Its art is rendered in
-    // colour-CYCLING palette slots, which is what spec.txt's "flashing light
-    // green" describes and what the M4 marker remap already produces — author,
-    // 2026-09-16. The invented visible-20/hidden-10 toggle is gone.)
     public const int SpheroidMinDistanceFromPlayer = 100; // spec-px, spec-stated
     public const int SpheroidNearWallBiasPercent = 70;
     public const int SpheroidNearWallBiasDistance = 30; // spec-px
 
     // Enforcer (R5 retune, notes §17)
-    // No EnforcerDyingBlinkTicks: RRC11 ENFKIL does `JSR KILOFP` (image and
-    // process gone immediately) then `JSR EXST` (explode) — the enforcer has no
-    // death animation at all (author, 2026-09-16: "enforcers shouldn't flash
-    // when hit"). Same defect class as the grunt in §44.
     public const int GlobalActiveSparkCap = 20; // R5 $1412: $14 (20) sparks max
 
     // Quark — from the GOSPEL (RRTK4 `SQUARE` + `SQVEL`; notes §43,
@@ -293,10 +280,6 @@ public static class GameplayConstants
     public const int QuarkFleeExitHighArcadePixels = 16; // ... or Y >= YMAX-16 → gone
     public const int QuarkTravelFrames = 5;  // SQP0..SQP4 while wandering
     public const int QuarkTotalFrames = 9;   // SQP0..SQP8 once it starts dropping tanks
-    // (No QuarkDyingBlinkTicks: SQKIL runs a bespoke 8-step burst — notes §50.)
-    // (No QuarkFlash*: the quark does NOT flash — author, 2026-09-16. Its art
-    // uses cycling-slot colours, which the M4 shader handles already.)
-
 
     // $4CAC (`TNKDRP`): the tank's blitter address = the quark's + `ADDD #$0206`,
     // i.e. **+2 COLUMNS and +6 ROWS — not +2 px**. A column is 2 px (notes §53),
@@ -304,9 +287,6 @@ public static class GameplayConstants
     // first UNLESS the quark sits exactly on the
     // top wall (`CMPB #YMIN / BEQ TNKDP1 / DECB`), so a tank normally lands 5 rows
     // below its quark and 6 on the top wall.
-    // (No TankFlash*: the tank does NOT flash — author, 2026-09-16: "Quarks and
-    // tanks should not flash". Its art DOES use cycling-slot colours, which the
-    // M4 shader handles; the flicker was a separate, invented visibility gate.)
     public const int TankBirthOffsetX = 8;   // +2 columns = 4 arcade px
     public const int TankBirthOffsetY = 12;  // +6 rows (quark on the TOP wall)
 
