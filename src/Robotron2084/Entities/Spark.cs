@@ -25,7 +25,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     private readonly SpriteSet _sprites;
     private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
     private readonly Random _random;
-    private readonly int _stepScale; // 1 port px = 256 subpixel units
     private readonly IntVector2 _accelerationSubpixels; // the constant per-axis acceleration, in 1/256 px per move, rolled once at spawn (ROM: PD2/PD4)
     private IntVector2 _velocitySubpixels; // current velocity, in 1/256 px per ROM frame (ROM: OXV/OYV)
     private IntVector2 _positionRemainderSubpixels; // carries the sub-pixel part so the step never drifts
@@ -50,8 +49,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _sprites = sprites;
         _position = position;
         _random = random;
-        // A per-frame step, not per move-pass: spreading it over the move interval runs 4x slow.
-        _stepScale = GameplayConstants.SparkVelocityScale;
 
         // Aim jitter, -16..+15 columns; suppressed on X when the player hugs the left wall.
         int jitterX = _random.Next(-GameplayConstants.SparkJitterColumns, GameplayConstants.SparkJitterColumns);
@@ -146,11 +143,13 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
                 _positionRemainderSubpixels.X + _velocitySubpixels.X,
                 _positionRemainderSubpixels.Y + _velocitySubpixels.Y);
 
-            int stepX = _positionRemainderSubpixels.X / _stepScale;
-            int stepY = _positionRemainderSubpixels.Y / _stepScale;
+            // The step is per ROM frame, not per move-pass: spreading it over the move interval
+            // runs 4x slow. 1 port px = SparkVelocityScale subpixel units.
+            int stepX = _positionRemainderSubpixels.X / GameplayConstants.SparkVelocityScale;
+            int stepY = _positionRemainderSubpixels.Y / GameplayConstants.SparkVelocityScale;
             _positionRemainderSubpixels = new IntVector2(
-                _positionRemainderSubpixels.X - (stepX * _stepScale),
-                _positionRemainderSubpixels.Y - (stepY * _stepScale));
+                _positionRemainderSubpixels.X - (stepX * GameplayConstants.SparkVelocityScale),
+                _positionRemainderSubpixels.Y - (stepY * GameplayConstants.SparkVelocityScale));
 
             MoveBy(field, stepX, stepY);
         }
