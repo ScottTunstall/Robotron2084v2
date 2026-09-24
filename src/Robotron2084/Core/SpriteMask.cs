@@ -71,7 +71,7 @@ public sealed class SpriteMask
 
     /// <summary>
     /// True when the two pictures cover a common screen pixel. Each mask is placed by the rectangle its
-    /// picture is DRAWN in — <see cref="Rendering.SpriteSet.ArtRect"/> is the one definition of that
+    /// picture is DRAWN in — <see cref="Rendering.SpriteSet.DrawnRect"/> is the one definition of that
     /// placement, so the collision follows the art wherever the drawer puts it — and one picture pixel
     /// covers a square of screen pixels (the render scale).
     ///
