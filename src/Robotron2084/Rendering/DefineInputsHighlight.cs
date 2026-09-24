@@ -20,8 +20,9 @@ public sealed class DefineInputsHighlight
     /// </summary>
     public const int Slot = 8;
 
-    /// <summary>The page's GREEN (CRTAB slot 6) — the label's colour between flashes.</summary>
-    private const byte Green = 0x38;
+    /// <summary>The page's GREEN — the palette's own CRTAB value for slot 6, the label's colour
+    /// between flashes.</summary>
+    private static readonly byte Green = GamePalette.DefaultSlots[6];
 
     /// <summary>The chase's WHITE — the presentation page's own flash colour (ROM $8A64).</summary>
     private const byte White = 0xFF;
