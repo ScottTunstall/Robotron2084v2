@@ -1,5 +1,4 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Hud;
@@ -213,71 +212,101 @@ public sealed class SpriteSet
     /// <summary>M4: the live 16-slot palette the effect remaps into (slots 10-15 cycle).</summary>
     public GamePalette? Palette { get; set; }
 
-    public SpriteSet(GraphicsDevice device, ContentManager content)
+    /// <summary>Loads the game's artwork.</summary>
+    /// <param name="source">Where the pictures come from — the content pipeline in the game, and nothing at
+    /// all in a headless test.</param>
+    public SpriteSet(ISpriteSource source)
     {
-        var factory = new PixelArtFactory(device);
-        PlayerFrames = LoadRange(content, "Sprites/Player", 12);
+        PlayerFrames = source.LoadAll(NumberedNames("Sprites/Player", 12));
         Player = PlayerFrames[6];
-        GruntFrames = LoadRange(content, "Sprites/Grunt", 3);
+        GruntFrames = source.LoadAll(NumberedNames("Sprites/Grunt", 3));
         Grunt = GruntFrames[0];
-        HulkFrames = LoadRange(content, "Sprites/Hulk", 9);
+        HulkFrames = source.LoadAll(NumberedNames("Sprites/Hulk", 9));
         Hulk = HulkFrames[0];
-        SpheroidFrames = LoadRange(content, "Sprites/Spheroid", 8);
-        EnforcerFrames = LoadRange(content, "Sprites/Enforcer", 6);
+        SpheroidFrames = source.LoadAll(NumberedNames("Sprites/Spheroid", 8));
+        EnforcerFrames = source.LoadAll(NumberedNames("Sprites/Enforcer", 6));
         Enforcer = EnforcerFrames[0];
-        QuarkFrames = LoadRange(content, "Sprites/Quark", 9);
-        TankFrames = LoadRange(content, "Sprites/Tank", 4);
+        QuarkFrames = source.LoadAll(NumberedNames("Sprites/Quark", 9));
+        TankFrames = source.LoadAll(NumberedNames("Sprites/Tank", 4));
         Tank = TankFrames[0];
 
         // ROM MTNKP1..4 (notes §53): the four birth pictures. Each is a
         // different size, so the drawer reads each texture's own dimensions
         // rather than the tank's collision box.
-        TankGrowFrames = LoadRange(content, "Sprites/TankGrow", GameplayConstants.TankGrowSteps);
-        ElectrodeFrames = LoadRange(content, "Sprites/Electrode", 27);
+        TankGrowFrames = source.LoadAll(NumberedNames("Sprites/TankGrow", GameplayConstants.TankGrowSteps));
+        ElectrodeFrames = source.LoadAll(NumberedNames("Sprites/Electrode", 27));
         Electrode = ElectrodeFrames[0];
-        SparkFrames = LoadRange(content, "Sprites/Spark", SparkFrameCount);
+        SparkFrames = source.LoadAll(NumberedNames("Sprites/Spark", SparkFrameCount));
         Spark = SparkFrames[0];
-        Skull = content.Load<Texture2D>("Sprites/Skull");
-        RescueScoreDisplays =
+        Skull = source.Load("Sprites/Skull");
+        RescueScoreDisplays = source.LoadAll(
         [
-            content.Load<Texture2D>("Sprites/Score_1000"),
-            content.Load<Texture2D>("Sprites/Score_2000"),
-            content.Load<Texture2D>("Sprites/Score_3000"),
-            content.Load<Texture2D>("Sprites/Score_4000"),
-            content.Load<Texture2D>("Sprites/Score_5000"),
-        ];
-        MikeyFrames = LoadRange(content, "Sprites/Mikey", 12);
-        MomFrames = LoadRange(content, "Sprites/Mummy", 12);
-        DadFrames = LoadRange(content, "Sprites/Daddy", 12);
-        BrainFrames = LoadRange(content, "Sprites/Brain", 12);
-        ProgBurst = content.Load<Texture2D>("Sprites/ProgBurst");
-        TitleWordmarkCore = content.Load<Texture2D>("Sprites/Title_Wordmark_Core");
-        TitleWordmarkRim = content.Load<Texture2D>("Sprites/Title_Wordmark_Rim");
-        Title2084 = content.Load<Texture2D>("Sprites/Title_2084");
-        MissileSmallFrames =
+            "Sprites/Score_1000",
+            "Sprites/Score_2000",
+            "Sprites/Score_3000",
+            "Sprites/Score_4000",
+            "Sprites/Score_5000",
+        ]);
+        MikeyFrames = source.LoadAll(NumberedNames("Sprites/Mikey", 12));
+        MomFrames = source.LoadAll(NumberedNames("Sprites/Mummy", 12));
+        DadFrames = source.LoadAll(NumberedNames("Sprites/Daddy", 12));
+        BrainFrames = source.LoadAll(NumberedNames("Sprites/Brain", 12));
+        ProgBurst = source.Load("Sprites/ProgBurst");
+        TitleWordmarkCore = source.Load("Sprites/Title_Wordmark_Core");
+        TitleWordmarkRim = source.Load("Sprites/Title_Wordmark_Rim");
+        Title2084 = source.Load("Sprites/Title_2084");
+        MissileSmallFrames = source.LoadAll(
         [
-            content.Load<Texture2D>("Sprites/MissileSmall_0"),
-            content.Load<Texture2D>("Sprites/MissileSmall_1"),
-        ];
+            "Sprites/MissileSmall_0",
+            "Sprites/MissileSmall_1",
+        ]);
 
-        LaserBar = factory.Create(6, 1, PixelArtFactory.BuildLaserBarPattern(Color.White));
-        LaserColumn = factory.Create(2, 6, PixelArtFactory.BuildLaserColumnPattern(Color.White));
-        LaserDiagonalMain = factory.Create(6, 6, PixelArtFactory.BuildLaserDiagonalMainPattern(Color.White));
-        LaserDiagonalAnti = factory.Create(6, 6, PixelArtFactory.BuildLaserDiagonalAntiPattern(Color.White));
-        TankShell = content.Load<Texture2D>("Sprites/TankShell");
-        AttractCruise = content.Load<Texture2D>("Sprites/AttractCruise");
-        PostFrames =
+        LaserBar = source.Create(6, 1, PixelArtFactory.BuildLaserBarPattern(Color.White));
+        LaserColumn = source.Create(2, 6, PixelArtFactory.BuildLaserColumnPattern(Color.White));
+        LaserDiagonalMain = source.Create(6, 6, PixelArtFactory.BuildLaserDiagonalMainPattern(Color.White));
+        LaserDiagonalAnti = source.Create(6, 6, PixelArtFactory.BuildLaserDiagonalAntiPattern(Color.White));
+        TankShell = source.Load("Sprites/TankShell");
+        AttractCruise = source.Load("Sprites/AttractCruise");
+        PostFrames = source.LoadAll(
         [
-            content.Load<Texture2D>("Sprites/AttractPost_1"),
-            content.Load<Texture2D>("Sprites/AttractPost_2"),
-            content.Load<Texture2D>("Sprites/AttractPost_3"),
-            content.Load<Texture2D>("Sprites/AttractPost_4"),
-        ];
-        WallPixel = factory.CreateSolid(1, 1, Color.White);
-        MiniMan = BuildMiniMan(factory);
-        FontLarge = LoadGlyphs(content, "Sprites/Font_L", GlyphSuffixes.Length);
-        FontSmall = LoadGlyphs(content, "Sprites/Font_S", 38);
-        CursorArrow = content.Load<Texture2D>("Sprites/Font_S_cursorright");
+            "Sprites/AttractPost_1",
+            "Sprites/AttractPost_2",
+            "Sprites/AttractPost_3",
+            "Sprites/AttractPost_4",
+        ]);
+        WallPixel = source.CreateSolid(1, 1, Color.White);
+        MiniMan = BuildMiniMan(source);
+        FontLarge = source.LoadAll(GlyphNames("Sprites/Font_L", GlyphSuffixes.Length));
+        FontSmall = source.LoadAll(GlyphNames("Sprites/Font_S", 38));
+        CursorArrow = source.Load("Sprites/Font_S_cursorright");
+    }
+
+    /// <summary>The asset names of a numbered run, <c>{prefix}_1</c> … <c>{prefix}_{count}</c>.</summary>
+    /// <param name="prefix">The run's asset prefix.</param>
+    /// <param name="count">How many pictures the run holds.</param>
+    private static string[] NumberedNames(string prefix, int count)
+    {
+        var names = new string[count];
+        for (int i = 0; i < count; i++)
+        {
+            names[i] = string.Concat(prefix, '_', i + 1);
+        }
+
+        return names;
+    }
+
+    /// <summary>The asset names of a font's glyphs, which are numbered by character rather than by index.</summary>
+    /// <param name="prefix">The font's asset prefix.</param>
+    /// <param name="count">How many glyphs the font starts with.</param>
+    private static string[] GlyphNames(string prefix, int count)
+    {
+        var names = new string[count];
+        for (int i = 0; i < count; i++)
+        {
+            names[i] = string.Concat(prefix, '_', GlyphSuffixes[i]);
+        }
+
+        return names;
     }
 
     /// <summary>
@@ -288,9 +317,9 @@ public sealed class SpriteSet
     /// 11 (a CYCLING slot — the RGB process, which is why the little man's body
     /// shimmers), legs slot 8, feet slot 3.
     /// </summary>
-    private static Texture2D BuildMiniMan(PixelArtFactory factory)
+    private static Texture2D BuildMiniMan(ISpriteSource source)
     {
-        byte[] source =
+        byte[] nibbles =
         [
             0x02, 0x22, 0x00, // .222..
             0xBB, 0x0B, 0xB0, // BB.BB.
@@ -310,13 +339,13 @@ public sealed class SpriteSet
         {
             for (int column = 0; column < widthBytes * 2; column++)
             {
-                int value = (source[(row * widthBytes) + (column / 2)] >> (column % 2 == 0 ? 4 : 0)) & 0x0F;
+                int value = (nibbles[(row * widthBytes) + (column / 2)] >> (column % 2 == 0 ? 4 : 0)) & 0x0F;
                 pixels[(row * widthBytes * 2) + column] =
                     value == 0 ? Color.Transparent : PaletteColorForSlot(value);
             }
         }
 
-        return factory.Create(widthBytes * 2, height, pixels);
+        return source.Create(widthBytes * 2, height, pixels);
     }
 
     /// <summary>
@@ -353,17 +382,6 @@ public sealed class SpriteSet
         "(", ")", "colon", "arrowleft",
         "exclaim", "comma", "period", "hyphen",
     ];
-
-    private static Texture2D[] LoadGlyphs(ContentManager content, string prefix, int count)
-    {
-        var glyphs = new Texture2D[count];
-        for (int i = 0; i < count; i++)
-        {
-            glyphs[i] = content.Load<Texture2D>(string.Concat(prefix, '_', GlyphSuffixes[i]));
-        }
-
-        return glyphs;
-    }
 
     /// <summary>
     /// Draws a font glyph in a STATIC palette slot (0-9): the white master
@@ -731,16 +749,5 @@ public sealed class SpriteSet
             bounds.X + (bounds.Width - w) / 2,
             bounds.Y + (bounds.Height - h) / 2,
             w, h);
-    }
-
-    private static Texture2D[] LoadRange(ContentManager content, string prefix, int count)
-    {
-        var frames = new Texture2D[count];
-        for (int i = 0; i < count; i++)
-        {
-            frames[i] = content.Load<Texture2D>(string.Concat(prefix, '_', i + 1));
-        }
-
-        return frames;
     }
 }

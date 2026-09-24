@@ -76,7 +76,7 @@ public sealed class RobotronGame : Game
         // (Content/Effects/ColorCycle.fx — notes §3.3, §34).
         GamePalette palette = new();
         _paletteAnimator = new PaletteAnimator(palette);
-        _sprites = new SpriteSet(GraphicsDevice, Content)
+        _sprites = new SpriteSet(new ContentSpriteSource(GraphicsDevice, Content))
         {
             Palette = palette,
             ColorCycleEffect = Content.Load<Effect>("Effects/ColorCycle"),
