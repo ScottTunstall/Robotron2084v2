@@ -50,6 +50,8 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     private readonly HighScorePageHold _hold = new();
     private bool _rampsStarted;
 
+    /// <summary>Creates the table screen for the scores this session just offered.</summary>
+    /// <param name="services">The attract screens' shared dependencies.</param>
     /// <param name="postedScores">
     /// The scores this session just offered to the table (highest first) — the
     /// ROM's <c>ZP1SCR</c>/<c>ZP2SCR</c> at <c>CLSET</c> time: their rows are

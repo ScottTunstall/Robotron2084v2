@@ -20,6 +20,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource
     private IntVector2 _position;
 
     /// <summary>Starts a laser travelling in the given direction.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where it starts — the player's muzzle offset for that direction.</param>
     /// <param name="direction">The direction it travels in; it never changes.</param>
     public PlayerLaser(SpriteSet sprites, IntVector2 position, Direction8 direction)

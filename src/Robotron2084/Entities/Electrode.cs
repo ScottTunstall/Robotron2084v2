@@ -29,6 +29,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     private IntVector2 _position;
 
     /// <summary>Creates an electrode for the given wave.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the electrode.</param>
     /// <param name="wave">The wave number; it decides the post's picture family and its colour.</param>
     public Electrode(SpriteSet sprites, IntVector2 position, int wave = 1)

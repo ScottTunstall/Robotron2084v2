@@ -16,6 +16,7 @@ public sealed class ScoreBoard
     {
     }
 
+    /// <summary>Creates a board that carries a score over from a previous level.</summary>
     /// <param name="startingScore">
     /// Score carried over from a previous level (level restarts / wave clear
     /// hand the score across); thresholds already passed are skipped.

@@ -30,6 +30,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     private int _moveTimer; // counts up to one ROM frame's worth of ticks so the shell moves once per frame, not once per tick
 
     /// <summary>Fires a shell from the given position, aimed once at the player.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where the shell starts — the tank's muzzle, in port pixels.</param>
     /// <param name="towardPlayerDirection">Direction from the tank to the player; only its SIGNS are used, so the aim is always a 45° line.</param>
     /// <param name="random">Source of the ±1 px/frame aim jitter and of the fizzle time.</param>

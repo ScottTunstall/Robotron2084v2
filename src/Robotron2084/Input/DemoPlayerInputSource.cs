@@ -38,6 +38,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
     private int _directionVotes;
     private int _holdTicks;
 
+    /// <summary>Creates the phony player.</summary>
     /// <param name="random">Optional seedable RNG (tests); the demo uses the default.</param>
     public DemoPlayerInputSource(Random? random = null)
     {

@@ -79,6 +79,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     private int _frame;          // Current walk picture index, 0-11 into this family member's 12 frames.
 
     /// <summary>Creates one family member with its own stagger and starting direction.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the human.</param>
     /// <param name="kind">Which member — it decides the art and the collision box.</param>
     /// <param name="random">The random source for the direction, the step count and the stagger.</param>

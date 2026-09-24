@@ -24,6 +24,7 @@ public sealed class LevelParameterGenerator
     {
     }
 
+    /// <summary>Creates a generator that reads an optional designer table.</summary>
     /// <param name="levelTablePath">
     /// Optional CSV table (header: Level,GruntCount,HulkCount,SpheroidCount,
     /// QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark).

@@ -44,7 +44,7 @@ public sealed class TunnelPalette
 
     /// <summary>
     /// The ROM's twelve ramps with the random-start mask each descriptor carries at $576D
-    /// (`$0F`/`$1F`/`$3F` — the initial window is `random & mask` values in).
+    /// (`$0F`/`$1F`/`$3F` — the initial window is `random &amp; mask` values in).
     /// </summary>
     internal static readonly byte[][] Ramps =
     [
@@ -94,7 +94,7 @@ public sealed class TunnelPalette
     internal int BlackOffset => _blackOffset;
 
     /// <summary>
-    /// `$59B1`: pick a ramp at random, then a random window inside it (`random & mask`). The
+    /// `$59B1`: pick a ramp at random, then a random window inside it (`random &amp; mask`). The
     /// ROM's own initial `A` for the black slot is whatever the task block held; 4 is the
     /// value it settles into, and every pass cycles it 4,3,2,1,0.
     /// </summary>

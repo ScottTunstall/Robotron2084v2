@@ -26,6 +26,7 @@ public sealed class SkullMarker : IEntity
     private int _ticksRemaining;
 
     /// <summary>Leaves a skull at the given position.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where the human was killed.</param>
     public SkullMarker(SpriteSet sprites, IntVector2 position)
     {

@@ -67,6 +67,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private int _reAimBeatsRemaining;
 
     /// <summary>Fires a missile, with its first direction already rolled.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="origin">Where it appears.</param>
     /// <param name="playerPosition">The player's position, used for the first aim.</param>
     /// <param name="random">The random source for the aim and the re-aim timer.</param>

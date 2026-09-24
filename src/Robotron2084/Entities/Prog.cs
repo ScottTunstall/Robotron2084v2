@@ -114,6 +114,7 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>Makes a prog where the human was, carrying that human's art and box.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the prog.</param>
     /// <param name="kind">Which human it became; this picks the art and the collision box.</param>
     /// <param name="random">The random source: the aim offsets and the re-aim rolls.</param>

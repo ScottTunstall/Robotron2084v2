@@ -26,6 +26,7 @@ public sealed class RescueScoreMarker : IEntity
     private int _ticksRemaining;
 
     /// <summary>Shows the display for one rescue.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">The rescue spot.</param>
     /// <param name="rescuesThisLife">How many humans rescued this life, counting this one; the display caps at 5000.</param>
     public RescueScoreMarker(SpriteSet sprites, IntVector2 position, int rescuesThisLife)

@@ -841,7 +841,7 @@ public sealed class PlayField
     /// ROM grunt speedup (3A94-3A9F): `LDB #$E0 / MUL` → the delay × 224/256
     /// (TRUNCATED), and applied ONLY while the result is still ≥ the current
     /// $BE5D floor (which descends over the wave — see
-    /// <see cref="UpdateGruntSpeedProgress">). Applied to every surviving grunt,
+    /// <see cref="UpdateGruntSpeedProgress"/>). Applied to every surviving grunt,
     /// whose in-flight countdown is deliberately NOT touched (notes §67).
     /// </summary>
     internal void SpeedUpGrunts()

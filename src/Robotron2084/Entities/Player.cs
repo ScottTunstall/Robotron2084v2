@@ -69,6 +69,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private int _animFrameTicks = 1;
 
     /// <summary>Spawns the player at <paramref name="startPosition"/> with <paramref name="lives"/> men and the start grace running.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
     /// <param name="startPosition">Top-left of the player.</param>
     /// <param name="lives">How many men the player starts with; a death takes one off.</param>
     /// <param name="random">The random source for the death animation's colour, or null to create one.</param>
