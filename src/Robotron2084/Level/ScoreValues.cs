@@ -32,9 +32,11 @@ public static class ScoreValues
     /// <summary>Rescue bonus by running save count (1-based; capped at 5). ROM SVITAB.</summary>
     public const int RescueBonusMin = 1000;
 
-    public static int RescueBonus(int savesThisGame)
+    /// <summary>The bonus one rescue pays, given how many this life has rescued (1-based).</summary>
+    /// <param name="rescuesThisLife">Humans rescued this life, counting this one; the table caps at 5.</param>
+    public static int RescueBonus(int rescuesThisLife)
     {
-        int index = Math.Clamp(savesThisGame, 1, 5);
+        int index = Math.Clamp(rescuesThisLife, 1, 5);
         return RescueBonusMin * index;
     }
 }
