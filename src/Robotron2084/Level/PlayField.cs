@@ -648,7 +648,7 @@ public sealed class PlayField
     /// <summary>
     /// Phases 9 and 10 (plan 9.2): the player vs every robot kind that is fatal to touch — the walkers of phase
     /// 9 and the shots of phase 10, in <see cref="RobotKinds.All"/>'s order. Only the player dies (a missile is
-    /// not removed: only a laser removes those; it expires on its own lifetime).
+    /// not removed: only a laser removes those).
     /// </summary>
     private void ResolvePlayerVsContactKills()
     {
