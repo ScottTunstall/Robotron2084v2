@@ -94,7 +94,6 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         }
     }
 
-    /// <summary>The picture currently on screen — this family's alive frame, or its shrivel frame while dying.</summary>
     /// <summary>This electrode's picture: the live frame, or the current shrivel frame while it is dying.</summary>
     public Texture2D CurrentAnimationFrame
     {

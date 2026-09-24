@@ -197,7 +197,6 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
-    /// <summary>The frame an explosion would copy: the grow-up picture, or the full picture once grown.</summary>
     /// <summary>The picture on screen: a grow-up frame while it grows, else the full picture.</summary>
     /// <remarks>The grow frames are the ROM's ENGD1..5, which are frames 2..6 (1-based) of the set.</remarks>
     public Texture2D CurrentAnimationFrame
