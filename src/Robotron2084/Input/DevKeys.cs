@@ -25,7 +25,8 @@ namespace Robotron2084.Input;
 /// </summary>
 public static class DevKeys
 {
-    /// <summary>How many times a tick the movie's frame clock runs while F3 is held.</summary>
+    /// <summary>How many times a tick the movie's frame clock runs while the attract fast-forward key is
+    /// held (see <see cref="RobotronGame.HandleAttractDevKeys"/>).</summary>
     public const int AttractFastForwardMultiplier = 8;
 
     /// <summary>
@@ -34,6 +35,6 @@ public static class DevKeys
     /// </summary>
     public const int QualifyingScore = 45000;
 
-    /// <summary>True while F3 is held (set by the app shell every tick).</summary>
+    /// <summary>True while the attract fast-forward key is held (set by the app shell every tick).</summary>
     public static bool AttractFastForward { get; set; }
 }
