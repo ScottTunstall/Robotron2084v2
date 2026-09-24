@@ -4,11 +4,11 @@ using Robotron2084.Core;
 namespace Robotron2084.Tuning;
 
 /// <summary>
-/// Centralized gameplay tuning constants — the single file to edit to replace
-/// this project's original placeholder values with any other set of numbers.
-/// Every gameplay tunable in the codebase reads from here (plan Appendix A
-/// checklist; values are original placeholders unless marked "spec-stated").
+/// The gameplay tuning constants: every tunable the entities, the playfield and the HUD
+/// read, together with the values decoded from the arcade ROM.
 /// </summary>
+/// <remarks>Each constant's own summary gives its source — a ROM routine, a measurement
+/// or the author's own tuning.</remarks>
 public static class GameplayConstants
 {
     /// <summary>
