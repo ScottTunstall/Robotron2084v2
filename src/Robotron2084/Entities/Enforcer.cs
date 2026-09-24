@@ -11,7 +11,8 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Spheroid"/>
 /// <seealso cref="Spark"/>
 /// <remarks>ROM: RRC11.ASM's <c>ENFR1</c>/<c>ENFNV</c>/<c>ENFDRP</c> (notes §17). Growing takes five
-/// pictures of 9 frames (40 in all) and is immobile. It then aims at a spot in a 32x32 zone
+/// pictures of 9 frames (<see cref="GameplayConstants.EnforcerGrowUpRomFrames"/> in all) and is immobile.
+/// It then aims at a spot in a 32x32 zone
 /// down-right of the player and moves at half the remaining distance, so it loiters as it closes. It
 /// flies over electrodes and dies outright when hit, with no Dying state and no flash. The fire timer
 /// re-arms before the 20-spark cap is checked, so a shot the cap swallows is simply lost. Timers count
