@@ -7,14 +7,13 @@ namespace Robotron2084.Input;
 /// each exactly -1, 0, or 1 (8-way digital direction, per the integer-math
 /// policy); <see cref="IntVector2.Zero"/> means no movement.
 ///
-/// Two-stick layout (user requirement, 2026-09-12): <see cref="MoveDirection"/>
-/// is the move stick (WASD / left stick) and <see cref="AimDirection"/> is the
-/// aim stick (IJKL; gamepad right stick deferred). When <see cref="AimDirection"/>
+/// Two-stick layout: <see cref="MoveDirection"/> is the move stick and
+/// <see cref="AimDirection"/> is the aim stick. When <see cref="AimDirection"/>
 /// is zero the player fires in their current facing direction.
 ///
-/// <see cref="SkipLevelPressed"/> is the port's test key (P, 2026-09-13
-/// round 6): clears the current level immediately so the author can jump
-/// between waves while playtesting. No arcade counterpart.
+/// <see cref="SkipLevelPressed"/> is a port-only playtest input: it clears the
+/// current level immediately, so the author can jump between waves. No arcade
+/// counterpart.
 ///
 /// <see cref="StartOnePlayerPressed"/> / <see cref="StartTwoPlayersPressed"/>
 /// are the arcade's coin-door START 1 / START 2 buttons (ROM PIA2 B4/B5 → RRG23
@@ -28,7 +27,7 @@ public readonly record struct PlayerInputState(
     bool StartOnePlayerPressed = false,
     bool StartTwoPlayersPressed = false)
 {
-    /// <summary>No-aim constructor (gamepad for now; aim stick is deferred).</summary>
+    /// <summary>No-aim constructor: the player fires along their facing direction.</summary>
     public PlayerInputState(IntVector2 moveDirection, bool firePressed)
         : this(moveDirection, IntVector2.Zero, firePressed)
     {
