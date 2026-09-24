@@ -1,16 +1,6 @@
 namespace Robotron2084.Level.Attract;
 
 /// <summary>
-/// One character the movie has printed: where (arcade pixels / rows) and in which
-/// palette slot. The ROM blits characters straight onto the screen; the port
-/// keeps them as a layer so the renderer can draw them with the arcade font.
-/// </summary>
-public readonly record struct MovieTextCell(int X, int Y, char Character, int Slot);
-
-/// <summary>A MESS popup — one of the ROM's message strings in the score row.</summary>
-public readonly record struct MovieMessage(int X, int Y, string Text, int Slot);
-
-/// <summary>
 /// The attract movie's PAGE-script interpreter (notes §95.2): the ROM's SPWAKE
 /// loop, which walks a byte stream that is one third text, one third actions and
 /// one third sleeps:

@@ -1,34 +1,6 @@
 namespace Robotron2084.Audio;
 
 /// <summary>
-/// One entry of a ROM sound table (notes §36.2, R5 $D3E0): play
-/// <see cref="Note"/> <see cref="Dur"/> times, each repetition sounding for
-/// <see cref="Len"/> vblanks. A table ends at the first entry whose
-/// <see cref="Dur"/> is 0 (the port passes pre-trimmed tables).
-/// </summary>
-public readonly record struct SoundEntry(byte Dur, byte Len, byte Note);
-
-/// <summary>
-/// A decoded ROM sound: the request <see cref="Priority"/> (the byte the ROM
-/// call sites point at) and the (dur, len, note) entries that follow it.
-/// <see cref="RomTableAddress"/> is the table address in
-/// <c>ref/rom/robotron64k.bin</c>, for provenance.
-/// </summary>
-public sealed record SoundSequence(int Priority, int RomTableAddress, SoundEntry[] Entries);
-
-/// <summary>
-/// Audio backend for <see cref="SoundEngine"/>. The port calls
-/// <see cref="PlayNote"/> when the sequencer (re)sounds a note; the sink
-/// holds the tone for <paramref name="ticks"/> port ticks.
-/// <see cref="Tick"/> retires expired tones (called once per port tick).
-/// </summary>
-public interface IAudioSink
-{
-    void PlayNote(int note, int ticks);
-    void Tick();
-}
-
-/// <summary>
 /// Single-voice priority sound sequencer, ported from the R5 disasm
 /// (notes §36.2): request $D3C7 (play only when the requested priority is
 /// STRICTLY higher than the one currently sounding — the ROM's

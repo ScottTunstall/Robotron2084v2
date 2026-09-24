@@ -4,25 +4,6 @@ using Robotron2084.Core;
 
 namespace Robotron2084.Input;
 
-/// <summary>What a binding is attached to.</summary>
-public enum InputBindingKind
-{
-    /// <summary>Nothing — the action is unbound.</summary>
-    None,
-
-    /// <summary>A keyboard key (<see cref="InputBinding.Code"/> is a <see cref="Keys"/>).</summary>
-    Key,
-
-    /// <summary>A gamepad button (<see cref="InputBinding.Code"/> is a <see cref="Buttons"/>).</summary>
-    GamePadButton,
-
-    /// <summary>A left-stick direction (<see cref="InputBinding.Code"/> is a direction code).</summary>
-    GamePadLeftStick,
-
-    /// <summary>A right-stick direction.</summary>
-    GamePadRightStick,
-}
-
 /// <summary>
 /// One thing the player can press: a keyboard key, a gamepad button, or one of a
 /// stick's eight directions. Port-only (notes §101) — the arcade cabinet's wiring
@@ -256,25 +237,3 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     ];
 }
 
-/// <summary>
-/// Reads a gamepad stick as one of the eight directions (or zero), dead-zoned and
-/// quantized. The single place floating point touches port-only input code:
-/// <see cref="GamePadState.ThumbSticks"/> is <see cref="Vector2"/> at the
-/// hardware boundary and is quantized before it leaves.
-/// </summary>
-public static class GamePadSticks
-{
-    private const float DeadZoneLengthSquared = 0.0625f; // 0.25^2 — still-centered
-
-    /// <summary>The stick's direction in SCREEN space (Y down-positive), or zero when centred.</summary>
-    public static IntVector2 Read(GamePadState pad, bool rightStick)
-    {
-        Vector2 stick = rightStick ? pad.ThumbSticks.Right : pad.ThumbSticks.Left;
-        if (stick.LengthSquared() < DeadZoneLengthSquared)
-        {
-            return IntVector2.Zero;
-        }
-
-        return new IntVector2(Math.Sign(stick.X), Math.Sign(-stick.Y));
-    }
-}

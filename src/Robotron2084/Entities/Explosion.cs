@@ -7,23 +7,6 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>Which way the dying sprite is cut up: <see cref="Rows"/> fans up/down, <see cref="Columns"/> left/right.</summary>
-/// <remarks>ROM: separate code per axis — <see cref="Rows"/> by the vertical-fan code
-/// (RRX7.ASM/RRDX2.ASM), <see cref="Columns"/> by the horizontal-fan code (RRHX4.ASM).</remarks>
-public enum StripFanAxis
-{
-    Rows,
-    Columns,
-}
-
-/// <summary>The playfield interior in the strip engine's units: X in art pixels, Y in rows.</summary>
-/// <remarks>ROM: RRF.ASM's playfield-edge constants, here expressed as the wall rectangle. A strip
-/// outside it is dropped, never scaled.</remarks>
-public readonly record struct StripClip(int MinX, int MaxX, int MinY, int MaxY);
-
-/// <summary>One strip to draw: the source index (row or column) and its top-left.</summary>
-public readonly record struct Strip(int SourceIndex, int X, int Y);
-
 /// <summary>The shared strip death effect: the dying sprite's rows or columns fan apart.</summary>
 /// <remarks>ROM: the enemy-death and directional-explosion routines plus their shared setup and
 /// per-frame layout code (RRX7.ASM/RRHX4.ASM/RRDX2.ASM; notes §61). An explosion runs a fixed number

@@ -2,16 +2,6 @@ using Microsoft.Xna.Framework;
 
 namespace Robotron2084.Core;
 
-/// <summary>How the canvas is fitted into the window.</summary>
-public enum ScaleMode
-{
-    /// <summary>The largest whole multiple of the canvas that fits — the crisp default for pixel art.</summary>
-    Integer,
-
-    /// <summary>The exact uniform fraction, so the canvas fills as much of the window as its shape allows.</summary>
-    Fill,
-}
-
 /// <summary>Fits the canvas into a window's client area: one scale for both axes, centred, black bars where it does not fit.</summary>
 /// <remarks>Port-only: the arcade's canvas IS its screen, so it has no fit to choose. The canvas is never
 /// stretched — it keeps the shape <see cref="ScreenSize.SpecWidth"/>:<see cref="ScreenSize.SpecHeight"/>

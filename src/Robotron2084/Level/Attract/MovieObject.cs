@@ -1,13 +1,6 @@
 namespace Robotron2084.Level.Attract;
 
 /// <summary>
-/// One EXP: the ROM removes the object (`KILLOF`) and starts the strip explosion
-/// with the picture the object was showing at the object's own corner, its centre
-/// row forced to ACTHIT+6 (notes §95.5).
-/// </summary>
-public readonly record struct MovieExplosion(MovieArt Art, int ImageIndex, int Column, int Row);
-
-/// <summary>
 /// One object in the attract movie (notes §95.3): a picture, a position, a
 /// velocity, and (for the walking characters) a walker state. The movie's
 /// objects are the ROM's `OBJ` blocks — plain data; the SCRIPT process that

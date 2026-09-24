@@ -1,16 +1,6 @@
 namespace Robotron2084.Persistence;
 
 /// <summary>
-/// The arcade's "GOD" entry (notes §98.2): the operator's own top score and the
-/// name that goes with it (<c>GODSCR</c>/<c>GODINT</c> — up to <see
-/// cref="HighScoreTable.TopNameLength"/> characters, entered from the service
-/// mode's "ENTER GODS NAME"). The port seeds it with the ROM's factory value
-/// ("WILLY ELKTRIX", 151782 — RRTESTC's <c>DEFHSR</c>/<c>DEFGOD</c>) because the
-/// operator side is deliberately out of scope (D-019).
-/// </summary>
-public sealed record TopScoreEntry(string Name, int Score);
-
-/// <summary>
 /// The arcade's high score table (notes §98): the operator's "GOD" entry, the
 /// ALL-TIME list (ROM <c>CMSCOR</c> — the 36 rows the screen shows, 12 per
 /// column × 3 columns) and the "TODAY'S" list (ROM <c>TODAYS</c> — the 10 rows
