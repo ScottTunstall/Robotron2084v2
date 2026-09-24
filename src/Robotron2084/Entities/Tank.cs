@@ -43,7 +43,10 @@ public sealed class Tank : IExplodable, IRemovable
     private IntVector2 _destination;
     private int _aimBeatsRemaining;
     private int _fireCooldownBeats;
-    private int _animationTicks;
+
+    /// <summary>Counts the tread pictures shown, one per beat.</summary>
+    /// <remarks>ROM: <c>TANK3</c> advances the picture once per beat.</remarks>
+    private int _treadFrameCounter;
 
     /// <summary>Counts up to the next beat.</summary>
     private int _beatTimer;
@@ -111,8 +114,6 @@ public sealed class Tank : IExplodable, IRemovable
         {
             return;
         }
-
-        _animationTicks++;
 
         if (field.RobotsFrozen)
         {
@@ -187,7 +188,7 @@ public sealed class Tank : IExplodable, IRemovable
             _position = next;
         }
 
-        _animationTicks++; // one walk frame per beat (ROM: `TANK3` advances the picture once)
+        _treadFrameCounter++; // one walk frame per beat (ROM: `TANK3` advances the picture once)
 
         // The re-aim timer counts down in beats; a blocked step already turned the tank (ROM: TANKND).
         if (--_aimBeatsRemaining <= 0)
@@ -270,10 +271,20 @@ public sealed class Tank : IExplodable, IRemovable
                 return _sprites.TankGrowFrames[_growStep];
             }
 
+            return _sprites.TankFrames[TreadFrameIndex];
+        }
+    }
+
+    /// <summary>Which tread picture is showing: the index into <see cref="SpriteSet.TankFrames"/>.</summary>
+    /// <remarks>Playing backwards while the tank moves left is the ROM's own rule: TANK3 takes the
+    /// direction from the X step's sign.</remarks>
+    internal int TreadFrameIndex
+    {
+        get
+        {
             int frames = _sprites.TankFrames.Length;
-            int forward = _animationTicks % frames;
-            int frame = _step.X < 0 ? frames - 1 - forward : forward;
-            return _sprites.TankFrames[frame];
+            int forward = _treadFrameCounter % frames;
+            return _step.X < 0 ? frames - 1 - forward : forward;
         }
     }
 }

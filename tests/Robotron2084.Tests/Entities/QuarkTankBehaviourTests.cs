@@ -196,4 +196,45 @@ public sealed class QuarkTankBehaviourTests
         Assert.True(tank.Bounds.X >= bounds.X && tank.Bounds.Right <= bounds.Right, "tank not inside horizontally");
         Assert.True(tank.Bounds.Y >= bounds.Y && tank.Bounds.Bottom <= bounds.Bottom, "tank not inside vertically");
     }
+
+    [Fact]
+    public void Tank_TreadAdvancesOnABeatAndNeverOtherwise()
+    {
+        PlayField field = CreateField(1);
+
+        // Spawned inside the 2 s player start grace, so the tank is frozen: no robot
+        // can beat while frozen, so the tread cannot move.
+        field.SpawnTank(new IntVector2(400, 200));
+        Tank tank = Assert.Single(field.Tanks);
+
+        int treadAtSpawn = tank.TreadFrameIndex;
+        for (int tick = 0; tick < 20; tick++)
+        {
+            field.Update(Frame());
+            Assert.Equal(treadAtSpawn, tank.TreadFrameIndex);
+        }
+
+        // ROM MTANK: the tank plays four birth pictures before it can move, aim or
+        // fire, so no beat happens while it is being born either.
+        while (tank.IsBeingBorn)
+        {
+            field.Update(Frame());
+            Assert.Equal(treadAtSpawn, tank.TreadFrameIndex);
+        }
+
+        // ROM TANK3 advances the tread picture on a BEAT, and a beat lands every 3rd
+        // or 4th tick (TNKSPD 2 + 1 = 18 timer units, earned 5 a tick), so the
+        // tread must run again well within 20 ticks. The port also bumped the counter
+        // on every tick, which span the tread at twice the arcade rate -- between the
+        // beats as well as on them -- and kept running it while the tank was frozen
+        // and while it was still being born.
+        bool advanced = false;
+        for (int tick = 0; tick < 20 && !advanced; tick++)
+        {
+            field.Update(Frame());
+            advanced = tank.TreadFrameIndex != treadAtSpawn;
+        }
+
+        Assert.True(advanced, "the tread never advanced after the tank was born");
+    }
 }
