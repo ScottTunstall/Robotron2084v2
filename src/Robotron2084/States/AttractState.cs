@@ -117,7 +117,7 @@ public sealed class AttractState : IGameState, IAttractState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _field.Draw(spriteBatch);
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds);
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds, showSpareMen: false);
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
     }
 }

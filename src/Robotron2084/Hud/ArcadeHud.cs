@@ -22,11 +22,13 @@ public static class ArcadeHud
     /// is the playfield's inner rectangle (the wall sits just outside it) so the HUD
     /// row lands eight arcade px above the top wall, exactly as in the ROM.
     /// </summary>
+    /// <param name="showSpareMen">False while the demo plays: the phony player's spare men are not shown.</param>
     public static void DrawScoresAndMen(
         SpriteBatch spriteBatch,
         SpriteSet sprites,
         GameSession session,
-        Rectangle innerBounds)
+        Rectangle innerBounds,
+        bool showSpareMen = true)
     {
         int wallTop = innerBounds.Top - ScreenSize.Scaled(CollisionSizes.WallThicknessSpecPixels);
         int hudY = wallTop - ScreenSize.Scaled(HudLayout.HudRowAboveWallPixels);
@@ -45,7 +47,10 @@ public static class ArcadeHud
                 : HudLayout.HudScoreSlotIdle;
 
             DrawScore(spriteBatch, sprites, player.Score, HudLayout.ArcadeX(scoreColumn * 2), hudY, slot);
-            DrawSpareMen(spriteBatch, sprites, player.DisplayedMen, HudLayout.ArcadeX(menColumn * 2), hudY);
+            if (showSpareMen)
+            {
+                DrawSpareMen(spriteBatch, sprites, player.DisplayedMen, HudLayout.ArcadeX(menColumn * 2), hudY);
+            }
         }
     }
 
