@@ -247,5 +247,6 @@ public static class SpriteContentPaths
         "Sprites/Title_2084",
         "Sprites/Title_Wordmark_Core",
         "Sprites/Title_Wordmark_Rim",
+        "Sprites/WilliamsLogo",
     ];
 }
