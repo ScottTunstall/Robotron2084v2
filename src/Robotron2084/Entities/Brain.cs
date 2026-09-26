@@ -16,9 +16,11 @@ namespace Robotron2084.Entities;
 /// ticks (reload <c>BSHTIM</c>). X has a ±2 arcade px dead
 /// zone, Y has none, so a brain on the target's row oscillates ±1 px. Each axis is wall-checked
 /// separately, so a blocked brain slides along the wall instead of freezing. Facing follows the move
-/// (X wins) and changing it restarts the walk pattern. It targets the nearest living human by
-/// Manhattan distance, else the player. Timers count 5 per tick and 6 per arcade frame, so an
-/// interval of N frames is due at 6 x N.</remarks>
+/// (X wins) and changing it restarts the walk pattern. Its target is a SLOT in the field's family list,
+/// not a person: the brain keeps the slot it was handed at spawn and only searches for another when that
+/// slot empties, falling back to the player when the family is gone. That is the arcade's own rule, and the
+/// reason every brain on a wave chases the same member (notes §18.8). Timers count 5 per tick and 6 per
+/// arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Brain : IEntity, IExplodable, IRemovable
 {
     /// <summary>Extra ROM frames added to this wave's brain speed to get the beat.</summary>
@@ -66,6 +68,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     private WalkFacing _facing = WalkFacing.Down; // starts facing down, like a freshly spawned brain
     private int _walkCycleStep;         // index 0..3 into the current direction's 4-frame walk pattern
     private int _fireBeatsRemaining; // beats left before the next missile
+    private int _targetSlot;         // the family-list slot this brain chases (ROM PD+9)
     private Human? _victim;                 // the human currently being reprogrammed, if any
     private int _reprogramRedrawsRemaining;
     private int _reprogramTimer;           // Counts up to the next lift/drop step
@@ -77,20 +80,34 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <param name="random">The random source: the fire timer and the reprogramming jitter.</param>
     /// <param name="beatDelayRomFrames">This wave's beat delay in ROM frames, added to the base beat (ROM <c>BRNSPD</c>): a bigger number is a SLOWER brain.</param>
     /// <param name="fireIntervalBeats">The most beats this wave's brain waits between cruise missiles: the interval is a random 1..this.</param>
+    /// <param name="targetFamilySlot">The family slot this brain chases. The field hands the brain the
+    /// slot <see cref="PlayField.NearestFamilySlotTo"/> returns AS IT IS CREATED, which is before the
+    /// family exists — the ROM's own order, and the arcade's "all the brains chase Mikey" bug
+    /// (notes §18.8).</param>
     public Brain(
         SpriteSet sprites,
         IntVector2 position,
         Random random,
         int beatDelayRomFrames,
-        int fireIntervalBeats)
+        int fireIntervalBeats,
+        int targetFamilySlot)
     {
         _sprites = sprites;
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
+        _targetSlot = targetFamilySlot;
         _beatPeriod = ArcadeClock.Units(BeatExecutionRomFrames + beatDelayRomFrames);
         _fireBeatsRemaining = 1 + random.Next(fireIntervalBeats);
     }
+
+    /// <summary>The family member this brain is chasing, or null while it is hunting the player.</summary>
+    /// <remarks>ROM: the object the brain's AI resolved into <c>Y</c> — null until its first beat, since
+    /// the catch test lives inside that beat (notes §18.8).</remarks>
+    internal Human? Target { get; private set; }
+
+    /// <summary>The family-list slot this brain chases (ROM PD+9, the brain's own target field).</summary>
+    internal int TargetFamilySlot => _targetSlot;
 
     /// <summary>Top-left of the brain.</summary>
     /// <remarks>The ROM's OBJX/OBJY.</remarks>
@@ -145,7 +162,10 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
 
         _beatTimer -= _beatPeriod;
 
-        AdvanceWalkAnimation(StepTowardTarget(field));
+        // ROM BRAIN_AI: the target is re-read at the top of every body — only an empty slot sends the brain
+        // to the player, or to a fresh search while the family is still about.
+        Target = ResolveTarget(field);
+        AdvanceWalkAnimation(StepTowardTarget(field, Target?.Position ?? field.Player.Position));
 
         if (--_fireBeatsRemaining <= 0)
         {
@@ -153,16 +173,39 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         }
     }
 
-    /// <summary>Steps one pixel each way toward the target, where the playfield allows it.</summary>
+    /// <summary>
+    /// The member in this brain's target slot, or null when the brain should hunt the player.
+    /// </summary>
+    /// <param name="field">The playfield, which owns the family list.</param>
+    /// <returns>The member to chase, or null for the player.</returns>
+    /// <remarks>ROM: <c>BRAIN_AI</c> dereferences its stored slot pointer; a NULL slot sends the brain to the
+    /// player object, and if any member of the family is still alive it searches for a new slot on the spot
+    /// and follows that. The slot is what makes every brain on a brain wave converge on Mikey
+    /// (notes §18.8).</remarks>
+    private Human? ResolveTarget(PlayField field)
+    {
+        if (field.FamilyMemberInSlot(_targetSlot) is { } chased)
+        {
+            return chased;
+        }
+
+        if (!field.AnyFamilyMemberAvailable)
+        {
+            return null;
+        }
+
+        _targetSlot = field.NearestFamilySlotTo(_position);
+        return field.FamilyMemberInSlot(_targetSlot);
+    }
+
+    /// <summary>Steps one pixel each way toward <paramref name="target"/>, where the playfield allows it.</summary>
     /// <param name="field">The playfield, whose bounds the step is kept inside.</param>
+    /// <param name="target">The position being closed on — the brain's family target, or the player.</param>
     /// <returns>The step it TRIED — the facing follows the intent, not whether a wall let it through.</returns>
     /// <remarks>ROM: <c>BRNL1</c>. X steps toward the target but stops short inside the dead zone; Y always
     /// steps, down when the target is level with it.</remarks>
-    private IntVector2 StepTowardTarget(PlayField field)
+    private IntVector2 StepTowardTarget(PlayField field, IntVector2 target)
     {
-        // Nearest living human, else the player (ROM: GETHTG).
-        IntVector2 target = field.NearestHumanPositionTo(_position) ?? field.Player.Position;
-
         int dx = 0;
         int targetDx = target.X - _position.X;
         if (Math.Abs(targetDx) > ApproachDeadZonePixels)

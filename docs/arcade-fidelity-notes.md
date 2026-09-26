@@ -10112,3 +10112,52 @@ checked by eye.
 the page's content now sits between them: the wordmark, the "2084" mark and both text panes moved down and the F-key menu
 spacing tightened (14 to 12 spec px). The port's credit line is 495 px wide and its first letter overlaps the left-hand W column.
 The W appears on INTRO2 only, because that is the only page whose ROM code draws it.
+
+---
+
+## §125 — REPRODUCED: ON A BRAIN WAVE, EVERY BRAIN CHASES MIKEY (author, 2026-09-26)
+
+The author: *"On the very first brain wave, all of the brains should go for mikey - that's a known bug in the
+arcade and one I want to see reproduced."* It is a bug, it is decodable, and the port now reproduces it.
+
+**The ROM.** `BEGIN_WAVE` (`$2826`) initialises the robots in a fixed order — hulks (`$0000`), **brains
+(`$1AC0` at `$2834`)** — and only THEN the family (`$0003` at `$283A`). A brain picks its target as its object
+is built (`1B43: JSR $1B95`, inside the per-brain loop at `$1B1F`), and `FIND_NEAREST_FAMILY_MEMBER_TO_PROG`
+(`$1B95`) walks the family list from `Y = $B354` upward: a NULL entry is skipped, and the pointer it carries
+as "closest" only moves when it FINDS an entry. With every entry NULL it therefore returns `$B354`, the
+list's first slot — for every brain. `HUMSTV` then fills that list in spawn order, **kids first**, so slot 0
+is Mikey and every brain on the wave converges on her. `BRAIN_AI` (`$1BEE`) re-reads `[$09,U]` once per body
+and searches again only when that slot reads NULL, so the brains stay on their one victim until she is
+progged, rescued or killed and only then spread out over the rest of the family. **Wave 5** — the arcade's
+first brain wave — is 15 brains, 15 moms and ONE Mikey, which is where the author knows it from; the same
+order runs on every brain wave, so the pile-up is not wave-5-only.
+
+**The port.** A brain's target is now a family-list SLOT rather than whoever happens to be nearest when it
+looks: `Human.FamilySlot` (handed out by `PlayField.AddFamilyMember` in spawn order, so the first Mikey holds
+0), `PlayField.NearestFamilySlotTo` (ROM `$1B95`'s search), `PlayField.FamilyMemberInSlot` (its NULL test),
+`PlayField.AnyFamilyMemberAvailable` (KIDCNT+MOMCNT+DADCNT ≠ 0), `Brain._targetSlot`, `Brain.ResolveTarget`
+(the fall-back-to-the-player, then search-again rule, once per beat) and `Brain.Target`. `SpawnBrains` hands
+each brain the slot `NearestFamilySlotTo(position)` returns AS IT IS CREATED — still an empty family list, so
+slot 0: the bug reproduced at its source rather than hard-coded. The catch test now runs against the brain's
+own target (`BRNL1`'s tail tests the object its AI resolved), so a brain can only program the member it is
+chasing — which is what makes the pile-up real; the old rule let any brain grab any human whose corner came
+within reach, so the port looked "normal".
+
+**Two decode corrections from the same routine.** (a) `$1B95` measures **|Δcolumn| + |Δrow|** — the video
+buffer's own units (the hi byte is the column; 1 column = 2 arcade px, notes §113) — and a TIE goes to the
+LATER entry (`CMPD ,S` / `BHI` replaces whenever the new distance is not higher). The port measured
+|Δpx| + |Δpx| in port pixels, weighting X twice as heavily as the ROM, and kept the FIRST of equal entries;
+both now match the ROM. (b) The catch used to be reachable from the field's collision phase on any tick; it
+now needs the brain's own beat, because the ROM resolves the target and tests the reach inside one body.
+
+**Three tests pin it:** `WaveFive_EveryBrainStartsOnMikeysFamilySlot` (wave 5 really is 15 brains and one
+Mikey, she holds slot 0, and every brain starts on slot 0), `Brains_AllChaseMikey_EvenWhenAnotherFamilyMember-
+IsNearer` (they step AT Mikey while a dad stands much closer) and `Brains_TargetTheNearestMember_OnceMikeys-
+SlotIsFree` (the re-acquisition). **509 tests, 0 failed, 0 skipped**; Debug + Release 0 warnings; the 12-second
+launch smoke is green.
+
+**Still open, deliberately NOT changed.** `BRNL1`'s horizontal dead zone and its catch reach are written in
+those same column units: the ROM's band is ±2 columns (4 arcade px) and its reach ±3 columns on X (±6 arcade
+px) with ±3 rows on Y, while the port has ±2 px and ±3 px. The port's pair is self-consistent (a brain stops
+2 px short, inside its 3 px reach) and changing one alone would stop it ever catching, so the units question
+is with the author rather than guessed at.

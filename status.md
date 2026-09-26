@@ -1426,3 +1426,27 @@ after every one (485 tests, 0 failed, 0 skipped; 0 warnings). See **notes §122*
 `TANK3`'s rate, and it advanced while frozen or being born). It now advances on a beat only — that is a
 visible change to the tank.
 
+## THE MIKEY BUG, REPRODUCED (2026-09-26) — notes §125, ledger D-028
+
+The author asked for the arcade's known bug: *"On the very first brain wave, all of the brains should go for
+mikey - that's a known bug in the arcade and one I want to see reproduced."* It is in, and it is the ROM's own
+mechanism rather than a special case:
+
+- A brain's target is a **family-list slot**, not a person. `BEGIN_WAVE` creates the brains before the family,
+  and a brain picks its target as it is created — so every brain of a wave leaves holding slot 0, and slot 0 is
+  Mikey (`HUMSTV` spawns the kids first). Wave 5 is 15 brains and one Mikey, so the whole wave piles onto her.
+- The brains keep that slot until it empties (progged, rescued or killed), then re-search the nearest member;
+  with no family left they go for the player.
+- The brain's catch test now runs against its OWN target, as `BRNL1`'s tail does.
+- Two decode corrections came with it: the target distance is the ROM's |Δcolumn| + |Δrow| (the port used
+  port-pixel Manhattan) and a tie goes to the later list entry.
+- **Both a behaviour change and a deliberate one:** the port used to chase the nearest human, which never
+  showed the bug. On a brain wave the brains now converge on Mikey — expect to see the pile-up on wave 5.
+- **Open question for the author:** the same routine's X dead zone and catch reach are in those same column
+  units in the ROM (±2 columns = 4 px; ±3 columns = 6 px on X) where the port has ±2 px and ±3 px. They were
+  left alone because the port's pair is self-consistent and moving only one would stop the brain ever
+  catching; say the word and both move together.
+- Tests: `WaveFive_EveryBrainStartsOnMikeysFamilySlot`, `Brains_AllChaseMikey_EvenWhenAnotherFamilyMemberIsNearer`,
+  `Brains_TargetTheNearestMember_OnceMikeysSlotIsFree` (**509 tests, 0 failed, 0 skipped**; Debug + Release 0
+  warnings; 12 s launch smoke green).
+

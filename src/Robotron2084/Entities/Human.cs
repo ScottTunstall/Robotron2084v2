@@ -105,6 +105,14 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Which member this is (Mikey, Mum or Dad) — it decides the animation frames and the box.</summary>
     public HumanKind Kind => _kind;
 
+    /// <summary>
+    /// This member's slot in the family list (the ROM's <c>$B354</c>), handed out in spawn order by
+    /// <see cref="PlayField"/> — so the first Mikey holds slot 0.
+    /// </summary>
+    /// <remarks>A brain's target is a SLOT rather than a person, which is why every brain on a wave can
+    /// chase the same member (notes §18.8).</remarks>
+    internal int FamilySlot { get; set; }
+
     /// <summary>Top-left of the human.</summary>
     /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position => _position;

@@ -37,6 +37,9 @@ public sealed class PlayField
     private readonly EntityList<TankShell> _tankShells = new();
     private readonly EntityList<Human> _humans = new();
     private readonly EntityList<SkullMarker> _skulls = new();
+
+    /// <summary>The next family slot to hand out (the ROM fills <c>$B354</c> upward).</summary>
+    private int _nextFamilySlot;
     private readonly EntityList<RescueScoreMarker> _rescueScores = new();
     private readonly EntityList<Brain> _brains = new();
     private readonly EntityList<Prog> _progs = new();
@@ -277,45 +280,77 @@ public sealed class PlayField
     /// <param name="list">The list to count.</param>
     private static int CountLive(IEntityList list) => list.Entities.Count(entity => entity.LifeState != EntityLifeState.Dead);
 
-    /// <summary>ROM GETHTG's distance: |dx| + |dy| — Manhattan, not Euclidean.</summary>
+    /// <summary>The attract demo's steering metric: |dx| + |dy| in port pixels (Manhattan).</summary>
     private static int ManhattanDistance(IntVector2 a, IntVector2 b) => Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
 
+    /// <summary>The family list's first slot — the ROM's <c>$B354</c>.</summary>
+    internal const int FirstFamilySlot = 0;
+
     /// <summary>
-    /// The nearest living human's position to <paramref name="from"/>
-    /// (ROM GETHTG), or null when the family is gone (brains fall back to the
-    /// player). GETHTG measures |dx| + |dy| — MANHATTAN, not Euclidean (the
-    /// source sums the two absolute differences before comparing) — and from
-    /// the BRAIN, not from the player; both matter to which human a brain
-    /// picks when two are in different directions.
+    /// ROM <c>$1B95</c>'s distance: |Δcolumn| + |Δrow| — the video buffer's own units, in which an X
+    /// difference counts half what the same difference in port pixels would (a column is two arcade px,
+    /// notes §113).
     /// </summary>
-    public IntVector2? NearestHumanPositionTo(IntVector2 from)
+    private static int FamilyDistance(IntVector2 from, IntVector2 to) =>
+        (Math.Abs(to.X - from.X) / ScreenSize.Columns(1))
+        + (Math.Abs(to.Y - from.Y) / ScreenSize.ArcadePixels(1));
+
+    /// <summary>True while a member of the family is standing and free (ROM: KIDCNT + MOMCNT + DADCNT ≠ 0).</summary>
+    internal bool AnyFamilyMemberAvailable => _humans.Any(IsGraspable);
+
+    /// <summary>The living member in a family slot, or null when the slot is empty.</summary>
+    /// <param name="slot">The slot to read.</param>
+    /// <remarks>A member who is dead or mid-reprogram is off the ROM's family list, so her slot reads as
+    /// empty — which is how a brain loses a target and goes looking for another.</remarks>
+    internal Human? FamilyMemberInSlot(int slot) =>
+        _humans.FirstOrDefault(human => human.FamilySlot == slot && IsGraspable(human));
+
+    /// <summary>
+    /// ROM <c>$1B95</c> (<c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c>): the SLOT of the family member
+    /// nearest <paramref name="from"/>, measured by <see cref="FamilyDistance"/>, with a tie going to the
+    /// later slot (the ROM replaces its "closest" whenever the new distance is not higher).
+    /// </summary>
+    /// <param name="from">The position measured from — the brain's own corner.</param>
+    /// <returns>The slot — <see cref="FirstFamilySlot"/> when every slot is empty, because the ROM starts
+    /// its search with <c>Y = $B354</c> and only moves it when it finds a member.</returns>
+    /// <remarks>This is where the arcade's "all the brains chase Mikey" bug lives. A brain picks its
+    /// target as it is created (ROM <c>$1B43</c>) and the brains are created BEFORE <c>HUMSTV</c> fills the
+    /// family list, so every brain on the wave leaves with slot 0 in hand; Mikey fills slot 0, because the
+    /// kids spawn first. Each brain then keeps that slot until it empties (notes §18.8).</remarks>
+    internal int NearestFamilySlotTo(IntVector2 from)
     {
-        Human? nearest = null;
+        int nearestSlot = FirstFamilySlot;
         int nearestDistance = int.MaxValue;
         foreach (Human human in _humans)
         {
-            // A human mid-reprogram is off the human list in the ROM (it has
-            // been moved to the object list), so it is no longer a target.
-            if (human.LifeState != EntityLifeState.Alive || human.IsBeingReprogrammed)
+            if (!IsGraspable(human))
             {
                 continue;
             }
 
-            int distance = ManhattanDistance(human.Position, from);
-            if (distance < nearestDistance)
+            int distance = FamilyDistance(human.Position, from);
+            if (distance <= nearestDistance)
             {
                 nearestDistance = distance;
-                nearest = human;
+                nearestSlot = human.FamilySlot;
             }
         }
 
-        return nearest?.Position;
+        return nearestSlot;
+    }
+
+    /// <summary>Puts a member in the family list's next slot (ROM <c>HUMSTV</c> fills <c>$B354</c> upward).</summary>
+    /// <param name="human">The member to add.</param>
+    private void AddFamilyMember(Human human)
+    {
+        human.FamilySlot = _nextFamilySlot++;
+        _humans.Add(human);
     }
 
     /// <summary>
     /// The nearest ALIVE robot's position to <paramref name="from"/> for the
     /// attract demo (notes §94), measured the same Manhattan way as
-    /// <see cref="NearestHumanPositionTo"/>, or null when the field is clear.
+    /// <see cref="ManhattanDistance"/>, or null when the field is clear.
     /// Every robot kind counts — a brain falls back to hunting the player once
     /// the family is gone (GETHTG), so none are safe to ignore. Used only by
     /// the attract demo's phony player; the ROM's own AI lives in the OS ROM.
@@ -707,7 +742,9 @@ public sealed class PlayField
     /// <remarks>The CATCH TEST is <c>BRNL1</c>'s tail comparing the two TOP-LEFT CORNERS, |dX| &lt;= 3 AND
     /// |dY| &lt;= 3 (<c>ADDB #3 / CMPB #$6 / BHI</c> then <c>ADDA #3 / CMPA #6 / BLS</c>) — not a picture
     /// overlap. A box test fires as soon as the 14x16 brain box touches anything, so brains would grab humans
-    /// the source would not.</remarks>
+    /// the source would not. The test is against the brain's OWN TARGET (the object its AI resolved), so a
+    /// brain can only program the member it is chasing — which, on a brain wave, is Mikey for all of them
+    /// (notes §18.8).</remarks>
     private void ResolveBrainCatches(bool robotsHeld)
     {
         if (robotsHeld)
@@ -723,22 +760,18 @@ public sealed class PlayField
                 continue;
             }
 
-            foreach (Human human in _humans)
+            if (brain.Target is not { } human || !IsGraspable(human))
             {
-                if (!IsGraspable(human))
-                {
-                    continue;
-                }
-
-                if (Math.Abs(brain.Position.X - human.Position.X) > BrainCatchReach
-                    || Math.Abs(brain.Position.Y - human.Position.Y) > BrainCatchReach)
-                {
-                    continue;
-                }
-
-                brain.BeginReprogramming(human, playfieldBounds);
-                break;
+                continue;
             }
+
+            if (Math.Abs(brain.Position.X - human.Position.X) > BrainCatchReach
+                || Math.Abs(brain.Position.Y - human.Position.Y) > BrainCatchReach)
+            {
+                continue;
+            }
+
+            brain.BeginReprogramming(human, playfieldBounds);
         }
     }
 
@@ -1048,7 +1081,11 @@ public sealed class PlayField
         {
             IntVector2 position = _placement.FindSpawnPoint(
                 rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.Scaled(SpawnTuning.HulkMinDistanceFromPlayer)));
-            var brain = new Brain(Sprites, position, _random, Parameters.BrainBeatDelayRomFrames, Parameters.BrainFireDelay);
+            // ROM $1B43: a brain picks its target as it is created — and the brains are created BEFORE
+            // HUMSTV fills the family list, so the search finds every slot empty and hands back slot 0.
+            // Mikey fills slot 0, so every brain on the wave chases her: the arcade's own bug, kept on
+            // purpose (notes §18.8).
+            var brain = new Brain(Sprites, position, _random, Parameters.BrainBeatDelayRomFrames, Parameters.BrainFireDelay, NearestFamilySlotTo(position));
             _brains.Add(brain);
             QueueMaterialise(brain);
             // R5 $4607 (PLAY_BRAIN_WAVE_WARP_IN_SOUNDS): $4143, priority 255.
@@ -1078,7 +1115,7 @@ public sealed class PlayField
             IntVector2 position = _placement.FindSpawnPoint(
                 rect => _electrodes.All(e => !e.Bounds.Overlaps(rect)),
                 Human.SpawnSquarePortPixels(kind));
-            _humans.Add(new Human(Sprites, position, kind, _random));
+            AddFamilyMember(new Human(Sprites, position, kind, _random));
         }
     }
 
@@ -1137,7 +1174,7 @@ public sealed class PlayField
 
     internal void AddTankShell(TankShell shell) => _tankShells.Add(shell);
 
-    internal void AddHuman(Human human) => _humans.Add(human);
+    internal void AddHuman(Human human) => AddFamilyMember(human);
 
     internal void AddQuark(Quark quark) => _quarks.Add(quark);
 
