@@ -188,6 +188,23 @@ public sealed class PlayFieldCollisionTests
     }
 
     [Fact]
+    public void ALaserFiredFromInsideTheWallDiesInsteadOfFlyingPastIt()
+    {
+        PlayField field = CreateEmptyField();
+        Rectangle inner = field.Wall.PlayfieldBounds;
+
+        // Fired straight down from just inside the bottom edge: the laser starts overlapping the wall, and one
+        // step later it lies wholly beyond it, so a test of only where it lands would let it fly on.
+        IntVector2 muzzle = new(inner.Center.X, inner.Bottom - 4);
+        Assert.True(field.PlayerLasers.TryFire(muzzle, Direction8.Down, out PlayerLaser? laser));
+
+        field.Update(Tick);
+
+        Assert.Equal(EntityLifeState.Dead, laser!.LifeState);
+        Assert.Equal(1, field.LaserWallFlareCount);
+    }
+
+    [Fact]
     public void AFlareOnAVerticalWall_IsSolid_NotDithered()
     {
         PlayField field = CreateEmptyField();

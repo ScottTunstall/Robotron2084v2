@@ -66,8 +66,11 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
+        // The wall is tested along the whole step, not only where the laser lands: a laser fired from beside the
+        // wall can start inside it and finish a step past it, and would otherwise fly on.
+        Rectangle before = Bounds;
         _position += Direction.ToIntVector() * PlayerTuning.LaserSpeed;
-        if (field.Wall.Intersects(Bounds))
+        if (field.Wall.Intersects(Rectangle.Union(before, Bounds)))
         {
             // RRG23 LASDIE: a brief flare in the wave's LASCOL slot, then the wall colour.
             field.SpawnLaserWallFlare(Bounds, Direction);
@@ -84,7 +87,8 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        // The ROM draws the laser in its flashing palette slot, so the whole bolt flashes with it.
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(PlayerTuning.LaserSlot));
     }
 
     /// <summary>The picture for this laser's direction — the ROM's four laser arts (`LTAB`, notes §19).</summary>

@@ -68,6 +68,13 @@ public static class PlayerTuning
     // Player laser
     public const int LaserSpeed = 12;
 
+    /// <summary>
+    /// The palette slot the laser pictures are drawn in: every lit nibble of the ROM's four laser pictures
+    /// (R5 $35C1-$35DC) is <c>$A</c>, the LASER FLASH entry (RRS22 <c>LF</c>), which flashes white and a random
+    /// colour of <c>COLTAB</c> every few frames.
+    /// </summary>
+    public const int LaserSlot = 10;
+
     // Scoring — per-kill point values live in Level/ScoreValues.cs
     public const int ExtraLifeThresholdStep = 10000;
 
