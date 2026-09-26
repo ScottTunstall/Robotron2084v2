@@ -73,7 +73,7 @@ public sealed class PlayingState : IGameState
     private PlayField BuildField()
     {
         PlayerSlot slot = _session.Current;
-        LevelParameters parameters = _generator.Generate(slot.Wave);
+        LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
         WallColorCycle cycle = new();
         return new PlayField(_sprites, parameters, slot.Input, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, pixelCollision: new SpriteCollision());
     }

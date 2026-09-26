@@ -121,7 +121,7 @@ public sealed class StorylineState : IGameState, IAttractState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.Blitter.SlotColor(AttractTuning.TitleWallSlot));
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds);
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds, showSpareMen: false);
 
         ArcadeHud.DrawCenteredLargeText(
             spriteBatch,

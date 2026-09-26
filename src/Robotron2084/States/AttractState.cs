@@ -56,7 +56,7 @@ public sealed class AttractState : IGameState, IAttractState
     private PlayField BuildField()
     {
         PlayerSlot slot = _session.Current;
-        LevelParameters parameters = _generator.Generate(slot.Wave);
+        LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
         WallColorCycle cycle = new();
         return new PlayField(_sprites, parameters, _demoInput, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
     }
