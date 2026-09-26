@@ -223,6 +223,13 @@ public sealed class SpriteSet
     /// </summary>
     public Texture2D Title2084 { get; }
 
+    /// <summary>
+    /// The Williams "W" of the attract page's border, a WHITE MASK decoded from the ROM's plotting instructions at
+    /// <c>$8CF4</c> by <c>tools/extract-williams-logo.py</c>: the opaque pixels are the ones the ROM draws, in the colour
+    /// of the palette slot it is given.
+    /// </summary>
+    public Texture2D WilliamsLogo { get; }
+
 
     /// <summary>The blitter operations that draw these pictures.</summary>
     public BlitterDraw Blitter { get; }
@@ -273,6 +280,7 @@ public sealed class SpriteSet
         TitleWordmarkCore = source.Load("Sprites/Title_Wordmark_Core");
         TitleWordmarkRim = source.Load("Sprites/Title_Wordmark_Rim");
         Title2084 = source.Load("Sprites/Title_2084");
+        WilliamsLogo = source.Load("Sprites/WilliamsLogo");
         MissileSmallAnimationFrames = source.LoadAll(
         [
             "Sprites/MissileSmall_0",

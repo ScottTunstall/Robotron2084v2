@@ -10079,3 +10079,36 @@ The other pages take the labels the 1982 listing gives them (`RRLOG.ASM`, `RRSCR
 logo build described above, and it ends in `FAMPAG`, not in a game. The port's `StorylineState` still goes on to
 `AttractState`, so the cycle the port runs is INTRO2, then the history page, then the phony-player game, then the high
 score table. The listing's own order should be checked before that is called faithful.
+
+
+### 124. THE MOVING "W" BORDER ON INTRO2 (author, 2026-09-26)
+
+**Author:** *"Add the moving W's. In the arcade ROM the W is rendered pixel by pixel; I think it's run length encoded. First
+create a tool to decode the W and create it as a PNG like the rest, then use the PNG on the INTRO page(s)."* This reverses
+§103.1's "dropped at the author's request".
+
+**The W.** It is not a bitmap: `$8CF4` holds 117 bytes of PLOTTING INSTRUCTIONS that `RENDER_GRAPHIC` (`$8D69`) interprets a
+pixel column at a time (`$00-$1F` move down, `$20-$3F` a vertical line in colour 2, `$40-$5F` a vertical line in colour 1,
+`$90` next pixel column, `$A0` done, `$C0-$CF` repeat, which the W never uses). The template is rendered with colour 1 = 1 and
+colour 2 = 0 (`$88C6`), copied to RAM as 14 bytes x 27 rows (`$8945`), and blitted with `$1E`, transparency + solid
+(`$8A33`), so only the colour-1 pixels are drawn and colour 2 is the transparent gaps: a disc with a W cut out of it.
+`tools/extract-williams-logo.py` decodes it to `Content/Sprites/WilliamsLogo.png` (27 x 27 drawn, 28 x 27 template; a white
+mask, tinted with a palette slot at draw time, like the wordmark masks). It prints the decoded picture as text so it can be
+checked by eye.
+
+**The border** (`Rendering/WilliamsLogoBorder`, `WilliamsLogoPath`), from `$87D6`-`$8A38`:
+
+- **Path** (`$896C`): right along the top, down, left along the bottom, up, in 32-pixel steps. A lap is exactly 28 W's; each lap
+  then starts two screen bytes further in (`$EA`), for eight laps, then starts over from column `$15` (the ROM's own value).
+  The colour operand steps down `$77, $66 ... $11` and round, so each W is the next of the page's seven colours.
+- **Phase 1** (`$87D9`): one W every 4 ROM frames until 28 are drawn.
+- **Phase 2** (`$88CD`): the path restarts and every slot is "empty" (`$13AF`); each ROM frame it takes six of the 28 slots in
+  turn, erases the slot's last W, and draws it at the path's next place in the next colour, for `$02C0` = 704 frames. The
+  port keeps a 304 x 256 screen of palette slots and blits and erases into it, so the overlaps between laps come out as the ROM's.
+- **Not modelled:** the ROM waits for the video beam to clear a W's rows before redrawing it (`$88EF`); the port draws a frame at
+  once. After the 704 frames the ROM goes on to `$799B`; the port's page keeps its 12-second idle timer instead.
+
+**Layout.** The ring takes the top and bottom rows of the canvas (rows 23-66 and 323-366 at the HUD's arcade-to-canvas scale), so
+the page's content now sits between them: the wordmark, the "2084" mark and both text panes moved down and the F-key menu
+spacing tightened (14 to 12 spec px). The port's credit line is 495 px wide and its first letter overlaps the left-hand W column.
+The W appears on INTRO2 only, because that is the only page whose ROM code draws it.

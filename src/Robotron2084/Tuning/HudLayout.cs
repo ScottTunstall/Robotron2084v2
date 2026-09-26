@@ -102,7 +102,7 @@ public static class HudLayout
     public const int PausedMessageRow = 120;
 
     // Port-only: the title's F-key menu, and how far apart its lines sit.
-    public const int TitleOptionRowStepPixels = 14;
+    public const int TitleOptionRowStepPixels = 12;
 
     /// <summary>Arcade screen x (of 304) mapped to the port screen (proportional, integer math).</summary>
     public static int ArcadeX(int arcadePx) => arcadePx * ScreenSize.Width / ArcadeScreenWidth;

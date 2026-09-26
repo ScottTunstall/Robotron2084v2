@@ -57,27 +57,28 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private const string CreditLine = "REVERSE ENGINEERING AND DEVELOPMENT BY SCOTT TUNSTALL";
 
-    // Layout of the presentation page (notes §103/§107). The wordmark is drawn at the port's 2x sprite
+    // Layout of the presentation page (notes §103/§107). It sits inside the border of moving W logos, between
+    // the top row's bottom edge (canvas row 66) and the bottom row's top edge (row 323). The wordmark is drawn at the port's 2x sprite
     // scale, which is why the wordmark is 58 canvas px tall. The page's TEXT alternates between two
     // panes, swapping every TitleTextSwapSeconds: there is no room for both at
     // once — and that is exactly what lets the arcade's two message lines have an EMPTY ROW between
     // them (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
     // an 8-row line grid, i.e. one blank line).
-    private const int WordmarkRow = 30;
-    private const int Logo2084Row = 96;
+    private const int WordmarkRow = 72;
+    private const int Logo2084Row = 138;
 
     // Pane 1 — the arcade's own lines: the welcome message (LARGE font), then the credit strings
     // (SMALL font) with the copyright on its own line below them. An empty 18-px row sits between
     // the two message lines, and an empty 16-px row between the credits and the copyright.
-    private const int WelcomeRowOne = 176;
-    private const int WelcomeRowTwo = 212;
-    private const int DesignedByRow = 244;
-    private const int ForWilliamsRow = 260;
-    private const int CopyrightRow = 292;
+    private const int WelcomeRowOne = 214;
+    private const int WelcomeRowTwo = 244;
+    private const int DesignedByRow = 268;
+    private const int ForWilliamsRow = 284;
+    private const int CopyrightRow = 308;
 
     // Pane 2 — the port's own lines: its credit and the F-key menu (notes §101/§102.1).
-    private const int CreditRow = 176;
-    private const int MenuRow = 220;
+    private const int CreditRow = 214;
+    private const int MenuRow = 236;
 
     /// <summary>
     /// The palette entry the page's text is drawn in: the ROM's text colour operand (notes §106) —
@@ -104,6 +105,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private readonly ControlSettings _controls;
     private readonly GameServices _services;
     private readonly PresentationPagePalette _colour = new();
+    private readonly WilliamsLogoBorder _border;
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(AttractTuning.TitleIdleSeconds);
     private readonly TimeSpan _textSwap = TimeSpan.FromSeconds(AttractTuning.TitleTextSwapSeconds);
     private TimeSpan _idleElapsed;
@@ -121,6 +123,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         _sprites = services.Sprites;
         _highScores = services.HighScores;
         _controls = services.Controls;
+        _border = new WilliamsLogoBorder(SpriteMask.FromTexture(_sprites.WilliamsLogo));
 
         // The presentation page runs its OWN decoded colour set (notes §106): entries 1-7 come
         // from the ROM's seven-byte table ($8A70) with a white flash chasing through them every
@@ -138,6 +141,8 @@ public sealed class TitleScreenState : IGameState, IAttractState
         {
             _colour.Update(live);
         }
+
+        _border.Tick();
 
         PlayerInputState input = _input.Poll();
 
@@ -209,11 +214,11 @@ public sealed class TitleScreenState : IGameState, IAttractState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         // The caller clears to black. This is the ROM's Williams PRESENTATION page (notes §103):
-        // the logos, the operator's welcome message (two 25-character lines) and the credit
-        // strings. The arcade draws a border of 28 moving "W" logos round it and a "CREDITS: n"
-        // line under the message; this port has neither (it has no credits), and
-        // neither the playfield wall nor the score/men belong to this page — the cabinet's other
-        // attract page carries those.
+        // the border of 28 moving "W" logos, the logos, the operator's welcome message (two
+        // 25-character lines) and the credit strings. The arcade's "CREDITS: n" line is not drawn,
+        // because the port has no credits, and neither the playfield wall nor the score/men belong to
+        // this page: the cabinet's other attract page carries those.
+        _border.Draw(spriteBatch, _sprites.Blitter);
 
         // The two logos, traced from an arcade screenshot (notes §103.4) — the R5 CPU
         // ROM we hold has no attract wordmark (§103.2). The wordmark's masks are drawn in the two
