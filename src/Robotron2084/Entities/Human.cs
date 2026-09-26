@@ -122,9 +122,6 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Alive until killed, rescued or reprogrammed.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Steps taken so far — test hook for the step cadence.</summary>
-    internal int StepCount { get; private set; }
-
     /// <summary>Killed: gone at once, with no death animation.</summary>
     /// <remarks>ROM: <c>DMAOFF</c>.</remarks>
     public void Kill()
@@ -274,4 +271,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="position">Where the brain puts the human.</param>
     /// <remarks>ROM: <c>BMUT</c>, the reprogramming lift and drop. A test can also use it to place one.</remarks>
     internal void MoveTo(IntVector2 position) => _position = position;
+
+    /// <summary>Steps taken so far — test hook for the step cadence.</summary>
+    internal int StepCount { get; private set; }
 }

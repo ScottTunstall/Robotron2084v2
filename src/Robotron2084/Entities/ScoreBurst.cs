@@ -105,15 +105,6 @@ public sealed class ScoreBurst : IEntity
     /// <summary>The steps left of the "1000" display (its 30-step countdown).</summary>
     internal int PointsStepsRemaining => _pointsStepsRemaining;
 
-    /// <summary>The burst's palette slot (test hook — a cycling slot, so it shimmers).</summary>
-    internal int BurstSlot => _burstSlot;
-
-    /// <summary>The points picture's palette slot (test hook).</summary>
-    internal int PointsSlot => _pointsSlot;
-
-    /// <summary>Where the points picture is drawn: the death spot + 1 column / +5 rows (test hook).</summary>
-    internal Rectangle PointsBounds => _pointsBounds;
-
     /// <summary>Advances the effect on its 2-frame clock: one silhouette per step, then the points.</summary>
     /// <param name="gameTime">Unused — the steps are counted in ticks.</param>
     /// <param name="field">Unused.</param>
@@ -173,4 +164,13 @@ public sealed class ScoreBurst : IEntity
             _sprites.Blitter.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds, _sprites.Blitter.SlotColor(_burstSlot));
         }
     }
+
+    /// <summary>The burst's palette slot (test hook — a cycling slot, so it shimmers).</summary>
+    internal int BurstSlot => _burstSlot;
+
+    /// <summary>The points picture's palette slot (test hook).</summary>
+    internal int PointsSlot => _pointsSlot;
+
+    /// <summary>Where the points picture is drawn: the death spot + 1 column / +5 rows (test hook).</summary>
+    internal Rectangle PointsBounds => _pointsBounds;
 }

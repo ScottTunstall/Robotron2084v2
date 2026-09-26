@@ -348,23 +348,11 @@ public sealed class Player : IEntity, IAnimationFrameSource
         _autoFireTicksRemaining = PlayerTuning.PlayerAutoFireTicks;
     }
 
-    /// <summary>Test-only positioning hook (InternalsVisibleTo the test assembly).</summary>
-    internal void TeleportTo(IntVector2 position) => _position = position;
-
     /// <summary>The palette slot the dying player is drawn solid in.</summary>
     /// <remarks>The ROM's death colour: a fixed white slot, a random colour slot, or the fading slot.</remarks>
     internal int DeathSolidSlot => _deathStage == DeathStage.Fade
         ? PlayerTuning.PlayerDeathFadeSlot
         : _deathFlashSlot;
-
-    /// <summary>Starts the death animation, ignoring <c>PlayerInvincibleForTesting</c> (test hook).</summary>
-    internal void StartDeathForTesting()
-    {
-        if (LifeState == EntityLifeState.Alive)
-        {
-            StartDeath();
-        }
-    }
 
     /// <summary>One tick of the death animation: the flash loop, then the fade.</summary>
     /// <param name="field">The playfield, whose palette runs the fade.</param>
@@ -465,4 +453,16 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>
     public Texture2D CurrentAnimationFrame => _sprites.PlayerAnimationFrames[WalkAnimationFrameIndex];
+
+    /// <summary>Test-only positioning hook (InternalsVisibleTo the test assembly).</summary>
+    internal void TeleportTo(IntVector2 position) => _position = position;
+
+    /// <summary>Starts the death animation, ignoring <c>PlayerInvincibleForTesting</c> (test hook).</summary>
+    internal void StartDeathForTesting()
+    {
+        if (LifeState == EntityLifeState.Alive)
+        {
+            StartDeath();
+        }
+    }
 }

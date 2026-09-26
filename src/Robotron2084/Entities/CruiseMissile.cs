@@ -185,9 +185,6 @@ public sealed class CruiseMissile : IEntity, IRemovable
         }
     }
 
-    /// <summary>Test hook: the rolling tail, oldest first.</summary>
-    internal IReadOnlyList<IntVector2> Trail => _trail;
-
     /// <summary>Rolls the next stretch's direction: Y only half the time, else X (and maybe Y too).</summary>
     /// <param name="player">The player's position, which each active axis aims at.</param>
     /// <returns>The per-step velocity on each axis; a zero component means that axis is idle.</returns>
@@ -241,4 +238,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
             new Rectangle(_position.X, _position.Y, markWidth, markHeight),
             _sprites.Blitter.SlotColor(CruiseMissileTuning.HeadSlot));
     }
+
+    /// <summary>Test hook: the rolling tail, oldest first.</summary>
+    internal IReadOnlyList<IntVector2> Trail => _trail;
 }

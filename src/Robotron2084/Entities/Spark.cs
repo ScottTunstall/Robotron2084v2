@@ -100,17 +100,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Which of the four flicker frames is showing (test hook).</summary>
-    /// <remarks>The ROM's 4 flicker pictures, one per 4-ROM-frame cycle.</remarks>
-    internal int AnimationFrameIndex => _flickerTimer / ArcadeClock.Units(SparkTuning.SparkFramePeriodRomFrames) % SpriteSet.SparkAnimationFrameCount;
-
-    /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
-    internal IntVector2 VelocitySubpixels => _velocitySubpixels;
-
-    /// <summary>The per-axis acceleration, in 1/256 port px per ROM frame of velocity, applied once per move (test hook).</summary>
-    /// <remarks>Rolled once at spawn and CONSTANT for the spark's life.</remarks>
-    internal IntVector2 AccelerationSubpixels => _accelerationSubpixels;
-
     /// <summary>Runs the spark's clocks: flicker, life, the move step and the shared mover.</summary>
     /// <param name="gameTime">Unused — every clock is counted in ticks.</param>
     /// <param name="field">The playfield wall.</param>
@@ -202,4 +191,15 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>The flicker frame this spark is showing — the picture pixel-perfect collision compares.</summary>
     public Texture2D CurrentAnimationFrame => _sprites.SparkAnimationFrames[AnimationFrameIndex];
+
+    /// <summary>Which of the four flicker frames is showing (test hook).</summary>
+    /// <remarks>The ROM's 4 flicker pictures, one per 4-ROM-frame cycle.</remarks>
+    internal int AnimationFrameIndex => _flickerTimer / ArcadeClock.Units(SparkTuning.SparkFramePeriodRomFrames) % SpriteSet.SparkAnimationFrameCount;
+
+    /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
+    internal IntVector2 VelocitySubpixels => _velocitySubpixels;
+
+    /// <summary>The per-axis acceleration, in 1/256 port px per ROM frame of velocity, applied once per move (test hook).</summary>
+    /// <remarks>Rolled once at spawn and CONSTANT for the spark's life.</remarks>
+    internal IntVector2 AccelerationSubpixels => _accelerationSubpixels;
 }

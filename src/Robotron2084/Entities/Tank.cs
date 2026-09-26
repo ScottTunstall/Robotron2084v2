@@ -234,9 +234,6 @@ public sealed class Tank : IExplodable, IRemovable
     /// <summary>How many timer units one grow step takes (a tick adds 5; an arcade frame is 6 units).</summary>
     private static int GrowPeriod => ArcadeClock.Units(TankTuning.GrowRomFrames);
 
-    /// <summary>True while the ROM birth sequence is still playing (test hook).</summary>
-    internal bool IsBeingBorn => _growStep < TankTuning.GrowSteps;
-
     /// <summary>Picks the next destination: the player about 38% of the time, else a random point.</summary>
     /// <remarks>ROM: <c>ANIMATE_TANK</c>.</remarks>
     private void PickDestination(PlayField field)
@@ -315,4 +312,7 @@ public sealed class Tank : IExplodable, IRemovable
             return _step.X < 0 ? frames - 1 - forward : forward;
         }
     }
+
+    /// <summary>True while the ROM birth sequence is still playing (test hook).</summary>
+    internal bool IsBeingBorn => _growStep < TankTuning.GrowSteps;
 }

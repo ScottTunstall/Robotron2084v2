@@ -204,16 +204,6 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
-    /// <summary>Current walk frame, 0-based index into <see cref="SpriteSet.HulkAnimationFrames"/> (test hook).</summary>
-    internal int AnimationFrameIndex => _animationFrameIndex;
-
-    /// <summary>Current travel direction (test hook).</summary>
-    internal Direction8 Direction => _direction;
-
-    /// <summary>Puts the hulk at <paramref name="position"/> (test hook).</summary>
-    /// <param name="position">The new top-left.</param>
-    internal void TeleportTo(IntVector2 position) => _position = position;
-
     private static int[] FramesFor(Direction8 direction) => direction switch
     {
         Direction8.Left => LeftAnimationFrames,
@@ -259,4 +249,14 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
             _direction = ty <= _position.Y ? Direction8.Up : Direction8.Down;
         }
     }
+
+    /// <summary>Current walk frame, 0-based index into <see cref="SpriteSet.HulkAnimationFrames"/> (test hook).</summary>
+    internal int AnimationFrameIndex => _animationFrameIndex;
+
+    /// <summary>Current travel direction (test hook).</summary>
+    internal Direction8 Direction => _direction;
+
+    /// <summary>Puts the hulk at <paramref name="position"/> (test hook).</summary>
+    /// <param name="position">The new top-left.</param>
+    internal void TeleportTo(IntVector2 position) => _position = position;
 }

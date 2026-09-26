@@ -125,14 +125,6 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Alive until shot or until it finishes its sideways escape; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Test hook: which picture is showing — 0..4 spinning or escaping, 0..7 dropping.</summary>
-    /// <remarks>The ROM's current-picture pointer.</remarks>
-    internal int PictureIndex => _rotation;
-
-    /// <summary>Test hook: true once the sideways exit run has started.</summary>
-    /// <remarks>ROM: the `CIRC3` escape phase.</remarks>
-    internal bool IsEscaping => _escaping;
-
     /// <summary>Kills the spheroid outright; a laser hit plays its own burst instead of the strip explosion.</summary>
     /// <remarks>ROM: <c>CIRKIL</c> plays a 7-frame bubble burst then a "1000"; <see cref="RobotKinds"/> wires
     /// <see cref="ScoreBurst.ForSpheroid"/> to the laser phase.</remarks>
@@ -351,4 +343,12 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <returns>The texture for the current rotation frame.</returns>
     public Texture2D CurrentAnimationFrame
         => _sprites.SpheroidAnimationFrames[_rotation % _sprites.SpheroidAnimationFrames.Length];
+
+    /// <summary>Test hook: which picture is showing — 0..4 spinning or escaping, 0..7 dropping.</summary>
+    /// <remarks>The ROM's current-picture pointer.</remarks>
+    internal int PictureIndex => _rotation;
+
+    /// <summary>Test hook: true once the sideways exit run has started.</summary>
+    /// <remarks>ROM: the `CIRC3` escape phase.</remarks>
+    internal bool IsEscaping => _escaping;
 }

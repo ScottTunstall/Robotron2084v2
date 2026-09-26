@@ -95,36 +95,6 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>The shadow ring, NEWEST FIRST (see <see cref="Ghost"/>).</summary>
     private readonly List<Ghost> _ghosts = new();
 
-    /// <summary>Test hook: the ghost trail's positions, newest first.</summary>
-    internal IReadOnlyList<IntVector2> GhostTrail
-    {
-        get
-        {
-            var positions = new List<IntVector2>(_ghosts.Count);
-            foreach (Ghost ghost in _ghosts)
-            {
-                positions.Add(ghost.Position);
-            }
-
-            return positions;
-        }
-    }
-
-    /// <summary>Test hook: the pose each ghost was frozen in, newest first.</summary>
-    internal IReadOnlyList<int> GhostFrames
-    {
-        get
-        {
-            var frames = new List<int>(_ghosts.Count);
-            foreach (Ghost ghost in _ghosts)
-            {
-                frames.Add(ghost.AnimationFrameIndex);
-            }
-
-            return frames;
-        }
-    }
-
     /// <summary>Makes a prog where the human was, carrying that human's animation frames and box.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the prog.</param>
@@ -348,4 +318,34 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>This prog's box placed at an arbitrary position (used for the frozen ghosts).</summary>
     private Rectangle BoundsAt(IntVector2 position) =>
         new(position.X, position.Y, _collisionSize.Width, _collisionSize.Height);
+
+    /// <summary>Test hook: the ghost trail's positions, newest first.</summary>
+    internal IReadOnlyList<IntVector2> GhostTrail
+    {
+        get
+        {
+            var positions = new List<IntVector2>(_ghosts.Count);
+            foreach (Ghost ghost in _ghosts)
+            {
+                positions.Add(ghost.Position);
+            }
+
+            return positions;
+        }
+    }
+
+    /// <summary>Test hook: the pose each ghost was frozen in, newest first.</summary>
+    internal IReadOnlyList<int> GhostFrames
+    {
+        get
+        {
+            var frames = new List<int>(_ghosts.Count);
+            foreach (Ghost ghost in _ghosts)
+            {
+                frames.Add(ghost.AnimationFrameIndex);
+            }
+
+            return frames;
+        }
+    }
 }

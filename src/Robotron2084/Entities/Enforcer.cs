@@ -200,12 +200,6 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <summary>Rolls the re-aim countdown: 0..31 beats (0 re-aims again next beat).</summary>
     private static int NextReaimBeats(Random random) => random.Next(0, ReaimBeatsMaxExclusive);
 
-    /// <summary>Which of the five grow-up pictures is showing (0..4), or -1 once grown (test hook).</summary>
-    internal int GrowAnimationFrameIndex => _growthRemaining > 0
-        ? (ArcadeClock.Units(EnforcerTuning.GrowUpRomFrames) - _growthRemaining)
-            / ArcadeClock.Units(EnforcerTuning.GrowStepRomFrames)
-        : -1;
-
     /// <summary>The interval until the next shot: 1..the wave's fire delay, in beats.</summary>
     private int NextFireBeats(Random random) => random.Next(1, _fireIntervalBeats + 1);
 
@@ -236,4 +230,10 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             return _sprites.EnforcerAnimationFrames[1 + frame];
         }
     }
+
+    /// <summary>Which of the five grow-up pictures is showing (0..4), or -1 once grown (test hook).</summary>
+    internal int GrowAnimationFrameIndex => _growthRemaining > 0
+        ? (ArcadeClock.Units(EnforcerTuning.GrowUpRomFrames) - _growthRemaining)
+            / ArcadeClock.Units(EnforcerTuning.GrowStepRomFrames)
+        : -1;
 }

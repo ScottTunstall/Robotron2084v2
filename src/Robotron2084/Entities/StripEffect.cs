@@ -111,19 +111,6 @@ public sealed class StripEffect : IEntity
     /// <summary>Alive for the record's life: a fixed frame count, or until an appear's size would reach 1.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Explode or Appear (test hook).</summary>
-    internal StripEffectKind Kind => _kind;
-
-    /// <summary>The current spacing (the sizer's high byte) — test hook.</summary>
-    internal int Spacing => Math.Max(1, _sizer >> 8);
-
-    /// <summary>The axis the pieces fly along: Rows for a vertical fan, Columns for a horizontal one (test hook).</summary>
-    /// <remarks>The ROM calls these the vertical family (rows) and the horizontal family (columns).</remarks>
-    internal StripFanAxis Axis => _axis;
-
-    /// <summary>The diagonal lean, -1 / 0 / +1 (test hook — see <see cref="FanForShot"/>).</summary>
-    internal int Slope => _slope;
-
     /// <summary>One ROM frame of the record's life.</summary>
     /// <param name="gameTime">Unused — the record is stepped once per ROM frame.</param>
     /// <param name="field">Unused; kept for the update call shape.</param>
@@ -306,4 +293,17 @@ public sealed class StripEffect : IEntity
 
         return y >= _clip.MinY && y + pictureRows <= _clip.MaxY && x >= _clip.MinX && x < _clip.MaxX;
     }
+
+    /// <summary>Explode or Appear (test hook).</summary>
+    internal StripEffectKind Kind => _kind;
+
+    /// <summary>The current spacing (the sizer's high byte) — test hook.</summary>
+    internal int Spacing => Math.Max(1, _sizer >> 8);
+
+    /// <summary>The axis the pieces fly along: Rows for a vertical fan, Columns for a horizontal one (test hook).</summary>
+    /// <remarks>The ROM calls these the vertical family (rows) and the horizontal family (columns).</remarks>
+    internal StripFanAxis Axis => _axis;
+
+    /// <summary>The diagonal lean, -1 / 0 / +1 (test hook — see <see cref="FanForShot"/>).</summary>
+    internal int Slope => _slope;
 }

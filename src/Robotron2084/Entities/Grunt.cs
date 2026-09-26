@@ -167,10 +167,6 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
             Math.Clamp(_position.Y, bounds.Y, bounds.Bottom - CollisionSize.Height));
     }
 
-    /// <summary>The walk frame showing right now, 1..4 (test hook).</summary>
-    /// <remarks>ROM RWDP picture.</remarks>
-    internal int WalkPictureNumber => _walkPictureNumber;
-
     /// <summary>Maps the ROM's walk picture number (1..4) to an index into <see cref="SpriteSet.GruntAnimationFrames"/>.</summary>
     /// <param name="romPictureNumber">The ROM's walk picture number, 1..4.</param>
     /// <returns>The index into <see cref="SpriteSet.GruntAnimationFrames"/>.</returns>
@@ -197,4 +193,8 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
 
         _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
+
+    /// <summary>The walk frame showing right now, 1..4 (test hook).</summary>
+    /// <remarks>ROM RWDP picture.</remarks>
+    internal int WalkPictureNumber => _walkPictureNumber;
 }
