@@ -253,8 +253,8 @@ public sealed class TunnelEffect
     private void DrawRing(SpriteBatch spriteBatch, SpriteSet sprites, Ring ring)
     {
         (int slot0, int slot1) = Colours(ring.Packed);          // $5A13 / $5A19
-        Color colour0 = sprites.SlotColor(slot0);
-        Color colour1 = sprites.SlotColor(slot1);
+        Color colour0 = sprites.Blitter.SlotColor(slot0);
+        Color colour1 = sprites.Blitter.SlotColor(slot1);
 
         int top = ring.Top;
         int bottom = ring.Bottom;

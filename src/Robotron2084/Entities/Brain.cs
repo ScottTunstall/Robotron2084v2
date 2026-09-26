@@ -331,10 +331,10 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         if (IsReprogramming)
         {
             // A solid block under the picture (ROM: DRAW_BRAIN_IN_PROGGING_STATE).
-            _sprites.DrawSolidRectangle(spriteBatch, Bounds, _sprites.SlotColor(ReprogramTuning.ShapeSlot));
+            _sprites.Blitter.DrawSolidRectangle(spriteBatch, Bounds, _sprites.Blitter.SlotColor(ReprogramTuning.ShapeSlot));
         }
 
-        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The frame an explosion would copy (see <see cref="IAnimationFrameSource"/>).</summary>

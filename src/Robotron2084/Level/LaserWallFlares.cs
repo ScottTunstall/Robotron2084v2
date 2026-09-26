@@ -99,19 +99,19 @@ internal sealed class LaserWallFlares
             return;
         }
 
-        Color flareColor = sprites.SlotColor(WavePaletteTables.LaserWallSlotForWave(levelNumber));
+        Color flareColor = sprites.Blitter.SlotColor(WavePaletteTables.LaserWallSlotForWave(levelNumber));
         foreach (LaserWallFlare flare in _flares)
         {
             if (!flare.Dithered)
             {
-                sprites.DrawSolidRectangle(spriteBatch, flare.Bounds, flareColor);
+                sprites.Blitter.DrawSolidRectangle(spriteBatch, flare.Bounds, flareColor);
                 continue;
             }
 
             // LASDIV: the ROM's mixed nibble — one band in LASCOL, the next left as WALCOL. Draw only the LASCOL bands.
             for (int y = flare.Bounds.Y; y < flare.Bounds.Bottom; y += DitherBandHeight * 2)
             {
-                sprites.DrawSolidRectangle(
+                sprites.Blitter.DrawSolidRectangle(
                     spriteBatch,
                     new Rectangle(flare.Bounds.X, y, flare.Bounds.Width, DitherBandHeight),
                     flareColor);

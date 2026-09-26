@@ -75,7 +75,7 @@ public sealed class PlayingState : IGameState
         PlayerSlot slot = _session.Current;
         LevelParameters parameters = _generator.Generate(slot.Wave);
         WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, slot.Input, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Palette, pixelCollision: new SpriteCollision());
+        return new PlayField(_sprites, parameters, slot.Input, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, pixelCollision: new SpriteCollision());
     }
 
     /// <summary>

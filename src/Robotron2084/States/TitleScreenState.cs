@@ -126,7 +126,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // from the ROM's seven-byte table ($8A70) with a white flash chasing through them every
         // 3 frames, and the message sits in entry 6. The message reads as "cycling between orange
         // and white", which is what this chase does (notes §106).
-        if (_sprites.Palette is { } palette)
+        if (_sprites.Blitter.Palette is { } palette)
         {
             _colour.Start(palette);
         }
@@ -134,7 +134,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
-        if (_sprites.Palette is { } live)
+        if (_sprites.Blitter.Palette is { } live)
         {
             _colour.Update(live);
         }
@@ -287,7 +287,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private void StopColours()
     {
-        if (_sprites.Palette is { } palette)
+        if (_sprites.Blitter.Palette is { } palette)
         {
             _colour.Stop(palette);
         }
@@ -299,7 +299,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         int width = texture.Width * ScreenSize.SpecScale;
         int height = texture.Height * ScreenSize.SpecScale;
         var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
-        _sprites.DrawSprite(spriteBatch, texture, bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, texture, bounds, Color.White);
     }
 
     /// <summary>
@@ -313,24 +313,24 @@ public sealed class TitleScreenState : IGameState, IAttractState
         int width = texture.Width * ScreenSize.SpecScale;
         int height = texture.Height * ScreenSize.SpecScale;
         var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
-        _sprites.DrawSpriteSolid(spriteBatch, texture, bounds, _sprites.SlotColor(slot));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, texture, bounds, _sprites.Blitter.SlotColor(slot));
     }
 
     private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int slot) =>
-        _sprites.DrawSmallFontText(spriteBatch, text, CenteredX(text, large: false), y, slot);
+        _sprites.Text.DrawSmallFontText(spriteBatch, text, CenteredX(text, large: false), y, slot);
 
     /// <summary>Centres a large-font line horizontally and prints it in one slot.</summary>
     private void DrawCenteredLargeText(SpriteBatch spriteBatch, string text, int y, int slot) =>
-        _sprites.DrawLargeFontText(spriteBatch, text, CenteredX(text, large: true), y, slot);
+        _sprites.Text.DrawLargeFontText(spriteBatch, text, CenteredX(text, large: true), y, slot);
 
     /// <summary>
     /// The X that centres a line on the canvas, measured with the font's own glyph widths
-    /// (<see cref="SpriteSet.MeasureSmallText"/>/<see cref="SpriteSet.MeasureLargeText"/>) — the two
+    /// (<see cref="ArcadeText.MeasureSmallText"/>/<see cref="ArcadeText.MeasureLargeText"/>) — the two
     /// fonts advance differently, so a fixed per-character width would mis-centre one of them.
     /// </summary>
     private int CenteredX(string text, bool large)
     {
-        int width = ScreenSize.Scaled(large ? _sprites.MeasureLargeText(text) : _sprites.MeasureSmallText(text));
+        int width = ScreenSize.Scaled(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
         return (ScreenSize.Width - width) / 2;
     }
 }

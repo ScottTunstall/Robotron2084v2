@@ -115,6 +115,6 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _sprites.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.SlotColor(TintSlot));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(TintSlot));
     }
 }

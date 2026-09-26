@@ -195,6 +195,6 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
             return;
         }
 
-        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 }

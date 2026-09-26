@@ -164,13 +164,13 @@ public sealed class ScoreBurst : IEntity
 
         if (_showingPoints)
         {
-            _sprites.DrawSpriteSolid(spriteBatch, _points, _pointsBounds, _sprites.SlotColor(_pointsSlot));
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _points, _pointsBounds, _sprites.Blitter.SlotColor(_pointsSlot));
             return;
         }
 
         if (_animationFrameIndex < _animationFrames.Length)
         {
-            _sprites.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds, _sprites.SlotColor(_burstSlot));
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds, _sprites.Blitter.SlotColor(_burstSlot));
         }
     }
 }

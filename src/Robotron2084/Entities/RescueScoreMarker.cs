@@ -68,6 +68,6 @@ public sealed class RescueScoreMarker : IEntity
             return;
         }
 
-        _sprites.DrawSprite(spriteBatch, _sprites.RescueScoreDisplays[_displayIndex], Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, _sprites.RescueScoreDisplays[_displayIndex], Bounds, Color.White);
     }
 }

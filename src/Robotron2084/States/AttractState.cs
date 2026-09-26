@@ -58,7 +58,7 @@ public sealed class AttractState : IGameState, IAttractState
         PlayerSlot slot = _session.Current;
         LevelParameters parameters = _generator.Generate(slot.Wave);
         WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, _demoInput, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
+        return new PlayField(_sprites, parameters, _demoInput, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)

@@ -101,7 +101,7 @@ public sealed class WaveClearState : IGameState
 
             // While the ramp runs it owns every slot, so the six colour processes must not fight
             // it for slots 10-15 (the ROM's own palette task writes all fifteen every pass).
-            if (_sprites.Palette is { } live)
+            if (_sprites.Blitter.Palette is { } live)
             {
                 for (int slot = FontSlots.FirstCyclingSlot; slot <= 15; slot++)
                 {
@@ -110,7 +110,7 @@ public sealed class WaveClearState : IGameState
             }
         }
 
-        if (_sprites.Palette is { } palette)
+        if (_sprites.Blitter.Palette is { } palette)
         {
             _tunnelPalette.Apply(palette);
         }
@@ -122,7 +122,7 @@ public sealed class WaveClearState : IGameState
     /// </summary>
     private void RestorePalette()
     {
-        if (_sprites.Palette is not { } palette)
+        if (_sprites.Blitter.Palette is not { } palette)
         {
             return;
         }

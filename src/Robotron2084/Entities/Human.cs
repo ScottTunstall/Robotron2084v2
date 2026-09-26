@@ -240,16 +240,16 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         if (IsBeingReprogrammed)
         {
             // Reprogrammed: a solid silhouette over a solid background, both cycling slots.
-            _sprites.DrawSpriteSolidWithBackground(
+            _sprites.Blitter.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[_animationFrameIndex],
                 Bounds,
-                _sprites.SlotColor(ReprogramTuning.BackgroundSlot),
-                _sprites.SlotColor(ReprogramTuning.ShapeSlot));
+                _sprites.Blitter.SlotColor(ReprogramTuning.BackgroundSlot),
+                _sprites.Blitter.SlotColor(ReprogramTuning.ShapeSlot));
             return;
         }
 
-        _sprites.DrawSprite(spriteBatch, frames[_animationFrameIndex], Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, frames[_animationFrameIndex], Bounds, Color.White);
     }
 
     /// <summary>The walk frame this human is showing — the picture pixel-perfect collision compares.</summary>

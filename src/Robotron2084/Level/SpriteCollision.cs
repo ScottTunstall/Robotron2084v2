@@ -23,7 +23,7 @@ public sealed class SpriteCollision : IPixelCollision
         }
 
         Texture2D animationFrame = frameSource.CurrentAnimationFrame;
-        return new PictureShape(MaskOf(animationFrame), SpriteSet.DrawnRect(entity.Bounds, animationFrame));
+        return new PictureShape(MaskOf(animationFrame), BlitterDraw.DrawnRect(entity.Bounds, animationFrame));
     }
 
     /// <inheritdoc/>

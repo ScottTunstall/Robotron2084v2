@@ -280,11 +280,11 @@ public sealed class Tank : IExplodable, IRemovable
                 _position.Y,
                 ScreenSize.Scaled(growWidth),
                 ScreenSize.Scaled(growHeight));
-            _sprites.DrawSprite(spriteBatch, _sprites.TankGrowAnimationFrames[_growStep], birth, Color.White);
+            _sprites.Blitter.DrawSprite(spriteBatch, _sprites.TankGrowAnimationFrames[_growStep], birth, Color.White);
             return;
         }
 
-        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The frame an explosion would copy (see <see cref="IAnimationFrameSource"/>): the birth picture while being born, else the tread frame.</summary>

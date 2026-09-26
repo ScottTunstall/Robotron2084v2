@@ -229,16 +229,16 @@ public sealed class CruiseMissile : IEntity, IRemovable
         int markWidth = ScreenSize.Scaled(CruiseMissileTuning.MarkArcadeWidth);
         int markHeight = ScreenSize.Scaled(CruiseMissileTuning.MarkArcadeHeight);
 
-        Color trailColor = _sprites.SlotColor(CruiseMissileTuning.TrailSlot);
+        Color trailColor = _sprites.Blitter.SlotColor(CruiseMissileTuning.TrailSlot);
         foreach (IntVector2 mark in _trail)
         {
-            _sprites.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight), trailColor);
+            _sprites.Blitter.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight), trailColor);
         }
 
         // The ROM's missile picture only defines the collision box; the head is a solid dot.
-        _sprites.DrawSolidRectangle(
+        _sprites.Blitter.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(_position.X, _position.Y, markWidth, markHeight),
-            _sprites.SlotColor(CruiseMissileTuning.HeadSlot));
+            _sprites.Blitter.SlotColor(CruiseMissileTuning.HeadSlot));
     }
 }

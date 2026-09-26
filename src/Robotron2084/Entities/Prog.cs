@@ -329,20 +329,20 @@ public sealed class Prog : IExplodable, IRemovable
         for (int i = _ghosts.Count - 1; i >= 0; i--)
         {
             Ghost ghost = _ghosts[i];
-            _sprites.DrawSpriteSolidWithBackground(
+            _sprites.Blitter.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[ghost.AnimationFrameIndex],
                 BoundsAt(ghost.Position),
-                _sprites.SlotColor(ProgTuning.GhostBackgroundSlot),
-                _sprites.SlotColor(ProgTuning.GhostShapeSlot));
+                _sprites.Blitter.SlotColor(ProgTuning.GhostBackgroundSlot),
+                _sprites.Blitter.SlotColor(ProgTuning.GhostShapeSlot));
         }
 
-        _sprites.DrawSpriteSolidWithBackground(
+        _sprites.Blitter.DrawSpriteSolidWithBackground(
             spriteBatch,
             picture,
             Bounds,
-            _sprites.SlotColor(ProgTuning.BackgroundSlot),
-            _sprites.SlotColor(ProgTuning.ShapeSlot));
+            _sprites.Blitter.SlotColor(ProgTuning.BackgroundSlot),
+            _sprites.Blitter.SlotColor(ProgTuning.ShapeSlot));
     }
 
     /// <summary>This prog's box placed at an arbitrary position (used for the frozen ghosts).</summary>

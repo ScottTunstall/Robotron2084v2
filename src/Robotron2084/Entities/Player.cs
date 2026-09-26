@@ -456,11 +456,11 @@ public sealed class Player : IEntity, IAnimationFrameSource
         // One colour while dying, like the ROM's own solid-colour draw.
         if (LifeState == EntityLifeState.Dying)
         {
-            _sprites.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.SlotColor(DeathSolidSlot));
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(DeathSolidSlot));
             return;
         }
 
-        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>

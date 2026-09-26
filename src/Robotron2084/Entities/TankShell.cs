@@ -131,7 +131,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     {
         if (LifeState == EntityLifeState.Alive)
         {
-            _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+            _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
         }
     }
 

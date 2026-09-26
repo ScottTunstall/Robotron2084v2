@@ -120,7 +120,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.SlotColor(AttractTuning.TitleWallSlot));
+        _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.Blitter.SlotColor(AttractTuning.TitleWallSlot));
         ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds);
 
         ArcadeHud.DrawCenteredLargeText(
@@ -139,10 +139,10 @@ public sealed class StorylineState : IGameState, IAttractState
 
         foreach (MovieTextCell cell in _movie.Page.Text)
         {
-            int index = SpriteSet.GlyphIndex(cell.Character);
+            int index = ArcadeText.GlyphIndex(cell.Character);
             if (index >= 0 && index < _sprites.FontLarge.Length)
             {
-                _sprites.DrawGlyphSlot(
+                _sprites.Blitter.DrawGlyphSlot(
                     spriteBatch,
                     _sprites.FontLarge,
                     index,
@@ -154,7 +154,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         if (_movie.Page.Message is { } message)
         {
-            _sprites.DrawSmallFontText(
+            _sprites.Text.DrawSmallFontText(
                 spriteBatch,
                 message.Text,
                 HudLayout.ArcadeX(message.X),
@@ -211,18 +211,18 @@ public sealed class StorylineState : IGameState, IAttractState
                 // the top (the ROM's second blit, `JMP $D018`, notes §72.1).
                 if (item.MonoBoxSlot != 0)
                 {
-                    _sprites.DrawSolidRectangle(spriteBatch, bounds, _sprites.SlotColor(item.MonoBoxSlot));
+                    _sprites.Blitter.DrawSolidRectangle(spriteBatch, bounds, _sprites.Blitter.SlotColor(item.MonoBoxSlot));
                 }
 
-                _sprites.DrawSpriteSolid(spriteBatch, animationFrame, bounds, _sprites.SlotColor(item.MonoSilhouetteSlot));
+                _sprites.Blitter.DrawSpriteSolid(spriteBatch, animationFrame, bounds, _sprites.Blitter.SlotColor(item.MonoSilhouetteSlot));
                 if (item.MonoBrain)
                 {
-                    _sprites.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
+                    _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
                 }
             }
             else
             {
-                _sprites.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
+                _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
             }
         }
     }

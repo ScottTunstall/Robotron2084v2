@@ -55,7 +55,7 @@ public sealed class EntriesMaximumState : IGameState
     }
 
     private void DrawLine(SpriteBatch spriteBatch, string text, int column, int row) =>
-        _services.Sprites.DrawLargeFontText(
+        _services.Sprites.Text.DrawLargeFontText(
             spriteBatch,
             text,
             HudLayout.ArcadeColumnX(column),

@@ -62,7 +62,7 @@ public static class ArcadeHud
 
         if (wave >= 10)
         {
-            x = sprites.DrawSmallFontText(spriteBatch, ((wave / 10) % 10).ToString(), x, y, numberSlot);
+            x = sprites.Text.DrawSmallFontText(spriteBatch, ((wave / 10) % 10).ToString(), x, y, numberSlot);
         }
         else
         {
@@ -71,15 +71,15 @@ public static class ArcadeHud
             x += ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels);
         }
 
-        x = sprites.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberSlot);
+        x = sprites.Text.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberSlot);
         x += ScreenSize.Scaled(HudLayout.HudWaveNumberGapPixels);
-        sprites.DrawSmallFontText(spriteBatch, " WAVE", x, y, HudLayout.HudWaveTextSlot);
+        sprites.Text.DrawSmallFontText(spriteBatch, " WAVE", x, y, HudLayout.HudWaveTextSlot);
     }
 
     /// <summary>Draws one of the ROM's message strings at its own cursor column/row.</summary>
     public static void DrawMessageText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int arcadeColumn, int arcadeRow, int slot)
     {
-        sprites.DrawSmallFontText(
+        sprites.Text.DrawSmallFontText(
             spriteBatch,
             text,
             HudLayout.ArcadeX(arcadeColumn * 2),
@@ -104,7 +104,7 @@ public static class ArcadeHud
                 continue;
             }
 
-            int index = SpriteSet.GlyphIndex(character);
+            int index = ArcadeText.GlyphIndex(character);
             if (index < 0 || index >= sprites.FontLarge.Length)
             {
                 continue;
@@ -113,7 +113,7 @@ public static class ArcadeHud
             width += ScreenSize.Scaled(sprites.FontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
         }
 
-        sprites.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
+        sprites.Text.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
     }
 
     /// <summary>
@@ -128,7 +128,7 @@ public static class ArcadeHud
             ScreenSize.Scaled(HudLayout.HudScoreDigitAdvancePixels),
             ScreenSize.Scaled(HudLayout.HudScoreBlankAdvancePixels)))
         {
-            sprites.DrawGlyphSlot(spriteBatch, sprites.FontLarge, glyph.Digit, glyph.X, y, slot);
+            sprites.Blitter.DrawGlyphSlot(spriteBatch, sprites.FontLarge, glyph.Digit, glyph.X, y, slot);
         }
     }
 
@@ -139,7 +139,7 @@ public static class ArcadeHud
 
         for (int i = 0; i < count; i++)
         {
-            sprites.DrawMiniMan(spriteBatch, originX + (i * pitch), y);
+            sprites.Text.DrawMiniMan(spriteBatch, originX + (i * pitch), y);
         }
     }
 }

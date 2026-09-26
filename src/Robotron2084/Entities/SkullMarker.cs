@@ -66,6 +66,6 @@ public sealed class SkullMarker : IEntity
             return;
         }
 
-        _sprites.DrawSprite(spriteBatch, _sprites.Skull, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, _sprites.Skull, Bounds, Color.White);
     }
 }

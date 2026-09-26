@@ -101,7 +101,7 @@ public sealed class DefineInputsState : IGameState
         _previous = InputSnapshot.Read();
         RestorePalette();
 
-        if (_sprites.Palette is { } palette)
+        if (_sprites.Blitter.Palette is { } palette)
         {
             _highlight.Start(palette);
         }
@@ -114,7 +114,7 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private void RestorePalette()
     {
-        if (_sprites.Palette is not { } palette)
+        if (_sprites.Blitter.Palette is not { } palette)
         {
             return;
         }
@@ -127,7 +127,7 @@ public sealed class DefineInputsState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
-        if (_sprites.Palette is { } palette)
+        if (_sprites.Blitter.Palette is { } palette)
         {
             _highlight.Update(palette);
         }
@@ -219,7 +219,7 @@ public sealed class DefineInputsState : IGameState
     /// The heading: the arcade's LARGE font, centred, in the page's WHITE.
     /// </summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y) =>
-        _sprites.DrawLargeFontText(spriteBatch, text, CenteredX(text, large: true), y, HeadingSlot);
+        _sprites.Text.DrawLargeFontText(spriteBatch, text, CenteredX(text, large: true), y, HeadingSlot);
 
     /// <summary>
     /// An instruction line under the list: the arcade's SMALL font, centred, in the page's WHITE
@@ -262,7 +262,7 @@ public sealed class DefineInputsState : IGameState
     /// this page's WHITE — the arcade's `04 99` sets exactly that colour before printing the cursor.
     /// </summary>
     private void DrawCursor(SpriteBatch spriteBatch, int y) =>
-        _sprites.DrawGlyphStatic(spriteBatch, _sprites.CursorArrow, CursorColumn, y, HeadingSlot);
+        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrow, CursorColumn, y, HeadingSlot);
 
     /// <summary>
     /// The value column: the keyboard binding, then the word OR in its own colour when the line
@@ -322,12 +322,12 @@ public sealed class DefineInputsState : IGameState
         : _settings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.ActionOf(line)!.Value];
 
     private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int slot) =>
-        _sprites.DrawSmallFontText(spriteBatch, text, x, y, slot);
+        _sprites.Text.DrawSmallFontText(spriteBatch, text, x, y, slot);
 
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
     private int CenteredX(string text, bool large = false)
     {
-        int width = ScreenSize.Scaled(large ? _sprites.MeasureLargeText(text) : _sprites.MeasureSmallText(text));
+        int width = ScreenSize.Scaled(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
         return (ScreenSize.Width - width) / 2;
     }
 

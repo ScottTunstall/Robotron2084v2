@@ -77,7 +77,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
         // RRTABLE's TABLE starts the page's colour processes before it draws anything
         // (MAKP LOOPP comes first, the other four after the lists are printed).
-        if (_sprites.Palette is { } palette)
+        if (_sprites.Blitter.Palette is { } palette)
         {
             _colour.Start(palette);
         }
@@ -102,7 +102,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             if (!_rampsStarted)
             {
                 _rampsStarted = true;
-                if (_sprites.Palette is { } livePalette)
+                if (_sprites.Blitter.Palette is { } livePalette)
                 {
                     _colour.StartRamps(livePalette);
                 }
@@ -118,7 +118,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             }
         }
 
-        if (_sprites.Palette is { } live)
+        if (_sprites.Blitter.Palette is { } live)
         {
             _colour.Update(live);
         }
@@ -139,7 +139,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
     private void Leave(GameStateManager manager)
     {
-        if (_sprites.Palette is { } palette)
+        if (_sprites.Blitter.Palette is { } palette)
         {
             _colour.Stop(palette);
         }
@@ -176,7 +176,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
     private void DrawHeader(SpriteBatch spriteBatch, string text, int row)
     {
-        _sprites.DrawLargeFontText(
+        _sprites.Text.DrawLargeFontText(
             spriteBatch,
             text,
             ColumnX(HighScoreTableLayout.HeaderColumn),
@@ -196,7 +196,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             int slot = SlotFor(entries[rank - 1], ScreenTuning.HighScoreTodaySlot, ScreenTuning.HighScoreTodayHighlightSlot);
 
             int afterRank = DrawRank(spriteBatch, rank, x, y, slot, large: true);
-            _sprites.DrawLargeFontText(spriteBatch, entries[rank - 1].Initials, afterRank, y, slot);
+            _sprites.Text.DrawLargeFontText(spriteBatch, entries[rank - 1].Initials, afterRank, y, slot);
 
             // The ROM's fixed offset from the POST-RANK cursor (RRTABLE's
             // `PSHS X` right after the rank message, then `LEAX D,X`): 11 columns
@@ -205,7 +205,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             // the 22 px the offset leaves.
             if (entries[rank - 1].Score != 0)
             {
-                _sprites.DrawLargeTableNumber(
+                _sprites.Text.DrawLargeTableNumber(
                     spriteBatch,
                     entries[rank - 1].Score,
                     afterRank + ScreenSize.Scaled(HighScoreTableLayout.TodayScoreOffsetColumns * 2),
@@ -227,11 +227,11 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             int slot = SlotFor(entries[rank - 2], ScreenTuning.HighScoreAllTimeSlot, ScreenTuning.HighScoreAllTimeHighlightSlot);
 
             int afterRank = DrawRank(spriteBatch, rank, x, y, slot, large: false);
-            _sprites.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, slot);
+            _sprites.Text.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, slot);
 
             if (entries[rank - 2].Score != 0)
             {
-                _sprites.DrawSmallTableNumber(
+                _sprites.Text.DrawSmallTableNumber(
                     spriteBatch,
                     entries[rank - 2].Score,
                     afterRank + ScreenSize.Scaled(HighScoreTableLayout.AllTimeScoreOffsetColumns * 2),
@@ -250,10 +250,10 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         int slot = SlotFor(_table.Top.Score, ScreenTuning.HighScoreAllTimeSlot, ScreenTuning.HighScoreAllTimeHighlightSlot);
 
         int x = ColumnX(HighScoreTableLayout.TopColumn);
-        x = _sprites.DrawLargeFontText(spriteBatch, "(", x, y, slot);
-        x = _sprites.DrawLargeFontText(spriteBatch, _table.Top.Name, x, y, slot);
-        x = _sprites.DrawLargeFontText(spriteBatch, ")", x, y, slot);
-        _sprites.DrawLargeTableNumber(spriteBatch, _table.Top.Score, x + ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels), y, slot);
+        x = _sprites.Text.DrawLargeFontText(spriteBatch, "(", x, y, slot);
+        x = _sprites.Text.DrawLargeFontText(spriteBatch, _table.Top.Name, x, y, slot);
+        x = _sprites.Text.DrawLargeFontText(spriteBatch, ")", x, y, slot);
+        _sprites.Text.DrawLargeTableNumber(spriteBatch, _table.Top.Score, x + ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels), y, slot);
     }
 
     /// <summary>
@@ -265,8 +265,8 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     {
         string text = $"{rank}) ";
         return large
-            ? _sprites.DrawLargeFontText(spriteBatch, text, x, y, slot)
-            : _sprites.DrawSmallFontText(spriteBatch, text, x, y, slot);
+            ? _sprites.Text.DrawLargeFontText(spriteBatch, text, x, y, slot)
+            : _sprites.Text.DrawSmallFontText(spriteBatch, text, x, y, slot);
     }
 
     /// <summary>
@@ -309,7 +309,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// </summary>
     private void DrawStroke(SpriteBatch spriteBatch, int stroke)
     {
-        Color colour = _sprites.SlotColor(HighScoreTableLayout.FrameStrokeSlot(stroke));
+        Color colour = _sprites.Blitter.SlotColor(HighScoreTableLayout.FrameStrokeSlot(stroke));
         (int left, int top, int right, int bottom) = HighScoreTableLayout.FrameStroke(stroke);
 
         DrawHatchedRow(spriteBatch, colour, left, right, top);
@@ -336,7 +336,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             }
 
             int px = HudLayout.ArcadeX(x);
-            _sprites.DrawSolidRectangle(
+            _sprites.Blitter.DrawSolidRectangle(
                 spriteBatch,
                 new Rectangle(px, top, HudLayout.ArcadeX(x + 1) - px, height),
                 colour);
@@ -357,7 +357,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             }
 
             int py = HudLayout.ArcadeY(y);
-            _sprites.DrawSolidRectangle(
+            _sprites.Blitter.DrawSolidRectangle(
                 spriteBatch,
                 new Rectangle(px, py, width, HudLayout.ArcadeY(y + 1) - py),
                 colour);

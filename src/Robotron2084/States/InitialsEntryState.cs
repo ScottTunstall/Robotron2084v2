@@ -50,7 +50,7 @@ public sealed class InitialsEntryState : IGameState
     /// </summary>
     private void RestorePalette()
     {
-        if (_sprites.Palette is not { } palette)
+        if (_sprites.Blitter.Palette is not { } palette)
         {
             return;
         }
@@ -107,23 +107,23 @@ public sealed class InitialsEntryState : IGameState
     {
         if (cell == _entry.Position && _entry.PreviewIsRub)
         {
-            _sprites.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.EchoY, InitialsEntryLayout.InkSlot);
+            _sprites.Text.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.EchoY, InitialsEntryLayout.InkSlot);
             return;
         }
 
-        _sprites.DrawLargeFontText(spriteBatch, _entry.Initials[cell].ToString(), x, InitialsEntryLayout.EchoY, InitialsEntryLayout.InkSlot);
+        _sprites.Text.DrawLargeFontText(spriteBatch, _entry.Initials[cell].ToString(), x, InitialsEntryLayout.EchoY, InitialsEntryLayout.InkSlot);
     }
 
     /// <summary>G0SUB's "frob" marker: a two-pixel dash one row of the arcade below its cell.</summary>
     private void DrawMarker(SpriteBatch spriteBatch, int x) =>
-        _sprites.DrawSolidRectangle(
+        _sprites.Blitter.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(x, InitialsEntryLayout.MarkerY, InitialsEntryLayout.MarkerWidthPixels, InitialsEntryLayout.MarkerHeightPixels),
-            _sprites.SlotColor(InitialsEntryLayout.InstructionSlot));
+            _sprites.Blitter.SlotColor(InitialsEntryLayout.InstructionSlot));
 
     private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row) =>
-        _sprites.DrawLargeFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InkSlot);
+        _sprites.Text.DrawLargeFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InkSlot);
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int column, int row) =>
-        _sprites.DrawSmallFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InstructionSlot);
+        _sprites.Text.DrawSmallFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InstructionSlot);
 }

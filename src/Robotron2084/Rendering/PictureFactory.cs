@@ -55,7 +55,7 @@ public sealed class PictureFactory
     // ---- ROM laser pictures (player laser pictures; R5 $35BE-$35DC = old source
     //      RRG23 LLPC/ULPC/DLLPC/ULLPC, author ROM-verified 2026-09-13) ----
     // 4 bits per pixel, high nibble = left pixel. Authored at arcade-pixel
-    // dimensions (1 arcade pixel = 1 texture pixel); SpriteSet.DrawSprite scales
+    // dimensions (1 arcade pixel = 1 texture pixel); BlitterDraw.DrawSprite scales
     // them by SpecScale at draw time.
 
     /// <summary>LLPC ($35BE, 3 bytes × 1 row = 6×1): a solid bar — LEFT and RIGHT.</summary>

@@ -218,7 +218,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             return;
         }
 
-        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 
     /// <summary>The picture on screen: a grow-up frame while it grows, else the full picture.</summary>

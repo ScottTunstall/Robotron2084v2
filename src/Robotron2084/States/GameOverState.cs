@@ -69,7 +69,7 @@ public sealed class GameOverState : IGameState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         // ROM string 40 (GOMP): "GAME OVER" in the LARGE font, colour $AA, at (62, 128).
-        _services.Sprites.DrawLargeFontText(
+        _services.Sprites.Text.DrawLargeFontText(
             spriteBatch,
             "GAME OVER",
                 HudLayout.ArcadeColumnX(HudLayout.GameOverMessageColumn),
