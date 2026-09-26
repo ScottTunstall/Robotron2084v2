@@ -786,11 +786,11 @@ public sealed class PlayFieldBrainProgMissileTests
     }
 
     [Fact]
-    public void InputSource_SkipLevel_FlagsOnThePKey()
+    public void SkipLevelHeld_CarriesTheFlagTheWaveClearPathReads()
     {
-        // The P key mapping lives in the KeyboardPlayerInputSource (needs a
-        // live device) — here: the state struct carries the flag, and
-        // PlayingState's wave-clear check reads it (smoke-tested live).
+        // The KEY itself is read in ControlSettings.ReadPlayer (Insert — P is PAUSE; see
+        // SpaceAndInsert_StayAsPortAliases); PlayingState's wave-clear check reads the flag this state
+        // carries.
         Assert.False(default(PlayerInputState).SkipLevelHeld);
         Assert.True(new PlayerInputState(IntVector2.Zero, IntVector2.Zero, false, true).SkipLevelHeld);
     }
