@@ -59,6 +59,8 @@ Never call the clock unit "fifths", "sixths" or "6ths". All three have been used
 | **laser** (the player's) / **spark**, **shell**, **cruise missile** (enemy shots) | bullet, projectile, missile (alone) | |
 | **Shoot** | Aim, Fire (as a direction) | The second stick. "Fire" is the act of creating a laser. |
 | **Kill** | Deactivate, Destroy, Remove | Taking an entity off the field. |
+| **INTRO2** | title screen, presentation page (alone) | The Williams presentation page: wordmark, credits and the F-key menu (`TitleScreenState`, notes §123). |
+| **FAMPAG**, **HISTO**, **TABLE** | title page, story page, high score page | The ROM's own labels for the family page, the history (story) page and the high score table (notes §123). |
 
 ## 2. Structure and responsibility (§114, §120, §121)
 

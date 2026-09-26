@@ -10,7 +10,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>
-/// The arcade's Williams PRESENTATION page (notes §103; builder at ROM $87A6 onward): the
+/// INTRO2 (notes §123): the arcade's Williams PRESENTATION page (notes §103; builder at ROM $87A6 onward): the
 /// "ROBOTRON:" wordmark and the "2084" mark over the operator's attract-mode welcome message
 /// (<c>$8822</c>-<c>$8836</c> prints two 25-character lines in the LARGE font, an empty row apart),
 /// then the Vid Kidz / Williams credit strings in the SMALL font.

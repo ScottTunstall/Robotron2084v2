@@ -13,8 +13,9 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>
-/// The arcade's attract MOVIE — the scripted storyline that plays after the title
-/// screen sits idle (notes §95/§96). It is the ROM's own HISTO page script run by
+/// The arcade's attract MOVIE, the history page (<c>SPAGE</c> running <c>HISTO</c> after <c>FAMPAG</c>'s title, notes §123) —
+/// the scripted storyline that plays after INTRO2
+/// sits idle (notes §95/§96). It is the ROM's own HISTO page script run by
 /// <see cref="AttractMovie"/>: the intro screen's text crawl ("ROBOTRON 2084 /
 /// INSPIRED BY HIS NEVER ENDING QUEST FOR PROGRESS…"), then the hero, the family,
 /// the grunts, the hulk, the spheroid/tank/enforcer scene, the brain's

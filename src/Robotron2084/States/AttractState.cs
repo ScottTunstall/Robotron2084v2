@@ -12,7 +12,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>
-/// The arcade's FANCY ATTRACT MODE (notes §94) — the machine plays
+/// The arcade's FANCY ATTRACT MODE (notes §94; the listing gives this game no page label, §123) — the machine plays
 /// itself. A one-player game driven by <see cref="DemoPlayerInputSource"/>
 /// (the port's phony player; the ROM's real one is the OS ROM's ATRSW2 writer).
 /// The field, waves and death handling are the real <see cref="PlayField"/> /

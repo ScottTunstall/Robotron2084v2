@@ -10,7 +10,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>
-/// THE ARCADE'S HIGH SCORE TABLE (notes §98) — RRTABLE's <c>TABLE</c>, drawn at
+/// THE ARCADE'S HIGH SCORE TABLE (<c>TABLE</c>, notes §98, §123) — RRTABLE's <c>TABLE</c>, drawn at
 /// its own cursors, in its own fonts and colours:
 /// <list type="bullet">
 /// <item>"ROBOTRON HEROES" (slot 7) over TODAY'S list at the ROM's (53, 37);</item>

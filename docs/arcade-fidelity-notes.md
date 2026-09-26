@@ -10051,3 +10051,31 @@ G06-G11/G13-G15/G17/G19-G21 (the `RomTicks` → `RomFrames` sweep, the fifths/si
 H03-H06 and H08-H10 (the entity member order, the `LifeState` guards, `GameplayConstants`' scattered fields,
 the state constructors), and I01-I04 (the test `PlayFieldBuilder`, the test folders, the phase-named test
 file). Every one of them is still in `docs/code-review-issues.md` with its own instructions.
+
+
+### 123. THE ATTRACT PAGES HAVE NAMES: INTRO2 AND THE ROM'S OWN LABELS (author, 2026-09-26)
+
+**Author:** *"There are two intro screens with the Robotron 2084 logo. The one that contains 'Scott Tunstall' and lets
+you define keys, let's name that INTRO2. If the other pages or attract mode pages aren't named, name them now, but
+follow what the original source calls them."*
+
+**INTRO2** is the Williams PRESENTATION page (notes §103, §106): the "ROBOTRON:" wordmark and the "2084" mark over the
+welcome message, the Vid Kidz and Williams credit strings and the port's own credit line, with the port's F-key menu
+that opens DEFINE INPUTS. In the code it is `TitleScreenState`. (The ROM builds it from `$87A6`; the 1982 listing does
+not contain it, so it has no source label. INTRO2 is the author's name and is used as is.)
+
+The other pages take the labels the 1982 listing gives them (`RRLOG.ASM`, `RRSCRIPT.ASM`, `RRTABLE.ASM`):
+
+| Page | Source label | What the listing says | Port |
+|---|---|---|---|
+| Logo build | `LOGGER` / `RUNIT` (`RRLOG.ASM`) | `RUNIT` lays the letters `LR,LO,LB,LO,LT,LR,LO,LN,LC` out with `LETOUT` and blasts them off; `WDONE` then falls into `FAMPAG` | not built (INTRO2 stands in for the logo) |
+| Family page | `FAMPAG` (`RRSCRIPT.ASM`) | `SPGSUB` (which prints string 128, `TITLEM`, "ROBOTRON: 2084") then string 129, `FAMMM`, "SAVE THE LAST HUMAN FAMILY", then the `DUMPLR` script walks the family | the wall + title page of §94.1 that `TitleScreenState` used to be; the title and family lines are drawn by `StorylineState` |
+| History page | `SPAGE` running `HISTO` (`RRSCRIPT.ASM`, `HISTRY` is its ORG) | the story text crawl, the family, the grunts, hulk, spheroid, enforcer, tank, brain and prog scenes, then `DONE2` | `StorylineState` (script `AttractMovieData.Histo`) |
+| Phony-player game | the "attract mode" (`ATRSW2`/`ATRSW3`, `PLAYRV`); no page label | the game played by the OS ROM's phony player | `AttractState` |
+| High score table | `TABLE` (`RRTABLE.ASM`), "ROBOTRON HEROES" | today's and all-time lists in a hatched frame | `HighScoreTableState` |
+| DEFINE INPUTS | none: port-only page | opened from INTRO2's F-key menu | `DefineInputsState` |
+
+**A caveat about §95.1.** It says `DONE2` hands over to `RUNIT`, "the phony-player game". In `RRLOG.ASM` `RUNIT` is the
+logo build described above, and it ends in `FAMPAG`, not in a game. The port's `StorylineState` still goes on to
+`AttractState`, so the cycle the port runs is INTRO2, then the history page, then the phony-player game, then the high
+score table. The listing's own order should be checked before that is called faithful.
