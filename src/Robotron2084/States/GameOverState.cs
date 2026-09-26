@@ -26,7 +26,7 @@ public sealed class GameOverState : IGameState
 {
     private readonly GameServices _services;
     private readonly IReadOnlyList<FinalScore> _scores;
-    private readonly int _holdTicks = GameplayConstants.PortTicks(GameplayConstants.GameOverMessageRomFrames);
+    private readonly int _holdTicks = ArcadeClock.PortTicks(ScreenTuning.GameOverMessageRomFrames);
     private int _elapsedTicks;
 
     /// <summary>Builds the screen for a finished game's scores.</summary>
@@ -72,8 +72,8 @@ public sealed class GameOverState : IGameState
         _services.Sprites.DrawLargeFontText(
             spriteBatch,
             "GAME OVER",
-                GameplayConstants.ArcadeColumnX(GameplayConstants.GameOverMessageColumn),
-                GameplayConstants.ArcadeY(GameplayConstants.GameOverMessageRow),
-            GameplayConstants.GameOverTextSlot);
+                HudLayout.ArcadeColumnX(HudLayout.GameOverMessageColumn),
+                HudLayout.ArcadeY(HudLayout.GameOverMessageRow),
+            ScreenTuning.GameOverTextSlot);
     }
 }

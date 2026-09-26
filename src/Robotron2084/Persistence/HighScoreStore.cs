@@ -16,10 +16,7 @@ namespace Robotron2084.Persistence;
 /// </summary>
 public sealed class HighScoreStore
 {
-    private static readonly string FilePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Robotron2084",
-        "highscores.json");
+    private static readonly string FilePath = AppDataPaths.FileInAppData("highscores.json");
 
     /// <summary>The table: the saved all-time list + top entry, and the ROM's factory today's list.</summary>
     public HighScoreTable Load() => Load(FilePath);

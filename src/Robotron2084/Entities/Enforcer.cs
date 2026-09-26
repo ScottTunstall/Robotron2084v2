@@ -11,7 +11,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Spheroid"/>
 /// <seealso cref="Spark"/>
 /// <remarks>ROM: RRC11.ASM's <c>ENFR1</c>/<c>ENFNV</c>/<c>ENFDRP</c> (notes §17). Growing takes five
-/// pictures of 9 frames (<see cref="GameplayConstants.EnforcerGrowUpRomFrames"/> in all) and is immobile.
+/// pictures of 9 frames (<see cref="EnforcerTuning.GrowUpRomFrames"/> in all) and is immobile.
 /// It then aims at a spot in a 32x32 zone
 /// down-right of the player and moves at half the remaining distance, so it loiters as it closes. It
 /// flies over electrodes and dies outright when hit, with no Dying state and no flash. The fire timer
@@ -19,12 +19,28 @@ namespace Robotron2084.Entities;
 /// 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Enforcer : IEntity, IExplodable, IRemovable
 {
-    private readonly SpriteSet _sprites;
+    /// <summary>The wave's enforcer fire interval when the caller gives none.</summary>
+    private const int DefaultFireIntervalBeats = 24;
+
+    /// <summary>ROM <c>ENFR1</c>: the aim zone down-right of the player is this many columns wide...</summary>
+    private const int AimZoneColumns = 32;
+
+    /// <summary>ROM <c>ENFR1</c>: ...and this many arcade rows tall.</summary>
+    private const int AimZoneRows = 32;
+
+    /// <summary>The enforcer covers this fraction of the remaining distance to its aim each ROM frame: 1 over this.</summary>
+    private const int ApproachDivisor = 2;
+
+    /// <summary>ROM <c>ENFR1</c>: a re-aim countdown is a random 0 to one less than this many beats.</summary>
+    private const int ReaimBeatsMaxExclusive = 32;
+
     /// <summary>The enforcer picture's own 10x11 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(GameplayConstants.EnforcerCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.EnforcerCollisionSize.Height));
+        (ScreenSize.Scaled(CollisionSizes.EnforcerCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.EnforcerCollisionSize.Height));
+
+    private readonly SpriteSet _sprites;
     private readonly Random _random;
-    private readonly int _fireDelayRomTicks;
+    private readonly int _fireIntervalBeats;
     private IntVector2 _position;
 
     /// <summary>Velocity in 1/256 port units per ROM frame, carried by a remainder.</summary>
@@ -41,22 +57,22 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the enforcer.</param>
     /// <param name="random">The random source for the re-aim destination and the fire timer.</param>
-    /// <param name="fireDelayRomTicks">This wave's fire delay, in ROM frames: the interval is a random 1..this.</param>
+    /// <param name="fireIntervalBeats">The most beats this wave's enforcer waits between shots: the interval is a random 1..this.</param>
     /// <remarks>ROM: <c>ENSTIM</c> — the interval is a random 1..that many AI passes.</remarks>
     public Enforcer(
         SpriteSet sprites,
         IntVector2 position,
         Random random,
-        int fireDelayRomTicks = 24)
+        int fireIntervalBeats = DefaultFireIntervalBeats)
     {
         _sprites = sprites;
         _position = position;
         _random = random;
-        _fireDelayRomTicks = fireDelayRomTicks;
-        _growthRemaining = ArcadeClock.Units(GameplayConstants.EnforcerGrowUpRomFrames);
+        _fireIntervalBeats = fireIntervalBeats;
+        _growthRemaining = ArcadeClock.Units(EnforcerTuning.GrowUpRomFrames);
         // Both countdowns are in beats; the arcade re-aims as soon as the grow-up ends.
         _reaimBeatsRemaining = 0;
-        _fireCooldownBeats = 1 + random.Next(0, _fireDelayRomTicks);
+        _fireCooldownBeats = 1 + random.Next(0, _fireIntervalBeats);
         // The mover starts on its first active frame; the accumulator is still while growing.
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
@@ -72,7 +88,15 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Kills it at once (ROM <c>ENFKIL</c>); there is no death animation.</summary>
-    public void Kill() => LifeState = EntityLifeState.Dead;
+    public void Kill()
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        LifeState = EntityLifeState.Dead;
+    }
 
     /// <summary>Runs the grow-up, the per-frame mover and the AI beat.</summary>
     /// <param name="gameTime">Unused — the clocks are counted in ticks.</param>
@@ -108,12 +132,12 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         }
 
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < ArcadeClock.Units(GameplayConstants.EnforcerBeatRomFrames))
+        if (_beatTimer < ArcadeClock.Units(EnforcerTuning.BeatRomFrames))
         {
             return;
         }
 
-        _beatTimer -= ArcadeClock.Units(GameplayConstants.EnforcerBeatRomFrames);
+        _beatTimer -= ArcadeClock.Units(EnforcerTuning.BeatRomFrames);
 
         // Both countdowns tick once per beat (ROM: ENFR1).
         if (--_reaimBeatsRemaining <= 0)
@@ -125,7 +149,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         if (--_fireCooldownBeats <= 0)
         {
             _fireCooldownBeats = NextFireBeats(_random);
-            if (field.ActiveSparkCount < GameplayConstants.GlobalActiveSparkCap)
+            if (field.ActiveSparkCount < SparkTuning.GlobalActiveSparkCap)
             {
                 // The ROM aims with the player's position, so velocity follows distance per axis.
                 field.SpawnSpark(_position, field.Player.Position);
@@ -138,15 +162,15 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private void RollVelocity(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        int targetX = field.Player.Position.X + ScreenSize.Columns(_random.Next(0, 32));
-        int targetY = field.Player.Position.Y + ScreenSize.Scaled(_random.Next(0, 32));
+        int targetX = field.Player.Position.X + ScreenSize.Columns(_random.Next(0, AimZoneColumns));
+        int targetY = field.Player.Position.Y + ScreenSize.ArcadePixels(_random.Next(0, AimZoneRows));
         targetX = Math.Clamp(targetX, bounds.X, bounds.Right - CollisionSize.Width);
         targetY = Math.Clamp(targetY, bounds.Y, bounds.Bottom - CollisionSize.Height);
 
         IntVector2 delta = new(targetX - _position.X, targetY - _position.Y);
 
         // Velocity is in 1/256-port-px units per ROM frame.
-        _velocitySubpixels = new IntVector2(delta.X / 2, delta.Y / 2);
+        _velocitySubpixels = new IntVector2(delta.X / ApproachDivisor, delta.Y / ApproachDivisor);
     }
 
     /// <summary>Moves one frame's worth of velocity; an axis that would leave the field is refused.</summary>
@@ -156,9 +180,9 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
         _remainderSubpixels += _velocitySubpixels;
-        int stepX = _remainderSubpixels.X / 256;
-        int stepY = _remainderSubpixels.Y / 256;
-        _remainderSubpixels -= new IntVector2(stepX * 256, stepY * 256);
+        int stepX = _remainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
+        int stepY = _remainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
+        _remainderSubpixels -= new IntVector2(stepX * ScreenSize.SubpixelsPerPixel, stepY * ScreenSize.SubpixelsPerPixel);
 
         int x = _position.X + stepX;
         if (stepX != 0 && x >= bounds.X && x + CollisionSize.Width <= bounds.Right)
@@ -174,16 +198,16 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     }
 
     /// <summary>Rolls the re-aim countdown: 0..31 beats (0 re-aims again next beat).</summary>
-    private static int NextReaimBeats(Random random) => random.Next(0, 32);
+    private static int NextReaimBeats(Random random) => random.Next(0, ReaimBeatsMaxExclusive);
 
     /// <summary>Which of the five grow-up pictures is showing (0..4), or -1 once grown (test hook).</summary>
-    internal int GrowFrameIndex => _growthRemaining > 0
-        ? (ArcadeClock.Units(GameplayConstants.EnforcerGrowUpRomFrames) - _growthRemaining)
-            / ArcadeClock.Units(GameplayConstants.EnforcerGrowStepRomFrames)
+    internal int GrowAnimationFrameIndex => _growthRemaining > 0
+        ? (ArcadeClock.Units(EnforcerTuning.GrowUpRomFrames) - _growthRemaining)
+            / ArcadeClock.Units(EnforcerTuning.GrowStepRomFrames)
         : -1;
 
     /// <summary>The interval until the next shot: 1..the wave's fire delay, in beats.</summary>
-    private int NextFireBeats(Random random) => random.Next(1, _fireDelayRomTicks + 1);
+    private int NextFireBeats(Random random) => random.Next(1, _fireIntervalBeats + 1);
 
     /// <summary>Draws the grow-up picture while it is growing, and the full picture afterwards.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
@@ -208,8 +232,8 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
                 return _sprites.Enforcer;
             }
 
-            int frame = Math.Clamp(GrowFrameIndex, 0, _sprites.EnforcerFrames.Length - 2);
-            return _sprites.EnforcerFrames[1 + frame];
+            int frame = Math.Clamp(GrowAnimationFrameIndex, 0, _sprites.EnforcerAnimationFrames.Length - 2);
+            return _sprites.EnforcerAnimationFrames[1 + frame];
         }
     }
 }

@@ -52,23 +52,23 @@ public static class InitialsEntryLayout
     /// pixels) per letter, which cannot hold a six-pixel glyph, so the port spaces the cells by an
     /// advance wide enough to print one — the deviation notes §116 records.
     /// </summary>
-    public static int CellAdvancePixels => ScreenSize.Scaled(GameplayConstants.HudScoreDigitAdvancePixels);
+    public static int CellAdvancePixels => ScreenSize.Scaled(HudLayout.HudScoreDigitAdvancePixels);
 
     /// <summary>Rows below the echo cursor of <c>G0SUB</c>'s frob marker (`STA 8,X`).</summary>
     public const int MarkerRowOffset = 8;
 
     /// <summary>The marker's width: the raw video byte <c>$99</c> lights both pixels of one column.</summary>
-    public static int MarkerWidthPixels => GameplayConstants.ArcadeX(ScreenSize.ArcadePixelsPerColumn);
+    public static int MarkerWidthPixels => HudLayout.ArcadeX(ScreenSize.ArcadePixelsPerColumn);
 
     /// <summary>The X of cell <paramref name="index"/> (0-based), in port pixels.</summary>
-    public static int CellX(int index) => GameplayConstants.ArcadeColumnX(EchoColumn) + (index * CellAdvancePixels);
+    public static int CellX(int index) => HudLayout.ArcadeColumnX(EchoColumn) + (index * CellAdvancePixels);
 
     /// <summary>The Y the three letters are drawn at, in port pixels.</summary>
-    public static int EchoY => GameplayConstants.ArcadeY(EchoRow);
+    public static int EchoY => HudLayout.ArcadeY(EchoRow);
 
     /// <summary>The Y of the row the frob markers sit on, in port pixels.</summary>
-    public static int MarkerY => GameplayConstants.ArcadeY(EchoRow + MarkerRowOffset);
+    public static int MarkerY => HudLayout.ArcadeY(EchoRow + MarkerRowOffset);
 
     /// <summary>The height of one arcade row on the port's canvas — the marker is a single row.</summary>
-    public static int MarkerHeightPixels => GameplayConstants.ArcadeY(EchoRow + MarkerRowOffset + 1) - MarkerY;
+    public static int MarkerHeightPixels => HudLayout.ArcadeY(EchoRow + MarkerRowOffset + 1) - MarkerY;
 }

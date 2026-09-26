@@ -133,7 +133,7 @@ public sealed class RobotronGame : Game
         }
         else if (Pressed(state, Keys.F8))
         {
-            _scaleMode = Presentation.Next(_scaleMode);
+            _scaleMode = Presentation.NextScaleMode(_scaleMode);
             FitCanvas();
         }
     }

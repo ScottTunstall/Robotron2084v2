@@ -6,18 +6,18 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 /// PHASE E (arcade-fidelity-notes (18)): brains (ROM BRNORG $1AC0 — nearest
 /// human target, 1px/beat chase, ABAC, cruise missiles, touch-conversion to
-/// progs), progs (straight-line walkers that keep the human's art/box and
+/// progs), progs (straight-line walkers that keep the human's animation frames and box and
 /// die in a strip explosion of the phony burst card, notes §90),
 /// cruise missiles (50/25/25 direction roll,
 /// wall-reflected, 25 pts), plus the round-6 autofire cadence and the P
 /// "skip level" port key.
 /// </summary>
-public sealed class PlayFieldPhaseETests
+public sealed class PlayFieldBrainProgMissileTests
 {
     private sealed class PhaseInput : IPlayerInputSource
     {
@@ -41,7 +41,7 @@ public sealed class PlayFieldPhaseETests
     }
 
     private static PlayField CreateField(LevelParameters parameters, IPlayerInputSource? input = null) =>
-        new(TestSprites.Shared, parameters, input ?? new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3);
+        new PlayFieldBuilder().WithParameters(parameters).WithInput(input ?? new FakeInputSource()).WithSeed(99).Build();
 
     private static LevelParameters BrainWave(int brains, int moms = 0, int dads = 0, int mikeys = 0) => new(
         LevelNumber: 1,
@@ -69,14 +69,14 @@ public sealed class PlayFieldPhaseETests
         // 30 arcade px left of (where the human is now) → steps right/up.
         IntVector2 humanSpot = field.Humans[0].Position;
         IntVector2 brainSpot = new(humanSpot.X - ScreenSize.Scaled(30), humanSpot.Y - ScreenSize.Scaled(20));
-        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(2), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(2), beatDelayRomFrames: 8, fireIntervalBeats: 40);
         field.AddBrain(brain);
 
         // Beat period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
         // (notes 26: SLEEP(BRNSPD) + one beat-execution vblank). In the
         // 19-tick window exactly one beat runs = 1 arcade px (Scaled(1) port px)
         // per axis toward the target.
-        for (int tick = 0; tick < GameplayConstants.PortTicks(16); tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicks(16); tick++)
         {
             field.Update(Frame());
         }
@@ -99,11 +99,11 @@ public sealed class PlayFieldPhaseETests
         // "target is below". That ±1px vertical jitter is the arcade brain's
         // hover; the port used to hold the row perfectly still.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.Scaled(30), playerSpot.Y);
-        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(3), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(3), beatDelayRomFrames: 8, fireIntervalBeats: 40);
         field.AddBrain(brain);
 
         // One beat in the 19-tick window (period PortTicks(9) = 10, notes 26).
-        for (int tick = 0; tick < GameplayConstants.PortTicks(16); tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicks(16); tick++)
         {
             field.Update(Frame());
         }
@@ -124,10 +124,10 @@ public sealed class PlayFieldPhaseETests
         // ROM's ±2px X dead zone (BRNL1: dx+2 <= 4), so X must not correct —
         // but Y has no dead zone and must still step down 1 px.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.Scaled(1), playerSpot.Y - ScreenSize.Scaled(50));
-        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(21), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(21), beatDelayRomFrames: 8, fireIntervalBeats: 40);
         field.AddBrain(brain);
 
-        for (int tick = 0; tick < GameplayConstants.PortTicks(12); tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicks(12); tick++)
         {
             field.Update(Frame());
         }
@@ -153,11 +153,11 @@ public sealed class PlayFieldPhaseETests
         // down) — the author's "the brains seem to get stuck at the bottom
         // wall". The port rejects per axis, like the ROM's own generic mover
         // (RRS22 OPB80), so the brain creeps down the wall instead.
-        IntVector2 brainSpot = new(inner.Right - ScreenSize.Scaled(GameplayConstants.BrainCollisionSize.Width), inner.Y + ScreenSize.Scaled(80));
-        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(22), brainSpeedRomTicks: 8, fireDelayRomTicks: 40);
+        IntVector2 brainSpot = new(inner.Right - ScreenSize.Scaled(CollisionSizes.BrainCollisionSize.Width), inner.Y + ScreenSize.Scaled(80));
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(22), beatDelayRomFrames: 8, fireIntervalBeats: 40);
         field.AddBrain(brain);
 
-        for (int tick = 0; tick < GameplayConstants.PortTicks(12); tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicks(12); tick++)
         {
             field.Update(Frame());
         }
@@ -181,7 +181,7 @@ public sealed class PlayFieldPhaseETests
         field.AddHuman(human);
 
         // Corners coincident — well inside the ROM's ±3px catch reach.
-        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(5), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(5), beatDelayRomFrames: 0, fireIntervalBeats: 40);
         field.AddBrain(brain);
 
         field.Update(Frame());
@@ -201,10 +201,10 @@ public sealed class PlayFieldPhaseETests
         // …and the placement SETS THE BRAIN'S PICTURE (BMUT00 `LDD #BRLP1` /
         // BMUT1 `STD OPICT,X`): the human went to its LEFT, so the brain faces
         // LEFT — BRLP1 is BRNAL's frame 0, i.e. the left base's first frame.
-        Assert.Equal(0, brain.WalkFrameIndex);
+        Assert.Equal(0, brain.WalkAnimationFrameIndex);
 
         // The animation is 20 iterations x 2 redraws x 3 ROM frames = 144 ticks
-        // on the exact-6ths clock (notes §52; PortTicks(3) = 3 would have made it
+        // on the clock-unit clock (notes §52; PortTicks(3) = 3 would have made it
         // 120). Through it the brain must not move (it is a solid block, not a
         // chaser).
         IntVector2 brainSpot = brain.Position;
@@ -223,7 +223,7 @@ public sealed class PlayFieldPhaseETests
         }
 
         // Done: the human is gone, a PROG stands at its last position and keeps
-        // its art/box, and the brain is free to move again.
+        // its animation frames and box, and the brain is free to move again.
         Assert.False(brain.IsReprogramming);
         Assert.NotEqual(EntityLifeState.Alive, human.LifeState);
         Assert.Equal(1, field.ProgCount);
@@ -246,7 +246,7 @@ public sealed class PlayFieldPhaseETests
         var human = new Human(TestSprites.Shared, humanSpot, HumanKind.Dad, new Random(7));
         field.AddHuman(human);
 
-        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(8), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(8), beatDelayRomFrames: 0, fireIntervalBeats: 40);
         field.AddBrain(brain);
 
         field.Update(Frame());
@@ -255,7 +255,7 @@ public sealed class PlayFieldPhaseETests
         // The human could not fit on the left, so it went right…
         Assert.Equal(brain.Position.X + ScreenSize.Scaled(8), human.Position.X);
         // …and the brain's picture is BRNAR's frame 0 (BRRP1) — facing RIGHT.
-        Assert.Equal(3, brain.WalkFrameIndex);
+        Assert.Equal(3, brain.WalkAnimationFrameIndex);
     }
 
     [Fact]
@@ -271,7 +271,7 @@ public sealed class PlayFieldPhaseETests
         IntVector2 humanSpot = new(inner.X + 200, inner.Y + 200);
         var human = new Human(TestSprites.Shared, humanSpot, HumanKind.Dad, new Random(31));
         field.AddHuman(human);
-        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(32), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(32), beatDelayRomFrames: 0, fireIntervalBeats: 40);
         field.AddBrain(brain);
 
         field.Update(Frame());
@@ -302,7 +302,7 @@ public sealed class PlayFieldPhaseETests
         // Boxes overlap (the human is well inside the brain's frame) but the
         // corners are 20px apart → the ROM's reach does not cover it.
         IntVector2 offset = new(ScreenSize.Scaled(20), 0);
-        var brain = new Brain(TestSprites.Shared, humanSpot - offset, new Random(15), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, humanSpot - offset, new Random(15), beatDelayRomFrames: 0, fireIntervalBeats: 40);
         field.AddBrain(brain);
 
         field.Update(Frame());
@@ -360,7 +360,7 @@ public sealed class PlayFieldPhaseETests
             var prog = new Prog(TestSprites.Shared, spot, HumanKind.Dad, new Random(seed));
             field.AddProg(prog);
 
-            for (int tick = 0; tick < GameplayConstants.PortTicksCeil(3); tick++)
+            for (int tick = 0; tick < ArcadeClock.PortTicksCeil(3); tick++)
             {
                 field.Update(Frame());
             }
@@ -393,7 +393,7 @@ public sealed class PlayFieldPhaseETests
         // ROM CMISL: one beat = NAP 2, doing TWO CMMOVs of 1px each. And
         // GCMDIR's `BPL GCMDY` jumps INTO the Y block, so a missile whose X
         // is not armed always seeks on Y — there is no "both axes zero" case.
-        Rectangle inner = PlayFieldSpawnTests.InnerBounds;
+        Rectangle inner = PlayFieldBuilder.DefaultBounds;
 
         int xArmed = 0;
         for (int seed = 0; seed < 400; seed++)
@@ -430,7 +430,7 @@ public sealed class PlayFieldPhaseETests
         // The first beat (2 x 1px CMMOV) lands on tick 4 (3 ROM frames = 3.6),
         // and the re-aim timer cannot fire that early (RND(1..7) >= 1 decrement
         // per beat, re-aim on reaching 0).
-        for (int tick = 0; tick < GameplayConstants.PortTicksCeil(3); tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicksCeil(3); tick++)
         {
             field.Update(Frame());
         }
@@ -467,7 +467,7 @@ public sealed class PlayFieldPhaseETests
 
         // Two beats = 4 CMMOVs = 4 marks (the missile flies on while the
         // player's start grace freezes the robots). Beats land on ticks 4 and 8.
-        for (int tick = 0; tick < GameplayConstants.PortTicksCeil(3) * 2; tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicksCeil(3) * 2; tick++)
         {
             field.Update(Frame());
         }
@@ -486,12 +486,12 @@ public sealed class PlayFieldPhaseETests
         }
 
         // A long flight must not grow the tail past the ring.
-        for (int tick = 0; tick < GameplayConstants.PortTicksCeil(3) * 40; tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicksCeil(3) * 40; tick++)
         {
             field.Update(Frame());
         }
 
-        Assert.Equal(GameplayConstants.MissileTrailMarks, missile.Trail.Count);
+        Assert.Equal(CruiseMissileTuning.TrailMarks, missile.Trail.Count);
 
         missile.Kill(); // CMKIL wipes the remaining marks
         Assert.Empty(missile.Trail);
@@ -514,7 +514,7 @@ public sealed class PlayFieldPhaseETests
         var prog = new Prog(TestSprites.Shared, spot, HumanKind.Dad, new Random(6));
         field.AddProg(prog);
 
-        for (int tick = 0; tick < GameplayConstants.PortTicksCeil(3) * 3; tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicksCeil(3) * 3; tick++)
         {
             field.Update(Frame());
         }
@@ -524,13 +524,13 @@ public sealed class PlayFieldPhaseETests
         Assert.Equal(3, prog.GhostFrames.Count);
 
         // Capped at the ROM's seven — the ring never grows.
-        for (int tick = 0; tick < GameplayConstants.PortTicksCeil(3) * 12; tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicksCeil(3) * 12; tick++)
         {
             field.Update(Frame());
         }
 
-        Assert.Equal(GameplayConstants.ProgGhostCount, prog.GhostTrail.Count);
-        Assert.Equal(GameplayConstants.ProgGhostCount, prog.GhostFrames.Count);
+        Assert.Equal(ProgTuning.GhostCount, prog.GhostTrail.Count);
+        Assert.Equal(ProgTuning.GhostCount, prog.GhostFrames.Count);
 
         // The poses are frozen at birth, so the ABAC walk cycle shows through
         // the trail — if every ghost shared one frame the trail would animate
@@ -558,13 +558,13 @@ public sealed class PlayFieldPhaseETests
 
         Assert.Equal(EntityLifeState.Dead, prog.LifeState); // instant off, no pop
         Assert.Equal(0, field.ProgCount);
-        Explosion explosion = Assert.Single(field.Explosions);
+        StripEffect explosion = Assert.Single(field.Explosions);
         // UL = OBJX/OBJY with the PICTURE's W/H: the 12x16 card's rect at the prog's
         // corner, NOT the smaller human box it was walking in.
         Assert.Equal(spot.X, explosion.Position.X);
         Assert.Equal(spot.Y, explosion.Position.Y);
-        Assert.Equal(ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Width), explosion.Bounds.Width);
-        Assert.Equal(ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Height), explosion.Bounds.Height);
+        Assert.Equal(ScreenSize.Scaled(CollisionSizes.ProgBurstSize.Width), explosion.Bounds.Width);
+        Assert.Equal(ScreenSize.Scaled(CollisionSizes.ProgBurstSize.Height), explosion.Bounds.Height);
     }
 
     [Fact]
@@ -608,7 +608,7 @@ public sealed class PlayFieldPhaseETests
         Rectangle inner = field.Wall.PlayfieldBounds;
 
         IntVector2 brainSpot = new(inner.X + 150, inner.Y + 120);
-        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(9), brainSpeedRomTicks: 0, fireDelayRomTicks: 40);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(9), beatDelayRomFrames: 0, fireIntervalBeats: 40);
         field.AddBrain(brain);
         Assert.True(field.PlayerLasers.TryFire(new IntVector2(brainSpot.X + 7, brainSpot.Y - 12), Direction8.Down, out PlayerLaser? l1));
         field.Update(new GameTime());
@@ -627,11 +627,11 @@ public sealed class PlayFieldPhaseETests
         Assert.Equal(EntityLifeState.Dead, prog.LifeState);
         Assert.Equal(600, field.Score.Score); // +100
         Assert.Equal(2, field.Explosions.Count); // the brain's and the prog's
-        Explosion card = field.Explosions[1];
+        StripEffect card = field.Explosions[1];
         Assert.Equal(progSpot.X, card.Position.X);
         Assert.Equal(progSpot.Y, card.Position.Y); // UL = OBJX/OBJY, unchanged by PRGKIL
-        Assert.Equal(ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Width), card.Bounds.Width);
-        Assert.Equal(ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Height), card.Bounds.Height);
+        Assert.Equal(ScreenSize.Scaled(CollisionSizes.ProgBurstSize.Width), card.Bounds.Width);
+        Assert.Equal(ScreenSize.Scaled(CollisionSizes.ProgBurstSize.Height), card.Bounds.Height);
         Assert.Equal(StripFanAxis.Columns, card.Axis); // a vertical shot -> the H family
     }
 
@@ -666,7 +666,7 @@ public sealed class PlayFieldPhaseETests
     [Fact]
     public void Player_HoldingFire_AutoReFires_AfterTheCooldown_AndCapsAtThreeLasers()
     {
-        var input = new PhaseInput { State = new PlayerInputState(IntVector2.Zero, IntVector2.Zero, FirePressed: true) };
+        var input = new PhaseInput { State = new PlayerInputState(IntVector2.Zero, IntVector2.Zero, FireHeld: true) };
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1), input);
         Rectangle inner = field.Wall.PlayfieldBounds;
 
@@ -693,7 +693,7 @@ public sealed class PlayFieldPhaseETests
         // The P key mapping lives in the KeyboardPlayerInputSource (needs a
         // live device) — here: the state struct carries the flag, and
         // PlayingState's wave-clear check reads it (smoke-tested live).
-        Assert.False(default(PlayerInputState).SkipLevelPressed);
-        Assert.True(new PlayerInputState(IntVector2.Zero, IntVector2.Zero, false, true).SkipLevelPressed);
+        Assert.False(default(PlayerInputState).SkipLevelHeld);
+        Assert.True(new PlayerInputState(IntVector2.Zero, IntVector2.Zero, false, true).SkipLevelHeld);
     }
 }

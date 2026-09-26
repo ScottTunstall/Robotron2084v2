@@ -30,8 +30,7 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class AttractState : IGameState, IAttractState
 {
-    private static readonly int Margin = ScreenSize.Scaled(GameplayConstants.PlayfieldMarginSpecPixels);
-    private static readonly Rectangle InnerBounds = new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
+    private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
 
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
@@ -42,9 +41,7 @@ public sealed class AttractState : IGameState, IAttractState
     private readonly Random _random = new();
     private GameSession _session;
     private PlayField _field;
-    private bool _previousFire;
-    private bool _previousStartOne;
-    private bool _previousStartTwo;
+    private readonly ButtonEdgeDetector _buttons = new();
 
     public AttractState(GameServices services)
     {
@@ -60,7 +57,7 @@ public sealed class AttractState : IGameState, IAttractState
     {
         PlayerSlot slot = _session.Current;
         LevelParameters parameters = _generator.Generate(slot.Wave);
-        WallColorCycle cycle = new(GameplayConstants.DefaultWallPalette, TimeSpan.FromMilliseconds(GameplayConstants.WallStepDurationMilliseconds));
+        WallColorCycle cycle = new();
         return new PlayField(_sprites, parameters, _demoInput, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
     }
 
@@ -69,16 +66,11 @@ public sealed class AttractState : IGameState, IAttractState
         // A human at the coin door takes the machine back (arcade: start works
         // any time attract is running).
         PlayerInputState human = _humanInput.Poll();
-        if ((human.FirePressed && !_previousFire) ||
-            (human.StartOnePlayerPressed && !_previousStartOne) ||
-            (human.StartTwoPlayersPressed && !_previousStartTwo))
+        if (_buttons.Advance(human).Any)
         {
             manager.TransitionTo(new TitleScreenState(_services));
             return;
         }
-        _previousFire = human.FirePressed;
-        _previousStartOne = human.StartOnePlayerPressed;
-        _previousStartTwo = human.StartTwoPlayersPressed;
 
         // The phony player reasons about the field BEFORE it moves this tick —
         // the same order PlayingState polls after its Update, except the AI needs

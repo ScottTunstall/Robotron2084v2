@@ -214,7 +214,7 @@ public static class AttractMovieData
     ];
 
     /// <summary>ANATAB ($7DEF): the walkers' 4-frame picture cycle (0,1,0,2).</summary>
-    public static readonly byte[] AnimTable =
+    public static readonly byte[] AnimationFrameCycleTable =
     [
         0x00, 0x01, 0x00, 0x02,
     ];

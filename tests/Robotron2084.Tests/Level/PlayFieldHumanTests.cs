@@ -26,7 +26,7 @@ public sealed class PlayFieldHumanTests
         HulkCount: hulks);
 
     private static PlayField CreateField(LevelParameters parameters, int startingRescues = 0) =>
-        new(TestSprites.Shared, parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3, startingRescues: startingRescues);
+        new PlayFieldBuilder().WithParameters(parameters).WithSeed(99).WithRescues(startingRescues).Build();
 
     /// <summary>
     /// One port tick. The player's start grace is WALL-CLOCK, so a `new GameTime()`
@@ -84,10 +84,10 @@ public sealed class PlayFieldHumanTests
     }
 
     [Fact]
-    public void Human_StepCadence_RunsOnTheExactSixthsClock()
+    public void Human_StepCadence_RunsOnTheClockUnitAccumulator()
     {
         // 16 ROM frames = 19.2 port ticks (the period is an author override of the
-        // ROM's NAP 8 — see Human.StepPeriodRomTicks and notes §70), so the exact-6ths
+        // ROM's NAP 8 — see Human.StepPeriodRomFrames and notes §70), so the clock-unit
         // clock fires ceil(19.2k) ticks after the FIRST step: 20, 39, 58, 77, 96 … The
         // truncated PortTicks(16) = 19 fired every 19 — a tick further ahead every five
         // steps. The first step itself is the stagger's last tick (notes §88), which is
@@ -165,7 +165,7 @@ public sealed class PlayFieldHumanTests
         // left the displayed score stale for the rest of the wave, which is what
         // the attract demo's rescue bonus looked like.
         PlayField field = CreateField(HumanWave(0, 0, 1));
-        PlayerSlot slot = new(1, new FakeInputSource(), lives: 3, wave: 1);
+        PlayerSlot slot = new(1, new FakeInputSource(), Lives: 3, Wave: 1);
 
         field.Update(new GameTime());
         field.SyncInto(slot);
@@ -194,7 +194,7 @@ public sealed class PlayFieldHumanTests
         // The hulk waits for STATUS (`HULK LDA STATUS WAIT FOR STATUS TO GO`) and the ROM
         // creates its collision process only after the wave-start appear, so no robot can touch
         // a human during the player's start grace — burn it off first (notes §88).
-        for (int tick = 0; tick < GameplayConstants.PlayerStartGraceSeconds * 60 + 1; tick++)
+        for (int tick = 0; tick < PlayerTuning.PlayerStartGraceSeconds * 60 + 1; tick++)
         {
             field.Update(Frame());
         }
@@ -218,7 +218,7 @@ public sealed class PlayFieldHumanTests
     {
         PlayField field = CreateField(HumanWave(0, 0, 1, hulks: 1));
 
-        for (int tick = 0; tick < GameplayConstants.PlayerStartGraceSeconds * 60 + 1; tick++)
+        for (int tick = 0; tick < PlayerTuning.PlayerStartGraceSeconds * 60 + 1; tick++)
         {
             field.Update(Frame()); // the hulk cannot act until the grace is over (notes §88)
         }
@@ -228,7 +228,7 @@ public sealed class PlayFieldHumanTests
         field.Update(Frame());
         Assert.Single(field.Skulls);
 
-        for (int tick = 0; tick < GameplayConstants.PortTicks(90) - 1; tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicks(90) - 1; tick++)
         {
             field.Update(Frame());
         }
@@ -251,7 +251,7 @@ public sealed class PlayFieldHumanTests
         Assert.Single(field.RescueScores);
         Assert.Equal(human.Position, field.RescueScores[0].Position);
 
-        for (int tick = 0; tick < GameplayConstants.PortTicks(60) - 1; tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicks(60) - 1; tick++)
         {
             field.Update(new GameTime());
         }

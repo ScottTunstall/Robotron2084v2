@@ -37,13 +37,13 @@ namespace Robotron2084.Hud;
 /// bits and indexes that table, and entry 1 (bit 0 set = PIA-A bit 0 = "Move up") is the
 /// up delta <c>00 FF</c>. So <c>ORAA PIA2 / BEQ</c> means "no switch at all is down".
 ///
-/// The timing runs on the exact-6ths clock the entity bodies use (notes §52): a port
-/// tick advances a ROM-frame clock by 5 sixths.
+/// The timing runs on the clock-unit clock the entity bodies use (notes §52): a port
+/// tick advances a ROM-frame clock by 5 clock units.
 /// </summary>
 public sealed class HighScorePageHold
 {
-    private int _holdSixths;
-    private int _checkSixths;
+    private int _holdClockUnits;
+    private int _checkClockUnits;
     private int _checks;
 
     /// <summary>True once the 600-frame hold has run out and the switches are being read.</summary>
@@ -51,7 +51,7 @@ public sealed class HighScorePageHold
 
     /// <summary>
     /// How many of the ROM's <c>$FF</c> post-hold checks have found a switch down — the
-    /// page leaves when this reaches <see cref="GameplayConstants.HighScoreLeaveChecks"/>.
+    /// page leaves when this reaches <see cref="ScreenTuning.HighScoreLeaveChecks"/>.
     /// </summary>
     public int ChecksWithSwitchDown => _checks;
 
@@ -64,8 +64,8 @@ public sealed class HighScorePageHold
     {
         if (!HoldIsOver)
         {
-            _holdSixths += ArcadeClock.UnitsPerPortTick;
-            if (_holdSixths < ArcadeClock.Units(GameplayConstants.HighScoreHoldRomFrames))
+            _holdClockUnits += ArcadeClock.UnitsPerPortTick;
+            if (_holdClockUnits < ArcadeClock.Units(ScreenTuning.HighScoreHoldRomFrames))
             {
                 return false;
             }
@@ -73,17 +73,17 @@ public sealed class HighScorePageHold
             // The hold is over and TAB777's first NAP 4 starts now, so the first switch
             // read is four ROM frames away.
             HoldIsOver = true;
-            _checkSixths = 0;
+            _checkClockUnits = 0;
             return false;
         }
 
-        _checkSixths += ArcadeClock.UnitsPerPortTick;
-        if (_checkSixths < ArcadeClock.Units(GameplayConstants.HighScoreLeaveCheckRomFrames))
+        _checkClockUnits += ArcadeClock.UnitsPerPortTick;
+        if (_checkClockUnits < ArcadeClock.Units(ScreenTuning.HighScoreLeaveCheckRomFrames))
         {
             return false;
         }
 
-        _checkSixths -= ArcadeClock.Units(GameplayConstants.HighScoreLeaveCheckRomFrames);
+        _checkClockUnits -= ArcadeClock.Units(ScreenTuning.HighScoreLeaveCheckRomFrames);
 
         if (!anySwitchHeld)
         {
@@ -92,6 +92,6 @@ public sealed class HighScorePageHold
         }
 
         _checks++;
-        return _checks >= GameplayConstants.HighScoreLeaveChecks;
+        return _checks >= ScreenTuning.HighScoreLeaveChecks;
     }
 }

@@ -25,17 +25,11 @@ public sealed class QuarkTankBehaviourTests
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     private static PlayField CreateField(int seed) =>
-        new(TestSprites.Shared, 
-            new LevelParameters(
+        new PlayFieldBuilder().WithParameters(new LevelParameters(
                 LevelNumber: 1,
                 SpheroidCount: 0,
                 MaxDropsX2: 10,
-                SpheroidDropDelay: 30),
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(seed),
-            startingLives: 3);
+                SpheroidDropDelay: 30)).WithRandom(new Random(seed)).Build();
 
     [Fact]
     public void Quark_DriftsSlowly_WithinTheField()
@@ -43,7 +37,7 @@ public sealed class QuarkTankBehaviourTests
         PlayField field = CreateField(1);
         Rectangle bounds = field.Wall.PlayfieldBounds;
 
-        var quark = new Quark(TestSprites.Shared, new IntVector2(bounds.X + 20, bounds.Y + 8), new Random(4), maxDropsX2: 10, dropDelayRomTicks: 60);
+        var quark = new Quark(TestSprites.Shared, new IntVector2(bounds.X + 20, bounds.Y + 8), new Random(4), maxDropsX2: 10, dropDelayBeats: 60);
         field.AddQuark(quark);
 
         IntVector2 prev = quark.Position;
@@ -103,7 +97,7 @@ public sealed class QuarkTankBehaviourTests
         PlayField field = CreateField(1);
 
         // Random(10): first Next(2) == 1 → exactly one tank to drop.
-        var quark = new Quark(TestSprites.Shared, new IntVector2(300, 200), new Random(10), maxDropsX2: 1, dropDelayRomTicks: 1);
+        var quark = new Quark(TestSprites.Shared, new IntVector2(300, 200), new Random(10), maxDropsX2: 1, dropDelayBeats: 1);
         field.AddQuark(quark);
 
         // Robots are frozen during the 2 s player start grace (120 ticks); the
@@ -122,8 +116,8 @@ public sealed class QuarkTankBehaviourTests
         // TNKDRP: +2 COLUMNS and +6 ROWS, with the row decremented first unless the
         // quark sits on the top wall — this quark is mid-field, so it is +5 rows.
         IntVector2 spawn = quark.Position + new IntVector2(
-            ScreenSize.Columns(GameplayConstants.TankBirthOffsetColumns),
-            ScreenSize.Scaled(GameplayConstants.TankBirthOffsetRowsOffTopWall));
+            ScreenSize.Columns(TankTuning.BirthOffsetColumns),
+            ScreenSize.Scaled(TankTuning.BirthOffsetRowsOffTopWall));
         Assert.Equal(spawn, tank.Position);
     }
 
@@ -149,7 +143,7 @@ public sealed class QuarkTankBehaviourTests
         // Author, 2026-09-16: "tanks spawn instantly whereas they are 'born'
         // like the enforcer." The old test asserted movement on the FIRST frame,
         // which was the wave-start TNKSTV path this port never uses.
-        int bornTicks = GameplayConstants.TankGrowSteps * GameplayConstants.TankGrowRomFrames * 6 / 5;
+        int bornTicks = TankTuning.GrowSteps * TankTuning.GrowRomFrames * 6 / 5;
 
         for (int tick = 0; tick < bornTicks - 1; tick++)
         {

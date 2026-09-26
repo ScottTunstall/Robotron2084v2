@@ -37,6 +37,12 @@ public static class ScreenSize
     /// <c>column * 256 + row</c> at 4bpp, so a column is two arcade pixels (notes §113).</summary>
     public const int ArcadePixelsPerColumn = 2;
 
+    /// <summary>Bits of a 16-bit ROM coordinate below the whole pixel (the low byte).</summary>
+    public const int SubpixelBits = 8;
+
+    /// <summary>Subpixels in one pixel: the ROM's 16-bit coordinates keep the pixel in the high byte, so 1/256 of a pixel is the smallest step.</summary>
+    public const int SubpixelsPerPixel = 1 << SubpixelBits;
+
     /// <summary>Internal render width (SpecWidth × SpecScale — 640 at 2x).</summary>
     public const int Width = SpecWidth * SpecScale;
 

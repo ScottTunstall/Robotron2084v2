@@ -89,13 +89,7 @@ public sealed class PlayFieldRobotRegistryTests
         QuarkCount: 13);
 
     private static PlayField CreateField() =>
-        new(TestSprites.Shared, 
-            new LevelParameters(LevelNumber: 1),
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(99),
-            startingLives: 3);
+        new PlayFieldBuilder().WithParameters(new LevelParameters(LevelNumber: 1)).WithSeed(99).Build();
 
     [Fact]
     public void EveryKindHasExactlyOneRow_InTheEnumsOrder()

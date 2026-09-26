@@ -68,7 +68,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
             int dx = position.X - robot.X;
             int dy = position.Y - robot.Y;
 
-            if (Math.Abs(dx) + Math.Abs(dy) < ScreenSize.Scaled(GameplayConstants.DemoThreatDistanceSpecPixels))
+            if (Math.Abs(dx) + Math.Abs(dy) < ScreenSize.Scaled(AttractTuning.DemoThreatDistanceSpecPixels))
             {
                 // In danger: run away (steering around the walls).
                 move = SteerClearOfWalls(new IntVector2(Math.Sign(dx), Math.Sign(dy)), position, bounds, centre);
@@ -87,13 +87,13 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         {
             _directionVotes = 0;
         }
-        else if (_heldMove == IntVector2.Zero || (_holdTicks <= 0 && ++_directionVotes >= GameplayConstants.DemoDirectionSwitchTicks))
+        else if (_heldMove == IntVector2.Zero || (_holdTicks <= 0 && ++_directionVotes >= AttractTuning.DemoDirectionSwitchTicks))
         {
             // An empty stick is "no decision yet", not a direction to defend, so the
             // first move (and the first stop) is adopted at once.
             _heldMove = move;
             _directionVotes = 0;
-            _holdTicks = move == IntVector2.Zero ? 0 : GameplayConstants.DemoDirectionHoldTicks;
+            _holdTicks = move == IntVector2.Zero ? 0 : AttractTuning.DemoDirectionHoldTicks;
         }
 
         if (_holdTicks > 0)
@@ -103,7 +103,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
 
         move = _heldMove;
 
-        if (move != IntVector2.Zero && _random.Next(GameplayConstants.DemoStutterChanceDenominator) == 0)
+        if (move != IntVector2.Zero && _random.Next(AttractTuning.DemoStutterChanceDenominator) == 0)
         {
             move = IntVector2.Zero;
         }
@@ -112,7 +112,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         // port's facing-follow fire rule never overrides the AI's aim.
         if (nearest is { } target &&
             Math.Abs(target.X - position.X) + Math.Abs(target.Y - position.Y)
-                < ScreenSize.Scaled(GameplayConstants.DemoFireRangeSpecPixels))
+                < ScreenSize.Scaled(AttractTuning.DemoFireRangeSpecPixels))
         {
             // 8-way digital: exactly -1/0/1 per component (PlayerInputState contract).
             IntVector2 aim = new(Math.Sign(target.X - position.X), Math.Sign(target.Y - position.Y));
@@ -144,7 +144,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
     /// <returns>The direction, with its X component bent when it was heading into a wall.</returns>
     private static IntVector2 SteerClearOnX(IntVector2 move, IntVector2 position, Rectangle bounds, IntVector2 centre)
     {
-        int clearance = ScreenSize.Scaled(GameplayConstants.DemoWallClearanceSpecPixels);
+        int clearance = ScreenSize.Scaled(AttractTuning.DemoWallClearanceSpecPixels);
         bool headingIntoWall = (move.X < 0 && position.X < bounds.X + clearance)
             || (move.X > 0 && position.X > bounds.Right - clearance);
 
@@ -161,7 +161,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
     /// <returns>The direction, with its Y component bent when it was heading into a wall.</returns>
     private static IntVector2 SteerClearOnY(IntVector2 move, IntVector2 position, Rectangle bounds, IntVector2 centre)
     {
-        int clearance = ScreenSize.Scaled(GameplayConstants.DemoWallClearanceSpecPixels);
+        int clearance = ScreenSize.Scaled(AttractTuning.DemoWallClearanceSpecPixels);
         bool headingIntoWall = (move.Y < 0 && position.Y < bounds.Y + clearance)
             || (move.Y > 0 && position.Y > bounds.Bottom - clearance);
 

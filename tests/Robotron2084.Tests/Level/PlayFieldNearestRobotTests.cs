@@ -7,7 +7,7 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// Phase 12.1 (notes §94): the nearest-living-robot accessor the attract demo's
+/// (notes §94) The nearest-living-robot accessor the attract demo's
 /// phony player steers by. Manhattan distance, same rule as the ROM's GETHTG
 /// (notes §90/§94.3); every robot kind counts; the dead are ignored.
 /// </summary>
@@ -19,7 +19,7 @@ public sealed class PlayFieldNearestRobotTests
     private static PlayField EmptyField()
     {
         var parameters = new LevelParameters(LevelNumber: 1);
-        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), Bounds, new WallColorCycle(), new Random(42), startingLives: 3);
+        return new PlayFieldBuilder().WithParameters(parameters).WithBounds(Bounds).WithSeed(42).Build();
     }
 
     [Fact]

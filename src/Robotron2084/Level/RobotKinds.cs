@@ -13,7 +13,7 @@ namespace Robotron2084.Level;
 /// things in one frame. The electrode's row is first for exactly that reason (notes §61).
 /// </para>
 /// <para>
-/// To add a robot kind: write the entity class, add its art, add a <see cref="RobotKind"/> value and a row here,
+/// To add a robot kind: write the entity class, add its animation frames, add a <see cref="RobotKind"/> value and a row here,
 /// add a field for its list and a <c>ListOf</c> arm in <see cref="PlayField"/>, add that list to the field's
 /// update and draw orders, and add it to <c>NearestLivingRobotPositionTo</c>. A guard test fails until the enum,
 /// this registry, the field's list orders and its own hand-written tables agree. No further edit is needed for a
@@ -31,7 +31,7 @@ public static class RobotKinds
         new(RobotKind.Electrode,
             WaveCount: static parameters => parameters.ElectrodeCount,
             Score: ScoreValues.Electrode,
-            LaserHit: static (field, target, direction) => field.Shatter(target, direction),
+            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
             Spawn: static (field, playerStart) => field.SpawnElectrodes(playerStart)),
 
         new(RobotKind.Grunt,
@@ -39,7 +39,7 @@ public static class RobotKinds
             Score: ScoreValues.Grunt,
             LaserHit: static (field, target, direction) =>
             {
-                field.Shatter(target, direction);
+                field.KillWithStripExplosion(target, direction);
                 // Every grunt death — a laser's or an electrode's — speeds up the survivors (ROM $3A94).
                 field.SpeedUpGrunts();
             },
@@ -50,7 +50,7 @@ public static class RobotKinds
         new(RobotKind.Hulk,
             WaveCount: static parameters => parameters.HulkCount,
             Score: 0,
-            LaserHit: static (field, target, direction) => ((Hulk)target).ApplyKnockback(direction.ToIntVector()),
+            LaserHit: static (field, target, direction) => target.Require<Hulk>().ApplyKnockback(direction.ToIntVector()),
             KillsPlayerOnContact: true,
             Spawn: static (field, playerStart) => field.SpawnHulks(playerStart)),
 
@@ -58,44 +58,44 @@ public static class RobotKinds
         new(RobotKind.Spheroid,
             WaveCount: static parameters => parameters.SpheroidCount,
             Score: ScoreValues.Spheroid,
-            LaserHit: static (field, target, direction) => field.Burst(target, ScoreBurst.ForSpheroid(field.Sprites, target.Bounds)),
+            LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.ForSpheroid(field.Sprites, target.Bounds)),
             Spawn: static (field, playerStart) => field.SpawnSpheroids(playerStart)),
 
         new(RobotKind.Enforcer,
             WaveCount: null,
             Score: ScoreValues.Enforcer,
-            LaserHit: static (field, target, direction) => field.Shatter(target, direction)),
+            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction)),
 
         new(RobotKind.Quark,
             WaveCount: static parameters => parameters.QuarkCount,
             Score: ScoreValues.Quark,
-            LaserHit: static (field, target, direction) => field.Burst(target, ScoreBurst.ForQuark(field.Sprites, target.Bounds)),
+            LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.ForQuark(field.Sprites, target.Bounds)),
             Spawn: static (field, playerStart) => field.SpawnQuarks(playerStart)),
 
         new(RobotKind.Tank,
             WaveCount: null,
             Score: ScoreValues.Tank,
-            LaserHit: static (field, target, direction) => field.Shatter(target, direction)),
+            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction)),
 
         // A brain killed MID-reprogram releases its victim — the field's own human phase does that (notes §90).
         new(RobotKind.Brain,
             WaveCount: static parameters => parameters.BrainCount,
             Score: ScoreValues.Brain,
-            LaserHit: static (field, target, direction) => field.Shatter(target, direction),
+            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
             KillsPlayerOnContact: true,
             Spawn: static (field, playerStart) => field.SpawnBrains(playerStart)),
 
         new(RobotKind.Prog,
             WaveCount: null,
             Score: ScoreValues.Prog,
-            LaserHit: static (field, target, direction) => field.Shatter(target, direction),
+            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
             KillsPlayerOnContact: true),
 
         // The shots are removed at once: no explosion, no sound, no death of their own.
         new(RobotKind.Spark,
             WaveCount: null,
             Score: ScoreValues.Spark,
-            LaserHit: static (field, target, direction) => ((IRemovable)target).Kill(),
+            LaserHit: static (field, target, direction) => target.Require<IRemovable>().Kill(),
             KillsPlayerOnContact: true),
 
         new(RobotKind.TankShell,
@@ -103,7 +103,7 @@ public static class RobotKinds
             Score: ScoreValues.TankShell,
             LaserHit: static (field, target, direction) =>
             {
-                ((IRemovable)target).Kill();
+                target.Require<IRemovable>().Kill();
                 // Only a laser kill counts against the wave's twenty shells (the fizzle bug, notes §53).
                 field.CountShellDestroyed();
             },
@@ -112,7 +112,7 @@ public static class RobotKinds
         new(RobotKind.CruiseMissile,
             WaveCount: null,
             Score: ScoreValues.CruiseMissile,
-            LaserHit: static (field, target, direction) => ((IRemovable)target).Kill(),
+            LaserHit: static (field, target, direction) => target.Require<IRemovable>().Kill(),
             KillsPlayerOnContact: true),
     ];
 

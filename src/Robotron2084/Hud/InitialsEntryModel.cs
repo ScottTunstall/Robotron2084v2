@@ -41,31 +41,31 @@ public sealed class InitialsEntryModel
     }
 
     /// <summary>GETLZZ's <c>NAP 4</c>: the fire switch is looked at once every four frames until it is up.</summary>
-    private const int FireReleaseCheckSixths = 4 * ArcadeClock.UnitsPerRomFrame;
+    private const int FireReleaseCheckClockUnits = 4 * ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>GETLT1's <c>NAP 2</c>: the main loop reads the switches every two frames.</summary>
-    private const int MainLoopSixths = 2 * ArcadeClock.UnitsPerRomFrame;
+    private const int MainLoopClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>GETLT3's <c>NAP 2</c> between two typematic counts.</summary>
-    private const int TypematicStepSixths = 2 * ArcadeClock.UnitsPerRomFrame;
+    private const int TypematicStepClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>How often a held direction is looked at — LUP/LDOWN poll their own switch inside the delay loop.</summary>
-    private const int CyclePollSixths = ArcadeClock.UnitsPerRomFrame;
+    private const int CyclePollClockUnits = ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>LUP/LDOWN's <c>DELAY1</c> loop — 8192 turns of a six-cycle loop, about 49 ms, i.e. two and a half ROM frames.</summary>
-    private const int CycleDelaySixths = ArcadeClock.UnitsPerRomFrame * 5 / 2;
+    private const int CycleDelayClockUnits = ArcadeClock.UnitsPerRomFrame * 5 / 2;
 
     /// <summary>LUP's <c>LDA #10</c>: ten <c>DELAY1</c> turns pass before the second cycle.</summary>
     private const int FastRepeatCount = 10;
 
     /// <summary>A repeat after those ten costs <c>DELAY1</c> plus LUP's <c>NAP 1</c>.</summary>
-    private const int CyclePeriodSixths = CycleDelaySixths + ArcadeClock.UnitsPerRomFrame;
+    private const int CyclePeriodClockUnits = CycleDelayClockUnits + ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>The first repeat's period: the ten <c>DELAY1</c> turns of the <c>DECA / BNE LUP1</c> loop.</summary>
-    private const int FirstCyclePeriodSixths = FastRepeatCount * CycleDelaySixths;
+    private const int FirstCyclePeriodClockUnits = FastRepeatCount * CycleDelayClockUnits;
 
     /// <summary>TIMPRC's deadline for one letter: <c>NAP $FF</c> + <c>NAP $FF</c> + <c>NAP $82</c> = 640 ROM frames (12.8 s).</summary>
-    private const int LetterTimeoutSixths = (0xFF + 0xFF + 0x82) * ArcadeClock.UnitsPerRomFrame;
+    private const int LetterTimeoutClockUnits = (0xFF + 0xFF + 0x82) * ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>GETRET's typematic count for the first auto-repeat (<c>ANDA #$80 / ADDA #$20</c>).</summary>
     private const int FirstTypematicCounts = 0x20;
@@ -83,10 +83,10 @@ public sealed class InitialsEntryModel
     private Phase _phase = Phase.AwaitingFireRelease;
     private int _position;
     private int _lettersLeft = LetterCount;
-    private int _sixths;
-    private int _periodSixths = FireReleaseCheckSixths;
-    private int _repeatSixths;
-    private int _timeoutSixths;
+    private int _clockUnits;
+    private int _periodClockUnits = FireReleaseCheckClockUnits;
+    private int _repeatClockUnits;
+    private int _timeoutClockUnits;
     private int _typematicCounts;
     private int _cycleDirection;
     private bool _rubAllowed;
@@ -103,7 +103,7 @@ public sealed class InitialsEntryModel
     /// <summary>The letter shown in the cursor's cell — the ROM's preview, which cycling rewrites in place.</summary>
     public char Preview => _position < LetterCount ? _letters[_position] : Blank;
 
-    /// <summary>True while the preview is the rub marker, which the page draws with the ROM's own art.</summary>
+    /// <summary>True while the preview is the rub marker, which the page draws with the ROM's own picture.</summary>
     public bool PreviewIsRub => Preview == RubLetter;
 
     /// <summary>
@@ -132,13 +132,13 @@ public sealed class InitialsEntryModel
     /// </summary>
     private void AdvanceTimeout()
     {
-        _timeoutSixths += ArcadeClock.UnitsPerPortTick;
-        if (_timeoutSixths < LetterTimeoutSixths)
+        _timeoutClockUnits += ArcadeClock.UnitsPerPortTick;
+        if (_timeoutClockUnits < LetterTimeoutClockUnits)
         {
             return;
         }
 
-        _timeoutSixths -= LetterTimeoutSixths;
+        _timeoutClockUnits -= LetterTimeoutClockUnits;
         if (--_lettersLeft > 0)
         {
             return;
@@ -155,13 +155,13 @@ public sealed class InitialsEntryModel
     /// <summary>Runs the current phase once its own period has elapsed.</summary>
     private void Step(PlayerInputState input)
     {
-        _sixths += ArcadeClock.UnitsPerPortTick;
-        if (_sixths < _periodSixths)
+        _clockUnits += ArcadeClock.UnitsPerPortTick;
+        if (_clockUnits < _periodClockUnits)
         {
             return;
         }
 
-        _sixths -= _periodSixths;
+        _clockUnits -= _periodClockUnits;
         switch (_phase)
         {
             case Phase.AwaitingFireRelease:
@@ -182,7 +182,7 @@ public sealed class InitialsEntryModel
     /// <summary>GETLZZ: the screen comes up under a held fire, so the entry first waits for the release.</summary>
     private void CheckFireReleased(PlayerInputState input)
     {
-        if (input.FirePressed)
+        if (input.FireHeld)
         {
             return;
         }
@@ -201,7 +201,7 @@ public sealed class InitialsEntryModel
         {
             BeginCycling(DownDirection);
         }
-        else if (input.FirePressed)
+        else if (input.FireHeld)
         {
             Commit(FirstTypematicCounts);
         }
@@ -212,10 +212,10 @@ public sealed class InitialsEntryModel
     {
         _cycleDirection = direction;
         Cycle(direction);
-        _repeatSixths = FirstCyclePeriodSixths;
+        _repeatClockUnits = FirstCyclePeriodClockUnits;
         _phase = Phase.Cycling;
-        _periodSixths = CyclePollSixths;
-        _sixths = 0;
+        _periodClockUnits = CyclePollClockUnits;
+        _clockUnits = 0;
     }
 
     /// <summary>
@@ -228,7 +228,7 @@ public sealed class InitialsEntryModel
         if (!Held(input, _cycleDirection))
         {
             EnterMainLoop();
-            if (input.FirePressed)
+            if (input.FireHeld)
             {
                 Commit(FirstTypematicCounts);
             }
@@ -236,14 +236,14 @@ public sealed class InitialsEntryModel
             return;
         }
 
-        _repeatSixths -= CyclePollSixths;
-        if (_repeatSixths > 0)
+        _repeatClockUnits -= CyclePollClockUnits;
+        if (_repeatClockUnits > 0)
         {
             return;
         }
 
         Cycle(_cycleDirection);
-        _repeatSixths = CyclePeriodSixths;
+        _repeatClockUnits = CyclePeriodClockUnits;
     }
 
     /// <summary>
@@ -253,7 +253,7 @@ public sealed class InitialsEntryModel
     /// </summary>
     private void RepeatTypematic(PlayerInputState input)
     {
-        if (!input.FirePressed)
+        if (!input.FireHeld)
         {
             EnterMainLoop();
             return;
@@ -289,8 +289,8 @@ public sealed class InitialsEntryModel
         SeedCell();
         _typematicCounts = typematicCounts;
         _phase = Phase.Typematic;
-        _periodSixths = TypematicStepSixths;
-        _sixths = 0;
+        _periodClockUnits = TypematicStepClockUnits;
+        _clockUnits = 0;
     }
 
     /// <summary>GETRUB: the rub marker clears its own cell, steps back one and asks for that letter again.</summary>
@@ -305,8 +305,8 @@ public sealed class InitialsEntryModel
         SeedCell();
         _rubAllowed = false;
         _phase = Phase.AwaitingFireRelease;
-        _periodSixths = FireReleaseCheckSixths;
-        _sixths = 0;
+        _periodClockUnits = FireReleaseCheckClockUnits;
+        _clockUnits = 0;
     }
 
     /// <summary>G0SUB: puts a blank in the cell the cursor is on, so it is always a valid letter position.</summary>
@@ -316,8 +316,8 @@ public sealed class InitialsEntryModel
     private void EnterMainLoop()
     {
         _phase = Phase.AwaitingInput;
-        _periodSixths = MainLoopSixths;
-        _sixths = 0;
+        _periodClockUnits = MainLoopClockUnits;
+        _clockUnits = 0;
     }
 
     private static bool Held(PlayerInputState input, int direction) =>

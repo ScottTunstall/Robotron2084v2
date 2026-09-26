@@ -26,22 +26,16 @@ public sealed class SpheroidEscapeTests
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     private static PlayField CreateField(int seed) =>
-        new(TestSprites.Shared,
-            new LevelParameters(
+        new PlayFieldBuilder().WithParameters(new LevelParameters(
                 LevelNumber: 1,
                 SpheroidCount: 1,
                 MaxDropsX2: 2,
-                SpheroidDropDelay: 3),
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(seed),
-            startingLives: 3);
+                SpheroidDropDelay: 3)).WithRandom(new Random(seed)).Build();
 
     [Fact]
     public void TheRightEscapeExitIsMeasuredFromTheScreenOrigin()
     {
-        int rightExit = ScreenSize.Scaled(2 * GameplayConstants.SpheroidEscapeExitRightColumn);
+        int rightExit = ScreenSize.Scaled(2 * SpheroidTuning.EscapeExitRightColumn);
 
         // The left exit is `bounds.X + Scaled(2 * 10)` = 80 (40 of playfield + 40 of
         // margin); the right exit is Scaled(2 * 133) = 532 with NO playfield term, so

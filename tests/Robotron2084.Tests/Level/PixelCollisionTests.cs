@@ -34,14 +34,7 @@ public sealed class PixelCollisionTests
         HulkCount: 0);
 
     private static PlayField CreateField(IPixelCollision? collision) =>
-        new(TestSprites.Shared, 
-            OneMikey,
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(99),
-            startingLives: 3,
-            pixelCollision: collision);
+        new PlayFieldBuilder().WithParameters(OneMikey).WithSeed(99).WithPixelCollision(collision).Build();
 
     [Fact]
     public void APictureThatDoesNotTouchDoesNotRescue_EvenWhereTheBoxesOverlap()

@@ -3,7 +3,7 @@ namespace Robotron2084.Level.Attract;
 /// <summary>
 /// The ROM's movie descriptors, keyed by the address the scripts pass to SETOB
 /// (notes §95.6). Every entry was read out of the R5 image: the picture-table
-/// pointers, the image counts and the walk tables.
+/// pointers, the animation frame counts and the walk tables.
 /// </summary>
 public static class MovieDescriptors
 {

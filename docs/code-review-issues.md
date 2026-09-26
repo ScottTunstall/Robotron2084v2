@@ -676,6 +676,8 @@ The structural fix, once J03 is decided, is to remove the parameter's default so
 
 **J02.** `RobotKindInfo.WaveCount`: use it in the spawners, or delete it? (C07)
 
+**J03 / F05 / I04 / J17 — DO NOT ADDRESS UNTIL THE AUTHOR SAYS SO.** The author needs the invincible player (`PlayerInvincibleForTesting`) and the level-skip and dev keys for playtesting. Leave them exactly as they are.
+
 **J03. The player cannot die in the real game.** `GameplayConstants.PlayerInvincibleForTesting => true`
 (`:137`, "TEMPORARY playtest aid (2026-09-13 round 7) ... TURN THIS OFF") feeds `Player.InvincibleForTesting`,
 and `PlayingState` never overrides it. Is the playtest over? If so, set it to `false`, delete the constant, and

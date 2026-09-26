@@ -53,7 +53,7 @@ public class ScoreFormatterTests
     [Fact]
     public void Digits_AlwaysReportsEightPositions_AndSuppressesTheLeadingOnes()
     {
-        ScoreFormatter.ScoreDigit[] digits = ScoreFormatter.Digits(100);
+        ScoreDigit[] digits = ScoreFormatter.Digits(100);
 
         Assert.Equal(ScoreFormatter.DigitPositions, digits.Length);
 

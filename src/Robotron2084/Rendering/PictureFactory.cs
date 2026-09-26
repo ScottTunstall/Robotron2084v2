@@ -8,15 +8,15 @@ namespace Robotron2084.Rendering;
 /// <summary>
 /// Builds every sprite at runtime as a pixel-array <see cref="Texture2D"/> —
 /// no Content pipeline assets needed. Entity silhouettes are
-/// original art authored fresh for this project (simple symmetric shapes on
+/// authored fresh for this project (simple symmetric shapes on
 /// a transparent background, in the spec's colour per entity); the four
-/// player laser pictures are ROM art (R5 $35BE-$35DC) built at arcade-pixel
+/// player laser pictures come from the ROM (R5 $35BE-$35DC) and are built at arcade-pixel
 /// dimensions. Entity patterns are authored on a fixed
 /// <see cref="DesignSize"/>×<see cref="DesignSize"/> design canvas and
 /// nearest-neighbour scaled to <see cref="PatternSize"/>, so they stay
 /// correct at any <c>ScreenSize.SpecScale</c>.
 /// </summary>
-public sealed class PixelArtFactory
+public sealed class PictureFactory
 {
     /// <summary>
     /// Canvas every hand-authored pattern is written on (2x arcade pixels in
@@ -27,11 +27,11 @@ public sealed class PixelArtFactory
     private const int DesignSize = 32;
 
     /// <summary>Runtime pattern size: the 16 spec-px entity box × SpecScale (32x32 at 2x).</summary>
-    private static readonly int PatternSize = ScreenSize.Scaled(GameplayConstants.EntitySizeSpecPixels);
+    private static readonly int PatternSize = ScreenSize.Scaled(CollisionSizes.EntitySizeSpecPixels);
 
     private readonly GraphicsDevice _device;
 
-    public PixelArtFactory(GraphicsDevice device)
+    public PictureFactory(GraphicsDevice device)
     {
         _device = device;
     }
@@ -52,10 +52,10 @@ public sealed class PixelArtFactory
         return texture;
     }
 
-    // ---- ROM laser art (player laser pictures; R5 $35BE-$35DC = old source
+    // ---- ROM laser pictures (player laser pictures; R5 $35BE-$35DC = old source
     //      RRG23 LLPC/ULPC/DLLPC/ULLPC, author ROM-verified 2026-09-13) ----
     // 4 bits per pixel, high nibble = left pixel. Authored at arcade-pixel
-    // dimensions (1 art pixel = 1 texture pixel); SpriteSet.DrawSprite scales
+    // dimensions (1 arcade pixel = 1 texture pixel); SpriteSet.DrawSprite scales
     // them by SpecScale at draw time.
 
     /// <summary>LLPC ($35BE, 3 bytes × 1 row = 6×1): a solid bar — LEFT and RIGHT.</summary>

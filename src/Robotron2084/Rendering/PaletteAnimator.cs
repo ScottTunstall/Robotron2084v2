@@ -17,7 +17,7 @@ namespace Robotron2084.Rendering;
 /// | 10   | LF      | every 2nd ROM frame = FF (white flash); every 6th = a random COLTAB entry | 2/6 ROM frames |
 ///
 /// **Timing.** The step counts above are the ROM's own FRAME counts, and a ROM
-/// frame is 6/5 of a port tick, so these run on the same exact-6ths accumulators
+/// frame is 6/5 of a port tick, so these run on the same clock-unit accumulators
 /// the entity bodies use (notes §52, §65): a 1-frame process steps every 1.2
 /// ticks, a 2-frame one every 2.4, an 8-frame one every 9.6. Until §65 the steps
 /// were counted in PORT ticks, which made all six cycles run 20% fast — visible
@@ -46,14 +46,14 @@ public sealed class PaletteAnimator
         public int Slot;
         public byte[] Table = [];
         public int RomFramesPerStep = 1;
-        public int Fifths;
+        public int ClockUnits;
         public int Index;
     }
 
     private readonly GamePalette _palette;
     private readonly Random _random;
     private readonly Process[] _processes;
-    private int _laserFlashFifths;
+    private int _laserFlashClockUnits;
     private int _laserFlashStep;
 
     public PaletteAnimator(GamePalette palette, Random? random = null)
@@ -75,11 +75,11 @@ public sealed class PaletteAnimator
     {
         // LF (slot 10): a white flash every 2 ROM frames, and every 6th frame a
         // random hue from the COLTAB ramp INSTEAD of the white one.
-        _laserFlashFifths += ArcadeClock.UnitsPerPortTick;
+        _laserFlashClockUnits += ArcadeClock.UnitsPerPortTick;
         int flashPeriod = ArcadeClock.Units(LaserFlashRomFrames);
-        while (_laserFlashFifths >= flashPeriod)
+        while (_laserFlashClockUnits >= flashPeriod)
         {
-            _laserFlashFifths -= flashPeriod;
+            _laserFlashClockUnits -= flashPeriod;
             _laserFlashStep++;
             if (_palette.IsSlotSuspended(10))
             {
@@ -102,13 +102,13 @@ public sealed class PaletteAnimator
                 continue;
             }
 
-            p.Fifths += ArcadeClock.UnitsPerPortTick;
-            if (p.Fifths < ArcadeClock.Units(p.RomFramesPerStep))
+            p.ClockUnits += ArcadeClock.UnitsPerPortTick;
+            if (p.ClockUnits < ArcadeClock.Units(p.RomFramesPerStep))
             {
                 continue;
             }
 
-            p.Fifths -= ArcadeClock.Units(p.RomFramesPerStep);
+            p.ClockUnits -= ArcadeClock.Units(p.RomFramesPerStep);
             _palette.SetSlot(p.Slot, p.Table[p.Index]);
             p.Index = (p.Index + 1) % p.Table.Length;
         }

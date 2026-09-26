@@ -18,8 +18,8 @@ namespace Robotron2084.Hud;
 /// </list>
 /// Both passes draw their first TWO strokes before the first sleep
 /// (<c>LDA #2 / STA PD+15,U</c>, then <c>NAP 1</c> per pair), and a stroke is half a ROM
-/// frame, so this runs on the exact-6ths accumulator the entity bodies use (notes §52):
-/// a stroke is 6 sixths = 0.6 ROM frames = 1.2 port ticks.
+/// frame, so this runs on the clock-unit accumulator the entity bodies use (notes §52):
+/// a stroke is 6 clock units = 0.6 ROM frames = 1.2 port ticks.
 /// </summary>
 public sealed class HighScoreFrameAnimation
 {
@@ -30,7 +30,7 @@ public sealed class HighScoreFrameAnimation
     /// </summary>
     private int _strokes = HighScoreTableLayout.FrameStrokesPerRomFrame;
     private bool _erasing;
-    private int _fifths;
+    private int _clockUnits;
 
     /// <summary>True once the erase pass has reached its terminal point — the wall is complete.</summary>
     public bool IsFinished => _erasing && _strokes >= HighScoreTableLayout.FrameEraseStrokeCount;
@@ -56,10 +56,10 @@ public sealed class HighScoreFrameAnimation
             return;
         }
 
-        _fifths += ArcadeClock.UnitsPerPortTick;
-        while (_fifths >= ArcadeClock.UnitsPerRomFrame)
+        _clockUnits += ArcadeClock.UnitsPerPortTick;
+        while (_clockUnits >= ArcadeClock.UnitsPerRomFrame)
         {
-            _fifths -= ArcadeClock.UnitsPerRomFrame;
+            _clockUnits -= ArcadeClock.UnitsPerRomFrame;
             Advance(HighScoreTableLayout.FrameStrokesPerRomFrame);
         }
     }

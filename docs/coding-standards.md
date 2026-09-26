@@ -64,7 +64,7 @@ Never call the clock unit "fifths", "sixths" or "6ths". All three have been used
 
 **STR-1. One reason to change per class.** If a class summary needs "and" to describe what it does, split it.
 Warning signs: more than ~400 lines, more than ~15 fields, or `// ---- section ----` comments that divide it
-into jobs. `PlayField`, `GameplayConstants` and `SpriteSet` are the counter-examples.
+into jobs. `PlayField` and `SpriteSet` are the counter-examples.
 
 **STR-2. One reason to change per method, and a verb phrase that names it.** A method whose body needs comment
 headers ("// 1. ...", "// 2. ...") is several methods. Cyclomatic complexity above 15 is a **build error**

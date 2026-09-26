@@ -2,7 +2,6 @@ using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Level;
-using Robotron2084.Tuning;
 using Xunit;
 
 namespace Robotron2084.Tests;
@@ -21,13 +20,7 @@ public sealed class GruntAnimationTests
 
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
-    private static PlayField CreateField() => new(TestSprites.Shared, 
-        new LevelParameters(LevelNumber: 1),
-        new FakeInputSource(),
-        PlayFieldSpawnTests.InnerBounds,
-        new WallColorCycle(),
-        new Random(1),
-        startingLives: 3);
+    private static PlayField CreateField() => new PlayFieldBuilder().WithParameters(new LevelParameters(LevelNumber: 1)).WithSeed(1).Build();
 
     /// <summary>Drives the field until the 2-second start grace (121 frames) is over.</summary>
     private static void ExpireGrace(PlayField field)
@@ -41,9 +34,9 @@ public sealed class GruntAnimationTests
     [Theory]
     [InlineData(1, 0)] // RWDP1 → RWDD1
     [InlineData(2, 1)] // RWDP2 → RWDD2
-    [InlineData(3, 0)] // RWDP3 → RWDD1 (the ROM reuses the first art)
+    [InlineData(3, 0)] // RWDP3 → RWDD1 (the ROM reuses the first animation frame)
     [InlineData(4, 2)] // RWDP4 → RWDD3
-    public void RomArtTable_MapsTheFourRWDPFramesOntoThreeRepoFrames(int romFrame, int repoIndex)
+    public void RomAnimationFrameTable_MapsTheFourRWDPFramesOntoThreeRepoFrames(int romFrame, int repoIndex)
     {
         Assert.Equal(repoIndex, Grunt.AnimationFrameIndexFor(romFrame));
     }
@@ -115,8 +108,8 @@ public sealed class GruntAnimationTests
         }
 
         // Each gap = countdown re-roll (1..15 beats) x 4-vblank beat.
-        Assert.InRange(minGap, GameplayConstants.PortTicks(4), GameplayConstants.PortTicksCeil(4) * 15);
-        Assert.InRange(maxGap, GameplayConstants.PortTicks(4), GameplayConstants.PortTicksCeil(4) * 15);
+        Assert.InRange(minGap, ArcadeClock.PortTicks(4), ArcadeClock.PortTicksCeil(4) * 15);
+        Assert.InRange(maxGap, ArcadeClock.PortTicks(4), ArcadeClock.PortTicksCeil(4) * 15);
         // The stagger: NOT a fixed period — at least two distinct gaps.
         Assert.True(gaps.Count >= 2, $"step gaps were constant {gaps.First()}");
     }
@@ -134,13 +127,13 @@ public sealed class GruntAnimationTests
         // "even when they are standing still, their legs are moving").
         Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 300, player.Y - 300), moveLimitBeats: 300, random: new Random(11));
 
-        Assert.Equal(1, grunt.WalkFrame);
-        for (int tick = 0; tick < GameplayConstants.PortTicksCeil(4) * 10; tick++)
+        Assert.Equal(1, grunt.WalkPictureNumber);
+        for (int tick = 0; tick < ArcadeClock.PortTicksCeil(4) * 10; tick++)
         {
             grunt.Update(Frame(), field);
         }
 
-        Assert.Equal(1, grunt.WalkFrame); // 10 beat passes, no step, no frame change
+        Assert.Equal(1, grunt.WalkPictureNumber); // 10 beat passes, no step, no frame change
 
         // Now let it walk: exactly one frame advance per completed step. (Check
         // that the frame CHANGED at least once rather than what it ended on: the
@@ -155,7 +148,7 @@ public sealed class GruntAnimationTests
                 last = grunt.Position;
             }
 
-            if (grunt.WalkFrame != 1)
+            if (grunt.WalkPictureNumber != 1)
             {
                 advanced = true;
             }

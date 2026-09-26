@@ -40,7 +40,7 @@ public sealed class HighScorePrintSequence
     }
 
     private Phase _phase = Phase.Waiting;
-    private int _fifths;
+    private int _clockUnits;
 
     /// <summary>Today's rows printed so far (0 until the frame has finished).</summary>
     public int TodayRows { get; private set; }
@@ -85,10 +85,10 @@ public sealed class HighScorePrintSequence
             return;
         }
 
-        _fifths += ArcadeClock.UnitsPerPortTick;
-        while (_fifths >= ArcadeClock.UnitsPerRomFrame)
+        _clockUnits += ArcadeClock.UnitsPerPortTick;
+        while (_clockUnits >= ArcadeClock.UnitsPerRomFrame)
         {
-            _fifths -= ArcadeClock.UnitsPerRomFrame;
+            _clockUnits -= ArcadeClock.UnitsPerRomFrame;
             Advance(todayCount, allTimeCount);
         }
     }

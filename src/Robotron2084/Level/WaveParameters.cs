@@ -17,10 +17,10 @@ public sealed record WaveParameters(
     int GruntSpeedFloor,
     int EnforcerFireDelay,
     int SpheroidDropDelay,
-    int HulkSpeed,
+    int HulkStepDelayRomFrames,
     int BrainFireDelay,
-    int BrainSpeed,
+    int BrainBeatDelayRomFrames,
     int TankFireDelay,
     int ShellSpeed,
     int QuarkDropDelay,
-    int QuarkMove);
+    int QuarkSpeedCap);

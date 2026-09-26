@@ -20,7 +20,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     private readonly SpriteSet _sprites;
     /// <summary>The grunt picture's own 10x13 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(GameplayConstants.GruntCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.GruntCollisionSize.Height));
+        (ScreenSize.Scaled(CollisionSizes.GruntCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.GruntCollisionSize.Height));
 
     /// <summary>How far one step moves the grunt on each active axis, in port pixels.</summary>
     private static readonly int StepScreenPixels = ScreenSize.ArcadePixels(GruntStepArcadePixels);
@@ -34,18 +34,24 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <summary>The arcade pixels the grunt keeps between itself and the player on each axis.</summary>
     private const int GruntDeadZoneArcadePixels = 2;
 
+    /// <summary>The wave's re-roll limit when the caller gives none.</summary>
+    private const int DefaultMoveLimitBeats = 15;
+
+    /// <summary>The ROM's walk pictures (RWDP1..4); the picture number wraps after the last.</summary>
+    private const int WalkPictureCount = 4;
+
     /// <summary>How many ROM frames one beat takes (4 vblanks).</summary>
-    private const int BeatIntervalRomTicks = 4;
+    private const int BeatIntervalRomFrames = 4;
 
     /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => ArcadeClock.Units(BeatIntervalRomTicks);
+    private static int BeatPeriod => ArcadeClock.Units(BeatIntervalRomFrames);
 
     private readonly Random _random;
     private IntVector2 _position;
     private int _moveLimitBeats;
     private int _beatTimer;
     private int _moveCountdownBeats;
-    private int _walkFrame = 1; // walk frame 1..4; a freshly spawned grunt starts on frame 1
+    private int _walkPictureNumber = 1; // the ROM's walk picture 1..4; a freshly spawned grunt starts on picture 1
 
     /// <summary>Creates a grunt, with its first stagger already rolled.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -56,7 +62,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     public Grunt(
         SpriteSet sprites,
         IntVector2 position,
-        int moveLimitBeats = 15,
+        int moveLimitBeats = DefaultMoveLimitBeats,
         Random? random = null)
     {
         _sprites = sprites;
@@ -108,6 +114,11 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <remarks>ROM: RRP8.ASM's <c>ROBKIL</c> just explodes it.</remarks>
     public void Kill()
     {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
         LifeState = EntityLifeState.Dead;
     }
 
@@ -116,7 +127,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
@@ -141,7 +152,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
         }
 
         _moveCountdownBeats = _random.Next(1, _moveLimitBeats + 1);
-        _walkFrame = _walkFrame % 4 + 1; // DRAW_GRUNT: one frame per step
+        _walkPictureNumber = _walkPictureNumber % WalkPictureCount + 1; // DRAW_GRUNT: one frame per step
 
         // Per-axis step toward the player, with a dead zone; the axes are independent.
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -157,14 +168,14 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     }
 
     /// <summary>The walk frame showing right now, 1..4 (test hook).</summary>
-    /// <remarks>ROM RWDP frame.</remarks>
-    internal int WalkFrame => _walkFrame;
+    /// <remarks>ROM RWDP picture.</remarks>
+    internal int WalkPictureNumber => _walkPictureNumber;
 
-    /// <summary>Maps a walk frame (1..4) to an index into <see cref="SpriteSet.GruntFrames"/>.</summary>
-    /// <param name="romFrame">The walk frame, 1..4.</param>
-    /// <returns>The index into <see cref="SpriteSet.GruntFrames"/>.</returns>
-    /// <remarks>Walk frames 1/2/3/4 map to pictures 1/2/1/3, so only three pictures are unique.</remarks>
-    internal static int AnimationFrameIndexFor(int romFrame) => romFrame switch
+    /// <summary>Maps the ROM's walk picture number (1..4) to an index into <see cref="SpriteSet.GruntAnimationFrames"/>.</summary>
+    /// <param name="romPictureNumber">The ROM's walk picture number, 1..4.</param>
+    /// <returns>The index into <see cref="SpriteSet.GruntAnimationFrames"/>.</returns>
+    /// <remarks>Walk pictures 1/2/3/4 map to animation frames 1/2/1/3, so only three animation frames are unique.</remarks>
+    internal static int AnimationFrameIndexFor(int romPictureNumber) => romPictureNumber switch
     {
         2 => 1,
         4 => 2,
@@ -173,17 +184,17 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
 
     /// <summary>This grunt's current walk picture, for the appear and explosion effects.</summary>
     /// <returns>The texture for the current walk frame.</returns>
-    public Texture2D CurrentAnimationFrame => _sprites.GruntFrames[AnimationFrameIndexFor(_walkFrame)];
+    public Texture2D CurrentAnimationFrame => _sprites.GruntAnimationFrames[AnimationFrameIndexFor(_walkPictureNumber)];
 
-    /// <summary>Draws the current walk picture in the art's own colours.</summary>
+    /// <summary>Draws the current walk picture in the animation frame's own colours.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
 
-        _sprites.DrawSprite(spriteBatch, _sprites.GruntFrames[AnimationFrameIndexFor(_walkFrame)], Bounds, Color.White);
+        _sprites.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
     }
 }

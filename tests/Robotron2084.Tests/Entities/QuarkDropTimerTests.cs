@@ -19,14 +19,8 @@ public sealed class QuarkDropTimerTests
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     private static PlayField CreateField(int seed) =>
-        new(TestSprites.Shared, 
-            new LevelParameters(LevelNumber: 7, SpheroidCount: 0, MaxDropsX2: 10, SpheroidDropDelay: 18,
-                QuarkDropDelay: 16),
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(seed),
-            startingLives: 3);
+        new PlayFieldBuilder().WithParameters(new LevelParameters(LevelNumber: 7, SpheroidCount: 0, MaxDropsX2: 10, SpheroidDropDelay: 18,
+                QuarkDropDelay: 16)).WithRandom(new Random(seed)).Build();
 
     [Fact]
     public void TheFirstTankWaitsForWholeIdleAnimationCycles()
@@ -42,7 +36,7 @@ public sealed class QuarkDropTimerTests
 
         var quark = new Quark(TestSprites.Shared, 
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(4),
-            maxDropsX2: 10, dropDelayRomTicks: 1, quarkSpeedRom: 50);
+            maxDropsX2: 10, dropDelayBeats: 1, speedCap: 50);
         field.AddQuark(quark);
 
         int tick = 0;
@@ -51,8 +45,8 @@ public sealed class QuarkDropTimerTests
             field.Update(Frame());
         }
 
-        int beatTicks = (int)Math.Ceiling(GameplayConstants.QuarkBeatRomTicks * 1.2); // 6/5 a frame
-        int oneCycle = (GameplayConstants.QuarkTravelFrames + 1) * beatTicks;
+        int beatTicks = (int)Math.Ceiling(QuarkTuning.BeatRomFrames * 1.2); // 6/5 a frame
+        int oneCycle = (QuarkTuning.TravelAnimationFrames + 1) * beatTicks;
 
         Assert.True(field.TankCount > 0, "the quark must eventually drop a tank");
         Assert.True(tick > oneCycle,
@@ -71,10 +65,10 @@ public sealed class QuarkDropTimerTests
 
         var quark = new Quark(TestSprites.Shared, 
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(11),
-            maxDropsX2: 10, dropDelayRomTicks: 16, quarkSpeedRom: 50);
+            maxDropsX2: 10, dropDelayBeats: 16, speedCap: 50);
         field.AddQuark(quark);
 
-        for (int tick = 0; tick < GameplayConstants.PortTicksCeil(GameplayConstants.QuarkBeatRomTicks) + 2; tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicksCeil(QuarkTuning.BeatRomFrames) + 2; tick++)
         {
             field.Update(Frame());
         }

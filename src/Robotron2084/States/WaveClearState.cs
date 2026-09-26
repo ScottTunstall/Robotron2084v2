@@ -48,7 +48,7 @@ public sealed class WaveClearState : IGameState
     private bool _paletteStarted;
     private int _ringsPaletted = -1;
 
-    private int _ticksRemaining = GameplayConstants.WaveClearDisplayTicks;
+    private int _ticksRemaining = ScreenTuning.WaveClearDisplayTicks;
 
     public WaveClearState(SpriteSet sprites, HighScoreStore highScores, GameSession session, int clearedWave, bool attract = false)
     {

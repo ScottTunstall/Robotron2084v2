@@ -27,8 +27,7 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class StorylineState : IGameState, IAttractState
 {
-    private static readonly int Margin = ScreenSize.Scaled(GameplayConstants.PlayfieldMarginSpecPixels);
-    private static readonly Rectangle InnerBounds = new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
+    private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
     private static readonly StripClip Clip = new(InnerBounds.Left, InnerBounds.Right, InnerBounds.Top, InnerBounds.Bottom);
 
     private readonly SpriteSet _sprites;
@@ -38,10 +37,8 @@ public sealed class StorylineState : IGameState, IAttractState
     private readonly PlayfieldWall _wall;
     private readonly GameSession _session;
     private readonly AttractMovie _movie;
-    private readonly List<Explosion> _explosions = [];
-    private bool _previousFire;
-    private bool _previousStartOne;
-    private bool _previousStartTwo;
+    private readonly List<StripEffect> _explosions = [];
+    private readonly ButtonEdgeDetector _buttons = new();
 
     public StorylineState(GameServices services, Random random)
     {
@@ -50,9 +47,7 @@ public sealed class StorylineState : IGameState, IAttractState
         _highScores = services.HighScores;
         _humanInput = services.Input;
 
-        _wall = new PlayfieldWall(InnerBounds, new WallColorCycle(
-            GameplayConstants.DefaultWallPalette,
-            TimeSpan.FromMilliseconds(GameplayConstants.WallStepDurationMilliseconds)));
+        _wall = new PlayfieldWall(InnerBounds, new WallColorCycle());
         _session = GameSession.NewGame(_humanInput, 1);
         _movie = new AttractMovie(AttractMovieData.Histo, random);
     }
@@ -62,17 +57,12 @@ public sealed class StorylineState : IGameState, IAttractState
         // A human at the coin door takes the machine back to the title, exactly as
         // the arcade's coin/start handler does while attract is running.
         PlayerInputState human = _humanInput.Poll();
-        if ((human.FirePressed && !_previousFire) ||
-            (human.StartOnePlayerPressed && !_previousStartOne) ||
-            (human.StartTwoPlayersPressed && !_previousStartTwo))
+        if (_buttons.Advance(human).Any)
         {
             manager.TransitionTo(new TitleScreenState(_services));
             return;
         }
 
-        _previousFire = human.FirePressed;
-        _previousStartOne = human.StartOnePlayerPressed;
-        _previousStartTwo = human.StartTwoPlayersPressed;
 
         _movie.Update(gameTime);
 
@@ -93,18 +83,18 @@ public sealed class StorylineState : IGameState, IAttractState
             // EXPP: the explosion takes the picture the object was showing and the
             // direction of a pure HORIZONTAL laser ($FF00), which the Gospel's
             // dispatch turns into the ROW-splitting fan.
-            Texture2D? animationFrame = MovieAnimationFrames.Resolve(_sprites, exploded.Animation, exploded.ImageIndex);
+            Texture2D? animationFrame = MovieAnimationFrames.Resolve(_sprites, exploded.Animation, exploded.AnimationFrameIndex);
             if (animationFrame is null)
             {
                 continue;
             }
 
-            _explosions.Add(Explosion.StartExplosion(
+            _explosions.Add(StripEffect.StartExplosion(
                 new MovieExplosionSource(
                     animationFrame,
                     new Rectangle(
-                        GameplayConstants.ArcadeX(exploded.Column * 2),
-                        GameplayConstants.ArcadeY(exploded.Row),
+                        HudLayout.ArcadeX(exploded.Column * 2),
+                        HudLayout.ArcadeY(exploded.Row),
                         ScreenSize.Scaled(animationFrame.Width),
                         ScreenSize.Scaled(animationFrame.Height))),
                 Direction8.Left,
@@ -130,19 +120,19 @@ public sealed class StorylineState : IGameState, IAttractState
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.SlotColor(GameplayConstants.TitleWallSlot));
+        _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.SlotColor(AttractTuning.TitleWallSlot));
         ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds);
 
         ArcadeHud.DrawCenteredLargeText(
             spriteBatch,
             _sprites,
             TitleText,
-            GameplayConstants.ArcadeY(GameplayConstants.StoryTitleRow),
-            GameplayConstants.HudScoreSlotCurrent);
+            HudLayout.ArcadeY(AttractTuning.StoryTitleRow),
+            HudLayout.HudScoreSlotCurrent);
 
         DrawObjects(spriteBatch);
 
-        foreach (Explosion explosion in _explosions)
+        foreach (StripEffect explosion in _explosions)
         {
             explosion.Draw(spriteBatch);
         }
@@ -156,8 +146,8 @@ public sealed class StorylineState : IGameState, IAttractState
                     spriteBatch,
                     _sprites.FontLarge,
                     index,
-                    GameplayConstants.ArcadeX(cell.X),
-                    GameplayConstants.ArcadeY(cell.Y),
+                    HudLayout.ArcadeX(cell.X),
+                    HudLayout.ArcadeY(cell.Y),
                     cell.Slot);
             }
         }
@@ -167,8 +157,8 @@ public sealed class StorylineState : IGameState, IAttractState
             _sprites.DrawSmallFontText(
                 spriteBatch,
                 message.Text,
-                GameplayConstants.ArcadeX(message.X),
-                GameplayConstants.ArcadeY(message.Y),
+                HudLayout.ArcadeX(message.X),
+                HudLayout.ArcadeY(message.Y),
                 message.Slot);
         }
     }
@@ -188,8 +178,8 @@ public sealed class StorylineState : IGameState, IAttractState
             if (item.IsLaser)
             {
                 // LASPIC: the rotating laser table's horizontal bar.
-                int x = GameplayConstants.ArcadeX(item.ArcadeX);
-                int y = GameplayConstants.ArcadeY(item.ArcadeY);
+                int x = HudLayout.ArcadeX(item.ArcadeX);
+                int y = HudLayout.ArcadeY(item.ArcadeY);
                 spriteBatch.Draw(
                     _sprites.LaserBar,
                     new Rectangle(x, y, ScreenSize.Scaled(_sprites.LaserBar.Width), ScreenSize.Scaled(_sprites.LaserBar.Height)),
@@ -202,15 +192,15 @@ public sealed class StorylineState : IGameState, IAttractState
                 continue;
             }
 
-            Texture2D? animationFrame = MovieAnimationFrames.Resolve(_sprites, descriptor.Animation, item.ImageIndex);
+            Texture2D? animationFrame = MovieAnimationFrames.Resolve(_sprites, descriptor.Animation, item.AnimationFrameIndex);
             if (animationFrame is null)
             {
                 continue;
             }
 
             var bounds = new Rectangle(
-                GameplayConstants.ArcadeX(item.ArcadeX),
-                GameplayConstants.ArcadeY(item.ArcadeY),
+                HudLayout.ArcadeX(item.ArcadeX),
+                HudLayout.ArcadeY(item.ArcadeY),
                 ScreenSize.Scaled(animationFrame.Width),
                 ScreenSize.Scaled(animationFrame.Height));
 
@@ -224,7 +214,7 @@ public sealed class StorylineState : IGameState, IAttractState
                     _sprites.DrawSolidRectangle(spriteBatch, bounds, _sprites.SlotColor(item.MonoBoxSlot));
                 }
 
-                _sprites.DrawSpriteSolid(spriteBatch, animationFrame, bounds, _sprites.SlotColor(item.MonoImageSlot));
+                _sprites.DrawSpriteSolid(spriteBatch, animationFrame, bounds, _sprites.SlotColor(item.MonoSilhouetteSlot));
                 if (item.MonoBrain)
                 {
                     _sprites.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
@@ -244,12 +234,12 @@ public sealed class StorylineState : IGameState, IAttractState
     /// </summary>
     private sealed class MovieExplosionSource : IExplodable
     {
-        private readonly Texture2D _art;
+        private readonly Texture2D _animationFrame;
         private readonly Rectangle _bounds;
 
-        public MovieExplosionSource(Texture2D art, Rectangle bounds)
+        public MovieExplosionSource(Texture2D animationFrame, Rectangle bounds)
         {
-            _art = art;
+            _animationFrame = animationFrame;
             _bounds = bounds;
         }
 
@@ -261,7 +251,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         public EntityLifeState LifeState => EntityLifeState.Dead;
 
-        public Texture2D CurrentAnimationFrame => _art;
+        public Texture2D CurrentAnimationFrame => _animationFrame;
 
         public void Update(GameTime gameTime, PlayField field)
         {

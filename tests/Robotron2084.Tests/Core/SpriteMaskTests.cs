@@ -30,7 +30,7 @@ public sealed class SpriteMaskTests
         SpriteMask bottomRight = SpriteMask.FromPixels(4, 4, [(3, 3)]);
         var box = new Rectangle(100, 100, 4, 4);
 
-        // Drawn in the same place the two marks are three pixels apart: the boxes overlap, the art does not.
+        // Drawn in the same place the two marks are three pixels apart: the boxes overlap, the pictures do not.
         Assert.False(SpriteMask.Overlap(topLeft, box, bottomRight, box));
 
         // Slide the second picture up and left until its mark lands on the first one's.

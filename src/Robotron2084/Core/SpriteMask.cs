@@ -72,12 +72,12 @@ public sealed class SpriteMask
     /// <summary>
     /// True when the two pictures cover a common screen pixel. Each mask is placed by the rectangle its
     /// picture is DRAWN in — <see cref="Rendering.SpriteSet.DrawnRect"/> is the one definition of that
-    /// placement, so the collision follows the art wherever the drawer puts it — and one picture pixel
+    /// placement, so the collision follows the picture wherever the drawer puts it — and one picture pixel
     /// covers a square of screen pixels (the render scale).
     ///
     /// The cheap test comes first and the pixel walk only ever runs over the band the two pictures share.
     /// The DRAWN rectangles are the right thing to reject on, not the collision boxes: several pictures are
-    /// drawn larger than the box that centres them (the spark is 8x7 art in a 4x4 box, the laser 6x6 in the
+    /// drawn larger than the box that centres them (the spark is 8x7 picture in a 4x4 box, the laser 6x6 in the
     /// same, the tank's birth frames bigger still), so a box-only rejection would drop the near misses the
     /// arcade counts.
     /// </summary>

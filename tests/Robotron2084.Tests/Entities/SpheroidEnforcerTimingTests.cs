@@ -37,17 +37,11 @@ public sealed class SpheroidEnforcerTimingTests
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     private static PlayField CreateField(int seed, int spheroids = 0, int enfnum = 10, int cdpTim = 30) =>
-        new(TestSprites.Shared, 
-            new LevelParameters(
+        new PlayFieldBuilder().WithParameters(new LevelParameters(
                 LevelNumber: 1,
                 SpheroidCount: spheroids,
                 MaxDropsX2: enfnum,
-                SpheroidDropDelay: cdpTim),
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(seed),
-            startingLives: 3);
+                SpheroidDropDelay: cdpTim)).WithRandom(new Random(seed)).Build();
 
     [Fact]
     public void Spheroid_DropCount_IsAlwaysBetweenOneAndFive()
@@ -108,7 +102,7 @@ public sealed class SpheroidEnforcerTimingTests
     public void Enforcer_IsImmobileAndSilentDuringGrowUp()
     {
         PlayField field = CreateField(7);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(42), fireDelayRomTicks: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(42), fireIntervalBeats: 30);
         IntVector2 start = enforcer.Position;
 
         // Expire the start grace so RobotsFrozen is false for the enforcer.
@@ -120,7 +114,7 @@ public sealed class SpheroidEnforcerTimingTests
         // The ROM grow-up is 45 frames = 54 port ticks (notes §65; the old model said
         // 40 frames, which is why this used to stop at PortTicks(40) = 48). The last
         // of those ticks is the one ENFR10 runs on, so immobility covers 1..53.
-        for (int tick = 1; tick < GameplayConstants.PortTicksCeil(GameplayConstants.EnforcerGrowUpRomFrames); tick++)
+        for (int tick = 1; tick < ArcadeClock.PortTicksCeil(EnforcerTuning.GrowUpRomFrames); tick++)
         {
             enforcer.Update(Frame(), field);
             Assert.True(enforcer.Position == start, $"moved during grow-up at tick {tick}");
@@ -138,12 +132,12 @@ public sealed class SpheroidEnforcerTimingTests
     [Fact]
     public void Enforcer_GrowFrames_ChangeOnTheRomsNineFrameBoundaries()
     {
-        // FIVE grow pictures over 45 ROM frames = 9 frames each, on the exact-6ths
+        // FIVE grow pictures over 45 ROM frames = 9 frames each, on the clock-unit
         // clock, so picture n starts on the first tick where 5t >= 9n x 6 — i.e.
         // ticks 1, 11, 22, 33, 44. The old PortTicks(9) = 10 switched every 10 ticks
         // and ran out early inside a correctly-timed growth (notes §65.3).
         PlayField field = CreateField(7);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(42), fireDelayRomTicks: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(42), fireIntervalBeats: 30);
 
         for (int tick = 1; tick <= GraceWarmupTicks; tick++)
         {
@@ -151,17 +145,17 @@ public sealed class SpheroidEnforcerTimingTests
         }
 
         int[] expectedStarts = { 1, 11, 22, 33, 44 };
-        int growTicks = GameplayConstants.PortTicksCeil(GameplayConstants.EnforcerGrowUpRomFrames); // 54
+        int growTicks = ArcadeClock.PortTicksCeil(EnforcerTuning.GrowUpRomFrames); // 54
 
         for (int tick = 1; tick < growTicks; tick++)
         {
             enforcer.Update(Frame(), field);
             int expected = Array.FindLastIndex(expectedStarts, s => s <= tick);
-            Assert.Equal(expected, enforcer.GrowFrameIndex);
+            Assert.Equal(expected, enforcer.GrowAnimationFrameIndex);
         }
 
         enforcer.Update(Frame(), field); // tick 54: the grow-up ends, ENFR10 runs
-        Assert.Equal(-1, enforcer.GrowFrameIndex);
+        Assert.Equal(-1, enforcer.GrowAnimationFrameIndex);
     }
 
     [Fact]
@@ -173,7 +167,7 @@ public sealed class SpheroidEnforcerTimingTests
         // slack for the 6/5 beat accumulator), and (seeded, deterministic) at least
         // one gap must exceed the old model's maximum of PortTicks(30) = 36.
         PlayField field = CreateField(11);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(1234), fireDelayRomTicks: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(1234), fireIntervalBeats: 30);
 
         for (int tick = 1; tick <= GraceWarmupTicks; tick++)
         {
@@ -201,12 +195,12 @@ public sealed class SpheroidEnforcerTimingTests
             int gap = fireTicks[i] - fireTicks[i - 1];
             Assert.InRange(
                 gap,
-                GameplayConstants.PortTicks(GameplayConstants.EnforcerBeatRomFrames) - 1,
-                GameplayConstants.PortTicks(GameplayConstants.EnforcerBeatRomFrames * 30) + 1);
+                ArcadeClock.PortTicks(EnforcerTuning.BeatRomFrames) - 1,
+                ArcadeClock.PortTicks(EnforcerTuning.BeatRomFrames * 30) + 1);
         }
 
         int maxGap = fireTicks.Zip(fireTicks.Skip(1), (a, b) => b - a).Max();
-        Assert.True(maxGap > GameplayConstants.PortTicks(30), $"max gap {maxGap} never exceeded the pre-fix maximum");
+        Assert.True(maxGap > ArcadeClock.PortTicks(30), $"max gap {maxGap} never exceeded the pre-fix maximum");
     }
 
     [Fact]
@@ -216,7 +210,7 @@ public sealed class SpheroidEnforcerTimingTests
         // down-right of the player; over a long run the enforcer must
         // spend time close to the player, not wander the whole field.
         PlayField field = CreateField(11);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(1234), fireDelayRomTicks: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(1234), fireIntervalBeats: 30);
 
         for (int tick = 1; tick <= GraceWarmupTicks; tick++)
         {

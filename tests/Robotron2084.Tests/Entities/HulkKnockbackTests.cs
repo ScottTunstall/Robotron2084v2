@@ -21,8 +21,8 @@ public sealed class HulkKnockbackTests
     private static IntVector2 Center(PlayField field)
     {
         Rectangle b = field.Wall.PlayfieldBounds;
-        int width = ScreenSize.Scaled(GameplayConstants.HulkCollisionSize.Width);
-        int height = ScreenSize.Scaled(GameplayConstants.HulkCollisionSize.Height);
+        int width = ScreenSize.Scaled(CollisionSizes.HulkCollisionSize.Width);
+        int height = ScreenSize.Scaled(CollisionSizes.HulkCollisionSize.Height);
         return new(b.X + b.Width / 2 - width / 2, b.Y + b.Height / 2 - height / 2);
     }
 
@@ -38,13 +38,7 @@ public sealed class HulkKnockbackTests
             MaxEnforcersPerSpheroid: 1,
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
-        return new PlayField(TestSprites.Shared, 
-            parameters,
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(1),
-            startingLives: 3);
+        return new PlayFieldBuilder().WithParameters(parameters).WithSeed(1).Build();
     }
 
     [Fact]
@@ -55,7 +49,7 @@ public sealed class HulkKnockbackTests
 
         foreach (Direction8 direction in Enum.GetValues<Direction8>())
         {
-            var hulk = new Hulk(TestSprites.Shared, spot, new Random(1000 + (int)direction), hulkSpeedRomTicks: 2, () => spot);
+            var hulk = new Hulk(TestSprites.Shared, spot, new Random(1000 + (int)direction), stepDelayRomFrames: 2, () => spot);
             field.AddHulk(hulk);
             field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // caches the playfield bounds
 
@@ -64,7 +58,7 @@ public sealed class HulkKnockbackTests
 
             for (int i = 0; i < 400; i++)
             {
-                hulk.Position = spot; // reset each hit so the hulk never drifts toward a wall
+                hulk.TeleportTo(spot); // reset each hit so the hulk never drifts toward a wall
                 hulk.ApplyKnockback(unit);
                 observed.Add(hulk.Position - spot);
             }
@@ -111,12 +105,12 @@ public sealed class HulkKnockbackTests
     {
         PlayField field = CreateField();
         Rectangle b = field.Wall.PlayfieldBounds;
-        int width = ScreenSize.Scaled(GameplayConstants.HulkCollisionSize.Width);
-        int height = ScreenSize.Scaled(GameplayConstants.HulkCollisionSize.Height);
+        int width = ScreenSize.Scaled(CollisionSizes.HulkCollisionSize.Width);
+        int height = ScreenSize.Scaled(CollisionSizes.HulkCollisionSize.Height);
 
         // Top-left corner, pushed outward (up-left): the hulk may sit on the
         // wall (spec: "pushed back into the WALL") but never leave the field.
-        var hulk = new Hulk(TestSprites.Shared, new IntVector2(b.X, b.Y), new Random(7), hulkSpeedRomTicks: 2, () => new IntVector2(b.X, b.Y));
+        var hulk = new Hulk(TestSprites.Shared, new IntVector2(b.X, b.Y), new Random(7), stepDelayRomFrames: 2, () => new IntVector2(b.X, b.Y));
         field.AddHulk(hulk);
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3)));
 

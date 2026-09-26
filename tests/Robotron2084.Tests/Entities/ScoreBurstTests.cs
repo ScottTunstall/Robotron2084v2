@@ -32,20 +32,20 @@ public sealed class ScoreBurstTests
         var bounds = new Rectangle(100, 200, 16, 15);
         ScoreBurst burst = ScoreBurst.ForSpheroid(TestSprites.Shared, bounds);
 
-        Assert.Equal(ScoreBurst.FirstBurstFrameIndex, burst.FrameIndex);
+        Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, burst.AnimationFrameIndex);
         Assert.False(burst.ShowingPoints);
 
-        // One tick at a time, recording every change: the 6ths accumulator makes a
+        // One tick at a time, recording every change: the clock-unit accumulator makes a
         // step land on a 2- or 3-tick boundary depending on its phase, so batching
         // ticks would alias the sequence.
         var seen = new List<int>();
         for (int i = 0; i < 60 && !burst.ShowingPoints; i++)
         {
-            int before = burst.FrameIndex;
+            int before = burst.AnimationFrameIndex;
             Advance(burst, 1);
-            if (burst.FrameIndex != before)
+            if (burst.AnimationFrameIndex != before)
             {
-                seen.Add(burst.FrameIndex);
+                seen.Add(burst.AnimationFrameIndex);
             }
         }
 
@@ -53,29 +53,29 @@ public sealed class ScoreBurstTests
         // and because the ROM tests the countdown BEFORE drawing, the last step
         // draws nothing — so the showing ends there.
         Assert.Equal([3, 4, 5, 6, 7], seen);
-        Assert.Equal(ScoreBurst.FirstBurstFrameIndex, seen[0] - 1); // it started on 2
+        Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, seen[0] - 1); // it started on 2
         Assert.True(burst.ShowingPoints);
-        Assert.Equal(GameplayConstants.ScoreBurstPointsSteps, burst.PointsStepsRemaining);
+        Assert.Equal(ScoreBurstTuning.PointsSteps, burst.PointsStepsRemaining);
     }
 
     [Fact]
     public void EachStepTakesTwoRomFrames_NotTwoPortTicks()
     {
-        // `NAP 2` = 2 ROM frames = 12 sixths, and a port tick is 5 sixths, so a
+        // `NAP 2` = 2 ROM frames = 12 clock units, and a port tick is 5 clock units, so a
         // step lands every 2-3 ticks (2.4). PortTicks(2) would also be 2 here,
         // but the accumulator is the repo's rule for short ROM delays (§52).
         ScoreBurst burst = ScoreBurst.ForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
 
         // Picture 2 is shown from the kill itself; each step is 2 ROM frames.
-        Assert.Equal(ScoreBurst.FirstBurstFrameIndex, burst.FrameIndex);
+        Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, burst.AnimationFrameIndex);
         Advance(burst, 2);
-        Assert.Equal(2, burst.FrameIndex); // 10 sixths: not yet
+        Assert.Equal(2, burst.AnimationFrameIndex); // 10 clock units: not yet
         Advance(burst, 1);
-        Assert.Equal(3, burst.FrameIndex); // 15 sixths: stepped, 3 left over
+        Assert.Equal(3, burst.AnimationFrameIndex); // 15 clock units: stepped, 3 left over
         Advance(burst, 1);
-        Assert.Equal(3, burst.FrameIndex);
+        Assert.Equal(3, burst.AnimationFrameIndex);
         Advance(burst, 1);
-        Assert.Equal(4, burst.FrameIndex);
+        Assert.Equal(4, burst.AnimationFrameIndex);
     }
 
     [Fact]
@@ -83,8 +83,8 @@ public sealed class ScoreBurstTests
     {
         ScoreBurst burst = ScoreBurst.ForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
 
-        // 36 steps in total (6 burst + 30 points) x 12 sixths = 432 sixths, and
-        // 5 sixths accrue a tick => 86 ticks leave it alive, the 87th kills it.
+        // 36 steps in total (6 burst + 30 points) x 12 clock units = 432 clock units, and
+        // 5 clock units accrue a tick => 86 ticks leave it alive, the 87th kills it.
         Advance(burst, 86);
         Assert.Equal(EntityLifeState.Alive, burst.LifeState);
         Assert.True(burst.ShowingPoints);
@@ -101,8 +101,8 @@ public sealed class ScoreBurstTests
         // The ROM adds #$0105 to the blitter's column:row destination.
         Assert.Equal(
             new Rectangle(
-                bounds.X + ScreenSize.Scaled(GameplayConstants.ScoreBurstPointsOffsetXSpecPixels),
-                bounds.Y + ScreenSize.Scaled(GameplayConstants.ScoreBurstPointsOffsetYSpecPixels),
+                bounds.X + ScreenSize.Scaled(ScoreBurstTuning.PointsOffsetXSpecPixels),
+                bounds.Y + ScreenSize.Scaled(ScoreBurstTuning.PointsOffsetYSpecPixels),
                 bounds.Width,
                 bounds.Height),
             burst.PointsBounds);
@@ -129,15 +129,15 @@ public sealed class ScoreBurstTests
         // The quark has NINE pictures (SQP0..SQP8) and `LDA #8`, so its burst
         // reaches index 8 — one further than the spheroid's.
         ScoreBurst burst = ScoreBurst.ForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
-        int last = burst.FrameIndex;
+        int last = burst.AnimationFrameIndex;
         while (!burst.ShowingPoints && last < 20)
         {
             Advance(burst, 3);
-            last = burst.FrameIndex;
+            last = burst.AnimationFrameIndex;
         }
 
         Assert.True(burst.ShowingPoints);
-        Assert.Equal(GameplayConstants.ScoreBurstQuarkCount, last);
+        Assert.Equal(ScoreBurstTuning.QuarkCount, last);
     }
 
     private static PlayField CreateField(int spheroids = 0, int quarks = 0)
@@ -153,7 +153,7 @@ public sealed class ScoreBurstTests
             MaxTanksPerQuark: 0,
             EnemySpeedBonus: 0);
 
-        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(7), startingLives: 3);
+        return new PlayFieldBuilder().WithParameters(parameters).WithSeed(7).Build();
     }
 
     /// <summary>Drains the wave-start appear chain so only kill effects remain.</summary>

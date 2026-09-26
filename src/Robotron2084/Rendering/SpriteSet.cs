@@ -36,44 +36,44 @@ public sealed class SpriteSet
     private const string SolidColorParameter = "RemapColor";
 
     /// <summary>Pictures in the player's walk cycle: 4 directions × 3 frames.</summary>
-    private const int PlayerFrameCount = 12;
+    private const int PlayerAnimationFrameCount = 12;
 
     /// <summary>The player picture drawn before the walk starts — the first DOWN-facing frame
     /// (frames 1-3 left, 4-6 right, 7-9 down, 10-12 up).</summary>
-    private const int FirstDownFacingPlayerFrame = 6;
+    private const int FirstDownFacingPlayerAnimationFrame = 6;
 
     /// <summary>Pictures in one walk cycle of a family member or the brain — 4 directions x 3 frames.</summary>
-    private const int WalkCycleFrameCount = 12;
+    private const int WalkCycleAnimationFrameCount = 12;
 
     /// <summary>Pictures in the grunt's walk cycle.</summary>
-    private const int GruntFrameCount = 3;
+    private const int GruntAnimationFrameCount = 3;
 
     /// <summary>Pictures in the hulk's walk cycle.</summary>
-    private const int HulkFrameCount = 9;
+    private const int HulkAnimationFrameCount = 9;
 
     /// <summary>Pictures in the spheroid's spin/drop cycle.</summary>
-    private const int SpheroidFrameCount = 8;
+    private const int SpheroidAnimationFrameCount = 8;
 
     /// <summary>Pictures in the enforcer's walk cycle.</summary>
-    private const int EnforcerFrameCount = 6;
+    private const int EnforcerAnimationFrameCount = 6;
 
     /// <summary>Pictures in the quark's spin/drop cycle.</summary>
-    private const int QuarkFrameCount = 9;
+    private const int QuarkAnimationFrameCount = 9;
 
     /// <summary>Pictures in the tank's walk cycle.</summary>
-    private const int TankFrameCount = 4;
+    private const int TankAnimationFrameCount = 4;
 
     /// <summary>The electrode picture variants (nine families of three, see notes §47).</summary>
-    private const int ElectrodeFrameCount = 27;
+    private const int ElectrodeAnimationFrameCount = 27;
 
     /// <summary>Glyphs the small font's table carries up to the closing bracket.</summary>
     private const int SmallFontGlyphCount = 38;
 
     /// <summary>Number of spark (enforcer bullet) frames — SPKP0..3 in the ROM (notes 32).</summary>
-    public const int SparkFrameCount = 4;
+    public const int SparkAnimationFrameCount = 4;
 
     /// <summary>
-    /// Index into <see cref="FontLarge"/> of the ROM's rub marker — the large-font table's own art for
+    /// Index into <see cref="FontLarge"/> of the ROM's rub marker — the large-font table's own picture for
     /// code <c>$5E</c> (notes §116). The initials entry cycles to it to delete a committed letter, and
     /// no other screen prints that character. Its file keeps the sprite editor's name,
     /// <c>Font_L_arrowleft</c>, which is the only "arrow" in the ROM's large font.
@@ -83,43 +83,43 @@ public sealed class SpriteSet
     /// <summary>Representative player frame: frame 7 = first of the down-facing set (frames 1-3 left, 4-6 right, 7-9 down, 10-12 up).</summary>
     public Texture2D Player { get; }
 
-    public Texture2D[] PlayerFrames { get; }
+    public Texture2D[] PlayerAnimationFrames { get; }
 
     public Texture2D Grunt { get; }
 
-    public Texture2D[] GruntFrames { get; }
+    public Texture2D[] GruntAnimationFrames { get; }
 
     public Texture2D Hulk { get; }
 
-    public Texture2D[] HulkFrames { get; }
+    public Texture2D[] HulkAnimationFrames { get; }
 
-    public Texture2D[] SpheroidFrames { get; }
+    public Texture2D[] SpheroidAnimationFrames { get; }
 
     public Texture2D Enforcer { get; }
 
-    public Texture2D[] EnforcerFrames { get; }
+    public Texture2D[] EnforcerAnimationFrames { get; }
 
-    public Texture2D[] QuarkFrames { get; }
+    public Texture2D[] QuarkAnimationFrames { get; }
 
     public Texture2D Tank { get; }
 
-    public Texture2D[] TankFrames { get; }
+    public Texture2D[] TankAnimationFrames { get; }
 
     /// <summary>
     /// ROM `MTNKP1..4` — the tank's BIRTH pictures (4x4, 8x7, 8x8 and 12x12
     /// arcade px; notes §52/§53). These are NOT the tank: <c>Tank</c> draws them
     /// while `MTANK` grows the drop, and each has its own size.
     /// </summary>
-    public Texture2D[] TankGrowFrames { get; }
+    public Texture2D[] TankGrowAnimationFrames { get; }
 
     public Texture2D Electrode { get; }
 
-    public Texture2D[] ElectrodeFrames { get; }
+    public Texture2D[] ElectrodeAnimationFrames { get; }
 
     /// <summary>Enforcer bullet / spark (ROM: enforcerbullet1-4).</summary>
     public Texture2D Spark { get; }
 
-    public Texture2D[] SparkFrames { get; }
+    public Texture2D[] SparkAnimationFrames { get; }
 
     /// <summary>Skull &amp; crossbones family-death marker (ROM: familydeath).</summary>
     public Texture2D Skull { get; }
@@ -136,26 +136,26 @@ public sealed class SpriteSet
     /// frames, same layout as the player frames; Mikey = Mikey_*, Mom =
     /// Mummy_*, Dad = Daddy_*).
     /// </summary>
-    public Texture2D[] MikeyFrames { get; }
+    public Texture2D[] MikeyAnimationFrames { get; }
 
-    public Texture2D[] MomFrames { get; }
+    public Texture2D[] MomAnimationFrames { get; }
 
-    public Texture2D[] DadFrames { get; }
+    public Texture2D[] DadAnimationFrames { get; }
 
     /// <summary>
     /// The brain's 12 walk frames (4 directions × 3, same layout as
     /// the family), the prog's phony burst (PGXPIC — solid blit), and the
     /// cruise missile's two flicker frames (CMPIC/CMP1).
     /// </summary>
-    public Texture2D[] BrainFrames { get; }
+    public Texture2D[] BrainAnimationFrames { get; }
 
     public Texture2D ProgBurst { get; }
 
-    public Texture2D[] MissileSmallFrames { get; }
+    public Texture2D[] MissileSmallAnimationFrames { get; }
 
     /// <summary>
-    /// Player laser art — the four ROM pictures (R5 $35BE-$35DC, byte-identical
-    /// to old source RRG23 LLPC/ULPC/DLLPC/ULLPC). Built at arcade-pixel size (1 art pixel = 1 texture pixel);
+    /// Player laser pictures — the four ROM pictures (R5 $35BE-$35DC, byte-identical
+    /// to old source RRG23 LLPC/ULPC/DLLPC/ULLPC). Built at arcade-pixel size (1 arcade pixel = 1 texture pixel);
     /// <see cref="DrawSprite"/> scales by SpecScale and centers in the laser's
     /// 4x4 (spec) collision box. ROM LTAB picks one per direction, no flipping:
     /// L/R = bar, U/D = column (left pixel lit), UL/DR = main diagonal,
@@ -175,7 +175,7 @@ public sealed class SpriteSet
     /// <summary>
     /// The attract movie's CRUISE MISSILE — ROM `CRUSB` ($86BA, the 9x2 picture
     /// the movie's own CRUSM descriptor points at; notes §95.6). The playfield's
-    /// cruise missile is a different picture (<see cref="MissileSmallFrames"/>).
+    /// cruise missile is a different picture (<see cref="MissileSmallAnimationFrames"/>).
     /// </summary>
     public Texture2D AttractCruise { get; }
 
@@ -185,7 +185,7 @@ public sealed class SpriteSet
     /// script. They are WHITE masks because the movie only ever draws them SOLID,
     /// through MONO's colour pair.
     /// </summary>
-    public Texture2D[] PostFrames { get; }
+    public Texture2D[] PostAnimationFrames { get; }
 
     /// <summary>
     /// Arcade font glyphs, extracted from the ROM (notes §38; the offsets come from
@@ -229,7 +229,7 @@ public sealed class SpriteSet
     /// <summary>
     /// The attract page's wordmark — "ROBOTRON:" — as two WHITE MASKS at 1x arcade pixels,
     /// TRACED from an arcade screenshot by <c>tools/extract-title-logos.py</c> (notes
-    /// §103.4): the R5 CPU ROM we hold does not contain this artwork. <see cref="TitleWordmarkCore"/>
+    /// §103.4): the R5 CPU ROM we hold does not contain these pictures. <see cref="TitleWordmarkCore"/>
     /// is the letters' body and <see cref="TitleWordmarkRim"/> the one-pixel rim round them,
     /// because the arcade blits a shape in a colour taken from the LIVE palette — so the page
     /// draws each mask in a palette slot and the wordmark colour-cycles with the page's own
@@ -241,7 +241,7 @@ public sealed class SpriteSet
     public Texture2D TitleWordmarkRim { get; }
 
     /// <summary>
-    /// The "2084" mark beneath the wordmark — COLOUR art, traced the same way and snapped to the
+    /// The "2084" mark beneath the wordmark — COLOUR picture, traced the same way and snapped to the
     /// arcade's own palette (notes §103.4). Unlike the wordmark it keeps its own colours: only the
     /// wordmark cycles.
     /// </summary>
@@ -257,32 +257,32 @@ public sealed class SpriteSet
     /// <summary>The live 16-slot palette the effect remaps into (slots 10-15 cycle).</summary>
     public GamePalette? Palette { get; set; }
 
-    /// <summary>Loads the game's artwork.</summary>
+    /// <summary>Loads the game's pictures.</summary>
     /// <param name="source">Where the pictures come from — the content pipeline in the game, and nothing at
     /// all in a headless test.</param>
     public SpriteSet(ISpriteSource source)
     {
-        PlayerFrames = source.LoadAll(NumberedNames("Sprites/Player", PlayerFrameCount));
-        Player = PlayerFrames[FirstDownFacingPlayerFrame];
-        GruntFrames = source.LoadAll(NumberedNames("Sprites/Grunt", GruntFrameCount));
-        Grunt = GruntFrames[0];
-        HulkFrames = source.LoadAll(NumberedNames("Sprites/Hulk", HulkFrameCount));
-        Hulk = HulkFrames[0];
-        SpheroidFrames = source.LoadAll(NumberedNames("Sprites/Spheroid", SpheroidFrameCount));
-        EnforcerFrames = source.LoadAll(NumberedNames("Sprites/Enforcer", EnforcerFrameCount));
-        Enforcer = EnforcerFrames[0];
-        QuarkFrames = source.LoadAll(NumberedNames("Sprites/Quark", QuarkFrameCount));
-        TankFrames = source.LoadAll(NumberedNames("Sprites/Tank", TankFrameCount));
-        Tank = TankFrames[0];
+        PlayerAnimationFrames = source.LoadAll(NumberedNames("Sprites/Player", PlayerAnimationFrameCount));
+        Player = PlayerAnimationFrames[FirstDownFacingPlayerAnimationFrame];
+        GruntAnimationFrames = source.LoadAll(NumberedNames("Sprites/Grunt", GruntAnimationFrameCount));
+        Grunt = GruntAnimationFrames[0];
+        HulkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Hulk", HulkAnimationFrameCount));
+        Hulk = HulkAnimationFrames[0];
+        SpheroidAnimationFrames = source.LoadAll(NumberedNames("Sprites/Spheroid", SpheroidAnimationFrameCount));
+        EnforcerAnimationFrames = source.LoadAll(NumberedNames("Sprites/Enforcer", EnforcerAnimationFrameCount));
+        Enforcer = EnforcerAnimationFrames[0];
+        QuarkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Quark", QuarkAnimationFrameCount));
+        TankAnimationFrames = source.LoadAll(NumberedNames("Sprites/Tank", TankAnimationFrameCount));
+        Tank = TankAnimationFrames[0];
 
         // ROM MTNKP1..4 (notes §53): the four birth pictures. Each is a
         // different size, so the drawer reads each texture's own dimensions
         // rather than the tank's collision box.
-        TankGrowFrames = source.LoadAll(NumberedNames("Sprites/TankGrow", GameplayConstants.TankGrowSteps));
-        ElectrodeFrames = source.LoadAll(NumberedNames("Sprites/Electrode", ElectrodeFrameCount));
-        Electrode = ElectrodeFrames[0];
-        SparkFrames = source.LoadAll(NumberedNames("Sprites/Spark", SparkFrameCount));
-        Spark = SparkFrames[0];
+        TankGrowAnimationFrames = source.LoadAll(NumberedNames("Sprites/TankGrow", TankTuning.GrowSteps));
+        ElectrodeAnimationFrames = source.LoadAll(NumberedNames("Sprites/Electrode", ElectrodeAnimationFrameCount));
+        Electrode = ElectrodeAnimationFrames[0];
+        SparkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Spark", SparkAnimationFrameCount));
+        Spark = SparkAnimationFrames[0];
         Skull = source.Load("Sprites/Skull");
         RescueScoreDisplays = source.LoadAll(
         [
@@ -292,27 +292,27 @@ public sealed class SpriteSet
             "Sprites/Score_4000",
             "Sprites/Score_5000",
         ]);
-        MikeyFrames = source.LoadAll(NumberedNames("Sprites/Mikey", WalkCycleFrameCount));
-        MomFrames = source.LoadAll(NumberedNames("Sprites/Mummy", WalkCycleFrameCount));
-        DadFrames = source.LoadAll(NumberedNames("Sprites/Daddy", WalkCycleFrameCount));
-        BrainFrames = source.LoadAll(NumberedNames("Sprites/Brain", WalkCycleFrameCount));
+        MikeyAnimationFrames = source.LoadAll(NumberedNames("Sprites/Mikey", WalkCycleAnimationFrameCount));
+        MomAnimationFrames = source.LoadAll(NumberedNames("Sprites/Mummy", WalkCycleAnimationFrameCount));
+        DadAnimationFrames = source.LoadAll(NumberedNames("Sprites/Daddy", WalkCycleAnimationFrameCount));
+        BrainAnimationFrames = source.LoadAll(NumberedNames("Sprites/Brain", WalkCycleAnimationFrameCount));
         ProgBurst = source.Load("Sprites/ProgBurst");
         TitleWordmarkCore = source.Load("Sprites/Title_Wordmark_Core");
         TitleWordmarkRim = source.Load("Sprites/Title_Wordmark_Rim");
         Title2084 = source.Load("Sprites/Title_2084");
-        MissileSmallFrames = source.LoadAll(
+        MissileSmallAnimationFrames = source.LoadAll(
         [
             "Sprites/MissileSmall_0",
             "Sprites/MissileSmall_1",
         ]);
 
-        LaserBar = source.Create(6, 1, PixelArtFactory.BuildLaserBarPattern(Color.White));
-        LaserColumn = source.Create(2, 6, PixelArtFactory.BuildLaserColumnPattern(Color.White));
-        LaserDiagonalMain = source.Create(6, 6, PixelArtFactory.BuildLaserDiagonalMainPattern(Color.White));
-        LaserDiagonalAnti = source.Create(6, 6, PixelArtFactory.BuildLaserDiagonalAntiPattern(Color.White));
+        LaserBar = source.Create(6, 1, PictureFactory.BuildLaserBarPattern(Color.White));
+        LaserColumn = source.Create(2, 6, PictureFactory.BuildLaserColumnPattern(Color.White));
+        LaserDiagonalMain = source.Create(6, 6, PictureFactory.BuildLaserDiagonalMainPattern(Color.White));
+        LaserDiagonalAnti = source.Create(6, 6, PictureFactory.BuildLaserDiagonalAntiPattern(Color.White));
         TankShell = source.Load("Sprites/TankShell");
         AttractCruise = source.Load("Sprites/AttractCruise");
-        PostFrames = source.LoadAll(
+        PostAnimationFrames = source.LoadAll(
         [
             "Sprites/AttractPost_1",
             "Sprites/AttractPost_2",
@@ -376,8 +376,8 @@ public sealed class SpriteSet
             0x88, 0x08, 0x80, // 88.88.
         ];
 
-        const int widthBytes = GameplayConstants.HudMiniManWidthPixels / 2;
-        const int height = GameplayConstants.HudMiniManHeightPixels;
+        const int widthBytes = HudLayout.HudMiniManWidthPixels / 2;
+        const int height = HudLayout.HudMiniManHeightPixels;
         var pixels = new Color[widthBytes * 2 * height];
 
         for (int row = 0; row < height; row++)
@@ -544,7 +544,7 @@ public sealed class SpriteSet
         {
             if (character == ' ')
             {
-                x += ScreenSize.Scaled(GameplayConstants.HudSmallFontSpaceAdvancePixels);
+                x += ScreenSize.Scaled(HudLayout.HudSmallFontSpaceAdvancePixels);
                 continue;
             }
 
@@ -552,20 +552,20 @@ public sealed class SpriteSet
             if (index >= 0 && index < FontSmall.Length)
             {
                 DrawGlyphSlot(spriteBatch, FontSmall, index, x, y, slot);
-                x += ScreenSize.Scaled(FontSmall[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+                x += ScreenSize.Scaled(FontSmall[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
                 continue;
             }
 
             // The arcade's SMALL font stops at ')' — 38 glyphs: digits, A-Z and the two brackets
             // — so it has no ':' of its own (the ROM's ':' lives in the LARGE font). Rather than
             // drop the character, draw the large font's glyph in its place: that is the arcade's
-            // own artwork, and it is why the DEFINE INPUTS page can print "ENTER: SET THE INPUT"
+            // own pictures, and it is why the DEFINE INPUTS page can print "ENTER: SET THE INPUT"
             // (notes §101.11). The colon is one row taller than the capitals, exactly as the two
             // arcade fonts differ.
             if (index >= 0 && index < FontLarge.Length)
             {
                 DrawGlyphSlot(spriteBatch, FontLarge, index, x, y, slot);
-                x += ScreenSize.Scaled(FontLarge[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+                x += ScreenSize.Scaled(FontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
             }
         }
 
@@ -586,7 +586,7 @@ public sealed class SpriteSet
         {
             if (character == ' ')
             {
-                x += ScreenSize.Scaled(GameplayConstants.HudSmallFontBlankAdvancePixels);
+                x += ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels);
                 continue;
             }
 
@@ -597,7 +597,7 @@ public sealed class SpriteSet
             }
 
             DrawGlyphSlot(spriteBatch, FontLarge, index, x, y, slot);
-            x += ScreenSize.Scaled(FontLarge[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+            x += ScreenSize.Scaled(FontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
         }
 
         return x;
@@ -651,14 +651,14 @@ public sealed class SpriteSet
         {
             if (character == ' ')
             {
-                width += GameplayConstants.HudSmallFontBlankAdvancePixels;
+                width += HudLayout.HudSmallFontBlankAdvancePixels;
                 continue;
             }
 
             int index = GlyphIndex(character);
             if (index >= 0 && index < glyphs.Length)
             {
-                width += glyphs[index].Width + GameplayConstants.HudSmallFontGlyphGapPixels;
+                width += glyphs[index].Width + HudLayout.HudSmallFontGlyphGapPixels;
             }
         }
 
@@ -674,7 +674,7 @@ public sealed class SpriteSet
     /// </summary>
     public int DrawTableNumber(SpriteBatch spriteBatch, Texture2D[] glyphs, int value, int x, int y, int slot)
     {
-        foreach (ScoreFormatter.ScoreDigit digit in ScoreFormatter.Digits(value))
+        foreach (ScoreDigit digit in ScoreFormatter.Digits(value))
         {
             if (digit.Suppressed)
             {
@@ -682,7 +682,7 @@ public sealed class SpriteSet
             }
 
             DrawGlyphSlot(spriteBatch, glyphs, digit.Value, x, y, slot);
-            x += ScreenSize.Scaled(glyphs[digit.Value].Width + GameplayConstants.HudSmallFontGlyphGapPixels);
+            x += ScreenSize.Scaled(glyphs[digit.Value].Width + HudLayout.HudSmallFontGlyphGapPixels);
         }
 
         return x;
@@ -709,7 +709,7 @@ public sealed class SpriteSet
     /// <summary>
     /// Blitter op <c>$1A</c> — "SOLID + TRANSPARENT" (RRS22 <c>MPCTNV</c>,
     /// "ON MONOCHROME PICT"; notes §47): draws the sprite's SHAPE in one
-    /// colour, discarding the art's own colours. This is the arcade's REMAP
+    /// colour, discarding the animation frame's own colours. This is the arcade's REMAP
     /// COLOUR mode, and it is how the ROM draws anything in a single colour —
     /// a post being "turned on" (<c>OPON</c>), the flashing human and brain
     /// while a brain reprograms one (<c>BRNON</c>/<c>HUMON</c>), mono text.
@@ -727,7 +727,7 @@ public sealed class SpriteSet
             technique.Passes[0].Apply();
         }
 
-        // Without the effect the draw degrades to a tint (exact for white art).
+        // Without the effect the draw degrades to a tint (exact for white pictures).
         spriteBatch.Draw(texture, DrawnRect(bounds, texture), null, color, 0f, Vector2.Zero, SpriteEffects.None, 0f);
 
         // Hand the pass-through back immediately: this pass is DEVICE state, and

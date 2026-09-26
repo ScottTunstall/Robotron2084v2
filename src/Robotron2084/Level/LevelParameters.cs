@@ -36,13 +36,13 @@ public sealed record LevelParameters(
     int GruntSpeedFloor = 4,
     int EnforcerFireDelay = 24,
     int SpheroidDropDelay = 24,
-    int HulkSpeed = 7,
+    int HulkStepDelayRomFrames = 7,
     int BrainFireDelay = 40,
-    int BrainSpeed = 8,
+    int BrainBeatDelayRomFrames = 8,
     int TankFireDelay = 32,
     int ShellSpeed = 176,
     int QuarkDropDelay = 16,
-    int QuarkMove = 50,
+    int QuarkSpeedCap = 50,
     int EnemySpeedBonus = 0)
 {
     /// <summary>
@@ -68,12 +68,12 @@ public sealed record LevelParameters(
         GruntSpeedFloor: wave.GruntSpeedFloor,
         EnforcerFireDelay: wave.EnforcerFireDelay,
         SpheroidDropDelay: wave.SpheroidDropDelay,
-        HulkSpeed: wave.HulkSpeed,
+        HulkStepDelayRomFrames: wave.HulkStepDelayRomFrames,
         BrainFireDelay: wave.BrainFireDelay,
-        BrainSpeed: wave.BrainSpeed,
+        BrainBeatDelayRomFrames: wave.BrainBeatDelayRomFrames,
         TankFireDelay: wave.TankFireDelay,
         ShellSpeed: wave.ShellSpeed,
         QuarkDropDelay: wave.QuarkDropDelay,
-        QuarkMove: wave.QuarkMove,
+        QuarkSpeedCap: wave.QuarkSpeedCap,
         EnemySpeedBonus: 0);
 }

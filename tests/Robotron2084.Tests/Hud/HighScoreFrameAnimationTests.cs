@@ -32,7 +32,7 @@ public sealed class HighScoreFrameAnimationTests
         // never more than two strokes a tick, which is what the ROM's `LDA #2` counter
         // and its one-frame `NAP` add up to.
         frame.Tick();
-        Assert.Equal(1, frame.DrawnStroke); // 5 sixths — not a frame yet
+        Assert.Equal(1, frame.DrawnStroke); // 5 clock units — not a frame yet
 
         frame.Tick();
         Assert.Equal(3, frame.DrawnStroke); // two strokes

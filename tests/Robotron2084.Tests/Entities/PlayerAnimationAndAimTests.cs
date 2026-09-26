@@ -25,20 +25,14 @@ public sealed class PlayerAnimationAndAimTests
         public PlayerInputState Poll() => State;
     }
 
-    private static PlayField CreateField(IPlayerInputSource input) => new(TestSprites.Shared, 
-        new LevelParameters(LevelNumber: 1),
-        input,
-        PlayFieldSpawnTests.InnerBounds,
-        new WallColorCycle(),
-        new Random(1),
-        startingLives: 3);
+    private static PlayField CreateField(IPlayerInputSource input) => new PlayFieldBuilder().WithParameters(new LevelParameters(LevelNumber: 1)).WithInput(input).WithSeed(1).Build();
 
     [Fact]
     public void Player_StartsOnFrame7_TheFirstDownFrame()
     {
         // WAVE_START_PLAYER points the player metadata at $3603 = frame 7.
         PlayField field = CreateField(new FakeInputSource());
-        Assert.Equal(6, field.Player.WalkFrameIndex); // 0-based index into PlayerFrames
+        Assert.Equal(6, field.Player.WalkAnimationFrameIndex); // 0-based index into PlayerAnimationFrames
     }
 
     [Fact]
@@ -46,7 +40,7 @@ public sealed class PlayerAnimationAndAimTests
     {
         PlayField field = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(-1, 0), false)));
 
-        // Left walk = frames 1,2,1,3 → PlayerFrames indices 0,1,0,2,
+        // Left walk = frames 1,2,1,3 → PlayerAnimationFrames indices 0,1,0,2,
         // each drawn for exactly 3 movement ticks.
         int[] expected = { 0, 0, 0, 1, 1, 1, 0, 0, 0, 2, 2, 2 };
 
@@ -54,8 +48,8 @@ public sealed class PlayerAnimationAndAimTests
         {
             field.Update(new GameTime());
             Assert.True(
-                field.Player.WalkFrameIndex == expected[tick],
-                $"tick {tick + 1}: expected frame index {expected[tick]}, got {field.Player.WalkFrameIndex}");
+                field.Player.WalkAnimationFrameIndex == expected[tick],
+                $"tick {tick + 1}: expected frame index {expected[tick]}, got {field.Player.WalkAnimationFrameIndex}");
         }
     }
 
@@ -84,7 +78,7 @@ public sealed class PlayerAnimationAndAimTests
         Assert.Equal(Direction8.Up, field.Player.FacingDirection); // the initial facing, untouched
         PlayerLaser laser = Assert.Single(field.PlayerLasers.ActiveLasers);
         Assert.Equal(Direction8.Right, laser.Direction);
-        Assert.Equal(6, field.Player.WalkFrameIndex); // idle frame, untouched
+        Assert.Equal(6, field.Player.WalkAnimationFrameIndex); // idle frame, untouched
     }
 
     [Fact]
@@ -98,7 +92,7 @@ public sealed class PlayerAnimationAndAimTests
             field.Update(new GameTime());
         }
 
-        Assert.Equal(1, field.Player.WalkFrameIndex); // left walk, frame 2 (index 1)
+        Assert.Equal(1, field.Player.WalkAnimationFrameIndex); // left walk, frame 2 (index 1)
 
         // Round 8: aim UP while still moving left — the facing and the walk
         // animation must stay LEFT (the old behaviour switched the sprite to
@@ -107,15 +101,15 @@ public sealed class PlayerAnimationAndAimTests
         field.Update(new GameTime());
 
         Assert.Equal(Direction8.Left, field.Player.FacingDirection);
-        Assert.InRange(field.Player.WalkFrameIndex, 0, 2); // still the left walk group
+        Assert.InRange(field.Player.WalkAnimationFrameIndex, 0, 2); // still the left walk group
 
         // Idle: the animation freezes on the current frame (R5 $2FFE early-out).
         input.State = default;
-        int frozen = field.Player.WalkFrameIndex;
+        int frozen = field.Player.WalkAnimationFrameIndex;
         for (int tick = 0; tick < 12; tick++)
         {
             field.Update(new GameTime());
-            Assert.True(field.Player.WalkFrameIndex == frozen, $"idle tick {tick + 1} changed the frame");
+            Assert.True(field.Player.WalkAnimationFrameIndex == frozen, $"idle tick {tick + 1} changed the frame");
         }
     }
 
@@ -159,6 +153,6 @@ public sealed class PlayerAnimationAndAimTests
         PlayerLaser laser = Assert.Single(field.PlayerLasers.ActiveLasers);
         Assert.Equal(direction, laser.Direction);
         IntVector2 muzzle = new(start.X + ScreenSize.Scaled(offsetXSpec), start.Y + ScreenSize.Scaled(offsetYSpec));
-        Assert.Equal(muzzle + direction.ToIntVector() * GameplayConstants.LaserSpeed, laser.Position);
+        Assert.Equal(muzzle + direction.ToIntVector() * PlayerTuning.LaserSpeed, laser.Position);
     }
 }

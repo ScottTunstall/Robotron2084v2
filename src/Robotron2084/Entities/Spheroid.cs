@@ -21,11 +21,6 @@ namespace Robotron2084.Entities;
 /// 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
-    private readonly SpriteSet _sprites;
-    /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
-    private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(GameplayConstants.SpheroidCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.SpheroidCollisionSize.Height));
-
     /// <summary>The last picture of the spin and escape, i.e. the pointer value whose step wraps.</summary>
     /// <remarks>ROM: <c>CIRCLE</c>/<c>CIRC3L</c> wrap after picture 5 (index 4).</remarks>
     private const int SpinLastPicture = 4;
@@ -34,8 +29,43 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: <c>CIRC2L</c> wraps after its eighth picture.</remarks>
     private const int DropLastPicture = 7;
 
+    /// <summary>The wave's enforcer-allotment bound when the caller gives none.</summary>
+    private const int DefaultMaxDropsX2 = 10;
+
+    /// <summary>The wave's rotation delay when the caller gives none.</summary>
+    private const int DefaultDropDelayRotations = 24;
+
+    /// <summary>ROM <c>CIRNAC</c>: the X acceleration roll has this many sides (-16..+15 once offset)...</summary>
+    private const int AccelXRollSides = 32;
+
+    /// <summary>ROM <c>CIRNAC</c>: ...and is offset down by this much.</summary>
+    private const int AccelXOffset = 16;
+
+    /// <summary>ROM <c>CIRNAC</c>: the Y acceleration roll has this many sides (-32..+31 once offset) — twice X, because a column is 2 pixels...</summary>
+    private const int AccelYRollSides = 64;
+
+    /// <summary>ROM <c>CIRNAC</c>: ...and is offset down by this much.</summary>
+    private const int AccelYOffset = 32;
+
+    /// <summary>ROM <c>CIRNAC</c>: the accelerations hold for a random 1..this many beats.</summary>
+    private const int AccelBeatsMax = 15;
+
+    /// <summary>ROM <c>CIRGO</c>: each beat the velocity is damped by this many 256ths of itself (a 64th)...</summary>
+    private const int DampingPer256 = 4;
+
+    /// <summary>ROM <c>CIRGO</c>: ...less this small constant, so it converges on a multiple of the acceleration.</summary>
+    private const int DampingBias = 4;
+
+    /// <summary>ROM <c>CIRC2</c>: a re-armed drop countdown is a random 1..(the wave's delay over this) rotations.</summary>
+    private const int DropRerollDivisor = 4;
+
+    /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
+    private static readonly (int Width, int Height) CollisionSize =
+        (ScreenSize.Scaled(CollisionSizes.SpheroidCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.SpheroidCollisionSize.Height));
+
+    private readonly SpriteSet _sprites;
     private readonly Random _random;
-    private readonly int _dropDelayRomTicks;
+    private readonly int _dropDelayRotations;
     private IntVector2 _position;
     private int _velocityXSubpixels; // X velocity, in 1/256 column per frame (a column is 2 arcade px)
     private int _velocityYSubpixels; // Y velocity, in 1/256 row per frame
@@ -58,7 +88,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="position">Top-left of the spheroid.</param>
     /// <param name="random">The random source: the allotment, the accelerations and the escape direction.</param>
     /// <param name="maxDropsX2">This wave's enforcer-allotment bound; the roll happens here.</param>
-    /// <param name="dropDelayRomTicks">This wave's rotation countdown, in ROM frames.</param>
+    /// <param name="dropDelayRotations">The most rotations this wave's spheroid makes before it drops an enforcer.</param>
     /// <remarks>ROM: <c>ENFNUM</c> and <c>CDPTIM</c> — this wave's allotment bound and rotation
     /// delay. There is deliberately no speed parameter: the spheroid's speed IS its accumulated,
     /// damped glide velocity, so a "speed bonus" cannot be expressed in this model.</remarks>
@@ -66,20 +96,20 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         SpriteSet sprites,
         IntVector2 position,
         Random random,
-        int maxDropsX2 = 10,
-        int dropDelayRomTicks = 24)
+        int maxDropsX2 = DefaultMaxDropsX2,
+        int dropDelayRotations = DefaultDropDelayRotations)
     {
         _sprites = sprites;
         _position = position;
         _random = random;
-        _dropDelayRomTicks = dropDelayRomTicks;
+        _dropDelayRotations = dropDelayRotations;
         // The allotment: a random roll (never 0), halved and rounded up — always 1..5.
         int roll = random.Next(1, maxDropsX2 + 1);
         _enforcersRemaining = (roll + 1) / 2;
         // A coin flip; the arcade derives it from its own random-seed byte.
         _escapeDirection = random.Next(2) == 0 ? -1 : 1;
         // The first drop countdown, in rotations.
-        _dropRotationsRemaining = random.Next(1, dropDelayRomTicks + 1);
+        _dropRotationsRemaining = random.Next(1, dropDelayRotations + 1);
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
         // Born on the spin phase's last picture, so the first beat is already a wrap pass.
         _rotation = SpinLastPicture;
@@ -106,14 +136,22 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Kills the spheroid outright; a laser hit plays its own burst instead of the strip explosion.</summary>
     /// <remarks>ROM: <c>CIRKIL</c> plays a 7-frame bubble burst then a "1000"; <see cref="RobotKinds"/> wires
     /// <see cref="ScoreBurst.ForSpheroid"/> to the laser phase.</remarks>
-    public void Kill() => LifeState = EntityLifeState.Dead;
+    public void Kill()
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        LifeState = EntityLifeState.Dead;
+    }
 
     /// <summary>Runs the glide, then the beat: accelerate and damp, or drop, or escape.</summary>
     /// <param name="gameTime">Unused — the clocks are counted in ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
@@ -128,12 +166,12 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         // Every phase runs on the same 3-frame beat (see the remarks).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < ArcadeClock.Units(GameplayConstants.SpheroidBeatRomFrames))
+        if (_beatTimer < ArcadeClock.Units(SpheroidTuning.BeatRomFrames))
         {
             return;
         }
 
-        _beatTimer -= ArcadeClock.Units(GameplayConstants.SpheroidBeatRomFrames);
+        _beatTimer -= ArcadeClock.Units(SpheroidTuning.BeatRomFrames);
 
         // Wrap pass = the beat on the phase's last picture; the phase's countdown lives there.
         int lastPicture = _dropping && !_escaping ? DropLastPicture : SpinLastPicture;
@@ -175,8 +213,8 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         }
 
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        int leftExit = bounds.X + ScreenSize.Columns(GameplayConstants.SpheroidEscapeExitLeftColumn);
-        int rightExit = ScreenSize.Columns(GameplayConstants.SpheroidEscapeExitRightColumn);
+        int leftExit = bounds.X + ScreenSize.Columns(SpheroidTuning.EscapeExitLeftColumn);
+        int rightExit = ScreenSize.Columns(SpheroidTuning.EscapeExitRightColumn);
         if (_position.X <= leftExit || _position.X >= rightExit)
         {
             LifeState = EntityLifeState.Dead; // removed at once, no burst (ROM: `CIR4`)
@@ -229,20 +267,19 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _rotation = 0;
     }
 
-    /// <summary>Re-rolls both accelerations and the 1..15-beat re-roll timer.</summary>
+    /// <summary>Re-rolls both accelerations and the timer that re-rolls them.</summary>
     /// <remarks>ROM: `CIRNAC`.</remarks>
     private void RollAccelerations()
     {
-        // X: -16..+15; Y: -32..+31 — twice as large because a column is 2 pixels.
-        _accelX = _random.Next(0, 32) - 16;
-        _accelY = _random.Next(0, 64) - 32;
-        _accelBeatsRemaining = 1 + _random.Next(0, 15); // 1..15 beats until the next re-roll
+        _accelX = _random.Next(0, AccelXRollSides) - AccelXOffset;
+        _accelY = _random.Next(0, AccelYRollSides) - AccelYOffset;
+        _accelBeatsRemaining = 1 + _random.Next(0, AccelBeatsMax);
     }
 
-    /// <summary>Re-arms the drop countdown: a random 1..(this wave's delay / 4) rotations between drops.</summary>
+    /// <summary>Re-arms the drop countdown: a random count of rotations between drops.</summary>
     /// <remarks>ROM: the <c>CIRC2</c> re-arm.</remarks>
     private void RerollDropCountdown() =>
-        _dropRotationsRemaining = 1 + _random.Next(0, _dropDelayRomTicks / 4);
+        _dropRotationsRemaining = 1 + _random.Next(0, _dropDelayRotations / DropRerollDivisor);
 
     /// <summary>Starts the escape: Y velocity 0, X exactly ±1 column per frame, picture untouched.</summary>
     /// <remarks>ROM: <c>CIRC3</c> — the arcade leaves the picture on the last drop-phase frame, and
@@ -250,7 +287,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private void StartEscape()
     {
         _escaping = true;
-        _velocityXSubpixels = _escapeDirection * GameplayConstants.SpheroidMaxVelocityXSubpixels;
+        _velocityXSubpixels = _escapeDirection * SpheroidTuning.MaxVelocityXSubpixels;
         _velocityYSubpixels = 0;
         _remainderXSubpixels = 0;
         _remainderYSubpixels = 0;
@@ -260,8 +297,8 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: <c>CIRGO</c>.</remarks>
     private void AccelerateAndDamp()
     {
-        _velocityXSubpixels = ClampThenDamp(_velocityXSubpixels + _accelX, GameplayConstants.SpheroidMaxVelocityXSubpixels);
-        _velocityYSubpixels = ClampThenDamp(_velocityYSubpixels + _accelY, GameplayConstants.SpheroidMaxVelocityYSubpixels);
+        _velocityXSubpixels = ClampThenDamp(_velocityXSubpixels + _accelX, SpheroidTuning.MaxVelocityXSubpixels);
+        _velocityYSubpixels = ClampThenDamp(_velocityYSubpixels + _accelY, SpheroidTuning.MaxVelocityYSubpixels);
     }
 
     /// <summary>Clamps the velocity to the limit, then damps it toward 64 x the acceleration.</summary>
@@ -271,7 +308,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private static int ClampThenDamp(int velocitySubpixels, int limitSubpixels)
     {
         velocitySubpixels = Math.Clamp(velocitySubpixels, -limitSubpixels, limitSubpixels);
-        return velocitySubpixels + (((-4 * velocitySubpixels) - 4) >> 8);
+        return velocitySubpixels + (((-DampingPer256 * velocitySubpixels) - DampingBias) >> ScreenSize.SubpixelBits);
     }
 
     /// <summary>Integrates the velocity on both axes for one frame; a step that would leave the field is rejected.</summary>
@@ -287,14 +324,14 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private static int AdvanceAxis(int position, int velocitySubpixels, ref int remainderSubpixels, int min, int max)
     {
         int nextRemainder = remainderSubpixels + velocitySubpixels;
-        int step = nextRemainder >> 8;
+        int step = nextRemainder >> ScreenSize.SubpixelBits;
         int next = position + step;
         if (next < min || next > max)
         {
             return position; // out of bounds: keep the old coordinate AND its carried fraction
         }
 
-        remainderSubpixels = nextRemainder - (step << 8);
+        remainderSubpixels = nextRemainder - (step << ScreenSize.SubpixelBits);
         return next;
     }
 
@@ -302,7 +339,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
@@ -313,5 +350,5 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The current picture, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <returns>The texture for the current rotation frame.</returns>
     public Texture2D CurrentAnimationFrame
-        => _sprites.SpheroidFrames[_rotation % _sprites.SpheroidFrames.Length];
+        => _sprites.SpheroidAnimationFrames[_rotation % _sprites.SpheroidAnimationFrames.Length];
 }

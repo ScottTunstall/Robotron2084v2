@@ -53,10 +53,10 @@ public sealed class HighScorePrintSequenceTests
 
         // A ROM frame is 6/5 of a port tick.
         print.Tick(false, Today, AllTime);
-        Assert.Equal(4, print.TodayRows); // 5 sixths — not a frame yet
+        Assert.Equal(4, print.TodayRows); // 5 clock units — not a frame yet
 
         print.Tick(false, Today, AllTime);
-        Assert.Equal(8, print.TodayRows); // 10 sixths — the second group
+        Assert.Equal(8, print.TodayRows); // 10 clock units — the second group
 
         // Today's list runs out on its third group, and the top entry plus the FIRST
         // all-time group print straight after it, with no sleep in between: TOD22 leaves

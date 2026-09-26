@@ -18,11 +18,11 @@ public sealed class SkullMarker : IEntity
     private readonly SpriteSet _sprites;
 
     /// <summary>How long the skull stays on the field.</summary>
-    private const int LifeRomTicks = 90;
+    private const int LifeRomFrames = 90;
 
     /// <summary>The skull picture's own 12x11 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(GameplayConstants.SkullCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.SkullCollisionSize.Height));
+        (ScreenSize.Scaled(CollisionSizes.SkullCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.SkullCollisionSize.Height));
 
     private readonly IntVector2 _position;
     private int _ticksRemaining;
@@ -34,7 +34,7 @@ public sealed class SkullMarker : IEntity
     {
         _sprites = sprites;
         _position = position;
-        _ticksRemaining = GameplayConstants.PortTicks(LifeRomTicks);
+        _ticksRemaining = ArcadeClock.PortTicks(LifeRomFrames);
     }
 
     /// <summary>The death spot.</summary>

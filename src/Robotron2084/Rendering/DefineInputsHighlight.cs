@@ -40,7 +40,7 @@ public sealed class DefineInputsHighlight
     private const int StepsPerLap = 7;
 
     private int _step;
-    private int _chaseSixths;
+    private int _chaseClockUnits;
 
     /// <summary>
     /// Puts the slot on the page's GREEN with no white on it — the presentation page does the
@@ -49,21 +49,21 @@ public sealed class DefineInputsHighlight
     public void Start(GamePalette palette)
     {
         _step = 0;
-        _chaseSixths = 0;
+        _chaseClockUnits = 0;
         palette.SetSlot(Slot, Green);
     }
 
     /// <summary>Advances the chase by one port tick (call once per Update).</summary>
     public void Update(GamePalette palette)
     {
-        _chaseSixths += ArcadeClock.UnitsPerPortTick;
+        _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
         int period = ArcadeClock.Units(RomFramesPerStep);
-        if (_chaseSixths < period)
+        if (_chaseClockUnits < period)
         {
             return;
         }
 
-        _chaseSixths -= period;
+        _chaseClockUnits -= period;
         _step = (_step + 1) % StepsPerLap;
         palette.SetSlot(Slot, _step == 0 ? White : Green);
     }

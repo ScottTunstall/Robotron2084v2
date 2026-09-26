@@ -26,11 +26,11 @@ namespace Robotron2084.States;
 /// Port conventions kept on top: **1** starts a one-player game and **2** a two-player game (the
 /// arcade's START 1 / START 2 buttons, ROM RRG23 START1/START2; fire is the one-player alias),
 /// the port's F1/F2/F3/F10 menu (notes §101), and after
-/// <see cref="GameplayConstants.TitleIdleSeconds"/> of no start press the arcade's attract movie
+/// <see cref="AttractTuning.TitleIdleSeconds"/> of no start press the arcade's attract movie
 /// takes over (notes §95/§96).
 ///
 /// TEXT (notes §107): the page's two text panes alternate every
-/// <see cref="GameplayConstants.TitleTextSwapSeconds"/> — the arcade's own lines (the welcome
+/// <see cref="AttractTuning.TitleTextSwapSeconds"/> — the arcade's own lines (the welcome
 /// message, with an empty row between its two lines as the arcade prints it, and the credit strings
 /// in the SMALL font with the copyright an empty row below them in a colour of its own), then the
 /// port's own (its credit line and the F-key menu). There is no room for both at once, and the
@@ -57,7 +57,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private const string CreditLine = "REVERSE ENGINEERING AND DEVELOPMENT BY SCOTT TUNSTALL";
 
-    // Layout of the presentation page (notes §103/§107). The art is drawn at the port's 2x sprite
+    // Layout of the presentation page (notes §103/§107). The wordmark is drawn at the port's 2x sprite
     // scale, which is why the wordmark is 58 canvas px tall. The page's TEXT alternates between two
     // panes, swapping every TitleTextSwapSeconds: there is no room for both at
     // once — and that is exactly what lets the arcade's two message lines have an EMPTY ROW between
@@ -104,17 +104,15 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private readonly ControlSettings _controls;
     private readonly GameServices _services;
     private readonly PresentationPagePalette _colour = new();
-    private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(GameplayConstants.TitleIdleSeconds);
-    private readonly TimeSpan _textSwap = TimeSpan.FromSeconds(GameplayConstants.TitleTextSwapSeconds);
+    private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(AttractTuning.TitleIdleSeconds);
+    private readonly TimeSpan _textSwap = TimeSpan.FromSeconds(AttractTuning.TitleTextSwapSeconds);
     private TimeSpan _idleElapsed;
     private TimeSpan _textElapsed;
 
     /// <summary>True while the ARCADE's text pane is up; it alternates with the port's (notes §107).</summary>
     private bool _arcadeText = true;
 
-    private bool _previousFire;
-    private bool _previousStartOne;
-    private bool _previousStartTwo;
+    private readonly ButtonEdgeDetector _buttons = new();
 
     public TitleScreenState(GameServices services)
     {
@@ -149,16 +147,17 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // convention — spec.txt's "press fire", which the arcade does not have).
         // The shell's F1/F2/F3 (notes §101) are the same three modes and work from
         // every attract screen, this one included.
+        ButtonPresses presses = _buttons.Advance(input);
         GameMode? mode = null;
-        if (input.StartOnePlayerPressed && !_previousStartOne)
+        if (presses.StartOnePlayer)
         {
             mode = GameMode.OnePlayer;
         }
-        else if (input.StartTwoPlayersPressed && !_previousStartTwo)
+        else if (presses.StartTwoPlayers)
         {
             mode = GameMode.TwoPlayerAlternate;
         }
-        else if (input.FirePressed && !_previousFire)
+        else if (presses.Fire)
         {
             mode = GameMode.OnePlayer;
         }
@@ -170,13 +169,9 @@ public sealed class TitleScreenState : IGameState, IAttractState
             return;
         }
 
-        _previousFire = input.FirePressed;
-        _previousStartOne = input.StartOnePlayerPressed;
-        _previousStartTwo = input.StartTwoPlayersPressed;
-
         // Any button held means a human is at the machine — the arcade's
         // attract only runs while the cabinet sits idle.
-        if (input.FirePressed || input.StartOnePlayerPressed || input.StartTwoPlayersPressed)
+        if (input.FireHeld || input.StartOnePlayerHeld || input.StartTwoPlayersHeld)
         {
             _idleElapsed = TimeSpan.Zero;
         }
@@ -222,12 +217,12 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
         // The two logos, traced from an arcade screenshot (notes §103.4) — the R5 CPU
         // ROM we hold has no attract wordmark (§103.2). The wordmark's masks are drawn in the two
-        // entries the page's art cycle is on this step, so it colour-cycles through the page's own
+        // entries the page's wordmark cycle is on this step, so it colour-cycles through the page's own
         // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
         // body on a yellow rim. The "2084" mark keeps its traced colours. Both at the port's 2x
         // sprite scale.
-        DrawCentredMask(spriteBatch, _sprites.TitleWordmarkRim, WordmarkRow, _colour.ArtRimSlot);
-        DrawCentredMask(spriteBatch, _sprites.TitleWordmarkCore, WordmarkRow, _colour.ArtColorSlot);
+        DrawCentredMask(spriteBatch, _sprites.TitleWordmarkRim, WordmarkRow, _colour.WordmarkRimSlot);
+        DrawCentredMask(spriteBatch, _sprites.TitleWordmarkCore, WordmarkRow, _colour.WordmarkColorSlot);
         DrawCentredLogo(spriteBatch, _sprites.Title2084, Logo2084Row);
 
         // The page's text: ONE of its two panes, alternating every TitleTextSwapSeconds
@@ -272,7 +267,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         foreach (string option in Options)
         {
             DrawCenteredSmallText(spriteBatch, option, y, TextSlot);
-            y += ScreenSize.Scaled(GameplayConstants.TitleOptionRowStepPixels);
+            y += ScreenSize.Scaled(HudLayout.TitleOptionRowStepPixels);
         }
     }
 
@@ -310,7 +305,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// <summary>
     /// Centres a WHITE MASK and draws it in one palette slot's live colour — the arcade's blitter
     /// REMAP COLOUR op (<c>$1A</c>), which is how the ROM draws anything in a colour from the
-    /// palette. A slot the page's colour processes own therefore takes the art round its cycle
+    /// palette. A slot the page's colour processes own therefore takes the wordmark round its cycle
     /// with it (notes §104).
     /// </summary>
     private void DrawCentredMask(SpriteBatch spriteBatch, Texture2D texture, int y, int slot)

@@ -4,9 +4,9 @@ using Microsoft.Xna.Framework.Graphics;
 namespace Robotron2084.Rendering;
 
 /// <summary>
-/// Where a <see cref="SpriteSet"/>'s textures come from: the content pipeline for the art extracted from the
+/// Where a <see cref="SpriteSet"/>'s textures come from: the content pipeline for the pictures extracted from the
 /// ROM, and code for the few pictures the port draws itself. Splitting this out is what lets a
-/// <see cref="SpriteSet"/> be built without a graphics device — a test needs entities, not artwork.
+/// <see cref="SpriteSet"/> be built without a graphics device — a test needs entities, not pictures.
 /// </summary>
 public interface ISpriteSource
 {

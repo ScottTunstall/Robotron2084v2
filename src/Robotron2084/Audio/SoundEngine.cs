@@ -78,8 +78,8 @@ public sealed class SoundEngine
             // and is non-zero — re-sound the SAME note (len re-loaded from the
             // current entry at $D3FC, but $58 is NOT re-loaded).
             SoundEntry resound = _entries[_entryIndex];
-            _ticksLeftInNote = resound.Len;
-            _sink.PlayNote(resound.Note, resound.Len);
+            _ticksLeftInNote = resound.LengthVblanks;
+            _sink.PlayNote(resound.Note, resound.LengthVblanks);
             return;
         }
 
@@ -93,9 +93,9 @@ public sealed class SoundEngine
         }
 
         SoundEntry entry = _entries[_entryIndex];
-        _repetitionsLeft = entry.Dur;
-        _ticksLeftInNote = entry.Len;
-        _sink.PlayNote(entry.Note, entry.Len);
+        _repetitionsLeft = entry.Repetitions;
+        _ticksLeftInNote = entry.LengthVblanks;
+        _sink.PlayNote(entry.Note, entry.LengthVblanks);
     }
 
     private void EndSequence()

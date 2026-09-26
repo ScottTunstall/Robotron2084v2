@@ -19,10 +19,10 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     private readonly SpriteSet _sprites;
     /// <summary>The post picture's own 10x9 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(GameplayConstants.ElectrodeCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.ElectrodeCollisionSize.Height));
+        (ScreenSize.Scaled(CollisionSizes.ElectrodeCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.ElectrodeCollisionSize.Height));
 
     /// <summary>How long each shrivel picture is held, in ROM frames.</summary>
-    private static readonly int[] ShrivelSleepRomTicks = [6, 3, 2];
+    private static readonly int[] ShrivelSleepRomFrames = [6, 3, 2];
     private readonly int _wave;
     private int _shrivelStep;
     private int _shrivelTimer;
@@ -41,10 +41,10 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Which of the 9 electrode picture sets this electrode draws, chosen by wave number.</summary>
     /// <remarks>The arcade names only the first four shapes; its own table cycles 9 sets over 10 waves.</remarks>
-    internal int FamilyIndex => GameplayConstants.PostFamilyForWave(_wave);
+    internal int FamilyIndex => WavePaletteTables.PostFamilyForWave(_wave);
 
     /// <summary>The palette slot the post is drawn in for this wave; the slot's colour may cycle.</summary>
-    internal int TintSlot => GameplayConstants.PostSlotForWave(_wave);
+    internal int TintSlot => WavePaletteTables.PostSlotForWave(_wave);
 
     /// <summary>Top-left of the electrode; it never moves.</summary>
     public IntVector2 Position => _position;
@@ -80,15 +80,15 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 
         // Counts up to the next shrivel picture: 5 per tick, 6 per arcade frame.
         _shrivelTimer += ArcadeClock.UnitsPerPortTick;
-        if (_shrivelTimer < ArcadeClock.Units(ShrivelSleepRomTicks[_shrivelStep]))
+        if (_shrivelTimer < ArcadeClock.Units(ShrivelSleepRomFrames[_shrivelStep]))
         {
             return;
         }
 
-        _shrivelTimer -= ArcadeClock.Units(ShrivelSleepRomTicks[_shrivelStep]);
+        _shrivelTimer -= ArcadeClock.Units(ShrivelSleepRomFrames[_shrivelStep]);
 
         _shrivelStep++;
-        if (_shrivelStep >= ShrivelSleepRomTicks.Length)
+        if (_shrivelStep >= ShrivelSleepRomFrames.Length)
         {
             LifeState = EntityLifeState.Dead;
             return;
@@ -100,9 +100,9 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     {
         get
         {
-            int baseFrame = FamilyIndex * GameplayConstants.PostPicturesPerFamily;
+            int baseFrame = FamilyIndex * WavePaletteTables.PostPicturesPerFamily;
             int frame = LifeState == EntityLifeState.Dying ? baseFrame + _shrivelStep : baseFrame;
-            return _sprites.ElectrodeFrames[frame];
+            return _sprites.ElectrodeAnimationFrames[frame];
         }
     }
 

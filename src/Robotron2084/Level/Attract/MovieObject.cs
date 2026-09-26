@@ -14,12 +14,13 @@ namespace Robotron2084.Level.Attract;
 /// <c>Y / 256</c>. That is the ROM's `OX16`/`OY16` pair, which packs into its
 /// screen address as `column*256 + row`.
 /// </summary>
-public sealed class MovieObject
+public sealed record MovieObject
 {
-    public MovieObject(MovieDescriptor? descriptor, int imageIndex, int x, int y)
+    /// <summary>Creates an object showing one animation frame at the given ROM coordinates.</summary>
+    public MovieObject(MovieDescriptor? descriptor, int animationFrameIndex, int x, int y)
     {
         Descriptor = descriptor;
-        ImageIndex = imageIndex;
+        AnimationFrameIndex = animationFrameIndex;
         X = x;
         Y = y;
     }
@@ -34,9 +35,10 @@ public sealed class MovieObject
     public bool LaserRight { get; set; }
 
     /// <summary>ROM frames a laser bolt stays alive (LFIRE/RFIRE's first operand).</summary>
-    public int LaserFramesLeft { get; set; }
+    public int LaserRomFramesLeft { get; set; }
 
-    public int ImageIndex { get; set; }
+    /// <summary>Which animation frame of the descriptor's animation the object is showing.</summary>
+    public int AnimationFrameIndex { get; set; }
 
     /// <summary>X in 1/256 columns (256 = one column = 2 arcade px).</summary>
     public int X { get; set; }
@@ -64,7 +66,7 @@ public sealed class MovieObject
     public int MonoBoxSlot { get; set; }
 
     /// <summary>MONO: the object is drawn as a solid silhouette in this palette slot.</summary>
-    public int MonoImageSlot { get; set; }
+    public int MonoSilhouetteSlot { get; set; }
 
     /// <summary>MONO: draw the BRAIN inside the box too (the ROM's `DMAON` "brain in the square").</summary>
     public bool MonoBrain { get; set; }
@@ -76,11 +78,15 @@ public sealed class MovieObject
     public int ShakeRowOffset { get; set; }
 
     /// <summary>The object's drawn position as arcade pixels — the ROM's `OBJX`/`OBJY`.</summary>
+    /// <summary>The integer column (the ROM's `OBJX`).</summary>
     public int Column => X >> 8;
 
+    /// <summary>The integer row, including the shake (the ROM's `OBJY`).</summary>
     public int Row => (Y >> 8) + ShakeRowOffset;
 
+    /// <summary>The column as arcade pixels.</summary>
     public int ArcadeX => Column * ScreenSize.ArcadePixelsPerColumn;
 
+    /// <summary>The row as arcade pixels.</summary>
     public int ArcadeY => Row;
 }

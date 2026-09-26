@@ -20,10 +20,20 @@ namespace Robotron2084.Entities;
 /// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 {
-    private readonly SpriteSet _sprites;
+    /// <summary>The aim jitter on each axis is a random offset of at least this many px per frame...</summary>
+    private const int AimJitterMin = -1;
+
+    /// <summary>...and less than this many (exclusive bound of the random roll).</summary>
+    private const int AimJitterMaxExclusive = 2;
+
+    /// <summary>ROM $4F82: the lifespan is the base plus a random count of ROM frames below this.</summary>
+    private const int LifeExtraRomFramesMaxExclusive = 32;
+
     /// <summary>The shell picture's own 8x7 arcade px box, in port pixels.</summary>
-    private static readonly int BoxWidth = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Width);
-    private static readonly int BoxHeight = ScreenSize.Scaled(GameplayConstants.TankShellCollisionSize.Height);
+    private static readonly int BoxWidth = ScreenSize.Scaled(CollisionSizes.TankShellCollisionSize.Width);
+    private static readonly int BoxHeight = ScreenSize.Scaled(CollisionSizes.TankShellCollisionSize.Height);
+
+    private readonly SpriteSet _sprites;
     private IntVector2 _position;
     private IntVector2 _velocity; // how far the shell moves per ROM frame, in port px per axis (ROM: OXV/OYV)
     private int _remainingLife;
@@ -41,10 +51,9 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         _position = position;
         // Aimed once, with ±1 px/frame jitter per axis ("not very accurate").
         _velocity = new IntVector2(
-            Math.Sign(towardPlayerDirection.X) * GameplayConstants.TankShellSpeed + random.Next(-1, 2),
-            Math.Sign(towardPlayerDirection.Y) * GameplayConstants.TankShellSpeed + random.Next(-1, 2));
-        // Counts up to the fizzle: 5 per tick, 6 per arcade frame.
-        _remainingLife = ArcadeClock.Units(random.Next(0, 32) + GameplayConstants.TankShellLifeBaseRomTicks);
+            Math.Sign(towardPlayerDirection.X) * TankShellTuning.Speed + random.Next(AimJitterMin, AimJitterMaxExclusive),
+            Math.Sign(towardPlayerDirection.Y) * TankShellTuning.Speed + random.Next(AimJitterMin, AimJitterMaxExclusive));
+        _remainingLife = ArcadeClock.Units(random.Next(0, LifeExtraRomFramesMaxExclusive) + TankShellTuning.LifeBaseRomFrames);
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
@@ -58,7 +67,15 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Hit: removed from the screen immediately (spec + ROM).</summary>
-    public void Kill() => LifeState = EntityLifeState.Dead;
+    public void Kill()
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        LifeState = EntityLifeState.Dead;
+    }
 
     /// <summary>True when this update bounced off a border wall, so the sound can be played.</summary>
     public bool BouncedThisUpdate { get; private set; }
@@ -70,7 +87,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     {
         BouncedThisUpdate = false;
 
-        if (LifeState == EntityLifeState.Dead)
+        if (LifeState != EntityLifeState.Alive)
         {
             return;
         }

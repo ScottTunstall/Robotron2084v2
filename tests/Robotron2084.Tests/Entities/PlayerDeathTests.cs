@@ -18,7 +18,7 @@ namespace Robotron2084.Tests;
 ///    drawn solid in slot 12, and `FF F6 AD A4 5B 52 09 00` is written into slot
 ///    12 a byte per 4 frames; the trailing `$00` ends the death.
 ///
-/// On the exact-6ths clock that is 129.6 port ticks: the flash runs to tick 95,
+/// On the clock-unit clock that is 129.6 port ticks: the flash runs to tick 95,
 /// the eight fade writes land on ticks 96/101/106/111/116/120/125/130, and the
 /// player is Dead on tick 130.
 /// </summary>
@@ -40,14 +40,7 @@ public sealed class PlayerDeathTests
             EnemySpeedBonus: 0);
 
         var palette = new GamePalette();
-        PlayField field = new(TestSprites.Shared, 
-            parameters,
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(5),
-            startingLives: 3,
-            wallPalette: palette);
+        PlayField field = new PlayFieldBuilder().WithParameters(parameters).WithSeed(5).WithPalette(palette).Build();
         return (field, palette);
     }
 
@@ -61,12 +54,12 @@ public sealed class PlayerDeathTests
         // PDTH0: `LDA #$99 / JSR OPON` — the first thing on screen is the player
         // as a WHITE silhouette.
         Assert.Equal(EntityLifeState.Dying, player.LifeState);
-        Assert.Equal(GameplayConstants.PlayerDeathWhiteSlot, player.DeathSolidSlot);
+        Assert.Equal(PlayerTuning.PlayerDeathWhiteSlot, player.DeathSolidSlot);
 
-        // The flash is 80 ROM frames (48 sixths each iteration): every slot seen
+        // The flash is 80 ROM frames (48 clock units each iteration): every slot seen
         // through it is either $99's slot 9 or a PDCTAB entry. Tick to 95 — the
         // 96th tick is where the fade takes over.
-        int[] allowed = [.. GameplayConstants.PlayerDeathFlashSlots, GameplayConstants.PlayerDeathWhiteSlot];
+        int[] allowed = [.. PlayerTuning.PlayerDeathFlashSlots, PlayerTuning.PlayerDeathWhiteSlot];
         bool sawWhite = false;
         bool sawColour = false;
         for (int tick = 0; tick < 95; tick++)
@@ -74,8 +67,8 @@ public sealed class PlayerDeathTests
             field.Update(Tick);
             int slot = player.DeathSolidSlot;
             Assert.Contains(slot, allowed);
-            sawWhite |= slot == GameplayConstants.PlayerDeathWhiteSlot;
-            sawColour |= slot != GameplayConstants.PlayerDeathWhiteSlot;
+            sawWhite |= slot == PlayerTuning.PlayerDeathWhiteSlot;
+            sawColour |= slot != PlayerTuning.PlayerDeathWhiteSlot;
         }
 
         Assert.True(sawWhite && sawColour, "the flash should alternate white and a PDCTAB colour");
@@ -96,11 +89,11 @@ public sealed class PlayerDeathTests
         }
 
         Assert.Equal(EntityLifeState.Dying, player.LifeState);
-        Assert.Equal(GameplayConstants.PlayerDeathFadeSlot, player.DeathSolidSlot);
+        Assert.Equal(PlayerTuning.PlayerDeathFadeSlot, player.DeathSolidSlot);
         Assert.True(palette.IsSlotSuspended(12), "the ROM kills the DECAY process off before the fade");
-        Assert.Equal(GameplayConstants.PlayerDeathFadeValues[0], palette.SlotValue(12));
+        Assert.Equal(PlayerTuning.PlayerDeathFadeValues[0], palette.SlotValue(12));
 
-        // The remaining writes are 4 ROM frames apart, which the sixths clock puts
+        // The remaining writes are 4 ROM frames apart, which the clock-unit clock puts
         // on ticks 101/106/111/116/120/125/130 — gaps of 5,5,5,5,4,5,5.
         int[] gaps = [5, 5, 5, 5, 4, 5, 5];
         for (int i = 0; i < gaps.Length; i++)
@@ -111,7 +104,7 @@ public sealed class PlayerDeathTests
             }
 
             // The last write is the trailing $00 — the death ends with it.
-            Assert.Equal(GameplayConstants.PlayerDeathFadeValues[i + 1], palette.SlotValue(12));
+            Assert.Equal(PlayerTuning.PlayerDeathFadeValues[i + 1], palette.SlotValue(12));
         }
 
         Assert.Equal(EntityLifeState.Dead, player.LifeState);

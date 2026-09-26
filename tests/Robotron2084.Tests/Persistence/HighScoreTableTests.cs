@@ -35,7 +35,7 @@ public sealed class HighScoreTableTests
     {
         HighScoreTable table = HighScoreTable.CreateFactory();
 
-        HighScoreTable.SubmitResult result = table.Submit(40000, "ABC");
+        SubmitResult result = table.Submit(40000, "ABC");
 
         Assert.False(result.BecomesTop);
         Assert.True(result.EnteredToday);
@@ -53,7 +53,7 @@ public sealed class HighScoreTableTests
         HighScoreTable table = HighScoreTable.CreateFactory();
 
         // 30000 beats today's lowest (CJM 24110) AND the all-time table's blank tail.
-        HighScoreTable.SubmitResult result = table.Submit(30000, "ABC");
+        SubmitResult result = table.Submit(30000, "ABC");
 
         Assert.True(result.EnteredToday);
         Assert.True(result.EnteredAllTime);
@@ -71,7 +71,7 @@ public sealed class HighScoreTableTests
     {
         HighScoreTable table = HighScoreTable.CreateFactory();
 
-        HighScoreTable.SubmitResult result = table.Submit(200000, "ACE");
+        SubmitResult result = table.Submit(200000, "ACE");
 
         Assert.True(result.BecomesTop);
         Assert.Equal(200000, table.Top.Score);
@@ -88,7 +88,7 @@ public sealed class HighScoreTableTests
         HighScoreTable table = HighScoreTable.CreateFactory();
 
         // Zero beats nothing, not even the blank rows the full table ends with.
-        HighScoreTable.SubmitResult result = table.Submit(0, "ABC");
+        SubmitResult result = table.Submit(0, "ABC");
 
         Assert.False(result.BecomesTop);
         Assert.False(result.EnteredToday);
@@ -119,20 +119,20 @@ public sealed class HighScoreTableTests
         // The all-time tail is blank, so five "ABC" scores fit and the cap never fires.
         for (int i = 0; i < HighScoreTable.AllTimeInitialsCap; i++)
         {
-            HighScoreTable.SubmitResult entered = table.Submit(26000 + i, "ABC");
+            SubmitResult entered = table.Submit(26000 + i, "ABC");
             Assert.True(entered.EnteredAllTime);
             Assert.False(entered.EntriesMaximum);
         }
 
         // A sixth that cannot beat the lowest of the full set is turned away, and the page says why (SETBOT/GETHM4).
-        HighScoreTable.SubmitResult turnedAway = table.Submit(25999, "ABC");
+        SubmitResult turnedAway = table.Submit(25999, "ABC");
 
         Assert.True(turnedAway.EntriesMaximum);
         Assert.False(turnedAway.EnteredAllTime);
         Assert.DoesNotContain(table.AllTime, e => e.Score == 25999);
 
         // One that does beat it replaces it — the set stays five strong.
-        HighScoreTable.SubmitResult replaced = table.Submit(26100, "ABC");
+        SubmitResult replaced = table.Submit(26100, "ABC");
 
         Assert.True(replaced.EntriesMaximum);
         Assert.True(replaced.EnteredAllTime);

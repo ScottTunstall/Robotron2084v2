@@ -4,7 +4,7 @@ namespace Robotron2084.Level;
 
 /// <summary>
 /// The run's score. Crosses an extra-life threshold every
-/// <see cref="GameplayConstants.ExtraLifeThresholdStep"/> points, repeating;
+/// <see cref="PlayerTuning.ExtraLifeThresholdStep"/> points, repeating;
 /// <see cref="Add"/> reports the crossing so the caller can award a life.
 /// </summary>
 public sealed class ScoreBoard
@@ -25,7 +25,7 @@ public sealed class ScoreBoard
     {
         Score = startingScore;
         _nextExtraLifeThreshold =
-            (startingScore / GameplayConstants.ExtraLifeThresholdStep + 1) * GameplayConstants.ExtraLifeThresholdStep;
+            (startingScore / PlayerTuning.ExtraLifeThresholdStep + 1) * PlayerTuning.ExtraLifeThresholdStep;
     }
 
     public int Score { get; private set; }
@@ -36,7 +36,7 @@ public sealed class ScoreBoard
         Score += points;
         if (Score >= _nextExtraLifeThreshold)
         {
-            _nextExtraLifeThreshold += GameplayConstants.ExtraLifeThresholdStep;
+            _nextExtraLifeThreshold += PlayerTuning.ExtraLifeThresholdStep;
             return true;
         }
 

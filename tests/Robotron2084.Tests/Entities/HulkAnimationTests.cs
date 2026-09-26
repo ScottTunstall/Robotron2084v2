@@ -18,7 +18,7 @@ namespace Robotron2084.Tests.Entities;
 /// </summary>
 public sealed class HulkAnimationTests
 {
-    /// <summary>Expected frame (0-based index into HulkFrames = repo hulk N+1) per direction and entry.</summary>
+    /// <summary>Expected frame (0-based index into HulkAnimationFrames = repo hulk N+1) per direction and entry.</summary>
     private static int ExpectedFrame(Direction8 direction, int entry) => direction switch
     {
         Direction8.Left => new[] { 0, 1, 0, 2 }[entry],
@@ -35,7 +35,7 @@ public sealed class HulkAnimationTests
         // LEFT; re-aims (RND 1..31 steps or wall contact) flip the axis.
         IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 120, bounds.Y + 120);
-        var hulk = new Hulk(TestSprites.Shared, spot, new Random(19), hulkSpeedRomTicks: 2, () => center);
+        var hulk = new Hulk(TestSprites.Shared, spot, new Random(19), stepDelayRomFrames: 2, () => center);
         field.AddHulk(hulk);
 
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // end start grace; first unfrozen update = the spawn aim
@@ -114,12 +114,6 @@ public sealed class HulkAnimationTests
             MaxEnforcersPerSpheroid: 1,
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
-        return new PlayField(TestSprites.Shared, 
-            parameters,
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(1),
-            startingLives: 3);
+        return new PlayFieldBuilder().WithParameters(parameters).WithSeed(1).Build();
     }
 }

@@ -30,10 +30,7 @@ namespace Robotron2084.Persistence;
 /// </summary>
 public sealed class ControlSettingsStore
 {
-    private static readonly string FilePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Robotron2084",
-        "controls.ini");
+    private static readonly string FilePath = AppDataPaths.FileInAppData("controls.ini");
 
     /// <summary>Loads the saved definitions, or the factory scheme when there are none.</summary>
     public ControlSettings Load() => Load(FilePath);

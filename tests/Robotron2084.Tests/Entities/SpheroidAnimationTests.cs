@@ -36,17 +36,11 @@ public sealed class SpheroidAnimationTests
     /// first drop ends the drop phase and the spheroid escapes almost at once.
     /// </summary>
     private static PlayField CreateField(int seed) =>
-        new(TestSprites.Shared, 
-            new LevelParameters(
+        new PlayFieldBuilder().WithParameters(new LevelParameters(
                 LevelNumber: 1,
                 SpheroidCount: 1,
                 MaxDropsX2: 2,
-                SpheroidDropDelay: 3),
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(seed),
-            startingLives: 3);
+                SpheroidDropDelay: 3)).WithRandom(new Random(seed)).Build();
 
     /// <summary>
     /// Drives one spheroid (seeded, so this is deterministic) through the start grace
@@ -99,7 +93,7 @@ public sealed class SpheroidAnimationTests
                 }
 
                 // One picture per `NAP 2` beat: 3.6 port ticks each, which the
-                // exact-6ths clock lands 3 and 4 ticks apart. The per-tick strobe was 1.
+                // clock-unit clock lands 3 and 4 ticks apart. The per-tick strobe was 1.
                 Assert.True(
                     tick - lastChangeTick >= 3,
                     $"seed {seed}: picture changed {tick - lastChangeTick} tick(s) after the last one");

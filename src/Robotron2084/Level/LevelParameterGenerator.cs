@@ -49,7 +49,7 @@ public sealed class LevelParameterGenerator
                 ElectrodeCount: row.ElectrodeCount,
                 MaxEnforcersPerSpheroid: row.MaxEnforcersPerSpheroid,
                 MaxTanksPerQuark: row.MaxTanksPerQuark,
-                EnemySpeedBonus: Math.Min(levelNumber - 1, GameplayConstants.EnemySpeedBonusCapPerLevel));
+                EnemySpeedBonus: Math.Min(levelNumber - 1, SpawnTuning.EnemySpeedBonusCapPerLevel));
         }
 
         return LevelParameters.FromWave(levelNumber, WaveTable.ForWave(levelNumber));

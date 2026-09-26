@@ -4,13 +4,13 @@ using Robotron2084.Rendering;
 namespace Robotron2084.Level.Attract;
 
 /// <summary>
-/// Maps a movie object's (animation, ROM image index) to the port's texture, including
+/// Maps a movie object's (animation, ROM animation frame index) to the port's texture, including
 /// the three pictures whose ROM table lists them in a different order to the
 /// port's files (notes §96.4).
 ///
 /// The port's sprite PNGs are stored in ROM-ADDRESS order, and for most of the
 /// movie's descriptors the ROM's picture table is in that same order — so the
-/// image index is the file index. Three are not:
+/// animation frame index is the file index. Three are not:
 /// <list type="bullet">
 /// <item><b>hulk</b> — the table at $0CF9 runs hulk1,hulk2,hulk3,hulk7,hulk8,hulk9,
 /// hulk4,hulk5,hulk6, i.e. its LEFT block is files 1-3, its RIGHT block files 7-9
@@ -27,14 +27,14 @@ namespace Robotron2084.Level.Attract;
 /// </summary>
 public static class MovieAnimationFrames
 {
-    private static readonly int[] HulkImages = [0, 1, 2, 6, 7, 8, 3, 4, 5];
+    private static readonly int[] HulkAnimationFrameOrder = [0, 1, 2, 6, 7, 8, 3, 4, 5];
 
-    private static readonly int[] EnforcerImages = [1, 2, 3, 4, 5, 0];
+    private static readonly int[] EnforcerAnimationFrameOrder = [1, 2, 3, 4, 5, 0];
 
-    private static readonly int[] GruntImages = [0, 1, 0];
+    private static readonly int[] GruntAnimationFrameOrder = [0, 1, 0];
 
     /// <summary>The texture a movie object draws, or null when there is none.</summary>
-    public static Texture2D? Resolve(SpriteSet sprites, MovieAnimation animation, int imageIndex)
+    public static Texture2D? Resolve(SpriteSet sprites, MovieAnimation animation, int animationFrameIndex)
     {
         Texture2D[]? frames = Frames(sprites, animation);
         if (frames is null || frames.Length == 0)
@@ -49,13 +49,13 @@ public static class MovieAnimationFrames
 
         int[]? remap = animation switch
         {
-            MovieAnimation.Hulk => HulkImages,
-            MovieAnimation.Enforcer => EnforcerImages,
-            MovieAnimation.Grunt => GruntImages,
+            MovieAnimation.Hulk => HulkAnimationFrameOrder,
+            MovieAnimation.Enforcer => EnforcerAnimationFrameOrder,
+            MovieAnimation.Grunt => GruntAnimationFrameOrder,
             _ => null,
         };
 
-        int index = imageIndex;
+        int index = animationFrameIndex;
         if (remap is not null)
         {
             index = index >= 0 && index < remap.Length ? remap[index] : 0;
@@ -66,20 +66,20 @@ public static class MovieAnimationFrames
 
     private static Texture2D[]? Frames(SpriteSet sprites, MovieAnimation animation) => animation switch
     {
-        MovieAnimation.Mummy => sprites.MomFrames,
-        MovieAnimation.Daddy => sprites.DadFrames,
-        MovieAnimation.Mikey => sprites.MikeyFrames,
-        MovieAnimation.Hulk => sprites.HulkFrames,
-        MovieAnimation.Brain => sprites.BrainFrames,
-        MovieAnimation.Grunt => sprites.GruntFrames,
-        MovieAnimation.Enforcer => sprites.EnforcerFrames,
-        MovieAnimation.Player => sprites.PlayerFrames,
-        MovieAnimation.Quark => sprites.QuarkFrames,
-        MovieAnimation.Spheroid => sprites.SpheroidFrames,
-        MovieAnimation.TankGrow => sprites.TankGrowFrames,
-        MovieAnimation.Tank => sprites.TankFrames,
+        MovieAnimation.Mummy => sprites.MomAnimationFrames,
+        MovieAnimation.Daddy => sprites.DadAnimationFrames,
+        MovieAnimation.Mikey => sprites.MikeyAnimationFrames,
+        MovieAnimation.Hulk => sprites.HulkAnimationFrames,
+        MovieAnimation.Brain => sprites.BrainAnimationFrames,
+        MovieAnimation.Grunt => sprites.GruntAnimationFrames,
+        MovieAnimation.Enforcer => sprites.EnforcerAnimationFrames,
+        MovieAnimation.Player => sprites.PlayerAnimationFrames,
+        MovieAnimation.Quark => sprites.QuarkAnimationFrames,
+        MovieAnimation.Spheroid => sprites.SpheroidAnimationFrames,
+        MovieAnimation.TankGrow => sprites.TankGrowAnimationFrames,
+        MovieAnimation.Tank => sprites.TankAnimationFrames,
         MovieAnimation.Points => sprites.RescueScoreDisplays,
-        MovieAnimation.Posts => sprites.PostFrames,
+        MovieAnimation.Posts => sprites.PostAnimationFrames,
         _ => null,
     };
 }

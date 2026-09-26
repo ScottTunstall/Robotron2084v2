@@ -50,9 +50,9 @@ public sealed class ScoreEntryCeremony
     /// <param name="score">The score the initials screen has just collected a name for.</param>
     /// <param name="initials">The initials the player entered.</param>
     /// <returns>What the table did with the score, which decides whether the ONLY5P page follows.</returns>
-    public HighScoreTable.SubmitResult Submit(FinalScore score, string initials)
+    public SubmitResult Submit(FinalScore score, string initials)
     {
-        HighScoreTable.SubmitResult result = _table.Submit(score.Score, initials);
+        SubmitResult result = _table.Submit(score.Score, initials);
         _store.Save(_table);
         return result;
     }

@@ -18,8 +18,8 @@ public sealed class WallColorCycle
 
     public WallColorCycle(IReadOnlyList<Color>? palette = null, TimeSpan? stepDuration = null)
     {
-        _palette = palette ?? GameplayConstants.DefaultWallPalette;
-        _stepDuration = stepDuration ?? TimeSpan.FromMilliseconds(GameplayConstants.WallStepDurationMilliseconds);
+        _palette = palette ?? WavePaletteTables.DefaultWallPalette;
+        _stepDuration = stepDuration ?? TimeSpan.FromMilliseconds(WavePaletteTables.WallStepDurationMilliseconds);
         CurrentColor = _palette[0];
     }
 

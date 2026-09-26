@@ -20,13 +20,7 @@ public sealed class HumanSpawnTests
 
     /// <summary>The ROM's own wave table, so the family, electrodes and robots are the arcade's.</summary>
     private static PlayField CreateField(int seed, int level) =>
-        new(TestSprites.Shared, 
-            LevelParameters.FromWave(level, WaveTable.ForWave(level)),
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(seed),
-            startingLives: 3);
+        new PlayFieldBuilder().WithParameters(LevelParameters.FromWave(level, WaveTable.ForWave(level))).WithRandom(new Random(seed)).Build();
 
     [Fact]
     public void TheFamilyNeverStartsOnAnElectrode()

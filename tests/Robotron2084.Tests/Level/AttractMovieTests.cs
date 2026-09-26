@@ -133,23 +133,23 @@ public sealed class AttractMovieTests
         Assert.Equal(104, hero.Column);
 
         // The BR* walker cycles ANATAB (0,1,0,2) on top of the direction's base
-        // image, so a LEFT walk shows images 0,1,0,2 — every one of them inside
+        // image, so a LEFT walk shows animation frames 0,1,0,2 — every one of them inside
         // the descriptor's 12 pictures (the source of the "player animations are
         // not quite right" report: a 12-byte ANATAB made it cycle garbage).
-        var images = new List<int>();
+        var animationFrames = new List<int>();
         for (int frame = 0; frame < 300; frame++)
         {
             machine.StepFrame();
-            images.Add(hero.ImageIndex);
+            animationFrames.Add(hero.AnimationFrameIndex);
         }
 
         Assert.Equal(104 - 64, hero.Column);
-        Assert.All(images, index => Assert.InRange(index, 0, 11));
+        Assert.All(animationFrames, index => Assert.InRange(index, 0, 11));
 
         // The ROM's BANA1 sleeps the descriptor's nap BEFORE the first step and
         // sets the picture on the step, so the cycle is one entry every 2 frames
         // starting at frame 3.
-        Assert.Equal([0, 1, 0, 2], new[] { images[2], images[4], images[6], images[8] });
+        Assert.Equal([0, 1, 0, 2], new[] { animationFrames[2], animationFrames[4], animationFrames[6], animationFrames[8] });
     }
 
     [Fact]
@@ -178,7 +178,7 @@ public sealed class AttractMovieTests
     }
 
     [Fact]
-    public void ObjectMachine_RprogIsAWholeScript_AndDoesNotRunOnIntoTheNext()
+    public void ObjectMachine_ReprogramShakeIsAWholeScript_AndDoesNotRunOnIntoTheNext()
     {
         var machine = new AttractObjectMachine(new Random(3));
 

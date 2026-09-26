@@ -80,8 +80,8 @@ public sealed class GameSession
             players[i] = new PlayerSlot(
                 i + 1,
                 i == 0 ? playerOne : playerTwo ?? playerOne,
-                GameplayConstants.StartingLives,
-                GameplayConstants.StartingLevelNumber);
+                PlayerTuning.StartingLives,
+                PlayerTuning.StartingLevelNumber);
         }
 
         return new GameSession(players, mode) { Controls = controls ?? ControlSettings.Defaults() };

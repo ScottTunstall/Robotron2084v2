@@ -131,11 +131,11 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// test keys (P) are not arcade switches, so they do not hold the page up.
     /// </summary>
     private static bool AnySwitchHeld(PlayerInputState input) =>
-        input.FirePressed
-        || input.StartOnePlayerPressed
-        || input.StartTwoPlayersPressed
+        input.FireHeld
+        || input.StartOnePlayerHeld
+        || input.StartTwoPlayersHeld
         || input.MoveDirection != IntVector2.Zero
-        || input.AimDirection != IntVector2.Zero;
+        || input.ShootDirection != IntVector2.Zero;
 
     private void Leave(GameStateManager manager)
     {
@@ -170,9 +170,9 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         }
     }
 
-    private static int ColumnX(int column) => GameplayConstants.ArcadeColumnX(column);
+    private static int ColumnX(int column) => HudLayout.ArcadeColumnX(column);
 
-    private static int RowY(int row) => GameplayConstants.ArcadeY(row);
+    private static int RowY(int row) => HudLayout.ArcadeY(row);
 
     private void DrawHeader(SpriteBatch spriteBatch, string text, int row)
     {
@@ -181,7 +181,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             text,
             ColumnX(HighScoreTableLayout.HeaderColumn),
             RowY(row),
-            GameplayConstants.HighScoreHeaderSlot);
+            ScreenTuning.HighScoreHeaderSlot);
     }
 
     private void DrawTodayList(SpriteBatch spriteBatch, int printedRows)
@@ -193,7 +193,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             (int column, int row) = HighScoreTableLayout.TodayPosition(rank);
             int x = ColumnX(column);
             int y = RowY(row);
-            int slot = SlotFor(entries[rank - 1], GameplayConstants.HighScoreTodaySlot, GameplayConstants.HighScoreTodayHighlightSlot);
+            int slot = SlotFor(entries[rank - 1], ScreenTuning.HighScoreTodaySlot, ScreenTuning.HighScoreTodayHighlightSlot);
 
             int afterRank = DrawRank(spriteBatch, rank, x, y, slot, large: true);
             _sprites.DrawLargeFontText(spriteBatch, entries[rank - 1].Initials, afterRank, y, slot);
@@ -224,7 +224,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             (int column, int row) = HighScoreTableLayout.AllTimePosition(rank);
             int x = ColumnX(column);
             int y = RowY(row);
-            int slot = SlotFor(entries[rank - 2], GameplayConstants.HighScoreAllTimeSlot, GameplayConstants.HighScoreAllTimeHighlightSlot);
+            int slot = SlotFor(entries[rank - 2], ScreenTuning.HighScoreAllTimeSlot, ScreenTuning.HighScoreAllTimeHighlightSlot);
 
             int afterRank = DrawRank(spriteBatch, rank, x, y, slot, large: false);
             _sprites.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, slot);
@@ -247,13 +247,13 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         // not see the name (GA2); the port always has a name, so it always prints
         // "( NAME )" then the score.
         int y = RowY(HighScoreTableLayout.TopRow);
-        int slot = SlotFor(_table.Top.Score, GameplayConstants.HighScoreAllTimeSlot, GameplayConstants.HighScoreAllTimeHighlightSlot);
+        int slot = SlotFor(_table.Top.Score, ScreenTuning.HighScoreAllTimeSlot, ScreenTuning.HighScoreAllTimeHighlightSlot);
 
         int x = ColumnX(HighScoreTableLayout.TopColumn);
         x = _sprites.DrawLargeFontText(spriteBatch, "(", x, y, slot);
         x = _sprites.DrawLargeFontText(spriteBatch, _table.Top.Name, x, y, slot);
         x = _sprites.DrawLargeFontText(spriteBatch, ")", x, y, slot);
-        _sprites.DrawLargeTableNumber(spriteBatch, _table.Top.Score, x + ScreenSize.Scaled(GameplayConstants.HudSmallFontBlankAdvancePixels), y, slot);
+        _sprites.DrawLargeTableNumber(spriteBatch, _table.Top.Score, x + ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels), y, slot);
     }
 
     /// <summary>
@@ -325,8 +325,8 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// <summary>One raster row of MARQ's hatch: every other arcade pixel of the run.</summary>
     private void DrawHatchedRow(SpriteBatch spriteBatch, Color colour, int left, int right, int row)
     {
-        int top = GameplayConstants.ArcadeY(row);
-        int height = GameplayConstants.ArcadeY(row + 1) - top;
+        int top = HudLayout.ArcadeY(row);
+        int height = HudLayout.ArcadeY(row + 1) - top;
 
         for (int x = left; x <= right; x++)
         {
@@ -335,10 +335,10 @@ public sealed class HighScoreTableState : IGameState, IAttractState
                 continue;
             }
 
-            int px = GameplayConstants.ArcadeX(x);
+            int px = HudLayout.ArcadeX(x);
             _sprites.DrawSolidRectangle(
                 spriteBatch,
-                new Rectangle(px, top, GameplayConstants.ArcadeX(x + 1) - px, height),
+                new Rectangle(px, top, HudLayout.ArcadeX(x + 1) - px, height),
                 colour);
         }
     }
@@ -346,8 +346,8 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// <summary>One pixel column of the same hatch — the strokes' vertical edges.</summary>
     private void DrawHatchedColumn(SpriteBatch spriteBatch, Color colour, int column, int top, int bottom)
     {
-        int px = GameplayConstants.ArcadeX(column);
-        int width = GameplayConstants.ArcadeX(column + 1) - px;
+        int px = HudLayout.ArcadeX(column);
+        int width = HudLayout.ArcadeX(column + 1) - px;
 
         for (int y = top; y <= bottom; y++)
         {
@@ -356,10 +356,10 @@ public sealed class HighScoreTableState : IGameState, IAttractState
                 continue;
             }
 
-            int py = GameplayConstants.ArcadeY(y);
+            int py = HudLayout.ArcadeY(y);
             _sprites.DrawSolidRectangle(
                 spriteBatch,
-                new Rectangle(px, py, width, GameplayConstants.ArcadeY(y + 1) - py),
+                new Rectangle(px, py, width, HudLayout.ArcadeY(y + 1) - py),
                 colour);
         }
     }

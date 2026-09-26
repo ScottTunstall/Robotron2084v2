@@ -66,13 +66,6 @@ public sealed class HighScoreTable
     /// <summary>ROM `CMSCOR` — the small-font list, ranks 2-37 (rank 1 is <see cref="Top"/>).</summary>
     public IReadOnlyList<HighScoreEntry> AllTime => _allTime;
 
-    /// <summary>What offering a finished score did — the ROM's `GODCHK`/`TODCHK`/`ALLCHK` answers.</summary>
-    /// <param name="BecomesTop">True when the score beat the top entry and took its place (`GODCHK`).</param>
-    /// <param name="EnteredToday">True when TODAY's list took the score (`TODCHK`).</param>
-    /// <param name="EnteredAllTime">True when the all-time list took the score (`ALLCHK`).</param>
-    /// <param name="EntriesMaximum">True when the per-initials cap applied, which is what the ONLY5P page explains (`SETBOT`/`SETBZZ`).</param>
-    public readonly record struct SubmitResult(bool BecomesTop, bool EnteredToday, bool EnteredAllTime, bool EntriesMaximum);
-
     /// <summary>ROM `DEFHSR`/`DEFGOD` — the factory "GOD" score: "WILLY ELKTRIX", 151782.</summary>
     public static TopScoreEntry FactoryTop { get; } = new("WILLY ELKTRIX", 151782);
 

@@ -29,14 +29,17 @@ public static class ScoreValues
     public const int Spark = 25;
     public const int TankShell = 25;
 
-    /// <summary>Rescue bonus by running save count (1-based; capped at 5). ROM SVITAB.</summary>
+    /// <summary>ROM SVITAB: the rescue bonus stops growing at this many rescues.</summary>
+    public const int RescueBonusMaxCount = 5;
+
+    /// <summary>Rescue bonus by running save count (1-based; capped at <see cref="RescueBonusMaxCount"/>). ROM SVITAB.</summary>
     public const int RescueBonusMin = 1000;
 
     /// <summary>The bonus one rescue pays, given how many this life has rescued (1-based).</summary>
-    /// <param name="rescuesThisLife">Humans rescued this life, counting this one; the table caps at 5.</param>
+    /// <param name="rescuesThisLife">Humans rescued this life, counting this one; the table caps at <see cref="RescueBonusMaxCount"/>.</param>
     public static int RescueBonus(int rescuesThisLife)
     {
-        int index = Math.Clamp(rescuesThisLife, 1, 5);
+        int index = Math.Clamp(rescuesThisLife, 1, RescueBonusMaxCount);
         return RescueBonusMin * index;
     }
 }

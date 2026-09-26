@@ -7,11 +7,11 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A prog — a reprogrammed human: it wears the human's art and hunts the player.</summary>
+/// <summary>A prog — a reprogrammed human: it wears the human's animation frames and hunts the player.</summary>
 /// <seealso cref="Human"/>
-/// <seealso cref="Explosion"/>
+/// <seealso cref="StripEffect"/>
 /// <remarks>ROM: RRB10.ASM's <c>PROGST</c>/<c>PROG</c>/<c>GPOFF</c>/<c>GPDIR</c>/<c>PRGKIL</c>
-/// (notes §18). It keeps its victim's art and box, walks one cardinal direction at a time (never
+/// (notes §18). It keeps its victim's animation frames and box, walks one cardinal direction at a time (never
 /// diagonally) 4 arcade px a beat, and does not home on the player: it rolls a persistent random aim
 /// offset and walks toward the player's position plus that offset, one axis at a time, re-rolling the
 /// offset occasionally and the direction on a blocked step. An aim point past the field's far edge
@@ -27,10 +27,10 @@ public sealed class Prog : IExplodable, IRemovable
 
     /// <summary>How many ROM frames pass between beats.</summary>
     /// <remarks>The ROM re-runs the prog's step logic every 3 frames.</remarks>
-    private const int BeatPeriodRomTicks = 3;
+    private const int BeatPeriodRomFrames = 3;
 
     /// <summary>The beat in timer units (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomTicks);
+    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomFrames);
 
     /// <summary>The horizontal step: 2 columns = 4 arcade px, the same distance as the vertical step.</summary>
     /// <remarks>ROM: the X step table moves 2 columns at a time, and a column is 2 arcade px.</remarks>
@@ -57,13 +57,23 @@ public sealed class Prog : IExplodable, IRemovable
     private const int ReOffsetThreshold256 = 0xF8;
     private const int ReDirectionThreshold256 = 0xE4;
 
-    /// <summary>Collision box = the converted human's picture (per kind).</summary>
-    private static (int Width, int Height) ArcadeCollisionSize(HumanKind kind) => kind switch
-    {
-        HumanKind.Mikey => GameplayConstants.MikeyCollisionSize,
-        HumanKind.Mom => GameplayConstants.MomCollisionSize,
-        _ => GameplayConstants.DadCollisionSize,
-    };
+    /// <summary>Sides of the ROM rolls the re-offset and re-aim thresholds are compared against.</summary>
+    private const int ThresholdRollSides = 256;
+
+    /// <summary>ROM <c>GPOFF</c>: the X offset roll is 1..this...</summary>
+    private const int OffsetXRollMax = 15;
+
+    /// <summary>ROM <c>GPOFF</c>: ...and each step of it is this many columns.</summary>
+    private const int OffsetXStepColumns = 4;
+
+    /// <summary>ROM <c>GPOFF</c>: the Y offset is (this minus a roll of 1..<see cref="OffsetYSteps"/>) times the step, less <see cref="OffsetYSteps"/>.</summary>
+    private const int OffsetYCentre = 19;
+
+    /// <summary>ROM <c>GPOFF</c>: each step of the Y offset is this many rows.</summary>
+    private const int OffsetYStepRows = 2;
+
+    /// <summary>Sides of the coin flip that picks whether a re-aim considers X or Y.</summary>
+    private const int AxisFlipSides = 2;
 
     // The walk cycle: picture 1, 2, 1, 3 — the same A-B-A-C pattern the humans use.
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
@@ -74,13 +84,13 @@ public sealed class Prog : IExplodable, IRemovable
     private IntVector2 _position;
     private Direction8 _direction = Direction8.Down; // set on the first beat
     private int _beatTimer; // counts up toward the next beat
-    private int _frameStep; // which entry of WalkCycle comes next (0-3)
+    private int _walkCycleStep; // which entry of WalkCycle comes next (0-3)
     private int _offsetX;   // this prog's persistent aim-offset on X, re-rolled occasionally
     private int _offsetY;   // this prog's persistent aim-offset on Y
 
     /// <summary>One shadow-ring entry: a position the prog vacated and the pose it was drawn in.</summary>
     /// <remarks>A ghost is blitted once and never re-blitted, so it keeps its creation pose for life.</remarks>
-    private readonly record struct Ghost(IntVector2 Position, int FrameIndex);
+    private readonly record struct Ghost(IntVector2 Position, int AnimationFrameIndex);
 
     /// <summary>The shadow ring, NEWEST FIRST (see <see cref="Ghost"/>).</summary>
     private readonly List<Ghost> _ghosts = new();
@@ -108,17 +118,17 @@ public sealed class Prog : IExplodable, IRemovable
             var frames = new List<int>(_ghosts.Count);
             foreach (Ghost ghost in _ghosts)
             {
-                frames.Add(ghost.FrameIndex);
+                frames.Add(ghost.AnimationFrameIndex);
             }
 
             return frames;
         }
     }
 
-    /// <summary>Makes a prog where the human was, carrying that human's art and box.</summary>
+    /// <summary>Makes a prog where the human was, carrying that human's animation frames and box.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the prog.</param>
-    /// <param name="kind">Which human it became; this picks the art and the collision box.</param>
+    /// <param name="kind">Which human it became; this picks the animation frames and the collision box.</param>
     /// <param name="random">The random source: the aim offsets and the re-aim rolls.</param>
     public Prog(SpriteSet sprites, IntVector2 position, HumanKind kind, Random random)
     {
@@ -127,12 +137,12 @@ public sealed class Prog : IExplodable, IRemovable
         _kind = kind;
         _random = random;
         _collisionSize = (
-            ScreenSize.Scaled(ArcadeCollisionSize(kind).Width),
-            ScreenSize.Scaled(ArcadeCollisionSize(kind).Height));
+            ScreenSize.Scaled(kind.ArcadeCollisionSize().Width),
+            ScreenSize.Scaled(kind.ArcadeCollisionSize().Height));
         RollOffsets(); // ROM PROGST calls GPOFF at creation
     }
 
-    /// <summary>Which human's art/box this prog carries (it became that human).</summary>
+    /// <summary>Which human's animation frames and box this prog carries (it became that human).</summary>
     public HumanKind Kind => _kind;
 
     /// <summary>Top-left of the prog (the ROM's OBJX/OBJY).</summary>
@@ -155,7 +165,7 @@ public sealed class Prog : IExplodable, IRemovable
         }
     }
 
-    /// <summary>The picture the death explosion shatters: the phony burst card, not the human art.</summary>
+    /// <summary>The picture the death explosion shatters: the phony burst card, not the human's animation frames.</summary>
     /// <returns>The phony burst card.</returns>
     /// <remarks>ROM: <c>PRGKIL</c> swaps the picture to the 12x16 <c>PGXPIC</c>.</remarks>
     public Texture2D CurrentAnimationFrame => _sprites.ProgBurst;
@@ -167,15 +177,15 @@ public sealed class Prog : IExplodable, IRemovable
     public Rectangle ExplosionBounds => new(
         _position.X,
         _position.Y,
-        ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Width),
-        ScreenSize.Scaled(GameplayConstants.ProgBurstSize.Height));
+        ScreenSize.Scaled(CollisionSizes.ProgBurstSize.Width),
+        ScreenSize.Scaled(CollisionSizes.ProgBurstSize.Height));
 
     /// <summary>Runs one beat: animate, maybe re-roll, drop a ghost, then step.</summary>
     /// <param name="gameTime">Unused — the beat timer is counted in ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
@@ -193,31 +203,31 @@ public sealed class Prog : IExplodable, IRemovable
 
         // The animation advances on every beat, even if the step below is refused.
         _beatTimer -= BeatPeriod;
-        _frameStep = (_frameStep + 1) % WalkCycle.Length;
+        _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
 
         // Re-roll the offsets first: picking a direction uses whatever offset is current.
-        if (_random.Next(256) > ReOffsetThreshold256)
+        if (_random.Next(ThresholdRollSides) > ReOffsetThreshold256)
         {
             RollOffsets();
         }
 
-        if (_random.Next(256) > ReDirectionThreshold256)
+        if (_random.Next(ThresholdRollSides) > ReDirectionThreshold256)
         {
             _direction = PickDirection(field);
-            _frameStep = 0;
+            _walkCycleStep = 0;
         }
 
         // Drop a ghost at the square being left, remembering its pose. Refused steps drop one too;
         // the trail keeps 7 and never redraws an older one (ROM: PROG3).
-        _ghosts.Insert(0, new Ghost(_position, WalkFrameIndex));
-        if (_ghosts.Count > GameplayConstants.ProgGhostCount)
+        _ghosts.Insert(0, new Ghost(_position, WalkAnimationFrameIndex));
+        if (_ghosts.Count > ProgTuning.GhostCount)
         {
             _ghosts.RemoveAt(_ghosts.Count - 1);
         }
 
         // 2 columns (4px) on X or 4 rows (4px) on Y, on one axis only.
-        int stepX = ScreenSize.Scaled(StepXColumns * ScreenSize.ArcadePixelsPerColumn);
-        int stepY = ScreenSize.Scaled(StepYRows);
+        int stepX = ScreenSize.Columns(StepXColumns);
+        int stepY = ScreenSize.ArcadePixels(StepYRows);
         IntVector2 step = _direction switch
         {
             Direction8.Left => new IntVector2(-stepX, 0),
@@ -236,7 +246,7 @@ public sealed class Prog : IExplodable, IRemovable
         {
             // A refused step is dropped entirely and the prog re-aims (ROM: CKLIM fails → GPDIR).
             _direction = PickDirection(field);
-            _frameStep = 0;
+            _walkCycleStep = 0;
         }
     }
 
@@ -252,8 +262,8 @@ public sealed class Prog : IExplodable, IRemovable
     /// <remarks>ROM: <c>GPOFF</c> — the offsets are the prog's standing error against the player.</remarks>
     private void RollOffsets()
     {
-        _offsetX = (_random.Next(1, 16) - OffsetXHalfRange) * 4;
-        _offsetY = ((19 - _random.Next(1, OffsetYSteps + 1)) * 2) - OffsetYSteps;
+        _offsetX = (_random.Next(1, OffsetXRollMax + 1) - OffsetXHalfRange) * OffsetXStepColumns;
+        _offsetY = ((OffsetYCentre - _random.Next(1, OffsetYSteps + 1)) * OffsetYStepRows) - OffsetYSteps;
     }
 
     /// <summary>Picks the next cardinal direction: half the re-aims consider X, half Y, so never diagonal.</summary>
@@ -265,11 +275,11 @@ public sealed class Prog : IExplodable, IRemovable
         Rectangle bounds = field.Wall.PlayfieldBounds;
         IntVector2 player = field.Player.Position;
 
-        if (_random.Next(2) == 0)
+        if (_random.Next(AxisFlipSides) == 0)
         {
             // The offset is in columns, so convert to pixels first.
-            int aimX = player.X + ScreenSize.Scaled(_offsetX * ScreenSize.ArcadePixelsPerColumn);
-            if (aimX > bounds.Right + ScreenSize.Scaled(WrapMarginXColumns * ScreenSize.ArcadePixelsPerColumn))
+            int aimX = player.X + ScreenSize.Columns(_offsetX);
+            if (aimX > bounds.Right + ScreenSize.Columns(WrapMarginXColumns))
             {
                 aimX = bounds.Left;
             }
@@ -277,8 +287,8 @@ public sealed class Prog : IExplodable, IRemovable
             return aimX <= _position.X ? Direction8.Left : Direction8.Right;
         }
 
-        int aimY = player.Y + ScreenSize.Scaled(_offsetY);
-        if (aimY > bounds.Bottom + ScreenSize.Scaled(WrapMarginYRows))
+        int aimY = player.Y + ScreenSize.ArcadePixels(_offsetY);
+        if (aimY > bounds.Bottom + ScreenSize.ArcadePixels(WrapMarginYRows))
         {
             aimY = bounds.Top;
         }
@@ -287,18 +297,18 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>The current walk picture: the facing direction's set, following <see cref="WalkCycle"/>.</summary>
-    internal int WalkFrameIndex
+    internal int WalkAnimationFrameIndex
     {
         get
         {
-            int set = _direction switch
+            WalkFacing facing = _direction switch
             {
-                Direction8.Left => 0,
-                Direction8.Right => 1,
-                Direction8.Down => 2,
-                _ => 3,
+                Direction8.Left => WalkFacing.Left,
+                Direction8.Right => WalkFacing.Right,
+                Direction8.Down => WalkFacing.Down,
+                _ => WalkFacing.Up,
             };
-            return set * 3 + WalkCycle[_frameStep];
+            return (int)facing * 3 + WalkCycle[_walkCycleStep];
         }
     }
 
@@ -311,13 +321,8 @@ public sealed class Prog : IExplodable, IRemovable
             return;
         }
 
-        Texture2D[] frames = _kind switch
-        {
-            HumanKind.Mikey => _sprites.MikeyFrames,
-            HumanKind.Mom => _sprites.MomFrames,
-            _ => _sprites.DadFrames,
-        };
-        Texture2D picture = frames[WalkFrameIndex];
+        Texture2D[] frames = _kind.AnimationFramesIn(_sprites);
+        Texture2D picture = frames[WalkAnimationFrameIndex];
 
         // Oldest ghost first so newer ones paint over it; each is drawn once, in the pose it
         // had when dropped, so the trail is frozen snapshots rather than an animation.
@@ -326,18 +331,18 @@ public sealed class Prog : IExplodable, IRemovable
             Ghost ghost = _ghosts[i];
             _sprites.DrawSpriteSolidWithBackground(
                 spriteBatch,
-                frames[ghost.FrameIndex],
+                frames[ghost.AnimationFrameIndex],
                 BoundsAt(ghost.Position),
-                _sprites.SlotColor(GameplayConstants.ProgGhostBackgroundSlot),
-                _sprites.SlotColor(GameplayConstants.ProgGhostShapeSlot));
+                _sprites.SlotColor(ProgTuning.GhostBackgroundSlot),
+                _sprites.SlotColor(ProgTuning.GhostShapeSlot));
         }
 
         _sprites.DrawSpriteSolidWithBackground(
             spriteBatch,
             picture,
             Bounds,
-            _sprites.SlotColor(GameplayConstants.ProgBackgroundSlot),
-            _sprites.SlotColor(GameplayConstants.ProgShapeSlot));
+            _sprites.SlotColor(ProgTuning.BackgroundSlot),
+            _sprites.SlotColor(ProgTuning.ShapeSlot));
     }
 
     /// <summary>This prog's box placed at an arbitrary position (used for the frozen ghosts).</summary>

@@ -28,12 +28,6 @@ public static class ScoreFormatter
     /// <summary>The largest score the seven drawn digits can show (the 10M digit is masked off).</summary>
     public const int MaxScore = 9_999_999;
 
-    /// <summary>One digit position: its value, and whether the ROM blanks it.</summary>
-    public readonly record struct ScoreDigit(int Value, bool Suppressed);
-
-    /// <summary>A digit that is actually drawn, and the X the ROM's cursor puts it at.</summary>
-    public readonly record struct ScoreGlyph(int Digit, int X);
-
     /// <summary>
     /// The score's eight digit positions in the order the ROM draws them, with
     /// the leading zeros (and the always-masked ten-millions digit) marked

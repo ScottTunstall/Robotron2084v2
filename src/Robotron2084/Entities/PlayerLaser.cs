@@ -10,14 +10,14 @@ namespace Robotron2084.Entities;
 /// <summary>The player's laser: a straight bolt, gone the moment it hits the wall or a robot.</summary>
 /// <seealso cref="LaserSlots"/>
 /// <remarks>The box is a 4x4 spec-pixel square and it flies at
-/// <see cref="GameplayConstants.LaserSpeed"/> px/tick, far quicker than the player. The picture is one of the ROM's four laser shapes (R5 $35BE-$35DC: <c>LLPC</c>,
+/// <see cref="PlayerTuning.LaserSpeed"/> px/tick, far quicker than the player. The picture is one of the ROM's four laser shapes (R5 $35BE-$35DC: <c>LLPC</c>,
 /// <c>ULPC</c>, <c>DLLPC</c>, <c>ULLPC</c>), chosen for the direction by <c>LTAB</c> (RRG23.ASM) and
-/// centred in the box — the arcade never flips the art (notes §19).</remarks>
+/// centred in the box — the arcade never flips the picture (notes §19).</remarks>
 public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
 {
     private readonly SpriteSet _sprites;
 
-    private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
+    private static readonly int Size = ScreenSize.Scaled(CollisionSizes.MissileSizeSpecPixels);
 
     private IntVector2 _position;
 
@@ -45,7 +45,15 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Removes the laser at once, vacating its slot.</summary>
-    public void Kill() => LifeState = EntityLifeState.Dead;
+    public void Kill()
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        LifeState = EntityLifeState.Dead;
+    }
 
     /// <summary>Flies one step in <see cref="Direction"/> and dies at the wall.</summary>
     /// <param name="gameTime">Unused — the laser moves a fixed step per tick.</param>
@@ -58,7 +66,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _position += Direction.ToIntVector() * GameplayConstants.LaserSpeed;
+        _position += Direction.ToIntVector() * PlayerTuning.LaserSpeed;
         if (field.Wall.Intersects(Bounds))
         {
             // RRG23 LASDIE: a brief flare in the wave's LASCOL slot, then the wall colour.

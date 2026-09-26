@@ -11,7 +11,7 @@ namespace Robotron2084.Core;
 public static class Presentation
 {
     /// <summary>The scale mode the next F8 press selects.</summary>
-    public static ScaleMode Next(ScaleMode mode) =>
+    public static ScaleMode NextScaleMode(ScaleMode mode) =>
         mode == ScaleMode.Integer ? ScaleMode.Fill : ScaleMode.Integer;
 
     /// <summary>The uniform scale the canvas is drawn at, for a client area of any size.</summary>

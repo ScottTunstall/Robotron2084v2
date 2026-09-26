@@ -20,7 +20,7 @@ namespace Robotron2084.Rendering;
 /// them pulse rather than stop; `LOOPP` simply starts COLTAB again at its end.
 ///
 /// **Timing.** The steps above are ROM frames and a ROM frame is 6/5 of a port tick, so
-/// these run on the exact-6ths accumulator the entity bodies use (notes §52): a
+/// these run on the clock-unit accumulator the entity bodies use (notes §52): a
 /// 3-frame process steps every 3.6 ticks, a 4-frame one every 4.8. Until notes §65 the
 /// in-game processes were counted in port ticks, which ran them 20% fast — this one is
 /// exact from the start.
@@ -72,7 +72,7 @@ public sealed class HighScorePalette
         public byte[] Table = [];
         public int Index;
         public int RomFramesPerStep;
-        public int Fifths;
+        public int ClockUnits;
     }
 
     private readonly Process[] _processes;
@@ -146,14 +146,14 @@ public sealed class HighScorePalette
             }
 
             Process process = _processes[i];
-            process.Fifths += ArcadeClock.UnitsPerPortTick;
+            process.ClockUnits += ArcadeClock.UnitsPerPortTick;
             int period = ArcadeClock.Units(process.RomFramesPerStep);
-            if (process.Fifths < period)
+            if (process.ClockUnits < period)
             {
                 continue;
             }
 
-            process.Fifths -= period;
+            process.ClockUnits -= period;
             process.Index = Advance(process.Table, process.Index);
             Apply(palette, process, process.Table[process.Index]);
         }

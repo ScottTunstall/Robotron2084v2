@@ -22,8 +22,8 @@ public class GameSessionTests
         Assert.False(session.IsTwoPlayer);
         Assert.Single(session.Players);
         Assert.Equal(1, session.Current.Number);
-        Assert.Equal(GameplayConstants.StartingLives, session.Current.Lives);
-        Assert.Equal(GameplayConstants.StartingLevelNumber, session.Current.Wave);
+        Assert.Equal(PlayerTuning.StartingLives, session.Current.Lives);
+        Assert.Equal(PlayerTuning.StartingLevelNumber, session.Current.Wave);
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class GameSessionTests
         session.Players[1].Score = 4200;
         session.Players[1].Wave = 7;
         Assert.Equal(0, session.Players[0].Score);
-        Assert.Equal(GameplayConstants.StartingLevelNumber, session.Players[0].Wave);
+        Assert.Equal(PlayerTuning.StartingLevelNumber, session.Players[0].Wave);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class GameSessionTests
 
         session.Current.Lives = 9; // 8 spare
         Assert.Equal(8, session.Current.SpareMen);
-        Assert.Equal(GameplayConstants.HudMaxMen, session.Current.DisplayedMen);
+        Assert.Equal(HudLayout.HudMaxMen, session.Current.DisplayedMen);
 
         session.Current.Lives = 4;
         Assert.Equal(3, session.Current.DisplayedMen);

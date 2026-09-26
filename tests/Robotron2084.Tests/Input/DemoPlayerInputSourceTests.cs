@@ -9,7 +9,7 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// Phase 12.1 (notes §94.3): the attract demo's phony player. The arcade's
+/// (notes §94.3) The attract demo's phony player. The arcade's
 /// real AI is the OS ROM's ATRSW2 writer (disassembly-only, undecoded), so
 /// these tests pin the PLACEHOLDER's behaviour: flee close robots, fire on
 /// robots in range, drift to the centre, never flee into a wall, and always
@@ -32,7 +32,7 @@ public sealed class DemoPlayerInputSourceTests
     private static PlayField EmptyFieldWithInput(Rectangle bounds, IPlayerInputSource input)
     {
         var parameters = new LevelParameters(LevelNumber: 1);
-        return new PlayField(TestSprites.Shared, parameters, input, bounds, new WallColorCycle(), new Random(1234), startingLives: 3);
+        return new PlayFieldBuilder().WithParameters(parameters).WithInput(input).WithBounds(bounds).WithSeed(1234).Build();
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public sealed class DemoPlayerInputSourceTests
         PlayerInputState state = demo.Poll();
 
         Assert.Equal(IntVector2.Zero, state.MoveDirection);
-        Assert.False(state.FirePressed);
+        Assert.False(state.FireHeld);
     }
 
     [Fact]
@@ -60,8 +60,8 @@ public sealed class DemoPlayerInputSourceTests
 
         // Running straight down, away from it, and firing up at it.
         Assert.Equal(new IntVector2(0, 1), state.MoveDirection);
-        Assert.Equal(new IntVector2(0, -1), state.AimDirection);
-        Assert.True(state.FirePressed);
+        Assert.Equal(new IntVector2(0, -1), state.ShootDirection);
+        Assert.True(state.FireHeld);
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public sealed class DemoPlayerInputSourceTests
         PlayerInputState state = demo.Poll();
 
         Assert.Equal(IntVector2.Zero, state.MoveDirection); // nothing to flee, and the centre is where it is
-        Assert.False(state.FirePressed);
+        Assert.False(state.FireHeld);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public sealed class DemoPlayerInputSourceTests
 
         Assert.Equal(1, state.MoveDirection.X); // back toward the centre
         Assert.Equal(0, state.MoveDirection.Y);
-        Assert.False(state.FirePressed);
+        Assert.False(state.FireHeld);
     }
 
     [Fact]
@@ -125,13 +125,13 @@ public sealed class DemoPlayerInputSourceTests
         // §97.5). It may pause (the deliberate stutter), but it must not reverse.
         field.Player.TeleportTo(start + new IntVector2(0, -ScreenSize.Scaled(40)));
 
-        for (int tick = 0; tick < GameplayConstants.DemoDirectionHoldTicks; tick++)
+        for (int tick = 0; tick < AttractTuning.DemoDirectionHoldTicks; tick++)
         {
             Assert.NotEqual(new IntVector2(0, -1), demo.Poll().MoveDirection);
         }
 
         IntVector2 move = IntVector2.Zero;
-        for (int tick = 0; tick < GameplayConstants.DemoDirectionHoldTicks + GameplayConstants.DemoDirectionSwitchTicks + 2
+        for (int tick = 0; tick < AttractTuning.DemoDirectionHoldTicks + AttractTuning.DemoDirectionSwitchTicks + 2
             && move != new IntVector2(0, -1); tick++)
         {
             move = demo.Poll().MoveDirection;
@@ -148,7 +148,7 @@ public sealed class DemoPlayerInputSourceTests
         var left = new MutableStick { State = new PlayerInputState(new IntVector2(-1, 0), false) };
         PlayField field = EmptyFieldWithInput(small, left);
 
-        int clearance = ScreenSize.Scaled(GameplayConstants.DemoWallClearanceSpecPixels);
+        int clearance = ScreenSize.Scaled(AttractTuning.DemoWallClearanceSpecPixels);
         while (field.Player.Position.X >= clearance)
         {
             field.Update(new GameTime());

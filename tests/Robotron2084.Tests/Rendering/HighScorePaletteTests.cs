@@ -118,7 +118,7 @@ public sealed class HighScorePaletteTests
     {
         (GamePalette palette, HighScorePalette cycle) = Started();
 
-        // 3 ROM frames = 18 sixths = 3.6 port ticks, so the first step lands on tick 4.
+        // 3 ROM frames = 18 clock units = 3.6 port ticks, so the first step lands on tick 4.
         for (int tick = 0; tick < 3; tick++)
         {
             cycle.Update(palette);
@@ -145,7 +145,7 @@ public sealed class HighScorePaletteTests
     {
         (GamePalette palette, HighScorePalette cycle) = Started();
 
-        // 21 entries at 3 ROM frames each = 63 ROM frames = 378 sixths = 75.6 port ticks,
+        // 21 entries at 3 ROM frames each = 63 ROM frames = 378 clock units = 75.6 port ticks,
         // so one lap later the process is back at the table's start.
         for (int tick = 0; tick < 76; tick++)
         {
@@ -163,7 +163,7 @@ public sealed class HighScorePaletteTests
         Assert.Equal(0x07, palette.SlotValue(9));
         Assert.Equal(0x07, palette.SlotValue(10));
 
-        // 4 ROM frames = 24 sixths = 4.8 ticks: the first step lands on tick 5.
+        // 4 ROM frames = 24 clock units = 4.8 ticks: the first step lands on tick 5.
         for (int tick = 0; tick < 5; tick++)
         {
             cycle.Update(palette);

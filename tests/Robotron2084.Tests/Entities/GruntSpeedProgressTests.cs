@@ -2,7 +2,6 @@ using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Level;
-using Robotron2084.Tuning;
 using Xunit;
 
 namespace Robotron2084.Tests;
@@ -28,13 +27,7 @@ public sealed class GruntSpeedProgressTests
 
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
-    private static PlayField CreateField(int wave = 1) => new(TestSprites.Shared, 
-        LevelParameters.FromWave(wave, WaveTable.ForWave(wave)),
-        new FakeInputSource(),
-        PlayFieldSpawnTests.InnerBounds,
-        new WallColorCycle(),
-        new Random(1),
-        startingLives: 3);
+    private static PlayField CreateField(int wave = 1) => new PlayFieldBuilder().WithParameters(LevelParameters.FromWave(wave, WaveTable.ForWave(wave))).WithSeed(1).Build();
 
     private static Grunt CreateGruntAt(PlayField field, int x, int y, int seed) =>
         new(TestSprites.Shared, new IntVector2(x, y), moveLimitBeats: 20, random: new Random(seed));
@@ -108,7 +101,7 @@ public sealed class GruntSpeedProgressTests
 
         // 121 grace frames + 203 = 324 = PortTicks(270): one frame before the
         // first tick the floor must be untouched.
-        for (int tick = 0; tick < 121 + (GameplayConstants.PortTicks(270) - 121) - 1; tick++)
+        for (int tick = 0; tick < 121 + (ArcadeClock.PortTicks(270) - 121) - 1; tick++)
         {
             field.Update(Frame());
         }
@@ -122,7 +115,7 @@ public sealed class GruntSpeedProgressTests
         Assert.Equal(11, tracked.MoveDelayBeats); // 15 − 4
 
         // 270 = PortTicks(225): one frame before the next tick, unchanged.
-        for (int tick = 0; tick < GameplayConstants.PortTicks(225) - 1; tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicks(225) - 1; tick++)
         {
             field.Update(Frame());
         }
@@ -136,7 +129,7 @@ public sealed class GruntSpeedProgressTests
         Assert.Equal(9, tracked.MoveDelayBeats); // 11 − 2
 
         // Third pass: back to −2 / −4.
-        for (int tick = 0; tick < GameplayConstants.PortTicks(225); tick++)
+        for (int tick = 0; tick < ArcadeClock.PortTicks(225); tick++)
         {
             field.Update(Frame());
         }
@@ -156,7 +149,7 @@ public sealed class GruntSpeedProgressTests
 
         // Two full cadence periods (270 + 225 vblanks + grace) with only 5
         // grunts on screen: the $2ACA gate (cur_grunts < 30) skips the update.
-        for (int tick = 0; tick < 121 + GameplayConstants.PortTicks(270) + GameplayConstants.PortTicks(225); tick++)
+        for (int tick = 0; tick < 121 + ArcadeClock.PortTicks(270) + ArcadeClock.PortTicks(225); tick++)
         {
             field.Update(Frame());
         }

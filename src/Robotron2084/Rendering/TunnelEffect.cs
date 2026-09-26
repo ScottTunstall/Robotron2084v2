@@ -25,7 +25,7 @@ namespace Robotron2084.Rendering;
 /// </para>
 /// <para>
 /// Two rings are drawn per pass and the task's delay is 1, so it advances two rings a
-/// frame. <see cref="PassFifths"/> holds how long a pass takes.
+/// frame. <see cref="PassClockUnits"/> holds how long a pass takes.
 /// </para>
 /// <para>
 /// The colours are a packed byte — the LEFT nibble is colour 0 and the RIGHT nibble colour
@@ -61,29 +61,29 @@ public sealed class TunnelEffect
     internal const int RingsPerPass = 2;
 
     /// <summary>
-    /// How long a task pass lasts, in sixths of a port tick (notes §83).
+    /// How long a task pass lasts, in clock units (notes §83).
     ///
     /// `ALLOCATE_TASK` ($D1E3) documents its delay as *"A x 16 Millisec"* and `$571E` passes
     /// `A = 1`, which at the ROM's own unit would put the whole effect — 54 passes over the two
     /// phases — at under a second. On the arcade the effect runs **about two
     /// seconds at least**, so the task list is walked SLOWER than one cycle per field: a pass is
-    /// **two ROM frames** (2.4 port ticks on §52's exact-6ths clock), which lands the effect at
+    /// **two ROM frames** (2.4 port ticks on §52's clock-unit clock), which lands the effect at
     /// 54 x 2.4 = ~130 ticks = ~2.2 s.
     ///
     /// This is the one number in the tunnel taken from the measurement rather than the disassembly,
     /// and it is called out as such in the notes so a MAME measurement can settle it.
     /// </summary>
-    internal const int PassFifths = 2 * ArcadeClock.UnitsPerRomFrame;
+    internal const int PassClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
 
-    private int _fifths;
+    private int _clockUnits;
 
     /// <summary>
     /// The ROM's screen is 304 px (152 columns) by 256 rows, and the port's SCREEN is
     /// <see cref="ScreenSize.Width"/>x<see cref="ScreenSize.Height"/> real pixels, so a ROM pixel is
     /// that ratio across and that ratio down (notes §84).
     /// </summary>
-    private const float RomPixelToScreenX = ScreenSize.Width / (float)GameplayConstants.ArcadeScreenWidth;
-    private const float RomPixelToScreenY = ScreenSize.Height / (float)GameplayConstants.ArcadeScreenHeight;
+    private const float RomPixelToScreenX = ScreenSize.Width / (float)HudLayout.ArcadeScreenWidth;
+    private const float RomPixelToScreenY = ScreenSize.Height / (float)HudLayout.ArcadeScreenHeight;
 
     /// <summary>
     /// The port pixel a ROM pixel starts at, and the port row a ROM row starts at.
@@ -148,7 +148,7 @@ public sealed class TunnelEffect
     private readonly List<Ring> _blackRings = new();
 
     /// <summary>
-    /// Runs one ROM task pass, which takes two ROM frames (see <see cref="PassFifths"/>). `$5726` resets
+    /// Runs one ROM task pass, which takes two ROM frames (see <see cref="PassClockUnits"/>). `$5726` resets
     /// the two-ring counter, then the ring is
     /// drawn, the pair advances (unless it is black), the corners step out — and all of that
     /// happens a second time before the task yields.
@@ -160,15 +160,15 @@ public sealed class TunnelEffect
             return;
         }
 
-        // One task pass per PassFifths — the exact-6ths accumulator §52/§65 use for every ROM
+        // One task pass per PassClockUnits — the clock-unit accumulator §52/§65 use for every ROM
         // delay, so the pace is the ROM's unit rather than a rounded frame count.
-        _fifths += ArcadeClock.UnitsPerPortTick;
-        if (_fifths < PassFifths)
+        _clockUnits += ArcadeClock.UnitsPerPortTick;
+        if (_clockUnits < PassClockUnits)
         {
             return;
         }
 
-        _fifths -= PassFifths;
+        _clockUnits -= PassClockUnits;
 
         _ringsThisPass = RingsPerPass;
         while (_ringsThisPass > 0 && !Finished)

@@ -33,4 +33,22 @@ public static class ArcadeClock
 
     /// <summary>A number of ROM frames, in clock units.</summary>
     public static int Units(int romFrames) => romFrames * UnitsPerRomFrame;
+
+    /// <summary>
+    /// Converts a delay in ROM frames to the equivalent number of port ticks, so every timer in
+    /// this port waits for the same real-world length of time the arcade did.
+    /// </summary>
+    /// <remarks>Truncates, so it is one tick early for a period that does not divide evenly — see
+    /// <see cref="ArcadeClock"/> for the clock itself and <see cref="PortTicksCeil"/> for the
+    /// first tick a period actually fires on.</remarks>
+    public static int PortTicks(int romFrames) => romFrames * ArcadeClock.UnitsPerRomFrame / ArcadeClock.UnitsPerPortTick;
+
+    /// <summary>
+    /// The FIRST port tick on which a <paramref name="romFrames"/>-period clock running on the
+    /// clock units described on <see cref="ArcadeClock"/> fires:
+    /// <c>ceil(romFrames * 6 / 5)</c>. Use this in tests that tick to a boundary —
+    /// <see cref="PortTicks"/> TRUNCATES, so it is always one tick too early for a short
+    /// period (<c>PortTicks(3)</c> = 3, but the step actually lands on tick 4).
+    /// </summary>
+    public static int PortTicksCeil(int romFrames) => (romFrames * ArcadeClock.UnitsPerRomFrame + 4) / ArcadeClock.UnitsPerPortTick;
 }

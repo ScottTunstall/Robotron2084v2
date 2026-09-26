@@ -235,7 +235,7 @@ internal static class Program
                 // The writer reads ONE ROW per `bytesPerRow` = w bytes, so inline data must
                 // be exactly w*h bytes. A LONGER array is not caught downstream — the writer
                 // just walks a misaligned stream and emits a plausible-looking PNG of noise
-                // (which is how the prog burst art came out wrong: the middle rows of the
+                // (which is how the prog burst picture came out wrong: the middle rows of the
                 // ProgBurst array were transcribed as eight bytes instead of six).
                 if (inline.Length != w * h)
                 {

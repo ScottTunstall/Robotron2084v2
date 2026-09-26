@@ -28,17 +28,11 @@ public sealed class SparkTests
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     private static PlayField CreateField(int seed) =>
-        new(TestSprites.Shared, 
-            new LevelParameters(
+        new PlayFieldBuilder().WithParameters(new LevelParameters(
                 LevelNumber: 1,
                 SpheroidCount: 0,
                 MaxDropsX2: 10,
-                SpheroidDropDelay: 30),
-            new FakeInputSource(),
-            PlayFieldSpawnTests.InnerBounds,
-            new WallColorCycle(),
-            new Random(seed),
-            startingLives: 3);
+                SpheroidDropDelay: 30)).WithRandom(new Random(seed)).Build();
 
     [Fact]
     public void Spark_ClampsAtTheWall_AndDiesOnItsLife_NotAtTheWall()
@@ -70,7 +64,7 @@ public sealed class SparkTests
     }
 
     [Fact]
-    public void Spark_Life_Is80To140RomTicks()
+    public void Spark_Life_Is80To140RomFrames()
     {
         PlayField field = CreateField(2);
         Rectangle inner = field.Wall.PlayfieldBounds;
@@ -93,8 +87,8 @@ public sealed class SparkTests
             }
 
             Assert.True(diedAt > 0, $"seed {seed}: spark never died");
-            int minTicks = GameplayConstants.PortTicks(GameplayConstants.SparkLifeMinRomTicks);
-            int maxTicks = GameplayConstants.PortTicks(GameplayConstants.SparkLifeMaxRomTicks);
+            int minTicks = ArcadeClock.PortTicks(SparkTuning.SparkLifeMinRomFrames);
+            int maxTicks = ArcadeClock.PortTicks(SparkTuning.SparkLifeMaxRomFrames);
             Assert.InRange(diedAt, minTicks, maxTicks);
         }
     }
@@ -111,9 +105,9 @@ public sealed class SparkTests
         Spark spark = field.Sparks[^1];
 
         // 4 ROM frames = 4.8 ticks, so the frame boundary lands on tick 5 of each
-        // period on the exact-6ths clock (notes §52, §65).
-        int period = GameplayConstants.PortTicksCeil(GameplayConstants.SparkFramePeriodRomTicks);
-        Assert.Equal(0, spark.FrameIndex); // born on SPKP0
+        // period on the clock-unit clock (notes §52, §65).
+        int period = ArcadeClock.PortTicksCeil(SparkTuning.SparkFramePeriodRomFrames);
+        Assert.Equal(0, spark.AnimationFrameIndex); // born on SPKP0
 
         // Each full period advances exactly one frame; four periods wrap to 0.
         for (int frame = 1; frame <= 4; frame++)
@@ -121,12 +115,12 @@ public sealed class SparkTests
             for (int tick = 1; tick < period; tick++)
             {
                 field.Update(Frame());
-                Assert.Equal(frame - 1, spark.FrameIndex); // stable within a period
+                Assert.Equal(frame - 1, spark.AnimationFrameIndex); // stable within a period
             }
 
             field.Update(Frame());
-            int expected = frame % SpriteSet.SparkFrameCount;
-            Assert.Equal(expected, spark.FrameIndex);
+            int expected = frame % SpriteSet.SparkAnimationFrameCount;
+            Assert.Equal(expected, spark.AnimationFrameIndex);
         }
     }
 
@@ -177,7 +171,7 @@ public sealed class SparkTests
         field.SpawnSpark(origin, new IntVector2(inner.X + 40, inner.Y + 120));
         Spark spark = field.Sparks[^1];
 
-        int moveInterval = GameplayConstants.PortTicksCeil(GameplayConstants.SparkMoveIntervalRomTicks);
+        int moveInterval = ArcadeClock.PortTicksCeil(SparkTuning.SparkMoveIntervalRomFrames);
         var changes = new List<IntVector2>();
         IntVector2 previous = spark.VelocitySubpixels;
 
@@ -198,8 +192,8 @@ public sealed class SparkTests
 
         // ...and it must be the acceleration the spark was built with, i.e. the
         // ROM's (seed & $1F) - 16 range scaled by the fixed-point factor.
-        int subpixelsPerPortPxPerMove = GameplayConstants.SparkVelocityScale / GameplayConstants.SparkAimDivisor;
-        int maxAccelSubpixels = GameplayConstants.SparkAccelRomRange * subpixelsPerPortPxPerMove;
+        int subpixelsPerPortPxPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
+        int maxAccelSubpixels = SparkTuning.SparkAccelRomRange * subpixelsPerPortPxPerMove;
         Assert.InRange(expected.X, -maxAccelSubpixels, maxAccelSubpixels);
         Assert.InRange(expected.Y, -maxAccelSubpixels, maxAccelSubpixels);
     }

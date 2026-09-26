@@ -9,7 +9,7 @@ namespace Robotron2084.Tests;
 
 public sealed class PlayFieldSpawnTests
 {
-    public static readonly Rectangle InnerBounds = new(ScreenSize.Scaled(20), ScreenSize.Scaled(20), ScreenSize.Width - ScreenSize.Scaled(40), ScreenSize.Height - ScreenSize.Scaled(40));
+    public static readonly Rectangle InnerBounds = PlayFieldBuilder.DefaultBounds;
 
     [Fact]
     public void Constructor_SpawnsExactlyTheParameterCounts()
@@ -54,10 +54,10 @@ public sealed class PlayFieldSpawnTests
         PlayField field = CreateField(4, 2, 2, 1, 6);
         IntVector2 playerStart = field.Player.Position;
 
-        AssertAllAreFartherThan(field.Electrodes, playerStart, GameplayConstants.ElectrodeMinDistanceFromPlayer);
-        AssertAllAreFartherThan(field.Grunts, playerStart, GameplayConstants.GruntMinDistanceFromPlayer);
-        AssertAllAreFartherThan(field.Hulks, playerStart, GameplayConstants.HulkMinDistanceFromPlayer);
-        AssertAllAreFartherThan(field.Spheroids, playerStart, GameplayConstants.SpheroidMinDistanceFromPlayer);
+        AssertAllAreFartherThan(field.Electrodes, playerStart, SpawnTuning.ElectrodeMinDistanceFromPlayer);
+        AssertAllAreFartherThan(field.Grunts, playerStart, SpawnTuning.GruntMinDistanceFromPlayer);
+        AssertAllAreFartherThan(field.Hulks, playerStart, SpawnTuning.HulkMinDistanceFromPlayer);
+        AssertAllAreFartherThan(field.Spheroids, playerStart, SpheroidTuning.MinDistanceFromPlayer);
         // Quarks are EXCLUDED: the ROM ($4B48-4B5A) spawns them on the top or
         // bottom wall with a uniform X — no minimum-distance rule (notes 28).
     }
@@ -91,7 +91,7 @@ public sealed class PlayFieldSpawnTests
             MaxTanksPerQuark: 2,
             EnemySpeedBonus: 0);
 
-        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), InnerBounds, new WallColorCycle(), new Random(1234), startingLives: 3);
+        return new PlayFieldBuilder().WithParameters(parameters).WithBounds(InnerBounds).WithSeed(1234).Build();
     }
 
     private static void AssertAllAreFartherThan<T>(IReadOnlyList<T> entities, IntVector2 playerStart, int minSpecPixels)

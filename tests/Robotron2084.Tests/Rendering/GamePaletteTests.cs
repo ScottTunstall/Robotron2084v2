@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Robotron2084.Rendering;
 using Xunit;
 
-namespace Robotron2084.Tests.Level;
+namespace Robotron2084.Tests.Rendering;
 
 /// <summary>
 /// The 16-slot live palette: CRTAB defaults, slot writes, and the

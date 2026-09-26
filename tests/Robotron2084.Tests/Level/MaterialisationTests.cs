@@ -3,7 +3,6 @@ using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Level;
 using Robotron2084.Rendering;
-using Robotron2084.Tuning;
 using Xunit;
 
 namespace Robotron2084.Tests;
@@ -16,7 +15,7 @@ namespace Robotron2084.Tests;
 /// </summary>
 public class MaterialisationTests
 {
-    private static readonly Rectangle InnerBounds = PlayFieldSpawnTests.InnerBounds;
+    private static readonly Rectangle InnerBounds = PlayFieldBuilder.DefaultBounds;
 
     private static PlayField CreateField(int grunts, int hulks = 0, int spheroids = 0, int quarks = 0, int brains = 0)
     {
@@ -31,7 +30,7 @@ public class MaterialisationTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), InnerBounds, new WallColorCycle(), new Random(1234), startingLives: 3);
+        return new PlayFieldBuilder().WithParameters(parameters).WithBounds(InnerBounds).WithSeed(1234).Build();
     }
 
     private static void Advance(PlayField field, int ticks)
@@ -70,7 +69,7 @@ public class MaterialisationTests
         Advance(field, 1);
         Assert.Equal(3, field.PendingAppearCount);
         Assert.Single(field.Explosions);
-        Assert.Equal(Explosion.Kind.Appear, field.Explosions[0].Mode);
+        Assert.Equal(StripEffectKind.Appear, field.Explosions[0].Kind);
 
         Advance(field, 3);
         Assert.Equal(0, field.PendingAppearCount);
@@ -126,9 +125,9 @@ public class MaterialisationTests
 
         Advance(field, 1);
 
-        // The record's own bounds are the robot's (the art it is blitting), and
+        // The record's own bounds are the robot's (the picture it is blitting), and
         // APCENT gave it the robot's centre as the impact.
-        Explosion appear = field.Explosions[0];
+        StripEffect appear = field.Explosions[0];
         Assert.Equal(grunt.Bounds, appear.Bounds);
     }
 

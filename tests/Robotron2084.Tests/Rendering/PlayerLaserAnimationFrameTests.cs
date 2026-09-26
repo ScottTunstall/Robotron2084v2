@@ -12,14 +12,14 @@ namespace Robotron2084.Tests;
 /// authored at arcade-pixel dimensions, so the exact pixels are the fidelity
 /// invariant.
 /// </summary>
-public sealed class PlayerLaserArtTests
+public sealed class PlayerLaserAnimationFrameTests
 {
     private const int N = 6;
 
     [Fact]
     public void Bar_Is6x1_Solid()
     {
-        Color[] pattern = PixelArtFactory.BuildLaserBarPattern(Color.White);
+        Color[] pattern = PictureFactory.BuildLaserBarPattern(Color.White);
 
         Assert.Equal(6, pattern.Length);
         Assert.All(pattern, pixel => Assert.Equal(Color.White, pixel));
@@ -28,7 +28,7 @@ public sealed class PlayerLaserArtTests
     [Fact]
     public void Column_Is2x6_LeftColumnOnly()
     {
-        Color[] pattern = PixelArtFactory.BuildLaserColumnPattern(Color.White);
+        Color[] pattern = PictureFactory.BuildLaserColumnPattern(Color.White);
 
         Assert.Equal(2 * N, pattern.Length);
         for (int row = 0; row < N; row++)
@@ -41,7 +41,7 @@ public sealed class PlayerLaserArtTests
     [Fact]
     public void DiagonalMain_Is6x6_TopLeftToBottomRight()
     {
-        Color[] pattern = PixelArtFactory.BuildLaserDiagonalMainPattern(Color.White);
+        Color[] pattern = PictureFactory.BuildLaserDiagonalMainPattern(Color.White);
 
         Assert.Equal(N * N, pattern.Length);
         for (int y = 0; y < N; y++)
@@ -57,7 +57,7 @@ public sealed class PlayerLaserArtTests
     [Fact]
     public void DiagonalAnti_Is6x6_TopRightToBottomLeft()
     {
-        Color[] pattern = PixelArtFactory.BuildLaserDiagonalAntiPattern(Color.White);
+        Color[] pattern = PictureFactory.BuildLaserDiagonalAntiPattern(Color.White);
 
         Assert.Equal(N * N, pattern.Length);
         for (int y = 0; y < N; y++)

@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.States;
@@ -25,7 +26,7 @@ public sealed class EntriesMaximumState : IGameState
 
     private readonly GameServices _services;
     private readonly ScoreEntryCeremony _ceremony;
-    private readonly int _holdTicks = GameplayConstants.PortTicks(GameplayConstants.EntriesMaximumHoldRomFrames);
+    private readonly int _holdTicks = ArcadeClock.PortTicks(ScreenTuning.EntriesMaximumHoldRomFrames);
     private int _elapsedTicks;
 
     /// <summary>Builds the page for the score whose initials hit the cap.</summary>
@@ -57,7 +58,7 @@ public sealed class EntriesMaximumState : IGameState
         _services.Sprites.DrawLargeFontText(
             spriteBatch,
             text,
-            GameplayConstants.ArcadeColumnX(column),
-            GameplayConstants.ArcadeY(row),
-            GameplayConstants.EntriesMaximumSlot);
+            HudLayout.ArcadeColumnX(column),
+            HudLayout.ArcadeY(row),
+            ScreenTuning.EntriesMaximumSlot);
 }

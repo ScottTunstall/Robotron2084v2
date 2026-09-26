@@ -32,8 +32,7 @@ public sealed class PlayingState : IGameState
     /// <summary>The wave counter is one byte, so it wraps here (ROM <c>GEXX</c>).</summary>
     private const int WaveCounterWrap = 255;
 
-    private static readonly int Margin = ScreenSize.Scaled(GameplayConstants.PlayfieldMarginSpecPixels);
-    private static readonly Rectangle InnerBounds = new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
+    private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
 
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _highScores;
@@ -75,10 +74,8 @@ public sealed class PlayingState : IGameState
     {
         PlayerSlot slot = _session.Current;
         LevelParameters parameters = _generator.Generate(slot.Wave);
-        WallColorCycle cycle = new(GameplayConstants.DefaultWallPalette, TimeSpan.FromMilliseconds(GameplayConstants.WallStepDurationMilliseconds));
-        _field = new PlayField(_sprites, parameters, slot.Input, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Palette, pixelCollision: new SpriteCollision());
-        _restartHandled = false;
-        return _field;
+        WallColorCycle cycle = new();
+        return new PlayField(_sprites, parameters, slot.Input, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Palette, pixelCollision: new SpriteCollision());
     }
 
     /// <summary>
@@ -89,7 +86,7 @@ public sealed class PlayingState : IGameState
     private void AnnounceTurn()
     {
         _turnMessageTicks = _session.IsTwoPlayer
-            ? GameplayConstants.PortTicks(GameplayConstants.PlayerTurnMessageRomFrames)
+            ? ArcadeClock.PortTicks(ScreenTuning.PlayerTurnMessageRomFrames)
             : 0;
     }
 
@@ -130,7 +127,7 @@ public sealed class PlayingState : IGameState
 
         // Wave clear — checked before the death check. The P key (the port's test
         // key) takes the same path so waves can be skipped.
-        if (_field.IsLevelCleared || input.SkipLevelPressed)
+        if (_field.IsLevelCleared || input.SkipLevelHeld)
         {
             HandleWaveCleared(manager);
             return;
@@ -192,10 +189,11 @@ public sealed class PlayingState : IGameState
             // ROM PLEND3: this player is out and the other still has men — print
             // "PLAYER n GAME OVER" and wait NAP $60 before the turn passes.
             _playerOutNumber = dead.Number;
-            _playerOutMessageTicks = GameplayConstants.PortTicks(GameplayConstants.PlayerGameOverMessageRomFrames);
+            _playerOutMessageTicks = ArcadeClock.PortTicks(ScreenTuning.PlayerGameOverMessageRomFrames);
         }
 
         _field = BuildField();
+        _restartHandled = false;
         AnnounceTurn();
     }
 
@@ -216,17 +214,17 @@ public sealed class PlayingState : IGameState
                 spriteBatch,
                 _sprites,
                 "PAUSED",
-                GameplayConstants.PausedMessageColumn,
-                GameplayConstants.PausedMessageRow,
-                GameplayConstants.PostSlotForWave(_session.Current.Wave));
+                HudLayout.PausedMessageColumn,
+                HudLayout.PausedMessageRow,
+                WavePaletteTables.PostSlotForWave(_session.Current.Wave));
         }
 
         if (_playerOutMessageTicks > 0)
         {
             // ROM string 75: "PLAYER n" at $3F79 then "GAME OVER" at $3E86.
-            int messageSlot = GameplayConstants.PostSlotForWave(_session.Current.Wave);
-            ArcadeHud.DrawMessageText(spriteBatch, _sprites, $"PLAYER {_playerOutNumber}", GameplayConstants.PlayerTurnMessageColumn, GameplayConstants.PlayerGameOverMessageRow, messageSlot);
-            ArcadeHud.DrawMessageText(spriteBatch, _sprites, "GAME OVER", GameplayConstants.GameOverMessageColumn, GameplayConstants.GameOverMessageRow, messageSlot);
+            int messageSlot = WavePaletteTables.PostSlotForWave(_session.Current.Wave);
+            ArcadeHud.DrawMessageText(spriteBatch, _sprites, $"PLAYER {_playerOutNumber}", HudLayout.PlayerTurnMessageColumn, HudLayout.PlayerGameOverMessageRow, messageSlot);
+            ArcadeHud.DrawMessageText(spriteBatch, _sprites, "GAME OVER", HudLayout.GameOverMessageColumn, HudLayout.GameOverMessageRow, messageSlot);
         }
         else if (_turnMessageTicks > 0)
         {
@@ -236,9 +234,9 @@ public sealed class PlayingState : IGameState
                 spriteBatch,
                 _sprites,
                 $"PLAYER {_session.Current.Number}",
-                GameplayConstants.PlayerTurnMessageColumn,
-                GameplayConstants.PlayerTurnMessageRow,
-                GameplayConstants.PostSlotForWave(_session.Current.Wave));
+                HudLayout.PlayerTurnMessageColumn,
+                HudLayout.PlayerTurnMessageRow,
+                WavePaletteTables.PostSlotForWave(_session.Current.Wave));
         }
     }
 }

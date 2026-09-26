@@ -18,7 +18,7 @@ public sealed class LaserSlots
     private readonly SpriteSet _sprites;
     private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
 
-    /// <summary>Wires the slots to the artwork their lasers are drawn with.</summary>
+    /// <summary>Wires the slots to the pictures their lasers are drawn with.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     public LaserSlots(SpriteSet sprites) => _sprites = sprites;
 

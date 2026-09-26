@@ -67,7 +67,7 @@ public sealed class InitialsEntryState : IGameState
             return;
         }
 
-        HighScoreTable.SubmitResult result = _ceremony.Submit(_score, _entry.Initials);
+        SubmitResult result = _ceremony.Submit(_score, _entry.Initials);
         manager.TransitionTo(result.EntriesMaximum
             ? new EntriesMaximumState(_services, _ceremony)
             : _ceremony.NextScreen());
@@ -122,8 +122,8 @@ public sealed class InitialsEntryState : IGameState
             _sprites.SlotColor(InitialsEntryLayout.InstructionSlot));
 
     private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row) =>
-        _sprites.DrawLargeFontText(spriteBatch, text, GameplayConstants.ArcadeColumnX(column), GameplayConstants.ArcadeY(row), InitialsEntryLayout.InkSlot);
+        _sprites.DrawLargeFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InkSlot);
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int column, int row) =>
-        _sprites.DrawSmallFontText(spriteBatch, text, GameplayConstants.ArcadeColumnX(column), GameplayConstants.ArcadeY(row), InitialsEntryLayout.InstructionSlot);
+        _sprites.DrawSmallFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InstructionSlot);
 }

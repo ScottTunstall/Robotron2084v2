@@ -8,7 +8,7 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// ROM-faithful movement tests for the Phase B shell/hulk rewrites
+/// ROM-faithful movement tests for the shell and hulk
 /// (arcade-fidelity-notes §11.5 / RRH11): tank shells fly straight, bounce
 /// off all four walls and fizzle after (RND &amp; $1F) + $30 ROM ticks; hulks
 /// take one step per HLKSPD-tick cycle.
@@ -16,7 +16,7 @@ namespace Robotron2084.Tests;
 public sealed class PlayFieldMovementTests
 {
     [Fact]
-    public void TankShell_FizzlesWithinRomLifetimeRange_PortTicks48To79RomTicks()
+    public void TankShell_FizzlesWithinRomLifetimeRange_PortTicks48To79RomFrames()
     {
         PlayField field = CreateEmptyField();
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -34,10 +34,10 @@ public sealed class PlayFieldMovementTests
         }
 
         Assert.Equal(EntityLifeState.Dead, shell.LifeState);
-        // 48..79 ROM frames, held in exact 6ths, so the fizzle lands on
+        // 48..79 ROM frames, held in exact clock units, so the fizzle lands on
         // ceil(6n/5) — 58..95 port ticks, not the truncated 57..94 (notes §65).
-        int minTicks = GameplayConstants.PortTicksCeil(GameplayConstants.TankShellLifeBaseRomTicks);
-        int maxTicks = GameplayConstants.PortTicksCeil(GameplayConstants.TankShellLifeBaseRomTicks + 31);
+        int minTicks = ArcadeClock.PortTicksCeil(TankShellTuning.LifeBaseRomFrames);
+        int maxTicks = ArcadeClock.PortTicksCeil(TankShellTuning.LifeBaseRomFrames + 31);
         Assert.InRange(ticks, minTicks, maxTicks);
     }
 
@@ -124,7 +124,7 @@ public sealed class PlayFieldMovementTests
         // but hunt the playfield center so the aim is unbounded.
         IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 100, bounds.Y + 100);
-        var hulk = new Hulk(TestSprites.Shared, spot, new Random(7), hulkSpeedRomTicks: 8, () => center);
+        var hulk = new Hulk(TestSprites.Shared, spot, new Random(7), stepDelayRomFrames: 8, () => center);
         field.AddHulk(hulk);
 
         // End the player's start grace period (robots are frozen during it).
@@ -132,7 +132,7 @@ public sealed class PlayFieldMovementTests
         IntVector2 afterAim = hulk.Position; // first unfrozen update = the spawn aim, no move
 
         // Step period = 8 ROM frames = 9.6 ticks, so the step lands on the 10th.
-        int stepPeriod = GameplayConstants.PortTicksCeil(8);
+        int stepPeriod = ArcadeClock.PortTicksCeil(8);
         for (int i = 1; i < stepPeriod; i++)
         {
             field.Update(new GameTime());
@@ -151,7 +151,7 @@ public sealed class PlayFieldMovementTests
         Rectangle bounds = field.Wall.PlayfieldBounds;
         // Right up against the left wall, hunting a point that keeps it aimed left.
         IntVector2 spot = new(bounds.X + 4, bounds.Y + bounds.Height / 2 - 16);
-        var hulk = new Hulk(TestSprites.Shared, spot, new Random(11), hulkSpeedRomTicks: 5, () => spot);
+        var hulk = new Hulk(TestSprites.Shared, spot, new Random(11), stepDelayRomFrames: 5, () => spot);
         field.AddHulk(hulk);
 
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // end grace
@@ -183,6 +183,6 @@ public sealed class PlayFieldMovementTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3);
+        return new PlayFieldBuilder().WithParameters(parameters).WithSeed(99).Build();
     }
 }

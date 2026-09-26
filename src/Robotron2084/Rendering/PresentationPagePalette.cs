@@ -15,11 +15,11 @@ namespace Robotron2084.Rendering;
 /// | `$89DA` | the border "W" logos step their colour operand `$77 → $66 → … → $11 → $77`, i.e. one entry per step down through 7…1 |
 ///
 /// The seven entries are red, blue, red-orange, green, magenta, ORANGE and yellow, so the page's
-/// text is ORANGE with a white flash sweeping through it, and the art
-/// around it cycles through the seven.
+/// text is ORANGE with a white flash sweeping through it, and the border logos
+/// around it cycle through the seven.
 ///
-/// **Two clocks, both on notes §52's exact-6ths accumulator** (a ROM frame is 6/5 of a port tick):
-/// the WHITE CHASE steps every 3 ROM frames, and the ART'S colour operand steps every 28 frames —
+/// **Two clocks, both on notes §52's clock-unit accumulator** (a ROM frame is 6/5 of a port tick):
+/// the WHITE CHASE steps every 3 ROM frames, and the border logos' colour operand steps every 28 frames —
 /// the border ring's own rate, which comes out of the animation loop at `$88EF` waiting on
 /// <c>vidctrs</c> and moving six logos a frame over a ring of 28 (`$87D9`'s `LDA #$1C`), so a given
 /// logo is re-coloured once every 28 frames.
@@ -51,27 +51,27 @@ public sealed class PresentationPagePalette
     private const int ChaseRomFramesPerStep = 3;
 
     /// <summary>One step per logo-handling, and the ring is 28 logos of one frame each.</summary>
-    private const int ArtRomFramesPerStep = 28;
+    private const int WordmarkRomFramesPerStep = 28;
 
     private readonly int _slotCount = LastSlot - FirstSlot + 1;
 
     private int _chaseSlot = FirstSlot;
-    private int _artStep;
-    private int _chaseSixths;
-    private int _artSixths;
+    private int _wordmarkStep;
+    private int _chaseClockUnits;
+    private int _wordmarkClockUnits;
 
     /// <summary>
-    /// The palette entry the page's art is drawn in on this step: slot 7, 6, 5, …, 1 and round
+    /// The palette entry the page's wordmark is drawn in on this step: slot 7, 6, 5, …, 1 and round
     /// (the ROM's `$77 → $66 → … → $11 → $77`).
     /// </summary>
-    public int ArtColorSlot => LastSlot - _artStep;
+    public int WordmarkColorSlot => LastSlot - _wordmarkStep;
 
     /// <summary>
-    /// The entry one step BEHIND <see cref="ArtColorSlot"/> (slot 1 wraps to 7). The port's traced
+    /// The entry one step BEHIND <see cref="WordmarkColorSlot"/> (slot 1 wraps to 7). The port's traced
     /// wordmark draws its rim here so the reference screenshot's two-tone survives the cycle — and
     /// at the wrap the pair is the reference's own red body on a yellow rim.
     /// </summary>
-    public int ArtRimSlot => ArtColorSlot == FirstSlot ? LastSlot : ArtColorSlot - 1;
+    public int WordmarkRimSlot => WordmarkColorSlot == FirstSlot ? LastSlot : WordmarkColorSlot - 1;
 
     /// <summary>
     /// The page's seven colours, and NO white yet: the ROM copies the table at `$8A3A` before its
@@ -89,18 +89,18 @@ public sealed class PresentationPagePalette
     /// <summary>Advances both clocks by one port tick (call once per Update).</summary>
     public void Update(GamePalette palette)
     {
-        _chaseSixths += ArcadeClock.UnitsPerPortTick;
-        if (StepDue(ref _chaseSixths, ChaseRomFramesPerStep))
+        _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
+        if (StepDue(ref _chaseClockUnits, ChaseRomFramesPerStep))
         {
             _chaseSlot = _chaseSlot >= LastSlot ? FirstSlot : _chaseSlot + 1;
             Start(palette); // the ROM re-copies the table on every step...
             palette.SetSlot(_chaseSlot, ChaseColor); // ...and then whitens the current entry
         }
 
-        _artSixths += ArcadeClock.UnitsPerPortTick;
-        if (StepDue(ref _artSixths, ArtRomFramesPerStep))
+        _wordmarkClockUnits += ArcadeClock.UnitsPerPortTick;
+        if (StepDue(ref _wordmarkClockUnits, WordmarkRomFramesPerStep))
         {
-            _artStep = (_artStep + 1) % _slotCount;
+            _wordmarkStep = (_wordmarkStep + 1) % _slotCount;
         }
     }
 
@@ -117,15 +117,15 @@ public sealed class PresentationPagePalette
     }
 
     /// <summary>True when a clock's accumulator has reached <paramref name="romFrames"/> frames.</summary>
-    private static bool StepDue(ref int sixths, int romFrames)
+    private static bool StepDue(ref int clockUnits, int romFrames)
     {
         int period = ArcadeClock.Units(romFrames);
-        if (sixths < period)
+        if (clockUnits < period)
         {
             return false;
         }
 
-        sixths -= period;
+        clockUnits -= period;
         return true;
     }
 }

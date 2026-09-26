@@ -255,6 +255,6 @@ public sealed class InitialsEntryModelTests
         }
     }
 
-    /// <summary>A port tick is five sixths of a ROM frame, so N frames are (N x 6 + 4) / 5 ticks.</summary>
+    /// <summary>A port tick is five clock units, and a ROM frame is six, so N frames are (N x 6 + 4) / 5 ticks.</summary>
     private static int TicksForRomFrames(int romFrames) => ((romFrames * 6) + 4) / 5;
 }

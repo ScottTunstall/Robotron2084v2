@@ -119,7 +119,7 @@ public static class WaveTable
     ];
 
     /// <summary>HLKSPD @ $BE61 — hulk update rate (lower = faster).</summary>
-    public static readonly int[] HulkSpeed =
+    public static readonly int[] HulkStepDelayRomFrames =
     [
         8, 8, 7, 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
     ];
@@ -131,7 +131,7 @@ public static class WaveTable
     ];
 
     /// <summary>BRNSPD @ $BE63 — brain speed (update rate; lower = faster).</summary>
-    public static readonly int[] BrainSpeed =
+    public static readonly int[] BrainBeatDelayRomFrames =
     [
         8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6
     ];
@@ -155,7 +155,7 @@ public static class WaveTable
     ];
 
     /// <summary>SQSPD @ $BE67 — quark movement (destination random bound).</summary>
-    public static readonly int[] QuarkMove =
+    public static readonly int[] QuarkSpeedCap =
     [
         50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60
     ];
@@ -165,7 +165,7 @@ public static class WaveTable
     [
         Grunts, Electrodes, Mommies, Daddies, Mikeys, Hulks, Brains, Spheroids, Quarks,
         GruntMoveDelay, GruntSpeedFloor, MaxDropsX2, EnforcerFireDelay, SpheroidDropDelay,
-        HulkSpeed, BrainFireDelay, BrainSpeed, TankFireDelay, ShellSpeed, QuarkDropDelay, QuarkMove,
+        HulkStepDelayRomFrames, BrainFireDelay, BrainBeatDelayRomFrames, TankFireDelay, ShellSpeed, QuarkDropDelay, QuarkSpeedCap,
     ];
 
     /// <summary>One wave's full parameter row (waves 41+ repeat 21-40, ROM rule).</summary>
@@ -189,13 +189,13 @@ public static class WaveTable
             GruntSpeedFloor[i],
             EnforcerFireDelay[i],
             SpheroidDropDelay[i],
-            HulkSpeed[i],
+            HulkStepDelayRomFrames[i],
             BrainFireDelay[i],
-            BrainSpeed[i],
+            BrainBeatDelayRomFrames[i],
             TankFireDelay[i],
             ShellSpeed[i],
             QuarkDropDelay[i],
-            QuarkMove[i]);
+            QuarkSpeedCap[i]);
     }
 
     /// <summary>Resolved wave number after the ROM's 41+ → repeat-21-40 rule.</summary>

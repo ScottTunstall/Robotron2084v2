@@ -180,9 +180,9 @@ public sealed class ControlSettingsStoreTests
         PlayerInputState state = settings.ReadPlayer(0, keys, new GamePadState(), new GamePadState());
 
         Assert.Equal(new IntVector2(0, -1), state.MoveDirection);
-        Assert.Equal(new IntVector2(1, 0), state.AimDirection);
-        Assert.True(state.FirePressed);
-        Assert.False(state.SkipLevelPressed);
+        Assert.Equal(new IntVector2(1, 0), state.ShootDirection);
+        Assert.True(state.FireHeld);
+        Assert.False(state.SkipLevelHeld);
     }
 
     [Fact]
@@ -193,8 +193,8 @@ public sealed class ControlSettingsStoreTests
 
         PlayerInputState state = settings.ReadPlayer(1, keys, new GamePadState(), new GamePadState());
 
-        Assert.Equal(new IntVector2(0, -1), state.AimDirection);
-        Assert.True(state.FirePressed);
+        Assert.Equal(new IntVector2(0, -1), state.ShootDirection);
+        Assert.True(state.FireHeld);
     }
 
     [Fact]
@@ -204,8 +204,8 @@ public sealed class ControlSettingsStoreTests
 
         PlayerInputState state = settings.ReadPlayer(0, new KeyboardState(Keys.Space, Keys.Insert), new GamePadState(), new GamePadState());
 
-        Assert.True(state.FirePressed);      // Space has always fired
-        Assert.True(state.SkipLevelPressed); // Insert is the skip-level key since P became PAUSE
+        Assert.True(state.FireHeld);      // Space has always fired
+        Assert.True(state.SkipLevelHeld); // Insert is the skip-level key since P became PAUSE
     }
 
     [Fact]
@@ -215,7 +215,7 @@ public sealed class ControlSettingsStoreTests
 
         PlayerInputState state = settings.ReadPlayer(0, new KeyboardState(Keys.D2), new GamePadState(), new GamePadState());
 
-        Assert.True(state.StartTwoPlayersPressed);
-        Assert.False(state.StartOnePlayerPressed);
+        Assert.True(state.StartTwoPlayersHeld);
+        Assert.False(state.StartOnePlayerHeld);
     }
 }

@@ -11,25 +11,18 @@ namespace Robotron2084.Entities;
 /// <remarks>ROM: the enemy-death and directional-explosion routines plus their shared setup and
 /// per-frame layout code (RRX7.ASM/RRHX4.ASM/RRDX2.ASM; notes §61). An explosion runs a fixed number
 /// of frames and its spacing grows by a fixed step each frame, so the spacing runs 1,2,3,…; an appear
-/// (<see cref="Kind.Appear"/>, ROM: RRG23.ASM's <c>APPEAR</c>) starts large and shrinks, ending when
+/// (<see cref="StripEffectKind.Appear"/>, ROM: RRG23.ASM's <c>APPEAR</c>) starts large and shrinks, ending when
 /// the size would reach 1. One fan opens UP and DOWN at once from the picture's MIDDLE, so both halves
 /// carry half the strips and reach equally far; a diagonal shot leans them opposite ways (a chevron).
-/// The port keeps the arcade's units: X in art pixels, Y in rows, one unit of spacing is ONE PIXEL
+/// The port keeps the arcade's units: X in arcade pixels, Y in rows, one unit of spacing is ONE PIXEL
 /// along the fan axis in both families, and a strip outside the clip is dropped rather than scaled. The
 /// dead entity's frame is resolved at draw time, so this class holds no texture. Timers count 5 per
 /// tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
-public sealed class Explosion : IEntity
+public sealed class StripEffect : IEntity
 {
-    /// <summary>Explode = the spacing grows (the fan opens); Appear = it shrinks (it converges).</summary>
-    public enum Kind
-    {
-        Explode,
-        Appear,
-    }
-
     private readonly Func<Texture2D> _animationFrameOf;
     private readonly Rectangle _bounds;
-    private readonly Kind _kind;
+    private readonly StripEffectKind _kind;
     private readonly StripFanAxis _axis;
     private readonly int _slope;          // the diagonal lean: -1 / 0 / +1 (ROM: SLOPE)
     private readonly StripClip _clip;
@@ -38,10 +31,10 @@ public sealed class Explosion : IEntity
     private int _timer;                  // Counts up to the next ROM frame: 5 per tick, 6 per arcade frame (notes §52, §67.4)
 
     /// <summary>Builds one record; the two static factories below are the only callers.</summary>
-    private Explosion(
+    private StripEffect(
         Func<Texture2D> animationFrameOf,
         Rectangle bounds,
-        Kind kind,
+        StripEffectKind kind,
         StripFanAxis axis,
         int slope,
         StripClip clip)
@@ -55,37 +48,37 @@ public sealed class Explosion : IEntity
 
         // The spacing accumulator starts small for an explosion ("1 unit is the minimum") or large
         // for an appear, so it can shrink back down; an explosion also gets a frame count.
-        _sizer = kind == Kind.Explode
-            ? GameplayConstants.StripExplosionStartSizer
-            : GameplayConstants.StripAppearStartSizer;
+        _sizer = kind == StripEffectKind.Explode
+            ? StripExplosionTuning.ExplosionStartSizer
+            : StripExplosionTuning.AppearStartSizer;
 
-        _frames = GameplayConstants.StripExplosionFrames;
+        _frames = StripExplosionTuning.ExplosionFrames;
     }
 
     /// <summary>Starts the explosion for a killed object; the killing shot picks the axis and lean.</summary>
-    /// <param name="dead">The object being exploded; its art and explosion bounds are used.</param>
+    /// <param name="dead">The object being exploded; its animation frame and explosion bounds are used.</param>
     /// <param name="direction">The killing shot's direction, or null for a kill with no laser.</param>
     /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
     /// <returns>The new explosion record.</returns>
     /// <remarks>ROM: the "make an enemy explode" entry point, which dispatches to its straight or
     /// directional setup. The rect is the object's position with the size of the picture it points at,
     /// which can be bigger than its collision box.</remarks>
-    public static Explosion StartExplosion(IExplodable dead, Direction8? direction, StripClip clip)
+    public static StripEffect StartExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {
-        (StripFanAxis axis, int slope) = Dispatch(direction);
-        return new Explosion(() => dead.CurrentAnimationFrame, dead.ExplosionBounds, Kind.Explode, axis, slope, clip);
+        (StripFanAxis axis, int slope) = FanForShot(direction);
+        return new StripEffect(() => dead.CurrentAnimationFrame, dead.ExplosionBounds, StripEffectKind.Explode, axis, slope, clip);
     }
 
     /// <summary>Starts an appear: the same record with the size running down, so the strips converge.</summary>
-    /// <param name="source">The object materialising; its current art is used.</param>
+    /// <param name="source">The object materialising; its current animation frame is used.</param>
     /// <param name="bounds">The rect the strips are laid out in.</param>
     /// <param name="axis">Which way the sprite is cut: rows or columns.</param>
     /// <param name="slope">The diagonal lean, -1 / 0 / +1.</param>
     /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
     /// <returns>The new appear record.</returns>
     /// <remarks>ROM: RRG23.ASM's <c>APPEAR</c> makes one of these per frame for each robot.</remarks>
-    public static Explosion StartAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
-        => new Explosion(() => source.CurrentAnimationFrame, bounds, Kind.Appear, axis, slope, clip);
+    public static StripEffect StartAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
+        => new StripEffect(() => source.CurrentAnimationFrame, bounds, StripEffectKind.Appear, axis, slope, clip);
 
     /// <summary>Maps a killing shot's direction to the fan axis and lean it produces.</summary>
     /// <param name="direction">The killing shot's direction, or null for a kill with no laser.</param>
@@ -95,7 +88,7 @@ public sealed class Explosion : IEntity
     /// vertical shot uses the columns split (they fly apart horizontally), a pure horizontal shot or no
     /// direction at all uses the rows split, and a diagonal shot uses the rows split with the halves
     /// leaning opposite ways. These two branches are easy to swap by mistake.</remarks>
-    internal static (StripFanAxis Axis, int Slope) Dispatch(Direction8? direction) => direction switch
+    internal static (StripFanAxis Axis, int Slope) FanForShot(Direction8? direction) => direction switch
     {
         // A pure vertical shot → cut into columns.
         Direction8.Up or Direction8.Down => (StripFanAxis.Columns, 0),
@@ -119,7 +112,7 @@ public sealed class Explosion : IEntity
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Explode or Appear (test hook).</summary>
-    internal Kind Mode => _kind;
+    internal StripEffectKind Kind => _kind;
 
     /// <summary>The current spacing (the sizer's high byte) — test hook.</summary>
     internal int Spacing => Math.Max(1, _sizer >> 8);
@@ -128,7 +121,7 @@ public sealed class Explosion : IEntity
     /// <remarks>The ROM calls these the vertical family (rows) and the horizontal family (columns).</remarks>
     internal StripFanAxis Axis => _axis;
 
-    /// <summary>The diagonal lean, -1 / 0 / +1 (test hook — see <see cref="Dispatch"/>).</summary>
+    /// <summary>The diagonal lean, -1 / 0 / +1 (test hook — see <see cref="FanForShot"/>).</summary>
     internal int Slope => _slope;
 
     /// <summary>One ROM frame of the record's life.</summary>
@@ -150,7 +143,7 @@ public sealed class Explosion : IEntity
 
         _timer -= ArcadeClock.UnitsPerRomFrame;
 
-        if (_kind == Kind.Explode)
+        if (_kind == StripEffectKind.Explode)
         {
             // Count the frame down; at zero the explosion is gone.
             if (--_frames <= 0)
@@ -159,12 +152,12 @@ public sealed class Explosion : IEntity
                 return;
             }
 
-            _sizer += GameplayConstants.StripSizerStep;
+            _sizer += StripExplosionTuning.SizerStep;
             return;
         }
 
         // Shrink the spacing; the record dies once it would fall to 1 or less.
-        int next = _sizer - GameplayConstants.StripSizerStep;
+        int next = _sizer - StripExplosionTuning.SizerStep;
         if ((next >> 8) <= 1)
         {
             LifeState = EntityLifeState.Dead;

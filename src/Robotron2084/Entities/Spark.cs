@@ -23,7 +23,7 @@ namespace Robotron2084.Entities;
 public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
     private readonly SpriteSet _sprites;
-    private static readonly int Size = ScreenSize.Scaled(GameplayConstants.MissileSizeSpecPixels);
+    private static readonly int Size = ScreenSize.Scaled(CollisionSizes.MissileSizeSpecPixels);
     private readonly Random _random;
     private readonly IntVector2 _accelerationSubpixels; // the constant per-axis acceleration, in 1/256 px per move, rolled once at spawn (ROM: PD2/PD4)
     private IntVector2 _velocitySubpixels; // current velocity, in 1/256 px per ROM frame (ROM: OXV/OYV)
@@ -52,10 +52,10 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _random = random;
 
         // Aim jitter, -16..+15 columns; suppressed on X when the player hugs the left wall.
-        int jitterX = _random.Next(-GameplayConstants.SparkJitterColumns, GameplayConstants.SparkJitterColumns);
-        int jitterY = _random.Next(-GameplayConstants.SparkJitterColumns, GameplayConstants.SparkJitterColumns);
+        int jitterX = _random.Next(-SparkTuning.SparkJitterColumns, SparkTuning.SparkJitterColumns);
+        int jitterY = _random.Next(-SparkTuning.SparkJitterColumns, SparkTuning.SparkJitterColumns);
         if (playfieldBounds is { } bounds &&
-            playerPosition.X < bounds.X + ScreenSize.Columns(GameplayConstants.SparkLeftWallJitterColumns))
+            playerPosition.X < bounds.X + ScreenSize.Columns(SparkTuning.SparkLeftWallJitterColumns))
         {
             jitterX = 0;
         }
@@ -64,18 +64,18 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         int deltaY = playerPosition.Y + ScreenSize.Columns(jitterY) - position.Y;
 
         // 4x the aim delta, in subpixels (the mover only acts on the velocity's high byte).
-        int subpixelsPerPortPxPerMove = GameplayConstants.SparkVelocityScale / GameplayConstants.SparkAimDivisor;
+        int subpixelsPerPortPxPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
         _velocitySubpixels = new IntVector2(deltaX * subpixelsPerPortPxPerMove, deltaY * subpixelsPerPortPxPerMove);
 
         // The constant per-axis acceleration: a random -16..+15, in the same subpixel units.
         _accelerationSubpixels = new IntVector2(
-            _random.Next(-GameplayConstants.SparkAccelRomRange, GameplayConstants.SparkAccelRomRange) * subpixelsPerPortPxPerMove,
-            _random.Next(-GameplayConstants.SparkAccelRomRange, GameplayConstants.SparkAccelRomRange) * subpixelsPerPortPxPerMove);
+            _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPxPerMove,
+            _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPxPerMove);
 
         // Life, in timer units: 5 per tick, 6 per arcade frame.
         _remainingLife = ArcadeClock.Units(_random.Next(
-            GameplayConstants.SparkLifeMinRomTicks,
-            GameplayConstants.SparkLifeMaxRomTicks + 1));
+            SparkTuning.SparkLifeMinRomFrames,
+            SparkTuning.SparkLifeMaxRomFrames + 1));
 
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
@@ -90,11 +90,19 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Laser hit: removed at once.</summary>
-    public void Kill() => LifeState = EntityLifeState.Dead;
+    public void Kill()
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        LifeState = EntityLifeState.Dead;
+    }
 
     /// <summary>Which of the four flicker frames is showing (test hook).</summary>
     /// <remarks>The ROM's 4 flicker pictures, one per 4-ROM-frame cycle.</remarks>
-    internal int FrameIndex => _flickerTimer / ArcadeClock.Units(GameplayConstants.SparkFramePeriodRomTicks) % SpriteSet.SparkFrameCount;
+    internal int AnimationFrameIndex => _flickerTimer / ArcadeClock.Units(SparkTuning.SparkFramePeriodRomFrames) % SpriteSet.SparkAnimationFrameCount;
 
     /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
     internal IntVector2 VelocitySubpixels => _velocitySubpixels;
@@ -108,7 +116,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="field">The playfield wall.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
@@ -125,9 +133,9 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
         // Every move the acceleration is added to the velocity, so the path curves into a parabola.
         _accelerationTimer += ArcadeClock.UnitsPerPortTick;
-        if (_accelerationTimer >= ArcadeClock.Units(GameplayConstants.SparkMoveIntervalRomTicks))
+        if (_accelerationTimer >= ArcadeClock.Units(SparkTuning.SparkMoveIntervalRomFrames))
         {
-            _accelerationTimer -= ArcadeClock.Units(GameplayConstants.SparkMoveIntervalRomTicks);
+            _accelerationTimer -= ArcadeClock.Units(SparkTuning.SparkMoveIntervalRomFrames);
             _velocitySubpixels = new IntVector2(
                 _velocitySubpixels.X + _accelerationSubpixels.X,
                 _velocitySubpixels.Y + _accelerationSubpixels.Y);
@@ -144,11 +152,11 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
             // The step is per ROM frame, not per move-pass: spreading it over the move interval
             // runs 4x slow. 1 port px = SparkVelocityScale subpixel units.
-            int stepX = _positionRemainderSubpixels.X / GameplayConstants.SparkVelocityScale;
-            int stepY = _positionRemainderSubpixels.Y / GameplayConstants.SparkVelocityScale;
+            int stepX = _positionRemainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
+            int stepY = _positionRemainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
             _positionRemainderSubpixels = new IntVector2(
-                _positionRemainderSubpixels.X - (stepX * GameplayConstants.SparkVelocityScale),
-                _positionRemainderSubpixels.Y - (stepY * GameplayConstants.SparkVelocityScale));
+                _positionRemainderSubpixels.X - (stepX * ScreenSize.SubpixelsPerPixel),
+                _positionRemainderSubpixels.Y - (stepY * ScreenSize.SubpixelsPerPixel));
 
             MoveBy(field, stepX, stepY);
         }
@@ -161,8 +169,8 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     private void MoveBy(PlayField field, int stepX, int stepY)
     {
         // Safety cap, reproducing the ROM's own velocity ceiling.
-        stepX = Math.Clamp(stepX, -GameplayConstants.SparkMaxSpeed, GameplayConstants.SparkMaxSpeed);
-        stepY = Math.Clamp(stepY, -GameplayConstants.SparkMaxSpeed, GameplayConstants.SparkMaxSpeed);
+        stepX = Math.Clamp(stepX, -SparkTuning.SparkMaxSpeed, SparkTuning.SparkMaxSpeed);
+        stepY = Math.Clamp(stepY, -SparkTuning.SparkMaxSpeed, SparkTuning.SparkMaxSpeed);
 
         // Each axis is updated only if the step stays inside the field — no clamp, no bounce.
         Rectangle inner = field.Wall.PlayfieldBounds;
@@ -192,6 +200,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         }
     }
 
-    /// <summary>The flicker frame this spark is showing — the art pixel-perfect collision compares.</summary>
-    public Texture2D CurrentAnimationFrame => _sprites.SparkFrames[FrameIndex];
+    /// <summary>The flicker frame this spark is showing — the picture pixel-perfect collision compares.</summary>
+    public Texture2D CurrentAnimationFrame => _sprites.SparkAnimationFrames[AnimationFrameIndex];
 }

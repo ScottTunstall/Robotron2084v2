@@ -17,8 +17,8 @@ namespace Robotron2084.Entities;
 /// aims at the player's coordinate plus a random -6..+9 nudge. It has no lifetime of its own: only
 /// being hit removes it, leaving no animation, and it keeps flying while the robots are frozen. Its
 /// trail is a ring of the 9 most recent positions — each step erases the mark from 9 steps ago —
-/// drawn as solid rectangles <see cref="GameplayConstants.MissileMarkArcadeWidth"/> x
-/// <see cref="GameplayConstants.MissileMarkArcadeHeight"/> arcade px, because the arcade's own video-memory write
+/// drawn as solid rectangles <see cref="CruiseMissileTuning.MarkArcadeWidth"/> x
+/// <see cref="CruiseMissileTuning.MarkArcadeHeight"/> arcade px, because the arcade's own video-memory write
 /// coloured two stacked pixels; the ROM's missile picture exists only to define the collision box.
 /// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.
 /// </remarks>
@@ -28,11 +28,11 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     /// <summary>The collision box's size, 6x4 arcade px, in port pixels; the box itself is offset up-left.</summary>
     /// <remarks>The disassembly labels this hitbox "FAT PHONY GUY" — far bigger than the
-    /// <see cref="GameplayConstants.MissileMarkArcadeWidth"/> x
-    /// <see cref="GameplayConstants.MissileMarkArcadeHeight"/> arcade px mark, and offset up and
+    /// <see cref="CruiseMissileTuning.MarkArcadeWidth"/> x
+    /// <see cref="CruiseMissileTuning.MarkArcadeHeight"/> arcade px mark, and offset up and
     /// left of the tracked point.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(GameplayConstants.CruiseMissileCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.CruiseMissileCollisionSize.Height));
+        (ScreenSize.Scaled(CollisionSizes.CruiseMissileCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.CruiseMissileCollisionSize.Height));
 
     /// <summary>How far the missile steps along X per move, in port pixels — two arcade px.</summary>
     /// <remarks>The arcade moves it one video-memory column per step; a column is 2 arcade px wide.</remarks>
@@ -42,10 +42,10 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private static readonly int StepYPortPixels = ScreenSize.Scaled(1);
 
     /// <summary>How many ROM frames one beat takes (NAP 2 plus the execution vblank).</summary>
-    private const int BeatPeriodRomTicks = 3;
+    private const int BeatPeriodRomFrames = 3;
 
     /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomTicks);
+    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomFrames);
 
     /// <summary>How many moves the missile makes per beat.</summary>
     private const int MovesPerBeat = 2;
@@ -60,7 +60,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     private readonly Random _random;
 
-    /// <summary>The rolling tail of up to <see cref="GameplayConstants.MissileTrailMarks"/> positions, oldest first.</summary>
+    /// <summary>The rolling tail of up to <see cref="CruiseMissileTuning.TrailMarks"/> positions, oldest first.</summary>
     private readonly List<IntVector2> _trail = new();
 
     private IntVector2 _position;
@@ -89,8 +89,8 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>The collision box: the tracked point shifted one pixel up and left.</summary>
     /// <remarks>ROM: the "FAT PHONY GUY" hitbox, offset up and left of the tracked point.</remarks>
     public Rectangle Bounds => new(
-        _position.X + ScreenSize.Columns(GameplayConstants.CruiseMissileBoxOffsetColumns),
-        _position.Y + ScreenSize.Scaled(GameplayConstants.CruiseMissileBoxOffsetRows),
+        _position.X + ScreenSize.Columns(CollisionSizes.CruiseMissileBoxOffsetColumns),
+        _position.Y + ScreenSize.Scaled(CollisionSizes.CruiseMissileBoxOffsetRows),
         CollisionSize.Width,
         CollisionSize.Height);
 
@@ -101,6 +101,11 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <remarks>ROM: <c>CMKIL</c> — nothing is left behind.</remarks>
     public void Kill()
     {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
         LifeState = EntityLifeState.Dead;
         _trail.Clear();
     }
@@ -174,7 +179,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
         // A trail mark for the position just left, then drop the oldest (the tail is 9 marks).
         _trail.Add(leaving);
-        if (_trail.Count > GameplayConstants.MissileTrailMarks)
+        if (_trail.Count > CruiseMissileTuning.TrailMarks)
         {
             _trail.RemoveAt(0);
         }
@@ -211,8 +216,8 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     /// <summary>Draws the trail marks and the missile's head.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <remarks>Each mark is <see cref="GameplayConstants.MissileMarkArcadeWidth"/> x
-    /// <see cref="GameplayConstants.MissileMarkArcadeHeight"/> arcade px, as the hardware's video
+    /// <remarks>Each mark is <see cref="CruiseMissileTuning.MarkArcadeWidth"/> x
+    /// <see cref="CruiseMissileTuning.MarkArcadeHeight"/> arcade px, as the hardware's video
     /// writes produced. The trail uses one palette slot and the head another.</remarks>
     public void Draw(SpriteBatch spriteBatch)
     {
@@ -221,10 +226,10 @@ public sealed class CruiseMissile : IEntity, IRemovable
             return;
         }
 
-        int markWidth = ScreenSize.Scaled(GameplayConstants.MissileMarkArcadeWidth);
-        int markHeight = ScreenSize.Scaled(GameplayConstants.MissileMarkArcadeHeight);
+        int markWidth = ScreenSize.Scaled(CruiseMissileTuning.MarkArcadeWidth);
+        int markHeight = ScreenSize.Scaled(CruiseMissileTuning.MarkArcadeHeight);
 
-        Color trailColor = _sprites.SlotColor(GameplayConstants.MissileTrailSlot);
+        Color trailColor = _sprites.SlotColor(CruiseMissileTuning.TrailSlot);
         foreach (IntVector2 mark in _trail)
         {
             _sprites.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight), trailColor);
@@ -234,6 +239,6 @@ public sealed class CruiseMissile : IEntity, IRemovable
         _sprites.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(_position.X, _position.Y, markWidth, markHeight),
-            _sprites.SlotColor(GameplayConstants.MissileHeadSlot));
+            _sprites.SlotColor(CruiseMissileTuning.HeadSlot));
     }
 }

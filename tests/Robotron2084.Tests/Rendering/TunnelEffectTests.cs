@@ -32,8 +32,8 @@ public sealed class TunnelEffectTests
         }
     }
 
-    /// <summary>Port ticks for one task pass on the exact-6ths clock (notes §83).</summary>
-    private static int TicksPerPass => (TunnelEffect.PassFifths + 4) / 5;
+    /// <summary>Port ticks for one task pass on the clock-unit clock (notes §83).</summary>
+    private static int TicksPerPass => (TunnelEffect.PassClockUnits + 4) / 5;
 
     [Fact]
     public void EachPassDrawsTwoRingsAndStepsTheCornersOut()
@@ -53,7 +53,7 @@ public sealed class TunnelEffectTests
     public void TheWholeEffectLastsAboutTwoSeconds()
     {
         // The author's playtest of the arcade: "~2 seconds at least". 54 passes over the two
-        // phases at PassFifths a pass must land near two seconds of port ticks (60 Hz), i.e.
+        // phases at PassClockUnits a pass must land near two seconds of port ticks (60 Hz), i.e.
         // around 130 — this is the number the playtest fixed (notes §83).
         var tunnel = new TunnelEffect();
 

@@ -6,7 +6,7 @@ namespace Robotron2084.Tests.Rendering;
 /// <summary>
 /// The Williams presentation page's own colour set (notes §106): the seven entries at ROM `$8A70`
 /// written into palette slots 1-7 (`$8A3A`), the WHITE flash the page chases through them every
-/// three ROM frames (`$8A4F`/`$8A68`), and the art's colour step (`$89DA`'s `$77 → $66 → … → $11 →
+/// three ROM frames (`$8A4F`/`$8A68`), and the border logos' colour step (`$89DA`'s `$77 → $66 → … → $11 →
 /// $77`) that the port's traced wordmark borrows.
 /// </summary>
 public sealed class PresentationPagePaletteTests
@@ -80,7 +80,7 @@ public sealed class PresentationPagePaletteTests
         int[] expected = [2, 3, 4, 5, 6, 7, 1, 2, 3];
         Assert.Equal(expected, moves.Select(move => move.Slot));
 
-        // Three ROM frames is 18 sixths and the clock advances 5 sixths a tick, so a step lands on
+        // Three ROM frames is 18 clock units and the clock advances 5 clock units a tick, so a step lands on
         // the third or the fourth tick — never earlier and never later.
         int[] gaps = moves.Zip(moves.Skip(1), (first, second) => second.Tick - first.Tick).ToArray();
         Assert.All(gaps, gap => Assert.InRange(gap, 3, 4));
@@ -132,7 +132,7 @@ public sealed class PresentationPagePaletteTests
     }
 
     [Fact]
-    public void TheArtColourStepsDownTheSevenEntriesOnceEveryTwentyEightFrames()
+    public void TheWordmarkColourStepsDownTheSevenEntriesOnceEveryTwentyEightFrames()
     {
         (GamePalette palette, PresentationPagePalette page) = Started();
 
@@ -143,8 +143,8 @@ public sealed class PresentationPagePaletteTests
             (7, 6), (6, 5), (5, 4), (4, 3), (3, 2), (2, 1), (1, 7),
         ];
 
-        Assert.Equal(expected[0].Slot, page.ArtColorSlot);
-        Assert.Equal(expected[0].Rim, page.ArtRimSlot);
+        Assert.Equal(expected[0].Slot, page.WordmarkColorSlot);
+        Assert.Equal(expected[0].Rim, page.WordmarkRimSlot);
 
         for (int step = 1; step < expected.Length; step++)
         {
@@ -153,14 +153,14 @@ public sealed class PresentationPagePaletteTests
                 page.Update(palette);
             }
 
-            Assert.Equal(expected[step].Slot, page.ArtColorSlot);
-            Assert.Equal(expected[step].Rim, page.ArtRimSlot);
+            Assert.Equal(expected[step].Slot, page.WordmarkColorSlot);
+            Assert.Equal(expected[step].Rim, page.WordmarkRimSlot);
         }
 
         // At the wrap the pair is the reference screenshot's own: a red body (slot 1, $07) on a
         // yellow rim (slot 7, $3F).
-        Assert.Equal(0x07, PresentationPagePalette.PageColors[page.ArtColorSlot - 1]);
-        Assert.Equal(0x3F, PresentationPagePalette.PageColors[page.ArtRimSlot - 1]);
+        Assert.Equal(0x07, PresentationPagePalette.PageColors[page.WordmarkColorSlot - 1]);
+        Assert.Equal(0x3F, PresentationPagePalette.PageColors[page.WordmarkRimSlot - 1]);
     }
 
     [Fact]

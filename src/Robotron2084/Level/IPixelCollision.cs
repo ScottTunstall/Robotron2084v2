@@ -3,7 +3,7 @@ using Robotron2084.Entities;
 namespace Robotron2084.Level;
 
 /// <summary>
-/// The contact test the playfield uses between two entities (notes §118): the opaque pixels of the art
+/// The contact test the playfield uses between two entities (notes §118): the opaque pixels of the picture
 /// they are drawn with, rather than their collision boxes.
 /// </summary>
 /// <remarks>

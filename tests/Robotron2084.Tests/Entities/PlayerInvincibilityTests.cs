@@ -7,7 +7,7 @@ namespace Robotron2084.Tests;
 
 /// <summary>
 /// Round 7 playtest aid: the player is invincible for testing
-/// (GameplayConstants.PlayerInvincibleForTesting) so whole waves can be
+/// (PlayerTuning.PlayerInvincibleForTesting) so whole waves can be
 /// playtested; while the flag is on, Kill() must be a COMPLETE no-op
 /// (state, lives, death timer all untouched). The aid is PER PLAYER since
 /// notes §97.5 — the attract demo builds its field with it OFF, so the arcade's
@@ -18,7 +18,7 @@ public sealed class PlayerInvincibilityTests
     [Fact]
     public void Kill_IsANoOp_WhileThePlaytestFlag_IsOn()
     {
-        Assert.True(GameplayConstants.PlayerInvincibleForTesting); // the flag must be on for this test to mean anything
+        Assert.True(PlayerTuning.PlayerInvincibleForTesting); // the flag must be on for this test to mean anything
 
         var player = new Player(TestSprites.Shared, new IntVector2(100, 100), 3);
 

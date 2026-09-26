@@ -22,22 +22,42 @@ namespace Robotron2084.Entities;
 /// 6 x N.</remarks>
 public sealed class Tank : IExplodable, IRemovable
 {
-    private readonly SpriteSet _sprites;
+    /// <summary>
+    /// A tank moves vertically only when its target is more than this many arcade pixels off.
+    /// </summary>
+    /// <remarks>ROM $4E11.</remarks>
+    private const int VerticalMoveThresholdArcadePixels = 16;
+
+    /// <summary>The wave's tank fire interval when the caller gives none.</summary>
+    private const int DefaultFireIntervalBeats = 32;
+
+    /// <summary>ROM <c>TANKND</c>: a re-aim comes after at least this many beats.</summary>
+    private const int AimIntervalMinBeats = 1;
+
+    /// <summary>ROM <c>TANKND</c>: ...and before this many (exclusive bound of the random roll).</summary>
+    private const int AimIntervalMaxExclusiveBeats = 32;
+
+    /// <summary>ROM <c>TNKSHT</c>: the first shot waits the interval plus a random count of beats below this.</summary>
+    private const int FirstShotExtraBeatsMaxExclusive = 32;
+
+    /// <summary>ROM <c>ANIMATE_TANK</c>: the destination roll has this many sides...</summary>
+    private const int DestinationRollSides = 256;
+
+    /// <summary>ROM <c>ANIMATE_TANK</c>: ...and a roll at or below this aims at the player (about 38%).</summary>
+    private const int AimAtPlayerRollAtMost = 96;
+
     /// <summary>Collision box = the ROM picture dimensions (14x16 arcade px), top-left anchored at <see cref="Position"/>.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(GameplayConstants.TankCollisionSize.Width), ScreenSize.Scaled(GameplayConstants.TankCollisionSize.Height));
+        (ScreenSize.Scaled(CollisionSizes.TankCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.TankCollisionSize.Height));
 
     internal static int CollisionWidth => CollisionSize.Width;
     internal static int CollisionHeight => CollisionSize.Height;
 
-    /// <summary>
-    /// A tank moves vertically only when its target is more than 16 arcade pixels (32 screen px) off.
-    /// </summary>
-    /// <remarks>ROM $4E11.</remarks>
-    private const int VerticalMoveThresholdScreenPx = 32;
+    private static readonly int VerticalMoveThreshold = ScreenSize.ArcadePixels(VerticalMoveThresholdArcadePixels);
 
+    private readonly SpriteSet _sprites;
     private readonly Random _random;
-    private readonly int _fireDelayRomTicks;
+    private readonly int _fireIntervalBeats;
     private IntVector2 _position;
     private IntVector2 _step; // current 8-way/0 step vector (±1/0 components)
     private IntVector2 _destination;
@@ -46,7 +66,7 @@ public sealed class Tank : IExplodable, IRemovable
 
     /// <summary>Counts the tread pictures shown, one per beat.</summary>
     /// <remarks>ROM: <c>TANK3</c> advances the picture once per beat.</remarks>
-    private int _treadFrameCounter;
+    private int _treadAnimationFrameCounter;
 
     /// <summary>Counts up to the next beat.</summary>
     private int _beatTimer;
@@ -62,23 +82,23 @@ public sealed class Tank : IExplodable, IRemovable
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the tank.</param>
     /// <param name="random">The random source: the aim rolls, the destinations and the first-fire delay.</param>
-    /// <param name="fireDelayRomTicks">This wave's firing interval, in ROM frames.</param>
+    /// <param name="fireIntervalBeats">The beats between this wave's tank shots.</param>
     /// <remarks>ROM: <c>TNKSHT</c> — this wave's firing interval.</remarks>
     public Tank(
         SpriteSet sprites,
         IntVector2 position,
         Random random,
-        int fireDelayRomTicks = 32)
+        int fireIntervalBeats = DefaultFireIntervalBeats)
     {
         _sprites = sprites;
         _position = position;
         _random = random;
-        _fireDelayRomTicks = fireDelayRomTicks;
+        _fireIntervalBeats = fireIntervalBeats;
         _destination = position;
         // The first beat fires and moves before the re-aim check (ROM: TANKL).
         _aimBeatsRemaining = 0;
         // The first shot waits the interval plus a random 0..31 beats.
-        _fireCooldownBeats = fireDelayRomTicks + random.Next(0, 32);
+        _fireCooldownBeats = fireIntervalBeats + random.Next(0, FirstShotExtraBeatsMaxExclusive);
     }
 
     /// <summary>Top-left of the tank (the ROM's OBJX/OBJY).</summary>
@@ -89,9 +109,9 @@ public sealed class Tank : IExplodable, IRemovable
     {
         get
         {
-            if (_growStep < GameplayConstants.TankGrowSteps)
+            if (_growStep < TankTuning.GrowSteps)
             {
-                (int w, int h) = GameplayConstants.TankGrowSizes[_growStep];
+                (int w, int h) = TankTuning.GrowSizes[_growStep];
                 return new Rectangle(_position.X, _position.Y, ScreenSize.Scaled(w), ScreenSize.Scaled(h));
             }
 
@@ -104,14 +124,22 @@ public sealed class Tank : IExplodable, IRemovable
 
     /// <summary>Kills the tank outright: no death animation.</summary>
     /// <remarks>ROM: RRTK4.ASM's <c>TNKIL</c>.</remarks>
-    public void Kill() => LifeState = EntityLifeState.Dead;
+    public void Kill()
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        LifeState = EntityLifeState.Dead;
+    }
 
     /// <summary>Runs the birth animation, then the beat: fire, move, animate and re-aim.</summary>
     /// <param name="gameTime">Unused — the clocks are counted in ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
@@ -123,7 +151,7 @@ public sealed class Tank : IExplodable, IRemovable
 
         // ROM MTANK ("MINI TANK GROW"): the tank plays the four mini-tank pictures, one per
         // 12 ROM frames, and cannot move, aim or fire until it finishes.
-        if (_growStep < GameplayConstants.TankGrowSteps)
+        if (_growStep < TankTuning.GrowSteps)
         {
             _growTimer += ArcadeClock.UnitsPerPortTick;
             if (_growTimer < GrowPeriod)
@@ -135,10 +163,10 @@ public sealed class Tank : IExplodable, IRemovable
 
             // MTANK applies the current picture's (dx,dy) before advancing, so the mini tank
             // walks up-left and the full tank lands centred on the drop point (notes §53).
-            (int columns, int rows) = GameplayConstants.TankGrowDeltas[_growStep];
+            (int columns, int rows) = TankTuning.GrowDeltas[_growStep];
             _position += new IntVector2(ScreenSize.Columns(columns), ScreenSize.Scaled(rows));
 
-            if (++_growStep < GameplayConstants.TankGrowSteps)
+            if (++_growStep < TankTuning.GrowSteps)
             {
                 return;
             }
@@ -146,12 +174,12 @@ public sealed class Tank : IExplodable, IRemovable
 
         // This wave's tank speed (2 vblanks) plus the 1 frame the process takes (ROM: TNKSPD).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < ArcadeClock.Units(GameplayConstants.TankBeatRomFrames))
+        if (_beatTimer < ArcadeClock.Units(TankTuning.BeatRomFrames))
         {
             return;
         }
 
-        _beatTimer -= ArcadeClock.Units(GameplayConstants.TankBeatRomFrames);
+        _beatTimer -= ArcadeClock.Units(TankTuning.BeatRomFrames);
 
         // One beat, always in this order (ROM: the TANK process).
         if (--_fireCooldownBeats <= 0)
@@ -163,11 +191,11 @@ public sealed class Tank : IExplodable, IRemovable
             }
 
             // Later shots reload to exactly this wave's interval — no random padding.
-            _fireCooldownBeats = _fireDelayRomTicks;
+            _fireCooldownBeats = _fireIntervalBeats;
         }
 
         // One arcade pixel on each active axis per beat (ROM: the TANK1 step).
-        int stepPixels = ScreenSize.Scaled(GameplayConstants.TankStepArcadePixels);
+        int stepPixels = ScreenSize.Scaled(TankTuning.StepArcadePixels);
         IntVector2 step = new(_step.X * stepPixels, _step.Y * stepPixels);
         IntVector2 next = _position + step;
         if (field.Wall.Intersects(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
@@ -189,7 +217,7 @@ public sealed class Tank : IExplodable, IRemovable
             _position = next;
         }
 
-        _treadFrameCounter++; // one walk frame per beat (ROM: `TANK3` advances the picture once)
+        _treadAnimationFrameCounter++; // one walk frame per beat (ROM: `TANK3` advances the picture once)
 
         // The re-aim timer counts down in beats; a blocked step already turned the tank (ROM: TANKND).
         if (--_aimBeatsRemaining <= 0)
@@ -199,26 +227,26 @@ public sealed class Tank : IExplodable, IRemovable
         }
     }
 
-    /// <summary>The next re-aim interval: a random 1..31 beats.</summary>
+    /// <summary>The next re-aim interval: a random count of beats.</summary>
     /// <remarks>ROM: <c>TANKND</c>.</remarks>
-    private static int NextAimInterval(Random random) => random.Next(1, 32);
+    private static int NextAimInterval(Random random) => random.Next(AimIntervalMinBeats, AimIntervalMaxExclusiveBeats);
 
     /// <summary>How many timer units one grow step takes (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int GrowPeriod => ArcadeClock.Units(GameplayConstants.TankGrowRomFrames);
+    private static int GrowPeriod => ArcadeClock.Units(TankTuning.GrowRomFrames);
 
     /// <summary>True while the ROM birth sequence is still playing (test hook).</summary>
-    internal bool IsBeingBorn => _growStep < GameplayConstants.TankGrowSteps;
+    internal bool IsBeingBorn => _growStep < TankTuning.GrowSteps;
 
     /// <summary>Picks the next destination: the player about 38% of the time, else a random point.</summary>
     /// <remarks>ROM: <c>ANIMATE_TANK</c>.</remarks>
     private void PickDestination(PlayField field)
     {
-        _destination = _random.Next(256) <= 96
+        _destination = _random.Next(DestinationRollSides) <= AimAtPlayerRollAtMost
             ? field.Player.Position
             : RandomPointIn(field);
 
         int dx = Math.Sign(_destination.X - _position.X);
-        int dy = Math.Abs(_destination.Y - _position.Y) > VerticalMoveThresholdScreenPx
+        int dy = Math.Abs(_destination.Y - _position.Y) > VerticalMoveThreshold
             ? Math.Sign(_destination.Y - _position.Y)
             : 0;
         _step = new IntVector2(dx, dy);
@@ -237,22 +265,22 @@ public sealed class Tank : IExplodable, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (LifeState != EntityLifeState.Alive)
         {
             return;
         }
 
         // While being born it draws the ROM's own mini-tank pictures, each at its own size
         // anchored at the object's position (ROM: MTNKP1..4) — not a scaled copy of the tank.
-        if (_growStep < GameplayConstants.TankGrowSteps)
+        if (_growStep < TankTuning.GrowSteps)
         {
-            (int gw, int gh) = GameplayConstants.TankGrowSizes[_growStep];
+            (int growWidth, int growHeight) = TankTuning.GrowSizes[_growStep];
             Rectangle birth = new(
                 _position.X,
                 _position.Y,
-                ScreenSize.Scaled(gw),
-                ScreenSize.Scaled(gh));
-            _sprites.DrawSprite(spriteBatch, _sprites.TankGrowFrames[_growStep], birth, Color.White);
+                ScreenSize.Scaled(growWidth),
+                ScreenSize.Scaled(growHeight));
+            _sprites.DrawSprite(spriteBatch, _sprites.TankGrowAnimationFrames[_growStep], birth, Color.White);
             return;
         }
 
@@ -266,24 +294,24 @@ public sealed class Tank : IExplodable, IRemovable
     {
         get
         {
-            if (_growStep < GameplayConstants.TankGrowSteps)
+            if (_growStep < TankTuning.GrowSteps)
             {
-                return _sprites.TankGrowFrames[_growStep];
+                return _sprites.TankGrowAnimationFrames[_growStep];
             }
 
-            return _sprites.TankFrames[TreadFrameIndex];
+            return _sprites.TankAnimationFrames[TreadFrameIndex];
         }
     }
 
-    /// <summary>Which tread picture is showing: the index into <see cref="SpriteSet.TankFrames"/>.</summary>
+    /// <summary>Which tread picture is showing: the index into <see cref="SpriteSet.TankAnimationFrames"/>.</summary>
     /// <remarks>Playing backwards while the tank moves left is the ROM's own rule: TANK3 takes the
     /// direction from the X step's sign.</remarks>
     internal int TreadFrameIndex
     {
         get
         {
-            int frames = _sprites.TankFrames.Length;
-            int forward = _treadFrameCounter % frames;
+            int frames = _sprites.TankAnimationFrames.Length;
+            int forward = _treadAnimationFrameCounter % frames;
             return _step.X < 0 ? frames - 1 - forward : forward;
         }
     }

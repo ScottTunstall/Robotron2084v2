@@ -1,14 +1,14 @@
 using Robotron2084.Rendering;
 using Xunit;
 
-namespace Robotron2084.Tests.Level;
+namespace Robotron2084.Tests.Rendering;
 
 /// <summary>
 /// The six ROM colour processes (arcade-fidelity-notes §4.12, §65) replayed over
 /// a <see cref="GamePalette"/> — exact tables, exact ROM-FRAME timings, wrap
 /// loops.
 ///
-/// The timings are the ROM's frame counts converted through the exact-6ths rule
+/// The timings are the ROM's frame counts converted through the clock-unit rule
 /// of §52 (a ROM frame is 6/5 of a port tick), so a 1-frame process steps every
 /// 1.2 ticks, a 2-frame one every 2.4 and an 8-frame one every 9.6. These tests
 /// therefore pin where a step really lands (the 3rd, 5th, 8th … tick), which is
@@ -54,13 +54,13 @@ public sealed class PaletteAnimatorTests
         Tick(animator, 9);
         Assert.Equal(0x17, palette.SlotValue(11)); // not yet — the CRTAB default
 
-        Tick(animator, 1); // tick 10 = 50 sixths >= 48
+        Tick(animator, 1); // tick 10 = 50 clock units >= 48
         Assert.Equal(0x38, palette.SlotValue(11)); // table[0]
 
         Tick(animator, 10); // tick 20
         Assert.Equal(0x07, palette.SlotValue(11)); // table[1]
 
-        Tick(animator, 9); // tick 29 (the carried 4 sixths catch up)
+        Tick(animator, 9); // tick 29 (the carried 4 clock units catch up)
         Assert.Equal(0xC0, palette.SlotValue(11)); // table[2]
 
         Tick(animator, 10); // wraps back to the start of the table
@@ -88,12 +88,12 @@ public sealed class PaletteAnimatorTests
         (GamePalette palette, PaletteAnimator animator) = NewPair();
 
         Tick(animator, 1);
-        Assert.Equal(0x81, palette.SlotValue(14)); // 5 sixths: still the default
+        Assert.Equal(0x81, palette.SlotValue(14)); // 5 clock units: still the default
 
-        Tick(animator, 1); // tick 2 = 10 sixths >= 6
+        Tick(animator, 1); // tick 2 = 10 clock units >= 6
         Assert.Equal(0xC0, palette.SlotValue(14)); // table[0]
 
-        Tick(animator, 4); // one step a tick from here (6 sixths per step)
+        Tick(animator, 4); // one step a tick from here (6 clock units per step)
         Assert.Equal(0xC4, palette.SlotValue(14));
     }
 
@@ -128,14 +128,14 @@ public sealed class PaletteAnimatorTests
     }
 
     [Fact]
-    public void LaserFlashIsWhiteEverySecondRomFrameAndRandomEverySixth()
+    public void LaserFlashIsWhiteEverySecondRomFrameAndRandomEverySixthRomFrame()
     {
         (GamePalette palette, PaletteAnimator animator) = NewPair();
 
         Tick(animator, 2);
-        Assert.Equal(0x38, palette.SlotValue(10)); // 5 and 10 sixths: no write yet
+        Assert.Equal(0x38, palette.SlotValue(10)); // 5 and 10 clock units: no write yet
 
-        Tick(animator, 1); // tick 3 = 15 sixths: the first (white) flash
+        Tick(animator, 1); // tick 3 = 15 clock units: the first (white) flash
         Assert.Equal(0xFF, palette.SlotValue(10));
 
         Tick(animator, 2); // tick 5: white again — the flash period is 2 ROM frames

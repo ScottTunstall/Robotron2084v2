@@ -128,9 +128,9 @@ public sealed class PresentationTests
 
     [Fact]
     public void TheScaleModeCycles() =>
-        Assert.Equal(ScaleMode.Fill, Presentation.Next(ScaleMode.Integer));
+        Assert.Equal(ScaleMode.Fill, Presentation.NextScaleMode(ScaleMode.Integer));
 
     [Fact]
     public void TheScaleModeCyclesBack() =>
-        Assert.Equal(ScaleMode.Integer, Presentation.Next(ScaleMode.Fill));
+        Assert.Equal(ScaleMode.Integer, Presentation.NextScaleMode(ScaleMode.Fill));
 }

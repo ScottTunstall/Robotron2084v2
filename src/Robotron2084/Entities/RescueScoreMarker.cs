@@ -16,9 +16,9 @@ public sealed class RescueScoreMarker : IEntity
     private readonly SpriteSet _sprites;
 
     /// <summary>How long the display stays on the field.</summary>
-    private const int LifeRomTicks = 60;
+    private const int LifeRomFrames = 60;
 
-    private static readonly int Size = ScreenSize.Scaled(GameplayConstants.EntitySizeSpecPixels);
+    private static readonly int Size = ScreenSize.Scaled(CollisionSizes.EntitySizeSpecPixels);
 
     private readonly IntVector2 _position;
 
@@ -35,8 +35,8 @@ public sealed class RescueScoreMarker : IEntity
     {
         _sprites = sprites;
         _position = position;
-        _ticksRemaining = GameplayConstants.PortTicks(LifeRomTicks);
-        _displayIndex = Math.Clamp(rescuesThisLife, 1, 5) - 1;
+        _ticksRemaining = ArcadeClock.PortTicks(LifeRomFrames);
+        _displayIndex = Math.Clamp(rescuesThisLife, 1, ScoreValues.RescueBonusMaxCount) - 1;
     }
 
     /// <summary>The rescue spot.</summary>

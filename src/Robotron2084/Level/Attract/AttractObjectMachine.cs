@@ -1,3 +1,4 @@
+using Robotron2084.Entities;
 namespace Robotron2084.Level.Attract;
 
 /// <summary>
@@ -19,7 +20,7 @@ namespace Robotron2084.Level.Attract;
 public sealed class AttractObjectMachine
 {
     /// <summary>The ANA* walker's `NAP 8` (notes §95.7) — ROM frames per walk step.</summary>
-    public const int WalkStepFrames = 8;
+    public const int WalkStepRomFrames = 8;
 
     /// <summary>ROM `EXPP` stores ACTHIT+6 into the explosion's centre row.</summary>
     private const int ExplosionRow = 0xA0 + 6;
@@ -44,7 +45,7 @@ public sealed class AttractObjectMachine
         var process = new MovieProcess
         {
             Object = new MovieObject(null, 0, 0, 0),
-            Pc = scriptAddress - AttractMovieData.ScriptBase,
+            ScriptIndex = scriptAddress - AttractMovieData.ScriptBase,
         };
         _objects.Add(process.Object);
         _processes.Add(process);
@@ -71,7 +72,7 @@ public sealed class AttractObjectMachine
             if (item.IsLaser)
             {
                 item.X += item.XVelocity;
-                item.LaserFramesLeft--;
+                item.LaserRomFramesLeft--;
                 continue;
             }
 
@@ -96,7 +97,7 @@ public sealed class AttractObjectMachine
 
         for (int i = _objects.Count - 1; i >= 0; i--)
         {
-            if (_objects[i].Dead || (_objects[i].IsLaser && _objects[i].LaserFramesLeft <= 0))
+            if (_objects[i].Dead || (_objects[i].IsLaser && _objects[i].LaserRomFramesLeft <= 0))
             {
                 _objects.RemoveAt(i);
             }
@@ -107,12 +108,12 @@ public sealed class AttractObjectMachine
 
     private int RandomUpTo(int exclusive) => _random.Next(exclusive);
 
-    private sealed class MovieProcess
+    private sealed record MovieProcess
     {
         public required MovieObject Object { get; init; }
 
         /// <summary>Index into <see cref="AttractMovieData.Scripts"/> (scripts address it by ROM address).</summary>
-        public int Pc { get; set; }
+        public int ScriptIndex { get; set; }
 
         public int Wait { get; set; }
 
@@ -126,13 +127,13 @@ public sealed class AttractObjectMachine
 
         public int CycleLeft { get; set; }
 
-        public int CycleFrames { get; set; }
+        public int CycleRomFrames { get; set; }
 
         public int MonoLeft { get; set; }
 
-        public int RprogLeft { get; set; }
+        public int ReprogramShakeLeft { get; set; }
 
-        public bool RprogPhase { get; set; }
+        public bool ReprogramShakePhase { get; set; }
 
         public int Loop { get; set; }
 
@@ -205,16 +206,16 @@ public sealed class AttractObjectMachine
                     return true;
 
                 case 3: // MLEFT
-                    return BeginWalk(machine.Read(this), 0);
+                    return BeginWalk(machine.Read(this), WalkFacing.Left);
 
                 case 4: // MRIGHT
-                    return BeginWalk(machine.Read(this), 1);
+                    return BeginWalk(machine.Read(this), WalkFacing.Right);
 
                 case 5: // MDOWN
-                    return BeginWalk(machine.Read(this), 2);
+                    return BeginWalk(machine.Read(this), WalkFacing.Down);
 
                 case 6: // MUP
-                    return BeginWalk(machine.Read(this), 3);
+                    return BeginWalk(machine.Read(this), WalkFacing.Up);
 
                 default:
                     return HaltOnUnknownOpcode();
@@ -254,11 +255,11 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 10: // CYCLE — frames per image, number of advances.
-                    CycleFrames = machine.Read(this);
+                    CycleRomFrames = machine.Read(this);
                     CycleLeft = machine.Read(this);
                     Action = MovieAction.Cycle;
                     AdvanceImage();
-                    Wait = CycleFrames;
+                    Wait = CycleRomFrames;
                     return false;
 
                 case 11: // REST
@@ -272,7 +273,7 @@ public sealed class AttractObjectMachine
                 case 13: // EXP — remove the object and explode where it stood.
                     machine._explosions.Add(new MovieExplosion(
                         Object.Descriptor?.Animation ?? MovieAnimation.Grunt,
-                        Object.ImageIndex,
+                        Object.AnimationFrameIndex,
                         Object.Column,
                         ExplosionRow));
                     KillObject();
@@ -289,7 +290,7 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 14: // JUMP
-                    Pc = machine.ReadWord(this) - AttractMovieData.ScriptBase;
+                    ScriptIndex = machine.ReadWord(this) - AttractMovieData.ScriptBase;
                     return true;
 
                 case 15: // HIB — off the object list (not drawn, not moved).
@@ -341,7 +342,7 @@ public sealed class AttractObjectMachine
 
                     if (--Loop != 0)
                     {
-                        Pc = label;
+                        ScriptIndex = label;
                     }
 
                     return true;
@@ -353,7 +354,7 @@ public sealed class AttractObjectMachine
                     machine._processes.Add(new MovieProcess
                     {
                         Object = Object,
-                        Pc = script - AttractMovieData.ScriptBase,
+                        ScriptIndex = script - AttractMovieData.ScriptBase,
                     });
                     return true;
                 }
@@ -403,9 +404,9 @@ public sealed class AttractObjectMachine
                 case 26: // RPROG — the 64-step vertical shake.
                     // PSHAKE ($868C) is a ONE-BYTE script: RPROG owns the process
                     // until it ends, so return false (stop reading).
-                    RprogLeft = 0x40;
-                    RprogPhase = false;
-                    Action = MovieAction.Rprog;
+                    ReprogramShakeLeft = 0x40;
+                    ReprogramShakePhase = false;
+                    Action = MovieAction.ReprogramShake;
                     Wait = 0;
                     return false;
 
@@ -429,7 +430,7 @@ public sealed class AttractObjectMachine
             return false;
         }
 
-        private bool BeginWalk(int steps, int direction)
+        private bool BeginWalk(int steps, WalkFacing facing)
         {
             if (Object.Descriptor is not { } descriptor || steps <= 0)
             {
@@ -440,14 +441,14 @@ public sealed class AttractObjectMachine
             Action = MovieAction.Walk;
             if (descriptor.Walk == MovieWalk.BrainStep)
             {
-                WalkIndex = direction;
+                WalkIndex = (int)facing;
                 WalkCycle = 0;
                 Wait = descriptor.StepNap;
             }
             else
             {
-                WalkIndex = direction * 13;
-                Wait = WalkStepFrames;
+                WalkIndex = (int)facing * 13;
+                Wait = WalkStepRomFrames;
             }
 
             return false;
@@ -459,7 +460,7 @@ public sealed class AttractObjectMachine
             {
                 case MovieAction.Walk:
                     // Only the WALK actions need the descriptor (its walk table and
-                    // image count); MONO and RPROG drive any object. A descriptor-less
+                    // animation frame count); MONO and RPROG drive any object. A descriptor-less
                     // walk must STOP the action: carrying on would read the next
                     // script's opcodes as its own (notes §97.4).
                     if (Object.Descriptor is not { } descriptor)
@@ -481,7 +482,7 @@ public sealed class AttractObjectMachine
                     else
                     {
                         TableStep(descriptor.Walk);
-                        Wait = --StepsLeft > 0 ? WalkStepFrames : 0;
+                        Wait = --StepsLeft > 0 ? WalkStepRomFrames : 0;
                     }
 
                     if (StepsLeft <= 0)
@@ -499,15 +500,15 @@ public sealed class AttractObjectMachine
                     }
 
                     AdvanceImage();
-                    Wait = CycleFrames;
+                    Wait = CycleRomFrames;
                     break;
 
                 case MovieAction.Mono:
                     StepMono();
                     break;
 
-                case MovieAction.Rprog:
-                    StepRprog(machine);
+                case MovieAction.ReprogramShake:
+                    StepReprogramShake(machine);
                     break;
             }
         }
@@ -535,13 +536,13 @@ public sealed class AttractObjectMachine
         }
 
         /// <summary>RPROGP: bounce the row by ±(random 0..7) a frame apart, 64 times, then die.</summary>
-        private void StepRprog(AttractObjectMachine machine)
+        private void StepReprogramShake(AttractObjectMachine machine)
         {
             int magnitude = machine.RandomUpTo(8);
-            if (RprogPhase)
+            if (ReprogramShakePhase)
             {
                 Object.ShakeRowOffset = -magnitude;
-                if (--RprogLeft <= 0)
+                if (--ReprogramShakeLeft <= 0)
                 {
                     Object.ShakeRowOffset = 0;
                     Alive = false;
@@ -553,7 +554,7 @@ public sealed class AttractObjectMachine
                 Object.ShakeRowOffset = magnitude;
             }
 
-            RprogPhase = !RprogPhase;
+            ReprogramShakePhase = !ReprogramShakePhase;
             Wait = 1;
         }
 
@@ -575,23 +576,23 @@ public sealed class AttractObjectMachine
         /// <summary>BR* — the descriptor's own step size, cycling the 4-picture ANATAB.</summary>
         private void BrainStep(MovieDescriptor descriptor)
         {
-            int direction = WalkIndex;
-            int dx = direction switch
+            WalkFacing facing = (WalkFacing)WalkIndex;
+            int dx = facing switch
             {
-                0 => -descriptor.StepSize,
-                1 => descriptor.StepSize,
+                WalkFacing.Left => -descriptor.StepSize,
+                WalkFacing.Right => descriptor.StepSize,
                 _ => 0,
             };
-            int dy = direction switch
+            int dy = facing switch
             {
-                2 => descriptor.StepSize,
-                3 => -descriptor.StepSize,
+                WalkFacing.Down => descriptor.StepSize,
+                WalkFacing.Up => -descriptor.StepSize,
                 _ => 0,
             };
             ApplyStep(dx, dy);
 
-            SetImage((direction * 3) + AttractMovieData.AnimTable[WalkCycle]);
-            WalkCycle = (WalkCycle + 1) % AttractMovieData.AnimTable.Length;
+            SetImage(((int)facing * 3) + AttractMovieData.AnimationFrameCycleTable[WalkCycle]);
+            WalkCycle = (WalkCycle + 1) % AttractMovieData.AnimationFrameCycleTable.Length;
         }
 
         /// <summary>The ROM's `DYDX`: dx counts arcade PIXELS, and a column is two of them.</summary>
@@ -603,14 +604,14 @@ public sealed class AttractObjectMachine
 
         private void AdvanceImage()
         {
-            int count = Object.Descriptor?.ImageCount ?? 1;
+            int count = Object.Descriptor?.AnimationFrameCount ?? 1;
             if (count > 1)
             {
-                SetImage((Object.ImageIndex + 1) % count);
+                SetImage((Object.AnimationFrameIndex + 1) % count);
             }
         }
 
-        private void SetImage(int index) => Object.ImageIndex = index;
+        private void SetImage(int index) => Object.AnimationFrameIndex = index;
 
         private void KillObject()
         {
@@ -625,7 +626,7 @@ public sealed class AttractObjectMachine
         Walk,
         Cycle,
         Mono,
-        Rprog,
+        ReprogramShake,
     }
 
     /// <summary>MONOP: hide the object, then every third frame move it in whole columns and box it.</summary>
@@ -634,11 +635,11 @@ public sealed class AttractObjectMachine
         item.OnList = false;
         item.MonoActive = true;
         item.MonoBoxSlot = boxSlot;
-        item.MonoImageSlot = imageSlot;
+        item.MonoSilhouetteSlot = imageSlot;
         item.MonoBrain = brain;
     }
 
-    private byte Read(MovieProcess process) => _scripts[process.Pc++];
+    private byte Read(MovieProcess process) => _scripts[process.ScriptIndex++];
 
     private int ReadWord(MovieProcess process) => (Read(process) << 8) | Read(process);
 
@@ -656,7 +657,7 @@ public sealed class AttractObjectMachine
         {
             IsLaser = true,
             LaserRight = right,
-            LaserFramesLeft = lifetime,
+            LaserRomFramesLeft = lifetime,
             XVelocity = right ? 0x0280 : -0x0280,
         });
     }

@@ -47,7 +47,7 @@ public sealed class PlayFieldCollisionTests
         electrode.Kill();
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
 
-        // The ROM's sleeps are 6/3/2 → FRAMES, which on the exact-6ths clock are
+        // The ROM's sleeps are 6/3/2 → FRAMES, which on the clock-unit clock are
         // 7.2/3.6/2.4 ticks: the three shrivel steps land on ticks 8, 11 and 14.
         for (int tick = 0; tick < 13; tick++)
         {
@@ -69,20 +69,20 @@ public sealed class PlayFieldCollisionTests
         int[] expectedPerWave = [0, 1, 2, 3, 4, 5, 7, 8, 0, 6];
         for (int wave = 1; wave <= expectedPerWave.Length; wave++)
         {
-            Assert.Equal(expectedPerWave[wave - 1], GameplayConstants.PostFamilyForWave(wave));
+            Assert.Equal(expectedPerWave[wave - 1], WavePaletteTables.PostFamilyForWave(wave));
         }
 
         // GTWL wraps the wave into 1..10 (`CMPA #9 / BLS / SUBA #10`), so the
         // sequence repeats every 10 waves.
-        Assert.Equal(GameplayConstants.PostFamilyForWave(1), GameplayConstants.PostFamilyForWave(11));
-        Assert.Equal(GameplayConstants.PostFamilyForWave(10), GameplayConstants.PostFamilyForWave(20));
+        Assert.Equal(WavePaletteTables.PostFamilyForWave(1), WavePaletteTables.PostFamilyForWave(11));
+        Assert.Equal(WavePaletteTables.PostFamilyForWave(10), WavePaletteTables.PostFamilyForWave(20));
 
         // An electrode is WAVE-derived — both its picture family and its colour —
         // and each family owns 3 consecutive pictures (alive + the two shrivel
         // frames) out of the 27 electrode PNGs.
         var electrode = new Electrode(TestSprites.Shared, new IntVector2(100, 100), wave: 3);
         Assert.Equal(2, electrode.FamilyIndex);
-        Assert.True((electrode.FamilyIndex * GameplayConstants.PostPicturesPerFamily) + GameplayConstants.PostPicturesPerFamily <= 27);
+        Assert.True((electrode.FamilyIndex * WavePaletteTables.PostPicturesPerFamily) + WavePaletteTables.PostPicturesPerFamily <= 27);
 
         // PSTCOL — the second of RRG23's four per-wave tables (`LDA 10,U / STA
         // PSTCOL`): $FF,$EE,$BB,$DD,$EE,$FF,$11,$BB,$DD,$AA. These are PALETTE
@@ -94,18 +94,18 @@ public sealed class PlayFieldCollisionTests
         byte[] expectedSlot = [0xFF, 0xEE, 0xBB, 0xDD, 0xEE, 0xFF, 0x11, 0xBB, 0xDD, 0xAA];
         for (int wave = 1; wave <= expectedSlot.Length; wave++)
         {
-            Assert.Equal(expectedSlot[wave - 1], GameplayConstants.PostSlotByWaveMod10[wave - 1]);
-            Assert.Equal(expectedSlot[wave - 1] & 0x0F, GameplayConstants.PostSlotForWave(wave));
+            Assert.Equal(expectedSlot[wave - 1], WavePaletteTables.PostSlotByWaveMod10[wave - 1]);
+            Assert.Equal(expectedSlot[wave - 1] & 0x0F, WavePaletteTables.PostSlotForWave(wave));
         }
 
-        Assert.Equal(0x0F, GameplayConstants.PostSlotForWave(11)); // wraps every 10
+        Assert.Equal(0x0F, WavePaletteTables.PostSlotForWave(11)); // wraps every 10
         // Wave 1 names slot 15 and wave 3 names slot 11 — both CYCLING slots
         // (10-15), so those waves' posts cycle, like the hardware palette.
-        Assert.Equal(15, GameplayConstants.PostSlotForWave(1));
-        Assert.Equal(11, GameplayConstants.PostSlotForWave(3));
-        Assert.Equal(1, GameplayConstants.PostSlotForWave(7)); // slot 1 = RED in the ROM's own CRTAB
-        Assert.Equal(new Electrode(TestSprites.Shared, new IntVector2(0, 0), wave: 1).TintSlot, GameplayConstants.PostSlotForWave(1));
-        Assert.True(GameplayConstants.PostSlotForWave(1) >= 10); // 10-15 are the cycling slots
+        Assert.Equal(15, WavePaletteTables.PostSlotForWave(1));
+        Assert.Equal(11, WavePaletteTables.PostSlotForWave(3));
+        Assert.Equal(1, WavePaletteTables.PostSlotForWave(7)); // slot 1 = RED in the ROM's own CRTAB
+        Assert.Equal(new Electrode(TestSprites.Shared, new IntVector2(0, 0), wave: 1).TintSlot, WavePaletteTables.PostSlotForWave(1));
+        Assert.True(WavePaletteTables.PostSlotForWave(1) >= 10); // 10-15 are the cycling slots
     }
 
     [Fact]
@@ -120,38 +120,38 @@ public sealed class PlayFieldCollisionTests
 
         for (int wave = 1; wave <= wall.Length; wave++)
         {
-            Assert.Equal(wall[wave - 1], GameplayConstants.WallSlotByWaveMod10[wave - 1]);
-            Assert.Equal(wall[wave - 1] & 0x0F, GameplayConstants.WallSlotForWave(wave));
-            Assert.Equal(laser[wave - 1], GameplayConstants.LaserWallSlotByWaveMod10[wave - 1]);
-            Assert.Equal(laser[wave - 1] & 0x0F, GameplayConstants.LaserWallSlotForWave(wave));
+            Assert.Equal(wall[wave - 1], WavePaletteTables.WallSlotByWaveMod10[wave - 1]);
+            Assert.Equal(wall[wave - 1] & 0x0F, WavePaletteTables.WallSlotForWave(wave));
+            Assert.Equal(laser[wave - 1], WavePaletteTables.LaserWallSlotByWaveMod10[wave - 1]);
+            Assert.Equal(laser[wave - 1] & 0x0F, WavePaletteTables.LaserWallSlotForWave(wave));
         }
 
         // The wall is NOT the port's old hard-coded slot 11, and it is different
         // on (nearly) every wave — that colour change IS the arcade's look.
-        Assert.NotEqual(11, GameplayConstants.WallSlotForWave(1));
-        Assert.Equal(2, GameplayConstants.WallSlotForWave(1));  // $22 = slot 2 = ORANGE
-        Assert.Equal(1, GameplayConstants.WallSlotForWave(3));  // $11 = slot 1 = RED
-        Assert.Equal(14, GameplayConstants.WallSlotForWave(4)); // $EE = a CYCLING slot
-        Assert.Equal(12, GameplayConstants.WallSlotForWave(10));// $CC = a CYCLING slot
-        Assert.True(GameplayConstants.WallSlotForWave(4) >= 10 && GameplayConstants.WallSlotForWave(10) >= 10);
+        Assert.NotEqual(11, WavePaletteTables.WallSlotForWave(1));
+        Assert.Equal(2, WavePaletteTables.WallSlotForWave(1));  // $22 = slot 2 = ORANGE
+        Assert.Equal(1, WavePaletteTables.WallSlotForWave(3));  // $11 = slot 1 = RED
+        Assert.Equal(14, WavePaletteTables.WallSlotForWave(4)); // $EE = a CYCLING slot
+        Assert.Equal(12, WavePaletteTables.WallSlotForWave(10));// $CC = a CYCLING slot
+        Assert.True(WavePaletteTables.WallSlotForWave(4) >= 10 && WavePaletteTables.WallSlotForWave(10) >= 10);
 
         // Faithful but surprising: wave 9's border is BLACK (slot 0) and wave 2's
         // laser-wall flare is black too — the ROM's own tables mean that.
-        Assert.Equal(0, GameplayConstants.WallSlotForWave(9));
-        Assert.Equal(0, GameplayConstants.LaserWallSlotForWave(2));
+        Assert.Equal(0, WavePaletteTables.WallSlotForWave(9));
+        Assert.Equal(0, WavePaletteTables.LaserWallSlotForWave(2));
 
         // The laser-wall flare is NOT the laser's own slot: wave 1 white (slot 9),
         // wave 4 green (slot 6), wave 8 red (slot 1), wave 9 a cycling slot.
-        Assert.Equal(9, GameplayConstants.LaserWallSlotForWave(1));
-        Assert.Equal(6, GameplayConstants.LaserWallSlotForWave(4));
-        Assert.Equal(1, GameplayConstants.LaserWallSlotForWave(8));
-        Assert.Equal(10, GameplayConstants.LaserWallSlotForWave(9));
+        Assert.Equal(9, WavePaletteTables.LaserWallSlotForWave(1));
+        Assert.Equal(6, WavePaletteTables.LaserWallSlotForWave(4));
+        Assert.Equal(1, WavePaletteTables.LaserWallSlotForWave(8));
+        Assert.Equal(10, WavePaletteTables.LaserWallSlotForWave(9));
 
         // Both wrap every 10 waves (the ROM's GTWCOL subtract-10 loop).
-        Assert.Equal(GameplayConstants.WallSlotForWave(1), GameplayConstants.WallSlotForWave(11));
-        Assert.Equal(GameplayConstants.WallSlotForWave(9), GameplayConstants.WallSlotForWave(19));
-        Assert.Equal(GameplayConstants.WallSlotForWave(10), GameplayConstants.WallSlotForWave(20));
-        Assert.Equal(GameplayConstants.LaserWallSlotForWave(2), GameplayConstants.LaserWallSlotForWave(12));
+        Assert.Equal(WavePaletteTables.WallSlotForWave(1), WavePaletteTables.WallSlotForWave(11));
+        Assert.Equal(WavePaletteTables.WallSlotForWave(9), WavePaletteTables.WallSlotForWave(19));
+        Assert.Equal(WavePaletteTables.WallSlotForWave(10), WavePaletteTables.WallSlotForWave(20));
+        Assert.Equal(WavePaletteTables.LaserWallSlotForWave(2), WavePaletteTables.LaserWallSlotForWave(12));
     }
 
     [Fact]
@@ -173,11 +173,11 @@ public sealed class PlayFieldCollisionTests
         // (LASDIV — the ROM mixes WALCOL into LASCOL there).
         Assert.Equal(EntityLifeState.Dead, laser.LifeState);
         Assert.Equal(1, field.LaserWallFlareCount);
-        PlayField.LaserWallFlare flare = field.LaserWallFlares[0];
+        LaserWallFlare flare = field.LaserWallFlares[0];
         Assert.True(flare.Bounds.Y < field.Wall.PlayfieldBounds.Top, $"flare {flare.Bounds} is not on the top wall band");
         Assert.True(flare.Dithered);
 
-        // It lives 2 ROM frames = 12 sixths, so it survives two ticks and is
+        // It lives 2 ROM frames = 12 clock units, so it survives two ticks and is
         // dropped on the third (the ROM's `NAP 2`).
         field.Update(Tick);
         Assert.Equal(1, field.LaserWallFlareCount);
@@ -196,7 +196,7 @@ public sealed class PlayFieldCollisionTests
         // A laser that crossed the RIGHT wall: LASDIH — a solid fill.
         field.SpawnLaserWallFlare(new Rectangle(inner.Right - 2, inner.Center.Y, 4, 4), Direction8.Right);
         Assert.Equal(1, field.LaserWallFlareCount);
-        PlayField.LaserWallFlare flare = field.LaserWallFlares[0];
+        LaserWallFlare flare = field.LaserWallFlares[0];
         Assert.False(flare.Dithered);
         Assert.True(flare.Bounds.Right > inner.Right, $"flare {flare.Bounds} is not on the right wall band");
 
@@ -298,6 +298,6 @@ public sealed class PlayFieldCollisionTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayField(TestSprites.Shared, parameters, new FakeInputSource(), PlayFieldSpawnTests.InnerBounds, new WallColorCycle(), new Random(99), startingLives: 3, playerInvincibleForTesting: playerInvincibleForTesting);
+        return new PlayFieldBuilder().WithParameters(parameters).WithSeed(99).WithPlayerInvincible(playerInvincibleForTesting).Build();
     }
 }

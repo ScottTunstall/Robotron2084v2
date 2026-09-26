@@ -5,13 +5,13 @@ using Microsoft.Xna.Framework.Graphics;
 namespace Robotron2084.Rendering;
 
 /// <summary>
-/// The game's artwork: the ROM-extracted pictures from the content pipeline, and the handful the port draws
-/// itself, which <see cref="PixelArtFactory"/> builds against the graphics device.
+/// The game's pictures: the ROM-extracted pictures from the content pipeline, and the handful the port draws
+/// itself, which <see cref="PictureFactory"/> builds against the graphics device.
 /// </summary>
 public sealed class ContentSpriteSource : ISpriteSource
 {
     private readonly ContentManager _content;
-    private readonly PixelArtFactory _factory;
+    private readonly PictureFactory _factory;
 
     /// <summary>Wires the source to the game's device and content.</summary>
     /// <param name="device">The graphics device the self-drawn pictures are created on.</param>
@@ -19,7 +19,7 @@ public sealed class ContentSpriteSource : ISpriteSource
     public ContentSpriteSource(GraphicsDevice device, ContentManager content)
     {
         _content = content;
-        _factory = new PixelArtFactory(device);
+        _factory = new PictureFactory(device);
     }
 
     /// <inheritdoc/>
