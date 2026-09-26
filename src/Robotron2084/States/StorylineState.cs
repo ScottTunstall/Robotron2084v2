@@ -181,10 +181,8 @@ public sealed class StorylineState : IGameState, IAttractState
                 // LASPIC: the rotating laser table's horizontal bar.
                 int x = HudLayout.ArcadeX(item.ArcadeX);
                 int y = HudLayout.ArcadeY(item.ArcadeY);
-                spriteBatch.Draw(
-                    _sprites.LaserBar,
-                    new Rectangle(x, y, ScreenSize.Scaled(_sprites.LaserBar.Width), ScreenSize.Scaled(_sprites.LaserBar.Height)),
-                    Color.White);
+                var bolt = new Rectangle(x, y, ScreenSize.Scaled(_sprites.LaserBar.Width), ScreenSize.Scaled(_sprites.LaserBar.Height));
+                _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBar, bolt, _sprites.Blitter.SlotColor(PlayerTuning.LaserSlot));
                 continue;
             }
 

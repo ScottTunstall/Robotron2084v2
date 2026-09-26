@@ -25,6 +25,15 @@ public sealed class AttractObjectMachine
     /// <summary>ROM `EXPP` stores ACTHIT+6 into the explosion's centre row.</summary>
     private const int ExplosionRow = 0xA0 + 6;
 
+    /// <summary>RRF.ASM <c>XMIN</c>: the leftmost column an object may occupy (the inside of the left wall).</summary>
+    private const int PlayfieldMinColumn = 7;
+
+    /// <summary>RRF.ASM <c>XMAX</c>: the rightmost column an object's right edge may reach.</summary>
+    private const int PlayfieldMaxColumn = 0x8F;
+
+    /// <summary>The laser bolt's picture (<c>LASPIC</c>, the 6-pixel bar) is three columns wide.</summary>
+    private const int LaserWidthColumns = 3;
+
     private readonly byte[] _scripts = AttractMovieData.Scripts;
     private readonly List<MovieObject> _objects = [];
     private readonly List<MovieProcess> _processes = [];
@@ -71,7 +80,7 @@ public sealed class AttractObjectMachine
 
             if (item.IsLaser)
             {
-                item.X += item.XVelocity;
+                MoveLaserWithinTheWalls(item);
                 item.LaserRomFramesLeft--;
                 continue;
             }
@@ -637,6 +646,20 @@ public sealed class AttractObjectMachine
         item.MonoBoxSlot = boxSlot;
         item.MonoSilhouetteSlot = imageSlot;
         item.MonoBrain = brain;
+    }
+
+    /// <summary>
+    /// The ROM's object mover (RRS22 <c>OPRC80</c>/<c>OPB80</c>): a step whose new column is left of <c>XMIN</c>, or whose
+    /// right edge would pass <c>XMAX</c>, is refused, so a bolt stops at the wall and waits there for its timer.
+    /// </summary>
+    internal static void MoveLaserWithinTheWalls(MovieObject laser)
+    {
+        int next = laser.X + laser.XVelocity;
+        int column = next >> 8;
+        if (column >= PlayfieldMinColumn && column + LaserWidthColumns <= PlayfieldMaxColumn + 1)
+        {
+            laser.X = next;
+        }
     }
 
     private byte Read(MovieProcess process) => _scripts[process.ScriptIndex++];
