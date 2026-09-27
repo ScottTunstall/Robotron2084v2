@@ -3,10 +3,10 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Robotron2084.Audio;
 using Robotron2084.Core;
+using Robotron2084.Graphics;
 using Robotron2084.Input;
 using Robotron2084.Level;
 using Robotron2084.Persistence;
-using Robotron2084.Rendering;
 using Robotron2084.States;
 
 namespace Robotron2084;
