@@ -291,7 +291,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         if (_reprogramLifting)
         {
             // The sound is requested at the top of every iteration (ROM: BMUTL).
-            Sound.Play(SoundTables.ProgProgramming);
+            field.PlaySoundFrom(SoundTables.Programming, victim.Bounds);
         }
 
         if (--_reprogramRedrawsRemaining > 0)
@@ -301,7 +301,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         }
 
         // The tail: conversion sound, free the human, spawn a PROG where it stood (ROM: PROGST).
-        Sound.Play(SoundTables.HumanProgConversion);
+        field.PlaySoundFrom(SoundTables.HumanProgFinalConversion, victim.Bounds);
         victim.FinishReprogramming();
         field.SpawnProg(victim.Position, victim.Kind);
         _victim = null;

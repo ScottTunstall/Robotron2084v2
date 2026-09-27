@@ -87,6 +87,9 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <summary>The current stagger limit, in ROM beats: the re-roll upper bound.</summary>
     public int MoveDelayBeats => _moveLimitBeats;
 
+    /// <summary>True when the grunt took a step during the last update (it asks for the robot-move sound).</summary>
+    public bool SteppedThisUpdate { get; private set; }
+
     // the ROM's walk picture 1..4; a freshly spawned grunt starts on picture 1
     /// <summary>Top-left of the grunt.</summary>
     /// <remarks>The ROM's OBJX/OBJY.</remarks>
@@ -142,6 +145,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
+        SteppedThisUpdate = false;
         if (LifeState != EntityLifeState.Alive)
         {
             return;
@@ -167,6 +171,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
         }
 
         _moveCountdownBeats = _random.Next(1, _moveLimitBeats + 1);
+        SteppedThisUpdate = true;
         _walkPictureNumber = _walkPictureNumber % WalkPictureCount + 1; // DRAW_GRUNT: one frame per step
 
         // Per-axis step toward the player, with a dead zone; the axes are independent.
