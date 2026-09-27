@@ -59,9 +59,10 @@ Note: MAME's `set_visarea(12, 303, 7, 246)` (292×240) belongs to **defender()**
 Robotron (williams_b1) uses the base `set_raw(8MHz, 512, 6, 298, 260, 7, 247)` — emulator geometry,
 reference only (user's 304×256 @ 50 fps RE is authoritative, D-004).
 
-## Sound CPU (separate 64K region — out of scope, D-003)
-- MC6808 @ 3.12 MHz XTAL (internal /4 divider → effective ≈894.886 kHz per driver comment)
-- `video_sound_rom_3_std_767.ic12` (P/N A-5342-09910) at 0xF000, 4KB
+## Sound CPU (separate 64K region — emulated, D-029; notes §126)
+- MC6808 @ 3.579545 MHz XTAL (internal /4 divider → effective ≈894.886 kHz per driver comment)
+- `video_sound_rom_3_std_767.ic12` (P/N A-5342-09910) at 0xF000, 4KB, SHA1 `15afefef11bfc3ab78f61ab046701db78d160ec3`
+- Map: RAM $0000–$007F (mirror $0F00), PIA $0400–$0403 (mirror $8000), ROM $B000–$FFFF (the 4KB at $F000)
 - Main CPU pokes 6-bit sound tokens to PIA1 port B ($C80E)
 
 ## PROMs (0x400 region)
