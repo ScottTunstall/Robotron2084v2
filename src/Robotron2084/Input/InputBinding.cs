@@ -1,4 +1,3 @@
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Robotron2084.Core;
 
@@ -236,4 +235,3 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
         ("DOWN RIGHT", 1, 1, DirectionCode(1, 1)),
     ];
 }
-

@@ -38,7 +38,6 @@ public static class WaveTable
         }
     }
 
-
     // ---- Entity counts (ROM $2E24+, column-major 40-byte blocks) ----
 
     public static readonly int[] Grunts =
@@ -160,7 +159,6 @@ public static class WaveTable
         50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60
     ];
 
-
     private static readonly int[][] AllTables =
     [
         Grunts, Electrodes, Mommies, Daddies, Mikeys, Hulks, Brains, Spheroids, Quarks,
@@ -210,4 +208,3 @@ public static class WaveTable
         return wave;
     }
 }
-

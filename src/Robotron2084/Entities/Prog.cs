@@ -51,10 +51,12 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>The aim-wrap margin past the field's far edge, in columns (X) and rows (Y).</summary>
     /// <remarks>ROM: <c>GPDIR</c> wraps an aim past this margin to the opposite edge.</remarks>
     private const int WrapMarginXColumns = 0x30;
+
     private const int WrapMarginYRows = 18;
 
     /// <summary>Roll thresholds out of 256: above the first the offsets re-roll, above the second it re-aims.</summary>
     private const int ReOffsetThreshold256 = 0xF8;
+
     private const int ReDirectionThreshold256 = 0xE4;
 
     /// <summary>Sides of the ROM rolls the re-offset and re-aim thresholds are compared against.</summary>

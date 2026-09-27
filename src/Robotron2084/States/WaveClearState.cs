@@ -1,8 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core;
 using Robotron2084.Graphics;
-using Robotron2084.Input;
 using Robotron2084.Level;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;

@@ -50,6 +50,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     // Death: a solid-colour flash loop, then the slot-12 fade (ROM: RRX7.ASM; see the remarks).
     private DeathStage _deathStage = DeathStage.White;
+
     private int _deathTimer;
     private int _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
     private int _deathFlashSlot = PlayerTuning.PlayerDeathWhiteSlot;
@@ -65,8 +66,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     private IntVector2 _position;
+
     // A wave starts on frame 7, the first DOWN frame; _animationFrameTicks counts 1..3.
     private WalkFacing _animationFacing = WalkFacingFor(Direction8.Down);
+
     private int _animationSequenceIndex;
     private int _animationFrameTicks = 1;
 

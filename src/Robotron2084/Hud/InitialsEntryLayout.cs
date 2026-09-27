@@ -21,6 +21,7 @@ public static class InitialsEntryLayout
 {
     // ---- CONGP's three large-font lines ------------------------------------------
     public const int PlayerColumn = 64;
+
     public const int PlayerRow = 16;
     public const int HeroColumn = 41;
     public const int HeroRow = 48;
@@ -29,6 +30,7 @@ public static class InitialsEntryLayout
 
     // ---- TELSUB's two small-font instructions ------------------------------------
     public const int SelectColumn = 47;
+
     public const int SelectRow = 192;
     public const int FireColumn = 50;
     public const int FireRow = 204;

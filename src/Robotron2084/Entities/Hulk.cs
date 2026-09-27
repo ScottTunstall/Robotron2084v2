@@ -70,6 +70,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     /// LEFT hulk1/2/1/3, RIGHT hulk7/8/7/9, UP and DOWN hulk4/5/4/6 (ROM: <c>HLKAL</c>/<c>HLKAR</c>/
     /// <c>HLKAD</c>/<c>HLKAU</c>, pictures <c>HLKLP1</c>).</remarks>
     private static readonly int[] LeftAnimationFrames = { 0, 1, 0, 2 };
+
     private static readonly int[] RightAnimationFrames = { 6, 7, 6, 8 };
     private static readonly int[] VerticalAnimationFrames = { 3, 4, 3, 5 };
 

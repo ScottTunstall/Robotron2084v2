@@ -51,6 +51,7 @@ public sealed class TunnelEffect
     // addresses are column*256 + row) so the numbers in the code are the ROM's, and only the
     // drawing maps them onto the port's grid.
     internal const int StartLeftColumn = 0x3B;   // $3B80
+
     internal const int StartTopRow = 0x80;
     internal const int StartRightColumn = 0x5A;  // $5A82
     internal const int StartBottomRow = 0x82;
@@ -83,6 +84,7 @@ public sealed class TunnelEffect
     /// that ratio across and that ratio down (notes §84).
     /// </summary>
     private const float RomPixelToScreenX = ScreenSize.Width / (float)HudLayout.ArcadeScreenWidth;
+
     private const float RomPixelToScreenY = ScreenSize.Height / (float)HudLayout.ArcadeScreenHeight;
 
     /// <summary>

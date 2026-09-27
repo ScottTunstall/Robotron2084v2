@@ -18,6 +18,7 @@ namespace Robotron2084.Entities;
 public sealed class Grunt : IEntity, IExplodable, IRemovable
 {
     private readonly SpriteSet _sprites;
+
     /// <summary>The grunt picture's own 10x13 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(CollisionSizes.GruntCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.GruntCollisionSize.Height));

@@ -48,6 +48,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// The reference screen prints them in the SMALL font.
     /// </summary>
     private const string DesignedByLine = "DESIGNED BY VID KIDZ";
+
     private const string ForWilliamsLine = "FOR WILLIAMS ELECTRONICS INC.";
     private const string CopyrightLine = "COPYRIGHT 1982 WILLIAMS ELECTRONICS INC.";
 
@@ -66,12 +67,14 @@ public sealed class TitleScreenState : IGameState, IAttractState
     // them (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
     // an 8-row line grid, i.e. one blank line).
     private const int WordmarkRow = 72;
+
     private const int Logo2084Row = 138;
 
     // Pane 1 — the arcade's own lines: the welcome message (LARGE font), then the credit strings
     // (SMALL font) with the copyright on its own line below them. An empty 18-px row sits between
     // the two message lines, and an empty 16-px row between the credits and the copyright.
     private const int WelcomeRowOne = 214;
+
     private const int WelcomeRowTwo = 244;
     private const int DesignedByRow = 268;
     private const int ForWilliamsRow = 284;
@@ -79,6 +82,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     // Pane 2 — the port's own lines: its credit and the F-key menu (notes §101/§102.1).
     private const int CreditRow = 214;
+
     private const int MenuRow = 236;
 
     /// <summary>

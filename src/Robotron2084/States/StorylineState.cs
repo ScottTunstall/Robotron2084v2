@@ -66,7 +66,6 @@ public sealed class StorylineState : IGameState, IAttractState
             return;
         }
 
-
         _movie.Update(gameTime);
 
         // F3 held (dev key, notes §97): run the movie's ROM frame clock extra

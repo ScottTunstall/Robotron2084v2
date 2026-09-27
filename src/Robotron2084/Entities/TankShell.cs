@@ -31,6 +31,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>The shell picture's own 8x7 arcade px box, in port pixels.</summary>
     private static readonly int BoxWidth = ScreenSize.Scaled(CollisionSizes.TankShellCollisionSize.Width);
+
     private static readonly int BoxHeight = ScreenSize.Scaled(CollisionSizes.TankShellCollisionSize.Height);
 
     private readonly SpriteSet _sprites;

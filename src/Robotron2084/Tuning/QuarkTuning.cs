@@ -21,7 +21,6 @@ public static class QuarkTuning
 
     public const int VelocityYScale = 8;    // ROM: three
 
-
     public const int ReaimMaxBeats = 32;   // ROM PD7 = (SEED & $1F) + 1
 
     public const int WallMarginLowArcadePixels = 5;     // XMIN+5 / YMIN+5

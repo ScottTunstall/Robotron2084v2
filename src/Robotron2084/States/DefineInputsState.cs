@@ -50,12 +50,14 @@ public sealed class DefineInputsState : IGameState
     // column, exactly where the arcade's GAME ADJUSTMENT page prints its cursor (column $0C), and it
     // is that page's own cursor glyph — the small font's "->" (notes §108.4).
     private const int CursorColumn = 57;
+
     private const int LabelColumn = 75;
     private const int ValueColumn = 285;
 
     // The instructions and the exit line sit under the list in the SMALL font, the way the arcade's
     // adjustment page ends — the exit line on its own, a blank line below them.
     private const int InstructionsRow = 294;
+
     private const int SetAndClearRow = 312;
     private const int ExitRow = 342;
 
@@ -71,6 +73,7 @@ public sealed class DefineInputsState : IGameState
     // (notes §115) — while the line's value, the bound key or joystick input, stays on the page's
     // static green.
     private const int InputSlot = 6;
+
     private const int SeparatorSlot = 7;
     private const int HeadingSlot = 9;
 

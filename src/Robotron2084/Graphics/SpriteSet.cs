@@ -55,7 +55,6 @@ public sealed class SpriteSet
     /// <summary>Number of spark (enforcer bullet) frames — SPKP0..3 in the ROM (notes 32).</summary>
     public const int SparkAnimationFrameCount = 4;
 
-
     /// <summary>Representative player frame: frame 7 = first of the down-facing set (frames 1-3 left, 4-6 right, 7-9 down, 10-12 up).</summary>
     public Texture2D Player { get; }
 
@@ -229,7 +228,6 @@ public sealed class SpriteSet
     /// of the palette slot it is given.
     /// </summary>
     public Texture2D WilliamsLogo { get; }
-
 
     /// <summary>The blitter operations that draw these pictures.</summary>
     public BlitterDraw Blitter { get; }

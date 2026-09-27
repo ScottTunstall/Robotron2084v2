@@ -19,6 +19,18 @@ namespace Robotron2084.Entities;
 /// per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 {
+    /// <summary>Animation frames in each of a family member's walk sets.</summary>
+    private const int AnimationFramesPerSet = 3;
+
+    /// <summary>Direction blocks in the walk table: the 8 travel directions.</summary>
+    private const int DirectionBlockCount = 8;
+
+    /// <summary>A fresh direction comes after a random 1..this many steps.</summary>
+    private const int NewDirectionStepsMax = 128;
+
+    /// <summary>The very first step waits a random 1..this many ticks, which staggers a group's start.</summary>
+    private const int StartStaggerTicksMax = 8;
+
     /// <summary>The step period in ROM frames. The ONE deliberate gameplay override — do not "fix" it.</summary>
     /// <remarks>The arcade steps every 8 frames and moves one arcade pixel; the port deliberately
     /// slows this to 16, because the ROM-accurate pace reads as too fast (notes §70).</remarks>
@@ -27,17 +39,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Substeps in each direction block of the walk table.</summary>
     private const int SubStepsPerBlock = 4;
 
-    /// <summary>Direction blocks in the walk table: the 8 travel directions.</summary>
-    private const int DirectionBlockCount = 8;
-
-    /// <summary>Animation frames in each of a family member's walk sets.</summary>
-    private const int AnimationFramesPerSet = 3;
-
-    /// <summary>A fresh direction comes after a random 1..this many steps.</summary>
-    private const int NewDirectionStepsMax = 128;
-
-    /// <summary>The very first step waits a random 1..this many ticks, which staggers a group's start.</summary>
-    private const int StartStaggerTicksMax = 8;
+    /// <summary>Which 3-frame set each block animates from: [L,R,D,U,L,R,R,L].</summary>
+    private static readonly int[] AnimationFrameGroupByDirectionBlock = { 0, 1, 2, 3, 0, 1, 1, 0 };
 
     /// <summary>The walk table: 4 substeps for each of the 8 travel directions, in arcade pixels.</summary>
     /// <remarks>Copied from the ROM's <c>HUMATB</c> — each substep is a picture number with an X/Y
@@ -62,28 +65,26 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         (-2, 1, 0), (-1, 1, 1), (-2, 1, 0), (-1, 1, 1),
     };
 
-    /// <summary>Which 3-frame set each block animates from: [L,R,D,U,L,R,R,L].</summary>
-    private static readonly int[] AnimationFrameGroupByDirectionBlock = { 0, 1, 2, 3, 0, 1, 1, 0 };
+    private readonly HumanKind _kind;
 
-    /// <summary>The largest side of this member's box in port pixels — the square the spawner keeps clear.</summary>
-    /// <param name="kind">The member whose box is measured.</param>
-    /// <returns>The square's side, in port pixels.</returns>
-    internal static int SpawnSquarePortPixels(HumanKind kind)
-    {
-        (int width, int height) = kind.ArcadeCollisionSize();
-        return ScreenSize.Scaled(Math.Max(width, height));
-    }
+    private readonly Random _random;
 
     private readonly SpriteSet _sprites;
-    private readonly Random _random;
-    private readonly HumanKind _kind;
+
+    private int _animationFrameIndex;
+
+    private int _directionBlock;
+
     private IntVector2 _position;
-    private int _directionBlock; // Which of the 8 direction blocks (see Steps) the human is currently walking.
-    private int _subStep;        // Which of the 4 substeps within that block comes next (0-3).
-    private int _stepTimer;     // Counts up to the next step.
-    private int _stepsUntilNewDirection; // Steps left before the human rolls a fresh direction.
-    private int _startStaggerTicks;   // Ticks left before this human's very first step (staggers group spawns).
-    private int _animationFrameIndex;          // Current animation frame, 0-11 into this family member's 12 animation frames.
+
+    private int _startStaggerTicks;
+
+    private int _stepsUntilNewDirection;
+
+    private int _stepTimer;
+
+    // Which of the 8 direction blocks (see Steps) the human is currently walking.
+    private int _subStep;
 
     /// <summary>Creates one family member with its own stagger and starting direction.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -102,21 +103,6 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _stepTimer = 0;                             // The stagger's last tick doubles as the first step.
     }
 
-    /// <summary>Which member this is (Mikey, Mum or Dad) — it decides the animation frames and the box.</summary>
-    public HumanKind Kind => _kind;
-
-    /// <summary>
-    /// This member's slot in the family list (the ROM's <c>$B354</c>), handed out in spawn order by
-    /// <see cref="PlayField"/> — so the first Mikey holds slot 0.
-    /// </summary>
-    /// <remarks>A brain's target is a SLOT rather than a person, which is why every brain on a wave can
-    /// chase the same member (notes §18.8).</remarks>
-    internal int FamilySlot { get; set; }
-
-    /// <summary>Top-left of the human.</summary>
-    /// <remarks>The ROM's OBJX/OBJY.</remarks>
-    public IntVector2 Position => _position;
-
     /// <summary>This member's own picture box at <see cref="Position"/>.</summary>
     public Rectangle Bounds
     {
@@ -127,8 +113,64 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         }
     }
 
+    /// <summary>The walk frame this human is showing — the picture pixel-perfect collision compares.</summary>
+    public Texture2D CurrentAnimationFrame => _kind.AnimationFramesIn(_sprites)[_animationFrameIndex];
+
+    /// <summary>True while this human is being reprogrammed: it cannot walk, be rescued or be killed.</summary>
+    /// <remarks>ROM: <c>BMUT</c> — the human comes off the human list while the brain drives it.</remarks>
+    public bool IsBeingReprogrammed { get; private set; }
+
+    // Which of the 4 substeps within that block comes next (0-3).
+    // Counts up to the next step.
+    // Steps left before the human rolls a fresh direction.
+    // Ticks left before this human's very first step (staggers group spawns).
+    // Current animation frame, 0-11 into this family member's 12 animation frames.
+    /// <summary>Which member this is (Mikey, Mum or Dad) — it decides the animation frames and the box.</summary>
+    public HumanKind Kind => _kind;
+
     /// <summary>Alive until killed, rescued or reprogrammed.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Top-left of the human.</summary>
+    /// <remarks>The ROM's OBJX/OBJY.</remarks>
+    public IntVector2 Position => _position;
+
+    /// <summary>
+    /// This member's slot in the family list (the ROM's <c>$B354</c>), handed out in spawn order by
+    /// <see cref="PlayField"/> — so the first Mikey holds slot 0.
+    /// </summary>
+    /// <remarks>A brain's target is a SLOT rather than a person, which is why every brain on a wave can
+    /// chase the same member (notes §18.8).</remarks>
+    internal int FamilySlot { get; set; }
+
+    /// <summary>Steps taken so far — test hook for the step cadence.</summary>
+    internal int StepCount { get; private set; }
+
+    /// <summary>Draws the walk frame, or — while being reprogrammed — the flashing two-colour shape.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        Texture2D[] frames = _kind.AnimationFramesIn(_sprites);
+
+        if (IsBeingReprogrammed)
+        {
+            // Reprogrammed: a solid silhouette over a solid background, both cycling slots.
+            _sprites.Blitter.DrawSpriteSolidWithBackground(
+                spriteBatch,
+                frames[_animationFrameIndex],
+                Bounds,
+                _sprites.Blitter.SlotColor(ReprogramTuning.BackgroundSlot),
+                _sprites.Blitter.SlotColor(ReprogramTuning.ShapeSlot));
+            return;
+        }
+
+        _sprites.Blitter.DrawSprite(spriteBatch, frames[_animationFrameIndex], Bounds, Color.White);
+    }
 
     /// <summary>Killed: gone at once, with no death animation.</summary>
     /// <remarks>ROM: <c>DMAOFF</c>.</remarks>
@@ -208,6 +250,31 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         }
     }
 
+    /// <summary>The largest side of this member's box in port pixels — the square the spawner keeps clear.</summary>
+    /// <param name="kind">The member whose box is measured.</param>
+    /// <returns>The square's side, in port pixels.</returns>
+    internal static int SpawnSquarePortPixels(HumanKind kind)
+    {
+        (int width, int height) = kind.ArcadeCollisionSize();
+        return ScreenSize.Scaled(Math.Max(width, height));
+    }
+
+    /// <summary>Starts being reprogrammed: the human stops walking and starts flashing.</summary>
+    internal void BeginReprogramming() => IsBeingReprogrammed = true;
+
+    /// <summary>Finishes reprogramming: the human is gone.</summary>
+    /// <remarks>ROM: <c>PROGST</c>.</remarks>
+    internal void FinishReprogramming()
+    {
+        IsBeingReprogrammed = false;
+        LifeState = EntityLifeState.Dead;
+    }
+
+    /// <summary>The brain's hold on its victim: moves the human directly, without walking it.</summary>
+    /// <param name="position">Where the brain puts the human.</param>
+    /// <remarks>ROM: <c>BMUT</c>, the reprogramming lift and drop. A test can also use it to place one.</remarks>
+    internal void MoveTo(IntVector2 position) => _position = position;
+
     /// <summary>True when the human's next step would overlap an electrode that is still standing.</summary>
     private static bool OverlapsLivingElectrode(Rectangle next, PlayField field)
     {
@@ -230,56 +297,4 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirectionBlock[_directionBlock];
         _stepsUntilNewDirection = 1 + _random.Next(NewDirectionStepsMax);
     }
-
-    /// <summary>Draws the walk frame, or — while being reprogrammed — the flashing two-colour shape.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (LifeState != EntityLifeState.Alive)
-        {
-            return;
-        }
-
-        Texture2D[] frames = _kind.AnimationFramesIn(_sprites);
-
-        if (IsBeingReprogrammed)
-        {
-            // Reprogrammed: a solid silhouette over a solid background, both cycling slots.
-            _sprites.Blitter.DrawSpriteSolidWithBackground(
-                spriteBatch,
-                frames[_animationFrameIndex],
-                Bounds,
-                _sprites.Blitter.SlotColor(ReprogramTuning.BackgroundSlot),
-                _sprites.Blitter.SlotColor(ReprogramTuning.ShapeSlot));
-            return;
-        }
-
-        _sprites.Blitter.DrawSprite(spriteBatch, frames[_animationFrameIndex], Bounds, Color.White);
-    }
-
-    /// <summary>The walk frame this human is showing — the picture pixel-perfect collision compares.</summary>
-    public Texture2D CurrentAnimationFrame => _kind.AnimationFramesIn(_sprites)[_animationFrameIndex];
-
-    /// <summary>True while this human is being reprogrammed: it cannot walk, be rescued or be killed.</summary>
-    /// <remarks>ROM: <c>BMUT</c> — the human comes off the human list while the brain drives it.</remarks>
-    public bool IsBeingReprogrammed { get; private set; }
-
-    /// <summary>Starts being reprogrammed: the human stops walking and starts flashing.</summary>
-    internal void BeginReprogramming() => IsBeingReprogrammed = true;
-
-    /// <summary>Finishes reprogramming: the human is gone.</summary>
-    /// <remarks>ROM: <c>PROGST</c>.</remarks>
-    internal void FinishReprogramming()
-    {
-        IsBeingReprogrammed = false;
-        LifeState = EntityLifeState.Dead;
-    }
-
-    /// <summary>The brain's hold on its victim: moves the human directly, without walking it.</summary>
-    /// <param name="position">Where the brain puts the human.</param>
-    /// <remarks>ROM: <c>BMUT</c>, the reprogramming lift and drop. A test can also use it to place one.</remarks>
-    internal void MoveTo(IntVector2 position) => _position = position;
-
-    /// <summary>Steps taken so far — test hook for the step cadence.</summary>
-    internal int StepCount { get; private set; }
 }

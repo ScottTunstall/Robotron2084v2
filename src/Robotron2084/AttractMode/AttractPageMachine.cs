@@ -120,14 +120,14 @@ public sealed class AttractPageMachine
                 return;
 
             case 1: // CLEARM — cursor to the left margin on the given row, clear the block.
-            {
-                int row = NextByte();
-                int range = NextByte();
-                _cursorX = TextLeft;
-                _cursorY = row;
-                ClearText(TextLeft, ClearTopRow, ClearWidth, range - 0x10);
-                return;
-            }
+                {
+                    int row = NextByte();
+                    int range = NextByte();
+                    _cursorX = TextLeft;
+                    _cursorY = row;
+                    ClearText(TextLeft, ClearTopRow, ClearWidth, range - 0x10);
+                    return;
+                }
 
             case 2: // NEWLIN
                 _cursorX = TextLeft;
@@ -143,17 +143,17 @@ public sealed class AttractPageMachine
                 return;
 
             case 5: // MESS — a name popup in the score row.
-            {
-                int x = NextByte() * ScreenSize.ArcadePixelsPerColumn;
-                int number = NextByte();
-                ClearText(TextLeft, MessageRow, ClearWidth, MessageHeight);
-                Message = new MovieMessage(
-                    x,
-                    MessageRow,
-                    MessageText(number),
-                    TextSlot);
-                return;
-            }
+                {
+                    int x = NextByte() * ScreenSize.ArcadePixelsPerColumn;
+                    int number = NextByte();
+                    ClearText(TextLeft, MessageRow, ClearWidth, MessageHeight);
+                    Message = new MovieMessage(
+                        x,
+                        MessageRow,
+                        MessageText(number),
+                        TextSlot);
+                    return;
+                }
 
             case 6: // DONE
                 Finished = true;

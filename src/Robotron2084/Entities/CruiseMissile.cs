@@ -55,6 +55,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     /// <summary>Subtracted from each aim roll, making the random nudge run -6..+9.</summary>
     private const int AimNoiseBase = 6;
+
     /// <summary>How many values an aim roll draws from.</summary>
     private const int AimNoiseRange = 16;
 

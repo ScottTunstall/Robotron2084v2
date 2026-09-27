@@ -239,13 +239,13 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 7: // SETPOS — column, row.
-                {
-                    int column = machine.Read(this);
-                    int row = machine.Read(this);
-                    Object.X = column << 8;
-                    Object.Y = row << 8;
-                    return true;
-                }
+                    {
+                        int column = machine.Read(this);
+                        int row = machine.Read(this);
+                        Object.X = column << 8;
+                        Object.Y = row << 8;
+                        return true;
+                    }
 
                 case 8: // SETXV
                     Object.XVelocity = machine.ReadSignedWord(this);
@@ -317,20 +317,20 @@ public sealed class AttractObjectMachine
                     return true;
 
                 case 18: // LFIRE — bolt lifetime, then the frames this script waits.
-                {
-                    int lifetime = machine.Read(this);
-                    machine.SpawnLaser(Object, lifetime, right: false);
-                    Wait = machine.Read(this);
-                    return false;
-                }
+                    {
+                        int lifetime = machine.Read(this);
+                        machine.SpawnLaser(Object, lifetime, right: false);
+                        Wait = machine.Read(this);
+                        return false;
+                    }
 
                 case 19: // RFIRE
-                {
-                    int lifetime = machine.Read(this);
-                    machine.SpawnLaser(Object, lifetime, right: true);
-                    Wait = machine.Read(this);
-                    return false;
-                }
+                    {
+                        int lifetime = machine.Read(this);
+                        machine.SpawnLaser(Object, lifetime, right: true);
+                        Wait = machine.Read(this);
+                        return false;
+                    }
 
                 default:
                     return HaltOnUnknownOpcode();
@@ -343,32 +343,32 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 20: // LOOPER — `count` passes over the block from the label.
-                {
-                    int count = machine.Read(this);
-                    int label = machine.ReadWord(this) - AttractMovieData.ScriptBase;
-                    if (Loop == 0)
                     {
-                        Loop = count;
-                    }
+                        int count = machine.Read(this);
+                        int label = machine.ReadWord(this) - AttractMovieData.ScriptBase;
+                        if (Loop == 0)
+                        {
+                            Loop = count;
+                        }
 
-                    if (--Loop != 0)
-                    {
-                        ScriptIndex = label;
-                    }
+                        if (--Loop != 0)
+                        {
+                            ScriptIndex = label;
+                        }
 
-                    return true;
-                }
+                        return true;
+                    }
 
                 case 21: // GHOST — another process on the SAME object.
-                {
-                    int script = machine.ReadWord(this);
-                    machine._processes.Add(new MovieProcess
                     {
-                        Object = Object,
-                        ScriptIndex = script - AttractMovieData.ScriptBase,
-                    });
-                    return true;
-                }
+                        int script = machine.ReadWord(this);
+                        machine._processes.Add(new MovieProcess
+                        {
+                            Object = Object,
+                            ScriptIndex = script - AttractMovieData.ScriptBase,
+                        });
+                        return true;
+                    }
 
                 default:
                     return HaltOnUnknownOpcode();
@@ -381,13 +381,13 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 22: // SETRP — a relative move in whole columns/rows, no animation.
-                {
-                    int dx = (sbyte)machine.Read(this);
-                    int dy = (sbyte)machine.Read(this);
-                    Object.X += dx << 8;
-                    Object.Y += dy << 8;
-                    return true;
-                }
+                    {
+                        int dx = (sbyte)machine.Read(this);
+                        int dy = (sbyte)machine.Read(this);
+                        Object.X += dx << 8;
+                        Object.Y += dy << 8;
+                        return true;
+                    }
 
                 case 23: // GDIE — kill the process, keep the object.
                     Alive = false;
@@ -398,19 +398,19 @@ public sealed class AttractObjectMachine
                     return true;
 
                 case 25: // MONO — box colour, image colour, frames, special (brain in the box).
-                {
-                    // The colour operands are doubled-nibble palette values exactly
-                    // like the page script's COLOR ($AA = slot 10), so the slot is the
-                    // HIGH nibble — and 0 means "no box".
-                    int box = machine.Read(this) >> 4;
-                    int image = machine.Read(this) >> 4;
-                    MonoLeft = machine.Read(this);
-                    bool brain = machine.Read(this) != 0;
-                    BeginMono(Object, box, image, brain);
-                    Action = MovieAction.Mono;
-                    Wait = 3;
-                    return false;
-                }
+                    {
+                        // The colour operands are doubled-nibble palette values exactly
+                        // like the page script's COLOR ($AA = slot 10), so the slot is the
+                        // HIGH nibble — and 0 means "no box".
+                        int box = machine.Read(this) >> 4;
+                        int image = machine.Read(this) >> 4;
+                        MonoLeft = machine.Read(this);
+                        bool brain = machine.Read(this) != 0;
+                        BeginMono(Object, box, image, brain);
+                        Action = MovieAction.Mono;
+                        Wait = 3;
+                        return false;
+                    }
 
                 case 26: // RPROG — the 64-step vertical shake.
                     // PSHAKE ($868C) is a ONE-BYTE script: RPROG owns the process

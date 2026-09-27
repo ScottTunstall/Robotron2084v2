@@ -87,12 +87,15 @@ public sealed class WilliamsLogoPath
             case 0:
                 StepRight();
                 break;
+
             case 1:
                 StepDown();
                 break;
+
             case 2:
                 StepLeft();
                 break;
+
             default:
                 StepUp();
                 break;

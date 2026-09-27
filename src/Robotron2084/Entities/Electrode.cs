@@ -17,12 +17,14 @@ namespace Robotron2084.Entities;
 public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 {
     private readonly SpriteSet _sprites;
+
     /// <summary>The post picture's own 10x9 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(CollisionSizes.ElectrodeCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.ElectrodeCollisionSize.Height));
 
     /// <summary>How long each shrivel picture is held, in ROM frames.</summary>
     private static readonly int[] ShrivelSleepRomFrames = [6, 3, 2];
+
     private readonly int _wave;
     private int _shrivelStep;
     private int _shrivelTimer;

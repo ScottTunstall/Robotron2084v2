@@ -22,6 +22,7 @@ public static class HighScoreTableLayout
     // Above this many entries the ROM's extra "5 ENTRIES MAXIMUM" rule applies
     // (notes §98.4); the display itself only ever shows the first N.
     public const int TodayColumn = 26;
+
     public const int TodayRow = 53;
     public const int TodayPerColumn = 5;
     public const int TodayColumns = 2;
@@ -46,6 +47,7 @@ public static class HighScoreTableLayout
 
     /// <summary>Rows the screen has room for (the ROM prints exactly these many).</summary>
     public const int TodayRows = TodayPerColumn * TodayColumns;
+
     public const int AllTimeRows = AllTimePerColumn * AllTimeColumns;
 
     // ---- the frame (`FRAMER` → `MARQ`, notes §98.5) -------------------------------
@@ -57,6 +59,7 @@ public static class HighScoreTableLayout
     // restarts at stroke 0 with flavour 0 (black) and stops at `$0E1D` = (col 14, row 29).
     // What is left visible is the band between those two — 8 columns and 16 rows thick.
     public const int FrameStartColumn = 62;
+
     public const int FrameStartRow = 125;
     public const int FrameHalfWidthColumns = 27;
     public const int FrameStrokesPerRomFrame = 2;

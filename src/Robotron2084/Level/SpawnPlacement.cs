@@ -108,12 +108,15 @@ public sealed class SpawnPlacement
             case Edge.Top:
                 y = _random.Next(inner.Y, inner.Y + bias);
                 break;
+
             case Edge.Bottom:
                 y = _random.Next(inner.Bottom - bias - EntitySize, inner.Bottom - EntitySize);
                 break;
+
             case Edge.Left:
                 x = _random.Next(inner.X, inner.X + bias);
                 break;
+
             default:
                 x = _random.Next(inner.Right - bias - EntitySize, inner.Right - EntitySize);
                 break;

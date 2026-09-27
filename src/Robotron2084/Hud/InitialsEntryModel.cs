@@ -167,12 +167,15 @@ public sealed class InitialsEntryModel
             case Phase.AwaitingFireRelease:
                 CheckFireReleased(input);
                 break;
+
             case Phase.AwaitingInput:
                 ReadSwitches(input);
                 break;
+
             case Phase.Cycling:
                 RepeatCycle(input);
                 break;
+
             default:
                 RepeatTypematic(input);
                 break;

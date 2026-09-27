@@ -29,6 +29,7 @@ public sealed class HighScoreFrameAnimation
     /// them by the time the page first appears.
     /// </summary>
     private int _strokes = HighScoreTableLayout.FrameStrokesPerRomFrame;
+
     private bool _erasing;
     private int _clockUnits;
 

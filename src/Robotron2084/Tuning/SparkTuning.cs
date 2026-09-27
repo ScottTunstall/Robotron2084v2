@@ -33,7 +33,6 @@ public static class SparkTuning
     // a/64 port px per frame of velocity. Both live in 1/256-px fixed point.
     public const int SparkMoveIntervalRomFrames = 4;   // NAP 4
 
-
     public const int SparkAimDivisor = 64;            // ROM: the delta is covered in 64 frames
 
     public const int SparkJitterColumns = 16;         // (seed & $1F) - 16 → -16..+15

@@ -41,6 +41,7 @@ public sealed class PlayField
 
     /// <summary>The next family slot to hand out (the ROM fills <c>$B354</c> upward).</summary>
     private int _nextFamilySlot;
+
     private readonly EntityList<RescueScoreMarker> _rescueScores = new();
     private readonly EntityList<Brain> _brains = new();
     private readonly EntityList<Prog> _progs = new();

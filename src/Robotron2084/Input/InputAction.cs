@@ -1,5 +1,3 @@
-using Microsoft.Xna.Framework.Input;
-
 namespace Robotron2084.Input;
 
 /// <summary>
