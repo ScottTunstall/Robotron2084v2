@@ -50,12 +50,13 @@ public sealed class TunnelEffectTests
     }
 
     [Fact]
-    public void TheWholeEffectLastsOnePhraseOfTheWaveEndMusic()
+    public void TheWholeEffectOutlastsTheWaveEndMusic()
     {
-        // The wave-complete screen is timed by the tunnel, and the board loops the wave-end music
-        // every 183 port ticks (3.05 s, measured through the emulated board — notes §128), so the
-        // 54 passes at PassClockUnits must land on or just past that: the music is never cut
-        // mid-phrase, which is what the author heard before this (notes §83's "~2 s" was a floor).
+        // The wave clear starts the marquee as a TASK and the next level is set up at once (RRG23
+        // GEXEC0), so the effect must still be running — its black erase pass over the new field —
+        // after the wave-end music has played out. The board loops that sound every 183 port ticks
+        // and the ROM's last ask is at tick 113, so the music runs to ~296 ticks (notes §128):
+        // 54 passes at PassClockUnits must reach past that.
         var tunnel = new TunnelEffect();
 
         int ticks = 0;
@@ -66,8 +67,8 @@ public sealed class TunnelEffectTests
         }
 
         Assert.True(tunnel.Finished);
-        Assert.InRange(ticks, 180, 190);                     // one phrase of the wave-end music
-        Assert.InRange(ticks / 60.0, 3.0, 3.2);
+        Assert.InRange(ticks, 295, 310);                     // ~5.0 s, past the music's 296
+        Assert.InRange(ticks / 60.0, 4.9, 5.2);
     }
 
     [Fact]

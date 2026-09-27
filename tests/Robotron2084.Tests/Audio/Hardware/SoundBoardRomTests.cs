@@ -66,13 +66,14 @@ public class SoundBoardRomTests
     }
 
     /// <summary>
-    /// The wave-clear screen is timed by the tunnel, and the board LOOPS the wave-end sound ($0E)
-    /// until a number stops it — so the screen must last a whole phrase of it or the music is cut
-    /// mid-phrase, which is what the author heard. Measure the phrase here and assert the tunnel
-    /// covers it, so the two cannot drift apart again (notes §83's lesson, §128).
+    /// The wave-clear starts the marquee as a TASK and the next level is set up at once (RRG23
+    /// GEXEC0), so the effect must still be running after the wave-end music has played out — the
+    /// board LOOPS sound $0E and only stops it when another number arrives, which is why the music was
+    /// being cut (the author's report). Measure the phrase here and assert the tunnel outlasts the
+    /// music's whole play-out, so the two cannot drift apart again (notes §83's lesson, §128).
     /// </summary>
     [Fact]
-    public void TheTunnelCoversAWholePhraseOfTheWaveEndMusic()
+    public void TheTunnelOutlastsTheWholeWaveEndMusic()
     {
         var board = new SoundBoard(RomFiles.ReadOrSkip(RomFiles.SoundRom));
         var renderer = new SoundBoardRenderer(board, SampleRate);
@@ -113,7 +114,12 @@ public class SoundBoardRomTests
             tunnelTicks++;
         }
 
-        Assert.True(tunnelTicks >= period, $"the wave-complete screen ({tunnelTicks} ticks) must not cut the music's phrase ({period} ticks)");
+        // The ROM's table asks for the sound 29 times, 4 ticks apart, the first at tick 1, and the
+        // phrase that follows the last ask plays out to here.
+        SoundEntry line = SoundTables.WaveEnd.Entries[0];
+        int musicEndsAt = 1 + ((line.Repetitions - 1) * line.LengthVblanks) + period;
+
+        Assert.True(tunnelTicks >= musicEndsAt, $"the wave-complete effect ({tunnelTicks} ticks) must outlast the level music ({musicEndsAt} ticks)");
     }
 
     private static (SoundBoard Board, SoundBoardRenderer Renderer) StartBoard()

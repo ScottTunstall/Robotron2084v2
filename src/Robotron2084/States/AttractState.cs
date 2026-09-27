@@ -39,20 +39,27 @@ public sealed class AttractState : IGameState, IAttractState
     private readonly SpriteSet _sprites;
     private PlayField _field;
     private GameSession _session;
+    private WaveCompleteEffect? _waveComplete;
 
-    public AttractState(GameServices services)
+    /// <summary>Starts the phony-player demo.
+    /// </summary>
+    /// <param name="services">The shared game services.</param>
+    /// <param name="waveComplete">The wave-complete marquee a cleared wave handed over, or null.</param>
+    public AttractState(GameServices services, WaveCompleteEffect? waveComplete = null)
     {
         _services = services;
         _sprites = services.Sprites;
         _highScores = services.HighScores;
         _humanInput = services.Input;
         _session = GameSession.NewGame(_demoInput, 1);
+        _waveComplete = waveComplete;
         _field = BuildField();
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _field.Draw(spriteBatch);
+        _waveComplete?.Draw(spriteBatch, _sprites);
         ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.InnerBounds, showSpareMen: false);
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
     }
@@ -72,6 +79,7 @@ public sealed class AttractState : IGameState, IAttractState
         // the same order PlayingState polls after its Update, except the AI needs
         // the pre-move picture to decide its own move.
         _demoInput.Bind(_field);
+        AdvanceWaveComplete();
         _field.Update(gameTime);
 
         // The demo's HUD is drawn from the session slot, so the live counters go
@@ -105,6 +113,25 @@ public sealed class AttractState : IGameState, IAttractState
             }
 
             _field = BuildField();
+        }
+    }
+
+    /// <summary>
+    /// Finishes the wave-complete marquee the wave clear handed over (notes §128), exactly as
+    /// <see cref="PlayingState"/> does: it erases itself over the demo's field and the palette goes
+    /// back when the last ring is drawn.
+    /// </summary>
+    private void AdvanceWaveComplete()
+    {
+        if (_waveComplete is null)
+        {
+            return;
+        }
+
+        _waveComplete.Update();
+        if (_waveComplete.Finished)
+        {
+            _waveComplete = null;
         }
     }
 

@@ -10305,22 +10305,32 @@ with the real sound ROM — the machinery `SoundBoardRomTests` already uses):
 - the sequencer's own table (`WVSND` = 29 sends x 4 x 16 ms; `RRS22.ASM`'s table format comment reads
   *"REPCNT,SNDTMR(16MSEC),SND#"*) ends at tick 117, inside either screen length.
 
-**The defect:** the wave-complete screen was timed by the tunnel alone at ~2.17 s — §83's playtest
-constant, 54 passes x 2 ROM frames — so it ended **about 0.9 s before the music's phrase did**, and
-the next wave's first sound cut the music mid-phrase. §83's *"~2 seconds at least"* was a FLOOR, not
-the length the arcade runs.
+**The defect was structural.** The port modelled the marquee as a SCREEN that blocked for the tunnel's
+whole length (~3 s at §83's pace) and only then built the next level — so the wave-end music was cut
+(§83's *"~2 seconds at least"* was a floor, not the length) and the effect never ran over the level it
+introduces. The ROM does the opposite: `GEXEC0` clears the screen, starts the marquee **as a task**
+(`$571E` re-allocates it through `ALLOCATE_TASK`, `$D1E3`) and jumps straight on to `JMP PLSTRT`, so the
+marquee keeps expanding and erasing *over* the new level while the music plays.
 
 **Fixed in the port:**
 
-- `TunnelEffect.PassClockUnits` = **17** clock units a pass (54 x 17 / 5 = 183.6 ticks = 3.06 s), so
-  the colour cycling lasts exactly one phrase of the music and finishes with it;
-- `WaveClearState.StopWaveEndMusic()` asks for `SoundTables.ClearTheSystem` as the screen ends — the
-  original's own background-off — so the looping phrase is stopped deliberately rather than being
-  overridden wherever the loop happens to be;
-- `SoundBoardRomTests.TheTunnelCoversAWholePhraseOfTheWaveEndMusic` measures the phrase (175-191
-  ticks) and asserts the tunnel covers it, so the two cannot drift apart again; the tunnel's own test
-  asserts 180-190 ticks.
+- new `Graphics/WaveCompleteEffect` owns the tunnel **and** its colour-cycling ramp, so the effect can
+  outlive the state that starts it (the ramp takes the fifteen slots, suspends the six colour processes
+  and puts CRTAB back when the tunnel ends);
+- `WaveClearState` now only **starts** the effect and hands it straight to the next level, exactly as
+  `SCRCLR / RMST / PLSTRT` do — `PlayingState` and `AttractState` take it as a constructor argument,
+  advance it, and draw it OVER the new field until the last ring, then drop it;
+- `TunnelEffect.PassClockUnits` = **28** clock units a pass (54 x 28 / 5 = 302 ticks = 5.0 s), so the
+  effect outlasts the music's whole play-out (the last ask at tick 113 + the 183-tick phrase = 296) and
+  the black erase runs over the new level for about the last 2.5 s of it;
+- the old `WaveClearDisplayTicks` floor (1.5 s) is gone — there is no screen to hold;
+- `SoundBoardRomTests.TheTunnelOutlastsTheWholeWaveEndMusic` measures the phrase and asserts the tunnel
+  outlasts the music's entire play-out, so the two cannot drift apart again.
 
-Authority: the ROM gives the STRUCTURE — `GEXEC0` asks for `WVSND`, then `JSR RMST` (the marquee),
-then `JMP PLSTRT` — while the LENGTH is measurement. That is §83's lesson, now with the measurement
-that settles it.
+The wave-end **sound** is now left to the arcade's own mechanism: `WVSND`'s table holds the one sound
+voice until its last ask (tick 117, `SNDPRI` then zero), after which the new level's own sounds take the
+voice over — which is why the port no longer sends "BACKY OFFY" to silence it by hand.
+
+Authority: the ROM gives the STRUCTURE — `GEXEC0` asks for `WVSND`, then `JSR SCRCLR` / `JSR RMST` /
+`JMP PLSTRT` with no wait between them — while the LENGTH is measurement. That is §83's lesson, now with
+the measurement that settles it.
