@@ -33,8 +33,6 @@ public sealed class PlayingState : IGameState
     /// <summary>The wave counter is one byte, so it wraps here (ROM <c>GEXX</c>).</summary>
     private const int WaveCounterWrap = 255;
 
-    private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
-
     private readonly LevelParameterGenerator _generator = new();
     private readonly HighScoreStore _highScores;
     private readonly PauseToggle _pause = new();
@@ -77,7 +75,7 @@ public sealed class PlayingState : IGameState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _field.Draw(spriteBatch);
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds);
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.InnerBounds);
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
 
         if (_pause.IsPaused)
@@ -187,7 +185,7 @@ public sealed class PlayingState : IGameState
         PlayerSlot slot = _session.Current;
         LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
         WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, slot.Input, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, pixelCollision: new SpriteCollision());
+        return new PlayField(_sprites, parameters, slot.Input, PlayfieldLayout.InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, pixelCollision: new SpriteCollision());
     }
 
     /// <summary>

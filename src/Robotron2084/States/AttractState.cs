@@ -29,8 +29,6 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class AttractState : IGameState, IAttractState
 {
-    private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
-
     private readonly ButtonEdgeDetector _buttons = new();
     private readonly DemoPlayerInputSource _demoInput = new();
     private readonly LevelParameterGenerator _generator = new();
@@ -55,7 +53,7 @@ public sealed class AttractState : IGameState, IAttractState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _field.Draw(spriteBatch);
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds, showSpareMen: false);
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.InnerBounds, showSpareMen: false);
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
     }
 
@@ -115,7 +113,7 @@ public sealed class AttractState : IGameState, IAttractState
         PlayerSlot slot = _session.Current;
         LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
         WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, _demoInput, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
+        return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
     }
 
     private void SyncSlotFromField() => _field.SyncInto(_session.Current);

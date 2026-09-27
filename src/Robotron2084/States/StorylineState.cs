@@ -32,15 +32,16 @@ public sealed class StorylineState : IGameState, IAttractState
     /// <summary>ROM string 128, printed by `SPGSUB` and never cleared by the page script.</summary>
     internal const string TitleText = "ROBOTRON 2084";
 
-    /// <summary>
-    /// The movie interior, in canvas pixels: a strip that falls outside it is dropped (the ROM's clip).
-    /// It is a property, not a field, so it reads <see cref="InnerBounds"/> when it is used — as a field
-    /// it would be initialised first and clip against a zero rectangle (ledger D-031).
-    /// </summary>
-    private static StripClip Clip => new(InnerBounds.Left, InnerBounds.Right, InnerBounds.Top, InnerBounds.Bottom);
+    /// <summary>The movie interior, in canvas pixels: a strip that falls outside it is dropped (the ROM's clip).</summary>
+    private static StripClip Clip
+    {
+        get
+        {
+            Rectangle bounds = PlayfieldLayout.InnerBounds;
+            return new StripClip(bounds.Left, bounds.Right, bounds.Top, bounds.Bottom);
+        }
+    }
 
-    /// <summary>The playfield's inner rectangle, which the movie's wall encloses.</summary>
-    private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
     private readonly ButtonEdgeDetector _buttons = new();
     private readonly List<StripEffect> _explosions = [];
     private readonly IPlayerInputSource _humanInput;
@@ -56,7 +57,7 @@ public sealed class StorylineState : IGameState, IAttractState
         _sprites = services.Sprites;
         _humanInput = services.Input;
 
-        _wall = new PlayfieldWall(InnerBounds, new WallColorCycle());
+        _wall = new PlayfieldWall(PlayfieldLayout.InnerBounds, new WallColorCycle());
         _session = GameSession.NewGame(_humanInput, 1);
         _movie = new AttractMovie(AttractMovieData.Histo, random);
     }
@@ -64,7 +65,7 @@ public sealed class StorylineState : IGameState, IAttractState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.Blitter.SlotColor(AttractTuning.TitleWallSlot));
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds, showSpareMen: false);
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.InnerBounds, showSpareMen: false);
 
         ArcadeHud.DrawCenteredLargeText(
             spriteBatch,

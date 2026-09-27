@@ -13,10 +13,6 @@ public static class PlayfieldLayout
     // tests, both builds and every gate green. Both members below are computed PROPERTIES, so there is
     // no order to get wrong; if such a dependency is ever introduced, refactor it OUT rather than
     // documenting which line must come first. This code is read by humans, not only by the compiler.
-    // SMELL (unfixed, ledger D-031): the geometry is a static class of derived constants, and every
-    // state that needs it caches its own copy of InnerBounds (PlayingState, AttractState,
-    // StorylineState). One owned playfield rectangle, passed where it is needed, would remove that
-    // duplication too.
 
     /// <summary>The inner play area the wall encloses: the canvas less the margin on every side.</summary>
     public static Rectangle InnerBounds => new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
