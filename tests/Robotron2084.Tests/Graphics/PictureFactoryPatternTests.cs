@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
-using Robotron2084.Rendering;
+using Robotron2084.Graphics;
 using Robotron2084.Tuning;
 using Xunit;
 
