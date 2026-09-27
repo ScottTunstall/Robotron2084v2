@@ -66,13 +66,13 @@ public class SoundBoardRomTests
     }
 
     /// <summary>
-    /// The wave-end music is a sound the BOARD loops: it keeps playing after the ROM's table has asked
-    /// for it for the last time, so the next level's own sounds would cut it short wherever the loop had
-    /// got to — the author's report. Measure the phrase here and assert the voice is held long enough
-    /// for the music to run out, so the two cannot drift apart again (notes §128).
+    /// The wave-end music is a sound the BOARD loops: it keeps playing after the ROM's table has asked for
+    /// it for the last time, so the next level's own sounds used to cut it short wherever the loop had got
+    /// to (the author's report). Measure the phrase here, then pin the held voice between the table's last
+    /// ask and the music's own end — the exact value inside that window is the author's ear (notes §128).
     /// </summary>
     [Fact]
-    public void TheHeldVoiceCoversTheWholeWaveEndMusic()
+    public void TheHeldVoiceStaysWithinTheWaveEndMusic()
     {
         var board = new SoundBoard(RomFiles.ReadOrSkip(RomFiles.SoundRom));
         var renderer = new SoundBoardRenderer(board, SampleRate);
@@ -105,14 +105,14 @@ public class SoundBoardRomTests
 
         Assert.InRange(period, 175, 191); // 183 ticks = 3.05 s
 
-        // The ROM's table asks for the sound 29 times, 4 ticks apart, the first at tick 1, and the
-        // phrase that follows the last ask plays out to here.
+        // The ROM's table asks for the sound 29 times, 4 ticks apart, the first at tick 1, so the last
+        // ask lands at tableEndsAt and the phrase that follows it plays out to musicEndsAt. The hold sits
+        // between them: long enough that every ask is heard, short enough never to outlast the music.
         SoundEntry line = SoundTables.WaveEnd.Entries[0];
-        int musicEndsAt = 1 + ((line.Repetitions - 1) * line.LengthVblanks) + period;
+        int tableEndsAt = 1 + ((line.Repetitions - 1) * line.LengthVblanks);
+        int musicEndsAt = tableEndsAt + period;
 
-        Assert.True(
-            SoundTuning.WaveEndMusicTicks >= musicEndsAt,
-            $"the voice is held {SoundTuning.WaveEndMusicTicks} ticks, which must cover the level music ({musicEndsAt} ticks)");
+        Assert.InRange(SoundTuning.WaveEndMusicTicks, tableEndsAt, musicEndsAt);
     }
 
     private static (SoundBoard Board, SoundBoardRenderer Renderer) StartBoard()

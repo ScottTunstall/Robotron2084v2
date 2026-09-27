@@ -13,11 +13,11 @@ public static class SoundTuning
     public const float StereoWidth = 0.8f;
 
     /// <summary>
-    /// How long the wave-end music sounds, in port ticks, measured from the moment it is asked for
-    /// (notes §128). The board LOOPS sound $0E every 183 ticks and the ROM's table asks for it 29 times
-    /// at 4 ticks apart, so the last ask lands at tick 113 and the phrase that follows it plays to about
-    /// tick 296 — measured through the emulated board rather than read from a comment, because the
-    /// board's own ROM holds the routine.
+    /// How long the voice is held for the wave-end music, in port ticks from the moment it is asked for
+    /// (notes §128). The board LOOPS sound $0E: its phrase is 183 ticks and the ROM's table asks for it
+    /// 29 times at 4 ticks apart, so the last ask lands at tick 113 and the phrase that follows it plays
+    /// out to about 296. That is the longest a hold can usefully be and the shortest is tick 113, and the
+    /// author trimmed the full play-out by a second (60 ticks) by ear.
     /// </summary>
-    public const int WaveEndMusicTicks = 296;
+    public const int WaveEndMusicTicks = 236;
 }
