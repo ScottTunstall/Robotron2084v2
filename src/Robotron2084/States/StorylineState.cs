@@ -32,7 +32,10 @@ public sealed class StorylineState : IGameState, IAttractState
     /// <summary>ROM string 128, printed by `SPGSUB` and never cleared by the page script.</summary>
     internal const string TitleText = "ROBOTRON 2084";
 
-    private static readonly StripClip Clip = new(InnerBounds.Left, InnerBounds.Right, InnerBounds.Top, InnerBounds.Bottom);
+    /// <summary>The movie interior, in canvas pixels: a strip that falls outside it is dropped (the ROM's clip).</summary>
+    private static StripClip Clip => new(InnerBounds.Left, InnerBounds.Right, InnerBounds.Top, InnerBounds.Bottom);
+
+    /// <summary>The playfield's inner rectangle, which the movie's wall encloses.</summary>
     private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
     private readonly ButtonEdgeDetector _buttons = new();
     private readonly List<StripEffect> _explosions = [];

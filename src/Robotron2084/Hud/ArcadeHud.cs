@@ -70,8 +70,7 @@ public static class ArcadeHud
         Rectangle innerBounds,
         bool showSpareMen = true)
     {
-        int wallTop = innerBounds.Top - ScreenSize.Scaled(CollisionSizes.WallThicknessSpecPixels);
-        int hudY = wallTop - ScreenSize.Scaled(HudLayout.HudRowAboveWallPixels);
+        int hudY = ScoresAndMenRowY(innerBounds);
 
         foreach (PlayerSlot player in session.Players)
         {
@@ -93,6 +92,14 @@ public static class ArcadeHud
             }
         }
     }
+
+    /// <summary>
+    /// The canvas row the scores and the spare-men icons are drawn at: the top wall less the ROM's
+    /// eight arcade pixels. It is negative — and the whole HUD invisible — when
+    /// <paramref name="innerBounds"/> runs to the top of the canvas.
+    /// </summary>
+    internal static int ScoresAndMenRowY(Rectangle innerBounds) =>
+        innerBounds.Top - ScreenSize.Scaled(CollisionSizes.WallThicknessSpecPixels) - ScreenSize.Scaled(HudLayout.HudRowAboveWallPixels);
 
     /// <summary>
     /// ROM string 104: the wave number in $AA at the BOTTOM of the screen (row
