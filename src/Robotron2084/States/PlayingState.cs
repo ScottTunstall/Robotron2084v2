@@ -41,7 +41,6 @@ public sealed class PlayingState : IGameState
     private readonly SpriteSet _sprites;
     private PlayField _field;
     private int _playerOutMessageTicks;
-    private WaveCompleteEffect? _waveComplete;
 
     // "PLAYER n GAME OVER" (ROM NAP $60)
     private int _playerOutNumber;
@@ -49,17 +48,11 @@ public sealed class PlayingState : IGameState
     private bool _restartHandled;       // one-shot so the death branch fires exactly once
     private int _turnMessageTicks;      // "PLAYER n" at a 2-player turn start (ROM NAP 115)
 
-    /// <summary>Builds the field for the player whose turn it is, and finishes any marquee handed down from the wave clear.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
-    /// <param name="highScores">The high score store.</param>
-    /// <param name="session">The running game session.</param>
-    /// <param name="waveComplete">The wave-complete marquee the previous level started, or null.</param>
-    public PlayingState(SpriteSet sprites, HighScoreStore highScores, GameSession session, WaveCompleteEffect? waveComplete = null)
+    public PlayingState(SpriteSet sprites, HighScoreStore highScores, GameSession session)
     {
         _sprites = sprites;
         _highScores = highScores;
         _session = session;
-        _waveComplete = waveComplete;
         _field = BuildField();
         AnnounceTurn();
     }
@@ -82,7 +75,6 @@ public sealed class PlayingState : IGameState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _field.Draw(spriteBatch);
-        _waveComplete?.Draw(spriteBatch, _sprites);
         ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.InnerBounds);
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
 
@@ -144,7 +136,6 @@ public sealed class PlayingState : IGameState
             _turnMessageTicks--;
         }
 
-        AdvanceWaveComplete();
         _field.Update(gameTime);
 
         // The HUD is drawn from the session's slots, and the ROM reads the score,
@@ -250,25 +241,6 @@ public sealed class PlayingState : IGameState
         slot.Wave = (slot.Wave % WaveCounterWrap) + 1;
 
         manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session));
-    }
-
-    /// <summary>
-    /// Finishes the wave-complete marquee the wave clear handed over (notes §128): the ROM starts it
-    /// as a task and goes straight into the next level, so it erases itself over this field while the
-    /// wave-end music plays, and the palette goes back when the last ring is drawn.
-    /// </summary>
-    private void AdvanceWaveComplete()
-    {
-        if (_waveComplete is null)
-        {
-            return;
-        }
-
-        _waveComplete.Update();
-        if (_waveComplete.Finished)
-        {
-            _waveComplete = null;
-        }
     }
 
     /// <summary>Copies the live field's counters back into the current player's slot.</summary>

@@ -55,6 +55,9 @@ public static class ScreenTuning
     /// </summary>
     public const int PlayerTurnMessageRomFrames = 115;
 
+    // Wave clear
+    public const int WaveClearDisplayTicks = 90; // 1.5s at 60Hz fixed timestep
+
     // LDA #200 with NAP 3 = 600 frames = 12 s
 
     // TAB777's NAP 4 between switch reads
