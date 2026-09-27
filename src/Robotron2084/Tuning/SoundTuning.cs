@@ -16,8 +16,8 @@ public static class SoundTuning
     /// How long the voice is held for the wave-end music, in port ticks from the moment it is asked for
     /// (notes §128). The board LOOPS sound $0E: its phrase is 183 ticks and the ROM's table asks for it
     /// 29 times at 4 ticks apart, so the last ask lands at tick 113 and the phrase that follows it plays
-    /// out to about 296. That is the longest a hold can usefully be and the shortest is tick 113, and the
-    /// author trimmed the full play-out by a second (60 ticks) by ear.
+    /// out to about 296. That is the longest a hold can usefully be and tick 113 is the shortest, and the
+    /// author trimmed the full play-out by two seconds (120 ticks) by ear.
     /// </summary>
-    public const int WaveEndMusicTicks = 236;
+    public const int WaveEndMusicTicks = 176;
 }

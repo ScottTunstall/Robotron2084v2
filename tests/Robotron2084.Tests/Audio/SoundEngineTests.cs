@@ -141,14 +141,14 @@ public class SoundEngineTests
 
         engine.Play(SoundTables.WaveEnd, 0f);
         engine.HoldVoice(SoundTuning.WaveEndMusicTicks);
-        RunTicks(engine, 200); // past the table's own end, inside the hold
+        RunTicks(engine, SoundTuning.WaveEndMusicTicks - 1); // one tick of the hold left
 
         engine.Play(SoundTables.RobotMove, 0f); // $C0, below the wave end's $E0
         RunTicks(engine, 1);
 
         Assert.DoesNotContain(0x06, sink.SoundNumbers());
 
-        RunTicks(engine, SoundTuning.WaveEndMusicTicks - 201); // the music has run out
+        RunTicks(engine, 1); // the music has run out and the voice is free
         engine.Play(SoundTables.RobotMove, 0f);
         RunTicks(engine, 1);
 

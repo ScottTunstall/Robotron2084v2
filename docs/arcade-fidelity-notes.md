@@ -10325,10 +10325,10 @@ the music's measured play-out, so the new level's sounds simply wait for the mus
 - `TunnelEffect.PassClockUnits` = **17** clock units a pass (54 x 17 / 5 = 183.6 ticks = 3.06 s) — the
   colour cycling lasts exactly one phrase of the music, and the screen still ends before the level
   starts, so nothing is ever drawn over the playfield;
-- `SoundTuning.WaveEndMusicTicks` = **236** port ticks and `Sound.PlayWaveEnd()` holds the voice for it.
+- `SoundTuning.WaveEndMusicTicks` = **176** port ticks and `Sound.PlayWaveEnd()` holds the voice for it.
   The measured window is tick 113 (the ROM's last ask — all 29 asks must be heard) to ~296 (the last
-  ask plus one 183-tick phrase), and the author set the value inside it by ear — the full play-out was
-  *"a little too long"*, so it is the play-out less one second (notes §128). `SoundEngine.HoldVoice`
+  ask plus one 183-tick phrase), and the author dialled the value down by ear — the full play-out was
+  *"a little too long"*, so it is the play-out less two seconds — *"and I think it's good"*. `SoundEngine.HoldVoice`
   keeps `SNDPRI` past the table's own end so no lower-priority sound can take the voice, and frees it
   when the music has run out; a sound important enough to take the voice anyway cancels the hold;
 - nothing sends "BACKY OFFY" ($13) any more: the music now ends where it should, and the new level's
