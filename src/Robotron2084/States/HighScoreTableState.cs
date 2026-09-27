@@ -1,10 +1,10 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Graphics;
 using Robotron2084.Hud;
 using Robotron2084.Input;
 using Robotron2084.Persistence;
-using Robotron2084.Rendering;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.States;
