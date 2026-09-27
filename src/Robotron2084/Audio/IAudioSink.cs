@@ -1,16 +1,13 @@
 namespace Robotron2084.Audio;
 
-/// <summary>
-/// Audio backend for <see cref="SoundEngine"/>. The port calls
-/// <see cref="PlayNote"/> when the sequencer (re)sounds a note, and the sink
-/// holds the tone for the number of port ticks that call passes.
-/// <see cref="Tick"/> retires expired tones (called once per port tick).
-/// </summary>
+/// <summary>Where the sound sequencer sends each sound number it plays.</summary>
 public interface IAudioSink
 {
-    /// <summary>Starts a tone at the given note for the given number of port ticks.</summary>
-    void PlayNote(int note, int ticks);
+    /// <summary>Starts the sound with this number, heard from this place between the speakers.</summary>
+    /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>), 0 to 63.</param>
+    /// <param name="pan">Where the sound is heard: -1 is wholly left, 0 the middle, 1 wholly right.</param>
+    void SendSoundNumber(int soundNumber, float pan);
 
-    /// <summary>Retires the tones whose time has run out.</summary>
+    /// <summary>Moves the sound on by one port tick.</summary>
     void Tick();
 }

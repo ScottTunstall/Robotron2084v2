@@ -1,58 +1,70 @@
 namespace Robotron2084.Audio;
 
 /// <summary>
-/// Single-voice priority sound sequencer, ported from the R5 disasm
-/// (notes §36.2): request $D3C7 (play only when the requested priority is
-/// STRICTLY higher than the one currently sounding — the ROM's
-/// <c>CMPA $56 / BCS</c>), vblank step $D3E0 ($57 = ticks left in the
-/// current note repetition; $58 = repetitions left in the current entry;
-/// at 0/0 the pointer advances 3 bytes to the next entry; dur 0 ends the
-/// table and clears the priority), hardware $D3B6 (note written to PIA port
-/// B, complemented — the note number selects the tone on the sound board).
-/// Pure logic: the tone itself is the sink's business.
+/// Decides which sound the sound board plays. The board plays one sound at a time, so a new sound
+/// only takes over when it is more important than the one playing; then it sends that sound's
+/// numbers to the board, one by one, at the right moments.
 /// </summary>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRS22.ASM</c>, routines <c>SNDLDV</c> ("SOUND LOADER": the request),
+/// <c>SNDSEQ</c> ("SOUND SEQUENCER": the per-vblank step) and <c>SNDOUT</c> (the send).</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$D3C7</c> (request), <c>$D3E0</c> (step) and
+/// <c>$D3B6</c> (send).</item>
+/// </list>
+/// A request plays only when its priority is strictly higher than the one playing (<c>BLO SNDLDX</c>).
+/// The step counts <c>SNDTMR</c> down each vblank; at zero it counts <c>SNDREP</c> down and sends the
+/// same number again, and when both are spent it moves to the next line. A repeat count of zero ends
+/// the table and frees the voice. Each sound also carries where it is heard between the speakers,
+/// which is a port addition: the arcade's speaker is mono.
+/// </remarks>
 public sealed class SoundEngine
 {
     private readonly IAudioSink _sink;
     private SoundEntry[] _entries = [];
     private int _entryIndex = -1;
+    private float _pan;
     private int _priority;
-    private int _repetitionsLeft;   // ROM $58
-    private int _ticksLeftInNote;   // ROM $57
-                                    // ROM $56
+    private int _repetitionsLeft;
+    private int _ticksLeftInSend;
 
+    /// <summary>Creates a sequencer that sends its sound numbers to a sink.</summary>
+    /// <param name="sink">Where the sound numbers go.</param>
     public SoundEngine(IAudioSink sink) => _sink = sink;
 
-    /// <summary>The priority currently holding the voice (0 = free).</summary>
+    /// <summary>The priority of the sound holding the voice, or 0 when the voice is free (<c>SNDPRI</c>).</summary>
     public int CurrentPriority => _priority;
 
     /// <summary>
-    /// Request a sound. Preempts only when <paramref name="sequence.Priority"/>
-    /// is strictly higher than the current one (ROM $D3CB-$D3D1). The first
-    /// note sounds on the next <see cref="Tick"/> (ROM: the request primes
-    /// $57=$58=1, so the first vblank advances straight to the first entry).
+    /// Asks for a sound. It takes the voice only if it is more important than the one playing; its first
+    /// sound number goes to the board on the next <see cref="Tick"/>.
     /// </summary>
-    public void Play(SoundSequence sequence)
+    /// <param name="sequence">The sound's table.</param>
+    /// <param name="pan">Where the sound is heard: -1 is wholly left, 0 the middle, 1 wholly right.</param>
+    public void Play(SoundSequence sequence, float pan)
     {
         if (sequence.Priority <= _priority)
         {
-            return; // ROM $D3CD-DCFE: not strictly higher — ignore.
+            return;
         }
 
         _priority = sequence.Priority;
         _entries = sequence.Entries;
+        _pan = pan;
         _entryIndex = -1;
-        _repetitionsLeft = 1; // ROM $D3D9 LDD #$0101
-        _ticksLeftInNote = 1;
+        _repetitionsLeft = 1;
+        _ticksLeftInSend = 1;
     }
 
     /// <summary>
-    /// One port tick (≈ one arcade vblank). Advances the sequencer per
-    /// $D3E0: while the current note repetition runs, only the tick counter
-    /// decrements; at 0 the repetition counter decrements and the note is
-    /// re-sounded; at 0/0 the next entry loads (dur 0 = table end → voice
-    /// freed, priority cleared).
+    /// Sends a sound number straight to the board, skipping the priority check and the tables (the
+    /// original's <c>SDOUT</c> vector). For routines that time their own sounds, such as the transporter.
     /// </summary>
+    /// <param name="soundNumber">The sound number (<c>SND#</c>).</param>
+    /// <param name="pan">Where the sound is heard: -1 is wholly left, 0 the middle, 1 wholly right.</param>
+    public void SendDirect(int soundNumber, float pan) => _sink.SendSoundNumber(soundNumber, pan);
+
+    /// <summary>One port tick (one vblank): counts the current send down, and sends the next sound number when it is due.</summary>
     public void Tick()
     {
         _sink.Tick();
@@ -62,30 +74,24 @@ public sealed class SoundEngine
             return;
         }
 
-        if (_ticksLeftInNote > 0)
+        if (_ticksLeftInSend > 0 && --_ticksLeftInSend > 0)
         {
-            _ticksLeftInNote--;
-            if (_ticksLeftInNote > 0)
-            {
-                return; // note still sounding (held on the sound board).
-            }
-        }
-
-        // _ticksLeftInNote == 0 here (ROM falls through at $D3E6).
-        _repetitionsLeft--;
-        if (_repetitionsLeft > 0)
-        {
-            // ROM $D3EC BNE $D3FC: the repetition counter was JUST decremented
-            // and is non-zero — re-sound the SAME note (len re-loaded from the
-            // current entry at $D3FC, but $58 is NOT re-loaded).
-            SoundEntry resound = _entries[_entryIndex];
-            _ticksLeftInNote = resound.LengthVblanks;
-            _sink.PlayNote(resound.Note, resound.LengthVblanks);
             return;
         }
 
-        // Entry exhausted (ROM $D3EE-$D3FA): advance and load the next one
-        // ($58 = the new entry's dur, then $D3FC sounds it).
+        if (--_repetitionsLeft > 0)
+        {
+            // SNDREP is not reloaded here: only moving to the next line reloads it.
+            Send(_entries[_entryIndex]);
+            return;
+        }
+
+        MoveToNextEntry();
+    }
+
+    /// <summary>Moves to the table's next line and sends it, or frees the voice at the table's end.</summary>
+    private void MoveToNextEntry()
+    {
         _entryIndex++;
         if (_entryIndex >= _entries.Length)
         {
@@ -95,13 +101,19 @@ public sealed class SoundEngine
 
         SoundEntry entry = _entries[_entryIndex];
         _repetitionsLeft = entry.Repetitions;
-        _ticksLeftInNote = entry.LengthVblanks;
-        _sink.PlayNote(entry.Note, entry.LengthVblanks);
+        Send(entry);
     }
 
+    /// <summary>Sends a line's sound number to the board and starts timing it.</summary>
+    private void Send(SoundEntry entry)
+    {
+        _ticksLeftInSend = entry.LengthVblanks;
+        _sink.SendSoundNumber(entry.SoundNumber, _pan);
+    }
+
+    /// <summary>Frees the voice: the table has ended (<c>STA SNDPRI</c> with the zero repeat count).</summary>
     private void EndSequence()
     {
-        // ROM $D3F6: the (0) priority is written back — the voice is free.
         _priority = 0;
         _entries = [];
         _entryIndex = -1;
