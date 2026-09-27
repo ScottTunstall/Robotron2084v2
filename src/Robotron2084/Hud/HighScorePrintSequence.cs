@@ -1,4 +1,5 @@
 using Robotron2084.Core;
+using Robotron2084.Palette;
 
 namespace Robotron2084.Hud;
 
@@ -22,7 +23,7 @@ namespace Robotron2084.Hud;
 /// The printed rows are already in palette slots 9/10, and those slots are BLACK until
 /// the ramps start (FRAMER zeroed the palette), so the text is drawn invisibly for the
 /// few frames it takes to print and then comes up dark red as DECAZ/COLA write their
-/// first byte — see <see cref="Rendering.HighScorePalette"/>.
+/// first byte — see <see cref="HighScorePalette"/>.
 /// </summary>
 public sealed class HighScorePrintSequence
 {
