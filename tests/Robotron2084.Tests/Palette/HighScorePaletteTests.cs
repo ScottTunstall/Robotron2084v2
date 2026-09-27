@@ -1,4 +1,3 @@
-using Robotron2084.Graphics;
 using Robotron2084.Palette;
 using Xunit;
 

@@ -1,4 +1,5 @@
 using Robotron2084.Graphics;
+using Robotron2084.Palette;
 using Xunit;
 
 namespace Robotron2084.Tests.Rendering;
