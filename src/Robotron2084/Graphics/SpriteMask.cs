@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Robotron2084.Core;
+namespace Robotron2084.Graphics;
 
 /// <summary>
 /// A picture's opaque pixels, one flag per pixel in the picture's own grid — the shape a pixel-perfect
@@ -71,7 +71,7 @@ public sealed class SpriteMask
 
     /// <summary>
     /// True when the two pictures cover a common screen pixel. Each mask is placed by the rectangle its
-    /// picture is DRAWN in — <see cref="Rendering.BlitterDraw.DrawnRect"/> is the one definition of that
+    /// picture is DRAWN in — <see cref="BlitterDraw.DrawnRect"/> is the one definition of that
     /// placement, so the collision follows the picture wherever the drawer puts it — and one picture pixel
     /// covers a square of screen pixels (the render scale).
     ///
