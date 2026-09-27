@@ -82,26 +82,7 @@ public sealed class AttractObjectMachine
     /// <summary>Runs one ROM frame: move what moves, then advance every process.</summary>
     public void StepFrame()
     {
-        foreach (MovieObject item in _objects)
-        {
-            if (item.Dead)
-            {
-                continue;
-            }
-
-            if (item.IsLaser)
-            {
-                MoveLaserWithinTheWalls(item);
-                item.LaserRomFramesLeft--;
-                continue;
-            }
-
-            if (item.OnList && !item.MonoActive)
-            {
-                item.X += item.XVelocity;
-                item.Y += item.YVelocity;
-            }
-        }
+        MoveObjects();
 
         // A script can FORK/GHOST while it runs, which appends to the process
         // list: walk only what existed when the frame started (a new process
@@ -115,14 +96,7 @@ public sealed class AttractObjectMachine
             }
         }
 
-        for (int i = _objects.Count - 1; i >= 0; i--)
-        {
-            if (_objects[i].Dead || (_objects[i].IsLaser && _objects[i].LaserRomFramesLeft <= 0))
-            {
-                _objects.RemoveAt(i);
-            }
-        }
-
+        _objects.RemoveAll(item => item.Dead || (item.IsLaser && item.LaserRomFramesLeft <= 0));
         _processes.RemoveAll(p => !p.Alive);
     }
 
@@ -148,6 +122,31 @@ public sealed class AttractObjectMachine
         item.MonoBoxSlot = boxSlot;
         item.MonoSilhouetteSlot = imageSlot;
         item.MonoBrain = brain;
+    }
+
+    /// <summary>Integrates every live object's velocity for one frame; laser bolts stop at the walls and age.</summary>
+    private void MoveObjects()
+    {
+        foreach (MovieObject item in _objects)
+        {
+            if (item.Dead)
+            {
+                continue;
+            }
+
+            if (item.IsLaser)
+            {
+                MoveLaserWithinTheWalls(item);
+                item.LaserRomFramesLeft--;
+                continue;
+            }
+
+            if (item.OnList && !item.MonoActive)
+            {
+                item.X += item.XVelocity;
+                item.Y += item.YVelocity;
+            }
+        }
     }
 
     private int RandomUpTo(int exclusive) => _random.Next(exclusive);
@@ -503,37 +502,7 @@ public sealed class AttractObjectMachine
             switch (Action)
             {
                 case MovieAction.Walk:
-                    // Only the WALK actions need the descriptor (its walk table and
-                    // animation frame count); MONO and RPROG drive any object. A descriptor-less
-                    // walk must STOP the action: carrying on would read the next
-                    // script's opcodes as its own (notes §97.4).
-                    if (Object.Descriptor is not { } descriptor)
-                    {
-                        Action = MovieAction.None;
-                        break;
-                    }
-
-                    // ANA2 / BANA2: move, DEC the step count, and only SLEEP again
-                    // while steps remain — the LAST step falls straight through to
-                    // the script (`JMP [LEV2,U]`). Sleeping once more after it would
-                    // put every walk a step period behind and drag the whole script's
-                    // later phases with it (notes §96.10).
-                    if (descriptor.Walk == MovieWalk.BrainStep)
-                    {
-                        BrainStep(descriptor);
-                        Wait = --StepsLeft > 0 ? descriptor.StepNap : 0;
-                    }
-                    else
-                    {
-                        TableStep(descriptor.Walk);
-                        Wait = --StepsLeft > 0 ? WalkStepRomFrames : 0;
-                    }
-
-                    if (StepsLeft <= 0)
-                    {
-                        Action = MovieAction.None;
-                    }
-
+                    StepWalk();
                     break;
 
                 case MovieAction.Cycle:
@@ -554,6 +523,40 @@ public sealed class AttractObjectMachine
                 case MovieAction.ReprogramShake:
                     StepReprogramShake(machine);
                     break;
+            }
+        }
+
+        /// <summary>ANA2 / BANA2: one walk step, ending the action after the last one.</summary>
+        private void StepWalk()
+        {
+            // Only the WALK actions need the descriptor (its walk table and
+            // animation frame count); MONO and RPROG drive any object. A descriptor-less
+            // walk must STOP the action: carrying on would read the next
+            // script's opcodes as its own (notes §97.4).
+            if (Object.Descriptor is not { } descriptor)
+            {
+                Action = MovieAction.None;
+                return;
+            }
+
+            // Move, DEC the step count, and only SLEEP again while steps remain — the
+            // LAST step falls straight through to the script (`JMP [LEV2,U]`). Sleeping
+            // once more after it would put every walk a step period behind and drag the
+            // whole script's later phases with it (notes §96.10).
+            if (descriptor.Walk == MovieWalk.BrainStep)
+            {
+                BrainStep(descriptor);
+                Wait = --StepsLeft > 0 ? descriptor.StepNap : 0;
+            }
+            else
+            {
+                TableStep(descriptor.Walk);
+                Wait = --StepsLeft > 0 ? WalkStepRomFrames : 0;
+            }
+
+            if (StepsLeft <= 0)
+            {
+                Action = MovieAction.None;
             }
         }
 

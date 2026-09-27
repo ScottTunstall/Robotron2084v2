@@ -107,25 +107,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
             .Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length >= 2 && parts[0].Length == 2 && parts[0][0] is 'P' or 'p' && parts[0][1] is '1' or '2')
         {
-            int pad = parts[0][1] - '1';
-            if (TryStick(parts, out bool rightStick, out int directionFrom))
-            {
-                if (!TryDirection(string.Join(' ', parts[directionFrom..]), out int dx, out int dy))
-                {
-                    return false;
-                }
-
-                binding = Stick(pad, rightStick, dx, dy);
-                return true;
-            }
-
-            if (!Enum.TryParse(parts[1], ignoreCase: true, out Buttons button))
-            {
-                return false;
-            }
-
-            binding = Button(pad, button);
-            return true;
+            return TryParseGamePad(parts, out binding);
         }
 
         if (!Enum.TryParse(text, ignoreCase: true, out Keys key))
@@ -134,6 +116,34 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
         }
 
         binding = Key(key);
+        return true;
+    }
+
+    /// <summary>Parses a "P1 ..."/"P2 ..." value: a stick direction or a gamepad button.</summary>
+    /// <param name="parts">The value's words; the first is the pad ("P1" or "P2").</param>
+    /// <param name="binding">The parsed binding, or <see cref="None"/> when it fails.</param>
+    /// <returns>True when the value parsed.</returns>
+    private static bool TryParseGamePad(string[] parts, out InputBinding binding)
+    {
+        binding = None;
+        int pad = parts[0][1] - '1';
+        if (TryStick(parts, out bool rightStick, out int directionFrom))
+        {
+            if (!TryDirection(string.Join(' ', parts[directionFrom..]), out int dx, out int dy))
+            {
+                return false;
+            }
+
+            binding = Stick(pad, rightStick, dx, dy);
+            return true;
+        }
+
+        if (!Enum.TryParse(parts[1], ignoreCase: true, out Buttons button))
+        {
+            return false;
+        }
+
+        binding = Button(pad, button);
         return true;
     }
 

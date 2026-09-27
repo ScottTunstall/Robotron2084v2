@@ -188,7 +188,37 @@ public sealed class AttractPageMachine
         _cursorX += AttractMovieData.FontWidths[code - 0x30] + 1;
     }
 
+    /// <summary>Runs a page-script action: the flow opcodes here, the text opcodes in <see cref="RunTextAction"/>.</summary>
     private void RunAction(byte op)
+    {
+        switch (op)
+        {
+            case 3: // SCRPT — start an object script.
+                _objects.StartScript(NextWord());
+                return;
+
+            case 4: // SNOOZE
+                _wait = NextByte();
+                return;
+
+            case 6: // DONE
+            case 9: // DONE2
+                Finished = true;
+                return;
+
+            case 8: // GRUNTS — 14 of them, one every 16 frames (the ROM's GRPROC).
+                _gruntsLeft = 14;
+                _gruntTimer = 16;
+                return;
+
+            default:
+                RunTextAction(op);
+                return;
+        }
+    }
+
+    /// <summary>Runs a page-script text action: the cursor, the clear, the name popup and the colour.</summary>
+    private void RunTextAction(byte op)
     {
         switch (op)
         {
@@ -212,14 +242,6 @@ public sealed class AttractPageMachine
                 _cursorY += 11;
                 return;
 
-            case 3: // SCRPT — start an object script.
-                _objects.StartScript(NextWord());
-                return;
-
-            case 4: // SNOOZE
-                _wait = NextByte();
-                return;
-
             case 5: // MESS — a name popup in the score row.
                 {
                     int x = NextByte() * ScreenSize.ArcadePixelsPerColumn;
@@ -233,21 +255,8 @@ public sealed class AttractPageMachine
                     return;
                 }
 
-            case 6: // DONE
-                Finished = true;
-                return;
-
             case 7: // COLOR — the text's palette slot (a doubled nibble like $AA).
                 TextSlot = NextByte() >> 4;
-                return;
-
-            case 8: // GRUNTS — 14 of them, one every 16 frames (the ROM's GRPROC).
-                _gruntsLeft = 14;
-                _gruntTimer = 16;
-                return;
-
-            case 9: // DONE2
-                Finished = true;
                 return;
         }
     }

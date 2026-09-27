@@ -198,22 +198,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // convention — spec.txt's "press fire", which the arcade does not have).
         // The shell's F1/F2/F3 (notes §101) are the same three modes and work from
         // every attract screen, this one included.
-        ButtonPresses presses = _buttons.Advance(input);
-        GameMode? mode = null;
-        if (presses.StartOnePlayer)
-        {
-            mode = GameMode.OnePlayer;
-        }
-        else if (presses.StartTwoPlayers)
-        {
-            mode = GameMode.TwoPlayerAlternate;
-        }
-        else if (presses.Fire)
-        {
-            mode = GameMode.OnePlayer;
-        }
-
-        if (mode is { } chosen)
+        if (ChooseMode(_buttons.Advance(input)) is { } chosen)
         {
             StopColours();
             manager.TransitionTo(PlayingState.StartNewGame(_controls, chosen, _sprites, _highScores));
@@ -255,6 +240,22 @@ public sealed class TitleScreenState : IGameState, IAttractState
             StopColours();
             manager.TransitionTo(new StorylineState(_services, new Random()));
         }
+    }
+
+    /// <summary>The game mode this tick's presses start, if any: START 1 or fire for one player, START 2 for two.</summary>
+    private static GameMode? ChooseMode(ButtonPresses presses)
+    {
+        if (presses.StartOnePlayer)
+        {
+            return GameMode.OnePlayer;
+        }
+
+        if (presses.StartTwoPlayers)
+        {
+            return GameMode.TwoPlayerAlternate;
+        }
+
+        return presses.Fire ? GameMode.OnePlayer : null;
     }
 
     /// <summary>

@@ -178,11 +178,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
             if (item.IsLaser)
             {
-                // LASPIC: the rotating laser table's horizontal bar.
-                int x = HudLayout.ArcadeX(item.ArcadeX);
-                int y = HudLayout.ArcadeY(item.ArcadeY);
-                var bolt = new Rectangle(x, y, ScreenSize.Scaled(_sprites.LaserBar.Width), ScreenSize.Scaled(_sprites.LaserBar.Height));
-                _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBar, bolt, _sprites.Blitter.SlotColor(PlayerTuning.LaserSlot));
+                DrawLaser(spriteBatch, item);
                 continue;
             }
 
@@ -205,24 +201,39 @@ public sealed class StorylineState : IGameState, IAttractState
 
             if (item.MonoActive)
             {
-                // ROM OPON: the box in the first colour, the object's SHAPE in the
-                // second, and — for the brain's box — the brain's own picture over
-                // the top (the ROM's second blit, `JMP $D018`, notes §72.1).
-                if (item.MonoBoxSlot != 0)
-                {
-                    _sprites.Blitter.DrawSolidRectangle(spriteBatch, bounds, _sprites.Blitter.SlotColor(item.MonoBoxSlot));
-                }
-
-                _sprites.Blitter.DrawSpriteSolid(spriteBatch, animationFrame, bounds, _sprites.Blitter.SlotColor(item.MonoSilhouetteSlot));
-                if (item.MonoBrain)
-                {
-                    _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
-                }
+                DrawMonoBox(spriteBatch, item, animationFrame, bounds);
             }
             else
             {
                 _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
             }
+        }
+    }
+
+    /// <summary>Draws a laser bolt: <c>LASPIC</c>, the rotating laser table's horizontal bar.</summary>
+    private void DrawLaser(SpriteBatch spriteBatch, MovieObject item)
+    {
+        int x = HudLayout.ArcadeX(item.ArcadeX);
+        int y = HudLayout.ArcadeY(item.ArcadeY);
+        var bolt = new Rectangle(x, y, ScreenSize.Scaled(_sprites.LaserBar.Width), ScreenSize.Scaled(_sprites.LaserBar.Height));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBar, bolt, _sprites.Blitter.SlotColor(PlayerTuning.LaserSlot));
+    }
+
+    /// <summary>
+    /// ROM <c>OPON</c>: the box in the first colour, the object's SHAPE in the second, and — for the
+    /// brain's box — the brain's own picture over the top (the ROM's second blit, <c>JMP $D018</c>, notes §72.1).
+    /// </summary>
+    private void DrawMonoBox(SpriteBatch spriteBatch, MovieObject item, Texture2D animationFrame, Rectangle bounds)
+    {
+        if (item.MonoBoxSlot != 0)
+        {
+            _sprites.Blitter.DrawSolidRectangle(spriteBatch, bounds, _sprites.Blitter.SlotColor(item.MonoBoxSlot));
+        }
+
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, animationFrame, bounds, _sprites.Blitter.SlotColor(item.MonoSilhouetteSlot));
+        if (item.MonoBrain)
+        {
+            _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
         }
     }
 

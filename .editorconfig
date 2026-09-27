@@ -19,7 +19,7 @@ csharp_using_directive_placement = outside_namespace:silent
 # Naming follows .NET/C# conventions (defaults); keep identifiers meaningful.
 dotnet_diagnostic.CS8618.severity = error
 
-# Cyclomatic complexity (notes §99, §120). The threshold is 15, set in CodeMetricsConfig.txt
+# Cyclomatic complexity (notes §99, §120). The threshold is 10, set in CodeMetricsConfig.txt
 # and registered as an AdditionalFile in Directory.Build.props; this line is what makes a
 # breach an error rather than a disabled rule. The rule is OFF by default in .NET 10.
 dotnet_diagnostic.CA1502.severity = error
@@ -31,3 +31,10 @@ dotnet_diagnostic.RCS1168.severity = warning
 dotnet_diagnostic.RCS1192.severity = warning
 dotnet_diagnostic.RCS1216.severity = warning
 dotnet_diagnostic.RCS1220.severity = warning
+
+
+# CS1591: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = error
+
+# CS1591: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = error

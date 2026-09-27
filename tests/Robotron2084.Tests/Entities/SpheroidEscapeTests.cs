@@ -48,53 +48,7 @@ public sealed class SpheroidEscapeTests
             PlayField field = CreateField(seed);
             Spheroid spheroid = field.Spheroids[0];
 
-            for (int tick = 0; tick < GraceWarmupTicks; tick++)
-            {
-                field.Update(Frame());
-            }
-
-            for (int guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++)
-            {
-                spheroid.Update(Frame(), field);
-            }
-
-            if (!spheroid.IsEscaping)
-            {
-                continue;
-            }
-
-            int startX = spheroid.Position.X;
-            int lastWrapBeatX = startX;
-            int previousPicture = spheroid.PictureIndex;
-            int deathX = startX;
-            bool escapedRight = false;
-
-            for (int tick = 0; tick < 900; tick++)
-            {
-                spheroid.Update(Frame(), field);
-
-                if (spheroid.Position.X < startX)
-                {
-                    break; // this seed escaped leftwards
-                }
-
-                escapedRight = true;
-
-                if (spheroid.LifeState == EntityLifeState.Dead)
-                {
-                    deathX = spheroid.Position.X;
-                    break;
-                }
-
-                if (spheroid.PictureIndex < previousPicture)
-                {
-                    lastWrapBeatX = spheroid.Position.X;
-                }
-
-                previousPicture = spheroid.PictureIndex;
-            }
-
-            if (!escapedRight || spheroid.LifeState != EntityLifeState.Dead)
+            if (!StartEscape(field, spheroid) || FollowRightwardEscape(field, spheroid) is not { } escape)
             {
                 continue;
             }
@@ -102,14 +56,64 @@ public sealed class SpheroidEscapeTests
             // The line sits between the last wrap beat that did not trigger the exit and
             // the one that did.
             Assert.True(
-                lastWrapBeatX < rightExit,
-                $"seed {seed}: a wrap beat at x {lastWrapBeatX} was already past the exit line {rightExit}");
+                escape.LastWrapBeatX < rightExit,
+                $"seed {seed}: a wrap beat at x {escape.LastWrapBeatX} was already past the exit line {rightExit}");
             Assert.True(
-                deathX >= rightExit,
-                $"seed {seed}: the spheroid left at x {deathX}, short of the exit line {rightExit}");
+                escape.DeathX >= rightExit,
+                $"seed {seed}: the spheroid left at x {escape.DeathX}, short of the exit line {rightExit}");
             return;
         }
 
         Assert.Fail("no seed escaped to the right");
+    }
+
+    /// <summary>Expires the start grace, then runs the spheroid until it starts escaping.</summary>
+    /// <returns>True when the spheroid is escaping.</returns>
+    private static bool StartEscape(PlayField field, Spheroid spheroid)
+    {
+        for (int tick = 0; tick < GraceWarmupTicks; tick++)
+        {
+            field.Update(Frame());
+        }
+
+        for (int guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++)
+        {
+            spheroid.Update(Frame(), field);
+        }
+
+        return spheroid.IsEscaping;
+    }
+
+    /// <summary>Follows an escape to its end, recording the last picture-wrap beat and where the spheroid left.</summary>
+    /// <returns>The two X positions, or null when the spheroid went left or never left the field.</returns>
+    private static (int LastWrapBeatX, int DeathX)? FollowRightwardEscape(PlayField field, Spheroid spheroid)
+    {
+        int startX = spheroid.Position.X;
+        int lastWrapBeatX = startX;
+        int previousPicture = spheroid.PictureIndex;
+
+        for (int tick = 0; tick < 900; tick++)
+        {
+            spheroid.Update(Frame(), field);
+
+            if (spheroid.Position.X < startX)
+            {
+                return null; // this seed escaped leftwards
+            }
+
+            if (spheroid.LifeState == EntityLifeState.Dead)
+            {
+                return (lastWrapBeatX, spheroid.Position.X);
+            }
+
+            if (spheroid.PictureIndex < previousPicture)
+            {
+                lastWrapBeatX = spheroid.Position.X;
+            }
+
+            previousPicture = spheroid.PictureIndex;
+        }
+
+        return null;
     }
 }

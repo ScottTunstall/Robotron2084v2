@@ -55,52 +55,8 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         }
 
         IntVector2 position = field.Player.Position;
-        Rectangle bounds = field.Wall.PlayfieldBounds;
-        IntVector2 centre = new(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
         IntVector2? nearest = field.NearestLivingRobotPositionTo(position);
-
-        // Default: work the middle of the field, staying mobile.
-        IntVector2 move = new IntVector2(Math.Sign(centre.X - position.X), Math.Sign(centre.Y - position.Y));
-
-        if (nearest is { } robot)
-        {
-            int dx = position.X - robot.X;
-            int dy = position.Y - robot.Y;
-
-            if (Math.Abs(dx) + Math.Abs(dy) < ScreenSize.Scaled(AttractTuning.DemoThreatDistanceSpecPixels))
-            {
-                // In danger: run away (steering around the walls).
-                move = SteerClearOfWalls(new IntVector2(Math.Sign(dx), Math.Sign(dy)), position, bounds, centre);
-            }
-            // A robot past the fire range just gets ignored for movement — the
-            // centre drift stays.
-        }
-
-        // Stick hysteresis (notes §97.5): the flee direction is `sign(player − robot)`
-        // against a field that moves under it and against a nearest-robot pick that
-        // changes as robots die, so the raw value flipped on ~75% of ticks — and the
-        // arcade RESETS the walk animation on every facing change, which made the
-        // demo's man twitch instead of walk. A direction must win
-        // DemoDirectionSwitchTicks ticks in a row before the stick follows it.
-        if (move == _heldMove)
-        {
-            _directionVotes = 0;
-        }
-        else if (_heldMove == IntVector2.Zero || (_holdTicks <= 0 && ++_directionVotes >= AttractTuning.DemoDirectionSwitchTicks))
-        {
-            // An empty stick is "no decision yet", not a direction to defend, so the
-            // first move (and the first stop) is adopted at once.
-            _heldMove = move;
-            _directionVotes = 0;
-            _holdTicks = move == IntVector2.Zero ? 0 : AttractTuning.DemoDirectionHoldTicks;
-        }
-
-        if (_holdTicks > 0)
-        {
-            _holdTicks--;
-        }
-
-        move = _heldMove;
+        IntVector2 move = HoldDirection(ChooseDirection(field, position, nearest));
 
         if (move != IntVector2.Zero && _random.Next(AttractTuning.DemoStutterChanceDenominator) == 0)
         {
@@ -167,5 +123,60 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         return headingIntoWall
             ? move + new IntVector2(0, centre.Y >= position.Y ? 1 : -1)
             : move;
+    }
+
+    /// <summary>Picks this tick's raw direction: flee a robot inside the threat distance, else drift to the centre.</summary>
+    /// <param name="field">The bound playfield.</param>
+    /// <param name="position">The player's position.</param>
+    /// <param name="nearest">The nearest living robot, if any.</param>
+    /// <returns>The raw 8-way direction, before hysteresis.</returns>
+    private static IntVector2 ChooseDirection(PlayField field, IntVector2 position, IntVector2? nearest)
+    {
+        Rectangle bounds = field.Wall.PlayfieldBounds;
+        IntVector2 centre = new(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+
+        // A robot past the threat distance is ignored for movement — the centre drift stays.
+        if (nearest is { } robot)
+        {
+            int dx = position.X - robot.X;
+            int dy = position.Y - robot.Y;
+            if (Math.Abs(dx) + Math.Abs(dy) < ScreenSize.Scaled(AttractTuning.DemoThreatDistanceSpecPixels))
+            {
+                return SteerClearOfWalls(new IntVector2(Math.Sign(dx), Math.Sign(dy)), position, bounds, centre);
+            }
+        }
+
+        return new IntVector2(Math.Sign(centre.X - position.X), Math.Sign(centre.Y - position.Y));
+    }
+
+    /// <summary>Applies the stick hysteresis and returns the direction the stick actually holds.</summary>
+    /// <param name="move">This tick's raw direction.</param>
+    /// <returns>The held direction.</returns>
+    /// <remarks>
+    /// Notes §97.5: the raw flee direction flipped on ~75% of ticks, and the arcade resets the
+    /// walk animation on every facing change, so the demo's man twitched instead of walking. A
+    /// direction must win <c>DemoDirectionSwitchTicks</c> ticks in a row before the stick follows it.
+    /// </remarks>
+    private IntVector2 HoldDirection(IntVector2 move)
+    {
+        if (move == _heldMove)
+        {
+            _directionVotes = 0;
+        }
+        else if (_heldMove == IntVector2.Zero || (_holdTicks <= 0 && ++_directionVotes >= AttractTuning.DemoDirectionSwitchTicks))
+        {
+            // An empty stick is "no decision yet", not a direction to defend, so the
+            // first move (and the first stop) is adopted at once.
+            _heldMove = move;
+            _directionVotes = 0;
+            _holdTicks = move == IntVector2.Zero ? 0 : AttractTuning.DemoDirectionHoldTicks;
+        }
+
+        if (_holdTicks > 0)
+        {
+            _holdTicks--;
+        }
+
+        return _heldMove;
     }
 }

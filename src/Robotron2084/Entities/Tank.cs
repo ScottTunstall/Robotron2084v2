@@ -208,27 +208,9 @@ public sealed class Tank : IExplodable, IRemovable
             return;
         }
 
-        // ROM MTANK ("MINI TANK GROW"): the tank plays the four mini-tank pictures, one per
-        // 12 ROM frames, and cannot move, aim or fire until it finishes.
-        if (_growStep < TankTuning.GrowSteps)
+        if (IsGrowing())
         {
-            _growTimer += ArcadeClock.UnitsPerPortTick;
-            if (_growTimer < GrowPeriod)
-            {
-                return;
-            }
-
-            _growTimer -= GrowPeriod;
-
-            // MTANK applies the current picture's (dx,dy) before advancing, so the mini tank
-            // walks up-left and the full tank lands centred on the drop point (notes §53).
-            (int columns, int rows) = TankTuning.GrowDeltas[_growStep];
-            _position += new IntVector2(ScreenSize.Columns(columns), ScreenSize.Scaled(rows));
-
-            if (++_growStep < TankTuning.GrowSteps)
-            {
-                return;
-            }
+            return;
         }
 
         // This wave's tank speed (2 vblanks) plus the 1 frame the process takes (ROM: TNKSPD).
@@ -241,40 +223,8 @@ public sealed class Tank : IExplodable, IRemovable
         _beatTimer -= ArcadeClock.Units(TankTuning.BeatRomFrames);
 
         // One beat, always in this order (ROM: the TANK process).
-        if (--_fireCooldownBeats <= 0)
-        {
-            Direction8? towardPlayer = Direction8Extensions.FromDelta(field.Player.Position - _position);
-            if (towardPlayer is { } d && field.CanFireShell)
-            {
-                field.SpawnTankShell(_position, d.ToIntVector());
-            }
-
-            // Later shots reload to exactly this wave's interval — no random padding.
-            _fireCooldownBeats = _fireIntervalBeats;
-        }
-
-        // One arcade pixel on each active axis per beat (ROM: the TANK1 step).
-        int stepPixels = ScreenSize.Scaled(TankTuning.StepArcadePixels);
-        IntVector2 step = new(_step.X * stepPixels, _step.Y * stepPixels);
-        IntVector2 next = _position + step;
-        if (field.Wall.Intersects(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
-        {
-            // Bounce off the wall (never crosses): mirror the axis that is blocked.
-            if (field.Wall.Intersects(new Rectangle(_position.X + step.X, _position.Y, CollisionSize.Width, CollisionSize.Height)))
-            {
-                _step = new IntVector2(-_step.X, _step.Y);
-                step = new IntVector2(-step.X, step.Y);
-                next = _position + step;
-            }
-            if (field.Wall.Intersects(new Rectangle(_position.X, _position.Y + step.Y, CollisionSize.Width, CollisionSize.Height)))
-            {
-                _step = new IntVector2(_step.X, -_step.Y);
-            }
-        }
-        else
-        {
-            _position = next;
-        }
+        FireIfDue(field);
+        StepOrBounce(field);
 
         _treadAnimationFrameCounter++; // one walk frame per beat (ROM: `TANK3` advances the picture once)
 
@@ -289,6 +239,77 @@ public sealed class Tank : IExplodable, IRemovable
     /// <summary>The next re-aim interval: a random count of beats.</summary>
     /// <remarks>ROM: <c>TANKND</c>.</remarks>
     private static int NextAimInterval(Random random) => random.Next(AimIntervalMinBeats, AimIntervalMaxExclusiveBeats);
+
+    /// <summary>Runs the mini-tank grow-up; true while the tank is still growing and must not act.</summary>
+    /// <remarks>ROM <c>MTANK</c> ("MINI TANK GROW"): four mini-tank pictures, one per 12 ROM frames.</remarks>
+    private bool IsGrowing()
+    {
+        if (_growStep >= TankTuning.GrowSteps)
+        {
+            return false;
+        }
+
+        _growTimer += ArcadeClock.UnitsPerPortTick;
+        if (_growTimer < GrowPeriod)
+        {
+            return true;
+        }
+
+        _growTimer -= GrowPeriod;
+
+        // MTANK applies the current picture's (dx,dy) before advancing, so the mini tank
+        // walks up-left and the full tank lands centred on the drop point (notes §53).
+        (int columns, int rows) = TankTuning.GrowDeltas[_growStep];
+        _position += new IntVector2(ScreenSize.Columns(columns), ScreenSize.Scaled(rows));
+
+        return ++_growStep < TankTuning.GrowSteps;
+    }
+
+    /// <summary>Counts the fire cooldown down one beat and fires a shell at the player when it runs out.</summary>
+    /// <param name="field">The playfield.</param>
+    private void FireIfDue(PlayField field)
+    {
+        if (--_fireCooldownBeats > 0)
+        {
+            return;
+        }
+
+        Direction8? towardPlayer = Direction8Extensions.FromDelta(field.Player.Position - _position);
+        if (towardPlayer is { } d && field.CanFireShell)
+        {
+            field.SpawnTankShell(_position, d.ToIntVector());
+        }
+
+        // Later shots reload to exactly this wave's interval — no random padding.
+        _fireCooldownBeats = _fireIntervalBeats;
+    }
+
+    /// <summary>Takes one step, or mirrors the blocked axis when the step would hit the wall.</summary>
+    /// <param name="field">The playfield.</param>
+    /// <remarks>ROM: the <c>TANK1</c> step, one arcade pixel on each active axis per beat.</remarks>
+    private void StepOrBounce(PlayField field)
+    {
+        int stepPixels = ScreenSize.Scaled(TankTuning.StepArcadePixels);
+        IntVector2 step = new(_step.X * stepPixels, _step.Y * stepPixels);
+        IntVector2 next = _position + step;
+        if (!field.Wall.Intersects(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
+        {
+            _position = next;
+            return;
+        }
+
+        // Bounce off the wall (never crosses): mirror the axis that is blocked.
+        if (field.Wall.Intersects(new Rectangle(_position.X + step.X, _position.Y, CollisionSize.Width, CollisionSize.Height)))
+        {
+            _step = new IntVector2(-_step.X, _step.Y);
+            step = new IntVector2(-step.X, step.Y);
+        }
+
+        if (field.Wall.Intersects(new Rectangle(_position.X, _position.Y + step.Y, CollisionSize.Width, CollisionSize.Height)))
+        {
+            _step = new IntVector2(_step.X, -_step.Y);
+        }
+    }
 
     /// <summary>Picks the next destination: the player about 38% of the time, else a random point.</summary>
     /// <remarks>ROM: <c>ANIMATE_TANK</c>.</remarks>

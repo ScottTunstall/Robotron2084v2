@@ -68,30 +68,15 @@ public sealed class LevelParameterGenerator
             List<LevelTableRow> rows = new();
             foreach (string rawLine in File.ReadAllLines(path))
             {
-                string line = rawLine.Trim();
-                if (line.Length == 0)
-                {
-                    continue;
-                }
-
-                string[] fields = line.Split(',');
-                if (fields.Length != 8 || !int.TryParse(fields[0], out int level) || level <= 0)
-                {
-                    continue; // header row (or a row without a usable level number)
-                }
-
-                if (!int.TryParse(fields[1], out int grunts)
-                    || !int.TryParse(fields[2], out int hulks)
-                    || !int.TryParse(fields[3], out int spheroids)
-                    || !int.TryParse(fields[4], out int quarks)
-                    || !int.TryParse(fields[5], out int electrodes)
-                    || !int.TryParse(fields[6], out int maxEnforcers)
-                    || !int.TryParse(fields[7], out int maxTanks))
+                if (!TryParseRow(rawLine.Trim(), out LevelTableRow? row))
                 {
                     return null; // malformed data row -> treat the whole table as unusable
                 }
 
-                rows.Add(new LevelTableRow(grunts, hulks, spheroids, quarks, electrodes, maxEnforcers, maxTanks));
+                if (row is not null)
+                {
+                    rows.Add(row);
+                }
             }
 
             return rows.Count > 0 ? rows.ToArray() : null;
@@ -100,6 +85,32 @@ public sealed class LevelParameterGenerator
         {
             return null;
         }
+    }
+
+    /// <summary>Parses one LevelTable.csv line.</summary>
+    /// <param name="line">The trimmed line.</param>
+    /// <param name="row">The parsed row, or null for a line to skip (blank, the header, or no usable level number).</param>
+    /// <returns>False when the line is a data row with a malformed count.</returns>
+    private static bool TryParseRow(string line, out LevelTableRow? row)
+    {
+        row = null;
+        string[] fields = line.Split(',');
+        if (line.Length == 0 || fields.Length != 8 || !int.TryParse(fields[0], out int level) || level <= 0)
+        {
+            return true;
+        }
+
+        int[] counts = new int[fields.Length - 1];
+        for (int i = 0; i < counts.Length; i++)
+        {
+            if (!int.TryParse(fields[i + 1], out counts[i]))
+            {
+                return false;
+            }
+        }
+
+        row = new LevelTableRow(counts[0], counts[1], counts[2], counts[3], counts[4], counts[5], counts[6]);
+        return true;
     }
 
     /// <summary>One parsed LevelTable.csv row (level number dropped — position in the array is the level).</summary>

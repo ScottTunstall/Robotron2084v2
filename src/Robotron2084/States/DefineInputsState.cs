@@ -285,20 +285,7 @@ public sealed class DefineInputsState : IGameState
     /// <summary>The idle half: scrolling, arming, clearing, defaults, and leaving.</summary>
     private void Navigate(InputSnapshot now, GameStateManager manager)
     {
-        if (KeyboardPressed(now, Keys.Up) || PadPressed(now, Buttons.DPadUp))
-        {
-            _model.MoveUp();
-        }
-
-        if (KeyboardPressed(now, Keys.Down) || PadPressed(now, Buttons.DPadDown))
-        {
-            _model.MoveDown();
-        }
-
-        if (KeyboardPressed(now, Keys.Enter) || PadPressed(now, Buttons.A))
-        {
-            _model.Arm();
-        }
+        ScrollOrArm(now);
 
         if (KeyboardPressed(now, Keys.Delete) || PadPressed(now, Buttons.X))
         {
@@ -316,6 +303,25 @@ public sealed class DefineInputsState : IGameState
         {
             _controlStore.Save(_settings);
             manager.TransitionTo(new TitleScreenState(_services));
+        }
+    }
+
+    /// <summary>Moves the highlight up or down, or arms the highlighted row for a new binding.</summary>
+    private void ScrollOrArm(InputSnapshot now)
+    {
+        if (KeyboardPressed(now, Keys.Up) || PadPressed(now, Buttons.DPadUp))
+        {
+            _model.MoveUp();
+        }
+
+        if (KeyboardPressed(now, Keys.Down) || PadPressed(now, Buttons.DPadDown))
+        {
+            _model.MoveDown();
+        }
+
+        if (KeyboardPressed(now, Keys.Enter) || PadPressed(now, Buttons.A))
+        {
+            _model.Arm();
         }
     }
 
