@@ -1,4 +1,5 @@
 using Robotron2084.Audio;
+using Robotron2084.Tuning;
 using Xunit;
 
 namespace Robotron2084.Tests.Audio;
@@ -128,6 +129,45 @@ public class SoundEngineTests
         {
             engine.Tick();
         }
+    }
+
+    [Fact]
+    public void AHeldVoiceIsNotTakenByALowerSound_UntilTheHoldRunsOut()
+    {
+        // The wave-end music: the board loops it after the ROM's table has finished asking, so the
+        // voice is held for the music's whole play-out (notes §128).
+        var sink = new RecordingSink();
+        var engine = new SoundEngine(sink);
+
+        engine.Play(SoundTables.WaveEnd, 0f);
+        engine.HoldVoice(SoundTuning.WaveEndMusicTicks);
+        RunTicks(engine, 200); // past the table's own end, inside the hold
+
+        engine.Play(SoundTables.RobotMove, 0f); // $C0, below the wave end's $E0
+        RunTicks(engine, 1);
+
+        Assert.DoesNotContain(0x06, sink.SoundNumbers());
+
+        RunTicks(engine, SoundTuning.WaveEndMusicTicks - 201); // the music has run out
+        engine.Play(SoundTables.RobotMove, 0f);
+        RunTicks(engine, 1);
+
+        Assert.Contains(0x06, sink.SoundNumbers());
+    }
+
+    [Fact]
+    public void AnImportantSoundStillTakesAHeldVoice()
+    {
+        var sink = new RecordingSink();
+        var engine = new SoundEngine(sink);
+
+        engine.Play(SoundTables.WaveEnd, 0f);
+        engine.HoldVoice(SoundTuning.WaveEndMusicTicks);
+        engine.Play(SoundTables.PlayerDeath, 0f); // $EE, above the wave end's $E0
+        RunTicks(engine, 1);
+
+        Assert.Equal(0x11, sink.SoundNumbers()[^1]);
+        Assert.Equal(SoundTables.PlayerDeath.Priority, engine.CurrentPriority);
     }
 
     private static SoundSequence Sequence(int priority, params (byte Repetitions, byte LengthVblanks, byte SoundNumber)[] lines) =>

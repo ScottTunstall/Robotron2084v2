@@ -1,3 +1,5 @@
+using Robotron2084.Tuning;
+
 namespace Robotron2084.Audio;
 
 /// <summary>
@@ -49,6 +51,23 @@ public static class Sound
         }
 
         _engine?.Play(sequence, pan);
+    }
+
+    /// <summary>
+    /// Asks for the wave-end music and keeps the voice for its whole play-out (notes §128). The board
+    /// loops that sound until another number arrives, so without the hold the new level's first sound —
+    /// a shot, a robot's step — replaces it wherever the loop has got to, which is the music being "cut
+    /// short". The hold makes the new level's sounds wait for the music to finish.
+    /// </summary>
+    public static void PlayWaveEnd()
+    {
+        if (!Enabled)
+        {
+            return;
+        }
+
+        Play(SoundTables.WaveEnd);
+        _engine?.HoldVoice(SoundTuning.WaveEndMusicTicks);
     }
 
     /// <summary>Starts the transporter's warp-in hum, as a brain wave's robots are beamed in.</summary>

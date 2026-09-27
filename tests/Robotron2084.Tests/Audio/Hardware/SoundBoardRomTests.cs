@@ -1,6 +1,6 @@
 using Robotron2084.Audio;
 using Robotron2084.Audio.Hardware;
-using Robotron2084.Graphics;
+using Robotron2084.Tuning;
 using Xunit;
 
 namespace Robotron2084.Tests.Audio.Hardware;
@@ -66,13 +66,13 @@ public class SoundBoardRomTests
     }
 
     /// <summary>
-    /// The wave-clear screen is timed by the tunnel, and the board LOOPS the wave-end sound ($0E)
-    /// until a number stops it — so the screen must last a whole phrase of it or the music is cut
-    /// mid-phrase, which is what the author heard. Measure the phrase here and assert the tunnel
-    /// covers it, so the two cannot drift apart again (notes §83's lesson, §128).
+    /// The wave-end music is a sound the BOARD loops: it keeps playing after the ROM's table has asked
+    /// for it for the last time, so the next level's own sounds would cut it short wherever the loop had
+    /// got to — the author's report. Measure the phrase here and assert the voice is held long enough
+    /// for the music to run out, so the two cannot drift apart again (notes §128).
     /// </summary>
     [Fact]
-    public void TheTunnelCoversAWholePhraseOfTheWaveEndMusic()
+    public void TheHeldVoiceCoversTheWholeWaveEndMusic()
     {
         var board = new SoundBoard(RomFiles.ReadOrSkip(RomFiles.SoundRom));
         var renderer = new SoundBoardRenderer(board, SampleRate);
@@ -105,15 +105,14 @@ public class SoundBoardRomTests
 
         Assert.InRange(period, 175, 191); // 183 ticks = 3.05 s
 
-        var tunnel = new TunnelEffect();
-        int tunnelTicks = 0;
-        while (!tunnel.Finished && tunnelTicks < 1000)
-        {
-            tunnel.Update();
-            tunnelTicks++;
-        }
+        // The ROM's table asks for the sound 29 times, 4 ticks apart, the first at tick 1, and the
+        // phrase that follows the last ask plays out to here.
+        SoundEntry line = SoundTables.WaveEnd.Entries[0];
+        int musicEndsAt = 1 + ((line.Repetitions - 1) * line.LengthVblanks) + period;
 
-        Assert.True(tunnelTicks >= period, $"the wave-complete screen ({tunnelTicks} ticks) must not cut the music's phrase ({period} ticks)");
+        Assert.True(
+            SoundTuning.WaveEndMusicTicks >= musicEndsAt,
+            $"the voice is held {SoundTuning.WaveEndMusicTicks} ticks, which must cover the level music ({musicEndsAt} ticks)");
     }
 
     private static (SoundBoard Board, SoundBoardRenderer Renderer) StartBoard()

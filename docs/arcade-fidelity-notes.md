@@ -10287,7 +10287,7 @@ makes no sound. Port: `TransporterSound`, `SoundEngine.SendDirect`, `Sound.PlayT
 ("COIN", `$D0CE` + offset) needs a coin slot the port does not have. `PSTKIL` skips the post kill when
 it is the player who touched the post (`LDA PCFLG / BNE PSTKON`), so that collision plays only `PDSND`.
 
-## §128 — THE WAVE-COMPLETE SCREEN LASTS ONE PHRASE OF THE LEVEL MUSIC (author, 2026-09-27)
+## §128 — THE WAVE-COMPLETE MUSIC RUNS TO COMPLETION (author, 2026-09-27)
 
 Author: *"The 'level complete' music that displays while the tunnel is colour cycling is cut short.
 The tunnel effect between levels thus cannot be long enough, or is playing too fast."*
@@ -10305,22 +10305,35 @@ with the real sound ROM — the machinery `SoundBoardRomTests` already uses):
 - the sequencer's own table (`WVSND` = 29 sends x 4 x 16 ms; `RRS22.ASM`'s table format comment reads
   *"REPCNT,SNDTMR(16MSEC),SND#"*) ends at tick 117, inside either screen length.
 
-**The defect:** the wave-complete screen was timed by the tunnel alone at ~2.17 s — §83's playtest
-constant, 54 passes x 2 ROM frames — so it ended **about 0.9 s before the music's phrase did**, and
-the next wave's first sound cut the music mid-phrase. §83's *"~2 seconds at least"* was a FLOOR, not
-the length the arcade runs.
+**The defect.** Two things, and they are both about the same measurement:
 
-**Fixed in the port:**
+1. the wave-complete screen was timed by the tunnel alone at ~2.17 s — §83's playtest constant — so it
+   ended **about 0.9 s before the music's phrase did**; and
+2. the music is a sound the **BOARD LOOPS**. Once the ROM's table has asked for it for the last time, the
+   sequencer's voice is free, so the new level's own sounds — a shot, a robot's step — replace it
+   wherever the loop has got to. That is what the author hears as *"About 1.5 - 2 seconds too short … It
+   does not run to completion"*.
 
-- `TunnelEffect.PassClockUnits` = **17** clock units a pass (54 x 17 / 5 = 183.6 ticks = 3.06 s), so
-  the colour cycling lasts exactly one phrase of the music and finishes with it;
-- `WaveClearState.StopWaveEndMusic()` asks for `SoundTables.ClearTheSystem` as the screen ends — the
-  original's own background-off — so the looping phrase is stopped deliberately rather than being
-  overridden wherever the loop happens to be;
-- `SoundBoardRomTests.TheTunnelCoversAWholePhraseOfTheWaveEndMusic` measures the phrase (175-191
-  ticks) and asserts the tunnel covers it, so the two cannot drift apart again; the tunnel's own test
-  asserts 180-190 ticks.
+**The approach (author, 2026-09-27):** *"letting the new level start and just wait for the 'tunnel
+music' to end before new sounds can be played."* So the screen is **not** lengthened to cover the music,
+and the tunnel does **not** run over the new level: a first attempt at that was **reverted** (the tunnel
+over the playfield obscured the player and the enemies). Instead the sequencer **holds the voice** for
+the music's measured play-out, so the new level's sounds simply wait for the music to finish.
 
-Authority: the ROM gives the STRUCTURE — `GEXEC0` asks for `WVSND`, then `JSR RMST` (the marquee),
-then `JMP PLSTRT` — while the LENGTH is measurement. That is §83's lesson, now with the measurement
+**In the port:**
+
+- `TunnelEffect.PassClockUnits` = **17** clock units a pass (54 x 17 / 5 = 183.6 ticks = 3.06 s) — the
+  colour cycling lasts exactly one phrase of the music, and the screen still ends before the level
+  starts, so nothing is ever drawn over the playfield;
+- `SoundTuning.WaveEndMusicTicks` = **296** (measured: the ROM's last ask at tick 113 + one 183-tick
+  phrase) and `Sound.PlayWaveEnd()` holds the voice for it. `SoundEngine.HoldVoice` keeps `SNDPRI` past
+  the table's own end so no lower-priority sound can take the voice, and frees it when the music has run
+  out; a sound important enough to take the voice anyway cancels the hold;
+- nothing sends "BACKY OFFY" ($13) any more: the music now ends where it should, and the new level's
+  first sound takes the voice at that moment;
+- `SoundBoardRomTests.TheHeldVoiceCoversTheWholeWaveEndMusic` measures the phrase and asserts the hold
+  covers the music's whole play-out, so the two cannot drift apart again.
+
+Authority: the ROM gives the STRUCTURE — `GEXEC0` asks for `WVSND`, then `JSR SCRCLR` / `JSR RMST` (the
+marquee) / `JMP PLSTRT` — while the LENGTH is measurement. That is §83's lesson, now with the measurement
 that settles it.

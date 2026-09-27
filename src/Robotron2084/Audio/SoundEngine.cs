@@ -23,6 +23,7 @@ public sealed class SoundEngine
     private readonly IAudioSink _sink;
     private SoundEntry[] _entries = [];
     private int _entryIndex = -1;
+    private int _holdTicksLeft;
     private float _pan;
     private int _priority;
     private int _repetitionsLeft;
@@ -48,6 +49,7 @@ public sealed class SoundEngine
             return;
         }
 
+        _holdTicksLeft = 0;
         _priority = sequence.Priority;
         _entries = sequence.Entries;
         _pan = pan;
@@ -55,6 +57,15 @@ public sealed class SoundEngine
         _repetitionsLeft = 1;
         _ticksLeftInSend = 1;
     }
+
+    /// <summary>
+    /// Keeps the voice for <paramref name="ticks"/> more port ticks. A table's end normally frees the
+    /// voice, but some sounds outlive their table on the BOARD — the wave-end music is a looping sound
+    /// the board plays on until another number arrives — so this stops a lower-priority sound cutting
+    /// one short (notes §128). A sound important enough to take the voice anyway cancels the hold.
+    /// </summary>
+    /// <param name="ticks">How many port ticks to keep the voice for.</param>
+    public void HoldVoice(int ticks) => _holdTicksLeft = Math.Max(_holdTicksLeft, ticks);
 
     /// <summary>
     /// Sends a sound number straight to the board, skipping the priority check and the tables (the
@@ -68,6 +79,7 @@ public sealed class SoundEngine
     public void Tick()
     {
         _sink.Tick();
+        AdvanceVoiceHold();
 
         if (_entries.Length == 0)
         {
@@ -111,10 +123,23 @@ public sealed class SoundEngine
         _sink.SendSoundNumber(entry.SoundNumber, _pan);
     }
 
+    /// <summary>Counts a held voice down, freeing it once the sound has played itself out.</summary>
+    private void AdvanceVoiceHold()
+    {
+        if (_holdTicksLeft > 0 && --_holdTicksLeft == 0)
+        {
+            _priority = 0;
+        }
+    }
+
     /// <summary>Frees the voice: the table has ended (<c>STA SNDPRI</c> with the zero repeat count).</summary>
     private void EndSequence()
     {
-        _priority = 0;
+        if (_holdTicksLeft == 0)
+        {
+            _priority = 0;
+        }
+
         _entries = [];
         _entryIndex = -1;
     }

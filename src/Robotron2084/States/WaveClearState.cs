@@ -69,7 +69,7 @@ public sealed class WaveClearState : IGameState
     {
         if (!_hasAskedForWaveEndSound)
         {
-            Sound.Play(SoundTables.WaveEnd); // RRG23 GEXEC0 asks for WVSND as the wave ends
+            Sound.PlayWaveEnd(); // RRG23 GEXEC0 asks for WVSND as the wave ends
             _hasAskedForWaveEndSound = true;
         }
 
@@ -90,21 +90,12 @@ public sealed class WaveClearState : IGameState
 
         if (--_ticksRemaining <= 0 && _tunnel.Finished)
         {
-            StopWaveEndMusic();
             RestorePalette();
             manager.TransitionTo(_attract
                 ? new AttractState(GameServices.From(_session, _sprites, _highScores, _session.Current.Input))
                 : new PlayingState(_sprites, _highScores, _session));
         }
     }
-
-    /// <summary>
-    /// Silences the wave-end music as the screen ends, with the original source's own "BACKY OFFY"
-    /// (sound $13, `RRT2`'s <c>TR1SND</c> "CLEAR THE SYSTEM"). The board loops that sound until a
-    /// number stops it, so without this the next wave's first sound cuts it wherever the loop has
-    /// got to.
-    /// </summary>
-    private static void StopWaveEndMusic() => Sound.Play(SoundTables.ClearTheSystem);
 
     /// <summary>One pass of the ROM's palette task: pick the ramp once, then slide its window.</summary>
     private void AdvancePalette()
