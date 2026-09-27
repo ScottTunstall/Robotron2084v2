@@ -32,7 +32,11 @@ public sealed class StorylineState : IGameState, IAttractState
     /// <summary>ROM string 128, printed by `SPGSUB` and never cleared by the page script.</summary>
     internal const string TitleText = "ROBOTRON 2084";
 
-    /// <summary>The movie interior, in canvas pixels: a strip that falls outside it is dropped (the ROM's clip).</summary>
+    /// <summary>
+    /// The movie interior, in canvas pixels: a strip that falls outside it is dropped (the ROM's clip).
+    /// It is a property, not a field, so it reads <see cref="InnerBounds"/> when it is used — as a field
+    /// it would be initialised first and clip against a zero rectangle (ledger D-031).
+    /// </summary>
     private static StripClip Clip => new(InnerBounds.Left, InnerBounds.Right, InnerBounds.Top, InnerBounds.Bottom);
 
     /// <summary>The playfield's inner rectangle, which the movie's wall encloses.</summary>
