@@ -1,4 +1,6 @@
-namespace Robotron2084.Graphics;
+using Robotron2084.Graphics;
+
+namespace Robotron2084.Palette;
 
 /// <summary>
 /// The ROM's COLOUR-CYCLING palette — the other half of the wave-complete effect, and the

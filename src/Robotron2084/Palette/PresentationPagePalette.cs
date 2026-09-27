@@ -1,6 +1,7 @@
 using Robotron2084.Core;
+using Robotron2084.Graphics;
 
-namespace Robotron2084.Graphics;
+namespace Robotron2084.Palette;
 
 /// <summary>
 /// The Williams presentation page's OWN colour set (notes §106) — the seven colours and the two

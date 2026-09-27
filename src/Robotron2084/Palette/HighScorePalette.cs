@@ -1,6 +1,7 @@
 using Robotron2084.Core;
+using Robotron2084.Graphics;
 
-namespace Robotron2084.Graphics;
+namespace Robotron2084.Palette;
 
 /// <summary>
 /// The five colour processes the high score page starts for itself — RRTABLE's
