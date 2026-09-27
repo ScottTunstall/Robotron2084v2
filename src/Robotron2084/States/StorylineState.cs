@@ -9,7 +9,6 @@ using Robotron2084.Input;
 using Robotron2084.Level;
 using Robotron2084.Level.Attract;
 using Robotron2084.Palette;
-using Robotron2084.Persistence;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.States;
@@ -37,7 +36,6 @@ public sealed class StorylineState : IGameState, IAttractState
     private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
     private readonly ButtonEdgeDetector _buttons = new();
     private readonly List<StripEffect> _explosions = [];
-    private readonly HighScoreStore _highScores;
     private readonly IPlayerInputSource _humanInput;
     private readonly AttractMovie _movie;
     private readonly GameServices _services;
@@ -49,7 +47,6 @@ public sealed class StorylineState : IGameState, IAttractState
     {
         _services = services;
         _sprites = services.Sprites;
-        _highScores = services.HighScores;
         _humanInput = services.Input;
 
         _wall = new PlayfieldWall(InnerBounds, new WallColorCycle());
@@ -202,11 +199,10 @@ public sealed class StorylineState : IGameState, IAttractState
             if (item.MonoActive)
             {
                 DrawMonoBox(spriteBatch, item, animationFrame, bounds);
+                continue;
             }
-            else
-            {
-                _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
-            }
+
+            _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
         }
     }
 
