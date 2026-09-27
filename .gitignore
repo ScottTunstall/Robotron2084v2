@@ -436,3 +436,6 @@ attract-title.png
 attract-story.png
 attract-demo.png
 attract-back-to-title.png
+
+# Local MCP server configuration
+.pi/
