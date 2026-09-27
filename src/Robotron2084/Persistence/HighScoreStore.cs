@@ -18,9 +18,6 @@ public sealed class HighScoreStore
 {
     private static readonly string FilePath = AppDataPaths.FileInAppData("highscores.json");
 
-    /// <summary>The table: the saved all-time list + top entry, and the ROM's factory today's list.</summary>
-    public HighScoreTable Load() => Load(FilePath);
-
     /// <summary>Loads from a given file — the seam the tests use.</summary>
     public static HighScoreTable Load(string path)
     {
@@ -40,9 +37,6 @@ public sealed class HighScoreStore
         }
     }
 
-    /// <summary>Saves the all-time list and the top entry (the two CMOS things).</summary>
-    public void Save(HighScoreTable table) => Save(FilePath, table);
-
     /// <summary>Saves to a given file — the seam the tests use.</summary>
     public static void Save(string path, HighScoreTable table)
     {
@@ -53,6 +47,12 @@ public sealed class HighScoreStore
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, JsonSerializer.Serialize(saved, new JsonSerializerOptions { WriteIndented = true }));
     }
+
+    /// <summary>The table: the saved all-time list + top entry, and the ROM's factory today's list.</summary>
+    public HighScoreTable Load() => Load(FilePath);
+
+    /// <summary>Saves the all-time list and the top entry (the two CMOS things).</summary>
+    public void Save(HighScoreTable table) => Save(FilePath, table);
 
     /// <summary>The on-disk shape: the two things the arcade keeps in CMOS.</summary>
     private sealed record SavedTable(

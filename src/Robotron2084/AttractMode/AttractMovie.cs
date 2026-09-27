@@ -21,14 +21,14 @@ public sealed class AttractMovie
         Page = new AttractPageMachine(script, Objects, random);
     }
 
+    /// <summary>The script reached DONE / DONE2.</summary>
+    public bool Finished => Page.Finished;
+
     /// <summary>The characters the movie has walking about.</summary>
     public AttractObjectMachine Objects { get; }
 
     /// <summary>The text/action interpreter that drives them.</summary>
     public AttractPageMachine Page { get; }
-
-    /// <summary>The script reached DONE / DONE2.</summary>
-    public bool Finished => Page.Finished;
 
     /// <summary>ROM frames played so far (a test hook).</summary>
     public int RomFrames { get; private set; }

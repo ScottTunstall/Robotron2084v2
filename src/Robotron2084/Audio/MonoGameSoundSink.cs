@@ -11,10 +11,9 @@ namespace Robotron2084.Audio;
 /// </summary>
 public sealed class MonoGameSoundSink : IAudioSink
 {
-    private const int SampleRate = 22050;
     private const int LoopSeconds = 1;
     private const float MasterVolume = 0.6f;
-
+    private const int SampleRate = 22050;
     private readonly Dictionary<int, SoundEffect> _toneCache = new();
     private SoundEffectInstance? _current;
     private int _currentTicksLeft;
@@ -50,18 +49,6 @@ public sealed class MonoGameSoundSink : IAudioSink
     /// </summary>
     internal static double StubFrequency(int note) => 110.0 * Math.Pow(2, note / 12.0);
 
-    private SoundEffect GetTone(int note)
-    {
-        if (_toneCache.TryGetValue(note, out SoundEffect? cached))
-        {
-            return cached;
-        }
-
-        SoundEffect tone = CreateSquareTone((float)StubFrequency(note));
-        _toneCache[note] = tone;
-        return tone;
-    }
-
     private static SoundEffect CreateSquareTone(float hertz)
     {
         int samples = SampleRate * LoopSeconds;
@@ -80,5 +67,17 @@ public sealed class MonoGameSoundSink : IAudioSink
         }
 
         return new SoundEffect(data, SampleRate, AudioChannels.Mono);
+    }
+
+    private SoundEffect GetTone(int note)
+    {
+        if (_toneCache.TryGetValue(note, out SoundEffect? cached))
+        {
+            return cached;
+        }
+
+        SoundEffect tone = CreateSquareTone((float)StubFrequency(note));
+        _toneCache[note] = tone;
+        return tone;
     }
 }

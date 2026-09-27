@@ -24,9 +24,9 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class GameOverState : IGameState
 {
-    private readonly GameServices _services;
-    private readonly IReadOnlyList<FinalScore> _scores;
     private readonly int _holdTicks = ArcadeClock.PortTicks(ScreenTuning.GameOverMessageRomFrames);
+    private readonly IReadOnlyList<FinalScore> _scores;
+    private readonly GameServices _services;
     private int _elapsedTicks;
 
     /// <summary>Builds the screen for a finished game's scores.</summary>
@@ -54,6 +54,17 @@ public sealed class GameOverState : IGameState
     public static GameOverState FromSession(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, GameSession session) =>
         new(input, sprites, highScores, session.FinalScoresHighestFirst(), session.Controls);
 
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+    {
+        // ROM string 40 (GOMP): "GAME OVER" in the LARGE font, colour $AA, at (62, 128).
+        _services.Sprites.Text.DrawLargeFontText(
+            spriteBatch,
+            "GAME OVER",
+                HudLayout.ArcadeColumnX(HudLayout.GameOverMessageColumn),
+                HudLayout.ArcadeY(HudLayout.GameOverMessageRow),
+            ScreenTuning.GameOverTextSlot);
+    }
+
     public void Update(GameTime gameTime, GameStateManager manager)
     {
         if (++_elapsedTicks < _holdTicks)
@@ -64,16 +75,5 @@ public sealed class GameOverState : IGameState
         // ENDPRC → ENDGAM → GOV: the scores are offered to the table in turn, and the table itself is
         // the end of the ceremony (notes §98).
         manager.TransitionTo(new ScoreEntryCeremony(_services, _scores).NextScreen());
-    }
-
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
-    {
-        // ROM string 40 (GOMP): "GAME OVER" in the LARGE font, colour $AA, at (62, 128).
-        _services.Sprites.Text.DrawLargeFontText(
-            spriteBatch,
-            "GAME OVER",
-                HudLayout.ArcadeColumnX(HudLayout.GameOverMessageColumn),
-                HudLayout.ArcadeY(HudLayout.GameOverMessageRow),
-            ScreenTuning.GameOverTextSlot);
     }
 }

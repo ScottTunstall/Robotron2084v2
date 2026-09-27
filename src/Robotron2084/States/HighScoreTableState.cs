@@ -40,15 +40,15 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class HighScoreTableState : IGameState, IAttractState
 {
+    private readonly HighScorePalette _colour = new();
+    private readonly HighScoreFrameAnimation _frame = new();
+    private readonly HighScorePageHold _hold = new();
     private readonly IPlayerInputSource _input;
+    private readonly int[] _postedScores;
+    private readonly HighScorePrintSequence _print = new();
     private readonly SpriteSet _sprites;
     private readonly HighScoreStore _store;
     private readonly HighScoreTable _table;
-    private readonly int[] _postedScores;
-    private readonly HighScorePalette _colour = new();
-    private readonly HighScoreFrameAnimation _frame = new();
-    private readonly HighScorePrintSequence _print = new();
-    private readonly HighScorePageHold _hold = new();
     private bool _rampsStarted;
 
     /// <summary>Creates the table screen for the scores this session just offered.</summary>
@@ -81,6 +81,29 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         if (_sprites.Blitter.Palette is { } palette)
         {
             _colour.Start(palette);
+        }
+    }
+
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+    {
+        DrawFrame(spriteBatch);
+
+        // Nothing but the wall until the frame's passes have finished, then the page
+        // prints itself in the ROM's own order: today's list, the top entry, the
+        // all-time list, the headers (PRJNK + TABLE + SCRMES).
+        DrawTodayList(spriteBatch, _print.TodayRows);
+
+        if (_print.TopPrinted)
+        {
+            DrawTopEntry(spriteBatch);
+        }
+
+        DrawAllTimeList(spriteBatch, _print.AllTimeRows);
+
+        if (_print.HeadersPrinted)
+        {
+            DrawHeader(spriteBatch, "ROBOTRON HEROES", HighScoreTableLayout.TodayHeaderRow);
+            DrawHeader(spriteBatch, "ALL TIME HEROES", HighScoreTableLayout.AllTimeHeaderRow);
         }
     }
 
@@ -138,42 +161,96 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         || input.MoveDirection != IntVector2.Zero
         || input.ShootDirection != IntVector2.Zero;
 
-    private void Leave(GameStateManager manager)
-    {
-        if (_sprites.Blitter.Palette is { } palette)
-        {
-            _colour.Stop(palette);
-        }
-
-        manager.TransitionTo(new TitleScreenState(new GameServices(_sprites, _store, ControlSettings.Defaults(), _input)));
-    }
-
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
-    {
-        DrawFrame(spriteBatch);
-
-        // Nothing but the wall until the frame's passes have finished, then the page
-        // prints itself in the ROM's own order: today's list, the top entry, the
-        // all-time list, the headers (PRJNK + TABLE + SCRMES).
-        DrawTodayList(spriteBatch, _print.TodayRows);
-
-        if (_print.TopPrinted)
-        {
-            DrawTopEntry(spriteBatch);
-        }
-
-        DrawAllTimeList(spriteBatch, _print.AllTimeRows);
-
-        if (_print.HeadersPrinted)
-        {
-            DrawHeader(spriteBatch, "ROBOTRON HEROES", HighScoreTableLayout.TodayHeaderRow);
-            DrawHeader(spriteBatch, "ALL TIME HEROES", HighScoreTableLayout.AllTimeHeaderRow);
-        }
-    }
-
     private static int ColumnX(int column) => HudLayout.ArcadeColumnX(column);
 
     private static int RowY(int row) => HudLayout.ArcadeY(row);
+
+    private void DrawAllTimeList(SpriteBatch spriteBatch, int printedRows)
+    {
+        IReadOnlyList<HighScoreEntry> entries = _table.AllTime;
+
+        for (int rank = 2; rank <= HighScoreTableLayout.AllTimeRows + 1 && rank - 2 < entries.Count && rank - 1 <= printedRows; rank++)
+        {
+            (int column, int row) = HighScoreTableLayout.AllTimePosition(rank);
+            int x = ColumnX(column);
+            int y = RowY(row);
+            int slot = SlotFor(entries[rank - 2], ScreenTuning.HighScoreAllTimeSlot, ScreenTuning.HighScoreAllTimeHighlightSlot);
+
+            int afterRank = DrawRank(spriteBatch, rank, x, y, slot, large: false);
+            _sprites.Text.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, slot);
+
+            if (entries[rank - 2].Score != 0)
+            {
+                _sprites.Text.DrawSmallTableNumber(
+                    spriteBatch,
+                    entries[rank - 2].Score,
+                    afterRank + ScreenSize.Scaled(HighScoreTableLayout.AllTimeScoreOffsetColumns * 2),
+                    y,
+                    slot);
+            }
+        }
+    }
+
+    /// <summary>
+    /// The ROM's frame (`FRAMER` → `MARQ`, notes §98.5/§98.7): the hatched band its two passes
+    /// leave behind, drawn STROKE BY STROKE because every stroke has its OWN palette slot —
+    /// MARQ's flavour walks down by `$11` a stroke (see
+    /// <see cref="HighScoreTableLayout.FrameStrokeSlot"/>), so the eight visible strokes are
+    /// slots 8…1, so the band carries eight cycling colours at once.
+    /// LOOPP keeps rewriting slots 1-8, so all eight stripes cycle together, three frames apart.
+    ///
+    /// The erase pass paints those same pixels black, so only the strokes above
+    /// <see cref="HighScoreFrameAnimation.ErasedStroke"/> are drawn.
+    /// </summary>
+    private void DrawFrame(SpriteBatch spriteBatch)
+    {
+        for (int stroke = _frame.ErasedStroke + 1; stroke <= _frame.DrawnStroke; stroke++)
+        {
+            DrawStroke(spriteBatch, stroke);
+        }
+    }
+
+    /// <summary>One pixel column of the same hatch — the strokes' vertical edges.</summary>
+    private void DrawHatchedColumn(SpriteBatch spriteBatch, Color colour, int column, int top, int bottom)
+    {
+        int px = HudLayout.ArcadeX(column);
+        int width = HudLayout.ArcadeX(column + 1) - px;
+
+        for (int y = top; y <= bottom; y++)
+        {
+            if (!HighScoreTableLayout.FramePixelIsLit(column, y))
+            {
+                continue;
+            }
+
+            int py = HudLayout.ArcadeY(y);
+            _sprites.Blitter.DrawSolidRectangle(
+                spriteBatch,
+                new Rectangle(px, py, width, HudLayout.ArcadeY(y + 1) - py),
+                colour);
+        }
+    }
+
+    /// <summary>One raster row of MARQ's hatch: every other arcade pixel of the run.</summary>
+    private void DrawHatchedRow(SpriteBatch spriteBatch, Color colour, int left, int right, int row)
+    {
+        int top = HudLayout.ArcadeY(row);
+        int height = HudLayout.ArcadeY(row + 1) - top;
+
+        for (int x = left; x <= right; x++)
+        {
+            if (!HighScoreTableLayout.FramePixelIsLit(x, row))
+            {
+                continue;
+            }
+
+            int px = HudLayout.ArcadeX(x);
+            _sprites.Blitter.DrawSolidRectangle(
+                spriteBatch,
+                new Rectangle(px, top, HudLayout.ArcadeX(x + 1) - px, height),
+                colour);
+        }
+    }
 
     private void DrawHeader(SpriteBatch spriteBatch, string text, int row)
     {
@@ -183,6 +260,42 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             ColumnX(HighScoreTableLayout.HeaderColumn),
             RowY(row),
             ScreenTuning.HighScoreHeaderSlot);
+    }
+
+    /// <summary>
+    /// The ROM's message 111 (`INDMEP`): the rank, ')' and a space. The arcade's
+    /// rows are NOT padded (its 10) sits a glyph further right than its 9)), which
+    /// is what the cabinet shows.
+    /// </summary>
+    private int DrawRank(SpriteBatch spriteBatch, int rank, int x, int y, int slot, bool large)
+    {
+        string text = $"{rank}) ";
+        return large
+            ? _sprites.Text.DrawLargeFontText(spriteBatch, text, x, y, slot)
+            : _sprites.Text.DrawSmallFontText(spriteBatch, text, x, y, slot);
+    }
+
+    /// <summary>
+    /// One MARQ stroke: four hatched edges in that stroke's slot, each two pixels thick. The
+    /// horizontal edges are the two rows of its top and bottom; the vertical ones are the two
+    /// pixel columns of its left edge and of its right one — which MARQ puts at `RIGHT-1` and
+    /// `RIGHT-2`, one pixel inside the rectangle's own right column: `VHIGH` runs at `RIGHT`
+    /// and lights the HIGH nibble (that byte's left pixel), and `VLOW` at the `DECA`-shifted
+    /// `RIGHT-1` lights the low one (the R5 disassembly's GFLIP case).
+    /// </summary>
+    private void DrawStroke(SpriteBatch spriteBatch, int stroke)
+    {
+        Color colour = _sprites.Blitter.SlotColor(HighScoreTableLayout.FrameStrokeSlot(stroke));
+        (int left, int top, int right, int bottom) = HighScoreTableLayout.FrameStroke(stroke);
+
+        DrawHatchedRow(spriteBatch, colour, left, right, top);
+        DrawHatchedRow(spriteBatch, colour, left, right, top + 1);
+        DrawHatchedRow(spriteBatch, colour, left, right, bottom - 1);
+        DrawHatchedRow(spriteBatch, colour, left, right, bottom);
+        DrawHatchedColumn(spriteBatch, colour, left, top, bottom);
+        DrawHatchedColumn(spriteBatch, colour, left + 1, top, bottom);
+        DrawHatchedColumn(spriteBatch, colour, right - 2, top, bottom);
+        DrawHatchedColumn(spriteBatch, colour, right - 1, top, bottom);
     }
 
     private void DrawTodayList(SpriteBatch spriteBatch, int printedRows)
@@ -216,32 +329,6 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         }
     }
 
-    private void DrawAllTimeList(SpriteBatch spriteBatch, int printedRows)
-    {
-        IReadOnlyList<HighScoreEntry> entries = _table.AllTime;
-
-        for (int rank = 2; rank <= HighScoreTableLayout.AllTimeRows + 1 && rank - 2 < entries.Count && rank - 1 <= printedRows; rank++)
-        {
-            (int column, int row) = HighScoreTableLayout.AllTimePosition(rank);
-            int x = ColumnX(column);
-            int y = RowY(row);
-            int slot = SlotFor(entries[rank - 2], ScreenTuning.HighScoreAllTimeSlot, ScreenTuning.HighScoreAllTimeHighlightSlot);
-
-            int afterRank = DrawRank(spriteBatch, rank, x, y, slot, large: false);
-            _sprites.Text.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, slot);
-
-            if (entries[rank - 2].Score != 0)
-            {
-                _sprites.Text.DrawSmallTableNumber(
-                    spriteBatch,
-                    entries[rank - 2].Score,
-                    afterRank + ScreenSize.Scaled(HighScoreTableLayout.AllTimeScoreOffsetColumns * 2),
-                    y,
-                    slot);
-            }
-        }
-    }
-
     private void DrawTopEntry(SpriteBatch spriteBatch)
     {
         // TABLE: only the initials part is drawn when the CMOS says the player may
@@ -257,17 +344,14 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         _sprites.Text.DrawLargeTableNumber(spriteBatch, _table.Top.Score, x + ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels), y, slot);
     }
 
-    /// <summary>
-    /// The ROM's message 111 (`INDMEP`): the rank, ')' and a space. The arcade's
-    /// rows are NOT padded (its 10) sits a glyph further right than its 9)), which
-    /// is what the cabinet shows.
-    /// </summary>
-    private int DrawRank(SpriteBatch spriteBatch, int rank, int x, int y, int slot, bool large)
+    private void Leave(GameStateManager manager)
     {
-        string text = $"{rank}) ";
-        return large
-            ? _sprites.Text.DrawLargeFontText(spriteBatch, text, x, y, slot)
-            : _sprites.Text.DrawSmallFontText(spriteBatch, text, x, y, slot);
+        if (_sprites.Blitter.Palette is { } palette)
+        {
+            _colour.Stop(palette);
+        }
+
+        manager.TransitionTo(new TitleScreenState(new GameServices(_sprites, _store, ControlSettings.Defaults(), _input)));
     }
 
     /// <summary>
@@ -280,88 +364,4 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
     private int SlotFor(int score, int normalSlot, int highlightSlot) =>
         score != 0 && _postedScores.Contains(score) ? highlightSlot : normalSlot;
-
-    /// <summary>
-    /// The ROM's frame (`FRAMER` → `MARQ`, notes §98.5/§98.7): the hatched band its two passes
-    /// leave behind, drawn STROKE BY STROKE because every stroke has its OWN palette slot —
-    /// MARQ's flavour walks down by `$11` a stroke (see
-    /// <see cref="HighScoreTableLayout.FrameStrokeSlot"/>), so the eight visible strokes are
-    /// slots 8…1, so the band carries eight cycling colours at once.
-    /// LOOPP keeps rewriting slots 1-8, so all eight stripes cycle together, three frames apart.
-    ///
-    /// The erase pass paints those same pixels black, so only the strokes above
-    /// <see cref="HighScoreFrameAnimation.ErasedStroke"/> are drawn.
-    /// </summary>
-    private void DrawFrame(SpriteBatch spriteBatch)
-    {
-        for (int stroke = _frame.ErasedStroke + 1; stroke <= _frame.DrawnStroke; stroke++)
-        {
-            DrawStroke(spriteBatch, stroke);
-        }
-    }
-
-    /// <summary>
-    /// One MARQ stroke: four hatched edges in that stroke's slot, each two pixels thick. The
-    /// horizontal edges are the two rows of its top and bottom; the vertical ones are the two
-    /// pixel columns of its left edge and of its right one — which MARQ puts at `RIGHT-1` and
-    /// `RIGHT-2`, one pixel inside the rectangle's own right column: `VHIGH` runs at `RIGHT`
-    /// and lights the HIGH nibble (that byte's left pixel), and `VLOW` at the `DECA`-shifted
-    /// `RIGHT-1` lights the low one (the R5 disassembly's GFLIP case).
-    /// </summary>
-    private void DrawStroke(SpriteBatch spriteBatch, int stroke)
-    {
-        Color colour = _sprites.Blitter.SlotColor(HighScoreTableLayout.FrameStrokeSlot(stroke));
-        (int left, int top, int right, int bottom) = HighScoreTableLayout.FrameStroke(stroke);
-
-        DrawHatchedRow(spriteBatch, colour, left, right, top);
-        DrawHatchedRow(spriteBatch, colour, left, right, top + 1);
-        DrawHatchedRow(spriteBatch, colour, left, right, bottom - 1);
-        DrawHatchedRow(spriteBatch, colour, left, right, bottom);
-        DrawHatchedColumn(spriteBatch, colour, left, top, bottom);
-        DrawHatchedColumn(spriteBatch, colour, left + 1, top, bottom);
-        DrawHatchedColumn(spriteBatch, colour, right - 2, top, bottom);
-        DrawHatchedColumn(spriteBatch, colour, right - 1, top, bottom);
-    }
-
-    /// <summary>One raster row of MARQ's hatch: every other arcade pixel of the run.</summary>
-    private void DrawHatchedRow(SpriteBatch spriteBatch, Color colour, int left, int right, int row)
-    {
-        int top = HudLayout.ArcadeY(row);
-        int height = HudLayout.ArcadeY(row + 1) - top;
-
-        for (int x = left; x <= right; x++)
-        {
-            if (!HighScoreTableLayout.FramePixelIsLit(x, row))
-            {
-                continue;
-            }
-
-            int px = HudLayout.ArcadeX(x);
-            _sprites.Blitter.DrawSolidRectangle(
-                spriteBatch,
-                new Rectangle(px, top, HudLayout.ArcadeX(x + 1) - px, height),
-                colour);
-        }
-    }
-
-    /// <summary>One pixel column of the same hatch — the strokes' vertical edges.</summary>
-    private void DrawHatchedColumn(SpriteBatch spriteBatch, Color colour, int column, int top, int bottom)
-    {
-        int px = HudLayout.ArcadeX(column);
-        int width = HudLayout.ArcadeX(column + 1) - px;
-
-        for (int y = top; y <= bottom; y++)
-        {
-            if (!HighScoreTableLayout.FramePixelIsLit(column, y))
-            {
-                continue;
-            }
-
-            int py = HudLayout.ArcadeY(y);
-            _sprites.Blitter.DrawSolidRectangle(
-                spriteBatch,
-                new Rectangle(px, py, width, HudLayout.ArcadeY(y + 1) - py),
-                colour);
-        }
-    }
 }

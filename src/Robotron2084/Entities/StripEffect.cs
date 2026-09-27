@@ -20,13 +20,13 @@ namespace Robotron2084.Entities;
 public sealed class StripEffect : IEntity
 {
     private readonly Func<Texture2D> _animationFrameOf;
-    private readonly Rectangle _bounds;
-    private readonly StripEffectKind _kind;
     private readonly StripFanAxis _axis;
-    private readonly int _slope;          // the diagonal lean: -1 / 0 / +1 (ROM: SLOPE)
+    private readonly Rectangle _bounds;
     private readonly StripClip _clip;
-    private int _sizer;                   // the spacing accumulator; its high byte is this frame's step (ROM: YSIZER)
+    private readonly StripEffectKind _kind;
+    private readonly int _slope;          // the diagonal lean: -1 / 0 / +1 (ROM: SLOPE)
     private int _frames;
+    private int _sizer;                   // the spacing accumulator; its high byte is this frame's step (ROM: YSIZER)
     private int _timer;                  // Counts up to the next ROM frame: 5 per tick, 6 per arcade frame (notes §52, §67.4)
 
     /// <summary>Builds one record; the two static factories below are the only callers.</summary>
@@ -54,6 +54,39 @@ public sealed class StripEffect : IEntity
         _frames = StripExplosionTuning.ExplosionFrames;
     }
 
+    /// <summary>The dead entity's own box.</summary>
+    public Rectangle Bounds => _bounds;
+
+    /// <summary>Alive for the record's life: a fixed frame count, or until an appear's size would reach 1.</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>The dead entity's top-left, which is also where the fan is centred (its middle).</summary>
+    public IntVector2 Position => new(_bounds.X, _bounds.Y);
+
+    /// <summary>The axis the pieces fly along: Rows for a vertical fan, Columns for a horizontal one (test hook).</summary>
+    /// <remarks>The ROM calls these the vertical family (rows) and the horizontal family (columns).</remarks>
+    internal StripFanAxis Axis => _axis;
+
+    /// <summary>Explode or Appear (test hook).</summary>
+    internal StripEffectKind Kind => _kind;
+
+    /// <summary>The diagonal lean, -1 / 0 / +1 (test hook — see <see cref="FanForShot"/>).</summary>
+    internal int Slope => _slope;
+
+    /// <summary>The current spacing (the sizer's high byte) — test hook.</summary>
+    internal int Spacing => Math.Max(1, _sizer >> 8);
+
+    /// <summary>Starts an appear: the same record with the size running down, so the strips converge.</summary>
+    /// <param name="source">The object materialising; its current animation frame is used.</param>
+    /// <param name="bounds">The rect the strips are laid out in.</param>
+    /// <param name="axis">Which way the sprite is cut: rows or columns.</param>
+    /// <param name="slope">The diagonal lean, -1 / 0 / +1.</param>
+    /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
+    /// <returns>The new appear record.</returns>
+    /// <remarks>ROM: RRG23.ASM's <c>APPEAR</c> makes one of these per frame for each robot.</remarks>
+    public static StripEffect StartAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
+        => new StripEffect(() => source.CurrentAnimationFrame, bounds, StripEffectKind.Appear, axis, slope, clip);
+
     /// <summary>Starts the explosion for a killed object; the killing shot picks the axis and lean.</summary>
     /// <param name="dead">The object being exploded; its animation frame and explosion bounds are used.</param>
     /// <param name="direction">The killing shot's direction, or null for a kill with no laser.</param>
@@ -68,47 +101,43 @@ public sealed class StripEffect : IEntity
         return new StripEffect(() => dead.CurrentAnimationFrame, dead.ExplosionBounds, StripEffectKind.Explode, axis, slope, clip);
     }
 
-    /// <summary>Starts an appear: the same record with the size running down, so the strips converge.</summary>
-    /// <param name="source">The object materialising; its current animation frame is used.</param>
-    /// <param name="bounds">The rect the strips are laid out in.</param>
-    /// <param name="axis">Which way the sprite is cut: rows or columns.</param>
-    /// <param name="slope">The diagonal lean, -1 / 0 / +1.</param>
-    /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
-    /// <returns>The new appear record.</returns>
-    /// <remarks>ROM: RRG23.ASM's <c>APPEAR</c> makes one of these per frame for each robot.</remarks>
-    public static StripEffect StartAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
-        => new StripEffect(() => source.CurrentAnimationFrame, bounds, StripEffectKind.Appear, axis, slope, clip);
-
-    /// <summary>Maps a killing shot's direction to the fan axis and lean it produces.</summary>
-    /// <param name="direction">The killing shot's direction, or null for a kill with no laser.</param>
-    /// <returns>The fan axis and the lean: -1, 0 or +1.</returns>
-    /// <remarks>ROM: RRX7.ASM's explosion-style routine, reached from "make an enemy explode". The
-    /// engine is named for the axis the pieces MOVE, which is ACROSS the shot, not along it: a pure
-    /// vertical shot uses the columns split (they fly apart horizontally), a pure horizontal shot or no
-    /// direction at all uses the rows split, and a diagonal shot uses the rows split with the halves
-    /// leaning opposite ways. These two branches are easy to swap by mistake.</remarks>
-    internal static (StripFanAxis Axis, int Slope) FanForShot(Direction8? direction) => direction switch
+    /// <summary>Draws the frame's strips, each from its own row or column of the dead entity's picture.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
     {
-        // A pure vertical shot → cut into columns.
-        Direction8.Up or Direction8.Down => (StripFanAxis.Columns, 0),
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
 
-        // A pure horizontal shot, and every non-laser kill → cut into rows.
-        Direction8.Left or Direction8.Right or null => (StripFanAxis.Rows, 0),
+        Texture2D picture = _animationFrameOf();
 
-        // The diagonals: the row split, leaning.
-        Direction8.UpLeft or Direction8.DownRight => (StripFanAxis.Rows, -1),
-        Direction8.UpRight or Direction8.DownLeft => (StripFanAxis.Rows, 1),
-        _ => (StripFanAxis.Rows, 0),
-    };
+        // The picture's width is in pixels and its height in rows; do not scale them back down (see Layout).
+        int pictureWidth = picture.Width;
+        int pictureRows = picture.Height;
 
-    /// <summary>The dead entity's top-left, which is also where the fan is centred (its middle).</summary>
-    public IntVector2 Position => new(_bounds.X, _bounds.Y);
+        foreach (Strip strip in Layout(pictureWidth, pictureRows))
+        {
+            // Sources are in texture pixels; destinations are in screen pixels (pixel x SpecScale).
+            Rectangle source = _axis == StripFanAxis.Rows
+                ? new Rectangle(0, strip.SourceIndex, pictureWidth, 1)
+                : new Rectangle(strip.SourceIndex, 0, 1, pictureRows);
 
-    /// <summary>The dead entity's own box.</summary>
-    public Rectangle Bounds => _bounds;
+            Rectangle dest = _axis == StripFanAxis.Rows
+                ? new Rectangle(
+                    strip.X * ScreenSize.SpecScale,
+                    strip.Y * ScreenSize.SpecScale,
+                    pictureWidth * ScreenSize.SpecScale,
+                    ScreenSize.SpecScale)
+                : new Rectangle(
+                    strip.X * ScreenSize.SpecScale,
+                    strip.Y * ScreenSize.SpecScale,
+                    ScreenSize.SpecScale,
+                    pictureRows * ScreenSize.SpecScale);
 
-    /// <summary>Alive for the record's life: a fixed frame count, or until an appear's size would reach 1.</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+            spriteBatch.Draw(picture, dest, source, Color.White);
+        }
+    }
 
     /// <summary>One ROM frame of the record's life.</summary>
     /// <param name="gameTime">Unused — the record is stepped once per ROM frame.</param>
@@ -153,43 +182,27 @@ public sealed class StripEffect : IEntity
         _sizer = next;
     }
 
-    /// <summary>Draws the frame's strips, each from its own row or column of the dead entity's picture.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
+    /// <summary>Maps a killing shot's direction to the fan axis and lean it produces.</summary>
+    /// <param name="direction">The killing shot's direction, or null for a kill with no laser.</param>
+    /// <returns>The fan axis and the lean: -1, 0 or +1.</returns>
+    /// <remarks>ROM: RRX7.ASM's explosion-style routine, reached from "make an enemy explode". The
+    /// engine is named for the axis the pieces MOVE, which is ACROSS the shot, not along it: a pure
+    /// vertical shot uses the columns split (they fly apart horizontally), a pure horizontal shot or no
+    /// direction at all uses the rows split, and a diagonal shot uses the rows split with the halves
+    /// leaning opposite ways. These two branches are easy to swap by mistake.</remarks>
+    internal static (StripFanAxis Axis, int Slope) FanForShot(Direction8? direction) => direction switch
     {
-        if (LifeState != EntityLifeState.Alive)
-        {
-            return;
-        }
+        // A pure vertical shot → cut into columns.
+        Direction8.Up or Direction8.Down => (StripFanAxis.Columns, 0),
 
-        Texture2D picture = _animationFrameOf();
+        // A pure horizontal shot, and every non-laser kill → cut into rows.
+        Direction8.Left or Direction8.Right or null => (StripFanAxis.Rows, 0),
 
-        // The picture's width is in pixels and its height in rows; do not scale them back down (see Layout).
-        int pictureWidth = picture.Width;
-        int pictureRows = picture.Height;
-
-        foreach (Strip strip in Layout(pictureWidth, pictureRows))
-        {
-            // Sources are in texture pixels; destinations are in screen pixels (pixel x SpecScale).
-            Rectangle source = _axis == StripFanAxis.Rows
-                ? new Rectangle(0, strip.SourceIndex, pictureWidth, 1)
-                : new Rectangle(strip.SourceIndex, 0, 1, pictureRows);
-
-            Rectangle dest = _axis == StripFanAxis.Rows
-                ? new Rectangle(
-                    strip.X * ScreenSize.SpecScale,
-                    strip.Y * ScreenSize.SpecScale,
-                    pictureWidth * ScreenSize.SpecScale,
-                    ScreenSize.SpecScale)
-                : new Rectangle(
-                    strip.X * ScreenSize.SpecScale,
-                    strip.Y * ScreenSize.SpecScale,
-                    ScreenSize.SpecScale,
-                    pictureRows * ScreenSize.SpecScale);
-
-            spriteBatch.Draw(picture, dest, source, Color.White);
-        }
-    }
+        // The diagonals: the row split, leaning.
+        Direction8.UpLeft or Direction8.DownRight => (StripFanAxis.Rows, -1),
+        Direction8.UpRight or Direction8.DownLeft => (StripFanAxis.Rows, 1),
+        _ => (StripFanAxis.Rows, 0),
+    };
 
     /// <summary>Where a picture sits when drawn into the bounds, in pixels and rows.</summary>
     /// <param name="bounds">The entity's bounds, in screen pixels.</param>
@@ -292,17 +305,4 @@ public sealed class StripEffect : IEntity
 
         return y >= _clip.MinY && y + pictureRows <= _clip.MaxY && x >= _clip.MinX && x < _clip.MaxX;
     }
-
-    /// <summary>Explode or Appear (test hook).</summary>
-    internal StripEffectKind Kind => _kind;
-
-    /// <summary>The current spacing (the sizer's high byte) — test hook.</summary>
-    internal int Spacing => Math.Max(1, _sizer >> 8);
-
-    /// <summary>The axis the pieces fly along: Rows for a vertical fan, Columns for a horizontal one (test hook).</summary>
-    /// <remarks>The ROM calls these the vertical family (rows) and the horizontal family (columns).</remarks>
-    internal StripFanAxis Axis => _axis;
-
-    /// <summary>The diagonal lean, -1 / 0 / +1 (test hook — see <see cref="FanForShot"/>).</summary>
-    internal int Slope => _slope;
 }

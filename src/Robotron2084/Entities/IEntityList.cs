@@ -11,16 +11,16 @@ public interface IEntityList
     /// <summary>The entities in the list, as the common type the registry-driven phases walk.</summary>
     IEnumerable<IEntity> Entities { get; }
 
-    /// <summary>Advances every entity in the list one tick, through the field's own per-entity step.</summary>
-    /// <param name="gameTime">Elapsed time for this tick.</param>
-    /// <param name="field">The field the entities live on and that advances them.</param>
-    void UpdateAll(GameTime gameTime, PlayField field);
-
-    /// <summary>Removes the entities that have died (the ROM's list counts decrement).</summary>
-    void PruneDead();
-
     /// <summary>Draws the list, in the order the entities sit in it.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="field">The field, whose materialisation guards decide what may be drawn.</param>
     void DrawAll(SpriteBatch spriteBatch, PlayField field);
+
+    /// <summary>Removes the entities that have died (the ROM's list counts decrement).</summary>
+    void PruneDead();
+
+    /// <summary>Advances every entity in the list one tick, through the field's own per-entity step.</summary>
+    /// <param name="gameTime">Elapsed time for this tick.</param>
+    /// <param name="field">The field the entities live on and that advances them.</param>
+    void UpdateAll(GameTime gameTime, PlayField field);
 }

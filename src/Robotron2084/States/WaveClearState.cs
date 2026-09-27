@@ -17,17 +17,17 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class WaveClearState : IGameState
 {
-    private readonly SpriteSet _sprites;
-    private readonly HighScoreStore _highScores;
-    private readonly GameSession _session;
-    private readonly int _clearedWave;
-
     /// <summary>
     /// When true the tunnel belongs to the ATTRACT demo
     /// (notes §94) and the game resumes in <see cref="AttractState"/> (the machine keeps
     /// playing itself) instead of <see cref="PlayingState"/>.
     /// </summary>
     private readonly bool _attract;
+
+    private readonly int _clearedWave;
+    private readonly HighScoreStore _highScores;
+    private readonly GameSession _session;
+    private readonly SpriteSet _sprites;
 
     /// <summary>
     /// The arcade's wave-complete effect (notes §79): a hatched, colour-cycling tunnel that
@@ -56,6 +56,13 @@ public sealed class WaveClearState : IGameState
         _session = session;
         _clearedWave = clearedWave;
         _attract = attract;
+    }
+
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+    {
+        // The wave that was just CLEARED is carried in _clearedWave (the session's counter has
+        // already advanced); nothing needs to be written for it — the ROM draws the tunnel.
+        _tunnel.Draw(spriteBatch, _sprites);
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -135,12 +142,5 @@ public sealed class WaveClearState : IGameState
         {
             palette.ResumeSlot(slot);
         }
-    }
-
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
-    {
-        // The wave that was just CLEARED is carried in _clearedWave (the session's counter has
-        // already advanced); nothing needs to be written for it — the ROM draws the tunnel.
-        _tunnel.Draw(spriteBatch, _sprites);
     }
 }

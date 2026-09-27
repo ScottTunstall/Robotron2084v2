@@ -6,6 +6,25 @@ public static class SparkTuning
     // Enforcer (R5 retune, notes §17)
     public const int GlobalActiveSparkCap = 20; // R5 $1412: $14 (20) sparks max
 
+    public const int SparkAccelRomRange = 16;
+
+    public const int SparkAimDivisor = 64;
+
+    // Spark flicker: the ROM SPARK process advances OPICT by one 4-byte
+    // picture entry (SPKP0..3) on every beat pass and re-runs every 4
+    // vblanks (NAP 4) — a 4-frame flash, one frame per 4 vblanks (notes 32).
+    public const int SparkFramePeriodRomFrames = 4;
+
+    public const int SparkJitterColumns = 16;
+
+    public const int SparkLeftWallJitterColumns = 16;
+
+    public const int SparkLifeMaxRomFrames = 140;
+
+    public const int SparkLifeMinRomFrames = 80;
+
+    public const int SparkMaxSpeed = 8;
+
     // Spark — arcade-faithful per the GOSPEL (ref/original-source/
     // RRC11.ASM: ENFSHT + SPARK + the SPKP0..3 pics; notes 41). A spark is a
     // BALLISTIC particle, NOT a random walk:
@@ -33,22 +52,13 @@ public static class SparkTuning
     // a/64 port px per frame of velocity. Both live in 1/256-px fixed point.
     public const int SparkMoveIntervalRomFrames = 4;   // NAP 4
 
-    public const int SparkAimDivisor = 64;            // ROM: the delta is covered in 64 frames
+    // ROM: the delta is covered in 64 frames
 
-    public const int SparkJitterColumns = 16;         // (seed & $1F) - 16 → -16..+15
+    // (seed & $1F) - 16 → -16..+15
 
-    public const int SparkLeftWallJitterColumns = 16; // XMIN+$10: no X jitter this near the wall
+    // XMIN+$10: no X jitter this near the wall
 
-    public const int SparkAccelRomRange = 16;         // PD2/PD4 = (seed & $1F) - 16
+    // PD2/PD4 = (seed & $1F) - 16
 
-    public const int SparkMaxSpeed = 8;               // port safety cap on the px/frame step
-
-    public const int SparkLifeMinRomFrames = 80;
-
-    public const int SparkLifeMaxRomFrames = 140;
-
-    // Spark flicker: the ROM SPARK process advances OPICT by one 4-byte
-    // picture entry (SPKP0..3) on every beat pass and re-runs every 4
-    // vblanks (NAP 4) — a 4-frame flash, one frame per 4 vblanks (notes 32).
-    public const int SparkFramePeriodRomFrames = 4;
+    // port safety cap on the px/frame step
 }

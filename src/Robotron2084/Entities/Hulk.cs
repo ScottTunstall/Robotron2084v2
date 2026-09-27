@@ -22,44 +22,44 @@ namespace Robotron2084.Entities;
 /// <see cref="ArcadeClock"/>.</remarks>
 public sealed class Hulk : IEntity, IAnimationFrameSource
 {
-    /// <summary>Steps in the walk pattern (A-B-A-C).</summary>
-    private const int WalkPatternLength = 4;
-
-    /// <summary>ROM <c>HULKND</c>: a fresh direction comes after at least this many steps.</summary>
-    private const int ReaimStepsMin = 1;
-
-    /// <summary>ROM <c>HULKND</c>: ...and before this many (exclusive bound of the random roll).</summary>
-    private const int ReaimStepsMaxExclusive = 32;
+    /// <summary>ROM <c>HNDX</c>/<c>HNDY</c>: ...and less than this many (exclusive bound of the random roll).</summary>
+    private const int AimOffsetMaxExclusiveArcadePixels = 16;
 
     /// <summary>ROM <c>HNDX</c>/<c>HNDY</c>: the aim is the target's coordinate plus at least this many arcade px.</summary>
     private const int AimOffsetMinArcadePixels = -16;
 
-    /// <summary>ROM <c>HNDX</c>/<c>HNDY</c>: ...and less than this many (exclusive bound of the random roll).</summary>
-    private const int AimOffsetMaxExclusiveArcadePixels = 16;
+    /// <summary>ROM <c>HULKND</c>: ...and before this many (exclusive bound of the random roll).</summary>
+    private const int ReaimStepsMaxExclusive = 32;
 
-    /// <summary>The shorter sideways step, taken on the even entries of the walk pattern (ROM horizontal animation table).</summary>
-    private const int SidewaysShortStepArcadePixels = 3;
-
-    /// <summary>The longer sideways step, taken on the odd entries of the walk pattern.</summary>
-    private const int SidewaysLongStepArcadePixels = 4;
-
-    /// <summary>The flat up/down step.</summary>
-    private const int VerticalStepArcadePixels = 2;
-
-    /// <summary>ROM <c>HULKIL</c>: a sideways shove is doubled when a roll of this many sides comes up 0 (half the time).</summary>
-    private const int ShoveSidewaysDoubleRollSides = 2;
+    /// <summary>ROM <c>HULKND</c>: a fresh direction comes after at least this many steps.</summary>
+    private const int ReaimStepsMin = 1;
 
     /// <summary>ROM <c>HULKIL</c>: how much a doubled sideways shove is multiplied.</summary>
     private const int ShoveSidewaysDoubleFactor = 2;
 
-    /// <summary>ROM <c>HULKIL</c>: an up/down shove is quadrupled when a roll of this many sides comes up below the threshold.</summary>
-    private const int ShoveVerticalQuadrupleRollSides = 4;
+    /// <summary>ROM <c>HULKIL</c>: a sideways shove is doubled when a roll of this many sides comes up 0 (half the time).</summary>
+    private const int ShoveSidewaysDoubleRollSides = 2;
+
+    /// <summary>ROM <c>HULKIL</c>: how much a quadrupled up/down shove is multiplied.</summary>
+    private const int ShoveVerticalQuadrupleFactor = 4;
 
     /// <summary>ROM <c>HULKIL</c>: the roll must come up below this for the up/down shove to be quadrupled (three quarters of the time).</summary>
     private const int ShoveVerticalQuadrupleRollBelow = 3;
 
-    /// <summary>ROM <c>HULKIL</c>: how much a quadrupled up/down shove is multiplied.</summary>
-    private const int ShoveVerticalQuadrupleFactor = 4;
+    /// <summary>ROM <c>HULKIL</c>: an up/down shove is quadrupled when a roll of this many sides comes up below the threshold.</summary>
+    private const int ShoveVerticalQuadrupleRollSides = 4;
+
+    /// <summary>The longer sideways step, taken on the odd entries of the walk pattern.</summary>
+    private const int SidewaysLongStepArcadePixels = 4;
+
+    /// <summary>The shorter sideways step, taken on the even entries of the walk pattern (ROM horizontal animation table).</summary>
+    private const int SidewaysShortStepArcadePixels = 3;
+
+    /// <summary>The flat up/down step.</summary>
+    private const int VerticalStepArcadePixels = 2;
+
+    /// <summary>Steps in the walk pattern (A-B-A-C).</summary>
+    private const int WalkPatternLength = 4;
 
     /// <summary>The hulk picture's own 14x16 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
@@ -74,19 +74,23 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     private static readonly int[] RightAnimationFrames = { 6, 7, 6, 8 };
     private static readonly int[] VerticalAnimationFrames = { 3, 4, 3, 5 };
 
-    private readonly SpriteSet _sprites;
     private readonly Random _random;
+    private readonly SpriteSet _sprites;
     private readonly int _stepPeriod; // how long one step takes — the ROM's HLKSPD frame count, in clock units
     private readonly Func<IntVector2> _target;
     private bool _aimed;
-    private bool _horizontal;
-    private int _walkCycleStep; // which of the 4 frames in the current walk pattern comes up next (0-3)
-    private int _animationFrameIndex; // 0-based index into SpriteSet.HulkAnimationFrames
-    private int _reaimStepsRemaining;
-    private int _stepTimer;
+    private int _animationFrameIndex;
     private Direction8 _direction;
+    private bool _horizontal;
+    private Rectangle? _playfieldBounds;
     private IntVector2 _position;
-    private Rectangle? _playfieldBounds; // cached from the last Update; used by ApplyKnockback
+
+    // 0-based index into SpriteSet.HulkAnimationFrames
+    private int _reaimStepsRemaining;
+
+    private int _stepTimer;
+    private int _walkCycleStep; // which of the 4 frames in the current walk pattern comes up next (0-3)
+                                // cached from the last Update; used by ApplyKnockback
 
     /// <summary>Creates a hulk; it takes its first aim on its first update.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -112,19 +116,53 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         _animationFrameIndex = VerticalAnimationFrames[0];
     }
 
-    /// <summary>Top-left of the hulk.</summary>
-    /// <remarks>The ROM's OBJX/OBJY.</remarks>
-    public IntVector2 Position => _position;
-
     /// <summary>The hulk picture's own 14x16 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
-
-    /// <summary>Always Alive — indestructible (the enum's Dying/Dead are simply never used here).</summary>
-    public EntityLifeState LifeState => EntityLifeState.Alive;
 
     /// <summary>This hulk's current walk picture, for the appear effect.</summary>
     /// <remarks>It never shatters, but it still materialises at the start of a wave.</remarks>
     public Texture2D CurrentAnimationFrame => _sprites.HulkAnimationFrames[_animationFrameIndex];
+
+    /// <summary>Always Alive — indestructible (the enum's Dying/Dead are simply never used here).</summary>
+    public EntityLifeState LifeState => EntityLifeState.Alive;
+
+    /// <summary>Top-left of the hulk.</summary>
+    /// <remarks>The ROM's OBJX/OBJY.</remarks>
+    public IntVector2 Position => _position;
+
+    /// <summary>Current walk frame, 0-based index into <see cref="SpriteSet.HulkAnimationFrames"/> (test hook).</summary>
+    internal int AnimationFrameIndex => _animationFrameIndex;
+
+    /// <summary>Current travel direction (test hook).</summary>
+    internal Direction8 Direction => _direction;
+
+    /// <summary>Pushes the hulk along the laser's travel direction, stopping at the wall.</summary>
+    /// <param name="direction">The laser's travel direction, per axis (-1, 0 or +1).</param>
+    /// <remarks>ROM: <c>HULKIL</c> — sideways the shove is 1 arcade px, doubling about half the
+    /// time; up/down it is 1, quadrupling about three-quarters of the time.</remarks>
+    public void ApplyKnockback(IntVector2 direction)
+    {
+        int dx = direction.X != 0 && _random.Next(ShoveSidewaysDoubleRollSides) == 0
+            ? direction.X * ShoveSidewaysDoubleFactor
+            : direction.X;
+        int dy = direction.Y != 0 && _random.Next(ShoveVerticalQuadrupleRollSides) < ShoveVerticalQuadrupleRollBelow
+            ? direction.Y * ShoveVerticalQuadrupleFactor
+            : direction.Y;
+        _position += new IntVector2(ScreenSize.ArcadePixels(dx), ScreenSize.ArcadePixels(dy));
+        if (_playfieldBounds is { } bounds)
+        {
+            int x = Math.Clamp(_position.X, bounds.X, bounds.Right - CollisionSize.Width);
+            int y = Math.Clamp(_position.Y, bounds.Top, bounds.Bottom - CollisionSize.Height);
+            _position = new IntVector2(x, y);
+        }
+    }
+
+    /// <summary>Draws the current walk picture solid.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+    }
 
     /// <summary>One hulk cycle: aims on the first call, then steps, or re-aims when the wall blocks it.</summary>
     /// <param name="gameTime">Unused — the steps are counted in ROM frames.</param>
@@ -177,33 +215,9 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         }
     }
 
-    /// <summary>Pushes the hulk along the laser's travel direction, stopping at the wall.</summary>
-    /// <param name="direction">The laser's travel direction, per axis (-1, 0 or +1).</param>
-    /// <remarks>ROM: <c>HULKIL</c> — sideways the shove is 1 arcade px, doubling about half the
-    /// time; up/down it is 1, quadrupling about three-quarters of the time.</remarks>
-    public void ApplyKnockback(IntVector2 direction)
-    {
-        int dx = direction.X != 0 && _random.Next(ShoveSidewaysDoubleRollSides) == 0
-            ? direction.X * ShoveSidewaysDoubleFactor
-            : direction.X;
-        int dy = direction.Y != 0 && _random.Next(ShoveVerticalQuadrupleRollSides) < ShoveVerticalQuadrupleRollBelow
-            ? direction.Y * ShoveVerticalQuadrupleFactor
-            : direction.Y;
-        _position += new IntVector2(ScreenSize.ArcadePixels(dx), ScreenSize.ArcadePixels(dy));
-        if (_playfieldBounds is { } bounds)
-        {
-            int x = Math.Clamp(_position.X, bounds.X, bounds.Right - CollisionSize.Width);
-            int y = Math.Clamp(_position.Y, bounds.Top, bounds.Bottom - CollisionSize.Height);
-            _position = new IntVector2(x, y);
-        }
-    }
-
-    /// <summary>Draws the current walk picture solid.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
-    }
+    /// <summary>Puts the hulk at <paramref name="position"/> (test hook).</summary>
+    /// <param name="position">The new top-left.</param>
+    internal void TeleportTo(IntVector2 position) => _position = position;
 
     private static int[] FramesFor(Direction8 direction) => direction switch
     {
@@ -211,20 +225,6 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         Direction8.Right => RightAnimationFrames,
         _ => VerticalAnimationFrames, // the ROM draws DOWN and UP with the same set of pictures
     };
-
-    /// <summary>The steps until the next fresh direction: a random count (ROM <c>HULKND</c>).</summary>
-    private int RollReaimSteps() => _random.Next(ReaimStepsMin, ReaimStepsMaxExclusive);
-
-    /// <summary>Re-rolls the step timer, switches axis and picks a new direction.</summary>
-    /// <remarks>ROM: <c>HULKND</c>/<c>HND10</c> — the walk animation restarts at its first frame.</remarks>
-    private void Reaim(PlayField field)
-    {
-        _reaimStepsRemaining = RollReaimSteps();
-        _horizontal = !_horizontal;
-        PickDirection(field);
-        _walkCycleStep = 0;
-        _animationFrameIndex = FramesFor(_direction)[0];
-    }
 
     /// <summary>Aims along the current axis at the target's coordinate plus a random offset.</summary>
     /// <remarks>ROM: <c>HNDX</c>/<c>HNDY</c> — an aim outside the wall is pulled back in; an aim
@@ -251,13 +251,17 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         }
     }
 
-    /// <summary>Current walk frame, 0-based index into <see cref="SpriteSet.HulkAnimationFrames"/> (test hook).</summary>
-    internal int AnimationFrameIndex => _animationFrameIndex;
+    /// <summary>Re-rolls the step timer, switches axis and picks a new direction.</summary>
+    /// <remarks>ROM: <c>HULKND</c>/<c>HND10</c> — the walk animation restarts at its first frame.</remarks>
+    private void Reaim(PlayField field)
+    {
+        _reaimStepsRemaining = RollReaimSteps();
+        _horizontal = !_horizontal;
+        PickDirection(field);
+        _walkCycleStep = 0;
+        _animationFrameIndex = FramesFor(_direction)[0];
+    }
 
-    /// <summary>Current travel direction (test hook).</summary>
-    internal Direction8 Direction => _direction;
-
-    /// <summary>Puts the hulk at <paramref name="position"/> (test hook).</summary>
-    /// <param name="position">The new top-left.</param>
-    internal void TeleportTo(IntVector2 position) => _position = position;
+    /// <summary>The steps until the next fresh direction: a random count (ROM <c>HULKND</c>).</summary>
+    private int RollReaimSteps() => _random.Next(ReaimStepsMin, ReaimStepsMaxExclusive);
 }

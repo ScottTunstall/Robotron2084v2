@@ -27,7 +27,8 @@ namespace Robotron2084.Entities;
 /// an interval of N frames is due at 6 x N.</remarks>
 public sealed class Player : IEntity, IAnimationFrameSource
 {
-    private readonly SpriteSet _sprites;
+    /// <summary>Each animation frame is drawn for 3 movement ticks.</summary>
+    private const int FrameTicksPerAnimationFrame = 3;
 
     /// <summary>Collision box = the player picture's own 8x12 arcade px.</summary>
     /// <remarks>The ROM collides against the player's PICTURE, not a fixed 16x16 cell.</remarks>
@@ -37,41 +38,29 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Walk cycle per direction: [f0, f1, f0, f2] (e.g. left = 1,2,1,3).</summary>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
-    /// <summary>Each animation frame is drawn for 3 movement ticks.</summary>
-    private const int FrameTicksPerAnimationFrame = 3;
-
     private readonly TimeSpan _graceDuration = TimeSpan.FromSeconds(PlayerTuning.PlayerStartGraceSeconds);
     private readonly Random _random;
-    private TimeSpan _graceRemaining;
-    private bool _wasFiring;
+    private readonly SpriteSet _sprites;
+
+    // A wave starts on frame 7, the first DOWN frame; _animationFrameTicks counts 1..3.
+    private WalkFacing _animationFacing = WalkFacingFor(Direction8.Down);
+
+    private int _animationFrameTicks = 1;
+    private int _animationSequenceIndex;
     private int _autoFireTicksRemaining;
-    private int _invincibilityTicksRemaining;
-    private int _invincibilityBlinkTicks;
+    private int _deathFadeIndex;
+    private int _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
+    private int _deathFlashSlot = PlayerTuning.PlayerDeathWhiteSlot;
 
     // Death: a solid-colour flash loop, then the slot-12 fade (ROM: RRX7.ASM; see the remarks).
     private DeathStage _deathStage = DeathStage.White;
 
     private int _deathTimer;
-    private int _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
-    private int _deathFlashSlot = PlayerTuning.PlayerDeathWhiteSlot;
-    private int _deathFadeIndex;
-
-    /// <summary>The death animation's stages: a white flash, a colour flash, then the fade to black.</summary>
-    /// <remarks>The ROM's death stages: a fixed white, then a random colour, then the slot-12 fade.</remarks>
-    private enum DeathStage
-    {
-        White,
-        Colour,
-        Fade,
-    }
-
+    private TimeSpan _graceRemaining;
+    private int _invincibilityBlinkTicks;
+    private int _invincibilityTicksRemaining;
     private IntVector2 _position;
-
-    // A wave starts on frame 7, the first DOWN frame; _animationFrameTicks counts 1..3.
-    private WalkFacing _animationFacing = WalkFacingFor(Direction8.Down);
-
-    private int _animationSequenceIndex;
-    private int _animationFrameTicks = 1;
+    private bool _wasFiring;
 
     /// <summary>Spawns the player at <paramref name="startPosition"/> with <paramref name="lives"/> men and the start grace running.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -88,11 +77,37 @@ public sealed class Player : IEntity, IAnimationFrameSource
         IsInStartGracePeriod = true;
     }
 
-    /// <summary>Top-left of the player (the ROM's OBJX/OBJY).</summary>
-    public IntVector2 Position => _position;
+    /// <summary>The death animation's stages: a white flash, a colour flash, then the fade to black.</summary>
+    /// <remarks>The ROM's death stages: a fixed white, then a random colour, then the slot-12 fade.</remarks>
+    private enum DeathStage
+    {
+        White,
+        Colour,
+        Fade,
+    }
+
+    /// <summary>The player picture's own 8x12 box at <see cref="Position"/> (the ROM intersects the PICTURE).</summary>
+    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+
+    /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>
+    public Texture2D CurrentAnimationFrame => _sprites.PlayerAnimationFrames[WalkAnimationFrameIndex];
 
     /// <summary>The way the player is drawn and walks — his last MOVEMENT direction.</summary>
     public Direction8 FacingDirection { get; private set; } = Direction8.Up;
+
+    /// <summary>TEMPORARY playtest aid: while set, <see cref="Kill"/> is a complete no-op.</summary>
+    /// <remarks>Per player, so the attract DEMO can opt out and the machine still plays by the
+    /// arcade's rules (otherwise every contact path in the demo is dead code).</remarks>
+    public bool InvincibleForTesting { get; set; } = PlayerTuning.PlayerInvincibleForTesting;
+
+    /// <summary>True until the start grace expires.</summary>
+    public bool IsInStartGracePeriod { get; private set; }
+
+    /// <summary>Passes through hazards unharmed for a short time after a respawn.</summary>
+    public bool IsInvincible => _invincibilityTicksRemaining > 0;
+
+    /// <summary>True when this update fired a laser.</summary>
+    public bool LasersFiredThisUpdate { get; private set; }
 
     /// <summary>Alive, Dying (the death animation's flash and fade), or Dead pending respawn.</summary>
     /// <remarks>The ROM's `PDTHV` flash and fade.</remarks>
@@ -101,25 +116,76 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Men remaining, including the one on screen; a death takes one off.</summary>
     public int Lives { get; private set; }
 
-    /// <summary>True when this update fired a laser.</summary>
-    public bool LasersFiredThisUpdate { get; private set; }
+    /// <summary>Top-left of the player (the ROM's OBJX/OBJY).</summary>
+    public IntVector2 Position => _position;
 
-    /// <summary>True until the start grace expires.</summary>
-    public bool IsInStartGracePeriod { get; private set; }
+    /// <summary>The palette slot the dying player is drawn solid in.</summary>
+    /// <remarks>The ROM's death colour: a fixed white slot, a random colour slot, or the fading slot.</remarks>
+    internal int DeathSolidSlot => _deathStage == DeathStage.Fade
+        ? PlayerTuning.PlayerDeathFadeSlot
+        : _deathFlashSlot;
 
-    /// <summary>Passes through hazards unharmed for a short time after a respawn.</summary>
-    public bool IsInvincible => _invincibilityTicksRemaining > 0;
-
-    /// <summary>TEMPORARY playtest aid: while set, <see cref="Kill"/> is a complete no-op.</summary>
-    /// <remarks>Per player, so the attract DEMO can opt out and the machine still plays by the
-    /// arcade's rules (otherwise every contact path in the demo is dead code).</remarks>
-    public bool InvincibleForTesting { get; set; } = PlayerTuning.PlayerInvincibleForTesting;
-
-    /// <summary>The player picture's own 8x12 box at <see cref="Position"/> (the ROM intersects the PICTURE).</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    /// <summary>0-based index into <see cref="SpriteSet.PlayerAnimationFrames"/>.</summary>
+    /// <remarks>The arcade numbers its frames 1 through 12, so arcade frame N is index N - 1.</remarks>
+    internal int WalkAnimationFrameIndex => (int)_animationFacing * 3 + WalkCycle[_animationSequenceIndex];
 
     /// <summary>Awards an extra life when a score crosses an extra-life threshold.</summary>
     public void AddLife() => Lives += 1;
+
+    /// <summary>Draws the walk frame, or a one-colour silhouette while dying.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (LifeState == EntityLifeState.Dead)
+        {
+            return;
+        }
+
+        // While invincible: visible/hidden tick-toggle flicker (no alpha blending).
+        if (IsInvincible && _invincibilityBlinkTicks >= PlayerTuning.InvincibilityFlickerVisibleTicks)
+        {
+            return;
+        }
+
+        // One colour while dying, like the ROM's own solid-colour draw.
+        if (LifeState == EntityLifeState.Dying)
+        {
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(DeathSolidSlot));
+            return;
+        }
+
+        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+    }
+
+    /// <summary>Kills the player (contact with a live hazard). No-op while dying/dead.</summary>
+    public void Kill()
+    {
+        if (InvincibleForTesting)
+        {
+            return; // TEMPORARY playtest aid — see the property and the constant.
+        }
+
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        StartDeath();
+    }
+
+    /// <summary>Respawn for "RESTART THE CURRENT LEVEL" (lives remaining).</summary>
+    /// <param name="startPosition">Where to place the player.</param>
+    public void ResetForLevelRestart(IntVector2 startPosition)
+    {
+        _position = startPosition;
+        LifeState = EntityLifeState.Alive;
+        ResetDeathAnimation();
+        _graceRemaining = _graceDuration;
+        IsInStartGracePeriod = true;
+        _invincibilityTicksRemaining = PlayerTuning.PlayerInvincibilityTicks;
+        _wasFiring = false;
+        _autoFireTicksRemaining = PlayerTuning.PlayerAutoFireTicks;
+    }
 
     /// <summary>One tick: the death animation while dying, else clocks, movement, firing and animation.</summary>
     /// <param name="gameTime">The elapsed time, used to run the start grace down.</param>
@@ -151,121 +217,29 @@ public sealed class Player : IEntity, IAnimationFrameSource
         AdvanceWalkAnimation(move);
     }
 
-    /// <summary>Runs one tick of the invincibility countdown, its flicker, and the start-of-life grace.</summary>
-    /// <param name="gameTime">The elapsed time, used to run the start grace down.</param>
-    private void AdvanceInvincibility(GameTime gameTime)
+    /// <summary>Which walk sequence a facing uses: diagonals reuse the horizontal sequences.</summary>
+    /// <param name="direction">The facing to map.</param>
+    /// <returns>The walk sequence the facing uses.</returns>
+    /// <remarks>The arcade's own stick-to-walk-sequence rule.</remarks>
+    internal static WalkFacing WalkFacingFor(Direction8 direction) => direction switch
     {
-        if (_invincibilityTicksRemaining > 0)
-        {
-            _invincibilityTicksRemaining--;
-        }
+        Direction8.Left or Direction8.UpLeft or Direction8.DownLeft => WalkFacing.Left,
+        Direction8.Right or Direction8.UpRight or Direction8.DownRight => WalkFacing.Right,
+        Direction8.Down => WalkFacing.Down,
+        _ => WalkFacing.Up,
+    };
 
-        _invincibilityBlinkTicks =
-            (_invincibilityBlinkTicks + 1) % (PlayerTuning.InvincibilityFlickerVisibleTicks + PlayerTuning.InvincibilityFlickerHiddenTicks);
-
-        if (IsInStartGracePeriod)
+    /// <summary>Starts the death animation, ignoring <c>PlayerInvincibleForTesting</c> (test hook).</summary>
+    internal void StartDeathForTesting()
+    {
+        if (LifeState == EntityLifeState.Alive)
         {
-            _graceRemaining -= gameTime.ElapsedGameTime;
-            if (_graceRemaining <= TimeSpan.Zero)
-            {
-                IsInStartGracePeriod = false;
-            }
+            StartDeath();
         }
     }
 
-    /// <summary>Applies the stick for one tick: the facing follows it, and the wall bounds the move.</summary>
-    /// <param name="move">The stick's per-axis direction, -1 / 0 / +1.</param>
-    /// <param name="field">The playfield, whose wall bounds the move.</param>
-    private void MoveFromInput(IntVector2 move, PlayField field)
-    {
-        if (move == IntVector2.Zero)
-        {
-            return;
-        }
-
-        FacingDirection = Direction8Extensions.FromDelta(move)!.Value;
-
-        // Per-axis move with wall revert: never allowed to overlap the wall.
-        IntVector2 candidate = _position;
-        int dx = move.X * PlayerTuning.PlayerSpeedX;
-        if (dx != 0)
-        {
-            candidate = StepAxis(candidate, new IntVector2(dx, 0), field.Wall);
-        }
-
-        int dy = move.Y * PlayerTuning.PlayerSpeedY;
-        if (dy != 0)
-        {
-            candidate = StepAxis(candidate, new IntVector2(0, dy), field.Wall);
-        }
-
-        _position = candidate;
-    }
-
-    /// <summary>Steps along one axis, unless the player's box would then overlap the wall.</summary>
-    /// <param name="from">The position to step from.</param>
-    /// <param name="delta">The step, on one axis only.</param>
-    /// <param name="wall">The wall the player must stay clear of.</param>
-    /// <returns>The stepped position, or <paramref name="from"/> when the wall blocks it.</returns>
-    private static IntVector2 StepAxis(IntVector2 from, IntVector2 delta, PlayfieldWall wall)
-    {
-        IntVector2 stepped = from + delta;
-        Rectangle box = new(stepped.X, stepped.Y, CollisionSize.Width, CollisionSize.Height);
-        return wall.Intersects(box) ? from : stepped;
-    }
-
-    /// <summary>Fires on the fire control: a fresh press at once, a held one on the auto-fire cadence.</summary>
-    /// <param name="input">This tick's controls.</param>
-    /// <param name="aim">The aim stick's direction, or null when it is centred.</param>
-    /// <param name="field">The playfield, which owns the laser slots.</param>
-    /// <remarks>A shot re-fires every <see cref="PlayerTuning.PlayerAutoFireTicks"/> ticks; the attempt
-    /// is a no-op when the three slots are full.</remarks>
-    private void UpdateFiring(PlayerInputState input, Direction8? aim, PlayField field)
-    {
-        bool fire = input.FireHeld;
-        if (fire && (!_wasFiring || --_autoFireTicksRemaining <= 0))
-        {
-            Direction8 fireDirection = aim ?? FacingDirection;
-            IntVector2 muzzle = _position + MuzzleOffset(fireDirection);
-            LasersFiredThisUpdate = field.PlayerLasers.TryFire(muzzle, fireDirection, out _);
-            _autoFireTicksRemaining = PlayerTuning.PlayerAutoFireTicks;
-        }
-        else
-        {
-            LasersFiredThisUpdate = false;
-        }
-
-        _wasFiring = fire;
-    }
-
-    /// <summary>Advances the walk cycle; with the stick centred the frame holds where it is.</summary>
-    /// <param name="move">The stick's per-axis direction, -1 / 0 / +1.</param>
-    private void AdvanceWalkAnimation(IntVector2 move)
-    {
-        if (move == IntVector2.Zero)
-        {
-            return;
-        }
-
-        WalkFacing facing = WalkFacingFor(FacingDirection);
-        if (facing != _animationFacing)
-        {
-            // A new direction resets the sequence index and the frame hold, so its first
-            // frame shows immediately.
-            _animationFacing = facing;
-            _animationSequenceIndex = 0;
-            _animationFrameTicks = 1;
-        }
-        else if (_animationFrameTicks >= FrameTicksPerAnimationFrame)
-        {
-            _animationFrameTicks = 1;
-            _animationSequenceIndex = (_animationSequenceIndex + 1) % WalkCycle.Length;
-        }
-        else
-        {
-            _animationFrameTicks++;
-        }
-    }
+    /// <summary>Test-only positioning hook (InternalsVisibleTo the test assembly).</summary>
+    internal void TeleportTo(IntVector2 position) => _position = position;
 
     /// <summary>Where a shot of this facing leaves the player: spec px from the player cell's top-left.</summary>
     /// <param name="direction">The direction the shot is fired in.</param>
@@ -287,75 +261,17 @@ public sealed class Player : IEntity, IAnimationFrameSource
         return new(ScreenSize.Scaled(offset.x), ScreenSize.Scaled(offset.y));
     }
 
-    /// <summary>Which walk sequence a facing uses: diagonals reuse the horizontal sequences.</summary>
-    /// <param name="direction">The facing to map.</param>
-    /// <returns>The walk sequence the facing uses.</returns>
-    /// <remarks>The arcade's own stick-to-walk-sequence rule.</remarks>
-    internal static WalkFacing WalkFacingFor(Direction8 direction) => direction switch
+    /// <summary>Steps along one axis, unless the player's box would then overlap the wall.</summary>
+    /// <param name="from">The position to step from.</param>
+    /// <param name="delta">The step, on one axis only.</param>
+    /// <param name="wall">The wall the player must stay clear of.</param>
+    /// <returns>The stepped position, or <paramref name="from"/> when the wall blocks it.</returns>
+    private static IntVector2 StepAxis(IntVector2 from, IntVector2 delta, PlayfieldWall wall)
     {
-        Direction8.Left or Direction8.UpLeft or Direction8.DownLeft => WalkFacing.Left,
-        Direction8.Right or Direction8.UpRight or Direction8.DownRight => WalkFacing.Right,
-        Direction8.Down => WalkFacing.Down,
-        _ => WalkFacing.Up,
-    };
-
-    /// <summary>0-based index into <see cref="SpriteSet.PlayerAnimationFrames"/>.</summary>
-    /// <remarks>The arcade numbers its frames 1 through 12, so arcade frame N is index N - 1.</remarks>
-    internal int WalkAnimationFrameIndex => (int)_animationFacing * 3 + WalkCycle[_animationSequenceIndex];
-
-    /// <summary>Kills the player (contact with a live hazard). No-op while dying/dead.</summary>
-    public void Kill()
-    {
-        if (InvincibleForTesting)
-        {
-            return; // TEMPORARY playtest aid — see the property and the constant.
-        }
-
-        if (LifeState != EntityLifeState.Alive)
-        {
-            return;
-        }
-
-        StartDeath();
+        IntVector2 stepped = from + delta;
+        Rectangle box = new(stepped.X, stepped.Y, CollisionSize.Width, CollisionSize.Height);
+        return wall.Intersects(box) ? from : stepped;
     }
-
-    /// <summary>The death state machine's setup, shared by <see cref="Kill"/> and the test hook.</summary>
-    private void StartDeath()
-    {
-        LifeState = EntityLifeState.Dying;
-        ResetDeathAnimation();
-        Lives -= 1;
-    }
-
-    /// <summary>Puts the death animation back at its first white flash.</summary>
-    private void ResetDeathAnimation()
-    {
-        _deathStage = DeathStage.White;
-        _deathTimer = 0;
-        _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
-        _deathFlashSlot = PlayerTuning.PlayerDeathWhiteSlot;
-        _deathFadeIndex = 0;
-    }
-
-    /// <summary>Respawn for "RESTART THE CURRENT LEVEL" (lives remaining).</summary>
-    /// <param name="startPosition">Where to place the player.</param>
-    public void ResetForLevelRestart(IntVector2 startPosition)
-    {
-        _position = startPosition;
-        LifeState = EntityLifeState.Alive;
-        ResetDeathAnimation();
-        _graceRemaining = _graceDuration;
-        IsInStartGracePeriod = true;
-        _invincibilityTicksRemaining = PlayerTuning.PlayerInvincibilityTicks;
-        _wasFiring = false;
-        _autoFireTicksRemaining = PlayerTuning.PlayerAutoFireTicks;
-    }
-
-    /// <summary>The palette slot the dying player is drawn solid in.</summary>
-    /// <remarks>The ROM's death colour: a fixed white slot, a random colour slot, or the fading slot.</remarks>
-    internal int DeathSolidSlot => _deathStage == DeathStage.Fade
-        ? PlayerTuning.PlayerDeathFadeSlot
-        : _deathFlashSlot;
 
     /// <summary>One tick of the death animation: the flash loop, then the fade.</summary>
     /// <param name="field">The playfield, whose palette runs the fade.</param>
@@ -413,6 +329,57 @@ public sealed class Player : IEntity, IAnimationFrameSource
         }
     }
 
+    /// <summary>Runs one tick of the invincibility countdown, its flicker, and the start-of-life grace.</summary>
+    /// <param name="gameTime">The elapsed time, used to run the start grace down.</param>
+    private void AdvanceInvincibility(GameTime gameTime)
+    {
+        if (_invincibilityTicksRemaining > 0)
+        {
+            _invincibilityTicksRemaining--;
+        }
+
+        _invincibilityBlinkTicks =
+            (_invincibilityBlinkTicks + 1) % (PlayerTuning.InvincibilityFlickerVisibleTicks + PlayerTuning.InvincibilityFlickerHiddenTicks);
+
+        if (IsInStartGracePeriod)
+        {
+            _graceRemaining -= gameTime.ElapsedGameTime;
+            if (_graceRemaining <= TimeSpan.Zero)
+            {
+                IsInStartGracePeriod = false;
+            }
+        }
+    }
+
+    /// <summary>Advances the walk cycle; with the stick centred the frame holds where it is.</summary>
+    /// <param name="move">The stick's per-axis direction, -1 / 0 / +1.</param>
+    private void AdvanceWalkAnimation(IntVector2 move)
+    {
+        if (move == IntVector2.Zero)
+        {
+            return;
+        }
+
+        WalkFacing facing = WalkFacingFor(FacingDirection);
+        if (facing != _animationFacing)
+        {
+            // A new direction resets the sequence index and the frame hold, so its first
+            // frame shows immediately.
+            _animationFacing = facing;
+            _animationSequenceIndex = 0;
+            _animationFrameTicks = 1;
+        }
+        else if (_animationFrameTicks >= FrameTicksPerAnimationFrame)
+        {
+            _animationFrameTicks = 1;
+            _animationSequenceIndex = (_animationSequenceIndex + 1) % WalkCycle.Length;
+        }
+        else
+        {
+            _animationFrameTicks++;
+        }
+    }
+
     /// <summary>Starts the fade: suspends the slot-12 decay and writes the first byte.</summary>
     /// <param name="field">The playfield, whose palette runs the fade.</param>
     /// <remarks>ROM: the colour processes carry on as normal; only the decay suspends.</remarks>
@@ -424,48 +391,79 @@ public sealed class Player : IEntity, IAnimationFrameSource
         WriteDeathFade(field);
     }
 
+    /// <summary>Applies the stick for one tick: the facing follows it, and the wall bounds the move.</summary>
+    /// <param name="move">The stick's per-axis direction, -1 / 0 / +1.</param>
+    /// <param name="field">The playfield, whose wall bounds the move.</param>
+    private void MoveFromInput(IntVector2 move, PlayField field)
+    {
+        if (move == IntVector2.Zero)
+        {
+            return;
+        }
+
+        FacingDirection = Direction8Extensions.FromDelta(move)!.Value;
+
+        // Per-axis move with wall revert: never allowed to overlap the wall.
+        IntVector2 candidate = _position;
+        int dx = move.X * PlayerTuning.PlayerSpeedX;
+        if (dx != 0)
+        {
+            candidate = StepAxis(candidate, new IntVector2(dx, 0), field.Wall);
+        }
+
+        int dy = move.Y * PlayerTuning.PlayerSpeedY;
+        if (dy != 0)
+        {
+            candidate = StepAxis(candidate, new IntVector2(0, dy), field.Wall);
+        }
+
+        _position = candidate;
+    }
+
+    /// <summary>Puts the death animation back at its first white flash.</summary>
+    private void ResetDeathAnimation()
+    {
+        _deathStage = DeathStage.White;
+        _deathTimer = 0;
+        _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
+        _deathFlashSlot = PlayerTuning.PlayerDeathWhiteSlot;
+        _deathFadeIndex = 0;
+    }
+
+    /// <summary>The death state machine's setup, shared by <see cref="Kill"/> and the test hook.</summary>
+    private void StartDeath()
+    {
+        LifeState = EntityLifeState.Dying;
+        ResetDeathAnimation();
+        Lives -= 1;
+    }
+
+    /// <summary>Fires on the fire control: a fresh press at once, a held one on the auto-fire cadence.</summary>
+    /// <param name="input">This tick's controls.</param>
+    /// <param name="aim">The aim stick's direction, or null when it is centred.</param>
+    /// <param name="field">The playfield, which owns the laser slots.</param>
+    /// <remarks>A shot re-fires every <see cref="PlayerTuning.PlayerAutoFireTicks"/> ticks; the attempt
+    /// is a no-op when the three slots are full.</remarks>
+    private void UpdateFiring(PlayerInputState input, Direction8? aim, PlayField field)
+    {
+        bool fire = input.FireHeld;
+        if (fire && (!_wasFiring || --_autoFireTicksRemaining <= 0))
+        {
+            Direction8 fireDirection = aim ?? FacingDirection;
+            IntVector2 muzzle = _position + MuzzleOffset(fireDirection);
+            LasersFiredThisUpdate = field.PlayerLasers.TryFire(muzzle, fireDirection, out _);
+            _autoFireTicksRemaining = PlayerTuning.PlayerAutoFireTicks;
+        }
+        else
+        {
+            LasersFiredThisUpdate = false;
+        }
+
+        _wasFiring = fire;
+    }
+
     /// <summary>Writes the next fade byte into the death colour's palette slot.</summary>
     /// <param name="field">The playfield, whose palette holds the death slot.</param>
     private void WriteDeathFade(PlayField field) =>
         field.Palette?.SetSlot(PlayerTuning.PlayerDeathFadeSlot, PlayerTuning.PlayerDeathFadeValues[_deathFadeIndex]);
-
-    /// <summary>Draws the walk frame, or a one-colour silhouette while dying.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (LifeState == EntityLifeState.Dead)
-        {
-            return;
-        }
-
-        // While invincible: visible/hidden tick-toggle flicker (no alpha blending).
-        if (IsInvincible && _invincibilityBlinkTicks >= PlayerTuning.InvincibilityFlickerVisibleTicks)
-        {
-            return;
-        }
-
-        // One colour while dying, like the ROM's own solid-colour draw.
-        if (LifeState == EntityLifeState.Dying)
-        {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(DeathSolidSlot));
-            return;
-        }
-
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
-    }
-
-    /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>
-    public Texture2D CurrentAnimationFrame => _sprites.PlayerAnimationFrames[WalkAnimationFrameIndex];
-
-    /// <summary>Test-only positioning hook (InternalsVisibleTo the test assembly).</summary>
-    internal void TeleportTo(IntVector2 position) => _position = position;
-
-    /// <summary>Starts the death animation, ignoring <c>PlayerInvincibleForTesting</c> (test hook).</summary>
-    internal void StartDeathForTesting()
-    {
-        if (LifeState == EntityLifeState.Alive)
-        {
-            StartDeath();
-        }
-    }
 }

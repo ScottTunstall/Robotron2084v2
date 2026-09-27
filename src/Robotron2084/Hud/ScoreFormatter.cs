@@ -58,6 +58,14 @@ public static class ScoreFormatter
     }
 
     /// <summary>
+    /// The digits of the score with the ROM's leading-zero suppression applied,
+    /// in reading order ("100", and "00" for a score of 0). Kept for callers that
+    /// only need the digits, not the layout.
+    /// </summary>
+    public static int[] DrawnDigits(int score) =>
+        Digits(score).Where(d => !d.Suppressed).Select(d => d.Value).ToArray();
+
+    /// <summary>
     /// The glyphs to draw and their X positions, walking the ROM's cursor from
     /// <paramref name="originX"/>: a suppressed digit advances
     /// <paramref name="blankAdvancePixels"/>, a drawn one advances
@@ -83,14 +91,6 @@ public static class ScoreFormatter
 
         return glyphs;
     }
-
-    /// <summary>
-    /// The digits of the score with the ROM's leading-zero suppression applied,
-    /// in reading order ("100", and "00" for a score of 0). Kept for callers that
-    /// only need the digits, not the layout.
-    /// </summary>
-    public static int[] DrawnDigits(int score) =>
-        Digits(score).Where(d => !d.Suppressed).Select(d => d.Value).ToArray();
 
     /// <summary>Position 0 = ten-millions (always 0 — the ROM masks it off) ... 7 = units.</summary>
     private static int DigitAt(int score, int position)

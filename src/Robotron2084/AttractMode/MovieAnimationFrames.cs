@@ -27,11 +27,9 @@ namespace Robotron2084.AttractMode;
 /// </summary>
 public static class MovieAnimationFrames
 {
-    private static readonly int[] HulkAnimationFrameOrder = [0, 1, 2, 6, 7, 8, 3, 4, 5];
-
     private static readonly int[] EnforcerAnimationFrameOrder = [1, 2, 3, 4, 5, 0];
-
     private static readonly int[] GruntAnimationFrameOrder = [0, 1, 0];
+    private static readonly int[] HulkAnimationFrameOrder = [0, 1, 2, 6, 7, 8, 3, 4, 5];
 
     /// <summary>The texture a movie object draws, or null when there is none.</summary>
     public static Texture2D? Resolve(SpriteSet sprites, MovieAnimation animation, int animationFrameIndex)

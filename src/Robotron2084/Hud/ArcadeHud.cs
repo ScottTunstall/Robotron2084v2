@@ -18,6 +18,46 @@ namespace Robotron2084.Hud;
 public static class ArcadeHud
 {
     /// <summary>
+    /// The ROM's title string (128, TITLEM: "ROBOTRON 2084") and its tagline
+    /// (129, FAMMM: "SAVE THE LAST HUMAN FAMILY"), both in the LARGE font in
+    /// slot $AA. The caller places them; the title screen and the attract
+    /// movie's story band each use their own rows (notes §94.1, §96.3).
+    /// </summary>
+    public static void DrawCenteredLargeText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int y, int slot)
+    {
+        int width = 0;
+        foreach (char character in text)
+        {
+            if (character == ' ')
+            {
+                width += ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels);
+                continue;
+            }
+
+            int index = ArcadeText.GlyphIndex(character);
+            if (index < 0 || index >= sprites.FontLarge.Length)
+            {
+                continue;
+            }
+
+            width += ScreenSize.Scaled(sprites.FontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
+        }
+
+        sprites.Text.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
+    }
+
+    /// <summary>Draws one of the ROM's message strings at its own cursor column/row.</summary>
+    public static void DrawMessageText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int arcadeColumn, int arcadeRow, int slot)
+    {
+        sprites.Text.DrawSmallFontText(
+            spriteBatch,
+            text,
+            HudLayout.ArcadeX(arcadeColumn * 2),
+            HudLayout.ArcadeY(arcadeRow),
+            slot);
+    }
+
+    /// <summary>
     /// Scores + spare men for every player in the session. <paramref name="innerBounds"/>
     /// is the playfield's inner rectangle (the wall sits just outside it) so the HUD
     /// row lands eight arcade px above the top wall, exactly as in the ROM.
@@ -79,46 +119,6 @@ public static class ArcadeHud
         x = sprites.Text.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberSlot);
         x += ScreenSize.Scaled(HudLayout.HudWaveNumberGapPixels);
         sprites.Text.DrawSmallFontText(spriteBatch, " WAVE", x, y, HudLayout.HudWaveTextSlot);
-    }
-
-    /// <summary>Draws one of the ROM's message strings at its own cursor column/row.</summary>
-    public static void DrawMessageText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int arcadeColumn, int arcadeRow, int slot)
-    {
-        sprites.Text.DrawSmallFontText(
-            spriteBatch,
-            text,
-            HudLayout.ArcadeX(arcadeColumn * 2),
-            HudLayout.ArcadeY(arcadeRow),
-            slot);
-    }
-
-    /// <summary>
-    /// The ROM's title string (128, TITLEM: "ROBOTRON 2084") and its tagline
-    /// (129, FAMMM: "SAVE THE LAST HUMAN FAMILY"), both in the LARGE font in
-    /// slot $AA. The caller places them; the title screen and the attract
-    /// movie's story band each use their own rows (notes §94.1, §96.3).
-    /// </summary>
-    public static void DrawCenteredLargeText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int y, int slot)
-    {
-        int width = 0;
-        foreach (char character in text)
-        {
-            if (character == ' ')
-            {
-                width += ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels);
-                continue;
-            }
-
-            int index = ArcadeText.GlyphIndex(character);
-            if (index < 0 || index >= sprites.FontLarge.Length)
-            {
-                continue;
-            }
-
-            width += ScreenSize.Scaled(sprites.FontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
-        }
-
-        sprites.Text.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
     }
 
     /// <summary>

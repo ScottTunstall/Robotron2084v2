@@ -8,9 +8,9 @@ namespace Robotron2084.Core;
 /// the work area excludes the taskbar.</remarks>
 public static class DisplayInfo
 {
-    private const int SpiGetWorkArea = 48;
     private const int SmCxScreen = 0;
     private const int SmCyScreen = 1;
+    private const int SpiGetWorkArea = 48;
 
     /// <summary>The primary monitor's resolution in pixels.</summary>
     /// <remarks>Full screen sets the backbuffer to this, so the game runs at the desktop's own mode.</remarks>
@@ -31,6 +31,13 @@ public static class DisplayInfo
         }
     }
 
+    [DllImport("user32.dll")]
+    private static extern int GetSystemMetrics(int index);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SystemParametersInfo(int uiAction, int uiParam, out Rect pvParam, int fWinIni);
+
     [StructLayout(LayoutKind.Sequential)]
     private struct Rect
     {
@@ -42,11 +49,4 @@ public static class DisplayInfo
         public int Width => Right - Left;
         public int Height => Bottom - Top;
     }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SystemParametersInfo(int uiAction, int uiParam, out Rect pvParam, int fWinIni);
-
-    [DllImport("user32.dll")]
-    private static extern int GetSystemMetrics(int index);
 }

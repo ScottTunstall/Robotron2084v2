@@ -3,9 +3,6 @@ namespace Robotron2084.Tuning;
 /// <summary>The cruise missile's colours, trail and cap (RRB10 CMMOV).</summary>
 public static class CruiseMissileTuning
 {
-    /// <summary>ROM BCMCNT cap: a brain fires only while fewer than 8 missiles fly.</summary>
-    public const int Max = 8;
-
     // CMMOV never blits the CMPIC/CMP1 pictures; it writes VIDEO MEMORY
     // directly, one 16-bit word per step: `$AAAA` (two pixels of slot 10) at
     // the new coordinate and `$DDDD` (two of slot 13) at the coordinate it just
@@ -13,9 +10,9 @@ public static class CruiseMissileTuning
     // RRG23's BORDER loop, which draws its vertical border with `STA ,X+` (one
     // address per ROW) — so a 16-bit word is TWO VERTICALLY ADJACENT PIXELS:
     // the mark is 1px wide and 2px tall.
-    public const int HeadSlot = 0x0A;   // $AA
+    public const int HeadSlot = 0x0A;
 
-    public const int TrailSlot = 0x0D;  // $DD
+    public const int MarkArcadeHeight = 2;
 
     /// <summary>
     /// ROM CMMOV's mark: `LDD #$AAAA / LDY OX16,X / STD ,Y` — a 16-BIT write at
@@ -25,7 +22,10 @@ public static class CruiseMissileTuning
     /// </summary>
     public const int MarkArcadeWidth = 2;
 
-    public const int MarkArcadeHeight = 2;
+    /// <summary>ROM BCMCNT cap: a brain fires only while fewer than 8 missiles fly.</summary>
+    public const int Max = 8;
+
+    // $AA
 
     /// <summary>
     /// The trail's length in marks — and the thing that stops it being a snake.
@@ -37,4 +37,6 @@ public static class CruiseMissileTuning
     /// remaining nine, so the tail vanishes with the missile.
     /// </summary>
     public const int TrailMarks = 9;
+
+    public const int TrailSlot = 0x0D;  // $DD
 }

@@ -23,14 +23,75 @@ namespace Robotron2084.Hud;
 /// </remarks>
 public sealed class InitialsEntryModel
 {
-    /// <summary>The ROM's rub code (<c>SLASH</c>/<c>LASCAR</c>, <c>$5E</c>): the marker the player cycles to in order to delete a letter. It is not an ASCII character, so it is carried as the ROM's own byte.</summary>
-    public const char RubLetter = '\u005E';
-
     /// <summary>How many letters the entry asks for — the ROM's <c>LDD #$300</c>, and the width of a table entry.</summary>
     public const int LetterCount = HighScoreTable.InitialsLength;
 
+    /// <summary>The ROM's rub code (<c>SLASH</c>/<c>LASCAR</c>, <c>$5E</c>): the marker the player cycles to in order to delete a letter. It is not an ASCII character, so it is carried as the ROM's own byte.</summary>
+    public const char RubLetter = '\u005E';
+
     /// <summary>The blank a cell starts on — the ROM's own space code, stored as each cell becomes current.</summary>
     private const char Blank = ' ';
+
+    /// <summary>LUP/LDOWN's <c>DELAY1</c> loop — 8192 turns of a six-cycle loop, about 49 ms, i.e. two and a half ROM frames.</summary>
+    private const int CycleDelayClockUnits = ArcadeClock.UnitsPerRomFrame * 5 / 2;
+
+    /// <summary>A repeat after those ten costs <c>DELAY1</c> plus LUP's <c>NAP 1</c>.</summary>
+    private const int CyclePeriodClockUnits = CycleDelayClockUnits + ArcadeClock.UnitsPerRomFrame;
+
+    /// <summary>How often a held direction is looked at — LUP/LDOWN poll their own switch inside the delay loop.</summary>
+    private const int CyclePollClockUnits = ArcadeClock.UnitsPerRomFrame;
+
+    /// <summary>The at-rest move stick's down (<c>RORA / LBCS LDOWN</c>): cycles the letter back.</summary>
+    private const int DownDirection = 1;
+
+    /// <summary>LUP's <c>LDA #10</c>: ten <c>DELAY1</c> turns pass before the second cycle.</summary>
+    private const int FastRepeatCount = 10;
+
+    /// <summary>GETLZZ's <c>NAP 4</c>: the fire switch is looked at once every four frames until it is up.</summary>
+    private const int FireReleaseCheckClockUnits = 4 * ArcadeClock.UnitsPerRomFrame;
+
+    /// <summary>The first repeat's period: the ten <c>DELAY1</c> turns of the <c>DECA / BNE LUP1</c> loop.</summary>
+    private const int FirstCyclePeriodClockUnits = FastRepeatCount * CycleDelayClockUnits;
+
+    /// <summary>GETRET's typematic count for the first auto-repeat (<c>ANDA #$80 / ADDA #$20</c>).</summary>
+    private const int FirstTypematicCounts = 0x20;
+
+    /// <summary>GETLT5's count for every later one (<c>ADDA #4</c>).</summary>
+    private const int LaterTypematicCounts = 4;
+
+    /// <summary>TIMPRC's deadline for one letter: <c>NAP $FF</c> + <c>NAP $FF</c> + <c>NAP $82</c> = 640 ROM frames (12.8 s).</summary>
+    private const int LetterTimeoutClockUnits = (0xFF + 0xFF + 0x82) * ArcadeClock.UnitsPerRomFrame;
+
+    /// <summary>GETLT1's <c>NAP 2</c>: the main loop reads the switches every two frames.</summary>
+    private const int MainLoopClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
+
+    /// <summary>GETLT3's <c>NAP 2</c> between two typematic counts.</summary>
+    private const int TypematicStepClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
+
+    /// <summary>The at-rest move stick's up (GETLT2's <c>RORA / LBCS LUP</c>): cycles the letter forward.</summary>
+    private const int UpDirection = -1;
+
+    private readonly char[] _letters = new string(Blank, LetterCount).ToCharArray();
+
+    private int _clockUnits;
+
+    private int _cycleDirection;
+
+    private int _lettersLeft = LetterCount;
+
+    private int _periodClockUnits = FireReleaseCheckClockUnits;
+
+    private Phase _phase = Phase.AwaitingFireRelease;
+
+    private int _position;
+
+    private int _repeatClockUnits;
+
+    private bool _rubAllowed;
+
+    private int _timeoutClockUnits;
+
+    private int _typematicCounts;
 
     private enum Phase
     {
@@ -40,62 +101,11 @@ public sealed class InitialsEntryModel
         Typematic,
     }
 
-    /// <summary>GETLZZ's <c>NAP 4</c>: the fire switch is looked at once every four frames until it is up.</summary>
-    private const int FireReleaseCheckClockUnits = 4 * ArcadeClock.UnitsPerRomFrame;
-
-    /// <summary>GETLT1's <c>NAP 2</c>: the main loop reads the switches every two frames.</summary>
-    private const int MainLoopClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
-
-    /// <summary>GETLT3's <c>NAP 2</c> between two typematic counts.</summary>
-    private const int TypematicStepClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
-
-    /// <summary>How often a held direction is looked at — LUP/LDOWN poll their own switch inside the delay loop.</summary>
-    private const int CyclePollClockUnits = ArcadeClock.UnitsPerRomFrame;
-
-    /// <summary>LUP/LDOWN's <c>DELAY1</c> loop — 8192 turns of a six-cycle loop, about 49 ms, i.e. two and a half ROM frames.</summary>
-    private const int CycleDelayClockUnits = ArcadeClock.UnitsPerRomFrame * 5 / 2;
-
-    /// <summary>LUP's <c>LDA #10</c>: ten <c>DELAY1</c> turns pass before the second cycle.</summary>
-    private const int FastRepeatCount = 10;
-
-    /// <summary>A repeat after those ten costs <c>DELAY1</c> plus LUP's <c>NAP 1</c>.</summary>
-    private const int CyclePeriodClockUnits = CycleDelayClockUnits + ArcadeClock.UnitsPerRomFrame;
-
-    /// <summary>The first repeat's period: the ten <c>DELAY1</c> turns of the <c>DECA / BNE LUP1</c> loop.</summary>
-    private const int FirstCyclePeriodClockUnits = FastRepeatCount * CycleDelayClockUnits;
-
-    /// <summary>TIMPRC's deadline for one letter: <c>NAP $FF</c> + <c>NAP $FF</c> + <c>NAP $82</c> = 640 ROM frames (12.8 s).</summary>
-    private const int LetterTimeoutClockUnits = (0xFF + 0xFF + 0x82) * ArcadeClock.UnitsPerRomFrame;
-
-    /// <summary>GETRET's typematic count for the first auto-repeat (<c>ANDA #$80 / ADDA #$20</c>).</summary>
-    private const int FirstTypematicCounts = 0x20;
-
-    /// <summary>GETLT5's count for every later one (<c>ADDA #4</c>).</summary>
-    private const int LaterTypematicCounts = 4;
-
-    /// <summary>The at-rest move stick's up (GETLT2's <c>RORA / LBCS LUP</c>): cycles the letter forward.</summary>
-    private const int UpDirection = -1;
-
-    /// <summary>The at-rest move stick's down (<c>RORA / LBCS LDOWN</c>): cycles the letter back.</summary>
-    private const int DownDirection = 1;
-
-    private readonly char[] _letters = new string(Blank, LetterCount).ToCharArray();
-    private Phase _phase = Phase.AwaitingFireRelease;
-    private int _position;
-    private int _lettersLeft = LetterCount;
-    private int _clockUnits;
-    private int _periodClockUnits = FireReleaseCheckClockUnits;
-    private int _repeatClockUnits;
-    private int _timeoutClockUnits;
-    private int _typematicCounts;
-    private int _cycleDirection;
-    private bool _rubAllowed;
+    /// <summary>The letters entered so far — three characters, a space for every cell left blank.</summary>
+    public string Initials => new(_letters);
 
     /// <summary>True once every letter has been committed or timed out (the ROM's G2LET).</summary>
     public bool IsComplete { get; private set; }
-
-    /// <summary>The letters entered so far — three characters, a space for every cell left blank.</summary>
-    public string Initials => new(_letters);
 
     /// <summary>The cell the cursor is on (0-based); <see cref="LetterCount"/> once the entry is over.</summary>
     public int Position => _position;
@@ -126,6 +136,9 @@ public sealed class InitialsEntryModel
         return IsComplete;
     }
 
+    private static bool Held(PlayerInputState input, int direction) =>
+            direction == UpDirection ? input.MoveDirection.Y < 0 : input.MoveDirection.Y > 0;
+
     /// <summary>
     /// TIMPRC: every letter still to come gets its own 640-frame deadline, running whether or not the
     /// player is typing. The last one ends the entry, and a name must not end on the rub marker.
@@ -152,34 +165,15 @@ public sealed class InitialsEntryModel
         IsComplete = true;
     }
 
-    /// <summary>Runs the current phase once its own period has elapsed.</summary>
-    private void Step(PlayerInputState input)
+    /// <summary>LUP/LDOWN: the first cycle happens the moment the switch is seen, and the repeats follow the ROM's delays.</summary>
+    private void BeginCycling(int direction)
     {
-        _clockUnits += ArcadeClock.UnitsPerPortTick;
-        if (_clockUnits < _periodClockUnits)
-        {
-            return;
-        }
-
-        _clockUnits -= _periodClockUnits;
-        switch (_phase)
-        {
-            case Phase.AwaitingFireRelease:
-                CheckFireReleased(input);
-                break;
-
-            case Phase.AwaitingInput:
-                ReadSwitches(input);
-                break;
-
-            case Phase.Cycling:
-                RepeatCycle(input);
-                break;
-
-            default:
-                RepeatTypematic(input);
-                break;
-        }
+        _cycleDirection = direction;
+        Cycle(direction);
+        _repeatClockUnits = FirstCyclePeriodClockUnits;
+        _phase = Phase.Cycling;
+        _periodClockUnits = CyclePollClockUnits;
+        _clockUnits = 0;
     }
 
     /// <summary>GETLZZ: the screen comes up under a held fire, so the entry first waits for the release.</summary>
@@ -192,6 +186,61 @@ public sealed class InitialsEntryModel
 
         EnterMainLoop();
     }
+
+    /// <summary>G1LET: the preview is committed to its cell and the cursor moves on, or the rub marker deletes.</summary>
+    /// <param name="typematicCounts">The count the ROM's typematic waits before typing the next letter by itself.</param>
+    private void Commit(int typematicCounts)
+    {
+        if (PreviewIsRub)
+        {
+            RubOut();
+            return;
+        }
+
+        _rubAllowed = true;
+        _position++;
+        if (--_lettersLeft <= 0)
+        {
+            IsComplete = true;
+            return;
+        }
+
+        // G0SUB seeds the cell the cursor has just reached so a letter left alone is a valid blank.
+        SeedCell();
+        _typematicCounts = typematicCounts;
+        _phase = Phase.Typematic;
+        _periodClockUnits = TypematicStepClockUnits;
+        _clockUnits = 0;
+    }
+
+    /// <summary>The alpha-only ring (LUPP1/LDN1): space, A to Z, and the rub marker once a letter has been committed.</summary>
+    private void Cycle(int direction) =>
+        _letters[_position] = direction == UpDirection ? NextLetter(Preview) : PreviousLetter(Preview);
+
+    /// <summary>GETLT1: back to reading the switches every two frames.</summary>
+    private void EnterMainLoop()
+    {
+        _phase = Phase.AwaitingInput;
+        _periodClockUnits = MainLoopClockUnits;
+        _clockUnits = 0;
+    }
+
+    private char NextLetter(char current) => current switch
+    {
+        Blank => 'A',
+        'Z' when _rubAllowed => RubLetter,
+        'Z' => Blank,
+        RubLetter => Blank,
+        _ => (char)(current + 1),
+    };
+
+    private char PreviousLetter(char current) => current switch
+    {
+        Blank => _rubAllowed ? RubLetter : 'Z',
+        'A' => Blank,
+        RubLetter => 'Z',
+        _ => (char)(current - 1),
+    };
 
     /// <summary>GETLT2: up and down cycle the preview, fire commits it — the ROM reads the switches in that order.</summary>
     private void ReadSwitches(PlayerInputState input)
@@ -208,17 +257,6 @@ public sealed class InitialsEntryModel
         {
             Commit(FirstTypematicCounts);
         }
-    }
-
-    /// <summary>LUP/LDOWN: the first cycle happens the moment the switch is seen, and the repeats follow the ROM's delays.</summary>
-    private void BeginCycling(int direction)
-    {
-        _cycleDirection = direction;
-        Cycle(direction);
-        _repeatClockUnits = FirstCyclePeriodClockUnits;
-        _phase = Phase.Cycling;
-        _periodClockUnits = CyclePollClockUnits;
-        _clockUnits = 0;
     }
 
     /// <summary>
@@ -270,32 +308,6 @@ public sealed class InitialsEntryModel
         Commit(LaterTypematicCounts);
     }
 
-    /// <summary>G1LET: the preview is committed to its cell and the cursor moves on, or the rub marker deletes.</summary>
-    /// <param name="typematicCounts">The count the ROM's typematic waits before typing the next letter by itself.</param>
-    private void Commit(int typematicCounts)
-    {
-        if (PreviewIsRub)
-        {
-            RubOut();
-            return;
-        }
-
-        _rubAllowed = true;
-        _position++;
-        if (--_lettersLeft <= 0)
-        {
-            IsComplete = true;
-            return;
-        }
-
-        // G0SUB seeds the cell the cursor has just reached so a letter left alone is a valid blank.
-        SeedCell();
-        _typematicCounts = typematicCounts;
-        _phase = Phase.Typematic;
-        _periodClockUnits = TypematicStepClockUnits;
-        _clockUnits = 0;
-    }
-
     /// <summary>GETRUB: the rub marker clears its own cell, steps back one and asks for that letter again.</summary>
     private void RubOut()
     {
@@ -315,35 +327,33 @@ public sealed class InitialsEntryModel
     /// <summary>G0SUB: puts a blank in the cell the cursor is on, so it is always a valid letter position.</summary>
     private void SeedCell() => _letters[_position] = Blank;
 
-    /// <summary>GETLT1: back to reading the switches every two frames.</summary>
-    private void EnterMainLoop()
+    /// <summary>Runs the current phase once its own period has elapsed.</summary>
+    private void Step(PlayerInputState input)
     {
-        _phase = Phase.AwaitingInput;
-        _periodClockUnits = MainLoopClockUnits;
-        _clockUnits = 0;
+        _clockUnits += ArcadeClock.UnitsPerPortTick;
+        if (_clockUnits < _periodClockUnits)
+        {
+            return;
+        }
+
+        _clockUnits -= _periodClockUnits;
+        switch (_phase)
+        {
+            case Phase.AwaitingFireRelease:
+                CheckFireReleased(input);
+                break;
+
+            case Phase.AwaitingInput:
+                ReadSwitches(input);
+                break;
+
+            case Phase.Cycling:
+                RepeatCycle(input);
+                break;
+
+            default:
+                RepeatTypematic(input);
+                break;
+        }
     }
-
-    private static bool Held(PlayerInputState input, int direction) =>
-        direction == UpDirection ? input.MoveDirection.Y < 0 : input.MoveDirection.Y > 0;
-
-    /// <summary>The alpha-only ring (LUPP1/LDN1): space, A to Z, and the rub marker once a letter has been committed.</summary>
-    private void Cycle(int direction) =>
-        _letters[_position] = direction == UpDirection ? NextLetter(Preview) : PreviousLetter(Preview);
-
-    private char NextLetter(char current) => current switch
-    {
-        Blank => 'A',
-        'Z' when _rubAllowed => RubLetter,
-        'Z' => Blank,
-        RubLetter => Blank,
-        _ => (char)(current + 1),
-    };
-
-    private char PreviousLetter(char current) => current switch
-    {
-        Blank => _rubAllowed ? RubLetter : 'Z',
-        'A' => Blank,
-        RubLetter => 'Z',
-        _ => (char)(current - 1),
-    };
 }

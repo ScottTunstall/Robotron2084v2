@@ -31,16 +31,16 @@ public sealed class AttractState : IGameState, IAttractState
 {
     private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
 
-    private readonly SpriteSet _sprites;
-    private readonly HighScoreStore _highScores;
-    private readonly IPlayerInputSource _humanInput;
-    private readonly GameServices _services;
+    private readonly ButtonEdgeDetector _buttons = new();
     private readonly DemoPlayerInputSource _demoInput = new();
     private readonly LevelParameterGenerator _generator = new();
+    private readonly HighScoreStore _highScores;
+    private readonly IPlayerInputSource _humanInput;
     private readonly Random _random = new();
-    private GameSession _session;
+    private readonly GameServices _services;
+    private readonly SpriteSet _sprites;
     private PlayField _field;
-    private readonly ButtonEdgeDetector _buttons = new();
+    private GameSession _session;
 
     public AttractState(GameServices services)
     {
@@ -52,12 +52,11 @@ public sealed class AttractState : IGameState, IAttractState
         _field = BuildField();
     }
 
-    private PlayField BuildField()
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        PlayerSlot slot = _session.Current;
-        LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
-        WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, _demoInput, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
+        _field.Draw(spriteBatch);
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds, showSpareMen: false);
+        ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -111,12 +110,13 @@ public sealed class AttractState : IGameState, IAttractState
         }
     }
 
-    private void SyncSlotFromField() => _field.SyncInto(_session.Current);
-
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+    private PlayField BuildField()
     {
-        _field.Draw(spriteBatch);
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds, showSpareMen: false);
-        ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
+        PlayerSlot slot = _session.Current;
+        LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
+        WallColorCycle cycle = new();
+        return new PlayField(_sprites, parameters, _demoInput, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
     }
+
+    private void SyncSlotFromField() => _field.SyncInto(_session.Current);
 }

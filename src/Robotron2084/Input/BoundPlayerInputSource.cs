@@ -3,11 +3,11 @@ namespace Robotron2084.Input;
 /// <summary>Reads one player's input.</summary>
 public sealed class BoundPlayerInputSource : IPlayerInputSource
 {
-    /// <summary>The controls to read.</summary>
-    private readonly ControlSettings _settings;
-
     /// <summary>0 for player 1, 1 for player 2.</summary>
     private readonly int _playerIndex;
+
+    /// <summary>The controls to read.</summary>
+    private readonly ControlSettings _settings;
 
     /// <summary>Creates a source that reads one player's input.</summary>
     /// <param name="settings">The controls to read.</param>

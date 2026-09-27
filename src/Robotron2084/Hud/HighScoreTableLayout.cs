@@ -19,36 +19,33 @@ namespace Robotron2084.Hud;
 /// </summary>
 public static class HighScoreTableLayout
 {
-    // Above this many entries the ROM's extra "5 ENTRIES MAXIMUM" rule applies
-    // (notes §98.4); the display itself only ever shows the first N.
-    public const int TodayColumn = 26;
-
-    public const int TodayRow = 53;
-    public const int TodayPerColumn = 5;
-    public const int TodayColumns = 2;
-    public const int TodayRowStep = 9;
-    public const int TodayColumnStep = 52;
-    public const int TodayScoreOffsetColumns = 11;
-
     public const int AllTimeColumn = 20;
-    public const int AllTimeRow = 136;
-    public const int AllTimePerColumn = 12;
-    public const int AllTimeColumns = 3;
-    public const int AllTimeRowStep = 7;
-    public const int AllTimeColumnStep = 40;
-    public const int AllTimeScoreOffsetColumns = 12;
 
-    public const int HeaderColumn = 53;
-    public const int TodayHeaderRow = 37;
+    public const int AllTimeColumns = 3;
+
+    public const int AllTimeColumnStep = 40;
+
     public const int AllTimeHeaderRow = 110;
 
-    public const int TopColumn = 21;
-    public const int TopRow = 122;
+    public const int AllTimePerColumn = 12;
 
-    /// <summary>Rows the screen has room for (the ROM prints exactly these many).</summary>
-    public const int TodayRows = TodayPerColumn * TodayColumns;
+    public const int AllTimeRow = 136;
 
     public const int AllTimeRows = AllTimePerColumn * AllTimeColumns;
+
+    public const int AllTimeRowStep = 7;
+
+    public const int AllTimeScoreOffsetColumns = 12;
+
+    public const int FrameEraseLastStroke = 48;
+
+    public const int FrameEraseStrokeCount = FrameEraseLastStroke + 1;
+
+    public const int FrameFirstStroke = 0;
+
+    public const int FrameHalfWidthColumns = 27;
+
+    public const int FrameLastStroke = 56;
 
     // ---- the frame (`FRAMER` → `MARQ`, notes §98.5) -------------------------------
     // FRAMER hands MARQ two inclusive corners and walks them apart, two strokes a ROM
@@ -61,13 +58,48 @@ public static class HighScoreTableLayout
     public const int FrameStartColumn = 62;
 
     public const int FrameStartRow = 125;
-    public const int FrameHalfWidthColumns = 27;
-    public const int FrameStrokesPerRomFrame = 2;
-    public const int FrameFirstStroke = 0;
-    public const int FrameLastStroke = 56;       // (col 6, row 13)
-    public const int FrameEraseLastStroke = 48;  // (col 14, row 29)
+
+    // (col 6, row 13)
+    // (col 14, row 29)
     public const int FrameStrokeCount = FrameLastStroke + 1;
-    public const int FrameEraseStrokeCount = FrameEraseLastStroke + 1;
+
+    public const int FrameStrokesPerRomFrame = 2;
+
+    public const int HeaderColumn = 53;
+
+    // Above this many entries the ROM's extra "5 ENTRIES MAXIMUM" rule applies
+    // (notes §98.4); the display itself only ever shows the first N.
+    public const int TodayColumn = 26;
+
+    public const int TodayColumns = 2;
+    public const int TodayColumnStep = 52;
+    public const int TodayHeaderRow = 37;
+    public const int TodayPerColumn = 5;
+    public const int TodayRow = 53;
+
+    /// <summary>Rows the screen has room for (the ROM prints exactly these many).</summary>
+    public const int TodayRows = TodayPerColumn * TodayColumns;
+
+    public const int TodayRowStep = 9;
+    public const int TodayScoreOffsetColumns = 11;
+    public const int TopColumn = 21;
+    public const int TopRow = 122;
+
+    /// <summary>The (column, row) of the ROM's cursor for all-time rank <paramref name="index"/> (1-based; rank 1 is the top entry).</summary>
+    public static (int Column, int Row) AllTimePosition(int index)
+    {
+        int zero = index - 2; // the list starts at rank 2 (rank 1 is the top entry)
+        return (
+            AllTimeColumn + (zero / AllTimePerColumn * AllTimeColumnStep),
+            AllTimeRow + (zero % AllTimePerColumn * AllTimeRowStep));
+    }
+
+    /// <summary>
+    /// MARQ's hatch: of every pair of pixels its two horizontal passes and its two
+    /// vertical passes light exactly ONE — the outer pixel taking the flavour's high
+    /// nibble, the inner one the low.
+    /// </summary>
+    public static bool FramePixelIsLit(int arcadeX, int arcadeY) => ((arcadeX + arcadeY) & 1) != 0;
 
     /// <summary>
     /// Stroke <paramref name="stroke"/>'s rectangle in ARCADE PIXELS, inclusive: MARQ's
@@ -80,13 +112,6 @@ public static class HighScoreTableLayout
         2 * (FrameStartColumn + FrameHalfWidthColumns + stroke) + 1,
         FrameStartRow + 2 + (2 * stroke)
     );
-
-    /// <summary>
-    /// MARQ's hatch: of every pair of pixels its two horizontal passes and its two
-    /// vertical passes light exactly ONE — the outer pixel taking the flavour's high
-    /// nibble, the inner one the low.
-    /// </summary>
-    public static bool FramePixelIsLit(int arcadeX, int arcadeY) => ((arcadeX + arcadeY) & 1) != 0;
 
     /// <summary>
     /// The palette slot stroke <paramref name="stroke"/> is drawn in. MARQ's flavour is a
@@ -108,14 +133,5 @@ public static class HighScoreTableLayout
         return (
             TodayColumn + (zero / TodayPerColumn * TodayColumnStep),
             TodayRow + (zero % TodayPerColumn * TodayRowStep));
-    }
-
-    /// <summary>The (column, row) of the ROM's cursor for all-time rank <paramref name="index"/> (1-based; rank 1 is the top entry).</summary>
-    public static (int Column, int Row) AllTimePosition(int index)
-    {
-        int zero = index - 2; // the list starts at rank 2 (rank 1 is the top entry)
-        return (
-            AllTimeColumn + (zero / AllTimePerColumn * AllTimeColumnStep),
-            AllTimeRow + (zero % AllTimePerColumn * AllTimeRowStep));
     }
 }

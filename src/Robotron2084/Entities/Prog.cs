@@ -23,44 +23,16 @@ namespace Robotron2084.Entities;
 /// frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Prog : IExplodable, IRemovable
 {
-    private readonly SpriteSet _sprites;
+    /// <summary>Sides of the coin flip that picks whether a re-aim considers X or Y.</summary>
+    private const int AxisFlipSides = 2;
 
     /// <summary>How many ROM frames pass between beats.</summary>
     /// <remarks>The ROM re-runs the prog's step logic every 3 frames.</remarks>
     private const int BeatPeriodRomFrames = 3;
 
-    /// <summary>The beat in timer units (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomFrames);
-
-    /// <summary>The horizontal step: 2 columns = 4 arcade px, the same distance as the vertical step.</summary>
-    /// <remarks>ROM: the X step table moves 2 columns at a time, and a column is 2 arcade px.</remarks>
-    private const int StepXColumns = 2;
-
-    /// <summary>The vertical step: ±4 rows on Y.</summary>
-    /// <remarks>ROM: the Y step table.</remarks>
-    private const int StepYRows = 4;
-
     /// <summary>Half of the X aim-offset's range: (a roll of 1..15 minus this) times 4 columns.</summary>
     /// <remarks>ROM: <c>GPOFF</c> gives ±28 columns of offset in steps of 4.</remarks>
     private const int OffsetXHalfRange = 8;
-
-    /// <summary>The Y aim-offset's span: a roll of 1..18 gives -16..+18 rows in steps of 2.</summary>
-    /// <remarks>ROM: <c>GPOFF</c> computes this from a random 1..18 roll.</remarks>
-    private const int OffsetYSteps = 18;
-
-    /// <summary>The aim-wrap margin past the field's far edge, in columns (X) and rows (Y).</summary>
-    /// <remarks>ROM: <c>GPDIR</c> wraps an aim past this margin to the opposite edge.</remarks>
-    private const int WrapMarginXColumns = 0x30;
-
-    private const int WrapMarginYRows = 18;
-
-    /// <summary>Roll thresholds out of 256: above the first the offsets re-roll, above the second it re-aims.</summary>
-    private const int ReOffsetThreshold256 = 0xF8;
-
-    private const int ReDirectionThreshold256 = 0xE4;
-
-    /// <summary>Sides of the ROM rolls the re-offset and re-aim thresholds are compared against.</summary>
-    private const int ThresholdRollSides = 256;
 
     /// <summary>ROM <c>GPOFF</c>: the X offset roll is 1..this...</summary>
     private const int OffsetXRollMax = 15;
@@ -74,28 +46,57 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>ROM <c>GPOFF</c>: each step of the Y offset is this many rows.</summary>
     private const int OffsetYStepRows = 2;
 
-    /// <summary>Sides of the coin flip that picks whether a re-aim considers X or Y.</summary>
-    private const int AxisFlipSides = 2;
+    /// <summary>The Y aim-offset's span: a roll of 1..18 gives -16..+18 rows in steps of 2.</summary>
+    /// <remarks>ROM: <c>GPOFF</c> computes this from a random 1..18 roll.</remarks>
+    private const int OffsetYSteps = 18;
+
+    private const int ReDirectionThreshold256 = 0xE4;
+
+    /// <summary>Roll thresholds out of 256: above the first the offsets re-roll, above the second it re-aims.</summary>
+    private const int ReOffsetThreshold256 = 0xF8;
+
+    /// <summary>The horizontal step: 2 columns = 4 arcade px, the same distance as the vertical step.</summary>
+    /// <remarks>ROM: the X step table moves 2 columns at a time, and a column is 2 arcade px.</remarks>
+    private const int StepXColumns = 2;
+
+    /// <summary>The vertical step: ±4 rows on Y.</summary>
+    /// <remarks>ROM: the Y step table.</remarks>
+    private const int StepYRows = 4;
+
+    /// <summary>Sides of the ROM rolls the re-offset and re-aim thresholds are compared against.</summary>
+    private const int ThresholdRollSides = 256;
+
+    /// <summary>The aim-wrap margin past the field's far edge, in columns (X) and rows (Y).</summary>
+    /// <remarks>ROM: <c>GPDIR</c> wraps an aim past this margin to the opposite edge.</remarks>
+    private const int WrapMarginXColumns = 0x30;
+
+    private const int WrapMarginYRows = 18;
 
     // The walk cycle: picture 1, 2, 1, 3 — the same A-B-A-C pattern the humans use.
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
-    private readonly Random _random;
-    private readonly HumanKind _kind;
     private readonly (int Width, int Height) _collisionSize;
-    private IntVector2 _position;
-    private Direction8 _direction = Direction8.Down; // set on the first beat
-    private int _beatTimer; // counts up toward the next beat
-    private int _walkCycleStep; // which entry of WalkCycle comes next (0-3)
-    private int _offsetX;   // this prog's persistent aim-offset on X, re-rolled occasionally
-    private int _offsetY;   // this prog's persistent aim-offset on Y
-
-    /// <summary>One shadow-ring entry: a position the prog vacated and the pose it was drawn in.</summary>
-    /// <remarks>A ghost is blitted once and never re-blitted, so it keeps its creation pose for life.</remarks>
-    private readonly record struct Ghost(IntVector2 Position, int AnimationFrameIndex);
 
     /// <summary>The shadow ring, NEWEST FIRST (see <see cref="Ghost"/>).</summary>
     private readonly List<Ghost> _ghosts = new();
+
+    private readonly HumanKind _kind;
+    private readonly Random _random;
+    private readonly SpriteSet _sprites;
+    private int _beatTimer;
+
+    private Direction8 _direction = Direction8.Down;
+
+    private int _offsetX;
+
+    // this prog's persistent aim-offset on X, re-rolled occasionally
+    private int _offsetY;
+
+    private IntVector2 _position;
+
+    // set on the first beat
+    // counts up toward the next beat
+    private int _walkCycleStep;
 
     /// <summary>Makes a prog where the human was, carrying that human's animation frames and box.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -114,28 +115,8 @@ public sealed class Prog : IExplodable, IRemovable
         RollOffsets(); // ROM PROGST calls GPOFF at creation
     }
 
-    /// <summary>Which human's animation frames and box this prog carries (it became that human).</summary>
-    public HumanKind Kind => _kind;
-
-    /// <summary>Top-left of the prog (the ROM's OBJX/OBJY).</summary>
-    public IntVector2 Position => _position;
-
     /// <summary>The converted human's own box at <see cref="Position"/> (a prog keeps its victim's size).</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
-
-    /// <summary>Alive until shot; never Dying (it dies by exploding, see <see cref="Kill"/>).</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
-
-    /// <summary>Kills the prog outright; the strip explosion is the whole visual.</summary>
-    /// <remarks>ROM: <c>PRGKIL</c> — the object is gone immediately, leaving only the strip explosion
-    /// of the picture it swapped in.</remarks>
-    public void Kill()
-    {
-        if (LifeState == EntityLifeState.Alive)
-        {
-            LifeState = EntityLifeState.Dead;
-        }
-    }
 
     /// <summary>The picture the death explosion shatters: the phony burst card, not the human's animation frames.</summary>
     /// <returns>The phony burst card.</returns>
@@ -151,6 +132,115 @@ public sealed class Prog : IExplodable, IRemovable
         _position.Y,
         ScreenSize.Scaled(CollisionSizes.ProgBurstSize.Width),
         ScreenSize.Scaled(CollisionSizes.ProgBurstSize.Height));
+
+    /// <summary>Which human's animation frames and box this prog carries (it became that human).</summary>
+    public HumanKind Kind => _kind;
+
+    /// <summary>Alive until shot; never Dying (it dies by exploding, see <see cref="Kill"/>).</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Top-left of the prog (the ROM's OBJX/OBJY).</summary>
+    public IntVector2 Position => _position;
+
+    /// <summary>Test hook: the pose each ghost was frozen in, newest first.</summary>
+    internal IReadOnlyList<int> GhostFrames
+    {
+        get
+        {
+            var frames = new List<int>(_ghosts.Count);
+            foreach (Ghost ghost in _ghosts)
+            {
+                frames.Add(ghost.AnimationFrameIndex);
+            }
+
+            return frames;
+        }
+    }
+
+    /// <summary>Test hook: the ghost trail's positions, newest first.</summary>
+    internal IReadOnlyList<IntVector2> GhostTrail
+    {
+        get
+        {
+            var positions = new List<IntVector2>(_ghosts.Count);
+            foreach (Ghost ghost in _ghosts)
+            {
+                positions.Add(ghost.Position);
+            }
+
+            return positions;
+        }
+    }
+
+    /// <summary>The current walk picture: the facing direction's set, following <see cref="WalkCycle"/>.</summary>
+    internal int WalkAnimationFrameIndex
+    {
+        get
+        {
+            WalkFacing facing = _direction switch
+            {
+                Direction8.Left => WalkFacing.Left,
+                Direction8.Right => WalkFacing.Right,
+                Direction8.Down => WalkFacing.Down,
+                _ => WalkFacing.Up,
+            };
+            return (int)facing * 3 + WalkCycle[_walkCycleStep];
+        }
+    }
+
+    /// <summary>The beat in timer units (a tick adds 5; an arcade frame is 6 units).</summary>
+    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomFrames);
+
+    // which entry of WalkCycle comes next (0-3)
+    // this prog's persistent aim-offset on Y
+
+    /// <summary>One shadow-ring entry: a position the prog vacated and the pose it was drawn in.</summary>
+    /// <remarks>A ghost is blitted once and never re-blitted, so it keeps its creation pose for life.</remarks>
+    private readonly record struct Ghost(IntVector2 Position, int AnimationFrameIndex);
+
+    /// <summary>Draws the ghost trail (oldest first) and then the prog, all as two-colour remap pairs.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        Texture2D[] frames = _kind.AnimationFramesIn(_sprites);
+        Texture2D picture = frames[WalkAnimationFrameIndex];
+
+        // Oldest ghost first so newer ones paint over it; each is drawn once, in the pose it
+        // had when dropped, so the trail is frozen snapshots rather than an animation.
+        for (int i = _ghosts.Count - 1; i >= 0; i--)
+        {
+            Ghost ghost = _ghosts[i];
+            _sprites.Blitter.DrawSpriteSolidWithBackground(
+                spriteBatch,
+                frames[ghost.AnimationFrameIndex],
+                BoundsAt(ghost.Position),
+                _sprites.Blitter.SlotColor(ProgTuning.GhostBackgroundSlot),
+                _sprites.Blitter.SlotColor(ProgTuning.GhostShapeSlot));
+        }
+
+        _sprites.Blitter.DrawSpriteSolidWithBackground(
+            spriteBatch,
+            picture,
+            Bounds,
+            _sprites.Blitter.SlotColor(ProgTuning.BackgroundSlot),
+            _sprites.Blitter.SlotColor(ProgTuning.ShapeSlot));
+    }
+
+    /// <summary>Kills the prog outright; the strip explosion is the whole visual.</summary>
+    /// <remarks>ROM: <c>PRGKIL</c> — the object is gone immediately, leaving only the strip explosion
+    /// of the picture it swapped in.</remarks>
+    public void Kill()
+    {
+        if (LifeState == EntityLifeState.Alive)
+        {
+            LifeState = EntityLifeState.Dead;
+        }
+    }
 
     /// <summary>Runs one beat: animate, maybe re-roll, drop a ghost, then step.</summary>
     /// <param name="gameTime">Unused — the beat timer is counted in ticks.</param>
@@ -230,13 +320,9 @@ public sealed class Prog : IExplodable, IRemovable
         && box.Right <= bounds.Right
         && box.Bottom <= bounds.Bottom;
 
-    /// <summary>Rolls the persistent aim offsets: X in columns (-28..+28), Y in rows (-16..+18).</summary>
-    /// <remarks>ROM: <c>GPOFF</c> — the offsets are the prog's standing error against the player.</remarks>
-    private void RollOffsets()
-    {
-        _offsetX = (_random.Next(1, OffsetXRollMax + 1) - OffsetXHalfRange) * OffsetXStepColumns;
-        _offsetY = ((OffsetYCentre - _random.Next(1, OffsetYSteps + 1)) * OffsetYStepRows) - OffsetYSteps;
-    }
+    /// <summary>This prog's box placed at an arbitrary position (used for the frozen ghosts).</summary>
+    private Rectangle BoundsAt(IntVector2 position) =>
+        new(position.X, position.Y, _collisionSize.Width, _collisionSize.Height);
 
     /// <summary>Picks the next cardinal direction: half the re-aims consider X, half Y, so never diagonal.</summary>
     /// <param name="field">The playfield: the player and the bounds to aim and wrap against.</param>
@@ -268,86 +354,11 @@ public sealed class Prog : IExplodable, IRemovable
         return aimY <= _position.Y ? Direction8.Up : Direction8.Down;
     }
 
-    /// <summary>The current walk picture: the facing direction's set, following <see cref="WalkCycle"/>.</summary>
-    internal int WalkAnimationFrameIndex
+    /// <summary>Rolls the persistent aim offsets: X in columns (-28..+28), Y in rows (-16..+18).</summary>
+    /// <remarks>ROM: <c>GPOFF</c> — the offsets are the prog's standing error against the player.</remarks>
+    private void RollOffsets()
     {
-        get
-        {
-            WalkFacing facing = _direction switch
-            {
-                Direction8.Left => WalkFacing.Left,
-                Direction8.Right => WalkFacing.Right,
-                Direction8.Down => WalkFacing.Down,
-                _ => WalkFacing.Up,
-            };
-            return (int)facing * 3 + WalkCycle[_walkCycleStep];
-        }
-    }
-
-    /// <summary>Draws the ghost trail (oldest first) and then the prog, all as two-colour remap pairs.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (LifeState != EntityLifeState.Alive)
-        {
-            return;
-        }
-
-        Texture2D[] frames = _kind.AnimationFramesIn(_sprites);
-        Texture2D picture = frames[WalkAnimationFrameIndex];
-
-        // Oldest ghost first so newer ones paint over it; each is drawn once, in the pose it
-        // had when dropped, so the trail is frozen snapshots rather than an animation.
-        for (int i = _ghosts.Count - 1; i >= 0; i--)
-        {
-            Ghost ghost = _ghosts[i];
-            _sprites.Blitter.DrawSpriteSolidWithBackground(
-                spriteBatch,
-                frames[ghost.AnimationFrameIndex],
-                BoundsAt(ghost.Position),
-                _sprites.Blitter.SlotColor(ProgTuning.GhostBackgroundSlot),
-                _sprites.Blitter.SlotColor(ProgTuning.GhostShapeSlot));
-        }
-
-        _sprites.Blitter.DrawSpriteSolidWithBackground(
-            spriteBatch,
-            picture,
-            Bounds,
-            _sprites.Blitter.SlotColor(ProgTuning.BackgroundSlot),
-            _sprites.Blitter.SlotColor(ProgTuning.ShapeSlot));
-    }
-
-    /// <summary>This prog's box placed at an arbitrary position (used for the frozen ghosts).</summary>
-    private Rectangle BoundsAt(IntVector2 position) =>
-        new(position.X, position.Y, _collisionSize.Width, _collisionSize.Height);
-
-    /// <summary>Test hook: the ghost trail's positions, newest first.</summary>
-    internal IReadOnlyList<IntVector2> GhostTrail
-    {
-        get
-        {
-            var positions = new List<IntVector2>(_ghosts.Count);
-            foreach (Ghost ghost in _ghosts)
-            {
-                positions.Add(ghost.Position);
-            }
-
-            return positions;
-        }
-    }
-
-    /// <summary>Test hook: the pose each ghost was frozen in, newest first.</summary>
-    internal IReadOnlyList<int> GhostFrames
-    {
-        get
-        {
-            var frames = new List<int>(_ghosts.Count);
-            foreach (Ghost ghost in _ghosts)
-            {
-                frames.Add(ghost.AnimationFrameIndex);
-            }
-
-            return frames;
-        }
+        _offsetX = (_random.Next(1, OffsetXRollMax + 1) - OffsetXHalfRange) * OffsetXStepColumns;
+        _offsetY = ((OffsetYCentre - _random.Next(1, OffsetYSteps + 1)) * OffsetYStepRows) - OffsetYSteps;
     }
 }

@@ -14,16 +14,8 @@ public sealed class ControlSettings
     /// <summary>How many players the page shows columns for (the arcade's PLRCNT maximum).</summary>
     public const int PlayerCount = 2;
 
-    private readonly PlayerControls[] _players = [new(), new()];
-
-    /// <summary>Both players' controls, player 1 first.</summary>
-    public PlayerControls this[int playerIndex] => _players[playerIndex];
-
-    /// <summary>
-    /// The global PAUSE binding, default <c>P</c>. ONE binding, not a key/pad pair: whichever
-    /// device the page captured it on is the one it lives on (notes §101).
-    /// </summary>
-    public InputBinding Pause { get; set; } = InputBinding.Key(Keys.P);
+    /// <inheritdoc cref="FireAliasKey"/>
+    private const Buttons FireAliasButton = Buttons.A;
 
     /// <summary>
     /// The port's fire alias: SPACE and the pad's A button, on top of the bound SHOOT directions.
@@ -32,14 +24,14 @@ public sealed class ControlSettings
     /// </summary>
     private const Keys FireAliasKey = Keys.Space;
 
-    /// <inheritdoc cref="FireAliasKey"/>
-    private const Buttons FireAliasButton = Buttons.A;
-
     /// <summary>How far the pad's trigger must be pulled to count as fire (a trigger is an axis).</summary>
     private const float FireTriggerThreshold = 0.5f;
 
     /// <summary>The port's skip-level test key. Fixed, like the other port-only keys in this block.</summary>
     private const Keys SkipLevelKey = Keys.Insert;
+
+    /// <inheritdoc cref="StartOneKey"/>
+    private const Buttons StartOneButton = Buttons.Start;
 
     /// <summary>
     /// The keyboard keys that start player 1's game. Fixed, not rebindable: the arcade's START 1 /
@@ -50,8 +42,8 @@ public sealed class ControlSettings
     /// <inheritdoc cref="StartOneKey"/>
     private const Keys StartOneNumPadKey = Keys.NumPad1;
 
-    /// <inheritdoc cref="StartOneKey"/>
-    private const Buttons StartOneButton = Buttons.Start;
+    /// <inheritdoc cref="StartTwoKey"/>
+    private const Buttons StartTwoButton = Buttons.Back;
 
     /// <summary>The keyboard keys that start a two-player game. Fixed, like <see cref="StartOneKey"/>.</summary>
     private const Keys StartTwoKey = Keys.D2;
@@ -59,8 +51,16 @@ public sealed class ControlSettings
     /// <inheritdoc cref="StartTwoKey"/>
     private const Keys StartTwoNumPadKey = Keys.NumPad2;
 
-    /// <inheritdoc cref="StartTwoKey"/>
-    private const Buttons StartTwoButton = Buttons.Back;
+    private readonly PlayerControls[] _players = [new(), new()];
+
+    /// <summary>
+    /// The global PAUSE binding, default <c>P</c>. ONE binding, not a key/pad pair: whichever
+    /// device the page captured it on is the one it lives on (notes §101).
+    /// </summary>
+    public InputBinding Pause { get; set; } = InputBinding.Key(Keys.P);
+
+    /// <summary>Both players' controls, player 1 first.</summary>
+    public PlayerControls this[int playerIndex] => _players[playerIndex];
 
     /// <summary>The port's factory settings: see <see cref="PlayerControls.Defaults"/>.</summary>
     public static ControlSettings Defaults()
@@ -68,17 +68,6 @@ public sealed class ControlSettings
         var settings = new ControlSettings();
         settings.ResetToDefaults();
         return settings;
-    }
-
-    /// <summary>The page's <c>R</c>: every line back to the factory scheme.</summary>
-    public void ResetToDefaults()
-    {
-        for (int player = 0; player < PlayerCount; player++)
-        {
-            _players[player] = PlayerControls.Defaults(player);
-        }
-
-        Pause = InputBinding.Key(Keys.P);
     }
 
     /// <summary>True while the pause binding is held.</summary>
@@ -111,5 +100,16 @@ public sealed class ControlSettings
             keys.IsKeyDown(SkipLevelKey),
             keys.IsKeyDown(StartOneKey) || keys.IsKeyDown(StartOneNumPadKey) || padOne.IsButtonDown(StartOneButton),
             keys.IsKeyDown(StartTwoKey) || keys.IsKeyDown(StartTwoNumPadKey) || padOne.IsButtonDown(StartTwoButton));
+    }
+
+    /// <summary>The page's <c>R</c>: every line back to the factory scheme.</summary>
+    public void ResetToDefaults()
+    {
+        for (int player = 0; player < PlayerCount; player++)
+        {
+            _players[player] = PlayerControls.Defaults(player);
+        }
+
+        Pause = InputBinding.Key(Keys.P);
     }
 }

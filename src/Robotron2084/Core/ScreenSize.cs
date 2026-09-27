@@ -24,18 +24,21 @@ namespace Robotron2084.Core;
 /// </summary>
 public static class ScreenSize
 {
+    /// <summary>Arcade (ROM) pixels in one ROM column: the video buffer is addressed as
+    /// <c>column * 256 + row</c> at 4bpp, so a column is two arcade pixels (notes §113).</summary>
+    public const int ArcadePixelsPerColumn = 2;
+
+    /// <summary>Internal render height (SpecHeight × SpecScale — 400 at 2x).</summary>
+    public const int Height = SpecHeight * SpecScale;
+
+    /// <summary>Spec.txt playfield height in original pixels.</summary>
+    public const int SpecHeight = 200;
+
     /// <summary>Internal pixels per spec pixel (render scale of the spec's 320x200 space).</summary>
     public const int SpecScale = 2;
 
     /// <summary>Spec.txt playfield width in original pixels.</summary>
     public const int SpecWidth = 320;
-
-    /// <summary>Spec.txt playfield height in original pixels.</summary>
-    public const int SpecHeight = 200;
-
-    /// <summary>Arcade (ROM) pixels in one ROM column: the video buffer is addressed as
-    /// <c>column * 256 + row</c> at 4bpp, so a column is two arcade pixels (notes §113).</summary>
-    public const int ArcadePixelsPerColumn = 2;
 
     /// <summary>Bits of a 16-bit ROM coordinate below the whole pixel (the low byte).</summary>
     public const int SubpixelBits = 8;
@@ -45,12 +48,6 @@ public static class ScreenSize
 
     /// <summary>Internal render width (SpecWidth × SpecScale — 640 at 2x).</summary>
     public const int Width = SpecWidth * SpecScale;
-
-    /// <summary>Internal render height (SpecHeight × SpecScale — 400 at 2x).</summary>
-    public const int Height = SpecHeight * SpecScale;
-
-    /// <summary>Converts a spec.txt pixel value to internal pixels.</summary>
-    public static int Scaled(int specPixels) => specPixels * SpecScale;
 
     /// <summary>Arcade (ROM) pixels to port pixels on the playfield: one arcade pixel is one spec pixel.</summary>
     public static int ArcadePixels(int arcadePixels) => Scaled(arcadePixels);
@@ -72,4 +69,7 @@ public static class ScreenSize
         int scale = Math.Min(availableWidth / Width, availableHeight / Height);
         return Math.Max(1, scale);
     }
+
+    /// <summary>Converts a spec.txt pixel value to internal pixels.</summary>
+    public static int Scaled(int specPixels) => specPixels * SpecScale;
 }

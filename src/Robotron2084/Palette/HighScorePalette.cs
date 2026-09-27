@@ -32,8 +32,12 @@ namespace Robotron2084.Palette;
 /// </summary>
 public sealed class HighScorePalette
 {
-    /// <summary>The slot <c>LOOPP</c> shifts through — its value is the wall's own slot.</summary>
-    private const int LoopSlot = 0;
+    /// <summary>`CCTAB` (RRTABLE `$E2D1`): the highlight ramp — white, down to `$C0` and back.</summary>
+    public static readonly byte[] AccentTable =
+    [
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xE4,
+        0xD2, 0xC0, 0xC0, 0xC0, 0xD2, 0xE4, 0x00,
+    ];
 
     /// <summary>`COLTAB` (RRTABLE `$E2FE`): the wall's colour walk, 21 steps then round again.</summary>
     public static readonly byte[] CycleTable =
@@ -43,6 +47,9 @@ public sealed class HighScorePalette
         0xC0, 0xD0, 0x98, 0x38, 0x33,
     ];
 
+    /// <summary>The slots the page takes over from the in-game colour animator.</summary>
+    public static readonly int[] OwnedSlots = [10, 12, 13];
+
     /// <summary>`CATAB` (RRTABLE `$E2C2`): the two list ramps — dark red, to white, and back.</summary>
     public static readonly byte[] RampTable =
     [
@@ -50,15 +57,8 @@ public sealed class HighScorePalette
         0x57, 0xA7, 0xFF, 0xFF, 0xA7, 0x57, 0x00,
     ];
 
-    /// <summary>`CCTAB` (RRTABLE `$E2D1`): the highlight ramp — white, down to `$C0` and back.</summary>
-    public static readonly byte[] AccentTable =
-    [
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xE4,
-        0xD2, 0xC0, 0xC0, 0xC0, 0xD2, 0xE4, 0x00,
-    ];
-
-    /// <summary>The slots the page takes over from the in-game colour animator.</summary>
-    public static readonly int[] OwnedSlots = [10, 12, 13];
+    /// <summary>The slot <c>LOOPP</c> shifts through — its value is the wall's own slot.</summary>
+    private const int LoopSlot = 0;
 
     /// <summary>
     /// The first of the four processes the ROM starts AFTER the page is printed
@@ -66,19 +66,7 @@ public sealed class HighScorePalette
     /// </summary>
     private const int RampProcessStart = 1;
 
-    private sealed class Process
-    {
-        public int Slot;
-        public byte[] Table = [];
-        public int Index;
-        public int RomFramesPerStep;
-        public int ClockUnits;
-    }
-
     private readonly Process[] _processes;
-
-    /// <summary>True once the four ramp processes have been started (the ROM's second MAKP group).</summary>
-    public bool RampsStarted { get; private set; }
 
     public HighScorePalette()
     {
@@ -93,6 +81,9 @@ public sealed class HighScorePalette
             new() { Slot = 13, Table = AccentTable, RomFramesPerStep = 4 },
         ];
     }
+
+    /// <summary>True once the four ramp processes have been started (the ROM's second MAKP group).</summary>
+    public bool RampsStarted { get; private set; }
 
     /// <summary>
     /// The page's <c>FRAMER</c> clear plus the wall's cycle: the ROM starts
@@ -135,6 +126,24 @@ public sealed class HighScorePalette
         }
     }
 
+    /// <summary>
+    /// The ROM's processes die with the page, and the page after it (<c>FAMPAG</c>) sets
+    /// its own slots. The port stands the ROM's default CRTAB values back up and lets the
+    /// in-game animator have slots 10-15 again.
+    /// </summary>
+    public void Stop(GamePalette palette)
+    {
+        for (int slot = 0; slot <= 15; slot++)
+        {
+            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
+        }
+
+        foreach (int slot in OwnedSlots)
+        {
+            palette.ResumeSlot(slot);
+        }
+    }
+
     /// <summary>Advances every process by one port tick (call once per Update).</summary>
     public void Update(GamePalette palette)
     {
@@ -160,21 +169,18 @@ public sealed class HighScorePalette
     }
 
     /// <summary>
-    /// The ROM's processes die with the page, and the page after it (<c>FAMPAG</c>) sets
-    /// its own slots. The port stands the ROM's default CRTAB values back up and lets the
-    /// in-game animator have slots 10-15 again.
+    /// The ROM's table walk: take the next byte, but a `$00` terminator sends the process
+    /// back to the START of the table (never forward past it).
     /// </summary>
-    public void Stop(GamePalette palette)
+    private static int Advance(byte[] table, int index)
     {
-        for (int slot = 0; slot <= 15; slot++)
+        int next = (index + 1) % table.Length;
+        for (int guard = 0; guard < table.Length && table[next] == 0; guard++)
         {
-            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
+            next = (next + 1) % table.Length;
         }
 
-        foreach (int slot in OwnedSlots)
-        {
-            palette.ResumeSlot(slot);
-        }
+        return next;
     }
 
     private static void Apply(GamePalette palette, Process process, byte value)
@@ -195,18 +201,12 @@ public sealed class HighScorePalette
         palette.SetSlot(8, value);
     }
 
-    /// <summary>
-    /// The ROM's table walk: take the next byte, but a `$00` terminator sends the process
-    /// back to the START of the table (never forward past it).
-    /// </summary>
-    private static int Advance(byte[] table, int index)
+    private sealed class Process
     {
-        int next = (index + 1) % table.Length;
-        for (int guard = 0; guard < table.Length && table[next] == 0; guard++)
-        {
-            next = (next + 1) % table.Length;
-        }
-
-        return next;
+        public int ClockUnits;
+        public int Index;
+        public int RomFramesPerStep;
+        public int Slot;
+        public byte[] Table = [];
     }
 }

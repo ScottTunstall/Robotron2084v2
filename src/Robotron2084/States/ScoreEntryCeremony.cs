@@ -13,11 +13,11 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class ScoreEntryCeremony
 {
+    private readonly Queue<FinalScore> _pending;
     private readonly GameServices _services;
+    private readonly int[] _sessionScores;
     private readonly HighScoreStore _store;
     private readonly HighScoreTable _table;
-    private readonly Queue<FinalScore> _pending;
-    private readonly int[] _sessionScores;
 
     /// <summary>Builds the ceremony for a finished game, loading the table the scores are offered to.</summary>
     /// <param name="services">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>

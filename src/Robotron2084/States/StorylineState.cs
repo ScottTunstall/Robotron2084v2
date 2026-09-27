@@ -30,18 +30,20 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class StorylineState : IGameState, IAttractState
 {
-    private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
-    private static readonly StripClip Clip = new(InnerBounds.Left, InnerBounds.Right, InnerBounds.Top, InnerBounds.Bottom);
+    /// <summary>ROM string 128, printed by `SPGSUB` and never cleared by the page script.</summary>
+    internal const string TitleText = "ROBOTRON 2084";
 
-    private readonly SpriteSet _sprites;
+    private static readonly StripClip Clip = new(InnerBounds.Left, InnerBounds.Right, InnerBounds.Top, InnerBounds.Bottom);
+    private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
+    private readonly ButtonEdgeDetector _buttons = new();
+    private readonly List<StripEffect> _explosions = [];
     private readonly HighScoreStore _highScores;
     private readonly IPlayerInputSource _humanInput;
-    private readonly GameServices _services;
-    private readonly PlayfieldWall _wall;
-    private readonly GameSession _session;
     private readonly AttractMovie _movie;
-    private readonly List<StripEffect> _explosions = [];
-    private readonly ButtonEdgeDetector _buttons = new();
+    private readonly GameServices _services;
+    private readonly GameSession _session;
+    private readonly SpriteSet _sprites;
+    private readonly PlayfieldWall _wall;
 
     public StorylineState(GameServices services, Random random)
     {
@@ -53,6 +55,51 @@ public sealed class StorylineState : IGameState, IAttractState
         _wall = new PlayfieldWall(InnerBounds, new WallColorCycle());
         _session = GameSession.NewGame(_humanInput, 1);
         _movie = new AttractMovie(AttractMovieData.Histo, random);
+    }
+
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+    {
+        _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.Blitter.SlotColor(AttractTuning.TitleWallSlot));
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds, showSpareMen: false);
+
+        ArcadeHud.DrawCenteredLargeText(
+            spriteBatch,
+            _sprites,
+            TitleText,
+            HudLayout.ArcadeY(AttractTuning.StoryTitleRow),
+            HudLayout.HudScoreSlotCurrent);
+
+        DrawObjects(spriteBatch);
+
+        foreach (StripEffect explosion in _explosions)
+        {
+            explosion.Draw(spriteBatch);
+        }
+
+        foreach (MovieTextCell cell in _movie.Page.Text)
+        {
+            int index = ArcadeText.GlyphIndex(cell.Character);
+            if (index >= 0 && index < _sprites.FontLarge.Length)
+            {
+                _sprites.Blitter.DrawGlyphSlot(
+                    spriteBatch,
+                    _sprites.FontLarge,
+                    index,
+                    HudLayout.ArcadeX(cell.X),
+                    HudLayout.ArcadeY(cell.Y),
+                    cell.Slot);
+            }
+        }
+
+        if (_movie.Page.Message is { } message)
+        {
+            _sprites.Text.DrawSmallFontText(
+                spriteBatch,
+                message.Text,
+                HudLayout.ArcadeX(message.X),
+                HudLayout.ArcadeY(message.Y),
+                message.Slot);
+        }
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -119,54 +166,6 @@ public sealed class StorylineState : IGameState, IAttractState
             manager.TransitionTo(new AttractState(_services));
         }
     }
-
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
-    {
-        _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.Blitter.SlotColor(AttractTuning.TitleWallSlot));
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds, showSpareMen: false);
-
-        ArcadeHud.DrawCenteredLargeText(
-            spriteBatch,
-            _sprites,
-            TitleText,
-            HudLayout.ArcadeY(AttractTuning.StoryTitleRow),
-            HudLayout.HudScoreSlotCurrent);
-
-        DrawObjects(spriteBatch);
-
-        foreach (StripEffect explosion in _explosions)
-        {
-            explosion.Draw(spriteBatch);
-        }
-
-        foreach (MovieTextCell cell in _movie.Page.Text)
-        {
-            int index = ArcadeText.GlyphIndex(cell.Character);
-            if (index >= 0 && index < _sprites.FontLarge.Length)
-            {
-                _sprites.Blitter.DrawGlyphSlot(
-                    spriteBatch,
-                    _sprites.FontLarge,
-                    index,
-                    HudLayout.ArcadeX(cell.X),
-                    HudLayout.ArcadeY(cell.Y),
-                    cell.Slot);
-            }
-        }
-
-        if (_movie.Page.Message is { } message)
-        {
-            _sprites.Text.DrawSmallFontText(
-                spriteBatch,
-                message.Text,
-                HudLayout.ArcadeX(message.X),
-                HudLayout.ArcadeY(message.Y),
-                message.Slot);
-        }
-    }
-
-    /// <summary>ROM string 128, printed by `SPGSUB` and never cleared by the page script.</summary>
-    internal const string TitleText = "ROBOTRON 2084";
 
     private void DrawObjects(SpriteBatch spriteBatch)
     {
@@ -243,21 +242,17 @@ public sealed class StorylineState : IGameState, IAttractState
             _bounds = bounds;
         }
 
+        public Rectangle Bounds => _bounds;
+        public Texture2D CurrentAnimationFrame => _animationFrame;
+        public Rectangle ExplosionBounds => _bounds;
+        public EntityLifeState LifeState => EntityLifeState.Dead;
         public IntVector2 Position => new(_bounds.X, _bounds.Y);
 
-        public Rectangle Bounds => _bounds;
-
-        public Rectangle ExplosionBounds => _bounds;
-
-        public EntityLifeState LifeState => EntityLifeState.Dead;
-
-        public Texture2D CurrentAnimationFrame => _animationFrame;
-
-        public void Update(GameTime gameTime, PlayField field)
+        public void Draw(SpriteBatch spriteBatch)
         {
         }
 
-        public void Draw(SpriteBatch spriteBatch)
+        public void Update(GameTime gameTime, PlayField field)
         {
         }
     }

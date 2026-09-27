@@ -21,68 +21,84 @@ namespace Robotron2084.Entities;
 /// 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
-    /// <summary>The last picture of the spin and escape, i.e. the pointer value whose step wraps.</summary>
-    /// <remarks>ROM: <c>CIRCLE</c>/<c>CIRC3L</c> wrap after picture 5 (index 4).</remarks>
-    private const int SpinLastPicture = 4;
+    /// <summary>ROM <c>CIRNAC</c>: the accelerations hold for a random 1..this many beats.</summary>
+    private const int AccelBeatsMax = 15;
 
-    /// <summary>The drop phase's wrap boundary, so it spins all eight pictures.</summary>
-    /// <remarks>ROM: <c>CIRC2L</c> wraps after its eighth picture.</remarks>
-    private const int DropLastPicture = 7;
-
-    /// <summary>The wave's enforcer-allotment bound when the caller gives none.</summary>
-    private const int DefaultMaxDropsX2 = 10;
-
-    /// <summary>The wave's rotation delay when the caller gives none.</summary>
-    private const int DefaultDropDelayRotations = 24;
+    /// <summary>ROM <c>CIRNAC</c>: ...and is offset down by this much.</summary>
+    private const int AccelXOffset = 16;
 
     /// <summary>ROM <c>CIRNAC</c>: the X acceleration roll has this many sides (-16..+15 once offset)...</summary>
     private const int AccelXRollSides = 32;
 
     /// <summary>ROM <c>CIRNAC</c>: ...and is offset down by this much.</summary>
-    private const int AccelXOffset = 16;
+    private const int AccelYOffset = 32;
 
     /// <summary>ROM <c>CIRNAC</c>: the Y acceleration roll has this many sides (-32..+31 once offset) — twice X, because a column is 2 pixels...</summary>
     private const int AccelYRollSides = 64;
 
-    /// <summary>ROM <c>CIRNAC</c>: ...and is offset down by this much.</summary>
-    private const int AccelYOffset = 32;
-
-    /// <summary>ROM <c>CIRNAC</c>: the accelerations hold for a random 1..this many beats.</summary>
-    private const int AccelBeatsMax = 15;
+    /// <summary>ROM <c>CIRGO</c>: ...less this small constant, so it converges on a multiple of the acceleration.</summary>
+    private const int DampingBias = 4;
 
     /// <summary>ROM <c>CIRGO</c>: each beat the velocity is damped by this many 256ths of itself (a 64th)...</summary>
     private const int DampingPer256 = 4;
 
-    /// <summary>ROM <c>CIRGO</c>: ...less this small constant, so it converges on a multiple of the acceleration.</summary>
-    private const int DampingBias = 4;
+    /// <summary>The wave's rotation delay when the caller gives none.</summary>
+    private const int DefaultDropDelayRotations = 24;
+
+    /// <summary>The wave's enforcer-allotment bound when the caller gives none.</summary>
+    private const int DefaultMaxDropsX2 = 10;
+
+    /// <summary>The drop phase's wrap boundary, so it spins all eight pictures.</summary>
+    /// <remarks>ROM: <c>CIRC2L</c> wraps after its eighth picture.</remarks>
+    private const int DropLastPicture = 7;
 
     /// <summary>ROM <c>CIRC2</c>: a re-armed drop countdown is a random 1..(the wave's delay over this) rotations.</summary>
     private const int DropRerollDivisor = 4;
+
+    /// <summary>The last picture of the spin and escape, i.e. the pointer value whose step wraps.</summary>
+    /// <remarks>ROM: <c>CIRCLE</c>/<c>CIRC3L</c> wrap after picture 5 (index 4).</remarks>
+    private const int SpinLastPicture = 4;
 
     /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(CollisionSizes.SpheroidCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.SpheroidCollisionSize.Height));
 
-    private readonly SpriteSet _sprites;
-    private readonly Random _random;
     private readonly int _dropDelayRotations;
-    private IntVector2 _position;
-    private int _velocityXSubpixels; // X velocity, in 1/256 column per frame (a column is 2 arcade px)
-    private int _velocityYSubpixels; // Y velocity, in 1/256 row per frame
-    private int _remainderXSubpixels;
-    private int _remainderYSubpixels;
-    private int _accelX; // current X acceleration: -16..+15, in 1/256 column per frame per beat
-    private int _accelY; // current Y acceleration: -32..+31, in 1/256 row per frame per beat
-    private int _accelBeatsRemaining; // beats left before the accelerations are re-rolled: 1..15
+    private readonly Random _random;
+    private readonly SpriteSet _sprites;
+    private int _accelBeatsRemaining;
+    private int _accelX;
+
+    // current X acceleration: -16..+15, in 1/256 column per frame per beat
+    private int _accelY;
+
+    // current Y acceleration: -32..+31, in 1/256 row per frame per beat
+    // beats left before the accelerations are re-rolled: 1..15
     private int _beatTimer;
-    private int _moveTimer; // Counts up to the next move: one per ROM frame
-    private int _enforcersRemaining; // how many enforcers this spheroid still owes: 1..5, never 0
-    private int _dropRotationsRemaining; // rotations left until the next enforcer drop
-    private int _rotation; // current picture: 0..4 while spinning/escaping, 0..7 while dropping
-    private bool _dropping; // spinning -> dropping enforcers
-    private bool _escaping; // sideways run toward the edge of the field, then vanish
+
+    private bool _dropping;
+    private int _dropRotationsRemaining;
+    private int _enforcersRemaining;
     private int _escapeDirection;
 
+    // spinning -> dropping enforcers
+    private bool _escaping;
+
+    private int _moveTimer;
+    private IntVector2 _position;
+    private int _remainderXSubpixels;
+    private int _remainderYSubpixels;
+
+    // Counts up to the next move: one per ROM frame
+    // how many enforcers this spheroid still owes: 1..5, never 0
+    // rotations left until the next enforcer drop
+    private int _rotation;
+
+    private int _velocityXSubpixels; // X velocity, in 1/256 column per frame (a column is 2 arcade px)
+    private int _velocityYSubpixels; // Y velocity, in 1/256 row per frame
+
+    // current picture: 0..4 while spinning/escaping, 0..7 while dropping
+    // sideways run toward the edge of the field, then vanish
     /// <summary>Drops a spheroid at <paramref name="position"/> with its enforcer allotment already rolled; it is born mid-spin.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the spheroid.</param>
@@ -116,14 +132,39 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         RollAccelerations();
     }
 
-    /// <summary>Top-left of the spheroid (the ROM's OBJX/OBJY).</summary>
-    public IntVector2 Position => _position;
-
     /// <summary>The spheroid picture's own 16x15 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
+    /// <summary>The current picture, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
+    /// <returns>The texture for the current rotation frame.</returns>
+    public Texture2D CurrentAnimationFrame
+        => _sprites.SpheroidAnimationFrames[_rotation % _sprites.SpheroidAnimationFrames.Length];
+
     /// <summary>Alive until shot or until it finishes its sideways escape; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Top-left of the spheroid (the ROM's OBJX/OBJY).</summary>
+    public IntVector2 Position => _position;
+
+    /// <summary>Test hook: true once the sideways exit run has started.</summary>
+    /// <remarks>ROM: the `CIRC3` escape phase.</remarks>
+    internal bool IsEscaping => _escaping;
+
+    /// <summary>Test hook: which picture is showing — 0..4 spinning or escaping, 0..7 dropping.</summary>
+    /// <remarks>The ROM's current-picture pointer.</remarks>
+    internal int PictureIndex => _rotation;
+
+    /// <summary>Draws the current picture; its shimmer comes from cycling palette slots, not a flash.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+    }
 
     /// <summary>Kills the spheroid outright; a laser hit plays its own burst instead of the strip explosion.</summary>
     /// <remarks>ROM: <c>CIRKIL</c> plays a 7-frame bubble burst then a "1000"; <see cref="RobotKinds"/> wires
@@ -191,29 +232,37 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         AdvanceDropBeat(field);
     }
 
-    /// <summary>One escape beat: step the picture, or leave for good once the far edge is reached.</summary>
-    /// <param name="field">The playfield, whose bounds the exit is measured against.</param>
-    /// <param name="wrapPass">True on the beat that lands on the phase's last picture.</param>
-    /// <remarks>The exit test lives inside the wrap branch, so it is tried once per picture cycle (ROM:
-    /// <c>CIRC3L</c>).</remarks>
-    private void AdvanceEscapeBeat(PlayField field, bool wrapPass)
+    /// <summary>One axis of the mover's step: whole pixels, keeping the 1/256 fraction for next time.</summary>
+    private static int AdvanceAxis(int position, int velocitySubpixels, ref int remainderSubpixels, int min, int max)
     {
-        if (!wrapPass)
+        int nextRemainder = remainderSubpixels + velocitySubpixels;
+        int step = nextRemainder >> ScreenSize.SubpixelBits;
+        int next = position + step;
+        if (next < min || next > max)
         {
-            _rotation++;
-            return;
+            return position; // out of bounds: keep the old coordinate AND its carried fraction
         }
 
-        Rectangle bounds = field.Wall.PlayfieldBounds;
-        int leftExit = bounds.X + ScreenSize.Columns(SpheroidTuning.EscapeExitLeftColumn);
-        int rightExit = ScreenSize.Columns(SpheroidTuning.EscapeExitRightColumn);
-        if (_position.X <= leftExit || _position.X >= rightExit)
-        {
-            LifeState = EntityLifeState.Dead; // removed at once, no burst (ROM: `CIR4`)
-            return;
-        }
+        remainderSubpixels = nextRemainder - (step << ScreenSize.SubpixelBits);
+        return next;
+    }
 
-        _rotation = 0;
+    /// <summary>Clamps the velocity to the limit, then damps it toward 64 x the acceleration.</summary>
+    /// <remarks>ROM: the second half of <c>CIRGO</c> — the damping nudges the velocity toward -4x
+    /// itself minus a small constant, so it converges on 64 x the acceleration and the clamp is the
+    /// usual terminal state.</remarks>
+    private static int ClampThenDamp(int velocitySubpixels, int limitSubpixels)
+    {
+        velocitySubpixels = Math.Clamp(velocitySubpixels, -limitSubpixels, limitSubpixels);
+        return velocitySubpixels + (((-DampingPer256 * velocitySubpixels) - DampingBias) >> ScreenSize.SubpixelBits);
+    }
+
+    /// <summary>Adds the acceleration, clamps to the top speed, then damps by a 64th.</summary>
+    /// <remarks>ROM: <c>CIRGO</c>.</remarks>
+    private void AccelerateAndDamp()
+    {
+        _velocityXSubpixels = ClampThenDamp(_velocityXSubpixels + _accelX, SpheroidTuning.MaxVelocityXSubpixels);
+        _velocityYSubpixels = ClampThenDamp(_velocityYSubpixels + _accelY, SpheroidTuning.MaxVelocityYSubpixels);
     }
 
     /// <summary>The wrap beat of the spin/drop cycle: hold the picture, release it, or drop an enforcer.</summary>
@@ -259,6 +308,45 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _rotation = 0;
     }
 
+    /// <summary>One escape beat: step the picture, or leave for good once the far edge is reached.</summary>
+    /// <param name="field">The playfield, whose bounds the exit is measured against.</param>
+    /// <param name="wrapPass">True on the beat that lands on the phase's last picture.</param>
+    /// <remarks>The exit test lives inside the wrap branch, so it is tried once per picture cycle (ROM:
+    /// <c>CIRC3L</c>).</remarks>
+    private void AdvanceEscapeBeat(PlayField field, bool wrapPass)
+    {
+        if (!wrapPass)
+        {
+            _rotation++;
+            return;
+        }
+
+        Rectangle bounds = field.Wall.PlayfieldBounds;
+        int leftExit = bounds.X + ScreenSize.Columns(SpheroidTuning.EscapeExitLeftColumn);
+        int rightExit = ScreenSize.Columns(SpheroidTuning.EscapeExitRightColumn);
+        if (_position.X <= leftExit || _position.X >= rightExit)
+        {
+            LifeState = EntityLifeState.Dead; // removed at once, no burst (ROM: `CIR4`)
+            return;
+        }
+
+        _rotation = 0;
+    }
+
+    /// <summary>Integrates the velocity on both axes for one frame; a step that would leave the field is rejected.</summary>
+    private void AdvancePosition(PlayField field)
+    {
+        Rectangle bounds = field.Wall.PlayfieldBounds;
+        _position = new IntVector2(
+            AdvanceAxis(_position.X, _velocityXSubpixels, ref _remainderXSubpixels, bounds.X, bounds.Right - CollisionSize.Width),
+            AdvanceAxis(_position.Y, _velocityYSubpixels, ref _remainderYSubpixels, bounds.Y, bounds.Bottom - CollisionSize.Height));
+    }
+
+    /// <summary>Re-arms the drop countdown: a random count of rotations between drops.</summary>
+    /// <remarks>ROM: the <c>CIRC2</c> re-arm.</remarks>
+    private void RerollDropCountdown() =>
+        _dropRotationsRemaining = 1 + _random.Next(0, _dropDelayRotations / DropRerollDivisor);
+
     /// <summary>Re-rolls both accelerations and the timer that re-rolls them.</summary>
     /// <remarks>ROM: `CIRNAC`.</remarks>
     private void RollAccelerations()
@@ -267,11 +355,6 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _accelY = _random.Next(0, AccelYRollSides) - AccelYOffset;
         _accelBeatsRemaining = 1 + _random.Next(0, AccelBeatsMax);
     }
-
-    /// <summary>Re-arms the drop countdown: a random count of rotations between drops.</summary>
-    /// <remarks>ROM: the <c>CIRC2</c> re-arm.</remarks>
-    private void RerollDropCountdown() =>
-        _dropRotationsRemaining = 1 + _random.Next(0, _dropDelayRotations / DropRerollDivisor);
 
     /// <summary>Starts the escape: Y velocity 0, X exactly ±1 column per frame, picture untouched.</summary>
     /// <remarks>ROM: <c>CIRC3</c> — the arcade leaves the picture on the last drop-phase frame, and
@@ -284,71 +367,4 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _remainderXSubpixels = 0;
         _remainderYSubpixels = 0;
     }
-
-    /// <summary>Adds the acceleration, clamps to the top speed, then damps by a 64th.</summary>
-    /// <remarks>ROM: <c>CIRGO</c>.</remarks>
-    private void AccelerateAndDamp()
-    {
-        _velocityXSubpixels = ClampThenDamp(_velocityXSubpixels + _accelX, SpheroidTuning.MaxVelocityXSubpixels);
-        _velocityYSubpixels = ClampThenDamp(_velocityYSubpixels + _accelY, SpheroidTuning.MaxVelocityYSubpixels);
-    }
-
-    /// <summary>Clamps the velocity to the limit, then damps it toward 64 x the acceleration.</summary>
-    /// <remarks>ROM: the second half of <c>CIRGO</c> — the damping nudges the velocity toward -4x
-    /// itself minus a small constant, so it converges on 64 x the acceleration and the clamp is the
-    /// usual terminal state.</remarks>
-    private static int ClampThenDamp(int velocitySubpixels, int limitSubpixels)
-    {
-        velocitySubpixels = Math.Clamp(velocitySubpixels, -limitSubpixels, limitSubpixels);
-        return velocitySubpixels + (((-DampingPer256 * velocitySubpixels) - DampingBias) >> ScreenSize.SubpixelBits);
-    }
-
-    /// <summary>Integrates the velocity on both axes for one frame; a step that would leave the field is rejected.</summary>
-    private void AdvancePosition(PlayField field)
-    {
-        Rectangle bounds = field.Wall.PlayfieldBounds;
-        _position = new IntVector2(
-            AdvanceAxis(_position.X, _velocityXSubpixels, ref _remainderXSubpixels, bounds.X, bounds.Right - CollisionSize.Width),
-            AdvanceAxis(_position.Y, _velocityYSubpixels, ref _remainderYSubpixels, bounds.Y, bounds.Bottom - CollisionSize.Height));
-    }
-
-    /// <summary>One axis of the mover's step: whole pixels, keeping the 1/256 fraction for next time.</summary>
-    private static int AdvanceAxis(int position, int velocitySubpixels, ref int remainderSubpixels, int min, int max)
-    {
-        int nextRemainder = remainderSubpixels + velocitySubpixels;
-        int step = nextRemainder >> ScreenSize.SubpixelBits;
-        int next = position + step;
-        if (next < min || next > max)
-        {
-            return position; // out of bounds: keep the old coordinate AND its carried fraction
-        }
-
-        remainderSubpixels = nextRemainder - (step << ScreenSize.SubpixelBits);
-        return next;
-    }
-
-    /// <summary>Draws the current picture; its shimmer comes from cycling palette slots, not a flash.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (LifeState != EntityLifeState.Alive)
-        {
-            return;
-        }
-
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
-    }
-
-    /// <summary>The current picture, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
-    /// <returns>The texture for the current rotation frame.</returns>
-    public Texture2D CurrentAnimationFrame
-        => _sprites.SpheroidAnimationFrames[_rotation % _sprites.SpheroidAnimationFrames.Length];
-
-    /// <summary>Test hook: which picture is showing — 0..4 spinning or escaping, 0..7 dropping.</summary>
-    /// <remarks>The ROM's current-picture pointer.</remarks>
-    internal int PictureIndex => _rotation;
-
-    /// <summary>Test hook: true once the sideways exit run has started.</summary>
-    /// <remarks>ROM: the `CIRC3` escape phase.</remarks>
-    internal bool IsEscaping => _escaping;
 }

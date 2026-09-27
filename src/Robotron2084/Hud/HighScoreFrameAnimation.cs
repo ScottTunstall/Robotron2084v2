@@ -23,18 +23,16 @@ namespace Robotron2084.Hud;
 /// </summary>
 public sealed class HighScoreFrameAnimation
 {
+    private int _clockUnits;
+
+    private bool _erasing;
+
     /// <summary>
     /// Strokes drawn so far by the pass that is running, and which pass that is. Both
     /// passes have drawn <see cref="HighScoreTableLayout.FrameStrokesPerRomFrame"/> of
     /// them by the time the page first appears.
     /// </summary>
     private int _strokes = HighScoreTableLayout.FrameStrokesPerRomFrame;
-
-    private bool _erasing;
-    private int _clockUnits;
-
-    /// <summary>True once the erase pass has reached its terminal point — the wall is complete.</summary>
-    public bool IsFinished => _erasing && _strokes >= HighScoreTableLayout.FrameEraseStrokeCount;
 
     /// <summary>
     /// The growing pass's frontier: the outermost stroke it has drawn, or -1 before it has
@@ -48,6 +46,9 @@ public sealed class HighScoreFrameAnimation
     /// between it and <see cref="DrawnStroke"/>.
     /// </summary>
     public int ErasedStroke => _erasing ? _strokes - 1 : -1;
+
+    /// <summary>True once the erase pass has reached its terminal point — the wall is complete.</summary>
+    public bool IsFinished => _erasing && _strokes >= HighScoreTableLayout.FrameEraseStrokeCount;
 
     /// <summary>Advances the pass by one port tick (call once per Update).</summary>
     public void Tick()

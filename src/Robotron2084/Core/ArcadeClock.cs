@@ -31,9 +31,6 @@ public static class ArcadeClock
     /// <summary>Clock units in one ROM frame (1/50 s).</summary>
     public const int UnitsPerRomFrame = 6;
 
-    /// <summary>A number of ROM frames, in clock units.</summary>
-    public static int Units(int romFrames) => romFrames * UnitsPerRomFrame;
-
     /// <summary>
     /// Converts a delay in ROM frames to the equivalent number of port ticks, so every timer in
     /// this port waits for the same real-world length of time the arcade did.
@@ -51,4 +48,7 @@ public static class ArcadeClock
     /// period (<c>PortTicks(3)</c> = 3, but the step actually lands on tick 4).
     /// </summary>
     public static int PortTicksCeil(int romFrames) => (romFrames * ArcadeClock.UnitsPerRomFrame + 4) / ArcadeClock.UnitsPerPortTick;
+
+    /// <summary>A number of ROM frames, in clock units.</summary>
+    public static int Units(int romFrames) => romFrames * UnitsPerRomFrame;
 }

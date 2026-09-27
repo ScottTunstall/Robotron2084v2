@@ -15,12 +15,16 @@ public sealed class LaserSlots
     /// <summary>How many lasers the player can have in flight at once.</summary>
     public const int Capacity = 3;
 
-    private readonly SpriteSet _sprites;
     private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
+    private readonly SpriteSet _sprites;
 
     /// <summary>Wires the slots to the pictures their lasers are drawn with.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     public LaserSlots(SpriteSet sprites) => _sprites = sprites;
+
+    /// <summary>The lasers currently alive, never more than <see cref="Capacity"/>.</summary>
+    public IEnumerable<PlayerLaser> ActiveLasers =>
+        _slots.Where(laser => laser is { LifeState: EntityLifeState.Alive }).Select(laser => laser!);
 
     /// <summary>Every slot in order; null means empty. Exposed for tests and diagnostics.</summary>
     public IReadOnlyList<PlayerLaser?> Slots => _slots;
@@ -60,8 +64,4 @@ public sealed class LaserSlots
             }
         }
     }
-
-    /// <summary>The lasers currently alive, never more than <see cref="Capacity"/>.</summary>
-    public IEnumerable<PlayerLaser> ActiveLasers =>
-        _slots.Where(laser => laser is { LifeState: EntityLifeState.Alive }).Select(laser => laser!);
 }

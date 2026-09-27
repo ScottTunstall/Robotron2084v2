@@ -27,28 +27,45 @@ public sealed class AttractObjectMachine
     /// <summary>ROM `EXPP` stores ACTHIT+6 into the explosion's centre row.</summary>
     private const int ExplosionRow = 0xA0 + 6;
 
-    /// <summary>RRF.ASM <c>XMIN</c>: the leftmost column an object may occupy (the inside of the left wall).</summary>
-    private const int PlayfieldMinColumn = 7;
+    /// <summary>The laser bolt's picture (<c>LASPIC</c>, the 6-pixel bar) is three columns wide.</summary>
+    private const int LaserWidthColumns = 3;
 
     /// <summary>RRF.ASM <c>XMAX</c>: the rightmost column an object's right edge may reach.</summary>
     private const int PlayfieldMaxColumn = 0x8F;
 
-    /// <summary>The laser bolt's picture (<c>LASPIC</c>, the 6-pixel bar) is three columns wide.</summary>
-    private const int LaserWidthColumns = 3;
+    /// <summary>RRF.ASM <c>XMIN</c>: the leftmost column an object may occupy (the inside of the left wall).</summary>
+    private const int PlayfieldMinColumn = 7;
 
-    private readonly byte[] _scripts = AttractMovieData.Scripts;
+    private readonly List<MovieExplosion> _explosions = [];
     private readonly List<MovieObject> _objects = [];
     private readonly List<MovieProcess> _processes = [];
-    private readonly List<MovieExplosion> _explosions = [];
     private readonly Random _random;
+    private readonly byte[] _scripts = AttractMovieData.Scripts;
 
     public AttractObjectMachine(Random random) => _random = random;
+
+    private enum MovieAction
+    {
+        None,
+        Walk,
+        Cycle,
+        Mono,
+        ReprogramShake,
+    }
+
+    /// <summary>True while any object or process is still running.</summary>
+    public bool IsRunning => _processes.Count > 0 || _objects.Count > 0;
 
     /// <summary>Every live object, in spawn order (laser bolts included).</summary>
     public IReadOnlyList<MovieObject> Objects => _objects;
 
-    /// <summary>True while any object or process is still running.</summary>
-    public bool IsRunning => _processes.Count > 0 || _objects.Count > 0;
+    /// <summary>Explosions the movie asked for since the last drain (the EXP opcode).</summary>
+    public List<MovieExplosion> DrainExplosions()
+    {
+        var drained = new List<MovieExplosion>(_explosions);
+        _explosions.Clear();
+        return drained;
+    }
 
     /// <summary>Starts a script: creates its object and its process (the ROM's `OSTART`).</summary>
     public void StartScript(int scriptAddress)
@@ -60,14 +77,6 @@ public sealed class AttractObjectMachine
         };
         _objects.Add(process.Object);
         _processes.Add(process);
-    }
-
-    /// <summary>Explosions the movie asked for since the last drain (the EXP opcode).</summary>
-    public List<MovieExplosion> DrainExplosions()
-    {
-        var drained = new List<MovieExplosion>(_explosions);
-        _explosions.Clear();
-        return drained;
     }
 
     /// <summary>Runs one ROM frame: move what moves, then advance every process.</summary>
@@ -115,6 +124,30 @@ public sealed class AttractObjectMachine
         }
 
         _processes.RemoveAll(p => !p.Alive);
+    }
+
+    /// <summary>
+    /// The ROM's object mover (RRS22 <c>OPRC80</c>/<c>OPB80</c>): a step whose new column is left of <c>XMIN</c>, or whose
+    /// right edge would pass <c>XMAX</c>, is refused, so a bolt stops at the wall and waits there for its timer.
+    /// </summary>
+    internal static void MoveLaserWithinTheWalls(MovieObject laser)
+    {
+        int next = laser.X + laser.XVelocity;
+        int column = next >> 8;
+        if (column >= PlayfieldMinColumn && column + LaserWidthColumns <= PlayfieldMaxColumn + 1)
+        {
+            laser.X = next;
+        }
+    }
+
+    /// <summary>MONOP: hide the object, then every third frame move it in whole columns and box it.</summary>
+    private static void BeginMono(MovieObject item, int boxSlot, int imageSlot, bool brain)
+    {
+        item.OnList = false;
+        item.MonoActive = true;
+        item.MonoBoxSlot = boxSlot;
+        item.MonoSilhouetteSlot = imageSlot;
+        item.MonoBrain = brain;
     }
 
     private int RandomUpTo(int exclusive) => _random.Next(exclusive);
@@ -631,44 +664,11 @@ public sealed class AttractObjectMachine
         }
     }
 
-    private enum MovieAction
-    {
-        None,
-        Walk,
-        Cycle,
-        Mono,
-        ReprogramShake,
-    }
-
-    /// <summary>MONOP: hide the object, then every third frame move it in whole columns and box it.</summary>
-    private static void BeginMono(MovieObject item, int boxSlot, int imageSlot, bool brain)
-    {
-        item.OnList = false;
-        item.MonoActive = true;
-        item.MonoBoxSlot = boxSlot;
-        item.MonoSilhouetteSlot = imageSlot;
-        item.MonoBrain = brain;
-    }
-
-    /// <summary>
-    /// The ROM's object mover (RRS22 <c>OPRC80</c>/<c>OPB80</c>): a step whose new column is left of <c>XMIN</c>, or whose
-    /// right edge would pass <c>XMAX</c>, is refused, so a bolt stops at the wall and waits there for its timer.
-    /// </summary>
-    internal static void MoveLaserWithinTheWalls(MovieObject laser)
-    {
-        int next = laser.X + laser.XVelocity;
-        int column = next >> 8;
-        if (column >= PlayfieldMinColumn && column + LaserWidthColumns <= PlayfieldMaxColumn + 1)
-        {
-            laser.X = next;
-        }
-    }
-
     private byte Read(MovieProcess process) => _scripts[process.ScriptIndex++];
 
-    private int ReadWord(MovieProcess process) => (Read(process) << 8) | Read(process);
-
     private int ReadSignedWord(MovieProcess process) => (short)ReadWord(process);
+
+    private int ReadWord(MovieProcess process) => (Read(process) << 8) | Read(process);
 
     /// <summary>
     /// The ROM's `RIGFIR`/`LEFFIR`: a bolt two columns ahead of the muzzle (right)

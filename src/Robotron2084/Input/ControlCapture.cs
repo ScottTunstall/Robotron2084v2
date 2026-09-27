@@ -69,6 +69,22 @@ public static class ControlCapture
         return InputBinding.None;
     }
 
+    private static InputBinding NewlyPressedButton(int padIndex, InputSnapshot previous, InputSnapshot current)
+    {
+        GamePadState previousPad = padIndex == 1 ? previous.PadTwo : previous.PadOne;
+        GamePadState currentPad = padIndex == 1 ? current.PadTwo : current.PadOne;
+
+        foreach (Buttons button in CapturableButtons)
+        {
+            if (currentPad.IsButtonDown(button) && !previousPad.IsButtonDown(button))
+            {
+                return InputBinding.Button(padIndex, button);
+            }
+        }
+
+        return InputBinding.None;
+    }
+
     /// <summary>The keys that went down, in <see cref="Keys"/> order so the result is deterministic.</summary>
     private static IEnumerable<Keys> NewlyPressedKeys(KeyboardState previous, KeyboardState current) =>
         current.GetPressedKeys()
@@ -86,22 +102,6 @@ public static class ControlCapture
             if (direction != IntVector2.Zero && direction != GamePadSticks.Read(previousPad, rightStick))
             {
                 return InputBinding.Stick(padIndex, rightStick, direction.X, direction.Y);
-            }
-        }
-
-        return InputBinding.None;
-    }
-
-    private static InputBinding NewlyPressedButton(int padIndex, InputSnapshot previous, InputSnapshot current)
-    {
-        GamePadState previousPad = padIndex == 1 ? previous.PadTwo : previous.PadOne;
-        GamePadState currentPad = padIndex == 1 ? current.PadTwo : current.PadOne;
-
-        foreach (Buttons button in CapturableButtons)
-        {
-            if (currentPad.IsButtonDown(button) && !previousPad.IsButtonDown(button))
-            {
-                return InputBinding.Button(padIndex, button);
             }
         }
 

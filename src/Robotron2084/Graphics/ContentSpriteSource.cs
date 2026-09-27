@@ -23,6 +23,12 @@ public sealed class ContentSpriteSource : ISpriteSource
     }
 
     /// <inheritdoc/>
+    public Texture2D Create(int width, int height, Color[] pixels) => _factory.Create(width, height, pixels);
+
+    /// <inheritdoc/>
+    public Texture2D CreateSolid(int width, int height, Color color) => _factory.CreateSolid(width, height, color);
+
+    /// <inheritdoc/>
     public Texture2D Load(string assetName) => _content.Load<Texture2D>(assetName);
 
     /// <inheritdoc/>
@@ -36,10 +42,4 @@ public sealed class ContentSpriteSource : ISpriteSource
 
         return pictures;
     }
-
-    /// <inheritdoc/>
-    public Texture2D Create(int width, int height, Color[] pixels) => _factory.Create(width, height, pixels);
-
-    /// <inheritdoc/>
-    public Texture2D CreateSolid(int width, int height, Color color) => _factory.CreateSolid(width, height, color);
 }

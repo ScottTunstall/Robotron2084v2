@@ -47,19 +47,10 @@ namespace Robotron2084.Graphics;
 /// </summary>
 public sealed class TunnelEffect
 {
-    // The walk is kept in the ROM's own SCREEN coordinates (X = column, Y = row; its screen
-    // addresses are column*256 + row) so the numbers in the code are the ROM's, and only the
-    // drawing maps them onto the port's grid.
-    internal const int StartLeftColumn = 0x3B;   // $3B80
+    internal const int EndLeftColumn = 0x06;
 
-    internal const int StartTopRow = 0x80;
-    internal const int StartRightColumn = 0x5A;  // $5A82
-    internal const int StartBottomRow = 0x82;
-    internal const int EndLeftColumn = 0x06;     // $0616 — the last ring's top-left
+    // $0616 — the last ring's top-left
     internal const int EndTopRow = 0x16;
-
-    /// <summary>ROM `LDB #$02 / STB $000E,U` — two rings per task pass.</summary>
-    internal const int RingsPerPass = 2;
 
     /// <summary>
     /// How long a task pass lasts, in clock units (notes §83).
@@ -76,7 +67,18 @@ public sealed class TunnelEffect
     /// </summary>
     internal const int PassClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
 
-    private int _clockUnits;
+    /// <summary>ROM `LDB #$02 / STB $000E,U` — two rings per task pass.</summary>
+    internal const int RingsPerPass = 2;
+
+    internal const int StartBottomRow = 0x82;
+
+    // The walk is kept in the ROM's own SCREEN coordinates (X = column, Y = row; its screen
+    // addresses are column*256 + row) so the numbers in the code are the ROM's, and only the
+    // drawing maps them onto the port's grid.
+    internal const int StartLeftColumn = 0x3B;   // $3B80
+
+    internal const int StartRightColumn = 0x5A;
+    internal const int StartTopRow = 0x80;
 
     /// <summary>
     /// The ROM's screen is 304 px (152 columns) by 256 rows, and the port's SCREEN is
@@ -87,38 +89,42 @@ public sealed class TunnelEffect
 
     private const float RomPixelToScreenY = ScreenSize.Height / (float)HudLayout.ArcadeScreenHeight;
 
-    /// <summary>
-    /// The port pixel a ROM pixel starts at, and the port row a ROM row starts at.
-    ///
-    /// Every span below is drawn from its own first pixel to the NEXT pixel's first — so two
-    /// adjacent rows (or columns) tile edge to edge and cannot leave a seam. Truncating each
-    /// one to a whole pixel is what drew a black line between every band and made the inner
-    /// rings read as thin outlines (notes §84/§85).
-    /// </summary>
-    internal static int PixelX(int romPixel) => (int)MathF.Round(romPixel * RomPixelToScreenX);
+    /// <summary>The erase pass's rings, drawn ON TOP of the coloured ones in black.</summary>
+    private readonly List<Ring> _blackRings = new();
 
-    internal static int RowY(int romRow) => (int)MathF.Round(romRow * RomPixelToScreenY);
+    /// <summary>
+    /// Every ring drawn so far. **The ROM never erases the rings it has passed** — each pass
+    /// draws one more, so the screen accumulates concentric rectangles two pixels apart and by
+    /// the end the whole area is a filled hatched field. Drawing only the CURRENT ring leaves a
+    /// handful of small rectangles instead.
+    /// </summary>
+    private readonly List<Ring> _rings = new();
+
+    private int _bottom = StartBottomRow;
+
+    // $5A82
+    private int _clockUnits;
 
     private int _left = StartLeftColumn;
-    private int _top = StartTopRow;
+
+    private int _packed = 0xEF;
+
     private int _right = StartRightColumn;
-    private int _bottom = StartBottomRow;
-    private int _packed = 0xEF;                  // ROM `LDA #$EF`
 
     /// <summary>Rings still to draw in this pass (the ROM's counter at `$000E,U`).</summary>
     private int _ringsThisPass = RingsPerPass;
 
+    private int _top = StartTopRow;
+
+    // ROM `LDA #$EF`
     /// <summary>True once the black pass has reached the middle — the effect is over.</summary>
     public bool Finished { get; private set; }
 
+    /// <summary>Current ring corners in the ROM's screen coordinates (test hook).</summary>
+    internal (int Left, int Top, int Right, int Bottom) Corners => (_left, _top, _right, _bottom);
+
     /// <summary>True while the tunnel is being redrawn in black to erase itself.</summary>
     internal bool Erasing => _packed == 0;
-
-    /// <summary>The rings drawn so far (test hook) — 53 coloured then 53 black.</summary>
-    internal int RingsDrawn { get; private set; }
-
-    /// <summary>Rings still on screen (test hook): nothing is erased until the black pass reaches it.</summary>
-    internal int RingsRetained => _rings.Count + _blackRings.Count;
 
     /// <summary>
     /// The last ring of the colouring pass (test hook) — the walk's outer extent, which must
@@ -129,25 +135,31 @@ public sealed class TunnelEffect
             ? (_rings[^1].Left, _rings[^1].Top, _rings[^1].Right, _rings[^1].Bottom)
             : (_left, _top, _right, _bottom);
 
-    /// <summary>Current ring corners in the ROM's screen coordinates (test hook).</summary>
-    internal (int Left, int Top, int Right, int Bottom) Corners => (_left, _top, _right, _bottom);
-
     /// <summary>The current packed colour pair (test hook).</summary>
     internal int Packed => _packed;
 
-    /// <summary>One ring as drawn: its corners in ROM screen coordinates and the pair it used.</summary>
-    private readonly record struct Ring(int Left, int Top, int Right, int Bottom, int Packed);
+    /// <summary>The rings drawn so far (test hook) — 53 coloured then 53 black.</summary>
+    internal int RingsDrawn { get; private set; }
+
+    /// <summary>Rings still on screen (test hook): nothing is erased until the black pass reaches it.</summary>
+    internal int RingsRetained => _rings.Count + _blackRings.Count;
 
     /// <summary>
-    /// Every ring drawn so far. **The ROM never erases the rings it has passed** — each pass
-    /// draws one more, so the screen accumulates concentric rectangles two pixels apart and by
-    /// the end the whole area is a filled hatched field. Drawing only the CURRENT ring leaves a
-    /// handful of small rectangles instead.
+    /// Draws EVERY ring the walk has reached — they accumulate, two pixels apart, which is what
+    /// fills the area — with the erase pass's black rings painted over the top of them.
     /// </summary>
-    private readonly List<Ring> _rings = new();
+    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    {
+        foreach (Ring ring in _rings)
+        {
+            DrawRing(spriteBatch, sprites, ring);
+        }
 
-    /// <summary>The erase pass's rings, drawn ON TOP of the coloured ones in black.</summary>
-    private readonly List<Ring> _blackRings = new();
+        foreach (Ring ring in _blackRings)
+        {
+            DrawRing(spriteBatch, sprites, ring);
+        }
+    }
 
     /// <summary>
     /// Runs one ROM task pass, which takes two ROM frames (see <see cref="PassClockUnits"/>). `$5726` resets
@@ -179,6 +191,49 @@ public sealed class TunnelEffect
             AdvanceRing();
         }
     }
+
+    /// <summary>
+    /// The palette slots a ring draws in: colour 0 (the left nibble) and colour 1 (the right).
+    /// Split out so the range can be asserted — the first cut passed the ROM's
+    /// <c>(colour0 &lt;&lt; 4) | colour1</c> straight to the palette, which is a blitter mask
+    /// (0-255) and threw on a wave clear.
+    /// </summary>
+    internal static (int Colour0, int Colour1) Colours(int packed)
+        => ((packed >> 4) & 0x0F, packed & 0x0F);
+
+    /// <summary>
+    /// ROM $5737-$574F: the pair advances by `SUBA #$22` — both nibbles two slots down — with
+    /// three special cases that wrap it round again.
+    /// </summary>
+    internal static int NextPair(int packed) => packed switch
+    {
+        0x12 => 0xEF,                        // 5737
+        0xF1 => 0xDE,                        // 573F
+        0x23 => 0xF1,                        // 5747
+        _ => (packed - 0x22) & 0xFF,         // 574F
+    };
+
+    /// <summary>
+    /// The port pixel a ROM pixel starts at, and the port row a ROM row starts at.
+    ///
+    /// Every span below is drawn from its own first pixel to the NEXT pixel's first — so two
+    /// adjacent rows (or columns) tile edge to edge and cannot leave a seam. Truncating each
+    /// one to a whole pixel is what drew a black line between every band and made the inner
+    /// rings read as thin outlines (notes §84/§85).
+    /// </summary>
+    internal static int PixelX(int romPixel) => (int)MathF.Round(romPixel * RomPixelToScreenX);
+
+    internal static int RowY(int romRow) => (int)MathF.Round(romRow * RomPixelToScreenY);
+
+    /// <summary>One ring as drawn: its corners in ROM screen coordinates and the pair it used.</summary>
+    private readonly record struct Ring(int Left, int Top, int Right, int Bottom, int Packed);
+
+    /// <summary>Blits one edge rectangle, already in the port's screen pixels.</summary>
+    private static void DrawEdge(SpriteBatch spriteBatch, SpriteSet sprites, Rectangle rect, Color colour)
+        => spriteBatch.Draw(
+            sprites.WallPixel,
+            new Rectangle(rect.X, rect.Y, Math.Max(1, rect.Width), Math.Max(1, rect.Height)),
+            colour);
 
     /// <summary>One ring: record it (the renderer draws the accumulated set), then step.</summary>
     private void AdvanceRing()
@@ -219,32 +274,29 @@ public sealed class TunnelEffect
     }
 
     /// <summary>
-    /// ROM $5737-$574F: the pair advances by `SUBA #$22` — both nibbles two slots down — with
-    /// three special cases that wrap it round again.
+    /// One horizontal edge: one ROM row tall, from column <paramref name="left"/> to
+    /// <paramref name="right"/> inclusive. <paramref name="inset"/> is the `$5AAA` form — the
+    /// same row one column to the right and one column narrower, i.e. a column in from each end.
     /// </summary>
-    internal static int NextPair(int packed) => packed switch
+    private void DrawHorizontalLine(
+        SpriteBatch spriteBatch, SpriteSet sprites, int left, int right, int row, Color colour, bool inset)
     {
-        0x12 => 0xEF,                        // 5737
-        0xF1 => 0xDE,                        // 573F
-        0x23 => 0xF1,                        // 5747
-        _ => (packed - 0x22) & 0xFF,         // 574F
-    };
-
-    /// <summary>
-    /// Draws EVERY ring the walk has reached — they accumulate, two pixels apart, which is what
-    /// fills the area — with the erase pass's black rings painted over the top of them.
-    /// </summary>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
-    {
-        foreach (Ring ring in _rings)
+        if (row < 0 || row > 255)
         {
-            DrawRing(spriteBatch, sprites, ring);
+            return;
         }
 
-        foreach (Ring ring in _blackRings)
+        int firstColumn = inset ? left + 1 : left;
+        int lastColumn = inset ? right - 1 : right;
+        if (lastColumn < firstColumn)
         {
-            DrawRing(spriteBatch, sprites, ring);
+            return;
         }
+
+        int x = PixelX(firstColumn * 2);
+        int width = PixelX(lastColumn * 2 + 2) - x;
+        int y = RowY(row);
+        DrawEdge(spriteBatch, sprites, new Rectangle(x, y, width, Math.Max(1, RowY(row + 1) - y)), colour);
     }
 
     /// <summary>
@@ -289,41 +341,6 @@ public sealed class TunnelEffect
     }
 
     /// <summary>
-    /// The palette slots a ring draws in: colour 0 (the left nibble) and colour 1 (the right).
-    /// Split out so the range can be asserted — the first cut passed the ROM's
-    /// <c>(colour0 &lt;&lt; 4) | colour1</c> straight to the palette, which is a blitter mask
-    /// (0-255) and threw on a wave clear.
-    /// </summary>
-    internal static (int Colour0, int Colour1) Colours(int packed)
-        => ((packed >> 4) & 0x0F, packed & 0x0F);
-
-    /// <summary>
-    /// One horizontal edge: one ROM row tall, from column <paramref name="left"/> to
-    /// <paramref name="right"/> inclusive. <paramref name="inset"/> is the `$5AAA` form — the
-    /// same row one column to the right and one column narrower, i.e. a column in from each end.
-    /// </summary>
-    private void DrawHorizontalLine(
-        SpriteBatch spriteBatch, SpriteSet sprites, int left, int right, int row, Color colour, bool inset)
-    {
-        if (row < 0 || row > 255)
-        {
-            return;
-        }
-
-        int firstColumn = inset ? left + 1 : left;
-        int lastColumn = inset ? right - 1 : right;
-        if (lastColumn < firstColumn)
-        {
-            return;
-        }
-
-        int x = PixelX(firstColumn * 2);
-        int width = PixelX(lastColumn * 2 + 2) - x;
-        int y = RowY(row);
-        DrawEdge(spriteBatch, sprites, new Rectangle(x, y, width, Math.Max(1, RowY(row + 1) - y)), colour);
-    }
-
-    /// <summary>
     /// One vertical edge: two ROM pixels (one column) wide, from row <paramref name="topRow"/>
     /// to <paramref name="bottomRow"/> inclusive. <paramref name="first"/> is the left of those
     /// two pixels, <paramref name="second"/> the right.
@@ -345,11 +362,4 @@ public sealed class TunnelEffect
         DrawEdge(spriteBatch, sprites, new Rectangle(x0, y, Math.Max(1, x1 - x0), height), first);
         DrawEdge(spriteBatch, sprites, new Rectangle(x1, y, Math.Max(1, x2 - x1), height), second);
     }
-
-    /// <summary>Blits one edge rectangle, already in the port's screen pixels.</summary>
-    private static void DrawEdge(SpriteBatch spriteBatch, SpriteSet sprites, Rectangle rect, Color colour)
-        => spriteBatch.Draw(
-            sprites.WallPixel,
-            new Rectangle(rect.X, rect.Y, Math.Max(1, rect.Width), Math.Max(1, rect.Height)),
-            colour);
 }

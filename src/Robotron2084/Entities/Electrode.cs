@@ -16,8 +16,6 @@ namespace Robotron2084.Entities;
 /// interval of N frames is due at 6 x N.</remarks>
 public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 {
-    private readonly SpriteSet _sprites;
-
     /// <summary>The post picture's own 10x9 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(CollisionSizes.ElectrodeCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.ElectrodeCollisionSize.Height));
@@ -25,10 +23,11 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>How long each shrivel picture is held, in ROM frames.</summary>
     private static readonly int[] ShrivelSleepRomFrames = [6, 3, 2];
 
+    private readonly SpriteSet _sprites;
     private readonly int _wave;
+    private IntVector2 _position;
     private int _shrivelStep;
     private int _shrivelTimer;
-    private IntVector2 _position;
 
     /// <summary>Creates an electrode for the given wave.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -41,6 +40,26 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         _wave = wave;
     }
 
+    /// <summary>The post picture's own 10x9 box at <see cref="Position"/>.</summary>
+    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+
+    /// <summary>This electrode's picture: the live frame, or the current shrivel frame while it is dying.</summary>
+    public Texture2D CurrentAnimationFrame
+    {
+        get
+        {
+            int baseFrame = FamilyIndex * WavePaletteTables.PostPicturesPerFamily;
+            int frame = LifeState == EntityLifeState.Dying ? baseFrame + _shrivelStep : baseFrame;
+            return _sprites.ElectrodeAnimationFrames[frame];
+        }
+    }
+
+    /// <summary>Alive until something kills it; Dying while the shrivel plays.</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Top-left of the electrode; it never moves.</summary>
+    public IntVector2 Position => _position;
+
     /// <summary>Which of the 9 electrode picture sets this electrode draws, chosen by wave number.</summary>
     /// <remarks>The arcade names only the first four shapes; its own table cycles 9 sets over 10 waves.</remarks>
     internal int FamilyIndex => WavePaletteTables.PostFamilyForWave(_wave);
@@ -48,14 +67,17 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The palette slot the post is drawn in for this wave; the slot's colour may cycle.</summary>
     internal int TintSlot => WavePaletteTables.PostSlotForWave(_wave);
 
-    /// <summary>Top-left of the electrode; it never moves.</summary>
-    public IntVector2 Position => _position;
+    /// <summary>Draws the live or shrivel picture, as a solid silhouette in the wave's slot colour.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (LifeState == EntityLifeState.Dead)
+        {
+            return;
+        }
 
-    /// <summary>The post picture's own 10x9 box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
-
-    /// <summary>Alive until something kills it; Dying while the shrivel plays.</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(TintSlot));
+    }
 
     /// <summary>Starts the shrivel; does nothing unless the electrode is alive.</summary>
     public void Kill()
@@ -95,28 +117,5 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
             LifeState = EntityLifeState.Dead;
             return;
         }
-    }
-
-    /// <summary>This electrode's picture: the live frame, or the current shrivel frame while it is dying.</summary>
-    public Texture2D CurrentAnimationFrame
-    {
-        get
-        {
-            int baseFrame = FamilyIndex * WavePaletteTables.PostPicturesPerFamily;
-            int frame = LifeState == EntityLifeState.Dying ? baseFrame + _shrivelStep : baseFrame;
-            return _sprites.ElectrodeAnimationFrames[frame];
-        }
-    }
-
-    /// <summary>Draws the live or shrivel picture, as a solid silhouette in the wave's slot colour.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (LifeState == EntityLifeState.Dead)
-        {
-            return;
-        }
-
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(TintSlot));
     }
 }

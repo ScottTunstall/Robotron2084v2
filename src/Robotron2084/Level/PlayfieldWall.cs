@@ -21,17 +21,14 @@ public sealed class PlayfieldWall
     /// <summary>Wall strip thickness: spec's 4px widened by SpecScale (8 internal px at 2x).</summary>
     public static readonly int Thickness = ScreenSize.Scaled(CollisionSizes.WallThicknessSpecPixels);
 
-    private readonly Rectangle _playfieldBounds;
     private readonly WallColorCycle _cycle;
+    private readonly Rectangle _playfieldBounds;
 
     public PlayfieldWall(Rectangle playfieldBounds, WallColorCycle cycle)
     {
         _playfieldBounds = playfieldBounds;
         _cycle = cycle;
     }
-
-    /// <summary>The inner play area (entities must stay fully inside this).</summary>
-    public Rectangle PlayfieldBounds => _playfieldBounds;
 
     /// <summary>The playfield expanded by the wall on all sides.</summary>
     public Rectangle OuterBounds => new(
@@ -40,7 +37,8 @@ public sealed class PlayfieldWall
         _playfieldBounds.Width + 2 * Thickness,
         _playfieldBounds.Height + 2 * Thickness);
 
-    public void Update(GameTime gameTime) => _cycle.Update(gameTime);
+    /// <summary>The inner play area (entities must stay fully inside this).</summary>
+    public Rectangle PlayfieldBounds => _playfieldBounds;
 
     public void Draw(SpriteBatch spriteBatch, Texture2D wallPixel, Color? colorOverride = null)
     {
@@ -59,4 +57,6 @@ public sealed class PlayfieldWall
         bounds.Overlaps(new Rectangle(OuterBounds.X, OuterBounds.Bottom - Thickness, OuterBounds.Width, Thickness)) ||
         bounds.Overlaps(new Rectangle(OuterBounds.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height)) ||
         bounds.Overlaps(new Rectangle(OuterBounds.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height));
+
+    public void Update(GameTime gameTime) => _cycle.Update(gameTime);
 }

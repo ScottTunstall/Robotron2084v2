@@ -76,6 +76,12 @@ public sealed class PlayerControls
         return controls;
     }
 
+    /// <summary>
+    /// True while ANY shoot action is held (holding an aim key fires).
+    /// </summary>
+    public bool Firing(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
+        ShootDirection(keys, padOne, padTwo) != IntVector2.Zero;
+
     /// <summary>The move stick's direction (-1/0/1 per axis), from the bound MOVE actions.</summary>
     public IntVector2 MoveDirection(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
         new(
@@ -87,12 +93,6 @@ public sealed class PlayerControls
         new(
             Axis(InputAction.ShootRight, InputAction.ShootLeft, keys, padOne, padTwo),
             Axis(InputAction.ShootDown, InputAction.ShootUp, keys, padOne, padTwo));
-
-    /// <summary>
-    /// True while ANY shoot action is held (holding an aim key fires).
-    /// </summary>
-    public bool Firing(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
-        ShootDirection(keys, padOne, padTwo) != IntVector2.Zero;
 
     private int Axis(
         InputAction positive,

@@ -24,9 +24,9 @@ public sealed class EntriesMaximumState : IGameState
     private const int SecondLineColumn = 40;
     private const int SecondLineRow = 144;
 
-    private readonly GameServices _services;
     private readonly ScoreEntryCeremony _ceremony;
     private readonly int _holdTicks = ArcadeClock.PortTicks(ScreenTuning.EntriesMaximumHoldRomFrames);
+    private readonly GameServices _services;
     private int _elapsedTicks;
 
     /// <summary>Builds the page for the score whose initials hit the cap.</summary>
@@ -38,6 +38,12 @@ public sealed class EntriesMaximumState : IGameState
         _ceremony = ceremony;
     }
 
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+    {
+        DrawLine(spriteBatch, "5 ENTRIES MAXIMUM PER PLAYER", FirstLineColumn, FirstLineRow);
+        DrawLine(spriteBatch, "LOWEST ENTRY REPLACED", SecondLineColumn, SecondLineRow);
+    }
+
     public void Update(GameTime gameTime, GameStateManager manager)
     {
         if (++_elapsedTicks < _holdTicks)
@@ -46,12 +52,6 @@ public sealed class EntriesMaximumState : IGameState
         }
 
         manager.TransitionTo(_ceremony.NextScreen());
-    }
-
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
-    {
-        DrawLine(spriteBatch, "5 ENTRIES MAXIMUM PER PLAYER", FirstLineColumn, FirstLineRow);
-        DrawLine(spriteBatch, "LOWEST ENTRY REPLACED", SecondLineColumn, SecondLineRow);
     }
 
     private void DrawLine(SpriteBatch spriteBatch, string text, int column, int row) =>

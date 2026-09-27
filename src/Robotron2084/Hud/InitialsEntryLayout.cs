@@ -19,21 +19,20 @@ namespace Robotron2084.Hud;
 /// </remarks>
 public static class InitialsEntryLayout
 {
-    // ---- CONGP's three large-font lines ------------------------------------------
-    public const int PlayerColumn = 64;
+    // ---- the echo region and its cells -------------------------------------------
+    /// <summary>The echo region's column (ROM <c>$4680</c> = column 70, row 128).</summary>
+    public const int EchoColumn = 70;
 
-    public const int PlayerRow = 16;
-    public const int HeroColumn = 41;
-    public const int HeroRow = 48;
-    public const int PromptColumn = 45;
-    public const int PromptRow = 88;
+    /// <summary>The echo region's row (ROM <c>$4680</c> = column 70, row 128).</summary>
+    public const int EchoRow = 128;
 
-    // ---- TELSUB's two small-font instructions ------------------------------------
-    public const int SelectColumn = 47;
-
-    public const int SelectRow = 192;
     public const int FireColumn = 50;
+
     public const int FireRow = 204;
+
+    public const int HeroColumn = 41;
+
+    public const int HeroRow = 48;
 
     /// <summary>CONGP's <c>COLOR $44</c>: the page's ink, slot 4 for the large-font lines.</summary>
     public const int InkSlot = 4;
@@ -41,12 +40,20 @@ public static class InitialsEntryLayout
     /// <summary>TELSUB's <c>COLOR $99</c>: white for the instructions and the frob markers.</summary>
     public const int InstructionSlot = 9;
 
-    // ---- the echo region and its cells -------------------------------------------
-    /// <summary>The echo region's column (ROM <c>$4680</c> = column 70, row 128).</summary>
-    public const int EchoColumn = 70;
+    /// <summary>Rows below the echo cursor of <c>G0SUB</c>'s frob marker (`STA 8,X`).</summary>
+    public const int MarkerRowOffset = 8;
 
-    /// <summary>The echo region's row (ROM <c>$4680</c> = column 70, row 128).</summary>
-    public const int EchoRow = 128;
+    // ---- CONGP's three large-font lines ------------------------------------------
+    public const int PlayerColumn = 64;
+
+    public const int PlayerRow = 16;
+    public const int PromptColumn = 45;
+    public const int PromptRow = 88;
+
+    // ---- TELSUB's two small-font instructions ------------------------------------
+    public const int SelectColumn = 47;
+
+    public const int SelectRow = 192;
 
     /// <summary>
     /// One cell's width: the port's own large-font advance — a glyph plus the ROM's one-pixel gap
@@ -56,21 +63,18 @@ public static class InitialsEntryLayout
     /// </summary>
     public static int CellAdvancePixels => ScreenSize.Scaled(HudLayout.HudScoreDigitAdvancePixels);
 
-    /// <summary>Rows below the echo cursor of <c>G0SUB</c>'s frob marker (`STA 8,X`).</summary>
-    public const int MarkerRowOffset = 8;
+    /// <summary>The Y the three letters are drawn at, in port pixels.</summary>
+    public static int EchoY => HudLayout.ArcadeY(EchoRow);
+
+    /// <summary>The height of one arcade row on the port's canvas — the marker is a single row.</summary>
+    public static int MarkerHeightPixels => HudLayout.ArcadeY(EchoRow + MarkerRowOffset + 1) - MarkerY;
 
     /// <summary>The marker's width: the raw video byte <c>$99</c> lights both pixels of one column.</summary>
     public static int MarkerWidthPixels => HudLayout.ArcadeX(ScreenSize.ArcadePixelsPerColumn);
 
-    /// <summary>The X of cell <paramref name="index"/> (0-based), in port pixels.</summary>
-    public static int CellX(int index) => HudLayout.ArcadeColumnX(EchoColumn) + (index * CellAdvancePixels);
-
-    /// <summary>The Y the three letters are drawn at, in port pixels.</summary>
-    public static int EchoY => HudLayout.ArcadeY(EchoRow);
-
     /// <summary>The Y of the row the frob markers sit on, in port pixels.</summary>
     public static int MarkerY => HudLayout.ArcadeY(EchoRow + MarkerRowOffset);
 
-    /// <summary>The height of one arcade row on the port's canvas — the marker is a single row.</summary>
-    public static int MarkerHeightPixels => HudLayout.ArcadeY(EchoRow + MarkerRowOffset + 1) - MarkerY;
+    /// <summary>The X of cell <paramref name="index"/> (0-based), in port pixels.</summary>
+    public static int CellX(int index) => HudLayout.ArcadeColumnX(EchoColumn) + (index * CellAdvancePixels);
 }

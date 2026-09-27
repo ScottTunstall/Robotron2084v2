@@ -14,13 +14,6 @@ namespace Robotron2084.Palette;
 /// </summary>
 public sealed class GamePalette
 {
-    /// <summary>ROM default palette (CRTAB, ROM $DA51) — the initial 16 slots.</summary>
-    public static readonly byte[] DefaultSlots =
-    [
-        0x00, 0x07, 0x17, 0xC7, 0x1F, 0x3F, 0x38, 0xC0,
-        0xA4, 0xFF, 0x38, 0x17, 0xCC, 0x81, 0x81, 0x07,
-    ];
-
     /// <summary>
     /// The six cycling-slot marker colour bytes (slots 10-15) exactly as the
     /// sprite PNGs encode them (RobotronPaletteService de-duplicated values —
@@ -31,14 +24,30 @@ public sealed class GamePalette
         0xC4, 0xF4, 0xCC, 0x81, 0x45, 0x2F,
     ];
 
+    /// <summary>ROM default palette (CRTAB, ROM $DA51) — the initial 16 slots.</summary>
+    public static readonly byte[] DefaultSlots =
+    [
+        0x00, 0x07, 0x17, 0xC7, 0x1F, 0x3F, 0x38, 0xC0,
+        0xA4, 0xFF, 0x38, 0x17, 0xCC, 0x81, 0x81, 0x07,
+    ];
+
     private readonly byte[] _slots = (byte[])DefaultSlots.Clone();
     private readonly bool[] _suspended = new bool[16];
 
-    /// <summary>The current 8-bit colour code of a slot (0-15).</summary>
-    public int SlotValue(int slot) => _slots[slot];
+    /// <summary>The live RGB of a slot.</summary>
+    public Color Color(int slot) => RobotronColor.FromByte(_slots[slot]);
+
+    /// <summary>True while a slot's colour process is stopped.</summary>
+    public bool IsSlotSuspended(int slot) => _suspended[slot];
+
+    /// <summary>Lets a slot's colour process run again (the ROM's `COLST`).</summary>
+    public void ResumeSlot(int slot) => _suspended[slot] = false;
 
     /// <summary>Writes a slot's current colour code (the colour processes do this).</summary>
     public void SetSlot(int slot, byte value) => _slots[slot] = value;
+
+    /// <summary>The current 8-bit colour code of a slot (0-15).</summary>
+    public int SlotValue(int slot) => _slots[slot];
 
     /// <summary>
     /// Freezes a slot's colour process (the ROM's "KILL OFF DECAY": the player
@@ -47,15 +56,6 @@ public sealed class GamePalette
     /// ROM's `COLST`, which recreates the colour processes afterwards.
     /// </summary>
     public void SuspendSlot(int slot) => _suspended[slot] = true;
-
-    /// <summary>Lets a slot's colour process run again (the ROM's `COLST`).</summary>
-    public void ResumeSlot(int slot) => _suspended[slot] = false;
-
-    /// <summary>True while a slot's colour process is stopped.</summary>
-    public bool IsSlotSuspended(int slot) => _suspended[slot];
-
-    /// <summary>The live RGB of a slot.</summary>
-    public Color Color(int slot) => RobotronColor.FromByte(_slots[slot]);
 
     /// <summary>
     /// Pushes the live colours of the six cycling slots (10-15) into the

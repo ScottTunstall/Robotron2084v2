@@ -39,18 +39,17 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class TitleScreenState : IGameState, IAttractState
 {
-    private const string WelcomeLineOne = "PRESENTED BY";
-    private const string WelcomeLineTwo = "WILLIAMS ELECTRONICS INC.";
+    private const string CopyrightLine = "COPYRIGHT 1982 WILLIAMS ELECTRONICS INC.";
+    private const int CopyrightRow = 308;
 
     /// <summary>
-    /// The ROM's own credit strings under the message (notes §103): "DESIGNED BY VID KIDZ" and
-    /// "FOR WILLIAMS ELECTRONICS INC." are at ROM $6D85 (with a copy at $7F50 for the copyright).
-    /// The reference screen prints them in the SMALL font.
+    /// The copyright line's OWN colour. Slot 2 is the page's own BLUE (`$C0`) — the
+    /// colour the ROM's string script writes for a credit line (`04 22` in front of "CREDITS: n" at
+    /// `$6D95`), which is the blue an arcade reference screenshot shows on that very line. It is
+    /// one of the seven entries the page writes, so it cycles with everything else: the white chase
+    /// sweeps through it, exactly as it sweeps through the orange above (notes §106).
     /// </summary>
-    private const string DesignedByLine = "DESIGNED BY VID KIDZ";
-
-    private const string ForWilliamsLine = "FOR WILLIAMS ELECTRONICS INC.";
-    private const string CopyrightLine = "COPYRIGHT 1982 WILLIAMS ELECTRONICS INC.";
+    private const int CopyrightSlot = 2;
 
     /// <summary>
     /// The port's own credit line, which sits among these (notes §102.1). The
@@ -59,30 +58,20 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private const string CreditLine = "REVERSE ENGINEERING AND DEVELOPMENT BY SCOTT TUNSTALL";
 
-    // Layout of the presentation page (notes §103/§107). It sits inside the border of moving W logos, between
-    // the top row's bottom edge (canvas row 66) and the bottom row's top edge (row 323). The wordmark is drawn at the port's 2x sprite
-    // scale, which is why the wordmark is 58 canvas px tall. The page's TEXT alternates between two
-    // panes, swapping every TitleTextSwapSeconds: there is no room for both at
-    // once — and that is exactly what lets the arcade's two message lines have an EMPTY ROW between
-    // them (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
-    // an 8-row line grid, i.e. one blank line).
-    private const int WordmarkRow = 72;
-
-    private const int Logo2084Row = 138;
-
-    // Pane 1 — the arcade's own lines: the welcome message (LARGE font), then the credit strings
-    // (SMALL font) with the copyright on its own line below them. An empty 18-px row sits between
-    // the two message lines, and an empty 16-px row between the credits and the copyright.
-    private const int WelcomeRowOne = 214;
-
-    private const int WelcomeRowTwo = 244;
-    private const int DesignedByRow = 268;
-    private const int ForWilliamsRow = 284;
-    private const int CopyrightRow = 308;
-
     // Pane 2 — the port's own lines: its credit and the F-key menu (notes §101/§102.1).
     private const int CreditRow = 214;
 
+    /// <summary>
+    /// The ROM's own credit strings under the message (notes §103): "DESIGNED BY VID KIDZ" and
+    /// "FOR WILLIAMS ELECTRONICS INC." are at ROM $6D85 (with a copy at $7F50 for the copyright).
+    /// The reference screen prints them in the SMALL font.
+    /// </summary>
+    private const string DesignedByLine = "DESIGNED BY VID KIDZ";
+
+    private const int DesignedByRow = 268;
+    private const string ForWilliamsLine = "FOR WILLIAMS ELECTRONICS INC.";
+    private const int ForWilliamsRow = 284;
+    private const int Logo2084Row = 138;
     private const int MenuRow = 236;
 
     /// <summary>
@@ -95,31 +84,50 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private const int TextSlot = PresentationPagePalette.TextSlot;
 
-    /// <summary>
-    /// The copyright line's OWN colour. Slot 2 is the page's own BLUE (`$C0`) — the
-    /// colour the ROM's string script writes for a credit line (`04 22` in front of "CREDITS: n" at
-    /// `$6D95`), which is the blue an arcade reference screenshot shows on that very line. It is
-    /// one of the seven entries the page writes, so it cycles with everything else: the white chase
-    /// sweeps through it, exactly as it sweeps through the orange above (notes §106).
-    /// </summary>
-    private const int CopyrightSlot = 2;
+    private const string WelcomeLineOne = "PRESENTED BY";
+    private const string WelcomeLineTwo = "WILLIAMS ELECTRONICS INC.";
 
-    private readonly IPlayerInputSource _input;
-    private readonly SpriteSet _sprites;
-    private readonly HighScoreStore _highScores;
-    private readonly ControlSettings _controls;
-    private readonly GameServices _services;
-    private readonly PresentationPagePalette _colour = new();
+    // Pane 1 — the arcade's own lines: the welcome message (LARGE font), then the credit strings
+    // (SMALL font) with the copyright on its own line below them. An empty 18-px row sits between
+    // the two message lines, and an empty 16-px row between the credits and the copyright.
+    private const int WelcomeRowOne = 214;
+
+    private const int WelcomeRowTwo = 244;
+
+    // Layout of the presentation page (notes §103/§107). It sits inside the border of moving W logos, between
+    // the top row's bottom edge (canvas row 66) and the bottom row's top edge (row 323). The wordmark is drawn at the port's 2x sprite
+    // scale, which is why the wordmark is 58 canvas px tall. The page's TEXT alternates between two
+    // panes, swapping every TitleTextSwapSeconds: there is no room for both at
+    // once — and that is exactly what lets the arcade's two message lines have an EMPTY ROW between
+    // them (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
+    // an 8-row line grid, i.e. one blank line).
+    private const int WordmarkRow = 72;
+
+    /// <summary>The title's port-only menu (notes §101).</summary>
+    private static readonly string[] Options =
+    [
+        "F1 ONE PLAYER GAME",
+        "F2 TWO PLAYER GAME (ALTERNATE)",
+        "F3 TWO PLAYER (SIMULTANEOUS)",
+        "F10 DEFINE INPUTS",
+    ];
+
     private readonly WilliamsLogoBorder _border;
+    private readonly ButtonEdgeDetector _buttons = new();
+    private readonly PresentationPagePalette _colour = new();
+    private readonly ControlSettings _controls;
+    private readonly HighScoreStore _highScores;
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(AttractTuning.TitleIdleSeconds);
+    private readonly IPlayerInputSource _input;
+    private readonly GameServices _services;
+    private readonly SpriteSet _sprites;
     private readonly TimeSpan _textSwap = TimeSpan.FromSeconds(AttractTuning.TitleTextSwapSeconds);
-    private TimeSpan _idleElapsed;
-    private TimeSpan _textElapsed;
 
     /// <summary>True while the ARCADE's text pane is up; it alternates with the port's (notes §107).</summary>
     private bool _arcadeText = true;
 
-    private readonly ButtonEdgeDetector _buttons = new();
+    private TimeSpan _idleElapsed;
+    private TimeSpan _textElapsed;
 
     public TitleScreenState(GameServices services)
     {
@@ -137,6 +145,39 @@ public sealed class TitleScreenState : IGameState, IAttractState
         if (_sprites.Blitter.Palette is { } palette)
         {
             _colour.Start(palette);
+        }
+    }
+
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+    {
+        // The caller clears to black. This is the ROM's Williams PRESENTATION page (notes §103):
+        // the border of 28 moving "W" logos, the logos, the operator's welcome message (two
+        // 25-character lines) and the credit strings. The arcade's "CREDITS: n" line is not drawn,
+        // because the port has no credits, and neither the playfield wall nor the score/men belong to
+        // this page: the cabinet's other attract page carries those.
+        _border.Draw(spriteBatch, _sprites.Blitter);
+
+        // The two logos, traced from an arcade screenshot (notes §103.4) — the R5 CPU
+        // ROM we hold has no attract wordmark (§103.2). The wordmark's masks are drawn in the two
+        // entries the page's wordmark cycle is on this step, so it colour-cycles through the page's own
+        // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
+        // body on a yellow rim. The "2084" mark keeps its traced colours. Both at the port's 2x
+        // sprite scale.
+        DrawCentredMask(spriteBatch, _sprites.TitleWordmarkRim, WordmarkRow, _colour.WordmarkRimSlot);
+        DrawCentredMask(spriteBatch, _sprites.TitleWordmarkCore, WordmarkRow, _colour.WordmarkColorSlot);
+        DrawCentredLogo(spriteBatch, _sprites.Title2084, Logo2084Row);
+
+        // The page's text: ONE of its two panes, alternating every TitleTextSwapSeconds
+        // (notes §107). Both are drawn in the page's own text slot — the ROM's operand `$66`, entry
+        // 6, ORANGE with the white flash sweeping through it (notes §106) — so the port's credit
+        // and the shortcut keys flash with the arcade's own lines.
+        if (_arcadeText)
+        {
+            DrawArcadeText(spriteBatch);
+        }
+        else
+        {
+            DrawPortText(spriteBatch);
         }
     }
 
@@ -216,37 +257,15 @@ public sealed class TitleScreenState : IGameState, IAttractState
         }
     }
 
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+    /// <summary>
+    /// The X that centres a line on the canvas, measured with the font's own glyph widths
+    /// (<see cref="ArcadeText.MeasureSmallText"/>/<see cref="ArcadeText.MeasureLargeText"/>) — the two
+    /// fonts advance differently, so a fixed per-character width would mis-centre one of them.
+    /// </summary>
+    private int CenteredX(string text, bool large)
     {
-        // The caller clears to black. This is the ROM's Williams PRESENTATION page (notes §103):
-        // the border of 28 moving "W" logos, the logos, the operator's welcome message (two
-        // 25-character lines) and the credit strings. The arcade's "CREDITS: n" line is not drawn,
-        // because the port has no credits, and neither the playfield wall nor the score/men belong to
-        // this page: the cabinet's other attract page carries those.
-        _border.Draw(spriteBatch, _sprites.Blitter);
-
-        // The two logos, traced from an arcade screenshot (notes §103.4) — the R5 CPU
-        // ROM we hold has no attract wordmark (§103.2). The wordmark's masks are drawn in the two
-        // entries the page's wordmark cycle is on this step, so it colour-cycles through the page's own
-        // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
-        // body on a yellow rim. The "2084" mark keeps its traced colours. Both at the port's 2x
-        // sprite scale.
-        DrawCentredMask(spriteBatch, _sprites.TitleWordmarkRim, WordmarkRow, _colour.WordmarkRimSlot);
-        DrawCentredMask(spriteBatch, _sprites.TitleWordmarkCore, WordmarkRow, _colour.WordmarkColorSlot);
-        DrawCentredLogo(spriteBatch, _sprites.Title2084, Logo2084Row);
-
-        // The page's text: ONE of its two panes, alternating every TitleTextSwapSeconds
-        // (notes §107). Both are drawn in the page's own text slot — the ROM's operand `$66`, entry
-        // 6, ORANGE with the white flash sweeping through it (notes §106) — so the port's credit
-        // and the shortcut keys flash with the arcade's own lines.
-        if (_arcadeText)
-        {
-            DrawArcadeText(spriteBatch);
-        }
-        else
-        {
-            DrawPortText(spriteBatch);
-        }
+        int width = ScreenSize.Scaled(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
+        return (ScreenSize.Width - width) / 2;
     }
 
     /// <summary>
@@ -264,44 +283,12 @@ public sealed class TitleScreenState : IGameState, IAttractState
         DrawCenteredSmallText(spriteBatch, CopyrightLine, CopyrightRow, CopyrightSlot);
     }
 
-    /// <summary>
-    /// Pane 2 — the port's own lines: its credit (notes §102.1) and the F-key menu
-    /// (notes §101). Port-only and labelled as such; they take the arcade pane's place, and the
-    /// arcade's START buttons keep working exactly as they did either way.
-    /// </summary>
-    private void DrawPortText(SpriteBatch spriteBatch)
-    {
-        DrawCenteredSmallText(spriteBatch, CreditLine, CreditRow, TextSlot);
+    /// <summary>Centres a large-font line horizontally and prints it in one slot.</summary>
+    private void DrawCenteredLargeText(SpriteBatch spriteBatch, string text, int y, int slot) =>
+        _sprites.Text.DrawLargeFontText(spriteBatch, text, CenteredX(text, large: true), y, slot);
 
-        int y = MenuRow;
-        foreach (string option in Options)
-        {
-            DrawCenteredSmallText(spriteBatch, option, y, TextSlot);
-            y += ScreenSize.Scaled(HudLayout.TitleOptionRowStepPixels);
-        }
-    }
-
-    /// <summary>The title's port-only menu (notes §101).</summary>
-    private static readonly string[] Options =
-    [
-        "F1 ONE PLAYER GAME",
-        "F2 TWO PLAYER GAME (ALTERNATE)",
-        "F3 TWO PLAYER (SIMULTANEOUS)",
-        "F10 DEFINE INPUTS",
-    ];
-
-    /// <summary>Draws an arcade-small-font line centred on the canvas.</summary>
-    /// <summary>
-    /// The page's colour set dies with the page (notes §103.3/§106): both ways off this screen
-    /// stand the ROM's CRTAB values back up over the seven entries the page had taken.
-    /// </summary>
-    private void StopColours()
-    {
-        if (_sprites.Blitter.Palette is { } palette)
-        {
-            _colour.Stop(palette);
-        }
-    }
+    private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int slot) =>
+            _sprites.Text.DrawSmallFontText(spriteBatch, text, CenteredX(text, large: false), y, slot);
 
     /// <summary>Centres one traced logo horizontally, at the port's 2x sprite scale.</summary>
     private void DrawCentredLogo(SpriteBatch spriteBatch, Texture2D texture, int y)
@@ -326,21 +313,33 @@ public sealed class TitleScreenState : IGameState, IAttractState
         _sprites.Blitter.DrawSpriteSolid(spriteBatch, texture, bounds, _sprites.Blitter.SlotColor(slot));
     }
 
-    private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int slot) =>
-        _sprites.Text.DrawSmallFontText(spriteBatch, text, CenteredX(text, large: false), y, slot);
-
-    /// <summary>Centres a large-font line horizontally and prints it in one slot.</summary>
-    private void DrawCenteredLargeText(SpriteBatch spriteBatch, string text, int y, int slot) =>
-        _sprites.Text.DrawLargeFontText(spriteBatch, text, CenteredX(text, large: true), y, slot);
-
     /// <summary>
-    /// The X that centres a line on the canvas, measured with the font's own glyph widths
-    /// (<see cref="ArcadeText.MeasureSmallText"/>/<see cref="ArcadeText.MeasureLargeText"/>) — the two
-    /// fonts advance differently, so a fixed per-character width would mis-centre one of them.
+    /// Pane 2 — the port's own lines: its credit (notes §102.1) and the F-key menu
+    /// (notes §101). Port-only and labelled as such; they take the arcade pane's place, and the
+    /// arcade's START buttons keep working exactly as they did either way.
     /// </summary>
-    private int CenteredX(string text, bool large)
+    private void DrawPortText(SpriteBatch spriteBatch)
     {
-        int width = ScreenSize.Scaled(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
-        return (ScreenSize.Width - width) / 2;
+        DrawCenteredSmallText(spriteBatch, CreditLine, CreditRow, TextSlot);
+
+        int y = MenuRow;
+        foreach (string option in Options)
+        {
+            DrawCenteredSmallText(spriteBatch, option, y, TextSlot);
+            y += ScreenSize.Scaled(HudLayout.TitleOptionRowStepPixels);
+        }
+    }
+
+    /// <summary>Draws an arcade-small-font line centred on the canvas.</summary>
+    /// <summary>
+    /// The page's colour set dies with the page (notes §103.3/§106): both ways off this screen
+    /// stand the ROM's CRTAB values back up over the seven entries the page had taken.
+    /// </summary>
+    private void StopColours()
+    {
+        if (_sprites.Blitter.Palette is { } palette)
+        {
+            _colour.Stop(palette);
+        }
     }
 }

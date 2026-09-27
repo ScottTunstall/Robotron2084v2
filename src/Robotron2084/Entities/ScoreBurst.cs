@@ -21,21 +21,24 @@ namespace Robotron2084.Entities;
 /// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class ScoreBurst : IEntity
 {
-    private readonly SpriteSet _sprites;
-    private readonly Texture2D[] _animationFrames;
-    private readonly Texture2D _points;
-    private readonly int _burstSlot;
-    private readonly int _pointsSlot;
-    private readonly Rectangle _bounds;      // where the enemy was drawn
-    private readonly Rectangle _pointsBounds;
-    private int _timer;                     // Counts up to the next step: 5 per tick, 6 per arcade frame.
-    private int _animationFrameIndex = FirstBurstAnimationFrameIndex;
-    private int _remaining;
-    private bool _showingPoints;
-    private int _pointsStepsRemaining;
-
     /// <summary>The first picture the burst shows (the ROM starts one past the live frame).</summary>
     internal const int FirstBurstAnimationFrameIndex = 2;
+
+    private readonly Texture2D[] _animationFrames;
+    private readonly Rectangle _bounds;
+    private readonly int _burstSlot;
+    private readonly Texture2D _points;
+
+    // where the enemy was drawn
+    private readonly Rectangle _pointsBounds;
+
+    private readonly int _pointsSlot;
+    private readonly SpriteSet _sprites;
+    private int _animationFrameIndex = FirstBurstAnimationFrameIndex;
+    private int _pointsStepsRemaining;
+    private int _remaining;
+    private bool _showingPoints;
+    private int _timer;                     // Counts up to the next step: 5 per tick, 6 per arcade frame.
 
     /// <summary>Builds one burst — both static factories funnel through here.</summary>
     private ScoreBurst(
@@ -63,17 +66,32 @@ public sealed class ScoreBurst : IEntity
             bounds.Height);
     }
 
-    /// <summary>Creates the burst a killed spheroid leaves: silhouette in the player's score colour, points in slot 15.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
-    /// <param name="bounds">Where the spheroid was drawn when it died.</param>
-    public static ScoreBurst ForSpheroid(SpriteSet sprites, Rectangle bounds) => new(
-        sprites,
-        frames: sprites.SpheroidAnimationFrames,
-        points: sprites.RescueScoreDisplays[0],
-        count: ScoreBurstTuning.SpheroidCount,
-        burstSlot: ScoreBurstTuning.SpheroidBurstSlot,
-        pointsSlot: ScoreBurstTuning.SpheroidPointsSlot,
-        bounds: bounds);
+    /// <summary>The dead enemy's own box, which is also the box the burst draws in.</summary>
+    public Rectangle Bounds => _bounds;
+
+    /// <summary>Alive for both phases (silhouette, then points), then Dead.</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>The dead enemy's top-left corner; the burst is drawn at the size it died at.</summary>
+    public IntVector2 Position => new(_bounds.X, _bounds.Y);
+
+    /// <summary>The picture the burst is currently drawing (valid while <see cref="ShowingPoints"/> is false).</summary>
+    internal int AnimationFrameIndex => _animationFrameIndex;
+
+    /// <summary>The burst's palette slot (test hook — a cycling slot, so it shimmers).</summary>
+    internal int BurstSlot => _burstSlot;
+
+    /// <summary>Where the points picture is drawn: the death spot + 1 column / +5 rows (test hook).</summary>
+    internal Rectangle PointsBounds => _pointsBounds;
+
+    /// <summary>The points picture's palette slot (test hook).</summary>
+    internal int PointsSlot => _pointsSlot;
+
+    /// <summary>The steps left of the "1000" display (its 30-step countdown).</summary>
+    internal int PointsStepsRemaining => _pointsStepsRemaining;
+
+    /// <summary>True once the burst has finished and the "1000" is showing.</summary>
+    internal bool ShowingPoints => _showingPoints;
 
     /// <summary>Creates the burst a killed quark leaves: both phases in the same slot-13 colour.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -87,23 +105,38 @@ public sealed class ScoreBurst : IEntity
         pointsSlot: ScoreBurstTuning.QuarkPointsSlot,
         bounds: bounds);
 
-    /// <summary>The dead enemy's top-left corner; the burst is drawn at the size it died at.</summary>
-    public IntVector2 Position => new(_bounds.X, _bounds.Y);
+    /// <summary>Creates the burst a killed spheroid leaves: silhouette in the player's score colour, points in slot 15.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="bounds">Where the spheroid was drawn when it died.</param>
+    public static ScoreBurst ForSpheroid(SpriteSet sprites, Rectangle bounds) => new(
+        sprites,
+        frames: sprites.SpheroidAnimationFrames,
+        points: sprites.RescueScoreDisplays[0],
+        count: ScoreBurstTuning.SpheroidCount,
+        burstSlot: ScoreBurstTuning.SpheroidBurstSlot,
+        pointsSlot: ScoreBurstTuning.SpheroidPointsSlot,
+        bounds: bounds);
 
-    /// <summary>The dead enemy's own box, which is also the box the burst draws in.</summary>
-    public Rectangle Bounds => _bounds;
+    /// <summary>Draws the current phase: the solid silhouette, or the solid "1000" once the enemy is gone.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
 
-    /// <summary>Alive for both phases (silhouette, then points), then Dead.</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+        if (_showingPoints)
+        {
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _points, _pointsBounds, _sprites.Blitter.SlotColor(_pointsSlot));
+            return;
+        }
 
-    /// <summary>The picture the burst is currently drawing (valid while <see cref="ShowingPoints"/> is false).</summary>
-    internal int AnimationFrameIndex => _animationFrameIndex;
-
-    /// <summary>True once the burst has finished and the "1000" is showing.</summary>
-    internal bool ShowingPoints => _showingPoints;
-
-    /// <summary>The steps left of the "1000" display (its 30-step countdown).</summary>
-    internal int PointsStepsRemaining => _pointsStepsRemaining;
+        if (_animationFrameIndex < _animationFrames.Length)
+        {
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds, _sprites.Blitter.SlotColor(_burstSlot));
+        }
+    }
 
     /// <summary>Advances the effect on its 2-frame clock: one silhouette per step, then the points.</summary>
     /// <param name="gameTime">Unused — the steps are counted in ticks.</param>
@@ -143,34 +176,4 @@ public sealed class ScoreBurst : IEntity
             LifeState = EntityLifeState.Dead;
         }
     }
-
-    /// <summary>Draws the current phase: the solid silhouette, or the solid "1000" once the enemy is gone.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (LifeState != EntityLifeState.Alive)
-        {
-            return;
-        }
-
-        if (_showingPoints)
-        {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _points, _pointsBounds, _sprites.Blitter.SlotColor(_pointsSlot));
-            return;
-        }
-
-        if (_animationFrameIndex < _animationFrames.Length)
-        {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds, _sprites.Blitter.SlotColor(_burstSlot));
-        }
-    }
-
-    /// <summary>The burst's palette slot (test hook — a cycling slot, so it shimmers).</summary>
-    internal int BurstSlot => _burstSlot;
-
-    /// <summary>The points picture's palette slot (test hook).</summary>
-    internal int PointsSlot => _pointsSlot;
-
-    /// <summary>Where the points picture is drawn: the death spot + 1 column / +5 rows (test hook).</summary>
-    internal Rectangle PointsBounds => _pointsBounds;
 }

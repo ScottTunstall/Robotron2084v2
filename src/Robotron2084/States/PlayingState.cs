@@ -34,17 +34,20 @@ public sealed class PlayingState : IGameState
 
     private static readonly Rectangle InnerBounds = PlayfieldLayout.InnerBounds;
 
-    private readonly SpriteSet _sprites;
-    private readonly HighScoreStore _highScores;
-    private readonly GameSession _session;
     private readonly LevelParameterGenerator _generator = new();
-    private readonly Random _random = new();
+    private readonly HighScoreStore _highScores;
     private readonly PauseToggle _pause = new();
+    private readonly Random _random = new();
+    private readonly GameSession _session;
+    private readonly SpriteSet _sprites;
     private PlayField _field;
+    private int _playerOutMessageTicks;
+
+    // "PLAYER n GAME OVER" (ROM NAP $60)
+    private int _playerOutNumber;
+
     private bool _restartHandled;       // one-shot so the death branch fires exactly once
     private int _turnMessageTicks;      // "PLAYER n" at a 2-player turn start (ROM NAP 115)
-    private int _playerOutMessageTicks; // "PLAYER n GAME OVER" (ROM NAP $60)
-    private int _playerOutNumber;
 
     public PlayingState(SpriteSet sprites, HighScoreStore highScores, GameSession session)
     {
@@ -69,25 +72,44 @@ public sealed class PlayingState : IGameState
         return new PlayingState(sprites, highScores, GameSession.NewGame(mode, playerOne, playerTwo, controls));
     }
 
-    /// <summary>Builds the playfield for whoever's turn it is, from their own state.</summary>
-    private PlayField BuildField()
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        PlayerSlot slot = _session.Current;
-        LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
-        WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, slot.Input, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, pixelCollision: new SpriteCollision());
-    }
+        _field.Draw(spriteBatch);
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds);
+        ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
 
-    /// <summary>
-    /// ROM RRG23 PLS0D: at the start of every 2-player turn the ROM prints
-    /// "PLAYER n" at the screen centre and waits NAP 115 before erasing it. A
-    /// 1-player game skips it entirely (<c>LDA PLRCNT / DECA / BEQ PLS0A</c>).
-    /// </summary>
-    private void AnnounceTurn()
-    {
-        _turnMessageTicks = _session.IsTwoPlayer
-            ? ArcadeClock.PortTicks(ScreenTuning.PlayerTurnMessageRomFrames)
-            : 0;
+        if (_pause.IsPaused)
+        {
+            // Port-only banner, in the wave's own message colour so it reads as part of
+            // the cabinet's vocabulary rather than a debug overlay.
+            ArcadeHud.DrawMessageText(
+                spriteBatch,
+                _sprites,
+                "PAUSED",
+                HudLayout.PausedMessageColumn,
+                HudLayout.PausedMessageRow,
+                WavePaletteTables.PostSlotForWave(_session.Current.Wave));
+        }
+
+        if (_playerOutMessageTicks > 0)
+        {
+            // ROM string 75: "PLAYER n" at $3F79 then "GAME OVER" at $3E86.
+            int messageSlot = WavePaletteTables.PostSlotForWave(_session.Current.Wave);
+            ArcadeHud.DrawMessageText(spriteBatch, _sprites, $"PLAYER {_playerOutNumber}", HudLayout.PlayerTurnMessageColumn, HudLayout.PlayerGameOverMessageRow, messageSlot);
+            ArcadeHud.DrawMessageText(spriteBatch, _sprites, "GAME OVER", HudLayout.GameOverMessageColumn, HudLayout.GameOverMessageRow, messageSlot);
+        }
+        else if (_turnMessageTicks > 0)
+        {
+            // ROM string 103: "PLAYER n" at $3F7A, in the wave's POST colour
+            // (PLS0D: LDA PSTCOL / STA TEXCOL), for NAP 115.
+            ArcadeHud.DrawMessageText(
+                spriteBatch,
+                _sprites,
+                $"PLAYER {_session.Current.Number}",
+                HudLayout.PlayerTurnMessageColumn,
+                HudLayout.PlayerTurnMessageRow,
+                WavePaletteTables.PostSlotForWave(_session.Current.Wave));
+        }
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -142,20 +164,24 @@ public sealed class PlayingState : IGameState
     }
 
     /// <summary>
-    /// ROM GEXEC0: the wave is cleared for whoever is playing — only THEIR wave
-    /// counter advances (<c>INC PWAV,X</c>, skipping 0) and only their state
-    /// carries over.
+    /// ROM RRG23 PLS0D: at the start of every 2-player turn the ROM prints
+    /// "PLAYER n" at the screen centre and waits NAP 115 before erasing it. A
+    /// 1-player game skips it entirely (<c>LDA PLRCNT / DECA / BEQ PLS0A</c>).
     /// </summary>
-    private void HandleWaveCleared(GameStateManager manager)
+    private void AnnounceTurn()
+    {
+        _turnMessageTicks = _session.IsTwoPlayer
+            ? ArcadeClock.PortTicks(ScreenTuning.PlayerTurnMessageRomFrames)
+            : 0;
+    }
+
+    /// <summary>Builds the playfield for whoever's turn it is, from their own state.</summary>
+    private PlayField BuildField()
     {
         PlayerSlot slot = _session.Current;
-        int clearedWave = slot.Wave;
-        SyncSlotFromField();
-
-        // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
-        slot.Wave = (slot.Wave % WaveCounterWrap) + 1;
-
-        manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session, clearedWave));
+        LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
+        WallColorCycle cycle = new();
+        return new PlayField(_sprites, parameters, slot.Input, InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, pixelCollision: new SpriteCollision());
     }
 
     /// <summary>
@@ -197,46 +223,23 @@ public sealed class PlayingState : IGameState
         AnnounceTurn();
     }
 
+    /// <summary>
+    /// ROM GEXEC0: the wave is cleared for whoever is playing — only THEIR wave
+    /// counter advances (<c>INC PWAV,X</c>, skipping 0) and only their state
+    /// carries over.
+    /// </summary>
+    private void HandleWaveCleared(GameStateManager manager)
+    {
+        PlayerSlot slot = _session.Current;
+        int clearedWave = slot.Wave;
+        SyncSlotFromField();
+
+        // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
+        slot.Wave = (slot.Wave % WaveCounterWrap) + 1;
+
+        manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session, clearedWave));
+    }
+
     /// <summary>Copies the live field's counters back into the current player's slot.</summary>
     private void SyncSlotFromField() => _field.SyncInto(_session.Current);
-
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
-    {
-        _field.Draw(spriteBatch);
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, InnerBounds);
-        ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
-
-        if (_pause.IsPaused)
-        {
-            // Port-only banner, in the wave's own message colour so it reads as part of
-            // the cabinet's vocabulary rather than a debug overlay.
-            ArcadeHud.DrawMessageText(
-                spriteBatch,
-                _sprites,
-                "PAUSED",
-                HudLayout.PausedMessageColumn,
-                HudLayout.PausedMessageRow,
-                WavePaletteTables.PostSlotForWave(_session.Current.Wave));
-        }
-
-        if (_playerOutMessageTicks > 0)
-        {
-            // ROM string 75: "PLAYER n" at $3F79 then "GAME OVER" at $3E86.
-            int messageSlot = WavePaletteTables.PostSlotForWave(_session.Current.Wave);
-            ArcadeHud.DrawMessageText(spriteBatch, _sprites, $"PLAYER {_playerOutNumber}", HudLayout.PlayerTurnMessageColumn, HudLayout.PlayerGameOverMessageRow, messageSlot);
-            ArcadeHud.DrawMessageText(spriteBatch, _sprites, "GAME OVER", HudLayout.GameOverMessageColumn, HudLayout.GameOverMessageRow, messageSlot);
-        }
-        else if (_turnMessageTicks > 0)
-        {
-            // ROM string 103: "PLAYER n" at $3F7A, in the wave's POST colour
-            // (PLS0D: LDA PSTCOL / STA TEXCOL), for NAP 115.
-            ArcadeHud.DrawMessageText(
-                spriteBatch,
-                _sprites,
-                $"PLAYER {_session.Current.Number}",
-                HudLayout.PlayerTurnMessageColumn,
-                HudLayout.PlayerTurnMessageRow,
-                WavePaletteTables.PostSlotForWave(_session.Current.Wave));
-        }
-    }
 }

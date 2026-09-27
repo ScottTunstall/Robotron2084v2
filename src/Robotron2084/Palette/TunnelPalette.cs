@@ -29,15 +29,15 @@ public sealed class TunnelPalette
     /// <summary>First palette slot a ramp fills (the ROM's `LDY #$9801`).</summary>
     internal const int FirstSlot = 1;
 
-    /// <summary>How many slots a ramp fills (the ROM's `CMPY #$9810`).</summary>
-    internal const int SlotCount = 15;
-
     /// <summary>
     /// How far the window slides each pass. `$59D2`'s `LEAX $0001,X` bumps the STORED pointer —
     /// the current window's first value — so the wheel advances one value a pass and sweeps the
     /// whole ramp in a couple of seconds, which is the "cycling" in the effect's name.
     /// </summary>
     internal const int SlidePerPass = 1;
+
+    /// <summary>How many slots a ramp fills (the ROM's `CMPY #$9810`).</summary>
+    internal const int SlotCount = 15;
 
     /// <summary>Palette slots blacked out per pass, as offsets from the first slot.</summary>
     internal static readonly int[] BlackSlots = [0, 5, 10];
@@ -78,32 +78,20 @@ public sealed class TunnelPalette
     internal static readonly int[] StartMasks = [0x1F, 0x3F, 0x3F, 0x0F, 0x0F, 0x0F, 0x0F, 0x1F, 0x1F, 0x0F, 0x1F, 0x1F];
 
     private readonly Random _random;
-    private int _rampIndex;
-    private int _pointer;
     private int _blackOffset = 4;
+    private int _pointer;
+    private int _rampIndex;
 
     public TunnelPalette(Random? random = null) => _random = random ?? new Random();
-
-    /// <summary>Which ramp is running (test hook).</summary>
-    internal int RampIndex => _rampIndex;
-
-    /// <summary>Where the fifteen-value window starts in that ramp (test hook).</summary>
-    internal int Pointer => _pointer;
 
     /// <summary>Which slot of each five is black (test hook) — the ROM's `$000B,U`.</summary>
     internal int BlackOffset => _blackOffset;
 
-    /// <summary>
-    /// `$59B1`: pick a ramp at random, then a random window inside it (`random &amp; mask`). The
-    /// ROM's own initial `A` for the black slot is whatever the task block held; 4 is the
-    /// value it settles into, and every pass cycles it 4,3,2,1,0.
-    /// </summary>
-    public void Start()
-    {
-        _rampIndex = _random.Next(Ramps.Length);
-        _pointer = (_random.Next() & StartMasks[_rampIndex]) % Ramps[_rampIndex].Length;
-        _blackOffset = 4;
-    }
+    /// <summary>Where the fifteen-value window starts in that ramp (test hook).</summary>
+    internal int Pointer => _pointer;
+
+    /// <summary>Which ramp is running (test hook).</summary>
+    internal int RampIndex => _rampIndex;
 
     /// <summary>
     /// One pass of the ROM's `$59D0` task: slide the window on sixteen values, then step the
@@ -143,5 +131,17 @@ public sealed class TunnelPalette
         {
             palette.SetSlot(FirstSlot + offset + _blackOffset, 0x00);   // $5A00: `STB A,X`
         }
+    }
+
+    /// <summary>
+    /// `$59B1`: pick a ramp at random, then a random window inside it (`random &amp; mask`). The
+    /// ROM's own initial `A` for the black slot is whatever the task block held; 4 is the
+    /// value it settles into, and every pass cycles it 4,3,2,1,0.
+    /// </summary>
+    public void Start()
+    {
+        _rampIndex = _random.Next(Ramps.Length);
+        _pointer = (_random.Next() & StartMasks[_rampIndex]) % Ramps[_rampIndex].Length;
+        _blackOffset = 4;
     }
 }

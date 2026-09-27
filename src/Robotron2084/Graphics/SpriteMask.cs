@@ -26,17 +26,26 @@ public sealed class SpriteMask
         _opaque = opaque;
     }
 
-    /// <summary>The picture's width in pixels.</summary>
-    public int Width { get; }
-
     /// <summary>The picture's height in pixels.</summary>
     public int Height { get; }
 
-    /// <summary>True when the picture has an opaque pixel at (x, y); false outside the picture.</summary>
-    /// <param name="x">Pixel column, from the picture's left edge.</param>
-    /// <param name="y">Pixel row, from the picture's top edge.</param>
-    public bool IsOpaque(int x, int y) =>
-        x >= 0 && y >= 0 && x < Width && y < Height && _opaque[(y * Width) + x];
+    /// <summary>The picture's width in pixels.</summary>
+    public int Width { get; }
+
+    /// <summary>Builds a mask from the pixels that are set — the way a test states a shape by hand.</summary>
+    /// <param name="width">The picture's width in pixels.</param>
+    /// <param name="height">The picture's height in pixels.</param>
+    /// <param name="opaquePixels">The opaque pixels, in the picture's own grid.</param>
+    public static SpriteMask FromPixels(int width, int height, IEnumerable<(int X, int Y)> opaquePixels)
+    {
+        var opaque = new bool[width * height];
+        foreach ((int x, int y) in opaquePixels)
+        {
+            opaque[(y * width) + x] = true;
+        }
+
+        return new SpriteMask(width, height, opaque);
+    }
 
     /// <summary>Derives a mask from a picture's alpha channel: any non-transparent pixel is opaque.</summary>
     /// <param name="picture">The texture the mask is built for (usually a ROM frame).</param>
@@ -52,21 +61,6 @@ public sealed class SpriteMask
         }
 
         return new SpriteMask(picture.Width, picture.Height, opaque);
-    }
-
-    /// <summary>Builds a mask from the pixels that are set — the way a test states a shape by hand.</summary>
-    /// <param name="width">The picture's width in pixels.</param>
-    /// <param name="height">The picture's height in pixels.</param>
-    /// <param name="opaquePixels">The opaque pixels, in the picture's own grid.</param>
-    public static SpriteMask FromPixels(int width, int height, IEnumerable<(int X, int Y)> opaquePixels)
-    {
-        var opaque = new bool[width * height];
-        foreach ((int x, int y) in opaquePixels)
-        {
-            opaque[(y * width) + x] = true;
-        }
-
-        return new SpriteMask(width, height, opaque);
     }
 
     /// <summary>
@@ -109,6 +103,12 @@ public sealed class SpriteMask
 
         return false;
     }
+
+    /// <summary>True when the picture has an opaque pixel at (x, y); false outside the picture.</summary>
+    /// <param name="x">Pixel column, from the picture's left edge.</param>
+    /// <param name="y">Pixel row, from the picture's top edge.</param>
+    public bool IsOpaque(int x, int y) =>
+        x >= 0 && y >= 0 && x < Width && y < Height && _opaque[(y * Width) + x];
 
     /// <summary>The screen pixels both drawn rectangles cover, or an empty rectangle when they miss.</summary>
     private static (int Left, int Top, int Right, int Bottom) SharedScreenRect(Rectangle a, Rectangle b) =>

@@ -17,23 +17,24 @@ namespace Robotron2084.Level;
 /// </summary>
 public static class ScoreValues
 {
-    public const int Electrode = 0;
-    public const int Grunt = 100;
-    public const int Spheroid = 1000;
-    public const int Enforcer = 150;
-    public const int Quark = 1000;
-    public const int Tank = 200;
     public const int Brain = 500;
     public const int CruiseMissile = 25;
+    public const int Electrode = 0;
+    public const int Enforcer = 150;
+    public const int Grunt = 100;
     public const int Prog = 100;
-    public const int Spark = 25;
-    public const int TankShell = 25;
+    public const int Quark = 1000;
 
     /// <summary>ROM SVITAB: the rescue bonus stops growing at this many rescues.</summary>
     public const int RescueBonusMaxCount = 5;
 
     /// <summary>Rescue bonus by running save count (1-based; capped at <see cref="RescueBonusMaxCount"/>). ROM SVITAB.</summary>
     public const int RescueBonusMin = 1000;
+
+    public const int Spark = 25;
+    public const int Spheroid = 1000;
+    public const int Tank = 200;
+    public const int TankShell = 25;
 
     /// <summary>The bonus one rescue pays, given how many this life has rescued (1-based).</summary>
     /// <param name="rescuesThisLife">Humans rescued this life, counting this one; the table caps at <see cref="RescueBonusMaxCount"/>.</param>

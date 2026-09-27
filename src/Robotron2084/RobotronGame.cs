@@ -24,29 +24,52 @@ namespace Robotron2084;
 public sealed class RobotronGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
-    private RenderTarget2D _playfield = null!;
-    private SpriteBatch _spriteBatch = null!;
-    private SpriteFont _font = null!;
-    private SpriteSet _sprites = null!;
-    private PaletteAnimator _paletteAnimator = null!;
-    private IPlayerInputSource _input = null!;
-    private HighScoreStore _highScoreStore = null!;
+    private Rectangle _canvas = new(0, 0, ScreenSize.Width, ScreenSize.Height);
     private ControlSettings _controlSettings = null!;
     private ControlSettingsStore _controlSettingsStore = null!;
-    private GameServices _services = null!;
-    private GameStateManager _stateManager = null!;
-
+    private SpriteFont _font = null!;
+    private bool _fullScreen;
+    private HighScoreStore _highScoreStore = null!;
+    private IPlayerInputSource _input = null!;
+    private PaletteAnimator _paletteAnimator = null!;
+    private RenderTarget2D _playfield = null!;
     private KeyboardState _previousKeyboardState;
     private ScaleMode _scaleMode = ScaleMode.Integer;
-    private bool _fullScreen;
+    private GameServices _services = null!;
+    private SpriteBatch _spriteBatch = null!;
+    private SpriteSet _sprites = null!;
+    private GameStateManager _stateManager = null!;
     private int _windowedScale = 1;
-    private Rectangle _canvas = new(0, 0, ScreenSize.Width, ScreenSize.Height);
 
     public RobotronGame()
     {
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsFixedTimeStep = true; // fixed timestep drives Update(GameTime); gameplay uses per-tick integer math
+    }
+
+    protected override void Draw(GameTime gameTime)
+    {
+        // 1. Render the ScreenSize.Width x ScreenSize.Height scene (states draw onto the already-cleared target).
+        GraphicsDevice.SetRenderTarget(_playfield);
+        GraphicsDevice.Clear(Color.Black);
+
+        _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp);
+        _stateManager.Draw(_spriteBatch, _font);
+        _spriteBatch.End();
+
+        // 2. Blit the scene to the window at the canvas's fit: uniform, centred, the bars
+        // black. The client area can change at any moment (a dragged window, a monitor
+        // switch), so the fit is re-solved here — it is pure arithmetic.
+        FitCanvas();
+        GraphicsDevice.SetRenderTarget(null);
+        GraphicsDevice.Clear(Color.Black);
+
+        _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp);
+        _spriteBatch.Draw(_playfield, _canvas, Color.White);
+        _spriteBatch.End();
+
+        base.Draw(gameTime);
     }
 
     protected override void Initialize()
@@ -118,24 +141,20 @@ public sealed class RobotronGame : Game
         base.Update(gameTime);
     }
 
-    /// <summary>The port-only presentation keys: full screen, and the canvas fit.</summary>
-    /// <param name="state">This tick's keyboard.</param>
-    private void HandlePresentationKeys(KeyboardState state)
+    /// <summary>Sizes the backbuffer, and with it the window, and switches the screen mode with it.</summary>
+    private void ApplyBackBuffer(int width, int height, bool fullScreen)
     {
-        // F11 is the Windows convention for full screen and Alt+Enter is the game
-        // convention; F8 cycles the canvas fit between the largest whole multiple
-        // (crisp, the default) and the exact uniform fraction (fills the window).
-        bool altHeld = state.IsKeyDown(Keys.LeftAlt) || state.IsKeyDown(Keys.RightAlt);
-        if (Pressed(state, Keys.F11) || (altHeld && Pressed(state, Keys.Enter)))
-        {
-            ToggleFullScreen();
-        }
-        else if (Pressed(state, Keys.F8))
-        {
-            _scaleMode = Presentation.NextScaleMode(_scaleMode);
-            FitCanvas();
-        }
+        _fullScreen = fullScreen;
+        _graphics.PreferredBackBufferWidth = width;
+        _graphics.PreferredBackBufferHeight = height;
+        _graphics.IsFullScreen = fullScreen;
+        _graphics.ApplyChanges();
+        FitCanvas();
     }
+
+    /// <summary>Re-solves where the canvas sits in the window's current client area.</summary>
+    private void FitCanvas() =>
+        _canvas = Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, _scaleMode);
 
     /// <summary>
     /// The port-only attract dev keys (notes §97, re-keyed in §101): F5 the storyline movie, F6 the demo
@@ -168,14 +187,23 @@ public sealed class RobotronGame : Game
         }
     }
 
-    /// <summary>Drops straight into the end of a game, with a score that has to qualify (notes §116).</summary>
-    /// <remarks>The GAME OVER page, the CONG initials screen and the table are otherwise a whole game away,
-    /// which is how the ceremony was verified.</remarks>
-    private void StartEndOfGameFlow()
+    /// <summary>The port-only presentation keys: full screen, and the canvas fit.</summary>
+    /// <param name="state">This tick's keyboard.</param>
+    private void HandlePresentationKeys(KeyboardState state)
     {
-        GameSession session = GameSession.NewGame(GameMode.OnePlayer, _input, controls: _controlSettings);
-        session.Current.Score = DevKeys.QualifyingScore;
-        _stateManager.TransitionTo(GameOverState.FromSession(_input, _sprites, _highScoreStore, session));
+        // F11 is the Windows convention for full screen and Alt+Enter is the game
+        // convention; F8 cycles the canvas fit between the largest whole multiple
+        // (crisp, the default) and the exact uniform fraction (fills the window).
+        bool altHeld = state.IsKeyDown(Keys.LeftAlt) || state.IsKeyDown(Keys.RightAlt);
+        if (Pressed(state, Keys.F11) || (altHeld && Pressed(state, Keys.Enter)))
+        {
+            ToggleFullScreen();
+        }
+        else if (Pressed(state, Keys.F8))
+        {
+            _scaleMode = Presentation.NextScaleMode(_scaleMode);
+            FitCanvas();
+        }
     }
 
     /// <summary>
@@ -208,39 +236,18 @@ public sealed class RobotronGame : Game
         }
     }
 
-    protected override void Draw(GameTime gameTime)
+    /// <summary>True on the tick <paramref name="key"/> goes down (press, not hold).</summary>
+    private bool Pressed(KeyboardState current, Keys key) =>
+        !_previousKeyboardState.IsKeyDown(key) && current.IsKeyDown(key);
+
+    /// <summary>Drops straight into the end of a game, with a score that has to qualify (notes §116).</summary>
+    /// <remarks>The GAME OVER page, the CONG initials screen and the table are otherwise a whole game away,
+    /// which is how the ceremony was verified.</remarks>
+    private void StartEndOfGameFlow()
     {
-        // 1. Render the ScreenSize.Width x ScreenSize.Height scene (states draw onto the already-cleared target).
-        GraphicsDevice.SetRenderTarget(_playfield);
-        GraphicsDevice.Clear(Color.Black);
-
-        _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp);
-        _stateManager.Draw(_spriteBatch, _font);
-        _spriteBatch.End();
-
-        // 2. Blit the scene to the window at the canvas's fit: uniform, centred, the bars
-        // black. The client area can change at any moment (a dragged window, a monitor
-        // switch), so the fit is re-solved here — it is pure arithmetic.
-        FitCanvas();
-        GraphicsDevice.SetRenderTarget(null);
-        GraphicsDevice.Clear(Color.Black);
-
-        _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp);
-        _spriteBatch.Draw(_playfield, _canvas, Color.White);
-        _spriteBatch.End();
-
-        base.Draw(gameTime);
-    }
-
-    /// <summary>Sizes the backbuffer, and with it the window, and switches the screen mode with it.</summary>
-    private void ApplyBackBuffer(int width, int height, bool fullScreen)
-    {
-        _fullScreen = fullScreen;
-        _graphics.PreferredBackBufferWidth = width;
-        _graphics.PreferredBackBufferHeight = height;
-        _graphics.IsFullScreen = fullScreen;
-        _graphics.ApplyChanges();
-        FitCanvas();
+        GameSession session = GameSession.NewGame(GameMode.OnePlayer, _input, controls: _controlSettings);
+        session.Current.Score = DevKeys.QualifyingScore;
+        _stateManager.TransitionTo(GameOverState.FromSession(_input, _sprites, _highScoreStore, session));
     }
 
     /// <summary>Switches between the windowed window and borderless full screen at the desktop's own mode.</summary>
@@ -255,12 +262,4 @@ public sealed class RobotronGame : Game
         Point desktop = DisplayInfo.DesktopResolution;
         ApplyBackBuffer(desktop.X, desktop.Y, fullScreen: true);
     }
-
-    /// <summary>Re-solves where the canvas sits in the window's current client area.</summary>
-    private void FitCanvas() =>
-        _canvas = Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, _scaleMode);
-
-    /// <summary>True on the tick <paramref name="key"/> goes down (press, not hold).</summary>
-    private bool Pressed(KeyboardState current, Keys key) =>
-        !_previousKeyboardState.IsKeyDown(key) && current.IsKeyDown(key);
 }

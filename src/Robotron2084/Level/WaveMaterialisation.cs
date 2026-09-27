@@ -14,30 +14,12 @@ public sealed class WaveMaterialisation
     /// <summary>Every fourth robot of the sequence (<c>ANDA #3 / CMPA #3</c>) uses the column fan.</summary>
     private const int ColumnFanSequenceMask = 3;
 
-    private readonly Queue<IEntity> _pending = new();
     private readonly Dictionary<IEntity, StripEffect?> _assembling = [];
+    private readonly Queue<IEntity> _pending = new();
     private int _sequenceNumber;
 
     /// <summary>Robots still waiting for their appear record.</summary>
     public int PendingCount => _pending.Count;
-
-    /// <summary>
-    /// Queues a wave-start robot. It counts as assembling from THIS moment — the ROM holds the robots OFF for the
-    /// whole sequence, not just once their own record starts.
-    /// </summary>
-    /// <param name="robot">The robot to bring in.</param>
-    public void Queue(IEntity robot)
-    {
-        _pending.Enqueue(robot);
-        _assembling[robot] = null;
-    }
-
-    /// <summary>
-    /// True while this entity is still assembling: it does not act and is NOT drawn — its appear records are
-    /// drawing it.
-    /// </summary>
-    /// <param name="entity">The entity to test.</param>
-    public bool IsAssembling(IEntity entity) => _assembling.ContainsKey(entity);
 
     /// <summary>
     /// One frame of the sequence: creates ONE appear record for the next queued robot (its strips converge onto
@@ -56,6 +38,36 @@ public sealed class WaveMaterialisation
         RetireConverged();
     }
 
+    /// <summary>
+    /// True while this entity is still assembling: it does not act and is NOT drawn — its appear records are
+    /// drawing it.
+    /// </summary>
+    /// <param name="entity">The entity to test.</param>
+    public bool IsAssembling(IEntity entity) => _assembling.ContainsKey(entity);
+
+    /// <summary>
+    /// Queues a wave-start robot. It counts as assembling from THIS moment — the ROM holds the robots OFF for the
+    /// whole sequence, not just once their own record starts.
+    /// </summary>
+    /// <param name="robot">The robot to bring in.</param>
+    public void Queue(IEntity robot)
+    {
+        _pending.Enqueue(robot);
+        _assembling[robot] = null;
+    }
+
+    private void RetireConverged()
+    {
+        List<IEntity> converged = [.. _assembling
+            .Where(pair => pair.Value is { LifeState: not EntityLifeState.Alive })
+            .Select(pair => pair.Key)];
+
+        foreach (IEntity robot in converged)
+        {
+            _assembling.Remove(robot);
+        }
+    }
+
     private void StartNextAppear(EntityList<StripEffect> explosions, StripClip clip)
     {
         IEntity robot = _pending.Dequeue();
@@ -72,18 +84,6 @@ public sealed class WaveMaterialisation
             StripEffect appear = StripEffect.StartAppear(frameSource, robot.Bounds, axis, slope: 0, clip);
             explosions.Add(appear);
             _assembling[robot] = appear;
-        }
-    }
-
-    private void RetireConverged()
-    {
-        List<IEntity> converged = [.. _assembling
-            .Where(pair => pair.Value is { LifeState: not EntityLifeState.Alive })
-            .Select(pair => pair.Key)];
-
-        foreach (IEntity robot in converged)
-        {
-            _assembling.Remove(robot);
         }
     }
 }

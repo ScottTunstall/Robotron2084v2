@@ -20,8 +20,17 @@ namespace Robotron2084.Hud;
 /// </summary>
 public sealed class DefineInputsModel
 {
+    /// <summary>Every line on the page, blank spacers included.</summary>
+    public const int LineCount = PauseLine + 1;
+
     /// <summary>Lines per player: the four MOVE and four SHOOT directions of one stick pair.</summary>
     public const int LinesPerPlayer = 8;
+
+    /// <summary>The PAUSE line's index — the last line, after both players and a gap.</summary>
+    public const int PauseLine = PlayerTwoLine + LinesPerPlayer + SpacerLines;
+
+    /// <summary>Player 2's first line — player 1's block, then the gap.</summary>
+    public const int PlayerTwoLine = LinesPerPlayer + SpacerLines;
 
     /// <summary>
     /// Blank lines between the sections, so player 1's block and player 2's do not
@@ -30,35 +39,23 @@ public sealed class DefineInputsModel
     /// </summary>
     public const int SpacerLines = 2;
 
-    /// <summary>Player 2's first line — player 1's block, then the gap.</summary>
-    public const int PlayerTwoLine = LinesPerPlayer + SpacerLines;
-
-    /// <summary>The PAUSE line's index — the last line, after both players and a gap.</summary>
-    public const int PauseLine = PlayerTwoLine + LinesPerPlayer + SpacerLines;
-
-    /// <summary>Every line on the page, blank spacers included.</summary>
-    public const int LineCount = PauseLine + 1;
-
     /// <summary>How many lines fit on screen at once.</summary>
     public const int VisibleLines = LinesPerPlayer;
-
-    /// <summary>True once Enter has armed the highlighted line for capture.</summary>
-    public bool IsArmed { get; private set; }
-
-    /// <summary>The highlighted line, from player 1's first MOVE to the PAUSE line.</summary>
-    public int Line { get; private set; }
 
     /// <summary>The first line on screen, so the highlighted line is always in the window.</summary>
     public int FirstVisibleLine { get; private set; }
 
+    /// <summary>The highlighted action, or null on the PAUSE line.</summary>
+    public InputAction? HighlightedAction => ActionOf(Line);
+
+    /// <summary>True once Enter has armed the highlighted line for capture.</summary>
+    public bool IsArmed { get; private set; }
+
     /// <summary>True while the highlight is on the shared PAUSE line.</summary>
     public bool IsPauseLine => Line == PauseLine;
 
-    /// <summary>
-    /// Which player owns an ACTION line: 0 for player 1, 1 for player 2. The PAUSE line and
-    /// the blank spacers have no owner — call <see cref="ActionOf"/> first.
-    /// </summary>
-    public static int PlayerOf(int line) => line < PlayerTwoLine ? 0 : 1;
+    /// <summary>The highlighted line, from player 1's first MOVE to the PAUSE line.</summary>
+    public int Line { get; private set; }
 
     /// <summary>The action a line sets, or null on a blank spacer or on the PAUSE line.</summary>
     public static InputAction? ActionOf(int line) => line switch
@@ -72,64 +69,14 @@ public sealed class DefineInputsModel
     /// <summary>True for the blank lines that separate the sections (never highlightable).</summary>
     public static bool IsSpacer(int line) => line != PauseLine && ActionOf(line) is null;
 
-    /// <summary>The highlighted action, or null on the PAUSE line.</summary>
-    public InputAction? HighlightedAction => ActionOf(Line);
-
-    /// <summary>True when the highlight is on <paramref name="line"/> (and not mid-capture).</summary>
-    public bool IsCursorOn(int line) => !IsArmed && Line == line;
+    /// <summary>
+    /// Which player owns an ACTION line: 0 for player 1, 1 for player 2. The PAUSE line and
+    /// the blank spacers have no owner — call <see cref="ActionOf"/> first.
+    /// </summary>
+    public static int PlayerOf(int line) => line < PlayerTwoLine ? 0 : 1;
 
     /// <summary>Arms the highlighted line: the next input captured is assigned to it.</summary>
     public void Arm() => IsArmed = true;
-
-    /// <summary>Disarms without assigning (Back while armed).</summary>
-    public void CancelArm() => IsArmed = false;
-
-    /// <summary>
-    /// Scrolls the highlight up one line, wrapping round the whole page and stepping over
-    /// the blank spacers, and brings it into the window.
-    /// </summary>
-    public void MoveUp()
-    {
-        if (!IsArmed)
-        {
-            MoveTo(PreviousLine(Line));
-        }
-    }
-
-    /// <summary>Scrolls the highlight down one line, wrapping and skipping the spacers.</summary>
-    public void MoveDown()
-    {
-        if (!IsArmed)
-        {
-            MoveTo(NextLine(Line));
-        }
-    }
-
-    /// <summary>The nearest line above that is not a blank spacer, wrapping round the page.</summary>
-    private static int PreviousLine(int line)
-    {
-        int candidate = line;
-        do
-        {
-            candidate = candidate == 0 ? PauseLine : candidate - 1;
-        }
-        while (IsSpacer(candidate) && candidate != line);
-
-        return candidate;
-    }
-
-    /// <summary>The nearest line below that is not a blank spacer, wrapping round the page.</summary>
-    private static int NextLine(int line)
-    {
-        int candidate = line;
-        do
-        {
-            candidate = candidate == PauseLine ? 0 : candidate + 1;
-        }
-        while (IsSpacer(candidate) && candidate != line);
-
-        return candidate;
-    }
 
     /// <summary>
     /// Gives the highlighted line its new binding and, in the two-step flow,
@@ -153,6 +100,9 @@ public sealed class DefineInputsModel
         return true;
     }
 
+    /// <summary>Disarms without assigning (Back while armed).</summary>
+    public void CancelArm() => IsArmed = false;
+
     /// <summary>Clears the highlighted line (Del) — both device slots go unbound.</summary>
     public void ClearHighlighted(ControlSettings settings)
     {
@@ -160,8 +110,58 @@ public sealed class DefineInputsModel
         SetLine(settings, Line, InputBinding.None);
     }
 
+    /// <summary>True when the highlight is on <paramref name="line"/> (and not mid-capture).</summary>
+    public bool IsCursorOn(int line) => !IsArmed && Line == line;
+
+    /// <summary>Scrolls the highlight down one line, wrapping and skipping the spacers.</summary>
+    public void MoveDown()
+    {
+        if (!IsArmed)
+        {
+            MoveTo(NextLine(Line));
+        }
+    }
+
+    /// <summary>
+    /// Scrolls the highlight up one line, wrapping round the whole page and stepping over
+    /// the blank spacers, and brings it into the window.
+    /// </summary>
+    public void MoveUp()
+    {
+        if (!IsArmed)
+        {
+            MoveTo(PreviousLine(Line));
+        }
+    }
+
     /// <summary>The page's <c>R</c>: every line of both players, and PAUSE, back to the factory scheme.</summary>
     public void ResetAll(ControlSettings settings) => settings.ResetToDefaults();
+
+    /// <summary>The nearest line below that is not a blank spacer, wrapping round the page.</summary>
+    private static int NextLine(int line)
+    {
+        int candidate = line;
+        do
+        {
+            candidate = candidate == PauseLine ? 0 : candidate + 1;
+        }
+        while (IsSpacer(candidate) && candidate != line);
+
+        return candidate;
+    }
+
+    /// <summary>The nearest line above that is not a blank spacer, wrapping round the page.</summary>
+    private static int PreviousLine(int line)
+    {
+        int candidate = line;
+        do
+        {
+            candidate = candidate == 0 ? PauseLine : candidate - 1;
+        }
+        while (IsSpacer(candidate) && candidate != line);
+
+        return candidate;
+    }
 
     /// <summary>Writes one line — the device slot the new binding belongs to, or both for a clear.</summary>
     private static void SetLine(ControlSettings settings, int line, InputBinding binding)

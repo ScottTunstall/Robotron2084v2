@@ -16,12 +16,12 @@ namespace Robotron2084.Graphics;
 /// </remarks>
 public interface IPixelCollision
 {
-    /// <summary>The picture an entity is drawn with, or null when it shows no picture of its own.</summary>
-    /// <param name="entity">The entity to describe.</param>
-    PictureShape? ShapeOf(IEntity entity);
-
     /// <summary>True when the two pictures cover a common screen pixel.</summary>
     /// <param name="a">One entity's picture.</param>
     /// <param name="b">The other entity's picture.</param>
     bool Overlaps(PictureShape a, PictureShape b);
+
+    /// <summary>The picture an entity is drawn with, or null when it shows no picture of its own.</summary>
+    /// <param name="entity">The entity to describe.</param>
+    PictureShape? ShapeOf(IEntity entity);
 }

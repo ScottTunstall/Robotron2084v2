@@ -21,13 +21,6 @@ public sealed class DefineInputsHighlight
     /// </summary>
     public const int Slot = 8;
 
-    /// <summary>The page's GREEN — the palette's own CRTAB value for slot 6, the label's colour
-    /// between flashes.</summary>
-    private static readonly byte Green = GamePalette.DefaultSlots[6];
-
-    /// <summary>The chase's WHITE — the presentation page's own flash colour (ROM $8A64).</summary>
-    private const byte White = 0xFF;
-
     /// <summary>
     /// The chase takes a step every 3 ROM frames — the presentation page's own rate (ROM
     /// $8A4F/$8A68), the same clock the intro pages' colour processes run on.
@@ -40,8 +33,15 @@ public sealed class DefineInputsHighlight
     /// </summary>
     private const int StepsPerLap = 7;
 
-    private int _step;
+    /// <summary>The chase's WHITE — the presentation page's own flash colour (ROM $8A64).</summary>
+    private const byte White = 0xFF;
+
+    /// <summary>The page's GREEN — the palette's own CRTAB value for slot 6, the label's colour
+    /// between flashes.</summary>
+    private static readonly byte Green = GamePalette.DefaultSlots[6];
+
     private int _chaseClockUnits;
+    private int _step;
 
     /// <summary>
     /// Puts the slot on the page's GREEN with no white on it — the presentation page does the

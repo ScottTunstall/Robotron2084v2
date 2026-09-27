@@ -16,9 +16,10 @@ public sealed class SoundEngine
     private readonly IAudioSink _sink;
     private SoundEntry[] _entries = [];
     private int _entryIndex = -1;
+    private int _priority;
     private int _repetitionsLeft;   // ROM $58
     private int _ticksLeftInNote;   // ROM $57
-    private int _priority;          // ROM $56
+                                    // ROM $56
 
     public SoundEngine(IAudioSink sink) => _sink = sink;
 

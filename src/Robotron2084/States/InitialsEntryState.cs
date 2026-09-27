@@ -23,12 +23,12 @@ namespace Robotron2084.States;
 /// </remarks>
 public sealed class InitialsEntryState : IGameState
 {
-    private readonly GameServices _services;
     private readonly ScoreEntryCeremony _ceremony;
-    private readonly FinalScore _score;
-    private readonly SpriteSet _sprites;
-    private readonly IPlayerInputSource _input;
     private readonly InitialsEntryModel _entry = new();
+    private readonly IPlayerInputSource _input;
+    private readonly FinalScore _score;
+    private readonly GameServices _services;
+    private readonly SpriteSet _sprites;
 
     /// <summary>Builds the screen for one qualifying score.</summary>
     /// <param name="services">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
@@ -44,20 +44,10 @@ public sealed class InitialsEntryState : IGameState
         RestorePalette();
     }
 
-    /// <summary>
-    /// The two entries the page draws with, put back on their CRTAB values: the screen it follows may
-    /// have left them holding anything (the in-play animator and the wave colours own slots 0-15), and
-    /// the page's own colours are CONGP's slot 4 and TELSUB's slot 9.
-    /// </summary>
-    private void RestorePalette()
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        if (_sprites.Blitter.Palette is not { } palette)
-        {
-            return;
-        }
-
-        palette.SetSlot(InitialsEntryLayout.InkSlot, GamePalette.DefaultSlots[InitialsEntryLayout.InkSlot]);
-        palette.SetSlot(InitialsEntryLayout.InstructionSlot, GamePalette.DefaultSlots[InitialsEntryLayout.InstructionSlot]);
+        DrawPage(spriteBatch);
+        DrawCells(spriteBatch);
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -74,20 +64,15 @@ public sealed class InitialsEntryState : IGameState
             : _ceremony.NextScreen());
     }
 
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+    private void DrawCell(SpriteBatch spriteBatch, int cell, int x)
     {
-        DrawPage(spriteBatch);
-        DrawCells(spriteBatch);
-    }
+        if (cell == _entry.Position && _entry.PreviewIsRub)
+        {
+            _sprites.Text.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.EchoY, InitialsEntryLayout.InkSlot);
+            return;
+        }
 
-    /// <summary>CONGP's three large-font lines and TELSUB's two small-font instructions.</summary>
-    private void DrawPage(SpriteBatch spriteBatch)
-    {
-        DrawLarge(spriteBatch, $"PLAYER {_score.PlayerNumber}", InitialsEntryLayout.PlayerColumn, InitialsEntryLayout.PlayerRow);
-        DrawLarge(spriteBatch, "YOU ARE A ROBOTRON HERO", InitialsEntryLayout.HeroColumn, InitialsEntryLayout.HeroRow);
-        DrawLarge(spriteBatch, "ENTER YOUR INITIALS:", InitialsEntryLayout.PromptColumn, InitialsEntryLayout.PromptRow);
-        DrawSmall(spriteBatch, "USE -MOVE- TO SELECT LETTER", InitialsEntryLayout.SelectColumn, InitialsEntryLayout.SelectRow);
-        DrawSmall(spriteBatch, "-FIRE UP- TO ENTER LETTER", InitialsEntryLayout.FireColumn, InitialsEntryLayout.FireRow);
+        _sprites.Text.DrawLargeFontText(spriteBatch, _entry.Initials[cell].ToString(), x, InitialsEntryLayout.EchoY, InitialsEntryLayout.InkSlot);
     }
 
     /// <summary>
@@ -104,16 +89,8 @@ public sealed class InitialsEntryState : IGameState
         }
     }
 
-    private void DrawCell(SpriteBatch spriteBatch, int cell, int x)
-    {
-        if (cell == _entry.Position && _entry.PreviewIsRub)
-        {
-            _sprites.Text.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.EchoY, InitialsEntryLayout.InkSlot);
-            return;
-        }
-
-        _sprites.Text.DrawLargeFontText(spriteBatch, _entry.Initials[cell].ToString(), x, InitialsEntryLayout.EchoY, InitialsEntryLayout.InkSlot);
-    }
+    private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row) =>
+            _sprites.Text.DrawLargeFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InkSlot);
 
     /// <summary>G0SUB's "frob" marker: a two-pixel dash one row of the arcade below its cell.</summary>
     private void DrawMarker(SpriteBatch spriteBatch, int x) =>
@@ -122,9 +99,32 @@ public sealed class InitialsEntryState : IGameState
             new Rectangle(x, InitialsEntryLayout.MarkerY, InitialsEntryLayout.MarkerWidthPixels, InitialsEntryLayout.MarkerHeightPixels),
             _sprites.Blitter.SlotColor(InitialsEntryLayout.InstructionSlot));
 
-    private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row) =>
-        _sprites.Text.DrawLargeFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InkSlot);
+    /// <summary>CONGP's three large-font lines and TELSUB's two small-font instructions.</summary>
+    private void DrawPage(SpriteBatch spriteBatch)
+    {
+        DrawLarge(spriteBatch, $"PLAYER {_score.PlayerNumber}", InitialsEntryLayout.PlayerColumn, InitialsEntryLayout.PlayerRow);
+        DrawLarge(spriteBatch, "YOU ARE A ROBOTRON HERO", InitialsEntryLayout.HeroColumn, InitialsEntryLayout.HeroRow);
+        DrawLarge(spriteBatch, "ENTER YOUR INITIALS:", InitialsEntryLayout.PromptColumn, InitialsEntryLayout.PromptRow);
+        DrawSmall(spriteBatch, "USE -MOVE- TO SELECT LETTER", InitialsEntryLayout.SelectColumn, InitialsEntryLayout.SelectRow);
+        DrawSmall(spriteBatch, "-FIRE UP- TO ENTER LETTER", InitialsEntryLayout.FireColumn, InitialsEntryLayout.FireRow);
+    }
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int column, int row) =>
-        _sprites.Text.DrawSmallFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InstructionSlot);
+            _sprites.Text.DrawSmallFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InstructionSlot);
+
+    /// <summary>
+    /// The two entries the page draws with, put back on their CRTAB values: the screen it follows may
+    /// have left them holding anything (the in-play animator and the wave colours own slots 0-15), and
+    /// the page's own colours are CONGP's slot 4 and TELSUB's slot 9.
+    /// </summary>
+    private void RestorePalette()
+    {
+        if (_sprites.Blitter.Palette is not { } palette)
+        {
+            return;
+        }
+
+        palette.SetSlot(InitialsEntryLayout.InkSlot, GamePalette.DefaultSlots[InitialsEntryLayout.InkSlot]);
+        palette.SetSlot(InitialsEntryLayout.InstructionSlot, GamePalette.DefaultSlots[InitialsEntryLayout.InstructionSlot]);
+    }
 }

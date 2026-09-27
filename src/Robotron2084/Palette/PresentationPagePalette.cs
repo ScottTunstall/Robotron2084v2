@@ -26,12 +26,6 @@ namespace Robotron2084.Palette;
 /// </summary>
 public sealed class PresentationPagePalette
 {
-    /// <summary>
-    /// The seven entries the page's own code writes (ROM `$8A70`), in slot order: red, blue,
-    /// red-orange, green, magenta, orange, yellow. Slots 1..7 are the page's; 8..15 keep CRTAB.
-    /// </summary>
-    public static readonly byte[] PageColors = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
-
     /// <summary>The first entry the page writes.</summary>
     public const int FirstSlot = 1;
 
@@ -44,6 +38,12 @@ public sealed class PresentationPagePalette
     /// </summary>
     public const int TextSlot = 6;
 
+    /// <summary>
+    /// The seven entries the page's own code writes (ROM `$8A70`), in slot order: red, blue,
+    /// red-orange, green, magenta, orange, yellow. Slots 1..7 are the page's; 8..15 keep CRTAB.
+    /// </summary>
+    public static readonly byte[] PageColors = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
+
     /// <summary>The colour the chase writes (`$8A64`'s `LDA #$FF`).</summary>
     private const byte ChaseColor = 0xFF;
 
@@ -55,10 +55,10 @@ public sealed class PresentationPagePalette
 
     private readonly int _slotCount = LastSlot - FirstSlot + 1;
 
-    private int _chaseSlot = FirstSlot;
-    private int _wordmarkStep;
     private int _chaseClockUnits;
+    private int _chaseSlot = FirstSlot;
     private int _wordmarkClockUnits;
+    private int _wordmarkStep;
 
     /// <summary>
     /// The palette entry the page's wordmark is drawn in on this step: slot 7, 6, 5, …, 1 and round
@@ -86,6 +86,18 @@ public sealed class PresentationPagePalette
         }
     }
 
+    /// <summary>
+    /// The page's slots go back to the ROM's CRTAB defaults as it leaves — the colour processes die
+    /// with the page and the page after it (<c>FAMPAG</c>) sets its own (notes §103.3).
+    /// </summary>
+    public void Stop(GamePalette palette)
+    {
+        for (int slot = FirstSlot; slot <= LastSlot; slot++)
+        {
+            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
+        }
+    }
+
     /// <summary>Advances both clocks by one port tick (call once per Update).</summary>
     public void Update(GamePalette palette)
     {
@@ -101,18 +113,6 @@ public sealed class PresentationPagePalette
         if (StepDue(ref _wordmarkClockUnits, WordmarkRomFramesPerStep))
         {
             _wordmarkStep = (_wordmarkStep + 1) % _slotCount;
-        }
-    }
-
-    /// <summary>
-    /// The page's slots go back to the ROM's CRTAB defaults as it leaves — the colour processes die
-    /// with the page and the page after it (<c>FAMPAG</c>) sets its own (notes §103.3).
-    /// </summary>
-    public void Stop(GamePalette palette)
-    {
-        for (int slot = FirstSlot; slot <= LastSlot; slot++)
-        {
-            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
         }
     }
 

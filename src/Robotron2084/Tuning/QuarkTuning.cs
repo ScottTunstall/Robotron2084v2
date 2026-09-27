@@ -17,25 +17,32 @@ public static class QuarkTuning
     //   beat:   NAP 3, and PD7 counts down in BEATS to the next SQVEL.
     public const int BeatRomFrames = 4;      // NAP 3 + the beat vblank
 
+    public const int FleeExitHighArcadePixels = 16;
+    public const int FleeExitLowArcadePixels = 2;
+    public const int FleeVelocityRom = 0x0200;
+    public const int ReaimMaxBeats = 32;
+    public const int TotalAnimationFrames = 9;
+    public const int TravelAnimationFrames = 5;
     public const int VelocityXScale = 4;    // ROM: two ASLB/ROLA pairs
 
     public const int VelocityYScale = 8;    // ROM: three
 
-    public const int ReaimMaxBeats = 32;   // ROM PD7 = (SEED & $1F) + 1
+    // ROM PD7 = (SEED & $1F) + 1
 
+    public const int WallMarginBottomArcadePixels = 20;
     public const int WallMarginLowArcadePixels = 5;     // XMIN+5 / YMIN+5
 
     public const int WallMarginRightArcadePixels = 12;  // XMAX-12
 
-    public const int WallMarginBottomArcadePixels = 20; // YMAX-20
+    // YMAX-20
 
-    public const int FleeVelocityRom = 0x0200; // SQ3: OXV = 0, OYV = ±$200 per frame
+    // SQ3: OXV = 0, OYV = ±$200 per frame
 
-    public const int FleeExitLowArcadePixels = 2;   // SQ3L: Y <= YMIN+2 ...
+    // SQ3L: Y <= YMIN+2 ...
 
-    public const int FleeExitHighArcadePixels = 16; // ... or Y >= YMAX-16 → gone
+    // ... or Y >= YMAX-16 → gone
 
-    public const int TravelAnimationFrames = 5;  // SQP0..SQP4 while wandering
+    // SQP0..SQP4 while wandering
 
-    public const int TotalAnimationFrames = 9;   // SQP0..SQP8 once it starts dropping tanks
+    // SQP0..SQP8 once it starts dropping tanks
 }

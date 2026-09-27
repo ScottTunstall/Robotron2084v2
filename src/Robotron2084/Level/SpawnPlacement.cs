@@ -13,19 +13,11 @@ public sealed class SpawnPlacement
     /// <summary>The percentage rolls are out of this many.</summary>
     private const int PercentSides = 100;
 
-    /// <summary>The four inner edges a spheroid's near-wall candidate can hug.</summary>
-    private enum Edge
-    {
-        Top,
-        Bottom,
-        Left,
-        Right,
-    }
-
     private static readonly int EntitySize = ScreenSize.Scaled(CollisionSizes.EntitySizeSpecPixels);
 
-    private readonly Random _random;
     private readonly Rectangle _playfieldBounds;
+
+    private readonly Random _random;
 
     /// <summary>Places entities inside <paramref name="playfieldBounds"/>, drawing from <paramref name="random"/>.</summary>
     /// <param name="random">The field's random source.</param>
@@ -36,18 +28,18 @@ public sealed class SpawnPlacement
         _playfieldBounds = playfieldBounds;
     }
 
+    /// <summary>The four inner edges a spheroid's near-wall candidate can hug.</summary>
+    private enum Edge
+    {
+        Top,
+        Bottom,
+        Left,
+        Right,
+    }
+
     /// <summary>A random spot whose entity-sized box passes <paramref name="isAcceptable"/>.</summary>
     /// <param name="isAcceptable">Tests a candidate's box.</param>
     public IntVector2 FindSpawnPoint(Func<Rectangle, bool> isAcceptable) => FindSpawnPoint(isAcceptable, EntitySize);
-
-    /// <summary>
-    /// A spheroid's spot: <see cref="SpheroidTuning.NearWallBiasPercent"/> percent of the time a point
-    /// within <see cref="SpheroidTuning.NearWallBiasDistance"/> of a random inner edge ("spheroids do like
-    /// to start near walls"), else a uniform one.
-    /// </summary>
-    /// <param name="isAcceptable">Tests a candidate's box.</param>
-    public IntVector2 FindSpheroidSpawnPoint(Func<Rectangle, bool> isAcceptable) =>
-        FindSpawnPoint(isAcceptable, EntitySize, () => RandomSpheroidCandidate());
 
     /// <summary>
     /// A random spot whose <paramref name="size"/>-square box passes <paramref name="isAcceptable"/>: a candidate
@@ -87,6 +79,15 @@ public sealed class SpawnPlacement
         // Nothing fits (a degenerate field): a predicate failure here must still return SOMETHING.
         return RandomPointInside(size);
     }
+
+    /// <summary>
+    /// A spheroid's spot: <see cref="SpheroidTuning.NearWallBiasPercent"/> percent of the time a point
+    /// within <see cref="SpheroidTuning.NearWallBiasDistance"/> of a random inner edge ("spheroids do like
+    /// to start near walls"), else a uniform one.
+    /// </summary>
+    /// <param name="isAcceptable">Tests a candidate's box.</param>
+    public IntVector2 FindSpheroidSpawnPoint(Func<Rectangle, bool> isAcceptable) =>
+        FindSpawnPoint(isAcceptable, EntitySize, () => RandomSpheroidCandidate());
 
     private IntVector2 RandomPointInside(int size) => new(
         _random.Next(_playfieldBounds.X, _playfieldBounds.Right - size),

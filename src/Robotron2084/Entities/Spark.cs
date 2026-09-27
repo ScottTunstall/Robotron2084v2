@@ -22,17 +22,29 @@ namespace Robotron2084.Entities;
 /// due at 6 x N.</remarks>
 public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
-    private readonly SpriteSet _sprites;
     private static readonly int Size = ScreenSize.Scaled(CollisionSizes.MissileSizeSpecPixels);
+    private readonly IntVector2 _accelerationSubpixels;
     private readonly Random _random;
-    private readonly IntVector2 _accelerationSubpixels; // the constant per-axis acceleration, in 1/256 px per move, rolled once at spawn (ROM: PD2/PD4)
-    private IntVector2 _velocitySubpixels; // current velocity, in 1/256 px per ROM frame (ROM: OXV/OYV)
-    private IntVector2 _positionRemainderSubpixels; // carries the sub-pixel part so the step never drifts
+    private readonly SpriteSet _sprites;
+    private int _accelerationTimer;
+
+    // counts up toward the next time acceleration is added to velocity, every 4 ROM frames
+    private int _flickerTimer;
+
+    // Counts up to the next flicker picture: 4 ROM frames per picture
+    private int _moveTimer;
+
     private IntVector2 _position;
+
+    private IntVector2 _positionRemainderSubpixels;
+
+    // carries the sub-pixel part so the step never drifts
     private int _remainingLife;
-    private int _accelerationTimer;   // counts up toward the next time acceleration is added to velocity, every 4 ROM frames
-    private int _flickerTimer; // Counts up to the next flicker picture: 4 ROM frames per picture
-    private int _moveTimer;  // counts up to one ROM frame's worth of ticks so the mover integrates velocity once per frame, not once per tick
+
+    // the constant per-axis acceleration, in 1/256 px per move, rolled once at spawn (ROM: PD2/PD4)
+    private IntVector2 _velocitySubpixels; // current velocity, in 1/256 px per ROM frame (ROM: OXV/OYV)
+
+    // counts up to one ROM frame's worth of ticks so the mover integrates velocity once per frame, not once per tick
 
     /// <summary>Fires a spark, aimed at the player once, with jitter.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -80,14 +92,39 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
-    /// <summary>Top-left of the spark's collision box.</summary>
-    public IntVector2 Position => _position;
-
     /// <summary>The spark's 4x4 spec-pixel collision box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
 
+    /// <summary>The flicker frame this spark is showing — the picture pixel-perfect collision compares.</summary>
+    public Texture2D CurrentAnimationFrame => _sprites.SparkAnimationFrames[AnimationFrameIndex];
+
     /// <summary>Only ever transitions Alive -> Dead (immediate removal, no death animation).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Top-left of the spark's collision box.</summary>
+    public IntVector2 Position => _position;
+
+    /// <summary>The per-axis acceleration, in 1/256 port px per ROM frame of velocity, applied once per move (test hook).</summary>
+    /// <remarks>Rolled once at spawn and CONSTANT for the spark's life.</remarks>
+    internal IntVector2 AccelerationSubpixels => _accelerationSubpixels;
+
+    /// <summary>Which of the four flicker frames is showing (test hook).</summary>
+    /// <remarks>The ROM's 4 flicker pictures, one per 4-ROM-frame cycle.</remarks>
+    internal int AnimationFrameIndex => _flickerTimer / ArcadeClock.Units(SparkTuning.SparkFramePeriodRomFrames) % SpriteSet.SparkAnimationFrameCount;
+
+    /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
+    internal IntVector2 VelocitySubpixels => _velocitySubpixels;
+
+    /// <summary>Draws the current flicker frame.
+    /// </summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (LifeState == EntityLifeState.Alive)
+        {
+            _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        }
+    }
 
     /// <summary>Laser hit: removed at once.</summary>
     public void Kill()
@@ -177,29 +214,4 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
         _position = new IntVector2(x, y);
     }
-
-    /// <summary>Draws the current flicker frame.
-    /// </summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (LifeState == EntityLifeState.Alive)
-        {
-            _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
-        }
-    }
-
-    /// <summary>The flicker frame this spark is showing — the picture pixel-perfect collision compares.</summary>
-    public Texture2D CurrentAnimationFrame => _sprites.SparkAnimationFrames[AnimationFrameIndex];
-
-    /// <summary>Which of the four flicker frames is showing (test hook).</summary>
-    /// <remarks>The ROM's 4 flicker pictures, one per 4-ROM-frame cycle.</remarks>
-    internal int AnimationFrameIndex => _flickerTimer / ArcadeClock.Units(SparkTuning.SparkFramePeriodRomFrames) % SpriteSet.SparkAnimationFrameCount;
-
-    /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
-    internal IntVector2 VelocitySubpixels => _velocitySubpixels;
-
-    /// <summary>The per-axis acceleration, in 1/256 port px per ROM frame of velocity, applied once per move (test hook).</summary>
-    /// <remarks>Rolled once at spawn and CONSTANT for the spark's life.</remarks>
-    internal IntVector2 AccelerationSubpixels => _accelerationSubpixels;
 }

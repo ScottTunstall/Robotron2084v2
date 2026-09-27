@@ -13,32 +13,14 @@ namespace Robotron2084.Graphics;
 /// </remarks>
 public sealed class WilliamsLogoPath
 {
-    /// <summary>ROM <c>$894B</c>: the first W's column, in bytes (10 arcade pixels).</summary>
-    private const int StartColumn = 0x05;
+    /// <summary>ROM <c>$89B7</c>: the bottom edge's row.</summary>
+    private const int BottomRow = 0xCF;
 
-    /// <summary>ROM <c>$894B</c>: the first W's row, and the row of the top edge.</summary>
-    private const int StartRow = 0x0F;
-
-    /// <summary>ROM <c>$8957</c>: the first W's colour operand, both nibbles the palette slot.</summary>
-    private const int StartColorOperand = 0x77;
-
-    /// <summary>ROM <c>$8970</c>: the side counter is taken modulo this.</summary>
-    private const int SideCount = 4;
+    /// <summary>ROM <c>$89DA</c>: each W's colour operand steps down by one in both nibbles.</summary>
+    private const int ColorOperandStep = 0x11;
 
     /// <summary>ROM <c>$89C5</c>: a step along the top or bottom edge is 16 bytes, 32 arcade pixels.</summary>
     private const int HorizontalStepColumns = 0x10;
-
-    /// <summary>ROM <c>$897D</c>: a step along the left or right edge is 32 rows.</summary>
-    private const int VerticalStepRows = 0x20;
-
-    /// <summary>ROM <c>$89C7</c>: the right edge's column; a step that reaches it turns the corner.</summary>
-    private const int RightColumn = 0x85;
-
-    /// <summary>ROM <c>$89A5</c>: the left edge's column.</summary>
-    private const int LeftColumn = 0x05;
-
-    /// <summary>ROM <c>$89B7</c>: the bottom edge's row.</summary>
-    private const int BottomRow = 0xCF;
 
     /// <summary>ROM <c>$8987</c>: each lap starts this many bytes further in...</summary>
     private const int LapInsetColumns = 0x02;
@@ -46,14 +28,32 @@ public sealed class WilliamsLogoPath
     /// <summary>ROM <c>$8989</c>: ...for laps until the inset would reach this, when the walk starts over.</summary>
     private const int LapInsetLimit = 0x10;
 
+    /// <summary>ROM <c>$89A5</c>: the left edge's column.</summary>
+    private const int LeftColumn = 0x05;
+
     /// <summary>ROM <c>$898F</c>: the column the walk starts over from (the ROM's own value, which is not the left edge).</summary>
     private const int RestartColumn = 0x15;
 
-    /// <summary>ROM <c>$89DA</c>: each W's colour operand steps down by one in both nibbles.</summary>
-    private const int ColorOperandStep = 0x11;
+    /// <summary>ROM <c>$89C7</c>: the right edge's column; a step that reaches it turns the corner.</summary>
+    private const int RightColumn = 0x85;
 
-    private int _side;
+    /// <summary>ROM <c>$8970</c>: the side counter is taken modulo this.</summary>
+    private const int SideCount = 4;
+
+    /// <summary>ROM <c>$8957</c>: the first W's colour operand, both nibbles the palette slot.</summary>
+    private const int StartColorOperand = 0x77;
+
+    /// <summary>ROM <c>$894B</c>: the first W's column, in bytes (10 arcade pixels).</summary>
+    private const int StartColumn = 0x05;
+
+    /// <summary>ROM <c>$894B</c>: the first W's row, and the row of the top edge.</summary>
+    private const int StartRow = 0x0F;
+
+    /// <summary>ROM <c>$897D</c>: a step along the left or right edge is 32 rows.</summary>
+    private const int VerticalStepRows = 0x20;
+
     private int _inset;
+    private int _side;
 
     /// <summary>Starts at the first W's place in the first colour.</summary>
     public WilliamsLogoPath() => Reset();
@@ -104,18 +104,10 @@ public sealed class WilliamsLogoPath
         StepColor();
     }
 
-    private void StepRight()
+    private void StepColor()
     {
-        int column = Column + HorizontalStepColumns;
-        if (column < RightColumn)
-        {
-            Column = column;
-            return;
-        }
-
-        Column = RightColumn;
-        Row = ((_inset * 2) + StartRow) & 0xFF;
-        _side++;
+        int next = ColorOperand - ColorOperandStep;
+        ColorOperand = next <= 0 ? StartColorOperand : next;
     }
 
     private void StepDown()
@@ -146,6 +138,20 @@ public sealed class WilliamsLogoPath
         _side++;
     }
 
+    private void StepRight()
+    {
+        int column = Column + HorizontalStepColumns;
+        if (column < RightColumn)
+        {
+            Column = column;
+            return;
+        }
+
+        Column = RightColumn;
+        Row = ((_inset * 2) + StartRow) & 0xFF;
+        _side++;
+    }
+
     private void StepUp()
     {
         int row = Row - VerticalStepRows;
@@ -169,11 +175,5 @@ public sealed class WilliamsLogoPath
 
         Row = StartRow;
         _side++;
-    }
-
-    private void StepColor()
-    {
-        int next = ColorOperand - ColorOperandStep;
-        ColorOperand = next <= 0 ? StartColorOperand : next;
     }
 }

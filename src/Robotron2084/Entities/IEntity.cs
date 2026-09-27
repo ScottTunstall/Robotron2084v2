@@ -20,21 +20,21 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public interface IEntity
 {
-    /// <summary>Top-left corner of the entity on screen.</summary>
-    IntVector2 Position { get; }
-
     /// <summary>Collision and draw rectangle; the player's hit box is the exception.</summary>
     Rectangle Bounds { get; }
 
     /// <summary>Where the entity is in its life cycle — see <see cref="EntityLifeState"/>.</summary>
     EntityLifeState LifeState { get; }
 
-    /// <summary>Advances the entity by one game tick.</summary>
-    /// <param name="gameTime">Elapsed time for this tick.</param>
-    /// <param name="field">The playfield the entity is on.</param>
-    void Update(GameTime gameTime, PlayField field);
+    /// <summary>Top-left corner of the entity on screen.</summary>
+    IntVector2 Position { get; }
 
     /// <summary>Draws the entity at its current position.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     void Draw(SpriteBatch spriteBatch);
+
+    /// <summary>Advances the entity by one game tick.</summary>
+    /// <param name="gameTime">Elapsed time for this tick.</param>
+    /// <param name="field">The playfield the entity is on.</param>
+    void Update(GameTime gameTime, PlayField field);
 }

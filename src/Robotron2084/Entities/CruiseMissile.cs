@@ -24,7 +24,20 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class CruiseMissile : IEntity, IRemovable
 {
-    private readonly SpriteSet _sprites;
+    /// <summary>Subtracted from each aim roll, making the random nudge run -6..+9.</summary>
+    private const int AimNoiseBase = 6;
+
+    /// <summary>How many values an aim roll draws from.</summary>
+    private const int AimNoiseRange = 16;
+
+    /// <summary>How many ROM frames one beat takes (NAP 2 plus the execution vblank).</summary>
+    private const int BeatPeriodRomFrames = 3;
+
+    /// <summary>How many moves the missile makes per beat.</summary>
+    private const int MovesPerBeat = 2;
+
+    /// <summary>The re-aim timer's upper bound, in beats (rolled 1..this).</summary>
+    private const int ReAimMaxBeats = 7;
 
     /// <summary>The collision box's size, 6x4 arcade px, in port pixels; the box itself is offset up-left.</summary>
     /// <remarks>The disassembly labels this hitbox "FAT PHONY GUY" — far bigger than the
@@ -41,34 +54,21 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>How far the missile steps along Y per move, in port pixels — one arcade px.</summary>
     private static readonly int StepYPortPixels = ScreenSize.Scaled(1);
 
-    /// <summary>How many ROM frames one beat takes (NAP 2 plus the execution vblank).</summary>
-    private const int BeatPeriodRomFrames = 3;
-
-    /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomFrames);
-
-    /// <summary>How many moves the missile makes per beat.</summary>
-    private const int MovesPerBeat = 2;
-
-    /// <summary>The re-aim timer's upper bound, in beats (rolled 1..this).</summary>
-    private const int ReAimMaxBeats = 7;
-
-    /// <summary>Subtracted from each aim roll, making the random nudge run -6..+9.</summary>
-    private const int AimNoiseBase = 6;
-
-    /// <summary>How many values an aim roll draws from.</summary>
-    private const int AimNoiseRange = 16;
-
     private readonly Random _random;
+    private readonly SpriteSet _sprites;
 
     /// <summary>The rolling tail of up to <see cref="CruiseMissileTuning.TrailMarks"/> positions, oldest first.</summary>
     private readonly List<IntVector2> _trail = new();
 
-    private IntVector2 _position;
-    private IntVector2 _velocity; // Current per-step move on each axis: ±StepXPortPixels / ±StepYPortPixels, or 0 if that axis is idle this re-aim.
     private int _beatTimer;
+
+    private IntVector2 _position;
+
     private int _reAimBeatsRemaining;
 
+    private IntVector2 _velocity;
+
+    // Current per-step move on each axis: ±StepXPortPixels / ±StepYPortPixels, or 0 if that axis is idle this re-aim.
     /// <summary>Fires a missile, with its first direction already rolled.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="origin">Where it appears.</param>
@@ -84,9 +84,6 @@ public sealed class CruiseMissile : IEntity, IRemovable
         _reAimBeatsRemaining = 1 + _random.Next(ReAimMaxBeats);
     }
 
-    /// <summary>The missile's true coordinate (the collision box is derived from it).</summary>
-    public IntVector2 Position => _position;
-
     /// <summary>The collision box: the tracked point shifted one pixel up and left.</summary>
     /// <remarks>ROM: the "FAT PHONY GUY" hitbox, offset up and left of the tracked point.</remarks>
     public Rectangle Bounds => new(
@@ -97,6 +94,46 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     /// <summary>Alive until it is hit (it has no life timer of its own).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>The missile's true coordinate (the collision box is derived from it).</summary>
+    public IntVector2 Position => _position;
+
+    /// <summary>Test hook: the rolling tail, oldest first.</summary>
+    internal IReadOnlyList<IntVector2> Trail => _trail;
+
+    /// <summary>The step the missile takes on each axis right now (0 = that axis is idle this re-aim).</summary>
+    internal IntVector2 Velocity => _velocity;
+
+    /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
+    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomFrames);
+
+    /// <summary>Draws the trail marks and the missile's head.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <remarks>Each mark is <see cref="CruiseMissileTuning.MarkArcadeWidth"/> x
+    /// <see cref="CruiseMissileTuning.MarkArcadeHeight"/> arcade px, as the hardware's video
+    /// writes produced. The trail uses one palette slot and the head another.</remarks>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        int markWidth = ScreenSize.Scaled(CruiseMissileTuning.MarkArcadeWidth);
+        int markHeight = ScreenSize.Scaled(CruiseMissileTuning.MarkArcadeHeight);
+
+        Color trailColor = _sprites.Blitter.SlotColor(CruiseMissileTuning.TrailSlot);
+        foreach (IntVector2 mark in _trail)
+        {
+            _sprites.Blitter.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight), trailColor);
+        }
+
+        // The ROM's missile picture only defines the collision box; the head is a solid dot.
+        _sprites.Blitter.DrawSolidRectangle(
+            spriteBatch,
+            new Rectangle(_position.X, _position.Y, markWidth, markHeight),
+            _sprites.Blitter.SlotColor(CruiseMissileTuning.HeadSlot));
+    }
 
     /// <summary>Removes the missile instantly and wipes its trail with it.</summary>
     /// <remarks>ROM: <c>CMKIL</c> — nothing is left behind.</remarks>
@@ -143,6 +180,29 @@ public sealed class CruiseMissile : IEntity, IRemovable
         }
     }
 
+    /// <summary>Aims one axis: the sign to move in, from a nudged target coordinate.</summary>
+    private int AimSign(int target, int mine)
+    {
+        int aim = target + _random.Next(AimNoiseRange) - AimNoiseBase;
+        return aim >= mine ? 1 : -1;
+    }
+
+    /// <summary>Rolls the next stretch's direction: Y only half the time, else X (and maybe Y too).</summary>
+    /// <param name="player">The player's position, which each active axis aims at.</param>
+    /// <returns>The per-step velocity on each axis; a zero component means that axis is idle.</returns>
+    /// <remarks>Y-only 50%, X-only 25%, diagonal 25% — vertical is the favoured axis (ROM: <c>GCMDIR</c>).</remarks>
+    private IntVector2 RollDirection(IntVector2 player)
+    {
+        if (_random.Next(2) != 0)
+        {
+            return new IntVector2(0, AimSign(player.Y, _position.Y) * StepYPortPixels);
+        }
+
+        int dx = AimSign(player.X, _position.X) * StepXPortPixels;
+        int dy = _random.Next(2) == 0 ? AimSign(player.Y, _position.Y) * StepYPortPixels : 0;
+        return new IntVector2(dx, dy);
+    }
+
     /// <summary>Takes one step, bouncing each axis off the playfield, and marks the position left.</summary>
     /// <remarks>ROM: <c>CMMOV</c> — each axis bounces independently: a step crossing the boundary
     /// flips that axis and is retaken the other way. The bounce uses the true tracked point, not the
@@ -185,61 +245,4 @@ public sealed class CruiseMissile : IEntity, IRemovable
             _trail.RemoveAt(0);
         }
     }
-
-    /// <summary>Rolls the next stretch's direction: Y only half the time, else X (and maybe Y too).</summary>
-    /// <param name="player">The player's position, which each active axis aims at.</param>
-    /// <returns>The per-step velocity on each axis; a zero component means that axis is idle.</returns>
-    /// <remarks>Y-only 50%, X-only 25%, diagonal 25% — vertical is the favoured axis (ROM: <c>GCMDIR</c>).</remarks>
-    private IntVector2 RollDirection(IntVector2 player)
-    {
-        if (_random.Next(2) != 0)
-        {
-            return new IntVector2(0, AimSign(player.Y, _position.Y) * StepYPortPixels);
-        }
-
-        int dx = AimSign(player.X, _position.X) * StepXPortPixels;
-        int dy = _random.Next(2) == 0 ? AimSign(player.Y, _position.Y) * StepYPortPixels : 0;
-        return new IntVector2(dx, dy);
-    }
-
-    /// <summary>Aims one axis: the sign to move in, from a nudged target coordinate.</summary>
-    private int AimSign(int target, int mine)
-    {
-        int aim = target + _random.Next(AimNoiseRange) - AimNoiseBase;
-        return aim >= mine ? 1 : -1;
-    }
-
-    /// <summary>The step the missile takes on each axis right now (0 = that axis is idle this re-aim).</summary>
-    internal IntVector2 Velocity => _velocity;
-
-    /// <summary>Draws the trail marks and the missile's head.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <remarks>Each mark is <see cref="CruiseMissileTuning.MarkArcadeWidth"/> x
-    /// <see cref="CruiseMissileTuning.MarkArcadeHeight"/> arcade px, as the hardware's video
-    /// writes produced. The trail uses one palette slot and the head another.</remarks>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (LifeState != EntityLifeState.Alive)
-        {
-            return;
-        }
-
-        int markWidth = ScreenSize.Scaled(CruiseMissileTuning.MarkArcadeWidth);
-        int markHeight = ScreenSize.Scaled(CruiseMissileTuning.MarkArcadeHeight);
-
-        Color trailColor = _sprites.Blitter.SlotColor(CruiseMissileTuning.TrailSlot);
-        foreach (IntVector2 mark in _trail)
-        {
-            _sprites.Blitter.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight), trailColor);
-        }
-
-        // The ROM's missile picture only defines the collision box; the head is a solid dot.
-        _sprites.Blitter.DrawSolidRectangle(
-            spriteBatch,
-            new Rectangle(_position.X, _position.Y, markWidth, markHeight),
-            _sprites.Blitter.SlotColor(CruiseMissileTuning.HeadSlot));
-    }
-
-    /// <summary>Test hook: the rolling tail, oldest first.</summary>
-    internal IReadOnlyList<IntVector2> Trail => _trail;
 }

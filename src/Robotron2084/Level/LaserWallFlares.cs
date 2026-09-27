@@ -14,39 +14,47 @@ namespace Robotron2084.Level;
 /// </summary>
 internal sealed class LaserWallFlares
 {
-    /// <summary>Two bytes of video memory: 2 columns of arcade pixels across the wall.</summary>
-    private static readonly int FlareThickness = ScreenSize.Columns(2);
+    /// <summary>The height of the LASCOL bands a dithered flare draws.</summary>
+    private static readonly int DitherBandHeight = ScreenSize.Scaled(2);
 
     /// <summary>Two bytes of video memory: 4 rows of arcade pixels along the wall.</summary>
     private static readonly int FlareLength = ScreenSize.ArcadePixels(4);
 
-    /// <summary>The height of the LASCOL bands a dithered flare draws.</summary>
-    private static readonly int DitherBandHeight = ScreenSize.Scaled(2);
+    /// <summary>Two bytes of video memory: 2 columns of arcade pixels across the wall.</summary>
+    private static readonly int FlareThickness = ScreenSize.Columns(2);
 
     private readonly List<LaserWallFlare> _flares = [];
 
     /// <summary>The live flares.</summary>
     public IReadOnlyList<LaserWallFlare> Flares => _flares;
 
-    /// <summary>
-    /// Runs every flare's clock down and drops the finished ones. The field calls this at the top of its tick, so a
-    /// flare spawned by a laser later in the same tick still gets its full two frames.
-    /// </summary>
-    public void Update()
+    /// <summary>Paints the flares OVER the wall, in the wave's LASCOL slot, as the ROM writes those pixels.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The sprite set that draws the solid rectangles.</param>
+    /// <param name="levelNumber">The wave, which picks the LASCOL slot.</param>
+    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites, int levelNumber)
     {
-        for (int i = _flares.Count - 1; i >= 0; i--)
+        if (_flares.Count == 0)
         {
-            LaserWallFlare flare = _flares[i] with
+            return;
+        }
+
+        Color flareColor = sprites.Blitter.SlotColor(WavePaletteTables.LaserWallSlotForWave(levelNumber));
+        foreach (LaserWallFlare flare in _flares)
+        {
+            if (!flare.Dithered)
             {
-                RemainingClockUnits = _flares[i].RemainingClockUnits - ArcadeClock.UnitsPerPortTick,
-            };
-            if (flare.RemainingClockUnits <= 0)
-            {
-                _flares.RemoveAt(i);
+                sprites.Blitter.DrawSolidRectangle(spriteBatch, flare.Bounds, flareColor);
+                continue;
             }
-            else
+
+            // LASDIV: the ROM's mixed nibble — one band in LASCOL, the next left as WALCOL. Draw only the LASCOL bands.
+            for (int y = flare.Bounds.Y; y < flare.Bounds.Bottom; y += DitherBandHeight * 2)
             {
-                _flares[i] = flare;
+                sprites.Blitter.DrawSolidRectangle(
+                    spriteBatch,
+                    new Rectangle(flare.Bounds.X, y, flare.Bounds.Width, DitherBandHeight),
+                    flareColor);
             }
         }
     }
@@ -88,33 +96,25 @@ internal sealed class LaserWallFlares
         _flares.Add(new LaserWallFlare(bounds, Dithered: horizontalWall));
     }
 
-    /// <summary>Paints the flares OVER the wall, in the wave's LASCOL slot, as the ROM writes those pixels.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The sprite set that draws the solid rectangles.</param>
-    /// <param name="levelNumber">The wave, which picks the LASCOL slot.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites, int levelNumber)
+    /// <summary>
+    /// Runs every flare's clock down and drops the finished ones. The field calls this at the top of its tick, so a
+    /// flare spawned by a laser later in the same tick still gets its full two frames.
+    /// </summary>
+    public void Update()
     {
-        if (_flares.Count == 0)
+        for (int i = _flares.Count - 1; i >= 0; i--)
         {
-            return;
-        }
-
-        Color flareColor = sprites.Blitter.SlotColor(WavePaletteTables.LaserWallSlotForWave(levelNumber));
-        foreach (LaserWallFlare flare in _flares)
-        {
-            if (!flare.Dithered)
+            LaserWallFlare flare = _flares[i] with
             {
-                sprites.Blitter.DrawSolidRectangle(spriteBatch, flare.Bounds, flareColor);
-                continue;
+                RemainingClockUnits = _flares[i].RemainingClockUnits - ArcadeClock.UnitsPerPortTick,
+            };
+            if (flare.RemainingClockUnits <= 0)
+            {
+                _flares.RemoveAt(i);
             }
-
-            // LASDIV: the ROM's mixed nibble — one band in LASCOL, the next left as WALCOL. Draw only the LASCOL bands.
-            for (int y = flare.Bounds.Y; y < flare.Bounds.Bottom; y += DitherBandHeight * 2)
+            else
             {
-                sprites.Blitter.DrawSolidRectangle(
-                    spriteBatch,
-                    new Rectangle(flare.Bounds.X, y, flare.Bounds.Width, DitherBandHeight),
-                    flareColor);
+                _flares[i] = flare;
             }
         }
     }

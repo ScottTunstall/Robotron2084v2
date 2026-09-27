@@ -12,6 +12,13 @@ public sealed class PauseToggle
     /// <summary>True while the game is paused.</summary>
     public bool IsPaused { get; private set; }
 
+    /// <summary>Clears the latch when leaving the game (a new game starts unpaused).</summary>
+    public void Reset()
+    {
+        IsPaused = false;
+        _wasHeld = true; // swallowing the current state, so the key that left must be released
+    }
+
     /// <summary>One tick: toggles when <paramref name="held"/> goes from up to down.</summary>
     public void Tick(bool held)
     {
@@ -21,12 +28,5 @@ public sealed class PauseToggle
         }
 
         _wasHeld = held;
-    }
-
-    /// <summary>Clears the latch when leaving the game (a new game starts unpaused).</summary>
-    public void Reset()
-    {
-        IsPaused = false;
-        _wasHeld = true; // swallowing the current state, so the key that left must be released
     }
 }

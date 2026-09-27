@@ -8,27 +8,6 @@ namespace Robotron2084.Core;
 public static class Direction8Extensions
 {
     /// <summary>
-    /// The (-1/0/1, -1/0/1) unit vector, NOT normalized: diagonal movement is
-    /// the same per-axis speed as cardinal movement (deliberate — matches
-    /// original arcade behaviour).
-    /// </summary>
-    public static IntVector2 ToIntVector(this Direction8 direction) => direction switch
-    {
-        Direction8.Up => new(0, -1),
-        Direction8.UpRight => new(1, -1),
-        Direction8.Right => new(1, 0),
-        Direction8.DownRight => new(1, 1),
-        Direction8.Down => new(0, 1),
-        Direction8.DownLeft => new(-1, 1),
-        Direction8.Left => new(-1, 0),
-        Direction8.UpLeft => new(-1, -1),
-        _ => IntVector2.Zero, // defensive: unknown (out-of-range) enum values never occur in gameplay
-    };
-
-    /// <summary>The direction 4 steps around the ring (Up&lt;-&gt;Down, UpRight&lt;-&gt;DownLeft, ...).</summary>
-    public static Direction8 Opposite(this Direction8 direction) => (Direction8)(((int)direction + 4) % 8);
-
-    /// <summary>
     /// Maps a delta to the compass direction of its per-axis signs;
     /// <see langword="null"/> for the zero delta.
     /// </summary>
@@ -55,4 +34,25 @@ public static class Direction8Extensions
             _ => null,
         };
     }
+
+    /// <summary>The direction 4 steps around the ring (Up&lt;-&gt;Down, UpRight&lt;-&gt;DownLeft, ...).</summary>
+    public static Direction8 Opposite(this Direction8 direction) => (Direction8)(((int)direction + 4) % 8);
+
+    /// <summary>
+    /// The (-1/0/1, -1/0/1) unit vector, NOT normalized: diagonal movement is
+    /// the same per-axis speed as cardinal movement (deliberate — matches
+    /// original arcade behaviour).
+    /// </summary>
+    public static IntVector2 ToIntVector(this Direction8 direction) => direction switch
+    {
+        Direction8.Up => new(0, -1),
+        Direction8.UpRight => new(1, -1),
+        Direction8.Right => new(1, 0),
+        Direction8.DownRight => new(1, 1),
+        Direction8.Down => new(0, 1),
+        Direction8.DownLeft => new(-1, 1),
+        Direction8.Left => new(-1, 0),
+        Direction8.UpLeft => new(-1, -1),
+        _ => IntVector2.Zero, // defensive: unknown (out-of-range) enum values never occur in gameplay
+    };
 }

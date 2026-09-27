@@ -32,12 +32,6 @@ public sealed class ControlSettingsStore
 {
     private static readonly string FilePath = AppDataPaths.FileInAppData("controls.ini");
 
-    /// <summary>Loads the saved definitions, or the factory scheme when there are none.</summary>
-    public ControlSettings Load() => Load(FilePath);
-
-    /// <summary>Saves the definitions.</summary>
-    public void Save(ControlSettings settings) => Save(FilePath, settings);
-
     /// <summary>Loads from a given file — the seam the tests use.</summary>
     public static ControlSettings Load(string path)
     {
@@ -54,41 +48,6 @@ public sealed class ControlSettingsStore
         {
             return ControlSettings.Defaults();
         }
-    }
-
-    /// <summary>Saves to a given file — the seam the tests use.</summary>
-    public static void Save(string path, ControlSettings settings)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, Write(settings), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-    }
-
-    /// <summary>Builds the file's text (also the tests' seam).</summary>
-    public static string Write(ControlSettings settings)
-    {
-        var text = new StringBuilder();
-        text.AppendLine("; Robotron 2084 (port) control definitions - see notes section 101.");
-        text.AppendLine("; Edit by hand, or press F10 on the title screen and use the page.");
-        text.AppendLine("; A value is what the page shows: a key name (W, UP, INSERT), or");
-        text.AppendLine("; P<n> <BUTTON> / P<n> LS <DIR> / P<n> RS <DIR>. NONE means unbound.");
-        text.AppendLine("; (Colons or dashes are accepted in place of the spaces when reading.)");
-
-        for (int player = 0; player < ControlSettings.PlayerCount; player++)
-        {
-            text.AppendLine();
-            text.AppendLine($"[player{player + 1}]");
-            foreach (InputAction action in InputActions.All)
-            {
-                ActionBinding binding = settings[player][action];
-                text.AppendLine($"{Name(action)}.key={binding.Key.DisplayName}");
-                text.AppendLine($"{Name(action)}.pad={binding.Pad.DisplayName}");
-            }
-        }
-
-        text.AppendLine();
-        text.AppendLine("[pause]");
-        text.AppendLine($"input={settings.Pause.DisplayName}");
-        return text.ToString();
     }
 
     /// <summary>Parses the file's text; anything missing or unreadable keeps the factory value.</summary>
@@ -128,6 +87,47 @@ public sealed class ControlSettingsStore
 
         return settings;
     }
+
+    /// <summary>Saves to a given file — the seam the tests use.</summary>
+    public static void Save(string path, ControlSettings settings)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, Write(settings), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+    }
+
+    /// <summary>Builds the file's text (also the tests' seam).</summary>
+    public static string Write(ControlSettings settings)
+    {
+        var text = new StringBuilder();
+        text.AppendLine("; Robotron 2084 (port) control definitions - see notes section 101.");
+        text.AppendLine("; Edit by hand, or press F10 on the title screen and use the page.");
+        text.AppendLine("; A value is what the page shows: a key name (W, UP, INSERT), or");
+        text.AppendLine("; P<n> <BUTTON> / P<n> LS <DIR> / P<n> RS <DIR>. NONE means unbound.");
+        text.AppendLine("; (Colons or dashes are accepted in place of the spaces when reading.)");
+
+        for (int player = 0; player < ControlSettings.PlayerCount; player++)
+        {
+            text.AppendLine();
+            text.AppendLine($"[player{player + 1}]");
+            foreach (InputAction action in InputActions.All)
+            {
+                ActionBinding binding = settings[player][action];
+                text.AppendLine($"{Name(action)}.key={binding.Key.DisplayName}");
+                text.AppendLine($"{Name(action)}.pad={binding.Pad.DisplayName}");
+            }
+        }
+
+        text.AppendLine();
+        text.AppendLine("[pause]");
+        text.AppendLine($"input={settings.Pause.DisplayName}");
+        return text.ToString();
+    }
+
+    /// <summary>Loads the saved definitions, or the factory scheme when there are none.</summary>
+    public ControlSettings Load() => Load(FilePath);
+
+    /// <summary>Saves the definitions.</summary>
+    public void Save(ControlSettings settings) => Save(FilePath, settings);
 
     private static void Apply(ControlSettings settings, string section, string name, InputBinding binding)
     {

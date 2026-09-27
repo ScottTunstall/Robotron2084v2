@@ -11,6 +11,17 @@ namespace Robotron2084.Graphics;
 /// <seealso cref="ScreenSize"/>
 public static class Presentation
 {
+    /// <summary>The canvas's destination rect in the client area: scaled uniformly and centred.</summary>
+    /// <remarks>The leftover on the wider axis is the black bars. The rect starts off-screen (negative)
+    /// when the canvas is larger than the client area, which crops it evenly.</remarks>
+    public static Rectangle CanvasDestination(int clientWidth, int clientHeight, ScaleMode mode)
+    {
+        float scale = ScaleFor(clientWidth, clientHeight, mode);
+        int width = Math.Max(1, (int)MathF.Round(ScreenSize.Width * scale));
+        int height = Math.Max(1, (int)MathF.Round(ScreenSize.Height * scale));
+        return new Rectangle((clientWidth - width) / 2, (clientHeight - height) / 2, width, height);
+    }
+
     /// <summary>The scale mode the next F8 press selects.</summary>
     public static ScaleMode NextScaleMode(ScaleMode mode) =>
         mode == ScaleMode.Integer ? ScaleMode.Fill : ScaleMode.Integer;
@@ -33,16 +44,5 @@ public static class Presentation
         }
 
         return Math.Min((float)clientWidth / ScreenSize.Width, (float)clientHeight / ScreenSize.Height);
-    }
-
-    /// <summary>The canvas's destination rect in the client area: scaled uniformly and centred.</summary>
-    /// <remarks>The leftover on the wider axis is the black bars. The rect starts off-screen (negative)
-    /// when the canvas is larger than the client area, which crops it evenly.</remarks>
-    public static Rectangle CanvasDestination(int clientWidth, int clientHeight, ScaleMode mode)
-    {
-        float scale = ScaleFor(clientWidth, clientHeight, mode);
-        int width = Math.Max(1, (int)MathF.Round(ScreenSize.Width * scale));
-        int height = Math.Max(1, (int)MathF.Round(ScreenSize.Height * scale));
-        return new Rectangle((clientWidth - width) / 2, (clientHeight - height) / 2, width, height);
     }
 }

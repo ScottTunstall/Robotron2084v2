@@ -17,42 +17,42 @@ namespace Robotron2084.Entities;
 /// arcade frame, so an interval of N frames is due at 6 x N.</remarks>
 public sealed class Grunt : IEntity, IExplodable, IRemovable
 {
-    private readonly SpriteSet _sprites;
+    /// <summary>How many ROM frames one beat takes (4 vblanks).</summary>
+    private const int BeatIntervalRomFrames = 4;
+
+    /// <summary>The wave's re-roll limit when the caller gives none.</summary>
+    private const int DefaultMoveLimitBeats = 15;
+
+    /// <summary>The arcade pixels the grunt keeps between itself and the player on each axis.</summary>
+    private const int GruntDeadZoneArcadePixels = 2;
+
+    /// <summary>The arcade pixels one grunt step covers (spec-stated).</summary>
+    private const int GruntStepArcadePixels = 4;
+
+    /// <summary>The ROM's walk pictures (RWDP1..4); the picture number wraps after the last.</summary>
+    private const int WalkPictureCount = 4;
 
     /// <summary>The grunt picture's own 10x13 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.Scaled(CollisionSizes.GruntCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.GruntCollisionSize.Height));
 
-    /// <summary>How far one step moves the grunt on each active axis, in port pixels.</summary>
-    private static readonly int StepScreenPixels = ScreenSize.ArcadePixels(GruntStepArcadePixels);
-
     /// <summary>The per-axis dead zone, in port pixels.</summary>
     private static readonly int DeadZoneScreenPixels = ScreenSize.ArcadePixels(GruntDeadZoneArcadePixels);
 
-    /// <summary>The arcade pixels one grunt step covers (spec-stated).</summary>
-    private const int GruntStepArcadePixels = 4;
-
-    /// <summary>The arcade pixels the grunt keeps between itself and the player on each axis.</summary>
-    private const int GruntDeadZoneArcadePixels = 2;
-
-    /// <summary>The wave's re-roll limit when the caller gives none.</summary>
-    private const int DefaultMoveLimitBeats = 15;
-
-    /// <summary>The ROM's walk pictures (RWDP1..4); the picture number wraps after the last.</summary>
-    private const int WalkPictureCount = 4;
-
-    /// <summary>How many ROM frames one beat takes (4 vblanks).</summary>
-    private const int BeatIntervalRomFrames = 4;
-
-    /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => ArcadeClock.Units(BeatIntervalRomFrames);
+    /// <summary>How far one step moves the grunt on each active axis, in port pixels.</summary>
+    private static readonly int StepScreenPixels = ScreenSize.ArcadePixels(GruntStepArcadePixels);
 
     private readonly Random _random;
-    private IntVector2 _position;
-    private int _moveLimitBeats;
+    private readonly SpriteSet _sprites;
     private int _beatTimer;
+
     private int _moveCountdownBeats;
-    private int _walkPictureNumber = 1; // the ROM's walk picture 1..4; a freshly spawned grunt starts on picture 1
+
+    private int _moveLimitBeats;
+
+    private IntVector2 _position;
+
+    private int _walkPictureNumber = 1;
 
     /// <summary>Creates a grunt, with its first stagger already rolled.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -74,18 +74,54 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
         _moveCountdownBeats = _random.Next(1, _moveLimitBeats + 1);
     }
 
-    /// <summary>Top-left of the grunt.</summary>
-    /// <remarks>The ROM's OBJX/OBJY.</remarks>
-    public IntVector2 Position => _position;
-
     /// <summary>The grunt picture's own 10x13 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+
+    /// <summary>This grunt's current walk picture, for the appear and explosion effects.</summary>
+    /// <returns>The texture for the current walk frame.</returns>
+    public Texture2D CurrentAnimationFrame => _sprites.GruntAnimationFrames[AnimationFrameIndexFor(_walkPictureNumber)];
 
     /// <summary>Alive until shot or killed on contact; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>The current stagger limit, in ROM beats: the re-roll upper bound.</summary>
     public int MoveDelayBeats => _moveLimitBeats;
+
+    // the ROM's walk picture 1..4; a freshly spawned grunt starts on picture 1
+    /// <summary>Top-left of the grunt.</summary>
+    /// <remarks>The ROM's OBJX/OBJY.</remarks>
+    public IntVector2 Position => _position;
+
+    /// <summary>The walk frame showing right now, 1..4 (test hook).</summary>
+    /// <remarks>ROM RWDP picture.</remarks>
+    internal int WalkPictureNumber => _walkPictureNumber;
+
+    /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
+    private static int BeatPeriod => ArcadeClock.Units(BeatIntervalRomFrames);
+
+    /// <summary>Draws the current walk picture in the animation frame's own colours.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+    }
+
+    /// <summary>Kills the grunt outright: no flash, no death animation.</summary>
+    /// <remarks>ROM: RRP8.ASM's <c>ROBKIL</c> just explodes it.</remarks>
+    public void Kill()
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
+
+        LifeState = EntityLifeState.Dead;
+    }
 
     /// <summary>Called when a grunt dies: drops this one's stagger limit to seven eighths of it.</summary>
     /// <param name="floorBeats">The wave's current floor, below which the limit must not go.</param>
@@ -99,28 +135,6 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
         {
             _moveLimitBeats = next;
         }
-    }
-
-    /// <summary>Called on the level-progress tick: drops the stagger limit by the wave's step.</summary>
-    /// <param name="floorBeats">The wave's floor; the limit never goes below it.</param>
-    /// <param name="stepBeats">How much to drop the limit by; the ROM alternates 4, then 2.</param>
-    /// <remarks>The arcade clamps the limit to the floor, which descends to 1: 4 arcade px a beat is
-    /// the player's own 1 px a frame. A pending countdown finishes before the new limit applies.</remarks>
-    public void WaveSpeedTick(int floorBeats, int stepBeats = 4)
-    {
-        _moveLimitBeats = Math.Max(floorBeats, _moveLimitBeats - stepBeats);
-    }
-
-    /// <summary>Kills the grunt outright: no flash, no death animation.</summary>
-    /// <remarks>ROM: RRP8.ASM's <c>ROBKIL</c> just explodes it.</remarks>
-    public void Kill()
-    {
-        if (LifeState != EntityLifeState.Alive)
-        {
-            return;
-        }
-
-        LifeState = EntityLifeState.Dead;
     }
 
     /// <summary>Runs the beat: counts the stagger down, then steps and re-rolls it.</summary>
@@ -168,6 +182,16 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
             Math.Clamp(_position.Y, bounds.Y, bounds.Bottom - CollisionSize.Height));
     }
 
+    /// <summary>Called on the level-progress tick: drops the stagger limit by the wave's step.</summary>
+    /// <param name="floorBeats">The wave's floor; the limit never goes below it.</param>
+    /// <param name="stepBeats">How much to drop the limit by; the ROM alternates 4, then 2.</param>
+    /// <remarks>The arcade clamps the limit to the floor, which descends to 1: 4 arcade px a beat is
+    /// the player's own 1 px a frame. A pending countdown finishes before the new limit applies.</remarks>
+    public void WaveSpeedTick(int floorBeats, int stepBeats = 4)
+    {
+        _moveLimitBeats = Math.Max(floorBeats, _moveLimitBeats - stepBeats);
+    }
+
     /// <summary>Maps the ROM's walk picture number (1..4) to an index into <see cref="SpriteSet.GruntAnimationFrames"/>.</summary>
     /// <param name="romPictureNumber">The ROM's walk picture number, 1..4.</param>
     /// <returns>The index into <see cref="SpriteSet.GruntAnimationFrames"/>.</returns>
@@ -178,24 +202,4 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
         4 => 2,
         _ => 0,
     };
-
-    /// <summary>This grunt's current walk picture, for the appear and explosion effects.</summary>
-    /// <returns>The texture for the current walk frame.</returns>
-    public Texture2D CurrentAnimationFrame => _sprites.GruntAnimationFrames[AnimationFrameIndexFor(_walkPictureNumber)];
-
-    /// <summary>Draws the current walk picture in the animation frame's own colours.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (LifeState != EntityLifeState.Alive)
-        {
-            return;
-        }
-
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
-    }
-
-    /// <summary>The walk frame showing right now, 1..4 (test hook).</summary>
-    /// <remarks>ROM RWDP picture.</remarks>
-    internal int WalkPictureNumber => _walkPictureNumber;
 }

@@ -30,6 +30,10 @@ public sealed class HighScorePrintSequence
     /// <summary>The ROM's <c>LDA #4</c>: four entries per sleep.</summary>
     public const int RowsPerGroup = 4;
 
+    private int _clockUnits;
+
+    private Phase _phase = Phase.Waiting;
+
     private enum Phase
     {
         Waiting,
@@ -40,26 +44,23 @@ public sealed class HighScorePrintSequence
         Done,
     }
 
-    private Phase _phase = Phase.Waiting;
-    private int _clockUnits;
-
-    /// <summary>Today's rows printed so far (0 until the frame has finished).</summary>
-    public int TodayRows { get; private set; }
-
-    /// <summary>True once the operator's top entry has been printed.</summary>
-    public bool TopPrinted { get; private set; }
-
     /// <summary>All-time rows printed so far.</summary>
     public int AllTimeRows { get; private set; }
 
     /// <summary>True once the headers have been printed — the page is complete.</summary>
     public bool HeadersPrinted { get; private set; }
 
+    /// <summary>True when the page has finished printing.</summary>
+    public bool IsDone => _phase == Phase.Done;
+
     /// <summary>True while the page is still being printed (nothing is drawn before it starts).</summary>
     public bool IsPrinting => _phase is not (Phase.Waiting or Phase.Done);
 
-    /// <summary>True when the page has finished printing.</summary>
-    public bool IsDone => _phase == Phase.Done;
+    /// <summary>Today's rows printed so far (0 until the frame has finished).</summary>
+    public int TodayRows { get; private set; }
+
+    /// <summary>True once the operator's top entry has been printed.</summary>
+    public bool TopPrinted { get; private set; }
 
     /// <summary>
     /// Advances the printing by one port tick. Nothing happens until

@@ -13,18 +13,16 @@ namespace Robotron2084.Entities;
 /// and holds it for 60 ROM frames.</remarks>
 public sealed class RescueScoreMarker : IEntity
 {
-    private readonly SpriteSet _sprites;
-
     /// <summary>How long the display stays on the field.</summary>
     private const int LifeRomFrames = 60;
 
     private static readonly int Size = ScreenSize.Scaled(CollisionSizes.EntitySizeSpecPixels);
 
-    private readonly IntVector2 _position;
-
     /// <summary>Index into <see cref="SpriteSet.RescueScoreDisplays"/> (0..4 = 1000..5000).</summary>
     private readonly int _displayIndex;
 
+    private readonly IntVector2 _position;
+    private readonly SpriteSet _sprites;
     private int _ticksRemaining;
 
     /// <summary>Shows the display for one rescue.</summary>
@@ -39,25 +37,14 @@ public sealed class RescueScoreMarker : IEntity
         _displayIndex = Math.Clamp(rescuesThisLife, 1, ScoreValues.RescueBonusMaxCount) - 1;
     }
 
-    /// <summary>The rescue spot.</summary>
-    public IntVector2 Position => _position;
-
     /// <summary>The display's own box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
 
     /// <summary>Alive until the linger runs out.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Counts the linger down.</summary>
-    /// <param name="gameTime">Unused — the linger is counted in ticks.</param>
-    /// <param name="field">Unused.</param>
-    public void Update(GameTime gameTime, PlayField field)
-    {
-        if (--_ticksRemaining <= 0)
-        {
-            LifeState = EntityLifeState.Dead;
-        }
-    }
+    /// <summary>The rescue spot.</summary>
+    public IntVector2 Position => _position;
 
     /// <summary>Draws the "1000".."5000" picture this rescue earned.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
@@ -69,5 +56,16 @@ public sealed class RescueScoreMarker : IEntity
         }
 
         _sprites.Blitter.DrawSprite(spriteBatch, _sprites.RescueScoreDisplays[_displayIndex], Bounds, Color.White);
+    }
+
+    /// <summary>Counts the linger down.</summary>
+    /// <param name="gameTime">Unused — the linger is counted in ticks.</param>
+    /// <param name="field">Unused.</param>
+    public void Update(GameTime gameTime, PlayField field)
+    {
+        if (--_ticksRemaining <= 0)
+        {
+            LifeState = EntityLifeState.Dead;
+        }
     }
 }

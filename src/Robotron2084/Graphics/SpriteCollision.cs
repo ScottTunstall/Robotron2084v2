@@ -13,6 +13,9 @@ public sealed class SpriteCollision : IPixelCollision
     private readonly Dictionary<Texture2D, SpriteMask> _masks = [];
 
     /// <inheritdoc/>
+    public bool Overlaps(PictureShape a, PictureShape b) => SpriteMask.Overlap(a.Mask, a.DrawnBounds, b.Mask, b.DrawnBounds);
+
+    /// <inheritdoc/>
     public PictureShape? ShapeOf(IEntity entity)
     {
         if (entity is not IAnimationFrameSource frameSource)
@@ -23,9 +26,6 @@ public sealed class SpriteCollision : IPixelCollision
         Texture2D animationFrame = frameSource.CurrentAnimationFrame;
         return new PictureShape(MaskOf(animationFrame), BlitterDraw.DrawnRect(entity.Bounds, animationFrame));
     }
-
-    /// <inheritdoc/>
-    public bool Overlaps(PictureShape a, PictureShape b) => SpriteMask.Overlap(a.Mask, a.DrawnBounds, b.Mask, b.DrawnBounds);
 
     private SpriteMask MaskOf(Texture2D picture)
     {

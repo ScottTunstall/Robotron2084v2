@@ -3,6 +3,10 @@ namespace Robotron2084.Tuning;
 /// <summary>The strip explosion and appear effects' size accumulators (notes §35, §61).</summary>
 public static class StripExplosionTuning
 {
+    public const int AppearStartSizer = 0x1000;
+
+    public const int ExplosionFrames = 0x10;
+
     // StripEffect / appear — the RRDX2 "DIAGONAL EXPLOSIONS" engine (notes §35.5,
     // §61). The records come from ONE pool of 10 (`EX` at DXTAB, `RMB
     // ((10-1)*EXSIZE)`) shared by explosions and appears, so that is the cap on
@@ -16,11 +20,6 @@ public static class StripExplosionTuning
     //              ending when the step would reach 1
     public const int ExplosionStartSizer = 0x0100;
 
-    public const int AppearStartSizer = 0x1000;
-
-    public const int SizerStep = 0x0100;
-
-    public const int ExplosionFrames = 0x10;
-
     public const int MaxConcurrent = 10;
+    public const int SizerStep = 0x0100;
 }

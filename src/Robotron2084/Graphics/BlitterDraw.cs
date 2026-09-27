@@ -19,13 +19,19 @@ public sealed class BlitterDraw
     /// <c>Content/Effects/ColorCycle.fx</c>.</summary>
     private const string GlyphSlotParameter = "SlotId";
 
+    /// <summary>The colour-cycle shader's solid technique's colour parameter; must match
+    /// <c>Content/Effects/ColorCycle.fx</c>.</summary>
+    private const string SolidColorParameter = "RemapColor";
+
     /// <summary>The colour-cycle shader's technique for a solid fill; must match
     /// <c>Content/Effects/ColorCycle.fx</c>.</summary>
     private const string SolidRemapTechnique = "SolidRemap";
 
-    /// <summary>The colour-cycle shader's solid technique's colour parameter; must match
-    /// <c>Content/Effects/ColorCycle.fx</c>.</summary>
-    private const string SolidColorParameter = "RemapColor";
+    private readonly Texture2D _wallPixel;
+
+    /// <summary>Creates a blitter that fills rectangles with a 1x1 white pixel.</summary>
+    /// <param name="wallPixel">The white pixel every solid fill is a tinted, stretched copy of.</param>
+    public BlitterDraw(Texture2D wallPixel) => _wallPixel = wallPixel;
 
     /// <summary>
     /// When set, entity draws run through the colour-cycle pixel shader
@@ -37,24 +43,22 @@ public sealed class BlitterDraw
     /// <summary>The live 16-slot palette the effect remaps into (slots 10-15 cycle).</summary>
     public GamePalette? Palette { get; set; }
 
-    private readonly Texture2D _wallPixel;
-
-    /// <summary>Creates a blitter that fills rectangles with a 1x1 white pixel.</summary>
-    /// <param name="wallPixel">The white pixel every solid fill is a tinted, stretched copy of.</param>
-    public BlitterDraw(Texture2D wallPixel) => _wallPixel = wallPixel;
-
     /// <summary>
-    /// Draws a font glyph in a STATIC palette slot (0-9): the white master
-    /// glyph tinted with the slot's live colour (static slots never change,
-    /// so a tint is exact). Notes §38, §39.
+    /// The rectangle an animation frame is DRAWN in inside an entity's collision box: centred in the box, at the
+    /// render scale. It is the ONE definition of where a sprite sits in its box — the drawer uses it, and so
+    /// does pixel-perfect collision (<see cref="SpriteMask.Overlap"/>), so the two cannot drift apart
+    /// (notes §118).
     /// </summary>
-    public void DrawGlyphStatic(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot,
-        SpriteEffects effects = SpriteEffects.None)
+    /// <param name="bounds">The entity's collision box, in screen pixels.</param>
+    /// <param name="animationFrame">The animation frame being drawn.</param>
+    public static Rectangle DrawnRect(Rectangle bounds, Texture2D animationFrame)
     {
-        Color tint = Palette?.Color(slot) ?? Color.White;
-        int w = ScreenSize.Scaled(glyph.Width);
-        int h = ScreenSize.Scaled(glyph.Height);
-        spriteBatch.Draw(glyph, new Rectangle(x, y, w, h), null, tint, 0f, Vector2.Zero, effects, 0f);
+        int w = ScreenSize.Scaled(animationFrame.Width);
+        int h = ScreenSize.Scaled(animationFrame.Height);
+        return new Rectangle(
+            bounds.X + (bounds.Width - w) / 2,
+            bounds.Y + (bounds.Height - h) / 2,
+            w, h);
     }
 
     /// <summary>
@@ -89,24 +93,6 @@ public sealed class BlitterDraw
     }
 
     /// <summary>
-    /// Binds the effect's PASS-THROUGH pass (<c>MainPS</c>: remap the six baked
-    /// cycling markers, then <c>return t * input.Color</c> — aside from that
-    /// remap it is exactly the built-in sprite shader). EVERY draw that is not a
-    /// remap has to bind this itself, because <c>Apply()</c> writes the pixel
-    /// shader straight to the device and the binding OUTLIVES the draw that made
-    /// it (the same class as notes §40's vertex-shader bug), so the next plain
-    /// fill or sprite would be rendered through whatever pass was bound last.
-    /// </summary>
-    internal void UsePassThrough()
-    {
-        if (ColorCycleEffect is { } effect)
-        {
-            Palette?.UpdateEffectColors(effect);
-            effect.CurrentTechnique.Passes[0].Apply();
-        }
-    }
-
-    /// <summary>
     /// Draws one arcade-font glyph in palette SLOT <paramref name="slot"/>,
     /// picking the right path (notes §58.1, §92): a static slot (0-9) tints the
     /// white master glyph with the slot's live colour; a cycling slot (10-15)
@@ -130,6 +116,32 @@ public sealed class BlitterDraw
         {
             DrawGlyphStatic(spriteBatch, glyphs[glyphIndex], x, y, slot, effects);
         }
+    }
+
+    /// <summary>
+    /// Draws a font glyph in a STATIC palette slot (0-9): the white master
+    /// glyph tinted with the slot's live colour (static slots never change,
+    /// so a tint is exact). Notes §38, §39.
+    /// </summary>
+    public void DrawGlyphStatic(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot,
+        SpriteEffects effects = SpriteEffects.None)
+    {
+        Color tint = Palette?.Color(slot) ?? Color.White;
+        int w = ScreenSize.Scaled(glyph.Width);
+        int h = ScreenSize.Scaled(glyph.Height);
+        spriteBatch.Draw(glyph, new Rectangle(x, y, w, h), null, tint, 0f, Vector2.Zero, effects, 0f);
+    }
+
+    /// <summary>
+    /// Blitter op <c>$12</c> — "SOLID" (RRS22 <c>BLKONV</c>, "ON DMA BLOCK"):
+    /// fills the rectangle with one colour, ignoring any source. The ROM uses
+    /// it for the brain's flashing block while it reprograms a human (notes
+    /// §47) and, with colour 0, to erase a rectangle (<c>PCTOFV</c>/<c>BLKCLV</c>).
+    /// </summary>
+    public void DrawSolidRectangle(SpriteBatch spriteBatch, Rectangle bounds, Color color)
+    {
+        UsePassThrough(); // a solid rect is NOT a remap — see UsePassThrough
+        spriteBatch.Draw(_wallPixel, bounds, color);
     }
 
     /// <summary>
@@ -172,18 +184,6 @@ public sealed class BlitterDraw
     }
 
     /// <summary>
-    /// Blitter op <c>$12</c> — "SOLID" (RRS22 <c>BLKONV</c>, "ON DMA BLOCK"):
-    /// fills the rectangle with one colour, ignoring any source. The ROM uses
-    /// it for the brain's flashing block while it reprograms a human (notes
-    /// §47) and, with colour 0, to erase a rectangle (<c>PCTOFV</c>/<c>BLKCLV</c>).
-    /// </summary>
-    public void DrawSolidRectangle(SpriteBatch spriteBatch, Rectangle bounds, Color color)
-    {
-        UsePassThrough(); // a solid rect is NOT a remap — see UsePassThrough
-        spriteBatch.Draw(_wallPixel, bounds, color);
-    }
-
-    /// <summary>
     /// The ROM's two-colour object blit ($1DC2
     /// <c>BLIT_IMAGE_AS_SOLID_COLOUR_WITH_SOLID_BACKGROUND</c>): op <c>$12</c>
     /// fills the frame with <paramref name="background"/>, then op <c>$1A</c>
@@ -211,20 +211,20 @@ public sealed class BlitterDraw
     public Color SlotColor(int slot) => Palette?.Color(slot) ?? Color.White;
 
     /// <summary>
-    /// The rectangle an animation frame is DRAWN in inside an entity's collision box: centred in the box, at the
-    /// render scale. It is the ONE definition of where a sprite sits in its box — the drawer uses it, and so
-    /// does pixel-perfect collision (<see cref="SpriteMask.Overlap"/>), so the two cannot drift apart
-    /// (notes §118).
+    /// Binds the effect's PASS-THROUGH pass (<c>MainPS</c>: remap the six baked
+    /// cycling markers, then <c>return t * input.Color</c> — aside from that
+    /// remap it is exactly the built-in sprite shader). EVERY draw that is not a
+    /// remap has to bind this itself, because <c>Apply()</c> writes the pixel
+    /// shader straight to the device and the binding OUTLIVES the draw that made
+    /// it (the same class as notes §40's vertex-shader bug), so the next plain
+    /// fill or sprite would be rendered through whatever pass was bound last.
     /// </summary>
-    /// <param name="bounds">The entity's collision box, in screen pixels.</param>
-    /// <param name="animationFrame">The animation frame being drawn.</param>
-    public static Rectangle DrawnRect(Rectangle bounds, Texture2D animationFrame)
+    internal void UsePassThrough()
     {
-        int w = ScreenSize.Scaled(animationFrame.Width);
-        int h = ScreenSize.Scaled(animationFrame.Height);
-        return new Rectangle(
-            bounds.X + (bounds.Width - w) / 2,
-            bounds.Y + (bounds.Height - h) / 2,
-            w, h);
+        if (ColorCycleEffect is { } effect)
+        {
+            Palette?.UpdateEffectColors(effect);
+            effect.CurrentTechnique.Passes[0].Apply();
+        }
     }
 }

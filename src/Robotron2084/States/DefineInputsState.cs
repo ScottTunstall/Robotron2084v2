@@ -36,30 +36,17 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class DefineInputsState : IGameState
 {
-    private const string Title = "DEFINE INPUTS";
     private const string ArmedPrompt = "PRESS AN INPUT";
-    private const string Instructions = "USE UP AND DOWN TO MOVE BETWEEN P1 AND P2";
-    private const string SetAndClear = "ENTER - SET THE INPUT   DEL - CLEAR   R - DEFAULTS";
-    private const string ExitLine = "F10 - TITLE";
-
-    private const int TitleRow = 12;
-    private const int FirstLineRow = 70;
-    private const int LineStep = 26;
 
     // The two columns are centred on the page (notes §102). The cursor sits just left of the label
     // column, exactly where the arcade's GAME ADJUSTMENT page prints its cursor (column $0C), and it
     // is that page's own cursor glyph — the small font's "->" (notes §108.4).
     private const int CursorColumn = 57;
 
-    private const int LabelColumn = 75;
-    private const int ValueColumn = 285;
-
-    // The instructions and the exit line sit under the list in the SMALL font, the way the arcade's
-    // adjustment page ends — the exit line on its own, a blank line below them.
-    private const int InstructionsRow = 294;
-
-    private const int SetAndClearRow = 312;
+    private const string ExitLine = "F10 - TITLE";
     private const int ExitRow = 342;
+    private const int FirstLineRow = 70;
+    private const int HeadingSlot = 9;
 
     // The page's own colours (notes §108): the page reads like the arcade's GAME ADJUSTMENT page —
     // HEADINGS and INSTRUCTIONS in the palette's WHITE ($FF, slot 9), the lines' input text in its
@@ -74,8 +61,20 @@ public sealed class DefineInputsState : IGameState
     // static green.
     private const int InputSlot = 6;
 
+    private const string Instructions = "USE UP AND DOWN TO MOVE BETWEEN P1 AND P2";
+
+    // The instructions and the exit line sit under the list in the SMALL font, the way the arcade's
+    // adjustment page ends — the exit line on its own, a blank line below them.
+    private const int InstructionsRow = 294;
+
+    private const int LabelColumn = 75;
+    private const int LineStep = 26;
     private const int SeparatorSlot = 7;
-    private const int HeadingSlot = 9;
+    private const string SetAndClear = "ENTER - SET THE INPUT   DEL - CLEAR   R - DEFAULTS";
+    private const int SetAndClearRow = 312;
+    private const string Title = "DEFINE INPUTS";
+    private const int TitleRow = 12;
+    private const int ValueColumn = 285;
 
     /// <summary>
     /// The three entries this page draws with STATICALLY. It writes them itself on entry (see
@@ -88,12 +87,12 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private static readonly int[] OwnedSlots = [InputSlot, SeparatorSlot, HeadingSlot];
 
-    private readonly SpriteSet _sprites;
     private readonly ControlSettingsStore _controlStore;
+    private readonly DefineInputsHighlight _highlight = new();
+    private readonly DefineInputsModel _model = new();
     private readonly GameServices _services;
     private readonly ControlSettings _settings;
-    private readonly DefineInputsModel _model = new();
-    private readonly DefineInputsHighlight _highlight = new();
+    private readonly SpriteSet _sprites;
     private InputSnapshot _previous;
 
     public DefineInputsState(GameServices services, ControlSettingsStore controlStore)
@@ -111,22 +110,20 @@ public sealed class DefineInputsState : IGameState
         }
     }
 
-    /// <summary>
-    /// Puts this page's three entries back on their CRTAB values (notes §108). They are what the page
-    /// draws with, and the screen it came from may have left them holding anything at all — see
-    /// <see cref="OwnedSlots"/>.
-    /// </summary>
-    private void RestorePalette()
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        if (_sprites.Blitter.Palette is not { } palette)
+        DrawHeading(spriteBatch, Title, TitleRow);
+
+        int last = Math.Min(_model.FirstVisibleLine + DefineInputsModel.VisibleLines, DefineInputsModel.LineCount);
+        int row = 0;
+        for (int line = _model.FirstVisibleLine; line < last; line++, row++)
         {
-            return;
+            DrawLine(spriteBatch, line, FirstLineRow + (row * LineStep));
         }
 
-        foreach (int slot in OwnedSlots)
-        {
-            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
-        }
+        DrawInstruction(spriteBatch, Instructions, InstructionsRow);
+        DrawInstruction(spriteBatch, SetAndClear, SetAndClearRow);
+        DrawInstruction(spriteBatch, ExitLine, ExitRow);
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -150,6 +147,24 @@ public sealed class DefineInputsState : IGameState
         _previous = now;
     }
 
+    /// <summary>
+    /// One line's LABEL — always with its player on it, so a window that leaves the tail of
+    /// one block and the head of the next on screen together can never be misread.
+    /// </summary>
+    private static string LabelOf(int line)
+    {
+        if (line == DefineInputsModel.PauseLine)
+        {
+            return "PAUSE";
+        }
+
+        return $"P{DefineInputsModel.PlayerOf(line) + 1} {DefineInputsModel.ActionOf(line)!.Value.Label()}";
+    }
+
+    private ActionBinding BindingOf(int line) => line == DefineInputsModel.PauseLine
+            ? new ActionBinding(_settings.Pause, InputBinding.None)
+            : _settings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.ActionOf(line)!.Value];
+
     /// <summary>The armed half of the page: the next input pressed becomes the binding.</summary>
     private void CaptureInput(InputSnapshot now)
     {
@@ -166,58 +181,21 @@ public sealed class DefineInputsState : IGameState
         }
     }
 
-    /// <summary>The idle half: scrolling, arming, clearing, defaults, and leaving.</summary>
-    private void Navigate(InputSnapshot now, GameStateManager manager)
+    /// <summary>The X that centres a line of the given font on the canvas.</summary>
+    private int CenteredX(string text, bool large = false)
     {
-        if (KeyboardPressed(now, Keys.Up) || PadPressed(now, Buttons.DPadUp))
-        {
-            _model.MoveUp();
-        }
-
-        if (KeyboardPressed(now, Keys.Down) || PadPressed(now, Buttons.DPadDown))
-        {
-            _model.MoveDown();
-        }
-
-        if (KeyboardPressed(now, Keys.Enter) || PadPressed(now, Buttons.A))
-        {
-            _model.Arm();
-        }
-
-        if (KeyboardPressed(now, Keys.Delete) || PadPressed(now, Buttons.X))
-        {
-            _model.ClearHighlighted(_settings);
-            _controlStore.Save(_settings);
-        }
-
-        if (KeyboardPressed(now, Keys.R))
-        {
-            _model.ResetAll(_settings);
-            _controlStore.Save(_settings);
-        }
-
-        if (KeyboardPressed(now, Keys.F10))
-        {
-            _controlStore.Save(_settings);
-            manager.TransitionTo(new TitleScreenState(_services));
-        }
+        int width = ScreenSize.Scaled(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
+        return (ScreenSize.Width - width) / 2;
     }
 
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
-    {
-        DrawHeading(spriteBatch, Title, TitleRow);
-
-        int last = Math.Min(_model.FirstVisibleLine + DefineInputsModel.VisibleLines, DefineInputsModel.LineCount);
-        int row = 0;
-        for (int line = _model.FirstVisibleLine; line < last; line++, row++)
-        {
-            DrawLine(spriteBatch, line, FirstLineRow + (row * LineStep));
-        }
-
-        DrawInstruction(spriteBatch, Instructions, InstructionsRow);
-        DrawInstruction(spriteBatch, SetAndClear, SetAndClearRow);
-        DrawInstruction(spriteBatch, ExitLine, ExitRow);
-    }
+    /// <summary>
+    /// The cursor on the selected line: the arcade's own — the GAME ADJUSTMENT page prints the small
+    /// font's "->" glyph at column $0C on the row the move lever is on, in palette entry 9, and this
+    /// page puts the same glyph in the same relation to its rows (notes §108.4/§108.5). Entry 9 is
+    /// this page's WHITE — the arcade's `04 99` sets exactly that colour before printing the cursor.
+    /// </summary>
+    private void DrawCursor(SpriteBatch spriteBatch, int y) =>
+        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrow, CursorColumn, y, HeadingSlot);
 
     /// <summary>
     /// The heading: the arcade's LARGE font, centred, in the page's WHITE.
@@ -259,14 +237,8 @@ public sealed class DefineInputsState : IGameState
         DrawValue(spriteBatch, line, armed, InputSlot, y);
     }
 
-    /// <summary>
-    /// The cursor on the selected line: the arcade's own — the GAME ADJUSTMENT page prints the small
-    /// font's "->" glyph at column $0C on the row the move lever is on, in palette entry 9, and this
-    /// page puts the same glyph in the same relation to its rows (notes §108.4/§108.5). Entry 9 is
-    /// this page's WHITE — the arcade's `04 99` sets exactly that colour before printing the cursor.
-    /// </summary>
-    private void DrawCursor(SpriteBatch spriteBatch, int y) =>
-        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrow, CursorColumn, y, HeadingSlot);
+    private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int slot) =>
+            _sprites.Text.DrawSmallFontText(spriteBatch, text, x, y, slot);
 
     /// <summary>
     /// The value column: the keyboard binding, then the word OR in its own colour when the line
@@ -307,38 +279,65 @@ public sealed class DefineInputsState : IGameState
         }
     }
 
-    /// <summary>
-    /// One line's LABEL — always with its player on it, so a window that leaves the tail of
-    /// one block and the head of the next on screen together can never be misread.
-    /// </summary>
-    private static string LabelOf(int line)
+    private bool KeyboardPressed(InputSnapshot now, Keys key) =>
+            now.Keys.IsKeyDown(key) && !_previous.Keys.IsKeyDown(key);
+
+    /// <summary>The idle half: scrolling, arming, clearing, defaults, and leaving.</summary>
+    private void Navigate(InputSnapshot now, GameStateManager manager)
     {
-        if (line == DefineInputsModel.PauseLine)
+        if (KeyboardPressed(now, Keys.Up) || PadPressed(now, Buttons.DPadUp))
         {
-            return "PAUSE";
+            _model.MoveUp();
         }
 
-        return $"P{DefineInputsModel.PlayerOf(line) + 1} {DefineInputsModel.ActionOf(line)!.Value.Label()}";
+        if (KeyboardPressed(now, Keys.Down) || PadPressed(now, Buttons.DPadDown))
+        {
+            _model.MoveDown();
+        }
+
+        if (KeyboardPressed(now, Keys.Enter) || PadPressed(now, Buttons.A))
+        {
+            _model.Arm();
+        }
+
+        if (KeyboardPressed(now, Keys.Delete) || PadPressed(now, Buttons.X))
+        {
+            _model.ClearHighlighted(_settings);
+            _controlStore.Save(_settings);
+        }
+
+        if (KeyboardPressed(now, Keys.R))
+        {
+            _model.ResetAll(_settings);
+            _controlStore.Save(_settings);
+        }
+
+        if (KeyboardPressed(now, Keys.F10))
+        {
+            _controlStore.Save(_settings);
+            manager.TransitionTo(new TitleScreenState(_services));
+        }
     }
-
-    private ActionBinding BindingOf(int line) => line == DefineInputsModel.PauseLine
-        ? new ActionBinding(_settings.Pause, InputBinding.None)
-        : _settings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.ActionOf(line)!.Value];
-
-    private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int slot) =>
-        _sprites.Text.DrawSmallFontText(spriteBatch, text, x, y, slot);
-
-    /// <summary>The X that centres a line of the given font on the canvas.</summary>
-    private int CenteredX(string text, bool large = false)
-    {
-        int width = ScreenSize.Scaled(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
-        return (ScreenSize.Width - width) / 2;
-    }
-
-    private bool KeyboardPressed(InputSnapshot now, Keys key) =>
-        now.Keys.IsKeyDown(key) && !_previous.Keys.IsKeyDown(key);
 
     private bool PadPressed(InputSnapshot now, Buttons button) =>
-        (now.PadOne.IsButtonDown(button) && !_previous.PadOne.IsButtonDown(button))
-        || (now.PadTwo.IsButtonDown(button) && !_previous.PadTwo.IsButtonDown(button));
+            (now.PadOne.IsButtonDown(button) && !_previous.PadOne.IsButtonDown(button))
+            || (now.PadTwo.IsButtonDown(button) && !_previous.PadTwo.IsButtonDown(button));
+
+    /// <summary>
+    /// Puts this page's three entries back on their CRTAB values (notes §108). They are what the page
+    /// draws with, and the screen it came from may have left them holding anything at all — see
+    /// <see cref="OwnedSlots"/>.
+    /// </summary>
+    private void RestorePalette()
+    {
+        if (_sprites.Blitter.Palette is not { } palette)
+        {
+            return;
+        }
+
+        foreach (int slot in OwnedSlots)
+        {
+            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
+        }
+    }
 }

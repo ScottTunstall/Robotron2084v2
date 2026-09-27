@@ -10,19 +10,18 @@ public static class SpheroidTuning
     // column/frame and 2 rows/frame, the same 2 arcade px/frame).
     public const int BeatRomFrames = 3; // `NAP 2` + 1
 
-    public const int MaxVelocityXSubpixels = 0x0100; // 1/256-column units per frame
-
-    public const int MaxVelocityYSubpixels = 0x0200; // 1/256-row units per frame
-
     // CIRC3L's exit test: `CMPA #XMIN+3` / `CMPA #XMAX-10` with XMIN=7 and
     // XMAX=$8F (RRF.ASM:69-70), i.e. column 10 / column 133 of the video buffer.
     public const int EscapeExitLeftColumn = 10;
 
     public const int EscapeExitRightColumn = 133;
+    public const int MaxVelocityXSubpixels = 0x0100; // 1/256-column units per frame
 
+    public const int MaxVelocityYSubpixels = 0x0200; // 1/256-row units per frame
     public const int MinDistanceFromPlayer = 100; // spec-px, spec-stated
 
+    public const int NearWallBiasDistance = 30;
     public const int NearWallBiasPercent = 70;
 
-    public const int NearWallBiasDistance = 30; // spec-px
+    // spec-px
 }

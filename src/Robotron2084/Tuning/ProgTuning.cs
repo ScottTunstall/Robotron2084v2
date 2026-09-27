@@ -3,6 +3,10 @@ namespace Robotron2084.Tuning;
 /// <summary>The prog's own colours (RRB10 PROG3/PROG4).</summary>
 public static class ProgTuning
 {
+    public const int BackgroundSlot = 0x00;
+
+    public const int GhostBackgroundSlot = 0x0E;
+
     // A prog is drawn as TWO blitter colour pairs, not as a sprite. Each beat:
     //   PROG3: `LDD #$EE00 / JSR HUMON` at the position it is LEAVING
     //   PROG4: `LDD #$00AA / JSR HUMON` at the position it is entering
@@ -17,11 +21,12 @@ public static class ProgTuning
     // and a ghost is erased by PCTOFF as its entry is reused 7 beats later.
     public const int GhostCount = 7;
 
-    public const int BackgroundSlot = 0x00;   // $00 — black
+    // $00 — black
 
+    public const int GhostShapeSlot = 0x00;
     public const int ShapeSlot = 0x0A;        // $AA
 
-    public const int GhostBackgroundSlot = 0x0E; // $EE
+    // $EE
 
-    public const int GhostShapeSlot = 0x00;      // $00 — black
+    // $00 — black
 }

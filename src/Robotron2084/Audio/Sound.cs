@@ -34,19 +34,6 @@ public static class Sound
     public static void Initialize(IAudioSink sink) => _engine = new SoundEngine(sink);
 
     /// <summary>
-    /// One port tick (≈ one arcade vblank). Drives the sequencer + sink.
-    /// </summary>
-    public static void Tick()
-    {
-        if (!Enabled)
-        {
-            return;
-        }
-
-        _engine?.Tick();
-    }
-
-    /// <summary>
     /// Request a ROM sound (priority preemption per the ROM, notes §36.2).
     /// A no-op while <see cref="Enabled"/> is false or before
     /// <see cref="Initialize"/> (unit tests, no-audio contexts).
@@ -59,5 +46,18 @@ public static class Sound
         }
 
         _engine?.Play(sequence);
+    }
+
+    /// <summary>
+    /// One port tick (≈ one arcade vblank). Drives the sequencer + sink.
+    /// </summary>
+    public static void Tick()
+    {
+        if (!Enabled)
+        {
+            return;
+        }
+
+        _engine?.Tick();
     }
 }

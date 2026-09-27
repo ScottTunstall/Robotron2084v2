@@ -32,9 +32,9 @@ namespace Robotron2084.Input;
 public sealed class DemoPlayerInputSource : IPlayerInputSource
 {
     private readonly Random _random;
+    private int _directionVotes;
     private PlayField? _field;
     private IntVector2 _heldMove;
-    private int _directionVotes;
     private int _holdTicks;
 
     /// <summary>Creates the phony player.</summary>

@@ -15,10 +15,8 @@ namespace Robotron2084.Entities;
 /// centred in the box — the arcade never flips the picture (notes §19).</remarks>
 public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
 {
-    private readonly SpriteSet _sprites;
-
     private static readonly int Size = ScreenSize.Scaled(CollisionSizes.MissileSizeSpecPixels);
-
+    private readonly SpriteSet _sprites;
     private IntVector2 _position;
 
     /// <summary>Starts a laser travelling in the given direction.</summary>
@@ -32,17 +30,40 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
         Direction = direction;
     }
 
+    /// <summary>The 4x4 spec-pixel collision box at <see cref="Position"/>.</summary>
+    public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
+
+    /// <summary>The picture for this laser's direction — the ROM's four laser arts (`LTAB`, notes §19).</summary>
+    public Texture2D CurrentAnimationFrame => Direction switch
+    {
+        Direction8.Left or Direction8.Right => _sprites.LaserBar,
+        Direction8.Up or Direction8.Down => _sprites.LaserColumn,
+        Direction8.UpLeft or Direction8.DownRight => _sprites.LaserDiagonalMain,
+        Direction8.DownLeft or Direction8.UpRight => _sprites.LaserDiagonalAnti,
+        _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}"),
+    };
+
     /// <summary>The direction the laser travels; never changes.</summary>
     public Direction8 Direction { get; }
+
+    /// <summary>Alive until it hits a wall or is hit; then immediately dead.</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Top-left of the collision box.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>The 4x4 spec-pixel collision box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
+    /// <summary>Draws the picture for this laser's direction.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (LifeState != EntityLifeState.Alive)
+        {
+            return;
+        }
 
-    /// <summary>Alive until it hits a wall or is hit; then immediately dead.</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+        // The ROM draws the laser in its flashing palette slot, so the whole bolt flashes with it.
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(PlayerTuning.LaserSlot));
+    }
 
     /// <summary>Removes the laser at once, vacating its slot.</summary>
     public void Kill()
@@ -77,29 +98,6 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
             Kill();
         }
     }
-
-    /// <summary>Draws the picture for this laser's direction.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (LifeState != EntityLifeState.Alive)
-        {
-            return;
-        }
-
-        // The ROM draws the laser in its flashing palette slot, so the whole bolt flashes with it.
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(PlayerTuning.LaserSlot));
-    }
-
-    /// <summary>The picture for this laser's direction — the ROM's four laser arts (`LTAB`, notes §19).</summary>
-    public Texture2D CurrentAnimationFrame => Direction switch
-    {
-        Direction8.Left or Direction8.Right => _sprites.LaserBar,
-        Direction8.Up or Direction8.Down => _sprites.LaserColumn,
-        Direction8.UpLeft or Direction8.DownRight => _sprites.LaserDiagonalMain,
-        Direction8.DownLeft or Direction8.UpRight => _sprites.LaserDiagonalAnti,
-        _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}"),
-    };
 
     /// <summary>Test-only positioning hook (InternalsVisibleTo the test assembly).</summary>
     internal void TeleportTo(IntVector2 position) => _position = position;

@@ -13,9 +13,9 @@ public sealed class GameStateManager
 
     public IGameState Current { get; private set; }
 
+    public void Draw(SpriteBatch spriteBatch, SpriteFont font) => Current.Draw(spriteBatch, font);
+
     public void TransitionTo(IGameState next) => Current = next;
 
     public void Update(GameTime gameTime) => Current.Update(gameTime, this);
-
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font) => Current.Draw(spriteBatch, font);
 }
