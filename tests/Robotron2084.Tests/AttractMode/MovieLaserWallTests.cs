@@ -1,3 +1,4 @@
+using Robotron2084.AttractMode;
 using Robotron2084.Level.Attract;
 using Xunit;
 
