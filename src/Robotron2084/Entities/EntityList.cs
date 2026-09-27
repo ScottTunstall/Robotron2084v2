@@ -5,15 +5,12 @@ using Robotron2084.Level;
 
 namespace Robotron2084.Entities;
 
-/// <summary>
-/// One kind's entities on the field, with the passes EVERY list of them needs — update, prune, draw — so the
-/// field walks its lists in single loops instead of repeating each pass once per kind.
-/// </summary>
+/// <summary>Holds every enemy or object of one kind that is currently on screen, and does the shared jobs of updating, cleaning out dead ones, and drawing them all.</summary>
 /// <remarks>
-/// Adding an entity kind is therefore a field for its list here plus a row in <see cref="RobotKinds"/> (and its
-/// class), not another edit in each of the field's passes — see <see cref="RobotKinds"/> for the whole list of
-/// steps. The field also holds the lists for the nearest-robot scan and
-/// the per-kind collision phases, which are typed and read as the ROM's own phases do.
+/// <list type="bullet">
+/// <item>Original source: no single matching routine — this is a C# implementation structure. It mirrors the original game's own convention of keeping a separate list per object kind, each object carrying its own "next" pointer (see <c>RRDX2.ASM</c>'s <c>NEXT</c>/<c>NEXTZ</c> field)</item>
+/// <item>Disassembly: Not separately labelled in <c>asm/robomame.asm</c>, though it documents the same convention (for example <c>spheroids_enforcers_quarks_sparks_shells</c>, <c>family_list_pointer</c> and <c>electrode_list_pointer</c>, each described as a "linked list of..." its own object kind).</item>
+/// </list>
 /// </remarks>
 /// <typeparam name="T">The entity type the list holds.</typeparam>
 public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>

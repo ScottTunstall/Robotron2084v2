@@ -7,16 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>One of the family members the player is trying to rescue: Mikey, Mummy or Daddy.</summary>
+/// <summary>A human is one of the family members the player is trying to rescue: Mikey, Mummy or Daddy. It wanders about until it is saved, killed or captured.</summary>
 /// <seealso cref="Brain"/>
 /// <seealso cref="SkullMarker"/>
-/// <remarks>ROM: RRH11.ASM's <c>HUMAN</c> process and its <c>HUMATB</c>
-/// walk table. It walks one of 8 direction blocks (4 cardinal, 4 diagonal) of 4 substeps — 2-then-1
-/// arcade px on the major axis, plus a steady 1px on the minor axis for diagonals — taking a new
-/// random direction every 1-128 steps, or at once if the next step would leave the field or land on
-/// a standing electrode. Its 12 frames are 4 directions x 3 walk frames, the diagonals reusing the
-/// cardinal sets. Humans set off before the robots' wave-start flag. Timers count 5 per tick and 6
-/// per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMAN</c> (with the <c>HUMATB</c> walk table)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$02B2</c> (<c>INITIALISE_FAMILY_MEMBERS</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>Animation frames in each of a family member's walk sets.</summary>

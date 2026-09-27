@@ -7,10 +7,14 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The "1000".."5000" number shown where the player rescued a human. Display only.</summary>
+/// <summary>The "1000" to "5000" number that pops up where you just rescued a family member, showing the points you earned.</summary>
 /// <seealso cref="Human"/>
-/// <remarks>ROM: <c>HUMKIL</c>'s <c>PCFLG</c> path (RRH11.ASM) picks <c>P1000 + 4*min(SAVCNT,5)</c>
-/// and holds it for 60 ROM frames.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMKIL</c> (the <c>PCFLG</c> path)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$03C5</c> (<c>RESCUE_FAMILY_POINTS_TABLE</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class RescueScoreMarker : IEntity
 {
     /// <summary>How long the display stays on the field.</summary>

@@ -7,19 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A quark — the drifting robot that drops tanks, then flees off the nearest edge.</summary>
+/// <summary>A quark is a drifting robot that wanders the screen dropping tanks, then flees off the edge once it has dropped enough.</summary>
 /// <seealso cref="Tank"/>
 /// <seealso cref="StripEffect"/>
-/// <remarks>ROM: RRTK4.ASM's <c>SQUARE</c> process — <c>SQVEL</c> rolls the drift each beat,
-/// <c>SQ3</c> handles the flee-and-vanish exit (notes §51). It never seeks the player: every beat it
-/// rolls a fresh random speed per axis, biased away from the nearest wall, and the shared per-frame
-/// mover integrates it every ROM frame, so it glides rather than jumps. It flies straight over
-/// electrodes and never bounces — reaching a wall just makes the next roll point inward. At spawn it
-/// rolls its tank allotment (half a random roll, rounded up); the first drop waits a random delay and
-/// each later one a shorter re-arm, and drops stop while 20 tanks are already in play. Once the
-/// allotment is gone it flees off the nearest edge at a fixed speed and disappears; being hit instead
-/// bursts it on the spot. Timers count 5 per tick and 6 per arcade frame, so an interval of N frames
-/// is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRTK4.ASM</c>, routine <c>SQUARE</c> (with <c>SQVEL</c>/<c>SQ3</c>)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$4BFB</c> (<c>ANIMATE_QUARK</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>Sides of the ROM's coin flips (the drift signs and the flee direction).</summary>

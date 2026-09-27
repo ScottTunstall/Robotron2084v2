@@ -8,19 +8,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A brain — a hovering robot that turns humans into progs and fires homing missiles.</summary>
+/// <summary>A brain is a hovering robot that catches humans and turns them into progs. It also fires homing missiles at you.</summary>
 /// <seealso cref="PlayField"/>
 /// <seealso cref="Human"/>
-/// <remarks>ROM: RRB10.ASM's <c>BRNORG</c>/<c>BRNKIL</c> (notes §18). Its beat is 1 + this wave's
-/// <c>BRNSPD</c> frames: one 1-px step per axis, the walk animation advances and the missile timer
-/// ticks (reload <c>BSHTIM</c>). X has a ±2 arcade px dead
-/// zone, Y has none, so a brain on the target's row oscillates ±1 px. Each axis is wall-checked
-/// separately, so a blocked brain slides along the wall instead of freezing. Facing follows the move
-/// (X wins) and changing it restarts the walk pattern. Its target is a SLOT in the field's family list,
-/// not a person: the brain keeps the slot it was handed at spawn and only searches for another when that
-/// slot empties, falling back to the player when the family is gone. That is the arcade's own rule, and the
-/// reason every brain on a wave chases the same member (notes §18.8). Timers count 5 per tick and 6 per
-/// arcade frame, so an interval of N frames is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRB10.ASM</c>, routine <c>BRAIN</c> (with <c>BRNKIL</c> sub-block)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>BRAIN_AI</c> (<c>$2523</c>) and <c>ANIMATE_BRAIN</c> (<c>$2539</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class Brain : IEntity, IExplodable, IRemovable
 {
     /// <summary>Extra ROM frames added to this wave's brain speed to get the beat.</summary>

@@ -7,12 +7,14 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The player's laser: a straight bolt, gone the moment it hits the wall or a robot.</summary>
+/// <summary>The player's laser shot: a straight bolt that flies until it hits a wall or a robot, then vanishes.</summary>
 /// <seealso cref="LaserSlots"/>
-/// <remarks>The box is a 4x4 spec-pixel square and it flies at
-/// <see cref="PlayerTuning.LaserSpeed"/> px/tick, far quicker than the player. The picture is one of the ROM's four laser shapes (R5 $35BE-$35DC: <c>LLPC</c>,
-/// <c>ULPC</c>, <c>DLLPC</c>, <c>ULLPC</c>), chosen for the direction by <c>LTAB</c> (RRG23.ASM) and
-/// centred in the box — the arcade never flips the picture (notes §19).</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRG23.ASM</c>, routine <c>LTAB</c> (picture lookup for shapes <c>LLPC</c>/<c>ULPC</c>/<c>DLLPC</c>/<c>ULLPC</c>)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$3237</c> (<c>LASER_DESCRIPTOR TABLE</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
 {
     private static readonly int Size = ScreenSize.Scaled(CollisionSizes.MissileSizeSpecPixels);

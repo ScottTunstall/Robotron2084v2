@@ -7,20 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A prog — a reprogrammed human: it wears the human's animation frames and hunts the player.</summary>
+/// <summary>A prog is a family member the brain has captured and turned into an enemy. It looks like the human it used to be, but now hunts the player instead of running from danger.</summary>
 /// <seealso cref="Human"/>
 /// <seealso cref="StripEffect"/>
-/// <remarks>ROM: RRB10.ASM's <c>PROGST</c>/<c>PROG</c>/<c>GPOFF</c>/<c>GPDIR</c>/<c>PRGKIL</c>
-/// (notes §18). It keeps its victim's animation frames and box, walks one cardinal direction at a time (never
-/// diagonally) 4 arcade px a beat, and does not home on the player: it rolls a persistent random aim
-/// offset and walks toward the player's position plus that offset, one axis at a time, re-rolling the
-/// offset occasionally and the direction on a blocked step. An aim point past the field's far edge
-/// wraps to the opposite edge, which is why a prog sometimes walks away. Each beat drops a ghost at
-/// the square it is leaving — the newest 7 are kept, each frozen in the pose it was dropped in — giving
-/// it a strobing afterimage trail. The leaving ghost is a coloured silhouette on black, the entering one
-/// black on colour: exact inverses by design, not a bug. A kill wipes the trail and swaps in the
-/// 12x16 <c>PGXPIC</c> card for the shared strip explosion. Timers count 5 per tick and 6 per arcade
-/// frame, so an interval of N frames is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRB10.ASM</c>, routine <c>PROG</c> (with <c>PROGST</c>/<c>GPOFF</c>/<c>GPDIR</c>/<c>PRGKIL</c>)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$1EAB</c> (<c>ANIMATE_PROG</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class Prog : IExplodable, IRemovable
 {
     /// <summary>Sides of the coin flip that picks whether a re-aim considers X or Y.</summary>

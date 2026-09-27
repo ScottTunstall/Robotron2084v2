@@ -7,13 +7,14 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>An electrode — a static hazard post that shrivels away when something kills it.</summary>
+/// <summary>An electrode is a spiky post standing in the play field. It cannot move, but it shrivels up and disappears when something destroys it.</summary>
 /// <seealso cref="PlayField"/>
-/// <remarks>ROM: RRP8.ASM (<c>PSTKIL</c> hands off to <c>PKPROC</c>). A post never explodes — its
-/// picture switches off and it plays a 3-picture shrivel held 6, 3 and 2 frames — so this class is
-/// deliberately not <see cref="IExplodable"/>. Its picture family and colour are looked up per wave
-/// by RRG23.ASM's <c>GTWCOL</c> (notes §45). Timers count 5 per tick and 6 per arcade frame, so an
-/// interval of N frames is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRP8.ASM</c>, routine <c>PSTKIL</c> (hands off to <c>PKPROC</c>)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$3AE0</c> (<c>ELECTRODE_DEATH</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>The post picture's own 10x9 arcade px box, in port pixels.</summary>

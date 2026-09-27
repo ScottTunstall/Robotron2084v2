@@ -8,23 +8,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The human-controlled avatar: moves, shoots, and can be lost and respawned.</summary>
+/// <summary>The player is the hero the person plays as: it moves around, shoots at enemies, and can be killed and brought back to try again.</summary>
 /// <seealso cref="PlayField"/>
 /// <seealso cref="PlayerLaser"/>
-/// <remarks>ROM: RRX7.ASM's death routine, RRG23.ASM's muzzle-offset table and the player-movement
-/// routine (notes §17). Movement is 8-way digital at the
-/// <c>PlayerSpeedX</c>/<c>PlayerSpeedY</c> rate; the fire button fires on its
-/// rising edge and then re-fires every <c>PlayerAutoFireTicks</c> while held, with the 3-laser slot cap
-/// as the binding limit. The two-stick controls are a deliberate deviation from the arcade's single
-/// 8-way joystick — movement and aim/fire have their own bindings (see
-/// <see cref="PlayerControls.Defaults"/>) — so don't revert it without
-/// checking. Facing follows MOVEMENT only; the aim sets the laser direction but never the facing or the
-/// walk animation. The walk uses 4 sequences of 3 pictures (left 1,2,1,3 / right 4,5,4,6 / down
-/// 7,8,7,9 / up 10,11,10,12; diagonals reuse the horizontal pair), each frame held 3 movement ticks,
-/// the index resetting on a direction change and the animation frozen while the stick is centred; a
-/// wave starts on frame 7, the first DOWN frame. Port frame N = arcade frame N. Death is a ~2 s
-/// solid-colour flash loop then the slot-12 fade. Timers count 5 per tick and 6 per arcade frame, so
-/// an interval of N frames is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRF.ASM</c>, routine <c>PLAYER</c> (called every interrupt; see also <c>PDEATH</c> and RRG23.ASM's <c>LTAB</c> muzzle-offset table)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$2FD0</c> (<c>MOVE_PLAYER</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class Player : IEntity, IAnimationFrameSource
 {
     /// <summary>Each animation frame is drawn for 3 movement ticks.</summary>

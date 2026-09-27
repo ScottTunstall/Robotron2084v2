@@ -7,16 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>An enforcer — a small, fast robot spheroids drop. It grows in place, then flies and shoots.</summary>
+/// <summary>An enforcer is a small, fast robot dropped by spheroids. It grows in place for a moment, then flies around firing sparks at you.</summary>
 /// <seealso cref="Spheroid"/>
 /// <seealso cref="Spark"/>
-/// <remarks>ROM: RRC11.ASM's <c>ENFR1</c>/<c>ENFNV</c>/<c>ENFDRP</c> (notes §17). Growing takes five
-/// pictures of 9 frames (<see cref="EnforcerTuning.GrowUpRomFrames"/> in all) and is immobile.
-/// It then aims at a spot in a 32x32 zone
-/// down-right of the player and moves at half the remaining distance, so it loiters as it closes. It
-/// flies over electrodes and dies outright when hit, with no Dying state and no flash. The fire timer
-/// re-arms before the 20-spark cap is checked, so a shot the cap swallows is simply lost. Timers count
-/// 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRC11.ASM</c>, routine <c>ENFR1</c> (with <c>ENFNV</c>, <c>ENFDRP</c> sub-blocks)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ENFORCER_AI</c> (<c>$1951</c> area), with spawning in <c>DROP_ENFORCER</c>/<c>CREATE_ENFORCER</c></item>
+/// </list>
+/// </remarks>
 public sealed class Enforcer : IEntity, IExplodable, IRemovable
 {
     /// <summary>ROM <c>ENFR1</c>: the aim zone down-right of the player is this many columns wide...</summary>

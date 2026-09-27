@@ -7,20 +7,14 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The missile a brain fires: a slow, lurching homing shot that bounces off the walls.</summary>
+/// <summary>A slow, wobbly missile fired by a brain robot. It chases the player and bounces off walls, leaving a trail behind it.</summary>
 /// <seealso cref="Brain"/>
 /// <seealso cref="PlayerLaser"/>
-/// <remarks>ROM: RRB10.ASM's <c>BRNSHT</c>/<c>GCMDIR</c>/<c>CMISL</c>/<c>CMMOV</c> (notes §18). It
-/// starts just below and right of the brain. Each beat it re-aims (timer 1..7 beats) and then takes
-/// two one-pixel steps, checking the bounce after each — which is what lets it turn flush against a
-/// wall. A re-aim is Y-only half the time, X-only a quarter and both axes a quarter; each active axis
-/// aims at the player's coordinate plus a random -6..+9 nudge. It has no lifetime of its own: only
-/// being hit removes it, leaving no animation, and it keeps flying while the robots are frozen. Its
-/// trail is a ring of the 9 most recent positions — each step erases the mark from 9 steps ago —
-/// drawn as solid rectangles <see cref="CruiseMissileTuning.MarkArcadeWidth"/> x
-/// <see cref="CruiseMissileTuning.MarkArcadeHeight"/> arcade px, because the arcade's own video-memory write
-/// coloured two stacked pixels; the ROM's missile picture exists only to define the collision box.
-/// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRB10.ASM</c>, routine <c>CMISL</c> (fired via <c>BRNSHT</c>, aimed by <c>GCMDIR</c>, moved by <c>CMMOV</c>)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$2006</c> (<c>CREATE_CRUISE_MISSILE</c>)</item>
+/// </list>
 /// </remarks>
 public sealed class CruiseMissile : IEntity, IRemovable
 {

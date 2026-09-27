@@ -7,19 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A hulk — the big, indestructible robot that slowly stalks the player or a human.</summary>
+/// <summary>A hulk is a huge, tough robot that can't be killed by shooting it — it just gets knocked back. It slowly stomps after you or a human.</summary>
 /// <seealso cref="Player"/>
 /// <seealso cref="Human"/>
-/// <remarks>ROM: RRH11.ASM's <c>HULK</c> process — <c>HULKND</c> re-aims, <c>HNDX</c>/<c>HNDY</c>
-/// pick the direction, <c>CKLIMV</c> rejects a step that would leave the field, <c>HULKIL</c> is the
-/// laser knockback, <c>HLKSPD</c> the step period. Nothing kills it: a hit only shoves it back,
-/// clamped at the wall, and it destroys electrodes rather than being destroyed by them. It hunts the
-/// player, or a human that falls back to the player once gone, decided at creation. It takes one step
-/// per speed cycle — <see cref="SidewaysShortStepArcadePixels"/> or <see cref="SidewaysLongStepArcadePixels"/>
-/// sideways, alternating, or a flat <see cref="VerticalStepArcadePixels"/> up/down — on one axis only,
-/// and re-aims when its random step timer runs out or the wall blocks it. A step's walk frame follows
-/// a 4-step A-B-A-C pattern (see <see cref="LeftAnimationFrames"/>). Timers count in the clock units of
-/// <see cref="ArcadeClock"/>.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRH11.ASM</c>, routine <c>HULK</c> (with <c>HULKND</c>, <c>HULKIL</c> sub-blocks)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ANIMATE_HULK</c> (<c>$003E</c>), with movement in <c>HULK_MOVE_HORIZONTALLY</c>/<c>MAKE_HULK_MOVE_VERTICALLY</c> and direction changes in <c>HULK_CHANGE_DIRECTION</c></item>
+/// </list>
+/// </remarks>
 public sealed class Hulk : IEntity, IAnimationFrameSource
 {
     /// <summary>ROM <c>HNDX</c>/<c>HNDY</c>: ...and less than this many (exclusive bound of the random roll).</summary>

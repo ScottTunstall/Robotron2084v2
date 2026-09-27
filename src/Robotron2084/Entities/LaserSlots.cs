@@ -6,10 +6,13 @@ using Robotron2084.Level;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The slots that cap how many player lasers can be in flight at once.</summary>
-/// <remarks>ROM: each laser is its own object record (RRG23.ASM, drawn by RRS22.ASM's <c>LASER</c>);
-/// a laser is only created while a slot is free, so three is the limit even with auto-fire held down
-/// (notes (24).1).</remarks>
+/// <summary>Keeps track of the player's laser shots on screen, and stops there ever being more than three at once.</summary>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRG23.ASM</c>, routine <c>LSPROC</c> (checks <c>LCNT</c> against the limit of 3 before creating a new laser), drawn by <c>RRS22.ASM</c>'s <c>LASER</c></item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$31D5</c>-<c>$31E5</c> (checks how many player lasers have been fired before allowing another)</item>
+/// </list>
+/// </remarks>
 public sealed class LaserSlots
 {
     /// <summary>How many lasers the player can have in flight at once.</summary>

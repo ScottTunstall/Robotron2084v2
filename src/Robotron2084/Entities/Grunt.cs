@@ -7,14 +7,14 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A grunt — the basic robot. It lumbers toward the player in staggered bursts.</summary>
+/// <summary>A grunt is a slow, clumsy robot that shuffles towards you. It's the most common enemy in the game.</summary>
 /// <seealso cref="PlayField"/>
-/// <remarks>ROM: RRP8.ASM's <c>ROBOT</c> and its <c>ROB0</c>..<c>ROB11</c> sub-blocks — the arcade's
-/// "Ground Roving UNit Terminator". Its beat runs every 4 vblanks, counting down a random
-/// 1..this wave's limit that is re-rolled after each step; it steps 4 arcade px on any axis it is
-/// more than 2 arcade px from the player (the axes are independent). The walk frame advances only on
-/// a step, and the survivors' speed-up is <c>RMXSPD</c> (notes §29). Timers count 5 per tick and 6 per
-/// arcade frame, so an interval of N frames is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRP8.ASM</c>, routine <c>ROBOT</c> (with <c>ROB0</c>..<c>ROB11</c> sub-blocks)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$39E6</c> (grunt speed/movement timer check, part of the shared grunt/hulk/brain/prog/tank update loop)</item>
+/// </list>
+/// </remarks>
 public sealed class Grunt : IEntity, IExplodable, IRemovable
 {
     /// <summary>How many ROM frames one beat takes (4 vblanks).</summary>
