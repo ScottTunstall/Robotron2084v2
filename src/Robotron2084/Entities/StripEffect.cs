@@ -6,17 +6,13 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The shared strip death effect: the dying sprite's rows or columns fan apart.</summary>
-/// <remarks>ROM: the enemy-death and directional-explosion routines plus their shared setup and
-/// per-frame layout code (RRX7.ASM/RRHX4.ASM/RRDX2.ASM; notes §61). An explosion runs a fixed number
-/// of frames and its spacing grows by a fixed step each frame, so the spacing runs 1,2,3,…; an appear
-/// (<see cref="StripEffectKind.Appear"/>, ROM: RRG23.ASM's <c>APPEAR</c>) starts large and shrinks, ending when
-/// the size would reach 1. One fan opens UP and DOWN at once from the picture's MIDDLE, so both halves
-/// carry half the strips and reach equally far; a diagonal shot leans them opposite ways (a chevron).
-/// The port keeps the arcade's units: X in arcade pixels, Y in rows, one unit of spacing is ONE PIXEL
-/// along the fan axis in both families, and a strip outside the clip is dropped rather than scaled. The
-/// dead entity's frame is resolved at draw time, so this class holds no texture. Timers count 5 per
-/// tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
+/// <summary>The effect where a dying creature's picture breaks into strips and fans apart, or a new robot's picture shrinks into view.</summary>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRX7.ASM</c>/<c>RRHX4.ASM</c>/<c>RRDX2.ASM</c> (the death explosion) and <c>RRG23.ASM</c>, routine <c>APPEAR</c> (the shrinking appear)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$5C1F</c> (<c>MAKE_ENEMY_EXPLODE</c>) and <c>$473F</c> (<c>CREATE_DIRECTIONAL_EXPLOSION</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class StripEffect : IEntity
 {
     private readonly Func<Texture2D> _animationFrameOf;

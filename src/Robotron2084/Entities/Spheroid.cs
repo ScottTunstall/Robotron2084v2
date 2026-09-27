@@ -7,18 +7,14 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A spheroid — the drifting ring that drops enforcers, then exits off the nearest edge.</summary>
+/// <summary>A spheroid is a drifting ring that floats around dropping little enforcer robots, then flies off the edge of the screen.</summary>
 /// <seealso cref="Enforcer"/>
-/// <remarks>ROM: RRC11.ASM's <c>CIRCLE</c>/<c>CIRNAC</c>/<c>CIRGO</c>/<c>CIRC2L</c>/<c>CIRC3L</c>
-/// routines (notes §56). Its glide is unsteered: a random acceleration is re-rolled every 1..15 beats
-/// and damped toward a top speed of 1 column (2 arcade px) per frame on X and 2 rows on Y — the same
-/// speed in pixels — and each axis CLAMPS at the walls rather than reflecting. It flies over
-/// electrodes. It steps the picture pointer one per beat through three phases: spin (5 pictures, the
-/// drop countdown on a full 5-picture wrap), drop (8 pictures, one enforcer per rotation until the
-/// allotment — half a random roll, rounded up — is gone) and escape (X fixed at 1 column a frame, Y
-/// stopped, running off the edge to vanish with no animation). A laser hit plays its own bubble burst
-/// (<see cref="ScoreBurst.ForSpheroid"/>), not the strip explosion; see <see cref="RobotKinds"/>. Timers count
-/// 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRC11.ASM</c>, routine <c>CIRCLE</c> (with <c>CIRNAC</c>/<c>CIRGO</c>/<c>CIRC2L</c>/<c>CIRC3L</c>)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$11AF</c> (<c>ANIMATE_SPHEROID</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>ROM <c>CIRNAC</c>: the accelerations hold for a random 1..this many beats.</summary>

@@ -7,18 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The death effect a killed spheroid or quark leaves — a strobing silhouette, then a "1000".</summary>
+/// <summary>The flashing shape and floating score number that appear for a moment when you kill a spheroid or a quark.</summary>
 /// <seealso cref="Spheroid"/>
 /// <seealso cref="Quark"/>
-/// <remarks>ROM: RRC11.ASM's <c>CIRKIL</c>/<c>CIRKP</c> (spheroid) and RRTK4.ASM's <c>SQKIL</c>/
-/// <c>CIRKV</c> (quark; its kill jumps into the spheroid's routine past the parameter setup). The
-/// burst strobes the enemy's remaining pictures as flat silhouettes — 7 frames for the spheroid, 8 for
-/// the quark, one every 2 ROM frames — and the first appears at the moment of death, so only count-1
-/// pictures are drawn. Then the enemy is gone and a "1000" (byte-for-byte
-/// <c>SpriteSet.RescueScoreDisplays[0]</c>) appears a little below-right for 30 steps of 2 frames.
-/// Both phases use cycling palette slots, which is why they shimmer: the spheroid's silhouette uses
-/// the score colour (slot 10) and its points slot 15; the quark uses slot 13 for both (notes §58).
-/// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRC11.ASM</c>, routine <c>CIRKIL</c>/<c>CIRKP</c> (spheroid) and <c>RRTK4.ASM</c>, routine <c>SQKIL</c>/<c>CIRKV</c> (quark)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$131E</c> (<c>DRAW_SPHEROID_POINTS_VALUE</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class ScoreBurst : IEntity
 {
     /// <summary>The first picture the burst shows (the ROM starts one past the live frame).</summary>

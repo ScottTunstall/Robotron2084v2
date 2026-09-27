@@ -7,19 +7,14 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>An enforcer's spark: a ballistic shot whose fixed acceleration curves its path.</summary>
+/// <summary>A shot fired by an enforcer robot. It curves through the air along a bent path and stops dead at a wall instead of bouncing.</summary>
 /// <seealso cref="Enforcer"/>
-/// <remarks>ROM: RRC11.ASM's <c>ENFSHT</c>/<c>SPARK</c>, with the <c>SPKP0</c>-<c>SPKP3</c> flicker
-/// frames (notes §41). At spawn each axis gets a velocity of 4 x (player coord + jitter - spark
-/// coord), with a random -16..+15 columns of jitter and the X jitter forced to 0 when the player is
-/// within 16 columns of the left wall, plus a constant acceleration rolled once as -16..+15 and fixed
-/// for life. Every 4 ROM frames the acceleration is added to the velocity, so the path bends into a
-/// parabola and the spark can start out moving away from the player. The mover adds the velocity once
-/// per ROM frame and refuses a step that would leave the field, so a spark slides then stops at the
-/// wall — no bounce. It lives 20-35 moves (80-140 ROM frames); the spec's 10-15 s was changed
-/// deliberately, so don't revert it without checking. All the subpixel maths is in 1/256-px units,
-/// not floating point. Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is
-/// due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRC11.ASM</c>, routine <c>SPARK</c> (fired via <c>ENFSHT</c>, flicker frames <c>SPKP0</c>-<c>SPKP3</c>)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$1404</c> (<c>CREATE_SPARK</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
     private static readonly int Size = ScreenSize.Scaled(CollisionSizes.MissileSizeSpecPixels);

@@ -7,17 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The tank's shell: aimed once, flies straight, bounces off the walls and fizzles out.</summary>
+/// <summary>A shell fired by a tank robot. It is aimed once, then flies in a straight line, bouncing off walls until it fizzles out.</summary>
 /// <seealso cref="Tank"/>
 /// <seealso cref="PlayField"/>
-/// <remarks>ROM: RRTK4.ASM's <c>SHELL</c>/<c>SHELLP</c>/<c>SHLDIE</c> (notes §11.5). It is aimed once
-/// at the player with ±1 px/frame jitter per axis ("not very accurate") — the arcade's spread comes
-/// from a speed table the port does not yet reproduce, so the jitter is an approximation and still an
-/// open item. It then flies straight on the shared mover, bouncing off all four border walls with a
-/// bounce sound. Only one axis is turned per integration, X before Y, so a corner is taken one axis
-/// at a time. It fizzles out after a random 48-79 ROM frames. A shell flies over electrodes and
-/// never collides with one, and its box is the picture's own 8x7 arcade px.
-/// Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRTK4.ASM</c>, routine <c>SHELL</c> (<c>SHELLP</c>/<c>SHLDIE</c> sub-blocks)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$4E46</c> (<c>CREATE_TANK_SHELL</c>)</item>
+/// </list>
+/// </remarks>
 public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>...and less than this many (exclusive bound of the random roll).</summary>

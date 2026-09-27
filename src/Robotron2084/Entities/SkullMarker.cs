@@ -7,11 +7,13 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The skull left where a robot killed a human. Display only; it lingers, then goes.</summary>
+/// <summary>The little skull left on the ground where a robot killed a family member. It fades away after a while.</summary>
 /// <seealso cref="Human"/>
 /// <remarks>
-/// ROM: <c>HUMKIL</c> (RRH11.ASM) draws <c>SKULP</c> (12x11 px), plays <c>HKSND</c> and sets a
-/// 90-ROM-frame countdown (PD2).
+/// <list type="bullet">
+/// <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMKIL</c> (draws <c>SKULP</c> and plays <c>HKSND</c>)</item>
+/// <item>Disassembly: Not separately labelled in <c>asm/robomame.asm</c>.</item>
+/// </list>
 /// </remarks>
 public sealed class SkullMarker : IEntity
 {

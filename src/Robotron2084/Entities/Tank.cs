@@ -7,19 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A tank — the slow, thick-skinned robot that only quarks drop. It fires shells.</summary>
+/// <summary>A tank is a slow, heavily armoured robot dropped by quarks. It rolls around and fires shells at you.</summary>
 /// <seealso cref="Quark"/>
 /// <seealso cref="TankShell"/>
-/// <remarks>ROM: RRTK4.ASM's <c>TANK</c> process (notes §4.8). A dropped tank is born through four
-/// mini-tank pictures (one per 12 ROM frames), immobile until it finishes; each birth picture is a
-/// smaller box, so a growing tank is a smaller target. Its beat is this wave's <c>TNKSPD</c> plus
-/// 1 frame; each beat it fires if due, steps one arcade px on each active axis, advances the tread
-/// frame (backwards while moving left) and re-aims every 1..31 beats — about 38% of aims chase the
-/// player, and it only moves vertically when the target is more than 16 arcade px off. The first shot
-/// waits <c>TNKSHT</c> plus a random 0..31 beats, and later shots wait exactly the interval; firing
-/// is capped at 20 shells in play, so a late tank can stop firing. It never flashes and dies outright
-/// when hit. Timers count 5 per tick and 6 per arcade frame, so an interval of N frames is due at
-/// 6 x N.</remarks>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRTK4.ASM</c>, routine <c>TANK</c></item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ANIMATE_TANK</c> (<c>$4D10</c>-ish, near <c>$4D55</c>'s fire-delay check)</item>
+/// </list>
+/// </remarks>
 public sealed class Tank : IExplodable, IRemovable
 {
     /// <summary>ROM <c>ANIMATE_TANK</c>: ...and a roll at or below this aims at the player (about 38%).</summary>
