@@ -1,5 +1,3 @@
-using Robotron2084.Graphics;
-
 namespace Robotron2084.Palette;
 
 /// <summary>
