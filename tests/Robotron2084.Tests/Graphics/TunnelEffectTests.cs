@@ -50,11 +50,12 @@ public sealed class TunnelEffectTests
     }
 
     [Fact]
-    public void TheWholeEffectLastsAboutTwoSeconds()
+    public void TheWholeEffectLastsOnePhraseOfTheWaveEndMusic()
     {
-        // The author's playtest of the arcade: "~2 seconds at least". 54 passes over the two
-        // phases at PassClockUnits a pass must land near two seconds of port ticks (60 Hz), i.e.
-        // around 130 — this is the number the playtest fixed (notes §83).
+        // The wave-complete screen is timed by the tunnel, and the board loops the wave-end music
+        // every 183 port ticks (3.05 s, measured through the emulated board — notes §128), so the
+        // 54 passes at PassClockUnits must land on or just past that: the music is never cut
+        // mid-phrase, which is what the author heard before this (notes §83's "~2 s" was a floor).
         var tunnel = new TunnelEffect();
 
         int ticks = 0;
@@ -65,8 +66,8 @@ public sealed class TunnelEffectTests
         }
 
         Assert.True(tunnel.Finished);
-        Assert.InRange(ticks, 120, 140);                           // ~2.0-2.3 s
-        Assert.InRange(ticks / 60.0, 2.0, 2.4);
+        Assert.InRange(ticks, 180, 190);                     // one phrase of the wave-end music
+        Assert.InRange(ticks / 60.0, 3.0, 3.2);
     }
 
     [Fact]

@@ -53,19 +53,20 @@ public sealed class TunnelEffect
     internal const int EndTopRow = 0x16;
 
     /// <summary>
-    /// How long a task pass lasts, in clock units (notes §83).
+    /// How long a task pass lasts, in clock units (notes §83, §128).
     ///
     /// `ALLOCATE_TASK` ($D1E3) documents its delay as *"A x 16 Millisec"* and `$571E` passes
     /// `A = 1`, which at the ROM's own unit would put the whole effect — 54 passes over the two
-    /// phases — at under a second. On the arcade the effect runs **about two
-    /// seconds at least**, so the task list is walked SLOWER than one cycle per field: a pass is
-    /// **two ROM frames** (2.4 port ticks on §52's clock-unit clock), which lands the effect at
-    /// 54 x 2.4 = ~130 ticks = ~2.2 s.
+    /// phases — at under a second. The arcade's effect is far longer than that, so the task list is
+    /// walked SLOWER than one cycle per field: 17 clock units a pass, which lands the effect at
+    /// 54 x 17 / 5 = 183 port ticks = 3.05 s.
     ///
-    /// This is the one number in the tunnel taken from the measurement rather than the disassembly,
-    /// and it is called out as such in the notes so a MAME measurement can settle it.
+    /// That duration is the WAVE-END MUSIC's own phrase. The board's sound $0E loops every 183 port
+    /// ticks (measured through the emulated board, notes §128), so the colour cycling lasts exactly
+    /// one phrase and the music finishes as the screen does instead of being cut mid-phrase. This is
+    /// the one number in the tunnel taken from measurement rather than the disassembly.
     /// </summary>
-    internal const int PassClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
+    internal const int PassClockUnits = 17;
 
     /// <summary>ROM `LDB #$02 / STB $000E,U` — two rings per task pass.</summary>
     internal const int RingsPerPass = 2;

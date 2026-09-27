@@ -10286,3 +10286,41 @@ makes no sound. Port: `TransporterSound`, `SoundEngine.SendDirect`, `Sound.PlayT
 **Not wired, deliberately:** `HLKSND` ("HULK KILL", `$0021`) has no caller in the original; `CNSND`
 ("COIN", `$D0CE` + offset) needs a coin slot the port does not have. `PSTKIL` skips the post kill when
 it is the player who touched the post (`LDA PCFLG / BNE PSTKON`), so that collision plays only `PDSND`.
+
+## §128 — THE WAVE-COMPLETE SCREEN LASTS ONE PHRASE OF THE LEVEL MUSIC (author, 2026-09-27)
+
+Author: *"The 'level complete' music that displays while the tunnel is colour cycling is cut short.
+The tunnel effect between levels thus cannot be long enough, or is playing too fast."*
+
+**Measured through the emulated board** (a throwaway harness driving `SoundBoard`/`SoundBoardRenderer`
+with the real sound ROM — the machinery `SoundBoardRomTests` already uses):
+
+- the wave-end sound `$0E` (`WVSND`, asked for by `GEXEC0` as the wave clears) **LOOPS**: one send
+  keeps sounding for 20 s and more, so it has no natural end and is stopped only by another sound
+  number;
+- its **phrase is 183 port ticks = 3.05 s** — a period scan of the loudness envelope, with the
+  harmonic at 366 ticks confirming it;
+- sound `$13` — the original source's own **"BACKY OFFY"** ("background off"; `RRT2`'s `TR1SND`
+  "CLEAR THE SYSTEM") — silences the board in about four ticks;
+- the sequencer's own table (`WVSND` = 29 sends x 4 x 16 ms; `RRS22.ASM`'s table format comment reads
+  *"REPCNT,SNDTMR(16MSEC),SND#"*) ends at tick 117, inside either screen length.
+
+**The defect:** the wave-complete screen was timed by the tunnel alone at ~2.17 s — §83's playtest
+constant, 54 passes x 2 ROM frames — so it ended **about 0.9 s before the music's phrase did**, and
+the next wave's first sound cut the music mid-phrase. §83's *"~2 seconds at least"* was a FLOOR, not
+the length the arcade runs.
+
+**Fixed in the port:**
+
+- `TunnelEffect.PassClockUnits` = **17** clock units a pass (54 x 17 / 5 = 183.6 ticks = 3.06 s), so
+  the colour cycling lasts exactly one phrase of the music and finishes with it;
+- `WaveClearState.StopWaveEndMusic()` asks for `SoundTables.ClearTheSystem` as the screen ends — the
+  original's own background-off — so the looping phrase is stopped deliberately rather than being
+  overridden wherever the loop happens to be;
+- `SoundBoardRomTests.TheTunnelCoversAWholePhraseOfTheWaveEndMusic` measures the phrase (175-191
+  ticks) and asserts the tunnel covers it, so the two cannot drift apart again; the tunnel's own test
+  asserts 180-190 ticks.
+
+Authority: the ROM gives the STRUCTURE — `GEXEC0` asks for `WVSND`, then `JSR RMST` (the marquee),
+then `JMP PLSTRT` — while the LENGTH is measurement. That is §83's lesson, now with the measurement
+that settles it.
