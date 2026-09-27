@@ -11,36 +11,47 @@ public sealed class SoundTests : IDisposable
     public void Dispose() => Sound.Enabled = _wasEnabled;
 
     [Fact]
-    public void BeepingIsOffByDefault_SoNothingReachesTheSink()
+    public void WithTheSwitchOff_NothingReachesTheSink()
     {
         var sink = new RecordingSink();
         Sound.Initialize(sink);
         Sound.Enabled = false;
 
-        Sound.Play(SoundTables.PlayerLaser);
+        Sound.Play(SoundTables.Laser);
         for (int i = 0; i < 20; i++)
         {
             Sound.Tick();
         }
 
-        Assert.Empty(sink.Calls);
-        Assert.False(Sound.Enabled);
+        Assert.Empty(sink.Sends);
     }
 
     [Fact]
-    public void TheFlagTurnsItBackOn_AndTheSequencerStillWorks()
+    public void WithTheSwitchOn_ASoundIsSentToTheSink()
     {
         var sink = new RecordingSink();
         Sound.Initialize(sink);
         Sound.Enabled = true;
 
-        Sound.Play(SoundTables.PlayerLaser);
-
+        Sound.Play(SoundTables.Laser);
         for (int i = 0; i < 20; i++)
         {
             Sound.Tick();
         }
 
-        Assert.Single(sink.Calls);
+        Assert.Single(sink.Sends);
+    }
+
+    [Fact]
+    public void ASoundAskedForWithoutAPlaceIsHeardInTheMiddle()
+    {
+        var sink = new RecordingSink();
+        Sound.Initialize(sink);
+        Sound.Enabled = true;
+
+        Sound.Play(SoundTables.Laser);
+        Sound.Tick();
+
+        Assert.Equal(0f, sink.Sends[0].Pan);
     }
 }

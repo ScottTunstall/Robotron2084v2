@@ -1,16 +1,22 @@
 using Robotron2084.Audio;
-using Xunit;
 
 namespace Robotron2084.Tests.Audio;
 
-/// <summary>
-/// A recording sink for sequencer tests (notes §36.2): captures every
-/// PlayNote(note, ticks) call in order.
-/// </summary>
+/// <summary>A sink for sequencer tests: records each sound number sent, where it is heard, and the tick it went out on.</summary>
 internal sealed class RecordingSink : IAudioSink
 {
-    public readonly List<(int Note, int Ticks)> Calls = [];
+    private int _tick;
 
-    public void PlayNote(int note, int ticks) => Calls.Add((note, ticks));
-    public void Tick() { }
+    /// <summary>Every sound number sent, in order, with its pan and the tick (counting from 1) it was sent on.</summary>
+    public List<(int SoundNumber, float Pan, int Tick)> Sends { get; } = [];
+
+    /// <summary>The sound numbers sent, in order.</summary>
+    public List<int> SoundNumbers() => [.. Sends.Select(send => send.SoundNumber)];
+
+    /// <summary>The ticks the sound numbers went out on, in order.</summary>
+    public List<int> SendTicks() => [.. Sends.Select(send => send.Tick)];
+
+    public void SendSoundNumber(int soundNumber, float pan) => Sends.Add((soundNumber, pan, _tick));
+
+    public void Tick() => _tick++;
 }

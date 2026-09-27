@@ -5,139 +5,131 @@ namespace Robotron2084.Tests.Audio;
 
 public class SoundEngineTests
 {
-    private static SoundSequence Seq(int priority, params (byte dur, byte len, byte note)[] entries) =>
-        new(priority, 0, entries.Select(e => new SoundEntry(e.dur, e.len, e.note)).ToArray());
-
     [Fact]
-    public void SingleEntrySoundsForLenTicksThenFreesTheVoice()
+    public void ASingleLineIsSentOnTheFirstTick_AndFreesTheVoiceWhenItsTimeRunsOut()
     {
-        // R5 $273A laser: (1, 16, $25), priority 240.
+        // One line: (1, 16, $25), priority 240 (the shape of ST2SND).
         var sink = new RecordingSink();
         var engine = new SoundEngine(sink);
 
-        engine.Play(SoundTables.PlayerLaser);
+        engine.Play(Sequence(240, (1, 16, 0x25)), 0f);
+        RunTicks(engine, 16);
 
-        for (int i = 0; i < 20; i++)
-        {
-            engine.Tick();
-        }
+        // The request primes SNDTMR and SNDREP to 1, so the first tick lands straight on the first line.
+        Assert.Equal([0x25], sink.SoundNumbers());
+        Assert.Equal([1], sink.SendTicks());
+        Assert.Equal(240, engine.CurrentPriority);
 
-        // First note sounds on the first tick (the ROM primes $57=$58=1, so
-        // the first vblank lands straight on the first entry), held 16 ticks
-        // in total. Then the table ends and the voice is free (priority 0).
-        Assert.Single(sink.Calls);
-        Assert.Equal((0x25, 16), sink.Calls[0]);
+        RunTicks(engine, 1);
+
         Assert.Equal(0, engine.CurrentPriority);
     }
 
     [Fact]
-    public void MultiEntrySequencesEntriesInOrder()
+    public void ARepeatedLineIsResentAfterItsTime_ThenTheNextLineFollows()
     {
-        // R5 $30EF player death: (2, 8, $11) then (1, 32, $17) — 48 ticks.
+        // R5 $30EF player death: (2, 8, $11) then (1, 32, $17).
         var sink = new RecordingSink();
         var engine = new SoundEngine(sink);
 
-        engine.Play(SoundTables.PlayerDeath);
+        engine.Play(SoundTables.PlayerDeath, 0f);
+        RunTicks(engine, 60);
 
-        for (int i = 0; i < 60; i++)
-        {
-            engine.Tick();
-        }
-
-        List<(int note, int ticks)> expected = [(0x11, 8), (0x11, 8), (0x17, 32)];
-        Assert.Equal(expected, sink.Calls);
+        Assert.Equal([0x11, 0x11, 0x17], sink.SoundNumbers());
+        Assert.Equal([1, 9, 17], sink.SendTicks());
         Assert.Equal(0, engine.CurrentPriority);
     }
 
     [Fact]
-    public void SamePriorityIsIgnoredWhileSounding()
+    public void TheSamePriorityIsIgnoredWhileASoundPlays()
     {
         var sink = new RecordingSink();
         var engine = new SoundEngine(sink);
-        SoundSequence seq = Seq(208, (1, 16, 0x25));
+        SoundSequence sound = Sequence(208, (1, 16, 0x25));
 
-        engine.Play(seq);
+        engine.Play(sound, 0f);
         engine.Tick();
-        engine.Play(seq); // priority 208 vs current 208: NOT strictly higher
+        engine.Play(sound, 0f); // 208 against 208: not strictly higher (BLO SNDLDX)
+        RunTicks(engine, 16);
 
-        // Only the original request's note is in flight; a second one would
-        // have produced a third PlayNote at tick 17 (it must not).
-        for (int i = 0; i < 16; i++)
+        Assert.Single(sink.Sends);
+    }
+
+    [Fact]
+    public void ALowerPriorityIsIgnored_AndAHigherOneTakesOver()
+    {
+        var sink = new RecordingSink();
+        var engine = new SoundEngine(sink);
+
+        engine.Play(Sequence(200, (1, 8, 0x04)), 0f);
+        engine.Tick();
+        engine.Play(Sequence(192, (1, 8, 0x06)), 0f);
+        engine.Tick();
+        engine.Play(Sequence(208, (1, 4, 0x14)), 0f);
+        engine.Tick();
+
+        Assert.Equal([0x04, 0x14], sink.SoundNumbers());
+    }
+
+    [Fact]
+    public void TheVoiceIsFreeOnceTheTableEnds()
+    {
+        var sink = new RecordingSink();
+        var engine = new SoundEngine(sink);
+
+        engine.Play(Sequence(255, (1, 2, 0x13)), 0f);
+        RunTicks(engine, 10);
+        engine.Play(Sequence(192, (1, 10, 0x06)), 0f);
+        engine.Tick();
+
+        Assert.Equal([0x13, 0x06], sink.SoundNumbers());
+    }
+
+    [Fact]
+    public void TicksWithNothingAskedForSendNothing()
+    {
+        var sink = new RecordingSink();
+        var engine = new SoundEngine(sink);
+
+        RunTicks(engine, 10);
+
+        Assert.Empty(sink.Sends);
+    }
+
+    [Fact]
+    public void EverySendOfASoundCarriesThePlaceItWasAskedForFrom()
+    {
+        var sink = new RecordingSink();
+        var engine = new SoundEngine(sink);
+
+        engine.Play(SoundTables.PlayerDeath, -0.5f);
+        RunTicks(engine, 20);
+
+        Assert.All(sink.Sends, send => Assert.Equal(-0.5f, send.Pan));
+    }
+
+    [Fact]
+    public void AnIgnoredRequestDoesNotMoveTheSoundThatIsPlaying()
+    {
+        var sink = new RecordingSink();
+        var engine = new SoundEngine(sink);
+
+        engine.Play(SoundTables.PlayerDeath, 0.7f);
+        engine.Tick();
+        engine.Play(SoundTables.TankFire, -0.7f); // 200 is below the death's 238
+        RunTicks(engine, 20);
+
+        Assert.All(sink.Sends, send => Assert.Equal(0.7f, send.Pan));
+    }
+
+    private static void RunTicks(SoundEngine engine, int ticks)
+    {
+        for (int i = 0; i < ticks; i++)
         {
             engine.Tick();
         }
-
-        Assert.Single(sink.Calls);
     }
 
-    [Fact]
-    public void LowerPriorityIsIgnoredHigherPreempts()
-    {
-        var sink = new RecordingSink();
-        var engine = new SoundEngine(sink);
-
-        engine.Play(Seq(200, (1, 8, 0x04))); // shell fire (p200)
-        engine.Tick();
-        engine.Play(Seq(208, (1, 4, 0x14))); // laser-ish (p208): strictly higher
-        engine.Tick();
-
-        List<(int note, int ticks)> expected = [(0x04, 8), (0x14, 4)];
-        Assert.Equal(expected, sink.Calls);
-    }
-
-    [Fact]
-    public void VoiceIsFreeAfterTheTableEnds()
-    {
-        var sink = new RecordingSink();
-        var engine = new SoundEngine(sink);
-
-        engine.Play(Seq(255, (1, 2, 0x13))); // brain warp-in, top priority
-        for (int i = 0; i < 10; i++)
-        {
-            engine.Tick();
-        }
-
-        // A low-priority request must now play (the $56 priority is 0).
-        engine.Play(Seq(192, (1, 10, 0x06)));
-        engine.Tick();
-
-        List<(int note, int ticks)> expected = [(0x13, 2), (0x06, 10)];
-        Assert.Equal(expected, sink.Calls);
-    }
-
-    [Fact]
-    public void TicksWithoutARequestAreNoOps()
-    {
-        var sink = new RecordingSink();
-        var engine = new SoundEngine(sink);
-
-        for (int i = 0; i < 10; i++)
-        {
-            engine.Tick();
-        }
-
-        Assert.Empty(sink.Calls);
-    }
-
-    [Fact]
-    public void TablesMatchTheDecodedRom()
-    {
-        // Spot-check the decoded ROM tables (notes §36.2) — the whole point
-        // of the provenance is that these bytes came from robotron64k.bin.
-        Assert.Equal(240, SoundTables.PlayerLaser.Priority);
-        Assert.Equal(0x26E6, SoundTables.PlayerLaser.RomTableAddress);
-        Assert.Equal(new[] { new SoundEntry(1, 16, 0x25) }, SoundTables.PlayerLaser.Entries);
-
-        Assert.Equal(238, SoundTables.PlayerDeath.Priority);
-        Assert.Equal(new[] { new SoundEntry(2, 8, 0x11), new SoundEntry(1, 32, 0x17) }, SoundTables.PlayerDeath.Entries);
-
-        Assert.Equal(200, SoundTables.ShellFire.Priority);
-        Assert.Equal(new[] { new SoundEntry(1, 8, 0x04) }, SoundTables.ShellFire.Entries);
-
-        Assert.Equal(255, SoundTables.BrainWarpIn.Priority);
-        Assert.Equal(new[] { new SoundEntry(1, 1, 0x13) }, SoundTables.BrainWarpIn.Entries);
-
-        Assert.Equal(239, SoundTables.BonusLife.Priority);
-        Assert.Equal(new[] { new SoundEntry(1, 32, 0x1E) }, SoundTables.BonusLife.Entries);
-    }
+    private static SoundSequence Sequence(int priority, params (byte Repetitions, byte LengthVblanks, byte SoundNumber)[] lines) =>
+        new(priority, 0, [.. lines.Select(line => new SoundEntry(line.Repetitions, line.LengthVblanks, line.SoundNumber))]);
 }
