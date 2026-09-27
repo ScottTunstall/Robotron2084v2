@@ -17,7 +17,8 @@ public static class SoundTuning
     /// (notes §128). The board LOOPS sound $0E: its phrase is 183 ticks and the ROM's table asks for it
     /// 29 times at 4 ticks apart, so the last ask lands at tick 113 and the phrase that follows it plays
     /// out to about 296. That is the longest a hold can usefully be and tick 113 is the shortest, and the
-    /// author trimmed the full play-out by two seconds (120 ticks) by ear.
+    /// author dialled the value in by ear — the full play-out was *"a little too long"*, so it is a second
+    /// under it (notes §128).
     /// </summary>
-    public const int WaveEndMusicTicks = 176;
+    public const int WaveEndMusicTicks = 236;
 }
