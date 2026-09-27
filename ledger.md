@@ -59,6 +59,7 @@ Companion to `plan.md`. Rules:
 | Q-004 | Which source is authoritative for asset data — **RESOLVED 2026-08-30**: verified blue-label ROM image (`ref/rom/robotron64k.bin`) is byte-level authority (46,160 listed disasm bytes match; 34-byte delta in 8 local regions, see Q-006); original source = behaviour reference; disasm = annotations | T-004 |
 | Q-005 | Entity rules to capture: laser limits, spawn constraints, projectile lifetimes, wave counts per difficulty — wave counts per wave now captured (`ref/robowaves.md`, tables $2E24/$2C12, routine $2B7C) | T-006, then per-entity tasks T-015…T-025 |
 | Q-006 | The 34 mismatched bytes (8 local regions, byte-shift pattern — see status.md): hand edits in the disasm or a dump quirk? Non-blocking: ROM image is byte authority regardless | Ask author |
+| Q-007 | **The sound sequencer's tempo.** Its table unit `SNDTMR` is documented as *"16MSEC"*, but the arcade frame is 20 ms and §127's MAME measurement of the laser (8 units) came to ~150 ms (~18.75 ms a unit). The port counts one port tick (16.67 ms), so every sequenced sound is ~10-15% fast (the laser repeats in ~133 ms). One-line fix in the `ArcadeClock` idiom, but it moves `WVSND`'s last ask and re-opens `SoundTuning.WaveEndMusicTicks`. | **ASK THE AUTHOR next session** (evidence in notes §129; measure against MAME first) |
 
 ---
 

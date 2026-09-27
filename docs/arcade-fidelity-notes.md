@@ -10340,3 +10340,39 @@ the music's measured play-out, so the new level's sounds simply wait for the mus
 Authority: the ROM gives the STRUCTURE — `GEXEC0` asks for `WVSND`, then `JSR SCRCLR` / `JSR RMST` (the
 marquee) / `JMP PLSTRT` — while the LENGTH is measurement. That is §83's lesson, now with the measurement
 that settles it.
+
+## §129 — OPEN: the sound-sequencer table unit looks ~10-15% fast (2026-09-27)
+
+Found while answering the author's question about whether the sound runs independently of the game:
+*"I hope the sound engine can run asynchronously to the main game, yes? Because I wouldn't want the sound
+to be dependent on anything happening in the main game such as a 'refresh' command"*, then *"As long as
+its consistent with the arcade I am happy"* and, on this finding: *"Make a note of it, and next time we
+continue, ask me."*
+
+**What the port does (for the record).** `SoundEngine.Tick` counts a line's `SNDTMR` down once per PORT
+TICK, and the tick is driven from `RobotronGame.Update` — so the game side of the sound is frame-locked,
+exactly as the arcade's `SNDSEQ` is driven from the frame interrupt. `SoundBoardAudioSink` renders one
+tick's samples per tick and hands them to XNA's audio thread, which plays them asynchronously; the board
+is advanced cycle by cycle inside `SoundBoardRenderer`. Playback is therefore asynchronous and generation
+is frame-locked. The only place hardware differs is that our board is *advanced* by the tick rather than
+free-running, so a frame that stalls beyond the 2-4 tick buffer (~33-67 ms) could gap the audio where the
+arcade would not.
+
+**The finding.** The table-format comment in `RRS22.ASM` reads *"REPCNT,SNDTMR(16MSEC),SND#"*, but:
+
+- the arcade's frame is **20 ms** (304x256 @ 50 fps, D-004) and `SNDSEQ` is called from the frame
+  interrupt, so a table unit can only really be a whole number of frames;
+- §127's MAME 0.288 measurement of the laser — `LASSND` = `$D0,$01,$08,1,0`, i.e. **8 units** — came out
+  at **~150 ms**, i.e. **~18.75 ms per unit**: closest to the 20 ms frame.
+
+The port fires a line 8 port ticks after the last, so the laser repeats in **~133 ms** rather than ~150,
+and every sequenced sound is about **10-15% fast**. (§127 passed it because its bar was 25 ms.)
+
+**The fix, if the author wants it** — one line in the house idiom: count `SNDTMR` in `ArcadeClock` clock
+units, i.e. add `UnitsPerPortTick` (5) a tick and fire at `UnitsPerRomFrame` (6) per unit, the same 6/5
+the rest of the game uses. CAUTION: that moves `WVSND`'s last ask from tick 113 to ~135, which re-opens
+`SoundTuning.WaveEndMusicTicks` (its window becomes ~135-318, so the author's chosen 236 would fall
+earlier in the final phrase). Measure against MAME first, then judge by ear.
+
+**ASK THE AUTHOR NEXT SESSION** before changing anything (their words: *"Make a note of it, and next time
+we continue, ask me"*). Also recorded as Q-007 in `ledger.md` and in `status.md`.

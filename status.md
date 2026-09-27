@@ -1450,3 +1450,20 @@ mechanism rather than a special case:
   `Brains_TargetTheNearestMember_OnceMikeysSlotIsFree` (**509 tests, 0 failed, 0 skipped**; Debug + Release 0
   warnings; 12 s launch smoke green).
 
+## OPEN — ASK THE AUTHOR NEXT SESSION (2026-09-27) — notes §129, ledger Q-007: the sound sequencer's tempo
+
+**Do not change this without asking.** Found while answering whether the sound runs independently of the
+game (it does: playback is on XNA's audio thread, and the sequencer is frame-locked exactly as the arcade's
+`SNDSEQ` is driven from the frame interrupt). The measurement that fell out:
+
+- the ROM's table format comment says `SNDTMR(16MSEC)`, but the arcade frame is 20 ms and §127's MAME
+  measurement of the laser (`LASSND` = 8 units) came to **~150 ms**, i.e. ~18.75 ms a unit;
+- the port counts **one port tick (16.67 ms)** per unit, so every sequenced sound is **~10-15% fast** —
+  the laser repeats in ~133 ms instead of ~150;
+- the fix is one line in the `ArcadeClock` idiom (5 units a tick, fire at 6 a unit), **but** it moves
+  `WVSND`'s last ask from tick 113 to ~135 and so re-opens `SoundTuning.WaveEndMusicTicks` (the window
+  becomes ~135-318), which the author has just tuned by ear to 236.
+
+So: measure it against MAME first (§126/§127's harness), then ask. Author, 2026-09-27: *"Make a note of it,
+and next time we continue, ask me."*
+
