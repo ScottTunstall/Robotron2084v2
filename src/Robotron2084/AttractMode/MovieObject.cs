@@ -31,9 +31,6 @@ public sealed record MovieObject
     /// <summary>A left/right laser bolt fired by LFIRE/RFIRE — drawn as the laser, killed on its timer.</summary>
     public bool IsLaser { get; set; }
 
-    /// <summary>Which way a laser bolt travels: true = right (RFIRE).</summary>
-    public bool LaserRight { get; set; }
-
     /// <summary>ROM frames a laser bolt stays alive (LFIRE/RFIRE's first operand).</summary>
     public int LaserRomFramesLeft { get; set; }
 

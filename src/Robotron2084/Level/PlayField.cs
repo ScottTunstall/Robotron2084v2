@@ -87,7 +87,6 @@ public sealed class PlayField
     /// <summary>The next family slot to hand out (the ROM fills <c>$B354</c> upward).</summary>
     private int _nextFamilySlot;
 
-    private IntVector2 _previousPlayerPosition;
     private int _shellsFiredThisWave;
 
     public PlayField(
@@ -133,7 +132,6 @@ public sealed class PlayField
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
         Player = new Player(Sprites, playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
         PlayerLasers = new LaserSlots(Sprites);
-        _previousPlayerPosition = playerStart;
 
         // Spawn order: the posts first, then the robots the wave table counts, then the family.
         // Each kind's own spawn is its registry row, so a new kind needs no edit here (notes §119).
@@ -175,9 +173,6 @@ public sealed class PlayField
 
     public IPlayerInputSource Input { get; }
 
-    /// <summary>True while the hit-stop freeze-frame is running.</summary>
-    public bool IsHitStopActive => _hitStopTicksRemaining > 0;
-
     /// <summary>
     /// Wave-clear condition: every grunt, spheroid, enforcer,
     /// quark, tank, brain, and prog is gone, and no cruise missile is in
@@ -197,13 +192,6 @@ public sealed class PlayField
     public Player Player { get; }
 
     public LaserSlots PlayerLasers { get; }
-
-    /// <summary>
-    /// The player's position delta over the last tick (plain integer
-    /// difference — one tick is the unit of time). Set in Update, before the
-    /// player moves, so it reflects last frame's motion.
-    /// </summary>
-    public IntVector2 PlayerVelocityEstimate { get; private set; }
 
     public int ProgCount => CountLive(_progs);
 
@@ -236,8 +224,6 @@ public sealed class PlayField
     internal bool AnyFamilyMemberAvailable => _humans.Any(IsGraspable);
 
     internal IReadOnlyList<Brain> Brains => _brains;
-
-    internal IReadOnlyList<CruiseMissile> CruiseMissiles => _missiles;
 
     /// <summary>The lists drawn behind the player's lasers, in order.</summary>
     internal IReadOnlyList<IEntityList> DrawOrderBehindShots => _drawOrderBehindShots;
@@ -296,7 +282,6 @@ public sealed class PlayField
 
     internal IReadOnlyList<Tank> Tanks => _tanks;
 
-    internal IReadOnlyList<TankShell> TankShells => _tankShells;
 
     /// <summary>Every list the field advances and prunes, in order.</summary>
     internal IReadOnlyList<IEntityList> UpdateOrder => _updateOrder;
@@ -459,11 +444,6 @@ public sealed class PlayField
         _laserWallFlares.Update();
 
         Wall.Update(gameTime);
-
-        // Player velocity estimate from last tick's motion — computed BEFORE
-        // the player moves this frame.
-        PlayerVelocityEstimate = Player.Position - _previousPlayerPosition;
-        _previousPlayerPosition = Player.Position;
 
         Player.Update(gameTime, this);
         // R5 $273A: the fire path requests the laser sound ($26E6, p240).

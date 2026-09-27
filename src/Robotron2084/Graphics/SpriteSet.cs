@@ -27,10 +27,6 @@ public sealed class SpriteSet
     /// <summary>Pictures in the enforcer's walk cycle.</summary>
     private const int EnforcerAnimationFrameCount = 6;
 
-    /// <summary>The player picture drawn before the walk starts — the first DOWN-facing frame
-    /// (frames 1-3 left, 4-6 right, 7-9 down, 10-12 up).</summary>
-    private const int FirstDownFacingPlayerAnimationFrame = 6;
-
     /// <summary>Pictures in the grunt's walk cycle.</summary>
     private const int GruntAnimationFrameCount = 3;
 
@@ -79,26 +75,20 @@ public sealed class SpriteSet
     public SpriteSet(ISpriteSource source)
     {
         PlayerAnimationFrames = source.LoadAll(NumberedNames("Sprites/Player", PlayerAnimationFrameCount));
-        Player = PlayerAnimationFrames[FirstDownFacingPlayerAnimationFrame];
         GruntAnimationFrames = source.LoadAll(NumberedNames("Sprites/Grunt", GruntAnimationFrameCount));
-        Grunt = GruntAnimationFrames[0];
         HulkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Hulk", HulkAnimationFrameCount));
-        Hulk = HulkAnimationFrames[0];
         SpheroidAnimationFrames = source.LoadAll(NumberedNames("Sprites/Spheroid", SpheroidAnimationFrameCount));
         EnforcerAnimationFrames = source.LoadAll(NumberedNames("Sprites/Enforcer", EnforcerAnimationFrameCount));
         Enforcer = EnforcerAnimationFrames[0];
         QuarkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Quark", QuarkAnimationFrameCount));
         TankAnimationFrames = source.LoadAll(NumberedNames("Sprites/Tank", TankAnimationFrameCount));
-        Tank = TankAnimationFrames[0];
 
         // ROM MTNKP1..4 (notes §53): the four birth pictures. Each is a
         // different size, so the drawer reads each texture's own dimensions
         // rather than the tank's collision box.
         TankGrowAnimationFrames = source.LoadAll(NumberedNames("Sprites/TankGrow", TankTuning.GrowSteps));
         ElectrodeAnimationFrames = source.LoadAll(NumberedNames("Sprites/Electrode", ElectrodeAnimationFrameCount));
-        Electrode = ElectrodeAnimationFrames[0];
         SparkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Spark", SparkAnimationFrameCount));
-        Spark = SparkAnimationFrames[0];
         Skull = source.Load("Sprites/Skull");
         RescueScoreDisplays = source.LoadAll(
         [
@@ -117,11 +107,6 @@ public sealed class SpriteSet
         TitleWordmarkRim = source.Load("Sprites/Title_Wordmark_Rim");
         Title2084 = source.Load("Sprites/Title_2084");
         WilliamsLogo = source.Load("Sprites/WilliamsLogo");
-        MissileSmallAnimationFrames = source.LoadAll(
-        [
-            "Sprites/MissileSmall_0",
-            "Sprites/MissileSmall_1",
-        ]);
 
         LaserBar = source.Create(6, 1, PictureFactory.BuildLaserBarPattern(Color.White));
         LaserColumn = source.Create(2, 6, PictureFactory.BuildLaserColumnPattern(Color.White));
@@ -148,7 +133,7 @@ public sealed class SpriteSet
     /// <summary>
     /// The attract movie's CRUISE MISSILE — ROM `CRUSB` ($86BA, the 9x2 picture
     /// the movie's own CRUSM descriptor points at; notes §95.6). The playfield's
-    /// cruise missile is a different picture (<see cref="MissileSmallAnimationFrames"/>).
+    /// cruise missile draws itself as solid marks, not a picture (see <see cref="Robotron2084.Entities.CruiseMissile"/>).
     /// </summary>
     public Texture2D AttractCruise { get; }
 
@@ -178,8 +163,6 @@ public sealed class SpriteSet
 
     public Texture2D[] DadAnimationFrames { get; }
 
-    public Texture2D Electrode { get; }
-
     public Texture2D[] ElectrodeAnimationFrames { get; }
 
     public Texture2D Enforcer { get; }
@@ -199,11 +182,7 @@ public sealed class SpriteSet
 
     public Texture2D[] FontSmall { get; }
 
-    public Texture2D Grunt { get; }
-
     public Texture2D[] GruntAnimationFrames { get; }
-
-    public Texture2D Hulk { get; }
 
     public Texture2D[] HulkAnimationFrames { get; }
 
@@ -239,12 +218,7 @@ public sealed class SpriteSet
     /// </summary>
     public Texture2D MiniMan { get; }
 
-    public Texture2D[] MissileSmallAnimationFrames { get; }
-
     public Texture2D[] MomAnimationFrames { get; }
-
-    /// <summary>Representative player frame: frame 7 = first of the down-facing set (frames 1-3 left, 4-6 right, 7-9 down, 10-12 up).</summary>
-    public Texture2D Player { get; }
 
     public Texture2D[] PlayerAnimationFrames { get; }
 
@@ -269,12 +243,8 @@ public sealed class SpriteSet
     /// <summary>Skull &amp; crossbones family-death marker (ROM: familydeath).</summary>
     public Texture2D Skull { get; }
 
-    /// <summary>Enforcer bullet / spark (ROM: enforcerbullet1-4).</summary>
-    public Texture2D Spark { get; }
-
     public Texture2D[] SparkAnimationFrames { get; }
     public Texture2D[] SpheroidAnimationFrames { get; }
-    public Texture2D Tank { get; }
 
     public Texture2D[] TankAnimationFrames { get; }
 

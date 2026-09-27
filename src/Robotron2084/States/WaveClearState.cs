@@ -24,7 +24,6 @@ public sealed class WaveClearState : IGameState
     /// </summary>
     private readonly bool _attract;
 
-    private readonly int _clearedWave;
     private readonly HighScoreStore _highScores;
     private readonly GameSession _session;
     private readonly SpriteSet _sprites;
@@ -49,12 +48,11 @@ public sealed class WaveClearState : IGameState
 
     private int _ticksRemaining = ScreenTuning.WaveClearDisplayTicks;
 
-    public WaveClearState(SpriteSet sprites, HighScoreStore highScores, GameSession session, int clearedWave, bool attract = false)
+    public WaveClearState(SpriteSet sprites, HighScoreStore highScores, GameSession session, bool attract = false)
     {
         _sprites = sprites;
         _highScores = highScores;
         _session = session;
-        _clearedWave = clearedWave;
         _attract = attract;
     }
 

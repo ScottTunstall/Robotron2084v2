@@ -43,11 +43,6 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
             gamePadIndex);
     }
 
-    /// <summary>A button or a stick — i.e. anything a gamepad can produce.</summary>
-    public bool IsGamePad => Kind is InputBindingKind.GamePadButton
-        or InputBindingKind.GamePadLeftStick
-        or InputBindingKind.GamePadRightStick;
-
     public int DirectionX => Kind is InputBindingKind.GamePadLeftStick or InputBindingKind.GamePadRightStick
         ? (Code / 3) - 1
         : 0;

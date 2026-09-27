@@ -1,0 +1,49 @@
+# Terminology ledger
+
+This is a record of places where the **original Robotron 2084 source** (`ref/original-source/*.ASM`),
+the author's own `asm/robomame.asm` disassembly, and this codebase use different words for the same
+thing. Compiled while adding class-level XML docs to the entity classes in
+`src/Robotron2084/Entities/`.
+
+**Rule: the original source's own word wins.** Where the three columns disagree, new code, comments
+and docs should reach for the "Original source term" column, not the disassembly's or an invented
+one. This does not mean every class must be renamed today — it means the next time a name is
+introduced or a comment is written, use the original's word.
+
+| Concept | Original source term | `robomame.asm` term | This codebase | Notes |
+|---|---|---|---|---|
+| The basic walking robot | `ROBOT` (RRP8.ASM; sub-blocks `ROB0`..`ROB11`) | no dedicated label; comments just say "grunt" | `Grunt` | The codebase's name is a fan/community name, not the ROM's. |
+| Hulk's bounds check | `CKLIMV` (RRH11.ASM) | inline wall-check logic, unnamed | (inline logic) | Same job, no shared name. |
+| Tank's shot timer | `TNKSHT` (RRTK4.ASM) | `$BE64` "tank fire delay variable" | (inline field) | Different names, same concept. |
+| Enforcer's re-aim | `ENFNV` (RRC11.ASM) | `PICK_ENFORCER_DESTINATION` | (inline logic) | Different names, same concept. |
+| Turning a human into an enemy | **"mutate"** — `BMUT00` (RRB10.ASM) | "progging" (`brain_progging_flag`, `DRAW_BRAIN_IN_PROGGING_STATE`) | "reprogramming" (`Prog`) | The original's own verb is **mutate**, not "prog"/"progging". `coding-standards.md` already flags "reprogramming" as the chosen term (ROM `BMUT`) — this confirms the ROM label is `BMUT`/"mutate", and "prog"/"progging" is the disassembly's word, not the original's. |
+| The recharging obstacle posts | **"post"** — `PSTKIL`, `PKPROC`, "*POST KILL PROCESS" (comments) | "electrode" | `Electrode` | The original never says "electrode" — it's a **post**. Both the disassembly and this codebase have standardised on the newer, non-original word. |
+| The brain's homing shot | Never called "cruise missile" — `BRNSHT` ("brain shot"), `CMISL`/`CMMOV` ("C-missile") (RRB10.ASM) | invented `CREATE_CRUISE_MISSILE`, comments say "cruise missile" | `CruiseMissile` | "Cruise missile" is a disassembler invention that stuck. Original's own words are **brain shot** / **C-missile**. |
+| Tank's projectile | `SHELL`, `SHELLP`, `SHLDIE` (RRTK4.ASM) | "tank shell" | `TankShell` | Consistent across all three — no action needed. |
+| Enforcer/spheroid's projectile | `SPARK`, fired by `ENFSHT` ("enforcer shot") | "spark (enforcer missile)" — the "(enforcer missile)" gloss is robomame's own addition | `Spark` | Core word "spark" is consistent; drop the "enforcer missile" gloss when writing about it, since the original doesn't use it. |
+| The player's shot | `LASER` | "laser" | `PlayerLaser` | Consistent — no action needed. |
+| Family members | `HUMAN`, `HUMATB` (RRH11.ASM) | "family member" throughout (`INITIALISE_FAMILY_MEMBERS`, `ANIMATE_FAMILY_MEMBER`, `FIND_NEAREST_FAMILY_MEMBER_TO_PROG`) | `Human` | The codebase's `Human` matches the **original**, not the disassembly. `coding-standards.md` already prefers "family"/"human" over "civilian"/"humanoid" — this confirms that's also the ROM's own word, and robomame's "family member" is the odd one out. |
+| A reprogrammed human (enemy) | `PROG`, `PROGST`, "*START A PROG" (RRB10.ASM) | `PROG` (`CREATE_PROG`, `ANIMATE_PROG`) | `Prog` | All three agree — no action needed. (Contrast with "mutate"/"reprogramming" above, which is about the *act*, not the resulting enemy's name.) |
+| The player character | `PLAYER` (a RAM jump-vector slot, RRF.ASM, invoked every interrupt from RRS22.ASM's `IRQV`) | `MOVE_PLAYER` | `Player` | Naming difference only, same routine/slot. |
+| The rolling, splitting green enemy | `CIRCLE` (its death routines are `CIRKIL`/`CIRKP`) | `ANIMATE_SPHEROID` | `Spheroid` | The original calls it a **circle**, not a spheroid. "Spheroid" is the disassembly/fan name. |
+| The enemy a spheroid splits into | `SQUARE` (its death routines are `SQKIL`/`CIRKV`) | `ANIMATE_QUARK` | `Quark` | The original calls it a **square**, not a quark. "Quark" is the disassembly/fan name. |
+| The floating points shown on a spheroid/quark kill | `CIRKIL`/`CIRKP`/`SQKIL`/`CIRKV` (the same kill routines as above — no separate name for the number) | "drawing a spheroid's points value" (no dedicated label) | `ScoreBurst` | Neither source has a distinct name for this effect; "score burst" is this codebase's own term. |
+| The bonus text/points for saving a family member | `PCFLG` (the rescue flag, in `HUMKIL`, RRH11.ASM) | `RESCUE_FAMILY_POINTS_TABLE` | `RescueScoreMarker` | Same concept, different names; neither source calls it a "marker". |
+| The skull left where a family member died | Drawn in `HUMKIL`: picture `SKULP`, sound `HKSND` (RRH11.ASM) | no separately labelled routine | `SkullMarker` | No naming conflict, just no shared label to point at. |
+| The fan-apart death effect | No single term — split across the death "explosion" routines (RRX7.ASM, RRHX4.ASM, RRDX2.ASM) and the separate shrink-in routine `APPEAR` (RRG23.ASM) | `MAKE_ENEMY_EXPLODE`, `CREATE_DIRECTIONAL_EXPLOSION` | `StripEffect` ("strip explosion" in prose) | `coding-standards.md` already names this **"strip explosion"** as the chosen codebase term "pending the author's decision" — worth noting neither the original source nor robomame.asm actually uses "strip" at all; both just say "explode"/"explosion". |
+| An object's link to the next one in its list | The record's own `NEXT`/`NEXTZ` field (RRDX2.ASM) | "linked list of X" per kind (e.g. `spheroids_enforcers_quarks_sparks_shells`, `family_list_pointer`, `electrode_list_pointer`) | `EntityList` | This codebase's `EntityList` is a C#-only structure; neither source has an equivalent single name. |
+| The player's limited number of shots on screen | `LCNT`, checked against 3 in `LSPROC` (RRG23.ASM), drawn by `LASER` (RRS22.ASM) | fire-cap check at `$31D5`-`$31E5`, unnamed | `LaserSlots` | Confirms the "three" limit; no shared name for the slot table itself. |
+| One vertical-blank interval | **FRAME** (e.g. RRS22.ASM's `FRAME` counter, RRT2.ASM's "GLITTER FRAME"); the pause-and-jump macro is `NAP n,LABEL` (defined in RRF.ASM) | "ROM frame" (matches) | "ROM frame" (`...RomFrames`) | Already aligned — `coding-standards.md`'s "ROM frame" is the original's own "FRAME". |
+| One call of the game's 1/60s update loop | No original term — the ROM has no fixed-timestep loop distinct from the vblank frame | n/a | "port tick" (`...Ticks`) | A pure engine concept with no ROM equivalent; nothing to reconcile. |
+| One pass of an entity's own update routine, every N frames | No original term — the ROM just uses `NAP n,LABEL` to re-enter a routine after n frames, with no noun for "a pass" | n/a | "beat" (`...Beats`) | Also a pure invented term, same reasoning as "port tick": there's no ROM word to prefer here. |
+| A sprite bitmap | **PICTURE** — RRP8.ASM: `*ON PICTURE OF OBJECT` | (uses "picture" too, e.g. sprite-position comments) | "animation frame"; "art" appears nowhere now (already renamed away per `coding-standards.md`'s stale-vocabulary scan) | The ROM's own word is **picture**, not "animation frame" — `coding-standards.md` already captures this ("picture — the ROM's word for a bitmap it blits"), so this codebase's remaining gap is that "animation frame" is still a modern coinage for "one picture in a sequence", not the original's term. |
+
+## How to read this
+
+- **Consistent already** (no action needed): tank shell, player's laser, prog.
+- **Disassembly or codebase invented a new word** where the original had its own: spheroid (→ circle),
+  quark (→ square), cruise missile (→ brain shot/C-missile), electrode (→ post), "progging" (→ mutate),
+  "family member" in robomame.asm (→ human, which the codebase already gets right).
+- **No original term exists at all** (fine to keep the codebase's own coinage, but don't claim it
+  comes from the ROM): score burst, rescue score marker, skull marker, strip effect, entity list,
+  laser slots.

@@ -14,10 +14,9 @@ namespace Robotron2084.Level;
 /// </summary>
 public sealed class GameSession
 {
-    private GameSession(PlayerSlot[] players, GameMode mode)
+    private GameSession(PlayerSlot[] players)
     {
         Players = players;
-        Mode = mode;
     }
 
     /// <summary>True while at least one player still has men (ROM <c>ZP1LAS | ZP2LAS</c>).</summary>
@@ -39,23 +38,8 @@ public sealed class GameSession
     /// <summary>True for the arcade's two-player game (ROM PLRCNT == 2).</summary>
     public bool IsTwoPlayer => Players.Count > 1;
 
-    /// <summary>How this game was started (notes §101) — the port's three modes.</summary>
-    public GameMode Mode { get; }
-
     /// <summary>Player 1 first; length 1 or 2 (ROM PLRCNT).</summary>
     public IReadOnlyList<PlayerSlot> Players { get; }
-
-    /// <summary>Rebuilds a session from carried-over player state (tests / save-style flows).</summary>
-    public static GameSession FromSlots(IEnumerable<PlayerSlot> players, int currentIndex)
-    {
-        PlayerSlot[] array = players.ToArray();
-        if (array.Length is < 1 or > 2)
-        {
-            throw new ArgumentException("a session has 1 or 2 players", nameof(players));
-        }
-
-        return new GameSession(array, GameMode.OnePlayer) { CurrentIndex = currentIndex };
-    }
 
     /// <summary>
     /// A fresh game by player count: the arcade's START 1 / START 2 (ROM PLRCNT) — a thin
@@ -93,7 +77,7 @@ public sealed class GameSession
                 PlayerTuning.StartingLevelNumber);
         }
 
-        return new GameSession(players, mode) { Controls = controls ?? ControlSettings.Defaults() };
+        return new GameSession(players) { Controls = controls ?? ControlSettings.Defaults() };
     }
 
     /// <summary>Every player's final score with their player number, highest first — the order the end-game ceremony offers them to the high score table (notes §98).</summary>

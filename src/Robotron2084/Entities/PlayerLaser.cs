@@ -100,7 +100,4 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
             Kill();
         }
     }
-
-    /// <summary>Test-only positioning hook (InternalsVisibleTo the test assembly).</summary>
-    internal void TeleportTo(IntVector2 position) => _position = position;
 }

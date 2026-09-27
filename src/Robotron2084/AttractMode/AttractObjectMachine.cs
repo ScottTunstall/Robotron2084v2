@@ -53,9 +53,6 @@ public sealed class AttractObjectMachine
         ReprogramShake,
     }
 
-    /// <summary>True while any object or process is still running.</summary>
-    public bool IsRunning => _processes.Count > 0 || _objects.Count > 0;
-
     /// <summary>Every live object, in spawn order (laser bolts included).</summary>
     public IReadOnlyList<MovieObject> Objects => _objects;
 
@@ -684,7 +681,6 @@ public sealed class AttractObjectMachine
         _objects.Add(new MovieObject(null, 0, column << 8, source.Y + (6 << 8))
         {
             IsLaser = true,
-            LaserRight = right,
             LaserRomFramesLeft = lifetime,
             XVelocity = right ? 0x0280 : -0x0280,
         });

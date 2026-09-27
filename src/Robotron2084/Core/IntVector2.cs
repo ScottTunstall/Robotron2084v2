@@ -23,7 +23,4 @@ public readonly record struct IntVector2(int X, int Y)
         long dy = a.Y - b.Y;
         return dx * dx + dy * dy;
     }
-
-    /// <summary>Converts to MonoGame's <see cref="Microsoft.Xna.Framework.Point"/>.</summary>
-    public Microsoft.Xna.Framework.Point ToPoint() => new(X, Y);
 }

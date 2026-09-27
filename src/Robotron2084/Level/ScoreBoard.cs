@@ -11,11 +11,6 @@ public sealed class ScoreBoard
 {
     private int _nextExtraLifeThreshold;
 
-    public ScoreBoard()
-        : this(0)
-    {
-    }
-
     /// <summary>Creates a board that carries a score over from a previous level.</summary>
     /// <param name="startingScore">
     /// Score carried over from a previous level (level restarts / wave clear

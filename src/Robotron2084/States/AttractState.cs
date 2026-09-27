@@ -86,7 +86,7 @@ public sealed class AttractState : IGameState, IAttractState
             PlayerSlot slot = _session.Current;
             SyncSlotFromField();
             slot.Wave = (slot.Wave % 255) + 1; // ROM GEXX: skip 0
-            manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session, slot.Wave - 1, attract: true));
+            manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session, attract: true));
             return;
         }
 

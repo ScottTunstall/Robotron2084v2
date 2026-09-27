@@ -91,7 +91,6 @@ public sealed class DemoPlayerInputSourceTests
             field.Update(new GameTime());
         }
 
-        IntVector2 player = field.Player.Position;
         IntVector2 centre = new(field.Wall.PlayfieldBounds.X + field.Wall.PlayfieldBounds.Width / 2, field.Wall.PlayfieldBounds.Y + field.Wall.PlayfieldBounds.Height / 2);
         field.SpawnEnforcer(new IntVector2(centre.X + ScreenSize.Scaled(120), centre.Y)); // well past the fire range
 

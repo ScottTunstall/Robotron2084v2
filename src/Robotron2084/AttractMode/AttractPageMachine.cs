@@ -59,9 +59,6 @@ public sealed class AttractPageMachine
     /// <summary>The script reached DONE / DONE2.</summary>
     public bool Finished { get; private set; }
 
-    /// <summary>The GRUNTS action's remaining spawns (the ROM's GRPROC countdown).</summary>
-    public int GruntsRemaining => _gruntsLeft;
-
     /// <summary>The name popup currently in the score row, if any.</summary>
     public MovieMessage? Message { get; private set; }
 

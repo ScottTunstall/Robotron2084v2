@@ -692,7 +692,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var missile = new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(8));
         field.AddCruiseMissile(missile);
 
-        Assert.True(field.PlayerLasers.TryFire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down, out PlayerLaser? laser));
+        Assert.True(field.PlayerLasers.TryFire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down, out PlayerLaser? _));
         field.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dead, missile.LifeState);
@@ -708,7 +708,7 @@ public sealed class PlayFieldBrainProgMissileTests
         IntVector2 brainSpot = new(inner.X + 150, inner.Y + 120);
         var brain = new Brain(TestSprites.Shared, brainSpot, new Random(9), beatDelayRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
-        Assert.True(field.PlayerLasers.TryFire(new IntVector2(brainSpot.X + 7, brainSpot.Y - 12), Direction8.Down, out PlayerLaser? l1));
+        Assert.True(field.PlayerLasers.TryFire(new IntVector2(brainSpot.X + 7, brainSpot.Y - 12), Direction8.Down, out PlayerLaser? _));
         field.Update(new GameTime());
         Assert.Equal(EntityLifeState.Dead, brain.LifeState); // BRNKIL: explode, then off — no blink
         Assert.Equal(500, field.Score.Score);
@@ -716,7 +716,7 @@ public sealed class PlayFieldBrainProgMissileTests
         IntVector2 progSpot = new(inner.X + 300, inner.Y + 120);
         var prog = new Prog(TestSprites.Shared, progSpot, HumanKind.Dad, new Random(10));
         field.AddProg(prog);
-        Assert.True(field.PlayerLasers.TryFire(new IntVector2(progSpot.X + 5, progSpot.Y - 12), Direction8.Down, out PlayerLaser? l2));
+        Assert.True(field.PlayerLasers.TryFire(new IntVector2(progSpot.X + 5, progSpot.Y - 12), Direction8.Down, out PlayerLaser? _));
         field.Update(new GameTime());
 
         // ROM PRGKIL: `JSR KILL` then the picture swap, so the prog is gone AT ONCE

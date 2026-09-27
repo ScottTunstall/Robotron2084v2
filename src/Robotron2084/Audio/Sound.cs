@@ -28,9 +28,6 @@ public static class Sound
     public static bool Enabled { get; set; } =
         Environment.GetEnvironmentVariable("ROBOTRON2084_SOUND") == "1";
 
-    /// <summary>True once <see cref="Initialize"/> has run (audio active).</summary>
-    public static bool IsReady => _engine is not null;
-
     public static void Initialize(IAudioSink sink) => _engine = new SoundEngine(sink);
 
     /// <summary>

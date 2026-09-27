@@ -69,12 +69,18 @@ Warning signs: more than ~400 lines, more than ~15 fields, or `// ---- section -
 into jobs. `PlayField` and `SpriteSet` are the counter-examples.
 
 **STR-2. One reason to change per method, and a verb phrase that names it.** A method whose body needs comment
-headers ("// 1. ...", "// 2. ...") is several methods. Cyclomatic complexity above 15 is a **build error**
+headers ("// 1. ...", "// 2. ...") is several methods. Cyclomatic complexity above 10 is a **build error**
 (CA1502). Split the method. Never suppress the rule.
 
-**STR-3. One top-level type per file (§121).** This includes records, enums and small structs. A nested type is
-allowed only when it is private and used by its enclosing type alone. `PlayField.LaserWallFlare` is internal
-and exposed through a property, so it breaks this rule.
+**STR-2a. No method longer than 50 lines**, blank lines included, measured from its opening `{` to its
+matching closing `}`. This is a hard cap, not a guideline: a method can be low-complexity and still be a wall
+of easy-to-read but repetitive lines that hides the shape of what it does. Extract named helpers (STR-7) until
+it fits, even when nothing here is complex enough to trip CA1502.
+
+**STR-3. One type per file, and no nested types.** A class, record, enum, struct or interface gets its own file,
+named after it, even a small helper type used by only one other class. Do not nest a type inside another
+class — pull it out and give it its own file, with `internal` or `private`-equivalent visibility if it should
+not be part of the public surface. `PlayField.LaserWallFlare` is the counter-example to fix, not to copy.
 
 **STR-4. Dependencies point inward.** `Core` depends on nothing in the game. `Rendering` does not depend on
 `Hud` or `States`. Entities do not reach into `States`. A new `using` that points outward needs a reason in
@@ -87,6 +93,13 @@ them → `CurrentAnimationFrame` → test hooks, last and together.
 **STR-6. A registry must be the only place.** If a type claims "add a row here and nothing else"
 (`RobotKinds`), then nothing else may list the kinds by hand. A hand-written list elsewhere is a bug waiting to
 happen, even when it is right today.
+
+**STR-7. One level of abstraction per method (SLAP).** Every statement in a method's body should read at the
+same altitude. A method that mixes a high-level step ("fire if due", "move the object") with the raw detail
+underneath it ("if `field.Wall.Intersects(...)`, mirror `_step.X`") is really two methods: extract the detail
+into a well-named helper and call it, so the body reads as a short list of steps at one level, each one a call
+to something whose name says what it does. This is the same instinct as STR-2, seen from the reader's side:
+if you have to ask "wait, what level are we on?" partway through a method, split it.
 
 ## 3. Naming (§114)
 
@@ -115,6 +128,28 @@ the difference must be visible in the names.
 **NAM-8. After a rename, the old word is gone everywhere**: identifiers, comments, crefs, test names, file
 names. Check with a solution-wide search and `git status` (§121: a stale untracked file survived a rename and
 compiled).
+
+**NAM-9. Principle of least surprise; one word per concept, everywhere.** A name must mean the same thing, and
+work the same way, in every file it appears in — not just within one class (CON-1, CON-2 give the sibling-file
+version of this rule; this is the whole-codebase version). A reader who has seen a name once should be able to
+predict what a same-named member elsewhere does, and a method should do what its name leads a reader to expect
+and nothing more surprising than that. When the codebase already has a word for a concept (this document's
+glossary, or the terminology ledger for ROM concepts), use that word rather than a fresh synonym.
+
+**NAM-10. A property is cheap; real work is a method.** Per Microsoft's member design guidelines, a property
+getter should cost about the same as a field read: no iteration, no allocation of anything but a trivial
+wrapper, no I/O, nothing that can reasonably throw, and no observable side effect. If getting the value
+searches a list, computes something proportional to its size, or its result can change between two calls with
+nothing in between that should change it, it is not a property — make it a method named for what it computes
+(`FindNearestRobot()`, `ComputeBounds()`), not a property that hides the cost from its caller.
+
+**NAM-11. Use explanatory variables instead of compound expressions inline.** When a constructor call or method
+call would take more than one computed argument — anything beyond a bare identifier, a constant, or a single
+member access — extract each computed piece into a well-named local first, then pass the locals in. Do not
+write `new IntVector2(delta.X / ApproachDivisor, delta.Y / ApproachDivisor)` and stop there if `delta` itself
+was still an inline expression; name the pieces so the call reads as a short sentence, not an equation to
+untangle. `Enforcer.RollVelocity`'s `IntVector2 delta = new(targetX - _position.X, targetY - _position.Y);`
+followed by the velocity call is the pattern to copy.
 
 ## 4. Numbers and units (§112, §113)
 
@@ -178,8 +213,12 @@ stale.
 
 **CMT-5. No plan or milestone references** ("Phase 11.3", "PHASE D", "plan 9.1", "M4"). Say what the thing is.
 
-**CMT-6. No invented vocabulary (§111).** Use the ROM's names for ROM things (`SPWAKE`, `NAP`) and the
-glossary's words for everything else. "Wake up" is out; the periodic activation is a **beat**.
+**CMT-6. Comments are written in plain English, and no vocabulary is invented without the author's consent
+(§111).** For a ROM thing, use the original source's own name where one exists (check
+`ref/original-source`, then `asm/robomame.asm`); otherwise use the word this document's glossary already
+gives it. "Wake up" is out; the periodic activation is a **beat**. Do not coin a new term, abbreviation or
+label for a concept that has none yet — flag it to the author and use their word, rather than inventing one
+and writing it into a comment as if it were established.
 
 **CMT-7. No tombstones.** Do not write "(No XyzBlinkTicks: ...)" about code that does not exist. If the fact
 matters, put it in the summary of the member that behaves that way ("dies at once; no death animation").
@@ -187,6 +226,10 @@ matters, put it in the summary of the member that behaves that way ("dies at onc
 **CMT-8. Every member has a `<summary>` (§109.1)**: public, internal and private members, constructors
 included. `<param>` tags match the real parameters exactly: no stale tags, none missing. `cref`s resolve.
 One `<summary>` per member. `GenerateDocumentationFile` must be on, so the compiler enforces all of this.
+`Update` and `Draw` are never exempt, on any class — every one of them gets a `<summary>` saying what that
+class's beat or draw actually does, not a generic "Updates the entity"/"Draws the entity". Enum members are
+members too: every value in every enum gets its own `<summary>` saying what that value means, not just the
+enum type itself.
 
 **CMT-9. A "test hook" label must be true.** If production code calls a member, it is not a test hook. Rename
 it and document its real use.
@@ -194,7 +237,21 @@ it and document its real use.
 **CMT-10. TODOs are tracked.** "Not built yet" and "open item" text in a comment must name the tracking item
 (handoff row, notes section). If the thing has been built, delete the text.
 
-## 7. SOLID in this codebase
+**CMT-11. A `<summary>` is written in plain English, at about a 10-year-old's reading age.** Say what the
+thing does in everyday words — no jargon, no ROM terminology, no code identifiers — one or two short sentences.
+Where the member maps to a ROM routine, its `<remarks>` gives BOTH sources, each on its own bullet or line:
+- the original arcade source: the `.ASM` filename and the routine's label (`ref/original-source`);
+- this repo's own disassembly: the label or memory address in `asm/robomame.asm`, or a plain "not separately
+  labelled" if it searched and found none — never guessed.
+Verify both by searching the actual files; do not copy a label forward without checking it still exists. This
+does not replace CMT-1's inline ROM cross-reference comment on ordinary (non-doc) code — where both apply,
+follow this rule for the `<summary>`/`<remarks>` block and CMT-1 for any inline comment elsewhere in the body.
+
+**CMT-12. An interface is a contract: its docs say what, never how.** A member's `<summary>` on an interface
+or an abstract member describes what the caller gets and can rely on — the inputs, the outputs, the
+guarantees — and nothing about any one implementer's internals. Do not write "counts down a beat timer and
+steps toward the player" on `IEntity.Update`; that belongs on `Grunt.Update`. If a sentence on an interface
+member would only be true for some implementations, it does not belong there at all.
 
 **SOLID-S.** See STR-1 and STR-2.
 
@@ -205,6 +262,13 @@ the single mapping, and its exception message says where to add the new case.
 **SOLID-L. No downcasts from an interface to a concrete type** in callbacks (`((Hulk)target)`,
 `((IRemovable)target)`). If a callback needs a capability, the type system should guarantee it. Where that
 is not possible, pattern-match and throw an `InvalidOperationException` that names the type.
+
+**SOLID-A. Abstractions must not leak.** An interface's shape must not force a caller to know, or an
+implementer to expose, a detail that is not part of what the interface promises — a concrete type peeking
+through a generic parameter, a "just for one implementer" flag on a shared method, a return type that only
+makes sense for one caller. If one implementation needs something the others don't, that need stays inside
+it; it does not become a wart on the interface everyone else has to carry. See also CMT-12: a leak often
+shows up first as a doc comment that has to say "except when...".
 
 **SOLID-I. Do not implement interface members you ignore.** A type whose `Update(GameTime, PlayField)` uses
 neither argument, or whose `Position`/`Bounds` mean nothing, is in the wrong interface. Parameters documented
@@ -249,6 +313,18 @@ loss.
 
 **FMT-1. One declaration per line.** A `///` comment starts its own line and sits directly above its member.
 No blank line directly after an opening brace. Use target-typed `new()` or `var` consistently within a file.
+
+**FMT-2. Ternary operators only for very simple expressions.** A ternary is fine when the condition and both
+branches are plain values or a single short call: `isRight ? 1 : -1`, `pad == 1 ? padTwo : padOne`. If the
+condition is compound, a branch does arithmetic or calls something with arguments of its own, the ternary is
+nested, or the line has to wrap, write an `if` with an early return (FMT-3) or a well-named helper instead. Always favour
+readability over cleverness.
+
+**FMT-3. Early returns, not `else`.** When one branch of an `if` finishes the method's work, return from it and
+let the other path carry on unindented. Do not write `if (x) { ...; return; } else { ... }`, or
+`if (x) { A } else { B }` where `A` could end with `return`. Guard clauses go at the top of the method.
+Keep `else` only when both branches are short and neither one ends the method's work, e.g. setting a value
+that the code below then uses.
 
 **CON-1. One idiom per concept across `src/` (§114).** If one entity guards `Update` with `!= Alive`, they all
 do (unless the entity has a `Dying` state). If the timer unit is a constant in one file, it is the same constant
@@ -301,10 +377,29 @@ Use this for reviewing a diff, a branch or a set of files in this repository. Th
 Run these from the repository root (Git Bash). Scope them to changed files where you can.
 
 ```bash
-# One top-level type per file (STR-3), §121
+# One top-level type per file, no nested types (STR-3), §121
 for f in $(git ls-files 'src/*.cs' 'tests/*.cs'); do
   n=$(grep -cE '^(public|internal)\s+((sealed|abstract|static|readonly|partial|record)\s+)*(class|record|enum|interface|struct)\b' "$f")
   [ "$n" -gt 1 ] && echo "$f: $n types"; done
+grep -rnE '^\s+(private|public|internal|protected)(\s+\w+)*\s+(sealed\s+)?(class|record|struct)\s' src tests --include=*.cs
+
+# Method length over 50 lines, blank lines included (STR-2a): a rough brace-depth scan, not exact —
+# check any hit by eye.
+for f in $(git ls-files 'src/*.cs' 'tests/*.cs'); do
+  awk -v file="$f" '
+    /^[[:space:]]*(public|private|internal|protected|static)[^=;{}]*\)[[:space:]]*$/ { sigline=$0; sigat=NR; next }
+    sigat && /\{/ && !inbody { depth=1; start=sigat; inbody=1; next }
+    inbody {
+      o=gsub(/\{/,"{"); depth+=o
+      c=gsub(/\}/,"}"); depth-=c
+      if (depth<=0) {
+        len=NR-start+1
+        if (len>50) printf "%s:%d: %d lines: %s\n", file, start, len, sigline
+        inbody=0; sigat=0
+      }
+    }
+  ' "$f"
+done
 
 # Clock literals (NUM-2)
 grep -rnE '(\+=|-=) 5;|\* 6\b|>= 6\b|< 6\b|= 6;|SixthsPer|Fifths|_sixths|_fifths' src --include=*.cs

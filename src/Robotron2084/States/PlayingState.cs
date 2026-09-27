@@ -231,13 +231,12 @@ public sealed class PlayingState : IGameState
     private void HandleWaveCleared(GameStateManager manager)
     {
         PlayerSlot slot = _session.Current;
-        int clearedWave = slot.Wave;
         SyncSlotFromField();
 
         // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
         slot.Wave = (slot.Wave % WaveCounterWrap) + 1;
 
-        manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session, clearedWave));
+        manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session));
     }
 
     /// <summary>Copies the live field's counters back into the current player's slot.</summary>
