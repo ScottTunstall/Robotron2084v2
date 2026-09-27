@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Audio;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Palette;
@@ -43,6 +44,7 @@ public sealed class WaveClearState : IGameState
     /// </summary>
     private readonly TunnelPalette _tunnelPalette = new();
 
+    private bool _hasAskedForWaveEndSound;
     private bool _paletteStarted;
     private int _ringsPaletted = -1;
 
@@ -65,6 +67,12 @@ public sealed class WaveClearState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
+        if (!_hasAskedForWaveEndSound)
+        {
+            Sound.Play(SoundTables.WaveEnd); // RRG23 GEXEC0 asks for WVSND as the wave ends
+            _hasAskedForWaveEndSound = true;
+        }
+
         // Two rings a frame (the ROM's task delay is 1 and its counter is seeded 2), then the
         // black pass — 53 + 53 rings, about 0.9 s. The state still honours the display time as
         // a floor, so the tunnel is never cut off.

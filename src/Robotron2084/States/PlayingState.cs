@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Graphics;
@@ -69,6 +70,7 @@ public sealed class PlayingState : IGameState
     {
         var playerOne = new BoundPlayerInputSource(controls, 0);
         var playerTwo = new BoundPlayerInputSource(controls, 1);
+        Sound.Play(StartSoundFor(mode));
         return new PlayingState(sprites, highScores, GameSession.NewGame(mode, playerOne, playerTwo, controls));
     }
 
@@ -168,6 +170,10 @@ public sealed class PlayingState : IGameState
     /// "PLAYER n" at the screen centre and waits NAP 115 before erasing it. A
     /// 1-player game skips it entirely (<c>LDA PLRCNT / DECA / BEQ PLS0A</c>).
     /// </summary>
+    /// <summary>The start sound for a mode: <c>ST1SND</c> for one player, <c>ST2SND</c> for two (RRG23 <c>SST01</c>, from <c>PLRCNT</c>).</summary>
+    private static SoundSequence StartSoundFor(GameMode mode) =>
+        mode == GameMode.OnePlayer ? SoundTables.StartOnePlayer : SoundTables.StartTwoPlayers;
+
     private void AnnounceTurn()
     {
         _turnMessageTicks = _session.IsTwoPlayer
