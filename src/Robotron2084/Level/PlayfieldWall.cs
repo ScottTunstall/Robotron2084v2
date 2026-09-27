@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Palette;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
