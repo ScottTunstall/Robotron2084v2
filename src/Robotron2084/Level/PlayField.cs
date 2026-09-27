@@ -379,17 +379,38 @@ public sealed class PlayField
         return nearest;
     }
 
-    public void SpawnCruiseMissile(IntVector2 origin) => _missiles.Add(new CruiseMissile(Sprites, origin, Player.Position, _random));
+    /// <summary>A brain fires a cruise missile at the player (RRB10 <c>BRSHT</c>, which asks for <c>BSHSND</c>).</summary>
+    /// <param name="origin">Where the missile starts.</param>
+    public void SpawnCruiseMissile(IntVector2 origin)
+    {
+        var missile = new CruiseMissile(Sprites, origin, Player.Position, _random);
+        _missiles.Add(missile);
+        PlaySoundFrom(SoundTables.BrainShoot, missile.Bounds);
+    }
 
-    public void SpawnEnforcer(IntVector2 position) => _enforcers.Add(new Enforcer(Sprites, position, _random, Parameters.EnforcerFireDelay));
+    /// <summary>A spheroid drops an enforcer (RRC11, which asks for <c>ENDSND</c>).</summary>
+    /// <param name="position">Where the enforcer grows.</param>
+    public void SpawnEnforcer(IntVector2 position)
+    {
+        var enforcer = new Enforcer(Sprites, position, _random, Parameters.EnforcerFireDelay);
+        _enforcers.Add(enforcer);
+        PlaySoundFrom(SoundTables.EnforcerDropOff, enforcer.Bounds);
+    }
 
     /// <summary>ROM BMUT: a brain's touch turns the human into a PROG at its spot.</summary>
     public void SpawnProg(IntVector2 position, HumanKind kind) => _progs.Add(new Prog(Sprites, position, kind, _random));
 
-    public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition) =>
-            // Wall bounds are passed through for the ROM's left-wall jitter rule
-            // (RRC11.ASM ENFSHT: no X jitter within 16 columns of the wall).
-            _sparks.Add(new Spark(Sprites, origin, playerPosition, _random, Wall.PlayfieldBounds));
+    /// <summary>An enforcer fires a spark (RRC11 <c>ENFSHT</c>, which asks for <c>ENFSND</c>).</summary>
+    /// <param name="origin">Where the spark starts.</param>
+    /// <param name="playerPosition">Where the player is, which the spark is aimed at.</param>
+    public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition)
+    {
+        // Wall bounds are passed through for the ROM's left-wall jitter rule
+        // (RRC11.ASM ENFSHT: no X jitter within 16 columns of the wall).
+        var spark = new Spark(Sprites, origin, playerPosition, _random, Wall.PlayfieldBounds);
+        _sparks.Add(spark);
+        PlaySoundFrom(SoundTables.EnforcerShoot, spark.Bounds);
+    }
 
     // ---- Spawn hooks called by entities during their own Update ----
     public Tank SpawnTank(IntVector2 position)
@@ -401,15 +422,16 @@ public sealed class PlayField
             Math.Clamp(position.Y, bounds.Y, bounds.Bottom - Tank.CollisionHeight));
         Tank tank = new(Sprites, position, _random, Parameters.TankFireDelay);
         _tanks.Add(tank);
+        PlaySoundFrom(SoundTables.TankDrop, tank.Bounds); // RRTK4: a quark's drop asks for TKDSND
         return tank;
     }
 
     public void SpawnTankShell(IntVector2 origin, IntVector2 towardPlayerDirection)
     {
         _shellsFiredThisWave++; // ROM INC on fire; only a laser kill decrements (fizzle bug)
-        _tankShells.Add(new TankShell(Sprites, origin, towardPlayerDirection, _random));
-        // R5 $4F8C: shell creation requests the fire sound ($4B11, p200).
-        Sound.Play(SoundTables.ShellFire);
+        var shell = new TankShell(Sprites, origin, towardPlayerDirection, _random);
+        _tankShells.Add(shell);
+        PlaySoundFrom(SoundTables.TankFire, shell.Bounds);
     }
 
     /// <summary>
@@ -446,23 +468,15 @@ public sealed class PlayField
         Wall.Update(gameTime);
 
         Player.Update(gameTime, this);
-        // R5 $273A: the fire path requests the laser sound ($26E6, p240).
+        // RRG23 LSPROC asks for LASSND as each laser starts (R5 $3221).
         if (Player.LasersFiredThisUpdate)
         {
-            Sound.Play(SoundTables.PlayerLaser);
+            PlaySoundFrom(SoundTables.Laser, Player.Bounds);
         }
         PlayerLasers.Update(gameTime, this);
 
         UpdateEntities(gameTime);
-        // R5 $4FCD: each wall bounce requests the bounce sound ($4B16, p200).
-        foreach (TankShell shell in _tankShells)
-        {
-            if (shell.BouncedThisUpdate)
-            {
-                Sound.Play(SoundTables.ShellBounce);
-            }
-        }
-
+        PlayMovementSounds();
         ResolveCollisions();
 
         // Prune: remove Dead entries from every list (pruning = count decrement, spec).
@@ -519,6 +533,15 @@ public sealed class PlayField
     /// <param name="entity">The entity to test.</param>
     internal bool IsMaterialising(IEntity entity) => _materialisation.IsAssembling(entity);
 
+    /// <summary>Asks for a sound that is heard from where its maker is on the playfield: something on the left is heard on the left.</summary>
+    /// <param name="sound">The sound's table.</param>
+    /// <param name="maker">The box of whatever made the sound.</param>
+    internal void PlaySoundFrom(SoundSequence sound, Rectangle maker)
+    {
+        float pan = StereoPlacement.PanFor(maker, Wall.PlayfieldBounds);
+        Sound.Play(sound, pan);
+    }
+
     /// <summary>The death of a robot that plays its OWN burst instead of the strip explosion (notes §64).</summary>
     /// <param name="target">The robot being killed.</param>
     /// <param name="burst">The burst its kind's row built from it.</param>
@@ -529,9 +552,9 @@ public sealed class PlayField
     }
 
     /// <summary>
-    /// The death of a robot whose picture shatters: the kill, the strip explosion (anchored at the picture's
-    /// middle — the ROM's <c>NWCENT</c> path, notes §73) and the ROM's robot-death sound (R5 $1F5B). The kinds'
-    /// rows call this one.
+    /// The death of a robot whose picture shatters: the kill and the strip explosion (anchored at the picture's
+    /// middle — the ROM's <c>NWCENT</c> path, notes §73). The kinds' rows call this one; each row carries its
+    /// own sound.
     /// </summary>
     /// <param name="target">The robot being killed.</param>
     /// <param name="direction">The laser's direction, which picks the explosion's axis and lean.</param>
@@ -541,7 +564,6 @@ public sealed class PlayField
         if (target is IExplodable explodable)
         {
             SpawnExplosion(explodable, direction);
-            Sound.Play(SoundTables.RobotDeath);
         }
     }
 
@@ -614,8 +636,12 @@ public sealed class PlayField
             var brain = new Brain(Sprites, position, _random, Parameters.BrainBeatDelayRomFrames, Parameters.BrainFireDelay, NearestFamilySlotTo(position));
             _brains.Add(brain);
             QueueMaterialise(brain);
-            // R5 $4607 (PLAY_BRAIN_WAVE_WARP_IN_SOUNDS): $4143, priority 255.
-            Sound.Play(SoundTables.BrainWarpIn);
+        }
+
+        // RRG23: "BRAIN WAVE???" — only a wave with brains is transported in, and TRANST starts its sound once.
+        if (Parameters.BrainCount > 0)
+        {
+            Sound.PlayTransporter();
         }
     }
 
@@ -784,7 +810,7 @@ public sealed class PlayField
         if (Score.Add(value))
         {
             Player.AddLife();
-            Sound.Play(SoundTables.BonusLife);
+            Sound.Play(SoundTables.Replay);
         }
     }
 
@@ -815,6 +841,26 @@ public sealed class PlayField
     /// <summary>Queues a wave-start robot for the APPEAR materialisation (RRG23).</summary>
     /// <param name="robot">The robot to bring in.</param>
     private void QueueMaterialise(IEntity robot) => _materialisation.Queue(robot);
+
+    /// <summary>
+    /// The sounds things make just by moving: each tank shell that bounced asks for <c>SRBSND</c> (RRTK4,
+    /// R5 $4FCD), and the grunts ask for <c>RMVSND</c> once when any of them stepped (RRP8 <c>ROBX</c>).
+    /// </summary>
+    private void PlayMovementSounds()
+    {
+        foreach (TankShell shell in _tankShells)
+        {
+            if (shell.BouncedThisUpdate)
+            {
+                PlaySoundFrom(SoundTables.ShellRebound, shell.Bounds);
+            }
+        }
+
+        if (_grunts.Any(grunt => grunt.SteppedThisUpdate))
+        {
+            Sound.Play(SoundTables.RobotMove);
+        }
+    }
 
     /// <summary>A brain killed MID-reprogram releases its victim — the conversion never completes, no prog
     /// appears, and a skull is left where she stands.</summary>
@@ -912,7 +958,7 @@ public sealed class PlayField
         {
             _hitStopTicksRemaining = PlayerTuning.HitStopTicks;
             // R5 $30EF (KILL_PLAYER): the death sound ($26D9, p238).
-            Sound.Play(SoundTables.PlayerDeath);
+            PlaySoundFrom(SoundTables.PlayerDeath, Player.Bounds);
         }
     }
 
@@ -939,6 +985,7 @@ public sealed class PlayField
                 {
                     human.Kill();
                     _skulls.Add(new SkullMarker(Sprites, human.Position));
+                    PlaySoundFrom(SoundTables.KillAHuman, human.Bounds); // RRH11 HUMKIL: the skull and HKSND
                     break;
                 }
             }
@@ -993,7 +1040,9 @@ public sealed class PlayField
                     continue;
                 }
 
+                Rectangle hitBounds = target.Bounds;
                 robot.LaserHit(this, target, laser.Direction);
+                PlaySoundFrom(robot.LaserHitSound, hitBounds);
                 AwardLaserScore(robot.Score);
                 laser.Kill();
                 break;
@@ -1023,6 +1072,7 @@ public sealed class PlayField
             // ROM HUMKIL PCFLG path: 60-tick score display at the rescue
             // spot showing min(SAVCNT,5) thousand (SAVCNT itself uncapped).
             _rescueScores.Add(new RescueScoreMarker(Sprites, human.Position, RescuesThisLife));
+            PlaySoundFrom(SoundTables.SaveAHuman, human.Bounds);
             if (Score.Add(ScoreValues.RescueBonus(RescuesThisLife)))
             {
                 Player.AddLife(); // extra-life thresholds apply to rescue score too (ROM SCORE routine)
@@ -1102,6 +1152,9 @@ public sealed class PlayField
                     // The post SHRIVELS and never bursts (RRP8 PSTKIL has no EXST).
                     electrode.Kill();
                     SpeedUpGrunts();
+                    // PSTKIL asks for PSKSND, then ROBKIL for RBSND in the same frame; the voice keeps the first.
+                    PlaySoundFrom(SoundTables.PostKill, electrode.Bounds);
+                    PlaySoundFrom(SoundTables.RobotHit, grunt.Bounds);
                     break;
                 }
             }
@@ -1119,6 +1172,7 @@ public sealed class PlayField
                 if (Touches(hulk, electrode))
                 {
                     electrode.Kill(); // the electrode is DESTROYED; the hulk is unaffected
+                    PlaySoundFrom(SoundTables.PostKill, electrode.Bounds);
                     break;
                 }
             }
@@ -1168,14 +1222,11 @@ public sealed class PlayField
     /// <summary>
     /// Starts the bespoke death burst for a spheroid or a quark (notes §64). The
     /// ROM's kill processes take a free object slot rather than one of the ten
-    /// shared strip records, so there is no cap — and the laser-kill sound is
-    /// played here because the strip-explosion branch (which normally plays it)
-    /// does not run for these two enemies.
+    /// shared strip records, so there is no cap.
     /// </summary>
     private void SpawnScoreBurst(ScoreBurst burst)
     {
         _scoreBursts.Add(burst);
-        Sound.Play(SoundTables.RobotDeath);
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 
@@ -17,6 +18,7 @@ namespace Robotron2084.Level;
 /// <param name="WaveCount">How many of them the wave table brings; null when only another robot makes them.</param>
 /// <param name="Score">Points a laser kill is worth (0 for what cannot be killed).</param>
 /// <param name="LaserHit">What one laser does to one of them — the kind's whole phase, from the kill to its own burst.</param>
+/// <param name="LaserHitSound">The sound the kind's own routine asks for when a laser hits one (its <c>...SND</c> table).</param>
 /// <param name="KillsPlayerOnContact">True when touching it kills the player.</param>
 /// <param name="Spawn">Builds the wave's own at a chosen spot; null when only another robot makes them.</param>
 public sealed record RobotKindInfo(
@@ -24,5 +26,6 @@ public sealed record RobotKindInfo(
     Func<LevelParameters, int>? WaveCount,
     int Score,
     Action<PlayField, IEntity, Direction8> LaserHit,
+    SoundSequence LaserHitSound,
     bool KillsPlayerOnContact = false,
     Action<PlayField, IntVector2>? Spawn = null);

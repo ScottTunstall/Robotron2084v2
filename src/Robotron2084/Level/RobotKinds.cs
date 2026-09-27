@@ -1,3 +1,4 @@
+using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 
@@ -32,6 +33,7 @@ public static class RobotKinds
             WaveCount: static parameters => parameters.ElectrodeCount,
             Score: ScoreValues.Electrode,
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            LaserHitSound: SoundTables.PostKill,
             Spawn: static (field, playerStart) => field.SpawnElectrodes(playerStart)),
 
         new(RobotKind.Grunt,
@@ -43,6 +45,7 @@ public static class RobotKinds
                 // Every grunt death — a laser's or an electrode's — speeds up the survivors (ROM $3A94).
                 field.SpeedUpGrunts();
             },
+            LaserHitSound: SoundTables.RobotHit,
             KillsPlayerOnContact: true,
             Spawn: static (field, playerStart) => field.SpawnGrunts(playerStart)),
 
@@ -51,6 +54,7 @@ public static class RobotKinds
             WaveCount: static parameters => parameters.HulkCount,
             Score: 0,
             LaserHit: static (field, target, direction) => target.Require<Hulk>().ApplyKnockback(direction.ToIntVector()),
+            LaserHitSound: SoundTables.HulkHit,
             KillsPlayerOnContact: true,
             Spawn: static (field, playerStart) => field.SpawnHulks(playerStart)),
 
@@ -59,29 +63,34 @@ public static class RobotKinds
             WaveCount: static parameters => parameters.SpheroidCount,
             Score: ScoreValues.Spheroid,
             LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.ForSpheroid(field.Sprites, target.Bounds)),
+            LaserHitSound: SoundTables.CircleKill,
             Spawn: static (field, playerStart) => field.SpawnSpheroids(playerStart)),
 
         new(RobotKind.Enforcer,
             WaveCount: null,
             Score: ScoreValues.Enforcer,
-            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction)),
+            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            LaserHitSound: SoundTables.EnforcerKill),
 
         new(RobotKind.Quark,
             WaveCount: static parameters => parameters.QuarkCount,
             Score: ScoreValues.Quark,
             LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.ForQuark(field.Sprites, target.Bounds)),
+            LaserHitSound: SoundTables.SquareKill,
             Spawn: static (field, playerStart) => field.SpawnQuarks(playerStart)),
 
         new(RobotKind.Tank,
             WaveCount: null,
             Score: ScoreValues.Tank,
-            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction)),
+            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            LaserHitSound: SoundTables.TankKill),
 
         // A brain killed MID-reprogram releases its victim — the field's own human phase does that (notes §90).
         new(RobotKind.Brain,
             WaveCount: static parameters => parameters.BrainCount,
             Score: ScoreValues.Brain,
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            LaserHitSound: SoundTables.BrainKill,
             KillsPlayerOnContact: true,
             Spawn: static (field, playerStart) => field.SpawnBrains(playerStart)),
 
@@ -89,13 +98,15 @@ public static class RobotKinds
             WaveCount: null,
             Score: ScoreValues.Prog,
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            LaserHitSound: SoundTables.ProgKill,
             KillsPlayerOnContact: true),
 
-        // The shots are removed at once: no explosion, no sound, no death of their own.
+        // The shots are removed at once: no explosion and no death of their own, but each has its own sound.
         new(RobotKind.Spark,
             WaveCount: null,
             Score: ScoreValues.Spark,
             LaserHit: static (field, target, direction) => target.Require<IRemovable>().Kill(),
+            LaserHitSound: SoundTables.SparkKill,
             KillsPlayerOnContact: true),
 
         new(RobotKind.TankShell,
@@ -107,12 +118,14 @@ public static class RobotKinds
                 // Only a laser kill counts against the wave's twenty shells (the fizzle bug, notes §53).
                 field.CountShellDestroyed();
             },
+            LaserHitSound: SoundTables.ShellKill,
             KillsPlayerOnContact: true),
 
         new(RobotKind.CruiseMissile,
             WaveCount: null,
             Score: ScoreValues.CruiseMissile,
             LaserHit: static (field, target, direction) => target.Require<IRemovable>().Kill(),
+            LaserHitSound: SoundTables.CruiseMissileKill,
             KillsPlayerOnContact: true),
     ];
 
