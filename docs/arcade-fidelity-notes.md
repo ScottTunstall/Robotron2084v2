@@ -10161,3 +10161,128 @@ those same column units: the ROM's band is ±2 columns (4 arcade px) and its rea
 px) with ±3 rows on Y, while the port has ±2 px and ±3 px. The port's pair is self-consistent (a brain stops
 2 px short, inside its 3 px reach) and changing one alone would stop it ever catching, so the units question
 is with the author rather than guessed at.
+
+## §126 — THE SOUND BOARD IS EMULATED, AND SOUNDS ARE PLACED IN STEREO (author, 2026-09-27)
+
+The author asked for the sound to work, with positional sound where an entity makes it (supersedes
+D-003, "sound is out of scope"; see D-029).
+
+**Why the old sink could never be right.** The byte the main board sends (the original source's
+`SND#`; the port called it a "note") is not a pitch. `SNDOUT` (`RRS22.ASM`, R5 `$D3B6`) writes
+`$3F` then `~SND# & $3F` to `SOUND` (`$C80E`), and that interrupts a separate computer — the sound
+board, a 6808 running its own 4K ROM (`video_sound_rom_3_std_767.ic12`) — which synthesises a whole
+effect into an 8-bit DAC. So the port now emulates that board rather than guessing tones:
+
+- `Audio/Hardware/Mc6800Cpu` + `Mc6800InstructionSet`/`Mc6800Opcodes`/`Mc6800Alu`: the 6800
+  instruction set with data-sheet cycle counts (the 6808 is a 6800 without on-chip RAM).
+- `Audio/Hardware/Pia6821`: the board's input-output chip — port A drives the DAC, port B takes the
+  sound lines, CB1 raises the interrupt.
+- `Audio/Hardware/SoundBoard`: MAME's Williams map (RAM `$0000-$007F` mirrored to `$0F7F`, PIA at
+  `$0400` mirrored at `$8400`, ROM at `$F000`), clock 3.579545 MHz / 4 = 894,886 Hz. The hand-over
+  copies `SNDOUT` and MAME's `snd_cmd_w`: the two top lines are held high and CB1 is high unless all
+  lines are. The ROM's own reset code (`$F01D`) sets CRB to `$37`: interrupt on a rising CB1.
+- `Audio/SoundBoardRenderer`: runs the board for exactly one sample's worth of cycles and averages
+  the DAC over it (a box filter), then removes the steady level as the arcade's coupling capacitor
+  does. Rendering is cheap: about 4 ms of CPU per 2 s of sound.
+- `Audio/SoundBoardAudioSink`: a stereo `DynamicSoundEffectInstance` at 44.1 kHz, one port tick
+  (735 samples) queued per tick, two ticks of cushion, audio dropped rather than lagging if the
+  queue passes four.
+
+**Checked against MAME 0.288.** MAME was driven headlessly with an autoboot Lua script that pokes the
+sequencer's own RAM (`SNDX $9854`, `SNDPRI $9856`, `SNDTMR/SNDREP $9857`; the direct page is `$98`)
+at the ROM's real tables, so the game's IRQ runs `SNDSEQ`/`SNDOUT` itself. (Writing `$C80E` from Lua
+does NOT reach the sound board; and before ~20 s the game is still in its power-on tests, with
+`SNDSEQ` not yet running.) Envelope and pitch contour (zero crossings per 100 ms) matched:
+
+| Table | MAME | Port |
+|---|---|---|
+| laser `$26E6` (`$25`) | ~220 Hz, decays over ~2 s | ~220 Hz, ~1.8 s |
+| shell fire `$4B11` (`$04`) | sweeps 2835 → 885 and never stops | 3255 → 885, never stops |
+| drone `$26EB` (`$0E` x29) | rises 250 → 885, never stops | 255 → 890, never stops |
+| player death `$26D9` | ~3 s | ~3 s |
+| bonus life `$D0C9` (`$1E`) | ~5.5 s | ~5.3 s |
+| shell bounce `$4B16` (`$14` then `$13`) | short, then silence | short, then silence |
+
+**Sound `$13` is "BACKY OFFY".** The original source's start-up (`RRS22.ASM` INIT) writes raw `$2C`
+(= sound number `$13`) with the comment `BACKY OFFY` — background off. Some sounds (`$04`, `$0E`)
+play until something replaces them; the shell bounce table ends with `$13` for one vblank to stop
+them, and `PLAY_BRAIN_WAVE_WARP_IN_SOUNDS` (`$4607`) is `$13` alone at priority 255.
+
+**Stereo is a port addition.** The arcade's speaker is mono. Each sound request now carries where it
+is heard (`Sound.Play(sequence, pan)`; `PlayField.PlaySoundFrom(sound, maker.Bounds)`), computed from
+the maker's centre across the playfield (`StereoPlacement`) and narrowed by `SoundTuning.StereoWidth`.
+The pan travels with the sequence that holds the one voice, so an ignored lower-priority request
+never moves the sound that is playing; `StereoPanner` glides over ~5 ms so a move makes no click.
+The brain warp-in and the bonus life are wave/HUD events and stay in the middle.
+
+**The ROM stays out of git.** `ref/rom` is ignored, as for the main ROM. Copy the sound ROM from the
+MAME set into `ref/rom/`; the build copies it to `Roms/` beside the game, and `RobotronGame.StartSound`
+runs silently (a debug line, no crash) when it is missing or there is no audio device. The
+`SoundBoardRomTests` skip without it. `Sound.Enabled` is now ON by default; `ROBOTRON2084_SOUND=0`
+turns it off.
+
+**Renamed:** `SoundEntry.Note` → `SoundNumber` (the original's `SND#`); `IAudioSink.PlayNote(note,
+ticks)` → `SendSoundNumber(soundNumber, pan)` (the board decides how long a sound lasts, so the tick
+count had no reader). `MonoGameSoundSink` (the stub square-wave scale) is deleted.
+
+**Still open (author):**
+- 19 of the ROM's ~29 `SNDLD` call sites are still unwired (the parked `SoundTables` rows plus brain
+  kill `$1ACD`, brain shot `$1AE2` and cruise kill `$1AD5`). Every robot death also still plays the
+  prog-kill table `$1ADA`; the grunt's own `RBSND` ("ROBOT HIT", R5 `$3898`) is one of the parked ones.
+- MAME's attract loop (7 minutes, no credits) was silent after the power-on sound, but never showed
+  the phony-player demo, so whether the arcade's demo game makes sound is unconfirmed. The original
+  source's `LSPROC` requests `LASSND` without checking `STATUS`, so the port's demo plays sound.
+- The port's pause does not stop the board, so a looping sound (`$04`) carries on while paused; the
+  arcade has no pause to compare against.
+
+## §127 — EVERY SOUND WIRED, AND THE LASER WAS NEVER THE LASER (author, 2026-09-27)
+
+The author: *"The player blaster sounds wrong. Wire in ALL the sounds."*
+
+**The bug.** Since §37 the port's "PlayerLaser" was the table at R5 `$26E6`, asked for at `$273A`. That
+call site is not the laser: it is the game start (`RRG23.ASM` `SST01`: `LDA PLRCNT / SUBA #2 / LDD
+#ST1SND / BCS SST01 / LDD #ST2SND`), and `$26E6` is `ST2SND` ("START 2"). Every shot played the
+two-player start sound. The real `LASSND` (`FCB $D0,$01,$08,1,0`, R5 `$26F0`) is asked for at `$3221`
+and had been parked as "WaveSfxJ". Checked against MAME 0.288 (the same Lua method as §126): the port's
+new laser matches MAME's to the 25 ms — a falling "pew" (940 → 100 zero crossings/s) every 150 ms, in
+eight steps of loudness, about 1.2 s long.
+
+**Every table now has its original name.** The R5 tables were matched byte-for-byte against the 32
+`...SND FCB` tables in the original source, and each call site's caller read in the original.
+`SoundTables` names each field after its label's own comment; `SoundTablesTests` checks all 30 against
+the main ROM's bytes (skips without the ROM).
+
+| Event | Original | R5 table / call |
+|---|---|---|
+| player fires | `LASSND` (`RRG23` `LSPROC`) | `$26F0` / `$3221` |
+| game starts, 1 / 2 players | `ST1SND` / `ST2SND` (`RRG23` `SST01`) | `$26E1`, `$26E6` / `$2735`, `$273A` |
+| wave ends | `WVSND` (`RRG23` `GEXEC0`) | `$26EB` / `$2A9C` |
+| player dies | `PDSND` (`RRG23` `PLEND`) | `$26D9` / `$30EF` |
+| spare man | `RPSND` "REPLAY" (`RRS22`) | `$D0C9` / `$DBF9` |
+| grunts step | `RMVSND` (`RRP8` `ROBX`, once a pass if any moved) | `$38A0` / `$3A68` |
+| grunt dies | `RBSND` "ROBOT HIT" (`RRP8` `ROBKIL`) | `$3898` / `$3A8E` |
+| post dies | `PSKSND` (`RRP8` `PSTKIL`) | `$38A5` / `$3ACD` |
+| laser hits hulk | `HKHSND` (`RRH11`) | `$001C` / `$00FC` |
+| human rescued / killed | `SAVSND` / `HKSND` (`RRH11`) | `$0026`, `$002B` / `$038A`, `$039C` |
+| spheroid shot; drops enforcer | `CRKSND`; `ENDSND` (`RRC11`) | `$1151`, `$114C` / `$12EA`, `$1377` |
+| enforcer fires; shot; spark shot | `ENFSND`; `ENKSND`; `SPKSND` (`RRC11`) | `$1156`, `$115B`, `$1160` / `$147B`, `$14A1`, `$14EB` |
+| brain shot; prog shot; brain fires; missile shot | `BKSND`; `PGKSND`; `BSHSND`; `CMKSND` (`RRB10`) | `$1ACD`, `$1ADA`, `$1AE2`, `$1AD5` / `$1E09`, `$1F5B`, `$2053`, `$213A` |
+| reprogramming; conversion | `PRGSND`; `HPSND` (`RRB10` `BMUTL`) | `$1AEA`, `$1AEF` / `$1D22`, `$1D7E` |
+| quark shot; drops tank; tank shot | `SQKSND`; `TKDSND`; `TNKSND` (`RRTK4`) | `$4B29`, `$4B31`, `$4B0C` / `$4BEB`, `$4CCE`, `$4E0A` |
+| tank fires; shell bounces; shell shot | `TKFSND`; `SRBSND`; `SHKSND` (`RRTK4`) | `$4B11`, `$4B16`, `$4B1E` / `$4F8C`, `$4FCD`, `$4FE7` |
+| brain wave beams in | `TR1SND` + `TRSPRC` (`RRT2`) | `$4143` / `$4607` |
+
+Before this, every robot death played `PGKSND` (the prog's own); now each kind's registry row carries
+its sound (`RobotKindInfo.LaserHitSound`). A grunt walking into a post asks for `PSKSND` then `RBSND`
+in the same frame, as `PSTKIL` then `ROBKIL` do; the one-voice rule keeps the first.
+
+**The transporter is a routine, not a table** (corrects §126, which read `$4607` as "`$13` alone"). `TRSPRC`
+asks for `TR1SND` ("CLEAR THE SYSTEM": `$13` at priority 255), then writes sound `$12` straight to the
+board through `SDOUT`, past the priority check: every vblank 72 times (`LDA #$48`), then — starting in
+the same vblank as the last — every other vblank 36 times (`LDA #$24`, `NAP 2`). It runs only on a brain
+wave (`RRG23`: `LDA BRNCNT BRAIN WAVE??? / BEQ PLS00 / MAKP TRANST`); other waves `JMP APPEAR`, which
+makes no sound. Port: `TransporterSound`, `SoundEngine.SendDirect`, `Sound.PlayTransporter`.
+
+**Not wired, deliberately:** `HLKSND` ("HULK KILL", `$0021`) has no caller in the original; `CNSND`
+("COIN", `$D0CE` + offset) needs a coin slot the port does not have. `PSTKIL` skips the post kill when
+it is the player who touched the post (`LDA PCFLG / BNE PSTKON`), so that collision plays only `PDSND`.
