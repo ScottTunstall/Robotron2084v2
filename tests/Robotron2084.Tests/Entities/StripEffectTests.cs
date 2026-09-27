@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Level;
-using Robotron2084.Rendering;
 using Robotron2084.Tuning;
 using Xunit;
 
