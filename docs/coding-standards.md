@@ -67,6 +67,15 @@ into a well-named helper and call it, so the body reads as a short list of steps
 to something whose name says what it does. This is the same instinct as STR-2, seen from the reader's side:
 if you have to ask "wait, what level are we on?" partway through a method, split it.
 
+**STR-8. No feature envy: a rule lives with the data it is about.** A method that mostly reads or changes
+another object's fields belongs on that object. The signs are a `static` or helper method that takes one object
+and asks it several questions (`IsGraspable(Human human)` belongs on `Human`), a loop that reaches into each
+item to test or count it (`CountLive(list)` belongs on the list), a calculation that only uses another type's
+sizes (`Tank.GetPositionInside`, `Quark.GetStartPosition`), and a fact about a kind written as a `switch` outside
+its registry (STR-6). Move the method to the type whose data it uses and leave the caller a one-line call. What
+stays in a coordinating class such as `PlayField` is only what needs two or more different objects at once: the
+order of the phases, and the rules between entities (who kills whom, who is drawn first).
+
 ## 3. Naming (§114)
 
 **NAM-1. Methods are verb phrases in the domain's own words**: `RollOffsets`, `PickDirection`,
