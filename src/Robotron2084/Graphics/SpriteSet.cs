@@ -76,6 +76,11 @@ public sealed class SpriteSet
     {
         PlayerAnimationFrames = source.LoadAll(NumberedNames("Sprites/Player", PlayerAnimationFrameCount));
         GruntAnimationFrames = source.LoadAll(NumberedNames("Sprites/Grunt", GruntAnimationFrameCount));
+        BerzerkRobotIdleFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_Idle", 6));
+        BerzerkRobotWalkRightFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_WalkRight", 2));
+        BerzerkRobotWalkLeftFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_WalkLeft", 2));
+        BerzerkRobotWalkUpFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_WalkUp", 3));
+        BerzerkRobotWalkDownFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_WalkDown", 3));
         HulkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Hulk", HulkAnimationFrameCount));
         SpheroidAnimationFrames = source.LoadAll(NumberedNames("Sprites/Spheroid", SpheroidAnimationFrameCount));
         EnforcerAnimationFrames = source.LoadAll(NumberedNames("Sprites/Enforcer", EnforcerAnimationFrameCount));
@@ -183,6 +188,21 @@ public sealed class SpriteSet
     public Texture2D[] FontSmall { get; }
 
     public Texture2D[] GruntAnimationFrames { get; }
+
+    /// <summary>The BerzerkRobot standing still: six frames that cycle (notes §138).</summary>
+    public Texture2D[] BerzerkRobotIdleFrames { get; }
+
+    /// <summary>The BerzerkRobot walking right: two frames.</summary>
+    public Texture2D[] BerzerkRobotWalkRightFrames { get; }
+
+    /// <summary>The BerzerkRobot walking left: two frames.</summary>
+    public Texture2D[] BerzerkRobotWalkLeftFrames { get; }
+
+    /// <summary>The BerzerkRobot walking up: three frames, played 1, 2, 3, 2.</summary>
+    public Texture2D[] BerzerkRobotWalkUpFrames { get; }
+
+    /// <summary>The BerzerkRobot walking down: three frames, played 1, 2, 3, 2.</summary>
+    public Texture2D[] BerzerkRobotWalkDownFrames { get; }
 
     public Texture2D[] HulkAnimationFrames { get; }
 
