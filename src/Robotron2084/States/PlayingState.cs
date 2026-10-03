@@ -171,6 +171,26 @@ public sealed class PlayingState : IGameState
         }
     }
 
+    /// <summary>Gets the wave a player is about to play: what was left after their last death, or a fresh wave.</summary>
+    /// <param name="slot">The player whose turn it is.</param>
+    /// <remarks>
+    /// Original source: <c>RRG23.ASM</c> <c>PLRES</c> brings back what <c>PLSAV</c> kept, then eases the first waves for a player on
+    /// their last men (Bozo). The difficulty setting is applied once, when the wave is first made (<c>GETWV</c>), so a
+    /// life after a death does not apply it again.
+    /// </remarks>
+    private LevelParameters GetWaveToPlay(PlayerSlot slot)
+    {
+        if (slot.SavedWave is { } saved)
+        {
+            return BozoMode.Apply(saved, slot.SpareMen, _settings.TurnsPerPlayer);
+        }
+
+        // Bozo mercy first, then the difficulty adjustment — the ROM's own order ($2B26 before $2B7C).
+        LevelParameters parameters = _generator.Generate(slot.Wave);
+        parameters = BozoMode.Apply(parameters, slot.SpareMen, _settings.TurnsPerPlayer);
+        return DifficultyTuning.Apply(parameters, _settings.Difficulty, slot.Lives);
+    }
+
     /// <summary>
     /// ROM RRG23 PLS0D: at the start of every 2-player turn the ROM prints
     /// "PLAYER n" at the screen centre and waits NAP 115 before erasing it. A
@@ -192,10 +212,7 @@ public sealed class PlayingState : IGameState
     {
         PlayerSlot slot = _session.Current;
 
-        // Bozo mercy first, then the difficulty adjustment — the ROM's own order ($2B26 before $2B7C).
-        LevelParameters parameters = _generator.Generate(slot.Wave);
-        parameters = BozoMode.Apply(parameters, slot.SpareMen, _settings.TurnsPerPlayer);
-        parameters = DifficultyTuning.Apply(parameters, _settings.Difficulty, slot.Lives);
+        LevelParameters parameters = GetWaveToPlay(slot);
 
         WallColorCycle cycle = new();
         return new PlayField(
@@ -221,6 +238,7 @@ public sealed class PlayingState : IGameState
     {
         PlayerSlot dead = _session.Current;
         SyncSlotFromField();
+        dead.SavedWave = WaveSurvivors.GetFrom(_field);
 
         if (_session.IsTwoPlayer)
         {
@@ -262,6 +280,7 @@ public sealed class PlayingState : IGameState
 
         // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
         slot.Wave = (slot.Wave % WaveCounterWrap) + 1;
+        slot.SavedWave = null;
 
         manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session));
     }
