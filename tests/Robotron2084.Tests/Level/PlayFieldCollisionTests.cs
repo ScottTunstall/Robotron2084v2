@@ -164,7 +164,7 @@ public sealed class PlayFieldCollisionTests
 
         // Fly it up into the top wall.
         int guard = 0;
-        while (laser!.LifeState == EntityLifeState.Alive && guard++ < 200)
+        while (laser!.IsAlive() && guard++ < 200)
         {
             field.Update(Tick);
         }

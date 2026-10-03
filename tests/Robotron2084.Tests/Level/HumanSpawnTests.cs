@@ -61,14 +61,14 @@ public sealed class HumanSpawnTests
 
             foreach (Human human in field.Entities.Family.Members)
             {
-                if (human.LifeState != EntityLifeState.Alive || human.IsBeingReprogrammed)
+                if (!human.IsAlive() || human.IsBeingReprogrammed)
                 {
                     continue;
                 }
 
                 foreach (Electrode electrode in field.Entities.Electrodes)
                 {
-                    if (electrode.LifeState != EntityLifeState.Alive)
+                    if (!electrode.IsAlive())
                     {
                         continue;
                     }
@@ -101,7 +101,7 @@ public sealed class HumanSpawnTests
 
         Assert.True(field.RobotsFrozen, "the player's start grace must still be holding the robots");
 
-        int moved = humans.Count(h => h.LifeState == EntityLifeState.Alive && h.Position != start[h]);
+        int moved = humans.Count(h => h.IsAlive() && h.Position != start[h]);
         Assert.True(moved > 0, "the family was still standing after half a second");
     }
 }
