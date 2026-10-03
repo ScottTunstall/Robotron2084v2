@@ -10643,15 +10643,25 @@ the flag, and `PlayField` calls it from `AwardScore` and `AwardRescueBonus`.
 and `SQCNT` (the disassembly: "excluding any missiles and progs"). The port also waited for the progs and the missiles, a plan from
 the early brain phase that never matched the ROM. `FieldEntities.AreEnemiesGone` now counts only those six.
 
-**4. A death keeps the survivors (NOT built; Q-008).** On a death `PLEND` converts the leftover enforcers into spheroids (one for
-every four; one if there are enforcers but no spheroids; never more than `CIRCNT` at the wave's start), restores `RMXSPD`
+**4. A death keeps the survivors (built, D-037, Q-008 resolved).** On a death `PLEND` converts the leftover enforcers into spheroids
+(one for every four; one if there are enforcers but no spheroids; never more than `CIRCNT` at the wave's start), restores `RMXSPD`
 (and raises `ROBSPD` to it if it is lower), and `PLSAV` copies the whole enemy list (`ELIST`: the speeds, the timers and the counts
 of grunts, electrodes, mommies, daddies, mikeys, hulks, brains, spheroids, quarks and tanks) into the player's block. `PLSTRT` then
 runs `PLRES` to bring it back, so the next life starts with the robots and the family that were still there; the ones already killed
-or rescued stay gone. The port rebuilds the whole wave from the wave table on every death, and also re-applies the difficulty
-setting (the ROM does that once, at `GETWV`, when the wave begins). Building it needs a saved wave state in `PlayerSlot`, a
-tank count and a spawner for the tanks that were alive (`TNKSTV`, `RRTK4.ASM`), and the speed limit the grunts share. It changes
-how every life after the first plays, so it is waiting on the author's go-ahead.
+or rescued stay gone. The port rebuilt the whole wave from the wave table on every death, and also re-applied the difficulty
+setting (the ROM does that once, at `GETWV`, when the wave begins).
+
+Now: `WaveSurvivors.GetFrom(field)` counts what is left (a thing that has begun to die is already off the count, as the ROM
+counts it off at the kill; a human in a brain's hold has already gone) and returns the wave's parameters with those counts;
+`PlayerSlot.SavedWave` (the ROM's `PENEMY`) holds them, `PlayingState` sets it on a death and clears it on a wave clear, and
+`BuildField` plays the saved wave (with Bozo mercy re-applied, as `PLRES` does, and no second difficulty adjustment) or makes a fresh one.
+`LevelParameters.TankCount` and a `TankWaveSpawner` (`TNKSTV`: full-size tanks, kept away from the player's start) bring back the tanks
+that were alive. Progs, sparks, shells and cruise missiles are not carried, as in the ROM. The grunts keep the speed limit they had
+reached; the floor returns to the wave's own. `WaveSurvivorsTests` pins the counts, the enforcer conversion (including its cap), the
+speed limit and floor, the tanks, and that the next field is made from what was left.
+
+**Not done:** the attract-mode demo still rebuilds its whole wave when its player dies. In the ROM the demo is the same game and
+keeps its survivors too; the demo is a small difference to the player and was left for the author to decide.
 
 **Not reviewed.** The individual start routines (`HULKST`, `BRNST`, `TANKST`, `HUMST`, `PSINIT`, `RINIT`, `CRINIT`, `CIRCST`, `SQST`)
 and `APPEAR` were not re-read here; earlier phases covered them.
