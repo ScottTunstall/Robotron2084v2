@@ -36,6 +36,12 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives,
     /// <summary>Men remaining INCLUDING the life in play.</summary>
     public int Lives { get; set; } = Lives;
 
+    /// <summary>
+    /// What was left on this player's field when they last died, or null when their wave has not been started, or has just been
+    /// cleared (ROM <c>PENEMY</c>, the enemy list that <c>PLSAV</c> keeps and <c>PLRES</c> brings back).
+    /// </summary>
+    public LevelParameters? SavedWave { get; set; }
+
     /// <summary>True while this player can still be given a turn.</summary>
     public bool HasMen => Lives > 0;
 

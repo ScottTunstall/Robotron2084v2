@@ -13,6 +13,8 @@ namespace Robotron2084.Level;
 /// <list type="bullet">
 /// <item><c>MaxDropsX2</c> = ENFNUM — at spawn time a spheroid/quark rolls
 /// RND(0..ENFNUM) and drops ceil(result/2) children (ROM 4B66-4B6F / $1193).</item>
+/// <item><c>TankCount</c> = TNKCNT: tanks already on the field when a life starts. The wave table never brings any: they
+/// come from a quark, and a death keeps the ones that were alive (notes §134).</item>
 /// <item>Timed fields are in ROM game ticks (NAP units); the port converts
 /// at the use sites (notes §11 + the tempo mapping recorded in the notes
 /// progress log).</item>
@@ -43,7 +45,8 @@ public sealed record LevelParameters(
     int ShellSpeed = 176,
     int QuarkDropDelay = 16,
     int QuarkSpeedCap = 50,
-    int EnemySpeedBonus = 0)
+    int EnemySpeedBonus = 0,
+    int TankCount = 0)
 {
     /// <summary>
     /// Fills every field from the ROM wave table. The legacy

@@ -81,11 +81,13 @@ public static class RobotKinds
             LaserHitSound: SoundTables.SquareKill,
             Spawn: new QuarkWaveSpawner()),
 
+        // The wave table brings no tanks, but a death keeps the ones that were alive (notes §134).
         new(RobotKind.Tank,
-            WaveCount: null,
+            WaveCount: static parameters => parameters.TankCount,
             Score: ScoreValues.Tank,
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
-            LaserHitSound: SoundTables.TankKill),
+            LaserHitSound: SoundTables.TankKill,
+            Spawn: new TankWaveSpawner()),
 
         // A brain killed MID-reprogram releases its victim — the field's own human phase does that (notes §90).
         new(RobotKind.Brain,
