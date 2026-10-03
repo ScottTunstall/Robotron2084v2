@@ -71,10 +71,10 @@ public sealed class PaletteAnimator
         // LF (slot 10): a white flash every 2 ROM frames, and every 6th frame a
         // random hue from the COLTAB ramp INSTEAD of the white one.
         _laserFlashClockUnits += ArcadeClock.UnitsPerPortTick;
-        int flashPeriod = ArcadeClock.ToClockUnits(LaserFlashRomFrames);
-        while (_laserFlashClockUnits >= flashPeriod)
+        int flashInterval = ArcadeClock.ToClockUnits(LaserFlashRomFrames);
+        while (_laserFlashClockUnits >= flashInterval)
         {
-            _laserFlashClockUnits -= flashPeriod;
+            _laserFlashClockUnits -= flashInterval;
             _laserFlashStep++;
             if (_palette.IsSlotSuspended(10))
             {
