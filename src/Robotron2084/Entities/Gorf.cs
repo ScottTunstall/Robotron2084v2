@@ -7,12 +7,13 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>Gorf hops across the screen in a string of small jumps, from one side to the other, dropping grunts as it goes. It does not shoot.</summary>
+/// <summary>Gorf hops across the screen in a string of jumps, from one side to the other, dropping grunts as it goes. It does not shoot.</summary>
 /// <remarks>
 /// A new kind of robot of the author's own with no arcade routine behind it (notes §138.2). It starts off the screen, on a random side and at a random
-/// height, and hops to the far side (<see cref="GorfPath"/>), then goes. Every hop is the same height, 16 pixels for now (<see cref="GorfTuning.HopRows"/>). On the way it drops grunts, evenly spaced along its path. How many it
-/// drops is rolled as a spheroid rolls its enforcers: from the wave's <c>ENFNUM</c> (<see cref="LevelParameters.MaxDropsX2"/>), so it grows with the wave and the
-/// difficulty. A Gorf that gets across is gone for good and scores nothing; one that is shot scores as a grunt does.
+/// height, and hops to the far side (<see cref="GorfPath"/>), then goes. Every hop is the same height, 16 pixels for now (<see cref="GorfTuning.HopRows"/>).
+/// It stops three times on the way (<see cref="GorfTuning.DropStops"/>) and drops a handful of grunts side by side from its body, which fall to the ground, up to six at a stop.
+/// How many is rolled as a spheroid rolls its enforcers: from the wave's <c>ENFNUM</c> (<see cref="LevelParameters.MaxDropsX2"/>), so it grows with the wave and the
+/// difficulty; the level can only hold so many grunts, and a stop drops fewer, or none, when it is full. A Gorf that gets across is gone for good and scores nothing; one that is shot scores as a grunt does.
 /// </remarks>
 public sealed class Gorf : IExplodable, IRemovable
 {
@@ -34,6 +35,8 @@ public sealed class Gorf : IExplodable, IRemovable
 
     private readonly int _direction;
     private readonly Queue<int> _dropSteps = new();
+    private readonly int _maxDropsX2;
+    private readonly Random _random;
     private readonly int _groundY;
     private readonly Rectangle _playfield;
     private readonly SpriteSet _sprites;
@@ -54,6 +57,8 @@ public sealed class Gorf : IExplodable, IRemovable
     {
         _sprites = sprites;
         _playfield = playfield;
+        _random = random;
+        _maxDropsX2 = maxDropsX2;
         _direction = random.Next(2) == 0 ? 1 : -1;
         int highest = playfield.Y + HopPixels;
         int lowest = Math.Max(highest, playfield.Bottom - CollisionSize.Height);
@@ -61,11 +66,9 @@ public sealed class Gorf : IExplodable, IRemovable
         _position = new IntVector2(_direction > 0 ? playfield.X - CollisionSize.Width : playfield.Right, _groundY);
         _totalSteps = (playfield.Width + CollisionSize.Width) / StepPixels;
 
-        // The drops: a random roll from 1 to the bound, halved and rounded up, as a spheroid's enforcers are.
-        int drops = (random.Next(maxDropsX2) + 2) / 2;
-        for (int drop = 1; drop <= drops; drop++)
+        for (int stop = 1; stop <= GorfTuning.DropStops; stop++)
         {
-            _dropSteps.Enqueue(drop * _totalSteps / (drops + 1));
+            _dropSteps.Enqueue(stop * _totalSteps / (GorfTuning.DropStops + 1));
         }
     }
 
@@ -78,8 +81,8 @@ public sealed class Gorf : IExplodable, IRemovable
     /// <summary>Top-left of the Gorf.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>How many grunts it has still to drop (test hook).</summary>
-    internal int DropsRemaining => _dropSteps.Count;
+    /// <summary>How many stops it has still to make to drop grunts (test hook).</summary>
+    internal int DropStopsRemaining => _dropSteps.Count;
 
     /// <summary>Which of the two animation frames is showing, 0 or 1 (test hook).</summary>
     internal int AnimationFrameIndex => _animationFrameIndex;
@@ -169,12 +172,31 @@ public sealed class Gorf : IExplodable, IRemovable
         if (_dropSteps.Count > 0 && _step >= _dropSteps.Peek())
         {
             _dropSteps.Dequeue();
-            field.SpawnGrunt(_position);
+            DropGrunts(field);
         }
 
         if (_step >= _totalSteps)
         {
             Kill();
+        }
+    }
+
+    /// <summary>Drops a handful of grunts side by side from Gorf's body, rolled as a spheroid rolls its enforcers: a roll from 1 to the wave's bound, halved and rounded up, and no more than six.</summary>
+    /// <param name="field">The playfield, which puts the grunts on the field and holds them back when the level is full.</param>
+    private void DropGrunts(PlayField field)
+    {
+        int count = Math.Min(GorfTuning.MaxGruntsPerDrop, (_random.Next(_maxDropsX2) + 2) / 2);
+        int gruntWidth = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Width);
+        int gruntHeight = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Height);
+        int spacing = gruntWidth + GorfTuning.DropGapPixels;
+        int centreX = _position.X + ((CollisionSize.Width - gruntWidth) / 2);
+        int bodyY = _position.Y + ((CollisionSize.Height - gruntHeight) / 2);
+        int groundY = _groundY + CollisionSize.Height - gruntHeight;
+
+        for (int index = 0; index < count; index++)
+        {
+            int sideways = ((2 * index) - (count - 1)) * spacing / 2;
+            field.SpawnGrunt(new IntVector2(centreX + sideways, bodyY), new IntVector2(centreX + sideways, groundY));
         }
     }
 }

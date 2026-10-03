@@ -36,6 +36,8 @@ public sealed class Grunt : IExplodable, IRemovable
 
     private int _moveCountdownBeats;
 
+    private int _landingY;
+
     private int _moveLimitBeats;
 
     private IntVector2 _position;
@@ -76,6 +78,9 @@ public sealed class Grunt : IExplodable, IRemovable
     /// <summary>The current stagger limit, in ROM beats: the re-roll upper bound.</summary>
     public int MoveDelayBeats => _moveLimitBeats;
 
+    /// <summary>True while the grunt is still falling after being dropped by Gorf. It does not move on until it lands.</summary>
+    public bool IsFalling => _position.Y < _landingY;
+
     /// <summary>True when the grunt took a step during the last update (it asks for the robot-move sound).</summary>
     public bool SteppedThisUpdate { get; private set; }
 
@@ -102,6 +107,11 @@ public sealed class Grunt : IExplodable, IRemovable
 
         _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
     }
+
+    /// <summary>Lets the grunt fall from where it is to the ground, as when Gorf drops it. It waits there until it lands.</summary>
+    /// <param name="landingY">The top of the grunt when it is standing on the ground, in port pixels.</param>
+    /// <remarks>A new robot's drop (notes §138.2): there is no arcade routine for it.</remarks>
+    internal void BeginFall(int landingY) => _landingY = landingY;
 
     /// <summary>Kills the grunt outright: no flash, no death animation.</summary>
     /// <remarks>ROM: RRP8.ASM's <c>ROBKIL</c> just explodes it.</remarks>
@@ -142,6 +152,12 @@ public sealed class Grunt : IExplodable, IRemovable
 
         if (field.RobotsFrozen)
         {
+            return;
+        }
+
+        if (IsFalling)
+        {
+            _position = _position with { Y = Math.Min(_landingY, _position.Y + GorfTuning.FallPixelsPerTick) };
             return;
         }
 
