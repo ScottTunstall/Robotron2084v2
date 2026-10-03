@@ -22,8 +22,8 @@ public sealed class ControlSettingsStoreTests
     {
         ControlSettings loaded = ControlSettingsStore.Load(TempFile());
 
-        Assert.Equal("W", loaded[0][InputAction.MoveUp].Key.DisplayName);
-        Assert.Equal("P", loaded.Pause.DisplayName);
+        Assert.Equal("W", loaded[0][InputAction.MoveUp].Key.GetDisplayName());
+        Assert.Equal("P", loaded.Pause.GetDisplayName());
     }
 
     [Fact]
@@ -32,21 +32,21 @@ public sealed class ControlSettingsStoreTests
         string path = TempFile();
         try
         {
-            ControlSettings settings = ControlSettings.Defaults();
-            settings[0][InputAction.MoveUp] = settings[0][InputAction.MoveUp].With(InputBinding.Key(Keys.Z));
-            settings[1][InputAction.ShootRight] = settings[1][InputAction.ShootRight].With(InputBinding.Button(1, Buttons.RightShoulder));
-            settings[1][InputAction.MoveLeft] = settings[1][InputAction.MoveLeft].With(InputBinding.Stick(1, rightStick: false, -1, -1));
-            settings.Pause = InputBinding.Key(Keys.Escape);
+            ControlSettings settings = ControlSettings.CreateDefaults();
+            settings[0][InputAction.MoveUp] = settings[0][InputAction.MoveUp].With(InputBinding.CreateKey(Keys.Z));
+            settings[1][InputAction.ShootRight] = settings[1][InputAction.ShootRight].With(InputBinding.CreateButton(1, Buttons.RightShoulder));
+            settings[1][InputAction.MoveLeft] = settings[1][InputAction.MoveLeft].With(InputBinding.CreateStick(1, rightStick: false, -1, -1));
+            settings.Pause = InputBinding.CreateKey(Keys.Escape);
 
             ControlSettingsStore.Save(path, settings);
             ControlSettings loaded = ControlSettingsStore.Load(path);
 
-            Assert.Equal("Z", loaded[0][InputAction.MoveUp].Key.DisplayName);
-            Assert.Equal("P1 LEFT STICK UP", loaded[0][InputAction.MoveUp].Pad.DisplayName);
-            Assert.Equal("P2 RIGHTSHOULDER", loaded[1][InputAction.ShootRight].Pad.DisplayName);
-            Assert.Equal("NUMPAD6", loaded[1][InputAction.ShootRight].Key.DisplayName);
-            Assert.Equal("P2 LEFT STICK UP LEFT", loaded[1][InputAction.MoveLeft].Pad.DisplayName);
-            Assert.Equal("ESCAPE", loaded.Pause.DisplayName);
+            Assert.Equal("Z", loaded[0][InputAction.MoveUp].Key.GetDisplayName());
+            Assert.Equal("P1 LEFT STICK UP", loaded[0][InputAction.MoveUp].Pad.GetDisplayName());
+            Assert.Equal("P2 RIGHTSHOULDER", loaded[1][InputAction.ShootRight].Pad.GetDisplayName());
+            Assert.Equal("NUMPAD6", loaded[1][InputAction.ShootRight].Key.GetDisplayName());
+            Assert.Equal("P2 LEFT STICK UP LEFT", loaded[1][InputAction.MoveLeft].Pad.GetDisplayName());
+            Assert.Equal("ESCAPE", loaded.Pause.GetDisplayName());
         }
         finally
         {
@@ -57,7 +57,7 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void TheFileIsReadableIni_WithThePagesOwnVocabulary()
     {
-        string text = ControlSettingsStore.Write(ControlSettings.Defaults());
+        string text = ControlSettingsStore.Write(ControlSettings.CreateDefaults());
 
         Assert.Contains("[player1]", text);
         Assert.Contains("[player2]", text);
@@ -91,7 +91,7 @@ public sealed class ControlSettingsStoreTests
 
         Assert.Equal(InputBindingKind.None, parsed[0][InputAction.MoveUp].Key.Kind);
         Assert.Equal(InputBindingKind.None, parsed[0][InputAction.MoveUp].Pad.Kind);
-        Assert.Equal("S", parsed[0][InputAction.MoveDown].Key.DisplayName); // the rest is untouched
+        Assert.Equal("S", parsed[0][InputAction.MoveDown].Key.GetDisplayName()); // the rest is untouched
     }
 
     [Fact]
@@ -99,10 +99,10 @@ public sealed class ControlSettingsStoreTests
     {
         // The pause line used to be a key/pad pair; both old names now set the single value.
         ControlSettings byKey = ControlSettingsStore.Parse(["[pause]", "key=Q"]);
-        Assert.Equal("Q", byKey.Pause.DisplayName);
+        Assert.Equal("Q", byKey.Pause.GetDisplayName());
 
         ControlSettings byPad = ControlSettingsStore.Parse(["[pause]", "pad=P1 A"]);
-        Assert.Equal("P1 A", byPad.Pause.DisplayName);
+        Assert.Equal("P1 A", byPad.Pause.GetDisplayName());
     }
 
     [Fact]
@@ -110,9 +110,9 @@ public sealed class ControlSettingsStoreTests
     {
         ControlSettings parsed = ControlSettingsStore.Parse(["[player1]", "moveup.key=Z"]);
 
-        Assert.Equal("Z", parsed[0][InputAction.MoveUp].Key.DisplayName);
-        Assert.Equal("S", parsed[0][InputAction.MoveDown].Key.DisplayName);
-        Assert.Equal("UP", parsed[1][InputAction.MoveUp].Key.DisplayName);
+        Assert.Equal("Z", parsed[0][InputAction.MoveUp].Key.GetDisplayName());
+        Assert.Equal("S", parsed[0][InputAction.MoveDown].Key.GetDisplayName());
+        Assert.Equal("UP", parsed[1][InputAction.MoveUp].Key.GetDisplayName());
     }
 
     [Fact]
@@ -130,8 +130,8 @@ public sealed class ControlSettingsStoreTests
             "moveup.pad=[player1]",
         ]);
 
-        Assert.Equal("W", parsed[0][InputAction.MoveUp].Key.DisplayName); // the bad value left the default
-        Assert.Equal("P1 LEFT STICK UP", parsed[0][InputAction.MoveUp].Pad.DisplayName);
+        Assert.Equal("W", parsed[0][InputAction.MoveUp].Key.GetDisplayName()); // the bad value left the default
+        Assert.Equal("P1 LEFT STICK UP", parsed[0][InputAction.MoveUp].Pad.GetDisplayName());
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public sealed class ControlSettingsStoreTests
 
             ControlSettings loaded = ControlSettingsStore.Load(path);
 
-            Assert.Equal("W", loaded[0][InputAction.MoveUp].Key.DisplayName);
+            Assert.Equal("W", loaded[0][InputAction.MoveUp].Key.GetDisplayName());
         }
         finally
         {
@@ -159,7 +159,7 @@ public sealed class ControlSettingsStoreTests
         string path = Path.Combine(directory, "controls.ini");
         try
         {
-            ControlSettingsStore.Save(path, ControlSettings.Defaults());
+            ControlSettingsStore.Save(path, ControlSettings.CreateDefaults());
 
             byte[] bytes = File.ReadAllBytes(path);
             Assert.True(bytes.Length > 0);
@@ -174,7 +174,7 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void ReadPlayer_TurnsTheBindingsIntoAState()
     {
-        ControlSettings settings = ControlSettings.Defaults();
+        ControlSettings settings = ControlSettings.CreateDefaults();
         var keys = new KeyboardState(Keys.W, Keys.L); // player 1: move up, shoot right
 
         PlayerInputState state = settings.ReadPlayer(0, keys, new GamePadState(), new GamePadState());
@@ -188,7 +188,7 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void APlayerTwoBinding_DrivesPlayerTwo()
     {
-        ControlSettings settings = ControlSettings.Defaults();
+        ControlSettings settings = ControlSettings.CreateDefaults();
         var keys = new KeyboardState(Keys.NumPad8); // player 2's default shoot-up
 
         PlayerInputState state = settings.ReadPlayer(1, keys, new GamePadState(), new GamePadState());
@@ -200,7 +200,7 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void SpaceAndInsert_StayAsPortAliases()
     {
-        ControlSettings settings = ControlSettings.Defaults();
+        ControlSettings settings = ControlSettings.CreateDefaults();
 
         PlayerInputState state = settings.ReadPlayer(0, new KeyboardState(Keys.Space, Keys.Insert), new GamePadState(), new GamePadState());
 
@@ -211,7 +211,7 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void TheStartButtons_AreStillTheArcanes()
     {
-        ControlSettings settings = ControlSettings.Defaults();
+        ControlSettings settings = ControlSettings.CreateDefaults();
 
         PlayerInputState state = settings.ReadPlayer(0, new KeyboardState(Keys.D2), new GamePadState(), new GamePadState());
 

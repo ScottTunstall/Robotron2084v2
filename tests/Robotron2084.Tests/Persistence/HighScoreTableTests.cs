@@ -12,7 +12,7 @@ public sealed class HighScoreTableTests
     [Fact]
     public void FactoryTable_IsTheRomsOwnDefaultTable()
     {
-        HighScoreTable table = HighScoreTable.CreateFactory();
+        HighScoreTable table = HighScoreTable.CreateWithFactoryScores();
 
         // DEFHSR/DEFGOD: the operator's top entry is "WILLY ELKTRIX" at 151782.
         Assert.Equal("WILLY ELKTRIX", table.Top.Name);
@@ -20,20 +20,20 @@ public sealed class HighScoreTableTests
 
         // TODTAB: ten entries, highest first, and exactly the ROM's names/scores.
         Assert.Equal(10, table.Today.Count);
-        Assert.Equal([("DRJ", 52127), ("LED", 50218), ("EPJ", 41255)], table.Today.Take(3).Select(e => (e.DisplayName, e.Score)));
-        Assert.Equal(("CJM", 24110), (table.Today[^1].DisplayName, table.Today[^1].Score));
+        Assert.Equal([("DRJ", 52127), ("LED", 50218), ("EPJ", 41255)], table.Today.Take(3).Select(e => (e.GetDisplayName(), e.Score)));
+        Assert.Equal(("CJM", 24110), (table.Today[^1].GetDisplayName(), table.Today[^1].Score));
 
         // CMSCOR: the full 36 rows, the factory ones in order and the rest blank.
         Assert.Equal(36, table.AllTime.Count);
-        Assert.Equal(("VID", 122145), (table.AllTime[0].DisplayName, table.AllTime[0].Score));
-        Assert.Equal(("CNS", 12755), (table.AllTime[21].DisplayName, table.AllTime[21].Score));
+        Assert.Equal(("VID", 122145), (table.AllTime[0].GetDisplayName(), table.AllTime[0].Score));
+        Assert.Equal(("CNS", 12755), (table.AllTime[21].GetDisplayName(), table.AllTime[21].Score));
         Assert.All(table.AllTime.Skip(22), entry => Assert.Equal(HighScoreEntry.Blank, entry));
     }
 
     [Fact]
     public void Submit_InsertInOrder_AndDropsTheLowest()
     {
-        HighScoreTable table = HighScoreTable.CreateFactory();
+        HighScoreTable table = HighScoreTable.CreateWithFactoryScores();
 
         SubmitResult result = table.Submit(40000, "ABC");
 
@@ -50,7 +50,7 @@ public sealed class HighScoreTableTests
     [Fact]
     public void Submit_ABigScore_EntersBothListsWithoutTruncatingThem()
     {
-        HighScoreTable table = HighScoreTable.CreateFactory();
+        HighScoreTable table = HighScoreTable.CreateWithFactoryScores();
 
         // 30000 beats today's lowest (CJM 24110) AND the all-time table's blank tail.
         SubmitResult result = table.Submit(30000, "ABC");
@@ -69,7 +69,7 @@ public sealed class HighScoreTableTests
     [Fact]
     public void Submit_BeatingTheTop_BecomesTheTopAndPushesTheOldOneDown()
     {
-        HighScoreTable table = HighScoreTable.CreateFactory();
+        HighScoreTable table = HighScoreTable.CreateWithFactoryScores();
 
         SubmitResult result = table.Submit(200000, "ACE");
 
@@ -78,14 +78,14 @@ public sealed class HighScoreTableTests
         Assert.Equal("ACE", table.Top.Name);
 
         // The old "GOD" entry drops into the all-time list, and the list stays full.
-        Assert.Equal(("WIL", 151782), (table.AllTime[0].DisplayName, table.AllTime[0].Score));
+        Assert.Equal(("WIL", 151782), (table.AllTime[0].GetDisplayName(), table.AllTime[0].Score));
         Assert.Equal(36, table.AllTime.Count);
     }
 
     [Fact]
     public void Submit_AScoreThatBeatsNothing_ChangesNothing()
     {
-        HighScoreTable table = HighScoreTable.CreateFactory();
+        HighScoreTable table = HighScoreTable.CreateWithFactoryScores();
 
         // Zero beats nothing, not even the blank rows the full table ends with.
         SubmitResult result = table.Submit(0, "ABC");
@@ -98,7 +98,7 @@ public sealed class HighScoreTableTests
     [Fact]
     public void Qualifies_IsTheRomsTodchkAndAllchk()
     {
-        HighScoreTable table = HighScoreTable.CreateFactory();
+        HighScoreTable table = HighScoreTable.CreateWithFactoryScores();
 
         // Zero beats nothing: TODAY's lowest is CJM 24110 and the all-time tail is blank (NULSCR).
         Assert.False(table.Qualifies(0));
@@ -114,7 +114,7 @@ public sealed class HighScoreTableTests
     [Fact]
     public void Submit_CapsHowManyAllTimeEntriesShareOneSetOfInitials()
     {
-        HighScoreTable table = HighScoreTable.CreateFactory();
+        HighScoreTable table = HighScoreTable.CreateWithFactoryScores();
 
         // The all-time tail is blank, so five "ABC" scores fit and the cap never fires.
         for (int i = 0; i < HighScoreTable.AllTimeInitialsCap; i++)
@@ -146,7 +146,7 @@ public sealed class HighScoreTableTests
         string path = Path.Combine(Path.GetTempPath(), $"robotron-hs-{Guid.NewGuid():N}.json");
         try
         {
-            HighScoreTable saved = HighScoreTable.CreateFactory();
+            HighScoreTable saved = HighScoreTable.CreateWithFactoryScores();
             saved.Submit(200000, "ACE");     // a new top (and the old top drops into the list)
             saved.Submit(12345, "ABC");      // today's only
             HighScoreStore.Save(path, saved);
@@ -157,8 +157,8 @@ public sealed class HighScoreTableTests
             Assert.Contains(loaded.AllTime, e => e.Score == 151782);
 
             // TODAY'S is not saved: the ROM reloads it from TODTAB at power-up (CKHS).
-            Assert.Equal(HighScoreTable.FactoryToday.Select(e => (e.DisplayName, e.Score)),
-                loaded.Today.Select(e => (e.DisplayName, e.Score)));
+            Assert.Equal(HighScoreTable.FactoryToday.Select(e => (e.GetDisplayName(), e.Score)),
+                loaded.Today.Select(e => (e.GetDisplayName(), e.Score)));
         }
         finally
         {
@@ -176,7 +176,7 @@ public sealed class HighScoreTableTests
         File.WriteAllText(broken, "{ not json at all");
         try
         {
-            Assert.Equal(HighScoreTable.CreateFactory().AllTime, HighScoreStore.Load(broken).AllTime);
+            Assert.Equal(HighScoreTable.CreateWithFactoryScores().AllTime, HighScoreStore.Load(broken).AllTime);
         }
         finally
         {
