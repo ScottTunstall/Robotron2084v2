@@ -1467,3 +1467,19 @@ game (it does: playback is on XNA's audio thread, and the sequencer is frame-loc
 So: measure it against MAME first (§126/§127's harness), then ask. Author, 2026-09-27: *"Make a note of it,
 and next time we continue, ask me."*
 
+
+## THE SOUND BOARD IS NATIVE; THE GAME NEEDS NO ROM (2026-10-03) — notes §130, ledger D-032
+
+- **Rule (author):** the game must not depend on ANY ROM to run, and holds no emulator. Anything it needs
+  from a ROM is translated into committed source; ROM readers and emulators live only in `tools/` and tests.
+- `src/Robotron2084/Audio/Synthesis/` ports the sound ROM's program from `VSNDRM3.SRC`
+  (`ref/original-source/sound/`, from `historicalsource/williams-soundroms`) for the 19 sound numbers the
+  game sends. `SoundBoard` answers a number as the ROM's `IRQ` does; `SoundBoardRenderer` plays any
+  `ISoundBoard`. `RobotronGame.StartSound` reads no file; the csproj copies no ROM.
+- The 6800/6821 emulator now lives only in `tools/RobotronSoundPlayer/Emulation` (`EmulatedSoundBoard`).
+  The **Robotron sound player** (`dotnet run --project tools/RobotronSoundPlayer -- play WaveEnd`) plays any
+  game sound or sound number on the emulated board (the real ROM).
+- Fidelity (`tests/RobotronSoundPlayer.Tests`, skip without the ROM): every sound number identical to the
+  real ROM change for change over 4 s; every game sound through the sequencer within 4 cycles over 6 s.
+- **620 tests, 0 failed, 0 skipped** (551 game + 69 player). Not yet heard by the author in the game: a
+  playtest by ear is the remaining check.

@@ -10376,3 +10376,79 @@ earlier in the final phrase). Measure against MAME first, then judge by ear.
 
 **ASK THE AUTHOR NEXT SESSION** before changing anything (their words: *"Make a note of it, and next time
 we continue, ask me"*). Also recorded as Q-007 in `ledger.md` and in `status.md`.
+
+## §130 — THE SOUND BOARD IS NATIVE C#, PORTED FROM ITS OWN SOURCE; THE EMULATOR MOVES TO A TOOL (2026-10-03)
+
+The author: *"I do not want dependencies on ROMs, I do not want emulators. I want native Windows/Linux
+sound"*, and *"the game should not depend on ANY ROM to run. Anything from the ROM it needs should be
+translated into monogame specific sources"* (supersedes D-029's emulation; see D-032). Also asked for: a
+standalone **Robotron sound player** that uses the emulator, picking the sound from the command line.
+
+**Why not "convert the notes".** The Williams board has no sound chip and plays no notes: a 6808 runs a
+program that writes levels straight into an 8-bit DAC. There is no register stream to capture and no chip
+format to convert to, and MonoGame plays only PCM. Baking each sound to PCM was measured and rejected:
+the board is deterministic from cold, but RAM carries over between sounds (the random generator `HI:LO`,
+`TEMPA`/`TEMPB`, the spinner's `SP1FLG`, the bonus's `B2FLG`), so a sound that cuts another does not
+sound like itself from silence, and three tables never end (`$04`, `$0E`, `$18`).
+
+**What was done instead: the program was ported, like the main board's.** The sound ROM's source is
+public — `historicalsource/williams-soundroms`, `VSNDRM3.SRC` ("ROBOTRON SOUNDS VERSION 1.0 3-8-82"),
+now in `ref/original-source/sound/` (git-ignored like the main board's source). Its tables were found
+byte for byte in `video_sound_rom_3_std_767.ic12` (`SVTAB $FE45`, `GWVTAB $FD32`, `GFRTAB $FF02`,
+`VVECT $FC08`, `RADSND $FC47`, the jump table `JMPTBL $FBC4` with `SP1 $F9A4`, `LITE $F55A`, `BON2 $F9CC`
+…), so the source is this ROM's. The handler `IRQ` maps the game's 19 sound numbers to:
+
+| Numbers | Routine | Port |
+|---|---|---|
+| `$01 $04 $06 $08 $0D $25 $28` | `GWLD`/`GWAVE` wave table synth | `WaveTableSound`, `WaveTableData` |
+| `$0E` | `SP1` spinner (the wave-end music), on `VARI` | `SpinnerSound` |
+| `$1D $1E` | `VARILD`/`VARI` variable-duty square wave | `SquareWaveSound` |
+| `$11 $15` | `LITE`/`APPEAR` → `LITEN` | `LightningNoise` |
+| `$14` | `TURBO` → `MOISE` | `WhiteNoise` |
+| `$17` | `CANNON` → `FNOISE` | `FilteredNoise` |
+| `$12` | `BON2` (continues from `GEND50` on each repeat) | `WaveTableSound.PlayLaserBallBonus` |
+| `$18 $19 $1A` | `RADIO`, `HYPER`, `SCREAM` | `RadioSound`, `HyperSound`, `ScreamSound` |
+| `$13` | `BGEND` ("BACKY OFFY") | `SoundBoard.EndBackground` |
+
+Each routine is ordinary C# that yields `OutputChange`s (wait N cycles, then write a level). The board
+times everything in its own clock cycles, from the 6800 data sheet (`InstructionCycles`), because on
+this board **the instruction timing is the pitch** — the one place the port keeps cycle timing despite
+D-011. `Synthesis/SoundBoard` answers a sound number as `IRQ` does (the same handler cost, the same flag
+clearing), and is played by the same `SoundBoardRenderer` (now over an `ISoundBoard`). Numbers the game
+never sends have no routine and are refused.
+
+**Interrupt timing, made exact.** Two details mattered once whole tables were compared:
+1. state the next sound can see (the random generator) must change when its instruction runs, not when
+   the routine computes it — the routines `Pass()` the time first (`RandomStep`), so a sound number that
+   cuts in part-way leaves the generator where the real board would;
+2. the processor answers an interrupt only between instructions, so a write to the port that has started
+   finishes first (`OutputChange.WriteCycles`, `SoundBoard.IsWriteUnderWay`).
+
+**Checked against the real ROM** (`tests/RobotronSoundPlayer.Tests/NativeBoardFidelityTests`, which
+skip without the ROM):
+- each of the 19 sound numbers from cold, over 4 s: **identical** to the emulated board, change for
+  change — level and cycle count — including the start-up delay (up to 33,100 changes for `$18`);
+- each of the 31 game sounds played through `SoundEngine` at 60 ticks a second, over 6 s: the boards
+  never disagree for longer than **4 cycles** (4.5 µs; the test allows one instruction, 9 cycles), and
+  for at most **2.4%** of the time — that is the emulator finishing a non-writing instruction before
+  answering, which the native board cannot know; only the fast-changing noise sounds show it.
+
+Note the real arcade cannot repeat its noise exactly either: the main board's sends land at no fixed point
+in the sound processor's instructions.
+
+**What moved.** The 6800/6821 emulator (`Audio/Hardware`) is now `tools/RobotronSoundPlayer/Emulation`
+(`SoundBoard` → `EmulatedSoundBoard`, implementing `ISoundBoard`), with its unit tests in
+`tests/RobotronSoundPlayer.Tests/Emulation`. The game reads no ROM at runtime: `RobotronGame.StartSound`
+builds the native board, and the csproj no longer copies the sound ROM. `SoundBoardRomTests` became
+`Audio/Synthesis/SoundBoardTests` on the native board — they now always run (laser, shell fire, `$13`,
+the wave-end phrase of 183 ticks that `SoundTuning.WaveEndMusicTicks` is pinned inside).
+
+**The sound player** (`tools/RobotronSoundPlayer`): `RobotronSoundPlayer` alone gives a menu; `list`
+lists the 30 tables, the transporter and the 64 sound numbers; `play <name|place|$hex>` plays one on
+the emulated board (the real ROM). `--seconds n`, `--wav file`, `--rom file`. Sounds stop when quiet for
+¾ s, or at 15 s for the three that never end. Any key stops a sound. (A `--board native|both` option to
+play the port as well was tried and removed at the author's word: *"they are clutter"* — the player is
+emulation only, and the port is held to the ROM by the fidelity tests.)
+
+**Still open:** Q-007 (§129, the sequencer's tempo) is unchanged by this — it is the main board's
+sequencer, not the sound board.

@@ -50,11 +50,10 @@ The house rules, learned the hard way over ~90 documented decode rounds:
 | **Effects** | The three-engine strip explosion (rows, columns, diagonal chevron), the wave-start materialisation ("appear"), the wave-complete colour-cycling **tunnel**, the death bursts, the player's own `PDTHV` flash-and-fade |
 | **Presentation** | The arcade HUD (score layout, blanked leading zeros, the mini-man spare lives, "<n> WAVE"), arcade font glyphs, 1- and 2-player alternating games with the ROM's turn-passing and "PLAYER n" announcement |
 | **Attract** | The arcade's whole attract sequence, driven by its own script: the title screen, then the **story movie** — the 2084 text crawl, the hero, the family and their name popups, the grunts, the hulk, the spheroid/tank/enforcer scene with a human reprogrammed into a prog, and the score posts (~96 s) — then the machine's phony-player demo game. Both script interpreters run the ROM's own bytes |
-| **Sound** | The ROM's priority sound sequencer ($D3C7/$D3E0) and decoded sound tables run for real — but the note→frequency map lives on the sound board, not in the CPU ROM, so the sink is a **stub beeper and is OFF by default** (`ROBOTRON2084_SOUND=1` to hear it) |
+| **Sound** | The ROM's priority sound sequencer ($D3C7/$D3E0) and its tables drive a **native C# sound board**, ported routine by routine from the sound ROM's own source (`VSNDRM3.SRC`: the wave table synth, square wave, noise, radio, hyper and scream routines) and timed in the board's clock cycles — it matches the real ROM change for change, needs no ROM, and plays through MonoGame on Windows and Linux. Sounds are placed in stereo by their maker's position (`ROBOTRON2084_SOUND=0` turns sound off) |
 
 **Deliberately absent:** self-test / adjustment / bookkeeping screens, coin counting,
-and the marquee art claim (author asset pending). The real sound note table is
-similarly blocked on hardware knowledge.
+and the marquee art claim (author asset pending).
 
 ## The journey (what has been through this repo)
 
@@ -104,6 +103,8 @@ write it up, including what was wrong before.
 | `docs/handoff-*.md`, `status.md`, `rebuild-ledger.md` | Session handoffs, the current state, and the per-checkpoint ledger |
 | `asm/robomame.asm` | The author's own annotated 6809 disassembly of the blue-label ROM — the locator and second witness behind most of the notes |
 | `tools/SpriteExtractor/` | Sprite/table extraction (148 PNGs) + the inline passthrough art |
+| `tools/RobotronSoundPlayer/` | The **Robotron sound player**: plays any game sound or sound number on an emulated sound board running the real sound ROM, to the speakers or a WAV file. The only home of the 6800 emulator — the game itself reads no ROM |
+| `tests/RobotronSoundPlayer.Tests/` | The emulator's tests, and the fidelity tests that hold the game's native sound board to the real ROM (they skip without the ROM) |
 | `tools/*.py` | Render gates and helpers (`verify-playfield`, `verify-fonts`, `extract-fonts`, `generate-mgcb`, `screenshot-map`) |
 | `ref/` | Committed research notes (palette, MAME, wave tables, the sprite list). `ref/rom/` and `ref/original-source/` are **git-ignored** — supply your own ROM image and listings to regenerate assets |
 
