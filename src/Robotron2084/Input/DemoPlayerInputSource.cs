@@ -49,7 +49,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
 
     public PlayerInputState Poll()
     {
-        if (_field is not { } field || field.Player.LifeState != EntityLifeState.Alive)
+        if (_field is not { } field || !field.Player.IsAlive())
         {
             return new PlayerInputState(IntVector2.Zero, false);
         }
