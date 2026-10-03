@@ -43,6 +43,14 @@ guideline: a method can be low-complexity and still be a wall of easy-to-read bu
 the shape of what it does. Extract named helpers (STR-7) until it fits, even when nothing here is complex
 enough to trip CA1502. Do not get under the cap by joining statements onto one line.
 
+**STR-2b. Every line of a method is at the same level of abstraction.** A method reads as a short list of steps that all
+sit at one level, each a call that names what it does. Do not mix a high-level step (`ResolveCollisions()`) with
+low-level detail (a bit mask, an index into a table, a raw loop over a list, a pixel offset) in the same body: lift the
+detail into a helper with a name (STR-7) so the method tells the story and the helper holds the working. A method that
+makes a decision and also does the arithmetic behind it is two methods. When you read a body and some lines are about
+*what* the method does and others about *how* a step is done, the *how* lines belong in a helper. This is the test
+STR-2a's length cap is a rough guard for: a short method can still break it.
+
 **STR-3. One type per file, and no nested types.** A class, record, enum, struct or interface gets its own file,
 named after it, even a small helper type used by only one other class. Do not nest a type inside another
 class — pull it out and give it its own file, with `internal` or `private`-equivalent visibility if it should
