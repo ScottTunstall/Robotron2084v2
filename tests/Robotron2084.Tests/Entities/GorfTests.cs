@@ -143,35 +143,107 @@ public sealed class GorfTests
         Assert.Equal(scoreBefore, field.Score.Score);
     }
 
-    [Fact]
-    public void ItDropsGrunts_HalfTheRollRoundedUp_EvenlyAlongItsWay()
+    /// <summary>Builds a field, puts a Gorf with these rolls on it, and runs it right across.</summary>
+    private static (PlayField Field, Gorf Gorf) RunAGorfAcross(LevelParameters parameters, int maxDropsX2, params int[] rolls)
     {
-        PlayField field = CreateFieldInPlay();
+        PlayField field = CreateFieldInPlay(parameters);
+        foreach (Grunt grunt in field.Entities.Grunts.ToList())
+        {
+            grunt.Kill(); // the wave's own grunts: only the ones Gorf drops are counted
+        }
 
-        // A roll of 0 here is a drop bound roll of 1: one grunt. A roll of 9 is 10: five grunts.
-        Assert.Equal(1, CreateGorf(field, 0, 0, 0).DropsRemaining);
-        Assert.Equal(2, CreateGorf(field, 0, 0, 2).DropsRemaining);
-        Assert.Equal(5, CreateGorf(field, 0, 0, 9).DropsRemaining);
-
-        Gorf gorf = CreateRollingGorf(field, 4);
+        var gorf = new Gorf(TestSprites.Shared, new ScriptedRandom(rolls), field.PlayfieldBounds, maxDropsX2);
         field.Entities.Add(gorf);
-        int promised = gorf.DropsRemaining;
-        int gruntsBefore = field.Entities.Grunts.Count;
         RunUntilGone(field, gorf);
-
-        Assert.InRange(promised, 1, 5);
-        Assert.Equal(promised, field.Entities.Grunts.Count - gruntsBefore);
+        return (field, gorf);
     }
 
     [Fact]
-    public void ABiggerWaveBoundDropsMoreGrunts_ThanASmallOne()
+    public void ItStopsThreeTimesOnTheWay_EvenlySpaced()
     {
         PlayField field = CreateFieldInPlay();
-        var top = new Gorf(TestSprites.Shared, new ScriptedRandom(0, 0, 49), field.PlayfieldBounds, maxDropsX2: 50);
-        var bottom = new Gorf(TestSprites.Shared, new ScriptedRandom(0, 0, 3), field.PlayfieldBounds, maxDropsX2: 4);
 
-        Assert.Equal(25, top.DropsRemaining);
-        Assert.Equal(2, bottom.DropsRemaining);
+        Assert.Equal(GorfTuning.DropStops, CreateGorf(field, 0, 0).DropStopsRemaining);
+        Assert.Equal(3, GorfTuning.DropStops);
+    }
+
+    [Theory]
+    [InlineData(0, 1)]
+    [InlineData(1, 1)]
+    [InlineData(2, 2)]
+    [InlineData(9, 5)]
+    [InlineData(11, 6)]
+    public void EachStopDropsHalfTheRollRoundedUp_AsASpheroidRollsItsEnforcers_UpToSix(int roll, int expected)
+    {
+        // The field has no grunts of its own and a cap of 30, so nothing holds the drops back.
+        (PlayField field, _) = RunAGorfAcross(new LevelParameters(LevelNumber: 1, GruntCount: 30), maxDropsX2: 12, 0, 0, roll, roll, roll);
+
+        Assert.Equal(3 * expected, field.Entities.Grunts.GetLiveCount());
+    }
+
+    [Fact]
+    public void ABiggerWaveBoundCanDropMoreAtOnceThanASmallOne()
+    {
+        // A bound of 4 never gives more than 2 (a roll of 4 halved and rounded up); a bound of 12 can give 6.
+        (PlayField small, _) = RunAGorfAcross(new LevelParameters(LevelNumber: 1, GruntCount: 30), maxDropsX2: 4, 0, 0, 3, 3, 3);
+        (PlayField big, _) = RunAGorfAcross(new LevelParameters(LevelNumber: 1, GruntCount: 30), maxDropsX2: 12, 0, 0, 11, 11, 11);
+
+        Assert.Equal(6, small.Entities.Grunts.GetLiveCount());
+        Assert.Equal(18, big.Entities.Grunts.GetLiveCount());
+    }
+
+    [Fact]
+    public void ALevelOnlyHoldsSoManyGrunts_SoAFullOneGetsFewerOrNone()
+    {
+        // The wave's grunt count is 2, but a level always holds at least six: three stops of six drop one burst and no more.
+        (PlayField field, _) = RunAGorfAcross(new LevelParameters(LevelNumber: 1, GruntCount: 2), maxDropsX2: 12, 0, 0, 11, 11, 11);
+
+        Assert.Equal(GorfTuning.MinimumGruntCap, field.Entities.Grunts.GetLiveCount());
+    }
+
+    [Fact]
+    public void ADroppedGruntFallsFromGorfToTheGround_WithNoAppearEffect()
+    {
+        PlayField field = CreateFieldInPlay();
+        var gorf = new Gorf(TestSprites.Shared, new ScriptedRandom(0, 0, 0, 0, 0), field.PlayfieldBounds, maxDropsX2: 10);
+        field.Entities.Add(gorf);
+
+        for (int tick = 0; tick < 3000 && field.Entities.Grunts.Count == 0; tick++)
+        {
+            field.Update(Frame);
+        }
+
+        Grunt dropped = field.Entities.Grunts[0];
+        Assert.True(dropped.IsFalling);
+        Assert.False(field.IsMaterialising(dropped));
+        Assert.Equal(0, field.PendingAppearCount);
+        int startY = dropped.Position.Y;
+
+        int guard = 0;
+        while (dropped.IsFalling && guard++ < 200)
+        {
+            field.Update(Frame);
+        }
+
+        Assert.False(dropped.IsFalling);
+        Assert.True(dropped.Position.Y >= startY);
+    }
+
+    [Fact]
+    public void AFallingGruntDoesNotWalkUntilItHasLanded()
+    {
+        PlayField field = CreateFieldInPlay();
+        var grunt = new Grunt(TestSprites.Shared, new IntVector2(300, 100), moveLimitBeats: 1, random: new Random(1));
+        grunt.BeginFall(100 + 40);
+
+        for (int tick = 0; tick < 4; tick++)
+        {
+            grunt.Update(Frame, field);
+        }
+
+        Assert.True(grunt.IsFalling);
+        Assert.Equal(300, grunt.Position.X);
+        Assert.Equal(100 + (4 * GorfTuning.FallPixelsPerTick), grunt.Position.Y);
     }
 
     [Fact]
