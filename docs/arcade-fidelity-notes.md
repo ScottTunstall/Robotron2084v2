@@ -10725,7 +10725,8 @@ This is the first thing in the port that has no arcade counterpart: the author's
 | `BerzerkRobot_Idle_1` to `_6` | 8 x 12 | the robot standing still: the first row of the 3 x 6 block, a cycle of six frames. Head on the top row |
 | `BerzerkRobot_WalkRight_1`, `_2` | 8 x 12 | the robot walking right (the author: *"Walk_1, 2 are the walk right animation frames"*): the first two frames of the other two rows |
 | `BerzerkRobot_WalkLeft_1`, `_2` | 8 x 12 | the robot walking left (the author: *"Walk_3, 4 are the walk left animation frames"*): the next two frames |
-| `BerzerkRobot_Walk_5` to `_10` | 8 x 12 | the rest of the other two rows in reading order, the two empty cells skipped, keeping their reading-order numbers until the author names them. Head on the top row throughout, so a walk keeps the head still |
+| `BerzerkRobot_WalkUp_1` to `_3` | 8 x 12 | the robot walking up (the author: *"Walk_5, 6, 7 are the walk up animation frames. Note that the animation sequence is 5, 6, 7, 6"*). They play in the order **1, 2, 3, 2**, so the middle frame is shown twice in each cycle |
+| `BerzerkRobot_Walk_8` to `_10` | 8 x 12 | the rest of the other two rows in reading order, the two empty cells skipped, keeping their reading-order numbers until the author names them. Head on the top row throughout, so a walk keeps the head still |
 | `BerzerkRobot_Stand` | 16 x 18 | the robot standing |
 | `BerzerkRobot_Explode_1` to `_3` | 16 x 18 | the three stages of it being destroyed, as the sheet's 2 x 2 block reads |
 
