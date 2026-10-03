@@ -109,6 +109,15 @@ reading what it reports. Name the report `...Result` (`LaserHitResult`), and the
 Where the owner must respond between two reports (a laser is spent before the next robot is tried), the rule returns its
 results lazily (`yield return`) so each response happens before the rule goes on.
 
+**STR-13. The playfield is the orchestrator.** `PlayField` is the one place that coordinates the objects in a wave, and
+control flows one way: down from the playfield. It tells each entity when to update and draw, tells the rules when to check
+for collisions, and acts on what they report. It owns the order things happen in. In the other direction, the objects it
+orchestrates (entities, rules, spawners, the contact test) **never tell the playfield what to do**. An entity asks the
+playfield a question or asks it to make something (STR-10, `field.HitsWall(box)`); a rule only reports a result
+(STR-12); neither commands it, decides its order, or changes its state. If an object seems to need to command the
+playfield, it should return a result and let the playfield decide. This keeps the order and the game's response in one
+place, so they can change without touching the objects.
+
 ## 3. Naming (§114)
 
 **NAM-1. Methods are verb phrases in the domain's own words**: `RollOffsets`, `PickDirection`,
