@@ -5,7 +5,7 @@ Reads src/Robotron2084/Content/Sprites/*.png and Content/Effects/*.fx and
 emits:
   1. src/Robotron2084/Content/Content.mgcb  (font entry + effect entries +
      one PNG entry per file)
-  2. src/Robotron2084/Rendering/SpriteContentPaths.cs (static content-path table)
+  2. src/Robotron2084/Graphics/SpriteContentPaths.cs (static content-path table)
 
 Re-run whenever new sprite PNGs are added to Content/Sprites/.
 """
@@ -16,7 +16,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 SPRITES_DIR = ROOT / "src/Robotron2084/Content/Sprites"
 EFFECTS_DIR = ROOT / "src/Robotron2084/Content/Effects"
 MGCB = ROOT / "src/Robotron2084/Content/Content.mgcb"
-PATHS_CS = ROOT / "src/Robotron2084/Rendering/SpriteContentPaths.cs"
+PATHS_CS = ROOT / "src/Robotron2084/Graphics/SpriteContentPaths.cs"
 
 def main() -> int:
     pngs = sorted(p.stem for p in SPRITES_DIR.glob("*.png"))
@@ -73,7 +73,7 @@ def main() -> int:
 
     # ---- SpriteContentPaths.cs ----
     entries = ",\n".join(f'        "Sprites/{n}"' for n in pngs)
-    paths_cs = f"""namespace Robotron2084.Rendering;
+    paths_cs = f"""namespace Robotron2084.Graphics;
 
 /// <summary>
 /// Every extracted sprite content path (one per PNG in
