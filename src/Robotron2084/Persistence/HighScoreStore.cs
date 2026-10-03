@@ -9,31 +9,31 @@ namespace Robotron2084.Persistence;
 /// arcade keeps in its battery-backed CMOS. TODAY'S list is NOT saved: the ROM
 /// reloads it from its own factory table at every power-up (<c>CKHS</c>
 /// <c>LDX #TODTAB / LDY #TODAYS / CMSMVV</c>), so the port does too
-/// (<see cref="HighScoreTable.FromSaved"/>).
+/// (<see cref="HighScoreTable.CreateFromSaved"/>).
 ///
 /// A missing or corrupt file yields the ROM's factory defaults rather than
 /// throwing, the same way a fresh cabinet comes up with RRTESTC's default table.
 /// </summary>
 public sealed class HighScoreStore
 {
-    private static readonly string FilePath = AppDataPaths.FileInAppData("highscores.json");
+    private static readonly string FilePath = AppDataPaths.GetFilePath("highscores.json");
 
     /// <summary>Loads from a given file — the seam the tests use.</summary>
     public static HighScoreTable Load(string path)
     {
         if (!File.Exists(path))
         {
-            return HighScoreTable.CreateFactory();
+            return HighScoreTable.CreateWithFactoryScores();
         }
 
         try
         {
             SavedTable? saved = JsonSerializer.Deserialize<SavedTable>(File.ReadAllText(path));
-            return HighScoreTable.FromSaved(saved?.Top, saved?.AllTime);
+            return HighScoreTable.CreateFromSaved(saved?.Top, saved?.AllTime);
         }
         catch (Exception)
         {
-            return HighScoreTable.CreateFactory();
+            return HighScoreTable.CreateWithFactoryScores();
         }
     }
 

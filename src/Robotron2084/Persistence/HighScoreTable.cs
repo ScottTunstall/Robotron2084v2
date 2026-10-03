@@ -119,7 +119,7 @@ public sealed class HighScoreTable
     public TopScoreEntry Top { get; private set; }
 
     /// <summary>The ROM's factory table: today's list, the all-time list and the top entry.</summary>
-    public static HighScoreTable CreateFactory() =>
+    public static HighScoreTable CreateWithFactoryScores() =>
         new(FactoryTop, FactoryToday, FactoryAllTime);
 
     /// <summary>
@@ -127,7 +127,7 @@ public sealed class HighScoreTable
     /// factory table (the ROM reloads it at power-up), the all-time list and the
     /// top entry come from the saved data when there is any.
     /// </summary>
-    public static HighScoreTable FromSaved(TopScoreEntry? top, IReadOnlyList<HighScoreEntry>? allTime) =>
+    public static HighScoreTable CreateFromSaved(TopScoreEntry? top, IReadOnlyList<HighScoreEntry>? allTime) =>
         new(top ?? FactoryTop, FactoryToday, Pad(allTime, AllTimeCapacity, FactoryAllTime));
 
     /// <summary>Whether a finished score earns an initials screen at all (ROM `EGSUB1`: `TODCHK`, then `ALLCHK`).</summary>

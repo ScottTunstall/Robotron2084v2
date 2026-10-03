@@ -30,14 +30,14 @@ namespace Robotron2084.Persistence;
 /// </summary>
 public sealed class ControlSettingsStore
 {
-    private static readonly string FilePath = AppDataPaths.FileInAppData("controls.ini");
+    private static readonly string FilePath = AppDataPaths.GetFilePath("controls.ini");
 
     /// <summary>Loads from a given file — the seam the tests use.</summary>
     public static ControlSettings Load(string path)
     {
         if (!File.Exists(path))
         {
-            return ControlSettings.Defaults();
+            return ControlSettings.CreateDefaults();
         }
 
         try
@@ -46,14 +46,14 @@ public sealed class ControlSettingsStore
         }
         catch (Exception)
         {
-            return ControlSettings.Defaults();
+            return ControlSettings.CreateDefaults();
         }
     }
 
     /// <summary>Parses the file's text; anything missing or unreadable keeps the factory value.</summary>
     public static ControlSettings Parse(IEnumerable<string> lines)
     {
-        ControlSettings settings = ControlSettings.Defaults();
+        ControlSettings settings = ControlSettings.CreateDefaults();
         string section = string.Empty;
 
         foreach (string raw in lines)
@@ -112,14 +112,14 @@ public sealed class ControlSettingsStore
             foreach (InputAction action in InputActions.All)
             {
                 ActionBinding binding = settings[player][action];
-                text.AppendLine($"{Name(action)}.key={binding.Key.DisplayName}");
-                text.AppendLine($"{Name(action)}.pad={binding.Pad.DisplayName}");
+                text.AppendLine($"{Name(action)}.key={binding.Key.GetDisplayName()}");
+                text.AppendLine($"{Name(action)}.pad={binding.Pad.GetDisplayName()}");
             }
         }
 
         text.AppendLine();
         text.AppendLine("[pause]");
-        text.AppendLine($"input={settings.Pause.DisplayName}");
+        text.AppendLine($"input={settings.Pause.GetDisplayName()}");
         return text.ToString();
     }
 

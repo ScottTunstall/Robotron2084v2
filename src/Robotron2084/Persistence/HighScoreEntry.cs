@@ -14,5 +14,5 @@ public sealed record HighScoreEntry(string Initials, int Score)
     public static HighScoreEntry Blank { get; } = new("   ", 0);
 
     /// <summary>The name, trimmed for display (the ROM walks its text to the first blank).</summary>
-    public string DisplayName => Initials.Trim();
+    public string GetDisplayName() => Initials.Trim();
 }
