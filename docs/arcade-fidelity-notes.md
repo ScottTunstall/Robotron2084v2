@@ -1081,7 +1081,7 @@ Called via KIDKIL/MOMKIL/DADKIL (DEC KIDCNT/MOMCNT/DADCNT first).
   - **SAVCNT is NOT capped** (plain INC). Only the score DISPLAY/lookup is
     capped at 5. PLINIT does CLR SAVCNT -> the running count resets when the
     player respawns (matches spec "rescues carry across waves, reset on
-    death"). Port: SkullMarker 90-tick/skull already matches; rescue bonus
+    death" — WRONG, corrected in §133: PLINIT runs at every wave start). Port: SkullMarker 90-tick/skull already matches; rescue bonus
     ScoreValues.RescueBonus(count) 1000..5000 capped already matches; the
     60-tick rescue SCORE DISPLAY popup is the one missing display (sprite
     Score_1000..5000 already in Content) — being added.
@@ -7862,7 +7862,7 @@ The hand-over is now per TICK: new `PlayField.SyncInto(PlayerSlot)` (score, `Pla
 `RescuesThisLife`) is called from both states immediately after `_field.Update`, and the two
 private `SyncSlotFromField` helpers are thin wrappers over it. The wave-clear and death
 calls stay — the death path still zeroes `SAVCNT` AFTER the copy (`PLINIT`).
-`PlayFieldHumanTests.SyncInto_HandsLiveScoreLivesAndRescuesToThePlayersSlot` pins it.
+`PlayFieldHumanTests.SyncInto_HandsLiveScoreAndLivesToThePlayersSlot` pins it (rescues were dropped from the hand-over in §133).
 
 ### 97.4 The brain's reprogramming: a ONE-BYTE script must not run on into the NEXT one
 
@@ -10592,3 +10592,23 @@ speed (the spec's, not the ROM's) and the Enforcer were only lightly checked.
 **Method.** Every changed constant now cites the original label and instruction and the disassembly address
 in its `<remarks>` (coding-standards CMT-11, CMT-14), and a test pins each change (one test fails on the old
 code for the quark margins, the spark ranges, the brain's reach and the grunt's step).
+
+
+## §133 — THE RESCUE COUNT RESTARTS ON EVERY WAVE (author, 2026-10-03)
+
+**Symptom.** The author saw 5000 points for the first human saved on a wave. The bonus is 1000, 2000, 3000, 4000, then 5000
+from the fifth rescue on (`SVITAB`), so a first rescue should pay 1000.
+
+**Cause.** The port kept the running count (`SAVCNT`) from one wave into the next and zeroed it only when the player died. That
+came from reading `PLINIT` as a routine that runs after a death. It does not. `PLSTRT` in `RRG23.ASM` is the start of every wave
+for the player (and of every life), and every path through it reaches `PLS0A` → `JSR PLINIT`, which does `CLR SAVCNT` (along
+with `BCMCNT`, `SPKCNT`, `ENFCNT`, `SHLCNT`). So the count is zero at the start of each wave. The earlier note about the human saves (the line that says "matches spec") and the
+`rebuild-ledger.md` line that said "carries across waves" were wrong.
+
+**Fix.** `PlayField` starts with no rescues and no longer takes a starting count; `PlayerSlot.Rescues`, its copy in `SyncInto` and
+the resets in `PlayingState`/`AttractState` are removed. `PlayFieldHumanTests.EveryWaveStartsWithNoRescues_…` pins that a second
+wave pays 1000 again, and `SyncInto_HandsLiveScoreAndLivesToThePlayersSlot` (renamed from `…AndRescues…`) now covers only score
+and lives.
+
+**Not changed, noted.** The other `PLINIT` counters (`BCMCNT`, `SPKCNT`, `ENFCNT`, `SHLCNT`) are per-wave in the port already (they
+are counted from the live entities, or reset with the new `PlayField`). `BRNFLG` and `TNKSPD` were not checked.
