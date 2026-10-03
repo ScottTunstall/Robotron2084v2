@@ -2,7 +2,7 @@ using Robotron2084.Entities;
 
 namespace Robotron2084.Level.Collisions;
 
-/// <summary>A grunt or a hulk walking onto an electrode. The grunt and the electrode both die; a hulk destroys the electrode and walks on.</summary>
+/// <summary>A grunt, a BerzerkRobot or a hulk walking onto an electrode. The robot and the electrode both die; a hulk destroys the electrode and walks on.</summary>
 /// <remarks>Original source: <c>RRP8.ASM</c> <c>PSTKIL</c>. The electrode shrivels and never bursts, and every grunt that
 /// dies speeds up the grunts that are left.</remarks>
 internal sealed class RobotVsElectrodeCollisionRule : ICollisionRule
@@ -15,6 +15,14 @@ internal sealed class RobotVsElectrodeCollisionRule : ICollisionRule
             if (grunt.IsAlive() && FindTouchedElectrode(scene, entities, grunt) is { } electrode)
             {
                 yield return new GruntHitElectrodeResult(grunt, electrode);
+            }
+        }
+
+        foreach (BerzerkRobot robot in entities.BerzerkRobots)
+        {
+            if (robot.IsAlive() && FindTouchedElectrode(scene, entities, robot) is { } electrode)
+            {
+                yield return new BerzerkRobotHitElectrodeResult(robot, electrode);
             }
         }
 

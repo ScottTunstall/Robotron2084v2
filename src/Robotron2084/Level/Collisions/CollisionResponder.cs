@@ -22,6 +22,7 @@ internal sealed class CollisionResponder
         {
             [typeof(LaserHitResult)] = result => RespondToLaserHit((LaserHitResult)result),
             [typeof(GruntHitElectrodeResult)] = result => RespondToGruntHittingElectrode((GruntHitElectrodeResult)result),
+            [typeof(BerzerkRobotHitElectrodeResult)] = result => RespondToBerzerkRobotHittingElectrode((BerzerkRobotHitElectrodeResult)result),
             [typeof(HulkHitElectrodeResult)] = result => RespondToHulkHittingElectrode((HulkHitElectrodeResult)result),
             [typeof(PlayerHitElectrodeResult)] = result => RespondToPlayerHittingElectrode((PlayerHitElectrodeResult)result),
             [typeof(PlayerTouchedDeadThingResult)] = _ => _field.KillPlayer(),
@@ -80,6 +81,17 @@ internal sealed class CollisionResponder
         _field.SpeedUpGrunts();
         _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.Bounds);
         _field.PlaySoundFrom(SoundTables.RobotHit, hit.Grunt.Bounds);
+    }
+
+    /// <summary>The BerzerkRobot and the electrode both die, as a grunt's do, but the other robots do not speed up.</summary>
+    /// <param name="hit">The hit.</param>
+    private void RespondToBerzerkRobotHittingElectrode(BerzerkRobotHitElectrodeResult hit)
+    {
+        hit.Robot.Kill();
+        _field.SpawnExplosion(hit.Robot, null);
+        hit.Electrode.Kill();
+        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.Bounds);
+        _field.PlaySoundFrom(SoundTables.RobotHit, hit.Robot.Bounds);
     }
 
     /// <summary>The electrode is destroyed. The hulk is not harmed.</summary>
