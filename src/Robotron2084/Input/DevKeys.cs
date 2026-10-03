@@ -1,12 +1,12 @@
 namespace Robotron2084.Input;
 
 /// <summary>
-/// Port-only DEVELOPMENT switches (notes §97, re-keyed in §101). Nothing here has an
+/// Port-only DEVELOPMENT switches (notes §97, re-keyed in §101 and §131). Nothing here has an
 /// arcade counterpart — these exist so the attract sequence can be inspected without
 /// sitting out the title's 12-second idle, and they are read only by the attract
 /// states. The keys themselves are handled in <c>RobotronGame.Update</c>:
 /// <list type="bullet">
-/// <item><b>F5</b> — jump straight into the attract STORYLINE movie (the family,
+/// <item><b>F12</b> — jump straight into the attract STORYLINE movie (the family,
 /// the hulk, the grunts, the spheroid/tank/enforcer scene, the brain);</item>
 /// <item><b>F6</b> — jump straight into the attract DEMO game (the phony player
 /// rescuing the family and being killed by the robots);</item>
@@ -20,7 +20,8 @@ namespace Robotron2084.Input;
 /// </list>
 ///
 /// F1/F2/F3 are the game's start keys (ONE PLAYER / TWO PLAYER ALTERNATE / TWO PLAYER
-/// SIMULTANEOUS) on every attract screen, so the dev keys sit above them.
+/// SIMULTANEOUS) on every attract screen, so the dev keys sit above them. F5 was the
+/// storyline jump until the GAME ADJUSTMENT page took it (notes §131).
 /// </summary>
 public static class DevKeys
 {

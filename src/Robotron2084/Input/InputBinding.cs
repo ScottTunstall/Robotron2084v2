@@ -18,17 +18,17 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     public static readonly InputBinding None = new(InputBindingKind.None, 0, 0);
 
     /// <summary>A keyboard key.</summary>
-    public static InputBinding Key(Keys key) => new(InputBindingKind.Key, (int)key, 0);
+    public static InputBinding CreateKey(Keys key) => new(InputBindingKind.Key, (int)key, 0);
 
     /// <summary>A gamepad button on <paramref name="gamePadIndex"/> (0 = pad 1, 1 = pad 2).</summary>
-    public static InputBinding Button(int gamePadIndex, Buttons button) =>
+    public static InputBinding CreateButton(int gamePadIndex, Buttons button) =>
         new(InputBindingKind.GamePadButton, (int)button, gamePadIndex);
 
     /// <summary>
     /// A stick direction on <paramref name="gamePadIndex"/>. <paramref name="dx"/> and
     /// <paramref name="dy"/> are screen-space (-1, 0 or 1) and must not both be zero.
     /// </summary>
-    public static InputBinding Stick(int gamePadIndex, bool rightStick, int dx, int dy)
+    public static InputBinding CreateStick(int gamePadIndex, bool rightStick, int dx, int dy)
     {
         dx = Math.Clamp(dx, -1, 1);
         dy = Math.Clamp(dy, -1, 1);
@@ -39,7 +39,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
 
         return new InputBinding(
             rightStick ? InputBindingKind.GamePadRightStick : InputBindingKind.GamePadLeftStick,
-            DirectionCode(dx, dy),
+            GetDirectionCode(dx, dy),
             gamePadIndex);
     }
 
@@ -73,12 +73,12 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     /// a lowercase name or a "P1-LS-UP" would reach the screen as "P1LSUP" (notes §101).
     /// The stick and direction words are spelled out rather than abbreviated for that reason.
     /// </summary>
-    public string DisplayName => Kind switch
+    public string GetDisplayName() => Kind switch
     {
         InputBindingKind.Key => ((Keys)Code).ToString().ToUpperInvariant(),
         InputBindingKind.GamePadButton => $"P{GamePadIndex + 1} {((Buttons)Code).ToString().ToUpperInvariant()}",
         InputBindingKind.GamePadLeftStick or InputBindingKind.GamePadRightStick =>
-            $"P{GamePadIndex + 1} {(Kind == InputBindingKind.GamePadRightStick ? "RIGHT STICK" : "LEFT STICK")} {DirectionName(Code)}",
+            $"P{GamePadIndex + 1} {(Kind == InputBindingKind.GamePadRightStick ? "RIGHT STICK" : "LEFT STICK")} {GetDirectionName(Code)}",
         _ => "NONE",
     };
 
@@ -110,7 +110,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
             return false;
         }
 
-        binding = Key(key);
+        binding = CreateKey(key);
         return true;
     }
 
@@ -129,7 +129,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
                 return false;
             }
 
-            binding = Stick(pad, rightStick, dx, dy);
+            binding = CreateStick(pad, rightStick, dx, dy);
             return true;
         }
 
@@ -138,7 +138,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
             return false;
         }
 
-        binding = Button(pad, button);
+        binding = CreateButton(pad, button);
         return true;
     }
 
@@ -177,9 +177,9 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
         return true;
     }
 
-    private static int DirectionCode(int dx, int dy) => ((dx + 1) * 3) + (dy + 1);
+    private static int GetDirectionCode(int dx, int dy) => ((dx + 1) * 3) + (dy + 1);
 
-    private static string DirectionName(int code) => Directions.First(d => d.Code == code).Name;
+    private static string GetDirectionName(int code) => Directions.First(d => d.Code == code).Name;
 
     private static bool TryDirection(string name, out int dx, out int dy)
     {
@@ -230,13 +230,13 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     /// </summary>
     private static readonly (string Name, int Dx, int Dy, int Code)[] Directions =
     [
-        ("UP", 0, -1, DirectionCode(0, -1)),
-        ("DOWN", 0, 1, DirectionCode(0, 1)),
-        ("LEFT", -1, 0, DirectionCode(-1, 0)),
-        ("RIGHT", 1, 0, DirectionCode(1, 0)),
-        ("UP LEFT", -1, -1, DirectionCode(-1, -1)),
-        ("UP RIGHT", 1, -1, DirectionCode(1, -1)),
-        ("DOWN LEFT", -1, 1, DirectionCode(-1, 1)),
-        ("DOWN RIGHT", 1, 1, DirectionCode(1, 1)),
+        ("UP", 0, -1, GetDirectionCode(0, -1)),
+        ("DOWN", 0, 1, GetDirectionCode(0, 1)),
+        ("LEFT", -1, 0, GetDirectionCode(-1, 0)),
+        ("RIGHT", 1, 0, GetDirectionCode(1, 0)),
+        ("UP LEFT", -1, -1, GetDirectionCode(-1, -1)),
+        ("UP RIGHT", 1, -1, GetDirectionCode(1, -1)),
+        ("DOWN LEFT", -1, 1, GetDirectionCode(-1, 1)),
+        ("DOWN RIGHT", 1, 1, GetDirectionCode(1, 1)),
     ];
 }

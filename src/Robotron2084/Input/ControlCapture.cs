@@ -41,16 +41,16 @@ public static class ControlCapture
     /// in order, so a key press captured on the same tick as a stick push wins — which
     /// is the common case on a keyboard-defining pass.
     /// </summary>
-    public static InputBinding NewlyPressed(InputSnapshot previous, InputSnapshot current)
+    public static InputBinding GetNewlyPressed(InputSnapshot previous, InputSnapshot current)
     {
-        foreach (Keys key in NewlyPressedKeys(previous.Keys, current.Keys))
+        foreach (Keys key in GetNewlyPressedKeys(previous.Keys, current.Keys))
         {
-            return InputBinding.Key(key);
+            return InputBinding.CreateKey(key);
         }
 
         for (int pad = 0; pad < 2; pad++)
         {
-            InputBinding stick = NewlyPressedStick(pad, previous, current);
+            InputBinding stick = GetNewlyPressedStick(pad, previous, current);
             if (stick.Kind != InputBindingKind.None)
             {
                 return stick;
@@ -59,7 +59,7 @@ public static class ControlCapture
 
         for (int pad = 0; pad < 2; pad++)
         {
-            InputBinding button = NewlyPressedButton(pad, previous, current);
+            InputBinding button = GetNewlyPressedButton(pad, previous, current);
             if (button.Kind != InputBindingKind.None)
             {
                 return button;
@@ -69,7 +69,7 @@ public static class ControlCapture
         return InputBinding.None;
     }
 
-    private static InputBinding NewlyPressedButton(int padIndex, InputSnapshot previous, InputSnapshot current)
+    private static InputBinding GetNewlyPressedButton(int padIndex, InputSnapshot previous, InputSnapshot current)
     {
         GamePadState previousPad = padIndex == 1 ? previous.PadTwo : previous.PadOne;
         GamePadState currentPad = padIndex == 1 ? current.PadTwo : current.PadOne;
@@ -78,7 +78,7 @@ public static class ControlCapture
         {
             if (currentPad.IsButtonDown(button) && !previousPad.IsButtonDown(button))
             {
-                return InputBinding.Button(padIndex, button);
+                return InputBinding.CreateButton(padIndex, button);
             }
         }
 
@@ -86,12 +86,12 @@ public static class ControlCapture
     }
 
     /// <summary>The keys that went down, in <see cref="Keys"/> order so the result is deterministic.</summary>
-    private static IEnumerable<Keys> NewlyPressedKeys(KeyboardState previous, KeyboardState current) =>
+    private static IEnumerable<Keys> GetNewlyPressedKeys(KeyboardState previous, KeyboardState current) =>
         current.GetPressedKeys()
             .Where(key => !previous.IsKeyDown(key))
             .OrderBy(key => (int)key);
 
-    private static InputBinding NewlyPressedStick(int padIndex, InputSnapshot previous, InputSnapshot current)
+    private static InputBinding GetNewlyPressedStick(int padIndex, InputSnapshot previous, InputSnapshot current)
     {
         GamePadState previousPad = padIndex == 1 ? previous.PadTwo : previous.PadOne;
         GamePadState currentPad = padIndex == 1 ? current.PadTwo : current.PadOne;
@@ -101,7 +101,7 @@ public static class ControlCapture
             IntVector2 direction = GamePadSticks.Read(currentPad, rightStick);
             if (direction != IntVector2.Zero && direction != GamePadSticks.Read(previousPad, rightStick))
             {
-                return InputBinding.Stick(padIndex, rightStick, direction.X, direction.Y);
+                return InputBinding.CreateStick(padIndex, rightStick, direction.X, direction.Y);
             }
         }
 

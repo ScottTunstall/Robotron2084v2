@@ -21,7 +21,7 @@ public static class InputActions
         is InputAction.MoveUp or InputAction.MoveDown or InputAction.MoveLeft or InputAction.MoveRight;
 
     /// <summary>The page's label, e.g. "MOVE UP" / "SHOOT LEFT".</summary>
-    public static string Label(this InputAction action) => action switch
+    public static string GetLabel(this InputAction action) => action switch
     {
         InputAction.MoveUp => "MOVE UP",
         InputAction.MoveDown => "MOVE DOWN",

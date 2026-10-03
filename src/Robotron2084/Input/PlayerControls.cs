@@ -36,7 +36,7 @@ public sealed class PlayerControls
     /// which is the only scheme that shares one keyboard cleanly. The pad defaults are
     /// the arcade's own two sticks: pad 1 for player 1, pad 2 for player 2.
     /// </summary>
-    public static PlayerControls Defaults(int playerIndex)
+    public static PlayerControls CreateDefaults(int playerIndex)
     {
         var controls = new PlayerControls();
         bool second = playerIndex == 1;
@@ -69,8 +69,8 @@ public sealed class PlayerControls
             (int dx, int dy) = directions[i];
 
             controls[action] = new ActionBinding(
-                InputBinding.Key(shooting ? shootKeys[index] : moveKeys[index]),
-                InputBinding.Stick(pad, rightStick: shooting, dx, dy));
+                InputBinding.CreateKey(shooting ? shootKeys[index] : moveKeys[index]),
+                InputBinding.CreateStick(pad, rightStick: shooting, dx, dy));
         }
 
         return controls;
@@ -80,16 +80,16 @@ public sealed class PlayerControls
     /// True while ANY shoot action is held (holding an aim key fires).
     /// </summary>
     public bool Firing(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
-        ShootDirection(keys, padOne, padTwo) != IntVector2.Zero;
+        GetShootDirection(keys, padOne, padTwo) != IntVector2.Zero;
 
     /// <summary>The move stick's direction (-1/0/1 per axis), from the bound MOVE actions.</summary>
-    public IntVector2 MoveDirection(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
+    public IntVector2 GetMoveDirection(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
         new(
             Axis(InputAction.MoveRight, InputAction.MoveLeft, keys, padOne, padTwo),
             Axis(InputAction.MoveDown, InputAction.MoveUp, keys, padOne, padTwo));
 
     /// <summary>The fire stick's direction, from the bound SHOOT actions.</summary>
-    public IntVector2 ShootDirection(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
+    public IntVector2 GetShootDirection(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
         new(
             Axis(InputAction.ShootRight, InputAction.ShootLeft, keys, padOne, padTwo),
             Axis(InputAction.ShootDown, InputAction.ShootUp, keys, padOne, padTwo));

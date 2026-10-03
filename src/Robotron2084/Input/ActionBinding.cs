@@ -40,10 +40,10 @@ public readonly record struct ActionBinding(InputBinding Key, InputBinding Pad)
         {
             if (Key.Kind == InputBindingKind.None)
             {
-                return Pad.Kind == InputBindingKind.None ? "NONE" : Pad.DisplayName;
+                return Pad.Kind == InputBindingKind.None ? "NONE" : Pad.GetDisplayName();
             }
 
-            return Pad.Kind == InputBindingKind.None ? Key.DisplayName : $"{Key.DisplayName} OR {Pad.DisplayName}";
+            return Pad.Kind == InputBindingKind.None ? Key.GetDisplayName() : $"{Key.GetDisplayName()} OR {Pad.GetDisplayName()}";
         }
     }
 }

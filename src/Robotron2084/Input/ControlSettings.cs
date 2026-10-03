@@ -57,13 +57,13 @@ public sealed class ControlSettings
     /// The global PAUSE binding, default <c>P</c>. ONE binding, not a key/pad pair: whichever
     /// device the page captured it on is the one it lives on (notes §101).
     /// </summary>
-    public InputBinding Pause { get; set; } = InputBinding.Key(Keys.P);
+    public InputBinding Pause { get; set; } = InputBinding.CreateKey(Keys.P);
 
     /// <summary>Both players' controls, player 1 first.</summary>
     public PlayerControls this[int playerIndex] => _players[playerIndex];
 
     /// <summary>The port's factory settings: see <see cref="PlayerControls.Defaults"/>.</summary>
-    public static ControlSettings Defaults()
+    public static ControlSettings CreateDefaults()
     {
         var settings = new ControlSettings();
         settings.ResetToDefaults();
@@ -84,8 +84,8 @@ public sealed class ControlSettings
     public PlayerInputState ReadPlayer(int playerIndex, KeyboardState keys, GamePadState padOne, GamePadState padTwo)
     {
         PlayerControls controls = _players[playerIndex];
-        IntVector2 move = controls.MoveDirection(keys, padOne, padTwo);
-        IntVector2 shoot = controls.ShootDirection(keys, padOne, padTwo);
+        IntVector2 move = controls.GetMoveDirection(keys, padOne, padTwo);
+        IntVector2 shoot = controls.GetShootDirection(keys, padOne, padTwo);
         GamePadState own = playerIndex == 1 ? padTwo : padOne;
 
         bool fire = controls.Firing(keys, padOne, padTwo)
@@ -107,9 +107,9 @@ public sealed class ControlSettings
     {
         for (int player = 0; player < PlayerCount; player++)
         {
-            _players[player] = PlayerControls.Defaults(player);
+            _players[player] = PlayerControls.CreateDefaults(player);
         }
 
-        Pause = InputBinding.Key(Keys.P);
+        Pause = InputBinding.CreateKey(Keys.P);
     }
 }
