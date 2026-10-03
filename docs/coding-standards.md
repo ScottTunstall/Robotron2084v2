@@ -175,6 +175,12 @@ gap: a flicker, a flash, a cycle (`SparkFrameIntervalRomFrames`, `CycleIntervalC
 (`fireIntervalBeats`). Where the ROM supplies only part of the interval, such as the frames a brain sleeps after its
 beat, that value is a **wait** (`beatWaitRomFrames`), and the interval is the wait plus the frame the beat takes.
 
+**NAM-17. A class is named for what it holds.** A class that holds rules is `...Rules`, and one rule is
+`...Rule` (`CollisionRules`, `ICollisionRule`, `LaserCollisionRule`), never "phases", "passes" or "steps". In the
+same way a list of strategies is `...Strategies`, a table of values is `...Tables`, a set of tuning numbers is
+`...Tuning`, and a registry of rows is named for the rows (`RobotKinds`). When a class is renamed because its
+contents are not what its name says, rename its interface, its members, its test classes and its file too (NAM-8).
+
 ## 4. Numbers and units (§112, §113)
 
 **NUM-1. No magic numbers.** Every literal other than `0`, `1`, `-1` (and `2` when halving) is a named constant.
