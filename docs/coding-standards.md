@@ -17,50 +17,9 @@ rename. When a constant and a comment would both explain a number, write the con
 
 ## 1. Vocabulary: one word per concept
 
-A reviewer should reject a new synonym for any term in this table.
-
-### Time
-
-| Term | Meaning | Identifier suffix |
-|---|---|---|
-| **port tick** | One call of `Update`: 1/60 s, fixed timestep | `...Ticks` |
-| **ROM frame** | One arcade vblank, the unit the ROM's `NAP n` counts in. 1 ROM frame = 6/5 port ticks | `...RomFrames` (never `...RomTicks`) |
-| **clock unit** | The whole-number unit both fit into: a port tick is 5, a ROM frame is 6 (`ArcadeClock`) | `...ClockUnits`, or a field named `_...Timer` whose summary says "clock units" |
-| **beat** | One pass of an entity's own update routine, every N ROM frames | `...Beats` |
-
-Never call the clock unit "fifths", "sixths" or "6ths". All three have been used, for the same thing.
-
-### Space
-
-| Term | Meaning | Identifier suffix |
-|---|---|---|
-| **arcade pixel** | A pixel of the ROM's 304x256 screen | `...ArcadePixels` |
-| **column** | The ROM's horizontal address unit: **2 arcade pixels** (video memory is `column*256 + row`, 2 px per byte, §113) | `...Columns` |
-| **row** | The ROM's vertical address unit: 1 arcade pixel | `...Rows` |
-| **spec pixel** | A pixel of spec.txt's 320x200 layout, the input of `ScreenSize.Scaled` | `...SpecPixels` |
-| **port pixel** | A pixel of the 640x400 canvas the game draws into | `...PortPixels` |
-| **canvas pixel** | A window pixel after the canvas is scaled to fit | (only in `Presentation`) |
-| **subpixel** | 1/256 of a pixel, the ROM's 16-bit coordinate fraction | `...Subpixels` |
-
-"Column" in the sense of a table's layout column ("5 per column") must be named something else, e.g. `ListColumn`.
-
-### Game terms
-
-| Use | Not | Meaning |
-|---|---|---|
-| **animation frame** | art, image, frame (alone) | One picture of an entity's animation (§121). "Frame" alone means a ROM frame. |
-| **picture** | sprite (in prose) | The ROM's word for a bitmap it blits. |
-| **palette slot** / **slot** | colour index, colour | One of the 16 palette entries (0-9 static, 10-15 cycling). |
-| **strip explosion** | explosion (ambiguous) | The RRDX2 fan-apart death effect. |
-| **appear** / **materialise** | spawn-in, warp-in | The wave-start strips converging onto a robot. |
-| **death burst** | score burst | The spheroid/quark `CIRKP` effect (pending the author's decision). |
-| **reprogramming** | conversion, mutation | A brain turning a human into a prog (ROM `BMUT`). |
-| **family** / **human** | civilian, humanoid | Mikey, Mom and Dad. |
-| **laser** (the player's) / **spark**, **shell**, **cruise missile** (enemy shots) | bullet, projectile, missile (alone) | |
-| **Shoot** | Aim, Fire (as a direction) | The second stick. "Fire" is the act of creating a laser. |
-| **Kill** | Deactivate, Destroy, Remove | Taking an entity off the field. |
-| **INTRO2** | title screen, presentation page (alone) | The Williams presentation page: wordmark, credits and the F-key menu (`TitleScreenState`, notes §123). |
-| **FAMPAG**, **HISTO**, **TABLE** | title page, story page, high score page | The ROM's own labels for the family page, the history (story) page and the high score table (notes §123). |
+The glossary is [glossary.md](glossary.md). It is part of the solution, so code and docs can link to it.
+A reviewer should reject a new synonym for any word in it, and should reject a `<summary>` that needs the
+glossary to be understood unless it links there (CMT-11).
 
 ## 2. Structure and responsibility (§114, §120, §121)
 
@@ -136,12 +95,18 @@ predict what a same-named member elsewhere does, and a method should do what its
 and nothing more surprising than that. When the codebase already has a word for a concept (this document's
 glossary, or the terminology ledger for ROM concepts), use that word rather than a fresh synonym.
 
-**NAM-10. A property is cheap; real work is a method.** Per Microsoft's member design guidelines, a property
-getter should cost about the same as a field read: no iteration, no allocation of anything but a trivial
-wrapper, no I/O, nothing that can reasonably throw, and no observable side effect. If getting the value
-searches a list, computes something proportional to its size, or its result can change between two calls with
-nothing in between that should change it, it is not a property — make it a method named for what it computes
-(`FindNearestRobot()`, `ComputeBounds()`), not a property that hides the cost from its caller.
+**NAM-10. A property is a stored value; a computation is a method. This follows Microsoft's member design
+guidelines and is not optional.** A property getter may do no more than read a field, or make one trivial
+derivation from the type's own fields that costs about the same as a field read (`Width => Right - Left`).
+Anything else is a method, named with a verb (NAM-13). It is a method when the getter:
+- loops, counts, searches or uses LINQ over a collection (`GetLiveGruntCount()`, `GetActiveLasers()`);
+- allocates a new collection, array, string or other object each call (`GetInitials()`, `GetDisplayName()`);
+- converts one thing to another (`ToString`-like work, parsing, formatting, `ToDisplayName()`);
+- calls into the operating system, the file system or any other slow or external thing;
+- looks something up in another object, or calls another method that does real work;
+- can return a different result on two calls with nothing changed in between, or has a side effect;
+- can reasonably throw.
+When in doubt it is a method. A property must never hide a cost from its caller.
 
 **NAM-11. Use explanatory variables instead of compound expressions inline.** When a constructor call or method
 call would take more than one computed argument — anything beyond a bare identifier, a constant, or a single
@@ -150,6 +115,41 @@ write `new IntVector2(delta.X / ApproachDivisor, delta.Y / ApproachDivisor)` and
 was still an inline expression; name the pieces so the call reads as a short sentence, not an equation to
 untangle. `Enforcer.RollVelocity`'s `IntVector2 delta = new(targetX - _position.X, targetY - _position.Y);`
 followed by the velocity call is the pattern to copy.
+
+**NAM-12. Use British English** in identifiers, comments, `<summary>` text, test names, docs and user-visible
+text: `colour`, `centre`, `initialise`, `materialise`, `behaviour`, `grey`, `serialise`, `normalise`. The
+exceptions are names we do not own: a framework or library member keeps its own spelling (MonoGame's `Color`,
+`Rectangle.Center`, `SpriteBatch`), and so does a ROM label quoted from the source. Where our own name has to
+sit next to a framework one, ours is British (`SlotColour` returning a `Color`). A rename to British spelling
+follows NAM-8: the American spelling is gone everywhere, not only from the declaration.
+
+**NAM-13. Method names start with the verb Microsoft's guidelines give them.**
+- **Fetch a value:** `Get…`: `GetElectrodeVariant(wave)`, not `ElectrodeVariantForWave(wave)`. A fetch that can
+  fail is `TryGet…(…, out T value)`. A search that may find nothing is `Find…`.
+- **Convert one thing to another:** `To…`: `ToPortPixels(specPixels)`, `ToClockUnits(romFrames)`,
+  `ToPortTicks(romFrames)`. Never `Scaled`, `Units` or `…For…`.
+- **Make a new object:** `Create…`: `CreateDefaults()`, `CreateFromWave(…)`, `CreateKey(…)`. Use `From…` or
+  `New…` only where the framework itself does and `Create…` would read as something else (`Parse` stays
+  `Parse`). If `Create…` would mislead, as `CreateFactory` suggested a factory object, pick a name that says
+  what is created (`CreateWithFactoryScores`).
+- **Work something out that is not a plain fetch:** `Compute…` (`ComputeMaxIntegerScale`).
+A method with no parameters that only returns a value is almost always a property: check NAM-10 before keeping
+it a method.
+
+**NAM-14. It is an electrode, never a post.** The original source calls the obstacle a "post" (`PSTKIL`,
+`PKPROC`), but this port has chosen **electrode**: the class is `Electrode`, and every name we write uses it
+(`GetElectrodeVariant`, `ElectrodeSlotByWaveMod10`). "Post" appears only inside a quoted ROM label or a comment
+that says which ROM routine it maps to. This is a decision of the author, and it overrides the terminology
+ledger's "original word wins" for this one concept. Do not reopen it.
+
+**NAM-15. Name every character as the ATTRACT MODE names it.** The attract screen introduces the cast as
+**Mommy**, **Daddy**, **Mikey**, **Grunt**, **Hulk**, **Spheroid**, **Quark**, **Enforcer**, **Tank**, **Brain**,
+**Prog** and **Cruise Missile**, and the author adds **Electrode**. Those are the words in identifiers, test names,
+summaries, comments and docs: `HumanKind.Mommy`, `MommyCount`, `DaddyAnimationFrames`, never `Mom`, `Dad`,
+`Mum`, `Mummy`, `Post`, `Circle` or `Square`. A ROM label or message quoted from the source keeps its own
+spelling (`MOM`, `DAD`, `PSTKIL`, the attract text "SPHEREOID"). The plural is the ordinary one (Mommies,
+Daddies, Electrodes, Brains, Grunts, Progs). A new character gets the name the attract screen gives it; if it
+has none, ask the author (CMT-6). Content file names follow the same rule (`Sprites/Mommy_1`).
 
 ## 4. Numbers and units (§112, §113)
 
@@ -163,8 +163,8 @@ uses them.
 
 **NUM-3. The column is never written as `2`.** Use `ScreenSize.Columns(n)` / `ArcadePixelsPerColumn`.
 
-**NUM-4. Unit conversions go through named helpers** (`ScreenSize.Scaled`, `ScreenSize.ArcadePixels`,
-`ScreenSize.Columns`, `ArcadeClock.Units`), never through inline arithmetic like `* ScreenSize.SpecScale`,
+**NUM-4. Unit conversions go through named helpers** (`ScreenSize.ToPortPixels`, `ScreenSize.ToPortPixelsFromArcade`,
+`ScreenSize.ToPortPixelsFromColumns`, `ArcadeClock.ToClockUnits`), never through inline arithmetic like `* ScreenSize.SpecScale`,
 `>> 8` or `* 256`. Name the subpixel scale once (`SubpixelsPerPixel`).
 
 **NUM-5. Store values in the unit the source gives them**, and convert at the use site. Do not pre-multiply
@@ -183,7 +183,7 @@ caller.
 `Units(period)`, subtract and carry). Do not introduce `TimeSpan`/`GameTime` timers in gameplay code.
 `Player`'s start grace is the exception to fix, not to copy.
 
-**TIME-2. `PortTicks(romFrames)` truncates** and fires up to a tick early. Use it only for one-shot display
+**TIME-2. `ToPortTicks(romFrames)` truncates** and fires up to a tick early. Use it only for one-shot display
 durations, and say so in the caller's comment.
 
 **TIME-3. No hidden randomness.** Gameplay classes take a `Random` in their constructor. `random ?? new Random()`
@@ -215,7 +215,7 @@ stale.
 
 **CMT-6. Comments are written in plain English, and no vocabulary is invented without the author's consent
 (§111).** For a ROM thing, use the original source's own name where one exists (check
-`ref/original-source`, then `asm/robomame.asm`); otherwise use the word this document's glossary already
+`ref/original-source`, then `asm/robomame.asm`); otherwise use the word [glossary.md](glossary.md) already
 gives it. "Wake up" is out; the periodic activation is a **beat**. Do not coin a new term, abbreviation or
 label for a concept that has none yet — flag it to the author and use their word, rather than inventing one
 and writing it into a comment as if it were established.
@@ -239,6 +239,8 @@ it and document its real use.
 
 **CMT-11. A `<summary>` is written in plain English, at about a 10-year-old's reading age.** Say what the
 thing does in everyday words — no jargon, no ROM terminology, no code identifiers — one or two short sentences.
+If a glossary word cannot be avoided, the summary says what it means in passing and links to
+`docs/glossary.md`; it never leaves the reader to look it up on their own.
 Where the member maps to a ROM routine, its `<remarks>` gives BOTH sources, each on its own bullet or line:
 - the original arcade source: the `.ASM` filename and the routine's label (`ref/original-source`);
 - this repo's own disassembly: the label or memory address in `asm/robomame.asm`, or a plain "not separately
@@ -252,6 +254,15 @@ or an abstract member describes what the caller gets and can rely on — the inp
 guarantees — and nothing about any one implementer's internals. Do not write "counts down a beat timer and
 steps toward the player" on `IEntity.Update`; that belongs on `Grunt.Update`. If a sentence on an interface
 member would only be true for some implementations, it does not belong there at all.
+
+**CMT-13. Say "animation frame" or "sprite", never "picture".** A drawing of a character is an **animation frame**, in
+summaries, remarks, comments and identifiers alike (`...AnimationFrame`, not `...Picture`). Do not write
+"picture", "art" or "image" for it, and do not use bare "frame", which means a ROM frame. "Sprite" is
+fine, since everyone knows it: use it for a character's drawings in general, and "animation frame" when it matters
+which one. A thing
+with one drawing, such as a shell, has one animation frame. The ROM's own labels (`OPICT`, `PGXPIC`, `RWDP1`)
+stay as they are, because they are quoted from the source, but the words around them are ours. Where the
+ROM numbers its drawings from 1, say so and name the index base once, e.g. "walk animation frame 1 to 4".
 
 **SOLID-S.** See STR-1 and STR-2.
 

@@ -181,7 +181,7 @@ of how it got there belongs in git history and the notes (standard CMT-3).
 - `Level/Attract/AttractObjectMachine.cs:466-471` and `:478-483`: same treatment.
 - `Rendering/SpriteSet.cs:436-443` and `:725-727`: keep the device-state explanation, drop the bug story.
 - `Tuning/GameplayConstants.cs:139-145, 259-263, 290-296, 318-320, 339-348, 603-607, 612-613, 765-766`.
-- `Audio/Sound.cs:16-29`: keep "off by default; set `ROBOTRON2084_SOUND=1` to enable", drop the quote.
+- `Audio/Sound.cs:16-29`: keep the master-switch summary ("sound is on whenever the game runs; the tests turn it off"), drop the history.
 Find them with: `grep -rnE "author's report|the author|playtest 20|Playtest 20|\(author, 20|used to|The old|was wrong|bug\)" src --include=*.cs`
 
 **B26. "Tombstone" comments about code that does not exist.** `GameplayConstants.cs:151-152, 253-254, 278-282,

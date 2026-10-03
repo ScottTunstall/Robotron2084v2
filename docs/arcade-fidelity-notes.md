@@ -10164,6 +10164,9 @@ is with the author rather than guessed at.
 
 ## §126 — THE SOUND BOARD IS EMULATED, AND SOUNDS ARE PLACED IN STEREO (author, 2026-09-27)
 
+> **SUPERSEDED by §130 (2026-10-03; D-032):** the board is native C# now. The game copies no ROM and
+> holds no emulator; the emulator lives only in `tools/RobotronSoundPlayer`.
+
 The author asked for the sound to work, with positional sound where an entity makes it (supersedes
 D-003, "sound is out of scope"; see D-029).
 
@@ -10452,3 +10455,91 @@ emulation only, and the port is held to the ROM by the fidelity tests.)
 
 **Still open:** Q-007 (§129, the sequencer's tempo) is unchanged by this — it is the main board's
 sequencer, not the sound board.
+
+
+## §131 — THE GAME ADJUSTMENT PAGE, AND THE DIFFICULTY OF PLAY'S OWN TABLES (author, 2026-10-03)
+
+The author: *"I want you to implement the game settings screen that the original game has (e.g.
+difficulty level setting, number of lives to start with) - excluding coins"*, reachable *"by F5 on
+title screen"*, and then *"You should be able to control whether the attract mode (with the AI player
+shooting) plays sounds from this setting screens too"*.
+
+**What the cabinet's page actually is.** The annotated disassembly documents it completely:
+`SHOW_GAME_ADJUSTMENT_SCREEN` ($70D5) prints every row from `GAME_ADJUSTMENT_SETTING_METADATA`
+($6FD5) in text colour `$66` (the palette's green), with the ROM's own "->" cursor
+(`SHOW_GAME_ADJUSTMENT_CURSOR`, notes §108.4) on the selected row and the footer string `$2D` under the
+list. Each 6-byte metadata row is min, max, a pointer to an option list, an indent flag and the screen
+row. The option lists are threshold tuples — "if the value is below V, print S" — which is where the
+words "LIBERAL", "RECOMMENDED", "HIGH VOLUME ARCADES" and the rest come from.
+
+**Which rows are built.** Of the eighteen rows, nine are coin/pricing (out of scope — the port has no
+coin handling). Of the other nine:
+
+| row | CMOS | range / stops | port |
+|-----|------|---------------|------|
+| EXTRA MAN EVERY | $CC00 | 0, 20, 25, 30, 50 thousand | `ScoreBoard`'s threshold |
+| TURNS PER PLAYER | $CC02 | 1-20 (ROM `NSHIP` → `PLAS`) | `GameSession`'s starting lives, `BozoMode`'s ships |
+| DIFFICULTY OF PLAY | $CC14 | 0-10 (5 recommended) | `Level.DifficultyTuning` |
+| RESTORE FACTORY SETTINGS | $CC18 | action | resets `GameSettings` and saves |
+| HIGH SCORE TABLE RESET | $CC1C | action | writes `HighScoreTable.CreateFactory()` |
+| FANCY ATTRACT MODE | $CC12 | on/off | not built — the port has only the fancy attract |
+| LETTERS FOR HIGHEST SCORE NAME | $CC16 | 3-20 | not built — the port's initials are 3 |
+| CLEAR BOOKKEEPING TOTALS | $CC1A | action | not built — the port has no bookkeeping |
+| AUTO CYCLE | $CC1E | on/off | not built |
+| SET ATTRACT MODE MESSAGE | $CC20 | action + 50 B text | not built — no text entry |
+| SET HIGHEST SCORE NAME | $CC22 | action + text | not built — no text entry |
+| ATTRACT MODE SOUND | — | on/off | **PORT-ONLY**, no CMOS row: `Sound.AttractMuted` |
+
+**DIFFICULTY OF PLAY is the ROM's own arithmetic.** `$2B7C`
+(`INITIALISE_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE`) walks the twelve 43-byte records at
+`$2C20`. Each record is `[multiplier byte][min][max][40 values]`; the wave's value is nudged by
+`round(value × (|difficulty − 5| × (multiplier & $1F)) / 256)` — the ROM multiplies twice (`MUL`,
+`MUL`, `ADCA #0`) — added or subtracted by the sign bit of `(difficulty − 5) XOR multiplier`, then
+clamped to the record's min and max. Bit 7 of the multiplier byte flags the values that FALL as
+difficulty rises, so at difficulty 8 wave 6 the grunt move delay goes 15 → 13 while the shell speed
+goes 176 → 205. The port keeps only the values today (`WaveTable`); `DifficultyTuning` carries the
+twelve headers and does the arithmetic.
+
+Two details beyond the arithmetic:
+- the "easy set up" mercy ($2B8C-$2B9E): an easier-than-recommended setting is quietly raised to 5
+  for a player at wave 14 or beyond, or from wave 5 with three or more men left;
+- the drops value (`ENFNUM`) carries its derived fields: `MaxEnforcersPerSpheroid` and
+  `MaxTanksPerQuark` are `ceil(ENFNUM/2)`, exactly as `LevelParameters.FromWave` derives them.
+
+`BozoMode` still runs first — the ROM's Bozo mercy is at `$2B26`, before `$2B7C` — and it now takes
+TURNS PER PLAYER instead of a hardcoded three ships.
+
+**The page's dress** is §108's: a centred LARGE white heading ("GAME ADJUSTMENT"), the rows in the
+small font with the setting in the palette's green (slot 6) and the arcade's "->" cursor on the
+selected row, the descriptive words in white (slot 9), and the instruction lines under the list with
+`F10 - TITLE` on its own. Up/Down move, Left/Right change, and the two action rows take the arcade's
+own two steps: Left/Right set NO or YES, then Enter activates while they read YES
+(`YES ADVANCE TO ACTIVATE`). Every change is written to `settings.ini` at once.
+
+**F5, and the dev key it displaced.** The author: *"make this screen accessible by F5 on title
+screen"*. F5 was the port's *jump to the storyline movie* dev key, so that moved to **F12** (§97's
+dev-key block). The page opens like the other attract keys (F1/F2/F3/F10): live on every attract
+screen, dead during a game.
+
+**ATTRACT MODE SOUND** is the one port-only row. The attract sequence is a real game — the demo
+machine playing itself, shooting and dying — so it makes real noises, and the author asked for the
+switch. `Sound` gained `AttractMuted`, which the shell sets every tick from
+`GameSettings.AttractIsSilent(current is IAttractState)`; while it is set, every request is ignored,
+but a real game is never silenced. The old master switch (the `ROBOTRON2084_SOUND` environment
+variable) went in the same session: sound is simply on, and `Sound.Enabled` remains only as the
+tests' hook.
+
+**Persistence.** `settings.ini` in `%LocalAppData%\Robotron2084\`, beside `controls.ini`: plain
+`key=value` under `[game]`, written on every change and read at start-up. A value the cabinet could
+not hold (an EXTRA MAN EVERY stop off the ROM's list, a turns count outside 1-20, a difficulty outside
+0-10) is ignored rather than applied.
+
+**Factory values** are the arcade's RECOMMENDED stops: difficulty 5, three turns, EXTRA MAN EVERY
+25000. That last one is a deliberate change: the port had used a flat 10000 points, which is not one
+of the ROM's five stops (0, 20000, 25000, 30000, 50000) — the arcade's factory value is the 25000
+"RECOMMENDED" stop.
+
+**Gates:** 0 warnings (Debug); `Robotron2084.Tests` **616** (up from 551), `RobotronSoundPlayer.Tests`
+69 — 685 in all, 0 failed, 0 skipped. The page was also driven live (F5, the arrows, Enter, F10) and
+its rows, its cursor and its saved file checked.
+
