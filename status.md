@@ -113,12 +113,16 @@ Primary behaviour reference: original source (`ref/original-source/`, historical
   4bpp screen-RAM storage, pair-major row packing (D-005), 1 MHz CPU timing, 16-line/frame DMA limits,
   staged line buffers, task-script machinery *as a mechanism*, ROM image loading as a runtime concept.
 - **DO NOT model either — the OPERATOR side (D-019, author 2026-09-17):** the self-test /
-  service (adjustment) mode and everything coin related. No `RRTEST*.ASM` screens, no switch /
-  ROM / RAM / colour-RAM tests, no CMOS settings or **bookkeeping totals** (credits, coins,
-  "men played", average time/turns per credit), no free play or coin-door handling, no credit
-  counting. *"This game is to look and play like the arcade but we don't need self test code or
-  coin counting etc."* The coin-door START 1 / START 2 buttons ARE kept (they are how a player
+  service mode's *hardware* pages and everything coin related. No `RRTEST*.ASM` screens, no switch /
+  ROM / RAM / colour-RAM tests, no **bookkeeping totals** (credits, coins, "men played", average
+  time/turns per credit), no free play or coin-door handling, no credit counting.
+  *"This game is to look and play like the arcade but we don't need self test code or coin
+  counting etc."* The coin-door START 1 / START 2 buttons ARE kept (they are how a player
   picks one or two players — `1` / `2` on the title screen), but nothing behind them.
+  **Partly superseded 2026-10-03 (D-033, notes §131):** at the author's request the GAME ADJUSTMENT
+  page's GAMEPLAY rows ARE built, on `F5` — extra-man score, turns per player, difficulty of play and
+  the factory/high-score resets — while its coin/pricing rows, the bookkeeping totals and the
+  self-test pages stay out.
 - **DO model** (game functionality / what the player experiences): 304×256 screen, the 16-colour
   palette, 50 fps pacing, entities + their behaviours, waves + spawn counts, collision/scoring,
   pre-game screens, text, the *visible* partial-blit effects (D-015 — implemented as idiomatic

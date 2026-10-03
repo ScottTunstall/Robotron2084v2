@@ -50,10 +50,12 @@ The house rules, learned the hard way over ~90 documented decode rounds:
 | **Effects** | The three-engine strip explosion (rows, columns, diagonal chevron), the wave-start materialisation ("appear"), the wave-complete colour-cycling **tunnel**, the death bursts, the player's own `PDTHV` flash-and-fade |
 | **Presentation** | The arcade HUD (score layout, blanked leading zeros, the mini-man spare lives, "<n> WAVE"), arcade font glyphs, 1- and 2-player alternating games with the ROM's turn-passing and "PLAYER n" announcement |
 | **Attract** | The arcade's whole attract sequence, driven by its own script: the title screen, then the **story movie** — the 2084 text crawl, the hero, the family and their name popups, the grunts, the hulk, the spheroid/tank/enforcer scene with a human reprogrammed into a prog, and the score posts (~96 s) — then the machine's phony-player demo game. Both script interpreters run the ROM's own bytes |
-| **Sound** | The ROM's priority sound sequencer ($D3C7/$D3E0) and its tables drive a **native C# sound board**, ported routine by routine from the sound ROM's own source (`VSNDRM3.SRC`: the wave table synth, square wave, noise, radio, hyper and scream routines) and timed in the board's clock cycles — it matches the real ROM change for change, needs no ROM, and plays through MonoGame on Windows and Linux. Sounds are placed in stereo by their maker's position (`ROBOTRON2084_SOUND=0` turns sound off) |
+| **Sound** | The ROM's priority sound sequencer ($D3C7/$D3E0) and its tables drive a **native C# sound board**, ported routine by routine from the sound ROM's own source (`VSNDRM3.SRC`: the wave table synth, square wave, noise, radio, hyper and scream routines) and timed in the board's clock cycles — it matches the real ROM change for change, needs no ROM, and plays through MonoGame on Windows and Linux. Sounds are placed in stereo by their maker's position |
+| **Game adjustment** | The cabinet's service-mode GAME ADJUSTMENT page (minus its coin/pricing rows), on `F5`: extra-man score, turns per player, difficulty of play (the ROM's own `$2C20` wave-table scaling) and the factory/high-score resets, plus a port-only attract-sound switch. Saved to `settings.ini` |
 
-**Deliberately absent:** self-test / adjustment / bookkeeping screens, coin counting,
-and the marquee art claim (author asset pending).
+**Deliberately absent:** the self-test and bookkeeping screens, coin counting and the pricing rows of
+the adjustment page (its gameplay rows are built — press `F5`), and the marquee art claim (author
+asset pending).
 
 ## The journey (what has been through this repo)
 
@@ -119,21 +121,31 @@ dotnet build Robotron2084.slnx                     # 0 warnings, warnings-as-err
 `1` / `2` start a one- or two-player game · `F11` cycle window scale · `Esc` quit.
 **The title screen (notes §101):** `F1` one player game · `F2` two player game
 (alternate) · `F3` two player game (simultaneous — the mode is offered, the sharing
-is not built yet) · `F10` define inputs. All four work from **every** attract
-screen — title, storyline movie, demo game and high score table — and `P` pauses a
-game (the arcade has no pause; port-only).
+is not built yet) · `F5` game settings (notes §131) · `F10` define inputs. All five
+work from **every** attract screen — title, storyline movie, demo game and high score
+table — and `P` pauses a game (the arcade has no pause; port-only).
 **Define inputs (`F10`, notes §101):** every MOVE/SHOOT UP, DN, LEFT, RIGHT of both
 players on its own line. `Up`/`Down` scroll (player 2's block is beneath player 1's,
 then the pause line), `Enter` arms the highlighted line and the next key, pad button
 or stick push becomes it, `Del` clears the line, `R` restores the factory scheme and
 `F10` saves and returns. Definitions live in
 `%LocalAppData%\Robotron2084\controls.ini`, hand-editable and reloaded at start-up.
-**Attract dev keys (port-only, notes §97/§98):** `F5` jump straight into the attract
+**Game settings (`F5`, notes §131):** the cabinet's GAME ADJUSTMENT page, in its own
+dress — the arcade's gameplay rows minus coins. `Up`/`Down` select, `Left`/`Right`
+change, `Enter` activates `RESTORE FACTORY SETTINGS` / `HIGH SCORE TABLE RESET` once
+they read `YES`, and `F10` saves and returns:
+`EXTRA MAN EVERY` (25000 points, the arcade's recommended stop), `TURNS PER PLAYER`
+(3 men), `DIFFICULTY OF PLAY` (0-10, 5 recommended — the wave tables move exactly as
+the ROM's `$2B7C` moves them), `ATTRACT MODE SOUND` (port-only: silence the demo
+machine playing itself), `RESTORE FACTORY SETTINGS` and `HIGH SCORE TABLE RESET`.
+Settings live in `%LocalAppData%\Robotron2084\settings.ini`, hand-editable and
+reloaded at start-up.
+**Attract dev keys (port-only, notes §97/§98):** `F12` jump straight into the attract
 storyline movie · `F6` jump straight into the attract demo game · `F7` (held)
 fast-forward the movie 8× — the hulk's walk arrives in ~7 s instead of ~51 s ·
 `F4` jump straight to the high score table · `Ins` skip a wave (the port's old `P`
 test key moved when `P` became PAUSE).
-**Sound:** off by default; `set ROBOTRON2084_SOUND=1` to enable it.
+**Sound:** on — the native sound board plays through MonoGame on Windows and Linux.
 
 ### The gates (run before every checkpoint)
 
