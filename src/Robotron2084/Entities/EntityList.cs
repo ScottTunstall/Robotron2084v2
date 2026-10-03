@@ -54,10 +54,10 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <inheritdoc/>
-    public int GetLiveCount() => _items.Count(entity => entity.LifeState != EntityLifeState.Dead);
+    public int GetLiveCount() => _items.Count(entity => !entity.IsDead());
 
     /// <inheritdoc/>
-    public void PruneDead() => _items.RemoveAll(entity => entity.LifeState == EntityLifeState.Dead);
+    public void PruneDead() => _items.RemoveAll(entity => entity.IsDead());
 
     /// <inheritdoc/>
     public void UpdateAll(GameTime gameTime, PlayField field)

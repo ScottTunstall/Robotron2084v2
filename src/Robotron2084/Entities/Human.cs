@@ -149,7 +149,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -175,7 +175,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: <c>DMAOFF</c>.</remarks>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -186,7 +186,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Rescued: gone at once.</summary>
     public void Rescue()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -200,7 +200,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     public void Update(GameTime gameTime, PlayField field)
     {
         // No "robots frozen" gate: humans wander while the field is still assembling.
-        if (LifeState != EntityLifeState.Alive || IsBeingReprogrammed)
+        if (!this.IsAlive() || IsBeingReprogrammed)
         {
             return;
         }
@@ -260,7 +260,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Says whether this human is standing on the field and free: alive, and not in a brain's hold.</summary>
     /// <remarks>Original source: a human that is dead or being reprogrammed is off the family list (<c>RRH11.ASM</c> <c>HTAB</c>), so nothing can target, catch, kill or rescue it.</remarks>
-    internal bool IsGraspable() => LifeState == EntityLifeState.Alive && !IsBeingReprogrammed;
+    internal bool IsGraspable() => this.IsAlive() && !IsBeingReprogrammed;
 
     /// <summary>Starts being reprogrammed: the human stops walking and starts flashing.</summary>
     internal void BeginReprogramming() => IsBeingReprogrammed = true;
@@ -283,7 +283,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     {
         foreach (Electrode electrode in field.Entities.Electrodes)
         {
-            if (electrode.LifeState == EntityLifeState.Alive && electrode.Bounds.Intersects(next))
+            if (electrode.IsAlive() && electrode.Bounds.Intersects(next))
             {
                 return true;
             }

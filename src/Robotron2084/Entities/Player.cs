@@ -128,7 +128,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (this.IsDead())
         {
             return;
         }
@@ -140,7 +140,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         }
 
         // One colour while dying, like the ROM's own solid-colour draw.
-        if (LifeState == EntityLifeState.Dying)
+        if (this.IsDying())
         {
             _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), Bounds, _sprites.Blitter.GetSlotColour(DeathSolidSlot));
             return;
@@ -157,7 +157,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
             return; // TEMPORARY playtest aid — see the property and the constant.
         }
 
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -184,12 +184,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (this.IsDead())
         {
             return;
         }
 
-        if (LifeState == EntityLifeState.Dying)
+        if (this.IsDying())
         {
             // Death animation: no movement.
             AdvanceDeath(field);
@@ -224,7 +224,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Starts the death animation, ignoring <c>PlayerInvincibleForTesting</c> (test hook).</summary>
     internal void StartDeathForTesting()
     {
-        if (LifeState == EntityLifeState.Alive)
+        if (this.IsAlive())
         {
             StartDeath();
         }

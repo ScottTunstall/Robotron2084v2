@@ -134,7 +134,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -147,7 +147,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// wires <see cref="ScoreBurst.CreateForQuark"/> to the laser phase.</remarks>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -160,7 +160,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }

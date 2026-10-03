@@ -28,7 +28,7 @@ public sealed class LaserSlots
 
     /// <summary>The lasers currently alive, never more than <see cref="Capacity"/>.</summary>
     public IEnumerable<PlayerLaser> GetActiveLasers() =>
-        _slots.Where(laser => laser is { LifeState: EntityLifeState.Alive }).Select(laser => laser!);
+        _slots.OfType<PlayerLaser>().Where(laser => laser.IsAlive());
 
     /// <summary>Every slot in order; null means empty. Exposed for tests and diagnostics.</summary>
     public IReadOnlyList<PlayerLaser?> Slots => _slots;
@@ -52,7 +52,7 @@ public sealed class LaserSlots
     {
         for (int i = 0; i < Capacity; i++)
         {
-            if (_slots[i] is null || _slots[i]!.LifeState != EntityLifeState.Alive)
+            if (_slots[i] is not { } existing || !existing.IsAlive())
             {
                 laser = new PlayerLaser(_sprites, position, direction);
                 _slots[i] = laser;
@@ -71,8 +71,7 @@ public sealed class LaserSlots
     {
         for (int i = 0; i < Capacity; i++)
         {
-            PlayerLaser? slot = _slots[i];
-            if (slot is { LifeState: EntityLifeState.Alive })
+            if (_slots[i] is { } slot && slot.IsAlive())
             {
                 slot.Update(gameTime, field);
             }

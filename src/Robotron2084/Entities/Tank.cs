@@ -161,7 +161,7 @@ public sealed class Tank : IExplodable, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -187,7 +187,7 @@ public sealed class Tank : IExplodable, IRemovable
     /// <remarks>ROM: RRTK4.ASM's <c>TNKIL</c>.</remarks>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -200,7 +200,7 @@ public sealed class Tank : IExplodable, IRemovable
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }

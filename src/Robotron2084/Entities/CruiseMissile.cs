@@ -108,7 +108,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// writes produced. The trail uses one palette slot and the head another.</remarks>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -133,7 +133,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <remarks>ROM: <c>CMKIL</c> — nothing is left behind.</remarks>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -147,7 +147,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }

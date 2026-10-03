@@ -59,7 +59,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -71,7 +71,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Removes the laser at once, vacating its slot.</summary>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -85,7 +85,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: RRG23.ASM's <c>LASDIE</c>; the flare lasts 2 frames.</remarks>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }

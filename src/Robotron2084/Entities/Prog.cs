@@ -191,7 +191,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -225,7 +225,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// of the sprite it swapped in.</remarks>
     public void Kill()
     {
-        if (LifeState == EntityLifeState.Alive)
+        if (this.IsAlive())
         {
             LifeState = EntityLifeState.Dead;
         }
@@ -236,7 +236,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }

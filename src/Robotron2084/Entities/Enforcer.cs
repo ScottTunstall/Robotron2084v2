@@ -85,7 +85,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <remarks>The grow frames are the ROM's ENGD1..5, which are frames 2..6 (1-based) of the set.</remarks>
     public Texture2D GetCurrentAnimationFrame()
     {
-        if (LifeState != EntityLifeState.Alive || _growthRemaining <= 0)
+        if (!this.IsAlive() || _growthRemaining <= 0)
         {
             return _sprites.Enforcer;
         }
@@ -111,7 +111,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -122,7 +122,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <summary>Kills it at once (ROM <c>ENFKIL</c>); there is no death animation.</summary>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -135,7 +135,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }

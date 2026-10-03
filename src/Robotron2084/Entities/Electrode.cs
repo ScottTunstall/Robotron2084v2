@@ -48,7 +48,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     public Texture2D GetCurrentAnimationFrame()
     {
         int baseFrame = GetVariantIndex() * WavePaletteTables.ElectrodeAnimationFramesPerVariant;
-        int frame = LifeState == EntityLifeState.Dying ? baseFrame + _shrivelStep : baseFrame;
+        int frame = this.IsDying() ? baseFrame + _shrivelStep : baseFrame;
         return _sprites.ElectrodeAnimationFrames[frame];
     }
 
@@ -69,7 +69,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState == EntityLifeState.Dead)
+        if (this.IsDead())
         {
             return;
         }
@@ -80,7 +80,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Starts the shrivel; does nothing unless the electrode is alive.</summary>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -95,7 +95,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="field">Unused.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState != EntityLifeState.Dying)
+        if (!this.IsDying())
         {
             return;
         }

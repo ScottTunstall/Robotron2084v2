@@ -119,7 +119,7 @@ public sealed class Grunt : IExplodable, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -131,7 +131,7 @@ public sealed class Grunt : IExplodable, IRemovable
     /// <remarks>ROM: RRP8.ASM's <c>ROBKIL</c> just explodes it.</remarks>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -159,7 +159,7 @@ public sealed class Grunt : IExplodable, IRemovable
     public void Update(GameTime gameTime, PlayField field)
     {
         SteppedThisUpdate = false;
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }

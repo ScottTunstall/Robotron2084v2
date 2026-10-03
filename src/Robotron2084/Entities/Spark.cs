@@ -117,7 +117,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState == EntityLifeState.Alive)
+        if (this.IsAlive())
         {
             _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
         }
@@ -126,7 +126,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Laser hit: removed at once.</summary>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -139,7 +139,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="field">The playfield wall.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }

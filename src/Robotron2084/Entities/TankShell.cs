@@ -137,7 +137,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState == EntityLifeState.Alive)
+        if (this.IsAlive())
         {
             _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
         }
@@ -147,7 +147,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SHLKIL</c>. Disassembly: <c>SHELL_COLLISION_HANDLER</c> (<c>$4FD5</c>).</remarks>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -168,7 +168,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     {
         BouncedThisUpdate = false;
 
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }

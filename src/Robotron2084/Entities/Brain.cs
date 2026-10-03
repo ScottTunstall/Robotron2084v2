@@ -178,7 +178,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -201,7 +201,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// </remarks>
     public void Kill()
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -220,7 +220,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// </remarks>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (LifeState != EntityLifeState.Alive)
+        if (!this.IsAlive())
         {
             return;
         }
@@ -302,7 +302,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// </remarks>
     internal void CatchTargetIfInReach(Rectangle playfieldBounds)
     {
-        if (LifeState != EntityLifeState.Alive || IsReprogramming)
+        if (!this.IsAlive() || IsReprogramming)
         {
             return;
         }
