@@ -141,7 +141,7 @@ every git checkpoint.
   SKULP, no score); player contact rescues: SAVCNT runs UNCAPPED, bonus
   1000..5000 via SVITAB min(SAVCNT,5), 60-tick score display at the rescue
   spot (P1000..P5000 sprites now in SpriteSet), NO skull on rescue; rescue
-  count carries across waves, resets on player death (PLINIT). Hulk target
+  count carries across waves, resets on player death (PLINIT) [SUPERSEDED: it resets at every wave start, notes §133]. Hulk target
   wired from the R5 $017C decode: 50/50 at spawn — family slot (empty at
   spawn time → NULL → player; the R5 phantom-$7E01 bug is documented and
   deliberately skipped) or the last family slot (last-spawned human →
