@@ -21,6 +21,7 @@ namespace Robotron2084.Level;
 /// <param name="LaserHitSound">The sound the kind's own routine asks for when a laser hits one (its <c>...SND</c> table).</param>
 /// <param name="KillsPlayerOnContact">True when touching it kills the player.</param>
 /// <param name="Spawn">Builds the wave's own at a chosen spot; null when only another robot makes them.</param>
+/// <param name="IsChasedByDemoPlayer">True when the attract demo's player steers towards it; false for the electrodes and the shots it dodges.</param>
 public sealed record RobotKindInfo(
     RobotKind Kind,
     Func<LevelParameters, int>? WaveCount,
@@ -28,4 +29,5 @@ public sealed record RobotKindInfo(
     Action<PlayField, IEntity, Direction8> LaserHit,
     SoundSequence LaserHitSound,
     bool KillsPlayerOnContact = false,
-    Action<PlayField, IntVector2>? Spawn = null);
+    Action<PlayField, IntVector2>? Spawn = null,
+    bool IsChasedByDemoPlayer = true);

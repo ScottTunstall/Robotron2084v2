@@ -80,6 +80,19 @@ public sealed class SpawnPlacement
         return RandomPointInside(size);
     }
 
+    /// <summary>A random spot that is far enough from a point, such as where the player starts.</summary>
+    /// <param name="point">The point to keep away from, in port pixels.</param>
+    /// <param name="minDistanceSpecPixels">How far away the spot must be, in spec pixels.</param>
+    /// <param name="isAlsoAcceptable">A further test of a candidate's box; null when being far enough is all that is asked.</param>
+    public IntVector2 FindSpawnPointAwayFrom(IntVector2 point, int minDistanceSpecPixels, Func<Rectangle, bool>? isAlsoAcceptable = null) =>
+        FindSpawnPoint(box => IsFarEnough(box, point, minDistanceSpecPixels) && (isAlsoAcceptable?.Invoke(box) ?? true));
+
+    /// <summary>A spheroid's spot (see <see cref="FindSpheroidSpawnPoint"/>) that is far enough from a point.</summary>
+    /// <param name="point">The point to keep away from, in port pixels.</param>
+    /// <param name="minDistanceSpecPixels">How far away the spot must be, in spec pixels.</param>
+    public IntVector2 FindSpheroidSpawnPointAwayFrom(IntVector2 point, int minDistanceSpecPixels) =>
+        FindSpheroidSpawnPoint(box => IsFarEnough(box, point, minDistanceSpecPixels));
+
     /// <summary>
     /// A spheroid's spot: <see cref="SpheroidTuning.NearWallBiasPercent"/> percent of the time a point
     /// within <see cref="SpheroidTuning.NearWallBiasDistance"/> of a random inner edge ("spheroids do like
@@ -88,6 +101,13 @@ public sealed class SpawnPlacement
     /// <param name="isAcceptable">Tests a candidate's box.</param>
     public IntVector2 FindSpheroidSpawnPoint(Func<Rectangle, bool> isAcceptable) =>
         FindSpawnPoint(isAcceptable, EntitySize, () => RandomSpheroidCandidate());
+
+    /// <summary>Says whether a candidate box's top-left corner is more than the given distance from a point.</summary>
+    /// <param name="box">The candidate's box, in port pixels.</param>
+    /// <param name="point">The point to keep away from.</param>
+    /// <param name="minDistanceSpecPixels">The distance, in spec pixels.</param>
+    private static bool IsFarEnough(Rectangle box, IntVector2 point, int minDistanceSpecPixels) =>
+        new IntVector2(box.X, box.Y).IsFartherThan(point, ScreenSize.ToPortPixels(minDistanceSpecPixels));
 
     private IntVector2 RandomPointInside(int size) => new(
         _random.Next(_playfieldBounds.X, _playfieldBounds.Right - size),

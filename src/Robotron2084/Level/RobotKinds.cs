@@ -34,7 +34,8 @@ public static class RobotKinds
             Score: ScoreValues.Electrode,
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
             LaserHitSound: SoundTables.PostKill,
-            Spawn: static (field, playerStart) => field.SpawnElectrodes(playerStart)),
+            Spawn: static (field, playerStart) => field.SpawnElectrodes(playerStart),
+            IsChasedByDemoPlayer: false),
 
         new(RobotKind.Grunt,
             WaveCount: static parameters => parameters.GruntCount,
@@ -107,7 +108,8 @@ public static class RobotKinds
             Score: ScoreValues.Spark,
             LaserHit: static (field, target, direction) => target.Require<IRemovable>().Kill(),
             LaserHitSound: SoundTables.SparkKill,
-            KillsPlayerOnContact: true),
+            KillsPlayerOnContact: true,
+            IsChasedByDemoPlayer: false),
 
         new(RobotKind.TankShell,
             WaveCount: null,
@@ -119,7 +121,8 @@ public static class RobotKinds
                 field.CountShellDestroyed();
             },
             LaserHitSound: SoundTables.ShellKill,
-            KillsPlayerOnContact: true),
+            KillsPlayerOnContact: true,
+            IsChasedByDemoPlayer: false),
 
         new(RobotKind.CruiseMissile,
             WaveCount: null,
