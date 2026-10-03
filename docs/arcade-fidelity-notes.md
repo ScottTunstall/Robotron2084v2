@@ -10622,3 +10622,36 @@ is shot mid-reprogramming), and `HUMKIL` (`RRH11`) tests it twice to skip the re
 takes is neither saved nor killed. The port reaches the same result without the flag: a caught human is hidden and becomes a
 prog with no skull or bonus (`Brain.BeginReprogramming`), and a brain shot while reprogramming leaves the skull and no
 bonus (`CollisionResponder`, `LeaveSkull`). So there is nothing to reset at a wave start.
+
+
+## §134 — A SWEEP OF THE WAVE START AND THE GAME EXECUTIVE AGAINST `RRG23.ASM` (author, 2026-10-03)
+
+The author asked that the port stay arcade-faithful. After §133 the per-wave setup (`PLSTRT`, `PLINIT`, `PLRES`, `PLSAV`, `PLEND`,
+`GEXEC`, `WVCHEK`) was read against the port. Three differences are fixed, one is recorded.
+
+**1. The speed-floor pass ran the wrong way round (fixed).** `GEXEC` (`RRG23.ASM`) skips the pass when `ROBCNT >= 30`
+(`CMPA #30 / BHS GEXECX`; the disassembly has `CMPA #$1E / BCC $2AF4` at `$2ACA`), so the floor drops only while FEWER than 30
+grunts are alive. The port did it only with 30 or more (§67.2 had read the branch the wrong way).
+
+**2. `SCRFLG`, not a toggle (fixed).** The `$F0` byte is `SCRFLG`, which every score sets (`RRS22.ASM` `SCOREV`: `INC SCRFLG`; the
+disassembly's `UPDATE_PLAYER_SCORE`, `$DB9C`). A pass that follows some scoring drops the floor by 1 and the limit by 2; a pass
+with no scoring drops them by 2 and 4 ("BONE HIM FOR STALLING"), and the pass clears the flag (only once past the grunt count
+check). §67.2's "the alternate path is dead code" and "toggles" were both wrong. `GruntSpeedProgression.NoteScore` now carries
+the flag, and `PlayField` calls it from `AwardScore` and `AwardRescueBonus`.
+
+**3. Progs and cruise missiles do not hold a wave open (fixed).** `WVCHEK` adds `ROBCNT`, `CIRCNT`, `ENFCNT`, `BRNCNT`, `TNKCNT`
+and `SQCNT` (the disassembly: "excluding any missiles and progs"). The port also waited for the progs and the missiles, a plan from
+the early brain phase that never matched the ROM. `FieldEntities.AreEnemiesGone` now counts only those six.
+
+**4. A death keeps the survivors (NOT built; Q-008).** On a death `PLEND` converts the leftover enforcers into spheroids (one for
+every four; one if there are enforcers but no spheroids; never more than `CIRCNT` at the wave's start), restores `RMXSPD`
+(and raises `ROBSPD` to it if it is lower), and `PLSAV` copies the whole enemy list (`ELIST`: the speeds, the timers and the counts
+of grunts, electrodes, mommies, daddies, mikeys, hulks, brains, spheroids, quarks and tanks) into the player's block. `PLSTRT` then
+runs `PLRES` to bring it back, so the next life starts with the robots and the family that were still there; the ones already killed
+or rescued stay gone. The port rebuilds the whole wave from the wave table on every death, and also re-applies the difficulty
+setting (the ROM does that once, at `GETWV`, when the wave begins). Building it needs a saved wave state in `PlayerSlot`, a
+tank count and a spawner for the tanks that were alive (`TNKSTV`, `RRTK4.ASM`), and the speed limit the grunts share. It changes
+how every life after the first plays, so it is waiting on the author's go-ahead.
+
+**Not reviewed.** The individual start routines (`HULKST`, `BRNST`, `TANKST`, `HUMST`, `PSINIT`, `RINIT`, `CRINIT`, `CIRCST`, `SQST`)
+and `APPEAR` were not re-read here; earlier phases covered them.
