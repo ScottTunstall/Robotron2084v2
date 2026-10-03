@@ -62,7 +62,7 @@ public sealed class TunnelEffect
     /// 54 x 17 / 5 = 183 port ticks = 3.05 s.
     ///
     /// That duration is the WAVE-END MUSIC's own phrase. The board's sound $0E loops every 183 port
-    /// ticks (measured through the emulated board, notes §128), so the colour cycling lasts exactly
+    /// ticks (measured on the sound board, notes §128), so the colour cycling lasts exactly
     /// one phrase and the music finishes as the screen does instead of being cut mid-phrase. This is
     /// the one number in the tunnel taken from measurement rather than the disassembly.
     /// </summary>
