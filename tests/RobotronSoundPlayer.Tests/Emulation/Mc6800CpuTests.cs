@@ -1,7 +1,7 @@
-using Robotron2084.Audio.Hardware;
+using RobotronSoundPlayer.Emulation;
 using Xunit;
 
-namespace Robotron2084.Tests.Audio.Hardware;
+namespace RobotronSoundPlayer.Tests.Emulation;
 
 public class Mc6800CpuTests
 {

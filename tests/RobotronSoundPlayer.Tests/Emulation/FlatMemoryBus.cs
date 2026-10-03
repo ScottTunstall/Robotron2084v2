@@ -1,6 +1,6 @@
-using Robotron2084.Audio.Hardware;
+using RobotronSoundPlayer.Emulation;
 
-namespace Robotron2084.Tests.Audio.Hardware;
+namespace RobotronSoundPlayer.Tests.Emulation;
 
 /// <summary>A plain 64K of memory for processor tests, which records every write.</summary>
 internal sealed class FlatMemoryBus : IMc6800Bus

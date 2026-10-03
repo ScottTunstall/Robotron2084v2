@@ -1,18 +1,18 @@
-using Robotron2084.Audio.Hardware;
+using RobotronSoundPlayer.Emulation;
 using Xunit;
 
-namespace Robotron2084.Tests.Audio.Hardware;
+namespace RobotronSoundPlayer.Tests.Emulation;
 
 /// <summary>
 /// The board's wiring, checked with a tiny hand-written sound ROM: its interrupt routine copies the
 /// sound lines straight to the output, so the output shows exactly what the board received.
 /// </summary>
-public class SoundBoardTests
+public class EmulatedSoundBoardTests
 {
     [Fact]
     public void TheBoardStartsSilent_UntilItIsSentASoundNumber()
     {
-        var board = new SoundBoard(EchoRom());
+        var board = new EmulatedSoundBoard(EchoRom());
 
         RunInstructions(board, 100);
 
@@ -22,7 +22,7 @@ public class SoundBoardTests
     [Fact]
     public void ASoundNumber_ReachesTheBoardFlipped_WithTheTopTwoLinesHigh()
     {
-        var board = new SoundBoard(EchoRom());
+        var board = new EmulatedSoundBoard(EchoRom());
         RunInstructions(board, 100);
 
         board.SendSoundNumber(0x25);
@@ -35,7 +35,7 @@ public class SoundBoardTests
     [Fact]
     public void EachNewSoundNumber_InterruptsTheBoardAgain()
     {
-        var board = new SoundBoard(EchoRom());
+        var board = new EmulatedSoundBoard(EchoRom());
         RunInstructions(board, 100);
         board.SendSoundNumber(0x25);
         RunInstructions(board, 20);
@@ -49,14 +49,14 @@ public class SoundBoardTests
     [Fact]
     public void ARomOfTheWrongSize_IsRefused()
     {
-        Assert.Throws<ArgumentException>(() => new SoundBoard(new byte[100]));
+        Assert.Throws<ArgumentException>(() => new EmulatedSoundBoard(new byte[100]));
     }
 
-    private static void RunInstructions(SoundBoard board, int count)
+    private static void RunInstructions(EmulatedSoundBoard board, int count)
     {
         for (int i = 0; i < count; i++)
         {
-            board.RunInstruction();
+            board.Run(1);
         }
     }
 
@@ -66,7 +66,7 @@ public class SoundBoardTests
     /// </summary>
     private static byte[] EchoRom()
     {
-        var rom = new byte[SoundBoard.RomLength];
+        var rom = new byte[EmulatedSoundBoard.RomLength];
         byte[] start =
         [
             0x8E, 0x00, 0x7F, // LDS #$007F
