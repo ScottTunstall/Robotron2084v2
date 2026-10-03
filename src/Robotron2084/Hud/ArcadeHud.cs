@@ -30,17 +30,17 @@ public static class ArcadeHud
         {
             if (character == ' ')
             {
-                width += ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels);
+                width += ScreenSize.ToPortPixels(HudLayout.HudSmallFontBlankAdvancePixels);
                 continue;
             }
 
-            int index = ArcadeText.GlyphIndex(character);
+            int index = ArcadeText.GetGlyphIndex(character);
             if (index < 0 || index >= sprites.FontLarge.Length)
             {
                 continue;
             }
 
-            width += ScreenSize.Scaled(sprites.FontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
+            width += ScreenSize.ToPortPixels(sprites.FontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
         }
 
         sprites.Text.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
@@ -52,8 +52,8 @@ public static class ArcadeHud
         sprites.Text.DrawSmallFontText(
             spriteBatch,
             text,
-            HudLayout.ArcadeX(arcadeColumn * 2),
-            HudLayout.ArcadeY(arcadeRow),
+            HudLayout.ToPortX(arcadeColumn * 2),
+            HudLayout.ToPortY(arcadeRow),
             slot);
     }
 
@@ -85,10 +85,10 @@ public static class ArcadeHud
                 ? HudLayout.HudScoreSlotCurrent
                 : HudLayout.HudScoreSlotIdle;
 
-            DrawScore(spriteBatch, sprites, player.Score, HudLayout.ArcadeX(scoreColumn * 2), hudY, slot);
+            DrawScore(spriteBatch, sprites, player.Score, HudLayout.ToPortX(scoreColumn * 2), hudY, slot);
             if (showSpareMen)
             {
-                DrawSpareMen(spriteBatch, sprites, player.DisplayedMen, HudLayout.ArcadeX(menColumn * 2), hudY);
+                DrawSpareMen(spriteBatch, sprites, player.DisplayedMen, HudLayout.ToPortX(menColumn * 2), hudY);
             }
         }
     }
@@ -99,7 +99,7 @@ public static class ArcadeHud
     /// <paramref name="innerBounds"/> runs to the top of the canvas.
     /// </summary>
     internal static int ScoresAndMenRowY(Rectangle innerBounds) =>
-        innerBounds.Top - ScreenSize.Scaled(CollisionSizes.WallThicknessSpecPixels) - ScreenSize.Scaled(HudLayout.HudRowAboveWallPixels);
+        innerBounds.Top - ScreenSize.ToPortPixels(CollisionSizes.WallThicknessSpecPixels) - ScreenSize.ToPortPixels(HudLayout.HudRowAboveWallPixels);
 
     /// <summary>
     /// ROM string 104: the wave number in $AA at the BOTTOM of the screen (row
@@ -108,8 +108,8 @@ public static class ArcadeHud
     /// </summary>
     public static void DrawWaveMessage(SpriteBatch spriteBatch, SpriteSet sprites, int wave)
     {
-        int x = HudLayout.ArcadeX(HudLayout.HudWaveTextColumn * 2);
-        int y = HudLayout.ArcadeY(HudLayout.HudWaveTextRow);
+        int x = HudLayout.ToPortX(HudLayout.HudWaveTextColumn * 2);
+        int y = HudLayout.ToPortY(HudLayout.HudWaveTextRow);
         const int numberSlot = HudLayout.HudScoreSlotCurrent;
 
         if (wave >= 10)
@@ -120,11 +120,11 @@ public static class ArcadeHud
         {
             // PRINT_BCD_NUMBER with $D1 = 2 (string 104's $15 op): a leading zero
             // advances without drawing — 4 px in the small font.
-            x += ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels);
+            x += ScreenSize.ToPortPixels(HudLayout.HudSmallFontBlankAdvancePixels);
         }
 
         x = sprites.Text.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberSlot);
-        x += ScreenSize.Scaled(HudLayout.HudWaveNumberGapPixels);
+        x += ScreenSize.ToPortPixels(HudLayout.HudWaveNumberGapPixels);
         sprites.Text.DrawSmallFontText(spriteBatch, " WAVE", x, y, HudLayout.HudWaveTextSlot);
     }
 
@@ -137,8 +137,8 @@ public static class ArcadeHud
         foreach (ScoreGlyph glyph in ScoreFormatter.Layout(
             score,
             originX,
-            ScreenSize.Scaled(HudLayout.HudScoreDigitAdvancePixels),
-            ScreenSize.Scaled(HudLayout.HudScoreBlankAdvancePixels)))
+            ScreenSize.ToPortPixels(HudLayout.HudScoreDigitAdvancePixels),
+            ScreenSize.ToPortPixels(HudLayout.HudScoreBlankAdvancePixels)))
         {
             sprites.Blitter.DrawGlyphSlot(spriteBatch, sprites.FontLarge, glyph.Digit, glyph.X, y, slot);
         }
@@ -147,7 +147,7 @@ public static class ArcadeHud
     /// <summary>ROM $34E0: the spare-man icons, 8 px apart.</summary>
     private static void DrawSpareMen(SpriteBatch spriteBatch, SpriteSet sprites, int count, int originX, int y)
     {
-        int pitch = ScreenSize.Scaled(HudLayout.HudMenPitchPixels);
+        int pitch = ScreenSize.ToPortPixels(HudLayout.HudMenPitchPixels);
 
         for (int i = 0; i < count; i++)
         {

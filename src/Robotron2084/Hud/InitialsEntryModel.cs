@@ -102,7 +102,7 @@ public sealed class InitialsEntryModel
     }
 
     /// <summary>The letters entered so far — three characters, a space for every cell left blank.</summary>
-    public string Initials => new(_letters);
+    public string GetInitials() => new(_letters);
 
     /// <summary>True once every letter has been committed or timed out (the ROM's G2LET).</summary>
     public bool IsComplete { get; private set; }
@@ -113,7 +113,7 @@ public sealed class InitialsEntryModel
     /// <summary>The letter shown in the cursor's cell — the ROM's preview, which cycling rewrites in place.</summary>
     public char Preview => _position < LetterCount ? _letters[_position] : Blank;
 
-    /// <summary>True while the preview is the rub marker, which the page draws with the ROM's own picture.</summary>
+    /// <summary>True while the preview is the rub marker, which the page draws with the ROM's own sprite.</summary>
     public bool PreviewIsRub => Preview == RubLetter;
 
     /// <summary>

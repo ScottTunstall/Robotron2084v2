@@ -61,20 +61,20 @@ public static class InitialsEntryLayout
     /// pixels) per letter, which cannot hold a six-pixel glyph, so the port spaces the cells by an
     /// advance wide enough to print one — the deviation notes §116 records.
     /// </summary>
-    public static int CellAdvancePixels => ScreenSize.Scaled(HudLayout.HudScoreDigitAdvancePixels);
+    public static int GetCellAdvancePixels() => ScreenSize.ToPortPixels(HudLayout.HudScoreDigitAdvancePixels);
 
     /// <summary>The Y the three letters are drawn at, in port pixels.</summary>
-    public static int EchoY => HudLayout.ArcadeY(EchoRow);
+    public static int GetEchoY() => HudLayout.ToPortY(EchoRow);
 
     /// <summary>The height of one arcade row on the port's canvas — the marker is a single row.</summary>
-    public static int MarkerHeightPixels => HudLayout.ArcadeY(EchoRow + MarkerRowOffset + 1) - MarkerY;
+    public static int GetMarkerHeightPixels() => HudLayout.ToPortY(EchoRow + MarkerRowOffset + 1) - GetMarkerY();
 
     /// <summary>The marker's width: the raw video byte <c>$99</c> lights both pixels of one column.</summary>
-    public static int MarkerWidthPixels => HudLayout.ArcadeX(ScreenSize.ArcadePixelsPerColumn);
+    public static int GetMarkerWidthPixels() => HudLayout.ToPortX(ScreenSize.ArcadePixelsPerColumn);
 
     /// <summary>The Y of the row the frob markers sit on, in port pixels.</summary>
-    public static int MarkerY => HudLayout.ArcadeY(EchoRow + MarkerRowOffset);
+    public static int GetMarkerY() => HudLayout.ToPortY(EchoRow + MarkerRowOffset);
 
     /// <summary>The X of cell <paramref name="index"/> (0-based), in port pixels.</summary>
-    public static int CellX(int index) => HudLayout.ArcadeColumnX(EchoColumn) + (index * CellAdvancePixels);
+    public static int GetCellX(int index) => HudLayout.ToPortColumnX(EchoColumn) + (index * GetCellAdvancePixels());
 }

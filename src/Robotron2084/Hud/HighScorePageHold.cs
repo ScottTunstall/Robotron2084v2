@@ -65,7 +65,7 @@ public sealed class HighScorePageHold
         if (!HoldIsOver)
         {
             _holdClockUnits += ArcadeClock.UnitsPerPortTick;
-            if (_holdClockUnits < ArcadeClock.Units(ScreenTuning.HighScoreHoldRomFrames))
+            if (_holdClockUnits < ArcadeClock.ToClockUnits(ScreenTuning.HighScoreHoldRomFrames))
             {
                 return false;
             }
@@ -78,12 +78,12 @@ public sealed class HighScorePageHold
         }
 
         _checkClockUnits += ArcadeClock.UnitsPerPortTick;
-        if (_checkClockUnits < ArcadeClock.Units(ScreenTuning.HighScoreLeaveCheckRomFrames))
+        if (_checkClockUnits < ArcadeClock.ToClockUnits(ScreenTuning.HighScoreLeaveCheckRomFrames))
         {
             return false;
         }
 
-        _checkClockUnits -= ArcadeClock.Units(ScreenTuning.HighScoreLeaveCheckRomFrames);
+        _checkClockUnits -= ArcadeClock.ToClockUnits(ScreenTuning.HighScoreLeaveCheckRomFrames);
 
         if (!anySwitchHeld)
         {

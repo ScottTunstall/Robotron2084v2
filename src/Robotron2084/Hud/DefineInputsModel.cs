@@ -46,7 +46,7 @@ public sealed class DefineInputsModel
     public int FirstVisibleLine { get; private set; }
 
     /// <summary>The highlighted action, or null on the PAUSE line.</summary>
-    public InputAction? HighlightedAction => ActionOf(Line);
+    public InputAction? GetHighlightedAction() => GetAction(Line);
 
     /// <summary>True once Enter has armed the highlighted line for capture.</summary>
     public bool IsArmed { get; private set; }
@@ -58,7 +58,7 @@ public sealed class DefineInputsModel
     public int Line { get; private set; }
 
     /// <summary>The action a line sets, or null on a blank spacer or on the PAUSE line.</summary>
-    public static InputAction? ActionOf(int line) => line switch
+    public static InputAction? GetAction(int line) => line switch
     {
         < LinesPerPlayer => InputActions.All[line],
         _ when line >= PlayerTwoLine && line < PlayerTwoLine + LinesPerPlayer =>
@@ -67,11 +67,11 @@ public sealed class DefineInputsModel
     };
 
     /// <summary>True for the blank lines that separate the sections (never highlightable).</summary>
-    public static bool IsSpacer(int line) => line != PauseLine && ActionOf(line) is null;
+    public static bool IsSpacer(int line) => line != PauseLine && GetAction(line) is null;
 
     /// <summary>
     /// Which player owns an ACTION line: 0 for player 1, 1 for player 2. The PAUSE line and
-    /// the blank spacers have no owner — call <see cref="ActionOf"/> first.
+    /// the blank spacers have no owner — call <see cref="GetAction"/> first.
     /// </summary>
     public static int PlayerOf(int line) => line < PlayerTwoLine ? 0 : 1;
 
@@ -174,7 +174,7 @@ public sealed class DefineInputsModel
         }
 
         PlayerControls controls = settings[PlayerOf(line)];
-        InputAction action = ActionOf(line)!.Value;
+        InputAction action = GetAction(line)!.Value;
         controls[action] = clearing ? ActionBinding.None : controls[action].With(binding);
     }
 
