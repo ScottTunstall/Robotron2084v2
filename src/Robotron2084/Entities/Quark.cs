@@ -191,7 +191,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
         if (--_reaimBeatsRemaining <= 0)
         {
-            RollVelocity(field.Wall.PlayfieldBounds);
+            RollVelocity(field.PlayfieldBounds);
         }
 
         // Frozen: the quark still animates and re-rolls, but the tank-drop countdown is paused.
@@ -221,7 +221,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Moves by the whole-pixel part of the velocity, carrying the fraction.</summary>
     private void AdvancePosition(PlayField field)
     {
-        Rectangle bounds = field.Wall.PlayfieldBounds;
+        Rectangle bounds = field.PlayfieldBounds;
 
         _remainderSubpixels += _velocitySubpixels;
         int stepX = _remainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
@@ -264,7 +264,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             _tanksRemaining--;
             // A new tank appears 2 columns right and 5-6 rows down — 6 when the quark is on the
             // top wall, where the ROM skips its `DECB` (ROM: TNKDRP).
-            int rowOffset = _position.Y == field.Wall.PlayfieldBounds.Y
+            int rowOffset = _position.Y == field.PlayfieldBounds.Y
                 ? TankTuning.BirthOffsetRowsOnTopWall
                 : TankTuning.BirthOffsetRowsOffTopWall;
             field.SpawnTank(_position + new IntVector2(
@@ -305,8 +305,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: <c>SQ3L</c>.</remarks>
     private void LeaveWhenClearOfTheField(PlayField field)
     {
-        int low = field.Wall.PlayfieldBounds.Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowRows);
-        int high = field.Wall.PlayfieldBounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.FleeExitHighRows);
+        int low = field.PlayfieldBounds.Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowRows);
+        int high = field.PlayfieldBounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.FleeExitHighRows);
         if (_position.Y <= low || _position.Y >= high)
         {
             LifeState = EntityLifeState.Dead;

@@ -224,8 +224,8 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private void RollVelocity(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        int targetX = field.Player.Position.X + ScreenSize.ToPortPixelsFromColumns(_random.Next(0, AimZoneColumns));
-        int targetY = field.Player.Position.Y + ScreenSize.ToPortPixels(_random.Next(0, AimZoneRows));
+        int targetX = field.PlayerPosition.X + ScreenSize.ToPortPixelsFromColumns(_random.Next(0, AimZoneColumns));
+        int targetY = field.PlayerPosition.Y + ScreenSize.ToPortPixels(_random.Next(0, AimZoneRows));
         targetX = Math.Clamp(targetX, bounds.X, bounds.Right - CollisionSize.Width);
         targetY = Math.Clamp(targetY, bounds.Y, bounds.Bottom - CollisionSize.Height);
 

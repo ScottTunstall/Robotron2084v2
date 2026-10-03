@@ -443,7 +443,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         {
             Direction8 fireDirection = aim ?? FacingDirection;
             IntVector2 muzzle = _position + GetMuzzleOffset(fireDirection);
-            LasersFiredThisUpdate = field.PlayerLasers.TryFire(muzzle, fireDirection, out _);
+            LasersFiredThisUpdate = field.TryFirePlayerLaser(muzzle, fireDirection);
             _autoFireTicksRemaining = PlayerTuning.PlayerAutoFireTicks;
         }
         else

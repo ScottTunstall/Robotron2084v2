@@ -94,7 +94,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
         // wall can start inside it and finish a step past it, and would otherwise fly on.
         Rectangle before = Bounds;
         _position += Direction.ToIntVector() * PlayerTuning.LaserSpeed;
-        if (field.Wall.Intersects(Rectangle.Union(before, Bounds)))
+        if (field.HitsWall(Rectangle.Union(before, Bounds)))
         {
             // RRG23 LASDIE: a brief flare in the wave's LASCOL slot, then the wall colour.
             field.SpawnLaserWallFlare(Bounds, Direction);

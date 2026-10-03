@@ -234,7 +234,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         // Each unit in the walk table is one arcade pixel.
         IntVector2 candidate = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixels(1);
         Rectangle next = Bounds with { X = candidate.X, Y = candidate.Y };
-        if (field.Wall.Intersects(next) || OverlapsLivingElectrode(next, field))
+        if (field.HitsWall(next) || OverlapsLivingElectrode(next, field))
         {
             // Blocked by the wall or a standing electrode: pick a fresh direction instead.
             PickNewDirection();
@@ -281,7 +281,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True when the human's next step would overlap an electrode that is still standing.</summary>
     private static bool OverlapsLivingElectrode(Rectangle next, PlayField field)
     {
-        foreach (Electrode electrode in field.Entities.Electrodes)
+        foreach (Electrode electrode in field.GetElectrodes())
         {
             if (electrode.IsAlive() && electrode.Bounds.Intersects(next))
             {

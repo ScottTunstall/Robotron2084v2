@@ -196,7 +196,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
             : VerticalStepArcadePixels;
         _walkCycleStep = (_walkCycleStep + 1) % WalkPatternLength;
         IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.ToPortPixels(stepArcadePx);
-        if (field.Wall.Intersects(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
+        if (field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             // That step would cross the wall — stay put and re-aim.
             Reaim(field);

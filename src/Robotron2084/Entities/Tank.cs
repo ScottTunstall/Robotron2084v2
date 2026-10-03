@@ -293,20 +293,20 @@ public sealed class Tank : IExplodable, IRemovable
         int stepPixels = ScreenSize.ToPortPixels(TankTuning.StepArcadePixels);
         IntVector2 step = new(_step.X * stepPixels, _step.Y * stepPixels);
         IntVector2 next = _position + step;
-        if (!field.Wall.Intersects(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
+        if (!field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             _position = next;
             return;
         }
 
         // Bounce off the wall (never crosses): mirror the axis that is blocked.
-        if (field.Wall.Intersects(new Rectangle(_position.X + step.X, _position.Y, CollisionSize.Width, CollisionSize.Height)))
+        if (field.HitsWall(new Rectangle(_position.X + step.X, _position.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             _step = new IntVector2(-_step.X, _step.Y);
             step = new IntVector2(-step.X, step.Y);
         }
 
-        if (field.Wall.Intersects(new Rectangle(_position.X, _position.Y + step.Y, CollisionSize.Width, CollisionSize.Height)))
+        if (field.HitsWall(new Rectangle(_position.X, _position.Y + step.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             _step = new IntVector2(_step.X, -_step.Y);
         }
