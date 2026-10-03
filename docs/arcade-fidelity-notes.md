@@ -10726,10 +10726,10 @@ This is the first thing in the port that has no arcade counterpart: the author's
 | `BerzerkRobot_WalkRight_1`, `_2` | 8 x 12 | the robot walking right (the author: *"Walk_1, 2 are the walk right animation frames"*): the first two frames of the other two rows |
 | `BerzerkRobot_WalkLeft_1`, `_2` | 8 x 12 | the robot walking left (the author: *"Walk_3, 4 are the walk left animation frames"*): the next two frames |
 | `BerzerkRobot_WalkUp_1` to `_3` | 8 x 12 | the robot walking up (the author: *"Walk_5, 6, 7 are the walk up animation frames. Note that the animation sequence is 5, 6, 7, 6"*). They play in the order **1, 2, 3, 2**, so the middle frame is shown twice in each cycle |
-| `BerzerkRobot_Walk_8` to `_10` | 8 x 12 | the rest of the other two rows in reading order, the two empty cells skipped, keeping their reading-order numbers until the author names them. Head on the top row throughout, so a walk keeps the head still |
+| `BerzerkRobot_WalkDown_1` to `_3` | 8 x 12 | the robot walking down (the author, confirming: *"they are walk down"*): the last three frames. The author has given no play order for these, so none is recorded. Head on the top row throughout, like every walking frame, so a walk keeps the head still |
 | `BerzerkRobot_Stand` | 16 x 18 | the robot standing |
 | `BerzerkRobot_Explode_1` to `_3` | 16 x 18 | the three stages of it being destroyed, as the sheet's 2 x 2 block reads |
 
 The four frames of the second block share one canvas, so they line up when shown in turn. The frames keep the sheet's own red, not the arcade's.
-Which of the remaining walking frames face which way is not recorded here: the sheet does not say, so they keep their sheet-order numbers until the author names them. `BerzerkRobot_Stand` is the single standing picture from the second block, not part of the idle cycle.
+Every walking frame is now named by the way it faces. `BerzerkRobot_Stand` is the single standing picture from the second block, not part of the idle cycle.
 **Not done:** there is no entity class, no `SpriteSet` property and no wave yet; the frames are content only.
