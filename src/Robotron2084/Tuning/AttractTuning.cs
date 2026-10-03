@@ -42,13 +42,17 @@ public static class AttractTuning
 
     // AI: 1-in-N ticks of deliberate pause (feels alive, not robotic)
     /// <summary>
-    /// How long each of the presentation page's two TEXT PANES is shown before they swap.
+    /// How long the presentation page's ARCADE text pane (PRESENTED BY, DESIGNED BY VID KIDZ, FOR WILLIAMS) is shown before it swaps to the port's credit pane.
+    /// It stays up twice as long as the credit pane, so the arcade's own credits can be read (notes §140.1).
     /// The page has no room for the arcade's message and credits and the port's credit
     /// and F-key menu at once — and the arcade's two message lines want an empty row between them
     /// (the ROM's own cursors, `$86`/`$96`, are 16 rows apart on an 8-row line grid) — so each pane
     /// gets the whole band to itself. Notes §107.
     /// </summary>
-    public const int TitleTextSwapSeconds = 3;
+    public const int TitleArcadeTextSeconds = 6;
+
+    /// <summary>How long the presentation page's PORT text pane (the port's credit line and the F-key menu) is shown before it swaps back to the arcade pane.</summary>
+    public const int TitlePortTextSeconds = 3;
 
     // Attract mode (notes §94) — the arcade's attract cycle: idle
     // title, then the machine plays itself (CMOS "FANCY ATTRACT MODE" when on).
