@@ -143,7 +143,7 @@ public sealed class QuarkTankBehaviourTests
         // Author, 2026-09-16: "tanks spawn instantly whereas they are 'born'
         // like the enforcer." The old test asserted movement on the FIRST frame,
         // which was the wave-start TNKSTV path this port never uses.
-        int bornTicks = TankTuning.GrowSteps * TankTuning.GrowRomFrames * 6 / 5;
+        int bornTicks = TankTuning.GrowSteps * TankTuning.GrowIntervalRomFrames * 6 / 5;
 
         for (int tick = 0; tick < bornTicks - 1; tick++)
         {

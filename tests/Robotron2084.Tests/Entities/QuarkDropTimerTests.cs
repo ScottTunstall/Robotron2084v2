@@ -45,7 +45,7 @@ public sealed class QuarkDropTimerTests
             field.Update(Frame());
         }
 
-        int beatTicks = (int)Math.Ceiling(QuarkTuning.BeatRomFrames * 1.2); // 6/5 a frame
+        int beatTicks = (int)Math.Ceiling(QuarkTuning.BeatIntervalRomFrames * 1.2); // 6/5 a frame
         int oneCycle = (QuarkTuning.TravelAnimationFrames + 1) * beatTicks;
 
         Assert.True(field.GetTankCount() > 0, "the quark must eventually drop a tank");
@@ -68,7 +68,7 @@ public sealed class QuarkDropTimerTests
             maxDropsX2: 10, dropDelayBeats: 16, speedCap: 50);
         field.AddQuark(quark);
 
-        for (int tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(QuarkTuning.BeatRomFrames) + 2; tick++)
+        for (int tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(QuarkTuning.BeatIntervalRomFrames) + 2; tick++)
         {
             field.Update(Frame());
         }

@@ -154,7 +154,7 @@ public sealed class AttractMovieTests
     }
 
     [Fact]
-    public void ObjectMachine_WalkCostsExactlyOneStepPeriodPerStep()
+    public void ObjectMachine_WalkCostsExactlyOneStepIntervalPerStep()
     {
         var machine = new AttractObjectMachine(new Random(4));
 

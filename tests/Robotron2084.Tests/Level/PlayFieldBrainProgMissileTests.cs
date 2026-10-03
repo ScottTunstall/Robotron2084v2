@@ -46,7 +46,7 @@ public sealed class PlayFieldBrainProgMissileTests
     /// <summary>
     /// Ticks past the brain's first beat. ROM <c>BRAIN_AI</c> resolves its target — and tests its catch
     /// reach — inside its body, so a brain that has not had a beat yet has no target at all. With
-    /// <c>beatDelayRomFrames: 0</c> the period is one ROM frame (6 clock units) and a tick adds 5, so the
+    /// <c>beatWaitRomFrames: 0</c> the period is one ROM frame (6 clock units) and a tick adds 5, so the
     /// SECOND tick is the beat (notes §18.8).
     /// </summary>
     private static void RunFirstBeat(PlayField field)
@@ -82,7 +82,7 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brains_AllChaseMikey_EvenWhenAnotherFamilyMemberIsNearer()
     {
-        LevelParameters wave = new(LevelNumber: 1, BrainCount: 2, DaddyCount: 1, MikeyCount: 1, BrainBeatDelayRomFrames: 0);
+        LevelParameters wave = new(LevelNumber: 1, BrainCount: 2, DaddyCount: 1, MikeyCount: 1, BrainBeatWaitRomFrames: 0);
         PlayField field = CreateField(wave);
         WarmUp(field);
 
@@ -115,7 +115,7 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brains_TargetTheNearestMember_OnceMikeysSlotIsFree()
     {
-        LevelParameters wave = new(LevelNumber: 1, BrainCount: 1, DaddyCount: 1, MikeyCount: 1, BrainBeatDelayRomFrames: 0);
+        LevelParameters wave = new(LevelNumber: 1, BrainCount: 1, DaddyCount: 1, MikeyCount: 1, BrainBeatWaitRomFrames: 0);
         PlayField field = CreateField(wave);
         WarmUp(field);
 
@@ -167,7 +167,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // 30 arcade px left of (where the human is now) → steps right/up.
         IntVector2 humanSpot = field.Humans[0].Position;
         IntVector2 brainSpot = new(humanSpot.X - ScreenSize.ToPortPixels(30), humanSpot.Y - ScreenSize.ToPortPixels(20));
-        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(2), beatDelayRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(2), beatWaitRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
 
         // Beat period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
@@ -197,7 +197,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // "target is below". That ±1px vertical jitter is the arcade brain's
         // hover; the port used to hold the row perfectly still.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixels(30), playerSpot.Y);
-        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(3), beatDelayRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(3), beatWaitRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
 
         // One beat in the 19-tick window (period PortTicks(9) = 10, notes 26).
@@ -222,7 +222,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // X dead zone (BRNL1: dx+2 <= 4), so X must not correct —
         // but Y has no dead zone and must still step down 1 px.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixels(1), playerSpot.Y - ScreenSize.ToPortPixels(50));
-        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(21), beatDelayRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(21), beatWaitRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
 
         for (int tick = 0; tick < ArcadeClock.ToPortTicks(12); tick++)
@@ -252,7 +252,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // wall". The port rejects per axis, like the ROM's own generic mover
         // (RRS22 OPB80), so the brain creeps down the wall instead.
         IntVector2 brainSpot = new(inner.Right - ScreenSize.ToPortPixels(CollisionSizes.BrainCollisionSize.Width), inner.Y + ScreenSize.ToPortPixels(80));
-        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(22), beatDelayRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(22), beatWaitRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
 
         for (int tick = 0; tick < ArcadeClock.ToPortTicks(12); tick++)
@@ -279,7 +279,7 @@ public sealed class PlayFieldBrainProgMissileTests
         field.AddHuman(human);
 
         // Corners coincident — well inside the ROM's ±3px catch reach.
-        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(5), beatDelayRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(5), beatWaitRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
 
         RunFirstBeat(field);
@@ -344,7 +344,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var human = new Human(TestSprites.Shared, humanSpot, HumanKind.Daddy, new Random(7));
         field.AddHuman(human);
 
-        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(8), beatDelayRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(8), beatWaitRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
 
         RunFirstBeat(field);
@@ -369,7 +369,7 @@ public sealed class PlayFieldBrainProgMissileTests
         IntVector2 humanSpot = new(inner.X + 200, inner.Y + 200);
         var human = new Human(TestSprites.Shared, humanSpot, HumanKind.Daddy, new Random(31));
         field.AddHuman(human);
-        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(32), beatDelayRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        var brain = new Brain(TestSprites.Shared, humanSpot, new Random(32), beatWaitRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
 
         RunFirstBeat(field);
@@ -400,7 +400,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // Boxes overlap (the human is well inside the brain's frame) but the
         // corners are 20px apart → the ROM's reach does not cover it.
         IntVector2 offset = new(ScreenSize.ToPortPixels(20), 0);
-        var brain = new Brain(TestSprites.Shared, humanSpot - offset, new Random(15), beatDelayRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        var brain = new Brain(TestSprites.Shared, humanSpot - offset, new Random(15), beatWaitRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
 
         RunFirstBeat(field);
@@ -423,7 +423,7 @@ public sealed class PlayFieldBrainProgMissileTests
         field.AddHuman(human);
 
         IntVector2 offset = new(ScreenSize.ToPortPixels(4), 0);
-        var brain = new Brain(TestSprites.Shared, humanSpot - offset, new Random(42), beatDelayRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        var brain = new Brain(TestSprites.Shared, humanSpot - offset, new Random(42), beatWaitRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
 
         RunFirstBeat(field);
@@ -729,7 +729,7 @@ public sealed class PlayFieldBrainProgMissileTests
         Rectangle inner = field.Wall.PlayfieldBounds;
 
         IntVector2 brainSpot = new(inner.X + 150, inner.Y + 120);
-        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(9), beatDelayRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        var brain = new Brain(TestSprites.Shared, brainSpot, new Random(9), beatWaitRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
         field.AddBrain(brain);
         Assert.True(field.PlayerLasers.TryFire(new IntVector2(brainSpot.X + 7, brainSpot.Y - 12), Direction8.Down, out PlayerLaser? _));
         field.Update(new GameTime());

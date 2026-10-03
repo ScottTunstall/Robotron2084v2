@@ -35,9 +35,9 @@ public sealed class DifficultyTuningTests
         Assert.Equal(6, adjusted.MaxTanksPerQuark);
         Assert.Equal(17, adjusted.EnforcerFireDelay);        // 20 − 3
         Assert.Equal(17, adjusted.SpheroidDropDelay);        // 20 − 3
-        Assert.Equal(6, adjusted.HulkStepDelayRomFrames);    // 7 − 1
+        Assert.Equal(6, adjusted.HulkBeatIntervalRomFrames);    // 7 − 1
         Assert.Equal(33, adjusted.BrainFireDelay);           // 40 − 7
-        Assert.Equal(6, adjusted.BrainBeatDelayRomFrames);   // 7 − 1
+        Assert.Equal(6, adjusted.BrainBeatWaitRomFrames);   // 7 − 1
         Assert.Equal(27, adjusted.TankFireDelay);            // 32 − 5
         Assert.Equal(205, adjusted.ShellSpeed);              // 176 + 29
         Assert.Equal(13, adjusted.QuarkDropDelay);           // 16 − 3
@@ -54,7 +54,7 @@ public sealed class DifficultyTuningTests
         Assert.Equal(8, adjusted.MaxDropsX2);                // 10 − 2
         Assert.Equal(4, adjusted.MaxEnforcersPerSpheroid);   // ceil(8/2)
         Assert.Equal(23, adjusted.EnforcerFireDelay);        // 20 + 3
-        Assert.Equal(8, adjusted.HulkStepDelayRomFrames);    // 7 + 1
+        Assert.Equal(8, adjusted.HulkBeatIntervalRomFrames);    // 7 + 1
         Assert.Equal(47, adjusted.BrainFireDelay);           // 40 + 7
         Assert.Equal(160, adjusted.ShellSpeed);              // 176 − 29, clamped to the record's floor
         Assert.Equal(19, adjusted.QuarkDropDelay);           // 16 + 3

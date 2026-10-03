@@ -195,8 +195,8 @@ public sealed class SpheroidEnforcerTimingTests
             int gap = fireTicks[i] - fireTicks[i - 1];
             Assert.InRange(
                 gap,
-                ArcadeClock.ToPortTicks(EnforcerTuning.BeatRomFrames) - 1,
-                ArcadeClock.ToPortTicks(EnforcerTuning.BeatRomFrames * 30) + 1);
+                ArcadeClock.ToPortTicks(EnforcerTuning.BeatIntervalRomFrames) - 1,
+                ArcadeClock.ToPortTicks(EnforcerTuning.BeatIntervalRomFrames * 30) + 1);
         }
 
         int maxGap = fireTicks.Zip(fireTicks.Skip(1), (a, b) => b - a).Max();

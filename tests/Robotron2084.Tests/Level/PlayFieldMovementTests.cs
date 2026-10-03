@@ -14,7 +14,7 @@ namespace Robotron2084.Tests;
 public sealed class PlayFieldMovementTests
 {
     [Fact]
-    public void Hulk_StaysPutForOneStepPeriodThenSteps_PortTicksOfHulkSpeed()
+    public void Hulk_StaysPutForOneBeatIntervalThenSteps_PortTicksOfHulkSpeed()
     {
         PlayField field = CreateEmptyField();
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -22,7 +22,7 @@ public sealed class PlayFieldMovementTests
         // but hunt the playfield center so the aim is unbounded.
         IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 100, bounds.Y + 100);
-        var hulk = new Hulk(TestSprites.Shared, spot, new Random(7), stepDelayRomFrames: 8, () => center);
+        var hulk = new Hulk(TestSprites.Shared, spot, new Random(7), beatIntervalRomFrames: 8, () => center);
         field.AddHulk(hulk);
 
         // End the player's start grace period (robots are frozen during it).
@@ -30,8 +30,8 @@ public sealed class PlayFieldMovementTests
         IntVector2 afterAim = hulk.Position; // first unfrozen update = the spawn aim, no move
 
         // Step period = 8 ROM frames = 9.6 ticks, so the step lands on the 10th.
-        int stepPeriod = ArcadeClock.ToPortTicksRoundedUp(8);
-        for (int i = 1; i < stepPeriod; i++)
+        int beatIntervalClockUnits = ArcadeClock.ToPortTicksRoundedUp(8);
+        for (int i = 1; i < beatIntervalClockUnits; i++)
         {
             field.Update(new GameTime());
             Assert.Equal(afterAim, hulk.Position);
@@ -49,7 +49,7 @@ public sealed class PlayFieldMovementTests
         Rectangle bounds = field.Wall.PlayfieldBounds;
         // Right up against the left wall, hunting a point that keeps it aimed left.
         IntVector2 spot = new(bounds.X + 4, bounds.Y + bounds.Height / 2 - 16);
-        var hulk = new Hulk(TestSprites.Shared, spot, new Random(11), stepDelayRomFrames: 5, () => spot);
+        var hulk = new Hulk(TestSprites.Shared, spot, new Random(11), beatIntervalRomFrames: 5, () => spot);
         field.AddHulk(hulk);
 
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // end grace

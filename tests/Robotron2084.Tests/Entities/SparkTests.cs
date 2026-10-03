@@ -106,7 +106,7 @@ public sealed class SparkTests
 
         // 4 ROM frames = 4.8 ticks, so the frame boundary lands on tick 5 of each
         // period on the clock-unit clock (notes §52, §65).
-        int period = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.SparkFramePeriodRomFrames);
+        int period = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.SparkFrameIntervalRomFrames);
         Assert.Equal(0, spark.AnimationFrameIndex); // born on SPKP0
 
         // Each full period advances exactly one frame; four periods wrap to 0.

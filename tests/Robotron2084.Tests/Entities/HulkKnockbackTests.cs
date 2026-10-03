@@ -49,7 +49,7 @@ public sealed class HulkKnockbackTests
 
         foreach (Direction8 direction in Enum.GetValues<Direction8>())
         {
-            var hulk = new Hulk(TestSprites.Shared, spot, new Random(1000 + (int)direction), stepDelayRomFrames: 2, () => spot);
+            var hulk = new Hulk(TestSprites.Shared, spot, new Random(1000 + (int)direction), beatIntervalRomFrames: 2, () => spot);
             field.AddHulk(hulk);
             field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // caches the playfield bounds
 
@@ -110,7 +110,7 @@ public sealed class HulkKnockbackTests
 
         // Top-left corner, pushed outward (up-left): the hulk may sit on the
         // wall (spec: "pushed back into the WALL") but never leave the field.
-        var hulk = new Hulk(TestSprites.Shared, new IntVector2(b.X, b.Y), new Random(7), stepDelayRomFrames: 2, () => new IntVector2(b.X, b.Y));
+        var hulk = new Hulk(TestSprites.Shared, new IntVector2(b.X, b.Y), new Random(7), beatIntervalRomFrames: 2, () => new IntVector2(b.X, b.Y));
         field.AddHulk(hulk);
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3)));
 

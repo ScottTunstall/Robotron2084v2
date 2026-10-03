@@ -60,7 +60,7 @@ public sealed class TankShellTests
 
         Assert.Equal(0, shell.VelocityX);
         Assert.Equal(0, shell.VelocityY);
-        Assert.Equal(ArcadeClock.ToPortTicksRoundedUp(TankShellTuning.LifeBaseTurns * TankShellTuning.BodyRomFrames), ticks);
+        Assert.Equal(ArcadeClock.ToPortTicksRoundedUp(TankShellTuning.LifeBaseBeats * TankShellTuning.BeatIntervalRomFrames), ticks);
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public sealed class TankShellTests
         IntVector2 tank = new(bounds.Right - boxWidth - 12 - startOffset, bounds.Y + 100);
         IntVector2 start = tank + new IntVector2(startOffset, 0);
         IntVector2 player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(20), 0);
-        var shell = new TankShell(TestSprites.Shared, tank, player, ShellSpeed, bounds, new ScriptedRandom(AimedRoll, NoMiss, NoMiss, TankShellTuning.LifeExtraTurnsMaxExclusive - 1));
+        var shell = new TankShell(TestSprites.Shared, tank, player, ShellSpeed, bounds, new ScriptedRandom(AimedRoll, NoMiss, NoMiss, TankShellTuning.LifeExtraBeatsMaxExclusive - 1));
         int sidewaysBefore = shell.VelocityX;
         Assert.True(sidewaysBefore > 0);
 
