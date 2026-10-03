@@ -20,7 +20,7 @@ public sealed class RobotVsElectrodeCollisionRule : ICollisionRule
     /// <param name="walker">The grunt or hulk.</param>
     /// <returns>The electrode, or null when it touches none.</returns>
     private static Electrode? FindTouchedElectrode(PlayField field, IEntity walker) =>
-        field.Entities.Electrodes.FirstOrDefault(electrode => electrode.LifeState == EntityLifeState.Alive && field.Touches(walker, electrode));
+        field.Entities.Electrodes.FirstOrDefault(electrode => electrode.IsAlive() && field.Touches(walker, electrode));
 
     /// <summary>Kills each grunt that has walked onto an electrode, and the electrode with it.</summary>
     /// <param name="field">The field the entities are on.</param>
@@ -28,7 +28,7 @@ public sealed class RobotVsElectrodeCollisionRule : ICollisionRule
     {
         foreach (Grunt grunt in field.Entities.Grunts)
         {
-            if (grunt.LifeState != EntityLifeState.Alive || FindTouchedElectrode(field, grunt) is not { } electrode)
+            if (!grunt.IsAlive() || FindTouchedElectrode(field, grunt) is not { } electrode)
             {
                 continue;
             }

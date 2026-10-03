@@ -31,5 +31,5 @@ public sealed class HulkVsHumanCollisionRule : ICollisionRule
     /// <param name="field">The field the entities are on.</param>
     /// <param name="human">The human.</param>
     private static bool IsTouchedByAHulk(PlayField field, Human human) =>
-        field.Entities.Hulks.Any(hulk => hulk.LifeState == EntityLifeState.Alive && field.Touches(hulk, human));
+        field.Entities.Hulks.Any(hulk => hulk.IsAlive() && field.Touches(hulk, human));
 }

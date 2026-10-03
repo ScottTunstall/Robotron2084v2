@@ -27,7 +27,7 @@ public sealed class LaserCollisionRule : ICollisionRule
         {
             foreach (IEntity target in field.Entities.GetList(robot.Kind).Entities)
             {
-                if (target.LifeState != EntityLifeState.Alive || !field.Touches(laser, target))
+                if (!target.IsAlive() || !field.Touches(laser, target))
                 {
                     continue;
                 }

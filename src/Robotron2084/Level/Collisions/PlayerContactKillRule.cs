@@ -10,7 +10,7 @@ public sealed class PlayerContactKillRule : ICollisionRule
     /// <inheritdoc/>
     public void Resolve(PlayField field)
     {
-        if (field.Player.LifeState != EntityLifeState.Alive || field.Player.IsInvincible)
+        if (!field.Player.IsAlive() || field.Player.IsInvincible)
         {
             return;
         }
@@ -34,12 +34,12 @@ public sealed class PlayerContactKillRule : ICollisionRule
         Player player = field.Player;
         foreach (IEntity entity in robots.Entities)
         {
-            if (player.LifeState != EntityLifeState.Alive)
+            if (!player.IsAlive())
             {
                 return;
             }
 
-            if (entity.LifeState == EntityLifeState.Alive && field.Touches(player, entity))
+            if (entity.IsAlive() && field.Touches(player, entity))
             {
                 player.Kill();
                 return;

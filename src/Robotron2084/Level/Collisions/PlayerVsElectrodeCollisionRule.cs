@@ -9,14 +9,14 @@ public sealed class PlayerVsElectrodeCollisionRule : ICollisionRule
     public void Resolve(PlayField field)
     {
         Player player = field.Player;
-        if (player.LifeState != EntityLifeState.Alive || player.IsInvincible)
+        if (!player.IsAlive() || player.IsInvincible)
         {
             return;
         }
 
         foreach (Electrode electrode in field.Entities.Electrodes)
         {
-            if (electrode.LifeState == EntityLifeState.Alive && field.Touches(player, electrode))
+            if (electrode.IsAlive() && field.Touches(player, electrode))
             {
                 player.Kill();
                 electrode.Kill();

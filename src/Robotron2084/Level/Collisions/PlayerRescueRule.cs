@@ -14,7 +14,7 @@ public sealed class PlayerRescueRule : ICollisionRule
         Player player = field.Player;
         foreach (Human human in field.Entities.Family.Members)
         {
-            if (!human.IsGraspable() || player.LifeState != EntityLifeState.Alive || !field.Touches(player, human))
+            if (!human.IsGraspable() || !player.IsAlive() || !field.Touches(player, human))
             {
                 continue;
             }

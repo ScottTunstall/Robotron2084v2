@@ -16,7 +16,7 @@ public sealed class BrainVictimReleaseRule : ICollisionRule
     {
         foreach (Brain brain in field.Entities.Brains)
         {
-            if (brain.LifeState != EntityLifeState.Alive && brain.ReleaseVictim() is { } released)
+            if (!brain.IsAlive() && brain.ReleaseVictim() is { } released)
             {
                 field.LeaveSkull(released.Position);
             }
