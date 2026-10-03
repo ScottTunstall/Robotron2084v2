@@ -10753,3 +10753,16 @@ It is a grunt in everything but its look:
 - **Shooting is not built.** The collision box is the 8 x 12 frame (`CollisionSizes.BerzerkRobotCollisionSize`).
 
 `BerzerkRobotTests` pins that it steps exactly as a grunt does for 200 ticks, the frame orders, the facing, the electrode death and the survivors; the registry tests cover the kind's row.
+
+### 138.2 The Gorf entity (author, 2026-10-03)
+
+**Author:** *"These two sprites are for gorf. Can you add them as 'Gorf' entity."*
+
+The sheet is `ref/gorf-sheet.png`: two frames side by side, each pixel a 7 x 7 block, each frame 15 pixels wide and 20 tall, in red, yellow and blue.
+`tools/extract-gorf.py` cuts it into `Gorf_1` (left) and `Gorf_2` (right) in `Content/Sprites/`, in the sheet's own colours; re-drawing the cut frames at
+the sheet's scale reproduces the sheet exactly.
+
+`Entities/Gorf` is a new kind (`RobotKind.Gorf`), another of the author's own with no arcade source. The author gave it no behaviour, so the first version is the least that
+makes it an entity: it **stands where it is put and swaps between its two frames every 8 ROM frames**. A laser kills it (strip explosion, the grunts' hit sound, 100 points for now),
+a touch kills the player, and the wave is not won while one is left. It does not move, shoot or die on electrodes. `LevelParameters.GorfCount` is 0 in every wave;
+`GorfWaveSpawner` places them as the grunts are placed, and `WaveSurvivors` keeps the survivors of a death. **All of that behaviour is provisional**, there to be replaced when the author says what a Gorf does.
