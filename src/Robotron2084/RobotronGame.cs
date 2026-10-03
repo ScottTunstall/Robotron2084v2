@@ -18,7 +18,7 @@ namespace Robotron2084;
 /// <summary>The application shell: it owns the window and the fixed-timestep loop and runs one game state at a time.</summary>
 /// <remarks>Port-only (no arcade counterpart). Every state draws into a <see cref="ScreenSize.Width"/> x
 /// <see cref="ScreenSize.Height"/> canvas, which is blitted to the window at ONE uniform scale and centred
-/// there, so the picture is never stretched and the window may be any size. <b>F8</b> cycles the canvas fit
+/// there, so the game screen is never stretched and the window may be any size. <b>F8</b> cycles the canvas fit
 /// (Integer = the largest whole multiple, Fill = the exact fraction), <b>F11</b> and <b>Alt+Enter</b> toggle
 /// full screen, <b>Escape</b> exits. It also owns the shared instances every state passes onward:
 /// <see cref="SpriteSet"/>, the input source and the high score store, all created once in LoadContent.</remarks>
@@ -32,6 +32,8 @@ public sealed class RobotronGame : Game
     private ControlSettingsStore _controlSettingsStore = null!;
     private SpriteFont _font = null!;
     private bool _fullScreen;
+    private GameSettings _gameSettings = null!;
+    private GameSettingsStore _gameSettingsStore = null!;
     private HighScoreStore _highScoreStore = null!;
     private IPlayerInputSource _input = null!;
     private PaletteAnimator _paletteAnimator = null!;
@@ -83,8 +85,8 @@ public sealed class RobotronGame : Game
 
         // The windowed window is the canvas at the largest whole multiple that fits the
         // desktop; the window can be dragged to any size afterwards and the fit follows.
-        Point workArea = DisplayInfo.WorkArea;
-        _windowedScale = ScreenSize.MaxIntegerScale(workArea.X, workArea.Y);
+        Point workArea = DisplayInfo.GetWorkArea();
+        _windowedScale = ScreenSize.ComputeMaxIntegerScale(workArea.X, workArea.Y);
         ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, fullScreen: false);
 
         base.Initialize();
@@ -111,9 +113,15 @@ public sealed class RobotronGame : Game
         // and the attract sequence read.
         _controlSettingsStore = new ControlSettingsStore();
         _controlSettings = _controlSettingsStore.Load();
+
+        // The GAME ADJUSTMENT settings (notes §131) are read from settings.ini at
+        // startup and edited by the settings page (F5); the title hands them to the
+        // next game, so a change is live from the next START.
+        _gameSettingsStore = new GameSettingsStore();
+        _gameSettings = _gameSettingsStore.Load();
         _input = new BoundPlayerInputSource(_controlSettings, playerIndex: 0);
         _highScoreStore = new HighScoreStore();
-        _services = new GameServices(_sprites, _highScoreStore, _controlSettings, _input);
+        _services = new GameServices(_sprites, _highScoreStore, _controlSettings, _input, _gameSettings);
         _stateManager = new GameStateManager(new TitleScreenState(_services));
 
         StartSound();
@@ -133,6 +141,11 @@ public sealed class RobotronGame : Game
         HandleStartKeys(state);
 
         _previousKeyboardState = state;
+
+        // The attract-cycle sound switch (notes §131): while the attract sequence is on screen and
+        // ATTRACT MODE SOUND is off, the sound service ignores every request — a real game keeps its
+        // sound.
+        Sound.AttractMuted = _gameSettings.AttractIsSilent(_stateManager.Current is IAttractState);
 
         _paletteAnimator.Update();
         _stateManager.Update(gameTime);
@@ -171,19 +184,21 @@ public sealed class RobotronGame : Game
         _canvas = Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, _scaleMode);
 
     /// <summary>
-    /// The port-only attract dev keys (notes §97, re-keyed in §101): F5 the storyline movie, F6 the demo
-    /// game, F4 the high score table, F9 the end of a game, and F7 HELD to fast-forward the movie.
+    /// The port-only attract dev keys (notes §97, re-keyed in §101 and §131): F12 the storyline movie,
+    /// F6 the demo game, F4 the high score table, F9 the end of a game, and F7 HELD to fast-forward
+    /// the movie.
     /// </summary>
     /// <param name="state">This tick's keyboard.</param>
-    /// <remarks>F5 and F6 drop straight into the attract sequence so a scene can be inspected without
+    /// <remarks>F12 and F6 drop straight into the attract sequence so a scene can be inspected without
     /// sitting out the title's 12-second idle, and F7 is how the hulk's walk (ROM frame ~2574) is reached
     /// in seconds rather than after the text crawl. F1/F2/F3 are the game-start keys, so the dev
-    /// keys sit above them.</remarks>
+    /// keys sit above them. F5 is no longer a dev key: it opens the GAME ADJUSTMENT page from the
+    /// attract screens (notes §131).</remarks>
     private void HandleAttractDevKeys(KeyboardState state)
     {
         DevKeys.AttractFastForward = state.IsKeyDown(Keys.F7);
 
-        if (Pressed(state, Keys.F5))
+        if (Pressed(state, Keys.F12))
         {
             _stateManager.TransitionTo(new StorylineState(_services, new Random()));
         }
@@ -222,12 +237,13 @@ public sealed class RobotronGame : Game
 
     /// <summary>
     /// The game's start keys, live on EVERY attract screen (notes §101): F1 one player, F2 two players
-    /// alternating turns, F3 the arcade's two-player game (selected now, played later), F10 the DEFINE INPUTS
-    /// page.
+    /// alternating turns, F3 the arcade's two-player game (selected now, played later), F5 the GAME
+    /// ADJUSTMENT page (notes §131), F10 the DEFINE INPUTS page.
     /// </summary>
     /// <param name="state">This tick's keyboard.</param>
     /// <remarks>Handling them here rather than in the title means the attract movie, the demo and the high
-    /// score table can all be interrupted by a real player sitting down.</remarks>
+    /// score table can all be interrupted by a real player sitting down — or by the operator opening
+    /// the settings.</remarks>
     private void HandleStartKeys(KeyboardState state)
     {
         if (_stateManager.Current is not IAttractState)
@@ -242,7 +258,11 @@ public sealed class RobotronGame : Game
 
         if (mode is { } chosen)
         {
-            _stateManager.TransitionTo(PlayingState.StartNewGame(_controlSettings, chosen, _sprites, _highScoreStore));
+            _stateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _sprites, _highScoreStore));
+        }
+        else if (Pressed(state, Keys.F5))
+        {
+            _stateManager.TransitionTo(new SettingsState(_services, _gameSettingsStore));
         }
         else if (Pressed(state, Keys.F10))
         {
@@ -259,9 +279,9 @@ public sealed class RobotronGame : Game
     /// which is how the ceremony was verified.</remarks>
     private void StartEndOfGameFlow()
     {
-        GameSession session = GameSession.NewGame(GameMode.OnePlayer, _input, controls: _controlSettings);
+        GameSession session = GameSession.CreateNewGame(GameMode.OnePlayer, _input, controls: _controlSettings, settings: _gameSettings);
         session.Current.Score = DevKeys.QualifyingScore;
-        _stateManager.TransitionTo(GameOverState.FromSession(_input, _sprites, _highScoreStore, session));
+        _stateManager.TransitionTo(GameOverState.CreateFromSession(_input, _sprites, _highScoreStore, session));
     }
 
     /// <summary>Switches between the windowed window and borderless full screen at the desktop's own mode.</summary>
@@ -273,7 +293,7 @@ public sealed class RobotronGame : Game
             return;
         }
 
-        Point desktop = DisplayInfo.DesktopResolution;
+        Point desktop = DisplayInfo.GetDesktopResolution();
         ApplyBackBuffer(desktop.X, desktop.Y, fullScreen: true);
     }
 }
