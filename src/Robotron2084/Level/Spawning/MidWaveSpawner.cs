@@ -76,20 +76,29 @@ internal sealed class MidWaveSpawner
         return tank;
     }
 
-    /// <summary>Gorf drops a grunt. It is kept inside the playfield, because Gorf is on its way in or out, and it appears the way a wave's grunts do.</summary>
-    /// <param name="position">Where Gorf is.</param>
-    /// <remarks>A new robot's drop (notes §138.2): there is no arcade routine for it.</remarks>
-    public void SpawnGrunt(IntVector2 position)
+    /// <summary>Gorf drops a grunt: it starts where Gorf is and falls to the ground, with no appear effect. A level holds only so many.</summary>
+    /// <param name="from">Where the grunt starts, which is inside Gorf.</param>
+    /// <param name="landing">Where the grunt ends up standing.</param>
+    /// <remarks>
+    /// A new robot's drop (notes §138.2): there is no arcade routine for it. The grunt is kept inside the playfield, and is not dropped at all when the level
+    /// already holds as many grunts as it is allowed: the wave's own number (which the difficulty moves), or <see cref="GorfTuning.MinimumGruntCap"/> if that is fewer.
+    /// </remarks>
+    public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
+        if (_entities.Grunts.GetLiveCount() >= Math.Max(_field.Parameters.GruntCount, GorfTuning.MinimumGruntCap))
+        {
+            return;
+        }
+
         Rectangle bounds = _field.PlayfieldBounds;
         int width = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Width);
         int height = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Height);
-        IntVector2 inside = new(
-            Math.Clamp(position.X, bounds.X, bounds.Right - width),
-            Math.Clamp(position.Y, bounds.Y, bounds.Bottom - height));
-        var grunt = new Grunt(_field.Sprites, inside, _field.Parameters.GruntMoveDelay, _random);
+        int x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
+        int startY = Math.Clamp(from.Y, bounds.Y, bounds.Bottom - height);
+        int landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);
+        var grunt = new Grunt(_field.Sprites, new IntVector2(x, startY), _field.Parameters.GruntMoveDelay, _random);
+        grunt.BeginFall(landingY);
         _entities.Add(grunt);
-        _field.QueueMaterialise(grunt);
     }
 
     /// <summary>A tank fires a shell at, or at a wall near, the player.</summary>
