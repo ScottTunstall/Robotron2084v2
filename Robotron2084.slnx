@@ -4,5 +4,9 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Robotron2084.Tests/Robotron2084.Tests.csproj" />
+    <Project Path="tests/RobotronSoundPlayer.Tests/RobotronSoundPlayer.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/RobotronSoundPlayer/RobotronSoundPlayer.csproj" />
   </Folder>
 </Solution>
