@@ -29,7 +29,7 @@ public sealed class PlayField
     /// ROM BRNL1's catch reach: the brain and human TOP-LEFT CORNERS must be
     /// within this many arcade px on both axes for a reprogramming to start.
     /// </summary>
-    private static readonly int BrainCatchReach = ScreenSize.ToPortPixelsFromArcade(ReprogramTuning.CatchReachArcadePixels);
+    private static readonly int BrainCatchReach = ScreenSize.ToPortPixels(ReprogramTuning.CatchReachArcadePixels);
 
     private readonly EntityList<Brain> _brains = new();
 
@@ -776,7 +776,7 @@ public sealed class PlayField
     /// </summary>
     private static int FamilyDistance(IntVector2 from, IntVector2 to) =>
         (Math.Abs(to.X - from.X) / ScreenSize.ToPortPixelsFromColumns(1))
-        + (Math.Abs(to.Y - from.Y) / ScreenSize.ToPortPixelsFromArcade(1));
+        + (Math.Abs(to.Y - from.Y) / ScreenSize.ToPortPixels(1));
 
     /// <summary>True when a human is standing on the field and no brain has hold of her.</summary>
     /// <param name="human">The human to test.</param>

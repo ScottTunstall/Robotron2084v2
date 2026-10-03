@@ -18,7 +18,7 @@ internal sealed class LaserWallFlares
     private static readonly int DitherBandHeight = ScreenSize.ToPortPixels(2);
 
     /// <summary>Two bytes of video memory: 4 rows of arcade pixels along the wall.</summary>
-    private static readonly int FlareLength = ScreenSize.ToPortPixelsFromArcade(4);
+    private static readonly int FlareLength = ScreenSize.ToPortPixels(4);
 
     /// <summary>Two bytes of video memory: 2 columns of arcade pixels across the wall.</summary>
     private static readonly int FlareThickness = ScreenSize.ToPortPixelsFromColumns(2);
