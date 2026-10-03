@@ -28,18 +28,18 @@ public sealed class FieldStrategyTests
     [Fact]
     public void TheCollisionRulesRunInTheArcadesOrder()
     {
-        Type[] order = CollisionPhases.InArcadeOrder.Select(phase => phase.GetType()).ToArray();
+        Type[] order = CollisionRules.InArcadeOrder.Select(phase => phase.GetType()).ToArray();
 
         Assert.Equal(
             [
-                typeof(LaserCollisionPhase),
-                typeof(RobotVsElectrodeCollisionPhase),
-                typeof(PlayerVsElectrodeCollisionPhase),
-                typeof(PlayerContactKillPhase),
-                typeof(BrainVictimReleasePhase),
-                typeof(BrainCatchPhase),
-                typeof(HulkVsHumanCollisionPhase),
-                typeof(PlayerRescuePhase),
+                typeof(LaserCollisionRule),
+                typeof(RobotVsElectrodeCollisionRule),
+                typeof(PlayerVsElectrodeCollisionRule),
+                typeof(PlayerContactKillRule),
+                typeof(BrainVictimReleaseRule),
+                typeof(BrainCatchRule),
+                typeof(HulkVsHumanCollisionRule),
+                typeof(PlayerRescueRule),
             ],
             order);
     }
