@@ -23,9 +23,9 @@ public sealed class GorfTests
         return field;
     }
 
-    /// <summary>A Gorf whose rolls are chosen: the side, the ground's height, the drops, then the first hop's height.</summary>
+    /// <summary>A Gorf whose rolls are chosen: the side, the ground's height and the drops.</summary>
     private static Gorf CreateGorf(PlayField field, params int[] rolls) =>
-        new(TestSprites.Shared, new ScriptedRandom([.. rolls, 0]), field.PlayfieldBounds, maxDropsX2: 10);
+        new(TestSprites.Shared, new ScriptedRandom(rolls), field.PlayfieldBounds, maxDropsX2: 10);
 
     /// <summary>A Gorf that rolls as a real game would, for the tests that run it right across.</summary>
     private static Gorf CreateRollingGorf(PlayField field, int seed) =>
@@ -67,15 +67,14 @@ public sealed class GorfTests
     }
 
     [Fact]
-    public void ADeeperHopRollGoesHigher_AndNoHopGoesAboveSixteenPixels()
+    public void EveryHopIsSixteenPixelsHigh_ForNow()
     {
-        Assert.Equal(16, GorfTuning.MaxHopRows);
-        Assert.Equal(8, GorfPath.GetHopHeight(GorfTuning.HopSteps / 2, GorfTuning.HopSteps, 8));
-        Assert.True(GorfPath.GetHopHeight(GorfTuning.HopSteps / 2, GorfTuning.HopSteps, GorfTuning.MaxHopRows) <= GorfTuning.MaxHopRows);
+        Assert.Equal(16, GorfTuning.HopRows);
+        Assert.Equal(16, GorfPath.GetHopHeight(GorfTuning.HopSteps / 2, GorfTuning.HopSteps, GorfTuning.HopRows));
     }
 
     [Fact]
-    public void ItHopsAcrossInSmallJumps_NeverHigherThanSixteenPixels_AndLandsOnTheGroundBetweenThem()
+    public void ItHopsAcrossInJumpsOfTheSameHeight_AndLandsOnTheGroundBetweenThem()
     {
         PlayField field = CreateFieldInPlay();
         Gorf gorf = CreateRollingGorf(field, 21);
@@ -83,22 +82,31 @@ public sealed class GorfTests
         int startX = gorf.Position.X;
         int stepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
         int highestSeen = 0;
+        var peaks = new List<int>();
+        int peakOfThisHop = 0;
+        int lastLanding = 0;
 
         for (int tick = 0; tick < 3000 && gorf.IsAlive(); tick++)
         {
             gorf.Update(Frame, field);
             int risen = groundY - gorf.Position.Y;
             highestSeen = Math.Max(highestSeen, risen);
-            Assert.InRange(risen, 0, ScreenSize.ToPortPixels(GorfTuning.MaxHopRows));
+            peakOfThisHop = Math.Max(peakOfThisHop, risen);
+            Assert.InRange(risen, 0, ScreenSize.ToPortPixels(GorfTuning.HopRows));
 
             int stepsTaken = Math.Abs(gorf.Position.X - startX) / stepPixels;
-            if (stepsTaken > 0 && stepsTaken % GorfTuning.HopSteps == 0)
+            if (stepsTaken > 0 && stepsTaken % GorfTuning.HopSteps == 0 && stepsTaken != lastLanding)
             {
+                lastLanding = stepsTaken;
                 Assert.Equal(0, risen);
+                peaks.Add(peakOfThisHop);
+                peakOfThisHop = 0;
             }
         }
 
-        Assert.True(highestSeen > 0);
+        Assert.Equal(ScreenSize.ToPortPixels(GorfTuning.HopRows), highestSeen);
+        Assert.True(peaks.Count > 3);
+        Assert.All(peaks.Distinct(), peak => Assert.Equal(ScreenSize.ToPortPixels(GorfTuning.HopRows), peak));
     }
 
     [Fact]
@@ -159,8 +167,8 @@ public sealed class GorfTests
     public void ABiggerWaveBoundDropsMoreGrunts_ThanASmallOne()
     {
         PlayField field = CreateFieldInPlay();
-        var top = new Gorf(TestSprites.Shared, new ScriptedRandom(0, 0, 49, 0), field.PlayfieldBounds, maxDropsX2: 50);
-        var bottom = new Gorf(TestSprites.Shared, new ScriptedRandom(0, 0, 3, 0), field.PlayfieldBounds, maxDropsX2: 4);
+        var top = new Gorf(TestSprites.Shared, new ScriptedRandom(0, 0, 49), field.PlayfieldBounds, maxDropsX2: 50);
+        var bottom = new Gorf(TestSprites.Shared, new ScriptedRandom(0, 0, 3), field.PlayfieldBounds, maxDropsX2: 4);
 
         Assert.Equal(25, top.DropsRemaining);
         Assert.Equal(2, bottom.DropsRemaining);
