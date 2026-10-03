@@ -83,6 +83,13 @@ The comparison then lives in one place, the call site reads as intent, and a cha
 once. Inside an entity's own class, ask the same methods on `this`. Setting a state (`LifeState = ...`) stays
 inside the entity that owns it.
 
+**STR-10. Tell, don't ask.** Tell an object what to do; do not ask it for its data and then decide for it. Code
+that reads several things from another object, makes a decision and writes the result back (`if (x.A > 0 &&
+!x.B) x.C = ...`) belongs inside that object as one method (`x.Update()`, `x.Catch(target)`). Callers give the object
+what it needs as arguments and let it work. A query is fine when the answer is the point (`IsAlive()`,
+`GetNearestSlot()`), but a query used only to choose which command to send is the smell. This works with STR-8
+(feature envy) and STR-9 (state checks): the rule and the data live together, and the caller issues one command.
+
 ## 3. Naming (§114)
 
 **NAM-1. Methods are verb phrases in the domain's own words**: `RollOffsets`, `PickDirection`,
@@ -187,6 +194,13 @@ beat, that value is a **wait** (`beatWaitRomFrames`), and the interval is the wa
 same way a list of strategies is `...Strategies`, a table of values is `...Tables`, a set of tuning numbers is
 `...Tuning`, and a registry of rows is named for the rows (`RobotKinds`). When a class is renamed because its
 contents are not what its name says, rename its interface, its members, its test classes and its file too (NAM-8).
+
+**NAM-18. A method name says what the method does, and does not repeat the class name.** The class already says
+what the thing is, so the method names only the action: `Robot.Move()`, not `Robot.MoveRobot()`; `Grunt.Kill()`,
+not `Grunt.KillGrunt()`; `FamilyList.GetNearestSlot()`, not `FamilyList.GetNearestFamilySlot()`. The caller reads
+`robot.Move()` and nothing is lost. The name must still be specific enough to say its purpose on its own: no bare
+`Process`, `Handle`, `Do` or `Run`. If the action cannot be named without the noun, the method is probably on the
+wrong class (STR-8).
 
 ## 4. Numbers and units (§112, §113)
 
