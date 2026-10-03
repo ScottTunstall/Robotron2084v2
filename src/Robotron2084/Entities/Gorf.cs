@@ -10,7 +10,7 @@ namespace Robotron2084.Entities;
 /// <summary>Gorf hops across the screen in a string of small jumps, from one side to the other, dropping grunts as it goes. It does not shoot.</summary>
 /// <remarks>
 /// A new kind of robot of the author's own with no arcade routine behind it (notes §138.2). It starts off the screen, on a random side and at a random
-/// height, and hops to the far side (<see cref="GorfPath"/>), then goes. Each hop rolls its own height, up to 16 pixels for now (<see cref="GorfTuning.MaxHopRows"/>). On the way it drops grunts, evenly spaced along its path. How many it
+/// height, and hops to the far side (<see cref="GorfPath"/>), then goes. Every hop is the same height, 16 pixels for now (<see cref="GorfTuning.HopRows"/>). On the way it drops grunts, evenly spaced along its path. How many it
 /// drops is rolled as a spheroid rolls its enforcers: from the wave's <c>ENFNUM</c> (<see cref="LevelParameters.MaxDropsX2"/>), so it grows with the wave and the
 /// difficulty. A Gorf that gets across is gone for good and scores nothing; one that is shot scores as a grunt does.
 /// </remarks>
@@ -29,19 +29,17 @@ public sealed class Gorf : IExplodable, IRemovable
     /// <summary>How far each step goes sideways, in port pixels.</summary>
     private static readonly int StepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
 
-    /// <summary>The highest a hop may go, in port pixels.</summary>
-    private static readonly int MaxHopPixels = ScreenSize.ToPortPixels(GorfTuning.MaxHopRows);
+    /// <summary>How high every hop goes, in port pixels.</summary>
+    private static readonly int HopPixels = ScreenSize.ToPortPixels(GorfTuning.HopRows);
 
     private readonly int _direction;
     private readonly Queue<int> _dropSteps = new();
     private readonly int _groundY;
     private readonly Rectangle _playfield;
-    private readonly Random _random;
     private readonly SpriteSet _sprites;
     private readonly int _totalSteps;
     private int _animationFrameIndex;
     private int _animationTimer;
-    private int _hopHeight;
     private IntVector2 _position;
     private int _step;
     private int _stepInHop;
@@ -56,9 +54,8 @@ public sealed class Gorf : IExplodable, IRemovable
     {
         _sprites = sprites;
         _playfield = playfield;
-        _random = random;
         _direction = random.Next(2) == 0 ? 1 : -1;
-        int highest = playfield.Y + MaxHopPixels;
+        int highest = playfield.Y + HopPixels;
         int lowest = Math.Max(highest, playfield.Bottom - CollisionSize.Height);
         _groundY = highest + random.Next(lowest - highest + 1);
         _position = new IntVector2(_direction > 0 ? playfield.X - CollisionSize.Width : playfield.Right, _groundY);
@@ -70,8 +67,6 @@ public sealed class Gorf : IExplodable, IRemovable
         {
             _dropSteps.Enqueue(drop * _totalSteps / (drops + 1));
         }
-
-        RollHopHeight();
     }
 
     /// <summary>The robot's own box at <see cref="Position"/>.</summary>
@@ -164,12 +159,11 @@ public sealed class Gorf : IExplodable, IRemovable
     {
         _step++;
         _stepInHop++;
-        int height = GorfPath.GetHopHeight(_stepInHop, GorfTuning.HopSteps, _hopHeight);
+        int height = GorfPath.GetHopHeight(_stepInHop, GorfTuning.HopSteps, HopPixels);
         _position = new IntVector2(_position.X + (_direction * StepPixels), _groundY - height);
         if (_stepInHop == GorfTuning.HopSteps)
         {
             _stepInHop = 0;
-            RollHopHeight();
         }
 
         if (_dropSteps.Count > 0 && _step >= _dropSteps.Peek())
@@ -183,7 +177,4 @@ public sealed class Gorf : IExplodable, IRemovable
             Kill();
         }
     }
-
-    /// <summary>Rolls how high the next hop goes: from 1 row up to the highest a hop may go.</summary>
-    private void RollHopHeight() => _hopHeight = ScreenSize.ToPortPixels(_random.Next(GorfTuning.MaxHopRows) + 1);
 }
