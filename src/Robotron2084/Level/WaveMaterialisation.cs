@@ -1,4 +1,6 @@
+using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Entities;
+using Robotron2084.Graphics;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
@@ -16,7 +18,15 @@ public sealed class WaveMaterialisation
 
     private readonly Dictionary<IEntity, StripEffect?> _assembling = [];
     private readonly Queue<IEntity> _pending = new();
+    private readonly RobotTransporter? _transporter;
     private int _sequenceNumber;
+    private bool _transportBegun;
+
+    /// <summary>Makes the sequence for one wave.</summary>
+    /// <param name="random">The field's random source, which the transporter's sparkle uses.</param>
+    /// <param name="beamIn">True on a brain wave, where the robots are beamed in by the transporter instead of appearing strip by strip.</param>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS00</c> and the test of <c>BRNCNT</c> before it ("BRAIN WAVE???").</remarks>
+    public WaveMaterialisation(Random random, bool beamIn) => _transporter = beamIn ? new RobotTransporter(random) : null;
 
     /// <summary>Robots still waiting for their appear record.</summary>
     public int PendingCount => _pending.Count;
@@ -30,12 +40,29 @@ public sealed class WaveMaterialisation
     /// <param name="clip">The strip engine's clip rectangle.</param>
     public void Advance(EntityList<StripEffect> explosions, StripClip clip)
     {
+        if (_transporter is not null)
+        {
+            AdvanceTransport(_transporter);
+            return;
+        }
+
         if (_pending.Count > 0 && explosions.Count < StripExplosionTuning.MaxConcurrent)
         {
             StartNextAppear(explosions, clip);
         }
 
         RetireConverged();
+    }
+
+    /// <summary>Draws the robots being beamed in, when this is a brain wave and the beaming is under way.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The sprite set.</param>
+    public void DrawTransport(SpriteBatch spriteBatch, SpriteSet sprites)
+    {
+        if (_transportBegun && _transporter is { IsFinished: false })
+        {
+            _transporter.Draw(spriteBatch, sprites);
+        }
     }
 
     /// <summary>
@@ -54,6 +81,27 @@ public sealed class WaveMaterialisation
     {
         _pending.Enqueue(robot);
         _assembling[robot] = null;
+    }
+
+    private void AdvanceTransport(RobotTransporter transporter)
+    {
+        if (!_transportBegun && _pending.Count > 0)
+        {
+            transporter.Begin([.. _pending]);
+            _pending.Clear();
+            _transportBegun = true;
+        }
+
+        if (!_transportBegun)
+        {
+            return;
+        }
+
+        transporter.Update();
+        if (transporter.IsFinished)
+        {
+            _assembling.Clear();
+        }
     }
 
     private void RetireConverged()

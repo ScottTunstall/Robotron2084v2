@@ -26,7 +26,7 @@ public sealed class PlayField : ICollisionScene
 {
     private readonly GruntSpeedProgression _gruntSpeed;
     private readonly LaserWallFlares _laserWallFlares = new();
-    private readonly WaveMaterialisation _materialisation = new();
+    private readonly WaveMaterialisation _materialisation;
     private readonly CollisionResponder _collisionResponder;
     private readonly IContactTest _contactTest;
     private readonly MidWaveSpawner _midWave;
@@ -71,6 +71,7 @@ public sealed class PlayField : ICollisionScene
         Input = input;
         Score = new ScoreBoard(startingScore, extraManEveryPoints);
         _random = random;
+        _materialisation = new WaveMaterialisation(random, parameters.BrainCount > 0);
         _palette = palette;
         _contactTest = contactTest ?? new BoxContactTest();
         _midWave = new MidWaveSpawner(this, Entities, random);
@@ -174,6 +175,7 @@ public sealed class PlayField : ICollisionScene
 
         // 2-4. The electrodes, the family and their markers, then the robots — one loop over the field's draw order.
         Entities.DrawBehindShots(spriteBatch, this);
+        _materialisation.DrawTransport(spriteBatch, Sprites);
 
         // 5. Player lasers.
         PlayerLasers.Draw(spriteBatch);
