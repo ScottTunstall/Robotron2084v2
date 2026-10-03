@@ -35,7 +35,7 @@ public sealed class GamePalette
     private readonly bool[] _suspended = new bool[16];
 
     /// <summary>The live RGB of a slot.</summary>
-    public Color Color(int slot) => RobotronColor.FromByte(_slots[slot]);
+    public Color Color(int slot) => RobotronColor.CreateFromByte(_slots[slot]);
 
     /// <summary>True while a slot's colour process is stopped.</summary>
     public bool IsSlotSuspended(int slot) => _suspended[slot];

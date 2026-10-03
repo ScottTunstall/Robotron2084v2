@@ -119,7 +119,7 @@ public sealed class PresentationPagePalette
     /// <summary>True when a clock's accumulator has reached <paramref name="romFrames"/> frames.</summary>
     private static bool StepDue(ref int clockUnits, int romFrames)
     {
-        int period = ArcadeClock.Units(romFrames);
+        int period = ArcadeClock.ToClockUnits(romFrames);
         if (clockUnits < period)
         {
             return false;

@@ -156,7 +156,7 @@ public sealed class HighScorePalette
 
             Process process = _processes[i];
             process.ClockUnits += ArcadeClock.UnitsPerPortTick;
-            int period = ArcadeClock.Units(process.RomFramesPerStep);
+            int period = ArcadeClock.ToClockUnits(process.RomFramesPerStep);
             if (process.ClockUnits < period)
             {
                 continue;

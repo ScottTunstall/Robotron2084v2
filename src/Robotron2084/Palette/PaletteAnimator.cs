@@ -21,7 +21,7 @@ namespace Robotron2084.Palette;
 /// the entity bodies use (notes §52, §65): a 1-frame process steps every 1.2
 /// ticks, a 2-frame one every 2.4, an 8-frame one every 9.6. Until §65 the steps
 /// were counted in PORT ticks, which made all six cycles run 20% fast — visible
-/// on the player's score digits, the mini man, the posts and the wall.
+/// on the player's score digits, the mini man, the electrodes and the wall.
 ///
 /// Tables loop (the ROM restarts each table at index 0 on its $00 sentinel —
 /// equivalent to wrap for these sequences).
@@ -71,7 +71,7 @@ public sealed class PaletteAnimator
         // LF (slot 10): a white flash every 2 ROM frames, and every 6th frame a
         // random hue from the COLTAB ramp INSTEAD of the white one.
         _laserFlashClockUnits += ArcadeClock.UnitsPerPortTick;
-        int flashPeriod = ArcadeClock.Units(LaserFlashRomFrames);
+        int flashPeriod = ArcadeClock.ToClockUnits(LaserFlashRomFrames);
         while (_laserFlashClockUnits >= flashPeriod)
         {
             _laserFlashClockUnits -= flashPeriod;
@@ -98,12 +98,12 @@ public sealed class PaletteAnimator
             }
 
             p.ClockUnits += ArcadeClock.UnitsPerPortTick;
-            if (p.ClockUnits < ArcadeClock.Units(p.RomFramesPerStep))
+            if (p.ClockUnits < ArcadeClock.ToClockUnits(p.RomFramesPerStep))
             {
                 continue;
             }
 
-            p.ClockUnits -= ArcadeClock.Units(p.RomFramesPerStep);
+            p.ClockUnits -= ArcadeClock.ToClockUnits(p.RomFramesPerStep);
             _palette.SetSlot(p.Slot, p.Table[p.Index]);
             p.Index = (p.Index + 1) % p.Table.Length;
         }
