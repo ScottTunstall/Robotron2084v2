@@ -34,7 +34,7 @@ namespace Robotron2084.States;
 /// takes over (notes §95/§96).
 ///
 /// TEXT (notes §107): the page's two text panes alternate every
-/// <see cref="AttractTuning.TitleTextSwapSeconds"/> — the arcade's own lines (the welcome
+/// <see cref="AttractTuning.TitleArcadeTextSeconds"/> and <see cref="AttractTuning.TitlePortTextSeconds"/> — the arcade's own lines (the welcome
 /// message, with an empty row between its two lines as the arcade prints it, and the credit strings
 /// in the SMALL font with the copyright an empty row below them in a colour of its own), then the
 /// port's own (its credit line and the F-key menu). There is no room for both at once, and the
@@ -100,7 +100,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     // Layout of the presentation page (notes §103/§107). It sits inside the border of moving W logos, between
     // the top row's bottom edge (canvas row 66) and the bottom row's top edge (row 323). The wordmark is drawn at the port's 2x sprite
     // scale, which is why the wordmark is 58 canvas px tall. The page's TEXT alternates between two
-    // panes, swapping every TitleTextSwapSeconds: there is no room for both at
+    // panes, swapping after TitleArcadeTextSeconds and TitlePortTextSeconds: there is no room for both at
     // once — and that is exactly what lets the arcade's two message lines have an EMPTY ROW between
     // them (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
     // an 8-row line grid, i.e. one blank line).
@@ -126,7 +126,8 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private readonly IPlayerInputSource _input;
     private readonly GameServices _services;
     private readonly SpriteSet _sprites;
-    private readonly TimeSpan _textSwap = TimeSpan.FromSeconds(AttractTuning.TitleTextSwapSeconds);
+    private readonly TimeSpan _arcadeTextDuration = TimeSpan.FromSeconds(AttractTuning.TitleArcadeTextSeconds);
+    private readonly TimeSpan _portTextDuration = TimeSpan.FromSeconds(AttractTuning.TitlePortTextSeconds);
 
     /// <summary>True while the ARCADE's text pane is up; it alternates with the port's (notes §107).</summary>
     private bool _arcadeText = true;
@@ -179,7 +180,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
             DrawCentredLogo(spriteBatch, _sprites.Title2084, Logo2084Row);
         }
 
-        // The page's text: ONE of its two panes, alternating every TitleTextSwapSeconds
+        // The page's text: ONE of its two panes, alternating (the arcade pane for TitleArcadeTextSeconds, the port's for TitlePortTextSeconds)
         // (notes §107). Both are drawn in the page's own text slot — the ROM's operand `$66`, entry
         // 6, ORANGE with the white flash sweeping through it (notes §106) — so the port's credit
         // and the shortcut keys flash with the arcade's own lines.
@@ -232,7 +233,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // credit and F-key menu. Nothing else on the page changes with them — the logos and the
         // colour cycling carry on regardless.
         _textElapsed += gameTime.ElapsedGameTime;
-        if (_textElapsed >= _textSwap)
+        if (_textElapsed >= (_arcadeText ? _arcadeTextDuration : _portTextDuration))
         {
             _textElapsed = TimeSpan.Zero;
             _arcadeText = !_arcadeText;
