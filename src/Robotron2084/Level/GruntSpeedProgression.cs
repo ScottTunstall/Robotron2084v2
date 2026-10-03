@@ -28,7 +28,7 @@ public sealed class GruntSpeedProgression
     private const int SmallFloorStep = 1;
 
     /// <summary>R5 $2A85-2B08: after the first update, the counter's 15 passes of 15 ROM frames.</summary>
-    private const int UpdatePeriodRomFrames = 15 * 15;
+    private const int UpdateIntervalRomFrames = 15 * 15;
 
     private int _floorStep = LargeFloorStep; // the ROM's $F0 toggle: -2/-4 then -1/-2
     private int _updateTimer = ArcadeClock.ToPortTicks(FirstUpdateRomFrames);
@@ -67,7 +67,7 @@ public sealed class GruntSpeedProgression
             return;
         }
 
-        _updateTimer = ArcadeClock.ToPortTicks(UpdatePeriodRomFrames);
+        _updateTimer = ArcadeClock.ToPortTicks(UpdateIntervalRomFrames);
 
         if (grunts.Count(grunt => grunt.LifeState != EntityLifeState.Dead) < MinimumGruntsToProgress)
         {

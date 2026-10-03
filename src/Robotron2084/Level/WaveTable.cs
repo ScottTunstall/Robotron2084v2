@@ -22,8 +22,8 @@ namespace Robotron2084.Level;
 /// </summary>
 public static class WaveTable
 {
-    /// <summary>BRNSPD @ $BE63 — brain speed (update rate; lower = faster).</summary>
-    public static readonly int[] BrainBeatDelayRomFrames =
+    /// <summary>BRNSPD @ $BE63: how many ROM frames a brain waits after each beat (lower = faster). The interval between beats is this plus one.</summary>
+    public static readonly int[] BrainBeatWaitRomFrames =
     [
         8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6
     ];
@@ -78,8 +78,8 @@ public static class WaveTable
         0, 5, 6, 7, 0, 7, 12, 8, 4, 0, 8, 13, 8, 20, 2, 3, 14, 8, 3, 2, 8, 15, 8, 13, 1, 8, 16, 8, 4, 1, 8, 16, 8, 25, 2, 8, 16, 8, 6, 2
     ];
 
-    /// <summary>HLKSPD @ $BE61 — hulk update rate (lower = faster).</summary>
-    public static readonly int[] HulkStepDelayRomFrames =
+    /// <summary>HLKSPD @ $BE61: the interval between a hulk's beats, in ROM frames (lower = faster).</summary>
+    public static readonly int[] HulkBeatIntervalRomFrames =
     [
         8, 8, 7, 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
     ];
@@ -148,7 +148,7 @@ public static class WaveTable
     [
         Grunts, Electrodes, Mommies, Daddies, Mikeys, Hulks, Brains, Spheroids, Quarks,
         GruntMoveDelay, GruntSpeedFloor, MaxDropsX2, EnforcerFireDelay, SpheroidDropDelay,
-        HulkStepDelayRomFrames, BrainFireDelay, BrainBeatDelayRomFrames, TankFireDelay, ShellSpeed, QuarkDropDelay, QuarkSpeedCap,
+        HulkBeatIntervalRomFrames, BrainFireDelay, BrainBeatWaitRomFrames, TankFireDelay, ShellSpeed, QuarkDropDelay, QuarkSpeedCap,
     ];
 
     static WaveTable()
@@ -185,9 +185,9 @@ public static class WaveTable
             GruntSpeedFloor[i],
             EnforcerFireDelay[i],
             SpheroidDropDelay[i],
-            HulkStepDelayRomFrames[i],
+            HulkBeatIntervalRomFrames[i],
             BrainFireDelay[i],
-            BrainBeatDelayRomFrames[i],
+            BrainBeatWaitRomFrames[i],
             TankFireDelay[i],
             ShellSpeed[i],
             QuarkDropDelay[i],

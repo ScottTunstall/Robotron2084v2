@@ -634,7 +634,7 @@ public sealed class PlayField
             // HUMSTV fills the family list, so the search finds every slot empty and hands back slot 0.
             // Mikey fills slot 0, so every brain on the wave chases her: the arcade's own bug, kept on
             // purpose (notes §18.8).
-            var brain = new Brain(Sprites, position, _random, Parameters.BrainBeatDelayRomFrames, Parameters.BrainFireDelay, GetNearestFamilySlot(position));
+            var brain = new Brain(Sprites, position, _random, Parameters.BrainBeatWaitRomFrames, Parameters.BrainFireDelay, GetNearestFamilySlot(position));
             _brains.Add(brain);
             QueueMaterialise(brain);
         }
@@ -687,7 +687,7 @@ public sealed class PlayField
             // (spec: "30,40 pixels away minimum" — 35 spec-px midpoint, tunable).
             IntVector2 position = _placement.FindSpawnPoint(
                 rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.ToPortPixels(SpawnTuning.HulkMinDistanceFromPlayer)));
-            // ROM RRH11: step period from the wave table (HLKSPD).
+            // ROM RRH11: beat interval from the wave table (HLKSPD).
             //
             // ROM (R5 $017C HULK_INITIALISE) target roll, per hulk at spawn:
             //   50% -> "stalk a family member": scan the family list (round
@@ -704,7 +704,7 @@ public sealed class PlayField
             // and the hulk falls back to the player (R5 $010D/$0113).
             Func<IntVector2> target =
                 _random.Next(2) == 0 ? GetLastHumanOrPlayerPosition : () => Player.Position;
-            var hulk = new Hulk(Sprites, position, _random, Parameters.HulkStepDelayRomFrames, target);
+            var hulk = new Hulk(Sprites, position, _random, Parameters.HulkBeatIntervalRomFrames, target);
             _hulks.Add(hulk);
             QueueMaterialise(hulk);
         }

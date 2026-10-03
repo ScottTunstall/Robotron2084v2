@@ -58,13 +58,13 @@ public static class DifficultyTuning
     private static readonly Header SpheroidDropDelayHeader = new(0x8E, 12, 40);
 
     /// <summary>HLKSPD @ $2CF7 — hulk update rate (lower = faster).</summary>
-    private static readonly Header HulkStepDelayHeader = new(0x8E, 5, 9);
+    private static readonly Header HulkBeatIntervalHeader = new(0x8E, 5, 9);
 
     /// <summary>BSHTIM @ $2D22 — brain cruise-missile fire delay.</summary>
     private static readonly Header BrainFireDelayHeader = new(0x8E, 25, 80);
 
     /// <summary>BRNSPD @ $2D4D — brain speed.</summary>
-    private static readonly Header BrainBeatDelayHeader = new(0x8E, 6, 10);
+    private static readonly Header BrainBeatWaitHeader = new(0x8E, 6, 10);
 
     /// <summary>TNKSHT @ $2D78 — tank shell fire rate.</summary>
     private static readonly Header TankFireDelayHeader = new(0x8E, 20, 40);
@@ -111,9 +111,9 @@ public static class DifficultyTuning
             MaxTanksPerQuark = (drops + 1) / 2,
             EnforcerFireDelay = Adjust(parameters.EnforcerFireDelay, EnforcerFireDelayHeader, delta, magnitude),
             SpheroidDropDelay = Adjust(parameters.SpheroidDropDelay, SpheroidDropDelayHeader, delta, magnitude),
-            HulkStepDelayRomFrames = Adjust(parameters.HulkStepDelayRomFrames, HulkStepDelayHeader, delta, magnitude),
+            HulkBeatIntervalRomFrames = Adjust(parameters.HulkBeatIntervalRomFrames, HulkBeatIntervalHeader, delta, magnitude),
             BrainFireDelay = Adjust(parameters.BrainFireDelay, BrainFireDelayHeader, delta, magnitude),
-            BrainBeatDelayRomFrames = Adjust(parameters.BrainBeatDelayRomFrames, BrainBeatDelayHeader, delta, magnitude),
+            BrainBeatWaitRomFrames = Adjust(parameters.BrainBeatWaitRomFrames, BrainBeatWaitHeader, delta, magnitude),
             TankFireDelay = Adjust(parameters.TankFireDelay, TankFireDelayHeader, delta, magnitude),
             ShellSpeed = Adjust(parameters.ShellSpeed, ShellSpeedHeader, delta, magnitude),
             QuarkDropDelay = Adjust(parameters.QuarkDropDelay, QuarkDropDelayHeader, delta, magnitude),
