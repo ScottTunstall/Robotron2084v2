@@ -1,4 +1,3 @@
-using Robotron2084.Audio;
 using Robotron2084.Entities;
 
 namespace Robotron2084.Level.Collisions;
@@ -6,31 +5,25 @@ namespace Robotron2084.Level.Collisions;
 /// <summary>A hulk walking onto a human. The human dies at once and leaves a skull.</summary>
 /// <remarks>Original source: <c>RRH11.ASM</c> <c>HULK</c>, the only robot whose collision check walks the family list,
 /// and <c>HUMKIL</c> for the skull and the sound. No hulk kills anyone while the robots are held still.</remarks>
-public sealed class HulkVsHumanCollisionRule : ICollisionRule
+internal sealed class HulkVsHumanCollisionRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
     {
-        if (field.RobotsFrozen)
+        if (scene.RobotsFrozen)
         {
-            return;
+            yield break;
         }
 
         foreach (Human human in entities.GetFamilyMembers())
         {
-            if (human.IsGraspable() && IsTouchedByAHulk(field, entities, human))
+            Hulk? hulk = human.IsGraspable()
+                ? entities.Hulks.FirstOrDefault(candidate => candidate.IsAlive() && scene.Touches(candidate, human))
+                : null;
+            if (hulk is not null)
             {
-                human.Kill();
-                field.LeaveSkull(human.Position);
-                field.PlaySoundFrom(SoundTables.KillAHuman, human.Bounds);
+                yield return new HulkKilledHumanResult(hulk, human);
             }
         }
     }
-
-    /// <summary>Says whether any living hulk is touching a human.</summary>
-    /// <param name="field">The field the entities are on.</param>
-    /// <param name="entities">What is on the field.</param>
-    /// <param name="human">The human.</param>
-    private static bool IsTouchedByAHulk(PlayField field, FieldEntities entities, Human human) =>
-        entities.Hulks.Any(hulk => hulk.IsAlive() && field.Touches(hulk, human));
 }

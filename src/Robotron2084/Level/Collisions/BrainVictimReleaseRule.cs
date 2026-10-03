@@ -9,16 +9,16 @@ namespace Robotron2084.Level.Collisions;
 /// <item>Disassembly: <c>BRAIN_COLLISION_HANDLER</c> (<c>$1DD6</c>)</item>
 /// </list>
 /// </remarks>
-public sealed class BrainVictimReleaseRule : ICollisionRule
+internal sealed class BrainVictimReleaseRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
     {
         foreach (Brain brain in entities.Brains)
         {
-            if (!brain.IsAlive() && brain.ReleaseVictim() is { } released)
+            if (!brain.IsAlive() && brain.IsReprogramming)
             {
-                field.LeaveSkull(released.Position);
+                yield return new BrainLostVictimResult(brain);
             }
         }
     }

@@ -5,43 +5,23 @@ namespace Robotron2084.Level.Collisions;
 /// <summary>The player touching anything that is deadly to touch: the walking robots and every enemy shot. Only the player dies.</summary>
 /// <remarks>Which kinds are deadly comes from <see cref="RobotKindInfo.KillsPlayerOnContact"/>. The thing touched is not
 /// removed; only a laser removes a shot.</remarks>
-public sealed class PlayerContactKillRule : ICollisionRule
+internal sealed class PlayerContactKillRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
     {
-        if (!field.CanPlayerBeHurt())
+        if (!scene.CanPlayerBeHurt())
         {
-            return;
+            yield break;
         }
 
-        foreach (RobotKindInfo robot in RobotKinds.All)
+        foreach (RobotKindInfo robot in RobotKinds.All.Where(kind => kind.KillsPlayerOnContact))
         {
-            if (robot.KillsPlayerOnContact)
+            IEntity? touched = entities.GetEntities(robot.Kind).FirstOrDefault(entity => entity.IsAlive() && scene.TouchesPlayer(entity));
+            if (touched is not null)
             {
-                KillPlayerOnContact(field, entities.GetEntities(robot.Kind));
-            }
-        }
-    }
-
-    /// <summary>Kills the player if they are touching any living thing in a list.</summary>
-    /// <param name="field">The field the entities are on.</param>
-    /// <param name="robots">The things of one kind.</param>
-    /// <remarks>The player is checked again before every one, because an earlier one may already have killed them, and a
-    /// second kill would start the death again.</remarks>
-    private static void KillPlayerOnContact(PlayField field, IEnumerable<IEntity> robots)
-    {
-        foreach (IEntity entity in robots)
-        {
-            if (!field.IsPlayerAlive())
-            {
-                return;
-            }
-
-            if (entity.IsAlive() && field.TouchesPlayer(entity))
-            {
-                field.KillPlayer();
-                return;
+                yield return new PlayerTouchedDeadThingResult(touched);
+                yield break;
             }
         }
     }

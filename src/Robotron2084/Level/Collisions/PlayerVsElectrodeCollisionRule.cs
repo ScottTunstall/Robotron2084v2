@@ -3,24 +3,20 @@ using Robotron2084.Entities;
 namespace Robotron2084.Level.Collisions;
 
 /// <summary>The player walking onto an electrode. Both the player and the electrode die, unless the player cannot be hurt just now.</summary>
-public sealed class PlayerVsElectrodeCollisionRule : ICollisionRule
+internal sealed class PlayerVsElectrodeCollisionRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
     {
-        if (!field.CanPlayerBeHurt())
+        if (!scene.CanPlayerBeHurt())
         {
-            return;
+            yield break;
         }
 
-        foreach (Electrode electrode in entities.Electrodes)
+        Electrode? touched = entities.Electrodes.FirstOrDefault(electrode => electrode.IsAlive() && scene.TouchesPlayer(electrode));
+        if (touched is not null)
         {
-            if (electrode.IsAlive() && field.TouchesPlayer(electrode))
-            {
-                field.KillPlayer();
-                electrode.Kill();
-                return;
-            }
+            yield return new PlayerHitElectrodeResult(touched);
         }
     }
 }
