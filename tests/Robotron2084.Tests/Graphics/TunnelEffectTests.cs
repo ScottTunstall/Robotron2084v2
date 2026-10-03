@@ -138,7 +138,7 @@ public sealed class TunnelEffectTests
         // the inner rings read as thin outlines (notes §84/§85).
         for (int row = 0; row < 256; row++)
         {
-            Assert.True(TunnelEffect.RowY(row + 1) > TunnelEffect.RowY(row),
+            Assert.True(TunnelEffect.GetRowY(row + 1) > TunnelEffect.GetRowY(row),
                 $"row {row} must be at least one port pixel tall");
         }
 
@@ -149,8 +149,8 @@ public sealed class TunnelEffectTests
         }
 
         // The ROM's 256 rows fill the port's whole screen height, and no more.
-        Assert.Equal(0, TunnelEffect.RowY(0));
-        Assert.Equal(ScreenSize.Height, TunnelEffect.RowY(256));
+        Assert.Equal(0, TunnelEffect.GetRowY(0));
+        Assert.Equal(ScreenSize.Height, TunnelEffect.GetRowY(256));
         Assert.Equal(ScreenSize.Width, TunnelEffect.PixelX(304));
     }
 

@@ -5,7 +5,7 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// The four player laser pictures must match the ROM byte-for-byte:
+/// The four player laser sprites must match the ROM byte-for-byte:
 /// R5 $35BE-$35DC (LLPC/ULPC/DLLPC/ULLPC), 4 bits per pixel with the high
 /// nibble = the left pixel (notes 2026-09-12 (19); author ROM check
 /// 2026-09-13: 13758 3x1, 13761 1x6, 13767 3x6, 13785 3x6). The patterns are
@@ -19,7 +19,7 @@ public sealed class PlayerLaserAnimationFrameTests
     [Fact]
     public void Bar_Is6x1_Solid()
     {
-        Color[] pattern = PictureFactory.BuildLaserBarPattern(Color.White);
+        Color[] pattern = SpriteFactory.BuildLaserBarPattern(Color.White);
 
         Assert.Equal(6, pattern.Length);
         Assert.All(pattern, pixel => Assert.Equal(Color.White, pixel));
@@ -28,7 +28,7 @@ public sealed class PlayerLaserAnimationFrameTests
     [Fact]
     public void Column_Is2x6_LeftColumnOnly()
     {
-        Color[] pattern = PictureFactory.BuildLaserColumnPattern(Color.White);
+        Color[] pattern = SpriteFactory.BuildLaserColumnPattern(Color.White);
 
         Assert.Equal(2 * N, pattern.Length);
         for (int row = 0; row < N; row++)
@@ -41,7 +41,7 @@ public sealed class PlayerLaserAnimationFrameTests
     [Fact]
     public void DiagonalMain_Is6x6_TopLeftToBottomRight()
     {
-        Color[] pattern = PictureFactory.BuildLaserDiagonalMainPattern(Color.White);
+        Color[] pattern = SpriteFactory.BuildLaserDiagonalMainPattern(Color.White);
 
         Assert.Equal(N * N, pattern.Length);
         for (int y = 0; y < N; y++)
@@ -57,7 +57,7 @@ public sealed class PlayerLaserAnimationFrameTests
     [Fact]
     public void DiagonalAnti_Is6x6_TopRightToBottomLeft()
     {
-        Color[] pattern = PictureFactory.BuildLaserDiagonalAntiPattern(Color.White);
+        Color[] pattern = SpriteFactory.BuildLaserDiagonalAntiPattern(Color.White);
 
         Assert.Equal(N * N, pattern.Length);
         for (int y = 0; y < N; y++)

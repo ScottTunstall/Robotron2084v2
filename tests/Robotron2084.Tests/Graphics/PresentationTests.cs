@@ -36,7 +36,7 @@ public sealed class PresentationTests
     [MemberData(nameof(ClientAreas))]
     public void IntegerModeIsAWholeMultipleAndTheLargestOneThatFits(int width, int height)
     {
-        float scale = Presentation.ScaleFor(width, height, ScaleMode.Integer);
+        float scale = Presentation.GetScale(width, height, ScaleMode.Integer);
 
         Assert.True(scale >= 1f, "the canvas is never scaled below 1x");
         Assert.Equal(MathF.Floor(scale), scale);
@@ -99,7 +99,7 @@ public sealed class PresentationTests
         Rectangle fill = Presentation.CanvasDestination(1440, 900, ScaleMode.Fill);
         Assert.Equal(new Rectangle(0, 0, 1440, 900), fill);
 
-        int whole = ScreenSize.MaxIntegerScale(1440, 900);
+        int whole = ScreenSize.ComputeMaxIntegerScale(1440, 900);
         Rectangle integer = Presentation.CanvasDestination(1440, 900, ScaleMode.Integer);
         Assert.Equal(whole * ScreenSize.Width, integer.Width);
         Assert.Equal(whole * ScreenSize.Height, integer.Height);
@@ -121,7 +121,7 @@ public sealed class PresentationTests
         int width = ScreenSize.Width * 3;
         int height = ScreenSize.Height * 3;
 
-        Assert.Equal(3f, Presentation.ScaleFor(width, height, ScaleMode.Integer));
+        Assert.Equal(3f, Presentation.GetScale(width, height, ScaleMode.Integer));
         Assert.Equal(
             Presentation.CanvasDestination(width, height, ScaleMode.Integer),
             Presentation.CanvasDestination(width, height, ScaleMode.Fill));

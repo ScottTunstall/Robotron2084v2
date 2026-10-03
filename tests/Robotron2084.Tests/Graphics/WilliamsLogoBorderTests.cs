@@ -8,12 +8,12 @@ namespace Robotron2084.Tests.Rendering;
 public sealed class WilliamsLogoBorderTests
 {
     /// <summary>A one-pixel stand-in for the W, so a test can find exactly where it was drawn.</summary>
-    private static WilliamsLogoBorder NewBorder() => new(SpriteMask.FromPixels(28, 27, [(0, 0)]));
+    private static WilliamsLogoBorder NewBorder() => new(SpriteMask.CreateFromPixels(28, 27, [(0, 0)]));
 
     private static void TickRomFrames(WilliamsLogoBorder border, int romFrames)
     {
         // A ROM frame is six clock units and a port tick five, so N frames take 6N/5 ticks, rounded up.
-        int ticks = (ArcadeClock.Units(romFrames) + ArcadeClock.UnitsPerPortTick - 1) / ArcadeClock.UnitsPerPortTick;
+        int ticks = (ArcadeClock.ToClockUnits(romFrames) + ArcadeClock.UnitsPerPortTick - 1) / ArcadeClock.UnitsPerPortTick;
         for (int i = 0; i < ticks; i++)
         {
             border.Tick();

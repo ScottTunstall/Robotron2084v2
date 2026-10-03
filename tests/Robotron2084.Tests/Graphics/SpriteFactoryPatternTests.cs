@@ -12,25 +12,25 @@ namespace Robotron2084.Tests;
 /// SpecScale) with the shape centred — centre pixel filled, corners empty —
 /// so a resolution change (SpecScale 2 → 3 → 4…) never mis-renders them.
 /// </summary>
-public sealed class PictureFactoryPatternTests
+public sealed class SpriteFactoryPatternTests
 {
     public static IEnumerable<object[]> AllPatterns()
     {
-        yield return new object[] { "Player", (Func<Color, Color[]>)PictureFactory.BuildPlayerPattern };
-        yield return new object[] { "Electrode", (Func<Color, Color[]>)PictureFactory.BuildElectrodePattern };
-        yield return new object[] { "Grunt", (Func<Color, Color[]>)PictureFactory.BuildGruntPattern };
-        yield return new object[] { "Hulk", (Func<Color, Color[]>)PictureFactory.BuildHulkPattern };
-        yield return new object[] { "Spheroid", (Func<Color, Color[]>)PictureFactory.BuildSpheroidPattern };
-        yield return new object[] { "Enforcer", (Func<Color, Color[]>)PictureFactory.BuildEnforcerPattern };
-        yield return new object[] { "Quark", (Func<Color, Color[]>)PictureFactory.BuildQuarkPattern };
-        yield return new object[] { "Tank", (Func<Color, Color[]>)PictureFactory.BuildTankPattern };
+        yield return new object[] { "Player", (Func<Color, Color[]>)SpriteFactory.BuildPlayerPattern };
+        yield return new object[] { "Electrode", (Func<Color, Color[]>)SpriteFactory.BuildElectrodePattern };
+        yield return new object[] { "Grunt", (Func<Color, Color[]>)SpriteFactory.BuildGruntPattern };
+        yield return new object[] { "Hulk", (Func<Color, Color[]>)SpriteFactory.BuildHulkPattern };
+        yield return new object[] { "Spheroid", (Func<Color, Color[]>)SpriteFactory.BuildSpheroidPattern };
+        yield return new object[] { "Enforcer", (Func<Color, Color[]>)SpriteFactory.BuildEnforcerPattern };
+        yield return new object[] { "Quark", (Func<Color, Color[]>)SpriteFactory.BuildQuarkPattern };
+        yield return new object[] { "Tank", (Func<Color, Color[]>)SpriteFactory.BuildTankPattern };
     }
 
     [Theory]
     [MemberData(nameof(AllPatterns))]
     public void Pattern_IsSizedToSpecBox_Centred_AndCornerTransparent(string name, Func<Color, Color[]> build)
     {
-        int size = ScreenSize.Scaled(CollisionSizes.EntitySizeSpecPixels);
+        int size = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeSpecPixels);
         Color[] pattern = build(Color.White);
 
         Assert.True(pattern.Length == size * size, $"{name} pattern must be {size}x{size} at the current SpecScale");
