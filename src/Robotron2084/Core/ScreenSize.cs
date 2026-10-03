@@ -1,7 +1,9 @@
 namespace Robotron2084.Core;
 
 /// <summary>
-/// Internal playfield geometry — the single source of truth for resolution.
+/// Port playfield geometry — the single source of truth for resolution. "Port" means this C# version of the
+/// game, as opposed to the original arcade machine, so a <b>port pixel</b> is one dot of the 640 by 400 screen
+/// this game draws (see docs/glossary.md).
 /// spec.txt's 320x200 coordinate space is widened by <see cref="SpecScale"/>
 /// for sharper rendering; every spec-pixel size, speed, and position in the
 /// codebase goes through <see cref="ToPortPixels(int)"/> (or derives from
@@ -28,13 +30,13 @@ public static class ScreenSize
     /// <c>column * 256 + row</c> at 4bpp, so a column is two arcade pixels (notes §113).</summary>
     public const int ArcadePixelsPerColumn = 2;
 
-    /// <summary>Internal render height (SpecHeight × SpecScale — 400 at 2x).</summary>
+    /// <summary>Height of the screen the game draws, in port pixels (SpecHeight × SpecScale).</summary>
     public const int Height = SpecHeight * SpecScale;
 
     /// <summary>Spec.txt playfield height in original pixels.</summary>
     public const int SpecHeight = 200;
 
-    /// <summary>Internal pixels per spec pixel (render scale of the spec's 320x200 space).</summary>
+    /// <summary>Port pixels in one spec pixel (the render scale of the spec's 320x200 space).</summary>
     public const int SpecScale = 2;
 
     /// <summary>Spec.txt playfield width in original pixels.</summary>
@@ -46,11 +48,8 @@ public static class ScreenSize
     /// <summary>Subpixels in one pixel: the ROM's 16-bit coordinates keep the pixel in the high byte, so 1/256 of a pixel is the smallest step.</summary>
     public const int SubpixelsPerPixel = 1 << SubpixelBits;
 
-    /// <summary>Internal render width (SpecWidth × SpecScale — 640 at 2x).</summary>
+    /// <summary>Width of the screen the game draws, in port pixels (SpecWidth × SpecScale).</summary>
     public const int Width = SpecWidth * SpecScale;
-
-    /// <summary>Arcade (ROM) pixels to port pixels on the playfield: one arcade pixel is one spec pixel.</summary>
-    public static int ToPortPixelsFromArcade(int arcadePixels) => ToPortPixels(arcadePixels);
 
     /// <summary>ROM columns to port pixels: a column is two arcade pixels.</summary>
     public static int ToPortPixelsFromColumns(int columns) => ToPortPixels(columns * ArcadePixelsPerColumn);
@@ -70,6 +69,7 @@ public static class ScreenSize
         return Math.Max(1, scale);
     }
 
-    /// <summary>Converts a spec.txt pixel value to internal pixels.</summary>
-    public static int ToPortPixels(int specPixels) => specPixels * SpecScale;
+    /// <summary>Converts a length in arcade pixels or spec pixels to port pixels. The two are the same size, so one method serves both.</summary>
+    /// <param name="pixels">The length in arcade pixels or spec pixels.</param>
+    public static int ToPortPixels(int pixels) => pixels * SpecScale;
 }

@@ -11,7 +11,7 @@ namespace Robotron2084.Core;
 /// <para>
 /// <b>Why a third unit.</b> The arcade board redraws the screen 50 times a second and its game
 /// logic is driven straight off that redraw signal (the "vertical blank", or "vblank", interrupt),
-/// so the ROM counts its delays in <i>ROM frames</i> (1 ROM frame = 1/50 second). This port runs a
+/// so the ROM counts its delays in <i>ROM frames</i> (1 ROM frame = 1/50 second). This port (this C# version of the game, not the arcade machine) runs a
 /// fixed 60-updates-per-second game loop, so its own timing unit — a <i>port tick</i> — is 1/60
 /// second. Since 60/50 reduces to 6/5, one ROM frame of arcade time is exactly 6/5 = 1.2 port
 /// ticks, and 1.2 is not a whole number: a timer cannot simply count down 4.8 ticks. Floating
