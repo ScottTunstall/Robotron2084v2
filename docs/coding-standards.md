@@ -25,7 +25,7 @@ glossary to be understood unless it links there (CMT-11).
 
 **STR-1. One reason to change per class.** If a class summary needs "and" to describe what it does, split it.
 Warning signs: more than ~15 fields, or `// ---- section ----` comments that divide it into jobs.
-`PlayField` and `SpriteSet` are the counter-examples.
+`SpriteSet` is the counter-example.
 
 **STR-1a. A class longer than 500 lines is doing too much.** Count every line of the file, blank lines and
 comments included. This is a hard cap, not a guideline: past it, find the second job the class has taken on and
