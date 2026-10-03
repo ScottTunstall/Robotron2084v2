@@ -294,8 +294,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: <c>SQ3L</c>.</remarks>
     private void LeaveWhenClearOfTheField(PlayField field)
     {
-        int low = field.Wall.PlayfieldBounds.Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowArcadePixels);
-        int high = field.Wall.PlayfieldBounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.FleeExitHighArcadePixels);
+        int low = field.Wall.PlayfieldBounds.Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowRows);
+        int high = field.Wall.PlayfieldBounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.FleeExitHighRows);
         if (_position.Y <= low || _position.Y >= high)
         {
             LifeState = EntityLifeState.Dead;
@@ -305,10 +305,10 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Rolls a fresh random speed per axis, biased away from the walls.</summary>
     private void RollVelocity(Rectangle bounds)
     {
-        int lowX = bounds.X + ScreenSize.ToPortPixels(QuarkTuning.WallMarginLowArcadePixels);
-        int highX = bounds.Right - ScreenSize.ToPortPixels(QuarkTuning.WallMarginRightArcadePixels);
-        int lowY = bounds.Y + ScreenSize.ToPortPixels(QuarkTuning.WallMarginLowArcadePixels);
-        int highY = bounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.WallMarginBottomArcadePixels);
+        int lowX = bounds.X + ScreenSize.ToPortPixelsFromColumns(QuarkTuning.WallMarginLeftColumns);
+        int highX = bounds.Right - ScreenSize.ToPortPixelsFromColumns(QuarkTuning.WallMarginRightColumns);
+        int lowY = bounds.Y + ScreenSize.ToPortPixels(QuarkTuning.WallMarginTopRows);
+        int highY = bounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.WallMarginBottomRows);
 
         bool xPositive = _position.X <= lowX || (_position.X < highX && _random.Next(CoinFlipSides) == 0);
         bool yPositive = _position.Y <= lowY || (_position.Y < highY && _random.Next(CoinFlipSides) != 0);

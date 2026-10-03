@@ -231,4 +231,27 @@ public sealed class QuarkTankBehaviourTests
 
         Assert.True(advanced, "the tread never advanced after the tank was born");
     }
+
+    [Fact]
+    public void ANearLeftWallQuark_IsTurnedRight_WithinFiveColumnsNotFiveArcadePixels()
+    {
+        // ROM SQVEL: `CMPB #XMIN+5` is in columns, so a quark within 5 columns (10 arcade
+        // pixels) of the left wall always rolls a rightward speed. 15 port pixels in is
+        // inside that margin, but outside a margin of 5 arcade pixels.
+        for (int seed = 0; seed < 40; seed++)
+        {
+            PlayField field = CreateField(seed);
+            Rectangle bounds = field.Wall.PlayfieldBounds;
+            var quark = new Quark(TestSprites.Shared, new IntVector2(bounds.X + 15, bounds.Y + 200), new Random(seed), maxDropsX2: 10, dropDelayBeats: 60);
+            field.AddQuark(quark);
+            int startX = quark.Position.X;
+
+            for (int tick = 0; tick < 12; tick++)
+            {
+                field.Update(Frame());
+            }
+
+            Assert.True(quark.Position.X >= startX, $"seed {seed}: the quark drifted left from {startX} to {quark.Position.X}");
+        }
+    }
 }

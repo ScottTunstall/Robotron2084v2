@@ -17,8 +17,13 @@ public static class QuarkTuning
     //   beat:   NAP 3, and PD7 counts down in BEATS to the next SQVEL.
     public const int BeatRomFrames = 4;      // NAP 3 + the beat vblank
 
-    public const int FleeExitHighArcadePixels = 16;
-    public const int FleeExitLowArcadePixels = 2;
+    /// <summary>How far above the bottom edge, in rows, a fleeing quark is counted as gone.</summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQ3L</c>, <c>YMAX-16</c>.</remarks>
+    public const int FleeExitHighRows = 16;
+
+    /// <summary>How far below the top edge, in rows, a fleeing quark is counted as gone.</summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQ3L</c>, <c>YMIN+2</c>.</remarks>
+    public const int FleeExitLowRows = 2;
     public const int FleeVelocityRom = 0x0200;
     public const int ReaimMaxBeats = 32;
     public const int TotalAnimationFrames = 9;
@@ -29,12 +34,21 @@ public static class QuarkTuning
 
     // ROM PD7 = (SEED & $1F) + 1
 
-    public const int WallMarginBottomArcadePixels = 20;
-    public const int WallMarginLowArcadePixels = 5;     // XMIN+5 / YMIN+5
+    /// <summary>How close to the bottom edge, in rows, a quark must be before it is turned back up.</summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQVEL</c>, <c>YMAX-20</c>.</remarks>
+    public const int WallMarginBottomRows = 20;
 
-    public const int WallMarginRightArcadePixels = 12;  // XMAX-12
+    /// <summary>How close to the left edge, in columns, a quark must be before it is turned back right.</summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQVEL</c>, <c>XMIN+5</c> (columns, so 10 arcade pixels).</remarks>
+    public const int WallMarginLeftColumns = 5;
 
-    // YMAX-20
+    /// <summary>How close to the top edge, in rows, a quark must be before it is turned back down.</summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQVEL</c>, <c>YMIN+5</c>.</remarks>
+    public const int WallMarginTopRows = 5;
+
+    /// <summary>How close to the right edge, in columns, a quark must be before it is turned back left.</summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQVEL</c>, <c>XMAX-12</c> (columns, so 24 arcade pixels).</remarks>
+    public const int WallMarginRightColumns = 12;
 
     // SQ3: OXV = 0, OYV = ±$200 per frame
 
