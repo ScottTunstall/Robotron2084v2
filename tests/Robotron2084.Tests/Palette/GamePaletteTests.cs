@@ -49,7 +49,7 @@ public sealed class GamePaletteTests
     [InlineData(0xFF, 240, 240, 240)] // white
     public void ByteToRgbMatchesTheServiceConversion(byte value, int r, int g, int b)
     {
-        Assert.Equal(new Color(r, g, b), RobotronColor.FromByte(value));
+        Assert.Equal(new Color(r, g, b), RobotronColor.CreateFromByte(value));
     }
 
     [Fact]
@@ -58,12 +58,12 @@ public sealed class GamePaletteTests
         // A marker texel must identify its slot unambiguously: no marker RGB
         // may equal any fixed-slot (0-9) RGB, and all six markers differ.
         var markerColors = GamePalette.CyclingSlotMarkers
-            .Select(v => RobotronColor.FromByte(v))
+            .Select(v => RobotronColor.CreateFromByte(v))
             .ToArray();
 
         for (int slot = 0; slot < 10; slot++)
         {
-            Color fixedColor = RobotronColor.FromByte(GamePalette.DefaultSlots[slot]);
+            Color fixedColor = RobotronColor.CreateFromByte(GamePalette.DefaultSlots[slot]);
             Assert.DoesNotContain(fixedColor, markerColors);
         }
 
