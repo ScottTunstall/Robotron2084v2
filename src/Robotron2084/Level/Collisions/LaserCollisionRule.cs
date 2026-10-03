@@ -10,22 +10,23 @@ namespace Robotron2084.Level.Collisions;
 public sealed class LaserCollisionRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field)
+    public void Resolve(PlayField field, FieldEntities entities)
     {
         foreach (RobotKindInfo robot in RobotKinds.All)
         {
-            ResolveKind(field, robot);
+            CheckForLaserHittingRobot(field, entities, robot);
         }
     }
 
     /// <summary>Tries every laser against one kind of robot.</summary>
     /// <param name="field">The field the entities are on.</param>
+    /// <param name="entities">What is on the field.</param>
     /// <param name="robot">The kind's row.</param>
-    private static void ResolveKind(PlayField field, RobotKindInfo robot)
+    private static void CheckForLaserHittingRobot(PlayField field, FieldEntities entities, RobotKindInfo robot)
     {
-        foreach (PlayerLaser laser in field.PlayerLasers.GetActiveLasers())
+        foreach (PlayerLaser laser in field.GetActiveLasers())
         {
-            foreach (IEntity target in field.Entities.GetList(robot.Kind).Entities)
+            foreach (IEntity target in entities.GetEntities(robot.Kind))
             {
                 if (!target.IsAlive() || !field.Touches(laser, target))
                 {

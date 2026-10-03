@@ -9,12 +9,11 @@ namespace Robotron2084.Level.Collisions;
 public sealed class PlayerRescueRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field)
+    public void Resolve(PlayField field, FieldEntities entities)
     {
-        Player player = field.Player;
-        foreach (Human human in field.Entities.Family.Members)
+        foreach (Human human in entities.GetFamilyMembers())
         {
-            if (!human.IsGraspable() || !player.IsAlive() || !field.Touches(player, human))
+            if (!human.IsGraspable() || !field.IsPlayerAlive() || !field.TouchesPlayer(human))
             {
                 continue;
             }
@@ -23,10 +22,7 @@ public sealed class PlayerRescueRule : ICollisionRule
             int rescues = field.CountRescue();
             field.ShowRescueScore(human.Position);
             field.PlaySoundFrom(SoundTables.SaveAHuman, human.Bounds);
-            if (field.Score.Add(ScoreValues.RescueBonus(rescues)))
-            {
-                player.AddLife();
-            }
+            field.AwardRescueBonus(rescues);
         }
     }
 }

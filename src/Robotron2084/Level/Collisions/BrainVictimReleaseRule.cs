@@ -12,9 +12,9 @@ namespace Robotron2084.Level.Collisions;
 public sealed class BrainVictimReleaseRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field)
+    public void Resolve(PlayField field, FieldEntities entities)
     {
-        foreach (Brain brain in field.Entities.Brains)
+        foreach (Brain brain in entities.Brains)
         {
             if (!brain.IsAlive() && brain.ReleaseVictim() is { } released)
             {

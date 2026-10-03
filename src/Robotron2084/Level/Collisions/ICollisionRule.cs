@@ -6,5 +6,7 @@ public interface ICollisionRule
 {
     /// <summary>Finds every pair this rule is about that is touching, and does what the rule says to them.</summary>
     /// <param name="field">The field the entities are on.</param>
-    void Resolve(PlayField field);
+    /// <param name="entities">What is on the field.</param>
+    /// <param name="entities">What is on the field.</param>
+    void Resolve(PlayField field, FieldEntities entities);
 }

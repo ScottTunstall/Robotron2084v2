@@ -9,26 +9,28 @@ namespace Robotron2084.Level.Collisions;
 public sealed class RobotVsElectrodeCollisionRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field)
+    public void Resolve(PlayField field, FieldEntities entities)
     {
-        ResolveGrunts(field);
-        ResolveHulks(field);
+        ResolveGrunts(field, entities);
+        ResolveHulks(field, entities);
     }
 
     /// <summary>Finds the first living electrode an entity is touching.</summary>
     /// <param name="field">The field the entities are on.</param>
+    /// <param name="entities">What is on the field.</param>
     /// <param name="walker">The grunt or hulk.</param>
     /// <returns>The electrode, or null when it touches none.</returns>
-    private static Electrode? FindTouchedElectrode(PlayField field, IEntity walker) =>
-        field.Entities.Electrodes.FirstOrDefault(electrode => electrode.IsAlive() && field.Touches(walker, electrode));
+    private static Electrode? FindTouchedElectrode(PlayField field, FieldEntities entities, IEntity walker) =>
+        entities.Electrodes.FirstOrDefault(electrode => electrode.IsAlive() && field.Touches(walker, electrode));
 
     /// <summary>Kills each grunt that has walked onto an electrode, and the electrode with it.</summary>
     /// <param name="field">The field the entities are on.</param>
-    private static void ResolveGrunts(PlayField field)
+    /// <param name="entities">What is on the field.</param>
+    private static void ResolveGrunts(PlayField field, FieldEntities entities)
     {
-        foreach (Grunt grunt in field.Entities.Grunts)
+        foreach (Grunt grunt in entities.Grunts)
         {
-            if (!grunt.IsAlive() || FindTouchedElectrode(field, grunt) is not { } electrode)
+            if (!grunt.IsAlive() || FindTouchedElectrode(field, entities, grunt) is not { } electrode)
             {
                 continue;
             }
@@ -45,11 +47,12 @@ public sealed class RobotVsElectrodeCollisionRule : ICollisionRule
 
     /// <summary>Destroys the electrode each hulk has walked onto. The hulk is not harmed.</summary>
     /// <param name="field">The field the entities are on.</param>
-    private static void ResolveHulks(PlayField field)
+    /// <param name="entities">What is on the field.</param>
+    private static void ResolveHulks(PlayField field, FieldEntities entities)
     {
-        foreach (Hulk hulk in field.Entities.Hulks)
+        foreach (Hulk hulk in entities.Hulks)
         {
-            if (FindTouchedElectrode(field, hulk) is { } electrode)
+            if (FindTouchedElectrode(field, entities, hulk) is { } electrode)
             {
                 electrode.Kill();
                 field.PlaySoundFrom(SoundTables.PostKill, electrode.Bounds);

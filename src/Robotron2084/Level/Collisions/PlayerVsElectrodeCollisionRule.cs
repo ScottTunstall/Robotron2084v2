@@ -6,19 +6,18 @@ namespace Robotron2084.Level.Collisions;
 public sealed class PlayerVsElectrodeCollisionRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field)
+    public void Resolve(PlayField field, FieldEntities entities)
     {
-        Player player = field.Player;
-        if (!player.IsAlive() || player.IsInvincible)
+        if (!field.CanPlayerBeHurt())
         {
             return;
         }
 
-        foreach (Electrode electrode in field.Entities.Electrodes)
+        foreach (Electrode electrode in entities.Electrodes)
         {
-            if (electrode.IsAlive() && field.Touches(player, electrode))
+            if (electrode.IsAlive() && field.TouchesPlayer(electrode))
             {
-                player.Kill();
+                field.KillPlayer();
                 electrode.Kill();
                 return;
             }

@@ -8,16 +8,16 @@ namespace Robotron2084.Level.Collisions;
 public sealed class BrainCatchRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field)
+    public void Resolve(PlayField field, FieldEntities entities)
     {
         if (field.RobotsFrozen)
         {
             return;
         }
 
-        foreach (Brain brain in field.Entities.Brains)
+        foreach (Brain brain in entities.Brains)
         {
-            brain.CatchTargetIfInReach(field.Wall.PlayfieldBounds);
+            brain.CatchTargetIfInReach(field.PlayfieldBounds);
         }
     }
 }

@@ -9,16 +9,16 @@ namespace Robotron2084.Level.Collisions;
 public sealed class HulkVsHumanCollisionRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field)
+    public void Resolve(PlayField field, FieldEntities entities)
     {
         if (field.RobotsFrozen)
         {
             return;
         }
 
-        foreach (Human human in field.Entities.Family.Members)
+        foreach (Human human in entities.GetFamilyMembers())
         {
-            if (human.IsGraspable() && IsTouchedByAHulk(field, human))
+            if (human.IsGraspable() && IsTouchedByAHulk(field, entities, human))
             {
                 human.Kill();
                 field.LeaveSkull(human.Position);
@@ -29,7 +29,8 @@ public sealed class HulkVsHumanCollisionRule : ICollisionRule
 
     /// <summary>Says whether any living hulk is touching a human.</summary>
     /// <param name="field">The field the entities are on.</param>
+    /// <param name="entities">What is on the field.</param>
     /// <param name="human">The human.</param>
-    private static bool IsTouchedByAHulk(PlayField field, Human human) =>
-        field.Entities.Hulks.Any(hulk => hulk.IsAlive() && field.Touches(hulk, human));
+    private static bool IsTouchedByAHulk(PlayField field, FieldEntities entities, Human human) =>
+        entities.Hulks.Any(hulk => hulk.IsAlive() && field.Touches(hulk, human));
 }

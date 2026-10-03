@@ -8,9 +8,9 @@ namespace Robotron2084.Level.Collisions;
 public sealed class PlayerContactKillRule : ICollisionRule
 {
     /// <inheritdoc/>
-    public void Resolve(PlayField field)
+    public void Resolve(PlayField field, FieldEntities entities)
     {
-        if (!field.Player.IsAlive() || field.Player.IsInvincible)
+        if (!field.CanPlayerBeHurt())
         {
             return;
         }
@@ -19,29 +19,28 @@ public sealed class PlayerContactKillRule : ICollisionRule
         {
             if (robot.KillsPlayerOnContact)
             {
-                KillPlayerOnContact(field, field.Entities.GetList(robot.Kind));
+                KillPlayerOnContact(field, entities.GetEntities(robot.Kind));
             }
         }
     }
 
     /// <summary>Kills the player if they are touching any living thing in a list.</summary>
     /// <param name="field">The field the entities are on.</param>
-    /// <param name="robots">The kind's list.</param>
+    /// <param name="robots">The things of one kind.</param>
     /// <remarks>The player is checked again before every one, because an earlier one may already have killed them, and a
     /// second kill would start the death again.</remarks>
-    private static void KillPlayerOnContact(PlayField field, IEntityList robots)
+    private static void KillPlayerOnContact(PlayField field, IEnumerable<IEntity> robots)
     {
-        Player player = field.Player;
-        foreach (IEntity entity in robots.Entities)
+        foreach (IEntity entity in robots)
         {
-            if (!player.IsAlive())
+            if (!field.IsPlayerAlive())
             {
                 return;
             }
 
-            if (entity.IsAlive() && field.Touches(player, entity))
+            if (entity.IsAlive() && field.TouchesPlayer(entity))
             {
-                player.Kill();
+                field.KillPlayer();
                 return;
             }
         }
