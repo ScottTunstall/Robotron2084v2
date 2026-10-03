@@ -110,4 +110,20 @@ public sealed class FieldStrategyTests
         entities.Grunts.Add(new Grunt(TestSprites.Shared, new IntVector2(90, 90)));
         Assert.False(entities.AreEnemiesGone());
     }
+
+    [Fact]
+    public void TheField_AnswersWithoutLettingCallersReachThroughIt()
+    {
+        PlayField field = new PlayFieldBuilder().Build();
+        var grunt = new Grunt(TestSprites.Shared, new IntVector2(90, 90));
+        field.Entities.Add(grunt);
+
+        Assert.Contains(grunt, field.Entities.GetEntities(RobotKind.Grunt));
+        Assert.Equal(field.Player.Position, field.PlayerPosition);
+        Assert.Equal(field.Wall.PlayfieldBounds, field.PlayfieldBounds);
+        Assert.True(field.HitsWall(new Microsoft.Xna.Framework.Rectangle(field.Wall.OuterBounds.X, field.Wall.OuterBounds.Y, 4, 4)));
+        Assert.False(field.HitsWall(new Microsoft.Xna.Framework.Rectangle(field.PlayfieldBounds.X + 40, field.PlayfieldBounds.Y + 40, 4, 4)));
+        Assert.True(field.IsPlayerAlive());
+        Assert.False(field.IsPlayerDead());
+    }
 }
