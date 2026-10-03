@@ -11,13 +11,13 @@ namespace Robotron2084.Entities;
 /// <seealso cref="LaserSlots"/>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c>, routine <c>LTAB</c> (picture lookup for shapes <c>LLPC</c>/<c>ULPC</c>/<c>DLLPC</c>/<c>ULLPC</c>)</item>
+/// <item>Original source: <c>RRG23.ASM</c>, routine <c>LTAB</c> (sprite lookup for shapes <c>LLPC</c>/<c>ULPC</c>/<c>DLLPC</c>/<c>ULLPC</c>)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$3237</c> (<c>LASER_DESCRIPTOR TABLE</c>)</item>
 /// </list>
 /// </remarks>
 public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
 {
-    private static readonly int Size = ScreenSize.Scaled(CollisionSizes.MissileSizeSpecPixels);
+    private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.MissileSizeSpecPixels);
     private readonly SpriteSet _sprites;
     private IntVector2 _position;
 
@@ -35,7 +35,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The 4x4 spec-pixel collision box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
 
-    /// <summary>The picture for this laser's direction — the ROM's four laser arts (`LTAB`, notes §19).</summary>
+    /// <summary>The sprite for this laser's direction — the ROM's four laser sprites (`LTAB`, notes §19).</summary>
     public Texture2D CurrentAnimationFrame => Direction switch
     {
         Direction8.Left or Direction8.Right => _sprites.LaserBar,
@@ -54,7 +54,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Top-left of the collision box.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>Draws the picture for this laser's direction.</summary>
+    /// <summary>Draws the sprite for this laser's direction.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
@@ -64,7 +64,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
         }
 
         // The ROM draws the laser in its flashing palette slot, so the whole bolt flashes with it.
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(PlayerTuning.LaserSlot));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
     }
 
     /// <summary>Removes the laser at once, vacating its slot.</summary>

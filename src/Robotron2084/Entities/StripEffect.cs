@@ -6,7 +6,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The effect where a dying creature's picture breaks into strips and fans apart, or a new robot's picture shrinks into view.</summary>
+/// <summary>The effect where a dying creature's sprite breaks into strips and fans apart, or a new robot's sprite shrinks into view.</summary>
 /// <remarks>
 /// <list type="bullet">
 /// <item>Original source: <c>RRX7.ASM</c>/<c>RRHX4.ASM</c>/<c>RRDX2.ASM</c> (the death explosion) and <c>RRG23.ASM</c>, routine <c>APPEAR</c> (the shrinking appear)</item>
@@ -80,7 +80,7 @@ public sealed class StripEffect : IEntity
     /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
     /// <returns>The new appear record.</returns>
     /// <remarks>ROM: RRG23.ASM's <c>APPEAR</c> makes one of these per frame for each robot.</remarks>
-    public static StripEffect StartAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
+    public static StripEffect CreateAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
         => new StripEffect(() => source.CurrentAnimationFrame, bounds, StripEffectKind.Appear, axis, slope, clip);
 
     /// <summary>Starts the explosion for a killed object; the killing shot picks the axis and lean.</summary>
@@ -89,15 +89,15 @@ public sealed class StripEffect : IEntity
     /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
     /// <returns>The new explosion record.</returns>
     /// <remarks>ROM: the "make an enemy explode" entry point, which dispatches to its straight or
-    /// directional setup. The rect is the object's position with the size of the picture it points at,
+    /// directional setup. The rect is the object's position with the size of the sprite it points at,
     /// which can be bigger than its collision box.</remarks>
-    public static StripEffect StartExplosion(IExplodable dead, Direction8? direction, StripClip clip)
+    public static StripEffect CreateExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {
         (StripFanAxis axis, int slope) = FanForShot(direction);
         return new StripEffect(() => dead.CurrentAnimationFrame, dead.ExplosionBounds, StripEffectKind.Explode, axis, slope, clip);
     }
 
-    /// <summary>Draws the frame's strips, each from its own row or column of the dead entity's picture.</summary>
+    /// <summary>Draws the frame's strips, each from its own row or column of the dead entity's sprite.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
@@ -106,32 +106,32 @@ public sealed class StripEffect : IEntity
             return;
         }
 
-        Texture2D picture = _animationFrameOf();
+        Texture2D animationFrame = _animationFrameOf();
 
-        // The picture's width is in pixels and its height in rows; do not scale them back down (see Layout).
-        int pictureWidth = picture.Width;
-        int pictureRows = picture.Height;
+        // The sprite's width is in pixels and its height in rows; do not scale them back down (see Layout).
+        int spriteWidth = animationFrame.Width;
+        int spriteRows = animationFrame.Height;
 
-        foreach (Strip strip in Layout(pictureWidth, pictureRows))
+        foreach (Strip strip in Layout(spriteWidth, spriteRows))
         {
             // Sources are in texture pixels; destinations are in screen pixels (pixel x SpecScale).
             Rectangle source = _axis == StripFanAxis.Rows
-                ? new Rectangle(0, strip.SourceIndex, pictureWidth, 1)
-                : new Rectangle(strip.SourceIndex, 0, 1, pictureRows);
+                ? new Rectangle(0, strip.SourceIndex, spriteWidth, 1)
+                : new Rectangle(strip.SourceIndex, 0, 1, spriteRows);
 
             Rectangle dest = _axis == StripFanAxis.Rows
                 ? new Rectangle(
                     strip.X * ScreenSize.SpecScale,
                     strip.Y * ScreenSize.SpecScale,
-                    pictureWidth * ScreenSize.SpecScale,
+                    spriteWidth * ScreenSize.SpecScale,
                     ScreenSize.SpecScale)
                 : new Rectangle(
                     strip.X * ScreenSize.SpecScale,
                     strip.Y * ScreenSize.SpecScale,
                     ScreenSize.SpecScale,
-                    pictureRows * ScreenSize.SpecScale);
+                    spriteRows * ScreenSize.SpecScale);
 
-            spriteBatch.Draw(picture, dest, source, Color.White);
+            spriteBatch.Draw(animationFrame, dest, source, Color.White);
         }
     }
 
@@ -200,25 +200,25 @@ public sealed class StripEffect : IEntity
         _ => (StripFanAxis.Rows, 0),
     };
 
-    /// <summary>Where a picture sits when drawn into the bounds, in pixels and rows.</summary>
+    /// <summary>Where a sprite sits when drawn into the bounds, in pixels and rows.</summary>
     /// <param name="bounds">The entity's bounds, in screen pixels.</param>
-    /// <param name="pictureWidth">The picture's width in pixels.</param>
-    /// <param name="pictureRows">The picture's height in rows.</param>
-    /// <returns>The top-left the picture is drawn at, in pixels and rows.</returns>
-    internal static (int Left, int Top) PicturePlacement(
-        Rectangle bounds, int pictureWidth, int pictureRows)
+    /// <param name="spriteWidth">The sprite's width in pixels.</param>
+    /// <param name="spriteRows">The sprite's height in rows.</param>
+    /// <returns>The top-left the sprite is drawn at, in pixels and rows.</returns>
+    internal static (int Left, int Top) SpritePlacement(
+        Rectangle bounds, int spriteWidth, int spriteRows)
     {
         int boundsWidth = bounds.Width / ScreenSize.SpecScale;
         int boundsRows = bounds.Height / ScreenSize.SpecScale;
 
         return (
-            (bounds.X / ScreenSize.SpecScale) + ((boundsWidth - pictureWidth) / 2),
-            (bounds.Y / ScreenSize.SpecScale) + ((boundsRows - pictureRows) / 2));
+            (bounds.X / ScreenSize.SpecScale) + ((boundsWidth - spriteWidth) / 2),
+            (bounds.Y / ScreenSize.SpecScale) + ((boundsRows - spriteRows) / 2));
     }
 
     /// <summary>The strips for the current frame (pixels and rows), pure so the shape is unit-testable.</summary>
-    /// <param name="pictureWidth">The dead picture's width in pixels.</param>
-    /// <param name="pictureRows">The dead picture's height in rows.</param>
+    /// <param name="spriteWidth">The dead sprite's width in pixels.</param>
+    /// <param name="spriteRows">The dead sprite's height in rows.</param>
     /// <returns>The strips to draw this frame, in draw order.</returns>
     /// <remarks>ROM: RRX7.ASM/RRHX4.ASM/RRDX2.ASM's strip-layout logic:
     ///
@@ -231,16 +231,16 @@ public sealed class StripEffect : IEntity
     /// At step 1 the offset term cancels, so the base is the sprite's top row and frame 0 reconstructs
     /// the sprite exactly — the ROM's own "1 unit is the minimum" rule. One fan opens both ways at
     /// once: the base climbs while the segments march down, so the fan tears UP and DOWN. The fixed
-    /// point is the picture's MIDDLE, so the halves are mirrored — the same strips and the same reach
+    /// point is the sprite's MIDDLE, so the halves are mirrored — the same strips and the same reach
     /// each way — and a diagonal shot leans them opposite ways (a chevron). The same maths runs on
     /// columns for a vertical shot. The middle anchor matches the ROM's own centring logic, the
-    /// picture's top plus half its height, and keeps both halves equal; anchoring at the collision
+    /// sprite's top plus half its height, and keeps both halves equal; anchoring at the collision
     /// point instead is lopsided, because a shot strikes the sprite's near edge. A strip outside the
     /// playfield is DROPPED, not clamped.</remarks>
-    internal IReadOnlyList<Strip> Layout(int pictureWidth, int pictureRows)
+    internal IReadOnlyList<Strip> Layout(int spriteWidth, int spriteRows)
     {
         bool rows = _axis == StripFanAxis.Rows;
-        int extent = rows ? pictureRows : pictureWidth;
+        int extent = rows ? spriteRows : spriteWidth;
 
         var strips = new List<Strip>(extent);
         int spacing = _sizer >> 8;
@@ -249,16 +249,16 @@ public sealed class StripEffect : IEntity
             spacing = 1;
         }
 
-        // The fan's fixed point is the picture's middle, derived from the picture's own extent.
+        // The fan's fixed point is the sprite's middle, derived from the sprite's own extent.
         int split = extent / 2;
 
-        // The picture is drawn centred in the bounds, so the fan must start from its own top-left.
-        (int spriteLeft, int spriteTop) = PicturePlacement(_bounds, pictureWidth, pictureRows);
+        // The sprite is drawn centred in the bounds, so the fan must start from its own top-left.
+        (int spriteLeft, int spriteTop) = SpritePlacement(_bounds, spriteWidth, spriteRows);
 
         // The fixed point's own screen row/column.
         int centre = (rows ? spriteTop : spriteLeft) + split;
 
-        // One unit is ONE pixel of the picture along the fan axis, for BOTH families: counting the
+        // One unit is ONE pixel of the sprite along the fan axis, for BOTH families: counting the
         // horizontal family in byte columns (2 px) would fly it off at twice the ROM's rate.
         int step = spacing;
 
@@ -269,7 +269,7 @@ public sealed class StripEffect : IEntity
 
         // The diagonal lean is half the current step, signed by the shot's diagonal: strip i shifts
         // sideways in proportion to its distance from the split, so the two halves lean opposite ways.
-        // The lean is measured in COLUMNS of the picture the ROM cuts up, which is a pixel distance;
+        // The lean is measured in COLUMNS of the sprite the ROM cuts up, which is a pixel distance;
         // scaling it by SpecScale instead made the chevron open wider as the render scale rose.
         int drift = _slope * ((spacing >> 1) * ScreenSize.ArcadePixelsPerColumn);
 
@@ -281,7 +281,7 @@ public sealed class StripEffect : IEntity
             int x = rows ? spriteLeft + lateral : along;
             int y = rows ? along : spriteTop + lateral;
 
-            if (IsInside(x, y, pictureWidth, pictureRows))
+            if (IsInside(x, y, spriteWidth, spriteRows))
             {
                 strips.Add(new Strip(i, x, y));
             }
@@ -292,13 +292,13 @@ public sealed class StripEffect : IEntity
 
     /// <summary>True when the strip lies inside the clip rectangle; a strip outside is dropped.</summary>
     /// <remarks>Matches the ROM's own per-strip clip check.</remarks>
-    private bool IsInside(int x, int y, int pictureWidth, int pictureRows)
+    private bool IsInside(int x, int y, int spriteWidth, int spriteRows)
     {
         if (_axis == StripFanAxis.Rows)
         {
-            return x >= _clip.MinX && x + pictureWidth <= _clip.MaxX && y >= _clip.MinY && y < _clip.MaxY;
+            return x >= _clip.MinX && x + spriteWidth <= _clip.MaxX && y >= _clip.MinY && y < _clip.MaxY;
         }
 
-        return y >= _clip.MinY && y + pictureRows <= _clip.MaxY && x >= _clip.MinX && x < _clip.MaxX;
+        return y >= _clip.MinY && y + spriteRows <= _clip.MaxY && x >= _clip.MinX && x < _clip.MaxX;
     }
 }

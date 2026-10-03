@@ -18,7 +18,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class ScoreBurst : IEntity
 {
-    /// <summary>The first picture the burst shows (the ROM starts one past the live frame).</summary>
+    /// <summary>The first animation frame the burst shows (the ROM starts one past the live frame).</summary>
     internal const int FirstBurstAnimationFrameIndex = 2;
 
     private readonly Texture2D[] _animationFrames;
@@ -54,11 +54,11 @@ public sealed class ScoreBurst : IEntity
         _pointsSlot = pointsSlot;
         _bounds = bounds;
 
-        // The first burst picture appears at death, so count-1 steps remain; the last only erases.
+        // The first burst animation frame appears at death, so count-1 steps remain; the last only erases.
         _remaining = count - 1;
         _pointsBounds = new Rectangle(
-            bounds.X + ScreenSize.Scaled(ScoreBurstTuning.PointsOffsetXSpecPixels),
-            bounds.Y + ScreenSize.Scaled(ScoreBurstTuning.PointsOffsetYSpecPixels),
+            bounds.X + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetXSpecPixels),
+            bounds.Y + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetYSpecPixels),
             bounds.Width,
             bounds.Height);
     }
@@ -72,16 +72,16 @@ public sealed class ScoreBurst : IEntity
     /// <summary>The dead enemy's top-left corner; the burst is drawn at the size it died at.</summary>
     public IntVector2 Position => new(_bounds.X, _bounds.Y);
 
-    /// <summary>The picture the burst is currently drawing (valid while <see cref="ShowingPoints"/> is false).</summary>
+    /// <summary>The animation frame the burst is currently drawing (valid while <see cref="ShowingPoints"/> is false).</summary>
     internal int AnimationFrameIndex => _animationFrameIndex;
 
     /// <summary>The burst's palette slot (test hook — a cycling slot, so it shimmers).</summary>
     internal int BurstSlot => _burstSlot;
 
-    /// <summary>Where the points picture is drawn: the death spot + 1 column / +5 rows (test hook).</summary>
+    /// <summary>Where the points sprite is drawn: the death spot + 1 column / +5 rows (test hook).</summary>
     internal Rectangle PointsBounds => _pointsBounds;
 
-    /// <summary>The points picture's palette slot (test hook).</summary>
+    /// <summary>The points sprite's palette slot (test hook).</summary>
     internal int PointsSlot => _pointsSlot;
 
     /// <summary>The steps left of the "1000" display (its 30-step countdown).</summary>
@@ -93,7 +93,7 @@ public sealed class ScoreBurst : IEntity
     /// <summary>Creates the burst a killed quark leaves: both phases in the same slot-13 colour.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="bounds">Where the quark was drawn when it died.</param>
-    public static ScoreBurst ForQuark(SpriteSet sprites, Rectangle bounds) => new(
+    public static ScoreBurst CreateForQuark(SpriteSet sprites, Rectangle bounds) => new(
         sprites,
         frames: sprites.QuarkAnimationFrames,
         points: sprites.RescueScoreDisplays[0],
@@ -105,7 +105,7 @@ public sealed class ScoreBurst : IEntity
     /// <summary>Creates the burst a killed spheroid leaves: silhouette in the player's score colour, points in slot 15.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="bounds">Where the spheroid was drawn when it died.</param>
-    public static ScoreBurst ForSpheroid(SpriteSet sprites, Rectangle bounds) => new(
+    public static ScoreBurst CreateForSpheroid(SpriteSet sprites, Rectangle bounds) => new(
         sprites,
         frames: sprites.SpheroidAnimationFrames,
         points: sprites.RescueScoreDisplays[0],
@@ -125,13 +125,13 @@ public sealed class ScoreBurst : IEntity
 
         if (_showingPoints)
         {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _points, _pointsBounds, _sprites.Blitter.SlotColor(_pointsSlot));
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _points, _pointsBounds, _sprites.Blitter.GetSlotColour(_pointsSlot));
             return;
         }
 
         if (_animationFrameIndex < _animationFrames.Length)
         {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds, _sprites.Blitter.SlotColor(_burstSlot));
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds, _sprites.Blitter.GetSlotColour(_burstSlot));
         }
     }
 
@@ -147,16 +147,16 @@ public sealed class ScoreBurst : IEntity
 
         // Counts up to the next step: 5 per tick, 6 per arcade frame.
         _timer += ArcadeClock.UnitsPerPortTick;
-        if (_timer < ArcadeClock.Units(ScoreBurstTuning.RomFramesPerStep))
+        if (_timer < ArcadeClock.ToClockUnits(ScoreBurstTuning.RomFramesPerStep))
         {
             return;
         }
 
-        _timer -= ArcadeClock.Units(ScoreBurstTuning.RomFramesPerStep);
+        _timer -= ArcadeClock.ToClockUnits(ScoreBurstTuning.RomFramesPerStep);
 
         if (!_showingPoints)
         {
-            // The last burst step only erases, so count-1 pictures appear.
+            // The last burst step only erases, so count-1 animation frames appear.
             if (--_remaining <= 0)
             {
                 _showingPoints = true;

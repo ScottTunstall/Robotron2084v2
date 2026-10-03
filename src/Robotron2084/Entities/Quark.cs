@@ -33,9 +33,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>ROM <c>SQ2</c>: after a drop the next delay is roughly the first over this.</summary>
     private const int RepeatDropDelayDivisor = 2;
 
-    /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
-    private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(CollisionSizes.QuarkCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.QuarkCollisionSize.Height));
+    /// <summary>Collision box = the ROM sprite dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
+    private static readonly (int Width, int Height) CollisionSize = (ScreenSize.ToPortPixels(CollisionSizes.QuarkCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.QuarkCollisionSize.Height));
 
     private readonly int _dropDelayBeats;
     private readonly Random _random;
@@ -63,7 +62,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private IntVector2 _remainderSubpixels;
 
     // Beats left before the quark rolls a fresh drift direction (ROM: PD7).
-    // Current rotation picture index (ROM: OPICT, pictures SQP0..SQP8).
+    // Current rotation animation frame index (ROM: OPICT, animation frames SQP0..SQP8).
     private int _tanksRemaining;
 
     /// <summary>Velocity in 1/256 port px per ROM frame, integrated once per frame by the shared mover.</summary>
@@ -104,7 +103,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
-    /// <summary>The quark picture's own 16x15 box at <see cref="Position"/>.</summary>
+    /// <summary>The quark sprite's own 16x15 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The current rotation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
@@ -118,7 +117,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     public IntVector2 Position => _position;
 
     /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => ArcadeClock.Units(QuarkTuning.BeatRomFrames);
+    private static readonly int BeatPeriod = ArcadeClock.ToClockUnits(QuarkTuning.BeatRomFrames);
 
     /// <summary>Draws the current rotation frame.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
@@ -134,7 +133,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Kills the quark outright; a laser hit plays its own burst instead of the strip explosion.</summary>
     /// <remarks>ROM: RRTK4.ASM's <c>SQKIL</c> plays a bespoke shrink-and-burst, not a blink. <see cref="RobotKinds"/>
-    /// wires <see cref="ScoreBurst.ForQuark"/> to the laser phase.</remarks>
+    /// wires <see cref="ScoreBurst.CreateForQuark"/> to the laser phase.</remarks>
     public void Kill()
     {
         if (LifeState != EntityLifeState.Alive)
@@ -193,7 +192,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         AdvanceTankDrop(field);
     }
 
-    /// <summary>Advances the animation one picture per beat; the range depends on the phase.</summary>
+    /// <summary>Advances the animation one animation frame per beat; the range depends on the phase.</summary>
     /// <remarks>ROM: SQP0..SQP4 while wandering, SQP0..SQP8 while dropping tanks, and SQP8..SQP0
     /// during the exit.</remarks>
     private void AdvanceAnimation()
@@ -248,7 +247,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        if (_tanksRemaining > 0 && field.CanDropTank)
+        if (_tanksRemaining > 0 && field.CanDropTank())
         {
             _droppingTanks = true;
             _tanksRemaining--;
@@ -258,8 +257,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
                 ? TankTuning.BirthOffsetRowsOnTopWall
                 : TankTuning.BirthOffsetRowsOffTopWall;
             field.SpawnTank(_position + new IntVector2(
-                ScreenSize.Columns(TankTuning.BirthOffsetColumns),
-                ScreenSize.ArcadePixels(rowOffset)));
+                ScreenSize.ToPortPixelsFromColumns(TankTuning.BirthOffsetColumns),
+                ScreenSize.ToPortPixelsFromArcade(rowOffset)));
             if (_tanksRemaining == 0)
             {
                 StartFlee();
@@ -278,7 +277,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private int AxisVelocitySubpixels(int scale, bool positive, int coordinateUnitArcadePixels)
     {
         int roll = 1 + _random.Next(_speedCap);
-        int subpixels = roll * scale * ScreenSize.Scaled(coordinateUnitArcadePixels);
+        int subpixels = roll * scale * ScreenSize.ToPortPixels(coordinateUnitArcadePixels);
         return positive ? subpixels : -subpixels;
     }
 
@@ -295,8 +294,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: <c>SQ3L</c>.</remarks>
     private void LeaveWhenClearOfTheField(PlayField field)
     {
-        int low = field.Wall.PlayfieldBounds.Y + ScreenSize.Scaled(QuarkTuning.FleeExitLowArcadePixels);
-        int high = field.Wall.PlayfieldBounds.Bottom - ScreenSize.Scaled(QuarkTuning.FleeExitHighArcadePixels);
+        int low = field.Wall.PlayfieldBounds.Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowArcadePixels);
+        int high = field.Wall.PlayfieldBounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.FleeExitHighArcadePixels);
         if (_position.Y <= low || _position.Y >= high)
         {
             LifeState = EntityLifeState.Dead;
@@ -306,10 +305,10 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Rolls a fresh random speed per axis, biased away from the walls.</summary>
     private void RollVelocity(Rectangle bounds)
     {
-        int lowX = bounds.X + ScreenSize.Scaled(QuarkTuning.WallMarginLowArcadePixels);
-        int highX = bounds.Right - ScreenSize.Scaled(QuarkTuning.WallMarginRightArcadePixels);
-        int lowY = bounds.Y + ScreenSize.Scaled(QuarkTuning.WallMarginLowArcadePixels);
-        int highY = bounds.Bottom - ScreenSize.Scaled(QuarkTuning.WallMarginBottomArcadePixels);
+        int lowX = bounds.X + ScreenSize.ToPortPixels(QuarkTuning.WallMarginLowArcadePixels);
+        int highX = bounds.Right - ScreenSize.ToPortPixels(QuarkTuning.WallMarginRightArcadePixels);
+        int lowY = bounds.Y + ScreenSize.ToPortPixels(QuarkTuning.WallMarginLowArcadePixels);
+        int highY = bounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.WallMarginBottomArcadePixels);
 
         bool xPositive = _position.X <= lowX || (_position.X < highX && _random.Next(CoinFlipSides) == 0);
         bool yPositive = _position.Y <= lowY || (_position.Y < highY && _random.Next(CoinFlipSides) != 0);
@@ -326,7 +325,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private void StartFlee()
     {
         _fleeing = true;
-        int subpixels = QuarkTuning.FleeVelocityRom * ScreenSize.ArcadePixels(1);
+        int subpixels = QuarkTuning.FleeVelocityRom * ScreenSize.ToPortPixelsFromArcade(1);
         _velocitySubpixels = new IntVector2(0, _random.Next(CoinFlipSides) == 0 ? subpixels : -subpixels);
         _remainderSubpixels = IntVector2.Zero;
     }

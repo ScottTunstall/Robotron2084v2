@@ -17,7 +17,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
-    private static readonly int Size = ScreenSize.Scaled(CollisionSizes.MissileSizeSpecPixels);
+    private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.MissileSizeSpecPixels);
     private readonly IntVector2 _accelerationSubpixels;
     private readonly Random _random;
     private readonly SpriteSet _sprites;
@@ -26,7 +26,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     // counts up toward the next time acceleration is added to velocity, every 4 ROM frames
     private int _flickerTimer;
 
-    // Counts up to the next flicker picture: 4 ROM frames per picture
+    // Counts up to the next flicker animation frame: 4 ROM frames per animation frame
     private int _moveTimer;
 
     private IntVector2 _position;
@@ -62,13 +62,13 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         int jitterX = _random.Next(-SparkTuning.SparkJitterColumns, SparkTuning.SparkJitterColumns);
         int jitterY = _random.Next(-SparkTuning.SparkJitterColumns, SparkTuning.SparkJitterColumns);
         if (playfieldBounds is { } bounds &&
-            playerPosition.X < bounds.X + ScreenSize.Columns(SparkTuning.SparkLeftWallJitterColumns))
+            playerPosition.X < bounds.X + ScreenSize.ToPortPixelsFromColumns(SparkTuning.SparkLeftWallJitterColumns))
         {
             jitterX = 0;
         }
 
-        int deltaX = playerPosition.X + ScreenSize.Columns(jitterX) - position.X;
-        int deltaY = playerPosition.Y + ScreenSize.Columns(jitterY) - position.Y;
+        int deltaX = playerPosition.X + ScreenSize.ToPortPixelsFromColumns(jitterX) - position.X;
+        int deltaY = playerPosition.Y + ScreenSize.ToPortPixelsFromColumns(jitterY) - position.Y;
 
         // 4x the aim delta, in subpixels (the mover only acts on the velocity's high byte).
         int subpixelsPerPortPxPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
@@ -80,7 +80,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
             _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPxPerMove);
 
         // Life, in timer units: 5 per tick, 6 per arcade frame.
-        _remainingLife = ArcadeClock.Units(_random.Next(
+        _remainingLife = ArcadeClock.ToClockUnits(_random.Next(
             SparkTuning.SparkLifeMinRomFrames,
             SparkTuning.SparkLifeMaxRomFrames + 1));
 
@@ -90,7 +90,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The spark's 4x4 spec-pixel collision box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
 
-    /// <summary>The flicker frame this spark is showing — the picture pixel-perfect collision compares.</summary>
+    /// <summary>The flicker frame this spark is showing — the sprite pixel-perfect collision compares.</summary>
     public Texture2D CurrentAnimationFrame => _sprites.SparkAnimationFrames[AnimationFrameIndex];
 
     /// <summary>Only ever transitions Alive -> Dead (immediate removal, no death animation).</summary>
@@ -104,8 +104,8 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     internal IntVector2 AccelerationSubpixels => _accelerationSubpixels;
 
     /// <summary>Which of the four flicker frames is showing (test hook).</summary>
-    /// <remarks>The ROM's 4 flicker pictures, one per 4-ROM-frame cycle.</remarks>
-    internal int AnimationFrameIndex => _flickerTimer / ArcadeClock.Units(SparkTuning.SparkFramePeriodRomFrames) % SpriteSet.SparkAnimationFrameCount;
+    /// <remarks>The ROM's 4 flicker animation frames, one per 4-ROM-frame cycle.</remarks>
+    internal int AnimationFrameIndex => _flickerTimer / ArcadeClock.ToClockUnits(SparkTuning.SparkFramePeriodRomFrames) % SpriteSet.SparkAnimationFrameCount;
 
     /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
     internal IntVector2 VelocitySubpixels => _velocitySubpixels;
@@ -154,9 +154,9 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
         // Every move the acceleration is added to the velocity, so the path curves into a parabola.
         _accelerationTimer += ArcadeClock.UnitsPerPortTick;
-        if (_accelerationTimer >= ArcadeClock.Units(SparkTuning.SparkMoveIntervalRomFrames))
+        if (_accelerationTimer >= ArcadeClock.ToClockUnits(SparkTuning.SparkMoveIntervalRomFrames))
         {
-            _accelerationTimer -= ArcadeClock.Units(SparkTuning.SparkMoveIntervalRomFrames);
+            _accelerationTimer -= ArcadeClock.ToClockUnits(SparkTuning.SparkMoveIntervalRomFrames);
             _velocitySubpixels = new IntVector2(
                 _velocitySubpixels.X + _accelerationSubpixels.X,
                 _velocitySubpixels.Y + _accelerationSubpixels.Y);

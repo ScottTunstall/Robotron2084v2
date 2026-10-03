@@ -22,10 +22,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Each animation frame is drawn for 3 movement ticks.</summary>
     private const int FrameTicksPerAnimationFrame = 3;
 
-    /// <summary>Collision box = the player picture's own 8x12 arcade px.</summary>
-    /// <remarks>The ROM collides against the player's PICTURE, not a fixed 16x16 cell.</remarks>
+    /// <summary>Collision box = the player sprite's own 8x12 arcade px.</summary>
+    /// <remarks>The ROM collides against the player's sprite, not a fixed 16x16 cell.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(CollisionSizes.PlayerCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.PlayerCollisionSize.Height));
+        (ScreenSize.ToPortPixels(CollisionSizes.PlayerCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.PlayerCollisionSize.Height));
 
     /// <summary>Walk cycle per direction: [f0, f1, f0, f2] (e.g. left = 1,2,1,3).</summary>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
@@ -35,7 +35,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private readonly SpriteSet _sprites;
 
     // A wave starts on frame 7, the first DOWN frame; _animationFrameTicks counts 1..3.
-    private WalkFacing _animationFacing = WalkFacingFor(Direction8.Down);
+    private WalkFacing _animationFacing = GetWalkFacing(Direction8.Down);
 
     private int _animationFrameTicks = 1;
     private int _animationSequenceIndex;
@@ -78,7 +78,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         Fade,
     }
 
-    /// <summary>The player picture's own 8x12 box at <see cref="Position"/> (the ROM intersects the PICTURE).</summary>
+    /// <summary>The player sprite's own 8x12 box at <see cref="Position"/> (the ROM intersects the sprite).</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>
@@ -142,7 +142,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         // One colour while dying, like the ROM's own solid-colour draw.
         if (LifeState == EntityLifeState.Dying)
         {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.SlotColor(DeathSolidSlot));
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.GetSlotColour(DeathSolidSlot));
             return;
         }
 
@@ -202,7 +202,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         IntVector2 move = input.MoveDirection;
 
         // The aim drives the FIRE direction only — never the facing or the animation.
-        Direction8? aim = Direction8Extensions.FromDelta(input.ShootDirection);
+        Direction8? aim = Direction8Extensions.CreateFromDelta(input.ShootDirection);
 
         MoveFromInput(move, field);
         UpdateFiring(input, aim, field);
@@ -213,7 +213,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <param name="direction">The facing to map.</param>
     /// <returns>The walk sequence the facing uses.</returns>
     /// <remarks>The arcade's own stick-to-walk-sequence rule.</remarks>
-    internal static WalkFacing WalkFacingFor(Direction8 direction) => direction switch
+    internal static WalkFacing GetWalkFacing(Direction8 direction) => direction switch
     {
         Direction8.Left or Direction8.UpLeft or Direction8.DownLeft => WalkFacing.Left,
         Direction8.Right or Direction8.UpRight or Direction8.DownRight => WalkFacing.Right,
@@ -237,7 +237,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <param name="direction">The direction the shot is fired in.</param>
     /// <returns>The muzzle's offset from the player's top-left, in port pixels.</returns>
     /// <remarks>ROM: the muzzle-offset table (RRG23.ASM).</remarks>
-    private static IntVector2 MuzzleOffset(Direction8 direction)
+    private static IntVector2 GetMuzzleOffset(Direction8 direction)
     {
         (int x, int y) offset = direction switch
         {
@@ -250,7 +250,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
             Direction8.UpRight => (2, 0),
             _ => (2, 12), // DownRight
         };
-        return new(ScreenSize.Scaled(offset.x), ScreenSize.Scaled(offset.y));
+        return new(ScreenSize.ToPortPixels(offset.x), ScreenSize.ToPortPixels(offset.y));
     }
 
     /// <summary>Steps along one axis, unless the player's box would then overlap the wall.</summary>
@@ -280,12 +280,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
             _ => PlayerTuning.PlayerDeathFadeRomFrames,
         };
 
-        if (_deathTimer < ArcadeClock.Units(romFrames))
+        if (_deathTimer < ArcadeClock.ToClockUnits(romFrames))
         {
             return;
         }
 
-        _deathTimer -= ArcadeClock.Units(romFrames);
+        _deathTimer -= ArcadeClock.ToClockUnits(romFrames);
 
         switch (_deathStage)
         {
@@ -352,7 +352,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
             return;
         }
 
-        WalkFacing facing = WalkFacingFor(FacingDirection);
+        WalkFacing facing = GetWalkFacing(FacingDirection);
         if (facing != _animationFacing)
         {
             // A new direction resets the sequence index and the frame hold, so its first
@@ -393,7 +393,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
             return;
         }
 
-        FacingDirection = Direction8Extensions.FromDelta(move)!.Value;
+        FacingDirection = Direction8Extensions.CreateFromDelta(move)!.Value;
 
         // Per-axis move with wall revert: never allowed to overlap the wall.
         IntVector2 candidate = _position;
@@ -442,7 +442,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         if (fire && (!_wasFiring || --_autoFireTicksRemaining <= 0))
         {
             Direction8 fireDirection = aim ?? FacingDirection;
-            IntVector2 muzzle = _position + MuzzleOffset(fireDirection);
+            IntVector2 muzzle = _position + GetMuzzleOffset(fireDirection);
             LasersFiredThisUpdate = field.PlayerLasers.TryFire(muzzle, fireDirection, out _);
             _autoFireTicksRemaining = PlayerTuning.PlayerAutoFireTicks;
         }

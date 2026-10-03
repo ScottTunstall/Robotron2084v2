@@ -57,14 +57,14 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     /// <summary>Steps in the walk pattern (A-B-A-C).</summary>
     private const int WalkPatternLength = 4;
 
-    /// <summary>The hulk picture's own 14x16 arcade px box, in port pixels.</summary>
+    /// <summary>The hulk sprite's own 14x16 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(CollisionSizes.HulkCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.HulkCollisionSize.Height));
+        (ScreenSize.ToPortPixels(CollisionSizes.HulkCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.HulkCollisionSize.Height));
 
     /// <summary>The walk frames for each direction, as indices into <see cref="SpriteSet.HulkAnimationFrames"/>.</summary>
-    /// <remarks>Each direction plays 4 frames in an A-B-A-C pattern, reusing 3 of the 9 pictures:
+    /// <remarks>Each direction plays 4 frames in an A-B-A-C pattern, reusing 3 of the 9 animation frames:
     /// LEFT hulk1/2/1/3, RIGHT hulk7/8/7/9, UP and DOWN hulk4/5/4/6 (ROM: <c>HLKAL</c>/<c>HLKAR</c>/
-    /// <c>HLKAD</c>/<c>HLKAU</c>, pictures <c>HLKLP1</c>).</remarks>
+    /// <c>HLKAD</c>/<c>HLKAU</c>, animation frames <c>HLKLP1</c>).</remarks>
     private static readonly int[] LeftAnimationFrames = { 0, 1, 0, 2 };
 
     private static readonly int[] RightAnimationFrames = { 6, 7, 6, 8 };
@@ -105,17 +105,17 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         _sprites = sprites;
         _position = position;
         _random = random;
-        _stepPeriod = ArcadeClock.Units(stepDelayRomFrames);
+        _stepPeriod = ArcadeClock.ToClockUnits(stepDelayRomFrames);
         _target = target;
         _reaimStepsRemaining = RollReaimSteps();
         _direction = Direction8.Up; // placeholder — the first Update() call picks the real starting direction
         _animationFrameIndex = VerticalAnimationFrames[0];
     }
 
-    /// <summary>The hulk picture's own 14x16 box at <see cref="Position"/>.</summary>
+    /// <summary>The hulk sprite's own 14x16 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
-    /// <summary>This hulk's current walk picture, for the appear effect.</summary>
+    /// <summary>This hulk's current walk animation frame, for the appear effect.</summary>
     /// <remarks>It never shatters, but it still materialises at the start of a wave.</remarks>
     public Texture2D CurrentAnimationFrame => _sprites.HulkAnimationFrames[_animationFrameIndex];
 
@@ -144,7 +144,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         int dy = direction.Y != 0 && _random.Next(ShoveVerticalQuadrupleRollSides) < ShoveVerticalQuadrupleRollBelow
             ? direction.Y * ShoveVerticalQuadrupleFactor
             : direction.Y;
-        _position += new IntVector2(ScreenSize.ArcadePixels(dx), ScreenSize.ArcadePixels(dy));
+        _position += new IntVector2(ScreenSize.ToPortPixelsFromArcade(dx), ScreenSize.ToPortPixelsFromArcade(dy));
         if (_playfieldBounds is { } bounds)
         {
             int x = Math.Clamp(_position.X, bounds.X, bounds.Right - CollisionSize.Width);
@@ -153,7 +153,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         }
     }
 
-    /// <summary>Draws the current walk picture solid.</summary>
+    /// <summary>Draws the current walk animation frame solid.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
@@ -177,7 +177,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
             _aimed = true;
             _horizontal = true;
             PickDirection(field);
-            _animationFrameIndex = FramesFor(_direction)[0]; // start the walk animation from its first frame
+            _animationFrameIndex = GetFrames(_direction)[0]; // start the walk animation from its first frame
             return;
         }
 
@@ -190,12 +190,12 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         _stepTimer -= _stepPeriod;
 
         // Show this cycle's walk frame, then move; sideways steps alternate short and long.
-        _animationFrameIndex = FramesFor(_direction)[_walkCycleStep];
+        _animationFrameIndex = GetFrames(_direction)[_walkCycleStep];
         int stepArcadePx = _horizontal
             ? (_walkCycleStep % 2 == 0 ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels)
             : VerticalStepArcadePixels;
         _walkCycleStep = (_walkCycleStep + 1) % WalkPatternLength;
-        IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.ArcadePixels(stepArcadePx);
+        IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.ToPortPixelsFromArcade(stepArcadePx);
         if (field.Wall.Intersects(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             // That step would cross the wall — stay put and re-aim.
@@ -215,11 +215,11 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     /// <param name="position">The new top-left.</param>
     internal void TeleportTo(IntVector2 position) => _position = position;
 
-    private static int[] FramesFor(Direction8 direction) => direction switch
+    private static int[] GetFrames(Direction8 direction) => direction switch
     {
         Direction8.Left => LeftAnimationFrames,
         Direction8.Right => RightAnimationFrames,
-        _ => VerticalAnimationFrames, // the ROM draws DOWN and UP with the same set of pictures
+        _ => VerticalAnimationFrames, // the ROM draws DOWN and UP with the same set of animation frames
     };
 
     /// <summary>Aims along the current axis at the target's coordinate plus a random offset.</summary>
@@ -255,7 +255,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         _horizontal = !_horizontal;
         PickDirection(field);
         _walkCycleStep = 0;
-        _animationFrameIndex = FramesFor(_direction)[0];
+        _animationFrameIndex = GetFrames(_direction)[0];
     }
 
     /// <summary>The steps until the next fresh direction: a random count (ROM <c>HULKND</c>).</summary>

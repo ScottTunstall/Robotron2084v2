@@ -41,18 +41,18 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     private const int VictimRightWallMarginArcadePixels = 4;
 
     /// <summary>X approach dead zone, in port pixels; there is no equivalent zone on Y.</summary>
-    private static readonly int ApproachDeadZonePixels = ScreenSize.Scaled(2);
+    private static readonly int ApproachDeadZonePixels = ScreenSize.ToPortPixels(2);
 
-    /// <summary>The brain picture's own 14x16 arcade px box, in port pixels.</summary>
+    /// <summary>The brain sprite's own 14x16 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(CollisionSizes.BrainCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.BrainCollisionSize.Height));
+        (ScreenSize.ToPortPixels(CollisionSizes.BrainCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.BrainCollisionSize.Height));
 
     /// <summary>How far the brain moves on each axis per step: one arcade px.</summary>
-    private static readonly int StepPixels = ScreenSize.Scaled(1);
+    private static readonly int StepPixels = ScreenSize.ToPortPixels(1);
 
-    /// <summary>The walk pattern's frame order: picture 1, 2, 1, 3 (an A-B-A-C cycle).</summary>
+    /// <summary>The walk pattern's frame order: animation frame 1, 2, 1, 3 (an A-B-A-C cycle).</summary>
     /// <remarks>ROM: each direction's animation table (<c>BRNAL</c>/<c>BRNAR</c>/<c>BRNAD</c>/
-    /// <c>BRNAU</c>) plays its 3 pictures in this order.</remarks>
+    /// <c>BRNAU</c>) plays its 3 animation frames in this order.</remarks>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
     private readonly int _beatPeriod;
@@ -95,7 +95,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <param name="beatDelayRomFrames">This wave's beat delay in ROM frames, added to the base beat (ROM <c>BRNSPD</c>): a bigger number is a SLOWER brain.</param>
     /// <param name="fireIntervalBeats">The most beats this wave's brain waits between cruise missiles: the interval is a random 1..this.</param>
     /// <param name="targetFamilySlot">The family slot this brain chases. The field hands the brain the
-    /// slot <see cref="PlayField.NearestFamilySlotTo"/> returns AS IT IS CREATED, which is before the
+    /// slot <see cref="PlayField.GetNearestFamilySlot"/> returns AS IT IS CREATED, which is before the
     /// family exists — the ROM's own order, and the arcade's "all the brains chase Mikey" bug
     /// (notes §18.8).</param>
     public Brain(
@@ -111,11 +111,11 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
         _targetSlot = targetFamilySlot;
-        _beatPeriod = ArcadeClock.Units(BeatExecutionRomFrames + beatDelayRomFrames);
+        _beatPeriod = ArcadeClock.ToClockUnits(BeatExecutionRomFrames + beatDelayRomFrames);
         _fireBeatsRemaining = 1 + random.Next(fireIntervalBeats);
     }
 
-    /// <summary>The brain picture's own 14x16 box at <see cref="Position"/>.</summary>
+    /// <summary>The brain sprite's own 14x16 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The frame an explosion would copy (see <see cref="IAnimationFrameSource"/>).</summary>
@@ -156,8 +156,8 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
 
         if (IsReprogramming)
         {
-            // A solid block under the picture (ROM: DRAW_BRAIN_IN_PROGGING_STATE).
-            _sprites.Blitter.DrawSolidRectangle(spriteBatch, Bounds, _sprites.Blitter.SlotColor(ReprogramTuning.ShapeSlot));
+            // A solid block under the sprite (ROM: DRAW_BRAIN_IN_PROGGING_STATE).
+            _sprites.Blitter.DrawSolidRectangle(spriteBatch, Bounds, _sprites.Blitter.GetSlotColour(ReprogramTuning.ShapeSlot));
         }
 
         _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
@@ -227,19 +227,19 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         human.BeginReprogramming();
         _reprogramRedrawsRemaining = ReprogramTuning.Iterations * ReprogramTuning.RedrawsPerIteration;
         _reprogramLifting = true;
-        _reprogramTimer = ArcadeClock.Units(ReprogramTuning.StepRomFrames);
+        _reprogramTimer = ArcadeClock.ToClockUnits(ReprogramTuning.StepRomFrames);
 
         // Placement and facing (ROM: BMUT00/BMUT10).
         int humanWidth = human.Bounds.Width;
-        int x = _position.X - humanWidth - ScreenSize.ArcadePixels(VictimGapArcadePixels);
+        int x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromArcade(VictimGapArcadePixels);
         WalkFacing facing = WalkFacing.Left;
         if (x < playfieldBounds.X)
         {
-            x = _position.X + ScreenSize.ArcadePixels(VictimRightOffsetArcadePixels);
+            x = _position.X + ScreenSize.ToPortPixelsFromArcade(VictimRightOffsetArcadePixels);
             facing = WalkFacing.Right;
-            if (x >= playfieldBounds.Right - ScreenSize.ArcadePixels(VictimRightWallMarginArcadePixels))
+            if (x >= playfieldBounds.Right - ScreenSize.ToPortPixelsFromArcade(VictimRightWallMarginArcadePixels))
             {
-                x = _position.X - humanWidth - ScreenSize.ArcadePixels(VictimGapArcadePixels);
+                x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromArcade(VictimGapArcadePixels);
                 facing = WalkFacing.Left;
             }
         }
@@ -247,7 +247,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         _facing = facing;
         _walkCycleStep = 0;
 
-        human.MoveTo(new IntVector2(x, _position.Y + ScreenSize.ArcadePixels(VictimDropArcadePixels)));
+        human.MoveTo(new IntVector2(x, _position.Y + ScreenSize.ToPortPixelsFromArcade(VictimDropArcadePixels)));
     }
 
     /// <summary>Gives up the current victim, if any — used when the brain is killed mid-animation.</summary>
@@ -260,11 +260,11 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         return victim;
     }
 
-    /// <summary>True when the brain's picture box would still sit inside the playfield on X.</summary>
+    /// <summary>True when the brain's sprite box would still sit inside the playfield on X.</summary>
     private static bool FitsInsideX(Rectangle bounds, int x) =>
         x >= bounds.X && x + CollisionSize.Width <= bounds.Right;
 
-    /// <summary>True when the brain's picture box would still sit inside the playfield on Y.</summary>
+    /// <summary>True when the brain's sprite box would still sit inside the playfield on Y.</summary>
     private static bool FitsInsideY(Rectangle bounds, int y) =>
         y >= bounds.Y && y + CollisionSize.Height <= bounds.Bottom;
 
@@ -273,12 +273,12 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     private void AdvanceReprogramming(PlayField field, Human victim)
     {
         _reprogramTimer += ArcadeClock.UnitsPerPortTick;
-        if (_reprogramTimer < ArcadeClock.Units(ReprogramTuning.StepRomFrames))
+        if (_reprogramTimer < ArcadeClock.ToClockUnits(ReprogramTuning.StepRomFrames))
         {
             return;
         }
 
-        _reprogramTimer -= ArcadeClock.Units(ReprogramTuning.StepRomFrames);
+        _reprogramTimer -= ArcadeClock.ToClockUnits(ReprogramTuning.StepRomFrames);
 
         Rectangle bounds = field.Wall.PlayfieldBounds;
         int jitter = _random.Next(ReprogramTuning.JitterPixels);
@@ -333,11 +333,11 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// cadence (ROM: the brain's fire beat).</remarks>
     private void FireIfPossible(PlayField field)
     {
-        if (field.CanFireCruiseMissile)
+        if (field.CanFireCruiseMissile())
         {
             field.SpawnCruiseMissile(_position + new IntVector2(
-                ScreenSize.ArcadePixels(MissileMuzzleXArcadePixels),
-                ScreenSize.ArcadePixels(MissileMuzzleYArcadePixels)));
+                ScreenSize.ToPortPixelsFromArcade(MissileMuzzleXArcadePixels),
+                ScreenSize.ToPortPixelsFromArcade(MissileMuzzleYArcadePixels)));
         }
 
         _fireBeatsRemaining = 1 + _random.Next(_fireIntervalBeats);
@@ -354,18 +354,18 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// (notes §18.8).</remarks>
     private Human? ResolveTarget(PlayField field)
     {
-        if (field.FamilyMemberInSlot(_targetSlot) is { } chased)
+        if (field.GetFamilyMemberInSlot(_targetSlot) is { } chased)
         {
             return chased;
         }
 
-        if (!field.AnyFamilyMemberAvailable)
+        if (!field.AnyFamilyMemberAvailable())
         {
             return null;
         }
 
-        _targetSlot = field.NearestFamilySlotTo(_position);
-        return field.FamilyMemberInSlot(_targetSlot);
+        _targetSlot = field.GetNearestFamilySlot(_position);
+        return field.GetFamilyMemberInSlot(_targetSlot);
     }
 
     /// <summary>Steps one pixel each way toward <paramref name="target"/>, where the playfield allows it.</summary>

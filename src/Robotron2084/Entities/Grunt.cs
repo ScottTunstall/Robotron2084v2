@@ -29,18 +29,18 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <summary>The arcade pixels one grunt step covers (spec-stated).</summary>
     private const int GruntStepArcadePixels = 4;
 
-    /// <summary>The ROM's walk pictures (RWDP1..4); the picture number wraps after the last.</summary>
-    private const int WalkPictureCount = 4;
+    /// <summary>The ROM's walk animation frames (RWDP1..4); the animation frame number wraps after the last.</summary>
+    private const int WalkAnimationFrameCount = 4;
 
-    /// <summary>The grunt picture's own 10x13 arcade px box, in port pixels.</summary>
+    /// <summary>The grunt sprite's own 10x13 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(CollisionSizes.GruntCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.GruntCollisionSize.Height));
+        (ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Height));
 
     /// <summary>The per-axis dead zone, in port pixels.</summary>
-    private static readonly int DeadZoneScreenPixels = ScreenSize.ArcadePixels(GruntDeadZoneArcadePixels);
+    private static readonly int DeadZoneScreenPixels = ScreenSize.ToPortPixelsFromArcade(GruntDeadZoneArcadePixels);
 
     /// <summary>How far one step moves the grunt on each active axis, in port pixels.</summary>
-    private static readonly int StepScreenPixels = ScreenSize.ArcadePixels(GruntStepArcadePixels);
+    private static readonly int StepScreenPixels = ScreenSize.ToPortPixelsFromArcade(GruntStepArcadePixels);
 
     private readonly Random _random;
     private readonly SpriteSet _sprites;
@@ -52,7 +52,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
 
     private IntVector2 _position;
 
-    private int _walkPictureNumber = 1;
+    private int _walkAnimationFrameNumber = 1;
 
     /// <summary>Creates a grunt, with its first stagger already rolled.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -74,12 +74,12 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
         _moveCountdownBeats = _random.Next(1, _moveLimitBeats + 1);
     }
 
-    /// <summary>The grunt picture's own 10x13 box at <see cref="Position"/>.</summary>
+    /// <summary>The grunt sprite's own 10x13 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
-    /// <summary>This grunt's current walk picture, for the appear and explosion effects.</summary>
+    /// <summary>This grunt's current walk animation frame, for the appear and explosion effects.</summary>
     /// <returns>The texture for the current walk frame.</returns>
-    public Texture2D CurrentAnimationFrame => _sprites.GruntAnimationFrames[AnimationFrameIndexFor(_walkPictureNumber)];
+    public Texture2D CurrentAnimationFrame => _sprites.GruntAnimationFrames[GetAnimationFrameIndex(_walkAnimationFrameNumber)];
 
     /// <summary>Alive until shot or killed on contact; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -90,19 +90,19 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
     /// <summary>True when the grunt took a step during the last update (it asks for the robot-move sound).</summary>
     public bool SteppedThisUpdate { get; private set; }
 
-    // the ROM's walk picture 1..4; a freshly spawned grunt starts on picture 1
+    // the ROM's walk animation frame 1..4; a freshly spawned grunt starts on animation frame 1
     /// <summary>Top-left of the grunt.</summary>
     /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position => _position;
 
     /// <summary>The walk frame showing right now, 1..4 (test hook).</summary>
-    /// <remarks>ROM RWDP picture.</remarks>
-    internal int WalkPictureNumber => _walkPictureNumber;
+    /// <remarks>ROM RWDP animation frame.</remarks>
+    internal int WalkAnimationFrameNumber => _walkAnimationFrameNumber;
 
     /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => ArcadeClock.Units(BeatIntervalRomFrames);
+    private static readonly int BeatPeriod = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
 
-    /// <summary>Draws the current walk picture in the animation frame's own colours.</summary>
+    /// <summary>Draws the current walk animation frame in its own colours.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
@@ -172,7 +172,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
 
         _moveCountdownBeats = _random.Next(1, _moveLimitBeats + 1);
         SteppedThisUpdate = true;
-        _walkPictureNumber = _walkPictureNumber % WalkPictureCount + 1; // DRAW_GRUNT: one frame per step
+        _walkAnimationFrameNumber = _walkAnimationFrameNumber % WalkAnimationFrameCount + 1; // DRAW_GRUNT: one frame per step
 
         // Per-axis step toward the player, with a dead zone; the axes are independent.
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -197,11 +197,11 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
         _moveLimitBeats = Math.Max(floorBeats, _moveLimitBeats - stepBeats);
     }
 
-    /// <summary>Maps the ROM's walk picture number (1..4) to an index into <see cref="SpriteSet.GruntAnimationFrames"/>.</summary>
-    /// <param name="romPictureNumber">The ROM's walk picture number, 1..4.</param>
+    /// <summary>Maps the ROM's walk animation frame number (1..4) to an index into <see cref="SpriteSet.GruntAnimationFrames"/>.</summary>
+    /// <param name="romAnimationFrameNumber">The ROM's walk animation frame number, 1..4.</param>
     /// <returns>The index into <see cref="SpriteSet.GruntAnimationFrames"/>.</returns>
-    /// <remarks>Walk pictures 1/2/3/4 map to animation frames 1/2/1/3, so only three animation frames are unique.</remarks>
-    internal static int AnimationFrameIndexFor(int romPictureNumber) => romPictureNumber switch
+    /// <remarks>Walk numbers 1/2/3/4 map to animation frames 1/2/1/3, so only three are unique.</remarks>
+    internal static int GetAnimationFrameIndex(int romAnimationFrameNumber) => romAnimationFrameNumber switch
     {
         2 => 1,
         4 => 2,

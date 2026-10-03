@@ -20,9 +20,9 @@ public sealed class SkullMarker : IEntity
     /// <summary>How long the skull stays on the field.</summary>
     private const int LifeRomFrames = 90;
 
-    /// <summary>The skull picture's own 12x11 arcade px box, in port pixels.</summary>
+    /// <summary>The skull sprite's own 12x11 arcade px box, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(CollisionSizes.SkullCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.SkullCollisionSize.Height));
+        (ScreenSize.ToPortPixels(CollisionSizes.SkullCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.SkullCollisionSize.Height));
 
     private readonly IntVector2 _position;
     private readonly SpriteSet _sprites;
@@ -35,10 +35,10 @@ public sealed class SkullMarker : IEntity
     {
         _sprites = sprites;
         _position = position;
-        _ticksRemaining = ArcadeClock.PortTicks(LifeRomFrames);
+        _ticksRemaining = ArcadeClock.ToPortTicks(LifeRomFrames);
     }
 
-    /// <summary>The skull picture's own box at <see cref="Position"/>.</summary>
+    /// <summary>The skull sprite's own box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>Alive until the linger runs out.</summary>
@@ -47,7 +47,7 @@ public sealed class SkullMarker : IEntity
     /// <summary>The death spot.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>Draws the skull in the picture's own colours.</summary>
+    /// <summary>Draws the skull in the sprite's own colours.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {

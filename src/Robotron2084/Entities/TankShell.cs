@@ -27,10 +27,10 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>ROM $4F82: the lifespan is the base plus a random count of ROM frames below this.</summary>
     private const int LifeExtraRomFramesMaxExclusive = 32;
 
-    private static readonly int BoxHeight = ScreenSize.Scaled(CollisionSizes.TankShellCollisionSize.Height);
+    private static readonly int BoxHeight = ScreenSize.ToPortPixels(CollisionSizes.TankShellCollisionSize.Height);
 
-    /// <summary>The shell picture's own 8x7 arcade px box, in port pixels.</summary>
-    private static readonly int BoxWidth = ScreenSize.Scaled(CollisionSizes.TankShellCollisionSize.Width);
+    /// <summary>The shell sprite's own 8x7 arcade px box, in port pixels.</summary>
+    private static readonly int BoxWidth = ScreenSize.ToPortPixels(CollisionSizes.TankShellCollisionSize.Width);
 
     private readonly SpriteSet _sprites;
     private int _moveTimer;
@@ -53,17 +53,17 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         _velocity = new IntVector2(
             Math.Sign(towardPlayerDirection.X) * TankShellTuning.Speed + random.Next(AimJitterMin, AimJitterMaxExclusive),
             Math.Sign(towardPlayerDirection.Y) * TankShellTuning.Speed + random.Next(AimJitterMin, AimJitterMaxExclusive));
-        _remainingLife = ArcadeClock.Units(random.Next(0, LifeExtraRomFramesMaxExclusive) + TankShellTuning.LifeBaseRomFrames);
+        _remainingLife = ArcadeClock.ToClockUnits(random.Next(0, LifeExtraRomFramesMaxExclusive) + TankShellTuning.LifeBaseRomFrames);
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
     /// <summary>True when this update bounced off a border wall, so the sound can be played.</summary>
     public bool BouncedThisUpdate { get; private set; }
 
-    /// <summary>The shell picture's own 8x7 box at <see cref="Position"/>.</summary>
+    /// <summary>The shell sprite's own 8x7 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, BoxWidth, BoxHeight);
 
-    /// <summary>The shell picture — it never flashes.</summary>
+    /// <summary>The shell sprite — it never flashes.</summary>
     public Texture2D CurrentAnimationFrame => _sprites.TankShell;
 
     /// <summary>Only ever transitions Alive -> Dead (immediate removal, no death animation).</summary>
@@ -72,7 +72,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Top-left of the collision box.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>Draws the shell picture at its own size; it never flashes.</summary>
+    /// <summary>Draws the shell sprite at its own size; it never flashes.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {

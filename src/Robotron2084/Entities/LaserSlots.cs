@@ -21,12 +21,12 @@ public sealed class LaserSlots
     private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
     private readonly SpriteSet _sprites;
 
-    /// <summary>Wires the slots to the pictures their lasers are drawn with.</summary>
+    /// <summary>Wires the slots to the sprites their lasers are drawn with.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     public LaserSlots(SpriteSet sprites) => _sprites = sprites;
 
     /// <summary>The lasers currently alive, never more than <see cref="Capacity"/>.</summary>
-    public IEnumerable<PlayerLaser> ActiveLasers =>
+    public IEnumerable<PlayerLaser> GetActiveLasers() =>
         _slots.Where(laser => laser is { LifeState: EntityLifeState.Alive }).Select(laser => laser!);
 
     /// <summary>Every slot in order; null means empty. Exposed for tests and diagnostics.</summary>

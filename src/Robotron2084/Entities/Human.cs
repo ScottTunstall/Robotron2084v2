@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A human is one of the family members the player is trying to rescue: Mikey, Mummy or Daddy. It wanders about until it is saved, killed or captured.</summary>
+/// <summary>A human is one of the family members the player is trying to rescue: Mikey, Mommy or Daddy. It wanders about until it is saved, killed or captured.</summary>
 /// <seealso cref="Brain"/>
 /// <seealso cref="SkullMarker"/>
 /// <remarks>
@@ -42,7 +42,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     private static readonly int[] AnimationFrameGroupByDirectionBlock = { 0, 1, 2, 3, 0, 1, 1, 0 };
 
     /// <summary>The walk table: 4 substeps for each of the 8 travel directions, in arcade pixels.</summary>
-    /// <remarks>Copied from the ROM's <c>HUMATB</c> — each substep is a picture number with an X/Y
+    /// <remarks>Copied from the ROM's <c>HUMATB</c> — each substep is an animation frame number with an X/Y
     /// delta. Block order: LEFT, RIGHT, DOWN, UP, UP+LEFT, RIGHT+UP, RIGHT+DOWN, DOWN+LEFT.</remarks>
     private static readonly (int Dx, int Dy, int Frame)[] Steps =
     {
@@ -102,18 +102,18 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _stepTimer = 0;                             // The stagger's last tick doubles as the first step.
     }
 
-    /// <summary>This member's own picture box at <see cref="Position"/>.</summary>
+    /// <summary>This member's own sprite box at <see cref="Position"/>.</summary>
     public Rectangle Bounds
     {
         get
         {
-            (int w, int h) = _kind.ArcadeCollisionSize();
-            return new(_position.X, _position.Y, ScreenSize.Scaled(w), ScreenSize.Scaled(h));
+            (int w, int h) = _kind.GetArcadeCollisionSize();
+            return new(_position.X, _position.Y, ScreenSize.ToPortPixels(w), ScreenSize.ToPortPixels(h));
         }
     }
 
-    /// <summary>The walk frame this human is showing — the picture pixel-perfect collision compares.</summary>
-    public Texture2D CurrentAnimationFrame => _kind.AnimationFramesIn(_sprites)[_animationFrameIndex];
+    /// <summary>The walk frame this human is showing — the sprite pixel-perfect collision compares.</summary>
+    public Texture2D CurrentAnimationFrame => _kind.GetAnimationFrames(_sprites)[_animationFrameIndex];
 
     /// <summary>True while this human is being reprogrammed: it cannot walk, be rescued or be killed.</summary>
     /// <remarks>ROM: <c>BMUT</c> — the human comes off the human list while the brain drives it.</remarks>
@@ -124,7 +124,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     // Steps left before the human rolls a fresh direction.
     // Ticks left before this human's very first step (staggers group spawns).
     // Current animation frame, 0-11 into this family member's 12 animation frames.
-    /// <summary>Which member this is (Mikey, Mum or Dad) — it decides the animation frames and the box.</summary>
+    /// <summary>Which member this is (Mikey, Mommy or Daddy) — it decides the animation frames and the box.</summary>
     public HumanKind Kind => _kind;
 
     /// <summary>Alive until killed, rescued or reprogrammed.</summary>
@@ -154,7 +154,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        Texture2D[] frames = _kind.AnimationFramesIn(_sprites);
+        Texture2D[] frames = _kind.GetAnimationFrames(_sprites);
 
         if (IsBeingReprogrammed)
         {
@@ -163,8 +163,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
                 spriteBatch,
                 frames[_animationFrameIndex],
                 Bounds,
-                _sprites.Blitter.SlotColor(ReprogramTuning.BackgroundSlot),
-                _sprites.Blitter.SlotColor(ReprogramTuning.ShapeSlot));
+                _sprites.Blitter.GetSlotColour(ReprogramTuning.BackgroundSlot),
+                _sprites.Blitter.GetSlotColour(ReprogramTuning.ShapeSlot));
             return;
         }
 
@@ -218,12 +218,12 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         else
         {
             _stepTimer += ArcadeClock.UnitsPerPortTick;
-            if (_stepTimer < ArcadeClock.Units(StepPeriodRomFrames))
+            if (_stepTimer < ArcadeClock.ToClockUnits(StepPeriodRomFrames))
             {
                 return;
             }
 
-            _stepTimer -= ArcadeClock.Units(StepPeriodRomFrames);
+            _stepTimer -= ArcadeClock.ToClockUnits(StepPeriodRomFrames);
         }
 
         StepCount++;
@@ -232,7 +232,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirectionBlock[_directionBlock] + frame;
 
         // Each unit in the walk table is one arcade pixel.
-        IntVector2 candidate = _position + new IntVector2(dx, dy) * ScreenSize.ArcadePixels(1);
+        IntVector2 candidate = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixelsFromArcade(1);
         Rectangle next = Bounds with { X = candidate.X, Y = candidate.Y };
         if (field.Wall.Intersects(next) || OverlapsLivingElectrode(next, field))
         {
@@ -254,8 +254,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <returns>The square's side, in port pixels.</returns>
     internal static int SpawnSquarePortPixels(HumanKind kind)
     {
-        (int width, int height) = kind.ArcadeCollisionSize();
-        return ScreenSize.Scaled(Math.Max(width, height));
+        (int width, int height) = kind.GetArcadeCollisionSize();
+        return ScreenSize.ToPortPixels(Math.Max(width, height));
     }
 
     /// <summary>Starts being reprogrammed: the human stops walking and starts flashing.</summary>

@@ -44,20 +44,20 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The wave's enforcer-allotment bound when the caller gives none.</summary>
     private const int DefaultMaxDropsX2 = 10;
 
-    /// <summary>The drop phase's wrap boundary, so it spins all eight pictures.</summary>
-    /// <remarks>ROM: <c>CIRC2L</c> wraps after its eighth picture.</remarks>
-    private const int DropLastPicture = 7;
+    /// <summary>The drop phase's wrap boundary, so it spins all eight animation frames.</summary>
+    /// <remarks>ROM: <c>CIRC2L</c> wraps after its eighth animation frame.</remarks>
+    private const int DropLastAnimationFrame = 7;
 
     /// <summary>ROM <c>CIRC2</c>: a re-armed drop countdown is a random 1..(the wave's delay over this) rotations.</summary>
     private const int DropRerollDivisor = 4;
 
-    /// <summary>The last picture of the spin and escape, i.e. the pointer value whose step wraps.</summary>
-    /// <remarks>ROM: <c>CIRCLE</c>/<c>CIRC3L</c> wrap after picture 5 (index 4).</remarks>
-    private const int SpinLastPicture = 4;
+    /// <summary>The last animation frame of the spin and escape, i.e. the pointer value whose step wraps.</summary>
+    /// <remarks>ROM: <c>CIRCLE</c>/<c>CIRC3L</c> wrap after animation frame 5 (index 4).</remarks>
+    private const int SpinLastAnimationFrame = 4;
 
-    /// <summary>Collision box = the ROM picture dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
+    /// <summary>Collision box = the ROM sprite dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(CollisionSizes.SpheroidCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.SpheroidCollisionSize.Height));
+        (ScreenSize.ToPortPixels(CollisionSizes.SpheroidCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.SpheroidCollisionSize.Height));
 
     private readonly int _dropDelayRotations;
     private readonly Random _random;
@@ -93,7 +93,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private int _velocityXSubpixels; // X velocity, in 1/256 column per frame (a column is 2 arcade px)
     private int _velocityYSubpixels; // Y velocity, in 1/256 row per frame
 
-    // current picture: 0..4 while spinning/escaping, 0..7 while dropping
+    // current animation frame: 0..4 while spinning/escaping, 0..7 while dropping
     // sideways run toward the edge of the field, then vanish
     /// <summary>Drops a spheroid at <paramref name="position"/> with its enforcer allotment already rolled; it is born mid-spin.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -123,15 +123,15 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         // The first drop countdown, in rotations.
         _dropRotationsRemaining = random.Next(1, dropDelayRotations + 1);
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
-        // Born on the spin phase's last picture, so the first beat is already a wrap pass.
-        _rotation = SpinLastPicture;
+        // Born on the spin phase's last animation frame, so the first beat is already a wrap pass.
+        _rotation = SpinLastAnimationFrame;
         RollAccelerations();
     }
 
-    /// <summary>The spheroid picture's own 16x15 box at <see cref="Position"/>.</summary>
+    /// <summary>The spheroid sprite's own 16x15 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
-    /// <summary>The current picture, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
+    /// <summary>The current animation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <returns>The texture for the current rotation frame.</returns>
     public Texture2D CurrentAnimationFrame
         => _sprites.SpheroidAnimationFrames[_rotation % _sprites.SpheroidAnimationFrames.Length];
@@ -146,11 +146,11 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: the `CIRC3` escape phase.</remarks>
     internal bool IsEscaping => _escaping;
 
-    /// <summary>Test hook: which picture is showing — 0..4 spinning or escaping, 0..7 dropping.</summary>
-    /// <remarks>The ROM's current-picture pointer.</remarks>
-    internal int PictureIndex => _rotation;
+    /// <summary>Test hook: which animation frame is showing — 0..4 spinning or escaping, 0..7 dropping.</summary>
+    /// <remarks>The ROM's current-animation-frame pointer.</remarks>
+    internal int AnimationFrameIndex => _rotation;
 
-    /// <summary>Draws the current picture; its shimmer comes from cycling palette slots, not a flash.</summary>
+    /// <summary>Draws the current animation frame; its shimmer comes from cycling palette slots, not a flash.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
@@ -164,7 +164,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Kills the spheroid outright; a laser hit plays its own burst instead of the strip explosion.</summary>
     /// <remarks>ROM: <c>CIRKIL</c> plays a 7-frame bubble burst then a "1000"; <see cref="RobotKinds"/> wires
-    /// <see cref="ScoreBurst.ForSpheroid"/> to the laser phase.</remarks>
+    /// <see cref="ScoreBurst.CreateForSpheroid"/> to the laser phase.</remarks>
     public void Kill()
     {
         if (LifeState != EntityLifeState.Alive)
@@ -195,16 +195,16 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         // Every phase runs on the same 3-frame beat (see the remarks).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < ArcadeClock.Units(SpheroidTuning.BeatRomFrames))
+        if (_beatTimer < ArcadeClock.ToClockUnits(SpheroidTuning.BeatRomFrames))
         {
             return;
         }
 
-        _beatTimer -= ArcadeClock.Units(SpheroidTuning.BeatRomFrames);
+        _beatTimer -= ArcadeClock.ToClockUnits(SpheroidTuning.BeatRomFrames);
 
-        // Wrap pass = the beat on the phase's last picture; the phase's countdown lives there.
-        int lastPicture = _dropping && !_escaping ? DropLastPicture : SpinLastPicture;
-        bool wrapPass = _rotation >= lastPicture;
+        // Wrap pass = the beat on the phase's last animation frame; the phase's countdown lives there.
+        int lastAnimationFrame = _dropping && !_escaping ? DropLastAnimationFrame : SpinLastAnimationFrame;
+        bool wrapPass = _rotation >= lastAnimationFrame;
 
         if (_escaping)
         {
@@ -261,9 +261,9 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _velocityYSubpixels = ClampThenDamp(_velocityYSubpixels + _accelY, SpheroidTuning.MaxVelocityYSubpixels);
     }
 
-    /// <summary>The wrap beat of the spin/drop cycle: hold the picture, release it, or drop an enforcer.</summary>
+    /// <summary>The wrap beat of the spin/drop cycle: hold the animation frame, release it, or drop an enforcer.</summary>
     /// <param name="field">The playfield, which owns the enforcer cap and the new enforcer.</param>
-    /// <remarks>ROM: <c>CIRC2</c>. While spinning, a frozen game holds the picture at its wrap target without
+    /// <remarks>ROM: <c>CIRC2</c>. While spinning, a frozen game holds the animation frame at its wrap target without
     /// decrementing the countdown; drop and escape have no such freeze check, because the arcade's freeze test
     /// is per routine, not per object.</remarks>
     private void AdvanceDropBeat(PlayField field)
@@ -282,20 +282,20 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         if (!_dropping)
         {
-            // Spin-to-drop does NOT reset the picture pointer: the drop phase carries the same
-            // picture on for one more beat.
+            // Spin-to-drop does NOT reset the animation frame pointer: the drop phase carries the same
+            // animation frame on for one more beat.
             _dropping = true;
             RerollDropCountdown();
             return;
         }
 
         // A drop capped by the enforcer limit is not deferred — it re-rolls and tries again.
-        if (field.CanDropEnforcer)
+        if (field.CanDropEnforcer())
         {
             field.SpawnEnforcer(_position);
             if (--_enforcersRemaining <= 0)
             {
-                StartEscape(); // the picture stays where it is; the first escape beat wraps it
+                StartEscape(); // the animation frame stays where it is; the first escape beat wraps it
                 return;
             }
         }
@@ -304,10 +304,10 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _rotation = 0;
     }
 
-    /// <summary>One escape beat: step the picture, or leave for good once the far edge is reached.</summary>
+    /// <summary>One escape beat: step the animation frame, or leave for good once the far edge is reached.</summary>
     /// <param name="field">The playfield, whose bounds the exit is measured against.</param>
-    /// <param name="wrapPass">True on the beat that lands on the phase's last picture.</param>
-    /// <remarks>The exit test lives inside the wrap branch, so it is tried once per picture cycle (ROM:
+    /// <param name="wrapPass">True on the beat that lands on the phase's last animation frame.</param>
+    /// <remarks>The exit test lives inside the wrap branch, so it is tried once per animation frame cycle (ROM:
     /// <c>CIRC3L</c>).</remarks>
     private void AdvanceEscapeBeat(PlayField field, bool wrapPass)
     {
@@ -318,8 +318,8 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         }
 
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        int leftExit = bounds.X + ScreenSize.Columns(SpheroidTuning.EscapeExitLeftColumn);
-        int rightExit = ScreenSize.Columns(SpheroidTuning.EscapeExitRightColumn);
+        int leftExit = bounds.X + ScreenSize.ToPortPixelsFromColumns(SpheroidTuning.EscapeExitLeftColumn);
+        int rightExit = ScreenSize.ToPortPixelsFromColumns(SpheroidTuning.EscapeExitRightColumn);
         if (_position.X <= leftExit || _position.X >= rightExit)
         {
             LifeState = EntityLifeState.Dead; // removed at once, no burst (ROM: `CIR4`)
@@ -352,9 +352,9 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _accelBeatsRemaining = 1 + _random.Next(0, AccelBeatsMax);
     }
 
-    /// <summary>Starts the escape: Y velocity 0, X exactly ±1 column per frame, picture untouched.</summary>
-    /// <remarks>ROM: <c>CIRC3</c> — the arcade leaves the picture on the last drop-phase frame, and
-    /// the first escape beat wraps it back to the first spin picture.</remarks>
+    /// <summary>Starts the escape: Y velocity 0, X exactly ±1 column per frame, animation frame untouched.</summary>
+    /// <remarks>ROM: <c>CIRC3</c> — the arcade leaves the animation frame on the last drop-phase frame, and
+    /// the first escape beat wraps it back to the first spin animation frame.</remarks>
     private void StartEscape()
     {
         _escaping = true;

@@ -39,14 +39,14 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <see cref="CruiseMissileTuning.MarkArcadeHeight"/> arcade px mark, and offset up and
     /// left of the tracked point.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.Scaled(CollisionSizes.CruiseMissileCollisionSize.Width), ScreenSize.Scaled(CollisionSizes.CruiseMissileCollisionSize.Height));
+        (ScreenSize.ToPortPixels(CollisionSizes.CruiseMissileCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.CruiseMissileCollisionSize.Height));
 
     /// <summary>How far the missile steps along X per move, in port pixels — two arcade px.</summary>
     /// <remarks>The arcade moves it one video-memory column per step; a column is 2 arcade px wide.</remarks>
-    private static readonly int StepXPortPixels = ScreenSize.Columns(1);
+    private static readonly int StepXPortPixels = ScreenSize.ToPortPixelsFromColumns(1);
 
     /// <summary>How far the missile steps along Y per move, in port pixels — one arcade px.</summary>
-    private static readonly int StepYPortPixels = ScreenSize.Scaled(1);
+    private static readonly int StepYPortPixels = ScreenSize.ToPortPixels(1);
 
     private readonly Random _random;
     private readonly SpriteSet _sprites;
@@ -81,8 +81,8 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>The collision box: the tracked point shifted one pixel up and left.</summary>
     /// <remarks>ROM: the "FAT PHONY GUY" hitbox, offset up and left of the tracked point.</remarks>
     public Rectangle Bounds => new(
-        _position.X + ScreenSize.Columns(CollisionSizes.CruiseMissileBoxOffsetColumns),
-        _position.Y + ScreenSize.Scaled(CollisionSizes.CruiseMissileBoxOffsetRows),
+        _position.X + ScreenSize.ToPortPixelsFromColumns(CollisionSizes.CruiseMissileBoxOffsetColumns),
+        _position.Y + ScreenSize.ToPortPixels(CollisionSizes.CruiseMissileBoxOffsetRows),
         CollisionSize.Width,
         CollisionSize.Height);
 
@@ -99,7 +99,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     internal IntVector2 Velocity => _velocity;
 
     /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomFrames);
+    private static readonly int BeatPeriod = ArcadeClock.ToClockUnits(BeatPeriodRomFrames);
 
     /// <summary>Draws the trail marks and the missile's head.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
@@ -113,20 +113,20 @@ public sealed class CruiseMissile : IEntity, IRemovable
             return;
         }
 
-        int markWidth = ScreenSize.Scaled(CruiseMissileTuning.MarkArcadeWidth);
-        int markHeight = ScreenSize.Scaled(CruiseMissileTuning.MarkArcadeHeight);
+        int markWidth = ScreenSize.ToPortPixels(CruiseMissileTuning.MarkArcadeWidth);
+        int markHeight = ScreenSize.ToPortPixels(CruiseMissileTuning.MarkArcadeHeight);
 
-        Color trailColor = _sprites.Blitter.SlotColor(CruiseMissileTuning.TrailSlot);
+        Color trailColor = _sprites.Blitter.GetSlotColour(CruiseMissileTuning.TrailSlot);
         foreach (IntVector2 mark in _trail)
         {
             _sprites.Blitter.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight), trailColor);
         }
 
-        // The ROM's missile picture only defines the collision box; the head is a solid dot.
+        // The ROM's missile sprite only defines the collision box; the head is a solid dot.
         _sprites.Blitter.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(_position.X, _position.Y, markWidth, markHeight),
-            _sprites.Blitter.SlotColor(CruiseMissileTuning.HeadSlot));
+            _sprites.Blitter.GetSlotColour(CruiseMissileTuning.HeadSlot));
     }
 
     /// <summary>Removes the missile instantly and wipes its trail with it.</summary>
@@ -205,8 +205,8 @@ public sealed class CruiseMissile : IEntity, IRemovable
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
         IntVector2 leaving = _position;
-        int columnPixels = ScreenSize.Columns(1);
-        int rowPixels = ScreenSize.Scaled(1);
+        int columnPixels = ScreenSize.ToPortPixelsFromColumns(1);
+        int rowPixels = ScreenSize.ToPortPixels(1);
 
         if (_velocity.X != 0)
         {

@@ -20,7 +20,7 @@ public sealed class RescueScoreMarker : IEntity
     /// <summary>How long the display stays on the field.</summary>
     private const int LifeRomFrames = 60;
 
-    private static readonly int Size = ScreenSize.Scaled(CollisionSizes.EntitySizeSpecPixels);
+    private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeSpecPixels);
 
     /// <summary>Index into <see cref="SpriteSet.RescueScoreDisplays"/> (0..4 = 1000..5000).</summary>
     private readonly int _displayIndex;
@@ -37,7 +37,7 @@ public sealed class RescueScoreMarker : IEntity
     {
         _sprites = sprites;
         _position = position;
-        _ticksRemaining = ArcadeClock.PortTicks(LifeRomFrames);
+        _ticksRemaining = ArcadeClock.ToPortTicks(LifeRomFrames);
         _displayIndex = Math.Clamp(rescuesThisLife, 1, ScoreValues.RescueBonusMaxCount) - 1;
     }
 
@@ -50,7 +50,7 @@ public sealed class RescueScoreMarker : IEntity
     /// <summary>The rescue spot.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>Draws the "1000".."5000" picture this rescue earned.</summary>
+    /// <summary>Draws the "1000".."5000" sprite this rescue earned.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {

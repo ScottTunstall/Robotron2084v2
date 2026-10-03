@@ -67,7 +67,7 @@ public sealed class Prog : IExplodable, IRemovable
 
     private const int WrapMarginYRows = 18;
 
-    // The walk cycle: picture 1, 2, 1, 3 — the same A-B-A-C pattern the humans use.
+    // The walk cycle: animation frame 1, 2, 1, 3 — the same A-B-A-C pattern the humans use.
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
     private readonly (int Width, int Height) _collisionSize;
@@ -105,28 +105,28 @@ public sealed class Prog : IExplodable, IRemovable
         _kind = kind;
         _random = random;
         _collisionSize = (
-            ScreenSize.Scaled(kind.ArcadeCollisionSize().Width),
-            ScreenSize.Scaled(kind.ArcadeCollisionSize().Height));
+            ScreenSize.ToPortPixels(kind.GetArcadeCollisionSize().Width),
+            ScreenSize.ToPortPixels(kind.GetArcadeCollisionSize().Height));
         RollOffsets(); // ROM PROGST calls GPOFF at creation
     }
 
     /// <summary>The converted human's own box at <see cref="Position"/> (a prog keeps its victim's size).</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
 
-    /// <summary>The picture the death explosion shatters: the phony burst card, not the human's animation frames.</summary>
+    /// <summary>The animation frame the death explosion shatters: the phony burst card, not the human's animation frames.</summary>
     /// <returns>The phony burst card.</returns>
-    /// <remarks>ROM: <c>PRGKIL</c> swaps the picture to the 12x16 <c>PGXPIC</c>.</remarks>
+    /// <remarks>ROM: <c>PRGKIL</c> swaps the sprite to the 12x16 <c>PGXPIC</c>.</remarks>
     public Texture2D CurrentAnimationFrame => _sprites.ProgBurst;
 
     /// <summary>The explosion's rect: the burst card's size at the prog's corner.</summary>
-    /// <remarks>ROM: <c>PRGKIL</c>/<c>EXSTV</c> swap the picture without moving the object, and the
-    /// explosion uses that corner with the PICTURE's own size. The arcade clamps the corner inside the
+    /// <remarks>ROM: <c>PRGKIL</c>/<c>EXSTV</c> swap the sprite without moving the object, and the
+    /// explosion uses that corner with the sprite's own size. The arcade clamps the corner inside the
     /// field; a prog is always inside it already.</remarks>
     public Rectangle ExplosionBounds => new(
         _position.X,
         _position.Y,
-        ScreenSize.Scaled(CollisionSizes.ProgBurstSize.Width),
-        ScreenSize.Scaled(CollisionSizes.ProgBurstSize.Height));
+        ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Width),
+        ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Height));
 
     /// <summary>Which human's animation frames and box this prog carries (it became that human).</summary>
     public HumanKind Kind => _kind;
@@ -138,36 +138,30 @@ public sealed class Prog : IExplodable, IRemovable
     public IntVector2 Position => _position;
 
     /// <summary>Test hook: the pose each ghost was frozen in, newest first.</summary>
-    internal IReadOnlyList<int> GhostFrames
+    internal IReadOnlyList<int> GetGhostFrames()
     {
-        get
+        var frames = new List<int>(_ghosts.Count);
+        foreach (Ghost ghost in _ghosts)
         {
-            var frames = new List<int>(_ghosts.Count);
-            foreach (Ghost ghost in _ghosts)
-            {
-                frames.Add(ghost.AnimationFrameIndex);
-            }
-
-            return frames;
+            frames.Add(ghost.AnimationFrameIndex);
         }
+
+        return frames;
     }
 
     /// <summary>Test hook: the ghost trail's positions, newest first.</summary>
-    internal IReadOnlyList<IntVector2> GhostTrail
+    internal IReadOnlyList<IntVector2> GetGhostTrail()
     {
-        get
+        var positions = new List<IntVector2>(_ghosts.Count);
+        foreach (Ghost ghost in _ghosts)
         {
-            var positions = new List<IntVector2>(_ghosts.Count);
-            foreach (Ghost ghost in _ghosts)
-            {
-                positions.Add(ghost.Position);
-            }
-
-            return positions;
+            positions.Add(ghost.Position);
         }
+
+        return positions;
     }
 
-    /// <summary>The current walk picture: the facing direction's set, following <see cref="WalkCycle"/>.</summary>
+    /// <summary>The current walk animation frame: the facing direction's set, following <see cref="WalkCycle"/>.</summary>
     internal int WalkAnimationFrameIndex
     {
         get
@@ -184,7 +178,7 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>The beat in timer units (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static int BeatPeriod => ArcadeClock.Units(BeatPeriodRomFrames);
+    private static readonly int BeatPeriod = ArcadeClock.ToClockUnits(BeatPeriodRomFrames);
 
     // which entry of WalkCycle comes next (0-3)
     // this prog's persistent aim-offset on Y
@@ -202,8 +196,8 @@ public sealed class Prog : IExplodable, IRemovable
             return;
         }
 
-        Texture2D[] frames = _kind.AnimationFramesIn(_sprites);
-        Texture2D picture = frames[WalkAnimationFrameIndex];
+        Texture2D[] frames = _kind.GetAnimationFrames(_sprites);
+        Texture2D animationFrame = frames[WalkAnimationFrameIndex];
 
         // Oldest ghost first so newer ones paint over it; each is drawn once, in the pose it
         // had when dropped, so the trail is frozen snapshots rather than an animation.
@@ -213,22 +207,22 @@ public sealed class Prog : IExplodable, IRemovable
             _sprites.Blitter.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[ghost.AnimationFrameIndex],
-                BoundsAt(ghost.Position),
-                _sprites.Blitter.SlotColor(ProgTuning.GhostBackgroundSlot),
-                _sprites.Blitter.SlotColor(ProgTuning.GhostShapeSlot));
+                GetBoundsAt(ghost.Position),
+                _sprites.Blitter.GetSlotColour(ProgTuning.GhostBackgroundSlot),
+                _sprites.Blitter.GetSlotColour(ProgTuning.GhostShapeSlot));
         }
 
         _sprites.Blitter.DrawSpriteSolidWithBackground(
             spriteBatch,
-            picture,
+            animationFrame,
             Bounds,
-            _sprites.Blitter.SlotColor(ProgTuning.BackgroundSlot),
-            _sprites.Blitter.SlotColor(ProgTuning.ShapeSlot));
+            _sprites.Blitter.GetSlotColour(ProgTuning.BackgroundSlot),
+            _sprites.Blitter.GetSlotColour(ProgTuning.ShapeSlot));
     }
 
     /// <summary>Kills the prog outright; the strip explosion is the whole visual.</summary>
     /// <remarks>ROM: <c>PRGKIL</c> — the object is gone immediately, leaving only the strip explosion
-    /// of the picture it swapped in.</remarks>
+    /// of the sprite it swapped in.</remarks>
     public void Kill()
     {
         if (LifeState == EntityLifeState.Alive)
@@ -283,8 +277,8 @@ public sealed class Prog : IExplodable, IRemovable
         }
 
         // 2 columns (4px) on X or 4 rows (4px) on Y, on one axis only.
-        int stepX = ScreenSize.Columns(StepXColumns);
-        int stepY = ScreenSize.ArcadePixels(StepYRows);
+        int stepX = ScreenSize.ToPortPixelsFromColumns(StepXColumns);
+        int stepY = ScreenSize.ToPortPixelsFromArcade(StepYRows);
         IntVector2 step = _direction switch
         {
             Direction8.Left => new IntVector2(-stepX, 0),
@@ -316,7 +310,7 @@ public sealed class Prog : IExplodable, IRemovable
         && box.Bottom <= bounds.Bottom;
 
     /// <summary>This prog's box placed at an arbitrary position (used for the frozen ghosts).</summary>
-    private Rectangle BoundsAt(IntVector2 position) =>
+    private Rectangle GetBoundsAt(IntVector2 position) =>
         new(position.X, position.Y, _collisionSize.Width, _collisionSize.Height);
 
     /// <summary>Picks the next cardinal direction: half the re-aims consider X, half Y, so never diagonal.</summary>
@@ -331,8 +325,8 @@ public sealed class Prog : IExplodable, IRemovable
         if (_random.Next(AxisFlipSides) == 0)
         {
             // The offset is in columns, so convert to pixels first.
-            int aimX = player.X + ScreenSize.Columns(_offsetX);
-            if (aimX > bounds.Right + ScreenSize.Columns(WrapMarginXColumns))
+            int aimX = player.X + ScreenSize.ToPortPixelsFromColumns(_offsetX);
+            if (aimX > bounds.Right + ScreenSize.ToPortPixelsFromColumns(WrapMarginXColumns))
             {
                 aimX = bounds.Left;
             }
@@ -340,8 +334,8 @@ public sealed class Prog : IExplodable, IRemovable
             return aimX <= _position.X ? Direction8.Left : Direction8.Right;
         }
 
-        int aimY = player.Y + ScreenSize.ArcadePixels(_offsetY);
-        if (aimY > bounds.Bottom + ScreenSize.ArcadePixels(WrapMarginYRows))
+        int aimY = player.Y + ScreenSize.ToPortPixelsFromArcade(_offsetY);
+        if (aimY > bounds.Bottom + ScreenSize.ToPortPixelsFromArcade(WrapMarginYRows))
         {
             aimY = bounds.Top;
         }
