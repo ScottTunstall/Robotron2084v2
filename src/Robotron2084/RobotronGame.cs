@@ -184,33 +184,39 @@ public sealed class RobotronGame : Game
         _canvas = Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, _scaleMode);
 
     /// <summary>
-    /// The port-only attract dev keys (notes §97, re-keyed in §101 and §131): F12 the storyline movie,
-    /// F6 the demo game, F4 the high score table, F9 the end of a game, and F7 HELD to fast-forward
-    /// the movie.
+    /// The port-only attract dev keys (notes §97, re-keyed in §101, §131 and §137): End the storyline movie,
+    /// Home the demo game, Insert the high score table, Delete the end of a game, and Page Up HELD to
+    /// fast-forward the movie.
     /// </summary>
     /// <param name="state">This tick's keyboard.</param>
-    /// <remarks>F12 and F6 drop straight into the attract sequence so a scene can be inspected without
-    /// sitting out the title's 12-second idle, and F7 is how the hulk's walk (ROM frame ~2574) is reached
-    /// in seconds rather than after the text crawl. F1/F2/F3 are the game-start keys, so the dev
-    /// keys sit above them. F5 is no longer a dev key: it opens the GAME ADJUSTMENT page from the
-    /// attract screens (notes §131).</remarks>
+    /// <remarks>End and Home drop straight into the attract sequence so a scene can be inspected without
+    /// sitting out the title's 12-second idle, and Page Up is how the hulk's walk (ROM frame ~2574) is reached
+    /// in seconds rather than after the text crawl. They are live on the attract screens only: Insert is also
+    /// the skip-a-wave key and Delete clears a line on the DEFINE INPUTS page, so they must not act anywhere else.
+    /// The function keys are left to the game's own start and settings keys (F1/F2/F3, F5, F10) and the display
+    /// keys (F8, F11).</remarks>
     private void HandleAttractDevKeys(KeyboardState state)
     {
-        DevKeys.AttractFastForward = state.IsKeyDown(Keys.F7);
+        bool onAttractScreen = _stateManager.Current is IAttractState;
+        DevKeys.AttractFastForward = onAttractScreen && state.IsKeyDown(Keys.PageUp);
+        if (!onAttractScreen)
+        {
+            return;
+        }
 
-        if (Pressed(state, Keys.F12))
+        if (Pressed(state, Keys.End))
         {
             _stateManager.TransitionTo(new StorylineState(_services, new Random()));
         }
-        else if (Pressed(state, Keys.F6))
+        else if (Pressed(state, Keys.Home))
         {
             _stateManager.TransitionTo(new AttractState(_services));
         }
-        else if (Pressed(state, Keys.F4))
+        else if (Pressed(state, Keys.Insert))
         {
             _stateManager.TransitionTo(new HighScoreTableState(_services));
         }
-        else if (Pressed(state, Keys.F9))
+        else if (Pressed(state, Keys.Delete))
         {
             StartEndOfGameFlow();
         }
