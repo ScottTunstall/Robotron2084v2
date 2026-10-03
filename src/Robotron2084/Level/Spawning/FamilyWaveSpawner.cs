@@ -27,10 +27,12 @@ public sealed class FamilyWaveSpawner : IWaveSpawner
     private static void SpawnKind(WaveSpawnContext context, HumanKind kind, int count)
     {
         PlayField field = context.Field;
+        FieldEntities entities = context.Entities;
+        SpawnPlacement placement = context.Placement;
         for (int i = 0; i < count; i++)
         {
-            IntVector2 position = context.Placement.FindSpawnPoint(field.IsClearOfElectrodes, Human.SpawnSquarePortPixels(kind));
-            field.Entities.Family.Add(new Human(field.Sprites, position, kind, context.Random));
+            IntVector2 position = placement.FindSpawnPoint(field.IsClearOfElectrodes, Human.SpawnSquarePortPixels(kind));
+            entities.Add(new Human(field.Sprites, position, kind, context.Random));
         }
     }
 }

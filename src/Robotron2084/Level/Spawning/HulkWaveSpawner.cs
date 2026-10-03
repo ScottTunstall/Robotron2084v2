@@ -24,14 +24,16 @@ public sealed class HulkWaveSpawner : IWaveSpawner
     public void Spawn(WaveSpawnContext context)
     {
         PlayField field = context.Field;
+        FieldEntities entities = context.Entities;
+        SpawnPlacement placement = context.Placement;
         for (int i = 0; i < field.Parameters.HulkCount; i++)
         {
-            IntVector2 position = context.Placement.FindSpawnPointAwayFrom(context.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
+            IntVector2 position = placement.FindSpawnPointAwayFrom(context.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
             Func<IntVector2> target = context.Random.Next(TargetRollSides) == 0
-                ? () => field.Entities.Family.GetLastMemberPosition() ?? field.Player.Position
-                : () => field.Player.Position;
+                ? () => entities.GetLastFamilyMemberPosition() ?? field.PlayerPosition
+                : () => field.PlayerPosition;
             var hulk = new Hulk(field.Sprites, position, context.Random, field.Parameters.HulkBeatIntervalRomFrames, target);
-            field.Entities.Hulks.Add(hulk);
+            entities.Add(hulk);
             field.QueueMaterialise(hulk);
         }
     }

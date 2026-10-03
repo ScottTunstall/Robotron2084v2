@@ -12,11 +12,12 @@ public sealed class QuarkWaveSpawner : IWaveSpawner
     public void Spawn(WaveSpawnContext context)
     {
         PlayField field = context.Field;
+        FieldEntities entities = context.Entities;
         for (int i = 0; i < field.Parameters.QuarkCount; i++)
         {
-            IntVector2 position = Quark.GetStartPosition(field.Wall.PlayfieldBounds, context.Random);
+            IntVector2 position = Quark.GetStartPosition(field.PlayfieldBounds, context.Random);
             var quark = new Quark(field.Sprites, position, context.Random, field.Parameters.MaxDropsX2, field.Parameters.QuarkDropDelay, field.Parameters.QuarkSpeedCap);
-            field.Entities.Quarks.Add(quark);
+            entities.Add(quark);
             field.QueueMaterialise(quark);
         }
     }

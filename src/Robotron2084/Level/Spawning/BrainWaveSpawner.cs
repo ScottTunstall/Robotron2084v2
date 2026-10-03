@@ -21,17 +21,19 @@ public sealed class BrainWaveSpawner : IWaveSpawner
     public void Spawn(WaveSpawnContext context)
     {
         PlayField field = context.Field;
+        FieldEntities entities = context.Entities;
+        SpawnPlacement placement = context.Placement;
         for (int i = 0; i < field.Parameters.BrainCount; i++)
         {
-            IntVector2 position = context.Placement.FindSpawnPointAwayFrom(context.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
+            IntVector2 position = placement.FindSpawnPointAwayFrom(context.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
             var brain = new Brain(
                 field.Sprites,
                 position,
                 context.Random,
                 field.Parameters.BrainBeatWaitRomFrames,
                 field.Parameters.BrainFireDelay,
-                field.Entities.Family.GetNearestSlot(position));
-            field.Entities.Brains.Add(brain);
+                entities.GetNearestFamilySlot(position));
+            entities.Add(brain);
             field.QueueMaterialise(brain);
         }
 

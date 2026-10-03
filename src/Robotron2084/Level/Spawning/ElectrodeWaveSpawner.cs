@@ -12,11 +12,13 @@ public sealed class ElectrodeWaveSpawner : IWaveSpawner
     public void Spawn(WaveSpawnContext context)
     {
         PlayField field = context.Field;
+        FieldEntities entities = context.Entities;
+        SpawnPlacement placement = context.Placement;
         for (int i = 0; i < field.Parameters.ElectrodeCount; i++)
         {
-            IntVector2 position = context.Placement.FindSpawnPointAwayFrom(
+            IntVector2 position = placement.FindSpawnPointAwayFrom(
                 context.PlayerStart, SpawnTuning.ElectrodeMinDistanceFromPlayer, field.IsClearOfElectrodes);
-            field.Entities.Electrodes.Add(new Electrode(field.Sprites, position, field.Parameters.LevelNumber));
+            entities.Add(new Electrode(field.Sprites, position, field.Parameters.LevelNumber));
         }
     }
 }

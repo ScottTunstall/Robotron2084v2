@@ -12,12 +12,14 @@ public sealed class GruntWaveSpawner : IWaveSpawner
     public void Spawn(WaveSpawnContext context)
     {
         PlayField field = context.Field;
+        FieldEntities entities = context.Entities;
+        SpawnPlacement placement = context.Placement;
         for (int i = 0; i < field.Parameters.GruntCount; i++)
         {
-            IntVector2 position = context.Placement.FindSpawnPointAwayFrom(
+            IntVector2 position = placement.FindSpawnPointAwayFrom(
                 context.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, field.IsClearOfElectrodes);
             var grunt = new Grunt(field.Sprites, position, field.Parameters.GruntMoveDelay, random: context.Random);
-            field.Entities.Grunts.Add(grunt);
+            entities.Add(grunt);
             field.QueueMaterialise(grunt);
         }
     }

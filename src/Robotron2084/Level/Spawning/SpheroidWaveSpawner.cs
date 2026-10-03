@@ -12,11 +12,13 @@ public sealed class SpheroidWaveSpawner : IWaveSpawner
     public void Spawn(WaveSpawnContext context)
     {
         PlayField field = context.Field;
+        FieldEntities entities = context.Entities;
+        SpawnPlacement placement = context.Placement;
         for (int i = 0; i < field.Parameters.SpheroidCount; i++)
         {
-            IntVector2 position = context.Placement.FindSpheroidSpawnPointAwayFrom(context.PlayerStart, SpheroidTuning.MinDistanceFromPlayer);
+            IntVector2 position = placement.FindSpheroidSpawnPointAwayFrom(context.PlayerStart, SpheroidTuning.MinDistanceFromPlayer);
             var spheroid = new Spheroid(field.Sprites, position, context.Random, field.Parameters.MaxDropsX2, field.Parameters.SpheroidDropDelay);
-            field.Entities.Spheroids.Add(spheroid);
+            entities.Add(spheroid);
             field.QueueMaterialise(spheroid);
         }
     }
