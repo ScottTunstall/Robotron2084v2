@@ -53,10 +53,10 @@ public sealed class PlayfieldWall
 
     /// <summary>True if <paramref name="bounds"/> overlaps any of the 4 border strips.</summary>
     public bool Intersects(Rectangle bounds) =>
-        bounds.Overlaps(new Rectangle(OuterBounds.X, OuterBounds.Y, OuterBounds.Width, Thickness)) ||
-        bounds.Overlaps(new Rectangle(OuterBounds.X, OuterBounds.Bottom - Thickness, OuterBounds.Width, Thickness)) ||
-        bounds.Overlaps(new Rectangle(OuterBounds.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height)) ||
-        bounds.Overlaps(new Rectangle(OuterBounds.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height));
+        bounds.Intersects(new Rectangle(OuterBounds.X, OuterBounds.Y, OuterBounds.Width, Thickness)) ||
+        bounds.Intersects(new Rectangle(OuterBounds.X, OuterBounds.Bottom - Thickness, OuterBounds.Width, Thickness)) ||
+        bounds.Intersects(new Rectangle(OuterBounds.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height)) ||
+        bounds.Intersects(new Rectangle(OuterBounds.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height));
 
     public void Update(GameTime gameTime) => _cycle.Update(gameTime);
 }

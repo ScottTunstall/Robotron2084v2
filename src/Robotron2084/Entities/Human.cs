@@ -279,7 +279,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     {
         foreach (Electrode electrode in field.Electrodes)
         {
-            if (electrode.LifeState == EntityLifeState.Alive && electrode.Bounds.Overlaps(next))
+            if (electrode.LifeState == EntityLifeState.Alive && electrode.Bounds.Intersects(next))
             {
                 return true;
             }

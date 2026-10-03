@@ -35,7 +35,7 @@ public sealed class PlayFieldSpawnTests
         {
             for (int j = i + 1; j < electrodes.Count; j++)
             {
-                Assert.False(electrodes[i].Bounds.Overlaps(electrodes[j].Bounds), $"electrodes {i} and {j} overlap");
+                Assert.False(electrodes[i].Bounds.Intersects(electrodes[j].Bounds), $"electrodes {i} and {j} overlap");
             }
         }
     }

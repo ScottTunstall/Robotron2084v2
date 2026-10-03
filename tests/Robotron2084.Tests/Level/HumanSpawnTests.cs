@@ -39,7 +39,7 @@ public sealed class HumanSpawnTests
                     foreach (Electrode electrode in field.Electrodes)
                     {
                         Assert.False(
-                            electrode.Bounds.Overlaps(human.Bounds),
+                            electrode.Bounds.Intersects(human.Bounds),
                             $"level {level} seed {seed}: {human.Kind} at {human.Bounds} spawns on an "
                             + $"electrode at {electrode.Bounds}");
                     }
@@ -74,7 +74,7 @@ public sealed class HumanSpawnTests
                     }
 
                     Assert.False(
-                        electrode.Bounds.Overlaps(human.Bounds),
+                        electrode.Bounds.Intersects(human.Bounds),
                         $"tick {tick}: a {human.Kind} walked into an electrode");
                 }
             }

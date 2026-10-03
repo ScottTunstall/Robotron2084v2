@@ -653,7 +653,7 @@ public sealed class PlayField
             // No overlap with other electrodes; not too close to the player start.
             IntVector2 position = _placement.FindSpawnPoint(
                 rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.ToPortPixels(SpawnTuning.ElectrodeMinDistanceFromPlayer))
-                         && _electrodes.All(e => !e.Bounds.Overlaps(rect)));
+                         && _electrodes.All(e => !e.Bounds.Intersects(rect)));
             _electrodes.Add(new Electrode(Sprites, position, Parameters.LevelNumber));
         }
     }
@@ -669,7 +669,7 @@ public sealed class PlayField
             // Grunts MAY overlap each other — no check for that.
             IntVector2 position = _placement.FindSpawnPoint(
                 rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.ToPortPixels(SpawnTuning.GruntMinDistanceFromPlayer))
-                         && _electrodes.All(e => !e.Bounds.Overlaps(rect)));
+                         && _electrodes.All(e => !e.Bounds.Intersects(rect)));
             // ROM: stagger — step countdown re-rolled RND(1..ROBSPD) bodies
             // every 4-vblank body; survivors' limit drops ×7/8 (floored at
             // RMXSPD) each time a grunt dies (notes §29).
@@ -1206,7 +1206,7 @@ public sealed class PlayField
             // the same way the electrodes and grunts are placed (notes §77), and clear
             // the member's OWN box, not the generic entity square (notes §88).
             IntVector2 position = _placement.FindSpawnPoint(
-                rect => _electrodes.All(e => !e.Bounds.Overlaps(rect)),
+                rect => _electrodes.All(e => !e.Bounds.Intersects(rect)),
                 Human.SpawnSquarePortPixels(kind));
             AddFamilyMember(new Human(Sprites, position, kind, _random));
         }
@@ -1242,7 +1242,7 @@ public sealed class PlayField
             return collision.Overlaps(shapeA, shapeB);
         }
 
-        return a.Bounds.Overlaps(b.Bounds);
+        return a.Bounds.Intersects(b.Bounds);
     }
 
     // ---- Human spawning (ROM HUMSTV: Mikeys, mommies, daddies; plain RANDXY —
