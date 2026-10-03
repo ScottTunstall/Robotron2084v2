@@ -41,7 +41,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable
     private readonly SpriteSet _sprites;
     private int _animationStep;
     private int _beatTimer;
-    private BerzerkRobotFacing _facing = BerzerkRobotFacing.Down;
+    private WalkFacing _facing = WalkFacing.Down;
     private bool _hasMoved;
     private int _moveCountdownBeats;
     private int _moveLimitBeats;
@@ -69,7 +69,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The way the robot is walking.</summary>
-    public BerzerkRobotFacing Facing => _facing;
+    public WalkFacing Facing => _facing;
 
     /// <summary>Alive until shot or killed on contact; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -156,9 +156,9 @@ public sealed class BerzerkRobot : IExplodable, IRemovable
     /// <param name="animationStep">How many steps the robot has taken.</param>
     /// <returns>The index into that facing's frames.</returns>
     /// <remarks>Walking sideways plays 1, 2. Walking up or down plays 1, 2, 3, 2, the author's order (notes §138).</remarks>
-    internal static int GetWalkFrameIndex(BerzerkRobotFacing facing, int animationStep) => facing switch
+    internal static int GetWalkFrameIndex(WalkFacing facing, int animationStep) => facing switch
     {
-        BerzerkRobotFacing.Left or BerzerkRobotFacing.Right => animationStep % SidewaysWalkFrameCount,
+        WalkFacing.Left or WalkFacing.Right => animationStep % SidewaysWalkFrameCount,
         _ => UpAndDownWalkOrder[animationStep % UpAndDownWalkOrder.Length],
     };
 
@@ -166,23 +166,23 @@ public sealed class BerzerkRobot : IExplodable, IRemovable
     /// <param name="from">The robot's top-left corner.</param>
     /// <param name="player">The player's top-left corner.</param>
     /// <returns>The facing.</returns>
-    internal static BerzerkRobotFacing GetFacingTowards(IntVector2 from, IntVector2 player)
+    internal static WalkFacing GetFacingTowards(IntVector2 from, IntVector2 player)
     {
         int gapX = player.X - from.X;
         int gapY = player.Y - from.Y;
         if (Math.Abs(gapX) >= Math.Abs(gapY))
         {
-            return gapX >= 0 ? BerzerkRobotFacing.Right : BerzerkRobotFacing.Left;
+            return gapX >= 0 ? WalkFacing.Right : WalkFacing.Left;
         }
 
-        return gapY >= 0 ? BerzerkRobotFacing.Down : BerzerkRobotFacing.Up;
+        return gapY >= 0 ? WalkFacing.Down : WalkFacing.Up;
     }
 
-    private Texture2D[] GetWalkFrames(BerzerkRobotFacing facing) => facing switch
+    private Texture2D[] GetWalkFrames(WalkFacing facing) => facing switch
     {
-        BerzerkRobotFacing.Right => _sprites.BerzerkRobotWalkRightFrames,
-        BerzerkRobotFacing.Left => _sprites.BerzerkRobotWalkLeftFrames,
-        BerzerkRobotFacing.Up => _sprites.BerzerkRobotWalkUpFrames,
+        WalkFacing.Right => _sprites.BerzerkRobotWalkRightFrames,
+        WalkFacing.Left => _sprites.BerzerkRobotWalkLeftFrames,
+        WalkFacing.Up => _sprites.BerzerkRobotWalkUpFrames,
         _ => _sprites.BerzerkRobotWalkDownFrames,
     };
 
