@@ -83,6 +83,16 @@ public sealed class StripEffect : IEntity
     public static StripEffect CreateAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
         => new(() => source.GetCurrentAnimationFrame(), bounds, StripEffectKind.Appear, axis, slope, clip);
 
+    /// <summary>Starts an appear for a plain picture rather than an entity: the logo's letters on the attract pages.</summary>
+    /// <param name="animationFrame">The picture materialising.</param>
+    /// <param name="bounds">The rect the strips are laid out in.</param>
+    /// <param name="axis">Which way the picture is cut: rows or columns.</param>
+    /// <param name="clip">The area strips are dropped outside of.</param>
+    /// <returns>The new appear record.</returns>
+    /// <remarks>Original source: <c>RRLOG.ASM</c> <c>WDONE1</c>, which asks the attract-mode appear (<c>AMAP</c>) for each letter.</remarks>
+    internal static StripEffect CreateAppear(Texture2D animationFrame, Rectangle bounds, StripFanAxis axis, StripClip clip)
+        => new(() => animationFrame, bounds, StripEffectKind.Appear, axis, 0, clip);
+
     /// <summary>Starts the explosion for a killed object; the killing shot picks the axis and lean.</summary>
     /// <param name="dead">The object being exploded; its animation frame and explosion bounds are used.</param>
     /// <param name="direction">The killing shot's direction, or null for a kill with no laser.</param>
