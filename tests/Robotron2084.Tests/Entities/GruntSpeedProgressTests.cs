@@ -13,9 +13,9 @@ namespace Robotron2084.Tests;
 ///    if that is still ≥ the floor; otherwise the limit is left ALONE. The
 ///    in-flight countdown is NOT re-rolled.
 /// 2. Level-progress tick (R5 $2AC7-2AF1): every 225 vblanks (first at 270),
-///    ONLY while 30+ grunts are alive: the floor drops by 2 and the limit by 4 on
-///    one pass, then by 1 and 2 on the next ($F0 toggles), the limit clamped to
-///    the floor.
+///    ONLY while FEWER than 30 grunts are alive (`CMPA #30 / BHS` skips it at 30 or more):
+///    the floor drops by 2 and the limit by 4, or by 1 and 2 when the player has
+///    scored since the last pass (SCRFLG, $F0), the limit clamped to the floor.
 /// 3. The floor reaches 1 = the arcade player's speed (player deltas ±1
 ///    arcade px/frame at $3031; a grunt at limit 1 steps 4 arcade px every
 ///    4-vblank beat = 1 arcade px/frame) — grunts end "at least as fast as
@@ -77,16 +77,16 @@ public sealed class GruntSpeedProgressTests
     }
 
     [Fact]
-    public void Floor_DescendsOnThe270Then225VblankCadence_OnlyWith30PlusGrunts()
+    public void Floor_DescendsOnThe270Then225VblankCadence_OnlyWithFewerThan30Grunts()
     {
         // Wave 7 (ROM $2E24): 0 grunts, 0 ELECTRODES — with the stationary
-        // player nothing can kill the 30 grunts we add, so the exact cadence
+        // player nothing can kill the 29 grunts we add, so the exact cadence
         // stays deterministic. Wave 7 floor = 5, ROBSPD = 15.
         PlayField field = CreateField(wave: 7);
         Assert.Equal(5, field.GruntSpeedFloor); // wave 7: RMXSPD = 5, 0 electrodes
 
         Grunt? tracked = null;
-        for (int i = 0; i < 30; i++)
+        for (int i = 0; i < 29; i++)
         {
             Grunt grunt = new(TestSprites.Shared, new IntVector2(100 + (i % 5) * 24, 100 + (i / 5) * 24), moveLimitBeats: 15, random: new Random(i));
             if (i == 0)
@@ -124,31 +124,49 @@ public sealed class GruntSpeedProgressTests
 
         field.Update(Frame()); // second tick (270 + 225 vblanks)
 
-        // The $F0 toggle: this pass drops the floor by 1 and the limit by 2.
-        Assert.Equal(2, field.GruntSpeedFloor); // 3 − 1
-        Assert.Equal(9, tracked.MoveDelayBeats); // 11 − 2
+        // Nothing was scored since the first pass, so this one is the harsh one again: the
+        // floor drops by 2 (3 → 1) and the limit by 4 (11 → 7).
+        Assert.Equal(1, field.GruntSpeedFloor);
+        Assert.Equal(7, tracked.MoveDelayBeats);
+    }
 
-        // Third pass: back to −2 / −4.
+    [Fact]
+    public void APassThatFollowsScoring_IsGentler_AndTheFlagIsSpentByIt()
+    {
+        PlayField field = CreateField(wave: 7);
+        Grunt tracked = new(TestSprites.Shared, new IntVector2(100, 100), moveLimitBeats: 15, random: new Random(1));
+        field.Entities.Grunts.Add(tracked);
+
+        field.AwardScore(100); // SCRFLG is set by any score (ROM UPDATE_PLAYER_SCORE, $DB9C)
+        for (int tick = 0; tick < 121 + ArcadeClock.ToPortTicks(270); tick++)
+        {
+            field.Update(Frame());
+        }
+
+        Assert.Equal(4, field.GruntSpeedFloor); // 5 − 1, not 5 − 2
+        Assert.Equal(13, tracked.MoveDelayBeats); // 15 − 2, not 15 − 4
+
+        // The pass cleared the flag, so with no further score the next one is the harsh one.
         for (int tick = 0; tick < ArcadeClock.ToPortTicks(225); tick++)
         {
             field.Update(Frame());
         }
 
-        Assert.Equal(1, field.GruntSpeedFloor); // 2 − 2 → 1 = the player's speed
-        Assert.Equal(5, tracked.MoveDelayBeats); // 9 − 4
+        Assert.Equal(2, field.GruntSpeedFloor); // 4 − 2
+        Assert.Equal(9, tracked.MoveDelayBeats); // 13 − 4
     }
 
     [Fact]
-    public void Floor_Holds_WhileFewerThan30GruntsAreAlive()
+    public void Floor_Holds_WhileThirtyOrMoreGruntsAreAlive()
     {
         PlayField field = CreateField();
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 30; i++)
         {
-            field.Entities.Grunts.Add(CreateGruntAt(field, 20 + i * 24, 20, i));
+            field.Entities.Grunts.Add(CreateGruntAt(field, 20 + (i % 10) * 24, 20 + (i / 10) * 24, i));
         }
 
-        // Two full cadence periods (270 + 225 vblanks + grace) with only 5
-        // grunts on screen: the $2ACA gate (cur_grunts < 30) skips the update.
+        // Two full cadence periods (270 + 225 vblanks + grace) with 30
+        // grunts on screen: the $2ACA gate (cur_grunts >= 30, BCC) skips the update.
         for (int tick = 0; tick < 121 + ArcadeClock.ToPortTicks(270) + ArcadeClock.ToPortTicks(225); tick++)
         {
             field.Update(Frame());

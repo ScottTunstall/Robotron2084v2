@@ -757,7 +757,7 @@ public sealed class PlayFieldBrainProgMissileTests
     }
 
     [Fact]
-    public void IsLevelCleared_RequiresBrainsProgsAndMissilesGone()
+    public void IsLevelCleared_RequiresBrainsGone_ButNotProgsOrMissiles()
     {
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
@@ -769,19 +769,19 @@ public sealed class PlayFieldBrainProgMissileTests
         field.Entities.Progs.Add(prog);
         var missile = new CruiseMissile(TestSprites.Shared, new IntVector2(inner.X + 300, inner.Y + 100), field.Player.Position, new Random(13));
         field.Entities.CruiseMissiles.Add(missile);
-        Assert.False(field.IsLevelCleared());
+        Assert.False(field.IsLevelCleared()); // the brain is still there
 
-        // Kill them: brain 2-second blink-off (real elapsed time), prog
-        // instant off (PRGKIL), missile instant off.
+        // ROM WVCHEK counts only grunts, spheroids, enforcers, brains, tanks and quarks:
+        // a prog and a cruise missile left flying do not hold the wave open.
         brain.Kill();
-        prog.Kill();
-        missile.Kill();
         for (int tick = 0; tick < 200 && !field.IsLevelCleared(); tick++)
         {
             field.Update(Frame());
         }
 
         Assert.True(field.IsLevelCleared());
+        Assert.True(prog.IsAlive());
+        Assert.True(missile.IsAlive());
     }
 
     [Fact]
