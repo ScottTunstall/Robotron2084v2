@@ -10733,3 +10733,23 @@ This is the first thing in the port that has no arcade counterpart: the author's
 The four frames of the second block share one canvas, so they line up when shown in turn. The frames keep the sheet's own red, not the arcade's.
 Every walking frame is now named by the way it faces. `BerzerkRobot_Stand` is the single standing picture from the second block, not part of the idle cycle.
 **Not done:** there is no entity class, no `SpriteSet` property and no wave yet; the frames are content only.
+
+### 138.1 The BerzerkRobot entity (author, 2026-10-03)
+
+**Author:** *"Create a BerzerkRobot entity which operates like the Grunt. But later, I want the berzerkrobot to be able to shoot. But not just now."*
+
+`Entities/BerzerkRobot` is a new kind (`RobotKind.BerzerkRobot`, last in the enum and in `RobotKinds.All`, so the arcade's laser-hit order is untouched).
+It is a grunt in everything but its look:
+
+- **It moves as a grunt does.** The grunt's step is now `GruntChaseStep` (the same code, moved out of `Grunt` so the two cannot drift apart): 2 columns sideways and
+  4 rows up or down towards the player every beat, a beat being 4 ROM frames, after a random 1..N beat wait. N is the wave's grunt wait (`GruntMoveDelay`); it does
+  not take part in the grunts' speed-up, because that is the arcade's grunt rule and the robot is not a grunt.
+- **It dies as a grunt does.** A laser kills it with the strip explosion and the grunt's hit sound, and walking onto an electrode kills both (`BerzerkRobotHitElectrodeResult`),
+  without the speed-up. A touch kills the player. Its kill is worth 100 (`ScoreValues.BerzerkRobot`, the grunt's score for now). The wave is not won while one is left.
+- **Its look is its own** (the port's decision; the sheet gave no rules). It stands in the six-frame idle cycle (one frame a beat) until it first steps, then shows the walk for
+  the way it is heading: the larger of its two gaps to the player picks right, left, down or up. Right and left play frames 1, 2; up and down play 1, 2, 3, 2.
+- **It is ready for a wave but in none.** `LevelParameters.BerzerkRobotCount` is 0 in every wave; `BerzerkRobotWaveSpawner` puts them on the field (off the electrodes, away from the player,
+  with the strip appear) and `WaveSurvivors` keeps the survivors of a death.
+- **Shooting is not built.** The collision box is the 8 x 12 frame (`CollisionSizes.BerzerkRobotCollisionSize`).
+
+`BerzerkRobotTests` pins that it steps exactly as a grunt does for 200 ticks, the frame orders, the facing, the electrode death and the survivors; the registry tests cover the kind's row.
