@@ -6,7 +6,7 @@ namespace Robotron2084.Tests.Hud;
 
 /// <summary>
 /// The arcade score display's digit model (notes §58.1, from $DC13's
-/// DRAW_PLAYER_SCORES): eight digit positions (ten-millions, always masked off,
+/// DRAW_PLAYER_SCORES): eight digit positions (ten-millions, which the arcade masks off but the port draws,
 /// then 1M..units), leading zeros suppressed but still advancing the cursor, and
 /// the LAST TWO digits always drawn.
 /// </summary>
@@ -39,9 +39,25 @@ public class ScoreFormatterTests
     }
 
     [Fact]
-    public void FullScore_AllSevenDigitsDrawn()
+    public void SevenDigitScore_DrawsSevenDigits()
     {
         Assert.Equal("9999999", Drawn(9_999_999));
+    }
+
+    [Fact]
+    public void EightDigitScore_DrawsAllEight_BeyondTheArcade()
+    {
+        // The arcade masked the ten-millions digit, so 10,000,000 showed as 0000000. The port goes beyond (notes §139).
+        Assert.Equal("10000000", Drawn(10_000_000));
+        Assert.Equal("12345678", Drawn(12_345_678));
+        Assert.Equal("99999999", Drawn(99_999_999));
+    }
+
+    [Fact]
+    public void ScoreThatPassesTheEightDigitLimit_ShowsTheLimit()
+    {
+        Assert.Equal("99999999", Drawn(123_456_789));
+        Assert.Equal(99_999_999, ScoreFormatter.MaxScore);
     }
 
     [Fact]
@@ -78,7 +94,7 @@ public class ScoreFormatterTests
     [Fact]
     public void Layout_ZeroScore_DrawsBothDigitsAfterSixBlanks()
     {
-        // Six suppressed zeros (the 10M digit plus 1M..100) = 36 px, then "00".
+        // Six suppressed zeros (10M to 100) = 36 px, then "00".
         var glyphs = ScoreFormatter.Layout(0, originX: 0, digitAdvancePixels: 7, blankAdvancePixels: 6);
 
         Assert.Equal([(0, 36), (0, 43)], glyphs.Select(g => (g.Digit, g.X)));
