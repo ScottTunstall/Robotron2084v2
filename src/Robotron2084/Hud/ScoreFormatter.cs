@@ -7,8 +7,11 @@ namespace Robotron2084.Hud;
 /// The ROM stores a score as FOUR BCD bytes (<c>p1_score</c>) and walks them as
 /// EIGHT digit positions, left to right:
 ///
-///     ten-millions (masked off with ANDA #$0F, so always blank),
-///     millions, hundred-thousands, ten-thousands, thousands, hundreds, tens, units
+///     ten-millions, millions, hundred-thousands, ten-thousands, thousands, hundreds, tens, units
+///
+/// The arcade masks the ten-millions digit off (<c>ANDA #$0F</c> on the top byte), so it only ever
+/// shows seven. The port shows all eight (notes §139): a score is drawn with its ten-millions digit
+/// when it has one.
 ///
 /// A zero digit is SUPPRESSED while nothing has been printed yet — but the text
 /// cursor still ADVANCES, by 6 px where a drawn glyph advances 7 px, so the
@@ -22,13 +25,12 @@ public static class ScoreFormatter
     /// <summary>Digit positions the ROM walks (10M, 1M, 100k, 10k, 1k, 100, 10, 1).</summary>
     public const int DigitPositions = 8;
 
-    /// <summary>The largest score the seven drawn digits can show (the 10M digit is masked off).</summary>
-    public const int MaxScore = 9_999_999;
+    /// <summary>The largest score the eight drawn digits can show. The arcade stopped at 9,999,999 because it masks the ten-millions digit.</summary>
+    public const int MaxScore = 99_999_999;
 
     /// <summary>
     /// The score's eight digit positions in the order the ROM draws them, with
-    /// the leading zeros (and the always-masked ten-millions digit) marked
-    /// suppressed.
+    /// the leading zeros marked suppressed.
     /// </summary>
     public static ScoreDigit[] Digits(int score)
     {
@@ -92,7 +94,7 @@ public static class ScoreFormatter
         return glyphs;
     }
 
-    /// <summary>Position 0 = ten-millions (always 0 — the ROM masks it off) ... 7 = units.</summary>
+    /// <summary>Position 0 = ten-millions (the ROM masks it off; the port draws it) ... 7 = units.</summary>
     private static int DigitAt(int score, int position)
     {
         int divisor = 1;
