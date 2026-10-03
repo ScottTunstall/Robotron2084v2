@@ -10768,7 +10768,7 @@ the sheet's scale reproduces the sheet exactly.
 
 - **The path** (revised by the author: *"Gorf does small jumps - not large waves. Think of Gorf jumping from one side of the screen to the other. The highest jump gorf does is 16 px high (for now)"*).
   It starts just off the screen on a random side (left or right) at a random ground height and hops to the far side, then is gone: when it gets across it is killed silently, with no explosion and no score.
-  It steps 1 column (2 arcade pixels) every 2 ROM frames, about 50 pixels a second. A hop is 16 steps (32 arcade pixels), and each hop rolls its own height from 1 up to 16 rows (`GorfTuning.MaxHopRows`, the author's "for now").
+  It steps 1 column (2 arcade pixels) every 2 ROM frames, about 50 pixels a second. A hop is 16 steps (32 arcade pixels). **Every hop is the same height, 16 rows** (`GorfTuning.HopRows`, the author's "for now"; the author: *"The hops have to be the same height each time, not random. So lets say 16px?"*). An earlier version rolled each hop's height from 1 to 16.
   The arc of a hop is `GorfPath.GetHopHeight`, one parabola arch that leaves the ground, peaks half way and lands where it left, in whole numbers with no `Sin`, `Cos` or any other trigonometry.
   It lands on the ground between hops, with no pause, and the ground is the random height it started on. The first version of this was a long up-and-down wave of 80 steps and 30 rows; the author's correction replaced it.
 - **The drops.** Its grunts are rolled as a spheroid's enforcers are: a roll from 1 to the wave's drop bound (`MaxDropsX2`, the ROM's `ENFNUM`, which grows with the wave and is moved by the difficulty setting), halved and rounded up.
