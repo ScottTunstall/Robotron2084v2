@@ -10709,3 +10709,23 @@ start a game, F5 the GAME ADJUSTMENT page, F10 DEFINE INPUTS, and the display ke
 **One behaviour change that the new keys force.** The old dev keys were read in every state, so F12 in the middle of a game left it. Insert is also the
 skip-a-wave key in a game, and Delete clears a line on the DEFINE INPUTS page, so the dev keys are now live on the attract screens only
 (`IAttractState`), as their documentation always said. Fast-forward is likewise off outside them.
+
+
+## §138 — THE BERZERKROBOT: A NEW ENTITY, NOT FROM THE ARCADE (author, 2026-10-03)
+
+**Author:** *"I'd like you to extract the sprite frames here and add them as content. This is a new entity type called BerzerkRobot. No waves use them as yet."*
+
+This is the first thing in the port that has no arcade counterpart: the author's own extension. Arcade fidelity (§133 onwards) still holds for everything else.
+
+**The source** is the author's sprite sheet, kept as `ref/berzerk-robot-sheet.png`: each sprite pixel is an 8 x 8 block of the picture, in red on a dark red background.
+`tools/extract-berzerk-robot.py` cuts it into 20 frames in `Content/Sprites/` (and `tools/generate-mgcb.py`, whose output paths had gone stale, adds them to the content pipeline):
+
+| Frames | Size | What the sheet shows |
+|---|---|---|
+| `BerzerkRobot_Walk_1` to `_16` | 8 x 12 | the 3 x 6 block in reading order, the two empty cells skipped. Head on the top row throughout, so a walk keeps the head still |
+| `BerzerkRobot_Stand` | 16 x 18 | the robot standing |
+| `BerzerkRobot_Explode_1` to `_3` | 16 x 18 | the three stages of it being destroyed, as the sheet's 2 x 2 block reads |
+
+The four frames of the second block share one canvas, so they line up when shown in turn. The frames keep the sheet's own red, not the arcade's.
+Which walking frames face which way is not recorded here: the sheet does not say, so they are numbered in sheet order until the entity is written.
+**Not done:** there is no entity class, no `SpriteSet` property and no wave yet; the frames are content only.
