@@ -25,7 +25,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private const int AimNoiseRange = 16;
 
     /// <summary>How many ROM frames one beat takes (NAP 2 plus the execution vblank).</summary>
-    private const int BeatPeriodRomFrames = 3;
+    private const int BeatIntervalRomFrames = 3;
 
     /// <summary>How many moves the missile makes per beat.</summary>
     private const int MovesPerBeat = 2;
@@ -99,7 +99,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     internal IntVector2 Velocity => _velocity;
 
     /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static readonly int BeatPeriod = ArcadeClock.ToClockUnits(BeatPeriodRomFrames);
+    private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
 
     /// <summary>Draws the trail marks and the missile's head.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
@@ -154,12 +154,12 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
         // Counts up to the next beat: 5 per tick, 6 per arcade frame.
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < BeatPeriod)
+        if (_beatTimer < BeatIntervalClockUnits)
         {
             return;
         }
 
-        _beatTimer -= BeatPeriod;
+        _beatTimer -= BeatIntervalClockUnits;
 
         // The re-aim timer is checked first, then the two steps for this beat are taken (ROM: `CMISL`).
         if (--_reAimBeatsRemaining <= 0)

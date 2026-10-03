@@ -12,7 +12,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Level.PlayField"/>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRTK4.ASM</c>: <c>TNKFIR</c> (aiming and speed), <c>SHELL</c> (each turn, bouncing and fizzling) and <c>SHLKIL</c></item>
+/// <item>Original source: <c>RRTK4.ASM</c>: <c>TNKFIR</c> (aiming and speed), <c>SHELL</c> (each beat, bouncing and fizzling) and <c>SHLKIL</c></item>
 /// <item>Disassembly: <c>asm/robomame.asm</c>: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>), <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>)</item>
 /// </list>
 /// Half the shots are aimed at the player, give or take a miss. The other half are aimed at a wall so that they bounce back across the field.
@@ -35,8 +35,8 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     private readonly Rectangle _playfieldBounds;
     private readonly SpriteSet _sprites;
 
-    /// <summary>ROM frames left before the shell's next turn.</summary>
-    private int _framesToNextTurn = TankShellTuning.BodyRomFrames;
+    /// <summary>ROM frames left before the shell's next beat.</summary>
+    private int _framesToNextBeat = TankShellTuning.BeatIntervalRomFrames;
 
     /// <summary>Builds up, a tick at a time, until it is time for the next ROM frame.</summary>
     private int _frameTimer;
@@ -46,8 +46,8 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The part of a port pixel the shell has moved but not yet shown, in 256ths, carried from frame to frame. A shell held against a wall can stop for good if its speed is under a pixel a ROM frame, as in the ROM.</summary>
     private IntVector2 _remainderSubpixels;
 
-    /// <summary>Turns left before the shell fizzles out.</summary>
-    private int _turnsRemaining;
+    /// <summary>Beats left before the shell fizzles out.</summary>
+    private int _beatsRemaining;
 
     /// <summary>How fast the shell goes sideways, in 256ths of a column a ROM frame, and up and down, in 256ths of a row a ROM frame.</summary>
     private IntVector2 _velocity;
@@ -67,10 +67,10 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         _velocity = random.Next(TankShellTuning.RollSides) >= TankShellTuning.ReboundRollAtOrAbove
             ? GetReboundVelocity(playerPosition, shellSpeed, random)
             : GetAimedVelocity(playerPosition, shellSpeed, random);
-        _turnsRemaining = TankShellTuning.LifeBaseTurns + random.Next(TankShellTuning.LifeExtraTurnsMaxExclusive);
+        _beatsRemaining = TankShellTuning.LifeBaseBeats + random.Next(TankShellTuning.LifeExtraBeatsMaxExclusive);
     }
 
-    /// <summary>True when this tick's turn bounced the shell off a wall, so the bounce sound can be played.</summary>
+    /// <summary>True when this tick's beat bounced the shell off a wall, so the bounce sound can be played.</summary>
     public bool BouncedThisUpdate { get; private set; }
 
     /// <summary>The box around the shell, from its top-left corner.</summary>
@@ -155,7 +155,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Runs one tick of the shell. Each ROM frame it moves, and every second ROM frame it takes a turn: bouncing off a wall or counting down its life.</summary>
+    /// <summary>Runs one tick of the shell. Each ROM frame it moves, and every second ROM frame it has a beat: bouncing off a wall or counting down its life.</summary>
     /// <param name="gameTime">Not used. The shell counts in ticks, not in seconds.</param>
     /// <param name="field">Not used.</param>
     /// <remarks>
@@ -182,13 +182,13 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         _frameTimer -= ArcadeClock.UnitsPerRomFrame;
         MoveOneFrame();
 
-        if (--_framesToNextTurn > 0)
+        if (--_framesToNextBeat > 0)
         {
             return;
         }
 
-        _framesToNextTurn = TankShellTuning.BodyRomFrames;
-        TakeTurn();
+        _framesToNextBeat = TankShellTuning.BeatIntervalRomFrames;
+        RunBeat();
     }
 
     /// <summary>Divides, rounding towards the lower number.</summary>
@@ -312,12 +312,12 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
             _position.Y + DivideRoundingDown(subpixels.Y, ScreenSize.SubpixelsPerPixel));
     }
 
-    /// <summary>Takes one turn: bounce if the next move would hit a wall, otherwise count down the shell's life.</summary>
+    /// <summary>Runs one beat: bounce if the next move would hit a wall, otherwise count down the shell's life.</summary>
     /// <remarks>
     /// Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, <c>XVNEG</c> and <c>YVNEG</c>. Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>), <c>TANK_SHELL_BOUNCE_HORIZONTAL</c> (<c>$4FC1</c>) and <c>TANK_SHELL_BOUNCE_VERTICAL</c> (<c>$4FC7</c>).
-    /// A turn that bounces the shell does not count down its life, and a sideways bounce skips the up-and-down check.
+    /// A beat that bounces the shell does not count down its life, and a sideways bounce skips the up-and-down check.
     /// </remarks>
-    private void TakeTurn()
+    private void RunBeat()
     {
         IntVector2 next = GetNextPosition();
         if (!FitsInsideX(next.X))
@@ -334,7 +334,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        if (--_turnsRemaining <= 0)
+        if (--_beatsRemaining <= 0)
         {
             LifeState = EntityLifeState.Dead;
         }

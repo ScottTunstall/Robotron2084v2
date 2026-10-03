@@ -30,10 +30,10 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The very first step waits a random 1..this many ticks, which staggers a group's start.</summary>
     private const int StartStaggerTicksMax = 8;
 
-    /// <summary>The step period in ROM frames. The ONE deliberate gameplay override — do not "fix" it.</summary>
+    /// <summary>The interval between beats, in ROM frames. The ONE deliberate gameplay override — do not "fix" it.</summary>
     /// <remarks>The arcade steps every 8 frames and moves one arcade pixel; the port deliberately
     /// slows this to 16, because the ROM-accurate pace reads as too fast (notes §70).</remarks>
-    private const int StepPeriodRomFrames = 16;
+    private const int BeatIntervalRomFrames = 16;
 
     /// <summary>Substeps in each direction block of the walk table.</summary>
     private const int SubStepsPerBlock = 4;
@@ -80,7 +80,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
     private int _stepsUntilNewDirection;
 
-    private int _stepTimer;
+    private int _beatTimer;
 
     // Which of the 8 direction blocks (see Steps) the human is currently walking.
     private int _subStep;
@@ -99,7 +99,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _directionBlock = random.Next(DirectionBlockCount);
         _stepsUntilNewDirection = 1 + random.Next(NewDirectionStepsMax);
         _startStaggerTicks = 1 + random.Next(StartStaggerTicksMax);
-        _stepTimer = 0;                             // The stagger's last tick doubles as the first step.
+        _beatTimer = 0;                             // The stagger's last tick doubles as the first step.
     }
 
     /// <summary>This member's own sprite box at <see cref="Position"/>.</summary>
@@ -195,7 +195,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Walks the current direction block one substep at a time, on the step clock.</summary>
-    /// <param name="gameTime">Unused — the step period is counted in ticks.</param>
+    /// <param name="gameTime">Unused — the beat interval is counted in ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -217,13 +217,13 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         }
         else
         {
-            _stepTimer += ArcadeClock.UnitsPerPortTick;
-            if (_stepTimer < ArcadeClock.ToClockUnits(StepPeriodRomFrames))
+            _beatTimer += ArcadeClock.UnitsPerPortTick;
+            if (_beatTimer < ArcadeClock.ToClockUnits(BeatIntervalRomFrames))
             {
                 return;
             }
 
-            _stepTimer -= ArcadeClock.ToClockUnits(StepPeriodRomFrames);
+            _beatTimer -= ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
         }
 
         StepCount++;

@@ -23,7 +23,7 @@ public sealed class Prog : IExplodable, IRemovable
 
     /// <summary>How many ROM frames pass between beats.</summary>
     /// <remarks>The ROM re-runs the prog's step logic every 3 frames.</remarks>
-    private const int BeatPeriodRomFrames = 3;
+    private const int BeatIntervalRomFrames = 3;
 
     /// <summary>Half of the X aim-offset's range: (a roll of 1..15 minus this) times 4 columns.</summary>
     /// <remarks>ROM: <c>GPOFF</c> gives ±28 columns of offset in steps of 4.</remarks>
@@ -178,7 +178,7 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>The beat in timer units (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static readonly int BeatPeriod = ArcadeClock.ToClockUnits(BeatPeriodRomFrames);
+    private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
 
     // which entry of WalkCycle comes next (0-3)
     // this prog's persistent aim-offset on Y
@@ -247,13 +247,13 @@ public sealed class Prog : IExplodable, IRemovable
         }
 
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < BeatPeriod)
+        if (_beatTimer < BeatIntervalClockUnits)
         {
             return;
         }
 
         // The animation advances on every beat, even if the step below is refused.
-        _beatTimer -= BeatPeriod;
+        _beatTimer -= BeatIntervalClockUnits;
         _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
 
         // Re-roll the offsets first: picking a direction uses whatever offset is current.

@@ -99,7 +99,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         // The first drop's delay, counted in animation cycles rather than beats (ROM: PD2).
         _dropBeatsRemaining = 1 + random.Next(dropDelayBeats);
         // A quark drifts and animates from the instant it exists, so both clocks start pre-loaded.
-        _beatTimer = BeatPeriod;
+        _beatTimer = BeatIntervalClockUnits;
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
@@ -117,7 +117,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     public IntVector2 Position => _position;
 
     /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static readonly int BeatPeriod = ArcadeClock.ToClockUnits(QuarkTuning.BeatRomFrames);
+    private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(QuarkTuning.BeatIntervalRomFrames);
 
     /// <summary>Draws the current rotation frame.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
@@ -164,12 +164,12 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
         // Counts up to the next beat: 5 per tick, 6 per arcade frame.
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < BeatPeriod)
+        if (_beatTimer < BeatIntervalClockUnits)
         {
             return;
         }
 
-        _beatTimer -= BeatPeriod;
+        _beatTimer -= BeatIntervalClockUnits;
         AdvanceAnimation();
 
         if (_fleeing)

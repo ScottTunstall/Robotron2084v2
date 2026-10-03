@@ -167,12 +167,12 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         }
 
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < ArcadeClock.ToClockUnits(EnforcerTuning.BeatRomFrames))
+        if (_beatTimer < ArcadeClock.ToClockUnits(EnforcerTuning.BeatIntervalRomFrames))
         {
             return;
         }
 
-        _beatTimer -= ArcadeClock.ToClockUnits(EnforcerTuning.BeatRomFrames);
+        _beatTimer -= ArcadeClock.ToClockUnits(EnforcerTuning.BeatIntervalRomFrames);
 
         // Both countdowns tick once per beat (ROM: ENFR1).
         if (--_reaimBeatsRemaining <= 0)

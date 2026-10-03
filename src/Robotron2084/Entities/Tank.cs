@@ -153,7 +153,7 @@ public sealed class Tank : IExplodable, IRemovable
     }
 
     /// <summary>How many timer units one grow step takes (a tick adds 5; an arcade frame is 6 units).</summary>
-    private static readonly int GrowPeriod = ArcadeClock.ToClockUnits(TankTuning.GrowRomFrames);
+    private static readonly int GrowIntervalClockUnits = ArcadeClock.ToClockUnits(TankTuning.GrowIntervalRomFrames);
 
     /// <summary>Draws the birth animation frames while being born, else the tread frame.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
@@ -215,12 +215,12 @@ public sealed class Tank : IExplodable, IRemovable
 
         // This wave's tank speed (2 vblanks) plus the 1 frame the process takes (ROM: TNKSPD).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < ArcadeClock.ToClockUnits(TankTuning.BeatRomFrames))
+        if (_beatTimer < ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames))
         {
             return;
         }
 
-        _beatTimer -= ArcadeClock.ToClockUnits(TankTuning.BeatRomFrames);
+        _beatTimer -= ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames);
 
         // One beat, always in this order (ROM: the TANK process).
         FireIfDue(field);
@@ -250,12 +250,12 @@ public sealed class Tank : IExplodable, IRemovable
         }
 
         _growTimer += ArcadeClock.UnitsPerPortTick;
-        if (_growTimer < GrowPeriod)
+        if (_growTimer < GrowIntervalClockUnits)
         {
             return true;
         }
 
-        _growTimer -= GrowPeriod;
+        _growTimer -= GrowIntervalClockUnits;
 
         // MTANK applies the current animation frame's (dx,dy) before advancing, so the mini tank
         // walks up-left and the full tank lands centred on the drop point (notes §53).

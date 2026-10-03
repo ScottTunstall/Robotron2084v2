@@ -195,12 +195,12 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         // Every phase runs on the same 3-frame beat (see the remarks).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < ArcadeClock.ToClockUnits(SpheroidTuning.BeatRomFrames))
+        if (_beatTimer < ArcadeClock.ToClockUnits(SpheroidTuning.BeatIntervalRomFrames))
         {
             return;
         }
 
-        _beatTimer -= ArcadeClock.ToClockUnits(SpheroidTuning.BeatRomFrames);
+        _beatTimer -= ArcadeClock.ToClockUnits(SpheroidTuning.BeatIntervalRomFrames);
 
         // Wrap pass = the beat on the phase's last animation frame; the phase's countdown lives there.
         int lastAnimationFrame = _dropping && !_escaping ? DropLastAnimationFrame : SpinLastAnimationFrame;

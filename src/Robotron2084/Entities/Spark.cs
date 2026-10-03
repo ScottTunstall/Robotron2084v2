@@ -107,7 +107,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Which of the four flicker frames is showing (test hook).</summary>
     /// <remarks>The ROM's 4 flicker animation frames, one per 4-ROM-frame cycle.</remarks>
-    internal int AnimationFrameIndex => _flickerTimer / ArcadeClock.ToClockUnits(SparkTuning.SparkFramePeriodRomFrames) % SpriteSet.SparkAnimationFrameCount;
+    internal int AnimationFrameIndex => _flickerTimer / ArcadeClock.ToClockUnits(SparkTuning.SparkFrameIntervalRomFrames) % SpriteSet.SparkAnimationFrameCount;
 
     /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
     internal IntVector2 VelocitySubpixels => _velocitySubpixels;

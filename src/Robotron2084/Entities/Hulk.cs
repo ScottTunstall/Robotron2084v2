@@ -72,7 +72,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
 
     private readonly Random _random;
     private readonly SpriteSet _sprites;
-    private readonly int _stepPeriod; // how long one step takes — the ROM's HLKSPD frame count, in clock units
+    private readonly int _beatIntervalClockUnits; // how long one step takes — the ROM's HLKSPD frame count, in clock units
     private readonly Func<IntVector2> _target;
     private bool _aimed;
     private int _animationFrameIndex;
@@ -84,7 +84,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     // 0-based index into SpriteSet.HulkAnimationFrames
     private int _reaimStepsRemaining;
 
-    private int _stepTimer;
+    private int _beatTimer;
     private int _walkCycleStep; // which of the 4 frames in the current walk pattern comes up next (0-3)
                                 // cached from the last Update; used by ApplyKnockback
 
@@ -92,20 +92,20 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the hulk.</param>
     /// <param name="random">The random source, for the re-aim timer and the aim offsets.</param>
-    /// <param name="stepDelayRomFrames">How many ROM frames between steps (ROM <c>HLKSPD</c>): a bigger number is a SLOWER hulk.</param>
+    /// <param name="beatIntervalRomFrames">How many ROM frames between steps (ROM <c>HLKSPD</c>): a bigger number is a SLOWER hulk.</param>
     /// <param name="target">Returns who this hulk hunts right now: the player, or a human that falls back to the player once it is gone.</param>
-    /// <remarks>The step period (ROM: <c>HLKSPD</c>) is 5-8 ROM frames.</remarks>
+    /// <remarks>The interval between beats (ROM: <c>HLKSPD</c>) is 5-8 ROM frames.</remarks>
     public Hulk(
         SpriteSet sprites,
         IntVector2 position,
         Random random,
-        int stepDelayRomFrames,
+        int beatIntervalRomFrames,
         Func<IntVector2> target)
     {
         _sprites = sprites;
         _position = position;
         _random = random;
-        _stepPeriod = ArcadeClock.ToClockUnits(stepDelayRomFrames);
+        _beatIntervalClockUnits = ArcadeClock.ToClockUnits(beatIntervalRomFrames);
         _target = target;
         _reaimStepsRemaining = RollReaimSteps();
         _direction = Direction8.Up; // placeholder — the first Update() call picks the real starting direction
@@ -181,13 +181,13 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
             return;
         }
 
-        _stepTimer += ArcadeClock.UnitsPerPortTick;
-        if (_stepTimer < _stepPeriod)
+        _beatTimer += ArcadeClock.UnitsPerPortTick;
+        if (_beatTimer < _beatIntervalClockUnits)
         {
             return;
         }
 
-        _stepTimer -= _stepPeriod;
+        _beatTimer -= _beatIntervalClockUnits;
 
         // Show this cycle's walk frame, then move; sideways steps alternate short and long.
         _animationFrameIndex = GetFrames(_direction)[_walkCycleStep];

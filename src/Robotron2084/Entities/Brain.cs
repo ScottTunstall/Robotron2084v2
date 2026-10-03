@@ -20,7 +20,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Brain : IEntity, IExplodable, IRemovable
 {
-    /// <summary>The ROM frame a brain spends doing its thinking, added to the wave's wait to get the time between beats.</summary>
+    /// <summary>The ROM frame a brain spends on the beat itself, added to the wave's wait to get the interval between beats.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSLP</c>, the sleep of <c>BRNSPD</c> frames at the end of each beat. Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>), the wait loaded from <c>$BE63</c> at <c>$1C9C</c>.</remarks>
     private const int BeatExecutionRomFrames = 1;
 
@@ -70,7 +70,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
     /// <summary>How long between beats, in clock units.</summary>
-    private readonly int _beatPeriod;
+    private readonly int _beatIntervalClockUnits;
 
     /// <summary>The longest wait, in beats, between cruise missiles. Each wait is a random number from 1 up to this.</summary>
     private readonly int _fireIntervalBeats;
@@ -114,7 +114,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the brain.</param>
     /// <param name="random">Where the missile waits and the reprogramming wobble come from.</param>
-    /// <param name="beatDelayRomFrames">How many ROM frames this wave's brains wait between beats. A bigger number is a slower brain.</param>
+    /// <param name="beatWaitRomFrames">How many ROM frames this wave's brains wait after each beat. A bigger number is a slower brain. The interval between beats is this plus the frame the beat itself takes.</param>
     /// <param name="fireIntervalBeats">The longest this wave's brains wait between cruise missiles, in beats.</param>
     /// <param name="targetFamilySlot">Which place in the family list the brain chases at the start.</param>
     /// <remarks>
@@ -125,7 +125,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         SpriteSet sprites,
         IntVector2 position,
         Random random,
-        int beatDelayRomFrames,
+        int beatWaitRomFrames,
         int fireIntervalBeats,
         int targetFamilySlot)
     {
@@ -134,7 +134,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
         _targetSlot = targetFamilySlot;
-        _beatPeriod = ArcadeClock.ToClockUnits(BeatExecutionRomFrames + beatDelayRomFrames);
+        _beatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatExecutionRomFrames + beatWaitRomFrames);
         _fireBeatsRemaining = 1 + random.Next(fireIntervalBeats);
     }
 
@@ -231,12 +231,12 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         }
 
         _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < _beatPeriod)
+        if (_beatTimer < _beatIntervalClockUnits)
         {
             return;
         }
 
-        _beatTimer -= _beatPeriod;
+        _beatTimer -= _beatIntervalClockUnits;
 
         Target = ResolveTarget(field);
         AdvanceWalkAnimation(StepTowardTarget(field, Target?.Position ?? field.Player.Position));
