@@ -10696,3 +10696,16 @@ was built from the listing and unit-tested (`WordmarkAppearTests`: the letters f
 **The port.** `TransportImage` is one image: it keeps what each pixel shows, and `Step` does one table entry. `RobotTransporter` shares an image between robots as above (`AssignImages`), steps every image once per ROM frame and draws each image at each of its robots, one square per pixel in the palette's live colours. `WaveMaterialisation` runs it instead of the strip appear when the wave has brains (`WaveMaterialisation(random, beamIn: parameters.BrainCount > 0)`); the robots are held, undrawn, until it finishes. The tables are in `TransporterTuning`, generated from `RRT2.ASM`; the tests check their sizes and that a whole picture ends fully on.
 
 **Faithful quirks kept:** a picture of more than 116 bytes never gets its last bytes (the groups stop at byte 115), so the spheroid's and quark's last bottom-right pixels do not appear while they are beamed in. **Differences:** the arcade picture is two pixels to a byte, and where a plain "on" meets a pixel that is still sparkling, the ROM ORs the two colour numbers; here the pixel takes its own colour. The port's robots are the picture's decoded colours, not colour numbers, so the OR cannot be done. The sparkle's reading-on past a set's end carries into the next set, and past the last set wraps. Not checked on screen.
+
+
+## §137 — THE ATTRACT DEV KEYS MOVE OFF THE FUNCTION KEYS (author, 2026-10-03)
+
+**Author:** *"Change the development function keys to be INS, HOME, PGUP, DEL, END, PGDN instead of function keys."*
+
+The five attract dev switches are now: **Insert** the high score table (was F4), **Home** the demo game (F6), **Page Up** HELD the movie fast-forward (F7),
+**Delete** the end of a game (F9), **End** the storyline movie (F12). **Page Down** is free. The function keys that remain are the game's own: F1/F2/F3
+start a game, F5 the GAME ADJUSTMENT page, F10 DEFINE INPUTS, and the display keys F8 (canvas fit) and F11 (full screen).
+
+**One behaviour change that the new keys force.** The old dev keys were read in every state, so F12 in the middle of a game left it. Insert is also the
+skip-a-wave key in a game, and Delete clears a line on the DEFINE INPUTS page, so the dev keys are now live on the attract screens only
+(`IAttractState`), as their documentation always said. Fast-forward is likewise off outside them.
