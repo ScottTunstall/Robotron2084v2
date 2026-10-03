@@ -10664,3 +10664,24 @@ The attract-mode demo does the same, since in the ROM it is the same game.
 
 **Not reviewed.** The individual start routines (`HULKST`, `BRNST`, `TANKST`, `HUMST`, `PSINIT`, `RINIT`, `CRINIT`, `CIRCST`, `SQST`)
 and `APPEAR` were not re-read here; earlier phases covered them.
+
+
+## §135 — THE BIG ROBOTRON LETTERS APPEAR ON THE ATTRACT PAGE, AS AN INVERSE EXPLOSION (author, 2026-10-03)
+
+**Author:** *"On the attract mode, the large ROBOTRON letters appear via blitter effects. Like an inverse explosion. Can you add that?"*
+
+**The ROM.** `RUNIT` in `RRLOG.ASM` writes the nine logo letters (`LR,LO,LB,LO,LT,LR,LO,LN,LC`) with `LETOUT`, copies each into RAM
+(two pieces, 11 x 14 and 11 x 13) and, when the operator's FANCY setting allows it (`GETBAL`), clears the screen and runs `WDONE`
+to `WDONE1`: one letter at a time, eight frames apart (`WDONE0 NAP 8`), each piece is handed to the attract-mode appear (`AMAP`),
+the same strip effect a robot uses at the start of a wave. The two pieces of a letter close in on the same seam (the top's centre
+row is the letter's row 13 and the bottom's is row 14). After the last letter the routine waits `$20` frames (`NAP $20,LOGG2`) and only then
+does the "2084" go up (`COLE`). The letters are drawn in colours `$C` (red) and `$E` (yellow), which the logo's colour processes cycle.
+
+**The port.** The big letters are on INTRO2 (`TitleScreenState`, notes §123), which stands in for the logo page. `WordmarkAppear` finds the
+nine letters in the wordmark's outline mask, starts one every 8 ROM frames, and draws each as rows that begin far apart and close in on
+the letter's middle row (`StripEffect.CreateAppear`, the wave-start appear), in the page's own wordmark colours so the cycle still runs.
+A finished letter is drawn whole. The "2084" mark waits until `$20` frames after the last letter has started. One fan on the whole
+letter closing on its middle row is the same picture as the ROM's two pieces closing on the seam, so each letter is one effect.
+
+**Not modelled:** the CMOS FANCY ATTRACT setting that can switch the appear off, and the ROM's wait for the beam. Not checked on screen: this
+was built from the listing and unit-tested (`WordmarkAppearTests`: the letters found, the 8-frame stagger, the `$20`-frame wait).
