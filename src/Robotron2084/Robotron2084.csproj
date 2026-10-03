@@ -15,10 +15,4 @@
     <PackageReference Include="Roslynator.Analyzers" Version="5.0.0" PrivateAssets="all" />
   </ItemGroup>
 
-  <!-- The sound board's ROM stays out of git (ref/rom is ignored; notes §126). When it is
-       there, the build copies it beside the game, which emulates the sound board from it. -->
-  <ItemGroup Condition="Exists('..\..\ref\rom\video_sound_rom_3_std_767.ic12')">
-    <None Include="..\..\ref\rom\video_sound_rom_3_std_767.ic12" Link="Roms\video_sound_rom_3_std_767.ic12" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
 </Project>

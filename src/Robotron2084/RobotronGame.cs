@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Robotron2084.Audio;
-using Robotron2084.Audio.Hardware;
+using Robotron2084.Audio.Synthesis;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
@@ -26,12 +26,6 @@ namespace Robotron2084;
 /// <seealso cref="ScreenSize"/>
 public sealed class RobotronGame : Game
 {
-    /// <summary>The folder beside the game that the build copies the sound ROM into.</summary>
-    private const string SoundRomFolder = "Roms";
-
-    /// <summary>The sound ROM's file name, as MAME's <c>robotron</c> set names it.</summary>
-    private const string SoundRomFileName = "video_sound_rom_3_std_767.ic12";
-
     private readonly GraphicsDeviceManager _graphics;
     private Rectangle _canvas = new(0, 0, ScreenSize.Width, ScreenSize.Height);
     private ControlSettings _controlSettings = null!;
@@ -147,25 +141,15 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>
-    /// Switches the emulated sound board on, when its ROM has been copied beside the game (see
-    /// notes §126). Without the ROM, or without a sound output, the game runs silently.
+    /// Switches the sound board on (notes §130). Without a sound output the game runs silently.
     /// </summary>
     private static void StartSound()
     {
-        string romPath = Path.Combine(AppContext.BaseDirectory, SoundRomFolder, SoundRomFileName);
-        if (!File.Exists(romPath))
-        {
-            Debug.WriteLine($"No sound: the sound ROM is not at {romPath}.");
-            return;
-        }
-
         try
         {
-            byte[] rom = File.ReadAllBytes(romPath);
-            var board = new SoundBoard(rom);
-            Sound.Initialize(new SoundBoardAudioSink(board));
+            Sound.Initialize(new SoundBoardAudioSink(new SoundBoard()));
         }
-        catch (Exception exception) when (exception is IOException or ArgumentException or NoAudioHardwareException)
+        catch (NoAudioHardwareException exception)
         {
             Debug.WriteLine($"No sound: {exception.Message}");
         }
