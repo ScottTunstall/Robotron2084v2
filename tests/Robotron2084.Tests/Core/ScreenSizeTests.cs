@@ -31,24 +31,24 @@ public sealed class ScreenSizeTests
     [InlineData(1)]
     [InlineData(16)]
     public void Scaled_MultipliesSpecPixelsBySpecScale(int specPixels) =>
-        Assert.Equal(specPixels * ScreenSize.SpecScale, ScreenSize.Scaled(specPixels));
+        Assert.Equal(specPixels * ScreenSize.SpecScale, ScreenSize.ToPortPixels(specPixels));
 
     [Fact]
     public void MaxIntegerScale_FitsThreeTimesThePlayfield_At3x() =>
-        Assert.Equal(3, ScreenSize.MaxIntegerScale(ScreenSize.Width * 3, ScreenSize.Height * 3));
+        Assert.Equal(3, ScreenSize.ComputeMaxIntegerScale(ScreenSize.Width * 3, ScreenSize.Height * 3));
 
     [Fact]
     public void MaxIntegerScale_WidthLimitsWhenHeightHasRoom() =>
-        Assert.Equal(1, ScreenSize.MaxIntegerScale(ScreenSize.Width, ScreenSize.Height * 2));
+        Assert.Equal(1, ScreenSize.ComputeMaxIntegerScale(ScreenSize.Width, ScreenSize.Height * 2));
 
     [Fact]
     public void MaxIntegerScale_HeightLimitsWhenWidthHasRoom() =>
-        Assert.Equal(1, ScreenSize.MaxIntegerScale(ScreenSize.Width * 2, ScreenSize.Height));
+        Assert.Equal(1, ScreenSize.ComputeMaxIntegerScale(ScreenSize.Width * 2, ScreenSize.Height));
 
     [Theory]
     [InlineData(0, 100)]   // degenerate width -> 1x
     [InlineData(100, 0)]   // degenerate height -> 1x
     [InlineData(1, 1)]     // tiny display -> 1x
     public void MaxIntegerScale_NeverDownscales(int width, int height) =>
-        Assert.Equal(1, ScreenSize.MaxIntegerScale(width, height));
+        Assert.Equal(1, ScreenSize.ComputeMaxIntegerScale(width, height));
 }

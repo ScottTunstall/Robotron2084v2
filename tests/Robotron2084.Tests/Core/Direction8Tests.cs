@@ -19,7 +19,7 @@ public sealed class Direction8Tests
     }
 
     [Fact]
-    public void FromDelta_Zero_ReturnsNull() => Assert.Null(Direction8Extensions.FromDelta(IntVector2.Zero));
+    public void FromDelta_Zero_ReturnsNull() => Assert.Null(Direction8Extensions.CreateFromDelta(IntVector2.Zero));
 
     [Theory]
     [InlineData(5, 0, Direction8.Right)]
@@ -28,7 +28,7 @@ public sealed class Direction8Tests
     [InlineData(-5, 0, Direction8.Left)]
     public void FromDelta_CardinalDelta_MapsToCardinalDirection(int x, int y, Direction8 expected)
     {
-        Assert.Equal(expected, Direction8Extensions.FromDelta(new IntVector2(x, y)));
+        Assert.Equal(expected, Direction8Extensions.CreateFromDelta(new IntVector2(x, y)));
     }
 
     [Theory]
@@ -38,7 +38,7 @@ public sealed class Direction8Tests
     [InlineData(3, -4, Direction8.UpRight)]
     public void FromDelta_DiagonalDelta_MapsToDiagonalDirection(int x, int y, Direction8 expected)
     {
-        Assert.Equal(expected, Direction8Extensions.FromDelta(new IntVector2(x, y)));
+        Assert.Equal(expected, Direction8Extensions.CreateFromDelta(new IntVector2(x, y)));
     }
 
     [Theory]
