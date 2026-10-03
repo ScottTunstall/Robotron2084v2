@@ -10718,14 +10718,15 @@ skip-a-wave key in a game, and Delete clears a line on the DEFINE INPUTS page, s
 This is the first thing in the port that has no arcade counterpart: the author's own extension. Arcade fidelity (§133 onwards) still holds for everything else.
 
 **The source** is the author's sprite sheet, kept as `ref/berzerk-robot-sheet.png`: each sprite pixel is an 8 x 8 block of the picture, in red on a dark red background.
-`tools/extract-berzerk-robot.py` cuts it into 20 frames in `Content/Sprites/` (and `tools/generate-mgcb.py`, whose output paths had gone stale, adds them to the content pipeline):
+`tools/extract-berzerk-robot.py` cuts it into 20 frames (the first row renamed as the idle cycle on the author's correction: *"Walk_1 to 6 are the standing still animation frames, they cycle"*) in `Content/Sprites/` (and `tools/generate-mgcb.py`, whose output paths had gone stale, adds them to the content pipeline):
 
 | Frames | Size | What the sheet shows |
 |---|---|---|
-| `BerzerkRobot_Walk_1` to `_16` | 8 x 12 | the 3 x 6 block in reading order, the two empty cells skipped. Head on the top row throughout, so a walk keeps the head still |
+| `BerzerkRobot_Idle_1` to `_6` | 8 x 12 | the robot standing still: the first row of the 3 x 6 block, a cycle of six frames. Head on the top row |
+| `BerzerkRobot_Walk_1` to `_10` | 8 x 12 | the other two rows in reading order, the two empty cells skipped. Head on the top row throughout, so a walk keeps the head still |
 | `BerzerkRobot_Stand` | 16 x 18 | the robot standing |
 | `BerzerkRobot_Explode_1` to `_3` | 16 x 18 | the three stages of it being destroyed, as the sheet's 2 x 2 block reads |
 
 The four frames of the second block share one canvas, so they line up when shown in turn. The frames keep the sheet's own red, not the arcade's.
-Which walking frames face which way is not recorded here: the sheet does not say, so they are numbered in sheet order until the entity is written.
+Which walking frames face which way is not recorded here: the sheet does not say, so they are numbered in sheet order until the entity is written. `BerzerkRobot_Stand` is the single standing picture from the second block, not part of the idle cycle.
 **Not done:** there is no entity class, no `SpriteSet` property and no wave yet; the frames are content only.
