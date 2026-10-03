@@ -32,6 +32,7 @@ public static class WaveSurvivors
         return wave with
         {
             GruntCount = CountAlive(entities.Grunts),
+            BerzerkRobotCount = CountAlive(entities.BerzerkRobots),
             ElectrodeCount = CountAlive(entities.Electrodes),
             MikeyCount = CountFamily(entities, HumanKind.Mikey),
             MommyCount = CountFamily(entities, HumanKind.Mommy),

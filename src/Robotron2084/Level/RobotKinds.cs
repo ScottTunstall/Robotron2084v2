@@ -133,6 +133,15 @@ public static class RobotKinds
             LaserHit: static (field, target, direction) => target.Require<IRemovable>().Kill(),
             LaserHitSound: SoundTables.CruiseMissileKill,
             KillsPlayerOnContact: true),
+
+        // The author's own robot (notes §138): it dies to a laser as a grunt does, without the grunts' speed-up.
+        new(RobotKind.BerzerkRobot,
+            WaveCount: static parameters => parameters.BerzerkRobotCount,
+            Score: ScoreValues.BerzerkRobot,
+            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            LaserHitSound: SoundTables.RobotHit,
+            KillsPlayerOnContact: true,
+            Spawn: new BerzerkRobotWaveSpawner()),
     ];
 
     /// <summary>One kind's row.</summary>

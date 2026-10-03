@@ -18,6 +18,10 @@ namespace Robotron2084.Level;
 public static class ScoreValues
 {
     public const int Brain = 500;
+
+    /// <summary>A BerzerkRobot kill: worth the same as a grunt for now (a new entity, no ROM source).</summary>
+    public const int BerzerkRobot = 100;
+
     public const int CruiseMissile = 25;
     public const int Electrode = 0;
     public const int Enforcer = 150;

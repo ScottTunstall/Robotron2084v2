@@ -21,12 +21,12 @@ public sealed class FieldEntities
     {
         _updateOrder =
         [
-            Electrodes, Grunts, Hulks, Spheroids, Enforcers, Quarks, Tanks, Brains, Progs,
+            Electrodes, Grunts, BerzerkRobots, Hulks, Spheroids, Enforcers, Quarks, Tanks, Brains, Progs,
             Sparks, TankShells, CruiseMissiles, Family.Members, Skulls, RescueScores, Explosions, ScoreBursts,
         ];
         _drawOrderBehindShots =
         [
-            Electrodes, Skulls, RescueScores, Family.Members, Grunts, Hulks, Spheroids, Enforcers,
+            Electrodes, Skulls, RescueScores, Family.Members, Grunts, BerzerkRobots, Hulks, Spheroids, Enforcers,
             Quarks, Tanks, Brains, Progs,
         ];
         _drawOrderInFrontOfShots =
@@ -34,6 +34,9 @@ public sealed class FieldEntities
             Sparks, TankShells, CruiseMissiles, Explosions, ScoreBursts,
         ];
     }
+
+    /// <summary>The BerzerkRobots.</summary>
+    public EntityList<BerzerkRobot> BerzerkRobots { get; } = new();
 
     /// <summary>The brains.</summary>
     public EntityList<Brain> Brains { get; } = new();
@@ -103,7 +106,7 @@ public sealed class FieldEntities
     /// Original source: <c>RRG23.ASM</c> <c>WVCHEK</c>. Disassembly: <c>COUNT_ENEMIES_ON_SCREEN</c> (<c>$2A73</c>).
     /// </remarks>
     public bool AreEnemiesGone() =>
-        Grunts.GetLiveCount() == 0 && Spheroids.GetLiveCount() == 0 && Enforcers.GetLiveCount() == 0 && Quarks.GetLiveCount() == 0
+        Grunts.GetLiveCount() == 0 && BerzerkRobots.GetLiveCount() == 0 && Spheroids.GetLiveCount() == 0 && Enforcers.GetLiveCount() == 0 && Quarks.GetLiveCount() == 0
         && Tanks.GetLiveCount() == 0 && Brains.GetLiveCount() == 0;
 
     /// <summary>Draws the lists that go behind the player's lasers.</summary>
@@ -123,6 +126,7 @@ public sealed class FieldEntities
     {
         RobotKind.Electrode => Electrodes,
         RobotKind.Grunt => Grunts,
+        RobotKind.BerzerkRobot => BerzerkRobots,
         RobotKind.Hulk => Hulks,
         RobotKind.Spheroid => Spheroids,
         RobotKind.Enforcer => Enforcers,
@@ -166,6 +170,10 @@ public sealed class FieldEntities
     /// <summary>Puts a Brain on the field.</summary>
     /// <param name="entity">The Brain to add.</param>
     public void Add(Brain entity) => Brains.Add(entity);
+
+    /// <summary>Puts a BerzerkRobot on the field.</summary>
+    /// <param name="entity">The BerzerkRobot to add.</param>
+    public void Add(BerzerkRobot entity) => BerzerkRobots.Add(entity);
 
     /// <summary>Puts a CruiseMissile on the field.</summary>
     /// <param name="entity">The CruiseMissile to add.</param>

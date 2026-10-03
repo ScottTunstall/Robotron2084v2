@@ -42,4 +42,7 @@ public enum RobotKind
 
     /// <summary>A brain's cruise missile (RRB10).</summary>
     CruiseMissile,
+
+    /// <summary>The author's own robot, which moves like a grunt (no arcade routine).</summary>
+    BerzerkRobot,
 }
