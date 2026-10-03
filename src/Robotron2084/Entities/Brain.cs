@@ -16,8 +16,7 @@ namespace Robotron2084.Entities;
 /// <item>Original source: <c>RRB10.ASM</c>: <c>BRNSTV</c> (start the brains), <c>BRAIN</c>/<c>BRNL</c>/<c>BRNL1</c> (each beat), <c>BMUT</c> (reprogram a human), <c>BRNSHT</c> (fire a cruise missile), <c>BRNKIL</c> (shot by a laser)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c>: <c>INITIALISE_ALL_BRAINS</c> (<c>$1AF6</c>), <c>BRAIN_AI</c> (<c>$1BEE</c>), <c>ANIMATE_BRAIN</c> (<c>$1C11</c>), <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>), <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>), <c>BRAIN_COLLISION_HANDLER</c> (<c>$1DD6</c>)</item>
 /// </list>
-/// The ROM counts X in columns of two arcade pixels and Y in rows of one (see the glossary, docs/glossary.md), so some ROM distances below are
-/// twice as wide on X as the "arcade px" constants this class uses; see each constant.
+/// Sideways distances here are in columns (two arcade pixels each) and up-and-down distances in rows (one arcade pixel each), as in the ROM; see docs/glossary.md.
 /// </remarks>
 public sealed class Brain : IEntity, IExplodable, IRemovable
 {
@@ -26,41 +25,45 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     private const int BeatExecutionRomFrames = 1;
 
     /// <summary>How far to the right of the brain's top-left corner a new cruise missile appears.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>ADDD #$0304</c>: the 3 is in columns, so 6 arcade pixels; this constant uses 3 arcade pixels. Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>).</remarks>
-    private const int MissileMuzzleXArcadePixels = 3;
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>ADDD #$0304</c>, the 3 columns. Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>).</remarks>
+    private const int MissileMuzzleXColumns = 3;
 
     /// <summary>How far below the brain's top-left corner a new cruise missile appears.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>ADDD #$0304</c>: the 4 is in rows, so 4 arcade pixels. Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>).</remarks>
-    private const int MissileMuzzleYArcadePixels = 4;
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>ADDD #$0304</c>, the 4 rows. Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>).</remarks>
+    private const int MissileMuzzleYRows = 4;
 
     /// <summary>How far below the brain's top-left corner the victim stands while being reprogrammed.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT1</c>, <c>ADDA #2</c> on Y (2 rows, so 2 arcade pixels). Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CEB</c>.</remarks>
-    private const int VictimDropArcadePixels = 2;
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT1</c>, <c>ADDA #2</c> on Y, 2 rows. Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CEB</c>.</remarks>
+    private const int VictimDropRows = 2;
 
     /// <summary>The gap between the victim and the brain's left side when the victim stands on the left.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT00</c>, <c>SUBA #1</c> on X: 1 column, so 2 arcade pixels; this constant uses 1. Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CCD</c>.</remarks>
-    private const int VictimGapArcadePixels = 1;
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT00</c>, <c>SUBA #1</c> on X, 1 column. Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CCD</c>.</remarks>
+    private const int VictimGapColumns = 1;
 
     /// <summary>How far right of the brain's top-left corner the victim stands when there is no room on the left.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT10</c>, <c>ADDA #8</c> on X: 8 columns, so 16 arcade pixels; this constant uses 8. The disassembly comment says "16 pixels". Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CDC</c>.</remarks>
-    private const int VictimRightOffsetArcadePixels = 8;
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT10</c>, <c>ADDA #8</c> on X, 8 columns (16 arcade pixels). Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CDC</c>.</remarks>
+    private const int VictimRightOffsetColumns = 8;
 
     /// <summary>How close to the right wall the victim may stand before the brain tries the left side again.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT10</c>, <c>CMPA #XMAX-4</c> on X: 4 columns, so 8 arcade pixels; this constant uses 4. Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CDE</c>.</remarks>
-    private const int VictimRightWallMarginArcadePixels = 4;
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT10</c>, <c>CMPA #XMAX-4</c> on X, 4 columns. Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CDE</c>.</remarks>
+    private const int VictimRightWallMarginColumns = 4;
 
     /// <summary>How close sideways the brain gets to its target before it stops moving sideways. Up and down has no such gap.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, <c>ADDA #2 / CMPA #4 / BLS</c> on X: 2 columns, so 4 arcade pixels; this constant uses 2. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>) at <c>$1C11</c>.</remarks>
-    private static readonly int ApproachDeadZonePixels = ScreenSize.ToPortPixels(2);
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, <c>ADDA #2 / CMPA #4 / BLS</c> on X, 2 columns. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>) at <c>$1C11</c>.</remarks>
+    private static readonly int ApproachDeadZonePixels = ScreenSize.ToPortPixelsFromColumns(2);
 
     /// <summary>The size of the brain's sprite, which is also the size of its hit box.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRDP1</c>, 7 bytes by 16 rows (14 by 16 arcade pixels). Disassembly: the brain standing still, <c>$2159</c>.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixels(CollisionSizes.BrainCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.BrainCollisionSize.Height));
 
-    /// <summary>How far the brain moves each way on each beat.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 on each axis; on X that is 1 column (2 arcade pixels), on Y 1 row; this constant uses 1 arcade pixel on both. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>).</remarks>
-    private static readonly int StepPixels = ScreenSize.ToPortPixels(1);
+    /// <summary>How far the brain moves sideways on each beat.</summary>
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 column. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>).</remarks>
+    private static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(1);
+
+    /// <summary>How far the brain moves up or down on each beat.</summary>
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 row. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>).</remarks>
+    private static readonly int StepYPixels = ScreenSize.ToPortPixels(1);
 
     /// <summary>The order the brain's three walking animation frames are shown in: first, second, first, third.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNAL</c>, <c>BRNAR</c>, <c>BRNAD</c> and <c>BRNAU</c>, each listing its frames as 1, 2, 1, 3. Disassembly: <c>BRAIN_ANIMATION_TABLES</c> (<c>$1CA2</c>).</remarks>
@@ -88,6 +91,9 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
 
     /// <summary>True when the next reprogramming step moves the human down, false when it moves them back up.</summary>
     private bool _reprogramMovingDown;
+
+    /// <summary>Where the human stands, up and down, while being reprogrammed. Each shake is measured from here.</summary>
+    private int _victimRestingY;
 
     /// <summary>Steps left before the reprogramming is finished.</summary>
     private int _reprogramRedrawsRemaining;
@@ -259,15 +265,15 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         _reprogramTimer = ArcadeClock.ToClockUnits(ReprogramTuning.StepRomFrames);
 
         int humanWidth = human.Bounds.Width;
-        int x = _position.X - humanWidth - ScreenSize.ToPortPixels(VictimGapArcadePixels);
+        int x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
         WalkFacing facing = WalkFacing.Left;
         if (x < playfieldBounds.X)
         {
-            x = _position.X + ScreenSize.ToPortPixels(VictimRightOffsetArcadePixels);
+            x = _position.X + ScreenSize.ToPortPixelsFromColumns(VictimRightOffsetColumns);
             facing = WalkFacing.Right;
-            if (x >= playfieldBounds.Right - ScreenSize.ToPortPixels(VictimRightWallMarginArcadePixels))
+            if (x >= playfieldBounds.Right - ScreenSize.ToPortPixelsFromColumns(VictimRightWallMarginColumns))
             {
-                x = _position.X - humanWidth - ScreenSize.ToPortPixels(VictimGapArcadePixels);
+                x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
                 facing = WalkFacing.Left;
             }
         }
@@ -275,7 +281,8 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         _facing = facing;
         _walkCycleStep = 0;
 
-        human.MoveTo(new IntVector2(x, _position.Y + ScreenSize.ToPortPixels(VictimDropArcadePixels)));
+        _victimRestingY = _position.Y + ScreenSize.ToPortPixels(VictimDropRows);
+        human.MoveTo(new IntVector2(x, _victimRestingY));
     }
 
     /// <summary>Lets go of the human being reprogrammed, if there is one. Used when the brain is shot part way through.</summary>
@@ -304,7 +311,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <item>Original source: <c>RRB10.ASM</c> <c>BMUTL</c> to <c>BMUT4</c> (20 rounds of a move down then a move up, a random 0 to 7 rows each; <c>PROGST</c> at the end)</item>
     /// <item>Disassembly: <c>DRAW_PROG_STARTING_TO_SHAKE</c> (<c>$1D37</c>) and <c>CREATE_PROG</c> (<c>$1E19</c>)</item>
     /// </list>
-    /// The ROM measures each shake from the human's resting place; this port measures it from where the human is now, so the shakes can drift.
+    /// Each shake is measured from the human's resting place, as in the ROM, so the shakes never drift.
     /// </remarks>
     private void AdvanceReprogramming(PlayField field, Human victim)
     {
@@ -320,8 +327,8 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         int jitter = _random.Next(ReprogramTuning.JitterPixels);
         int height = victim.Bounds.Height;
         int y = _reprogramMovingDown
-            ? Math.Min(victim.Position.Y + jitter, bounds.Bottom - height)
-            : Math.Max(victim.Position.Y - jitter, bounds.Y);
+            ? Math.Min(_victimRestingY + jitter, bounds.Bottom - height)
+            : Math.Max(_victimRestingY - jitter, bounds.Y);
         victim.MoveTo(new IntVector2(victim.Position.X, y));
 
         if (_reprogramMovingDown)
@@ -374,8 +381,8 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         if (field.CanFireCruiseMissile())
         {
             field.SpawnCruiseMissile(_position + new IntVector2(
-                ScreenSize.ToPortPixels(MissileMuzzleXArcadePixels),
-                ScreenSize.ToPortPixels(MissileMuzzleYArcadePixels)));
+                ScreenSize.ToPortPixelsFromColumns(MissileMuzzleXColumns),
+                ScreenSize.ToPortPixels(MissileMuzzleYRows)));
         }
 
         _fireBeatsRemaining = 1 + _random.Next(_fireIntervalBeats);
@@ -417,7 +424,8 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>)</item>
     /// </list>
     /// Sideways, the brain stops moving once it is close enough. Up and down, it always moves, and goes down when the target is level with it.
-    /// The ROM checks the sideways and up-and-down step together and undoes both if either leaves the playfield; this port checks each on its own.
+    /// The ROM undoes both steps if either would leave the playfield, which pins a brain against a wall for good. This port deliberately
+    /// checks each step on its own, so a brain against a wall slides along it (the author's decision).
     /// </remarks>
     private IntVector2 StepTowardTarget(PlayField field, IntVector2 target)
     {
@@ -425,10 +433,10 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         int targetDx = target.X - _position.X;
         if (Math.Abs(targetDx) > ApproachDeadZonePixels)
         {
-            dx = Math.Sign(targetDx) * StepPixels;
+            dx = Math.Sign(targetDx) * StepXPixels;
         }
 
-        int dy = target.Y >= _position.Y ? StepPixels : -StepPixels;
+        int dy = target.Y >= _position.Y ? StepYPixels : -StepYPixels;
 
         Rectangle bounds = field.Wall.PlayfieldBounds;
         if (dx != 0 && FitsInsideX(bounds, _position.X + dx))

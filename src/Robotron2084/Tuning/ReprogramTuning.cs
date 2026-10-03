@@ -6,8 +6,13 @@ public static class ReprogramTuning
     /// <summary>Blitter colour 1 for the reprogramming human ($AA = palette slot 10).</summary>
     public const int BackgroundSlot = 0x0A;
 
-    /// <summary>ROM BRNL1's catch reach: brain and human top-left corners within this many arcade px on both axes.</summary>
-    public const int CatchReachArcadePixels = 3;
+    /// <summary>How close sideways the brain's and human's top-left corners must be for the brain to catch the human, in columns.</summary>
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, <c>ADDA #3 / CMPA #6 / BLS</c>. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>) at <c>$1C52</c>.</remarks>
+    public const int CatchReachColumns = 3;
+
+    /// <summary>How close up and down the brain's and human's top-left corners must be for the brain to catch the human, in rows.</summary>
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, <c>ADDB #3 / CMPB #$6 / BHI</c>. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>) at <c>$1C4A</c>.</remarks>
+    public const int CatchReachRows = 3;
 
     // The ROM's 20-iteration loop, each iteration doing TWO redraws of the
     // human (one with its Y lifted by SEED & 7, one with it dropped by the

@@ -29,7 +29,9 @@ public sealed class PlayField
     /// ROM BRNL1's catch reach: the brain and human TOP-LEFT CORNERS must be
     /// within this many arcade px on both axes for a reprogramming to start.
     /// </summary>
-    private static readonly int BrainCatchReach = ScreenSize.ToPortPixels(ReprogramTuning.CatchReachArcadePixels);
+    private static readonly int BrainCatchReachX = ScreenSize.ToPortPixelsFromColumns(ReprogramTuning.CatchReachColumns);
+
+    private static readonly int BrainCatchReachY = ScreenSize.ToPortPixels(ReprogramTuning.CatchReachRows);
 
     private readonly EntityList<Brain> _brains = new();
 
@@ -889,7 +891,7 @@ public sealed class PlayField
     /// </summary>
     /// <param name="robotsHeld">True while the wave-start appear holds the robots.</param>
     /// <remarks>The CATCH TEST is <c>BRNL1</c>'s tail comparing the two TOP-LEFT CORNERS, |dX| &lt;= 3 AND
-    /// |dY| &lt;= 3 (<c>ADDB #3 / CMPB #$6 / BHI</c> then <c>ADDA #3 / CMPA #6 / BLS</c>) — not a sprite
+    /// |dY| &lt;= 3, in columns on X and rows on Y (<c>ADDB #3 / CMPB #$6 / BHI</c> then <c>ADDA #3 / CMPA #6 / BLS</c>) — not a sprite
     /// overlap. A box test fires as soon as the 14x16 brain box touches anything, so brains would grab humans
     /// the source would not. The test is against the brain's OWN TARGET (the object its AI resolved), so a
     /// brain can only program the member it is chasing — which, on a brain wave, is Mikey for all of them
@@ -914,8 +916,8 @@ public sealed class PlayField
                 continue;
             }
 
-            if (Math.Abs(brain.Position.X - human.Position.X) > BrainCatchReach
-                || Math.Abs(brain.Position.Y - human.Position.Y) > BrainCatchReach)
+            if (Math.Abs(brain.Position.X - human.Position.X) > BrainCatchReachX
+                || Math.Abs(brain.Position.Y - human.Position.Y) > BrainCatchReachY)
             {
                 continue;
             }

@@ -156,7 +156,7 @@ public sealed class PlayFieldBrainProgMissileTests
     }
 
     [Fact]
-    public void Brain_StepsTowardNearestHuman_OneArcadePxPerAxisPerBeat()
+    public void Brain_StepsTowardNearestHuman_OneColumnSidewaysAndOneRowUpAndDownPerBeat()
     {
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
@@ -172,14 +172,14 @@ public sealed class PlayFieldBrainProgMissileTests
 
         // Beat period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
         // (notes 26: SLEEP(BRNSPD) + one beat-execution vblank). In the
-        // 19-tick window exactly one beat runs = 1 arcade px (Scaled(1) port px)
-        // per axis toward the target.
+        // 19-tick window exactly one beat runs = 1 column sideways (RRB10 BRNL1
+        // steps XTEMP = 1 in column units) and 1 row up or down toward the target.
         for (int tick = 0; tick < ArcadeClock.ToPortTicks(16); tick++)
         {
             field.Update(Frame());
         }
 
-        Assert.Equal(brainSpot.X + ScreenSize.ToPortPixels(1), brain.Position.X);
+        Assert.Equal(brainSpot.X + ScreenSize.ToPortPixelsFromColumns(1), brain.Position.X);
         Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixels(1), brain.Position.Y);
     }
 
@@ -206,7 +206,7 @@ public sealed class PlayFieldBrainProgMissileTests
             field.Update(Frame());
         }
 
-        Assert.Equal(brainSpot.X - ScreenSize.ToPortPixels(1), brain.Position.X);
+        Assert.Equal(brainSpot.X - ScreenSize.ToPortPixelsFromColumns(1), brain.Position.X);
         Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixels(1), brain.Position.Y);
     }
 
@@ -218,8 +218,8 @@ public sealed class PlayFieldBrainProgMissileTests
 
         WarmUp(field);
 
-        // 1 arcade px (Scaled(1) port px) to the right of the player: INSIDE the
-        // ROM's ±2px X dead zone (BRNL1: dx+2 <= 4), so X must not correct —
+        // 1 arcade px to the right of the player: INSIDE the ROM's ±2 column
+        // X dead zone (BRNL1: dx+2 <= 4), so X must not correct —
         // but Y has no dead zone and must still step down 1 px.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixels(1), playerSpot.Y - ScreenSize.ToPortPixels(50));
         var brain = new Brain(TestSprites.Shared, brainSpot, new Random(21), beatDelayRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
@@ -292,8 +292,8 @@ public sealed class PlayFieldBrainProgMissileTests
         Assert.Empty(field.Skulls); // ROM BRNFLG — never a skull on conversion
         Assert.Null(field.GetFamilyMemberInSlot(human.FamilySlot)); // off the family list now
 
-        // ROM BMUT's placement: just left of the brain, 2px below it.
-        Assert.Equal(brain.Position.X - human.Bounds.Width - ScreenSize.ToPortPixels(1), human.Position.X);
+        // ROM BMUT's placement: just left of the brain (a gap of 1 column), 2 rows below it.
+        Assert.Equal(brain.Position.X - human.Bounds.Width - ScreenSize.ToPortPixelsFromColumns(1), human.Position.X);
         Assert.Equal(brain.Position.Y + ScreenSize.ToPortPixels(2), human.Position.Y);
 
         // …and the placement SETS THE BRAIN'S sprite (BMUT00 `LDD #BRLP1` /
@@ -332,8 +332,8 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brain_ProggingAHumanItCannotGetLeftOf_FacesRightInstead()
     {
-        // BMUT00 places the human at brainX - humanWidth - 1 and, when that
-        // would cross XMIN, BMUT10 puts it 8px to the RIGHT and loads BRRP1
+        // BMUT00 places the human at brainX - humanWidth - 1 (columns) and, when that
+        // would cross XMIN, BMUT10 puts it 8 columns to the RIGHT and loads BRRP1
         // instead — the brain faces the human either way (author, 2026-09-20:
         // "the brain does not face the human it is progging").
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
@@ -351,7 +351,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         Assert.True(brain.IsReprogramming);
         // The human could not fit on the left, so it went right…
-        Assert.Equal(brain.Position.X + ScreenSize.ToPortPixels(8), human.Position.X);
+        Assert.Equal(brain.Position.X + ScreenSize.ToPortPixelsFromColumns(8), human.Position.X);
         // …and the brain's sprite is BRNAR's frame 0 (BRRP1) — facing RIGHT.
         Assert.Equal(3, brain.WalkAnimationFrameIndex);
     }
@@ -406,6 +406,29 @@ public sealed class PlayFieldBrainProgMissileTests
         RunFirstBeat(field);
 
         Assert.False(brain.IsReprogramming);
+    }
+
+    [Fact]
+    public void Brain_CatchReachSideways_IsThreeColumns_SoSixArcadePixels()
+    {
+        // ROM BRNL1 `ADDA #3 / CMPA #6` compares X in columns: 3 columns is 6 arcade
+        // pixels. 4 arcade pixels apart is inside the X dead zone (2 columns), so the
+        // brain does not step, and is still within reach.
+        PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
+        WarmUp(field);
+
+        Rectangle inner = field.Wall.PlayfieldBounds;
+        IntVector2 humanSpot = new(inner.X + 200, inner.Y + 200);
+        var human = new Human(TestSprites.Shared, humanSpot, HumanKind.Mommy, new Random(41));
+        field.AddHuman(human);
+
+        IntVector2 offset = new(ScreenSize.ToPortPixels(4), 0);
+        var brain = new Brain(TestSprites.Shared, humanSpot - offset, new Random(42), beatDelayRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: PlayField.FirstFamilySlot);
+        field.AddBrain(brain);
+
+        RunFirstBeat(field);
+
+        Assert.True(brain.IsReprogramming);
     }
 
     [Fact]
