@@ -23,4 +23,7 @@ public readonly record struct IntVector2(int X, int Y)
         long dy = a.Y - b.Y;
         return dx * dx + dy * dy;
     }
+
+    /// <summary>Squared-distance check strictly beyond <paramref name="distance"/>.</summary>
+    public bool IsFartherThan(IntVector2 b, int distance) => DistanceSquared(this, b) > (long)distance * distance;
 }
