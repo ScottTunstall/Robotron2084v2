@@ -22,11 +22,17 @@ public static class Sound
     private static SoundEngine? _engine;
 
     /// <summary>
-    /// The master switch: on unless the game is started with the environment variable
-    /// <c>ROBOTRON2084_SOUND=0</c>. While it is off, asking for a sound does nothing.
+    /// The master switch. Sound is on whenever the game runs; the tests, which share this one static
+    /// service process-wide, turn it off. While it is off, asking for a sound does nothing.
     /// </summary>
-    public static bool Enabled { get; set; } =
-        Environment.GetEnvironmentVariable("ROBOTRON2084_SOUND") != "0";
+    public static bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// Set by the app shell every tick (notes §131): true while the attract sequence is on screen and
+    /// the operator's ATTRACT MODE SOUND setting is off. While it is set, asking for a sound does
+    /// nothing — a real game keeps its sound.
+    /// </summary>
+    public static bool AttractMuted { get; set; }
 
     /// <summary>Sets up the sound service with the sink that will play the sound numbers.</summary>
     /// <param name="sink">Where the sound numbers go.</param>
@@ -45,7 +51,7 @@ public static class Sound
     /// <param name="pan">Where the sound is heard: -1 is wholly left, 0 the middle, 1 wholly right.</param>
     public static void Play(SoundSequence sequence, float pan)
     {
-        if (!Enabled)
+        if (!Enabled || AttractMuted)
         {
             return;
         }
@@ -61,7 +67,7 @@ public static class Sound
     /// </summary>
     public static void PlayWaveEnd()
     {
-        if (!Enabled)
+        if (!Enabled || AttractMuted)
         {
             return;
         }
@@ -73,7 +79,7 @@ public static class Sound
     /// <summary>Starts the transporter's warp-in hum, as a brain wave's robots are beamed in.</summary>
     public static void PlayTransporter()
     {
-        if (!Enabled || _engine is null)
+        if (!Enabled || AttractMuted || _engine is null)
         {
             return;
         }
@@ -84,7 +90,7 @@ public static class Sound
     /// <summary>Moves the sound on by one port tick.</summary>
     public static void Tick()
     {
-        if (!Enabled || _engine is null)
+        if (!Enabled || AttractMuted || _engine is null)
         {
             return;
         }

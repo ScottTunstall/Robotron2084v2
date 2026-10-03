@@ -16,7 +16,7 @@ namespace Robotron2084.Audio;
 /// </list>
 /// A couple of ticks of sound are kept queued so a slow frame does not leave a gap. If the game runs
 /// ahead and the queue grows, the extra audio is dropped rather than letting the sound fall behind
-/// the picture.
+/// the sprite.
 /// </remarks>
 public sealed class SoundBoardAudioSink : IAudioSink
 {
@@ -35,7 +35,7 @@ public sealed class SoundBoardAudioSink : IAudioSink
     /// <summary>Queued ticks of sound below which another tick is made at once, so the speakers never run dry.</summary>
     private const int MinimumQueuedTicks = 2;
 
-    /// <summary>Queued ticks of sound at which a new tick is dropped, so the sound does not lag the picture.</summary>
+    /// <summary>Queued ticks of sound at which a new tick is dropped, so the sound does not lag the screen.</summary>
     private const int MaximumQueuedTicks = 4;
 
     private readonly ISoundBoard _board;

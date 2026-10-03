@@ -16,7 +16,7 @@ public static class StereoPlacement
     /// <returns>
     /// Where the sound is heard, from -1 (left) to 1 (right), narrowed by <see cref="SoundTuning.StereoWidth"/>.
     /// </returns>
-    public static float PanFor(Rectangle maker, Rectangle playfield)
+    public static float GetPan(Rectangle maker, Rectangle playfield)
     {
         float halfWidth = playfield.Width / 2f;
         float offsetFromCentre = maker.Center.X - playfield.Center.X;
