@@ -10762,7 +10762,18 @@ The sheet is `ref/gorf-sheet.png`: two frames side by side, each pixel a 7 x 7 b
 `tools/extract-gorf.py` cuts it into `Gorf_1` (left) and `Gorf_2` (right) in `Content/Sprites/`, in the sheet's own colours; re-drawing the cut frames at
 the sheet's scale reproduces the sheet exactly.
 
-`Entities/Gorf` is a new kind (`RobotKind.Gorf`), another of the author's own with no arcade source. The author gave it no behaviour, so the first version is the least that
-makes it an entity: it **stands where it is put and swaps between its two frames every 8 ROM frames**. A laser kills it (strip explosion, the grunts' hit sound, 100 points for now),
-a touch kills the player, and the wave is not won while one is left. It does not move, shoot or die on electrodes. `LevelParameters.GorfCount` is 0 in every wave;
-`GorfWaveSpawner` places them as the grunts are placed, and `WaveSurvivors` keeps the survivors of a death. **All of that behaviour is provisional**, there to be replaced when the author says what a Gorf does.
+`Entities/Gorf` is a new kind (`RobotKind.Gorf`), another of the author's own with no arcade source. At first it only stood and flapped between its two frames (every 8 ROM frames); the author then said what it does:
+
+> *"Gorf is a robot that moves in a sine wave (but don't use Sin or Cos for the movement) - it will start from off screen at a random Y location, then move across the screen, dropping GRUNT robots as it goes. The number of GRUNT robots it drops depends on the wave number and difficulty level, like the spheroids I think."*
+
+- **The path.** It starts just off the screen on a random side (left or right) at a random height and crosses to the far side, then is gone: when it gets across it is killed silently, with no explosion and no score.
+  It steps 1 column (2 arcade pixels) every 2 ROM frames, about 50 pixels a second, and its height follows a wave of 80 steps and 30 rows. The wave is `GorfPath.GetOffset`, which is two parabola arches (up on the
+  first half of the wave and down on the second), a good match for a sine, in whole numbers with no `Sin`, `Cos` or any other trigonometry. The numbers are in `GorfTuning`.
+- **The drops.** Its grunts are rolled as a spheroid's enforcers are: a roll from 1 to the wave's drop bound (`MaxDropsX2`, the ROM's `ENFNUM`, which grows with the wave and is moved by the difficulty setting), halved and rounded up.
+  Spheroids get 1 to 5 at the wave table's bound of 10; Gorf's grunts are spaced evenly along its way. `PlayField.SpawnGrunt` puts each one on the field where Gorf is (kept inside the wall), with the strip appear and the wave's grunt wait.
+- **Drawn through the wall.** Only the part of Gorf inside the wall is drawn, so it comes in from off the screen instead of over the border.
+- **Killing it.** A laser kills it (strip explosion, the grunts' hit sound, 100 points for now), a touch kills the player, and the wave is not won while one is on its way across. It does not shoot or die on electrodes.
+- **In a wave.** `LevelParameters.GorfCount` is 0 in every wave. `GorfWaveSpawner` makes them (nothing to place, since they start off the screen) and `WaveSurvivors` keeps the survivors of a death.
+- **A change to `WaveMaterialisation`.** A robot made after a brain wave's beam-in has started (a dropped grunt) used to be left waiting for ever. It now appears strip by strip like the rest.
+
+Everything not stated by the author is the port's choice and is in `GorfTuning` or marked in the code.
