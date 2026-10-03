@@ -69,7 +69,7 @@ public sealed class HighScorePrintSequenceTests
         Assert.Equal(AllTime, print.AllTimeRows);
         Assert.True(print.IsDone);
 
-        // The page is a still picture once printed.
+        // The page is a still screen once printed.
         TickFrames(print, 10);
         Assert.Equal(AllTime, print.AllTimeRows);
         Assert.True(print.IsDone);

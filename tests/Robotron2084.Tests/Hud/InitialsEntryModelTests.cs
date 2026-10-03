@@ -83,7 +83,7 @@ public sealed class InitialsEntryModelTests
         Press(model, Up);
         PressFire(model);
 
-        Assert.Equal("A  ", model.Initials);
+        Assert.Equal("A  ", model.GetInitials());
         Assert.Equal(1, model.Position);
         Assert.Equal(' ', model.Preview);
         Assert.False(model.IsComplete);
@@ -99,7 +99,7 @@ public sealed class InitialsEntryModelTests
         CommitLetter(model, 3, Up);       // C
 
         Assert.True(model.IsComplete);
-        Assert.Equal("ABC", model.Initials);
+        Assert.Equal("ABC", model.GetInitials());
         Assert.Equal(InitialsEntryModel.LetterCount, model.Position);
     }
 
@@ -110,7 +110,7 @@ public sealed class InitialsEntryModelTests
 
         CommitLetter(model, 2, Up);        // B
         CommitLetter(model, 3, Up);        // C
-        Assert.Equal("BC ", model.Initials);
+        Assert.Equal("BC ", model.GetInitials());
 
         // Down from the blank cell reaches the rub marker, and fire there takes the C away.
         Press(model, Down);
@@ -119,11 +119,11 @@ public sealed class InitialsEntryModelTests
 
         Assert.False(model.IsComplete);
         Assert.Equal(1, model.Position);
-        Assert.Equal("B  ", model.Initials);
+        Assert.Equal("B  ", model.GetInitials());
 
         // And the letter the player rejected can be typed again.
         CommitLetter(model, 2, Up);
-        Assert.Equal("BB ", model.Initials);
+        Assert.Equal("BB ", model.GetInitials());
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public sealed class InitialsEntryModelTests
 
         // GETLT3/GETLT4: the first auto-commit waits 32 counts of two frames (64 ROM frames,
         // under two seconds) and types the second letter with a blank of its own.
-        Assert.Equal("A  ", model.Initials);
+        Assert.Equal("A  ", model.GetInitials());
         Assert.Equal(2, model.Position);
         Assert.False(model.IsComplete);
         Assert.InRange(ticks, 60, 110);
@@ -155,7 +155,7 @@ public sealed class InitialsEntryModelTests
         PressFire(model);
 
         Assert.True(model.IsComplete);
-        Assert.Equal("A  ", model.Initials);
+        Assert.Equal("A  ", model.GetInitials());
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public sealed class InitialsEntryModelTests
 
         Tick(model, Idle, TicksForRomFrames(640) + 10);
         Assert.True(model.IsComplete);
-        Assert.Equal("   ", model.Initials);
+        Assert.Equal("   ", model.GetInitials());
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public sealed class InitialsEntryModelTests
         Tick(model, Idle, TicksForRomFrames(2 * 640) + 10);
 
         Assert.True(model.IsComplete);
-        Assert.Equal("A  ", model.Initials);
+        Assert.Equal("A  ", model.GetInitials());
     }
 
     /// <summary>A fresh entry, past GETLZZ's wait for the fire switch to come up.</summary>
