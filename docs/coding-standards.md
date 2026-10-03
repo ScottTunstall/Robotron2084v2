@@ -90,6 +90,17 @@ what it needs as arguments and let it work. A query is fine when the answer is t
 `GetNearestSlot()`), but a query used only to choose which command to send is the smell. This works with STR-8
 (feature envy) and STR-9 (state checks): the rule and the data live together, and the caller issues one command.
 
+**STR-11. Law of Demeter: one dot.** A method talks to its own members, its parameters, the objects it makes, and
+the things it is directly given. It does not reach through one object to another: `field.Entities.GetList(kind).Entities`,
+`field.Wall.Intersects(box)` and `sprites.Blitter.DrawSprite(...)` all call a method on something got from something
+else. If a statement has a second dot after a property or a call, it is a smell. Fix it one of two ways: give the
+near object a method that does the whole job (`field.HitsWall(box)`, `field.GetEntities(kind)`), or pass the
+collaborator in as a parameter. A short-lived local that only renames a parameter's collaborator is not a fix.
+- **Exempt:** reading plain data (`point.X`, `box.Bounds.Width`, `parameters.GruntCount`), one fluent chain on a single
+  object (LINQ, builders), and static, namespace and enum paths (`ScreenSize.ToPortPixels`, `EntityLifeState.Alive`).
+- **The price:** a thin delegating method on the near object. That is correct. It keeps callers from knowing the
+  structure behind it, so the structure can change in one place.
+
 ## 3. Naming (§114)
 
 **NAM-1. Methods are verb phrases in the domain's own words**: `RollOffsets`, `PickDirection`,
