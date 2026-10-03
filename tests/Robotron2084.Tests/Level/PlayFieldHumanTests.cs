@@ -11,8 +11,7 @@ namespace Robotron2084.Tests;
 /// PHASE D humans (ROM RRH11): wave spawn (Mikeys/mommies/daddies counts), bounded
 /// table walk, hulk-kill → skull marker, player touch → rescue with the
 /// running save count (1000-5000, ROM SAVCNT/PCFLG), wave clear independent
-/// of humans, and the rescue count's lifetime (carries across waves, resets
-/// on player death via the PlayField's startingRescues).
+/// of humans, and the rescue count starting at none on every wave (ROM PLINIT).
 /// </summary>
 public sealed class PlayFieldHumanTests
 {
@@ -25,8 +24,8 @@ public sealed class PlayFieldHumanTests
         MikeyCount: mikey,
         HulkCount: hulks);
 
-    private static PlayField CreateField(LevelParameters parameters, int startingRescues = 0) =>
-        new PlayFieldBuilder().WithParameters(parameters).WithSeed(99).WithRescues(startingRescues).Build();
+    private static PlayField CreateField(LevelParameters parameters) =>
+        new PlayFieldBuilder().WithParameters(parameters).WithSeed(99).Build();
 
     /// <summary>
     /// One port tick. The player's start grace is WALL-CLOCK, so a `new GameTime()`
@@ -138,7 +137,7 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void Rescues_KeepRunningCountUntilTheCap()
     {
-        PlayField field = CreateField(HumanWave(0, 0, 5), startingRescues: 4);
+        PlayField field = CreateField(HumanWave(0, 0, 9));
         foreach (Human human in field.Entities.Family.Members)
         {
             human.MoveTo(field.Player.Position);
@@ -148,19 +147,17 @@ public sealed class PlayFieldHumanTests
         field.Update(new GameTime());
 
         // ROM: SAVCNT itself is uncapped (INC SAVCNT); only the score lookup
-        // caps at 5 (CMPA #5 / BLS → SVITAB index). 4 + 5 rescues = 9 saved,
-        // and each of the 5 rescues pays the 5000 cap.
+        // caps at 5 (CMPA #5 / BLS → SVITAB index). Nine rescues in one tick pay
+        // 1000, 2000, 3000, 4000, then the 5000 cap five times.
         Assert.Equal(9, field.RescuesThisLife);
-        Assert.Equal(
-            scoreBefore + ScoreValues.RescueBonus(5) + ScoreValues.RescueBonus(5) + ScoreValues.RescueBonus(5) + ScoreValues.RescueBonus(5) + ScoreValues.RescueBonus(5),
-            field.Score.Score);
+        Assert.Equal(scoreBefore + 10000 + 5 * ScoreValues.RescueBonus(5), field.Score.Score);
     }
 
     [Fact]
-    public void SyncInto_HandsLiveScoreLivesAndRescuesToThePlayersSlot()
+    public void SyncInto_HandsLiveScoreAndLivesToThePlayersSlot()
     {
         // The HUD draws the SESSION's slots, and the ROM reads the score, the men
-        // and SAVCNT out of the player's data block every time it draws — so the
+        // out of the player's data block every time it draws — so the
         // hand-over happens every tick (notes §97). Syncing only at a wave clear
         // left the displayed score stale for the rest of the wave, which is what
         // the attract demo's rescue bonus looked like.
@@ -170,7 +167,6 @@ public sealed class PlayFieldHumanTests
         field.Update(new GameTime());
         field.SyncInto(slot);
         Assert.Equal(0, slot.Score);
-        Assert.Equal(0, slot.Rescues);
         Assert.Equal(field.Player.Lives, slot.Lives);
 
         Human human = field.Entities.Family.Members[0];
@@ -180,9 +176,7 @@ public sealed class PlayFieldHumanTests
         field.SyncInto(slot);
 
         Assert.Equal(ScoreValues.RescueBonus(1), slot.Score);
-        Assert.Equal(1, slot.Rescues);
         Assert.Equal(field.Player.Lives, slot.Lives);
-        Assert.Equal(field.RescuesThisLife, slot.Rescues);
     }
 
     [Fact]
@@ -271,19 +265,20 @@ public sealed class PlayFieldHumanTests
     }
 
     [Fact]
-    public void RescueCount_CarriesIntoTheNextField_ViaStartingRescues()
+    public void EveryWaveStartsWithNoRescues_SoTheFirstHumanSavedPaysTheFirstBonus()
     {
         PlayField first = CreateField(HumanWave(0, 0, 1));
         first.Entities.Family.Members[0].MoveTo(first.Player.Position);
         first.Update(new GameTime());
         Assert.Equal(1, first.RescuesThisLife);
 
-        PlayField next = CreateField(HumanWave(0, 0, 1), startingRescues: first.RescuesThisLife);
-        int baseScore = next.Score.Score; // the next field starts at 0 score; anchor on its own base
+        // ROM PLINIT clears SAVCNT as each wave starts, so the next wave pays 1000 again, not 2000.
+        PlayField next = CreateField(HumanWave(0, 0, 1));
+        Assert.Equal(0, next.RescuesThisLife);
         next.Entities.Family.Members[0].MoveTo(next.Player.Position);
         next.Update(new GameTime());
 
-        Assert.Equal(2, next.RescuesThisLife);
-        Assert.Equal(baseScore + ScoreValues.RescueBonus(2), next.Score.Score);
+        Assert.Equal(1, next.RescuesThisLife);
+        Assert.Equal(ScoreValues.RescueBonus(1), next.Score.Score);
     }
 }

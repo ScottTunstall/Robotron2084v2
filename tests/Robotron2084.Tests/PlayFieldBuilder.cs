@@ -30,7 +30,6 @@ internal sealed class PlayFieldBuilder
     private Random _random = new(DefaultSeed);
     private int _lives = DefaultLives;
     private int _score;
-    private int _rescues;
     private GamePalette? _palette;
     private bool _playerInvincible = true;
     private IPixelCollision? _pixelCollision;
@@ -91,13 +90,6 @@ internal sealed class PlayFieldBuilder
         return this;
     }
 
-    /// <summary>Starts the player with this many humans already rescued this life.</summary>
-    /// <param name="rescues">The rescues carried in.</param>
-    public PlayFieldBuilder WithRescues(int rescues)
-    {
-        _rescues = rescues;
-        return this;
-    }
 
     /// <summary>Wires in a live palette.</summary>
     /// <param name="palette">The palette.</param>
@@ -133,7 +125,6 @@ internal sealed class PlayFieldBuilder
         _random,
         _lives,
         _score,
-        _rescues,
         palette: _palette,
         playerInvincibleForTesting: _playerInvincible,
         contactTest: _pixelCollision is null ? null : new PixelContactTest(_pixelCollision));
