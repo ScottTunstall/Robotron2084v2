@@ -8,8 +8,7 @@ cells on a dark red background. It holds:
     BerzerkRobot_Idle_1 .. BerzerkRobot_Idle_6. The other two rows are the walking frames, with two empty cells in the middle row.
     The ten frames are numbered in reading order. The first two are the robot walking right (BerzerkRobot_WalkRight_1 and
     _2), the next two walking left (BerzerkRobot_WalkLeft_1 and _2) and the next three walking up (BerzerkRobot_WalkUp_1
-    to _3, which play in the order 1, 2, 3, 2). The rest keep their reading-order number (BerzerkRobot_Walk_8 ..
-    BerzerkRobot_Walk_10) until they are named;
+    to _3, which play in the order 1, 2, 3, 2) and the last three walking down (BerzerkRobot_WalkDown_1 to _3);
   * a block of 4 cells in 2 x 2: the robot standing (BerzerkRobot_Stand) and then the three stages of it being
     destroyed (BerzerkRobot_Explode_1 .. 3), read left to right, top to bottom.
 
@@ -48,6 +47,9 @@ WALK_NAMES = {
     5: "BerzerkRobot_WalkUp_1",
     6: "BerzerkRobot_WalkUp_2",
     7: "BerzerkRobot_WalkUp_3",
+    8: "BerzerkRobot_WalkDown_1",
+    9: "BerzerkRobot_WalkDown_2",
+    10: "BerzerkRobot_WalkDown_3",
 }
 
 # The other block: the four cells, as (left, top, width, height) in sheet pixels.
