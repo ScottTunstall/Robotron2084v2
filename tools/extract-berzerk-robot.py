@@ -6,7 +6,8 @@ cells on a dark red background. It holds:
 
   * a block of 18 cells in 3 rows of 6. The first row is the robot standing still, a cycle of six frames:
     BerzerkRobot_Idle_1 .. BerzerkRobot_Idle_6. The other two rows are the walking frames, with two empty cells in the middle row.
-    The ten frames are numbered in reading order: BerzerkRobot_Walk_1 .. BerzerkRobot_Walk_10;
+    The ten frames are numbered in reading order. The first two are the robot walking right (BerzerkRobot_WalkRight_1 and
+    _2). The rest keep their reading-order number (BerzerkRobot_Walk_3 .. BerzerkRobot_Walk_10) until they are named;
   * a block of 4 cells in 2 x 2: the robot standing (BerzerkRobot_Stand) and then the three stages of it being
     destroyed (BerzerkRobot_Explode_1 .. 3), read left to right, top to bottom.
 
@@ -82,7 +83,7 @@ def main() -> int:
                 name = f"BerzerkRobot_Idle_{column_number + 1}"
             else:
                 walk_number += 1
-                name = f"BerzerkRobot_Walk_{walk_number}"
+                name = f"BerzerkRobot_WalkRight_{walk_number}" if walk_number <= 2 else f"BerzerkRobot_Walk_{walk_number}"
             write_png(name, rows, WALK_COLUMN_WIDTH // BLOCK, WALK_FRAME_ROWS)
 
     cells = [read_cell(sheet, *cell) for cell in OTHER_CELLS]
