@@ -1,6 +1,8 @@
 using Robotron2084.Audio;
 using Robotron2084.Core;
+using Microsoft.Xna.Framework;
 using Robotron2084.Entities;
+using Robotron2084.Tuning;
 
 namespace Robotron2084.Level.Spawning;
 
@@ -72,6 +74,22 @@ internal sealed class MidWaveSpawner
         _entities.Add(tank);
         _field.PlaySoundFrom(SoundTables.TankDrop, tank.Bounds);
         return tank;
+    }
+
+    /// <summary>Gorf drops a grunt. It is kept inside the playfield, because Gorf is on its way in or out, and it appears the way a wave's grunts do.</summary>
+    /// <param name="position">Where Gorf is.</param>
+    /// <remarks>A new robot's drop (notes §138.2): there is no arcade routine for it.</remarks>
+    public void SpawnGrunt(IntVector2 position)
+    {
+        Rectangle bounds = _field.PlayfieldBounds;
+        int width = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Width);
+        int height = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Height);
+        IntVector2 inside = new(
+            Math.Clamp(position.X, bounds.X, bounds.Right - width),
+            Math.Clamp(position.Y, bounds.Y, bounds.Bottom - height));
+        var grunt = new Grunt(_field.Sprites, inside, _field.Parameters.GruntMoveDelay, _random);
+        _entities.Add(grunt);
+        _field.QueueMaterialise(grunt);
     }
 
     /// <summary>A tank fires a shell at, or at a wall near, the player.</summary>
