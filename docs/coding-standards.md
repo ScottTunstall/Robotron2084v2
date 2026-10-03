@@ -385,6 +385,20 @@ leftover files or dead code (§120, §121). Run the scans in Part 2.
 **PROC-3. Behaviour changes are separate commits** from refactors, each with a test that fails before and
 passes after.
 
+**PROC-4. Atomic commits, one per folder.** A commit holds one logical change. When that change touches several
+folders, commit each folder on its own: one commit for `docs`, one for each folder under `src/Robotron2084`
+(`Entities`, `Level`, `Tuning` and so on), one for each test folder, one for each tool.
+- **The message describes that folder's part.** The subject says what changed there, in the imperative
+  ("Name beat gaps intervals in Tuning"). The body says why, and names the main types or rules affected. Never
+  reuse one generic message across the folders.
+- **Stage by path, never the whole tree.** Add the files you changed by name. Do not sweep in edits you did not
+  make. If a folder holds someone else's uncommitted work that cannot be separated from yours, say so in the body.
+- **Unrelated changes are separate commits**, even inside one folder (PROC-3).
+- **The set must end green.** A folder commit in the middle of a set may not build on its own, because a rename
+  crosses folders. The last commit of the set must build with no warnings and pass every test. Commit the folder
+  that the others depend on first.
+- **Do not push** unless asked.
+
 ---
 
 # Part 2: Code review procedure (for use as a review skill)
