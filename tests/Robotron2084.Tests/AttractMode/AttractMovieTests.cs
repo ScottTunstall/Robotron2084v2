@@ -109,8 +109,8 @@ public sealed class AttractMovieTests
         Assert.Contains(MovieAnimation.Enforcer, seen);
         Assert.Contains(MovieAnimation.Tank, seen);
         Assert.Contains(MovieAnimation.Brain, seen);      // the reprogramming
-        Assert.Contains(MovieAnimation.Posts, seen);      // the score posts
-        Assert.Contains(MovieAnimation.Mummy, seen);
+        Assert.Contains(MovieAnimation.Electrodes, seen);      // the score posts
+        Assert.Contains(MovieAnimation.Mommy, seen);
         Assert.Contains(MovieAnimation.Daddy, seen);
         Assert.Contains(MovieAnimation.Mikey, seen);
         Assert.True(exploded, "no EXP ever fired");
@@ -135,7 +135,7 @@ public sealed class AttractMovieTests
 
         // The BR* walker cycles ANATAB (0,1,0,2) on top of the direction's base
         // image, so a LEFT walk shows animation frames 0,1,0,2 — every one of them inside
-        // the descriptor's 12 pictures (the source of the "player animations are
+        // the descriptor's 12 animation frames (the source of the "player animations are
         // not quite right" report: a 12-byte ANATAB made it cycle garbage).
         var animationFrames = new List<int>();
         for (int frame = 0; frame < 300; frame++)
@@ -148,7 +148,7 @@ public sealed class AttractMovieTests
         Assert.All(animationFrames, index => Assert.InRange(index, 0, 11));
 
         // The ROM's BANA1 sleeps the descriptor's nap BEFORE the first step and
-        // sets the picture on the step, so the cycle is one entry every 2 frames
+        // sets the animation frame on the step, so the cycle is one entry every 2 frames
         // starting at frame 3.
         Assert.Equal([0, 1, 0, 2], new[] { animationFrames[2], animationFrames[4], animationFrames[6], animationFrames[8] });
     }
