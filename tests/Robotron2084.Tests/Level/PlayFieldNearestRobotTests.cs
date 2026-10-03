@@ -14,7 +14,7 @@ namespace Robotron2084.Tests;
 public sealed class PlayFieldNearestRobotTests
 {
     private static readonly Microsoft.Xna.Framework.Rectangle Bounds =
-        new(ScreenSize.Scaled(20), ScreenSize.Scaled(20), ScreenSize.Width - ScreenSize.Scaled(40), ScreenSize.Height - ScreenSize.Scaled(40));
+        new(ScreenSize.ToPortPixels(20), ScreenSize.ToPortPixels(20), ScreenSize.Width - ScreenSize.ToPortPixels(40), ScreenSize.Height - ScreenSize.ToPortPixels(40));
 
     private static PlayField EmptyField()
     {
@@ -27,7 +27,7 @@ public sealed class PlayFieldNearestRobotTests
     {
         PlayField field = EmptyField();
 
-        Assert.Null(field.NearestLivingRobotPositionTo(field.Player.Position));
+        Assert.Null(field.GetNearestLivingRobotPosition(field.Player.Position));
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class PlayFieldNearestRobotTests
         field.SpawnEnforcer(far);
         Tank nearTank = field.SpawnTank(near);
 
-        Assert.Equal(nearTank.Position, field.NearestLivingRobotPositionTo(player));
+        Assert.Equal(nearTank.Position, field.GetNearestLivingRobotPosition(player));
     }
 
     [Fact]
@@ -56,6 +56,6 @@ public sealed class PlayFieldNearestRobotTests
         Tank tank = field.SpawnTank(near);
         tank.Kill();
 
-        Assert.Equal(far, field.NearestLivingRobotPositionTo(player));
+        Assert.Equal(far, field.GetNearestLivingRobotPosition(player));
     }
 }

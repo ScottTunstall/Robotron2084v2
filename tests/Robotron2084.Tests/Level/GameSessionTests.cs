@@ -1,5 +1,6 @@
 using Robotron2084.Input;
 using Robotron2084.Level;
+using Robotron2084.Persistence;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -12,12 +13,12 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public class GameSessionTests
 {
-    private static GameSession NewTwoPlayerGame() => GameSession.NewGame(new FakeInputSource(), playerCount: 2);
+    private static GameSession NewTwoPlayerGame() => GameSession.CreateNewGame(new FakeInputSource(), playerCount: 2);
 
     [Fact]
     public void OnePlayerGame_HasOneSlot_NamedPlayerOne()
     {
-        GameSession session = GameSession.NewGame(new FakeInputSource(), playerCount: 1);
+        GameSession session = GameSession.CreateNewGame(new FakeInputSource(), playerCount: 1);
 
         Assert.False(session.IsTwoPlayer);
         Assert.Single(session.Players);
@@ -46,7 +47,7 @@ public class GameSessionTests
     {
         // The ROM's p1_men is the lives counter AFTER PLSTRT decremented it: with
         // 3 ships the HUD shows 2 icons during the first life.
-        GameSession session = GameSession.NewGame(new FakeInputSource(), playerCount: 1);
+        GameSession session = GameSession.CreateNewGame(new FakeInputSource(), playerCount: 1);
 
         Assert.Equal(3, session.Current.Lives);
         Assert.Equal(2, session.Current.SpareMen);
@@ -62,7 +63,7 @@ public class GameSessionTests
     public void DisplayedMen_IsCappedAtSeven()
     {
         // ROM MANDSV: "DISPLAY MEN LEFT / MAX OF 7".
-        GameSession session = GameSession.NewGame(new FakeInputSource(), playerCount: 1);
+        GameSession session = GameSession.CreateNewGame(new FakeInputSource(), playerCount: 1);
 
         session.Current.Lives = 9; // 8 spare
         Assert.Equal(8, session.Current.SpareMen);
@@ -99,7 +100,7 @@ public class GameSessionTests
     [Fact]
     public void SwitchToPlayerWithMen_NeverMovesInAOnePlayerGame()
     {
-        GameSession session = GameSession.NewGame(new FakeInputSource(), playerCount: 1);
+        GameSession session = GameSession.CreateNewGame(new FakeInputSource(), playerCount: 1);
 
         Assert.False(session.SwitchToPlayerWithMen());
         Assert.Equal(1, session.Current.Number);
@@ -110,13 +111,13 @@ public class GameSessionTests
     {
         GameSession session = NewTwoPlayerGame();
 
-        Assert.True(session.AnyMenLeft);
+        Assert.True(session.AnyMenLeft());
 
         session.Players[0].Lives = 0;
-        Assert.True(session.AnyMenLeft);
+        Assert.True(session.AnyMenLeft());
 
         session.Players[1].Lives = 0;
-        Assert.False(session.AnyMenLeft);
+        Assert.False(session.AnyMenLeft());
     }
 
     [Fact]
@@ -126,12 +127,31 @@ public class GameSessionTests
         session.Players[0].Score = 1500;
         session.Players[1].Score = 9800;
 
-        Assert.Equal([9800, 1500], session.ScoresHighestFirst());
+        Assert.Equal([9800, 1500], session.GetScoresHighestFirst());
     }
 
     [Fact]
     public void NewGame_RejectsThreePlayers()
     {
-        Assert.Throws<System.ArgumentOutOfRangeException>(() => GameSession.NewGame(new FakeInputSource(), playerCount: 3));
+        Assert.Throws<System.ArgumentOutOfRangeException>(() => GameSession.CreateNewGame(new FakeInputSource(), playerCount: 3));
+    }
+
+    [Fact]
+    public void NewGame_TakesTheStartingLivesFromTurnsPerPlayer()
+    {
+        var settings = new GameSettings { TurnsPerPlayer = 5 };
+
+        GameSession session = GameSession.CreateNewGame(GameMode.OnePlayer, new FakeInputSource(), settings: settings);
+
+        Assert.Equal(5, session.Current.Lives);
+        Assert.Same(settings, session.Settings);
+    }
+
+    [Fact]
+    public void NewGame_WithNoSettings_UsesTheFactoryOnes()
+    {
+        GameSession session = GameSession.CreateNewGame(new FakeInputSource(), playerCount: 1);
+
+        Assert.Equal(GameSettings.FactoryTurnsPerPlayer, session.Current.Lives);
     }
 }

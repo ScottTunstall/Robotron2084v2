@@ -36,8 +36,8 @@ public sealed class PlayFieldMovementTests
         Assert.Equal(EntityLifeState.Dead, shell.LifeState);
         // 48..79 ROM frames, held in exact clock units, so the fizzle lands on
         // ceil(6n/5) — 58..95 port ticks, not the truncated 57..94 (notes §65).
-        int minTicks = ArcadeClock.PortTicksCeil(TankShellTuning.LifeBaseRomFrames);
-        int maxTicks = ArcadeClock.PortTicksCeil(TankShellTuning.LifeBaseRomFrames + 31);
+        int minTicks = ArcadeClock.ToPortTicksRoundedUp(TankShellTuning.LifeBaseRomFrames);
+        int maxTicks = ArcadeClock.ToPortTicksRoundedUp(TankShellTuning.LifeBaseRomFrames + 31);
         Assert.InRange(ticks, minTicks, maxTicks);
     }
 
@@ -132,7 +132,7 @@ public sealed class PlayFieldMovementTests
         IntVector2 afterAim = hulk.Position; // first unfrozen update = the spawn aim, no move
 
         // Step period = 8 ROM frames = 9.6 ticks, so the step lands on the 10th.
-        int stepPeriod = ArcadeClock.PortTicksCeil(8);
+        int stepPeriod = ArcadeClock.ToPortTicksRoundedUp(8);
         for (int i = 1; i < stepPeriod; i++)
         {
             field.Update(new GameTime());

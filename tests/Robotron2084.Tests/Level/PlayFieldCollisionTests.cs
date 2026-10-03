@@ -37,7 +37,7 @@ public sealed class PlayFieldCollisionTests
     public void ElectrodeLaserKill_ShrivelsForTheRomFrameTimes_ThenDies()
     {
         // RRP8.ASM PKPROC (the POST KILL PROCESS): the post plays its 3 death
-        // pictures (PSP1 → PSP2 → PSP3), holding each for its own sleep time —
+        // sprites (PSP1 → PSP2 → PSP3), holding each for its own sleep time —
         // 6, 3, 2 vblanks — and then the image is turned off (DMAOFF). It is a
         // shape collapse, NOT a blink (the old port toggled visibility for 2 s).
         PlayField field = CreateEmptyField();
@@ -60,29 +60,29 @@ public sealed class PlayFieldCollisionTests
     }
 
     [Fact]
-    public void ElectrodePictureFamilyIsWaveDependent()
+    public void ElectrodeVariantIsWaveDependent()
     {
         // RRG23.ASM GTWCOL: the POST IMAGE table is the third of the wave colour
-        // tables, indexed by (wave-1) mod 10, with $10 bytes per family of three
-        // pictures — so the post's picture is WAVE-DEPENDENT and repeats every
+        // tables, indexed by (wave-1) mod 10, with $10 bytes per variant of three
+        // sprites — so the post's sprite is WAVE-DEPENDENT and repeats every
         // 10 waves: offsets $00,$10,$20,$30,$40,$50,$70,$80,$00,$60.
         int[] expectedPerWave = [0, 1, 2, 3, 4, 5, 7, 8, 0, 6];
         for (int wave = 1; wave <= expectedPerWave.Length; wave++)
         {
-            Assert.Equal(expectedPerWave[wave - 1], WavePaletteTables.PostFamilyForWave(wave));
+            Assert.Equal(expectedPerWave[wave - 1], WavePaletteTables.GetElectrodeVariant(wave));
         }
 
         // GTWL wraps the wave into 1..10 (`CMPA #9 / BLS / SUBA #10`), so the
         // sequence repeats every 10 waves.
-        Assert.Equal(WavePaletteTables.PostFamilyForWave(1), WavePaletteTables.PostFamilyForWave(11));
-        Assert.Equal(WavePaletteTables.PostFamilyForWave(10), WavePaletteTables.PostFamilyForWave(20));
+        Assert.Equal(WavePaletteTables.GetElectrodeVariant(1), WavePaletteTables.GetElectrodeVariant(11));
+        Assert.Equal(WavePaletteTables.GetElectrodeVariant(10), WavePaletteTables.GetElectrodeVariant(20));
 
-        // An electrode is WAVE-derived — both its picture family and its colour —
-        // and each family owns 3 consecutive pictures (alive + the two shrivel
+        // An electrode is WAVE-derived — both its variant and its colour —
+        // and each variant owns 3 consecutive animation frames (alive + the two shrivel
         // frames) out of the 27 electrode PNGs.
         var electrode = new Electrode(TestSprites.Shared, new IntVector2(100, 100), wave: 3);
-        Assert.Equal(2, electrode.FamilyIndex);
-        Assert.True((electrode.FamilyIndex * WavePaletteTables.PostPicturesPerFamily) + WavePaletteTables.PostPicturesPerFamily <= 27);
+        Assert.Equal(2, electrode.GetVariantIndex());
+        Assert.True((electrode.GetVariantIndex() * WavePaletteTables.ElectrodeAnimationFramesPerVariant) + WavePaletteTables.ElectrodeAnimationFramesPerVariant <= 27);
 
         // PSTCOL — the second of RRG23's four per-wave tables (`LDA 10,U / STA
         // PSTCOL`): $FF,$EE,$BB,$DD,$EE,$FF,$11,$BB,$DD,$AA. These are PALETTE
@@ -94,18 +94,18 @@ public sealed class PlayFieldCollisionTests
         byte[] expectedSlot = [0xFF, 0xEE, 0xBB, 0xDD, 0xEE, 0xFF, 0x11, 0xBB, 0xDD, 0xAA];
         for (int wave = 1; wave <= expectedSlot.Length; wave++)
         {
-            Assert.Equal(expectedSlot[wave - 1], WavePaletteTables.PostSlotByWaveMod10[wave - 1]);
-            Assert.Equal(expectedSlot[wave - 1] & 0x0F, WavePaletteTables.PostSlotForWave(wave));
+            Assert.Equal(expectedSlot[wave - 1], WavePaletteTables.ElectrodeSlotByWaveMod10[wave - 1]);
+            Assert.Equal(expectedSlot[wave - 1] & 0x0F, WavePaletteTables.GetElectrodeSlot(wave));
         }
 
-        Assert.Equal(0x0F, WavePaletteTables.PostSlotForWave(11)); // wraps every 10
+        Assert.Equal(0x0F, WavePaletteTables.GetElectrodeSlot(11)); // wraps every 10
         // Wave 1 names slot 15 and wave 3 names slot 11 — both CYCLING slots
         // (10-15), so those waves' posts cycle, like the hardware palette.
-        Assert.Equal(15, WavePaletteTables.PostSlotForWave(1));
-        Assert.Equal(11, WavePaletteTables.PostSlotForWave(3));
-        Assert.Equal(1, WavePaletteTables.PostSlotForWave(7)); // slot 1 = RED in the ROM's own CRTAB
-        Assert.Equal(new Electrode(TestSprites.Shared, new IntVector2(0, 0), wave: 1).TintSlot, WavePaletteTables.PostSlotForWave(1));
-        Assert.True(WavePaletteTables.PostSlotForWave(1) >= 10); // 10-15 are the cycling slots
+        Assert.Equal(15, WavePaletteTables.GetElectrodeSlot(1));
+        Assert.Equal(11, WavePaletteTables.GetElectrodeSlot(3));
+        Assert.Equal(1, WavePaletteTables.GetElectrodeSlot(7)); // slot 1 = RED in the ROM's own CRTAB
+        Assert.Equal(new Electrode(TestSprites.Shared, new IntVector2(0, 0), wave: 1).GetTintSlot(), WavePaletteTables.GetElectrodeSlot(1));
+        Assert.True(WavePaletteTables.GetElectrodeSlot(1) >= 10); // 10-15 are the cycling slots
     }
 
     [Fact]
@@ -121,37 +121,37 @@ public sealed class PlayFieldCollisionTests
         for (int wave = 1; wave <= wall.Length; wave++)
         {
             Assert.Equal(wall[wave - 1], WavePaletteTables.WallSlotByWaveMod10[wave - 1]);
-            Assert.Equal(wall[wave - 1] & 0x0F, WavePaletteTables.WallSlotForWave(wave));
+            Assert.Equal(wall[wave - 1] & 0x0F, WavePaletteTables.GetWallSlot(wave));
             Assert.Equal(laser[wave - 1], WavePaletteTables.LaserWallSlotByWaveMod10[wave - 1]);
-            Assert.Equal(laser[wave - 1] & 0x0F, WavePaletteTables.LaserWallSlotForWave(wave));
+            Assert.Equal(laser[wave - 1] & 0x0F, WavePaletteTables.GetLaserWallSlot(wave));
         }
 
         // The wall is NOT the port's old hard-coded slot 11, and it is different
         // on (nearly) every wave — that colour change IS the arcade's look.
-        Assert.NotEqual(11, WavePaletteTables.WallSlotForWave(1));
-        Assert.Equal(2, WavePaletteTables.WallSlotForWave(1));  // $22 = slot 2 = ORANGE
-        Assert.Equal(1, WavePaletteTables.WallSlotForWave(3));  // $11 = slot 1 = RED
-        Assert.Equal(14, WavePaletteTables.WallSlotForWave(4)); // $EE = a CYCLING slot
-        Assert.Equal(12, WavePaletteTables.WallSlotForWave(10));// $CC = a CYCLING slot
-        Assert.True(WavePaletteTables.WallSlotForWave(4) >= 10 && WavePaletteTables.WallSlotForWave(10) >= 10);
+        Assert.NotEqual(11, WavePaletteTables.GetWallSlot(1));
+        Assert.Equal(2, WavePaletteTables.GetWallSlot(1));  // $22 = slot 2 = ORANGE
+        Assert.Equal(1, WavePaletteTables.GetWallSlot(3));  // $11 = slot 1 = RED
+        Assert.Equal(14, WavePaletteTables.GetWallSlot(4)); // $EE = a CYCLING slot
+        Assert.Equal(12, WavePaletteTables.GetWallSlot(10));// $CC = a CYCLING slot
+        Assert.True(WavePaletteTables.GetWallSlot(4) >= 10 && WavePaletteTables.GetWallSlot(10) >= 10);
 
         // Faithful but surprising: wave 9's border is BLACK (slot 0) and wave 2's
         // laser-wall flare is black too — the ROM's own tables mean that.
-        Assert.Equal(0, WavePaletteTables.WallSlotForWave(9));
-        Assert.Equal(0, WavePaletteTables.LaserWallSlotForWave(2));
+        Assert.Equal(0, WavePaletteTables.GetWallSlot(9));
+        Assert.Equal(0, WavePaletteTables.GetLaserWallSlot(2));
 
         // The laser-wall flare is NOT the laser's own slot: wave 1 white (slot 9),
         // wave 4 green (slot 6), wave 8 red (slot 1), wave 9 a cycling slot.
-        Assert.Equal(9, WavePaletteTables.LaserWallSlotForWave(1));
-        Assert.Equal(6, WavePaletteTables.LaserWallSlotForWave(4));
-        Assert.Equal(1, WavePaletteTables.LaserWallSlotForWave(8));
-        Assert.Equal(10, WavePaletteTables.LaserWallSlotForWave(9));
+        Assert.Equal(9, WavePaletteTables.GetLaserWallSlot(1));
+        Assert.Equal(6, WavePaletteTables.GetLaserWallSlot(4));
+        Assert.Equal(1, WavePaletteTables.GetLaserWallSlot(8));
+        Assert.Equal(10, WavePaletteTables.GetLaserWallSlot(9));
 
         // Both wrap every 10 waves (the ROM's GTWCOL subtract-10 loop).
-        Assert.Equal(WavePaletteTables.WallSlotForWave(1), WavePaletteTables.WallSlotForWave(11));
-        Assert.Equal(WavePaletteTables.WallSlotForWave(9), WavePaletteTables.WallSlotForWave(19));
-        Assert.Equal(WavePaletteTables.WallSlotForWave(10), WavePaletteTables.WallSlotForWave(20));
-        Assert.Equal(WavePaletteTables.LaserWallSlotForWave(2), WavePaletteTables.LaserWallSlotForWave(12));
+        Assert.Equal(WavePaletteTables.GetWallSlot(1), WavePaletteTables.GetWallSlot(11));
+        Assert.Equal(WavePaletteTables.GetWallSlot(9), WavePaletteTables.GetWallSlot(19));
+        Assert.Equal(WavePaletteTables.GetWallSlot(10), WavePaletteTables.GetWallSlot(20));
+        Assert.Equal(WavePaletteTables.GetLaserWallSlot(2), WavePaletteTables.GetLaserWallSlot(12));
     }
 
     [Fact]

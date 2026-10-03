@@ -101,7 +101,7 @@ public sealed class PlayFieldRobotRegistryTests
         {
             // The order of `All` is behaviour: it is the order the laser phases resolve in.
             Assert.Equal(kinds[index], RobotKinds.All[index].Kind);
-            Assert.Equal(kinds[index], RobotKinds.Of(kinds[index]).Kind);
+            Assert.Equal(kinds[index], RobotKinds.GetInfo(kinds[index]).Kind);
         }
     }
 
@@ -109,7 +109,7 @@ public sealed class PlayFieldRobotRegistryTests
     public void EveryKindsListIsWalkedOnceAndDrawnOnce()
     {
         PlayField field = CreateField();
-        IEntityList[] robotLists = [.. Enum.GetValues<RobotKind>().Select(field.ListOf)];
+        IEntityList[] robotLists = [.. Enum.GetValues<RobotKind>().Select(field.GetList)];
 
         // One list per kind: no two kinds share a list, and none is missing.
         Assert.Equal(Enum.GetValues<RobotKind>().Length, robotLists.Distinct().Count());
@@ -139,7 +139,7 @@ public sealed class PlayFieldRobotRegistryTests
 
         foreach ((RobotKind kind, Func<LevelParameters, int> count) in WaveBrought)
         {
-            Func<LevelParameters, int>? row = RobotKinds.Of(kind).WaveCount;
+            Func<LevelParameters, int>? row = RobotKinds.GetInfo(kind).WaveCount;
 
             Assert.NotNull(row);
             Assert.Equal(count(parameters), row(parameters));
@@ -149,9 +149,9 @@ public sealed class PlayFieldRobotRegistryTests
         {
             bool waveBrought = WaveBrought.Any(entry => entry.Kind == kind);
 
-            Assert.Equal(waveBrought, RobotKinds.Of(kind).WaveCount is not null);
+            Assert.Equal(waveBrought, RobotKinds.GetInfo(kind).WaveCount is not null);
             // A kind the wave brings builds the wave's own; a child build is its parent's business.
-            Assert.Equal(waveBrought, RobotKinds.Of(kind).Spawn is not null);
+            Assert.Equal(waveBrought, RobotKinds.GetInfo(kind).Spawn is not null);
         }
     }
 
@@ -162,7 +162,7 @@ public sealed class PlayFieldRobotRegistryTests
 
         foreach ((RobotKind kind, int score) in ExpectedScores)
         {
-            Assert.Equal(score, RobotKinds.Of(kind).Score);
+            Assert.Equal(score, RobotKinds.GetInfo(kind).Score);
         }
     }
 
@@ -171,7 +171,7 @@ public sealed class PlayFieldRobotRegistryTests
     {
         foreach (RobotKind kind in Enum.GetValues<RobotKind>())
         {
-            Assert.Equal(FatalOnContact.Contains(kind), RobotKinds.Of(kind).KillsPlayerOnContact);
+            Assert.Equal(FatalOnContact.Contains(kind), RobotKinds.GetInfo(kind).KillsPlayerOnContact);
         }
     }
 
@@ -180,7 +180,7 @@ public sealed class PlayFieldRobotRegistryTests
     {
         PlayField field = CreateField();
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => field.ListOf((RobotKind)999));
+        Assert.Throws<ArgumentOutOfRangeException>(() => field.GetList((RobotKind)999));
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public sealed class PlayFieldRobotRegistryTests
         Assert.Equal(Enum.GetValues<RobotKind>().Length, ExpectedEntityTypes.Length);
         foreach ((RobotKind kind, Type entityType) in ExpectedEntityTypes)
         {
-            Type listType = field.ListOf(kind).GetType();
+            Type listType = field.GetList(kind).GetType();
             Assert.Equal(entityType, Assert.Single(listType.GetGenericArguments()));
         }
     }

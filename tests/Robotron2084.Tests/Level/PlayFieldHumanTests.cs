@@ -8,7 +8,7 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// PHASE D humans (ROM RRH11): wave spawn (kids/moms/dads counts), bounded
+/// PHASE D humans (ROM RRH11): wave spawn (Mikeys/mommies/daddies counts), bounded
 /// table walk, hulk-kill → skull marker, player touch → rescue with the
 /// running save count (1000-5000, ROM SAVCNT/PCFLG), wave clear independent
 /// of humans, and the rescue count's lifetime (carries across waves, resets
@@ -16,12 +16,12 @@ namespace Robotron2084.Tests;
 /// </summary>
 public sealed class PlayFieldHumanTests
 {
-    private static LevelParameters HumanWave(int mom, int dad, int mikey, int hulks = 0) => new(
+    private static LevelParameters HumanWave(int mom, int daddy, int mikey, int hulks = 0) => new(
         LevelNumber: 1,
         GruntCount: 0,
         ElectrodeCount: 0,
-        MomCount: mom,
-        DadCount: dad,
+        MommyCount: mom,
+        DaddyCount: daddy,
         MikeyCount: mikey,
         HulkCount: hulks);
 
@@ -39,13 +39,13 @@ public sealed class PlayFieldHumanTests
     {
         PlayField field = CreateField(HumanWave(2, 1, 3));
 
-        Assert.Equal(2, field.Humans.Count(h => h.Kind == HumanKind.Mom));
-        Assert.Equal(1, field.Humans.Count(h => h.Kind == HumanKind.Dad));
+        Assert.Equal(2, field.Humans.Count(h => h.Kind == HumanKind.Mommy));
+        Assert.Equal(1, field.Humans.Count(h => h.Kind == HumanKind.Daddy));
         Assert.Equal(3, field.Humans.Count(h => h.Kind == HumanKind.Mikey));
-        // ROM HUMSTV spawn order: kids, then moms, then dads — the list order
+        // ROM HUMSTV spawn order: Mikeys, then mommies, then daddies — the list order
         // matters (the hulk "last slot" target is the last-spawned member).
         Assert.Equal(HumanKind.Mikey, field.Humans[0].Kind);
-        Assert.Equal(HumanKind.Dad, field.Humans[^1].Kind);
+        Assert.Equal(HumanKind.Daddy, field.Humans[^1].Kind);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class PlayFieldHumanTests
         }
 
         Rectangle inner = field.Wall.PlayfieldBounds;
-        var human = new Human(TestSprites.Shared, new IntVector2(inner.Center.X, inner.Center.Y), HumanKind.Mom, new Random(7));
+        var human = new Human(TestSprites.Shared, new IntVector2(inner.Center.X, inner.Center.Y), HumanKind.Mommy, new Random(7));
 
         List<int> starts = new();
         int seen = 0;
@@ -228,7 +228,7 @@ public sealed class PlayFieldHumanTests
         field.Update(Frame());
         Assert.Single(field.Skulls);
 
-        for (int tick = 0; tick < ArcadeClock.PortTicks(90) - 1; tick++)
+        for (int tick = 0; tick < ArcadeClock.ToPortTicks(90) - 1; tick++)
         {
             field.Update(Frame());
         }
@@ -251,7 +251,7 @@ public sealed class PlayFieldHumanTests
         Assert.Single(field.RescueScores);
         Assert.Equal(human.Position, field.RescueScores[0].Position);
 
-        for (int tick = 0; tick < ArcadeClock.PortTicks(60) - 1; tick++)
+        for (int tick = 0; tick < ArcadeClock.ToPortTicks(60) - 1; tick++)
         {
             field.Update(new GameTime());
         }

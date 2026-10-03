@@ -14,8 +14,8 @@ public sealed class LevelParameterGeneratorTests
         // ROM $2E24 wave 1 (arcade-fidelity-notes §11.1).
         Assert.Equal(15, p.GruntCount);
         Assert.Equal(5, p.ElectrodeCount);
-        Assert.Equal(1, p.MomCount);
-        Assert.Equal(1, p.DadCount);
+        Assert.Equal(1, p.MommyCount);
+        Assert.Equal(1, p.DaddyCount);
         Assert.Equal(0, p.MikeyCount);
         Assert.Equal(0, p.HulkCount);
         Assert.Equal(0, p.BrainCount);
@@ -35,8 +35,8 @@ public sealed class LevelParameterGeneratorTests
 
         Assert.Equal(20, p.GruntCount);
         Assert.Equal(20, p.ElectrodeCount);
-        Assert.Equal(15, p.MomCount);
-        Assert.Equal(0, p.DadCount);
+        Assert.Equal(15, p.MommyCount);
+        Assert.Equal(0, p.DaddyCount);
         Assert.Equal(1, p.MikeyCount);
         Assert.Equal(15, p.BrainCount);
         Assert.Equal(1, p.SpheroidCount);

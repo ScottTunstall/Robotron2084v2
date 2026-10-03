@@ -19,20 +19,20 @@ public sealed class PlayfieldLayoutTests
 {
     private static readonly Rectangle Canvas = new(0, 0, ScreenSize.Width, ScreenSize.Height);
 
-    private static int Margin => ScreenSize.Scaled(CollisionSizes.PlayfieldMarginSpecPixels);
+    private static int Margin => ScreenSize.ToPortPixels(CollisionSizes.PlayfieldMarginSpecPixels);
 
     [Fact]
     public void InnerBounds_IsTheCanvasInsetByThePlayfieldMargin()
     {
         Rectangle expected = new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
 
-        Assert.Equal(expected, PlayfieldLayout.InnerBounds);
+        Assert.Equal(expected, PlayfieldLayout.GetInnerBounds());
     }
 
     [Fact]
     public void ScoresAndMenRow_IsOnScreen()
     {
-        int row = ArcadeHud.ScoresAndMenRowY(PlayfieldLayout.InnerBounds);
+        int row = ArcadeHud.ScoresAndMenRowY(PlayfieldLayout.GetInnerBounds());
 
         Assert.True(row >= 0, $"the score and spare-men row ({row}) must be on the canvas");
     }
@@ -40,7 +40,7 @@ public sealed class PlayfieldLayoutTests
     [Fact]
     public void Wall_IsOnScreen()
     {
-        var wall = new PlayfieldWall(PlayfieldLayout.InnerBounds, new WallColorCycle());
+        var wall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColorCycle());
 
         Assert.True(Canvas.Contains(wall.OuterBounds), $"the wall {wall.OuterBounds} must lie inside the {Canvas} canvas");
     }

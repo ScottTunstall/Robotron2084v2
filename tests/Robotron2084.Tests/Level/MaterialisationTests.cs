@@ -124,7 +124,7 @@ public class MaterialisationTests
 
         Advance(field, 1);
 
-        // The record's own bounds are the robot's (the picture it is blitting), and
+        // The record's own bounds are the robot's (the sprite it is blitting), and
         // APCENT gave it the robot's centre as the impact.
         StripEffect appear = field.Explosions[0];
         Assert.Equal(grunt.Bounds, appear.Bounds);

@@ -16,13 +16,13 @@ public sealed class PlayFieldSpawnTests
     {
         PlayField field = CreateField(4, 2, 2, 1, 6);
 
-        Assert.Equal(6, field.ElectrodeCount);
-        Assert.Equal(4, field.GruntCount);
-        Assert.Equal(2, field.HulkCount);
-        Assert.Equal(2, field.SpheroidCount);
-        Assert.Equal(1, field.QuarkCount);
-        Assert.Equal(0, field.EnforcerCount); // only dropped by spheroids later
-        Assert.Equal(0, field.TankCount);     // only dropped by quarks later
+        Assert.Equal(6, field.GetElectrodeCount());
+        Assert.Equal(4, field.GetGruntCount());
+        Assert.Equal(2, field.GetHulkCount());
+        Assert.Equal(2, field.GetSpheroidCount());
+        Assert.Equal(1, field.GetQuarkCount());
+        Assert.Equal(0, field.GetEnforcerCount()); // only dropped by spheroids later
+        Assert.Equal(0, field.GetTankCount());     // only dropped by quarks later
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public sealed class PlayFieldSpawnTests
         PlayField field = CreateField(0, 0, 0, 3, 0);
         Rectangle bounds = field.Wall.PlayfieldBounds;
 
-        Assert.Equal(3, field.QuarkCount);
+        Assert.Equal(3, field.GetQuarkCount());
         foreach (Quark quark in field.Quarks)
         {
             int bottomEdgeY = bounds.Bottom - quark.Bounds.Height;
@@ -97,7 +97,7 @@ public sealed class PlayFieldSpawnTests
     private static void AssertAllAreFartherThan<T>(IReadOnlyList<T> entities, IntVector2 playerStart, int minSpecPixels)
         where T : IEntity
     {
-        long minSquared = ScreenSize.Scaled(minSpecPixels) * (long)ScreenSize.Scaled(minSpecPixels);
+        long minSquared = ScreenSize.ToPortPixels(minSpecPixels) * (long)ScreenSize.ToPortPixels(minSpecPixels);
         foreach (T entity in entities)
         {
             Assert.True(IntVector2.DistanceSquared(entity.Position, playerStart) > minSquared, $"{typeof(T).Name} spawned too close to the player start");
