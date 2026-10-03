@@ -5,7 +5,7 @@ using Robotron2084.Graphics;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// The pictures a headless test builds its entities with. A test process has no graphics device, so nothing
+/// The sprites a headless test builds its entities with. A test process has no graphics device, so nothing
 /// can be loaded: every handle comes back null, but a numbered run still comes back with the RIGHT NUMBER of
 /// slots, because the entities index into those runs. Enough to construct and run an entity, never enough to
 /// draw one — nothing in the suite draws, and no test asks an entity for its frame.

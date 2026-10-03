@@ -15,10 +15,10 @@ internal sealed class PlayFieldBuilder
 {
     /// <summary>The inner play area every test field uses unless it says otherwise: the canvas less a 20 spec-pixel margin.</summary>
     public static readonly Rectangle DefaultBounds = new(
-        ScreenSize.Scaled(20),
-        ScreenSize.Scaled(20),
-        ScreenSize.Width - ScreenSize.Scaled(40),
-        ScreenSize.Height - ScreenSize.Scaled(40));
+        ScreenSize.ToPortPixels(20),
+        ScreenSize.ToPortPixels(20),
+        ScreenSize.Width - ScreenSize.ToPortPixels(40),
+        ScreenSize.Height - ScreenSize.ToPortPixels(40));
 
     private const int DefaultSeed = 1234;
     private const int DefaultLives = 3;
