@@ -95,33 +95,8 @@ public sealed class PlayField : ICollisionScene
         new FamilyWaveSpawner().Spawn(spawning);
     }
 
-    /// <summary>Counts the sparks in flight. There may never be more than twenty.</summary>
-    public int GetActiveSparkCount() => Entities.GetSparkCount();
-
-    /// <summary>Says whether a spheroid may drop another enforcer: there may be eight at most.</summary>
-    /// <remarks>Original source: <c>ENFCNT</c> (notes §11).</remarks>
-    public bool CanDropEnforcer() => Entities.GetEnforcerCount() < SpawnTuning.EnforcerCap;
-
-    /// <summary>Says whether a quark may drop another tank: there may be twenty at most.</summary>
-    /// <remarks>Original source: <c>TNKCNT</c> (notes §11).</remarks>
-    public bool CanDropTank() => Entities.GetTankCount() < SpawnTuning.TankCap;
-
-    /// <summary>Says whether a brain may fire another cruise missile.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>BCMCNT</c>.</remarks>
-    public bool CanFireCruiseMissile() => Entities.GetCruiseMissileCount() < CruiseMissileTuning.Max;
-
-    /// <summary>Says whether a tank may fire another shell this wave.</summary>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>SHLCNT</c>.</remarks>
-    public bool CanFireShell() => _shellsFiredThisWave < SpawnTuning.ShellsPerWave;
-
-    /// <summary>Everything on the field apart from the player, kind by kind.</summary>
-    internal FieldEntities Entities { get; } = new();
-
     /// <summary>Where the player's moves come from.</summary>
     public IPlayerInputSource Input { get; }
-
-    /// <summary>Says whether the wave is won: every enemy that can be killed is gone. Hulks and electrodes do not count.</summary>
-    public bool IsLevelCleared() => Entities.AreEnemiesGone();
 
     /// <summary>The wave's numbers: how many of each kind, and how fast.</summary>
     public LevelParameters Parameters { get; }
@@ -144,152 +119,11 @@ public sealed class PlayField : ICollisionScene
     /// <summary>The wall round the playfield.</summary>
     public PlayfieldWall Wall { get; }
 
-    /// <summary>Current grunt-speed floor (tests; R5 $BE5D).</summary>
-    internal int GruntSpeedFloor => _gruntSpeed.Floor;
-
-    /// <summary>Number of live laser-vs-wall flares (test hook).</summary>
-    internal int LaserWallFlareCount => _laserWallFlares.Flares.Count;
-
-    /// <summary>Live laser-vs-wall flares (test hook — the ROM's LASCOL pixels).</summary>
-    internal IReadOnlyList<LaserWallFlare> LaserWallFlares => _laserWallFlares.Flares;
-
-    /// <summary>The live palette, or null in a test. The player's death fade writes to it (notes §66).</summary>
-    internal GamePalette? Palette => _palette;
-
-    /// <summary>Robots still waiting for their appear record (tests).</summary>
-    internal int PendingAppearCount => _materialisation.PendingCount;
-
-    /// <summary>The sprite set this field's entities are built and drawn with — the field owns it because it builds them.</summary>
-    internal SpriteSet Sprites { get; }
-
     /// <summary>Where the player's top-left corner is.</summary>
     public IntVector2 PlayerPosition => Player.Position;
 
     /// <summary>The inside of the wall, in port pixels.</summary>
     public Rectangle PlayfieldBounds => Wall.PlayfieldBounds;
-
-    /// <summary>Says whether a box touches the wall.</summary>
-    /// <param name="box">The box to test, in port pixels.</param>
-    public bool HitsWall(Rectangle box) => Wall.Intersects(box);
-
-    /// <summary>Says whether the player is alive, and so can move, shoot and be hit.</summary>
-    public bool IsPlayerAlive() => Player.IsAlive();
-
-    /// <summary>Says whether the player has finished dying.</summary>
-    public bool IsPlayerDead() => Player.IsDead();
-
-    /// <summary>Says whether the player can be killed just now: alive, and not the invincible playtest player.</summary>
-    public bool CanPlayerBeHurt() => Player.IsAlive() && !Player.IsInvincible;
-
-    /// <summary>Kills the player.</summary>
-    public void KillPlayer() => Player.Kill();
-
-    /// <summary>Says whether the player is touching an entity.</summary>
-    /// <param name="entity">The entity to test.</param>
-    public bool TouchesPlayer(IEntity entity) => Touches(Player, entity);
-
-    /// <summary>Fires one of the player's lasers, if one of their three slots is free.</summary>
-    /// <param name="position">Where the laser starts.</param>
-    /// <param name="direction">The way it flies.</param>
-    /// <returns>True when a laser was fired.</returns>
-    internal bool TryFirePlayerLaser(IntVector2 position, Direction8 direction) => PlayerLasers.TryFire(position, direction, out _);
-
-    /// <summary>Lists the player's lasers that are in flight.</summary>
-    public IEnumerable<PlayerLaser> GetActiveLasers() => PlayerLasers.GetActiveLasers();
-
-    /// <summary>Lists the electrodes.</summary>
-    internal IReadOnlyList<Electrode> GetElectrodes() => Entities.Electrodes;
-
-    /// <summary>Finds the family member in a place in the family list, if they are standing and free.</summary>
-    /// <param name="slot">The place to look in.</param>
-    internal Human? GetFamilyMemberInSlot(int slot) => Entities.GetFamilyMemberInSlot(slot);
-
-    /// <summary>Says whether any family member is standing on the field and free.</summary>
-    internal bool AnyFamilyMemberAvailable() => Entities.AnyFamilyMemberAvailable();
-
-    /// <summary>Finds the family list place of the member nearest a point.</summary>
-    /// <param name="from">The point to measure from.</param>
-    internal int GetNearestFamilySlot(IntVector2 from) => Entities.GetNearestFamilySlot(from);
-
-    /// <summary>Finds where the nearest living robot to a point is, for the attract demo's player to steer by.</summary>
-    /// <param name="from">The point to measure from.</param>
-    public IntVector2? GetNearestLivingRobotPosition(IntVector2 from) => Entities.GetNearestLivingRobotPosition(from);
-
-    /// <summary>Adds a rescue's bonus to the score, and gives the player a spare man if it earns one.</summary>
-    /// <param name="rescues">How many humans have now been rescued this life.</param>
-    internal void AwardRescueBonus(int rescues)
-    {
-        if (Score.Add(ScoreValues.RescueBonus(rescues)))
-        {
-            Player.AddLife();
-        }
-    }
-
-    /// <summary>Draws the field: the wall, then everything on it from the back to the front, with the player last.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        // 1. Wall — arcade-faithful: the ROM's per-wave WALL colour slot (RRG23
-        //    `GTWCOL` -> `WALCOL`, solid fill); the placeholder WallColorCycle
-        //    has no palette to read, and is only used when no live palette is
-        //    wired in (unit tests).
-        Wall.Draw(spriteBatch, Sprites.WallPixel,
-            _palette is { } p ? p.Color(WavePaletteTables.GetWallSlot(Parameters.LevelNumber)) : null);
-
-        // 1b. Laser-vs-wall flares (RRG23 LASDIE): painted OVER the wall, exactly as the ROM writes those pixels.
-        _laserWallFlares.Draw(spriteBatch, Sprites, Parameters.LevelNumber);
-
-        // 2-4. The electrodes, the family and their markers, then the robots — one loop over the field's draw order.
-        Entities.DrawBehindShots(spriteBatch, this);
-
-        // 5. Player lasers.
-        PlayerLasers.Draw(spriteBatch);
-
-        // 6-7b. The enemy shots, then the explosions and the bursts — over the shots, under the player.
-        Entities.DrawInFrontOfShots(spriteBatch, this);
-
-        // 8. Player — ALWAYS last (spec states this explicitly twice).
-        Player.Draw(spriteBatch);
-    }
-
-    /// <summary>A brain fires a cruise missile at the player.</summary>
-    /// <param name="origin">Where the missile starts.</param>
-    public void SpawnCruiseMissile(IntVector2 origin) => _midWave.SpawnCruiseMissile(origin);
-
-    /// <summary>A spheroid drops an enforcer.</summary>
-    /// <param name="position">Where the enforcer grows.</param>
-    public void SpawnEnforcer(IntVector2 position) => _midWave.SpawnEnforcer(position);
-
-    /// <summary>A brain's touch turns a human into a prog where they stand.</summary>
-    /// <param name="position">Where the human stood.</param>
-    /// <param name="kind">Which family member it was.</param>
-    public void SpawnProg(IntVector2 position, HumanKind kind) => _midWave.SpawnProg(position, kind);
-
-    /// <summary>An enforcer fires a spark at the player.</summary>
-    /// <param name="origin">Where the spark starts.</param>
-    /// <param name="playerPosition">Where the player is.</param>
-    public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition) => _midWave.SpawnSpark(origin, playerPosition);
-
-    /// <summary>A quark drops a tank, which is kept inside the playfield.</summary>
-    /// <param name="position">Where the quark is.</param>
-    /// <returns>The new tank.</returns>
-    public Tank SpawnTank(IntVector2 position) => _midWave.SpawnTank(position);
-
-    /// <summary>A tank fires a shell.</summary>
-    /// <param name="origin">The tank's top-left corner.</param>
-    public void SpawnTankShell(IntVector2 origin) => _midWave.SpawnTankShell(origin);
-
-    /// <summary>Counts one more shell fired this wave.</summary>
-    internal void CountShellFired() => _shellsFiredThisWave++;
-
-    /// <summary>Copies the live score, lives and rescues to the player's session slot, every tick, so the HUD never lags (notes §97).</summary>
-    /// <param name="slot">The player's session slot.</param>
-    public void SyncInto(PlayerSlot slot)
-    {
-        slot.Score = Score.Score;
-        slot.Lives = Player.Lives;
-        slot.Rescues = RescuesThisLife;
-    }
 
     /// <summary>Moves the whole field on by one tick.</summary>
     /// <param name="gameTime">The time for this tick.</param>
@@ -327,45 +161,208 @@ public sealed class PlayField : ICollisionScene
         Entities.PruneDead();
     }
 
+    /// <summary>Draws the field: the wall, then everything on it from the back to the front, with the player last.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        // 1. Wall — arcade-faithful: the ROM's per-wave WALL colour slot (RRG23
+        //    `GTWCOL` -> `WALCOL`, solid fill); the placeholder WallColorCycle
+        //    has no palette to read, and is only used when no live palette is
+        //    wired in (unit tests).
+        Wall.Draw(spriteBatch, Sprites.WallPixel,
+            _palette is { } p ? p.Color(WavePaletteTables.GetWallSlot(Parameters.LevelNumber)) : null);
+
+        // 1b. Laser-vs-wall flares (RRG23 LASDIE): painted OVER the wall, exactly as the ROM writes those pixels.
+        _laserWallFlares.Draw(spriteBatch, Sprites, Parameters.LevelNumber);
+
+        // 2-4. The electrodes, the family and their markers, then the robots — one loop over the field's draw order.
+        Entities.DrawBehindShots(spriteBatch, this);
+
+        // 5. Player lasers.
+        PlayerLasers.Draw(spriteBatch);
+
+        // 6-7b. The enemy shots, then the explosions and the bursts — over the shots, under the player.
+        Entities.DrawInFrontOfShots(spriteBatch, this);
+
+        // 8. Player — ALWAYS last (spec states this explicitly twice).
+        Player.Draw(spriteBatch);
+    }
+
+    /// <summary>Copies the live score, lives and rescues to the player's session slot, every tick, so the HUD never lags (notes §97).</summary>
+    /// <param name="slot">The player's session slot.</param>
+    public void SyncInto(PlayerSlot slot)
+    {
+        slot.Score = Score.Score;
+        slot.Lives = Player.Lives;
+        slot.Rescues = RescuesThisLife;
+    }
+
+    /// <summary>Says whether the wave is won: every enemy that can be killed is gone. Hulks and electrodes do not count.</summary>
+    public bool IsLevelCleared() => Entities.AreEnemiesGone();
+
+    /// <summary>Counts the sparks in flight. There may never be more than twenty.</summary>
+    public int GetActiveSparkCount() => Entities.GetSparkCount();
+
+    /// <summary>Says whether a spheroid may drop another enforcer: there may be eight at most.</summary>
+    /// <remarks>Original source: <c>ENFCNT</c> (notes §11).</remarks>
+    public bool CanDropEnforcer() => Entities.GetEnforcerCount() < SpawnTuning.EnforcerCap;
+
+    /// <summary>Says whether a quark may drop another tank: there may be twenty at most.</summary>
+    /// <remarks>Original source: <c>TNKCNT</c> (notes §11).</remarks>
+    public bool CanDropTank() => Entities.GetTankCount() < SpawnTuning.TankCap;
+
+    /// <summary>Says whether a brain may fire another cruise missile.</summary>
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>BCMCNT</c>.</remarks>
+    public bool CanFireCruiseMissile() => Entities.GetCruiseMissileCount() < CruiseMissileTuning.Max;
+
+    /// <summary>Says whether a tank may fire another shell this wave.</summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>SHLCNT</c>.</remarks>
+    public bool CanFireShell() => _shellsFiredThisWave < SpawnTuning.ShellsPerWave;
+
+    /// <summary>Says whether the player is alive, and so can move, shoot and be hit.</summary>
+    public bool IsPlayerAlive() => Player.IsAlive();
+
+    /// <summary>Says whether the player has finished dying.</summary>
+    public bool IsPlayerDead() => Player.IsDead();
+
+    /// <summary>Says whether the player can be killed just now: alive, and not the invincible playtest player.</summary>
+    public bool CanPlayerBeHurt() => Player.IsAlive() && !Player.IsInvincible;
+
+    /// <summary>Kills the player.</summary>
+    public void KillPlayer() => Player.Kill();
+
+    /// <summary>Says whether the player is touching an entity.</summary>
+    /// <param name="entity">The entity to test.</param>
+    public bool TouchesPlayer(IEntity entity) => Touches(Player, entity);
+
+    /// <summary>Lists the player's lasers that are in flight.</summary>
+    public IEnumerable<PlayerLaser> GetActiveLasers() => PlayerLasers.GetActiveLasers();
+
+    /// <summary>Says whether a box touches the wall.</summary>
+    /// <param name="box">The box to test, in port pixels.</param>
+    public bool HitsWall(Rectangle box) => Wall.Intersects(box);
+
+    /// <summary>Says whether two entities are touching, by the field's contact test.</summary>
+    /// <param name="a">One entity.</param>
+    /// <param name="b">The other entity.</param>
+    public bool Touches(IEntity a, IEntity b) => _contactTest.Touches(a, b);
+
+    /// <summary>Finds where the nearest living robot to a point is, for the attract demo's player to steer by.</summary>
+    /// <param name="from">The point to measure from.</param>
+    public IntVector2? GetNearestLivingRobotPosition(IntVector2 from) => Entities.GetNearestLivingRobotPosition(from);
+
+    /// <summary>A brain fires a cruise missile at the player.</summary>
+    /// <param name="origin">Where the missile starts.</param>
+    public void SpawnCruiseMissile(IntVector2 origin) => _midWave.SpawnCruiseMissile(origin);
+
+    /// <summary>A spheroid drops an enforcer.</summary>
+    /// <param name="position">Where the enforcer grows.</param>
+    public void SpawnEnforcer(IntVector2 position) => _midWave.SpawnEnforcer(position);
+
+    /// <summary>A brain's touch turns a human into a prog where they stand.</summary>
+    /// <param name="position">Where the human stood.</param>
+    /// <param name="kind">Which family member it was.</param>
+    public void SpawnProg(IntVector2 position, HumanKind kind) => _midWave.SpawnProg(position, kind);
+
+    /// <summary>An enforcer fires a spark at the player.</summary>
+    /// <param name="origin">Where the spark starts.</param>
+    /// <param name="playerPosition">Where the player is.</param>
+    public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition) => _midWave.SpawnSpark(origin, playerPosition);
+
+    /// <summary>A quark drops a tank, which is kept inside the playfield.</summary>
+    /// <param name="position">Where the quark is.</param>
+    /// <returns>The new tank.</returns>
+    public Tank SpawnTank(IntVector2 position) => _midWave.SpawnTank(position);
+
+    /// <summary>A tank fires a shell.</summary>
+    /// <param name="origin">The tank's top-left corner.</param>
+    public void SpawnTankShell(IntVector2 origin) => _midWave.SpawnTankShell(origin);
+
+    /// <summary>Everything on the field apart from the player, kind by kind.</summary>
+    internal FieldEntities Entities { get; } = new();
+
+    /// <summary>The sprite set this field's entities are built and drawn with — the field owns it because it builds them.</summary>
+    internal SpriteSet Sprites { get; }
+
+    /// <summary>The live palette, or null in a test. The player's death fade writes to it (notes §66).</summary>
+    internal GamePalette? Palette => _palette;
+
+    /// <summary>Current grunt-speed floor (tests; R5 $BE5D).</summary>
+    internal int GruntSpeedFloor => _gruntSpeed.Floor;
+
+    /// <summary>Number of live laser-vs-wall flares (test hook).</summary>
+    internal int LaserWallFlareCount => _laserWallFlares.Flares.Count;
+
+    /// <summary>Live laser-vs-wall flares (test hook — the ROM's LASCOL pixels).</summary>
+    internal IReadOnlyList<LaserWallFlare> LaserWallFlares => _laserWallFlares.Flares;
+
+    /// <summary>Robots still waiting for their appear record (tests).</summary>
+    internal int PendingAppearCount => _materialisation.PendingCount;
+
+    /// <summary>Fires one of the player's lasers, if one of their three slots is free.</summary>
+    /// <param name="position">Where the laser starts.</param>
+    /// <param name="direction">The way it flies.</param>
+    /// <returns>True when a laser was fired.</returns>
+    internal bool TryFirePlayerLaser(IntVector2 position, Direction8 direction) => PlayerLasers.TryFire(position, direction, out _);
+
+    /// <summary>Lists the electrodes.</summary>
+    internal IReadOnlyList<Electrode> GetElectrodes() => Entities.Electrodes;
+
+    /// <summary>Says whether a box touches no electrode, so that something can be put there.</summary>
+    /// <param name="box">The box to test, in port pixels.</param>
+    internal bool IsClearOfElectrodes(Rectangle box) => Entities.IsClearOfElectrodes(box);
+
+    /// <summary>Finds the family member in a place in the family list, if they are standing and free.</summary>
+    /// <param name="slot">The place to look in.</param>
+    internal Human? GetFamilyMemberInSlot(int slot) => Entities.GetFamilyMemberInSlot(slot);
+
+    /// <summary>Says whether any family member is standing on the field and free.</summary>
+    internal bool AnyFamilyMemberAvailable() => Entities.AnyFamilyMemberAvailable();
+
+    /// <summary>Finds the family list place of the member nearest a point.</summary>
+    /// <param name="from">The point to measure from.</param>
+    internal int GetNearestFamilySlot(IntVector2 from) => Entities.GetNearestFamilySlot(from);
+
+    /// <summary>Adds to the score, and gives the player a spare man with its sound if the score has earned one.</summary>
+    /// <param name="value">The points to add.</param>
+    /// <remarks>Disassembly: the score routine at <c>$DBF9</c>.</remarks>
+    internal void AwardScore(int value)
+    {
+        if (Score.Add(value))
+        {
+            Player.AddLife();
+            Sound.Play(SoundTables.Replay);
+        }
+    }
+
+    /// <summary>Adds a rescue's bonus to the score, and gives the player a spare man if it earns one.</summary>
+    /// <param name="rescues">How many humans have now been rescued this life.</param>
+    internal void AwardRescueBonus(int rescues)
+    {
+        if (Score.Add(ScoreValues.RescueBonus(rescues)))
+        {
+            Player.AddLife();
+        }
+    }
+
     /// <summary>Counts one more human rescued this life.</summary>
     /// <returns>How many have now been rescued this life.</returns>
     /// <remarks>Original source: <c>SAVCNT</c>.</remarks>
     internal int CountRescue() => ++RescuesThisLife;
 
-    /// <summary>Leaves a skull where a human has been killed.</summary>
-    /// <param name="position">Where the human stood.</param>
-    internal void LeaveSkull(IntVector2 position) => Entities.Add(new SkullMarker(Sprites, position));
-
     /// <summary>Shows the bonus for the latest rescue where the human stood.</summary>
     /// <param name="position">Where the human stood.</param>
     internal void ShowRescueScore(IntVector2 position) => Entities.Add(new RescueScoreMarker(Sprites, position, RescuesThisLife));
 
+    /// <summary>Leaves a skull where a human has been killed.</summary>
+    /// <param name="position">Where the human stood.</param>
+    internal void LeaveSkull(IntVector2 position) => Entities.Add(new SkullMarker(Sprites, position));
+
+    /// <summary>Counts one more shell fired this wave.</summary>
+    internal void CountShellFired() => _shellsFiredThisWave++;
+
     /// <summary>The wave's shell count, which only a LASER kill decrements (the fizzle bug, notes §53).</summary>
     internal void CountShellDestroyed() => _shellsFiredThisWave--;
-
-    /// <summary>Draws an entity unless it is still materialising.</summary>
-    /// <param name="entity">The entity to draw.</param>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    internal void DrawEntity(IEntity entity, SpriteBatch spriteBatch)
-    {
-        if (!IsMaterialising(entity))
-        {
-            entity.Draw(spriteBatch);
-        }
-    }
-
-    /// <summary>Says whether an entity is still assembling at a wave start. It does not act and is not drawn; its appear effect is.</summary>
-    /// <param name="entity">The entity to test.</param>
-    internal bool IsMaterialising(IEntity entity) => _materialisation.IsAssembling(entity);
-
-    /// <summary>Asks for a sound that is heard from where its maker is on the playfield: something on the left is heard on the left.</summary>
-    /// <param name="sound">The sound's table.</param>
-    /// <param name="maker">The box of whatever made the sound.</param>
-    internal void PlaySoundFrom(SoundSequence sound, Rectangle maker)
-    {
-        float pan = StereoPlacement.GetPan(maker, Wall.PlayfieldBounds);
-        Sound.Play(sound, pan);
-    }
 
     /// <summary>The death of a robot that plays its OWN burst instead of the strip explosion (notes §64).</summary>
     /// <param name="target">The robot being killed.</param>
@@ -392,6 +389,22 @@ public sealed class PlayField : ICollisionScene
         }
     }
 
+    /// <summary>
+    /// Spawns an explosion for a dying entity. The ROM's explosion and appear
+    /// records share ONE pool of 10 <c>EX</c> blocks (RRDX2.ASM's `EX` struct,
+    /// `RMB ((10-1)*EXSIZE)`); GETBLK/GETAP both take from the same free list, so
+    /// a full list means no explosion at all (the caller's kill still stands).
+    /// </summary>
+    internal void SpawnExplosion(IExplodable dead, Direction8? direction)
+    {
+        if (Entities.Explosions.Count >= StripExplosionTuning.MaxConcurrent)
+        {
+            return; // ROM: list full → no explosion
+        }
+
+        Entities.Add(StripEffect.CreateExplosion(dead, direction, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds)));
+    }
+
     /// <summary>Starts the ROM's laser-vs-wall flare where a laser ran off the playfield (notes §63).</summary>
     /// <param name="laserBounds">The laser's box when it hit the wall.</param>
     /// <param name="direction">The laser's direction.</param>
@@ -410,26 +423,34 @@ public sealed class PlayField : ICollisionScene
         }
     }
 
-    /// <summary>Adds to the score, and gives the player a spare man with its sound if the score has earned one.</summary>
-    /// <param name="value">The points to add.</param>
-    /// <remarks>Disassembly: the score routine at <c>$DBF9</c>.</remarks>
-    internal void AwardScore(int value)
+    /// <summary>Draws an entity unless it is still materialising.</summary>
+    /// <param name="entity">The entity to draw.</param>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    internal void DrawEntity(IEntity entity, SpriteBatch spriteBatch)
     {
-        if (Score.Add(value))
+        if (!IsMaterialising(entity))
         {
-            Player.AddLife();
-            Sound.Play(SoundTables.Replay);
+            entity.Draw(spriteBatch);
         }
     }
 
-    /// <summary>Says whether a box touches no electrode, so that something can be put there.</summary>
-    /// <param name="box">The box to test, in port pixels.</param>
-    internal bool IsClearOfElectrodes(Rectangle box) => Entities.IsClearOfElectrodes(box);
+    /// <summary>Says whether an entity is still assembling at a wave start. It does not act and is not drawn; its appear effect is.</summary>
+    /// <param name="entity">The entity to test.</param>
+    internal bool IsMaterialising(IEntity entity) => _materialisation.IsAssembling(entity);
 
     /// <summary>Queues a wave-start robot to appear strip by strip.</summary>
     /// <param name="robot">The robot to bring in.</param>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>.</remarks>
     internal void QueueMaterialise(IEntity robot) => _materialisation.Queue(robot);
+
+    /// <summary>Asks for a sound that is heard from where its maker is on the playfield: something on the left is heard on the left.</summary>
+    /// <param name="sound">The sound's table.</param>
+    /// <param name="maker">The box of whatever made the sound.</param>
+    internal void PlaySoundFrom(SoundSequence sound, Rectangle maker)
+    {
+        float pan = StereoPlacement.GetPan(maker, Wall.PlayfieldBounds);
+        Sound.Play(sound, pan);
+    }
 
     /// <summary>
     /// The sounds things make just by moving: each tank shell that bounced asks for <c>SRBSND</c> (RRTK4,
@@ -471,25 +492,4 @@ public sealed class PlayField : ICollisionScene
             PlaySoundFrom(SoundTables.PlayerDeath, Player.Bounds);
         }
     }
-
-    /// <summary>
-    /// Spawns an explosion for a dying entity. The ROM's explosion and appear
-    /// records share ONE pool of 10 <c>EX</c> blocks (RRDX2.ASM's `EX` struct,
-    /// `RMB ((10-1)*EXSIZE)`); GETBLK/GETAP both take from the same free list, so
-    /// a full list means no explosion at all (the caller's kill still stands).
-    /// </summary>
-    internal void SpawnExplosion(IExplodable dead, Direction8? direction)
-    {
-        if (Entities.Explosions.Count >= StripExplosionTuning.MaxConcurrent)
-        {
-            return; // ROM: list full → no explosion
-        }
-
-        Entities.Add(StripEffect.CreateExplosion(dead, direction, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds)));
-    }
-
-    /// <summary>Says whether two entities are touching, by the field's contact test.</summary>
-    /// <param name="a">One entity.</param>
-    /// <param name="b">The other entity.</param>
-    public bool Touches(IEntity a, IEntity b) => _contactTest.Touches(a, b);
 }
