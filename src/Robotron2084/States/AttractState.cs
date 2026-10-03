@@ -85,6 +85,7 @@ public sealed class AttractState : IGameState, IAttractState
             PlayerSlot slot = _session.Current;
             SyncSlotFromField();
             slot.Wave = (slot.Wave % 255) + 1; // ROM GEXX: skip 0
+            slot.SavedWave = null;
             manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session, attract: true));
             return;
         }
@@ -92,6 +93,7 @@ public sealed class AttractState : IGameState, IAttractState
         if (_field.IsPlayerDead())
         {
             SyncSlotFromField();
+            _session.Current.SavedWave = WaveSurvivors.GetFrom(_field);
 
             if (!_session.AnyMenLeft())
             {
@@ -111,7 +113,8 @@ public sealed class AttractState : IGameState, IAttractState
     private PlayField BuildField()
     {
         PlayerSlot slot = _session.Current;
-        LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
+        // The demo is the same game, so a death keeps the survivors here too (notes §134).
+        LevelParameters parameters = BozoMode.Apply(slot.SavedWave ?? _generator.Generate(slot.Wave), slot.SpareMen);
         WallColorCycle cycle = new();
         return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.GetInnerBounds(), cycle, _random, slot.Lives, slot.Score, _sprites.Blitter.Palette, playerInvincibleForTesting: false, contactTest: new PixelContactTest(new SpriteCollision()));
     }
