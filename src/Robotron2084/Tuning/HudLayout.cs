@@ -18,9 +18,10 @@ public static class HudLayout
 
     public const int HudMaxMen = 7;
 
-    public const int HudMenOriginColumnP1 = 46;
+    // The arcade's columns were 46 and 110, right behind a seven-digit score. An eight-digit score is 7 pixels longer, so the port moves both rows of men 4 columns (8 pixels) to the right (notes §139).
+    public const int HudMenOriginColumnP1 = 50;
 
-    public const int HudMenOriginColumnP2 = 110;
+    public const int HudMenOriginColumnP2 = 114;
 
     public const int HudMenPitchPixels = 8;
 
@@ -50,10 +51,10 @@ public static class HudLayout
     //   score   P1 cursor = col 21 (x 42), row 14; P2 = col 85 (x 170), row 14
     //           (`LEAX -$300,X` from the $180E/$580E blit destination)
     //   digits  the 4 BCD score bytes as EIGHT positions, left to right:
-    //           10M (always masked off), 1M, 100k, 10k, 1k, 100, 10, 1
+    //           10M (masked off by the arcade; the port draws it), 1M, 100k, 10k, 1k, 100, 10, 1
     //           a drawn glyph advances width+1 = 7 px; a suppressed leading
     //           zero advances 6 px ($6128: 4 px, then +2 for the large font)
-    //   men     P1 col 46 (x 92), P2 col 110 (x 220), row 14, 8 px apart,
+    //   men     P1 col 46 (x 92), P2 col 110 (x 220) in the arcade; the port: 50 and 114. Row 14, 8 px apart,
     //           the 6x8 mini man sprite ($3592/$3596), capped at SEVEN
     //   colour  the CURRENT player's score blits in slot 10 ($AA — a CYCLING
     //           slot: the LF process); everyone else's in slot 1 ($11)
