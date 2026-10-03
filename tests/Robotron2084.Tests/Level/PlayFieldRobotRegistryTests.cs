@@ -29,6 +29,7 @@ public sealed class PlayFieldRobotRegistryTests
         (RobotKind.Quark, static parameters => parameters.QuarkCount),
         (RobotKind.Tank, static parameters => parameters.TankCount),
         (RobotKind.Brain, static parameters => parameters.BrainCount),
+        (RobotKind.BerzerkRobot, static parameters => parameters.BerzerkRobotCount),
     ];
 
     /// <summary>What one laser kill of each kind is worth (notes §11.3). A hulk is indestructible and an
@@ -47,6 +48,7 @@ public sealed class PlayFieldRobotRegistryTests
         (RobotKind.Spark, ScoreValues.Spark),
         (RobotKind.TankShell, ScoreValues.TankShell),
         (RobotKind.CruiseMissile, ScoreValues.CruiseMissile),
+        (RobotKind.BerzerkRobot, ScoreValues.BerzerkRobot),
     ];
 
     /// <summary>The kinds a touch from the player kills them. The electrode is NOT one of them: it has its own
@@ -60,6 +62,7 @@ public sealed class PlayFieldRobotRegistryTests
         RobotKind.Spark,
         RobotKind.TankShell,
         RobotKind.CruiseMissile,
+        RobotKind.BerzerkRobot,
     ];
 
     /// <summary>The entity class each kind's list holds — the hand-written half of the registry, so wiring a
@@ -78,6 +81,7 @@ public sealed class PlayFieldRobotRegistryTests
         (RobotKind.Spark, typeof(Spark)),
         (RobotKind.TankShell, typeof(TankShell)),
         (RobotKind.CruiseMissile, typeof(CruiseMissile)),
+        (RobotKind.BerzerkRobot, typeof(BerzerkRobot)),
     ];
 
     private static LevelParameters OneOfEverything => new(
@@ -88,7 +92,8 @@ public sealed class PlayFieldRobotRegistryTests
         BrainCount: 7,
         SpheroidCount: 11,
         QuarkCount: 13,
-        TankCount: 17);
+        TankCount: 17,
+        BerzerkRobotCount: 19);
 
     private static PlayField CreateField() =>
         new PlayFieldBuilder().WithParameters(new LevelParameters(LevelNumber: 1)).WithSeed(99).Build();
