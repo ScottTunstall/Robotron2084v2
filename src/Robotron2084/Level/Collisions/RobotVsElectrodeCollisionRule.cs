@@ -6,7 +6,7 @@ namespace Robotron2084.Level.Collisions;
 /// <summary>A grunt or a hulk walking onto an electrode. The grunt and the electrode both die; a hulk destroys the electrode and walks on.</summary>
 /// <remarks>Original source: <c>RRP8.ASM</c> <c>PSTKIL</c>. The electrode shrivels and never bursts, and every grunt that
 /// dies speeds up the grunts that are left.</remarks>
-public sealed class RobotVsElectrodeCollisionPhase : ICollisionPhase
+public sealed class RobotVsElectrodeCollisionRule : ICollisionRule
 {
     /// <inheritdoc/>
     public void Resolve(PlayField field)

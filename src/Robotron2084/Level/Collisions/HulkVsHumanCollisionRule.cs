@@ -6,7 +6,7 @@ namespace Robotron2084.Level.Collisions;
 /// <summary>A hulk walking onto a human. The human dies at once and leaves a skull.</summary>
 /// <remarks>Original source: <c>RRH11.ASM</c> <c>HULK</c>, the only robot whose collision check walks the family list,
 /// and <c>HUMKIL</c> for the skull and the sound. No hulk kills anyone while the robots are held still.</remarks>
-public sealed class HulkVsHumanCollisionPhase : ICollisionPhase
+public sealed class HulkVsHumanCollisionRule : ICollisionRule
 {
     /// <inheritdoc/>
     public void Resolve(PlayField field)

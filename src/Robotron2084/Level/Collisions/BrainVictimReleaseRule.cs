@@ -9,7 +9,7 @@ namespace Robotron2084.Level.Collisions;
 /// <item>Disassembly: <c>BRAIN_COLLISION_HANDLER</c> (<c>$1DD6</c>)</item>
 /// </list>
 /// </remarks>
-public sealed class BrainVictimReleasePhase : ICollisionPhase
+public sealed class BrainVictimReleaseRule : ICollisionRule
 {
     /// <inheritdoc/>
     public void Resolve(PlayField field)

@@ -6,18 +6,18 @@ namespace Robotron2084.Level.Collisions;
 /// rescue. Lasers against the wall are not here: a laser tests the wall itself as it moves. No rule makes a spheroid,
 /// an enforcer, a quark or a tank fatal to touch; they harm the player only through what they drop and fire.
 /// </remarks>
-public static class CollisionPhases
+public static class CollisionRules
 {
     /// <summary>The rules, first to last.</summary>
-    public static readonly ICollisionPhase[] InArcadeOrder =
+    public static readonly ICollisionRule[] InArcadeOrder =
     [
-        new LaserCollisionPhase(),
-        new RobotVsElectrodeCollisionPhase(),
-        new PlayerVsElectrodeCollisionPhase(),
-        new PlayerContactKillPhase(),
-        new BrainVictimReleasePhase(),
-        new BrainCatchPhase(),
-        new HulkVsHumanCollisionPhase(),
-        new PlayerRescuePhase(),
+        new LaserCollisionRule(),
+        new RobotVsElectrodeCollisionRule(),
+        new PlayerVsElectrodeCollisionRule(),
+        new PlayerContactKillRule(),
+        new BrainVictimReleaseRule(),
+        new BrainCatchRule(),
+        new HulkVsHumanCollisionRule(),
+        new PlayerRescueRule(),
     ];
 }

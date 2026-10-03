@@ -7,7 +7,7 @@ namespace Robotron2084.Level.Collisions;
 /// <remarks>The kinds are tried in <see cref="RobotKinds.All"/>'s order, and that order is behaviour, because a laser
 /// cannot hit two things in one tick. What a hit does to a robot, the sound it makes and its score all come from the
 /// kind's own row.</remarks>
-public sealed class LaserCollisionPhase : ICollisionPhase
+public sealed class LaserCollisionRule : ICollisionRule
 {
     /// <inheritdoc/>
     public void Resolve(PlayField field)

@@ -5,7 +5,7 @@ namespace Robotron2084.Level.Collisions;
 /// <summary>The player touching anything that is deadly to touch: the walking robots and every enemy shot. Only the player dies.</summary>
 /// <remarks>Which kinds are deadly comes from <see cref="RobotKindInfo.KillsPlayerOnContact"/>. The thing touched is not
 /// removed; only a laser removes a shot.</remarks>
-public sealed class PlayerContactKillPhase : ICollisionPhase
+public sealed class PlayerContactKillRule : ICollisionRule
 {
     /// <inheritdoc/>
     public void Resolve(PlayField field)
