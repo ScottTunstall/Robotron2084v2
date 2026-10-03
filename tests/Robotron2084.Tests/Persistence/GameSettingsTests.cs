@@ -15,7 +15,7 @@ public sealed class GameSettingsTests
         Assert.Equal(25_000, settings.ExtraManEveryPoints);
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(GameSettings.RecommendedDifficulty, settings.Difficulty);
-        Assert.True(settings.AttractModeSound);
+        Assert.False(settings.AttractModeSound); // the port's demo is silent until the operator turns it on
     }
 
     [Fact]
@@ -76,14 +76,14 @@ public sealed class GameSettingsTests
     [Fact]
     public void ResetToFactoryRestoresEverySetting()
     {
-        var settings = new GameSettings { ExtraManEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSound = false };
+        var settings = new GameSettings { ExtraManEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSound = true };
 
         settings.ResetToFactory();
 
         Assert.Equal(25, settings.ExtraManEvery);
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(5, settings.Difficulty);
-        Assert.True(settings.AttractModeSound);
+        Assert.False(settings.AttractModeSound);
     }
 
     [Fact]

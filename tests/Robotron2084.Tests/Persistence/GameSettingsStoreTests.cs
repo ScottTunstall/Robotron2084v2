@@ -72,7 +72,7 @@ public sealed class GameSettingsStoreTests
     {
         Assert.False(GameSettingsStore.Parse(["[game]", "attractsound=0"]).AttractModeSound);
         Assert.True(GameSettingsStore.Parse(["[game]", "attractsound=1"]).AttractModeSound);
-        Assert.True(GameSettingsStore.Parse(["[game]", "attractsound=7"]).AttractModeSound);
+        Assert.False(GameSettingsStore.Parse(["[game]", "attractsound=7"]).AttractModeSound); // ignored: the factory value (off) stays
     }
 
     [Fact]

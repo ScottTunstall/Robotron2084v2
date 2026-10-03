@@ -86,7 +86,7 @@ public sealed class SettingsModelTests
     public void RestoreFactorySettingsPutsTheValuesBackAndDisarms()
     {
         var model = new SettingsModel();
-        var settings = new GameSettings { ExtraManEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSound = false };
+        var settings = new GameSettings { ExtraManEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSound = true };
         GoTo(model, SettingsModel.RestoreFactoryLine);
         model.Change(settings, 1);
 
@@ -94,7 +94,7 @@ public sealed class SettingsModelTests
         Assert.Equal(25, settings.ExtraManEvery);
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(5, settings.Difficulty);
-        Assert.True(settings.AttractModeSound);
+        Assert.False(settings.AttractModeSound);
         Assert.False(model.IsArmed(SettingsModel.RestoreFactoryLine));
     }
 
@@ -117,14 +117,14 @@ public sealed class SettingsModelTests
         var settings = new GameSettings();
         GoTo(model, SettingsModel.AttractSoundLine);
 
-        Assert.Equal("ON", model.GetValue(settings, SettingsModel.AttractSoundLine));
-
-        model.Change(settings, -1);
-        Assert.False(settings.AttractModeSound);
         Assert.Equal("OFF", model.GetValue(settings, SettingsModel.AttractSoundLine));
 
         model.Change(settings, 1);
         Assert.True(settings.AttractModeSound);
+        Assert.Equal("ON", model.GetValue(settings, SettingsModel.AttractSoundLine));
+
+        model.Change(settings, -1);
+        Assert.False(settings.AttractModeSound);
     }
 
     [Theory]
