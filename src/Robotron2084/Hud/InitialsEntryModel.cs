@@ -33,10 +33,10 @@ public sealed class InitialsEntryModel
     private const char Blank = ' ';
 
     /// <summary>LUP/LDOWN's <c>DELAY1</c> loop — 8192 turns of a six-cycle loop, about 49 ms, i.e. two and a half ROM frames.</summary>
-    private const int CycleDelayClockUnits = ArcadeClock.UnitsPerRomFrame * 5 / 2;
+    private const int CycleWaitClockUnits = ArcadeClock.UnitsPerRomFrame * 5 / 2;
 
     /// <summary>A repeat after those ten costs <c>DELAY1</c> plus LUP's <c>NAP 1</c>.</summary>
-    private const int CyclePeriodClockUnits = CycleDelayClockUnits + ArcadeClock.UnitsPerRomFrame;
+    private const int CycleIntervalClockUnits = CycleWaitClockUnits + ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>How often a held direction is looked at — LUP/LDOWN poll their own switch inside the delay loop.</summary>
     private const int CyclePollClockUnits = ArcadeClock.UnitsPerRomFrame;
@@ -51,7 +51,7 @@ public sealed class InitialsEntryModel
     private const int FireReleaseCheckClockUnits = 4 * ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>The first repeat's period: the ten <c>DELAY1</c> turns of the <c>DECA / BNE LUP1</c> loop.</summary>
-    private const int FirstCyclePeriodClockUnits = FastRepeatCount * CycleDelayClockUnits;
+    private const int FirstCycleIntervalClockUnits = FastRepeatCount * CycleWaitClockUnits;
 
     /// <summary>GETRET's typematic count for the first auto-repeat (<c>ANDA #$80 / ADDA #$20</c>).</summary>
     private const int FirstTypematicCounts = 0x20;
@@ -170,7 +170,7 @@ public sealed class InitialsEntryModel
     {
         _cycleDirection = direction;
         Cycle(direction);
-        _repeatClockUnits = FirstCyclePeriodClockUnits;
+        _repeatClockUnits = FirstCycleIntervalClockUnits;
         _phase = Phase.Cycling;
         _periodClockUnits = CyclePollClockUnits;
         _clockUnits = 0;
@@ -284,7 +284,7 @@ public sealed class InitialsEntryModel
         }
 
         Cycle(_cycleDirection);
-        _repeatClockUnits = CyclePeriodClockUnits;
+        _repeatClockUnits = CycleIntervalClockUnits;
     }
 
     /// <summary>
