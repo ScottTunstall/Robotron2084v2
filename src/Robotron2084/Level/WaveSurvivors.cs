@@ -33,6 +33,7 @@ public static class WaveSurvivors
         {
             GruntCount = CountAlive(entities.Grunts),
             BerzerkRobotCount = CountAlive(entities.BerzerkRobots),
+            GorfCount = CountAlive(entities.Gorfs),
             ElectrodeCount = CountAlive(entities.Electrodes),
             MikeyCount = CountFamily(entities, HumanKind.Mikey),
             MommyCount = CountFamily(entities, HumanKind.Mommy),

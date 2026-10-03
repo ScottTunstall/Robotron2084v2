@@ -21,12 +21,12 @@ public sealed class FieldEntities
     {
         _updateOrder =
         [
-            Electrodes, Grunts, BerzerkRobots, Hulks, Spheroids, Enforcers, Quarks, Tanks, Brains, Progs,
+            Electrodes, Grunts, BerzerkRobots, Gorfs, Hulks, Spheroids, Enforcers, Quarks, Tanks, Brains, Progs,
             Sparks, TankShells, CruiseMissiles, Family.Members, Skulls, RescueScores, Explosions, ScoreBursts,
         ];
         _drawOrderBehindShots =
         [
-            Electrodes, Skulls, RescueScores, Family.Members, Grunts, BerzerkRobots, Hulks, Spheroids, Enforcers,
+            Electrodes, Skulls, RescueScores, Family.Members, Grunts, BerzerkRobots, Gorfs, Hulks, Spheroids, Enforcers,
             Quarks, Tanks, Brains, Progs,
         ];
         _drawOrderInFrontOfShots =
@@ -61,6 +61,9 @@ public sealed class FieldEntities
 
     /// <summary>The family: who is on the field and the places the brains and hulks pick them by.</summary>
     public FamilyList Family { get; } = new();
+
+    /// <summary>The Gorfs.</summary>
+    public EntityList<Gorf> Gorfs { get; } = new();
 
     /// <summary>The grunts.</summary>
     public EntityList<Grunt> Grunts { get; } = new();
@@ -106,7 +109,7 @@ public sealed class FieldEntities
     /// Original source: <c>RRG23.ASM</c> <c>WVCHEK</c>. Disassembly: <c>COUNT_ENEMIES_ON_SCREEN</c> (<c>$2A73</c>).
     /// </remarks>
     public bool AreEnemiesGone() =>
-        Grunts.GetLiveCount() == 0 && BerzerkRobots.GetLiveCount() == 0 && Spheroids.GetLiveCount() == 0 && Enforcers.GetLiveCount() == 0 && Quarks.GetLiveCount() == 0
+        Grunts.GetLiveCount() == 0 && BerzerkRobots.GetLiveCount() == 0 && Gorfs.GetLiveCount() == 0 && Spheroids.GetLiveCount() == 0 && Enforcers.GetLiveCount() == 0 && Quarks.GetLiveCount() == 0
         && Tanks.GetLiveCount() == 0 && Brains.GetLiveCount() == 0;
 
     /// <summary>Draws the lists that go behind the player's lasers.</summary>
@@ -127,6 +130,7 @@ public sealed class FieldEntities
         RobotKind.Electrode => Electrodes,
         RobotKind.Grunt => Grunts,
         RobotKind.BerzerkRobot => BerzerkRobots,
+        RobotKind.Gorf => Gorfs,
         RobotKind.Hulk => Hulks,
         RobotKind.Spheroid => Spheroids,
         RobotKind.Enforcer => Enforcers,
@@ -186,6 +190,10 @@ public sealed class FieldEntities
     /// <summary>Puts a Enforcer on the field.</summary>
     /// <param name="entity">The Enforcer to add.</param>
     public void Add(Enforcer entity) => Enforcers.Add(entity);
+
+    /// <summary>Puts a Gorf on the field.</summary>
+    /// <param name="entity">The Gorf to add.</param>
+    public void Add(Gorf entity) => Gorfs.Add(entity);
 
     /// <summary>Puts a Grunt on the field.</summary>
     /// <param name="entity">The Grunt to add.</param>

@@ -142,6 +142,15 @@ public static class RobotKinds
             LaserHitSound: SoundTables.RobotHit,
             KillsPlayerOnContact: true,
             Spawn: new BerzerkRobotWaveSpawner()),
+
+        // The author's own robot (notes §138.2): it stands and animates, and dies to a laser.
+        new(RobotKind.Gorf,
+            WaveCount: static parameters => parameters.GorfCount,
+            Score: ScoreValues.Gorf,
+            LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            LaserHitSound: SoundTables.RobotHit,
+            KillsPlayerOnContact: true,
+            Spawn: new GorfWaveSpawner()),
     ];
 
     /// <summary>One kind's row.</summary>

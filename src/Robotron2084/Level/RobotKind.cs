@@ -45,4 +45,7 @@ public enum RobotKind
 
     /// <summary>The author's own robot, which moves like a grunt (no arcade routine).</summary>
     BerzerkRobot,
+
+    /// <summary>The author's own robot that flaps between two frames (no arcade routine).</summary>
+    Gorf,
 }

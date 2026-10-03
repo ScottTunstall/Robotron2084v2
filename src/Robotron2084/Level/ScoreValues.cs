@@ -26,6 +26,10 @@ public static class ScoreValues
     public const int Electrode = 0;
     public const int Enforcer = 150;
     public const int Grunt = 100;
+
+    /// <summary>A Gorf kill: worth the same as a grunt for now (a new entity, no ROM source).</summary>
+    public const int Gorf = 100;
+
     public const int Prog = 100;
     public const int Quark = 1000;
 

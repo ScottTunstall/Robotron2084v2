@@ -16,6 +16,7 @@ namespace Robotron2084.Level;
 /// <item><c>TankCount</c> = TNKCNT: tanks already on the field when a life starts. The wave table never brings any: they
 /// come from a quark, and a death keeps the ones that were alive (notes §134).</item>
 /// <item><c>BerzerkRobotCount</c>: the author's new robot. No wave table row has any yet, so the count is 0 in every wave.</item>
+/// <item><c>GorfCount</c>: another of the author's new robots, in no wave yet.</item>
 /// <item>Timed fields are in ROM game ticks (NAP units); the port converts
 /// at the use sites (notes §11 + the tempo mapping recorded in the notes
 /// progress log).</item>
@@ -48,7 +49,8 @@ public sealed record LevelParameters(
     int QuarkSpeedCap = 50,
     int EnemySpeedBonus = 0,
     int TankCount = 0,
-    int BerzerkRobotCount = 0)
+    int BerzerkRobotCount = 0,
+    int GorfCount = 0)
 {
     /// <summary>
     /// Fills every field from the ROM wave table. The legacy
