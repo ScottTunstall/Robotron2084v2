@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/docs/">
+    <File Path="docs/glossary.md" />
+    <File Path="docs/coding-standards.md" />
+    <File Path="docs/terminology-ledger.md" />
+    <File Path="docs/arcade-fidelity-notes.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Robotron2084/Robotron2084.csproj" />
   </Folder>
