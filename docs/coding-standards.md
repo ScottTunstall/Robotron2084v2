@@ -264,6 +264,12 @@ with one drawing, such as a shell, has one animation frame. The ROM's own labels
 stay as they are, because they are quoted from the source, but the words around them are ours. Where the
 ROM numbers its drawings from 1, say so and name the index base once, e.g. "walk animation frame 1 to 4".
 
+**CMT-14. Say which unit a ROM distance is in, and check it.** The ROM counts X in **columns** (2 arcade
+pixels each) and Y in **rows** (1 arcade pixel). A constant copied from a ROM listing is named and documented in
+the unit the ROM used, and its `<remarks>` quotes the instruction (`ADDA #8`) and the disassembly address. If the
+port deliberately uses a different value, the `<remarks>` says so and says why; if it does not, the constant is a
+bug. Never label a column count as arcade pixels.
+
 **SOLID-S.** See STR-1 and STR-2.
 
 **SOLID-O.** New robot kinds, new states and new sounds should need additions, not edits spread across the
