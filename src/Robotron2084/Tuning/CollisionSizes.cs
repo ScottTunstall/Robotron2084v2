@@ -45,6 +45,9 @@ public static class CollisionSizes
 
     public static readonly (int Width, int Height) GruntCollisionSize = (10, 13);
 
+    /// <summary>Gorf's animation frame, in arcade px (a new entity: no ROM source).</summary>
+    public static readonly (int Width, int Height) GorfCollisionSize = (15, 20);
+
     /// <summary>The BerzerkRobot's animation frame canvas, in arcade px (a new entity: no ROM source).</summary>
     public static readonly (int Width, int Height) BerzerkRobotCollisionSize = (8, 12);
 
