@@ -10660,8 +10660,7 @@ that were alive. Progs, sparks, shells and cruise missiles are not carried, as i
 reached; the floor returns to the wave's own. `WaveSurvivorsTests` pins the counts, the enforcer conversion (including its cap), the
 speed limit and floor, the tanks, and that the next field is made from what was left.
 
-**Not done:** the attract-mode demo still rebuilds its whole wave when its player dies. In the ROM the demo is the same game and
-keeps its survivors too; the demo is a small difference to the player and was left for the author to decide.
+The attract-mode demo does the same, since in the ROM it is the same game.
 
 **Not reviewed.** The individual start routines (`HULKST`, `BRNST`, `TANKST`, `HUMST`, `PSINIT`, `RINIT`, `CRINIT`, `CIRCST`, `SQST`)
 and `APPEAR` were not re-read here; earlier phases covered them.
