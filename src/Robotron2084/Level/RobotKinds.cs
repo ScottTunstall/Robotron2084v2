@@ -1,6 +1,7 @@
 using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Level.Spawning;
 
 namespace Robotron2084.Level;
 
@@ -34,7 +35,7 @@ public static class RobotKinds
             Score: ScoreValues.Electrode,
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
             LaserHitSound: SoundTables.PostKill,
-            Spawn: static (field, playerStart) => field.SpawnElectrodes(playerStart),
+            Spawn: new ElectrodeWaveSpawner(),
             IsChasedByDemoPlayer: false),
 
         new(RobotKind.Grunt,
@@ -48,7 +49,7 @@ public static class RobotKinds
             },
             LaserHitSound: SoundTables.RobotHit,
             KillsPlayerOnContact: true,
-            Spawn: static (field, playerStart) => field.SpawnGrunts(playerStart)),
+            Spawn: new GruntWaveSpawner()),
 
         // A hulk is never killed and never scored: the laser only knocks it back (RRH11 HULKIL).
         new(RobotKind.Hulk,
@@ -57,7 +58,7 @@ public static class RobotKinds
             LaserHit: static (field, target, direction) => target.Require<Hulk>().ApplyKnockback(direction.ToIntVector()),
             LaserHitSound: SoundTables.HulkHit,
             KillsPlayerOnContact: true,
-            Spawn: static (field, playerStart) => field.SpawnHulks(playerStart)),
+            Spawn: new HulkWaveSpawner()),
 
         // A spheroid and a quark play their OWN burst instead of the strip explosion (CIRKP/SQKIL, notes §64).
         new(RobotKind.Spheroid,
@@ -65,7 +66,7 @@ public static class RobotKinds
             Score: ScoreValues.Spheroid,
             LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.CreateForSpheroid(field.Sprites, target.Bounds)),
             LaserHitSound: SoundTables.CircleKill,
-            Spawn: static (field, playerStart) => field.SpawnSpheroids(playerStart)),
+            Spawn: new SpheroidWaveSpawner()),
 
         new(RobotKind.Enforcer,
             WaveCount: null,
@@ -78,7 +79,7 @@ public static class RobotKinds
             Score: ScoreValues.Quark,
             LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.CreateForQuark(field.Sprites, target.Bounds)),
             LaserHitSound: SoundTables.SquareKill,
-            Spawn: static (field, playerStart) => field.SpawnQuarks(playerStart)),
+            Spawn: new QuarkWaveSpawner()),
 
         new(RobotKind.Tank,
             WaveCount: null,
@@ -93,7 +94,7 @@ public static class RobotKinds
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
             LaserHitSound: SoundTables.BrainKill,
             KillsPlayerOnContact: true,
-            Spawn: static (field, playerStart) => field.SpawnBrains(playerStart)),
+            Spawn: new BrainWaveSpawner()),
 
         new(RobotKind.Prog,
             WaveCount: null,

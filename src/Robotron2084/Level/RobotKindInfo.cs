@@ -1,6 +1,7 @@
 using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Level.Spawning;
 
 namespace Robotron2084.Level;
 
@@ -20,7 +21,7 @@ namespace Robotron2084.Level;
 /// <param name="LaserHit">What one laser does to one of them — the kind's whole phase, from the kill to its own burst.</param>
 /// <param name="LaserHitSound">The sound the kind's own routine asks for when a laser hits one (its <c>...SND</c> table).</param>
 /// <param name="KillsPlayerOnContact">True when touching it kills the player.</param>
-/// <param name="Spawn">Builds the wave's own at a chosen spot; null when only another robot makes them.</param>
+/// <param name="Spawn">How the wave's own are put on the field; null when only another robot makes them.</param>
 /// <param name="IsChasedByDemoPlayer">True when the attract demo's player steers towards it; false for the electrodes and the shots it dodges.</param>
 public sealed record RobotKindInfo(
     RobotKind Kind,
@@ -29,5 +30,5 @@ public sealed record RobotKindInfo(
     Action<PlayField, IEntity, Direction8> LaserHit,
     SoundSequence LaserHitSound,
     bool KillsPlayerOnContact = false,
-    Action<PlayField, IntVector2>? Spawn = null,
+    IWaveSpawner? Spawn = null,
     bool IsChasedByDemoPlayer = true);
