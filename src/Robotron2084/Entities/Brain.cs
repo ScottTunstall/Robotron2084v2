@@ -52,6 +52,12 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, <c>ADDA #2 / CMPA #4 / BLS</c> on X, 2 columns. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>) at <c>$1C11</c>.</remarks>
     private static readonly int ApproachDeadZonePixels = ScreenSize.ToPortPixelsFromColumns(2);
 
+    /// <summary>How close sideways the brain's and the human's top-left corners must be for a catch, in port pixels.</summary>
+    private static readonly int CatchReachX = ScreenSize.ToPortPixelsFromColumns(ReprogramTuning.CatchReachColumns);
+
+    /// <summary>How close up and down the brain's and the human's top-left corners must be for a catch, in port pixels.</summary>
+    private static readonly int CatchReachY = ScreenSize.ToPortPixels(ReprogramTuning.CatchReachRows);
+
     /// <summary>The size of the brain's sprite, which is also the size of its hit box.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRDP1</c>, 7 bytes by 16 rows (14 by 16 arcade pixels). Disassembly: the brain standing still, <c>$2159</c>.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
@@ -285,13 +291,44 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         human.MoveTo(new IntVector2(x, _victimRestingY));
     }
 
-    /// <summary>Lets go of the human being reprogrammed, if there is one. Used when the brain is shot part way through.</summary>
+    /// <summary>Catches the family member the brain is chasing, if it is close enough, and starts reprogramming them.</summary>
+    /// <param name="playfieldBounds">The edges of the playfield, so the human is placed inside them.</param>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c>, the end of <c>BRNL1</c> (<c>ADDB #3 / CMPB #$6 / BHI</c> then <c>ADDA #3 / CMPA #6 / BLS BMUT</c>)</item>
+    /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>) from <c>$1C48</c> to <c>$1C56</c></item>
+    /// </list>
+    /// The test compares the two top-left corners, not the sprites, and only the brain's own target can be caught.
+    /// </remarks>
+    internal void CatchTargetIfInReach(Rectangle playfieldBounds)
+    {
+        if (LifeState != EntityLifeState.Alive || IsReprogramming)
+        {
+            return;
+        }
+
+        if (Target is not { } human || !human.IsGraspable())
+        {
+            return;
+        }
+
+        if (Math.Abs(_position.X - human.Position.X) > CatchReachX
+            || Math.Abs(_position.Y - human.Position.Y) > CatchReachY)
+        {
+            return;
+        }
+
+        BeginReprogramming(human, playfieldBounds);
+    }
+
+    /// <summary>Lets go of the human being reprogrammed, if there is one, who is then lost. Used when the brain is shot part way through.</summary>
     /// <returns>The human the brain was reprogramming, or null if it was not reprogramming anyone.</returns>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNKIL</c>, the <c>BRNK2</c> branch for a brain shot while reprogramming. Disassembly: <c>BRAIN_COLLISION_HANDLER</c> (<c>$1DD6</c>).</remarks>
     internal Human? ReleaseVictim()
     {
         Human? victim = _victim;
         _victim = null;
+        victim?.FinishReprogramming();
         return victim;
     }
 

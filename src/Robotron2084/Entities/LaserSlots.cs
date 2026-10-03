@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
@@ -31,6 +32,16 @@ public sealed class LaserSlots
 
     /// <summary>Every slot in order; null means empty. Exposed for tests and diagnostics.</summary>
     public IReadOnlyList<PlayerLaser?> Slots => _slots;
+
+    /// <summary>Draws every laser that is in flight.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        foreach (PlayerLaser? laser in _slots)
+        {
+            laser?.Draw(spriteBatch);
+        }
+    }
 
     /// <summary>Fires a laser into the first empty slot.</summary>
     /// <param name="position">Where the laser appears.</param>

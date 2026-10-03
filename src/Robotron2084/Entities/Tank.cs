@@ -130,8 +130,13 @@ public sealed class Tank : IExplodable, IRemovable
     /// <summary>Top-left of the tank (the ROM's OBJX/OBJY).</summary>
     public IntVector2 Position => _position;
 
-    internal static int CollisionHeight => CollisionSize.Height;
-    internal static int CollisionWidth => CollisionSize.Width;
+    /// <summary>Moves a spot so that a tank standing on it is wholly inside the playfield.</summary>
+    /// <param name="playfieldBounds">The edges of the playfield.</param>
+    /// <param name="position">Where the tank would stand, which may be against or past a wall.</param>
+    /// <returns>The nearest spot at which the tank's box fits.</returns>
+    internal static IntVector2 GetPositionInside(Rectangle playfieldBounds, IntVector2 position) => new(
+        Math.Clamp(position.X, playfieldBounds.X, playfieldBounds.Right - CollisionSize.Width),
+        Math.Clamp(position.Y, playfieldBounds.Y, playfieldBounds.Bottom - CollisionSize.Height));
 
     /// <summary>True while the ROM birth sequence is still playing (test hook).</summary>
     internal bool IsBeingBorn => _growStep < TankTuning.GrowSteps;

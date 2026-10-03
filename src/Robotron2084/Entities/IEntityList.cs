@@ -16,6 +16,9 @@ public interface IEntityList
     /// <param name="field">The field, whose materialisation guards decide what may be drawn.</param>
     void DrawAll(SpriteBatch spriteBatch, PlayField field);
 
+    /// <summary>Counts the entities that are not dead yet.</summary>
+    int GetLiveCount();
+
     /// <summary>Removes the entities that have died (the ROM's list counts decrement).</summary>
     void PruneDead();
 

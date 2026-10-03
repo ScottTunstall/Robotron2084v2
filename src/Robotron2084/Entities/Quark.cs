@@ -103,6 +103,17 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
+    /// <summary>Picks where a quark starts a wave: anywhere along the top wall or the bottom wall.</summary>
+    /// <param name="playfieldBounds">The edges of the playfield.</param>
+    /// <param name="random">Where the sideways spot and the top-or-bottom choice come from.</param>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQST1</c> and <c>SQST2</c> (<c>YMIN+2</c> or <c>YMAX-14</c>, then a random X). Disassembly: <c>$4B48</c> to <c>$4B5A</c>.</remarks>
+    internal static IntVector2 GetStartPosition(Rectangle playfieldBounds, Random random)
+    {
+        int x = random.Next(playfieldBounds.X, playfieldBounds.Right - CollisionSize.Width + 1);
+        bool top = random.Next(2) == 0;
+        return new IntVector2(x, top ? playfieldBounds.Y : playfieldBounds.Bottom - CollisionSize.Height);
+    }
+
     /// <summary>The quark sprite's own 16x15 box at <see cref="Position"/>.</summary>
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 

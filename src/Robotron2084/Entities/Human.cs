@@ -258,6 +258,10 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         return ScreenSize.ToPortPixels(Math.Max(width, height));
     }
 
+    /// <summary>Says whether this human is standing on the field and free: alive, and not in a brain's hold.</summary>
+    /// <remarks>Original source: a human that is dead or being reprogrammed is off the family list (<c>RRH11.ASM</c> <c>HTAB</c>), so nothing can target, catch, kill or rescue it.</remarks>
+    internal bool IsGraspable() => LifeState == EntityLifeState.Alive && !IsBeingReprogrammed;
+
     /// <summary>Starts being reprogrammed: the human stops walking and starts flashing.</summary>
     internal void BeginReprogramming() => IsBeingReprogrammed = true;
 
