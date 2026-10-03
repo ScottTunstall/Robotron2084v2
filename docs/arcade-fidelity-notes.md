@@ -10798,3 +10798,12 @@ Everything not stated by the author is the port's choice and is in `GorfTuning` 
 covers the in-play HUD and both of the high score table's number printers, which share the formatter; the table's columns have room for the extra digit (it is 7 pixels wider, in columns 80 and 104 pixels apart).
 The one place the extra digit would not fit was the HUD: an 8-digit score ends at pixel 98 from its start at 42, and the first spare man starts at 92, so both players' rows of spare men moved 4 columns (8 pixels) right (`HudLayout`, columns 46 to 50 and 110 to 114).
 This is an extension of the arcade, not a correction of the port. **Not checked on screen.**
+
+
+## §140 — THE ATTRACT DEMO IS SILENT BY DEFAULT (author, 2026-10-03)
+
+**Author:** *"The sound is playing during attract mode (where it simulates the player) - if its on by default, turn it off in the settings. And if its not in the settings - it should be."*
+
+It is in the settings: **ATTRACT MODE SOUND** on the GAME ADJUSTMENT page (`F5`, §131), a port-only row. It was **on** by default, which the arcade does: its demo is a real game with its real noises. The factory value is now **off**
+(`GameSettings.FactoryAttractModeSound`), so the demo machine playing itself is silent until the operator turns the row on; **RESTORE FACTORY SETTINGS** puts it back to off, and a `settings.ini` that already says `attractsound=1` keeps the sound on.
+An unreadable value in the file now falls back to off. The mute covers every sound the shell plays while an attract screen is up, including the brain wave's transporter hum. This departs from the arcade on purpose.
