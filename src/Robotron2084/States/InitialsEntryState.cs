@@ -58,7 +58,7 @@ public sealed class InitialsEntryState : IGameState
             return;
         }
 
-        SubmitResult result = _ceremony.Submit(_score, _entry.Initials);
+        SubmitResult result = _ceremony.Submit(_score, _entry.GetInitials());
         manager.TransitionTo(result.EntriesMaximum
             ? new EntriesMaximumState(_services, _ceremony)
             : _ceremony.NextScreen());
@@ -68,11 +68,11 @@ public sealed class InitialsEntryState : IGameState
     {
         if (cell == _entry.Position && _entry.PreviewIsRub)
         {
-            _sprites.Text.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.EchoY, InitialsEntryLayout.InkSlot);
+            _sprites.Text.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
             return;
         }
 
-        _sprites.Text.DrawLargeFontText(spriteBatch, _entry.Initials[cell].ToString(), x, InitialsEntryLayout.EchoY, InitialsEntryLayout.InkSlot);
+        _sprites.Text.DrawLargeFontText(spriteBatch, _entry.GetInitials()[cell].ToString(), x, InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
     }
 
     /// <summary>
@@ -83,21 +83,21 @@ public sealed class InitialsEntryState : IGameState
     {
         for (int cell = 0; cell < InitialsEntryModel.LetterCount; cell++)
         {
-            int x = InitialsEntryLayout.CellX(cell);
+            int x = InitialsEntryLayout.GetCellX(cell);
             DrawCell(spriteBatch, cell, x);
             DrawMarker(spriteBatch, x);
         }
     }
 
     private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row) =>
-            _sprites.Text.DrawLargeFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InkSlot);
+            _sprites.Text.DrawLargeFontText(spriteBatch, text, HudLayout.ToPortColumnX(column), HudLayout.ToPortY(row), InitialsEntryLayout.InkSlot);
 
     /// <summary>G0SUB's "frob" marker: a two-pixel dash one row of the arcade below its cell.</summary>
     private void DrawMarker(SpriteBatch spriteBatch, int x) =>
         _sprites.Blitter.DrawSolidRectangle(
             spriteBatch,
-            new Rectangle(x, InitialsEntryLayout.MarkerY, InitialsEntryLayout.MarkerWidthPixels, InitialsEntryLayout.MarkerHeightPixels),
-            _sprites.Blitter.SlotColor(InitialsEntryLayout.InstructionSlot));
+            new Rectangle(x, InitialsEntryLayout.GetMarkerY(), InitialsEntryLayout.GetMarkerWidthPixels(), InitialsEntryLayout.GetMarkerHeightPixels()),
+            _sprites.Blitter.GetSlotColour(InitialsEntryLayout.InstructionSlot));
 
     /// <summary>CONGP's three large-font lines and TELSUB's two small-font instructions.</summary>
     private void DrawPage(SpriteBatch spriteBatch)
@@ -110,7 +110,7 @@ public sealed class InitialsEntryState : IGameState
     }
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int column, int row) =>
-            _sprites.Text.DrawSmallFontText(spriteBatch, text, HudLayout.ArcadeColumnX(column), HudLayout.ArcadeY(row), InitialsEntryLayout.InstructionSlot);
+            _sprites.Text.DrawSmallFontText(spriteBatch, text, HudLayout.ToPortColumnX(column), HudLayout.ToPortY(row), InitialsEntryLayout.InstructionSlot);
 
     /// <summary>
     /// The two entries the page draws with, put back on their CRTAB values: the screen it follows may

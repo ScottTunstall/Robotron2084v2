@@ -117,6 +117,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private readonly PresentationPagePalette _colour = new();
     private readonly ControlSettings _controls;
     private readonly HighScoreStore _highScores;
+    private readonly GameSettings _settings;
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(AttractTuning.TitleIdleSeconds);
     private readonly IPlayerInputSource _input;
     private readonly GameServices _services;
@@ -136,7 +137,8 @@ public sealed class TitleScreenState : IGameState, IAttractState
         _sprites = services.Sprites;
         _highScores = services.HighScores;
         _controls = services.Controls;
-        _border = new WilliamsLogoBorder(SpriteMask.FromTexture(_sprites.WilliamsLogo));
+        _settings = services.Settings;
+        _border = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_sprites.WilliamsLogo));
 
         // The presentation page runs its OWN decoded colour set (notes §106): entries 1-7 come
         // from the ROM's seven-byte table ($8A70) with a white flash chasing through them every
@@ -201,7 +203,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         if (ChooseMode(_buttons.Advance(input)) is { } chosen)
         {
             StopColours();
-            manager.TransitionTo(PlayingState.StartNewGame(_controls, chosen, _sprites, _highScores));
+            manager.TransitionTo(PlayingState.CreateNewGame(_controls, _settings, chosen, _sprites, _highScores));
             return;
         }
 
@@ -263,9 +265,9 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// (<see cref="ArcadeText.MeasureSmallText"/>/<see cref="ArcadeText.MeasureLargeText"/>) — the two
     /// fonts advance differently, so a fixed per-character width would mis-centre one of them.
     /// </summary>
-    private int CenteredX(string text, bool large)
+    private int GetCenteredX(string text, bool large)
     {
-        int width = ScreenSize.Scaled(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
+        int width = ScreenSize.ToPortPixels(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
         return (ScreenSize.Width - width) / 2;
     }
 
@@ -286,10 +288,10 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     /// <summary>Centres a large-font line horizontally and prints it in one slot.</summary>
     private void DrawCenteredLargeText(SpriteBatch spriteBatch, string text, int y, int slot) =>
-        _sprites.Text.DrawLargeFontText(spriteBatch, text, CenteredX(text, large: true), y, slot);
+        _sprites.Text.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, large: true), y, slot);
 
     private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int slot) =>
-            _sprites.Text.DrawSmallFontText(spriteBatch, text, CenteredX(text, large: false), y, slot);
+            _sprites.Text.DrawSmallFontText(spriteBatch, text, GetCenteredX(text, large: false), y, slot);
 
     /// <summary>Centres one traced logo horizontally, at the port's 2x sprite scale.</summary>
     private void DrawCentredLogo(SpriteBatch spriteBatch, Texture2D texture, int y)
@@ -311,7 +313,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         int width = texture.Width * ScreenSize.SpecScale;
         int height = texture.Height * ScreenSize.SpecScale;
         var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, texture, bounds, _sprites.Blitter.SlotColor(slot));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, texture, bounds, _sprites.Blitter.GetSlotColour(slot));
     }
 
     /// <summary>
@@ -327,7 +329,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         foreach (string option in Options)
         {
             DrawCenteredSmallText(spriteBatch, option, y, TextSlot);
-            y += ScreenSize.Scaled(HudLayout.TitleOptionRowStepPixels);
+            y += ScreenSize.ToPortPixels(HudLayout.TitleOptionRowStepPixels);
         }
     }
 

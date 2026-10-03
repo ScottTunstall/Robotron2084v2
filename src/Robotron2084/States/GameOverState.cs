@@ -24,7 +24,7 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class GameOverState : IGameState
 {
-    private readonly int _holdTicks = ArcadeClock.PortTicks(ScreenTuning.GameOverMessageRomFrames);
+    private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.GameOverMessageRomFrames);
     private readonly IReadOnlyList<FinalScore> _scores;
     private readonly GameServices _services;
     private int _elapsedTicks;
@@ -35,14 +35,16 @@ public sealed class GameOverState : IGameState
     /// <param name="highScores">The high score store the ceremony writes to.</param>
     /// <param name="scores">Every player's final score, highest first — the ROM's <c>EGSUB</c> runs once per player.</param>
     /// <param name="controls">The port's control definitions.</param>
+    /// <param name="settings">The GAME ADJUSTMENT settings (notes §131).</param>
     public GameOverState(
         IPlayerInputSource input,
         SpriteSet sprites,
         HighScoreStore highScores,
         IReadOnlyList<FinalScore> scores,
-        ControlSettings? controls = null)
+        ControlSettings? controls = null,
+        GameSettings? settings = null)
     {
-        _services = new GameServices(sprites, highScores, controls ?? ControlSettings.Defaults(), input);
+        _services = new GameServices(sprites, highScores, controls ?? ControlSettings.CreateDefaults(), input, settings ?? GameSettings.CreateFactoryDefaults());
         _scores = scores;
     }
 
@@ -50,9 +52,9 @@ public sealed class GameOverState : IGameState
     /// <param name="input">Player 1's input.</param>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="highScores">The high score store.</param>
-    /// <param name="session">The finished game, which supplies the final scores and the controls.</param>
-    public static GameOverState FromSession(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, GameSession session) =>
-        new(input, sprites, highScores, session.FinalScoresHighestFirst(), session.Controls);
+    /// <param name="session">The finished game, which supplies the final scores, the controls and the settings.</param>
+    public static GameOverState CreateFromSession(IPlayerInputSource input, SpriteSet sprites, HighScoreStore highScores, GameSession session) =>
+        new(input, sprites, highScores, session.GetFinalScoresHighestFirst(), session.Controls, session.Settings);
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
@@ -60,8 +62,8 @@ public sealed class GameOverState : IGameState
         _services.Sprites.Text.DrawLargeFontText(
             spriteBatch,
             "GAME OVER",
-                HudLayout.ArcadeColumnX(HudLayout.GameOverMessageColumn),
-                HudLayout.ArcadeY(HudLayout.GameOverMessageRow),
+                HudLayout.ToPortColumnX(HudLayout.GameOverMessageColumn),
+                HudLayout.ToPortY(HudLayout.GameOverMessageRow),
             ScreenTuning.GameOverTextSlot);
     }
 

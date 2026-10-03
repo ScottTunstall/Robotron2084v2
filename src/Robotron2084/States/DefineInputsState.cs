@@ -151,19 +151,19 @@ public sealed class DefineInputsState : IGameState
     /// One line's LABEL — always with its player on it, so a window that leaves the tail of
     /// one block and the head of the next on screen together can never be misread.
     /// </summary>
-    private static string LabelOf(int line)
+    private static string GetLabel(int line)
     {
         if (line == DefineInputsModel.PauseLine)
         {
             return "PAUSE";
         }
 
-        return $"P{DefineInputsModel.PlayerOf(line) + 1} {DefineInputsModel.ActionOf(line)!.Value.Label()}";
+        return $"P{DefineInputsModel.PlayerOf(line) + 1} {DefineInputsModel.GetAction(line)!.Value.GetLabel()}";
     }
 
-    private ActionBinding BindingOf(int line) => line == DefineInputsModel.PauseLine
+    private ActionBinding GetBinding(int line) => line == DefineInputsModel.PauseLine
             ? new ActionBinding(_settings.Pause, InputBinding.None)
-            : _settings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.ActionOf(line)!.Value];
+            : _settings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.GetAction(line)!.Value];
 
     /// <summary>The armed half of the page: the next input pressed becomes the binding.</summary>
     private void CaptureInput(InputSnapshot now)
@@ -174,7 +174,7 @@ public sealed class DefineInputsState : IGameState
             return;
         }
 
-        InputBinding captured = ControlCapture.NewlyPressed(_previous, now);
+        InputBinding captured = ControlCapture.GetNewlyPressed(_previous, now);
         if (captured.Kind != InputBindingKind.None && _model.Assign(_settings, captured))
         {
             _controlStore.Save(_settings);
@@ -182,9 +182,9 @@ public sealed class DefineInputsState : IGameState
     }
 
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
-    private int CenteredX(string text, bool large = false)
+    private int GetCenteredX(string text, bool large = false)
     {
-        int width = ScreenSize.Scaled(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
+        int width = ScreenSize.ToPortPixels(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
         return (ScreenSize.Width - width) / 2;
     }
 
@@ -201,14 +201,14 @@ public sealed class DefineInputsState : IGameState
     /// The heading: the arcade's LARGE font, centred, in the page's WHITE.
     /// </summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y) =>
-        _sprites.Text.DrawLargeFontText(spriteBatch, text, CenteredX(text, large: true), y, HeadingSlot);
+        _sprites.Text.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, large: true), y, HeadingSlot);
 
     /// <summary>
     /// An instruction line under the list: the arcade's SMALL font, centred, in the page's WHITE
     /// (the heading keeps the large font; these do not).
     /// </summary>
     private void DrawInstruction(SpriteBatch spriteBatch, string text, int y) =>
-        DrawText(spriteBatch, text, CenteredX(text), y, HeadingSlot);
+        DrawText(spriteBatch, text, GetCenteredX(text), y, HeadingSlot);
 
     /// <summary>
     /// One line: the arcade's arrow if the cursor is on it, then its label and its value — or the
@@ -233,7 +233,7 @@ public sealed class DefineInputsState : IGameState
         // The selected line's label is the page's one cycling thing (notes §115): it strobes in the
         // highlight's slot — while armed as well — and the line's value stays on the page's green.
         int labelSlot = _model.Line == line ? DefineInputsHighlight.Slot : InputSlot;
-        DrawText(spriteBatch, LabelOf(line), LabelColumn, y, labelSlot);
+        DrawText(spriteBatch, GetLabel(line), LabelColumn, y, labelSlot);
         DrawValue(spriteBatch, line, armed, InputSlot, y);
     }
 
@@ -252,7 +252,7 @@ public sealed class DefineInputsState : IGameState
             return;
         }
 
-        ActionBinding binding = BindingOf(line);
+        ActionBinding binding = GetBinding(line);
         bool key = binding.Key.Kind != InputBindingKind.None;
         bool pad = binding.Pad.Kind != InputBindingKind.None;
 
@@ -265,7 +265,7 @@ public sealed class DefineInputsState : IGameState
         int x = ValueColumn;
         if (key)
         {
-            x = DrawText(spriteBatch, binding.Key.DisplayName, x, y, slot);
+            x = DrawText(spriteBatch, binding.Key.GetDisplayName(), x, y, slot);
         }
 
         if (key && pad)
@@ -275,7 +275,7 @@ public sealed class DefineInputsState : IGameState
 
         if (pad)
         {
-            DrawText(spriteBatch, binding.Pad.DisplayName, x, y, slot);
+            DrawText(spriteBatch, binding.Pad.GetDisplayName(), x, y, slot);
         }
     }
 

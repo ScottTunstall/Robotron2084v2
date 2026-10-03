@@ -20,7 +20,7 @@ namespace Robotron2084.States;
 /// <see cref="AttractMovie"/>: the intro screen's text crawl ("ROBOTRON 2084 /
 /// INSPIRED BY HIS NEVER ENDING QUEST FOR PROGRESS…"), then the hero, the family,
 /// the grunts, the hulk, the spheroid/tank/enforcer scene, the brain's
-/// reprogramming and the score posts, all on the title's solid $CC wall with the
+/// reprogramming and the score electrodes, all on the title's solid $CC wall with the
 /// player's score and men in the HUD.
 ///
 /// Draw order follows the screen's own layering: wall, HUD, the title string (the
@@ -33,13 +33,10 @@ public sealed class StorylineState : IGameState, IAttractState
     internal const string TitleText = "ROBOTRON 2084";
 
     /// <summary>The movie interior, in canvas pixels: a strip that falls outside it is dropped (the ROM's clip).</summary>
-    private static StripClip Clip
+    private static StripClip GetClip()
     {
-        get
-        {
-            Rectangle bounds = PlayfieldLayout.InnerBounds;
-            return new StripClip(bounds.Left, bounds.Right, bounds.Top, bounds.Bottom);
-        }
+        Rectangle bounds = PlayfieldLayout.GetInnerBounds();
+        return new StripClip(bounds.Left, bounds.Right, bounds.Top, bounds.Bottom);
     }
 
     private readonly ButtonEdgeDetector _buttons = new();
@@ -57,21 +54,21 @@ public sealed class StorylineState : IGameState, IAttractState
         _sprites = services.Sprites;
         _humanInput = services.Input;
 
-        _wall = new PlayfieldWall(PlayfieldLayout.InnerBounds, new WallColorCycle());
-        _session = GameSession.NewGame(_humanInput, 1);
+        _wall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColorCycle());
+        _session = GameSession.CreateNewGame(_humanInput, 1);
         _movie = new AttractMovie(AttractMovieData.Histo, random);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.Blitter.SlotColor(AttractTuning.TitleWallSlot));
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.InnerBounds, showSpareMen: false);
+        _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.Blitter.GetSlotColour(AttractTuning.TitleWallSlot));
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds(), showSpareMen: false);
 
         ArcadeHud.DrawCenteredLargeText(
             spriteBatch,
             _sprites,
             TitleText,
-            HudLayout.ArcadeY(AttractTuning.StoryTitleRow),
+            HudLayout.ToPortY(AttractTuning.StoryTitleRow),
             HudLayout.HudScoreSlotCurrent);
 
         DrawObjects(spriteBatch);
@@ -83,15 +80,15 @@ public sealed class StorylineState : IGameState, IAttractState
 
         foreach (MovieTextCell cell in _movie.Page.Text)
         {
-            int index = ArcadeText.GlyphIndex(cell.Character);
+            int index = ArcadeText.GetGlyphIndex(cell.Character);
             if (index >= 0 && index < _sprites.FontLarge.Length)
             {
                 _sprites.Blitter.DrawGlyphSlot(
                     spriteBatch,
                     _sprites.FontLarge,
                     index,
-                    HudLayout.ArcadeX(cell.X),
-                    HudLayout.ArcadeY(cell.Y),
+                    HudLayout.ToPortX(cell.X),
+                    HudLayout.ToPortY(cell.Y),
                     cell.Slot);
             }
         }
@@ -101,8 +98,8 @@ public sealed class StorylineState : IGameState, IAttractState
             _sprites.Text.DrawSmallFontText(
                 spriteBatch,
                 message.Text,
-                HudLayout.ArcadeX(message.X),
-                HudLayout.ArcadeY(message.Y),
+                HudLayout.ToPortX(message.X),
+                HudLayout.ToPortY(message.Y),
                 message.Slot);
         }
     }
@@ -134,7 +131,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         foreach (MovieExplosion exploded in _movie.Objects.DrainExplosions())
         {
-            // EXPP: the explosion takes the picture the object was showing and the
+            // EXPP: the explosion takes the sprite the object was showing and the
             // direction of a pure HORIZONTAL laser ($FF00), which the Gospel's
             // dispatch turns into the ROW-splitting fan.
             Texture2D? animationFrame = MovieAnimationFrames.Resolve(_sprites, exploded.Animation, exploded.AnimationFrameIndex);
@@ -143,16 +140,16 @@ public sealed class StorylineState : IGameState, IAttractState
                 continue;
             }
 
-            _explosions.Add(StripEffect.StartExplosion(
+            _explosions.Add(StripEffect.CreateExplosion(
                 new MovieExplosionSource(
                     animationFrame,
                     new Rectangle(
-                        HudLayout.ArcadeX(exploded.Column * 2),
-                        HudLayout.ArcadeY(exploded.Row),
-                        ScreenSize.Scaled(animationFrame.Width),
-                        ScreenSize.Scaled(animationFrame.Height))),
+                        HudLayout.ToPortX(exploded.Column * 2),
+                        HudLayout.ToPortY(exploded.Row),
+                        ScreenSize.ToPortPixels(animationFrame.Width),
+                        ScreenSize.ToPortPixels(animationFrame.Height))),
                 Direction8.Left,
-                Clip));
+                GetClip()));
         }
 
         for (int i = _explosions.Count - 1; i >= 0; i--)
@@ -199,10 +196,10 @@ public sealed class StorylineState : IGameState, IAttractState
             }
 
             var bounds = new Rectangle(
-                HudLayout.ArcadeX(item.ArcadeX),
-                HudLayout.ArcadeY(item.ArcadeY),
-                ScreenSize.Scaled(animationFrame.Width),
-                ScreenSize.Scaled(animationFrame.Height));
+                HudLayout.ToPortX(item.ArcadeX),
+                HudLayout.ToPortY(item.ArcadeY),
+                ScreenSize.ToPortPixels(animationFrame.Width),
+                ScreenSize.ToPortPixels(animationFrame.Height));
 
             if (item.MonoActive)
             {
@@ -217,24 +214,24 @@ public sealed class StorylineState : IGameState, IAttractState
     /// <summary>Draws a laser bolt: <c>LASPIC</c>, the rotating laser table's horizontal bar.</summary>
     private void DrawLaser(SpriteBatch spriteBatch, MovieObject item)
     {
-        int x = HudLayout.ArcadeX(item.ArcadeX);
-        int y = HudLayout.ArcadeY(item.ArcadeY);
-        var bolt = new Rectangle(x, y, ScreenSize.Scaled(_sprites.LaserBar.Width), ScreenSize.Scaled(_sprites.LaserBar.Height));
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBar, bolt, _sprites.Blitter.SlotColor(PlayerTuning.LaserSlot));
+        int x = HudLayout.ToPortX(item.ArcadeX);
+        int y = HudLayout.ToPortY(item.ArcadeY);
+        var bolt = new Rectangle(x, y, ScreenSize.ToPortPixels(_sprites.LaserBar.Width), ScreenSize.ToPortPixels(_sprites.LaserBar.Height));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBar, bolt, _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
     }
 
     /// <summary>
     /// ROM <c>OPON</c>: the box in the first colour, the object's SHAPE in the second, and — for the
-    /// brain's box — the brain's own picture over the top (the ROM's second blit, <c>JMP $D018</c>, notes §72.1).
+    /// brain's box — the brain's own sprite over the top (the ROM's second blit, <c>JMP $D018</c>, notes §72.1).
     /// </summary>
     private void DrawMonoBox(SpriteBatch spriteBatch, MovieObject item, Texture2D animationFrame, Rectangle bounds)
     {
         if (item.MonoBoxSlot != 0)
         {
-            _sprites.Blitter.DrawSolidRectangle(spriteBatch, bounds, _sprites.Blitter.SlotColor(item.MonoBoxSlot));
+            _sprites.Blitter.DrawSolidRectangle(spriteBatch, bounds, _sprites.Blitter.GetSlotColour(item.MonoBoxSlot));
         }
 
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, animationFrame, bounds, _sprites.Blitter.SlotColor(item.MonoSilhouetteSlot));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, animationFrame, bounds, _sprites.Blitter.GetSlotColour(item.MonoSilhouetteSlot));
         if (item.MonoBrain)
         {
             _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
@@ -242,9 +239,9 @@ public sealed class StorylineState : IGameState, IAttractState
     }
 
     /// <summary>
-    /// The EXP opcode's dead object: the ROM's `KILLOF` leaves the object's picture
+    /// The EXP opcode's dead object: the ROM's `KILLOF` leaves the object's sprite
     /// in place and `EXPP` sets the explosion's row to ACTHIT+6, so the fan's rect is
-    /// that picture at (the object's column, row 166).
+    /// that sprite at (the object's column, row 166).
     /// </summary>
     private sealed class MovieExplosionSource : IExplodable
     {

@@ -25,7 +25,7 @@ public sealed class EntriesMaximumState : IGameState
     private const int SecondLineRow = 144;
 
     private readonly ScoreEntryCeremony _ceremony;
-    private readonly int _holdTicks = ArcadeClock.PortTicks(ScreenTuning.EntriesMaximumHoldRomFrames);
+    private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.EntriesMaximumHoldRomFrames);
     private readonly GameServices _services;
     private int _elapsedTicks;
 
@@ -58,7 +58,7 @@ public sealed class EntriesMaximumState : IGameState
         _services.Sprites.Text.DrawLargeFontText(
             spriteBatch,
             text,
-            HudLayout.ArcadeColumnX(column),
-            HudLayout.ArcadeY(row),
+            HudLayout.ToPortColumnX(column),
+            HudLayout.ToPortY(row),
             ScreenTuning.EntriesMaximumSlot);
 }

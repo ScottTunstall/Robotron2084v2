@@ -46,14 +46,14 @@ public sealed class AttractState : IGameState, IAttractState
         _sprites = services.Sprites;
         _highScores = services.HighScores;
         _humanInput = services.Input;
-        _session = GameSession.NewGame(_demoInput, 1);
+        _session = GameSession.CreateNewGame(_demoInput, 1);
         _field = BuildField();
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _field.Draw(spriteBatch);
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.InnerBounds, showSpareMen: false);
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds(), showSpareMen: false);
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
     }
 
@@ -70,7 +70,7 @@ public sealed class AttractState : IGameState, IAttractState
 
         // The phony player reasons about the field BEFORE it moves this tick —
         // the same order PlayingState polls after its Update, except the AI needs
-        // the pre-move picture to decide its own move.
+        // the pre-move sprite to decide its own move.
         _demoInput.Bind(_field);
         _field.Update(gameTime);
 
@@ -93,7 +93,7 @@ public sealed class AttractState : IGameState, IAttractState
             SyncSlotFromField();
             _session.Current.Rescues = 0; // ROM PLINIT clears SAVCNT
 
-            if (!_session.AnyMenLeft)
+            if (!_session.AnyMenLeft())
             {
                 // RRG23 PLEND: the last man gone ends the game — "GAME OVER", then
                 // ENDPRC → GOV → LOGG1, whose first act is the high score TABLE
@@ -113,7 +113,7 @@ public sealed class AttractState : IGameState, IAttractState
         PlayerSlot slot = _session.Current;
         LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
         WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
+        return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.GetInnerBounds(), cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
     }
 
     private void SyncSlotFromField() => _field.SyncInto(_session.Current);

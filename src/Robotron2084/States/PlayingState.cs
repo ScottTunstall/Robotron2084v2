@@ -38,6 +38,7 @@ public sealed class PlayingState : IGameState
     private readonly PauseToggle _pause = new();
     private readonly Random _random = new();
     private readonly GameSession _session;
+    private readonly GameSettings _settings;
     private readonly SpriteSet _sprites;
     private PlayField _field;
     private int _playerOutMessageTicks;
@@ -53,6 +54,7 @@ public sealed class PlayingState : IGameState
         _sprites = sprites;
         _highScores = highScores;
         _session = session;
+        _settings = session.Settings;
         _field = BuildField();
         AnnounceTurn();
     }
@@ -64,18 +66,23 @@ public sealed class PlayingState : IGameState
     /// the title and from anywhere in the attract cycle; TWO PLAYER SIMULTANEOUS is
     /// carried as far as this call and the second input (the simultaneous field itself is not built yet).
     /// </summary>
-    public static PlayingState StartNewGame(ControlSettings controls, GameMode mode, SpriteSet sprites, HighScoreStore highScores)
+    /// <param name="settings">
+    /// The GAME ADJUSTMENT settings (notes §131): TURNS PER PLAYER is the men each player starts
+    /// with, EXTRA MAN EVERY the score that earns a spare man, and DIFFICULTY OF PLAY nudges every
+    /// wave's tuning.
+    /// </param>
+    public static PlayingState CreateNewGame(ControlSettings controls, GameSettings settings, GameMode mode, SpriteSet sprites, HighScoreStore highScores)
     {
         var playerOne = new BoundPlayerInputSource(controls, 0);
         var playerTwo = new BoundPlayerInputSource(controls, 1);
         Sound.Play(StartSoundFor(mode));
-        return new PlayingState(sprites, highScores, GameSession.NewGame(mode, playerOne, playerTwo, controls));
+        return new PlayingState(sprites, highScores, GameSession.CreateNewGame(mode, playerOne, playerTwo, controls, settings));
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _field.Draw(spriteBatch);
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.InnerBounds);
+        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds());
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
 
         if (_pause.IsPaused)
@@ -88,19 +95,19 @@ public sealed class PlayingState : IGameState
                 "PAUSED",
                 HudLayout.PausedMessageColumn,
                 HudLayout.PausedMessageRow,
-                WavePaletteTables.PostSlotForWave(_session.Current.Wave));
+                WavePaletteTables.GetElectrodeSlot(_session.Current.Wave));
         }
 
         if (_playerOutMessageTicks > 0)
         {
             // ROM string 75: "PLAYER n" at $3F79 then "GAME OVER" at $3E86.
-            int messageSlot = WavePaletteTables.PostSlotForWave(_session.Current.Wave);
+            int messageSlot = WavePaletteTables.GetElectrodeSlot(_session.Current.Wave);
             ArcadeHud.DrawMessageText(spriteBatch, _sprites, $"PLAYER {_playerOutNumber}", HudLayout.PlayerTurnMessageColumn, HudLayout.PlayerGameOverMessageRow, messageSlot);
             ArcadeHud.DrawMessageText(spriteBatch, _sprites, "GAME OVER", HudLayout.GameOverMessageColumn, HudLayout.GameOverMessageRow, messageSlot);
         }
         else if (_turnMessageTicks > 0)
         {
-            // ROM string 103: "PLAYER n" at $3F7A, in the wave's POST colour
+            // ROM string 103: "PLAYER n" at $3F7A, in the wave's electrode colour
             // (PLS0D: LDA PSTCOL / STA TEXCOL), for NAP 115.
             ArcadeHud.DrawMessageText(
                 spriteBatch,
@@ -108,7 +115,7 @@ public sealed class PlayingState : IGameState
                 $"PLAYER {_session.Current.Number}",
                 HudLayout.PlayerTurnMessageColumn,
                 HudLayout.PlayerTurnMessageRow,
-                WavePaletteTables.PostSlotForWave(_session.Current.Wave));
+                WavePaletteTables.GetElectrodeSlot(_session.Current.Wave));
         }
     }
 
@@ -175,7 +182,7 @@ public sealed class PlayingState : IGameState
     private void AnnounceTurn()
     {
         _turnMessageTicks = _session.IsTwoPlayer
-            ? ArcadeClock.PortTicks(ScreenTuning.PlayerTurnMessageRomFrames)
+            ? ArcadeClock.ToPortTicks(ScreenTuning.PlayerTurnMessageRomFrames)
             : 0;
     }
 
@@ -183,9 +190,26 @@ public sealed class PlayingState : IGameState
     private PlayField BuildField()
     {
         PlayerSlot slot = _session.Current;
-        LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
+
+        // Bozo mercy first, then the difficulty adjustment — the ROM's own order ($2B26 before $2B7C).
+        LevelParameters parameters = _generator.Generate(slot.Wave);
+        parameters = BozoMode.Apply(parameters, slot.SpareMen, _settings.TurnsPerPlayer);
+        parameters = DifficultyTuning.Apply(parameters, _settings.Difficulty, slot.Lives);
+
         WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, slot.Input, PlayfieldLayout.InnerBounds, cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, pixelCollision: new SpriteCollision());
+        return new PlayField(
+            _sprites,
+            parameters,
+            slot.Input,
+            PlayfieldLayout.GetInnerBounds(),
+            cycle,
+            _random,
+            slot.Lives,
+            slot.Score,
+            slot.Rescues,
+            _sprites.Blitter.Palette,
+            pixelCollision: new SpriteCollision(),
+            extraManEveryPoints: _settings.ExtraManEveryPoints);
     }
 
     /// <summary>
@@ -205,12 +229,12 @@ public sealed class PlayingState : IGameState
             _session.SwitchToPlayerWithMen();
         }
 
-        if (!_session.AnyMenLeft)
+        if (!_session.AnyMenLeft())
         {
             // The score that ends the game is the CURRENT player's — but a 2-player
             // game offers both scores to the high-score table (RRTESTC checks
             // ZP1SCR and ZP2SCR), so the session hands over all of them.
-            manager.TransitionTo(GameOverState.FromSession(_session.Current.Input, _sprites, _highScores, _session));
+            manager.TransitionTo(GameOverState.CreateFromSession(_session.Current.Input, _sprites, _highScores, _session));
             return;
         }
 
@@ -219,7 +243,7 @@ public sealed class PlayingState : IGameState
             // ROM PLEND3: this player is out and the other still has men — print
             // "PLAYER n GAME OVER" and wait NAP $60 before the turn passes.
             _playerOutNumber = dead.Number;
-            _playerOutMessageTicks = ArcadeClock.PortTicks(ScreenTuning.PlayerGameOverMessageRomFrames);
+            _playerOutMessageTicks = ArcadeClock.ToPortTicks(ScreenTuning.PlayerGameOverMessageRomFrames);
         }
 
         _field = BuildField();
