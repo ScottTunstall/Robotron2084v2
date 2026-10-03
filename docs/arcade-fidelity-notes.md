@@ -10611,4 +10611,14 @@ wave pays 1000 again, and `SyncInto_HandsLiveScoreAndLivesToThePlayersSlot` (ren
 and lives.
 
 **Not changed, noted.** The other `PLINIT` counters (`BCMCNT`, `SPKCNT`, `ENFCNT`, `SHLCNT`) are per-wave in the port already (they
-are counted from the live entities, or reset with the new `PlayField`). `BRNFLG` and `TNKSPD` were not checked.
+are counted from the live entities, or reset with the new `PlayField`).
+
+**The other two `PLINIT` values, checked against the ROM (no change needed).**
+`TNKSPD` is set to 2 (`LDA #2 / STA TNKSPD`) and only ever read (`RRTK4` `TANK6`: `LDA TNKSPD / JMP SLEEP`), so it is the
+constant 2; `TankTuning` and `Tank` already model it that way, with the process's own extra frame. `BRNFLG` ("brain human kill
+flag") is never held between ticks: `RRB10` sets it just around the two calls that remove a human for a brain
+(`STA BRNFLG ... JSR [OCVECT,X] ... CLR BRNFLG` when a brain catches one, `INC BRNFLG / JSR SKULL / CLR BRNFLG` when a brain
+is shot mid-reprogramming), and `HUMKIL` (`RRH11`) tests it twice to skip the rescue score and the skull, so a human a brain
+takes is neither saved nor killed. The port reaches the same result without the flag: a caught human is hidden and becomes a
+prog with no skull or bonus (`Brain.BeginReprogramming`), and a brain shot while reprogramming leaves the skull and no
+bonus (`CollisionResponder`, `LeaveSkull`). So there is nothing to reset at a wave start.
