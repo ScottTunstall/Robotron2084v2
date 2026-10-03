@@ -45,14 +45,11 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>This electrode's animation frame: the live frame, or the current shrivel frame while it is dying.</summary>
-    public Texture2D CurrentAnimationFrame
+    public Texture2D GetCurrentAnimationFrame()
     {
-        get
-        {
-            int baseFrame = GetVariantIndex() * WavePaletteTables.ElectrodeAnimationFramesPerVariant;
-            int frame = LifeState == EntityLifeState.Dying ? baseFrame + _shrivelStep : baseFrame;
-            return _sprites.ElectrodeAnimationFrames[frame];
-        }
+        int baseFrame = GetVariantIndex() * WavePaletteTables.ElectrodeAnimationFramesPerVariant;
+        int frame = LifeState == EntityLifeState.Dying ? baseFrame + _shrivelStep : baseFrame;
+        return _sprites.ElectrodeAnimationFrames[frame];
     }
 
     /// <summary>Alive until something kills it; Dying while the shrivel plays.</summary>
@@ -77,7 +74,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.GetSlotColour(GetTintSlot()));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), Bounds, _sprites.Blitter.GetSlotColour(GetTintSlot()));
     }
 
     /// <summary>Starts the shrivel; does nothing unless the electrode is alive.</summary>

@@ -255,7 +255,7 @@ public sealed class StorylineState : IGameState, IAttractState
         }
 
         public Rectangle Bounds => _bounds;
-        public Texture2D CurrentAnimationFrame => _animationFrame;
+        public Texture2D GetCurrentAnimationFrame() => _animationFrame;
         public Rectangle ExplosionBounds => _bounds;
         public EntityLifeState LifeState => EntityLifeState.Dead;
         public IntVector2 Position => new(_bounds.X, _bounds.Y);

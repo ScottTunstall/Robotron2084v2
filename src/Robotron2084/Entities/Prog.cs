@@ -116,7 +116,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>The animation frame the death explosion shatters: the phony burst card, not the human's animation frames.</summary>
     /// <returns>The phony burst card.</returns>
     /// <remarks>ROM: <c>PRGKIL</c> swaps the sprite to the 12x16 <c>PGXPIC</c>.</remarks>
-    public Texture2D CurrentAnimationFrame => _sprites.ProgBurst;
+    public Texture2D GetCurrentAnimationFrame() => _sprites.ProgBurst;
 
     /// <summary>The explosion's rect: the burst card's size at the prog's corner.</summary>
     /// <remarks>ROM: <c>PRGKIL</c>/<c>EXSTV</c> swap the sprite without moving the object, and the

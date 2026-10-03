@@ -77,7 +77,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     public Rectangle Bounds => new(_position.X, _position.Y, BoxWidth, BoxHeight);
 
     /// <summary>The shell's one animation frame. It never flashes.</summary>
-    public Texture2D CurrentAnimationFrame => _sprites.TankShell;
+    public Texture2D GetCurrentAnimationFrame() => _sprites.TankShell;
 
     /// <summary>Alive until it fizzles out or is shot, then dead at once. A shell has no dying animation.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -139,7 +139,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     {
         if (LifeState == EntityLifeState.Alive)
         {
-            _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
         }
     }
 

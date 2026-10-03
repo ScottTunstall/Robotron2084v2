@@ -108,7 +108,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>The current rotation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <returns>The texture for the current rotation frame.</returns>
-    public Texture2D CurrentAnimationFrame => _sprites.QuarkAnimationFrames[_animationFrame];
+    public Texture2D GetCurrentAnimationFrame() => _sprites.QuarkAnimationFrames[_animationFrame];
 
     /// <summary>Alive until it is hit or flees off the field; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -128,7 +128,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
     }
 
     /// <summary>Kills the quark outright; a laser hit plays its own burst instead of the strip explosion.</summary>

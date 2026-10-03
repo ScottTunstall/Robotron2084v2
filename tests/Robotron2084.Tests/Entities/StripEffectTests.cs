@@ -51,8 +51,8 @@ public sealed class StripEffectTests
         }
 
         // Draw-time only; the lifecycle/geometry tests never draw.
-        public Texture2D CurrentAnimationFrame =>
-            throw new NotSupportedException("no texture in unit tests");
+
+        public Texture2D GetCurrentAnimationFrame() => throw new NotSupportedException("no texture in unit tests");
     }
 
     private static StripEffect NewExplosion(Direction8? direction = null, Rectangle? sprite = null) =>

@@ -36,14 +36,15 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
 
     /// <summary>The sprite for this laser's direction — the ROM's four laser sprites (`LTAB`, notes §19).</summary>
-    public Texture2D CurrentAnimationFrame => Direction switch
-    {
-        Direction8.Left or Direction8.Right => _sprites.LaserBar,
-        Direction8.Up or Direction8.Down => _sprites.LaserColumn,
-        Direction8.UpLeft or Direction8.DownRight => _sprites.LaserDiagonalMain,
-        Direction8.DownLeft or Direction8.UpRight => _sprites.LaserDiagonalAnti,
-        _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}"),
-    };
+    public Texture2D GetCurrentAnimationFrame() =>
+        Direction switch
+        {
+            Direction8.Left or Direction8.Right => _sprites.LaserBar,
+            Direction8.Up or Direction8.Down => _sprites.LaserColumn,
+            Direction8.UpLeft or Direction8.DownRight => _sprites.LaserDiagonalMain,
+            Direction8.DownLeft or Direction8.UpRight => _sprites.LaserDiagonalAnti,
+            _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}"),
+        };
 
     /// <summary>The direction the laser travels; never changes.</summary>
     public Direction8 Direction { get; }
@@ -64,7 +65,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
         }
 
         // The ROM draws the laser in its flashing palette slot, so the whole bolt flashes with it.
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), Bounds, _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
     }
 
     /// <summary>Removes the laser at once, vacating its slot.</summary>

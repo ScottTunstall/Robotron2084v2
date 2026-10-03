@@ -93,7 +93,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
 
     /// <summary>The flicker frame this spark is showing — the sprite pixel-perfect collision compares.</summary>
-    public Texture2D CurrentAnimationFrame => _sprites.SparkAnimationFrames[AnimationFrameIndex];
+    public Texture2D GetCurrentAnimationFrame() => _sprites.SparkAnimationFrames[AnimationFrameIndex];
 
     /// <summary>Only ever transitions Alive -> Dead (immediate removal, no death animation).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -119,7 +119,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     {
         if (LifeState == EntityLifeState.Alive)
         {
-            _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
         }
     }
 

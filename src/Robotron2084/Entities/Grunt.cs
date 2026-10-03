@@ -15,7 +15,7 @@ namespace Robotron2084.Entities;
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$39E6</c> (grunt speed/movement timer check, part of the shared grunt/hulk/brain/prog/tank update loop)</item>
 /// </list>
 /// </remarks>
-public sealed class Grunt : IEntity, IExplodable, IRemovable
+public sealed class Grunt : IExplodable, IRemovable
 {
     /// <summary>How many ROM frames one beat takes (4 vblanks).</summary>
     private const int BeatIntervalRomFrames = 4;
@@ -91,7 +91,8 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
 
     /// <summary>This grunt's current walk animation frame, for the appear and explosion effects.</summary>
     /// <returns>The texture for the current walk frame.</returns>
-    public Texture2D CurrentAnimationFrame => _sprites.GruntAnimationFrames[GetAnimationFrameIndex(_walkAnimationFrameNumber)];
+    public Texture2D GetCurrentAnimationFrame() =>
+        _sprites.GruntAnimationFrames[GetAnimationFrameIndex(_walkAnimationFrameNumber)];
 
     /// <summary>Alive until shot or killed on contact; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -123,7 +124,7 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
     }
 
     /// <summary>Kills the grunt outright: no flash, no death animation.</summary>

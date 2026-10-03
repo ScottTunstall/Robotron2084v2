@@ -82,7 +82,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>
-    public Texture2D CurrentAnimationFrame => _sprites.PlayerAnimationFrames[WalkAnimationFrameIndex];
+    public Texture2D GetCurrentAnimationFrame() => _sprites.PlayerAnimationFrames[WalkAnimationFrameIndex];
 
     /// <summary>The way the player is drawn and walks — his last MOVEMENT direction.</summary>
     public Direction8 FacingDirection { get; private set; } = Direction8.Up;
@@ -142,11 +142,11 @@ public sealed class Player : IEntity, IAnimationFrameSource
         // One colour while dying, like the ROM's own solid-colour draw.
         if (LifeState == EntityLifeState.Dying)
         {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, CurrentAnimationFrame, Bounds, _sprites.Blitter.GetSlotColour(DeathSolidSlot));
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), Bounds, _sprites.Blitter.GetSlotColour(DeathSolidSlot));
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
     }
 
     /// <summary>Kills the player (contact with a live hazard). No-op while dying/dead.</summary>

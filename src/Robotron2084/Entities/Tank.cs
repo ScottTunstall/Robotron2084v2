@@ -114,17 +114,14 @@ public sealed class Tank : IExplodable, IRemovable
     /// <summary>The frame an explosion would copy (see <see cref="IAnimationFrameSource"/>): the birth animation frame while being born, else the tread frame.</summary>
     /// <remarks>The walk frame advances once per beat and plays backwards while moving left
     /// (ROM: TANK3 takes the direction from the X step's sign).</remarks>
-    public Texture2D CurrentAnimationFrame
+    public Texture2D GetCurrentAnimationFrame()
     {
-        get
+        if (_growStep < TankTuning.GrowSteps)
         {
-            if (_growStep < TankTuning.GrowSteps)
-            {
-                return _sprites.TankGrowAnimationFrames[_growStep];
-            }
-
-            return _sprites.TankAnimationFrames[TreadFrameIndex];
+            return _sprites.TankGrowAnimationFrames[_growStep];
         }
+
+        return _sprites.TankAnimationFrames[TreadFrameIndex];
     }
 
     /// <summary>Alive until shot or until it walks into an electrode; never Dying (see <see cref="Kill"/>).</summary>
@@ -178,7 +175,7 @@ public sealed class Tank : IExplodable, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
     }
 
     /// <summary>Kills the tank outright: no death animation.</summary>

@@ -142,7 +142,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The animation frame the brain is showing now. The explosion copies this when the brain is shot.</summary>
-    public Texture2D CurrentAnimationFrame => _sprites.BrainAnimationFrames[WalkAnimationFrameIndex];
+    public Texture2D GetCurrentAnimationFrame() => _sprites.BrainAnimationFrames[WalkAnimationFrameIndex];
 
     /// <summary>True while this brain is turning a human into a prog.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> to <c>BMUT4</c>. Disassembly: the "progging" flag at <c>$9895</c> (<c>brain_progging_flag</c>) and <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>).</remarks>
@@ -182,7 +182,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
             _sprites.Blitter.DrawSolidRectangle(spriteBatch, Bounds, _sprites.Blitter.GetSlotColour(ReprogramTuning.ShapeSlot));
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
     }
 
     /// <summary>Takes the brain off the field at once. The playfield makes the explosion and gives the points.</summary>

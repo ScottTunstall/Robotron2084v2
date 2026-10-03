@@ -81,7 +81,7 @@ public sealed class StripEffect : IEntity
     /// <returns>The new appear record.</returns>
     /// <remarks>ROM: RRG23.ASM's <c>APPEAR</c> makes one of these per frame for each robot.</remarks>
     public static StripEffect CreateAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
-        => new StripEffect(() => source.CurrentAnimationFrame, bounds, StripEffectKind.Appear, axis, slope, clip);
+        => new StripEffect(() => source.GetCurrentAnimationFrame(), bounds, StripEffectKind.Appear, axis, slope, clip);
 
     /// <summary>Starts the explosion for a killed object; the killing shot picks the axis and lean.</summary>
     /// <param name="dead">The object being exploded; its animation frame and explosion bounds are used.</param>
@@ -94,7 +94,7 @@ public sealed class StripEffect : IEntity
     public static StripEffect CreateExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {
         (StripFanAxis axis, int slope) = FanForShot(direction);
-        return new StripEffect(() => dead.CurrentAnimationFrame, dead.ExplosionBounds, StripEffectKind.Explode, axis, slope, clip);
+        return new StripEffect(() => dead.GetCurrentAnimationFrame(), dead.ExplosionBounds, StripEffectKind.Explode, axis, slope, clip);
     }
 
     /// <summary>Draws the frame's strips, each from its own row or column of the dead entity's sprite.</summary>

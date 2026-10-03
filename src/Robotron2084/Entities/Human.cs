@@ -113,7 +113,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The walk frame this human is showing — the sprite pixel-perfect collision compares.</summary>
-    public Texture2D CurrentAnimationFrame => _kind.GetAnimationFrames(_sprites)[_animationFrameIndex];
+    public Texture2D GetCurrentAnimationFrame() => _kind.GetAnimationFrames(_sprites)[_animationFrameIndex];
 
     /// <summary>True while this human is being reprogrammed: it cannot walk, be rescued or be killed.</summary>
     /// <remarks>ROM: <c>BMUT</c> — the human comes off the human list while the brain drives it.</remarks>

@@ -117,7 +117,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
 
     /// <summary>This hulk's current walk animation frame, for the appear effect.</summary>
     /// <remarks>It never shatters, but it still materialises at the start of a wave.</remarks>
-    public Texture2D CurrentAnimationFrame => _sprites.HulkAnimationFrames[_animationFrameIndex];
+    public Texture2D GetCurrentAnimationFrame() => _sprites.HulkAnimationFrames[_animationFrameIndex];
 
     /// <summary>Always Alive — indestructible (the enum's Dying/Dead are simply never used here).</summary>
     public EntityLifeState LifeState => EntityLifeState.Alive;
@@ -157,7 +157,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
     }
 
     /// <summary>One hulk cycle: aims on the first call, then steps, or re-aims when the wall blocks it.</summary>

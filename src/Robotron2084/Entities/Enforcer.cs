@@ -83,18 +83,15 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
 
     /// <summary>The animation frame on screen: a grow-up frame while it grows, else the full animation frame.</summary>
     /// <remarks>The grow frames are the ROM's ENGD1..5, which are frames 2..6 (1-based) of the set.</remarks>
-    public Texture2D CurrentAnimationFrame
+    public Texture2D GetCurrentAnimationFrame()
     {
-        get
+        if (LifeState != EntityLifeState.Alive || _growthRemaining <= 0)
         {
-            if (LifeState != EntityLifeState.Alive || _growthRemaining <= 0)
-            {
-                return _sprites.Enforcer;
-            }
-
-            int frame = Math.Clamp(GrowAnimationFrameIndex, 0, _sprites.EnforcerAnimationFrames.Length - 2);
-            return _sprites.EnforcerAnimationFrames[1 + frame];
+            return _sprites.Enforcer;
         }
+
+        int frame = Math.Clamp(GrowAnimationFrameIndex, 0, _sprites.EnforcerAnimationFrames.Length - 2);
+        return _sprites.EnforcerAnimationFrames[1 + frame];
     }
 
     /// <summary>Alive until killed; never Dying — there is no death animation.</summary>
@@ -119,7 +116,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
     }
 
     /// <summary>Kills it at once (ROM <c>ENFKIL</c>); there is no death animation.</summary>

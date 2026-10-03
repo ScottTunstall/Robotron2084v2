@@ -133,8 +133,8 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>The current animation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <returns>The texture for the current rotation frame.</returns>
-    public Texture2D CurrentAnimationFrame
-        => _sprites.SpheroidAnimationFrames[_rotation % _sprites.SpheroidAnimationFrames.Length];
+    public Texture2D GetCurrentAnimationFrame() =>
+        _sprites.SpheroidAnimationFrames[_rotation % _sprites.SpheroidAnimationFrames.Length];
 
     /// <summary>Alive until shot or until it finishes its sideways escape; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -159,7 +159,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, CurrentAnimationFrame, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
     }
 
     /// <summary>Kills the spheroid outright; a laser hit plays its own burst instead of the strip explosion.</summary>
