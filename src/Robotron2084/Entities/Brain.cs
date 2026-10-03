@@ -291,34 +291,31 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         human.MoveTo(new IntVector2(x, _victimRestingY));
     }
 
-    /// <summary>Catches the family member the brain is chasing, if it is close enough, and starts reprogramming them.</summary>
-    /// <param name="playfieldBounds">The edges of the playfield, so the human is placed inside them.</param>
+    /// <summary>Finds the family member the brain could catch right now: the one it is chasing, if it is close enough.</summary>
+    /// <returns>The family member, or null when the brain cannot catch anyone.</returns>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c>, the end of <c>BRNL1</c> (<c>ADDB #3 / CMPB #$6 / BHI</c> then <c>ADDA #3 / CMPA #6 / BLS BMUT</c>)</item>
     /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>) from <c>$1C48</c> to <c>$1C56</c></item>
     /// </list>
-    /// The test compares the two top-left corners, not the sprites, and only the brain's own target can be caught.
+    /// The test compares the two top-left corners, not the sprites, and only the brain's own target can be caught. This only
+    /// asks: starting the reprogramming is for the field to decide (<see cref="BeginReprogramming"/>).
     /// </remarks>
-    internal void CatchTargetIfInReach(Rectangle playfieldBounds)
+    internal Human? GetCatchableTarget()
     {
         if (!this.IsAlive() || IsReprogramming)
         {
-            return;
+            return null;
         }
 
         if (Target is not { } human || !human.IsGraspable())
         {
-            return;
+            return null;
         }
 
-        if (Math.Abs(_position.X - human.Position.X) > CatchReachX
-            || Math.Abs(_position.Y - human.Position.Y) > CatchReachY)
-        {
-            return;
-        }
-
-        BeginReprogramming(human, playfieldBounds);
+        bool inReach = Math.Abs(_position.X - human.Position.X) <= CatchReachX
+            && Math.Abs(_position.Y - human.Position.Y) <= CatchReachY;
+        return inReach ? human : null;
     }
 
     /// <summary>Lets go of the human being reprogrammed, if there is one, who is then lost. Used when the brain is shot part way through.</summary>
