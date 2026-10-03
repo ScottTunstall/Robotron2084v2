@@ -202,7 +202,7 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/BerzerkRobot_Stand.png
 
-#begin Sprites/BerzerkRobot_Walk_1.png
+#begin Sprites/BerzerkRobot_WalkRight_1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -212,7 +212,19 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/BerzerkRobot_Walk_1.png
+/build:Sprites/BerzerkRobot_WalkRight_1.png
+
+#begin Sprites/BerzerkRobot_WalkRight_2.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/BerzerkRobot_WalkRight_2.png
 
 #begin Sprites/BerzerkRobot_Walk_10.png
 /importer:TextureImporter
@@ -225,18 +237,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/BerzerkRobot_Walk_10.png
-
-#begin Sprites/BerzerkRobot_Walk_2.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/BerzerkRobot_Walk_2.png
 
 #begin Sprites/BerzerkRobot_Walk_3.png
 /importer:TextureImporter
