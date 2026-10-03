@@ -72,26 +72,26 @@ public sealed class BerzerkRobotTests
     }
 
     [Theory]
-    [InlineData(BerzerkRobotFacing.Right, 0, 0)]
-    [InlineData(BerzerkRobotFacing.Right, 1, 1)]
-    [InlineData(BerzerkRobotFacing.Right, 2, 0)]
-    [InlineData(BerzerkRobotFacing.Left, 3, 1)]
-    [InlineData(BerzerkRobotFacing.Up, 0, 0)]
-    [InlineData(BerzerkRobotFacing.Up, 1, 1)]
-    [InlineData(BerzerkRobotFacing.Up, 2, 2)]
-    [InlineData(BerzerkRobotFacing.Up, 3, 1)]
-    [InlineData(BerzerkRobotFacing.Down, 4, 0)]
-    [InlineData(BerzerkRobotFacing.Down, 7, 1)]
-    public void TheWalkFramesPlay_OneTwo_SideToSide_AndOneTwoThreeTwo_UpAndDown(BerzerkRobotFacing facing, int step, int expectedIndex) =>
+    [InlineData(WalkFacing.Right, 0, 0)]
+    [InlineData(WalkFacing.Right, 1, 1)]
+    [InlineData(WalkFacing.Right, 2, 0)]
+    [InlineData(WalkFacing.Left, 3, 1)]
+    [InlineData(WalkFacing.Up, 0, 0)]
+    [InlineData(WalkFacing.Up, 1, 1)]
+    [InlineData(WalkFacing.Up, 2, 2)]
+    [InlineData(WalkFacing.Up, 3, 1)]
+    [InlineData(WalkFacing.Down, 4, 0)]
+    [InlineData(WalkFacing.Down, 7, 1)]
+    public void TheWalkFramesPlay_OneTwo_SideToSide_AndOneTwoThreeTwo_UpAndDown(WalkFacing facing, int step, int expectedIndex) =>
         Assert.Equal(expectedIndex, BerzerkRobot.GetWalkFrameIndex(facing, step));
 
     [Theory]
-    [InlineData(50, 10, BerzerkRobotFacing.Right)]
-    [InlineData(-50, 10, BerzerkRobotFacing.Left)]
-    [InlineData(10, 50, BerzerkRobotFacing.Down)]
-    [InlineData(10, -50, BerzerkRobotFacing.Up)]
-    [InlineData(30, 30, BerzerkRobotFacing.Right)]
-    public void ItFacesAlongTheLargerGapToThePlayer(int gapX, int gapY, BerzerkRobotFacing expected) =>
+    [InlineData(50, 10, WalkFacing.Right)]
+    [InlineData(-50, 10, WalkFacing.Left)]
+    [InlineData(10, 50, WalkFacing.Down)]
+    [InlineData(10, -50, WalkFacing.Up)]
+    [InlineData(30, 30, WalkFacing.Right)]
+    public void ItFacesAlongTheLargerGapToThePlayer(int gapX, int gapY, WalkFacing expected) =>
         Assert.Equal(expected, BerzerkRobot.GetFacingTowards(new IntVector2(100, 100), new IntVector2(100 + gapX, 100 + gapY)));
 
     [Fact]
