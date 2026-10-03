@@ -10725,8 +10725,8 @@ This is the first thing in the port that has no arcade counterpart: the author's
 | `BerzerkRobot_Idle_1` to `_6` | 8 x 12 | the robot standing still: the first row of the 3 x 6 block, a cycle of six frames. Head on the top row |
 | `BerzerkRobot_WalkRight_1`, `_2` | 8 x 12 | the robot walking right (the author: *"Walk_1, 2 are the walk right animation frames"*): the first two frames of the other two rows |
 | `BerzerkRobot_WalkLeft_1`, `_2` | 8 x 12 | the robot walking left (the author: *"Walk_3, 4 are the walk left animation frames"*): the next two frames |
-| `BerzerkRobot_WalkUp_1` to `_3` | 8 x 12 | the robot walking up (the author: *"Walk_5, 6, 7 are the walk up animation frames. Note that the animation sequence is 5, 6, 7, 6"*). They play in the order **1, 2, 3, 2**, so the middle frame is shown twice in each cycle |
-| `BerzerkRobot_WalkDown_1` to `_3` | 8 x 12 | the robot walking down (the author, confirming: *"they are walk down"*): the last three frames. The author has given no play order for these, so none is recorded. Head on the top row throughout, like every walking frame, so a walk keeps the head still |
+| `BerzerkRobot_WalkDown_1` to `_3` | 8 x 12 | the robot walking down: sheet frames 5, 6, 7 of the walking rows. The author first said *"Walk_5, 6, 7 are the walk up animation frames. Note that the animation sequence is 5, 6, 7, 6"*, then corrected it (*"Walkup should be walkdown and vice versa - I got it wrong"*). They play in the order **1, 2, 3, 2**, so the middle frame is shown twice in each cycle |
+| `BerzerkRobot_WalkUp_1` to `_3` | 8 x 12 | the robot walking up: the last three frames, sheet frames 8, 9, 10. The author has given no play order for these, so none is recorded. Head on the top row throughout, like every walking frame, so a walk keeps the head still |
 | `BerzerkRobot_Stand` | 16 x 18 | the robot standing |
 | `BerzerkRobot_Explode_1` to `_3` | 16 x 18 | the three stages of it being destroyed, as the sheet's 2 x 2 block reads |
 
