@@ -136,8 +136,8 @@ change, `Enter` activates `RESTORE FACTORY SETTINGS` / `HIGH SCORE TABLE RESET` 
 they read `YES`, and `F10` saves and returns:
 `EXTRA MAN EVERY` (25000 points, the arcade's recommended stop), `TURNS PER PLAYER`
 (3 men), `DIFFICULTY OF PLAY` (0-10, 5 recommended — the wave tables move exactly as
-the ROM's `$2B7C` moves them), `ATTRACT MODE SOUND` (port-only: silence the demo
-machine playing itself), `RESTORE FACTORY SETTINGS` and `HIGH SCORE TABLE RESET`.
+the ROM's `$2B7C` moves them), `ATTRACT MODE SOUND` (port-only: off by default, so the demo
+machine playing itself is silent; turn it on to hear it), `RESTORE FACTORY SETTINGS` and `HIGH SCORE TABLE RESET`.
 Settings live in `%LocalAppData%\Robotron2084\settings.ini`, hand-editable and
 reloaded at start-up.
 **Attract dev keys (port-only, notes §97/§98):** `End` jump straight into the attract
