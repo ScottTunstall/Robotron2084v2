@@ -1,16 +1,16 @@
 using Robotron2084.Audio;
-using Robotron2084.Audio.Hardware;
+using Robotron2084.Audio.Synthesis;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests.Audio.Hardware;
+namespace Robotron2084.Tests.Audio.Synthesis;
 
 /// <summary>
-/// The emulated board running the real sound ROM. The ROM is not in git,
-/// so these skip when it is missing. The expectations were measured against MAME 0.288 driving the same
-/// sound tables through the arcade's own <c>SNDSEQ</c> (notes §126).
+/// The game's sound board, rebuilt from the sound ROM's source. The expectations were measured against
+/// MAME 0.288 driving the same sound tables through the arcade's own <c>SNDSEQ</c> (notes §126); the board
+/// itself is checked change for change against the real ROM by the sound player's tests (notes §130).
 /// </summary>
-public class SoundBoardRomTests
+public class SoundBoardTests
 {
     private const int SampleRate = 44_100;
 
@@ -74,7 +74,7 @@ public class SoundBoardRomTests
     [Fact]
     public void TheHeldVoiceStaysWithinTheWaveEndMusic()
     {
-        var board = new SoundBoard(RomFiles.ReadOrSkip(RomFiles.SoundRom));
+        var board = new SoundBoard();
         var renderer = new SoundBoardRenderer(board, SampleRate);
         board.SendSoundNumber(0x0E);
 
@@ -115,9 +115,26 @@ public class SoundBoardRomTests
         Assert.InRange(SoundTuning.WaveEndMusicTicks, tableEndsAt, musicEndsAt);
     }
 
+    [Fact]
+    public void EverySoundNumberTheGameSends_HasARoutine()
+    {
+        var board = new SoundBoard();
+        IEnumerable<int> sent = SoundTables.All.SelectMany(table => table.Entries).Select(entry => (int)entry.SoundNumber);
+
+        Assert.All(sent, soundNumber => Assert.True(board.CanPlay(soundNumber), $"sound ${soundNumber:X2}"));
+    }
+
+    [Fact]
+    public void ASoundNumberWithNoRoutine_IsRefused()
+    {
+        var board = new SoundBoard();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => board.SendSoundNumber(0x02));
+    }
+
     private static (SoundBoard Board, SoundBoardRenderer Renderer) StartBoard()
     {
-        var board = new SoundBoard(RomFiles.ReadOrSkip(RomFiles.SoundRom));
+        var board = new SoundBoard();
         return (board, new SoundBoardRenderer(board, SampleRate));
     }
 
