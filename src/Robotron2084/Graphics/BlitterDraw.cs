@@ -207,6 +207,28 @@ public sealed class BlitterDraw
         DrawSpriteSolid(spriteBatch, texture, bounds, shape);
     }
 
+    /// <summary>
+    /// Blitter op <c>$1A</c> for a PIECE of a sprite: draws the shape of one part of a white mask in one colour, which is how a
+    /// sprite that is being cut into strips is drawn in a palette colour.
+    /// </summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="texture">The white mask.</param>
+    /// <param name="source">The part of the mask to draw, in its own pixels.</param>
+    /// <param name="destination">Where to draw it, in port pixels.</param>
+    /// <param name="color">The colour, usually from <see cref="GetSlotColour"/>.</param>
+    public void DrawSpriteSolidPiece(SpriteBatch spriteBatch, Texture2D texture, Rectangle source, Rectangle destination, Color color)
+    {
+        if (ColorCycleEffect is { } effect &&
+            effect.Techniques[SolidRemapTechnique] is { } technique)
+        {
+            effect.Parameters[SolidColorParameter].SetValue(color.ToVector4());
+            technique.Passes[0].Apply();
+        }
+
+        spriteBatch.Draw(texture, destination, source, color);
+        UsePassThrough();
+    }
+
     /// <summary>The live RGB of a palette slot (0-15); white when no palette is wired.</summary>
     public Color GetSlotColour(int slot) => Palette?.Color(slot) ?? Color.White;
 
