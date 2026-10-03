@@ -27,6 +27,7 @@ public sealed class PlayFieldRobotRegistryTests
         (RobotKind.Hulk, static parameters => parameters.HulkCount),
         (RobotKind.Spheroid, static parameters => parameters.SpheroidCount),
         (RobotKind.Quark, static parameters => parameters.QuarkCount),
+        (RobotKind.Tank, static parameters => parameters.TankCount),
         (RobotKind.Brain, static parameters => parameters.BrainCount),
     ];
 
@@ -86,7 +87,8 @@ public sealed class PlayFieldRobotRegistryTests
         HulkCount: 5,
         BrainCount: 7,
         SpheroidCount: 11,
-        QuarkCount: 13);
+        QuarkCount: 13,
+        TankCount: 17);
 
     private static PlayField CreateField() =>
         new PlayFieldBuilder().WithParameters(new LevelParameters(LevelNumber: 1)).WithSeed(99).Build();
