@@ -34,7 +34,7 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/AttractCruise.png
 
-#begin Sprites/AttractPost_1.png
+#begin Sprites/AttractElectrode_1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -44,9 +44,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/AttractPost_1.png
+/build:Sprites/AttractElectrode_1.png
 
-#begin Sprites/AttractPost_2.png
+#begin Sprites/AttractElectrode_2.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -56,9 +56,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/AttractPost_2.png
+/build:Sprites/AttractElectrode_2.png
 
-#begin Sprites/AttractPost_3.png
+#begin Sprites/AttractElectrode_3.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -68,9 +68,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/AttractPost_3.png
+/build:Sprites/AttractElectrode_3.png
 
-#begin Sprites/AttractPost_4.png
+#begin Sprites/AttractElectrode_4.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -80,7 +80,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/AttractPost_4.png
+/build:Sprites/AttractElectrode_4.png
 
 #begin Sprites/Brain_1.png
 /importer:TextureImporter
@@ -2086,7 +2086,7 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/MissileSmall_1.png
 
-#begin Sprites/Mummy_1.png
+#begin Sprites/Mommy_1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2096,9 +2096,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_1.png
+/build:Sprites/Mommy_1.png
 
-#begin Sprites/Mummy_10.png
+#begin Sprites/Mommy_10.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2108,9 +2108,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_10.png
+/build:Sprites/Mommy_10.png
 
-#begin Sprites/Mummy_11.png
+#begin Sprites/Mommy_11.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2120,9 +2120,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_11.png
+/build:Sprites/Mommy_11.png
 
-#begin Sprites/Mummy_12.png
+#begin Sprites/Mommy_12.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2132,9 +2132,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_12.png
+/build:Sprites/Mommy_12.png
 
-#begin Sprites/Mummy_2.png
+#begin Sprites/Mommy_2.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2144,9 +2144,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_2.png
+/build:Sprites/Mommy_2.png
 
-#begin Sprites/Mummy_3.png
+#begin Sprites/Mommy_3.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2156,9 +2156,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_3.png
+/build:Sprites/Mommy_3.png
 
-#begin Sprites/Mummy_4.png
+#begin Sprites/Mommy_4.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2168,9 +2168,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_4.png
+/build:Sprites/Mommy_4.png
 
-#begin Sprites/Mummy_5.png
+#begin Sprites/Mommy_5.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2180,9 +2180,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_5.png
+/build:Sprites/Mommy_5.png
 
-#begin Sprites/Mummy_6.png
+#begin Sprites/Mommy_6.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2192,9 +2192,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_6.png
+/build:Sprites/Mommy_6.png
 
-#begin Sprites/Mummy_7.png
+#begin Sprites/Mommy_7.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2204,9 +2204,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_7.png
+/build:Sprites/Mommy_7.png
 
-#begin Sprites/Mummy_8.png
+#begin Sprites/Mommy_8.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2216,9 +2216,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_8.png
+/build:Sprites/Mommy_8.png
 
-#begin Sprites/Mummy_9.png
+#begin Sprites/Mommy_9.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2228,7 +2228,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Mummy_9.png
+/build:Sprites/Mommy_9.png
 
 #begin Sprites/PlayerBig.png
 /importer:TextureImporter
