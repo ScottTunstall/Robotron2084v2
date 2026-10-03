@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
@@ -15,6 +15,9 @@ namespace Robotron2084.States;
 /// "ROBOTRON:" wordmark and the "2084" mark over the operator's attract-mode welcome message
 /// (<c>$8822</c>-<c>$8836</c> prints two 25-character lines in the LARGE font, an empty row apart),
 /// then the Vid Kidz / Williams credit strings in the SMALL font.
+///
+/// The big ROBOTRON letters come into view one after another, each pulled together from strips like an explosion run
+/// backwards (<see cref="WordmarkAppear"/>, notes §135), and the "2084" mark goes up once the last has settled.
 ///
 /// COLOUR — the page's OWN decoded set (notes §106): the ROM writes seven colours into palette
 /// entries 1-7 (`$8A3A` copying the table at `$8A70`) and chases a WHITE flash through them every
@@ -113,6 +116,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     ];
 
     private readonly WilliamsLogoBorder _border;
+    private readonly WordmarkAppear _wordmark;
     private readonly ButtonEdgeDetector _buttons = new();
     private readonly PresentationPagePalette _colour = new();
     private readonly ControlSettings _controls;
@@ -139,6 +143,10 @@ public sealed class TitleScreenState : IGameState, IAttractState
         _controls = services.Controls;
         _settings = services.Settings;
         _border = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_sprites.WilliamsLogo));
+        _wordmark = WordmarkAppear.CreateFromMasks(
+            _sprites.TitleWordmarkRim,
+            _sprites.TitleWordmarkCore,
+            new Point((ScreenSize.Width - (_sprites.TitleWordmarkRim.Width * ScreenSize.SpecScale)) / 2, WordmarkRow));
 
         // The presentation page runs its OWN decoded colour set (notes §106): entries 1-7 come
         // from the ROM's seven-byte table ($8A70) with a white flash chasing through them every
@@ -165,9 +173,11 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
         // body on a yellow rim. The "2084" mark keeps its traced colours. Both at the port's 2x
         // sprite scale.
-        DrawCentredMask(spriteBatch, _sprites.TitleWordmarkRim, WordmarkRow, _colour.WordmarkRimSlot);
-        DrawCentredMask(spriteBatch, _sprites.TitleWordmarkCore, WordmarkRow, _colour.WordmarkColorSlot);
-        DrawCentredLogo(spriteBatch, _sprites.Title2084, Logo2084Row);
+        _wordmark.Draw(spriteBatch, _sprites.Blitter, _colour.WordmarkRimSlot, _colour.WordmarkColorSlot);
+        if (_wordmark.IsFinished)
+        {
+            DrawCentredLogo(spriteBatch, _sprites.Title2084, Logo2084Row);
+        }
 
         // The page's text: ONE of its two panes, alternating every TitleTextSwapSeconds
         // (notes §107). Both are drawn in the page's own text slot — the ROM's operand `$66`, entry
@@ -191,6 +201,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         }
 
         _border.Tick();
+        _wordmark.Update();
 
         PlayerInputState input = _input.Poll();
 
@@ -300,20 +311,6 @@ public sealed class TitleScreenState : IGameState, IAttractState
         int height = texture.Height * ScreenSize.SpecScale;
         var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
         _sprites.Blitter.DrawSprite(spriteBatch, texture, bounds, Color.White);
-    }
-
-    /// <summary>
-    /// Centres a WHITE MASK and draws it in one palette slot's live colour — the arcade's blitter
-    /// REMAP COLOUR op (<c>$1A</c>), which is how the ROM draws anything in a colour from the
-    /// palette. A slot the page's colour processes own therefore takes the wordmark round its cycle
-    /// with it (notes §104).
-    /// </summary>
-    private void DrawCentredMask(SpriteBatch spriteBatch, Texture2D texture, int y, int slot)
-    {
-        int width = texture.Width * ScreenSize.SpecScale;
-        int height = texture.Height * ScreenSize.SpecScale;
-        var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, texture, bounds, _sprites.Blitter.GetSlotColour(slot));
     }
 
     /// <summary>
