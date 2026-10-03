@@ -53,8 +53,14 @@ not be part of the public surface. `PlayField.LaserWallFlare` is the counter-exa
 the review.
 
 **STR-5. Member order in a class:** constants → static fields → instance fields → constructor(s) → public
-properties → public methods (`Update` before `Draw`) → private helpers in the order the public methods call
-them → `CurrentAnimationFrame` → test hooks, last and together.
+properties → public methods (`Update` before `Draw`) → internal properties → internal methods → private helpers in
+the order the public methods call them → `CurrentAnimationFrame`. Order by visibility first: never put a private or
+internal member between public ones. Test hooks go last and together within their visibility.
+
+**STR-5a. Keep related members together.** Inside each visibility group, members that are conceptually related sit
+side by side: the frame loop (`Update`, `Draw`), the questions about the wave, the questions about the player, the
+spawns, scoring, sound, and so on. A reader should find everything about one idea in one place, not scattered by the
+order it was written in. When you add a member, put it beside its relatives, not at the end.
 
 **STR-6. A registry must be the only place.** If a type claims "add a row here and nothing else"
 (`RobotKinds`), then nothing else may list the kinds by hand. A hand-written list elsewhere is a bug waiting to
