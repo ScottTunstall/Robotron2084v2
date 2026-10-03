@@ -231,15 +231,15 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
 
         // Placement and facing (ROM: BMUT00/BMUT10).
         int humanWidth = human.Bounds.Width;
-        int x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromArcade(VictimGapArcadePixels);
+        int x = _position.X - humanWidth - ScreenSize.ToPortPixels(VictimGapArcadePixels);
         WalkFacing facing = WalkFacing.Left;
         if (x < playfieldBounds.X)
         {
-            x = _position.X + ScreenSize.ToPortPixelsFromArcade(VictimRightOffsetArcadePixels);
+            x = _position.X + ScreenSize.ToPortPixels(VictimRightOffsetArcadePixels);
             facing = WalkFacing.Right;
-            if (x >= playfieldBounds.Right - ScreenSize.ToPortPixelsFromArcade(VictimRightWallMarginArcadePixels))
+            if (x >= playfieldBounds.Right - ScreenSize.ToPortPixels(VictimRightWallMarginArcadePixels))
             {
-                x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromArcade(VictimGapArcadePixels);
+                x = _position.X - humanWidth - ScreenSize.ToPortPixels(VictimGapArcadePixels);
                 facing = WalkFacing.Left;
             }
         }
@@ -247,7 +247,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         _facing = facing;
         _walkCycleStep = 0;
 
-        human.MoveTo(new IntVector2(x, _position.Y + ScreenSize.ToPortPixelsFromArcade(VictimDropArcadePixels)));
+        human.MoveTo(new IntVector2(x, _position.Y + ScreenSize.ToPortPixels(VictimDropArcadePixels)));
     }
 
     /// <summary>Gives up the current victim, if any — used when the brain is killed mid-animation.</summary>
@@ -336,8 +336,8 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
         if (field.CanFireCruiseMissile())
         {
             field.SpawnCruiseMissile(_position + new IntVector2(
-                ScreenSize.ToPortPixelsFromArcade(MissileMuzzleXArcadePixels),
-                ScreenSize.ToPortPixelsFromArcade(MissileMuzzleYArcadePixels)));
+                ScreenSize.ToPortPixels(MissileMuzzleXArcadePixels),
+                ScreenSize.ToPortPixels(MissileMuzzleYArcadePixels)));
         }
 
         _fireBeatsRemaining = 1 + _random.Next(_fireIntervalBeats);

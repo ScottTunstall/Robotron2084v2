@@ -144,7 +144,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         int dy = direction.Y != 0 && _random.Next(ShoveVerticalQuadrupleRollSides) < ShoveVerticalQuadrupleRollBelow
             ? direction.Y * ShoveVerticalQuadrupleFactor
             : direction.Y;
-        _position += new IntVector2(ScreenSize.ToPortPixelsFromArcade(dx), ScreenSize.ToPortPixelsFromArcade(dy));
+        _position += new IntVector2(ScreenSize.ToPortPixels(dx), ScreenSize.ToPortPixels(dy));
         if (_playfieldBounds is { } bounds)
         {
             int x = Math.Clamp(_position.X, bounds.X, bounds.Right - CollisionSize.Width);
@@ -195,7 +195,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
             ? (_walkCycleStep % 2 == 0 ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels)
             : VerticalStepArcadePixels;
         _walkCycleStep = (_walkCycleStep + 1) % WalkPatternLength;
-        IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.ToPortPixelsFromArcade(stepArcadePx);
+        IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.ToPortPixels(stepArcadePx);
         if (field.Wall.Intersects(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             // That step would cross the wall — stay put and re-aim.

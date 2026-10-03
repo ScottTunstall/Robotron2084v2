@@ -278,7 +278,7 @@ public sealed class Prog : IExplodable, IRemovable
 
         // 2 columns (4px) on X or 4 rows (4px) on Y, on one axis only.
         int stepX = ScreenSize.ToPortPixelsFromColumns(StepXColumns);
-        int stepY = ScreenSize.ToPortPixelsFromArcade(StepYRows);
+        int stepY = ScreenSize.ToPortPixels(StepYRows);
         IntVector2 step = _direction switch
         {
             Direction8.Left => new IntVector2(-stepX, 0),
@@ -334,8 +334,8 @@ public sealed class Prog : IExplodable, IRemovable
             return aimX <= _position.X ? Direction8.Left : Direction8.Right;
         }
 
-        int aimY = player.Y + ScreenSize.ToPortPixelsFromArcade(_offsetY);
-        if (aimY > bounds.Bottom + ScreenSize.ToPortPixelsFromArcade(WrapMarginYRows))
+        int aimY = player.Y + ScreenSize.ToPortPixels(_offsetY);
+        if (aimY > bounds.Bottom + ScreenSize.ToPortPixels(WrapMarginYRows))
         {
             aimY = bounds.Top;
         }

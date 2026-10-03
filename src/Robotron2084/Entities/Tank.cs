@@ -46,7 +46,7 @@ public sealed class Tank : IExplodable, IRemovable
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixels(CollisionSizes.TankCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.TankCollisionSize.Height));
 
-    private static readonly int VerticalMoveThreshold = ScreenSize.ToPortPixelsFromArcade(VerticalMoveThresholdArcadePixels);
+    private static readonly int VerticalMoveThreshold = ScreenSize.ToPortPixels(VerticalMoveThresholdArcadePixels);
     private readonly int _fireIntervalBeats;
     private readonly Random _random;
     private readonly SpriteSet _sprites;

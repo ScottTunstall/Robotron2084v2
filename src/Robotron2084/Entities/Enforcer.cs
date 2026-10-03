@@ -228,7 +228,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
         int targetX = field.Player.Position.X + ScreenSize.ToPortPixelsFromColumns(_random.Next(0, AimZoneColumns));
-        int targetY = field.Player.Position.Y + ScreenSize.ToPortPixelsFromArcade(_random.Next(0, AimZoneRows));
+        int targetY = field.Player.Position.Y + ScreenSize.ToPortPixels(_random.Next(0, AimZoneRows));
         targetX = Math.Clamp(targetX, bounds.X, bounds.Right - CollisionSize.Width);
         targetY = Math.Clamp(targetY, bounds.Y, bounds.Bottom - CollisionSize.Height);
 

@@ -258,7 +258,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
                 : TankTuning.BirthOffsetRowsOffTopWall;
             field.SpawnTank(_position + new IntVector2(
                 ScreenSize.ToPortPixelsFromColumns(TankTuning.BirthOffsetColumns),
-                ScreenSize.ToPortPixelsFromArcade(rowOffset)));
+                ScreenSize.ToPortPixels(rowOffset)));
             if (_tanksRemaining == 0)
             {
                 StartFlee();
@@ -325,7 +325,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private void StartFlee()
     {
         _fleeing = true;
-        int subpixels = QuarkTuning.FleeVelocityRom * ScreenSize.ToPortPixelsFromArcade(1);
+        int subpixels = QuarkTuning.FleeVelocityRom * ScreenSize.ToPortPixels(1);
         _velocitySubpixels = new IntVector2(0, _random.Next(CoinFlipSides) == 0 ? subpixels : -subpixels);
         _remainderSubpixels = IntVector2.Zero;
     }

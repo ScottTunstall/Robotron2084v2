@@ -232,7 +232,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirectionBlock[_directionBlock] + frame;
 
         // Each unit in the walk table is one arcade pixel.
-        IntVector2 candidate = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixelsFromArcade(1);
+        IntVector2 candidate = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixels(1);
         Rectangle next = Bounds with { X = candidate.X, Y = candidate.Y };
         if (field.Wall.Intersects(next) || OverlapsLivingElectrode(next, field))
         {

@@ -37,10 +37,10 @@ public sealed class Grunt : IEntity, IExplodable, IRemovable
         (ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Height));
 
     /// <summary>The per-axis dead zone, in port pixels.</summary>
-    private static readonly int DeadZoneScreenPixels = ScreenSize.ToPortPixelsFromArcade(GruntDeadZoneArcadePixels);
+    private static readonly int DeadZoneScreenPixels = ScreenSize.ToPortPixels(GruntDeadZoneArcadePixels);
 
     /// <summary>How far one step moves the grunt on each active axis, in port pixels.</summary>
-    private static readonly int StepScreenPixels = ScreenSize.ToPortPixelsFromArcade(GruntStepArcadePixels);
+    private static readonly int StepScreenPixels = ScreenSize.ToPortPixels(GruntStepArcadePixels);
 
     private readonly Random _random;
     private readonly SpriteSet _sprites;
