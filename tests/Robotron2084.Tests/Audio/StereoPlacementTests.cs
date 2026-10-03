@@ -14,7 +14,7 @@ public class StereoPlacementTests
     {
         var maker = new Rectangle(310, 200, 20, 20);
 
-        Assert.Equal(0f, StereoPlacement.PanFor(maker, Playfield));
+        Assert.Equal(0f, StereoPlacement.GetPan(maker, Playfield));
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public class StereoPlacementTests
     {
         var maker = new Rectangle(30, 200, 20, 20);
 
-        Assert.Equal(-SoundTuning.StereoWidth, StereoPlacement.PanFor(maker, Playfield));
+        Assert.Equal(-SoundTuning.StereoWidth, StereoPlacement.GetPan(maker, Playfield));
     }
 
     [Fact]
@@ -30,7 +30,7 @@ public class StereoPlacementTests
     {
         var maker = new Rectangle(900, 200, 20, 20);
 
-        Assert.Equal(SoundTuning.StereoWidth, StereoPlacement.PanFor(maker, Playfield));
+        Assert.Equal(SoundTuning.StereoWidth, StereoPlacement.GetPan(maker, Playfield));
     }
 
     [Fact]
@@ -38,6 +38,6 @@ public class StereoPlacementTests
     {
         var maker = new Rectangle(450, 200, 20, 20);
 
-        Assert.Equal(0.5f * SoundTuning.StereoWidth, StereoPlacement.PanFor(maker, Playfield), precision: 3);
+        Assert.Equal(0.5f * SoundTuning.StereoWidth, StereoPlacement.GetPan(maker, Playfield), precision: 3);
     }
 }

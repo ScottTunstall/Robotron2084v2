@@ -51,6 +51,6 @@ public class SoundTablesTests
     {
         object? expected = typeof(SoundTables).GetField(table)!.GetValue(null);
 
-        Assert.Same(expected, RobotKinds.Of(kind).LaserHitSound);
+        Assert.Same(expected, RobotKinds.GetInfo(kind).LaserHitSound);
     }
 }

@@ -7,8 +7,13 @@ namespace Robotron2084.Tests.Audio;
 public sealed class SoundTests : IDisposable
 {
     private readonly bool _wasEnabled = Sound.Enabled;
+    private readonly bool _wasAttractMuted = Sound.AttractMuted;
 
-    public void Dispose() => Sound.Enabled = _wasEnabled;
+    public void Dispose()
+    {
+        Sound.Enabled = _wasEnabled;
+        Sound.AttractMuted = _wasAttractMuted;
+    }
 
     [Fact]
     public void WithTheSwitchOff_NothingReachesTheSink()
@@ -32,6 +37,7 @@ public sealed class SoundTests : IDisposable
         var sink = new RecordingSink();
         Sound.Initialize(sink);
         Sound.Enabled = true;
+        Sound.AttractMuted = false;
 
         Sound.Play(SoundTables.Laser);
         for (int i = 0; i < 20; i++)
@@ -40,6 +46,23 @@ public sealed class SoundTests : IDisposable
         }
 
         Assert.Single(sink.Sends);
+    }
+
+    [Fact]
+    public void WhileTheAttractIsMuted_NothingReachesTheSink()
+    {
+        var sink = new RecordingSink();
+        Sound.Initialize(sink);
+        Sound.Enabled = true;
+        Sound.AttractMuted = true;
+
+        Sound.Play(SoundTables.Laser);
+        for (int i = 0; i < 20; i++)
+        {
+            Sound.Tick();
+        }
+
+        Assert.Empty(sink.Sends);
     }
 
     [Fact]

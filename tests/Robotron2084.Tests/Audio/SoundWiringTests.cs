@@ -12,16 +12,22 @@ namespace Robotron2084.Tests.Audio;
 [Collection("SoundFacade")]
 public sealed class SoundWiringTests : IDisposable
 {
+    private readonly bool _wasAttractMuted = Sound.AttractMuted;
     private readonly bool _wasEnabled = Sound.Enabled;
     private readonly RecordingSink _sink = new();
 
     public SoundWiringTests()
     {
-        Sound.Initialize(_sink);
+        Sound.AttractMuted = false;
         Sound.Enabled = true;
+        Sound.Initialize(_sink);
     }
 
-    public void Dispose() => Sound.Enabled = _wasEnabled;
+    public void Dispose()
+    {
+        Sound.Enabled = _wasEnabled;
+        Sound.AttractMuted = _wasAttractMuted;
+    }
 
     [Fact]
     public void FiringTheLaser_SendsLASSND_SoundNumber01_NotTheTwoPlayerStartSound()
