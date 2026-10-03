@@ -164,7 +164,7 @@ public sealed class PlayingState : IGameState
         }
 
         // Death animation finished this frame (one-shot via _restartHandled).
-        if (_field.Player.LifeState == EntityLifeState.Dead && !_restartHandled)
+        if (_field.Player.IsDead() && !_restartHandled)
         {
             _restartHandled = true;
             HandlePlayerDeath(manager);

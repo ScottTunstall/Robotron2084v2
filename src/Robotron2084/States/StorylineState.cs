@@ -155,7 +155,7 @@ public sealed class StorylineState : IGameState, IAttractState
         for (int i = _explosions.Count - 1; i >= 0; i--)
         {
             _explosions[i].Update(gameTime);
-            if (_explosions[i].LifeState != EntityLifeState.Alive)
+            if (!_explosions[i].IsAlive())
             {
                 _explosions.RemoveAt(i);
             }

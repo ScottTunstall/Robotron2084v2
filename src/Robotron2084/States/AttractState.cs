@@ -89,7 +89,7 @@ public sealed class AttractState : IGameState, IAttractState
             return;
         }
 
-        if (_field.Player.LifeState == EntityLifeState.Dead)
+        if (_field.Player.IsDead())
         {
             SyncSlotFromField();
             _session.Current.Rescues = 0; // ROM PLINIT clears SAVCNT
