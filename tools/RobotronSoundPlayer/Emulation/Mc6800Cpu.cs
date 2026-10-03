@@ -86,7 +86,7 @@ public sealed class Mc6800Cpu
             return WaitCycles;
         }
 
-        Mc6800Instruction instruction = Mc6800InstructionSet.For(FetchByte());
+        Mc6800Instruction instruction = Mc6800InstructionSet.GetInstruction(FetchByte());
         instruction.Execute(this);
         return instruction.Cycles;
     }

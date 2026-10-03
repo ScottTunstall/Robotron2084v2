@@ -96,7 +96,7 @@ internal static class Mc6800InstructionSet
     /// <summary>The instruction an opcode byte stands for.</summary>
     /// <param name="opcode">The opcode byte.</param>
     /// <returns>Its instruction.</returns>
-    internal static Mc6800Instruction For(byte opcode) => Instructions[opcode];
+    internal static Mc6800Instruction GetInstruction(byte opcode) => Instructions[opcode];
 
     /// <summary>Fills in every opcode.</summary>
     private static Mc6800Instruction[] Build()
