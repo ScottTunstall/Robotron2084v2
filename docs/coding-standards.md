@@ -76,6 +76,13 @@ its registry (STR-6). Move the method to the type whose data it uses and leave t
 stays in a coordinating class such as `PlayField` is only what needs two or more different objects at once: the
 order of the phases, and the rules between entities (who kills whom, who is drawn first).
 
+**STR-9. A check on state is a method that says what it is for.** Never compare an entity's `LifeState` (or any
+other state) with an enum value outside the type that owns it. Ask `entity.IsAlive()`, `IsDying()` or `IsDead()`
+(`EntityLifeExtensions`), or add a method named for the question (`human.IsGraspable()`, `brain.IsReprogramming`).
+The comparison then lives in one place, the call site reads as intent, and a change to what a state means is made
+once. Inside an entity's own class, ask the same methods on `this`. Setting a state (`LifeState = ...`) stays
+inside the entity that owns it.
+
 ## 3. Naming (§114)
 
 **NAM-1. Methods are verb phrases in the domain's own words**: `RollOffsets`, `PickDirection`,
