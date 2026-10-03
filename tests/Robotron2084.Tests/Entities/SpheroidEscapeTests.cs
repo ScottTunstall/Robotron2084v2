@@ -10,7 +10,7 @@ namespace Robotron2084.Tests;
 /// <summary>
 /// Pins where the spheroid's escape gives up (ROM <c>CIRC3L</c>: <c>CMPA #XMIN+3</c> /
 /// <c>CMPA #XMAX-10</c>, i.e. column 10 and column 133 of the video buffer). The exit is
-/// only tested on the beat that wraps a picture cycle, so a spheroid leaves on the first
+/// only tested on the beat that wraps an animation frame cycle, so a spheroid leaves on the first
 /// wrap beat past the line, never exactly on it.
 /// </summary>
 /// <remarks>This class exists because the two exits are measured from DIFFERENT origins
@@ -35,7 +35,7 @@ public sealed class SpheroidEscapeTests
     [Fact]
     public void TheRightEscapeExitIsMeasuredFromTheScreenOrigin()
     {
-        int rightExit = ScreenSize.Scaled(2 * SpheroidTuning.EscapeExitRightColumn);
+        int rightExit = ScreenSize.ToPortPixels(2 * SpheroidTuning.EscapeExitRightColumn);
 
         // The left exit is `bounds.X + Scaled(2 * 10)` = 80 (40 of playfield + 40 of
         // margin); the right exit is Scaled(2 * 133) = 532 with NO playfield term, so
@@ -84,13 +84,13 @@ public sealed class SpheroidEscapeTests
         return spheroid.IsEscaping;
     }
 
-    /// <summary>Follows an escape to its end, recording the last picture-wrap beat and where the spheroid left.</summary>
+    /// <summary>Follows an escape to its end, recording the last animation-frame wrap beat and where the spheroid left.</summary>
     /// <returns>The two X positions, or null when the spheroid went left or never left the field.</returns>
     private static (int LastWrapBeatX, int DeathX)? FollowRightwardEscape(PlayField field, Spheroid spheroid)
     {
         int startX = spheroid.Position.X;
         int lastWrapBeatX = startX;
-        int previousPicture = spheroid.PictureIndex;
+        int previousAnimationFrame = spheroid.AnimationFrameIndex;
 
         for (int tick = 0; tick < 900; tick++)
         {
@@ -106,12 +106,12 @@ public sealed class SpheroidEscapeTests
                 return (lastWrapBeatX, spheroid.Position.X);
             }
 
-            if (spheroid.PictureIndex < previousPicture)
+            if (spheroid.AnimationFrameIndex < previousAnimationFrame)
             {
                 lastWrapBeatX = spheroid.Position.X;
             }
 
-            previousPicture = spheroid.PictureIndex;
+            previousAnimationFrame = spheroid.AnimationFrameIndex;
         }
 
         return null;

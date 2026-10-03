@@ -9,8 +9,8 @@ namespace Robotron2084.Tests;
 
 /// <summary>
 /// The spheroid's and the quark's DEATH BURST (notes §64) — the ROM's
-/// `CIRKP`/`CIRKV`, which is NOT the strip explosion: the enemy's own pictures
-/// play as a solid silhouette in a palette slot, then its "1000" picture is
+/// `CIRKP`/`CIRKV`, which is NOT the strip explosion: the enemy's own animation frames
+/// play as a solid silhouette in a palette slot, then its "1000" sprite is
 /// displayed down-right of where it died.
 /// </summary>
 public sealed class ScoreBurstTests
@@ -27,10 +27,10 @@ public sealed class ScoreBurstTests
     }
 
     [Fact]
-    public void TheBurstShowsTheEnemysPictures_FromTwo_UpToTheRomCount()
+    public void TheBurstShowsTheEnemysAnimationFrames_FromTwo_UpToTheRomCount()
     {
         var bounds = new Rectangle(100, 200, 16, 15);
-        ScoreBurst burst = ScoreBurst.ForSpheroid(TestSprites.Shared, bounds);
+        ScoreBurst burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, bounds);
 
         Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, burst.AnimationFrameIndex);
         Assert.False(burst.ShowingPoints);
@@ -49,7 +49,7 @@ public sealed class ScoreBurstTests
             }
         }
 
-        // Pictures 2..7 for the spheroid: `LDA #7` IS the last picture's index,
+        // Animation frames 2..7 for the spheroid: `LDA #7` IS the last animation frame's index,
         // and because the ROM tests the countdown BEFORE drawing, the last step
         // draws nothing — so the showing ends there.
         Assert.Equal([3, 4, 5, 6, 7], seen);
@@ -64,9 +64,9 @@ public sealed class ScoreBurstTests
         // `NAP 2` = 2 ROM frames = 12 clock units, and a port tick is 5 clock units, so a
         // step lands every 2-3 ticks (2.4). PortTicks(2) would also be 2 here,
         // but the accumulator is the repo's rule for short ROM delays (§52).
-        ScoreBurst burst = ScoreBurst.ForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
+        ScoreBurst burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
 
-        // Picture 2 is shown from the kill itself; each step is 2 ROM frames.
+        // Animation frame 2 is shown from the kill itself; each step is 2 ROM frames.
         Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, burst.AnimationFrameIndex);
         Advance(burst, 2);
         Assert.Equal(2, burst.AnimationFrameIndex); // 10 clock units: not yet
@@ -81,7 +81,7 @@ public sealed class ScoreBurstTests
     [Fact]
     public void ThePointsValueShowsForThirtySteps_ThenTheBurstIsGone()
     {
-        ScoreBurst burst = ScoreBurst.ForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
+        ScoreBurst burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
 
         // 36 steps in total (6 burst + 30 points) x 12 clock units = 432 clock units, and
         // 5 clock units accrue a tick => 86 ticks leave it alive, the 87th kills it.
@@ -96,13 +96,13 @@ public sealed class ScoreBurstTests
     public void ThePointsValueSits_OneColumnRight_FiveRowsDown()
     {
         var bounds = new Rectangle(100, 200, 16, 15);
-        ScoreBurst burst = ScoreBurst.ForQuark(TestSprites.Shared, bounds);
+        ScoreBurst burst = ScoreBurst.CreateForQuark(TestSprites.Shared, bounds);
 
         // The ROM adds #$0105 to the blitter's column:row destination.
         Assert.Equal(
             new Rectangle(
-                bounds.X + ScreenSize.Scaled(ScoreBurstTuning.PointsOffsetXSpecPixels),
-                bounds.Y + ScreenSize.Scaled(ScoreBurstTuning.PointsOffsetYSpecPixels),
+                bounds.X + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetXSpecPixels),
+                bounds.Y + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetYSpecPixels),
                 bounds.Width,
                 bounds.Height),
             burst.PointsBounds);
@@ -114,21 +114,21 @@ public sealed class ScoreBurstTests
         // `LDD #$FFAA`: $AA = slot 10 (the current player's score slot) for the
         // dying silhouette and $FF = slot 15 for the points value; the quark's
         // `LDD #$DDDD` uses slot 13 for both. All three cycle with the palette.
-        ScoreBurst spheroid = ScoreBurst.ForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
+        ScoreBurst spheroid = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
         Assert.Equal(10, spheroid.BurstSlot);
         Assert.Equal(15, spheroid.PointsSlot);
 
-        ScoreBurst quark = ScoreBurst.ForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
+        ScoreBurst quark = ScoreBurst.CreateForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
         Assert.Equal(13, quark.BurstSlot);
         Assert.Equal(13, quark.PointsSlot);
     }
 
     [Fact]
-    public void TheQuarkBurst_ShowsItsLastPicture_IndexEight()
+    public void TheQuarkBurst_ShowsItsLastAnimationFrame_IndexEight()
     {
-        // The quark has NINE pictures (SQP0..SQP8) and `LDA #8`, so its burst
+        // The quark has NINE animation frames (SQP0..SQP8) and `LDA #8`, so its burst
         // reaches index 8 — one further than the spheroid's.
-        ScoreBurst burst = ScoreBurst.ForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
+        ScoreBurst burst = ScoreBurst.CreateForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
         int last = burst.AnimationFrameIndex;
         while (!burst.ShowingPoints && last < 20)
         {

@@ -86,7 +86,7 @@ public sealed class QuarkTankBehaviourTests
         // "The quarks are WAY too fast.", and would blow both bounds below.
         // Both bounds are in port px, so they follow the render scale: the peak step stays
         // under 2 arcade px on one axis, and the average path under 3.5 px a tick at 2x.
-        Assert.True(maxAxisSeen <= ScreenSize.Scaled(2), $"axis step {maxAxisSeen} is too large for a sub-pixel drift");
+        Assert.True(maxAxisSeen <= ScreenSize.ToPortPixels(2), $"axis step {maxAxisSeen} is too large for a sub-pixel drift");
         Assert.True(pathLength <= aliveTicksSampled * 3.5 * ScreenSize.SpecScale,
             $"average path {pathLength / (double)aliveTicksSampled:F2} units/tick — that is a dart, not a drift");
     }
@@ -102,7 +102,7 @@ public sealed class QuarkTankBehaviourTests
 
         // Robots are frozen during the 2 s player start grace (120 ticks); the
         // first drop is due within 2 ticks after it ends.
-        for (int tick = 0; tick < 200 && field.TankCount == 0; tick++)
+        for (int tick = 0; tick < 200 && field.GetTankCount() == 0; tick++)
         {
             field.Update(Frame());
         }
@@ -116,8 +116,8 @@ public sealed class QuarkTankBehaviourTests
         // TNKDRP: +2 COLUMNS and +6 ROWS, with the row decremented first unless the
         // quark sits on the top wall — this quark is mid-field, so it is +5 rows.
         IntVector2 spawn = quark.Position + new IntVector2(
-            ScreenSize.Columns(TankTuning.BirthOffsetColumns),
-            ScreenSize.Scaled(TankTuning.BirthOffsetRowsOffTopWall));
+            ScreenSize.ToPortPixelsFromColumns(TankTuning.BirthOffsetColumns),
+            ScreenSize.ToPortPixels(TankTuning.BirthOffsetRowsOffTopWall));
         Assert.Equal(spawn, tank.Position);
     }
 
@@ -138,7 +138,7 @@ public sealed class QuarkTankBehaviourTests
         IntVector2 start = tank.Position;
 
         // ROM MTANK ("MINI TANK GROW"): a dropped tank plays four mini-tank
-        // pictures at NAP 12 ROM frames each — 48 ROM frames = 4.8x12 = 57.6
+        // animation frames at NAP 12 ROM frames each — 48 ROM frames = 4.8x12 = 57.6
         // port ticks — and it does not move, aim or fire until they are done.
         // Author, 2026-09-16: "tanks spawn instantly whereas they are 'born'
         // like the enforcer." The old test asserted movement on the FIRST frame,
@@ -157,12 +157,12 @@ public sealed class QuarkTankBehaviourTests
             field.Update(Frame());
         }
 
-        // MTANK walks the mini tank up-left as it grows: the four pictures' own
+        // MTANK walks the mini tank up-left as it grows: the four animation frames' own
         // (dx,dy) come to -2 columns and -6 rows (notes §53), so the full 14x16
         // tank ends up centred on the drop point instead of hanging off it. The
         // tolerance is one aim step (the update that ends the birth also lets the
         // tank move itself for the first time).
-        IntVector2 grown = start + new IntVector2(-ScreenSize.Scaled(4), -ScreenSize.Scaled(6));
+        IntVector2 grown = start + new IntVector2(-ScreenSize.ToPortPixels(4), -ScreenSize.ToPortPixels(6));
         Assert.InRange(tank.Position.X, grown.X - 2, grown.X + 2);
         Assert.InRange(tank.Position.Y, grown.Y - 2, grown.Y + 2);
 
@@ -208,7 +208,7 @@ public sealed class QuarkTankBehaviourTests
             Assert.Equal(treadAtSpawn, tank.TreadFrameIndex);
         }
 
-        // ROM MTANK: the tank plays four birth pictures before it can move, aim or
+        // ROM MTANK: the tank plays four birth animation frames before it can move, aim or
         // fire, so no beat happens while it is being born either.
         while (tank.IsBeingBorn)
         {
@@ -216,7 +216,7 @@ public sealed class QuarkTankBehaviourTests
             Assert.Equal(treadAtSpawn, tank.TreadFrameIndex);
         }
 
-        // ROM TANK3 advances the tread picture on a BEAT, and a beat lands every 3rd
+        // ROM TANK3 advances the tread animation frame on a BEAT, and a beat lands every 3rd
         // or 4th tick (TNKSPD 2 + 1 = 18 timer units, earned 5 a tick), so the
         // tread must run again well within 20 ticks. The port also bumped the counter
         // on every tick, which span the tread at twice the arcade rate -- between the

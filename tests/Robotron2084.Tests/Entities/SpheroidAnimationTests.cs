@@ -6,20 +6,20 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// The spheroid's PICTURE CHAIN (notes §56.2 as corrected by §90) — `OPICT += 4` once
+/// The spheroid's sprite CHAIN (notes §56.2 as corrected by §90) — `OPICT += 4` once
 /// per beat (`NAP 2` = 3 ROM frames = 3.6 port ticks), where the wrap boundary decides
-/// how many pictures a phase has:
+/// how many animation frames a phase has:
 /// <list type="bullet">
 /// <item>`CIRCLE` (`ANIMATE_SPHEROID`) and `CIRC3L` both compare against `CIRP4`
-/// (`CMPD #$1502`), so the idle spin and the ESCAPE cycle FIVE pictures, CIRP0..CIRP4;</item>
+/// (`CMPD #$1502`), so the idle spin and the ESCAPE cycle FIVE animation frames, CIRP0..CIRP4;</item>
 /// <item>`CIRC2L` compares against `CIRP7` (`CMPD #$150E`), so the drop phase cycles
 /// all eight.</item>
 /// </list>
-/// The escape used to advance its picture on every port TICK and only ever showed
-/// CIRP0..CIRP3 — 3.6x the arcade's rate, and a picture short. That is the author's
+/// The escape used to advance its animation frame on every port TICK and only ever showed
+/// CIRP0..CIRP3 — 3.6x the arcade's rate, and an animation frame short. That is the author's
 /// *"the spheroid, after giving birth to all the enforcers, looks weird animation
 /// wise"* (2026-09-17). A spheroid is also BORN on CIRP4 (MPROB stores the `MKPROB`
-/// picture argument in OPICT), not on the dot.
+/// animation frame argument in OPICT), not on the dot.
 /// </summary>
 public sealed class SpheroidAnimationTests
 {
@@ -31,7 +31,7 @@ public sealed class SpheroidAnimationTests
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     /// <summary>
-    /// ENFNUM 2 + CDPTIM 3: the initial countdown is 1..3 five-picture wraps, the drop
+    /// ENFNUM 2 + CDPTIM 3: the initial countdown is 1..3 five-animation-frame wraps, the drop
     /// phase's is always 1 (CDPTIM/4 = 0), and `ceil(RND(1..2)/2)` = 1 enforcer — so the
     /// first drop ends the drop phase and the spheroid escapes almost at once.
     /// </summary>
@@ -67,18 +67,18 @@ public sealed class SpheroidAnimationTests
     }
 
     [Fact]
-    public void TheEscapeSpinsTheIdleFivePictures_OnePicturePerBeat()
+    public void TheEscapeSpinsTheIdleFiveAnimationFrames_OneAnimationFramePerBeat()
     {
         // How long the escape lasts depends on where the seeded bounce leaves the
         // spheroid, so several seeds are tried (deterministically, in order) and the
-        // first that runs at least a full five-picture cycle is the one asserted on.
+        // first that runs at least a full five-animation-frame cycle is the one asserted on.
         // Every observed change is checked for EVERY seed, so a fast strobe cannot
         // hide in the short escapes.
         for (int seed = 1; seed <= 40; seed++)
         {
             (PlayField field, Spheroid spheroid) = DriveToEscape(seed);
 
-            int previous = spheroid.PictureIndex;
+            int previous = spheroid.AnimationFrameIndex;
             int lastChangeTick = 0;
             int changes = 0;
             var seen = new HashSet<int>();
@@ -87,28 +87,28 @@ public sealed class SpheroidAnimationTests
             {
                 spheroid.Update(Frame(), field);
 
-                if (spheroid.PictureIndex == previous)
+                if (spheroid.AnimationFrameIndex == previous)
                 {
                     continue;
                 }
 
-                // One picture per `NAP 2` beat: 3.6 port ticks each, which the
+                // One animation frame per `NAP 2` beat: 3.6 port ticks each, which the
                 // clock-unit clock lands 3 and 4 ticks apart. The per-tick strobe was 1.
                 Assert.True(
                     tick - lastChangeTick >= 3,
-                    $"seed {seed}: picture changed {tick - lastChangeTick} tick(s) after the last one");
+                    $"seed {seed}: animation frame changed {tick - lastChangeTick} tick(s) after the last one");
 
                 // The chain only ever advances one entry (`ADDD #4`) or wraps to CIRP0.
                 Assert.True(
-                    spheroid.PictureIndex == 0 || spheroid.PictureIndex == previous + 1,
-                    $"seed {seed}: picture jumped {previous} -> {spheroid.PictureIndex}");
+                    spheroid.AnimationFrameIndex == 0 || spheroid.AnimationFrameIndex == previous + 1,
+                    $"seed {seed}: animation frame jumped {previous} -> {spheroid.AnimationFrameIndex}");
 
                 // CIRC3L wraps at CIRP4, so the escape shows 0..4 and NEVER a
-                // drop-phase picture.
-                Assert.InRange(spheroid.PictureIndex, 0, 4);
+                // drop-phase animation frame.
+                Assert.InRange(spheroid.AnimationFrameIndex, 0, 4);
 
                 lastChangeTick = tick;
-                previous = spheroid.PictureIndex;
+                previous = spheroid.AnimationFrameIndex;
                 changes++;
                 seen.Add(previous);
             }
@@ -121,20 +121,20 @@ public sealed class SpheroidAnimationTests
             }
         }
 
-        Assert.Fail("no seed produced a full five-picture escape cycle to judge");
+        Assert.Fail("no seed produced a full five-animation-frame escape cycle to judge");
     }
 
     [Fact]
-    public void TheSpinPhaseNeverShowsADropPicture()
+    public void TheSpinPhaseNeverShowsADropAnimationFrame()
     {
         // The same drive, watching the phases as they go: the idle spin (CIRCLE) is
-        // limited to CIRP0..CIRP4, and CIRP5 is the first picture only the drop phase
+        // limited to CIRP0..CIRP4, and CIRP5 is the first animation frame only the drop phase
         // (CIRC2L) can show — which is also how this test tells the phases apart.
         PlayField field = CreateField(seed: 3);
         Spheroid spheroid = field.Spheroids[0];
 
-        var spinPictures = new HashSet<int>();
-        var dropPictures = new HashSet<int>();
+        var spinAnimationFrames = new HashSet<int>();
+        var dropAnimationFrames = new HashSet<int>();
         bool dropping = false;
 
         for (int tick = 1; tick <= 4000 && !spheroid.IsEscaping; tick++)
@@ -148,28 +148,28 @@ public sealed class SpheroidAnimationTests
                 spheroid.Update(Frame(), field);
             }
 
-            if (spheroid.PictureIndex > 4)
+            if (spheroid.AnimationFrameIndex > 4)
             {
                 dropping = true;
             }
 
-            (dropping ? dropPictures : spinPictures).Add(spheroid.PictureIndex);
+            (dropping ? dropAnimationFrames : spinAnimationFrames).Add(spheroid.AnimationFrameIndex);
         }
 
-        Assert.NotEmpty(spinPictures);
-        Assert.All(spinPictures, index => Assert.InRange(index, 0, 4));
-        Assert.Contains(5, dropPictures);
-        Assert.Contains(7, dropPictures);
+        Assert.NotEmpty(spinAnimationFrames);
+        Assert.All(spinAnimationFrames, index => Assert.InRange(index, 0, 4));
+        Assert.Contains(5, dropAnimationFrames);
+        Assert.Contains(7, dropAnimationFrames);
     }
 
     [Fact]
     public void ASpheroidIsBornOnCIRP4()
     {
-        // MPROB: `LDD ,U++ / STD OLDPIC,X / STD OPICT,X` — the picture argument of
+        // MPROB: `LDD ,U++ / STD OLDPIC,X / STD OPICT,X` — the animation frame argument of
         // `MKPROB CIRCLE,CIRP4,CIRKIL` becomes the new object's OPICT, so the very
-        // first picture on screen is the medium ring, not the dot.
+        // first animation frame on screen is the medium ring, not the dot.
         PlayField field = CreateField(seed: 11);
 
-        Assert.Equal(4, field.Spheroids[0].PictureIndex);
+        Assert.Equal(4, field.Spheroids[0].AnimationFrameIndex);
     }
 }

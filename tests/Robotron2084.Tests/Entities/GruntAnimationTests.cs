@@ -38,7 +38,7 @@ public sealed class GruntAnimationTests
     [InlineData(4, 2)] // RWDP4 → RWDD3
     public void RomAnimationFrameTable_MapsTheFourRWDPFramesOntoThreeRepoFrames(int romFrame, int repoIndex)
     {
-        Assert.Equal(repoIndex, Grunt.AnimationFrameIndexFor(romFrame));
+        Assert.Equal(repoIndex, Grunt.GetAnimationFrameIndex(romFrame));
     }
 
     [Fact]
@@ -108,8 +108,8 @@ public sealed class GruntAnimationTests
         }
 
         // Each gap = countdown re-roll (1..15 beats) x 4-vblank beat.
-        Assert.InRange(minGap, ArcadeClock.PortTicks(4), ArcadeClock.PortTicksCeil(4) * 15);
-        Assert.InRange(maxGap, ArcadeClock.PortTicks(4), ArcadeClock.PortTicksCeil(4) * 15);
+        Assert.InRange(minGap, ArcadeClock.ToPortTicks(4), ArcadeClock.ToPortTicksRoundedUp(4) * 15);
+        Assert.InRange(maxGap, ArcadeClock.ToPortTicks(4), ArcadeClock.ToPortTicksRoundedUp(4) * 15);
         // The stagger: NOT a fixed period — at least two distinct gaps.
         Assert.True(gaps.Count >= 2, $"step gaps were constant {gaps.First()}");
     }
@@ -127,13 +127,13 @@ public sealed class GruntAnimationTests
         // "even when they are standing still, their legs are moving").
         Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 300, player.Y - 300), moveLimitBeats: 300, random: new Random(11));
 
-        Assert.Equal(1, grunt.WalkPictureNumber);
-        for (int tick = 0; tick < ArcadeClock.PortTicksCeil(4) * 10; tick++)
+        Assert.Equal(1, grunt.WalkAnimationFrameNumber);
+        for (int tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(4) * 10; tick++)
         {
             grunt.Update(Frame(), field);
         }
 
-        Assert.Equal(1, grunt.WalkPictureNumber); // 10 beat passes, no step, no frame change
+        Assert.Equal(1, grunt.WalkAnimationFrameNumber); // 10 beat passes, no step, no frame change
 
         // Now let it walk: exactly one frame advance per completed step. (Check
         // that the frame CHANGED at least once rather than what it ended on: the
@@ -148,7 +148,7 @@ public sealed class GruntAnimationTests
                 last = grunt.Position;
             }
 
-            if (grunt.WalkPictureNumber != 1)
+            if (grunt.WalkAnimationFrameNumber != 1)
             {
                 advanced = true;
             }

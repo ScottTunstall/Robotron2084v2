@@ -60,7 +60,7 @@ public sealed class PlayerAnimationAndAimTests
         field.Update(new GameTime());
 
         Assert.Equal(Direction8.DownRight, field.Player.FacingDirection);
-        PlayerLaser laser = Assert.Single(field.PlayerLasers.ActiveLasers);
+        PlayerLaser laser = Assert.Single(field.PlayerLasers.GetActiveLasers());
         Assert.Equal(Direction8.DownRight, laser.Direction);
     }
 
@@ -76,7 +76,7 @@ public sealed class PlayerAnimationAndAimTests
         field.Update(new GameTime());
 
         Assert.Equal(Direction8.Up, field.Player.FacingDirection); // the initial facing, untouched
-        PlayerLaser laser = Assert.Single(field.PlayerLasers.ActiveLasers);
+        PlayerLaser laser = Assert.Single(field.PlayerLasers.GetActiveLasers());
         Assert.Equal(Direction8.Right, laser.Direction);
         Assert.Equal(6, field.Player.WalkAnimationFrameIndex); // idle frame, untouched
     }
@@ -125,7 +125,7 @@ public sealed class PlayerAnimationAndAimTests
         field.Update(new GameTime());
 
         Assert.Equal(Direction8.Left, field.Player.FacingDirection);
-        PlayerLaser laser = Assert.Single(field.PlayerLasers.ActiveLasers);
+        PlayerLaser laser = Assert.Single(field.PlayerLasers.GetActiveLasers());
         Assert.Equal(Direction8.Right, laser.Direction);
     }
 
@@ -150,9 +150,9 @@ public sealed class PlayerAnimationAndAimTests
         IntVector2 start = field.Player.Position;
         field.Update(new GameTime());
 
-        PlayerLaser laser = Assert.Single(field.PlayerLasers.ActiveLasers);
+        PlayerLaser laser = Assert.Single(field.PlayerLasers.GetActiveLasers());
         Assert.Equal(direction, laser.Direction);
-        IntVector2 muzzle = new(start.X + ScreenSize.Scaled(offsetXSpec), start.Y + ScreenSize.Scaled(offsetYSpec));
+        IntVector2 muzzle = new(start.X + ScreenSize.ToPortPixels(offsetXSpec), start.Y + ScreenSize.ToPortPixels(offsetYSpec));
         Assert.Equal(muzzle + direction.ToIntVector() * PlayerTuning.LaserSpeed, laser.Position);
     }
 }

@@ -69,7 +69,7 @@ public sealed class SpheroidEnforcerTimingTests
             }
 
             Assert.Equal(EntityLifeState.Dead, spheroid.LifeState);
-            int dropped = field.EnforcerCount;
+            int dropped = field.GetEnforcerCount();
             Assert.InRange(dropped, 1, 5);
             observed.Add(dropped);
         }
@@ -81,7 +81,7 @@ public sealed class SpheroidEnforcerTimingTests
     public void Spheroid_NeverDropsBeforeTheMinimumBouncePhase()
     {
         // Minimum initial countdown = RND(1..CDPTIM) = 1 step, and a step is now a
-        // full FIVE-picture wrap (CIRCLE advances `OPICT += 4` per `NAP 2` beat and
+        // full FIVE-animation-frame wrap (CIRCLE advances `OPICT += 4` per `NAP 2` beat and
         // wraps at CIRP4, notes §90): 5 x 3 = 15 ROM frames = 18 port ticks. (It was
         // 16 frames while §56.2 mis-read the boundary as CIRP3.) The start grace
         // freezes everything until the 121st frame, so the earliest possible drop is
@@ -93,7 +93,7 @@ public sealed class SpheroidEnforcerTimingTests
             for (int tick = 1; tick <= GraceWarmupTicks + 17; tick++)
             {
                 field.Update(Frame());
-                Assert.True(field.EnforcerCount == 0, $"seed {seed}: drop at tick {tick}");
+                Assert.True(field.GetEnforcerCount() == 0, $"seed {seed}: drop at tick {tick}");
             }
         }
     }
@@ -102,7 +102,7 @@ public sealed class SpheroidEnforcerTimingTests
     public void Enforcer_IsImmobileAndSilentDuringGrowUp()
     {
         PlayField field = CreateField(7);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(42), fireIntervalBeats: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(42), fireIntervalBeats: 30);
         IntVector2 start = enforcer.Position;
 
         // Expire the start grace so RobotsFrozen is false for the enforcer.
@@ -114,11 +114,11 @@ public sealed class SpheroidEnforcerTimingTests
         // The ROM grow-up is 45 frames = 54 port ticks (notes §65; the old model said
         // 40 frames, which is why this used to stop at PortTicks(40) = 48). The last
         // of those ticks is the one ENFR10 runs on, so immobility covers 1..53.
-        for (int tick = 1; tick < ArcadeClock.PortTicksCeil(EnforcerTuning.GrowUpRomFrames); tick++)
+        for (int tick = 1; tick < ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowUpRomFrames); tick++)
         {
             enforcer.Update(Frame(), field);
             Assert.True(enforcer.Position == start, $"moved during grow-up at tick {tick}");
-            Assert.True(field.ActiveSparkCount == 0, $"fired during grow-up at tick {tick}");
+            Assert.True(field.GetActiveSparkCount() == 0, $"fired during grow-up at tick {tick}");
         }
 
         for (int tick = 1; tick <= 160 && enforcer.Position == start; tick++)
@@ -132,12 +132,12 @@ public sealed class SpheroidEnforcerTimingTests
     [Fact]
     public void Enforcer_GrowFrames_ChangeOnTheRomsNineFrameBoundaries()
     {
-        // FIVE grow pictures over 45 ROM frames = 9 frames each, on the clock-unit
-        // clock, so picture n starts on the first tick where 5t >= 9n x 6 — i.e.
+        // FIVE grow animation frames over 45 ROM frames = 9 frames each, on the clock-unit
+        // clock, so animation frame n starts on the first tick where 5t >= 9n x 6 — i.e.
         // ticks 1, 11, 22, 33, 44. The old PortTicks(9) = 10 switched every 10 ticks
         // and ran out early inside a correctly-timed growth (notes §65.3).
         PlayField field = CreateField(7);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(42), fireIntervalBeats: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(42), fireIntervalBeats: 30);
 
         for (int tick = 1; tick <= GraceWarmupTicks; tick++)
         {
@@ -145,7 +145,7 @@ public sealed class SpheroidEnforcerTimingTests
         }
 
         int[] expectedStarts = { 1, 11, 22, 33, 44 };
-        int growTicks = ArcadeClock.PortTicksCeil(EnforcerTuning.GrowUpRomFrames); // 54
+        int growTicks = ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowUpRomFrames); // 54
 
         for (int tick = 1; tick < growTicks; tick++)
         {
@@ -167,7 +167,7 @@ public sealed class SpheroidEnforcerTimingTests
         // slack for the 6/5 beat accumulator), and (seeded, deterministic) at least
         // one gap must exceed the old model's maximum of PortTicks(30) = 36.
         PlayField field = CreateField(11);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(1234), fireIntervalBeats: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(1234), fireIntervalBeats: 30);
 
         for (int tick = 1; tick <= GraceWarmupTicks; tick++)
         {
@@ -195,12 +195,12 @@ public sealed class SpheroidEnforcerTimingTests
             int gap = fireTicks[i] - fireTicks[i - 1];
             Assert.InRange(
                 gap,
-                ArcadeClock.PortTicks(EnforcerTuning.BeatRomFrames) - 1,
-                ArcadeClock.PortTicks(EnforcerTuning.BeatRomFrames * 30) + 1);
+                ArcadeClock.ToPortTicks(EnforcerTuning.BeatRomFrames) - 1,
+                ArcadeClock.ToPortTicks(EnforcerTuning.BeatRomFrames * 30) + 1);
         }
 
         int maxGap = fireTicks.Zip(fireTicks.Skip(1), (a, b) => b - a).Max();
-        Assert.True(maxGap > ArcadeClock.PortTicks(30), $"max gap {maxGap} never exceeded the pre-fix maximum");
+        Assert.True(maxGap > ArcadeClock.ToPortTicks(30), $"max gap {maxGap} never exceeded the pre-fix maximum");
     }
 
     [Fact]
@@ -210,7 +210,7 @@ public sealed class SpheroidEnforcerTimingTests
         // down-right of the player; over a long run the enforcer must
         // spend time close to the player, not wander the whole field.
         PlayField field = CreateField(11);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.Scaled(30), ScreenSize.Scaled(30)), new Random(1234), fireIntervalBeats: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(1234), fireIntervalBeats: 30);
 
         for (int tick = 1; tick <= GraceWarmupTicks; tick++)
         {
@@ -226,7 +226,7 @@ public sealed class SpheroidEnforcerTimingTests
             closest = Math.Min(closest, (int)IntVector2.DistanceSquared(enforcer.Position, player));
         }
 
-        int reach = ScreenSize.Scaled(65);
+        int reach = ScreenSize.ToPortPixels(65);
         Assert.True(closest < reach * reach, $"enforcer never came within {reach} port px of the player (closest^2 = {closest})");
     }
 }

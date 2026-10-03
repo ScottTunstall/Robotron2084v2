@@ -14,7 +14,7 @@ namespace Robotron2084.Tests.Entities;
 /// moving)") — the port re-checked against the R5 disasm:
 /// - life = RND(0..15)+20 cycles x 4 vblanks = 80..140 ROM ticks
 ///   (1.6-2.8 s), NOT the spec's 10-15 s;
-/// - the mover ($DCFF) REJECTS an axis update that would push the picture
+/// - the mover ($DCFF) REJECTS an axis update that would push the sprite
 ///   out of the playfield: the spark clamps/slides at the wall and dies on
 ///   its life — it never leaves the playfield and never dies at the wall;
 /// - aim = per-axis velocity proportional to player distance (ROM delta =
@@ -87,8 +87,8 @@ public sealed class SparkTests
             }
 
             Assert.True(diedAt > 0, $"seed {seed}: spark never died");
-            int minTicks = ArcadeClock.PortTicks(SparkTuning.SparkLifeMinRomFrames);
-            int maxTicks = ArcadeClock.PortTicks(SparkTuning.SparkLifeMaxRomFrames);
+            int minTicks = ArcadeClock.ToPortTicks(SparkTuning.SparkLifeMinRomFrames);
+            int maxTicks = ArcadeClock.ToPortTicks(SparkTuning.SparkLifeMaxRomFrames);
             Assert.InRange(diedAt, minTicks, maxTicks);
         }
     }
@@ -106,7 +106,7 @@ public sealed class SparkTests
 
         // 4 ROM frames = 4.8 ticks, so the frame boundary lands on tick 5 of each
         // period on the clock-unit clock (notes §52, §65).
-        int period = ArcadeClock.PortTicksCeil(SparkTuning.SparkFramePeriodRomFrames);
+        int period = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.SparkFramePeriodRomFrames);
         Assert.Equal(0, spark.AnimationFrameIndex); // born on SPKP0
 
         // Each full period advances exactly one frame; four periods wrap to 0.
@@ -171,7 +171,7 @@ public sealed class SparkTests
         field.SpawnSpark(origin, new IntVector2(inner.X + 40, inner.Y + 120));
         Spark spark = field.Sparks[^1];
 
-        int moveInterval = ArcadeClock.PortTicksCeil(SparkTuning.SparkMoveIntervalRomFrames);
+        int moveInterval = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.SparkMoveIntervalRomFrames);
         var changes = new List<IntVector2>();
         IntVector2 previous = spark.VelocitySubpixels;
 

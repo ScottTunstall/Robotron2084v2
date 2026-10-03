@@ -9,7 +9,7 @@ namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 /// The quark's tank-drop TIMER (notes §87). The drop countdown is only advanced on the pass
-/// that wraps the quark's idle animation — five pictures, so six beats — which is why the
+/// that wraps the quark's idle animation — five animation frames, so six beats — which is why the
 /// first tank arrives seconds after the quark does rather than on its second beat.
 /// </summary>
 public sealed class QuarkDropTimerTests
@@ -26,7 +26,7 @@ public sealed class QuarkDropTimerTests
     public void TheFirstTankWaitsForWholeIdleAnimationCycles()
     {
         // SQUARE reads `ADDD #4 / CMPD #SQP4 / BLS SQ1` and puts `DEC PD2,U` on the WRAP
-        // branch, so PD2 counts CYCLES of the idle animation: five pictures to walk plus the
+        // branch, so PD2 counts CYCLES of the idle animation: five animation frames to walk plus the
         // pass that wraps = six beats. With TDPTIM = 1 (the shortest first timer the ROM can
         // roll) the first tank is therefore due six beats after the quark starts running —
         // never on the next beat, which is what counting beats did and why the author saw
@@ -40,7 +40,7 @@ public sealed class QuarkDropTimerTests
         field.AddQuark(quark);
 
         int tick = 0;
-        for (; tick < 800 && field.TankCount == 0; tick++)
+        for (; tick < 800 && field.GetTankCount() == 0; tick++)
         {
             field.Update(Frame());
         }
@@ -48,7 +48,7 @@ public sealed class QuarkDropTimerTests
         int beatTicks = (int)Math.Ceiling(QuarkTuning.BeatRomFrames * 1.2); // 6/5 a frame
         int oneCycle = (QuarkTuning.TravelAnimationFrames + 1) * beatTicks;
 
-        Assert.True(field.TankCount > 0, "the quark must eventually drop a tank");
+        Assert.True(field.GetTankCount() > 0, "the quark must eventually drop a tank");
         Assert.True(tick > oneCycle,
             $"the first tank came {tick} ticks after spawn; one idle cycle is {oneCycle}");
     }
@@ -68,12 +68,12 @@ public sealed class QuarkDropTimerTests
             maxDropsX2: 10, dropDelayBeats: 16, speedCap: 50);
         field.AddQuark(quark);
 
-        for (int tick = 0; tick < ArcadeClock.PortTicksCeil(QuarkTuning.BeatRomFrames) + 2; tick++)
+        for (int tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(QuarkTuning.BeatRomFrames) + 2; tick++)
         {
             field.Update(Frame());
         }
 
-        Assert.Equal(0, field.TankCount);
+        Assert.Equal(0, field.GetTankCount());
         Assert.Equal(EntityLifeState.Alive, quark.LifeState);
     }
 }

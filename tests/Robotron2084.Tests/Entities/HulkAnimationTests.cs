@@ -11,7 +11,7 @@ namespace Robotron2084.Tests.Entities;
 /// docs/arcade-fidelity-notes.md progress (21)): each direction block
 /// walks an ABAC sequence over the nine verified hulk frames, and every
 /// direction change restarts at the block's first frame (ROM HND10:
-/// CLRA; STA PD4,U; OPICT = HLKLP1 + first image). The picture list
+/// CLRA; STA PD4,U; OPICT = HLKLP1 + first image). The animation frame list
 /// HLKLP1 at $0CF9 maps the blocks to repo frames: LEFT = 1,2,1,3 /
 /// RIGHT = 7,8,7,9 / DOWN = UP = 4,5,4,6. Horizontal step length (3/4
 /// arcade px) follows the animation entry (even = 3, odd = 4).
@@ -65,7 +65,7 @@ public sealed class HulkAnimationTests
                 int stepArcadePx = lastDirection is Direction8.Up or Direction8.Down
                     ? 2
                     : ((stepEntry & 1) == 0 ? 3 : 4);
-                int step = ScreenSize.Scaled(stepArcadePx);
+                int step = ScreenSize.ToPortPixels(stepArcadePx);
                 int expectedDeltaX = lastDirection switch
                 {
                     Direction8.Left => -step,

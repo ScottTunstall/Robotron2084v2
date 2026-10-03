@@ -15,7 +15,7 @@ public sealed class LaserSlotsTests
         Assert.True(slots.TryFire(new IntVector2(120, 100), Direction8.Up, out _));
         Assert.True(slots.TryFire(new IntVector2(140, 100), Direction8.Up, out _));
         Assert.False(slots.TryFire(new IntVector2(160, 100), Direction8.Up, out _));
-        Assert.Equal(3, slots.ActiveLasers.Count());
+        Assert.Equal(3, slots.GetActiveLasers().Count());
     }
 
     [Fact]
@@ -33,6 +33,6 @@ public sealed class LaserSlotsTests
         Assert.True(slots.TryFire(new IntVector2(300, 300), Direction8.Right, out PlayerLaser? laser));
         Assert.NotNull(laser);
         Assert.Equal(Direction8.Right, laser!.Direction);
-        Assert.Equal(3, slots.ActiveLasers.Count());
+        Assert.Equal(3, slots.GetActiveLasers().Count());
     }
 }

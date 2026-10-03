@@ -21,12 +21,12 @@ public sealed class StripEffectTests
 {
     private static readonly StripClip Clip = new(MinX: 20, MaxX: 300, MinY: 20, MaxY: 180);
 
-    /// <summary>An 8x12-arcade-pixel picture at arcade pixel (50,100); its collision box is the same extent in port px.</summary>
+    /// <summary>An 8x12-arcade-pixel sprite at arcade pixel (50,100); its collision box is the same extent in port px.</summary>
     private static readonly Rectangle Sprite = new(
-        ScreenSize.Scaled(SpriteLeft),
-        ScreenSize.Scaled(SpriteTop),
-        ScreenSize.Scaled(WidthArcadePixels),
-        ScreenSize.Scaled(HeightRows));
+        ScreenSize.ToPortPixels(SpriteLeft),
+        ScreenSize.ToPortPixels(SpriteTop),
+        ScreenSize.ToPortPixels(WidthArcadePixels),
+        ScreenSize.ToPortPixels(HeightRows));
     private const int WidthArcadePixels = 8;
     private const int HeightRows = 12;
     private const int SpriteLeft = 50;
@@ -56,7 +56,7 @@ public sealed class StripEffectTests
     }
 
     private static StripEffect NewExplosion(Direction8? direction = null, Rectangle? sprite = null) =>
-        StripEffect.StartExplosion(
+        StripEffect.CreateExplosion(
             new FakeDead(sprite ?? Sprite),
             direction: direction,
             clip: Clip);
@@ -99,14 +99,14 @@ public sealed class StripEffectTests
     }
 
     [Fact]
-    public void TheFanOpensUpAndDownAtOnce_AndIsMirroredAboutThePicturesMiddle()
+    public void TheFanOpensUpAndDownAtOnce_AndIsMirroredAboutTheSpritesMiddle()
     {
         // ROM RRX7 `WRITE`: base = YCENT − YSIZE*YOF + YSIZE/2, and each further
         // segment steps DOWN by YSIZE. The base climbs faster than the segments march
         // away from it, so ONE fan covers both sides at the same time — the author's
         // "it's meant to be up AND down at the same time".
         //
-        // Its fixed point is the picture's MIDDLE (the ROM's NWCENT centre invariant):
+        // Its fixed point is the sprite's MIDDLE (the ROM's NWCENT centre invariant):
         // the author's follow-up (notes §73) — *"one side of the explosion is not
         // mirrored on the other side ... the half going UP is bigger than the half
         // going DOWN"* — is exactly what anchoring at the hit gives, because a laser
@@ -132,7 +132,7 @@ public sealed class StripEffectTests
         Assert.Equal(expectedBase + (HeightRows - 1) * 3, strips[^1].Y);
         Assert.True(strips[^1].Y > SpriteTop + HeightRows - 1, "the fan must reach below the sprite");
 
-        // MIRRORED: the reach above the picture equals the reach below it.
+        // MIRRORED: the reach above the sprite equals the reach below it.
         int reachUp = SpriteTop - strips[0].Y;
         int reachDown = strips[^1].Y - (SpriteTop + HeightRows - 1);
         Assert.Equal(reachUp, reachDown);
@@ -158,18 +158,18 @@ public sealed class StripEffectTests
     [Fact]
     public void TheFanStartsFromTheCentredArt_NotTheBoundsCorner()
     {
-        // A picture smaller than its collision box is drawn CENTRED in it
-        // (SpriteSet.CentredIn), so the fan has to start from the picture's own top-left.
-        // At spacing 1 the fan IS the picture, so strip 0 lands exactly where the picture
-        // sits: BOUNDS 11x15 arcade px holding an 8x12 picture, so the picture starts one
+        // A sprite smaller than its collision box is drawn CENTRED in it
+        // (SpriteSet.CentredIn), so the fan has to start from the sprite's own top-left.
+        // At spacing 1 the fan IS the sprite, so strip 0 lands exactly where the sprite
+        // sits: BOUNDS 11x15 arcade px holding an 8x12 sprite, so the sprite starts one
         // pixel in on both axes (notes §75).
         Rectangle bounds = new(
-            ScreenSize.Scaled(SpriteLeft),
-            ScreenSize.Scaled(SpriteTop),
-            ScreenSize.Scaled(WidthArcadePixels + 3),
-            ScreenSize.Scaled(HeightRows + 3));
+            ScreenSize.ToPortPixels(SpriteLeft),
+            ScreenSize.ToPortPixels(SpriteTop),
+            ScreenSize.ToPortPixels(WidthArcadePixels + 3),
+            ScreenSize.ToPortPixels(HeightRows + 3));
 
-        var explosion = StripEffect.StartExplosion(
+        var explosion = StripEffect.CreateExplosion(
             new FakeDead(bounds),
             direction: Direction8.Left,
             clip: Clip);
@@ -184,7 +184,7 @@ public sealed class StripEffectTests
         // And the placement helper agrees with the draw path's own convention.
         Assert.Equal(
             (SpriteLeft + 1, SpriteTop + 1),
-            StripEffect.PicturePlacement(bounds, WidthArcadePixels, HeightRows));
+            StripEffect.SpritePlacement(bounds, WidthArcadePixels, HeightRows));
     }
 
     [Fact]
@@ -252,7 +252,7 @@ public sealed class StripEffectTests
         // The sprite sits on the TOP wall, so the leading part of the fan leaves the
         // playfield and those strips are DROPPED (the ROM's clip passes).
         var onTheWall = new Rectangle(
-            ScreenSize.Scaled(SpriteLeft), ScreenSize.Scaled(20), ScreenSize.Scaled(WidthArcadePixels), ScreenSize.Scaled(HeightRows));
+            ScreenSize.ToPortPixels(SpriteLeft), ScreenSize.ToPortPixels(20), ScreenSize.ToPortPixels(WidthArcadePixels), ScreenSize.ToPortPixels(HeightRows));
         StripEffect explosion = NewExplosion(Direction8.Left, sprite: onTheWall);
 
         IReadOnlyList<Strip> strips = Strips(explosion, frames: 2); // spacing 3
@@ -270,7 +270,7 @@ public sealed class StripEffectTests
         // by the spacing, so the base moves left while they march right — the fan opens
         // left AND right, and every strip keeps the sprite's own row.
         StripEffect explosion = NewExplosion(Direction8.Up);
-        int collisionColumn = SpriteLeft + 4; // the picture's middle (notes §73)
+        int collisionColumn = SpriteLeft + 4; // the sprite's middle (notes §73)
 
         IReadOnlyList<Strip> strips = Strips(explosion, frames: 1); // spacing 2
 
@@ -345,7 +345,7 @@ public sealed class StripEffectTests
         // APSTZ/AWRITE: YSIZER starts at $1000 and shrinks $100 a frame, and the
         // record dies when the step would fall to 1 or less — so it draws steps
         // 15,14,...,2: fourteen draws, the mirror of an explosion.
-        StripEffect appear = StripEffect.StartAppear(
+        StripEffect appear = StripEffect.CreateAppear(
             new FakeDead(new Rectangle(100, 200, 16, 24)),
             new Rectangle(100, 200, 16, 24),
             StripFanAxis.Rows,
@@ -369,13 +369,13 @@ public sealed class StripEffectTests
     }
 
     [Fact]
-    public void StartExplosion_TakesTheRomsDispatch()
+    public void CreateExplosion_TakesTheRomsDispatch()
     {
         var dead = new FakeDead(new Rectangle(100, 200, 16, 24));
 
-        StripEffect diagonal = StripEffect.StartExplosion(dead, Direction8.DownRight, Clip);
-        StripEffect vertical = StripEffect.StartExplosion(dead, Direction8.Up, Clip);
-        StripEffect horizontal = StripEffect.StartExplosion(dead, Direction8.Left, Clip);
+        StripEffect diagonal = StripEffect.CreateExplosion(dead, Direction8.DownRight, Clip);
+        StripEffect vertical = StripEffect.CreateExplosion(dead, Direction8.Up, Clip);
+        StripEffect horizontal = StripEffect.CreateExplosion(dead, Direction8.Left, Clip);
 
         Assert.Equal(StripEffectKind.Explode, diagonal.Kind);
         Assert.Equal((StripFanAxis.Rows, -1), (diagonal.Axis, diagonal.Slope));
@@ -385,7 +385,7 @@ public sealed class StripEffectTests
         Assert.Equal((StripFanAxis.Columns, 0), (vertical.Axis, vertical.Slope));
         Assert.Equal((StripFanAxis.Rows, 0), (horizontal.Axis, horizontal.Slope));
 
-        // And every one of them anchors at the picture's MIDDLE, not at the hit
+        // And every one of them anchors at the sprite's MIDDLE, not at the hit
         // (the ROM's NWCENT centre invariant — notes §73), which the two mirror
         // tests above pin from both axes.
     }
@@ -409,7 +409,7 @@ public sealed class StripEffectTests
 
         Assert.Equal(EntityLifeState.Dead, enforcer.LifeState); // no Dying state at all
         Assert.Single(field.Explosions);
-        Assert.Equal(0, field.EnforcerCount);
+        Assert.Equal(0, field.GetEnforcerCount());
     }
 
     [Fact]
