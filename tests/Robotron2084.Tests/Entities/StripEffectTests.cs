@@ -401,15 +401,15 @@ public sealed class StripEffectTests
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
         field.SpawnEnforcer(spot);
-        Enforcer enforcer = field.Enforcers[0];
+        Enforcer enforcer = field.Entities.Enforcers[0];
 
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
         Assert.True(field.PlayerLasers.TryFire(laserOrigin, Direction8.Down, out _));
         field.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dead, enforcer.LifeState); // no Dying state at all
-        Assert.Single(field.Explosions);
-        Assert.Equal(0, field.GetEnforcerCount());
+        Assert.Single(field.Entities.Explosions);
+        Assert.Equal(0, field.Entities.Enforcers.GetLiveCount());
     }
 
     [Fact]
@@ -422,13 +422,13 @@ public sealed class StripEffectTests
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
         var electrode = new Electrode(TestSprites.Shared, spot);
-        field.AddElectrode(electrode);
+        field.Entities.Electrodes.Add(electrode);
 
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
         Assert.True(field.PlayerLasers.TryFire(laserOrigin, Direction8.Down, out _));
         field.Update(new GameTime());
 
-        Assert.Empty(field.Explosions);
+        Assert.Empty(field.Entities.Explosions);
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState); // the shrivel is running
     }
 
@@ -440,14 +440,14 @@ public sealed class StripEffectTests
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
         var electrode = new Electrode(TestSprites.Shared, spot);
-        field.AddElectrode(electrode);
-        field.AddGrunt(new Grunt(TestSprites.Shared, spot)); // standing on the electrode
+        field.Entities.Electrodes.Add(electrode);
+        field.Entities.Grunts.Add(new Grunt(TestSprites.Shared, spot)); // standing on the electrode
 
         field.Update(new GameTime());
 
-        Assert.Single(field.Explosions); // the grunt only
-        Assert.Equal(StripFanAxis.Rows, field.Explosions[0].Axis);
-        Assert.Equal(0, field.Explosions[0].Slope); // non-directional shatter (notes §35)
+        Assert.Single(field.Entities.Explosions); // the grunt only
+        Assert.Equal(StripFanAxis.Rows, field.Entities.Explosions[0].Axis);
+        Assert.Equal(0, field.Entities.Explosions[0].Slope); // non-directional shatter (notes §35)
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
     }
 
@@ -463,13 +463,13 @@ public sealed class StripEffectTests
         for (int i = 0; i < StripExplosionTuning.MaxConcurrent + 4; i++)
         {
             IntVector2 spot = new(bounds.X + 16 + (i * 12), bounds.Y + 60);
-            field.AddGrunt(new Grunt(TestSprites.Shared, spot));
-            field.AddElectrode(new Electrode(TestSprites.Shared, spot));
+            field.Entities.Grunts.Add(new Grunt(TestSprites.Shared, spot));
+            field.Entities.Electrodes.Add(new Electrode(TestSprites.Shared, spot));
         }
 
         field.Update(new GameTime());
 
-        Assert.Equal(StripExplosionTuning.MaxConcurrent, field.Explosions.Count);
+        Assert.Equal(StripExplosionTuning.MaxConcurrent, field.Entities.Explosions.Count);
     }
 
     private static PlayField CreateEmptyField()

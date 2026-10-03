@@ -34,9 +34,9 @@ public sealed class HumanSpawnTests
             {
                 PlayField field = CreateField(seed, level);
 
-                foreach (Human human in field.Humans)
+                foreach (Human human in field.Entities.Family.Members)
                 {
-                    foreach (Electrode electrode in field.Electrodes)
+                    foreach (Electrode electrode in field.Entities.Electrodes)
                     {
                         Assert.False(
                             electrode.Bounds.Intersects(human.Bounds),
@@ -59,14 +59,14 @@ public sealed class HumanSpawnTests
         {
             field.Update(Frame());
 
-            foreach (Human human in field.Humans)
+            foreach (Human human in field.Entities.Family.Members)
             {
                 if (human.LifeState != EntityLifeState.Alive || human.IsBeingReprogrammed)
                 {
                     continue;
                 }
 
-                foreach (Electrode electrode in field.Electrodes)
+                foreach (Electrode electrode in field.Entities.Electrodes)
                 {
                     if (electrode.LifeState != EntityLifeState.Alive)
                     {
@@ -90,7 +90,7 @@ public sealed class HumanSpawnTests
         // half a second the family must be moving even though the robots are not.
         PlayField field = CreateField(3, 7);
 
-        List<Human> humans = field.Humans.ToList();
+        List<Human> humans = field.Entities.Family.Members.ToList();
         Assert.NotEmpty(humans);
         var start = humans.ToDictionary(h => h, h => h.Position);
 

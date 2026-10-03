@@ -164,7 +164,7 @@ public sealed class ScoreBurstTests
             field.Update(Tick16);
         }
 
-        Assert.Empty(field.Explosions);
+        Assert.Empty(field.Entities.Explosions);
     }
 
     [Fact]
@@ -173,15 +173,15 @@ public sealed class ScoreBurstTests
         PlayField field = CreateField(spheroids: 1);
         Settle(field);
 
-        Spheroid spheroid = field.Spheroids[0];
+        Spheroid spheroid = field.Entities.Spheroids[0];
         IntVector2 aim = new(spheroid.Bounds.Center.X, spheroid.Bounds.Y - 6);
         Assert.True(field.PlayerLasers.TryFire(aim, Direction8.Down, out PlayerLaser? laser));
         Assert.NotNull(laser);
         field.Update(Tick16);
 
         Assert.Equal(EntityLifeState.Dead, spheroid.LifeState);
-        Assert.Single(field.ScoreBursts);
-        Assert.Empty(field.Explosions); // CIRKP, not EXST
+        Assert.Single(field.Entities.ScoreBursts);
+        Assert.Empty(field.Entities.Explosions); // CIRKP, not EXST
         Assert.Equal(ScoreValues.Spheroid, field.Score.Score); // both burst paths score $0210 = 1000
     }
 
@@ -191,14 +191,14 @@ public sealed class ScoreBurstTests
         PlayField field = CreateField(quarks: 1);
         Settle(field);
 
-        Quark quark = field.Quarks[0];
+        Quark quark = field.Entities.Quarks[0];
         IntVector2 aim = new(quark.Bounds.Center.X, quark.Bounds.Y - 6);
         Assert.True(field.PlayerLasers.TryFire(aim, Direction8.Down, out PlayerLaser? laser));
         Assert.NotNull(laser);
         field.Update(Tick16);
 
         Assert.Equal(EntityLifeState.Dead, quark.LifeState);
-        Assert.Single(field.ScoreBursts);
-        Assert.Empty(field.Explosions);
+        Assert.Single(field.Entities.ScoreBursts);
+        Assert.Empty(field.Entities.Explosions);
     }
 }

@@ -94,7 +94,7 @@ public sealed class GruntSpeedProgressTests
                 tracked = grunt;
             }
 
-            field.AddGrunt(grunt);
+            field.Entities.Grunts.Add(grunt);
         }
 
         Assert.Equal(15, tracked!.MoveDelayBeats);
@@ -144,7 +144,7 @@ public sealed class GruntSpeedProgressTests
         PlayField field = CreateField();
         for (int i = 0; i < 5; i++)
         {
-            field.AddGrunt(CreateGruntAt(field, 20 + i * 24, 20, i));
+            field.Entities.Grunts.Add(CreateGruntAt(field, 20 + i * 24, 20, i));
         }
 
         // Two full cadence periods (270 + 225 vblanks + grace) with only 5

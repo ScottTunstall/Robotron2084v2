@@ -38,7 +38,7 @@ public sealed class QuarkTankBehaviourTests
         Rectangle bounds = field.Wall.PlayfieldBounds;
 
         var quark = new Quark(TestSprites.Shared, new IntVector2(bounds.X + 20, bounds.Y + 8), new Random(4), maxDropsX2: 10, dropDelayBeats: 60);
-        field.AddQuark(quark);
+        field.Entities.Quarks.Add(quark);
 
         IntVector2 prev = quark.Position;
         int maxAxisSeen = 0;
@@ -98,16 +98,16 @@ public sealed class QuarkTankBehaviourTests
 
         // Random(10): first Next(2) == 1 → exactly one tank to drop.
         var quark = new Quark(TestSprites.Shared, new IntVector2(300, 200), new Random(10), maxDropsX2: 1, dropDelayBeats: 1);
-        field.AddQuark(quark);
+        field.Entities.Quarks.Add(quark);
 
         // Robots are frozen during the 2 s player start grace (120 ticks); the
         // first drop is due within 2 ticks after it ends.
-        for (int tick = 0; tick < 200 && field.GetTankCount() == 0; tick++)
+        for (int tick = 0; tick < 200 && field.Entities.Tanks.GetLiveCount() == 0; tick++)
         {
             field.Update(Frame());
         }
 
-        Tank tank = Assert.Single(field.Tanks);
+        Tank tank = Assert.Single(field.Entities.Tanks);
         // The drop happens after the quark's own move in the same Update, so at
         // loop exit quark.Position IS the position at the moment of the drop.
         // The dropped tank is then BORN in place (MTANK) and does not move while
@@ -134,7 +134,7 @@ public sealed class QuarkTankBehaviourTests
         }
 
         field.SpawnTank(new IntVector2(400, 200)); // 80 px right of the player start
-        Tank tank = Assert.Single(field.Tanks);
+        Tank tank = Assert.Single(field.Entities.Tanks);
         IntVector2 start = tank.Position;
 
         // ROM MTANK ("MINI TANK GROW"): a dropped tank plays four mini-tank
@@ -186,7 +186,7 @@ public sealed class QuarkTankBehaviourTests
 
         field.SpawnTank(new IntVector2(bounds.Right + 100, bounds.Bottom + 100));
 
-        Tank tank = Assert.Single(field.Tanks);
+        Tank tank = Assert.Single(field.Entities.Tanks);
         Assert.True(tank.Bounds.X >= bounds.X && tank.Bounds.Right <= bounds.Right, "tank not inside horizontally");
         Assert.True(tank.Bounds.Y >= bounds.Y && tank.Bounds.Bottom <= bounds.Bottom, "tank not inside vertically");
     }
@@ -199,7 +199,7 @@ public sealed class QuarkTankBehaviourTests
         // Spawned inside the 2 s player start grace, so the tank is frozen: no robot
         // can beat while frozen, so the tread cannot move.
         field.SpawnTank(new IntVector2(400, 200));
-        Tank tank = Assert.Single(field.Tanks);
+        Tank tank = Assert.Single(field.Entities.Tanks);
 
         int treadAtSpawn = tank.TreadFrameIndex;
         for (int tick = 0; tick < 20; tick++)
@@ -243,7 +243,7 @@ public sealed class QuarkTankBehaviourTests
             PlayField field = CreateField(seed);
             Rectangle bounds = field.Wall.PlayfieldBounds;
             var quark = new Quark(TestSprites.Shared, new IntVector2(bounds.X + 15, bounds.Y + 200), new Random(seed), maxDropsX2: 10, dropDelayBeats: 60);
-            field.AddQuark(quark);
+            field.Entities.Quarks.Add(quark);
             int startX = quark.Position.X;
 
             for (int tick = 0; tick < 12; tick++)

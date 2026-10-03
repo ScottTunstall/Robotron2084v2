@@ -109,24 +109,24 @@ public sealed class PlayFieldRobotRegistryTests
     public void EveryKindsListIsWalkedOnceAndDrawnOnce()
     {
         PlayField field = CreateField();
-        IEntityList[] robotLists = [.. Enum.GetValues<RobotKind>().Select(field.GetList)];
+        IEntityList[] robotLists = [.. Enum.GetValues<RobotKind>().Select(field.Entities.GetList)];
 
         // One list per kind: no two kinds share a list, and none is missing.
         Assert.Equal(Enum.GetValues<RobotKind>().Length, robotLists.Distinct().Count());
 
         // The update pass holds every kind's list, plus the lists no kind owns, and no list twice.
-        Assert.Equal(robotLists.Length + NonRobotLists, field.UpdateOrder.Count);
-        Assert.Equal(field.UpdateOrder.Count, field.UpdateOrder.Distinct().Count());
+        Assert.Equal(robotLists.Length + NonRobotLists, field.Entities.UpdateOrder.Count);
+        Assert.Equal(field.Entities.UpdateOrder.Count, field.Entities.UpdateOrder.Distinct().Count());
         foreach (IEntityList list in robotLists)
         {
-            Assert.Contains(list, field.UpdateOrder);
+            Assert.Contains(list, field.Entities.UpdateOrder);
         }
 
         // The two draw passes hold every walked list exactly once between them, so nothing is invisible.
-        IEntityList[] drawn = [.. field.DrawOrderBehindShots, .. field.DrawOrderInFrontOfShots];
-        Assert.Equal(field.UpdateOrder.Count, drawn.Length);
-        Assert.Equal(field.UpdateOrder.Count, drawn.Distinct().Count());
-        foreach (IEntityList list in field.UpdateOrder)
+        IEntityList[] drawn = [.. field.Entities.DrawOrderBehindShots, .. field.Entities.DrawOrderInFrontOfShots];
+        Assert.Equal(field.Entities.UpdateOrder.Count, drawn.Length);
+        Assert.Equal(field.Entities.UpdateOrder.Count, drawn.Distinct().Count());
+        foreach (IEntityList list in field.Entities.UpdateOrder)
         {
             Assert.Contains(list, drawn);
         }
@@ -180,7 +180,7 @@ public sealed class PlayFieldRobotRegistryTests
     {
         PlayField field = CreateField();
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => field.GetList((RobotKind)999));
+        Assert.Throws<ArgumentOutOfRangeException>(() => field.Entities.GetList((RobotKind)999));
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public sealed class PlayFieldRobotRegistryTests
         Assert.Equal(Enum.GetValues<RobotKind>().Length, ExpectedEntityTypes.Length);
         foreach ((RobotKind kind, Type entityType) in ExpectedEntityTypes)
         {
-            Type listType = field.GetList(kind).GetType();
+            Type listType = field.Entities.GetList(kind).GetType();
             Assert.Equal(entityType, Assert.Single(listType.GetGenericArguments()));
         }
     }

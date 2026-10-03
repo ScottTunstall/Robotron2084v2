@@ -39,13 +39,13 @@ public sealed class PlayFieldHumanTests
     {
         PlayField field = CreateField(HumanWave(2, 1, 3));
 
-        Assert.Equal(2, field.Humans.Count(h => h.Kind == HumanKind.Mommy));
-        Assert.Equal(1, field.Humans.Count(h => h.Kind == HumanKind.Daddy));
-        Assert.Equal(3, field.Humans.Count(h => h.Kind == HumanKind.Mikey));
+        Assert.Equal(2, field.Entities.Family.Members.Count(h => h.Kind == HumanKind.Mommy));
+        Assert.Equal(1, field.Entities.Family.Members.Count(h => h.Kind == HumanKind.Daddy));
+        Assert.Equal(3, field.Entities.Family.Members.Count(h => h.Kind == HumanKind.Mikey));
         // ROM HUMSTV spawn order: Mikeys, then mommies, then daddies — the list order
         // matters (the hulk "last slot" target is the last-spawned member).
-        Assert.Equal(HumanKind.Mikey, field.Humans[0].Kind);
-        Assert.Equal(HumanKind.Daddy, field.Humans[^1].Kind);
+        Assert.Equal(HumanKind.Mikey, field.Entities.Family.Members[0].Kind);
+        Assert.Equal(HumanKind.Daddy, field.Entities.Family.Members[^1].Kind);
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public sealed class PlayFieldHumanTests
         for (int tick = 0; tick < 600; tick++)
         {
             field.Update(Frame());
-            foreach (Human human in field.Humans)
+            foreach (Human human in field.Entities.Family.Members)
             {
                 Assert.InRange(human.Bounds.X, inner.X, inner.Right - human.Bounds.Width);
                 Assert.InRange(human.Bounds.Y, inner.Y, inner.Bottom - human.Bounds.Height);
@@ -70,7 +70,7 @@ public sealed class PlayFieldHumanTests
     public void Humans_MoveOverTime()
     {
         PlayField field = CreateField(HumanWave(0, 0, 4));
-        Human first = field.Humans[0];
+        Human first = field.Entities.Family.Members[0];
         IntVector2 firstPosition = first.Position;
         bool anyMoved = false;
 
@@ -123,7 +123,7 @@ public sealed class PlayFieldHumanTests
     public void Player_TouchingHuman_RescuesWithFirstBonus()
     {
         PlayField field = CreateField(HumanWave(0, 0, 1));
-        Human human = field.Humans[0];
+        Human human = field.Entities.Family.Members[0];
         int scoreBefore = field.Score.Score;
         human.MoveTo(field.Player.Position);
 
@@ -132,14 +132,14 @@ public sealed class PlayFieldHumanTests
         Assert.Equal(EntityLifeState.Dead, human.LifeState);
         Assert.Equal(1, field.RescuesThisLife);
         Assert.Equal(scoreBefore + ScoreValues.RescueBonus(1), field.Score.Score);
-        Assert.Empty(field.Skulls); // a rescue leaves no skull (ROM: PCFLG path)
+        Assert.Empty(field.Entities.Skulls); // a rescue leaves no skull (ROM: PCFLG path)
     }
 
     [Fact]
     public void Rescues_KeepRunningCountUntilTheCap()
     {
         PlayField field = CreateField(HumanWave(0, 0, 5), startingRescues: 4);
-        foreach (Human human in field.Humans)
+        foreach (Human human in field.Entities.Family.Members)
         {
             human.MoveTo(field.Player.Position);
         }
@@ -173,7 +173,7 @@ public sealed class PlayFieldHumanTests
         Assert.Equal(0, slot.Rescues);
         Assert.Equal(field.Player.Lives, slot.Lives);
 
-        Human human = field.Humans[0];
+        Human human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
         field.Update(new GameTime());
         field.Player.AddLife(); // an earned spare man must reach the HUD too
@@ -199,16 +199,16 @@ public sealed class PlayFieldHumanTests
             field.Update(Frame());
         }
 
-        Human human = field.Humans[0];
+        Human human = field.Entities.Family.Members[0];
         int scoreBefore = field.Score.Score;
-        human.MoveTo(field.Hulks[0].Position);
+        human.MoveTo(field.Entities.Hulks[0].Position);
 
         field.Update(Frame());
 
         Assert.Equal(EntityLifeState.Dead, human.LifeState);
-        Assert.Empty(field.Humans); // pruned after the update
-        Assert.Single(field.Skulls);
-        Assert.Equal(human.Position, field.Skulls[0].Position); // skull at the death spot
+        Assert.Empty(field.Entities.Family.Members); // pruned after the update
+        Assert.Single(field.Entities.Skulls);
+        Assert.Equal(human.Position, field.Entities.Skulls[0].Position); // skull at the death spot
         Assert.Equal(0, field.RescuesThisLife);
         Assert.Equal(scoreBefore, field.Score.Score); // robot kills pay nothing
     }
@@ -223,43 +223,43 @@ public sealed class PlayFieldHumanTests
             field.Update(Frame()); // the hulk cannot act until the grace is over (notes §88)
         }
 
-        Human human = field.Humans[0];
-        human.MoveTo(field.Hulks[0].Position);
+        Human human = field.Entities.Family.Members[0];
+        human.MoveTo(field.Entities.Hulks[0].Position);
         field.Update(Frame());
-        Assert.Single(field.Skulls);
+        Assert.Single(field.Entities.Skulls);
 
         for (int tick = 0; tick < ArcadeClock.ToPortTicks(90) - 1; tick++)
         {
             field.Update(Frame());
         }
 
-        Assert.Single(field.Skulls); // still up just before the linger ends
+        Assert.Single(field.Entities.Skulls); // still up just before the linger ends
 
         field.Update(Frame());
-        Assert.Empty(field.Skulls); // pruned once expired
+        Assert.Empty(field.Entities.Skulls); // pruned once expired
     }
 
     [Fact]
     public void Rescue_LeavesScoreDisplay_AtTheRescueSpot_ThatExpires()
     {
         PlayField field = CreateField(HumanWave(0, 0, 1));
-        Human human = field.Humans[0];
+        Human human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
 
-        Assert.Single(field.RescueScores);
-        Assert.Equal(human.Position, field.RescueScores[0].Position);
+        Assert.Single(field.Entities.RescueScores);
+        Assert.Equal(human.Position, field.Entities.RescueScores[0].Position);
 
         for (int tick = 0; tick < ArcadeClock.ToPortTicks(60) - 1; tick++)
         {
             field.Update(new GameTime());
         }
 
-        Assert.Single(field.RescueScores); // still up just before the linger ends
+        Assert.Single(field.Entities.RescueScores); // still up just before the linger ends
 
         field.Update(new GameTime());
-        Assert.Empty(field.RescueScores); // pruned once expired
+        Assert.Empty(field.Entities.RescueScores); // pruned once expired
     }
 
     [Fact]
@@ -267,20 +267,20 @@ public sealed class PlayFieldHumanTests
     {
         PlayField field = CreateField(HumanWave(1, 1, 1));
 
-        Assert.True(field.IsLevelCleared); // no robots → cleared even with humans alive (ROM WVCHEK)
+        Assert.True(field.IsLevelCleared()); // no robots → cleared even with humans alive (ROM WVCHEK)
     }
 
     [Fact]
     public void RescueCount_CarriesIntoTheNextField_ViaStartingRescues()
     {
         PlayField first = CreateField(HumanWave(0, 0, 1));
-        first.Humans[0].MoveTo(first.Player.Position);
+        first.Entities.Family.Members[0].MoveTo(first.Player.Position);
         first.Update(new GameTime());
         Assert.Equal(1, first.RescuesThisLife);
 
         PlayField next = CreateField(HumanWave(0, 0, 1), startingRescues: first.RescuesThisLife);
         int baseScore = next.Score.Score; // the next field starts at 0 score; anchor on its own base
-        next.Humans[0].MoveTo(next.Player.Position);
+        next.Entities.Family.Members[0].MoveTo(next.Player.Position);
         next.Update(new GameTime());
 
         Assert.Equal(2, next.RescuesThisLife);

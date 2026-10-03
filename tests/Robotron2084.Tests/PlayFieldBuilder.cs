@@ -3,6 +3,7 @@ using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
 using Robotron2084.Level;
+using Robotron2084.Level.Collisions;
 using Robotron2084.Palette;
 
 namespace Robotron2084.Tests;
@@ -135,5 +136,5 @@ internal sealed class PlayFieldBuilder
         _rescues,
         palette: _palette,
         playerInvincibleForTesting: _playerInvincible,
-        pixelCollision: _pixelCollision);
+        contactTest: _pixelCollision is null ? null : new PixelContactTest(_pixelCollision));
 }

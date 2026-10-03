@@ -41,7 +41,7 @@ public sealed class PixelCollisionTests
     public void ASpriteThatDoesNotTouchDoesNotRescue_EvenWhereTheBoxesOverlap()
     {
         PlayField field = CreateField(new StubPixelCollision(touching: false));
-        Human human = field.Humans[0];
+        Human human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
@@ -54,7 +54,7 @@ public sealed class PixelCollisionTests
     public void ASpriteThatTouchesRescues_EvenWhereTheBoxesMiss()
     {
         PlayField field = CreateField(new StubPixelCollision(touching: true));
-        Human human = field.Humans[0];
+        Human human = field.Entities.Family.Members[0];
 
         // Well outside the player's box, so nothing but the sprite test could rescue this human.
         Rectangle inner = field.Wall.PlayfieldBounds;
@@ -69,7 +69,7 @@ public sealed class PixelCollisionTests
     public void AnEntityWithNoSpriteOfItsOwn_FallsBackToItsBox()
     {
         PlayField field = CreateField(new StubPixelCollision(touching: false, hasShape: false));
-        Human human = field.Humans[0];
+        Human human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
@@ -81,7 +81,7 @@ public sealed class PixelCollisionTests
     public void WithNoContactTestAtAll_TheBoxesDecide()
     {
         PlayField field = CreateField(null);
-        Human human = field.Humans[0];
+        Human human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());

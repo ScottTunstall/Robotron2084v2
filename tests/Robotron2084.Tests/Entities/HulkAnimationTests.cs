@@ -36,7 +36,7 @@ public sealed class HulkAnimationTests
         IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 120, bounds.Y + 120);
         var hulk = new Hulk(TestSprites.Shared, spot, new Random(19), beatIntervalRomFrames: 2, () => center);
-        field.AddHulk(hulk);
+        field.Entities.Hulks.Add(hulk);
 
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // end start grace; first unfrozen update = the spawn aim
 

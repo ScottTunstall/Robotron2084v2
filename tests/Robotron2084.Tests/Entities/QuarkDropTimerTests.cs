@@ -37,10 +37,10 @@ public sealed class QuarkDropTimerTests
         var quark = new Quark(TestSprites.Shared, 
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(4),
             maxDropsX2: 10, dropDelayBeats: 1, speedCap: 50);
-        field.AddQuark(quark);
+        field.Entities.Quarks.Add(quark);
 
         int tick = 0;
-        for (; tick < 800 && field.GetTankCount() == 0; tick++)
+        for (; tick < 800 && field.Entities.Tanks.GetLiveCount() == 0; tick++)
         {
             field.Update(Frame());
         }
@@ -48,7 +48,7 @@ public sealed class QuarkDropTimerTests
         int beatTicks = (int)Math.Ceiling(QuarkTuning.BeatIntervalRomFrames * 1.2); // 6/5 a frame
         int oneCycle = (QuarkTuning.TravelAnimationFrames + 1) * beatTicks;
 
-        Assert.True(field.GetTankCount() > 0, "the quark must eventually drop a tank");
+        Assert.True(field.Entities.Tanks.GetLiveCount() > 0, "the quark must eventually drop a tank");
         Assert.True(tick > oneCycle,
             $"the first tank came {tick} ticks after spawn; one idle cycle is {oneCycle}");
     }
@@ -66,14 +66,14 @@ public sealed class QuarkDropTimerTests
         var quark = new Quark(TestSprites.Shared, 
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(11),
             maxDropsX2: 10, dropDelayBeats: 16, speedCap: 50);
-        field.AddQuark(quark);
+        field.Entities.Quarks.Add(quark);
 
         for (int tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(QuarkTuning.BeatIntervalRomFrames) + 2; tick++)
         {
             field.Update(Frame());
         }
 
-        Assert.Equal(0, field.GetTankCount());
+        Assert.Equal(0, field.Entities.Tanks.GetLiveCount());
         Assert.Equal(EntityLifeState.Alive, quark.LifeState);
     }
 }

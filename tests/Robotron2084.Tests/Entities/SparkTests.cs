@@ -44,7 +44,7 @@ public sealed class SparkTests
         // (vx ≈ -265/53 + jitter = -4..-6 px/tick).
         IntVector2 origin = new(inner.X + 280, inner.Y + 50);
         field.SpawnSpark(origin, new IntVector2(inner.X + 15, inner.Y + 50));
-        Spark spark = Assert.Single(field.Sparks);
+        Spark spark = Assert.Single(field.Entities.Sparks);
 
         for (int tick = 1; tick <= 250; tick++)
         {
@@ -73,7 +73,7 @@ public sealed class SparkTests
         for (int seed = 1; seed <= 16; seed++)
         {
             field.SpawnSpark(centre, new IntVector2(centre.X + 1, centre.Y)); // +1 keeps vx non-zero
-            Spark spark = field.Sparks[^1];
+            Spark spark = field.Entities.Sparks[^1];
 
             int diedAt = -1;
             for (int tick = 1; tick <= 400; tick++)
@@ -102,7 +102,7 @@ public sealed class SparkTests
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 centre = new(inner.X + inner.Width / 2, inner.Y + inner.Height / 2);
         field.SpawnSpark(centre, new IntVector2(centre.X + 1, centre.Y));
-        Spark spark = field.Sparks[^1];
+        Spark spark = field.Entities.Sparks[^1];
 
         // 4 ROM frames = 4.8 ticks, so the frame boundary lands on tick 5 of each
         // period on the clock-unit clock (notes §52, §65).
@@ -139,7 +139,7 @@ public sealed class SparkTests
         // delta ∈ [-(300+64), -(300-60)] → about -15 to -23 px.
         IntVector2 origin = new(inner.X + 300, inner.Y + 100);
         field.SpawnSpark(origin, new IntVector2(inner.X, inner.Y + 100));
-        Spark spark = field.Sparks[^1];
+        Spark spark = field.Entities.Sparks[^1];
 
         for (int tick = 0; tick < 4; tick++)
         {
@@ -169,7 +169,7 @@ public sealed class SparkTests
         // far enough that the aim dominates the jitter.
         IntVector2 origin = new(inner.X + 320, inner.Y + 200);
         field.SpawnSpark(origin, new IntVector2(inner.X + 40, inner.Y + 120));
-        Spark spark = field.Sparks[^1];
+        Spark spark = field.Entities.Sparks[^1];
 
         int moveInterval = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.SparkMoveIntervalRomFrames);
         var changes = new List<IntVector2>();

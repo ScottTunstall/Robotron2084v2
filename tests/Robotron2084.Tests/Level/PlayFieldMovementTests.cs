@@ -23,7 +23,7 @@ public sealed class PlayFieldMovementTests
         IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 100, bounds.Y + 100);
         var hulk = new Hulk(TestSprites.Shared, spot, new Random(7), beatIntervalRomFrames: 8, () => center);
-        field.AddHulk(hulk);
+        field.Entities.Hulks.Add(hulk);
 
         // End the player's start grace period (robots are frozen during it).
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3)));
@@ -50,7 +50,7 @@ public sealed class PlayFieldMovementTests
         // Right up against the left wall, hunting a point that keeps it aimed left.
         IntVector2 spot = new(bounds.X + 4, bounds.Y + bounds.Height / 2 - 16);
         var hulk = new Hulk(TestSprites.Shared, spot, new Random(11), beatIntervalRomFrames: 5, () => spot);
-        field.AddHulk(hulk);
+        field.Entities.Hulks.Add(hulk);
 
         field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // end grace
 

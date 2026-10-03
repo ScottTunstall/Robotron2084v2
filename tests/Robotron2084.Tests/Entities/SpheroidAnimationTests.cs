@@ -50,7 +50,7 @@ public sealed class SpheroidAnimationTests
     private static (PlayField Field, Spheroid Spheroid) DriveToEscape(int seed)
     {
         PlayField field = CreateField(seed);
-        Spheroid spheroid = field.Spheroids[0];
+        Spheroid spheroid = field.Entities.Spheroids[0];
 
         for (int tick = 1; tick <= GraceWarmupTicks; tick++)
         {
@@ -131,7 +131,7 @@ public sealed class SpheroidAnimationTests
         // limited to CIRP0..CIRP4, and CIRP5 is the first animation frame only the drop phase
         // (CIRC2L) can show — which is also how this test tells the phases apart.
         PlayField field = CreateField(seed: 3);
-        Spheroid spheroid = field.Spheroids[0];
+        Spheroid spheroid = field.Entities.Spheroids[0];
 
         var spinAnimationFrames = new HashSet<int>();
         var dropAnimationFrames = new HashSet<int>();
@@ -170,6 +170,6 @@ public sealed class SpheroidAnimationTests
         // first animation frame on screen is the medium ring, not the dot.
         PlayField field = CreateField(seed: 11);
 
-        Assert.Equal(4, field.Spheroids[0].AnimationFrameIndex);
+        Assert.Equal(4, field.Entities.Spheroids[0].AnimationFrameIndex);
     }
 }

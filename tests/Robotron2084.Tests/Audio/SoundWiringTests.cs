@@ -50,7 +50,7 @@ public sealed class SoundWiringTests : IDisposable
         PlayField field = new PlayFieldBuilder().WithParameters(new LevelParameters(LevelNumber: 1)).WithSeed(99).Build();
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 250, inner.Y + 120);
-        field.AddCruiseMissile(new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(8)));
+        field.Entities.CruiseMissiles.Add(new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(8)));
 
         Assert.True(field.PlayerLasers.TryFire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down, out PlayerLaser? _));
         field.Update(new GameTime());

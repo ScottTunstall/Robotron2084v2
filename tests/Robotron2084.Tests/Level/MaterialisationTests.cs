@@ -49,12 +49,12 @@ public class MaterialisationTests
         // they count as assembling from the moment they are queued, because the
         // ROM holds them OFF for the whole sequence. (Brains are a wave-table
         // spawn, so this level has none.)
-        int spawned = field.Grunts.Count + field.Hulks.Count + field.Spheroids.Count + field.Quarks.Count + field.Brains.Count;
+        int spawned = field.Entities.Grunts.Count + field.Entities.Hulks.Count + field.Entities.Spheroids.Count + field.Entities.Quarks.Count + field.Entities.Brains.Count;
         Assert.Equal(spawned, field.PendingAppearCount);
-        Assert.True(field.IsMaterialising(field.Grunts[0]));
-        Assert.True(field.IsMaterialising(field.Hulks[0]));
-        Assert.True(field.IsMaterialising(field.Spheroids[0]));
-        Assert.True(field.IsMaterialising(field.Quarks[0]));
+        Assert.True(field.IsMaterialising(field.Entities.Grunts[0]));
+        Assert.True(field.IsMaterialising(field.Entities.Hulks[0]));
+        Assert.True(field.IsMaterialising(field.Entities.Spheroids[0]));
+        Assert.True(field.IsMaterialising(field.Entities.Quarks[0]));
     }
 
     [Fact]
@@ -67,8 +67,8 @@ public class MaterialisationTests
 
         Advance(field, 1);
         Assert.Equal(3, field.PendingAppearCount);
-        Assert.Single(field.Explosions);
-        Assert.Equal(StripEffectKind.Appear, field.Explosions[0].Kind);
+        Assert.Single(field.Entities.Explosions);
+        Assert.Equal(StripEffectKind.Appear, field.Entities.Explosions[0].Kind);
 
         Advance(field, 3);
         Assert.Equal(0, field.PendingAppearCount);
@@ -76,8 +76,8 @@ public class MaterialisationTests
         // 4 creates + 15 ROM frames per appear (18 ticks) = the last robot is free
         // by tick 34; allow a little slack for the queue draining.
         Advance(field, 22);
-        Assert.DoesNotContain(field.Grunts, g => field.IsMaterialising(g));
-        Assert.Empty(field.Explosions);
+        Assert.DoesNotContain(field.Entities.Grunts, g => field.IsMaterialising(g));
+        Assert.Empty(field.Entities.Explosions);
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public class MaterialisationTests
         // The ROM holds the robots OFF (ROBOFF) through the appear sequence, so a
         // robot that has not finished assembling must not move or fire.
         PlayField field = CreateField(grunts: 1);
-        Grunt grunt = field.Grunts[0];
+        Grunt grunt = field.Entities.Grunts[0];
         IntVector2 start = grunt.Position;
 
         Advance(field, 3);
@@ -107,7 +107,7 @@ public class MaterialisationTests
         for (int i = 0; i < 8; i++)
         {
             Advance(field, 1);
-            axes.Add(field.Explosions[^1].Axis);
+            axes.Add(field.Entities.Explosions[^1].Axis);
         }
 
         Assert.Equal(StripFanAxis.Rows, axes[0]);
@@ -120,13 +120,13 @@ public class MaterialisationTests
     public void TheAppearConvergesOntoTheRobotsCentre()
     {
         PlayField field = CreateField(grunts: 1);
-        Grunt grunt = field.Grunts[0];
+        Grunt grunt = field.Entities.Grunts[0];
 
         Advance(field, 1);
 
         // The record's own bounds are the robot's (the sprite it is blitting), and
         // APCENT gave it the robot's centre as the impact.
-        StripEffect appear = field.Explosions[0];
+        StripEffect appear = field.Entities.Explosions[0];
         Assert.Equal(grunt.Bounds, appear.Bounds);
     }
 
@@ -137,7 +137,7 @@ public class MaterialisationTests
         // pins the flag the field's DrawEntity guard reads: while it is true the
         // robot's own sprite is suppressed and only the appear strips draw it.
         PlayField field = CreateField(grunts: 1);
-        Grunt grunt = field.Grunts[0];
+        Grunt grunt = field.Entities.Grunts[0];
 
         Assert.True(field.IsMaterialising(grunt));
 

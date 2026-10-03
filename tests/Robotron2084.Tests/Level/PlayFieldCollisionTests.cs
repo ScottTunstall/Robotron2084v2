@@ -15,7 +15,7 @@ public sealed class PlayFieldCollisionTests
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
         var electrode = new Electrode(TestSprites.Shared, spot);
-        field.AddElectrode(electrode);
+        field.Entities.Electrodes.Add(electrode);
 
         // The laser moves 12 px on its first Update before collisions resolve;
         // from just above the electrode's top-left, moving Down, it still
@@ -42,7 +42,7 @@ public sealed class PlayFieldCollisionTests
         // shape collapse, NOT a blink (the old port toggled visibility for 2 s).
         PlayField field = CreateEmptyField();
         var electrode = new Electrode(TestSprites.Shared, new IntVector2(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100));
-        field.AddElectrode(electrode);
+        field.Entities.Electrodes.Add(electrode);
 
         electrode.Kill();
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
@@ -232,7 +232,7 @@ public sealed class PlayFieldCollisionTests
     {
         PlayField field = CreateEmptyField(playerInvincibleForTesting: false);
         var electrode = new Electrode(TestSprites.Shared, field.Player.Position); // directly on the player
-        field.AddElectrode(electrode);
+        field.Entities.Electrodes.Add(electrode);
 
         int livesBefore = field.Player.Lives;
         field.Update(new GameTime());
@@ -250,12 +250,12 @@ public sealed class PlayFieldCollisionTests
         // walked through every robot. The aid is per player now and the DEMO clears
         // it (`AttractState`), so contact kills there and only there (notes §97.5).
         PlayField aided = CreateEmptyField();
-        aided.AddGrunt(new Grunt(TestSprites.Shared, aided.Player.Position));
+        aided.Entities.Grunts.Add(new Grunt(TestSprites.Shared, aided.Player.Position));
         aided.Update(new GameTime());
         Assert.Equal(EntityLifeState.Alive, aided.Player.LifeState);
 
         PlayField demo = CreateEmptyField(playerInvincibleForTesting: false);
-        demo.AddGrunt(new Grunt(TestSprites.Shared, demo.Player.Position));
+        demo.Entities.Grunts.Add(new Grunt(TestSprites.Shared, demo.Player.Position));
         demo.Update(new GameTime());
         Assert.Equal(EntityLifeState.Dying, demo.Player.LifeState);
     }
@@ -266,7 +266,7 @@ public sealed class PlayFieldCollisionTests
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 200, field.Wall.PlayfieldBounds.Y + 100);
         var grunt = new Grunt(TestSprites.Shared, spot);
-        field.AddGrunt(grunt);
+        field.Entities.Grunts.Add(grunt);
 
         Assert.True(field.PlayerLasers.TryFire(spot, Direction8.Down, out PlayerLaser? laser));
         field.Update(new GameTime());
@@ -278,7 +278,7 @@ public sealed class PlayFieldCollisionTests
         Assert.Equal(EntityLifeState.Dead, grunt.LifeState);
         Assert.Equal(EntityLifeState.Dead, laser!.LifeState);
         Assert.Equal(100, field.Score.Score); // ScoreValues.Grunt
-        Assert.Single(field.Explosions);      // the grunt's death visual
+        Assert.Single(field.Entities.Explosions);      // the grunt's death visual
     }
 
     [Fact]
@@ -287,7 +287,7 @@ public sealed class PlayFieldCollisionTests
         PlayField field = CreateEmptyField();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 200, field.Wall.PlayfieldBounds.Y + 200);
         var hulk = new Hulk(TestSprites.Shared, spot, new Random(7), 8, static () => IntVector2.Zero);
-        field.AddHulk(hulk);
+        field.Entities.Hulks.Add(hulk);
         IntVector2 positionBefore = hulk.Position;
 
         // Laser moving Left knocks the hulk left. Spawn it to the RIGHT of the hulk so the

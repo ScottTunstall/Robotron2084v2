@@ -46,7 +46,7 @@ public sealed class SpheroidEscapeTests
         for (int seed = 1; seed <= 40; seed++)
         {
             PlayField field = CreateField(seed);
-            Spheroid spheroid = field.Spheroids[0];
+            Spheroid spheroid = field.Entities.Spheroids[0];
 
             if (!StartEscape(field, spheroid) || FollowRightwardEscape(field, spheroid) is not { } escape)
             {

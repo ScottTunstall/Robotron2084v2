@@ -52,7 +52,7 @@ public sealed class SpheroidEnforcerTimingTests
         for (int seed = 1; seed <= 16; seed++)
         {
             PlayField field = CreateField(seed, spheroids: 1);
-            Spheroid spheroid = field.Spheroids[0];
+            Spheroid spheroid = field.Entities.Spheroids[0];
 
             // Expire the start grace, then drive the spheroid standalone:
             // its drops land in the field (field.EnforcerCount) but the
@@ -69,7 +69,7 @@ public sealed class SpheroidEnforcerTimingTests
             }
 
             Assert.Equal(EntityLifeState.Dead, spheroid.LifeState);
-            int dropped = field.GetEnforcerCount();
+            int dropped = field.Entities.Enforcers.GetLiveCount();
             Assert.InRange(dropped, 1, 5);
             observed.Add(dropped);
         }
@@ -93,7 +93,7 @@ public sealed class SpheroidEnforcerTimingTests
             for (int tick = 1; tick <= GraceWarmupTicks + 17; tick++)
             {
                 field.Update(Frame());
-                Assert.True(field.GetEnforcerCount() == 0, $"seed {seed}: drop at tick {tick}");
+                Assert.True(field.Entities.Enforcers.GetLiveCount() == 0, $"seed {seed}: drop at tick {tick}");
             }
         }
     }
@@ -180,7 +180,7 @@ public sealed class SpheroidEnforcerTimingTests
         for (int tick = 1; tick <= 3000 && fireTicks.Count < 10; tick++)
         {
             enforcer.Update(Frame(), field);
-            foreach (Spark spark in field.Sparks)
+            foreach (Spark spark in field.Entities.Sparks)
             {
                 if (seen.Add(spark) && spark.LifeState == EntityLifeState.Alive && fireTicks.Count < 10)
                 {

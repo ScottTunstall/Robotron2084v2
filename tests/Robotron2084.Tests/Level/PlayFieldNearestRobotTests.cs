@@ -27,7 +27,7 @@ public sealed class PlayFieldNearestRobotTests
     {
         PlayField field = EmptyField();
 
-        Assert.Null(field.GetNearestLivingRobotPosition(field.Player.Position));
+        Assert.Null(field.Entities.GetNearestLivingRobotPosition(field.Player.Position));
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class PlayFieldNearestRobotTests
         field.SpawnEnforcer(far);
         Tank nearTank = field.SpawnTank(near);
 
-        Assert.Equal(nearTank.Position, field.GetNearestLivingRobotPosition(player));
+        Assert.Equal(nearTank.Position, field.Entities.GetNearestLivingRobotPosition(player));
     }
 
     [Fact]
@@ -56,6 +56,6 @@ public sealed class PlayFieldNearestRobotTests
         Tank tank = field.SpawnTank(near);
         tank.Kill();
 
-        Assert.Equal(far, field.GetNearestLivingRobotPosition(player));
+        Assert.Equal(far, field.Entities.GetNearestLivingRobotPosition(player));
     }
 }
