@@ -437,18 +437,18 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// </remarks>
     private Human? ResolveTarget(PlayField field)
     {
-        if (field.GetFamilyMemberInSlot(_targetSlot) is { } chased)
+        if (field.Entities.Family.GetMemberInSlot(_targetSlot) is { } chased)
         {
             return chased;
         }
 
-        if (!field.AnyFamilyMemberAvailable())
+        if (!field.Entities.Family.AnyAvailable())
         {
             return null;
         }
 
-        _targetSlot = field.GetNearestFamilySlot(_position);
-        return field.GetFamilyMemberInSlot(_targetSlot);
+        _targetSlot = field.Entities.Family.GetNearestSlot(_position);
+        return field.Entities.Family.GetMemberInSlot(_targetSlot);
     }
 
     /// <summary>Takes a small step towards the target, as long as the step stays inside the playfield.</summary>

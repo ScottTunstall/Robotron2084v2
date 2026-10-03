@@ -281,7 +281,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True when the human's next step would overlap an electrode that is still standing.</summary>
     private static bool OverlapsLivingElectrode(Rectangle next, PlayField field)
     {
-        foreach (Electrode electrode in field.Electrodes)
+        foreach (Electrode electrode in field.Entities.Electrodes)
         {
             if (electrode.LifeState == EntityLifeState.Alive && electrode.Bounds.Intersects(next))
             {
