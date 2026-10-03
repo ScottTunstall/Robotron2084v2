@@ -13,7 +13,9 @@ For the rule that keeps this list to one word per idea, see [coding-standards.md
 | **port tick** | One go round the game loop: one call of `Update`. The game does 60 of these every second. "Port" means this version of the game, as opposed to the original arcade machine. | `...Ticks` |
 | **ROM frame** | One redraw of the original arcade screen. The arcade did 50 a second, so the original game counted its waiting times in these. One ROM frame is a bit longer than one port tick: 6 ROM frames last as long as 5 port ticks. | `...RomFrames` (never `...RomTicks`) |
 | **clock unit** | A small counting unit that lets a port tick and a ROM frame both be whole numbers: a port tick is 5 units and a ROM frame is 6. A timer adds 5 every tick and goes off when it has 6 for each ROM frame it is waiting for. | `...ClockUnits`, or a `_...Timer` field whose summary says "clock units" |
-| **beat** | One go of a character's own thinking and moving routine. It happens every few ROM frames, and slower characters have longer gaps between beats. | `...Beats` |
+| **beat** | One go of a character's own thinking and moving routine. It happens every few ROM frames. | `...Beats` |
+| **interval** | The gap from one beat to the next, or from one flicker, flash or other repeat to the next. A slower character has a longer interval. | `...IntervalRomFrames`, `...IntervalClockUnits`, `...IntervalBeats` |
+| **wait** | The part of an interval the ROM sets by itself, such as the frames a brain sleeps after a beat. The interval is the wait plus the frame the beat takes. | `...WaitRomFrames` |
 
 Never call the clock unit "fifths", "sixths" or "6ths".
 

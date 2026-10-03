@@ -67,7 +67,7 @@ if you have to ask "wait, what level are we on?" partway through a method, split
 object (`Burst`, `Dispatch`).
 
 **NAM-2. Numeric identifiers carry their unit** when the unit is not obvious, using the suffixes in section 1:
-`StepPeriodRomFrames`, `JitterColumns`, `_velocitySubpixels`. A name that says one unit while holding another is
+`BeatIntervalRomFrames`, `JitterColumns`, `_velocitySubpixels`. A name that says one unit while holding another is
 a defect: `StepColumns` holding port pixels, `...RomTicks` holding beats.
 
 **NAM-3. A name says what the value is, not what it once was or how it is used.** `HulkSpeed` for a delay
@@ -150,6 +150,14 @@ summaries, comments and docs: `HumanKind.Mommy`, `MommyCount`, `DaddyAnimationFr
 spelling (`MOM`, `DAD`, `PSTKIL`, the attract text "SPHEREOID"). The plural is the ordinary one (Mommies,
 Daddies, Electrodes, Brains, Grunts, Progs). A new character gets the name the attract screen gives it; if it
 has none, ask the author (CMT-6). Content file names follow the same rule (`Sprites/Mommy_1`).
+
+**NAM-16. The gap between beats is an interval.** The time from one beat to the next is the **interval**:
+`BeatIntervalRomFrames` in ROM frames, `BeatIntervalClockUnits` in clock units, and `_beatTimer` for the timer that
+counts up to it. Never call it a period, delay, rate, sleep or step, and never call a beat a "step" or a "turn"
+(a hulk's or a human's beat is a beat; its steps are the moves inside it). The same word names any other repeating
+gap: a flicker, a flash, a cycle (`SparkFrameIntervalRomFrames`, `CycleIntervalClockUnits`), and a gap counted in beats
+(`fireIntervalBeats`). Where the ROM supplies only part of the interval, such as the frames a brain sleeps after its
+beat, that value is a **wait** (`beatWaitRomFrames`), and the interval is the wait plus the frame the beat takes.
 
 ## 4. Numbers and units (§112, §113)
 
@@ -489,7 +497,7 @@ question that needs the author.
 ## What not to flag
 
 - ROM labels, addresses and `notes §NN` references. These are required (CMT-1).
-- Deliberate deviations marked "do not revert without asking" (e.g. `Human.StepPeriod`), unless the marking is missing.
+- Deliberate deviations marked "do not revert without asking" (e.g. `Human.BeatIntervalRomFrames`), unless the marking is missing.
 - Byte tables copied from the ROM (`WaveTable`, `AttractMovieData`), as long as they have a summary giving the ROM
   address. They are data, not magic numbers.
 - Style choices the `.editorconfig` and analyzers already enforce. The build reports those.
