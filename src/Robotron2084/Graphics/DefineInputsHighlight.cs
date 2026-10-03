@@ -58,7 +58,7 @@ public sealed class DefineInputsHighlight
     public void Update(GamePalette palette)
     {
         _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
-        int period = ArcadeClock.Units(RomFramesPerStep);
+        int period = ArcadeClock.ToClockUnits(RomFramesPerStep);
         if (_chaseClockUnits < period)
         {
             return;

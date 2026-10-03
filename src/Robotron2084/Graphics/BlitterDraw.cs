@@ -53,8 +53,8 @@ public sealed class BlitterDraw
     /// <param name="animationFrame">The animation frame being drawn.</param>
     public static Rectangle DrawnRect(Rectangle bounds, Texture2D animationFrame)
     {
-        int w = ScreenSize.Scaled(animationFrame.Width);
-        int h = ScreenSize.Scaled(animationFrame.Height);
+        int w = ScreenSize.ToPortPixels(animationFrame.Width);
+        int h = ScreenSize.ToPortPixels(animationFrame.Height);
         return new Rectangle(
             bounds.X + (bounds.Width - w) / 2,
             bounds.Y + (bounds.Height - h) / 2,
@@ -72,8 +72,8 @@ public sealed class BlitterDraw
     /// </summary>
     public void DrawGlyphCycling(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot)
     {
-        int w = ScreenSize.Scaled(glyph.Width);
-        int h = ScreenSize.Scaled(glyph.Height);
+        int w = ScreenSize.ToPortPixels(glyph.Width);
+        int h = ScreenSize.ToPortPixels(glyph.Height);
         if (ColorCycleEffect is { } effect &&
             effect.Techniques[GlyphCycleTechnique] is { } technique)
         {
@@ -127,8 +127,8 @@ public sealed class BlitterDraw
         SpriteEffects effects = SpriteEffects.None)
     {
         Color tint = Palette?.Color(slot) ?? Color.White;
-        int w = ScreenSize.Scaled(glyph.Width);
-        int h = ScreenSize.Scaled(glyph.Height);
+        int w = ScreenSize.ToPortPixels(glyph.Width);
+        int h = ScreenSize.ToPortPixels(glyph.Height);
         spriteBatch.Draw(glyph, new Rectangle(x, y, w, h), null, tint, 0f, Vector2.Zero, effects, 0f);
     }
 
@@ -159,10 +159,10 @@ public sealed class BlitterDraw
     /// "ON MONOCHROME PICT"; notes §47): draws the sprite's SHAPE in one
     /// colour, discarding the animation frame's own colours. This is the arcade's REMAP
     /// COLOUR mode, and it is how the ROM draws anything in a single colour —
-    /// a post being "turned on" (<c>OPON</c>), the flashing human and brain
+    /// an electrode being "turned on" (<c>OPON</c>), the flashing human and brain
     /// while a brain reprograms one (<c>BRNON</c>/<c>HUMON</c>), mono text.
     ///
-    /// <paramref name="color"/> usually comes from <see cref="SlotColor"/> so
+    /// <paramref name="color"/> usually comes from <see cref="GetSlotColour"/> so
     /// the caller can name a palette slot; a cycling slot then cycles here for
     /// free, exactly as the hardware's palette does.
     /// </summary>
@@ -175,7 +175,7 @@ public sealed class BlitterDraw
             technique.Passes[0].Apply();
         }
 
-        // Without the effect the draw degrades to a tint (exact for white pictures).
+        // Without the effect the draw degrades to a tint (exact for white sprites).
         spriteBatch.Draw(texture, DrawnRect(bounds, texture), null, color, 0f, Vector2.Zero, SpriteEffects.None, 0f);
 
         // Hand the pass-through back immediately: this pass is DEVICE state, and
@@ -208,7 +208,7 @@ public sealed class BlitterDraw
     }
 
     /// <summary>The live RGB of a palette slot (0-15); white when no palette is wired.</summary>
-    public Color SlotColor(int slot) => Palette?.Color(slot) ?? Color.White;
+    public Color GetSlotColour(int slot) => Palette?.Color(slot) ?? Color.White;
 
     /// <summary>
     /// Binds the effect's PASS-THROUGH pass (<c>MainPS</c>: remap the six baked

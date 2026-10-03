@@ -224,7 +224,7 @@ public sealed class TunnelEffect
     /// </summary>
     internal static int PixelX(int romPixel) => (int)MathF.Round(romPixel * RomPixelToScreenX);
 
-    internal static int RowY(int romRow) => (int)MathF.Round(romRow * RomPixelToScreenY);
+    internal static int GetRowY(int romRow) => (int)MathF.Round(romRow * RomPixelToScreenY);
 
     /// <summary>One ring as drawn: its corners in ROM screen coordinates and the pair it used.</summary>
     private readonly record struct Ring(int Left, int Top, int Right, int Bottom, int Packed);
@@ -296,8 +296,8 @@ public sealed class TunnelEffect
 
         int x = PixelX(firstColumn * 2);
         int width = PixelX(lastColumn * 2 + 2) - x;
-        int y = RowY(row);
-        DrawEdge(spriteBatch, sprites, new Rectangle(x, y, width, Math.Max(1, RowY(row + 1) - y)), colour);
+        int y = GetRowY(row);
+        DrawEdge(spriteBatch, sprites, new Rectangle(x, y, width, Math.Max(1, GetRowY(row + 1) - y)), colour);
     }
 
     /// <summary>
@@ -308,8 +308,8 @@ public sealed class TunnelEffect
     private void DrawRing(SpriteBatch spriteBatch, SpriteSet sprites, Ring ring)
     {
         (int slot0, int slot1) = Colours(ring.Packed);          // $5A13 / $5A19
-        Color colour0 = sprites.Blitter.SlotColor(slot0);
-        Color colour1 = sprites.Blitter.SlotColor(slot1);
+        Color colour0 = sprites.Blitter.GetSlotColour(slot0);
+        Color colour1 = sprites.Blitter.GetSlotColour(slot1);
 
         int top = ring.Top;
         int bottom = ring.Bottom;
@@ -354,8 +354,8 @@ public sealed class TunnelEffect
             return;
         }
 
-        int y = RowY(topRow);
-        int height = Math.Max(1, RowY(bottomRow + 1) - y);
+        int y = GetRowY(topRow);
+        int height = Math.Max(1, GetRowY(bottomRow + 1) - y);
         int x0 = PixelX(column * 2);
         int x1 = PixelX(column * 2 + 1);
         int x2 = PixelX(column * 2 + 2);

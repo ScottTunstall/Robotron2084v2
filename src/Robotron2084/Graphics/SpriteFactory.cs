@@ -10,13 +10,13 @@ namespace Robotron2084.Graphics;
 /// no Content pipeline assets needed. Entity silhouettes are
 /// authored fresh for this project (simple symmetric shapes on
 /// a transparent background, in the spec's colour per entity); the four
-/// player laser pictures come from the ROM (R5 $35BE-$35DC) and are built at arcade-pixel
+/// player laser sprites come from the ROM (R5 $35BE-$35DC) and are built at arcade-pixel
 /// dimensions. Entity patterns are authored on a fixed
 /// <see cref="DesignSize"/>×<see cref="DesignSize"/> design canvas and
 /// nearest-neighbour scaled to <see cref="PatternSize"/>, so they stay
 /// correct at any <c>ScreenSize.SpecScale</c>.
 /// </summary>
-public sealed class PictureFactory
+public sealed class SpriteFactory
 {
     /// <summary>
     /// Canvas every hand-authored pattern is written on (2x arcade pixels in
@@ -29,11 +29,11 @@ public sealed class PictureFactory
     private const int LaserDiagonalSize = 6;
 
     /// <summary>Runtime pattern size: the 16 spec-px entity box × SpecScale (32x32 at 2x).</summary>
-    private static readonly int PatternSize = ScreenSize.Scaled(CollisionSizes.EntitySizeSpecPixels);
+    private static readonly int PatternSize = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeSpecPixels);
 
     private readonly GraphicsDevice _device;
 
-    public PictureFactory(GraphicsDevice device)
+    public SpriteFactory(GraphicsDevice device)
     {
         _device = device;
     }
@@ -41,7 +41,7 @@ public sealed class PictureFactory
     /// <summary>Spiked tower: top ball, stem, diamond midsection, base.</summary>
     public static Color[] BuildElectrodePattern(Color color)
     {
-        Color[] canvas = NewCanvas();
+        Color[] canvas = CreateCanvas();
         FillRect(canvas, 13, 3, 6, 5, color);  // top ball
         FillRect(canvas, 15, 8, 2, 9, color);  // stem
         for (int dy = -5; dy <= 5; dy++)       // diamond midsection
@@ -57,7 +57,7 @@ public sealed class PictureFactory
     /// <summary>Four-legged angular stalker: core + corner legs + mid nubs.</summary>
     public static Color[] BuildEnforcerPattern(Color color)
     {
-        Color[] canvas = NewCanvas();
+        Color[] canvas = CreateCanvas();
         FillRect(canvas, 11, 11, 10, 10, color); // core
         FillRect(canvas, 4, 4, 5, 5, color);     // corner legs
         FillRect(canvas, 23, 4, 5, 5, color);
@@ -73,7 +73,7 @@ public sealed class PictureFactory
     /// <summary>Small blocky robot: head, torso, arms, legs.</summary>
     public static Color[] BuildGruntPattern(Color color)
     {
-        Color[] canvas = NewCanvas();
+        Color[] canvas = CreateCanvas();
         FillRect(canvas, 12, 5, 8, 6, color);   // head
         FillRect(canvas, 9, 11, 14, 10, color); // torso
         FillRect(canvas, 4, 12, 3, 8, color);   // left arm
@@ -86,7 +86,7 @@ public sealed class PictureFactory
     /// <summary>Bulky robot: wide head, shoulders, torso, short legs.</summary>
     public static Color[] BuildHulkPattern(Color color)
     {
-        Color[] canvas = NewCanvas();
+        Color[] canvas = CreateCanvas();
         FillRect(canvas, 11, 3, 10, 8, color);  // head
         FillRect(canvas, 4, 11, 24, 6, color);  // shoulders
         FillRect(canvas, 8, 17, 16, 9, color);  // torso
@@ -103,7 +103,7 @@ public sealed class PictureFactory
         return pattern;
     }
 
-    // ---- ROM laser pictures (player laser pictures; R5 $35BE-$35DC = old source
+    // ---- ROM laser sprites (player laser sprites; R5 $35BE-$35DC = old source
     //      RRG23 LLPC/ULPC/DLLPC/ULLPC, author ROM-verified 2026-09-13) ----
     // 4 bits per pixel, high nibble = left pixel. Authored at arcade-pixel
     // dimensions (1 arcade pixel = 1 texture pixel); BlitterDraw.DrawSprite scales
@@ -153,7 +153,7 @@ public sealed class PictureFactory
     /// <summary>Humanoid: head + torso + two arms + two legs.</summary>
     public static Color[] BuildPlayerPattern(Color color)
     {
-        Color[] canvas = NewCanvas();
+        Color[] canvas = CreateCanvas();
         FillRect(canvas, 12, 2, 8, 8, color);    // head
         FillRect(canvas, 10, 10, 12, 12, color); // torso
         FillRect(canvas, 5, 11, 3, 8, color); // left arm
@@ -166,7 +166,7 @@ public sealed class PictureFactory
     /// <summary>Angular gem: filled diamond.</summary>
     public static Color[] BuildQuarkPattern(Color color)
     {
-        Color[] canvas = NewCanvas();
+        Color[] canvas = CreateCanvas();
         for (int y = 0; y < DesignSize; y++)
         {
             for (int x = 0; x < DesignSize; x++)
@@ -187,7 +187,7 @@ public sealed class PictureFactory
     /// <summary>Orb: filled disc.</summary>
     public static Color[] BuildSpheroidPattern(Color color)
     {
-        Color[] canvas = NewCanvas();
+        Color[] canvas = CreateCanvas();
         for (int y = 0; y < DesignSize; y++)
         {
             for (int x = 0; x < DesignSize; x++)
@@ -207,7 +207,7 @@ public sealed class PictureFactory
     /// <summary>Turret + barrel, hull, treads.</summary>
     public static Color[] BuildTankPattern(Color color)
     {
-        Color[] canvas = NewCanvas();
+        Color[] canvas = CreateCanvas();
         FillRect(canvas, 12, 8, 8, 7, color);   // turret
         FillRect(canvas, 14, 2, 3, 6, color);   // barrel
         FillRect(canvas, 5, 15, 22, 9, color);  // hull
@@ -242,7 +242,7 @@ public sealed class PictureFactory
         }
     }
 
-    private static Color[] NewCanvas() => new Color[DesignSize * DesignSize];
+    private static Color[] CreateCanvas() => new Color[DesignSize * DesignSize];
 
     /// <summary>Nearest-neighbour scales a DesignSize×DesignSize pattern to PatternSize×PatternSize.</summary>
     private static Color[] ScalePattern(Color[] design)

@@ -16,7 +16,7 @@ public static class Presentation
     /// when the canvas is larger than the client area, which crops it evenly.</remarks>
     public static Rectangle CanvasDestination(int clientWidth, int clientHeight, ScaleMode mode)
     {
-        float scale = ScaleFor(clientWidth, clientHeight, mode);
+        float scale = GetScale(clientWidth, clientHeight, mode);
         int width = Math.Max(1, (int)MathF.Round(ScreenSize.Width * scale));
         int height = Math.Max(1, (int)MathF.Round(ScreenSize.Height * scale));
         return new Rectangle((clientWidth - width) / 2, (clientHeight - height) / 2, width, height);
@@ -31,7 +31,7 @@ public static class Presentation
     /// than 1, so a window smaller than the canvas crops it; <see cref="ScaleMode.Fill"/> is the exact
     /// fraction of the limiting axis. A client area with no area at all falls back to 1, so nothing here
     /// can divide by zero.</remarks>
-    public static float ScaleFor(int clientWidth, int clientHeight, ScaleMode mode)
+    public static float GetScale(int clientWidth, int clientHeight, ScaleMode mode)
     {
         if (clientWidth <= 0 || clientHeight <= 0)
         {
@@ -40,7 +40,7 @@ public static class Presentation
 
         if (mode == ScaleMode.Integer)
         {
-            return ScreenSize.MaxIntegerScale(clientWidth, clientHeight);
+            return ScreenSize.ComputeMaxIntegerScale(clientWidth, clientHeight);
         }
 
         return Math.Min((float)clientWidth / ScreenSize.Width, (float)clientHeight / ScreenSize.Height);

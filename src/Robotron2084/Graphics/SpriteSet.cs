@@ -9,7 +9,7 @@ namespace Robotron2084.Graphics;
 /// ROM sprite textures loaded from the content pipeline (extracted from
 /// ref/rom/robotron64k.bin by tools/SpriteExtractor — definitive source and
 /// per-sprite ROM offsets in docs/sprite-map.md), plus runtime-generated
-/// textures for the four player laser pictures (ROM data R5 $35BE-$35DC,
+/// textures for the four player laser sprites (ROM data R5 $35BE-$35DC,
 /// see the Laser* properties) and the 1x1 wall pixel.
 ///
 /// Arcade fidelity: ROM frames are drawn at SpecScale× arcade pixels (the
@@ -21,34 +21,34 @@ public sealed class SpriteSet
     /// <summary>Number of spark (enforcer bullet) frames — SPKP0..3 in the ROM (notes 32).</summary>
     public const int SparkAnimationFrameCount = 4;
 
-    /// <summary>The electrode picture variants (nine families of three, see notes §47).</summary>
+    /// <summary>The electrode sprite variants (nine variants of three, see notes §47).</summary>
     private const int ElectrodeAnimationFrameCount = 27;
 
-    /// <summary>Pictures in the enforcer's walk cycle.</summary>
+    /// <summary>Animation frames in the enforcer's walk cycle.</summary>
     private const int EnforcerAnimationFrameCount = 6;
 
-    /// <summary>Pictures in the grunt's walk cycle.</summary>
+    /// <summary>Animation frames in the grunt's walk cycle.</summary>
     private const int GruntAnimationFrameCount = 3;
 
-    /// <summary>Pictures in the hulk's walk cycle.</summary>
+    /// <summary>Animation frames in the hulk's walk cycle.</summary>
     private const int HulkAnimationFrameCount = 9;
 
-    /// <summary>Pictures in the player's walk cycle: 4 directions × 3 frames.</summary>
+    /// <summary>Animation frames in the player's walk cycle: 4 directions × 3 frames.</summary>
     private const int PlayerAnimationFrameCount = 12;
 
-    /// <summary>Pictures in the quark's spin/drop cycle.</summary>
+    /// <summary>Animation frames in the quark's spin/drop cycle.</summary>
     private const int QuarkAnimationFrameCount = 9;
 
     /// <summary>Glyphs the small font's table carries up to the closing bracket.</summary>
     private const int SmallFontGlyphCount = 38;
 
-    /// <summary>Pictures in the spheroid's spin/drop cycle.</summary>
+    /// <summary>Animation frames in the spheroid's spin/drop cycle.</summary>
     private const int SpheroidAnimationFrameCount = 8;
 
-    /// <summary>Pictures in the tank's walk cycle.</summary>
+    /// <summary>Animation frames in the tank's walk cycle.</summary>
     private const int TankAnimationFrameCount = 4;
 
-    /// <summary>Pictures in one walk cycle of a family member or the brain — 4 directions x 3 frames.</summary>
+    /// <summary>Animation frames in one walk cycle of a family member or the brain — 4 directions x 3 frames.</summary>
     private const int WalkCycleAnimationFrameCount = 12;
 
     /// <summary>
@@ -69,8 +69,8 @@ public sealed class SpriteSet
         "exclaim", "comma", "period", "hyphen",
     ];
 
-    /// <summary>Loads the game's pictures.</summary>
-    /// <param name="source">Where the pictures come from — the content pipeline in the game, and nothing at
+    /// <summary>Loads the game's sprites.</summary>
+    /// <param name="source">Where the sprites come from — the content pipeline in the game, and nothing at
     /// all in a headless test.</param>
     public SpriteSet(ISpriteSource source)
     {
@@ -83,7 +83,7 @@ public sealed class SpriteSet
         QuarkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Quark", QuarkAnimationFrameCount));
         TankAnimationFrames = source.LoadAll(NumberedNames("Sprites/Tank", TankAnimationFrameCount));
 
-        // ROM MTNKP1..4 (notes §53): the four birth pictures. Each is a
+        // ROM MTNKP1..4 (notes §53): the four birth animation frames. Each is a
         // different size, so the drawer reads each texture's own dimensions
         // rather than the tank's collision box.
         TankGrowAnimationFrames = source.LoadAll(NumberedNames("Sprites/TankGrow", TankTuning.GrowSteps));
@@ -99,8 +99,8 @@ public sealed class SpriteSet
             "Sprites/Score_5000",
         ]);
         MikeyAnimationFrames = source.LoadAll(NumberedNames("Sprites/Mikey", WalkCycleAnimationFrameCount));
-        MomAnimationFrames = source.LoadAll(NumberedNames("Sprites/Mummy", WalkCycleAnimationFrameCount));
-        DadAnimationFrames = source.LoadAll(NumberedNames("Sprites/Daddy", WalkCycleAnimationFrameCount));
+        MommyAnimationFrames = source.LoadAll(NumberedNames("Sprites/Mommy", WalkCycleAnimationFrameCount));
+        DaddyAnimationFrames = source.LoadAll(NumberedNames("Sprites/Daddy", WalkCycleAnimationFrameCount));
         BrainAnimationFrames = source.LoadAll(NumberedNames("Sprites/Brain", WalkCycleAnimationFrameCount));
         ProgBurst = source.Load("Sprites/ProgBurst");
         TitleWordmarkCore = source.Load("Sprites/Title_Wordmark_Core");
@@ -108,18 +108,18 @@ public sealed class SpriteSet
         Title2084 = source.Load("Sprites/Title_2084");
         WilliamsLogo = source.Load("Sprites/WilliamsLogo");
 
-        LaserBar = source.Create(6, 1, PictureFactory.BuildLaserBarPattern(Color.White));
-        LaserColumn = source.Create(2, 6, PictureFactory.BuildLaserColumnPattern(Color.White));
-        LaserDiagonalMain = source.Create(6, 6, PictureFactory.BuildLaserDiagonalMainPattern(Color.White));
-        LaserDiagonalAnti = source.Create(6, 6, PictureFactory.BuildLaserDiagonalAntiPattern(Color.White));
+        LaserBar = source.Create(6, 1, SpriteFactory.BuildLaserBarPattern(Color.White));
+        LaserColumn = source.Create(2, 6, SpriteFactory.BuildLaserColumnPattern(Color.White));
+        LaserDiagonalMain = source.Create(6, 6, SpriteFactory.BuildLaserDiagonalMainPattern(Color.White));
+        LaserDiagonalAnti = source.Create(6, 6, SpriteFactory.BuildLaserDiagonalAntiPattern(Color.White));
         TankShell = source.Load("Sprites/TankShell");
         AttractCruise = source.Load("Sprites/AttractCruise");
-        PostAnimationFrames = source.LoadAll(
+        AttractElectrodeAnimationFrames = source.LoadAll(
         [
-            "Sprites/AttractPost_1",
-            "Sprites/AttractPost_2",
-            "Sprites/AttractPost_3",
-            "Sprites/AttractPost_4",
+            "Sprites/AttractElectrode_1",
+            "Sprites/AttractElectrode_2",
+            "Sprites/AttractElectrode_3",
+            "Sprites/AttractElectrode_4",
         ]);
         WallPixel = source.CreateSolid(1, 1, Color.White);
         MiniMan = BuildMiniMan(source);
@@ -131,13 +131,13 @@ public sealed class SpriteSet
     }
 
     /// <summary>
-    /// The attract movie's CRUISE MISSILE — ROM `CRUSB` ($86BA, the 9x2 picture
+    /// The attract movie's CRUISE MISSILE — ROM `CRUSB` ($86BA, the 9x2 sprite
     /// the movie's own CRUSM descriptor points at; notes §95.6). The playfield's
-    /// cruise missile draws itself as solid marks, not a picture (see <see cref="Robotron2084.Entities.CruiseMissile"/>).
+    /// cruise missile draws itself as solid marks, not a sprite (see <see cref="Robotron2084.Entities.CruiseMissile"/>).
     /// </summary>
     public Texture2D AttractCruise { get; }
 
-    /// <summary>The blitter operations that draw these pictures.</summary>
+    /// <summary>The blitter operations that draw these sprites.</summary>
     public BlitterDraw Blitter { get; }
 
     /// <summary>
@@ -161,7 +161,7 @@ public sealed class SpriteSet
     /// </summary>
     public Texture2D CursorArrow { get; }
 
-    public Texture2D[] DadAnimationFrames { get; }
+    public Texture2D[] DaddyAnimationFrames { get; }
 
     public Texture2D[] ElectrodeAnimationFrames { get; }
 
@@ -187,7 +187,7 @@ public sealed class SpriteSet
     public Texture2D[] HulkAnimationFrames { get; }
 
     /// <summary>
-    /// Player laser pictures — the four ROM pictures (R5 $35BE-$35DC, byte-identical
+    /// Player laser sprites — the four ROM sprites (R5 $35BE-$35DC, byte-identical
     /// to old source RRG23 LLPC/ULPC/DLLPC/ULLPC). Built at arcade-pixel size (1 arcade pixel = 1 texture pixel);
     /// <see cref="DrawSprite"/> scales by SpecScale and centers in the laser's
     /// 4x4 (spec) collision box. ROM LTAB picks one per direction, no flipping:
@@ -204,13 +204,13 @@ public sealed class SpriteSet
 
     /// <summary>
     /// The human family — 12 frames each (4 directions × 3 walk
-    /// frames, same layout as the player frames; Mikey = Mikey_*, Mom =
-    /// Mummy_*, Dad = Daddy_*).
+    /// frames, same layout as the player frames; Mikey = Mikey_*, Mommy =
+    /// Mommy_*, Daddy = Daddy_*).
     /// </summary>
     public Texture2D[] MikeyAnimationFrames { get; }
 
     /// <summary>
-    /// The arcade's mini man picture — the LIVES icon (notes §58.2). ROM MNPIC
+    /// The arcade's mini man sprite — the LIVES icon (notes §58.2). ROM MNPIC
     /// (`$3592` metadata, `$3596` pixels): 3 bytes x 8 rows = 6x8 px, one icon per
     /// spare man, 8 px apart, next to that player's score. It is NOT the 8x12
     /// player sprite. Built at runtime from the ROM nibbles; its slot-11 body
@@ -218,17 +218,17 @@ public sealed class SpriteSet
     /// </summary>
     public Texture2D MiniMan { get; }
 
-    public Texture2D[] MomAnimationFrames { get; }
+    public Texture2D[] MommyAnimationFrames { get; }
 
     public Texture2D[] PlayerAnimationFrames { get; }
 
     /// <summary>
-    /// The attract movie's four SCORE POSTS — ROM `POSTS` images 12, 0, 4 and 8
-    /// (notes §95.6): the main post and the three that fork off it in the POSTER
+    /// The attract movie's four SCORE ELECTRODES — ROM `POSTS` images 12, 0, 4 and 8
+    /// (notes §95.6): the main electrode and the three that fork off it in the POSTER
     /// script. They are WHITE masks because the movie only ever draws them SOLID,
     /// through MONO's colour pair.
     /// </summary>
-    public Texture2D[] PostAnimationFrames { get; }
+    public Texture2D[] AttractElectrodeAnimationFrames { get; }
 
     public Texture2D ProgBurst { get; }
     public Texture2D[] QuarkAnimationFrames { get; }
@@ -249,7 +249,7 @@ public sealed class SpriteSet
     public Texture2D[] TankAnimationFrames { get; }
 
     /// <summary>
-    /// ROM `MTNKP1..4` — the tank's BIRTH pictures (4x4, 8x7, 8x8 and 12x12
+    /// ROM `MTNKP1..4` — the tank's BIRTH animation frames (4x4, 8x7, 8x8 and 12x12
     /// arcade px; notes §52/§53). These are NOT the tank: <c>Tank</c> draws them
     /// while `MTANK` grows the drop, and each has its own size.
     /// </summary>
@@ -258,11 +258,11 @@ public sealed class SpriteSet
     /// <summary>ROM tank shell (raw data $4FF2, 7×16 = 14×16 px; notes §11.5).</summary>
     public Texture2D TankShell { get; }
 
-    /// <summary>The arcade's text, printed in these pictures' fonts.</summary>
+    /// <summary>The arcade's text, printed in these sprites' fonts.</summary>
     public ArcadeText Text { get; }
 
     /// <summary>
-    /// The "2084" mark beneath the wordmark — COLOUR picture, traced the same way and snapped to the
+    /// The "2084" mark beneath the wordmark — COLOUR sprite, traced the same way and snapped to the
     /// arcade's own palette (notes §103.4). Unlike the wordmark it keeps its own colours: only the
     /// wordmark cycles.
     /// </summary>
@@ -271,7 +271,7 @@ public sealed class SpriteSet
     /// <summary>
     /// The attract page's wordmark — "ROBOTRON:" — as two WHITE MASKS at 1x arcade pixels,
     /// TRACED from an arcade screenshot by <c>tools/extract-title-logos.py</c> (notes
-    /// §103.4): the R5 CPU ROM we hold does not contain these pictures. <see cref="TitleWordmarkCore"/>
+    /// §103.4): the R5 CPU ROM we hold does not contain these sprites. <see cref="TitleWordmarkCore"/>
     /// is the letters' body and <see cref="TitleWordmarkRim"/> the one-pixel rim round them,
     /// because the arcade blits a shape in a colour taken from the LIVE palette — so the page
     /// draws each mask in a palette slot and the wordmark colour-cycles with the page's own
@@ -324,7 +324,7 @@ public sealed class SpriteSet
             {
                 int value = (nibbles[(row * widthBytes) + (column / 2)] >> (column % 2 == 0 ? 4 : 0)) & 0x0F;
                 pixels[(row * widthBytes * 2) + column] =
-                    value == 0 ? Color.Transparent : PaletteColorForSlot(value);
+                    value == 0 ? Color.Transparent : GetPaletteColour(value);
             }
         }
 
@@ -347,7 +347,7 @@ public sealed class SpriteSet
 
     /// <summary>The asset names of a numbered run, <c>{prefix}_1</c> … <c>{prefix}_{count}</c>.</summary>
     /// <param name="prefix">The run's asset prefix.</param>
-    /// <param name="count">How many pictures the run holds.</param>
+    /// <param name="count">How many sprites the run holds.</param>
     private static string[] NumberedNames(string prefix, int count)
     {
         var names = new string[count];
@@ -365,14 +365,14 @@ public sealed class SpriteSet
     /// live colour at draw time (notes §34/§39) — and a static slot (0-9) uses
     /// the slot's fixed ROM colour.
     /// </summary>
-    private static Color PaletteColorForSlot(int slot)
+    private static Color GetPaletteColour(int slot)
     {
         if (FontSlots.IsCycling(slot))
         {
             byte marker = GamePalette.CyclingSlotMarkers[slot - FontSlots.FirstCyclingSlot];
-            return RobotronColor.FromByte(marker);
+            return RobotronColor.CreateFromByte(marker);
         }
 
-        return RobotronColor.FromByte(GamePalette.DefaultSlots[slot]);
+        return RobotronColor.CreateFromByte(GamePalette.DefaultSlots[slot]);
     }
 }

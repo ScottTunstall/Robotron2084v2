@@ -15,7 +15,7 @@ namespace Robotron2084.Graphics;
 public static class RobotronColor
 {
     /// <summary>Converts a Robotron colour byte (BBGGGRRR) to its RGB value.</summary>
-    public static Color FromByte(byte value)
+    public static Color CreateFromByte(byte value)
     {
         // The red component is stored in bits 0-2.
         int red = (value & 0x07) << 1;

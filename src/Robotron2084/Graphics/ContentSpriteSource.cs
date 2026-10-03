@@ -5,21 +5,21 @@ using Microsoft.Xna.Framework.Graphics;
 namespace Robotron2084.Graphics;
 
 /// <summary>
-/// The game's pictures: the ROM-extracted pictures from the content pipeline, and the handful the port draws
-/// itself, which <see cref="PictureFactory"/> builds against the graphics device.
+/// The game's sprites: the ROM-extracted sprites from the content pipeline, and the handful the port draws
+/// itself, which <see cref="SpriteFactory"/> builds against the graphics device.
 /// </summary>
 public sealed class ContentSpriteSource : ISpriteSource
 {
     private readonly ContentManager _content;
-    private readonly PictureFactory _factory;
+    private readonly SpriteFactory _factory;
 
     /// <summary>Wires the source to the game's device and content.</summary>
-    /// <param name="device">The graphics device the self-drawn pictures are created on.</param>
-    /// <param name="content">The content pipeline the ROM-extracted pictures are loaded from.</param>
+    /// <param name="device">The graphics device the self-drawn sprites are created on.</param>
+    /// <param name="content">The content pipeline the ROM-extracted sprites are loaded from.</param>
     public ContentSpriteSource(GraphicsDevice device, ContentManager content)
     {
         _content = content;
-        _factory = new PictureFactory(device);
+        _factory = new SpriteFactory(device);
     }
 
     /// <inheritdoc/>
@@ -34,12 +34,12 @@ public sealed class ContentSpriteSource : ISpriteSource
     /// <inheritdoc/>
     public Texture2D[] LoadAll(string[] assetNames)
     {
-        var pictures = new Texture2D[assetNames.Length];
+        var sprites = new Texture2D[assetNames.Length];
         for (int i = 0; i < assetNames.Length; i++)
         {
-            pictures[i] = Load(assetNames[i]);
+            sprites[i] = Load(assetNames[i]);
         }
 
-        return pictures;
+        return sprites;
     }
 }

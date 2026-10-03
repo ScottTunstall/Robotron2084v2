@@ -13,7 +13,7 @@ namespace Robotron2084.Graphics;
 public sealed class ArcadeText
 {
     /// <summary>
-    /// Index into the large font of the ROM's rub marker — the large-font table's own picture for
+    /// Index into the large font of the ROM's rub marker — the large-font table's own sprite for
     /// code <c>$5E</c> (notes §116). The initials entry cycles to it to delete a committed letter, and
     /// no other screen prints that character. Its file keeps the sprite editor's name,
     /// <c>Font_L_arrowleft</c>, which is the only "arrow" in the ROM's large font.
@@ -46,7 +46,7 @@ public sealed class ArcadeText
     /// arrow exist in the large font only), then the LARGE font's punctuation
     /// '!' ',' '.' '-' (notes §96 — indices 40-43, appended so nothing moves).
     /// </summary>
-    public static int GlyphIndex(char c) => c switch
+    public static int GetGlyphIndex(char c) => c switch
     {
         >= '0' and <= '9' => c - '0',
         >= 'A' and <= 'Z' => 10 + (c - 'A'),
@@ -74,18 +74,18 @@ public sealed class ArcadeText
         {
             if (character == ' ')
             {
-                x += ScreenSize.Scaled(HudLayout.HudSmallFontBlankAdvancePixels);
+                x += ScreenSize.ToPortPixels(HudLayout.HudSmallFontBlankAdvancePixels);
                 continue;
             }
 
-            int index = GlyphIndex(character);
+            int index = GetGlyphIndex(character);
             if (index < 0 || index >= _fontLarge.Length)
             {
                 continue;
             }
 
             _blitter.DrawGlyphSlot(spriteBatch, _fontLarge, index, x, y, slot);
-            x += ScreenSize.Scaled(_fontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
+            x += ScreenSize.ToPortPixels(_fontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
         }
 
         return x;
@@ -105,7 +105,7 @@ public sealed class ArcadeText
         _blitter.UsePassThrough();
         spriteBatch.Draw(
             _miniMan,
-            new Rectangle(x, y, ScreenSize.Scaled(_miniMan.Width), ScreenSize.Scaled(_miniMan.Height)),
+            new Rectangle(x, y, ScreenSize.ToPortPixels(_miniMan.Width), ScreenSize.ToPortPixels(_miniMan.Height)),
             Color.White);
     }
 
@@ -130,28 +130,28 @@ public sealed class ArcadeText
         {
             if (character == ' ')
             {
-                x += ScreenSize.Scaled(HudLayout.HudSmallFontSpaceAdvancePixels);
+                x += ScreenSize.ToPortPixels(HudLayout.HudSmallFontSpaceAdvancePixels);
                 continue;
             }
 
-            int index = GlyphIndex(character);
+            int index = GetGlyphIndex(character);
             if (index >= 0 && index < _fontSmall.Length)
             {
                 _blitter.DrawGlyphSlot(spriteBatch, _fontSmall, index, x, y, slot);
-                x += ScreenSize.Scaled(_fontSmall[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
+                x += ScreenSize.ToPortPixels(_fontSmall[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
                 continue;
             }
 
             // The arcade's SMALL font stops at ')' — 38 glyphs: digits, A-Z and the two brackets
             // — so it has no ':' of its own (the ROM's ':' lives in the LARGE font). Rather than
             // drop the character, draw the large font's glyph in its place: that is the arcade's
-            // own pictures, and it is why the DEFINE INPUTS page can print "ENTER: SET THE INPUT"
+            // own sprites, and it is why the DEFINE INPUTS page can print "ENTER: SET THE INPUT"
             // (notes §101.11). The colon is one row taller than the capitals, exactly as the two
             // arcade fonts differ.
             if (index >= 0 && index < _fontLarge.Length)
             {
                 _blitter.DrawGlyphSlot(spriteBatch, _fontLarge, index, x, y, slot);
-                x += ScreenSize.Scaled(_fontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
+                x += ScreenSize.ToPortPixels(_fontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
             }
         }
 
@@ -179,7 +179,7 @@ public sealed class ArcadeText
             }
 
             _blitter.DrawGlyphSlot(spriteBatch, glyphs, digit.Value, x, y, slot);
-            x += ScreenSize.Scaled(glyphs[digit.Value].Width + HudLayout.HudSmallFontGlyphGapPixels);
+            x += ScreenSize.ToPortPixels(glyphs[digit.Value].Width + HudLayout.HudSmallFontGlyphGapPixels);
         }
 
         return x;
@@ -207,7 +207,7 @@ public sealed class ArcadeText
                 continue;
             }
 
-            int index = GlyphIndex(character);
+            int index = GetGlyphIndex(character);
             if (index >= 0 && index < glyphs.Length)
             {
                 width += glyphs[index].Width + HudLayout.HudSmallFontGlyphGapPixels;

@@ -4,19 +4,19 @@ using Robotron2084.Entities;
 namespace Robotron2084.Graphics;
 
 /// <summary>
-/// Pixel-perfect contact over the loaded sprite set (notes §118): each picture's opaque-pixel mask is
-/// derived from its texture the first time it is asked for and kept, because a picture never changes
-/// shape — only which picture an entity is showing does.
+/// Pixel-perfect contact over the loaded sprite set (notes §118): each sprite's opaque-pixel mask is
+/// derived from its texture the first time it is asked for and kept, because a sprite never changes
+/// shape — only which sprite an entity is showing does.
 /// </summary>
 public sealed class SpriteCollision : IPixelCollision
 {
     private readonly Dictionary<Texture2D, SpriteMask> _masks = [];
 
     /// <inheritdoc/>
-    public bool Overlaps(PictureShape a, PictureShape b) => SpriteMask.Overlap(a.Mask, a.DrawnBounds, b.Mask, b.DrawnBounds);
+    public bool Overlaps(SpriteShape a, SpriteShape b) => SpriteMask.Overlap(a.Mask, a.DrawnBounds, b.Mask, b.DrawnBounds);
 
     /// <inheritdoc/>
-    public PictureShape? ShapeOf(IEntity entity)
+    public SpriteShape? GetShape(IEntity entity)
     {
         if (entity is not IAnimationFrameSource frameSource)
         {
@@ -24,15 +24,15 @@ public sealed class SpriteCollision : IPixelCollision
         }
 
         Texture2D animationFrame = frameSource.CurrentAnimationFrame;
-        return new PictureShape(MaskOf(animationFrame), BlitterDraw.DrawnRect(entity.Bounds, animationFrame));
+        return new SpriteShape(GetMask(animationFrame), BlitterDraw.DrawnRect(entity.Bounds, animationFrame));
     }
 
-    private SpriteMask MaskOf(Texture2D picture)
+    private SpriteMask GetMask(Texture2D animationFrame)
     {
-        if (!_masks.TryGetValue(picture, out SpriteMask? mask))
+        if (!_masks.TryGetValue(animationFrame, out SpriteMask? mask))
         {
-            mask = SpriteMask.FromTexture(picture);
-            _masks[picture] = mask;
+            mask = SpriteMask.CreateFromTexture(animationFrame);
+            _masks[animationFrame] = mask;
         }
 
         return mask;

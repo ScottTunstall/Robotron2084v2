@@ -77,8 +77,8 @@ public sealed class WilliamsLogoBorder
     {
         for (int y = 0; y < Height; y++)
         {
-            int top = HudLayout.ArcadeY(y);
-            int bottom = HudLayout.ArcadeY(y + 1);
+            int top = HudLayout.ToPortY(y);
+            int bottom = HudLayout.ToPortY(y + 1);
             int x = 0;
             while (x < Width)
             {
@@ -91,9 +91,9 @@ public sealed class WilliamsLogoBorder
 
                 if (slot != 0)
                 {
-                    int left = HudLayout.ArcadeX(x);
-                    Rectangle run = new(left, top, HudLayout.ArcadeX(end) - left, bottom - top);
-                    blitter.DrawSolidRectangle(spriteBatch, run, blitter.SlotColor(slot));
+                    int left = HudLayout.ToPortX(x);
+                    Rectangle run = new(left, top, HudLayout.ToPortX(end) - left, bottom - top);
+                    blitter.DrawSolidRectangle(spriteBatch, run, blitter.GetSlotColour(slot));
                 }
 
                 x = end;
