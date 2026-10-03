@@ -42,13 +42,14 @@ public sealed class GruntAnimationTests
     }
 
     [Fact]
-    public void Grunt_Steps_Are8PixelPerAxisJumps_WithA4PixelDeadZone()
+    public void Grunt_StepsTwoColumnsSidewaysAndFourRowsUpAndDown_AndBobsWhenLevelWithThePlayer()
     {
         PlayField field = CreateField();
         ExpireGrace(field);
 
-        // Lone grunt 200px left of the player on the same row: x steps must
-        // be exactly +8 each time, y must never move (dead zone).
+        // Lone grunt 200px left of the player on the same row. ROM MOVE_GRUNT: sideways it
+        // steps 2 columns (8 port px) towards the player every time; level with the player
+        // it steps DOWN 4 rows (8 port px), then back up, so it bobs rather than staying put.
         IntVector2 player = field.Player.Position;
         Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 200, player.Y), moveLimitBeats: 15, random: new Random(3));
         IntVector2 last = grunt.Position;
@@ -65,12 +66,37 @@ public sealed class GruntAnimationTests
             int dx = grunt.Position.X - last.X;
             int dy = grunt.Position.Y - last.Y;
             Assert.Equal(8, dx);
-            Assert.Equal(0, dy); // same row → y stays in the dead zone
+            Assert.Equal(8, Math.Abs(dy));
             last = grunt.Position;
             steps++;
         }
 
         Assert.True(steps >= 8, $"expected a steady stream of 8px steps, saw {steps}");
+    }
+
+    [Theory]
+    [InlineData(1, 0)]
+    [InlineData(-1, 0)]
+    [InlineData(2, -8)]
+    [InlineData(-2, 8)]
+    public void Grunt_IgnoresAnUpAndDownGapOfExactlyOneRow_ButStepsForAnyOther(int rowsBelowPlayer, int expectedDy)
+    {
+        // ROM MOVE_GRUNT: `CMPB #$FE` and `CMPB #$02` skip the up-and-down step only when the
+        // grunt is exactly one row above or below the player.
+        PlayField field = CreateField();
+        ExpireGrace(field);
+
+        IntVector2 player = field.Player.Position;
+        Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 200, player.Y + (rowsBelowPlayer * ScreenSize.ToPortPixels(1))), moveLimitBeats: 15, random: new Random(3));
+        int startY = grunt.Position.Y;
+
+        for (int tick = 0; tick < 600 && !grunt.SteppedThisUpdate; tick++)
+        {
+            grunt.Update(Frame(), field);
+        }
+
+        Assert.True(grunt.SteppedThisUpdate);
+        Assert.Equal(startY + expectedDy, grunt.Position.Y);
     }
 
     [Fact]
