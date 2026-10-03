@@ -207,7 +207,6 @@ public sealed class PlayingState : IGameState
             _random,
             slot.Lives,
             slot.Score,
-            slot.Rescues,
             _sprites.Blitter.Palette,
             contactTest: new PixelContactTest(new SpriteCollision()),
             extraManEveryPoints: _settings.ExtraManEveryPoints);
@@ -222,7 +221,6 @@ public sealed class PlayingState : IGameState
     {
         PlayerSlot dead = _session.Current;
         SyncSlotFromField();
-        dead.Rescues = 0; // ROM PLINIT clears SAVCNT
 
         if (_session.IsTwoPlayer)
         {

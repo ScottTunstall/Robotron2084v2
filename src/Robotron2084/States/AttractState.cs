@@ -92,7 +92,6 @@ public sealed class AttractState : IGameState, IAttractState
         if (_field.IsPlayerDead())
         {
             SyncSlotFromField();
-            _session.Current.Rescues = 0; // ROM PLINIT clears SAVCNT
 
             if (!_session.AnyMenLeft())
             {
@@ -114,7 +113,7 @@ public sealed class AttractState : IGameState, IAttractState
         PlayerSlot slot = _session.Current;
         LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
         WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.GetInnerBounds(), cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, contactTest: new PixelContactTest(new SpriteCollision()));
+        return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.GetInnerBounds(), cycle, _random, slot.Lives, slot.Score, _sprites.Blitter.Palette, playerInvincibleForTesting: false, contactTest: new PixelContactTest(new SpriteCollision()));
     }
 
     private void SyncSlotFromField() => _field.SyncInto(_session.Current);
