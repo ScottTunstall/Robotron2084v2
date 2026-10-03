@@ -1,4 +1,4 @@
-namespace Robotron2084.Audio.Hardware;
+namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>The six flags a 6800 processor keeps about the result of its last instruction.</summary>
 [Flags]

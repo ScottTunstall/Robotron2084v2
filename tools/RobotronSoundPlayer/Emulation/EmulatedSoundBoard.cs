@@ -1,8 +1,11 @@
-namespace Robotron2084.Audio.Hardware;
+using Robotron2084.Audio;
+
+namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>
-/// The arcade's sound board: a little computer of its own that listens for a sound number from the
-/// main board and then plays that sound, one at a time. A new sound number cuts off whatever is playing.
+/// The arcade's sound board, emulated: its processor runs the real sound ROM. The player plays it so the
+/// game's own board (<c>Robotron2084.Audio.Synthesis.SoundBoard</c>), which is rebuilt from the ROM's source,
+/// can be checked against it by ear and by the fidelity tests.
 /// </summary>
 /// <remarks>
 /// <list type="bullet">
@@ -16,14 +19,8 @@ namespace Robotron2084.Audio.Hardware;
 /// <c>$0400</c>, and the ROM at <c>$F000</c>. The ROM's own start-up code sets the chip to interrupt
 /// on a rising CB1, which is what the main board's hand-over produces.
 /// </remarks>
-public sealed class SoundBoard : IMc6800Bus
+public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
 {
-    /// <summary>
-    /// The board's processor clock in cycles a second: its 3.579545 MHz crystal divided by four inside
-    /// the chip (MAME's Williams driver).
-    /// </summary>
-    public const int ClockHertz = 894_886;
-
     /// <summary>The sound ROM's size in bytes.</summary>
     public const int RomLength = 0x1000;
 
@@ -62,7 +59,7 @@ public sealed class SoundBoard : IMc6800Bus
     /// <summary>Builds the board around its sound ROM and switches it on.</summary>
     /// <param name="rom">The sound ROM's bytes.</param>
     /// <exception cref="ArgumentException">The ROM is not <see cref="RomLength"/> bytes long.</exception>
-    public SoundBoard(byte[] rom)
+    public EmulatedSoundBoard(byte[] rom)
     {
         if (rom.Length != RomLength)
         {
@@ -95,9 +92,10 @@ public sealed class SoundBoard : IMc6800Bus
         return address >= RomStart ? _rom[address - RomStart] : (byte)0;
     }
 
-    /// <summary>Runs the board's processor for one instruction.</summary>
+    /// <summary>Runs the board's processor for one instruction, however many cycles were asked for.</summary>
+    /// <param name="maxCycles">Not used: an instruction cannot be split.</param>
     /// <returns>How many clock cycles passed.</returns>
-    public int RunInstruction()
+    public int Run(int maxCycles)
     {
         _cpu.IsInterruptRequested = _pia.IsInterruptRequested;
         return _cpu.Step();

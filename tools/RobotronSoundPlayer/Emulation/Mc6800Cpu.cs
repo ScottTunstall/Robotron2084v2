@@ -1,4 +1,4 @@
-namespace Robotron2084.Audio.Hardware;
+namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>
 /// The processor on the arcade's sound board. It runs the sound board's own program, which makes

@@ -1,4 +1,4 @@
-namespace Robotron2084.Audio.Hardware;
+namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>
 /// The sound board's input-output chip (a Motorola 6821). It takes in the sound number the main

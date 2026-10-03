@@ -1,4 +1,4 @@
-namespace Robotron2084.Audio.Hardware;
+namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>One of the 6800 processor's two 8-bit working registers.</summary>
 public enum Mc6800Accumulator

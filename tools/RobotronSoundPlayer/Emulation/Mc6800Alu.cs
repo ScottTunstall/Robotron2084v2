@@ -1,4 +1,4 @@
-namespace Robotron2084.Audio.Hardware;
+namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>
 /// The 6800 processor's arithmetic: the sums, shifts and tests its instructions do, and the flags

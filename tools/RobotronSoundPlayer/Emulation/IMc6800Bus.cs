@@ -1,4 +1,4 @@
-namespace Robotron2084.Audio.Hardware;
+namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>The memory and chips a 6800 processor can read from and write to.</summary>
 public interface IMc6800Bus

@@ -1,6 +1,6 @@
-using static Robotron2084.Audio.Hardware.Mc6800Opcodes;
+using static RobotronSoundPlayer.Emulation.Mc6800Opcodes;
 
-namespace Robotron2084.Audio.Hardware;
+namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>
 /// The 6800 processor's instruction set: for each of the 256 possible opcode bytes, what the

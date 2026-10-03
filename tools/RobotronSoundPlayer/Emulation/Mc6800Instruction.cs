@@ -1,4 +1,4 @@
-namespace Robotron2084.Audio.Hardware;
+namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>One instruction the 6800 processor knows: what it does and how long it takes.</summary>
 /// <param name="Execute">Carries the instruction out, once its opcode byte has been read.</param>

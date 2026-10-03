@@ -1,4 +1,4 @@
-namespace Robotron2084.Audio.Hardware;
+namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>
 /// The 6800 processor's opcode bytes, named after what they do, with the Motorola mnemonic in each
