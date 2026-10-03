@@ -24,17 +24,24 @@ glossary to be understood unless it links there (CMT-11).
 ## 2. Structure and responsibility (§114, §120, §121)
 
 **STR-1. One reason to change per class.** If a class summary needs "and" to describe what it does, split it.
-Warning signs: more than ~400 lines, more than ~15 fields, or `// ---- section ----` comments that divide it
-into jobs. `PlayField` and `SpriteSet` are the counter-examples.
+Warning signs: more than ~15 fields, or `// ---- section ----` comments that divide it into jobs.
+`PlayField` and `SpriteSet` are the counter-examples.
+
+**STR-1a. A class longer than 500 lines is doing too much.** Count every line of the file, blank lines and
+comments included. This is a hard cap, not a guideline: past it, find the second job the class has taken on and
+move it into a class of its own (STR-1), with its own file (STR-3). Do not get under the cap by deleting
+documentation, by squeezing lines together, or by making the class `partial` across several files. A file that
+is only data (a ROM table, a list of content paths) is the one exception, and its summary must say it is data.
 
 **STR-2. One reason to change per method, and a verb phrase that names it.** A method whose body needs comment
 headers ("// 1. ...", "// 2. ...") is several methods. Cyclomatic complexity above 10 is a **build error**
 (CA1502). Split the method. Never suppress the rule.
 
-**STR-2a. No method longer than 50 lines**, blank lines included, measured from its opening `{` to its
-matching closing `}`. This is a hard cap, not a guideline: a method can be low-complexity and still be a wall
-of easy-to-read but repetitive lines that hides the shape of what it does. Extract named helpers (STR-7) until
-it fits, even when nothing here is complex enough to trip CA1502.
+**STR-2a. A method longer than 50 lines must be shortened.** Count the lines between its opening `{` and its
+matching closing `}`, leaving out the lines that are blank. Comment lines count. This is a hard cap, not a
+guideline: a method can be low-complexity and still be a wall of easy-to-read but repetitive lines that hides
+the shape of what it does. Extract named helpers (STR-7) until it fits, even when nothing here is complex
+enough to trip CA1502. Do not get under the cap by joining statements onto one line.
 
 **STR-3. One type per file, and no nested types.** A class, record, enum, struct or interface gets its own file,
 named after it, even a small helper type used by only one other class. Do not nest a type inside another
@@ -408,18 +415,22 @@ for f in $(git ls-files 'src/*.cs' 'tests/*.cs'); do
   [ "$n" -gt 1 ] && echo "$f: $n types"; done
 grep -rnE '^\s+(private|public|internal|protected)(\s+\w+)*\s+(sealed\s+)?(class|record|struct)\s' src tests --include=*.cs
 
-# Method length over 50 lines, blank lines included (STR-2a): a rough brace-depth scan, not exact —
+# Class length over 500 lines, every line counted (STR-1a)
+for f in $(git ls-files 'src/*.cs' 'tools/*.cs'); do
+  n=$(wc -l < "$f"); [ "$n" -gt 500 ] && echo "$f: $n lines"; done
+
+# Method length over 50 lines, blank lines left out (STR-2a): a rough brace-depth scan, not exact —
 # check any hit by eye.
-for f in $(git ls-files 'src/*.cs' 'tests/*.cs'); do
+for f in $(git ls-files 'src/*.cs' 'tests/*.cs' 'tools/*.cs'); do
   awk -v file="$f" '
     /^[[:space:]]*(public|private|internal|protected|static)[^=;{}]*\)[[:space:]]*$/ { sigline=$0; sigat=NR; next }
-    sigat && /\{/ && !inbody { depth=1; start=sigat; inbody=1; next }
+    sigat && /\{/ && !inbody { depth=1; start=sigat; inbody=1; len=0; next }
     inbody {
+      if ($0 !~ /^[[:space:]]*$/) len++
       o=gsub(/\{/,"{"); depth+=o
       c=gsub(/\}/,"}"); depth-=c
       if (depth<=0) {
-        len=NR-start+1
-        if (len>50) printf "%s:%d: %d lines: %s\n", file, start, len, sigline
+        if (len-1>50) printf "%s:%d: %d lines: %s\n", file, start, len-1, sigline
         inbody=0; sigat=0
       }
     }
