@@ -101,6 +101,14 @@ collaborator in as a parameter. A short-lived local that only renames a paramete
 - **The price:** a thin delegating method on the near object. That is correct. It keeps callers from knowing the
   structure behind it, so the structure can change in one place.
 
+**STR-12. A rule reports; the owner responds.** A class that detects a situation (a collision rule, a validator) returns a
+**result** that says what it found, and never changes the object that called it or tells it what to do. The owner takes each
+result and decides what it means. Give the rule a read-only view of what it may ask (`ICollisionScene`), and give the owner the
+code that responds (`CollisionResponder`), so a response can change without a rule changing and a rule can be tested by
+reading what it reports. Name the report `...Result` (`LaserHitResult`), and the thing that responds `...Responder`.
+Where the owner must respond between two reports (a laser is spent before the next robot is tried), the rule returns its
+results lazily (`yield return`) so each response happens before the rule goes on.
+
 ## 3. Naming (§114)
 
 **NAM-1. Methods are verb phrases in the domain's own words**: `RollOffsets`, `PickDirection`,
