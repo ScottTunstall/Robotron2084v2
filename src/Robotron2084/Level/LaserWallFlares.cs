@@ -15,13 +15,13 @@ namespace Robotron2084.Level;
 internal sealed class LaserWallFlares
 {
     /// <summary>The height of the LASCOL bands a dithered flare draws.</summary>
-    private static readonly int DitherBandHeight = ScreenSize.Scaled(2);
+    private static readonly int DitherBandHeight = ScreenSize.ToPortPixels(2);
 
     /// <summary>Two bytes of video memory: 4 rows of arcade pixels along the wall.</summary>
-    private static readonly int FlareLength = ScreenSize.ArcadePixels(4);
+    private static readonly int FlareLength = ScreenSize.ToPortPixelsFromArcade(4);
 
     /// <summary>Two bytes of video memory: 2 columns of arcade pixels across the wall.</summary>
-    private static readonly int FlareThickness = ScreenSize.Columns(2);
+    private static readonly int FlareThickness = ScreenSize.ToPortPixelsFromColumns(2);
 
     private readonly List<LaserWallFlare> _flares = [];
 
@@ -39,7 +39,7 @@ internal sealed class LaserWallFlares
             return;
         }
 
-        Color flareColor = sprites.Blitter.SlotColor(WavePaletteTables.LaserWallSlotForWave(levelNumber));
+        Color flareColor = sprites.Blitter.GetSlotColour(WavePaletteTables.GetLaserWallSlot(levelNumber));
         foreach (LaserWallFlare flare in _flares)
         {
             if (!flare.Dithered)

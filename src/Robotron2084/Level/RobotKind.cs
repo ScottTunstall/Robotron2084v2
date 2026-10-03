@@ -7,7 +7,7 @@ namespace Robotron2084.Level;
 /// </remarks>
 public enum RobotKind
 {
-    /// <summary>An electric post (ROM: the <c>POSTS</c> list).</summary>
+    /// <summary>An electrode (ROM: the <c>POSTS</c> list).</summary>
     Electrode,
 
     /// <summary>The basic robot (RRP8).</summary>

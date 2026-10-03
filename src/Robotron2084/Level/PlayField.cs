@@ -6,6 +6,7 @@ using Robotron2084.Entities;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
 using Robotron2084.Palette;
+using Robotron2084.Persistence;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
@@ -28,12 +29,12 @@ public sealed class PlayField
     /// ROM BRNL1's catch reach: the brain and human TOP-LEFT CORNERS must be
     /// within this many arcade px on both axes for a reprogramming to start.
     /// </summary>
-    private static readonly int BrainCatchReach = ScreenSize.ArcadePixels(ReprogramTuning.CatchReachArcadePixels);
+    private static readonly int BrainCatchReach = ScreenSize.ToPortPixelsFromArcade(ReprogramTuning.CatchReachArcadePixels);
 
     private readonly EntityList<Brain> _brains = new();
 
     /// <summary>
-    /// Every list drawn BEHIND the player's lasers, in the spec's render order: the posts, the family and their
+    /// Every list drawn BEHIND the player's lasers, in the spec's render order: the electrodes, the family and their
     /// markers, then the robots.
     /// </summary>
     private readonly IEntityList[] _drawOrderBehindShots;
@@ -64,7 +65,7 @@ public sealed class PlayField
 
     /// <summary>
     /// The spheroid's `CIRKP` and the quark's `CIRKV` bursts (notes §64): those two enemies do NOT use the strip
-    /// explosion — their own pictures play as a solid silhouette and then their "1000" picture appears. The ROM's
+    /// explosion — their own animation frames play as a solid silhouette and then their "1000" sprite appears. The ROM's
     /// kill processes take a free object slot, not one of the ten shared EX records, so these are not capped.
     /// </summary>
     private readonly EntityList<ScoreBurst> _scoreBursts = new();
@@ -101,7 +102,8 @@ public sealed class PlayField
             int startingRescues = 0,
             GamePalette? palette = null,
             bool playerInvincibleForTesting = true,
-            IPixelCollision? pixelCollision = null)
+            IPixelCollision? pixelCollision = null,
+            int extraManEveryPoints = GameSettings.FactoryExtraManEveryPoints)
     {
         Sprites = sprites;
         Parameters = parameters;
@@ -123,7 +125,7 @@ public sealed class PlayField
         ];
         RescuesThisLife = startingRescues;
         Input = input;
-        Score = new ScoreBoard(startingScore);
+        Score = new ScoreBoard(startingScore, extraManEveryPoints);
         _random = random;
         _palette = palette;
         _pixelCollision = pixelCollision;
@@ -133,43 +135,43 @@ public sealed class PlayField
         Player = new Player(Sprites, playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
         PlayerLasers = new LaserSlots(Sprites);
 
-        // Spawn order: the posts first, then the robots the wave table counts, then the family.
+        // Spawn order: the electrodes first, then the robots the wave table counts, then the family.
         // Each kind's own spawn is its registry row, so a new kind needs no edit here (notes §119).
         foreach (RobotKindInfo robot in RobotKinds.All)
         {
             robot.Spawn?.Invoke(this, playerStart);
         }
 
-        // The human family spawns last (ROM HUMSTV — kids first, then moms, then dads,
+        // The human family spawns last (ROM HUMSTV — Mikeys first, then mommies, then daddies,
         // random field positions, staggered starts).
         SpawnHumans();
     }
 
     /// <summary>Spec: the total of SPARKS on screen must not exceed 20.</summary>
     /// <remarks>Counts the <c>Alive</c> ones, where every other count is "not yet <c>Dead</c>"; sparks are never <c>Dying</c>, so the two agree.</remarks>
-    public int ActiveSparkCount => _sparks.Count(s => s.LifeState == EntityLifeState.Alive);
+    public int GetActiveSparkCount() => _sparks.Count(s => s.LifeState == EntityLifeState.Alive);
 
-    public int BrainCount => CountLive(_brains);
+    public int GetBrainCount() => CountLive(_brains);
 
     // Arcade caps (notes §11): ENFCNT < 8 spheroid-enforcers, TNKCNT < 20 tanks,
     // and the 20-shells-per-wave counter (fizzle bug: only a laser KILL decrements
     // it — a fizzled/expired shell never does, so late in the wave tanks stop firing).
-    public bool CanDropEnforcer => CountLive(_enforcers) < SpawnTuning.EnforcerCap;
+    public bool CanDropEnforcer() => CountLive(_enforcers) < SpawnTuning.EnforcerCap;
 
-    public bool CanDropTank => CountLive(_tanks) < SpawnTuning.TankCap;
+    public bool CanDropTank() => CountLive(_tanks) < SpawnTuning.TankCap;
 
-    public bool CanFireCruiseMissile => CountLive(_missiles) < CruiseMissileTuning.Max;
+    public bool CanFireCruiseMissile() => CountLive(_missiles) < CruiseMissileTuning.Max;
 
-    public bool CanFireShell => _shellsFiredThisWave < SpawnTuning.ShellsPerWave;
+    public bool CanFireShell() => _shellsFiredThisWave < SpawnTuning.ShellsPerWave;
 
     // Read-only counts for HUD/testing (live = not yet pruned).
-    public int ElectrodeCount => CountLive(_electrodes);
+    public int GetElectrodeCount() => CountLive(_electrodes);
 
-    public int EnforcerCount => CountLive(_enforcers);
+    public int GetEnforcerCount() => CountLive(_enforcers);
 
-    public int GruntCount => CountLive(_grunts);
+    public int GetGruntCount() => CountLive(_grunts);
 
-    public int HulkCount => CountLive(_hulks);
+    public int GetHulkCount() => CountLive(_hulks);
 
     public IPlayerInputSource Input { get; }
 
@@ -182,10 +184,10 @@ public sealed class PlayField
     /// sense).
     /// </summary>
     public bool IsLevelCleared =>
-        GruntCount == 0 && SpheroidCount == 0 && EnforcerCount == 0 && QuarkCount == 0 && TankCount == 0
-        && BrainCount == 0 && ProgCount == 0 && MissileCount == 0;
+        GetGruntCount() == 0 && GetSpheroidCount() == 0 && GetEnforcerCount() == 0 && GetQuarkCount() == 0 && GetTankCount() == 0
+        && GetBrainCount() == 0 && GetProgCount() == 0 && GetMissileCount() == 0;
 
-    public int MissileCount => CountLive(_missiles);
+    public int GetMissileCount() => CountLive(_missiles);
 
     public LevelParameters Parameters { get; }
 
@@ -193,9 +195,9 @@ public sealed class PlayField
 
     public LaserSlots PlayerLasers { get; }
 
-    public int ProgCount => CountLive(_progs);
+    public int GetProgCount() => CountLive(_progs);
 
-    public int QuarkCount => CountLive(_quarks);
+    public int GetQuarkCount() => CountLive(_quarks);
 
     /// <summary>
     /// Humans rescued (player touch) during this player's life. ROM
@@ -214,14 +216,14 @@ public sealed class PlayField
 
     public ScoreBoard Score { get; }
 
-    public int SpheroidCount => CountLive(_spheroids);
+    public int GetSpheroidCount() => CountLive(_spheroids);
 
-    public int TankCount => CountLive(_tanks);
+    public int GetTankCount() => CountLive(_tanks);
 
     public PlayfieldWall Wall { get; }
 
     /// <summary>True while a member of the family is standing and free (ROM: KIDCNT + MOMCNT + DADCNT ≠ 0).</summary>
-    internal bool AnyFamilyMemberAvailable => _humans.Any(IsGraspable);
+    internal bool AnyFamilyMemberAvailable() => _humans.Any(IsGraspable);
 
     internal IReadOnlyList<Brain> Brains => _brains;
 
@@ -288,27 +290,24 @@ public sealed class PlayField
 
     /// <summary>
     /// ROM HULK "last slot" target: the last-spawned family member (HUMSTV
-    /// order: mikeys, then moms, then dads — so <c>_humans[^1]</c>), or the
+    /// order: Mikeys, then mommies, then daddies — so <c>_humans[^1]</c>), or the
     /// player once that member is gone (NULL target -> player, R5 $0113).
     /// Humans spawn after hulks, so this resolves lazily at re-aim time.
     /// </summary>
-    private Func<IntVector2> LastHumanOrPlayer => () =>
+    private IntVector2 GetLastHumanOrPlayerPosition() =>
         _humans.Count > 0 && _humans.Last.LifeState == EntityLifeState.Alive
             ? _humans.Last.Position
             : Player.Position;
 
     /// <summary>The strip engine's clip rectangle, in arcade pixels (X) and rows (Y).</summary>
-    private StripClip StripClipBounds
+    private StripClip GetStripClipBounds()
     {
-        get
-        {
-            Rectangle bounds = Wall.PlayfieldBounds;
-            return new StripClip(
-                bounds.Left / ScreenSize.SpecScale,
-                bounds.Right / ScreenSize.SpecScale,
-                bounds.Top / ScreenSize.SpecScale,
-                bounds.Bottom / ScreenSize.SpecScale);
-        }
+        Rectangle bounds = Wall.PlayfieldBounds;
+        return new StripClip(
+            bounds.Left / ScreenSize.SpecScale,
+            bounds.Right / ScreenSize.SpecScale,
+            bounds.Top / ScreenSize.SpecScale,
+            bounds.Bottom / ScreenSize.SpecScale);
     }
 
     public void Draw(SpriteBatch spriteBatch)
@@ -318,12 +317,12 @@ public sealed class PlayField
         //    has no palette to read, and is only used when no live palette is
         //    wired in (unit tests).
         Wall.Draw(spriteBatch, Sprites.WallPixel,
-            _palette is { } p ? p.Color(WavePaletteTables.WallSlotForWave(Parameters.LevelNumber)) : null);
+            _palette is { } p ? p.Color(WavePaletteTables.GetWallSlot(Parameters.LevelNumber)) : null);
 
         // 1b. Laser-vs-wall flares (RRG23 LASDIE): painted OVER the wall, exactly as the ROM writes those pixels.
         _laserWallFlares.Draw(spriteBatch, Sprites, Parameters.LevelNumber);
 
-        // 2-4. The posts, the family and their markers, then the robots — one loop over the field's draw order.
+        // 2-4. The electrodes, the family and their markers, then the robots — one loop over the field's draw order.
         foreach (IEntityList list in _drawOrderBehindShots)
         {
             list.DrawAll(spriteBatch, this);
@@ -353,14 +352,14 @@ public sealed class PlayField
     /// the family is gone (GETHTG), so none are safe to ignore. Used only by
     /// the attract demo's phony player; the ROM's own AI lives in the OS ROM.
     /// </summary>
-    public IntVector2? NearestLivingRobotPositionTo(IntVector2 from)
+    public IntVector2? GetNearestLivingRobotPosition(IntVector2 from)
     {
         IntVector2? nearest = null;
         int nearestDistance = int.MaxValue;
 
         foreach (RobotKindInfo robot in RobotKinds.All.Where(kind => !IsNotARobot(kind.Kind)))
         {
-            foreach (IEntity entity in ListOf(robot.Kind).Entities)
+            foreach (IEntity entity in GetList(robot.Kind).Entities)
             {
                 if (entity.LifeState != EntityLifeState.Alive)
                 {
@@ -461,7 +460,7 @@ public sealed class PlayField
 
         _gruntSpeed.Update(_grunts);
 
-        _materialisation.Advance(_explosions, StripClipBounds);
+        _materialisation.Advance(_explosions, GetStripClipBounds());
 
         _laserWallFlares.Update();
 
@@ -523,7 +522,7 @@ public sealed class PlayField
     /// <param name="slot">The slot to read.</param>
     /// <remarks>A member who is dead or mid-reprogram is off the ROM's family list, so her slot reads as
     /// empty — which is how a brain loses a target and goes looking for another.</remarks>
-    internal Human? FamilyMemberInSlot(int slot) =>
+    internal Human? GetFamilyMemberInSlot(int slot) =>
         _humans.FirstOrDefault(human => human.FamilySlot == slot && IsGraspable(human));
 
     /// <summary>
@@ -538,7 +537,7 @@ public sealed class PlayField
     /// <param name="maker">The box of whatever made the sound.</param>
     internal void PlaySoundFrom(SoundSequence sound, Rectangle maker)
     {
-        float pan = StereoPlacement.PanFor(maker, Wall.PlayfieldBounds);
+        float pan = StereoPlacement.GetPan(maker, Wall.PlayfieldBounds);
         Sound.Play(sound, pan);
     }
 
@@ -552,7 +551,7 @@ public sealed class PlayField
     }
 
     /// <summary>
-    /// The death of a robot whose picture shatters: the kill and the strip explosion (anchored at the picture's
+    /// The death of a robot whose sprite shatters: the kill and the strip explosion (anchored at the sprite's
     /// middle — the ROM's <c>NWCENT</c> path, notes §73). The kinds' rows call this one; each row carries its
     /// own sound.
     /// </summary>
@@ -570,7 +569,7 @@ public sealed class PlayField
     /// <summary>The list a robot kind lives in — the one mapping from the registry to the field's lists.</summary>
     /// <param name="kind">The kind to look up.</param>
     /// <exception cref="ArgumentOutOfRangeException">The kind has no list — a new kind needs one here.</exception>
-    internal IEntityList ListOf(RobotKind kind) => kind switch
+    internal IEntityList GetList(RobotKind kind) => kind switch
     {
         RobotKind.Electrode => _electrodes,
         RobotKind.Grunt => _grunts,
@@ -598,8 +597,8 @@ public sealed class PlayField
     /// <remarks>This is where the arcade's "all the brains chase Mikey" bug lives. A brain picks its
     /// target as it is created (ROM <c>$1B43</c>) and the brains are created BEFORE <c>HUMSTV</c> fills the
     /// family list, so every brain on the wave leaves with slot 0 in hand; Mikey fills slot 0, because the
-    /// kids spawn first. Each brain then keeps that slot until it empties (notes §18.8).</remarks>
-    internal int NearestFamilySlotTo(IntVector2 from)
+    /// Mikeys spawn first. Each brain then keeps that slot until it empties (notes §18.8).</remarks>
+    internal int GetNearestFamilySlot(IntVector2 from)
     {
         int nearestSlot = FirstFamilySlot;
         int nearestDistance = int.MaxValue;
@@ -628,12 +627,12 @@ public sealed class PlayField
         for (int i = 0; i < Parameters.BrainCount; i++)
         {
             IntVector2 position = _placement.FindSpawnPoint(
-                rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.Scaled(SpawnTuning.HulkMinDistanceFromPlayer)));
+                rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.ToPortPixels(SpawnTuning.HulkMinDistanceFromPlayer)));
             // ROM $1B43: a brain picks its target as it is created — and the brains are created BEFORE
             // HUMSTV fills the family list, so the search finds every slot empty and hands back slot 0.
             // Mikey fills slot 0, so every brain on the wave chases her: the arcade's own bug, kept on
             // purpose (notes §18.8).
-            var brain = new Brain(Sprites, position, _random, Parameters.BrainBeatDelayRomFrames, Parameters.BrainFireDelay, NearestFamilySlotTo(position));
+            var brain = new Brain(Sprites, position, _random, Parameters.BrainBeatDelayRomFrames, Parameters.BrainFireDelay, GetNearestFamilySlot(position));
             _brains.Add(brain);
             QueueMaterialise(brain);
         }
@@ -651,7 +650,7 @@ public sealed class PlayField
         {
             // No overlap with other electrodes; not too close to the player start.
             IntVector2 position = _placement.FindSpawnPoint(
-                rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.Scaled(SpawnTuning.ElectrodeMinDistanceFromPlayer))
+                rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.ToPortPixels(SpawnTuning.ElectrodeMinDistanceFromPlayer))
                          && _electrodes.All(e => !e.Bounds.Overlaps(rect)));
             _electrodes.Add(new Electrode(Sprites, position, Parameters.LevelNumber));
         }
@@ -667,7 +666,7 @@ public sealed class PlayField
             // Cannot overlap electrodes or the wall; >= 20 spec-px from the player start (spec-stated).
             // Grunts MAY overlap each other — no check for that.
             IntVector2 position = _placement.FindSpawnPoint(
-                rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.Scaled(SpawnTuning.GruntMinDistanceFromPlayer))
+                rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.ToPortPixels(SpawnTuning.GruntMinDistanceFromPlayer))
                          && _electrodes.All(e => !e.Bounds.Overlaps(rect)));
             // ROM: stagger — step countdown re-rolled RND(1..ROBSPD) bodies
             // every 4-vblank body; survivors' limit drops ×7/8 (floored at
@@ -685,7 +684,7 @@ public sealed class PlayField
             // May overlap electrodes/other robots; just not the wall or too close to the player
             // (spec: "30,40 pixels away minimum" — 35 spec-px midpoint, tunable).
             IntVector2 position = _placement.FindSpawnPoint(
-                rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.Scaled(SpawnTuning.HulkMinDistanceFromPlayer)));
+                rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.ToPortPixels(SpawnTuning.HulkMinDistanceFromPlayer)));
             // ROM RRH11: step period from the wave table (HLKSPD).
             //
             // ROM (R5 $017C HULK_INITIALISE) target roll, per hulk at spawn:
@@ -697,12 +696,12 @@ public sealed class PlayField
             //          bug that leaves those hulks wandering into corners. We
             //          take the intended NULL -> player fallback instead.)
             //   50% -> target = the LAST family-list slot, which HUMSTV fills
-            //          with the last-spawned member (mikeys, then moms, then
-            //          dads — so usually the last dad).
+            //          with the last-spawned member (Mikeys, then mommies, then
+            //          daddies — so usually the last daddy).
             // A stalked member that dies or is rescued clears its slot (NULL)
             // and the hulk falls back to the player (R5 $010D/$0113).
             Func<IntVector2> target =
-                _random.Next(2) == 0 ? LastHumanOrPlayer : () => Player.Position;
+                _random.Next(2) == 0 ? GetLastHumanOrPlayerPosition : () => Player.Position;
             var hulk = new Hulk(Sprites, position, _random, Parameters.HulkStepDelayRomFrames, target);
             _hulks.Add(hulk);
             QueueMaterialise(hulk);
@@ -722,11 +721,11 @@ public sealed class PlayField
         {
             // ROM $4B48-4B5A: X uniform across the field; Y = 26 (top) or 220 (bottom)
             // arcade px with a coin flip — quarks spawn ON the top or bottom wall.
-            int x = _random.Next(bounds.X, bounds.Right - ScreenSize.Scaled(CollisionSizes.QuarkCollisionSize.Width) + 1);
+            int x = _random.Next(bounds.X, bounds.Right - ScreenSize.ToPortPixels(CollisionSizes.QuarkCollisionSize.Width) + 1);
             bool top = _random.Next(2) == 0;
             IntVector2 position = new(
                 x,
-                top ? bounds.Y : bounds.Bottom - ScreenSize.Scaled(CollisionSizes.QuarkCollisionSize.Height));
+                top ? bounds.Y : bounds.Bottom - ScreenSize.ToPortPixels(CollisionSizes.QuarkCollisionSize.Height));
             // ROM: same ENFNUM roll as the spheroid; TDPTIM sets the tank-drop tempo.
             var quark = new Quark(Sprites, position, _random, Parameters.MaxDropsX2, Parameters.QuarkDropDelay, Parameters.QuarkSpeedCap);
             _quarks.Add(quark);
@@ -740,9 +739,9 @@ public sealed class PlayField
         {
             // May overlap everything; just not the wall or within 100 spec-px of the player start.
             // Bias: spheroids "do like to start near walls" — 70% of the time a candidate
-            // within Scaled(30) of one of the four inner edges.
+            // within ToPortPixels(30) of one of the four inner edges.
             IntVector2 position = _placement.FindSpheroidSpawnPoint(
-                rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.Scaled(SpheroidTuning.MinDistanceFromPlayer)));
+                rect => new IntVector2(rect.X, rect.Y).IsFartherThan(playerStart, ScreenSize.ToPortPixels(SpheroidTuning.MinDistanceFromPlayer)));
             // ROM (notes §11.2): the spheroid rolls its own drop count from ENFNUM
             // (MaxDropsX2) at spawn; CDPTIM sets its drop tempo.
             var spheroid = new Spheroid(Sprites, position, _random, Parameters.MaxDropsX2, Parameters.SpheroidDropDelay);
@@ -776,15 +775,15 @@ public sealed class PlayField
     /// notes §113).
     /// </summary>
     private static int FamilyDistance(IntVector2 from, IntVector2 to) =>
-        (Math.Abs(to.X - from.X) / ScreenSize.Columns(1))
-        + (Math.Abs(to.Y - from.Y) / ScreenSize.ArcadePixels(1));
+        (Math.Abs(to.X - from.X) / ScreenSize.ToPortPixelsFromColumns(1))
+        + (Math.Abs(to.Y - from.Y) / ScreenSize.ToPortPixelsFromArcade(1));
 
     /// <summary>True when a human is standing on the field and no brain has hold of her.</summary>
     /// <param name="human">The human to test.</param>
     private static bool IsGraspable(Human human) =>
         human.LifeState == EntityLifeState.Alive && !human.IsBeingReprogrammed;
 
-    /// <summary>The kinds the demo's player ignores: the posts and the enemy shots the player shoots or dodges by other means.</summary>
+    /// <summary>The kinds the demo's player ignores: the electrodes and the enemy shots the player shoots or dodges by other means.</summary>
     /// <param name="kind">The kind to test.</param>
     private static bool IsNotARobot(RobotKind kind) => kind is RobotKind.Electrode or RobotKind.Spark or RobotKind.TankShell;
 
@@ -890,7 +889,7 @@ public sealed class PlayField
     /// </summary>
     /// <param name="robotsHeld">True while the wave-start appear holds the robots.</param>
     /// <remarks>The CATCH TEST is <c>BRNL1</c>'s tail comparing the two TOP-LEFT CORNERS, |dX| &lt;= 3 AND
-    /// |dY| &lt;= 3 (<c>ADDB #3 / CMPB #$6 / BHI</c> then <c>ADDA #3 / CMPA #6 / BLS</c>) — not a picture
+    /// |dY| &lt;= 3 (<c>ADDB #3 / CMPB #$6 / BHI</c> then <c>ADDA #3 / CMPA #6 / BLS</c>) — not a sprite
     /// overlap. A box test fires as soon as the 14x16 brain box touches anything, so brains would grab humans
     /// the source would not. The test is against the brain's OWN TARGET (the object its AI resolved), so a
     /// brain can only program the member it is chasing — which, on a brain wave, is Mikey for all of them
@@ -1031,9 +1030,9 @@ public sealed class PlayField
     /// <param name="robot">The kind's registry row.</param>
     private void ResolveLaserPhase(RobotKindInfo robot)
     {
-        foreach (PlayerLaser laser in PlayerLasers.ActiveLasers)
+        foreach (PlayerLaser laser in PlayerLasers.GetActiveLasers())
         {
-            foreach (IEntity target in ListOf(robot.Kind).Entities)
+            foreach (IEntity target in GetList(robot.Kind).Entities)
             {
                 if (target.LifeState != EntityLifeState.Alive || !Touches(laser, target))
                 {
@@ -1096,7 +1095,7 @@ public sealed class PlayField
         {
             if (robot.KillsPlayerOnContact)
             {
-                KillPlayerOnContact(ListOf(robot.Kind));
+                KillPlayerOnContact(GetList(robot.Kind));
             }
         }
     }
@@ -1192,7 +1191,7 @@ public sealed class PlayField
             return; // ROM: list full → no explosion
         }
 
-        _explosions.Add(StripEffect.StartExplosion(dead, direction, StripClipBounds));
+        _explosions.Add(StripEffect.CreateExplosion(dead, direction, GetStripClipBounds()));
     }
 
     private void SpawnHumanKind(HumanKind kind, int count)
@@ -1214,8 +1213,8 @@ public sealed class PlayField
     private void SpawnHumans()
     {
         SpawnHumanKind(HumanKind.Mikey, Parameters.MikeyCount);
-        SpawnHumanKind(HumanKind.Mom, Parameters.MomCount);
-        SpawnHumanKind(HumanKind.Dad, Parameters.DadCount);
+        SpawnHumanKind(HumanKind.Mommy, Parameters.MommyCount);
+        SpawnHumanKind(HumanKind.Daddy, Parameters.DaddyCount);
     }
 
     // ---- Explosions (RRDX2/RRX7/RRHX4 — notes §35.5, §61) ----
@@ -1230,13 +1229,13 @@ public sealed class PlayField
     }
 
     /// <summary>
-    /// The arcade's contact test between two entities (notes §118): their pictures' opaque pixels where
-    /// the two are drawn, or their collision boxes when the field has no pictures to compare (a headless test)
-    /// or one of them shows no picture of its own (the cruise missile).
+    /// The arcade's contact test between two entities (notes §118): their sprites' opaque pixels where
+    /// the two are drawn, or their collision boxes when the field has no sprites to compare (a headless test)
+    /// or one of them shows no sprite of its own (the cruise missile).
     /// </summary>
     private bool Touches(IEntity a, IEntity b)
     {
-        if (_pixelCollision is { } collision && collision.ShapeOf(a) is { } shapeA && collision.ShapeOf(b) is { } shapeB)
+        if (_pixelCollision is { } collision && collision.GetShape(a) is { } shapeA && collision.GetShape(b) is { } shapeB)
         {
             return collision.Overlaps(shapeA, shapeB);
         }
@@ -1244,7 +1243,7 @@ public sealed class PlayField
         return a.Bounds.Overlaps(b.Bounds);
     }
 
-    // ---- Human spawning (ROM HUMSTV: kids, moms, dads; plain RANDXY —
+    // ---- Human spawning (ROM HUMSTV: Mikeys, mommies, daddies; plain RANDXY —
     //      no overlap or spacing constraints in the ROM) ----
     /// <summary>Advances every list the field holds, in the ROM's own update order.</summary>
     private void UpdateEntities(GameTime gameTime)

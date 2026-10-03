@@ -15,8 +15,8 @@ namespace Robotron2084.Level;
 /// </para>
 /// <para>
 /// To add a robot kind: write the entity class, add its animation frames, add a <see cref="RobotKind"/> value and a row here,
-/// add a field for its list and a <c>ListOf</c> arm in <see cref="PlayField"/>, add that list to the field's
-/// update and draw orders, and add it to <c>NearestLivingRobotPositionTo</c>. A guard test fails until the enum,
+/// add a field for its list and a <c>GetList</c> arm in <see cref="PlayField"/>, add that list to the field's
+/// update and draw orders, and add it to <c>GetNearestLivingRobotPosition</c>. A guard test fails until the enum,
 /// this registry, the field's list orders and its own hand-written tables agree. No further edit is needed for a
 /// kind that brings no NEW behaviour — a laser phase that is not one of the shapes
 /// below, an interaction with the electrodes the two existing ones do not have, or a contact rule the player
@@ -28,7 +28,7 @@ public static class RobotKinds
     /// <summary>Every kind, in the order the ROM's collision phases walk them.</summary>
     public static readonly RobotKindInfo[] All =
     [
-        // The electric posts come first, and a laser that reaches one is spent on it.
+        // The electrodes come first, and a laser that reaches one is spent on it.
         new(RobotKind.Electrode,
             WaveCount: static parameters => parameters.ElectrodeCount,
             Score: ScoreValues.Electrode,
@@ -62,7 +62,7 @@ public static class RobotKinds
         new(RobotKind.Spheroid,
             WaveCount: static parameters => parameters.SpheroidCount,
             Score: ScoreValues.Spheroid,
-            LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.ForSpheroid(field.Sprites, target.Bounds)),
+            LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.CreateForSpheroid(field.Sprites, target.Bounds)),
             LaserHitSound: SoundTables.CircleKill,
             Spawn: static (field, playerStart) => field.SpawnSpheroids(playerStart)),
 
@@ -75,7 +75,7 @@ public static class RobotKinds
         new(RobotKind.Quark,
             WaveCount: static parameters => parameters.QuarkCount,
             Score: ScoreValues.Quark,
-            LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.ForQuark(field.Sprites, target.Bounds)),
+            LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.CreateForQuark(field.Sprites, target.Bounds)),
             LaserHitSound: SoundTables.SquareKill,
             Spawn: static (field, playerStart) => field.SpawnQuarks(playerStart)),
 
@@ -131,5 +131,5 @@ public static class RobotKinds
 
     /// <summary>One kind's row.</summary>
     /// <param name="kind">The kind to look up.</param>
-    public static RobotKindInfo Of(RobotKind kind) => All[(int)kind];
+    public static RobotKindInfo GetInfo(RobotKind kind) => All[(int)kind];
 }

@@ -14,9 +14,9 @@ public static class PlayfieldLayout
     // no order to get wrong; if such a dependency is ever introduced, refactor it OUT rather than
     // documenting which line must come first. This code is read by humans, not only by the compiler.
 
-    /// <summary>The inner play area the wall encloses: the canvas less the margin on every side.</summary>
-    public static Rectangle InnerBounds => new(Margin, Margin, ScreenSize.Width - 2 * Margin, ScreenSize.Height - 2 * Margin);
-
     /// <summary>The margin between the canvas edge and the inner play area, in canvas pixels.</summary>
-    private static int Margin => ScreenSize.Scaled(CollisionSizes.PlayfieldMarginSpecPixels);
+    private static int GetMargin() => ScreenSize.ToPortPixels(CollisionSizes.PlayfieldMarginSpecPixels);
+
+    /// <summary>The inner play area the wall encloses: the canvas less the margin on every side.</summary>
+    public static Rectangle GetInnerBounds() => new(GetMargin(), GetMargin(), ScreenSize.Width - 2 * GetMargin(), ScreenSize.Height - 2 * GetMargin());
 }

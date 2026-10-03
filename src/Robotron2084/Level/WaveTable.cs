@@ -7,7 +7,7 @@ namespace Robotron2084.Level;
 ///
 /// <list type="bullet">
 /// <item>Entity counts @ $2E24: 9 columns (grunts, electrodes, mommies,
-/// daddies, mikeys, hulks, brains, spheroids, quarks) × 40 waves, verified
+/// daddies, Mikeys, hulks, brains, spheroids, quarks) × 40 waves, verified
 /// identical to the decoded table in ref/robowaves.md (all 360 values).</item>
 /// <item>Difficulty-setting values @ $2C20: 12 consecutive 43-byte records
 /// ([multiplier][min][max][40 values]); at the default (recommended)
@@ -165,7 +165,7 @@ public static class WaveTable
     }
 
     /// <summary>One wave's full parameter row (waves 41+ repeat 21-40, ROM rule).</summary>
-    public static WaveParameters ForWave(int waveNumber)
+    public static WaveParameters GetParameters(int waveNumber)
     {
         int wave = ResolveWave(waveNumber);
         int i = wave - 1;

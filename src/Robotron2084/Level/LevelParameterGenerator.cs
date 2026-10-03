@@ -52,7 +52,7 @@ public sealed class LevelParameterGenerator
                 EnemySpeedBonus: Math.Min(levelNumber - 1, SpawnTuning.EnemySpeedBonusCapPerLevel));
         }
 
-        return LevelParameters.FromWave(levelNumber, WaveTable.ForWave(levelNumber));
+        return LevelParameters.CreateFromWave(levelNumber, WaveTable.GetParameters(levelNumber));
     }
 
     private static LevelTableRow[]? LoadTable(string? path)

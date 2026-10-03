@@ -1,4 +1,5 @@
 using Robotron2084.Input;
+using Robotron2084.Persistence;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
@@ -20,14 +21,21 @@ public sealed class GameSession
     }
 
     /// <summary>True while at least one player still has men (ROM <c>ZP1LAS | ZP2LAS</c>).</summary>
-    public bool AnyMenLeft => Players.Any(p => p.HasMen);
+    public bool AnyMenLeft() => Players.Any(p => p.HasMen);
 
     /// <summary>
     /// The port's control definitions, carried with the game (notes §101) so that every
     /// state holding the session — the playfield, a wave clear, the high score table —
     /// can read the PAUSE key without each of them being handed the settings separately.
     /// </summary>
-    public ControlSettings Controls { get; private init; } = ControlSettings.Defaults();
+    public ControlSettings Controls { get; private init; } = ControlSettings.CreateDefaults();
+
+    /// <summary>
+    /// The GAME ADJUSTMENT settings the game was started under (notes §131), carried with the game
+    /// exactly as <see cref="Controls"/> is: the states that follow a game over build their
+    /// <see cref="States.GameServices"/> from the session, so the settings have to ride along.
+    /// </summary>
+    public GameSettings Settings { get; private init; } = GameSettings.CreateFactoryDefaults();
 
     /// <summary>The player whose turn it is.</summary>
     public PlayerSlot Current => Players[CurrentIndex];
@@ -46,14 +54,14 @@ public sealed class GameSession
     /// wrapper over the mode-based factory, kept because the START buttons are still how
     /// the cabinet starts a game.
     /// </summary>
-    public static GameSession NewGame(IPlayerInputSource input, int playerCount, IPlayerInputSource? secondPlayerInput = null)
+    public static GameSession CreateNewGame(IPlayerInputSource input, int playerCount, IPlayerInputSource? secondPlayerInput = null)
     {
         if (playerCount is < 1 or > 2)
         {
             throw new ArgumentOutOfRangeException(nameof(playerCount), playerCount, "Robotron is a 1 or 2 player game (ROM PLRCNT).");
         }
 
-        return NewGame(
+        return CreateNewGame(
             playerCount == 2 ? GameMode.TwoPlayerAlternate : GameMode.OnePlayer,
             input,
             secondPlayerInput);
@@ -64,8 +72,14 @@ public sealed class GameSession
     /// each player gets their OWN input source — which is the point of the DEFINITIONS
     /// page, since player 2 no longer has to share player 1's controls.
     /// </summary>
-    public static GameSession NewGame(GameMode mode, IPlayerInputSource playerOne, IPlayerInputSource? playerTwo = null, ControlSettings? controls = null)
+    /// <param name="settings">
+    /// The GAME ADJUSTMENT settings (notes §131), or null for the factory ones. TURNS PER PLAYER is
+    /// the men each player starts with (ROM <c>NSHIP</c> → <c>PLAS</c>); the rest travel with the
+    /// session for the states that follow.
+    /// </param>
+    public static GameSession CreateNewGame(GameMode mode, IPlayerInputSource playerOne, IPlayerInputSource? playerTwo = null, ControlSettings? controls = null, GameSettings? settings = null)
     {
+        GameSettings gameSettings = settings ?? GameSettings.CreateFactoryDefaults();
         int playerCount = mode == GameMode.OnePlayer ? 1 : 2;
         var players = new PlayerSlot[playerCount];
         for (int i = 0; i < playerCount; i++)
@@ -73,19 +87,23 @@ public sealed class GameSession
             players[i] = new PlayerSlot(
                 i + 1,
                 i == 0 ? playerOne : playerTwo ?? playerOne,
-                PlayerTuning.StartingLives,
+                settings?.TurnsPerPlayer ?? PlayerTuning.StartingLives,
                 PlayerTuning.StartingLevelNumber);
         }
 
-        return new GameSession(players) { Controls = controls ?? ControlSettings.Defaults() };
+        return new GameSession(players)
+        {
+            Controls = controls ?? ControlSettings.CreateDefaults(),
+            Settings = gameSettings,
+        };
     }
 
     /// <summary>Every player's final score with their player number, highest first — the order the end-game ceremony offers them to the high score table (notes §98).</summary>
-    public FinalScore[] FinalScoresHighestFirst() =>
+    public FinalScore[] GetFinalScoresHighestFirst() =>
         [.. Players.Select(player => new FinalScore(player.Number, player.Score)).OrderByDescending(score => score.Score)];
 
     /// <summary>Every player's score, highest first — what the game-over flow checks.</summary>
-    public int[] ScoresHighestFirst() => [.. FinalScoresHighestFirst().Select(score => score.Score)];
+    public int[] GetScoresHighestFirst() => [.. GetFinalScoresHighestFirst().Select(score => score.Score)];
 
     /// <summary>
     /// The turn's advance after a death (ROM <c>PLE1B</c>): flip to the other

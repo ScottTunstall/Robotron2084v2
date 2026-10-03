@@ -22,8 +22,8 @@ public sealed record LevelParameters(
     int LevelNumber,
     int GruntCount = 0,
     int ElectrodeCount = 0,
-    int MomCount = 0,
-    int DadCount = 0,
+    int MommyCount = 0,
+    int DaddyCount = 0,
     int MikeyCount = 0,
     int HulkCount = 0,
     int BrainCount = 0,
@@ -50,12 +50,12 @@ public sealed record LevelParameters(
     /// <c>MaxEnforcersPerSpheroid</c>/<c>MaxTanksPerQuark</c> fields are kept
     /// in sync with ceil(ENFNUM/2) for anything still reading them.
     /// </summary>
-    public static LevelParameters FromWave(int levelNumber, WaveParameters wave) => new(
+    public static LevelParameters CreateFromWave(int levelNumber, WaveParameters wave) => new(
         LevelNumber: levelNumber,
         GruntCount: wave.GruntCount,
         ElectrodeCount: wave.ElectrodeCount,
-        MomCount: wave.MomCount,
-        DadCount: wave.DadCount,
+        MommyCount: wave.MommyCount,
+        DaddyCount: wave.DaddyCount,
         MikeyCount: wave.MikeyCount,
         HulkCount: wave.HulkCount,
         BrainCount: wave.BrainCount,

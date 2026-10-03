@@ -81,7 +81,7 @@ public sealed class WaveMaterialisation
 
         if (robot is IAnimationFrameSource frameSource)
         {
-            StripEffect appear = StripEffect.StartAppear(frameSource, robot.Bounds, axis, slope: 0, clip);
+            StripEffect appear = StripEffect.CreateAppear(frameSource, robot.Bounds, axis, slope: 0, clip);
             explosions.Add(appear);
             _assembling[robot] = appear;
         }

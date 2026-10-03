@@ -13,7 +13,7 @@ public sealed class SpawnPlacement
     /// <summary>The percentage rolls are out of this many.</summary>
     private const int PercentSides = 100;
 
-    private static readonly int EntitySize = ScreenSize.Scaled(CollisionSizes.EntitySizeSpecPixels);
+    private static readonly int EntitySize = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeSpecPixels);
 
     private readonly Rectangle _playfieldBounds;
 
@@ -100,7 +100,7 @@ public sealed class SpawnPlacement
             return RandomPointInside(EntitySize);
         }
 
-        int bias = ScreenSize.Scaled(SpheroidTuning.NearWallBiasDistance);
+        int bias = ScreenSize.ToPortPixels(SpheroidTuning.NearWallBiasDistance);
         Rectangle inner = _playfieldBounds;
         int x = _random.Next(inner.X, inner.Right - EntitySize);
         int y = _random.Next(inner.Y, inner.Bottom - EntitySize);

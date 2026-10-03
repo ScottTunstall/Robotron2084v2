@@ -31,7 +31,7 @@ public sealed class GruntSpeedProgression
     private const int UpdatePeriodRomFrames = 15 * 15;
 
     private int _floorStep = LargeFloorStep; // the ROM's $F0 toggle: -2/-4 then -1/-2
-    private int _updateTimer = ArcadeClock.PortTicks(FirstUpdateRomFrames);
+    private int _updateTimer = ArcadeClock.ToPortTicks(FirstUpdateRomFrames);
 
     /// <summary>Starts a wave's progression at the wave table's floor.</summary>
     /// <param name="initialFloor">The wave table's RMXSPD.</param>
@@ -67,7 +67,7 @@ public sealed class GruntSpeedProgression
             return;
         }
 
-        _updateTimer = ArcadeClock.PortTicks(UpdatePeriodRomFrames);
+        _updateTimer = ArcadeClock.ToPortTicks(UpdatePeriodRomFrames);
 
         if (grunts.Count(grunt => grunt.LifeState != EntityLifeState.Dead) < MinimumGruntsToProgress)
         {

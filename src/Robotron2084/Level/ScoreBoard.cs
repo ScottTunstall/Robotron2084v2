@@ -1,14 +1,15 @@
-using Robotron2084.Tuning;
+using Robotron2084.Persistence;
 
 namespace Robotron2084.Level;
 
 /// <summary>
 /// The run's score. Crosses an extra-life threshold every
-/// <see cref="PlayerTuning.ExtraLifeThresholdStep"/> points, repeating;
-/// <see cref="Add"/> reports the crossing so the caller can award a life.
+/// <c>extraLifeEveryPoints</c> points, repeating; <see cref="Add"/> reports the
+/// crossing so the caller can award a life.
 /// </summary>
 public sealed class ScoreBoard
 {
+    private readonly int _step;
     private int _nextExtraLifeThreshold;
 
     /// <summary>Creates a board that carries a score over from a previous level.</summary>
@@ -16,11 +17,17 @@ public sealed class ScoreBoard
     /// Score carried over from a previous level (level restarts / wave clear
     /// hand the score across); thresholds already passed are skipped.
     /// </param>
-    public ScoreBoard(int startingScore)
+    /// <param name="extraLifeEveryPoints">
+    /// The GAME ADJUSTMENT page's EXTRA MAN EVERY in points (ROM <c>extra_man_every</c>, notes §131);
+    /// the factory value by default. The arcade allows 0 there, which turns extra men off.
+    /// </param>
+    public ScoreBoard(int startingScore, int extraLifeEveryPoints = GameSettings.FactoryExtraManEveryPoints)
     {
         Score = startingScore;
-        _nextExtraLifeThreshold =
-            (startingScore / PlayerTuning.ExtraLifeThresholdStep + 1) * PlayerTuning.ExtraLifeThresholdStep;
+        _step = extraLifeEveryPoints;
+        _nextExtraLifeThreshold = _step > 0
+            ? (startingScore / _step + 1) * _step
+            : int.MaxValue;
     }
 
     public int Score { get; private set; }
@@ -31,7 +38,7 @@ public sealed class ScoreBoard
         Score += points;
         if (Score >= _nextExtraLifeThreshold)
         {
-            _nextExtraLifeThreshold += PlayerTuning.ExtraLifeThresholdStep;
+            _nextExtraLifeThreshold += _step;
             return true;
         }
 

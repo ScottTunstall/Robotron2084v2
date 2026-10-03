@@ -19,7 +19,7 @@ namespace Robotron2084.Level;
 public sealed class PlayfieldWall
 {
     /// <summary>Wall strip thickness: spec's 4px widened by SpecScale (8 internal px at 2x).</summary>
-    public static readonly int Thickness = ScreenSize.Scaled(CollisionSizes.WallThicknessSpecPixels);
+    public static readonly int Thickness = ScreenSize.ToPortPixels(CollisionSizes.WallThicknessSpecPixels);
 
     private readonly WallColorCycle _cycle;
     private readonly Rectangle _playfieldBounds;

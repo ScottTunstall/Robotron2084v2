@@ -1,3 +1,5 @@
+using Robotron2084.Tuning;
+
 namespace Robotron2084.Level;
 
 /// <summary>
@@ -16,9 +18,6 @@ public static class BozoMode
 
     /// <summary>The last wave a merely-behind player gets it on (<c>CMPA #2 / BHI</c>).</summary>
     private const int LastWaveForBehindPlayer = 2;
-
-    /// <summary>The ships the operator awards a player (ROM <c>NSHIP</c>, the CMOS "turns per player"); the default is 3.</summary>
-    private const int ShipsPerGame = 3;
 
     /// <summary>One row of <c>BOZOTB</c>: the four settings for a wave, in the table's own byte order.</summary>
     /// <param name="SpheroidDropDelay">ROM <c>CDPTIM</c>.</param>
@@ -39,7 +38,11 @@ public static class BozoMode
     /// <summary>Whether the mercy applies to a player about to play a wave.</summary>
     /// <param name="wave">The wave, 1-based.</param>
     /// <param name="spareMen">The men the player has left besides the one in play (ROM <c>PLAS</c>).</param>
-    public static bool AppliesTo(int wave, int spareMen)
+    /// <param name="shipsPerGame">
+    /// The ships the operator awards a player — the CMOS "turns per player" (ROM <c>NSHIP</c>, the
+    /// GAME ADJUSTMENT page's TURNS PER PLAYER row, notes §131).
+    /// </param>
+    public static bool AppliesTo(int wave, int spareMen, int shipsPerGame = PlayerTuning.StartingLives)
     {
         if (wave > LastWave)
         {
@@ -51,15 +54,16 @@ public static class BozoMode
             return true;
         }
 
-        return wave <= LastWaveForBehindPlayer && ShipsPerGame - 1 > spareMen;
+        return wave <= LastWaveForBehindPlayer && shipsPerGame - 1 > spareMen;
     }
 
     /// <summary>The wave's parameters, dialled down when the mercy applies.</summary>
     /// <param name="parameters">The wave table's parameters.</param>
     /// <param name="spareMen">The men the player has left besides the one in play.</param>
-    public static LevelParameters Apply(LevelParameters parameters, int spareMen)
+    /// <param name="shipsPerGame">The operator's TURNS PER PLAYER setting (see <see cref="AppliesTo"/>).</param>
+    public static LevelParameters Apply(LevelParameters parameters, int spareMen, int shipsPerGame = PlayerTuning.StartingLives)
     {
-        if (!AppliesTo(parameters.LevelNumber, spareMen))
+        if (!AppliesTo(parameters.LevelNumber, spareMen, shipsPerGame))
         {
             return parameters;
         }

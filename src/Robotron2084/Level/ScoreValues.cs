@@ -8,7 +8,7 @@ namespace Robotron2084.Level;
 ///
 /// Grunt 100 · Spheroid 1000 · Quark 1000 · Enforcer 150 · Tank 200 ·
 /// Brain 500 · Cruise missile (brain's) 25 · Prog 100 · Spark 25 ·
-/// Tank shell 25 · Electrode 0 (no score call — destroying a post scores
+/// Tank shell 25 · Electrode 0 (no score call — destroying an electrode scores
 /// nothing) · Hulk 0 (indestructible).
 ///
 /// The player never loses points. Rescue bonuses (human saved: 1000-5000
