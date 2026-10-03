@@ -416,7 +416,7 @@ done
 grep -rnE '(\+=|-=) 5;|\* 6\b|>= 6\b|< 6\b|= 6;|SixthsPer|Fifths|_sixths|_fifths' src --include=*.cs
 
 # Column literal and hand-rolled scaling (NUM-3, NUM-4)
-grep -rnE 'Scaled\(2\b|Scaled\(2 \*|\* ScreenSize\.SpecScale|/ 256\b|>> 8\b|<< 8\b' src --include=*.cs
+grep -rnE 'ToPortPixels\(2\b|ToPortPixels\(2 \*|\* ScreenSize\.SpecScale|/ 256\b|>> 8\b|<< 8\b' src --include=*.cs
 
 # Unit-suffix mistakes (NAM-2)
 grep -rnoE '\w*RomTicks\w*' src tests --include=*.cs
