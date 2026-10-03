@@ -97,10 +97,14 @@ public sealed class FieldEntities
     public IReadOnlyList<IEntityList> UpdateOrder => _updateOrder;
 
     /// <summary>Says whether every enemy that must be cleared to finish the wave is gone.</summary>
-    /// <remarks>Hulks cannot be killed and electrodes are obstacles, so neither counts. A cruise missile does, because it never fizzles out.</remarks>
+    /// <remarks>
+    /// Hulks cannot be killed and electrodes are obstacles, so neither counts. Nor do progs and cruise missiles: the arcade only
+    /// counts the grunts, spheroids, enforcers, brains, tanks and quarks, and clears away anything else when the wave ends.
+    /// Original source: <c>RRG23.ASM</c> <c>WVCHEK</c>. Disassembly: <c>COUNT_ENEMIES_ON_SCREEN</c> (<c>$2A73</c>).
+    /// </remarks>
     public bool AreEnemiesGone() =>
         Grunts.GetLiveCount() == 0 && Spheroids.GetLiveCount() == 0 && Enforcers.GetLiveCount() == 0 && Quarks.GetLiveCount() == 0
-        && Tanks.GetLiveCount() == 0 && Brains.GetLiveCount() == 0 && Progs.GetLiveCount() == 0 && CruiseMissiles.GetLiveCount() == 0;
+        && Tanks.GetLiveCount() == 0 && Brains.GetLiveCount() == 0;
 
     /// <summary>Draws the lists that go behind the player's lasers.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>

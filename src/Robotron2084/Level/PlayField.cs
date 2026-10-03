@@ -324,6 +324,7 @@ public sealed class PlayField : ICollisionScene
     /// <remarks>Disassembly: the score routine at <c>$DBF9</c>.</remarks>
     internal void AwardScore(int value)
     {
+        _gruntSpeed.NoteScore();
         if (Score.Add(value))
         {
             Player.AddLife();
@@ -335,6 +336,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="rescues">How many humans have now been rescued this life.</param>
     internal void AwardRescueBonus(int rescues)
     {
+        _gruntSpeed.NoteScore();
         if (Score.Add(ScoreValues.RescueBonus(rescues)))
         {
             Player.AddLife();
