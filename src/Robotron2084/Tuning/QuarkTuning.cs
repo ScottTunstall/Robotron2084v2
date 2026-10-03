@@ -1,6 +1,6 @@
 namespace Robotron2084.Tuning;
 
-/// <summary>The quark's movement, drop and picture tuning.</summary>
+/// <summary>The quark's movement, drop and animation tuning.</summary>
 public static class QuarkTuning
 {
     // Quark — from the GOSPEL (RRTK4 `SQUARE` + `SQVEL`; notes §43,

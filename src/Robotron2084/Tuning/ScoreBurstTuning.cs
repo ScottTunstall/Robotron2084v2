@@ -24,13 +24,13 @@ public static class ScoreBurstTuning
     // Spheroid / quark DEATH BURST (notes §64) — the spheroid's `CIRKP`
     // ("DRAW_SPHEROID_IN_DEATH_THROES", RRG23.ASM $12F1) and the quark's
     // `CIRKV`, which is `$1143: JMP $12FA` — the SAME routine entered after its
-    // parameter setup. The enemy's own pictures play as a SOLID silhouette, then
-    // its "1000" picture is displayed. `LDD #$FFAA` (spheroid) / `LDD #$DDDD`
+    // parameter setup. The enemy's own animation frames play as a SOLID silhouette, then
+    // its "1000" sprite is displayed. `LDD #$FFAA` (spheroid) / `LDD #$DDDD`
     // (quark) sets one colour per phase, named by the disassembly's own comment
     // as "the same colour as the player score"; each is a PALETTE SLOT in the
     // doubled-nibble form, so both effects shimmer, because all the slots used
     // here (10, 13, 15) are colour-CYCLING ones.
-    public const int SpheroidCount = 7; // `LDA #7` — = the LAST picture's index
+    public const int SpheroidCount = 7; // `LDA #7` — = the LAST animation frame's index
 
     // `LDA #8`
 

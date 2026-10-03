@@ -29,7 +29,7 @@ public static class TankTuning
     /// <summary>ROM `MTANK`: `NAP 12` per grow step.</summary>
     public const int GrowRomFrames = 12;
 
-    /// <summary>ROM `MTANK`: grow pictures `MTNKP1..4` — 4x4, 8x7, 8x8, 12x12 arcade px (notes §53).</summary>
+    /// <summary>ROM `MTANK`: grow animation frames `MTNKP1..4` — 4x4, 8x7, 8x8, 12x12 arcade px (notes §53).</summary>
     public const int GrowSteps = 4;
 
     /// <summary>
@@ -42,8 +42,8 @@ public static class TankTuning
     public const int StepArcadePixels = 1;
 
     /// <summary>
-    /// ROM `MTANK`: each grow picture's own (dx,dy) — descriptor bytes 4 and 5 of
-    /// `MTNKP1..4`, in COLUMNS and ROWS. `MTANK` adds the CURRENT picture's delta
+    /// ROM `MTANK`: each grow animation frame's own (dx,dy) — descriptor bytes 4 and 5 of
+    /// `MTNKP1..4`, in COLUMNS and ROWS. `MTANK` adds the CURRENT animation frame's delta
     /// to the object's address and only then advances the pointer, so the mini tank
     /// walks up-left as it grows and the full 14x16 tank lands centred on the drop
     /// point (a total of -2 columns, -6 rows).
@@ -57,9 +57,9 @@ public static class TankTuning
     ];
 
     /// <summary>
-    /// The birth pictures' sizes in arcade px, from the `MTNKP1..4` descriptors
+    /// The birth animation frames' sizes in arcade px, from the `MTNKP1..4` descriptors
     /// (`FCB 2,4` / `4,7` / `4,8` / `6,12` — bytes wide x rows, and a byte is 2 px).
-    /// The ROM bounds and collides against the CURRENT picture, so a growing tank
+    /// The ROM bounds and collides against the CURRENT animation frame, so a growing tank
     /// is a smaller target than a full one.
     /// </summary>
     public static readonly (int Width, int Height)[] GrowSizes =

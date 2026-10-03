@@ -4,8 +4,6 @@ namespace Robotron2084.Tuning;
 public static class PlayerTuning
 {
     // Scoring — per-kill point values live in Level/ScoreValues.cs
-    public const int ExtraLifeThresholdStep = 10000;
-
     public const int HitStopTicks = 10;
 
     public const int InvincibilityFlickerHiddenTicks = 2;
@@ -13,7 +11,7 @@ public static class PlayerTuning
     public const int InvincibilityFlickerVisibleTicks = 4;
 
     /// <summary>
-    /// The palette slot the laser pictures are drawn in: every lit nibble of the ROM's four laser pictures
+    /// The palette slot the laser sprites are drawn in: every lit nibble of the ROM's four laser sprites
     /// (R5 $35C1-$35DC) is <c>$A</c>, the LASER FLASH entry (RRS22 <c>LF</c>), which flashes white and a random
     /// colour of <c>COLTAB</c> every few frames.
     /// </summary>

@@ -30,7 +30,7 @@ public static class SpawnTuning
 
     public const int SpawnPlacementMaxAttempts = 100;
 
-    // spec-px (apply ScreenSize.Scaled at the use site)
+    // spec-px (apply ScreenSize.ToPortPixels at the use site)
 
     // spec-px, spec-stated
 

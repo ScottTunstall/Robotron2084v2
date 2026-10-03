@@ -9,11 +9,11 @@ public static class EnforcerTuning
     /// </summary>
     public const int BeatRomFrames = 4;
 
-    /// <summary>ROM `ENFRCE`: `NAP 8` per spawn picture.</summary>
+    /// <summary>ROM `ENFRCE`: `NAP 8` per spawn animation frame.</summary>
     public const int GrowStepRomFrames = 9;
 
     /// <summary>
-    /// ROM `ENFR0`: the enforcer's grow-up is FIVE spawn pictures at `NAP 8`
+    /// ROM `ENFR0`: the enforcer's grow-up is FIVE spawn animation frames at `NAP 8`
     /// each = 5 x 9 ROM frames = **45** (a `NAP n` beat is n+1 frames, as with the
     /// quark). The port used 40, treating each step as 8.
     /// </summary>

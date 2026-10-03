@@ -25,7 +25,7 @@ public static class ReprogramTuning
     /// Blitter colour 2 for the reprogramming human AND the BACKDROP the brain is drawn
     /// on ($BB = slot 11). For the brain this is a backdrop, not a replacement: ROM
     /// $1DAF fills the brain's rectangle with it ($DA61 / BLKON, op $12) and then blits
-    /// the brain's own picture over the top (JMP $D018) — notes §72.
+    /// the brain's own sprite over the top (JMP $D018) — notes §72.
     /// </summary>
     public const int ShapeSlot = 0x0B;
 

@@ -3,7 +3,7 @@ namespace Robotron2084.Tuning;
 /// <summary>The cruise missile's colours, trail and cap (RRB10 CMMOV).</summary>
 public static class CruiseMissileTuning
 {
-    // CMMOV never blits the CMPIC/CMP1 pictures; it writes VIDEO MEMORY
+    // CMMOV never blits the CMPIC/CMP1 sprites; it writes VIDEO MEMORY
     // directly, one 16-bit word per step: `$AAAA` (two pixels of slot 10) at
     // the new coordinate and `$DDDD` (two of slot 13) at the coordinate it just
     // left. The video address is COLUMN-MAJOR — `column*256 + row`, proved by

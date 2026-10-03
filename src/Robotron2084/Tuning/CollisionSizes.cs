@@ -11,7 +11,7 @@ public static class CollisionSizes
 
     // The spec's 16x16 entity box is not a collision box — see the
     // per-entity *CollisionSize table below. Still used for the spawn-candidate grid
-    // (the largest entity box is 16 spec-px wide) and the picture factory
+    // (the largest entity box is 16 spec-px wide) and the sprite factory
     // pattern size.
     public const int EntitySizeSpecPixels = 16;
 
@@ -22,7 +22,7 @@ public static class CollisionSizes
 
     public const int WallThicknessSpecPixels = 4;
 
-    // Brain picture (notes (18) RRB10 decode): 7 bytes x 16 rows =
+    // Brain sprite (notes (18) RRB10 decode): 7 bytes x 16 rows =
     // 14x16 px; a prog re-draws its converted human's animation frames and keeps that
     // human's per-kind box (see HumanKindExtensions.ArcadeCollisionSize); cruise missile =
     // the ROM's "FAT PHONY GUY" box (the 6x6 head inset 1 px = 4x4).
@@ -37,7 +37,7 @@ public static class CollisionSizes
     /// </summary>
     public static readonly (int Width, int Height) CruiseMissileCollisionSize = (6, 4);
 
-    public static readonly (int Width, int Height) DadCollisionSize = (10, 13);
+    public static readonly (int Width, int Height) DaddyCollisionSize = (10, 13);
 
     public static readonly (int Width, int Height) ElectrodeCollisionSize = (10, 9);
 
@@ -49,20 +49,20 @@ public static class CollisionSizes
 
     public static readonly (int Width, int Height) MikeyCollisionSize = (6, 11);
 
-    public static readonly (int Width, int Height) MomCollisionSize = (8, 14);
+    public static readonly (int Width, int Height) MommyCollisionSize = (8, 14);
 
-    // The ROM (COL0V, RRS22 ~1038) intersects each object's PICTURE
+    // The ROM (COL0V, RRS22 ~1038) intersects each object's sprite
     // dimensions — ADDD OBJW,U / ADDD [OPICT,X] — not a fixed square: the
-    // collision box IS the picture. Sizes are the live-frame dimensions from
-    // docs/sprite-map.md, in arcade px; apply ScreenSize.Scaled at the use
+    // collision box IS the sprite. Sizes are the live-frame dimensions from
+    // docs/sprite-map.md, in arcade px; apply ScreenSize.ToPortPixels at the use
     // site. Lasers/sparks keep the spec's 4x4 box (spec-stated).
     public static readonly (int Width, int Height) PlayerCollisionSize = (8, 12);
 
     /// <summary>
     /// ROM PGXPIC: `FCB 6,16` — the prog's PHONY burst card, 6 BYTES x 16 rows =
-    /// 12x16 px. PRGKIL swaps the object's picture descriptor to this card and then
+    /// 12x16 px. PRGKIL swaps the object's sprite descriptor to this card and then
     /// calls the ordinary `EXST`, so the card is what the strip explosion shatters,
-    /// and `EXSTV` sizes its record from the picture — see
+    /// and `EXSTV` sizes its record from the sprite — see
     /// <see cref="Entities.Prog.ExplosionBounds"/> (notes §90).
     /// </summary>
     public static readonly (int Width, int Height) ProgBurstSize = (12, 16);
@@ -78,9 +78,9 @@ public static class CollisionSizes
     public static readonly (int Width, int Height) TankCollisionSize = (14, 16);
 
     /// <summary>
-    /// ROM `SHLP1 FCB 4,7` — the shell's picture is 4 BYTES wide (a byte is 2 px)
+    /// ROM `SHLP1 FCB 4,7` — the shell's sprite is 4 BYTES wide (a byte is 2 px)
     /// by 7 rows = **8x7 px**, and the ROM bounds and collides a projectile against
-    /// the picture it is showing (notes §53). The port used the spec's square 4x4
+    /// the animation frame it is showing (notes §53). The port used the spec's square 4x4
     /// missile box while drawing a wrongly-sized 14x16 extraction into it.
     /// </summary>
     public static readonly (int Width, int Height) TankShellCollisionSize = (8, 7);

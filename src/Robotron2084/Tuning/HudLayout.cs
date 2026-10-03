@@ -54,7 +54,7 @@ public static class HudLayout
     //           a drawn glyph advances width+1 = 7 px; a suppressed leading
     //           zero advances 6 px ($6128: 4 px, then +2 for the large font)
     //   men     P1 col 46 (x 92), P2 col 110 (x 220), row 14, 8 px apart,
-    //           the 6x8 mini man picture ($3592/$3596), capped at SEVEN
+    //           the 6x8 mini man sprite ($3592/$3596), capped at SEVEN
     //   colour  the CURRENT player's score blits in slot 10 ($AA — a CYCLING
     //           slot: the LF process); everyone else's in slot 1 ($11)
     //   wave    "<n>  WAVE" at col 62 / row 238 (the BOTTOM), string 104,
@@ -117,11 +117,11 @@ public static class HudLayout
     public const int TitleOptionRowStepPixels = 12;
 
     /// <summary>An arcade COLUMN to the port screen's x — a column is <see cref="ScreenSize.ArcadePixelsPerColumn"/> arcade pixels.</summary>
-    public static int ArcadeColumnX(int column) => ArcadeX(column * ScreenSize.ArcadePixelsPerColumn);
+    public static int ToPortColumnX(int column) => ToPortX(column * ScreenSize.ArcadePixelsPerColumn);
 
     /// <summary>Arcade screen x (of 304) mapped to the port screen (proportional, integer math).</summary>
-    public static int ArcadeX(int arcadePx) => arcadePx * ScreenSize.Width / ArcadeScreenWidth;
+    public static int ToPortX(int arcadePx) => arcadePx * ScreenSize.Width / ArcadeScreenWidth;
 
     /// <summary>Arcade screen y (of 256) mapped to the port screen (proportional, integer math).</summary>
-    public static int ArcadeY(int arcadePx) => arcadePx * ScreenSize.Height / ArcadeScreenHeight;
+    public static int ToPortY(int arcadePx) => arcadePx * ScreenSize.Height / ArcadeScreenHeight;
 }
