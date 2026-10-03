@@ -17,7 +17,7 @@ namespace Robotron2084.Level;
 /// <remarks>
 /// The field coordinates; the rules live elsewhere. What is on the field is in <see cref="FieldEntities"/>, how each
 /// kind is put there at the start of a wave is its <see cref="IWaveSpawner"/>, what happens when two things touch is
-/// an <see cref="ICollisionPhase"/>, and whether they are touching is the <see cref="IContactTest"/> the field is given.
+/// an <see cref="ICollisionRule"/>, and whether they are touching is the <see cref="IContactTest"/> the field is given.
 /// Each tick, in order: the freeze after the player's death, the grunts' speed-up, the wave-start appear, the wall,
 /// the player and the lasers, every list of entities, the collision rules, then the dead are taken out.
 /// </remarks>
@@ -439,9 +439,9 @@ public sealed class PlayField
     {
         bool playerWasAlive = Player.LifeState == EntityLifeState.Alive;
 
-        foreach (ICollisionPhase phase in CollisionPhases.InArcadeOrder)
+        foreach (ICollisionRule rule in CollisionRules.InArcadeOrder)
         {
-            phase.Resolve(this);
+            rule.Resolve(this);
         }
 
         if (playerWasAlive && Player.LifeState == EntityLifeState.Dying)
