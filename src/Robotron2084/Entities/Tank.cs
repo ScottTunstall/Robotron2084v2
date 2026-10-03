@@ -78,13 +78,16 @@ public sealed class Tank : IExplodable, IRemovable
     /// <param name="position">Top-left of the tank.</param>
     /// <param name="random">The random source: the aim rolls, the destinations and the first-fire delay.</param>
     /// <param name="fireIntervalBeats">The beats between this wave's tank shots.</param>
-    /// <remarks>ROM: <c>TNKSHT</c> — this wave's firing interval.</remarks>
+    /// <param name="startFullyGrown">True for a tank put on at the start of a life, which does not grow first.</param>
+    /// <remarks>ROM: <c>TNKSHT</c> — this wave's firing interval. <c>TNKSTV</c> puts a tank on at full size; only a dropped one grows (<c>MTANK</c>).</remarks>
     public Tank(
         SpriteSet sprites,
         IntVector2 position,
         Random random,
-        int fireIntervalBeats = DefaultFireIntervalBeats)
+        int fireIntervalBeats = DefaultFireIntervalBeats,
+        bool startFullyGrown = false)
     {
+        _growStep = startFullyGrown ? TankTuning.GrowSteps : 0;
         _sprites = sprites;
         _position = position;
         _random = random;
