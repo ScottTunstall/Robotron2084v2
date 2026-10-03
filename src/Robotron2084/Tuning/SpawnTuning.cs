@@ -14,7 +14,7 @@ public static class SpawnTuning
     // Grunt
     public const int GruntMinDistanceFromPlayer = 20;
 
-    // Hulk — ROM RRH11: step period comes from the
+    // Hulk — ROM RRH11: beat interval comes from the
     // wave table (HLKSPD, in ROM ticks); step sizes are fixed by the ROM
     // animation table (horizontal 3/4 arcade px alternating, vertical 2).
     // Laser knockback is the ROM RRH11 HULKIL per-axis random

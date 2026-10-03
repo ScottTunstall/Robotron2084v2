@@ -13,7 +13,7 @@ public static class SparkTuning
     // Spark flicker: the ROM SPARK process advances OPICT by one 4-byte
     // animation frame entry (SPKP0..3) on every beat pass and re-runs every 4
     // vblanks (NAP 4) — a 4-frame flash, one frame per 4 vblanks (notes 32).
-    public const int SparkFramePeriodRomFrames = 4;
+    public const int SparkFrameIntervalRomFrames = 4;
 
     /// <summary>The widest aim wobble: from minus this to just under plus this, in columns sideways and rows up and down.</summary>
     /// <remarks>Original source: <c>RRC11.ASM</c> <c>ENFSHT</c>, <c>ANDB #$1F / ADDB #-$10</c> on both axes. Disassembly: <c>CREATE_SPARK</c> (<c>$1404</c>).</remarks>

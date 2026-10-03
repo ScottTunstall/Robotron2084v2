@@ -9,7 +9,7 @@ public static class TankTuning
     /// #TANKL / JMP SLEEP`, so the tank's process re-runs every TNKSPD vblanks — a
     /// beat of 2 vblanks plus the frame it runs in = **3 ROM frames**.
     /// </summary>
-    public const int BeatRomFrames = 3;
+    public const int BeatIntervalRomFrames = 3;
 
     // $4CAC (`TNKDRP`): the tank's blitter address = the quark's + `ADDD #$0206`,
     // i.e. **+2 COLUMNS and +6 ROWS — not +2 px**. A column is 2 px (notes §53),
@@ -27,7 +27,7 @@ public static class TankTuning
     public const int BirthOffsetRowsOnTopWall = 6;
 
     /// <summary>ROM `MTANK`: `NAP 12` per grow step.</summary>
-    public const int GrowRomFrames = 12;
+    public const int GrowIntervalRomFrames = 12;
 
     /// <summary>ROM `MTANK`: grow animation frames `MTNKP1..4` — 4x4, 8x7, 8x8, 12x12 arcade px (notes §53).</summary>
     public const int GrowSteps = 4;

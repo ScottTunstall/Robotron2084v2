@@ -15,7 +15,7 @@ public static class QuarkTuning
     //           otherwise taken from the seed bit (X: set = negative, Y: set =
     //           positive; the opposite polarity decorrelates the axes).
     //   beat:   NAP 3, and PD7 counts down in BEATS to the next SQVEL.
-    public const int BeatRomFrames = 4;      // NAP 3 + the beat vblank
+    public const int BeatIntervalRomFrames = 4;      // NAP 3 + the beat vblank
 
     /// <summary>How far above the bottom edge, in rows, a fleeing quark is counted as gone.</summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQ3L</c>, <c>YMAX-16</c>.</remarks>

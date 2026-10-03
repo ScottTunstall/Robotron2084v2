@@ -3,17 +3,17 @@ namespace Robotron2084.Tuning;
 /// <summary>How a tank shell is aimed, how fast it flies and how long it lasts.</summary>
 public static class TankShellTuning
 {
-    /// <summary>The fewest turns a shell gets before it fizzles out. A turn is <see cref="BodyRomFrames"/> ROM frames.</summary>
+    /// <summary>The fewest beats a shell gets before it fizzles out. A beat comes every <see cref="BeatIntervalRomFrames"/> ROM frames.</summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKFX1</c>, <c>ADDA #$30</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4F88</c>.</remarks>
-    public const int LifeBaseTurns = 48;
+    public const int LifeBaseBeats = 48;
 
-    /// <summary>Extra random turns on top of <see cref="LifeBaseTurns"/>: from none up to one less than this.</summary>
+    /// <summary>Extra random beats on top of <see cref="LifeBaseBeats"/>: from none up to one less than this.</summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKFX1</c>, <c>ANDA #$1F</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4F86</c>.</remarks>
-    public const int LifeExtraTurnsMaxExclusive = 32;
+    public const int LifeExtraBeatsMaxExclusive = 32;
 
-    /// <summary>How many ROM frames pass between one turn of a shell and the next.</summary>
+    /// <summary>How many ROM frames pass between one beat of a shell and the next.</summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SHELLP</c>, <c>NAP 2</c>. Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>) at <c>$4FB3</c>.</remarks>
-    public const int BodyRomFrames = 2;
+    public const int BeatIntervalRomFrames = 2;
 
     /// <summary>How far to the right of the tank's top-left corner a shell starts, in columns.</summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>ADDD #$0100</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4E70</c>.</remarks>

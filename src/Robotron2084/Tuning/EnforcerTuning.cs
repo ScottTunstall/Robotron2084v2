@@ -7,7 +7,7 @@ public static class EnforcerTuning
     /// ROM `ENFR1B`: `NAP 3` — the enforcer's logic beat is 4 ROM frames (3 vblanks
     /// plus the frame it runs in), and its re-aim and shot timers count BEATS.
     /// </summary>
-    public const int BeatRomFrames = 4;
+    public const int BeatIntervalRomFrames = 4;
 
     /// <summary>ROM `ENFRCE`: `NAP 8` per spawn animation frame.</summary>
     public const int GrowStepRomFrames = 9;

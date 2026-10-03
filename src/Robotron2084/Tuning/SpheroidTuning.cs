@@ -8,7 +8,7 @@ public static class SpheroidTuning
     // acceleration and damps it by a 64th every beat, so its speed is emergent.
     // The clamps below are the ROM's own velocity limits ($0100 / $0200 = 1
     // column/frame and 2 rows/frame, the same 2 arcade px/frame).
-    public const int BeatRomFrames = 3; // `NAP 2` + 1
+    public const int BeatIntervalRomFrames = 3; // `NAP 2` + 1
 
     // CIRC3L's exit test: `CMPA #XMIN+3` / `CMPA #XMAX-10` with XMIN=7 and
     // XMAX=$8F (RRF.ASM:69-70), i.e. column 10 / column 133 of the video buffer.
