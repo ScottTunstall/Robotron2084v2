@@ -10771,11 +10771,17 @@ the sheet's scale reproduces the sheet exactly.
   It steps 1 column (2 arcade pixels) every 2 ROM frames, about 50 pixels a second. A hop is 16 steps (32 arcade pixels). **Every hop is the same height, 16 rows** (`GorfTuning.HopRows`, the author's "for now"; the author: *"The hops have to be the same height each time, not random. So lets say 16px?"*). An earlier version rolled each hop's height from 1 to 16.
   The arc of a hop is `GorfPath.GetHopHeight`, one parabola arch that leaves the ground, peaks half way and lands where it left, in whole numbers with no `Sin`, `Cos` or any other trigonometry.
   It lands on the ground between hops, with no pause, and the ground is the random height it started on. The first version of this was a long up-and-down wave of 80 steps and 30 rows; the author's correction replaced it.
-- **The drops.** Its grunts are rolled as a spheroid's enforcers are: a roll from 1 to the wave's drop bound (`MaxDropsX2`, the ROM's `ENFNUM`, which grows with the wave and is moved by the difficulty setting), halved and rounded up.
-  Spheroids get 1 to 5 at the wave table's bound of 10; Gorf's grunts are spaced evenly along its way. `PlayField.SpawnGrunt` puts each one on the field where Gorf is (kept inside the wall), with the strip appear and the wave's grunt wait.
+- **The drops** (revised by the author: *"I don't think the grunts that GORF spawns should be using the 'warp in' reverse explosion effect. It should look like GORF is dropping them. Also, I'd like GORF to drop up to 6 at a time - depending on difficulty level and max GRUNTS allowed per level"*).
+  Gorf stops three times on the way across, evenly spaced (`GorfTuning.DropStops`), and at each stop drops a handful of grunts side by side from the middle of its body.
+  How many is rolled as a spheroid's enforcers are: a roll from 1 to the wave's drop bound (`MaxDropsX2`, the ROM's `ENFNUM`, which grows with the wave and is moved by the difficulty setting), halved and rounded up,
+  and never more than 6 (`GorfTuning.MaxGruntsPerDrop`); the bound's own top of 12 gives exactly 6. **The level's grunt limit:** a grunt is not dropped when the level already holds as many as the wave
+  brings (the wave table's grunt count, which the difficulty setting also moves), or `GorfTuning.MinimumGruntCap` (6) if that is fewer, so a Gorf in a wave with no grunts can still drop one burst.
+  The limit is the port's reading of "max grunts allowed per level", and the numbers are in `GorfTuning`.
+  **How they arrive:** there is no appear effect. A dropped grunt starts inside Gorf, shows at once and falls 4 pixels a tick to the ground line beside Gorf's feet (`PlayField.SpawnGrunt`, `Grunt.BeginFall`),
+  and does not walk until it has landed. It keeps the wave's grunt wait.
 - **Drawn through the wall.** Only the part of Gorf inside the wall is drawn, so it comes in from off the screen instead of over the border.
 - **Killing it.** A laser kills it (strip explosion, the grunts' hit sound, 100 points for now), a touch kills the player, and the wave is not won while one is on its way across. It does not shoot or die on electrodes.
 - **In a wave.** `LevelParameters.GorfCount` is 0 in every wave. `GorfWaveSpawner` makes them (nothing to place, since they start off the screen) and `WaveSurvivors` keeps the survivors of a death.
-- **A change to `WaveMaterialisation`.** A robot made after a brain wave's beam-in has started (a dropped grunt) used to be left waiting for ever. It now appears strip by strip like the rest.
+- **A change to `WaveMaterialisation`.** A robot made after a brain wave's beam-in has started used to be left waiting for ever. It now appears strip by strip like the rest. (Gorf's grunts no longer use it, but the fix stands.)
 
 Everything not stated by the author is the port's choice and is in `GorfTuning` or marked in the code.
