@@ -140,11 +140,13 @@ the ROM's `$2B7C` moves them), `ATTRACT MODE SOUND` (port-only: silence the demo
 machine playing itself), `RESTORE FACTORY SETTINGS` and `HIGH SCORE TABLE RESET`.
 Settings live in `%LocalAppData%\Robotron2084\settings.ini`, hand-editable and
 reloaded at start-up.
-**Attract dev keys (port-only, notes §97/§98):** `F12` jump straight into the attract
-storyline movie · `F6` jump straight into the attract demo game · `F7` (held)
+**Attract dev keys (port-only, notes §97/§98):** `End` jump straight into the attract
+storyline movie · `Home` jump straight into the attract demo game · `PgUp` (held)
 fast-forward the movie 8× — the hulk's walk arrives in ~7 s instead of ~51 s ·
-`F4` jump straight to the high score table · `Ins` skip a wave (the port's old `P`
-test key moved when `P` became PAUSE).
+`Ins` jump straight to the high score table · `Del` jump straight to the end of a
+game (the GAME OVER page and the initials ceremony). These work on the attract
+screens only. In a game `Ins` skips a wave (the port's old `P` test key moved when
+`P` became PAUSE).
 **Sound:** on — the native sound board plays through MonoGame on Windows and Linux.
 
 ### The gates (run before every checkpoint)
