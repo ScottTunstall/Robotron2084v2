@@ -7,6 +7,7 @@ using Robotron2084.Graphics;
 using Robotron2084.Hud;
 using Robotron2084.Input;
 using Robotron2084.Level;
+using Robotron2084.Level.Collisions;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
 using Robotron2084.Tuning;
@@ -156,7 +157,7 @@ public sealed class PlayingState : IGameState
 
         // Wave clear — checked before the death check. The P key (the port's test
         // key) takes the same path so waves can be skipped.
-        if (_field.IsLevelCleared || input.SkipLevelHeld)
+        if (_field.IsLevelCleared() || input.SkipLevelHeld)
         {
             HandleWaveCleared(manager);
             return;
@@ -208,7 +209,7 @@ public sealed class PlayingState : IGameState
             slot.Score,
             slot.Rescues,
             _sprites.Blitter.Palette,
-            pixelCollision: new SpriteCollision(),
+            contactTest: new PixelContactTest(new SpriteCollision()),
             extraManEveryPoints: _settings.ExtraManEveryPoints);
     }
 

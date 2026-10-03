@@ -5,6 +5,7 @@ using Robotron2084.Graphics;
 using Robotron2084.Hud;
 using Robotron2084.Input;
 using Robotron2084.Level;
+using Robotron2084.Level.Collisions;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
 
@@ -79,7 +80,7 @@ public sealed class AttractState : IGameState, IAttractState
         // the score only at the next wave clear / death before this.
         SyncSlotFromField();
 
-        if (_field.IsLevelCleared)
+        if (_field.IsLevelCleared())
         {
             PlayerSlot slot = _session.Current;
             SyncSlotFromField();
@@ -113,7 +114,7 @@ public sealed class AttractState : IGameState, IAttractState
         PlayerSlot slot = _session.Current;
         LevelParameters parameters = BozoMode.Apply(_generator.Generate(slot.Wave), slot.SpareMen);
         WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.GetInnerBounds(), cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, pixelCollision: new SpriteCollision());
+        return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.GetInnerBounds(), cycle, _random, slot.Lives, slot.Score, slot.Rescues, _sprites.Blitter.Palette, playerInvincibleForTesting: false, contactTest: new PixelContactTest(new SpriteCollision()));
     }
 
     private void SyncSlotFromField() => _field.SyncInto(_session.Current);

@@ -55,7 +55,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         }
 
         IntVector2 position = field.Player.Position;
-        IntVector2? nearest = field.GetNearestLivingRobotPosition(position);
+        IntVector2? nearest = field.Entities.GetNearestLivingRobotPosition(position);
         IntVector2 move = HoldDirection(ChooseDirection(field, position, nearest));
 
         if (move != IntVector2.Zero && _random.Next(AttractTuning.DemoStutterChanceDenominator) == 0)
