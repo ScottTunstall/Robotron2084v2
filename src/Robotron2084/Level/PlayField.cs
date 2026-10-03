@@ -91,7 +91,7 @@ public sealed class PlayField
     }
 
     /// <summary>Counts the sparks in flight. There may never be more than twenty.</summary>
-    public int GetActiveSparkCount() => Entities.Sparks.Count(s => s.LifeState == EntityLifeState.Alive);
+    public int GetActiveSparkCount() => Entities.Sparks.Count(s => s.IsAlive());
 
     /// <summary>Says whether a spheroid may drop another enforcer: there may be eight at most.</summary>
     /// <remarks>Original source: <c>ENFCNT</c> (notes §11).</remarks>
@@ -140,7 +140,7 @@ public sealed class PlayField
     /// cases) — robots still tick their death timers, they just don't move,
     /// and remain killable by lasers.
     /// </summary>
-    public bool RobotsFrozen => Player.IsInStartGracePeriod || Player.LifeState == EntityLifeState.Dying;
+    public bool RobotsFrozen => Player.IsInStartGracePeriod || Player.IsDying();
 
     /// <summary>The player's score.</summary>
     public ScoreBoard Score { get; }
@@ -387,7 +387,7 @@ public sealed class PlayField
     /// </summary>
     internal void UpdateEntity(IEntity entity, GameTime gameTime)
     {
-        if (entity.LifeState != EntityLifeState.Dead && !IsMaterialising(entity))
+        if (!entity.IsDead() && !IsMaterialising(entity))
         {
             entity.Update(gameTime, this);
         }
@@ -437,14 +437,14 @@ public sealed class PlayField
     /// <summary>Runs every collision rule in the arcade's order, then freezes the game for a moment if the player has just been killed.</summary>
     private void ResolveCollisions()
     {
-        bool playerWasAlive = Player.LifeState == EntityLifeState.Alive;
+        bool playerWasAlive = Player.IsAlive();
 
         foreach (ICollisionRule rule in CollisionRules.InArcadeOrder)
         {
             rule.Resolve(this);
         }
 
-        if (playerWasAlive && Player.LifeState == EntityLifeState.Dying)
+        if (playerWasAlive && Player.IsDying())
         {
             _hitStopTicksRemaining = PlayerTuning.HitStopTicks;
             // R5 $30EF (KILL_PLAYER): the death sound ($26D9, p238).

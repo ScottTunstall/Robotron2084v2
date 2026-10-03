@@ -48,7 +48,7 @@ public sealed class GruntSpeedProgression
     /// <param name="grunts">The field's grunts.</param>
     public void SpeedUp(IEnumerable<Grunt> grunts)
     {
-        foreach (Grunt grunt in grunts.Where(grunt => grunt.LifeState == EntityLifeState.Alive))
+        foreach (Grunt grunt in grunts.Where(grunt => grunt.IsAlive()))
         {
             grunt.SpeedUp(Floor);
         }
@@ -69,13 +69,13 @@ public sealed class GruntSpeedProgression
 
         _updateTimer = ArcadeClock.ToPortTicks(UpdateIntervalRomFrames);
 
-        if (grunts.Count(grunt => grunt.LifeState != EntityLifeState.Dead) < MinimumGruntsToProgress)
+        if (grunts.Count(grunt => !grunt.IsDead()) < MinimumGruntsToProgress)
         {
             return;
         }
 
         Floor = Math.Max(LowestFloor, Floor - _floorStep);
-        foreach (Grunt grunt in grunts.Where(grunt => grunt.LifeState == EntityLifeState.Alive))
+        foreach (Grunt grunt in grunts.Where(grunt => grunt.IsAlive()))
         {
             grunt.WaveSpeedTick(Floor, LimitStepPerFloorStep * _floorStep);
         }

@@ -142,7 +142,7 @@ internal sealed class FieldEntities
         IEnumerable<IEntity> living = RobotKinds.All
             .Where(kind => kind.IsChasedByDemoPlayer)
             .SelectMany(kind => GetList(kind.Kind).Entities)
-            .Where(entity => entity.LifeState == EntityLifeState.Alive);
+            .Where(entity => entity.IsAlive());
 
         IntVector2? nearest = null;
         int nearestDistance = int.MaxValue;

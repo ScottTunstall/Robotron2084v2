@@ -59,7 +59,7 @@ public sealed class WaveMaterialisation
     private void RetireConverged()
     {
         List<IEntity> converged = [.. _assembling
-            .Where(pair => pair.Value is { LifeState: not EntityLifeState.Alive })
+            .Where(pair => pair.Value is { } effect && !effect.IsAlive())
             .Select(pair => pair.Key)];
 
         foreach (IEntity robot in converged)
