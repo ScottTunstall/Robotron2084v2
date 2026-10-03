@@ -49,7 +49,7 @@ public sealed class QuarkTankBehaviourTests
         for (int tick = 0; tick < 400; tick++)
         {
             field.Update(Frame());
-            if (quark.LifeState != EntityLifeState.Alive)
+            if (!quark.IsAlive())
             {
                 break;
             }

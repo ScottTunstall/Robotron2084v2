@@ -83,7 +83,7 @@ public sealed class SpheroidAnimationTests
             int changes = 0;
             var seen = new HashSet<int>();
 
-            for (int tick = 1; tick <= 600 && spheroid.LifeState != EntityLifeState.Dead; tick++)
+            for (int tick = 1; tick <= 600 && !spheroid.IsDead(); tick++)
             {
                 spheroid.Update(Frame(), field);
 

@@ -49,7 +49,7 @@ public sealed class SparkTests
         for (int tick = 1; tick <= 250; tick++)
         {
             field.Update(Frame());
-            if (spark.LifeState == EntityLifeState.Dead)
+            if (spark.IsDead())
             {
                 break;
             }
@@ -79,7 +79,7 @@ public sealed class SparkTests
             for (int tick = 1; tick <= 400; tick++)
             {
                 field.Update(Frame());
-                if (spark.LifeState == EntityLifeState.Dead)
+                if (spark.IsDead())
                 {
                     diedAt = tick;
                     break;

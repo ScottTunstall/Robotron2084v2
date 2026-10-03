@@ -101,7 +101,7 @@ public sealed class SpheroidEscapeTests
                 return null; // this seed escaped leftwards
             }
 
-            if (spheroid.LifeState == EntityLifeState.Dead)
+            if (spheroid.IsDead())
             {
                 return (lastWrapBeatX, spheroid.Position.X);
             }

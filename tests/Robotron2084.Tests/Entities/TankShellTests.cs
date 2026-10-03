@@ -52,7 +52,7 @@ public sealed class TankShellTests
         var shell = new TankShell(TestSprites.Shared, tank, player, ShellSpeed, bounds, new ScriptedRandom(AimedRoll, NoMiss, NoMiss, 0));
 
         int ticks = 0;
-        while (shell.LifeState == EntityLifeState.Alive && ticks < 1000)
+        while (shell.IsAlive() && ticks < 1000)
         {
             shell.Update(new GameTime(), field);
             ticks++;
@@ -112,7 +112,7 @@ public sealed class TankShellTests
 
         int bounces = 0;
         bool lastTickBounced = false;
-        for (int tick = 0; tick < 200 && shell.LifeState == EntityLifeState.Alive; tick++)
+        for (int tick = 0; tick < 200 && shell.IsAlive(); tick++)
         {
             shell.Update(new GameTime(), field);
             Assert.True(shell.Bounds.Right <= bounds.Right, $"the shell crossed the right wall on tick {tick}");

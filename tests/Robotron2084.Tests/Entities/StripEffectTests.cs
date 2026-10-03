@@ -355,7 +355,7 @@ public sealed class StripEffectTests
         Assert.Equal(StripEffectKind.Appear, appear.Kind);
 
         int ticks = 0;
-        while (appear.LifeState == EntityLifeState.Alive && ticks < 60)
+        while (appear.IsAlive() && ticks < 60)
         {
             appear.Update(new GameTime(), null!);
             ticks++;

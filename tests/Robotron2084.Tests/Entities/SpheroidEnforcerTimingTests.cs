@@ -63,7 +63,7 @@ public sealed class SpheroidEnforcerTimingTests
                 field.Update(Frame());
             }
 
-            for (int tick = 0; tick < 2000 && spheroid.LifeState != EntityLifeState.Dead; tick++)
+            for (int tick = 0; tick < 2000 && !spheroid.IsDead(); tick++)
             {
                 spheroid.Update(Frame(), field);
             }
@@ -182,7 +182,7 @@ public sealed class SpheroidEnforcerTimingTests
             enforcer.Update(Frame(), field);
             foreach (Spark spark in field.Entities.Sparks)
             {
-                if (seen.Add(spark) && spark.LifeState == EntityLifeState.Alive && fireTicks.Count < 10)
+                if (seen.Add(spark) && spark.IsAlive() && fireTicks.Count < 10)
                 {
                     fireTicks.Add(tick);
                 }

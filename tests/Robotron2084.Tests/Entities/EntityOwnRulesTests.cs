@@ -103,4 +103,23 @@ public sealed class EntityOwnRulesTests
         Assert.Equal(ScreenSize.ToPortPixelsFromColumns(3) + ScreenSize.ToPortPixels(5), from.GetManhattanDistance(to));
         Assert.Equal(3 + 5, ScreenSize.ToColumnAndRowDistance(from, to));
     }
+
+    [Fact]
+    public void TheLifeQuestions_AnswerForAnyEntity_FromItsLifeState()
+    {
+        var electrode = new Electrode(TestSprites.Shared, new IntVector2(10, 10));
+        Assert.True(electrode.IsAlive());
+        Assert.False(electrode.IsDying());
+        Assert.False(electrode.IsDead());
+
+        electrode.Kill();
+        Assert.False(electrode.IsAlive());
+        Assert.True(electrode.IsDying());
+        Assert.False(electrode.IsDead());
+
+        var grunt = new Grunt(TestSprites.Shared, new IntVector2(50, 50));
+        grunt.Kill();
+        Assert.True(grunt.IsDead());
+        Assert.False(grunt.IsAlive());
+    }
 }
