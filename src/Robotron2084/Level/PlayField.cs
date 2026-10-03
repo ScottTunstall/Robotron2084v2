@@ -17,15 +17,17 @@ namespace Robotron2084.Level;
 /// <remarks>
 /// The field coordinates; the rules live elsewhere. What is on the field is in <see cref="FieldEntities"/>, how each
 /// kind is put there at the start of a wave is its <see cref="IWaveSpawner"/>, what happens when two things touch is
-/// an <see cref="ICollisionRule"/>, and whether they are touching is the <see cref="IContactTest"/> the field is given.
+/// an <see cref="ICollisionRule"/> that only reports what touched what, and the field responds to each report
+/// (<see cref="CollisionResponder"/>). Whether two things are touching is the <see cref="IContactTest"/> the field is given.
 /// Each tick, in order: the freeze after the player's death, the grunts' speed-up, the wave-start appear, the wall,
 /// the player and the lasers, every list of entities, the collision rules, then the dead are taken out.
 /// </remarks>
-public sealed class PlayField
+public sealed class PlayField : ICollisionScene
 {
     private readonly GruntSpeedProgression _gruntSpeed;
     private readonly LaserWallFlares _laserWallFlares = new();
     private readonly WaveMaterialisation _materialisation = new();
+    private readonly CollisionResponder _collisionResponder;
     private readonly IContactTest _contactTest;
     private readonly MidWaveSpawner _midWave;
     private readonly GamePalette? _palette;
@@ -75,6 +77,7 @@ public sealed class PlayField
         _palette = palette;
         _contactTest = contactTest ?? new BoxContactTest();
         _midWave = new MidWaveSpawner(this, Entities, random);
+        _collisionResponder = new CollisionResponder(this);
         Wall = new PlayfieldWall(innerBounds, cycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
@@ -183,7 +186,7 @@ public sealed class PlayField
 
     /// <summary>Says whether the player is touching an entity.</summary>
     /// <param name="entity">The entity to test.</param>
-    internal bool TouchesPlayer(IEntity entity) => Touches(Player, entity);
+    public bool TouchesPlayer(IEntity entity) => Touches(Player, entity);
 
     /// <summary>Fires one of the player's lasers, if one of their three slots is free.</summary>
     /// <param name="position">Where the laser starts.</param>
@@ -192,7 +195,7 @@ public sealed class PlayField
     internal bool TryFirePlayerLaser(IntVector2 position, Direction8 direction) => PlayerLasers.TryFire(position, direction, out _);
 
     /// <summary>Lists the player's lasers that are in flight.</summary>
-    internal IEnumerable<PlayerLaser> GetActiveLasers() => PlayerLasers.GetActiveLasers();
+    public IEnumerable<PlayerLaser> GetActiveLasers() => PlayerLasers.GetActiveLasers();
 
     /// <summary>Lists the electrodes.</summary>
     internal IReadOnlyList<Electrode> GetElectrodes() => Entities.Electrodes;
@@ -455,7 +458,10 @@ public sealed class PlayField
 
         foreach (ICollisionRule rule in CollisionRules.InArcadeOrder)
         {
-            rule.Resolve(this, Entities);
+            foreach (CollisionResult result in rule.Detect(this, Entities))
+            {
+                _collisionResponder.Respond(result);
+            }
         }
 
         if (playerWasAlive && Player.IsDying())
@@ -485,5 +491,5 @@ public sealed class PlayField
     /// <summary>Says whether two entities are touching, by the field's contact test.</summary>
     /// <param name="a">One entity.</param>
     /// <param name="b">The other entity.</param>
-    internal bool Touches(IEntity a, IEntity b) => _contactTest.Touches(a, b);
+    public bool Touches(IEntity a, IEntity b) => _contactTest.Touches(a, b);
 }
