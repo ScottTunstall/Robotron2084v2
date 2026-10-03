@@ -163,7 +163,7 @@ uses them.
 
 **NUM-3. The column is never written as `2`.** Use `ScreenSize.Columns(n)` / `ArcadePixelsPerColumn`.
 
-**NUM-4. Unit conversions go through named helpers** (`ScreenSize.ToPortPixels`, `ScreenSize.ToPortPixelsFromArcade`,
+**NUM-4. Unit conversions go through named helpers** (`ScreenSize.ToPortPixels`,
 `ScreenSize.ToPortPixelsFromColumns`, `ArcadeClock.ToClockUnits`), never through inline arithmetic like `* ScreenSize.SpecScale`,
 `>> 8` or `* 256`. Name the subpixel scale once (`SubpixelsPerPixel`).
 
