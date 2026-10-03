@@ -10543,3 +10543,52 @@ of the ROM's five stops (0, 20000, 25000, 30000, 50000) — the arcade's factory
 69 — 685 in all, 0 failed, 0 skipped. The page was also driven live (F5, the arrows, Enter, F10) and
 its rows, its cursor and its saved file checked.
 
+## §132 — SIDEWAYS DISTANCES ARE COLUMNS: THE BRAIN, QUARK AND SPARK; THE GRUNT'S STEP; THE TANK SHELL'S REAL AIM (author, 2026-10-03)
+
+The author asked for the `Brain` comments to be checked against the source, and then for the same
+check on the other entities. The comments were wrong in three ways (disassembly "addresses" that were
+listing line numbers, field comments one field out of place, "lift then drop" for what is a move down
+then up), and checking them showed that several sideways distances had been written as arcade pixels
+where the ROM counts **columns** (two arcade pixels; `OBJX` is a byte, and 304 pixels do not fit one).
+The disassembly's own comment at `$1CDC` says `ADDA #8` is "16 pixels".
+
+**Brain (supersedes the "open question" in §125 and the status note).** The dead zone (2 columns), the
+step (1 column sideways, 1 row up or down), the catch reach (3 columns by 3 rows), the missile start
+(3 columns, 4 rows), the victim's gap (1 column), the right-hand offset (8 columns) and the right-wall
+margin (4 columns) are all now in columns on X. Both halves of the dead-zone and reach pair moved
+together, as §125 required. The reprogramming shake is measured from the human's resting row, as `BMUTL`
+does (it writes only `OBJX`/`OBJY`, never `OX16`/`OY16`). **Kept as a deliberate deviation:** the ROM undoes
+both axes when `CKLIM` fails, which pins a brain against a wall; the port checks each axis alone (the
+author's earlier decision, recorded in `Brain_DoesNotDeadlockOnAWall_SlidesAlongItInstead`).
+
+**Quark.** `SQVEL`'s `XMIN+5` and `XMAX-12` are columns, so the sideways wall margins are 10 and 24
+arcade pixels, not 5 and 12. The up-and-down margins and the flee exits were already rows.
+
+**Spark.** `ENFSHT` jitters and accelerates in columns sideways and rows up and down. The port used columns
+for both, so the up-and-down jitter and acceleration were twice the ROM's.
+
+**Grunt (corrects the "dead-zone 2 arcade px" in the §29 note).** `MOVE_GRUNT` ($39E6) has no sideways dead
+zone: it steps 2 columns every time, to the right when the columns match. Up and down it steps 4 rows,
+and only a gap of exactly one row is ignored (`CMPB #$FE` and `CMPB #$02`); a grunt level with the player
+steps down. A grunt level with the player therefore bobs, as in the arcade. A step that would leave the
+playfield is skipped, not clamped.
+
+**Tank shell (implements the "PENDING" shell aim recorded earlier in this file, and corrects §36.3's "x2 sideways / x8 up and
+down": both axes are x8).** The shell's start is a column right of the tank. `TNKFIR` rolls 0 to 255: from
+`$80` up (half the time) it is a **rebound shot** aimed at the wall on the player's side of the field
+(seven times in eight; the far wall otherwise), with the other axis aimed at the midpoint between shell and
+player; the speed is then doubled until it reaches the floor `((setting x $40) >> 8) x 4` sideways or twice
+that up and down. Otherwise it is an **aimed shot**: the gap to the player (plus a miss of -16 to 15, none
+sideways when the player is within 10 columns of the left wall) times the wave's `SHLSPD`, top byte, times 8
+(a gap to the left or above becomes one less than minus that). A shell takes a turn every 2 ROM frames
+and the shared mover moves it every frame; a turn that bounces does not count down its life, and the life is
+48 to 79 **turns** (96 to 158 ROM frames), not ROM frames as the port had it. The wave table already carried
+`SHLSPD` (and the difficulty tables adjust it); nothing read it until now. A shell held against a wall with a
+speed under one pixel a frame can stop for good, as in the ROM.
+
+**Not changed, noted.** The Human step (documented as the author's one deliberate override), the Player's
+speed (the spec's, not the ROM's) and the Enforcer were only lightly checked.
+
+**Method.** Every changed constant now cites the original label and instruction and the disassembly address
+in its `<remarks>` (coding-standards CMT-11, CMT-14), and a test pins each change (one test fails on the old
+code for the quark margins, the spark ranges, the brain's reach and the grunt's step).
