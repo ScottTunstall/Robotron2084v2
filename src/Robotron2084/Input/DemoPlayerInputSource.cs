@@ -49,13 +49,13 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
 
     public PlayerInputState Poll()
     {
-        if (_field is not { } field || !field.Player.IsAlive())
+        if (_field is not { } field || !field.IsPlayerAlive())
         {
             return new PlayerInputState(IntVector2.Zero, false);
         }
 
         IntVector2 position = field.Player.Position;
-        IntVector2? nearest = field.Entities.GetNearestLivingRobotPosition(position);
+        IntVector2? nearest = field.GetNearestLivingRobotPosition(position);
         IntVector2 move = HoldDirection(ChooseDirection(field, position, nearest));
 
         if (move != IntVector2.Zero && _random.Next(AttractTuning.DemoStutterChanceDenominator) == 0)
