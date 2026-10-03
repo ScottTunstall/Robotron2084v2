@@ -4,12 +4,13 @@
 The sheet is a blown-up picture of the robot: every sprite pixel is an 8 x 8 block of the picture, and the frames sit in
 cells on a dark red background. It holds:
 
-  * a block of 18 cells in 3 rows of 6 (the walking frames). Two cells in the middle row are empty. The 16 frames are
-    numbered in reading order: BerzerkRobot_Walk_1 .. BerzerkRobot_Walk_16;
+  * a block of 18 cells in 3 rows of 6. The first row is the robot standing still, a cycle of six frames:
+    BerzerkRobot_Idle_1 .. BerzerkRobot_Idle_6. The other two rows are the walking frames, with two empty cells in the middle row.
+    The ten frames are numbered in reading order: BerzerkRobot_Walk_1 .. BerzerkRobot_Walk_10;
   * a block of 4 cells in 2 x 2: the robot standing (BerzerkRobot_Stand) and then the three stages of it being
     destroyed (BerzerkRobot_Explode_1 .. 3), read left to right, top to bottom.
 
-Every walking frame is 8 x 12 pixels with the head on the top row, so a walk keeps the head still (the shorter frames
+Every idle and walking frame is 8 x 12 pixels with the head on the top row, so a walk keeps the head still (the shorter frames
 get an empty bottom row). The four frames of the other block share one canvas, so they line up when shown one after another.
 Each pixel is drawn in the sheet's own red; everything else is transparent.
 
@@ -71,14 +72,18 @@ def main() -> int:
     sheet = Image.open(SHEET).convert("RGB")
     assert sheet.getpixel((150, 150)) == BORDER, "the sheet's layout has changed"
 
-    number = 0
-    for top, bottom in WALK_ROWS:
-        for left in WALK_COLUMNS:
+    walk_number = 0
+    for row_number, (top, bottom) in enumerate(WALK_ROWS):
+        for column_number, left in enumerate(WALK_COLUMNS):
             rows = read_cell(sheet, left, top, WALK_COLUMN_WIDTH, bottom - top + 1)
             if not any(any(row) for row in rows):
                 continue
-            number += 1
-            write_png(f"BerzerkRobot_Walk_{number}", rows, WALK_COLUMN_WIDTH // BLOCK, WALK_FRAME_ROWS)
+            if row_number == 0:
+                name = f"BerzerkRobot_Idle_{column_number + 1}"
+            else:
+                walk_number += 1
+                name = f"BerzerkRobot_Walk_{walk_number}"
+            write_png(name, rows, WALK_COLUMN_WIDTH // BLOCK, WALK_FRAME_ROWS)
 
     cells = [read_cell(sheet, *cell) for cell in OTHER_CELLS]
     filled = [(x, y) for rows in cells for y, row in enumerate(rows) for x, on in enumerate(row) if on]
