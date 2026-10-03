@@ -58,9 +58,9 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _position = position;
         _random = random;
 
-        // Aim jitter, -16..+15 columns; suppressed on X when the player hugs the left wall.
-        int jitterX = _random.Next(-SparkTuning.SparkJitterColumns, SparkTuning.SparkJitterColumns);
-        int jitterY = _random.Next(-SparkTuning.SparkJitterColumns, SparkTuning.SparkJitterColumns);
+        // Aim jitter, -16..+15 columns sideways and rows up and down; none sideways when the player hugs the left wall.
+        int jitterX = _random.Next(-SparkTuning.SparkJitterRange, SparkTuning.SparkJitterRange);
+        int jitterY = _random.Next(-SparkTuning.SparkJitterRange, SparkTuning.SparkJitterRange);
         if (playfieldBounds is { } bounds &&
             playerPosition.X < bounds.X + ScreenSize.ToPortPixelsFromColumns(SparkTuning.SparkLeftWallJitterColumns))
         {
@@ -68,16 +68,18 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         }
 
         int deltaX = playerPosition.X + ScreenSize.ToPortPixelsFromColumns(jitterX) - position.X;
-        int deltaY = playerPosition.Y + ScreenSize.ToPortPixelsFromColumns(jitterY) - position.Y;
+        int deltaY = playerPosition.Y + ScreenSize.ToPortPixels(jitterY) - position.Y;
 
         // 4x the aim delta, in subpixels (the mover only acts on the velocity's high byte).
         int subpixelsPerPortPxPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
         _velocitySubpixels = new IntVector2(deltaX * subpixelsPerPortPxPerMove, deltaY * subpixelsPerPortPxPerMove);
 
         // The constant per-axis acceleration: a random -16..+15, in the same subpixel units.
+        // A sideways unit of acceleration is a column's worth, an up-and-down one a row's worth.
         _accelerationSubpixels = new IntVector2(
             _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPxPerMove,
-            _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPxPerMove);
+            _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPxPerMove
+                * ScreenSize.ToPortPixels(1) / ScreenSize.ToPortPixelsFromColumns(1));
 
         // Life, in timer units: 5 per tick, 6 per arcade frame.
         _remainingLife = ArcadeClock.ToClockUnits(_random.Next(

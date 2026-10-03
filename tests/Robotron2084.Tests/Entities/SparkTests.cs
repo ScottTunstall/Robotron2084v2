@@ -197,4 +197,24 @@ public sealed class SparkTests
         Assert.InRange(expected.X, -maxAccelSubpixels, maxAccelSubpixels);
         Assert.InRange(expected.Y, -maxAccelSubpixels, maxAccelSubpixels);
     }
+
+    [Fact]
+    public void AccelerationAndAimJitter_AreInColumnsSidewaysAndRowsUpAndDown()
+    {
+        // ROM ENFSHT: OXV/OYV are in 1/256 of a column / of a row per frame, and a column is
+        // twice a row, so a sideways unit of acceleration is twice an up-and-down one.
+        int subpixelsPerPortPxPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
+        int sidewaysLimit = SparkTuning.SparkAccelRomRange * subpixelsPerPortPxPerMove;
+        int upAndDownLimit = sidewaysLimit / 2;
+        bool sidewaysUsedMoreThanTheUpAndDownRange = false;
+
+        for (int seed = 0; seed < 200; seed++)
+        {
+            var spark = new Spark(TestSprites.Shared, new IntVector2(300, 200), new IntVector2(100, 100), new Random(seed));
+            Assert.InRange(spark.AccelerationSubpixels.Y, -upAndDownLimit, upAndDownLimit);
+            sidewaysUsedMoreThanTheUpAndDownRange |= Math.Abs(spark.AccelerationSubpixels.X) > upAndDownLimit;
+        }
+
+        Assert.True(sidewaysUsedMoreThanTheUpAndDownRange);
+    }
 }
