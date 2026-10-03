@@ -63,7 +63,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// The table to draw. The score ceremony hands over the very table it has just written the
     /// session's scores into, because TODAY's list is deliberately NOT persisted (the ROM reloads it
     /// from <c>TODTAB</c> at power-up) and a reload would lose the scores just posted. Null loads it
-    /// from the store, which is what the attract cycle and the F4 key want.
+    /// from the store, which is what the attract cycle and the Insert dev key want.
     /// </param>
     public HighScoreTableState(GameServices services, IReadOnlyList<int>? postedScores = null, HighScoreTable? table = null)
     {
