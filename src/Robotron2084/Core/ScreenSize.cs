@@ -4,7 +4,7 @@ namespace Robotron2084.Core;
 /// Internal playfield geometry — the single source of truth for resolution.
 /// spec.txt's 320x200 coordinate space is widened by <see cref="SpecScale"/>
 /// for sharper rendering; every spec-pixel size, speed, and position in the
-/// codebase goes through <see cref="Scaled(int)"/> (or derives from
+/// codebase goes through <see cref="ToPortPixels(int)"/> (or derives from
 /// <see cref="Width"/>/<see cref="Height"/>) in one place, so raising the
 /// resolution is a change to the constants below and nothing else:
 /// <list type="bullet">
@@ -50,16 +50,16 @@ public static class ScreenSize
     public const int Width = SpecWidth * SpecScale;
 
     /// <summary>Arcade (ROM) pixels to port pixels on the playfield: one arcade pixel is one spec pixel.</summary>
-    public static int ArcadePixels(int arcadePixels) => Scaled(arcadePixels);
+    public static int ToPortPixelsFromArcade(int arcadePixels) => ToPortPixels(arcadePixels);
 
     /// <summary>ROM columns to port pixels: a column is two arcade pixels.</summary>
-    public static int Columns(int columns) => Scaled(columns * ArcadePixelsPerColumn);
+    public static int ToPortPixelsFromColumns(int columns) => ToPortPixels(columns * ArcadePixelsPerColumn);
 
     /// <summary>
     /// Largest integer scale at which the playfield fits in the given
     /// available area. Never downscales (minimum 1x).
     /// </summary>
-    public static int MaxIntegerScale(int availableWidth, int availableHeight)
+    public static int ComputeMaxIntegerScale(int availableWidth, int availableHeight)
     {
         if (availableWidth <= 0 || availableHeight <= 0)
         {
@@ -71,5 +71,5 @@ public static class ScreenSize
     }
 
     /// <summary>Converts a spec.txt pixel value to internal pixels.</summary>
-    public static int Scaled(int specPixels) => specPixels * SpecScale;
+    public static int ToPortPixels(int specPixels) => specPixels * SpecScale;
 }

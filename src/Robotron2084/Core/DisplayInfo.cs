@@ -14,21 +14,18 @@ public static class DisplayInfo
 
     /// <summary>The primary monitor's resolution in pixels.</summary>
     /// <remarks>Full screen sets the backbuffer to this, so the game runs at the desktop's own mode.</remarks>
-    public static Point DesktopResolution =>
+    public static Point GetDesktopResolution() =>
         new(Math.Max(1, GetSystemMetrics(SmCxScreen)), Math.Max(1, GetSystemMetrics(SmCyScreen)));
 
     /// <summary>Available desktop area (work area) as width/height in pixels.</summary>
-    public static Point WorkArea
+    public static Point GetWorkArea()
     {
-        get
+        if (SystemParametersInfo(SpiGetWorkArea, SpiGetWorkArea, out Rect workArea, 0) && workArea.Width > 0 && workArea.Height > 0)
         {
-            if (SystemParametersInfo(SpiGetWorkArea, SpiGetWorkArea, out Rect workArea, 0) && workArea.Width > 0 && workArea.Height > 0)
-            {
-                return new Point(workArea.Width, workArea.Height);
-            }
-
-            return DesktopResolution;
+            return new Point(workArea.Width, workArea.Height);
         }
+
+        return GetDesktopResolution();
     }
 
     [DllImport("user32.dll")]

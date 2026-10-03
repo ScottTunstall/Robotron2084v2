@@ -11,7 +11,7 @@ public static class Direction8Extensions
     /// Maps a delta to the compass direction of its per-axis signs;
     /// <see langword="null"/> for the zero delta.
     /// </summary>
-    public static Direction8? FromDelta(IntVector2 delta)
+    public static Direction8? CreateFromDelta(IntVector2 delta)
     {
         if (delta == IntVector2.Zero)
         {
