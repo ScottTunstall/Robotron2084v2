@@ -1,9 +1,9 @@
-using Robotron2084.Audio.Hardware;
+using Robotron2084.Audio.Synthesis;
 
 namespace Robotron2084.Audio;
 
 /// <summary>
-/// Turns the sound board's output into audio samples, by running the board for exactly as long as
+/// Turns a sound board's output into audio samples, by running the board for exactly as long as
 /// each sample lasts and averaging its output level over that time.
 /// </summary>
 /// <remarks>
@@ -25,7 +25,7 @@ public sealed class SoundBoardRenderer
     /// <summary>How long the board runs before the first sample, so its start-up settles out of earshot: a tenth of a second.</summary>
     private const int WarmUpCycles = SoundBoard.ClockHertz / 10;
 
-    private readonly SoundBoard _board;
+    private readonly ISoundBoard _board;
     private readonly double _cyclesPerSample;
     private byte _level;
     private float _previousInput;
@@ -35,7 +35,7 @@ public sealed class SoundBoardRenderer
     /// <summary>Creates a renderer for a board, and runs the board's start-up.</summary>
     /// <param name="board">The sound board.</param>
     /// <param name="sampleRate">Samples a second.</param>
-    public SoundBoardRenderer(SoundBoard board, int sampleRate)
+    public SoundBoardRenderer(ISoundBoard board, int sampleRate)
     {
         _board = board;
         _cyclesPerSample = (double)SoundBoard.ClockHertz / sampleRate;
@@ -53,7 +53,10 @@ public sealed class SoundBoardRenderer
         }
     }
 
-    /// <summary>Runs the board for one sample's worth of time and averages its output level.</summary>
+    /// <summary>
+    /// Runs the board for one sample's worth of time and averages its output level. A level holds while
+    /// the board runs towards its next change, and the new level counts from the moment it is made.
+    /// </summary>
     /// <returns>The average level, 0 to 255.</returns>
     private float AverageLevelOverOneSample()
     {
@@ -63,8 +66,8 @@ public sealed class SoundBoardRenderer
         {
             if (_unspentCycles <= 0)
             {
-                _unspentCycles += _board.RunInstruction();
                 _level = _board.OutputLevel;
+                _unspentCycles += _board.Run((int)Math.Ceiling(cyclesLeft));
             }
 
             double cycles = Math.Min(cyclesLeft, _unspentCycles);
@@ -92,7 +95,7 @@ public sealed class SoundBoardRenderer
     {
         for (int cycles = 0; cycles < WarmUpCycles;)
         {
-            cycles += _board.RunInstruction();
+            cycles += _board.Run(WarmUpCycles - cycles);
         }
 
         _level = _board.OutputLevel;

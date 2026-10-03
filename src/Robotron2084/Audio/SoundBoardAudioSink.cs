@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework.Audio;
-using Robotron2084.Audio.Hardware;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Audio;
@@ -39,7 +38,7 @@ public sealed class SoundBoardAudioSink : IAudioSink
     /// <summary>Queued ticks of sound at which a new tick is dropped, so the sound does not lag the picture.</summary>
     private const int MaximumQueuedTicks = 4;
 
-    private readonly SoundBoard _board;
+    private readonly ISoundBoard _board;
     private readonly float[] _mono = new float[SamplesPerPortTick];
     private readonly DynamicSoundEffectInstance _output;
     private readonly StereoPanner _panner = new();
@@ -49,7 +48,7 @@ public sealed class SoundBoardAudioSink : IAudioSink
     /// <summary>Starts playing a sound board through the speakers.</summary>
     /// <param name="board">The sound board.</param>
     /// <exception cref="NoAudioHardwareException">The computer has no sound output.</exception>
-    public SoundBoardAudioSink(SoundBoard board)
+    public SoundBoardAudioSink(ISoundBoard board)
     {
         _board = board;
         _renderer = new SoundBoardRenderer(board, SampleRate);

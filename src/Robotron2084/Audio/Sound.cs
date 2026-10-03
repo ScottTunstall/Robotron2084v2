@@ -13,8 +13,8 @@ namespace Robotron2084.Audio;
 /// jump vector in <c>RRF.ASM</c>).</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$D3C7</c>.</item>
 /// </list>
-/// Until <see cref="Initialize"/> runs (in the tests, or when the sound ROM is missing), asking for a
-/// sound does nothing.
+/// Until <see cref="Initialize"/> runs (in the tests, or when the computer has no sound output), asking
+/// for a sound does nothing.
 /// </remarks>
 public static class Sound
 {
