@@ -5,11 +5,11 @@ namespace Robotron2084.AttractMode;
 
 /// <summary>
 /// Maps a movie object's (animation, ROM animation frame index) to the port's texture, including
-/// the three pictures whose ROM table lists them in a different order to the
+/// the three animation frames whose ROM table lists them in a different order to the
 /// port's files (notes §96.4).
 ///
 /// The port's sprite PNGs are stored in ROM-ADDRESS order, and for most of the
-/// movie's descriptors the ROM's picture table is in that same order — so the
+/// movie's descriptors the ROM's animation frame table is in that same order — so the
 /// animation frame index is the file index. Three are not:
 /// <list type="bullet">
 /// <item><b>hulk</b> — the table at $0CF9 runs hulk1,hulk2,hulk3,hulk7,hulk8,hulk9,
@@ -17,11 +17,11 @@ namespace Robotron2084.AttractMode;
 /// and its DOWN/UP block files 4-6 (which is why the playfield's <c>Hulk</c> uses
 /// frames 6,7,8 for its right walk);</item>
 /// <item><b>enforcer</b> — the table at $18D2 starts at $1921 (the port's
-/// Enforcer_2, the first GROW picture) and ends at $18EA (Enforcer_1, the full
+/// Enforcer_2, the first GROW animation frame) and ends at $18EA (Enforcer_1, the full
 /// one the grow-up finishes on);</item>
 /// <item><b>grunt</b> — the table at $4063 lists $4073, $40B4, $4073: ROM image 2
-/// is the same picture as image 0, so the movie's <c>SETIM 2</c> draws Grunt_1
-/// (the port ships a third distinct grunt picture at $40F5, which the movie's
+/// is the same sprite as image 0, so the movie's <c>SETIM 2</c> draws Grunt_1
+/// (the port ships a third distinct grunt sprite at $40F5, which the movie's
 /// table does not use).</item>
 /// </list>
 /// </summary>
@@ -64,8 +64,8 @@ public static class MovieAnimationFrames
 
     private static Texture2D[]? Frames(SpriteSet sprites, MovieAnimation animation) => animation switch
     {
-        MovieAnimation.Mummy => sprites.MomAnimationFrames,
-        MovieAnimation.Daddy => sprites.DadAnimationFrames,
+        MovieAnimation.Mommy => sprites.MommyAnimationFrames,
+        MovieAnimation.Daddy => sprites.DaddyAnimationFrames,
         MovieAnimation.Mikey => sprites.MikeyAnimationFrames,
         MovieAnimation.Hulk => sprites.HulkAnimationFrames,
         MovieAnimation.Brain => sprites.BrainAnimationFrames,
@@ -77,7 +77,7 @@ public static class MovieAnimationFrames
         MovieAnimation.TankGrow => sprites.TankGrowAnimationFrames,
         MovieAnimation.Tank => sprites.TankAnimationFrames,
         MovieAnimation.Points => sprites.RescueScoreDisplays,
-        MovieAnimation.Posts => sprites.PostAnimationFrames,
+        MovieAnimation.Electrodes => sprites.AttractElectrodeAnimationFrames,
         _ => null,
     };
 }

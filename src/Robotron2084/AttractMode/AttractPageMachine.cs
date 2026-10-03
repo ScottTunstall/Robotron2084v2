@@ -126,7 +126,7 @@ public sealed class AttractPageMachine
         _ => null,
     };
 
-    private static string MessageText(int number)
+    private static string GetMessageText(int number)
     {
         int index = number - AttractMovieData.FirstMessageNumber;
         return index >= 0 && index < AttractMovieData.Messages.Length
@@ -247,7 +247,7 @@ public sealed class AttractPageMachine
                     Message = new MovieMessage(
                         x,
                         MessageRow,
-                        MessageText(number),
+                        GetMessageText(number),
                         TextSlot);
                     return;
                 }

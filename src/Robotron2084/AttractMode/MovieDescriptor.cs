@@ -1,7 +1,7 @@
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-/// A movie object descriptor (ROM format: FDB picture-table, FCB animation frame count,
+/// A movie object descriptor (ROM format: FDB animation frame table, FCB animation frame count,
 /// FCB 4, then for the walkers FDB walk-L/R/D/U and FDB walk-table).
 /// </summary>
 /// <param name="Animation">Which animation the object draws.</param>

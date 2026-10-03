@@ -8,7 +8,7 @@ namespace Robotron2084.AttractMode;
 /// scripting level — the one that animates every character in the storyline:
 /// the family walking on, the hero's stroll and gunfire, the grunts, the hulk's
 /// bounce, the spheroid/tank/enforcer scene, the brain's reprogramming box and
-/// the score posts.
+/// the score electrodes.
 ///
 /// It runs the ROM's own bytes (<see cref="AttractMovieData.Scripts"/>) with the
 /// ROM's own opcodes at the ROM's own frame clock: one <see cref="StepFrame"/>
@@ -27,7 +27,7 @@ public sealed class AttractObjectMachine
     /// <summary>ROM `EXPP` stores ACTHIT+6 into the explosion's centre row.</summary>
     private const int ExplosionRow = 0xA0 + 6;
 
-    /// <summary>The laser bolt's picture (<c>LASPIC</c>, the 6-pixel bar) is three columns wide.</summary>
+    /// <summary>The laser bolt's sprite (<c>LASPIC</c>, the 6-pixel bar) is three columns wide.</summary>
     private const int LaserWidthColumns = 3;
 
     /// <summary>RRF.ASM <c>XMAX</c>: the rightmost column an object's right edge may reach.</summary>
@@ -289,7 +289,7 @@ public sealed class AttractObjectMachine
             }
         }
 
-        /// <summary>Family 10-13: how long the object lives and how its picture advances.</summary>
+        /// <summary>Family 10-13: how long the object lives and how its animation frame advances.</summary>
         private bool ReadLifetimeOp(AttractObjectMachine machine, int opcode)
         {
             switch (opcode)
@@ -450,7 +450,7 @@ public sealed class AttractObjectMachine
                     Wait = 0;
                     return false;
 
-                case 27: // PDEAD — the score posts' retirement (notes §95.10).
+                case 27: // PDEAD — the score electrodes' retirement (notes §95.10).
                     Object.OnList = false;
                     Alive = false;
                     return false;
@@ -617,7 +617,7 @@ public sealed class AttractObjectMachine
             }
         }
 
-        /// <summary>BR* — the descriptor's own step size, cycling the 4-picture ANATAB.</summary>
+        /// <summary>BR* — the descriptor's own step size, cycling the 4-entry ANATAB.</summary>
         private void BrainStep(MovieDescriptor descriptor)
         {
             WalkFacing facing = (WalkFacing)WalkIndex;

@@ -6,7 +6,7 @@ namespace Robotron2084.AttractMode;
 /// HUMANA / HLKANA, whose entries are (image x4, dx pixels, dy pixels) and whose
 /// dx is HALVED into columns by <c>DYDX</c>. <see cref="BrainStep"/> runs the
 /// BR* walker: a fixed step size and nap out of the descriptor itself, cycling
-/// the four-entry picture table ANATAB.
+/// the four-entry animation frame table ANATAB.
 /// </summary>
 public enum MovieWalk
 {

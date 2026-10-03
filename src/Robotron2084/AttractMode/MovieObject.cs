@@ -3,7 +3,7 @@ using Robotron2084.Core;
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-/// One object in the attract movie (notes §95.3): a picture, a position, a
+/// One object in the attract movie (notes §95.3): a sprite, a position, a
 /// velocity, and (for the walking characters) a walker state. The movie's
 /// objects are the ROM's `OBJ` blocks — plain data; the process that drives one
 /// lives in <see cref="AttractObjectMachine"/>.
@@ -25,7 +25,7 @@ public sealed record MovieObject
         Y = y;
     }
 
-    /// <summary>The picture set. Null for the movie's laser bolts (see <see cref="IsLaser"/>).</summary>
+    /// <summary>The sprite set. Null for the movie's laser bolts (see <see cref="IsLaser"/>).</summary>
     public MovieDescriptor? Descriptor { get; set; }
 
     /// <summary>A left/right laser bolt fired by LFIRE/RFIRE — drawn as the laser, killed on its timer.</summary>

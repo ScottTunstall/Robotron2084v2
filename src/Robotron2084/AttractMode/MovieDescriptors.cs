@@ -2,7 +2,7 @@ namespace Robotron2084.AttractMode;
 
 /// <summary>
 /// The ROM's movie descriptors, keyed by the address the scripts pass to SETOB
-/// (notes §95.6). Every entry was read out of the R5 image: the picture-table
+/// (notes §95.6). Every entry was read out of the R5 image: the sprite-table
 /// pointers, the animation frame counts and the walk tables.
 /// </summary>
 public static class MovieDescriptors
@@ -17,7 +17,7 @@ public static class MovieDescriptors
     public const int Mikey = 0x7E61;
     public const int Mommy = 0x7E41;
     public const int Points = 0x7EB5;
-    public const int Posts = 0x7E8F;
+    public const int Electrodes = 0x7E8F;
     public const int Skull = 0x7EB9;
     public const int Square = 0x7EA5;
     public const int Tank = 0x7EB1;
@@ -27,13 +27,13 @@ public static class MovieDescriptors
     /// <summary>Every descriptor the movie's scripts reference, by ROM address.</summary>
     public static readonly (int Address, MovieDescriptor Descriptor)[] All =
     [
-        (Mommy, new MovieDescriptor(MovieAnimation.Mummy, 12, MovieWalk.Human)),
+        (Mommy, new MovieDescriptor(MovieAnimation.Mommy, 12, MovieWalk.Human)),
         (Daddy, new MovieDescriptor(MovieAnimation.Daddy, 12, MovieWalk.Human)),
         (Mikey, new MovieDescriptor(MovieAnimation.Mikey, 12, MovieWalk.Human)),
         (Hulk, new MovieDescriptor(MovieAnimation.Hulk, 12, MovieWalk.Hulk)),
         (Brain, new MovieDescriptor(MovieAnimation.Brain, 12, MovieWalk.BrainStep, 2, 8)),
         (Grunt, new MovieDescriptor(MovieAnimation.Grunt, 3)),
-        (Posts, new MovieDescriptor(MovieAnimation.Posts, 36)),
+        (Electrodes, new MovieDescriptor(MovieAnimation.Electrodes, 36)),
         (Enforcer, new MovieDescriptor(MovieAnimation.Enforcer, 6)),
         (You, new MovieDescriptor(MovieAnimation.Player, 12, MovieWalk.BrainStep, 1, 2)),
         (Square, new MovieDescriptor(MovieAnimation.Quark, 9)),
