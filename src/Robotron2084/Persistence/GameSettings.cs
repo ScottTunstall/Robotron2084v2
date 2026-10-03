@@ -56,10 +56,11 @@ public sealed class GameSettings
     public const int FactoryDifficulty = RecommendedDifficulty;
 
     /// <summary>
-    /// Factory ATTRACT MODE SOUND: on — the arcade's attract demo is a real game and makes its real
-    /// noises, so the port does too unless the operator turns it off.
+    /// Factory ATTRACT MODE SOUND: off. The arcade's attract demo is a real game and makes its real
+    /// noises, but the port's demo plays on a machine someone is usually sitting at, so it is silent
+    /// until the operator turns it on (notes §140). The setting is on the GAME ADJUSTMENT page.
     /// </summary>
-    public const bool FactoryAttractModeSound = true;
+    public const bool FactoryAttractModeSound = false;
 
     /// <summary>
     /// The score that earns a spare man, in thousands — 0 turns extra men off. One of
