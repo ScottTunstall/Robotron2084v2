@@ -274,10 +274,9 @@ public sealed class Tank : IExplodable, IRemovable
             return;
         }
 
-        Direction8? towardPlayer = Direction8Extensions.CreateFromDelta(field.Player.Position - _position);
-        if (towardPlayer is { } d && field.CanFireShell())
+        if (field.CanFireShell())
         {
-            field.SpawnTankShell(_position, d.ToIntVector());
+            field.SpawnTankShell(_position);
         }
 
         // Later shots reload to exactly this wave's interval — no random padding.

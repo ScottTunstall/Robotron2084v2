@@ -427,10 +427,10 @@ public sealed class PlayField
         return tank;
     }
 
-    public void SpawnTankShell(IntVector2 origin, IntVector2 towardPlayerDirection)
+    public void SpawnTankShell(IntVector2 origin)
     {
         _shellsFiredThisWave++; // ROM INC on fire; only a laser kill decrements (fizzle bug)
-        var shell = new TankShell(Sprites, origin, towardPlayerDirection, _random);
+        var shell = new TankShell(Sprites, origin, Player.Position, Parameters.ShellSpeed, Wall.PlayfieldBounds, _random);
         _tankShells.Add(shell);
         PlaySoundFrom(SoundTables.TankFire, shell.Bounds);
     }
