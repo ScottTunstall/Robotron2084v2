@@ -76,6 +76,7 @@ public sealed class SpriteSet
     {
         PlayerAnimationFrames = source.LoadAll(NumberedNames("Sprites/Player", PlayerAnimationFrameCount));
         GruntAnimationFrames = source.LoadAll(NumberedNames("Sprites/Grunt", GruntAnimationFrameCount));
+        GorfAnimationFrames = source.LoadAll(NumberedNames("Sprites/Gorf", 2));
         BerzerkRobotIdleFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_Idle", 6));
         BerzerkRobotWalkRightFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_WalkRight", 2));
         BerzerkRobotWalkLeftFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_WalkLeft", 2));
@@ -188,6 +189,9 @@ public sealed class SpriteSet
     public Texture2D[] FontSmall { get; }
 
     public Texture2D[] GruntAnimationFrames { get; }
+
+    /// <summary>Gorf's two animation frames, which it flaps between (notes §138.2).</summary>
+    public Texture2D[] GorfAnimationFrames { get; }
 
     /// <summary>The BerzerkRobot standing still: six frames that cycle (notes §138).</summary>
     public Texture2D[] BerzerkRobotIdleFrames { get; }

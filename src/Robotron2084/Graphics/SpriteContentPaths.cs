@@ -175,6 +175,8 @@ public static class SpriteContentPaths
         "Sprites/Font_S_Y",
         "Sprites/Font_S_Z",
         "Sprites/Font_S_cursorright",
+        "Sprites/Gorf_1",
+        "Sprites/Gorf_2",
         "Sprites/Grunt_1",
         "Sprites/Grunt_2",
         "Sprites/Grunt_3",
