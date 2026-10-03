@@ -18,6 +18,8 @@ public sealed class WaveMaterialisation
 
     private readonly Dictionary<IEntity, StripEffect?> _assembling = [];
     private readonly Queue<IEntity> _pending = new();
+    private readonly List<IEntity> _transportQueue = [];
+    private readonly List<IEntity> _transported = [];
     private readonly RobotTransporter? _transporter;
     private int _sequenceNumber;
     private bool _transportBegun;
@@ -29,7 +31,7 @@ public sealed class WaveMaterialisation
     public WaveMaterialisation(Random random, bool beamIn) => _transporter = beamIn ? new RobotTransporter(random) : null;
 
     /// <summary>Robots still waiting for their appear record.</summary>
-    public int PendingCount => _pending.Count;
+    public int PendingCount => _pending.Count + _transportQueue.Count;
 
     /// <summary>
     /// One frame of the sequence: creates ONE appear record for the next queued robot (its strips converge onto
@@ -43,7 +45,6 @@ public sealed class WaveMaterialisation
         if (_transporter is not null)
         {
             AdvanceTransport(_transporter);
-            return;
         }
 
         if (_pending.Count > 0 && explosions.Count < StripExplosionTuning.MaxConcurrent)
@@ -79,16 +80,23 @@ public sealed class WaveMaterialisation
     /// <param name="robot">The robot to bring in.</param>
     public void Queue(IEntity robot)
     {
-        _pending.Enqueue(robot);
         _assembling[robot] = null;
+        if (_transporter is not null && !_transportBegun)
+        {
+            _transportQueue.Add(robot);
+            return;
+        }
+
+        _pending.Enqueue(robot);
     }
 
     private void AdvanceTransport(RobotTransporter transporter)
     {
-        if (!_transportBegun && _pending.Count > 0)
+        if (!_transportBegun && _transportQueue.Count > 0)
         {
-            transporter.Begin([.. _pending]);
-            _pending.Clear();
+            transporter.Begin(_transportQueue);
+            _transported.AddRange(_transportQueue);
+            _transportQueue.Clear();
             _transportBegun = true;
         }
 
@@ -100,7 +108,12 @@ public sealed class WaveMaterialisation
         transporter.Update();
         if (transporter.IsFinished)
         {
-            _assembling.Clear();
+            foreach (IEntity robot in _transported)
+            {
+                _assembling.Remove(robot);
+            }
+
+            _transported.Clear();
         }
     }
 

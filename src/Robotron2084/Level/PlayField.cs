@@ -272,6 +272,10 @@ public sealed class PlayField : ICollisionScene
     /// <returns>The new tank.</returns>
     public Tank SpawnTank(IntVector2 position) => _midWave.SpawnTank(position);
 
+    /// <summary>Gorf drops a grunt.</summary>
+    /// <param name="position">Where Gorf is.</param>
+    public void SpawnGrunt(IntVector2 position) => _midWave.SpawnGrunt(position);
+
     /// <summary>A tank fires a shell.</summary>
     /// <param name="origin">The tank's top-left corner.</param>
     public void SpawnTankShell(IntVector2 origin) => _midWave.SpawnTankShell(origin);
