@@ -10785,3 +10785,16 @@ the sheet's scale reproduces the sheet exactly.
 - **A change to `WaveMaterialisation`.** A robot made after a brain wave's beam-in has started used to be left waiting for ever. It now appears strip by strip like the rest. (Gorf's grunts no longer use it, but the fix stands.)
 
 Everything not stated by the author is the port's choice and is in `GorfTuning` or marked in the code.
+
+
+## §139 — EIGHT-DIGIT SCORES, BEYOND THE ARCADE (author, 2026-10-03)
+
+**Author:** *"How many digits can the score have in the original rom?"* — then — *"OK, change the code so that 8 digits can be shown. Lets go beyond!"*
+
+**The arcade.** A score is 4 packed BCD bytes (`ZP1SCR RMB 4`), which is 8 digits, and `SCOREV` adds with `DAA` and carries through all four. But the display routine masks the top byte's high digit off
+(`ANDA #$0F`), so the ten-millions digit never shows: the screen and the high score table stop at 9,999,999 (the table's entry is 7 digits, with a check digit in the top nibble, `SCRSIZ`). §38 and §58.1 recorded the mask.
+
+**The port.** `ScoreFormatter` now draws the ten-millions digit when a score has one, and clamps what it shows at 99,999,999 (`ScoreFormatter.MaxScore`). The score itself is an ordinary integer and was never limited. That
+covers the in-play HUD and both of the high score table's number printers, which share the formatter; the table's columns have room for the extra digit (it is 7 pixels wider, in columns 80 and 104 pixels apart).
+The one place the extra digit would not fit was the HUD: an 8-digit score ends at pixel 98 from its start at 42, and the first spare man starts at 92, so both players' rows of spare men moved 4 columns (8 pixels) right (`HudLayout`, columns 46 to 50 and 110 to 114).
+This is an extension of the arcade, not a correction of the port. **Not checked on screen.**
