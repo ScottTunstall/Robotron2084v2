@@ -24,6 +24,10 @@ public readonly record struct IntVector2(int X, int Y)
         return dx * dx + dy * dy;
     }
 
+    /// <summary>Works out how far apart two points are when you may only move sideways and up and down: the sideways gap plus the up-and-down gap.</summary>
+    /// <param name="other">The other point.</param>
+    public int GetManhattanDistance(IntVector2 other) => Math.Abs(X - other.X) + Math.Abs(Y - other.Y);
+
     /// <summary>Squared-distance check strictly beyond <paramref name="distance"/>.</summary>
     public bool IsFartherThan(IntVector2 b, int distance) => DistanceSquared(this, b) > (long)distance * distance;
 }

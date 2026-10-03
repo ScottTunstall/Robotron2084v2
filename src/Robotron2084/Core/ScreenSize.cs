@@ -51,6 +51,13 @@ public static class ScreenSize
     /// <summary>Width of the screen the game draws, in port pixels (SpecWidth × SpecScale).</summary>
     public const int Width = SpecWidth * SpecScale;
 
+    /// <summary>Turns the gap between two points, given in port pixels, into the ROM's own count: columns sideways plus rows up and down.</summary>
+    /// <param name="from">One point, in port pixels.</param>
+    /// <param name="to">The other point, in port pixels.</param>
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>GETHTG</c>, "SUM OF ABS VALUES DX,DY". A sideways gap counts half what the same gap in pixels would, because a column is two arcade pixels (notes §113). Disassembly: <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c> (<c>$1B95</c>).</remarks>
+    public static int ToColumnAndRowDistance(IntVector2 from, IntVector2 to) =>
+        (Math.Abs(to.X - from.X) / ToPortPixelsFromColumns(1)) + (Math.Abs(to.Y - from.Y) / ToPortPixels(1));
+
     /// <summary>ROM columns to port pixels: a column is two arcade pixels.</summary>
     public static int ToPortPixelsFromColumns(int columns) => ToPortPixels(columns * ArcadePixelsPerColumn);
 
