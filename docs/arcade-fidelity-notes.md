@@ -10807,3 +10807,11 @@ This is an extension of the arcade, not a correction of the port. **Not checked 
 It is in the settings: **ATTRACT MODE SOUND** on the GAME ADJUSTMENT page (`F5`, §131), a port-only row. It was **on** by default, which the arcade does: its demo is a real game with its real noises. The factory value is now **off**
 (`GameSettings.FactoryAttractModeSound`), so the demo machine playing itself is silent until the operator turns the row on; **RESTORE FACTORY SETTINGS** puts it back to off, and a `settings.ini` that already says `attractsound=1` keeps the sound on.
 An unreadable value in the file now falls back to off. The mute covers every sound the shell plays while an attract screen is up, including the brain wave's transporter hum. This departs from the arcade on purpose.
+
+### 140.1 The credits pane stays up longer (author, 2026-10-03)
+
+**Author:** *"I think the screen containing 'designed by vid kidz' part needs to stay on screen a few seconds longer, before going to the screen with my name on it."*
+
+INTRO2's two text panes (§107) each showed for 3 seconds. The arcade pane ("PRESENTED BY", "DESIGNED BY VID KIDZ", "FOR WILLIAMS ELECTRONICS INC.") now shows for **6 seconds**
+(`AttractTuning.TitleArcadeTextSeconds`) before the port's credit and F-key pane, which keeps its **3** (`TitlePortTextSeconds`). The title's 12-second idle timer is unchanged, so before the attract movie takes over the
+sequence is arcade pane (6 s), port pane (3 s), arcade pane (3 s more). A press of a start key interrupts it at any point. The one `TitleTextSwapSeconds` constant became these two. Not checked on screen.
