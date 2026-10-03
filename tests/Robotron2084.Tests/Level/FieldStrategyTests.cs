@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Level;
@@ -125,5 +126,49 @@ public sealed class FieldStrategyTests
         Assert.False(field.HitsWall(new Microsoft.Xna.Framework.Rectangle(field.PlayfieldBounds.X + 40, field.PlayfieldBounds.Y + 40, 4, 4)));
         Assert.True(field.IsPlayerAlive());
         Assert.False(field.IsPlayerDead());
+    }
+
+    [Fact]
+    public void ACollisionRule_OnlyReports_AndTheFieldResponds()
+    {
+        PlayField field = new PlayFieldBuilder().Build();
+        var human = new Human(TestSprites.Shared, field.Player.Position, HumanKind.Mommy, new Random(1));
+        field.Entities.Add(human);
+
+        CollisionResult[] results = new PlayerRescueRule().Detect(field, field.Entities).ToArray();
+
+        // The rule found the rescue and changed nothing.
+        PlayerRescuedHumanResult rescued = Assert.IsType<PlayerRescuedHumanResult>(Assert.Single(results));
+        Assert.Same(human, rescued.Human);
+        Assert.True(human.IsGraspable());
+        Assert.Equal(0, field.RescuesThisLife);
+
+        // The field's response is what rescues them.
+        new CollisionResponder(field).Respond(rescued);
+        Assert.False(human.IsGraspable());
+        Assert.Equal(1, field.RescuesThisLife);
+    }
+
+    [Fact]
+    public void TheLaserRule_ReportsOneHitPerLaser_AsTheFieldKillsTheLaserBetweenReports()
+    {
+        PlayField field = new PlayFieldBuilder().Build();
+        Rectangle bounds = field.PlayfieldBounds;
+        IntVector2 spot = new(bounds.X + 200, bounds.Y + 200);
+        field.Entities.Add(new Grunt(TestSprites.Shared, spot));
+        field.Entities.Add(new Grunt(TestSprites.Shared, spot));
+        field.PlayerLasers.TryFire(spot, Direction8.Up, out _);
+        var responder = new CollisionResponder(field);
+
+        int hits = 0;
+        foreach (CollisionResult result in new LaserCollisionRule().Detect(field, field.Entities))
+        {
+            hits++;
+            responder.Respond(result);
+        }
+
+        // Two grunts stand under one laser, and the laser is spent on the first.
+        Assert.Equal(1, hits);
+        Assert.Equal(1, field.Entities.Grunts.Count(grunt => grunt.IsAlive()));
     }
 }
