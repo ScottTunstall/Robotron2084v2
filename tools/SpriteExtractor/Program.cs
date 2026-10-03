@@ -8,9 +8,9 @@
 // Blit modes (arcade blitter, author 2026-09-13 round 6: "make the sprites
 // transparent where they should be"): palette slot 0 is the blitter's
 // TRANSPARENT pixel for most sprites (a 0-nibble does not draw, so sprites
-// no longer paint black boxes over the wall and each other). A few pictures
+// no longer paint black boxes over the wall and each other). A few sprites
 // are SOLID blits (every nibble draws, 0 = black) — the arcade uses this
-// for the progs' phony-burst picture (PGXPIC); those names are listed in
+// for the progs' phony-burst sprite (PGXPIC); those names are listed in
 // SolidNames and their 0-nibbles come out opaque.
 //
 // Palette: ported from the author's WmsGfxSpriteEditor
@@ -195,7 +195,7 @@ internal static class Program
             ("TankGrow_4", 0x507A, 6, 12, null),
             // Prog phony-burst (RRB10 PGXPIC/PGXD) — 6 bytes x 16 rows = 12x16,
             // SOLID blit. The pre-R5 source's bytes are NOT verbatim in the R5
-            // ROM (R5 re-drew the picture; a byte search for the PGXD pattern
+            // ROM (R5 re-drew the sprite; a byte search for the PGXD pattern
             // finds nothing), and locating R5's replacement would mean
             // reverse-engineering sprite pointers (author directive: don't).
             // We keep the original source's burst as the port's phony burst —
@@ -235,7 +235,7 @@ internal static class Program
                 // The writer reads ONE ROW per `bytesPerRow` = w bytes, so inline data must
                 // be exactly w*h bytes. A LONGER array is not caught downstream — the writer
                 // just walks a misaligned stream and emits a plausible-looking PNG of noise
-                // (which is how the prog burst picture came out wrong: the middle rows of the
+                // (which is how the prog burst sprite came out wrong: the middle rows of the
                 // ProgBurst array were transcribed as eight bytes instead of six).
                 if (inline.Length != w * h)
                 {
@@ -469,7 +469,7 @@ internal static class Program
         // Port of RobotronPaletteService.ConvertColorValue (byte = BBGGGRRR):
         // R = bits 0-2 (x2, +1 if >6), G = bits 3-5 (+1 if >6), B = bits 6-7 (x5),
         // each then x16 (clamped to 255).
-        private static Rgb FromColorValue(byte value)
+        private static Rgb CreateFromColorValue(byte value)
         {
             int red = (value & 0x07) << 1;
             if (red > 6)
@@ -699,7 +699,7 @@ internal static class Program
 
         return name switch
         {
-            _ when name.StartsWith("mommy") => "Mummy" + Suffix(name, "mommy"),
+            _ when name.StartsWith("mommy") => "Mommy" + Suffix(name, "mommy"),
             _ when name.StartsWith("daddy") => "Daddy" + Suffix(name, "daddy"),
             _ when name.StartsWith("mikey") => "Mikey" + Suffix(name, "mikey"),
             _ when name.StartsWith("hulk") => "Hulk" + Suffix(name, "hulk"),
@@ -726,9 +726,9 @@ internal static class Program
         }
     }
 
-    // Solid-blit pictures: the arcade blits these with EVERY nibble drawn
+    // Solid-blit sprites: the arcade blits these with EVERY nibble drawn
     // (slot 0 = opaque black) — currently only the prog's phony-burst
-    // picture (PGXPIC, RRB10). Everything else is transparent-blit (slot 0
+    // sprite (PGXPIC, RRB10). Everything else is transparent-blit (slot 0
     // = no pixel).
     static readonly HashSet<string> SolidNames = new() { "ProgBurst" };
 
