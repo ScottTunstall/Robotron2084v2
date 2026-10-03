@@ -1,6 +1,6 @@
 ﻿namespace Robotron2084.Tuning;
 
-/// <summary>How Gorf crosses the screen: how fast, and how long and how high its hops are. Gorf is the author's own robot, so none of these come from the arcade.</summary>
+/// <summary>How Gorf crosses the screen: how fast, and how long its hops are and how high. Gorf is the author's own robot, so none of these come from the arcade.</summary>
 public static class GorfTuning
 {
     /// <summary>How many ROM frames Gorf waits between steps.</summary>
@@ -12,8 +12,8 @@ public static class GorfTuning
     /// <summary>How many steps one hop takes, from leaving the ground to landing.</summary>
     public const int HopSteps = 16;
 
-    /// <summary>The highest a hop goes, in rows (one arcade pixel each). Each hop rolls its own height up to this.</summary>
-    public const int MaxHopRows = 16;
+    /// <summary>How high every hop goes, in rows (one arcade pixel each). They are all the same height, 16 for now.</summary>
+    public const int HopRows = 16;
 
     /// <summary>How many ROM frames each of Gorf's two animation frames shows for.</summary>
     public const int AnimationFrameRomFrames = 8;
