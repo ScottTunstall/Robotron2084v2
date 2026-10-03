@@ -36,9 +36,6 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives,
     /// <summary>Men remaining INCLUDING the life in play.</summary>
     public int Lives { get; set; } = Lives;
 
-    /// <summary>ROM <c>SAVCNT</c> — humans rescued during the current life; cleared on death.</summary>
-    public int Rescues { get; set; }
-
     /// <summary>True while this player can still be given a turn.</summary>
     public bool HasMen => Lives > 0;
 

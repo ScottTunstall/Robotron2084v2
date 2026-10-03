@@ -47,7 +47,6 @@ public sealed class PlayField : ICollisionScene
     /// <param name="random">The field's random source.</param>
     /// <param name="startingLives">How many lives the player has.</param>
     /// <param name="startingScore">The score carried in from the last wave.</param>
-    /// <param name="startingRescues">The rescues this life carried in from the last wave.</param>
     /// <param name="palette">The live palette, or null in a test.</param>
     /// <param name="playerInvincibleForTesting">True for the playtest player, who cannot be killed.</param>
     /// <param name="contactTest">How two things are tested for touching; null compares their boxes.</param>
@@ -61,7 +60,6 @@ public sealed class PlayField : ICollisionScene
             Random random,
             int startingLives,
             int startingScore = 0,
-            int startingRescues = 0,
             GamePalette? palette = null,
             bool playerInvincibleForTesting = true,
             IContactTest? contactTest = null,
@@ -70,7 +68,6 @@ public sealed class PlayField : ICollisionScene
         Sprites = sprites;
         Parameters = parameters;
         _gruntSpeed = new GruntSpeedProgression(parameters.GruntSpeedFloor);
-        RescuesThisLife = startingRescues;
         Input = input;
         Score = new ScoreBoard(startingScore, extraManEveryPoints);
         _random = random;
@@ -107,7 +104,7 @@ public sealed class PlayField : ICollisionScene
     /// <summary>The player's lasers in flight.</summary>
     public LaserSlots PlayerLasers { get; }
 
-    /// <summary>Humans rescued during this player's life. It resets when the player dies and carries across waves (ROM <c>SAVCNT</c>).</summary>
+    /// <summary>Humans rescued so far on this wave. Every wave starts at none, because the ROM clears <c>SAVCNT</c> as each wave starts (<c>PLINIT</c>).</summary>
     public int RescuesThisLife { get; private set; }
 
     /// <summary>True while the robots must stand still: in the player's start grace period and during their death animation.</summary>
@@ -188,13 +185,12 @@ public sealed class PlayField : ICollisionScene
         Player.Draw(spriteBatch);
     }
 
-    /// <summary>Copies the live score, lives and rescues to the player's session slot, every tick, so the HUD never lags (notes §97).</summary>
+    /// <summary>Copies the live score and lives to the player's session slot, every tick, so the HUD never lags (notes §97).</summary>
     /// <param name="slot">The player's session slot.</param>
     public void SyncInto(PlayerSlot slot)
     {
         slot.Score = Score.Score;
         slot.Lives = Player.Lives;
-        slot.Rescues = RescuesThisLife;
     }
 
     /// <summary>Says whether the wave is won: every enemy that can be killed is gone. Hulks and electrodes do not count.</summary>
