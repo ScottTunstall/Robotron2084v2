@@ -15,15 +15,15 @@ public sealed class InputBindingTests
     {
         var data = new TheoryData<InputBinding, string>
         {
-            { InputBinding.Key(Keys.W), "W" },
-            { InputBinding.Key(Keys.Up), "UP" },
-            { InputBinding.Key(Keys.Insert), "INSERT" },
-            { InputBinding.Key(Keys.NumPad8), "NUMPAD8" },
-            { InputBinding.Button(0, Buttons.A), "P1 A" },
-            { InputBinding.Button(1, Buttons.RightShoulder), "P2 RIGHTSHOULDER" },
-            { InputBinding.Stick(0, rightStick: false, 0, -1), "P1 LEFT STICK UP" },
-            { InputBinding.Stick(0, rightStick: true, 0, 1), "P1 RIGHT STICK DOWN" },
-            { InputBinding.Stick(1, rightStick: true, -1, -1), "P2 RIGHT STICK UP LEFT" },
+            { InputBinding.CreateKey(Keys.W), "W" },
+            { InputBinding.CreateKey(Keys.Up), "UP" },
+            { InputBinding.CreateKey(Keys.Insert), "INSERT" },
+            { InputBinding.CreateKey(Keys.NumPad8), "NUMPAD8" },
+            { InputBinding.CreateButton(0, Buttons.A), "P1 A" },
+            { InputBinding.CreateButton(1, Buttons.RightShoulder), "P2 RIGHTSHOULDER" },
+            { InputBinding.CreateStick(0, rightStick: false, 0, -1), "P1 LEFT STICK UP" },
+            { InputBinding.CreateStick(0, rightStick: true, 0, 1), "P1 RIGHT STICK DOWN" },
+            { InputBinding.CreateStick(1, rightStick: true, -1, -1), "P2 RIGHT STICK UP LEFT" },
             { InputBinding.None, "NONE" },
         };
         return data;
@@ -33,7 +33,7 @@ public sealed class InputBindingTests
     [MemberData(nameof(Bindings))]
     public void DisplayName_AndTryParse_AreTheSameLanguage(InputBinding binding, string text)
     {
-        Assert.Equal(text, binding.DisplayName);
+        Assert.Equal(text, binding.GetDisplayName());
         Assert.True(InputBinding.TryParse(text, out InputBinding parsed));
         Assert.Equal(binding, parsed);
     }
@@ -54,10 +54,10 @@ public sealed class InputBindingTests
     {
         // A file hand-written before the sticks were spelled out should still load.
         Assert.True(InputBinding.TryParse("P1-LS-UP", out InputBinding stick));
-        Assert.Equal(InputBinding.Stick(0, rightStick: false, 0, -1), stick);
+        Assert.Equal(InputBinding.CreateStick(0, rightStick: false, 0, -1), stick);
 
         Assert.True(InputBinding.TryParse("p2-rs-dn-lt", out InputBinding diagonal));
-        Assert.Equal(InputBinding.Stick(1, rightStick: true, -1, 1), diagonal);
+        Assert.Equal(InputBinding.CreateStick(1, rightStick: true, -1, 1), diagonal);
     }
 
     [Theory]
@@ -70,12 +70,12 @@ public sealed class InputBindingTests
 
     [Fact]
     public void AStickBindingNeedsADirection() =>
-        Assert.Throws<ArgumentOutOfRangeException>(() => InputBinding.Stick(0, rightStick: false, 0, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => InputBinding.CreateStick(0, rightStick: false, 0, 0));
 
     [Fact]
     public void StickDirections_AreStoredScreenSpace()
     {
-        InputBinding down = InputBinding.Stick(0, rightStick: false, 0, 1);
+        InputBinding down = InputBinding.CreateStick(0, rightStick: false, 0, 1);
 
         Assert.Equal(0, down.DirectionX);
         Assert.Equal(1, down.DirectionY); // Y down, like every other coordinate in the port
@@ -84,7 +84,7 @@ public sealed class InputBindingTests
     [Fact]
     public void AKeyIsHeld_OnlyWhenItsKeyIsDown()
     {
-        var binding = InputBinding.Key(Keys.W);
+        var binding = InputBinding.CreateKey(Keys.W);
         var empty = new GamePadState();
 
         Assert.True(binding.IsHeld(new KeyboardState(Keys.W), empty, empty));
@@ -94,7 +94,7 @@ public sealed class InputBindingTests
     [Fact]
     public void AStickBinding_RespondsToThatStickAndNoOther()
     {
-        var binding = InputBinding.Stick(0, rightStick: true, 1, 0); // pad 1 right stick, right
+        var binding = InputBinding.CreateStick(0, rightStick: true, 1, 0); // pad 1 right stick, right
         GamePadState pad = TestPads.Pad(leftStick: new Microsoft.Xna.Framework.Vector2(0f, 1f), rightStick: new Microsoft.Xna.Framework.Vector2(1f, 0f));
         var empty = new KeyboardState();
 
@@ -105,7 +105,7 @@ public sealed class InputBindingTests
     [Fact]
     public void TheLeftStickBinding_IgnoresTheRightStick()
     {
-        var binding = InputBinding.Stick(0, rightStick: false, 1, 0);
+        var binding = InputBinding.CreateStick(0, rightStick: false, 1, 0);
         GamePadState rightStickOnly = TestPads.Pad(rightStick: new Microsoft.Xna.Framework.Vector2(1f, 0f));
 
         Assert.False(binding.IsHeld(new KeyboardState(), rightStickOnly, new GamePadState()));
@@ -117,11 +117,11 @@ public sealed class InputBindingTests
         // The author: "the controls don't clearly show that W OR stick up can be used." Both
         // halves are shown with the word between them; a hyphen could not have stood in for it,
         // because the arcade's small font has no '-' and the two would have run together.
-        var both = new ActionBinding(InputBinding.Key(Keys.W), InputBinding.Stick(0, rightStick: false, 0, -1));
-        var padOnly = new ActionBinding(InputBinding.None, InputBinding.Stick(0, rightStick: false, 0, -1));
+        var both = new ActionBinding(InputBinding.CreateKey(Keys.W), InputBinding.CreateStick(0, rightStick: false, 0, -1));
+        var padOnly = new ActionBinding(InputBinding.None, InputBinding.CreateStick(0, rightStick: false, 0, -1));
 
         Assert.Equal("W OR P1 LEFT STICK UP", both.DisplayName);
-        Assert.Equal("W", new ActionBinding(InputBinding.Key(Keys.W), InputBinding.None).DisplayName);
+        Assert.Equal("W", new ActionBinding(InputBinding.CreateKey(Keys.W), InputBinding.None).DisplayName);
         Assert.Equal("P1 LEFT STICK UP", padOnly.DisplayName);
         Assert.Equal("NONE", ActionBinding.None.DisplayName); // not "-": that glyph is not in the small font
     }
