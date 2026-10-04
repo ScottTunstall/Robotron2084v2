@@ -67,11 +67,15 @@ public sealed class PlayingState : IGameState
     /// the title and from anywhere in the attract cycle; TWO PLAYER SIMULTANEOUS is
     /// carried as far as this call and the second input (the simultaneous field itself is not built yet).
     /// </summary>
+    /// <param name="controls">The keys and buttons the players have chosen.</param>
     /// <param name="settings">
     /// The GAME ADJUSTMENT settings (notes §131): TURNS PER PLAYER is the men each player starts
     /// with, EXTRA MAN EVERY the score that earns a spare man, and DIFFICULTY OF PLAY nudges every
     /// wave's tuning.
     /// </param>
+    /// <param name="mode">How many people are playing, and whether two of them take turns.</param>
+    /// <param name="sprites">The sprite set that everything is drawn with.</param>
+    /// <param name="highScores">The high score table, which is offered the scores when the game ends.</param>
     public static PlayingState CreateNewGame(ControlSettings controls, GameSettings settings, GameMode mode, SpriteSet sprites, HighScoreStore highScores)
     {
         var playerOne = new BoundPlayerInputSource(controls, 0);
