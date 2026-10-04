@@ -440,7 +440,7 @@ internal static class Program
                 Console.WriteLine($"   {y,2}  {sb}");
             }
 
-            Console.WriteLine("  legend: " + string.Join(" ", Enumerable.Range(0, 16).Select(i => $"{AsciiGlyph(i)}={Palette.Rgb[i]}")));
+            Console.WriteLine("  legend: " + string.Join(" ", Enumerable.Range(0, 16).Select(i => $"{AsciiGlyph(i)}={Palette.Colours[i]}")));
             return true;
         }
 
@@ -464,7 +464,7 @@ internal static class Program
             0xA4, 0xFF, 0xC4, 0xF4, 0xCC, 0x81, 0x45, 0x2F,
         ];
 
-        public static readonly Rgb[] Rgb = [.. ColorValues.Select(FromColorValue)];
+        public static readonly Rgb[] Colours = [.. ColorValues.Select(FromColorValue)];
 
         // Port of RobotronPaletteService.ConvertColorValue (byte = BBGGGRRR):
         // R = bits 0-2 (x2, +1 if >6), G = bits 3-5 (+1 if >6), B = bits 6-7 (x5),
@@ -787,7 +787,7 @@ internal static class Program
             {
                 byte b = data[y * bytesPerRow + (x >> 1)];
                 int nibble = (x & 1) == 0 ? (b >> 4) & 0xF : b & 0xF;
-                Rgb c = Palette.Rgb[nibble];
+                Rgb c = Palette.Colours[nibble];
                 raw[rowStart + 1 + x * 4] = c.R;
                 raw[rowStart + 2 + x * 4] = c.G;
                 raw[rowStart + 3 + x * 4] = c.B;
