@@ -360,7 +360,6 @@ caller.
 
 **TIME-1. One timer idiom.** Periodic work uses the clock-unit accumulator (add `UnitsPerPortTick`, compare to
 `Units(period)`, subtract and carry). Do not introduce `TimeSpan`/`GameTime` timers in gameplay code.
-`Player`'s start grace is the exception to fix, not to copy.
 
 **TIME-2. `ToPortTicks(romFrames)` truncates** and fires up to a tick early. Use it only for one-shot display
 durations, and say so in the caller's comment.

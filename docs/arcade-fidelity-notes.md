@@ -10843,4 +10843,38 @@ So the first check is **277 ROM frames after the game goes live**, on every wave
 
 **The port, now.** The playfield calls `GruntSpeedProgression.Update` only once the game is live (the player's start grace is over), and the class counts `FirstCheckRomFrames` = 22 + 17 x 15 = 277 on the clock-unit accumulator (TIME-1), then 225. At 22 frames it forgets any score, as `CLR SCRFLG` does. `GruntSpeedProgressTests` pins the tick before and the tick of the first check, and has a new test for the forgotten score.
 
-**Still not the arcade: when the game goes live.** The port's start grace is a flat 2 seconds of wall-clock time (`PlayerTuning.PlayerStartGraceSeconds`, from `spec.txt`; TIME-1 already calls it the exception to fix). The arcade goes live N + 53 frames after the wave is set up, and 160 on a brain wave, so wave 1 with its 15 grunts is live after 68 frames (1.36 s), not 2 s. The check now follows whatever that moment is, so it will stay right when the grace is made faithful. **Not checked on screen.**
+**When the game goes live** was itself not the arcade's at this point: The port's start grace is a flat 2 seconds of wall-clock time (`PlayerTuning.PlayerStartGraceSeconds`, from `spec.txt`; TIME-1 already calls it the exception to fix). The arcade goes live N + 53 frames after the wave is set up, and 160 on a brain wave, so wave 1 with its 15 grunts is live after 68 frames (1.36 s), not 2 s. The check now follows whatever that moment is, so it will stay right when the grace is made faithful. That is put right in §142. **Not checked on screen.**
+
+
+## §142 — THE START OF A WAVE: THE PLAYER APPEARS, THEN THE GAME GOES LIVE (author, 2026-10-04)
+
+**Author:** *"I want you to make it faithful, yes."* This replaces the flat 2-second start grace (`spec.txt`), which §62.3 and TIME-1 had both marked as something to fix.
+
+**The arcade** (§141 has the frame table; `RRG23.ASM` `PLS0A` to `PLS2`, disassembly `$2831` to `$289A`). The wave is set up with `STATUS` at `$19`, which holds three things (`RRF.ASM`, "STATUS FLAG"): bit 0 the player's motion, collision and fire; bit 3 the motion objects' velocity and the enemies; bit 4 the player's output, which is its drawing. The family is not held: `HUMAN` has no `STATUS` test (§88). Then:
+
+- **`PLS1`, frame N + 43** (44 with no robots, 150 on a brain wave): the player starts to appear (`JSR PAPPR`, and `JSR PDAPPR` 6 frames later). N is the number of robots on the robot list `RPTR`, the one `GETROB` fills: grunts (`RRP8`), hulks (`RRH11`), brains (`RRB10`) and tanks (`RRTK4`). Spheroids and quarks are on the object list and `APPEAR` never walks them.
+- **`PLS2`, 10 frames later**: `MAKP LSPROC`, `MAKP COLCHK`, `CLR STATUS`. The laser process and the collision process do not exist before this, so the player cannot fire and nothing can collide with the player; and with `STATUS` clear the player moves, is drawn, and the robots act.
+
+**The port, before.** A wall-clock 2 seconds on every wave. During it the robots were held, but the player could move and fire, was drawn from the first tick, could rescue a family member and could be killed. One robot's appear effect was started on each port tick, not each ROM frame.
+
+**The port, now.**
+
+- `WaveStartSequence` (new, `Level/`) counts ROM frames from when the field is made, on the clock-unit timer, and answers two questions: `HasPlayerAppeared()` (`PLS1`) and `IsLive()` (`PLS2`). Each sleep in the sequence is a named constant with its ROM line and address.
+- `RobotKindInfo.IsOnRobotList` marks the kinds the arcade keeps on `RPTR`, and the field counts those to get N. The port's own Berzerk robot is marked too, since it is a grunt in all but looks.
+- Until the game is live: `Player.Update` does nothing (`PLAYRV`, `BITA #$01`), `PlayField.ResolveCollisions` runs no rule (`COLCHK` is not made yet), and `RobotsFrozen` is true. The player is not drawn until `HasPlayerAppeared()`.
+- `WaveMaterialisation` starts one appear effect on each ROM frame (`NAP 1,APL`), the first at once.
+- A timer that starts when the game goes live is given only the part of that tick that is live (`GetLiveClockUnitsThisTick`), so the grunts' first speed check (§141) falls on the exact ROM frame and not the nearest tick.
+- Removed: `Player.IsInStartGracePeriod` and its `TimeSpan` timer, `PlayerTuning.PlayerStartGraceSeconds`, and `Player.ResetForLevelRestart`, which nothing called.
+
+**Tests.** `WaveStartSequenceTests` (new) pins the frames for 0, 1, 15 and 40 robots and for a brain wave, the tick before and the tick of each moment, and that before the game is live the player cannot move or fire, is not rescued into, is not killed, and the robots stand still. Tests of things that happen in play, which used to rely on the player acting during the grace, now call `PlayField.SkipWaveStart()` (a test hook), and tests that waited out the grace wait for `WaveStartTicks.UntilLive(field)`.
+
+**Still not the arcade.** Each of these was seen while reading the ROM for this and was left alone:
+
+1. **The player's appear effect.** The arcade forms the player out of strips from `PLS1` (`PAPPR`: one vertical appear for every row of the sprite and one horizontal for every column; `PDAPPR`: diagonal ones every third row, both ways) and only draws it normally from `PLS2`. The port draws the player whole from `PLS1`. Doing it properly needs the three strip engines' record pools read first (`RRX7`, `RRHX4`, `RRDX2`); §62.3 item 1 is still open for the effect itself.
+2. **Spheroids and quarks get an appear effect in the port.** The arcade's `APPEAR` does not walk them. What the arcade shows for them before the game is live was not read.
+3. **A robot's first wait after the game goes live.** `ROBOT` looks at `STATUS` every 2 frames and then sleeps 10 before its first move (`NAP 2,ROBOT`, `NAP 10,ROB0`); `HULK` looks every 8. Whether the port's first moves match was not checked.
+4. **When there is no room for another appear effect**, the port makes the robot wait a frame (§62.1 item 5). The arcade's loop looks as though it moves on to the next robot whether or not `APST` got a record (`STX PD2,U` follows either way). Not settled.
+5. **The brain wave's transporter** was not checked against the 150 frames.
+6. **A two-player game's "PLAYER n" message** (`NAP 115,PLS0B`) comes before the wave is set up and was not checked.
+
+**Not checked on screen.**
