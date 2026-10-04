@@ -16,7 +16,7 @@ internal sealed class BrainVictimReleaseRule : ICollisionRule
     {
         foreach (Brain brain in entities.Brains)
         {
-            if (!brain.IsAlive() && brain.IsReprogramming)
+            if (!brain.IsAlive() && brain.IsReprogramming())
             {
                 yield return new BrainLostVictimResult(brain);
             }
