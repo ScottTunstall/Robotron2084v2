@@ -5,7 +5,7 @@ using Robotron2084.Audio;
 namespace RobotronSoundPlayer;
 
 /// <summary>
-/// Everything the player can play: each of the game's sound tables, the transporter's warp-in, and each of
+/// Everything the player can play: each of the game's sound tables, the transporter's hum, and each of
 /// the board's sound numbers on its own. The tables are read from <see cref="SoundTables"/> itself, so a
 /// table added there shows up here without a change.
 /// </summary>
