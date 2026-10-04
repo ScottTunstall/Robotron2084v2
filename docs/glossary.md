@@ -45,7 +45,7 @@ A table's layout column ("5 per column") must be named something else, such as `
 | **death burst** | score burst | The flash and floating points left when a spheroid or quark dies. (Name still waiting for the author to decide.) |
 | **electrode** | post | The spiky obstacle you must not touch. The original game calls it a "post"; this project calls it an electrode. |
 | **reprogramming** | conversion, mutation | A brain turning a family member into a prog. |
-| **family** or **human** | civilian, humanoid | Mikey, Mommy and Daddy. Always call them by the names the attract screen uses (never Mom, Dad, Mum or Mummy). |
+| **family member** | human, civilian, humanoid | Mikey, Mommy and Daddy. The word for the group is **family member**, in names, comments and docs alike. Always call each one by the name the attract screen uses (never Mom, Dad, Mum or Mummy). The class `Human` and its `HumanKind` still carry the old word until the author decides on the rename (refactoring ledger). |
 | **laser** (the player's shot); **spark**, **shell**, **cruise missile** (enemy shots) | bullet, projectile, missile (alone) | |
 | **Shoot** | Aim, Fire (as a direction) | Using the second stick to pick which way to shoot. "Fire" means making a laser. |
 | **Kill** | Deactivate, Destroy, Remove | Taking something off the field. |

@@ -281,6 +281,23 @@ method does and gives back. A field called `_facing` that holds a `WalkSequence`
 A name that needs a comment to say what it holds is wrong; rename it (§114). The corrections made when this rule came in
 are listed in [refactoring-ledger.md](refactoring-ledger.md), which is also a list of examples.
 
+**NAM-20. A method that works on a collection names what the collection holds.** If a method loops over, counts,
+searches, filters or changes a collection of things, and the class it is on is not itself a collection, the method's
+name says what the things are. `CountRescue` does not say what was rescued; `CountRescuedFamilyMembers` does.
+`ClearText` becomes `ClearTextCells`, `AnyMenLeft` becomes `AnyPlayerSlotHasMen`, `SpeedUp(grunts)` becomes
+`SpeedUpGrunts(grunts)`, and `Begin(robots)` becomes `BeginBeamingInRobots(robots)`.
+- **A collection class is exempt**, because the class name already says what it holds: `EntityList.UpdateAll()`,
+  `FamilyList.AnyAvailable()`, `LaserSlots.GetActiveLasers()`, `HighScoreTable.CountInitials()`. A class that is only
+  a bundle of collections (`FieldEntities`) counts as one.
+- **A method that loops over its own private numbers, such as a sample buffer or a pixel array, is not covered.** The
+  rule is for collections of domain things: entities, family members, players, robots, results.
+- **The name uses the glossary's word for the thing** (NAM-9): a family member is a family member, never a human
+  (glossary: *family member*).
+- **A method that returns a collection, or takes one only to pass it on, is judged by what it does with it.** If the
+  answer needs the type to make sense, the type is in the name.
+- **Interface methods count too.** `ICollisionRule.Detect` loops over what is on the field and gives no hint what kind
+  of thing it finds; see the refactoring ledger for why it was left for the author to decide.
+
 ## 4. Numbers and units (§112, §113)
 
 **NUM-1. No magic numbers.** Every literal other than `0`, `1`, `-1` (and `2` when halving) is a named constant.

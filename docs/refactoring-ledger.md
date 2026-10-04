@@ -24,6 +24,59 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 
 ---
 
+## 2026-10-04: Collection methods that did not say what they work on (NAM-20)
+
+### What was wrong
+
+The author, looking at `PlayField.CountRescue()`: *what are we counting the rescue of?* The rule they gave: a method
+that works on a collection, on a class that is not itself a collection, must have the type of the items in its name.
+They also pointed out that **human** and **family member** were used for the same thing, and chose **family member**.
+Found by listing every method whose body loops over or searches a collection, then reading the candidates.
+
+### How it got in
+
+Not traced.
+
+### What was changed
+
+| Class | Old name | New name |
+|---|---|---|
+| `PlayField` | `CountRescue` | `CountRescuedFamilyMembers` |
+| `PlayField` | `PlayMovementSounds` (shells and grunts) | `PlayShellAndGruntMovementSounds` |
+| `WaveSurvivors` | `CountFamily` | `CountFamilyMembers` |
+| `GameSession` | `AnyMenLeft` | `AnyPlayerSlotHasMen` |
+| `GruntSpeedProgression` | `SpeedUp`, `Update` (each takes the grunts) | `SpeedUpGrunts`, `UpdateGruntSpeeds` |
+| `WaveMaterialisation` | `RetireConverged` | `RetireConvergedRobots` |
+| `RobotTransporter` | `Begin` | `BeginBeamingInRobots` |
+| `AttractObjectMachine` | `MoveObjects` | `MoveMovieObjects` |
+| `AttractPageMachine` | `ClearText` | `ClearTextCells` |
+
+The glossary entry for family members now says the word is **family member**.
+
+### What was left alone, and why
+
+- **The `Human` class, `HumanKind`, `HumanWave`, the `...HumanResult` records and the test names that use**
+  **"human"** (about 400 uses). Renaming a class is a bigger step than a method name, and the terminology ledger
+  records that `Human` is the original source's own word (`HUMAN`, `HUMATB`). It is the author's decision, and it
+  is waiting for it.
+- **`ICollisionRule.Detect`** and its eight implementations. Each one loops over a kind of entity (the brain rule
+  over brains and family members, the laser rule over lasers and robots), but the method is one name on one interface,
+  and the class name (`BrainCatchRule`) already says which. Giving each its own method name would break the
+  interface, so it needs the author to say whether the rule should apply to interface methods.
+- **Methods on collection classes** (`EntityList`, `FamilyList`, `LaserSlots`, `LaserWallFlares`, `HighScoreTable`,
+  `FieldEntities`), which are exempt by the rule.
+- **Methods that loop over their own sample buffers or pixel arrays** (`Play`, `Render`, `Spread`, the `Draw...`
+  methods on the tunnel and logo), which are not collections of domain things.
+- **The methods in the list that only loop as a detail** (`Draw`, `Update`, `Parse`), which are named for what they do.
+
+### How it was checked
+
+The build reports one error, in `BrainVictimReleaseRule.cs`, from a rename of `Brain.IsReprogramming` to a method that
+the author has started and not finished; the files for that are not part of this entry and were left alone. Nothing
+else in the solution reports a diagnostic. The tests were not run again after these renames for that reason.
+
+---
+
 ## 2026-10-04: Names that did not say what they hold (NAM-19)
 
 ### What was wrong
