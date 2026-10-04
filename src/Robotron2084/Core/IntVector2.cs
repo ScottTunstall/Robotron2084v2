@@ -17,7 +17,7 @@ public readonly record struct IntVector2(int X, int Y)
     public static IntVector2 operator *(IntVector2 a, int scalar) => new(a.X * scalar, a.Y * scalar);
 
     /// <summary>Squared distance widened to <see cref="long"/> to avoid overflow — never float distance math.</summary>
-    public static long DistanceSquared(IntVector2 a, IntVector2 b)
+    public static long ComputeDistanceSquared(IntVector2 a, IntVector2 b)
     {
         long dx = a.X - b.X;
         long dy = a.Y - b.Y;
@@ -29,5 +29,5 @@ public readonly record struct IntVector2(int X, int Y)
     public int GetManhattanDistance(IntVector2 other) => Math.Abs(X - other.X) + Math.Abs(Y - other.Y);
 
     /// <summary>Squared-distance check strictly beyond <paramref name="distance"/>.</summary>
-    public bool IsFartherThan(IntVector2 b, int distance) => DistanceSquared(this, b) > (long)distance * distance;
+    public bool IsFartherThan(IntVector2 b, int distance) => ComputeDistanceSquared(this, b) > (long)distance * distance;
 }

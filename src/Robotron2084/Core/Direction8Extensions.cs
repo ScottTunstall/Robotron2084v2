@@ -36,7 +36,7 @@ public static class Direction8Extensions
     }
 
     /// <summary>The direction 4 steps around the ring (Up&lt;-&gt;Down, UpRight&lt;-&gt;DownLeft, ...).</summary>
-    public static Direction8 Opposite(this Direction8 direction) => (Direction8)(((int)direction + 4) % 8);
+    public static Direction8 GetOpposite(this Direction8 direction) => (Direction8)(((int)direction + 4) % 8);
 
     /// <summary>
     /// The (-1/0/1, -1/0/1) unit vector, NOT normalized: diagonal movement is
