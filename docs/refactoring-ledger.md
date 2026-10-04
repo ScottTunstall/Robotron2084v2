@@ -272,6 +272,11 @@ and do not come from the property names.
   is a choice between giving `SpriteSet` methods of its own and passing the blitter in, and `SpriteSet` is
   already the standard's example of a class with too many jobs (STR-1). That choice is the author's, and it is a
   change of structure, so it was not made with the renames.
+- **Calculated properties (NAM-10, tightened the same day).** The rule no longer allows even a one-line calculation
+  in a property, and the scan in the standard finds 153 expression-bodied properties, many of them plain
+  calculations (`HasMen`, `ExtraManEveryPoints`, `IsFinished`, `Spacing`, `RobotsFrozen`). Each is a public or
+  internal member that callers use, so turning them into methods is a separate sweep, not done here. Some of
+  the 153 only return a field (`Bounds => _bounds`) and are allowed.
 - **The notes, the handoffs and `code-review-issues.md`** still use the old names. They are a record of their
   day. This ledger is how to read them.
 

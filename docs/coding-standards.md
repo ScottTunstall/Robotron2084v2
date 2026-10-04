@@ -169,9 +169,14 @@ and nothing more surprising than that. When the codebase already has a word for 
 glossary, or the terminology ledger for ROM concepts), use that word rather than a fresh synonym.
 
 **NAM-10. A property is a stored value; a computation is a method. This follows Microsoft's member design
-guidelines and is not optional.** A property getter may do no more than read a field, or make one trivial
-derivation from the type's own fields that costs about the same as a field read (`Width => Right - Left`).
-Anything else is a method, named with a verb (NAM-13). It is a method when the getter:
+guidelines and is not optional.** A property getter does one thing: it returns a value that is stored in a field, or in an auto-property.
+**A calculated value is a method, never a property**, however small the calculation. `Width => Right - Left`,
+`HasMen => Lives > 0` and `ExtraManEveryPoints => ExtraManEvery * 1000` are `GetWidth()`, `HasMen()` and
+`GetExtraManEveryPoints()`: the parentheses tell the caller that something is worked out each time it asks. A
+`bool` answer worked out from other members is a question, so it is a method named as one (`IsDying()`,
+`IsAlive()`). Anything else that a getter might do is also a method, named with a verb (NAM-13). It is a method when
+the getter:
+- works a value out from other members, with arithmetic, a comparison or a call (the rule above);
 - loops, counts, searches or uses LINQ over a collection (`GetLiveGruntCount()`, `GetActiveLasers()`);
 - allocates a new collection, array, string or other object each call (`GetInitials()`, `GetDisplayName()`);
 - converts one thing to another (`ToString`-like work, parsing, formatting, `ToDisplayName()`);
@@ -179,7 +184,9 @@ Anything else is a method, named with a verb (NAM-13). It is a method when the g
 - looks something up in another object, or calls another method that does real work;
 - can return a different result on two calls with nothing changed in between, or has a side effect;
 - can reasonably throw.
-When in doubt it is a method. A property must never hide a cost from its caller.
+When in doubt it is a method. A property must never hide a cost from its caller. A property is not made a method
+by hiding the calculation in a field that is updated elsewhere: that is TIME-4's one-meaning rule broken, and the stored
+value can go stale.
 
 **NAM-11. Use explanatory variables instead of compound expressions inline.** When a constructor call or method
 call would take more than one computed argument — anything beyond a bare identifier, a constant, or a single
@@ -611,6 +618,9 @@ grep -rnE 'ForTesting\s*=\s*true' src --include=*.cs
 # more than one type. Check each hit by eye.
 grep -rnP '^\s+private (static )?(readonly )?bool _(?!is|has|can|was|should|are|have)' src --include=*.cs
 grep -rhoP '^\s+private (readonly )?[\w<>\[\]?,]+ _\w+' src --include=*.cs | awk '{print $NF, $(NF-1)}' | sort -u | awk '{n[$1]++; t[$1]=t[$1]" "$2} END{for (k in n) if (n[k]>1) print k":"t[k]}'
+
+# Calculated properties (NAM-10): every hit is a property that must become a method
+grep -rnP '^s+(public|internal|private|protected) (static |override )*[w<>[]?,.() ]+ [A-Z]w* =>' src --include=*.cs
 
 # Law of Demeter (STR-11): a call made through another object's property
 grep -rnoP '(?<![\w.])_?[a-z]\w*\.[A-Z]\w*\.[A-Z]\w*(?=\()' src --include=*.cs
