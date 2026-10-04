@@ -19,7 +19,7 @@ public static class ScreenTuning
 
     // The wall is NOT one slot: FRAMER's flavour starts at $88 and GETA walks it down by
     // $11 a stroke, so each of the eight visible strokes takes its own slot — see
-    // HighScoreTableLayout.FrameStrokeSlot (LOOPP then cycles slots 1-8, which is why the
+    // HighScoreTableLayout.GetFrameStrokeSlot (LOOPP then cycles slots 1-8, which is why the
     // band reads as eight colours chasing at once).
     public const int GameOverTextSlot = 10;
 

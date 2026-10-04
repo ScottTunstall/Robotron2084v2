@@ -78,7 +78,7 @@ public static class WavePaletteTables
     /// border by storing ONE byte per step, which must be solid) — so the value's
     /// LOW NIBBLE is the slot. Use <see cref="GetWallSlot"/>.
     ///
-    /// Decoded against the ROM's CRTAB defaults (see <c>GamePalette.DefaultSlots</c>):
+    /// Decoded against the ROM's CRTAB defaults (see <c>GamePalette.DefaultSlotValues</c>):
     /// wave 1 = $22 = slot 2 = $17 = ORANGE, 2 = $55 = slot 5 = $3F = YELLOW,
     /// 3 = $11 = slot 1 = $07 = RED, 4 = $EE = slot 14 = a CYCLING slot,
     /// 5 = $77 = slot 7 = $C0 = BLUE, 6 = $33 = slot 3 = $C7 = MAGENTA,
