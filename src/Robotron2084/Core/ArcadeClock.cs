@@ -36,7 +36,7 @@ public static class ArcadeClock
     /// this port waits for the same real-world length of time the arcade did.
     /// </summary>
     /// <remarks>Truncates, so it is one tick early for a period that does not divide evenly — see
-    /// <see cref="ArcadeClock"/> for the clock itself and <see cref="PortTicksCeil"/> for the
+    /// <see cref="ArcadeClock"/> for the clock itself and <see cref="ToPortTicksRoundedUp"/> for the
     /// first tick a period actually fires on.</remarks>
     public static int ToPortTicks(int romFrames) => romFrames * ArcadeClock.UnitsPerRomFrame / ArcadeClock.UnitsPerPortTick;
 
