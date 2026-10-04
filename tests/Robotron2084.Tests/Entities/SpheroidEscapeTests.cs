@@ -20,9 +20,6 @@ public sealed class SpheroidEscapeTests
 {
     private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    /// <summary>Frames of field.Update needed to expire the player's 2-second start grace.</summary>
-    private const int GraceWarmupTicks = 121;
-
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     private static PlayField CreateField(int seed) =>
@@ -67,11 +64,11 @@ public sealed class SpheroidEscapeTests
         Assert.Fail("no seed escaped to the right");
     }
 
-    /// <summary>Expires the start grace, then runs the spheroid until it starts escaping.</summary>
+    /// <summary>Runs through the start of the wave, then runs the spheroid until it starts escaping.</summary>
     /// <returns>True when the spheroid is escaping.</returns>
     private static bool StartEscape(PlayField field, Spheroid spheroid)
     {
-        for (int tick = 0; tick < GraceWarmupTicks; tick++)
+        for (int tick = 0; tick < WaveStartTicks.UntilLive(field); tick++)
         {
             field.Update(Frame());
         }

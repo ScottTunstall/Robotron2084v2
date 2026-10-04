@@ -51,7 +51,8 @@ public sealed class HulkKnockbackTests
         {
             var hulk = new Hulk(TestSprites.Shared, spot, new Random(1000 + (int)direction), beatIntervalRomFrames: 2, () => spot);
             field.Entities.Hulks.Add(hulk);
-            field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // caches the playfield bounds
+            field.SkipWaveStart();
+            field.Update(new GameTime()); // caches the playfield bounds
 
             IntVector2 unit = direction.ToIntVector();
             var observed = new HashSet<IntVector2>();
@@ -112,7 +113,8 @@ public sealed class HulkKnockbackTests
         // wall (spec: "pushed back into the WALL") but never leave the field.
         var hulk = new Hulk(TestSprites.Shared, new IntVector2(b.X, b.Y), new Random(7), beatIntervalRomFrames: 2, () => new IntVector2(b.X, b.Y));
         field.Entities.Hulks.Add(hulk);
-        field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3)));
+        field.SkipWaveStart();
+        field.Update(new GameTime());
 
         for (int i = 0; i < 50; i++)
         {

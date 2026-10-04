@@ -22,10 +22,10 @@ public sealed class GruntAnimationTests
 
     private static PlayField CreateField() => new PlayFieldBuilder().WithParameters(new LevelParameters(LevelNumber: 1)).WithSeed(1).Build();
 
-    /// <summary>Drives the field until the 2-second start grace (121 frames) is over.</summary>
-    private static void ExpireGrace(PlayField field)
+    /// <summary>Drives the field through the start of the wave, until the game is live.</summary>
+    private static void RunUntilLive(PlayField field)
     {
-        for (int tick = 0; tick < 121; tick++)
+        for (int tick = 0; tick < WaveStartTicks.UntilLive(field); tick++)
         {
             field.Update(Frame());
         }
@@ -45,7 +45,7 @@ public sealed class GruntAnimationTests
     public void Grunt_StepsTwoColumnsSidewaysAndFourRowsUpAndDown_AndBobsWhenLevelWithThePlayer()
     {
         PlayField field = CreateField();
-        ExpireGrace(field);
+        RunUntilLive(field);
 
         // Lone grunt 200px left of the player on the same row. ROM MOVE_GRUNT: sideways it
         // steps 2 columns (8 port px) towards the player every time; level with the player
@@ -84,7 +84,7 @@ public sealed class GruntAnimationTests
         // ROM MOVE_GRUNT: `CMPB #$FE` and `CMPB #$02` skip the up-and-down step only when the
         // grunt is exactly one row above or below the player.
         PlayField field = CreateField();
-        ExpireGrace(field);
+        RunUntilLive(field);
 
         IntVector2 player = field.Player.Position;
         Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 200, player.Y + (rowsBelowPlayer * ScreenSize.ToPortPixels(1))), moveLimitBeats: 15, random: new Random(3));
@@ -103,7 +103,7 @@ public sealed class GruntAnimationTests
     public void Grunt_StepGaps_AreIrregular_AndBoundedByTheRerollLimit()
     {
         PlayField field = CreateField();
-        ExpireGrace(field);
+        RunUntilLive(field);
 
         IntVector2 player = field.Player.Position;
         Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 300, player.Y - 120), moveLimitBeats: 15, random: new Random(7));
@@ -144,7 +144,7 @@ public sealed class GruntAnimationTests
     public void Grunt_WalkFrameFreezesWhilePaused_AndAdvancesOncePerStep()
     {
         PlayField field = CreateField();
-        ExpireGrace(field);
+        RunUntilLive(field);
 
         IntVector2 player = field.Player.Position;
         // Huge re-roll limit: no steps for a long time — beats keep firing.

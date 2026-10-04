@@ -38,7 +38,8 @@ public sealed class HulkAnimationTests
         var hulk = new Hulk(TestSprites.Shared, spot, new Random(19), beatIntervalRomFrames: 2, () => center);
         field.Entities.Hulks.Add(hulk);
 
-        field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // end start grace; first unfrozen update = the spawn aim
+        field.SkipWaveStart();
+        field.Update(new GameTime()); // the first live update = the spawn aim
 
         // ROM state after the spawn aim: entry 0 of the aimed block.
         Direction8 lastDirection = hulk.Direction;

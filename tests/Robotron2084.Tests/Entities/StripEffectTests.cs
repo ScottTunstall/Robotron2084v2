@@ -399,6 +399,7 @@ public sealed class StripEffectTests
         // ("enforcers shouldn't flash when hit"), the same defect class as the
         // grunt in §44.
         PlayField field = CreateEmptyField();
+        field.SkipWaveStart();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
         field.SpawnEnforcer(spot);
         Enforcer enforcer = field.Entities.Enforcers[0];
@@ -420,6 +421,7 @@ public sealed class StripEffectTests
         // bursts. The author reported the port's shatter explosion on 2026-09-16:
         // "electrodes shouldn't explode when hit, they shrivel."
         PlayField field = CreateEmptyField();
+        field.SkipWaveStart();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
         var electrode = new Electrode(TestSprites.Shared, spot);
         field.Entities.Electrodes.Add(electrode);
@@ -438,6 +440,7 @@ public sealed class StripEffectTests
         // RRP8 ROBKIL explodes the grunt (`JSR EXST`); the post it walked into
         // shrivels instead (PSTKIL, above) — one explosion, not two.
         PlayField field = CreateEmptyField();
+        field.SkipWaveStart();
         IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
         var electrode = new Electrode(TestSprites.Shared, spot);
         field.Entities.Electrodes.Add(electrode);
@@ -458,6 +461,7 @@ public sealed class StripEffectTests
         // explosions and appears take from the SAME free list, so an eleventh is
         // refused outright (the caller's kill still stands).
         PlayField field = CreateEmptyField();
+        field.SkipWaveStart();
         Rectangle bounds = field.Wall.PlayfieldBounds;
 
         for (int i = 0; i < StripExplosionTuning.MaxConcurrent + 4; i++)

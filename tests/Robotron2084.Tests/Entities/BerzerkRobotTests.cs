@@ -12,7 +12,7 @@ public sealed class BerzerkRobotTests
     private static PlayField CreateField(LevelParameters? parameters = null) =>
         new PlayFieldBuilder().WithParameters(parameters ?? new LevelParameters(LevelNumber: 1)).WithSeed(5).Build();
 
-    /// <summary>A field whose robots are free to move: the player's start grace period is over.</summary>
+    /// <summary>A field whose robots are free to move: the start of the wave is over, so the game is live.</summary>
     private static PlayField CreateFieldInPlay()
     {
         PlayField field = CreateField();
@@ -108,6 +108,7 @@ public sealed class BerzerkRobotTests
     public void WalkingOntoAnElectrode_KillsTheRobotAndTheElectrode()
     {
         PlayField field = CreateField();
+        field.SkipWaveStart();
         var electrode = new Electrode(TestSprites.Shared, new IntVector2(field.Player.Position.X + 200, field.Player.Position.Y + 100));
         var robot = new BerzerkRobot(TestSprites.Shared, electrode.Position, random: new Random(1));
         field.Entities.Add(electrode);

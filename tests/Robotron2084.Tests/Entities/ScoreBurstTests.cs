@@ -171,6 +171,7 @@ public sealed class ScoreBurstTests
     public void ShootingASpheroid_PlaysTheBurst_AndNoStripExplosion()
     {
         PlayField field = CreateField(spheroids: 1);
+        field.SkipWaveStart();
         Settle(field);
 
         Spheroid spheroid = field.Entities.Spheroids[0];
@@ -189,6 +190,7 @@ public sealed class ScoreBurstTests
     public void ShootingAQuark_PlaysTheBurst_AndNoStripExplosion()
     {
         PlayField field = CreateField(quarks: 1);
+        field.SkipWaveStart();
         Settle(field);
 
         Quark quark = field.Entities.Quarks[0];

@@ -39,6 +39,7 @@ public sealed class PlayerAnimationAndAimTests
     public void Player_WalkCycle_IsThreeTicksPerFrame_InTheRomABACPattern()
     {
         PlayField field = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(-1, 0), false)));
+        field.SkipWaveStart();
 
         // Left walk = frames 1,2,1,3 → PlayerAnimationFrames indices 0,1,0,2,
         // each drawn for exactly 3 movement ticks.
@@ -57,6 +58,7 @@ public sealed class PlayerAnimationAndAimTests
     public void Fire_WithoutAim_UsesTheMovementFacing()
     {
         PlayField field = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(1, 1), IntVector2.Zero, true)));
+        field.SkipWaveStart();
         field.Update(new GameTime());
 
         Assert.Equal(Direction8.DownRight, field.Player.FacingDirection);
@@ -73,6 +75,7 @@ public sealed class PlayerAnimationAndAimTests
         // required direction ... the shooting direction should not specify
         // the walking animation").
         PlayField field = CreateField(new FakeInputSource(new PlayerInputState(IntVector2.Zero, new IntVector2(1, 0), true)));
+        field.SkipWaveStart();
         field.Update(new GameTime());
 
         Assert.Equal(Direction8.Up, field.Player.FacingDirection); // the initial facing, untouched
@@ -86,6 +89,7 @@ public sealed class PlayerAnimationAndAimTests
     {
         var input = new PhaseInput { State = new PlayerInputState(new IntVector2(-1, 0), false) };
         PlayField field = CreateField(input);
+        field.SkipWaveStart();
 
         for (int tick = 0; tick < 4; tick++)
         {
@@ -121,6 +125,7 @@ public sealed class PlayerAnimationAndAimTests
         // stays LEFT.
         var input = new PhaseInput { State = new PlayerInputState(new IntVector2(-1, 0), new IntVector2(1, 0), true) };
         PlayField field = CreateField(input);
+        field.SkipWaveStart();
 
         field.Update(new GameTime());
 
@@ -147,6 +152,7 @@ public sealed class PlayerAnimationAndAimTests
     public void Fire_LaserSpawnsAtTheRomLtabMuzzleOffset(Direction8 direction, int offsetXSpec, int offsetYSpec)
     {
         PlayField field = CreateField(new FakeInputSource(new PlayerInputState(IntVector2.Zero, direction.ToIntVector(), true)));
+        field.SkipWaveStart();
         IntVector2 start = field.Player.Position;
         field.Update(new GameTime());
 

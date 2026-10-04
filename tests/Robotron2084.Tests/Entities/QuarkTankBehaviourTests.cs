@@ -100,7 +100,7 @@ public sealed class QuarkTankBehaviourTests
         var quark = new Quark(TestSprites.Shared, new IntVector2(300, 200), new Random(10), maxDropsX2: 1, dropDelayBeats: 1);
         field.Entities.Quarks.Add(quark);
 
-        // Robots are frozen during the 2 s player start grace (120 ticks); the
+        // Robots are frozen until the game goes live at the start of the wave; the
         // first drop is due within 2 ticks after it ends.
         for (int tick = 0; tick < 200 && field.Entities.Tanks.GetLiveCount() == 0; tick++)
         {
@@ -126,7 +126,7 @@ public sealed class QuarkTankBehaviourTests
     {
         PlayField field = CreateField(1);
 
-        // Robots are frozen during the 2 s player start grace — burn it off so
+        // Robots are frozen until the game goes live at the start of the wave — run through it so
         // the tank's birth runs unfrozen.
         for (int tick = 0; tick < 130; tick++)
         {
@@ -196,7 +196,7 @@ public sealed class QuarkTankBehaviourTests
     {
         PlayField field = CreateField(1);
 
-        // Spawned inside the 2 s player start grace, so the tank is frozen: no robot
+        // Spawned before the game is live, so the tank is frozen: no robot
         // can beat while frozen, so the tread cannot move.
         field.SpawnTank(new IntVector2(400, 200));
         Tank tank = Assert.Single(field.Entities.Tanks);

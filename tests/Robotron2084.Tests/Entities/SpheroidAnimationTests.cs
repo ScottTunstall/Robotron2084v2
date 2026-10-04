@@ -25,9 +25,6 @@ public sealed class SpheroidAnimationTests
 {
     private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    /// <summary>Frames of field.Update needed to expire the player's 2-second start grace.</summary>
-    private const int GraceWarmupTicks = 121;
-
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
     /// <summary>
@@ -43,7 +40,7 @@ public sealed class SpheroidAnimationTests
                 SpheroidDropDelay: 3)).WithRandom(new Random(seed)).Build();
 
     /// <summary>
-    /// Drives one spheroid (seeded, so this is deterministic) through the start grace
+    /// Drives one spheroid (seeded, so this is deterministic) through the start of the wave
     /// and on into its escape phase. Dropped enforcers are never updated, so they cannot
     /// kill the standing player and freeze the field.
     /// </summary>
@@ -52,7 +49,7 @@ public sealed class SpheroidAnimationTests
         PlayField field = CreateField(seed);
         Spheroid spheroid = field.Entities.Spheroids[0];
 
-        for (int tick = 1; tick <= GraceWarmupTicks; tick++)
+        for (int tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++)
         {
             field.Update(Frame());
         }
@@ -139,9 +136,9 @@ public sealed class SpheroidAnimationTests
 
         for (int tick = 1; tick <= 4000 && !spheroid.IsEscaping; tick++)
         {
-            if (tick <= GraceWarmupTicks)
+            if (tick <= WaveStartTicks.UntilLive(field))
             {
-                field.Update(Frame()); // let the start grace expire
+                field.Update(Frame()); // run through the start of the wave
             }
             else
             {

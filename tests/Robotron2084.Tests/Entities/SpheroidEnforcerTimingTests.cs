@@ -24,15 +24,8 @@ public sealed class SpheroidEnforcerTimingTests
 {
     /// <summary>
     /// One port tick at 60 ticks/s in INTEGER ticks (no float drift).
-    /// TicksPerSecond/60 = 166,666 ticks/frame (truncated), so the player's
-    /// 2-second start grace (PlayerStartGraceSeconds, time-based) expires on
-    /// the 121st such frame (120 x 166,666 = 1.999992 s; 121 x 166,666 =
-    /// 2.0166586 s), which is what unfreezes RobotsFrozen.
     /// </summary>
     private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
-
-    /// <summary>Frames of field.Update needed to expire the start grace period.</summary>
-    private const int GraceWarmupTicks = 121;
 
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
@@ -54,11 +47,11 @@ public sealed class SpheroidEnforcerTimingTests
             PlayField field = CreateField(seed, spheroids: 1);
             Spheroid spheroid = field.Entities.Spheroids[0];
 
-            // Expire the start grace, then drive the spheroid standalone:
+            // Run through the start of the wave, then drive the spheroid standalone:
             // its drops land in the field (field.EnforcerCount) but the
             // dropped enforcers are never updated, so they cannot kill the
             // standing player and freeze the simulation.
-            for (int tick = 1; tick <= GraceWarmupTicks; tick++)
+            for (int tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++)
             {
                 field.Update(Frame());
             }
@@ -83,14 +76,14 @@ public sealed class SpheroidEnforcerTimingTests
         // Minimum initial countdown = RND(1..CDPTIM) = 1 step, and a step is now a
         // full FIVE-animation-frame wrap (CIRCLE advances `OPICT += 4` per `NAP 2` beat and
         // wraps at CIRP4, notes §90): 5 x 3 = 15 ROM frames = 18 port ticks. (It was
-        // 16 frames while §56.2 mis-read the boundary as CIRP3.) The start grace
-        // freezes everything until the 121st frame, so the earliest possible drop is
-        // around tick 139; no drop through tick 138 for every seed pins that floor.
+        // 16 frames while §56.2 mis-read the boundary as CIRP3.) The start of the wave
+        // holds everything until the game goes live, so the earliest possible drop is
+        // 18 ticks after that; no drop through the 17th for every seed pins that floor.
         for (int seed = 1; seed <= 8; seed++)
         {
             PlayField field = CreateField(seed, spheroids: 1);
 
-            for (int tick = 1; tick <= GraceWarmupTicks + 17; tick++)
+            for (int tick = 1; tick <= WaveStartTicks.UntilLive(field) + 17; tick++)
             {
                 field.Update(Frame());
                 Assert.True(field.Entities.Enforcers.GetLiveCount() == 0, $"seed {seed}: drop at tick {tick}");
@@ -105,8 +98,8 @@ public sealed class SpheroidEnforcerTimingTests
         Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(42), fireIntervalBeats: 30);
         IntVector2 start = enforcer.Position;
 
-        // Expire the start grace so RobotsFrozen is false for the enforcer.
-        for (int tick = 1; tick <= GraceWarmupTicks; tick++)
+        // Run through the start of the wave so RobotsFrozen is false for the enforcer.
+        for (int tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++)
         {
             field.Update(Frame());
         }
@@ -139,7 +132,7 @@ public sealed class SpheroidEnforcerTimingTests
         PlayField field = CreateField(7);
         Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(42), fireIntervalBeats: 30);
 
-        for (int tick = 1; tick <= GraceWarmupTicks; tick++)
+        for (int tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++)
         {
             field.Update(Frame());
         }
@@ -169,7 +162,7 @@ public sealed class SpheroidEnforcerTimingTests
         PlayField field = CreateField(11);
         Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(1234), fireIntervalBeats: 30);
 
-        for (int tick = 1; tick <= GraceWarmupTicks; tick++)
+        for (int tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++)
         {
             field.Update(Frame());
         }
@@ -212,7 +205,7 @@ public sealed class SpheroidEnforcerTimingTests
         PlayField field = CreateField(11);
         Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(1234), fireIntervalBeats: 30);
 
-        for (int tick = 1; tick <= GraceWarmupTicks; tick++)
+        for (int tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++)
         {
             field.Update(Frame());
         }
