@@ -21,6 +21,9 @@ namespace Robotron2084.Level;
 /// </remarks>
 public static class RobotKinds
 {
+    // RobotListSetUpOrder below is the order the arcade sets the kinds up in at the start of a wave: the hulks, the brains,
+    // the tanks and then the grunts (ROM: RRG23.ASM PLS0A, JSR HULKST / BRNST / TANKST ... RINIT; disassembly $2831 onwards).
+    // The author's own BerzerkRobot is put after the grunts, since it is a grunt in all but looks.
     /// <summary>Every kind, in the order the arcade's collision code deals with them.</summary>
     public static readonly RobotKindInfo[] All =
     [
@@ -45,7 +48,7 @@ public static class RobotKinds
             LaserHitSound: SoundTables.RobotHit,
             KillsPlayerOnContact: true,
             Spawn: new GruntWaveSpawner(),
-            IsOnRobotList: true),
+            RobotListSetUpOrder: 4),
 
         // A hulk is never killed and never scored: the laser only knocks it back (RRH11 HULKIL).
         new(RobotKind.Hulk,
@@ -55,7 +58,7 @@ public static class RobotKinds
             LaserHitSound: SoundTables.HulkHit,
             KillsPlayerOnContact: true,
             Spawn: new HulkWaveSpawner(),
-            IsOnRobotList: true),
+            RobotListSetUpOrder: 1),
 
         // A spheroid and a quark play their OWN burst instead of the strip explosion (CIRKP/SQKIL, notes §64).
         new(RobotKind.Spheroid,
@@ -85,7 +88,7 @@ public static class RobotKinds
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
             LaserHitSound: SoundTables.TankKill,
             Spawn: new TankWaveSpawner(),
-            IsOnRobotList: true),
+            RobotListSetUpOrder: 3),
 
         // A brain killed MID-reprogram releases its victim — the field's own human phase does that (notes §90).
         new(RobotKind.Brain,
@@ -95,7 +98,7 @@ public static class RobotKinds
             LaserHitSound: SoundTables.BrainKill,
             KillsPlayerOnContact: true,
             Spawn: new BrainWaveSpawner(),
-            IsOnRobotList: true),
+            RobotListSetUpOrder: 2),
 
         new(RobotKind.Prog,
             WaveCount: null,
@@ -141,7 +144,7 @@ public static class RobotKinds
             LaserHitSound: SoundTables.RobotHit,
             KillsPlayerOnContact: true,
             Spawn: new BerzerkRobotWaveSpawner(),
-            IsOnRobotList: true),
+            RobotListSetUpOrder: 5),
 
         // The author's own robot (notes §138.2): it stands and animates, and dies to a laser.
         new(RobotKind.Gorf,

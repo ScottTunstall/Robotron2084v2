@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
 
@@ -286,6 +287,13 @@ public sealed class FieldEntities
     /// <summary>Says whether no electrode touches a box, so that something can be put there.</summary>
     /// <param name="box">The box to test, in port pixels.</param>
     public bool IsClearOfElectrodes(Rectangle box) => Electrodes.All(electrode => !electrode.Bounds.Intersects(box));
+
+    /// <summary>Says whether one of the arcade's strip routines has a record free for another explosion or appear effect.</summary>
+    /// <param name="engine">The strip routine that would run the effect.</param>
+    /// <returns>True when the routine can run one more effect.</returns>
+    /// <remarks>Original source: <c>GETBLK</c> and <c>GETAP</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>, each with its own free list. Disassembly: <c>$5B6C</c>, <c>$F03A</c> and the diagonal routine's at <c>$46B2</c> onwards.</remarks>
+    public bool HasRoomForStripEffect(StripEngine engine) =>
+        StripExplosionTuning.GetPoolSize(engine) is not { } poolSize || Explosions.Count(effect => effect.GetEngine() == engine) < poolSize;
 
     /// <summary>Takes the dead out of every list.</summary>
     public void PruneDead()

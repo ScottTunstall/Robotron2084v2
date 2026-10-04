@@ -31,8 +31,9 @@ public sealed class RobotTransporter
     /// <summary>The images being built up. Robots with the same animation frame share one.</summary>
     private readonly List<TransportImage> _images = [];
 
-    /// <summary>Builds up, a tick at a time, until it is time for the next ROM frame.</summary>
-    private int _clockUnits;
+    /// <summary>Builds up, a tick at a time, until it is time for the next ROM frame. It starts with a whole ROM frame in it, so that the first step is taken on the first tick, as the arcade takes its first step on the frame the wave is set up.</summary>
+    /// <remarks>Original source: <c>RRT2.ASM</c> <c>TRNLP</c>, which <c>TRNSTV</c> runs on into before its first <c>NAP 1</c>. Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>).</remarks>
+    private int _clockUnits = ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>Makes a transporter.</summary>
     /// <param name="random">The field's random source, which picks each image's sparkle.</param>

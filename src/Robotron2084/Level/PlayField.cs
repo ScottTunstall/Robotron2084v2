@@ -26,7 +26,7 @@ namespace Robotron2084.Level;
 /// kind is put there at the start of a wave is its <see cref="IWaveSpawner"/>, what happens when two things touch is
 /// an <see cref="ICollisionRule"/> that only reports what touched what, and the field responds to each report
 /// (<see cref="CollisionResponder"/>). Whether two things are touching is the <see cref="IContactTest"/> the field is given.
-/// Each tick, in order: the freeze after the player's death, the grunts' speed-up, the wave-start appear, the wall,
+/// Each tick, in order: the freeze after the player's death, the start of the wave, the grunts' speed-up, the robots' and the player's appear, the wall,
 /// the player and the lasers, every list of entities, the collision rules, then the dead are taken out.
 /// <para>
 /// Where a tick comes from: MonoGame's fixed time step, which <see cref="RobotronGame"/> switches on and leaves at MonoGame's own rate of 60 updates a second.
@@ -44,6 +44,7 @@ public sealed class PlayField : ICollisionScene
     private readonly IContactTest _contactTest;
     private readonly MidWaveSpawner _midWaveSpawner;
     private readonly WaveStartSequence _waveStart;
+    private readonly PlayerAppear _playerAppear = new();
     private readonly GamePalette? _palette;
 
     /// <summary>True when a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
@@ -113,7 +114,14 @@ public sealed class PlayField : ICollisionScene
         // The family is put on last, after every robot (ROM HUMSTV).
         new FamilyWaveSpawner().Spawn(spawning);
 
-        _waveStart = new WaveStartSequence(CountRobotsOnTheRobotList(), parameters.BrainCount > 0);
+        // The robots on the arcade's robot list are brought on in the order its appear loop meets them (ROM: RRG23.ASM APPEAR).
+        IEntity[] robotsInAppearOrder = [.. GetRobotsInAppearOrder()];
+        foreach (IEntity robot in robotsInAppearOrder)
+        {
+            _materialisation.Queue(robot);
+        }
+
+        _waveStart = new WaveStartSequence(robotsInAppearOrder.Length, parameters.BrainCount > 0);
 
         // With the bug switched off, each brain picks again now that there is a family to pick from.
         if (!brainsChaseMikeyBugEnabled)
@@ -177,7 +185,13 @@ public sealed class PlayField : ICollisionScene
             _gruntSpeedProgression.Update(Entities.Grunts, _waveStart.GetLiveClockUnitsThisTick());
         }
 
-        _materialisation.Advance(Entities.Explosions, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds));
+        if (_waveStart.HasJustGoneLive())
+        {
+            TellRobotsTheGameIsLive();
+        }
+
+        _materialisation.Advance(Entities, Wall.PlayfieldBounds);
+        _playerAppear.Update(_waveStart, Player, Entities, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds));
 
         _laserWallFlares.Update();
 
@@ -203,12 +217,8 @@ public sealed class PlayField : ICollisionScene
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        // 1. Wall — arcade-faithful: the ROM's per-wave WALL colour slot (RRG23
-        //    `GTWCOL` -> `WALCOL`, solid fill); the placeholder WallColorCycle
-        //    has no palette to read, and is only used when no live palette is
-        //    wired in (unit tests).
-        Wall.Draw(spriteBatch, Sprites.WallPixelSprite,
-            _palette is { } p ? p.GetColour(WavePaletteTables.GetWallSlot(Parameters.LevelNumber)) : null);
+        // 1. Wall.
+        DrawWall(spriteBatch);
 
         // 1b. Laser-vs-wall flares (RRG23 LASDIE): painted OVER the wall, exactly as the ROM writes those pixels.
         _laserWallFlares.Draw(spriteBatch, Sprites, Parameters.LevelNumber);
@@ -223,12 +233,22 @@ public sealed class PlayField : ICollisionScene
         // 6-7b. The enemy shots, then the explosions and the bursts — over the shots, under the player.
         Entities.DrawInFrontOfShots(spriteBatch, this);
 
-        // 8. Player — ALWAYS last (spec states this explicitly twice). It is not on the screen until it appears (ROM: RRG23.ASM PLS1).
-        if (_waveStart.HasPlayerAppeared())
+        // 8. Player — ALWAYS last (spec states this explicitly twice). Its own sprite is not drawn until the game is live;
+        //    before that only the strips of its appear effect are (ROM: STATUS bit 4, "PLAYER OUTPUT", held until PLS2; RRS22.ASM PLA0).
+        if (IsPlayerDrawn())
         {
             Player.Draw(spriteBatch);
         }
     }
+
+    /// <summary>Draws the wall round the playfield and nothing else. It is what is on the screen, with the scores, while the arcade shows whose turn it is before it sets a wave up.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <remarks>
+    /// Original source: <c>RRG23.ASM</c> <c>GTWCOL</c>, which picks the wall's colour for the wave (<c>WALCOL</c>), and <c>BORDER</c>, which <c>TDISP</c> calls. Disassembly: not separately labelled.
+    /// The placeholder <see cref="WallColorCycle"/> is only used when there is no live palette, which is in a test.
+    /// </remarks>
+    public void DrawWall(SpriteBatch spriteBatch) =>
+        Wall.Draw(spriteBatch, Sprites.WallPixelSprite, _palette?.GetColour(WavePaletteTables.GetWallSlot(Parameters.LevelNumber)));
 
     /// <summary>Copies the live score and lives to the player's session slot, every tick, so the HUD never lags (notes §97).</summary>
     /// <param name="slot">The player's session slot.</param>
@@ -442,21 +462,22 @@ public sealed class PlayField : ICollisionScene
         }
     }
 
-    /// <summary>Starts an explosion for something that has died. If the arcade's pool of explosions is full there is no explosion, but the thing is still dead.</summary>
+    /// <summary>Starts an explosion for something that has died. If the strip routine that would run it has no record free there is no explosion, but the thing is still dead.</summary>
     /// <param name="dead">The thing that died.</param>
     /// <param name="direction">The way the laser that killed it was going, or null when it was not a laser.</param>
     /// <remarks>
-    /// Original source: <c>RRDX2.ASM</c>, where the explosions and the appear effects take from the same pool of blocks (<c>GETBLK</c> and <c>GETAP</c>).
-    /// Disassembly: not separately labelled.
+    /// Original source: <c>GETBLK</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>. Each of the three strip routines has its own records, which its explosions and its appear effects share (<see cref="StripExplosionTuning.GetPoolSize"/>).
+    /// Disassembly: <c>$5B6C</c>, <c>$F03A</c> and <c>$46B2</c>.
     /// </remarks>
     internal void SpawnExplosion(IExplodable dead, Direction8? direction)
     {
-        if (Entities.Explosions.Count >= StripExplosionTuning.MaxConcurrent)
+        StripEffect explosion = StripEffect.CreateExplosion(dead, direction, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds));
+        if (!Entities.HasRoomForStripEffect(explosion.GetEngine()))
         {
-            return; // ROM: list full → no explosion
+            return; // ROM: no record free → no explosion
         }
 
-        Entities.Add(StripEffect.CreateExplosion(dead, direction, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds)));
+        Entities.Add(explosion);
     }
 
     /// <summary>Starts a flash of colour where a laser ran into the wall (notes §63).</summary>
@@ -493,11 +514,6 @@ public sealed class PlayField : ICollisionScene
     /// <summary>Says whether an entity is still assembling at a wave start. It does not act and is not drawn; its appear effect is.</summary>
     /// <param name="entity">The entity to test.</param>
     internal bool IsMaterialising(IEntity entity) => _materialisation.IsAssembling(entity);
-
-    /// <summary>Adds a robot to the sequence that brings the robots on at the start of the wave, one by one.</summary>
-    /// <param name="robot">The robot to bring in.</param>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>.</remarks>
-    internal void QueueMaterialise(IEntity robot) => _materialisation.Queue(robot);
 
     /// <summary>Asks for a sound that is heard from where its maker is on the playfield: something on the left is heard on the left.</summary>
     /// <param name="sound">The sound's table.</param>
@@ -539,17 +555,43 @@ public sealed class PlayField : ICollisionScene
     /// <returns>The ROM frames.</returns>
     internal int GetPlayerAppearRomFrames() => _waveStart.PlayerAppearRomFrames;
 
-    /// <summary>Says whether the player has appeared and is drawn (test hook).</summary>
+    /// <summary>Says whether the player has started to appear, so that the strips of its appear effect are on the screen (test hook).</summary>
     internal bool HasPlayerAppeared() => _waveStart.HasPlayerAppeared();
 
-    /// <summary>Makes the game live at once, for a test of something that happens in play and not at the start of a wave (test hook).</summary>
-    internal void SkipWaveStart() => _waveStart.SkipToLive();
+    /// <summary>Says whether the player's own sprite is drawn. It is not until the game is live.</summary>
+    /// <remarks>Original source: <c>RRS22.ASM</c> <c>PLA0</c>, <c>BITA #$10</c>, with <c>STATUS</c> held at <c>$19</c> until <c>PLS2</c>. Disassembly: the status byte at <c>$59</c>.</remarks>
+    internal bool IsPlayerDrawn() => IsLive();
 
-    /// <summary>Counts the robots that the arcade keeps on its robot list, which are the ones its appear loop brings in. The count sets how long the start of the wave lasts.</summary>
-    /// <returns>How many there are on the field.</returns>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which walks <c>RPTR</c>. Disassembly: the list at <c>$9821</c>.</remarks>
-    private int CountRobotsOnTheRobotList() =>
-        RobotKinds.All.Where(kind => kind.IsOnRobotList).Sum(kind => Entities.GetEntities(kind.Kind).Count());
+    /// <summary>Makes the game live at once and leaves the player's appear effect out, for a test of something that happens in play and not at the start of a wave (test hook).</summary>
+    internal void SkipWaveStart()
+    {
+        _waveStart.SkipToLive();
+        _playerAppear.Skip();
+    }
+
+    /// <summary>Works out how long a robot waits before its first move, counted from the start of the tick on which the game goes live.</summary>
+    /// <param name="pollRomFrames">How many ROM frames the robot sleeps between one look at whether the game is live and the next.</param>
+    /// <param name="napRomFrames">How many ROM frames the robot sleeps after the look that finds the game live, before its first move.</param>
+    /// <returns>The clock units from the start of this tick to the robot's first move.</returns>
+    internal int GetClockUnitsToFirstBeat(int pollRomFrames, int napRomFrames) => _waveStart.GetClockUnitsToFirstBeat(pollRomFrames, napRomFrames);
+
+    /// <summary>Lists the robots that the arcade keeps on its robot list, in the order its appear loop meets them. The arcade puts each new robot at the head of the list, so the loop meets the kind that was set up last first, and within a kind the robot that was made last first.</summary>
+    /// <returns>The robots, from the first the loop meets to the last.</returns>
+    /// <remarks>Original source: <c>RRS22.ASM</c> <c>GETRBV</c> (<c>LDD RPTR / STX RPTR</c>), and <c>RRG23.ASM</c> <c>APPEAR</c>, which walks <c>RPTR</c>. Disassembly: the list at <c>$9821</c>.</remarks>
+    private IEnumerable<IEntity> GetRobotsInAppearOrder() =>
+        RobotKinds.All
+            .Where(kind => kind.IsOnRobotList())
+            .OrderByDescending(kind => kind.RobotListSetUpOrder)
+            .SelectMany(kind => Entities.GetEntities(kind.Kind).Reverse());
+
+    /// <summary>Tells every robot that was on the field at the start of the wave that the game has gone live, so that each sets the time of its first move.</summary>
+    private void TellRobotsTheGameIsLive()
+    {
+        foreach (IWaveStartRobot robot in GetRobotsInAppearOrder().OfType<IWaveStartRobot>())
+        {
+            robot.BeginPlay(this);
+        }
+    }
 
     /// <summary>Runs every collision rule in the arcade's order, then freezes the game for a moment if the player has just been killed. Nothing collides until the game is live.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS2</c>, which makes the collision process (<c>MAKP COLCHK</c>) only as the game goes live. Disassembly: <c>$2895</c>.</remarks>

@@ -33,7 +33,7 @@ public sealed class WaveStartSequence
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>NAP 150,PLS1</c>. Disassembly: <c>$2869</c>.</remarks>
     private const int BrainWavePlayerAppearRomFrames = 150;
 
-    /// <summary>How many ROM frames the arcade sleeps after the player starts to appear, before the second part of the player's appear.</summary>
+    /// <summary>How many ROM frames the arcade sleeps after the player starts to appear, before the second part of the player's appear, which is the strips that lean.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>NAP 06,PLS1A</c>. Disassembly: <c>$287A</c>.</remarks>
     private const int PlayerAppearNapRomFrames = 6;
 
@@ -53,6 +53,9 @@ public sealed class WaveStartSequence
     /// <summary>How many clock units of the latest tick came after the game went live: none before it, part of the tick on which it goes live, and the whole tick from then on.</summary>
     private int _liveClockUnitsThisTick;
 
+    /// <summary>True on the one tick on which the game goes live.</summary>
+    private bool _hasJustGoneLive;
+
     /// <summary>Works out the times for one wave.</summary>
     /// <param name="robotListCount">How many robots the arcade's appear loop would bring in: the ones on its robot list, which are the grunts, the hulks and the tanks.</param>
     /// <param name="isBrainWave">True on a brain wave, where the robots are beamed in and the times do not depend on how many there are.</param>
@@ -70,11 +73,13 @@ public sealed class WaveStartSequence
         if (IsLive())
         {
             _liveClockUnitsThisTick = ArcadeClock.UnitsPerPortTick;
+            _hasJustGoneLive = false;
             return;
         }
 
         _clockUnits += ArcadeClock.UnitsPerPortTick;
         _liveClockUnitsThisTick = Math.Max(0, _clockUnits - ArcadeClock.ToClockUnits(_liveRomFrames));
+        _hasJustGoneLive = IsLive();
     }
 
     /// <summary>Gets how much of the latest tick was live play, in clock units, so that a timer that starts when the game goes live starts at exactly that moment and not at the nearest tick.</summary>
@@ -84,6 +89,43 @@ public sealed class WaveStartSequence
     /// <summary>Says whether the player has started to appear. Before this the player is not on the screen.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS1</c>, <c>JSR PAPPR</c>. Disassembly: <c>$2874</c>.</remarks>
     public bool HasPlayerAppeared() => _clockUnits >= ArcadeClock.ToClockUnits(_playerAppearRomFrames);
+
+    /// <summary>Gets how long ago the player started to appear, in clock units, so that the appear effect takes its first step on the right ROM frame.</summary>
+    /// <returns>The clock units since then. It is less than nothing before the player has started to appear.</returns>
+    public int GetClockUnitsSincePlayerAppeared() => _clockUnits - ArcadeClock.ToClockUnits(_playerAppearRomFrames);
+
+    /// <summary>Says whether the second part of the player's appear has started, which is the strips that lean.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS1A</c>, <c>JSR PDAPPR</c>. Disassembly: <c>$2882</c>.</remarks>
+    public bool HasPlayerDiagonalAppearStarted() => GetClockUnitsSincePlayerDiagonalAppearStarted() >= 0;
+
+    /// <summary>Gets how long ago the second part of the player's appear started, in clock units.</summary>
+    /// <returns>The clock units since then. It is less than nothing before that part has started.</returns>
+    public int GetClockUnitsSincePlayerDiagonalAppearStarted() => _clockUnits - ArcadeClock.ToClockUnits(_playerAppearRomFrames + PlayerAppearNapRomFrames);
+
+    /// <summary>Says whether this is the tick on which the game goes live. The playfield tells the robots on that tick, so that each one can set the time of its first move.</summary>
+    public bool HasJustGoneLive() => _hasJustGoneLive;
+
+    /// <summary>
+    /// Works out how long a robot waits before its first move, counted from the start of the tick on which the game goes live. A robot does not see the game go live at once.
+    /// It looks at intervals, and its looks are counted from when the wave was set up, so the first look that finds the game live can be some frames after it went live.
+    /// Some robots then sleep once more before they move.
+    /// </summary>
+    /// <param name="pollRomFrames">How many ROM frames the robot sleeps between one look and the next.</param>
+    /// <param name="napRomFrames">How many ROM frames the robot sleeps after the look that finds the game live, before its first move.</param>
+    /// <returns>The clock units from the start of this tick to the robot's first move. Call it only on the tick that <see cref="HasJustGoneLive"/> is true.</returns>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRP8.ASM</c> <c>ROBOT</c> (<c>BITA #$7F / BEQ ROB0A / NAP 2,ROBOT</c>, then <c>NAP 10,ROB0</c>), and the same test at the head of <c>HULK</c>, <c>BRAIN</c> and <c>TANK</c>; <c>RRS22.ASM</c> <c>MKPRCV</c> links a new process in straight after the one that made it, so each robot takes its first look on the frame the wave is set up, after the routine that set it up</item>
+    /// <item>Disassembly: the status byte at <c>$59</c></item>
+    /// </list>
+    /// </remarks>
+    public int GetClockUnitsToFirstBeat(int pollRomFrames, int napRomFrames)
+    {
+        int looksBeforeLive = (_liveRomFrames + pollRomFrames - 1) / pollRomFrames;
+        int firstBeatRomFrames = (looksBeforeLive * pollRomFrames) + napRomFrames;
+        int clockUnitsAtStartOfTick = _clockUnits - ArcadeClock.UnitsPerPortTick;
+        return ArcadeClock.ToClockUnits(firstBeatRomFrames) - clockUnitsAtStartOfTick;
+    }
 
     /// <summary>Says whether the game is live: the player can move and fire, things can touch the player, and the robots act.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS2</c>, <c>MAKP LSPROC / MAKP COLCHK / CLR STATUS</c>. Disassembly: <c>$288D</c> to <c>$289A</c>.</remarks>
