@@ -15,6 +15,34 @@ rename. When a constant and a comment would both explain a number, write the con
 
 # Part 1: The standard
 
+## 0. Faithfulness to the arcade
+
+**FID-1. The arcade is the specification.** Where the arcade does something, the port does the same thing: the same
+counts, the same timings, the same order of events, the same random rolls, and the same bugs. "Close enough" is a defect.
+Before you write or change behaviour, read what the arcade does in `ref/original-source` and in `asm/robomame.asm`, and
+write code that does that. If the two sources disagree, or neither says, stop and ask the author; do not guess, and do
+not copy a number forward from a comment, a test or the notes without checking it against the sources (CMT-11).
+
+**FID-2. A timing is counted from the arcade's own event, in the arcade's own unit.** Find the ROM event the count
+starts at (a `NAP`, a `MAKP`, `CLR STATUS`) and start the port's count at the port's version of that event, not at
+whatever moment is handy, such as when an object is made. Count it in ROM frames or beats on the clock-unit timer
+(TIME-1). A loop that counts down from 18 and tests on its first pass takes 17 sleeps, not 18: work the count through.
+
+**FID-3. A test of arcade behaviour pins the arcade's value and says where it comes from.** It names the ROM routine
+and the address, and it checks the tick before as well as the tick of the event, so that being one tick out fails. A
+test that was written to agree with the code proves nothing; when the code is found to differ from the arcade, the
+test is wrong too and is corrected with it.
+
+**FID-4. Anything that is not the arcade says so.** A deliberate departure is marked "do not revert without asking" in
+the code, has a section in `docs/arcade-fidelity-notes.md` that gives the author's reason, and is behind a setting where
+the arcade's behaviour can be had back. A port-only addition (Gorf, the Berzerk robot, eight-digit scores) says it is
+port-only in its summary. A known difference that has not been fixed yet is written in the notes as "still not the
+arcade", so that it is not mistaken for a decision.
+
+**FID-5. Faithfulness comes before tidiness.** If a clean-code rule and the arcade's behaviour pull in different
+directions, keep the behaviour and find another way to make the code clean. A refactor never changes what the game does
+(PROC-3).
+
 ## 1. Vocabulary: one word per concept
 
 The glossary is [glossary.md](glossary.md). It is part of the solution, so code and docs can link to it.

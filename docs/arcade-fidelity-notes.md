@@ -10818,3 +10818,29 @@ An unreadable value in the file now falls back to off. The mute covers every sou
 INTRO2's two text panes (§107) each showed for 3 seconds. The arcade pane ("PRESENTED BY", "DESIGNED BY VID KIDZ", "FOR WILLIAMS ELECTRONICS INC.") now shows for **6 seconds**
 (`AttractTuning.TitleArcadeTextSeconds`) before the port's credit and F-key pane, which keeps its **3** (`TitlePortTextSeconds`). The title's 12-second idle timer is unchanged, so before the attract movie takes over the
 sequence is arcade pane (6 s), port pane (3 s), arcade pane (3 s more). A press of a start key interrupts it at any point. The one `TitleTextSwapSeconds` constant became these two. Not checked on screen.
+
+
+## §141 — WHEN THE GRUNTS' SPEED CHECK FIRST RUNS: 277 FRAMES AFTER THE GAME GOES LIVE (author, 2026-10-04)
+
+**Author:** *"What does the arcade do? I want faithfulness to the arcade. That is a coding rule."* The rule is now **FID-1** in `docs/coding-standards.md`.
+
+This corrects the timing in §31 and §67, which had the first check "at 270" vblanks, counted from when the field is made.
+
+**The arcade's wave start, in ROM frames** (`RRG23.ASM`, `PLS0A` onwards; disassembly `$2869` to `$28D7`). `NAP n` runs the process again `n` dispatches later (`SLEEPV` and `DISP1`, `RRS22.ASM`).
+
+| Frame | What happens | Source |
+|---|---|---|
+| 0 | The wave is set up (`HULKST`, `BRNST`, `TANKST`, `HUMST`, `RINIT`), `STATUS` is `$19` so nothing moves, and `APPEAR` starts | `PLS0A` |
+| N + 43 | The player appears. `APPEAR` starts one robot a frame, runs N + 32 passes for the N robots on the robot list (grunts, hulks, tanks), then `NAP 2` and `NAP 10`. With no robots it is frame 44. On a brain wave it is frame 150 (`NAP 150,PLS1`) | `PLS1` |
+| + 10 | **The game goes live:** `CLR STATUS`, and the laser and collision processes are made. `STATUS` bit 0 holds the player's motion, collision and fire, and the robots wait for `STATUS` to clear (`ROBOT`, `HULK`: `BITA #$7F`) | `PLS2`, `$289A` |
+| + 22 | `GEXEC` starts (`NAP 12,PLS3`, `NAP 10,PLS4`, then `JMP GEXEC` with no more sleeps). It loads 18 into `PD` and clears `SCRFLG` | `$2A85` to `$2A8B` |
+| + 255 | The first check. `DEC PD,U` runs on every pass, the first included, so the 18th pass is 17 sleeps of 15 | `$2ABF` |
+| + 225 | Every check after that: `PD` is reloaded with 15 | `$2AC3` |
+
+So the first check is **277 ROM frames after the game goes live**, on every wave, and a score made in the 22 frames before `GEXEC` starts is forgotten.
+
+**The port, before.** `GruntSpeedProgression` counted 270 ROM frames from when the field was made, start grace included, and never cleared the score flag. Against the arcade the first check was early on every wave.
+
+**The port, now.** The playfield calls `GruntSpeedProgression.Update` only once the game is live (the player's start grace is over), and the class counts `FirstCheckRomFrames` = 22 + 17 x 15 = 277 on the clock-unit accumulator (TIME-1), then 225. At 22 frames it forgets any score, as `CLR SCRFLG` does. `GruntSpeedProgressTests` pins the tick before and the tick of the first check, and has a new test for the forgotten score.
+
+**Still not the arcade: when the game goes live.** The port's start grace is a flat 2 seconds of wall-clock time (`PlayerTuning.PlayerStartGraceSeconds`, from `spec.txt`; TIME-1 already calls it the exception to fix). The arcade goes live N + 53 frames after the wave is set up, and 160 on a brain wave, so wave 1 with its 15 grunts is live after 68 frames (1.36 s), not 2 s. The check now follows whatever that moment is, so it will stay right when the grace is made faithful. **Not checked on screen.**

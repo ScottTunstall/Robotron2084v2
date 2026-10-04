@@ -61,8 +61,8 @@ Not traced.
   (`APPEAR`, at least about 45 frames), `PLS1` and its four naps (32 frames more): about 80 frames or more after the wave starts on
   an ordinary wave, and 182 on a brain wave (`NAP 150,PLS1` and then the same 32). The port counts its 270 frames from when
   the field is made, so against the ROM its first check is early by about 60 frames on an ordinary wave and about 165 on a brain
-  wave. Nothing was changed: the right fix is to start the count when the port's own "wave is playable" moment arrives, and
-  count 255 from there, which is the author's choice of moment.
+  wave. **Fixed the same day** (notes §141): the count now starts when the game goes live and is 277 ROM frames, which is the arcade's
+  22 to reach `GEXEC` and 255 more.
 - **Grunts made mid-wave** (`MidWaveSpawner`, Gorf's drops) start with the wave's starting limit, not the current eased
   one. The ROM has one global limit that every grunt shares and makes no grunts mid-wave, so this is a port-only choice.
   **Decided by the author: it stays. Gorf drops slow grunts, and nothing is to be changed.**
