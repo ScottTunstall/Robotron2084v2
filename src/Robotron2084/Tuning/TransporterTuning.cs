@@ -1,12 +1,12 @@
 ﻿namespace Robotron2084.Tuning;
 
-/// <summary>The tables that drive the brain-wave transporter: which pixels each step touches, in what order, and what colours the sparkle is.</summary>
+/// <summary>The tables that drive the transporter, which beams the robots in at the start of a brain wave: which pixels each step touches, in what order, and what colours the sparkle is. "Transporter" is the arcade's own name for it.</summary>
 /// <remarks>
 /// <list type="bullet">
 /// <item>Original source: <c>RRT2.ASM</c>, <c>GRPTAB</c> and <c>GROUP1</c> to <c>GROUP8</c>, <c>TRNTAB</c> to <c>TABBOT</c>, and <c>GLIT0</c> to <c>GLIT6</c> with <c>GLITAB</c></item>
 /// <item>Disassembly: the transporter's tables at the start of its overlay (<c>RTORG</c>, <c>$4140</c>)</item>
 /// </list>
-/// A picture is cut into eight groups of its pixels. Each step of the sequence turns one group on in its own colours, on with a sparkle,
+/// An animation frame is cut into eight groups of its pixels. Each step of the sequence turns one group on in its own colours, on with a sparkle,
 /// or off. Every group is on in its own colours by the end.
 /// </remarks>
 public static class TransporterTuning
