@@ -30,7 +30,7 @@ public sealed class PlayFieldCollisionTests
         Assert.Equal(EntityLifeState.Dead, laser!.LifeState);
         // Arcade-fidelity: destroying a post scores NOTHING (no SCORE call in
         // PSTKIL / ELECTRODE_COLLISION_HANDLER - notes 11.3).
-        Assert.Equal(0, field.Score.Score); // ScoreValues.Electrode
+        Assert.Equal(0, field.ScoreBoard.Score); // ScoreValues.Electrode
     }
 
     [Fact]
@@ -277,7 +277,7 @@ public sealed class PlayFieldCollisionTests
         // (ROBKON → DMAON), which this port does not model yet.
         Assert.Equal(EntityLifeState.Dead, grunt.LifeState);
         Assert.Equal(EntityLifeState.Dead, laser!.LifeState);
-        Assert.Equal(100, field.Score.Score); // ScoreValues.Grunt
+        Assert.Equal(100, field.ScoreBoard.Score); // ScoreValues.Grunt
         Assert.Single(field.Entities.Explosions);      // the grunt's death visual
     }
 

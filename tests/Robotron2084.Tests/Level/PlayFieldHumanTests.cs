@@ -123,14 +123,14 @@ public sealed class PlayFieldHumanTests
     {
         PlayField field = CreateField(HumanWave(0, 0, 1));
         Human human = field.Entities.Family.Members[0];
-        int scoreBefore = field.Score.Score;
+        int scoreBefore = field.ScoreBoard.Score;
         human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dead, human.LifeState);
         Assert.Equal(1, field.RescuesThisLife);
-        Assert.Equal(scoreBefore + ScoreValues.RescueBonus(1), field.Score.Score);
+        Assert.Equal(scoreBefore + ScoreValues.RescueBonus(1), field.ScoreBoard.Score);
         Assert.Empty(field.Entities.Skulls); // a rescue leaves no skull (ROM: PCFLG path)
     }
 
@@ -143,14 +143,14 @@ public sealed class PlayFieldHumanTests
             human.MoveTo(field.Player.Position);
         }
 
-        int scoreBefore = field.Score.Score;
+        int scoreBefore = field.ScoreBoard.Score;
         field.Update(new GameTime());
 
         // ROM: SAVCNT itself is uncapped (INC SAVCNT); only the score lookup
         // caps at 5 (CMPA #5 / BLS → SVITAB index). Nine rescues in one tick pay
         // 1000, 2000, 3000, 4000, then the 5000 cap five times.
         Assert.Equal(9, field.RescuesThisLife);
-        Assert.Equal(scoreBefore + 10000 + 5 * ScoreValues.RescueBonus(5), field.Score.Score);
+        Assert.Equal(scoreBefore + 10000 + 5 * ScoreValues.RescueBonus(5), field.ScoreBoard.Score);
     }
 
     [Fact]
@@ -194,7 +194,7 @@ public sealed class PlayFieldHumanTests
         }
 
         Human human = field.Entities.Family.Members[0];
-        int scoreBefore = field.Score.Score;
+        int scoreBefore = field.ScoreBoard.Score;
         human.MoveTo(field.Entities.Hulks[0].Position);
 
         field.Update(Frame());
@@ -204,7 +204,7 @@ public sealed class PlayFieldHumanTests
         Assert.Single(field.Entities.Skulls);
         Assert.Equal(human.Position, field.Entities.Skulls[0].Position); // skull at the death spot
         Assert.Equal(0, field.RescuesThisLife);
-        Assert.Equal(scoreBefore, field.Score.Score); // robot kills pay nothing
+        Assert.Equal(scoreBefore, field.ScoreBoard.Score); // robot kills pay nothing
     }
 
     [Fact]
@@ -279,6 +279,6 @@ public sealed class PlayFieldHumanTests
         next.Update(new GameTime());
 
         Assert.Equal(1, next.RescuesThisLife);
-        Assert.Equal(ScoreValues.RescueBonus(1), next.Score.Score);
+        Assert.Equal(ScoreValues.RescueBonus(1), next.ScoreBoard.Score);
     }
 }

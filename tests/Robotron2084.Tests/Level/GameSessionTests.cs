@@ -144,7 +144,7 @@ public class GameSessionTests
         GameSession session = GameSession.CreateNewGame(GameMode.OnePlayer, new FakeInputSource(), settings: settings);
 
         Assert.Equal(5, session.Current.Lives);
-        Assert.Same(settings, session.Settings);
+        Assert.Same(settings, session.GameSettings);
     }
 
     [Fact]

@@ -738,7 +738,7 @@ public sealed class PlayFieldBrainProgMissileTests
         field.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dead, missile.LifeState);
-        Assert.Equal(25, field.Score.Score); // ScoreValues.CruiseMissile
+        Assert.Equal(25, field.ScoreBoard.Score); // ScoreValues.CruiseMissile
     }
 
     [Fact]
@@ -753,7 +753,7 @@ public sealed class PlayFieldBrainProgMissileTests
         Assert.True(field.PlayerLasers.TryFire(new IntVector2(brainSpot.X + 7, brainSpot.Y - 12), Direction8.Down, out PlayerLaser? _));
         field.Update(new GameTime());
         Assert.Equal(EntityLifeState.Dead, brain.LifeState); // BRNKIL: explode, then off — no blink
-        Assert.Equal(500, field.Score.Score);
+        Assert.Equal(500, field.ScoreBoard.Score);
 
         IntVector2 progSpot = new(inner.X + 300, inner.Y + 120);
         var prog = new Prog(TestSprites.Shared, progSpot, HumanKind.Daddy, new Random(10));
@@ -765,7 +765,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // (no Dying pop) and what remains is the ordinary strip explosion of the
         // 12x16 PGXPIC card it swapped in (notes §90).
         Assert.Equal(EntityLifeState.Dead, prog.LifeState);
-        Assert.Equal(600, field.Score.Score); // +100
+        Assert.Equal(600, field.ScoreBoard.Score); // +100
         Assert.Equal(2, field.Entities.Explosions.Count); // the brain's and the prog's
         StripEffect card = field.Entities.Explosions[1];
         Assert.Equal(progSpot.X, card.Position.X);

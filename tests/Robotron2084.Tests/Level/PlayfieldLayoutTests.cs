@@ -32,7 +32,7 @@ public sealed class PlayfieldLayoutTests
     [Fact]
     public void ScoresAndMenRow_IsOnScreen()
     {
-        int row = ArcadeHud.ScoresAndMenRowY(PlayfieldLayout.GetInnerBounds());
+        int row = ArcadeHud.GetScoresAndMenRowY(PlayfieldLayout.GetInnerBounds());
 
         Assert.True(row >= 0, $"the score and spare-men row ({row}) must be on the canvas");
     }

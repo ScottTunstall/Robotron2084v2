@@ -100,7 +100,7 @@ public sealed class PlayFieldSpawnTests
         long minSquared = ScreenSize.ToPortPixels(minSpecPixels) * (long)ScreenSize.ToPortPixels(minSpecPixels);
         foreach (T entity in entities)
         {
-            Assert.True(IntVector2.DistanceSquared(entity.Position, playerStart) > minSquared, $"{typeof(T).Name} spawned too close to the player start");
+            Assert.True(IntVector2.ComputeDistanceSquared(entity.Position, playerStart) > minSquared, $"{typeof(T).Name} spawned too close to the player start");
         }
     }
 
