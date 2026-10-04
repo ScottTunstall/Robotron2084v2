@@ -44,7 +44,6 @@ public sealed class PlayField : ICollisionScene
     private readonly IContactTest _contactTest;
     private readonly MidWaveSpawner _midWave;
     private readonly GamePalette? _palette;
-    private readonly Random _random;
 
     /// <summary>True when a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
     private readonly bool _tankShellBug;
@@ -92,7 +91,6 @@ public sealed class PlayField : ICollisionScene
         _gruntSpeed = new GruntSpeedProgression(parameters.GruntSpeedFloor);
         Input = input;
         Score = new ScoreBoard(startingScore, extraManEveryPoints);
-        _random = random;
         _materialisation = new WaveMaterialisation(random, parameters.BrainCount > 0);
         _palette = palette;
         _contactTest = contactTest ?? new BoxContactTest();
