@@ -47,9 +47,11 @@ namespace Robotron2084.Graphics;
 /// </summary>
 public sealed class TunnelEffect
 {
+    /// <summary><see cref="_left"/> is compared with this to tell whether the tunnel has reached its last ring.</summary>
     internal const int EndLeftColumn = 0x06;
 
     // $0616 — the last ring's top-left
+    /// <summary><see cref="_top"/> is compared with this to tell whether the tunnel has reached its last ring.</summary>
     internal const int EndTopRow = 0x16;
 
     /// <summary>
@@ -65,20 +67,24 @@ public sealed class TunnelEffect
     /// ticks (measured on the sound board, notes §128), so the colour cycling lasts exactly
     /// one phrase and the music finishes as the screen does instead of being cut mid-phrase. This is
     /// the one number in the tunnel taken from measurement rather than the disassembly.
-    /// </summary>
+    ///  <see cref="_clockUnits"/> is compared with this to tell whether it is time for the next pass.</summary>
     internal const int PassClockUnits = 17;
 
-    /// <summary>ROM `LDB #$02 / STB $000E,U` — two rings per task pass.</summary>
+    /// <summary>ROM `LDB #$02 / STB $000E,U` — two rings per task pass. It is the starting value of <see cref="_ringsThisPass"/>, which counts down.</summary>
     internal const int RingsPerPass = 2;
 
+    /// <summary>It is the starting value of <see cref="_bottom"/>.</summary>
     internal const int StartBottomRow = 0x82;
 
     // The walk is kept in the ROM's own SCREEN coordinates (X = column, Y = row; its screen
     // addresses are column*256 + row) so the numbers in the code are the ROM's, and only the
     // drawing maps them onto the port's grid.
+    /// <summary>It is the starting value of <see cref="_left"/>.</summary>
     internal const int StartLeftColumn = 0x3B;   // $3B80
 
+    /// <summary>It is the starting value of <see cref="_right"/>.</summary>
     internal const int StartRightColumn = 0x5A;
+    /// <summary>It is the starting value of <see cref="_top"/>.</summary>
     internal const int StartTopRow = 0x80;
 
     /// <summary>

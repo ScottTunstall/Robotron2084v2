@@ -13,7 +13,7 @@ namespace Robotron2084.Graphics;
 /// </remarks>
 public sealed class WilliamsLogoPath
 {
-    /// <summary>ROM <c>$89B7</c>: the bottom edge's row.</summary>
+    /// <summary>ROM <c>$89B7</c>: the bottom edge's row. It is the value <see cref="Row"/> is set to along the bottom side.</summary>
     private const int BottomRow = 0xCF;
 
     /// <summary>ROM <c>$89DA</c>: each W's colour operand steps down by one in both nibbles.</summary>
@@ -22,31 +22,31 @@ public sealed class WilliamsLogoPath
     /// <summary>ROM <c>$89C5</c>: a step along the top or bottom edge is 16 bytes, 32 arcade pixels.</summary>
     private const int HorizontalStepColumns = 0x10;
 
-    /// <summary>ROM <c>$8987</c>: each lap starts this many bytes further in...</summary>
+    /// <summary>ROM <c>$8987</c>: each lap starts this many bytes further in... It is added to <see cref="_inset"/> each time the path goes round once.</summary>
     private const int LapInsetColumns = 0x02;
 
     /// <summary>ROM <c>$8989</c>: ...for laps until the inset would reach this, when the walk starts over.</summary>
     private const int LapInsetLimit = 0x10;
 
-    /// <summary>ROM <c>$89A5</c>: the left edge's column.</summary>
+    /// <summary>ROM <c>$89A5</c>: the left edge's column. It is the value <see cref="Column"/> is set to along the left side.</summary>
     private const int LeftColumn = 0x05;
 
-    /// <summary>ROM <c>$898F</c>: the column the walk starts over from (the ROM's own value, which is not the left edge).</summary>
+    /// <summary>ROM <c>$898F</c>: the column the walk starts over from (the ROM's own value, which is not the left edge). It is the value <see cref="Column"/> is set to when the path starts a new lap.</summary>
     private const int RestartColumn = 0x15;
 
-    /// <summary>ROM <c>$89C7</c>: the right edge's column; a step that reaches it turns the corner.</summary>
+    /// <summary>ROM <c>$89C7</c>: the right edge's column; a step that reaches it turns the corner. It is the value <see cref="Column"/> is set to along the right side, less <see cref="_inset"/>.</summary>
     private const int RightColumn = 0x85;
 
-    /// <summary>ROM <c>$8970</c>: the side counter is taken modulo this.</summary>
+    /// <summary>ROM <c>$8970</c>: the side counter is taken modulo this. <see cref="_side"/> counts up and goes back to the first side after this many.</summary>
     private const int SideCount = 4;
 
-    /// <summary>ROM <c>$8957</c>: the first W's colour operand, both nibbles the palette slot.</summary>
+    /// <summary>ROM <c>$8957</c>: the first W's colour operand, both nibbles the palette slot. It is the starting value of <see cref="ColorOperand"/>.</summary>
     private const int StartColorOperand = 0x77;
 
-    /// <summary>ROM <c>$894B</c>: the first W's column, in bytes (10 arcade pixels).</summary>
+    /// <summary>ROM <c>$894B</c>: the first W's column, in bytes (10 arcade pixels). It is the starting value of <see cref="Column"/>.</summary>
     private const int StartColumn = 0x05;
 
-    /// <summary>ROM <c>$894B</c>: the first W's row, and the row of the top edge.</summary>
+    /// <summary>ROM <c>$894B</c>: the first W's row, and the row of the top edge. It is the starting value of <see cref="Row"/>.</summary>
     private const int StartRow = 0x0F;
 
     /// <summary>ROM <c>$897D</c>: a step along the left or right edge is 32 rows.</summary>

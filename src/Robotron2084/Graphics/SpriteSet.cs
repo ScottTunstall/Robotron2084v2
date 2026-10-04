@@ -18,37 +18,37 @@ namespace Robotron2084.Graphics;
 /// </summary>
 public sealed class SpriteSet
 {
-    /// <summary>Number of spark (enforcer bullet) frames — SPKP0..3 in the ROM (notes 32).</summary>
+    /// <summary>Number of spark (enforcer bullet) frames — SPKP0..3 in the ROM (notes 32). It is the number of animation frames loaded into <see cref="SparkAnimationFrames"/>.</summary>
     public const int SparkAnimationFrameCount = 4;
 
-    /// <summary>The electrode sprite variants (nine variants of three, see notes §47).</summary>
+    /// <summary>The electrode sprite variants (nine variants of three, see notes §47). It is the number of animation frames loaded into <see cref="ElectrodeAnimationFrames"/>.</summary>
     private const int ElectrodeAnimationFrameCount = 27;
 
-    /// <summary>Animation frames in the enforcer's walk cycle.</summary>
+    /// <summary>Animation frames in the enforcer's walk cycle. It is the number of animation frames loaded into <see cref="EnforcerAnimationFrames"/>.</summary>
     private const int EnforcerAnimationFrameCount = 6;
 
-    /// <summary>Animation frames in the grunt's walk cycle.</summary>
+    /// <summary>Animation frames in the grunt's walk cycle. It is the number of animation frames loaded into <see cref="GruntAnimationFrames"/>.</summary>
     private const int GruntAnimationFrameCount = 3;
 
-    /// <summary>Animation frames in the hulk's walk cycle.</summary>
+    /// <summary>Animation frames in the hulk's walk cycle. It is the number of animation frames loaded into <see cref="HulkAnimationFrames"/>.</summary>
     private const int HulkAnimationFrameCount = 9;
 
-    /// <summary>Animation frames in the player's walk cycle: 4 directions × 3 frames.</summary>
+    /// <summary>Animation frames in the player's walk cycle: 4 directions × 3 frames. It is the number of animation frames loaded into <see cref="PlayerAnimationFrames"/>.</summary>
     private const int PlayerAnimationFrameCount = 12;
 
-    /// <summary>Animation frames in the quark's spin/drop cycle.</summary>
+    /// <summary>Animation frames in the quark's spin/drop cycle. It is the number of animation frames loaded into <see cref="QuarkAnimationFrames"/>.</summary>
     private const int QuarkAnimationFrameCount = 9;
 
-    /// <summary>Glyphs the small font's table carries up to the closing bracket.</summary>
+    /// <summary>Glyphs the small font's table carries up to the closing bracket. It is the number of glyphs loaded into <see cref="FontSmall"/>.</summary>
     private const int SmallFontGlyphCount = 38;
 
-    /// <summary>Animation frames in the spheroid's spin/drop cycle.</summary>
+    /// <summary>Animation frames in the spheroid's spin/drop cycle. It is the number of animation frames loaded into <see cref="SpheroidAnimationFrames"/>.</summary>
     private const int SpheroidAnimationFrameCount = 8;
 
-    /// <summary>Animation frames in the tank's walk cycle.</summary>
+    /// <summary>Animation frames in the tank's walk cycle. It is the number of animation frames loaded into <see cref="TankAnimationFrames"/>.</summary>
     private const int TankAnimationFrameCount = 4;
 
-    /// <summary>Animation frames in one walk cycle of a family member or the brain — 4 directions x 3 frames.</summary>
+    /// <summary>Animation frames in one walk cycle of a family member or the brain — 4 directions x 3 frames. It is the number of animation frames loaded into <see cref="MikeyAnimationFrames"/>, and into the animation frames of the other family members.</summary>
     private const int WalkCycleAnimationFrameCount = 12;
 
     /// <summary>

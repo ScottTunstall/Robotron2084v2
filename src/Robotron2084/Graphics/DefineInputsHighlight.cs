@@ -30,7 +30,7 @@ public sealed class DefineInputsHighlight
     /// <summary>
     /// The presentation page chases through SEVEN entries (notes §106), so the text drawn in one
     /// of them is white for one step in seven — the duty cycle this slot copies.
-    /// </summary>
+    ///  <see cref="_step"/> counts up to this and then goes back to the first step.</summary>
     private const int StepsPerLap = 7;
 
     /// <summary>The chase's WHITE — the presentation page's own flash colour (ROM $8A64).</summary>

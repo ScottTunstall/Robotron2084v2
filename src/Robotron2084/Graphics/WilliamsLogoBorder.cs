@@ -24,28 +24,28 @@ namespace Robotron2084.Graphics;
 /// </remarks>
 public sealed class WilliamsLogoBorder
 {
-    /// <summary>The screen's height in arcade pixels.</summary>
+    /// <summary>The screen's height in arcade pixels. It is multiplied by <see cref="Width"/> to give the size of <see cref="_pixels"/>.</summary>
     public const int Height = HudLayout.ArcadeScreenHeight;
 
-    /// <summary>The screen the W is blitted into, in arcade pixels: the ROM's 304x256.</summary>
+    /// <summary>The screen the W is blitted into, in arcade pixels: the ROM's 304x256. It is multiplied by <see cref="Height"/> to give the size of <see cref="_pixels"/>.</summary>
     public const int Width = HudLayout.ArcadeScreenWidth;
 
-    /// <summary>ROM <c>$87E9</c>: the first phase draws a W every this many ROM frames.</summary>
+    /// <summary>ROM <c>$87E9</c>: the first phase draws a W every this many ROM frames. One less than this is the value <see cref="_sleepRomFrames"/> is set to after each draw, and it then counts down.</summary>
     private const int DrawIntervalRomFrames = 4;
 
-    /// <summary>ROM <c>$8960</c>: a slot's W is at this column until it has drawn one (nothing is there)...</summary>
+    /// <summary>ROM <c>$8960</c>: a slot's W is at this column until it has drawn one (nothing is there)... It is stored in <see cref="_slots"/>, with <see cref="EmptySlotRow"/>, to mark a slot that has no logo in it.</summary>
     private const int EmptySlotColumn = 0x13;
 
-    /// <summary>ROM <c>$8960</c>: ...and at this row.</summary>
+    /// <summary>ROM <c>$8960</c>: ...and at this row. It is stored in <see cref="_slots"/>, with <see cref="EmptySlotColumn"/>, to mark a slot that has no logo in it.</summary>
     private const int EmptySlotRow = 0xAF;
 
-    /// <summary>ROM <c>$87D9</c>: the W's on the screen, and so the slots of the second phase.</summary>
+    /// <summary>ROM <c>$87D9</c>: the W's on the screen, and so the slots of the second phase. It is the size of <see cref="_slots"/>.</summary>
     private const int LogoCount = 28;
 
     /// <summary>ROM <c>$88DB</c>: the second phase moves this many W's each ROM frame.</summary>
     private const int MovesPerRomFrame = 6;
 
-    /// <summary>ROM <c>$88D6</c>: the second phase runs for this many ROM frames (704).</summary>
+    /// <summary>ROM <c>$88D6</c>: the second phase runs for this many ROM frames (704). It is the value <see cref="_movingFramesRemaining"/> is set to when the logos start to move, and it then counts down.</summary>
     private const int MovingRomFrames = 0x02C0;
 
     private readonly SpriteMask _logo;

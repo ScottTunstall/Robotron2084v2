@@ -20,7 +20,7 @@ public sealed class WordmarkAppear
     /// <summary>ROM frames between one letter starting to appear and the next (<c>WDONE0 NAP 8</c>).</summary>
     private const int RomFramesBetweenLetters = 8;
 
-    /// <summary>ROM frames the last letter is left to finish before whatever comes next (<c>NAP $20,LOGG2</c>).</summary>
+    /// <summary>ROM frames the last letter is left to finish before whatever comes next (<c>NAP $20,LOGG2</c>). It is added to the start time of the last letter to decide when <see cref="IsFinished"/> becomes true.</summary>
     private const int RomFramesAfterLastLetter = 0x20;
 
     private readonly StripEffect[] _effects;
