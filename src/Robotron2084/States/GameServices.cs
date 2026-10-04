@@ -17,16 +17,16 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed record GameServices(
     SpriteSet Sprites,
-    HighScoreStore HighScores,
-    ControlSettings Controls,
+    HighScoreStore HighScoreStore,
+    ControlSettings ControlSettings,
     IPlayerInputSource Input,
-    GameSettings Settings)
+    GameSettings GameSettings)
 {
     /// <summary>
     /// Builds the bundle from a game in progress — what the play states do when a game
     /// ends and the machine goes back to the title (the session already carries the
     /// controls and the settings, so nothing has to be threaded through for that).
     /// </summary>
-    public static GameServices CreateFrom(Level.GameSession session, SpriteSet sprites, HighScoreStore highScores, IPlayerInputSource input) =>
-        new(sprites, highScores, session.Controls, input, session.Settings);
+    public static GameServices CreateFrom(Level.GameSession session, SpriteSet sprites, HighScoreStore highScoreStore, IPlayerInputSource input) =>
+        new(sprites, highScoreStore, session.ControlSettings, input, session.GameSettings);
 }

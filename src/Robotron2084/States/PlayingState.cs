@@ -35,11 +35,11 @@ public sealed class PlayingState : IGameState
     private const int WaveCounterWrap = 255;
 
     private readonly LevelParameterGenerator _generator = new();
-    private readonly HighScoreStore _highScores;
+    private readonly HighScoreStore _highScoreStore;
     private readonly PauseToggle _pause = new();
     private readonly Random _random = new();
     private readonly GameSession _session;
-    private readonly GameSettings _settings;
+    private readonly GameSettings _gameSettings;
     private readonly SpriteSet _sprites;
     private PlayField _field;
     private int _playerOutMessageTicks;
@@ -50,12 +50,12 @@ public sealed class PlayingState : IGameState
     private bool _restartHandled;       // one-shot so the death branch fires exactly once
     private int _turnMessageTicks;      // "PLAYER n" at a 2-player turn start (ROM NAP 115)
 
-    public PlayingState(SpriteSet sprites, HighScoreStore highScores, GameSession session)
+    public PlayingState(SpriteSet sprites, HighScoreStore highScoreStore, GameSession session)
     {
         _sprites = sprites;
-        _highScores = highScores;
+        _highScoreStore = highScoreStore;
         _session = session;
-        _settings = session.Settings;
+        _gameSettings = session.GameSettings;
         _field = BuildField();
         AnnounceTurn();
     }
@@ -75,13 +75,13 @@ public sealed class PlayingState : IGameState
     /// </param>
     /// <param name="mode">How many people are playing, and whether two of them take turns.</param>
     /// <param name="sprites">The sprite set that everything is drawn with.</param>
-    /// <param name="highScores">The high score table, which is offered the scores when the game ends.</param>
-    public static PlayingState CreateNewGame(ControlSettings controls, GameSettings settings, GameMode mode, SpriteSet sprites, HighScoreStore highScores)
+    /// <param name="highScoreStore">The high score table, which is offered the scores when the game ends.</param>
+    public static PlayingState CreateNewGame(ControlSettings controls, GameSettings settings, GameMode mode, SpriteSet sprites, HighScoreStore highScoreStore)
     {
         var playerOne = new BoundPlayerInputSource(controls, 0);
         var playerTwo = new BoundPlayerInputSource(controls, 1);
         Sound.Play(StartSoundFor(mode));
-        return new PlayingState(sprites, highScores, GameSession.CreateNewGame(mode, playerOne, playerTwo, controls, settings));
+        return new PlayingState(sprites, highScoreStore, GameSession.CreateNewGame(mode, playerOne, playerTwo, controls, settings));
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -129,7 +129,7 @@ public sealed class PlayingState : IGameState
         // The port's PAUSE (notes §101) — port-only, the arcade has none. The field is
         // frozen but the toggle still polls, or the key that paused could never unpause.
         InputSnapshot snapshot = InputSnapshot.Read();
-        _pause.Tick(_session.Controls.PauseHeld(snapshot.Keys, snapshot.PadOne, snapshot.PadTwo));
+        _pause.Tick(_session.ControlSettings.IsPauseHeld(snapshot.Keys, snapshot.PadOne, snapshot.PadTwo));
         if (_pause.IsPaused)
         {
             return;
@@ -184,21 +184,21 @@ public sealed class PlayingState : IGameState
     /// </remarks>
     private LevelParameters GetWaveToPlay(PlayerSlot slot)
     {
-        if (slot.SavedWave is { } saved)
+        if (slot.SavedWaveParameters is { } saved)
         {
             return ApplyBozoMode(saved, slot);
         }
 
         // Bozo mercy first, then the difficulty adjustment — the ROM's own order ($2B26 before $2B7C).
         LevelParameters parameters = ApplyBozoMode(_generator.Generate(slot.Wave), slot);
-        return DifficultyTuning.Apply(parameters, _settings.Difficulty, slot.Lives);
+        return DifficultyTuning.Apply(parameters, _gameSettings.Difficulty, slot.Lives);
     }
 
     /// <summary>Eases the wave for a player losing ships early, unless BOZO MODE is switched off on the GAME ADJUSTMENT page.</summary>
     /// <param name="parameters">The wave's parameters.</param>
     /// <param name="slot">The player whose turn it is.</param>
     private LevelParameters ApplyBozoMode(LevelParameters parameters, PlayerSlot slot) =>
-        _settings.BozoModeEnabled ? BozoMode.Apply(parameters, slot.SpareMen, _settings.TurnsPerPlayer) : parameters;
+        _gameSettings.BozoModeEnabled ? BozoMode.Apply(parameters, slot.SpareMen, _gameSettings.TurnsPerPlayer) : parameters;
 
     /// <summary>
     /// ROM RRG23 PLS0D: at the start of every 2-player turn the ROM prints
@@ -235,9 +235,9 @@ public sealed class PlayingState : IGameState
             slot.Score,
             _sprites.Blitter.Palette,
             contactTest: new PixelContactTest(new SpriteCollision()),
-            extraManEveryPoints: _settings.ExtraManEveryPoints,
-            tankShellBug: _settings.TankShellBug,
-            brainsChaseMikeyBug: _settings.BrainsChaseMikeyBug);
+            extraManEveryPoints: _gameSettings.ExtraManEveryPoints,
+            tankShellBugEnabled: _gameSettings.TankShellBugEnabled,
+            brainsChaseMikeyBugEnabled: _gameSettings.BrainsChaseMikeyBugEnabled);
     }
 
     /// <summary>
@@ -247,9 +247,9 @@ public sealed class PlayingState : IGameState
     /// </summary>
     private void HandlePlayerDeath(GameStateManager manager)
     {
-        PlayerSlot dead = _session.Current;
+        PlayerSlot deadPlayerSlot = _session.Current;
         SyncSlotFromField();
-        dead.SavedWave = WaveSurvivors.GetFrom(_field);
+        deadPlayerSlot.SavedWaveParameters = WaveSurvivors.GetFrom(_field);
 
         if (_session.IsTwoPlayer)
         {
@@ -262,15 +262,15 @@ public sealed class PlayingState : IGameState
             // The score that ends the game is the CURRENT player's — but a 2-player
             // game offers both scores to the high-score table (RRTESTC checks
             // ZP1SCR and ZP2SCR), so the session hands over all of them.
-            manager.TransitionTo(GameOverState.CreateFromSession(_session.Current.Input, _sprites, _highScores, _session));
+            manager.TransitionTo(GameOverState.CreateFromSession(_session.Current.Input, _sprites, _highScoreStore, _session));
             return;
         }
 
-        if (!dead.HasMen && _session.IsTwoPlayer)
+        if (!deadPlayerSlot.HasMen && _session.IsTwoPlayer)
         {
             // ROM PLEND3: this player is out and the other still has men — print
             // "PLAYER n GAME OVER" and wait NAP $60 before the turn passes.
-            _playerOutNumber = dead.Number;
+            _playerOutNumber = deadPlayerSlot.Number;
             _playerOutMessageTicks = ArcadeClock.ToPortTicks(ScreenTuning.PlayerGameOverMessageRomFrames);
         }
 
@@ -291,9 +291,9 @@ public sealed class PlayingState : IGameState
 
         // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
         slot.Wave = (slot.Wave % WaveCounterWrap) + 1;
-        slot.SavedWave = null;
+        slot.SavedWaveParameters = null;
 
-        manager.TransitionTo(new WaveClearState(_sprites, _highScores, _session));
+        manager.TransitionTo(new WaveClearState(_sprites, _highScoreStore, _session));
     }
 
     /// <summary>Copies the live field's counters back into the current player's slot.</summary>

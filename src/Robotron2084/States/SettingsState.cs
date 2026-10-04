@@ -70,22 +70,22 @@ public sealed class SettingsState : IGameState
     private const int ValueColumn = 340;
 
     private readonly DefineInputsHighlight _highlight = new();
-    private readonly HighScoreStore _highScores;
+    private readonly HighScoreStore _highScoreStore;
     private readonly SettingsModel _model = new();
     private readonly GameServices _services;
-    private readonly GameSettings _settings;
+    private readonly GameSettings _gameSettings;
     private readonly SpriteSet _sprites;
-    private readonly GameSettingsStore _store;
-    private InputSnapshot _previous;
+    private readonly GameSettingsStore _gameSettingsStore;
+    private InputSnapshot _previousSnapshot;
 
     public SettingsState(GameServices services, GameSettingsStore settingsStore)
     {
         _services = services;
         _sprites = services.Sprites;
-        _settings = services.Settings;
-        _highScores = services.HighScores;
-        _store = settingsStore;
-        _previous = InputSnapshot.Read();
+        _gameSettings = services.GameSettings;
+        _highScoreStore = services.HighScoreStore;
+        _gameSettingsStore = settingsStore;
+        _previousSnapshot = InputSnapshot.Read();
         RestorePalette();
 
         if (_sprites.Blitter.Palette is { } palette)
@@ -117,44 +117,44 @@ public sealed class SettingsState : IGameState
 
         InputSnapshot now = InputSnapshot.Read();
 
-        if (Pressed(now, Keys.Up, Buttons.DPadUp))
+        if (WasPressed(now, Keys.Up, Buttons.DPadUp))
         {
             _model.MoveUp();
         }
 
-        if (Pressed(now, Keys.Down, Buttons.DPadDown))
+        if (WasPressed(now, Keys.Down, Buttons.DPadDown))
         {
             _model.MoveDown();
         }
 
-        if (Pressed(now, Keys.Left, Buttons.DPadLeft))
+        if (WasPressed(now, Keys.Left, Buttons.DPadLeft))
         {
             Change(-1);
         }
 
-        if (Pressed(now, Keys.Right, Buttons.DPadRight))
+        if (WasPressed(now, Keys.Right, Buttons.DPadRight))
         {
             Change(1);
         }
 
-        if (Pressed(now, Keys.Enter, Buttons.A))
+        if (WasPressed(now, Keys.Enter, Buttons.A))
         {
             Activate();
         }
 
-        if (KeyboardPressed(now, Keys.F10))
+        if (WasKeyboardPressed(now, Keys.F10))
         {
-            _store.Save(_settings);
+            _gameSettingsStore.Save(_gameSettings);
             manager.TransitionTo(new TitleScreenState(_services));
         }
 
-        _previous = now;
+        _previousSnapshot = now;
     }
 
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
-    private int GetCenteredX(string text, bool large = false)
+    private int GetCenteredX(string text, bool isLarge = false)
     {
-        int width = ScreenSize.ToPortPixels(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
+        int width = ScreenSize.ToPortPixels(isLarge ? _sprites.TextRenderer.MeasureLargeText(text) : _sprites.TextRenderer.MeasureSmallText(text));
         return (ScreenSize.Width - width) / 2;
     }
 
@@ -163,11 +163,11 @@ public sealed class SettingsState : IGameState
     /// font's "->" glyph at column $0C on the row the move lever is on, in palette entry 9.
     /// </summary>
     private void DrawCursor(SpriteBatch spriteBatch, int y) =>
-        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrow, CursorColumn, y, HeadingSlot);
+        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingSlot);
 
     /// <summary>The heading: the arcade's LARGE font, centred, in the page's WHITE.</summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y) =>
-        _sprites.Text.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, large: true), y, HeadingSlot);
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, isLarge: true), y, HeadingSlot);
 
     /// <summary>An instruction line under the list: the SMALL font, centred, in the page's WHITE.</summary>
     private void DrawInstruction(SpriteBatch spriteBatch, string text, int y) =>
@@ -187,9 +187,9 @@ public sealed class SettingsState : IGameState
 
         int labelSlot = _model.Line == line ? DefineInputsHighlight.Slot : InputSlot;
         DrawText(spriteBatch, SettingsModel.GetLabel(line), LabelColumn, y, labelSlot);
-        DrawText(spriteBatch, _model.GetValue(_settings, line), ValueColumn, y, InputSlot);
+        DrawText(spriteBatch, _model.GetValue(_gameSettings, line), ValueColumn, y, InputSlot);
 
-        string note = SettingsModel.IsActionLine(line) ? _model.GetActionHint(line) : SettingsModel.GetNote(_settings, line);
+        string note = SettingsModel.IsActionLine(line) ? _model.GetActionHint(line) : SettingsModel.GetNote(_gameSettings, line);
         if (note.Length > 0)
         {
             DrawText(spriteBatch, note, NoteColumn, y, HeadingSlot);
@@ -197,36 +197,36 @@ public sealed class SettingsState : IGameState
     }
 
     private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int slot) =>
-        _sprites.Text.DrawSmallFontText(spriteBatch, text, x, y, slot);
+        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, slot);
 
-    private bool KeyboardPressed(InputSnapshot now, Keys key) =>
-        now.Keys.IsKeyDown(key) && !_previous.Keys.IsKeyDown(key);
+    private bool WasKeyboardPressed(InputSnapshot now, Keys key) =>
+        now.Keys.IsKeyDown(key) && !_previousSnapshot.Keys.IsKeyDown(key);
 
     /// <summary>True on the tick the key or the pad button (either pad) goes down.</summary>
-    private bool Pressed(InputSnapshot now, Keys key, Buttons button) =>
-        KeyboardPressed(now, key) || PadPressed(now, button);
+    private bool WasPressed(InputSnapshot now, Keys key, Buttons button) =>
+        WasKeyboardPressed(now, key) || WasPadPressed(now, button);
 
-    private bool PadPressed(InputSnapshot now, Buttons button) =>
-        (now.PadOne.IsButtonDown(button) && !_previous.PadOne.IsButtonDown(button))
-        || (now.PadTwo.IsButtonDown(button) && !_previous.PadTwo.IsButtonDown(button));
+    private bool WasPadPressed(InputSnapshot now, Buttons button) =>
+        (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
+        || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
 
     /// <summary>Steps the highlighted row, writing the change straight to the file.</summary>
     private void Change(int direction)
     {
-        _model.Change(_settings, direction);
-        _store.Save(_settings);
+        _model.Change(_gameSettings, direction);
+        _gameSettingsStore.Save(_gameSettings);
     }
 
     /// <summary>Performs the highlighted action row, if it reads YES.</summary>
     private void Activate()
     {
-        switch (_model.Activate(_settings))
+        switch (_model.Activate(_gameSettings))
         {
             case SettingsAction.RestoreFactorySettings:
-                _store.Save(_settings);
+                _gameSettingsStore.Save(_gameSettings);
                 break;
             case SettingsAction.ResetHighScores:
-                _highScores.Save(HighScoreTable.CreateWithFactoryScores());
+                _highScoreStore.Save(HighScoreTable.CreateWithFactoryScores());
                 break;
         }
     }
@@ -244,7 +244,7 @@ public sealed class SettingsState : IGameState
 
         foreach (int slot in OwnedSlots)
         {
-            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
+            palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
         }
     }
 }

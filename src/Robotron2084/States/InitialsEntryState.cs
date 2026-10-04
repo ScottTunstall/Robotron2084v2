@@ -59,20 +59,20 @@ public sealed class InitialsEntryState : IGameState
         }
 
         SubmitResult result = _ceremony.Submit(_score, _entry.GetInitials());
-        manager.TransitionTo(result.EntriesMaximum
+        manager.TransitionTo(result.ReachedEntriesMaximum
             ? new EntriesMaximumState(_services, _ceremony)
             : _ceremony.NextScreen());
     }
 
     private void DrawCell(SpriteBatch spriteBatch, int cell, int x)
     {
-        if (cell == _entry.Position && _entry.PreviewIsRub)
+        if (cell == _entry.LetterIndex && _entry.PreviewIsRub)
         {
-            _sprites.Text.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
+            _sprites.TextRenderer.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
             return;
         }
 
-        _sprites.Text.DrawLargeFontText(spriteBatch, _entry.GetInitials()[cell].ToString(), x, InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, _entry.GetInitials()[cell].ToString(), x, InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
     }
 
     /// <summary>
@@ -90,7 +90,7 @@ public sealed class InitialsEntryState : IGameState
     }
 
     private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row) =>
-            _sprites.Text.DrawLargeFontText(spriteBatch, text, HudLayout.ToPortColumnX(column), HudLayout.ToPortY(row), InitialsEntryLayout.InkSlot);
+            _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, HudLayout.ToPortColumnX(column), HudLayout.ToPortY(row), InitialsEntryLayout.InkSlot);
 
     /// <summary>G0SUB's "frob" marker: a two-pixel dash one row of the arcade below its cell.</summary>
     private void DrawMarker(SpriteBatch spriteBatch, int x) =>
@@ -110,7 +110,7 @@ public sealed class InitialsEntryState : IGameState
     }
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int column, int row) =>
-            _sprites.Text.DrawSmallFontText(spriteBatch, text, HudLayout.ToPortColumnX(column), HudLayout.ToPortY(row), InitialsEntryLayout.InstructionSlot);
+            _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, HudLayout.ToPortColumnX(column), HudLayout.ToPortY(row), InitialsEntryLayout.InstructionSlot);
 
     /// <summary>
     /// The two entries the page draws with, put back on their CRTAB values: the screen it follows may
@@ -124,7 +124,7 @@ public sealed class InitialsEntryState : IGameState
             return;
         }
 
-        palette.SetSlot(InitialsEntryLayout.InkSlot, GamePalette.DefaultSlots[InitialsEntryLayout.InkSlot]);
-        palette.SetSlot(InitialsEntryLayout.InstructionSlot, GamePalette.DefaultSlots[InitialsEntryLayout.InstructionSlot]);
+        palette.SetSlot(InitialsEntryLayout.InkSlot, GamePalette.DefaultSlotValues[InitialsEntryLayout.InkSlot]);
+        palette.SetSlot(InitialsEntryLayout.InstructionSlot, GamePalette.DefaultSlotValues[InitialsEntryLayout.InstructionSlot]);
     }
 }

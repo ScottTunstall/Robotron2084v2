@@ -115,13 +115,13 @@ public sealed class TitleScreenState : IGameState, IAttractState
         "F10 DEFINE INPUTS",
     ];
 
-    private readonly WilliamsLogoBorder _border;
+    private readonly WilliamsLogoBorder _logoBorder;
     private readonly WordmarkAppear _wordmark;
     private readonly ButtonEdgeDetector _buttons = new();
-    private readonly PresentationPagePalette _colour = new();
-    private readonly ControlSettings _controls;
-    private readonly HighScoreStore _highScores;
-    private readonly GameSettings _settings;
+    private readonly PresentationPagePalette _pagePalette = new();
+    private readonly ControlSettings _controlSettings;
+    private readonly HighScoreStore _highScoreStore;
+    private readonly GameSettings _gameSettings;
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(AttractTuning.TitleIdleSeconds);
     private readonly IPlayerInputSource _input;
     private readonly GameServices _services;
@@ -130,7 +130,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private readonly TimeSpan _portTextDuration = TimeSpan.FromSeconds(AttractTuning.TitlePortTextSeconds);
 
     /// <summary>True while the ARCADE's text pane is up; it alternates with the port's (notes §107).</summary>
-    private bool _arcadeText = true;
+    private bool _isShowingArcadeText = true;
 
     private TimeSpan _idleElapsed;
     private TimeSpan _textElapsed;
@@ -140,14 +140,14 @@ public sealed class TitleScreenState : IGameState, IAttractState
         _services = services;
         _input = services.Input;
         _sprites = services.Sprites;
-        _highScores = services.HighScores;
-        _controls = services.Controls;
-        _settings = services.Settings;
-        _border = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_sprites.WilliamsLogo));
+        _highScoreStore = services.HighScoreStore;
+        _controlSettings = services.ControlSettings;
+        _gameSettings = services.GameSettings;
+        _logoBorder = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_sprites.WilliamsLogoSprite));
         _wordmark = WordmarkAppear.CreateFromMasks(
-            _sprites.TitleWordmarkRim,
-            _sprites.TitleWordmarkCore,
-            new Point((ScreenSize.Width - (_sprites.TitleWordmarkRim.Width * ScreenSize.SpecScale)) / 2, WordmarkRow));
+            _sprites.TitleWordmarkRimSprite,
+            _sprites.TitleWordmarkCoreSprite,
+            new Point((ScreenSize.Width - (_sprites.TitleWordmarkRimSprite.Width * ScreenSize.SpecScale)) / 2, WordmarkRow));
 
         // The presentation page runs its OWN decoded colour set (notes §106): entries 1-7 come
         // from the ROM's seven-byte table ($8A70) with a white flash chasing through them every
@@ -155,7 +155,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // and white", which is what this chase does (notes §106).
         if (_sprites.Blitter.Palette is { } palette)
         {
-            _colour.Start(palette);
+            _pagePalette.Start(palette);
         }
     }
 
@@ -166,7 +166,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // 25-character lines) and the credit strings. The arcade's "CREDITS: n" line is not drawn,
         // because the port has no credits, and neither the playfield wall nor the score/men belong to
         // this page: the cabinet's other attract page carries those.
-        _border.Draw(spriteBatch, _sprites.Blitter);
+        _logoBorder.Draw(spriteBatch, _sprites.Blitter);
 
         // The two logos, traced from an arcade screenshot (notes §103.4) — the R5 CPU
         // ROM we hold has no attract wordmark (§103.2). The wordmark's masks are drawn in the two
@@ -174,17 +174,17 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
         // body on a yellow rim. The "2084" mark keeps its traced colours. Both at the port's 2x
         // sprite scale.
-        _wordmark.Draw(spriteBatch, _sprites.Blitter, _colour.WordmarkRimSlot, _colour.WordmarkColorSlot);
+        _wordmark.Draw(spriteBatch, _sprites.Blitter, _pagePalette.WordmarkRimSlot, _pagePalette.WordmarkColorSlot);
         if (_wordmark.IsFinished)
         {
-            DrawCentredLogo(spriteBatch, _sprites.Title2084, Logo2084Row);
+            DrawCentredLogo(spriteBatch, _sprites.Title2084Sprite, Logo2084Row);
         }
 
         // The page's text: ONE of its two panes, alternating (the arcade pane for TitleArcadeTextSeconds, the port's for TitlePortTextSeconds)
         // (notes §107). Both are drawn in the page's own text slot — the ROM's operand `$66`, entry
         // 6, ORANGE with the white flash sweeping through it (notes §106) — so the port's credit
         // and the shortcut keys flash with the arcade's own lines.
-        if (_arcadeText)
+        if (_isShowingArcadeText)
         {
             DrawArcadeText(spriteBatch);
         }
@@ -198,10 +198,10 @@ public sealed class TitleScreenState : IGameState, IAttractState
     {
         if (_sprites.Blitter.Palette is { } live)
         {
-            _colour.Update(live);
+            _pagePalette.Update(live);
         }
 
-        _border.Tick();
+        _logoBorder.Tick();
         _wordmark.Update();
 
         PlayerInputState input = _input.Poll();
@@ -215,7 +215,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         if (ChooseMode(_buttons.Advance(input)) is { } chosen)
         {
             StopColours();
-            manager.TransitionTo(PlayingState.CreateNewGame(_controls, _settings, chosen, _sprites, _highScores));
+            manager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _sprites, _highScoreStore));
             return;
         }
 
@@ -233,10 +233,10 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // credit and F-key menu. Nothing else on the page changes with them — the logos and the
         // colour cycling carry on regardless.
         _textElapsed += gameTime.ElapsedGameTime;
-        if (_textElapsed >= (_arcadeText ? _arcadeTextDuration : _portTextDuration))
+        if (_textElapsed >= (_isShowingArcadeText ? _arcadeTextDuration : _portTextDuration))
         {
             _textElapsed = TimeSpan.Zero;
-            _arcadeText = !_arcadeText;
+            _isShowingArcadeText = !_isShowingArcadeText;
         }
 
         // The port's old "top ten" swap lived here; the arcade's table is its
@@ -259,17 +259,17 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// <summary>The game mode this tick's presses start, if any: START 1 or fire for one player, START 2 for two.</summary>
     private static GameMode? ChooseMode(ButtonPresses presses)
     {
-        if (presses.StartOnePlayer)
+        if (presses.StartOnePlayerPressed)
         {
             return GameMode.OnePlayer;
         }
 
-        if (presses.StartTwoPlayers)
+        if (presses.StartTwoPlayersPressed)
         {
             return GameMode.TwoPlayerAlternate;
         }
 
-        return presses.Fire ? GameMode.OnePlayer : null;
+        return presses.FirePressed ? GameMode.OnePlayer : null;
     }
 
     /// <summary>
@@ -277,9 +277,9 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// (<see cref="ArcadeText.MeasureSmallText"/>/<see cref="ArcadeText.MeasureLargeText"/>) — the two
     /// fonts advance differently, so a fixed per-character width would mis-centre one of them.
     /// </summary>
-    private int GetCenteredX(string text, bool large)
+    private int GetCenteredX(string text, bool isLarge)
     {
-        int width = ScreenSize.ToPortPixels(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
+        int width = ScreenSize.ToPortPixels(isLarge ? _sprites.TextRenderer.MeasureLargeText(text) : _sprites.TextRenderer.MeasureSmallText(text));
         return (ScreenSize.Width - width) / 2;
     }
 
@@ -300,10 +300,10 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     /// <summary>Centres a large-font line horizontally and prints it in one slot.</summary>
     private void DrawCenteredLargeText(SpriteBatch spriteBatch, string text, int y, int slot) =>
-        _sprites.Text.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, large: true), y, slot);
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, isLarge: true), y, slot);
 
     private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int slot) =>
-            _sprites.Text.DrawSmallFontText(spriteBatch, text, GetCenteredX(text, large: false), y, slot);
+            _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, GetCenteredX(text, isLarge: false), y, slot);
 
     /// <summary>Centres one traced logo horizontally, at the port's 2x sprite scale.</summary>
     private void DrawCentredLogo(SpriteBatch spriteBatch, Texture2D texture, int y)
@@ -340,7 +340,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     {
         if (_sprites.Blitter.Palette is { } palette)
         {
-            _colour.Stop(palette);
+            _pagePalette.Stop(palette);
         }
     }
 }

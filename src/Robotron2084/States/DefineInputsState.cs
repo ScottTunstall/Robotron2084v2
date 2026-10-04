@@ -90,21 +90,21 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private static readonly int[] OwnedSlots = [InputSlot, SeparatorSlot, HeadingSlot];
 
-    private readonly ControlSettingsStore _controlStore;
+    private readonly ControlSettingsStore _controlSettingsStore;
     private readonly DefineInputsHighlight _highlight = new();
     private readonly DefineInputsModel _model = new();
     private readonly GameServices _services;
-    private readonly ControlSettings _settings;
+    private readonly ControlSettings _controlSettings;
     private readonly SpriteSet _sprites;
-    private InputSnapshot _previous;
+    private InputSnapshot _previousSnapshot;
 
-    public DefineInputsState(GameServices services, ControlSettingsStore controlStore)
+    public DefineInputsState(GameServices services, ControlSettingsStore controlSettingsStore)
     {
         _services = services;
         _sprites = services.Sprites;
-        _settings = services.Controls;
-        _controlStore = controlStore;
-        _previous = InputSnapshot.Read();
+        _controlSettings = services.ControlSettings;
+        _controlSettingsStore = controlSettingsStore;
+        _previousSnapshot = InputSnapshot.Read();
         RestorePalette();
 
         if (_sprites.Blitter.Palette is { } palette)
@@ -147,7 +147,7 @@ public sealed class DefineInputsState : IGameState
             Navigate(now, manager);
         }
 
-        _previous = now;
+        _previousSnapshot = now;
     }
 
     /// <summary>
@@ -165,29 +165,29 @@ public sealed class DefineInputsState : IGameState
     }
 
     private ActionBinding GetBinding(int line) => line == DefineInputsModel.PauseLine
-            ? new ActionBinding(_settings.Pause, InputBinding.None)
-            : _settings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.GetAction(line)!.Value];
+            ? new ActionBinding(_controlSettings.Pause, InputBinding.None)
+            : _controlSettings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.GetAction(line)!.Value];
 
     /// <summary>The armed half of the page: the next input pressed becomes the binding.</summary>
     private void CaptureInput(InputSnapshot now)
     {
-        if (KeyboardPressed(now, Keys.Back) || PadPressed(now, Buttons.B))
+        if (WasKeyboardPressed(now, Keys.Back) || WasPadPressed(now, Buttons.B))
         {
             _model.CancelArm();
             return;
         }
 
-        InputBinding captured = ControlCapture.GetNewlyPressed(_previous, now);
-        if (captured.Kind != InputBindingKind.None && _model.Assign(_settings, captured))
+        InputBinding captured = ControlCapture.GetNewlyPressed(_previousSnapshot, now);
+        if (captured.Kind != InputBindingKind.None && _model.Assign(_controlSettings, captured))
         {
-            _controlStore.Save(_settings);
+            _controlSettingsStore.Save(_controlSettings);
         }
     }
 
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
-    private int GetCenteredX(string text, bool large = false)
+    private int GetCenteredX(string text, bool isLarge = false)
     {
-        int width = ScreenSize.ToPortPixels(large ? _sprites.Text.MeasureLargeText(text) : _sprites.Text.MeasureSmallText(text));
+        int width = ScreenSize.ToPortPixels(isLarge ? _sprites.TextRenderer.MeasureLargeText(text) : _sprites.TextRenderer.MeasureSmallText(text));
         return (ScreenSize.Width - width) / 2;
     }
 
@@ -198,13 +198,13 @@ public sealed class DefineInputsState : IGameState
     /// this page's WHITE — the arcade's `04 99` sets exactly that colour before printing the cursor.
     /// </summary>
     private void DrawCursor(SpriteBatch spriteBatch, int y) =>
-        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrow, CursorColumn, y, HeadingSlot);
+        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingSlot);
 
     /// <summary>
     /// The heading: the arcade's LARGE font, centred, in the page's WHITE.
     /// </summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y) =>
-        _sprites.Text.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, large: true), y, HeadingSlot);
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, isLarge: true), y, HeadingSlot);
 
     /// <summary>
     /// An instruction line under the list: the arcade's SMALL font, centred, in the page's WHITE
@@ -231,80 +231,80 @@ public sealed class DefineInputsState : IGameState
 
         // The arrow hides itself while armed (IsCursorOn): the next input pressed becomes the
         // binding rather than moving the cursor, so the armed line is identified by its prompt.
-        bool armed = _model.IsArmed && _model.Line == line;
+        bool isArmed = _model.IsArmed && _model.Line == line;
 
         // The selected line's label is the page's one cycling thing (notes §115): it strobes in the
         // highlight's slot — while armed as well — and the line's value stays on the page's green.
         int labelSlot = _model.Line == line ? DefineInputsHighlight.Slot : InputSlot;
         DrawText(spriteBatch, GetLabel(line), LabelColumn, y, labelSlot);
-        DrawValue(spriteBatch, line, armed, InputSlot, y);
+        DrawValue(spriteBatch, line, isArmed, InputSlot, y);
     }
 
     private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int slot) =>
-            _sprites.Text.DrawSmallFontText(spriteBatch, text, x, y, slot);
+            _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, slot);
 
     /// <summary>
     /// The value column: the keyboard binding, then the word OR in its own colour when the line
     /// has both devices, then the gamepad binding — or the armed prompt, or NONE.
     /// </summary>
-    private void DrawValue(SpriteBatch spriteBatch, int line, bool armed, int slot, int y)
+    private void DrawValue(SpriteBatch spriteBatch, int line, bool isArmed, int slot, int y)
     {
-        if (armed)
+        if (isArmed)
         {
             DrawText(spriteBatch, ArmedPrompt, ValueColumn, y, slot);
             return;
         }
 
         ActionBinding binding = GetBinding(line);
-        bool key = binding.Key.Kind != InputBindingKind.None;
-        bool pad = binding.Pad.Kind != InputBindingKind.None;
+        bool hasKeyBinding = binding.KeyBinding.Kind != InputBindingKind.None;
+        bool hasPadBinding = binding.PadBinding.Kind != InputBindingKind.None;
 
-        if (!key && !pad)
+        if (!hasKeyBinding && !hasPadBinding)
         {
             DrawText(spriteBatch, "NONE", ValueColumn, y, slot);
             return;
         }
 
         int x = ValueColumn;
-        if (key)
+        if (hasKeyBinding)
         {
-            x = DrawText(spriteBatch, binding.Key.GetDisplayName(), x, y, slot);
+            x = DrawText(spriteBatch, binding.KeyBinding.GetDisplayName(), x, y, slot);
         }
 
-        if (key && pad)
+        if (hasKeyBinding && hasPadBinding)
         {
             x = DrawText(spriteBatch, " OR ", x, y, SeparatorSlot);
         }
 
-        if (pad)
+        if (hasPadBinding)
         {
-            DrawText(spriteBatch, binding.Pad.GetDisplayName(), x, y, slot);
+            DrawText(spriteBatch, binding.PadBinding.GetDisplayName(), x, y, slot);
         }
     }
 
-    private bool KeyboardPressed(InputSnapshot now, Keys key) =>
-            now.Keys.IsKeyDown(key) && !_previous.Keys.IsKeyDown(key);
+    private bool WasKeyboardPressed(InputSnapshot now, Keys key) =>
+            now.Keys.IsKeyDown(key) && !_previousSnapshot.Keys.IsKeyDown(key);
 
     /// <summary>The idle half: scrolling, arming, clearing, defaults, and leaving.</summary>
     private void Navigate(InputSnapshot now, GameStateManager manager)
     {
         ScrollOrArm(now);
 
-        if (KeyboardPressed(now, Keys.Delete) || PadPressed(now, Buttons.X))
+        if (WasKeyboardPressed(now, Keys.Delete) || WasPadPressed(now, Buttons.X))
         {
-            _model.ClearHighlighted(_settings);
-            _controlStore.Save(_settings);
+            _model.ClearHighlighted(_controlSettings);
+            _controlSettingsStore.Save(_controlSettings);
         }
 
-        if (KeyboardPressed(now, Keys.R))
+        if (WasKeyboardPressed(now, Keys.R))
         {
-            _model.ResetAll(_settings);
-            _controlStore.Save(_settings);
+            _model.ResetAll(_controlSettings);
+            _controlSettingsStore.Save(_controlSettings);
         }
 
-        if (KeyboardPressed(now, Keys.F10))
+        if (WasKeyboardPressed(now, Keys.F10))
         {
-            _controlStore.Save(_settings);
+            _controlSettingsStore.Save(_controlSettings);
             manager.TransitionTo(new TitleScreenState(_services));
         }
     }
@@ -312,25 +312,25 @@ public sealed class DefineInputsState : IGameState
     /// <summary>Moves the highlight up or down, or arms the highlighted row for a new binding.</summary>
     private void ScrollOrArm(InputSnapshot now)
     {
-        if (KeyboardPressed(now, Keys.Up) || PadPressed(now, Buttons.DPadUp))
+        if (WasKeyboardPressed(now, Keys.Up) || WasPadPressed(now, Buttons.DPadUp))
         {
             _model.MoveUp();
         }
 
-        if (KeyboardPressed(now, Keys.Down) || PadPressed(now, Buttons.DPadDown))
+        if (WasKeyboardPressed(now, Keys.Down) || WasPadPressed(now, Buttons.DPadDown))
         {
             _model.MoveDown();
         }
 
-        if (KeyboardPressed(now, Keys.Enter) || PadPressed(now, Buttons.A))
+        if (WasKeyboardPressed(now, Keys.Enter) || WasPadPressed(now, Buttons.A))
         {
             _model.Arm();
         }
     }
 
-    private bool PadPressed(InputSnapshot now, Buttons button) =>
-            (now.PadOne.IsButtonDown(button) && !_previous.PadOne.IsButtonDown(button))
-            || (now.PadTwo.IsButtonDown(button) && !_previous.PadTwo.IsButtonDown(button));
+    private bool WasPadPressed(InputSnapshot now, Buttons button) =>
+            (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
+            || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
 
     /// <summary>
     /// Puts this page's three entries back on their CRTAB values (notes §108). They are what the page
@@ -346,7 +346,7 @@ public sealed class DefineInputsState : IGameState
 
         foreach (int slot in OwnedSlots)
         {
-            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
+            palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
         }
     }
 }

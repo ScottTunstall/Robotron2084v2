@@ -61,7 +61,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        _wall.Draw(spriteBatch, _sprites.WallPixel, _sprites.Blitter.GetSlotColour(AttractTuning.TitleWallSlot));
+        _wall.Draw(spriteBatch, _sprites.WallPixelSprite, _sprites.Blitter.GetSlotColour(AttractTuning.TitleWallSlot));
         ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds(), showSpareMen: false);
 
         ArcadeHud.DrawCenteredLargeText(
@@ -78,7 +78,7 @@ public sealed class StorylineState : IGameState, IAttractState
             explosion.Draw(spriteBatch);
         }
 
-        foreach (MovieTextCell cell in _movie.Page.Text)
+        foreach (MovieTextCell cell in _movie.PageMachine.TextCells)
         {
             int index = ArcadeText.GetGlyphIndex(cell.Character);
             if (index >= 0 && index < _sprites.FontLarge.Length)
@@ -93,9 +93,9 @@ public sealed class StorylineState : IGameState, IAttractState
             }
         }
 
-        if (_movie.Page.Message is { } message)
+        if (_movie.PageMachine.Message is { } message)
         {
-            _sprites.Text.DrawSmallFontText(
+            _sprites.TextRenderer.DrawSmallFontText(
                 spriteBatch,
                 message.Text,
                 HudLayout.ToPortX(message.X),
@@ -109,7 +109,7 @@ public sealed class StorylineState : IGameState, IAttractState
         // A human at the coin door takes the machine back to the title, exactly as
         // the arcade's coin/start handler does while attract is running.
         PlayerInputState human = _humanInput.Poll();
-        if (_buttons.Advance(human).Any)
+        if (_buttons.Advance(human).AnyPressed)
         {
             manager.TransitionTo(new TitleScreenState(_services));
             return;
@@ -129,7 +129,7 @@ public sealed class StorylineState : IGameState, IAttractState
             }
         }
 
-        foreach (MovieExplosion exploded in _movie.Objects.DrainExplosions())
+        foreach (MovieExplosion exploded in _movie.ObjectMachine.DrainExplosions())
         {
             // EXPP: the explosion takes the sprite the object was showing and the
             // direction of a pure HORIZONTAL laser ($FF00), which the Gospel's
@@ -163,7 +163,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         // HISTO ends with DONE2, which the ROM answers with RUNIT: the machine
         // starts its phony-player game.
-        if (_movie.Finished)
+        if (_movie.IsFinished)
         {
             manager.TransitionTo(new AttractState(_services));
         }
@@ -171,9 +171,9 @@ public sealed class StorylineState : IGameState, IAttractState
 
     private void DrawObjects(SpriteBatch spriteBatch)
     {
-        foreach (MovieObject item in _movie.Objects.Objects)
+        foreach (MovieObject item in _movie.ObjectMachine.Objects)
         {
-            if (item.Dead || (!item.OnList && !item.MonoActive))
+            if (item.IsDead || (!item.IsOnList && !item.IsMonoActive))
             {
                 continue;
             }
@@ -201,7 +201,7 @@ public sealed class StorylineState : IGameState, IAttractState
                 ScreenSize.ToPortPixels(animationFrame.Width),
                 ScreenSize.ToPortPixels(animationFrame.Height));
 
-            if (item.MonoActive)
+            if (item.IsMonoActive)
             {
                 DrawMonoBox(spriteBatch, item, animationFrame, bounds);
                 continue;
@@ -216,8 +216,8 @@ public sealed class StorylineState : IGameState, IAttractState
     {
         int x = HudLayout.ToPortX(item.ArcadeX);
         int y = HudLayout.ToPortY(item.ArcadeY);
-        var bolt = new Rectangle(x, y, ScreenSize.ToPortPixels(_sprites.LaserBar.Width), ScreenSize.ToPortPixels(_sprites.LaserBar.Height));
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBar, bolt, _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
+        var bolt = new Rectangle(x, y, ScreenSize.ToPortPixels(_sprites.LaserBarSprite.Width), ScreenSize.ToPortPixels(_sprites.LaserBarSprite.Height));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBarSprite, bolt, _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
     }
 
     /// <summary>
@@ -232,7 +232,7 @@ public sealed class StorylineState : IGameState, IAttractState
         }
 
         _sprites.Blitter.DrawSpriteSolid(spriteBatch, animationFrame, bounds, _sprites.Blitter.GetSlotColour(item.MonoSilhouetteSlot));
-        if (item.MonoBrain)
+        if (item.ShowsMonoBrain)
         {
             _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
         }

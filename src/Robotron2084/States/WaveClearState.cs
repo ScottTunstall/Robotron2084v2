@@ -23,9 +23,9 @@ public sealed class WaveClearState : IGameState
     /// (notes §94) and the game resumes in <see cref="AttractState"/> (the machine keeps
     /// playing itself) instead of <see cref="PlayingState"/>.
     /// </summary>
-    private readonly bool _attract;
+    private readonly bool _isAttractMode;
 
-    private readonly HighScoreStore _highScores;
+    private readonly HighScoreStore _highScoreStore;
     private readonly GameSession _session;
     private readonly SpriteSet _sprites;
 
@@ -50,12 +50,12 @@ public sealed class WaveClearState : IGameState
 
     private int _ticksRemaining = ScreenTuning.WaveClearDisplayTicks;
 
-    public WaveClearState(SpriteSet sprites, HighScoreStore highScores, GameSession session, bool attract = false)
+    public WaveClearState(SpriteSet sprites, HighScoreStore highScoreStore, GameSession session, bool isAttractMode = false)
     {
         _sprites = sprites;
-        _highScores = highScores;
+        _highScoreStore = highScoreStore;
         _session = session;
-        _attract = attract;
+        _isAttractMode = isAttractMode;
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -76,7 +76,7 @@ public sealed class WaveClearState : IGameState
         // Two rings a frame (the ROM's task delay is 1 and its counter is seeded 2), then the
         // black pass — 53 + 53 rings, about 0.9 s. The state still honours the display time as
         // a floor, so the tunnel is never cut off.
-        if (!_tunnel.Finished)
+        if (!_tunnel.IsFinished)
         {
             // The palette task runs beside the walker's, on the same delay of 1, so the ramp's
             // window slides once per ring pass (notes §86).
@@ -88,12 +88,12 @@ public sealed class WaveClearState : IGameState
             _tunnel.Update();
         }
 
-        if (--_ticksRemaining <= 0 && _tunnel.Finished)
+        if (--_ticksRemaining <= 0 && _tunnel.IsFinished)
         {
             RestorePalette();
-            manager.TransitionTo(_attract
-                ? new AttractState(GameServices.CreateFrom(_session, _sprites, _highScores, _session.Current.Input))
-                : new PlayingState(_sprites, _highScores, _session));
+            manager.TransitionTo(_isAttractMode
+                ? new AttractState(GameServices.CreateFrom(_session, _sprites, _highScoreStore, _session.Current.Input))
+                : new PlayingState(_sprites, _highScoreStore, _session));
         }
     }
 
@@ -141,7 +141,7 @@ public sealed class WaveClearState : IGameState
 
         for (int slot = 1; slot <= 15; slot++)
         {
-            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
+            palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
         }
 
         for (int slot = FontSlots.FirstCyclingSlot; slot <= 15; slot++)
