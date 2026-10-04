@@ -18,16 +18,16 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 {
-    /// <summary>Animation frames in each of a family member's walk sets.</summary>
+    /// <summary>How many animation frames are in each of a family member's walk sets. It is multiplied by the set a direction uses to find the first animation frame, which is stored in <see cref="_animationFrameIndex"/>.</summary>
     private const int AnimationFramesPerSet = 3;
 
-    /// <summary>Direction blocks in the walk table: the 8 travel directions.</summary>
+    /// <summary>How many direction blocks the walk table has, one for each way a human can walk. <see cref="_directionBlock"/> is set to a random one of them.</summary>
     private const int DirectionBlockCount = 8;
 
-    /// <summary>A fresh direction comes after a random 1..this many steps.</summary>
+    /// <summary>The most steps a human takes before choosing a new direction. <see cref="_stepsUntilNewDirection"/> is set to a random number of steps from one up to this.</summary>
     private const int NewDirectionStepsMax = 128;
 
-    /// <summary>The very first step waits a random 1..this many ticks, which staggers a group's start.</summary>
+    /// <summary>The most ticks a human waits before its first step. <see cref="_startStaggerTicks"/> is set to a random number of ticks from one up to this, so a group of humans does not all start together.</summary>
     private const int StartStaggerTicksMax = 8;
 
     /// <summary>The interval between beats, in ROM frames. The ONE deliberate gameplay override — do not "fix" it.</summary>
@@ -35,7 +35,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// slows this to 16, because the ROM-accurate pace reads as too fast (notes §70).</remarks>
     private const int BeatIntervalRomFrames = 16;
 
-    /// <summary>Substeps in each direction block of the walk table.</summary>
+    /// <summary>How many substeps each direction block of the walk table has. <see cref="_subStep"/> counts up to this and then goes back to the first.</summary>
     private const int SubStepsPerBlock = 4;
 
     /// <summary>Which 3-frame set each block animates from: [L,R,D,U,L,R,R,L].</summary>

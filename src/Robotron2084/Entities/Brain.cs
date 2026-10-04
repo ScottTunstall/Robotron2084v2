@@ -20,7 +20,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Brain : IEntity, IExplodable, IRemovable
 {
-    /// <summary>The ROM frame a brain spends on the beat itself, added to the wave's wait to get the interval between beats.</summary>
+    /// <summary>The number of ROM frames a brain spends on the beat itself. It is added to the wave's wait to give the interval between beats, which is stored in <see cref="_beatIntervalClockUnits"/>.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSLP</c>, the sleep of <c>BRNSPD</c> frames at the end of each beat. Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>), the wait loaded from <c>$BE63</c> at <c>$1C9C</c>.</remarks>
     private const int BeatExecutionRomFrames = 1;
 
@@ -32,7 +32,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>ADDD #$0304</c>, the 4 rows. Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>).</remarks>
     private const int MissileMuzzleYRows = 4;
 
-    /// <summary>How far below the brain's top-left corner the victim stands while being reprogrammed.</summary>
+    /// <summary>How many rows below the brain's top-left corner the victim stands while being reprogrammed. It is added to the brain's Y position to set <see cref="_victimRestingY"/>.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT1</c>, <c>ADDA #2</c> on Y, 2 rows. Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CEB</c>.</remarks>
     private const int VictimDropRows = 2;
 

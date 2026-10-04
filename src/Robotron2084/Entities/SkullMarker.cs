@@ -17,7 +17,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class SkullMarker : IEntity
 {
-    /// <summary>How long the skull stays on the field.</summary>
+    /// <summary>How many ROM frames the skull stays on the field. It is converted to port ticks to set <see cref="_ticksRemaining"/>, which then counts down to nothing.</summary>
     private const int LifeRomFrames = 90;
 
     /// <summary>The skull sprite's own 12x11 arcade px box, in port pixels.</summary>

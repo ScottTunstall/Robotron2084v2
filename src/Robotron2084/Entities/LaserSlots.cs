@@ -16,7 +16,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class LaserSlots
 {
-    /// <summary>How many lasers the player can have in flight at once.</summary>
+    /// <summary>How many lasers the player can have in flight at once. It is the size of <see cref="_slots"/>.</summary>
     public const int Capacity = 3;
 
     private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];

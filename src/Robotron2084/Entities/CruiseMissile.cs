@@ -30,7 +30,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>How many moves the missile makes per beat.</summary>
     private const int MovesPerBeat = 2;
 
-    /// <summary>The re-aim timer's upper bound, in beats (rolled 1..this).</summary>
+    /// <summary>The most beats a missile may go before it aims again. <see cref="_reAimBeatsRemaining"/> is set to a random number of beats from one up to this.</summary>
     private const int ReAimMaxBeats = 7;
 
     /// <summary>The collision box's size, 6x4 arcade px, in port pixels; the box itself is offset up-left.</summary>
@@ -98,7 +98,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>The step the missile takes on each axis right now (0 = that axis is idle this re-aim).</summary>
     internal IntVector2 Velocity => _velocity;
 
-    /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
+    /// <summary>How many clock units pass between one beat and the next. A cruise missile's <see cref="_beatTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a beat happens and this is subtracted from it.</summary>
     private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
 
     /// <summary>Draws the trail marks and the missile's head.</summary>

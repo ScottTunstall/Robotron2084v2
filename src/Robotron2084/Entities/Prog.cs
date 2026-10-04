@@ -25,23 +25,23 @@ public sealed class Prog : IExplodable, IRemovable
     /// <remarks>The ROM re-runs the prog's step logic every 3 frames.</remarks>
     private const int BeatIntervalRomFrames = 3;
 
-    /// <summary>Half of the X aim-offset's range: (a roll of 1..15 minus this) times 4 columns.</summary>
+    /// <summary>Half of the range of the sideways aim offset. A random roll has this subtracted from it, and the result is multiplied by <see cref="OffsetXStepColumns"/> to give <see cref="_offsetX"/>.</summary>
     /// <remarks>ROM: <c>GPOFF</c> gives ±28 columns of offset in steps of 4.</remarks>
     private const int OffsetXHalfRange = 8;
 
-    /// <summary>ROM <c>GPOFF</c>: the X offset roll is 1..this...</summary>
+    /// <summary>The biggest number the sideways aim offset's random roll can come up with. The roll starts at one. It is used to work out <see cref="_offsetX"/>.</summary>
     private const int OffsetXRollMax = 15;
 
-    /// <summary>ROM <c>GPOFF</c>: ...and each step of it is this many columns.</summary>
+    /// <summary>How many columns each step of the sideways aim offset is. The rolled number of steps is multiplied by this to give <see cref="_offsetX"/>.</summary>
     private const int OffsetXStepColumns = 4;
 
     /// <summary>ROM <c>GPOFF</c>: the Y offset is (this minus a roll of 1..<see cref="OffsetYSteps"/>) times the step, less <see cref="OffsetYSteps"/>.</summary>
     private const int OffsetYCentre = 19;
 
-    /// <summary>ROM <c>GPOFF</c>: each step of the Y offset is this many rows.</summary>
+    /// <summary>How many rows each step of the up-and-down aim offset is. The rolled number of steps is multiplied by this to give <see cref="_offsetY"/>.</summary>
     private const int OffsetYStepRows = 2;
 
-    /// <summary>The Y aim-offset's span: a roll of 1..18 gives -16..+18 rows in steps of 2.</summary>
+    /// <summary>The span of the up-and-down aim offset, in steps. A random roll from one up to this is used to work out <see cref="_offsetY"/>.</summary>
     /// <remarks>ROM: <c>GPOFF</c> computes this from a random 1..18 roll.</remarks>
     private const int OffsetYSteps = 18;
 
@@ -177,7 +177,7 @@ public sealed class Prog : IExplodable, IRemovable
         }
     }
 
-    /// <summary>The beat in timer units (a tick adds 5; an arcade frame is 6 units).</summary>
+    /// <summary>How many clock units pass between one beat and the next. A prog's <see cref="_beatTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a beat happens and this is subtracted from it.</summary>
     private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
 
     // which entry of WalkCycle comes next (0-3)

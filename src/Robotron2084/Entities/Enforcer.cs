@@ -24,7 +24,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <summary>ROM <c>ENFR1</c>: ...and this many arcade rows tall.</summary>
     private const int AimZoneRows = 32;
 
-    /// <summary>The enforcer covers this fraction of the remaining distance to its aim each ROM frame: 1 over this.</summary>
+    /// <summary>The remaining distance to its aim is divided by this to give how far an enforcer moves each ROM frame. The result sets <see cref="_velocitySubpixels"/>.</summary>
     private const int ApproachDivisor = 2;
 
     /// <summary>The wave's enforcer fire interval when the caller gives none.</summary>

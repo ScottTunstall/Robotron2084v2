@@ -24,10 +24,10 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     /// <summary>ROM <c>HNDX</c>/<c>HNDY</c>: the aim is the target's coordinate plus at least this many arcade px.</summary>
     private const int AimOffsetMinArcadePixels = -16;
 
-    /// <summary>ROM <c>HULKND</c>: ...and before this many (exclusive bound of the random roll).</summary>
+    /// <summary>One more than the most steps a hulk may take before it aims again. The number of steps is picked at random, from <see cref="ReaimStepsMin"/> up to one less than this, and counted down in <see cref="_stepsUntilReaim"/>.</summary>
     private const int ReaimStepsMaxExclusive = 32;
 
-    /// <summary>ROM <c>HULKND</c>: a fresh direction comes after at least this many steps.</summary>
+    /// <summary>The fewest steps a hulk takes before it aims again. The number of steps is picked at random, from this up to one less than <see cref="ReaimStepsMaxExclusive"/>, and counted down in <see cref="_stepsUntilReaim"/>.</summary>
     private const int ReaimStepsMin = 1;
 
     /// <summary>ROM <c>HULKIL</c>: how much a doubled sideways shove is multiplied.</summary>
@@ -54,7 +54,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     /// <summary>The flat up/down step.</summary>
     private const int VerticalStepArcadePixels = 2;
 
-    /// <summary>Steps in the walk pattern (A-B-A-C).</summary>
+    /// <summary>How many steps make up the walk pattern. <see cref="_walkCycleStep"/> counts up to this and then goes back to the first step.</summary>
     private const int WalkPatternLength = 4;
 
     /// <summary>The hulk sprite's own 14x16 arcade px box, in port pixels.</summary>

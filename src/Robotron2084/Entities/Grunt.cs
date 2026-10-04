@@ -23,7 +23,7 @@ public sealed class Grunt : IExplodable, IRemovable
     /// <summary>The wave's re-roll limit when the caller gives none.</summary>
     private const int DefaultMoveLimitBeats = 15;
 
-    /// <summary>The ROM's walk animation frames (RWDP1..4); the animation frame number wraps after the last.</summary>
+    /// <summary>How many walk animation frames a grunt has. <see cref="_walkAnimationFrameNumber"/> counts up to this and then goes back to the first.</summary>
     private const int WalkAnimationFrameCount = 4;
 
     /// <summary>The grunt sprite's own 10x13 arcade px box, in port pixels.</summary>
@@ -93,7 +93,7 @@ public sealed class Grunt : IExplodable, IRemovable
     /// <remarks>ROM RWDP animation frame.</remarks>
     internal int WalkAnimationFrameNumber => _walkAnimationFrameNumber;
 
-    /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
+    /// <summary>How many clock units pass between one beat and the next. A grunt's <see cref="_beatTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a beat happens and this is subtracted from it.</summary>
     private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
 
     /// <summary>Draws the current walk animation frame in its own colours.</summary>

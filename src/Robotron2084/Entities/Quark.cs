@@ -30,7 +30,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The wave's drift-speed cap when the caller gives none.</summary>
     private const int DefaultSpeedCap = 50;
 
-    /// <summary>ROM <c>SQ2</c>: after a drop the next delay is roughly the first over this.</summary>
+    /// <summary>After a quark has dropped a tank, its drop delay is divided by this to give the most beats it waits before the next drop. A random number up to that is stored in <see cref="_dropBeatsRemaining"/>.</summary>
     private const int RepeatDropDelayDivisor = 2;
 
     /// <summary>Collision box = the ROM sprite dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
@@ -127,7 +127,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Top-left of the quark (the ROM's OBJX/OBJY).</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
+    /// <summary>How many clock units pass between one beat and the next. A quark's <see cref="_beatTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a beat happens and this is subtracted from it.</summary>
     private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(QuarkTuning.BeatIntervalRomFrames);
 
     /// <summary>Draws the current rotation frame.</summary>

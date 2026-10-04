@@ -21,13 +21,13 @@ public sealed class Gorf : IExplodable, IRemovable
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixels(CollisionSizes.GorfCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.GorfCollisionSize.Height));
 
-    /// <summary>How many timer units between steps (a tick adds 5; an arcade frame is 6 units).</summary>
+    /// <summary>How many clock units pass between one step and the next. <see cref="_stepTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a step is taken and this is subtracted from it.</summary>
     private static readonly int StepClockUnits = ArcadeClock.ToClockUnits(GorfTuning.StepRomFrames);
 
-    /// <summary>How many timer units each animation frame shows for.</summary>
+    /// <summary>How many clock units each animation frame is shown for. <see cref="_animationTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, the next animation frame is shown and this is subtracted from it.</summary>
     private static readonly int AnimationFrameClockUnits = ArcadeClock.ToClockUnits(GorfTuning.AnimationFrameRomFrames);
 
-    /// <summary>How far each step goes sideways, in port pixels.</summary>
+    /// <summary>How far each step goes sideways, in port pixels. It is added to or subtracted from the X of <see cref="_position"/> at each step, and it sets how many steps cross the playfield, which is stored in <see cref="_totalSteps"/>.</summary>
     private static readonly int StepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
 
     /// <summary>How high every hop goes, in port pixels.</summary>

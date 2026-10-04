@@ -19,7 +19,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Player : IEntity, IAnimationFrameSource
 {
-    /// <summary>Each animation frame is drawn for 3 movement ticks.</summary>
+    /// <summary>How many movement ticks each animation frame is shown for. <see cref="_animationFrameTicks"/> counts up to this and then the next animation frame is shown.</summary>
     private const int FrameTicksPerAnimationFrame = 3;
 
     /// <summary>Collision box = the player sprite's own 8x12 arcade px.</summary>

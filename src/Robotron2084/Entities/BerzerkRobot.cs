@@ -34,7 +34,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixels(CollisionSizes.BerzerkRobotCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.BerzerkRobotCollisionSize.Height));
 
-    /// <summary>How many timer units between beats (a tick adds 5; an arcade frame is 6 units).</summary>
+    /// <summary>How many clock units pass between one beat and the next. A BerzerkRobot's <see cref="_beatTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a beat happens and this is subtracted from it.</summary>
     private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
 
     private readonly Random _random;

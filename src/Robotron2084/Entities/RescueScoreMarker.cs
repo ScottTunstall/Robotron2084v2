@@ -17,7 +17,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class RescueScoreMarker : IEntity
 {
-    /// <summary>How long the display stays on the field.</summary>
+    /// <summary>How many ROM frames the display stays on the field. It is converted to port ticks to set <see cref="_ticksRemaining"/>, which then counts down to nothing.</summary>
     private const int LifeRomFrames = 60;
 
     private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeSpecPixels);
