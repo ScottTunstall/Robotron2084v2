@@ -152,13 +152,13 @@ internal sealed class WaveTableSound
     /// <summary><c>GW3</c> marking the end and checking whether to copy the wave again: <c>STX FRQEND</c>, <c>LDAA GECDEC</c>, <c>BEQ</c>.</summary>
     private const int MarkEndCycles = WordStoreDirect + Direct + Branch;
 
-    /// <summary>The top bit: a pitch move above 127 lowers the waits instead of raising them.</summary>
+    /// <summary>The top bit: a pitch move above 127 lowers the waits instead of raising them. <see cref="BoardMemory.ScratchA"/> is compared with this to tell whether its top bit is set.</summary>
     private const int NegativeBit = 0x80;
 
-    /// <summary>The bottom four bits of a settings byte.</summary>
+    /// <summary>The bottom four bits of a settings byte. It picks the low half of the settings byte, which becomes <see cref="_playsPerPitch"/>.</summary>
     private const int LowNibble = 0x0F;
 
-    /// <summary>How far the top four bits of a settings byte are shifted down.</summary>
+    /// <summary>How far the top four bits of a settings byte are shifted down. The settings byte is shifted down by this many bits to give its high half, which becomes <see cref="_echoes"/>.</summary>
     private const int HighNibbleShift = 4;
 
     private readonly BoardMemory _memory;

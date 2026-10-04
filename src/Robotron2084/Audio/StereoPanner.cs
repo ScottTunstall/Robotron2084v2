@@ -13,7 +13,7 @@ public sealed class StereoPanner
     /// <summary>Samples per output frame: one for the left speaker, one for the right.</summary>
     private const int ChannelsPerFrame = 2;
 
-    /// <summary>How far each sample moves the speaker volumes towards their targets: a glide of about 5 ms at 44.1 kHz.</summary>
+    /// <summary>How far each sample moves the speaker volumes towards their targets: a glide of about 5 ms at 44.1 kHz. It is multiplied by how far <see cref="_left"/> still has to go to reach <see cref="_targetLeft"/>, and the result is added to <see cref="_left"/> at every sample. The right side works the same way.</summary>
     private const float GlidePerSample = 0.005f;
 
     /// <summary>A quarter turn, in radians: the angle between "all left" and "all right".</summary>

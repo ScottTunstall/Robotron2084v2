@@ -17,7 +17,7 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal sealed class FilteredNoise
 {
-    /// <summary><c>CANTB</c>'s first slope limit, high byte (<c>FMAX</c>).</summary>
+    /// <summary><c>CANTB</c>'s first slope limit, high byte (<c>FMAX</c>). It is shifted up by <see cref="ByteBits"/> to give the starting value of <see cref="_limit"/>.</summary>
     private const byte CannonFirstLimit = 0xFF;
 
     /// <summary><c>CANTB</c>'s levels between each shrink of the limit (<c>SAMPC</c>).</summary>
@@ -26,10 +26,10 @@ internal sealed class FilteredNoise
     /// <summary><c>CANTB</c>'s smallest slope (<c>LOFRQ</c>), added after the random distortion.</summary>
     private const byte CannonSmallestSlope = 0;
 
-    /// <summary>The low byte of the limit at which the sound ends, once the high byte is 0 (<c>CMPB #7</c>).</summary>
+    /// <summary>The low byte of the limit at which the sound ends, once the high byte is 0 (<c>CMPB #7</c>). The low byte of <see cref="_limit"/> is compared with this to tell whether the limit has finished shrinking.</summary>
     private const byte FinalLimitLow = 7;
 
-    /// <summary>How far the limit is shifted to get the eighth it shrinks by (three <c>LSRA</c>/<c>RORB</c> pairs).</summary>
+    /// <summary>How far the limit is shifted to get the eighth it shrinks by (three <c>LSRA</c>/<c>RORB</c> pairs). <see cref="_limit"/> is shifted down by this many bits, and the result is subtracted from <see cref="_limit"/>, so the limit shrinks.</summary>
     private const int ShrinkShift = 3;
 
     /// <summary>
@@ -69,7 +69,7 @@ internal sealed class FilteredNoise
         Direct + Branch + Direct + Direct + (ShrinkShift * 2 * Inherent) + Inherent + Inherent + Immediate
         + Direct + Direct + StoreDirect + StoreDirect + Branch;
 
-    /// <summary>The bits of a byte.</summary>
+    /// <summary>The bits of a byte. It is used to shift <see cref="_limit"/>, both to set its starting value and to read its top byte.</summary>
     private const int ByteBits = 8;
 
     /// <summary>The bits of a 16-bit sum that stay in it.</summary>

@@ -28,7 +28,7 @@ internal static class ScreamSound
     /// <summary>The next tone's starting pitch (<c>LDAB #$41</c>).</summary>
     private const byte NextPitch = 0x41;
 
-    /// <summary>The first tone's loudness; each tone after is half as loud (<c>LDAA #$80</c>, <c>LSR TEMPA</c>).</summary>
+    /// <summary>The first tone's loudness; each tone after is half as loud (<c>LDAA #$80</c>, <c>LSR TEMPA</c>). It is the value stored in <see cref="BoardMemory.ScratchA"/> at the start of the sound.</summary>
     private const byte FirstLoudness = 0x80;
 
     /// <summary>The bit of a tone's timer that says its square wave is high (<c>BPL</c>).</summary>

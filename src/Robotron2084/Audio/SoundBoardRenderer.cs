@@ -13,13 +13,13 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public sealed class SoundBoardRenderer
 {
-    /// <summary>The output level in the middle of the board's 0 to 255 range.</summary>
+    /// <summary>The output level in the middle of the board's 0 to 255 range. It is subtracted from <see cref="_level"/>, and the result is divided by it, to set <see cref="_previousInput"/>.</summary>
     private const float MidLevel = 128f;
 
     /// <summary>
     /// How much of its last output the steady-level filter keeps each sample. Close to 1, so it only
     /// removes changes slower than about 20 times a second.
-    /// </summary>
+    ///  It is multiplied by <see cref="_previousOutput"/> and the result is added in to work out the next output.</summary>
     private const float SteadyLevelRetention = 0.997f;
 
     /// <summary>How long the board runs before the first sample, so its start-up settles out of earshot: a tenth of a second.</summary>

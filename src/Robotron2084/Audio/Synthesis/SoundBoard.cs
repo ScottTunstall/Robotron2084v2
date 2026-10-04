@@ -27,7 +27,7 @@ public sealed class SoundBoard : ISoundBoard
     /// <summary>The six sound lines (<c>RRF.ASM</c>: "B0-B5 SOUND"): a sound number is 0 to 63.</summary>
     private const int SoundLines = 0x3F;
 
-    /// <summary>No sound number is waiting to be answered.</summary>
+    /// <summary>No sound number is waiting to be answered. It is the starting value of <see cref="_waitingSoundNumber"/>, which means that no sound is waiting.</summary>
     private const int NoSoundNumber = -1;
 
     /// <summary>The spinner sound, which keeps its send count (<c>SP1SND</c>).</summary>

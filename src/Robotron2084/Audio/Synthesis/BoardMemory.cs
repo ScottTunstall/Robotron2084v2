@@ -15,7 +15,7 @@ internal sealed class BoardMemory
     /// <summary>The value <c>SETUP</c> leaves in <c>HI</c>: the byte it last wrote to the output chip (<c>LDAA #$3C</c>).</summary>
     private const byte StartingRandomHigh = 0x3C;
 
-    /// <summary>The bit that shifts in at the top of a byte when it rotates right.</summary>
+    /// <summary>The bit that shifts in at the top of a byte when it rotates right. The new random bit is multiplied by it and the result is combined into <see cref="RandomHigh"/>.</summary>
     private const int TopBit = 0x80;
 
     /// <summary>How far the generator shifts a byte before mixing it in (the three <c>LSR</c>s).</summary>

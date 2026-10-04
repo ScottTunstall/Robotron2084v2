@@ -26,10 +26,10 @@ public sealed class SoundBoardAudioSink : IAudioSink
     /// <summary>The port's fixed update rate: port ticks a second.</summary>
     private const int PortTicksPerSecond = 60;
 
-    /// <summary>Samples in one port tick.</summary>
+    /// <summary>Samples in one port tick. It is the size of <see cref="_mono"/>, and it is multiplied by <see cref="ChannelsPerFrame"/> to give the size of <see cref="_stereo"/>.</summary>
     private const int SamplesPerPortTick = SampleRate / PortTicksPerSecond;
 
-    /// <summary>Samples per output frame: left and right.</summary>
+    /// <summary>Samples per output frame: left and right. It is multiplied by <see cref="SamplesPerPortTick"/> to give the size of <see cref="_stereo"/>.</summary>
     private const int ChannelsPerFrame = 2;
 
     /// <summary>Queued ticks of sound below which another tick is made at once, so the speakers never run dry.</summary>
