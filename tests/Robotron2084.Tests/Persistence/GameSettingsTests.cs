@@ -15,7 +15,7 @@ public sealed class GameSettingsTests
         Assert.Equal(25_000, settings.ExtraManEveryPoints);
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(GameSettings.RecommendedDifficulty, settings.Difficulty);
-        Assert.False(settings.AttractModeSound); // the port's demo is silent until the operator turns it on
+        Assert.False(settings.AttractModeSoundEnabled); // the port's demo is silent until the operator turns it on
     }
 
     [Fact]
@@ -81,9 +81,9 @@ public sealed class GameSettingsTests
             ExtraManEvery = 0,
             TurnsPerPlayer = 20,
             Difficulty = 10,
-            AttractModeSound = true,
-            TankShellBug = false,
-            BrainsChaseMikeyBug = false,
+            AttractModeSoundEnabled = true,
+            TankShellBugEnabled = false,
+            BrainsChaseMikeyBugEnabled = false,
             BozoModeEnabled = false,
         };
 
@@ -92,9 +92,9 @@ public sealed class GameSettingsTests
         Assert.Equal(25, settings.ExtraManEvery);
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(5, settings.Difficulty);
-        Assert.False(settings.AttractModeSound);
-        Assert.True(settings.TankShellBug);
-        Assert.True(settings.BrainsChaseMikeyBug);
+        Assert.False(settings.AttractModeSoundEnabled);
+        Assert.True(settings.TankShellBugEnabled);
+        Assert.True(settings.BrainsChaseMikeyBugEnabled);
         Assert.True(settings.BozoModeEnabled);
     }
 
@@ -104,10 +104,10 @@ public sealed class GameSettingsTests
         var settings = new GameSettings();
 
         settings.BumpAttractModeSound(-1);
-        Assert.False(settings.AttractModeSound);
+        Assert.False(settings.AttractModeSoundEnabled);
 
         settings.BumpAttractModeSound(1);
-        Assert.True(settings.AttractModeSound);
+        Assert.True(settings.AttractModeSoundEnabled);
     }
 
     [Theory]
@@ -117,9 +117,9 @@ public sealed class GameSettingsTests
     [InlineData(false, true, false)]  // ...but a real game still has sound
     public void OnlyAnAttractScreenWithTheSoundSettingOffIsSilent(bool attractShowing, bool soundOff, bool expected)
     {
-        var settings = new GameSettings { AttractModeSound = !soundOff };
+        var settings = new GameSettings { AttractModeSoundEnabled = !soundOff };
 
-        Assert.Equal(expected, settings.AttractIsSilent(attractShowing));
+        Assert.Equal(expected, settings.IsAttractSilent(attractShowing));
     }
 
     [Theory]

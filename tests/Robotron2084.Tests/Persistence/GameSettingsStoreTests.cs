@@ -29,7 +29,7 @@ public sealed class GameSettingsStoreTests
         string path = TempFile();
         try
         {
-            var settings = new GameSettings { ExtraManEvery = 50, TurnsPerPlayer = 5, Difficulty = 10, AttractModeSound = false };
+            var settings = new GameSettings { ExtraManEvery = 50, TurnsPerPlayer = 5, Difficulty = 10, AttractModeSoundEnabled = false };
 
             GameSettingsStore.Save(path, settings);
             GameSettings loaded = GameSettingsStore.Load(path);
@@ -37,7 +37,7 @@ public sealed class GameSettingsStoreTests
             Assert.Equal(50, loaded.ExtraManEvery);
             Assert.Equal(5, loaded.TurnsPerPlayer);
             Assert.Equal(10, loaded.Difficulty);
-            Assert.False(loaded.AttractModeSound);
+            Assert.False(loaded.AttractModeSoundEnabled);
         }
         finally
         {
@@ -70,27 +70,27 @@ public sealed class GameSettingsStoreTests
     [Fact]
     public void TheAttractSoundFlagIsSavedAndAnythingButZeroOrOneIsIgnored()
     {
-        Assert.False(GameSettingsStore.Parse(["[game]", "attractsound=0"]).AttractModeSound);
-        Assert.True(GameSettingsStore.Parse(["[game]", "attractsound=1"]).AttractModeSound);
-        Assert.False(GameSettingsStore.Parse(["[game]", "attractsound=7"]).AttractModeSound); // ignored: the factory value (off) stays
+        Assert.False(GameSettingsStore.Parse(["[game]", "attractsound=0"]).AttractModeSoundEnabled);
+        Assert.True(GameSettingsStore.Parse(["[game]", "attractsound=1"]).AttractModeSoundEnabled);
+        Assert.False(GameSettingsStore.Parse(["[game]", "attractsound=7"]).AttractModeSoundEnabled); // ignored: the factory value (off) stays
     }
 
     [Fact]
     public void TheBugAndBozoSwitchesAreOnUnlessTheFileSaysOff_AndSurviveARoundTrip()
     {
         GameSettings factory = GameSettingsStore.Parse(["[game]"]);
-        Assert.True(factory.TankShellBug);
-        Assert.True(factory.BrainsChaseMikeyBug);
+        Assert.True(factory.TankShellBugEnabled);
+        Assert.True(factory.BrainsChaseMikeyBugEnabled);
         Assert.True(factory.BozoModeEnabled);
 
-        var off = new GameSettings { TankShellBug = false, BrainsChaseMikeyBug = false, BozoModeEnabled = false };
+        var off = new GameSettings { TankShellBugEnabled = false, BrainsChaseMikeyBugEnabled = false, BozoModeEnabled = false };
         GameSettings loaded = GameSettingsStore.Parse(GameSettingsStore.Write(off).Split(Environment.NewLine));
-        Assert.False(loaded.TankShellBug);
-        Assert.False(loaded.BrainsChaseMikeyBug);
+        Assert.False(loaded.TankShellBugEnabled);
+        Assert.False(loaded.BrainsChaseMikeyBugEnabled);
         Assert.False(loaded.BozoModeEnabled);
 
         // Anything but 0 or 1 is ignored, so the factory value (on) stays.
-        Assert.True(GameSettingsStore.Parse(["[game]", "tankshellbug=7"]).TankShellBug);
+        Assert.True(GameSettingsStore.Parse(["[game]", "tankshellbug=7"]).TankShellBugEnabled);
     }
 
     [Fact]

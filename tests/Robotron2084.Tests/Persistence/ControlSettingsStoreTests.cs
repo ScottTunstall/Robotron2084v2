@@ -22,7 +22,7 @@ public sealed class ControlSettingsStoreTests
     {
         ControlSettings loaded = ControlSettingsStore.Load(TempFile());
 
-        Assert.Equal("W", loaded[0][InputAction.MoveUp].Key.GetDisplayName());
+        Assert.Equal("W", loaded[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
         Assert.Equal("P", loaded.Pause.GetDisplayName());
     }
 
@@ -35,17 +35,17 @@ public sealed class ControlSettingsStoreTests
             ControlSettings settings = ControlSettings.CreateDefaults();
             settings[0][InputAction.MoveUp] = settings[0][InputAction.MoveUp].With(InputBinding.CreateKey(Keys.Z));
             settings[1][InputAction.ShootRight] = settings[1][InputAction.ShootRight].With(InputBinding.CreateButton(1, Buttons.RightShoulder));
-            settings[1][InputAction.MoveLeft] = settings[1][InputAction.MoveLeft].With(InputBinding.CreateStick(1, rightStick: false, -1, -1));
+            settings[1][InputAction.MoveLeft] = settings[1][InputAction.MoveLeft].With(InputBinding.CreateStick(1, isRightStick: false, -1, -1));
             settings.Pause = InputBinding.CreateKey(Keys.Escape);
 
             ControlSettingsStore.Save(path, settings);
             ControlSettings loaded = ControlSettingsStore.Load(path);
 
-            Assert.Equal("Z", loaded[0][InputAction.MoveUp].Key.GetDisplayName());
-            Assert.Equal("P1 LEFT STICK UP", loaded[0][InputAction.MoveUp].Pad.GetDisplayName());
-            Assert.Equal("P2 RIGHTSHOULDER", loaded[1][InputAction.ShootRight].Pad.GetDisplayName());
-            Assert.Equal("NUMPAD6", loaded[1][InputAction.ShootRight].Key.GetDisplayName());
-            Assert.Equal("P2 LEFT STICK UP LEFT", loaded[1][InputAction.MoveLeft].Pad.GetDisplayName());
+            Assert.Equal("Z", loaded[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
+            Assert.Equal("P1 LEFT STICK UP", loaded[0][InputAction.MoveUp].PadBinding.GetDisplayName());
+            Assert.Equal("P2 RIGHTSHOULDER", loaded[1][InputAction.ShootRight].PadBinding.GetDisplayName());
+            Assert.Equal("NUMPAD6", loaded[1][InputAction.ShootRight].KeyBinding.GetDisplayName());
+            Assert.Equal("P2 LEFT STICK UP LEFT", loaded[1][InputAction.MoveLeft].PadBinding.GetDisplayName());
             Assert.Equal("ESCAPE", loaded.Pause.GetDisplayName());
         }
         finally
@@ -89,9 +89,9 @@ public sealed class ControlSettingsStoreTests
             "moveup.pad=",
         ]);
 
-        Assert.Equal(InputBindingKind.None, parsed[0][InputAction.MoveUp].Key.Kind);
-        Assert.Equal(InputBindingKind.None, parsed[0][InputAction.MoveUp].Pad.Kind);
-        Assert.Equal("S", parsed[0][InputAction.MoveDown].Key.GetDisplayName()); // the rest is untouched
+        Assert.Equal(InputBindingKind.None, parsed[0][InputAction.MoveUp].KeyBinding.Kind);
+        Assert.Equal(InputBindingKind.None, parsed[0][InputAction.MoveUp].PadBinding.Kind);
+        Assert.Equal("S", parsed[0][InputAction.MoveDown].KeyBinding.GetDisplayName()); // the rest is untouched
     }
 
     [Fact]
@@ -110,9 +110,9 @@ public sealed class ControlSettingsStoreTests
     {
         ControlSettings parsed = ControlSettingsStore.Parse(["[player1]", "moveup.key=Z"]);
 
-        Assert.Equal("Z", parsed[0][InputAction.MoveUp].Key.GetDisplayName());
-        Assert.Equal("S", parsed[0][InputAction.MoveDown].Key.GetDisplayName());
-        Assert.Equal("UP", parsed[1][InputAction.MoveUp].Key.GetDisplayName());
+        Assert.Equal("Z", parsed[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
+        Assert.Equal("S", parsed[0][InputAction.MoveDown].KeyBinding.GetDisplayName());
+        Assert.Equal("UP", parsed[1][InputAction.MoveUp].KeyBinding.GetDisplayName());
     }
 
     [Fact]
@@ -130,8 +130,8 @@ public sealed class ControlSettingsStoreTests
             "moveup.pad=[player1]",
         ]);
 
-        Assert.Equal("W", parsed[0][InputAction.MoveUp].Key.GetDisplayName()); // the bad value left the default
-        Assert.Equal("P1 LEFT STICK UP", parsed[0][InputAction.MoveUp].Pad.GetDisplayName());
+        Assert.Equal("W", parsed[0][InputAction.MoveUp].KeyBinding.GetDisplayName()); // the bad value left the default
+        Assert.Equal("P1 LEFT STICK UP", parsed[0][InputAction.MoveUp].PadBinding.GetDisplayName());
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public sealed class ControlSettingsStoreTests
 
             ControlSettings loaded = ControlSettingsStore.Load(path);
 
-            Assert.Equal("W", loaded[0][InputAction.MoveUp].Key.GetDisplayName());
+            Assert.Equal("W", loaded[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
         }
         finally
         {

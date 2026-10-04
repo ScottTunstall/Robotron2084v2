@@ -121,20 +121,20 @@ public sealed class HighScoreTableTests
         {
             SubmitResult entered = table.Submit(26000 + i, "ABC");
             Assert.True(entered.EnteredAllTime);
-            Assert.False(entered.EntriesMaximum);
+            Assert.False(entered.ReachedEntriesMaximum);
         }
 
         // A sixth that cannot beat the lowest of the full set is turned away, and the page says why (SETBOT/GETHM4).
         SubmitResult turnedAway = table.Submit(25999, "ABC");
 
-        Assert.True(turnedAway.EntriesMaximum);
+        Assert.True(turnedAway.ReachedEntriesMaximum);
         Assert.False(turnedAway.EnteredAllTime);
         Assert.DoesNotContain(table.AllTime, e => e.Score == 25999);
 
         // One that does beat it replaces it — the set stays five strong.
         SubmitResult replaced = table.Submit(26100, "ABC");
 
-        Assert.True(replaced.EntriesMaximum);
+        Assert.True(replaced.ReachedEntriesMaximum);
         Assert.True(replaced.EnteredAllTime);
         Assert.Equal(HighScoreTable.AllTimeInitialsCap, table.AllTime.Count(e => e.Initials == "ABC"));
         Assert.DoesNotContain(table.AllTime, e => e.Score == 26000);
