@@ -8,14 +8,14 @@ public sealed class Direction8Tests
     [Fact]
     public void Opposite_ReturnsAllFourOppositePairs()
     {
-        Assert.Equal(Direction8.Down, Direction8.Up.Opposite());
-        Assert.Equal(Direction8.Up, Direction8.Down.Opposite());
-        Assert.Equal(Direction8.Left, Direction8.Right.Opposite());
-        Assert.Equal(Direction8.Right, Direction8.Left.Opposite());
-        Assert.Equal(Direction8.DownLeft, Direction8.UpRight.Opposite());
-        Assert.Equal(Direction8.UpRight, Direction8.DownLeft.Opposite());
-        Assert.Equal(Direction8.UpLeft, Direction8.DownRight.Opposite());
-        Assert.Equal(Direction8.DownRight, Direction8.UpLeft.Opposite());
+        Assert.Equal(Direction8.Down, Direction8.Up.GetOpposite());
+        Assert.Equal(Direction8.Up, Direction8.Down.GetOpposite());
+        Assert.Equal(Direction8.Left, Direction8.Right.GetOpposite());
+        Assert.Equal(Direction8.Right, Direction8.Left.GetOpposite());
+        Assert.Equal(Direction8.DownLeft, Direction8.UpRight.GetOpposite());
+        Assert.Equal(Direction8.UpRight, Direction8.DownLeft.GetOpposite());
+        Assert.Equal(Direction8.UpLeft, Direction8.DownRight.GetOpposite());
+        Assert.Equal(Direction8.DownRight, Direction8.UpLeft.GetOpposite());
     }
 
     [Fact]
