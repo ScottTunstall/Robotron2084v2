@@ -41,6 +41,7 @@ A table's layout column ("5 per column") must be named something else, such as `
 | **palette slot** or **slot** | colour index, colour | One of the 16 colours the game can show at once. Slots 0-9 stay the same; 10-15 keep changing, which makes things flash. |
 | **strip explosion** | explosion (on its own) | A robot's animation frame cut into thin strips that fly apart. |
 | **appear** or **materialise** | spawn-in, warp-in | The strips of a new robot's animation frame rushing together at the start of a wave. |
+| **transporter**, **transport** | warp-in, teleport | The arcade's own name for the way the robots arrive at the start of a brain wave: they are beamed in, sparkling, instead of forming out of strips. Any name in the code with `Transport` or `Transporter` in it is about this and nothing else. The word comes from the original source, `RRT2.ASM`, which is titled `TRANSPORTER`. |
 | **death burst** | score burst | The flash and floating points left when a spheroid or quark dies. (Name still waiting for the author to decide.) |
 | **electrode** | post | The spiky obstacle you must not touch. The original game calls it a "post"; this project calls it an electrode. |
 | **reprogramming** | conversion, mutation | A brain turning a family member into a prog. |
