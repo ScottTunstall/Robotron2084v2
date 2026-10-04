@@ -19,7 +19,7 @@ public sealed class AttractMovieTests
     private static List<string> Lines(AttractPageMachine page)
     {
         var lines = new List<string>();
-        foreach (IGrouping<int, MovieTextCell> group in page.Text.GroupBy(c => c.Y).OrderBy(g => g.Key))
+        foreach (IGrouping<int, MovieTextCell> group in page.TextCells.GroupBy(c => c.Y).OrderBy(g => g.Key))
         {
             lines.Add(new string(group.OrderBy(c => c.X).Select(c => c.Character).ToArray()));
         }
@@ -36,7 +36,7 @@ public sealed class AttractMovieTests
         for (int tick = 0; tick < 8000 && prologue is null; tick++)
         {
             movie.Update(Tick());
-            List<string> lines = Lines(movie.Page);
+            List<string> lines = Lines(movie.PageMachine);
             if (lines.Contains("AND THEREFORE MUST BE DESTROYED."))
             {
                 prologue = lines;
@@ -70,7 +70,7 @@ public sealed class AttractMovieTests
 
             // The ROM's CLEARM starts at row 48 (and the title is printed at row
             // 36), so no story character may land above it.
-            Assert.All(movie.Page.Text, cell => Assert.True(cell.Y >= 48, $"printed at row {cell.Y}"));
+            Assert.All(movie.PageMachine.TextCells, cell => Assert.True(cell.Y >= 48, $"printed at row {cell.Y}"));
         }
     }
 
@@ -82,10 +82,10 @@ public sealed class AttractMovieTests
         var messages = new HashSet<string>();
         bool exploded = false;
 
-        for (int tick = 0; tick < 60_000 && !movie.Finished; tick++)
+        for (int tick = 0; tick < 60_000 && !movie.IsFinished; tick++)
         {
             movie.Update(Tick());
-            foreach (MovieObject item in movie.Objects.Objects)
+            foreach (MovieObject item in movie.ObjectMachine.Objects)
             {
                 if (item.Descriptor is { } descriptor)
                 {
@@ -93,15 +93,15 @@ public sealed class AttractMovieTests
                 }
             }
 
-            if (movie.Page.Message is { } message)
+            if (movie.PageMachine.Message is { } message)
             {
                 messages.Add(message.Text);
             }
 
-            exploded |= movie.Objects.DrainExplosions().Count > 0;
+            exploded |= movie.ObjectMachine.DrainExplosions().Count > 0;
         }
 
-        Assert.True(movie.Finished, "HISTO never reached DONE2");
+        Assert.True(movie.IsFinished, "HISTO never reached DONE2");
         Assert.Contains(MovieAnimation.Player, seen);     // the hero walks on and shoots
         Assert.Contains(MovieAnimation.Grunt, seen);      // the 14 grunts
         Assert.Contains(MovieAnimation.Hulk, seen);       // the hulk bounces in
@@ -210,7 +210,7 @@ public sealed class AttractMovieTests
 
         Assert.True(shook, "PSHAKE never moved the object's row");
         Assert.Equal(0, shaking.ShakeRowOffset); // the shake ends by restoring the base row
-        Assert.False(shaking.Dead); // the ROM frees the ghost's metadata entry, not the object
+        Assert.False(shaking.IsDead); // the ROM frees the ghost's metadata entry, not the object
     }
 
     [Fact]
@@ -230,7 +230,7 @@ public sealed class AttractMovieTests
         }
 
         Assert.NotNull(grunt);
-        int startX = grunt.X;
+        int startX = grunt.XSubpixels;
 
         List<MovieExplosion> explosions = [];
         for (int frame = 0; frame < 3000 && explosions.Count == 0; frame++)
@@ -239,7 +239,7 @@ public sealed class AttractMovieTests
             explosions.AddRange(machine.DrainExplosions());
         }
 
-        Assert.True(grunt.X < startX, "the grunt did not walk left");
+        Assert.True(grunt.XSubpixels < startX, "the grunt did not walk left");
         MovieExplosion explosion = Assert.Single(explosions);
         Assert.Equal(MovieAnimation.Grunt, explosion.Animation);
         Assert.Equal(0xA6, explosion.Row); // EXPP's ACTHIT+6
@@ -257,13 +257,13 @@ public sealed class AttractMovieTests
             page.StepFrame();
         }
 
-        Assert.Equal(['A'], page.Text.Select(c => c.Character).ToArray());
+        Assert.Equal(['A'], page.TextCells.Select(c => c.Character).ToArray());
 
         for (int frame = 0; frame < 200; frame++)
         {
             page.StepFrame();
         }
 
-        Assert.Equal(['A', 'B'], page.Text.Select(c => c.Character).ToArray());
+        Assert.Equal(['A', 'B'], page.TextCells.Select(c => c.Character).ToArray());
     }
 }

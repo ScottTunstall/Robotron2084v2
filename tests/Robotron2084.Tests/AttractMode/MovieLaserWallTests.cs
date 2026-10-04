@@ -12,7 +12,7 @@ public sealed class MovieLaserWallTests
     [InlineData(0x0A, -0x0280)] // fired left, near the left wall
     public void ABoltNeverLeavesThePlayfield(int startColumn, int velocity)
     {
-        var bolt = new MovieObject(null, 0, startColumn << 8, 100 << 8) { IsLaser = true, XVelocity = velocity };
+        var bolt = new MovieObject(null, 0, startColumn << 8, 100 << 8) { IsLaser = true, XVelocitySubpixels = velocity };
 
         for (int frame = 0; frame < 100; frame++)
         {
