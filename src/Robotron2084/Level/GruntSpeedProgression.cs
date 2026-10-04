@@ -72,7 +72,7 @@ public sealed class GruntSpeedProgression
     /// </list>
     /// A grunt's longest wait is made a little shorter, rounding down. The wait it is already part-way through is left alone (notes §67).
     /// </remarks>
-    public void SpeedUp(IEnumerable<Grunt> grunts)
+    public void SpeedUpGrunts(IEnumerable<Grunt> grunts)
     {
         foreach (Grunt grunt in grunts.Where(grunt => grunt.IsAlive()))
         {
@@ -90,7 +90,7 @@ public sealed class GruntSpeedProgression
     /// At each check, <see cref="LargeFloorStep"/> beats are subtracted from the floor, or <see cref="SmallFloorStep"/> beats if the player has scored since the previous check, but the floor never goes below <see cref="LowestFloor"/>.
     /// Each live grunt's longest random wait is cut too, by <see cref="LimitStepPerFloorStep"/> times as much, though never below the new floor.
     /// </remarks>
-    public void Update(IEnumerable<Grunt> grunts)
+    public void UpdateGruntSpeeds(IEnumerable<Grunt> grunts)
     {
         if (--_updateTimer > 0)
         {

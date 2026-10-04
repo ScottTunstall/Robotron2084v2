@@ -69,7 +69,7 @@ public sealed class RobotTransporter
 
     /// <summary>Starts beaming a set of robots in.</summary>
     /// <param name="robots">The robots, in the order they were made.</param>
-    public void Begin(IReadOnlyList<IEntity> robots)
+    public void BeginBeamingInRobots(IReadOnlyList<IEntity> robots)
     {
         // A field built without sprites (a test) has robots with no animation frame to beam in; they are simply not shown.
         (IEntity Robot, Texture2D Frame)[] shown =

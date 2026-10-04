@@ -23,7 +23,7 @@ public sealed class GameSession
 
     /// <summary>Says whether at least one player still has men.</summary>
     /// <remarks>Original source: <c>RRF.ASM</c> <c>ZP1LAS</c> and <c>ZP2LAS</c>. Disassembly: not separately labelled.</remarks>
-    public bool AnyMenLeft() => Players.Any(p => p.HasMen);
+    public bool AnyPlayerSlotHasMen() => Players.Any(p => p.HasMen);
 
     /// <summary>The keys and buttons the players have chosen. They go with the game so that every screen can read them, such as the pause key (notes §101).</summary>
     public ControlSettings ControlSettings { get; private init; } = ControlSettings.CreateDefaults();

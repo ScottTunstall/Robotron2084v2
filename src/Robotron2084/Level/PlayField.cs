@@ -165,7 +165,7 @@ public sealed class PlayField : ICollisionScene
             return;
         }
 
-        _gruntSpeedProgression.Update(Entities.Grunts);
+        _gruntSpeedProgression.UpdateGruntSpeeds(Entities.Grunts);
 
         _materialisation.Advance(Entities.Explosions, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds));
 
@@ -182,7 +182,7 @@ public sealed class PlayField : ICollisionScene
         PlayerLasers.Update(gameTime, this);
 
         Entities.UpdateAll(gameTime, this);
-        PlayMovementSounds();
+        PlayShellAndGruntMovementSounds();
         ResolveCollisions();
 
         // Prune: remove Dead entries from every list (pruning = count decrement, spec).
@@ -387,7 +387,7 @@ public sealed class PlayField : ICollisionScene
     /// <summary>Counts one more human rescued this life.</summary>
     /// <returns>How many have now been rescued this life.</returns>
     /// <remarks>Original source: <c>SAVCNT</c>.</remarks>
-    internal int CountRescue() => ++RescuesThisLife;
+    internal int CountRescuedFamilyMembers() => ++RescuesThisLife;
 
     /// <summary>Shows the bonus for the latest rescue where the human stood.</summary>
     /// <param name="position">Where the human stood.</param>
@@ -449,7 +449,7 @@ public sealed class PlayField : ICollisionScene
         _laserWallFlares.Spawn(laserBounds, direction, Wall);
 
     /// <summary>Speeds up every grunt that is still alive, as each grunt's death does (notes §67).</summary>
-    internal void SpeedUpGrunts() => _gruntSpeedProgression.SpeedUp(Entities.Grunts);
+    internal void SpeedUpGrunts() => _gruntSpeedProgression.SpeedUpGrunts(Entities.Grunts);
 
     /// <summary>Moves one entity on by a tick, unless it is still appearing. The arcade keeps the robots still until the whole appear sequence is done (notes §62).</summary>
     /// <param name="entity">The entity to move on.</param>
@@ -498,7 +498,7 @@ public sealed class PlayField : ICollisionScene
     /// <item>Disassembly: <c>$4FCD</c> for the bounce</item>
     /// </list>
     /// </remarks>
-    private void PlayMovementSounds()
+    private void PlayShellAndGruntMovementSounds()
     {
         foreach (TankShell shell in Entities.TankShells)
         {

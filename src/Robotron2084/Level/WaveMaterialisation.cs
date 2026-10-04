@@ -72,7 +72,7 @@ public sealed class WaveMaterialisation
             StartNextAppear(explosions, clip);
         }
 
-        RetireConverged();
+        RetireConvergedRobots();
     }
 
     /// <summary>Draws the robots being beamed in, when this is a brain wave and the beaming is under way.</summary>
@@ -123,7 +123,7 @@ public sealed class WaveMaterialisation
     {
         if (!_transportBegun && _transportQueue.Count > 0)
         {
-            transporter.Begin(_transportQueue);
+            transporter.BeginBeamingInRobots(_transportQueue);
             _transported.AddRange(_transportQueue);
             _transportQueue.Clear();
             _transportBegun = true;
@@ -147,7 +147,7 @@ public sealed class WaveMaterialisation
     }
 
     /// <summary>Lets go of the robots whose appear effect has finished, so they start acting.</summary>
-    private void RetireConverged()
+    private void RetireConvergedRobots()
     {
         List<IEntity> converged = [.. _assembling
             .Where(pair => pair.Value is { } effect && !effect.IsAlive())

@@ -126,7 +126,7 @@ internal sealed class CollisionResponder
     private void RespondToPlayerRescuingHuman(PlayerRescuedHumanResult rescued)
     {
         rescued.Human.Rescue();
-        int rescues = _field.CountRescue();
+        int rescues = _field.CountRescuedFamilyMembers();
         _field.ShowRescueScore(rescued.Human.Position);
         _field.PlaySoundFrom(SoundTables.SaveAHuman, rescued.Human.Bounds);
         _field.AwardRescueBonus(rescues);

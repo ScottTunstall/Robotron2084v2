@@ -35,9 +35,9 @@ public static class WaveSurvivors
             BerzerkRobotCount = CountAlive(entities.BerzerkRobots),
             GorfCount = CountAlive(entities.Gorfs),
             ElectrodeCount = CountAlive(entities.Electrodes),
-            MikeyCount = CountFamily(entities, HumanKind.Mikey),
-            MommyCount = CountFamily(entities, HumanKind.Mommy),
-            DaddyCount = CountFamily(entities, HumanKind.Daddy),
+            MikeyCount = CountFamilyMembers(entities, HumanKind.Mikey),
+            MommyCount = CountFamilyMembers(entities, HumanKind.Mommy),
+            DaddyCount = CountFamilyMembers(entities, HumanKind.Daddy),
             HulkCount = CountAlive(entities.Hulks),
             BrainCount = CountAlive(entities.Brains),
             SpheroidCount = CountSpheroidsAfterConverting(CountAlive(entities.Enforcers), CountAlive(entities.Spheroids), parameters.SpheroidCount),
@@ -75,6 +75,6 @@ public static class WaveSurvivors
     /// <summary>Counts the members of one kind of family member who are standing on the field and free.</summary>
     /// <param name="entities">What is on the field.</param>
     /// <param name="kind">Which family member to count.</param>
-    private static int CountFamily(FieldEntities entities, HumanKind kind) =>
+    private static int CountFamilyMembers(FieldEntities entities, HumanKind kind) =>
         entities.Family.Members.Count(human => human.Kind == kind && human.IsGraspable());
 }
