@@ -95,7 +95,7 @@ public sealed class AttractState : IGameState, IAttractState
             SyncSlotFromField();
             _session.Current.SavedWaveParameters = WaveSurvivors.GetFrom(_field);
 
-            if (!_session.AnyMenLeft())
+            if (!_session.AnyPlayerSlotHasMen())
             {
                 // RRG23 PLEND: the last man gone ends the game — "GAME OVER", then
                 // ENDPRC → GOV → LOGG1, whose first act is the high score TABLE

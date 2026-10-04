@@ -257,7 +257,7 @@ public sealed class PlayingState : IGameState
             _session.SwitchToPlayerWithMen();
         }
 
-        if (!_session.AnyMenLeft())
+        if (!_session.AnyPlayerSlotHasMen())
         {
             // The score that ends the game is the CURRENT player's — but a 2-player
             // game offers both scores to the high-score table (RRTESTC checks
