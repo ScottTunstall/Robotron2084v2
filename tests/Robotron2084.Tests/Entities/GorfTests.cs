@@ -133,14 +133,14 @@ public sealed class GorfTests
         PlayField field = CreateFieldInPlay();
         Gorf gorf = CreateRollingGorf(field, 3);
         field.Entities.Add(gorf);
-        int scoreBefore = field.Score.Score;
+        int scoreBefore = field.ScoreBoard.Score;
 
         int ticks = RunUntilGone(field, gorf);
 
         Assert.False(gorf.IsAlive());
         Assert.InRange(ticks, 1, 2999);
         Assert.True(gorf.Position.X >= field.PlayfieldBounds.Right - ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns));
-        Assert.Equal(scoreBefore, field.Score.Score);
+        Assert.Equal(scoreBefore, field.ScoreBoard.Score);
     }
 
     /// <summary>Builds a field, puts a Gorf with these rolls on it, and runs it right across.</summary>

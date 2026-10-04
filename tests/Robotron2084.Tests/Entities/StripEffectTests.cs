@@ -76,7 +76,7 @@ public sealed class StripEffectTests
     private static IReadOnlyList<Strip> Strips(StripEffect explosion, int frames = 0)
     {
         Steps(explosion, frames);
-        return explosion.Layout(WidthArcadePixels, HeightRows);
+        return explosion.LayOutStrips(WidthArcadePixels, HeightRows);
     }
 
     [Fact]
@@ -184,7 +184,7 @@ public sealed class StripEffectTests
         // And the placement helper agrees with the draw path's own convention.
         Assert.Equal(
             (SpriteLeft + 1, SpriteTop + 1),
-            StripEffect.SpritePlacement(bounds, WidthArcadePixels, HeightRows));
+            StripEffect.GetSpritePlacement(bounds, WidthArcadePixels, HeightRows));
     }
 
     [Fact]
@@ -322,21 +322,21 @@ public sealed class StripEffectTests
         // VERTICAL" — a straight HORIZONTAL shot takes the VERTICAL explosion; both
         // components non-zero → the diagonal engine. The name is the axis the pieces
         // MOVE (across the shot), which is why these look "swapped" at first glance.
-        Assert.Equal((StripFanAxis.Columns, 0), StripEffect.FanForShot(Direction8.Up));
-        Assert.Equal((StripFanAxis.Columns, 0), StripEffect.FanForShot(Direction8.Down));
+        Assert.Equal((StripFanAxis.Columns, 0), StripEffect.GetFanForShot(Direction8.Up));
+        Assert.Equal((StripFanAxis.Columns, 0), StripEffect.GetFanForShot(Direction8.Down));
 
-        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.FanForShot(Direction8.Left));
-        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.FanForShot(Direction8.Right));
+        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.GetFanForShot(Direction8.Left));
+        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.GetFanForShot(Direction8.Right));
 
         // No laser direction at all: the port's non-laser kills, which the ROM sends
         // through HVEXV with LASDIR = $0100 — that lands on EXST1A, the VERTICAL one.
-        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.FanForShot(null));
+        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.GetFanForShot(null));
 
         // Diagonals: the row split, leaning by SLOPE = ~(vertical ^ horizontal).
-        Assert.Equal((StripFanAxis.Rows, -1), StripEffect.FanForShot(Direction8.UpLeft));
-        Assert.Equal((StripFanAxis.Rows, -1), StripEffect.FanForShot(Direction8.DownRight));
-        Assert.Equal((StripFanAxis.Rows, 1), StripEffect.FanForShot(Direction8.UpRight));
-        Assert.Equal((StripFanAxis.Rows, 1), StripEffect.FanForShot(Direction8.DownLeft));
+        Assert.Equal((StripFanAxis.Rows, -1), StripEffect.GetFanForShot(Direction8.UpLeft));
+        Assert.Equal((StripFanAxis.Rows, -1), StripEffect.GetFanForShot(Direction8.DownRight));
+        Assert.Equal((StripFanAxis.Rows, 1), StripEffect.GetFanForShot(Direction8.UpRight));
+        Assert.Equal((StripFanAxis.Rows, 1), StripEffect.GetFanForShot(Direction8.DownLeft));
     }
 
     [Fact]
@@ -381,7 +381,7 @@ public sealed class StripEffectTests
         Assert.Equal((StripFanAxis.Rows, -1), (diagonal.Axis, diagonal.Slope));
 
         // A vertical shot is the HORIZONTAL explosion (columns), a horizontal shot the
-        // VERTICAL one (rows) — see StripEffect.FanForShot and notes §69.
+        // VERTICAL one (rows) — see StripEffect.GetFanForShot and notes §69.
         Assert.Equal((StripFanAxis.Columns, 0), (vertical.Axis, vertical.Slope));
         Assert.Equal((StripFanAxis.Rows, 0), (horizontal.Axis, horizontal.Slope));
 

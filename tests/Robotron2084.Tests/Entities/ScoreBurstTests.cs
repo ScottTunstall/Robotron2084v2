@@ -182,7 +182,7 @@ public sealed class ScoreBurstTests
         Assert.Equal(EntityLifeState.Dead, spheroid.LifeState);
         Assert.Single(field.Entities.ScoreBursts);
         Assert.Empty(field.Entities.Explosions); // CIRKP, not EXST
-        Assert.Equal(ScoreValues.Spheroid, field.Score.Score); // both burst paths score $0210 = 1000
+        Assert.Equal(ScoreValues.Spheroid, field.ScoreBoard.Score); // both burst paths score $0210 = 1000
     }
 
     [Fact]

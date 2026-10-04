@@ -91,7 +91,7 @@ public sealed class PlayerDeathTests
         Assert.Equal(EntityLifeState.Dying, player.LifeState);
         Assert.Equal(PlayerTuning.PlayerDeathFadeSlot, player.DeathSolidSlot);
         Assert.True(palette.IsSlotSuspended(12), "the ROM kills the DECAY process off before the fade");
-        Assert.Equal(PlayerTuning.PlayerDeathFadeValues[0], palette.SlotValue(12));
+        Assert.Equal(PlayerTuning.PlayerDeathFadeValues[0], palette.GetSlotValue(12));
 
         // The remaining writes are 4 ROM frames apart, which the clock-unit clock puts
         // on ticks 101/106/111/116/120/125/130 — gaps of 5,5,5,5,4,5,5.
@@ -104,7 +104,7 @@ public sealed class PlayerDeathTests
             }
 
             // The last write is the trailing $00 — the death ends with it.
-            Assert.Equal(PlayerTuning.PlayerDeathFadeValues[i + 1], palette.SlotValue(12));
+            Assert.Equal(PlayerTuning.PlayerDeathFadeValues[i + 1], palette.GetSlotValue(12));
         }
 
         Assert.Equal(EntityLifeState.Dead, player.LifeState);

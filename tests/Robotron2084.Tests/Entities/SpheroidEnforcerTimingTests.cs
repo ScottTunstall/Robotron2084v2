@@ -223,7 +223,7 @@ public sealed class SpheroidEnforcerTimingTests
         for (int tick = 1; tick <= 3000; tick++)
         {
             enforcer.Update(Frame(), field);
-            closest = Math.Min(closest, (int)IntVector2.DistanceSquared(enforcer.Position, player));
+            closest = Math.Min(closest, (int)IntVector2.ComputeDistanceSquared(enforcer.Position, player));
         }
 
         int reach = ScreenSize.ToPortPixels(65);

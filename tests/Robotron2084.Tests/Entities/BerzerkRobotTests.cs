@@ -72,27 +72,27 @@ public sealed class BerzerkRobotTests
     }
 
     [Theory]
-    [InlineData(WalkFacing.Right, 0, 0)]
-    [InlineData(WalkFacing.Right, 1, 1)]
-    [InlineData(WalkFacing.Right, 2, 0)]
-    [InlineData(WalkFacing.Left, 3, 1)]
-    [InlineData(WalkFacing.Up, 0, 0)]
-    [InlineData(WalkFacing.Up, 1, 1)]
-    [InlineData(WalkFacing.Up, 2, 2)]
-    [InlineData(WalkFacing.Up, 3, 1)]
-    [InlineData(WalkFacing.Down, 4, 0)]
-    [InlineData(WalkFacing.Down, 7, 1)]
-    public void TheWalkFramesPlay_OneTwo_SideToSide_AndOneTwoThreeTwo_UpAndDown(WalkFacing facing, int step, int expectedIndex) =>
+    [InlineData(WalkSequence.Right, 0, 0)]
+    [InlineData(WalkSequence.Right, 1, 1)]
+    [InlineData(WalkSequence.Right, 2, 0)]
+    [InlineData(WalkSequence.Left, 3, 1)]
+    [InlineData(WalkSequence.Up, 0, 0)]
+    [InlineData(WalkSequence.Up, 1, 1)]
+    [InlineData(WalkSequence.Up, 2, 2)]
+    [InlineData(WalkSequence.Up, 3, 1)]
+    [InlineData(WalkSequence.Down, 4, 0)]
+    [InlineData(WalkSequence.Down, 7, 1)]
+    public void TheWalkFramesPlay_OneTwo_SideToSide_AndOneTwoThreeTwo_UpAndDown(WalkSequence facing, int step, int expectedIndex) =>
         Assert.Equal(expectedIndex, BerzerkRobot.GetWalkFrameIndex(facing, step));
 
     [Theory]
-    [InlineData(50, 10, WalkFacing.Right)]
-    [InlineData(-50, 10, WalkFacing.Left)]
-    [InlineData(10, 50, WalkFacing.Down)]
-    [InlineData(10, -50, WalkFacing.Up)]
-    [InlineData(30, 30, WalkFacing.Right)]
-    public void ItFacesAlongTheLargerGapToThePlayer(int gapX, int gapY, WalkFacing expected) =>
-        Assert.Equal(expected, BerzerkRobot.GetFacingTowards(new IntVector2(100, 100), new IntVector2(100 + gapX, 100 + gapY)));
+    [InlineData(50, 10, WalkSequence.Right)]
+    [InlineData(-50, 10, WalkSequence.Left)]
+    [InlineData(10, 50, WalkSequence.Down)]
+    [InlineData(10, -50, WalkSequence.Up)]
+    [InlineData(30, 30, WalkSequence.Right)]
+    public void ItFacesAlongTheLargerGapToThePlayer(int gapX, int gapY, WalkSequence expected) =>
+        Assert.Equal(expected, BerzerkRobot.GetWalkSequenceTowards(new IntVector2(100, 100), new IntVector2(100 + gapX, 100 + gapY)));
 
     [Fact]
     public void ItIsRegisteredLikeAGrunt_ScoringTheSame_FatalToTouch_AndPutOnTheFieldByTheWave()
