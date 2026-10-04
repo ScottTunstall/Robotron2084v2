@@ -6,7 +6,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The effect where a dying creature's sprite breaks into strips and fans apart, or a new robot's sprite shrinks into view. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_timer"/> gathers the ticks until it is time for the next ROM frame, and it takes a step every ROM frame (see <see cref="ArcadeClock"/>).</summary>
+/// <summary>The effect where a dying creature's sprite breaks into strips and fans apart, or a new robot's sprite shrinks into view. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_romFrameTimer"/> gathers the ticks until it is time for the next ROM frame, and it takes a step every ROM frame (see <see cref="ArcadeClock"/>).</summary>
 /// <remarks>
 /// <list type="bullet">
 /// <item>Original source: <c>RRX7.ASM</c>/<c>RRHX4.ASM</c>/<c>RRDX2.ASM</c> (the death explosion) and <c>RRG23.ASM</c>, routine <c>APPEAR</c> (the shrinking appear)</item>
@@ -15,26 +15,26 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class StripEffect : IEntity
 {
-    private readonly Func<Texture2D> _animationFrameOf;
+    private readonly Func<Texture2D> _getAnimationFrame;
     private readonly StripFanAxis _axis;
     private readonly Rectangle _bounds;
     private readonly StripClip _clip;
     private readonly StripEffectKind _kind;
     private readonly int _slope;          // the diagonal lean: -1 / 0 / +1 (ROM: SLOPE)
-    private int _frames;
-    private int _sizer;                   // the spacing accumulator; its high byte is this frame's step (ROM: YSIZER)
-    private int _timer;                  // Counts up to the next ROM frame: 5 per tick, 6 per arcade frame (notes §52, §67.4)
+    private int _romFramesRemaining;
+    private int _spacingAccumulator;                   // the spacing accumulator; its high byte is this frame's step (ROM: YSIZER)
+    private int _romFrameTimer;                  // Counts up to the next ROM frame: 5 per tick, 6 per arcade frame (notes §52, §67.4)
 
     /// <summary>Builds one record; the two static factories below are the only callers.</summary>
     private StripEffect(
-        Func<Texture2D> animationFrameOf,
+        Func<Texture2D> getAnimationFrame,
         Rectangle bounds,
         StripEffectKind kind,
         StripFanAxis axis,
         int slope,
         StripClip clip)
     {
-        _animationFrameOf = animationFrameOf;
+        _getAnimationFrame = getAnimationFrame;
         _bounds = bounds;
         _kind = kind;
         _axis = axis;
@@ -43,11 +43,11 @@ public sealed class StripEffect : IEntity
 
         // The spacing accumulator starts small for an explosion ("1 unit is the minimum") or large
         // for an appear, so it can shrink back down; an explosion also gets a frame count.
-        _sizer = kind == StripEffectKind.Explode
+        _spacingAccumulator = kind == StripEffectKind.Explode
             ? StripExplosionTuning.ExplosionStartSizer
             : StripExplosionTuning.AppearStartSizer;
 
-        _frames = StripExplosionTuning.ExplosionFrames;
+        _romFramesRemaining = StripExplosionTuning.ExplosionFrames;
     }
 
     /// <summary>The dead entity's own box.</summary>
@@ -66,11 +66,11 @@ public sealed class StripEffect : IEntity
     /// <summary>Explode or Appear (test hook).</summary>
     internal StripEffectKind Kind => _kind;
 
-    /// <summary>The diagonal lean, -1 / 0 / +1 (test hook — see <see cref="FanForShot"/>).</summary>
+    /// <summary>The diagonal lean, -1 / 0 / +1 (test hook — see <see cref="GetFanForShot"/>).</summary>
     internal int Slope => _slope;
 
     /// <summary>The current spacing (the sizer's high byte) — test hook.</summary>
-    internal int Spacing => Math.Max(1, _sizer >> 8);
+    internal int Spacing => Math.Max(1, _spacingAccumulator >> 8);
 
     /// <summary>Starts an appear: the same record with the size running down, so the strips converge.</summary>
     /// <param name="source">The object materialising; its current animation frame is used.</param>
@@ -103,7 +103,7 @@ public sealed class StripEffect : IEntity
     /// which can be bigger than its collision box.</remarks>
     public static StripEffect CreateExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {
-        (StripFanAxis axis, int slope) = FanForShot(direction);
+        (StripFanAxis axis, int slope) = GetFanForShot(direction);
         return new StripEffect(() => dead.GetCurrentAnimationFrame(), dead.ExplosionBounds, StripEffectKind.Explode, axis, slope, clip);
     }
 
@@ -116,20 +116,20 @@ public sealed class StripEffect : IEntity
             return;
         }
 
-        Texture2D animationFrame = _animationFrameOf();
+        Texture2D animationFrame = _getAnimationFrame();
 
         // The sprite's width is in pixels and its height in rows; do not scale them back down (see Layout).
         int spriteWidth = animationFrame.Width;
         int spriteRows = animationFrame.Height;
 
-        foreach (Strip strip in Layout(spriteWidth, spriteRows))
+        foreach (Strip strip in LayOutStrips(spriteWidth, spriteRows))
         {
             // Sources are in texture pixels; destinations are in screen pixels (pixel x SpecScale).
             Rectangle source = _axis == StripFanAxis.Rows
                 ? new Rectangle(0, strip.SourceIndex, spriteWidth, 1)
                 : new Rectangle(strip.SourceIndex, 0, 1, spriteRows);
 
-            Rectangle dest = _axis == StripFanAxis.Rows
+            Rectangle destination = _axis == StripFanAxis.Rows
                 ? new Rectangle(
                     strip.X * ScreenSize.SpecScale,
                     strip.Y * ScreenSize.SpecScale,
@@ -141,7 +141,7 @@ public sealed class StripEffect : IEntity
                     ScreenSize.SpecScale,
                     spriteRows * ScreenSize.SpecScale);
 
-            spriteBatch.Draw(animationFrame, dest, source, Color.White);
+            spriteBatch.Draw(animationFrame, destination, source, Color.White);
         }
     }
 
@@ -156,36 +156,36 @@ public sealed class StripEffect : IEntity
         }
 
         // One step per ROM frame, not one per tick (see the remarks).
-        _timer += ArcadeClock.UnitsPerPortTick;
-        if (_timer < ArcadeClock.UnitsPerRomFrame)
+        _romFrameTimer += ArcadeClock.UnitsPerPortTick;
+        if (_romFrameTimer < ArcadeClock.UnitsPerRomFrame)
         {
             return;
         }
 
-        _timer -= ArcadeClock.UnitsPerRomFrame;
+        _romFrameTimer -= ArcadeClock.UnitsPerRomFrame;
 
         if (_kind == StripEffectKind.Explode)
         {
             // Count the frame down; at zero the explosion is gone.
-            if (--_frames <= 0)
+            if (--_romFramesRemaining <= 0)
             {
                 LifeState = EntityLifeState.Dead;
                 return;
             }
 
-            _sizer += StripExplosionTuning.SizerStep;
+            _spacingAccumulator += StripExplosionTuning.SizerStep;
             return;
         }
 
         // Shrink the spacing; the record dies once it would fall to 1 or less.
-        int next = _sizer - StripExplosionTuning.SizerStep;
+        int next = _spacingAccumulator - StripExplosionTuning.SizerStep;
         if ((next >> 8) <= 1)
         {
             LifeState = EntityLifeState.Dead;
             return;
         }
 
-        _sizer = next;
+        _spacingAccumulator = next;
     }
 
     /// <summary>Maps a killing shot's direction to the fan axis and lean it produces.</summary>
@@ -196,7 +196,7 @@ public sealed class StripEffect : IEntity
     /// vertical shot uses the columns split (they fly apart horizontally), a pure horizontal shot or no
     /// direction at all uses the rows split, and a diagonal shot uses the rows split with the halves
     /// leaning opposite ways. These two branches are easy to swap by mistake.</remarks>
-    internal static (StripFanAxis Axis, int Slope) FanForShot(Direction8? direction) => direction switch
+    internal static (StripFanAxis Axis, int Slope) GetFanForShot(Direction8? direction) => direction switch
     {
         // A pure vertical shot → cut into columns.
         Direction8.Up or Direction8.Down => (StripFanAxis.Columns, 0),
@@ -215,7 +215,7 @@ public sealed class StripEffect : IEntity
     /// <param name="spriteWidth">The sprite's width in pixels.</param>
     /// <param name="spriteRows">The sprite's height in rows.</param>
     /// <returns>The top-left the sprite is drawn at, in pixels and rows.</returns>
-    internal static (int Left, int Top) SpritePlacement(
+    internal static (int Left, int Top) GetSpritePlacement(
         Rectangle bounds, int spriteWidth, int spriteRows)
     {
         int boundsWidth = bounds.Width / ScreenSize.SpecScale;
@@ -247,13 +247,13 @@ public sealed class StripEffect : IEntity
     /// sprite's top plus half its height, and keeps both halves equal; anchoring at the collision
     /// point instead is lopsided, because a shot strikes the sprite's near edge. A strip outside the
     /// playfield is DROPPED, not clamped.</remarks>
-    internal IReadOnlyList<Strip> Layout(int spriteWidth, int spriteRows)
+    internal IReadOnlyList<Strip> LayOutStrips(int spriteWidth, int spriteRows)
     {
-        bool rows = _axis == StripFanAxis.Rows;
-        int extent = rows ? spriteRows : spriteWidth;
+        bool fansByRows = _axis == StripFanAxis.Rows;
+        int extent = fansByRows ? spriteRows : spriteWidth;
 
         var strips = new List<Strip>(extent);
-        int spacing = _sizer >> 8;
+        int spacing = _spacingAccumulator >> 8;
         if (spacing < 1)
         {
             spacing = 1;
@@ -263,10 +263,10 @@ public sealed class StripEffect : IEntity
         int split = extent / 2;
 
         // The sprite is drawn centred in the bounds, so the fan must start from its own top-left.
-        (int spriteLeft, int spriteTop) = SpritePlacement(_bounds, spriteWidth, spriteRows);
+        (int spriteLeft, int spriteTop) = GetSpritePlacement(_bounds, spriteWidth, spriteRows);
 
         // The fixed point's own screen row/column.
-        int centre = (rows ? spriteTop : spriteLeft) + split;
+        int centre = (fansByRows ? spriteTop : spriteLeft) + split;
 
         // One unit is ONE pixel of the sprite along the fan axis, for BOTH families: counting the
         // horizontal family in byte columns (2 px) would fly it off at twice the ROM's rate.
@@ -288,8 +288,8 @@ public sealed class StripEffect : IEntity
             int along = fanBase + (i * step);
             int lateral = (i - split) * drift;
 
-            int x = rows ? spriteLeft + lateral : along;
-            int y = rows ? along : spriteTop + lateral;
+            int x = fansByRows ? spriteLeft + lateral : along;
+            int y = fansByRows ? along : spriteTop + lateral;
 
             if (IsInside(x, y, spriteWidth, spriteRows))
             {

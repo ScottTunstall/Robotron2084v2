@@ -72,41 +72,51 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
 
     private readonly Random _random;
     private readonly SpriteSet _sprites;
-    private readonly int _beatIntervalClockUnits; // how long one step takes — the ROM's HLKSPD frame count, in clock units
-    private readonly Func<IntVector2> _target;
-    private bool _aimed;
-    private int _animationFrameIndex;
-    private Direction8 _direction;
-    private bool _horizontal;
-    private Rectangle? _playfieldBounds;
-    private IntVector2 _position;
 
-    // 0-based index into SpriteSet.HulkAnimationFrames
+    /// <summary>How long one beat takes, in clock units.</summary>
+    /// <remarks>ROM: the wave's <c>HLKSPD</c> frame count.</remarks>
+    private readonly int _beatIntervalClockUnits;
+
+    private readonly Func<IntVector2> _getTargetPosition;
+
+    /// <summary>Which animation frame is showing, as a place in the sprite set's hulk animation frames.</summary>
+    private int _animationFrameIndex;
+
+    /// <summary>Counts up to the next beat.</summary>
+    private int _beatTimer;
+
+    private Direction8 _direction;
+    private bool _hasAimed;
+    private bool _isMovingHorizontally;
+
+    /// <summary>The inside of the wall as it was on the last update. A knockback uses it.</summary>
+    private Rectangle? _playfieldBounds;
+
+    private IntVector2 _position;
     private int _reaimStepsRemaining;
 
-    private int _beatTimer;
-    private int _walkCycleStep; // which of the 4 frames in the current walk pattern comes up next (0-3)
-                                // cached from the last Update; used by ApplyKnockback
+    /// <summary>Which animation frame of the walk pattern comes up next.</summary>
+    private int _walkCycleStep;
 
     /// <summary>Creates a hulk; it takes its first aim on its first update.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the hulk.</param>
     /// <param name="random">The random source, for the re-aim timer and the aim offsets.</param>
     /// <param name="beatIntervalRomFrames">How many ROM frames between steps (ROM <c>HLKSPD</c>): a bigger number is a SLOWER hulk.</param>
-    /// <param name="target">Returns who this hulk hunts right now: the player, or a human that falls back to the player once it is gone.</param>
+    /// <param name="getTargetPosition">Returns who this hulk hunts right now: the player, or a human that falls back to the player once it is gone.</param>
     /// <remarks>The interval between beats (ROM: <c>HLKSPD</c>) is 5-8 ROM frames.</remarks>
     public Hulk(
         SpriteSet sprites,
         IntVector2 position,
         Random random,
         int beatIntervalRomFrames,
-        Func<IntVector2> target)
+        Func<IntVector2> getTargetPosition)
     {
         _sprites = sprites;
         _position = position;
         _random = random;
         _beatIntervalClockUnits = ArcadeClock.ToClockUnits(beatIntervalRomFrames);
-        _target = target;
+        _getTargetPosition = getTargetPosition;
         _reaimStepsRemaining = RollReaimSteps();
         _direction = Direction8.Up; // placeholder — the first Update() call picks the real starting direction
         _animationFrameIndex = VerticalAnimationFrames[0];
@@ -171,11 +181,11 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
             return;
         }
 
-        if (!_aimed)
+        if (!_hasAimed)
         {
             // The first move is always sideways, never up/down.
-            _aimed = true;
-            _horizontal = true;
+            _hasAimed = true;
+            _isMovingHorizontally = true;
             PickDirection(field);
             _animationFrameIndex = GetFrames(_direction)[0]; // start the walk animation from its first frame
             return;
@@ -191,11 +201,11 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
 
         // Show this cycle's walk frame, then move; sideways steps alternate short and long.
         _animationFrameIndex = GetFrames(_direction)[_walkCycleStep];
-        int stepArcadePx = _horizontal
+        int stepArcadePixels = _isMovingHorizontally
             ? (_walkCycleStep % 2 == 0 ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels)
             : VerticalStepArcadePixels;
         _walkCycleStep = (_walkCycleStep + 1) % WalkPatternLength;
-        IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.ToPortPixels(stepArcadePx);
+        IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.ToPortPixels(stepArcadePixels);
         if (field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             // That step would cross the wall — stay put and re-aim.
@@ -227,23 +237,23 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     /// above the top wall is redirected to the bottom wall.</remarks>
     private void PickDirection(PlayField field)
     {
-        IntVector2 target = _target();
+        IntVector2 target = _getTargetPosition();
         int offset = _random.Next(AimOffsetMinArcadePixels, AimOffsetMaxExclusiveArcadePixels);
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        if (_horizontal)
+        if (_isMovingHorizontally)
         {
-            int tx = Math.Clamp(target.X + offset, bounds.X, bounds.Right - CollisionSize.Width);
-            _direction = tx <= _position.X ? Direction8.Left : Direction8.Right;
+            int targetX = Math.Clamp(target.X + offset, bounds.X, bounds.Right - CollisionSize.Width);
+            _direction = targetX <= _position.X ? Direction8.Left : Direction8.Right;
         }
         else
         {
-            int ty = target.Y + offset;
-            if (ty < bounds.Y) // aiming above the top wall — redirect to the bottom wall instead
+            int targetY = target.Y + offset;
+            if (targetY < bounds.Y) // aiming above the top wall — redirect to the bottom wall instead
             {
-                ty = bounds.Bottom - CollisionSize.Height;
+                targetY = bounds.Bottom - CollisionSize.Height;
             }
 
-            _direction = ty <= _position.Y ? Direction8.Up : Direction8.Down;
+            _direction = targetY <= _position.Y ? Direction8.Up : Direction8.Down;
         }
     }
 
@@ -252,7 +262,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     private void Reaim(PlayField field)
     {
         _reaimStepsRemaining = RollReaimSteps();
-        _horizontal = !_horizontal;
+        _isMovingHorizontally = !_isMovingHorizontally;
         PickDirection(field);
         _walkCycleStep = 0;
         _animationFrameIndex = GetFrames(_direction)[0];

@@ -33,38 +33,38 @@ public sealed class Gorf : IExplodable, IRemovable
     /// <summary>How high every hop goes, in port pixels.</summary>
     private static readonly int HopPixels = ScreenSize.ToPortPixels(GorfTuning.HopRows);
 
-    private readonly int _direction;
+    private readonly int _directionSignX;
     private readonly Queue<int> _dropSteps = new();
     private readonly int _maxDropsX2;
     private readonly Random _random;
     private readonly int _groundY;
-    private readonly Rectangle _playfield;
+    private readonly Rectangle _playfieldBounds;
     private readonly SpriteSet _sprites;
     private readonly int _totalSteps;
     private int _animationFrameIndex;
     private int _animationTimer;
     private IntVector2 _position;
-    private int _step;
+    private int _stepCount;
     private int _stepInHop;
     private int _stepTimer;
 
     /// <summary>Creates a Gorf just off the screen, on a random side and at a random height, with its drops already rolled.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="random">The random source: the side, the height and the drops.</param>
-    /// <param name="playfield">The inside of the wall, in port pixels. Gorf starts and ends outside it.</param>
+    /// <param name="playfieldBounds">The inside of the wall, in port pixels. Gorf starts and ends outside it.</param>
     /// <param name="maxDropsX2">This wave's drop bound, rolled as a spheroid's is.</param>
-    public Gorf(SpriteSet sprites, Random random, Rectangle playfield, int maxDropsX2)
+    public Gorf(SpriteSet sprites, Random random, Rectangle playfieldBounds, int maxDropsX2)
     {
         _sprites = sprites;
-        _playfield = playfield;
+        _playfieldBounds = playfieldBounds;
         _random = random;
         _maxDropsX2 = maxDropsX2;
-        _direction = random.Next(2) == 0 ? 1 : -1;
-        int highest = playfield.Y + HopPixels;
-        int lowest = Math.Max(highest, playfield.Bottom - CollisionSize.Height);
+        _directionSignX = random.Next(2) == 0 ? 1 : -1;
+        int highest = playfieldBounds.Y + HopPixels;
+        int lowest = Math.Max(highest, playfieldBounds.Bottom - CollisionSize.Height);
         _groundY = highest + random.Next(lowest - highest + 1);
-        _position = new IntVector2(_direction > 0 ? playfield.X - CollisionSize.Width : playfield.Right, _groundY);
-        _totalSteps = (playfield.Width + CollisionSize.Width) / StepPixels;
+        _position = new IntVector2(_directionSignX > 0 ? playfieldBounds.X - CollisionSize.Width : playfieldBounds.Right, _groundY);
+        _totalSteps = (playfieldBounds.Width + CollisionSize.Width) / StepPixels;
 
         for (int stop = 1; stop <= GorfTuning.DropStops; stop++)
         {
@@ -100,9 +100,9 @@ public sealed class Gorf : IExplodable, IRemovable
             return;
         }
 
-        Texture2D frame = GetCurrentAnimationFrame();
-        Rectangle drawn = BlitterDraw.DrawnRect(Bounds, frame);
-        Rectangle visible = Rectangle.Intersect(drawn, _playfield);
+        Texture2D animationFrame = GetCurrentAnimationFrame();
+        Rectangle drawn = BlitterDraw.DrawnRect(Bounds, animationFrame);
+        Rectangle visible = Rectangle.Intersect(drawn, _playfieldBounds);
         if (visible.IsEmpty)
         {
             return;
@@ -111,7 +111,7 @@ public sealed class Gorf : IExplodable, IRemovable
         int pixel = ScreenSize.ToPortPixels(1);
         var source = new Rectangle((visible.X - drawn.X) / pixel, (visible.Y - drawn.Y) / pixel, visible.Width / pixel, visible.Height / pixel);
         _sprites.Blitter.UsePassThrough();
-        spriteBatch.Draw(frame, visible, source, Color.White);
+        spriteBatch.Draw(animationFrame, visible, source, Color.White);
     }
 
     /// <summary>Kills the Gorf outright: no flash, no death animation.</summary>
@@ -160,22 +160,22 @@ public sealed class Gorf : IExplodable, IRemovable
 
     private void Step(PlayField field)
     {
-        _step++;
+        _stepCount++;
         _stepInHop++;
         int height = GorfPath.GetHopHeight(_stepInHop, GorfTuning.HopSteps, HopPixels);
-        _position = new IntVector2(_position.X + (_direction * StepPixels), _groundY - height);
+        _position = new IntVector2(_position.X + (_directionSignX * StepPixels), _groundY - height);
         if (_stepInHop == GorfTuning.HopSteps)
         {
             _stepInHop = 0;
         }
 
-        if (_dropSteps.Count > 0 && _step >= _dropSteps.Peek())
+        if (_dropSteps.Count > 0 && _stepCount >= _dropSteps.Peek())
         {
             _dropSteps.Dequeue();
             DropGrunts(field);
         }
 
-        if (_step >= _totalSteps)
+        if (_stepCount >= _totalSteps)
         {
             Kill();
         }

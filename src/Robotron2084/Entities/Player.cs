@@ -25,7 +25,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Collision box = the player sprite's own 8x12 arcade px.</summary>
     /// <remarks>The ROM collides against the player's sprite, not a fixed 16x16 cell.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.PlayerCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.PlayerCollisionSize.Height));
+        (ScreenSize.ToPortPixels(CollisionSizes.PlayerCollisionSize.Width),
+            ScreenSize.ToPortPixels(CollisionSizes.PlayerCollisionSize.Height));
 
     /// <summary>Walk cycle per direction: [f0, f1, f0, f2] (e.g. left = 1,2,1,3).</summary>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
@@ -35,10 +36,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private readonly SpriteSet _sprites;
 
     // A wave starts on frame 7, the first DOWN frame; _animationFrameTicks counts 1..3.
-    private WalkFacing _animationFacing = GetWalkFacing(Direction8.Down);
+    private WalkSequence _walkSequence = GetWalkSequence(Direction8.Down);
 
     private int _animationFrameTicks = 1;
-    private int _animationSequenceIndex;
+    private int _walkCycleStep;
     private int _autoFireTicksRemaining;
     private int _deathFadeIndex;
     private int _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
@@ -99,7 +100,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     public bool IsInvincible => _invincibilityTicksRemaining > 0;
 
     /// <summary>True when this update fired a laser.</summary>
-    public bool LasersFiredThisUpdate { get; private set; }
+    public bool FiredLaserThisUpdate { get; private set; }
 
     /// <summary>Alive, Dying (the death animation's flash and fade), or Dead pending respawn.</summary>
     /// <remarks>The ROM's `PDTHV` flash and fade.</remarks>
@@ -119,7 +120,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     /// <summary>0-based index into <see cref="SpriteSet.PlayerAnimationFrames"/>.</summary>
     /// <remarks>The arcade numbers its frames 1 through 12, so arcade frame N is index N - 1.</remarks>
-    internal int WalkAnimationFrameIndex => (int)_animationFacing * 3 + WalkCycle[_animationSequenceIndex];
+    internal int WalkAnimationFrameIndex => (int)_walkSequence * 3 + WalkCycle[_walkCycleStep];
 
     /// <summary>Awards an extra life when a score crosses an extra-life threshold.</summary>
     public void AddLife() => Lives += 1;
@@ -142,7 +143,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
         // One colour while dying, like the ROM's own solid-colour draw.
         if (this.IsDying())
         {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), Bounds, _sprites.Blitter.GetSlotColour(DeathSolidSlot));
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), Bounds,
+                _sprites.Blitter.GetSlotColour(DeathSolidSlot));
             return;
         }
 
@@ -202,23 +204,23 @@ public sealed class Player : IEntity, IAnimationFrameSource
         IntVector2 move = input.MoveDirection;
 
         // The aim drives the FIRE direction only — never the facing or the animation.
-        Direction8? aim = Direction8Extensions.CreateFromDelta(input.ShootDirection);
+        Direction8? aimDirection = Direction8Extensions.CreateFromDelta(input.ShootDirection);
 
         MoveFromInput(move, field);
-        UpdateFiring(input, aim, field);
+        UpdateFiring(input, aimDirection, field);
         AdvanceWalkAnimation(move);
     }
 
-    /// <summary>Which walk sequence a facing uses: diagonals reuse the horizontal sequences.</summary>
-    /// <param name="direction">The facing to map.</param>
-    /// <returns>The walk sequence the facing uses.</returns>
+    /// <summary>Which walk sequence a direction uses: diagonals reuse the horizontal sequences.</summary>
+    /// <param name="direction">The direction to map.</param>
+    /// <returns>The walk sequence the direction uses.</returns>
     /// <remarks>The arcade's own stick-to-walk-sequence rule.</remarks>
-    internal static WalkFacing GetWalkFacing(Direction8 direction) => direction switch
+    internal static WalkSequence GetWalkSequence(Direction8 direction) => direction switch
     {
-        Direction8.Left or Direction8.UpLeft or Direction8.DownLeft => WalkFacing.Left,
-        Direction8.Right or Direction8.UpRight or Direction8.DownRight => WalkFacing.Right,
-        Direction8.Down => WalkFacing.Down,
-        _ => WalkFacing.Up,
+        Direction8.Left or Direction8.UpLeft or Direction8.DownLeft => WalkSequence.Left,
+        Direction8.Right or Direction8.UpRight or Direction8.DownRight => WalkSequence.Right,
+        Direction8.Down => WalkSequence.Down,
+        _ => WalkSequence.Up,
     };
 
     /// <summary>Starts the death animation, ignoring <c>PlayerInvincibleForTesting</c> (test hook).</summary>
@@ -233,7 +235,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Test-only positioning hook (InternalsVisibleTo the test assembly).</summary>
     internal void TeleportTo(IntVector2 position) => _position = position;
 
-    /// <summary>Where a shot of this facing leaves the player: spec px from the player cell's top-left.</summary>
+    /// <summary>Where a shot in this direction leaves the player: spec px from the player cell's top-left.</summary>
     /// <param name="direction">The direction the shot is fired in.</param>
     /// <returns>The muzzle's offset from the player's top-left, in port pixels.</returns>
     /// <remarks>ROM: the muzzle-offset table (RRG23.ASM).</remarks>
@@ -291,7 +293,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
         {
             case DeathStage.White:
                 // After the white flash, pick a random colour slot.
-                _deathFlashSlot = PlayerTuning.PlayerDeathFlashSlots[_random.Next(PlayerTuning.PlayerDeathFlashSlots.Length)];
+                _deathFlashSlot =
+                    PlayerTuning.PlayerDeathFlashSlots[_random.Next(PlayerTuning.PlayerDeathFlashSlots.Length)];
                 _deathStage = DeathStage.Colour;
                 break;
 
@@ -331,7 +334,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
         }
 
         _invincibilityBlinkTicks =
-            (_invincibilityBlinkTicks + 1) % (PlayerTuning.InvincibilityFlickerVisibleTicks + PlayerTuning.InvincibilityFlickerHiddenTicks);
+            (_invincibilityBlinkTicks + 1) % (PlayerTuning.InvincibilityFlickerVisibleTicks +
+                                              PlayerTuning.InvincibilityFlickerHiddenTicks);
 
         if (IsInStartGracePeriod)
         {
@@ -352,19 +356,19 @@ public sealed class Player : IEntity, IAnimationFrameSource
             return;
         }
 
-        WalkFacing facing = GetWalkFacing(FacingDirection);
-        if (facing != _animationFacing)
+        WalkSequence walkSequence = GetWalkSequence(FacingDirection);
+        if (walkSequence != _walkSequence)
         {
             // A new direction resets the sequence index and the frame hold, so its first
             // frame shows immediately.
-            _animationFacing = facing;
-            _animationSequenceIndex = 0;
+            _walkSequence = walkSequence;
+            _walkCycleStep = 0;
             _animationFrameTicks = 1;
         }
         else if (_animationFrameTicks >= FrameTicksPerAnimationFrame)
         {
             _animationFrameTicks = 1;
-            _animationSequenceIndex = (_animationSequenceIndex + 1) % WalkCycle.Length;
+            _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
         }
         else
         {
@@ -432,26 +436,26 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     /// <summary>Fires on the fire control: a fresh press at once, a held one on the auto-fire cadence.</summary>
     /// <param name="input">This tick's controls.</param>
-    /// <param name="aim">The aim stick's direction, or null when it is centred.</param>
+    /// <param name="aim">The aimDirection stick's direction, or null when it is centred.</param>
     /// <param name="field">The playfield, which owns the laser slots.</param>
     /// <remarks>A shot re-fires every <see cref="PlayerTuning.PlayerAutoFireTicks"/> ticks; the attempt
     /// is a no-op when the three slots are full.</remarks>
-    private void UpdateFiring(PlayerInputState input, Direction8? aim, PlayField field)
+    private void UpdateFiring(PlayerInputState input, Direction8? aimDirection, PlayField field)
     {
-        bool fire = input.FireHeld;
-        if (fire && (!_wasFiring || --_autoFireTicksRemaining <= 0))
+        bool isFireHeld = input.FireHeld;
+        if (isFireHeld && (!_wasFiring || --_autoFireTicksRemaining <= 0))
         {
-            Direction8 fireDirection = aim ?? FacingDirection;
+            Direction8 fireDirection = aimDirection ?? FacingDirection;
             IntVector2 muzzle = _position + GetMuzzleOffset(fireDirection);
-            LasersFiredThisUpdate = field.TryFirePlayerLaser(muzzle, fireDirection);
+            FiredLaserThisUpdate = field.TryFirePlayerLaser(muzzle, fireDirection);
             _autoFireTicksRemaining = PlayerTuning.PlayerAutoFireTicks;
         }
         else
         {
-            LasersFiredThisUpdate = false;
+            FiredLaserThisUpdate = false;
         }
 
-        _wasFiring = fire;
+        _wasFiring = isFireHeld;
     }
 
     /// <summary>Writes the next fade byte into the death colour's palette slot.</summary>

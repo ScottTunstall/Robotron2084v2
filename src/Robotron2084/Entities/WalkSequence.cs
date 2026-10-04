@@ -2,9 +2,9 @@ namespace Robotron2084.Entities;
 
 /// <summary>
 /// Which of the four walk sequences a walker is showing. The numeric values are the ROM's own block order, so
-/// <c>(int)facing * 3</c> is the first animation frame of the facing's three.
+/// <c>(int)walkSequence * 3</c> is the first animation frame of that sequence's three.
 /// </summary>
-public enum WalkFacing
+public enum WalkSequence
 {
     /// <summary>Walking left (diagonals to the left reuse it).</summary>
     Left = 0,

@@ -34,7 +34,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     private IntVector2 _positionRemainderSubpixels;
 
     // carries the sub-pixel part so the step never drifts
-    private int _remainingLife;
+    private int _lifeClockUnitsRemaining;
 
     // the constant per-axis acceleration, in 1/256 px per move, rolled once at spawn (ROM: PD2/PD4)
     private IntVector2 _velocitySubpixels; // current velocity, in 1/256 px per ROM frame (ROM: OXV/OYV)
@@ -71,18 +71,18 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         int deltaY = playerPosition.Y + ScreenSize.ToPortPixels(jitterY) - position.Y;
 
         // 4x the aim delta, in subpixels (the mover only acts on the velocity's high byte).
-        int subpixelsPerPortPxPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
-        _velocitySubpixels = new IntVector2(deltaX * subpixelsPerPortPxPerMove, deltaY * subpixelsPerPortPxPerMove);
+        int subpixelsPerPortPixelPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
+        _velocitySubpixels = new IntVector2(deltaX * subpixelsPerPortPixelPerMove, deltaY * subpixelsPerPortPixelPerMove);
 
         // The constant per-axis acceleration: a random -16..+15, in the same subpixel units.
         // A sideways unit of acceleration is a column's worth, an up-and-down one a row's worth.
         _accelerationSubpixels = new IntVector2(
-            _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPxPerMove,
-            _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPxPerMove
+            _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPixelPerMove,
+            _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPixelPerMove
                 * ScreenSize.ToPortPixels(1) / ScreenSize.ToPortPixelsFromColumns(1));
 
         // Life, in timer units: 5 per tick, 6 per arcade frame.
-        _remainingLife = ArcadeClock.ToClockUnits(_random.Next(
+        _lifeClockUnitsRemaining = ArcadeClock.ToClockUnits(_random.Next(
             SparkTuning.SparkLifeMinRomFrames,
             SparkTuning.SparkLifeMaxRomFrames + 1));
 
@@ -147,8 +147,8 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _flickerTimer += ArcadeClock.UnitsPerPortTick;
 
         // Life counts down: 5 per tick, 6 per arcade frame.
-        _remainingLife -= ArcadeClock.UnitsPerPortTick;
-        if (_remainingLife <= 0)
+        _lifeClockUnitsRemaining -= ArcadeClock.UnitsPerPortTick;
+        if (_lifeClockUnitsRemaining <= 0)
         {
             LifeState = EntityLifeState.Dead;
             return;

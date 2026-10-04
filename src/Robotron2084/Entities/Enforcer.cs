@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>An enforcer is a small, fast robot dropped by spheroids. It grows in place for a moment, then flies around firing sparks at you. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by <see cref="_moveTimer"/>, and <see cref="_growthRemaining"/> counts down its growing.</summary>
+/// <summary>An enforcer is a small, fast robot dropped by spheroids. It grows in place for a moment, then flies around firing sparks at you. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by <see cref="_moveTimer"/>, and <see cref="_growClockUnitsRemaining"/> counts down its growing.</summary>
 /// <seealso cref="Spheroid"/>
 /// <seealso cref="Spark"/>
 /// <remarks>
@@ -42,7 +42,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private readonly SpriteSet _sprites;
     private int _beatTimer;
     private int _fireCooldownBeats;
-    private int _growthRemaining;
+    private int _growClockUnitsRemaining;
     private int _moveTimer;
     private IntVector2 _position;
 
@@ -70,7 +70,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
-        _growthRemaining = ArcadeClock.ToClockUnits(EnforcerTuning.GrowUpRomFrames);
+        _growClockUnitsRemaining = ArcadeClock.ToClockUnits(EnforcerTuning.GrowUpRomFrames);
         // Both countdowns are in beats; the arcade re-aims as soon as the grow-up ends.
         _reaimBeatsRemaining = 0;
         _fireCooldownBeats = 1 + random.Next(0, _fireIntervalBeats);
@@ -85,9 +85,9 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <remarks>The grow frames are the ROM's ENGD1..5, which are frames 2..6 (1-based) of the set.</remarks>
     public Texture2D GetCurrentAnimationFrame()
     {
-        if (!this.IsAlive() || _growthRemaining <= 0)
+        if (!this.IsAlive() || _growClockUnitsRemaining <= 0)
         {
-            return _sprites.Enforcer;
+            return _sprites.EnforcerSprite;
         }
 
         int frame = Math.Clamp(GrowAnimationFrameIndex, 0, _sprites.EnforcerAnimationFrames.Length - 2);
@@ -102,8 +102,8 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     public IntVector2 Position => _position;
 
     /// <summary>Which of the five grow-up animation frames is showing (0..4), or -1 once grown (test hook).</summary>
-    internal int GrowAnimationFrameIndex => _growthRemaining > 0
-        ? (ArcadeClock.ToClockUnits(EnforcerTuning.GrowUpRomFrames) - _growthRemaining)
+    internal int GrowAnimationFrameIndex => _growClockUnitsRemaining > 0
+        ? (ArcadeClock.ToClockUnits(EnforcerTuning.GrowUpRomFrames) - _growClockUnitsRemaining)
             / ArcadeClock.ToClockUnits(EnforcerTuning.GrowStepRomFrames)
         : -1;
 
@@ -146,10 +146,10 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         }
 
         // Grow-up: immobile and silent; the carry keeps the animation frames on the ROM's 9-frame mark.
-        if (_growthRemaining > 0)
+        if (_growClockUnitsRemaining > 0)
         {
-            _growthRemaining -= ArcadeClock.UnitsPerPortTick;
-            if (_growthRemaining > 0)
+            _growClockUnitsRemaining -= ArcadeClock.UnitsPerPortTick;
+            if (_growClockUnitsRemaining > 0)
             {
                 return;
             }

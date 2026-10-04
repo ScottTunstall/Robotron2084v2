@@ -177,8 +177,8 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>Aims one axis: the sign to move in, from a nudged target coordinate.</summary>
     private int AimSign(int target, int mine)
     {
-        int aim = target + _random.Next(AimNoiseRange) - AimNoiseBase;
-        return aim >= mine ? 1 : -1;
+        int aimedCoordinate = target + _random.Next(AimNoiseRange) - AimNoiseBase;
+        return aimedCoordinate >= mine ? 1 : -1;
     }
 
     /// <summary>Rolls the next stretch's direction: Y only half the time, else X (and maybe Y too).</summary>
@@ -204,7 +204,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private void Step(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        IntVector2 leaving = _position;
+        IntVector2 positionBeforeMove = _position;
         int columnPixels = ScreenSize.ToPortPixelsFromColumns(1);
         int rowPixels = ScreenSize.ToPortPixels(1);
 
@@ -233,7 +233,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
         }
 
         // A trail mark for the position just left, then drop the oldest (the tail is 9 marks).
-        _trail.Add(leaving);
+        _trail.Add(positionBeforeMove);
         if (_trail.Count > CruiseMissileTuning.TrailMarks)
         {
             _trail.RemoveAt(0);

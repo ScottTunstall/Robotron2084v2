@@ -87,8 +87,8 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <summary>Builds up, a tick at a time, until it is time for the next beat.</summary>
     private int _beatTimer;
 
-    /// <summary>Which way the brain is facing. A new brain faces down.</summary>
-    private WalkFacing _facing = WalkFacing.Down;
+    /// <summary>Which walk sequence the brain is showing. A new brain shows the one for walking down.</summary>
+    private WalkSequence _walkSequence = WalkSequence.Down;
 
     /// <summary>Beats left before the brain fires its next cruise missile.</summary>
     private int _fireBeatsRemaining;
@@ -176,7 +176,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     internal void Retarget(int targetFamilySlot) => _targetSlot = targetFamilySlot;
 
     /// <summary>Which of the brain's animation frames is showing, counting from 0 in <see cref="SpriteSet.BrainAnimationFrames"/>.</summary>
-    internal int WalkAnimationFrameIndex => (int)_facing * 3 + WalkCycle[_walkCycleStep];
+    internal int WalkAnimationFrameIndex => (int)_walkSequence * 3 + WalkCycle[_walkCycleStep];
 
     /// <summary>Draws the brain. While it is reprogramming, it is drawn on top of a solid block of colour.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNON</c>. Disassembly: <c>DRAW_BRAIN_IN_PROGGING_STATE</c> (<c>$1DAF</c>).</remarks>
@@ -277,19 +277,19 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
 
         int humanWidth = human.Bounds.Width;
         int x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
-        WalkFacing facing = WalkFacing.Left;
+        WalkSequence walkSequence = WalkSequence.Left;
         if (x < playfieldBounds.X)
         {
             x = _position.X + ScreenSize.ToPortPixelsFromColumns(VictimRightOffsetColumns);
-            facing = WalkFacing.Right;
+            walkSequence = WalkSequence.Right;
             if (x >= playfieldBounds.Right - ScreenSize.ToPortPixelsFromColumns(VictimRightWallMarginColumns))
             {
                 x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
-                facing = WalkFacing.Left;
+                walkSequence = WalkSequence.Left;
             }
         }
 
-        _facing = facing;
+        _walkSequence = walkSequence;
         _walkCycleStep = 0;
 
         _victimRestingY = _position.Y + ScreenSize.ToPortPixels(VictimDropRows);
@@ -392,17 +392,17 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRN5</c> to <c>BRNSD1</c> (<c>BRNDIR</c> and <c>BRNSD</c>). Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>), from <c>$1C58</c> to <c>$1C8F</c>.</remarks>
     private void AdvanceWalkAnimation(IntVector2 step)
     {
-        WalkFacing nextFacing = step.X != 0
-            ? (step.X > 0 ? WalkFacing.Right : WalkFacing.Left)
-            : (step.Y < 0 ? WalkFacing.Up : WalkFacing.Down);
+        WalkSequence nextWalkSequence = step.X != 0
+            ? (step.X > 0 ? WalkSequence.Right : WalkSequence.Left)
+            : (step.Y < 0 ? WalkSequence.Up : WalkSequence.Down);
 
-        if (nextFacing == _facing)
+        if (nextWalkSequence == _walkSequence)
         {
             _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
         }
         else
         {
-            _facing = nextFacing;
+            _walkSequence = nextWalkSequence;
             _walkCycleStep = 0;
         }
     }
@@ -469,10 +469,10 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     private IntVector2 StepTowardTarget(PlayField field, IntVector2 target)
     {
         int dx = 0;
-        int targetDx = target.X - _position.X;
-        if (Math.Abs(targetDx) > ApproachDeadZonePixels)
+        int targetDeltaX = target.X - _position.X;
+        if (Math.Abs(targetDeltaX) > ApproachDeadZonePixels)
         {
-            dx = Math.Sign(targetDx) * StepXPixels;
+            dx = Math.Sign(targetDeltaX) * StepXPixels;
         }
 
         int dy = target.Y >= _position.Y ? StepYPixels : -StepYPixels;

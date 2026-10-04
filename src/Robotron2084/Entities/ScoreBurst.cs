@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The flashing shape and floating score number that appear for a moment when you kill a spheroid or a quark. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_timer"/> gathers the ticks until it is time for the next step (see <see cref="ArcadeClock"/>).</summary>
+/// <summary>The flashing shape and floating score number that appear for a moment when you kill a spheroid or a quark. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_stepTimer"/> gathers the ticks until it is time for the next step (see <see cref="ArcadeClock"/>).</summary>
 /// <seealso cref="Spheroid"/>
 /// <seealso cref="Quark"/>
 /// <remarks>
@@ -24,7 +24,7 @@ public sealed class ScoreBurst : IEntity
     private readonly Texture2D[] _animationFrames;
     private readonly Rectangle _bounds;
     private readonly int _burstSlot;
-    private readonly Texture2D _points;
+    private readonly Texture2D _pointsSprite;
 
     // where the enemy was drawn
     private readonly Rectangle _pointsBounds;
@@ -33,15 +33,15 @@ public sealed class ScoreBurst : IEntity
     private readonly SpriteSet _sprites;
     private int _animationFrameIndex = FirstBurstAnimationFrameIndex;
     private int _pointsStepsRemaining;
-    private int _remaining;
+    private int _burstStepsRemaining;
     private bool _showingPoints;
-    private int _timer;                     // Counts up to the next step: 5 per tick, 6 per arcade frame.
+    private int _stepTimer;                     // Counts up to the next step: 5 per tick, 6 per arcade frame.
 
     /// <summary>Builds one burst — both static factories funnel through here.</summary>
     private ScoreBurst(
         SpriteSet sprites,
         Texture2D[] frames,
-        Texture2D points,
+        Texture2D pointsSprite,
         int count,
         int burstSlot,
         int pointsSlot,
@@ -49,13 +49,13 @@ public sealed class ScoreBurst : IEntity
     {
         _sprites = sprites;
         _animationFrames = frames;
-        _points = points;
+        _pointsSprite = pointsSprite;
         _burstSlot = burstSlot;
         _pointsSlot = pointsSlot;
         _bounds = bounds;
 
         // The first burst animation frame appears at death, so count-1 steps remain; the last only erases.
-        _remaining = count - 1;
+        _burstStepsRemaining = count - 1;
         _pointsBounds = new Rectangle(
             bounds.X + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetXSpecPixels),
             bounds.Y + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetYSpecPixels),
@@ -96,7 +96,7 @@ public sealed class ScoreBurst : IEntity
     public static ScoreBurst CreateForQuark(SpriteSet sprites, Rectangle bounds) => new(
         sprites,
         frames: sprites.QuarkAnimationFrames,
-        points: sprites.RescueScoreDisplays[0],
+        pointsSprite: sprites.RescueScoreDisplays[0],
         count: ScoreBurstTuning.QuarkCount,
         burstSlot: ScoreBurstTuning.QuarkBurstSlot,
         pointsSlot: ScoreBurstTuning.QuarkPointsSlot,
@@ -108,7 +108,7 @@ public sealed class ScoreBurst : IEntity
     public static ScoreBurst CreateForSpheroid(SpriteSet sprites, Rectangle bounds) => new(
         sprites,
         frames: sprites.SpheroidAnimationFrames,
-        points: sprites.RescueScoreDisplays[0],
+        pointsSprite: sprites.RescueScoreDisplays[0],
         count: ScoreBurstTuning.SpheroidCount,
         burstSlot: ScoreBurstTuning.SpheroidBurstSlot,
         pointsSlot: ScoreBurstTuning.SpheroidPointsSlot,
@@ -125,7 +125,7 @@ public sealed class ScoreBurst : IEntity
 
         if (_showingPoints)
         {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _points, _pointsBounds, _sprites.Blitter.GetSlotColour(_pointsSlot));
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _pointsSprite, _pointsBounds, _sprites.Blitter.GetSlotColour(_pointsSlot));
             return;
         }
 
@@ -146,18 +146,18 @@ public sealed class ScoreBurst : IEntity
         }
 
         // Counts up to the next step: 5 per tick, 6 per arcade frame.
-        _timer += ArcadeClock.UnitsPerPortTick;
-        if (_timer < ArcadeClock.ToClockUnits(ScoreBurstTuning.RomFramesPerStep))
+        _stepTimer += ArcadeClock.UnitsPerPortTick;
+        if (_stepTimer < ArcadeClock.ToClockUnits(ScoreBurstTuning.RomFramesPerStep))
         {
             return;
         }
 
-        _timer -= ArcadeClock.ToClockUnits(ScoreBurstTuning.RomFramesPerStep);
+        _stepTimer -= ArcadeClock.ToClockUnits(ScoreBurstTuning.RomFramesPerStep);
 
         if (!_showingPoints)
         {
             // The last burst step only erases, so count-1 animation frames appear.
-            if (--_remaining <= 0)
+            if (--_burstStepsRemaining <= 0)
             {
                 _showingPoints = true;
                 _pointsStepsRemaining = ScoreBurstTuning.PointsSteps;

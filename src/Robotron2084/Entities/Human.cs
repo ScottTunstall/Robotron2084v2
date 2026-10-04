@@ -70,19 +70,24 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
     private readonly SpriteSet _sprites;
 
+    /// <summary>Which walk animation frame is showing, counted through this family member's own animation frames.</summary>
     private int _animationFrameIndex;
 
+    /// <summary>Counts up to the next beat.</summary>
+    private int _beatTimer;
+
+    /// <summary>Which direction block of the walk table (see <see cref="Steps"/>) the human is walking.</summary>
     private int _directionBlock;
 
     private IntVector2 _position;
 
+    /// <summary>Ticks left before this human takes its first step, so a group does not all step together.</summary>
     private int _startStaggerTicks;
 
+    /// <summary>Steps left before the human picks a new direction.</summary>
     private int _stepsUntilNewDirection;
 
-    private int _beatTimer;
-
-    // Which of the 8 direction blocks (see Steps) the human is currently walking.
+    /// <summary>Which substep of the direction block comes next.</summary>
     private int _subStep;
 
     /// <summary>Creates one family member with its own stagger and starting direction.</summary>

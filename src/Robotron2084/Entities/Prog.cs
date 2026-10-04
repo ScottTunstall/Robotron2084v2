@@ -116,7 +116,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>The animation frame the death explosion shatters: the phony burst card, not the human's animation frames.</summary>
     /// <returns>The phony burst card.</returns>
     /// <remarks>ROM: <c>PRGKIL</c> swaps the sprite to the 12x16 <c>PGXPIC</c>.</remarks>
-    public Texture2D GetCurrentAnimationFrame() => _sprites.ProgBurst;
+    public Texture2D GetCurrentAnimationFrame() => _sprites.ProgBurstSprite;
 
     /// <summary>The explosion's rect: the burst card's size at the prog's corner.</summary>
     /// <remarks>ROM: <c>PRGKIL</c>/<c>EXSTV</c> swap the sprite without moving the object, and the
@@ -166,14 +166,14 @@ public sealed class Prog : IExplodable, IRemovable
     {
         get
         {
-            WalkFacing facing = _direction switch
+            WalkSequence walkSequence = _direction switch
             {
-                Direction8.Left => WalkFacing.Left,
-                Direction8.Right => WalkFacing.Right,
-                Direction8.Down => WalkFacing.Down,
-                _ => WalkFacing.Up,
+                Direction8.Left => WalkSequence.Left,
+                Direction8.Right => WalkSequence.Right,
+                Direction8.Down => WalkSequence.Down,
+                _ => WalkSequence.Up,
             };
-            return (int)facing * 3 + WalkCycle[_walkCycleStep];
+            return (int)walkSequence * 3 + WalkCycle[_walkCycleStep];
         }
     }
 

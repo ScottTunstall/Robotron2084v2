@@ -66,7 +66,7 @@ public sealed class Tank : IExplodable, IRemovable
     private int _growTimer;
 
     private IntVector2 _position;
-    private IntVector2 _step;
+    private IntVector2 _stepDirection;
 
     // current 8-way/0 step vector (±1/0 components)
     /// <summary>Counts the tread animation frames shown, one per beat.</summary>
@@ -151,9 +151,9 @@ public sealed class Tank : IExplodable, IRemovable
     {
         get
         {
-            int frames = _sprites.TankAnimationFrames.Length;
-            int forward = _treadAnimationFrameCounter % frames;
-            return _step.X < 0 ? frames - 1 - forward : forward;
+            int animationFrameCount = _sprites.TankAnimationFrames.Length;
+            int forward = _treadAnimationFrameCounter % animationFrameCount;
+            return _stepDirection.X < 0 ? animationFrameCount - 1 - forward : forward;
         }
     }
 
@@ -174,12 +174,12 @@ public sealed class Tank : IExplodable, IRemovable
         if (_growStep < TankTuning.GrowSteps)
         {
             (int growWidth, int growHeight) = TankTuning.GrowSizes[_growStep];
-            Rectangle birth = new(
+            Rectangle growBounds = new(
                 _position.X,
                 _position.Y,
                 ScreenSize.ToPortPixels(growWidth),
                 ScreenSize.ToPortPixels(growHeight));
-            _sprites.Blitter.DrawSprite(spriteBatch, _sprites.TankGrowAnimationFrames[_growStep], birth, Color.White);
+            _sprites.Blitter.DrawSprite(spriteBatch, _sprites.TankGrowAnimationFrames[_growStep], growBounds, Color.White);
             return;
         }
 
@@ -294,7 +294,7 @@ public sealed class Tank : IExplodable, IRemovable
     private void StepOrBounce(PlayField field)
     {
         int stepPixels = ScreenSize.ToPortPixels(TankTuning.StepArcadePixels);
-        IntVector2 step = new(_step.X * stepPixels, _step.Y * stepPixels);
+        IntVector2 step = new(_stepDirection.X * stepPixels, _stepDirection.Y * stepPixels);
         IntVector2 next = _position + step;
         if (!field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
@@ -305,13 +305,13 @@ public sealed class Tank : IExplodable, IRemovable
         // Bounce off the wall (never crosses): mirror the axis that is blocked.
         if (field.HitsWall(new Rectangle(_position.X + step.X, _position.Y, CollisionSize.Width, CollisionSize.Height)))
         {
-            _step = new IntVector2(-_step.X, _step.Y);
+            _stepDirection = new IntVector2(-_stepDirection.X, _stepDirection.Y);
             step = new IntVector2(-step.X, step.Y);
         }
 
         if (field.HitsWall(new Rectangle(_position.X, _position.Y + step.Y, CollisionSize.Width, CollisionSize.Height)))
         {
-            _step = new IntVector2(_step.X, -_step.Y);
+            _stepDirection = new IntVector2(_stepDirection.X, -_stepDirection.Y);
         }
     }
 
@@ -321,17 +321,17 @@ public sealed class Tank : IExplodable, IRemovable
     {
         _destination = _random.Next(DestinationRollSides) <= AimAtPlayerRollAtMost
             ? field.Player.Position
-            : RandomPointIn(field);
+            : PickRandomPointIn(field);
 
         int dx = Math.Sign(_destination.X - _position.X);
         int dy = Math.Abs(_destination.Y - _position.Y) > VerticalMoveThreshold
             ? Math.Sign(_destination.Y - _position.Y)
             : 0;
-        _step = new IntVector2(dx, dy);
+        _stepDirection = new IntVector2(dx, dy);
     }
 
     /// <summary>A random point inside the playfield, inset by the tank's own box.</summary>
-    private IntVector2 RandomPointIn(PlayField field)
+    private IntVector2 PickRandomPointIn(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
         return new IntVector2(

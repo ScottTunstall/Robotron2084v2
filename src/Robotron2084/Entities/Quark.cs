@@ -40,36 +40,41 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private readonly Random _random;
     private readonly int _speedCap;
     private readonly SpriteSet _sprites;
-    private int _animationFrame;
+
+    /// <summary>Which rotation animation frame is showing.</summary>
+    /// <remarks>ROM: <c>OPICT</c>, animation frames <c>SQP0</c> to <c>SQP8</c>.</remarks>
+    private int _animationFrameIndex;
+
+    /// <summary>Counts up to the next beat.</summary>
     private int _beatTimer;
+
+    /// <summary>Beats left before the next tank drop is due.</summary>
+    /// <remarks>ROM: <c>PD2</c>.</remarks>
     private int _dropBeatsRemaining;
 
-    // Beats left before the next tank drop is due (ROM: PD2).
-    private bool _droppingTanks;
+    /// <summary>True once the quark has started dropping tanks. It stays true until every tank has been dropped.</summary>
+    private bool _isDroppingTanks;
 
-    // True once the quark has entered its drop phase; it never leaves it until its allotment is gone.
-    private bool _fleeing;
+    /// <summary>True once the quark is running for the nearest edge of the playfield, where it vanishes.</summary>
+    private bool _isFleeing;
 
-    // Counts up to the next beat.
+    /// <summary>Counts up to the next move: one move per ROM frame.</summary>
     private int _moveTimer;
 
     private IntVector2 _position;
 
-    // Counts up to the next movement step: one per ROM frame.
+    /// <summary>Beats left before the quark picks a new direction to drift in.</summary>
+    /// <remarks>ROM: <c>PD7</c>.</remarks>
     private int _reaimBeatsRemaining;
 
     /// <summary>Sub-pixel carry, so a slow drift still accumulates into movement.</summary>
     private IntVector2 _remainderSubpixels;
 
-    // Beats left before the quark rolls a fresh drift direction (ROM: PD7).
-    // Current rotation animation frame index (ROM: OPICT, animation frames SQP0..SQP8).
+    /// <summary>How many tanks this quark still has left to drop.</summary>
     private int _tanksRemaining;
 
     /// <summary>Velocity in 1/256 port px per ROM frame, integrated once per frame by the shared mover.</summary>
     private IntVector2 _velocitySubpixels;
-
-    // How many tanks this quark still has left to drop.
-    // True once the quark is running for the nearest edge to vanish.
 
     /// <summary>Drops a quark at <paramref name="position"/> with its tank allotment and first drift already rolled.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -110,8 +115,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     internal static IntVector2 GetStartPosition(Rectangle playfieldBounds, Random random)
     {
         int x = random.Next(playfieldBounds.X, playfieldBounds.Right - CollisionSize.Width + 1);
-        bool top = random.Next(2) == 0;
-        return new IntVector2(x, top ? playfieldBounds.Y : playfieldBounds.Bottom - CollisionSize.Height);
+        bool startsAtTop = random.Next(2) == 0;
+        return new IntVector2(x, startsAtTop ? playfieldBounds.Y : playfieldBounds.Bottom - CollisionSize.Height);
     }
 
     /// <summary>The quark sprite's own 16x15 box at <see cref="Position"/>.</summary>
@@ -119,7 +124,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>The current rotation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <returns>The texture for the current rotation frame.</returns>
-    public Texture2D GetCurrentAnimationFrame() => _sprites.QuarkAnimationFrames[_animationFrame];
+    public Texture2D GetCurrentAnimationFrame() => _sprites.QuarkAnimationFrames[_animationFrameIndex];
 
     /// <summary>Alive until it is hit or flees off the field; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -183,7 +188,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _beatTimer -= BeatIntervalClockUnits;
         AdvanceAnimation();
 
-        if (_fleeing)
+        if (_isFleeing)
         {
             LeaveWhenClearOfTheField(field);
             return;
@@ -208,14 +213,14 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// during the exit.</remarks>
     private void AdvanceAnimation()
     {
-        if (_fleeing)
+        if (_isFleeing)
         {
-            _animationFrame = _animationFrame <= 0 ? QuarkTuning.TotalAnimationFrames - 1 : _animationFrame - 1;
+            _animationFrameIndex = _animationFrameIndex <= 0 ? QuarkTuning.TotalAnimationFrames - 1 : _animationFrameIndex - 1;
             return;
         }
 
-        int last = _droppingTanks ? QuarkTuning.TotalAnimationFrames - 1 : QuarkTuning.TravelAnimationFrames - 1;
-        _animationFrame = _animationFrame >= last ? 0 : _animationFrame + 1;
+        int last = _isDroppingTanks ? QuarkTuning.TotalAnimationFrames - 1 : QuarkTuning.TravelAnimationFrames - 1;
+        _animationFrameIndex = _animationFrameIndex >= last ? 0 : _animationFrameIndex + 1;
     }
 
     /// <summary>Moves by the whole-pixel part of the velocity, carrying the fraction.</summary>
@@ -248,7 +253,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// flees.</remarks>
     private void AdvanceTankDrop(PlayField field)
     {
-        if (!_droppingTanks && _animationFrame != 0)
+        if (!_isDroppingTanks && _animationFrameIndex != 0)
         {
             return;
         }
@@ -260,7 +265,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
         if (_tanksRemaining > 0 && field.CanDropTank())
         {
-            _droppingTanks = true;
+            _isDroppingTanks = true;
             _tanksRemaining--;
             // A new tank appears 2 columns right and 5-6 rows down — 6 when the quark is on the
             // top wall, where the ROM skips its `DECB` (ROM: TNKDRP).
@@ -285,11 +290,11 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>The arcade addresses video memory as <c>column*256 + row</c>, so X counts 2-pixel
     /// columns and Y counts 1-pixel rows: the ROM's X scale of 4 and Y scale of 8 give the same
     /// on-screen speed once columns are halved. The mover integrates this once per ROM frame.</remarks>
-    private int AxisVelocitySubpixels(int scale, bool positive, int coordinateUnitArcadePixels)
+    private int ComputeAxisVelocitySubpixels(int scale, bool isPositive, int coordinateUnitArcadePixels)
     {
         int roll = 1 + _random.Next(_speedCap);
         int subpixels = roll * scale * ScreenSize.ToPortPixels(coordinateUnitArcadePixels);
-        return positive ? subpixels : -subpixels;
+        return isPositive ? subpixels : -subpixels;
     }
 
     /// <summary>True when an X coordinate keeps the quark's whole box inside the playfield.</summary>
@@ -305,9 +310,9 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: <c>SQ3L</c>.</remarks>
     private void LeaveWhenClearOfTheField(PlayField field)
     {
-        int low = field.PlayfieldBounds.Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowRows);
-        int high = field.PlayfieldBounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.FleeExitHighRows);
-        if (_position.Y <= low || _position.Y >= high)
+        int topExitY = field.PlayfieldBounds.Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowRows);
+        int bottomExitY = field.PlayfieldBounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.FleeExitHighRows);
+        if (_position.Y <= topExitY || _position.Y >= bottomExitY)
         {
             LifeState = EntityLifeState.Dead;
         }
@@ -325,8 +330,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         bool yPositive = _position.Y <= lowY || (_position.Y < highY && _random.Next(CoinFlipSides) != 0);
 
         _velocitySubpixels = new IntVector2(
-            AxisVelocitySubpixels(QuarkTuning.VelocityXScale, xPositive, coordinateUnitArcadePixels: ScreenSize.ArcadePixelsPerColumn),
-            AxisVelocitySubpixels(QuarkTuning.VelocityYScale, yPositive, coordinateUnitArcadePixels: 1));
+            ComputeAxisVelocitySubpixels(QuarkTuning.VelocityXScale, xPositive, coordinateUnitArcadePixels: ScreenSize.ArcadePixelsPerColumn),
+            ComputeAxisVelocitySubpixels(QuarkTuning.VelocityYScale, yPositive, coordinateUnitArcadePixels: 1));
 
         _reaimBeatsRemaining = 1 + _random.Next(QuarkTuning.ReaimMaxBeats);
     }
@@ -335,7 +340,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: RRTK4.ASM's <c>SQ3</c>.</remarks>
     private void StartFlee()
     {
-        _fleeing = true;
+        _isFleeing = true;
         int subpixels = QuarkTuning.FleeVelocityRom * ScreenSize.ToPortPixels(1);
         _velocitySubpixels = new IntVector2(0, _random.Next(CoinFlipSides) == 0 ? subpixels : -subpixels);
         _remainderSubpixels = IntVector2.Zero;

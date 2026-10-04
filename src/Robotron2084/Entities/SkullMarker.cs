@@ -56,7 +56,7 @@ public sealed class SkullMarker : IEntity
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, _sprites.Skull, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, _sprites.SkullSprite, Bounds, Color.White);
     }
 
     /// <summary>Counts the linger down.</summary>

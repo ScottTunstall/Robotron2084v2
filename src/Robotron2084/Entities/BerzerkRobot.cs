@@ -41,7 +41,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable
     private readonly SpriteSet _sprites;
     private int _animationStep;
     private int _beatTimer;
-    private WalkFacing _facing = WalkFacing.Down;
+    private WalkSequence _walkSequence = WalkSequence.Down;
     private bool _hasMoved;
     private int _moveCountdownBeats;
     private int _moveLimitBeats;
@@ -69,7 +69,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable
     public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The way the robot is walking.</summary>
-    public WalkFacing Facing => _facing;
+    public WalkSequence WalkSequence => _walkSequence;
 
     /// <summary>Alive until shot or killed on contact; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -92,8 +92,8 @@ public sealed class BerzerkRobot : IExplodable, IRemovable
             return _sprites.BerzerkRobotIdleFrames[_animationStep % _sprites.BerzerkRobotIdleFrames.Length];
         }
 
-        Texture2D[] frames = GetWalkFrames(_facing);
-        return frames[GetWalkFrameIndex(_facing, _animationStep)];
+        Texture2D[] frames = GetWalkFrames(_walkSequence);
+        return frames[GetWalkFrameIndex(_walkSequence, _animationStep)];
     }
 
     /// <summary>Draws the current animation frame in its own colours.</summary>
@@ -152,47 +152,47 @@ public sealed class BerzerkRobot : IExplodable, IRemovable
     }
 
     /// <summary>Picks which set of frames to show, and how far into it, from the frame number.</summary>
-    /// <param name="facing">The way the robot is walking.</param>
+    /// <param name="walkSequence">The way the robot is walking.</param>
     /// <param name="animationStep">How many steps the robot has taken.</param>
-    /// <returns>The index into that facing's frames.</returns>
+    /// <returns>The index into that walk sequence's frames.</returns>
     /// <remarks>Walking sideways plays 1, 2. Walking up or down plays 1, 2, 3, 2, the author's order (notes §138).</remarks>
-    internal static int GetWalkFrameIndex(WalkFacing facing, int animationStep) => facing switch
+    internal static int GetWalkFrameIndex(WalkSequence walkSequence, int animationStep) => walkSequence switch
     {
-        WalkFacing.Left or WalkFacing.Right => animationStep % SidewaysWalkFrameCount,
+        WalkSequence.Left or WalkSequence.Right => animationStep % SidewaysWalkFrameCount,
         _ => UpAndDownWalkOrder[animationStep % UpAndDownWalkOrder.Length],
     };
 
     /// <summary>Works out the way to face from where the player is: along the larger gap.</summary>
     /// <param name="from">The robot's top-left corner.</param>
-    /// <param name="player">The player's top-left corner.</param>
-    /// <returns>The facing.</returns>
-    internal static WalkFacing GetFacingTowards(IntVector2 from, IntVector2 player)
+    /// <param name="player">The playerPosition's top-left corner.</param>
+    /// <returns>The walk sequence.</returns>
+    internal static WalkSequence GetWalkSequenceTowards(IntVector2 from, IntVector2 playerPosition)
     {
-        int gapX = player.X - from.X;
-        int gapY = player.Y - from.Y;
+        int gapX = playerPosition.X - from.X;
+        int gapY = playerPosition.Y - from.Y;
         if (Math.Abs(gapX) >= Math.Abs(gapY))
         {
-            return gapX >= 0 ? WalkFacing.Right : WalkFacing.Left;
+            return gapX >= 0 ? WalkSequence.Right : WalkSequence.Left;
         }
 
-        return gapY >= 0 ? WalkFacing.Down : WalkFacing.Up;
+        return gapY >= 0 ? WalkSequence.Down : WalkSequence.Up;
     }
 
-    private Texture2D[] GetWalkFrames(WalkFacing facing) => facing switch
+    private Texture2D[] GetWalkFrames(WalkSequence walkSequence) => walkSequence switch
     {
-        WalkFacing.Right => _sprites.BerzerkRobotWalkRightFrames,
-        WalkFacing.Left => _sprites.BerzerkRobotWalkLeftFrames,
-        WalkFacing.Up => _sprites.BerzerkRobotWalkUpFrames,
+        WalkSequence.Right => _sprites.BerzerkRobotWalkRightFrames,
+        WalkSequence.Left => _sprites.BerzerkRobotWalkLeftFrames,
+        WalkSequence.Up => _sprites.BerzerkRobotWalkUpFrames,
         _ => _sprites.BerzerkRobotWalkDownFrames,
     };
 
     private void Step(PlayField field)
     {
-        IntVector2 player = field.Player.Position;
+        IntVector2 playerPosition = field.Player.Position;
         SteppedThisUpdate = true;
         _hasMoved = true;
         _animationStep++;
-        _position = GruntChaseStep.GetNextPosition(_position, player, field.Wall.PlayfieldBounds, CollisionSize);
-        _facing = GetFacingTowards(_position, player);
+        _position = GruntChaseStep.GetNextPosition(_position, playerPosition, field.Wall.PlayfieldBounds, CollisionSize);
+        _walkSequence = GetWalkSequenceTowards(_position, playerPosition);
     }
 }

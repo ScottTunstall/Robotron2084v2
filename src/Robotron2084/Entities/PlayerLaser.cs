@@ -39,10 +39,10 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     public Texture2D GetCurrentAnimationFrame() =>
         Direction switch
         {
-            Direction8.Left or Direction8.Right => _sprites.LaserBar,
-            Direction8.Up or Direction8.Down => _sprites.LaserColumn,
-            Direction8.UpLeft or Direction8.DownRight => _sprites.LaserDiagonalMain,
-            Direction8.DownLeft or Direction8.UpRight => _sprites.LaserDiagonalAnti,
+            Direction8.Left or Direction8.Right => _sprites.LaserBarSprite,
+            Direction8.Up or Direction8.Down => _sprites.LaserColumnSprite,
+            Direction8.UpLeft or Direction8.DownRight => _sprites.LaserDiagonalMainSprite,
+            Direction8.DownLeft or Direction8.UpRight => _sprites.LaserDiagonalAntiSprite,
             _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}"),
         };
 
@@ -92,9 +92,9 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
 
         // The wall is tested along the whole step, not only where the laser lands: a laser fired from beside the
         // wall can start inside it and finish a step past it, and would otherwise fly on.
-        Rectangle before = Bounds;
+        Rectangle boundsBeforeMove = Bounds;
         _position += Direction.ToIntVector() * PlayerTuning.LaserSpeed;
-        if (field.HitsWall(Rectangle.Union(before, Bounds)))
+        if (field.HitsWall(Rectangle.Union(boundsBeforeMove, Bounds)))
         {
             // RRG23 LASDIE: a brief flare in the wave's LASCOL slot, then the wall colour.
             field.SpawnLaserWallFlare(Bounds, Direction);

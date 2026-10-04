@@ -62,36 +62,49 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private readonly int _dropDelayRotations;
     private readonly Random _random;
     private readonly SpriteSet _sprites;
+
+    /// <summary>Beats left before the accelerations are rolled again.</summary>
     private int _accelBeatsRemaining;
+
+    /// <summary>The sideways acceleration now, in 1/256 column per ROM frame per beat.</summary>
     private int _accelX;
 
-    // current X acceleration: -16..+15, in 1/256 column per frame per beat
+    /// <summary>The up-and-down acceleration now, in 1/256 row per ROM frame per beat.</summary>
     private int _accelY;
 
-    // current Y acceleration: -32..+31, in 1/256 row per frame per beat
-    // beats left before the accelerations are re-rolled: 1..15
+    /// <summary>Which animation frame is showing. It counts round as the spheroid spins.</summary>
+    private int _animationFrameIndex;
+
+    /// <summary>Counts up to the next beat.</summary>
     private int _beatTimer;
 
-    private bool _dropping;
+    /// <summary>Rotations left until the next enforcer is dropped.</summary>
     private int _dropRotationsRemaining;
+
+    /// <summary>How many enforcers this spheroid still has to drop.</summary>
     private int _enforcersRemaining;
-    private int _escapeDirection;
 
-    // spinning -> dropping enforcers
-    private bool _escaping;
+    /// <summary>Which way the spheroid runs when it escapes: -1 for left, +1 for right.</summary>
+    private int _escapeDirectionSignX;
 
+    /// <summary>True once the spheroid has stopped spinning and started dropping enforcers.</summary>
+    private bool _isDropping;
+
+    /// <summary>True once the spheroid is running sideways for the edge of the playfield, where it vanishes.</summary>
+    private bool _isEscaping;
+
+    /// <summary>Counts up to the next move: one move per ROM frame.</summary>
     private int _moveTimer;
+
     private IntVector2 _position;
     private int _remainderXSubpixels;
     private int _remainderYSubpixels;
 
-    // Counts up to the next move: one per ROM frame
-    // how many enforcers this spheroid still owes: 1..5, never 0
-    // rotations left until the next enforcer drop
-    private int _rotation;
+    /// <summary>The sideways velocity, in 1/256 column per ROM frame.</summary>
+    private int _velocityXSubpixels;
 
-    private int _velocityXSubpixels; // X velocity, in 1/256 column per frame (a column is 2 arcade px)
-    private int _velocityYSubpixels; // Y velocity, in 1/256 row per frame
+    /// <summary>The up-and-down velocity, in 1/256 row per ROM frame.</summary>
+    private int _velocityYSubpixels;
 
     // current animation frame: 0..4 while spinning/escaping, 0..7 while dropping
     // sideways run toward the edge of the field, then vanish
@@ -119,12 +132,12 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         int roll = random.Next(1, maxDropsX2 + 1);
         _enforcersRemaining = (roll + 1) / 2;
         // A coin flip; the arcade derives it from its own random-seed byte.
-        _escapeDirection = random.Next(2) == 0 ? -1 : 1;
+        _escapeDirectionSignX = random.Next(2) == 0 ? -1 : 1;
         // The first drop countdown, in rotations.
         _dropRotationsRemaining = random.Next(1, dropDelayRotations + 1);
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
         // Born on the spin phase's last animation frame, so the first beat is already a wrap pass.
-        _rotation = SpinLastAnimationFrame;
+        _animationFrameIndex = SpinLastAnimationFrame;
         RollAccelerations();
     }
 
@@ -134,7 +147,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The current animation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <returns>The texture for the current rotation frame.</returns>
     public Texture2D GetCurrentAnimationFrame() =>
-        _sprites.SpheroidAnimationFrames[_rotation % _sprites.SpheroidAnimationFrames.Length];
+        _sprites.SpheroidAnimationFrames[_animationFrameIndex % _sprites.SpheroidAnimationFrames.Length];
 
     /// <summary>Alive until shot or until it finishes its sideways escape; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -144,11 +157,11 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Test hook: true once the sideways exit run has started.</summary>
     /// <remarks>ROM: the `CIRC3` escape phase.</remarks>
-    internal bool IsEscaping => _escaping;
+    internal bool IsEscaping => _isEscaping;
 
     /// <summary>Test hook: which animation frame is showing — 0..4 spinning or escaping, 0..7 dropping.</summary>
     /// <remarks>The ROM's current-animation-frame pointer.</remarks>
-    internal int AnimationFrameIndex => _rotation;
+    internal int AnimationFrameIndex => _animationFrameIndex;
 
     /// <summary>Draws the current animation frame; its shimmer comes from cycling palette slots, not a flash.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
@@ -203,10 +216,10 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _beatTimer -= ArcadeClock.ToClockUnits(SpheroidTuning.BeatIntervalRomFrames);
 
         // Wrap pass = the beat on the phase's last animation frame; the phase's countdown lives there.
-        int lastAnimationFrame = _dropping && !_escaping ? DropLastAnimationFrame : SpinLastAnimationFrame;
-        bool wrapPass = _rotation >= lastAnimationFrame;
+        int lastAnimationFrame = _isDropping && !_isEscaping ? DropLastAnimationFrame : SpinLastAnimationFrame;
+        bool wrapPass = _animationFrameIndex >= lastAnimationFrame;
 
-        if (_escaping)
+        if (_isEscaping)
         {
             AdvanceEscapeBeat(field, wrapPass);
             return;
@@ -221,7 +234,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         if (!wrapPass)
         {
-            _rotation++;
+            _animationFrameIndex++;
             return;
         }
 
@@ -268,23 +281,23 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// is per routine, not per object.</remarks>
     private void AdvanceDropBeat(PlayField field)
     {
-        if (!_dropping && field.RobotsFrozen)
+        if (!_isDropping && field.RobotsFrozen)
         {
-            _rotation = 0;
+            _animationFrameIndex = 0;
             return;
         }
 
         if (--_dropRotationsRemaining > 0)
         {
-            _rotation = 0;
+            _animationFrameIndex = 0;
             return;
         }
 
-        if (!_dropping)
+        if (!_isDropping)
         {
             // Spin-to-drop does NOT reset the animation frame pointer: the drop phase carries the same
             // animation frame on for one more beat.
-            _dropping = true;
+            _isDropping = true;
             RerollDropCountdown();
             return;
         }
@@ -301,7 +314,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         }
 
         RerollDropCountdown();
-        _rotation = 0;
+        _animationFrameIndex = 0;
     }
 
     /// <summary>One escape beat: step the animation frame, or leave for good once the far edge is reached.</summary>
@@ -313,7 +326,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     {
         if (!wrapPass)
         {
-            _rotation++;
+            _animationFrameIndex++;
             return;
         }
 
@@ -326,7 +339,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _rotation = 0;
+        _animationFrameIndex = 0;
     }
 
     /// <summary>Integrates the velocity on both axes for one frame; a step that would leave the field is rejected.</summary>
@@ -357,8 +370,8 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// the first escape beat wraps it back to the first spin animation frame.</remarks>
     private void StartEscape()
     {
-        _escaping = true;
-        _velocityXSubpixels = _escapeDirection * SpheroidTuning.MaxVelocityXSubpixels;
+        _isEscaping = true;
+        _velocityXSubpixels = _escapeDirectionSignX * SpheroidTuning.MaxVelocityXSubpixels;
         _velocityYSubpixels = 0;
         _remainderXSubpixels = 0;
         _remainderYSubpixels = 0;
