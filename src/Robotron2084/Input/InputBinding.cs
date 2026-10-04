@@ -83,7 +83,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     };
 
     /// <summary>
-    /// The inverse of <see cref="DisplayName"/> — the controls INI file stores each
+    /// The inverse of <see cref="GetDisplayName"/> — the controls INI file stores each
     /// line in exactly the vocabulary the page shows (notes §101), so what is in the
     /// file is what the page says and either can be read by a human. Accepts "NONE", an
     /// empty value or "-" as the unbound binding, and ":" or "-" in place of the spaces

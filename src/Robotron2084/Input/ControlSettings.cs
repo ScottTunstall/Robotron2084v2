@@ -62,7 +62,7 @@ public sealed class ControlSettings
     /// <summary>Both players' controls, player 1 first.</summary>
     public PlayerControls this[int playerIndex] => _players[playerIndex];
 
-    /// <summary>The port's factory settings: see <see cref="PlayerControls.Defaults"/>.</summary>
+    /// <summary>The port's factory settings: see <see cref="PlayerControls.CreateDefaults"/>.</summary>
     public static ControlSettings CreateDefaults()
     {
         var settings = new ControlSettings();
