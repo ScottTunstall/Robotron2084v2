@@ -21,7 +21,7 @@ namespace Robotron2084.AttractMode;
 /// </summary>
 public sealed class AttractObjectMachine
 {
-    /// <summary>The ANA* walker's `NAP 8` (notes §95.7) — ROM frames per walk step.</summary>
+    /// <summary>The ANA* walker's `NAP 8` (notes §95.7) — ROM frames per walk step. It is the value the machine's <see cref="MovieProcess.Wait"/> is set to between walk steps.</summary>
     public const int WalkStepRomFrames = 8;
 
     /// <summary>ROM `EXPP` stores ACTHIT+6 into the explosion's centre row.</summary>

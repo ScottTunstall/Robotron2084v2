@@ -32,7 +32,7 @@ public sealed class AttractPageMachine
     /// <summary>The ROM's `MESHIT` = row $D8: the score row the name popups use.</summary>
     public const int MessageRow = 216;
 
-    /// <summary>The ROM's `LEFT` = $14 columns = 40 arcade pixels — the text margin.</summary>
+    /// <summary>The ROM's `LEFT` = $14 columns = 40 arcade pixels — the text margin. It is the starting value of <see cref="_cursorX"/>.</summary>
     public const int TextLeft = 40;
 
     /// <summary>The ROM's `GSTRTS`: the four grunt personalities.</summary>
