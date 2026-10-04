@@ -365,6 +365,8 @@ bug. Never label a column count as arcade pixels.
 
 **CMT-15. A constant that changes a field or property says which one, with `<see cref>`.** If a constant is added to, subtracted from, assigned to or compared with a field or property, its `<summary>` names that field or property with `<see cref="..."/>`, and says what the constant does to it: "The number of beats subtracted from <see cref="Floor"/> at a check." A reader must never have to search the class to find what a number is for. Where the field is private, `cref` it anyway; it resolves inside its own class.
 
+**CMT-16. An orchestrator's docs say what it does, not how the things it runs work inside.** A class that drives other objects (the playfield driving the entities, a state driving the playfield, a list driving its items) documents its own part: what it calls, when, in what order, and when it does not. It must not describe how the called object works inside: its fields, its timers, its counting, its private steps. Write "on each tick the playfield calls each character's `Update`", not "each character keeps a timer and adds to it". How an object works is documented on that object, once, where it cannot go stale. This is CMT-12 seen from the caller's side: the interface says what is promised, the orchestrator says what it asks for, and only the implementer says how.
+
 **SOLID-S.** See STR-1 and STR-2.
 
 **SOLID-O.** New robot kinds, new states and new sounds should need additions, not edits spread across the
