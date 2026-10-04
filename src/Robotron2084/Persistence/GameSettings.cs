@@ -30,47 +30,47 @@ public sealed class GameSettings
     /// <summary>The EXTRA MAN EVERY stops the ROM allows (its <c>$71DB</c> list), in thousands of points.</summary>
     public static readonly int[] ExtraManEveryValues = [0, 20, 25, 30, 50];
 
-    /// <summary>DIFFICULTY OF PLAY's floor — "EXTRA LIBERAL" (ROM metadata $7079: 00).</summary>
+    /// <summary>DIFFICULTY OF PLAY's floor — "EXTRA LIBERAL" (ROM metadata $7079: 00). It is the smallest value <see cref="Difficulty"/> may have.</summary>
     public const int MinimumDifficulty = 0;
 
-    /// <summary>DIFFICULTY OF PLAY's ceiling — "EXTRA CONSERVATIVE" (ROM metadata $7079: 10).</summary>
+    /// <summary>DIFFICULTY OF PLAY's ceiling — "EXTRA CONSERVATIVE" (ROM metadata $7079: 10). It is the biggest value <see cref="Difficulty"/> may have.</summary>
     public const int MaximumDifficulty = 10;
 
     /// <summary>The recommended difficulty: 5 — no wave-table adjustment at all (the ROM's "RECOMMENDED").</summary>
     public const int RecommendedDifficulty = 5;
 
-    /// <summary>TURNS PER PLAYER's floor (ROM metadata $704C: 01).</summary>
+    /// <summary>TURNS PER PLAYER's floor (ROM metadata $704C: 01). It is the smallest value <see cref="TurnsPerPlayer"/> may have.</summary>
     public const int MinimumTurnsPerPlayer = 1;
 
-    /// <summary>TURNS PER PLAYER's ceiling (ROM metadata $704C: 20).</summary>
+    /// <summary>TURNS PER PLAYER's ceiling (ROM metadata $704C: 20). It is the biggest value <see cref="TurnsPerPlayer"/> may have.</summary>
     public const int MaximumTurnsPerPlayer = 20;
 
-    /// <summary>The factory EXTRA MAN EVERY: 25 (25000 points), the ROM's "RECOMMENDED" stop.</summary>
+    /// <summary>The factory EXTRA MAN EVERY: 25 (25000 points), the ROM's "RECOMMENDED" stop. It is the starting value of <see cref="ExtraManEvery"/>, and the value it is set back to when the settings are restored.</summary>
     public const int FactoryExtraManEveryThousands = 25;
 
     /// <summary>The factory EXTRA MAN EVERY in points, as the game compares scores.</summary>
     public const int FactoryExtraManEveryPoints = FactoryExtraManEveryThousands * 1000;
 
-    /// <summary>The factory TURNS PER PLAYER: 3, the ROM's "RECOMMENDED" (and the arcade's own default).</summary>
+    /// <summary>The factory TURNS PER PLAYER: 3, the ROM's "RECOMMENDED" (and the arcade's own default). It is the starting value of <see cref="TurnsPerPlayer"/>, and the value it is set back to when the settings are restored.</summary>
     public const int FactoryTurnsPerPlayer = 3;
 
-    /// <summary>Factory DIFFICULTY OF PLAY: 5, the ROM's "RECOMMENDED".</summary>
+    /// <summary>Factory DIFFICULTY OF PLAY: 5, the ROM's "RECOMMENDED". It is the starting value of <see cref="Difficulty"/>, and the value it is set back to when the settings are restored.</summary>
     public const int FactoryDifficulty = RecommendedDifficulty;
 
     /// <summary>
     /// Factory ATTRACT MODE SOUND: off. The arcade's attract demo is a real game and makes its real
     /// noises, but the port's demo plays on a machine someone is usually sitting at, so it is silent
     /// until the operator turns it on (notes §140). The setting is on the GAME ADJUSTMENT page.
-    /// </summary>
+    ///  It is the starting value of <see cref="AttractModeSound"/>, and the value it is set back to when the settings are restored.</summary>
     public const bool FactoryAttractModeSound = false;
 
-    /// <summary>Factory TANK SHELL BUG: on, as the arcade is.</summary>
+    /// <summary>Factory TANK SHELL BUG: on, as the arcade is. It is the starting value of <see cref="TankShellBug"/>, and the value it is set back to when the settings are restored.</summary>
     public const bool FactoryTankShellBug = true;
 
-    /// <summary>Factory BRAINS CHASE MIKEY BUG: on, as the arcade is.</summary>
+    /// <summary>Factory BRAINS CHASE MIKEY BUG: on, as the arcade is. It is the starting value of <see cref="BrainsChaseMikeyBug"/>, and the value it is set back to when the settings are restored.</summary>
     public const bool FactoryBrainsChaseMikeyBug = true;
 
-    /// <summary>Factory BOZO MODE: on, as the arcade's second release is.</summary>
+    /// <summary>Factory BOZO MODE: on, as the arcade's second release is. It is the starting value of <see cref="BozoModeEnabled"/>, and the value it is set back to when the settings are restored.</summary>
     public const bool FactoryBozoModeEnabled = true;
 
     /// <summary>

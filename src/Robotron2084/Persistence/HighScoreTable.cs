@@ -20,7 +20,7 @@ namespace Robotron2084.Persistence;
 /// </summary>
 public sealed class HighScoreTable
 {
-    /// <summary>ROM `CMSCOR`: the screen shows 36 (12 per column × 3 columns).</summary>
+    /// <summary>ROM `CMSCOR`: the screen shows 36 (12 per column × 3 columns). It is how many entries <see cref="_allTime"/> is filled to.</summary>
     public const int AllTimeCapacity = 36;
 
     /// <summary>
@@ -36,7 +36,7 @@ public sealed class HighScoreTable
     /// <summary>ROM: three initials per entry (`NULSCR` is three spaces).</summary>
     public const int InitialsLength = 3;
 
-    /// <summary>ROM `TODAYS`: the screen shows 10 (5 per column × 2 columns).</summary>
+    /// <summary>ROM `TODAYS`: the screen shows 10 (5 per column × 2 columns). It is how many entries <see cref="_today"/> is filled to.</summary>
     public const int TodayCapacity = 10;
 
     /// <summary>ROM `LDA #23` — the operator's GOD name's length (`GODSCR`).</summary>
