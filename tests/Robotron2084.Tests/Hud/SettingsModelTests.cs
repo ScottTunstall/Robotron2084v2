@@ -86,7 +86,7 @@ public sealed class SettingsModelTests
     public void RestoreFactorySettingsPutsTheValuesBackAndDisarms()
     {
         var model = new SettingsModel();
-        var settings = new GameSettings { ExtraManEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSound = true };
+        var settings = new GameSettings { ExtraManEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSoundEnabled = true };
         GoTo(model, SettingsModel.RestoreFactoryLine);
         model.Change(settings, 1);
 
@@ -94,7 +94,7 @@ public sealed class SettingsModelTests
         Assert.Equal(25, settings.ExtraManEvery);
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(5, settings.Difficulty);
-        Assert.False(settings.AttractModeSound);
+        Assert.False(settings.AttractModeSoundEnabled);
         Assert.False(model.IsArmed(SettingsModel.RestoreFactoryLine));
     }
 
@@ -120,11 +120,11 @@ public sealed class SettingsModelTests
         Assert.Equal("OFF", model.GetValue(settings, SettingsModel.AttractSoundLine));
 
         model.Change(settings, 1);
-        Assert.True(settings.AttractModeSound);
+        Assert.True(settings.AttractModeSoundEnabled);
         Assert.Equal("ON", model.GetValue(settings, SettingsModel.AttractSoundLine));
 
         model.Change(settings, -1);
-        Assert.False(settings.AttractModeSound);
+        Assert.False(settings.AttractModeSoundEnabled);
     }
 
     [Theory]
@@ -145,7 +145,7 @@ public sealed class SettingsModelTests
         Assert.Equal(string.Empty, SettingsModel.GetNote(settings, line));
 
         // Only the highlighted row changed.
-        int off = new[] { settings.TankShellBug, settings.BrainsChaseMikeyBug, settings.BozoModeEnabled }.Count(on => !on);
+        int off = new[] { settings.TankShellBugEnabled, settings.BrainsChaseMikeyBugEnabled, settings.BozoModeEnabled }.Count(on => !on);
         Assert.Equal(1, off);
 
         model.Change(settings, 1);

@@ -19,7 +19,7 @@ public sealed class HighScoreFrameAnimationTests
 
         Assert.Equal(1, frame.DrawnStroke);
         Assert.Equal(-1, frame.ErasedStroke);
-        Assert.Equal(HighScoreTableLayout.FrameStroke(1), HighScoreTableLayout.FrameStroke(frame.DrawnStroke));
+        Assert.Equal(HighScoreTableLayout.GetFrameStroke(1), HighScoreTableLayout.GetFrameStroke(frame.DrawnStroke));
         Assert.False(frame.IsFinished);
     }
 
@@ -97,13 +97,13 @@ public sealed class HighScoreFrameAnimationTests
         var slots = new int[frame.DrawnStroke - frame.ErasedStroke];
         for (int stroke = frame.ErasedStroke + 1; stroke <= frame.DrawnStroke; stroke++)
         {
-            slots[stroke - frame.ErasedStroke - 1] = HighScoreTableLayout.FrameStrokeSlot(stroke);
+            slots[stroke - frame.ErasedStroke - 1] = HighScoreTableLayout.GetFrameStrokeSlot(stroke);
         }
 
         Assert.Equal(new[] { 8, 7, 6, 5, 4, 3, 2, 1 }, slots);
 
         // …and the walk repeats, so the whole page's outer edge came back to $11's slot.
-        Assert.Equal(1, HighScoreTableLayout.FrameStrokeSlot(HighScoreTableLayout.FrameLastStroke));
-        Assert.Equal(8, HighScoreTableLayout.FrameStrokeSlot(HighScoreTableLayout.FrameLastStroke - 7));
+        Assert.Equal(1, HighScoreTableLayout.GetFrameStrokeSlot(HighScoreTableLayout.FrameLastStroke));
+        Assert.Equal(8, HighScoreTableLayout.GetFrameStrokeSlot(HighScoreTableLayout.FrameLastStroke - 7));
     }
 }

@@ -26,11 +26,11 @@ public sealed class HighScoreTableLayoutTests
     public void AllTimeList_MatchesTheRomsCursorAndSpacing()
     {
         Assert.Equal(36, HighScoreTableLayout.AllTimeRows);
-        Assert.Equal((20, 136), HighScoreTableLayout.AllTimePosition(2));  // rank 1 is the top entry
-        Assert.Equal((20, 213), HighScoreTableLayout.AllTimePosition(13)); // 11 rows down: +11 x 7
-        Assert.Equal((60, 136), HighScoreTableLayout.AllTimePosition(14)); // second column: +40
-        Assert.Equal((100, 136), HighScoreTableLayout.AllTimePosition(26)); // third column
-        Assert.Equal((100, 213), HighScoreTableLayout.AllTimePosition(37));
+        Assert.Equal((20, 136), HighScoreTableLayout.GetAllTimePosition(2));  // rank 1 is the top entry
+        Assert.Equal((20, 213), HighScoreTableLayout.GetAllTimePosition(13)); // 11 rows down: +11 x 7
+        Assert.Equal((60, 136), HighScoreTableLayout.GetAllTimePosition(14)); // second column: +40
+        Assert.Equal((100, 136), HighScoreTableLayout.GetAllTimePosition(26)); // third column
+        Assert.Equal((100, 213), HighScoreTableLayout.GetAllTimePosition(37));
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public sealed class HighScoreTableLayoutTests
     {
         // The ROM's frame runs (col 6, row 13) to (col 145, row 239); every row the
         // screen prints must sit inside it, which is what these cursors are chosen for.
-        (int column, int row) = HighScoreTableLayout.AllTimePosition(37);
+        (int column, int row) = HighScoreTableLayout.GetAllTimePosition(37);
         Assert.True(column > 6 && column < 145, $"last row at column {column}");
         Assert.True(row < 239, $"last row at row {row}");
         Assert.Equal((21, 122), (HighScoreTableLayout.TopColumn, HighScoreTableLayout.TopRow));
@@ -56,9 +56,9 @@ public sealed class HighScoreTableLayoutTests
     [Fact]
     public void TheFramesStrokes_MatchTheRomsTerminalPoints()
     {
-        Assert.Equal((124, 125, 179, 127), HighScoreTableLayout.FrameStroke(HighScoreTableLayout.FrameFirstStroke));
-        Assert.Equal((12, 13, 291, 239), HighScoreTableLayout.FrameStroke(HighScoreTableLayout.FrameLastStroke));
-        Assert.Equal((28, 29, 275, 223), HighScoreTableLayout.FrameStroke(HighScoreTableLayout.FrameEraseLastStroke));
+        Assert.Equal((124, 125, 179, 127), HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameFirstStroke));
+        Assert.Equal((12, 13, 291, 239), HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameLastStroke));
+        Assert.Equal((28, 29, 275, 223), HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameEraseLastStroke));
 
         Assert.Equal(57, HighScoreTableLayout.FrameStrokeCount);
         Assert.Equal(49, HighScoreTableLayout.FrameEraseStrokeCount);
@@ -72,8 +72,8 @@ public sealed class HighScoreTableLayoutTests
     [Fact]
     public void TheBandLeftByTheErasePass_IsSixteenPixelsThickAllRound()
     {
-        (int left, int top, int right, int bottom) = HighScoreTableLayout.FrameStroke(HighScoreTableLayout.FrameLastStroke);
-        (int innerLeft, int innerTop, int innerRight, int innerBottom) = HighScoreTableLayout.FrameStroke(HighScoreTableLayout.FrameEraseLastStroke);
+        (int left, int top, int right, int bottom) = HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameLastStroke);
+        (int innerLeft, int innerTop, int innerRight, int innerBottom) = HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameEraseLastStroke);
 
         Assert.Equal(16, innerLeft - left);
         Assert.Equal(16, innerTop - top);
@@ -89,10 +89,10 @@ public sealed class HighScoreTableLayoutTests
     [Fact]
     public void TheFramesHatch_LightsOnePixelOfEveryPairBothWays()
     {
-        Assert.False(HighScoreTableLayout.FramePixelIsLit(0, 0));
-        Assert.True(HighScoreTableLayout.FramePixelIsLit(1, 0));
-        Assert.True(HighScoreTableLayout.FramePixelIsLit(0, 1));
-        Assert.False(HighScoreTableLayout.FramePixelIsLit(1, 1));
-        Assert.Equal(HighScoreTableLayout.FramePixelIsLit(200, 200), !HighScoreTableLayout.FramePixelIsLit(200, 201));
+        Assert.False(HighScoreTableLayout.IsFramePixelLit(0, 0));
+        Assert.True(HighScoreTableLayout.IsFramePixelLit(1, 0));
+        Assert.True(HighScoreTableLayout.IsFramePixelLit(0, 1));
+        Assert.False(HighScoreTableLayout.IsFramePixelLit(1, 1));
+        Assert.Equal(HighScoreTableLayout.IsFramePixelLit(200, 200), !HighScoreTableLayout.IsFramePixelLit(200, 201));
     }
 }

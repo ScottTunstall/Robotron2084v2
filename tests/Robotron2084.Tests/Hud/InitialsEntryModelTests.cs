@@ -27,7 +27,7 @@ public sealed class InitialsEntryModelTests
         Tick(model, Fire, 30);
 
         Assert.Equal(' ', model.Preview);
-        Assert.Equal(0, model.Position);
+        Assert.Equal(0, model.LetterIndex);
         Assert.False(model.IsComplete);
 
         Tick(model, Idle, 5);
@@ -68,7 +68,7 @@ public sealed class InitialsEntryModelTests
 
         // ...but after a commit the ring goes Z, then the rub marker (LUPP1/LDN1's GETLST test).
         PressFire(model);
-        Assert.Equal(1, model.Position);
+        Assert.Equal(1, model.LetterIndex);
 
         Press(model, Down);
         Assert.Equal(InitialsEntryModel.RubLetter, model.Preview);
@@ -84,7 +84,7 @@ public sealed class InitialsEntryModelTests
         PressFire(model);
 
         Assert.Equal("A  ", model.GetInitials());
-        Assert.Equal(1, model.Position);
+        Assert.Equal(1, model.LetterIndex);
         Assert.Equal(' ', model.Preview);
         Assert.False(model.IsComplete);
     }
@@ -100,7 +100,7 @@ public sealed class InitialsEntryModelTests
 
         Assert.True(model.IsComplete);
         Assert.Equal("ABC", model.GetInitials());
-        Assert.Equal(InitialsEntryModel.LetterCount, model.Position);
+        Assert.Equal(InitialsEntryModel.LetterCount, model.LetterIndex);
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public sealed class InitialsEntryModelTests
         PressFire(model);
 
         Assert.False(model.IsComplete);
-        Assert.Equal(1, model.Position);
+        Assert.Equal(1, model.LetterIndex);
         Assert.Equal("B  ", model.GetInitials());
 
         // And the letter the player rejected can be typed again.
@@ -133,7 +133,7 @@ public sealed class InitialsEntryModelTests
         Press(model, Up);                 // A
 
         int ticks = 0;
-        while (model.Position < 2 && ticks < 400)
+        while (model.LetterIndex < 2 && ticks < 400)
         {
             model.Tick(Fire);
             ticks++;
@@ -142,7 +142,7 @@ public sealed class InitialsEntryModelTests
         // GETLT3/GETLT4: the first auto-commit waits 32 counts of two frames (64 ROM frames,
         // under two seconds) and types the second letter with a blank of its own.
         Assert.Equal("A  ", model.GetInitials());
-        Assert.Equal(2, model.Position);
+        Assert.Equal(2, model.LetterIndex);
         Assert.False(model.IsComplete);
         Assert.InRange(ticks, 60, 110);
 

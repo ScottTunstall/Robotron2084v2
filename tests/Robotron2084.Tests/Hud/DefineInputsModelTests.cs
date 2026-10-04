@@ -161,7 +161,7 @@ public sealed class DefineInputsModelTests
         ControlSettings settings = ControlSettings.CreateDefaults();
 
         Assert.False(model.Assign(settings, InputBinding.CreateKey(Keys.Z)));
-        Assert.Equal("W", settings[0][InputAction.MoveUp].Key.GetDisplayName());
+        Assert.Equal("W", settings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
     }
 
     [Fact]
@@ -173,8 +173,8 @@ public sealed class DefineInputsModelTests
         model.Arm();
         Assert.True(model.Assign(settings, InputBinding.CreateKey(Keys.Z)));
 
-        Assert.Equal("Z", settings[0][InputAction.MoveUp].Key.GetDisplayName());
-        Assert.Equal("P1 LEFT STICK UP", settings[0][InputAction.MoveUp].Pad.GetDisplayName()); // the pad slot is untouched
+        Assert.Equal("Z", settings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
+        Assert.Equal("P1 LEFT STICK UP", settings[0][InputAction.MoveUp].PadBinding.GetDisplayName()); // the pad slot is untouched
         Assert.Equal(1, model.Line);  // straight on to MOVE DOWN
         Assert.False(model.IsArmed);
     }
@@ -193,8 +193,8 @@ public sealed class DefineInputsModelTests
         model.Arm();
         model.Assign(settings, InputBinding.CreateKey(Keys.Z));
 
-        Assert.Equal("Z", settings[1][InputAction.MoveUp].Key.GetDisplayName());
-        Assert.Equal("W", settings[0][InputAction.MoveUp].Key.GetDisplayName()); // player 1 is untouched
+        Assert.Equal("Z", settings[1][InputAction.MoveUp].KeyBinding.GetDisplayName());
+        Assert.Equal("W", settings[0][InputAction.MoveUp].KeyBinding.GetDisplayName()); // player 1 is untouched
     }
 
     [Fact]
@@ -244,9 +244,9 @@ public sealed class DefineInputsModelTests
 
         model.ClearHighlighted(settings);
 
-        Assert.Equal("NONE", settings[0][InputAction.MoveUp].Key.GetDisplayName());
-        Assert.Equal("NONE", settings[0][InputAction.MoveUp].Pad.GetDisplayName());
-        Assert.Equal("D", settings[0][InputAction.MoveRight].Key.GetDisplayName()); // its neighbours are untouched
+        Assert.Equal("NONE", settings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
+        Assert.Equal("NONE", settings[0][InputAction.MoveUp].PadBinding.GetDisplayName());
+        Assert.Equal("D", settings[0][InputAction.MoveRight].KeyBinding.GetDisplayName()); // its neighbours are untouched
     }
 
     [Fact]
@@ -263,8 +263,8 @@ public sealed class DefineInputsModelTests
 
         model.ResetAll(settings);
 
-        Assert.Equal("W", settings[0][InputAction.MoveUp].Key.GetDisplayName());
-        Assert.Equal("NUMPAD8", settings[1][InputAction.ShootUp].Key.GetDisplayName());
+        Assert.Equal("W", settings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
+        Assert.Equal("NUMPAD8", settings[1][InputAction.ShootUp].KeyBinding.GetDisplayName());
         Assert.Equal("P", settings.Pause.GetDisplayName());
     }
 

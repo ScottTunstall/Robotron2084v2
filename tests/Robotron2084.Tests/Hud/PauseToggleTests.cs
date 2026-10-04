@@ -18,12 +18,12 @@ public sealed class PauseToggleTests
     {
         var pause = new PauseToggle();
 
-        pause.Tick(held: true);
+        pause.Tick(isPauseHeld: true);
         Assert.True(pause.IsPaused);
 
         for (int tick = 0; tick < 100; tick++)
         {
-            pause.Tick(held: true);
+            pause.Tick(isPauseHeld: true);
         }
 
         Assert.True(pause.IsPaused); // still one pause, however long the key is down
@@ -34,9 +34,9 @@ public sealed class PauseToggleTests
     {
         var pause = new PauseToggle();
 
-        pause.Tick(held: true);
-        pause.Tick(held: false);
-        pause.Tick(held: true);
+        pause.Tick(isPauseHeld: true);
+        pause.Tick(isPauseHeld: false);
+        pause.Tick(isPauseHeld: true);
 
         Assert.False(pause.IsPaused);
     }
@@ -45,16 +45,16 @@ public sealed class PauseToggleTests
     public void Reset_LeavesItRunning_AndSwallowsTheKeyThatWasHeld()
     {
         var pause = new PauseToggle();
-        pause.Tick(held: true);
+        pause.Tick(isPauseHeld: true);
 
         pause.Reset();
 
         Assert.False(pause.IsPaused);
-        pause.Tick(held: true); // the key that was down when the game ended must not re-pause it
+        pause.Tick(isPauseHeld: true); // the key that was down when the game ended must not re-pause it
         Assert.False(pause.IsPaused);
 
-        pause.Tick(held: false);
-        pause.Tick(held: true);
+        pause.Tick(isPauseHeld: false);
+        pause.Tick(isPauseHeld: true);
         Assert.True(pause.IsPaused);
     }
 }

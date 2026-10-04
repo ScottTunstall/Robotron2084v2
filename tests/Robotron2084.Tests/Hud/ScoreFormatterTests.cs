@@ -69,7 +69,7 @@ public class ScoreFormatterTests
     [Fact]
     public void Digits_AlwaysReportsEightPositions_AndSuppressesTheLeadingOnes()
     {
-        ScoreDigit[] digits = ScoreFormatter.Digits(100);
+        ScoreDigit[] digits = ScoreFormatter.GetDigits(100);
 
         Assert.Equal(ScoreFormatter.DigitPositions, digits.Length);
 
@@ -86,7 +86,7 @@ public class ScoreFormatterTests
     {
         // Score 100 at origin 100: five suppressed zeros (6 px each = 30) put the
         // "1" at 130, then 10s at 137 and units at 144 (7 px steps).
-        var glyphs = ScoreFormatter.Layout(100, originX: 100, digitAdvancePixels: 7, blankAdvancePixels: 6);
+        var glyphs = ScoreFormatter.LayOutGlyphs(100, originX: 100, digitAdvancePixels: 7, blankAdvancePixels: 6);
 
         Assert.Equal([(1, 130), (0, 137), (0, 144)], glyphs.Select(g => (g.Digit, g.X)));
     }
@@ -95,7 +95,7 @@ public class ScoreFormatterTests
     public void Layout_ZeroScore_DrawsBothDigitsAfterSixBlanks()
     {
         // Six suppressed zeros (10M to 100) = 36 px, then "00".
-        var glyphs = ScoreFormatter.Layout(0, originX: 0, digitAdvancePixels: 7, blankAdvancePixels: 6);
+        var glyphs = ScoreFormatter.LayOutGlyphs(0, originX: 0, digitAdvancePixels: 7, blankAdvancePixels: 6);
 
         Assert.Equal([(0, 36), (0, 43)], glyphs.Select(g => (g.Digit, g.X)));
     }
