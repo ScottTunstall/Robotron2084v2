@@ -45,7 +45,7 @@ public enum SettingsAction
 /// </summary>
 public sealed class SettingsModel
 {
-    /// <summary>Every line on the page. It is the size of <see cref="_armed"/>.</summary>
+    /// <summary>Every line on the page. It is the size of <see cref="_armedLines"/>.</summary>
     public const int LineCount = 9;
 
     /// <summary>EXTRA MAN EVERY — the first row, as on the cabinet.</summary>
@@ -76,7 +76,7 @@ public sealed class SettingsModel
     public const int HighScoreResetLine = 8;
 
     /// <summary>The YES/NO state of each action row.</summary>
-    private readonly bool[] _armed = new bool[LineCount];
+    private readonly bool[] _armedLines = new bool[LineCount];
 
     /// <summary>The highlighted line, 0 to <see cref="LineCount"/> − 1.</summary>
     public int Line { get; private set; }
@@ -85,7 +85,7 @@ public sealed class SettingsModel
     public static bool IsActionLine(int line) => line is RestoreFactoryLine or HighScoreResetLine;
 
     /// <summary>True once an action row has been set to YES (Enter will perform it).</summary>
-    public bool IsArmed(int line) => _armed[line];
+    public bool IsArmed(int line) => _armedLines[line];
 
     /// <summary>Scrolls the highlight down one line, wrapping round the page.</summary>
     public void MoveDown() => Line = Line == LineCount - 1 ? 0 : Line + 1;
@@ -123,7 +123,7 @@ public sealed class SettingsModel
                 settings.BumpBozoModeEnabled(direction);
                 break;
             default:
-                _armed[Line] = direction > 0;
+                _armedLines[Line] = direction > 0;
                 break;
         }
     }
@@ -134,12 +134,12 @@ public sealed class SettingsModel
     /// </summary>
     public SettingsAction Activate(GameSettings settings)
     {
-        if (!IsActionLine(Line) || !_armed[Line])
+        if (!IsActionLine(Line) || !_armedLines[Line])
         {
             return SettingsAction.None;
         }
 
-        _armed[Line] = false;
+        _armedLines[Line] = false;
 
         if (Line == RestoreFactoryLine)
         {
@@ -171,11 +171,11 @@ public sealed class SettingsModel
         ExtraManLine => settings.ExtraManEveryPoints.ToString(),
         TurnsLine => settings.TurnsPerPlayer.ToString(),
         DifficultyLine => settings.Difficulty.ToString(),
-        AttractSoundLine => GetOnOff(settings.AttractModeSound),
-        TankShellBugLine => GetOnOff(settings.TankShellBug),
-        BrainsChaseMikeyBugLine => GetOnOff(settings.BrainsChaseMikeyBug),
+        AttractSoundLine => GetOnOff(settings.AttractModeSoundEnabled),
+        TankShellBugLine => GetOnOff(settings.TankShellBugEnabled),
+        BrainsChaseMikeyBugLine => GetOnOff(settings.BrainsChaseMikeyBugEnabled),
         BozoModeLine => GetOnOff(settings.BozoModeEnabled),
-        _ => _armed[line] ? "YES" : "NO",
+        _ => _armedLines[line] ? "YES" : "NO",
     };
 
     /// <summary>
@@ -209,19 +209,19 @@ public sealed class SettingsModel
             < 8 => "CONSERVATIVE",
             _ => "EXTRA CONSERVATIVE",
         },
-        TankShellBugLine => GetArcadeNote(settings.TankShellBug),
-        BrainsChaseMikeyBugLine => GetArcadeNote(settings.BrainsChaseMikeyBug),
+        TankShellBugLine => GetArcadeNote(settings.TankShellBugEnabled),
+        BrainsChaseMikeyBugLine => GetArcadeNote(settings.BrainsChaseMikeyBugEnabled),
         BozoModeLine => GetArcadeNote(settings.BozoModeEnabled),
         _ => string.Empty,
     };
 
     /// <summary>The word for an ON/OFF row's value.</summary>
-    private static string GetOnOff(bool on) => on ? "ON" : "OFF";
+    private static string GetOnOff(bool isOn) => isOn ? "ON" : "OFF";
 
     /// <summary>The word beside a row that is ON in the arcade: "RECOMMENDED" while it is on.</summary>
-    private static string GetArcadeNote(bool on) => on ? "RECOMMENDED" : string.Empty;
+    private static string GetArcadeNote(bool isOn) => isOn ? "RECOMMENDED" : string.Empty;
 
     /// <summary>The hint under an action row once it has been set to YES.</summary>
     public string GetActionHint(int line) =>
-        IsActionLine(line) && _armed[line] ? "PRESS ENTER" : string.Empty;
+        IsActionLine(line) && _armedLines[line] ? "PRESS ENTER" : string.Empty;
 }

@@ -130,7 +130,7 @@ public sealed class DefineInputsModel
     {
         if (!IsArmed)
         {
-            MoveTo(PreviousLine(Line));
+            MoveTo(GetPreviousLine(Line));
         }
     }
 
@@ -151,7 +151,7 @@ public sealed class DefineInputsModel
     }
 
     /// <summary>The nearest line above that is not a blank spacer, wrapping round the page.</summary>
-    private static int PreviousLine(int line)
+    private static int GetPreviousLine(int line)
     {
         int candidate = line;
         do

@@ -86,12 +86,12 @@ public static class HighScoreTableLayout
     public const int TopRow = 122;
 
     /// <summary>The (column, row) of the ROM's cursor for all-time rank <paramref name="index"/> (1-based; rank 1 is the top entry).</summary>
-    public static (int Column, int Row) AllTimePosition(int index)
+    public static (int Column, int Row) GetAllTimePosition(int index)
     {
-        int zero = index - 2; // the list starts at rank 2 (rank 1 is the top entry)
+        int zeroBasedIndex = index - 2; // the list starts at rank 2 (rank 1 is the top entry)
         return (
-            AllTimeColumn + (zero / AllTimePerColumn * AllTimeColumnStep),
-            AllTimeRow + (zero % AllTimePerColumn * AllTimeRowStep));
+            AllTimeColumn + (zeroBasedIndex / AllTimePerColumn * AllTimeColumnStep),
+            AllTimeRow + (zeroBasedIndex % AllTimePerColumn * AllTimeRowStep));
     }
 
     /// <summary>
@@ -99,13 +99,13 @@ public static class HighScoreTableLayout
     /// vertical passes light exactly ONE — the outer pixel taking the flavour's high
     /// nibble, the inner one the low.
     /// </summary>
-    public static bool FramePixelIsLit(int arcadeX, int arcadeY) => ((arcadeX + arcadeY) & 1) != 0;
+    public static bool IsFramePixelLit(int arcadeX, int arcadeY) => ((arcadeX + arcadeY) & 1) != 0;
 
     /// <summary>
     /// Stroke <paramref name="stroke"/>'s rectangle in ARCADE PIXELS, inclusive: MARQ's
     /// corners are (column, row) units and one column is two pixels.
     /// </summary>
-    public static (int Left, int Top, int Right, int Bottom) FrameStroke(int stroke) =>
+    public static (int Left, int Top, int Right, int Bottom) GetFrameStroke(int stroke) =>
     (
         2 * (FrameStartColumn - stroke),
         FrameStartRow - (2 * stroke),
@@ -123,15 +123,15 @@ public static class HighScoreTableLayout
     /// why the arcade's wall reads as several colours at once: the eight visible strokes are slots
     /// eight to one, each showing a COLTAB colour three frames apart in the walk.
     /// </summary>
-    public static int FrameStrokeSlot(int stroke) =>
+    public static int GetFrameStrokeSlot(int stroke) =>
         stroke <= 0 ? 1 : 8 - ((stroke - 1) % 8);
 
     /// <summary>The (column, row) of the ROM's cursor for today's rank <paramref name="index"/> (1-based).</summary>
     public static (int Column, int Row) TodayPosition(int index)
     {
-        int zero = index - 1;
+        int zeroBasedIndex = index - 1;
         return (
-            TodayColumn + (zero / TodayPerColumn * TodayColumnStep),
-            TodayRow + (zero % TodayPerColumn * TodayRowStep));
+            TodayColumn + (zeroBasedIndex / TodayPerColumn * TodayColumnStep),
+            TodayRow + (zeroBasedIndex % TodayPerColumn * TodayRowStep));
     }
 }

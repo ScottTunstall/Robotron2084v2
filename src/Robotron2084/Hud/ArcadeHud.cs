@@ -43,13 +43,13 @@ public static class ArcadeHud
             width += ScreenSize.ToPortPixels(sprites.FontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
         }
 
-        sprites.Text.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
+        sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
     }
 
     /// <summary>Draws one of the ROM's message strings at its own cursor column/row.</summary>
     public static void DrawMessageText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int arcadeColumn, int arcadeRow, int slot)
     {
-        sprites.Text.DrawSmallFontText(
+        sprites.TextRenderer.DrawSmallFontText(
             spriteBatch,
             text,
             HudLayout.ToPortX(arcadeColumn * 2),
@@ -70,7 +70,7 @@ public static class ArcadeHud
         Rectangle innerBounds,
         bool showSpareMen = true)
     {
-        int hudY = ScoresAndMenRowY(innerBounds);
+        int hudY = GetScoresAndMenRowY(innerBounds);
 
         foreach (PlayerSlot player in session.Players)
         {
@@ -98,7 +98,7 @@ public static class ArcadeHud
     /// eight arcade pixels. It is negative — and the whole HUD invisible — when
     /// <paramref name="innerBounds"/> runs to the top of the canvas.
     /// </summary>
-    internal static int ScoresAndMenRowY(Rectangle innerBounds) =>
+    internal static int GetScoresAndMenRowY(Rectangle innerBounds) =>
         innerBounds.Top - ScreenSize.ToPortPixels(CollisionSizes.WallThicknessSpecPixels) - ScreenSize.ToPortPixels(HudLayout.HudRowAboveWallPixels);
 
     /// <summary>
@@ -114,7 +114,7 @@ public static class ArcadeHud
 
         if (wave >= 10)
         {
-            x = sprites.Text.DrawSmallFontText(spriteBatch, ((wave / 10) % 10).ToString(), x, y, numberSlot);
+            x = sprites.TextRenderer.DrawSmallFontText(spriteBatch, ((wave / 10) % 10).ToString(), x, y, numberSlot);
         }
         else
         {
@@ -123,9 +123,9 @@ public static class ArcadeHud
             x += ScreenSize.ToPortPixels(HudLayout.HudSmallFontBlankAdvancePixels);
         }
 
-        x = sprites.Text.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberSlot);
+        x = sprites.TextRenderer.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberSlot);
         x += ScreenSize.ToPortPixels(HudLayout.HudWaveNumberGapPixels);
-        sprites.Text.DrawSmallFontText(spriteBatch, " WAVE", x, y, HudLayout.HudWaveTextSlot);
+        sprites.TextRenderer.DrawSmallFontText(spriteBatch, " WAVE", x, y, HudLayout.HudWaveTextSlot);
     }
 
     /// <summary>
@@ -134,7 +134,7 @@ public static class ArcadeHud
     /// </summary>
     private static void DrawScore(SpriteBatch spriteBatch, SpriteSet sprites, int score, int originX, int y, int slot)
     {
-        foreach (ScoreGlyph glyph in ScoreFormatter.Layout(
+        foreach (ScoreGlyph glyph in ScoreFormatter.LayOutGlyphs(
             score,
             originX,
             ScreenSize.ToPortPixels(HudLayout.HudScoreDigitAdvancePixels),
@@ -151,7 +151,7 @@ public static class ArcadeHud
 
         for (int i = 0; i < count; i++)
         {
-            sprites.Text.DrawMiniMan(spriteBatch, originX + (i * pitch), y);
+            sprites.TextRenderer.DrawMiniMan(spriteBatch, originX + (i * pitch), y);
         }
     }
 }

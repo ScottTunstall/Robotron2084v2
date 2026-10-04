@@ -32,28 +32,28 @@ public static class ScoreFormatter
     /// The score's eight digit positions in the order the ROM draws them, with
     /// the leading zeros marked suppressed.
     /// </summary>
-    public static ScoreDigit[] Digits(int score)
+    public static ScoreDigit[] GetDigits(int score)
     {
         int value = System.Math.Clamp(score, 0, MaxScore);
         var digits = new ScoreDigit[DigitPositions];
-        bool printed = false;
+        bool hasPrinted = false;
 
         for (int position = 0; position < DigitPositions; position++)
         {
-            int digit = DigitAt(value, position);
+            int digit = GetDigitAt(value, position);
 
             // ROM $610D: a zero digit takes the blank path while $D6 == 0
             // ("nothing printed yet") ... but $DC4D sets $D6 before the last two
             // positions, so tens and units always draw (score 0 prints "00").
-            bool lastTwo = position >= DigitPositions - 2;
-            bool suppressed = !printed && !lastTwo && digit == 0;
+            bool isInLastTwo = position >= DigitPositions - 2;
+            bool isSuppressed = !hasPrinted && !isInLastTwo && digit == 0;
 
-            if (!suppressed)
+            if (!isSuppressed)
             {
-                printed = true;
+                hasPrinted = true;
             }
 
-            digits[position] = new ScoreDigit(digit, suppressed);
+            digits[position] = new ScoreDigit(digit, isSuppressed);
         }
 
         return digits;
@@ -65,7 +65,7 @@ public static class ScoreFormatter
     /// only need the digits, not the layout.
     /// </summary>
     public static int[] DrawnDigits(int score) =>
-        Digits(score).Where(d => !d.Suppressed).Select(d => d.Value).ToArray();
+        GetDigits(score).Where(d => !d.Suppressed).Select(d => d.Value).ToArray();
 
     /// <summary>
     /// The glyphs to draw and their X positions, walking the ROM's cursor from
@@ -73,12 +73,12 @@ public static class ScoreFormatter
     /// <paramref name="blankAdvancePixels"/>, a drawn one advances
     /// <paramref name="digitAdvancePixels"/>.
     /// </summary>
-    public static IReadOnlyList<ScoreGlyph> Layout(int score, int originX, int digitAdvancePixels, int blankAdvancePixels)
+    public static IReadOnlyList<ScoreGlyph> LayOutGlyphs(int score, int originX, int digitAdvancePixels, int blankAdvancePixels)
     {
         var glyphs = new List<ScoreGlyph>(DigitPositions);
         int x = originX;
 
-        foreach (ScoreDigit digit in Digits(score))
+        foreach (ScoreDigit digit in GetDigits(score))
         {
             if (digit.Suppressed)
             {
@@ -95,7 +95,7 @@ public static class ScoreFormatter
     }
 
     /// <summary>Position 0 = ten-millions (the ROM masks it off; the port draws it) ... 7 = units.</summary>
-    private static int DigitAt(int score, int position)
+    private static int GetDigitAt(int score, int position)
     {
         int divisor = 1;
         for (int i = position; i < DigitPositions - 1; i++)

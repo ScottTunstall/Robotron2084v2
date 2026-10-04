@@ -83,11 +83,11 @@ public sealed class InitialsEntryModel
 
     private Phase _phase = Phase.AwaitingFireRelease;
 
-    private int _position;
+    private int _letterIndex;
 
     private int _repeatClockUnits;
 
-    private bool _rubAllowed;
+    private bool _isRubAllowed;
 
     private int _timeoutClockUnits;
 
@@ -108,10 +108,10 @@ public sealed class InitialsEntryModel
     public bool IsComplete { get; private set; }
 
     /// <summary>The cell the cursor is on (0-based); <see cref="LetterCount"/> once the entry is over.</summary>
-    public int Position => _position;
+    public int LetterIndex => _letterIndex;
 
     /// <summary>The letter shown in the cursor's cell — the ROM's preview, which cycling rewrites in place.</summary>
-    public char Preview => _position < LetterCount ? _letters[_position] : Blank;
+    public char Preview => _letterIndex < LetterCount ? _letters[_letterIndex] : Blank;
 
     /// <summary>True while the preview is the rub marker, which the page draws with the ROM's own sprite.</summary>
     public bool PreviewIsRub => Preview == RubLetter;
@@ -136,7 +136,7 @@ public sealed class InitialsEntryModel
         return IsComplete;
     }
 
-    private static bool Held(PlayerInputState input, int direction) =>
+    private static bool IsHeld(PlayerInputState input, int direction) =>
             direction == UpDirection ? input.MoveDirection.Y < 0 : input.MoveDirection.Y > 0;
 
     /// <summary>
@@ -157,9 +157,9 @@ public sealed class InitialsEntryModel
             return;
         }
 
-        if (_position < LetterCount && PreviewIsRub)
+        if (_letterIndex < LetterCount && PreviewIsRub)
         {
-            _letters[_position] = Blank;
+            _letters[_letterIndex] = Blank;
         }
 
         IsComplete = true;
@@ -197,8 +197,8 @@ public sealed class InitialsEntryModel
             return;
         }
 
-        _rubAllowed = true;
-        _position++;
+        _isRubAllowed = true;
+        _letterIndex++;
         if (--_lettersLeft <= 0)
         {
             IsComplete = true;
@@ -215,7 +215,7 @@ public sealed class InitialsEntryModel
 
     /// <summary>The alpha-only ring (LUPP1/LDN1): space, A to Z, and the rub marker once a letter has been committed.</summary>
     private void Cycle(int direction) =>
-        _letters[_position] = direction == UpDirection ? NextLetter(Preview) : PreviousLetter(Preview);
+        _letters[_letterIndex] = direction == UpDirection ? NextLetter(Preview) : GetPreviousLetter(Preview);
 
     /// <summary>GETLT1: back to reading the switches every two frames.</summary>
     private void EnterMainLoop()
@@ -228,15 +228,15 @@ public sealed class InitialsEntryModel
     private char NextLetter(char current) => current switch
     {
         Blank => 'A',
-        'Z' when _rubAllowed => RubLetter,
+        'Z' when _isRubAllowed => RubLetter,
         'Z' => Blank,
         RubLetter => Blank,
         _ => (char)(current + 1),
     };
 
-    private char PreviousLetter(char current) => current switch
+    private char GetPreviousLetter(char current) => current switch
     {
-        Blank => _rubAllowed ? RubLetter : 'Z',
+        Blank => _isRubAllowed ? RubLetter : 'Z',
         'A' => Blank,
         RubLetter => 'Z',
         _ => (char)(current - 1),
@@ -266,7 +266,7 @@ public sealed class InitialsEntryModel
     /// </summary>
     private void RepeatCycle(PlayerInputState input)
     {
-        if (!Held(input, _cycleDirection))
+        if (!IsHeld(input, _cycleDirection))
         {
             EnterMainLoop();
             if (input.FireHeld)
@@ -311,21 +311,21 @@ public sealed class InitialsEntryModel
     /// <summary>GETRUB: the rub marker clears its own cell, steps back one and asks for that letter again.</summary>
     private void RubOut()
     {
-        _letters[_position] = Blank;
-        _position--;
+        _letters[_letterIndex] = Blank;
+        _letterIndex--;
         _lettersLeft++;
 
         // GETRUB ends by re-entering GETLLL → G0SUB, which seeds the cell the cursor has gone back
         // to: that is why the letter the player rejected is gone and can be typed afresh.
         SeedCell();
-        _rubAllowed = false;
+        _isRubAllowed = false;
         _phase = Phase.AwaitingFireRelease;
         _periodClockUnits = FireReleaseCheckClockUnits;
         _clockUnits = 0;
     }
 
     /// <summary>G0SUB: puts a blank in the cell the cursor is on, so it is always a valid letter position.</summary>
-    private void SeedCell() => _letters[_position] = Blank;
+    private void SeedCell() => _letters[_letterIndex] = Blank;
 
     /// <summary>Runs the current phase once its own period has elapsed.</summary>
     private void Step(PlayerInputState input)

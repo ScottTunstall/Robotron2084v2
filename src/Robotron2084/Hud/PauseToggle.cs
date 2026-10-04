@@ -19,14 +19,14 @@ public sealed class PauseToggle
         _wasHeld = true; // swallowing the current state, so the key that left must be released
     }
 
-    /// <summary>One tick: toggles when <paramref name="held"/> goes from up to down.</summary>
-    public void Tick(bool held)
+    /// <summary>One tick: toggles when <paramref name="isPauseHeld"/> goes from up to down.</summary>
+    public void Tick(bool isPauseHeld)
     {
-        if (held && !_wasHeld)
+        if (isPauseHeld && !_wasHeld)
         {
             IsPaused = !IsPaused;
         }
 
-        _wasHeld = held;
+        _wasHeld = isPauseHeld;
     }
 }

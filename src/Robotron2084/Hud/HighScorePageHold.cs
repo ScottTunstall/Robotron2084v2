@@ -43,14 +43,14 @@ namespace Robotron2084.Hud;
 public sealed class HighScorePageHold
 {
     private int _checkClockUnits;
-    private int _checks;
+    private int _checksWithSwitchDown;
     private int _holdClockUnits;
 
     /// <summary>
     /// How many of the ROM's <c>$FF</c> post-hold checks have found a switch down — the
     /// page leaves when this reaches <see cref="ScreenTuning.HighScoreLeaveChecks"/>.
     /// </summary>
-    public int ChecksWithSwitchDown => _checks;
+    public int ChecksWithSwitchDown => _checksWithSwitchDown;
 
     /// <summary>True once the 600-frame hold has run out and the switches are being read.</summary>
     public bool HoldIsOver { get; private set; }
@@ -91,7 +91,7 @@ public sealed class HighScorePageHold
             return true;
         }
 
-        _checks++;
-        return _checks >= ScreenTuning.HighScoreLeaveChecks;
+        _checksWithSwitchDown++;
+        return _checksWithSwitchDown >= ScreenTuning.HighScoreLeaveChecks;
     }
 }

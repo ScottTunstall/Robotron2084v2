@@ -10,7 +10,7 @@ namespace Robotron2084.Hud;
 /// <item>the growing pass: two strokes a ROM frame, out from the smallest rectangle,
 /// (62,125)-(89,127), to the terminal point (col 6, row 13)-(col 145, row 239); its flavour
 /// starts at `$88` and `GETA` walks it DOWN by `$11` a stroke, so each stroke takes its own
-/// palette slot (see <see cref="HighScoreTableLayout.FrameStrokeSlot"/>) and the eight visible
+/// palette slot (see <see cref="HighScoreTableLayout.GetFrameStrokeSlot"/>) and the eight visible
 /// ones are slots 8…1;</item>
 /// <item>the erase pass: the same walk again in flavour 0 (BLACK) — <c>FRCOND</c> does
 /// <c>CLR PD+14,U</c> — which restarts at stroke 0 and stops at (col 14, row 29), so it
@@ -25,30 +25,30 @@ public sealed class HighScoreFrameAnimation
 {
     private int _clockUnits;
 
-    private bool _erasing;
+    private bool _isErasing;
 
     /// <summary>
     /// Strokes drawn so far by the pass that is running, and which pass that is. Both
     /// passes have drawn <see cref="HighScoreTableLayout.FrameStrokesPerRomFrame"/> of
     /// them by the time the page first appears.
     /// </summary>
-    private int _strokes = HighScoreTableLayout.FrameStrokesPerRomFrame;
+    private int _strokesDrawn = HighScoreTableLayout.FrameStrokesPerRomFrame;
 
     /// <summary>
     /// The growing pass's frontier: the outermost stroke it has drawn, or -1 before it has
     /// drawn any (notes §98.5 — the first two strokes are drawn before the first sleep).
     /// </summary>
-    public int DrawnStroke => _erasing ? HighScoreTableLayout.FrameLastStroke : _strokes - 1;
+    public int DrawnStroke => _isErasing ? HighScoreTableLayout.FrameLastStroke : _strokesDrawn - 1;
 
     /// <summary>
     /// The erase pass's frontier: the innermost stroke it has BLACKED, or -1 while that pass
     /// has not started. Everything at or below this stroke is gone; the wall is what is left
     /// between it and <see cref="DrawnStroke"/>.
     /// </summary>
-    public int ErasedStroke => _erasing ? _strokes - 1 : -1;
+    public int ErasedStroke => _isErasing ? _strokesDrawn - 1 : -1;
 
     /// <summary>True once the erase pass has reached its terminal point — the wall is complete.</summary>
-    public bool IsFinished => _erasing && _strokes >= HighScoreTableLayout.FrameEraseStrokeCount;
+    public bool IsFinished => _isErasing && _strokesDrawn >= HighScoreTableLayout.FrameEraseStrokeCount;
 
     /// <summary>Advances the pass by one port tick (call once per Update).</summary>
     public void Tick()
@@ -70,24 +70,24 @@ public sealed class HighScoreFrameAnimation
     {
         for (int i = 0; i < strokes; i++)
         {
-            if (!_erasing)
+            if (!_isErasing)
             {
-                if (_strokes == HighScoreTableLayout.FrameStrokeCount)
+                if (_strokesDrawn == HighScoreTableLayout.FrameStrokeCount)
                 {
                     // FRBYE → FRCONT: the growing pass is done, so the ROM clears the
                     // flavour and jumps back to its start — the erase's first two strokes
                     // are drawn at once, exactly as the growing pass's were.
-                    _erasing = true;
-                    _strokes = HighScoreTableLayout.FrameStrokesPerRomFrame;
+                    _isErasing = true;
+                    _strokesDrawn = HighScoreTableLayout.FrameStrokesPerRomFrame;
                 }
                 else
                 {
-                    _strokes++;
+                    _strokesDrawn++;
                 }
             }
             else if (!IsFinished)
             {
-                _strokes++;
+                _strokesDrawn++;
             }
         }
     }
