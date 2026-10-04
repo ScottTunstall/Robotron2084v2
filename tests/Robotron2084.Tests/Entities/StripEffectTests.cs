@@ -36,7 +36,9 @@ public sealed class StripEffectTests
     {
         public FakeDead(Rectangle bounds) => Bounds = bounds;
 
-        public Rectangle Bounds { get; }
+        public Rectangle Bounds { get; private set; }
+
+        public void MoveTo(Rectangle bounds) => Bounds = bounds;
 
         public IntVector2 Position => new(Bounds.X, Bounds.Y);
 
@@ -339,33 +341,110 @@ public sealed class StripEffectTests
         Assert.Equal((StripFanAxis.Rows, 1), StripEffect.GetFanForShot(Direction8.DownLeft));
     }
 
-    [Fact]
-    public void Appear_ConvergesAndFreesItselfWhenTheSizeReachesOne()
-    {
-        // APSTZ/AWRITE: YSIZER starts at $1000 and shrinks $100 a frame, and the
-        // record dies when the step would fall to 1 or less — so it draws steps
-        // 15,14,...,2: fourteen draws, the mirror of an explosion.
-        StripEffect appear = StripEffect.CreateAppear(
-            new FakeDead(new Rectangle(100, 200, 16, 24)),
-            new Rectangle(100, 200, 16, 24),
-            StripFanAxis.Rows,
-            slope: 0,
-            clip: Clip);
+    private static StripEffect NewAppear(StripFanAxis axis, int slope) => StripEffect.CreateAppear(
+        new FakeDead(new Rectangle(100, 200, 16, 24)),
+        new Rectangle(100, 200, 16, 24),
+        axis,
+        slope,
+        clip: Clip);
 
+    /// <summary>Runs an effect on to the tick a ROM frame falls on, counted from when the effect was made.</summary>
+    private static void UpdateToRomFrame(StripEffect effect, ref int ticks, int romFrame)
+    {
+        while (ticks < ArcadeClock.ToPortTicksRoundedUp(romFrame))
+        {
+            effect.Update(new GameTime(), null!);
+            ticks++;
+        }
+    }
+
+    [Theory]
+    [InlineData(StripFanAxis.Rows, 0, 29)] // RRX7 AWRITE: `SUBD #$0080` ($5D4A), and gone when the gap would be 1 ($5D78)
+    [InlineData(StripFanAxis.Columns, 0, 31)] // RRHX4 AWRITE: `SUBD #$80`, and drawn closed up before it goes (`TSTA / BHI APGO`)
+    [InlineData(StripFanAxis.Rows, 1, 15)] // RRDX2 AWRITE: `SUBD #$100`, and gone when the gap would be 1
+    public void AnAppear_LastsAsManyRomFramesAsItsStripRoutineTakes(StripFanAxis axis, int slope, int romFrames)
+    {
+        StripEffect appear = NewAppear(axis, slope);
         Assert.Equal(StripEffectKind.Appear, appear.Kind);
 
         int ticks = 0;
-        while (appear.IsAlive() && ticks < 60)
-        {
-            appear.Update(new GameTime(), null!);
-            ticks++;
-        }
+        UpdateToRomFrame(appear, ref ticks, romFrames - 1);
+        Assert.True(appear.IsAlive());
 
+        UpdateToRomFrame(appear, ref ticks, romFrames);
         Assert.Equal(EntityLifeState.Dead, appear.LifeState);
+    }
 
-        // 15 ROM FRAMES of work (14 draws and the call that frees the record), which
-        // the 6/5 clock spreads over 18 port ticks: 15 × 6 clock units / 5 a tick.
-        Assert.Equal(18, ticks);
+    [Fact]
+    public void AVerticalAppear_ShowsNothingBeforeItsFirstStep_ThenEachGapForTwoRomFrames()
+    {
+        // YSIZER starts at $1000 and the routine redraws only when its high byte changes (`CMPA YSIZER,Y`, "CHANGE?",
+        // $5D4D): 15 on frames 1 and 2, 14 on frames 3 and 4, and so on down to 2 on frames 27 and 28.
+        StripEffect appear = NewAppear(StripFanAxis.Rows, slope: 0);
+        int ticks = 0;
+        Assert.False(appear.IsDrawn());
+
+        UpdateToRomFrame(appear, ref ticks, 1);
+        Assert.True(appear.IsDrawn());
+        Assert.Equal(15, appear.Spacing);
+
+        UpdateToRomFrame(appear, ref ticks, 2);
+        Assert.Equal(15, appear.Spacing);
+
+        UpdateToRomFrame(appear, ref ticks, 3);
+        Assert.Equal(14, appear.Spacing);
+
+        UpdateToRomFrame(appear, ref ticks, 28);
+        Assert.Equal(2, appear.Spacing);
+        Assert.True(appear.IsAlive());
+    }
+
+    [Fact]
+    public void AHorizontalAppear_IsDrawnClosedUp_BeforeItGoes()
+    {
+        StripEffect appear = NewAppear(StripFanAxis.Columns, slope: 0);
+        int ticks = 0;
+
+        UpdateToRomFrame(appear, ref ticks, 28);
+        Assert.Equal(2, appear.Spacing);
+
+        UpdateToRomFrame(appear, ref ticks, 30);
+        Assert.Equal(1, appear.Spacing);
+        Assert.True(appear.IsAlive());
+    }
+
+    [Fact]
+    public void AnAppearGivenACentreStrip_ClosesInOnThatStrip_NotOnTheMiddleOne()
+    {
+        // YOF is the row the others close in on: row i is drawn at YCENT - YSIZE x YOF + YSIZE / 2 + i x YSIZE
+        // (RRX7 APGO, $5D96), and with YOF at nothing the half is left out ("OBSCURE BUG").
+        var sprite = new Rectangle(100, 200, 16, 24);
+        StripEffect appear = StripEffect.CreateAppear(new FakeDead(sprite), sprite, StripFanAxis.Rows, slope: 0, Clip, getCentreStripIndex: _ => 0);
+        int ticks = 0;
+        UpdateToRomFrame(appear, ref ticks, 1);
+
+        IReadOnlyList<Strip> strips = appear.LayOutStrips(spriteWidth: 8, spriteRows: 12);
+
+        int top = sprite.Y / ScreenSize.SpecScale;
+        Assert.Equal(top, strips[0].Y); // the top row stays where it is
+        Assert.Equal(top + 15, strips[1].Y); // and every other row is below it, a gap apart
+    }
+
+    [Fact]
+    public void AnAppearThatFollowsItsSource_MovesToItEachTimeThePictureChanges()
+    {
+        // AWRIT0 ("SCROLL EM", $5D57): with STATUS clear the routine takes the player's place again before each redraw.
+        var player = new FakeDead(new Rectangle(100, 200, 16, 24));
+        StripEffect appear = StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, slope: 0, Clip, centreStripIndex: 3, startClockUnits: 0);
+        int ticks = 0;
+        UpdateToRomFrame(appear, ref ticks, 1);
+
+        player.MoveTo(new Rectangle(140, 200, 16, 24));
+        UpdateToRomFrame(appear, ref ticks, 2); // the gap is the same, so nothing is redrawn
+        Assert.Equal(100, appear.Bounds.X);
+
+        UpdateToRomFrame(appear, ref ticks, 3);
+        Assert.Equal(140, appear.Bounds.X);
     }
 
     [Fact]
@@ -454,26 +533,52 @@ public sealed class StripEffectTests
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
     }
 
-    [Fact]
-    public void AtMostTenConcurrentRecords_TheRomsSharedPool()
+    [Theory]
+    [InlineData(Direction8.Up, StripExplosionTuning.HorizontalPoolSize)] // RRHX4 HXINV links two records (R5 $F01D to $F038)
+    [InlineData(Direction8.UpLeft, StripExplosionTuning.DiagonalPoolSize)] // RRDX2: `RMB ((10-1)*EXSIZE)` after the first (R5 $468C)
+    public void AStripRoutineWithNoRecordFree_MakesNoExplosion(Direction8 shot, int records)
     {
-        // RRDX2's `EX` region holds TEN records (`RMB ((10-1)*EXSIZE)`) and
-        // explosions and appears take from the SAME free list, so an eleventh is
-        // refused outright (the caller's kill still stands).
+        // Each routine has its own records, and one more explosion than it has records is refused outright (the
+        // caller's kill still stands).
         PlayField field = CreateEmptyField();
         field.SkipWaveStart();
-        Rectangle bounds = field.Wall.PlayfieldBounds;
 
-        for (int i = 0; i < StripExplosionTuning.MaxConcurrent + 4; i++)
+        for (int i = 0; i < records + 4; i++)
         {
-            IntVector2 spot = new(bounds.X + 16 + (i * 12), bounds.Y + 60);
-            field.Entities.Grunts.Add(new Grunt(TestSprites.Shared, spot));
-            field.Entities.Electrodes.Add(new Electrode(TestSprites.Shared, spot));
+            field.SpawnExplosion(new FakeDead(Sprite), shot);
         }
 
-        field.Update(new GameTime());
+        Assert.Equal(records, field.Entities.Explosions.Count);
+    }
 
-        Assert.Equal(StripExplosionTuning.MaxConcurrent, field.Entities.Explosions.Count);
+    [Fact]
+    public void TheVerticalRoutine_TakesItsRecordsFromTheArcadesObjectList_WhichThePortDoesNotKeep()
+    {
+        // RRX7 GETBLK: `LDU OFREE` ($5B6E). The port has no object list to run out of, so every one is made.
+        PlayField field = CreateEmptyField();
+        field.SkipWaveStart();
+
+        for (int i = 0; i < 20; i++)
+        {
+            field.SpawnExplosion(new FakeDead(Sprite), Direction8.Left);
+        }
+
+        Assert.Equal(20, field.Entities.Explosions.Count);
+    }
+
+    [Fact]
+    public void AFullHorizontalRoutine_DoesNotStopADiagonalExplosion()
+    {
+        PlayField field = CreateEmptyField();
+        field.SkipWaveStart();
+        for (int i = 0; i < StripExplosionTuning.HorizontalPoolSize; i++)
+        {
+            field.SpawnExplosion(new FakeDead(Sprite), Direction8.Up);
+        }
+
+        field.SpawnExplosion(new FakeDead(Sprite), Direction8.DownLeft);
+
+        Assert.Equal(StripExplosionTuning.HorizontalPoolSize + 1, field.Entities.Explosions.Count);
     }
 
     private static PlayField CreateEmptyField()
