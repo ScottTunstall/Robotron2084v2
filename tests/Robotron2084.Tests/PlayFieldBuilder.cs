@@ -33,7 +33,7 @@ internal sealed class PlayFieldBuilder
     private GamePalette? _palette;
     private bool _playerInvincible = true;
     private IPixelCollision? _pixelCollision;
-    private bool _tankShellBug = true;
+    private bool _tankShellBugEnabled = true;
     private bool _brainsChaseMikeyBug = true;
 
     /// <summary>Uses these wave parameters.</summary>
@@ -121,7 +121,7 @@ internal sealed class PlayFieldBuilder
     /// <param name="bug">True to keep the arcade's bug.</param>
     public PlayFieldBuilder WithTankShellBug(bool bug)
     {
-        _tankShellBug = bug;
+        _tankShellBugEnabled = bug;
         return this;
     }
 
@@ -146,6 +146,6 @@ internal sealed class PlayFieldBuilder
         palette: _palette,
         playerInvincibleForTesting: _playerInvincible,
         contactTest: _pixelCollision is null ? null : new PixelContactTest(_pixelCollision),
-        tankShellBug: _tankShellBug,
-        brainsChaseMikeyBug: _brainsChaseMikeyBug);
+        tankShellBugEnabled: _tankShellBugEnabled,
+        brainsChaseMikeyBugEnabled: _brainsChaseMikeyBug);
 }
