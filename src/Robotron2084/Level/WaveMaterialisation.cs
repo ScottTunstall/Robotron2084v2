@@ -123,7 +123,7 @@ public sealed class WaveMaterialisation
     {
         if (!_transportBegun && _transportQueue.Count > 0)
         {
-            transporter.BeginBeamingInRobots(_transportQueue);
+            transporter.Begin(_transportQueue);
             _transported.AddRange(_transportQueue);
             _transportQueue.Clear();
             _transportBegun = true;

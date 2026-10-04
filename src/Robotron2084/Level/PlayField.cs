@@ -165,7 +165,7 @@ public sealed class PlayField : ICollisionScene
             return;
         }
 
-        _gruntSpeedProgression.UpdateGruntSpeeds(Entities.Grunts);
+        _gruntSpeedProgression.Update(Entities.Grunts);
 
         _materialisation.Advance(Entities.Explosions, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds));
 
@@ -449,7 +449,7 @@ public sealed class PlayField : ICollisionScene
         _laserWallFlares.Spawn(laserBounds, direction, Wall);
 
     /// <summary>Speeds up every grunt that is still alive, as each grunt's death does (notes §67).</summary>
-    internal void SpeedUpGrunts() => _gruntSpeedProgression.SpeedUpGrunts(Entities.Grunts);
+    internal void SpeedUpGrunts() => _gruntSpeedProgression.SpeedUp(Entities.Grunts);
 
     /// <summary>Moves one entity on by a tick, unless it is still appearing. The arcade keeps the robots still until the whole appear sequence is done (notes §62).</summary>
     /// <param name="entity">The entity to move on.</param>
