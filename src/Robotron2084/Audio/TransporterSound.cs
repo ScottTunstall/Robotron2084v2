@@ -1,9 +1,9 @@
 namespace Robotron2084.Audio;
 
 /// <summary>
-/// The humming "warp in" as a brain wave's robots are beamed onto the playfield. It first clears
-/// whatever is playing, then sends the warp-in sound over and over: every vblank for a while, then
-/// every other vblank for a while longer.
+/// The transporter's hum: the sound made while a brain wave's robots are beamed onto the playfield. It first clears
+/// whatever is playing, then sends the sound over and over: every ROM frame for a while, then
+/// every other ROM frame for a while longer. "Transporter" is the arcade's own name for beaming the robots in at the start of a brain wave.
 /// </summary>
 /// <remarks>
 /// <list type="bullet">

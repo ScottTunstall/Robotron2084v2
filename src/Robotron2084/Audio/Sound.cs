@@ -76,7 +76,14 @@ public static class Sound
         _engine?.HoldVoice(SoundTuning.WaveEndMusicTicks);
     }
 
-    /// <summary>Starts the transporter's warp-in hum, as a brain wave's robots are beamed in.</summary>
+    /// <summary>Starts the transporter's hum: the sound made while a brain wave's robots are beamed in.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRT2.ASM</c> <c>TRSPRC</c> ("TRANSPORTER SOUND PROCESS"), started by <c>TRNSTV</c> ("START TRANSPORTING")</item>
+    /// <item>Disassembly: <c>PLAY_BRAIN_WAVE_WARP_IN_SOUNDS</c> (<c>$4607</c>)</item>
+    /// </list>
+    /// "Transporter" is the arcade's own name for beaming the robots in at the start of a brain wave.
+    /// </remarks>
     public static void PlayTransporter()
     {
         if (!Enabled || AttractMuted || _engine is null)
