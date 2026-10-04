@@ -34,13 +34,13 @@ public static class MovieAnimationFrames
     /// <summary>The texture a movie object draws, or null when there is none.</summary>
     public static Texture2D? Resolve(SpriteSet sprites, MovieAnimation animation, int animationFrameIndex)
     {
-        Texture2D[]? frames = Frames(sprites, animation);
+        Texture2D[]? frames = GetAnimationFrames(sprites, animation);
         if (frames is null || frames.Length == 0)
         {
             return animation switch
             {
-                MovieAnimation.Skull => sprites.Skull,
-                MovieAnimation.Cruise => sprites.AttractCruise,
+                MovieAnimation.Skull => sprites.SkullSprite,
+                MovieAnimation.Cruise => sprites.AttractCruiseSprite,
                 _ => null,
             };
         }
@@ -62,7 +62,7 @@ public static class MovieAnimationFrames
         return frames[index % frames.Length];
     }
 
-    private static Texture2D[]? Frames(SpriteSet sprites, MovieAnimation animation) => animation switch
+    private static Texture2D[]? GetAnimationFrames(SpriteSet sprites, MovieAnimation animation) => animation switch
     {
         MovieAnimation.Mommy => sprites.MommyAnimationFrames,
         MovieAnimation.Daddy => sprites.DaddyAnimationFrames,

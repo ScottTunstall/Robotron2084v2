@@ -38,32 +38,32 @@ public sealed class AttractPageMachine
     /// <summary>The ROM's `GSTRTS`: the four grunt personalities.</summary>
     private static readonly int[] GruntScripts = [0x84F5, 0x8517, 0x8540, 0x8567];
 
-    private readonly AttractObjectMachine _objects;
+    private readonly AttractObjectMachine _objectMachine;
     private readonly Random _random;
-    private readonly byte[] _script;
-    private readonly List<MovieTextCell> _text = [];
+    private readonly byte[] _scriptBytes;
+    private readonly List<MovieTextCell> _textCells = [];
     private int _cursorX = TextLeft;
     private int _cursorY = 0;
     private int _gruntsLeft;
     private int _gruntTimer;
-    private int _pc;
-    private int _wait;
+    private int _scriptIndex;
+    private int _waitRomFrames;
 
-    public AttractPageMachine(byte[] script, AttractObjectMachine objects, Random random)
+    public AttractPageMachine(byte[] scriptBytes, AttractObjectMachine objectMachine, Random random)
     {
-        _script = script;
-        _objects = objects;
+        _scriptBytes = scriptBytes;
+        _objectMachine = objectMachine;
         _random = random;
     }
 
     /// <summary>The script reached DONE / DONE2.</summary>
-    public bool Finished { get; private set; }
+    public bool IsFinished { get; private set; }
 
     /// <summary>The name popup currently in the score row, if any.</summary>
     public MovieMessage? Message { get; private set; }
 
     /// <summary>Every character currently on the story screen.</summary>
-    public IReadOnlyList<MovieTextCell> Text => _text;
+    public IReadOnlyList<MovieTextCell> TextCells => _textCells;
 
     /// <summary>The current text colour slot (the ROM's `TEXCOL`).</summary>
     public int TextSlot { get; private set; } = 10;
@@ -73,24 +73,24 @@ public sealed class AttractPageMachine
     {
         SpawnQueuedGrunts();
 
-        if (_wait > 0 && --_wait > 0)
+        if (_waitRomFrames > 0 && --_waitRomFrames > 0)
         {
             return;
         }
 
-        while (!Finished)
+        while (!IsFinished)
         {
-            if (_pc >= _script.Length)
+            if (_scriptIndex >= _scriptBytes.Length)
             {
-                Finished = true;
+                IsFinished = true;
                 return;
             }
 
-            byte op = _script[_pc++];
-            if (op <= 9)
+            byte opcode = _scriptBytes[_scriptIndex++];
+            if (opcode <= 9)
             {
-                RunAction(op);
-                if (_wait > 0 || Finished)
+                RunAction(opcode);
+                if (_waitRomFrames > 0 || IsFinished)
                 {
                     return;
                 }
@@ -98,14 +98,14 @@ public sealed class AttractPageMachine
                 continue;
             }
 
-            if (op >= 0x5F)
+            if (opcode >= 0x5F)
             {
-                _wait = op;
+                _waitRomFrames = opcode;
                 return;
             }
 
-            PrintCharacter(op);
-            _wait = 3;
+            PrintCharacter(opcode);
+            _waitRomFrames = 3;
             return;
         }
     }
@@ -137,7 +137,7 @@ public sealed class AttractPageMachine
     /// <summary>Drops every character inside a cleared block (the ROM's `BLKCLR`).</summary>
     private void ClearText(int x, int y, int width, int height)
     {
-        _text.RemoveAll(cell =>
+        _textCells.RemoveAll(cell =>
             cell.X >= x && cell.X < x + width &&
             cell.Y >= y && cell.Y < y + height);
 
@@ -149,7 +149,7 @@ public sealed class AttractPageMachine
         }
     }
 
-    private byte NextByte() => _script[_pc++];
+    private byte NextByte() => _scriptBytes[_scriptIndex++];
 
     private int NextWord() => (NextByte() << 8) | NextByte();
 
@@ -174,33 +174,33 @@ public sealed class AttractPageMachine
         char? character = DecodeCharacter(code);
         if (character is not null)
         {
-            if (_text.Count > 0 && _text[^1].X == _cursorX && _text[^1].Y == _cursorY)
+            if (_textCells.Count > 0 && _textCells[^1].X == _cursorX && _textCells[^1].Y == _cursorY)
             {
-                _text.RemoveAt(_text.Count - 1);
+                _textCells.RemoveAt(_textCells.Count - 1);
             }
 
-            _text.Add(new MovieTextCell(_cursorX, _cursorY, character.Value, TextSlot));
+            _textCells.Add(new MovieTextCell(_cursorX, _cursorY, character.Value, TextSlot));
         }
 
         _cursorX += AttractMovieData.FontWidths[code - 0x30] + 1;
     }
 
     /// <summary>Runs a page-script action: the flow opcodes here, the text opcodes in <see cref="RunTextAction"/>.</summary>
-    private void RunAction(byte op)
+    private void RunAction(byte opcode)
     {
-        switch (op)
+        switch (opcode)
         {
             case 3: // SCRPT — start an object script.
-                _objects.StartScript(NextWord());
+                _objectMachine.StartScript(NextWord());
                 return;
 
             case 4: // SNOOZE
-                _wait = NextByte();
+                _waitRomFrames = NextByte();
                 return;
 
             case 6: // DONE
             case 9: // DONE2
-                Finished = true;
+                IsFinished = true;
                 return;
 
             case 8: // GRUNTS — 14 of them, one every 16 frames (the ROM's GRPROC).
@@ -209,15 +209,15 @@ public sealed class AttractPageMachine
                 return;
 
             default:
-                RunTextAction(op);
+                RunTextAction(opcode);
                 return;
         }
     }
 
     /// <summary>Runs a page-script text action: the cursor, the clear, the name popup and the colour.</summary>
-    private void RunTextAction(byte op)
+    private void RunTextAction(byte opcode)
     {
-        switch (op)
+        switch (opcode)
         {
             case 0: // CURSAB — set the text cursor (column, row).
                 _cursorX = NextByte() * ScreenSize.ArcadePixelsPerColumn;
@@ -272,6 +272,6 @@ public sealed class AttractPageMachine
 
         _gruntTimer = 16;
         _gruntsLeft--;
-        _objects.StartScript(GruntScripts[_random.Next(GruntScripts.Length)]);
+        _objectMachine.StartScript(GruntScripts[_random.Next(GruntScripts.Length)]);
     }
 }
