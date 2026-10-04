@@ -57,11 +57,11 @@ public static class ArcadeHud
             slot);
     }
 
-    /// <summary>
-    /// Scores + spare men for every player in the session. <paramref name="innerBounds"/>
-    /// is the playfield's inner rectangle (the wall sits just outside it) so the HUD
-    /// row lands eight arcade px above the top wall, exactly as in the ROM.
-    /// </summary>
+    /// <summary>Draws each player's score and spare men along the top of the screen, just above the wall.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The sprite set, which holds the text and the little men.</param>
+    /// <param name="session">The game being played, which says who the players are.</param>
+    /// <param name="innerBounds">The play area inside the wall. The row is placed a set distance above its top edge, as in the arcade.</param>
     /// <param name="showSpareMen">False while the demo plays: the phony player's spare men are not shown.</param>
     public static void DrawScoresAndMen(
         SpriteBatch spriteBatch,
