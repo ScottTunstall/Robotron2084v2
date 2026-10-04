@@ -32,7 +32,7 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives,
 
     /// <summary>What was left on the player's field when they last died, to start their next man with. It is null when their wave has not started or has just been cleared.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>PENEMY</c>, the list that <c>PLSAV</c> keeps and <c>PLRES</c> brings back. Disassembly: not separately labelled.</remarks>
-    public LevelParameters? SavedWave { get; set; }
+    public LevelParameters? SavedWaveParameters { get; set; }
 
     /// <summary>True while the player can still be given a turn.</summary>
     public bool HasMen => Lives > 0;

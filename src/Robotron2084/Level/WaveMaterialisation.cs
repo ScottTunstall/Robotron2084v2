@@ -27,7 +27,7 @@ public sealed class WaveMaterialisation
     private readonly Dictionary<IEntity, StripEffect?> _assembling = [];
 
     /// <summary>The robots waiting for their turn to appear.</summary>
-    private readonly Queue<IEntity> _pending = new();
+    private readonly Queue<IEntity> _pendingRobots = new();
 
     /// <summary>The robots waiting to be beamed in together, when the wave is a brain wave. "Transport" is the arcade's own word for beaming in.</summary>
     private readonly List<IEntity> _transportQueue = [];
@@ -46,12 +46,12 @@ public sealed class WaveMaterialisation
 
     /// <summary>Makes the sequence for one wave.</summary>
     /// <param name="random">The field's random source, which the transporter's sparkle uses.</param>
-    /// <param name="beamIn">True on a brain wave, where the robots are beamed in by the transporter instead of appearing strip by strip.</param>
+    /// <param name="beamsIn">True on a brain wave, where the robots are beamed in by the transporter instead of appearing strip by strip.</param>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS00</c> and the test of <c>BRNCNT</c> before it ("BRAIN WAVE???").</remarks>
-    public WaveMaterialisation(Random random, bool beamIn) => _transporter = beamIn ? new RobotTransporter(random) : null;
+    public WaveMaterialisation(Random random, bool beamsIn) => _transporter = beamsIn ? new RobotTransporter(random) : null;
 
     /// <summary>The number of robots that have not yet been given their turn to appear.</summary>
-    public int PendingCount => _pending.Count + _transportQueue.Count;
+    public int PendingCount => _pendingRobots.Count + _transportQueue.Count;
 
     /// <summary>Moves the sequence on by one tick: starts the appear effect of the next robot in the queue, and lets go of the robots whose effect has finished.</summary>
     /// <remarks>
@@ -67,7 +67,7 @@ public sealed class WaveMaterialisation
             AdvanceTransport(_transporter);
         }
 
-        if (_pending.Count > 0 && explosions.Count < StripExplosionTuning.MaxConcurrent)
+        if (_pendingRobots.Count > 0 && explosions.Count < StripExplosionTuning.MaxConcurrent)
         {
             StartNextAppear(explosions, clip);
         }
@@ -108,7 +108,7 @@ public sealed class WaveMaterialisation
             return;
         }
 
-        _pending.Enqueue(robot);
+        _pendingRobots.Enqueue(robot);
     }
 
     /// <summary>Starts the beaming in once the robots are all queued, moves it on, and lets the robots go when it has finished.</summary>
@@ -164,7 +164,7 @@ public sealed class WaveMaterialisation
     /// <param name="clip">The edges the strips are cut off at.</param>
     private void StartNextAppear(EntityList<StripEffect> explosions, StripClip clip)
     {
-        IEntity robot = _pending.Dequeue();
+        IEntity robot = _pendingRobots.Dequeue();
 
         // The ROM does not set A before the APST call in this loop, so the row fan's slope is taken as 0 (no lean)
         // rather than guessed.
@@ -175,9 +175,9 @@ public sealed class WaveMaterialisation
 
         if (robot is IAnimationFrameSource frameSource)
         {
-            StripEffect appear = StripEffect.CreateAppear(frameSource, robot.Bounds, axis, slope: 0, clip);
-            explosions.Add(appear);
-            _assembling[robot] = appear;
+            StripEffect appearEffect = StripEffect.CreateAppear(frameSource, robot.Bounds, axis, slope: 0, clip);
+            explosions.Add(appearEffect);
+            _assembling[robot] = appearEffect;
         }
     }
 }

@@ -25,11 +25,11 @@ public static class WaveSurvivors
     public static LevelParameters GetFrom(PlayField field)
     {
         FieldEntities entities = field.Entities;
-        LevelParameters wave = field.Parameters;
+        LevelParameters parameters = field.Parameters;
         int gruntLimit = entities.Grunts.Where(grunt => grunt.IsAlive()).Select(grunt => grunt.MoveDelayBeats)
-            .DefaultIfEmpty(wave.GruntMoveDelay).Min();
+            .DefaultIfEmpty(parameters.GruntMoveDelay).Min();
 
-        return wave with
+        return parameters with
         {
             GruntCount = CountAlive(entities.Grunts),
             BerzerkRobotCount = CountAlive(entities.BerzerkRobots),
@@ -40,10 +40,10 @@ public static class WaveSurvivors
             DaddyCount = CountFamily(entities, HumanKind.Daddy),
             HulkCount = CountAlive(entities.Hulks),
             BrainCount = CountAlive(entities.Brains),
-            SpheroidCount = CountSpheroidsAfterConverting(CountAlive(entities.Enforcers), CountAlive(entities.Spheroids), wave.SpheroidCount),
+            SpheroidCount = CountSpheroidsAfterConverting(CountAlive(entities.Enforcers), CountAlive(entities.Spheroids), parameters.SpheroidCount),
             QuarkCount = CountAlive(entities.Quarks),
             TankCount = CountAlive(entities.Tanks),
-            GruntMoveDelay = Math.Max(gruntLimit, wave.GruntSpeedFloor),
+            GruntMoveDelay = Math.Max(gruntLimit, parameters.GruntSpeedFloor),
         };
     }
 
@@ -58,13 +58,13 @@ public static class WaveSurvivors
             return spheroids;
         }
 
-        int made = enforcers / EnforcersPerSpheroid;
-        if (made == 0 && spheroids == 0)
+        int spheroidsFromEnforcers = enforcers / EnforcersPerSpheroid;
+        if (spheroidsFromEnforcers == 0 && spheroids == 0)
         {
-            made = 1;
+            spheroidsFromEnforcers = 1;
         }
 
-        return Math.Min(made + spheroids, startedWith);
+        return Math.Min(spheroidsFromEnforcers + spheroids, startedWith);
     }
 
     /// <summary>Counts the things in a list that are still alive.</summary>

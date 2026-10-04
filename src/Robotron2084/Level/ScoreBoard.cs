@@ -6,7 +6,7 @@ namespace Robotron2084.Level;
 /// <remarks>A spare man is earned each time the score passes a multiple of the extra man setting (notes §131). <see cref="Add"/> reports it, so the caller can give the man.</remarks>
 public sealed class ScoreBoard
 {
-    private readonly int _step;
+    private readonly int _extraLifeEveryPoints;
     private int _nextExtraLifeThreshold;
 
     /// <summary>Makes a score board that carries on from the score a player already has.</summary>
@@ -15,9 +15,9 @@ public sealed class ScoreBoard
     public ScoreBoard(int startingScore, int extraLifeEveryPoints = GameSettings.FactoryExtraManEveryPoints)
     {
         Score = startingScore;
-        _step = extraLifeEveryPoints;
-        _nextExtraLifeThreshold = _step > 0
-            ? (startingScore / _step + 1) * _step
+        _extraLifeEveryPoints = extraLifeEveryPoints;
+        _nextExtraLifeThreshold = _extraLifeEveryPoints > 0
+            ? (startingScore / _extraLifeEveryPoints + 1) * _extraLifeEveryPoints
             : int.MaxValue;
     }
 
@@ -32,7 +32,7 @@ public sealed class ScoreBoard
         Score += points;
         if (Score >= _nextExtraLifeThreshold)
         {
-            _nextExtraLifeThreshold += _step;
+            _nextExtraLifeThreshold += _extraLifeEveryPoints;
             return true;
         }
 

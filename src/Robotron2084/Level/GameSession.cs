@@ -26,10 +26,10 @@ public sealed class GameSession
     public bool AnyMenLeft() => Players.Any(p => p.HasMen);
 
     /// <summary>The keys and buttons the players have chosen. They go with the game so that every screen can read them, such as the pause key (notes §101).</summary>
-    public ControlSettings Controls { get; private init; } = ControlSettings.CreateDefaults();
+    public ControlSettings ControlSettings { get; private init; } = ControlSettings.CreateDefaults();
 
     /// <summary>The game adjustment settings the game was started with. They go with the game, as <see cref="Controls"/> do, because the screens after a game over need them (notes §131).</summary>
-    public GameSettings Settings { get; private init; } = GameSettings.CreateFactoryDefaults();
+    public GameSettings GameSettings { get; private init; } = GameSettings.CreateFactoryDefaults();
 
     /// <summary>The player whose turn it is.</summary>
     public PlayerSlot Current => Players[CurrentIndex];
@@ -85,8 +85,8 @@ public sealed class GameSession
 
         return new GameSession(players)
         {
-            Controls = controls ?? ControlSettings.CreateDefaults(),
-            Settings = gameSettings,
+            ControlSettings = controls ?? ControlSettings.CreateDefaults(),
+            GameSettings = gameSettings,
         };
     }
 
@@ -107,13 +107,13 @@ public sealed class GameSession
             return false;
         }
 
-        int other = (CurrentIndex + 1) % Players.Count;
-        if (!Players[other].HasMen)
+        int otherIndex = (CurrentIndex + 1) % Players.Count;
+        if (!Players[otherIndex].HasMen)
         {
             return false; // ROM: PLE1, EORA #3 / PLDX / LDB PLAS,X / BEQ PLE1 (toggles back)
         }
 
-        CurrentIndex = other;
+        CurrentIndex = otherIndex;
         return true;
     }
 }

@@ -152,8 +152,8 @@ public sealed class TransportImage
                 continue;
             }
 
-            byte colours = TransporterTuning.SparkleColours[sparkle++ % TransporterTuning.SparkleColours.Length];
-            _pixels[pixel] = half == 0xF0 ? colours >> 4 : colours & 0x0F;
+            byte colourPair = TransporterTuning.SparkleColours[sparkle++ % TransporterTuning.SparkleColours.Length];
+            _pixels[pixel] = half == 0xF0 ? colourPair >> 4 : colourPair & 0x0F;
         }
     }
 

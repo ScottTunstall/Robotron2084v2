@@ -15,7 +15,7 @@ namespace Robotron2084.Level;
 public sealed class LevelParameterGenerator
 {
     /// <summary>The rows of the table that replaces the arcade's wave tables, or null to use the arcade's.</summary>
-    private readonly LevelTableRow[]? _table;
+    private readonly LevelTableRow[]? _levelTable;
 
     /// <summary>Makes a generator that looks for a <c>LevelTable.csv</c> in the game's <c>Content</c> folder.</summary>
     public LevelParameterGenerator()
@@ -27,14 +27,14 @@ public sealed class LevelParameterGenerator
     /// <param name="levelTablePath">The path of a CSV file whose header reads Level, GruntCount, HulkCount, SpheroidCount, QuarkCount, ElectrodeCount, MaxEnforcersPerSpheroid, MaxTanksPerQuark. When it is null, the game's <c>Content</c> folder is looked in.</param>
     public LevelParameterGenerator(string? levelTablePath)
     {
-        _table = LoadTable(levelTablePath);
+        _levelTable = LoadTable(levelTablePath);
     }
 
     /// <summary>Works out what a wave contains.</summary>
     /// <param name="levelNumber">The wave number, starting at 1.</param>
     public LevelParameters Generate(int levelNumber)
     {
-        if (_table is { Length: > 0 } table)
+        if (_levelTable is { Length: > 0 } table)
         {
             LevelTableRow row = table[(levelNumber - 1) % table.Length];
             return new LevelParameters(

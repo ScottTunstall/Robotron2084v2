@@ -90,25 +90,25 @@ public static class DifficultyTuning
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, with the difficulty in <c>difficulty_of_play</c> (<c>$CC14</c>) and the men in <c>PLAS</c>. Disassembly: <c>$2B7C</c>.</remarks>
     public static LevelParameters Apply(LevelParameters parameters, int difficulty, int lives)
     {
-        int effective = GetEffectiveDifficulty(parameters.LevelNumber, difficulty, lives);
-        if (effective == GameSettings.RecommendedDifficulty)
+        int effectiveDifficulty = GetEffectiveDifficulty(parameters.LevelNumber, difficulty, lives);
+        if (effectiveDifficulty == GameSettings.RecommendedDifficulty)
         {
             return parameters;
         }
 
-        int delta = effective - GameSettings.RecommendedDifficulty;
+        int delta = effectiveDifficulty - GameSettings.RecommendedDifficulty;
         int magnitude = Math.Abs(delta);
 
-        // The two fields worked out from the drops value must follow it, as LevelParameters.CreateFromWave works them out.
-        int drops = Adjust(parameters.MaxDropsX2, MaxDropsX2Header, delta, magnitude);
+        // The two fields worked out from the maxDropsX2 value must follow it, as LevelParameters.CreateFromWave works them out.
+        int maxDropsX2 = Adjust(parameters.MaxDropsX2, MaxDropsX2Header, delta, magnitude);
 
         return parameters with
         {
             GruntMoveDelay = Adjust(parameters.GruntMoveDelay, GruntMoveDelayHeader, delta, magnitude),
             GruntSpeedFloor = Adjust(parameters.GruntSpeedFloor, GruntSpeedFloorHeader, delta, magnitude),
-            MaxDropsX2 = drops,
-            MaxEnforcersPerSpheroid = (drops + 1) / 2,
-            MaxTanksPerQuark = (drops + 1) / 2,
+            MaxDropsX2 = maxDropsX2,
+            MaxEnforcersPerSpheroid = (maxDropsX2 + 1) / 2,
+            MaxTanksPerQuark = (maxDropsX2 + 1) / 2,
             EnforcerFireDelay = Adjust(parameters.EnforcerFireDelay, EnforcerFireDelayHeader, delta, magnitude),
             SpheroidDropDelay = Adjust(parameters.SpheroidDropDelay, SpheroidDropDelayHeader, delta, magnitude),
             HulkBeatIntervalRomFrames = Adjust(parameters.HulkBeatIntervalRomFrames, HulkBeatIntervalHeader, delta, magnitude),
@@ -164,8 +164,8 @@ public static class DifficultyTuning
         // bit 7 of the product's low byte.
         int step = (product >> 8) + ((product >> 7) & 1);
 
-        bool subtract = (((delta & 0xFF) ^ header.Multiplier) & ReversedFlag) != 0;
-        int adjusted = subtract ? value - step : value + step;
+        bool isSubtracted = (((delta & 0xFF) ^ header.Multiplier) & ReversedFlag) != 0;
+        int adjusted = isSubtracted ? value - step : value + step;
         return Math.Clamp(adjusted, header.Min, header.Max);
     }
 }

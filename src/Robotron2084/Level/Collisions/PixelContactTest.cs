@@ -9,25 +9,25 @@ namespace Robotron2084.Level.Collisions;
 /// <item>Original source: <c>RRS22.ASM</c> <c>COL0V</c> (reached through the <c>COL0</c> vector), which walks the two sprites' bytes and skips a zero byte as see-through (notes §118)</item>
 /// <item>Disassembly: the fixed block at <c>$D85C</c></item>
 /// </list>
-/// The cruise missile is the one thing with no sprite of its own: it is drawn as solid pixels, so its box is used.
+/// The cruise missile is the one thing with no sprite of its own: it is drawn as solid pixelCollision, so its box is used.
 /// </remarks>
 public sealed class PixelContactTest : IContactTest
 {
-    private readonly BoxContactTest _boxes = new();
-    private readonly IPixelCollision _pixels;
+    private readonly BoxContactTest _boxContactTest = new();
+    private readonly IPixelCollision _pixelCollision;
 
     /// <summary>Makes the test from the sprite shapes it will compare.</summary>
-    /// <param name="pixels">Supplies each entity's sprite shape and compares two of them.</param>
-    public PixelContactTest(IPixelCollision pixels) => _pixels = pixels;
+    /// <param name="pixelCollision">Supplies each entity's sprite shape and compares two of them.</param>
+    public PixelContactTest(IPixelCollision pixelCollision) => _pixelCollision = pixelCollision;
 
     /// <inheritdoc/>
     public bool Touches(IEntity a, IEntity b)
     {
-        if (_pixels.GetShape(a) is { } shapeA && _pixels.GetShape(b) is { } shapeB)
+        if (_pixelCollision.GetShape(a) is { } shapeA && _pixelCollision.GetShape(b) is { } shapeB)
         {
-            return _pixels.Overlaps(shapeA, shapeB);
+            return _pixelCollision.Overlaps(shapeA, shapeB);
         }
 
-        return _boxes.Touches(a, b);
+        return _boxContactTest.Touches(a, b);
     }
 }

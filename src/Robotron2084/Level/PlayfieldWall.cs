@@ -17,16 +17,16 @@ public sealed class PlayfieldWall
     /// <summary>How thick the wall is, in port pixels. It is added to each side of <see cref="PlayfieldBounds"/> to make <see cref="OuterBounds"/>.</summary>
     public static readonly int Thickness = ScreenSize.ToPortPixels(CollisionSizes.WallThicknessSpecPixels);
 
-    private readonly WallColorCycle _cycle;
+    private readonly WallColorCycle _colourCycle;
     private readonly Rectangle _playfieldBounds;
 
     /// <summary>Makes the wall for a play area.</summary>
     /// <param name="playfieldBounds">The play area inside the wall, in port pixels.</param>
     /// <param name="cycle">The colours the wall cycles through when it is not given one.</param>
-    public PlayfieldWall(Rectangle playfieldBounds, WallColorCycle cycle)
+    public PlayfieldWall(Rectangle playfieldBounds, WallColorCycle colourCycle)
     {
         _playfieldBounds = playfieldBounds;
-        _cycle = cycle;
+        _colourCycle = colourCycle;
     }
 
     /// <summary>The play area and the wall around it, in port pixels.</summary>
@@ -46,7 +46,7 @@ public sealed class PlayfieldWall
     public void Draw(SpriteBatch spriteBatch, Texture2D wallPixel, Color? colorOverride = null)
     {
         Rectangle outer = OuterBounds;
-        Color color = colorOverride ?? _cycle.CurrentColor;
+        Color color = colorOverride ?? _colourCycle.CurrentColor;
 
         spriteBatch.Draw(wallPixel, new Rectangle(outer.X, outer.Y, outer.Width, Thickness), color);
         spriteBatch.Draw(wallPixel, new Rectangle(outer.X, outer.Bottom - Thickness, outer.Width, Thickness), color);
@@ -64,5 +64,5 @@ public sealed class PlayfieldWall
 
     /// <summary>Moves the wall's colour cycle on by one tick.</summary>
     /// <param name="gameTime">The time for this tick.</param>
-    public void Update(GameTime gameTime) => _cycle.Update(gameTime);
+    public void Update(GameTime gameTime) => _colourCycle.Update(gameTime);
 }

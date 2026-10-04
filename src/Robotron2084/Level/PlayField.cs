@@ -37,16 +37,16 @@ namespace Robotron2084.Level;
 /// </remarks>
 public sealed class PlayField : ICollisionScene
 {
-    private readonly GruntSpeedProgression _gruntSpeed;
+    private readonly GruntSpeedProgression _gruntSpeedProgression;
     private readonly LaserWallFlares _laserWallFlares = new();
     private readonly WaveMaterialisation _materialisation;
     private readonly CollisionResponder _collisionResponder;
     private readonly IContactTest _contactTest;
-    private readonly MidWaveSpawner _midWave;
+    private readonly MidWaveSpawner _midWaveSpawner;
     private readonly GamePalette? _palette;
 
     /// <summary>True when a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
-    private readonly bool _tankShellBug;
+    private readonly bool _tankShellBugEnabled;
 
     /// <summary>Ticks left of the freeze that follows the player's death.</summary>
     private int _hitStopTicksRemaining;
@@ -67,8 +67,8 @@ public sealed class PlayField : ICollisionScene
     /// <param name="playerInvincibleForTesting">True for the playtest player, who cannot be killed.</param>
     /// <param name="contactTest">How two things are tested for touching; null compares their boxes.</param>
     /// <param name="extraManEveryPoints">How many points earn a spare man.</param>
-    /// <param name="tankShellBug">True to keep the arcade's bug: a shell that fizzles out stays on the wave's shell count.</param>
-    /// <param name="brainsChaseMikeyBug">True to keep the arcade's bug: every brain starts the wave chasing the first Mikey.</param>
+    /// <param name="tankShellBugEnabled">True to keep the arcade's bug: a shell that fizzles out stays on the wave's shell count.</param>
+    /// <param name="brainsChaseMikeyBugEnabled">True to keep the arcade's bug: every brain starts the wave chasing the first Mikey.</param>
     public PlayField(
             SpriteSet sprites,
             LevelParameters parameters,
@@ -82,19 +82,19 @@ public sealed class PlayField : ICollisionScene
             bool playerInvincibleForTesting = true,
             IContactTest? contactTest = null,
             int extraManEveryPoints = GameSettings.FactoryExtraManEveryPoints,
-            bool tankShellBug = GameSettings.FactoryTankShellBug,
-            bool brainsChaseMikeyBug = GameSettings.FactoryBrainsChaseMikeyBug)
+            bool tankShellBugEnabled = GameSettings.FactoryTankShellBugEnabled,
+            bool brainsChaseMikeyBugEnabled = GameSettings.FactoryBrainsChaseMikeyBugEnabled)
     {
-        _tankShellBug = tankShellBug;
+        _tankShellBugEnabled = tankShellBugEnabled;
         Sprites = sprites;
         Parameters = parameters;
-        _gruntSpeed = new GruntSpeedProgression(parameters.GruntSpeedFloor);
+        _gruntSpeedProgression = new GruntSpeedProgression(parameters.GruntSpeedFloor);
         Input = input;
-        Score = new ScoreBoard(startingScore, extraManEveryPoints);
+        ScoreBoard = new ScoreBoard(startingScore, extraManEveryPoints);
         _materialisation = new WaveMaterialisation(random, parameters.BrainCount > 0);
         _palette = palette;
         _contactTest = contactTest ?? new BoxContactTest();
-        _midWave = new MidWaveSpawner(this, Entities, random);
+        _midWaveSpawner = new MidWaveSpawner(this, Entities, random);
         _collisionResponder = new CollisionResponder(this);
         Wall = new PlayfieldWall(innerBounds, cycle);
 
@@ -113,7 +113,7 @@ public sealed class PlayField : ICollisionScene
         new FamilyWaveSpawner().Spawn(spawning);
 
         // With the bug switched off, each brain picks again now that there is a family to pick from.
-        if (!brainsChaseMikeyBug)
+        if (!brainsChaseMikeyBugEnabled)
         {
             foreach (Brain brain in Entities.Brains)
             {
@@ -142,7 +142,7 @@ public sealed class PlayField : ICollisionScene
     public bool RobotsFrozen => Player.IsInStartGracePeriod || Player.IsDying();
 
     /// <summary>The player's score.</summary>
-    public ScoreBoard Score { get; }
+    public ScoreBoard ScoreBoard { get; }
 
     /// <summary>The wall round the playfield.</summary>
     public PlayfieldWall Wall { get; }
@@ -165,7 +165,7 @@ public sealed class PlayField : ICollisionScene
             return;
         }
 
-        _gruntSpeed.Update(Entities.Grunts);
+        _gruntSpeedProgression.Update(Entities.Grunts);
 
         _materialisation.Advance(Entities.Explosions, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds));
 
@@ -175,7 +175,7 @@ public sealed class PlayField : ICollisionScene
 
         Player.Update(gameTime, this);
         // RRG23 LSPROC asks for LASSND as each laser starts (R5 $3221).
-        if (Player.LasersFiredThisUpdate)
+        if (Player.FiredLaserThisUpdate)
         {
             PlaySoundFrom(SoundTables.Laser, Player.Bounds);
         }
@@ -197,8 +197,8 @@ public sealed class PlayField : ICollisionScene
         //    `GTWCOL` -> `WALCOL`, solid fill); the placeholder WallColorCycle
         //    has no palette to read, and is only used when no live palette is
         //    wired in (unit tests).
-        Wall.Draw(spriteBatch, Sprites.WallPixel,
-            _palette is { } p ? p.Color(WavePaletteTables.GetWallSlot(Parameters.LevelNumber)) : null);
+        Wall.Draw(spriteBatch, Sprites.WallPixelSprite,
+            _palette is { } p ? p.GetColour(WavePaletteTables.GetWallSlot(Parameters.LevelNumber)) : null);
 
         // 1b. Laser-vs-wall flares (RRG23 LASDIE): painted OVER the wall, exactly as the ROM writes those pixels.
         _laserWallFlares.Draw(spriteBatch, Sprites, Parameters.LevelNumber);
@@ -221,7 +221,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="slot">The player's session slot.</param>
     public void SyncInto(PlayerSlot slot)
     {
-        slot.Score = Score.Score;
+        slot.Score = ScoreBoard.Score;
         slot.Lives = Player.Lives;
     }
 
@@ -248,8 +248,7 @@ public sealed class PlayField : ICollisionScene
     /// Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>SHLCNT</c>. The ROM stops only when the count is higher than the limit (<c>LBHI</c>), so a count equal to it still fires.
     /// With the tank shell bug switched off, the count is the shells on the field, which is what the ROM's count was meant to be.
     /// </remarks>
-    public bool CanFireShell() =>
-        (_tankShellBug ? _shellsFiredThisWave : Entities.TankShells.GetLiveCount()) <= SpawnTuning.ShellCountLimit;
+    public bool CanFireShell() => (_tankShellBugEnabled ? _shellsFiredThisWave : Entities.TankShells.GetLiveCount()) <= SpawnTuning.ShellCountLimit;
 
     /// <summary>Says whether the player is alive, and so can move, shoot and be hit.</summary>
     public bool IsPlayerAlive() => Player.IsAlive();
@@ -285,35 +284,35 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>A brain fires a cruise missile at the player.</summary>
     /// <param name="origin">Where the missile starts.</param>
-    public void SpawnCruiseMissile(IntVector2 origin) => _midWave.SpawnCruiseMissile(origin);
+    public void SpawnCruiseMissile(IntVector2 origin) => _midWaveSpawner.SpawnCruiseMissile(origin);
 
     /// <summary>A spheroid drops an enforcer.</summary>
     /// <param name="position">Where the enforcer grows.</param>
-    public void SpawnEnforcer(IntVector2 position) => _midWave.SpawnEnforcer(position);
+    public void SpawnEnforcer(IntVector2 position) => _midWaveSpawner.SpawnEnforcer(position);
 
     /// <summary>A brain's touch turns a human into a prog where they stand.</summary>
     /// <param name="position">Where the human stood.</param>
     /// <param name="kind">Which family member it was.</param>
-    public void SpawnProg(IntVector2 position, HumanKind kind) => _midWave.SpawnProg(position, kind);
+    public void SpawnProg(IntVector2 position, HumanKind kind) => _midWaveSpawner.SpawnProg(position, kind);
 
     /// <summary>An enforcer fires a spark at the player.</summary>
     /// <param name="origin">Where the spark starts.</param>
     /// <param name="playerPosition">Where the player is.</param>
-    public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition) => _midWave.SpawnSpark(origin, playerPosition);
+    public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition) => _midWaveSpawner.SpawnSpark(origin, playerPosition);
 
     /// <summary>A quark drops a tank, which is kept inside the playfield.</summary>
     /// <param name="position">Where the quark is.</param>
     /// <returns>The new tank.</returns>
-    public Tank SpawnTank(IntVector2 position) => _midWave.SpawnTank(position);
+    public Tank SpawnTank(IntVector2 position) => _midWaveSpawner.SpawnTank(position);
 
     /// <summary>Gorf drops a grunt, which falls to the ground.</summary>
     /// <param name="from">Where the grunt starts.</param>
     /// <param name="landing">Where it ends up standing.</param>
-    public void SpawnGrunt(IntVector2 from, IntVector2 landing) => _midWave.SpawnGrunt(from, landing);
+    public void SpawnGrunt(IntVector2 from, IntVector2 landing) => _midWaveSpawner.SpawnGrunt(from, landing);
 
     /// <summary>A tank fires a shell.</summary>
     /// <param name="origin">The tank's top-left corner.</param>
-    public void SpawnTankShell(IntVector2 origin) => _midWave.SpawnTankShell(origin);
+    public void SpawnTankShell(IntVector2 origin) => _midWaveSpawner.SpawnTankShell(origin);
 
     /// <summary>Everything on the field apart from the player, kind by kind.</summary>
     internal FieldEntities Entities { get; } = new();
@@ -326,7 +325,7 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>The shortest wait between moves that the grunts' speed-ups may bring a grunt to (test hook).</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>RMXSPD</c>. Disassembly: <c>$BE5D</c>.</remarks>
-    internal int GruntSpeedFloor => _gruntSpeed.Floor;
+    internal int GruntSpeedFloor => _gruntSpeedProgression.Floor;
 
     /// <summary>How many flashes of colour are showing where lasers hit the wall (test hook).</summary>
     internal int LaserWallFlareCount => _laserWallFlares.Flares.Count;
@@ -366,8 +365,8 @@ public sealed class PlayField : ICollisionScene
     /// <remarks>Disassembly: the score routine at <c>$DBF9</c>.</remarks>
     internal void AwardScore(int value)
     {
-        _gruntSpeed.NoteScore();
-        if (Score.Add(value))
+        _gruntSpeedProgression.NoteScore();
+        if (ScoreBoard.Add(value))
         {
             Player.AddLife();
             Sound.Play(SoundTables.Replay);
@@ -378,8 +377,8 @@ public sealed class PlayField : ICollisionScene
     /// <param name="rescues">How many humans have now been rescued this life.</param>
     internal void AwardRescueBonus(int rescues)
     {
-        _gruntSpeed.NoteScore();
-        if (Score.Add(ScoreValues.RescueBonus(rescues)))
+        _gruntSpeedProgression.NoteScore();
+        if (ScoreBoard.Add(ScoreValues.RescueBonus(rescues)))
         {
             Player.AddLife();
         }
@@ -450,7 +449,7 @@ public sealed class PlayField : ICollisionScene
         _laserWallFlares.Spawn(laserBounds, direction, Wall);
 
     /// <summary>Speeds up every grunt that is still alive, as each grunt's death does (notes §67).</summary>
-    internal void SpeedUpGrunts() => _gruntSpeed.SpeedUp(Entities.Grunts);
+    internal void SpeedUpGrunts() => _gruntSpeedProgression.SpeedUp(Entities.Grunts);
 
     /// <summary>Moves one entity on by a tick, unless it is still appearing. The arcade keeps the robots still until the whole appear sequence is done (notes §62).</summary>
     /// <param name="entity">The entity to move on.</param>

@@ -57,7 +57,7 @@ public sealed class SpawnPlacement
     {
         for (int attempt = 0; attempt < SpawnTuning.SpawnPlacementMaxAttempts; attempt++)
         {
-            IntVector2 candidate = candidateSource?.Invoke() ?? RandomPointInside(size);
+            IntVector2 candidate = candidateSource?.Invoke() ?? PickRandomPointInside(size);
             if (isAcceptable(new Rectangle(candidate.X, candidate.Y, size, size)))
             {
                 return candidate;
@@ -77,7 +77,7 @@ public sealed class SpawnPlacement
         }
 
         // Nothing fits (a degenerate field): a predicate failure here must still return SOMETHING.
-        return RandomPointInside(size);
+        return PickRandomPointInside(size);
     }
 
     /// <summary>Finds a random spot that is far enough from a point, such as where the player starts.</summary>
@@ -97,7 +97,7 @@ public sealed class SpawnPlacement
     /// <param name="isAcceptable">Says whether a spot's box is acceptable.</param>
     /// <remarks>The share of spots tried near a wall is <see cref="SpheroidTuning.NearWallBiasPercent"/>, and how near is <see cref="SpheroidTuning.NearWallBiasDistance"/>. The rest are anywhere.</remarks>
     public IntVector2 FindSpheroidSpawnPoint(Func<Rectangle, bool> isAcceptable) =>
-        FindSpawnPoint(isAcceptable, EntitySize, () => RandomSpheroidCandidate());
+        FindSpawnPoint(isAcceptable, EntitySize, () => PickRandomSpheroidCandidate());
 
     /// <summary>Says whether a candidate box's top-left corner is more than the given distance from a point.</summary>
     /// <param name="box">The candidate's box, in port pixels.</param>
@@ -108,16 +108,16 @@ public sealed class SpawnPlacement
 
     /// <summary>Picks a random spot where a square of the given size fits inside the play area.</summary>
     /// <param name="size">The side of the square, in port pixels.</param>
-    private IntVector2 RandomPointInside(int size) => new(
+    private IntVector2 PickRandomPointInside(int size) => new(
         _random.Next(_playfieldBounds.X, _playfieldBounds.Right - size),
         _random.Next(_playfieldBounds.Y, _playfieldBounds.Bottom - size));
 
     /// <summary>Picks a spot to try for a spheroid. Usually it is near a wall.</summary>
-    private IntVector2 RandomSpheroidCandidate()
+    private IntVector2 PickRandomSpheroidCandidate()
     {
         if (_random.Next(PercentSides) >= SpheroidTuning.NearWallBiasPercent)
         {
-            return RandomPointInside(EntitySize);
+            return PickRandomPointInside(EntitySize);
         }
 
         int bias = ScreenSize.ToPortPixels(SpheroidTuning.NearWallBiasDistance);

@@ -46,25 +46,25 @@ public sealed class RobotTransporter
     /// <returns>The number of the image each robot shares. A new image starts when the animation frame changes, and after sixteen robots.</returns>
     public static int[] AssignImages(IReadOnlyList<object> animationFrames)
     {
-        int[] images = new int[animationFrames.Count];
-        int image = -1;
-        int sharing = 0;
+        int[] imageNumbers = new int[animationFrames.Count];
+        int imageNumber = -1;
+        int robotsSharingImage = 0;
         object? previous = null;
         for (int index = 0; index < animationFrames.Count; index++)
         {
-            bool shares = image >= 0 && ReferenceEquals(animationFrames[index], previous) && sharing < RobotsPerImage;
-            if (!shares)
+            bool sharesImage = imageNumber >= 0 && ReferenceEquals(animationFrames[index], previous) && robotsSharingImage < RobotsPerImage;
+            if (!sharesImage)
             {
-                image++;
-                sharing = 0;
+                imageNumber++;
+                robotsSharingImage = 0;
             }
 
-            sharing++;
+            robotsSharingImage++;
             previous = animationFrames[index];
-            images[index] = image;
+            imageNumbers[index] = imageNumber;
         }
 
-        return images;
+        return imageNumbers;
     }
 
     /// <summary>Starts beaming a set of robots in.</summary>
@@ -79,16 +79,16 @@ public sealed class RobotTransporter
                 .Where(pair => pair.Frame is not null),
         ];
         Texture2D[] frames = [.. shown.Select(pair => pair.Frame)];
-        int[] numbers = AssignImages(frames);
+        int[] imageNumbers = AssignImages(frames);
 
         for (int index = 0; index < shown.Length; index++)
         {
-            if (numbers[index] == _images.Count)
+            if (imageNumbers[index] == _images.Count)
             {
                 _images.Add(CreateImage(frames[index]));
             }
 
-            _robots.Add((shown[index].Robot, _images[numbers[index]]));
+            _robots.Add((shown[index].Robot, _images[imageNumbers[index]]));
         }
     }
 
@@ -142,7 +142,7 @@ public sealed class RobotTransporter
                 Color colour = pixel == TransportImage.PixelOwnColour
                     ? image.Template[(y * image.Width) + x]
                     : sprites.Blitter.GetSlotColour(pixel);
-                spriteBatch.Draw(sprites.WallPixel, new Rectangle(topLeft.X + (x * pixelSize), topLeft.Y + (y * pixelSize), pixelSize, pixelSize), colour);
+                spriteBatch.Draw(sprites.WallPixelSprite, new Rectangle(topLeft.X + (x * pixelSize), topLeft.Y + (y * pixelSize), pixelSize, pixelSize), colour);
             }
         }
     }
