@@ -23,19 +23,19 @@ public sealed class ArcadeText
     private readonly BlitterDraw _blitter;
     private readonly Texture2D[] _fontLarge;
     private readonly Texture2D[] _fontSmall;
-    private readonly Texture2D _miniMan;
+    private readonly Texture2D _miniManSprite;
 
     /// <summary>Prints with these fonts through this blitter.</summary>
     /// <param name="blitter">The blitter that draws each glyph.</param>
     /// <param name="fontLarge">The large font's glyphs.</param>
     /// <param name="fontSmall">The small font's glyphs.</param>
-    /// <param name="miniMan">The lives icon.</param>
-    public ArcadeText(BlitterDraw blitter, Texture2D[] fontLarge, Texture2D[] fontSmall, Texture2D miniMan)
+    /// <param name="miniManSprite">The lives icon.</param>
+    public ArcadeText(BlitterDraw blitter, Texture2D[] fontLarge, Texture2D[] fontSmall, Texture2D miniManSprite)
     {
         _blitter = blitter;
         _fontLarge = fontLarge;
         _fontSmall = fontSmall;
-        _miniMan = miniMan;
+        _miniManSprite = miniManSprite;
     }
 
     /// <summary>
@@ -104,8 +104,8 @@ public sealed class ArcadeText
     {
         _blitter.UsePassThrough();
         spriteBatch.Draw(
-            _miniMan,
-            new Rectangle(x, y, ScreenSize.ToPortPixels(_miniMan.Width), ScreenSize.ToPortPixels(_miniMan.Height)),
+            _miniManSprite,
+            new Rectangle(x, y, ScreenSize.ToPortPixels(_miniManSprite.Width), ScreenSize.ToPortPixels(_miniManSprite.Height)),
             Color.White);
     }
 
@@ -171,7 +171,7 @@ public sealed class ArcadeText
     /// </summary>
     public int DrawTableNumber(SpriteBatch spriteBatch, Texture2D[] glyphs, int value, int x, int y, int slot)
     {
-        foreach (ScoreDigit digit in ScoreFormatter.Digits(value))
+        foreach (ScoreDigit digit in ScoreFormatter.GetDigits(value))
         {
             if (digit.Suppressed)
             {

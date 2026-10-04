@@ -24,48 +24,48 @@ public sealed class WordmarkAppear
     private const int RomFramesAfterLastLetter = 0x20;
 
     private readonly StripEffect[] _effects;
-    private readonly Rectangle _origin;
+    private readonly Rectangle _bounds;
     private readonly IReadOnlyList<LetterSpan> _letters;
-    private readonly Texture2D _core;
-    private readonly int _pictureHeight;
-    private readonly Texture2D _rim;
+    private readonly Texture2D _coreSprite;
+    private readonly int _spriteHeight;
+    private readonly Texture2D _rimSprite;
     private int _clockUnits;
 
     /// <summary>Makes the appear for a word whose letters have been found.</summary>
-    /// <param name="rim">The white mask of the letters' outline.</param>
-    /// <param name="core">The white mask of the letters' body, the same size as the outline.</param>
-    /// <param name="pictureSize">The size of each mask, in its own pixels.</param>
+    /// <param name="rimSprite">The white mask of the letters' outline.</param>
+    /// <param name="coreSprite">The white mask of the letters' body, the same size as the outline.</param>
+    /// <param name="spriteSize">The size of each mask, in its own pixels.</param>
     /// <param name="letters">Where each letter sits across the masks.</param>
     /// <param name="origin">Where the whole picture is drawn, in port pixels.</param>
-    public WordmarkAppear(Texture2D rim, Texture2D core, Point pictureSize, IReadOnlyList<LetterSpan> letters, Point origin)
+    public WordmarkAppear(Texture2D rimSprite, Texture2D coreSprite, Point spriteSize, IReadOnlyList<LetterSpan> letters, Point origin)
     {
-        _rim = rim;
-        _core = core;
+        _rimSprite = rimSprite;
+        _coreSprite = coreSprite;
         _letters = letters;
-        _pictureHeight = pictureSize.Y;
-        _origin = new Rectangle(origin.X, origin.Y, pictureSize.X * ScreenSize.SpecScale, pictureSize.Y * ScreenSize.SpecScale);
-        StripClip everywhere = StripClip.CreateFromPortPixels(new Rectangle(0, 0, ScreenSize.Width, ScreenSize.Height));
-        _effects = [.. letters.Select(letter => StripEffect.CreateAppear(rim, GetLetterBounds(letter), StripFanAxis.Rows, everywhere))];
+        _spriteHeight = spriteSize.Y;
+        _bounds = new Rectangle(origin.X, origin.Y, spriteSize.X * ScreenSize.SpecScale, spriteSize.Y * ScreenSize.SpecScale);
+        StripClip wholeScreenClip = StripClip.CreateFromPortPixels(new Rectangle(0, 0, ScreenSize.Width, ScreenSize.Height));
+        _effects = [.. letters.Select(letter => StripEffect.CreateAppear(rimSprite, GetLetterBounds(letter), StripFanAxis.Rows, wholeScreenClip))];
     }
 
     /// <summary>Says whether every letter has finished coming in and been left to settle, so the next thing can go up.</summary>
     public bool IsFinished => _letters.Count == 0 || GetRomFrames() >= GetStartFrame(_letters.Count - 1) + RomFramesAfterLastLetter;
 
     /// <summary>Makes the appear for a word drawn as two white masks, finding its letters from the outline mask.</summary>
-    /// <param name="rim">The white mask of the letters' outline.</param>
-    /// <param name="core">The white mask of the letters' body, the same size as the outline.</param>
+    /// <param name="rimSprite">The white mask of the letters' outline.</param>
+    /// <param name="coreSprite">The white mask of the letters' body, the same size as the outline.</param>
     /// <param name="origin">Where the whole picture is drawn, in port pixels.</param>
-    public static WordmarkAppear CreateFromMasks(Texture2D rim, Texture2D core, Point origin)
+    public static WordmarkAppear CreateFromMasks(Texture2D rimSprite, Texture2D coreSprite, Point origin)
     {
-        var pixels = new Color[rim.Width * rim.Height];
-        rim.GetData(pixels);
-        bool[] columns = new bool[rim.Width];
+        var pixels = new Color[rimSprite.Width * rimSprite.Height];
+        rimSprite.GetData(pixels);
+        bool[] columnHasPixel = new bool[rimSprite.Width];
         for (int index = 0; index < pixels.Length; index++)
         {
-            columns[index % rim.Width] |= pixels[index].A > 0;
+            columnHasPixel[index % rimSprite.Width] |= pixels[index].A > 0;
         }
 
-        return new WordmarkAppear(rim, core, new Point(rim.Width, rim.Height), FindLetters(columns), origin);
+        return new WordmarkAppear(rimSprite, coreSprite, new Point(rimSprite.Width, rimSprite.Height), FindLetters(columnHasPixel), origin);
     }
 
     /// <summary>How many letters have started to appear (test hook).</summary>
@@ -80,12 +80,12 @@ public sealed class WordmarkAppear
         int start = -1;
         for (int column = 0; column <= columnHasPixel.Count; column++)
         {
-            bool filled = column < columnHasPixel.Count && columnHasPixel[column];
-            if (filled && start < 0)
+            bool isFilled = column < columnHasPixel.Count && columnHasPixel[column];
+            if (isFilled && start < 0)
             {
                 start = column;
             }
-            else if (!filled && start >= 0)
+            else if (!isFilled && start >= 0)
             {
                 letters.Add(new LetterSpan(start, column - start));
                 start = -1;
@@ -140,20 +140,20 @@ public sealed class WordmarkAppear
     private int GetRomFrames() => _clockUnits / ArcadeClock.UnitsPerRomFrame;
 
     private Rectangle GetLetterBounds(LetterSpan letter) =>
-        new(_origin.X + (letter.Start * ScreenSize.SpecScale), _origin.Y, letter.Width * ScreenSize.SpecScale, _origin.Height);
+        new(_bounds.X + (letter.Start * ScreenSize.SpecScale), _bounds.Y, letter.Width * ScreenSize.SpecScale, _bounds.Height);
 
     private void DrawWhole(SpriteBatch spriteBatch, BlitterDraw blitter, LetterSpan letter, int rimSlot, int coreSlot)
     {
-        Rectangle source = new(letter.Start, 0, letter.Width, _pictureHeight);
+        Rectangle source = new(letter.Start, 0, letter.Width, _spriteHeight);
         Rectangle destination = GetLetterBounds(letter);
-        blitter.DrawSpriteSolidPiece(spriteBatch, _rim, source, destination, blitter.GetSlotColour(rimSlot));
-        blitter.DrawSpriteSolidPiece(spriteBatch, _core, source, destination, blitter.GetSlotColour(coreSlot));
+        blitter.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitter.GetSlotColour(rimSlot));
+        blitter.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination, blitter.GetSlotColour(coreSlot));
     }
 
     private void DrawStrips(SpriteBatch spriteBatch, BlitterDraw blitter, int index, int rimSlot, int coreSlot)
     {
         LetterSpan letter = _letters[index];
-        foreach (Strip strip in _effects[index].Layout(letter.Width, _pictureHeight))
+        foreach (Strip strip in _effects[index].LayOutStrips(letter.Width, _spriteHeight))
         {
             Rectangle source = new(letter.Start, strip.SourceIndex, letter.Width, 1);
             Rectangle destination = new(
@@ -161,8 +161,8 @@ public sealed class WordmarkAppear
                 strip.Y * ScreenSize.SpecScale,
                 letter.Width * ScreenSize.SpecScale,
                 ScreenSize.SpecScale);
-            blitter.DrawSpriteSolidPiece(spriteBatch, _rim, source, destination, blitter.GetSlotColour(rimSlot));
-            blitter.DrawSpriteSolidPiece(spriteBatch, _core, source, destination, blitter.GetSlotColour(coreSlot));
+            blitter.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitter.GetSlotColour(rimSlot));
+            blitter.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination, blitter.GetSlotColour(coreSlot));
         }
     }
 }

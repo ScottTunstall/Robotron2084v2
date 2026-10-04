@@ -33,13 +33,13 @@ public sealed class WilliamsLogoBorder
     /// <summary>ROM <c>$87E9</c>: the first phase draws a W every this many ROM frames. One less than this is the value <see cref="_sleepRomFrames"/> is set to after each draw, and it then counts down.</summary>
     private const int DrawIntervalRomFrames = 4;
 
-    /// <summary>ROM <c>$8960</c>: a slot's W is at this column until it has drawn one (nothing is there)... It is stored in <see cref="_slots"/>, with <see cref="EmptySlotRow"/>, to mark a slot that has no logo in it.</summary>
+    /// <summary>ROM <c>$8960</c>: a slot's W is at this column until it has drawn one (nothing is there)... It is stored in <see cref="_logoPositions"/>, with <see cref="EmptySlotRow"/>, to mark a slot that has no logo in it.</summary>
     private const int EmptySlotColumn = 0x13;
 
-    /// <summary>ROM <c>$8960</c>: ...and at this row. It is stored in <see cref="_slots"/>, with <see cref="EmptySlotColumn"/>, to mark a slot that has no logo in it.</summary>
+    /// <summary>ROM <c>$8960</c>: ...and at this row. It is stored in <see cref="_logoPositions"/>, with <see cref="EmptySlotColumn"/>, to mark a slot that has no logo in it.</summary>
     private const int EmptySlotRow = 0xAF;
 
-    /// <summary>ROM <c>$87D9</c>: the W's on the screen, and so the slots of the second phase. It is the size of <see cref="_slots"/>.</summary>
+    /// <summary>ROM <c>$87D9</c>: the W's on the screen, and so the slots of the second phase. It is the size of <see cref="_logoPositions"/>.</summary>
     private const int LogoCount = 28;
 
     /// <summary>ROM <c>$88DB</c>: the second phase moves this many W's each ROM frame.</summary>
@@ -48,24 +48,24 @@ public sealed class WilliamsLogoBorder
     /// <summary>ROM <c>$88D6</c>: the second phase runs for this many ROM frames (704). It is the value <see cref="_movingFramesRemaining"/> is set to when the logos start to move, and it then counts down.</summary>
     private const int MovingRomFrames = 0x02C0;
 
-    private readonly SpriteMask _logo;
+    private readonly SpriteMask _logoMask;
     private readonly WilliamsLogoPath _path = new();
     private readonly byte[] _pixels = new byte[Width * Height];
-    private readonly (int Column, int Row)[] _slots = new (int, int)[LogoCount];
+    private readonly (int Column, int Row)[] _logoPositions = new (int, int)[LogoCount];
     private int _clockUnits;
-    private int _drawn;
-    private bool _firstMove;
-    private bool _moving;
+    private int _drawnLogoCount;
+    private bool _isFirstMove;
+    private bool _isMoving;
     private int _movingFramesRemaining;
     private int _sleepRomFrames;
-    private int _slot;
+    private int _logoIndex;
 
     /// <summary>Starts the ring from nothing.</summary>
     /// <param name="logo">The W's shape: the mask of <c>WilliamsLogo.png</c>, its opaque pixels the colour-1 pixels.</param>
-    public WilliamsLogoBorder(SpriteMask logo) => _logo = logo;
+    public WilliamsLogoBorder(SpriteMask logoMask) => _logoMask = logoMask;
 
     /// <summary>True once the second phase has run its course; the ROM then goes on to the next page.</summary>
-    public bool IsFinished => _moving && _movingFramesRemaining <= 0;
+    public bool IsFinished => _isMoving && _movingFramesRemaining <= 0;
 
     /// <summary>Which palette slot each arcade pixel of the screen holds; 0 is empty.</summary>
     public IReadOnlyList<byte> Pixels => _pixels;
@@ -83,20 +83,20 @@ public sealed class WilliamsLogoBorder
             while (x < Width)
             {
                 byte slot = _pixels[(y * Width) + x];
-                int end = x + 1;
-                while (end < Width && _pixels[(y * Width) + end] == slot)
+                int runEnd = x + 1;
+                while (runEnd < Width && _pixels[(y * Width) + runEnd] == slot)
                 {
-                    end++;
+                    runEnd++;
                 }
 
                 if (slot != 0)
                 {
                     int left = HudLayout.ToPortX(x);
-                    Rectangle run = new(left, top, HudLayout.ToPortX(end) - left, bottom - top);
-                    blitter.DrawSolidRectangle(spriteBatch, run, blitter.GetSlotColour(slot));
+                    Rectangle runBounds = new(left, top, HudLayout.ToPortX(runEnd) - left, bottom - top);
+                    blitter.DrawSolidRectangle(spriteBatch, runBounds, blitter.GetSlotColour(slot));
                 }
 
-                x = end;
+                x = runEnd;
             }
         }
     }
@@ -120,7 +120,7 @@ public sealed class WilliamsLogoBorder
             return;
         }
 
-        if (!_moving)
+        if (!_isMoving)
         {
             DrawNextOfTheRing();
         }
@@ -134,13 +134,13 @@ public sealed class WilliamsLogoBorder
     private void Blit(int column, int row, int slot)
     {
         int left = column * ScreenSize.ArcadePixelsPerColumn;
-        for (int y = 0; y < _logo.Height; y++)
+        for (int y = 0; y < _logoMask.Height; y++)
         {
-            for (int x = 0; x < _logo.Width; x++)
+            for (int x = 0; x < _logoMask.Width; x++)
             {
                 int screenX = left + x;
                 int screenY = row + y;
-                if (_logo.IsOpaque(x, y) && screenX < Width && screenY < Height)
+                if (_logoMask.IsOpaque(x, y) && screenX < Width && screenY < Height)
                 {
                     _pixels[(screenY * Width) + screenX] = (byte)slot;
                 }
@@ -151,7 +151,7 @@ public sealed class WilliamsLogoBorder
     /// <summary>ROM <c>$87DF</c>: draw a W, step the path, sleep; after the 28th the ring starts moving.</summary>
     private void DrawNextOfTheRing()
     {
-        if (_drawn == LogoCount)
+        if (_drawnLogoCount == LogoCount)
         {
             StartMoving();
             return;
@@ -159,7 +159,7 @@ public sealed class WilliamsLogoBorder
 
         Blit(_path.Column, _path.Row, _path.Slot);
         _path.Step();
-        _drawn++;
+        _drawnLogoCount++;
         _sleepRomFrames = DrawIntervalRomFrames - 1;
     }
 
@@ -168,20 +168,20 @@ public sealed class WilliamsLogoBorder
     {
         for (int move = 0; move < MovesPerRomFrame; move++)
         {
-            if (_firstMove)
+            if (_isFirstMove)
             {
-                _firstMove = false;
+                _isFirstMove = false;
             }
             else
             {
                 _path.Step();
-                _slot = (_slot + 1) % LogoCount;
+                _logoIndex = (_logoIndex + 1) % LogoCount;
             }
 
-            (int column, int row) = _slots[_slot];
+            (int column, int row) = _logoPositions[_logoIndex];
             Blit(column, row, 0);
             Blit(_path.Column, _path.Row, _path.Slot);
-            _slots[_slot] = (_path.Column, _path.Row);
+            _logoPositions[_logoIndex] = (_path.Column, _path.Row);
         }
 
         _movingFramesRemaining--;
@@ -191,10 +191,10 @@ public sealed class WilliamsLogoBorder
     private void StartMoving()
     {
         _path.Reset();
-        Array.Fill(_slots, (EmptySlotColumn, EmptySlotRow));
-        _slot = 0;
-        _moving = true;
-        _firstMove = true;
+        Array.Fill(_logoPositions, (EmptySlotColumn, EmptySlotRow));
+        _logoIndex = 0;
+        _isMoving = true;
+        _isFirstMove = true;
         _movingFramesRemaining = MovingRomFrames;
         MoveSomeLogos();
     }

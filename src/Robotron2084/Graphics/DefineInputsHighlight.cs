@@ -30,7 +30,7 @@ public sealed class DefineInputsHighlight
     /// <summary>
     /// The presentation page chases through SEVEN entries (notes §106), so the text drawn in one
     /// of them is white for one step in seven — the duty cycle this slot copies.
-    ///  <see cref="_step"/> counts up to this and then goes back to the first step.</summary>
+    ///  <see cref="_stepIndex"/> counts up to this and then goes back to the first step.</summary>
     private const int StepsPerLap = 7;
 
     /// <summary>The chase's WHITE — the presentation page's own flash colour (ROM $8A64).</summary>
@@ -38,10 +38,10 @@ public sealed class DefineInputsHighlight
 
     /// <summary>The page's GREEN — the palette's own CRTAB value for slot 6, the label's colour
     /// between flashes.</summary>
-    private static readonly byte Green = GamePalette.DefaultSlots[6];
+    private static readonly byte Green = GamePalette.DefaultSlotValues[6];
 
     private int _chaseClockUnits;
-    private int _step;
+    private int _stepIndex;
 
     /// <summary>
     /// Puts the slot on the page's GREEN with no white on it — the presentation page does the
@@ -49,7 +49,7 @@ public sealed class DefineInputsHighlight
     /// </summary>
     public void Start(GamePalette palette)
     {
-        _step = 0;
+        _stepIndex = 0;
         _chaseClockUnits = 0;
         palette.SetSlot(Slot, Green);
     }
@@ -58,14 +58,14 @@ public sealed class DefineInputsHighlight
     public void Update(GamePalette palette)
     {
         _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
-        int period = ArcadeClock.ToClockUnits(RomFramesPerStep);
-        if (_chaseClockUnits < period)
+        int stepClockUnits = ArcadeClock.ToClockUnits(RomFramesPerStep);
+        if (_chaseClockUnits < stepClockUnits)
         {
             return;
         }
 
-        _chaseClockUnits -= period;
-        _step = (_step + 1) % StepsPerLap;
-        palette.SetSlot(Slot, _step == 0 ? White : Green);
+        _chaseClockUnits -= stepClockUnits;
+        _stepIndex = (_stepIndex + 1) % StepsPerLap;
+        palette.SetSlot(Slot, _stepIndex == 0 ? White : Green);
     }
 }

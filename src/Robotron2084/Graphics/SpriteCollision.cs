@@ -13,7 +13,7 @@ public sealed class SpriteCollision : IPixelCollision
     private readonly Dictionary<Texture2D, SpriteMask> _masks = [];
 
     /// <inheritdoc/>
-    public bool Overlaps(SpriteShape a, SpriteShape b) => SpriteMask.Overlap(a.Mask, a.DrawnBounds, b.Mask, b.DrawnBounds);
+    public bool Overlaps(SpriteShape a, SpriteShape b) => SpriteMask.Overlaps(a.Mask, a.DrawnBounds, b.Mask, b.DrawnBounds);
 
     /// <inheritdoc/>
     public SpriteShape? GetShape(IEntity entity)

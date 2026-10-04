@@ -74,28 +74,28 @@ public sealed class SpriteSet
     /// all in a headless test.</param>
     public SpriteSet(ISpriteSource source)
     {
-        PlayerAnimationFrames = source.LoadAll(NumberedNames("Sprites/Player", PlayerAnimationFrameCount));
-        GruntAnimationFrames = source.LoadAll(NumberedNames("Sprites/Grunt", GruntAnimationFrameCount));
-        GorfAnimationFrames = source.LoadAll(NumberedNames("Sprites/Gorf", 2));
-        BerzerkRobotIdleFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_Idle", 6));
-        BerzerkRobotWalkRightFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_WalkRight", 2));
-        BerzerkRobotWalkLeftFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_WalkLeft", 2));
-        BerzerkRobotWalkUpFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_WalkUp", 3));
-        BerzerkRobotWalkDownFrames = source.LoadAll(NumberedNames("Sprites/BerzerkRobot_WalkDown", 3));
-        HulkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Hulk", HulkAnimationFrameCount));
-        SpheroidAnimationFrames = source.LoadAll(NumberedNames("Sprites/Spheroid", SpheroidAnimationFrameCount));
-        EnforcerAnimationFrames = source.LoadAll(NumberedNames("Sprites/Enforcer", EnforcerAnimationFrameCount));
-        Enforcer = EnforcerAnimationFrames[0];
-        QuarkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Quark", QuarkAnimationFrameCount));
-        TankAnimationFrames = source.LoadAll(NumberedNames("Sprites/Tank", TankAnimationFrameCount));
+        PlayerAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Player", PlayerAnimationFrameCount));
+        GruntAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Grunt", GruntAnimationFrameCount));
+        GorfAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Gorf", 2));
+        BerzerkRobotIdleFrames = source.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_Idle", 6));
+        BerzerkRobotWalkRightFrames = source.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkRight", 2));
+        BerzerkRobotWalkLeftFrames = source.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkLeft", 2));
+        BerzerkRobotWalkUpFrames = source.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkUp", 3));
+        BerzerkRobotWalkDownFrames = source.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkDown", 3));
+        HulkAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Hulk", HulkAnimationFrameCount));
+        SpheroidAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Spheroid", SpheroidAnimationFrameCount));
+        EnforcerAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Enforcer", EnforcerAnimationFrameCount));
+        EnforcerSprite = EnforcerAnimationFrames[0];
+        QuarkAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Quark", QuarkAnimationFrameCount));
+        TankAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Tank", TankAnimationFrameCount));
 
         // ROM MTNKP1..4 (notes §53): the four birth animation frames. Each is a
         // different size, so the drawer reads each texture's own dimensions
         // rather than the tank's collision box.
-        TankGrowAnimationFrames = source.LoadAll(NumberedNames("Sprites/TankGrow", TankTuning.GrowSteps));
-        ElectrodeAnimationFrames = source.LoadAll(NumberedNames("Sprites/Electrode", ElectrodeAnimationFrameCount));
-        SparkAnimationFrames = source.LoadAll(NumberedNames("Sprites/Spark", SparkAnimationFrameCount));
-        Skull = source.Load("Sprites/Skull");
+        TankGrowAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/TankGrow", TankTuning.GrowSteps));
+        ElectrodeAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Electrode", ElectrodeAnimationFrameCount));
+        SparkAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Spark", SparkAnimationFrameCount));
+        SkullSprite = source.Load("Sprites/Skull");
         RescueScoreDisplays = source.LoadAll(
         [
             "Sprites/Score_1000",
@@ -104,22 +104,22 @@ public sealed class SpriteSet
             "Sprites/Score_4000",
             "Sprites/Score_5000",
         ]);
-        MikeyAnimationFrames = source.LoadAll(NumberedNames("Sprites/Mikey", WalkCycleAnimationFrameCount));
-        MommyAnimationFrames = source.LoadAll(NumberedNames("Sprites/Mommy", WalkCycleAnimationFrameCount));
-        DaddyAnimationFrames = source.LoadAll(NumberedNames("Sprites/Daddy", WalkCycleAnimationFrameCount));
-        BrainAnimationFrames = source.LoadAll(NumberedNames("Sprites/Brain", WalkCycleAnimationFrameCount));
-        ProgBurst = source.Load("Sprites/ProgBurst");
-        TitleWordmarkCore = source.Load("Sprites/Title_Wordmark_Core");
-        TitleWordmarkRim = source.Load("Sprites/Title_Wordmark_Rim");
-        Title2084 = source.Load("Sprites/Title_2084");
-        WilliamsLogo = source.Load("Sprites/WilliamsLogo");
+        MikeyAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Mikey", WalkCycleAnimationFrameCount));
+        MommyAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Mommy", WalkCycleAnimationFrameCount));
+        DaddyAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Daddy", WalkCycleAnimationFrameCount));
+        BrainAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Brain", WalkCycleAnimationFrameCount));
+        ProgBurstSprite = source.Load("Sprites/ProgBurst");
+        TitleWordmarkCoreSprite = source.Load("Sprites/Title_Wordmark_Core");
+        TitleWordmarkRimSprite = source.Load("Sprites/Title_Wordmark_Rim");
+        Title2084Sprite = source.Load("Sprites/Title_2084");
+        WilliamsLogoSprite = source.Load("Sprites/WilliamsLogo");
 
-        LaserBar = source.Create(6, 1, SpriteFactory.BuildLaserBarPattern(Color.White));
-        LaserColumn = source.Create(2, 6, SpriteFactory.BuildLaserColumnPattern(Color.White));
-        LaserDiagonalMain = source.Create(6, 6, SpriteFactory.BuildLaserDiagonalMainPattern(Color.White));
-        LaserDiagonalAnti = source.Create(6, 6, SpriteFactory.BuildLaserDiagonalAntiPattern(Color.White));
-        TankShell = source.Load("Sprites/TankShell");
-        AttractCruise = source.Load("Sprites/AttractCruise");
+        LaserBarSprite = source.Create(6, 1, SpriteFactory.BuildLaserBarPattern(Color.White));
+        LaserColumnSprite = source.Create(2, 6, SpriteFactory.BuildLaserColumnPattern(Color.White));
+        LaserDiagonalMainSprite = source.Create(6, 6, SpriteFactory.BuildLaserDiagonalMainPattern(Color.White));
+        LaserDiagonalAntiSprite = source.Create(6, 6, SpriteFactory.BuildLaserDiagonalAntiPattern(Color.White));
+        TankShellSprite = source.Load("Sprites/TankShell");
+        AttractCruiseSprite = source.Load("Sprites/AttractCruise");
         AttractElectrodeAnimationFrames = source.LoadAll(
         [
             "Sprites/AttractElectrode_1",
@@ -127,13 +127,13 @@ public sealed class SpriteSet
             "Sprites/AttractElectrode_3",
             "Sprites/AttractElectrode_4",
         ]);
-        WallPixel = source.CreateSolid(1, 1, Color.White);
-        MiniMan = BuildMiniMan(source);
-        FontLarge = source.LoadAll(GlyphNames("Sprites/Font_L", GlyphSuffixes.Length));
-        FontSmall = source.LoadAll(GlyphNames("Sprites/Font_S", SmallFontGlyphCount));
-        CursorArrow = source.Load("Sprites/Font_S_cursorright");
-        Blitter = new BlitterDraw(WallPixel);
-        Text = new ArcadeText(Blitter, FontLarge, FontSmall, MiniMan);
+        WallPixelSprite = source.CreateSolid(1, 1, Color.White);
+        MiniManSprite = BuildMiniMan(source);
+        FontLarge = source.LoadAll(GetGlyphNames("Sprites/Font_L", GlyphSuffixes.Length));
+        FontSmall = source.LoadAll(GetGlyphNames("Sprites/Font_S", SmallFontGlyphCount));
+        CursorArrowSprite = source.Load("Sprites/Font_S_cursorright");
+        Blitter = new BlitterDraw(WallPixelSprite);
+        TextRenderer = new ArcadeText(Blitter, FontLarge, FontSmall, MiniManSprite);
     }
 
     /// <summary>
@@ -141,7 +141,7 @@ public sealed class SpriteSet
     /// the movie's own CRUSM descriptor points at; notes §95.6). The playfield's
     /// cruise missile draws itself as solid marks, not a sprite (see <see cref="Robotron2084.Entities.CruiseMissile"/>).
     /// </summary>
-    public Texture2D AttractCruise { get; }
+    public Texture2D AttractCruiseSprite { get; }
 
     /// <summary>The blitter operations that draw these sprites.</summary>
     public BlitterDraw Blitter { get; }
@@ -165,13 +165,13 @@ public sealed class SpriteSet
     /// loads on its own (see <c>Content/Sprites/Font_S_cursorright.png</c>, guarded
     /// against the ROM by <c>tools/verify-fonts.py</c>).
     /// </summary>
-    public Texture2D CursorArrow { get; }
+    public Texture2D CursorArrowSprite { get; }
 
     public Texture2D[] DaddyAnimationFrames { get; }
 
     public Texture2D[] ElectrodeAnimationFrames { get; }
 
-    public Texture2D Enforcer { get; }
+    public Texture2D EnforcerSprite { get; }
 
     public Texture2D[] EnforcerAnimationFrames { get; }
 
@@ -218,13 +218,13 @@ public sealed class SpriteSet
     /// L/R = bar, U/D = column (left pixel lit), UL/DR = main diagonal,
     /// DL/UR = anti-diagonal.
     /// </summary>
-    public Texture2D LaserBar { get; }
+    public Texture2D LaserBarSprite { get; }
 
-    public Texture2D LaserColumn { get; }
+    public Texture2D LaserColumnSprite { get; }
 
-    public Texture2D LaserDiagonalAnti { get; }
+    public Texture2D LaserDiagonalAntiSprite { get; }
 
-    public Texture2D LaserDiagonalMain { get; }
+    public Texture2D LaserDiagonalMainSprite { get; }
 
     /// <summary>
     /// The human family — 12 frames each (4 directions × 3 walk
@@ -240,7 +240,7 @@ public sealed class SpriteSet
     /// player sprite. Built at runtime from the ROM nibbles; its slot-11 body
     /// pixels carry the slot-11 cycling marker.
     /// </summary>
-    public Texture2D MiniMan { get; }
+    public Texture2D MiniManSprite { get; }
 
     public Texture2D[] MommyAnimationFrames { get; }
 
@@ -254,7 +254,7 @@ public sealed class SpriteSet
     /// </summary>
     public Texture2D[] AttractElectrodeAnimationFrames { get; }
 
-    public Texture2D ProgBurst { get; }
+    public Texture2D ProgBurstSprite { get; }
     public Texture2D[] QuarkAnimationFrames { get; }
 
     /// <summary>
@@ -265,7 +265,7 @@ public sealed class SpriteSet
     public Texture2D[] RescueScoreDisplays { get; }
 
     /// <summary>Skull &amp; crossbones family-death marker (ROM: familydeath).</summary>
-    public Texture2D Skull { get; }
+    public Texture2D SkullSprite { get; }
 
     public Texture2D[] SparkAnimationFrames { get; }
     public Texture2D[] SpheroidAnimationFrames { get; }
@@ -280,17 +280,17 @@ public sealed class SpriteSet
     public Texture2D[] TankGrowAnimationFrames { get; }
 
     /// <summary>ROM tank shell (raw data $4FF2, 7×16 = 14×16 px; notes §11.5).</summary>
-    public Texture2D TankShell { get; }
+    public Texture2D TankShellSprite { get; }
 
     /// <summary>The arcade's text, printed in these sprites' fonts.</summary>
-    public ArcadeText Text { get; }
+    public ArcadeText TextRenderer { get; }
 
     /// <summary>
     /// The "2084" mark beneath the wordmark — COLOUR sprite, traced the same way and snapped to the
     /// arcade's own palette (notes §103.4). Unlike the wordmark it keeps its own colours: only the
     /// wordmark cycles.
     /// </summary>
-    public Texture2D Title2084 { get; }
+    public Texture2D Title2084Sprite { get; }
 
     /// <summary>
     /// The attract page's wordmark — "ROBOTRON:" — as two WHITE MASKS at 1x arcade pixels,
@@ -301,20 +301,20 @@ public sealed class SpriteSet
     /// draws each mask in a palette slot and the wordmark colour-cycles with the page's own
     /// colour processes (notes §104).
     /// </summary>
-    public Texture2D TitleWordmarkCore { get; }
+    public Texture2D TitleWordmarkCoreSprite { get; }
 
     /// <summary>The one-pixel rim round the wordmark's letters (see <see cref="TitleWordmarkCore"/>).</summary>
-    public Texture2D TitleWordmarkRim { get; }
+    public Texture2D TitleWordmarkRimSprite { get; }
 
     /// <summary>1x1 white pixel for the wall ring (tinted per draw call).</summary>
-    public Texture2D WallPixel { get; }
+    public Texture2D WallPixelSprite { get; }
 
     /// <summary>
     /// The Williams "W" of the attract page's border, a WHITE MASK decoded from the ROM's plotting instructions at
     /// <c>$8CF4</c> by <c>tools/extract-williams-logo.py</c>: the opaque pixels are the ones the ROM draws, in the colour
     /// of the palette slot it is given.
     /// </summary>
-    public Texture2D WilliamsLogo { get; }
+    public Texture2D WilliamsLogoSprite { get; }
 
     /// <summary>
     /// ROM MNPIC (RRG23; R5 `$3596`, metadata `$3592` = 3 bytes x 8 rows): the
@@ -358,7 +358,7 @@ public sealed class SpriteSet
     /// <summary>The asset names of a font's glyphs, which are numbered by character rather than by index.</summary>
     /// <param name="prefix">The font's asset prefix.</param>
     /// <param name="count">How many glyphs the font starts with.</param>
-    private static string[] GlyphNames(string prefix, int count)
+    private static string[] GetGlyphNames(string prefix, int count)
     {
         var names = new string[count];
         for (int i = 0; i < count; i++)
@@ -372,7 +372,7 @@ public sealed class SpriteSet
     /// <summary>The asset names of a numbered run, <c>{prefix}_1</c> … <c>{prefix}_{count}</c>.</summary>
     /// <param name="prefix">The run's asset prefix.</param>
     /// <param name="count">How many sprites the run holds.</param>
-    private static string[] NumberedNames(string prefix, int count)
+    private static string[] GetNumberedNames(string prefix, int count)
     {
         var names = new string[count];
         for (int i = 0; i < count; i++)
@@ -397,6 +397,6 @@ public sealed class SpriteSet
             return RobotronColor.CreateFromByte(marker);
         }
 
-        return RobotronColor.CreateFromByte(GamePalette.DefaultSlots[slot]);
+        return RobotronColor.CreateFromByte(GamePalette.DefaultSlotValues[slot]);
     }
 }

@@ -17,13 +17,13 @@ namespace Robotron2084.Graphics;
 /// </remarks>
 public sealed class SpriteMask
 {
-    private readonly bool[] _opaque;
+    private readonly bool[] _opaquePixels;
 
-    private SpriteMask(int width, int height, bool[] opaque)
+    private SpriteMask(int width, int height, bool[] opaquePixels)
     {
         Width = width;
         Height = height;
-        _opaque = opaque;
+        _opaquePixels = opaquePixels;
     }
 
     /// <summary>The sprite's height in pixels.</summary>
@@ -38,13 +38,13 @@ public sealed class SpriteMask
     /// <param name="opaquePixels">The opaque pixels, in the sprite's own grid.</param>
     public static SpriteMask CreateFromPixels(int width, int height, IEnumerable<(int X, int Y)> opaquePixels)
     {
-        var opaque = new bool[width * height];
+        var isOpaque = new bool[width * height];
         foreach ((int x, int y) in opaquePixels)
         {
-            opaque[(y * width) + x] = true;
+            isOpaque[(y * width) + x] = true;
         }
 
-        return new SpriteMask(width, height, opaque);
+        return new SpriteMask(width, height, isOpaque);
     }
 
     /// <summary>Makes a mask from a sprite: every pixel that is not see-through counts as solid.</summary>
@@ -54,13 +54,13 @@ public sealed class SpriteMask
         var pixels = new Color[texture.Width * texture.Height];
         texture.GetData(pixels);
 
-        var opaque = new bool[pixels.Length];
+        var isOpaque = new bool[pixels.Length];
         for (int pixel = 0; pixel < pixels.Length; pixel++)
         {
-            opaque[pixel] = pixels[pixel].A != 0;
+            isOpaque[pixel] = pixels[pixel].A != 0;
         }
 
-        return new SpriteMask(texture.Width, texture.Height, opaque);
+        return new SpriteMask(texture.Width, texture.Height, isOpaque);
     }
 
     /// <summary>
@@ -79,9 +79,9 @@ public sealed class SpriteMask
     /// <param name="aDrawnBounds">The rectangle <paramref name="a"/> is drawn in, in screen pixels.</param>
     /// <param name="b">The second sprite's mask.</param>
     /// <param name="bDrawnBounds">The rectangle <paramref name="b"/> is drawn in, in screen pixels.</param>
-    public static bool Overlap(SpriteMask a, Rectangle aDrawnBounds, SpriteMask b, Rectangle bDrawnBounds)
+    public static bool Overlaps(SpriteMask a, Rectangle aDrawnBounds, SpriteMask b, Rectangle bDrawnBounds)
     {
-        (int left, int top, int right, int bottom) = SharedScreenRect(aDrawnBounds, bDrawnBounds);
+        (int left, int top, int right, int bottom) = GetSharedScreenRect(aDrawnBounds, bDrawnBounds);
         if (left >= right || top >= bottom)
         {
             return false;
@@ -108,9 +108,9 @@ public sealed class SpriteMask
     /// <param name="x">Pixel column, from the sprite's left edge.</param>
     /// <param name="y">Pixel row, from the sprite's top edge.</param>
     public bool IsOpaque(int x, int y) =>
-        x >= 0 && y >= 0 && x < Width && y < Height && _opaque[(y * Width) + x];
+        x >= 0 && y >= 0 && x < Width && y < Height && _opaquePixels[(y * Width) + x];
 
     /// <summary>The screen pixels both drawn rectangles cover, or an empty rectangle when they miss.</summary>
-    private static (int Left, int Top, int Right, int Bottom) SharedScreenRect(Rectangle a, Rectangle b) =>
+    private static (int Left, int Top, int Right, int Bottom) GetSharedScreenRect(Rectangle a, Rectangle b) =>
         (Math.Max(a.Left, b.Left), Math.Max(a.Top, b.Top), Math.Min(a.Right, b.Right), Math.Min(a.Bottom, b.Bottom));
 }

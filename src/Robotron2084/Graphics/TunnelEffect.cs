@@ -47,11 +47,11 @@ namespace Robotron2084.Graphics;
 /// </summary>
 public sealed class TunnelEffect
 {
-    /// <summary><see cref="_left"/> is compared with this to tell whether the tunnel has reached its last ring.</summary>
+    /// <summary><see cref="_leftColumn"/> is compared with this to tell whether the tunnel has reached its last ring.</summary>
     internal const int EndLeftColumn = 0x06;
 
     // $0616 — the last ring's top-left
-    /// <summary><see cref="_top"/> is compared with this to tell whether the tunnel has reached its last ring.</summary>
+    /// <summary><see cref="_topRow"/> is compared with this to tell whether the tunnel has reached its last ring.</summary>
     internal const int EndTopRow = 0x16;
 
     /// <summary>
@@ -73,18 +73,18 @@ public sealed class TunnelEffect
     /// <summary>ROM `LDB #$02 / STB $000E,U` — two rings per task pass. It is the starting value of <see cref="_ringsThisPass"/>, which counts down.</summary>
     internal const int RingsPerPass = 2;
 
-    /// <summary>It is the starting value of <see cref="_bottom"/>.</summary>
+    /// <summary>It is the starting value of <see cref="_bottomRow"/>.</summary>
     internal const int StartBottomRow = 0x82;
 
     // The walk is kept in the ROM's own SCREEN coordinates (X = column, Y = row; its screen
     // addresses are column*256 + row) so the numbers in the code are the ROM's, and only the
     // drawing maps them onto the port's grid.
-    /// <summary>It is the starting value of <see cref="_left"/>.</summary>
+    /// <summary>It is the starting value of <see cref="_leftColumn"/>.</summary>
     internal const int StartLeftColumn = 0x3B;   // $3B80
 
-    /// <summary>It is the starting value of <see cref="_right"/>.</summary>
-    internal const int StartRightColumn = 0x5A;
-    /// <summary>It is the starting value of <see cref="_top"/>.</summary>
+    /// <summary>It is the starting value of <see cref="_rightColumn"/>.</summary>
+    internal const int StartRightColumn = 0x5A;  // $5A82
+    /// <summary>It is the starting value of <see cref="_topRow"/>.</summary>
     internal const int StartTopRow = 0x80;
 
     /// <summary>
@@ -107,31 +107,31 @@ public sealed class TunnelEffect
     /// </summary>
     private readonly List<Ring> _rings = new();
 
-    private int _bottom = StartBottomRow;
+    private int _bottomRow = StartBottomRow;
 
-    // $5A82
     private int _clockUnits;
 
-    private int _left = StartLeftColumn;
+    private int _leftColumn = StartLeftColumn;
 
-    private int _packed = 0xEF;
+    /// <summary>The two colours the next ring is drawn in, packed into one byte as the ROM keeps them. It is zero while the tunnel is being rubbed out in black.</summary>
+    /// <remarks>ROM: <c>LDA #$EF</c>.</remarks>
+    private int _packedColourPair = 0xEF;
 
-    private int _right = StartRightColumn;
+    private int _rightColumn = StartRightColumn;
 
     /// <summary>Rings still to draw in this pass (the ROM's counter at `$000E,U`).</summary>
     private int _ringsThisPass = RingsPerPass;
 
-    private int _top = StartTopRow;
+    private int _topRow = StartTopRow;
 
-    // ROM `LDA #$EF`
     /// <summary>True once the black pass has reached the middle — the effect is over.</summary>
-    public bool Finished { get; private set; }
+    public bool IsFinished { get; private set; }
 
     /// <summary>Current ring corners in the ROM's screen coordinates (test hook).</summary>
-    internal (int Left, int Top, int Right, int Bottom) Corners => (_left, _top, _right, _bottom);
+    internal (int Left, int Top, int Right, int Bottom) Corners => (_leftColumn, _topRow, _rightColumn, _bottomRow);
 
     /// <summary>True while the tunnel is being redrawn in black to erase itself.</summary>
-    internal bool Erasing => _packed == 0;
+    internal bool IsErasing => _packedColourPair == 0;
 
     /// <summary>
     /// The last ring of the colouring pass (test hook) — the walk's outer extent, which must
@@ -140,10 +140,10 @@ public sealed class TunnelEffect
     internal (int Left, int Top, int Right, int Bottom) OutermostRing
         => _rings.Count > 0
             ? (_rings[^1].Left, _rings[^1].Top, _rings[^1].Right, _rings[^1].Bottom)
-            : (_left, _top, _right, _bottom);
+            : (_leftColumn, _topRow, _rightColumn, _bottomRow);
 
     /// <summary>The current packed colour pair (test hook).</summary>
-    internal int Packed => _packed;
+    internal int PackedColourPair => _packedColourPair;
 
     /// <summary>The rings drawn so far (test hook) — 53 coloured then 53 black.</summary>
     internal int RingsDrawn { get; private set; }
@@ -176,7 +176,7 @@ public sealed class TunnelEffect
     /// </summary>
     public void Update()
     {
-        if (Finished)
+        if (IsFinished)
         {
             return;
         }
@@ -192,7 +192,7 @@ public sealed class TunnelEffect
         _clockUnits -= PassClockUnits;
 
         _ringsThisPass = RingsPerPass;
-        while (_ringsThisPass > 0 && !Finished)
+        while (_ringsThisPass > 0 && !IsFinished)
         {
             _ringsThisPass--;
             AdvanceRing();
@@ -205,7 +205,7 @@ public sealed class TunnelEffect
     /// <c>(colour0 &lt;&lt; 4) | colour1</c> straight to the palette, which is a blitter mask
     /// (0-255) and threw on a wave clear.
     /// </summary>
-    internal static (int Colour0, int Colour1) Colours(int packed)
+    internal static (int Colour0, int Colour1) GetColourSlots(int packed)
         => ((packed >> 4) & 0x0F, packed & 0x0F);
 
     /// <summary>
@@ -228,17 +228,17 @@ public sealed class TunnelEffect
     /// one to a whole pixel is what drew a black line between every band and made the inner
     /// rings read as thin outlines (notes §84/§85).
     /// </summary>
-    internal static int PixelX(int romPixel) => (int)MathF.Round(romPixel * RomPixelToScreenX);
+    internal static int ToPixelX(int romPixel) => (int)MathF.Round(romPixel * RomPixelToScreenX);
 
     internal static int GetRowY(int romRow) => (int)MathF.Round(romRow * RomPixelToScreenY);
 
     /// <summary>One ring as drawn: its corners in ROM screen coordinates and the pair it used.</summary>
-    private readonly record struct Ring(int Left, int Top, int Right, int Bottom, int Packed);
+    private readonly record struct Ring(int Left, int Top, int Right, int Bottom, int PackedColourPair);
 
     /// <summary>Blits one edge rectangle, already in the port's screen pixels.</summary>
     private static void DrawEdge(SpriteBatch spriteBatch, SpriteSet sprites, Rectangle rect, Color colour)
         => spriteBatch.Draw(
-            sprites.WallPixel,
+            sprites.WallPixelSprite,
             new Rectangle(rect.X, rect.Y, Math.Max(1, rect.Width), Math.Max(1, rect.Height)),
             colour);
 
@@ -246,62 +246,62 @@ public sealed class TunnelEffect
     private void AdvanceRing()
     {
         // 5731 draws the ring from the CURRENT corners and pair — so record it before stepping.
-        (_packed == 0 ? _blackRings : _rings).Add(new Ring(_left, _top, _right, _bottom, _packed));
+        (_packedColourPair == 0 ? _blackRings : _rings).Add(new Ring(_leftColumn, _topRow, _rightColumn, _bottomRow, _packedColourPair));
         RingsDrawn++;
 
         // 5734: `TSTA / BEQ $5751` — a black pass does not touch the colours.
-        if (_packed != 0)
+        if (_packedColourPair != 0)
         {
-            _packed = NextPair(_packed);
+            _packedColourPair = NextPair(_packedColourPair);
         }
 
         // 5751/5754: `CMPX #$0616 / BEQ $5764` — the top-left has reached the middle.
-        if (_left == EndLeftColumn && _top == EndTopRow)
+        if (_leftColumn == EndLeftColumn && _topRow == EndTopRow)
         {
-            if (_packed == 0)
+            if (_packedColourPair == 0)
             {
-                Finished = true;                  // 5765/576A: black and at the middle — done
+                IsFinished = true;                  // 5765/576A: black and at the middle — done
                 return;
             }
 
             // 5767: `CLRA / BRA $5710` — start the whole walk again, in black, to erase it.
-            _left = StartLeftColumn;
-            _top = StartTopRow;
-            _right = StartRightColumn;
-            _bottom = StartBottomRow;
-            _packed = 0;
+            _leftColumn = StartLeftColumn;
+            _topRow = StartTopRow;
+            _rightColumn = StartRightColumn;
+            _bottomRow = StartBottomRow;
+            _packedColourPair = 0;
             return;
         }
 
         // 5756/575A: `LEAX -258,X` (one column left, two rows up) and `LEAY $0102,Y`.
-        _left--;
-        _top -= 2;
-        _right++;
-        _bottom += 2;
+        _leftColumn--;
+        _topRow -= 2;
+        _rightColumn++;
+        _bottomRow += 2;
     }
 
     /// <summary>
     /// One horizontal edge: one ROM row tall, from column <paramref name="left"/> to
-    /// <paramref name="right"/> inclusive. <paramref name="inset"/> is the `$5AAA` form — the
+    /// <paramref name="right"/> inclusive. <paramref name="isInset"/> is the `$5AAA` form — the
     /// same row one column to the right and one column narrower, i.e. a column in from each end.
     /// </summary>
     private void DrawHorizontalLine(
-        SpriteBatch spriteBatch, SpriteSet sprites, int left, int right, int row, Color colour, bool inset)
+        SpriteBatch spriteBatch, SpriteSet sprites, int left, int right, int row, Color colour, bool isInset)
     {
         if (row < 0 || row > 255)
         {
             return;
         }
 
-        int firstColumn = inset ? left + 1 : left;
-        int lastColumn = inset ? right - 1 : right;
+        int firstColumn = isInset ? left + 1 : left;
+        int lastColumn = isInset ? right - 1 : right;
         if (lastColumn < firstColumn)
         {
             return;
         }
 
-        int x = PixelX(firstColumn * 2);
-        int width = PixelX(lastColumn * 2 + 2) - x;
+        int x = ToPixelX(firstColumn * 2);
+        int width = ToPixelX(lastColumn * 2 + 2) - x;
         int y = GetRowY(row);
         DrawEdge(spriteBatch, sprites, new Rectangle(x, y, width, Math.Max(1, GetRowY(row + 1) - y)), colour);
     }
@@ -313,7 +313,7 @@ public sealed class TunnelEffect
     /// </summary>
     private void DrawRing(SpriteBatch spriteBatch, SpriteSet sprites, Ring ring)
     {
-        (int slot0, int slot1) = Colours(ring.Packed);          // $5A13 / $5A19
+        (int slot0, int slot1) = GetColourSlots(ring.PackedColourPair);          // $5A13 / $5A19
         Color colour0 = sprites.Blitter.GetSlotColour(slot0);
         Color colour1 = sprites.Blitter.GetSlotColour(slot1);
 
@@ -331,10 +331,10 @@ public sealed class TunnelEffect
         // — but through $5AAA, which moves the blit one column right and makes it one column
         // narrower, so the second line is INSET a column at each end. The bottom edge mirrors it:
         // row `bottom` full width in colour 0, row `bottom-1` inset in colour 1.
-        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, top, colour0, inset: false);
-        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, top + 1, colour1, inset: true);
-        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, bottom, colour0, inset: false);
-        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, bottom - 1, colour1, inset: true);
+        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, top, colour0, isInset: false);
+        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, top + 1, colour1, isInset: true);
+        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, bottom, colour0, isInset: false);
+        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, bottom - 1, colour1, isInset: true);
 
         // The vertical edges run from row `top + 1` to row `bottom - 1` — $5A7B's height is
         // `bottom - top - 1` starting at `top + 1`. They are ONE COLUMN wide, which is TWO ROM
@@ -362,11 +362,11 @@ public sealed class TunnelEffect
 
         int y = GetRowY(topRow);
         int height = Math.Max(1, GetRowY(bottomRow + 1) - y);
-        int x0 = PixelX(column * 2);
-        int x1 = PixelX(column * 2 + 1);
-        int x2 = PixelX(column * 2 + 2);
+        int leftX = ToPixelX(column * 2);
+        int middleX = ToPixelX(column * 2 + 1);
+        int rightX = ToPixelX(column * 2 + 2);
 
-        DrawEdge(spriteBatch, sprites, new Rectangle(x0, y, Math.Max(1, x1 - x0), height), first);
-        DrawEdge(spriteBatch, sprites, new Rectangle(x1, y, Math.Max(1, x2 - x1), height), second);
+        DrawEdge(spriteBatch, sprites, new Rectangle(leftX, y, Math.Max(1, middleX - leftX), height), first);
+        DrawEdge(spriteBatch, sprites, new Rectangle(middleX, y, Math.Max(1, rightX - middleX), height), second);
     }
 }

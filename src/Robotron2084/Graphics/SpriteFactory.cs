@@ -255,11 +255,11 @@ public sealed class SpriteFactory
         Color[] output = new Color[PatternSize * PatternSize];
         for (int y = 0; y < PatternSize; y++)
         {
-            int sy = y * DesignSize / PatternSize;
+            int sourceY = y * DesignSize / PatternSize;
             for (int x = 0; x < PatternSize; x++)
             {
-                int sx = x * DesignSize / PatternSize;
-                output[y * PatternSize + x] = design[sy * DesignSize + sx];
+                int sourceX = x * DesignSize / PatternSize;
+                output[y * PatternSize + x] = design[sourceY * DesignSize + sourceX];
             }
         }
 

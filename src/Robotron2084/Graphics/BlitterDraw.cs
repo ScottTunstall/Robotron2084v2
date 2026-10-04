@@ -53,12 +53,12 @@ public sealed class BlitterDraw
     /// <param name="animationFrame">The animation frame being drawn.</param>
     public static Rectangle DrawnRect(Rectangle bounds, Texture2D animationFrame)
     {
-        int w = ScreenSize.ToPortPixels(animationFrame.Width);
-        int h = ScreenSize.ToPortPixels(animationFrame.Height);
+        int width = ScreenSize.ToPortPixels(animationFrame.Width);
+        int height = ScreenSize.ToPortPixels(animationFrame.Height);
         return new Rectangle(
-            bounds.X + (bounds.Width - w) / 2,
-            bounds.Y + (bounds.Height - h) / 2,
-            w, h);
+            bounds.X + (bounds.Width - width) / 2,
+            bounds.Y + (bounds.Height - height) / 2,
+            width, height);
     }
 
     /// <summary>
@@ -72,8 +72,8 @@ public sealed class BlitterDraw
     /// </summary>
     public void DrawGlyphCycling(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot)
     {
-        int w = ScreenSize.ToPortPixels(glyph.Width);
-        int h = ScreenSize.ToPortPixels(glyph.Height);
+        int width = ScreenSize.ToPortPixels(glyph.Width);
+        int height = ScreenSize.ToPortPixels(glyph.Height);
         if (ColorCycleEffect is { } effect &&
             effect.Techniques[GlyphCycleTechnique] is { } technique)
         {
@@ -84,8 +84,8 @@ public sealed class BlitterDraw
 
         // Without the effect the draw degrades to a CPU tint of the slot's live
         // colour (exact for the white master, and it cycles with the palette).
-        Color tint = ColorCycleEffect is null ? Palette?.Color(slot) ?? Color.White : Color.White;
-        spriteBatch.Draw(glyph, new Rectangle(x, y, w, h), tint);
+        Color tint = ColorCycleEffect is null ? Palette?.GetColour(slot) ?? Color.White : Color.White;
+        spriteBatch.Draw(glyph, new Rectangle(x, y, width, height), tint);
 
         // Hand the pass-through back immediately: this pass is DEVICE state, and
         // the caller's next draw is not a glyph-cycle (same as DrawSpriteSolid).
@@ -126,10 +126,10 @@ public sealed class BlitterDraw
     public void DrawGlyphStatic(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot,
         SpriteEffects effects = SpriteEffects.None)
     {
-        Color tint = Palette?.Color(slot) ?? Color.White;
-        int w = ScreenSize.ToPortPixels(glyph.Width);
-        int h = ScreenSize.ToPortPixels(glyph.Height);
-        spriteBatch.Draw(glyph, new Rectangle(x, y, w, h), null, tint, 0f, Vector2.Zero, effects, 0f);
+        Color tint = Palette?.GetColour(slot) ?? Color.White;
+        int width = ScreenSize.ToPortPixels(glyph.Width);
+        int height = ScreenSize.ToPortPixels(glyph.Height);
+        spriteBatch.Draw(glyph, new Rectangle(x, y, width, height), null, tint, 0f, Vector2.Zero, effects, 0f);
     }
 
     /// <summary>
@@ -230,7 +230,7 @@ public sealed class BlitterDraw
     }
 
     /// <summary>The live RGB of a palette slot (0-15); white when no palette is wired.</summary>
-    public Color GetSlotColour(int slot) => Palette?.Color(slot) ?? Color.White;
+    public Color GetSlotColour(int slot) => Palette?.GetColour(slot) ?? Color.White;
 
     /// <summary>
     /// Binds the effect's PASS-THROUGH pass (<c>MainPS</c>: remap the six baked
