@@ -35,15 +35,15 @@ public sealed class PaletteAnimatorTests
     public void SlotsStartAtTheCrtabDefaults()
     {
         (GamePalette palette, _) = NewPair();
-        Assert.Equal(0x00, palette.SlotValue(0));
-        Assert.Equal(0x07, palette.SlotValue(1));
-        Assert.Equal(0xFF, palette.SlotValue(9));
-        Assert.Equal(0x38, palette.SlotValue(10));
-        Assert.Equal(0x17, palette.SlotValue(11));
-        Assert.Equal(0xCC, palette.SlotValue(12));
-        Assert.Equal(0x81, palette.SlotValue(13));
-        Assert.Equal(0x81, palette.SlotValue(14));
-        Assert.Equal(0x07, palette.SlotValue(15));
+        Assert.Equal(0x00, palette.GetSlotValue(0));
+        Assert.Equal(0x07, palette.GetSlotValue(1));
+        Assert.Equal(0xFF, palette.GetSlotValue(9));
+        Assert.Equal(0x38, palette.GetSlotValue(10));
+        Assert.Equal(0x17, palette.GetSlotValue(11));
+        Assert.Equal(0xCC, palette.GetSlotValue(12));
+        Assert.Equal(0x81, palette.GetSlotValue(13));
+        Assert.Equal(0x81, palette.GetSlotValue(14));
+        Assert.Equal(0x07, palette.GetSlotValue(15));
     }
 
     [Fact]
@@ -52,19 +52,19 @@ public sealed class PaletteAnimatorTests
         (GamePalette palette, PaletteAnimator animator) = NewPair();
 
         Tick(animator, 9);
-        Assert.Equal(0x17, palette.SlotValue(11)); // not yet — the CRTAB default
+        Assert.Equal(0x17, palette.GetSlotValue(11)); // not yet — the CRTAB default
 
         Tick(animator, 1); // tick 10 = 50 clock units >= 48
-        Assert.Equal(0x38, palette.SlotValue(11)); // table[0]
+        Assert.Equal(0x38, palette.GetSlotValue(11)); // table[0]
 
         Tick(animator, 10); // tick 20
-        Assert.Equal(0x07, palette.SlotValue(11)); // table[1]
+        Assert.Equal(0x07, palette.GetSlotValue(11)); // table[1]
 
         Tick(animator, 9); // tick 29 (the carried 4 clock units catch up)
-        Assert.Equal(0xC0, palette.SlotValue(11)); // table[2]
+        Assert.Equal(0xC0, palette.GetSlotValue(11)); // table[2]
 
         Tick(animator, 10); // wraps back to the start of the table
-        Assert.Equal(0x38, palette.SlotValue(11)); // table[0] again
+        Assert.Equal(0x38, palette.GetSlotValue(11)); // table[0] again
     }
 
     [Fact]
@@ -73,13 +73,13 @@ public sealed class PaletteAnimatorTests
         (GamePalette palette, PaletteAnimator animator) = NewPair();
 
         Tick(animator, 3);
-        Assert.Equal(0xC0, palette.SlotValue(12)); // table[0]
+        Assert.Equal(0xC0, palette.GetSlotValue(12)); // table[0]
 
         Tick(animator, 2);
-        Assert.Equal(0xC0, palette.SlotValue(12)); // table[1]
+        Assert.Equal(0xC0, palette.GetSlotValue(12)); // table[1]
 
         Tick(animator, 3);
-        Assert.Equal(0xD0, palette.SlotValue(12)); // table[2]
+        Assert.Equal(0xD0, palette.GetSlotValue(12)); // table[2]
     }
 
     [Fact]
@@ -88,13 +88,13 @@ public sealed class PaletteAnimatorTests
         (GamePalette palette, PaletteAnimator animator) = NewPair();
 
         Tick(animator, 1);
-        Assert.Equal(0x81, palette.SlotValue(14)); // 5 clock units: still the default
+        Assert.Equal(0x81, palette.GetSlotValue(14)); // 5 clock units: still the default
 
         Tick(animator, 1); // tick 2 = 10 clock units >= 6
-        Assert.Equal(0xC0, palette.SlotValue(14)); // table[0]
+        Assert.Equal(0xC0, palette.GetSlotValue(14)); // table[0]
 
         Tick(animator, 4); // one step a tick from here (6 clock units per step)
-        Assert.Equal(0xC4, palette.SlotValue(14));
+        Assert.Equal(0xC4, palette.GetSlotValue(14));
     }
 
     [Fact]
@@ -106,10 +106,10 @@ public sealed class PaletteAnimatorTests
         // the step clock is only OBSERVABLE at the third entry (0x2F), which the
         // ROM's 6-frame period puts on tick 22 (steps at 8, 15 and 22).
         Tick(animator, 21);
-        Assert.Equal(0x07, palette.SlotValue(15));
+        Assert.Equal(0x07, palette.GetSlotValue(15));
 
         Tick(animator, 1);
-        Assert.Equal(0x2F, palette.SlotValue(15)); // table[2]
+        Assert.Equal(0x2F, palette.GetSlotValue(15)); // table[2]
     }
 
     [Fact]
@@ -118,13 +118,13 @@ public sealed class PaletteAnimatorTests
         (GamePalette palette, PaletteAnimator animator) = NewPair();
 
         Tick(animator, 3);
-        Assert.Equal(PaletteAnimator.LaserTab[0], palette.SlotValue(13));
+        Assert.Equal(PaletteAnimator.LaserTab[0], palette.GetSlotValue(13));
 
         Tick(animator, 2);
-        Assert.Equal(PaletteAnimator.LaserTab[1], palette.SlotValue(13));
+        Assert.Equal(PaletteAnimator.LaserTab[1], palette.GetSlotValue(13));
 
         Tick(animator, 3);
-        Assert.Equal(PaletteAnimator.LaserTab[2], palette.SlotValue(13));
+        Assert.Equal(PaletteAnimator.LaserTab[2], palette.GetSlotValue(13));
     }
 
     [Fact]
@@ -133,19 +133,19 @@ public sealed class PaletteAnimatorTests
         (GamePalette palette, PaletteAnimator animator) = NewPair();
 
         Tick(animator, 2);
-        Assert.Equal(0x38, palette.SlotValue(10)); // 5 and 10 clock units: no write yet
+        Assert.Equal(0x38, palette.GetSlotValue(10)); // 5 and 10 clock units: no write yet
 
         Tick(animator, 1); // tick 3 = 15 clock units: the first (white) flash
-        Assert.Equal(0xFF, palette.SlotValue(10));
+        Assert.Equal(0xFF, palette.GetSlotValue(10));
 
         Tick(animator, 2); // tick 5: white again — the flash period is 2 ROM frames
-        Assert.Equal(0xFF, palette.SlotValue(10));
+        Assert.Equal(0xFF, palette.GetSlotValue(10));
 
         Tick(animator, 3); // tick 8: every 3rd flash is a random COLTAB hue
-        Assert.Contains((byte)palette.SlotValue(10), PaletteAnimator.LaserTab);
+        Assert.Contains((byte)palette.GetSlotValue(10), PaletteAnimator.LaserTab);
 
         Tick(animator, 2); // tick 10: back to white
-        Assert.Equal(0xFF, palette.SlotValue(10));
+        Assert.Equal(0xFF, palette.GetSlotValue(10));
     }
 
     [Fact]
@@ -157,15 +157,15 @@ public sealed class PaletteAnimatorTests
         // DECAY process and then drives slot 12 itself, byte by byte.
         palette.SuspendSlot(12);
         Tick(animator, 40);
-        Assert.Equal(0xCC, palette.SlotValue(12)); // still the CRTAB default
+        Assert.Equal(0xCC, palette.GetSlotValue(12)); // still the CRTAB default
 
         palette.SetSlot(12, 0x55); // a fade byte, written directly
         Tick(animator, 40);
-        Assert.Equal(0x55, palette.SlotValue(12)); // the process never overwrote it
+        Assert.Equal(0x55, palette.GetSlotValue(12)); // the process never overwrote it
 
         // COLST: the process comes back, and restarts at its table's first entry.
         palette.ResumeSlot(12);
         Tick(animator, 3);
-        Assert.Equal(0xC0, palette.SlotValue(12));
+        Assert.Equal(0xC0, palette.GetSlotValue(12));
     }
 }

@@ -37,20 +37,20 @@ public sealed class HighScorePaletteTests
 
         // FRAMER zeroes PCRAM..PCRAM+15 before anything is drawn (the page comes up
         // from black)...
-        Assert.Equal(0x00, palette.SlotValue(0));
-        Assert.Equal(0x00, palette.SlotValue(11));
+        Assert.Equal(0x00, palette.GetSlotValue(0));
+        Assert.Equal(0x00, palette.GetSlotValue(11));
 
         // ...then MAKP LOOPP's first store shifts slot 8's old — zero — value into slot 7.
-        Assert.Equal(HighScorePalette.CycleTable[0], palette.SlotValue(8));
-        Assert.Equal(0x00, palette.SlotValue(7));
+        Assert.Equal(HighScorePalette.CycleTable[0], palette.GetSlotValue(8));
+        Assert.Equal(0x00, palette.GetSlotValue(7));
 
         // The four ramps are NOT running yet: the ROM starts them after the page has
         // printed (MAKP DECAZ/COLA/COLC/COLD follow WRD7V), so the printed rows sit in
         // black slots until then.
-        Assert.Equal(0x00, palette.SlotValue(9));
-        Assert.Equal(0x00, palette.SlotValue(10));
-        Assert.Equal(0x00, palette.SlotValue(12));
-        Assert.Equal(0x00, palette.SlotValue(13));
+        Assert.Equal(0x00, palette.GetSlotValue(9));
+        Assert.Equal(0x00, palette.GetSlotValue(10));
+        Assert.Equal(0x00, palette.GetSlotValue(12));
+        Assert.Equal(0x00, palette.GetSlotValue(13));
     }
 
     [Fact]
@@ -61,10 +61,10 @@ public sealed class HighScorePaletteTests
         cycle.StartRamps(palette);
 
         Assert.True(cycle.RampsStarted);
-        Assert.Equal(HighScorePalette.RampTable[7], palette.SlotValue(9));   // DECAZ starts at CATAB+7
-        Assert.Equal(HighScorePalette.RampTable[0], palette.SlotValue(10));  // COLA starts at CATAB
-        Assert.Equal(HighScorePalette.AccentTable[7], palette.SlotValue(12)); // COLC starts at CCTAB+7
-        Assert.Equal(HighScorePalette.AccentTable[0], palette.SlotValue(13)); // COLD starts at CCTAB
+        Assert.Equal(HighScorePalette.RampTable[7], palette.GetSlotValue(9));   // DECAZ starts at CATAB+7
+        Assert.Equal(HighScorePalette.RampTable[0], palette.GetSlotValue(10));  // COLA starts at CATAB
+        Assert.Equal(HighScorePalette.AccentTable[7], palette.GetSlotValue(12)); // COLC starts at CCTAB+7
+        Assert.Equal(HighScorePalette.AccentTable[0], palette.GetSlotValue(13)); // COLD starts at CCTAB
 
         // Starting them twice is a no-op (the ROM's MAKPs happen once).
         for (int tick = 0; tick < 5; tick++)
@@ -72,9 +72,9 @@ public sealed class HighScorePaletteTests
             cycle.Update(palette);
         }
 
-        byte stepped = (byte)palette.SlotValue(9);
+        byte stepped = (byte)palette.GetSlotValue(9);
         cycle.StartRamps(palette);
-        Assert.Equal(stepped, palette.SlotValue(9));
+        Assert.Equal(stepped, palette.GetSlotValue(9));
     }
 
     [Fact]
@@ -87,13 +87,13 @@ public sealed class HighScorePaletteTests
             cycle.Update(palette);
         }
 
-        Assert.Equal(0x00, palette.SlotValue(9));
-        Assert.Equal(0x00, palette.SlotValue(10));
-        Assert.Equal(0x00, palette.SlotValue(12));
-        Assert.Equal(0x00, palette.SlotValue(13));
+        Assert.Equal(0x00, palette.GetSlotValue(9));
+        Assert.Equal(0x00, palette.GetSlotValue(10));
+        Assert.Equal(0x00, palette.GetSlotValue(12));
+        Assert.Equal(0x00, palette.GetSlotValue(13));
 
         // ...the wall's cycle runs regardless (it comes up with the frame).
-        Assert.NotEqual(0x00, palette.SlotValue(8));
+        Assert.NotEqual(0x00, palette.GetSlotValue(8));
     }
 
     [Fact]
@@ -124,20 +124,20 @@ public sealed class HighScorePaletteTests
             cycle.Update(palette);
         }
 
-        Assert.Equal(HighScorePalette.CycleTable[0], palette.SlotValue(8));
+        Assert.Equal(HighScorePalette.CycleTable[0], palette.GetSlotValue(8));
 
         cycle.Update(palette);
-        Assert.Equal(HighScorePalette.CycleTable[1], palette.SlotValue(8));
-        Assert.Equal(HighScorePalette.CycleTable[0], palette.SlotValue(7));
+        Assert.Equal(HighScorePalette.CycleTable[1], palette.GetSlotValue(8));
+        Assert.Equal(HighScorePalette.CycleTable[0], palette.GetSlotValue(7));
 
         for (int tick = 0; tick < 4; tick++)
         {
             cycle.Update(palette);
         }
 
-        Assert.Equal(HighScorePalette.CycleTable[2], palette.SlotValue(8));
-        Assert.Equal(HighScorePalette.CycleTable[1], palette.SlotValue(7));
-        Assert.Equal(HighScorePalette.CycleTable[0], palette.SlotValue(6));
+        Assert.Equal(HighScorePalette.CycleTable[2], palette.GetSlotValue(8));
+        Assert.Equal(HighScorePalette.CycleTable[1], palette.GetSlotValue(7));
+        Assert.Equal(HighScorePalette.CycleTable[0], palette.GetSlotValue(6));
     }
 
     [Fact]
@@ -152,7 +152,7 @@ public sealed class HighScorePaletteTests
             cycle.Update(palette);
         }
 
-        Assert.Equal(HighScorePalette.CycleTable[0], palette.SlotValue(8));
+        Assert.Equal(HighScorePalette.CycleTable[0], palette.GetSlotValue(8));
     }
 
     [Fact]
@@ -160,8 +160,8 @@ public sealed class HighScorePaletteTests
     {
         (GamePalette palette, HighScorePalette cycle) = Started();
 
-        Assert.Equal(0x07, palette.SlotValue(9));
-        Assert.Equal(0x07, palette.SlotValue(10));
+        Assert.Equal(0x07, palette.GetSlotValue(9));
+        Assert.Equal(0x07, palette.GetSlotValue(10));
 
         // 4 ROM frames = 24 clock units = 4.8 ticks: the first step lands on tick 5.
         for (int tick = 0; tick < 5; tick++)
@@ -169,18 +169,18 @@ public sealed class HighScorePaletteTests
             cycle.Update(palette);
         }
 
-        Assert.Equal(0x57, palette.SlotValue(9)); // CATAB+8 — DECAZ is a step ahead
-        Assert.Equal(0x07, palette.SlotValue(10)); // COLA's table opens with eight $07s
+        Assert.Equal(0x57, palette.GetSlotValue(9)); // CATAB+8 — DECAZ is a step ahead
+        Assert.Equal(0x07, palette.GetSlotValue(10)); // COLA's table opens with eight $07s
 
         // DECAZ's walk on from there: $A7 $FF $A7 $57 then the $00 terminator sends it
         // back to the START of CATAB, so its eight $07s come round again — the ramp never
         // lands on black.
         var changes = new List<byte>();
-        byte last = (byte)palette.SlotValue(9);
+        byte last = (byte)palette.GetSlotValue(9);
         for (int tick = 0; tick < 400; tick++)
         {
             cycle.Update(palette);
-            byte now = (byte)palette.SlotValue(9);
+            byte now = (byte)palette.GetSlotValue(9);
             if (now != last)
             {
                 changes.Add(now);
@@ -203,8 +203,8 @@ public sealed class HighScorePaletteTests
             cycle.Update(palette);
         }
 
-        Assert.Equal(0xD2, palette.SlotValue(12)); // COLC was started at CCTAB+7 ($E4)
-        Assert.Equal(0xFF, palette.SlotValue(13)); // COLD is still in CCTAB's seven $FFs
+        Assert.Equal(0xD2, palette.GetSlotValue(12)); // COLC was started at CCTAB+7 ($E4)
+        Assert.Equal(0xFF, palette.GetSlotValue(13)); // COLD is still in CCTAB's seven $FFs
     }
 
     [Fact]
@@ -221,7 +221,7 @@ public sealed class HighScorePaletteTests
 
         for (int slot = 0; slot <= 15; slot++)
         {
-            Assert.Equal(GamePalette.DefaultSlots[slot], palette.SlotValue(slot));
+            Assert.Equal(GamePalette.DefaultSlotValues[slot], palette.GetSlotValue(slot));
             Assert.False(palette.IsSlotSuspended(slot), $"slot {slot}");
         }
     }

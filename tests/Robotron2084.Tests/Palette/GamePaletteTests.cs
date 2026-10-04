@@ -15,27 +15,27 @@ public sealed class GamePaletteTests
     public void DefaultsAreTheCrtabPalette()
     {
         GamePalette palette = new();
-        Assert.Equal(0x00, palette.SlotValue(0));
-        Assert.Equal(0x07, palette.SlotValue(1));
-        Assert.Equal(0x17, palette.SlotValue(2));
-        Assert.Equal(0xC7, palette.SlotValue(3));
-        Assert.Equal(0x1F, palette.SlotValue(4));
-        Assert.Equal(0x3F, palette.SlotValue(5));
-        Assert.Equal(0x38, palette.SlotValue(6));
-        Assert.Equal(0xC0, palette.SlotValue(7));
-        Assert.Equal(0xA4, palette.SlotValue(8));
-        Assert.Equal(0xFF, palette.SlotValue(9));
+        Assert.Equal(0x00, palette.GetSlotValue(0));
+        Assert.Equal(0x07, palette.GetSlotValue(1));
+        Assert.Equal(0x17, palette.GetSlotValue(2));
+        Assert.Equal(0xC7, palette.GetSlotValue(3));
+        Assert.Equal(0x1F, palette.GetSlotValue(4));
+        Assert.Equal(0x3F, palette.GetSlotValue(5));
+        Assert.Equal(0x38, palette.GetSlotValue(6));
+        Assert.Equal(0xC0, palette.GetSlotValue(7));
+        Assert.Equal(0xA4, palette.GetSlotValue(8));
+        Assert.Equal(0xFF, palette.GetSlotValue(9));
     }
 
     [Fact]
     public void SetSlotChangesTheLiveColour()
     {
         GamePalette palette = new();
-        Assert.NotEqual(palette.Color(11), palette.Color(0));
+        Assert.NotEqual(palette.GetColour(11), palette.GetColour(0));
 
         palette.SetSlot(11, 0x00);
-        Assert.Equal(0x00, palette.SlotValue(11));
-        Assert.Equal(new Color(0, 0, 0), palette.Color(11));
+        Assert.Equal(0x00, palette.GetSlotValue(11));
+        Assert.Equal(new Color(0, 0, 0), palette.GetColour(11));
     }
 
     [Theory]
@@ -63,7 +63,7 @@ public sealed class GamePaletteTests
 
         for (int slot = 0; slot < 10; slot++)
         {
-            Color fixedColor = RobotronColor.CreateFromByte(GamePalette.DefaultSlots[slot]);
+            Color fixedColor = RobotronColor.CreateFromByte(GamePalette.DefaultSlotValues[slot]);
             Assert.DoesNotContain(fixedColor, markerColors);
         }
 

@@ -25,7 +25,7 @@ public sealed class PresentationPagePaletteTests
     /// <summary>The single entry the chase is whitening, or 0 when no entry is white.</summary>
     private static int WhiteSlot(GamePalette palette) =>
         Enumerable.Range(PresentationPagePalette.FirstSlot, 7)
-            .SingleOrDefault(slot => palette.SlotValue(slot) == 0xFF);
+            .SingleOrDefault(slot => palette.GetSlotValue(slot) == 0xFF);
 
     [Fact]
     public void Start_WritesThePagesSevenColoursAndLeavesTheRestOnCrtab()
@@ -34,17 +34,17 @@ public sealed class PresentationPagePaletteTests
 
         for (int slot = PresentationPagePalette.FirstSlot; slot <= PresentationPagePalette.LastSlot; slot++)
         {
-            Assert.Equal(PresentationPagePalette.PageColors[slot - 1], palette.SlotValue(slot));
+            Assert.Equal(PresentationPagePalette.PageColors[slot - 1], palette.GetSlotValue(slot));
         }
 
         // The other nine entries are untouched — this page owns slots 1-7 and nothing else.
         foreach (int slot in new[] { 0, 8, 9, 10, 11, 12, 13, 14, 15 })
         {
-            Assert.Equal(GamePalette.DefaultSlots[slot], palette.SlotValue(slot));
+            Assert.Equal(GamePalette.DefaultSlotValues[slot], palette.GetSlotValue(slot));
         }
 
         // The text slot is ORANGE in the page's own table — the colour the author sees.
-        Assert.Equal(0x1F, palette.SlotValue(PresentationPagePalette.TextSlot));
+        Assert.Equal(0x1F, palette.GetSlotValue(PresentationPagePalette.TextSlot));
 
         // $8A3A runs before the chase task exists, and $8A4F advances BEFORE it whitens: the page
         // comes up with no white on it at all.
@@ -103,7 +103,7 @@ public sealed class PresentationPagePaletteTests
             {
                 if (slot != white)
                 {
-                    Assert.Equal(PresentationPagePalette.PageColors[slot - 1], palette.SlotValue(slot));
+                    Assert.Equal(PresentationPagePalette.PageColors[slot - 1], palette.GetSlotValue(slot));
                 }
             }
         }
@@ -118,7 +118,7 @@ public sealed class PresentationPagePaletteTests
 
         for (int tick = 0; tick < Ticks; tick++)
         {
-            if (palette.SlotValue(PresentationPagePalette.TextSlot) == 0xFF)
+            if (palette.GetSlotValue(PresentationPagePalette.TextSlot) == 0xFF)
             {
                 white++;
             }
@@ -171,7 +171,7 @@ public sealed class PresentationPagePaletteTests
 
         for (int slot = 0; slot <= 15; slot++)
         {
-            Assert.Equal(GamePalette.DefaultSlots[slot], palette.SlotValue(slot));
+            Assert.Equal(GamePalette.DefaultSlotValues[slot], palette.GetSlotValue(slot));
         }
     }
 }

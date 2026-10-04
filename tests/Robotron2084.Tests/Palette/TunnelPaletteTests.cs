@@ -49,7 +49,7 @@ public sealed class TunnelPaletteTests
             int blacks = 0;
             for (int slot = first; slot < first + 5; slot++)
             {
-                if (palette.SlotValue(slot) == 0x00)
+                if (palette.GetSlotValue(slot) == 0x00)
                 {
                     blacks++;
                 }
@@ -59,7 +59,7 @@ public sealed class TunnelPaletteTests
         }
 
         // Slot 0 is not part of the ramp (the ROM starts at $9801) and is left alone.
-        Assert.Equal(GamePalette.DefaultSlots[0], palette.SlotValue(0));
+        Assert.Equal(GamePalette.DefaultSlotValues[0], palette.GetSlotValue(0));
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public sealed class TunnelPaletteTests
         tunnel.Start();
 
         byte[] ramp = TunnelPalette.Ramps[tunnel.RampIndex];
-        int index = tunnel.Pointer;
+        int index = tunnel.WindowStartIndex;
 
         tunnel.Apply(palette);
 
@@ -87,7 +87,7 @@ public sealed class TunnelPaletteTests
                 continue;
             }
 
-            Assert.Equal(expected, palette.SlotValue(TunnelPalette.FirstSlot + slot));
+            Assert.Equal(expected, palette.GetSlotValue(TunnelPalette.FirstSlot + slot));
         }
     }
 
@@ -105,11 +105,11 @@ public sealed class TunnelPaletteTests
         var tunnel = new TunnelPalette(new Random(3));
         tunnel.Start();
 
-        int pointer = tunnel.Pointer;
+        int pointer = tunnel.WindowStartIndex;
         Assert.Equal(4, tunnel.BlackOffset);
 
         tunnel.Advance();
-        Assert.Equal(pointer + 1, tunnel.Pointer);
+        Assert.Equal(pointer + 1, tunnel.WindowStartIndex);
         Assert.Equal(3, tunnel.BlackOffset);
 
         for (int i = 0; i < 3; i++)
@@ -121,7 +121,7 @@ public sealed class TunnelPaletteTests
 
         tunnel.Advance();
         Assert.Equal(4, tunnel.BlackOffset);            // 0 wraps back to 4, never to 5
-        Assert.Equal(pointer + 5, tunnel.Pointer);
+        Assert.Equal(pointer + 5, tunnel.WindowStartIndex);
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public sealed class TunnelPaletteTests
 
         for (int pass = 0; pass < 1000; pass++)
         {
-            Assert.InRange(tunnel.Pointer, 0, ramp.Length - 1);
+            Assert.InRange(tunnel.WindowStartIndex, 0, ramp.Length - 1);
             tunnel.Advance();
         }
     }
