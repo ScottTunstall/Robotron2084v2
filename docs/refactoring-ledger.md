@@ -54,9 +54,15 @@ Not traced.
 
 ### What was left alone, and why
 
-- **A possible timing difference.** The ROM loop counts down from 18 and reaches zero on its 18th pass, which is 17 sleeps
-  or 255 ROM frames after the start. The class and its test use 270. If the ROM count is right, the first check is one
-  pass (15 ROM frames) late. It was not changed: the test says "first at 270" and it needs the author's say-so first.
+- **The first check, checked against the ROM (answered).** `GEXEC` loads 18 into `PD` (`LDA #$12`, disassembly `$2A85`) and the
+  `DEC PD,U` at `$2ABF` runs on the very first pass, so the 18th pass is 17 sleeps, **255 ROM frames, after `GEXEC` starts**, not 270.
+  `SLEEPV` and `DISP` in `RRS22.ASM` confirm that `NAP 15` runs again 15 dispatches later. The later checks, 225 apart, are right.
+  The bigger gap is where the count starts. `GEXEC` is reached only after the wave is set up (`PLS0A`), the robots appear
+  (`APPEAR`, at least about 45 frames), `PLS1` and its four naps (32 frames more): about 80 frames or more after the wave starts on
+  an ordinary wave, and 182 on a brain wave (`NAP 150,PLS1` and then the same 32). The port counts its 270 frames from when
+  the field is made, so against the ROM its first check is early by about 60 frames on an ordinary wave and about 165 on a brain
+  wave. Nothing was changed: the right fix is to start the count when the port's own "wave is playable" moment arrives, and
+  count 255 from there, which is the author's choice of moment.
 - **Grunts made mid-wave** (`MidWaveSpawner`, Gorf's drops) start with the wave's starting limit, not the current eased
   one. The ROM has one global limit that every grunt shares and makes no grunts mid-wave, so this is a port-only choice.
   **Decided by the author: it stays. Gorf drops slow grunts, and nothing is to be changed.**
