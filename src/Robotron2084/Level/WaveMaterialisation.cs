@@ -72,7 +72,7 @@ public sealed class WaveMaterialisation
             StartNextAppear(explosions, clip);
         }
 
-        RetireConvergedRobots();
+        FinishAssemblingRobots();
     }
 
     /// <summary>Draws the robots being beamed in, when this is a brain wave and the beaming is under way.</summary>
@@ -146,14 +146,14 @@ public sealed class WaveMaterialisation
         }
     }
 
-    /// <summary>Lets go of the robots whose appear effect has finished, so they start acting.</summary>
-    private void RetireConvergedRobots()
+    /// <summary>Takes the robots whose appear effect has finished out of the assembling ones, so they start acting.</summary>
+    private void FinishAssemblingRobots()
     {
-        List<IEntity> converged = [.. _assembling
+        List<IEntity> finishedRobots = [.. _assembling
             .Where(pair => pair.Value is { } effect && !effect.IsAlive())
             .Select(pair => pair.Key)];
 
-        foreach (IEntity robot in converged)
+        foreach (IEntity robot in finishedRobots)
         {
             _assembling.Remove(robot);
         }
