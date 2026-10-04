@@ -82,10 +82,12 @@ public sealed class DemoPlayerInputSourceTests
     public void Poll_WithARobotOutOfRange_DriftsToCentreAndDoesNotFire()
     {
         PlayField field = EmptyField(FullBounds);
+        field.SkipWaveStart();
 
         // Walk the player off-centre with a plain fake stick, then hand the wheel to the demo.
         var left = new MutableStick { State = new PlayerInputState(new IntVector2(-1, 0), false) };
         field = EmptyFieldWithInput(FullBounds, left);
+        field.SkipWaveStart();
         for (int i = 0; i < 40; i++)
         {
             field.Update(new GameTime());

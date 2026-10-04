@@ -48,6 +48,7 @@ public sealed class SoundWiringTests : IDisposable
     public void ShootingACruiseMissile_SendsCMKSND()
     {
         PlayField field = new PlayFieldBuilder().WithParameters(new LevelParameters(LevelNumber: 1)).WithSeed(99).Build();
+        field.SkipWaveStart();
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 250, inner.Y + 120);
         field.Entities.CruiseMissiles.Add(new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(8)));
