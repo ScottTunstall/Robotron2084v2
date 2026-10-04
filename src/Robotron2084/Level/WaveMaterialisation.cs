@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Graphics;
 using Robotron2084.Tuning;
@@ -38,6 +39,10 @@ public sealed class WaveMaterialisation
     /// <summary>The transporter that beams the robots in, or null when the wave is not a brain wave.</summary>
     private readonly RobotTransporter? _transporter;
 
+    /// <summary>Counts up to the next ROM frame, in clock units, because one robot's appear effect is started on each ROM frame. It starts with a whole ROM frame in it, so that the first robot is started on the first tick, as the arcade makes its first pass at once.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>NAP 1,APL</c>. Disassembly: <c>$2949</c>.</remarks>
+    private int _appearClockUnits = ArcadeClock.UnitsPerRomFrame;
+
     /// <summary>How many robots have been given an appear effect so far, which decides whether the next fans in by columns.</summary>
     private int _sequenceNumber;
 
@@ -53,7 +58,7 @@ public sealed class WaveMaterialisation
     /// <summary>The number of robots that have not yet been given their turn to appear.</summary>
     public int PendingCount => _pendingRobots.Count + _transportQueue.Count;
 
-    /// <summary>Moves the sequence on by one tick: starts the appear effect of the next robot in the queue, and lets go of the robots whose effect has finished.</summary>
+    /// <summary>Moves the sequence on by one tick: on each ROM frame it starts the appear effect of the next robot in the queue, and it lets go of the robots whose effect has finished.</summary>
     /// <remarks>
     /// Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, with the strips closing in on the robot's centre (<c>APCENT</c>). Disassembly: not separately labelled.
     /// The appear effects share a pool with the explosions, so when the pool is full the next robot waits.
@@ -67,10 +72,7 @@ public sealed class WaveMaterialisation
             AdvanceTransport(_transporter);
         }
 
-        if (_pendingRobots.Count > 0 && explosions.Count < StripExplosionTuning.MaxConcurrent)
-        {
-            StartNextAppear(explosions, clip);
-        }
+        StartNextAppearOnTheRomFrame(explosions, clip);
 
         FinishAssemblingRobots();
     }
@@ -156,6 +158,25 @@ public sealed class WaveMaterialisation
         foreach (IEntity robot in finishedRobots)
         {
             _assembling.Remove(robot);
+        }
+    }
+
+    /// <summary>Counts one tick, and when a ROM frame has gone by, starts the next robot's appear effect if there is a robot waiting and room for the effect.</summary>
+    /// <param name="explosions">The list of strip effects that the new one joins.</param>
+    /// <param name="clip">The edges the strips are cut off at.</param>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, one robot on each pass (<c>LDA #1 / PSHS A</c>, "1/FRAME"). Disassembly: <c>$290D</c> to <c>$294E</c>.</remarks>
+    private void StartNextAppearOnTheRomFrame(EntityList<StripEffect> explosions, StripClip clip)
+    {
+        _appearClockUnits += ArcadeClock.UnitsPerPortTick;
+        if (_appearClockUnits < ArcadeClock.UnitsPerRomFrame)
+        {
+            return;
+        }
+
+        _appearClockUnits -= ArcadeClock.UnitsPerRomFrame;
+        if (_pendingRobots.Count > 0 && explosions.Count < StripExplosionTuning.MaxConcurrent)
+        {
+            StartNextAppear(explosions, clip);
         }
     }
 

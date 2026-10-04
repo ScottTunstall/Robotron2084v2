@@ -44,7 +44,8 @@ public static class RobotKinds
             },
             LaserHitSound: SoundTables.RobotHit,
             KillsPlayerOnContact: true,
-            Spawn: new GruntWaveSpawner()),
+            Spawn: new GruntWaveSpawner(),
+            IsOnRobotList: true),
 
         // A hulk is never killed and never scored: the laser only knocks it back (RRH11 HULKIL).
         new(RobotKind.Hulk,
@@ -53,7 +54,8 @@ public static class RobotKinds
             LaserHit: static (field, target, direction) => target.Require<Hulk>().ApplyKnockback(direction.ToIntVector()),
             LaserHitSound: SoundTables.HulkHit,
             KillsPlayerOnContact: true,
-            Spawn: new HulkWaveSpawner()),
+            Spawn: new HulkWaveSpawner(),
+            IsOnRobotList: true),
 
         // A spheroid and a quark play their OWN burst instead of the strip explosion (CIRKP/SQKIL, notes §64).
         new(RobotKind.Spheroid,
@@ -82,7 +84,8 @@ public static class RobotKinds
             Score: ScoreValues.Tank,
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
             LaserHitSound: SoundTables.TankKill,
-            Spawn: new TankWaveSpawner()),
+            Spawn: new TankWaveSpawner(),
+            IsOnRobotList: true),
 
         // A brain killed MID-reprogram releases its victim — the field's own human phase does that (notes §90).
         new(RobotKind.Brain,
@@ -91,7 +94,8 @@ public static class RobotKinds
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
             LaserHitSound: SoundTables.BrainKill,
             KillsPlayerOnContact: true,
-            Spawn: new BrainWaveSpawner()),
+            Spawn: new BrainWaveSpawner(),
+            IsOnRobotList: true),
 
         new(RobotKind.Prog,
             WaveCount: null,
@@ -136,7 +140,8 @@ public static class RobotKinds
             LaserHit: static (field, target, direction) => field.KillWithStripExplosion(target, direction),
             LaserHitSound: SoundTables.RobotHit,
             KillsPlayerOnContact: true,
-            Spawn: new BerzerkRobotWaveSpawner()),
+            Spawn: new BerzerkRobotWaveSpawner(),
+            IsOnRobotList: true),
 
         // The author's own robot (notes §138.2): it stands and animates, and dies to a laser.
         new(RobotKind.Gorf,

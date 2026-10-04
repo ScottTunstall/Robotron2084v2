@@ -7,7 +7,7 @@ namespace Robotron2084.Level.Collisions;
 /// a rule cannot tell the field what to do, whatever it is given (STR-10).</remarks>
 internal interface ICollisionScene
 {
-    /// <summary>Says whether the robots must stand still: in the player's start grace period and while the player is dying.</summary>
+    /// <summary>Says whether the robots must stand still: until the game goes live at the start of the wave, and while the player is dying.</summary>
     bool RobotsFrozen { get; }
 
     /// <summary>Says whether the player can be killed just now: alive, and not the invincible playtest player.</summary>

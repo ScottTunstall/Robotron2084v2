@@ -43,6 +43,7 @@ public sealed class PlayField : ICollisionScene
     private readonly CollisionResponder _collisionResponder;
     private readonly IContactTest _contactTest;
     private readonly MidWaveSpawner _midWaveSpawner;
+    private readonly WaveStartSequence _waveStart;
     private readonly GamePalette? _palette;
 
     /// <summary>True when a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
@@ -112,6 +113,8 @@ public sealed class PlayField : ICollisionScene
         // The family is put on last, after every robot (ROM HUMSTV).
         new FamilyWaveSpawner().Spawn(spawning);
 
+        _waveStart = new WaveStartSequence(CountRobotsOnTheRobotList(), parameters.BrainCount > 0);
+
         // With the bug switched off, each brain picks again now that there is a family to pick from.
         if (!brainsChaseMikeyBugEnabled)
         {
@@ -138,8 +141,9 @@ public sealed class PlayField : ICollisionScene
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLINIT</c>, which clears <c>SAVCNT</c> as each wave starts. Disassembly: not separately labelled.</remarks>
     public int RescuesThisLife { get; private set; }
 
-    /// <summary>True while the robots must stand still: in the player's start grace period and during their death animation.</summary>
-    public bool RobotsFrozen => Player.IsInStartGracePeriod || Player.IsDying();
+    /// <summary>True while the robots must stand still: until the game goes live at the start of the wave, and while the player is dying.</summary>
+    /// <remarks>Original source: each robot's routine waits for <c>STATUS</c> to clear (<c>RRP8.ASM</c> <c>ROBOT</c>, <c>RRH11.ASM</c> <c>HULK</c>). Disassembly: the status byte at <c>$59</c>.</remarks>
+    public bool RobotsFrozen => !IsLive() || Player.IsDying();
 
     /// <summary>The player's score.</summary>
     public ScoreBoard ScoreBoard { get; }
@@ -165,10 +169,12 @@ public sealed class PlayField : ICollisionScene
             return;
         }
 
+        _waveStart.Update();
+
         // The arcade times the grunt speed checks from when the game goes live (ROM: RRG23.ASM PLS2, CLR STATUS).
-        if (!Player.IsInStartGracePeriod)
+        if (IsLive())
         {
-            _gruntSpeedProgression.Update(Entities.Grunts);
+            _gruntSpeedProgression.Update(Entities.Grunts, _waveStart.GetLiveClockUnitsThisTick());
         }
 
         _materialisation.Advance(Entities.Explosions, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds));
@@ -217,8 +223,11 @@ public sealed class PlayField : ICollisionScene
         // 6-7b. The enemy shots, then the explosions and the bursts — over the shots, under the player.
         Entities.DrawInFrontOfShots(spriteBatch, this);
 
-        // 8. Player — ALWAYS last (spec states this explicitly twice).
-        Player.Draw(spriteBatch);
+        // 8. Player — ALWAYS last (spec states this explicitly twice). It is not on the screen until it appears (ROM: RRG23.ASM PLS1).
+        if (_waveStart.HasPlayerAppeared())
+        {
+            Player.Draw(spriteBatch);
+        }
     }
 
     /// <summary>Copies the live score and lives to the player's session slot, every tick, so the HUD never lags (notes §97).</summary>
@@ -256,6 +265,10 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>Says whether the player is alive, and so can move, shoot and be hit.</summary>
     public bool IsPlayerAlive() => Player.IsAlive();
+
+    /// <summary>Says whether the game is live: the start of the wave is over, so the player can move and fire, things can touch the player, and the robots act.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS2</c>, <c>CLR STATUS</c>. Disassembly: <c>$289A</c>.</remarks>
+    public bool IsLive() => _waveStart.IsLive();
 
     /// <summary>Says whether the player has finished dying.</summary>
     public bool IsPlayerDead() => Player.IsDead();
@@ -518,9 +531,35 @@ public sealed class PlayField : ICollisionScene
         }
     }
 
-    /// <summary>Runs every collision rule in the arcade's order, then freezes the game for a moment if the player has just been killed.</summary>
+    /// <summary>Gets how many ROM frames after the wave is set up the game goes live (test hook).</summary>
+    /// <returns>The ROM frames.</returns>
+    internal int GetLiveRomFrames() => _waveStart.LiveRomFrames;
+
+    /// <summary>Gets how many ROM frames after the wave is set up the player appears (test hook).</summary>
+    /// <returns>The ROM frames.</returns>
+    internal int GetPlayerAppearRomFrames() => _waveStart.PlayerAppearRomFrames;
+
+    /// <summary>Says whether the player has appeared and is drawn (test hook).</summary>
+    internal bool HasPlayerAppeared() => _waveStart.HasPlayerAppeared();
+
+    /// <summary>Makes the game live at once, for a test of something that happens in play and not at the start of a wave (test hook).</summary>
+    internal void SkipWaveStart() => _waveStart.SkipToLive();
+
+    /// <summary>Counts the robots that the arcade keeps on its robot list, which are the ones its appear loop brings in. The count sets how long the start of the wave lasts.</summary>
+    /// <returns>How many there are on the field.</returns>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which walks <c>RPTR</c>. Disassembly: the list at <c>$9821</c>.</remarks>
+    private int CountRobotsOnTheRobotList() =>
+        RobotKinds.All.Where(kind => kind.IsOnRobotList).Sum(kind => Entities.GetEntities(kind.Kind).Count());
+
+    /// <summary>Runs every collision rule in the arcade's order, then freezes the game for a moment if the player has just been killed. Nothing collides until the game is live.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS2</c>, which makes the collision process (<c>MAKP COLCHK</c>) only as the game goes live. Disassembly: <c>$2895</c>.</remarks>
     private void ResolveCollisions()
     {
+        if (!IsLive())
+        {
+            return;
+        }
+
         bool playerWasAlive = Player.IsAlive();
 
         foreach (ICollisionRule rule in CollisionRules.InArcadeOrder)

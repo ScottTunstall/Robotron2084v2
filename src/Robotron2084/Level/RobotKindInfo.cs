@@ -22,6 +22,7 @@ namespace Robotron2084.Level;
 /// <param name="KillsPlayerOnContact">True when touching it kills the player.</param>
 /// <param name="Spawn">How the wave's own are put on the field; null when only another robot makes them.</param>
 /// <param name="IsChasedByDemoPlayer">True when the player in the attract demo steers towards it. It is false for the electrodes and the shots that the demo player dodges.</param>
+/// <param name="IsOnRobotList">True when the arcade keeps this kind on its robot list (<c>GETROB</c>), which is the list its appear loop walks at the start of a wave. The number of robots on that list sets when the player appears and the game goes live (<see cref="WaveStartSequence"/>).</param>
 public sealed record RobotKindInfo(
     RobotKind Kind,
     Func<LevelParameters, int>? WaveCount,
@@ -30,4 +31,5 @@ public sealed record RobotKindInfo(
     SoundSequence LaserHitSound,
     bool KillsPlayerOnContact = false,
     IWaveSpawner? Spawn = null,
-    bool IsChasedByDemoPlayer = true);
+    bool IsChasedByDemoPlayer = true,
+    bool IsOnRobotList = false);

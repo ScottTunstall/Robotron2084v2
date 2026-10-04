@@ -111,8 +111,9 @@ public sealed class GruntSpeedProgression
         }
     }
 
-    /// <summary>Counts one tick of the live game. When the time is up, and the grunts have dropped below <see cref="GruntCountThatHoldsTheFloor"/>, it lowers the floor, so the grunts may get faster still.</summary>
+    /// <summary>Counts the live play that has gone by. When the time is up, and the grunts have dropped below <see cref="GruntCountThatHoldsTheFloor"/>, it lowers the floor, so the grunts may get faster still.</summary>
     /// <param name="grunts">The field's grunts.</param>
+    /// <param name="clockUnits">How much live play has gone by since the last call, in clock units: a whole port tick's worth, or less on the tick the game goes live.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the part that updates the grunts' speed as the level progresses ("BONE HIM FOR STALLING")</item>
@@ -121,9 +122,9 @@ public sealed class GruntSpeedProgression
     /// At each check, <see cref="LargeFloorStep"/> beats are subtracted from the floor, or <see cref="SmallFloorStep"/> beats if the player has scored since the previous check, but the floor never goes below <see cref="LowestFloor"/>.
     /// Each live grunt's longest random wait is cut too, by <see cref="LimitStepPerFloorStep"/> times as much, though never below the new floor.
     /// </remarks>
-    public void Update(EntityList<Grunt> grunts)
+    public void Update(EntityList<Grunt> grunts, int clockUnits)
     {
-        _checkClockUnits += ArcadeClock.UnitsPerPortTick;
+        _checkClockUnits += clockUnits;
         ForgetScoreWhenTheExecutiveStarts();
         if (_checkClockUnits < ArcadeClock.ToClockUnits(_checkWaitRomFrames))
         {
