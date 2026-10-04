@@ -182,14 +182,19 @@ public sealed class PlayingState : IGameState
     {
         if (slot.SavedWave is { } saved)
         {
-            return BozoMode.Apply(saved, slot.SpareMen, _settings.TurnsPerPlayer);
+            return ApplyBozoMode(saved, slot);
         }
 
         // Bozo mercy first, then the difficulty adjustment — the ROM's own order ($2B26 before $2B7C).
-        LevelParameters parameters = _generator.Generate(slot.Wave);
-        parameters = BozoMode.Apply(parameters, slot.SpareMen, _settings.TurnsPerPlayer);
+        LevelParameters parameters = ApplyBozoMode(_generator.Generate(slot.Wave), slot);
         return DifficultyTuning.Apply(parameters, _settings.Difficulty, slot.Lives);
     }
+
+    /// <summary>Eases the wave for a player losing ships early, unless BOZO MODE is switched off on the GAME ADJUSTMENT page.</summary>
+    /// <param name="parameters">The wave's parameters.</param>
+    /// <param name="slot">The player whose turn it is.</param>
+    private LevelParameters ApplyBozoMode(LevelParameters parameters, PlayerSlot slot) =>
+        _settings.BozoModeEnabled ? BozoMode.Apply(parameters, slot.SpareMen, _settings.TurnsPerPlayer) : parameters;
 
     /// <summary>
     /// ROM RRG23 PLS0D: at the start of every 2-player turn the ROM prints
@@ -226,7 +231,9 @@ public sealed class PlayingState : IGameState
             slot.Score,
             _sprites.Blitter.Palette,
             contactTest: new PixelContactTest(new SpriteCollision()),
-            extraManEveryPoints: _settings.ExtraManEveryPoints);
+            extraManEveryPoints: _settings.ExtraManEveryPoints,
+            tankShellBug: _settings.TankShellBug,
+            brainsChaseMikeyBug: _settings.BrainsChaseMikeyBug);
     }
 
     /// <summary>

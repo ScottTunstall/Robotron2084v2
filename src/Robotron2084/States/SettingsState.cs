@@ -22,7 +22,8 @@ namespace Robotron2084.States;
 /// Only the arcade's gameplay rows are built (its coin/pricing rows are not): EXTRA MAN EVERY,
 /// TURNS PER PLAYER, DIFFICULTY OF PLAY, RESTORE FACTORY SETTINGS and HIGH SCORE TABLE RESET — plus
 /// the port's own ATTRACT MODE SOUND row, which keeps the attract sequence's sounds (the demo machine
-/// playing itself) controllable from this page.
+/// playing itself) controllable from this page, and its TANK SHELL BUG, BRAINS CHASE MIKEY BUG and
+/// BOZO MODE rows, which switch three of the arcade's own behaviours off.
 /// Every change is written straight to <c>settings.ini</c>, so the settings are there the next time
 /// the game starts whatever happens next.
 /// </summary>
@@ -48,7 +49,7 @@ public sealed class SettingsState : IGameState
     private const int InputSlot = 6;
     private const int InstructionsRow = 294;
     private const int LabelColumn = 75;
-    private const int LineStep = 36;
+    private const int LineStep = 24;
 
     // The value column clears the longest label ("RESTORE FACTORY SETTINGS", 24 small-font glyphs
     // ≈ 240 px from LabelColumn), and the descriptive word column clears the longest value.
