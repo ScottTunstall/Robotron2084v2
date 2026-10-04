@@ -34,7 +34,7 @@ public static class HudLayout
     /// sits on row 22, i.e. EIGHT rows above the wall — and the 8-row-tall mini men
     /// therefore finish on row 21, exactly adjacent to the wall. The port derives its
     /// HUD row the same way (wall top minus this many arcade pixels) instead of using
-    /// <see cref="ArcadeY"/>'s screen proportion, because the port's wall comes from
+    /// <see cref="ToPortY"/>'s screen proportion, because the port's wall comes from
     /// spec.txt's margin and is not at the arcade's 22/256 height: at ArcadeY(14) = 21
     /// the 12-px score glyphs and 16-px men ran through the 32..40 wall band, which is
     /// exactly the round-8 complaint ("the score also overlaps the border wall").
