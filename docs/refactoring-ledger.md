@@ -330,7 +330,7 @@ and do not come from the property names.
   in a property, and the scan in the standard finds 153 expression-bodied properties, many of them plain
   calculations (`HasMen`, `ExtraManEveryPoints`, `IsFinished`, `Spacing`, `RobotsFrozen`). Each is a public or
   internal member that callers use, so turning them into methods is a separate sweep, not done here. Some of
-  the 153 only return a field (`Bounds => _bounds`) and are allowed.
+  the 153 only return a field (`Bounds => _bounds`) and are allowed. `Brain.IsReprogramming` is the first one converted (now a method).
 - **The notes, the handoffs and `code-review-issues.md`** still use the old names. They are a record of their
   day. This ledger is how to read them.
 
