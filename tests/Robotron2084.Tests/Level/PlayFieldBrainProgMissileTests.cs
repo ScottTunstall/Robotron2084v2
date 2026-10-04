@@ -305,7 +305,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         // ROM BMUT: the brain STOPS and the pair run the 20-iteration animation
         // — the human is not a prog yet, and is off the human list.
-        Assert.True(brain.IsReprogramming);
+        Assert.True(brain.IsReprogramming());
         Assert.True(human.IsBeingReprogrammed);
         Assert.Equal(0, field.Entities.Progs.GetLiveCount());
         Assert.Empty(field.Entities.Skulls); // ROM BRNFLG — never a skull on conversion
@@ -330,7 +330,7 @@ public sealed class PlayFieldBrainProgMissileTests
             field.Update(Frame());
         }
 
-        Assert.True(brain.IsReprogramming);
+        Assert.True(brain.IsReprogramming());
         Assert.Equal(brainSpot, brain.Position);
         Assert.Equal(0, field.Entities.Progs.GetLiveCount());
 
@@ -341,7 +341,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         // Done: the human is gone, a PROG stands at its last position and keeps
         // its animation frames and box, and the brain is free to move again.
-        Assert.False(brain.IsReprogramming);
+        Assert.False(brain.IsReprogramming());
         Assert.NotEqual(EntityLifeState.Alive, human.LifeState);
         Assert.Equal(1, field.Entities.Progs.GetLiveCount());
         Assert.Equal(HumanKind.Mommy, field.Entities.Progs[0].Kind);
@@ -368,7 +368,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         RunFirstBeat(field);
 
-        Assert.True(brain.IsReprogramming);
+        Assert.True(brain.IsReprogramming());
         // The human could not fit on the left, so it went right…
         Assert.Equal(brain.Position.X + ScreenSize.ToPortPixelsFromColumns(8), human.Position.X);
         // …and the brain's sprite is BRNAR's frame 0 (BRRP1) — facing RIGHT.
@@ -392,7 +392,7 @@ public sealed class PlayFieldBrainProgMissileTests
         field.Entities.Brains.Add(brain);
 
         RunFirstBeat(field);
-        Assert.True(brain.IsReprogramming);
+        Assert.True(brain.IsReprogramming());
 
         brain.Kill(); // laser hit, mid-animation
         field.Update(Frame());
@@ -401,7 +401,7 @@ public sealed class PlayFieldBrainProgMissileTests
         Assert.Equal(EntityLifeState.Dead, human.LifeState);
         Assert.Equal(0, field.Entities.Progs.GetLiveCount()); // the conversion never completed
         Assert.Single(field.Entities.Skulls);
-        Assert.False(brain.IsReprogramming);
+        Assert.False(brain.IsReprogramming());
     }
 
     [Fact]
@@ -424,7 +424,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         RunFirstBeat(field);
 
-        Assert.False(brain.IsReprogramming);
+        Assert.False(brain.IsReprogramming());
     }
 
     [Fact]
@@ -447,7 +447,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         RunFirstBeat(field);
 
-        Assert.True(brain.IsReprogramming);
+        Assert.True(brain.IsReprogramming());
     }
 
     [Fact]
