@@ -17,10 +17,10 @@ namespace Robotron2084.Level;
 /// </remarks>
 public sealed class TransportImage
 {
-    /// <summary>A pixel that is not showing.</summary>
+    /// <summary>The value stored in <see cref="_pixels"/> for a pixel that is not showing. <see cref="GetPixel"/> returns it for such a pixel.</summary>
     public const int PixelOff = -1;
 
-    /// <summary>A pixel that is showing its own colour.</summary>
+    /// <summary>The value stored in <see cref="_pixels"/> for a pixel that is showing its own colour. <see cref="GetPixel"/> returns it for such a pixel.</summary>
     public const int PixelOwnColour = -2;
 
     /// <summary>What each pixel is showing, a row at a time: <see cref="PixelOff"/>, <see cref="PixelOwnColour"/>, or a sparkle's palette number.</summary>

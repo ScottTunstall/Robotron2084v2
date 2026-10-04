@@ -15,7 +15,7 @@ namespace Robotron2084.Level;
 /// </remarks>
 public sealed class WaveMaterialisation
 {
-    /// <summary>Picks every fourth robot of the sequence, which fans in by columns instead of rows.</summary>
+    /// <summary>Picks every fourth robot to fan in by columns instead of rows. It is used on <see cref="_sequenceNumber"/>, which counts the robots given an appear effect: the robot fans in by columns when the last two bits of that count are both set.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>ANDA #3 / CMPA #3</c>. Disassembly: not separately labelled.</remarks>
     private const int ColumnFanSequenceMask = 3;
 

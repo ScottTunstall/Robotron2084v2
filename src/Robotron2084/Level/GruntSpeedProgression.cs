@@ -11,50 +11,51 @@ namespace Robotron2084.Level;
 /// </list>
 /// A grunt has a beat every few ROM frames, and moves only after a random number of beats, so the fewer beats it waits, the faster it is. Each time a grunt dies, the
 /// grunts that are left have their waits made shorter. The floor is the fewest beats they may be brought down to, so it is the grunts' speed limit. Lowering the floor eases
-/// that limit and lets them get faster. The wave starts at the floor the wave table gives it (notes §31, §134). ROM frames come into this class only for the timing of the
-/// checks on the floor; the waits and the floor are counted in beats.
+/// that limit and lets them get faster. The wave starts at the floor the wave table gives it (notes §31, §134).
+/// Every so often the game makes a check on the floor, and ROM frames are used in this class only to time those checks. At a check the game lowers the floor,
+/// unless many grunts are still alive. The waits and the floor themselves are counted in beats.
 /// </remarks>
 public sealed class GruntSpeedProgression
 {
-    /// <summary>How many ROM frames pass before the floor is first looked at to see whether it can be lowered.</summary>
+    /// <summary>How many ROM frames the game waits, from the start of the wave, before its first check on whether to lower <see cref="Floor"/>. It is the starting value of <see cref="_updateTimer"/>, after conversion to port ticks.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which counts down eighteen passes of fifteen frames. Disassembly: <c>$2A85</c> to <c>$2B08</c>.</remarks>
     private const int FirstUpdateRomFrames = 18 * 15;
 
-    /// <summary>How many beats the floor is lowered by when the player has not scored since the last time it was looked at.</summary>
+    /// <summary>The number of beats subtracted from <see cref="Floor"/> at a check when the player has scored nothing since the previous check. A smaller <see cref="Floor"/> lets the grunts get faster.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the operand <c>$FEFC</c>. Disassembly: <c>$2AC7</c> to <c>$2AF1</c>.</remarks>
     private const int LargeFloorStep = 2;
 
-    /// <summary>How many times as much as the floor is lowered by the longest wait a grunt may pick is also cut, each time the floor is lowered.</summary>
+    /// <summary>Each time <see cref="Floor"/> is lowered, every grunt's longest wait (<see cref="Grunt.MoveDelayBeats"/>) is cut as well. This many times the number of beats subtracted from <see cref="Floor"/> is subtracted from it.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which changes <c>ROBSPD</c> along with the floor. Disassembly: <c>$BE5C</c>.</remarks>
     private const int LimitStepPerFloorStep = 2;
 
-    /// <summary>The lowest the floor goes. It is as fast as the player moves.</summary>
+    /// <summary>The smallest value <see cref="Floor"/> can ever have, in beats. A grunt waiting only this long is as fast as the player.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>. Disassembly: the player's steps at <c>$3031</c>, which are one pixel.</remarks>
     private const int LowestFloor = 1;
 
-    /// <summary>How many grunts must be alive, or more, for the floor to be left alone. The floor is only lowered when fewer than this are left.</summary>
+    /// <summary>If this many grunts or more are alive at a check, <see cref="Floor"/> is not lowered. It is only lowered at a check when fewer grunts than this are alive.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>CMPA #30 / BHS</c>. Disassembly: <c>$2ACA</c>.</remarks>
     private const int GruntCountThatHoldsTheFloor = 30;
 
-    /// <summary>How many beats the floor is lowered by when the player has scored since the last time it was looked at.</summary>
+    /// <summary>The number of beats subtracted from <see cref="Floor"/> at a check when the player has scored at least once since the previous check. It is smaller than <see cref="LargeFloorStep"/>, so a player who keeps scoring has the grunts speeded up more slowly.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the operand <c>$FFFE</c>. Disassembly: <c>$2AC7</c> to <c>$2AF1</c>.</remarks>
     private const int SmallFloorStep = 1;
 
-    /// <summary>How many ROM frames pass between one look at the floor and the next.</summary>
+    /// <summary>How many ROM frames the game waits between one check on whether to lower <see cref="Floor"/> and the next. It is put back into <see cref="_updateTimer"/> after each check, after conversion to port ticks.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which counts down fifteen passes of fifteen frames. Disassembly: <c>$2A85</c> to <c>$2B08</c>.</remarks>
     private const int UpdateIntervalRomFrames = 15 * 15;
 
-    /// <summary>True once the player has scored since the floor was last looked at.</summary>
+    /// <summary>True if the player has scored at least once since the previous check.</summary>
     private bool _scoredSinceLastPass;
 
-    /// <summary>Counts down to the next time the floor is looked at.</summary>
+    /// <summary>Counts down port ticks to the next check.</summary>
     private int _updateTimer = ArcadeClock.ToPortTicks(FirstUpdateRomFrames);
 
     /// <summary>Starts a wave at the floor the wave table gives it.</summary>
     /// <param name="initialFloor">The wave table's floor.</param>
     public GruntSpeedProgression(int initialFloor) => Floor = initialFloor;
 
-    /// <summary>Notes that the player has scored, so the next time the floor is lowered it is lowered by less. A player who scores nothing is punished for stalling, because the grunts get faster sooner.</summary>
+    /// <summary>Records that the player has scored, so the next check subtracts <see cref="SmallFloorStep"/> beats from the floor instead of <see cref="LargeFloorStep"/>. A player who scores nothing is punished for stalling, because the floor falls further and the grunts get faster sooner.</summary>
     /// <remarks>Original source: <c>RRS22.ASM</c> <c>SCOREV</c> (<c>INC SCRFLG</c>). Disassembly: <c>UPDATE_PLAYER_SCORE</c> (<c>$DB9C</c>).</remarks>
     public void NoteScore() => _scoredSinceLastPass = true;
 
@@ -86,7 +87,7 @@ public sealed class GruntSpeedProgression
     /// <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the part that updates the grunts' speed as the level progresses ("BONE HIM FOR STALLING")</item>
     /// <item>Disassembly: <c>$2AC7</c> to <c>$2AF1</c></item>
     /// </list>
-    /// The floor is lowered by <see cref="LargeFloorStep"/>, or by <see cref="SmallFloorStep"/> if the player has scored since the last time, but never below <see cref="LowestFloor"/>.
+    /// At each check, <see cref="LargeFloorStep"/> beats are subtracted from the floor, or <see cref="SmallFloorStep"/> beats if the player has scored since the previous check, but the floor never goes below <see cref="LowestFloor"/>.
     /// Each live grunt's longest random wait is cut too, by <see cref="LimitStepPerFloorStep"/> times as much, though never below the new floor.
     /// </remarks>
     public void Update(IEnumerable<Grunt> grunts)
