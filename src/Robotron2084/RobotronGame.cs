@@ -27,17 +27,17 @@ namespace Robotron2084;
 public sealed class RobotronGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
-    private Rectangle _canvas = new(0, 0, ScreenSize.Width, ScreenSize.Height);
+    private Rectangle _canvasBounds = new(0, 0, ScreenSize.Width, ScreenSize.Height);
     private ControlSettings _controlSettings = null!;
     private ControlSettingsStore _controlSettingsStore = null!;
     private SpriteFont _font = null!;
-    private bool _fullScreen;
+    private bool _isFullScreen;
     private GameSettings _gameSettings = null!;
     private GameSettingsStore _gameSettingsStore = null!;
     private HighScoreStore _highScoreStore = null!;
     private IPlayerInputSource _input = null!;
     private PaletteAnimator _paletteAnimator = null!;
-    private RenderTarget2D _playfield = null!;
+    private RenderTarget2D _renderTarget = null!;
     private KeyboardState _previousKeyboardState;
     private ScaleMode _scaleMode = ScaleMode.Integer;
     private GameServices _services = null!;
@@ -56,7 +56,7 @@ public sealed class RobotronGame : Game
     protected override void Draw(GameTime gameTime)
     {
         // 1. Render the ScreenSize.Width x ScreenSize.Height scene (states draw onto the already-cleared target).
-        GraphicsDevice.SetRenderTarget(_playfield);
+        GraphicsDevice.SetRenderTarget(_renderTarget);
         GraphicsDevice.Clear(Color.Black);
 
         _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp);
@@ -71,7 +71,7 @@ public sealed class RobotronGame : Game
         GraphicsDevice.Clear(Color.Black);
 
         _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp);
-        _spriteBatch.Draw(_playfield, _canvas, Color.White);
+        _spriteBatch.Draw(_renderTarget, _canvasBounds, Color.White);
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -87,14 +87,14 @@ public sealed class RobotronGame : Game
         // desktop; the window can be dragged to any size afterwards and the fit follows.
         Point workArea = DisplayInfo.GetWorkArea();
         _windowedScale = ScreenSize.ComputeMaxIntegerScale(workArea.X, workArea.Y);
-        ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, fullScreen: false);
+        ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, isFullScreen: false);
 
         base.Initialize();
     }
 
     protected override void LoadContent()
     {
-        _playfield = new RenderTarget2D(GraphicsDevice, ScreenSize.Width, ScreenSize.Height);
+        _renderTarget = new RenderTarget2D(GraphicsDevice, ScreenSize.Width, ScreenSize.Height);
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _font = Content.Load<SpriteFont>("Fonts/Default");
 
@@ -145,7 +145,7 @@ public sealed class RobotronGame : Game
         // The attract-cycle sound switch (notes §131): while the attract sequence is on screen and
         // ATTRACT MODE SOUND is off, the sound service ignores every request — a real game keeps its
         // sound.
-        Sound.AttractMuted = _gameSettings.AttractIsSilent(_stateManager.Current is IAttractState);
+        Sound.AttractMuted = _gameSettings.IsAttractSilent(_stateManager.Current is IAttractState);
 
         _paletteAnimator.Update();
         _stateManager.Update(gameTime);
@@ -169,19 +169,19 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>Sizes the backbuffer, and with it the window, and switches the screen mode with it.</summary>
-    private void ApplyBackBuffer(int width, int height, bool fullScreen)
+    private void ApplyBackBuffer(int width, int height, bool isFullScreen)
     {
-        _fullScreen = fullScreen;
+        _isFullScreen = isFullScreen;
         _graphics.PreferredBackBufferWidth = width;
         _graphics.PreferredBackBufferHeight = height;
-        _graphics.IsFullScreen = fullScreen;
+        _graphics.IsFullScreen = isFullScreen;
         _graphics.ApplyChanges();
         FitCanvas();
     }
 
     /// <summary>Re-solves where the canvas sits in the window's current client area.</summary>
     private void FitCanvas() =>
-        _canvas = Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, _scaleMode);
+        _canvasBounds = Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, _scaleMode);
 
     /// <summary>
     /// The port-only attract dev keys (notes §97, re-keyed in §101, §131 and §137): End the storyline movie,
@@ -204,19 +204,19 @@ public sealed class RobotronGame : Game
             return;
         }
 
-        if (Pressed(state, Keys.End))
+        if (WasPressed(state, Keys.End))
         {
             _stateManager.TransitionTo(new StorylineState(_services, new Random()));
         }
-        else if (Pressed(state, Keys.Home))
+        else if (WasPressed(state, Keys.Home))
         {
             _stateManager.TransitionTo(new AttractState(_services));
         }
-        else if (Pressed(state, Keys.Insert))
+        else if (WasPressed(state, Keys.Insert))
         {
             _stateManager.TransitionTo(new HighScoreTableState(_services));
         }
-        else if (Pressed(state, Keys.Delete))
+        else if (WasPressed(state, Keys.Delete))
         {
             StartEndOfGameFlow();
         }
@@ -230,11 +230,11 @@ public sealed class RobotronGame : Game
         // convention; F8 cycles the canvas fit between the largest whole multiple
         // (crisp, the default) and the exact uniform fraction (fills the window).
         bool altHeld = state.IsKeyDown(Keys.LeftAlt) || state.IsKeyDown(Keys.RightAlt);
-        if (Pressed(state, Keys.F11) || (altHeld && Pressed(state, Keys.Enter)))
+        if (WasPressed(state, Keys.F11) || (altHeld && WasPressed(state, Keys.Enter)))
         {
             ToggleFullScreen();
         }
-        else if (Pressed(state, Keys.F8))
+        else if (WasPressed(state, Keys.F8))
         {
             _scaleMode = Presentation.NextScaleMode(_scaleMode);
             FitCanvas();
@@ -257,27 +257,27 @@ public sealed class RobotronGame : Game
             return;
         }
 
-        GameMode? mode = Pressed(state, Keys.F1) ? GameMode.OnePlayer
-            : Pressed(state, Keys.F2) ? GameMode.TwoPlayerAlternate
-            : Pressed(state, Keys.F3) ? GameMode.TwoPlayerSimultaneous
+        GameMode? mode = WasPressed(state, Keys.F1) ? GameMode.OnePlayer
+            : WasPressed(state, Keys.F2) ? GameMode.TwoPlayerAlternate
+            : WasPressed(state, Keys.F3) ? GameMode.TwoPlayerSimultaneous
             : null;
 
         if (mode is { } chosen)
         {
             _stateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _sprites, _highScoreStore));
         }
-        else if (Pressed(state, Keys.F5))
+        else if (WasPressed(state, Keys.F5))
         {
             _stateManager.TransitionTo(new SettingsState(_services, _gameSettingsStore));
         }
-        else if (Pressed(state, Keys.F10))
+        else if (WasPressed(state, Keys.F10))
         {
             _stateManager.TransitionTo(new DefineInputsState(_services, _controlSettingsStore));
         }
     }
 
     /// <summary>True on the tick <paramref name="key"/> goes down (press, not hold).</summary>
-    private bool Pressed(KeyboardState current, Keys key) =>
+    private bool WasPressed(KeyboardState current, Keys key) =>
         !_previousKeyboardState.IsKeyDown(key) && current.IsKeyDown(key);
 
     /// <summary>Drops straight into the end of a game, with a score that has to qualify (notes §116).</summary>
@@ -293,13 +293,13 @@ public sealed class RobotronGame : Game
     /// <summary>Switches between the windowed window and borderless full screen at the desktop's own mode.</summary>
     private void ToggleFullScreen()
     {
-        if (_fullScreen)
+        if (_isFullScreen)
         {
-            ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, fullScreen: false);
+            ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, isFullScreen: false);
             return;
         }
 
-        Point desktop = DisplayInfo.GetDesktopResolution();
-        ApplyBackBuffer(desktop.X, desktop.Y, fullScreen: true);
+        Point desktopSize = DisplayInfo.GetDesktopResolution();
+        ApplyBackBuffer(desktopSize.X, desktopSize.Y, isFullScreen: true);
     }
 }
