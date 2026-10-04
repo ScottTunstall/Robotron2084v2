@@ -165,7 +165,11 @@ public sealed class PlayField : ICollisionScene
             return;
         }
 
-        _gruntSpeedProgression.Update(Entities.Grunts);
+        // The arcade times the grunt speed checks from when the game goes live (ROM: RRG23.ASM PLS2, CLR STATUS).
+        if (!Player.IsInStartGracePeriod)
+        {
+            _gruntSpeedProgression.Update(Entities.Grunts);
+        }
 
         _materialisation.Advance(Entities.Explosions, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds));
 

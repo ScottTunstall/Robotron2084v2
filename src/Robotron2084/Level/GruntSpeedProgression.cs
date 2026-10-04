@@ -12,7 +12,8 @@ namespace Robotron2084.Level;
 /// A grunt has a beat every few ROM frames, and moves only after a random number of beats, so the fewer beats it waits, the faster it is. Each time a grunt dies, the
 /// grunts that are left have their waits made shorter. The floor is the fewest beats they may be brought down to, so it is the grunts' speed limit. Lowering the floor eases
 /// that limit and lets them get faster. The wave starts at the floor the wave table gives it (notes §31, §134).
-/// Every so often the game makes a check on the floor, and ROM frames are used in this class only to time those checks. At a check the game lowers the floor,
+/// Every so often the game makes a check on the floor, and ROM frames are used in this class only to time those checks. The count of ROM frames starts when the game goes live
+/// (the arcade's <c>CLR STATUS</c> at <c>PLS2</c>, when the player may move and fire and the robots may act), so the playfield does not call <see cref="Update"/> before then. At a check the game lowers the floor,
 /// unless many grunts are still alive. The waits and the floor themselves are counted in beats.
 /// </remarks>
 public sealed class GruntSpeedProgression
@@ -21,17 +22,29 @@ public sealed class GruntSpeedProgression
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>NAP 15,GEXEC0</c>. Disassembly: <c>$2A85</c> to <c>$2B08</c>.</remarks>
     private const int PassRomFrames = 15;
 
-    /// <summary>How many passes the game counts, from the start of the wave, before its first check on whether to lower <see cref="Floor"/>. With <see cref="PassRomFrames"/> it gives <see cref="FirstCheckRomFrames"/>.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>LDA #18 / STA PD,U</c>. Disassembly: <c>$2A85</c> to <c>$2B08</c>.</remarks>
+    /// <summary>The pass on which the game makes its first check on whether to lower <see cref="Floor"/>. The game makes its first pass at once and then sleeps before each of the others, so one fewer than this many sleeps of <see cref="PassRomFrames"/> go by before the first check. It is used to work out <see cref="FirstCheckRomFrames"/>.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>LDA #18 / STA PD,U</c>, counted down by <c>DEC PD,U</c> on every pass, the first one included. Disassembly: <c>$2A87</c> and <c>$2ABF</c>.</remarks>
     private const int FirstCheckPasses = 18;
 
     /// <summary>How many passes the game counts between one check on whether to lower <see cref="Floor"/> and the next. With <see cref="PassRomFrames"/> it gives <see cref="CheckIntervalRomFrames"/>.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>LDA #15 / STA PD,U</c>. Disassembly: <c>$2A85</c> to <c>$2B08</c>.</remarks>
     private const int CheckIntervalPasses = 15;
 
-    /// <summary>How many ROM frames the game waits, from the start of the wave, before its first check on whether to lower <see cref="Floor"/>. It is the starting value of <see cref="_ticksUntilNextCheck"/>, after conversion to port ticks.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which counts down eighteen passes of fifteen frames. Disassembly: <c>$2A85</c> to <c>$2B08</c>.</remarks>
-    private const int FirstCheckRomFrames = FirstCheckPasses * PassRomFrames;
+    /// <summary>How many ROM frames the game sleeps after it goes live before it switches the robots on again. It is the first part of <see cref="ExecutiveStartRomFrames"/>.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>NAP 12,PLS3</c>, straight after <c>CLR STATUS</c> at <c>PLS2</c>. Disassembly: <c>$289A</c> to <c>$28A1</c>.</remarks>
+    private const int Pls3NapRomFrames = 12;
+
+    /// <summary>How many ROM frames the game then sleeps before it starts its loop of passes. It is the second part of <see cref="ExecutiveStartRomFrames"/>.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>NAP 10,PLS4</c>; <c>PLS4</c> runs on into <c>JMP GEXEC</c> with no more sleeps. Disassembly: <c>$28AA</c> to <c>$28D7</c>.</remarks>
+    private const int Pls4NapRomFrames = 10;
+
+    /// <summary>How many ROM frames go by, from when the game goes live, before the game starts its loop of passes. When <see cref="_checkClockUnits"/> has counted this many, the loop has started, and a score made before then is forgotten (<see cref="_hasPlayerScoredSinceLastCheck"/>).</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS2</c> to <c>HIDEND</c>; <c>GEXEC</c> opens with <c>CLR SCRFLG</c>. Disassembly: <c>$289A</c> to <c>$2A8B</c>.</remarks>
+    private const int ExecutiveStartRomFrames = Pls3NapRomFrames + Pls4NapRomFrames;
+
+    /// <summary>How many ROM frames go by, from when the game goes live, before its first check on whether to lower <see cref="Floor"/>. It is the starting value of <see cref="_checkWaitRomFrames"/>.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS2</c> to <c>GEXEC1</c>: the two sleeps before the loop starts, and then one sleep before every pass but the first. Disassembly: <c>$289A</c> to <c>$2AC5</c>.</remarks>
+    private const int FirstCheckRomFrames = ExecutiveStartRomFrames + ((FirstCheckPasses - 1) * PassRomFrames);
 
     /// <summary>The number of beats subtracted from <see cref="Floor"/> at a check when the player has scored nothing since the previous check. A smaller <see cref="Floor"/> lets the grunts get faster.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the operand <c>$FEFC</c>. Disassembly: <c>$2AC7</c> to <c>$2AF1</c>.</remarks>
@@ -53,15 +66,21 @@ public sealed class GruntSpeedProgression
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the operand <c>$FFFE</c>. Disassembly: <c>$2AC7</c> to <c>$2AF1</c>.</remarks>
     private const int SmallFloorStep = 1;
 
-    /// <summary>How many ROM frames the game waits between one check on whether to lower <see cref="Floor"/> and the next. It is put back into <see cref="_ticksUntilNextCheck"/> after each check, after conversion to port ticks.</summary>
+    /// <summary>How many ROM frames the game waits between one check on whether to lower <see cref="Floor"/> and the next. It is the value <see cref="_checkWaitRomFrames"/> has after the first check.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which counts down fifteen passes of fifteen frames. Disassembly: <c>$2A85</c> to <c>$2B08</c>.</remarks>
     private const int CheckIntervalRomFrames = CheckIntervalPasses * PassRomFrames;
 
     /// <summary>True if the player has scored at least once since the previous check.</summary>
     private bool _hasPlayerScoredSinceLastCheck;
 
-    /// <summary>Counts down port ticks to the next check.</summary>
-    private int _ticksUntilNextCheck = ArcadeClock.ToPortTicks(FirstCheckRomFrames);
+    /// <summary>Counts up to the next check, in clock units. It only counts while the game is live.</summary>
+    private int _checkClockUnits;
+
+    /// <summary>How many ROM frames <see cref="_checkClockUnits"/> counts up to before the next check.</summary>
+    private int _checkWaitRomFrames = FirstCheckRomFrames;
+
+    /// <summary>True once the game has started its loop of passes, which is <see cref="ExecutiveStartRomFrames"/> after the game goes live.</summary>
+    private bool _hasExecutiveStarted;
 
     /// <summary>Starts a wave at the floor the wave table gives it.</summary>
     /// <param name="initialFloor">The wave table's floor.</param>
@@ -92,7 +111,7 @@ public sealed class GruntSpeedProgression
         }
     }
 
-    /// <summary>Counts down one tick. When the time is up, and the grunts have dropped below <see cref="GruntCountThatHoldsTheFloor"/>, it lowers the floor, so the grunts may get faster still.</summary>
+    /// <summary>Counts one tick of the live game. When the time is up, and the grunts have dropped below <see cref="GruntCountThatHoldsTheFloor"/>, it lowers the floor, so the grunts may get faster still.</summary>
     /// <param name="grunts">The field's grunts.</param>
     /// <remarks>
     /// <list type="bullet">
@@ -104,12 +123,15 @@ public sealed class GruntSpeedProgression
     /// </remarks>
     public void Update(EntityList<Grunt> grunts)
     {
-        if (--_ticksUntilNextCheck > 0)
+        _checkClockUnits += ArcadeClock.UnitsPerPortTick;
+        ForgetScoreWhenTheExecutiveStarts();
+        if (_checkClockUnits < ArcadeClock.ToClockUnits(_checkWaitRomFrames))
         {
             return;
         }
 
-        _ticksUntilNextCheck = ArcadeClock.ToPortTicks(CheckIntervalRomFrames);
+        _checkClockUnits -= ArcadeClock.ToClockUnits(_checkWaitRomFrames);
+        _checkWaitRomFrames = CheckIntervalRomFrames;
 
         if (grunts.GetLiveCount() >= GruntCountThatHoldsTheFloor)
         {
@@ -124,5 +146,18 @@ public sealed class GruntSpeedProgression
         {
             grunt.WaveSpeedTick(Floor, LimitStepPerFloorStep * floorStep);
         }
+    }
+
+    /// <summary>Forgets any score made before the game started its loop of passes, at the moment the loop starts.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>CLR SCRFLG</c>. Disassembly: <c>$2A8B</c>.</remarks>
+    private void ForgetScoreWhenTheExecutiveStarts()
+    {
+        if (_hasExecutiveStarted || _checkClockUnits < ArcadeClock.ToClockUnits(ExecutiveStartRomFrames))
+        {
+            return;
+        }
+
+        _hasExecutiveStarted = true;
+        _hasPlayerScoredSinceLastCheck = false;
     }
 }
