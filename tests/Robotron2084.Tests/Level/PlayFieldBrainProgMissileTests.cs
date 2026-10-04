@@ -31,13 +31,8 @@ public sealed class PlayFieldBrainProgMissileTests
     /// <summary>
     /// Runs through the start of the wave, until the game is live and the robots are no longer held.
     /// </summary>
-    private static void WarmUp(PlayField field)
-    {
-        for (int tick = 0; tick < WaveStartTicks.UntilLive(field); tick++)
-        {
-            field.Update(Frame());
-        }
-    }
+    /// <summary>Makes the game live at once. These tests are of what a brain does in play, not of how long it waits at the start of a wave (which <c>RobotFirstMoveTests</c> covers).</summary>
+    private static void WarmUp(PlayField field) => field.SkipWaveStart();
 
     private static PlayField CreateField(LevelParameters parameters, IPlayerInputSource? input = null) =>
         new PlayFieldBuilder().WithParameters(parameters).WithInput(input ?? new FakeInputSource()).WithSeed(99).Build();
