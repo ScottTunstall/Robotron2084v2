@@ -45,7 +45,7 @@ Not traced.
 | `PlayField` | `PlayMovementSounds` (shells and grunts) | `PlayShellAndGruntMovementSounds` |
 | `WaveSurvivors` | `CountFamily` | `CountFamilyMembers` |
 | `GameSession` | `AnyMenLeft` | `AnyPlayerSlotHasMen` |
-| `WaveMaterialisation` | `RetireConverged` | `RetireConvergedRobots` |
+| `WaveMaterialisation` | `RetireConverged` (a robot whose appear effect had finished) | `FinishAssemblingRobots` |
 | `AttractPageMachine` | `ClearText` | `ClearTextCells` |
 
 The glossary entry for family members now says the word is **family member**.
