@@ -50,14 +50,23 @@ public sealed class PlayingState : IGameState
     private bool _restartHandled;       // one-shot so the death branch fires exactly once
     private int _turnMessageTicks;      // "PLAYER n" at a 2-player turn start (ROM NAP 115)
 
-    public PlayingState(SpriteSet sprites, HighScoreStore highScoreStore, GameSession session)
+    /// <summary>Makes the state for the wave the current player is about to play.</summary>
+    /// <param name="sprites">The sprite set that everything is drawn with.</param>
+    /// <param name="highScoreStore">The high score table, which is offered the scores when the game ends.</param>
+    /// <param name="session">The game in progress: its players, and whose turn it is.</param>
+    /// <param name="isStartOfTurn">True when a turn is starting, which is at the start of the game. The arcade shows whose turn it is then, and after a death, but not when a player goes on from one wave to the next.</param>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS000</c>, <c>LDA PCFLG / BNE PLS00C</c> ("NO DEATH.. NO MESSIE POOH"); <c>PCFLG</c> is set when a game starts and is left set when the player dies. Disassembly: <c>$27E7</c>.</remarks>
+    public PlayingState(SpriteSet sprites, HighScoreStore highScoreStore, GameSession session, bool isStartOfTurn = false)
     {
         _sprites = sprites;
         _highScoreStore = highScoreStore;
         _session = session;
         _gameSettings = session.GameSettings;
         _field = BuildField();
-        AnnounceTurn();
+        if (isStartOfTurn)
+        {
+            AnnounceTurn();
+        }
     }
 
     /// <summary>
@@ -81,12 +90,21 @@ public sealed class PlayingState : IGameState
         var playerOne = new BoundPlayerInputSource(controls, 0);
         var playerTwo = new BoundPlayerInputSource(controls, 1);
         Sound.Play(StartSoundFor(mode));
-        return new PlayingState(sprites, highScoreStore, GameSession.CreateNewGame(mode, playerOne, playerTwo, controls, settings));
+        return new PlayingState(sprites, highScoreStore, GameSession.CreateNewGame(mode, playerOne, playerTwo, controls, settings), isStartOfTurn: true);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        _field.Draw(spriteBatch);
+        // While the arcade shows whose turn it is, the wave has not been set up: only the wall and the scores are on the screen.
+        if (IsAnnouncingTurn())
+        {
+            _field.DrawWall(spriteBatch);
+        }
+        else
+        {
+            _field.Draw(spriteBatch);
+        }
+
         ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds());
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
 
@@ -110,7 +128,7 @@ public sealed class PlayingState : IGameState
             ArcadeHud.DrawMessageText(spriteBatch, _sprites, $"PLAYER {_playerOutNumber}", HudLayout.PlayerTurnMessageColumn, HudLayout.PlayerGameOverMessageRow, messageSlot);
             ArcadeHud.DrawMessageText(spriteBatch, _sprites, "GAME OVER", HudLayout.GameOverMessageColumn, HudLayout.GameOverMessageRow, messageSlot);
         }
-        else if (_turnMessageTicks > 0)
+        else if (IsAnnouncingTurn())
         {
             // ROM string 103: "PLAYER n" at $3F7A, in the wave's electrode colour
             // (PLS0D: LDA PSTCOL / STA TEXCOL), for NAP 115.
@@ -143,9 +161,11 @@ public sealed class PlayingState : IGameState
             return;
         }
 
-        if (_turnMessageTicks > 0)
+        // "PLAYER n" is a wait too, and it comes before the wave is set up (ROM: NAP 115,PLS0B, then PLS0A), so the field does not start until it is over.
+        if (IsAnnouncingTurn())
         {
             _turnMessageTicks--;
+            return;
         }
 
         _field.Update(gameTime);
@@ -200,15 +220,18 @@ public sealed class PlayingState : IGameState
     private LevelParameters ApplyBozoMode(LevelParameters parameters, PlayerSlot slot) =>
         _gameSettings.BozoModeEnabled ? BozoMode.Apply(parameters, slot.SpareMen, _gameSettings.TurnsPerPlayer) : parameters;
 
-    /// <summary>
-    /// ROM RRG23 PLS0D: at the start of every 2-player turn the ROM prints
-    /// "PLAYER n" at the screen centre and waits NAP 115 before erasing it. A
-    /// 1-player game skips it entirely (<c>LDA PLRCNT / DECA / BEQ PLS0A</c>).
-    /// </summary>
     /// <summary>The start sound for a mode: <c>ST1SND</c> for one player, <c>ST2SND</c> for two (RRG23 <c>SST01</c>, from <c>PLRCNT</c>).</summary>
     private static SoundSequence StartSoundFor(GameMode mode) =>
         mode == GameMode.OnePlayer ? SoundTables.StartOnePlayer : SoundTables.StartTwoPlayers;
 
+    /// <summary>Says whether the "PLAYER n" message is on the screen. The wave is not set up until it has gone.</summary>
+    internal bool IsAnnouncingTurn() => _turnMessageTicks > 0;
+
+    /// <summary>
+    /// Starts the "PLAYER n" message at the start of a turn in a two-player game. The arcade prints it in the middle of the screen and waits before it rubs it out and sets the wave up.
+    /// A one-player game has no such message.
+    /// </summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS0D</c>, <c>LDA PLRCNT / DECA / BEQ PLS0A</c> ("1 PLAYER GAME"), then <c>NAP 115,PLS0B</c> ("PLAYER UP MESSAGE"). Disassembly: <c>$2803</c> to <c>$281A</c>.</remarks>
     private void AnnounceTurn()
     {
         _turnMessageTicks = _session.IsTwoPlayer
