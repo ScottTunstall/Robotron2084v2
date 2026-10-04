@@ -57,11 +57,11 @@ public sealed class PaletteAnimator
         _random = random ?? new Random();
         _processes =
         [
-            new() { Slot = 11, Table = [0x38, 0x07, 0xC0], RomFramesPerStep = 8 },   // RGB
-            new() { Slot = 12, Table = [0xC0, 0xC0, 0xD0, 0xE0, 0xF0, 0xF8, 0xFA, 0xBA, 0x7A, 0x3A, 0x34, 0x2D, 0x1F, 0x17, 0x0F, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00], RomFramesPerStep = 2 }, // DECAY
-            new() { Slot = 14, Table = [0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0x87, 0x87, 0x47, 0x47, 0x07, 0x07, 0x47, 0x47, 0x87, 0x87, 0xC7, 0xC7, 0xC6, 0xC5, 0xC4, 0xC3, 0xC2, 0xC1], RomFramesPerStep = 1 }, // BLU-PURP-RED
-            new() { Slot = 15, Table = [0x07, 0x07, 0x2F], RomFramesPerStep = 6 },   // RED-GOLD
-            new() { Slot = 13, Table = LaserTab, RomFramesPerStep = 2 },             // LASER
+            new() { Slot = 11, ColourTable = [0x38, 0x07, 0xC0], RomFramesPerStep = 8 },   // RGB
+            new() { Slot = 12, ColourTable = [0xC0, 0xC0, 0xD0, 0xE0, 0xF0, 0xF8, 0xFA, 0xBA, 0x7A, 0x3A, 0x34, 0x2D, 0x1F, 0x17, 0x0F, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00], RomFramesPerStep = 2 }, // DECAY
+            new() { Slot = 14, ColourTable = [0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0x87, 0x87, 0x47, 0x47, 0x07, 0x07, 0x47, 0x47, 0x87, 0x87, 0xC7, 0xC7, 0xC6, 0xC5, 0xC4, 0xC3, 0xC2, 0xC1], RomFramesPerStep = 1 }, // BLU-PURP-RED
+            new() { Slot = 15, ColourTable = [0x07, 0x07, 0x2F], RomFramesPerStep = 6 },   // RED-GOLD
+            new() { Slot = 13, ColourTable = LaserTab, RomFramesPerStep = 2 },             // LASER
         ];
     }
 
@@ -88,33 +88,33 @@ public sealed class PaletteAnimator
                     : (byte)0xFF);
         }
 
-        foreach (Process p in _processes)
+        foreach (Process process in _processes)
         {
             // A suspended slot is a KILLED process in the ROM: it does not even
             // advance, so resuming restarts it where it left off.
-            if (_palette.IsSlotSuspended(p.Slot))
+            if (_palette.IsSlotSuspended(process.Slot))
             {
                 continue;
             }
 
-            p.ClockUnits += ArcadeClock.UnitsPerPortTick;
-            if (p.ClockUnits < ArcadeClock.ToClockUnits(p.RomFramesPerStep))
+            process.ClockUnits += ArcadeClock.UnitsPerPortTick;
+            if (process.ClockUnits < ArcadeClock.ToClockUnits(process.RomFramesPerStep))
             {
                 continue;
             }
 
-            p.ClockUnits -= ArcadeClock.ToClockUnits(p.RomFramesPerStep);
-            _palette.SetSlot(p.Slot, p.Table[p.Index]);
-            p.Index = (p.Index + 1) % p.Table.Length;
+            process.ClockUnits -= ArcadeClock.ToClockUnits(process.RomFramesPerStep);
+            _palette.SetSlot(process.Slot, process.ColourTable[process.ColourIndex]);
+            process.ColourIndex = (process.ColourIndex + 1) % process.ColourTable.Length;
         }
     }
 
     private sealed class Process
     {
         public int ClockUnits;
-        public int Index;
+        public int ColourIndex;
         public int RomFramesPerStep = 1;
         public int Slot;
-        public byte[] Table = [];
+        public byte[] ColourTable = [];
     }
 }

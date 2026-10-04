@@ -74,11 +74,11 @@ public sealed class HighScorePalette
         // (`LDX #CATAB+7` "OUT OF PHASE PLEASE", `LDX #CCTAB+7").
         _processes =
         [
-            new() { Slot = LoopSlot, Table = CycleTable, RomFramesPerStep = 3 },
-            new() { Slot = 9, Table = RampTable, Index = 7, RomFramesPerStep = 4 },
-            new() { Slot = 10, Table = RampTable, RomFramesPerStep = 4 },
-            new() { Slot = 12, Table = AccentTable, Index = 7, RomFramesPerStep = 4 },
-            new() { Slot = 13, Table = AccentTable, RomFramesPerStep = 4 },
+            new() { Slot = LoopSlot, ColourTable = CycleTable, RomFramesPerStep = 3 },
+            new() { Slot = 9, ColourTable = RampTable, ColourIndex = 7, RomFramesPerStep = 4 },
+            new() { Slot = 10, ColourTable = RampTable, RomFramesPerStep = 4 },
+            new() { Slot = 12, ColourTable = AccentTable, ColourIndex = 7, RomFramesPerStep = 4 },
+            new() { Slot = 13, ColourTable = AccentTable, RomFramesPerStep = 4 },
         ];
     }
 
@@ -103,7 +103,7 @@ public sealed class HighScorePalette
             palette.SuspendSlot(slot);
         }
 
-        Apply(palette, _processes[0], _processes[0].Table[_processes[0].Index]);
+        Apply(palette, _processes[0], _processes[0].ColourTable[_processes[0].ColourIndex]);
     }
 
     /// <summary>
@@ -122,7 +122,7 @@ public sealed class HighScorePalette
         RampsStarted = true;
         for (int i = RampProcessStart; i < _processes.Length; i++)
         {
-            Apply(palette, _processes[i], _processes[i].Table[_processes[i].Index]);
+            Apply(palette, _processes[i], _processes[i].ColourTable[_processes[i].ColourIndex]);
         }
     }
 
@@ -135,7 +135,7 @@ public sealed class HighScorePalette
     {
         for (int slot = 0; slot <= 15; slot++)
         {
-            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
+            palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
         }
 
         foreach (int slot in OwnedSlots)
@@ -163,8 +163,8 @@ public sealed class HighScorePalette
             }
 
             process.ClockUnits -= period;
-            process.Index = Advance(process.Table, process.Index);
-            Apply(palette, process, process.Table[process.Index]);
+            process.ColourIndex = Advance(process.ColourTable, process.ColourIndex);
+            Apply(palette, process, process.ColourTable[process.ColourIndex]);
         }
     }
 
@@ -195,7 +195,7 @@ public sealed class HighScorePalette
         // shift register, so the wall's colour history walks down slots 7…1 behind it.
         for (int slot = 1; slot <= 7; slot++)
         {
-            palette.SetSlot(slot, (byte)palette.SlotValue(slot + 1));
+            palette.SetSlot(slot, (byte)palette.GetSlotValue(slot + 1));
         }
 
         palette.SetSlot(8, value);
@@ -204,9 +204,9 @@ public sealed class HighScorePalette
     private sealed class Process
     {
         public int ClockUnits;
-        public int Index;
+        public int ColourIndex;
         public int RomFramesPerStep;
         public int Slot;
-        public byte[] Table = [];
+        public byte[] ColourTable = [];
     }
 }

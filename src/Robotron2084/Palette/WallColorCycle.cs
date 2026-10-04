@@ -11,16 +11,16 @@ namespace Robotron2084.Palette;
 /// </summary>
 public sealed class WallColorCycle
 {
-    private readonly IReadOnlyList<Color> _palette;
+    private readonly IReadOnlyList<Color> _colours;
     private readonly TimeSpan _stepDuration;
     private TimeSpan _elapsed;
-    private int _index;
+    private int _colourIndex;
 
-    public WallColorCycle(IReadOnlyList<Color>? palette = null, TimeSpan? stepDuration = null)
+    public WallColorCycle(IReadOnlyList<Color>? colours = null, TimeSpan? stepDuration = null)
     {
-        _palette = palette ?? WavePaletteTables.DefaultWallPalette;
+        _colours = colours ?? WavePaletteTables.DefaultWallPalette;
         _stepDuration = stepDuration ?? TimeSpan.FromMilliseconds(WavePaletteTables.WallStepDurationMilliseconds);
-        CurrentColor = _palette[0];
+        CurrentColor = _colours[0];
     }
 
     /// <summary>The wall colour for the current step.</summary>
@@ -32,8 +32,8 @@ public sealed class WallColorCycle
         while (_elapsed >= _stepDuration)
         {
             _elapsed -= _stepDuration;
-            _index = (_index + 1) % _palette.Count;
-            CurrentColor = _palette[_index];
+            _colourIndex = (_colourIndex + 1) % _colours.Count;
+            CurrentColor = _colours[_colourIndex];
         }
     }
 }

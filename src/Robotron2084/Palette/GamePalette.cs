@@ -25,29 +25,29 @@ public sealed class GamePalette
     ];
 
     /// <summary>ROM default palette (CRTAB, ROM $DA51) — the initial 16 slots.</summary>
-    public static readonly byte[] DefaultSlots =
+    public static readonly byte[] DefaultSlotValues =
     [
         0x00, 0x07, 0x17, 0xC7, 0x1F, 0x3F, 0x38, 0xC0,
         0xA4, 0xFF, 0x38, 0x17, 0xCC, 0x81, 0x81, 0x07,
     ];
 
-    private readonly byte[] _slots = (byte[])DefaultSlots.Clone();
-    private readonly bool[] _suspended = new bool[16];
+    private readonly byte[] _slotValues = (byte[])DefaultSlotValues.Clone();
+    private readonly bool[] _suspendedSlots = new bool[16];
 
     /// <summary>The live RGB of a slot.</summary>
-    public Color Color(int slot) => RobotronColor.CreateFromByte(_slots[slot]);
+    public Color GetColour(int slot) => RobotronColor.CreateFromByte(_slotValues[slot]);
 
     /// <summary>True while a slot's colour process is stopped.</summary>
-    public bool IsSlotSuspended(int slot) => _suspended[slot];
+    public bool IsSlotSuspended(int slot) => _suspendedSlots[slot];
 
     /// <summary>Lets a slot's colour process run again (the ROM's `COLST`).</summary>
-    public void ResumeSlot(int slot) => _suspended[slot] = false;
+    public void ResumeSlot(int slot) => _suspendedSlots[slot] = false;
 
     /// <summary>Writes a slot's current colour code (the colour processes do this).</summary>
-    public void SetSlot(int slot, byte value) => _slots[slot] = value;
+    public void SetSlot(int slot, byte value) => _slotValues[slot] = value;
 
     /// <summary>The current 8-bit colour code of a slot (0-15).</summary>
-    public int SlotValue(int slot) => _slots[slot];
+    public int GetSlotValue(int slot) => _slotValues[slot];
 
     /// <summary>
     /// Freezes a slot's colour process (the ROM's "KILL OFF DECAY": the player
@@ -55,7 +55,7 @@ public sealed class GamePalette
     /// slot's process neither steps nor writes; <see cref="ResumeSlot"/> is the
     /// ROM's `COLST`, which recreates the colour processes afterwards.
     /// </summary>
-    public void SuspendSlot(int slot) => _suspended[slot] = true;
+    public void SuspendSlot(int slot) => _suspendedSlots[slot] = true;
 
     /// <summary>
     /// Pushes the live colours of the six cycling slots (10-15) into the
@@ -66,8 +66,8 @@ public sealed class GamePalette
     {
         for (int slot = 10; slot <= 15; slot++)
         {
-            Color c = Color(slot);
-            effect.Parameters[$"Live{slot}"].SetValue(new Vector4(c.R / 255f, c.G / 255f, c.B / 255f, 1f));
+            Color colour = GetColour(slot);
+            effect.Parameters[$"Live{slot}"].SetValue(new Vector4(colour.R / 255f, colour.G / 255f, colour.B / 255f, 1f));
         }
     }
 }

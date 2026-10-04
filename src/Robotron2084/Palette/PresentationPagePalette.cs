@@ -94,7 +94,7 @@ public sealed class PresentationPagePalette
     {
         for (int slot = FirstSlot; slot <= LastSlot; slot++)
         {
-            palette.SetSlot(slot, GamePalette.DefaultSlots[slot]);
+            palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
         }
     }
 
@@ -102,7 +102,7 @@ public sealed class PresentationPagePalette
     public void Update(GamePalette palette)
     {
         _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
-        if (StepDue(ref _chaseClockUnits, ChaseRomFramesPerStep))
+        if (IsStepDue(ref _chaseClockUnits, ChaseRomFramesPerStep))
         {
             _chaseSlot = _chaseSlot >= LastSlot ? FirstSlot : _chaseSlot + 1;
             Start(palette); // the ROM re-copies the table on every step...
@@ -110,14 +110,14 @@ public sealed class PresentationPagePalette
         }
 
         _wordmarkClockUnits += ArcadeClock.UnitsPerPortTick;
-        if (StepDue(ref _wordmarkClockUnits, WordmarkRomFramesPerStep))
+        if (IsStepDue(ref _wordmarkClockUnits, WordmarkRomFramesPerStep))
         {
             _wordmarkStep = (_wordmarkStep + 1) % _slotCount;
         }
     }
 
     /// <summary>True when a clock's accumulator has reached <paramref name="romFrames"/> frames.</summary>
-    private static bool StepDue(ref int clockUnits, int romFrames)
+    private static bool IsStepDue(ref int clockUnits, int romFrames)
     {
         int period = ArcadeClock.ToClockUnits(romFrames);
         if (clockUnits < period)

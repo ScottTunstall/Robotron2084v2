@@ -33,7 +33,7 @@ public sealed class TunnelPalette
     /// How far the window slides each pass. `$59D2`'s `LEAX $0001,X` bumps the STORED pointer —
     /// the current window's first value — so the wheel advances one value a pass and sweeps the
     /// whole ramp in a couple of seconds, which is the "cycling" in the effect's name.
-    ///  It is added to <see cref="_pointer"/> on each pass.</summary>
+    ///  It is added to <see cref="_windowStartIndex"/> on each pass.</summary>
     internal const int SlidePerPass = 1;
 
     /// <summary>How many slots a ramp fills (the ROM's `CMPY #$9810`).</summary>
@@ -79,7 +79,7 @@ public sealed class TunnelPalette
 
     private readonly Random _random;
     private int _blackOffset = 4;
-    private int _pointer;
+    private int _windowStartIndex;
     private int _rampIndex;
 
     public TunnelPalette(Random? random = null) => _random = random ?? new Random();
@@ -88,7 +88,7 @@ public sealed class TunnelPalette
     internal int BlackOffset => _blackOffset;
 
     /// <summary>Where the fifteen-value window starts in that ramp (test hook).</summary>
-    internal int Pointer => _pointer;
+    internal int WindowStartIndex => _windowStartIndex;
 
     /// <summary>Which ramp is running (test hook).</summary>
     internal int RampIndex => _rampIndex;
@@ -99,11 +99,11 @@ public sealed class TunnelPalette
     /// </summary>
     public void Advance()
     {
-        _pointer += SlidePerPass;
+        _windowStartIndex += SlidePerPass;
         byte[] ramp = Ramps[_rampIndex];
-        while (_pointer >= ramp.Length)
+        while (_windowStartIndex >= ramp.Length)
         {
-            _pointer -= ramp.Length;
+            _windowStartIndex -= ramp.Length;
         }
 
         _blackOffset = _blackOffset == 0 ? 4 : _blackOffset - 1;
@@ -116,7 +116,7 @@ public sealed class TunnelPalette
     public void Apply(GamePalette palette)
     {
         byte[] ramp = Ramps[_rampIndex];
-        int index = _pointer;
+        int index = _windowStartIndex;
         for (int slot = 0; slot < SlotCount; slot++)
         {
             palette.SetSlot(FirstSlot + slot, ramp[index]);
@@ -141,7 +141,7 @@ public sealed class TunnelPalette
     public void Start()
     {
         _rampIndex = _random.Next(Ramps.Length);
-        _pointer = (_random.Next() & StartMasks[_rampIndex]) % Ramps[_rampIndex].Length;
+        _windowStartIndex = (_random.Next() & StartMasks[_rampIndex]) % Ramps[_rampIndex].Length;
         _blackOffset = 4;
     }
 }
