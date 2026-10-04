@@ -23,10 +23,11 @@ public static class SpawnTuning
     public const int HulkMinDistanceFromPlayer = 35;
 
     /// <summary>
-    /// The shells a wave's tanks may fire. Only a laser KILL gives one back (the fizzle bug, notes §53), so late in
-    /// the wave the tanks stop firing.
+    /// A tank may fire while the wave's shell count is no higher than this, so twenty-one shells can be fired. Only a
+    /// laser KILL gives one back (the fizzle bug, notes §53), so late in the wave the tanks stop firing.
     /// </summary>
-    public const int ShellsPerWave = 20;
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>CMPA #20 / LBHI TNKFX</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4E59</c>.</remarks>
+    public const int ShellCountLimit = 20;
 
     public const int SpawnPlacementMaxAttempts = 100;
 
