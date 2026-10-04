@@ -59,6 +59,7 @@ Not traced.
   pass (15 ROM frames) late. It was not changed: the test says "first at 270" and it needs the author's say-so first.
 - **Grunts made mid-wave** (`MidWaveSpawner`, Gorf's drops) start with the wave's starting limit, not the current eased
   one. The ROM has one global limit that every grunt shares and makes no grunts mid-wave, so this is a port-only choice.
+  **Decided by the author: it stays. Gorf drops slow grunts, and nothing is to be changed.**
 
 ### How it was checked
 
