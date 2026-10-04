@@ -12,6 +12,10 @@ namespace Robotron2084.Level;
 /// <item>Disassembly: not separately labelled</item>
 /// </list>
 /// A robot waits, still and unseen, from the moment it is queued (notes §61.4).
+/// <para>
+/// "Transport" in the names here is the arcade's own name for beaming the robots in at the start of a brain wave: the original source calls that effect the transporter
+/// (<c>RRT2.ASM</c>, titled <c>TRANSPORTER</c>, started by <c>TRNSTV</c>, "START TRANSPORTING"). Here it is done by <see cref="RobotTransporter"/>.
+/// </para>
 /// </remarks>
 public sealed class WaveMaterialisation
 {
@@ -25,7 +29,7 @@ public sealed class WaveMaterialisation
     /// <summary>The robots waiting for their turn to appear.</summary>
     private readonly Queue<IEntity> _pending = new();
 
-    /// <summary>The robots waiting to be beamed in together, when the wave is a brain wave.</summary>
+    /// <summary>The robots waiting to be beamed in together, when the wave is a brain wave. "Transport" is the arcade's own word for beaming in.</summary>
     private readonly List<IEntity> _transportQueue = [];
 
     /// <summary>The robots being beamed in.</summary>
@@ -74,6 +78,13 @@ public sealed class WaveMaterialisation
     /// <summary>Draws the robots being beamed in, when this is a brain wave and the beaming is under way.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The sprite set.</param>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRT2.ASM</c>, the transporter, which draws each image where its robots stand (<c>TRNLP</c>)</item>
+    /// <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>)</item>
+    /// </list>
+    /// "Transport" is the arcade's own word for beaming the robots in.
+    /// </remarks>
     public void DrawTransport(SpriteBatch spriteBatch, SpriteSet sprites)
     {
         if (_transportBegun && _transporter is { IsFinished: false })
@@ -102,6 +113,12 @@ public sealed class WaveMaterialisation
 
     /// <summary>Starts the beaming in once the robots are all queued, moves it on, and lets the robots go when it has finished.</summary>
     /// <param name="transporter">The transporter that does the beaming in.</param>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRT2.ASM</c> <c>TRNSTV</c> ("START TRANSPORTING"), which <c>RRG23.ASM</c> starts with <c>MAKP TRANST</c> on a brain wave</item>
+    /// <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>)</item>
+    /// </list>
+    /// </remarks>
     private void AdvanceTransport(RobotTransporter transporter)
     {
         if (!_transportBegun && _transportQueue.Count > 0)

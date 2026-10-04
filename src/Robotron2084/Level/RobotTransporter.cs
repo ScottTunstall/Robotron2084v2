@@ -14,6 +14,7 @@ namespace Robotron2084.Level;
 /// </list>
 /// Every ROM frame it takes one step of each image, and it draws each image where its robots stand. The sound is the transporter's own
 /// (<see cref="Audio.Sound.PlayTransporter"/>). Other waves use the strip appear instead (<see cref="WaveMaterialisation"/>).
+/// "Transporter" is the arcade's own name for beaming the robots in at the start of a brain wave (<c>RRT2.ASM</c> is titled <c>TRANSPORTER</c>).
 /// </remarks>
 public sealed class RobotTransporter
 {
