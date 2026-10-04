@@ -24,10 +24,10 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
     /// <summary>ROM <c>HNDX</c>/<c>HNDY</c>: the aim is the target's coordinate plus at least this many arcade px.</summary>
     private const int AimOffsetMinArcadePixels = -16;
 
-    /// <summary>One more than the most steps a hulk may take before it aims again. The number of steps is picked at random, from <see cref="ReaimStepsMin"/> up to one less than this, and counted down in <see cref="_stepsUntilReaim"/>.</summary>
+    /// <summary>One more than the most steps a hulk may take before it aims again. The number of steps is picked at random, from <see cref="ReaimStepsMin"/> up to one less than this, and counted down in <see cref="_reaimStepsRemaining"/>.</summary>
     private const int ReaimStepsMaxExclusive = 32;
 
-    /// <summary>The fewest steps a hulk takes before it aims again. The number of steps is picked at random, from this up to one less than <see cref="ReaimStepsMaxExclusive"/>, and counted down in <see cref="_stepsUntilReaim"/>.</summary>
+    /// <summary>The fewest steps a hulk takes before it aims again. The number of steps is picked at random, from this up to one less than <see cref="ReaimStepsMaxExclusive"/>, and counted down in <see cref="_reaimStepsRemaining"/>.</summary>
     private const int ReaimStepsMin = 1;
 
     /// <summary>ROM <c>HULKIL</c>: how much a doubled sideways shove is multiplied.</summary>
