@@ -128,6 +128,31 @@ public sealed class SettingsModelTests
     }
 
     [Theory]
+    [InlineData(SettingsModel.TankShellBugLine)]
+    [InlineData(SettingsModel.BrainsChaseMikeyBugLine)]
+    [InlineData(SettingsModel.BozoModeLine)]
+    public void TheBugAndBozoRowsAreOnFromTheFactory_AndLeftTurnsThemOff(int line)
+    {
+        var model = new SettingsModel();
+        var settings = new GameSettings();
+        GoTo(model, line);
+
+        Assert.Equal("ON", model.GetValue(settings, line));
+        Assert.Equal("RECOMMENDED", SettingsModel.GetNote(settings, line));
+
+        model.Change(settings, -1);
+        Assert.Equal("OFF", model.GetValue(settings, line));
+        Assert.Equal(string.Empty, SettingsModel.GetNote(settings, line));
+
+        // Only the highlighted row changed.
+        int off = new[] { settings.TankShellBug, settings.BrainsChaseMikeyBug, settings.BozoModeEnabled }.Count(on => !on);
+        Assert.Equal(1, off);
+
+        model.Change(settings, 1);
+        Assert.Equal("ON", model.GetValue(settings, line));
+    }
+
+    [Theory]
     [InlineData(0, "0", "NO EXTRA MEN")]
     [InlineData(25, "25000", "RECOMMENDED")]
     [InlineData(50, "50000", "EXTRA CONSERVATIVE")]

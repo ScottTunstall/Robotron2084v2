@@ -43,6 +43,68 @@ public sealed class TankShellTests
     }
 
     [Fact]
+    public void TanksStopFiringOnceTheShellCountIsOverTwenty_AndOnlyALaserKillGivesAShellBack()
+    {
+        PlayField field = new PlayFieldBuilder().Build();
+        Rectangle bounds = field.Wall.PlayfieldBounds;
+        IntVector2 tank = new(bounds.X + 200, bounds.Y + 100);
+
+        // CMPA #20 / LBHI: a count of 20 still fires, so the twenty-first shell is the last (R5 $4E57 to $4E5F).
+        int fired = 0;
+        while (field.CanFireShell() && fired < 100)
+        {
+            field.SpawnTankShell(tank);
+            fired++;
+        }
+
+        Assert.Equal(SpawnTuning.ShellCountLimit + 1, fired);
+
+        // A shell that fizzles out does not give its place back (SHELL never does DEC SHLCNT).
+        for (int tick = 0; tick < 1000 && field.Entities.TankShells.Any(shell => shell.IsAlive()); tick++)
+        {
+            foreach (TankShell shell in field.Entities.TankShells.ToList())
+            {
+                shell.Update(new GameTime(), field);
+            }
+        }
+
+        Assert.DoesNotContain(field.Entities.TankShells, shell => shell.IsAlive());
+        Assert.False(field.CanFireShell());
+
+        // A laser kill does (SHLKIL, R5 $4FD9).
+        field.CountShellDestroyed();
+        Assert.True(field.CanFireShell());
+    }
+
+    [Fact]
+    public void WithTheTankShellBugSwitchedOff_AShellThatIsGoneGivesItsPlaceBack()
+    {
+        PlayField field = new PlayFieldBuilder().WithTankShellBug(false).Build();
+        Rectangle bounds = field.Wall.PlayfieldBounds;
+        IntVector2 tank = new(bounds.X + 200, bounds.Y + 100);
+
+        int fired = 0;
+        while (field.CanFireShell() && fired < 100)
+        {
+            field.SpawnTankShell(tank);
+            fired++;
+        }
+
+        // The limit on how many are out at once is still the ROM's.
+        Assert.Equal(SpawnTuning.ShellCountLimit + 1, fired);
+
+        for (int tick = 0; tick < 1000 && field.Entities.TankShells.Any(shell => shell.IsAlive()); tick++)
+        {
+            foreach (TankShell shell in field.Entities.TankShells.ToList())
+            {
+                shell.Update(new GameTime(), field);
+            }
+        }
+
+        Assert.True(field.CanFireShell());
+    }
+
+    [Fact]
     public void AnAimedShotAtTheSpotItStartsOn_DoesNotMove_AndFizzlesAfterFortyEightTurnsOfTwoRomFrames()
     {
         PlayField field = new PlayFieldBuilder().Build();

@@ -76,6 +76,24 @@ public sealed class GameSettingsStoreTests
     }
 
     [Fact]
+    public void TheBugAndBozoSwitchesAreOnUnlessTheFileSaysOff_AndSurviveARoundTrip()
+    {
+        GameSettings factory = GameSettingsStore.Parse(["[game]"]);
+        Assert.True(factory.TankShellBug);
+        Assert.True(factory.BrainsChaseMikeyBug);
+        Assert.True(factory.BozoModeEnabled);
+
+        var off = new GameSettings { TankShellBug = false, BrainsChaseMikeyBug = false, BozoModeEnabled = false };
+        GameSettings loaded = GameSettingsStore.Parse(GameSettingsStore.Write(off).Split(Environment.NewLine));
+        Assert.False(loaded.TankShellBug);
+        Assert.False(loaded.BrainsChaseMikeyBug);
+        Assert.False(loaded.BozoModeEnabled);
+
+        // Anything but 0 or 1 is ignored, so the factory value (on) stays.
+        Assert.True(GameSettingsStore.Parse(["[game]", "tankshellbug=7"]).TankShellBug);
+    }
+
+    [Fact]
     public void UnknownKeysAndSectionsAreIgnored()
     {
         GameSettings loaded = GameSettingsStore.Parse(

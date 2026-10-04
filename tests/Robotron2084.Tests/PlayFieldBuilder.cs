@@ -33,6 +33,8 @@ internal sealed class PlayFieldBuilder
     private GamePalette? _palette;
     private bool _playerInvincible = true;
     private IPixelCollision? _pixelCollision;
+    private bool _tankShellBug = true;
+    private bool _brainsChaseMikeyBug = true;
 
     /// <summary>Uses these wave parameters.</summary>
     /// <param name="parameters">The wave.</param>
@@ -115,6 +117,22 @@ internal sealed class PlayFieldBuilder
         return this;
     }
 
+    /// <summary>Sets whether a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
+    /// <param name="bug">True to keep the arcade's bug.</param>
+    public PlayFieldBuilder WithTankShellBug(bool bug)
+    {
+        _tankShellBug = bug;
+        return this;
+    }
+
+    /// <summary>Sets whether every brain starts the wave chasing the first Mikey, as in the arcade.</summary>
+    /// <param name="bug">True to keep the arcade's bug.</param>
+    public PlayFieldBuilder WithBrainsChaseMikeyBug(bool bug)
+    {
+        _brainsChaseMikeyBug = bug;
+        return this;
+    }
+
     /// <summary>Builds the field.</summary>
     public PlayField Build() => new(
         TestSprites.Shared,
@@ -127,5 +145,7 @@ internal sealed class PlayFieldBuilder
         _score,
         palette: _palette,
         playerInvincibleForTesting: _playerInvincible,
-        contactTest: _pixelCollision is null ? null : new PixelContactTest(_pixelCollision));
+        contactTest: _pixelCollision is null ? null : new PixelContactTest(_pixelCollision),
+        tankShellBug: _tankShellBug,
+        brainsChaseMikeyBug: _brainsChaseMikeyBug);
 }

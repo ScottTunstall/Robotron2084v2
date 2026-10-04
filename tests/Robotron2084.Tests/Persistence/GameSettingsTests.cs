@@ -76,7 +76,16 @@ public sealed class GameSettingsTests
     [Fact]
     public void ResetToFactoryRestoresEverySetting()
     {
-        var settings = new GameSettings { ExtraManEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSound = true };
+        var settings = new GameSettings
+        {
+            ExtraManEvery = 0,
+            TurnsPerPlayer = 20,
+            Difficulty = 10,
+            AttractModeSound = true,
+            TankShellBug = false,
+            BrainsChaseMikeyBug = false,
+            BozoModeEnabled = false,
+        };
 
         settings.ResetToFactory();
 
@@ -84,6 +93,9 @@ public sealed class GameSettingsTests
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(5, settings.Difficulty);
         Assert.False(settings.AttractModeSound);
+        Assert.True(settings.TankShellBug);
+        Assert.True(settings.BrainsChaseMikeyBug);
+        Assert.True(settings.BozoModeEnabled);
     }
 
     [Fact]

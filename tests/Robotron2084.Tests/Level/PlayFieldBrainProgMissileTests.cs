@@ -108,6 +108,25 @@ public sealed class PlayFieldBrainProgMissileTests
     }
 
     /// <summary>
+    /// With the GAME ADJUSTMENT page's BRAINS CHASE MIKEY BUG row off, each brain picks again once the family is on
+    /// the field, so it starts the wave chasing the member nearest to it.
+    /// </summary>
+    [Fact]
+    public void Brains_StartOnTheNearestMember_WhenTheMikeyBugIsSwitchedOff()
+    {
+        LevelParameters wave = new(LevelNumber: 1, BrainCount: 6, MommyCount: 2, DaddyCount: 2, MikeyCount: 2);
+
+        PlayField arcade = new PlayFieldBuilder().WithParameters(wave).WithSeed(99).Build();
+        Assert.All(arcade.Entities.Brains, brain => Assert.Equal(FamilyList.FirstSlot, brain.TargetFamilySlot));
+
+        PlayField withoutBug = new PlayFieldBuilder().WithParameters(wave).WithSeed(99).WithBrainsChaseMikeyBug(false).Build();
+        Assert.All(
+            withoutBug.Entities.Brains,
+            brain => Assert.Equal(withoutBug.Entities.GetNearestFamilySlot(brain.Position), brain.TargetFamilySlot));
+        Assert.Contains(withoutBug.Entities.Brains, brain => brain.TargetFamilySlot != FamilyList.FirstSlot);
+    }
+
+    /// <summary>
     /// Once Mikey's slot empties the brains are ordinary again: ROM <c>BRAIN_AI</c> falls back to the
     /// player and, with the family still about, searches for a slot on the spot — so the next beat takes
     /// the nearest member (notes §18.8).
