@@ -26,10 +26,10 @@ namespace Robotron2084.Palette;
 /// </summary>
 public sealed class PresentationPagePalette
 {
-    /// <summary>The first entry the page writes.</summary>
+    /// <summary>The first entry the page writes. It is subtracted from <see cref="LastSlot"/>, with one added, to give <see cref="_slotCount"/>.</summary>
     public const int FirstSlot = 1;
 
-    /// <summary>The last entry the page writes (seven of them).</summary>
+    /// <summary>The last entry the page writes (seven of them). It has <see cref="FirstSlot"/> subtracted from it, with one added, to give <see cref="_slotCount"/>.</summary>
     public const int LastSlot = 7;
 
     /// <summary>
@@ -47,10 +47,10 @@ public sealed class PresentationPagePalette
     /// <summary>The colour the chase writes (`$8A64`'s `LDA #$FF`).</summary>
     private const byte ChaseColor = 0xFF;
 
-    /// <summary>`$8A68`'s `LDA #$03` — the chase takes a step every three ROM frames.</summary>
+    /// <summary>`$8A68`'s `LDA #$03` — the chase takes a step every three ROM frames. It is how many ROM frames are gathered in <see cref="_chaseClockUnits"/> before the chase takes a step.</summary>
     private const int ChaseRomFramesPerStep = 3;
 
-    /// <summary>One step per logo-handling, and the ring is 28 logos of one frame each.</summary>
+    /// <summary>One step per logo-handling, and the ring is 28 logos of one frame each. It is how many ROM frames are gathered in <see cref="_wordmarkClockUnits"/> before the wordmark takes a step.</summary>
     private const int WordmarkRomFramesPerStep = 28;
 
     private readonly int _slotCount = LastSlot - FirstSlot + 1;

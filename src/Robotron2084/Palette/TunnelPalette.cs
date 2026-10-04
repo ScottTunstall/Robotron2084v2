@@ -33,7 +33,7 @@ public sealed class TunnelPalette
     /// How far the window slides each pass. `$59D2`'s `LEAX $0001,X` bumps the STORED pointer —
     /// the current window's first value — so the wheel advances one value a pass and sweeps the
     /// whole ramp in a couple of seconds, which is the "cycling" in the effect's name.
-    /// </summary>
+    ///  It is added to <see cref="_pointer"/> on each pass.</summary>
     internal const int SlidePerPass = 1;
 
     /// <summary>How many slots a ramp fills (the ROM's `CMPY #$9810`).</summary>
