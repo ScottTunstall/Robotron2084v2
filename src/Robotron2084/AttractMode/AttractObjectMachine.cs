@@ -79,7 +79,7 @@ public sealed class AttractObjectMachine
     /// <summary>Runs one ROM frame: move what moves, then advance every process.</summary>
     public void StepFrame()
     {
-        MoveMovieObjects();
+        MoveObjects();
 
         // A script can FORK/GHOST while it runs, which appends to the process
         // list: walk only what existed when the frame started (a new process
@@ -122,7 +122,7 @@ public sealed class AttractObjectMachine
     }
 
     /// <summary>Integrates every live object's velocity for one frame; laser bolts stop at the walls and age.</summary>
-    private void MoveMovieObjects()
+    private void MoveObjects()
     {
         foreach (MovieObject item in _objects)
         {
