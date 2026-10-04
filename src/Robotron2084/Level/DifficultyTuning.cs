@@ -35,11 +35,11 @@ public static class DifficultyTuning
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, <c>CMPA #3</c>. Disassembly: <c>$2B9A</c>, <c>CMPA #$03</c>.</remarks>
     private const int ComfortableLives = 3;
 
-    /// <summary>The settings for how long a grunt waits between moves. A smaller number is a faster grunt.</summary>
+    /// <summary>The settings for the longest a grunt waits between moves, in beats. A smaller number is a faster grunt.</summary>
     /// <remarks>Original source: <c>ROBSPD</c>. Disassembly: the record at <c>$2C20</c>.</remarks>
     private static readonly Header GruntMoveDelayHeader = new(0x8E, 10, 20);
 
-    /// <summary>The settings for the shortest wait that the grunts' speed-ups may bring a grunt down to.</summary>
+    /// <summary>The settings for the fewest beats that the grunts' speed-ups may bring a grunt's longest wait down to.</summary>
     /// <remarks>Original source: <c>RMXSPD</c>. Disassembly: the record at <c>$2C4B</c>.</remarks>
     private static readonly Header GruntSpeedFloorHeader = new(0x8E, 3, 10);
 

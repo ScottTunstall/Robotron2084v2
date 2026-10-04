@@ -13,8 +13,8 @@ namespace Robotron2084.Level;
 /// <param name="SpheroidCount">How many spheroids the wave starts with.</param>
 /// <param name="QuarkCount">How many quarks the wave starts with.</param>
 /// <param name="MaxDropsX2">Twice the most that a spheroid or quark may drop. Each rolls a number up to this and drops half of it, rounded up.</param>
-/// <param name="GruntMoveDelay">How long a grunt waits between moves. A smaller number is a faster grunt.</param>
-/// <param name="GruntSpeedFloor">The shortest wait that the grunts' speed-ups may bring a grunt down to.</param>
+/// <param name="GruntMoveDelay">The longest a grunt waits between moves, in beats. A smaller number is a faster grunt.</param>
+/// <param name="GruntSpeedFloor">The fewest beats that the grunts' speed-ups may bring a grunt's longest wait down to.</param>
 /// <param name="EnforcerFireDelay">How long an enforcer waits between sparks. A smaller number is faster fire.</param>
 /// <param name="SpheroidDropDelay">How long a spheroid waits before dropping an enforcer. A smaller number is a quicker drop.</param>
 /// <param name="HulkBeatIntervalRomFrames">How many ROM frames pass between a hulk's beats. A smaller number is a faster hulk.</param>

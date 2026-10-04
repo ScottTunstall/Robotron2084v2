@@ -24,8 +24,8 @@ public static class BozoMode
     /// <summary>One row of the table: the four settings for a wave, in the table's own order.</summary>
     /// <param name="SpheroidDropDelay">How long a spheroid waits before dropping an enforcer.</param>
     /// <param name="EnforcerFireDelay">How long an enforcer waits between sparks.</param>
-    /// <param name="GruntMoveDelay">How long a grunt waits between moves.</param>
-    /// <param name="GruntSpeedFloor">The shortest wait the grunts' speed-ups may bring a grunt down to.</param>
+    /// <param name="GruntMoveDelay">The longest a grunt waits between moves, in beats.</param>
+    /// <param name="GruntSpeedFloor">The fewest beats the grunts' speed-ups may bring a grunt's longest wait down to.</param>
     private sealed record Row(int SpheroidDropDelay, int EnforcerFireDelay, int GruntMoveDelay, int GruntSpeedFloor);
 
     /// <summary>The settings for waves 1 to 4.</summary>

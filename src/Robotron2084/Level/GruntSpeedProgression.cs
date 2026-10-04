@@ -9,9 +9,10 @@ namespace Robotron2084.Level;
 /// <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c> (<c>GEXEC0</c> to <c>GEXEC4</c>); the table value is <c>RMXSPD</c></item>
 /// <item>Disassembly: <c>$2A85</c> to <c>$2B08</c>, working on <c>$BE5D</c></item>
 /// </list>
-/// A grunt moves, waits a number of ROM frames, then moves again, so a smaller wait is a faster grunt. Each time a grunt dies, the grunts that are left
-/// have their waits made shorter. The floor is the shortest wait they may be brought down to, so it is the grunts' speed limit. Lowering the floor eases that limit and
-/// lets them get faster. The wave starts at the floor the wave table gives it (notes §31, §134).
+/// A grunt has a beat every few ROM frames, and moves only after a random number of beats, so the fewer beats it waits, the faster it is. Each time a grunt dies, the
+/// grunts that are left have their waits made shorter. The floor is the fewest beats they may be brought down to, so it is the grunts' speed limit. Lowering the floor eases
+/// that limit and lets them get faster. The wave starts at the floor the wave table gives it (notes §31, §134). ROM frames come into this class only for the timing of the
+/// checks on the floor; the waits and the floor are counted in beats.
 /// </remarks>
 public sealed class GruntSpeedProgression
 {
@@ -19,7 +20,7 @@ public sealed class GruntSpeedProgression
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which counts down eighteen passes of fifteen frames. Disassembly: <c>$2A85</c> to <c>$2B08</c>.</remarks>
     private const int FirstUpdateRomFrames = 18 * 15;
 
-    /// <summary>How much the floor is lowered by when the player has not scored since the last time it was looked at.</summary>
+    /// <summary>How many beats the floor is lowered by when the player has not scored since the last time it was looked at.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the operand <c>$FEFC</c>. Disassembly: <c>$2AC7</c> to <c>$2AF1</c>.</remarks>
     private const int LargeFloorStep = 2;
 
@@ -35,7 +36,7 @@ public sealed class GruntSpeedProgression
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>CMPA #30 / BHS</c>. Disassembly: <c>$2ACA</c>.</remarks>
     private const int GruntCountThatHoldsTheFloor = 30;
 
-    /// <summary>How much the floor is lowered by when the player has scored since the last time it was looked at.</summary>
+    /// <summary>How many beats the floor is lowered by when the player has scored since the last time it was looked at.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the operand <c>$FFFE</c>. Disassembly: <c>$2AC7</c> to <c>$2AF1</c>.</remarks>
     private const int SmallFloorStep = 1;
 
@@ -57,18 +58,18 @@ public sealed class GruntSpeedProgression
     /// <remarks>Original source: <c>RRS22.ASM</c> <c>SCOREV</c> (<c>INC SCRFLG</c>). Disassembly: <c>UPDATE_PLAYER_SCORE</c> (<c>$DB9C</c>).</remarks>
     public void NoteScore() => _scoredSinceLastPass = true;
 
-    /// <summary>The floor: the shortest wait between moves that a grunt may be sped up to. A smaller number is a faster grunt.</summary>
+    /// <summary>The floor: the fewest beats a grunt may be made to wait between moves. A smaller number is a faster grunt.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>RMXSPD</c>. Disassembly: <c>$BE5D</c>.</remarks>
     public int Floor { get; private set; }
 
-    /// <summary>Makes every grunt that is still alive a little faster, as happens each time a grunt dies. A grunt that would be made faster than the floor allows is left as it is.</summary>
+    /// <summary>Makes every grunt that is still alive a little faster, as happens each time a grunt dies, by cutting how many beats it may wait. A grunt that would be made faster than the floor allows is left as it is.</summary>
     /// <param name="grunts">The field's grunts.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRP8.ASM</c> <c>ROBK0</c> ("SPEED EM UP"), which every grunt death runs</item>
     /// <item>Disassembly: <c>$3A94</c> to <c>$3A9F</c></item>
     /// </list>
-    /// A grunt's wait is made a little shorter, rounding down. The wait it is already part-way through is left alone (notes §67).
+    /// A grunt's longest wait is made a little shorter, rounding down. The wait it is already part-way through is left alone (notes §67).
     /// </remarks>
     public void SpeedUp(IEnumerable<Grunt> grunts)
     {

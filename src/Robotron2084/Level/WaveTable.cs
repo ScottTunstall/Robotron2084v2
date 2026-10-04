@@ -54,7 +54,7 @@ public static class WaveTable
         30, 28, 26, 24, 22, 20, 18, 18, 16, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 15, 15, 15, 15, 15, 15, 15, 15, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14
     ];
 
-    /// <summary>The longest a grunt waits between moves, for each wave. A smaller number is a faster grunt.</summary>
+    /// <summary>The longest a grunt waits between moves, in beats, for each wave. A smaller number is a faster grunt.</summary>
     /// <remarks>
     /// Each grunt waits a random time up to this, so the grunts do not all move at once (notes §29). Original source: <c>RRP8.ASM</c> <c>ROBSPD</c>. Disassembly: <c>$BE5C</c>.
     /// </remarks>
@@ -70,7 +70,7 @@ public static class WaveTable
         15, 17, 22, 34, 20, 32, 0, 35, 60, 25, 35, 0, 35, 27, 25, 35, 0, 35, 70, 25, 35, 0, 35, 0, 25, 35, 0, 35, 75, 25, 35, 0, 35, 30, 27, 35, 0, 35, 80, 30
     ];
 
-    /// <summary>The shortest wait that the grunts' speed-ups may bring a grunt down to, for each wave.</summary>
+    /// <summary>The fewest beats that the grunts' speed-ups may bring a grunt's longest wait down to, for each wave.</summary>
     /// <remarks>Original source: <c>RRP8.ASM</c> <c>RMXSPD</c>. Disassembly: <c>$BE5D</c>.</remarks>
     public static readonly int[] GruntSpeedFloor =
     [
