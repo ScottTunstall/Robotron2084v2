@@ -13,7 +13,14 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
 
-/// <summary>The playfield for one wave: the player, the robots and the family, moved and drawn once a tick in the arcade's order.</summary>
+/// <summary>
+/// The playfield is where one wave of the game is played. It holds the player, the robots and the family, and it is in charge of them.
+/// The game runs in ticks. A tick is one step of the game's clock, and there are 60 of them every second. MonoGame, the toolkit the game is built with, keeps the clock and runs <see cref="RobotronGame"/> once for each tick.
+/// On each tick the playfield calls <see cref="IEntity.Update"/> on every character on the field, and then checks what has touched what.
+/// It does not invoke the Update method during the short freeze after the player dies, or one that is still appearing at the start of a wave.
+/// A beat is a character's own turn to think and move. The playfield does not decide when a beat happens. It only calls <c>Update</c>, and each character works out for itself whether this tick is one of its beats.
+/// So a tick belongs to the playfield, and a beat belongs to a character. Ticks come at a steady rate. Beats come less often, so each kind of character has its own pace.
+/// </summary>
 /// <remarks>
 /// The field coordinates; the rules live elsewhere. What is on the field is in <see cref="FieldEntities"/>, how each
 /// kind is put there at the start of a wave is its <see cref="IWaveSpawner"/>, what happens when two things touch is
@@ -21,6 +28,12 @@ namespace Robotron2084.Level;
 /// (<see cref="CollisionResponder"/>). Whether two things are touching is the <see cref="IContactTest"/> the field is given.
 /// Each tick, in order: the freeze after the player's death, the grunts' speed-up, the wave-start appear, the wall,
 /// the player and the lasers, every list of entities, the collision rules, then the dead are taken out.
+/// <para>
+/// Where a tick comes from: MonoGame's fixed time step, which <see cref="RobotronGame"/> switches on and leaves at MonoGame's own rate of 60 updates a second.
+/// MonoGame calls <c>RobotronGame.Update</c>, which passes the tick to <see cref="States.GameStateManager.Update"/> and so to the current state
+/// (<see cref="States.PlayingState"/> or <see cref="States.AttractState"/>), which calls <see cref="Update"/>. The field then calls each entity's <see cref="IEntity.Update"/>,
+/// through <see cref="FieldEntities.UpdateAll"/> and <see cref="UpdateEntity"/>. What an entity does with a tick is the entity's own business, and is described on the entity (CMT-16).
+/// </para>
 /// </remarks>
 public sealed class PlayField : ICollisionScene
 {
