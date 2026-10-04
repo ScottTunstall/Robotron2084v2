@@ -15,7 +15,9 @@ namespace Robotron2084.Persistence;
 /// <item><b>DIFFICULTY OF PLAY</b> (ROM <c>difficulty_of_play</c> $CC14) — 0-10, 5 "RECOMMENDED",
 /// applied to the wave tables by <see cref="Level.DifficultyTuning"/>;</item>
 /// <item><b>ATTRACT MODE SOUND</b> — PORT-ONLY, with no arcade counterpart: the attract sequence
-/// (the demo machine playing itself) keeps its sound or is silenced.</item>
+/// (the demo machine playing itself) keeps its sound or is silenced;</item>
+/// <item><b>TANK SHELL BUG</b>, <b>BRAINS CHASE MIKEY BUG</b> and <b>BOZO MODE</b> — PORT-ONLY switches for
+/// three things the arcade always does. All three are on from the factory, which is the arcade as it shipped.</item>
 /// </list>
 ///
 /// The ranges and the factory values are the ROM's (<c>GAME_ADJUSTMENT_SETTING_METADATA</c>, $6FD5;
@@ -62,6 +64,15 @@ public sealed class GameSettings
     /// </summary>
     public const bool FactoryAttractModeSound = false;
 
+    /// <summary>Factory TANK SHELL BUG: on, as the arcade is.</summary>
+    public const bool FactoryTankShellBug = true;
+
+    /// <summary>Factory BRAINS CHASE MIKEY BUG: on, as the arcade is.</summary>
+    public const bool FactoryBrainsChaseMikeyBug = true;
+
+    /// <summary>Factory BOZO MODE: on, as the arcade's second release is.</summary>
+    public const bool FactoryBozoModeEnabled = true;
+
     /// <summary>
     /// The score that earns a spare man, in thousands — 0 turns extra men off. One of
     /// <see cref="ExtraManEveryValues"/>; 25 by default, the arcade's factory "RECOMMENDED".
@@ -79,6 +90,24 @@ public sealed class GameSettings
     /// silences the demo machine playing itself, while a real game still has sound.
     /// </summary>
     public bool AttractModeSound { get; set; } = FactoryAttractModeSound;
+
+    /// <summary>
+    /// Whether the arcade's tank shell bug is kept (port-only switch). On, a shell that fizzles out is never taken
+    /// off the wave's shell count, so the tanks stop firing once the count is used up. Off, only the shells on
+    /// the field count.
+    /// </summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, which has no <c>DEC SHLCNT</c>.</remarks>
+    public bool TankShellBug { get; set; } = FactoryTankShellBug;
+
+    /// <summary>
+    /// Whether the arcade's "all the brains chase Mikey" bug is kept (port-only switch). On, every brain starts the
+    /// wave chasing the first Mikey. Off, each brain starts by chasing the family member nearest to it.
+    /// </summary>
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSTV</c>, which calls <c>GETHTG</c> before the family is made (notes §18.8).</remarks>
+    public bool BrainsChaseMikeyBug { get; set; } = FactoryBrainsChaseMikeyBug;
+
+    /// <summary>Whether the arcade's mercy for a player losing ships early is given (port-only switch; see <see cref="Level.BozoMode"/>).</summary>
+    public bool BozoModeEnabled { get; set; } = FactoryBozoModeEnabled;
 
     /// <summary>The EXTRA MAN EVERY score in points, as the game compares scores (<c>0</c> = never).</summary>
     public int ExtraManEveryPoints => ExtraManEvery * 1000;
@@ -103,6 +132,9 @@ public sealed class GameSettings
         TurnsPerPlayer = FactoryTurnsPerPlayer;
         Difficulty = FactoryDifficulty;
         AttractModeSound = FactoryAttractModeSound;
+        TankShellBug = FactoryTankShellBug;
+        BrainsChaseMikeyBug = FactoryBrainsChaseMikeyBug;
+        BozoModeEnabled = FactoryBozoModeEnabled;
     }
 
     /// <summary>
@@ -130,4 +162,13 @@ public sealed class GameSettings
 
     /// <summary>Turns ATTRACT MODE SOUND on (right) or off (left).</summary>
     public void BumpAttractModeSound(int direction) => AttractModeSound = direction > 0;
+
+    /// <summary>Turns TANK SHELL BUG on (right) or off (left).</summary>
+    public void BumpTankShellBug(int direction) => TankShellBug = direction > 0;
+
+    /// <summary>Turns BRAINS CHASE MIKEY BUG on (right) or off (left).</summary>
+    public void BumpBrainsChaseMikeyBug(int direction) => BrainsChaseMikeyBug = direction > 0;
+
+    /// <summary>Turns BOZO MODE on (right) or off (left).</summary>
+    public void BumpBozoModeEnabled(int direction) => BozoModeEnabled = direction > 0;
 }

@@ -13,6 +13,10 @@ namespace Robotron2084.Persistence;
 /// extramanevery=25
 /// turnsperplayer=3
 /// difficulty=5
+/// attractsound=0
+/// tankshellbug=1
+/// brainschasemikeybug=1
+/// bozomode=1
 /// </code>
 ///
 /// A missing file, or one with anything unreadable in it, yields the factory settings rather than
@@ -97,12 +101,16 @@ public sealed class GameSettingsStore
         text.AppendLine("; Edit by hand, or press F5 on the title screen and use the GAME ADJUSTMENT page.");
         text.AppendLine("; Difficulty 0-10 (5 recommended), turns per player 1-20 (3 recommended), and");
         text.AppendLine("; extramanevery in thousands of points: 0, 20, 25, 30 or 50. attractsound is 1 or 0.");
+        text.AppendLine("; tankshellbug, brainschasemikeybug and bozomode are 1 (as the arcade) or 0.");
         text.AppendLine();
         text.AppendLine($"[{Section}]");
         text.AppendLine($"extramanevery={settings.ExtraManEvery}");
         text.AppendLine($"turnsperplayer={settings.TurnsPerPlayer}");
         text.AppendLine($"difficulty={settings.Difficulty}");
         text.AppendLine($"attractsound={(settings.AttractModeSound ? 1 : 0)}");
+        text.AppendLine($"tankshellbug={(settings.TankShellBug ? 1 : 0)}");
+        text.AppendLine($"brainschasemikeybug={(settings.BrainsChaseMikeyBug ? 1 : 0)}");
+        text.AppendLine($"bozomode={(settings.BozoModeEnabled ? 1 : 0)}");
         return text.ToString();
     }
 
@@ -128,6 +136,15 @@ public sealed class GameSettingsStore
                 break;
             case "attractsound" when value is 0 or 1:
                 settings.AttractModeSound = value == 1;
+                break;
+            case "tankshellbug" when value is 0 or 1:
+                settings.TankShellBug = value == 1;
+                break;
+            case "brainschasemikeybug" when value is 0 or 1:
+                settings.BrainsChaseMikeyBug = value == 1;
+                break;
+            case "bozomode" when value is 0 or 1:
+                settings.BozoModeEnabled = value == 1;
                 break;
         }
     }
