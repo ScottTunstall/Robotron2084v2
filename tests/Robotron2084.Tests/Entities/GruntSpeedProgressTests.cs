@@ -12,7 +12,10 @@ namespace Robotron2084.Tests;
 ///    limit becomes the high byte of limit × 224 (limit × 7/8, TRUNCATED) ONLY
 ///    if that is still ≥ the floor; otherwise the limit is left ALONE. The
 ///    in-flight countdown is NOT re-rolled.
-/// 2. Level-progress tick (R5 $2AC7-2AF1): every 225 vblanks (first at 270),
+/// 2. Level-progress tick (R5 $2AC7-2AF1): every 225 vblanks. The first is 277 vblanks after the game goes
+///    live (`CLR STATUS` at PLS2, R5 $289A): 22 to reach GEXEC (`NAP 12`, `NAP 10`), then 17 sleeps of 15, because
+///    GEXEC loads 18 and counts down on its very first pass. A score made before GEXEC starts is forgotten
+///    (`CLR SCRFLG`, R5 $2A8B). It runs
 ///    ONLY while FEWER than 30 grunts are alive (`CMPA #30 / BHS` skips it at 30 or more):
 ///    the floor drops by 2 and the limit by 4, or by 1 and 2 when the player has
 ///    scored since the last pass (SCRFLG, $F0), the limit clamped to the floor.
@@ -25,7 +28,27 @@ public sealed class GruntSpeedProgressTests
 {
     private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
+    /// <summary>The port ticks the player's start grace lasts, after which the game is live.</summary>
+    private const int StartGraceTicks = 121;
+
+    /// <summary>ROM frames from the game going live to GEXEC starting: `NAP 12,PLS3` and `NAP 10,PLS4`.</summary>
+    private const int ExecutiveStartRomFrames = 12 + 10;
+
+    /// <summary>ROM frames from the game going live to the first check: GEXEC's 18th pass is 17 sleeps of 15 after it starts.</summary>
+    private const int FirstCheckRomFrames = ExecutiveStartRomFrames + (17 * 15);
+
+    /// <summary>ROM frames between one check and the next: 15 passes of 15.</summary>
+    private const int CheckIntervalRomFrames = 15 * 15;
+
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
+
+    private static void Tick(PlayField field, int ticks)
+    {
+        for (int tick = 0; tick < ticks; tick++)
+        {
+            field.Update(Frame());
+        }
+    }
 
     private static PlayField CreateField(int wave = 1) => new PlayFieldBuilder().WithParameters(LevelParameters.CreateFromWave(wave, WaveTable.GetParameters(wave))).WithSeed(1).Build();
 
@@ -77,7 +100,7 @@ public sealed class GruntSpeedProgressTests
     }
 
     [Fact]
-    public void Floor_DescendsOnThe270Then225VblankCadence_OnlyWithFewerThan30Grunts()
+    public void Floor_DescendsFirst277VblanksAfterTheGameGoesLive_ThenEvery225_OnlyWithFewerThan30Grunts()
     {
         // Wave 7 (ROM $2E24): 0 grunts, 0 ELECTRODES — with the stationary
         // player nothing can kill the 29 grunts we add, so the exact cadence
@@ -99,30 +122,23 @@ public sealed class GruntSpeedProgressTests
 
         Assert.Equal(15, tracked!.MoveDelayBeats);
 
-        // 121 grace frames + 203 = 324 = PortTicks(270): one frame before the
-        // first tick the floor must be untouched.
-        for (int tick = 0; tick < 121 + (ArcadeClock.ToPortTicks(270) - 121) - 1; tick++)
-        {
-            field.Update(Frame());
-        }
+        // The start grace, then one tick short of the first check: the floor must be untouched.
+        Tick(field, StartGraceTicks + ArcadeClock.ToPortTicksRoundedUp(FirstCheckRomFrames) - 1);
 
         Assert.Equal(5, field.GruntSpeedFloor);
         Assert.Equal(15, tracked.MoveDelayBeats);
 
-        field.Update(Frame()); // first level-progress tick (270 vblanks in)
+        field.Update(Frame()); // first level-progress tick (277 vblanks after the game went live)
 
         Assert.Equal(3, field.GruntSpeedFloor); // 5 − 2
         Assert.Equal(11, tracked.MoveDelayBeats); // 15 − 4
 
-        // 270 = PortTicks(225): one frame before the next tick, unchanged.
-        for (int tick = 0; tick < ArcadeClock.ToPortTicks(225) - 1; tick++)
-        {
-            field.Update(Frame());
-        }
+        // One tick short of the next check: unchanged.
+        Tick(field, ArcadeClock.ToPortTicks(CheckIntervalRomFrames) - 1);
 
         Assert.Equal(3, field.GruntSpeedFloor);
 
-        field.Update(Frame()); // second tick (270 + 225 vblanks)
+        field.Update(Frame()); // second tick (225 vblanks after the first)
 
         // Nothing was scored since the first pass, so this one is the harsh one again: the
         // floor drops by 2 (3 → 1) and the limit by 4 (11 → 7).
@@ -137,23 +153,36 @@ public sealed class GruntSpeedProgressTests
         Grunt tracked = new(TestSprites.Shared, new IntVector2(100, 100), moveLimitBeats: 15, random: new Random(1));
         field.Entities.Grunts.Add(tracked);
 
+        // The score must come after GEXEC has started, because GEXEC opens by clearing the flag.
+        int executiveStartTicks = ArcadeClock.ToPortTicksRoundedUp(ExecutiveStartRomFrames);
+        Tick(field, StartGraceTicks + executiveStartTicks);
         field.AwardScore(100); // SCRFLG is set by any score (ROM UPDATE_PLAYER_SCORE, $DB9C)
-        for (int tick = 0; tick < 121 + ArcadeClock.ToPortTicks(270); tick++)
-        {
-            field.Update(Frame());
-        }
+        Tick(field, ArcadeClock.ToPortTicksRoundedUp(FirstCheckRomFrames) - executiveStartTicks);
 
         Assert.Equal(4, field.GruntSpeedFloor); // 5 − 1, not 5 − 2
         Assert.Equal(13, tracked.MoveDelayBeats); // 15 − 2, not 15 − 4
 
         // The pass cleared the flag, so with no further score the next one is the harsh one.
-        for (int tick = 0; tick < ArcadeClock.ToPortTicks(225); tick++)
-        {
-            field.Update(Frame());
-        }
+        Tick(field, ArcadeClock.ToPortTicks(CheckIntervalRomFrames));
 
         Assert.Equal(2, field.GruntSpeedFloor); // 4 − 2
         Assert.Equal(9, tracked.MoveDelayBeats); // 13 − 4
+    }
+
+    [Fact]
+    public void AScoreMadeBeforeTheExecutiveStarts_IsForgotten_SoTheFirstPassIsTheHarshOne()
+    {
+        PlayField field = CreateField(wave: 7);
+        Grunt tracked = new(TestSprites.Shared, new IntVector2(100, 100), moveLimitBeats: 15, random: new Random(1));
+        field.Entities.Grunts.Add(tracked);
+
+        // GEXEC opens with CLR SCRFLG (R5 $2A8B), 22 vblanks after the game goes live, so this score does not count.
+        Tick(field, StartGraceTicks + 1);
+        field.AwardScore(100);
+        Tick(field, ArcadeClock.ToPortTicksRoundedUp(FirstCheckRomFrames) - 1);
+
+        Assert.Equal(3, field.GruntSpeedFloor); // 5 − 2, not 5 − 1
+        Assert.Equal(11, tracked.MoveDelayBeats); // 15 − 4, not 15 − 2
     }
 
     [Fact]
@@ -165,12 +194,8 @@ public sealed class GruntSpeedProgressTests
             field.Entities.Grunts.Add(CreateGruntAt(field, 20 + (i % 10) * 24, 20 + (i / 10) * 24, i));
         }
 
-        // Two full cadence periods (270 + 225 vblanks + grace) with 30
-        // grunts on screen: the $2ACA gate (cur_grunts >= 30, BCC) skips the update.
-        for (int tick = 0; tick < 121 + ArcadeClock.ToPortTicks(270) + ArcadeClock.ToPortTicks(225); tick++)
-        {
-            field.Update(Frame());
-        }
+        // The grace and two full checks with 30 grunts on screen: the $2ACA gate (cur_grunts >= 30, BCC) skips the update.
+        Tick(field, StartGraceTicks + ArcadeClock.ToPortTicksRoundedUp(FirstCheckRomFrames) + ArcadeClock.ToPortTicks(CheckIntervalRomFrames));
 
         Assert.Equal(9, field.GruntSpeedFloor);
     }
