@@ -152,7 +152,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
 
     /// <summary>True while this brain is turning a human into a prog.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> to <c>BMUT4</c>. Disassembly: the "progging" flag at <c>$9895</c> (<c>brain_progging_flag</c>) and <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>).</remarks>
-    public bool IsReprogramming => _victim is not null;
+    public bool IsReprogramming() => _victim is not null;
 
     /// <summary>Alive until a laser hits it, then dead at once. The brain never plays a dying animation of its own.</summary>
     /// <remarks>The explosion that follows is made by the playfield, not by the brain (<see cref="IExplodable"/>).</remarks>
@@ -188,7 +188,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
             return;
         }
 
-        if (IsReprogramming)
+        if (IsReprogramming())
         {
             _sprites.Blitter.DrawSolidRectangle(spriteBatch, Bounds, _sprites.Blitter.GetSlotColour(ReprogramTuning.ShapeSlot));
         }
@@ -308,7 +308,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// </remarks>
     internal Human? GetCatchableTarget()
     {
-        if (!this.IsAlive() || IsReprogramming)
+        if (!this.IsAlive() || IsReprogramming())
         {
             return null;
         }
