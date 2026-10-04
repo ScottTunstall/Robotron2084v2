@@ -3,26 +3,27 @@ using Robotron2084.Entities;
 
 namespace Robotron2084.Level;
 
-/// <summary>Decides how fast the grunts may get. As the wave goes on and fewer grunts are left, the fastest they may move gets faster, until the grunts are as fast as the player.</summary>
+/// <summary>Sets the speed limit for the grunts. As the wave goes on and fewer grunts are left, the limit is eased now and then, so the grunts can get faster, until they are as fast as the player.</summary>
 /// <remarks>
 /// <list type="bullet">
 /// <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c> (<c>GEXEC0</c> to <c>GEXEC4</c>); the table value is <c>RMXSPD</c></item>
 /// <item>Disassembly: <c>$2A85</c> to <c>$2B08</c>, working on <c>$BE5D</c></item>
 /// </list>
-/// A grunt's speed is how long it waits between moves, so a lower number is a faster grunt and the fastest allowed is a floor on that number.
-/// The wave starts at the wave table's floor (notes §31, §134).
+/// A grunt moves, waits a number of ROM frames, then moves again, so a smaller wait is a faster grunt. Each time a grunt dies, the grunts that are left
+/// have their waits made shorter. The floor is the shortest wait they may be brought down to, so it is the grunts' speed limit. Lowering the floor eases that limit and
+/// lets them get faster. The wave starts at the floor the wave table gives it (notes §31, §134).
 /// </remarks>
 public sealed class GruntSpeedProgression
 {
-    /// <summary>How many ROM frames pass before the floor is first lowered.</summary>
+    /// <summary>How many ROM frames pass before the floor is first looked at to see whether it can be lowered.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which counts down eighteen passes of fifteen frames. Disassembly: <c>$2A85</c> to <c>$2B08</c>.</remarks>
     private const int FirstUpdateRomFrames = 18 * 15;
 
-    /// <summary>How far the floor drops on a pass when the player has not scored since the last one.</summary>
+    /// <summary>How much the floor is lowered by when the player has not scored since the last time it was looked at.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the operand <c>$FEFC</c>. Disassembly: <c>$2AC7</c> to <c>$2AF1</c>.</remarks>
     private const int LargeFloorStep = 2;
 
-    /// <summary>How many times the floor's drop the grunts' own limit falls by on the same pass.</summary>
+    /// <summary>How many times as much as the floor is lowered by the longest wait a grunt may pick is also cut, each time the floor is lowered.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which changes <c>ROBSPD</c> along with the floor. Disassembly: <c>$BE5C</c>.</remarks>
     private const int LimitStepPerFloorStep = 2;
 
@@ -30,15 +31,15 @@ public sealed class GruntSpeedProgression
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>. Disassembly: the player's steps at <c>$3031</c>, which are one pixel.</remarks>
     private const int LowestFloor = 1;
 
-    /// <summary>The number of live grunts at or above which the floor is left alone.</summary>
+    /// <summary>How many grunts must be alive, or more, for the floor to be left alone. The floor is only lowered when fewer than this are left.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>CMPA #30 / BHS</c>. Disassembly: <c>$2ACA</c>.</remarks>
     private const int GruntCountThatHoldsTheFloor = 30;
 
-    /// <summary>How far the floor drops on a pass when the player has scored since the last one.</summary>
+    /// <summary>How much the floor is lowered by when the player has scored since the last time it was looked at.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the operand <c>$FFFE</c>. Disassembly: <c>$2AC7</c> to <c>$2AF1</c>.</remarks>
     private const int SmallFloorStep = 1;
 
-    /// <summary>How many ROM frames pass between one lowering of the floor and the next.</summary>
+    /// <summary>How many ROM frames pass between one look at the floor and the next.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which counts down fifteen passes of fifteen frames. Disassembly: <c>$2A85</c> to <c>$2B08</c>.</remarks>
     private const int UpdateIntervalRomFrames = 15 * 15;
 
@@ -52,15 +53,15 @@ public sealed class GruntSpeedProgression
     /// <param name="initialFloor">The wave table's floor.</param>
     public GruntSpeedProgression(int initialFloor) => Floor = initialFloor;
 
-    /// <summary>Notes that the player has scored, so the next drop in the floor is smaller. A player who scores nothing is punished for stalling.</summary>
+    /// <summary>Notes that the player has scored, so the next time the floor is lowered it is lowered by less. A player who scores nothing is punished for stalling, because the grunts get faster sooner.</summary>
     /// <remarks>Original source: <c>RRS22.ASM</c> <c>SCOREV</c> (<c>INC SCRFLG</c>). Disassembly: <c>UPDATE_PLAYER_SCORE</c> (<c>$DB9C</c>).</remarks>
     public void NoteScore() => _scoredSinceLastPass = true;
 
-    /// <summary>The shortest wait between moves that a speed-up may give a grunt.</summary>
+    /// <summary>The floor: the shortest wait between moves that a grunt may be sped up to. A smaller number is a faster grunt.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>RMXSPD</c>. Disassembly: <c>$BE5D</c>.</remarks>
     public int Floor { get; private set; }
 
-    /// <summary>Speeds up every grunt that is still alive, as happens each time a grunt dies. A grunt that would go faster than the floor allows is left as it is.</summary>
+    /// <summary>Makes every grunt that is still alive a little faster, as happens each time a grunt dies. A grunt that would be made faster than the floor allows is left as it is.</summary>
     /// <param name="grunts">The field's grunts.</param>
     /// <remarks>
     /// <list type="bullet">
@@ -77,15 +78,15 @@ public sealed class GruntSpeedProgression
         }
     }
 
-    /// <summary>Counts down one tick, and when the time is up lowers the floor, so the grunts may get faster. Nothing happens while many grunts are alive.</summary>
+    /// <summary>Counts down one tick. When the time is up, and fewer than thirty grunts are left, it lowers the floor, so the grunts may get faster still.</summary>
     /// <param name="grunts">The field's grunts.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the part that updates the grunts' speed as the level progresses ("BONE HIM FOR STALLING")</item>
     /// <item>Disassembly: <c>$2AC7</c> to <c>$2AF1</c></item>
     /// </list>
-    /// The floor drops by <see cref="LargeFloorStep"/>, or by <see cref="SmallFloorStep"/> if the player has scored since the last time. Every live grunt's own limit
-    /// is then brought down to the new floor.
+    /// The floor is lowered by <see cref="LargeFloorStep"/>, or by <see cref="SmallFloorStep"/> if the player has scored since the last time, but never below <see cref="LowestFloor"/>.
+    /// Each live grunt's longest random wait is cut too, by <see cref="LimitStepPerFloorStep"/> times as much, though never below the new floor.
     /// </remarks>
     public void Update(IEnumerable<Grunt> grunts)
     {
