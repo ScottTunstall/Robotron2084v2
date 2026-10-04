@@ -24,6 +24,48 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 
 ---
 
+## 2026-10-04: GruntSpeedProgression checked against the ROM, and four standards fixes
+
+### What was wrong
+
+The author asked whether `GruntSpeedProgression` is correct. It was read line by line against `GEXEC` (`RRG23.ASM`) and
+`ROBK0` (`RRP8.ASM`). The logic matches. The class itself broke four rules:
+
+1. **Names (NAM-19):** `_updateTimer` counted ticks to the next check, and `_scoredSinceLastPass` said "pass" where every
+   comment said "check" and was not a predicate.
+2. **Numbers written in comments (CMT-4):** "fewer than thirty grunts" in two summaries, and a constant that holds it.
+3. **Unnamed numbers (NUM-1):** `18 * 15` and `15 * 15`.
+4. **Feature envy (STR-8):** `Update` counted the live grunts with its own LINQ line.
+
+### How it got in
+
+Not traced.
+
+### What was changed
+
+| Old | New |
+|---|---|
+| `_updateTimer` | `_ticksUntilNextCheck` |
+| `_scoredSinceLastPass` | `_hasPlayerScoredSinceLastCheck` |
+| `FirstUpdateRomFrames`, `UpdateIntervalRomFrames` | `FirstCheckRomFrames`, `CheckIntervalRomFrames` (NAM-16: an interval) |
+| `18 * 15`, `15 * 15` | `FirstCheckPasses * PassRomFrames`, `CheckIntervalPasses * PassRomFrames`, each part a named constant quoting its ROM line |
+| `Update(IEnumerable<Grunt>)` counting with LINQ | `Update(EntityList<Grunt>)` asking `GetLiveCount()` |
+| the number thirty in two summaries | a `cref` to `GruntCountThatHoldsTheFloor` |
+
+### What was left alone, and why
+
+- **A possible timing difference.** The ROM loop counts down from 18 and reaches zero on its 18th pass, which is 17 sleeps
+  or 255 ROM frames after the start. The class and its test use 270. If the ROM count is right, the first check is one
+  pass (15 ROM frames) late. It was not changed: the test says "first at 270" and it needs the author's say-so first.
+- **Grunts made mid-wave** (`MidWaveSpawner`, Gorf's drops) start with the wave's starting limit, not the current eased
+  one. The ROM has one global limit that every grunt shares and makes no grunts mid-wave, so this is a port-only choice.
+
+### How it was checked
+
+Debug build with no warnings and 789 tests passing, the same as before. Behaviour is unchanged.
+
+---
+
 ## 2026-10-04: Collection methods that did not say what they work on (NAM-20)
 
 ### What was wrong
@@ -313,7 +355,7 @@ and do not come from the property names.
   name or a result type, which is a change of shape and not of name.
 - **Predicates that already read as a question** without `Is`: `Qualifies`, `Beats`, `AppliesTo`, `FitsInside`,
   `TopCarriesInitials`, and the fields `_rampsStarted`, `_paletteStarted`, `_restartHandled`, `_transportBegun`,
-  `_showingPoints`, `_scoredSinceLastPass`, `_reprogramMovingDown`.
+  `_showingPoints`, `_reprogramMovingDown`.
 - **Plain local names whose type is clear from the line they are on**: `next`, `source`, `output`, `scale`,
   `delta`, `centre`, `candidate`, `step`.
 - **Fields that share a name across two classes but are each right for their class**: `_kind`, `_model`,
