@@ -45,13 +45,14 @@ Not traced.
 | `PlayField` | `PlayMovementSounds` (shells and grunts) | `PlayShellAndGruntMovementSounds` |
 | `WaveSurvivors` | `CountFamily` | `CountFamilyMembers` |
 | `GameSession` | `AnyMenLeft` | `AnyPlayerSlotHasMen` |
-| `GruntSpeedProgression` | `SpeedUp`, `Update` (each takes the grunts) | `SpeedUpGrunts`, `UpdateGruntSpeeds` |
 | `WaveMaterialisation` | `RetireConverged` | `RetireConvergedRobots` |
-| `RobotTransporter` | `Begin` | `BeginBeamingInRobots` |
-| `AttractObjectMachine` | `MoveObjects` | `MoveMovieObjects` |
 | `AttractPageMachine` | `ClearText` | `ClearTextCells` |
 
 The glossary entry for family members now says the word is **family member**.
+
+Three renames made first were then undone, because the class name already says what the items are (see NAM-20):
+`GruntSpeedProgression.SpeedUp` and `Update`, `RobotTransporter.Begin`, and `AttractObjectMachine.MoveObjects` keep their
+original names.
 
 ### What was left alone, and why
 

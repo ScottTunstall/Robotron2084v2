@@ -284,8 +284,12 @@ are listed in [refactoring-ledger.md](refactoring-ledger.md), which is also a li
 **NAM-20. A method that works on a collection names what the collection holds.** If a method loops over, counts,
 searches, filters or changes a collection of things, and the class it is on is not itself a collection, the method's
 name says what the things are. `CountRescue` does not say what was rescued; `CountRescuedFamilyMembers` does.
-`ClearText` becomes `ClearTextCells`, `AnyMenLeft` becomes `AnyPlayerSlotHasMen`, `SpeedUp(grunts)` becomes
-`SpeedUpGrunts(grunts)`, and `Begin(robots)` becomes `BeginBeamingInRobots(robots)`.
+`ClearText` becomes `ClearTextCells` and `AnyMenLeft` becomes `AnyPlayerSlotHasMen`.
+- **A class whose own name already says what the items are does not repeat it.** `GruntSpeedProgression.SpeedUp(grunts)`
+is right, and `SpeedUpGrunts` says "grunt" twice. `RobotTransporter.Begin(robots)` and `AttractObjectMachine.MoveObjects()`
+are right for the same reason (NAM-18: a method name does not repeat its class name). The reader gets the type from the class
+name; the method name only needs to supply it where the class name does not (`PlayField.CountRescuedFamilyMembers`,
+`AttractPageMachine.ClearTextCells`).
 - **A collection class is exempt**, because the class name already says what it holds: `EntityList.UpdateAll()`,
   `FamilyList.AnyAvailable()`, `LaserSlots.GetActiveLasers()`, `HighScoreTable.CountInitials()`. A class that is only
   a bundle of collections (`FieldEntities`) counts as one.
