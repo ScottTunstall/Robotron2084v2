@@ -170,6 +170,11 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>PD2</c>, the brain's target. Disassembly: the brain's target field at offset <c>$09</c> of its process (<c>$1BEE</c>).</remarks>
     internal int TargetFamilySlot => _targetSlot;
 
+    /// <summary>Gives the brain a new place in the family list to chase.</summary>
+    /// <param name="targetFamilySlot">The place to chase from now on.</param>
+    /// <remarks>Port-only. The playfield uses it when the "all the brains chase Mikey" bug is switched off, to let each brain pick again once the family is on the field.</remarks>
+    internal void Retarget(int targetFamilySlot) => _targetSlot = targetFamilySlot;
+
     /// <summary>Which of the brain's animation frames is showing, counting from 0 in <see cref="SpriteSet.BrainAnimationFrames"/>.</summary>
     internal int WalkAnimationFrameIndex => (int)_facing * 3 + WalkCycle[_walkCycleStep];
 
