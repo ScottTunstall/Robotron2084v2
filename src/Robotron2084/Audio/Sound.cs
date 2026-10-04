@@ -18,7 +18,7 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public static class Sound
 {
-    private static TransporterSound _transporter = new();
+    private static TransporterSound _transporterSound = new();
     private static SoundEngine? _engine;
 
     /// <summary>
@@ -39,7 +39,7 @@ public static class Sound
     public static void Initialize(IAudioSink sink)
     {
         _engine = new SoundEngine(sink);
-        _transporter = new TransporterSound();
+        _transporterSound = new TransporterSound();
     }
 
     /// <summary>Asks for a sound that is heard in the middle, between both speakers.</summary>
@@ -91,7 +91,7 @@ public static class Sound
             return;
         }
 
-        _transporter.Start(_engine);
+        _transporterSound.Start(_engine);
     }
 
     /// <summary>Moves the sound on by one port tick.</summary>
@@ -103,6 +103,6 @@ public static class Sound
         }
 
         _engine.Tick();
-        _transporter.Tick(_engine);
+        _transporterSound.Tick(_engine);
     }
 }

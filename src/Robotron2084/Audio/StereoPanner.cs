@@ -13,23 +13,23 @@ public sealed class StereoPanner
     /// <summary>Samples per output frame: one for the left speaker, one for the right.</summary>
     private const int ChannelsPerFrame = 2;
 
-    /// <summary>How far each sample moves the speaker volumes towards their targets: a glide of about 5 ms at 44.1 kHz. It is multiplied by how far <see cref="_left"/> still has to go to reach <see cref="_targetLeft"/>, and the result is added to <see cref="_left"/> at every sample. The right side works the same way.</summary>
+    /// <summary>How far each sample moves the speaker volumes towards their targets: a glide of about 5 ms at 44.1 kHz. It is multiplied by how far <see cref="_leftVolume"/> still has to go to reach <see cref="_targetLeftVolume"/>, and the result is added to <see cref="_leftVolume"/> at every sample. The right side works the same way.</summary>
     private const float GlidePerSample = 0.005f;
 
     /// <summary>A quarter turn, in radians: the angle between "all left" and "all right".</summary>
     private const float QuarterTurn = MathF.PI / 2;
 
-    private float _left;
-    private float _right;
-    private float _targetLeft;
-    private float _targetRight;
+    private float _leftVolume;
+    private float _rightVolume;
+    private float _targetLeftVolume;
+    private float _targetRightVolume;
 
     /// <summary>Creates a panner with the sound in the middle.</summary>
     public StereoPanner()
     {
         PanTo(0f);
-        _left = _targetLeft;
-        _right = _targetRight;
+        _leftVolume = _targetLeftVolume;
+        _rightVolume = _targetRightVolume;
     }
 
     /// <summary>Moves the sound to a new place between the speakers.</summary>
@@ -38,8 +38,8 @@ public sealed class StereoPanner
     {
         float leftToRight = (Math.Clamp(pan, -1f, 1f) + 1f) / 2;
         float angle = leftToRight * QuarterTurn;
-        _targetLeft = MathF.Cos(angle);
-        _targetRight = MathF.Sin(angle);
+        _targetLeftVolume = MathF.Cos(angle);
+        _targetRightVolume = MathF.Sin(angle);
     }
 
     /// <summary>Writes each sample to both speakers at their current volumes, as 16-bit left-right pairs.</summary>
@@ -50,12 +50,12 @@ public sealed class StereoPanner
     {
         for (int i = 0; i < samples.Length; i++)
         {
-            _left += (_targetLeft - _left) * GlidePerSample;
-            _right += (_targetRight - _right) * GlidePerSample;
+            _leftVolume += (_targetLeftVolume - _leftVolume) * GlidePerSample;
+            _rightVolume += (_targetRightVolume - _rightVolume) * GlidePerSample;
             float sample = samples[i] * volume;
-            int frame = i * ChannelsPerFrame;
-            stereo[frame] = ToPcm(sample * _left);
-            stereo[frame + 1] = ToPcm(sample * _right);
+            int leftSampleIndex = i * ChannelsPerFrame;
+            stereo[leftSampleIndex] = ToPcm(sample * _leftVolume);
+            stereo[leftSampleIndex + 1] = ToPcm(sample * _rightVolume);
         }
     }
 

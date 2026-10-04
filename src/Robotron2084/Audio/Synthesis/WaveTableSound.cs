@@ -163,7 +163,7 @@ internal sealed class WaveTableSound
 
     private readonly BoardMemory _memory;
     private readonly BoardOutput _output;
-    private readonly byte[] _wave = new byte[WaveTableData.LongestWave];
+    private readonly byte[] _waveSamples = new byte[WaveTableData.LongestWave];
     private byte _echoes;
     private byte _playsPerPitch;
     private byte _echoDecay;
@@ -186,12 +186,12 @@ internal sealed class WaveTableSound
     }
 
     /// <summary>Loads a sound's settings and wave, then plays it (<c>JSR GWLD</c>, <c>JSR GWAVE</c>).</summary>
-    /// <param name="vector">The sound's place in <see cref="WaveTableData.Vectors"/>.</param>
+    /// <param name="vectorIndex">The sound's place in <see cref="WaveTableData.Vectors"/>.</param>
     /// <returns>The sound's output changes.</returns>
-    public IEnumerable<OutputChange> LoadAndPlay(int vector)
+    public IEnumerable<OutputChange> LoadAndPlay(int vectorIndex)
     {
         _output.Wait(CallExtended);
-        Load(vector);
+        Load(vectorIndex);
         _output.Wait(CallExtended);
         return Play();
     }
@@ -218,25 +218,25 @@ internal sealed class WaveTableSound
     }
 
     /// <summary>Loads a sound's settings, copies its wave into memory and makes it quieter if asked (<c>GWLD</c>).</summary>
-    /// <param name="vector">The sound's place in <see cref="WaveTableData.Vectors"/>.</param>
-    private void Load(int vector)
+    /// <param name="vectorIndex">The sound's place in <see cref="WaveTableData.Vectors"/>.</param>
+    private void Load(int vectorIndex)
     {
         _output.Wait(LoadSettingsCycles + LoadWaveNumberCycles);
-        WaveTableVector settings = WaveTableData.Vectors[vector];
-        _playsPerPitch = (byte)(settings.EchoesAndPlays & LowNibble);
-        _echoes = (byte)(settings.EchoesAndPlays >> HighNibbleShift);
-        _echoDecay = (byte)(settings.EchoDecayAndWave >> HighNibbleShift);
-        FindWave(settings.EchoDecayAndWave & LowNibble);
+        WaveTableVector vector = WaveTableData.Vectors[vectorIndex];
+        _playsPerPitch = (byte)(vector.EchoesAndPlays & LowNibble);
+        _echoes = (byte)(vector.EchoesAndPlays >> HighNibbleShift);
+        _echoDecay = (byte)(vector.EchoDecayAndWave >> HighNibbleShift);
+        FindWave(vector.EchoDecayAndWave & LowNibble);
         _output.Wait(CallTransferFromLoadCycles);
         CopyWave();
         _output.Wait(CallPreDecayFromLoadCycles);
-        _preDecay = settings.PreDecay;
+        _preDecay = vector.PreDecay;
         Decay(_preDecay);
         _output.Wait(LoadPatternCycles);
-        _pitchStep = settings.PitchStep;
-        _pitchStepsLeft = settings.PitchSteps;
-        _patternStart = settings.PatternStart;
-        _patternEnd = settings.PatternStart + settings.PatternLength;
+        _pitchStep = vector.PitchStep;
+        _pitchStepsLeft = vector.PitchSteps;
+        _patternStart = vector.PatternStart;
+        _patternEnd = vector.PatternStart + vector.PatternLength;
         _pitchOffset = 0;
     }
 
@@ -267,7 +267,7 @@ internal sealed class WaveTableSound
         _output.Wait(TransferCycles + (_waveLength * SubroutineCycles.TransferPerByte));
         for (int i = 0; i < _waveLength; i++)
         {
-            _wave[i] = WaveTableData.Waves[_waveStart + 1 + i];
+            _waveSamples[i] = WaveTableData.Waves[_waveStart + 1 + i];
         }
     }
 
@@ -290,7 +290,7 @@ internal sealed class WaveTableSound
         for (int i = 0; i < _waveLength; i++)
         {
             int sixteenth = WaveTableData.Waves[_waveStart + 1 + i] >> SixteenthShift;
-            _wave[i] = (byte)(_wave[i] - (steps * sixteenth));
+            _waveSamples[i] = (byte)(_waveSamples[i] - (steps * sixteenth));
         }
     }
 
@@ -377,7 +377,7 @@ internal sealed class WaveTableSound
             for (int i = 0; i < _waveLength; i++)
             {
                 _output.Wait(cyclesBeforeEachLevel);
-                yield return _output.Store(_wave[i]);
+                yield return _output.Store(_waveSamples[i]);
                 _output.Wait(NextLevelCycles);
             }
 
@@ -490,16 +490,16 @@ internal sealed class WaveTableSound
     private bool IsPlayable(byte pitch)
     {
         int sum = _pitchOffset + pitch;
-        bool carries = sum > byte.MaxValue;
+        bool hasCarry = sum > byte.MaxValue;
         _output.Wait(TestPitchCycles);
         if (_pitchStep < NegativeBit)
         {
-            if (!carries)
+            if (!hasCarry)
             {
                 _output.Wait(Branch);
             }
 
-            return !carries;
+            return !hasCarry;
         }
 
         if ((byte)sum == 0)
@@ -508,6 +508,6 @@ internal sealed class WaveTableSound
         }
 
         _output.Wait(Branch);
-        return carries;
+        return hasCarry;
     }
 }

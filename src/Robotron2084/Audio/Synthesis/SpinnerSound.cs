@@ -53,7 +53,7 @@ internal static class SpinnerSound
         var square = new SquareWaveSound(output);
         output.Wait(CallLoadCycles);
         square.Load(SquareWaveSound.CabinetShakeVector);
-        square.LowWait = LowWaitForSend(CountSend(memory, output), output);
+        square.LowWait = GetLowWaitForSend(CountSend(memory, output), output);
         while (true)
         {
             output.Wait(CallExtended);
@@ -93,7 +93,7 @@ internal static class SpinnerSound
     /// <param name="sends">The send count.</param>
     /// <param name="output">The board's output port, for the time it takes.</param>
     /// <returns>The low time, in counts.</returns>
-    private static byte LowWaitForSend(byte sends, BoardOutput output)
+    private static byte GetLowWaitForSend(byte sends, BoardOutput output)
     {
         var stepsLeft = (byte)(SendsPerClimb - sends);
         byte lowWait = 0;

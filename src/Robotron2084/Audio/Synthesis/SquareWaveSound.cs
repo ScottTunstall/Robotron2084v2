@@ -68,7 +68,7 @@ internal sealed class SquareWaveSound
     ];
 
     private readonly BoardOutput _output;
-    private SquareWaveVector _settings;
+    private SquareWaveVector _vector;
     private byte _lowCount;
     private byte _highCount;
     private ushort _sweepCountsLeft;
@@ -80,16 +80,16 @@ internal sealed class SquareWaveSound
     /// <summary>How long the wave stays low each time at the start of each sweep, in counts (<c>LOPER</c>).</summary>
     public byte LowWait
     {
-        get => _settings.LowWait;
-        set => _settings = _settings with { LowWait = value };
+        get => _vector.LowWait;
+        set => _vector = _vector with { LowWait = value };
     }
 
     /// <summary>Copies a sound's settings into place (<c>VARILD</c>).</summary>
-    /// <param name="vector">The sound's place in the settings table.</param>
-    public void Load(int vector)
+    /// <param name="vectorIndex">The sound's place in the settings table.</param>
+    public void Load(int vectorIndex)
     {
         _output.Wait(LoadCycles);
-        _settings = Vectors[vector];
+        _vector = Vectors[vectorIndex];
     }
 
     /// <summary>Plays the loaded sound until its sweeps end (<c>VARI</c>); some never end.</summary>
@@ -97,12 +97,12 @@ internal sealed class SquareWaveSound
     public IEnumerable<OutputChange> Play()
     {
         _output.Wait(Direct);
-        yield return _output.Store(_settings.Level);
+        yield return _output.Store(_vector.Level);
         do
         {
             _output.Wait(StartCountsCycles);
-            _lowCount = _settings.LowWait;
-            _highCount = _settings.HighWait;
+            _lowCount = _vector.LowWait;
+            _highCount = _vector.HighWait;
             do
             {
                 foreach (OutputChange change in PlayUntilSweep())
@@ -115,7 +115,7 @@ internal sealed class SquareWaveSound
                     yield return change;
                 }
             }
-            while (_highCount != _settings.HighWaitEnd);
+            while (_highCount != _vector.HighWaitEnd);
         }
         while (ChangeLowWait());
     }
@@ -125,7 +125,7 @@ internal sealed class SquareWaveSound
     private IEnumerable<OutputChange> PlayUntilSweep()
     {
         _output.Wait(WordDirect);
-        _sweepCountsLeft = _settings.SweepLength;
+        _sweepCountsLeft = _vector.SweepLength;
         while (true)
         {
             _output.Wait(Direct);
@@ -184,8 +184,8 @@ internal sealed class SquareWaveSound
         _output.Wait(Immediate);
         yield return _output.Store(level);
         _output.Wait(GrowCountCycles + GrowCountCycles + CheckEndCycles);
-        _lowCount += _settings.LowWaitStep;
-        _highCount += _settings.HighWaitStep;
+        _lowCount += _vector.LowWaitStep;
+        _highCount += _vector.HighWaitStep;
     }
 
     /// <summary>
@@ -196,14 +196,14 @@ internal sealed class SquareWaveSound
     private bool ChangeLowWait()
     {
         _output.Wait(Direct + Branch);
-        if (_settings.LowWaitChange == 0)
+        if (_vector.LowWaitChange == 0)
         {
             _output.Wait(Return);
             return false;
         }
 
         _output.Wait(ChangeLowWaitCycles);
-        LowWait += _settings.LowWaitChange;
+        LowWait += _vector.LowWaitChange;
         return LowWait != 0;
     }
 }

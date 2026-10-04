@@ -81,8 +81,8 @@ public sealed class SoundBoard : ISoundBoard
     private readonly BoardMemory _memory = new();
     private readonly BoardOutput _output = new();
     private readonly IReadOnlyDictionary<int, Func<IEnumerable<OutputChange>>> _routines;
-    private readonly WaveTableSound _waveTable;
-    private IEnumerator<OutputChange>? _sound;
+    private readonly WaveTableSound _waveTableSound;
+    private IEnumerator<OutputChange>? _outputChanges;
     private int _waitingSoundNumber = NoSoundNumber;
     private int _cyclesLeftInChange;
     private byte _nextLevel;
@@ -91,7 +91,7 @@ public sealed class SoundBoard : ISoundBoard
     /// <summary>Switches the board on: silent, waiting for a sound number.</summary>
     public SoundBoard()
     {
-        _waveTable = new WaveTableSound(_memory, _output);
+        _waveTableSound = new WaveTableSound(_memory, _output);
         _routines = BuildRoutines();
     }
 
@@ -170,11 +170,11 @@ public sealed class SoundBoard : ISoundBoard
 
         int number = _waitingSoundNumber;
         _waitingSoundNumber = NoSoundNumber;
-        _sound?.Dispose();
+        _outputChanges?.Dispose();
         _output.Restart(OutputLevel);
         _output.Wait(Interrupt + HandlerStartCycles + FlagCheckCycles + SortCycles);
         ClearRepeatCounts(number);
-        _sound = _routines[number]().GetEnumerator();
+        _outputChanges = _routines[number]().GetEnumerator();
     }
 
     /// <summary>True when the instruction that writes the next level has started but not finished.</summary>
@@ -204,9 +204,9 @@ public sealed class SoundBoard : ISoundBoard
     /// <returns>True when there is a change to run towards.</returns>
     private bool TakeNextChange()
     {
-        while (_sound is not null && _sound.MoveNext())
+        while (_outputChanges is not null && _outputChanges.MoveNext())
         {
-            OutputChange change = _sound.Current;
+            OutputChange change = _outputChanges.Current;
             _nextLevel = change.Level;
             _nextWriteCycles = change.WriteCycles;
             _cyclesLeftInChange = change.CyclesBefore;
@@ -218,7 +218,7 @@ public sealed class SoundBoard : ISoundBoard
             OutputLevel = change.Level;
         }
 
-        _sound = null;
+        _outputChanges = null;
         return false;
     }
 
@@ -229,49 +229,49 @@ public sealed class SoundBoard : ISoundBoard
     /// <returns>The routines, by sound number.</returns>
     private Dictionary<int, Func<IEnumerable<OutputChange>>> BuildRoutines() => new()
     {
-        [0x01] = LowWaveTable(0x01), // HBDV "HEARTBEAT DISTORTO"
-        [0x04] = LowWaveTable(0x04), // XBV
-        [0x06] = LowWaveTable(0x06), // HBEV "HEARTBEAT ECHO"
-        [0x08] = LowWaveTable(0x08), // SPNRV
-        [0x0D] = LowWaveTable(0x0D), // ED17
-        [SpinnerSoundNumber] = JumpTable(() => SpinnerSound.Play(_memory, _output)), // SP1
-        [0x11] = JumpTable(() => LightningNoise.PlayLightning(_memory, _output)), // LITE
-        [LaserBallBonusSoundNumber] = JumpTable(_waveTable.PlayLaserBallBonus), // BON2
-        [0x13] = JumpTable(EndBackground), // BGEND
-        [0x14] = JumpTable(() => WhiteNoise.PlayTurbo(_memory, _output)), // TURBO
-        [0x15] = JumpTable(() => LightningNoise.PlayAppear(_memory, _output)), // APPEAR
-        [0x17] = JumpTable(() => FilteredNoise.PlayCannon(_memory, _output)), // CANNON
-        [0x18] = JumpTable(() => RadioSound.Play(_memory, _output)), // RADIO
-        [0x19] = JumpTable(() => HyperSound.Play(_memory, _output)), // HYPER
-        [0x1A] = JumpTable(() => ScreamSound.Play(_memory, _output)), // SCREAM
-        [0x1D] = SquareWave(0x1D), // SAW
-        [0x1E] = SquareWave(0x1E), // FOSHIT
-        [0x25] = HighWaveTable(0x25), // SSPV
-        [0x28] = HighWaveTable(0x28), // GDYUKV
+        [0x01] = CreateLowWaveTableRoutine(0x01), // HBDV "HEARTBEAT DISTORTO"
+        [0x04] = CreateLowWaveTableRoutine(0x04), // XBV
+        [0x06] = CreateLowWaveTableRoutine(0x06), // HBEV "HEARTBEAT ECHO"
+        [0x08] = CreateLowWaveTableRoutine(0x08), // SPNRV
+        [0x0D] = CreateLowWaveTableRoutine(0x0D), // ED17
+        [SpinnerSoundNumber] = CreateJumpTableRoutine(() => SpinnerSound.Play(_memory, _output)), // SP1
+        [0x11] = CreateJumpTableRoutine(() => LightningNoise.PlayLightning(_memory, _output)), // LITE
+        [LaserBallBonusSoundNumber] = CreateJumpTableRoutine(_waveTableSound.PlayLaserBallBonus), // BON2
+        [0x13] = CreateJumpTableRoutine(EndBackground), // BGEND
+        [0x14] = CreateJumpTableRoutine(() => WhiteNoise.PlayTurbo(_memory, _output)), // TURBO
+        [0x15] = CreateJumpTableRoutine(() => LightningNoise.PlayAppear(_memory, _output)), // APPEAR
+        [0x17] = CreateJumpTableRoutine(() => FilteredNoise.PlayCannon(_memory, _output)), // CANNON
+        [0x18] = CreateJumpTableRoutine(() => RadioSound.Play(_memory, _output)), // RADIO
+        [0x19] = CreateJumpTableRoutine(() => HyperSound.Play(_memory, _output)), // HYPER
+        [0x1A] = CreateJumpTableRoutine(() => ScreamSound.Play(_memory, _output)), // SCREAM
+        [0x1D] = CreateSquareWaveRoutine(0x1D), // SAW
+        [0x1E] = CreateSquareWaveRoutine(0x1E), // FOSHIT
+        [0x25] = CreateHighWaveTableRoutine(0x25), // SSPV
+        [0x28] = CreateHighWaveTableRoutine(0x28), // GDYUKV
     };
 
     /// <summary>A wave table sound numbered 1 to 13 (<c>IRQ001</c> to <c>IRQ002</c>).</summary>
     /// <param name="soundNumber">The sound number.</param>
     /// <returns>The routine.</returns>
-    private Func<IEnumerable<OutputChange>> LowWaveTable(int soundNumber) => () =>
+    private Func<IEnumerable<OutputChange>> CreateLowWaveTableRoutine(int soundNumber) => () =>
     {
         _output.Wait(LowRangeCycles);
-        return _waveTable.LoadAndPlay(soundNumber - LowWaveTableOffset);
+        return _waveTableSound.LoadAndPlay(soundNumber - LowWaveTableOffset);
     };
 
     /// <summary>A wave table sound numbered 32 to 43, which the handler moves down to follow the low ones (<c>IRQ00</c>'s high range).</summary>
     /// <param name="soundNumber">The sound number.</param>
     /// <returns>The routine.</returns>
-    private Func<IEnumerable<OutputChange>> HighWaveTable(int soundNumber) => () =>
+    private Func<IEnumerable<OutputChange>> CreateHighWaveTableRoutine(int soundNumber) => () =>
     {
         _output.Wait(HighRangeCycles);
-        return _waveTable.LoadAndPlay(soundNumber - HighWaveTableOffset);
+        return _waveTableSound.LoadAndPlay(soundNumber - HighWaveTableOffset);
     };
 
     /// <summary>A sound with its own routine, reached through the jump table <c>JMPTBL</c> (<c>IRQ10</c>, <c>IRQ2</c>).</summary>
     /// <param name="routine">The routine.</param>
     /// <returns>The routine, after the handler's time to reach it.</returns>
-    private Func<IEnumerable<OutputChange>> JumpTable(Func<IEnumerable<OutputChange>> routine) => () =>
+    private Func<IEnumerable<OutputChange>> CreateJumpTableRoutine(Func<IEnumerable<OutputChange>> routine) => () =>
     {
         _output.Wait(LowRangeCycles + MiddleRangeCycles + JumpTableCycles);
         return routine();
@@ -280,7 +280,7 @@ public sealed class SoundBoard : ISoundBoard
     /// <summary>A square wave sound (<c>IRQ20</c>, <c>IRQ21</c>: <c>JSR VARILD</c>, <c>JSR VARI</c>).</summary>
     /// <param name="soundNumber">The sound number.</param>
     /// <returns>The routine.</returns>
-    private Func<IEnumerable<OutputChange>> SquareWave(int soundNumber) => () =>
+    private Func<IEnumerable<OutputChange>> CreateSquareWaveRoutine(int soundNumber) => () =>
     {
         _output.Wait(LowRangeCycles + MiddleRangeCycles + CallExtended);
         var square = new SquareWaveSound(_output);
