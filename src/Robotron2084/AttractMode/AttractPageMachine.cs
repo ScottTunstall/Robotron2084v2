@@ -135,7 +135,7 @@ public sealed class AttractPageMachine
     }
 
     /// <summary>Drops every character inside a cleared block (the ROM's `BLKCLR`).</summary>
-    private void ClearText(int x, int y, int width, int height)
+    private void ClearTextCells(int x, int y, int width, int height)
     {
         _textCells.RemoveAll(cell =>
             cell.X >= x && cell.X < x + width &&
@@ -230,7 +230,7 @@ public sealed class AttractPageMachine
                     int range = NextByte();
                     _cursorX = TextLeft;
                     _cursorY = row;
-                    ClearText(TextLeft, ClearTopRow, ClearWidth, range - 0x10);
+                    ClearTextCells(TextLeft, ClearTopRow, ClearWidth, range - 0x10);
                     return;
                 }
 
@@ -243,7 +243,7 @@ public sealed class AttractPageMachine
                 {
                     int x = NextByte() * ScreenSize.ArcadePixelsPerColumn;
                     int number = NextByte();
-                    ClearText(TextLeft, MessageRow, ClearWidth, MessageHeight);
+                    ClearTextCells(TextLeft, MessageRow, ClearWidth, MessageHeight);
                     Message = new MovieMessage(
                         x,
                         MessageRow,
