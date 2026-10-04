@@ -111,13 +111,13 @@ public class GameSessionTests
     {
         GameSession session = NewTwoPlayerGame();
 
-        Assert.True(session.AnyMenLeft());
+        Assert.True(session.AnyPlayerSlotHasMen());
 
         session.Players[0].Lives = 0;
-        Assert.True(session.AnyMenLeft());
+        Assert.True(session.AnyPlayerSlotHasMen());
 
         session.Players[1].Lives = 0;
-        Assert.False(session.AnyMenLeft());
+        Assert.False(session.AnyPlayerSlotHasMen());
     }
 
     [Fact]
