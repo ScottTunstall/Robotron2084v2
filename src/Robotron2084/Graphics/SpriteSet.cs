@@ -213,7 +213,7 @@ public sealed class SpriteSet
     /// <summary>
     /// Player laser sprites — the four ROM sprites (R5 $35BE-$35DC, byte-identical
     /// to old source RRG23 LLPC/ULPC/DLLPC/ULLPC). Built at arcade-pixel size (1 arcade pixel = 1 texture pixel);
-    /// <see cref="DrawSprite"/> scales by SpecScale and centers in the laser's
+    /// <see cref="BlitterDraw.DrawSprite"/> scales by SpecScale and centers in the laser's
     /// 4x4 (spec) collision box. ROM LTAB picks one per direction, no flipping:
     /// L/R = bar, U/D = column (left pixel lit), UL/DR = main diagonal,
     /// DL/UR = anti-diagonal.

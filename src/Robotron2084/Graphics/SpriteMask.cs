@@ -47,8 +47,8 @@ public sealed class SpriteMask
         return new SpriteMask(width, height, opaque);
     }
 
-    /// <summary>Derives a mask from a sprite's alpha channel: any non-transparent pixel is opaque.</summary>
-    /// <param name="sprite">The texture the mask is built for (usually a ROM frame).</param>
+    /// <summary>Makes a mask from a sprite: every pixel that is not see-through counts as solid.</summary>
+    /// <param name="texture">The sprite the mask is made for, which is usually one animation frame of a character.</param>
     public static SpriteMask CreateFromTexture(Texture2D texture)
     {
         var pixels = new Color[texture.Width * texture.Height];
