@@ -19,8 +19,8 @@ public sealed class TunnelEffectTests
         var tunnel = new TunnelEffect();
 
         Assert.Equal((0x3B, 0x80, 0x5A, 0x82), tunnel.Corners);
-        Assert.Equal(0xEF, tunnel.Packed);
-        Assert.False(tunnel.Finished);
+        Assert.Equal(0xEF, tunnel.PackedColourPair);
+        Assert.False(tunnel.IsFinished);
     }
 
     /// <summary>Ticks the effect the way the game does — one call a tick — for <paramref name="ticks"/> ticks.</summary>
@@ -46,7 +46,7 @@ public sealed class TunnelEffectTests
 
         Assert.Equal(TunnelEffect.RingsPerPass, tunnel.RingsDrawn);
         Assert.Equal((0x39, 0x7C, 0x5C, 0x86), tunnel.Corners);
-        Assert.Equal(0xAB, tunnel.Packed); // $EF -> $CD -> $AB, one step per ring
+        Assert.Equal(0xAB, tunnel.PackedColourPair); // $EF -> $CD -> $AB, one step per ring
     }
 
     [Fact]
@@ -59,13 +59,13 @@ public sealed class TunnelEffectTests
         var tunnel = new TunnelEffect();
 
         int ticks = 0;
-        while (!tunnel.Finished && ticks < 1000)
+        while (!tunnel.IsFinished && ticks < 1000)
         {
             tunnel.Update();
             ticks++;
         }
 
-        Assert.True(tunnel.Finished);
+        Assert.True(tunnel.IsFinished);
         Assert.InRange(ticks, 180, 190);                     // one phrase of the wave-end music
         Assert.InRange(ticks / 60.0, 3.0, 3.2);
     }
@@ -99,12 +99,12 @@ public sealed class TunnelEffectTests
         var tunnel = new TunnelEffect();
 
         int guard = 0;
-        while (!tunnel.Finished && guard++ < 500)
+        while (!tunnel.IsFinished && guard++ < 500)
         {
             tunnel.Update();
         }
 
-        Assert.True(tunnel.Finished, "the tunnel must finish");
+        Assert.True(tunnel.IsFinished, "the tunnel must finish");
         Assert.Equal(108, tunnel.RingsDrawn);
     }
 
@@ -117,7 +117,7 @@ public sealed class TunnelEffectTests
         int pair = 0xEF;
         for (int i = 0; i < 200; i++)
         {
-            (int colour0, int colour1) = TunnelEffect.Colours(pair);
+            (int colour0, int colour1) = TunnelEffect.GetColourSlots(pair);
             Assert.InRange(colour0, 0, 15);
             Assert.InRange(colour1, 0, 15);
 
@@ -144,14 +144,14 @@ public sealed class TunnelEffectTests
 
         for (int pixel = 0; pixel < 304; pixel++)
         {
-            Assert.True(TunnelEffect.PixelX(pixel + 1) > TunnelEffect.PixelX(pixel),
+            Assert.True(TunnelEffect.ToPixelX(pixel + 1) > TunnelEffect.ToPixelX(pixel),
                 $"ROM pixel {pixel} must be at least one port pixel wide");
         }
 
         // The ROM's 256 rows fill the port's whole screen height, and no more.
         Assert.Equal(0, TunnelEffect.GetRowY(0));
         Assert.Equal(ScreenSize.Height, TunnelEffect.GetRowY(256));
-        Assert.Equal(ScreenSize.Width, TunnelEffect.PixelX(304));
+        Assert.Equal(ScreenSize.Width, TunnelEffect.ToPixelX(304));
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public sealed class TunnelEffectTests
         // The rings keep growing until the outward walk covers the screen: the last ring of the
         // colouring pass starts at $0616 (column 6, row 22) and ends on the screen's own edges.
         int guard = 0;
-        while (!tunnel.Erasing && guard++ < 1000)
+        while (!tunnel.IsErasing && guard++ < 1000)
         {
             tunnel.Update();
         }
@@ -193,16 +193,16 @@ public sealed class TunnelEffectTests
         var tunnel = new TunnelEffect();
 
         int guard = 0;
-        while (!tunnel.Erasing && guard++ < 500)
+        while (!tunnel.IsErasing && guard++ < 500)
         {
             tunnel.Update();
         }
 
-        Assert.True(tunnel.Erasing);
-        Assert.Equal(0, tunnel.Packed);
+        Assert.True(tunnel.IsErasing);
+        Assert.Equal(0, tunnel.PackedColourPair);
         Assert.Equal((0x3B, 0x80, 0x5A, 0x82), tunnel.Corners); // back to the outermost ring
 
         tunnel.Update();
-        Assert.Equal(0, tunnel.Packed); // still black — the pair never advances again
+        Assert.Equal(0, tunnel.PackedColourPair); // still black — the pair never advances again
     }
 }

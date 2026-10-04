@@ -31,10 +31,10 @@ public sealed class SpriteMaskTests
         var box = new Rectangle(100, 100, 4, 4);
 
         // Drawn in the same place the two marks are three pixels apart: the boxes overlap, the sprites do not.
-        Assert.False(SpriteMask.Overlap(topLeft, box, bottomRight, box));
+        Assert.False(SpriteMask.Overlaps(topLeft, box, bottomRight, box));
 
         // Slide the second sprite up and left until its mark lands on the first one's.
-        Assert.True(SpriteMask.Overlap(topLeft, box, bottomRight, new Rectangle(97, 97, 4, 4)));
+        Assert.True(SpriteMask.Overlaps(topLeft, box, bottomRight, new Rectangle(97, 97, 4, 4)));
     }
 
     [Fact]
@@ -46,11 +46,11 @@ public sealed class SpriteMaskTests
         var a = new Rectangle(100, 100, 4, 4);
 
         // In the same box the two marks cannot reach each other (0..2 and 2..4 screen pixels)...
-        Assert.False(SpriteMask.Overlap(topLeft, a, bottomRight, a));
+        Assert.False(SpriteMask.Overlaps(topLeft, a, bottomRight, a));
 
         // ...but two screen pixels up-left the second mark covers screen pixel 100.
-        Assert.True(SpriteMask.Overlap(topLeft, a, bottomRight, new Rectangle(98, 98, 4, 4)));
-        Assert.False(SpriteMask.Overlap(topLeft, a, bottomRight, new Rectangle(96, 96, 4, 4)));
+        Assert.True(SpriteMask.Overlaps(topLeft, a, bottomRight, new Rectangle(98, 98, 4, 4)));
+        Assert.False(SpriteMask.Overlaps(topLeft, a, bottomRight, new Rectangle(96, 96, 4, 4)));
     }
 
     [Fact]
@@ -59,10 +59,10 @@ public sealed class SpriteMaskTests
         SpriteMask solid = SpriteMask.CreateFromPixels(2, 2, [(0, 0), (1, 0), (0, 1), (1, 1)]);
         var box = new Rectangle(0, 0, 2, 2);
 
-        Assert.True(SpriteMask.Overlap(solid, box, solid, box));
+        Assert.True(SpriteMask.Overlaps(solid, box, solid, box));
 
         // Adjacent and apart, with no shared screen pixel.
-        Assert.False(SpriteMask.Overlap(solid, box, solid, new Rectangle(2, 0, 2, 2)));
-        Assert.False(SpriteMask.Overlap(solid, box, solid, new Rectangle(0, 2, 2, 2)));
+        Assert.False(SpriteMask.Overlaps(solid, box, solid, new Rectangle(2, 0, 2, 2)));
+        Assert.False(SpriteMask.Overlaps(solid, box, solid, new Rectangle(0, 2, 2, 2)));
     }
 }

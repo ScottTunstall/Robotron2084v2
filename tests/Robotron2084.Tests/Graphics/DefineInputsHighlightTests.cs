@@ -26,11 +26,11 @@ public sealed class DefineInputsHighlightTests
 
         // The page comes up green with no white on it, as the presentation page does: its table
         // copy (ROM $8A3A) runs before its first chase step.
-        Assert.Equal(0x38, palette.SlotValue(DefineInputsHighlight.Slot));
+        Assert.Equal(0x38, palette.GetSlotValue(DefineInputsHighlight.Slot));
 
         foreach (int slot in new[] { 0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15 })
         {
-            Assert.Equal(GamePalette.DefaultSlots[slot], palette.SlotValue(slot));
+            Assert.Equal(GamePalette.DefaultSlotValues[slot], palette.GetSlotValue(slot));
         }
     }
 
@@ -44,7 +44,7 @@ public sealed class DefineInputsHighlightTests
         for (int tick = 1; tick <= 300; tick++)
         {
             highlight.Update(palette);
-            bool isWhite = palette.SlotValue(DefineInputsHighlight.Slot) == 0xFF;
+            bool isWhite = palette.GetSlotValue(DefineInputsHighlight.Slot) == 0xFF;
             if (isWhite && !wasWhite)
             {
                 flashTicks.Add(tick);
@@ -68,7 +68,7 @@ public sealed class DefineInputsHighlightTests
         for (int tick = 0; tick < 300; tick++)
         {
             highlight.Update(palette);
-            int value = palette.SlotValue(DefineInputsHighlight.Slot);
+            int value = palette.GetSlotValue(DefineInputsHighlight.Slot);
             Assert.True(value is 0x38 or 0xFF, $"the slot held {value:X2}");
         }
     }
@@ -82,7 +82,7 @@ public sealed class DefineInputsHighlightTests
 
         for (int tick = 0; tick < Ticks; tick++)
         {
-            if (palette.SlotValue(DefineInputsHighlight.Slot) == 0xFF)
+            if (palette.GetSlotValue(DefineInputsHighlight.Slot) == 0xFF)
             {
                 white++;
             }
@@ -107,7 +107,7 @@ public sealed class DefineInputsHighlightTests
 
         foreach (int slot in new[] { 0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15 })
         {
-            Assert.Equal(GamePalette.DefaultSlots[slot], palette.SlotValue(slot));
+            Assert.Equal(GamePalette.DefaultSlotValues[slot], palette.GetSlotValue(slot));
         }
     }
 }
