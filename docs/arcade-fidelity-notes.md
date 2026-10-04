@@ -1033,6 +1033,9 @@ Called via KIDKIL/MOMKIL/DADKIL (DEC KIDCNT/MOMCNT/DADCNT first).
   decrement the 20-shell counter (bug preserved; the fire gate
   `CMPA #$14; LBHI` = fire while count < 20 — the port's `< 20` was already
   exact, re-verified against the disasm this session).
+  **CORRECTED 2026-10-04:** `LBHI` branches only when the count is HIGHER than
+  20, so a count of 20 still fires: 21 shells, not 20 (RRTK4 `TNKFIR`,
+  `CMPA #20 / LBHI TNKFX`). The port's gate is now `<= ShellCountLimit`.
   (2) **Hulk** rewritten from RRH11 source this session (HULK/HULKND/
   HULKST + the animation tables): one step per HLKSPD-tick cycle (PortTicks),
   horizontal steps alternate 3/4 arcade-px with the animation, vertical 2

@@ -137,7 +137,13 @@ they read `YES`, and `F10` saves and returns:
 `EXTRA MAN EVERY` (25000 points, the arcade's recommended stop), `TURNS PER PLAYER`
 (3 men), `DIFFICULTY OF PLAY` (0-10, 5 recommended — the wave tables move exactly as
 the ROM's `$2B7C` moves them), `ATTRACT MODE SOUND` (port-only: off by default, so the demo
-machine playing itself is silent; turn it on to hear it), `RESTORE FACTORY SETTINGS` and `HIGH SCORE TABLE RESET`.
+machine playing itself is silent; turn it on to hear it), `BOZO MODE` (port-only: on by
+default, as the arcade — the early-wave mercy for a player losing ships; off, it is never
+given), `BRAINS CHASE MIKEY BUG` (port-only: on by default, as the arcade — every brain starts
+the wave chasing the first Mikey; off, each starts on the nearest family member),
+`TANK SHELL BUG` (port-only: on by default, as the arcade — a shell that fizzles out stays on
+the wave's shell count, so the tanks stop firing after 21; off, only the shells on the field count),
+`RESTORE FACTORY SETTINGS` and `HIGH SCORE TABLE RESET`.
 Settings live in `%LocalAppData%\Robotron2084\settings.ini`, hand-editable and
 reloaded at start-up.
 **Attract dev keys (port-only, notes §97/§98):** `End` jump straight into the attract
