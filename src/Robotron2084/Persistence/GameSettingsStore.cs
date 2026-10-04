@@ -28,7 +28,7 @@ public sealed class GameSettingsStore
 {
     private const string Section = "game";
 
-    private static readonly string FilePath = AppDataPaths.GetFilePath("settings.ini");
+    private static readonly string FilePath = AppDataPaths.GetFilePath("gameSettings.ini");
 
     /// <summary>Loads from a given file — the seam the tests use.</summary>
     public static GameSettings Load(string path)
@@ -51,7 +51,7 @@ public sealed class GameSettingsStore
     /// <summary>Parses the file's text; anything missing or out of range keeps the factory value.</summary>
     public static GameSettings Parse(IEnumerable<string> lines)
     {
-        GameSettings settings = GameSettings.CreateFactoryDefaults();
+        GameSettings gameSettings = GameSettings.CreateFactoryDefaults();
         string section = string.Empty;
 
         foreach (string raw in lines)
@@ -80,37 +80,37 @@ public sealed class GameSettingsStore
                 continue;
             }
 
-            Apply(settings, name, value);
+            Apply(gameSettings, name, value);
         }
 
-        return settings;
+        return gameSettings;
     }
 
     /// <summary>Saves to a given file — the seam the tests use.</summary>
-    public static void Save(string path, GameSettings settings)
+    public static void Save(string path, GameSettings gameSettings)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, Write(settings), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        File.WriteAllText(path, Write(gameSettings), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 
     /// <summary>Builds the file's text (also the tests' seam).</summary>
-    public static string Write(GameSettings settings)
+    public static string Write(GameSettings gameSettings)
     {
         var text = new StringBuilder();
-        text.AppendLine("; Robotron 2084 (port) game settings - see notes section 131.");
+        text.AppendLine("; Robotron 2084 (port) game gameSettings - see notes section 131.");
         text.AppendLine("; Edit by hand, or press F5 on the title screen and use the GAME ADJUSTMENT page.");
         text.AppendLine("; Difficulty 0-10 (5 recommended), turns per player 1-20 (3 recommended), and");
         text.AppendLine("; extramanevery in thousands of points: 0, 20, 25, 30 or 50. attractsound is 1 or 0.");
         text.AppendLine("; tankshellbug, brainschasemikeybug and bozomode are 1 (as the arcade) or 0.");
         text.AppendLine();
         text.AppendLine($"[{Section}]");
-        text.AppendLine($"extramanevery={settings.ExtraManEvery}");
-        text.AppendLine($"turnsperplayer={settings.TurnsPerPlayer}");
-        text.AppendLine($"difficulty={settings.Difficulty}");
-        text.AppendLine($"attractsound={(settings.AttractModeSound ? 1 : 0)}");
-        text.AppendLine($"tankshellbug={(settings.TankShellBug ? 1 : 0)}");
-        text.AppendLine($"brainschasemikeybug={(settings.BrainsChaseMikeyBug ? 1 : 0)}");
-        text.AppendLine($"bozomode={(settings.BozoModeEnabled ? 1 : 0)}");
+        text.AppendLine($"extramanevery={gameSettings.ExtraManEvery}");
+        text.AppendLine($"turnsperplayer={gameSettings.TurnsPerPlayer}");
+        text.AppendLine($"difficulty={gameSettings.Difficulty}");
+        text.AppendLine($"attractsound={(gameSettings.AttractModeSoundEnabled ? 1 : 0)}");
+        text.AppendLine($"tankshellbug={(gameSettings.TankShellBugEnabled ? 1 : 0)}");
+        text.AppendLine($"brainschasemikeybug={(gameSettings.BrainsChaseMikeyBugEnabled ? 1 : 0)}");
+        text.AppendLine($"bozomode={(gameSettings.BozoModeEnabled ? 1 : 0)}");
         return text.ToString();
     }
 
@@ -118,33 +118,33 @@ public sealed class GameSettingsStore
     public GameSettings Load() => Load(FilePath);
 
     /// <summary>Saves the settings.</summary>
-    public void Save(GameSettings settings) => Save(FilePath, settings);
+    public void Save(GameSettings gameSettings) => Save(FilePath, gameSettings);
 
     /// <summary>Applies one key when the value is one the cabinet could hold, ignoring it otherwise.</summary>
-    private static void Apply(GameSettings settings, string name, int value)
+    private static void Apply(GameSettings gameSettings, string name, int value)
     {
         switch (name)
         {
             case "extramanevery" when GameSettings.IsExtraManEveryValue(value):
-                settings.ExtraManEvery = value;
+                gameSettings.ExtraManEvery = value;
                 break;
             case "turnsperplayer" when value is >= GameSettings.MinimumTurnsPerPlayer and <= GameSettings.MaximumTurnsPerPlayer:
-                settings.TurnsPerPlayer = value;
+                gameSettings.TurnsPerPlayer = value;
                 break;
             case "difficulty" when value is >= GameSettings.MinimumDifficulty and <= GameSettings.MaximumDifficulty:
-                settings.Difficulty = value;
+                gameSettings.Difficulty = value;
                 break;
             case "attractsound" when value is 0 or 1:
-                settings.AttractModeSound = value == 1;
+                gameSettings.AttractModeSoundEnabled = value == 1;
                 break;
             case "tankshellbug" when value is 0 or 1:
-                settings.TankShellBug = value == 1;
+                gameSettings.TankShellBugEnabled = value == 1;
                 break;
             case "brainschasemikeybug" when value is 0 or 1:
-                settings.BrainsChaseMikeyBug = value == 1;
+                gameSettings.BrainsChaseMikeyBugEnabled = value == 1;
                 break;
             case "bozomode" when value is 0 or 1:
-                settings.BozoModeEnabled = value == 1;
+                gameSettings.BozoModeEnabled = value == 1;
                 break;
         }
     }

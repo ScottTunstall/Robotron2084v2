@@ -45,13 +45,13 @@ public sealed class HighScoreTable
     private readonly List<HighScoreEntry> _allTime;
     private readonly List<HighScoreEntry> _today;
 
-    private HighScoreTable(TopScoreEntry top, IEnumerable<HighScoreEntry> today, IEnumerable<HighScoreEntry> allTime)
+    private HighScoreTable(TopScoreEntry top, IEnumerable<HighScoreEntry> enteredToday, IEnumerable<HighScoreEntry> allTime)
     {
         Top = top;
         // Both lists are the ROM's FULL tables: an unused row holds NULSCR (three
         // spaces and 0) rather than being absent, which is what the screen draws and
         // what "does this score qualify?" is measured against.
-        _today = [.. today];
+        _today = [.. enteredToday];
         _allTime = [.. allTime];
         Fill(_today, TodayCapacity);
         Fill(_allTime, AllTimeCapacity);
@@ -128,7 +128,7 @@ public sealed class HighScoreTable
     /// top entry come from the saved data when there is any.
     /// </summary>
     public static HighScoreTable CreateFromSaved(TopScoreEntry? top, IReadOnlyList<HighScoreEntry>? allTime) =>
-        new(top ?? FactoryTop, FactoryToday, Pad(allTime, AllTimeCapacity, FactoryAllTime));
+        new(top ?? FactoryTop, FactoryToday, PadToCapacity(allTime, AllTimeCapacity, FactoryAllTime));
 
     /// <summary>Whether a finished score earns an initials screen at all (ROM `EGSUB1`: `TODCHK`, then `ALLCHK`).</summary>
     public bool Qualifies(int score) => QualifiesForToday(score) || QualifiesForAllTime(score);
@@ -152,22 +152,22 @@ public sealed class HighScoreTable
         if (score > Top.Score)
         {
             TakeTopEntry(score, initials);
-            bool today = Insert(_today, new HighScoreEntry(initials, score), TodayCapacity);
+            bool topEnteredToday = Insert(_today, new HighScoreEntry(initials, score), TodayCapacity);
             return new SubmitResult(
                 BecomesTop: true,
-                EnteredToday: today,
+                EnteredToday: topEnteredToday,
                 EnteredAllTime: false,
-                EntriesMaximum: EnforceAllTimeInitialsCap(initials));
+                ReachedEntriesMaximum: EnforceAllTimeInitialsCap(initials));
         }
 
-        int cap = TopCarriesInitials(initials) ? AllTimeTopInitialsCap : AllTimeInitialsCap;
-        bool intoToday = Insert(_today, new HighScoreEntry(initials, score), TodayCapacity);
-        (bool intoAllTime, bool maximum) = InsertAllTime(score, initials, cap);
+        int initialsCap = TopCarriesInitials(initials) ? AllTimeTopInitialsCap : AllTimeInitialsCap;
+        bool enteredToday = Insert(_today, new HighScoreEntry(initials, score), TodayCapacity);
+        (bool enteredAllTime, bool reachedMaximum) = InsertAllTime(score, initials, initialsCap);
         return new SubmitResult(
             BecomesTop: false,
-            EnteredToday: intoToday,
-            EnteredAllTime: intoAllTime,
-            EntriesMaximum: maximum);
+            EnteredToday: enteredToday,
+            EnteredAllTime: enteredAllTime,
+            ReachedEntriesMaximum: reachedMaximum);
     }
 
     /// <summary>Whether a score beats a full list's lowest entry — the ROM's `TODCK1`/`ALCK1` walk to the bottom.</summary>
@@ -203,7 +203,7 @@ public sealed class HighScoreTable
     }
 
     /// <summary>The three initials a name starts with (the ROM's `GODINT`, three CMOS characters).</summary>
-    private static string InitialsOf(string name) =>
+    private static string GetInitialsOf(string name) =>
         name.Length >= InitialsLength ? name[..InitialsLength] : name.PadRight(InitialsLength);
 
     /// <summary>
@@ -219,8 +219,8 @@ public sealed class HighScoreTable
             return false;
         }
 
-        int at = list.FindIndex(e => entry.Score > e.Score);
-        list.Insert(at < 0 ? list.Count : at, entry);
+        int insertIndex = list.FindIndex(e => entry.Score > e.Score);
+        list.Insert(insertIndex < 0 ? list.Count : insertIndex, entry);
         if (list.Count > capacity)
         {
             list.RemoveAt(list.Count - 1);
@@ -230,10 +230,10 @@ public sealed class HighScoreTable
     }
 
     /// <summary>The index of the list's lowest-scoring entry carrying these initials — the fifth `SETBOT` finds.</summary>
-    private static int LowestInitialsIndex(List<HighScoreEntry> list, string initials) =>
+    private static int FindLowestInitialsIndex(List<HighScoreEntry> list, string initials) =>
         list.FindLastIndex(entry => entry.Initials == initials);
 
-    private static List<HighScoreEntry> Pad(IReadOnlyList<HighScoreEntry>? entries, int capacity, IReadOnlyList<HighScoreEntry> fallback)
+    private static List<HighScoreEntry> PadToCapacity(IReadOnlyList<HighScoreEntry>? entries, int capacity, IReadOnlyList<HighScoreEntry> fallback)
     {
         List<HighScoreEntry> source = entries is { Count: > 0 } ? [.. entries] : [.. fallback];
         Fill(source, capacity);
@@ -251,7 +251,7 @@ public sealed class HighScoreTable
             return false;
         }
 
-        _allTime.RemoveAt(LowestInitialsIndex(_allTime, initials));
+        _allTime.RemoveAt(FindLowestInitialsIndex(_allTime, initials));
         return true;
     }
 
@@ -260,17 +260,17 @@ public sealed class HighScoreTable
     /// having first applied the per-initials cap — a full set of initials can only be beaten from
     /// inside, by outscoring the lowest of them, which is the entry the score replaces.
     /// </summary>
-    private (bool Entered, bool Maximum) InsertAllTime(int score, string initials, int cap)
+    private (bool Entered, bool Maximum) InsertAllTime(int score, string initials, int initialsCap)
     {
         if (!Beats(_allTime, score))
         {
             return (false, false);
         }
 
-        bool atCap = CountInitials(_allTime, initials) >= cap;
+        bool atCap = CountInitials(_allTime, initials) >= initialsCap;
         if (atCap)
         {
-            int lowest = LowestInitialsIndex(_allTime, initials);
+            int lowest = FindLowestInitialsIndex(_allTime, initials);
             if (score <= _allTime[lowest].Score)
             {
                 return (false, true);
@@ -288,11 +288,11 @@ public sealed class HighScoreTable
     /// </summary>
     private void TakeTopEntry(int score, string initials)
     {
-        _allTime.Insert(0, new HighScoreEntry(InitialsOf(Top.Name), Top.Score));
+        _allTime.Insert(0, new HighScoreEntry(GetInitialsOf(Top.Name), Top.Score));
         Fill(_allTime, AllTimeCapacity);
         Top = new TopScoreEntry(initials, score);
     }
 
     /// <summary>ROM `SETBOT`'s first test: whether the entered initials are the top entry's own.</summary>
-    private bool TopCarriesInitials(string initials) => InitialsOf(Top.Name) == initials;
+    private bool TopCarriesInitials(string initials) => GetInitialsOf(Top.Name) == initials;
 }

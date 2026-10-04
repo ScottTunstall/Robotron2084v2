@@ -61,14 +61,14 @@ public sealed class GameSettings
     /// Factory ATTRACT MODE SOUND: off. The arcade's attract demo is a real game and makes its real
     /// noises, but the port's demo plays on a machine someone is usually sitting at, so it is silent
     /// until the operator turns it on (notes §140). The setting is on the GAME ADJUSTMENT page.
-    ///  It is the starting value of <see cref="AttractModeSound"/>, and the value it is set back to when the settings are restored.</summary>
-    public const bool FactoryAttractModeSound = false;
+    ///  It is the starting value of <see cref="AttractModeSoundEnabled"/>, and the value it is set back to when the settings are restored.</summary>
+    public const bool FactoryAttractModeSoundEnabled = false;
 
-    /// <summary>Factory TANK SHELL BUG: on, as the arcade is. It is the starting value of <see cref="TankShellBug"/>, and the value it is set back to when the settings are restored.</summary>
-    public const bool FactoryTankShellBug = true;
+    /// <summary>Factory TANK SHELL BUG: on, as the arcade is. It is the starting value of <see cref="TankShellBugEnabled"/>, and the value it is set back to when the settings are restored.</summary>
+    public const bool FactoryTankShellBugEnabled = true;
 
-    /// <summary>Factory BRAINS CHASE MIKEY BUG: on, as the arcade is. It is the starting value of <see cref="BrainsChaseMikeyBug"/>, and the value it is set back to when the settings are restored.</summary>
-    public const bool FactoryBrainsChaseMikeyBug = true;
+    /// <summary>Factory BRAINS CHASE MIKEY BUG: on, as the arcade is. It is the starting value of <see cref="BrainsChaseMikeyBugEnabled"/>, and the value it is set back to when the settings are restored.</summary>
+    public const bool FactoryBrainsChaseMikeyBugEnabled = true;
 
     /// <summary>Factory BOZO MODE: on, as the arcade's second release is. It is the starting value of <see cref="BozoModeEnabled"/>, and the value it is set back to when the settings are restored.</summary>
     public const bool FactoryBozoModeEnabled = true;
@@ -89,7 +89,7 @@ public sealed class GameSettings
     /// Whether the attract sequence plays its sounds (port-only; the arcade has no such row). Off
     /// silences the demo machine playing itself, while a real game still has sound.
     /// </summary>
-    public bool AttractModeSound { get; set; } = FactoryAttractModeSound;
+    public bool AttractModeSoundEnabled { get; set; } = FactoryAttractModeSoundEnabled;
 
     /// <summary>
     /// Whether the arcade's tank shell bug is kept (port-only switch). On, a shell that fizzles out is never taken
@@ -97,14 +97,14 @@ public sealed class GameSettings
     /// the field count.
     /// </summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, which has no <c>DEC SHLCNT</c>.</remarks>
-    public bool TankShellBug { get; set; } = FactoryTankShellBug;
+    public bool TankShellBugEnabled { get; set; } = FactoryTankShellBugEnabled;
 
     /// <summary>
     /// Whether the arcade's "all the brains chase Mikey" bug is kept (port-only switch). On, every brain starts the
     /// wave chasing the first Mikey. Off, each brain starts by chasing the family member nearest to it.
     /// </summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSTV</c>, which calls <c>GETHTG</c> before the family is made (notes §18.8).</remarks>
-    public bool BrainsChaseMikeyBug { get; set; } = FactoryBrainsChaseMikeyBug;
+    public bool BrainsChaseMikeyBugEnabled { get; set; } = FactoryBrainsChaseMikeyBugEnabled;
 
     /// <summary>Whether the arcade's mercy for a player losing ships early is given (port-only switch; see <see cref="Level.BozoMode"/>).</summary>
     public bool BozoModeEnabled { get; set; } = FactoryBozoModeEnabled;
@@ -116,8 +116,8 @@ public sealed class GameSettings
     /// Whether the attract sequence should be silent (notes §131): true while an attract screen is
     /// showing and ATTRACT MODE SOUND is off. The shell hands this to <c>Sound.AttractMuted</c>.
     /// </summary>
-    /// <param name="attractShowing">True while an attract screen is on screen.</param>
-    public bool AttractIsSilent(bool attractShowing) => attractShowing && !AttractModeSound;
+    /// <param name="isAttractShowing">True while an attract screen is on screen.</param>
+    public bool IsAttractSilent(bool isAttractShowing) => isAttractShowing && !AttractModeSoundEnabled;
 
     /// <summary>A fresh cabinet's settings.</summary>
     public static GameSettings CreateFactoryDefaults() => new();
@@ -131,9 +131,9 @@ public sealed class GameSettings
         ExtraManEvery = FactoryExtraManEveryThousands;
         TurnsPerPlayer = FactoryTurnsPerPlayer;
         Difficulty = FactoryDifficulty;
-        AttractModeSound = FactoryAttractModeSound;
-        TankShellBug = FactoryTankShellBug;
-        BrainsChaseMikeyBug = FactoryBrainsChaseMikeyBug;
+        AttractModeSoundEnabled = FactoryAttractModeSoundEnabled;
+        TankShellBugEnabled = FactoryTankShellBugEnabled;
+        BrainsChaseMikeyBugEnabled = FactoryBrainsChaseMikeyBugEnabled;
         BozoModeEnabled = FactoryBozoModeEnabled;
     }
 
@@ -161,13 +161,13 @@ public sealed class GameSettings
         Difficulty = Math.Clamp(Difficulty + direction, MinimumDifficulty, MaximumDifficulty);
 
     /// <summary>Turns ATTRACT MODE SOUND on (right) or off (left).</summary>
-    public void BumpAttractModeSound(int direction) => AttractModeSound = direction > 0;
+    public void BumpAttractModeSound(int direction) => AttractModeSoundEnabled = direction > 0;
 
     /// <summary>Turns TANK SHELL BUG on (right) or off (left).</summary>
-    public void BumpTankShellBug(int direction) => TankShellBug = direction > 0;
+    public void BumpTankShellBug(int direction) => TankShellBugEnabled = direction > 0;
 
     /// <summary>Turns BRAINS CHASE MIKEY BUG on (right) or off (left).</summary>
-    public void BumpBrainsChaseMikeyBug(int direction) => BrainsChaseMikeyBug = direction > 0;
+    public void BumpBrainsChaseMikeyBug(int direction) => BrainsChaseMikeyBugEnabled = direction > 0;
 
     /// <summary>Turns BOZO MODE on (right) or off (left).</summary>
     public void BumpBozoModeEnabled(int direction) => BozoModeEnabled = direction > 0;

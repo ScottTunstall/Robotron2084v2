@@ -53,7 +53,7 @@ public sealed class ControlSettingsStore
     /// <summary>Parses the file's text; anything missing or unreadable keeps the factory value.</summary>
     public static ControlSettings Parse(IEnumerable<string> lines)
     {
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        ControlSettings controlSettings = ControlSettings.CreateDefaults();
         string section = string.Empty;
 
         foreach (string raw in lines)
@@ -82,21 +82,21 @@ public sealed class ControlSettingsStore
                 continue; // an unrecognised value leaves that slot at its default
             }
 
-            Apply(settings, section, name, binding);
+            Apply(controlSettings, section, name, binding);
         }
 
-        return settings;
+        return controlSettings;
     }
 
     /// <summary>Saves to a given file — the seam the tests use.</summary>
-    public static void Save(string path, ControlSettings settings)
+    public static void Save(string path, ControlSettings controlSettings)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, Write(settings), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        File.WriteAllText(path, Write(controlSettings), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 
     /// <summary>Builds the file's text (also the tests' seam).</summary>
-    public static string Write(ControlSettings settings)
+    public static string Write(ControlSettings controlSettings)
     {
         var text = new StringBuilder();
         text.AppendLine("; Robotron 2084 (port) control definitions - see notes section 101.");
@@ -111,15 +111,15 @@ public sealed class ControlSettingsStore
             text.AppendLine($"[player{player + 1}]");
             foreach (InputAction action in InputActions.All)
             {
-                ActionBinding binding = settings[player][action];
-                text.AppendLine($"{Name(action)}.key={binding.Key.GetDisplayName()}");
-                text.AppendLine($"{Name(action)}.pad={binding.Pad.GetDisplayName()}");
+                ActionBinding binding = controlSettings[player][action];
+                text.AppendLine($"{GetName(action)}.key={binding.KeyBinding.GetDisplayName()}");
+                text.AppendLine($"{GetName(action)}.pad={binding.PadBinding.GetDisplayName()}");
             }
         }
 
         text.AppendLine();
         text.AppendLine("[pause]");
-        text.AppendLine($"input={settings.Pause.GetDisplayName()}");
+        text.AppendLine($"input={controlSettings.Pause.GetDisplayName()}");
         return text.ToString();
     }
 
@@ -127,9 +127,9 @@ public sealed class ControlSettingsStore
     public ControlSettings Load() => Load(FilePath);
 
     /// <summary>Saves the definitions.</summary>
-    public void Save(ControlSettings settings) => Save(FilePath, settings);
+    public void Save(ControlSettings controlSettings) => Save(FilePath, controlSettings);
 
-    private static void Apply(ControlSettings settings, string section, string name, InputBinding binding)
+    private static void Apply(ControlSettings controlSettings, string section, string name, InputBinding binding)
     {
         if (section == "pause")
         {
@@ -137,14 +137,14 @@ public sealed class ControlSettingsStore
             // old or new, sets the whole line.
             if (name is "input" or "key" or "pad")
             {
-                settings.Pause = binding;
+                controlSettings.Pause = binding;
             }
 
             return;
         }
 
-        bool padSlot = name.EndsWith(".pad", StringComparison.Ordinal);
-        if (!padSlot && !name.EndsWith(".key", StringComparison.Ordinal))
+        bool isPadSlot = name.EndsWith(".pad", StringComparison.Ordinal);
+        if (!isPadSlot && !name.EndsWith(".key", StringComparison.Ordinal))
         {
             return;
         }
@@ -163,19 +163,19 @@ public sealed class ControlSettingsStore
             return;
         }
 
-        PlayerControls controls = settings[number - 1];
-        controls[action] = AssignSlot(controls[action], padSlot, binding);
+        PlayerControls controls = controlSettings[number - 1];
+        controls[action] = AssignSlot(controls[action], isPadSlot, binding);
     }
 
     /// <summary>Sets ONE device slot of a line — which is why <c>key=-</c> cannot wipe the pad.</summary>
-    private static ActionBinding AssignSlot(ActionBinding line, bool padSlot, InputBinding binding) =>
-        padSlot ? line with { Pad = binding } : line with { Key = binding };
+    private static ActionBinding AssignSlot(ActionBinding line, bool isPadSlot, InputBinding binding) =>
+        isPadSlot ? line with { PadBinding = binding } : line with { KeyBinding = binding };
 
     private static InputAction? FindAction(string name)
     {
         foreach (InputAction action in InputActions.All)
         {
-            if (string.Equals(Name(action), name, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(GetName(action), name, StringComparison.OrdinalIgnoreCase))
             {
                 return action;
             }
@@ -185,5 +185,5 @@ public sealed class ControlSettingsStore
     }
 
     /// <summary>The INI name of an action: "moveup", "shootright", …</summary>
-    private static string Name(InputAction action) => action.ToString().ToLowerInvariant();
+    private static string GetName(InputAction action) => action.ToString().ToLowerInvariant();
 }
