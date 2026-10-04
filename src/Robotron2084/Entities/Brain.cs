@@ -18,8 +18,16 @@ namespace Robotron2084.Entities;
 /// </list>
 /// Sideways distances here are in columns (two arcade pixels each) and up-and-down distances in rows (one arcade pixel each), as in the ROM; see docs/glossary.md.
 /// </remarks>
-public sealed class Brain : IEntity, IExplodable, IRemovable
+public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
 {
+    /// <summary>How many ROM frames the arcade's routine sleeps between one look at whether the game is live and the next. It sets how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRAIN</c>, <c>BITA #$7F / BEQ BRN0A / NAP 4,BRAIN</c>. Disassembly: <c>$1BD8</c>.</remarks>
+    private const int LivePollRomFrames = 4;
+
+    /// <summary>How many ROM frames the arcade's routine sleeps after the look that finds the game live, before the first beat.</summary>
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRN0A</c>, <c>NAP 12,BRNL</c>. Disassembly: <c>$1BD8</c> onwards.</remarks>
+    private const int FirstBeatNapRomFrames = 12;
+
     /// <summary>The number of ROM frames a brain spends on the beat itself. It is added to the wave's wait to give the interval between beats, which is stored in <see cref="_beatIntervalClockUnits"/>.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSLP</c>, the sleep of <c>BRNSPD</c> frames at the end of each beat. Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>), the wait loaded from <c>$BE63</c> at <c>$1C9C</c>.</remarks>
     private const int BeatExecutionRomFrames = 1;
@@ -213,6 +221,11 @@ public sealed class Brain : IEntity, IExplodable, IRemovable
 
         LifeState = EntityLifeState.Dead;
     }
+
+    /// <summary>Sets the time of the brain's first beat, on the tick the game goes live. The beat timer is set so that it comes due when that time has gone by.</summary>
+    /// <param name="field">The playfield, which works out how long the wait is.</param>
+    public void BeginPlay(PlayField field) =>
+        _beatTimer = _beatIntervalClockUnits - field.GetClockUnitsToFirstBeat(LivePollRomFrames, FirstBeatNapRomFrames);
 
     /// <summary>Runs one tick of the brain. When a beat is due it chases its target, takes a step, changes its animation frame and counts down to its next missile.</summary>
     /// <param name="gameTime">Not used. The brain counts in ticks, not in seconds.</param>

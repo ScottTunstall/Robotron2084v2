@@ -170,12 +170,11 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // Movement shares the per-frame mover clock, not the AI beat (see the remarks).
-        _moveTimer += ArcadeClock.UnitsPerPortTick;
-        if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
+        // The arcade does not move its motion objects while the game is held: before it goes live, and while the player dies
+        // (ROM: RRS22.ASM OPRC80, BITA #8 / BNE O80, "NO VELOCITY REFRESH ONLY"; STATUS bit 3).
+        if (!field.RobotsFrozen)
         {
-            _moveTimer -= ArcadeClock.UnitsPerRomFrame;
-            AdvancePosition(field);
+            AdvanceMover(field);
         }
 
         // Counts up to the next beat: 5 per tick, 6 per arcade frame.
@@ -206,6 +205,18 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         }
 
         AdvanceTankDrop(field);
+    }
+
+    /// <summary>Counts one tick towards the next ROM frame, and moves the quark when the frame comes. Movement shares the per-frame mover clock, not the beat (see the remarks on the class).</summary>
+    /// <param name="field">The playfield.</param>
+    private void AdvanceMover(PlayField field)
+    {
+        _moveTimer += ArcadeClock.UnitsPerPortTick;
+        if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
+        {
+            _moveTimer -= ArcadeClock.UnitsPerRomFrame;
+            AdvancePosition(field);
+        }
     }
 
     /// <summary>Advances the animation one animation frame per beat; the range depends on the phase.</summary>

@@ -15,8 +15,16 @@ namespace Robotron2084.Entities;
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$39E6</c> (grunt speed/movement timer check, part of the shared grunt/hulk/brain/prog/tank update loop)</item>
 /// </list>
 /// </remarks>
-public sealed class Grunt : IExplodable, IRemovable
+public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 {
+    /// <summary>How many ROM frames the arcade's routine sleeps between one look at whether the game is live and the next. It sets how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
+    /// <remarks>Original source: <c>RRP8.ASM</c> <c>ROBOT</c>, <c>BITA #$7F / BEQ ROB0A / NAP 2,ROBOT</c>. Disassembly: <c>$39B7</c>.</remarks>
+    private const int LivePollRomFrames = 2;
+
+    /// <summary>How many ROM frames the arcade's routine sleeps after the look that finds the game live, before the first beat.</summary>
+    /// <remarks>Original source: <c>RRP8.ASM</c> <c>ROB0A</c>, <c>NAP 10,ROB0</c>. Disassembly: <c>$39B7</c> onwards.</remarks>
+    private const int FirstBeatNapRomFrames = 10;
+
     /// <summary>How many ROM frames one beat takes (4 vblanks).</summary>
     private const int BeatIntervalRomFrames = 4;
 
@@ -138,6 +146,11 @@ public sealed class Grunt : IExplodable, IRemovable
             _moveLimitBeats = next;
         }
     }
+
+    /// <summary>Sets the time of the grunt's first beat, on the tick the game goes live. The beat timer is set so that it comes due when that time has gone by.</summary>
+    /// <param name="field">The playfield, which works out how long the wait is.</param>
+    public void BeginPlay(PlayField field) =>
+        _beatTimer = BeatIntervalClockUnits - field.GetClockUnitsToFirstBeat(LivePollRomFrames, FirstBeatNapRomFrames);
 
     /// <summary>Runs one tick of the grunt. When its wait is over it takes a step towards the player and picks a new wait.</summary>
     /// <param name="gameTime">Unused — the beat is counted in ticks.</param>

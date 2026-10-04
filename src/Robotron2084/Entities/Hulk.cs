@@ -16,8 +16,12 @@ namespace Robotron2084.Entities;
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ANIMATE_HULK</c> (<c>$003E</c>), with movement in <c>HULK_MOVE_HORIZONTALLY</c>/<c>MAKE_HULK_MOVE_VERTICALLY</c> and direction changes in <c>HULK_CHANGE_DIRECTION</c></item>
 /// </list>
 /// </remarks>
-public sealed class Hulk : IEntity, IAnimationFrameSource
+public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 {
+    /// <summary>How many ROM frames the arcade's routine sleeps between one look at whether the game is live and the next. It sets how long after the game goes live the first step comes (<see cref="BeginPlay"/>).</summary>
+    /// <remarks>Original source: <c>RRH11.ASM</c> <c>HULK</c> ("WAIT FOR STATUS TO GO"), <c>BITA #$7F / BEQ HULKL / NAP 8,HULK</c>, which runs on into its first step with no more sleep. Disassembly: <c>$0030</c>.</remarks>
+    private const int LivePollRomFrames = 8;
+
     /// <summary>ROM <c>HNDX</c>/<c>HNDY</c>: ...and less than this many (exclusive bound of the random roll).</summary>
     private const int AimOffsetMaxExclusiveArcadePixels = 16;
 
@@ -170,6 +174,14 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
     }
 
+    /// <summary>Aims the hulk and sets the time of its first step, on the tick the game goes live. The beat timer is set so that it comes due when that time has gone by.</summary>
+    /// <param name="field">The playfield, which works out how long the wait is.</param>
+    public void BeginPlay(PlayField field)
+    {
+        AimForTheFirstTime(field);
+        _beatTimer = _beatIntervalClockUnits - field.GetClockUnitsToFirstBeat(LivePollRomFrames, napRomFrames: 0);
+    }
+
     /// <summary>One hulk cycle: aims on the first call, then steps, or re-aims when the wall blocks it.</summary>
     /// <param name="gameTime">Unused — the steps are counted in ROM frames.</param>
     /// <param name="field">The playfield.</param>
@@ -183,11 +195,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
 
         if (!_hasAimed)
         {
-            // The first move is always sideways, never up/down.
-            _hasAimed = true;
-            _isMovingHorizontally = true;
-            PickDirection(field);
-            _animationFrameIndex = GetFrames(_direction)[0]; // start the walk animation from its first frame
+            AimForTheFirstTime(field);
             return;
         }
 
@@ -231,6 +239,16 @@ public sealed class Hulk : IEntity, IAnimationFrameSource
         Direction8.Right => RightAnimationFrames,
         _ => VerticalAnimationFrames, // the ROM draws DOWN and UP with the same set of animation frames
     };
+
+    /// <summary>Picks the hulk's first direction, which is always sideways, and starts its walk animation from the first frame.</summary>
+    /// <param name="field">The playfield.</param>
+    private void AimForTheFirstTime(PlayField field)
+    {
+        _hasAimed = true;
+        _isMovingHorizontally = true;
+        PickDirection(field);
+        _animationFrameIndex = GetFrames(_direction)[0];
+    }
 
     /// <summary>Aims along the current axis at the target's coordinate plus a random offset.</summary>
     /// <remarks>ROM: <c>HNDX</c>/<c>HNDY</c> — an aim outside the wall is pulled back in; an aim

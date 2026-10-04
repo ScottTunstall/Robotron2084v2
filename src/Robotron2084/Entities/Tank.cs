@@ -16,8 +16,12 @@ namespace Robotron2084.Entities;
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ANIMATE_TANK</c> (<c>$4D10</c>-ish, near <c>$4D55</c>'s fire-delay check)</item>
 /// </list>
 /// </remarks>
-public sealed class Tank : IExplodable, IRemovable
+public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 {
+    /// <summary>How many ROM frames the arcade's routine sleeps between one look at whether the game is live and the next. It sets how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TANK</c>, <c>BITA #$7F / BEQ TANKL / NAP 15,TANK</c>, which runs on into its first beat with no more sleep. Disassembly: <c>$4D8B</c>.</remarks>
+    private const int LivePollRomFrames = 15;
+
     /// <summary>ROM <c>ANIMATE_TANK</c>: ...and a roll at or below this aims at the player (about 38%).</summary>
     private const int AimAtPlayerRollAtMost = 96;
 
@@ -197,6 +201,11 @@ public sealed class Tank : IExplodable, IRemovable
 
         LifeState = EntityLifeState.Dead;
     }
+
+    /// <summary>Sets the time of the first beat of a tank that was on the field when the wave started, on the tick the game goes live. The beat timer is set so that it comes due when that time has gone by.</summary>
+    /// <param name="field">The playfield, which works out how long the wait is.</param>
+    public void BeginPlay(PlayField field) =>
+        _beatTimer = ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames) - field.GetClockUnitsToFirstBeat(LivePollRomFrames, napRomFrames: 0);
 
     /// <summary>Runs the birth animation, then the beat: fire, move, animate and re-aim.</summary>
     /// <param name="gameTime">Unused — the clocks are counted in ticks.</param>

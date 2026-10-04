@@ -16,8 +16,16 @@ namespace Robotron2084.Entities;
 /// then shows the walk for the way it is heading, which it works out from which gap to the player is larger.
 /// Shooting is planned and not built.
 /// </remarks>
-public sealed class BerzerkRobot : IExplodable, IRemovable
+public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
 {
+    /// <summary>How many ROM frames the arcade's routine sleeps between one look at whether the game is live and the next. It sets how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
+    /// <remarks>Original source: none, since this is the author's own robot; it waits as a grunt does (<c>RRP8.ASM</c> <c>ROBOT</c>, <c>NAP 2,ROBOT</c>). Disassembly: <c>$39B7</c>.</remarks>
+    private const int LivePollRomFrames = 2;
+
+    /// <summary>How many ROM frames the arcade's routine sleeps after the look that finds the game live, before the first beat.</summary>
+    /// <remarks>Original source: none; as a grunt does (<c>RRP8.ASM</c> <c>ROB0A</c>, <c>NAP 10,ROB0</c>). Disassembly: <c>$39B7</c> onwards.</remarks>
+    private const int FirstBeatNapRomFrames = 10;
+
     /// <summary>How many ROM frames one beat takes, the same as a grunt's.</summary>
     private const int BeatIntervalRomFrames = 4;
 
@@ -118,6 +126,11 @@ public sealed class BerzerkRobot : IExplodable, IRemovable
 
         LifeState = EntityLifeState.Dead;
     }
+
+    /// <summary>Sets the time of the robot's first beat, on the tick the game goes live. The beat timer is set so that it comes due when that time has gone by.</summary>
+    /// <param name="field">The playfield, which works out how long the wait is.</param>
+    public void BeginPlay(PlayField field) =>
+        _beatTimer = BeatIntervalClockUnits - field.GetClockUnitsToFirstBeat(LivePollRomFrames, FirstBeatNapRomFrames);
 
     /// <summary>Runs one tick. When its wait is over the robot takes a step towards the player and picks a new wait.</summary>
     /// <param name="gameTime">Unused — the beat is counted in ticks.</param>

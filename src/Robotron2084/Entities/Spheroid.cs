@@ -198,12 +198,11 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // Mover: once per ROM frame, not once per tick (see the remarks).
-        _moveTimer += ArcadeClock.UnitsPerPortTick;
-        if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
+        // The arcade does not move its motion objects while the game is held: before it goes live, and while the player dies
+        // (ROM: RRS22.ASM OPRC80, BITA #8 / BNE O80, "NO VELOCITY REFRESH ONLY"; STATUS bit 3).
+        if (!field.RobotsFrozen)
         {
-            _moveTimer -= ArcadeClock.UnitsPerRomFrame;
-            AdvancePosition(field);
+            AdvanceMover(field);
         }
 
         // Every phase runs on the same 3-frame beat (see the remarks).
@@ -239,6 +238,18 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         }
 
         AdvanceDropBeat(field);
+    }
+
+    /// <summary>Counts one tick towards the next ROM frame, and moves the spheroid when the frame comes: once per ROM frame, not once per tick (see the remarks on the class).</summary>
+    /// <param name="field">The playfield.</param>
+    private void AdvanceMover(PlayField field)
+    {
+        _moveTimer += ArcadeClock.UnitsPerPortTick;
+        if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
+        {
+            _moveTimer -= ArcadeClock.UnitsPerRomFrame;
+            AdvancePosition(field);
+        }
     }
 
     /// <summary>One axis of the mover's step: whole pixels, keeping the 1/256 fraction for next time.</summary>

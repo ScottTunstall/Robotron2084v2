@@ -16,14 +16,33 @@ namespace Robotron2084.Entities;
 public sealed class StripEffect : IEntity
 {
     private readonly Func<Texture2D> _getAnimationFrame;
+
+    /// <summary>Gets the box of the thing an appear is forming, when the appear must stay with it as it moves; null when the effect stays where it started.</summary>
+    /// <remarks>Original source: <c>RRX7.ASM</c> <c>AWRIT0</c>, <c>LDD PX / STA UL,Y</c> ("SCROLL EM"), which moves an appear to the player once the game is live. Disassembly: <c>$5D57</c> to <c>$5D61</c>.</remarks>
+    private readonly Func<Rectangle>? _getFollowedBounds;
+
     private readonly StripFanAxis _axis;
-    private readonly Rectangle _bounds;
+
+    /// <summary>Works out which strip of the sprite the others close in on or fly away from, counted from the top row or the left column, when it is given how many strips the sprite has; null for the middle one.</summary>
+    /// <remarks>Original source: <c>RRX7.ASM</c> <c>YOF</c>, and <c>RRHX4.ASM</c> <c>XOF</c>. Disassembly: the byte at offset <c>5</c> of a record, as at <c>$5BEF</c>.</remarks>
+    private readonly Func<int, int>? _getCentreStripIndex;
+
+    /// <summary>How much the gap shrinks on each ROM frame, when the effect is an appear.</summary>
+    private readonly int _appearSizerStep;
+
+    /// <summary>The smallest gap at which an appear is still drawn. When the gap would fall below it the appear is over.</summary>
+    private readonly int _smallestAppearSpacing;
+
+    private Rectangle _bounds;
     private readonly StripClip _clip;
     private readonly StripEffectKind _kind;
     private readonly int _slope;          // the diagonal lean: -1 / 0 / +1 (ROM: SLOPE)
     private int _romFramesRemaining;
     private int _spacingAccumulator;                   // the spacing accumulator; its high byte is this frame's step (ROM: YSIZER)
     private int _romFrameTimer;                  // Counts up to the next ROM frame: 5 per tick, 6 per arcade frame (notes §52, §67.4)
+
+    /// <summary>True once an appear has taken its first step. The arcade draws nothing for an appear until then.</summary>
+    private bool _hasAppearBeenDrawn;
 
     /// <summary>Builds one record; the two static factories below are the only callers.</summary>
     private StripEffect(
@@ -32,7 +51,11 @@ public sealed class StripEffect : IEntity
         StripEffectKind kind,
         StripFanAxis axis,
         int slope,
-        StripClip clip)
+        StripClip clip,
+        Func<int, int>? getCentreStripIndex = null,
+        int startClockUnits = 0,
+        bool isClosedUpAtTheEnd = false,
+        Func<Rectangle>? getFollowedBounds = null)
     {
         _getAnimationFrame = getAnimationFrame;
         _bounds = bounds;
@@ -40,6 +63,16 @@ public sealed class StripEffect : IEntity
         _axis = axis;
         _slope = slope;
         _clip = clip;
+        _getCentreStripIndex = getCentreStripIndex;
+        _romFrameTimer = startClockUnits;
+        _getFollowedBounds = getFollowedBounds;
+
+        // The vertical and the horizontal routines shrink an appear by half a row a frame, and the diagonal one by a whole row.
+        StripEngine engine = GetEngine();
+        _appearSizerStep = engine == StripEngine.Diagonal ? StripExplosionTuning.SizerStep : StripExplosionTuning.SlowAppearSizerStep;
+        _smallestAppearSpacing = isClosedUpAtTheEnd || engine == StripEngine.Horizontal
+            ? StripExplosionTuning.SmallestClosedAppearSpacing
+            : StripExplosionTuning.SmallestAppearSpacing;
 
         // The spacing accumulator starts small for an explosion ("1 unit is the minimum") or large
         // for an appear, so it can shrink back down; an explosion also gets a frame count.
@@ -78,10 +111,36 @@ public sealed class StripEffect : IEntity
     /// <param name="axis">Which way the sprite is cut: rows or columns.</param>
     /// <param name="slope">The diagonal lean, -1 / 0 / +1.</param>
     /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
+    /// <param name="getCentreStripIndex">Works out which row or column the others close in on, counted from the top or the left, when it is given how many rows or columns the sprite has; null for the middle one.</param>
+    /// <param name="startClockUnits">How far into a ROM frame the effect starts, in clock units, so that its first step falls on the right ROM frame. It is less than nothing when the first step is more than a tick away.</param>
     /// <returns>The new appear record.</returns>
-    /// <remarks>ROM: RRG23.ASM's <c>APPEAR</c> makes one of these per frame for each robot.</remarks>
-    public static StripEffect CreateAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip)
-        => new(() => source.GetCurrentAnimationFrame(), bounds, StripEffectKind.Appear, axis, slope, clip);
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which makes one of these on each ROM frame; <c>RRX7.ASM</c> <c>APSTV</c>, <c>RRHX4.ASM</c> <c>HAPSTV</c> and <c>RRDX2.ASM</c> <c>APSTZ</c></item>
+    /// <item>Disassembly: <c>$5BC6</c> (the vertical routine), <c>$F066</c> (the horizontal one) and <c>$46E6</c> (the diagonal one)</item>
+    /// </list>
+    /// </remarks>
+    public static StripEffect CreateAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip, Func<int, int>? getCentreStripIndex = null, int startClockUnits = 0)
+        => new(() => source.GetCurrentAnimationFrame(), bounds, StripEffectKind.Appear, axis, slope, clip, getCentreStripIndex, startClockUnits);
+
+    /// <summary>Starts an appear that stays with the thing it is forming as that thing moves. The player's appear is the one that does: it is still running when the game goes live and the player can walk.</summary>
+    /// <typeparam name="T">The kind of thing that is appearing.</typeparam>
+    /// <param name="source">The thing that is appearing. Its animation frame and its box are read again each time the picture changes.</param>
+    /// <param name="axis">Which way the sprite is cut: rows or columns.</param>
+    /// <param name="slope">The diagonal lean, -1 / 0 / +1.</param>
+    /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
+    /// <param name="centreStripIndex">Which row or column the others close in on, counted from the top or the left.</param>
+    /// <param name="startClockUnits">How far into a ROM frame the effect starts, in clock units.</param>
+    /// <returns>The new appear record.</returns>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRX7.ASM</c> <c>AWRIT0</c> ("SCROLL EM"), <c>RRHX4.ASM</c> <c>AWRIT0</c> ("SCROLL PLAYER APPEAR") and <c>RRDX2.ASM</c> <c>AWRIT0</c>, each of which moves the appear to the player when <c>STATUS</c> is clear</item>
+    /// <item>Disassembly: <c>$5D57</c> to <c>$5D61</c> for the vertical routine</item>
+    /// </list>
+    /// </remarks>
+    public static StripEffect CreateFollowingAppear<T>(T source, StripFanAxis axis, int slope, StripClip clip, int centreStripIndex, int startClockUnits)
+        where T : IEntity, IAnimationFrameSource
+        => new(() => source.GetCurrentAnimationFrame(), source.Bounds, StripEffectKind.Appear, axis, slope, clip, _ => centreStripIndex, startClockUnits, getFollowedBounds: () => source.Bounds);
 
     /// <summary>Starts an appear for a plain picture rather than an entity: the logo's letters on the attract pages.</summary>
     /// <param name="animationFrame">The picture materialising.</param>
@@ -89,9 +148,9 @@ public sealed class StripEffect : IEntity
     /// <param name="axis">Which way the picture is cut: rows or columns.</param>
     /// <param name="clip">The area strips are dropped outside of.</param>
     /// <returns>The new appear record.</returns>
-    /// <remarks>Original source: <c>RRLOG.ASM</c> <c>WDONE1</c>, which asks the attract-mode appear (<c>AMAP</c>) for each letter.</remarks>
+    /// <remarks>Original source: <c>RRLOG.ASM</c> <c>WDONE1</c>, which asks the attract-mode appear (<c>AMAP</c>) for each letter. That appear draws the strips closed up before it ends (<c>RRX7.ASM</c> <c>AWW2</c>, "FORCE SIZE OF 1"). Disassembly: <c>$5B98</c> and <c>$5D7C</c> to <c>$5D85</c>.</remarks>
     internal static StripEffect CreateAppear(Texture2D animationFrame, Rectangle bounds, StripFanAxis axis, StripClip clip)
-        => new(() => animationFrame, bounds, StripEffectKind.Appear, axis, 0, clip);
+        => new(() => animationFrame, bounds, StripEffectKind.Appear, axis, 0, clip, isClosedUpAtTheEnd: true);
 
     /// <summary>Starts the explosion for a killed object; the killing shot picks the axis and lean.</summary>
     /// <param name="dead">The object being exploded; its animation frame and explosion bounds are used.</param>
@@ -111,7 +170,7 @@ public sealed class StripEffect : IEntity
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (!this.IsAlive())
+        if (!this.IsAlive() || !IsDrawn())
         {
             return;
         }
@@ -177,15 +236,53 @@ public sealed class StripEffect : IEntity
             return;
         }
 
-        // Shrink the spacing; the record dies once it would fall to 1 or less.
-        int next = _spacingAccumulator - StripExplosionTuning.SizerStep;
-        if ((next >> 8) <= 1)
+        StepAppear();
+    }
+
+    /// <summary>Says which of the arcade's three strip routines runs this effect.</summary>
+    /// <returns>The horizontal routine for a column fan, the diagonal one for a row fan that leans, and the vertical one for a row fan that does not.</returns>
+    /// <remarks>Original source: <c>RRX7.ASM</c> <c>EXSTV</c>, which picks the routine from the laser's direction. Disassembly: <c>$5C1F</c>.</remarks>
+    internal StripEngine GetEngine()
+    {
+        if (_axis == StripFanAxis.Columns)
+        {
+            return StripEngine.Horizontal;
+        }
+
+        return _slope == 0 ? StripEngine.Vertical : StripEngine.Diagonal;
+    }
+
+    /// <summary>Says whether the effect has anything on the screen. An appear has nothing until its first step.</summary>
+    internal bool IsDrawn() => _kind == StripEffectKind.Explode || _hasAppearBeenDrawn;
+
+    /// <summary>Takes one ROM frame off an appear's gap. The picture changes only when the whole-row part of the gap changes, and the appear is over when the gap would fall below the smallest that its routine draws.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>AWRITE</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>: <c>CMPA YSIZER,Y</c> ("CHANGE?") skips the frame when the row count is the same, and the tests after <c>AWRIT1</c> end the appear</item>
+    /// <item>Disassembly: <c>$5D48</c> to <c>$5D85</c> for the vertical routine</item>
+    /// </list>
+    /// </remarks>
+    private void StepAppear()
+    {
+        int next = _spacingAccumulator - _appearSizerStep;
+        if ((next >> 8) == (_spacingAccumulator >> 8))
+        {
+            _spacingAccumulator = next;
+            return;
+        }
+
+        if ((next >> 8) < _smallestAppearSpacing)
         {
             LifeState = EntityLifeState.Dead;
             return;
         }
 
         _spacingAccumulator = next;
+        _hasAppearBeenDrawn = true;
+        if (_getFollowedBounds is not null)
+        {
+            _bounds = _getFollowedBounds();
+        }
     }
 
     /// <summary>Maps a killing shot's direction to the fan axis and lean it produces.</summary>
@@ -259,8 +356,8 @@ public sealed class StripEffect : IEntity
             spacing = 1;
         }
 
-        // The fan's fixed point is the sprite's middle, derived from the sprite's own extent.
-        int split = extent / 2;
+        // The fan's fixed point is the strip it was given, or the sprite's middle when it was given none.
+        int split = GetCentreStripIndex(extent);
 
         // The sprite is drawn centred in the bounds, so the fan must start from its own top-left.
         (int spriteLeft, int spriteTop) = GetSpritePlacement(_bounds, spriteWidth, spriteRows);
@@ -299,6 +396,11 @@ public sealed class StripEffect : IEntity
 
         return strips;
     }
+
+    /// <summary>Gets which strip the others close in on or fly away from.</summary>
+    /// <param name="extent">How many strips the sprite is cut into.</param>
+    /// <returns>The strip the effect was given, or the middle one when it was given none.</returns>
+    private int GetCentreStripIndex(int extent) => _getCentreStripIndex?.Invoke(extent) ?? (extent / 2);
 
     /// <summary>True when the strip lies inside the clip rectangle; a strip outside is dropped.</summary>
     /// <remarks>Matches the ROM's own per-strip clip check.</remarks>
