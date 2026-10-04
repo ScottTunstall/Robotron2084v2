@@ -46,6 +46,7 @@ public sealed class DefineInputsState : IGameState
     private const string ExitLine = "F10 - TITLE";
     private const int ExitRow = 342;
     private const int FirstLineRow = 70;
+    /// <summary>It is one of the palette slots in <see cref="OwnedSlots"/>.</summary>
     private const int HeadingSlot = 9;
 
     // The page's own colours (notes §108): the page reads like the arcade's GAME ADJUSTMENT page —
@@ -59,6 +60,7 @@ public sealed class DefineInputsState : IGameState
     // selected line's label — strobed in its own slot the way the intro pages cycle their text
     // (notes §115) — while the line's value, the bound key or joystick input, stays on the page's
     // static green.
+    /// <summary>It is one of the palette slots in <see cref="OwnedSlots"/>.</summary>
     private const int InputSlot = 6;
 
     private const string Instructions = "USE UP AND DOWN TO MOVE BETWEEN P1 AND P2";
@@ -69,6 +71,7 @@ public sealed class DefineInputsState : IGameState
 
     private const int LabelColumn = 75;
     private const int LineStep = 26;
+    /// <summary>It is one of the palette slots in <see cref="OwnedSlots"/>.</summary>
     private const int SeparatorSlot = 7;
     private const string SetAndClear = "ENTER - SET THE INPUT   DEL - CLEAR   R - DEFAULTS";
     private const int SetAndClearRow = 312;

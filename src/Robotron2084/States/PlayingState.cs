@@ -31,7 +31,7 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class PlayingState : IGameState
 {
-    /// <summary>The wave counter is one byte, so it wraps here (ROM <c>GEXX</c>).</summary>
+    /// <summary>The wave counter is one byte, so it wraps here (ROM <c>GEXX</c>). A player's wave number is divided by this and the remainder, plus one, becomes <see cref="PlayerSlot.Wave"/>, so the wave number goes back to the start after this many.</summary>
     private const int WaveCounterWrap = 255;
 
     private readonly LevelParameterGenerator _generator = new();

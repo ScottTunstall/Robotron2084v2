@@ -39,6 +39,7 @@ public sealed class SettingsState : IGameState
     private const string ExitLine = "F10 - TITLE";
     private const int ExitRow = 342;
     private const int FirstLineRow = 76;
+    /// <summary>It is one of the palette slots in <see cref="OwnedSlots"/>.</summary>
     private const int HeadingSlot = 9;
 
     // The page's own colours (notes §108): headings, instructions and the words under each value in
@@ -46,6 +47,7 @@ public sealed class SettingsState : IGameState
     // the entries the arcade's page uses (its text colour $66 is slot 6). No slot can be assumed to
     // hold its CRTAB value — the page is opened from an attract screen, which leaves its own colours
     // up — so the page writes the two itself on entry (see OwnedSlots).
+    /// <summary>It is one of the palette slots in <see cref="OwnedSlots"/>.</summary>
     private const int InputSlot = 6;
     private const int InstructionsRow = 294;
     private const int LabelColumn = 75;
