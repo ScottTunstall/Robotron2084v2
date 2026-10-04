@@ -103,6 +103,7 @@ write it up, including what was wrong before.
 | `tests/Robotron2084.Tests/` | **270 tests** — ROM contracts (timings, counts, layouts), not smoke checks |
 | `docs/arcade-fidelity-notes.md` | The master decode log (91 sections, ROM-vs-port, with retractions) |
 | `docs/handoff-*.md`, `status.md`, `rebuild-ledger.md` | Session handoffs, the current state, and the per-checkpoint ledger |
+| `docs/coding-standards.md`, `docs/refactoring-ledger.md` | The coding rules, and the record of code changed to meet them: every renamed member, old name to new |
 | `asm/robomame.asm` | The author's own annotated 6809 disassembly of the blue-label ROM — the locator and second witness behind most of the notes |
 | `tools/SpriteExtractor/` | Sprite/table extraction (148 PNGs) + the inline passthrough art |
 | `tools/RobotronSoundPlayer/` | The **Robotron sound player**: plays any game sound or sound number on an emulated sound board running the real sound ROM, to the speakers or a WAV file. The only home of the 6800 emulator — the game itself reads no ROM |

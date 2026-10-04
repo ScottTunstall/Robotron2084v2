@@ -107,7 +107,8 @@ what it needs as arguments and let it work. A query is fine when the answer is t
 **STR-11. Law of Demeter: one dot.** A method talks to its own members, its parameters, the objects it makes, and
 the things it is directly given. It does not reach through one object to another: `field.Entities.GetList(kind).Entities`,
 `field.Wall.Intersects(box)` and `sprites.Blitter.DrawSprite(...)` all call a method on something got from something
-else. If a statement has a second dot after a property or a call, it is a smell. Fix it one of two ways: give the
+else. If a statement has a second dot after a property or a call, it is a smell. More than one dot means the class knows too much about
+the inside of another object, and will break when that inside changes. Fix it one of two ways: give the
 near object a method that does the whole job (`field.HitsWall(box)`, `field.GetEntities(kind)`), or pass the
 collaborator in as a parameter. A short-lived local that only renames a parameter's collaborator is not a fix.
 - **Exempt:** reading plain data (`point.X`, `box.Bounds.Width`, `parameters.GruntCount`), one fluent chain on a single
@@ -243,6 +244,35 @@ not `Grunt.KillGrunt()`; `FamilyList.GetNearestSlot()`, not `FamilyList.GetNeare
 `robot.Move()` and nothing is lost. The name must still be specific enough to say its purpose on its own: no bare
 `Process`, `Handle`, `Do` or `Run`. If the action cannot be named without the noun, the method is probably on the
 wrong class (STR-8).
+
+**NAM-19. A name tells you what it holds or does: no surprises.** This is for every name: methods, properties, fields,
+parameters and local variables. A reader who sees only the name should be able to guess the type it holds, or what the
+method does and gives back. A field called `_facing` that holds a `WalkSequence` is a defect, and so is a `Score` that is a
+`ScoreBoard`. The glossary's unit suffixes (NAM-2) already do this for numbers; these do it for everything else:
+- **A helper object is named for its class**, not for the thing it works on: `_highScoreStore`, `_gruntSpeedProgression`,
+  `_frameAnimation`, `ObjectMachine`. Not `_highScores`, `_gruntSpeed`, `_frame`, `Objects`.
+- **A collection is a plural noun** for what is in it (`_pendingRobots`, `_textCells`), and an array of flags says what is
+  flagged (`_armedLines`, `_opaquePixels`). A single object is never a plural (`_boxes` for one `BoxContactTest`).
+- **A number says what it counts or measures**: a place in a list ends in `Index`, a quantity in `Count`, a countdown in
+  `...Remaining` or `...Left`, and anything with a unit takes the unit (NAM-2). `_animationFrameIndex`, not
+  `_animationFrame` or `_rotation`; `_stepCount`, not `_step`. A direction held as -1 or +1 says so (`_directionSignX`),
+  because `_direction` is a `Direction8`.
+- **A texture ends in `Sprite`, `AnimationFrame` or `AnimationFrames`** (CMT-13): `EnforcerSprite`, `_pointsSprite`. A bare
+  `Enforcer` is an enforcer.
+- **A rectangle ends in `Bounds`** and a point does not: `_playfieldBounds`, `_canvasBounds`.
+- **A delegate starts with a verb**, as the method it stands for would: `_getTargetPosition`, not `_target`.
+- **A boolean is a predicate** (NAM-4) in every kind of name, locals and parameters included: `isFireHeld`, `fansByRows`,
+  `TankShellBugEnabled`. Not `fire`, `rows`, `TankShellBug`. A boolean must not read as a count or an object
+  (`LasersFiredThisUpdate`, `_arcadeText`).
+- **A method that returns a value starts with the verb NAM-13 gives it**, and a method that returns `bool` reads as a
+  question (`IsFramePixelLit`, `WasPressed`). A noun alone (`Digits`, `Layout`, `Colours`) is not a method name.
+- **One name, one type, everywhere** (NAM-9). If `_settings` is a `GameSettings` in one class it is not a
+  `ControlSettings` in the next: call them `_gameSettings` and `_controlSettings`. The same goes for locals: `pad` is a
+  `GamePadState`, so the number is `padIndex` and the flag is `hasPadBinding`.
+- **Where a name of ours sits beside a type of the same name, that is allowed and wanted**: `ScoreBoard ScoreBoard`,
+  `GameSettings GameSettings`.
+A name that needs a comment to say what it holds is wrong; rename it (§114). The corrections made when this rule came in
+are listed in [refactoring-ledger.md](refactoring-ledger.md), which is also a list of examples.
 
 ## 4. Numbers and units (§112, §113)
 
@@ -472,6 +502,19 @@ folders, commit each folder on its own: one commit for `docs`, one for each fold
   that the others depend on first.
 - **Do not push** unless asked.
 
+**PROC-5. Refactoring and bad code are tracked.** When code is changed because it broke this standard, and not because
+the game's behaviour had to change, the change is written down in [refactoring-ledger.md](refactoring-ledger.md), in the
+same set of commits. This covers a sweep of renames, a split class, repaired comments, and any batch of code that was
+written badly and had to be put right, whoever or whatever wrote it. An entry says:
+- **what was wrong**, with the rule it broke and how it was found;
+- **how it got in**, where the git history shows it. If it was not traced, say "not traced". Do not guess;
+- **what was changed**, as a table of old name to new name, so a reader of an old note, handoff or commit can find the
+  thing under its new name;
+- **what was left alone and why**, so the next reader does not have to find it again.
+The older notes and handoffs are a record of what was true when they were written. Do not rewrite them after a rename
+(NAM-8 is for the code, the tests and the living docs); the ledger is what joins the old names to the new ones. One small
+fix made while a file is open for another reason (PROC-1) needs no entry.
+
 ---
 
 # Part 2: Code review procedure (for use as a review skill)
@@ -563,6 +606,14 @@ grep -rnE 'Test-only|test hook' src --include=*.cs
 
 # Test-favouring defaults (TEST-2)
 grep -rnE 'ForTesting\s*=\s*true' src --include=*.cs
+
+# Names that hide their type (NAM-4, NAM-19): booleans that are not predicates, and names used for
+# more than one type. Check each hit by eye.
+grep -rnP '^\s+private (static )?(readonly )?bool _(?!is|has|can|was|should|are|have)' src --include=*.cs
+grep -rhoP '^\s+private (readonly )?[\w<>\[\]?,]+ _\w+' src --include=*.cs | awk '{print $NF, $(NF-1)}' | sort -u | awk '{n[$1]++; t[$1]=t[$1]" "$2} END{for (k in n) if (n[k]>1) print k":"t[k]}'
+
+# Law of Demeter (STR-11): a call made through another object's property
+grep -rnoP '(?<![\w.])_?[a-z]\w*\.[A-Z]\w*\.[A-Z]\w*(?=\()' src --include=*.cs
 
 # Untracked leftovers
 git status --porcelain | grep '^??'
