@@ -5010,6 +5010,9 @@ Key consequences, all of which the port now mirrors:
    wave of *n* robots takes *n* frames to *start* assembling, and each record
    then converges over its own 15 calls (§61.2) — so the last robot is
    fully present about *n* + 15 frames after the wave begins.
+   **CORRECTION (2026-10-04, §143):** 15 calls is the diagonal routine's length. The loop uses the
+   vertical routine (29 updates) and the horizontal one (31), and a robot is drawn whole on pass 32 + j,
+   so the earlier "32 frames" was the right read.
    **CORRECTION:** an earlier note said "32 frames"; that figure is a bad read
    and is superseded.
 2. **Every FOURTH appear is horizontal** — the sequence counter's low two bits
@@ -5024,6 +5027,8 @@ Key consequences, all of which the port now mirrors:
    uses), and the **slope is 0** — that loop never sets `A` before `APST`.
 5. The appear records come from the **same ten-record pool as explosions**
    (§61.2), so a full pool simply means the next robot's appear waits a frame.
+   **CORRECTION (2026-10-04, §143):** each of the three strip routines has its own records (the object
+   list, 2 and 10), and the loop does not wait: a robot whose routine has no record free gets no effect.
 
 ### 62.2 The port's implementation
 
@@ -10868,7 +10873,7 @@ So the first check is **277 ROM frames after the game goes live**, on every wave
 
 **Tests.** `WaveStartSequenceTests` (new) pins the frames for 0, 1, 15 and 40 robots and for a brain wave, the tick before and the tick of each moment, and that before the game is live the player cannot move or fire, is not rescued into, is not killed, and the robots stand still. Tests of things that happen in play, which used to rely on the player acting during the grace, now call `PlayField.SkipWaveStart()` (a test hook), and tests that waited out the grace wait for `WaveStartTicks.UntilLive(field)`.
 
-**Still not the arcade.** Each of these was seen while reading the ROM for this and was left alone:
+**Still not the arcade.** Each of these was seen while reading the ROM for this and was left alone. **All six are put right in §143**, which also says what is still open after it:
 
 1. **The player's appear effect.** The arcade forms the player out of strips from `PLS1` (`PAPPR`: one vertical appear for every row of the sprite and one horizontal for every column; `PDAPPR`: diagonal ones every third row, both ways) and only draws it normally from `PLS2`. The port draws the player whole from `PLS1`. Doing it properly needs the three strip engines' record pools read first (`RRX7`, `RRHX4`, `RRDX2`); §62.3 item 1 is still open for the effect itself.
 2. **Spheroids and quarks get an appear effect in the port.** The arcade's `APPEAR` does not walk them. What the arcade shows for them before the game is live was not read.
@@ -10876,5 +10881,84 @@ So the first check is **277 ROM frames after the game goes live**, on every wave
 4. **When there is no room for another appear effect**, the port makes the robot wait a frame (§62.1 item 5). The arcade's loop looks as though it moves on to the next robot whether or not `APST` got a record (`STX PD2,U` follows either way). Not settled.
 5. **The brain wave's transporter** was not checked against the 150 frames.
 6. **A two-player game's "PLAYER n" message** (`NAP 115,PLS0B`) comes before the wave is set up and was not checked.
+
+**Not checked on screen.**
+
+## §143 — THE REST OF THE START OF A WAVE: THE STRIP ROUTINES, THE PLAYER'S APPEAR, AND EACH ROBOT'S FIRST MOVE (author, 2026-10-04)
+
+**Author:** *"OK, fix what you've identified as wrong."* These are the six things §142 listed as still not the arcade. Reading the ROM for them turned up more, which is put right here too. It corrects §35.5, §61.2 and §62.1 where they say there is one store of ten records and that an appear lasts 15 calls.
+
+### 143.1 There are three strip routines, each with its own records and its own speed
+
+| Routine | Source | Cuts the sprite into | Records | An appear shrinks by | An appear is drawn at gaps | It ends on update |
+|---|---|---|---|---|---|---|
+| Vertical | `RRX7.ASM`, `$5B40` | rows, no lean | from the list of free objects (`GETAP`: `LDU OFREE`, `$5B86`) | `$0080` a frame (`$5D4A`) | 15 down to 2, two frames each | 29 |
+| Horizontal | `RRHX4.ASM`, `$F01D` | columns | **2** | `$80` a frame | 15 down to 1, two frames each | 31 |
+| Diagonal | `RRDX2.ASM`, `$4680` | rows that lean | 10 (`RMB ((10-1)*EXSIZE)`, `$468C`) | `$100` a frame | 15 down to 2, one frame each | 15 |
+
+- **The picture changes only when the high byte of the gap changes** (`CMPA YSIZER,Y`, "CHANGE?", `$5D4D`), which is every second frame for the two slow routines. Nothing is drawn before the first update, and the last update rubs the strips out and draws nothing.
+- **The horizontal routine has 2 records, not 8.** `HXINV` reserves room for 8, but the branch that loops round to link them is on the same line as the compare before it, where the assembler took it for a comment: `CMPX   #EXEND-EXSIZE       BLO    EXIN0`. The disassembly has the compare at `$F02C` and no branch after it, so one pass links two records and ends the list.
+- **A routine with no record free makes no effect.** `APSTV`, `HAPSTV` and `APSTZ` return at once (`BCS APBY`), and an explosion that finds none just switches the object off.
+- **`HAPST` and `HEXST` are behind a trap** (`RRX7.ASM` `HORAP`, `HOREX`, `$5BB1`): they use the horizontal routine only when the operator's FANCY ATTRACT MODE setting is on (`$CC13`). With it off they fall into the vertical routine. The setting is on from the factory, and the port always behaves as if it is on.
+
+### 143.2 The appear loop, corrected (`RRG23.ASM` `APPEAR`, `$28FE` to `$2962`)
+
+- **Which robots.** The loop walks `RPTR`, the list `GETROB` fills: grunts, hulks, brains and tanks. `GETRBV` puts each new robot at the head, and `PLS0A` sets up hulks, brains, tanks and then grunts (`$2831` to `$2840`), so the loop meets the last grunt made first and the hulks last.
+- **Spheroids and quarks are not on it** (§142 item 2). They are made with `MKPROB` and go on the object list `OPTR`. With `STATUS` at `$19` their velocity is not added (`OPRC80`: `BITA #8 / BNE O80`, "NO VELOCITY REFRESH ONLY"), and each one's routine runs but holds its drop timer (`TST STATUS`, "DONT START EARLY GUYS"). So they are on the screen from the start, spinning on the spot.
+- **One pass a frame, and the loop never waits** (§142 item 4). A pass asks for the next robot's effect and moves on whether or not it got one (`AP2 STX PD2,U`, `$292A`). Every fourth asks the horizontal routine, which has 2 records and holds each for 31 frames, so in a wave of more than 11 robots most of the every-fourth robots get no effect at all.
+- **Where the strips close in** (`APCENT`, `$29B5`). The centre row is `OBJH x OBJY / 256` rows down the sprite, and the centre column the same with the doubled column. So a robot near the top of the screen closes in on a row near its own top, and its strips stay on the screen.
+- **When a robot is drawn whole.** From pass 33 the loop redraws the robots it has finished with, one more each pass (`CMPA #32`, `$2930`; `APREF`, `$2965`). Robot j is first drawn on pass 32 + j, which is three frames after its vertical effect is rubbed out.
+
+### 143.3 The player's appear (§142 item 1; `PAPPR` `$29F5`, `PDAPPR` `$29D2`)
+
+- **At `PLS1`:** a vertical effect for every row of the player's sprite, each closing in on a different row (12 of them), and a horizontal one for every column (4 asked for, 2 made, since that is all the records there are).
+- **At `PLS1A`, 6 frames later:** two diagonal effects, one leaning each way, for every third row. The count runs 12, 9, 6, 3, 0, which is ten effects and every diagonal record. The last asks for the row above the sprite, which the routine will not take, and it uses half the sprite's width instead (`NWCEAP`: `LDB ,X / LSRB`).
+- **The player's own sprite is not drawn until `PLS2`** (`PLA0`: `BITA #$10`). The effects are still running then. With `STATUS` clear each routine takes the player's place again before every redraw (`AWRIT0`, "SCROLL EM", `$5D57`), so the strips stay with the player as the player walks.
+
+### 143.4 Each robot's first move (§142 item 3)
+
+Every robot's routine starts with a look at `STATUS` and a sleep if it is not clear (`BITA #$7F`). `MKPRCV` links a new process in after the one that made it and gives it a sleep of 1, so each takes its first look on the frame the wave is set up, after the set-up routine, and then at its own interval.
+
+| Robot | Looks every | Then | First move |
+|---|---|---|---|
+| Grunts (`ROBOT`, `$39B7`) | 2 frames | `NAP 10,ROB0` | 10 frames after the first look that finds the game live |
+| Hulk (`HULK`, `$0030`) | 8 frames | steps at once | on that look |
+| Brain (`BRAIN`, `$1BD8`) | 4 frames | `NAP 12,BRNL` | 12 frames after it |
+| Tank left from the last man (`TANK`, `$4D8B`) | 15 frames | beats at once | on that look |
+
+With 15 grunts the game is live on frame 68 and the grunts' first pass is on frame 78. The port had every robot take its first beat one of its own intervals after going live.
+
+### 143.5 The transporter and the 150 frames (§142 item 5)
+
+`TRNSTV` runs on into `TRNLP` on the frame it is made, and takes one step of its 130 a frame. The pass after the last step ends it, on frame 130, 20 frames before `NAP 150,PLS1`. It then calls `HXINIT`, because it borrows the horizontal routine's memory. The port's length was right. It started one frame late.
+
+### 143.6 "PLAYER n" (§142 item 6; `$27E7` to `$281D`)
+
+The arcade shows it only when `PCFLG` is set, which is at the start of a game and after a death ("NO DEATH.. NO MESSIE POOH"), and only with two players. It is shown for 115 frames on a screen that has the wall and the scores and nothing else, and the wave is set up only when it has gone. The port showed it at the start of every wave of a two-player game, and ran the wave underneath it.
+
+### 143.7 The port, now
+
+- `StripEngine` (new) names the three routines. `StripEffect` shrinks an appear at its routine's speed, draws nothing before the first step, can close in on a given row or column, and can follow the thing it is forming. `StripExplosionTuning` has the speeds and the two stores (`HorizontalPoolSize`, `DiagonalPoolSize`); the old `MaxConcurrent` of 10 for everything is gone. `FieldEntities.HasRoomForStripEffect` asks the right store, for explosions as well as appears.
+- `WaveMaterialisation` counts passes. It asks for robot j's effect on pass j and stops holding the robot back on pass 32 + j. `RobotKindInfo.RobotListSetUpOrder` replaces `IsOnRobotList` and gives the order; the field queues the robots itself, so the spawners no longer do, and the spheroids and quarks are never queued.
+- `PlayerAppear` (new, `Level/`) makes the player's effects at `PLS1` and `PLS1A`. `PlayField.Draw` draws the player's sprite only when the game is live.
+- `IWaveStartRobot.BeginPlay` (new) is called on the tick the game goes live. `Grunt`, `Hulk`, `Brain` and `Tank` set their beat timer from `WaveStartSequence.GetClockUnitsToFirstBeat`, each with its own interval as a named constant. The author's `BerzerkRobot` waits as a grunt does.
+- `Spheroid` and `Quark` do not move while `RobotsFrozen` is true.
+- `RobotTransporter` takes its first step on the first tick.
+- `PlayingState` announces a turn only when told a turn is starting (a new game, or after a death), holds the field until the message has gone, and draws only the wall and the scores meanwhile (`PlayField.DrawWall`).
+
+### 143.8 Tests
+
+`StripEffectTests` (each routine's length, the gaps a vertical and a horizontal appear show, a given centre row, following, each store), `MaterialisationTests` (rewritten: which robots, the order, no record, the centre row and column, when a robot is drawn whole, spheroids and quarks standing still), `PlayerAppearTests` and `RobotFirstMoveTests` (new), and `PlayingStateTurnMessageTests` (new; when the message is shown).
+
+### 143.9 Still not the arcade
+
+1. **The column fan's spacing.** The horizontal routine places its pixel columns one of the arcade's columns apart, which is two pixels. The port places them one pixel apart, as §71 decided for explosions. The two were not reconciled.
+2. **The vertical routine never runs out here.** The arcade's does when its list of free objects is empty. The port keeps no such list.
+3. **A hulk's first aim** is made when the wave is set up (`HLKST`, `JSR HULKND`). The port makes it on the tick the game goes live. The player has not moved by then, but the family has.
+4. **FANCY ATTRACT MODE off** is not modelled (143.1).
+5. **What is on the screen with "PLAYER n".** At the start of a game the arcade prints its copyright line where the wave number goes. The port prints the wave number. The "PLAYER n GAME OVER" screen was not checked.
+6. **The transporter's sound** (72 frames at one a frame, then 36 at one every two) was not checked against the port's.
+7. **While held, the arcade redraws a spheroid or a quark only on every eighth interrupt.** The port draws it every tick.
+8. **The message's hold has no test.** `PlayingState.Update` reads the keyboard, which a test cannot do, so only the rule for when the message is shown is tested.
 
 **Not checked on screen.**

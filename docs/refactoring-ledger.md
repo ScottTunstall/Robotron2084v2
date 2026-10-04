@@ -24,6 +24,61 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 
 ---
 
+## 2026-10-04: the strip effects' one store of ten, and the robot list flag
+
+### What was wrong
+
+These were found while making the start of a wave faithful (notes §143). They are wrong reads of the ROM that had
+been built into names and constants, so they are recorded here as bad code as well as in the notes as behaviour.
+
+- **`StripExplosionTuning.MaxConcurrent` (10)** said that every explosion and every appear shared one store of ten
+  records. The arcade has three strip routines with a store each. The name hid which store it was (NAM-19), and
+  its comment gave the number as a fact about all three (CMT-4).
+- **`StripExplosionTuning.SizerStep`** was used for every appear, though only the diagonal routine shrinks an
+  appear by that much. The other two shrink it by half as much.
+- **`RobotKindInfo.IsOnRobotList`** was a flag where the arcade has an order: the appear loop meets the robots in
+  the reverse of the order they are set up in.
+- **`PlayField.QueueMaterialise`** was called by seven spawners, two of which (spheroids and quarks) should never
+  have called it. The field now queues the robots itself, so the method had no caller left (DEAD-1).
+- **`PlayingState`'s constructor** announced a turn every time it ran, which made the reason for the announcement
+  a side effect of who made the state.
+
+### How it got in
+
+- The one store of ten came from reading `RRDX2.ASM` alone (notes §35.5) and applying it to all three routines.
+  The horizontal routine's real count is not in the source at all: the source asks for 8 and the assembled ROM
+  links 2, so it could only be found in the disassembly.
+- The rest: not traced.
+
+### What was changed
+
+| Old name | New name | Where |
+|---|---|---|
+| `StripExplosionTuning.MaxConcurrent` | `HorizontalPoolSize`, `DiagonalPoolSize` and `GetPoolSize(StripEngine)` | `Tuning/` |
+| (none) | `StripExplosionTuning.SlowAppearSizerStep`, `SmallestAppearSpacing`, `SmallestClosedAppearSpacing` | `Tuning/` |
+| (none) | `StripEngine`, `StripEffect.GetEngine()`, `StripEffect.IsDrawn()`, `StripEffect.CreateFollowingAppear` | `Entities/` |
+| `RobotKindInfo.IsOnRobotList` (a flag) | `RobotListSetUpOrder` (a number, or null), and `IsOnRobotList()` (a method, NAM-10) | `Level/` |
+| `PlayField.QueueMaterialise` | removed; the field calls `WaveMaterialisation.Queue` itself | `Level/` |
+| `PlayField.CountRobotsOnTheRobotList` | `GetRobotsInAppearOrder` (the list, whose length is the count) | `Level/` |
+| `WaveMaterialisation._assembling`, `_pendingRobots`, `_sequenceNumber` | `_appearNumbers`, `_robotsByAppearNumber`, `_passes` | `Level/` |
+| `WaveMaterialisation.Advance(explosions, clip)` | `Advance(entities, playfieldBounds)` | `Level/` |
+| `Hulk.Update`'s first-aim block | `Hulk.AimForTheFirstTime` | `Entities/` |
+| `Spheroid.Update`'s and `Quark.Update`'s mover blocks | `AdvanceMover` | `Entities/` |
+| `new PlayingState(sprites, store, session)` announcing a turn | `isStartOfTurn` parameter | `States/` |
+
+### What was left alone, and why
+
+- **`StripExplosionTuning.SizerStep` keeps its name.** It is still the step of an explosion and of a diagonal
+  appear; its comment now says so.
+- **The column fan is still laid out a pixel apart**, where the arcade's is a column (two pixels) apart. Notes
+  §71 decided it for explosions and it was not reopened (notes §143.9).
+
+### How it was checked
+
+Debug and Release build with no warnings. 837 tests pass, 32 more than before. Not checked on screen.
+
+---
+
 ## 2026-10-04: GruntSpeedProgression checked against the ROM, and four standards fixes
 
 ### What was wrong
