@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A shell fired by a tank. It is aimed once, then flies straight, bouncing off the walls until it fizzles out.</summary>
+/// <summary>A shell fired by a tank. It is aimed once, then flies straight, bouncing off the walls until it fizzles out. It moves every ROM frame, and has a beat every few ROM frames. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_frameTimer"/> gathers the ticks until it is time for the next ROM frame (see <see cref="ArcadeClock"/>), and <see cref="_framesToNextBeat"/> counts the ROM frames to its next beat.</summary>
 /// <seealso cref="Tank"/>
 /// <seealso cref="Level.PlayField"/>
 /// <remarks>

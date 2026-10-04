@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The player's laser shot: a straight bolt that flies until it hits a wall or a robot, then vanishes.</summary>
+/// <summary>The player's laser shot: a straight bolt that flies until it hits a wall or a robot, then vanishes. It has no beat and no timer: <see cref="LaserSlots"/> holds it and calls <see cref="Update"/> on nearly every tick, and the <see cref="PlayField"/> calls <see cref="LaserSlots.Update"/> in <see cref="PlayField.Update"/>.</summary>
 /// <seealso cref="LaserSlots"/>
 /// <remarks>
 /// <list type="bullet">

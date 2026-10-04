@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The "1000" to "5000" number that pops up where you just rescued a family member, showing the points you earned.</summary>
+/// <summary>The "1000" to "5000" number that pops up where you just rescued a family member, showing the points you earned. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_ticksRemaining"/> counts down the ticks until it goes.</summary>
 /// <seealso cref="Human"/>
 /// <remarks>
 /// <list type="bullet">

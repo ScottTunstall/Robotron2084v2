@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A slow, wobbly missile fired by a brain robot. It chases the player and bounces off walls, leaving a trail behind it.</summary>
+/// <summary>A slow, wobbly missile fired by a brain robot. It chases the player and bounces off walls, leaving a trail behind it. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>).</summary>
 /// <seealso cref="Brain"/>
 /// <seealso cref="PlayerLaser"/>
 /// <remarks>

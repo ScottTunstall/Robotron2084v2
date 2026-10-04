@@ -8,7 +8,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A brain is a floating robot that chases a family member and turns them into a prog. It also shoots cruise missiles at you.</summary>
+/// <summary>A brain is a floating robot that chases a family member and turns them into a prog. It also shoots cruise missiles at you. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). <see cref="_reprogramTimer"/> times the steps of reprogramming a human.</summary>
 /// <seealso cref="PlayField"/>
 /// <seealso cref="Human"/>
 /// <remarks>

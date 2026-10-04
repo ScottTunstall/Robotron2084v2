@@ -8,7 +8,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The player is the hero the person plays as: it moves around, shoots at enemies, and can be killed and brought back to try again.</summary>
+/// <summary>The player is the hero the person plays as: it moves around, shoots at enemies, and can be killed and brought back to try again. It has no beat, and acts on every tick: The <see cref="PlayField"/> calls <see cref="Update"/> directly, on nearly every tick, in <see cref="PlayField.Update"/>. <see cref="_deathTimer"/> times the stages of its death (see <see cref="ArcadeClock"/>), <see cref="_animationFrameTicks"/> counts the ticks each animation frame is shown, and <see cref="_invincibilityBlinkTicks"/> counts the ticks of its blinking.</summary>
 /// <seealso cref="PlayField"/>
 /// <seealso cref="PlayerLaser"/>
 /// <remarks>

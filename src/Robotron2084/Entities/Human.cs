@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A human is one of the family members the player is trying to rescue: Mikey, Mommy or Daddy. It wanders about until it is saved, killed or captured.</summary>
+/// <summary>A human is one of the family members the player is trying to rescue: Mikey, Mommy or Daddy. It wanders about until it is saved, killed or captured. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). <see cref="_startStaggerTicks"/> counts the ticks before its first step.</summary>
 /// <seealso cref="Brain"/>
 /// <seealso cref="SkullMarker"/>
 /// <remarks>

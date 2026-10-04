@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The flashing shape and floating score number that appear for a moment when you kill a spheroid or a quark.</summary>
+/// <summary>The flashing shape and floating score number that appear for a moment when you kill a spheroid or a quark. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_timer"/> gathers the ticks until it is time for the next step (see <see cref="ArcadeClock"/>).</summary>
 /// <seealso cref="Spheroid"/>
 /// <seealso cref="Quark"/>
 /// <remarks>

@@ -33,7 +33,7 @@ public interface IEntity
     /// <param name="spriteBatch">The batch to draw into.</param>
     void Draw(SpriteBatch spriteBatch);
 
-    /// <summary>Advances the entity by one game tick.</summary>
+    /// <summary>Advances the entity by one game tick. The playfield calls this on nearly every tick; the entity decides for itself whether it moves or has a beat on that tick.</summary>
     /// <param name="gameTime">Elapsed time for this tick.</param>
     /// <param name="field">The playfield the entity is on.</param>
     void Update(GameTime gameTime, PlayField field);

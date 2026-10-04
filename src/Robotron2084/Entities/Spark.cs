@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A shot fired by an enforcer robot. It curves through the air along a bent path and stops dead at a wall instead of bouncing.</summary>
+/// <summary>A shot fired by an enforcer robot. It curves through the air along a bent path and stops dead at a wall instead of bouncing. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_moveTimer"/> times its moves, <see cref="_accelerationTimer"/> times its speeding up, and <see cref="_flickerTimer"/> times its flicker (see <see cref="ArcadeClock"/>).</summary>
 /// <seealso cref="Enforcer"/>
 /// <remarks>
 /// <list type="bullet">

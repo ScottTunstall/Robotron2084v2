@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>Gorf hops across the screen in a string of jumps, from one side to the other, dropping grunts as it goes. It does not shoot.</summary>
+/// <summary>Gorf hops across the screen in a string of jumps, from one side to the other, dropping grunts as it goes. It does not shoot. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_stepTimer"/> times its steps and <see cref="_animationTimer"/> times its animation frames (see <see cref="ArcadeClock"/>).</summary>
 /// <remarks>
 /// A new kind of robot of the author's own with no arcade routine behind it (notes §138.2). It starts off the screen, on a random side and at a random
 /// height, and hops to the far side (<see cref="GorfPath"/>), then goes. Every hop is the same height, 16 pixels for now (<see cref="GorfTuning.HopRows"/>).

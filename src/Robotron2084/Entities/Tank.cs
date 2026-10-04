@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A tank is a slow, heavily armoured robot dropped by quarks. It rolls around and fires shells at you.</summary>
+/// <summary>A tank is a slow, heavily armoured robot dropped by quarks. It rolls around and fires shells at you. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). <see cref="_growTimer"/> times the stages of its birth.</summary>
 /// <seealso cref="Quark"/>
 /// <seealso cref="TankShell"/>
 /// <remarks>

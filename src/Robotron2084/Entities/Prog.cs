@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A prog is a family member the brain has captured and turned into an enemy. It looks like the human it used to be, but now hunts the player instead of running from danger.</summary>
+/// <summary>A prog is a family member the brain has captured and turned into an enemy. It looks like the human it used to be, but now hunts the player instead of running from danger. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>).</summary>
 /// <seealso cref="Human"/>
 /// <seealso cref="StripEffect"/>
 /// <remarks>

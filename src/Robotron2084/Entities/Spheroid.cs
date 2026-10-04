@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A spheroid is a drifting ring that floats around dropping little enforcer robots, then flies off the edge of the screen.</summary>
+/// <summary>A spheroid is a drifting ring that floats around dropping little enforcer robots, then flies off the edge of the screen. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by <see cref="_moveTimer"/>.</summary>
 /// <seealso cref="Enforcer"/>
 /// <remarks>
 /// <list type="bullet">

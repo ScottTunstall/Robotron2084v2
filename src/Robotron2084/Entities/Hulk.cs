@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A hulk is a huge, tough robot that can't be killed by shooting it — it just gets knocked back. It slowly stomps after you or a human.</summary>
+/// <summary>A hulk is a huge, tough robot that can't be killed by shooting it — it just gets knocked back. It slowly stomps after you or a human. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>).</summary>
 /// <seealso cref="Player"/>
 /// <seealso cref="Human"/>
 /// <remarks>

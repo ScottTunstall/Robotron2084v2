@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>An electrode is a spiky pillar standing in the playfield. It cannot move, but it shrivels up and disappears when something destroys it.</summary>
+/// <summary>An electrode is a spiky pillar standing in the playfield. It cannot move, but it shrivels up and disappears when something destroys it. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_shrivelTimer"/> times each stage of its shrivelling (see <see cref="ArcadeClock"/>).</summary>
 /// <seealso cref="PlayField"/>
 /// <remarks>
 /// <list type="bullet">
