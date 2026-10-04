@@ -10,7 +10,7 @@ namespace Robotron2084.Tests.Level;
 /// The human family's start of wave (notes §88): they are placed OFF the electrodes, and they
 /// begin walking straight away — the ROM's `HUMSTV` staggers each member 1..8 units and the
 /// `HUMAN` process is the one robot routine with no STATUS gate, so the family walks while the
-/// robots are held off for the wave-start appear and while the player is in the start grace.
+/// robots are held off until the game goes live at the start of the wave.
 /// </summary>
 public sealed class HumanSpawnTests
 {
@@ -99,7 +99,7 @@ public sealed class HumanSpawnTests
             field.Update(Frame());
         }
 
-        Assert.True(field.RobotsFrozen, "the player's start grace must still be holding the robots");
+        Assert.True(field.RobotsFrozen, "the start of the wave must still be holding the robots");
 
         int moved = humans.Count(h => h.IsAlive() && h.Position != start[h]);
         Assert.True(moved > 0, "the family was still standing after half a second");

@@ -29,12 +29,11 @@ public sealed class PlayFieldBrainProgMissileTests
     private static GameTime Frame() => new(TimeSpan.Zero, TimeSpan.FromMilliseconds(1000.0 / 60));
 
     /// <summary>
-    /// Expires the player's 2-second start grace (RobotsFrozen) with real
-    /// elapsed time — 121 frames, per SpheroidEnforcerTimingTests.
+    /// Runs through the start of the wave, until the game is live and the robots are no longer held.
     /// </summary>
     private static void WarmUp(PlayField field)
     {
-        for (int tick = 0; tick < 121; tick++)
+        for (int tick = 0; tick < WaveStartTicks.UntilLive(field); tick++)
         {
             field.Update(Frame());
         }
@@ -181,7 +180,7 @@ public sealed class PlayFieldBrainProgMissileTests
         Rectangle inner = field.Wall.PlayfieldBounds;
 
         field.Entities.Family.Add(new Human(TestSprites.Shared, new IntVector2(inner.X + 300, inner.Y + 150), HumanKind.Mommy, new Random(1)));
-        WarmUp(field); // expire the start grace (RobotsFrozen)
+        WarmUp(field); // run through the start of the wave (RobotsFrozen)
 
         // 30 arcade px left of (where the human is now) → steps right/up.
         IntVector2 humanSpot = field.Entities.Family.Members[0].Position;
@@ -208,7 +207,7 @@ public sealed class PlayFieldBrainProgMissileTests
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         IntVector2 playerSpot = field.Player.Position;
 
-        WarmUp(field); // expire the start grace (RobotsFrozen)
+        WarmUp(field); // run through the start of the wave (RobotsFrozen)
 
         // 30 arcade px right of the player, on the player's OWN row → the
         // brain steps left at it AND one px DOWN: ROM BRN3A has no dead zone
@@ -288,7 +287,7 @@ public sealed class PlayFieldBrainProgMissileTests
     {
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         // The reprogram animation is robot activity, so RobotsFrozen pauses it
-        // (the port's "ALL ROBOTS ARE IMMOBILE" rule) — expire the start grace
+        // (the port's "ALL ROBOTS ARE IMMOBILE" rule) — run through the start of the wave
         // or the loop never advances.
         WarmUp(field);
 
@@ -460,7 +459,7 @@ public sealed class PlayFieldBrainProgMissileTests
         IntVector2 spot = new(inner.X + 100, inner.Y + 100);
         var prog = new Prog(TestSprites.Shared, spot, HumanKind.Daddy, new Random(6));
         field.Entities.Progs.Add(prog);
-        WarmUp(field); // expire the start grace (RobotsFrozen)
+        WarmUp(field); // run through the start of the wave (RobotsFrozen)
 
         // The prog re-aims on small odds (3%/9% per beat) and when blocked,
         // so over a long window it WILL turn — the arcade property is that
@@ -606,7 +605,7 @@ public sealed class PlayFieldBrainProgMissileTests
         field.Entities.CruiseMissiles.Add(missile);
 
         // Two beats = 4 CMMOVs = 4 marks (the missile flies on while the
-        // player's start grace freezes the robots). Beats land on ticks 4 and 8.
+        // start of the wave holds the robots). Beats land on ticks 4 and 8.
         for (int tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 2; tick++)
         {
             field.Update(Frame());
@@ -688,6 +687,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // state, which the author saw as "the explosion effect looks weird"
         // (2026-09-17, notes §90). There is no Dying phase any more.
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
+        field.SkipWaveStart();
         Rectangle inner = field.Wall.PlayfieldBounds;
         var prog = new Prog(TestSprites.Shared, new IntVector2(inner.X + 120, inner.Y + 120), HumanKind.Mommy, new Random(21));
         field.Entities.Progs.Add(prog);
@@ -729,6 +729,7 @@ public sealed class PlayFieldBrainProgMissileTests
     public void LaserKillsCruiseMissile_Scores25()
     {
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
+        field.SkipWaveStart();
         Rectangle inner = field.Wall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 250, inner.Y + 120);
         var missile = new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(8));
@@ -745,6 +746,7 @@ public sealed class PlayFieldBrainProgMissileTests
     public void LaserKillsBrain_Scores500_AndLaserKillsProg_Scores100()
     {
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
+        field.SkipWaveStart();
         Rectangle inner = field.Wall.PlayfieldBounds;
 
         IntVector2 brainSpot = new(inner.X + 150, inner.Y + 120);
@@ -808,6 +810,7 @@ public sealed class PlayFieldBrainProgMissileTests
     {
         var input = new PhaseInput { State = new PlayerInputState(IntVector2.Zero, IntVector2.Zero, FireHeld: true) };
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1), input);
+        field.SkipWaveStart();
         Rectangle inner = field.Wall.PlayfieldBounds;
 
         // The player aims down by default; park near the bottom wall so each

@@ -17,6 +17,7 @@ public sealed class PlayFieldMovementTests
     public void Hulk_StaysPutForOneBeatIntervalThenSteps_PortTicksOfHulkSpeed()
     {
         PlayField field = CreateEmptyField();
+        field.SkipWaveStart();
         Rectangle bounds = field.Wall.PlayfieldBounds;
         // Spawn well away from the player (player-vs-hulk contact is lethal),
         // but hunt the playfield center so the aim is unbounded.
@@ -25,8 +26,8 @@ public sealed class PlayFieldMovementTests
         var hulk = new Hulk(TestSprites.Shared, spot, new Random(7), beatIntervalRomFrames: 8, () => center);
         field.Entities.Hulks.Add(hulk);
 
-        // End the player's start grace period (robots are frozen during it).
-        field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3)));
+        // The game is live (the robots are held until then); this update is the spawn aim.
+        field.Update(new GameTime());
         IntVector2 afterAim = hulk.Position; // first unfrozen update = the spawn aim, no move
 
         // Step period = 8 ROM frames = 9.6 ticks, so the step lands on the 10th.
@@ -52,7 +53,8 @@ public sealed class PlayFieldMovementTests
         var hulk = new Hulk(TestSprites.Shared, spot, new Random(11), beatIntervalRomFrames: 5, () => spot);
         field.Entities.Hulks.Add(hulk);
 
-        field.Update(new GameTime(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(3))); // end grace
+        field.SkipWaveStart();
+        field.Update(new GameTime());
 
         IntVector2 positionBefore = hulk.Position;
         for (int i = 0; i < 300; i++)

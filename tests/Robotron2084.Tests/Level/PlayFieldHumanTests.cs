@@ -28,8 +28,7 @@ public sealed class PlayFieldHumanTests
         new PlayFieldBuilder().WithParameters(parameters).WithSeed(99).Build();
 
     /// <summary>
-    /// One port tick. The player's start grace is WALL-CLOCK, so a `new GameTime()`
-    /// (zero elapsed) leaves `PlayField.RobotsFrozen` true forever and nothing moves.
+    /// One port tick.
     /// </summary>
     private static GameTime Frame() => new(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
 
@@ -95,7 +94,7 @@ public sealed class PlayFieldHumanTests
         PlayField field = CreateField(HumanWave(0, 0, 4));
         for (int tick = 0; tick < 130; tick++)
         {
-            field.Update(Frame()); // the player's 2-second start grace freezes the robots
+            field.Update(Frame()); // the robots are held until the game goes live
         }
 
         Rectangle inner = field.Wall.PlayfieldBounds;
@@ -122,6 +121,7 @@ public sealed class PlayFieldHumanTests
     public void Player_TouchingHuman_RescuesWithFirstBonus()
     {
         PlayField field = CreateField(HumanWave(0, 0, 1));
+        field.SkipWaveStart();
         Human human = field.Entities.Family.Members[0];
         int scoreBefore = field.ScoreBoard.Score;
         human.MoveTo(field.Player.Position);
@@ -138,6 +138,7 @@ public sealed class PlayFieldHumanTests
     public void Rescues_KeepRunningCountUntilTheCap()
     {
         PlayField field = CreateField(HumanWave(0, 0, 9));
+        field.SkipWaveStart();
         foreach (Human human in field.Entities.Family.Members)
         {
             human.MoveTo(field.Player.Position);
@@ -162,6 +163,7 @@ public sealed class PlayFieldHumanTests
         // left the displayed score stale for the rest of the wave, which is what
         // the attract demo's rescue bonus looked like.
         PlayField field = CreateField(HumanWave(0, 0, 1));
+        field.SkipWaveStart();
         PlayerSlot slot = new(1, new FakeInputSource(), Lives: 3, Wave: 1);
 
         field.Update(new GameTime());
@@ -187,8 +189,8 @@ public sealed class PlayFieldHumanTests
 
         // The hulk waits for STATUS (`HULK LDA STATUS WAIT FOR STATUS TO GO`) and the ROM
         // creates its collision process only after the wave-start appear, so no robot can touch
-        // a human during the player's start grace — burn it off first (notes §88).
-        for (int tick = 0; tick < PlayerTuning.PlayerStartGraceSeconds * 60 + 1; tick++)
+        // a human before the game goes live — run through the start of the wave first (notes §88).
+        for (int tick = 0; tick < WaveStartTicks.UntilLive(field); tick++)
         {
             field.Update(Frame());
         }
@@ -212,9 +214,9 @@ public sealed class PlayFieldHumanTests
     {
         PlayField field = CreateField(HumanWave(0, 0, 1, hulks: 1));
 
-        for (int tick = 0; tick < PlayerTuning.PlayerStartGraceSeconds * 60 + 1; tick++)
+        for (int tick = 0; tick < WaveStartTicks.UntilLive(field); tick++)
         {
-            field.Update(Frame()); // the hulk cannot act until the grace is over (notes §88)
+            field.Update(Frame()); // the hulk cannot act until the game is live (notes §88)
         }
 
         Human human = field.Entities.Family.Members[0];
@@ -237,6 +239,7 @@ public sealed class PlayFieldHumanTests
     public void Rescue_LeavesScoreDisplay_AtTheRescueSpot_ThatExpires()
     {
         PlayField field = CreateField(HumanWave(0, 0, 1));
+        field.SkipWaveStart();
         Human human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
 
@@ -268,12 +271,14 @@ public sealed class PlayFieldHumanTests
     public void EveryWaveStartsWithNoRescues_SoTheFirstHumanSavedPaysTheFirstBonus()
     {
         PlayField first = CreateField(HumanWave(0, 0, 1));
+        first.SkipWaveStart();
         first.Entities.Family.Members[0].MoveTo(first.Player.Position);
         first.Update(new GameTime());
         Assert.Equal(1, first.RescuesThisLife);
 
         // ROM PLINIT clears SAVCNT as each wave starts, so the next wave pays 1000 again, not 2000.
         PlayField next = CreateField(HumanWave(0, 0, 1));
+        next.SkipWaveStart();
         Assert.Equal(0, next.RescuesThisLife);
         next.Entities.Family.Members[0].MoveTo(next.Player.Position);
         next.Update(new GameTime());

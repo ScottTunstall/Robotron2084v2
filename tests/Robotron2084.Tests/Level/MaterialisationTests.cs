@@ -96,6 +96,26 @@ public class MaterialisationTests
     }
 
     [Fact]
+    public void OneAppearStarts_OnEachRomFrame_NotOnEachPortTick()
+    {
+        // `NAP 1,APL` (R5 $2949): one robot's appear a ROM frame, the first at once. A ROM frame is 6/5 of a port
+        // tick, so robot k starts on tick ceil(1.2 x (k - 1)), and the 7th tick starts none.
+        PlayField field = CreateField(grunts: 8);
+
+        Advance(field, 1);
+        Assert.Equal(7, field.PendingAppearCount); // ROM frame 0, on the first tick
+
+        Advance(field, 5);
+        Assert.Equal(2, field.PendingAppearCount); // ticks 2 to 6 start robots 2 to 6
+
+        Advance(field, 1);
+        Assert.Equal(2, field.PendingAppearCount); // tick 7 is still ROM frame 5
+
+        Advance(field, 1);
+        Assert.Equal(1, field.PendingAppearCount); // tick 8 reaches ROM frame 6
+    }
+
+    [Fact]
     public void EveryFourthRobot_UsesTheHorizontalColumnFan()
     {
         // `LDA PD,U / ANDA #3 / CMPA #3 / BNE AP1 / JSR HAPST` — the sequence index
@@ -103,11 +123,15 @@ public class MaterialisationTests
         // row fan.
         PlayField field = CreateField(grunts: 8);
 
+        // One appear starts on each ROM frame, so some ticks start none: note each one as it starts.
         var axes = new List<StripFanAxis>();
-        for (int i = 0; i < 8; i++)
+        while (axes.Count < 8)
         {
             Advance(field, 1);
-            axes.Add(field.Entities.Explosions[^1].Axis);
+            if (field.Entities.Explosions.Count > axes.Count)
+            {
+                axes.Add(field.Entities.Explosions[^1].Axis);
+            }
         }
 
         Assert.Equal(StripFanAxis.Rows, axes[0]);

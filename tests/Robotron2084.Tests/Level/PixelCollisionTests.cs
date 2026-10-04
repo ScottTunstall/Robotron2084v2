@@ -54,6 +54,7 @@ public sealed class PixelCollisionTests
     public void ASpriteThatTouchesRescues_EvenWhereTheBoxesMiss()
     {
         PlayField field = CreateField(new StubPixelCollision(touching: true));
+        field.SkipWaveStart();
         Human human = field.Entities.Family.Members[0];
 
         // Well outside the player's box, so nothing but the sprite test could rescue this human.
@@ -69,6 +70,7 @@ public sealed class PixelCollisionTests
     public void AnEntityWithNoSpriteOfItsOwn_FallsBackToItsBox()
     {
         PlayField field = CreateField(new StubPixelCollision(touching: false, hasShape: false));
+        field.SkipWaveStart();
         Human human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
 
@@ -81,6 +83,7 @@ public sealed class PixelCollisionTests
     public void WithNoContactTestAtAll_TheBoxesDecide()
     {
         PlayField field = CreateField(null);
+        field.SkipWaveStart();
         Human human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
 
