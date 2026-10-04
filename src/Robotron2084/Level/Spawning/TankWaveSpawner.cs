@@ -23,7 +23,6 @@ public sealed class TankWaveSpawner : IWaveSpawner
             IntVector2 position = context.Placement.FindSpawnPointAwayFrom(context.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer);
             var tank = new Tank(field.Sprites, position, context.Random, field.Parameters.TankFireDelay, startFullyGrown: true);
             context.Entities.Add(tank);
-            field.QueueMaterialise(tank);
         }
     }
 }

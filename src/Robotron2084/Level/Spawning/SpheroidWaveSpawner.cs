@@ -19,7 +19,6 @@ public sealed class SpheroidWaveSpawner : IWaveSpawner
             IntVector2 position = placement.FindSpheroidSpawnPointAwayFrom(context.PlayerStart, SpheroidTuning.MinDistanceFromPlayer);
             var spheroid = new Spheroid(field.Sprites, position, context.Random, field.Parameters.MaxDropsX2, field.Parameters.SpheroidDropDelay);
             entities.Add(spheroid);
-            field.QueueMaterialise(spheroid);
         }
     }
 }

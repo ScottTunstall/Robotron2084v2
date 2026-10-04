@@ -18,7 +18,6 @@ public sealed class BerzerkRobotWaveSpawner : IWaveSpawner
                 context.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, field.IsClearOfElectrodes);
             var robot = new BerzerkRobot(field.Sprites, position, field.Parameters.GruntMoveDelay, context.Random);
             context.Entities.Add(robot);
-            field.QueueMaterialise(robot);
         }
     }
 }

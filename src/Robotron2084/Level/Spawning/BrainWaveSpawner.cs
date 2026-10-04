@@ -34,7 +34,6 @@ public sealed class BrainWaveSpawner : IWaveSpawner
                 field.Parameters.BrainFireDelay,
                 entities.GetNearestFamilySlot(position));
             entities.Add(brain);
-            field.QueueMaterialise(brain);
         }
 
         if (field.Parameters.BrainCount > 0)

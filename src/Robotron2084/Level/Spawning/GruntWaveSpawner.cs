@@ -20,7 +20,6 @@ public sealed class GruntWaveSpawner : IWaveSpawner
                 context.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, field.IsClearOfElectrodes);
             var grunt = new Grunt(field.Sprites, position, field.Parameters.GruntMoveDelay, random: context.Random);
             entities.Add(grunt);
-            field.QueueMaterialise(grunt);
         }
     }
 }

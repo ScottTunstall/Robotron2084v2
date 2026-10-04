@@ -34,7 +34,6 @@ public sealed class HulkWaveSpawner : IWaveSpawner
                 : () => field.PlayerPosition;
             var hulk = new Hulk(field.Sprites, position, context.Random, field.Parameters.HulkBeatIntervalRomFrames, getTargetPosition);
             entities.Add(hulk);
-            field.QueueMaterialise(hulk);
         }
     }
 }
