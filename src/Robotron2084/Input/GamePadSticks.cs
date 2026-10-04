@@ -15,9 +15,9 @@ public static class GamePadSticks
     private const float DeadZoneLengthSquared = 0.0625f; // 0.25^2 — still-centered
 
     /// <summary>The stick's direction in SCREEN space (Y down-positive), or zero when centred.</summary>
-    public static IntVector2 Read(GamePadState pad, bool rightStick)
+    public static IntVector2 Read(GamePadState pad, bool isRightStick)
     {
-        Vector2 stick = rightStick ? pad.ThumbSticks.Right : pad.ThumbSticks.Left;
+        Vector2 stick = isRightStick ? pad.ThumbSticks.Right : pad.ThumbSticks.Left;
         if (stick.LengthSquared() < DeadZoneLengthSquared)
         {
             return IntVector2.Zero;

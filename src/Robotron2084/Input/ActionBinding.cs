@@ -8,26 +8,26 @@ namespace Robotron2084.Input;
 /// time: arming a line and pressing a key
 /// replaces the keyboard slot and leaves the pad slot alone, and vice versa.
 /// </summary>
-public readonly record struct ActionBinding(InputBinding Key, InputBinding Pad)
+public readonly record struct ActionBinding(InputBinding KeyBinding, InputBinding PadBinding)
 {
     /// <summary>An unbound line.</summary>
     public static readonly ActionBinding None = new(InputBinding.None, InputBinding.None);
 
     /// <summary>
     /// Routes <paramref name="binding"/> to the slot its DEVICE belongs to — a keyboard
-    /// key to <see cref="Key"/>, anything from a gamepad to <see cref="Pad"/> — and
+    /// key to <see cref="KeyBinding"/>, anything from a gamepad to <see cref="PadBinding"/> — and
     /// clears both when given <see cref="InputBinding.None"/> (the page's Del).
     /// </summary>
     public ActionBinding With(InputBinding binding) => binding.Kind switch
     {
         InputBindingKind.None => None,
-        InputBindingKind.Key => this with { Key = binding },
-        _ => this with { Pad = binding },
+        InputBindingKind.Key => this with { KeyBinding = binding },
+        _ => this with { PadBinding = binding },
     };
 
     /// <summary>True while either slot is held.</summary>
     public bool IsHeld(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
-        Key.IsHeld(keys, padOne, padTwo) || Pad.IsHeld(keys, padOne, padTwo);
+        KeyBinding.IsHeld(keys, padOne, padTwo) || PadBinding.IsHeld(keys, padOne, padTwo);
 
     /// <summary>
     /// The page's value column: "W OR P1 LEFT STICK UP" when both devices are bound, the one
@@ -38,12 +38,12 @@ public readonly record struct ActionBinding(InputBinding Key, InputBinding Pad)
     {
         get
         {
-            if (Key.Kind == InputBindingKind.None)
+            if (KeyBinding.Kind == InputBindingKind.None)
             {
-                return Pad.Kind == InputBindingKind.None ? "NONE" : Pad.GetDisplayName();
+                return PadBinding.Kind == InputBindingKind.None ? "NONE" : PadBinding.GetDisplayName();
             }
 
-            return Pad.Kind == InputBindingKind.None ? Key.GetDisplayName() : $"{Key.GetDisplayName()} OR {Pad.GetDisplayName()}";
+            return PadBinding.Kind == InputBindingKind.None ? KeyBinding.GetDisplayName() : $"{KeyBinding.GetDisplayName()} OR {PadBinding.GetDisplayName()}";
         }
     }
 }

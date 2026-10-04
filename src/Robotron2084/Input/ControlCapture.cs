@@ -50,10 +50,10 @@ public static class ControlCapture
 
         for (int pad = 0; pad < 2; pad++)
         {
-            InputBinding stick = GetNewlyPressedStick(pad, previous, current);
-            if (stick.Kind != InputBindingKind.None)
+            InputBinding stickBinding = GetNewlyPressedStick(pad, previous, current);
+            if (stickBinding.Kind != InputBindingKind.None)
             {
-                return stick;
+                return stickBinding;
             }
         }
 
@@ -96,12 +96,12 @@ public static class ControlCapture
         GamePadState previousPad = padIndex == 1 ? previous.PadTwo : previous.PadOne;
         GamePadState currentPad = padIndex == 1 ? current.PadTwo : current.PadOne;
 
-        foreach (bool rightStick in (bool[])[false, true])
+        foreach (bool isRightStick in (bool[])[false, true])
         {
-            IntVector2 direction = GamePadSticks.Read(currentPad, rightStick);
-            if (direction != IntVector2.Zero && direction != GamePadSticks.Read(previousPad, rightStick))
+            IntVector2 direction = GamePadSticks.Read(currentPad, isRightStick);
+            if (direction != IntVector2.Zero && direction != GamePadSticks.Read(previousPad, isRightStick))
             {
-                return InputBinding.CreateStick(padIndex, rightStick, direction.X, direction.Y);
+                return InputBinding.CreateStick(padIndex, isRightStick, direction.X, direction.Y);
             }
         }
 

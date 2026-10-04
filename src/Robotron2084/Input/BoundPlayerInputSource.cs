@@ -7,14 +7,14 @@ public sealed class BoundPlayerInputSource : IPlayerInputSource
     private readonly int _playerIndex;
 
     /// <summary>The controls to read.</summary>
-    private readonly ControlSettings _settings;
+    private readonly ControlSettings _controlSettings;
 
     /// <summary>Creates a source that reads one player's input.</summary>
     /// <param name="settings">The controls to read.</param>
     /// <param name="playerIndex">0 for player 1, 1 for player 2.</param>
     public BoundPlayerInputSource(ControlSettings settings, int playerIndex)
     {
-        _settings = settings;
+        _controlSettings = settings;
         _playerIndex = playerIndex;
     }
 
@@ -24,5 +24,5 @@ public sealed class BoundPlayerInputSource : IPlayerInputSource
     /// <summary>Reads the player's input from a given snapshot — the seam the tests use.</summary>
     /// <param name="snapshot">The snapshot to read from.</param>
     public PlayerInputState Poll(InputSnapshot snapshot) =>
-        _settings.ReadPlayer(_playerIndex, snapshot.Keys, snapshot.PadOne, snapshot.PadTwo);
+        _controlSettings.ReadPlayer(_playerIndex, snapshot.Keys, snapshot.PadOne, snapshot.PadTwo);
 }

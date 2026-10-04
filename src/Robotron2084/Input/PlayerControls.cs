@@ -39,8 +39,8 @@ public sealed class PlayerControls
     public static PlayerControls CreateDefaults(int playerIndex)
     {
         var controls = new PlayerControls();
-        bool second = playerIndex == 1;
-        int pad = second ? 1 : 0;
+        bool isSecondPlayer = playerIndex == 1;
+        int pad = isSecondPlayer ? 1 : 0;
 
         (int dx, int dy)[] directions =
         [
@@ -54,10 +54,10 @@ public sealed class PlayerControls
             (1, 0),  // ShootRight
         ];
 
-        Keys[] moveKeys = second
+        Keys[] moveKeys = isSecondPlayer
             ? [Keys.Up, Keys.Down, Keys.Left, Keys.Right]
             : [Keys.W, Keys.S, Keys.A, Keys.D];
-        Keys[] shootKeys = second
+        Keys[] shootKeys = isSecondPlayer
             ? [Keys.NumPad8, Keys.NumPad5, Keys.NumPad4, Keys.NumPad6]
             : [Keys.I, Keys.K, Keys.J, Keys.L];
 
@@ -70,7 +70,7 @@ public sealed class PlayerControls
 
             controls[action] = new ActionBinding(
                 InputBinding.CreateKey(shooting ? shootKeys[index] : moveKeys[index]),
-                InputBinding.CreateStick(pad, rightStick: shooting, dx, dy));
+                InputBinding.CreateStick(pad, isRightStick: shooting, dx, dy));
         }
 
         return controls;
@@ -79,22 +79,22 @@ public sealed class PlayerControls
     /// <summary>
     /// True while ANY shoot action is held (holding an aim key fires).
     /// </summary>
-    public bool Firing(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
+    public bool IsFiring(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
         GetShootDirection(keys, padOne, padTwo) != IntVector2.Zero;
 
     /// <summary>The move stick's direction (-1/0/1 per axis), from the bound MOVE actions.</summary>
     public IntVector2 GetMoveDirection(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
         new(
-            Axis(InputAction.MoveRight, InputAction.MoveLeft, keys, padOne, padTwo),
-            Axis(InputAction.MoveDown, InputAction.MoveUp, keys, padOne, padTwo));
+            GetAxis(InputAction.MoveRight, InputAction.MoveLeft, keys, padOne, padTwo),
+            GetAxis(InputAction.MoveDown, InputAction.MoveUp, keys, padOne, padTwo));
 
     /// <summary>The fire stick's direction, from the bound SHOOT actions.</summary>
     public IntVector2 GetShootDirection(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
         new(
-            Axis(InputAction.ShootRight, InputAction.ShootLeft, keys, padOne, padTwo),
-            Axis(InputAction.ShootDown, InputAction.ShootUp, keys, padOne, padTwo));
+            GetAxis(InputAction.ShootRight, InputAction.ShootLeft, keys, padOne, padTwo),
+            GetAxis(InputAction.ShootDown, InputAction.ShootUp, keys, padOne, padTwo));
 
-    private int Axis(
+    private int GetAxis(
         InputAction positive,
         InputAction negative,
         KeyboardState keys,

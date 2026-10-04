@@ -28,7 +28,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     /// A stick direction on <paramref name="gamePadIndex"/>. <paramref name="dx"/> and
     /// <paramref name="dy"/> are screen-space (-1, 0 or 1) and must not both be zero.
     /// </summary>
-    public static InputBinding CreateStick(int gamePadIndex, bool rightStick, int dx, int dy)
+    public static InputBinding CreateStick(int gamePadIndex, bool isRightStick, int dx, int dy)
     {
         dx = Math.Clamp(dx, -1, 1);
         dy = Math.Clamp(dy, -1, 1);
@@ -38,7 +38,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
         }
 
         return new InputBinding(
-            rightStick ? InputBindingKind.GamePadRightStick : InputBindingKind.GamePadLeftStick,
+            isRightStick ? InputBindingKind.GamePadRightStick : InputBindingKind.GamePadLeftStick,
             GetDirectionCode(dx, dy),
             gamePadIndex);
     }
@@ -60,8 +60,8 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
         {
             InputBindingKind.Key => keys.IsKeyDown((Keys)Code),
             InputBindingKind.GamePadButton => pad.IsButtonDown((Buttons)Code),
-            InputBindingKind.GamePadLeftStick => GamePadSticks.Read(pad, rightStick: false) == new IntVector2(DirectionX, DirectionY),
-            InputBindingKind.GamePadRightStick => GamePadSticks.Read(pad, rightStick: true) == new IntVector2(DirectionX, DirectionY),
+            InputBindingKind.GamePadLeftStick => GamePadSticks.Read(pad, isRightStick: false) == new IntVector2(DirectionX, DirectionY),
+            InputBindingKind.GamePadRightStick => GamePadSticks.Read(pad, isRightStick: true) == new IntVector2(DirectionX, DirectionY),
             _ => false,
         };
     }
@@ -121,15 +121,15 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     private static bool TryParseGamePad(string[] parts, out InputBinding binding)
     {
         binding = None;
-        int pad = parts[0][1] - '1';
-        if (TryStick(parts, out bool rightStick, out int directionFrom))
+        int padIndex = parts[0][1] - '1';
+        if (TryStick(parts, out bool isRightStick, out int directionFrom))
         {
             if (!TryDirection(string.Join(' ', parts[directionFrom..]), out int dx, out int dy))
             {
                 return false;
             }
 
-            binding = CreateStick(pad, rightStick, dx, dy);
+            binding = CreateStick(padIndex, isRightStick, dx, dy);
             return true;
         }
 
@@ -138,7 +138,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
             return false;
         }
 
-        binding = CreateButton(pad, button);
+        binding = CreateButton(padIndex, button);
         return true;
     }
 
@@ -147,9 +147,9 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     /// ("P1 LEFT STICK UP") or the older abbreviations ("P1 LS UP", "P1-LS-UP"), and
     /// reports where the direction word starts.
     /// </summary>
-    private static bool TryStick(string[] parts, out bool rightStick, out int directionFrom)
+    private static bool TryStick(string[] parts, out bool isRightStick, out int directionFrom)
     {
-        rightStick = false;
+        isRightStick = false;
         directionFrom = 0;
         if (parts.Length < 2)
         {
@@ -159,7 +159,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
         if (parts[1].Equals("LS", StringComparison.OrdinalIgnoreCase)
             || parts[1].Equals("RS", StringComparison.OrdinalIgnoreCase))
         {
-            rightStick = parts[1].Equals("RS", StringComparison.OrdinalIgnoreCase);
+            isRightStick = parts[1].Equals("RS", StringComparison.OrdinalIgnoreCase);
             directionFrom = 2;
             return true;
         }
@@ -172,7 +172,7 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
             return false;
         }
 
-        rightStick = parts[1].Equals("RIGHT", StringComparison.OrdinalIgnoreCase);
+        isRightStick = parts[1].Equals("RIGHT", StringComparison.OrdinalIgnoreCase);
         directionFrom = 3;
         return true;
     }

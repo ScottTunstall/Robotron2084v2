@@ -65,13 +65,13 @@ public sealed class ControlSettings
     /// <summary>The port's factory settings: see <see cref="PlayerControls.CreateDefaults"/>.</summary>
     public static ControlSettings CreateDefaults()
     {
-        var settings = new ControlSettings();
-        settings.ResetToDefaults();
-        return settings;
+        var controlSettings = new ControlSettings();
+        controlSettings.ResetToDefaults();
+        return controlSettings;
     }
 
     /// <summary>True while the pause binding is held.</summary>
-    public bool PauseHeld(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
+    public bool IsPauseHeld(KeyboardState keys, GamePadState padOne, GamePadState padTwo) =>
         Pause.IsHeld(keys, padOne, padTwo);
 
     /// <summary>
@@ -86,12 +86,12 @@ public sealed class ControlSettings
         PlayerControls controls = _players[playerIndex];
         IntVector2 move = controls.GetMoveDirection(keys, padOne, padTwo);
         IntVector2 shoot = controls.GetShootDirection(keys, padOne, padTwo);
-        GamePadState own = playerIndex == 1 ? padTwo : padOne;
+        GamePadState ownPad = playerIndex == 1 ? padTwo : padOne;
 
-        bool fire = controls.Firing(keys, padOne, padTwo)
+        bool fire = controls.IsFiring(keys, padOne, padTwo)
             || keys.IsKeyDown(FireAliasKey)
-            || own.IsButtonDown(FireAliasButton)
-            || own.Triggers.Right > FireTriggerThreshold;
+            || ownPad.IsButtonDown(FireAliasButton)
+            || ownPad.Triggers.Right > FireTriggerThreshold;
 
         return new PlayerInputState(
             move,
