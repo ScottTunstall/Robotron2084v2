@@ -1,23 +1,25 @@
 namespace Robotron2084.Level;
 
-/// <summary>
-/// How a game was started (notes §101). The arcade has one two-player game — both
-/// players at once, on their own sticks — so <see cref="TwoPlayerSimultaneous"/> is the
-/// faithful one; <see cref="TwoPlayerAlternate"/> is the port's own take-turns
-/// two-player game, which is what its turn logic implements.
-///
-/// <see cref="TwoPlayerSimultaneous"/> is wired as far as mode selection and the two
-/// inputs; the field itself still runs one player at a time, so it currently plays as
-/// the alternate game.
-/// </summary>
+/// <summary>How many people are playing, and whether two of them play together or take turns.</summary>
+/// <remarks>
+/// The arcade has one two-player game, with both players on the field at once. The port plays two players as
+/// <see cref="TwoPlayerAlternate"/> and does not yet have the arcade's game; <see cref="TwoPlayerSimultaneous"/> can be chosen
+/// but plays as <see cref="TwoPlayerAlternate"/> (notes §101).
+/// </remarks>
 public enum GameMode
 {
-    /// <summary>One player, one stick pair.</summary>
+    /// <summary>One player.</summary>
     OnePlayer,
 
-    /// <summary>Two players taking turns — the port's existing turn logic (RRG23 PLEND).</summary>
+    /// <summary>Two players who take turns, each keeping their own score, men and wave.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>PLEND</c>, which passes the turn on when a man is lost</item>
+    /// <item>Disassembly: not separately labelled</item>
+    /// </list>
+    /// </remarks>
     TwoPlayerAlternate,
 
-    /// <summary>The arcade's two-player game: both players in the field at once. Not built yet.</summary>
+    /// <summary>Two players on the field at the same time, as in the arcade. It is not built yet, so it plays as <see cref="TwoPlayerAlternate"/> (notes §101).</summary>
     TwoPlayerSimultaneous,
 }

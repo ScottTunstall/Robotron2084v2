@@ -5,24 +5,23 @@ using Robotron2084.Level.Spawning;
 
 namespace Robotron2084.Level;
 
-/// <summary>
-/// Everything the playfield needs to know about ONE robot kind: how many the wave brings, what it is worth, how
-/// it is spawned, what a laser does to it and whether touching it is fatal.
-/// </summary>
+/// <summary>Everything the playfield needs to know about one kind of robot: how many a wave has, what it is worth, how it is put on the field, what a laser does to it and whether touching it kills the player.</summary>
 /// <remarks>
-/// This is the port's registry of the arcade's robot routines: the wave counts come from <see cref="LevelParameters"/>
-/// (the ROM's own wave tables), the scores from <see cref="ScoreValues"/> (notes §11.3), the spawn from the kind's
-/// own initialise routine, and <see cref="LaserHit"/> from the collision phase that kind's routine runs
-/// (notes §61, §64).
+/// <list type="bullet">
+/// <item>Original source: each kind's own routines, such as <c>RRP8.ASM</c> for the grunt and <c>RRH11.ASM</c> for the hulk; this record gathers what they decide</item>
+/// <item>Disassembly: not separately labelled, since it is the port's own registry of them</item>
+/// </list>
+/// The wave counts come from <see cref="LevelParameters"/>, the scores from <see cref="ScoreValues"/> (notes §11.3), and
+/// <see cref="LaserHit"/> from the part of each kind's routine that handles a laser (notes §61, §64).
 /// </remarks>
 /// <param name="Kind">Which kind this row describes.</param>
 /// <param name="WaveCount">How many of them the wave table brings; null when only another robot makes them.</param>
-/// <param name="Score">Points a laser kill is worth (0 for what cannot be killed).</param>
-/// <param name="LaserHit">What one laser does to one of them — the kind's whole phase, from the kill to its own burst.</param>
-/// <param name="LaserHitSound">The sound the kind's own routine asks for when a laser hits one (its <c>...SND</c> table).</param>
+/// <param name="Score">The points a laser kill is worth. It is nothing for a robot that cannot be killed.</param>
+/// <param name="LaserHit">What one laser does to one of them, from the kill to the burst it leaves.</param>
+/// <param name="LaserHitSound">The sound made when a laser hits one.</param>
 /// <param name="KillsPlayerOnContact">True when touching it kills the player.</param>
 /// <param name="Spawn">How the wave's own are put on the field; null when only another robot makes them.</param>
-/// <param name="IsChasedByDemoPlayer">True when the attract demo's player steers towards it; false for the electrodes and the shots it dodges.</param>
+/// <param name="IsChasedByDemoPlayer">True when the player in the attract demo steers towards it. It is false for the electrodes and the shots that the demo player dodges.</param>
 public sealed record RobotKindInfo(
     RobotKind Kind,
     Func<LevelParameters, int>? WaveCount,

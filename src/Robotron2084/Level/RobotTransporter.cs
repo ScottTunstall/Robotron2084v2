@@ -6,23 +6,31 @@ using Robotron2084.Graphics;
 
 namespace Robotron2084.Level;
 
-/// <summary>Beams the robots in at the start of a brain wave: each picture is built up out of sparkling pixels, in a buffer shared by the robots that show it.</summary>
+/// <summary>Beams the robots in at the start of a brain wave. Each robot's animation frame is built up out of sparkling pixels, and robots that show the same animation frame share one build-up.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRT2.ASM</c> <c>TRNSTV</c> (which shares an image between robots with the same picture, up to sixteen each), <c>TRNLP</c> and <c>ROBUP</c>; <c>RRG23.ASM</c> starts it with <c>MAKP TRANST</c> when <c>BRNCNT</c> is not zero</item>
+/// <item>Original source: <c>RRT2.ASM</c> <c>TRNSTV</c> (which shares an image between robots with the same animation frame, up to sixteen each), <c>TRNLP</c> and <c>ROBUP</c>; <c>RRG23.ASM</c> starts it with <c>MAKP TRANST</c> when <c>BRNCNT</c> is not zero</item>
 /// <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>)</item>
 /// </list>
-/// Every ROM frame it takes one step of each image and draws each image where its robots stand. The sound is the transporter's own
+/// Every ROM frame it takes one step of each image, and it draws each image where its robots stand. The sound is the transporter's own
 /// (<see cref="Audio.Sound.PlayTransporter"/>). Other waves use the strip appear instead (<see cref="WaveMaterialisation"/>).
 /// </remarks>
 public sealed class RobotTransporter
 {
-    /// <summary>How many robots share one image: the first, and then fifteen more (<c>CMPY #15</c>).</summary>
+    /// <summary>The most robots that share one image: the first, and then fifteen more.</summary>
+    /// <remarks>Original source: <c>RRT2.ASM</c> <c>TRNSTV</c>, <c>CMPY #15</c>. Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>).</remarks>
     private const int RobotsPerImage = 16;
 
+    /// <summary>Each robot being beamed in, with the image it shows.</summary>
     private readonly List<(IEntity Robot, TransportImage Image)> _robots = [];
+
+    /// <summary>The field's random source, which picks each image's sparkle.</summary>
     private readonly Random _random;
+
+    /// <summary>The images being built up. Robots with the same animation frame share one.</summary>
     private readonly List<TransportImage> _images = [];
+
+    /// <summary>Builds up, a tick at a time, until it is time for the next ROM frame.</summary>
     private int _clockUnits;
 
     /// <summary>Makes a transporter.</summary>
@@ -32,18 +40,18 @@ public sealed class RobotTransporter
     /// <summary>Says whether every image has run out of steps.</summary>
     public bool IsFinished => _images.All(image => image.IsFinished);
 
-    /// <summary>Works out which image each robot shares, from the picture each is showing.</summary>
-    /// <param name="pictures">What each robot is showing, in order. Two robots are showing the same picture when these are the same object.</param>
-    /// <returns>The number of the image each robot shares. A new image starts when the picture changes, and after sixteen robots.</returns>
-    public static int[] AssignImages(IReadOnlyList<object> pictures)
+    /// <summary>Works out which image each robot shares, from the animation frame each is showing.</summary>
+    /// <param name="animationFrames">The animation frame each robot is showing, in order. Two robots are showing the same one when these are the same object.</param>
+    /// <returns>The number of the image each robot shares. A new image starts when the animation frame changes, and after sixteen robots.</returns>
+    public static int[] AssignImages(IReadOnlyList<object> animationFrames)
     {
-        int[] images = new int[pictures.Count];
+        int[] images = new int[animationFrames.Count];
         int image = -1;
         int sharing = 0;
         object? previous = null;
-        for (int index = 0; index < pictures.Count; index++)
+        for (int index = 0; index < animationFrames.Count; index++)
         {
-            bool shares = image >= 0 && ReferenceEquals(pictures[index], previous) && sharing < RobotsPerImage;
+            bool shares = image >= 0 && ReferenceEquals(animationFrames[index], previous) && sharing < RobotsPerImage;
             if (!shares)
             {
                 image++;
@@ -51,7 +59,7 @@ public sealed class RobotTransporter
             }
 
             sharing++;
-            previous = pictures[index];
+            previous = animationFrames[index];
             images[index] = image;
         }
 
@@ -62,7 +70,7 @@ public sealed class RobotTransporter
     /// <param name="robots">The robots, in the order they were made.</param>
     public void Begin(IReadOnlyList<IEntity> robots)
     {
-        // A field built without sprites (a test) has robots with no picture to beam in; they are simply not shown.
+        // A field built without sprites (a test) has robots with no animation frame to beam in; they are simply not shown.
         (IEntity Robot, Texture2D Frame)[] shown =
         [
             .. robots.OfType<IAnimationFrameSource>()
@@ -112,6 +120,11 @@ public sealed class RobotTransporter
         }
     }
 
+    /// <summary>Draws one image, a pixel at a time.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="sprites">The sprite set, for the palette and the one-pixel square.</param>
+    /// <param name="image">The image to draw.</param>
+    /// <param name="topLeft">Where the image's top-left corner goes, in port pixels.</param>
     private static void DrawImage(SpriteBatch spriteBatch, SpriteSet sprites, TransportImage image, Point topLeft)
     {
         int pixelSize = ScreenSize.ToPortPixels(1);
@@ -133,6 +146,8 @@ public sealed class RobotTransporter
         }
     }
 
+    /// <summary>Makes an empty image for an animation frame, with a sparkle picked at random.</summary>
+    /// <param name="frame">The animation frame the image builds up.</param>
     private TransportImage CreateImage(Texture2D frame)
     {
         var pixels = new Color[frame.Width * frame.Height];

@@ -5,28 +5,23 @@ using Robotron2084.Level.Spawning;
 
 namespace Robotron2084.Level;
 
-/// <summary>
-/// The robot kinds, one row each — the single place a kind is declared (notes §119).
-/// </summary>
+/// <summary>The list of robot kinds, with a row for each. It is the one place that a kind is declared (notes §119).</summary>
 /// <remarks>
 /// <para>
-/// THE ORDER OF <see cref="All"/> IS BEHAVIOUR. It is the order the ROM's own collision phases resolve
-/// laser hits in, which matters because a laser is consumed by the first thing it meets — it cannot hit two
-/// things in one frame. The electrode's row is first for exactly that reason (notes §61).
+/// The order of <see cref="All"/> matters. It is the order the arcade's own collision code deals with lasers in, and a laser is used up by the first thing it
+/// meets, so it cannot hit two things in one tick. The electrode's row is first for that reason (notes §61).
 /// </para>
 /// <para>
-/// To add a robot kind: write the entity class, add its animation frames, add a <see cref="RobotKind"/> value and a row here,
-/// add a field for its list and a <c>GetList</c> arm in <see cref="PlayField"/>, add that list to the field's
-/// update and draw orders, and add it to <c>GetNearestLivingRobotPosition</c>. A guard test fails until the enum,
-/// this registry, the field's list orders and its own hand-written tables agree. No further edit is needed for a
-/// kind that brings no NEW behaviour — a laser phase that is not one of the shapes
-/// below, an interaction with the electrodes the two existing ones do not have, or a contact rule the player
-/// phases do not already express.
+/// To add a kind of robot: write its class, add its animation frames, add a <see cref="RobotKind"/> value and a row here, add a list for it and a
+/// <c>GetList</c> case in <see cref="PlayField"/>, add that list to the field's update and draw orders, and add it to <c>GetNearestLivingRobotPosition</c>.
+/// A test fails until the enum, this list, the field's list orders and its own tables all agree. Nothing more is needed, unless the kind does something
+/// new: a way of dealing with a laser that no row here does, a meeting with the electrodes that the two existing ones do not have, or a way of killing the
+/// player that the player's rules do not already cover.
 /// </para>
 /// </remarks>
 public static class RobotKinds
 {
-    /// <summary>Every kind, in the order the ROM's collision phases walk them.</summary>
+    /// <summary>Every kind, in the order the arcade's collision code deals with them.</summary>
     public static readonly RobotKindInfo[] All =
     [
         // The electrodes come first, and a laser that reaches one is spent on it.
@@ -120,7 +115,7 @@ public static class RobotKinds
             LaserHit: static (field, target, direction) =>
             {
                 target.Require<IRemovable>().Kill();
-                // Only a laser kill counts against the wave's twenty shells (the fizzle bug, notes §53).
+                // Only a laser kill gives one of the wave's shells back (the fizzle bug, notes §53).
                 field.CountShellDestroyed();
             },
             LaserHitSound: SoundTables.ShellKill,
@@ -153,7 +148,7 @@ public static class RobotKinds
             Spawn: new GorfWaveSpawner()),
     ];
 
-    /// <summary>One kind's row.</summary>
+    /// <summary>Finds the row for a kind.</summary>
     /// <param name="kind">The kind to look up.</param>
     public static RobotKindInfo GetInfo(RobotKind kind) => All[(int)kind];
 }

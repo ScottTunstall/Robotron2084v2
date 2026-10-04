@@ -6,32 +6,39 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
 
-/// <summary>
-/// The laser-vs-wall flares (RRG23 <c>LASDIE</c> → <c>LASDIH</c>/<c>LASDIV</c>, notes §63): where a laser runs off
-/// the playfield the ROM paints the end pixels in the wave's LASCOL slot for two ROM frames, then repaints them in
-/// WALCOL. The LEFT/RIGHT walls use <c>LASDIH</c> (a SOLID fill); the TOP/BOTTOM walls use <c>LASDIV</c>, which ANDs
-/// WALCOL's high nibble onto LASCOL's low nibble — a dither, so the wall shows through alternate rows.
-/// </summary>
+/// <summary>Keeps the flashes of colour where lasers have run into the wall, draws them, and takes them away when they are done.</summary>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRG23.ASM</c> <c>LASDIE</c>, which calls <c>LASDIH</c> for the side walls and <c>LASDIV</c> for the top and bottom</item>
+/// <item>Disassembly: not separately labelled</item>
+/// </list>
+/// Where a laser runs off the field, the arcade paints the last pixels in the wave's laser wall colour (<c>LASCOL</c>) for two ROM frames, then paints
+/// them back in the wall's colour (<c>WALCOL</c>). A side wall is painted solid. On the top and bottom walls the colours are mixed, so the wall shows through every
+/// other row (notes §63).
+/// </remarks>
 internal sealed class LaserWallFlares
 {
-    /// <summary>The height of the LASCOL bands a dithered flare draws.</summary>
+    /// <summary>The height of each coloured band in a flash on the top or bottom wall, in port pixels.</summary>
     private static readonly int DitherBandHeight = ScreenSize.ToPortPixels(2);
 
-    /// <summary>Two bytes of video memory: 4 rows of arcade pixels along the wall.</summary>
+    /// <summary>How long a flash is, along the wall, in port pixels.</summary>
+    /// <remarks>It is two bytes of the arcade's video memory.</remarks>
     private static readonly int FlareLength = ScreenSize.ToPortPixels(4);
 
-    /// <summary>Two bytes of video memory: 2 columns of arcade pixels across the wall.</summary>
+    /// <summary>How thick a flash is, across the wall, in port pixels.</summary>
+    /// <remarks>It is two bytes of the arcade's video memory.</remarks>
     private static readonly int FlareThickness = ScreenSize.ToPortPixelsFromColumns(2);
 
+    /// <summary>The flashes that are showing.</summary>
     private readonly List<LaserWallFlare> _flares = [];
 
-    /// <summary>The live flares.</summary>
+    /// <summary>The flashes that are showing.</summary>
     public IReadOnlyList<LaserWallFlare> Flares => _flares;
 
-    /// <summary>Paints the flares OVER the wall, in the wave's LASCOL slot, as the ROM writes those pixels.</summary>
+    /// <summary>Draws the flashes over the wall, in the colour the wave gives them.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The sprite set that draws the solid rectangles.</param>
-    /// <param name="levelNumber">The wave, which picks the LASCOL slot.</param>
+    /// <param name="sprites">The sprite set, which draws the solid rectangles.</param>
+    /// <param name="levelNumber">The wave, which picks the colour.</param>
     public void Draw(SpriteBatch spriteBatch, SpriteSet sprites, int levelNumber)
     {
         if (_flares.Count == 0)
@@ -59,10 +66,10 @@ internal sealed class LaserWallFlares
         }
     }
 
-    /// <summary>Starts a flare where a laser ran off the playfield.</summary>
+    /// <summary>Starts a flash where a laser ran into the wall.</summary>
     /// <param name="laserBounds">The laser's box when it hit the wall.</param>
-    /// <param name="direction">The laser's direction, which picks the wall when the box alone does not.</param>
-    /// <param name="wall">The playfield's wall.</param>
+    /// <param name="direction">The way the laser was going, which picks the wall when the box alone does not.</param>
+    /// <param name="wall">The wall round the playfield.</param>
     public void Spawn(Rectangle laserBounds, Direction8 direction, PlayfieldWall wall)
     {
         Rectangle inner = wall.PlayfieldBounds;
@@ -96,10 +103,7 @@ internal sealed class LaserWallFlares
         _flares.Add(new LaserWallFlare(bounds, Dithered: horizontalWall));
     }
 
-    /// <summary>
-    /// Runs every flare's clock down and drops the finished ones. The field calls this at the top of its tick, so a
-    /// flare spawned by a laser later in the same tick still gets its full two frames.
-    /// </summary>
+    /// <summary>Counts every flash's time down by one tick and takes away the ones that are done. The field does this at the start of its tick, so a flash made later in the same tick still lasts its full time.</summary>
     public void Update()
     {
         for (int i = _flares.Count - 1; i >= 0; i--)

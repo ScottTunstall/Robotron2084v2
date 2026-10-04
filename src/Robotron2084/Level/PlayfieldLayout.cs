@@ -4,19 +4,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
 
-/// <summary>Where the playfield sits on the port's canvas.</summary>
+/// <summary>Works out where the playfield sits on the screen.</summary>
 public static class PlayfieldLayout
 {
-    // NOTE: nothing here may depend on static initialisation ORDER. A static field initialiser that
-    // reads another member of its own class can read that member's DEFAULT (initialisers run in
-    // declaration order), which is what once hid the wall, the score and the spare men — with 562
-    // tests, both builds and every gate green. Both members below are computed PROPERTIES, so there is
-    // no order to get wrong; if such a dependency is ever introduced, refactor it OUT rather than
-    // documenting which line must come first. This code is read by humans, not only by the compiler.
+    // Nothing here may depend on the order static fields are set up in: a static initialiser that reads another
+    // member of its own class can read that member's default. Both members below are computed, so there is no order.
 
-    /// <summary>The margin between the canvas edge and the inner play area, in canvas pixels.</summary>
+    /// <summary>The gap between the edge of the canvas and the play area, in port pixels.</summary>
     private static int GetMargin() => ScreenSize.ToPortPixels(CollisionSizes.PlayfieldMarginSpecPixels);
 
-    /// <summary>The inner play area the wall encloses: the canvas less the margin on every side.</summary>
+    /// <summary>Gets the play area inside the wall, which is the screen less the gap on every side.</summary>
     public static Rectangle GetInnerBounds() => new(GetMargin(), GetMargin(), ScreenSize.Width - 2 * GetMargin(), ScreenSize.Height - 2 * GetMargin());
 }

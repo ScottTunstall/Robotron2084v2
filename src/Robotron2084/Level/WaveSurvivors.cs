@@ -67,9 +67,14 @@ public static class WaveSurvivors
         return Math.Min(made + spheroids, startedWith);
     }
 
+    /// <summary>Counts the things in a list that are still alive.</summary>
+    /// <param name="list">The list to count.</param>
     private static int CountAlive<T>(EntityList<T> list)
         where T : class, IEntity => list.Count(entity => entity.IsAlive());
 
+    /// <summary>Counts the members of one kind of family member who are standing on the field and free.</summary>
+    /// <param name="entities">What is on the field.</param>
+    /// <param name="kind">Which family member to count.</param>
     private static int CountFamily(FieldEntities entities, HumanKind kind) =>
         entities.Family.Members.Count(human => human.Kind == kind && human.IsGraspable());
 }

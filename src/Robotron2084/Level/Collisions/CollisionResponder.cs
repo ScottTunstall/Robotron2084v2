@@ -33,7 +33,7 @@ internal sealed class CollisionResponder
         };
     }
 
-    /// <summary>Does what the field does when a collision rule reports an result.</summary>
+    /// <summary>Does what the field does when a collision rule reports a result.</summary>
     /// <param name="result">What the rule found.</param>
     /// <exception cref="ArgumentOutOfRangeException">The result is one the field has no response for. A new result needs a response in the constructor.</exception>
     public void Respond(CollisionResult result)

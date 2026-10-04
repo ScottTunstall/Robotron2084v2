@@ -2,31 +2,34 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
 
-/// <summary>
-/// The arcade's mercy for a player who is losing ships early: the second release's "BOZO MODE" (RRG23 <c>PLRES</c>,
-/// R5 $2B26-$2B68). Larry DeMar: it was added after field complaints that the game was too brutal for new players.
-/// </summary>
+/// <summary>Makes the first few waves easier for a player who is losing men early. The arcade's second release added it, because new players found the game too hard.</summary>
 /// <remarks>
-/// It runs each time a player's wave is loaded. On waves 1 to 4, a player with no spare men left, or on waves 1 and 2
-/// a player down on the ships the operator awards per game, gets the wave's enforcer, spheroid and grunt settings
-/// dialled down to a four-row table (<c>BOZOTB</c>, R5 $2B59).
+/// <list type="bullet">
+/// <item>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, with the table <c>BOZOTB</c></item>
+/// <item>Disassembly: <c>$2B26</c> to <c>$2B68</c>, with the table at <c>$2B59</c></item>
+/// </list>
+/// It runs each time a player's wave is loaded. On the first four waves, a player with no spare men left gets it. On the first two waves, so does a player who has lost a man.
+/// The wave's enforcers, spheroids and grunts are then slowed to the values in the table.
 /// </remarks>
 public static class BozoMode
 {
-    /// <summary>The last wave the mercy applies to (<c>CMPA #4 / BHI</c>).</summary>
+    /// <summary>The last wave the mercy is given on.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, <c>CMPA #4 / BHI</c>. Disassembly: not separately labelled.</remarks>
     private const int LastWave = 4;
 
-    /// <summary>The last wave a merely-behind player gets it on (<c>CMPA #2 / BHI</c>).</summary>
+    /// <summary>The last wave a player who has lost a man, but still has spare ones, is given the mercy on.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, <c>CMPA #2 / BHI</c>. Disassembly: not separately labelled.</remarks>
     private const int LastWaveForBehindPlayer = 2;
 
-    /// <summary>One row of <c>BOZOTB</c>: the four settings for a wave, in the table's own byte order.</summary>
-    /// <param name="SpheroidDropDelay">ROM <c>CDPTIM</c>.</param>
-    /// <param name="EnforcerFireDelay">ROM <c>ENSTIM</c>.</param>
-    /// <param name="GruntMoveDelay">ROM <c>ROBSPD</c>.</param>
-    /// <param name="GruntSpeedFloor">ROM <c>RMXSPD</c>.</param>
+    /// <summary>One row of the table: the four settings for a wave, in the table's own order.</summary>
+    /// <param name="SpheroidDropDelay">How long a spheroid waits before dropping an enforcer.</param>
+    /// <param name="EnforcerFireDelay">How long an enforcer waits between sparks.</param>
+    /// <param name="GruntMoveDelay">How long a grunt waits between moves.</param>
+    /// <param name="GruntSpeedFloor">The shortest wait the grunts' speed-ups may bring a grunt down to.</param>
     private sealed record Row(int SpheroidDropDelay, int EnforcerFireDelay, int GruntMoveDelay, int GruntSpeedFloor);
 
-    /// <summary>ROM <c>BOZOTB</c> (R5 $2B59), waves 1 to 4.</summary>
+    /// <summary>The settings for waves 1 to 4.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>BOZOTB</c>. Disassembly: <c>$2B59</c>.</remarks>
     private static readonly Row[] Table =
     [
         new(38, 96, 30, 15),
@@ -35,13 +38,10 @@ public static class BozoMode
         new(30, 30, 15, 7),
     ];
 
-    /// <summary>Whether the mercy applies to a player about to play a wave.</summary>
-    /// <param name="wave">The wave, 1-based.</param>
-    /// <param name="spareMen">The men the player has left besides the one in play (ROM <c>PLAS</c>).</param>
-    /// <param name="shipsPerGame">
-    /// The ships the operator awards a player — the CMOS "turns per player" (ROM <c>NSHIP</c>, the
-    /// GAME ADJUSTMENT page's TURNS PER PLAYER row, notes §131).
-    /// </param>
+    /// <summary>Says whether the mercy is given to a player who is about to play a wave.</summary>
+    /// <param name="wave">The wave, starting at 1.</param>
+    /// <param name="spareMen">The men the player has left besides the one in play.</param>
+    /// <param name="shipsPerGame">The men each player starts with: the TURNS PER PLAYER setting (notes §131).</param>
     public static bool AppliesTo(int wave, int spareMen, int shipsPerGame = PlayerTuning.StartingLives)
     {
         if (wave > LastWave)
@@ -57,10 +57,10 @@ public static class BozoMode
         return wave <= LastWaveForBehindPlayer && shipsPerGame - 1 > spareMen;
     }
 
-    /// <summary>The wave's parameters, dialled down when the mercy applies.</summary>
+    /// <summary>Gives a wave's parameters, slowed down when the mercy is given.</summary>
     /// <param name="parameters">The wave table's parameters.</param>
     /// <param name="spareMen">The men the player has left besides the one in play.</param>
-    /// <param name="shipsPerGame">The operator's TURNS PER PLAYER setting (see <see cref="AppliesTo"/>).</param>
+    /// <param name="shipsPerGame">The men each player starts with (see <see cref="AppliesTo"/>).</param>
     public static LevelParameters Apply(LevelParameters parameters, int spareMen, int shipsPerGame = PlayerTuning.StartingLives)
     {
         if (!AppliesTo(parameters.LevelNumber, spareMen, shipsPerGame))

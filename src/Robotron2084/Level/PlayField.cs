@@ -32,10 +32,14 @@ public sealed class PlayField : ICollisionScene
     private readonly MidWaveSpawner _midWave;
     private readonly GamePalette? _palette;
     private readonly Random _random;
+
+    /// <summary>True when a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
+    private readonly bool _tankShellBug;
+
     /// <summary>Ticks left of the freeze that follows the player's death.</summary>
     private int _hitStopTicksRemaining;
 
-    /// <summary>Shells fired this wave. Only a laser hit takes one off, so a wave stops firing after twenty have fizzled (notes §53).</summary>
+    /// <summary>How many shells the tanks have fired this wave, less the ones the player has shot. A shell that fizzles out is never taken off, so the tanks stop firing once the limit is reached (notes §53).</summary>
     private int _shellsFiredThisWave;
 
     /// <summary>Makes the field for one wave and puts everything on it.</summary>
@@ -51,6 +55,8 @@ public sealed class PlayField : ICollisionScene
     /// <param name="playerInvincibleForTesting">True for the playtest player, who cannot be killed.</param>
     /// <param name="contactTest">How two things are tested for touching; null compares their boxes.</param>
     /// <param name="extraManEveryPoints">How many points earn a spare man.</param>
+    /// <param name="tankShellBug">True to keep the arcade's bug: a shell that fizzles out stays on the wave's shell count.</param>
+    /// <param name="brainsChaseMikeyBug">True to keep the arcade's bug: every brain starts the wave chasing the first Mikey.</param>
     public PlayField(
             SpriteSet sprites,
             LevelParameters parameters,
@@ -63,8 +69,11 @@ public sealed class PlayField : ICollisionScene
             GamePalette? palette = null,
             bool playerInvincibleForTesting = true,
             IContactTest? contactTest = null,
-            int extraManEveryPoints = GameSettings.FactoryExtraManEveryPoints)
+            int extraManEveryPoints = GameSettings.FactoryExtraManEveryPoints,
+            bool tankShellBug = GameSettings.FactoryTankShellBug,
+            bool brainsChaseMikeyBug = GameSettings.FactoryBrainsChaseMikeyBug)
     {
+        _tankShellBug = tankShellBug;
         Sprites = sprites;
         Parameters = parameters;
         _gruntSpeed = new GruntSpeedProgression(parameters.GruntSpeedFloor);
@@ -91,6 +100,15 @@ public sealed class PlayField : ICollisionScene
 
         // The family is put on last, after every robot (ROM HUMSTV).
         new FamilyWaveSpawner().Spawn(spawning);
+
+        // With the bug switched off, each brain picks again now that there is a family to pick from.
+        if (!brainsChaseMikeyBug)
+        {
+            foreach (Brain brain in Entities.Brains)
+            {
+                brain.Retarget(Entities.GetNearestFamilySlot(brain.Position));
+            }
+        }
     }
 
     /// <summary>Where the player's moves come from.</summary>
@@ -105,7 +123,8 @@ public sealed class PlayField : ICollisionScene
     /// <summary>The player's lasers in flight.</summary>
     public LaserSlots PlayerLasers { get; }
 
-    /// <summary>Humans rescued so far on this wave. Every wave starts at none, because the ROM clears <c>SAVCNT</c> as each wave starts (<c>PLINIT</c>).</summary>
+    /// <summary>How many humans the player has rescued so far on this wave. Every wave starts at none.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLINIT</c>, which clears <c>SAVCNT</c> as each wave starts. Disassembly: not separately labelled.</remarks>
     public int RescuesThisLife { get; private set; }
 
     /// <summary>True while the robots must stand still: in the player's start grace period and during their death animation.</summary>
@@ -214,8 +233,12 @@ public sealed class PlayField : ICollisionScene
     public bool CanFireCruiseMissile() => Entities.GetCruiseMissileCount() < CruiseMissileTuning.Max;
 
     /// <summary>Says whether a tank may fire another shell this wave.</summary>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>SHLCNT</c>.</remarks>
-    public bool CanFireShell() => _shellsFiredThisWave < SpawnTuning.ShellsPerWave;
+    /// <remarks>
+    /// Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>SHLCNT</c>. The ROM stops only when the count is higher than the limit (<c>LBHI</c>), so a count equal to it still fires.
+    /// With the tank shell bug switched off, the count is the shells on the field, which is what the ROM's count was meant to be.
+    /// </remarks>
+    public bool CanFireShell() =>
+        (_tankShellBug ? _shellsFiredThisWave : Entities.TankShells.GetLiveCount()) <= SpawnTuning.ShellCountLimit;
 
     /// <summary>Says whether the player is alive, and so can move, shoot and be hit.</summary>
     public bool IsPlayerAlive() => Player.IsAlive();
@@ -290,16 +313,17 @@ public sealed class PlayField : ICollisionScene
     /// <summary>The live palette, or null in a test. The player's death fade writes to it (notes §66).</summary>
     internal GamePalette? Palette => _palette;
 
-    /// <summary>Current grunt-speed floor (tests; R5 $BE5D).</summary>
+    /// <summary>The shortest wait between moves that the grunts' speed-ups may bring a grunt to (test hook).</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>RMXSPD</c>. Disassembly: <c>$BE5D</c>.</remarks>
     internal int GruntSpeedFloor => _gruntSpeed.Floor;
 
-    /// <summary>Number of live laser-vs-wall flares (test hook).</summary>
+    /// <summary>How many flashes of colour are showing where lasers hit the wall (test hook).</summary>
     internal int LaserWallFlareCount => _laserWallFlares.Flares.Count;
 
-    /// <summary>Live laser-vs-wall flares (test hook — the ROM's LASCOL pixels).</summary>
+    /// <summary>The flashes of colour that are showing where lasers hit the wall (test hook).</summary>
     internal IReadOnlyList<LaserWallFlare> LaserWallFlares => _laserWallFlares.Flares;
 
-    /// <summary>Robots still waiting for their appear record (tests).</summary>
+    /// <summary>How many robots are still waiting for their turn to appear at the start of the wave (test hook).</summary>
     internal int PendingAppearCount => _materialisation.PendingCount;
 
     /// <summary>Fires one of the player's lasers, if one of their three slots is free.</summary>
@@ -378,11 +402,8 @@ public sealed class PlayField : ICollisionScene
         Entities.Add(burst);
     }
 
-    /// <summary>
-    /// The death of a robot whose sprite shatters: the kill and the strip explosion (anchored at the sprite's
-    /// middle — the ROM's <c>NWCENT</c> path, notes §73). The kinds' rows call this one; each row carries its
-    /// own sound.
-    /// </summary>
+    /// <summary>Kills a robot and shatters its sprite into strips. Each kind's row calls this, and each row has its own sound.</summary>
+    /// <remarks>Original source: <c>RRDX2.ASM</c> <c>NWCENT</c>, which puts the explosion at the sprite's middle (notes §73). Disassembly: not separately labelled.</remarks>
     /// <param name="target">The robot being killed.</param>
     /// <param name="direction">The laser's direction, which picks the explosion's axis and lean.</param>
     internal void KillWithStripExplosion(IEntity target, Direction8 direction)
@@ -394,12 +415,13 @@ public sealed class PlayField : ICollisionScene
         }
     }
 
-    /// <summary>
-    /// Spawns an explosion for a dying entity. The ROM's explosion and appear
-    /// records share ONE pool of 10 <c>EX</c> blocks (RRDX2.ASM's `EX` struct,
-    /// `RMB ((10-1)*EXSIZE)`); GETBLK/GETAP both take from the same free list, so
-    /// a full list means no explosion at all (the caller's kill still stands).
-    /// </summary>
+    /// <summary>Starts an explosion for something that has died. If the arcade's pool of explosions is full there is no explosion, but the thing is still dead.</summary>
+    /// <param name="dead">The thing that died.</param>
+    /// <param name="direction">The way the laser that killed it was going, or null when it was not a laser.</param>
+    /// <remarks>
+    /// Original source: <c>RRDX2.ASM</c>, where the explosions and the appear effects take from the same pool of blocks (<c>GETBLK</c> and <c>GETAP</c>).
+    /// Disassembly: not separately labelled.
+    /// </remarks>
     internal void SpawnExplosion(IExplodable dead, Direction8? direction)
     {
         if (Entities.Explosions.Count >= StripExplosionTuning.MaxConcurrent)
@@ -410,16 +432,18 @@ public sealed class PlayField : ICollisionScene
         Entities.Add(StripEffect.CreateExplosion(dead, direction, StripClip.CreateFromPortPixels(Wall.PlayfieldBounds)));
     }
 
-    /// <summary>Starts the ROM's laser-vs-wall flare where a laser ran off the playfield (notes §63).</summary>
+    /// <summary>Starts a flash of colour where a laser ran into the wall (notes §63).</summary>
     /// <param name="laserBounds">The laser's box when it hit the wall.</param>
-    /// <param name="direction">The laser's direction.</param>
+    /// <param name="direction">The way the laser was going.</param>
     internal void SpawnLaserWallFlare(Rectangle laserBounds, Direction8 direction) =>
         _laserWallFlares.Spawn(laserBounds, direction, Wall);
 
-    /// <summary>The ROM grunt speedup, applied to every surviving grunt (notes §67).</summary>
+    /// <summary>Speeds up every grunt that is still alive, as each grunt's death does (notes §67).</summary>
     internal void SpeedUpGrunts() => _gruntSpeed.SpeedUp(Entities.Grunts);
 
-    /// <summary>Moves one entity on, unless it is still assembling: the ROM holds the robots off through the appear sequence (notes §62).</summary>
+    /// <summary>Moves one entity on by a tick, unless it is still appearing. The arcade keeps the robots still until the whole appear sequence is done (notes §62).</summary>
+    /// <param name="entity">The entity to move on.</param>
+    /// <param name="gameTime">The time for this tick.</param>
     internal void UpdateEntity(IEntity entity, GameTime gameTime)
     {
         if (!entity.IsDead() && !IsMaterialising(entity))
@@ -443,7 +467,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="entity">The entity to test.</param>
     internal bool IsMaterialising(IEntity entity) => _materialisation.IsAssembling(entity);
 
-    /// <summary>Queues a wave-start robot to appear strip by strip.</summary>
+    /// <summary>Adds a robot to the sequence that brings the robots on at the start of the wave, one by one.</summary>
     /// <param name="robot">The robot to bring in.</param>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>.</remarks>
     internal void QueueMaterialise(IEntity robot) => _materialisation.Queue(robot);
@@ -457,10 +481,13 @@ public sealed class PlayField : ICollisionScene
         Sound.Play(sound, pan);
     }
 
-    /// <summary>
-    /// The sounds things make just by moving: each tank shell that bounced asks for <c>SRBSND</c> (RRTK4,
-    /// R5 $4FCD), and the grunts ask for <c>RMVSND</c> once when any of them stepped (RRP8 <c>ROBX</c>).
-    /// </summary>
+    /// <summary>Plays the sounds that things make just by moving: a bounce for each tank shell that bounced, and one step for all the grunts together if any of them moved.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> for the shell's bounce (<c>SRBSND</c>) and <c>RRP8.ASM</c> <c>ROBX</c> for the grunts' step (<c>RMVSND</c>)</item>
+    /// <item>Disassembly: <c>$4FCD</c> for the bounce</item>
+    /// </list>
+    /// </remarks>
     private void PlayMovementSounds()
     {
         foreach (TankShell shell in Entities.TankShells)

@@ -6,40 +6,43 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
 
-/// <summary>
-/// The 4px (spec) border around the play area, rendered as a
-/// ring of strips built from a 1x1 white pixel tinted per draw call.
-/// Entities live inside <see cref="PlayfieldBounds"/>; the ring itself spans
-/// from there out to <see cref="OuterBounds"/>.
-/// </summary>
+/// <summary>The coloured wall around the play area. It is drawn as four strips, and it tells what is touching it.</summary>
 /// <remarks>
-/// The colour is supplied by the caller: the live game passes the wave's wall palette slot
-/// (<see cref="PlayField.Draw"/>), so the fallback cycle below is only ever seen where no palette is wired.
+/// Everything on the field stays inside <see cref="PlayfieldBounds"/>, and the wall fills the space from there out to <see cref="OuterBounds"/>.
+/// The game passes in the colour the wave's palette gives the wall (<see cref="PlayField.Draw"/>). The colour cycle is used only when there is no palette,
+/// as in a test.
 /// </remarks>
 public sealed class PlayfieldWall
 {
-    /// <summary>Wall strip thickness: spec's 4px widened by SpecScale (8 internal px at 2x).</summary>
+    /// <summary>How thick the wall is, in port pixels.</summary>
     public static readonly int Thickness = ScreenSize.ToPortPixels(CollisionSizes.WallThicknessSpecPixels);
 
     private readonly WallColorCycle _cycle;
     private readonly Rectangle _playfieldBounds;
 
+    /// <summary>Makes the wall for a play area.</summary>
+    /// <param name="playfieldBounds">The play area inside the wall, in port pixels.</param>
+    /// <param name="cycle">The colours the wall cycles through when it is not given one.</param>
     public PlayfieldWall(Rectangle playfieldBounds, WallColorCycle cycle)
     {
         _playfieldBounds = playfieldBounds;
         _cycle = cycle;
     }
 
-    /// <summary>The playfield expanded by the wall on all sides.</summary>
+    /// <summary>The play area and the wall around it, in port pixels.</summary>
     public Rectangle OuterBounds => new(
         _playfieldBounds.X - Thickness,
         _playfieldBounds.Y - Thickness,
         _playfieldBounds.Width + 2 * Thickness,
         _playfieldBounds.Height + 2 * Thickness);
 
-    /// <summary>The inner play area (entities must stay fully inside this).</summary>
+    /// <summary>The play area inside the wall, in port pixels. Everything on the field must stay wholly inside it.</summary>
     public Rectangle PlayfieldBounds => _playfieldBounds;
 
+    /// <summary>Draws the wall as four coloured strips.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="wallPixel">A single white pixel, which is stretched and tinted to make each strip.</param>
+    /// <param name="colorOverride">The colour to draw in, or null to use the wall's own colour cycle.</param>
     public void Draw(SpriteBatch spriteBatch, Texture2D wallPixel, Color? colorOverride = null)
     {
         Rectangle outer = OuterBounds;
@@ -51,12 +54,15 @@ public sealed class PlayfieldWall
         spriteBatch.Draw(wallPixel, new Rectangle(outer.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height), color);
     }
 
-    /// <summary>True if <paramref name="bounds"/> overlaps any of the 4 border strips.</summary>
+    /// <summary>Says whether a box overlaps any part of the wall.</summary>
+    /// <param name="bounds">The box to test, in port pixels.</param>
     public bool Intersects(Rectangle bounds) =>
         bounds.Intersects(new Rectangle(OuterBounds.X, OuterBounds.Y, OuterBounds.Width, Thickness)) ||
         bounds.Intersects(new Rectangle(OuterBounds.X, OuterBounds.Bottom - Thickness, OuterBounds.Width, Thickness)) ||
         bounds.Intersects(new Rectangle(OuterBounds.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height)) ||
         bounds.Intersects(new Rectangle(OuterBounds.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height));
 
+    /// <summary>Moves the wall's colour cycle on by one tick.</summary>
+    /// <param name="gameTime">The time for this tick.</param>
     public void Update(GameTime gameTime) => _cycle.Update(gameTime);
 }

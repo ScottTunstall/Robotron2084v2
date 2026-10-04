@@ -1,27 +1,17 @@
 namespace Robotron2084.Level;
 
-/// <summary>
-/// All arcade parameters for one level. They come
-/// from the Release-5 ROM tables (<see cref="WaveTable"/> /
-/// arcade-fidelity-notes §11) — waves 1-40 unique, 41+ repeat 21-40.
-///
-/// New fields have defaults so hand-built parameter sets in tests and the
-/// content pipeline keep compiling; <c>LevelParameterGenerator</c> fills
-/// every field from the ROM.
-///
-/// Field notes (ROM names in arcade-fidelity-notes §11.2):
+/// <summary>Everything that makes one wave what it is: how many of each robot it has, and how fast and how often they act.</summary>
+/// <remarks>
 /// <list type="bullet">
-/// <item><c>MaxDropsX2</c> = ENFNUM — at spawn time a spheroid/quark rolls
-/// RND(0..ENFNUM) and drops ceil(result/2) children (ROM 4B66-4B6F / $1193).</item>
-/// <item><c>TankCount</c> = TNKCNT: tanks already on the field when a life starts. The wave table never brings any: they
-/// come from a quark, and a death keeps the ones that were alive (notes §134).</item>
-/// <item><c>BerzerkRobotCount</c>: the author's new robot. No wave table row has any yet, so the count is 0 in every wave.</item>
-/// <item><c>GorfCount</c>: another of the author's new robots, in no wave yet.</item>
-/// <item>Timed fields are in ROM game ticks (NAP units); the port converts
-/// at the use sites (notes §11 + the tempo mapping recorded in the notes
-/// progress log).</item>
+/// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the wave's counts and settings when a wave begins</item>
+/// <item>Disassembly: <c>INITIALISE_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE</c> (<c>$2B7C</c>)</item>
 /// </list>
-/// </summary>
+/// The values come from the arcade's wave tables (<see cref="WaveTable"/>, notes §11). A parameter left out gets a value that a hand-built wave in a test
+/// can use. <c>MaxDropsX2</c> is the arcade's <c>ENFNUM</c>: a spheroid or quark rolls a number up to it and drops half of it, rounded up.
+/// <c>TankCount</c> is the tanks already on the field when a man starts. The wave table never has any, because quarks drop them, but a death keeps the ones
+/// that were alive (notes §134). <c>BerzerkRobotCount</c> and <c>GorfCount</c> are the author's own robots, which no wave has yet.
+/// Times are counted in ROM frames, and the port turns them into its own ticks where they are used.
+/// </remarks>
 public sealed record LevelParameters(
     int LevelNumber,
     int GruntCount = 0,
@@ -52,11 +42,10 @@ public sealed record LevelParameters(
     int BerzerkRobotCount = 0,
     int GorfCount = 0)
 {
-    /// <summary>
-    /// Fills every field from the ROM wave table. The legacy
-    /// <c>MaxEnforcersPerSpheroid</c>/<c>MaxTanksPerQuark</c> fields are kept
-    /// in sync with ceil(ENFNUM/2) for anything still reading them.
-    /// </summary>
+    /// <summary>Makes the parameters for a wave from the arcade's wave table.</summary>
+    /// <param name="levelNumber">The wave number.</param>
+    /// <param name="wave">The wave table's row for it.</param>
+    /// <remarks><c>MaxEnforcersPerSpheroid</c> and <c>MaxTanksPerQuark</c> are kept in step with <c>MaxDropsX2</c>, for anything that still reads them.</remarks>
     public static LevelParameters CreateFromWave(int levelNumber, WaveParameters wave) => new(
         LevelNumber: levelNumber,
         GruntCount: wave.GruntCount,

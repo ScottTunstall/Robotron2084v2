@@ -2,39 +2,36 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
 
-/// <summary>
-/// Produces the per-level parameters.
-///
-/// The source of truth is the arcade's own wave tables —
-/// <see cref="WaveTable"/> (ROM $2E24 counts + $2C20 difficulty settings,
-/// verified byte-exact; arcade-fidelity-notes §11). Waves 1-40 are unique;
-/// waves 41+ repeat waves 21-40 (the ROM's rule, $2B7C).
-///
-/// Optional designer-supplied table: if a LevelTable.csv is found (injected path, or
-/// Content/LevelTable.csv next to the app), its count rows are used
-/// verbatim, cycling once past the last row. Any missing/malformed file
-/// falls back to the ROM tables.
-/// </summary>
+/// <summary>Works out what each wave contains: how many of each robot, and how fast and how often they act.</summary>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the wave tables when a wave begins</item>
+/// <item>Disassembly: <c>$2B7C</c>, which reads the counts at <c>$2E24</c> and the settings at <c>$2C20</c></item>
+/// </list>
+/// By default it uses the arcade's own wave tables (<see cref="WaveTable"/>, notes §11), where the waves after the fortieth repeat the second half of the table.
+/// If a <c>LevelTable.csv</c> file is found, either at a path it is given or in the game's <c>Content</c> folder, its rows are used instead and
+/// start again from the top after the last row. A missing or damaged file is ignored.
+/// </remarks>
 public sealed class LevelParameterGenerator
 {
+    /// <summary>The rows of the table that replaces the arcade's wave tables, or null to use the arcade's.</summary>
     private readonly LevelTableRow[]? _table;
 
+    /// <summary>Makes a generator that looks for a <c>LevelTable.csv</c> in the game's <c>Content</c> folder.</summary>
     public LevelParameterGenerator()
         : this(null)
     {
     }
 
-    /// <summary>Creates a generator that reads an optional designer table.</summary>
-    /// <param name="levelTablePath">
-    /// Optional CSV table (header: Level,GruntCount,HulkCount,SpheroidCount,
-    /// QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark).
-    /// <see langword="null"/> checks the default Content/LevelTable.csv location.
-    /// </param>
+    /// <summary>Makes a generator that looks for a table that replaces the arcade's wave tables.</summary>
+    /// <param name="levelTablePath">The path of a CSV file whose header reads Level, GruntCount, HulkCount, SpheroidCount, QuarkCount, ElectrodeCount, MaxEnforcersPerSpheroid, MaxTanksPerQuark. When it is null, the game's <c>Content</c> folder is looked in.</param>
     public LevelParameterGenerator(string? levelTablePath)
     {
         _table = LoadTable(levelTablePath);
     }
 
+    /// <summary>Works out what a wave contains.</summary>
+    /// <param name="levelNumber">The wave number, starting at 1.</param>
     public LevelParameters Generate(int levelNumber)
     {
         if (_table is { Length: > 0 } table)
@@ -55,6 +52,9 @@ public sealed class LevelParameterGenerator
         return LevelParameters.CreateFromWave(levelNumber, WaveTable.GetParameters(levelNumber));
     }
 
+    /// <summary>Reads the replacement table.</summary>
+    /// <param name="path">The CSV file's path, or null for the one in the game's <c>Content</c> folder.</param>
+    /// <returns>The rows, or null when there is no file, it is damaged or it has no rows.</returns>
     private static LevelTableRow[]? LoadTable(string? path)
     {
         path ??= Path.Combine(AppContext.BaseDirectory, "Content", "LevelTable.csv");
@@ -87,7 +87,7 @@ public sealed class LevelParameterGenerator
         }
     }
 
-    /// <summary>Parses one LevelTable.csv line.</summary>
+    /// <summary>Reads one line of the replacement table.</summary>
     /// <param name="line">The trimmed line.</param>
     /// <param name="row">The parsed row, or null for a line to skip (blank, the header, or no usable level number).</param>
     /// <returns>False when the line is a data row with a malformed count.</returns>
@@ -113,7 +113,7 @@ public sealed class LevelParameterGenerator
         return true;
     }
 
-    /// <summary>One parsed LevelTable.csv row (level number dropped — position in the array is the level).</summary>
+    /// <summary>One row of the replacement table. The wave number is not kept, because a row's place in the table is its wave.</summary>
     private sealed record LevelTableRow(
         int GruntCount,
         int HulkCount,

@@ -3,58 +3,45 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
 
-/// <summary>
-/// ONE player's persistent session state — the ROM's per-player block
-/// (<c>PLDATA</c> for player 1, <c>ZP2SCR</c> for player 2, selected by
-/// <c>PLINDX</c>/<c>PLDX</c>): the score (4 BCD bytes), the next-free-man
-/// threshold, the lives counter (<c>PLAS</c>), the wave (<c>PWAV</c>) and the
-/// frozen enemy list.
-///
-/// Robotron 2084 alternates turns: each player keeps their own score, lives and
-/// wave across the other player's turn, and a death hands the turn over (ROM
-/// RRG23 <c>PLE1B</c>: <c>EORA #3</c> to the other player, skipping anyone with
-/// no men left, then <c>PLSTRT</c> resumes THEIR wave).
-/// </summary>
-/// <param name="Number">1 or 2 — the ROM prints it after "PLAYER " (string 103).</param>
-/// <param name="Input">
-/// This player's controls. Per-slot so a future SIMULTANEOUS two-player mode can give player 2 their own
-/// source; in the arcade's alternating game both slots just hold the same device.
-/// </param>
-/// <param name="Lives">
-/// Men remaining INCLUDING the life in play (ROM <c>PLAS</c>: <c>START1</c> loads it from the CMOS "ships per
-/// credit", and <c>PLSTRT</c> does <c>DEC PLAS,X</c> as each new life begins).
-/// </param>
-/// <param name="Wave">ROM <c>PWAV</c> — this player's own wave number (only they advance it).</param>
+/// <summary>Everything the game remembers about one player between waves: their score, their men, their wave, and what was left on their field when they died.</summary>
+/// <remarks>
+/// <list type="bullet">
+/// <item>Original source: <c>RRG23.ASM</c> <c>PLDATA</c> (player 1's block) and <c>ZP2SCR</c> (player 2's), chosen by <c>PLINDX</c></item>
+/// <item>Disassembly: not separately labelled</item>
+/// </list>
+/// In a two-player game each player keeps their own score, men and wave while the other plays. When a man is lost the turn passes to the other
+/// player, unless they have no men left, and they carry on from their own wave (<c>RRG23.ASM</c> <c>PLE1B</c>).
+/// </remarks>
+/// <param name="Number">1 or 2. It is printed after "PLAYER " when two people play.</param>
+/// <param name="Input">This player's controls. Each player has their own, so a second player need not share the first player's.</param>
+/// <param name="Lives">The men the player has, counting the one in play.</param>
+/// <param name="Wave">The wave the player is on. Only they move it on.</param>
 public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives, int Wave)
 {
-    /// <summary>ROM <c>PWAV</c> — this player's own wave number (only they advance it).</summary>
+    /// <summary>The wave the player is on. Only they move it on.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PWAV</c>. Disassembly: not separately labelled.</remarks>
     public int Wave { get; set; } = Wave;
 
-    /// <summary>ROM <c>ZP1SCR</c>/<c>ZP2SCR</c>.</summary>
+    /// <summary>The player's score.</summary>
+    /// <remarks>Original source: <c>RRF.ASM</c> <c>ZP1SCR</c> and <c>ZP2SCR</c>. Disassembly: <c>p1_score</c> and <c>p2_score</c>.</remarks>
     public int Score { get; set; }
 
-    /// <summary>Men remaining INCLUDING the life in play.</summary>
+    /// <summary>The men the player has, counting the one in play.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLAS</c>. Disassembly: not separately labelled.</remarks>
     public int Lives { get; set; } = Lives;
 
-    /// <summary>
-    /// What was left on this player's field when they last died, or null when their wave has not been started, or has just been
-    /// cleared (ROM <c>PENEMY</c>, the enemy list that <c>PLSAV</c> keeps and <c>PLRES</c> brings back).
-    /// </summary>
+    /// <summary>What was left on the player's field when they last died, to start their next man with. It is null when their wave has not started or has just been cleared.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PENEMY</c>, the list that <c>PLSAV</c> keeps and <c>PLRES</c> brings back. Disassembly: not separately labelled.</remarks>
     public LevelParameters? SavedWave { get; set; }
 
-    /// <summary>True while this player can still be given a turn.</summary>
+    /// <summary>True while the player can still be given a turn.</summary>
     public bool HasMen => Lives > 0;
 
-    /// <summary>
-    /// The SPARE men the HUD draws (ROM <c>p1_men</c>/<c>p2_men</c> = the lives
-    /// counter read AFTER the life in play was decremented) — with 3 ships you
-    /// see 2 icons during your first life.
-    /// </summary>
+    /// <summary>The spare men: the men the player has besides the one in play. With three men, the player sees two spare ones during their first.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c>, the count that <c>MANDSV</c> draws. Disassembly: <c>p1_men</c> and <c>p2_men</c>.</remarks>
     public int SpareMen => System.Math.Max(0, Lives - 1);
 
-    /// <summary>
-    /// How many mini man icons the HUD draws: the spare men, capped at SEVEN
-    /// (ROM MANDSV: <c>CMPA #$07 / BLS / LDA #$07</c> — "MAX OF 7").
-    /// </summary>
+    /// <summary>How many little men are drawn on the screen: the spare men, though never more than the screen has room for.</summary>
+    /// <remarks>Original source: <c>RRG23.ASM</c> <c>MANDSV</c>, which stops at <c>#$07</c>. Disassembly: not separately labelled.</remarks>
     public int DisplayedMen => System.Math.Min(SpareMen, HudLayout.HudMaxMen);
 }

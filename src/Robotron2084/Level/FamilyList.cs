@@ -19,7 +19,7 @@ public sealed class FamilyList
 
     private readonly EntityList<Human> _members = new();
 
-    /// <summary>The next place to hand out. The ROM fills the list upward from the first place.</summary>
+    /// <summary>The next place to give out. The places are given out in order, starting from the first.</summary>
     private int _nextSlot;
 
     /// <summary>Every member, in the order they joined, whether or not they are still on the field.</summary>

@@ -56,7 +56,7 @@ public sealed class FieldEntities
     /// <summary>The enforcers the spheroids have dropped.</summary>
     public EntityList<Enforcer> Enforcers { get; } = new();
 
-    /// <summary>The strip explosions and the wave-start appear effects, which share one pool in the ROM.</summary>
+    /// <summary>The strip explosions and the wave-start appear effects, which share one pool in the arcade.</summary>
     public EntityList<StripEffect> Explosions { get; } = new();
 
     /// <summary>The family: who is on the field and the places the brains and hulks pick them by.</summary>
@@ -99,7 +99,7 @@ public sealed class FieldEntities
     /// <summary>The shells the tanks have fired.</summary>
     public EntityList<TankShell> TankShells { get; } = new();
 
-    /// <summary>Every list the field moves and prunes, in the ROM's own order.</summary>
+    /// <summary>Every list the field moves on and clears of the dead, in the order the arcade does them.</summary>
     public IReadOnlyList<IEntityList> UpdateOrder => _updateOrder;
 
     /// <summary>Says whether every enemy that must be cleared to finish the wave is gone.</summary>
@@ -183,11 +183,11 @@ public sealed class FieldEntities
     /// <param name="entity">The CruiseMissile to add.</param>
     public void Add(CruiseMissile entity) => CruiseMissiles.Add(entity);
 
-    /// <summary>Puts a Electrode on the field.</summary>
+    /// <summary>Puts an Electrode on the field.</summary>
     /// <param name="entity">The Electrode to add.</param>
     public void Add(Electrode entity) => Electrodes.Add(entity);
 
-    /// <summary>Puts a Enforcer on the field.</summary>
+    /// <summary>Puts an Enforcer on the field.</summary>
     /// <param name="entity">The Enforcer to add.</param>
     public void Add(Enforcer entity) => Enforcers.Add(entity);
 
@@ -296,7 +296,7 @@ public sealed class FieldEntities
         }
     }
 
-    /// <summary>Moves every list on by one tick, in the ROM's own order.</summary>
+    /// <summary>Moves every list on by one tick, in the order the arcade does them.</summary>
     /// <param name="gameTime">The time for this tick.</param>
     /// <param name="field">The field the entities are on.</param>
     public void UpdateAll(GameTime gameTime, PlayField field)
