@@ -29,11 +29,14 @@ public enum SettingsAction
 /// <item>DIFFICULTY OF PLAY — 0-10;</item>
 /// <item>ATTRACT MODE SOUND — port-only: whether the attract sequence (the demo machine playing
 /// itself) keeps its sound;</item>
+/// <item>BOZO MODE — port-only: whether the arcade's mercy for a player losing ships early is given;</item>
+/// <item>BRAINS CHASE MIKEY BUG — port-only: whether every brain starts the wave chasing Mikey, as in the arcade;</item>
+/// <item>TANK SHELL BUG — port-only: whether a fizzled shell stays on the wave's shell count, as in the arcade;</item>
 /// <item>RESTORE FACTORY SETTINGS — an action row;</item>
 /// <item>HIGH SCORE TABLE RESET — an action row.</item>
 /// </list>
 ///
-/// Up/Down move the cursor round the five rows, Left/Right step the highlighted row's value, and the
+/// Up/Down move the cursor round the rows, Left/Right step the highlighted row's value, and the
 /// two action rows take the arcade's own two steps: Left/Right set them to NO or YES, then Enter
 /// performs them while they read YES (<c>YES ADVANCE TO ACTIVATE</c>).
 ///
@@ -43,7 +46,7 @@ public enum SettingsAction
 public sealed class SettingsModel
 {
     /// <summary>Every line on the page.</summary>
-    public const int LineCount = 6;
+    public const int LineCount = 9;
 
     /// <summary>EXTRA MAN EVERY — the first row, as on the cabinet.</summary>
     public const int ExtraManLine = 0;
@@ -57,11 +60,20 @@ public sealed class SettingsModel
     /// <summary>ATTRACT MODE SOUND — port-only: whether the attract sequence makes its noises.</summary>
     public const int AttractSoundLine = 3;
 
+    /// <summary>BOZO MODE — port-only: whether the arcade's mercy for a losing player is given.</summary>
+    public const int BozoModeLine = 4;
+
+    /// <summary>BRAINS CHASE MIKEY BUG — port-only: whether the arcade's brain target bug is kept.</summary>
+    public const int BrainsChaseMikeyBugLine = 5;
+
+    /// <summary>TANK SHELL BUG — port-only: whether the arcade's shell count bug is kept.</summary>
+    public const int TankShellBugLine = 6;
+
     /// <summary>RESTORE FACTORY SETTINGS — an action row.</summary>
-    public const int RestoreFactoryLine = 4;
+    public const int RestoreFactoryLine = 7;
 
     /// <summary>HIGH SCORE TABLE RESET — an action row.</summary>
-    public const int HighScoreResetLine = 5;
+    public const int HighScoreResetLine = 8;
 
     /// <summary>The YES/NO state of each action row.</summary>
     private readonly bool[] _armed = new bool[LineCount];
@@ -101,6 +113,15 @@ public sealed class SettingsModel
             case AttractSoundLine:
                 settings.BumpAttractModeSound(direction);
                 break;
+            case TankShellBugLine:
+                settings.BumpTankShellBug(direction);
+                break;
+            case BrainsChaseMikeyBugLine:
+                settings.BumpBrainsChaseMikeyBug(direction);
+                break;
+            case BozoModeLine:
+                settings.BumpBozoModeEnabled(direction);
+                break;
             default:
                 _armed[Line] = direction > 0;
                 break;
@@ -129,31 +150,38 @@ public sealed class SettingsModel
         return SettingsAction.ResetHighScores;
     }
 
-    /// <summary>The row's name, in the arcade's own words (the last is the port's own).</summary>
+    /// <summary>The row's name, in the arcade's own words (the ON/OFF rows are the port's own).</summary>
     public static string GetLabel(int line) => line switch
     {
         ExtraManLine => "EXTRA MAN EVERY",
         TurnsLine => "TURNS PER PLAYER",
         DifficultyLine => "DIFFICULTY OF PLAY",
         AttractSoundLine => "ATTRACT MODE SOUND",
+        TankShellBugLine => "TANK SHELL BUG",
+        BrainsChaseMikeyBugLine => "BRAINS CHASE MIKEY BUG",
+        BozoModeLine => "BOZO MODE",
         RestoreFactoryLine => "RESTORE FACTORY SETTINGS",
         HighScoreResetLine => "HIGH SCORE TABLE RESET",
         _ => throw new ArgumentOutOfRangeException(nameof(line), line, null),
     };
 
-    /// <summary>The row's value: the setting itself, ON/OFF for the sound row, or NO/YES on an action row.</summary>
+    /// <summary>The row's value: the setting itself, ON/OFF for the port's own rows, or NO/YES on an action row.</summary>
     public string GetValue(GameSettings settings, int line) => line switch
     {
         ExtraManLine => settings.ExtraManEveryPoints.ToString(),
         TurnsLine => settings.TurnsPerPlayer.ToString(),
         DifficultyLine => settings.Difficulty.ToString(),
-        AttractSoundLine => settings.AttractModeSound ? "ON" : "OFF",
+        AttractSoundLine => GetOnOff(settings.AttractModeSound),
+        TankShellBugLine => GetOnOff(settings.TankShellBug),
+        BrainsChaseMikeyBugLine => GetOnOff(settings.BrainsChaseMikeyBug),
+        BozoModeLine => GetOnOff(settings.BozoModeEnabled),
         _ => _armed[line] ? "YES" : "NO",
     };
 
     /// <summary>
     /// The descriptive word under a value — the ROM's own option lists at $7041 (EXTRA MAN EVERY),
     /// $704C (TURNS PER PLAYER) and $7079 (DIFFICULTY OF PLAY). Empty where the arcade prints nothing.
+    /// The port's bug and Bozo rows borrow "RECOMMENDED" for ON, which is the arcade as it shipped.
     /// </summary>
     public static string GetNote(GameSettings settings, int line) => line switch
     {
@@ -181,8 +209,17 @@ public sealed class SettingsModel
             < 8 => "CONSERVATIVE",
             _ => "EXTRA CONSERVATIVE",
         },
+        TankShellBugLine => GetArcadeNote(settings.TankShellBug),
+        BrainsChaseMikeyBugLine => GetArcadeNote(settings.BrainsChaseMikeyBug),
+        BozoModeLine => GetArcadeNote(settings.BozoModeEnabled),
         _ => string.Empty,
     };
+
+    /// <summary>The word for an ON/OFF row's value.</summary>
+    private static string GetOnOff(bool on) => on ? "ON" : "OFF";
+
+    /// <summary>The word beside a row that is ON in the arcade: "RECOMMENDED" while it is on.</summary>
+    private static string GetArcadeNote(bool on) => on ? "RECOMMENDED" : string.Empty;
 
     /// <summary>The hint under an action row once it has been set to YES.</summary>
     public string GetActionHint(int line) =>
