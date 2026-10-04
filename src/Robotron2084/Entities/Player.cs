@@ -31,7 +31,6 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Walk cycle per direction: [f0, f1, f0, f2] (e.g. left = 1,2,1,3).</summary>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
-    private readonly TimeSpan _graceDuration = TimeSpan.FromSeconds(PlayerTuning.PlayerStartGraceSeconds);
     private readonly Random _random;
     private readonly SpriteSet _sprites;
 
@@ -49,13 +48,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private DeathStage _deathStage = DeathStage.White;
 
     private int _deathTimer;
-    private TimeSpan _graceRemaining;
     private int _invincibilityBlinkTicks;
     private int _invincibilityTicksRemaining;
     private IntVector2 _position;
     private bool _wasFiring;
 
-    /// <summary>Spawns the player at <paramref name="startPosition"/> with <paramref name="lives"/> men and the start grace running.</summary>
+    /// <summary>Spawns the player at <paramref name="startPosition"/> with <paramref name="lives"/> men.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="startPosition">Top-left of the player.</param>
     /// <param name="lives">How many men the player starts with; a death takes one off.</param>
@@ -66,8 +64,6 @@ public sealed class Player : IEntity, IAnimationFrameSource
         _position = startPosition;
         _random = random ?? new Random();
         Lives = lives;
-        _graceRemaining = _graceDuration;
-        IsInStartGracePeriod = true;
     }
 
     /// <summary>The death animation's stages: a white flash, a colour flash, then the fade to black.</summary>
@@ -92,9 +88,6 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <remarks>Per player, so the attract DEMO can opt out and the machine still plays by the
     /// arcade's rules (otherwise every contact path in the demo is dead code).</remarks>
     public bool InvincibleForTesting { get; set; } = PlayerTuning.PlayerInvincibleForTesting;
-
-    /// <summary>True until the start grace expires.</summary>
-    public bool IsInStartGracePeriod { get; private set; }
 
     /// <summary>Passes through hazards unharmed for a short time after a respawn.</summary>
     public bool IsInvincible => _invincibilityTicksRemaining > 0;
@@ -167,22 +160,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
         StartDeath();
     }
 
-    /// <summary>Respawn for "RESTART THE CURRENT LEVEL" (lives remaining).</summary>
-    /// <param name="startPosition">Where to place the player.</param>
-    public void ResetForLevelRestart(IntVector2 startPosition)
-    {
-        _position = startPosition;
-        LifeState = EntityLifeState.Alive;
-        ResetDeathAnimation();
-        _graceRemaining = _graceDuration;
-        IsInStartGracePeriod = true;
-        _invincibilityTicksRemaining = PlayerTuning.PlayerInvincibilityTicks;
-        _wasFiring = false;
-        _autoFireTicksRemaining = PlayerTuning.PlayerAutoFireTicks;
-    }
-
-    /// <summary>One tick: the death animation while dying, else clocks, movement, firing and animation.</summary>
-    /// <param name="gameTime">The elapsed time, used to run the start grace down.</param>
+    /// <summary>One tick: the death animation while dying, else clocks, movement, firing and animation. Before the game is live the player does nothing.</summary>
+    /// <param name="gameTime">Not used: the player counts in ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -198,7 +177,13 @@ public sealed class Player : IEntity, IAnimationFrameSource
             return;
         }
 
-        AdvanceInvincibility(gameTime);
+        // The arcade holds the player's motion and fire until the game is live (ROM: RRG23.ASM PLAYRV, BITA #$01).
+        if (!field.IsLive())
+        {
+            return;
+        }
+
+        AdvanceInvincibility();
 
         PlayerInputState input = field.Input.Poll();
         IntVector2 move = input.MoveDirection;
@@ -324,9 +309,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
         }
     }
 
-    /// <summary>Runs one tick of the invincibility countdown, its flicker, and the start-of-life grace.</summary>
-    /// <param name="gameTime">The elapsed time, used to run the start grace down.</param>
-    private void AdvanceInvincibility(GameTime gameTime)
+    /// <summary>Runs one tick of the invincibility countdown and its flicker.</summary>
+    private void AdvanceInvincibility()
     {
         if (_invincibilityTicksRemaining > 0)
         {
@@ -337,14 +321,6 @@ public sealed class Player : IEntity, IAnimationFrameSource
             (_invincibilityBlinkTicks + 1) % (PlayerTuning.InvincibilityFlickerVisibleTicks +
                                               PlayerTuning.InvincibilityFlickerHiddenTicks);
 
-        if (IsInStartGracePeriod)
-        {
-            _graceRemaining -= gameTime.ElapsedGameTime;
-            if (_graceRemaining <= TimeSpan.Zero)
-            {
-                IsInStartGracePeriod = false;
-            }
-        }
     }
 
     /// <summary>Advances the walk cycle; with the stick centred the frame holds where it is.</summary>
