@@ -53,7 +53,7 @@ public sealed class ControlCaptureTests
         InputBinding captured = ControlCapture.GetNewlyPressed(Bare(), Bare(pad: pad));
 
         // Up on the left stick, in screen space (XNA's Y is up-positive).
-        Assert.Equal(InputBinding.CreateStick(0, rightStick: false, 0, -1), captured);
+        Assert.Equal(InputBinding.CreateStick(0, isRightStick: false, 0, -1), captured);
     }
 
     [Fact]

@@ -21,9 +21,9 @@ public sealed class InputBindingTests
             { InputBinding.CreateKey(Keys.NumPad8), "NUMPAD8" },
             { InputBinding.CreateButton(0, Buttons.A), "P1 A" },
             { InputBinding.CreateButton(1, Buttons.RightShoulder), "P2 RIGHTSHOULDER" },
-            { InputBinding.CreateStick(0, rightStick: false, 0, -1), "P1 LEFT STICK UP" },
-            { InputBinding.CreateStick(0, rightStick: true, 0, 1), "P1 RIGHT STICK DOWN" },
-            { InputBinding.CreateStick(1, rightStick: true, -1, -1), "P2 RIGHT STICK UP LEFT" },
+            { InputBinding.CreateStick(0, isRightStick: false, 0, -1), "P1 LEFT STICK UP" },
+            { InputBinding.CreateStick(0, isRightStick: true, 0, 1), "P1 RIGHT STICK DOWN" },
+            { InputBinding.CreateStick(1, isRightStick: true, -1, -1), "P2 RIGHT STICK UP LEFT" },
             { InputBinding.None, "NONE" },
         };
         return data;
@@ -54,10 +54,10 @@ public sealed class InputBindingTests
     {
         // A file hand-written before the sticks were spelled out should still load.
         Assert.True(InputBinding.TryParse("P1-LS-UP", out InputBinding stick));
-        Assert.Equal(InputBinding.CreateStick(0, rightStick: false, 0, -1), stick);
+        Assert.Equal(InputBinding.CreateStick(0, isRightStick: false, 0, -1), stick);
 
         Assert.True(InputBinding.TryParse("p2-rs-dn-lt", out InputBinding diagonal));
-        Assert.Equal(InputBinding.CreateStick(1, rightStick: true, -1, 1), diagonal);
+        Assert.Equal(InputBinding.CreateStick(1, isRightStick: true, -1, 1), diagonal);
     }
 
     [Theory]
@@ -70,12 +70,12 @@ public sealed class InputBindingTests
 
     [Fact]
     public void AStickBindingNeedsADirection() =>
-        Assert.Throws<ArgumentOutOfRangeException>(() => InputBinding.CreateStick(0, rightStick: false, 0, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => InputBinding.CreateStick(0, isRightStick: false, 0, 0));
 
     [Fact]
     public void StickDirections_AreStoredScreenSpace()
     {
-        InputBinding down = InputBinding.CreateStick(0, rightStick: false, 0, 1);
+        InputBinding down = InputBinding.CreateStick(0, isRightStick: false, 0, 1);
 
         Assert.Equal(0, down.DirectionX);
         Assert.Equal(1, down.DirectionY); // Y down, like every other coordinate in the port
@@ -94,8 +94,8 @@ public sealed class InputBindingTests
     [Fact]
     public void AStickBinding_RespondsToThatStickAndNoOther()
     {
-        var binding = InputBinding.CreateStick(0, rightStick: true, 1, 0); // pad 1 right stick, right
-        GamePadState pad = TestPads.Pad(leftStick: new Microsoft.Xna.Framework.Vector2(0f, 1f), rightStick: new Microsoft.Xna.Framework.Vector2(1f, 0f));
+        var binding = InputBinding.CreateStick(0, isRightStick: true, 1, 0); // pad 1 right stick, right
+        GamePadState pad = TestPads.Pad(leftStick: new Microsoft.Xna.Framework.Vector2(0f, 1f), isRightStick: new Microsoft.Xna.Framework.Vector2(1f, 0f));
         var empty = new KeyboardState();
 
         Assert.True(binding.IsHeld(empty, pad, new GamePadState()));
@@ -105,8 +105,8 @@ public sealed class InputBindingTests
     [Fact]
     public void TheLeftStickBinding_IgnoresTheRightStick()
     {
-        var binding = InputBinding.CreateStick(0, rightStick: false, 1, 0);
-        GamePadState rightStickOnly = TestPads.Pad(rightStick: new Microsoft.Xna.Framework.Vector2(1f, 0f));
+        var binding = InputBinding.CreateStick(0, isRightStick: false, 1, 0);
+        GamePadState rightStickOnly = TestPads.Pad(isRightStick: new Microsoft.Xna.Framework.Vector2(1f, 0f));
 
         Assert.False(binding.IsHeld(new KeyboardState(), rightStickOnly, new GamePadState()));
     }
@@ -117,8 +117,8 @@ public sealed class InputBindingTests
         // The author: "the controls don't clearly show that W OR stick up can be used." Both
         // halves are shown with the word between them; a hyphen could not have stood in for it,
         // because the arcade's small font has no '-' and the two would have run together.
-        var both = new ActionBinding(InputBinding.CreateKey(Keys.W), InputBinding.CreateStick(0, rightStick: false, 0, -1));
-        var padOnly = new ActionBinding(InputBinding.None, InputBinding.CreateStick(0, rightStick: false, 0, -1));
+        var both = new ActionBinding(InputBinding.CreateKey(Keys.W), InputBinding.CreateStick(0, isRightStick: false, 0, -1));
+        var padOnly = new ActionBinding(InputBinding.None, InputBinding.CreateStick(0, isRightStick: false, 0, -1));
 
         Assert.Equal("W OR P1 LEFT STICK UP", both.DisplayName);
         Assert.Equal("W", new ActionBinding(InputBinding.CreateKey(Keys.W), InputBinding.None).DisplayName);

@@ -14,7 +14,7 @@ internal static class TestPads
     /// <summary>A pad with the given sticks, buttons and right trigger; nothing else.</summary>
     public static GamePadState Pad(
         Vector2 leftStick = default,
-        Vector2 rightStick = default,
+        Vector2 isRightStick = default,
         Buttons button = Buttons.None,
         float rightTrigger = 0f)
     {
@@ -24,7 +24,7 @@ internal static class TestPads
             buttons.Add(button);
         }
 
-        return new GamePadState(leftStick, rightStick, 0f, rightTrigger, [.. buttons]);
+        return new GamePadState(leftStick, isRightStick, 0f, rightTrigger, [.. buttons]);
     }
 
     /// <summary>A pad with exactly one button pressed.</summary>
