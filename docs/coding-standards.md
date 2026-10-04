@@ -363,6 +363,8 @@ the unit the ROM used, and its `<remarks>` quotes the instruction (`ADDA #8`) an
 port deliberately uses a different value, the `<remarks>` says so and says why; if it does not, the constant is a
 bug. Never label a column count as arcade pixels.
 
+**CMT-15. A constant that changes a field or property says which one, with `<see cref>`.** If a constant is added to, subtracted from, assigned to or compared with a field or property, its `<summary>` names that field or property with `<see cref="..."/>`, and says what the constant does to it: "The number of beats subtracted from <see cref="Floor"/> at a check." A reader must never have to search the class to find what a number is for. Where the field is private, `cref` it anyway; it resolves inside its own class.
+
 **SOLID-S.** See STR-1 and STR-2.
 
 **SOLID-O.** New robot kinds, new states and new sounds should need additions, not edits spread across the
