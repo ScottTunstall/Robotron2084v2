@@ -39,7 +39,7 @@ public sealed class DefineInputsModel
     /// </summary>
     public const int SpacerLines = 2;
 
-    /// <summary>How many lines fit on screen at once.</summary>
+    /// <summary>How many lines fit on screen at once. It is subtracted from <see cref="Line"/>, with one added, to give <see cref="FirstVisibleLine"/> when the cursor moves past the bottom of the page.</summary>
     public const int VisibleLines = LinesPerPlayer;
 
     /// <summary>The first line on screen, so the highlighted line is always in the window.</summary>

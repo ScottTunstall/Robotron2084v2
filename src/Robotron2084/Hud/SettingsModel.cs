@@ -45,7 +45,7 @@ public enum SettingsAction
 /// </summary>
 public sealed class SettingsModel
 {
-    /// <summary>Every line on the page.</summary>
+    /// <summary>Every line on the page. It is the size of <see cref="_armed"/>.</summary>
     public const int LineCount = 9;
 
     /// <summary>EXTRA MAN EVERY — the first row, as on the cabinet.</summary>

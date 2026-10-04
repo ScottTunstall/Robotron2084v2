@@ -27,7 +27,7 @@ namespace Robotron2084.Hud;
 /// </summary>
 public sealed class HighScorePrintSequence
 {
-    /// <summary>The ROM's <c>LDA #4</c>: four entries per sleep.</summary>
+    /// <summary>The ROM's <c>LDA #4</c>: four entries per sleep. It is added to <see cref="TodayRows"/> each time a group of rows is printed.</summary>
     public const int RowsPerGroup = 4;
 
     private int _clockUnits;
