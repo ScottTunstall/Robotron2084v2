@@ -7,7 +7,7 @@ public static class TankTuning
     /// ROM `TNKSPD` = **2**, and it is a CONSTANT, not a wave value: `LDA #2 / STA
     /// TNKSPD` in the per-level reset (RRG23:677). `TANK6` does `LDA TNKSPD / LDX
     /// #TANKL / JMP SLEEP`, so the tank's process re-runs every TNKSPD vblanks — a
-    /// beat of 2 vblanks plus the frame it runs in = **3 ROM frames**.
+    /// beat of 2 vblanks plus the frame it runs in = **3 fiftieths of a second**.
     /// </summary>
     public const int BeatIntervalRomFrames = 3;
 

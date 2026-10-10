@@ -13,7 +13,7 @@ public static class StripExplosionTuning
     /// <remarks>Original source: <c>RRX7.ASM</c> <c>APSTV</c>, <c>LDD #$1000</c> ("START LARGE FOR APPEAR"); the same in <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>. Disassembly: <c>$5C01</c>.</remarks>
     public const int AppearStartSizer = 0x1000;
 
-    /// <summary>How many ROM frames an explosion lasts. It is counted down once each ROM frame, and the explosion is gone when it reaches nothing.</summary>
+    /// <summary>How many fiftieths of a second an explosion lasts. It is counted down once each fiftieth of a second, and the explosion is gone when it reaches nothing.</summary>
     /// <remarks>Original source: <c>RRX7.ASM</c> <c>EXST2</c>, <c>LDA #$10 / STA FRAMES,U</c>. Disassembly: <c>$5C1F</c> onwards.</remarks>
     public const int ExplosionFrames = 0x10;
 
@@ -21,11 +21,11 @@ public static class StripExplosionTuning
     /// <remarks>Original source: <c>RRX7.ASM</c> <c>NOCKK</c>, <c>LDD #$100</c> ("1 UNIT IS MIN"). Disassembly: <c>$5C1F</c> onwards.</remarks>
     public const int ExplosionStartSizer = 0x0100;
 
-    /// <summary>How much the gap changes each ROM frame for an explosion, and for an appear run by the diagonal routine. It is a whole row, so the picture changes on every ROM frame.</summary>
+    /// <summary>How much the gap changes each fiftieth of a second for an explosion, and for an appear run by the diagonal routine. It is a whole row, so the picture changes on 50 times a second.</summary>
     /// <remarks>Original source: <c>RRX7.ASM</c> <c>WRITE</c>, <c>ADDD #$100</c>, and <c>RRDX2.ASM</c> <c>AWRITE</c>, <c>SUBD #$100</c>. Disassembly: <c>$5D93</c>.</remarks>
     public const int SizerStep = 0x0100;
 
-    /// <summary>How much the gap shrinks each ROM frame for an appear run by the vertical or the horizontal routine. It is half a row, so the picture changes on every second ROM frame and the appear takes twice as long as a diagonal one.</summary>
+    /// <summary>How much the gap shrinks each fiftieth of a second for an appear run by the vertical or the horizontal routine. It is half a row, so the picture changes on every second fiftieth of a second and the appear takes twice as long as a diagonal one.</summary>
     /// <remarks>Original source: <c>RRX7.ASM</c> <c>AWRITE</c>, <c>SUBD #$0080</c>; the same in <c>RRHX4.ASM</c>. Disassembly: <c>$5D4A</c>.</remarks>
     public const int SlowAppearSizerStep = 0x0080;
 

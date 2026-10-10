@@ -3,7 +3,7 @@
 /// <summary>How Gorf crosses the screen: how fast, and how long its hops are and how high. Gorf is the author's own robot, so none of these come from the arcade.</summary>
 public static class GorfTuning
 {
-    /// <summary>How many ROM frames Gorf waits between steps.</summary>
+    /// <summary>How many fiftieths of a second Gorf waits between steps.</summary>
     public const int StepRomFrames = 2;
 
     /// <summary>How far Gorf goes sideways each step, in columns (2 arcade pixels each).</summary>
@@ -30,6 +30,6 @@ public static class GorfTuning
     /// <summary>The gap left between grunts dropped side by side, in port pixels.</summary>
     public const int DropGapPixels = 4;
 
-    /// <summary>How many ROM frames each of Gorf's two animation frames shows for.</summary>
+    /// <summary>How many fiftieths of a second each of Gorf's two animation frames shows for.</summary>
     public const int AnimationFrameRomFrames = 8;
 }

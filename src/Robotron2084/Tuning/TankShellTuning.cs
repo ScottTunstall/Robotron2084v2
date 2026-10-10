@@ -3,7 +3,7 @@ namespace Robotron2084.Tuning;
 /// <summary>How a tank shell is aimed, how fast it flies and how long it lasts.</summary>
 public static class TankShellTuning
 {
-    /// <summary>The fewest beats a shell gets before it fizzles out. A beat comes every <see cref="BeatIntervalRomFrames"/> ROM frames.</summary>
+    /// <summary>The fewest beats a shell gets before it fizzles out. A beat comes every <see cref="BeatIntervalRomFrames"/> fiftieths of a second.</summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKFX1</c>, <c>ADDA #$30</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4F88</c>.</remarks>
     public const int LifeBaseBeats = 48;
 
@@ -11,7 +11,7 @@ public static class TankShellTuning
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKFX1</c>, <c>ANDA #$1F</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4F86</c>.</remarks>
     public const int LifeExtraBeatsMaxExclusive = 32;
 
-    /// <summary>How many ROM frames pass between one beat of a shell and the next.</summary>
+    /// <summary>How many fiftieths of a second pass between one beat of a shell and the next.</summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SHELLP</c>, <c>NAP 2</c>. Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>) at <c>$4FB3</c>.</remarks>
     public const int BeatIntervalRomFrames = 2;
 

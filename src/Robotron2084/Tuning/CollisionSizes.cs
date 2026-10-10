@@ -39,7 +39,12 @@ public static class CollisionSizes
 
     public static readonly (int Width, int Height) DaddyCollisionSize = (10, 13);
 
-    public static readonly (int Width, int Height) ElectrodeCollisionSize = (10, 9);
+    /// <summary>How big each shape of electrode is, in arcade pixels, in the order of the shapes. Most are 10 by 9. The thin one is 6 by 9, the "2084" one is 18 by 7, and the last is 10 by 10.</summary>
+    /// <remarks>Disassembly: the first two bytes of each 16-byte entry from <c>$3B05</c> to <c>$3B85</c>, which are the width in bytes (two arcade pixels each) and the height in rows: <c>05 09</c>, and <c>03 09</c> at <c>$3B45</c>, <c>09 07</c> at <c>$3B65</c> and <c>05 0A</c> at <c>$3B85</c>.</remarks>
+    public static readonly (int Width, int Height)[] ElectrodeCollisionSizeByVariant =
+    [
+        (10, 9), (10, 9), (10, 9), (10, 9), (6, 9), (10, 9), (18, 7), (10, 9), (10, 10),
+    ];
 
     public static readonly (int Width, int Height) EnforcerCollisionSize = (10, 11);
 

@@ -3,7 +3,7 @@ namespace Robotron2084.Tuning;
 /// <summary>The between-game screens: wave clear, game over, entries maximum and the high score pages.</summary>
 public static class ScreenTuning
 {
-    /// <summary>ONLY5P's <c>NAP $60</c>: the "5 ENTRIES MAXIMUM" page is held for 60 ROM frames (1.2 s).</summary>
+    /// <summary>ONLY5P's <c>NAP $60</c>: the "5 ENTRIES MAXIMUM" page is held for 60 fiftieths of a second (1.2 s).</summary>
     public const int EntriesMaximumHoldRomFrames = 0x60;
 
     // INITIALS ENTRY (notes §116) — RRTESTC's ENDGAM/EGSUB, RRET's messages 95 (CONG) and 100
@@ -50,7 +50,7 @@ public static class ScreenTuning
     // SCRMEP: COLOR $77 = slot 7
     /// <summary>
     /// ROM RRG23 PLS0D: the "PLAYER n" message is drawn and the game waits
-    /// <c>NAP 115</c> before erasing it — 115 ROM frames at a turn start in a
+    /// <c>NAP 115</c> before erasing it — 115 fiftieths of a second at a turn start in a
     /// 2-player game (1-player games skip it: <c>LDA PLRCNT / DECA / BEQ</c>).
     /// </summary>
     public const int PlayerTurnMessageRomFrames = 115;

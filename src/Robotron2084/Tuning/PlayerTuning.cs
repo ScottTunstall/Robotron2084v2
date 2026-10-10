@@ -41,7 +41,7 @@ public static class PlayerTuning
     // written into slot 12 one byte per `NAP 4` while the player keeps being drawn
     // solid in slot 12 — the trailing $00 ends it and erases the player.
     // Total: 10 x (2 + 6) = 80 frames of flash, then 7 gaps of 4 frames across the
-    // 8-byte fade table = 108 ROM frames (129.6 port ticks).
+    // 8-byte fade table = 108 fiftieths of a second (129.6 port ticks).
     public const int PlayerDeathFlashIterations = 10;
 
     public const int PlayerDeathWhiteRomFrames = 2;
