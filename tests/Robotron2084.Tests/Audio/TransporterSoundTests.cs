@@ -31,6 +31,31 @@ public class TransporterSoundTests
         Assert.False(transporter.IsRunning());
     }
 
+    [Fact]
+    public void Stop_EndsTheSends_SoTheyDoNotCutAcrossTheNextSound()
+    {
+        var sink = new RecordingSink();
+        var engine = new SoundEngine(sink);
+        var transporter = new TransporterSound();
+        transporter.Start(engine);
+        for (int i = 0; i < 10; i++)
+        {
+            engine.Tick();
+            transporter.Tick(engine);
+        }
+
+        int sentBeforeStop = sink.Sends.Count(send => send.SoundNumber == WarpIn);
+        transporter.Stop();
+        for (int i = 0; i < 200; i++)
+        {
+            engine.Tick();
+            transporter.Tick(engine);
+        }
+
+        Assert.False(transporter.IsRunning());
+        Assert.Equal(sentBeforeStop, sink.Sends.Count(send => send.SoundNumber == WarpIn));
+    }
+
     private static (RecordingSink Sink, TransporterSound Transporter) Run(int ticks)
     {
         var sink = new RecordingSink();
