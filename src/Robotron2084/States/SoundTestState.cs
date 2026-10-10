@@ -22,7 +22,7 @@ namespace Robotron2084.States;
 /// </list>
 /// The arcade clears the screen and prints "SOUND LINE" and a number in the large font, in the game's white,
 /// and plays one sound; the service switch ADVANCE moves on to the next (and past the last, back to the first),
-/// and the AUTO UP switch makes it move on by itself. Left alone, a sound is started again every 64 vblanks
+/// and the AUTO UP switch makes it move on by itself. Left alone, a sound is started again every 64 vblanks (the port waits until the sound has finished, so a long one is not cut off)
 /// (<c>LDA #$40</c>, <c>STA PD+4,U</c>), after the board has been silenced and given a vblank to settle
 /// (sound lines high, <c>$2C</c>, high again). The arcade steps through the six sound lines, so it only
 /// reaches the numbers 1, 2, 4, 8, 16 and 32; this page steps through all 63, which is the one difference.
@@ -36,6 +36,9 @@ public sealed class SoundTestState : IGameState
 
     /// <summary>The vblanks the board is given to settle between stopping it and sending the number (<c>NAP 1</c> three times).</summary>
     private const int SettleTicks = 3;
+
+    /// <summary>The ticks the board must have been finished for before the sound is started again: the audio already queued for the speakers is still playing out.</summary>
+    private const int QuietTicksNeeded = 6;
 
     /// <summary>The sound number that silences the board (<c>BGEND</c>, the arcade's <c>$2C</c> sent through the inverting pins).</summary>
     private const int SilenceNumber = 0x13;
@@ -62,6 +65,7 @@ public sealed class SoundTestState : IGameState
     private bool _isAutoUp;
     private int _settleTicksLeft;
     private int _repeatTicksLeft;
+    private int _quietTicks;
 
     /// <summary>Opens the page and starts the first sound.</summary>
     /// <param name="services">The attract sequence's shared services.</param>
@@ -142,6 +146,7 @@ public sealed class SoundTestState : IGameState
         Sound.SendDirect(SilenceNumber);
         _settleTicksLeft = SettleTicks;
         _repeatTicksLeft = 0;
+        _quietTicks = 0;
     }
 
     /// <summary>Sends the sound when the board has settled, and starts it again, or moves on in AUTO UP, when it has been left for a while.</summary>
@@ -160,7 +165,8 @@ public sealed class SoundTestState : IGameState
         }
 
         _repeatTicksLeft--;
-        if (_repeatTicksLeft > 0)
+        _quietTicks = Sound.IsPlaying ? 0 : _quietTicks + 1;
+        if (_repeatTicksLeft > 0 || _quietTicks < QuietTicksNeeded)
         {
             return;
         }
