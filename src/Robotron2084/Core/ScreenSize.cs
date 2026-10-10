@@ -26,9 +26,9 @@ namespace Robotron2084.Core;
 /// </summary>
 public static class ScreenSize
 {
-    /// <summary>Arcade (ROM) pixels in one ROM column: the video buffer is addressed as
-    /// <c>column * 256 + row</c> at 4bpp, so a column is two arcade pixels (notes §113).</summary>
-    public const int ArcadePixelsPerColumn = 2;
+    /// <summary>How many arcade pixels fit across one byte of the arcade's video memory. A pixel takes 4 bits, so a byte holds two. The video buffer is addressed as
+    /// <c>column * 256 + row</c>, so one column is one byte across, which is this many arcade pixels (notes §113).</summary>
+    public const int ArcadePixelsPerByte = 2;
 
     /// <summary>How tall the screen the game draws is, in port pixels. It is <see cref="HeightInArcadePixels"/> times <see cref="SpecScale"/>.</summary>
     public const int Height = HeightInArcadePixels * SpecScale;
@@ -58,9 +58,9 @@ public static class ScreenSize
     public static int ToColumnAndRowDistance(IntVector2 from, IntVector2 to) =>
         (Math.Abs(to.X - from.X) / ToPortPixelsFromColumns(1)) + (Math.Abs(to.Y - from.Y) / ToPortPixels(1));
 
-    /// <summary>Changes a number of the arcade's columns into port pixels. A column is <see cref="ArcadePixelsPerColumn"/> arcade pixels wide, and an arcade pixel is <see cref="SpecScale"/> port pixels wide, so one column is 4 port pixels.</summary>
+    /// <summary>Changes a number of the arcade's columns into port pixels. A column is one byte of video memory across, which is <see cref="ArcadePixelsPerByte"/> arcade pixels wide, and an arcade pixel is <see cref="SpecScale"/> port pixels wide, so one column is 4 port pixels.</summary>
     /// <param name="columns">How many columns.</param>
-    public static int ToPortPixelsFromColumns(int columns) => ToPortPixels(columns * ArcadePixelsPerColumn);
+    public static int ToPortPixelsFromColumns(int columns) => ToPortPixels(columns * ArcadePixelsPerByte);
 
     /// <summary>
     /// Largest integer scale at which the playfield fits in the given
