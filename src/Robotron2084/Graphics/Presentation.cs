@@ -5,7 +5,7 @@ namespace Robotron2084.Graphics;
 
 /// <summary>Fits the canvas into a window's client area: one scale for both axes, centred, black bars where it does not fit.</summary>
 /// <remarks>Port-only: the arcade's canvas IS its screen, so it has no fit to choose. The canvas is never
-/// stretched — it keeps the shape <see cref="ScreenSize.SpecWidth"/>:<see cref="ScreenSize.SpecHeight"/>
+/// stretched — it keeps the shape <see cref="ScreenSize.WidthInArcadePixels"/>:<see cref="ScreenSize.HeightInArcadePixels"/>
 /// gives it — and a client area smaller than the canvas crops it rather than scaling below 1x. Pure, so
 /// any client size can be checked without a graphics device.</remarks>
 /// <seealso cref="ScreenSize"/>
