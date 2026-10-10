@@ -7,7 +7,7 @@ namespace Robotron2084.Hud;
 /// page's hatched wall, which is why the arcade's border appears to be drawn rather
 /// than to appear whole:
 /// <list type="number">
-/// <item>the growing pass: two strokes a ROM frame, out from the smallest rectangle,
+/// <item>the growing pass: two strokes a fiftieth of a second, out from the smallest rectangle,
 /// (62,125)-(89,127), to the terminal point (col 6, row 13)-(col 145, row 239); its flavour
 /// starts at `$88` and `GETA` walks it DOWN by `$11` a stroke, so each stroke takes its own
 /// palette slot (see <see cref="HighScoreTableLayout.GetFrameStrokeSlot"/>) and the eight visible
@@ -19,7 +19,7 @@ namespace Robotron2084.Hud;
 /// Both passes draw their first TWO strokes before the first sleep
 /// (<c>LDA #2 / STA PD+15,U</c>, then <c>NAP 1</c> per pair), and a stroke is half a ROM
 /// frame, so this runs on the clock-unit accumulator the entity bodies use (notes §52):
-/// a stroke is 6 clock units = 0.6 ROM frames = 1.2 port ticks.
+/// a stroke is 6 clock units = 0.6 fiftieths of a second = 1.2 port ticks.
 /// </summary>
 public sealed class HighScoreFrameAnimation
 {

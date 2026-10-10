@@ -71,7 +71,7 @@ public sealed class HighScorePageHold
             }
 
             // The hold is over and TAB777's first NAP 4 starts now, so the first switch
-            // read is four ROM frames away.
+            // read is four fiftieths of a second away.
             HoldIsOver = true;
             _checkClockUnits = 0;
             return false;

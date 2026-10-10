@@ -32,7 +32,7 @@ public sealed class InitialsEntryModel
     /// <summary>The blank a cell starts on — the ROM's own space code, stored as each cell becomes current.</summary>
     private const char Blank = ' ';
 
-    /// <summary>LUP/LDOWN's <c>DELAY1</c> loop — 8192 turns of a six-cycle loop, about 49 ms, i.e. two and a half ROM frames.</summary>
+    /// <summary>LUP/LDOWN's <c>DELAY1</c> loop — 8192 turns of a six-cycle loop, about 49 ms, i.e. two and a half fiftieths of a second.</summary>
     private const int CycleWaitClockUnits = ArcadeClock.UnitsPerRomFrame * 5 / 2;
 
     /// <summary>A repeat after those ten costs <c>DELAY1</c> plus LUP's <c>NAP 1</c>. It is the value <see cref="_repeatClockUnits"/> is set to once a letter is cycling steadily.</summary>
@@ -59,7 +59,7 @@ public sealed class InitialsEntryModel
     /// <summary>GETLT5's count for every later one (<c>ADDA #4</c>).</summary>
     private const int LaterTypematicCounts = 4;
 
-    /// <summary>TIMPRC's deadline for one letter: <c>NAP $FF</c> + <c>NAP $FF</c> + <c>NAP $82</c> = 640 ROM frames (12.8 s). <see cref="_timeoutClockUnits"/> is compared with this to tell whether the player has run out of time to choose a letter.</summary>
+    /// <summary>TIMPRC's deadline for one letter: <c>NAP $FF</c> + <c>NAP $FF</c> + <c>NAP $82</c> = 640 fiftieths of a second (12.8 s). <see cref="_timeoutClockUnits"/> is compared with this to tell whether the player has run out of time to choose a letter.</summary>
     private const int LetterTimeoutClockUnits = (0xFF + 0xFF + 0x82) * ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>GETLT1's <c>NAP 2</c>: the main loop reads the switches every two frames. It is the value <see cref="_periodClockUnits"/> is set to in the main waiting loop.</summary>
