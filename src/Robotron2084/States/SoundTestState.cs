@@ -225,13 +225,13 @@ public sealed class SoundTestState : IGameState
 
     private void DrawLarge(SpriteBatch spriteBatch, string text, int y)
     {
-        int width = ScreenSize.ToPortPixels(_sprites.TextRenderer.MeasureLargeText(text));
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(_sprites.TextRenderer.MeasureLargeText(text));
         _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextSlot);
     }
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int y)
     {
-        int width = ScreenSize.ToPortPixels(_sprites.TextRenderer.MeasureSmallText(text));
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(_sprites.TextRenderer.MeasureSmallText(text));
         _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextSlot);
     }
 }

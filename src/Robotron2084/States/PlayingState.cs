@@ -260,7 +260,8 @@ public sealed class PlayingState : IGameState
             contactTest: new PixelContactTest(new SpriteCollision()),
             extraManEveryPoints: _gameSettings.GetExtraManEveryPoints(),
             tankShellBugEnabled: _gameSettings.TankShellBugEnabled,
-            brainsChaseMikeyBugEnabled: _gameSettings.BrainsChaseMikeyBugEnabled);
+            brainsChaseMikeyBugEnabled: _gameSettings.BrainsChaseMikeyBugEnabled,
+            familySlotsLeftOver: _session.FamilySlotsLeftOver);
     }
 
     /// <summary>
@@ -272,6 +273,7 @@ public sealed class PlayingState : IGameState
     {
         PlayerSlot deadPlayerSlot = _session.GetCurrent();
         SyncSlotFromField();
+        NoteFamilySlotsLeftOver();
         deadPlayerSlot.SavedWaveParameters = WaveSurvivors.GetFrom(_field);
 
         if (_session.IsTwoPlayer())
@@ -311,6 +313,7 @@ public sealed class PlayingState : IGameState
     {
         PlayerSlot slot = _session.GetCurrent();
         SyncSlotFromField();
+        NoteFamilySlotsLeftOver();
 
         // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
         slot.Wave = (slot.Wave % WaveCounterWrap) + 1;
@@ -321,4 +324,8 @@ public sealed class PlayingState : IGameState
 
     /// <summary>Copies the live field's counters back into the current player's slot.</summary>
     private void SyncSlotFromField() => _field.SyncInto(_session.GetCurrent());
+
+    /// <summary>Notes which places in the family list still hold a family member, now that this field is over. The next field's hulks pick what to stalk from them.</summary>
+    /// <remarks>Disassembly: the family list at <c>$B354</c> is not cleared when a wave or a life ends, only when the next family is put on (<c>$0200</c>).</remarks>
+    private void NoteFamilySlotsLeftOver() => _session.FamilySlotsLeftOver = _field.GetOccupiedFamilySlots();
 }

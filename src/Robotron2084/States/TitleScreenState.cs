@@ -279,7 +279,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private int GetCenteredX(string text, bool isLarge)
     {
-        int width = ScreenSize.ToPortPixels(isLarge ? _sprites.TextRenderer.MeasureLargeText(text) : _sprites.TextRenderer.MeasureSmallText(text));
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(isLarge ? _sprites.TextRenderer.MeasureLargeText(text) : _sprites.TextRenderer.MeasureSmallText(text));
         return (ScreenSize.Width - width) / 2;
     }
 
@@ -327,7 +327,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         foreach (string option in Options)
         {
             DrawCenteredSmallText(spriteBatch, option, y, TextSlot);
-            y += ScreenSize.ToPortPixels(HudLayout.TitleOptionRowStepPixels);
+            y += ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.TitleOptionRowStepPixels);
         }
     }
 

@@ -186,7 +186,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
                 _sprites.TextRenderer.DrawSmallTableNumber(
                     spriteBatch,
                     entries[rank - 2].Score,
-                    afterRank + ScreenSize.ToPortPixels(HighScoreTableLayout.AllTimeScoreOffsetColumns * 2),
+                    afterRank + ScreenSize.ToPortPixelsFromArcadePixels(HighScoreTableLayout.AllTimeScoreOffsetColumns * 2),
                     y,
                     slot);
             }
@@ -324,7 +324,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
                 _sprites.TextRenderer.DrawLargeTableNumber(
                     spriteBatch,
                     entries[rank - 1].Score,
-                    afterRank + ScreenSize.ToPortPixels(HighScoreTableLayout.TodayScoreOffsetColumns * 2),
+                    afterRank + ScreenSize.ToPortPixelsFromArcadePixels(HighScoreTableLayout.TodayScoreOffsetColumns * 2),
                     y,
                     slot);
             }
@@ -343,7 +343,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, "(", x, y, slot);
         x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, _highScoreTable.Top.Name, x, y, slot);
         x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, ")", x, y, slot);
-        _sprites.TextRenderer.DrawLargeTableNumber(spriteBatch, _highScoreTable.Top.Score, x + ScreenSize.ToPortPixels(HudLayout.HudSmallFontBlankAdvancePixels), y, slot);
+        _sprites.TextRenderer.DrawLargeTableNumber(spriteBatch, _highScoreTable.Top.Score, x + ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudSmallFontBlankAdvancePixels), y, slot);
     }
 
     private void Leave(GameStateManager manager)

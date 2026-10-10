@@ -146,8 +146,8 @@ public sealed class StorylineState : IGameState, IAttractState
                     new Rectangle(
                         HudLayout.ToPortX(exploded.Column * 2),
                         HudLayout.ToPortY(exploded.Row),
-                        ScreenSize.ToPortPixels(animationFrame.Width),
-                        ScreenSize.ToPortPixels(animationFrame.Height))),
+                        ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Width),
+                        ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Height))),
                 Direction8.Left,
                 GetClip()));
         }
@@ -198,8 +198,8 @@ public sealed class StorylineState : IGameState, IAttractState
             var bounds = new Rectangle(
                 HudLayout.ToPortX(item.GetArcadeX()),
                 HudLayout.ToPortY(item.GetArcadeY()),
-                ScreenSize.ToPortPixels(animationFrame.Width),
-                ScreenSize.ToPortPixels(animationFrame.Height));
+                ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Width),
+                ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Height));
 
             if (item.IsMonoActive)
             {
@@ -216,7 +216,7 @@ public sealed class StorylineState : IGameState, IAttractState
     {
         int x = HudLayout.ToPortX(item.GetArcadeX());
         int y = HudLayout.ToPortY(item.GetArcadeY());
-        var bolt = new Rectangle(x, y, ScreenSize.ToPortPixels(_sprites.LaserBarSprite.Width), ScreenSize.ToPortPixels(_sprites.LaserBarSprite.Height));
+        var bolt = new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_sprites.LaserBarSprite.Width), ScreenSize.ToPortPixelsFromArcadePixels(_sprites.LaserBarSprite.Height));
         _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBarSprite, bolt, _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
     }
 

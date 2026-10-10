@@ -154,7 +154,7 @@ public sealed class SettingsState : IGameState
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
     private int GetCenteredX(string text, bool isLarge = false)
     {
-        int width = ScreenSize.ToPortPixels(isLarge ? _sprites.TextRenderer.MeasureLargeText(text) : _sprites.TextRenderer.MeasureSmallText(text));
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(isLarge ? _sprites.TextRenderer.MeasureLargeText(text) : _sprites.TextRenderer.MeasureSmallText(text));
         return (ScreenSize.Width - width) / 2;
     }
 
