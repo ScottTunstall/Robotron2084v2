@@ -1,6 +1,9 @@
 ﻿namespace Robotron2084.Tuning;
 
-/// <summary>How Gorf crosses the screen: how fast, and how long its hops are and how high. Gorf is the author's own robot, so none of these come from the arcade.</summary>
+/// <summary>
+///     How Gorf crosses the screen: how fast, and how long its hops are and how high. Gorf is the author's own robot,
+///     so none of these come from the arcade.
+/// </summary>
 public static class GorfTuning
 {
     /// <summary>How many fiftieths of a second Gorf waits between steps.</summary>
@@ -21,7 +24,10 @@ public static class GorfTuning
     /// <summary>The most grunts Gorf drops at one stop.</summary>
     public const int MaxGruntsPerDrop = 6;
 
-    /// <summary>The fewest grunts a level may hold, whatever the wave brings, so that a Gorf in a wave with no grunts can still drop some.</summary>
+    /// <summary>
+    ///     The fewest grunts a level may hold, whatever the wave brings, so that a Gorf in a wave with no grunts can
+    ///     still drop some.
+    /// </summary>
     public const int MinimumGruntCap = 6;
 
     /// <summary>How far a dropped grunt falls each tick, in port pixels.</summary>

@@ -15,10 +15,10 @@ public static class CruiseMissileTuning
     public const int MarkArcadeHeight = 2;
 
     /// <summary>
-    /// ROM CMMOV's mark: `LDD #$AAAA / LDY OX16,X / STD ,Y` — a 16-BIT write at
-    /// the video address. The video is column-major (`column*256 + row`) with 2 px
-    /// per byte (notes §52), so that paints TWO vertically adjacent addresses,
-    /// each holding 2 px: a **2x2 arcade px** block. The port drew 1x2.
+    ///     ROM CMMOV's mark: `LDD #$AAAA / LDY OX16,X / STD ,Y` — a 16-BIT write at
+    ///     the video address. The video is column-major (`column*256 + row`) with 2 px
+    ///     per byte (notes §52), so that paints TWO vertically adjacent addresses,
+    ///     each holding 2 px: a **2x2 arcade px** block. The port drew 1x2.
     /// </summary>
     public const int MarkArcadeWidth = 2;
 
@@ -28,15 +28,15 @@ public static class CruiseMissileTuning
     // $AA
 
     /// <summary>
-    /// The trail's length in marks — and the thing that stops it being a snake.
-    /// CMMOV keeps a ring of coordinates at `PD+6`..`SPSIZE` stepping by 2
-    /// (`SPSIZE` 31, initialised to `PD+6` = 13 → 13,15,..,29 = NINE entries)
-    /// and, EVERY STEP, erases the screen pixel at the entry it is about to
-    /// overwrite (`LDY #0 / LDA PD5,U / STY [A,U]`): the pixel nine steps back.
-    /// So the missile drags a rolling NINE-MARK tail. `CMKIL` then wipes the
-    /// remaining nine, so the tail vanishes with the missile.
+    ///     The trail's length in marks — and the thing that stops it being a snake.
+    ///     CMMOV keeps a ring of coordinates at `PD+6`..`SPSIZE` stepping by 2
+    ///     (`SPSIZE` 31, initialised to `PD+6` = 13 → 13,15,..,29 = NINE entries)
+    ///     and, EVERY STEP, erases the screen pixel at the entry it is about to
+    ///     overwrite (`LDY #0 / LDA PD5,U / STY [A,U]`): the pixel nine steps back.
+    ///     So the missile drags a rolling NINE-MARK tail. `CMKIL` then wipes the
+    ///     remaining nine, so the tail vanishes with the missile.
     /// </summary>
     public const int TrailMarks = 9;
 
-    public const int TrailSlot = 0x0D;  // $DD
+    public const int TrailSlot = 0x0D; // $DD
 }

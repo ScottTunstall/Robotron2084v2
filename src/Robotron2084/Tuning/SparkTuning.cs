@@ -16,7 +16,10 @@ public static class SparkTuning
     public const int SparkFrameIntervalRomFrames = 4;
 
     /// <summary>The widest aim wobble: from minus this to just under plus this, in columns sideways and rows up and down.</summary>
-    /// <remarks>Original source: <c>RRC11.ASM</c> <c>ENFSHT</c>, <c>ANDB #$1F / ADDB #-$10</c> on both axes. Disassembly: <c>CREATE_SPARK</c> (<c>$1404</c>).</remarks>
+    /// <remarks>
+    ///     Original source: <c>RRC11.ASM</c> <c>ENFSHT</c>, <c>ANDB #$1F / ADDB #-$10</c> on both axes. Disassembly:
+    ///     <c>CREATE_SPARK</c> (<c>$1404</c>).
+    /// </remarks>
     public const int SparkJitterRange = 16;
 
     public const int SparkLeftWallJitterColumns = 16;
@@ -52,7 +55,7 @@ public static class SparkTuning
     // Port units: 1 ROM column = 2 arcade px = ToPortPixelsFromArcadePixels(2) port px = 4 port px,
     // so one frame advances deltaPort/64 port px and the acceleration is
     // a/64 port px per frame of velocity. Both live in 1/256-px fixed point.
-    public const int SparkMoveIntervalRomFrames = 4;   // NAP 4
+    public const int SparkMoveIntervalRomFrames = 4; // NAP 4
 
     // ROM: the delta is covered in 64 frames
 

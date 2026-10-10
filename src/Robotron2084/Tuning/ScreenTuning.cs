@@ -49,9 +49,9 @@ public static class ScreenTuning
 
     // SCRMEP: COLOR $77 = slot 7
     /// <summary>
-    /// ROM RRG23 PLS0D: the "PLAYER n" message is drawn and the game waits
-    /// <c>NAP 115</c> before erasing it — 115 fiftieths of a second at a turn start in a
-    /// 2-player game (1-player games skip it: <c>LDA PLRCNT / DECA / BEQ</c>).
+    ///     ROM RRG23 PLS0D: the "PLAYER n" message is drawn and the game waits
+    ///     <c>NAP 115</c> before erasing it — 115 fiftieths of a second at a turn start in a
+    ///     2-player game (1-player games skip it: <c>LDA PLRCNT / DECA / BEQ</c>).
     /// </summary>
     public const int PlayerTurnMessageRomFrames = 115;
 

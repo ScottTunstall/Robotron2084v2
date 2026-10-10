@@ -11,9 +11,9 @@ public static class PlayerTuning
     public const int InvincibilityFlickerVisibleTicks = 4;
 
     /// <summary>
-    /// The palette slot the laser sprites are drawn in: every lit nibble of the ROM's four laser sprites
-    /// (R5 $35C1-$35DC) is <c>$A</c>, the LASER FLASH entry (RRS22 <c>LF</c>), which flashes white and a random
-    /// colour of <c>COLTAB</c> every few frames.
+    ///     The palette slot the laser sprites are drawn in: every lit nibble of the ROM's four laser sprites
+    ///     (R5 $35C1-$35DC) is <c>$A</c>, the LASER FLASH entry (RRS22 <c>LF</c>), which flashes white and a random
+    ///     colour of <c>COLTAB</c> every few frames.
     /// </summary>
     public const int LaserSlot = 10;
 
@@ -21,9 +21,9 @@ public static class PlayerTuning
     public const int LaserSpeed = 12;
 
     /// <summary>
-    /// A press fires immediately (the arcade's rising edge) and HOLDING the fire
-    /// button re-fires every this many ticks; the 3-laser SLOT cap (LaserSlots)
-    /// is the real binding limit.
+    ///     A press fires immediately (the arcade's rising edge) and HOLDING the fire
+    ///     button re-fires every this many ticks; the 3-laser SLOT cap (LaserSlots)
+    ///     is the real binding limit.
     /// </summary>
     public const int PlayerAutoFireTicks = 12;
 
@@ -75,12 +75,13 @@ public static class PlayerTuning
     public static readonly int[] PlayerDeathFlashSlots = [0x00, 0x01, 0x03, 0x07];
 
     /// <summary>
-    /// TEMPORARY playtest aid: the player cannot be
-    /// killed at all, so new robot types (brains/progs/missiles) can be
-    /// playtested across whole waves. TURN THIS OFF (and re-verify the
-    /// gates) once the gameplay is confirmed working.
+    ///     TEMPORARY playtest aid: the player cannot be
+    ///     killed at all, so new robot types (brains/progs/missiles) can be
+    ///     playtested across whole waves. TURN THIS OFF (and re-verify the
+    ///     gates) once the gameplay is confirmed working.
     /// </summary>
-    public static bool PlayerInvincibleForTesting => true; // flip to false when playtesting is done (a property, not const, so the guard below doesn't fold to unreachable)
+    public static bool PlayerInvincibleForTesting =>
+        true; // flip to false when playtesting is done (a property, not const, so the guard below doesn't fold to unreachable)
 
     // spec-stated ("the PLAYER is awarded 3 lives")
 

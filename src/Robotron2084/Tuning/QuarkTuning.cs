@@ -15,7 +15,7 @@ public static class QuarkTuning
     //           otherwise taken from the seed bit (X: set = negative, Y: set =
     //           positive; the opposite polarity decorrelates the axes).
     //   beat:   NAP 3, and PD7 counts down in BEATS to the next SQVEL.
-    public const int BeatIntervalRomFrames = 4;      // NAP 3 + the beat vblank
+    public const int BeatIntervalRomFrames = 4; // NAP 3 + the beat vblank
 
     /// <summary>How far above the bottom edge, in rows, a fleeing quark is counted as gone.</summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQ3L</c>, <c>YMAX-16</c>.</remarks>
@@ -24,13 +24,14 @@ public static class QuarkTuning
     /// <summary>How far below the top edge, in rows, a fleeing quark is counted as gone.</summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQ3L</c>, <c>YMIN+2</c>.</remarks>
     public const int FleeExitLowRows = 2;
+
     public const int FleeVelocityRom = 0x0200;
     public const int ReaimMaxBeats = 32;
     public const int TotalAnimationFrames = 9;
     public const int TravelAnimationFrames = 5;
-    public const int VelocityXScale = 4;    // ROM: two ASLB/ROLA pairs
+    public const int VelocityXScale = 4; // ROM: two ASLB/ROLA pairs
 
-    public const int VelocityYScale = 8;    // ROM: three
+    public const int VelocityYScale = 8; // ROM: three
 
     // ROM PD7 = (SEED & $1F) + 1
 

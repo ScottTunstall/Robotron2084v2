@@ -24,7 +24,7 @@ public static class ProgTuning
     // $00 — black
 
     public const int GhostShapeSlot = 0x00;
-    public const int ShapeSlot = 0x0A;        // $AA
+    public const int ShapeSlot = 0x0A; // $AA
 
     // $EE
 

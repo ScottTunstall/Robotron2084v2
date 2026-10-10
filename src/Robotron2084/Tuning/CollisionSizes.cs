@@ -29,21 +29,28 @@ public static class CollisionSizes
     public static readonly (int Width, int Height) BrainCollisionSize = (14, 16);
 
     /// <summary>
-    /// ROM CMMOV: `SUBD #$0101 / STD OBJX,X` — the FAT collision box, `CMPIC
-    /// FCB 3,4` = 3 BYTES x 4 rows = **6x4 px**, whose top-left sits ONE COLUMN
-    /// and ONE ROW up-left of the missile's true coordinate. The port used a 4x4
-    /// box with no offset. (The box is collision-only: `CMPIC`/`CMP1` are never
-    /// blitted — notes §49.)
+    ///     ROM CMMOV: `SUBD #$0101 / STD OBJX,X` — the FAT collision box, `CMPIC
+    ///     FCB 3,4` = 3 BYTES x 4 rows = **6x4 px**, whose top-left sits ONE COLUMN
+    ///     and ONE ROW up-left of the missile's true coordinate. The port used a 4x4
+    ///     box with no offset. (The box is collision-only: `CMPIC`/`CMP1` are never
+    ///     blitted — notes §49.)
     /// </summary>
     public static readonly (int Width, int Height) CruiseMissileCollisionSize = (6, 4);
 
     public static readonly (int Width, int Height) DaddyCollisionSize = (10, 13);
 
-    /// <summary>How big each shape of electrode is, in arcade pixels, in the order of the shapes. Most are 10 by 9. The thin one is 6 by 9, the "2084" one is 18 by 7, and the last is 10 by 10.</summary>
-    /// <remarks>Disassembly: the first two bytes of each 16-byte entry from <c>$3B05</c> to <c>$3B85</c>, which are the width in bytes (two arcade pixels each) and the height in rows: <c>05 09</c>, and <c>03 09</c> at <c>$3B45</c>, <c>09 07</c> at <c>$3B65</c> and <c>05 0A</c> at <c>$3B85</c>.</remarks>
+    /// <summary>
+    ///     How big each shape of electrode is, in arcade pixels, in the order of the shapes. Most are 10 by 9. The thin
+    ///     one is 6 by 9, the "2084" one is 18 by 7, and the last is 10 by 10.
+    /// </summary>
+    /// <remarks>
+    ///     Disassembly: the first two bytes of each 16-byte entry from <c>$3B05</c> to <c>$3B85</c>, which are the width
+    ///     in bytes (two arcade pixels each) and the height in rows: <c>05 09</c>, and <c>03 09</c> at <c>$3B45</c>,
+    ///     <c>09 07</c> at <c>$3B65</c> and <c>05 0A</c> at <c>$3B85</c>.
+    /// </remarks>
     public static readonly (int Width, int Height)[] ElectrodeCollisionSizeByVariant =
     [
-        (10, 9), (10, 9), (10, 9), (10, 9), (6, 9), (10, 9), (18, 7), (10, 9), (10, 10),
+        (10, 9), (10, 9), (10, 9), (10, 9), (6, 9), (10, 9), (18, 7), (10, 9), (10, 10)
     ];
 
     public static readonly (int Width, int Height) EnforcerCollisionSize = (10, 11);
@@ -70,11 +77,11 @@ public static class CollisionSizes
     public static readonly (int Width, int Height) PlayerCollisionSize = (8, 12);
 
     /// <summary>
-    /// ROM PGXPIC: `FCB 6,16` — the prog's PHONY burst card, 6 BYTES x 16 rows =
-    /// 12x16 px. PRGKIL swaps the object's sprite descriptor to this card and then
-    /// calls the ordinary `EXST`, so the card is what the strip explosion shatters,
-    /// and `EXSTV` sizes its record from the sprite — see
-    /// <see cref="Entities.Prog.GetExplosionBounds()"/> (notes §90).
+    ///     ROM PGXPIC: `FCB 6,16` — the prog's PHONY burst card, 6 BYTES x 16 rows =
+    ///     12x16 px. PRGKIL swaps the object's sprite descriptor to this card and then
+    ///     calls the ordinary `EXST`, so the card is what the strip explosion shatters,
+    ///     and `EXSTV` sizes its record from the sprite — see
+    ///     <see cref="Entities.Prog.GetExplosionBounds()" /> (notes §90).
     /// </summary>
     public static readonly (int Width, int Height) ProgBurstSize = (12, 16);
 
@@ -89,10 +96,10 @@ public static class CollisionSizes
     public static readonly (int Width, int Height) TankCollisionSize = (14, 16);
 
     /// <summary>
-    /// ROM `SHLP1 FCB 4,7` — the shell's sprite is 4 BYTES wide (a byte is 2 px)
-    /// by 7 rows = **8x7 px**, and the ROM bounds and collides a projectile against
-    /// the animation frame it is showing (notes §53). The port used the spec's square 4x4
-    /// missile box while drawing a wrongly-sized 14x16 extraction into it.
+    ///     ROM `SHLP1 FCB 4,7` — the shell's sprite is 4 BYTES wide (a byte is 2 px)
+    ///     by 7 rows = **8x7 px**, and the ROM bounds and collides a projectile against
+    ///     the animation frame it is showing (notes §53). The port used the spec's square 4x4
+    ///     missile box while drawing a wrongly-sized 14x16 extraction into it.
     /// </summary>
     public static readonly (int Width, int Height) TankShellCollisionSize = (8, 7);
 
