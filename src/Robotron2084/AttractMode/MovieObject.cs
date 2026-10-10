@@ -3,16 +3,15 @@ using Robotron2084.Core;
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-/// One object in the attract movie (notes §95.3): a sprite, a position, a
-/// velocity, and (for the walking characters) a walker state. The movie's
-/// objects are the ROM's `OBJ` blocks — plain data; the process that drives one
-/// lives in <see cref="AttractObjectMachine"/>.
-///
-/// Coordinates are the ROM's: <see cref="XSubpixels"/> counts 1/256 COLUMNS and
-/// <see cref="YSubpixels"/> counts 1/256 ROWS, so the integer column is
-/// <c>XSubpixels / 256</c> (one column = 2 arcade px) and the integer row is
-/// <c>YSubpixels / 256</c>. That is the ROM's `OX16`/`OY16` pair, which packs into its
-/// screen address as `column*256 + row`.
+///     One object in the attract movie (notes §95.3): a sprite, a position, a
+///     velocity, and (for the walking characters) a walker state. The movie's
+///     objects are the ROM's `OBJ` blocks — plain data; the process that drives one
+///     lives in <see cref="AttractObjectMachine" />.
+///     Coordinates are the ROM's: <see cref="XSubpixels" /> counts 1/256 COLUMNS and
+///     <see cref="YSubpixels" /> counts 1/256 ROWS, so the integer column is
+///     <c>XSubpixels / 256</c> (one column = 2 arcade px) and the integer row is
+///     <c>YSubpixels / 256</c>. That is the ROM's `OX16`/`OY16` pair, which packs into its
+///     screen address as `column*256 + row`.
 /// </summary>
 public sealed record MovieObject
 {
@@ -25,7 +24,7 @@ public sealed record MovieObject
         YSubpixels = ySubpixels;
     }
 
-    /// <summary>The sprite set. Null for the movie's laser bolts (see <see cref="IsLaser"/>).</summary>
+    /// <summary>The sprite set. Null for the movie's laser bolts (see <see cref="IsLaser" />).</summary>
     public MovieDescriptor? Descriptor { get; set; }
 
     /// <summary>A left/right laser bolt fired by LFIRE/RFIRE — drawn as the laser, killed on its timer.</summary>
@@ -50,9 +49,9 @@ public sealed record MovieObject
     public int YVelocitySubpixels { get; set; }
 
     /// <summary>
-    /// Whether the object is on the ROM's object LIST — HIB clears it (the object
-    /// keeps its identity but is neither drawn nor moved) and REBORN sets it
-    /// again. MONO hides its object for the same reason.
+    ///     Whether the object is on the ROM's object LIST — HIB clears it (the object
+    ///     keeps its identity but is neither drawn nor moved) and REBORN sets it
+    ///     again. MONO hides its object for the same reason.
     /// </summary>
     public bool IsOnList { get; set; } = true;
 
@@ -76,14 +75,26 @@ public sealed record MovieObject
 
     /// <summary>The object's drawn position as arcade pixels — the ROM's `OBJX`/`OBJY`.</summary>
     /// <summary>The integer column (the ROM's `OBJX`).</summary>
-    public int GetColumn() => XSubpixels >> 8;
+    public int GetColumn()
+    {
+        return XSubpixels >> 8;
+    }
 
     /// <summary>The integer row, including the shake (the ROM's `OBJY`).</summary>
-    public int GetRow() => (YSubpixels >> 8) + ShakeRowOffset;
+    public int GetRow()
+    {
+        return (YSubpixels >> 8) + ShakeRowOffset;
+    }
 
     /// <summary>The column as arcade pixels.</summary>
-    public int GetArcadeX() => GetColumn() * ScreenSize.ArcadePixelsPerByte;
+    public int GetArcadeX()
+    {
+        return GetColumn() * ScreenSize.ArcadePixelsPerByte;
+    }
 
     /// <summary>The row as arcade pixels.</summary>
-    public int GetArcadeY() => GetRow();
+    public int GetArcadeY()
+    {
+        return GetRow();
+    }
 }

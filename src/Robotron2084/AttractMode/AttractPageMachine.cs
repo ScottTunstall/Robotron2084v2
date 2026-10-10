@@ -4,19 +4,23 @@ using Robotron2084.Level.Attract;
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-/// The attract movie's PAGE-script interpreter (notes §95.2): the ROM's SPWAKE
-/// loop, which walks a byte stream that is one third text, one third actions and
-/// one third sleeps:
-/// <list type="bullet">
-/// <item>a byte below 10 is an action — CURSAB, CLEARM, NEWLIN, SCRPT, SNOOZE,
-/// MESS, DONE, COLOR, GRUNTS, DONE2;</item>
-/// <item>a byte of $5F or more is a sleep that many fiftieths of a second;</item>
-/// <item>anything else is a character to blit in the LARGE font — one every
-/// three frames, exactly the ROM's `NAP 3`.</item>
-/// </list>
-/// It drives the object machine (SCRPT/FORK/GRUNTS) and builds the text layer the
-/// renderer draws. Timing is the ROM's frame clock: one <see cref="StepFrame"/>
-/// per fiftieth of a second.
+///     The attract movie's PAGE-script interpreter (notes §95.2): the ROM's SPWAKE
+///     loop, which walks a byte stream that is one third text, one third actions and
+///     one third sleeps:
+///     <list type="bullet">
+///         <item>
+///             a byte below 10 is an action — CURSAB, CLEARM, NEWLIN, SCRPT, SNOOZE,
+///             MESS, DONE, COLOR, GRUNTS, DONE2;
+///         </item>
+///         <item>a byte of $5F or more is a sleep that many fiftieths of a second;</item>
+///         <item>
+///             anything else is a character to blit in the LARGE font — one every
+///             three frames, exactly the ROM's `NAP 3`.
+///         </item>
+///     </list>
+///     It drives the object machine (SCRPT/FORK/GRUNTS) and builds the text layer the
+///     renderer draws. Timing is the ROM's frame clock: one <see cref="StepFrame" />
+///     per fiftieth of a second.
 /// </summary>
 public sealed class AttractPageMachine
 {
@@ -32,7 +36,10 @@ public sealed class AttractPageMachine
     /// <summary>The ROM's `MESHIT` = row $D8: the score row the name popups use.</summary>
     public const int MessageRow = 216;
 
-    /// <summary>The ROM's `LEFT` = $14 columns = 40 arcade pixels — the text margin. It is the starting value of <see cref="_cursorX"/>.</summary>
+    /// <summary>
+    ///     The ROM's `LEFT` = $14 columns = 40 arcade pixels — the text margin. It is the starting value of
+    ///     <see cref="_cursorX" />.
+    /// </summary>
     public const int TextLeft = 40;
 
     /// <summary>The ROM's `GSTRTS`: the four grunt personalities.</summary>
@@ -43,9 +50,9 @@ public sealed class AttractPageMachine
     private readonly byte[] _scriptBytes;
     private readonly List<MovieTextCell> _textCells = [];
     private int _cursorX = TextLeft;
-    private int _cursorY = 0;
-    private int _gruntsLeft;
+    private int _cursorY;
     private int _gruntTimer;
+    private int _gruntsLeft;
     private int _scriptIndex;
     private int _waitRomFrames;
 
@@ -73,10 +80,7 @@ public sealed class AttractPageMachine
     {
         SpawnQueuedGrunts();
 
-        if (_waitRomFrames > 0 && --_waitRomFrames > 0)
-        {
-            return;
-        }
+        if (_waitRomFrames > 0 && --_waitRomFrames > 0) return;
 
         while (!IsFinished)
         {
@@ -86,14 +90,11 @@ public sealed class AttractPageMachine
                 return;
             }
 
-            byte opcode = _scriptBytes[_scriptIndex++];
+            var opcode = _scriptBytes[_scriptIndex++];
             if (opcode <= 9)
             {
                 RunAction(opcode);
-                if (_waitRomFrames > 0 || IsFinished)
-                {
-                    return;
-                }
+                if (_waitRomFrames > 0 || IsFinished) return;
 
                 continue;
             }
@@ -111,24 +112,27 @@ public sealed class AttractPageMachine
     }
 
     /// <summary>The ROM's font codes to the port's characters (the font table's order).</summary>
-    private static char? DecodeCharacter(byte code) => code switch
+    private static char? DecodeCharacter(byte code)
     {
-        0x3A => ' ',
-        0x3B => '!',
-        0x3C => ',',
-        0x3D => '.',
-        0x3F => ':',
-        0x40 => '-',
-        0x5B => '(',
-        0x5C => ')',
-        >= 0x30 and <= 0x39 => (char)code,
-        >= 0x41 and <= 0x5A => (char)code,
-        _ => null,
-    };
+        return code switch
+        {
+            0x3A => ' ',
+            0x3B => '!',
+            0x3C => ',',
+            0x3D => '.',
+            0x3F => ':',
+            0x40 => '-',
+            0x5B => '(',
+            0x5C => ')',
+            >= 0x30 and <= 0x39 => (char)code,
+            >= 0x41 and <= 0x5A => (char)code,
+            _ => null
+        };
+    }
 
     private static string GetMessageText(int number)
     {
-        int index = number - AttractMovieData.FirstMessageNumber;
+        var index = number - AttractMovieData.FirstMessageNumber;
         return index >= 0 && index < AttractMovieData.Messages.Length
             ? AttractMovieData.Messages[index]
             : string.Empty;
@@ -144,40 +148,36 @@ public sealed class AttractPageMachine
         if (Message is { } message &&
             message.X >= x && message.X < x + width &&
             message.Y >= y && message.Y < y + height)
-        {
             Message = null;
-        }
     }
 
-    private byte NextByte() => _scriptBytes[_scriptIndex++];
+    private byte NextByte()
+    {
+        return _scriptBytes[_scriptIndex++];
+    }
 
-    private int NextWord() => (NextByte() << 8) | NextByte();
+    private int NextWord()
+    {
+        return (NextByte() << 8) | NextByte();
+    }
 
     /// <summary>
-    /// ROM `BLIT_LARGE_CHARACTER`: the pen advances (width + 1) pixels, and a code
-    /// outside $30..$5E draws nothing at all (the routine returns before its
-    /// `LEAX`). A space arrives as $20 and is substituted with the table's blank
-    /// glyph at $3A first.
+    ///     ROM `BLIT_LARGE_CHARACTER`: the pen advances (width + 1) pixels, and a code
+    ///     outside $30..$5E draws nothing at all (the routine returns before its
+    ///     `LEAX`). A space arrives as $20 and is substituted with the table's blank
+    ///     glyph at $3A first.
     /// </summary>
     private void PrintCharacter(byte code)
     {
-        if (code == 0x20)
-        {
-            code = 0x3A;
-        }
+        if (code == 0x20) code = 0x3A;
 
-        if (code < 0x30 || code > 0x5E)
-        {
-            return;
-        }
+        if (code < 0x30 || code > 0x5E) return;
 
-        char? character = DecodeCharacter(code);
+        var character = DecodeCharacter(code);
         if (character is not null)
         {
             if (_textCells.Count > 0 && _textCells[^1].X == _cursorX && _textCells[^1].Y == _cursorY)
-            {
                 _textCells.RemoveAt(_textCells.Count - 1);
-            }
 
             _textCells.Add(new MovieTextCell(_cursorX, _cursorY, character.Value, TextSlot));
         }
@@ -185,7 +185,7 @@ public sealed class AttractPageMachine
         _cursorX += AttractMovieData.FontWidths[code - 0x30] + 1;
     }
 
-    /// <summary>Runs a page-script action: the flow opcodes here, the text opcodes in <see cref="RunTextAction"/>.</summary>
+    /// <summary>Runs a page-script action: the flow opcodes here, the text opcodes in <see cref="RunTextAction" />.</summary>
     private void RunAction(byte opcode)
     {
         switch (opcode)
@@ -225,14 +225,14 @@ public sealed class AttractPageMachine
                 return;
 
             case 1: // CLEARM — cursor to the left margin on the given row, clear the block.
-                {
-                    int row = NextByte();
-                    int range = NextByte();
-                    _cursorX = TextLeft;
-                    _cursorY = row;
-                    ClearTextCells(TextLeft, ClearTopRow, ClearWidth, range - 0x10);
-                    return;
-                }
+            {
+                int row = NextByte();
+                int range = NextByte();
+                _cursorX = TextLeft;
+                _cursorY = row;
+                ClearTextCells(TextLeft, ClearTopRow, ClearWidth, range - 0x10);
+                return;
+            }
 
             case 2: // NEWLIN
                 _cursorX = TextLeft;
@@ -240,17 +240,17 @@ public sealed class AttractPageMachine
                 return;
 
             case 5: // MESS — a name popup in the score row.
-                {
-                    int x = NextByte() * ScreenSize.ArcadePixelsPerByte;
-                    int number = NextByte();
-                    ClearTextCells(TextLeft, MessageRow, ClearWidth, MessageHeight);
-                    Message = new MovieMessage(
-                        x,
-                        MessageRow,
-                        GetMessageText(number),
-                        TextSlot);
-                    return;
-                }
+            {
+                var x = NextByte() * ScreenSize.ArcadePixelsPerByte;
+                int number = NextByte();
+                ClearTextCells(TextLeft, MessageRow, ClearWidth, MessageHeight);
+                Message = new MovieMessage(
+                    x,
+                    MessageRow,
+                    GetMessageText(number),
+                    TextSlot);
+                return;
+            }
 
             case 7: // COLOR — the text's palette slot (a doubled nibble like $AA).
                 TextSlot = NextByte() >> 4;
@@ -260,15 +260,9 @@ public sealed class AttractPageMachine
 
     private void SpawnQueuedGrunts()
     {
-        if (_gruntsLeft <= 0)
-        {
-            return;
-        }
+        if (_gruntsLeft <= 0) return;
 
-        if (--_gruntTimer > 0)
-        {
-            return;
-        }
+        if (--_gruntTimer > 0) return;
 
         _gruntTimer = 16;
         _gruntsLeft--;

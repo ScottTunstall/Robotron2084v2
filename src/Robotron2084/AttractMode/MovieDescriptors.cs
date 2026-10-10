@@ -1,9 +1,9 @@
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-/// The ROM's movie descriptors, keyed by the address the scripts pass to SETOB
-/// (notes §95.6). Every entry was read out of the R5 image: the sprite-table
-/// pointers, the animation frame counts and the walk tables.
+///     The ROM's movie descriptors, keyed by the address the scripts pass to SETOB
+///     (notes §95.6). Every entry was read out of the R5 image: the sprite-table
+///     pointers, the animation frame counts and the walk tables.
 /// </summary>
 public static class MovieDescriptors
 {
@@ -42,19 +42,15 @@ public static class MovieDescriptors
         (Tank, new MovieDescriptor(MovieAnimation.Tank, 4)),
         (Points, new MovieDescriptor(MovieAnimation.Points, 5)),
         (Skull, new MovieDescriptor(MovieAnimation.Skull, 1)),
-        (Cruise, new MovieDescriptor(MovieAnimation.Cruise, 1)),
+        (Cruise, new MovieDescriptor(MovieAnimation.Cruise, 1))
     ];
 
     /// <summary>Resolves a SETOB operand, or null when the address is not a movie descriptor.</summary>
     public static MovieDescriptor? Resolve(int address)
     {
-        foreach ((int addr, MovieDescriptor descriptor) in All)
-        {
+        foreach (var (addr, descriptor) in All)
             if (addr == address)
-            {
                 return descriptor;
-            }
-        }
 
         return null;
     }

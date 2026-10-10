@@ -4,24 +4,26 @@ using Robotron2084.Level.Attract;
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-/// The attract movie's OBJECT-script interpreter (notes §95.3): the ROM's second
-/// scripting level — the one that animates every character in the storyline:
-/// the family walking on, the hero's stroll and gunfire, the grunts, the hulk's
-/// bounce, the spheroid/tank/enforcer scene, the brain's reprogramming box and
-/// the score electrodes.
-///
-/// It runs the ROM's own bytes (<see cref="AttractMovieData.Scripts"/>) with the
-/// ROM's own opcodes at the ROM's own frame clock: one <see cref="StepFrame"/>
-/// call per fiftieth of a second. The one thing the ROM's listings leave implicit here is
-/// the per-frame velocity integrator — the movie's `SETXV`/`SETYV` are read by
-/// the object refresh (the same `OPB80` mover the playfield uses, notes §93),
-/// and MONO moves its OWN hidden object explicitly because `HIB` has taken that
-/// object off the list. So: every object that is ON the list integrates its
-/// velocity each frame, and MONO integrates in whole columns on its own.
+///     The attract movie's OBJECT-script interpreter (notes §95.3): the ROM's second
+///     scripting level — the one that animates every character in the storyline:
+///     the family walking on, the hero's stroll and gunfire, the grunts, the hulk's
+///     bounce, the spheroid/tank/enforcer scene, the brain's reprogramming box and
+///     the score electrodes.
+///     It runs the ROM's own bytes (<see cref="AttractMovieData.Scripts" />) with the
+///     ROM's own opcodes at the ROM's own frame clock: one <see cref="StepFrame" />
+///     call per fiftieth of a second. The one thing the ROM's listings leave implicit here is
+///     the per-frame velocity integrator — the movie's `SETXV`/`SETYV` are read by
+///     the object refresh (the same `OPB80` mover the playfield uses, notes §93),
+///     and MONO moves its OWN hidden object explicitly because `HIB` has taken that
+///     object off the list. So: every object that is ON the list integrates its
+///     velocity each frame, and MONO integrates in whole columns on its own.
 /// </summary>
 public sealed class AttractObjectMachine
 {
-    /// <summary>The ANA* walker's `NAP 8` (notes §95.7) — fiftieths of a second per walk step. It is the value the machine's <see cref="MovieProcess.WaitRomFrames"/> is set to between walk steps.</summary>
+    /// <summary>
+    ///     The ANA* walker's `NAP 8` (notes §95.7) — fiftieths of a second per walk step. It is the value the machine's
+    ///     <see cref="MovieProcess.WaitRomFrames" /> is set to between walk steps.
+    /// </summary>
     public const int WalkStepRomFrames = 8;
 
     /// <summary>ROM `EXPP` stores ACTHIT+6 into the explosion's centre row.</summary>
@@ -42,15 +44,9 @@ public sealed class AttractObjectMachine
     private readonly Random _random;
     private readonly byte[] _scriptBytes = AttractMovieData.Scripts;
 
-    public AttractObjectMachine(Random random) => _random = random;
-
-    private enum MovieAction
+    public AttractObjectMachine(Random random)
     {
-        None,
-        Walk,
-        Cycle,
-        Mono,
-        ReprogramShake,
+        _random = random;
     }
 
     /// <summary>Every live object, in spawn order (laser bolts included).</summary>
@@ -70,7 +66,7 @@ public sealed class AttractObjectMachine
         var process = new MovieProcess
         {
             Object = new MovieObject(null, 0, 0, 0),
-            ScriptIndex = scriptAddress - AttractMovieData.ScriptBase,
+            ScriptIndex = scriptAddress - AttractMovieData.ScriptBase
         };
         _objects.Add(process.Object);
         _processes.Add(process);
@@ -84,31 +80,25 @@ public sealed class AttractObjectMachine
         // A script can FORK/GHOST while it runs, which appends to the process
         // list: walk only what existed when the frame started (a new process
         // begins on the next frame — one frame is invisible in the movie).
-        int processCount = _processes.Count;
-        for (int i = 0; i < processCount; i++)
-        {
+        var processCount = _processes.Count;
+        for (var i = 0; i < processCount; i++)
             if (_processes[i].IsAlive)
-            {
                 _processes[i].Step(this);
-            }
-        }
 
         _objects.RemoveAll(item => item.IsDead || (item.IsLaser && item.LaserRomFramesLeft <= 0));
         _processes.RemoveAll(p => !p.IsAlive);
     }
 
     /// <summary>
-    /// The ROM's object mover (RRS22 <c>OPRC80</c>/<c>OPB80</c>): a step whose new column is left of <c>XMIN</c>, or whose
-    /// right edge would pass <c>XMAX</c>, is refused, so a bolt stops at the wall and waits there for its timer.
+    ///     The ROM's object mover (RRS22 <c>OPRC80</c>/<c>OPB80</c>): a step whose new column is left of <c>XMIN</c>, or whose
+    ///     right edge would pass <c>XMAX</c>, is refused, so a bolt stops at the wall and waits there for its timer.
     /// </summary>
     internal static void MoveLaserWithinTheWalls(MovieObject laser)
     {
-        int next = laser.XSubpixels + laser.XVelocitySubpixels;
-        int column = next >> 8;
+        var next = laser.XSubpixels + laser.XVelocitySubpixels;
+        var column = next >> 8;
         if (column >= PlayfieldMinColumn && column + LaserWidthColumns <= PlayfieldMaxColumn + 1)
-        {
             laser.XSubpixels = next;
-        }
     }
 
     /// <summary>MONOP: hide the object, then every third frame move it in whole columns and box it.</summary>
@@ -124,12 +114,9 @@ public sealed class AttractObjectMachine
     /// <summary>Integrates every live object's velocity for one frame; laser bolts stop at the walls and age.</summary>
     private void MoveObjects()
     {
-        foreach (MovieObject item in _objects)
+        foreach (var item in _objects)
         {
-            if (item.IsDead)
-            {
-                continue;
-            }
+            if (item.IsDead) continue;
 
             if (item.IsLaser)
             {
@@ -146,13 +133,56 @@ public sealed class AttractObjectMachine
         }
     }
 
-    private int RollUpTo(int exclusive) => _random.Next(exclusive);
+    private int RollUpTo(int exclusive)
+    {
+        return _random.Next(exclusive);
+    }
+
+    private byte Read(MovieProcess process)
+    {
+        return _scriptBytes[process.ScriptIndex++];
+    }
+
+    private int ReadSignedWord(MovieProcess process)
+    {
+        return (short)ReadWord(process);
+    }
+
+    private int ReadWord(MovieProcess process)
+    {
+        return (Read(process) << 8) | Read(process);
+    }
+
+    /// <summary>
+    ///     The ROM's `RIGFIR`/`LEFFIR`: a bolt two columns ahead of the muzzle (right)
+    ///     or one column behind it (left), six rows down, moving ±$0280 a frame, and
+    ///     living the LFIRE/RFIRE operand's frame count.
+    /// </summary>
+    private void SpawnLaser(MovieObject source, int lifetime, bool firesRight)
+    {
+        var column = (source.XSubpixels >> 8) + (firesRight ? 2 : -1);
+        _objects.Add(new MovieObject(null, 0, column << 8, source.YSubpixels + (6 << 8))
+        {
+            IsLaser = true,
+            LaserRomFramesLeft = lifetime,
+            XVelocitySubpixels = firesRight ? 0x0280 : -0x0280
+        });
+    }
+
+    private enum MovieAction
+    {
+        None,
+        Walk,
+        Cycle,
+        Mono,
+        ReprogramShake
+    }
 
     private sealed record MovieProcess
     {
         public required MovieObject Object { get; init; }
 
-        /// <summary>Index into <see cref="AttractMovieData.Scripts"/> (scripts address it by ROM address).</summary>
+        /// <summary>Index into <see cref="AttractMovieData.Scripts" /> (scripts address it by ROM address).</summary>
         public int ScriptIndex { get; set; }
 
         public int WaitRomFrames { get; set; }
@@ -182,18 +212,12 @@ public sealed class AttractObjectMachine
         /// <summary>One step of this process.</summary>
         public void Step(AttractObjectMachine machine)
         {
-            if (WaitRomFrames > 0 && --WaitRomFrames > 0)
-            {
-                return;
-            }
+            if (WaitRomFrames > 0 && --WaitRomFrames > 0) return;
 
             if (Action != MovieAction.None)
             {
                 RunAction(machine);
-                if (WaitRomFrames > 0 || !IsAlive || Action != MovieAction.None)
-                {
-                    return;
-                }
+                if (WaitRomFrames > 0 || !IsAlive || Action != MovieAction.None) return;
 
                 // The action finished: the ROM returns into the script loop with
                 // `JMP [LEV2,U]`, i.e. the next opcode runs in this same pass.
@@ -207,24 +231,24 @@ public sealed class AttractObjectMachine
         // ---- the ROM's object opcodes (notes §95.3, the R5 $7B58 table) -----
 
         /// <summary>
-        /// Runs the opcode at the script cursor (notes §95.3) and returns true while the
-        /// process should keep reading — the ROM's <c>JMP [LEV2,U]</c> — or false when the
-        /// opcode has slept it or ended it. The ROM's table is a 28-entry vector list; here
-        /// it is split into the families it already reads as, so that no one method is a
-        /// wall of cases.
+        ///     Runs the opcode at the script cursor (notes §95.3) and returns true while the
+        ///     process should keep reading — the ROM's <c>JMP [LEV2,U]</c> — or false when the
+        ///     opcode has slept it or ended it. The ROM's table is a 28-entry vector list; here
+        ///     it is split into the families it already reads as, so that no one method is a
+        ///     wall of cases.
         /// </summary>
         private bool ReadOp(AttractObjectMachine machine)
         {
             int opcode = machine.Read(this);
             return opcode switch
             {
-                <= 6 => ReadObjectOp(machine, opcode),    // 0 NOP · 1 SETOB · 2 SETIM · 3-6 M*
+                <= 6 => ReadObjectOp(machine, opcode), // 0 NOP · 1 SETOB · 2 SETIM · 3-6 M*
                 <= 9 => ReadPlacementOp(machine, opcode), // 7 SETPOS · 8 SETXV · 9 SETYV
                 <= 13 => ReadLifetimeOp(machine, opcode), // 10 CYCLE · 11 REST · 12 DIE · 13 EXP
-                <= 19 => ReadFlowOp(machine, opcode),     // 14-17 JUMP/HIB/REBORN/FORK · 18-19 FIRE
-                <= 21 => ReadLoopOp(machine, opcode),     // 20 LOOPER · 21 GHOST
-                <= 27 => ReadStateOp(machine, opcode),    // 22-27 SETRP · GDIE · INCIM · MONO…
-                _ => HaltOnUnknownOpcode(),
+                <= 19 => ReadFlowOp(machine, opcode), // 14-17 JUMP/HIB/REBORN/FORK · 18-19 FIRE
+                <= 21 => ReadLoopOp(machine, opcode), // 20 LOOPER · 21 GHOST
+                <= 27 => ReadStateOp(machine, opcode), // 22-27 SETRP · GDIE · INCIM · MONO…
+                _ => HaltOnUnknownOpcode()
             };
         }
 
@@ -268,13 +292,13 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 7: // SETPOS — column, row.
-                    {
-                        int column = machine.Read(this);
-                        int row = machine.Read(this);
-                        Object.XSubpixels = column << 8;
-                        Object.YSubpixels = row << 8;
-                        return true;
-                    }
+                {
+                    int column = machine.Read(this);
+                    int row = machine.Read(this);
+                    Object.XSubpixels = column << 8;
+                    Object.YSubpixels = row << 8;
+                    return true;
+                }
 
                 case 8: // SETXV
                     Object.XVelocitySubpixels = machine.ReadSignedWord(this);
@@ -346,20 +370,20 @@ public sealed class AttractObjectMachine
                     return true;
 
                 case 18: // LFIRE — bolt lifetime, then the frames this script waits.
-                    {
-                        int lifetime = machine.Read(this);
-                        machine.SpawnLaser(Object, lifetime, firesRight: false);
-                        WaitRomFrames = machine.Read(this);
-                        return false;
-                    }
+                {
+                    int lifetime = machine.Read(this);
+                    machine.SpawnLaser(Object, lifetime, false);
+                    WaitRomFrames = machine.Read(this);
+                    return false;
+                }
 
                 case 19: // RFIRE
-                    {
-                        int lifetime = machine.Read(this);
-                        machine.SpawnLaser(Object, lifetime, firesRight: true);
-                        WaitRomFrames = machine.Read(this);
-                        return false;
-                    }
+                {
+                    int lifetime = machine.Read(this);
+                    machine.SpawnLaser(Object, lifetime, true);
+                    WaitRomFrames = machine.Read(this);
+                    return false;
+                }
 
                 default:
                     return HaltOnUnknownOpcode();
@@ -372,32 +396,26 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 20: // LOOPER — `count` passes over the block from the label.
-                    {
-                        int count = machine.Read(this);
-                        int labelIndex = machine.ReadWord(this) - AttractMovieData.ScriptBase;
-                        if (LoopPassesLeft == 0)
-                        {
-                            LoopPassesLeft = count;
-                        }
+                {
+                    int count = machine.Read(this);
+                    var labelIndex = machine.ReadWord(this) - AttractMovieData.ScriptBase;
+                    if (LoopPassesLeft == 0) LoopPassesLeft = count;
 
-                        if (--LoopPassesLeft != 0)
-                        {
-                            ScriptIndex = labelIndex;
-                        }
+                    if (--LoopPassesLeft != 0) ScriptIndex = labelIndex;
 
-                        return true;
-                    }
+                    return true;
+                }
 
                 case 21: // GHOST — another process on the SAME object.
+                {
+                    var scriptAddress = machine.ReadWord(this);
+                    machine._processes.Add(new MovieProcess
                     {
-                        int scriptAddress = machine.ReadWord(this);
-                        machine._processes.Add(new MovieProcess
-                        {
-                            Object = Object,
-                            ScriptIndex = scriptAddress - AttractMovieData.ScriptBase,
-                        });
-                        return true;
-                    }
+                        Object = Object,
+                        ScriptIndex = scriptAddress - AttractMovieData.ScriptBase
+                    });
+                    return true;
+                }
 
                 default:
                     return HaltOnUnknownOpcode();
@@ -410,13 +428,13 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 22: // SETRP — a relative move in whole columns/rows, no animation.
-                    {
-                        int dx = (sbyte)machine.Read(this);
-                        int dy = (sbyte)machine.Read(this);
-                        Object.XSubpixels += dx << 8;
-                        Object.YSubpixels += dy << 8;
-                        return true;
-                    }
+                {
+                    int dx = (sbyte)machine.Read(this);
+                    int dy = (sbyte)machine.Read(this);
+                    Object.XSubpixels += dx << 8;
+                    Object.YSubpixels += dy << 8;
+                    return true;
+                }
 
                 case 23: // GDIE — kill the process, keep the object.
                     IsAlive = false;
@@ -427,19 +445,19 @@ public sealed class AttractObjectMachine
                     return true;
 
                 case 25: // MONO — box colour, image colour, frames, special (brain in the box).
-                    {
-                        // The colour operands are doubled-nibble palette values exactly
-                        // like the page script's COLOR ($AA = slot 10), so the slot is the
-                        // HIGH nibble — and 0 means "no box".
-                        int boxSlot = machine.Read(this) >> 4;
-                        int silhouetteSlot = machine.Read(this) >> 4;
-                        MonoStepsLeft = machine.Read(this);
-                        bool showsBrain = machine.Read(this) != 0;
-                        BeginMono(Object, boxSlot, silhouetteSlot, showsBrain);
-                        Action = MovieAction.Mono;
-                        WaitRomFrames = 3;
-                        return false;
-                    }
+                {
+                    // The colour operands are doubled-nibble palette values exactly
+                    // like the page script's COLOR ($AA = slot 10), so the slot is the
+                    // HIGH nibble — and 0 means "no box".
+                    var boxSlot = machine.Read(this) >> 4;
+                    var silhouetteSlot = machine.Read(this) >> 4;
+                    MonoStepsLeft = machine.Read(this);
+                    var showsBrain = machine.Read(this) != 0;
+                    BeginMono(Object, boxSlot, silhouetteSlot, showsBrain);
+                    Action = MovieAction.Mono;
+                    WaitRomFrames = 3;
+                    return false;
+                }
 
                 case 26: // RPROG — the 64-step vertical shake.
                     // PSHAKE ($868C) is a ONE-BYTE script: RPROG owns the process
@@ -461,8 +479,8 @@ public sealed class AttractObjectMachine
         }
 
         /// <summary>
-        /// Not an opcode the ROM's table has: stop rather than run off the end of the script
-        /// block (the same end state as GDIE/PDEAD).
+        ///     Not an opcode the ROM's table has: stop rather than run off the end of the script
+        ///     block (the same end state as GDIE/PDEAD).
         /// </summary>
         private bool HaltOnUnknownOpcode()
         {
@@ -472,10 +490,7 @@ public sealed class AttractObjectMachine
 
         private bool BeginWalk(int steps, WalkSequence walkSequence)
         {
-            if (Object.Descriptor is not { } descriptor || steps <= 0)
-            {
-                return true;
-            }
+            if (Object.Descriptor is not { } descriptor || steps <= 0) return true;
 
             StepsLeft = steps;
             Action = MovieAction.Walk;
@@ -551,17 +566,14 @@ public sealed class AttractObjectMachine
                 WaitRomFrames = --StepsLeft > 0 ? WalkStepRomFrames : 0;
             }
 
-            if (StepsLeft <= 0)
-            {
-                Action = MovieAction.None;
-            }
+            if (StepsLeft <= 0) Action = MovieAction.None;
         }
 
         /// <summary>
-        /// MONOP: the object is already off the list (HIB), so this is what moves
-        /// it — `ADDA OXV,X` adds the velocity's HIGH byte to the packed
-        /// (column, row) address, i.e. whole columns, every third frame — and the
-        /// box is redrawn each pass. After `frames` passes it is REBORN.
+        ///     MONOP: the object is already off the list (HIB), so this is what moves
+        ///     it — `ADDA OXV,X` adds the velocity's HIGH byte to the packed
+        ///     (column, row) address, i.e. whole columns, every third frame — and the
+        ///     box is redrawn each pass. After `frames` passes it is REBORN.
         /// </summary>
         private void StepMono()
         {
@@ -582,7 +594,7 @@ public sealed class AttractObjectMachine
         /// <summary>RPROGP: bounce the row by ±(random 0..7) a frame apart, 64 times, then die.</summary>
         private void StepReprogramShake(AttractObjectMachine machine)
         {
-            int magnitude = machine.RollUpTo(8);
+            var magnitude = machine.RollUpTo(8);
             if (IsShakingUp)
             {
                 Object.ShakeRowOffset = -magnitude;
@@ -605,37 +617,34 @@ public sealed class AttractObjectMachine
         /// <summary>ANA* — one walk step out of HUMANA / HLKANA (notes §95.7).</summary>
         private void TableStep(MovieWalk walk)
         {
-            byte[] table = walk == MovieWalk.Hulk ? AttractMovieData.WalkHulk : AttractMovieData.WalkHuman;
+            var table = walk == MovieWalk.Hulk ? AttractMovieData.WalkHulk : AttractMovieData.WalkHuman;
 
             SetImage(table[WalkIndex] >> 2);
             ApplyStep((sbyte)table[WalkIndex + 1], (sbyte)table[WalkIndex + 2]);
 
             WalkIndex += 3;
-            if (table[WalkIndex] == 0xFF)
-            {
-                WalkIndex -= 12;
-            }
+            if (table[WalkIndex] == 0xFF) WalkIndex -= 12;
         }
 
         /// <summary>BR* — the descriptor's own step size, cycling the 4-entry ANATAB.</summary>
         private void BrainStep(MovieDescriptor descriptor)
         {
-            WalkSequence walkSequence = (WalkSequence)WalkIndex;
-            int dx = walkSequence switch
+            var walkSequence = (WalkSequence)WalkIndex;
+            var dx = walkSequence switch
             {
                 WalkSequence.Left => -descriptor.StepSize,
                 WalkSequence.Right => descriptor.StepSize,
-                _ => 0,
+                _ => 0
             };
-            int dy = walkSequence switch
+            var dy = walkSequence switch
             {
                 WalkSequence.Down => descriptor.StepSize,
                 WalkSequence.Up => -descriptor.StepSize,
-                _ => 0,
+                _ => 0
             };
             ApplyStep(dx, dy);
 
-            SetImage(((int)walkSequence * 3) + AttractMovieData.AnimationFrameCycleTable[WalkCycleStep]);
+            SetImage((int)walkSequence * 3 + AttractMovieData.AnimationFrameCycleTable[WalkCycleStep]);
             WalkCycleStep = (WalkCycleStep + 1) % AttractMovieData.AnimationFrameCycleTable.Length;
         }
 
@@ -648,41 +657,19 @@ public sealed class AttractObjectMachine
 
         private void AdvanceImage()
         {
-            int count = Object.Descriptor?.AnimationFrameCount ?? 1;
-            if (count > 1)
-            {
-                SetImage((Object.AnimationFrameIndex + 1) % count);
-            }
+            var count = Object.Descriptor?.AnimationFrameCount ?? 1;
+            if (count > 1) SetImage((Object.AnimationFrameIndex + 1) % count);
         }
 
-        private void SetImage(int index) => Object.AnimationFrameIndex = index;
+        private void SetImage(int index)
+        {
+            Object.AnimationFrameIndex = index;
+        }
 
         private void KillObject()
         {
             Object.IsDead = true;
             IsAlive = false;
         }
-    }
-
-    private byte Read(MovieProcess process) => _scriptBytes[process.ScriptIndex++];
-
-    private int ReadSignedWord(MovieProcess process) => (short)ReadWord(process);
-
-    private int ReadWord(MovieProcess process) => (Read(process) << 8) | Read(process);
-
-    /// <summary>
-    /// The ROM's `RIGFIR`/`LEFFIR`: a bolt two columns ahead of the muzzle (right)
-    /// or one column behind it (left), six rows down, moving ±$0280 a frame, and
-    /// living the LFIRE/RFIRE operand's frame count.
-    /// </summary>
-    private void SpawnLaser(MovieObject source, int lifetime, bool firesRight)
-    {
-        int column = (source.XSubpixels >> 8) + (firesRight ? 2 : -1);
-        _objects.Add(new MovieObject(null, 0, column << 8, source.YSubpixels + (6 << 8))
-        {
-            IsLaser = true,
-            LaserRomFramesLeft = lifetime,
-            XVelocitySubpixels = firesRight ? 0x0280 : -0x0280,
-        });
     }
 }
