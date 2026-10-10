@@ -352,6 +352,11 @@ The same goes for a coordinate or position, which is always measured from an ori
 or `Delta` is a finding. A name that says the "from" in its own words (`Jitter`, `Gap` between two named things) is
 fine only when the two things are named in the same sentence of its summary.
 
+**NAM-22. A retired word is not used.** The glossary's "Retired words" table lists words that were replaced and why:
+`Spec...`, `...SpecPixels`, `ArcadePixelsPerColumn`, "nearly every tick", "picture" and the rest. Do not use one in a
+name, comment or doc, and when a rename retires a word, add it to that table in the same change. The dated records
+(`status.md`, the ledgers, `arcade-fidelity-notes.md`) keep their original words.
+
 ## 4. Numbers and units (§112, §113)
 
 **NUM-1. No magic numbers.** Every literal other than `0`, `1`, `-1` (and `2` when halving) is a named constant.
@@ -678,6 +683,9 @@ grep -rnE "M4\b|M5\b|round [0-9]|Phase [0-9]|PHASE [A-Z]|plan [0-9]|author's rep
 
 # Stale vocabulary after renames (NAM-8): add the old word of any rename in the diff
 grep -rnwE 'Art|IArtSource|ArtRect|WalkArtIndex|wake' src tests --include=*.cs
+
+# Retired words (NAM-22): the glossary's "Retired words" table, as a search
+grep -rnE 'SpecScale|SpecWidth|SpecHeight|SpecPixels|ArcadePixelsPerColumn|nearly every tick|spec-px|spec pixel' src tests --include=*.cs
 
 # Suppressions (never allowed)
 grep -rnE '#pragma warning disable|SuppressMessage|NoWarn' src tests --include=*.cs --include=*.csproj --include=*.props; grep -nE 'NoWarn' Directory.Build.props .editorconfig
