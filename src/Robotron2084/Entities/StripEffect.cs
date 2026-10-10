@@ -418,7 +418,7 @@ public sealed class StripEffect : IEntity
 
         // How far each strip slides to the side for a diagonal shot. A strip slides further the further it is from the chosen strip, and strips on opposite sides of the chosen strip slide opposite ways.
         // The slide is not scaled up with the screen, because then the strips would slide too far.
-        int drift = _slope * ((spacing >> 1) * ScreenSize.ArcadePixelsPerColumn);
+        int drift = _slope * ((spacing >> 1) * ScreenSize.ArcadePixelsPerByte);
 
         for (int i = 0; i < extent; i++)
         {

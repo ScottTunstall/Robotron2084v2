@@ -417,7 +417,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         bool yPositive = _position.Y <= lowY || (_position.Y < highY && _random.Next(CoinFlipSides) != 0);
 
         _velocitySubpixels = new IntVector2(
-            ComputeAxisVelocitySubpixels(QuarkTuning.VelocityXScale, xPositive, coordinateUnitArcadePixels: ScreenSize.ArcadePixelsPerColumn),
+            ComputeAxisVelocitySubpixels(QuarkTuning.VelocityXScale, xPositive, coordinateUnitArcadePixels: ScreenSize.ArcadePixelsPerByte),
             ComputeAxisVelocitySubpixels(QuarkTuning.VelocityYScale, yPositive, coordinateUnitArcadePixels: 1));
 
         _reaimBeatsRemaining = 1 + _random.Next(QuarkTuning.ReaimMaxBeats);
