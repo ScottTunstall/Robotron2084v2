@@ -1,4 +1,3 @@
-using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Level;
@@ -8,8 +7,8 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// Each shape of electrode is its own size, as in the arcade (disassembly <c>$3B05</c> onwards). The "2084" electrode
-/// of every tenth wave is 18 by 7 arcade pixels, not the usual 10 by 9.
+///     Each shape of electrode is its own size, as in the arcade (disassembly <c>$3B05</c> onwards). The "2084" electrode
+///     of every tenth wave is 18 by 7 arcade pixels, not the usual 10 by 9.
 /// </summary>
 public sealed class ElectrodeSizeTests
 {
@@ -24,7 +23,7 @@ public sealed class ElectrodeSizeTests
     {
         var electrode = new Electrode(TestSprites.Shared, new IntVector2(100, 100), wave);
 
-        Rectangle bounds = electrode.GetBounds();
+        var bounds = electrode.GetBounds();
 
         Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(arcadeWidth), bounds.Width);
         Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(arcadeHeight), bounds.Height);
@@ -41,14 +40,14 @@ public sealed class ElectrodeSizeTests
     [Fact]
     public void TheWide2084Electrodes_AreAllPutInsideTheWall()
     {
-        PlayField field = new PlayFieldBuilder()
+        var field = new PlayFieldBuilder()
             .WithParameters(new LevelParameters(10, ElectrodeCount: 60))
             .Build();
-        Rectangle bounds = field.GetPlayfieldBounds();
+        var bounds = field.GetPlayfieldBounds();
 
         Assert.All(field.Entities.Electrodes, electrode =>
         {
-            Rectangle box = electrode.GetBounds();
+            var box = electrode.GetBounds();
             Assert.True(box.X >= bounds.X && box.Right <= bounds.Right, $"electrode at x {box.X} to {box.Right}");
             Assert.True(box.Y >= bounds.Y && box.Bottom <= bounds.Bottom, $"electrode at y {box.Y} to {box.Bottom}");
         });

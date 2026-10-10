@@ -10,9 +10,9 @@ public sealed class WilliamsLogoPathTests
     {
         var path = new WilliamsLogoPath();
         var places = new List<(int Column, int Row, int Slot)>();
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
-            places.Add((Column: path.Column, Row: path.Row, Slot: path.GetSlot()));
+            places.Add((path.Column, path.Row, Slot: path.GetSlot()));
             path.Step();
         }
 
@@ -22,7 +22,7 @@ public sealed class WilliamsLogoPathTests
     [Fact]
     public void TheFirstLapIsTwentyEightWsRoundTheEdge()
     {
-        List<(int Column, int Row, int Slot)> places = Walk(29);
+        var places = Walk(29);
 
         // Along the top from the left corner, then the top-right corner.
         Assert.Equal([5, 21, 37, 53, 69, 85, 101, 117, 133], places.Take(9).Select(p => p.Column));
@@ -41,7 +41,7 @@ public sealed class WilliamsLogoPathTests
     [Fact]
     public void TheSecondLapStartsTwoBytesFurtherIn()
     {
-        List<(int Column, int Row, int Slot)> places = Walk(29);
+        var places = Walk(29);
 
         Assert.Equal((7, 0x0F), (places[28].Column, places[28].Row));
     }
@@ -49,7 +49,7 @@ public sealed class WilliamsLogoPathTests
     [Fact]
     public void TheColoursStepDownThroughSevenSlotsAndRoundAgain()
     {
-        List<(int Column, int Row, int Slot)> places = Walk(9);
+        var places = Walk(9);
 
         Assert.Equal([7, 6, 5, 4, 3, 2, 1, 7, 6], places.Select(p => p.Slot));
     }
@@ -58,10 +58,7 @@ public sealed class WilliamsLogoPathTests
     public void ResetGoesBackToTheFirstW()
     {
         var path = new WilliamsLogoPath();
-        for (int i = 0; i < 40; i++)
-        {
-            path.Step();
-        }
+        for (var i = 0; i < 40; i++) path.Step();
 
         path.Reset();
 

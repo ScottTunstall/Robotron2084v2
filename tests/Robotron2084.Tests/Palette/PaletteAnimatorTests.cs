@@ -4,15 +4,14 @@ using Xunit;
 namespace Robotron2084.Tests.Rendering;
 
 /// <summary>
-/// The six ROM colour processes (arcade-fidelity-notes §4.12, §65) replayed over
-/// a <see cref="GamePalette"/> — exact tables, exact ROM-FRAME timings, wrap
-/// loops.
-///
-/// The timings are the ROM's frame counts converted through the clock-unit rule
-/// of §52 (a fiftieth of a second is 6/5 of a port tick), so a 1-frame process steps every
-/// 1.2 ticks, a 2-frame one every 2.4 and an 8-frame one every 9.6. These tests
-/// therefore pin where a step really lands (the 3rd, 5th, 8th … tick), which is
-/// what distinguishes them from the old 20%-fast tick counts.
+///     The six ROM colour processes (arcade-fidelity-notes §4.12, §65) replayed over
+///     a <see cref="GamePalette" /> — exact tables, exact ROM-FRAME timings, wrap
+///     loops.
+///     The timings are the ROM's frame counts converted through the clock-unit rule
+///     of §52 (a fiftieth of a second is 6/5 of a port tick), so a 1-frame process steps every
+///     1.2 ticks, a 2-frame one every 2.4 and an 8-frame one every 9.6. These tests
+///     therefore pin where a step really lands (the 3rd, 5th, 8th … tick), which is
+///     what distinguishes them from the old 20%-fast tick counts.
 /// </summary>
 public sealed class PaletteAnimatorTests
 {
@@ -25,16 +24,13 @@ public sealed class PaletteAnimatorTests
 
     private static void Tick(PaletteAnimator animator, int ticks)
     {
-        for (int i = 0; i < ticks; i++)
-        {
-            animator.Update();
-        }
+        for (var i = 0; i < ticks; i++) animator.Update();
     }
 
     [Fact]
     public void SlotsStartAtTheCrtabDefaults()
     {
-        (GamePalette palette, _) = NewPair();
+        var (palette, _) = NewPair();
         Assert.Equal(0x00, palette.GetSlotValue(0));
         Assert.Equal(0x07, palette.GetSlotValue(1));
         Assert.Equal(0xFF, palette.GetSlotValue(9));
@@ -49,7 +45,7 @@ public sealed class PaletteAnimatorTests
     [Fact]
     public void RgbProcessStepsEveryEightRomFrames_WhichIs9Point6Ticks()
     {
-        (GamePalette palette, PaletteAnimator animator) = NewPair();
+        var (palette, animator) = NewPair();
 
         Tick(animator, 9);
         Assert.Equal(0x17, palette.GetSlotValue(11)); // not yet — the CRTAB default
@@ -70,7 +66,7 @@ public sealed class PaletteAnimatorTests
     [Fact]
     public void DecayProcessStepsEveryTwoRomFrames_WhichIs2Point4Ticks()
     {
-        (GamePalette palette, PaletteAnimator animator) = NewPair();
+        var (palette, animator) = NewPair();
 
         Tick(animator, 3);
         Assert.Equal(0xC0, palette.GetSlotValue(12)); // table[0]
@@ -85,7 +81,7 @@ public sealed class PaletteAnimatorTests
     [Fact]
     public void BluePurpleRedProcessStepsEveryRomFrame_WhichIs1Point2Ticks()
     {
-        (GamePalette palette, PaletteAnimator animator) = NewPair();
+        var (palette, animator) = NewPair();
 
         Tick(animator, 1);
         Assert.Equal(0x81, palette.GetSlotValue(14)); // 5 clock units: still the default
@@ -100,7 +96,7 @@ public sealed class PaletteAnimatorTests
     [Fact]
     public void RedGoldProcessStepsEverySixRomFrames_WhichIs7Point2Ticks()
     {
-        (GamePalette palette, PaletteAnimator animator) = NewPair();
+        var (palette, animator) = NewPair();
 
         // Entries 0 and 1 are both 0x07 — the same value slot 15 starts on — so
         // the step clock is only OBSERVABLE at the third entry (0x2F), which the
@@ -115,7 +111,7 @@ public sealed class PaletteAnimatorTests
     [Fact]
     public void LaserProcessStepsEveryTwoRomFrames_WhichIs2Point4Ticks()
     {
-        (GamePalette palette, PaletteAnimator animator) = NewPair();
+        var (palette, animator) = NewPair();
 
         Tick(animator, 3);
         Assert.Equal(PaletteAnimator.LaserTab[0], palette.GetSlotValue(13));
@@ -130,7 +126,7 @@ public sealed class PaletteAnimatorTests
     [Fact]
     public void LaserFlashIsWhiteEverySecondRomFrameAndRandomEverySixthRomFrame()
     {
-        (GamePalette palette, PaletteAnimator animator) = NewPair();
+        var (palette, animator) = NewPair();
 
         Tick(animator, 2);
         Assert.Equal(0x38, palette.GetSlotValue(10)); // 5 and 10 clock units: no write yet
@@ -151,7 +147,7 @@ public sealed class PaletteAnimatorTests
     [Fact]
     public void ASuspendedSlot_IsNotWrittenByItsProcess()
     {
-        (GamePalette palette, PaletteAnimator animator) = NewPair();
+        var (palette, animator) = NewPair();
 
         // The ROM's KILL OFF DECAY (notes §66): the player death stops slot 12's
         // DECAY process and then drives slot 12 itself, byte by byte.

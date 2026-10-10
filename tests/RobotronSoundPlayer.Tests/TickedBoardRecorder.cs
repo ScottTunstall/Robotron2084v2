@@ -4,8 +4,8 @@ using Robotron2084.Audio.Synthesis;
 namespace RobotronSoundPlayer.Tests;
 
 /// <summary>
-/// Stands where the game's audio sink stands: each port tick it runs a board for one tick's worth of
-/// cycles, carrying any overrun into the next tick as the renderer does, and records what the board held.
+///     Stands where the game's audio sink stands: each port tick it runs a board for one tick's worth of
+///     cycles, carrying any overrun into the next tick as the renderer does, and records what the board held.
 /// </summary>
 /// <param name="board">The board.</param>
 internal sealed class TickedBoardRecorder(ISoundBoard board) : IAudioSink
@@ -24,15 +24,18 @@ internal sealed class TickedBoardRecorder(ISoundBoard board) : IAudioSink
     /// <summary>Sends a sound number to the board; where it is heard does not matter here.</summary>
     /// <param name="soundNumber">The sound number.</param>
     /// <param name="pan">Not used.</param>
-    public void SendSoundNumber(int soundNumber, float pan) => board.SendSoundNumber(soundNumber);
+    public void SendSoundNumber(int soundNumber, float pan)
+    {
+        board.SendSoundNumber(soundNumber);
+    }
 
     /// <summary>Runs the board for one port tick and records it.</summary>
     public void Tick()
     {
         while (_overrunCycles < CyclesPerPortTick)
         {
-            byte level = board.OutputLevel;
-            int ran = board.Run((int)Math.Ceiling(CyclesPerPortTick - _overrunCycles));
+            var level = board.OutputLevel;
+            var ran = board.Run((int)Math.Ceiling(CyclesPerPortTick - _overrunCycles));
             _overrunCycles += ran;
             Add(level, ran);
         }

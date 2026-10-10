@@ -30,7 +30,7 @@ public sealed class ScoreBoardTests
     [Fact]
     public void NoExtraMenMeansTheThresholdIsNeverCrossed()
     {
-        var board = new ScoreBoard(0, extraLifeEveryPoints: 0);
+        var board = new ScoreBoard(0, 0);
 
         Assert.False(board.Add(500_000));
     }
@@ -38,9 +38,9 @@ public sealed class ScoreBoardTests
     [Fact]
     public void TheArcadesOwnStopsScaleTheThreshold()
     {
-        Assert.True(new ScoreBoard(0, extraLifeEveryPoints: 20_000).Add(20_000));
-        Assert.True(new ScoreBoard(0, extraLifeEveryPoints: 30_000).Add(30_000));
-        Assert.True(new ScoreBoard(0, extraLifeEveryPoints: 50_000).Add(50_000));
+        Assert.True(new ScoreBoard(0, 20_000).Add(20_000));
+        Assert.True(new ScoreBoard(0, 30_000).Add(30_000));
+        Assert.True(new ScoreBoard(0, 50_000).Add(50_000));
     }
 
     [Fact]

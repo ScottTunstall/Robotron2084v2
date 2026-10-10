@@ -8,7 +8,7 @@ public sealed class LevelParameterGeneratorTests
     [Fact]
     public void Generate_UsesRomWaveTable_ExactValues()
     {
-        LevelParameters p = new LevelParameterGenerator().Generate(1);
+        var p = new LevelParameterGenerator().Generate(1);
 
         Assert.Equal(1, p.LevelNumber);
         // ROM $2E24 wave 1 (arcade-fidelity-notes §11.1).
@@ -31,7 +31,7 @@ public sealed class LevelParameterGeneratorTests
     [Fact]
     public void Generate_Wave5_BrainAndSpheroidWave()
     {
-        LevelParameters p = new LevelParameterGenerator().Generate(5);
+        var p = new LevelParameterGenerator().Generate(5);
 
         Assert.Equal(20, p.GruntCount);
         Assert.Equal(20, p.ElectrodeCount);
@@ -46,7 +46,7 @@ public sealed class LevelParameterGeneratorTests
     [Fact]
     public void Generate_Wave9_HeavyGruntWave()
     {
-        LevelParameters p = new LevelParameterGenerator().Generate(9);
+        var p = new LevelParameterGenerator().Generate(9);
 
         Assert.Equal(60, p.GruntCount);
         Assert.Equal(0, p.ElectrodeCount);
@@ -58,11 +58,11 @@ public sealed class LevelParameterGeneratorTests
     {
         LevelParameterGenerator generator = new();
 
-        LevelParameters w41 = generator.Generate(41);
-        LevelParameters w21 = generator.Generate(21);
-        LevelParameters w60 = generator.Generate(60);
-        LevelParameters w40 = generator.Generate(40);
-        LevelParameters w61 = generator.Generate(61);
+        var w41 = generator.Generate(41);
+        var w21 = generator.Generate(21);
+        var w60 = generator.Generate(60);
+        var w40 = generator.Generate(40);
+        var w61 = generator.Generate(61);
 
         Assert.Equal(w21.GruntCount, w41.GruntCount);
         Assert.Equal(w40.GruntCount, w60.GruntCount);
@@ -72,7 +72,7 @@ public sealed class LevelParameterGeneratorTests
     [Fact]
     public void Generate_WithLevelTable_UsesExactRowsAndWrapsPastTheEnd()
     {
-        string path = Path.Combine(Path.GetTempPath(), $"robotron-table-{Guid.NewGuid():N}.csv");
+        var path = Path.Combine(Path.GetTempPath(), $"robotron-table-{Guid.NewGuid():N}.csv");
         File.WriteAllText(
             path,
             "Level,GruntCount,HulkCount,SpheroidCount,QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark\n" +
@@ -82,7 +82,7 @@ public sealed class LevelParameterGeneratorTests
         {
             var generator = new LevelParameterGenerator(path);
 
-            LevelParameters level1 = generator.Generate(1);
+            var level1 = generator.Generate(1);
             Assert.Equal(5, level1.GruntCount);
             Assert.Equal(2, level1.HulkCount);
             Assert.Equal(1, level1.SpheroidCount);
@@ -92,12 +92,12 @@ public sealed class LevelParameterGeneratorTests
             Assert.Equal(2, level1.MaxTanksPerQuark);
             Assert.Equal(0, level1.EnemySpeedBonus);
 
-            LevelParameters level2 = generator.Generate(2);
+            var level2 = generator.Generate(2);
             Assert.Equal(9, level2.GruntCount);
             Assert.Equal(4, level2.MaxEnforcersPerSpheroid);
             Assert.Equal(1, level2.EnemySpeedBonus); // still computed from the level number
 
-            LevelParameters level3 = generator.Generate(3); // wraps back to row 1
+            var level3 = generator.Generate(3); // wraps back to row 1
             Assert.Equal(5, level3.GruntCount);
             Assert.Equal(2, level3.EnemySpeedBonus);
         }
@@ -110,10 +110,10 @@ public sealed class LevelParameterGeneratorTests
     [Fact]
     public void Generate_MissingTable_FallsBackToRomWaveTable()
     {
-        string path = Path.Combine(Path.GetTempPath(), $"robotron-missing-{Guid.NewGuid():N}.csv");
+        var path = Path.Combine(Path.GetTempPath(), $"robotron-missing-{Guid.NewGuid():N}.csv");
         var generator = new LevelParameterGenerator(path);
 
-        LevelParameters p = generator.Generate(1);
+        var p = generator.Generate(1);
 
         Assert.Equal(15, p.GruntCount); // ROM wave 1
         Assert.Equal(5, p.ElectrodeCount);
@@ -122,7 +122,7 @@ public sealed class LevelParameterGeneratorTests
     [Fact]
     public void Generate_MalformedTable_FallsBackToRomWaveTable()
     {
-        string path = Path.Combine(Path.GetTempPath(), $"robotron-bad-{Guid.NewGuid():N}.csv");
+        var path = Path.Combine(Path.GetTempPath(), $"robotron-bad-{Guid.NewGuid():N}.csv");
         File.WriteAllText(
             path,
             "Level,GruntCount,HulkCount,SpheroidCount,QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark\n" +
@@ -130,7 +130,7 @@ public sealed class LevelParameterGeneratorTests
         try
         {
             var generator = new LevelParameterGenerator(path);
-            LevelParameters p = generator.Generate(1);
+            var p = generator.Generate(1);
 
             Assert.Equal(15, p.GruntCount);
         }

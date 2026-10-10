@@ -12,7 +12,7 @@ public class TransporterSoundTests
     [Fact]
     public void ItClearsTheSystemFirst()
     {
-        (RecordingSink sink, _) = Run(ticks: 1);
+        var (sink, _) = Run(1);
 
         Assert.Contains(sink.Sends, send => send.SoundNumber == ClearTheSystem && send.Tick == 1);
     }
@@ -20,7 +20,7 @@ public class TransporterSoundTests
     [Fact]
     public void ItSendsTheWarpIn108Times_OnTheROMsSchedule()
     {
-        (RecordingSink sink, TransporterSound transporter) = Run(ticks: 200);
+        var (sink, transporter) = Run(200);
 
         List<int> ticks = [.. sink.Sends.Where(send => send.SoundNumber == WarpIn).Select(send => send.Tick)];
         Assert.Equal(108, ticks.Count);
@@ -38,15 +38,15 @@ public class TransporterSoundTests
         var engine = new SoundEngine(sink);
         var transporter = new TransporterSound();
         transporter.Start(engine);
-        for (int i = 0; i < 10; i++)
+        for (var i = 0; i < 10; i++)
         {
             engine.Tick();
             transporter.Tick(engine);
         }
 
-        int sentBeforeStop = sink.Sends.Count(send => send.SoundNumber == WarpIn);
+        var sentBeforeStop = sink.Sends.Count(send => send.SoundNumber == WarpIn);
         transporter.Stop();
-        for (int i = 0; i < 200; i++)
+        for (var i = 0; i < 200; i++)
         {
             engine.Tick();
             transporter.Tick(engine);
@@ -62,7 +62,7 @@ public class TransporterSoundTests
         var engine = new SoundEngine(sink);
         var transporter = new TransporterSound();
         transporter.Start(engine);
-        for (int i = 0; i < ticks; i++)
+        for (var i = 0; i < ticks; i++)
         {
             engine.Tick();
             transporter.Tick(engine);

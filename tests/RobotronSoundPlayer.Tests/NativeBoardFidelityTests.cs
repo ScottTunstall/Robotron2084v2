@@ -7,8 +7,8 @@ using Xunit;
 namespace RobotronSoundPlayer.Tests;
 
 /// <summary>
-/// The game's own sound board, rebuilt from the sound ROM's source, against the emulated board running the
-/// real ROM. The ROM is not in git, so these skip when it is missing (notes §130).
+///     The game's own sound board, rebuilt from the sound ROM's source, against the emulated board running the
+///     real ROM. The ROM is not in git, so these skip when it is missing (notes §130).
 /// </summary>
 public class NativeBoardFidelityTests
 {
@@ -22,13 +22,16 @@ public class NativeBoardFidelityTests
     private const int GameSoundTicks = 6 * 60;
 
     /// <summary>
-    /// The longest the two boards may disagree at a stretch: one instruction. The emulated processor
-    /// finishes the instruction it is in before it answers a sound number, while the game's board answers at
-    /// once; the longest instruction the program uses is <c>JSR</c> to a full address.
+    ///     The longest the two boards may disagree at a stretch: one instruction. The emulated processor
+    ///     finishes the instruction it is in before it answers a sound number, while the game's board answers at
+    ///     once; the longest instruction the program uses is <c>JSR</c> to a full address.
     /// </summary>
     private const long LongestInstructionCycles = 9;
 
-    /// <summary>The most of the time the boards may disagree, from 0 to 1: the noise sounds change level every few dozen cycles, so a few cycles' lag shows.</summary>
+    /// <summary>
+    ///     The most of the time the boards may disagree, from 0 to 1: the noise sounds change level every few dozen
+    ///     cycles, so a few cycles' lag shows.
+    /// </summary>
     private const double MostDisagreement = 0.03;
 
     /// <summary>Every sound number the board has (the sound test page's list), which includes every one the game sends.</summary>
@@ -44,8 +47,8 @@ public class NativeBoardFidelityTests
         var emulated = new EmulatedSoundBoard(RomFiles.ReadOrSkip(RomFiles.SoundRom));
         var native = new SoundBoard();
 
-        List<LevelRun> expected = PlayFromCold(emulated, soundNumber);
-        List<LevelRun> actual = PlayFromCold(native, soundNumber);
+        var expected = PlayFromCold(emulated, soundNumber);
+        var actual = PlayFromCold(native, soundNumber);
 
         // The last run is cut wherever the recording stops, which an emulated instruction can overrun.
         Assert.Equal(expected.SkipLast(1), actual.SkipLast(1));
@@ -55,11 +58,11 @@ public class NativeBoardFidelityTests
     [MemberData(nameof(GameSoundNames))]
     public void EachGameSound_PlayedThroughTheSequencer_DiffersFromTheRealRom_ByNoMoreThanAnInstruction(string name)
     {
-        byte[] rom = RomFiles.ReadOrSkip(RomFiles.SoundRom);
+        var rom = RomFiles.ReadOrSkip(RomFiles.SoundRom);
 
-        List<LevelRun> expected = PlayThroughSequencer(new EmulatedSoundBoard(rom), name);
-        List<LevelRun> actual = PlayThroughSequencer(new SoundBoard(), name);
-        LevelDisagreement disagreement = LevelComparison.Compare(expected, actual);
+        var expected = PlayThroughSequencer(new EmulatedSoundBoard(rom), name);
+        var actual = PlayThroughSequencer(new SoundBoard(), name);
+        var disagreement = LevelComparison.Compare(expected, actual);
 
         Assert.InRange(disagreement.LongestCycles, 0, LongestInstructionCycles);
         Assert.InRange(disagreement.Share, 0, MostDisagreement);
@@ -77,9 +80,9 @@ public class NativeBoardFidelityTests
         LevelRecorder.Skip(board, WarmUpCycles);
         var recorder = new TickedBoardRecorder(board);
         var engine = new SoundEngine(recorder);
-        ISoundRequest request = new SoundCatalog().Find(name)!;
+        var request = new SoundCatalog().Find(name)!;
         request.Start(engine);
-        for (int tick = 0; tick < GameSoundTicks; tick++)
+        for (var tick = 0; tick < GameSoundTicks; tick++)
         {
             engine.Tick();
             request.Tick(engine);

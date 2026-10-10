@@ -9,42 +9,37 @@ namespace Robotron2084.Tests;
 /// <summary>The BerzerkRobot: the author's own robot, which moves, dies and kills as a grunt does (notes §138).</summary>
 public sealed class BerzerkRobotTests
 {
-    private static PlayField CreateField(LevelParameters? parameters = null) =>
-        new PlayFieldBuilder().WithParameters(parameters ?? new LevelParameters(LevelNumber: 1)).WithSeed(5).Build();
+    private static PlayField CreateField(LevelParameters? parameters = null)
+    {
+        return new PlayFieldBuilder().WithParameters(parameters ?? new LevelParameters(1)).WithSeed(5).Build();
+    }
 
     /// <summary>A field whose robots are free to move: the start of the wave is over, so the game is live.</summary>
     private static PlayField CreateFieldInPlay()
     {
-        PlayField field = CreateField();
+        var field = CreateField();
         var frame = new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
-        for (int tick = 0; tick < 400 && field.RobotsFrozen(); tick++)
-        {
-            field.Update(frame);
-        }
+        for (var tick = 0; tick < 400 && field.RobotsFrozen(); tick++) field.Update(frame);
 
         return field;
     }
 
     private static void Tick(PlayField field, int ticks, params IEntity[] robots)
     {
-        for (int tick = 0; tick < ticks; tick++)
-        {
-            foreach (IEntity robot in robots)
-            {
+        for (var tick = 0; tick < ticks; tick++)
+            foreach (var robot in robots)
                 robot.Update(new GameTime(), field);
-            }
-        }
     }
 
     [Fact]
     public void ItStepsTowardsThePlayerExactlyAsAGruntDoes()
     {
-        PlayField field = CreateFieldInPlay();
+        var field = CreateFieldInPlay();
         IntVector2 start = new(field.Player.Position.X + 120, field.Player.Position.Y - 90);
-        var grunt = new Grunt(TestSprites.Shared, start, moveLimitBeats: 6, random: new Random(11));
-        var robot = new BerzerkRobot(TestSprites.Shared, start, moveLimitBeats: 6, random: new Random(11));
+        var grunt = new Grunt(TestSprites.Shared, start, 6, new Random(11));
+        var robot = new BerzerkRobot(TestSprites.Shared, start, 6, new Random(11));
 
-        for (int tick = 0; tick < 200; tick++)
+        for (var tick = 0; tick < 200; tick++)
         {
             grunt.Update(new GameTime(), field);
             robot.Update(new GameTime(), field);
@@ -58,9 +53,10 @@ public sealed class BerzerkRobotTests
     [Fact]
     public void ItStandsStillInTheIdleCycleUntilItFirstMoves_ThenWalks()
     {
-        PlayField field = CreateFieldInPlay();
-        var robot = new BerzerkRobot(TestSprites.Shared, new IntVector2(field.Player.Position.X + 100, field.Player.Position.Y), moveLimitBeats: 3, random: new Random(2));
-        IntVector2 start = robot.Position;
+        var field = CreateFieldInPlay();
+        var robot = new BerzerkRobot(TestSprites.Shared,
+            new IntVector2(field.Player.Position.X + 100, field.Player.Position.Y), 3, new Random(2));
+        var start = robot.Position;
 
         Tick(field, 1, robot);
         Assert.Equal(start, robot.Position);
@@ -82,8 +78,11 @@ public sealed class BerzerkRobotTests
     [InlineData(WalkSequence.Up, 3, 1)]
     [InlineData(WalkSequence.Down, 4, 0)]
     [InlineData(WalkSequence.Down, 7, 1)]
-    public void TheWalkFramesPlay_OneTwo_SideToSide_AndOneTwoThreeTwo_UpAndDown(WalkSequence facing, int step, int expectedIndex) =>
+    public void TheWalkFramesPlay_OneTwo_SideToSide_AndOneTwoThreeTwo_UpAndDown(WalkSequence facing, int step,
+        int expectedIndex)
+    {
         Assert.Equal(expectedIndex, BerzerkRobot.GetWalkFrameIndex(facing, step));
+    }
 
     [Theory]
     [InlineData(50, 10, WalkSequence.Right)]
@@ -91,13 +90,16 @@ public sealed class BerzerkRobotTests
     [InlineData(10, 50, WalkSequence.Down)]
     [InlineData(10, -50, WalkSequence.Up)]
     [InlineData(30, 30, WalkSequence.Right)]
-    public void ItFacesAlongTheLargerGapToThePlayer(int gapX, int gapY, WalkSequence expected) =>
-        Assert.Equal(expected, BerzerkRobot.GetWalkSequenceTowards(new IntVector2(100, 100), new IntVector2(100 + gapX, 100 + gapY)));
+    public void ItFacesAlongTheLargerGapToThePlayer(int gapX, int gapY, WalkSequence expected)
+    {
+        Assert.Equal(expected,
+            BerzerkRobot.GetWalkSequenceTowards(new IntVector2(100, 100), new IntVector2(100 + gapX, 100 + gapY)));
+    }
 
     [Fact]
     public void ItIsRegisteredLikeAGrunt_ScoringTheSame_FatalToTouch_AndPutOnTheFieldByTheWave()
     {
-        PlayField field = CreateField(new LevelParameters(LevelNumber: 1, BerzerkRobotCount: 3));
+        var field = CreateField(new LevelParameters(1, BerzerkRobotCount: 3));
 
         Assert.Equal(3, field.Entities.BerzerkRobots.Count);
         Assert.Equal(ScoreValues.Grunt, RobotKinds.GetInfo(RobotKind.BerzerkRobot).Score);
@@ -107,9 +109,10 @@ public sealed class BerzerkRobotTests
     [Fact]
     public void WalkingOntoAnElectrode_KillsTheRobotAndTheElectrode()
     {
-        PlayField field = CreateField();
+        var field = CreateField();
         field.SkipWaveStart();
-        var electrode = new Electrode(TestSprites.Shared, new IntVector2(field.Player.Position.X + 200, field.Player.Position.Y + 100));
+        var electrode = new Electrode(TestSprites.Shared,
+            new IntVector2(field.Player.Position.X + 200, field.Player.Position.Y + 100));
         var robot = new BerzerkRobot(TestSprites.Shared, electrode.Position, random: new Random(1));
         field.Entities.Add(electrode);
         field.Entities.Add(robot);
@@ -123,17 +126,14 @@ public sealed class BerzerkRobotTests
     [Fact]
     public void TheWaveIsNotWonWhileOneIsLeft_AndADeathKeepsTheOnesThatSurvive()
     {
-        PlayField field = CreateField(new LevelParameters(LevelNumber: 1, BerzerkRobotCount: 3));
+        var field = CreateField(new LevelParameters(1, BerzerkRobotCount: 3));
         Assert.False(field.IsLevelCleared());
 
         field.Entities.BerzerkRobots[0].Kill();
 
         Assert.Equal(2, WaveSurvivors.GetFrom(field).BerzerkRobotCount);
 
-        foreach (BerzerkRobot robot in field.Entities.BerzerkRobots)
-        {
-            robot.Kill();
-        }
+        foreach (var robot in field.Entities.BerzerkRobots) robot.Kill();
 
         Assert.True(field.IsLevelCleared());
     }

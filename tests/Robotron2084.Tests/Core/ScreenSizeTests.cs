@@ -4,11 +4,11 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// Resolution invariants. These must hold at ANY PortPixelsPerArcadePixel, so the suite
-/// stays green when the render scale is raised (ScreenSize is the single
-/// source of truth). The 320 by 200 screen size IS pinned — that is the game's
-/// layout. PortPixelsPerArcadePixel is deliberately NOT pinned: it is the knob
-/// a resolution increase turns.
+///     Resolution invariants. These must hold at ANY PortPixelsPerArcadePixel, so the suite
+///     stays green when the render scale is raised (ScreenSize is the single
+///     source of truth). The 320 by 200 screen size IS pinned — that is the game's
+///     layout. PortPixelsPerArcadePixel is deliberately NOT pinned: it is the knob
+///     a resolution increase turns.
 /// </summary>
 public sealed class ScreenSizeTests
 {
@@ -30,25 +30,36 @@ public sealed class ScreenSizeTests
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(16)]
-    public void ToPortPixelsFromArcadePixels_MultipliesArcadePixelsByPortPixelsPerArcadePixel(int arcadePixels) =>
-        Assert.Equal(arcadePixels * ScreenSize.PortPixelsPerArcadePixel, ScreenSize.ToPortPixelsFromArcadePixels(arcadePixels));
+    public void ToPortPixelsFromArcadePixels_MultipliesArcadePixelsByPortPixelsPerArcadePixel(int arcadePixels)
+    {
+        Assert.Equal(arcadePixels * ScreenSize.PortPixelsPerArcadePixel,
+            ScreenSize.ToPortPixelsFromArcadePixels(arcadePixels));
+    }
 
     [Fact]
-    public void MaxIntegerScale_FitsThreeTimesThePlayfield_At3x() =>
+    public void MaxIntegerScale_FitsThreeTimesThePlayfield_At3x()
+    {
         Assert.Equal(3, ScreenSize.ComputeMaxIntegerScale(ScreenSize.Width * 3, ScreenSize.Height * 3));
+    }
 
     [Fact]
-    public void MaxIntegerScale_WidthLimitsWhenHeightHasRoom() =>
+    public void MaxIntegerScale_WidthLimitsWhenHeightHasRoom()
+    {
         Assert.Equal(1, ScreenSize.ComputeMaxIntegerScale(ScreenSize.Width, ScreenSize.Height * 2));
+    }
 
     [Fact]
-    public void MaxIntegerScale_HeightLimitsWhenWidthHasRoom() =>
+    public void MaxIntegerScale_HeightLimitsWhenWidthHasRoom()
+    {
         Assert.Equal(1, ScreenSize.ComputeMaxIntegerScale(ScreenSize.Width * 2, ScreenSize.Height));
+    }
 
     [Theory]
-    [InlineData(0, 100)]   // degenerate width -> 1x
-    [InlineData(100, 0)]   // degenerate height -> 1x
-    [InlineData(1, 1)]     // tiny display -> 1x
-    public void MaxIntegerScale_NeverDownscales(int width, int height) =>
+    [InlineData(0, 100)] // degenerate width -> 1x
+    [InlineData(100, 0)] // degenerate height -> 1x
+    [InlineData(1, 1)] // tiny display -> 1x
+    public void MaxIntegerScale_NeverDownscales(int width, int height)
+    {
         Assert.Equal(1, ScreenSize.ComputeMaxIntegerScale(width, height));
+    }
 }

@@ -6,10 +6,10 @@ using Xunit;
 namespace Robotron2084.Tests.Hud;
 
 /// <summary>
-/// The DEFINE INPUTS page's logic (notes §101): one column — player 1's eight stick
-/// lines, blank lines, player 2's eight, blank lines, then PAUSE — of which eight are on
-/// screen at a time, and the author's two-step flow: Enter arms a line, the next input
-/// becomes its binding, and the highlight moves on (stepping over the blanks).
+///     The DEFINE INPUTS page's logic (notes §101): one column — player 1's eight stick
+///     lines, blank lines, player 2's eight, blank lines, then PAUSE — of which eight are on
+///     screen at a time, and the author's two-step flow: Enter arms a line, the next input
+///     becomes its binding, and the highlight moves on (stepping over the blanks).
 /// </summary>
 public sealed class DefineInputsModelTests
 {
@@ -53,19 +53,13 @@ public sealed class DefineInputsModelTests
     {
         var model = new DefineInputsModel();
 
-        for (int i = 0; i < DefineInputsModel.LinesPerPlayer; i++)
-        {
-            model.MoveDown();
-        }
+        for (var i = 0; i < DefineInputsModel.LinesPerPlayer; i++) model.MoveDown();
 
         // Seven steps through player 1, then straight onto player 2's first line.
         Assert.Equal(DefineInputsModel.PlayerTwoLine, model.Line);
         Assert.Equal(InputAction.MoveUp, model.GetHighlightedAction());
 
-        for (int i = 0; i < DefineInputsModel.LinesPerPlayer; i++)
-        {
-            model.MoveDown();
-        }
+        for (var i = 0; i < DefineInputsModel.LinesPerPlayer; i++) model.MoveDown();
 
         Assert.True(model.IsPauseLine()); // the gap before PAUSE is stepped over too
 
@@ -81,10 +75,7 @@ public sealed class DefineInputsModelTests
     {
         var model = new DefineInputsModel();
 
-        for (int i = 0; i < DefineInputsModel.LinesPerPlayer - 1; i++)
-        {
-            model.MoveDown();
-        }
+        for (var i = 0; i < DefineInputsModel.LinesPerPlayer - 1; i++) model.MoveDown();
 
         Assert.Equal(InputAction.ShootRight, model.GetHighlightedAction());
         Assert.Equal(0, DefineInputsModel.PlayerOf(model.Line));
@@ -93,10 +84,7 @@ public sealed class DefineInputsModelTests
         Assert.Equal(InputAction.MoveUp, model.GetHighlightedAction());
         Assert.Equal(1, DefineInputsModel.PlayerOf(model.Line)); // player 2's section
 
-        for (int i = 0; i < DefineInputsModel.LinesPerPlayer; i++)
-        {
-            model.MoveDown();
-        }
+        for (var i = 0; i < DefineInputsModel.LinesPerPlayer; i++) model.MoveDown();
 
         Assert.True(model.IsPauseLine());
 
@@ -120,7 +108,7 @@ public sealed class DefineInputsModelTests
     {
         var model = new DefineInputsModel();
 
-        for (int line = 1; line < DefineInputsModel.LineCount; line++)
+        for (var line = 1; line < DefineInputsModel.LineCount; line++)
         {
             model.MoveDown();
 
@@ -130,7 +118,7 @@ public sealed class DefineInputsModelTests
             Assert.True(model.FirstVisibleLine + DefineInputsModel.VisibleLines <= DefineInputsModel.LineCount);
         }
 
-        for (int line = DefineInputsModel.LineCount - 2; line >= 0; line--)
+        for (var line = DefineInputsModel.LineCount - 2; line >= 0; line--)
         {
             model.MoveUp();
 
@@ -144,21 +132,18 @@ public sealed class DefineInputsModelTests
     {
         var model = new DefineInputsModel();
 
-        for (int i = 0; i < DefineInputsModel.LinesPerPlayer; i++)
-        {
-            model.MoveDown();
-        }
+        for (var i = 0; i < DefineInputsModel.LinesPerPlayer; i++) model.MoveDown();
 
         Assert.Equal(DefineInputsModel.PlayerTwoLine, model.Line);
-        Assert.True(model.FirstVisibleLine > 0);                                    // the P1 section has moved up
-        Assert.True(model.FirstVisibleLine <= DefineInputsModel.PlayerTwoLine);     // and the cursor is in the window
+        Assert.True(model.FirstVisibleLine > 0); // the P1 section has moved up
+        Assert.True(model.FirstVisibleLine <= DefineInputsModel.PlayerTwoLine); // and the cursor is in the window
     }
 
     [Fact]
     public void NothingIsCapturedUntilEnterArmsTheLine()
     {
         var model = new DefineInputsModel();
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
 
         Assert.False(model.Assign(settings, InputBinding.CreateKey(Keys.Z)));
         Assert.Equal("W", settings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
@@ -168,14 +153,15 @@ public sealed class DefineInputsModelTests
     public void AssigningArmsThenTakesTheInput_AndMovesOn()
     {
         var model = new DefineInputsModel();
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
 
         model.Arm();
         Assert.True(model.Assign(settings, InputBinding.CreateKey(Keys.Z)));
 
         Assert.Equal("Z", settings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
-        Assert.Equal("P1 LEFT STICK UP", settings[0][InputAction.MoveUp].PadBinding.GetDisplayName()); // the pad slot is untouched
-        Assert.Equal(1, model.Line);  // straight on to MOVE DOWN
+        Assert.Equal("P1 LEFT STICK UP",
+            settings[0][InputAction.MoveUp].PadBinding.GetDisplayName()); // the pad slot is untouched
+        Assert.Equal(1, model.Line); // straight on to MOVE DOWN
         Assert.False(model.IsArmed);
     }
 
@@ -183,12 +169,9 @@ public sealed class DefineInputsModelTests
     public void PlayerTwosLinesWritePlayerTwosControls()
     {
         var model = new DefineInputsModel();
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
 
-        for (int i = 0; i < DefineInputsModel.LinesPerPlayer; i++)
-        {
-            model.MoveDown();
-        }
+        for (var i = 0; i < DefineInputsModel.LinesPerPlayer; i++) model.MoveDown();
 
         model.Arm();
         model.Assign(settings, InputBinding.CreateKey(Keys.Z));
@@ -201,7 +184,7 @@ public sealed class DefineInputsModelTests
     public void ThePauseLine_TakesAGlobalBinding()
     {
         var model = new DefineInputsModel();
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
 
         model.MoveUp(); // onto PAUSE
         model.Arm();
@@ -215,7 +198,7 @@ public sealed class DefineInputsModelTests
     public void BackWhileArmed_DisarmsWithoutAssigning()
     {
         var model = new DefineInputsModel();
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
 
         model.Arm();
         model.CancelArm();
@@ -240,20 +223,21 @@ public sealed class DefineInputsModelTests
     public void ClearUnbindsBothSlotsOfTheHighlightedLine()
     {
         var model = new DefineInputsModel();
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
 
         model.ClearHighlighted(settings);
 
         Assert.Equal("NONE", settings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
         Assert.Equal("NONE", settings[0][InputAction.MoveUp].PadBinding.GetDisplayName());
-        Assert.Equal("D", settings[0][InputAction.MoveRight].KeyBinding.GetDisplayName()); // its neighbours are untouched
+        Assert.Equal("D",
+            settings[0][InputAction.MoveRight].KeyBinding.GetDisplayName()); // its neighbours are untouched
     }
 
     [Fact]
     public void ResetPutsEveryLineAndPauseBackToFactory()
     {
         var model = new DefineInputsModel();
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
 
         model.Arm();
         model.Assign(settings, InputBinding.CreateKey(Keys.Z));

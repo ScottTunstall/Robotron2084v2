@@ -4,10 +4,10 @@ using Xunit;
 namespace Robotron2084.Tests.Hud;
 
 /// <summary>
-/// RRTABLE's printing order (notes §98.6) — the page BUILDS ITSELF: <c>MAKP LOOPP</c>
-/// and <c>JSR FRAMER</c> put the wall on an empty screen, then <c>PRJNK</c> prints the
-/// lists FOUR ROWS A ROM FRAME (<c>LDA #4 / STA PD+17,U</c> + <c>NAP 1</c>), with the top
-/// entry between them and the headers last, and only then do the ramp processes start.
+///     RRTABLE's printing order (notes §98.6) — the page BUILDS ITSELF: <c>MAKP LOOPP</c>
+///     and <c>JSR FRAMER</c> put the wall on an empty screen, then <c>PRJNK</c> prints the
+///     lists FOUR ROWS A ROM FRAME (<c>LDA #4 / STA PD+17,U</c> + <c>NAP 1</c>), with the top
+///     entry between them and the headers last, and only then do the ramp processes start.
 /// </summary>
 public sealed class HighScorePrintSequenceTests
 {
@@ -19,10 +19,7 @@ public sealed class HighScorePrintSequenceTests
     {
         var print = new HighScorePrintSequence();
 
-        for (int tick = 0; tick < 200; tick++)
-        {
-            print.Tick(frameFinished: false, Today, AllTime);
-        }
+        for (var tick = 0; tick < 200; tick++) print.Tick(false, Today, AllTime);
 
         Assert.False(print.IsPrinting());
         Assert.Equal(0, print.TodayRows);
@@ -37,7 +34,7 @@ public sealed class HighScorePrintSequenceTests
     {
         var print = new HighScorePrintSequence();
 
-        print.Tick(frameFinished: true, Today, AllTime);
+        print.Tick(true, Today, AllTime);
 
         // PRJNK's first group prints the moment it is called (TOD44 falls into TOD33).
         Assert.Equal(4, print.TodayRows);
@@ -48,7 +45,7 @@ public sealed class HighScorePrintSequenceTests
     public void FourRowsPrintPerRomFrame_AndThePageEndsWithTheHeaders()
     {
         var print = new HighScorePrintSequence();
-        print.Tick(frameFinished: true, Today, AllTime);
+        print.Tick(true, Today, AllTime);
         Assert.Equal(4, print.TodayRows);
 
         // A fiftieth of a second is 6/5 of a port tick.
@@ -81,10 +78,10 @@ public sealed class HighScorePrintSequenceTests
         // 10 rows = 3 groups (2 sleeps) and 36 rows = 9 groups (8 sleeps): ten fiftieths of a second
         // = twelve ticks, a fifth of a second of printing after the frame's own 53.
         var print = new HighScorePrintSequence();
-        int ticks = 0;
+        var ticks = 0;
         while (!print.IsDone() && ticks < 200)
         {
-            print.Tick(frameFinished: true, Today, AllTime);
+            print.Tick(true, Today, AllTime);
             ticks++;
         }
 
@@ -97,7 +94,7 @@ public sealed class HighScorePrintSequenceTests
     {
         var print = new HighScorePrintSequence();
 
-        print.Tick(frameFinished: true, 0, 0);
+        print.Tick(true, 0, 0);
 
         Assert.True(print.HeadersPrinted);
         Assert.True(print.IsDone());
@@ -106,20 +103,14 @@ public sealed class HighScorePrintSequenceTests
 
     private static void TickUntil(HighScorePrintSequence print, Func<HighScorePrintSequence, bool> condition)
     {
-        for (int tick = 0; tick < 200 && !condition(print); tick++)
-        {
-            print.Tick(false, Today, AllTime);
-        }
+        for (var tick = 0; tick < 200 && !condition(print); tick++) print.Tick(false, Today, AllTime);
 
         Assert.True(condition(print), "the page never reached the expected state");
     }
 
-    /// <summary>Ticks <paramref name="frames"/> fiftieths of a second' worth of printing.</summary>
+    /// <summary>Ticks <paramref name="frames" /> fiftieths of a second' worth of printing.</summary>
     private static void TickFrames(HighScorePrintSequence print, int frames)
     {
-        for (int tick = 0; tick < ((frames * 6) + 4) / 5; tick++)
-        {
-            print.Tick(false, Today, AllTime);
-        }
+        for (var tick = 0; tick < (frames * 6 + 4) / 5; tick++) print.Tick(false, Today, AllTime);
     }
 }

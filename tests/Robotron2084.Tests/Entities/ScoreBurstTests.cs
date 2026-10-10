@@ -8,10 +8,10 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// The spheroid's and the quark's DEATH BURST (notes §64) — the ROM's
-/// `CIRKP`/`CIRKV`, which is NOT the strip explosion: the enemy's own animation frames
-/// play as a solid silhouette in a palette slot, then its "1000" sprite is
-/// displayed down-right of where it died.
+///     The spheroid's and the quark's DEATH BURST (notes §64) — the ROM's
+///     `CIRKP`/`CIRKV`, which is NOT the strip explosion: the enemy's own animation frames
+///     play as a solid silhouette in a palette slot, then its "1000" sprite is
+///     displayed down-right of where it died.
 /// </summary>
 public sealed class ScoreBurstTests
 {
@@ -19,18 +19,16 @@ public sealed class ScoreBurstTests
 
     private static void Advance(ScoreBurst burst, int ticks)
     {
-        for (int i = 0; i < ticks; i++)
-        {
+        for (var i = 0; i < ticks; i++)
             // The burst reads neither the field nor the clock — it counts ticks.
-            burst.Update(Tick16, field: null!);
-        }
+            burst.Update(Tick16, null!);
     }
 
     [Fact]
     public void TheBurstShowsTheEnemysAnimationFrames_FromTwo_UpToTheRomCount()
     {
         var bounds = new Rectangle(100, 200, 16, 15);
-        ScoreBurst burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, bounds);
+        var burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, bounds);
 
         Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, burst.AnimationFrameIndex);
         Assert.False(burst.ShowingPoints);
@@ -39,14 +37,11 @@ public sealed class ScoreBurstTests
         // step land on a 2- or 3-tick boundary depending on its phase, so batching
         // ticks would alias the sequence.
         var seen = new List<int>();
-        for (int i = 0; i < 60 && !burst.ShowingPoints; i++)
+        for (var i = 0; i < 60 && !burst.ShowingPoints; i++)
         {
-            int before = burst.AnimationFrameIndex;
+            var before = burst.AnimationFrameIndex;
             Advance(burst, 1);
-            if (burst.AnimationFrameIndex != before)
-            {
-                seen.Add(burst.AnimationFrameIndex);
-            }
+            if (burst.AnimationFrameIndex != before) seen.Add(burst.AnimationFrameIndex);
         }
 
         // Animation frames 2..7 for the spheroid: `LDA #7` IS the last animation frame's index,
@@ -64,7 +59,7 @@ public sealed class ScoreBurstTests
         // `NAP 2` = 2 fiftieths of a second = 12 clock units, and a port tick is 5 clock units, so a
         // step lands every 2-3 ticks (2.4). PortTicks(2) would also be 2 here,
         // but the accumulator is the repo's rule for short ROM delays (§52).
-        ScoreBurst burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
+        var burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
 
         // Animation frame 2 is shown from the kill itself; each step is 2 fiftieths of a second.
         Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, burst.AnimationFrameIndex);
@@ -81,7 +76,7 @@ public sealed class ScoreBurstTests
     [Fact]
     public void ThePointsValueShowsForThirtySteps_ThenTheBurstIsGone()
     {
-        ScoreBurst burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
+        var burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
 
         // 36 steps in total (6 burst + 30 points) x 12 clock units = 432 clock units, and
         // 5 clock units accrue a tick => 86 ticks leave it alive, the 87th kills it.
@@ -96,7 +91,7 @@ public sealed class ScoreBurstTests
     public void ThePointsValueSits_OneColumnRight_FiveRowsDown()
     {
         var bounds = new Rectangle(100, 200, 16, 15);
-        ScoreBurst burst = ScoreBurst.CreateForQuark(TestSprites.Shared, bounds);
+        var burst = ScoreBurst.CreateForQuark(TestSprites.Shared, bounds);
 
         // The ROM adds #$0105 to the blitter's column:row destination.
         Assert.Equal(
@@ -114,11 +109,11 @@ public sealed class ScoreBurstTests
         // `LDD #$FFAA`: $AA = slot 10 (the current player's score slot) for the
         // dying silhouette and $FF = slot 15 for the points value; the quark's
         // `LDD #$DDDD` uses slot 13 for both. All three cycle with the palette.
-        ScoreBurst spheroid = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
+        var spheroid = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
         Assert.Equal(10, spheroid.BurstSlot);
         Assert.Equal(15, spheroid.PointsSlot);
 
-        ScoreBurst quark = ScoreBurst.CreateForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
+        var quark = ScoreBurst.CreateForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
         Assert.Equal(13, quark.BurstSlot);
         Assert.Equal(13, quark.PointsSlot);
     }
@@ -128,8 +123,8 @@ public sealed class ScoreBurstTests
     {
         // The quark has NINE animation frames (SQP0..SQP8) and `LDA #8`, so its burst
         // reaches index 8 — one further than the spheroid's.
-        ScoreBurst burst = ScoreBurst.CreateForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
-        int last = burst.AnimationFrameIndex;
+        var burst = ScoreBurst.CreateForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
+        var last = burst.AnimationFrameIndex;
         while (!burst.ShowingPoints && last < 20)
         {
             Advance(burst, 3);
@@ -144,7 +139,6 @@ public sealed class ScoreBurstTests
     {
         var parameters = new LevelParameters(
             1,
-            GruntCount: 0,
             HulkCount: 0,
             SpheroidCount: spheroids,
             QuarkCount: quarks,
@@ -159,10 +153,7 @@ public sealed class ScoreBurstTests
     /// <summary>Drains the wave-start appear chain so only kill effects remain.</summary>
     private static void Settle(PlayField field)
     {
-        for (int i = 0; i < 30; i++)
-        {
-            field.Update(Tick16);
-        }
+        for (var i = 0; i < 30; i++) field.Update(Tick16);
 
         Assert.Empty(field.Entities.Explosions);
     }
@@ -170,13 +161,13 @@ public sealed class ScoreBurstTests
     [Fact]
     public void ShootingASpheroid_PlaysTheBurst_AndNoStripExplosion()
     {
-        PlayField field = CreateField(spheroids: 1);
+        var field = CreateField(1);
         field.SkipWaveStart();
         Settle(field);
 
-        Spheroid spheroid = field.Entities.Spheroids[0];
+        var spheroid = field.Entities.Spheroids[0];
         IntVector2 aim = new(spheroid.GetBounds().Center.X, spheroid.GetBounds().Y - 6);
-        Assert.True(field.PlayerLasers.TryFire(aim, Direction8.Down, out PlayerLaser? laser));
+        Assert.True(field.PlayerLasers.TryFire(aim, Direction8.Down, out var laser));
         Assert.NotNull(laser);
         field.Update(Tick16);
 
@@ -189,13 +180,13 @@ public sealed class ScoreBurstTests
     [Fact]
     public void ShootingAQuark_PlaysTheBurst_AndNoStripExplosion()
     {
-        PlayField field = CreateField(quarks: 1);
+        var field = CreateField(quarks: 1);
         field.SkipWaveStart();
         Settle(field);
 
-        Quark quark = field.Entities.Quarks[0];
+        var quark = field.Entities.Quarks[0];
         IntVector2 aim = new(quark.GetBounds().Center.X, quark.GetBounds().Y - 6);
-        Assert.True(field.PlayerLasers.TryFire(aim, Direction8.Down, out PlayerLaser? laser));
+        Assert.True(field.PlayerLasers.TryFire(aim, Direction8.Down, out var laser));
         Assert.NotNull(laser);
         field.Update(Tick16);
 

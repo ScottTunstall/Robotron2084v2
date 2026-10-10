@@ -7,54 +7,57 @@ using Xunit;
 namespace Robotron2084.Tests.Entities;
 
 /// <summary>
-/// Hulk walk animation (RRH11, decoded 2026-09-13 from the ROM — see
-/// docs/arcade-fidelity-notes.md progress (21)): each direction block
-/// walks an ABAC sequence over the nine verified hulk frames, and every
-/// direction change restarts at the block's first frame (ROM HND10:
-/// CLRA; STA PD4,U; OPICT = HLKLP1 + first image). The animation frame list
-/// HLKLP1 at $0CF9 maps the blocks to repo frames: LEFT = 1,2,1,3 /
-/// RIGHT = 7,8,7,9 / DOWN = UP = 4,5,4,6. Horizontal step length (3/4
-/// arcade px) follows the animation entry (even = 3, odd = 4).
+///     Hulk walk animation (RRH11, decoded 2026-09-13 from the ROM — see
+///     docs/arcade-fidelity-notes.md progress (21)): each direction block
+///     walks an ABAC sequence over the nine verified hulk frames, and every
+///     direction change restarts at the block's first frame (ROM HND10:
+///     CLRA; STA PD4,U; OPICT = HLKLP1 + first image). The animation frame list
+///     HLKLP1 at $0CF9 maps the blocks to repo frames: LEFT = 1,2,1,3 /
+///     RIGHT = 7,8,7,9 / DOWN = UP = 4,5,4,6. Horizontal step length (3/4
+///     arcade px) follows the animation entry (even = 3, odd = 4).
 /// </summary>
 public sealed class HulkAnimationTests
 {
     /// <summary>Expected frame (0-based index into HulkAnimationFrames = repo hulk N+1) per direction and entry.</summary>
-    private static int ExpectedFrame(Direction8 direction, int entry) => direction switch
+    private static int ExpectedFrame(Direction8 direction, int entry)
     {
-        Direction8.Left => new[] { 0, 1, 0, 2 }[entry],
-        Direction8.Right => new[] { 6, 7, 6, 8 }[entry],
-        _ => new[] { 3, 4, 3, 5 }[entry], // Down and Up share the ROM's block
-    };
+        return direction switch
+        {
+            Direction8.Left => new[] { 0, 1, 0, 2 }[entry],
+            Direction8.Right => new[] { 6, 7, 6, 8 }[entry],
+            _ => new[] { 3, 4, 3, 5 }[entry] // Down and Up share the ROM's block
+        };
+    }
 
     [Fact]
     public void Hulk_WalksTheRomFrameSequence_AndRestartsOnEveryDirectionChange()
     {
-        PlayField field = CreateField();
-        Rectangle bounds = field.Wall.PlayfieldBounds;
+        var field = CreateField();
+        var bounds = field.Wall.PlayfieldBounds;
         // Hunt the playfield center from the right side: the first aim is
         // LEFT; re-aims (RND 1..31 steps or wall contact) flip the axis.
         IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 120, bounds.Y + 120);
-        var hulk = new Hulk(TestSprites.Shared, spot, new Random(19), beatIntervalRomFrames: 2, () => center);
+        var hulk = new Hulk(TestSprites.Shared, spot, new Random(19), 2, () => center);
         field.Entities.Hulks.Add(hulk);
 
         field.SkipWaveStart();
         field.Update(new GameTime()); // the first live update = the spawn aim
 
         // ROM state after the spawn aim: entry 0 of the aimed block.
-        Direction8 lastDirection = hulk.Direction;
-        int entry = 0;
-        int expectedFrame = ExpectedFrame(lastDirection, 0);
-        IntVector2 lastPosition = hulk.Position;
+        var lastDirection = hulk.Direction;
+        var entry = 0;
+        var expectedFrame = ExpectedFrame(lastDirection, 0);
+        var lastPosition = hulk.Position;
         Assert.Equal(expectedFrame, hulk.AnimationFrameIndex);
 
-        bool reaimed = false;
-        for (int i = 0; i < 400; i++)
+        var reaimed = false;
+        for (var i = 0; i < 400; i++)
         {
             field.Update(new GameTime());
             Assert.True(IsFullyInside(hulk.GetBounds(), bounds), $"hulk left the playfield at update {i}");
 
-            bool moved = hulk.Position != lastPosition;
+            var moved = hulk.Position != lastPosition;
             reaimed = hulk.Direction != lastDirection;
 
             if (moved)
@@ -62,22 +65,24 @@ public sealed class HulkAnimationTests
                 // A step always uses the state's direction and entry BEFORE
                 // any re-aim this cycle (a post-step re-aim flips the axis,
                 // so the moved direction and the new direction differ).
-                int stepEntry = entry;
-                int stepArcadePx = lastDirection is Direction8.Up or Direction8.Down
+                var stepEntry = entry;
+                var stepArcadePx = lastDirection is Direction8.Up or Direction8.Down
                     ? 2
-                    : ((stepEntry & 1) == 0 ? 3 : 4);
-                int step = ScreenSize.ToPortPixelsFromArcadePixels(stepArcadePx);
-                int expectedDeltaX = lastDirection switch
+                    : (stepEntry & 1) == 0
+                        ? 3
+                        : 4;
+                var step = ScreenSize.ToPortPixelsFromArcadePixels(stepArcadePx);
+                var expectedDeltaX = lastDirection switch
                 {
                     Direction8.Left => -step,
                     Direction8.Right => step,
-                    _ => 0,
+                    _ => 0
                 };
-                int expectedDeltaY = lastDirection switch
+                var expectedDeltaY = lastDirection switch
                 {
                     Direction8.Up => -step,
                     Direction8.Down => step,
-                    _ => 0,
+                    _ => 0
                 };
                 Assert.Equal(lastPosition.X + expectedDeltaX, hulk.Position.X);
                 Assert.Equal(lastPosition.Y + expectedDeltaY, hulk.Position.Y);
@@ -100,14 +105,16 @@ public sealed class HulkAnimationTests
         }
     }
 
-    private static bool IsFullyInside(Rectangle rect, Rectangle bounds) =>
-        rect.Left >= bounds.Left && rect.Right <= bounds.Right && rect.Top >= bounds.Top && rect.Bottom <= bounds.Bottom;
+    private static bool IsFullyInside(Rectangle rect, Rectangle bounds)
+    {
+        return rect.Left >= bounds.Left && rect.Right <= bounds.Right && rect.Top >= bounds.Top &&
+               rect.Bottom <= bounds.Bottom;
+    }
 
     private static PlayField CreateField()
     {
         var parameters = new LevelParameters(
             1,
-            GruntCount: 0,
             HulkCount: 0,
             SpheroidCount: 0,
             QuarkCount: 0,

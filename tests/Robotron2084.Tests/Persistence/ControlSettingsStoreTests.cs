@@ -7,20 +7,22 @@ using Xunit;
 namespace Robotron2084.Tests.Persistence;
 
 /// <summary>
-/// The controls INI file (notes §101). The author asked for INI rather than JSON so it
-/// can be read and hand-edited, which makes two things load-bearing: the file must
-/// round-trip exactly, and anything unreadable in it must fall back to the factory
-/// scheme rather than leave the player with no controls at all.
+///     The controls INI file (notes §101). The author asked for INI rather than JSON so it
+///     can be read and hand-edited, which makes two things load-bearing: the file must
+///     round-trip exactly, and anything unreadable in it must fall back to the factory
+///     scheme rather than leave the player with no controls at all.
 /// </summary>
 public sealed class ControlSettingsStoreTests
 {
-    private static string TempFile() =>
-        Path.Combine(Path.GetTempPath(), $"robotron-controls-{Guid.NewGuid():N}.ini");
+    private static string TempFile()
+    {
+        return Path.Combine(Path.GetTempPath(), $"robotron-controls-{Guid.NewGuid():N}.ini");
+    }
 
     [Fact]
     public void MissingFile_YieldsTheFactoryScheme()
     {
-        ControlSettings loaded = ControlSettingsStore.Load(TempFile());
+        var loaded = ControlSettingsStore.Load(TempFile());
 
         Assert.Equal("W", loaded[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
         Assert.Equal("P", loaded.Pause.GetDisplayName());
@@ -29,17 +31,19 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void EverythingSurvivesARoundTrip()
     {
-        string path = TempFile();
+        var path = TempFile();
         try
         {
-            ControlSettings settings = ControlSettings.CreateDefaults();
+            var settings = ControlSettings.CreateDefaults();
             settings[0][InputAction.MoveUp] = settings[0][InputAction.MoveUp].With(InputBinding.CreateKey(Keys.Z));
-            settings[1][InputAction.ShootRight] = settings[1][InputAction.ShootRight].With(InputBinding.CreateButton(1, Buttons.RightShoulder));
-            settings[1][InputAction.MoveLeft] = settings[1][InputAction.MoveLeft].With(InputBinding.CreateStick(1, isRightStick: false, -1, -1));
+            settings[1][InputAction.ShootRight] = settings[1][InputAction.ShootRight]
+                .With(InputBinding.CreateButton(1, Buttons.RightShoulder));
+            settings[1][InputAction.MoveLeft] =
+                settings[1][InputAction.MoveLeft].With(InputBinding.CreateStick(1, false, -1, -1));
             settings.Pause = InputBinding.CreateKey(Keys.Escape);
 
             ControlSettingsStore.Save(path, settings);
-            ControlSettings loaded = ControlSettingsStore.Load(path);
+            var loaded = ControlSettingsStore.Load(path);
 
             Assert.Equal("Z", loaded[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
             Assert.Equal("P1 LEFT STICK UP", loaded[0][InputAction.MoveUp].PadBinding.GetDisplayName());
@@ -57,7 +61,7 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void TheFileIsReadableIni_WithThePagesOwnVocabulary()
     {
-        string text = ControlSettingsStore.Write(ControlSettings.CreateDefaults());
+        var text = ControlSettingsStore.Write(ControlSettings.CreateDefaults());
 
         Assert.Contains("[player1]", text);
         Assert.Contains("[player2]", text);
@@ -71,7 +75,7 @@ public sealed class ControlSettingsStoreTests
         Assert.DoesNotContain("pause.pad", text);
         // Nothing in a VALUE may need a character the arcade's small font has not got
         // (no lowercase, no colon, no hyphen) — notes §101.
-        string values = string.Join(
+        var values = string.Join(
             "\n",
             text.Split('\n').Where(line => !line.TrimStart().StartsWith(';')));
         Assert.DoesNotContain(":", values);
@@ -82,11 +86,11 @@ public sealed class ControlSettingsStoreTests
     public void ClearingOneSlotByHand_LeavesTheOtherAlone()
     {
         // The trap: "key=-" must clear the KEYBOARD slot only, not the whole line.
-        ControlSettings parsed = ControlSettingsStore.Parse(
+        var parsed = ControlSettingsStore.Parse(
         [
             "[player1]",
             "moveup.key=-",
-            "moveup.pad=",
+            "moveup.pad="
         ]);
 
         Assert.Equal(InputBindingKind.None, parsed[0][InputAction.MoveUp].KeyBinding.Kind);
@@ -98,17 +102,17 @@ public sealed class ControlSettingsStoreTests
     public void TheOlderPauseNames_StillSetTheOneValue()
     {
         // The pause line used to be a key/pad pair; both old names now set the single value.
-        ControlSettings byKey = ControlSettingsStore.Parse(["[pause]", "key=Q"]);
+        var byKey = ControlSettingsStore.Parse(["[pause]", "key=Q"]);
         Assert.Equal("Q", byKey.Pause.GetDisplayName());
 
-        ControlSettings byPad = ControlSettingsStore.Parse(["[pause]", "pad=P1 A"]);
+        var byPad = ControlSettingsStore.Parse(["[pause]", "pad=P1 A"]);
         Assert.Equal("P1 A", byPad.Pause.GetDisplayName());
     }
 
     [Fact]
     public void PartialFiles_KeepTheFactoryValueForEverythingElse()
     {
-        ControlSettings parsed = ControlSettingsStore.Parse(["[player1]", "moveup.key=Z"]);
+        var parsed = ControlSettingsStore.Parse(["[player1]", "moveup.key=Z"]);
 
         Assert.Equal("Z", parsed[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
         Assert.Equal("S", parsed[0][InputAction.MoveDown].KeyBinding.GetDisplayName());
@@ -118,7 +122,7 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void GarbageIsIgnored_NotGuessed()
     {
-        ControlSettings parsed = ControlSettingsStore.Parse(
+        var parsed = ControlSettingsStore.Parse(
         [
             "; a comment",
             "# another",
@@ -127,7 +131,7 @@ public sealed class ControlSettingsStoreTests
             "[player1]",
             "notanaction.key=Z",
             "moveup.key=NotAKey",
-            "moveup.pad=[player1]",
+            "moveup.pad=[player1]"
         ]);
 
         Assert.Equal("W", parsed[0][InputAction.MoveUp].KeyBinding.GetDisplayName()); // the bad value left the default
@@ -137,12 +141,12 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void ACorruptFile_FallsBackToTheFactoryScheme()
     {
-        string path = TempFile();
+        var path = TempFile();
         try
         {
             File.WriteAllText(path, "this is not an ini file at all \0\u0001");
 
-            ControlSettings loaded = ControlSettingsStore.Load(path);
+            var loaded = ControlSettingsStore.Load(path);
 
             Assert.Equal("W", loaded[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
         }
@@ -155,29 +159,29 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void SaveCreatesTheDirectory_AndWritesNoBom()
     {
-        string directory = Path.Combine(Path.GetTempPath(), $"robotron-{Guid.NewGuid():N}");
-        string path = Path.Combine(directory, "controls.ini");
+        var directory = Path.Combine(Path.GetTempPath(), $"robotron-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "controls.ini");
         try
         {
             ControlSettingsStore.Save(path, ControlSettings.CreateDefaults());
 
-            byte[] bytes = File.ReadAllBytes(path);
+            var bytes = File.ReadAllBytes(path);
             Assert.True(bytes.Length > 0);
             Assert.NotEqual(0xEF, bytes[0]); // no BOM: the file should open cleanly in Notepad
         }
         finally
         {
-            Directory.Delete(directory, recursive: true);
+            Directory.Delete(directory, true);
         }
     }
 
     [Fact]
     public void ReadPlayer_TurnsTheBindingsIntoAState()
     {
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
         var keys = new KeyboardState(Keys.W, Keys.L); // player 1: move up, shoot right
 
-        PlayerInputState state = settings.ReadPlayer(0, keys, new GamePadState(), new GamePadState());
+        var state = settings.ReadPlayer(0, keys, new GamePadState(), new GamePadState());
 
         Assert.Equal(new IntVector2(0, -1), state.MoveDirection);
         Assert.Equal(new IntVector2(1, 0), state.ShootDirection);
@@ -188,10 +192,10 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void APlayerTwoBinding_DrivesPlayerTwo()
     {
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
         var keys = new KeyboardState(Keys.NumPad8); // player 2's default shoot-up
 
-        PlayerInputState state = settings.ReadPlayer(1, keys, new GamePadState(), new GamePadState());
+        var state = settings.ReadPlayer(1, keys, new GamePadState(), new GamePadState());
 
         Assert.Equal(new IntVector2(0, -1), state.ShootDirection);
         Assert.True(state.FireHeld);
@@ -200,20 +204,21 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void SpaceAndInsert_StayAsPortAliases()
     {
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
 
-        PlayerInputState state = settings.ReadPlayer(0, new KeyboardState(Keys.Space, Keys.Insert), new GamePadState(), new GamePadState());
+        var state = settings.ReadPlayer(0, new KeyboardState(Keys.Space, Keys.Insert), new GamePadState(),
+            new GamePadState());
 
-        Assert.True(state.FireHeld);      // Space has always fired
+        Assert.True(state.FireHeld); // Space has always fired
         Assert.True(state.SkipLevelHeld); // Insert is the skip-level key since P became PAUSE
     }
 
     [Fact]
     public void TheStartButtons_AreStillTheArcanes()
     {
-        ControlSettings settings = ControlSettings.CreateDefaults();
+        var settings = ControlSettings.CreateDefaults();
 
-        PlayerInputState state = settings.ReadPlayer(0, new KeyboardState(Keys.D2), new GamePadState(), new GamePadState());
+        var state = settings.ReadPlayer(0, new KeyboardState(Keys.D2), new GamePadState(), new GamePadState());
 
         Assert.True(state.StartTwoPlayersHeld);
         Assert.False(state.StartOnePlayerHeld);

@@ -8,29 +8,28 @@ using Xunit;
 namespace Robotron2084.Tests.Entities;
 
 /// <summary>
-/// Hulk laser knockback (ROM RRH11 HULKIL, decoded 2026-09-13): the hulk is
-/// indestructible and is pushed along the laser's direction PER AXIS at ROM
-/// magnitudes — X = ±1 arcade px, doubled to ±2 by SEED's sign bit (50%);
-/// Y = ±1, quadrupled to ±4 when LSEED &gt;= $C0 (75%) — then clamped at the
-/// wall. (Playtest 2026-09-13: the old fixed 20 arcade pixel push "jumps too far".)
-/// All magnitudes here are in internal px (1 arcade px = ScreenSize.ToPortPixelsFromArcadePixels(1)).
+///     Hulk laser knockback (ROM RRH11 HULKIL, decoded 2026-09-13): the hulk is
+///     indestructible and is pushed along the laser's direction PER AXIS at ROM
+///     magnitudes — X = ±1 arcade px, doubled to ±2 by SEED's sign bit (50%);
+///     Y = ±1, quadrupled to ±4 when LSEED &gt;= $C0 (75%) — then clamped at the
+///     wall. (Playtest 2026-09-13: the old fixed 20 arcade pixel push "jumps too far".)
+///     All magnitudes here are in internal px (1 arcade px = ScreenSize.ToPortPixelsFromArcadePixels(1)).
 /// </summary>
 public sealed class HulkKnockbackTests
 {
     /// <summary>The field center — far enough from every wall that clamping never interferes.</summary>
     private static IntVector2 Center(PlayField field)
     {
-        Rectangle b = field.Wall.PlayfieldBounds;
-        int width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width);
-        int height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height);
-        return new(b.X + b.Width / 2 - width / 2, b.Y + b.Height / 2 - height / 2);
+        var b = field.Wall.PlayfieldBounds;
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height);
+        return new IntVector2(b.X + b.Width / 2 - width / 2, b.Y + b.Height / 2 - height / 2);
     }
 
     private static PlayField CreateField()
     {
         var parameters = new LevelParameters(
             1,
-            GruntCount: 0,
             HulkCount: 0,
             SpheroidCount: 0,
             QuarkCount: 0,
@@ -44,30 +43,30 @@ public sealed class HulkKnockbackTests
     [Fact]
     public void Hulk_Knockback_UsesOnlyTheRomPerAxisMagnitudes_OnAllEightDirections()
     {
-        PlayField field = CreateField();
-        IntVector2 spot = Center(field);
+        var field = CreateField();
+        var spot = Center(field);
 
-        foreach (Direction8 direction in Enum.GetValues<Direction8>())
+        foreach (var direction in Enum.GetValues<Direction8>())
         {
-            var hulk = new Hulk(TestSprites.Shared, spot, new Random(1000 + (int)direction), beatIntervalRomFrames: 2, () => spot);
+            var hulk = new Hulk(TestSprites.Shared, spot, new Random(1000 + (int)direction), 2, () => spot);
             field.Entities.Hulks.Add(hulk);
             field.SkipWaveStart();
             field.Update(new GameTime()); // caches the playfield bounds
 
-            IntVector2 unit = direction.ToIntVector();
+            var unit = direction.ToIntVector();
             var observed = new HashSet<IntVector2>();
 
-            for (int i = 0; i < 400; i++)
+            for (var i = 0; i < 400; i++)
             {
                 hulk.TeleportTo(spot); // reset each hit so the hulk never drifts toward a wall
                 hulk.ApplyKnockback(unit);
                 observed.Add(hulk.Position - spot);
             }
 
-            int oneX = ScreenSize.ToPortPixelsFromArcadePixels(1);
-            int twoX = ScreenSize.ToPortPixelsFromArcadePixels(2);
-            int oneY = ScreenSize.ToPortPixelsFromArcadePixels(1);
-            int fourY = ScreenSize.ToPortPixelsFromArcadePixels(4);
+            var oneX = ScreenSize.ToPortPixelsFromArcadePixels(1);
+            var twoX = ScreenSize.ToPortPixelsFromArcadePixels(2);
+            var oneY = ScreenSize.ToPortPixelsFromArcadePixels(1);
+            var fourY = ScreenSize.ToPortPixelsFromArcadePixels(4);
 
             // ROM HULKIL: each active axis moves by exactly ±1 or ±2 (X) /
             // ±1 or ±4 (Y) arcade px; the inactive axis never moves.
@@ -75,8 +74,8 @@ public sealed class HulkKnockbackTests
                 observed,
                 d =>
                 {
-                    int ax = Math.Abs(d.X);
-                    int ay = Math.Abs(d.Y);
+                    var ax = Math.Abs(d.X);
+                    var ay = Math.Abs(d.Y);
                     Assert.True(
                         unit.X == 0 ? ax == 0 : ax == oneX || ax == twoX,
                         $"dx {d.X} for {direction}");
@@ -104,19 +103,20 @@ public sealed class HulkKnockbackTests
     [Fact]
     public void Hulk_Knockback_IsClampedAtTheWall()
     {
-        PlayField field = CreateField();
-        Rectangle b = field.Wall.PlayfieldBounds;
-        int width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width);
-        int height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height);
+        var field = CreateField();
+        var b = field.Wall.PlayfieldBounds;
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height);
 
         // Top-left corner, pushed outward (up-left): the hulk may sit on the
         // wall (spec: "pushed back into the WALL") but never leave the field.
-        var hulk = new Hulk(TestSprites.Shared, new IntVector2(b.X, b.Y), new Random(7), beatIntervalRomFrames: 2, () => new IntVector2(b.X, b.Y));
+        var hulk = new Hulk(TestSprites.Shared, new IntVector2(b.X, b.Y), new Random(7), 2,
+            () => new IntVector2(b.X, b.Y));
         field.Entities.Hulks.Add(hulk);
         field.SkipWaveStart();
         field.Update(new GameTime());
 
-        for (int i = 0; i < 50; i++)
+        for (var i = 0; i < 50; i++)
         {
             hulk.ApplyKnockback(Direction8.UpLeft.ToIntVector());
             Assert.InRange(hulk.Position.X, b.X, b.Right - width);

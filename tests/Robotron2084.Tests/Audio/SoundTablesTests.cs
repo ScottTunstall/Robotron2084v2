@@ -9,19 +9,18 @@ public class SoundTablesTests
     [Fact]
     public void EveryTable_MatchesTheMainROMsOwnBytes()
     {
-        byte[] rom = RomFiles.ReadOrSkip(RomFiles.MainRom);
+        var rom = RomFiles.ReadOrSkip(RomFiles.MainRom);
 
-        foreach (SoundSequence table in SoundTables.All)
+        foreach (var table in SoundTables.All)
         {
             List<byte> expected = [(byte)table.Priority];
-            foreach (SoundEntry entry in table.Entries)
-            {
+            foreach (var entry in table.Entries)
                 expected.AddRange([entry.Repetitions, entry.LengthVblanks, entry.SoundNumber]);
-            }
 
             expected.Add(0); // a repeat count of 0 ends the table
-            byte[] actual = rom[table.RomTableAddress..(table.RomTableAddress + expected.Count)];
-            Assert.True(expected.SequenceEqual(actual), $"The table at ${table.RomTableAddress:X4} does not match the ROM.");
+            var actual = rom[table.RomTableAddress..(table.RomTableAddress + expected.Count)];
+            Assert.True(expected.SequenceEqual(actual),
+                $"The table at ${table.RomTableAddress:X4} does not match the ROM.");
         }
     }
 
@@ -49,7 +48,7 @@ public class SoundTablesTests
     [InlineData(RobotKind.CruiseMissile, "CruiseMissileKill")]
     public void EachKind_PlaysItsOwnKillSound(RobotKind kind, string table)
     {
-        object? expected = typeof(SoundTables).GetField(table)!.GetValue(null);
+        var expected = typeof(SoundTables).GetField(table)!.GetValue(null);
 
         Assert.Same(expected, RobotKinds.GetInfo(kind).LaserHitSound);
     }

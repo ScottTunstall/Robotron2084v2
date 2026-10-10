@@ -2,40 +2,47 @@ using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Level;
-using Robotron2084.Tuning;
 using Xunit;
 
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// PHASE D humans (ROM RRH11): wave spawn (Mikeys/mommies/daddies counts), bounded
-/// table walk, hulk-kill → skull marker, player touch → rescue with the
-/// running save count (1000-5000, ROM SAVCNT/PCFLG), wave clear independent
-/// of humans, and the rescue count starting at none on every wave (ROM PLINIT).
+///     PHASE D humans (ROM RRH11): wave spawn (Mikeys/mommies/daddies counts), bounded
+///     table walk, hulk-kill → skull marker, player touch → rescue with the
+///     running save count (1000-5000, ROM SAVCNT/PCFLG), wave clear independent
+///     of humans, and the rescue count starting at none on every wave (ROM PLINIT).
 /// </summary>
 public sealed class PlayFieldHumanTests
 {
-    private static LevelParameters HumanWave(int mom, int daddy, int mikey, int hulks = 0) => new(
-        LevelNumber: 1,
-        GruntCount: 0,
-        ElectrodeCount: 0,
-        MommyCount: mom,
-        DaddyCount: daddy,
-        MikeyCount: mikey,
-        HulkCount: hulks);
+    private static LevelParameters HumanWave(int mom, int daddy, int mikey, int hulks = 0)
+    {
+        return new LevelParameters(
+            1,
+            0,
+            0,
+            mom,
+            daddy,
+            mikey,
+            hulks);
+    }
 
-    private static PlayField CreateField(LevelParameters parameters) =>
-        new PlayFieldBuilder().WithParameters(parameters).WithSeed(99).Build();
+    private static PlayField CreateField(LevelParameters parameters)
+    {
+        return new PlayFieldBuilder().WithParameters(parameters).WithSeed(99).Build();
+    }
 
     /// <summary>
-    /// One port tick.
+    ///     One port tick.
     /// </summary>
-    private static GameTime Frame() => new(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
+    private static GameTime Frame()
+    {
+        return new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
+    }
 
     [Fact]
     public void Constructor_SpawnsTheWaveHumanCounts()
     {
-        PlayField field = CreateField(HumanWave(2, 1, 3));
+        var field = CreateField(HumanWave(2, 1, 3));
 
         Assert.Equal(2, field.Entities.Family.Members.Count(h => h.Kind == HumanKind.Mommy));
         Assert.Equal(1, field.Entities.Family.Members.Count(h => h.Kind == HumanKind.Daddy));
@@ -49,17 +56,18 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void Humans_StayInsideTheField_OverManyTicks()
     {
-        PlayField field = CreateField(HumanWave(2, 2, 2));
-        Rectangle inner = field.Wall.PlayfieldBounds;
+        var field = CreateField(HumanWave(2, 2, 2));
+        var inner = field.Wall.PlayfieldBounds;
 
-        for (int tick = 0; tick < 600; tick++)
+        for (var tick = 0; tick < 600; tick++)
         {
             field.Update(Frame());
-            foreach (Human human in field.Entities.Family.Members)
+            foreach (var human in field.Entities.Family.Members)
             {
                 Assert.InRange(human.GetBounds().X, inner.X, inner.Right - human.GetBounds().Width);
                 Assert.InRange(human.GetBounds().Y, inner.Y, inner.Bottom - human.GetBounds().Height);
-                Assert.True(human.GetBounds().Right <= inner.Right && human.GetBounds().Bottom <= inner.Bottom, $"tick {tick}: human {human.GetBounds()} escapes {inner}");
+                Assert.True(human.GetBounds().Right <= inner.Right && human.GetBounds().Bottom <= inner.Bottom,
+                    $"tick {tick}: human {human.GetBounds()} escapes {inner}");
             }
         }
     }
@@ -67,12 +75,12 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void Humans_MoveOverTime()
     {
-        PlayField field = CreateField(HumanWave(0, 0, 4));
-        Human first = field.Entities.Family.Members[0];
-        IntVector2 firstPosition = first.Position;
-        bool anyMoved = false;
+        var field = CreateField(HumanWave(0, 0, 4));
+        var first = field.Entities.Family.Members[0];
+        var firstPosition = first.Position;
+        var anyMoved = false;
 
-        for (int tick = 0; tick < 300 && !anyMoved; tick++)
+        for (var tick = 0; tick < 300 && !anyMoved; tick++)
         {
             field.Update(Frame());
             anyMoved = first.Position != firstPosition;
@@ -91,18 +99,16 @@ public sealed class PlayFieldHumanTests
         // steps. The first step itself is the stagger's last tick (notes §88), which is
         // why the grid is measured from it rather than from the object's creation.
         // The human is driven directly so a wave change cannot swap the object out.
-        PlayField field = CreateField(HumanWave(0, 0, 4));
-        for (int tick = 0; tick < 130; tick++)
-        {
-            field.Update(Frame()); // the robots are held until the game goes live
-        }
+        var field = CreateField(HumanWave(0, 0, 4));
+        for (var tick = 0; tick < 130; tick++) field.Update(Frame()); // the robots are held until the game goes live
 
-        Rectangle inner = field.Wall.PlayfieldBounds;
-        var human = new Human(TestSprites.Shared, new IntVector2(inner.Center.X, inner.Center.Y), HumanKind.Mommy, new Random(7));
+        var inner = field.Wall.PlayfieldBounds;
+        var human = new Human(TestSprites.Shared, new IntVector2(inner.Center.X, inner.Center.Y), HumanKind.Mommy,
+            new Random(7));
 
         List<int> starts = new();
-        int seen = 0;
-        for (int tick = 1; tick <= 400 && starts.Count < 10; tick++)
+        var seen = 0;
+        for (var tick = 1; tick <= 400 && starts.Count < 10; tick++)
         {
             human.Update(Frame(), field);
             if (human.StepCount > seen)
@@ -120,10 +126,10 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void Player_TouchingHuman_RescuesWithFirstBonus()
     {
-        PlayField field = CreateField(HumanWave(0, 0, 1));
+        var field = CreateField(HumanWave(0, 0, 1));
         field.SkipWaveStart();
-        Human human = field.Entities.Family.Members[0];
-        int scoreBefore = field.ScoreBoard.Score;
+        var human = field.Entities.Family.Members[0];
+        var scoreBefore = field.ScoreBoard.Score;
         human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
@@ -137,14 +143,11 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void Rescues_KeepRunningCountUntilTheCap()
     {
-        PlayField field = CreateField(HumanWave(0, 0, 9));
+        var field = CreateField(HumanWave(0, 0, 9));
         field.SkipWaveStart();
-        foreach (Human human in field.Entities.Family.Members)
-        {
-            human.MoveTo(field.Player.Position);
-        }
+        foreach (var human in field.Entities.Family.Members) human.MoveTo(field.Player.Position);
 
-        int scoreBefore = field.ScoreBoard.Score;
+        var scoreBefore = field.ScoreBoard.Score;
         field.Update(new GameTime());
 
         // ROM: SAVCNT itself is uncapped (INC SAVCNT); only the score lookup
@@ -162,16 +165,16 @@ public sealed class PlayFieldHumanTests
         // hand-over happens every tick (notes §97). Syncing only at a wave clear
         // left the displayed score stale for the rest of the wave, which is what
         // the attract demo's rescue bonus looked like.
-        PlayField field = CreateField(HumanWave(0, 0, 1));
+        var field = CreateField(HumanWave(0, 0, 1));
         field.SkipWaveStart();
-        PlayerSlot slot = new(1, new FakeInputSource(), Lives: 3, Wave: 1);
+        PlayerSlot slot = new(1, new FakeInputSource(), 3, 1);
 
         field.Update(new GameTime());
         field.SyncInto(slot);
         Assert.Equal(0, slot.Score);
         Assert.Equal(field.Player.Lives, slot.Lives);
 
-        Human human = field.Entities.Family.Members[0];
+        var human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
         field.Update(new GameTime());
         field.Player.AddLife(); // an earned spare man must reach the HUD too
@@ -185,18 +188,15 @@ public sealed class PlayFieldHumanTests
     public void Hulk_Contact_KillsHuman_LeavesSkull_NoScore()
 
     {
-        PlayField field = CreateField(HumanWave(0, 0, 1, hulks: 1));
+        var field = CreateField(HumanWave(0, 0, 1, 1));
 
         // The hulk waits for STATUS (`HULK LDA STATUS WAIT FOR STATUS TO GO`) and the ROM
         // creates its collision process only after the wave-start appear, so no robot can touch
         // a human before the game goes live — run through the start of the wave first (notes §88).
-        for (int tick = 0; tick < WaveStartTicks.UntilLive(field); tick++)
-        {
-            field.Update(Frame());
-        }
+        for (var tick = 0; tick < WaveStartTicks.UntilLive(field); tick++) field.Update(Frame());
 
-        Human human = field.Entities.Family.Members[0];
-        int scoreBefore = field.ScoreBoard.Score;
+        var human = field.Entities.Family.Members[0];
+        var scoreBefore = field.ScoreBoard.Score;
         human.MoveTo(field.Entities.Hulks[0].Position);
 
         field.Update(Frame());
@@ -212,22 +212,18 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void SkullMarker_ExpiresAfterItsLinger()
     {
-        PlayField field = CreateField(HumanWave(0, 0, 1, hulks: 1));
+        var field = CreateField(HumanWave(0, 0, 1, 1));
 
-        for (int tick = 0; tick < WaveStartTicks.UntilLive(field); tick++)
-        {
-            field.Update(Frame()); // the hulk cannot act until the game is live (notes §88)
-        }
+        for (var tick = 0;
+             tick < WaveStartTicks.UntilLive(field);
+             tick++) field.Update(Frame()); // the hulk cannot act until the game is live (notes §88)
 
-        Human human = field.Entities.Family.Members[0];
+        var human = field.Entities.Family.Members[0];
         human.MoveTo(field.Entities.Hulks[0].Position);
         field.Update(Frame());
         Assert.Single(field.Entities.Skulls);
 
-        for (int tick = 0; tick < ArcadeClock.ToPortTicks(90) - 1; tick++)
-        {
-            field.Update(Frame());
-        }
+        for (var tick = 0; tick < ArcadeClock.ToPortTicks(90) - 1; tick++) field.Update(Frame());
 
         Assert.Single(field.Entities.Skulls); // still up just before the linger ends
 
@@ -238,9 +234,9 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void Rescue_LeavesScoreDisplay_AtTheRescueSpot_ThatExpires()
     {
-        PlayField field = CreateField(HumanWave(0, 0, 1));
+        var field = CreateField(HumanWave(0, 0, 1));
         field.SkipWaveStart();
-        Human human = field.Entities.Family.Members[0];
+        var human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
 
         field.Update(new GameTime());
@@ -248,10 +244,7 @@ public sealed class PlayFieldHumanTests
         Assert.Single(field.Entities.RescueScores);
         Assert.Equal(human.Position, field.Entities.RescueScores[0].Position);
 
-        for (int tick = 0; tick < ArcadeClock.ToPortTicks(60) - 1; tick++)
-        {
-            field.Update(new GameTime());
-        }
+        for (var tick = 0; tick < ArcadeClock.ToPortTicks(60) - 1; tick++) field.Update(new GameTime());
 
         Assert.Single(field.Entities.RescueScores); // still up just before the linger ends
 
@@ -262,7 +255,7 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void WaveClear_DoesNotRequireHumansGone()
     {
-        PlayField field = CreateField(HumanWave(1, 1, 1));
+        var field = CreateField(HumanWave(1, 1, 1));
 
         Assert.True(field.IsLevelCleared()); // no robots → cleared even with humans alive (ROM WVCHEK)
     }
@@ -270,14 +263,14 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void EveryWaveStartsWithNoRescues_SoTheFirstHumanSavedPaysTheFirstBonus()
     {
-        PlayField first = CreateField(HumanWave(0, 0, 1));
+        var first = CreateField(HumanWave(0, 0, 1));
         first.SkipWaveStart();
         first.Entities.Family.Members[0].MoveTo(first.Player.Position);
         first.Update(new GameTime());
         Assert.Equal(1, first.RescuesThisLife);
 
         // ROM PLINIT clears SAVCNT as each wave starts, so the next wave pays 1000 again, not 2000.
-        PlayField next = CreateField(HumanWave(0, 0, 1));
+        var next = CreateField(HumanWave(0, 0, 1));
         next.SkipWaveStart();
         Assert.Equal(0, next.RescuesThisLife);
         next.Entities.Family.Members[0].MoveTo(next.Player.Position);

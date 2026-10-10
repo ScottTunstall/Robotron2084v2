@@ -3,33 +3,30 @@ using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Level;
 using Robotron2084.Level.Collisions;
-using Robotron2084.Level.Spawning;
 using Xunit;
 
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// The classes the playfield hands its jobs to: the wave spawners, the collision rules and their order, the contact
-/// test, the family list and the lists of entities.
+///     The classes the playfield hands its jobs to: the wave spawners, the collision rules and their order, the contact
+///     test, the family list and the lists of entities.
 /// </summary>
 public sealed class FieldStrategyTests
 {
     [Fact]
     public void EveryKindTheWaveBrings_HasItsOwnSpawner_AndEveryOtherKindHasNone()
     {
-        foreach (RobotKindInfo robot in RobotKinds.All)
-        {
-            Assert.Equal(robot.WaveCount is not null, robot.Spawn is not null);
-        }
+        foreach (var robot in RobotKinds.All) Assert.Equal(robot.WaveCount is not null, robot.Spawn is not null);
 
-        Type[] spawners = RobotKinds.All.Where(robot => robot.Spawn is not null).Select(robot => robot.Spawn!.GetType()).ToArray();
+        var spawners = RobotKinds.All.Where(robot => robot.Spawn is not null).Select(robot => robot.Spawn!.GetType())
+            .ToArray();
         Assert.Equal(spawners.Length, spawners.Distinct().Count());
     }
 
     [Fact]
     public void TheCollisionRulesRunInTheArcadesOrder()
     {
-        Type[] order = CollisionRules.InArcadeOrder.Select(phase => phase.GetType()).ToArray();
+        var order = CollisionRules.InArcadeOrder.Select(phase => phase.GetType()).ToArray();
 
         Assert.Equal(
             [
@@ -40,7 +37,7 @@ public sealed class FieldStrategyTests
                 typeof(BrainVictimReleaseRule),
                 typeof(BrainCatchRule),
                 typeof(HulkVsHumanCollisionRule),
-                typeof(PlayerRescueRule),
+                typeof(PlayerRescueRule)
             ],
             order);
     }
@@ -50,7 +47,7 @@ public sealed class FieldStrategyTests
     {
         var test = new BoxContactTest();
         var first = new Electrode(TestSprites.Shared, new IntVector2(100, 100));
-        var overlapping = new Electrode(TestSprites.Shared, new IntVector2(100 + (first.GetBounds().Width / 2), 100));
+        var overlapping = new Electrode(TestSprites.Shared, new IntVector2(100 + first.GetBounds().Width / 2, 100));
         var apart = new Electrode(TestSprites.Shared, new IntVector2(100 + first.GetBounds().Width, 100));
 
         Assert.True(test.Touches(first, overlapping));
@@ -99,13 +96,11 @@ public sealed class FieldStrategyTests
     public void TheFieldsEntities_HaveAListForEveryKind_AndIgnoreHulksAndElectrodesWhenTheWaveIsWon()
     {
         var entities = new FieldEntities();
-        foreach (RobotKind kind in Enum.GetValues<RobotKind>())
-        {
-            Assert.NotNull(entities.GetList(kind));
-        }
+        foreach (var kind in Enum.GetValues<RobotKind>()) Assert.NotNull(entities.GetList(kind));
 
         entities.Electrodes.Add(new Electrode(TestSprites.Shared, new IntVector2(10, 10)));
-        entities.Hulks.Add(new Hulk(TestSprites.Shared, new IntVector2(50, 50), new Random(1), beatIntervalRomFrames: 8, () => IntVector2.Zero));
+        entities.Hulks.Add(
+            new Hulk(TestSprites.Shared, new IntVector2(50, 50), new Random(1), 8, () => IntVector2.Zero));
         Assert.True(entities.AreEnemiesGone());
 
         entities.Grunts.Add(new Grunt(TestSprites.Shared, new IntVector2(90, 90)));
@@ -115,15 +110,16 @@ public sealed class FieldStrategyTests
     [Fact]
     public void TheField_AnswersWithoutLettingCallersReachThroughIt()
     {
-        PlayField field = new PlayFieldBuilder().Build();
+        var field = new PlayFieldBuilder().Build();
         var grunt = new Grunt(TestSprites.Shared, new IntVector2(90, 90));
         field.Entities.Add(grunt);
 
         Assert.Contains(grunt, field.Entities.GetEntities(RobotKind.Grunt));
         Assert.Equal(field.Player.Position, field.GetPlayerPosition());
         Assert.Equal(field.Wall.PlayfieldBounds, field.GetPlayfieldBounds());
-        Assert.True(field.HitsWall(new Microsoft.Xna.Framework.Rectangle(field.Wall.GetOuterBounds().X, field.Wall.GetOuterBounds().Y, 4, 4)));
-        Assert.False(field.HitsWall(new Microsoft.Xna.Framework.Rectangle(field.GetPlayfieldBounds().X + 40, field.GetPlayfieldBounds().Y + 40, 4, 4)));
+        Assert.True(field.HitsWall(new Rectangle(field.Wall.GetOuterBounds().X, field.Wall.GetOuterBounds().Y, 4, 4)));
+        Assert.False(field.HitsWall(new Rectangle(field.GetPlayfieldBounds().X + 40, field.GetPlayfieldBounds().Y + 40,
+            4, 4)));
         Assert.True(field.IsPlayerAlive());
         Assert.False(field.IsPlayerDead());
     }
@@ -131,14 +127,14 @@ public sealed class FieldStrategyTests
     [Fact]
     public void ACollisionRule_OnlyReports_AndTheFieldResponds()
     {
-        PlayField field = new PlayFieldBuilder().Build();
+        var field = new PlayFieldBuilder().Build();
         var human = new Human(TestSprites.Shared, field.Player.Position, HumanKind.Mommy, new Random(1));
         field.Entities.Add(human);
 
-        CollisionResult[] results = new PlayerRescueRule().Detect(field, field.Entities).ToArray();
+        var results = new PlayerRescueRule().Detect(field, field.Entities).ToArray();
 
         // The rule found the rescue and changed nothing.
-        PlayerRescuedHumanResult rescued = Assert.IsType<PlayerRescuedHumanResult>(Assert.Single(results));
+        var rescued = Assert.IsType<PlayerRescuedHumanResult>(Assert.Single(results));
         Assert.Same(human, rescued.Human);
         Assert.True(human.IsGraspable());
         Assert.Equal(0, field.RescuesThisLife);
@@ -152,16 +148,16 @@ public sealed class FieldStrategyTests
     [Fact]
     public void TheLaserRule_ReportsOneHitPerLaser_AsTheFieldKillsTheLaserBetweenReports()
     {
-        PlayField field = new PlayFieldBuilder().Build();
-        Rectangle bounds = field.GetPlayfieldBounds();
+        var field = new PlayFieldBuilder().Build();
+        var bounds = field.GetPlayfieldBounds();
         IntVector2 spot = new(bounds.X + 200, bounds.Y + 200);
         field.Entities.Add(new Grunt(TestSprites.Shared, spot));
         field.Entities.Add(new Grunt(TestSprites.Shared, spot));
         field.PlayerLasers.TryFire(spot, Direction8.Up, out _);
         var responder = new CollisionResponder(field);
 
-        int hits = 0;
-        foreach (CollisionResult result in new LaserCollisionRule().Detect(field, field.Entities))
+        var hits = 0;
+        foreach (var result in new LaserCollisionRule().Detect(field, field.Entities))
         {
             hits++;
             responder.Respond(result);

@@ -38,6 +38,6 @@ public class StereoPlacementTests
     {
         var maker = new Rectangle(450, 200, 20, 20);
 
-        Assert.Equal(0.5f * SoundTuning.StereoWidth, StereoPlacement.GetPan(maker, Playfield), precision: 3);
+        Assert.Equal(0.5f * SoundTuning.StereoWidth, StereoPlacement.GetPan(maker, Playfield), 3);
     }
 }

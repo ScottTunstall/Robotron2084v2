@@ -4,11 +4,11 @@ using Xunit;
 namespace Robotron2084.Tests.Hud;
 
 /// <summary>
-/// RRTABLE's <c>FRAMER</c> (notes §98.5) — the high score page's frame is DRAWN: two
-/// strokes a fiftieth of a second grow it from (col 62, row 125)-(col 89, row 127) out to the
-/// terminal point $060D = (col 6, row 13), and then the same walk runs again in flavour
-/// 0 (black) up to $0E1D = (col 14, row 29), leaving the hatched band between them.
-/// Both passes draw their first two strokes before the first sleep.
+///     RRTABLE's <c>FRAMER</c> (notes §98.5) — the high score page's frame is DRAWN: two
+///     strokes a fiftieth of a second grow it from (col 62, row 125)-(col 89, row 127) out to the
+///     terminal point $060D = (col 6, row 13), and then the same walk runs again in flavour
+///     0 (black) up to $0E1D = (col 14, row 29), leaving the hatched band between them.
+///     Both passes draw their first two strokes before the first sleep.
 /// </summary>
 public sealed class HighScoreFrameAnimationTests
 {
@@ -19,7 +19,8 @@ public sealed class HighScoreFrameAnimationTests
 
         Assert.Equal(1, frame.GetDrawnStroke());
         Assert.Equal(-1, frame.GetErasedStroke());
-        Assert.Equal(HighScoreTableLayout.GetFrameStroke(1), HighScoreTableLayout.GetFrameStroke(frame.GetDrawnStroke()));
+        Assert.Equal(HighScoreTableLayout.GetFrameStroke(1),
+            HighScoreTableLayout.GetFrameStroke(frame.GetDrawnStroke()));
         Assert.False(frame.IsFinished());
     }
 
@@ -50,7 +51,7 @@ public sealed class HighScoreFrameAnimationTests
         // = 1.06 s — which at 6/5 of a tick each is about 64 port ticks.
         var frame = new HighScoreFrameAnimation();
 
-        int ticks = 0;
+        var ticks = 0;
         while (!frame.IsFinished())
         {
             frame.Tick();
@@ -65,18 +66,12 @@ public sealed class HighScoreFrameAnimationTests
     public void TheErasePass_StopsLeavingTheEightStrokeBandAndStaysThere()
     {
         var frame = new HighScoreFrameAnimation();
-        while (!frame.IsFinished())
-        {
-            frame.Tick();
-        }
+        while (!frame.IsFinished()) frame.Tick();
 
         Assert.Equal(HighScoreTableLayout.FrameLastStroke, frame.GetDrawnStroke());
         Assert.Equal(HighScoreTableLayout.FrameEraseLastStroke, frame.GetErasedStroke());
 
-        for (int tick = 0; tick < 100; tick++)
-        {
-            frame.Tick();
-        }
+        for (var tick = 0; tick < 100; tick++) frame.Tick();
 
         Assert.Equal(HighScoreTableLayout.FrameLastStroke, frame.GetDrawnStroke());
         Assert.Equal(HighScoreTableLayout.FrameEraseLastStroke, frame.GetErasedStroke());
@@ -89,16 +84,11 @@ public sealed class HighScoreFrameAnimationTests
         // leaves behind are slots 8…1 — the eight simultaneously cycling colours the
         // author sees on the cabinet.
         var frame = new HighScoreFrameAnimation();
-        while (!frame.IsFinished())
-        {
-            frame.Tick();
-        }
+        while (!frame.IsFinished()) frame.Tick();
 
         var slots = new int[frame.GetDrawnStroke() - frame.GetErasedStroke()];
-        for (int stroke = frame.GetErasedStroke() + 1; stroke <= frame.GetDrawnStroke(); stroke++)
-        {
+        for (var stroke = frame.GetErasedStroke() + 1; stroke <= frame.GetDrawnStroke(); stroke++)
             slots[stroke - frame.GetErasedStroke() - 1] = HighScoreTableLayout.GetFrameStrokeSlot(stroke);
-        }
 
         Assert.Equal(new[] { 8, 7, 6, 5, 4, 3, 2, 1 }, slots);
 

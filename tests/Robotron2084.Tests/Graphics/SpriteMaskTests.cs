@@ -5,19 +5,19 @@ using Xunit;
 namespace Robotron2084.Tests.Core;
 
 /// <summary>
-/// The opaque-pixel masks and the contact test they drive (notes §118): a sprite's shape, and the
-/// screen pixels two of them share wherever their boxes put them.
+///     The opaque-pixel masks and the contact test they drive (notes §118): a sprite's shape, and the
+///     screen pixels two of them share wherever their boxes put them.
 /// </summary>
 public sealed class SpriteMaskTests
 {
     [Fact]
     public void IsOpaque_IsFalseOutsideTheSprite()
     {
-        SpriteMask mask = SpriteMask.CreateFromPixels(2, 3, [(1, 2)]);
+        var mask = SpriteMask.CreateFromPixels(2, 3, [(1, 2)]);
 
         Assert.True(mask.IsOpaque(1, 2));
         Assert.False(mask.IsOpaque(0, 0));
-        Assert.False(mask.IsOpaque(2, 2));   // one past the right edge
+        Assert.False(mask.IsOpaque(2, 2)); // one past the right edge
         Assert.False(mask.IsOpaque(-1, 0));
         Assert.False(mask.IsOpaque(0, 3));
     }
@@ -26,8 +26,8 @@ public sealed class SpriteMaskTests
     public void TwoSpritesTouchOnlyWhereBothHaveAPixel_NotWhereTheirBoxesOverlap()
     {
         // Two 4x4 sprites: one marked only at its top-left, the other only at its bottom-right.
-        SpriteMask topLeft = SpriteMask.CreateFromPixels(4, 4, [(0, 0)]);
-        SpriteMask bottomRight = SpriteMask.CreateFromPixels(4, 4, [(3, 3)]);
+        var topLeft = SpriteMask.CreateFromPixels(4, 4, [(0, 0)]);
+        var bottomRight = SpriteMask.CreateFromPixels(4, 4, [(3, 3)]);
         var box = new Rectangle(100, 100, 4, 4);
 
         // Drawn in the same place the two marks are three pixels apart: the boxes overlap, the sprites do not.
@@ -41,8 +41,8 @@ public sealed class SpriteMaskTests
     public void OneSpritePixelCoversARenderScaleBlockOfScreenPixels()
     {
         // A 2x2 sprite drawn 4x4 screen pixels across: one sprite pixel is a 2x2 screen block.
-        SpriteMask topLeft = SpriteMask.CreateFromPixels(2, 2, [(0, 0)]);
-        SpriteMask bottomRight = SpriteMask.CreateFromPixels(2, 2, [(1, 1)]);
+        var topLeft = SpriteMask.CreateFromPixels(2, 2, [(0, 0)]);
+        var bottomRight = SpriteMask.CreateFromPixels(2, 2, [(1, 1)]);
         var a = new Rectangle(100, 100, 4, 4);
 
         // In the same box the two marks cannot reach each other (0..2 and 2..4 screen pixels)...
@@ -56,7 +56,7 @@ public sealed class SpriteMaskTests
     [Fact]
     public void BoxesThatMissNeverTouch_WhateverThePixels()
     {
-        SpriteMask solid = SpriteMask.CreateFromPixels(2, 2, [(0, 0), (1, 0), (0, 1), (1, 1)]);
+        var solid = SpriteMask.CreateFromPixels(2, 2, [(0, 0), (1, 0), (0, 1), (1, 1)]);
         var box = new Rectangle(0, 0, 2, 2);
 
         Assert.True(SpriteMask.Overlaps(solid, box, solid, box));

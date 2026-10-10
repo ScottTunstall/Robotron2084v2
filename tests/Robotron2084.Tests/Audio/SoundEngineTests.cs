@@ -46,7 +46,7 @@ public class SoundEngineTests
     {
         var sink = new RecordingSink();
         var engine = new SoundEngine(sink);
-        SoundSequence sound = Sequence(208, (1, 16, 0x25));
+        var sound = Sequence(208, (1, 16, 0x25));
 
         engine.Play(sound, 0f);
         engine.Tick();
@@ -125,10 +125,7 @@ public class SoundEngineTests
 
     private static void RunTicks(SoundEngine engine, int ticks)
     {
-        for (int i = 0; i < ticks; i++)
-        {
-            engine.Tick();
-        }
+        for (var i = 0; i < ticks; i++) engine.Tick();
     }
 
     [Fact]
@@ -170,6 +167,10 @@ public class SoundEngineTests
         Assert.Equal(SoundTables.PlayerDeath.Priority, engine.CurrentPriority);
     }
 
-    private static SoundSequence Sequence(int priority, params (byte Repetitions, byte LengthVblanks, byte SoundNumber)[] lines) =>
-        new(priority, 0, [.. lines.Select(line => new SoundEntry(line.Repetitions, line.LengthVblanks, line.SoundNumber))]);
+    private static SoundSequence Sequence(int priority,
+        params (byte Repetitions, byte LengthVblanks, byte SoundNumber)[] lines)
+    {
+        return new SoundSequence(priority, 0,
+            [.. lines.Select(line => new SoundEntry(line.Repetitions, line.LengthVblanks, line.SoundNumber))]);
+    }
 }

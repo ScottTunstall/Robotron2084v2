@@ -8,8 +8,8 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// The rules each entity keeps for itself, which used to sit in the playfield: whether a human can be got hold of,
-/// where a tank or a quark may stand, how a list counts its living, and how the strip clip is made.
+///     The rules each entity keeps for itself, which used to sit in the playfield: whether a human can be got hold of,
+///     where a tank or a quark may stand, how a list counts its living, and how the strip clip is made.
 /// </summary>
 public sealed class EntityOwnRulesTests
 {
@@ -31,11 +31,12 @@ public sealed class EntityOwnRulesTests
     public void ATanksSpot_IsMovedSoItsWholeBoxIsInsideThePlayfield()
     {
         var bounds = new Rectangle(20, 30, 400, 300);
-        int width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Width);
-        int height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Height);
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Height);
 
         Assert.Equal(new IntVector2(20, 30), Tank.GetPositionInside(bounds, new IntVector2(0, 0)));
-        Assert.Equal(new IntVector2(bounds.Right - width, bounds.Bottom - height), Tank.GetPositionInside(bounds, new IntVector2(900, 900)));
+        Assert.Equal(new IntVector2(bounds.Right - width, bounds.Bottom - height),
+            Tank.GetPositionInside(bounds, new IntVector2(900, 900)));
         Assert.Equal(new IntVector2(100, 100), Tank.GetPositionInside(bounds, new IntVector2(100, 100)));
     }
 
@@ -43,15 +44,15 @@ public sealed class EntityOwnRulesTests
     public void AQuarkStartsOnTheTopOrBottomWall_AndInsideTheSideWalls()
     {
         var bounds = new Rectangle(20, 30, 400, 300);
-        int width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Width);
-        int height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Height);
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Height);
         var random = new Random(5);
-        bool sawTop = false;
-        bool sawBottom = false;
+        var sawTop = false;
+        var sawBottom = false;
 
-        for (int i = 0; i < 100; i++)
+        for (var i = 0; i < 100; i++)
         {
-            IntVector2 start = Quark.GetStartPosition(bounds, random);
+            var start = Quark.GetStartPosition(bounds, random);
             Assert.InRange(start.X, bounds.X, bounds.Right - width);
             Assert.True(start.Y == bounds.Y || start.Y == bounds.Bottom - height, $"a quark started at row {start.Y}");
             sawTop |= start.Y == bounds.Y;
@@ -66,8 +67,8 @@ public sealed class EntityOwnRulesTests
     {
         var list = new EntityList<Electrode>
         {
-            new Electrode(TestSprites.Shared, new IntVector2(10, 10)),
-            new Electrode(TestSprites.Shared, new IntVector2(50, 10)),
+            new(TestSprites.Shared, new IntVector2(10, 10)),
+            new(TestSprites.Shared, new IntVector2(50, 10))
         };
         Assert.Equal(2, list.GetLiveCount());
 
@@ -81,15 +82,17 @@ public sealed class EntityOwnRulesTests
     {
         var bounds = new Rectangle(20, 30, 400, 300);
 
-        StripClip clip = StripClip.CreateFromPortPixels(bounds);
+        var clip = StripClip.CreateFromPortPixels(bounds);
 
-        Assert.Equal(new StripClip(20 / ScreenSize.PortPixelsPerArcadePixel, 420 / ScreenSize.PortPixelsPerArcadePixel, 30 / ScreenSize.PortPixelsPerArcadePixel, 330 / ScreenSize.PortPixelsPerArcadePixel), clip);
+        Assert.Equal(
+            new StripClip(20 / ScreenSize.PortPixelsPerArcadePixel, 420 / ScreenSize.PortPixelsPerArcadePixel,
+                30 / ScreenSize.PortPixelsPerArcadePixel, 330 / ScreenSize.PortPixelsPerArcadePixel), clip);
     }
 
     [Fact]
     public void TheDemosPlayerChasesEveryKind_ExceptTheElectrodesAndTheShotsItDodges()
     {
-        RobotKind[] notChased = RobotKinds.All.Where(kind => !kind.IsChasedByDemoPlayer).Select(kind => kind.Kind).ToArray();
+        var notChased = RobotKinds.All.Where(kind => !kind.IsChasedByDemoPlayer).Select(kind => kind.Kind).ToArray();
 
         Assert.Equal([RobotKind.Electrode, RobotKind.Spark, RobotKind.TankShell], notChased);
     }
@@ -98,9 +101,11 @@ public sealed class EntityOwnRulesTests
     public void DistancesBetweenTwoPoints_InPixelsAndInColumnsAndRows()
     {
         var from = new IntVector2(10, 10);
-        var to = new IntVector2(10 + ScreenSize.ToPortPixelsFromColumns(3), 10 - ScreenSize.ToPortPixelsFromArcadePixels(5));
+        var to = new IntVector2(10 + ScreenSize.ToPortPixelsFromColumns(3),
+            10 - ScreenSize.ToPortPixelsFromArcadePixels(5));
 
-        Assert.Equal(ScreenSize.ToPortPixelsFromColumns(3) + ScreenSize.ToPortPixelsFromArcadePixels(5), from.GetManhattanDistance(to));
+        Assert.Equal(ScreenSize.ToPortPixelsFromColumns(3) + ScreenSize.ToPortPixelsFromArcadePixels(5),
+            from.GetManhattanDistance(to));
         Assert.Equal(3 + 5, ScreenSize.ToColumnAndRowDistance(from, to));
     }
 

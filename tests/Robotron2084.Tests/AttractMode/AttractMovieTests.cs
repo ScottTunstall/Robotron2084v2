@@ -6,23 +6,24 @@ using Xunit;
 namespace Robotron2084.Tests.Level;
 
 /// <summary>
-/// The attract movie (notes §95/§96): the ROM's HISTO page script and its object
-/// scripts, replayed by the port's two interpreters. These tests run the ROM's own
-/// bytes, so they are the check that the decode of the opcode tables, the walk
-/// tables and the font's pen advance all agree with the arcade's data.
+///     The attract movie (notes §95/§96): the ROM's HISTO page script and its object
+///     scripts, replayed by the port's two interpreters. These tests run the ROM's own
+///     bytes, so they are the check that the decode of the opcode tables, the walk
+///     tables and the font's pen advance all agree with the arcade's data.
 /// </summary>
 public sealed class AttractMovieTests
 {
-    private static GameTime Tick() => new(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
+    private static GameTime Tick()
+    {
+        return new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
+    }
 
     /// <summary>The story text as lines: cells grouped by row, in pen order.</summary>
     private static List<string> Lines(AttractPageMachine page)
     {
         var lines = new List<string>();
-        foreach (IGrouping<int, MovieTextCell> group in page.TextCells.GroupBy(c => c.Y).OrderBy(g => g.Key))
-        {
+        foreach (var group in page.TextCells.GroupBy(c => c.Y).OrderBy(g => g.Key))
             lines.Add(new string(group.OrderBy(c => c.X).Select(c => c.Character).ToArray()));
-        }
 
         return lines;
     }
@@ -33,14 +34,11 @@ public sealed class AttractMovieTests
         var movie = new AttractMovie(AttractMovieData.Histo, new Random(7));
 
         List<string>? prologue = null;
-        for (int tick = 0; tick < 8000 && prologue is null; tick++)
+        for (var tick = 0; tick < 8000 && prologue is null; tick++)
         {
             movie.Update(Tick());
-            List<string> lines = Lines(movie.PageMachine);
-            if (lines.Contains("AND THEREFORE MUST BE DESTROYED."))
-            {
-                prologue = lines;
-            }
+            var lines = Lines(movie.PageMachine);
+            if (lines.Contains("AND THEREFORE MUST BE DESTROYED.")) prologue = lines;
         }
 
         Assert.NotNull(prologue);
@@ -54,7 +52,7 @@ public sealed class AttractMovieTests
                 "GUIDED BY THEIR INFALLIBLE LOGIC,",
                 "THE ROBOTRONS CONCLUDE:",
                 "THE HUMAN RACE IS INEFFICIENT,",
-                "AND THEREFORE MUST BE DESTROYED.",
+                "AND THEREFORE MUST BE DESTROYED."
             ],
             prologue);
     }
@@ -64,7 +62,7 @@ public sealed class AttractMovieTests
     {
         var movie = new AttractMovie(AttractMovieData.Histo, new Random(7));
 
-        for (int tick = 0; tick < 1500; tick++)
+        for (var tick = 0; tick < 1500; tick++)
         {
             movie.Update(Tick());
 
@@ -80,36 +78,29 @@ public sealed class AttractMovieTests
         var movie = new AttractMovie(AttractMovieData.Histo, new Random(3));
         var seen = new HashSet<MovieAnimation>();
         var messages = new HashSet<string>();
-        bool exploded = false;
+        var exploded = false;
 
-        for (int tick = 0; tick < 60_000 && !movie.IsFinished(); tick++)
+        for (var tick = 0; tick < 60_000 && !movie.IsFinished(); tick++)
         {
             movie.Update(Tick());
-            foreach (MovieObject item in movie.ObjectMachine.Objects)
-            {
+            foreach (var item in movie.ObjectMachine.Objects)
                 if (item.Descriptor is { } descriptor)
-                {
                     seen.Add(descriptor.Animation);
-                }
-            }
 
-            if (movie.PageMachine.Message is { } message)
-            {
-                messages.Add(message.Text);
-            }
+            if (movie.PageMachine.Message is { } message) messages.Add(message.Text);
 
             exploded |= movie.ObjectMachine.DrainExplosions().Count > 0;
         }
 
         Assert.True(movie.IsFinished(), "HISTO never reached DONE2");
-        Assert.Contains(MovieAnimation.Player, seen);     // the hero walks on and shoots
-        Assert.Contains(MovieAnimation.Grunt, seen);      // the 14 grunts
-        Assert.Contains(MovieAnimation.Hulk, seen);       // the hulk bounces in
-        Assert.Contains(MovieAnimation.Spheroid, seen);   // the spheroid scene
+        Assert.Contains(MovieAnimation.Player, seen); // the hero walks on and shoots
+        Assert.Contains(MovieAnimation.Grunt, seen); // the 14 grunts
+        Assert.Contains(MovieAnimation.Hulk, seen); // the hulk bounces in
+        Assert.Contains(MovieAnimation.Spheroid, seen); // the spheroid scene
         Assert.Contains(MovieAnimation.Enforcer, seen);
         Assert.Contains(MovieAnimation.Tank, seen);
-        Assert.Contains(MovieAnimation.Brain, seen);      // the reprogramming
-        Assert.Contains(MovieAnimation.Electrodes, seen);      // the score posts
+        Assert.Contains(MovieAnimation.Brain, seen); // the reprogramming
+        Assert.Contains(MovieAnimation.Electrodes, seen); // the score posts
         Assert.Contains(MovieAnimation.Mommy, seen);
         Assert.Contains(MovieAnimation.Daddy, seen);
         Assert.Contains(MovieAnimation.Mikey, seen);
@@ -130,7 +121,7 @@ public sealed class AttractMovieTests
         machine.StartScript(0x8739);
         machine.StepFrame();
 
-        MovieObject hero = machine.Objects[0];
+        var hero = machine.Objects[0];
         Assert.Equal(104, hero.GetColumn());
 
         // The BR* walker cycles ANATAB (0,1,0,2) on top of the direction's base
@@ -138,7 +129,7 @@ public sealed class AttractMovieTests
         // the descriptor's 12 animation frames (the source of the "player animations are
         // not quite right" report: a 12-byte ANATAB made it cycle garbage).
         var animationFrames = new List<int>();
-        for (int frame = 0; frame < 300; frame++)
+        for (var frame = 0; frame < 300; frame++)
         {
             machine.StepFrame();
             animationFrames.Add(hero.AnimationFrameIndex);
@@ -150,7 +141,8 @@ public sealed class AttractMovieTests
         // The ROM's BANA1 sleeps the descriptor's nap BEFORE the first step and
         // sets the animation frame on the step, so the cycle is one entry every 2 frames
         // starting at frame 3.
-        Assert.Equal([0, 1, 0, 2], new[] { animationFrames[2], animationFrames[4], animationFrames[6], animationFrames[8] });
+        Assert.Equal([0, 1, 0, 2],
+            new[] { animationFrames[2], animationFrames[4], animationFrames[6], animationFrames[8] });
     }
 
     [Fact]
@@ -168,10 +160,7 @@ public sealed class AttractMovieTests
         machine.StepFrame();
         Assert.NotEmpty(machine.Objects);
 
-        for (int frame = 0; frame < 255; frame++)
-        {
-            machine.StepFrame();
-        }
+        for (var frame = 0; frame < 255; frame++) machine.StepFrame();
 
         Assert.NotEmpty(machine.Objects);
         machine.StepFrame();
@@ -194,11 +183,11 @@ public sealed class AttractMovieTests
         // off across the screen instead of a reprogrammed mummy (notes §97.4).
         machine.StartScript(0x868C);
 
-        MovieObject shaking = Assert.Single(machine.Objects);
+        var shaking = Assert.Single(machine.Objects);
         Assert.Null(shaking.Descriptor); // nothing has run on into BRAING's SETOB
 
-        bool shook = false;
-        for (int frame = 0; frame < 300; frame++)
+        var shook = false;
+        for (var frame = 0; frame < 300; frame++)
         {
             machine.StepFrame();
 
@@ -223,24 +212,24 @@ public sealed class AttractMovieTests
         machine.StartScript(0x84F5);
 
         MovieObject? grunt = null;
-        for (int i = 0; i < 4; i++)
+        for (var i = 0; i < 4; i++)
         {
             machine.StepFrame();
             grunt ??= machine.Objects.FirstOrDefault(o => o.Descriptor?.Animation == MovieAnimation.Grunt);
         }
 
         Assert.NotNull(grunt);
-        int startX = grunt.XSubpixels;
+        var startX = grunt.XSubpixels;
 
         List<MovieExplosion> explosions = [];
-        for (int frame = 0; frame < 3000 && explosions.Count == 0; frame++)
+        for (var frame = 0; frame < 3000 && explosions.Count == 0; frame++)
         {
             machine.StepFrame();
             explosions.AddRange(machine.DrainExplosions());
         }
 
         Assert.True(grunt.XSubpixels < startX, "the grunt did not walk left");
-        MovieExplosion explosion = Assert.Single(explosions);
+        var explosion = Assert.Single(explosions);
         Assert.Equal(MovieAnimation.Grunt, explosion.Animation);
         Assert.Equal(0xA6, explosion.Row); // EXPP's ACTHIT+6
     }
@@ -252,17 +241,11 @@ public sealed class AttractMovieTests
         byte[] script = [0x41, 0x5F, 0x42];
         var page = new AttractPageMachine(script, new AttractObjectMachine(new Random(1)), new Random(1));
 
-        for (int frame = 0; frame < 3; frame++)
-        {
-            page.StepFrame();
-        }
+        for (var frame = 0; frame < 3; frame++) page.StepFrame();
 
         Assert.Equal(['A'], page.TextCells.Select(c => c.Character).ToArray());
 
-        for (int frame = 0; frame < 200; frame++)
-        {
-            page.StepFrame();
-        }
+        for (var frame = 0; frame < 200; frame++) page.StepFrame();
 
         Assert.Equal(['A', 'B'], page.TextCells.Select(c => c.Character).ToArray());
     }

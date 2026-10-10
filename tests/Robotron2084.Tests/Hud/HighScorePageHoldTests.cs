@@ -4,11 +4,11 @@ using Xunit;
 namespace Robotron2084.Tests.Hud;
 
 /// <summary>
-/// RRTABLE's <c>TABLE</c> hold and exit (notes §98.8). The ROM plays the page for its
-/// full 600 frames with NO switch check at all (<c>TAB888</c>), and only then leaves —
-/// and it leaves when the switches are CLEAR (<c>TAB999</c>'s <c>BEQ</c>), so a held
-/// switch DELAYS the exit rather than shortening the page. The switch bits are active
-/// high, which the movement table at $3031 proves.
+///     RRTABLE's <c>TABLE</c> hold and exit (notes §98.8). The ROM plays the page for its
+///     full 600 frames with NO switch check at all (<c>TAB888</c>), and only then leaves —
+///     and it leaves when the switches are CLEAR (<c>TAB999</c>'s <c>BEQ</c>), so a held
+///     switch DELAYS the exit rather than shortening the page. The switch bits are active
+///     high, which the movement table at $3031 proves.
 /// </summary>
 public sealed class HighScorePageHoldTests
 {
@@ -18,7 +18,7 @@ public sealed class HighScorePageHoldTests
         var hold = new HighScorePageHold();
 
         // 600 fiftieths of a second = 720 port ticks.
-        for (int tick = 0; tick < 719; tick++)
+        for (var tick = 0; tick < 719; tick++)
         {
             Assert.False(hold.Tick(true), $"the page left during the hold (tick {tick})");
             Assert.False(hold.HoldIsOver);
@@ -32,13 +32,10 @@ public sealed class HighScorePageHoldTests
     public void WithNothingHeld_ThePageLeavesOneNapFourAfterTheHold()
     {
         var hold = new HighScorePageHold();
-        for (int tick = 0; tick < 720; tick++)
-        {
-            hold.Tick(false);
-        }
+        for (var tick = 0; tick < 720; tick++) hold.Tick(false);
 
         // TAB777's NAP 4 — 4 fiftieths of a second ≈ 4.8 ticks — is the first switch read.
-        int ticks = 0;
+        var ticks = 0;
         while (!hold.Tick(false))
         {
             ticks++;
@@ -53,12 +50,9 @@ public sealed class HighScorePageHoldTests
     public void AHeldSwitchDelaysTheExit_ForTheRoms255Checks()
     {
         var hold = new HighScorePageHold();
-        for (int tick = 0; tick < 720; tick++)
-        {
-            hold.Tick(true);
-        }
+        for (var tick = 0; tick < 720; tick++) hold.Tick(true);
 
-        int ticks = 0;
+        var ticks = 0;
         while (!hold.Tick(true))
         {
             ticks++;
@@ -74,18 +68,12 @@ public sealed class HighScorePageHoldTests
     public void ReleasingTheSwitchesLeavesAtTheNextCheck()
     {
         var hold = new HighScorePageHold();
-        for (int tick = 0; tick < 720; tick++)
-        {
-            hold.Tick(false);
-        }
+        for (var tick = 0; tick < 720; tick++) hold.Tick(false);
 
         // Hold a switch through five checks, then let go.
-        while (hold.ChecksWithSwitchDown < 5)
-        {
-            Assert.False(hold.Tick(true));
-        }
+        while (hold.ChecksWithSwitchDown < 5) Assert.False(hold.Tick(true));
 
-        int ticks = 0;
+        var ticks = 0;
         while (!hold.Tick(false))
         {
             ticks++;

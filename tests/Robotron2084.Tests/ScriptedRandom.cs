@@ -7,14 +7,17 @@ internal sealed class ScriptedRandom : Random
 {
     private readonly Queue<int> _values;
 
-    /// <summary>Makes a source that returns these numbers, one for each call to <see cref="Next(int)"/>.</summary>
+    /// <summary>Makes a source that returns these numbers, one for each call to <see cref="Next(int)" />.</summary>
     /// <param name="values">The numbers to hand back, in order.</param>
-    public ScriptedRandom(params int[] values) => _values = new Queue<int>(values);
+    public ScriptedRandom(params int[] values)
+    {
+        _values = new Queue<int>(values);
+    }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override int Next(int maxValue)
     {
-        int value = _values.Dequeue();
+        var value = _values.Dequeue();
         Assert.InRange(value, 0, maxValue - 1);
         return value;
     }

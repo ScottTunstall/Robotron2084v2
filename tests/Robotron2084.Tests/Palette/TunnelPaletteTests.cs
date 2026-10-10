@@ -4,11 +4,11 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// The ROM's colour-cycling palette for the wave-complete tunnel (notes §86): twelve ramp
-/// tables that live beside the walker's task data at $576D, fifteen values of one written
-/// into palette slots 1-15, one slot blacked in each group of five, and the window slid on
-/// one value a pass. This is what makes the arcade's tunnel read as thick bars with dark
-/// seams instead of fifteen thin stripes.
+///     The ROM's colour-cycling palette for the wave-complete tunnel (notes §86): twelve ramp
+///     tables that live beside the walker's task data at $576D, fifteen values of one written
+///     into palette slots 1-15, one slot blacked in each group of five, and the window slid on
+///     one value a pass. This is what makes the arcade's tunnel read as thick bars with dark
+///     seams instead of fifteen thin stripes.
 /// </summary>
 public sealed class TunnelPaletteTests
 {
@@ -20,7 +20,7 @@ public sealed class TunnelPaletteTests
         Assert.Equal(12, TunnelPalette.Ramps.Length);
         Assert.Equal(12, TunnelPalette.StartMasks.Length);
 
-        foreach (byte[] ramp in TunnelPalette.Ramps)
+        foreach (var ramp in TunnelPalette.Ramps)
         {
             // A ramp runs to its zero terminator ($59E2 skips a zero and wraps), so a ramp the
             // port stores never CONTAINS one, and the fifteen-value window always fits.
@@ -43,17 +43,13 @@ public sealed class TunnelPaletteTests
         tunnel.Start();
         tunnel.Apply(palette);
 
-        for (int group = 0; group < 3; group++)
+        for (var group = 0; group < 3; group++)
         {
-            int first = TunnelPalette.FirstSlot + group * 5;
-            int blacks = 0;
-            for (int slot = first; slot < first + 5; slot++)
-            {
+            var first = TunnelPalette.FirstSlot + group * 5;
+            var blacks = 0;
+            for (var slot = first; slot < first + 5; slot++)
                 if (palette.GetSlotValue(slot) == 0x00)
-                {
                     blacks++;
-                }
-            }
 
             Assert.Equal(1, blacks);
         }
@@ -72,20 +68,17 @@ public sealed class TunnelPaletteTests
         var tunnel = new TunnelPalette(new Random(7));
         tunnel.Start();
 
-        byte[] ramp = TunnelPalette.Ramps[tunnel.RampIndex];
-        int index = tunnel.WindowStartIndex;
+        var ramp = TunnelPalette.Ramps[tunnel.RampIndex];
+        var index = tunnel.WindowStartIndex;
 
         tunnel.Apply(palette);
 
-        for (int slot = 0; slot < TunnelPalette.SlotCount; slot++)
+        for (var slot = 0; slot < TunnelPalette.SlotCount; slot++)
         {
-            byte expected = ramp[index % ramp.Length];
+            var expected = ramp[index % ramp.Length];
             index++;
 
-            if (BlackedSlots(tunnel).Contains(TunnelPalette.FirstSlot + slot))
-            {
-                continue;
-            }
+            if (BlackedSlots(tunnel).Contains(TunnelPalette.FirstSlot + slot)) continue;
 
             Assert.Equal(expected, palette.GetSlotValue(TunnelPalette.FirstSlot + slot));
         }
@@ -93,9 +86,11 @@ public sealed class TunnelPaletteTests
 
     /// <summary>The three slots this pass blits black — `$9801+A`, `$9806+A`, `$980B+A`.</summary>
     private static int[] BlackedSlots(TunnelPalette tunnel)
-        => TunnelPalette.BlackSlots
+    {
+        return TunnelPalette.BlackSlots
             .Select(offset => TunnelPalette.FirstSlot + offset + tunnel.BlackOffset)
             .ToArray();
+    }
 
     [Fact]
     public void EachPassSlidesTheWindowOneValueAndWalksTheBlackSlotDown()
@@ -105,22 +100,19 @@ public sealed class TunnelPaletteTests
         var tunnel = new TunnelPalette(new Random(3));
         tunnel.Start();
 
-        int pointer = tunnel.WindowStartIndex;
+        var pointer = tunnel.WindowStartIndex;
         Assert.Equal(4, tunnel.BlackOffset);
 
         tunnel.Advance();
         Assert.Equal(pointer + 1, tunnel.WindowStartIndex);
         Assert.Equal(3, tunnel.BlackOffset);
 
-        for (int i = 0; i < 3; i++)
-        {
-            tunnel.Advance();
-        }
+        for (var i = 0; i < 3; i++) tunnel.Advance();
 
         Assert.Equal(0, tunnel.BlackOffset);
 
         tunnel.Advance();
-        Assert.Equal(4, tunnel.BlackOffset);            // 0 wraps back to 4, never to 5
+        Assert.Equal(4, tunnel.BlackOffset); // 0 wraps back to 4, never to 5
         Assert.Equal(pointer + 5, tunnel.WindowStartIndex);
     }
 
@@ -132,9 +124,9 @@ public sealed class TunnelPaletteTests
         var tunnel = new TunnelPalette(new Random(5));
         tunnel.Start();
 
-        byte[] ramp = TunnelPalette.Ramps[tunnel.RampIndex];
+        var ramp = TunnelPalette.Ramps[tunnel.RampIndex];
 
-        for (int pass = 0; pass < 1000; pass++)
+        for (var pass = 0; pass < 1000; pass++)
         {
             Assert.InRange(tunnel.WindowStartIndex, 0, ramp.Length - 1);
             tunnel.Advance();

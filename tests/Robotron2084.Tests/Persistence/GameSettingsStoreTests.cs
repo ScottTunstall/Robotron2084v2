@@ -4,21 +4,23 @@ using Xunit;
 namespace Robotron2084.Tests.Persistence;
 
 /// <summary>
-/// The settings INI file (notes §131). Like the controls file it must round-trip exactly, and a
-/// missing file yields the factory values. Because it can be hand-edited, a value the cabinet
-/// itself could not hold is ignored rather than putting the game into an unreachable state. A file
-/// that EXISTS but cannot be opened throws a <see cref="PersistenceException"/> naming it (ERR-1):
-/// silently falling back would let the next save overwrite the user's settings.
+///     The settings INI file (notes §131). Like the controls file it must round-trip exactly, and a
+///     missing file yields the factory values. Because it can be hand-edited, a value the cabinet
+///     itself could not hold is ignored rather than putting the game into an unreachable state. A file
+///     that EXISTS but cannot be opened throws a <see cref="PersistenceException" /> naming it (ERR-1):
+///     silently falling back would let the next save overwrite the user's settings.
 /// </summary>
 public sealed class GameSettingsStoreTests
 {
-    private static string TempFile() =>
-        Path.Combine(Path.GetTempPath(), $"robotron-settings-{Guid.NewGuid():N}.ini");
+    private static string TempFile()
+    {
+        return Path.Combine(Path.GetTempPath(), $"robotron-settings-{Guid.NewGuid():N}.ini");
+    }
 
     [Fact]
     public void MissingFile_YieldsTheFactorySettings()
     {
-        GameSettings loaded = GameSettingsStore.Load(TempFile());
+        var loaded = GameSettingsStore.Load(TempFile());
 
         Assert.Equal(25, loaded.ExtraManEvery);
         Assert.Equal(3, loaded.TurnsPerPlayer);
@@ -28,7 +30,7 @@ public sealed class GameSettingsStoreTests
     [Fact]
     public void AFileThatCannotBeOpened_ThrowsNamingTheFile()
     {
-        string path = TempFile();
+        var path = TempFile();
         File.WriteAllText(path, "[game]\n");
         try
         {
@@ -36,7 +38,7 @@ public sealed class GameSettingsStoreTests
             // the handle is released before the finally deletes the file.
             using var lockHandle = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
 
-            PersistenceException exception = Assert.Throws<PersistenceException>(() => GameSettingsStore.Load(path));
+            var exception = Assert.Throws<PersistenceException>(() => GameSettingsStore.Load(path));
 
             Assert.Contains(path, exception.Message); // the user must be told WHICH file failed
         }
@@ -49,13 +51,14 @@ public sealed class GameSettingsStoreTests
     [Fact]
     public void EverythingSurvivesARoundTrip()
     {
-        string path = TempFile();
+        var path = TempFile();
         try
         {
-            var settings = new GameSettings { ExtraManEvery = 50, TurnsPerPlayer = 5, Difficulty = 10, AttractModeSoundEnabled = false };
+            var settings = new GameSettings
+                { ExtraManEvery = 50, TurnsPerPlayer = 5, Difficulty = 10, AttractModeSoundEnabled = false };
 
             GameSettingsStore.Save(path, settings);
-            GameSettings loaded = GameSettingsStore.Load(path);
+            var loaded = GameSettingsStore.Load(path);
 
             Assert.Equal(50, loaded.ExtraManEvery);
             Assert.Equal(5, loaded.TurnsPerPlayer);
@@ -69,11 +72,11 @@ public sealed class GameSettingsStoreTests
     }
 
     [Theory]
-    [InlineData("extramanevery=17")]  // off the ROM's five-stop list
+    [InlineData("extramanevery=17")] // off the ROM's five-stop list
     [InlineData("extramanevery=1000")]
     public void OutOfRangeValuesAreIgnored(string line)
     {
-        GameSettings loaded = GameSettingsStore.Parse(["[game]", line]);
+        var loaded = GameSettingsStore.Parse(["[game]", line]);
 
         Assert.Equal(25, loaded.ExtraManEvery);
     }
@@ -84,7 +87,7 @@ public sealed class GameSettingsStoreTests
     [InlineData("difficulty=11")]
     public void ValuesOutsideTheRomsRangeAreIgnored(string line)
     {
-        GameSettings loaded = GameSettingsStore.Parse(["[game]", line]);
+        var loaded = GameSettingsStore.Parse(["[game]", line]);
 
         Assert.Equal(3, loaded.TurnsPerPlayer);
         Assert.Equal(5, loaded.Difficulty);
@@ -95,19 +98,21 @@ public sealed class GameSettingsStoreTests
     {
         Assert.False(GameSettingsStore.Parse(["[game]", "attractsound=0"]).AttractModeSoundEnabled);
         Assert.True(GameSettingsStore.Parse(["[game]", "attractsound=1"]).AttractModeSoundEnabled);
-        Assert.False(GameSettingsStore.Parse(["[game]", "attractsound=7"]).AttractModeSoundEnabled); // ignored: the factory value (off) stays
+        Assert.False(GameSettingsStore.Parse(["[game]", "attractsound=7"])
+            .AttractModeSoundEnabled); // ignored: the factory value (off) stays
     }
 
     [Fact]
     public void TheBugAndBozoSwitchesAreOnUnlessTheFileSaysOff_AndSurviveARoundTrip()
     {
-        GameSettings factory = GameSettingsStore.Parse(["[game]"]);
+        var factory = GameSettingsStore.Parse(["[game]"]);
         Assert.True(factory.TankShellBugEnabled);
         Assert.True(factory.BrainsChaseMikeyBugEnabled);
         Assert.True(factory.BozoModeEnabled);
 
-        var off = new GameSettings { TankShellBugEnabled = false, BrainsChaseMikeyBugEnabled = false, BozoModeEnabled = false };
-        GameSettings loaded = GameSettingsStore.Parse(GameSettingsStore.Write(off).Split(Environment.NewLine));
+        var off = new GameSettings
+            { TankShellBugEnabled = false, BrainsChaseMikeyBugEnabled = false, BozoModeEnabled = false };
+        var loaded = GameSettingsStore.Parse(GameSettingsStore.Write(off).Split(Environment.NewLine));
         Assert.False(loaded.TankShellBugEnabled);
         Assert.False(loaded.BrainsChaseMikeyBugEnabled);
         Assert.False(loaded.BozoModeEnabled);
@@ -119,7 +124,7 @@ public sealed class GameSettingsStoreTests
     [Fact]
     public void UnknownKeysAndSectionsAreIgnored()
     {
-        GameSettings loaded = GameSettingsStore.Parse(
+        var loaded = GameSettingsStore.Parse(
         [
             "; a comment",
             "[somethingelse]",
@@ -127,7 +132,7 @@ public sealed class GameSettingsStoreTests
             "[game]",
             "# another comment",
             "notasetting=99",
-            "difficulty=1",
+            "difficulty=1"
         ]);
 
         Assert.Equal(1, loaded.Difficulty);

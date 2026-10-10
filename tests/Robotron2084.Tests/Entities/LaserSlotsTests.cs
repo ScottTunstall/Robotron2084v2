@@ -23,14 +23,12 @@ public sealed class LaserSlotsTests
     {
         LaserSlots slots = new(TestSprites.Shared);
 
-        for (int i = 0; i < LaserSlots.Capacity; i++)
-        {
+        for (var i = 0; i < LaserSlots.Capacity; i++)
             Assert.True(slots.TryFire(new IntVector2(100 + i * 20, 100), Direction8.Up, out _));
-        }
 
         slots.Slots[0]!.Kill();
 
-        Assert.True(slots.TryFire(new IntVector2(300, 300), Direction8.Right, out PlayerLaser? laser));
+        Assert.True(slots.TryFire(new IntVector2(300, 300), Direction8.Right, out var laser));
         Assert.NotNull(laser);
         Assert.Equal(Direction8.Right, laser!.Direction);
         Assert.Equal(3, slots.GetActiveLasers().Count());

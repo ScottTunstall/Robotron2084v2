@@ -6,9 +6,9 @@ using Xunit;
 namespace Robotron2084.Tests.Hud;
 
 /// <summary>
-/// The initials entry (notes §116) — RRTESTB's GETLET: three alpha-only letters, the up/down ring
-/// with the rub marker, the fire that commits and then types on by itself, and the per-letter
-/// deadline that ends the entry whether or not the player is typing.
+///     The initials entry (notes §116) — RRTESTB's GETLET: three alpha-only letters, the up/down ring
+///     with the rub marker, the fire that commits and then types on by itself, and the per-letter
+///     deadline that ends the entry whether or not the player is typing.
 /// </summary>
 public sealed class InitialsEntryModelTests
 {
@@ -38,7 +38,7 @@ public sealed class InitialsEntryModelTests
     [Fact]
     public void UpCyclesForwardThroughTheRingAndDownCyclesBack()
     {
-        InitialsEntryModel model = Started();
+        var model = Started();
 
         Press(model, Up);
         Assert.Equal('A', model.GetPreview());
@@ -60,7 +60,7 @@ public sealed class InitialsEntryModelTests
     [Fact]
     public void TheRubMarkerIsOnlyInTheRingOnceALetterHasBeenCommitted()
     {
-        InitialsEntryModel model = Started();
+        var model = Started();
 
         // Z wraps to a blank before anything is committed...
         Press(model, Up);
@@ -78,7 +78,7 @@ public sealed class InitialsEntryModelTests
     [Fact]
     public void FireCommitsTheLetterAndMovesTheCursorOn()
     {
-        InitialsEntryModel model = Started();
+        var model = Started();
 
         Press(model, Up);
         PressFire(model);
@@ -92,11 +92,11 @@ public sealed class InitialsEntryModelTests
     [Fact]
     public void ThreeCommittedLettersFinishTheEntry()
     {
-        InitialsEntryModel model = Started();
+        var model = Started();
 
-        CommitLetter(model, Up);          // A
-        CommitLetter(model, 2, Up);       // B
-        CommitLetter(model, 3, Up);       // C
+        CommitLetter(model, Up); // A
+        CommitLetter(model, 2, Up); // B
+        CommitLetter(model, 3, Up); // C
 
         Assert.True(model.IsComplete);
         Assert.Equal("ABC", model.GetInitials());
@@ -106,10 +106,10 @@ public sealed class InitialsEntryModelTests
     [Fact]
     public void TheRubMarkerDeletesTheLetterBeforeTheCursor()
     {
-        InitialsEntryModel model = Started();
+        var model = Started();
 
-        CommitLetter(model, 2, Up);        // B
-        CommitLetter(model, 3, Up);        // C
+        CommitLetter(model, 2, Up); // B
+        CommitLetter(model, 3, Up); // C
         Assert.Equal("BC ", model.GetInitials());
 
         // Down from the blank cell reaches the rub marker, and fire there takes the C away.
@@ -129,10 +129,10 @@ public sealed class InitialsEntryModelTests
     [Fact]
     public void HoldingFireTypesTheNextLetterItself_ButTheLastOneStillHasToBePressed()
     {
-        InitialsEntryModel model = Started();
-        Press(model, Up);                 // A
+        var model = Started();
+        Press(model, Up); // A
 
-        int ticks = 0;
+        var ticks = 0;
         while (model.LetterIndex < 2 && ticks < 400)
         {
             model.Tick(Fire);
@@ -161,7 +161,7 @@ public sealed class InitialsEntryModelTests
     [Fact]
     public void AHeldDirectionRepeatsTheRomWay_ALateFirstRepeatThenEverySeventyMilliseconds()
     {
-        InitialsEntryModel model = Started();
+        var model = Started();
 
         // The cycle happens the moment the switch is seen (LUP's first LUPP1)...
         Tick(model, Up, 3);
@@ -184,7 +184,7 @@ public sealed class InitialsEntryModelTests
     [Fact]
     public void ALetterNoOneTypesTimesOutAfterSixHundredAndFortyFrames()
     {
-        InitialsEntryModel model = Started();
+        var model = Started();
 
         // TIMPRC gives each remaining letter 640 fiftieths of a second (768 port ticks), and the entry ends
         // when the last of them runs out — three deadlines for three letters.
@@ -199,10 +199,10 @@ public sealed class InitialsEntryModelTests
     [Fact]
     public void ALetterLeftOnTheRubMarkerTimesOutAsABlank()
     {
-        InitialsEntryModel model = Started();
+        var model = Started();
 
-        CommitLetter(model, Up);          // A, and the rub marker joins the ring
-        Press(model, Down);               // the preview is the rub marker
+        CommitLetter(model, Up); // A, and the rub marker joins the ring
+        Press(model, Down); // the preview is the rub marker
         Assert.True(model.IsPreviewRub());
 
         // TIMPR2 stores a space rather than let a timed-out name end on the marker.
@@ -227,18 +227,18 @@ public sealed class InitialsEntryModelTests
         Tick(model, Idle, 3);
     }
 
-    /// <summary>Types a letter: <paramref name="steps"/> presses of up, then fire.</summary>
+    /// <summary>Types a letter: <paramref name="steps" /> presses of up, then fire.</summary>
     private static void CommitLetter(InitialsEntryModel model, int steps, PlayerInputState direction)
     {
-        for (int step = 0; step < steps; step++)
-        {
-            Press(model, direction);
-        }
+        for (var step = 0; step < steps; step++) Press(model, direction);
 
         PressFire(model);
     }
 
-    private static void CommitLetter(InitialsEntryModel model, PlayerInputState direction) => CommitLetter(model, 1, direction);
+    private static void CommitLetter(InitialsEntryModel model, PlayerInputState direction)
+    {
+        CommitLetter(model, 1, direction);
+    }
 
     /// <summary>One press of fire, released again before the typematic could take over.</summary>
     private static void PressFire(InitialsEntryModel model)
@@ -249,12 +249,12 @@ public sealed class InitialsEntryModelTests
 
     private static void Tick(InitialsEntryModel model, PlayerInputState input, int ticks)
     {
-        for (int tick = 0; tick < ticks; tick++)
-        {
-            model.Tick(input);
-        }
+        for (var tick = 0; tick < ticks; tick++) model.Tick(input);
     }
 
     /// <summary>A port tick is five clock units, and a fiftieth of a second is six, so N frames are (N x 6 + 4) / 5 ticks.</summary>
-    private static int TicksForRomFrames(int romFrames) => ((romFrames * 6) + 4) / 5;
+    private static int TicksForRomFrames(int romFrames)
+    {
+        return (romFrames * 6 + 4) / 5;
+    }
 }

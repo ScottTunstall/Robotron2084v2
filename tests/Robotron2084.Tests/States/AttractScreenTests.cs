@@ -4,16 +4,15 @@ using Xunit;
 namespace Robotron2084.Tests.States;
 
 /// <summary>
-/// The attract cycle and the author's start keys (notes §101). <c>RobotronGame.Update</c>
-/// reads F1 (one player) / F2 (two players, alternating) / F3 (two players, simultaneous)
-/// and F10 (DEFINE INPUTS) on EVERY screen of the attract cycle — the author's question of
-/// 2026-09-20 — and it recognises those screens by the <see cref="IAttractState"/> marker,
-/// so a screen that joins the cycle without the marker silently loses the keys.
-///
-/// That is what these tests guard, from both ends: the marker covers exactly the four
-/// attract screens, and EVERY <see cref="IGameState"/> in the assembly is either one of
-/// them or named in <see cref="NotAttractScreens"/> — so adding a screen forces the
-/// decision instead of quietly falling outside the key handling.
+///     The attract cycle and the author's start keys (notes §101). <c>RobotronGame.Update</c>
+///     reads F1 (one player) / F2 (two players, alternating) / F3 (two players, simultaneous)
+///     and F10 (DEFINE INPUTS) on EVERY screen of the attract cycle — the author's question of
+///     2026-09-20 — and it recognises those screens by the <see cref="IAttractState" /> marker,
+///     so a screen that joins the cycle without the marker silently loses the keys.
+///     That is what these tests guard, from both ends: the marker covers exactly the four
+///     attract screens, and EVERY <see cref="IGameState" /> in the assembly is either one of
+///     them or named in <see cref="NotAttractScreens" /> — so adding a screen forces the
+///     decision instead of quietly falling outside the key handling.
 /// </summary>
 public sealed class AttractScreenTests
 {
@@ -23,15 +22,15 @@ public sealed class AttractScreenTests
         typeof(TitleScreenState),
         typeof(StorylineState),
         typeof(AttractState),
-        typeof(HighScoreTableState),
+        typeof(HighScoreTableState)
     ];
 
     /// <summary>
-    /// The screens that are NOT attract screens: where a game is being played (or paused in
-    /// front of), the arcade's own rule applies instead — no key restarts the machine under a
-    /// player mid-game — and so do the screens that finish a game, which the cabinet also runs
-    /// outside the attract cycle: the game-over message, the CONG initials entry (notes §116) and
-    /// the ONLY5P page, plus the port-only definitions and GAME ADJUSTMENT pages.
+    ///     The screens that are NOT attract screens: where a game is being played (or paused in
+    ///     front of), the arcade's own rule applies instead — no key restarts the machine under a
+    ///     player mid-game — and so do the screens that finish a game, which the cabinet also runs
+    ///     outside the attract cycle: the game-over message, the CONG initials entry (notes §116) and
+    ///     the ONLY5P page, plus the port-only definitions and GAME ADJUSTMENT pages.
     /// </summary>
     private static readonly Type[] NotAttractScreens =
     [
@@ -42,13 +41,13 @@ public sealed class AttractScreenTests
         typeof(EntriesMaximumState),
         typeof(DefineInputsState),
         typeof(SettingsState),
-        typeof(SoundTestState),
+        typeof(SoundTestState)
     ];
 
     [Fact]
     public void TheStartKeysAreLiveOnExactlyTheFourAttractScreens()
     {
-        string[] marked = Screens()
+        var marked = Screens()
             .Where(typeof(IAttractState).IsAssignableFrom)
             .Select(screen => screen.Name)
             .OrderBy(name => name)
@@ -62,7 +61,7 @@ public sealed class AttractScreenTests
     [Fact]
     public void EveryScreenIsEitherAnAttractScreenOrDeliberatelyNotOne()
     {
-        Type[] unexplained = Screens()
+        var unexplained = Screens()
             .Except(AttractScreens)
             .Except(NotAttractScreens)
             .ToArray();
@@ -74,9 +73,11 @@ public sealed class AttractScreenTests
             + $"{nameof(NotAttractScreens)} (they do not)");
     }
 
-    /// <summary>Every concrete <see cref="IGameState"/> in the game assembly.</summary>
-    private static Type[] Screens() =>
-        typeof(IGameState).Assembly.GetTypes()
+    /// <summary>Every concrete <see cref="IGameState" /> in the game assembly.</summary>
+    private static Type[] Screens()
+    {
+        return typeof(IGameState).Assembly.GetTypes()
             .Where(type => type is { IsClass: true, IsAbstract: false } && typeof(IGameState).IsAssignableFrom(type))
             .ToArray();
+    }
 }

@@ -8,12 +8,15 @@ namespace Robotron2084.Tests;
 /// <summary>The big ROBOTRON letters coming into view one at a time (ROM <c>RRLOG.ASM</c> <c>WDONE</c>).</summary>
 public sealed class WordmarkAppearTests
 {
-    private static WordmarkAppear CreateAppear(int letterCount) => new(
-        null!,
-        null!,
-        new Point(200, 29),
-        [.. Enumerable.Range(0, letterCount).Select(index => new LetterSpan(index * 25, 20))],
-        new Point(0, 0));
+    private static WordmarkAppear CreateAppear(int letterCount)
+    {
+        return new WordmarkAppear(
+            null!,
+            null!,
+            new Point(200, 29),
+            [.. Enumerable.Range(0, letterCount).Select(index => new LetterSpan(index * 25, 20))],
+            new Point(0, 0));
+    }
 
     [Fact]
     public void TheLetters_AreTheRunsOfColumnsThatHaveSomethingDrawnInThem()
@@ -28,8 +31,8 @@ public sealed class WordmarkAppearTests
     [Fact]
     public void ALetterStartsEveryEightRomFrames_BeginningWithTheFirstAtOnce()
     {
-        WordmarkAppear appear = CreateAppear(9);
-        Assert.Equal(1, Started(appear, ticks: 1));
+        var appear = CreateAppear(9);
+        Assert.Equal(1, Started(appear, 1));
 
         appear = CreateAppear(9);
         Assert.Equal(1, Started(appear, ArcadeClock.ToPortTicksRoundedUp(7)));
@@ -44,13 +47,10 @@ public sealed class WordmarkAppearTests
     [Fact]
     public void TheNextThingGoesUp_ThirtyTwoRomFramesAfterTheLastLetterStarts()
     {
-        WordmarkAppear appear = CreateAppear(9);
-        int ticks = ArcadeClock.ToPortTicksRoundedUp((8 * 8) + 0x20);
+        var appear = CreateAppear(9);
+        var ticks = ArcadeClock.ToPortTicksRoundedUp(8 * 8 + 0x20);
 
-        for (int tick = 0; tick < ticks - 1; tick++)
-        {
-            appear.Update();
-        }
+        for (var tick = 0; tick < ticks - 1; tick++) appear.Update();
 
         Assert.False(appear.IsFinished());
         appear.Update();
@@ -58,14 +58,14 @@ public sealed class WordmarkAppearTests
     }
 
     [Fact]
-    public void AWordWithNoLetters_IsFinishedAtOnce() => Assert.True(CreateAppear(0).IsFinished());
+    public void AWordWithNoLetters_IsFinishedAtOnce()
+    {
+        Assert.True(CreateAppear(0).IsFinished());
+    }
 
     private static int Started(WordmarkAppear appear, int ticks)
     {
-        for (int tick = 0; tick < ticks; tick++)
-        {
-            appear.Update();
-        }
+        for (var tick = 0; tick < ticks; tick++) appear.Update();
 
         return appear.GetStartedLetterCount();
     }

@@ -3,8 +3,8 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// Finds the ROM images in <c>ref/rom</c>. They are not in git (notes §126), so a test that needs one
-/// skips when it is missing.
+///     Finds the ROM images in <c>ref/rom</c>. They are not in git (notes §126), so a test that needs one
+///     skips when it is missing.
 /// </summary>
 internal static class RomFiles
 {
@@ -19,7 +19,7 @@ internal static class RomFiles
     /// <returns>The image's bytes.</returns>
     public static byte[] ReadOrSkip(string fileName)
     {
-        string? path = Find(fileName);
+        var path = Find(fileName);
         Assert.SkipWhen(path is null, $"{fileName} is not in ref/rom.");
         return File.ReadAllBytes(path!);
     }
@@ -28,11 +28,8 @@ internal static class RomFiles
     {
         for (DirectoryInfo? folder = new(AppContext.BaseDirectory); folder is not null; folder = folder.Parent)
         {
-            string candidate = Path.Combine(folder.FullName, "ref", "rom", fileName);
-            if (File.Exists(candidate))
-            {
-                return candidate;
-            }
+            var candidate = Path.Combine(folder.FullName, "ref", "rom", fileName);
+            if (File.Exists(candidate)) return candidate;
         }
 
         return null;

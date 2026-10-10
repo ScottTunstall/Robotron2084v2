@@ -12,7 +12,7 @@ public class StereoPannerTests
     {
         var panner = new StereoPanner();
 
-        (short left, short right) = LastFrame(panner, samples: 10);
+        var (left, right) = LastFrame(panner, 10);
 
         Assert.Equal(left, right);
         Assert.InRange(left, 23000, 23400);
@@ -24,7 +24,7 @@ public class StereoPannerTests
         var panner = new StereoPanner();
 
         panner.PanTo(-1f);
-        (short left, short right) = LastFrame(panner, GlideSettledSamples);
+        var (left, right) = LastFrame(panner, GlideSettledSamples);
 
         Assert.InRange(left, 32000, short.MaxValue);
         Assert.InRange(right, (short)0, (short)100);
@@ -36,7 +36,7 @@ public class StereoPannerTests
         var panner = new StereoPanner();
 
         panner.PanTo(1f);
-        (short left, short right) = LastFrame(panner, samples: 1);
+        var (left, right) = LastFrame(panner, 1);
 
         Assert.InRange(left, 23000, 23400);
         Assert.InRange(right, 23000, 23400);
@@ -56,7 +56,7 @@ public class StereoPannerTests
 
     private static (short Left, short Right) LastFrame(StereoPanner panner, int samples)
     {
-        float[] full = Enumerable.Repeat(1f, samples).ToArray();
+        var full = Enumerable.Repeat(1f, samples).ToArray();
         var stereo = new short[samples * 2];
         panner.Spread(full, 1f, stereo);
         return (stereo[^2], stereo[^1]);

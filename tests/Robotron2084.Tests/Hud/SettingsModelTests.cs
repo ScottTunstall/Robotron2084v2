@@ -9,10 +9,7 @@ public sealed class SettingsModelTests
 {
     private static void GoTo(SettingsModel model, int line)
     {
-        while (model.Line != line)
-        {
-            model.MoveDown();
-        }
+        while (model.Line != line) model.MoveDown();
     }
 
     [Fact]
@@ -86,7 +83,8 @@ public sealed class SettingsModelTests
     public void RestoreFactorySettingsPutsTheValuesBackAndDisarms()
     {
         var model = new SettingsModel();
-        var settings = new GameSettings { ExtraManEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSoundEnabled = true };
+        var settings = new GameSettings
+            { ExtraManEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSoundEnabled = true };
         GoTo(model, SettingsModel.RestoreFactoryLine);
         model.Change(settings, 1);
 
@@ -145,7 +143,8 @@ public sealed class SettingsModelTests
         Assert.Equal(string.Empty, SettingsModel.GetNote(settings, line));
 
         // Only the highlighted row changed.
-        int off = new[] { settings.TankShellBugEnabled, settings.BrainsChaseMikeyBugEnabled, settings.BozoModeEnabled }.Count(on => !on);
+        var off = new[] { settings.TankShellBugEnabled, settings.BrainsChaseMikeyBugEnabled, settings.BozoModeEnabled }
+            .Count(on => !on);
         Assert.Equal(1, off);
 
         model.Change(settings, 1);
@@ -171,8 +170,11 @@ public sealed class SettingsModelTests
     [InlineData(5, "RECOMMENDED")]
     [InlineData(7, "CONSERVATIVE")]
     [InlineData(10, "EXTRA CONSERVATIVE")]
-    public void TheDifficultyRowUsesTheRomsWordBands(int value, string note) =>
-        Assert.Equal(note, SettingsModel.GetNote(new GameSettings { Difficulty = value }, SettingsModel.DifficultyLine));
+    public void TheDifficultyRowUsesTheRomsWordBands(int value, string note)
+    {
+        Assert.Equal(note,
+            SettingsModel.GetNote(new GameSettings { Difficulty = value }, SettingsModel.DifficultyLine));
+    }
 
     [Fact]
     public void TheActionRowsReadNoUntilTheyAreSet()

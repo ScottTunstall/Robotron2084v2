@@ -8,27 +8,33 @@ namespace Robotron2084.Tests.Rendering;
 public sealed class WilliamsLogoBorderTests
 {
     /// <summary>A one-pixel stand-in for the W, so a test can find exactly where it was drawn.</summary>
-    private static WilliamsLogoBorder NewBorder() => new(SpriteMask.CreateFromPixels(28, 27, [(0, 0)]));
+    private static WilliamsLogoBorder NewBorder()
+    {
+        return new WilliamsLogoBorder(SpriteMask.CreateFromPixels(28, 27, [(0, 0)]));
+    }
 
     private static void TickRomFrames(WilliamsLogoBorder border, int romFrames)
     {
         // A fiftieth of a second is six clock units and a port tick five, so N frames take 6N/5 ticks, rounded up.
-        int ticks = (ArcadeClock.ToClockUnits(romFrames) + ArcadeClock.UnitsPerPortTick - 1) / ArcadeClock.UnitsPerPortTick;
-        for (int i = 0; i < ticks; i++)
-        {
-            border.Tick();
-        }
+        var ticks = (ArcadeClock.ToClockUnits(romFrames) + ArcadeClock.UnitsPerPortTick - 1) /
+                    ArcadeClock.UnitsPerPortTick;
+        for (var i = 0; i < ticks; i++) border.Tick();
     }
 
-    private static int Count(WilliamsLogoBorder border) => border.Pixels.Count(pixel => pixel != 0);
+    private static int Count(WilliamsLogoBorder border)
+    {
+        return border.Pixels.Count(pixel => pixel != 0);
+    }
 
-    private static byte PixelAt(WilliamsLogoBorder border, int column, int row) =>
-        border.Pixels[(row * WilliamsLogoBorder.Width) + (column * ScreenSize.ArcadePixelsPerByte)];
+    private static byte PixelAt(WilliamsLogoBorder border, int column, int row)
+    {
+        return border.Pixels[row * WilliamsLogoBorder.Width + column * ScreenSize.ArcadePixelsPerByte];
+    }
 
     [Fact]
     public void TheFirstWIsDrawnAtOnceInSlotSeven()
     {
-        WilliamsLogoBorder border = NewBorder();
+        var border = NewBorder();
 
         TickRomFrames(border, 1);
 
@@ -39,7 +45,7 @@ public sealed class WilliamsLogoBorderTests
     [Fact]
     public void AnotherWComesEveryFourRomFrames()
     {
-        WilliamsLogoBorder border = NewBorder();
+        var border = NewBorder();
 
         TickRomFrames(border, 12);
 
@@ -51,9 +57,9 @@ public sealed class WilliamsLogoBorderTests
     [Fact]
     public void TheRingHasTwentyEightWsBeforeItStartsToMove()
     {
-        WilliamsLogoBorder border = NewBorder();
+        var border = NewBorder();
 
-        TickRomFrames(border, (4 * 27) + 1); // the 28th W is drawn on the 109th fiftieth of a second
+        TickRomFrames(border, 4 * 27 + 1); // the 28th W is drawn on the 109th fiftieth of a second
 
         Assert.Equal(28, Count(border));
     }
@@ -61,10 +67,10 @@ public sealed class WilliamsLogoBorderTests
     [Fact]
     public void ThenSixWsMoveEveryRomFrame()
     {
-        WilliamsLogoBorder border = NewBorder();
-        TickRomFrames(border, (4 * 28) + 1); // the moving phase begins four frames after the 28th W
+        var border = NewBorder();
+        TickRomFrames(border, 4 * 28 + 1); // the moving phase begins four frames after the 28th W
 
-        int before = Count(border);
+        var before = Count(border);
         TickRomFrames(border, 1);
 
         // Each move erases its slot's W (nothing there for the first lap) and draws one, so the ring grows.
@@ -75,9 +81,9 @@ public sealed class WilliamsLogoBorderTests
     [Fact]
     public void ItFinishesAfterSevenHundredAndFourMovingFrames()
     {
-        WilliamsLogoBorder border = NewBorder();
+        var border = NewBorder();
 
-        TickRomFrames(border, (4 * 28) + 704 + 8);
+        TickRomFrames(border, 4 * 28 + 704 + 8);
 
         Assert.True(border.IsFinished());
     }

@@ -6,12 +6,12 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// Round 7 playtest aid: the player is invincible for testing
-/// (PlayerTuning.PlayerInvincibleForTesting) so whole waves can be
-/// playtested; while the flag is on, Kill() must be a COMPLETE no-op
-/// (state, lives, death timer all untouched). The aid is PER PLAYER since
-/// notes §97.5 — the attract demo builds its field with it OFF, so the arcade's
-/// contact rules are live for the machine's own player.
+///     Round 7 playtest aid: the player is invincible for testing
+///     (PlayerTuning.PlayerInvincibleForTesting) so whole waves can be
+///     playtested; while the flag is on, Kill() must be a COMPLETE no-op
+///     (state, lives, death timer all untouched). The aid is PER PLAYER since
+///     notes §97.5 — the attract demo builds its field with it OFF, so the arcade's
+///     contact rules are live for the machine's own player.
 /// </summary>
 public sealed class PlayerInvincibilityTests
 {

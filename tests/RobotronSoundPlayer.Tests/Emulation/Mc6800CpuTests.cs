@@ -24,7 +24,7 @@ public class Mc6800CpuTests
     public void AddingPastTheLargestPositiveByte_SetsOverflowNegativeAndHalfCarry()
     {
         // LDAA #$7F / ADDA #$01
-        Mc6800Cpu cpu = Run(2, 0x86, 0x7F, 0x8B, 0x01);
+        var cpu = Run(2, 0x86, 0x7F, 0x8B, 0x01);
 
         Assert.Equal(0x80, cpu.A);
         Assert.Equal(
@@ -36,7 +36,7 @@ public class Mc6800CpuTests
     public void SubtractingFromZero_Borrows()
     {
         // LDAA #$00 / SUBA #$01
-        Mc6800Cpu cpu = Run(2, 0x86, 0x00, 0x80, 0x01);
+        var cpu = Run(2, 0x86, 0x00, 0x80, 0x01);
 
         Assert.Equal(0xFF, cpu.A);
         Assert.True(cpu.ConditionCodes.HasFlag(Mc6800ConditionCodes.Carry));
@@ -52,14 +52,11 @@ public class Mc6800CpuTests
         var cpu = new Mc6800Cpu(bus);
         cpu.Reset();
 
-        int cycles = 0;
-        for (int step = 0; step < 7; step++)
-        {
-            cycles += cpu.Step();
-        }
+        var cycles = 0;
+        for (var step = 0; step < 7; step++) cycles += cpu.Step();
 
         Assert.Equal(0, cpu.B);
-        Assert.Equal(2 + (3 * (2 + 4)), cycles);
+        Assert.Equal(2 + 3 * (2 + 4), cycles);
     }
 
     [Fact]
@@ -118,7 +115,7 @@ public class Mc6800CpuTests
         var cpu = new Mc6800Cpu(bus);
         cpu.Reset();
         StepTimes(cpu, 3);
-        ushort pc = cpu.ProgramCounter;
+        var pc = cpu.ProgramCounter;
 
         StepTimes(cpu, 5);
         Assert.Equal(pc, cpu.ProgramCounter);
@@ -163,7 +160,7 @@ public class Mc6800CpuTests
     public void DecimalAdjust_TurnsABinarySumBackIntoTwoDecimalDigits()
     {
         // LDAA #$09 / ADDA #$01 / DAA
-        Mc6800Cpu cpu = Run(3, 0x86, 0x09, 0x8B, 0x01, 0x19);
+        var cpu = Run(3, 0x86, 0x09, 0x8B, 0x01, 0x19);
 
         Assert.Equal(0x10, cpu.A);
     }
@@ -172,7 +169,7 @@ public class Mc6800CpuTests
     public void ComparingTheIndexRegister_SetsZeroWhenEqual()
     {
         // LDX #$1234 / CPX #$1234
-        Mc6800Cpu cpu = Run(2, 0xCE, 0x12, 0x34, 0x8C, 0x12, 0x34);
+        var cpu = Run(2, 0xCE, 0x12, 0x34, 0x8C, 0x12, 0x34);
 
         Assert.True(cpu.ConditionCodes.HasFlag(Mc6800ConditionCodes.Zero));
         Assert.Equal(0x1234, cpu.X);
@@ -190,9 +187,6 @@ public class Mc6800CpuTests
 
     private static void StepTimes(Mc6800Cpu cpu, int steps)
     {
-        for (int i = 0; i < steps; i++)
-        {
-            cpu.Step();
-        }
+        for (var i = 0; i < steps; i++) cpu.Step();
     }
 }

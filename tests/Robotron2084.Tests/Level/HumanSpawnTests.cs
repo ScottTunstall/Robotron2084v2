@@ -1,5 +1,4 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Level;
 using Xunit;
@@ -7,20 +6,27 @@ using Xunit;
 namespace Robotron2084.Tests.Level;
 
 /// <summary>
-/// The human family's start of wave (notes §88): they are placed OFF the electrodes, and they
-/// begin walking straight away — the ROM's `HUMSTV` staggers each member 1..8 units and the
-/// `HUMAN` process is the one robot routine with no STATUS gate, so the family walks while the
-/// robots are held off until the game goes live at the start of the wave.
+///     The human family's start of wave (notes §88): they are placed OFF the electrodes, and they
+///     begin walking straight away — the ROM's `HUMSTV` staggers each member 1..8 units and the
+///     `HUMAN` process is the one robot routine with no STATUS gate, so the family walks while the
+///     robots are held off until the game goes live at the start of the wave.
 /// </summary>
 public sealed class HumanSpawnTests
 {
     private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
+    private static GameTime Frame()
+    {
+        return new GameTime(TimeSpan.Zero, FrameSpan);
+    }
 
     /// <summary>The ROM's own wave table, so the family, electrodes and robots are the arcade's.</summary>
-    private static PlayField CreateField(int seed, int level) =>
-        new PlayFieldBuilder().WithParameters(LevelParameters.CreateFromWave(level, WaveTable.GetParameters(level))).WithRandom(new Random(seed)).Build();
+    private static PlayField CreateField(int seed, int level)
+    {
+        return new PlayFieldBuilder()
+            .WithParameters(LevelParameters.CreateFromWave(level, WaveTable.GetParameters(level)))
+            .WithRandom(new Random(seed)).Build();
+    }
 
     [Fact]
     public void TheFamilyNeverStartsOnAnElectrode()
@@ -28,24 +34,18 @@ public sealed class HumanSpawnTests
         // A human refuses to step into a live electrode, so one placed inside stands there for
         // the whole wave (the author's report). The placement predicate has to hold for every
         // wave — including the fallback paths, which used to return an unchecked point.
-        foreach (int level in new[] { 1, 5, 6, 7, 12, 20, 33 })
-        {
-            for (int seed = 1; seed <= 120; seed++)
+        foreach (var level in new[] { 1, 5, 6, 7, 12, 20, 33 })
+            for (var seed = 1; seed <= 120; seed++)
             {
-                PlayField field = CreateField(seed, level);
+                var field = CreateField(seed, level);
 
-                foreach (Human human in field.Entities.Family.Members)
-                {
-                    foreach (Electrode electrode in field.Entities.Electrodes)
-                    {
-                        Assert.False(
-                            electrode.GetBounds().Intersects(human.GetBounds()),
-                            $"level {level} seed {seed}: {human.Kind} at {human.GetBounds()} spawns on an "
-                            + $"electrode at {electrode.GetBounds()}");
-                    }
-                }
+                foreach (var human in field.Entities.Family.Members)
+                foreach (var electrode in field.Entities.Electrodes)
+                    Assert.False(
+                        electrode.GetBounds().Intersects(human.GetBounds()),
+                        $"level {level} seed {seed}: {human.Kind} at {human.GetBounds()} spawns on an "
+                        + $"electrode at {electrode.GetBounds()}");
             }
-        }
     }
 
     [Fact]
@@ -53,25 +53,19 @@ public sealed class HumanSpawnTests
     {
         // The walk's own obstacle rule, checked over a whole wave: a human may stand NEXT to an
         // electrode, never inside one.
-        PlayField field = CreateField(9, 7);
+        var field = CreateField(9, 7);
 
-        for (int tick = 0; tick < 1800; tick++)
+        for (var tick = 0; tick < 1800; tick++)
         {
             field.Update(Frame());
 
-            foreach (Human human in field.Entities.Family.Members)
+            foreach (var human in field.Entities.Family.Members)
             {
-                if (!human.IsAlive() || human.IsBeingReprogrammed)
-                {
-                    continue;
-                }
+                if (!human.IsAlive() || human.IsBeingReprogrammed) continue;
 
-                foreach (Electrode electrode in field.Entities.Electrodes)
+                foreach (var electrode in field.Entities.Electrodes)
                 {
-                    if (!electrode.IsAlive())
-                    {
-                        continue;
-                    }
+                    if (!electrode.IsAlive()) continue;
 
                     Assert.False(
                         electrode.GetBounds().Intersects(human.GetBounds()),
@@ -88,20 +82,17 @@ public sealed class HumanSpawnTests
         // `RobotsFrozen()` (which the ROM's robots check but the humans do not), and a whole extra
         // step period seeded into the walk clock — `HUMSTV`'s stagger IS the first wait. Within
         // half a second the family must be moving even though the robots are not.
-        PlayField field = CreateField(3, 7);
+        var field = CreateField(3, 7);
 
-        List<Human> humans = field.Entities.Family.Members.ToList();
+        var humans = field.Entities.Family.Members.ToList();
         Assert.NotEmpty(humans);
         var start = humans.ToDictionary(h => h, h => h.Position);
 
-        for (int tick = 0; tick < 30; tick++)
-        {
-            field.Update(Frame());
-        }
+        for (var tick = 0; tick < 30; tick++) field.Update(Frame());
 
         Assert.True(field.RobotsFrozen(), "the start of the wave must still be holding the robots");
 
-        int moved = humans.Count(h => h.IsAlive() && h.Position != start[h]);
+        var moved = humans.Count(h => h.IsAlive() && h.Position != start[h]);
         Assert.True(moved > 0, "the family was still standing after half a second");
     }
 }

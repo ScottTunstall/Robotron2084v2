@@ -6,8 +6,8 @@ using Xunit;
 namespace Robotron2084.Tests.Rendering;
 
 /// <summary>
-/// The 16-slot live palette: CRTAB defaults, slot writes, and the
-/// seanriddle.com byte→RGB conversion (RobotronPaletteService port).
+///     The 16-slot live palette: CRTAB defaults, slot writes, and the
+///     seanriddle.com byte→RGB conversion (RobotronPaletteService port).
 /// </summary>
 public sealed class GamePaletteTests
 {
@@ -39,13 +39,13 @@ public sealed class GamePaletteTests
     }
 
     [Theory]
-    [InlineData(0x00, 0, 0, 0)]     // black
-    [InlineData(0x07, 240, 0, 0)]   // red
-    [InlineData(0x17, 240, 64, 0)]  // orange
+    [InlineData(0x00, 0, 0, 0)] // black
+    [InlineData(0x07, 240, 0, 0)] // red
+    [InlineData(0x17, 240, 64, 0)] // orange
     [InlineData(0xC7, 240, 0, 240)] // purple
     [InlineData(0x3F, 240, 240, 0)] // yellow
-    [InlineData(0x38, 0, 240, 0)]   // green
-    [InlineData(0xC0, 0, 0, 240)]   // blue
+    [InlineData(0x38, 0, 240, 0)] // green
+    [InlineData(0xC0, 0, 0, 240)] // blue
     [InlineData(0xFF, 240, 240, 240)] // white
     public void ByteToRgbMatchesTheServiceConversion(byte value, int r, int g, int b)
     {
@@ -61,9 +61,9 @@ public sealed class GamePaletteTests
             .Select(v => RobotronColor.CreateFromByte(v))
             .ToArray();
 
-        for (int slot = 0; slot < 10; slot++)
+        for (var slot = 0; slot < 10; slot++)
         {
-            Color fixedColor = RobotronColor.CreateFromByte(GamePalette.DefaultSlotValues[slot]);
+            var fixedColor = RobotronColor.CreateFromByte(GamePalette.DefaultSlotValues[slot]);
             Assert.DoesNotContain(fixedColor, markerColors);
         }
 

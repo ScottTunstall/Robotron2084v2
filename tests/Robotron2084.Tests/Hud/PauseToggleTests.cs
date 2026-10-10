@@ -4,27 +4,27 @@ using Xunit;
 namespace Robotron2084.Tests.Hud;
 
 /// <summary>
-/// The port's PAUSE key (notes §101). It is an edge detector on purpose: the player
-/// holds the key while looking away from the screen, and a held key must not flap the
-/// game in and out of pause.
+///     The port's PAUSE key (notes §101). It is an edge detector on purpose: the player
+///     holds the key while looking away from the screen, and a held key must not flap the
+///     game in and out of pause.
 /// </summary>
 public sealed class PauseToggleTests
 {
     [Fact]
-    public void ANewGameIsNotPaused() => Assert.False(new PauseToggle().IsPaused);
+    public void ANewGameIsNotPaused()
+    {
+        Assert.False(new PauseToggle().IsPaused);
+    }
 
     [Fact]
     public void ItTogglesOnThePress_NotWhileTheKeyIsHeld()
     {
         var pause = new PauseToggle();
 
-        pause.Tick(isPauseHeld: true);
+        pause.Tick(true);
         Assert.True(pause.IsPaused);
 
-        for (int tick = 0; tick < 100; tick++)
-        {
-            pause.Tick(isPauseHeld: true);
-        }
+        for (var tick = 0; tick < 100; tick++) pause.Tick(true);
 
         Assert.True(pause.IsPaused); // still one pause, however long the key is down
     }
@@ -34,9 +34,9 @@ public sealed class PauseToggleTests
     {
         var pause = new PauseToggle();
 
-        pause.Tick(isPauseHeld: true);
-        pause.Tick(isPauseHeld: false);
-        pause.Tick(isPauseHeld: true);
+        pause.Tick(true);
+        pause.Tick(false);
+        pause.Tick(true);
 
         Assert.False(pause.IsPaused);
     }
@@ -45,16 +45,16 @@ public sealed class PauseToggleTests
     public void Reset_LeavesItRunning_AndSwallowsTheKeyThatWasHeld()
     {
         var pause = new PauseToggle();
-        pause.Tick(isPauseHeld: true);
+        pause.Tick(true);
 
         pause.Reset();
 
         Assert.False(pause.IsPaused);
-        pause.Tick(isPauseHeld: true); // the key that was down when the game ended must not re-pause it
+        pause.Tick(true); // the key that was down when the game ended must not re-pause it
         Assert.False(pause.IsPaused);
 
-        pause.Tick(isPauseHeld: false);
-        pause.Tick(isPauseHeld: true);
+        pause.Tick(false);
+        pause.Tick(true);
         Assert.True(pause.IsPaused);
     }
 }

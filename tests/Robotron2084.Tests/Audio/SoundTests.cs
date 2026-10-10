@@ -6,8 +6,8 @@ namespace Robotron2084.Tests.Audio;
 [Collection("SoundFacade")]
 public sealed class SoundTests : IDisposable
 {
-    private readonly bool _wasEnabled = Sound.Enabled;
     private readonly bool _wasAttractMuted = Sound.AttractMuted;
+    private readonly bool _wasEnabled = Sound.Enabled;
 
     public void Dispose()
     {
@@ -23,10 +23,7 @@ public sealed class SoundTests : IDisposable
         Sound.Enabled = false;
 
         Sound.Play(SoundTables.Laser);
-        for (int i = 0; i < 20; i++)
-        {
-            Sound.Tick();
-        }
+        for (var i = 0; i < 20; i++) Sound.Tick();
 
         Assert.Empty(sink.Sends);
     }
@@ -40,10 +37,7 @@ public sealed class SoundTests : IDisposable
         Sound.AttractMuted = false;
 
         Sound.Play(SoundTables.Laser);
-        for (int i = 0; i < 20; i++)
-        {
-            Sound.Tick();
-        }
+        for (var i = 0; i < 20; i++) Sound.Tick();
 
         Assert.Single(sink.Sends);
     }
@@ -57,10 +51,7 @@ public sealed class SoundTests : IDisposable
         Sound.AttractMuted = true;
 
         Sound.Play(SoundTables.Laser);
-        for (int i = 0; i < 20; i++)
-        {
-            Sound.Tick();
-        }
+        for (var i = 0; i < 20; i++) Sound.Tick();
 
         Assert.Empty(sink.Sends);
     }

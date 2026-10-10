@@ -28,12 +28,12 @@ public sealed class WaveTableTests
     [Fact]
     public void ForWave_KnownRomValues()
     {
-        WaveParameters w9 = WaveTable.GetParameters(9);
+        var w9 = WaveTable.GetParameters(9);
         Assert.Equal(60, w9.GruntCount);
         Assert.Equal(0, w9.ElectrodeCount);
         Assert.Equal(5, w9.SpheroidCount);
 
-        WaveParameters w40 = WaveTable.GetParameters(40);
+        var w40 = WaveTable.GetParameters(40);
         Assert.Equal(30, w40.GruntCount);
         Assert.Equal(25, w40.BrainCount);
         Assert.Equal(10, w40.MommyCount);

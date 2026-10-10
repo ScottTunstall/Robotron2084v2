@@ -8,19 +8,21 @@ public sealed class BozoModeTests
 {
     [Theory]
     [InlineData(1, 2, false)] // a fresh game: two spare men, doing fine
-    [InlineData(1, 1, true)]  // down a ship on wave 1
-    [InlineData(2, 1, true)]  // ...and on wave 2
+    [InlineData(1, 1, true)] // down a ship on wave 1
+    [InlineData(2, 1, true)] // ...and on wave 2
     [InlineData(3, 1, false)] // ...but not on wave 3
-    [InlineData(3, 0, true)]  // no spare men left: waves 1-4 all get it
+    [InlineData(3, 0, true)] // no spare men left: waves 1-4 all get it
     [InlineData(4, 0, true)]
     [InlineData(5, 0, false)] // never past wave 4
-    public void TheMercyAppliesToWavesOneToFourForAPlayerLosingShips(int wave, int spareMen, bool expected) =>
+    public void TheMercyAppliesToWavesOneToFourForAPlayerLosingShips(int wave, int spareMen, bool expected)
+    {
         Assert.Equal(expected, BozoMode.AppliesTo(wave, spareMen));
+    }
 
     [Fact]
     public void WaveOneGetsTheFirstRowOfTheTable()
     {
-        LevelParameters eased = BozoMode.Apply(new LevelParameters(LevelNumber: 1), spareMen: 0);
+        var eased = BozoMode.Apply(new LevelParameters(1), 0);
 
         Assert.Equal(38, eased.SpheroidDropDelay);
         Assert.Equal(96, eased.EnforcerFireDelay);
@@ -31,8 +33,8 @@ public sealed class BozoModeTests
     [Fact]
     public void ParametersAreUntouchedWhenTheMercyDoesNotApply()
     {
-        var parameters = new LevelParameters(LevelNumber: 3);
+        var parameters = new LevelParameters(3);
 
-        Assert.Same(parameters, BozoMode.Apply(parameters, spareMen: 2));
+        Assert.Same(parameters, BozoMode.Apply(parameters, 2));
     }
 }

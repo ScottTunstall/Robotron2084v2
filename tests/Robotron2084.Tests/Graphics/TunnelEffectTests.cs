@@ -5,13 +5,16 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// The ROM's wave-complete tunnel (`DRAW_COLOUR_CYCLING_TUNNEL_EFFECT` $5703 and
-/// `DRAW_RECTANGULAR_PART_OF_TUNNEL` $5A11 — notes §78.2, §79): it EXPANDS from a thin
-/// line at the screen's centre to its corners, two rings a frame, cycling a packed
-/// colour pair once per ring, then walks the whole thing again in black to clear it.
+///     The ROM's wave-complete tunnel (`DRAW_COLOUR_CYCLING_TUNNEL_EFFECT` $5703 and
+///     `DRAW_RECTANGULAR_PART_OF_TUNNEL` $5A11 — notes §78.2, §79): it EXPANDS from a thin
+///     line at the screen's centre to its corners, two rings a frame, cycling a packed
+///     colour pair once per ring, then walks the whole thing again in black to clear it.
 /// </summary>
 public sealed class TunnelEffectTests
 {
+    /// <summary>Port ticks for one task pass on the clock-unit clock (notes §83).</summary>
+    private static int TicksPerPass => (TunnelEffect.PassClockUnits + 4) / 5;
+
     [Fact]
     public void TheTunnelStartsAsACentreLineWithTheFirstColourPair()
     {
@@ -23,17 +26,11 @@ public sealed class TunnelEffectTests
         Assert.False(tunnel.IsFinished);
     }
 
-    /// <summary>Ticks the effect the way the game does — one call a tick — for <paramref name="ticks"/> ticks.</summary>
+    /// <summary>Ticks the effect the way the game does — one call a tick — for <paramref name="ticks" /> ticks.</summary>
     private static void Ticks(TunnelEffect tunnel, int ticks)
     {
-        for (int i = 0; i < ticks; i++)
-        {
-            tunnel.Update();
-        }
+        for (var i = 0; i < ticks; i++) tunnel.Update();
     }
-
-    /// <summary>Port ticks for one task pass on the clock-unit clock (notes §83).</summary>
-    private static int TicksPerPass => (TunnelEffect.PassClockUnits + 4) / 5;
 
     [Fact]
     public void EachPassDrawsTwoRingsAndStepsTheCornersOut()
@@ -58,7 +55,7 @@ public sealed class TunnelEffectTests
         // mid-phrase, which is what the author heard before this (notes §83's "~2 s" was a floor).
         var tunnel = new TunnelEffect();
 
-        int ticks = 0;
+        var ticks = 0;
         while (!tunnel.IsFinished && ticks < 1000)
         {
             tunnel.Update();
@@ -66,7 +63,7 @@ public sealed class TunnelEffectTests
         }
 
         Assert.True(tunnel.IsFinished);
-        Assert.InRange(ticks, 180, 190);                     // one phrase of the wave-end music
+        Assert.InRange(ticks, 180, 190); // one phrase of the wave-end music
         Assert.InRange(ticks / 60.0, 3.0, 3.2);
     }
 
@@ -83,8 +80,8 @@ public sealed class TunnelEffectTests
 
         // The chain only ever visits the pairs the ROM lists, wrapping rather than running
         // into a negative nibble.
-        int pair = 0xEF;
-        for (int i = 0; i < 64; i++)
+        var pair = 0xEF;
+        for (var i = 0; i < 64; i++)
         {
             pair = TunnelEffect.NextPair(pair);
             Assert.InRange(pair, 0x00, 0xFF);
@@ -98,11 +95,8 @@ public sealed class TunnelEffectTests
         // start and at the middle: 54 rings a phase, so 108 draws over 54 frames.
         var tunnel = new TunnelEffect();
 
-        int guard = 0;
-        while (!tunnel.IsFinished && guard++ < 500)
-        {
-            tunnel.Update();
-        }
+        var guard = 0;
+        while (!tunnel.IsFinished && guard++ < 500) tunnel.Update();
 
         Assert.True(tunnel.IsFinished, "the tunnel must finish");
         Assert.Equal(108, tunnel.RingsDrawn);
@@ -114,18 +108,15 @@ public sealed class TunnelEffectTests
         // The first cut passed the ROM's `(colour0 << 4) | colour1` — a BLITTER PLANE MASK,
         // 0-255 — straight to the palette, so a wave clear threw on slot 239 and the game
         // ended. Assert the whole chain stays inside 0-15.
-        int pair = 0xEF;
-        for (int i = 0; i < 200; i++)
+        var pair = 0xEF;
+        for (var i = 0; i < 200; i++)
         {
-            (int colour0, int colour1) = TunnelEffect.GetColourSlots(pair);
+            var (colour0, colour1) = TunnelEffect.GetColourSlots(pair);
             Assert.InRange(colour0, 0, 15);
             Assert.InRange(colour1, 0, 15);
 
             pair = TunnelEffect.NextPair(pair);
-            if (pair == 0)
-            {
-                break; // the erase pass draws in black
-            }
+            if (pair == 0) break; // the erase pass draws in black
         }
     }
 
@@ -136,17 +127,13 @@ public sealed class TunnelEffectTests
         // the rows have to TILE: each row's span must run to the next row's first pixel. Rounding
         // each row down to a whole pixel instead left a black line between every band and made
         // the inner rings read as thin outlines (notes §84/§85).
-        for (int row = 0; row < 256; row++)
-        {
+        for (var row = 0; row < 256; row++)
             Assert.True(TunnelEffect.GetRowY(row + 1) > TunnelEffect.GetRowY(row),
                 $"row {row} must be at least one port pixel tall");
-        }
 
-        for (int pixel = 0; pixel < 304; pixel++)
-        {
+        for (var pixel = 0; pixel < 304; pixel++)
             Assert.True(TunnelEffect.ToPixelX(pixel + 1) > TunnelEffect.ToPixelX(pixel),
                 $"ROM pixel {pixel} must be at least one port pixel wide");
-        }
 
         // The ROM's 256 rows fill the port's whole screen height, and no more.
         Assert.Equal(0, TunnelEffect.GetRowY(0));
@@ -162,27 +149,24 @@ public sealed class TunnelEffectTests
         // CURRENT ring left a handful of small rectangles instead (the author's report).
         var tunnel = new TunnelEffect();
 
-        Ticks(tunnel, TicksPerPass);       // two rings
-        Ticks(tunnel, TicksPerPass);       // four
+        Ticks(tunnel, TicksPerPass); // two rings
+        Ticks(tunnel, TicksPerPass); // four
 
         Assert.Equal(4, tunnel.RingsDrawn);
-        Assert.Equal(4, tunnel.GetRingsRetained());          // nothing has been discarded
+        Assert.Equal(4, tunnel.GetRingsRetained()); // nothing has been discarded
 
         // The rings keep growing until the outward walk covers the screen: the last ring of the
         // colouring pass starts at $0616 (column 6, row 22) and ends on the screen's own edges.
-        int guard = 0;
-        while (!tunnel.IsErasing() && guard++ < 1000)
-        {
-            tunnel.Update();
-        }
+        var guard = 0;
+        while (!tunnel.IsErasing() && guard++ < 1000) tunnel.Update();
 
-        Assert.Equal(54, tunnel.GetRingsRetained());          // every coloured ring is still there
-        (int left, int top, int right, int bottom) = tunnel.GetOutermostRing();
+        Assert.Equal(54, tunnel.GetRingsRetained()); // every coloured ring is still there
+        var (left, top, right, bottom) = tunnel.GetOutermostRing();
 
         Assert.Equal(0x06, left);
         Assert.Equal(0x16, top);
-        Assert.Equal(0x8F, right);                       // column 143 — the right edge
-        Assert.Equal(0xEC, bottom);                      // row 236 — the bottom edge
+        Assert.Equal(0x8F, right); // column 143 — the right edge
+        Assert.Equal(0xEC, bottom); // row 236 — the bottom edge
     }
 
     [Fact]
@@ -192,11 +176,8 @@ public sealed class TunnelEffectTests
         // colour forced to 0, and $5734's `TSTA / BEQ` leaves it there.
         var tunnel = new TunnelEffect();
 
-        int guard = 0;
-        while (!tunnel.IsErasing() && guard++ < 500)
-        {
-            tunnel.Update();
-        }
+        var guard = 0;
+        while (!tunnel.IsErasing() && guard++ < 500) tunnel.Update();
 
         Assert.True(tunnel.IsErasing());
         Assert.Equal(0, tunnel.PackedColourPair);

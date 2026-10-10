@@ -14,27 +14,28 @@ public sealed class GorfTests
 
     private static PlayField CreateFieldInPlay(LevelParameters? parameters = null)
     {
-        PlayField field = new PlayFieldBuilder().WithParameters(parameters ?? new LevelParameters(LevelNumber: 1)).WithSeed(5).Build();
-        for (int tick = 0; tick < 400 && field.RobotsFrozen(); tick++)
-        {
-            field.Update(Frame);
-        }
+        var field = new PlayFieldBuilder().WithParameters(parameters ?? new LevelParameters(1)).WithSeed(5).Build();
+        for (var tick = 0; tick < 400 && field.RobotsFrozen(); tick++) field.Update(Frame);
 
         return field;
     }
 
     /// <summary>A Gorf whose rolls are chosen: the side, the ground's height and the drops.</summary>
-    private static Gorf CreateGorf(PlayField field, params int[] rolls) =>
-        new(TestSprites.Shared, new ScriptedRandom(rolls), field.GetPlayfieldBounds(), maxDropsX2: 10);
+    private static Gorf CreateGorf(PlayField field, params int[] rolls)
+    {
+        return new Gorf(TestSprites.Shared, new ScriptedRandom(rolls), field.GetPlayfieldBounds(), 10);
+    }
 
     /// <summary>A Gorf that rolls as a real game would, for the tests that run it right across.</summary>
-    private static Gorf CreateRollingGorf(PlayField field, int seed) =>
-        new(TestSprites.Shared, new Random(seed), field.GetPlayfieldBounds(), maxDropsX2: 10);
+    private static Gorf CreateRollingGorf(PlayField field, int seed)
+    {
+        return new Gorf(TestSprites.Shared, new Random(seed), field.GetPlayfieldBounds(), 10);
+    }
 
     /// <summary>Runs the field until the Gorf is gone, and counts the ticks it took (or gives up).</summary>
     private static int RunUntilGone(PlayField field, Gorf gorf)
     {
-        int ticks = 0;
+        var ticks = 0;
         while (gorf.IsAlive() && ticks < 3000)
         {
             field.Update(Frame);
@@ -54,15 +55,12 @@ public sealed class GorfTests
         Assert.Equal(height, GorfPath.GetHopHeight(hopSteps / 2, hopSteps, height));
         Assert.Equal(0, GorfPath.GetHopHeight(hopSteps, hopSteps, height));
 
-        for (int step = 0; step <= hopSteps; step++)
+        for (var step = 0; step <= hopSteps; step++)
         {
-            int up = GorfPath.GetHopHeight(step, hopSteps, height);
+            var up = GorfPath.GetHopHeight(step, hopSteps, height);
             Assert.InRange(up, 0, height);
             Assert.Equal(up, GorfPath.GetHopHeight(hopSteps - step, hopSteps, height));
-            if (step > 0 && step <= hopSteps / 2)
-            {
-                Assert.True(up >= GorfPath.GetHopHeight(step - 1, hopSteps, height));
-            }
+            if (step > 0 && step <= hopSteps / 2) Assert.True(up >= GorfPath.GetHopHeight(step - 1, hopSteps, height));
         }
     }
 
@@ -76,25 +74,25 @@ public sealed class GorfTests
     [Fact]
     public void ItHopsAcrossInJumpsOfTheSameHeight_AndLandsOnTheGroundBetweenThem()
     {
-        PlayField field = CreateFieldInPlay();
-        Gorf gorf = CreateRollingGorf(field, 21);
-        int groundY = gorf.Position.Y;
-        int startX = gorf.Position.X;
-        int stepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
-        int highestSeen = 0;
+        var field = CreateFieldInPlay();
+        var gorf = CreateRollingGorf(field, 21);
+        var groundY = gorf.Position.Y;
+        var startX = gorf.Position.X;
+        var stepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
+        var highestSeen = 0;
         var peaks = new List<int>();
-        int peakOfThisHop = 0;
-        int lastLanding = 0;
+        var peakOfThisHop = 0;
+        var lastLanding = 0;
 
-        for (int tick = 0; tick < 3000 && gorf.IsAlive(); tick++)
+        for (var tick = 0; tick < 3000 && gorf.IsAlive(); tick++)
         {
             gorf.Update(Frame, field);
-            int risen = groundY - gorf.Position.Y;
+            var risen = groundY - gorf.Position.Y;
             highestSeen = Math.Max(highestSeen, risen);
             peakOfThisHop = Math.Max(peakOfThisHop, risen);
             Assert.InRange(risen, 0, ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows));
 
-            int stepsTaken = Math.Abs(gorf.Position.X - startX) / stepPixels;
+            var stepsTaken = Math.Abs(gorf.Position.X - startX) / stepPixels;
             if (stepsTaken > 0 && stepsTaken % GorfTuning.HopSteps == 0 && stepsTaken != lastLanding)
             {
                 lastLanding = stepsTaken;
@@ -106,23 +104,24 @@ public sealed class GorfTests
 
         Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows), highestSeen);
         Assert.True(peaks.Count > 3);
-        Assert.All(peaks.Distinct(), peak => Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows), peak));
+        Assert.All(peaks.Distinct(),
+            peak => Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows), peak));
     }
 
     [Fact]
     public void ItStartsJustOffTheScreenOnARandomSide_AtARandomHeight()
     {
-        PlayField field = CreateFieldInPlay();
-        Rectangle playfield = field.GetPlayfieldBounds();
+        var field = CreateFieldInPlay();
+        var playfield = field.GetPlayfieldBounds();
 
-        Gorf fromTheLeft = CreateGorf(field, 0, 0, 0);
-        Gorf fromTheRight = CreateGorf(field, 1, 0, 0);
+        var fromTheLeft = CreateGorf(field, 0, 0, 0);
+        var fromTheRight = CreateGorf(field, 1, 0, 0);
 
         Assert.True(fromTheLeft.GetBounds().Right <= playfield.X);
         Assert.True(fromTheRight.GetBounds().X >= playfield.Right);
 
-        Gorf high = CreateGorf(field, 0, 0, 0);
-        Gorf low = CreateGorf(field, 0, 50, 0);
+        var high = CreateGorf(field, 0, 0, 0);
+        var low = CreateGorf(field, 0, 50, 0);
         Assert.True(high.Position.Y < low.Position.Y);
         Assert.True(low.Position.Y + low.GetBounds().Height <= playfield.Bottom);
     }
@@ -130,27 +129,28 @@ public sealed class GorfTests
     [Fact]
     public void ItCrossesTheWholeScreenAndThenIsGone_WithNoScore()
     {
-        PlayField field = CreateFieldInPlay();
-        Gorf gorf = CreateRollingGorf(field, 3);
+        var field = CreateFieldInPlay();
+        var gorf = CreateRollingGorf(field, 3);
         field.Entities.Add(gorf);
-        int scoreBefore = field.ScoreBoard.Score;
+        var scoreBefore = field.ScoreBoard.Score;
 
-        int ticks = RunUntilGone(field, gorf);
+        var ticks = RunUntilGone(field, gorf);
 
         Assert.False(gorf.IsAlive());
         Assert.InRange(ticks, 1, 2999);
-        Assert.True(gorf.Position.X >= field.GetPlayfieldBounds().Right - ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns));
+        Assert.True(gorf.Position.X >= field.GetPlayfieldBounds().Right -
+            ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns));
         Assert.Equal(scoreBefore, field.ScoreBoard.Score);
     }
 
     /// <summary>Builds a field, puts a Gorf with these rolls on it, and runs it right across.</summary>
-    private static (PlayField Field, Gorf Gorf) RunAGorfAcross(LevelParameters parameters, int maxDropsX2, params int[] rolls)
+    private static (PlayField Field, Gorf Gorf) RunAGorfAcross(LevelParameters parameters, int maxDropsX2,
+        params int[] rolls)
     {
-        PlayField field = CreateFieldInPlay(parameters);
-        foreach (Grunt grunt in field.Entities.Grunts.ToList())
-        {
-            grunt.Kill(); // the wave's own grunts: only the ones Gorf drops are counted
-        }
+        var field = CreateFieldInPlay(parameters);
+        foreach (var grunt in
+                 field.Entities.Grunts
+                     .ToList()) grunt.Kill(); // the wave's own grunts: only the ones Gorf drops are counted
 
         var gorf = new Gorf(TestSprites.Shared, new ScriptedRandom(rolls), field.GetPlayfieldBounds(), maxDropsX2);
         field.Entities.Add(gorf);
@@ -161,7 +161,7 @@ public sealed class GorfTests
     [Fact]
     public void ItStopsThreeTimesOnTheWay_EvenlySpaced()
     {
-        PlayField field = CreateFieldInPlay();
+        var field = CreateFieldInPlay();
 
         Assert.Equal(GorfTuning.DropStops, CreateGorf(field, 0, 0).GetDropStopsRemaining());
         Assert.Equal(3, GorfTuning.DropStops);
@@ -176,7 +176,7 @@ public sealed class GorfTests
     public void EachStopDropsHalfTheRollRoundedUp_AsASpheroidRollsItsEnforcers_UpToSix(int roll, int expected)
     {
         // The field has no grunts of its own and a cap of 30, so nothing holds the drops back.
-        (PlayField field, _) = RunAGorfAcross(new LevelParameters(LevelNumber: 1, GruntCount: 30), maxDropsX2: 12, 0, 0, roll, roll, roll);
+        var (field, _) = RunAGorfAcross(new LevelParameters(1, 30), 12, 0, 0, roll, roll, roll);
 
         Assert.Equal(3 * expected, field.Entities.Grunts.GetLiveCount());
     }
@@ -185,8 +185,8 @@ public sealed class GorfTests
     public void ABiggerWaveBoundCanDropMoreAtOnceThanASmallOne()
     {
         // A bound of 4 never gives more than 2 (a roll of 4 halved and rounded up); a bound of 12 can give 6.
-        (PlayField small, _) = RunAGorfAcross(new LevelParameters(LevelNumber: 1, GruntCount: 30), maxDropsX2: 4, 0, 0, 3, 3, 3);
-        (PlayField big, _) = RunAGorfAcross(new LevelParameters(LevelNumber: 1, GruntCount: 30), maxDropsX2: 12, 0, 0, 11, 11, 11);
+        var (small, _) = RunAGorfAcross(new LevelParameters(1, 30), 4, 0, 0, 3, 3, 3);
+        var (big, _) = RunAGorfAcross(new LevelParameters(1, 30), 12, 0, 0, 11, 11, 11);
 
         Assert.Equal(6, small.Entities.Grunts.GetLiveCount());
         Assert.Equal(18, big.Entities.Grunts.GetLiveCount());
@@ -196,7 +196,7 @@ public sealed class GorfTests
     public void ALevelOnlyHoldsSoManyGrunts_SoAFullOneGetsFewerOrNone()
     {
         // The wave's grunt count is 2, but a level always holds at least six: three stops of six drop one burst and no more.
-        (PlayField field, _) = RunAGorfAcross(new LevelParameters(LevelNumber: 1, GruntCount: 2), maxDropsX2: 12, 0, 0, 11, 11, 11);
+        var (field, _) = RunAGorfAcross(new LevelParameters(1, 2), 12, 0, 0, 11, 11, 11);
 
         Assert.Equal(GorfTuning.MinimumGruntCap, field.Entities.Grunts.GetLiveCount());
     }
@@ -204,26 +204,20 @@ public sealed class GorfTests
     [Fact]
     public void ADroppedGruntFallsFromGorfToTheGround_WithNoAppearEffect()
     {
-        PlayField field = CreateFieldInPlay();
-        var gorf = new Gorf(TestSprites.Shared, new ScriptedRandom(0, 0, 0, 0, 0), field.GetPlayfieldBounds(), maxDropsX2: 10);
+        var field = CreateFieldInPlay();
+        var gorf = new Gorf(TestSprites.Shared, new ScriptedRandom(0, 0, 0, 0, 0), field.GetPlayfieldBounds(), 10);
         field.Entities.Add(gorf);
 
-        for (int tick = 0; tick < 3000 && field.Entities.Grunts.Count == 0; tick++)
-        {
-            field.Update(Frame);
-        }
+        for (var tick = 0; tick < 3000 && field.Entities.Grunts.Count == 0; tick++) field.Update(Frame);
 
-        Grunt dropped = field.Entities.Grunts[0];
+        var dropped = field.Entities.Grunts[0];
         Assert.True(dropped.IsFalling());
         Assert.False(field.IsMaterialising(dropped));
         Assert.Equal(0, field.GetPendingAppearCount());
-        int startY = dropped.Position.Y;
+        var startY = dropped.Position.Y;
 
-        int guard = 0;
-        while (dropped.IsFalling() && guard++ < 200)
-        {
-            field.Update(Frame);
-        }
+        var guard = 0;
+        while (dropped.IsFalling() && guard++ < 200) field.Update(Frame);
 
         Assert.False(dropped.IsFalling());
         Assert.True(dropped.Position.Y >= startY);
@@ -232,33 +226,27 @@ public sealed class GorfTests
     [Fact]
     public void AFallingGruntDoesNotWalkUntilItHasLanded()
     {
-        PlayField field = CreateFieldInPlay();
-        var grunt = new Grunt(TestSprites.Shared, new IntVector2(300, 100), moveLimitBeats: 1, random: new Random(1));
+        var field = CreateFieldInPlay();
+        var grunt = new Grunt(TestSprites.Shared, new IntVector2(300, 100), 1, new Random(1));
         grunt.BeginFall(100 + 40);
 
-        for (int tick = 0; tick < 4; tick++)
-        {
-            grunt.Update(Frame, field);
-        }
+        for (var tick = 0; tick < 4; tick++) grunt.Update(Frame, field);
 
         Assert.True(grunt.IsFalling());
         Assert.Equal(300, grunt.Position.X);
-        Assert.Equal(100 + (4 * GorfTuning.FallPixelsPerTick), grunt.Position.Y);
+        Assert.Equal(100 + 4 * GorfTuning.FallPixelsPerTick, grunt.Position.Y);
     }
 
     [Fact]
     public void AGorfThatIsShotScoresLikeAGrunt_AndMustBeKilledOrPassToWinTheWave()
     {
-        PlayField field = CreateFieldInPlay(new LevelParameters(LevelNumber: 1, GorfCount: 2));
+        var field = CreateFieldInPlay(new LevelParameters(1, GorfCount: 2));
 
         Assert.Equal(2, field.Entities.Gorfs.Count);
         Assert.Equal(ScoreValues.Grunt, RobotKinds.GetInfo(RobotKind.Gorf).Score);
         Assert.False(field.IsLevelCleared());
 
-        foreach (Gorf gorf in field.Entities.Gorfs)
-        {
-            gorf.Kill();
-        }
+        foreach (var gorf in field.Entities.Gorfs) gorf.Kill();
 
         Assert.True(field.IsLevelCleared());
     }
@@ -266,7 +254,7 @@ public sealed class GorfTests
     [Fact]
     public void ADeathKeepsTheOnesThatSurvive()
     {
-        PlayField field = CreateFieldInPlay(new LevelParameters(LevelNumber: 1, GorfCount: 3));
+        var field = CreateFieldInPlay(new LevelParameters(1, GorfCount: 3));
         field.Entities.Gorfs[0].Kill();
 
         Assert.Equal(2, WaveSurvivors.GetFrom(field).GorfCount);
@@ -275,22 +263,16 @@ public sealed class GorfTests
     [Fact]
     public void ItSwapsToTheOtherFrameEveryEightRomFrames_AndBackAgain()
     {
-        PlayField field = CreateFieldInPlay();
-        Gorf gorf = CreateGorf(field, 0, 0, 0);
-        int ticksPerFrame = ArcadeClock.ToPortTicksRoundedUp(GorfTuning.AnimationFrameRomFrames);
+        var field = CreateFieldInPlay();
+        var gorf = CreateGorf(field, 0, 0, 0);
+        var ticksPerFrame = ArcadeClock.ToPortTicksRoundedUp(GorfTuning.AnimationFrameRomFrames);
         Assert.Equal(0, gorf.AnimationFrameIndex);
 
-        for (int tick = 0; tick < ticksPerFrame; tick++)
-        {
-            gorf.Update(Frame, field);
-        }
+        for (var tick = 0; tick < ticksPerFrame; tick++) gorf.Update(Frame, field);
 
         Assert.Equal(1, gorf.AnimationFrameIndex);
 
-        for (int tick = 0; tick < ticksPerFrame; tick++)
-        {
-            gorf.Update(Frame, field);
-        }
+        for (var tick = 0; tick < ticksPerFrame; tick++) gorf.Update(Frame, field);
 
         Assert.Equal(0, gorf.AnimationFrameIndex);
     }

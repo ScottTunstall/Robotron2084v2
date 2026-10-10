@@ -39,7 +39,7 @@ public class Pia6821Tests
         pia.SetPortBInput(0xDA);
         pia.SetCb1(true);
 
-        byte value = pia.ReadRegister(2);
+        var value = pia.ReadRegister(2);
 
         Assert.Equal(0xDA, value);
         Assert.False(pia.IsInterruptRequested);

@@ -19,7 +19,10 @@ public sealed class Direction8Tests
     }
 
     [Fact]
-    public void FromDelta_Zero_ReturnsNull() => Assert.Null(Direction8Extensions.CreateFromDelta(IntVector2.Zero));
+    public void FromDelta_Zero_ReturnsNull()
+    {
+        Assert.Null(Direction8Extensions.CreateFromDelta(IntVector2.Zero));
+    }
 
     [Theory]
     [InlineData(5, 0, Direction8.Right)]
@@ -52,7 +55,7 @@ public sealed class Direction8Tests
     [InlineData(Direction8.UpLeft, -1, -1)]
     public void ToIntVector_ReturnsUnitSignVectorPerAxis(Direction8 direction, int expectedX, int expectedY)
     {
-        IntVector2 vector = direction.ToIntVector();
+        var vector = direction.ToIntVector();
         Assert.Equal(expectedX, vector.X);
         Assert.Equal(expectedY, vector.Y);
     }

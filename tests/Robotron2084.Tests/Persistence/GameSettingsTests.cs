@@ -9,7 +9,7 @@ public sealed class GameSettingsTests
     [Fact]
     public void FactorySettingsAreTheArcardsRecommendedStops()
     {
-        GameSettings settings = GameSettings.CreateFactoryDefaults();
+        var settings = GameSettings.CreateFactoryDefaults();
 
         Assert.Equal(25, settings.ExtraManEvery);
         Assert.Equal(25_000, settings.GetExtraManEveryPoints());
@@ -21,7 +21,7 @@ public sealed class GameSettingsTests
     [Fact]
     public void ExtraManEveryStepsThroughTheRomsFiveStopsAndStopsAtTheEnds()
     {
-        GameSettings settings = GameSettings.CreateFactoryDefaults(); // 25
+        var settings = GameSettings.CreateFactoryDefaults(); // 25
 
         settings.BumpExtraManEvery(1);
         Assert.Equal(30, settings.ExtraManEvery);
@@ -32,10 +32,7 @@ public sealed class GameSettingsTests
         settings.BumpExtraManEvery(1); // already at the top
         Assert.Equal(50, settings.ExtraManEvery);
 
-        for (int i = 0; i < 5; i++)
-        {
-            settings.BumpExtraManEvery(-1);
-        }
+        for (var i = 0; i < 5; i++) settings.BumpExtraManEvery(-1);
 
         Assert.Equal(0, settings.ExtraManEvery);
         Assert.Equal(0, settings.GetExtraManEveryPoints());
@@ -84,7 +81,7 @@ public sealed class GameSettingsTests
             AttractModeSoundEnabled = true,
             TankShellBugEnabled = false,
             BrainsChaseMikeyBugEnabled = false,
-            BozoModeEnabled = false,
+            BozoModeEnabled = false
         };
 
         settings.ResetToFactory();
@@ -111,10 +108,10 @@ public sealed class GameSettingsTests
     }
 
     [Theory]
-    [InlineData(true, false, false)]  // attract sound on: the attract keeps its sound
+    [InlineData(true, false, false)] // attract sound on: the attract keeps its sound
     [InlineData(false, false, false)] // ...and a real game is never silenced
-    [InlineData(true, true, true)]    // attract sound off + an attract screen: silence
-    [InlineData(false, true, false)]  // ...but a real game still has sound
+    [InlineData(true, true, true)] // attract sound off + an attract screen: silence
+    [InlineData(false, true, false)] // ...but a real game still has sound
     public void OnlyAnAttractScreenWithTheSoundSettingOffIsSilent(bool attractShowing, bool soundOff, bool expected)
     {
         var settings = new GameSettings { AttractModeSoundEnabled = !soundOff };
@@ -131,6 +128,8 @@ public sealed class GameSettingsTests
     [InlineData(10, false)]
     [InlineData(17, false)]
     [InlineData(100, false)]
-    public void OnlyTheRomsFiveStopsAreValidExtraManValues(int value, bool expected) =>
+    public void OnlyTheRomsFiveStopsAreValidExtraManValues(int value, bool expected)
+    {
         Assert.Equal(expected, GameSettings.IsExtraManEveryValue(value));
+    }
 }
