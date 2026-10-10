@@ -107,9 +107,14 @@ public sealed class RobotronGame : Game
         // (Content/Effects/ColorCycle.fx — notes §3.3, §34).
         GamePalette palette = new();
         _paletteAnimator = new PaletteAnimator(palette);
-        _sprites = new SpriteSet(new ContentSpriteSource(GraphicsDevice, Content));
-        _sprites.Blitter.Palette = palette;
-        _sprites.Blitter.ColorCycleEffect = Content.Load<Effect>("Effects/ColorCycle");
+        _sprites = new SpriteSet(new ContentSpriteSource(GraphicsDevice, Content))
+        {
+            Blitter =
+            {
+                Palette = palette,
+                ColorCycleEffect = Content.Load<Effect>("Effects/ColorCycle")
+            }
+        };
         // The port's control definitions (notes §101) are read from controls.ini at
         // startup and edited by the DEFINE INPUTS page; player 1's are what the menus
         // and the attract sequence read.
