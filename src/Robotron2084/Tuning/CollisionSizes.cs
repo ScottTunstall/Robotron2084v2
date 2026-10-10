@@ -60,7 +60,7 @@ public static class CollisionSizes
     // The ROM (COL0V, RRS22 ~1038) intersects each object's sprite
     // dimensions — ADDD OBJW,U / ADDD [OPICT,X] — not a fixed square: the
     // collision box IS the sprite. Sizes are the live-frame dimensions from
-    // docs/sprite-map.md, in arcade px; apply ScreenSize.ToPortPixels at the use
+    // docs/sprite-map.md, in arcade px; apply ScreenSize.ToPortPixelsFromArcadePixels at the use
     // site. Lasers/sparks keep the spec's 4x4 box (spec-stated).
     public static readonly (int Width, int Height) PlayerCollisionSize = (8, 12);
 

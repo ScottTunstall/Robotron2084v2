@@ -31,7 +31,7 @@ public static class SpawnTuning
 
     public const int SpawnPlacementMaxAttempts = 100;
 
-    // arcade pixels (apply ScreenSize.ToPortPixels at the use site)
+    // arcade pixels (apply ScreenSize.ToPortPixelsFromArcadePixels at the use site)
 
     // arcade pixels, spec-stated
 

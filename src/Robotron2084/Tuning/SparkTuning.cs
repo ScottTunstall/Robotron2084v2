@@ -49,7 +49,7 @@ public static class SparkTuning
     //   a/256 columns per frame. (An axis update that would leave the playfield
     //   is REJECTED, not clamped — the object keeps its last valid coordinate on
     //   that axis while the other axis still moves.)
-    // Port units: 1 ROM column = 2 arcade px = ToPortPixels(2) port px = 4 port px,
+    // Port units: 1 ROM column = 2 arcade px = ToPortPixelsFromArcadePixels(2) port px = 4 port px,
     // so one frame advances deltaPort/64 port px and the acceleration is
     // a/64 port px per frame of velocity. Both live in 1/256-px fixed point.
     public const int SparkMoveIntervalRomFrames = 4;   // NAP 4
