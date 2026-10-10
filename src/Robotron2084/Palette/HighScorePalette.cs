@@ -9,17 +9,17 @@ namespace Robotron2084.Palette;
 ///
 /// | process | slot | table | step | what it does on screen |
 /// |---------|------|-------|------|------------------------|
-/// | LOOPP   | 1-8  | COLTAB `$E2FE` | 3 ROM frames | shifts the wall's next colour into slot 8 and pushes the old one down a slot — slot 7 is the headers ("ROBOTRON HEROES"), so they trail the wall by one step |
-/// | DECAZ   | 9    | CATAB `$E2C2` from index 7 | 4 ROM frames | today's list, out of phase: `$07` to white and back |
-/// | COLA    | 10   | CATAB from index 0 | 4 ROM frames | the top entry `( WILLY ELKTRIX )`, in phase |
-/// | COLC    | 12   | CCTAB `$E2D1` from index 7 | 4 ROM frames | the "you are here" highlight, out of phase |
-/// | COLD    | 13   | CCTAB from index 0 | 4 ROM frames | the top entry's highlight, in phase |
+/// | LOOPP   | 1-8  | COLTAB `$E2FE` | 3 fiftieths of a second | shifts the wall's next colour into slot 8 and pushes the old one down a slot — slot 7 is the headers ("ROBOTRON HEROES"), so they trail the wall by one step |
+/// | DECAZ   | 9    | CATAB `$E2C2` from index 7 | 4 fiftieths of a second | today's list, out of phase: `$07` to white and back |
+/// | COLA    | 10   | CATAB from index 0 | 4 fiftieths of a second | the top entry `( WILLY ELKTRIX )`, in phase |
+/// | COLC    | 12   | CCTAB `$E2D1` from index 7 | 4 fiftieths of a second | the "you are here" highlight, out of phase |
+/// | COLD    | 13   | CCTAB from index 0 | 4 fiftieths of a second | the top entry's highlight, in phase |
 ///
 /// The two tables that ramp end in a `$00` terminator that sends the process back to
 /// the table's START (the ROM's <c>COLA3</c>/<c>RCS3</c> reload), which is what makes
 /// them pulse rather than stop; `LOOPP` simply starts COLTAB again at its end.
 ///
-/// **Timing.** The steps above are ROM frames and a ROM frame is 6/5 of a port tick, so
+/// **Timing.** The steps above are fiftieths of a second and a fiftieth of a second is 6/5 of a port tick, so
 /// these run on the clock-unit accumulator the entity bodies use (notes §52): a
 /// 3-frame process steps every 3.6 ticks, a 4-frame one every 4.8. Until notes §65 the
 /// in-game processes were counted in port ticks, which ran them 20% fast — this one is

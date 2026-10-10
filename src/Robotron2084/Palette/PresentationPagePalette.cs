@@ -10,7 +10,7 @@ namespace Robotron2084.Palette;
 /// | ROM | what it does |
 /// |-----|--------------|
 /// | `$8A3A` | copies the seven bytes at `$8A70` into the RAM palette's entries **1..7**, leaving the other nine on their CRTAB defaults |
-/// | `$8A4F` | re-copies that table and sets ONE entry to `$FF` — WHITE — every **3 ROM frames**, stepping 2,3,…,7,1 and round: a white flash running through the seven |
+/// | `$8A4F` | re-copies that table and sets ONE entry to `$FF` — WHITE — every **3 fiftieths of a second**, stepping 2,3,…,7,1 and round: a white flash running through the seven |
 /// | `$884E` | the text colour operand `$66` — the welcome message and the page's credit strings are drawn in entry **6** |
 /// | `$89DA` | the border "W" logos step their colour operand `$77 → $66 → … → $11 → $77`, i.e. one entry per step down through 7…1 |
 ///
@@ -18,8 +18,8 @@ namespace Robotron2084.Palette;
 /// text is ORANGE with a white flash sweeping through it, and the border logos
 /// around it cycle through the seven.
 ///
-/// **Two clocks, both on notes §52's clock-unit accumulator** (a ROM frame is 6/5 of a port tick):
-/// the WHITE CHASE steps every 3 ROM frames, and the border logos' colour operand steps every 28 frames —
+/// **Two clocks, both on notes §52's clock-unit accumulator** (a fiftieth of a second is 6/5 of a port tick):
+/// the WHITE CHASE steps every 3 fiftieths of a second, and the border logos' colour operand steps every 28 frames —
 /// the border ring's own rate, which comes out of the animation loop at `$88EF` waiting on
 /// <c>vidctrs</c> and moving six logos a frame over a ring of 28 (`$87D9`'s `LDA #$1C`), so a given
 /// logo is re-coloured once every 28 frames.
@@ -47,10 +47,10 @@ public sealed class PresentationPagePalette
     /// <summary>The colour the chase writes (`$8A64`'s `LDA #$FF`).</summary>
     private const byte ChaseColor = 0xFF;
 
-    /// <summary>`$8A68`'s `LDA #$03` — the chase takes a step every three ROM frames. It is how many ROM frames are gathered in <see cref="_chaseClockUnits"/> before the chase takes a step.</summary>
+    /// <summary>`$8A68`'s `LDA #$03` — the chase takes a step every three fiftieths of a second. It is how many fiftieths of a second are gathered in <see cref="_chaseClockUnits"/> before the chase takes a step.</summary>
     private const int ChaseRomFramesPerStep = 3;
 
-    /// <summary>One step per logo-handling, and the ring is 28 logos of one frame each. It is how many ROM frames are gathered in <see cref="_wordmarkClockUnits"/> before the wordmark takes a step.</summary>
+    /// <summary>One step per logo-handling, and the ring is 28 logos of one frame each. It is how many fiftieths of a second are gathered in <see cref="_wordmarkClockUnits"/> before the wordmark takes a step.</summary>
     private const int WordmarkRomFramesPerStep = 28;
 
     private readonly int _slotCount = LastSlot - FirstSlot + 1;

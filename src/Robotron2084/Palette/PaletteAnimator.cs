@@ -9,12 +9,12 @@ namespace Robotron2084.Palette;
 ///
 /// | slot | process | table | step |
 /// |------|---------|-------|------|
-/// | 11   | RGB     | 38 07 C0 | 8 ROM frames |
-/// | 12   | DECAY   | C0 C0 D0 E0 F0 F8 FA BA 7A 3A 34 2D 1F 17 0F 07 06 05 04 03 02 01 00 | 2 ROM frames |
-/// | 14   | BPR     | C0 C1 C2 C3 C4 C5 C6 C7 87 87 47 47 07 07 47 47 87 87 C7 C7 C6 C5 C4 C3 C2 C1 | 1 ROM frame |
-/// | 15   | RGOLD   | 07 07 2F | 6 ROM frames |
-/// | 13   | LASER   | the 37-step COLTAB ramp (below) | 2 ROM frames |
-/// | 10   | LF      | every 2nd ROM frame = FF (white flash); every 6th = a random COLTAB entry | 2/6 ROM frames |
+/// | 11   | RGB     | 38 07 C0 | 8 fiftieths of a second |
+/// | 12   | DECAY   | C0 C0 D0 E0 F0 F8 FA BA 7A 3A 34 2D 1F 17 0F 07 06 05 04 03 02 01 00 | 2 fiftieths of a second |
+/// | 14   | BPR     | C0 C1 C2 C3 C4 C5 C6 C7 87 87 47 47 07 07 47 47 87 87 C7 C7 C6 C5 C4 C3 C2 C1 | 1 fiftieth of a second |
+/// | 15   | RGOLD   | 07 07 2F | 6 fiftieths of a second |
+/// | 13   | LASER   | the 37-step COLTAB ramp (below) | 2 fiftieths of a second |
+/// | 10   | LF      | every 2nd fiftieth of a second = FF (white flash); every 6th = a random COLTAB entry | 2/6 fiftieths of a second |
 ///
 /// **Timing.** The step counts above are the ROM's own FRAME counts, and a ROM
 /// frame is 6/5 of a port tick, so these run on the same clock-unit accumulators
@@ -38,7 +38,7 @@ public sealed class PaletteAnimator
         0xBF, 0x3F, 0x3E, 0x3C,
     ];
 
-    /// <summary>The ROM's LF flash period in ROM frames (every 3rd flash is the random hue).</summary>
+    /// <summary>The ROM's LF flash period in fiftieths of a second (every 3rd flash is the random hue).</summary>
     private const int LaserFlashRomFrames = 2;
 
     private readonly GamePalette _palette;
@@ -68,7 +68,7 @@ public sealed class PaletteAnimator
     /// <summary>Advances every process by one game tick (call once per Update).</summary>
     public void Update()
     {
-        // LF (slot 10): a white flash every 2 ROM frames, and every 6th frame a
+        // LF (slot 10): a white flash every 2 fiftieths of a second, and every 6th frame a
         // random hue from the COLTAB ramp INSTEAD of the white one.
         _laserFlashClockUnits += ArcadeClock.UnitsPerPortTick;
         int flashInterval = ArcadeClock.ToClockUnits(LaserFlashRomFrames);
