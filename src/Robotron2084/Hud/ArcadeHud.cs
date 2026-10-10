@@ -99,7 +99,7 @@ public static class ArcadeHud
     /// <paramref name="innerBounds"/> runs to the top of the canvas.
     /// </summary>
     internal static int GetScoresAndMenRowY(Rectangle innerBounds) =>
-        innerBounds.Top - ScreenSize.ToPortPixels(CollisionSizes.WallThicknessSpecPixels) - ScreenSize.ToPortPixels(HudLayout.HudRowAboveWallPixels);
+        innerBounds.Top - ScreenSize.ToPortPixels(CollisionSizes.WallThicknessArcadePixels) - ScreenSize.ToPortPixels(HudLayout.HudRowAboveWallPixels);
 
     /// <summary>
     /// ROM string 104: the wave number in $AA at the BOTTOM of the screen (row
