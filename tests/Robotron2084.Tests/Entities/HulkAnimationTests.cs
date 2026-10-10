@@ -66,7 +66,7 @@ public sealed class HulkAnimationTests
                 int stepArcadePx = lastDirection is Direction8.Up or Direction8.Down
                     ? 2
                     : ((stepEntry & 1) == 0 ? 3 : 4);
-                int step = ScreenSize.ToPortPixels(stepArcadePx);
+                int step = ScreenSize.ToPortPixelsFromArcadePixels(stepArcadePx);
                 int expectedDeltaX = lastDirection switch
                 {
                     Direction8.Left => -step,

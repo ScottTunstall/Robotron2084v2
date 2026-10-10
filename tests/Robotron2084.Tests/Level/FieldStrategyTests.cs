@@ -64,7 +64,7 @@ public sealed class FieldStrategyTests
         var mikey = new Human(TestSprites.Shared, new IntVector2(100, 100), HumanKind.Mikey, new Random(1));
         var mommy = new Human(TestSprites.Shared, new IntVector2(300, 100), HumanKind.Mommy, new Random(2));
         Assert.Equal(FamilyList.FirstSlot, family.GetNearestSlot(new IntVector2(0, 0)));
-        Assert.Null(family.GetLastMemberPosition());
+        Assert.Empty(family.GetOccupiedSlots());
 
         family.Add(mikey);
         family.Add(mommy);
@@ -73,7 +73,7 @@ public sealed class FieldStrategyTests
         Assert.Equal(FamilyList.FirstSlot + 1, mommy.FamilySlot);
         Assert.Equal(mommy.FamilySlot, family.GetNearestSlot(new IntVector2(290, 100)));
         Assert.Equal(mommy, family.GetMemberInSlot(mommy.FamilySlot));
-        Assert.Equal(mommy.Position, family.GetLastMemberPosition());
+        Assert.Equal([mikey.FamilySlot, mommy.FamilySlot], family.GetOccupiedSlots());
 
         // In a brain's hold she is off the list: her place reads empty, and the nearest is whoever is left.
         mommy.BeginReprogramming();

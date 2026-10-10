@@ -86,7 +86,7 @@ public sealed class QuarkTankBehaviourTests
         // "The quarks are WAY too fast.", and would blow both bounds below.
         // Both bounds are in port px, so they follow the render scale: the peak step stays
         // under 2 arcade px on one axis, and the average path under 3.5 px a tick at 2x.
-        Assert.True(maxAxisSeen <= ScreenSize.ToPortPixels(2), $"axis step {maxAxisSeen} is too large for a sub-pixel drift");
+        Assert.True(maxAxisSeen <= ScreenSize.ToPortPixelsFromArcadePixels(2), $"axis step {maxAxisSeen} is too large for a sub-pixel drift");
         Assert.True(pathLength <= aliveTicksSampled * 3.5 * ScreenSize.PortPixelsPerArcadePixel,
             $"average path {pathLength / (double)aliveTicksSampled:F2} units/tick — that is a dart, not a drift");
     }
@@ -117,7 +117,7 @@ public sealed class QuarkTankBehaviourTests
         // quark sits on the top wall — this quark is mid-field, so it is +5 rows.
         IntVector2 spawn = quark.Position + new IntVector2(
             ScreenSize.ToPortPixelsFromColumns(TankTuning.BirthOffsetColumns),
-            ScreenSize.ToPortPixels(TankTuning.BirthOffsetRowsOffTopWall));
+            ScreenSize.ToPortPixelsFromArcadePixels(TankTuning.BirthOffsetRowsOffTopWall));
         Assert.Equal(spawn, tank.Position);
     }
 
@@ -162,7 +162,7 @@ public sealed class QuarkTankBehaviourTests
         // tank ends up centred on the drop point instead of hanging off it. The
         // tolerance is one aim step (the update that ends the birth also lets the
         // tank move itself for the first time).
-        IntVector2 grown = start + new IntVector2(-ScreenSize.ToPortPixels(4), -ScreenSize.ToPortPixels(6));
+        IntVector2 grown = start + new IntVector2(-ScreenSize.ToPortPixelsFromArcadePixels(4), -ScreenSize.ToPortPixelsFromArcadePixels(6));
         Assert.InRange(tank.Position.X, grown.X - 2, grown.X + 2);
         Assert.InRange(tank.Position.Y, grown.Y - 2, grown.Y + 2);
 

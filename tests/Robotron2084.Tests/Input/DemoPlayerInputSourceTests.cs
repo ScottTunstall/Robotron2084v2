@@ -25,7 +25,7 @@ public sealed class DemoPlayerInputSourceTests
     }
 
     private static readonly Rectangle FullBounds =
-        new(ScreenSize.ToPortPixels(20), ScreenSize.ToPortPixels(20), ScreenSize.Width - ScreenSize.ToPortPixels(40), ScreenSize.Height - ScreenSize.ToPortPixels(40));
+        new(ScreenSize.ToPortPixelsFromArcadePixels(20), ScreenSize.ToPortPixelsFromArcadePixels(20), ScreenSize.Width - ScreenSize.ToPortPixelsFromArcadePixels(40), ScreenSize.Height - ScreenSize.ToPortPixelsFromArcadePixels(40));
 
     private static PlayField EmptyField(Rectangle bounds) => EmptyFieldWithInput(bounds, new FakeInputSource());
 
@@ -51,7 +51,7 @@ public sealed class DemoPlayerInputSourceTests
     {
         PlayField field = EmptyField(FullBounds);
         IntVector2 player = field.Player.Position;
-        field.SpawnEnforcer(player + new IntVector2(0, -ScreenSize.ToPortPixels(30))); // straight above, inside the threat distance
+        field.SpawnEnforcer(player + new IntVector2(0, -ScreenSize.ToPortPixelsFromArcadePixels(30))); // straight above, inside the threat distance
 
         var demo = new DemoPlayerInputSource(new Random(7));
         demo.Bind(field);
@@ -94,7 +94,7 @@ public sealed class DemoPlayerInputSourceTests
         }
 
         IntVector2 centre = new(field.Wall.PlayfieldBounds.X + field.Wall.PlayfieldBounds.Width / 2, field.Wall.PlayfieldBounds.Y + field.Wall.PlayfieldBounds.Height / 2);
-        field.SpawnEnforcer(new IntVector2(centre.X + ScreenSize.ToPortPixels(120), centre.Y)); // well past the fire range
+        field.SpawnEnforcer(new IntVector2(centre.X + ScreenSize.ToPortPixelsFromArcadePixels(120), centre.Y)); // well past the fire range
 
         var demo = new DemoPlayerInputSource(new Random(7));
         demo.Bind(field);
@@ -111,7 +111,7 @@ public sealed class DemoPlayerInputSourceTests
     {
         PlayField field = EmptyField(FullBounds);
         IntVector2 start = field.Player.Position;
-        field.SpawnEnforcer(start + new IntVector2(0, -ScreenSize.ToPortPixels(30))); // above him → flee DOWN
+        field.SpawnEnforcer(start + new IntVector2(0, -ScreenSize.ToPortPixelsFromArcadePixels(30))); // above him → flee DOWN
 
         var demo = new DemoPlayerInputSource(new Random(7));
         demo.Bind(field);
@@ -124,7 +124,7 @@ public sealed class DemoPlayerInputSourceTests
         // on every facing change, and the raw direction flips against a moving field
         // — which is what left the demo's man twitching instead of walking (notes
         // §97.5). It may pause (the deliberate stutter), but it must not reverse.
-        field.Player.TeleportTo(start + new IntVector2(0, -ScreenSize.ToPortPixels(40)));
+        field.Player.TeleportTo(start + new IntVector2(0, -ScreenSize.ToPortPixelsFromArcadePixels(40)));
 
         for (int tick = 0; tick < AttractTuning.DemoDirectionHoldTicks; tick++)
         {
@@ -149,7 +149,7 @@ public sealed class DemoPlayerInputSourceTests
         var left = new MutableStick { State = new PlayerInputState(new IntVector2(-1, 0), false) };
         PlayField field = EmptyFieldWithInput(small, left);
 
-        int clearance = ScreenSize.ToPortPixels(AttractTuning.DemoWallClearanceArcadePixels);
+        int clearance = ScreenSize.ToPortPixelsFromArcadePixels(AttractTuning.DemoWallClearanceArcadePixels);
         while (field.Player.Position.X >= clearance)
         {
             field.Update(new GameTime());
@@ -158,7 +158,7 @@ public sealed class DemoPlayerInputSourceTests
         // A robot on the CENTRE side of the player: fleeing it means running
         // into the left wall, which the demo must refuse.
         IntVector2 player = field.Player.Position;
-        field.SpawnEnforcer(player + new IntVector2(ScreenSize.ToPortPixels(40), 0));
+        field.SpawnEnforcer(player + new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(40), 0));
 
         var demo = new DemoPlayerInputSource(new Random(7));
         demo.Bind(field);

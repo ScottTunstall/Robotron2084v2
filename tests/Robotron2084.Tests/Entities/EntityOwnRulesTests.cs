@@ -31,8 +31,8 @@ public sealed class EntityOwnRulesTests
     public void ATanksSpot_IsMovedSoItsWholeBoxIsInsideThePlayfield()
     {
         var bounds = new Rectangle(20, 30, 400, 300);
-        int width = ScreenSize.ToPortPixels(CollisionSizes.TankCollisionSize.Width);
-        int height = ScreenSize.ToPortPixels(CollisionSizes.TankCollisionSize.Height);
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Width);
+        int height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Height);
 
         Assert.Equal(new IntVector2(20, 30), Tank.GetPositionInside(bounds, new IntVector2(0, 0)));
         Assert.Equal(new IntVector2(bounds.Right - width, bounds.Bottom - height), Tank.GetPositionInside(bounds, new IntVector2(900, 900)));
@@ -43,8 +43,8 @@ public sealed class EntityOwnRulesTests
     public void AQuarkStartsOnTheTopOrBottomWall_AndInsideTheSideWalls()
     {
         var bounds = new Rectangle(20, 30, 400, 300);
-        int width = ScreenSize.ToPortPixels(CollisionSizes.QuarkCollisionSize.Width);
-        int height = ScreenSize.ToPortPixels(CollisionSizes.QuarkCollisionSize.Height);
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Width);
+        int height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Height);
         var random = new Random(5);
         bool sawTop = false;
         bool sawBottom = false;
@@ -98,9 +98,9 @@ public sealed class EntityOwnRulesTests
     public void DistancesBetweenTwoPoints_InPixelsAndInColumnsAndRows()
     {
         var from = new IntVector2(10, 10);
-        var to = new IntVector2(10 + ScreenSize.ToPortPixelsFromColumns(3), 10 - ScreenSize.ToPortPixels(5));
+        var to = new IntVector2(10 + ScreenSize.ToPortPixelsFromColumns(3), 10 - ScreenSize.ToPortPixelsFromArcadePixels(5));
 
-        Assert.Equal(ScreenSize.ToPortPixelsFromColumns(3) + ScreenSize.ToPortPixels(5), from.GetManhattanDistance(to));
+        Assert.Equal(ScreenSize.ToPortPixelsFromColumns(3) + ScreenSize.ToPortPixelsFromArcadePixels(5), from.GetManhattanDistance(to));
         Assert.Equal(3 + 5, ScreenSize.ToColumnAndRowDistance(from, to));
     }
 

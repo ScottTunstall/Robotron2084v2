@@ -87,7 +87,7 @@ public sealed class GruntAnimationTests
         RunUntilLive(field);
 
         IntVector2 player = field.Player.Position;
-        Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 200, player.Y + (rowsBelowPlayer * ScreenSize.ToPortPixels(1))), moveLimitBeats: 15, random: new Random(3));
+        Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 200, player.Y + (rowsBelowPlayer * ScreenSize.ToPortPixelsFromArcadePixels(1))), moveLimitBeats: 15, random: new Random(3));
         int startY = grunt.Position.Y;
 
         for (int tick = 0; tick < 600 && !grunt.SteppedThisUpdate; tick++)

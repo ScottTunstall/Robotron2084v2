@@ -23,10 +23,10 @@ public sealed class StripEffectTests
 
     /// <summary>An 8x12-arcade-pixel sprite at arcade pixel (50,100); its collision box is the same extent in port px.</summary>
     private static readonly Rectangle Sprite = new(
-        ScreenSize.ToPortPixels(SpriteLeft),
-        ScreenSize.ToPortPixels(SpriteTop),
-        ScreenSize.ToPortPixels(WidthArcadePixels),
-        ScreenSize.ToPortPixels(HeightRows));
+        ScreenSize.ToPortPixelsFromArcadePixels(SpriteLeft),
+        ScreenSize.ToPortPixelsFromArcadePixels(SpriteTop),
+        ScreenSize.ToPortPixelsFromArcadePixels(WidthArcadePixels),
+        ScreenSize.ToPortPixelsFromArcadePixels(HeightRows));
     private const int WidthArcadePixels = 8;
     private const int HeightRows = 12;
     private const int SpriteLeft = 50;
@@ -168,10 +168,10 @@ public sealed class StripEffectTests
         // sits: BOUNDS 11x15 arcade px holding an 8x12 sprite, so the sprite starts one
         // pixel in on both axes (notes §75).
         Rectangle bounds = new(
-            ScreenSize.ToPortPixels(SpriteLeft),
-            ScreenSize.ToPortPixels(SpriteTop),
-            ScreenSize.ToPortPixels(WidthArcadePixels + 3),
-            ScreenSize.ToPortPixels(HeightRows + 3));
+            ScreenSize.ToPortPixelsFromArcadePixels(SpriteLeft),
+            ScreenSize.ToPortPixelsFromArcadePixels(SpriteTop),
+            ScreenSize.ToPortPixelsFromArcadePixels(WidthArcadePixels + 3),
+            ScreenSize.ToPortPixelsFromArcadePixels(HeightRows + 3));
 
         var explosion = StripEffect.CreateExplosion(
             new FakeDead(bounds),
@@ -256,7 +256,7 @@ public sealed class StripEffectTests
         // The sprite sits on the TOP wall, so the leading part of the fan leaves the
         // playfield and those strips are DROPPED (the ROM's clip passes).
         var onTheWall = new Rectangle(
-            ScreenSize.ToPortPixels(SpriteLeft), ScreenSize.ToPortPixels(20), ScreenSize.ToPortPixels(WidthArcadePixels), ScreenSize.ToPortPixels(HeightRows));
+            ScreenSize.ToPortPixelsFromArcadePixels(SpriteLeft), ScreenSize.ToPortPixelsFromArcadePixels(20), ScreenSize.ToPortPixelsFromArcadePixels(WidthArcadePixels), ScreenSize.ToPortPixelsFromArcadePixels(HeightRows));
         StripEffect explosion = NewExplosion(Direction8.Left, sprite: onTheWall);
 
         IReadOnlyList<Strip> strips = Strips(explosion, frames: 2); // spacing 3

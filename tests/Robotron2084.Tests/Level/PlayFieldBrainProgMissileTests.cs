@@ -22,7 +22,6 @@ public sealed class PlayFieldBrainProgMissileTests
     private sealed class PhaseInput : IPlayerInputSource
     {
         public PlayerInputState State = default;
-
         public PlayerInputState Poll() => State;
     }
 
@@ -87,8 +86,8 @@ public sealed class PlayFieldBrainProgMissileTests
         Human daddy = field.Entities.Family.Members.Single(human => human.Kind == HumanKind.Daddy);
 
         // Mikey far to the right of the field; the daddy right beside the first brain, on its left.
-        mikey.MoveTo(new IntVector2(inner.Right - ScreenSize.ToPortPixels(20), firstStart.Y + ScreenSize.ToPortPixels(60)));
-        daddy.MoveTo(new IntVector2(firstStart.X - ScreenSize.ToPortPixels(60), firstStart.Y + ScreenSize.ToPortPixels(4)));
+        mikey.MoveTo(new IntVector2(inner.Right - ScreenSize.ToPortPixelsFromArcadePixels(20), firstStart.Y + ScreenSize.ToPortPixelsFromArcadePixels(60)));
+        daddy.MoveTo(new IntVector2(firstStart.X - ScreenSize.ToPortPixelsFromArcadePixels(60), firstStart.Y + ScreenSize.ToPortPixelsFromArcadePixels(4)));
         Assert.True(
             PixelDistance(firstStart, daddy.Position) < PixelDistance(firstStart, mikey.Position),
             "the daddy has to be the NEARER member, or this test would pass under the ordinary rule too");
@@ -137,8 +136,8 @@ public sealed class PlayFieldBrainProgMissileTests
         Human mikey = field.Entities.Family.Members.Single(human => human.Kind == HumanKind.Mikey);
         Human daddy = field.Entities.Family.Members.Single(human => human.Kind == HumanKind.Daddy);
 
-        mikey.MoveTo(new IntVector2(inner.Right - ScreenSize.ToPortPixels(20), brain.Position.Y));
-        daddy.MoveTo(new IntVector2(brain.Position.X - ScreenSize.ToPortPixels(60), brain.Position.Y + ScreenSize.ToPortPixels(4)));
+        mikey.MoveTo(new IntVector2(inner.Right - ScreenSize.ToPortPixelsFromArcadePixels(20), brain.Position.Y));
+        daddy.MoveTo(new IntVector2(brain.Position.X - ScreenSize.ToPortPixelsFromArcadePixels(60), brain.Position.Y + ScreenSize.ToPortPixelsFromArcadePixels(4)));
 
         RunFirstBeat(field);
         Assert.Equal(mikey, brain.Target);
@@ -179,7 +178,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         // 30 arcade px left of (where the human is now) → steps right/up.
         IntVector2 humanSpot = field.Entities.Family.Members[0].Position;
-        IntVector2 brainSpot = new(humanSpot.X - ScreenSize.ToPortPixels(30), humanSpot.Y - ScreenSize.ToPortPixels(20));
+        IntVector2 brainSpot = new(humanSpot.X - ScreenSize.ToPortPixelsFromArcadePixels(30), humanSpot.Y - ScreenSize.ToPortPixelsFromArcadePixels(20));
         var brain = new Brain(TestSprites.Shared, brainSpot, new Random(2), beatWaitRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: FamilyList.FirstSlot);
         field.Entities.Brains.Add(brain);
 
@@ -193,7 +192,7 @@ public sealed class PlayFieldBrainProgMissileTests
         }
 
         Assert.Equal(brainSpot.X + ScreenSize.ToPortPixelsFromColumns(1), brain.Position.X);
-        Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixels(1), brain.Position.Y);
+        Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixelsFromArcadePixels(1), brain.Position.Y);
     }
 
     [Fact]
@@ -209,7 +208,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // on Y and compares with BHS, so "level with the target" counts as
         // "target is below". That ±1px vertical jitter is the arcade brain's
         // hover; the port used to hold the row perfectly still.
-        IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixels(30), playerSpot.Y);
+        IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixelsFromArcadePixels(30), playerSpot.Y);
         var brain = new Brain(TestSprites.Shared, brainSpot, new Random(3), beatWaitRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: FamilyList.FirstSlot);
         field.Entities.Brains.Add(brain);
 
@@ -220,7 +219,7 @@ public sealed class PlayFieldBrainProgMissileTests
         }
 
         Assert.Equal(brainSpot.X - ScreenSize.ToPortPixelsFromColumns(1), brain.Position.X);
-        Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixels(1), brain.Position.Y);
+        Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixelsFromArcadePixels(1), brain.Position.Y);
     }
 
     [Fact]
@@ -234,7 +233,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // 1 arcade px to the right of the player: INSIDE the ROM's ±2 column
         // X dead zone (BRNL1: dx+2 <= 4), so X must not correct —
         // but Y has no dead zone and must still step down 1 px.
-        IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixels(1), playerSpot.Y - ScreenSize.ToPortPixels(50));
+        IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixelsFromArcadePixels(1), playerSpot.Y - ScreenSize.ToPortPixelsFromArcadePixels(50));
         var brain = new Brain(TestSprites.Shared, brainSpot, new Random(21), beatWaitRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: FamilyList.FirstSlot);
         field.Entities.Brains.Add(brain);
 
@@ -244,7 +243,7 @@ public sealed class PlayFieldBrainProgMissileTests
         }
 
         Assert.Equal(brainSpot.X, brain.Position.X);      // dead zone holds X
-        Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixels(1), brain.Position.Y);  // Y keeps closing
+        Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixelsFromArcadePixels(1), brain.Position.Y);  // Y keeps closing
     }
 
     [Fact]
@@ -256,7 +255,7 @@ public sealed class PlayFieldBrainProgMissileTests
         WarmUp(field);
 
         // Player below and to the RIGHT of where the brain will sit.
-        field.Player.TeleportTo(new IntVector2(inner.Right - ScreenSize.ToPortPixels(5), inner.Y + ScreenSize.ToPortPixels(130)));
+        field.Player.TeleportTo(new IntVector2(inner.Right - ScreenSize.ToPortPixelsFromArcadePixels(5), inner.Y + ScreenSize.ToPortPixelsFromArcadePixels(130)));
 
         // Brain flush against the RIGHT wall, so its +X step is out of bounds.
         // The Gospel's CKLIM undoes BOTH axes on failure, which pins it there
@@ -264,7 +263,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // down) — the author's "the brains seem to get stuck at the bottom
         // wall". The port rejects per axis, like the ROM's own generic mover
         // (RRS22 OPB80), so the brain creeps down the wall instead.
-        IntVector2 brainSpot = new(inner.Right - ScreenSize.ToPortPixels(CollisionSizes.BrainCollisionSize.Width), inner.Y + ScreenSize.ToPortPixels(80));
+        IntVector2 brainSpot = new(inner.Right - ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BrainCollisionSize.Width), inner.Y + ScreenSize.ToPortPixelsFromArcadePixels(80));
         var brain = new Brain(TestSprites.Shared, brainSpot, new Random(22), beatWaitRomFrames: 8, fireIntervalBeats: 40, targetFamilySlot: FamilyList.FirstSlot);
         field.Entities.Brains.Add(brain);
 
@@ -274,7 +273,7 @@ public sealed class PlayFieldBrainProgMissileTests
         }
 
         Assert.Equal(brainSpot.X, brain.Position.X);          // the wall still holds
-        Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixels(1), brain.Position.Y);      // but it is not stuck
+        Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixelsFromArcadePixels(1), brain.Position.Y);      // but it is not stuck
     }
 
     [Fact]
@@ -307,7 +306,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         // ROM BMUT's placement: just left of the brain (a gap of 1 column), 2 rows below it.
         Assert.Equal(brain.Position.X - human.GetBounds().Width - ScreenSize.ToPortPixelsFromColumns(1), human.Position.X);
-        Assert.Equal(brain.Position.Y + ScreenSize.ToPortPixels(2), human.Position.Y);
+        Assert.Equal(brain.Position.Y + ScreenSize.ToPortPixelsFromArcadePixels(2), human.Position.Y);
 
         // …and the placement SETS THE BRAIN'S sprite (BMUT00 `LDD #BRLP1` /
         // BMUT1 `STD OPICT,X`): the human went to its LEFT, so the brain faces
@@ -412,7 +411,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         // Boxes overlap (the human is well inside the brain's frame) but the
         // corners are 20px apart → the ROM's reach does not cover it.
-        IntVector2 offset = new(ScreenSize.ToPortPixels(20), 0);
+        IntVector2 offset = new(ScreenSize.ToPortPixelsFromArcadePixels(20), 0);
         var brain = new Brain(TestSprites.Shared, humanSpot - offset, new Random(15), beatWaitRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: FamilyList.FirstSlot);
         field.Entities.Brains.Add(brain);
 
@@ -435,7 +434,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var human = new Human(TestSprites.Shared, humanSpot, HumanKind.Mommy, new Random(41));
         field.Entities.Family.Add(human);
 
-        IntVector2 offset = new(ScreenSize.ToPortPixels(4), 0);
+        IntVector2 offset = new(ScreenSize.ToPortPixelsFromArcadePixels(4), 0);
         var brain = new Brain(TestSprites.Shared, humanSpot - offset, new Random(42), beatWaitRomFrames: 0, fireIntervalBeats: 40, targetFamilySlot: FamilyList.FirstSlot);
         field.Entities.Brains.Add(brain);
 
@@ -504,7 +503,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
             // NAP 3 beat (3.6 ticks): exactly one step per beat, one axis only, 4 px either way.
             Assert.True(dx == 0 || dy == 0, $"seed {seed}: diagonal step {dx},{dy}");
-            Assert.Equal(ScreenSize.ToPortPixels(4), dx + dy);
+            Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(4), dx + dy);
 
             if (dx != 0)
             {
@@ -577,8 +576,8 @@ public sealed class PlayFieldBrainProgMissileTests
         // 2 columns on X but only 2 rows on Y. The missile really is faster
         // horizontally than vertically; there is no halving here as there is for
         // the player and the tank.
-        Assert.True(dx is 0 || dx == ScreenSize.ToPortPixels(4), $"dx {dx} is not 0 or 4 arcade px");
-        Assert.True(dy is 0 || dy == ScreenSize.ToPortPixels(2), $"dy {dy} is not 0 or 2 arcade px");
+        Assert.True(dx is 0 || dx == ScreenSize.ToPortPixelsFromArcadePixels(4), $"dx {dx} is not 0 or 4 arcade px");
+        Assert.True(dy is 0 || dy == ScreenSize.ToPortPixelsFromArcadePixels(2), $"dy {dy} is not 0 or 2 arcade px");
         Assert.True(dx != 0 || dy != 0, "missile did not move at all in its first beat");
     }
 
@@ -616,7 +615,7 @@ public sealed class PlayFieldBrainProgMissileTests
             // Nothing may be skipped entirely.
             int gap = Math.Abs(missile.Trail[i].X - missile.Trail[i - 1].X)
                 + Math.Abs(missile.Trail[i].Y - missile.Trail[i - 1].Y);
-            Assert.InRange(gap, ScreenSize.ToPortPixels(1), ScreenSize.ToPortPixels(3));
+            Assert.InRange(gap, ScreenSize.ToPortPixelsFromArcadePixels(1), ScreenSize.ToPortPixelsFromArcadePixels(3));
         }
 
         // A long flight must not grow the tail past the ring.
@@ -698,8 +697,8 @@ public sealed class PlayFieldBrainProgMissileTests
         // corner, NOT the smaller human box it was walking in.
         Assert.Equal(spot.X, explosion.Position.X);
         Assert.Equal(spot.Y, explosion.Position.Y);
-        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Width), explosion.GetBounds().Width);
-        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Height), explosion.GetBounds().Height);
+        Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Width), explosion.GetBounds().Width);
+        Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Height), explosion.GetBounds().Height);
     }
 
     [Fact]
@@ -767,8 +766,8 @@ public sealed class PlayFieldBrainProgMissileTests
         StripEffect card = field.Entities.Explosions[1];
         Assert.Equal(progSpot.X, card.Position.X);
         Assert.Equal(progSpot.Y, card.Position.Y); // UL = OBJX/OBJY, unchanged by PRGKIL
-        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Width), card.GetBounds().Width);
-        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Height), card.GetBounds().Height);
+        Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Width), card.GetBounds().Width);
+        Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Height), card.GetBounds().Height);
         Assert.Equal(StripFanAxis.Columns, card.Axis); // a vertical shot -> the H family
     }
 

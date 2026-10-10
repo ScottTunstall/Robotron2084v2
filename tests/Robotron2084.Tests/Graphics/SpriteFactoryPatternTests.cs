@@ -30,7 +30,7 @@ public sealed class SpriteFactoryPatternTests
     [MemberData(nameof(AllPatterns))]
     public void Pattern_IsSizedToSpecBox_Centred_AndCornerTransparent(string name, Func<Color, Color[]> build)
     {
-        int size = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeArcadePixels);
+        int size = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EntitySizeArcadePixels);
         Color[] pattern = build(Color.White);
 
         Assert.True(pattern.Length == size * size, $"{name} pattern must be {size}x{size} at the current PortPixelsPerArcadePixel");

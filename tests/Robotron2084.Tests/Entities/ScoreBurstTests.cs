@@ -101,8 +101,8 @@ public sealed class ScoreBurstTests
         // The ROM adds #$0105 to the blitter's column:row destination.
         Assert.Equal(
             new Rectangle(
-                bounds.X + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetXArcadePixels),
-                bounds.Y + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetYArcadePixels),
+                bounds.X + ScreenSize.ToPortPixelsFromArcadePixels(ScoreBurstTuning.PointsOffsetXArcadePixels),
+                bounds.Y + ScreenSize.ToPortPixelsFromArcadePixels(ScoreBurstTuning.PointsOffsetYArcadePixels),
                 bounds.Width,
                 bounds.Height),
             burst.PointsBounds);

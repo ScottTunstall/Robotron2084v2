@@ -95,7 +95,7 @@ public sealed class SpheroidEnforcerTimingTests
     public void Enforcer_IsImmobileAndSilentDuringGrowUp()
     {
         PlayField field = CreateField(7);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(42), fireIntervalBeats: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), new Random(42), fireIntervalBeats: 30);
         IntVector2 start = enforcer.Position;
 
         // Run through the start of the wave so RobotsFrozen() is false for the enforcer.
@@ -130,7 +130,7 @@ public sealed class SpheroidEnforcerTimingTests
         // ticks 1, 11, 22, 33, 44. The old PortTicks(9) = 10 switched every 10 ticks
         // and ran out early inside a correctly-timed growth (notes §65.3).
         PlayField field = CreateField(7);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(42), fireIntervalBeats: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), new Random(42), fireIntervalBeats: 30);
 
         for (int tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++)
         {
@@ -160,7 +160,7 @@ public sealed class SpheroidEnforcerTimingTests
         // slack for the 6/5 beat accumulator), and (seeded, deterministic) at least
         // one gap must exceed the old model's maximum of PortTicks(30) = 36.
         PlayField field = CreateField(11);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(1234), fireIntervalBeats: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), new Random(1234), fireIntervalBeats: 30);
 
         for (int tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++)
         {
@@ -203,7 +203,7 @@ public sealed class SpheroidEnforcerTimingTests
         // down-right of the player; over a long run the enforcer must
         // spend time close to the player, not wander the whole field.
         PlayField field = CreateField(11);
-        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(1234), fireIntervalBeats: 30);
+        Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), new Random(1234), fireIntervalBeats: 30);
 
         for (int tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++)
         {
@@ -219,7 +219,7 @@ public sealed class SpheroidEnforcerTimingTests
             closest = Math.Min(closest, (int)IntVector2.ComputeDistanceSquared(enforcer.Position, player));
         }
 
-        int reach = ScreenSize.ToPortPixels(65);
+        int reach = ScreenSize.ToPortPixelsFromArcadePixels(65);
         Assert.True(closest < reach * reach, $"enforcer never came within {reach} port px of the player (closest^2 = {closest})");
     }
 }

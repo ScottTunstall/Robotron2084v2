@@ -30,8 +30,8 @@ public sealed class ScreenSizeTests
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(16)]
-    public void ToPortPixels_MultipliesArcadePixelsByPortPixelsPerArcadePixel(int arcadePixels) =>
-        Assert.Equal(arcadePixels * ScreenSize.PortPixelsPerArcadePixel, ScreenSize.ToPortPixels(arcadePixels));
+    public void ToPortPixelsFromArcadePixels_MultipliesArcadePixelsByPortPixelsPerArcadePixel(int arcadePixels) =>
+        Assert.Equal(arcadePixels * ScreenSize.PortPixelsPerArcadePixel, ScreenSize.ToPortPixelsFromArcadePixels(arcadePixels));
 
     [Fact]
     public void MaxIntegerScale_FitsThreeTimesThePlayfield_At3x() =>

@@ -92,7 +92,7 @@ public sealed class GorfTests
             int risen = groundY - gorf.Position.Y;
             highestSeen = Math.Max(highestSeen, risen);
             peakOfThisHop = Math.Max(peakOfThisHop, risen);
-            Assert.InRange(risen, 0, ScreenSize.ToPortPixels(GorfTuning.HopRows));
+            Assert.InRange(risen, 0, ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows));
 
             int stepsTaken = Math.Abs(gorf.Position.X - startX) / stepPixels;
             if (stepsTaken > 0 && stepsTaken % GorfTuning.HopSteps == 0 && stepsTaken != lastLanding)
@@ -104,9 +104,9 @@ public sealed class GorfTests
             }
         }
 
-        Assert.Equal(ScreenSize.ToPortPixels(GorfTuning.HopRows), highestSeen);
+        Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows), highestSeen);
         Assert.True(peaks.Count > 3);
-        Assert.All(peaks.Distinct(), peak => Assert.Equal(ScreenSize.ToPortPixels(GorfTuning.HopRows), peak));
+        Assert.All(peaks.Distinct(), peak => Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows), peak));
     }
 
     [Fact]

@@ -161,7 +161,7 @@ public sealed class TankShellTests
     {
         PlayField field = new PlayFieldBuilder().Build();
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        int boxWidth = ScreenSize.ToPortPixels(CollisionSizes.TankShellCollisionSize.Width);
+        int boxWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankShellCollisionSize.Width);
 
         // 12 port pixels from the right wall, aimed at a spot 20 columns further right: it flies right, then must bounce.
         int startOffset = ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns);

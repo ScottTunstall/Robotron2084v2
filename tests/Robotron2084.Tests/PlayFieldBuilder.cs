@@ -16,10 +16,10 @@ internal sealed class PlayFieldBuilder
 {
     /// <summary>The inner play area every test field uses unless it says otherwise: the canvas less a 20 arcade pixel margin.</summary>
     public static readonly Rectangle DefaultBounds = new(
-        ScreenSize.ToPortPixels(20),
-        ScreenSize.ToPortPixels(20),
-        ScreenSize.Width - ScreenSize.ToPortPixels(40),
-        ScreenSize.Height - ScreenSize.ToPortPixels(40));
+        ScreenSize.ToPortPixelsFromArcadePixels(20),
+        ScreenSize.ToPortPixelsFromArcadePixels(20),
+        ScreenSize.Width - ScreenSize.ToPortPixelsFromArcadePixels(40),
+        ScreenSize.Height - ScreenSize.ToPortPixelsFromArcadePixels(40));
 
     private const int DefaultSeed = 1234;
     private const int DefaultLives = 3;
@@ -35,6 +35,7 @@ internal sealed class PlayFieldBuilder
     private IPixelCollision? _pixelCollision;
     private bool _tankShellBugEnabled = true;
     private bool _brainsChaseMikeyBug = true;
+    private IReadOnlyList<int> _familySlotsLeftOver = [];
 
     /// <summary>Uses these wave parameters.</summary>
     /// <param name="parameters">The wave.</param>
@@ -133,6 +134,14 @@ internal sealed class PlayFieldBuilder
         return this;
     }
 
+    /// <summary>Says which places in the family list still held a family member when the last wave or life ended.</summary>
+    /// <param name="slots">The places.</param>
+    public PlayFieldBuilder WithFamilySlotsLeftOver(params int[] slots)
+    {
+        _familySlotsLeftOver = slots;
+        return this;
+    }
+
     /// <summary>Builds the field.</summary>
     public PlayField Build() => new(
         TestSprites.Shared,
@@ -147,5 +156,6 @@ internal sealed class PlayFieldBuilder
         playerInvincibleForTesting: _playerInvincible,
         contactTest: _pixelCollision is null ? null : new PixelContactTest(_pixelCollision),
         tankShellBugEnabled: _tankShellBugEnabled,
-        brainsChaseMikeyBugEnabled: _brainsChaseMikeyBug);
+        brainsChaseMikeyBugEnabled: _brainsChaseMikeyBug,
+        familySlotsLeftOver: _familySlotsLeftOver);
 }

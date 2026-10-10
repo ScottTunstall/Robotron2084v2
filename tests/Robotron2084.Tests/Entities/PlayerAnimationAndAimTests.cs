@@ -158,7 +158,7 @@ public sealed class PlayerAnimationAndAimTests
 
         PlayerLaser laser = Assert.Single(field.PlayerLasers.GetActiveLasers());
         Assert.Equal(direction, laser.Direction);
-        IntVector2 muzzle = new(start.X + ScreenSize.ToPortPixels(offsetXSpec), start.Y + ScreenSize.ToPortPixels(offsetYSpec));
+        IntVector2 muzzle = new(start.X + ScreenSize.ToPortPixelsFromArcadePixels(offsetXSpec), start.Y + ScreenSize.ToPortPixelsFromArcadePixels(offsetYSpec));
         Assert.Equal(muzzle + direction.ToIntVector() * PlayerTuning.LaserSpeed, laser.Position);
     }
 }

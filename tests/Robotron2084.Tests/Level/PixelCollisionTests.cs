@@ -59,7 +59,7 @@ public sealed class PixelCollisionTests
 
         // Well outside the player's box, so nothing but the sprite test could rescue this human.
         Rectangle inner = field.Wall.PlayfieldBounds;
-        human.MoveTo(new IntVector2(inner.Center.X + ScreenSize.ToPortPixels(60), inner.Center.Y));
+        human.MoveTo(new IntVector2(inner.Center.X + ScreenSize.ToPortPixelsFromArcadePixels(60), inner.Center.Y));
 
         field.Update(new GameTime());
 

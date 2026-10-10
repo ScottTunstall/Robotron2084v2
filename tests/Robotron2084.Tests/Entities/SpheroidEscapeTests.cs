@@ -32,7 +32,7 @@ public sealed class SpheroidEscapeTests
     [Fact]
     public void TheRightEscapeExitIsMeasuredFromTheScreenOrigin()
     {
-        int rightExit = ScreenSize.ToPortPixels(2 * SpheroidTuning.EscapeExitRightColumn);
+        int rightExit = ScreenSize.ToPortPixelsFromArcadePixels(2 * SpheroidTuning.EscapeExitRightColumn);
 
         // The left exit is `bounds.X + Scaled(2 * 10)` = 80 (40 of playfield + 40 of
         // margin); the right exit is Scaled(2 * 133) = 532 with NO playfield term, so

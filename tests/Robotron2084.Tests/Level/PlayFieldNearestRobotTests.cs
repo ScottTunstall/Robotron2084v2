@@ -14,7 +14,7 @@ namespace Robotron2084.Tests;
 public sealed class PlayFieldNearestRobotTests
 {
     private static readonly Microsoft.Xna.Framework.Rectangle Bounds =
-        new(ScreenSize.ToPortPixels(20), ScreenSize.ToPortPixels(20), ScreenSize.Width - ScreenSize.ToPortPixels(40), ScreenSize.Height - ScreenSize.ToPortPixels(40));
+        new(ScreenSize.ToPortPixelsFromArcadePixels(20), ScreenSize.ToPortPixelsFromArcadePixels(20), ScreenSize.Width - ScreenSize.ToPortPixelsFromArcadePixels(40), ScreenSize.Height - ScreenSize.ToPortPixelsFromArcadePixels(40));
 
     private static PlayField EmptyField()
     {

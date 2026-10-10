@@ -13,7 +13,7 @@ namespace Robotron2084.Tests.Entities;
 /// magnitudes — X = ±1 arcade px, doubled to ±2 by SEED's sign bit (50%);
 /// Y = ±1, quadrupled to ±4 when LSEED &gt;= $C0 (75%) — then clamped at the
 /// wall. (Playtest 2026-09-13: the old fixed 20 arcade pixel push "jumps too far".)
-/// All magnitudes here are in internal px (1 arcade px = ScreenSize.ToPortPixels(1)).
+/// All magnitudes here are in internal px (1 arcade px = ScreenSize.ToPortPixelsFromArcadePixels(1)).
 /// </summary>
 public sealed class HulkKnockbackTests
 {
@@ -21,8 +21,8 @@ public sealed class HulkKnockbackTests
     private static IntVector2 Center(PlayField field)
     {
         Rectangle b = field.Wall.PlayfieldBounds;
-        int width = ScreenSize.ToPortPixels(CollisionSizes.HulkCollisionSize.Width);
-        int height = ScreenSize.ToPortPixels(CollisionSizes.HulkCollisionSize.Height);
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width);
+        int height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height);
         return new(b.X + b.Width / 2 - width / 2, b.Y + b.Height / 2 - height / 2);
     }
 
@@ -64,10 +64,10 @@ public sealed class HulkKnockbackTests
                 observed.Add(hulk.Position - spot);
             }
 
-            int oneX = ScreenSize.ToPortPixels(1);
-            int twoX = ScreenSize.ToPortPixels(2);
-            int oneY = ScreenSize.ToPortPixels(1);
-            int fourY = ScreenSize.ToPortPixels(4);
+            int oneX = ScreenSize.ToPortPixelsFromArcadePixels(1);
+            int twoX = ScreenSize.ToPortPixelsFromArcadePixels(2);
+            int oneY = ScreenSize.ToPortPixelsFromArcadePixels(1);
+            int fourY = ScreenSize.ToPortPixelsFromArcadePixels(4);
 
             // ROM HULKIL: each active axis moves by exactly ±1 or ±2 (X) /
             // ±1 or ±4 (Y) arcade px; the inactive axis never moves.
@@ -106,8 +106,8 @@ public sealed class HulkKnockbackTests
     {
         PlayField field = CreateField();
         Rectangle b = field.Wall.PlayfieldBounds;
-        int width = ScreenSize.ToPortPixels(CollisionSizes.HulkCollisionSize.Width);
-        int height = ScreenSize.ToPortPixels(CollisionSizes.HulkCollisionSize.Height);
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width);
+        int height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height);
 
         // Top-left corner, pushed outward (up-left): the hulk may sit on the
         // wall (spec: "pushed back into the WALL") but never leave the field.
