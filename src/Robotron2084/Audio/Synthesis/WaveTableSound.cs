@@ -217,6 +217,43 @@ internal sealed class WaveTableSound
         return Play();
     }
 
+    /// <summary>The place of <c>TRBV</c>, "TURBINE START UP", the second background sound's settings, in <see cref="WaveTableData.Vectors"/> (<c>BG2</c>: <c>LDAA #(TRBV-SVTAB)/7</c>).</summary>
+    private const int BackgroundVector = 14;
+
+    /// <summary><c>BG2</c>: <c>LDAA #</c>, <c>JSR GWLD</c> (counted with the load), then <c>LDAA BG2FLG</c>, two <c>ASLA</c>, <c>COMA</c>, <c>JSR GEND60</c>, <c>STAA FOFSET</c>.</summary>
+    private const int BackgroundSetUpCycles = Immediate + CallExtended + Direct + (3 * Inherent) + CallExtended + StoreDirect;
+
+    /// <summary><c>BG2LP</c>: <c>INC GDCNT</c>, <c>JSR GEND61</c>, and the <c>BRA</c> back.</summary>
+    private const int BackgroundLoopCycles = ModifyExtended + CallExtended + Branch;
+
+    /// <summary>
+    /// The second background sound (<c>BG2</c>): the turbine wave, played over and over, its pitch set by how many
+    /// times <c>BG2INC</c> has been sent. It goes on until another sound number arrives.
+    /// </summary>
+    /// <param name="level">The background's level, 1 to 29 (<c>BG2FLG</c>).</param>
+    /// <returns>The sound's output changes.</returns>
+    public IEnumerable<OutputChange> PlayBackground2(byte level)
+    {
+        Load(BackgroundVector);
+        _output.Wait(BackgroundSetUpCycles);
+        _pitchOffset = (byte)~(level << 2);
+        return PlayBackgroundLoop();
+    }
+
+    private IEnumerable<OutputChange> PlayBackgroundLoop()
+    {
+        while (FindPlayableRange())
+        {
+            foreach (OutputChange change in Play())
+            {
+                yield return change;
+            }
+
+            _output.Wait(BackgroundLoopCycles);
+            _pitchStepsLeft++;
+        }
+    }
+
     /// <summary>Loads a sound's settings, copies its wave into memory and makes it quieter if asked (<c>GWLD</c>).</summary>
     /// <param name="vectorIndex">The sound's place in <see cref="WaveTableData.Vectors"/>.</param>
     private void Load(int vectorIndex)

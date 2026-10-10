@@ -37,6 +37,16 @@ internal static class LightningNoise
     /// <summary><c>LITEN</c>'s first level: as loud as it goes (<c>LDAA #$FF</c>).</summary>
     private const byte StartLevel = 0xFF;
 
+    /// <summary><c>LAUNCH</c>'s gap change (<c>LDAA #$FF</c>: one less each round), first gap (<c>LDAA #$60</c>) and chances (<c>LDAB #$FF</c>).</summary>
+    private const byte LaunchGapChange = 0xFF;
+
+    private const byte LaunchFirstGap = 0x60;
+
+    private const byte LaunchChancesPerGap = 0xFF;
+
+    /// <summary><c>LAUNCH</c> setting up: <c>LDAA</c>, <c>STAA</c>, <c>LDAA</c>, <c>LDAB</c>, <c>BRA</c>.</summary>
+    private const int LaunchSetUpCycles = Immediate + StoreDirect + Immediate + Immediate + Branch;
+
     /// <summary><c>LITE</c> setting up: <c>LDAA</c>, <c>STAA</c>, <c>LDAB</c>, <c>BRA</c>.</summary>
     private const int LightningSetUpCycles = Immediate + StoreDirect + Immediate + Branch;
 
@@ -70,6 +80,16 @@ internal static class LightningNoise
     {
         output.Wait(AppearSetUpCycles);
         return Play(memory, output, AppearFirstGap, AppearGapChange, AppearChancesPerGap);
+    }
+
+    /// <summary>Plays the launch sound (sound <c>LAUNCH</c>): the gap shrinks by one each round, from $60, with 255 chances at each.</summary>
+    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="output">The board's output port.</param>
+    /// <returns>The sound's output changes.</returns>
+    public static IEnumerable<OutputChange> PlayLaunch(BoardMemory memory, BoardOutput output)
+    {
+        output.Wait(LaunchSetUpCycles);
+        return Play(memory, output, LaunchFirstGap, LaunchGapChange, LaunchChancesPerGap);
     }
 
     /// <summary>The shared noise (<c>LITEN</c>).</summary>

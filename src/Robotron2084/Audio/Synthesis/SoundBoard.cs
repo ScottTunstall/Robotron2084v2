@@ -14,7 +14,7 @@ namespace Robotron2084.Audio.Synthesis;
 /// </list>
 /// The board runs each sound as a program timed by its own instructions. The port times each sound with
 /// the same instruction costs (<see cref="InstructionCycles"/>), so pitches and lengths match the arcade's.
-/// Only the sound numbers the game sends are built; the notes (§130) explain how they were checked.
+/// Every sound number the game sends is built, and so are the eight coin sounds (<c>CNSND</c>); the notes (§130) explain how they were checked.
 /// </remarks>
 public sealed class SoundBoard : ISoundBoard
 {
@@ -74,6 +74,33 @@ public sealed class SoundBoard : ISoundBoard
 
     /// <summary>The high range: <c>CMPA #$3D</c>, <c>BGT</c>, <c>CMPA #$2A</c>, <c>BHI</c>, <c>SUBA #$10</c>, <c>BRA IRQ002</c>.</summary>
     private const int HighRangeCycles = Immediate + Branch + Immediate + Branch + Immediate + Branch;
+
+    /// <summary>The first and last wave table sounds the handler reaches by the low range (<c>IRQ001</c>), and by the high range (<c>IRQ00</c>).</summary>
+    private const int FirstLowWaveTable = 0x01;
+
+    private const int LastLowWaveTable = 0x0D;
+
+    private const int FirstHighWaveTable = 0x20;
+
+    private const int LastHighWaveTable = 0x2B;
+
+    /// <summary>The place of <c>MOSQTO</c> in the square wave settings (<c>IRQ00C</c>: <c>SUBA #$39</c>).</summary>
+    private const int MosquitoVector = 5;
+
+    /// <summary>The handler sorting sound number 63: <c>CMPA #$3D</c>, <c>BGT</c>, <c>SUBA #$39</c>, <c>BRA</c>.</summary>
+    private const int HighestRangeCycles = Immediate + Branch + Immediate + Branch;
+
+    /// <summary>The second background sound's highest pitch (<c>BG2MAX</c>).</summary>
+    private const int Background2MaxLevel = 29;
+
+    /// <summary><c>IRQ3</c> checking the flags: <c>LDAA BG1FLG</c>, <c>ORAA BG2FLG</c>, <c>BEQ</c>.</summary>
+    private const int BackgroundCheckCycles = Direct + Direct + Branch;
+
+    /// <summary><c>IRQ3</c> starting a background: <c>CLRA</c>, <c>STAA B2FLG</c>, <c>LDAA BG1FLG</c>, <c>BEQ</c>, <c>JMP</c>.</summary>
+    private const int BackgroundStartCycles = Inherent + StoreDirect + Direct + Branch + JumpExtended;
+
+    /// <summary>The handler seeing that an organ tune is next: <c>LDAB ORGFLG</c>, <c>BEQ</c>, <c>JSR ORGNT1</c>, then the tune search, which the port does not play.</summary>
+    private const int OrganTuneCycles = Direct + Branch + CallExtended + CallShort + ModifyExtended + Return;
 
     /// <summary><c>BGEND</c>: <c>CLRA</c>, two <c>STAA</c>, <c>RTS</c>.</summary>
     private const int BackgroundEndCycles = Inherent + StoreDirect + StoreDirect + Return;
@@ -172,9 +199,21 @@ public sealed class SoundBoard : ISoundBoard
         _waitingSoundNumber = NoSoundNumber;
         _outputChanges?.Dispose();
         _output.Restart(OutputLevel);
-        _output.Wait(Interrupt + HandlerStartCycles + FlagCheckCycles + SortCycles);
-        ClearRepeatCounts(number);
-        _outputChanges = _routines[number]().GetEnumerator();
+        _output.Wait(Interrupt + HandlerStartCycles);
+        IEnumerable<OutputChange> routine = [];
+        if (_memory.IsOrganTuneNext)
+        {
+            _memory.IsOrganTuneNext = false;
+            _output.Wait(OrganTuneCycles);
+        }
+        else
+        {
+            _output.Wait(FlagCheckCycles + SortCycles);
+            ClearRepeatCounts(number);
+            routine = _routines[number]();
+        }
+
+        _outputChanges = WithBackground(routine).GetEnumerator();
     }
 
     /// <summary>True when the instruction that writes the next level has started but not finished.</summary>
@@ -223,32 +262,77 @@ public sealed class SoundBoard : ISoundBoard
     }
 
     /// <summary>
-    /// Every sound number the game sends, with the routine the board's handler sends it to. This is the
-    /// one place a sound number is matched to its routine.
+    /// Every sound number the board has, with the routine the board's handler sends it to. This is the one place
+    /// a sound number is matched to its routine; the names are the source's (<see cref="BoardSounds"/>).
     /// </summary>
     /// <returns>The routines, by sound number.</returns>
-    private Dictionary<int, Func<IEnumerable<OutputChange>>> BuildRoutines() => new()
+    private Dictionary<int, Func<IEnumerable<OutputChange>>> BuildRoutines()
     {
-        [0x01] = CreateLowWaveTableRoutine(0x01), // HBDV "HEARTBEAT DISTORTO"
-        [0x04] = CreateLowWaveTableRoutine(0x04), // XBV
-        [0x06] = CreateLowWaveTableRoutine(0x06), // HBEV "HEARTBEAT ECHO"
-        [0x08] = CreateLowWaveTableRoutine(0x08), // SPNRV
-        [0x0D] = CreateLowWaveTableRoutine(0x0D), // ED17
-        [SpinnerSoundNumber] = CreateJumpTableRoutine(() => SpinnerSound.Play(_memory, _output)), // SP1
-        [0x11] = CreateJumpTableRoutine(() => LightningNoise.PlayLightning(_memory, _output)), // LITE
-        [LaserBallBonusSoundNumber] = CreateJumpTableRoutine(_waveTableSound.PlayLaserBallBonus), // BON2
-        [0x13] = CreateJumpTableRoutine(EndBackground), // BGEND
-        [0x14] = CreateJumpTableRoutine(() => WhiteNoise.PlayTurbo(_memory, _output)), // TURBO
-        [0x15] = CreateJumpTableRoutine(() => LightningNoise.PlayAppear(_memory, _output)), // APPEAR
-        [0x17] = CreateJumpTableRoutine(() => FilteredNoise.PlayCannon(_memory, _output)), // CANNON
-        [0x18] = CreateJumpTableRoutine(() => RadioSound.Play(_memory, _output)), // RADIO
-        [0x19] = CreateJumpTableRoutine(() => HyperSound.Play(_memory, _output)), // HYPER
-        [0x1A] = CreateJumpTableRoutine(() => ScreamSound.Play(_memory, _output)), // SCREAM
-        [0x1D] = CreateSquareWaveRoutine(0x1D), // SAW
-        [0x1E] = CreateSquareWaveRoutine(0x1E), // FOSHIT
-        [0x25] = CreateHighWaveTableRoutine(0x25), // SSPV
-        [0x28] = CreateHighWaveTableRoutine(0x28), // GDYUKV
-    };
+        var routines = new Dictionary<int, Func<IEnumerable<OutputChange>>>();
+        for (int number = FirstLowWaveTable; number <= LastLowWaveTable; number++)
+        {
+            routines[number] = CreateLowWaveTableRoutine(number);
+        }
+
+        for (int number = FirstHighWaveTable; number <= LastHighWaveTable; number++)
+        {
+            routines[number] = CreateHighWaveTableRoutine(number);
+        }
+
+        AddJumpTableRoutines(routines);
+        AddHighJumpTableRoutines(routines);
+        routines[0x1D] = CreateSquareWaveRoutine(0x1D - SquareWaveOffset, LowRangeCycles + MiddleRangeCycles); // SAW
+        routines[0x1E] = CreateSquareWaveRoutine(0x1E - SquareWaveOffset, LowRangeCycles + MiddleRangeCycles); // FOSHIT
+        routines[0x1F] = CreateSquareWaveRoutine(0x1F - SquareWaveOffset, LowRangeCycles + MiddleRangeCycles); // QUASAR
+        routines[0x3F] = CreateSquareWaveRoutine(MosquitoVector, HighestRangeCycles); // MOSQTO
+        return routines;
+    }
+
+    /// <summary>The sounds <c>JMPTBL</c> holds (<c>$0E</c> to <c>$1C</c>), which the handler reaches by the low range.</summary>
+    /// <param name="routines">The routines to add them to.</param>
+    private void AddJumpTableRoutines(Dictionary<int, Func<IEnumerable<OutputChange>>> routines)
+    {
+        routines[SpinnerSoundNumber] = CreateJumpTableRoutine(() => SpinnerSound.Play(_memory, _output)); // SP1
+        routines[0x0F] = CreateJumpTableRoutine(StartBackground1); // BG1
+        routines[0x10] = CreateJumpTableRoutine(IncrementBackground2); // BG2INC
+        routines[0x11] = CreateJumpTableRoutine(() => LightningNoise.PlayLightning(_memory, _output)); // LITE
+        routines[LaserBallBonusSoundNumber] = CreateJumpTableRoutine(_waveTableSound.PlayLaserBallBonus); // BON2
+        routines[0x13] = CreateJumpTableRoutine(EndBackground); // BGEND
+        routines[0x14] = CreateJumpTableRoutine(() => WhiteNoise.PlayTurbo(_memory, _output)); // TURBO
+        routines[0x15] = CreateJumpTableRoutine(() => LightningNoise.PlayAppear(_memory, _output)); // APPEAR
+        routines[0x16] = CreateJumpTableRoutine(() => FilteredNoise.PlayThrust(_memory, _output)); // THRUST
+        routines[0x17] = CreateJumpTableRoutine(() => FilteredNoise.PlayCannon(_memory, _output)); // CANNON
+        routines[0x18] = CreateJumpTableRoutine(() => RadioSound.Play(_memory, _output)); // RADIO
+        routines[0x19] = CreateJumpTableRoutine(() => HyperSound.Play(_memory, _output)); // HYPER
+        routines[0x1A] = CreateJumpTableRoutine(() => ScreamSound.Play(_memory, _output)); // SCREAM
+        routines[0x1B] = CreateJumpTableRoutine(ArmOrganTune); // ORGANT
+        routines[0x1C] = CreateJumpTableRoutine(PlayOrganNote); // ORGANN
+    }
+
+    /// <summary>The sounds <c>JMPTB1</c> holds (<c>$2C</c> to <c>$3E</c>), which the handler reaches by the high range.</summary>
+    /// <param name="routines">The routines to add them to.</param>
+    private void AddHighJumpTableRoutines(Dictionary<int, Func<IEnumerable<OutputChange>>> routines)
+    {
+        routines[0x2C] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound2(_memory, _output)); // SND2
+        routines[0x2D] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound5(_memory, _output)); // SND5
+        routines[0x2E] = CreateHighJumpTableRoutine(() => OscillatorSound.PlayThunder(_memory, _output)); // THNDR
+        routines[0x2F] = CreateHighJumpTableRoutine(() => SingSound.PlayHstd(_memory, _output)); // HSTD
+        routines[0x30] = CreateHighJumpTableRoutine(() => SingSound.PlayAtari(_memory, _output)); // ATARI
+        routines[0x31] = CreateHighJumpTableRoutine(() => SingSound.PlaySiren(_memory, _output)); // SIREN
+        routines[0x32] = CreateHighJumpTableRoutine(() => SingSound.PlayOrrrr(_memory, _output)); // ORRRR
+        routines[0x33] = CreateHighJumpTableRoutine(() => SingSound.PlayPerkDollars(_memory, _output)); // PERK$$
+        routines[0x34] = CreateHighJumpTableRoutine(() => SingSound.PlaySquirts(_memory, _output)); // SQRT
+        routines[0x35] = CreateHighJumpTableRoutine(() => ElectricSound.PlayStart(_output)); // START
+        routines[0x36] = CreateHighJumpTableRoutine(() => PlaneSound.Play(_output)); // PLANE
+        routines[0x37] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound16(_memory, _output)); // SND16
+        routines[0x38] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound17(_memory, _output)); // SND17
+        routines[0x39] = CreateHighJumpTableRoutine(() => LightningNoise.PlayLaunch(_memory, _output)); // LAUNCH
+        routines[0x3A] = CreateHighJumpTableRoutine(() => CrowdRoarSound.Play(_memory, _output)); // CDR
+        routines[0x3B] = CreateHighJumpTableRoutine(() => KnockerSound.Play(_output)); // KNOCK
+        routines[0x3C] = CreateHighJumpTableRoutine(() => SirenSound.Play(_output)); // ZIREN
+        routines[0x3D] = CreateHighJumpTableRoutine(() => WhistleSound.Play(_output)); // WHIST
+        routines[0x3E] = CreateHighJumpTableRoutine(() => FilteredNoise.PlayBomb(_memory, _output)); // HBOMB
+    }
 
     /// <summary>A wave table sound numbered 1 to 13 (<c>IRQ001</c> to <c>IRQ002</c>).</summary>
     /// <param name="soundNumber">The sound number.</param>
@@ -277,26 +361,107 @@ public sealed class SoundBoard : ISoundBoard
         return routine();
     };
 
-    /// <summary>A square wave sound (<c>IRQ20</c>, <c>IRQ21</c>: <c>JSR VARILD</c>, <c>JSR VARI</c>).</summary>
-    /// <param name="soundNumber">The sound number.</param>
-    /// <returns>The routine.</returns>
-    private Func<IEnumerable<OutputChange>> CreateSquareWaveRoutine(int soundNumber) => () =>
+    /// <summary>
+    /// A sound with its own routine, reached through the jump table by the handler's high range (<c>IRQ00B</c>, <c>IRQ2</c>): the
+    /// sounds numbered 44 and up.
+    /// </summary>
+    /// <param name="routine">The routine.</param>
+    /// <returns>The routine, after the handler's time to reach it.</returns>
+    private Func<IEnumerable<OutputChange>> CreateHighJumpTableRoutine(Func<IEnumerable<OutputChange>> routine) => () =>
     {
-        _output.Wait(LowRangeCycles + MiddleRangeCycles + CallExtended);
+        _output.Wait(HighRangeCycles + JumpTableCycles);
+        return routine();
+    };
+
+    /// <summary>A square wave sound (<c>IRQ20</c>, <c>IRQ21</c>: <c>JSR VARILD</c>, <c>JSR VARI</c>).</summary>
+    /// <param name="vectorIndex">The sound's place in the square wave settings table.</param>
+    /// <param name="handlerCycles">The time the handler takes to sort the number into this range.</param>
+    /// <returns>The routine.</returns>
+    private Func<IEnumerable<OutputChange>> CreateSquareWaveRoutine(int vectorIndex, int handlerCycles) => () =>
+    {
+        _output.Wait(handlerCycles + CallExtended);
         var square = new SquareWaveSound(_output);
-        square.Load(soundNumber - SquareWaveOffset);
+        square.Load(vectorIndex);
         _output.Wait(CallExtended);
         return square.Play();
     };
 
     /// <summary>
-    /// Turns the background sounds off (<c>BGEND</c>). Robotron never turns them on, so this only stops the
-    /// sound playing, which is how the game uses it ("BACKY OFFY", notes §126).
+    /// Turns the background sounds off (<c>BGEND</c>). The game only uses it to stop the sound playing ("BACKY OFFY",
+    /// notes §126).
     /// </summary>
     /// <returns>No output changes.</returns>
     private IEnumerable<OutputChange> EndBackground()
     {
         _output.Wait(BackgroundEndCycles);
+        _memory.IsBackground1On = false;
+        _memory.Background2Level = 0;
         return [];
+    }
+
+    /// <summary>Starts the first background sound (<c>BG1</c>): it plays until another sound number arrives, and again after every sound that follows.</summary>
+    /// <returns>The sound's output changes.</returns>
+    private IEnumerable<OutputChange> StartBackground1()
+    {
+        _memory.IsBackground1On = true;
+        return FilteredNoise.PlayBackground1(_memory, _output);
+    }
+
+    /// <summary>Moves the second background sound up one pitch and turns it on (<c>BG2INC</c>); it then plays after this sound, and after every sound that follows.</summary>
+    /// <returns>No output changes.</returns>
+    private IEnumerable<OutputChange> IncrementBackground2()
+    {
+        _output.Wait(ModifyExtended + Direct + Immediate + Immediate + Branch + Inherent + StoreDirect + Return);
+        _memory.IsBackground1On = false;
+        byte level = _memory.Background2Level;
+        _memory.Background2Level = (byte)(level == Background2MaxLevel ? 1 : level + 1);
+        return [];
+    }
+
+    /// <summary>The organ tune sound (<c>ORGANT</c>): it only arms the board, so that the next sound number is a tune number.</summary>
+    /// <returns>No output changes.</returns>
+    private IEnumerable<OutputChange> ArmOrganTune()
+    {
+        _output.Wait(ModifyExtended + Return);
+        _memory.IsOrganTuneNext = true;
+        return [];
+    }
+
+    /// <summary>The organ note sound (<c>ORGANN</c>): the source's routine is a bare <c>RTS</c>.</summary>
+    /// <returns>No output changes.</returns>
+    private IEnumerable<OutputChange> PlayOrganNote()
+    {
+        _output.Wait(Return);
+        return [];
+    }
+
+    /// <summary>
+    /// Plays a sound's routine and then, as the handler does after every sound (<c>IRQ3</c>), whichever
+    /// background sound is on, which goes on until the next sound number arrives.
+    /// </summary>
+    /// <param name="routine">The sound's output changes.</param>
+    /// <returns>The sound's output changes, and the background's.</returns>
+    private IEnumerable<OutputChange> WithBackground(IEnumerable<OutputChange> routine)
+    {
+        foreach (OutputChange change in routine)
+        {
+            yield return change;
+        }
+
+        _output.Wait(BackgroundCheckCycles);
+        if (!_memory.IsBackground1On && _memory.Background2Level == 0)
+        {
+            yield break;
+        }
+
+        _output.Wait(BackgroundStartCycles);
+        _memory.IsLaserBallBonusRepeating = false;
+        IEnumerable<OutputChange> background = _memory.IsBackground1On
+            ? FilteredNoise.PlayBackground1(_memory, _output)
+            : _waveTableSound.PlayBackground2(_memory.Background2Level);
+        foreach (OutputChange change in background)
+        {
+            yield return change;
+        }
     }
 }

@@ -41,8 +41,29 @@ internal sealed class BoardMemory
     /// <summary>True while the laser ball bonus sound is being sent over and over (<c>B2FLG</c>); any other sound number clears it.</summary>
     public bool IsLaserBallBonusRepeating { get; set; }
 
+    /// <summary>True while the first background sound is on (<c>BG1FLG</c>): it plays again after every other sound until <c>BGEND</c>.</summary>
+    public bool IsBackground1On { get; set; }
+
+    /// <summary>Which of the second background sound's 29 pitches is on, or 0 for off (<c>BG2FLG</c>): it plays again after every other sound until <c>BGEND</c>.</summary>
+    public byte Background2Level { get; set; }
+
+    /// <summary>True after <c>ORGANT</c> (<c>ORGFLG</c>): the next sound number is an organ tune number instead of a sound.</summary>
+    public bool IsOrganTuneNext { get; set; }
+
     /// <summary>The bit that last fell out of the bottom of <c>LO</c> (the carry flag after <c>ROR LO</c>).</summary>
     public bool RandomBitOut { get; private set; }
+
+    /// <summary>
+    /// Loads the random bytes directly: <c>STX HI</c> writes <c>HI</c> and <c>LO</c> together (the crowd
+    /// roar seeds them), and the oscillator sound writes <c>LO</c> alone because <c>RANDOM EQU LO</c>.
+    /// </summary>
+    /// <param name="high">The new <c>HI</c>.</param>
+    /// <param name="low">The new <c>LO</c>.</param>
+    public void SetRandom(byte high, byte low)
+    {
+        RandomHigh = high;
+        RandomLow = low;
+    }
 
     /// <summary>
     /// The first half of a random step (<c>ROR HI</c>): a bit made from <paramref name="mixedWith"/> and
