@@ -94,7 +94,7 @@ public sealed class PlayerAppear
         {
             if (entities.HasRoomForStripEffect(StripEngine.Horizontal))
             {
-                entities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Columns, slope: 0, clip, column * ScreenSize.ArcadePixelsPerColumn, startClockUnits));
+                entities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Columns, slope: 0, clip, column * ScreenSize.ArcadePixelsPerByte, startClockUnits));
             }
         }
     }

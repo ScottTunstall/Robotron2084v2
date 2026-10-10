@@ -245,9 +245,9 @@ public sealed class WaveMaterialisation
     internal static Func<int, int> GetCentreColumnFinder(Rectangle robotBounds, Rectangle playfieldBounds)
     {
         int arcadeColumn = ArcadeLeftColumn + ((robotBounds.X - playfieldBounds.X) * (ArcadeRightColumn - ArcadeLeftColumn) / playfieldBounds.Width);
-        int arcadePixel = Math.Min(arcadeColumn * ScreenSize.ArcadePixelsPerColumn, LargestByte);
+        int arcadePixel = Math.Min(arcadeColumn * ScreenSize.ArcadePixelsPerByte, LargestByte);
         return spritePixelColumns =>
-            ((spritePixelColumns / ScreenSize.ArcadePixelsPerColumn * arcadePixel) >> ScreenSize.SubpixelBits) * ScreenSize.ArcadePixelsPerColumn;
+            ((spritePixelColumns / ScreenSize.ArcadePixelsPerByte * arcadePixel) >> ScreenSize.SubpixelBits) * ScreenSize.ArcadePixelsPerByte;
     }
 
     /// <summary>Starts the beaming in once the robots are all queued, moves it on, and lets the robots go when it has finished.</summary>
