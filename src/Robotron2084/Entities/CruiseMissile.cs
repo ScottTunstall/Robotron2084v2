@@ -30,7 +30,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>The random number that moves the missile's aim is picked from 0 up to one less than this (see <see cref="AimNoiseBase"/>).</summary>
     private const int AimNoiseRange = 16;
 
-    /// <summary>How long one beat lasts, in 50ths of a second.</summary>
+    /// <summary>How long one beat lasts.</summary>
     /// <remarks>ROM: <c>NAP 2</c>, plus the one the routine runs in.</remarks>
     private const int BeatIntervalRomFrames = 3;
 

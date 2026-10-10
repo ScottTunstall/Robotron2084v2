@@ -34,7 +34,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next, in 50ths of a second. It decides how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
+    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next. It decides how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>BRAIN</c>, <c>BITA #$7F / BEQ BRN0A / NAP 4,BRAIN</c>.</item>
@@ -43,7 +43,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int LivePollRomFrames = 4;
 
-    /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first beat, in 50ths of a second.</summary>
+    /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first beat.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>BRN0A</c>, <c>NAP 12,BRNL</c>.</item>
@@ -52,7 +52,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int FirstBeatNapRomFrames = 12;
 
-    /// <summary>How long a brain spends on the beat itself, in 50ths of a second. It is added to the wave's wait to give the time from one beat to the next, which is stored in <see cref="_beatIntervalClockUnits"/>.</summary>
+    /// <summary>How long one beat takes to run. The time from one beat to the next.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>BRNSLP</c>, the sleep of <c>BRNSPD</c> frames at the end
@@ -217,7 +217,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where the brain's top-left corner is.</param>
     /// <param name="random">Where its random numbers come from. They pick the waits between missiles and the shaking during reprogramming.</param>
-    /// <param name="beatWaitRomFrames">How long this wave's brains wait after each beat, in 50ths of a second. A bigger number makes a slower brain. The time from one beat to the next is this plus <see cref="BeatExecutionRomFrames"/>.</param>
+    /// <param name="beatWaitRomFrames">How long this wave's brains wait after each beat. A bigger number makes a slower brain. The time from one beat to the next is this plus <see cref="BeatExecutionRomFrames"/>.</param>
     /// <param name="fireIntervalBeats">The longest this wave's brains wait between cruise missiles, in beats.</param>
     /// <param name="targetFamilySlot">Which place in the family list the brain chases at the start.</param>
     /// <remarks>

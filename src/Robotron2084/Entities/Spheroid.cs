@@ -13,7 +13,7 @@ namespace Robotron2084.Entities;
 /// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
 /// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the
 /// short freeze just after the player is killed. <see cref="_beatTimer"/> gathers the ticks until it is time for
-/// the next beat (see <see cref="ArcadeClock"/>). It also moves 50 times a second, timed by
+/// the next beat (see <see cref="ArcadeClock"/>). It also moves steadily, timed by
 /// <see cref="_moveTimer"/>.
 ///
 /// <list type="bullet">
@@ -159,7 +159,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True once the spheroid is running sideways for the edge of the playfield, where it vanishes.</summary>
     private bool _isEscaping;
 
-    /// <summary>Counts up to the next move. The spheroid moves 50 times a second.</summary>
+    /// <summary>Counts up to the next move. The spheroid moves steadily.</summary>
     private int _moveTimer;
 
     private IntVector2 _position;
@@ -332,7 +332,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         AdvanceDropBeat(field);
     }
 
-    /// <summary>Counts one tick towards the spheroid's next move, and makes the move when it is due. The spheroid moves 50 times a second, which is more often than it has a beat.</summary>
+    /// <summary>Counts one tick towards the spheroid's next move, and makes the move when it is due. The spheroid moves on its own clock, which is more often than it has a beat.</summary>
     /// <param name="field">The playfield.</param>
     private void AdvanceMover(PlayField field)
     {

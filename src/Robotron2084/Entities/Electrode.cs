@@ -22,12 +22,11 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 {
-    /// <summary>How big the electrode is, in port pixels. It is the size of the electrode's sprite, and it is used to tell what touches the electrode.</summary>
-    private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ElectrodeCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ElectrodeCollisionSize.Height));
-
-    /// <summary>How long each shrivel animation frame is shown for, in 50ths of a second.</summary>
+    /// <summary>How long each shrivel animation frame is shown for.</summary>
     private static readonly int[] ShrivelSleepRomFrames = [6, 3, 2];
+
+    /// <summary>How big the electrode is, in port pixels. It is the size of the sprite for this wave's shape of electrode, and it is used to tell what touches the electrode.</summary>
+    private readonly (int Width, int Height) _collisionSize;
 
     private readonly SpriteSet _sprites;
     private readonly int _wave;
@@ -44,10 +43,11 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         _sprites = sprites;
         _position = position;
         _wave = wave;
+        _collisionSize = GetCollisionSize(wave);
     }
 
     /// <summary>The box the electrode takes up on the screen. It is used to tell what touches the electrode.</summary>
-    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
 
     /// <summary>The animation frame the electrode is showing: its normal one, or one of the shrivel ones while it is dying.</summary>
     public Texture2D GetCurrentAnimationFrame()
@@ -62,6 +62,16 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Where the electrode's top-left corner is. An electrode never moves.</summary>
     public IntVector2 Position => _position;
+
+    /// <summary>Works out how big a wave's electrodes are, in port pixels. Each shape of electrode has its own size.</summary>
+    /// <param name="wave">The wave number, which decides the shape.</param>
+    /// <returns>The width and the height, in port pixels.</returns>
+    /// <remarks>Disassembly: the arcade takes the size from the shape's own animation frame (<c>$3B05</c> onwards), so the "2084" electrode of every tenth wave is wider and shorter than the rest.</remarks>
+    internal static (int Width, int Height) GetCollisionSize(int wave)
+    {
+        (int width, int height) = CollisionSizes.ElectrodeCollisionSizeByVariant[WavePaletteTables.GetElectrodeVariant(wave)];
+        return (ScreenSize.ToPortPixelsFromArcadePixels(width), ScreenSize.ToPortPixelsFromArcadePixels(height));
+    }
 
     /// <summary>Which shape of electrode is drawn. The wave number decides it.</summary>
     /// <remarks>The arcade gives names to only the first four shapes. Its own table goes through 9 shapes in every 10 waves.</remarks>

@@ -11,7 +11,7 @@ namespace Robotron2084.Entities;
 /// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
 /// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the
 /// short freeze just after the player is killed. <see cref="_romFrameTimer"/> gathers the ticks until it is time
-/// for the effect's next step. It takes a step 50 times a second (see <see cref="ArcadeClock"/>).
+/// for the effect's next step. It takes a step steadily (see <see cref="ArcadeClock"/>).
 ///
 /// <list type="bullet">
 /// <item>Original source: <c>RRX7.ASM</c>/<c>RRHX4.ASM</c>/<c>RRDX2.ASM</c> (the explosion) and
@@ -143,7 +143,7 @@ public sealed class StripEffect : IEntity
     /// <returns>The new appear.</returns>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which makes one of these 50 times a second;
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which makes one of these as the screen is redrawn;
     /// <c>RRX7.ASM</c> <c>APSTV</c>, <c>RRHX4.ASM</c> <c>HAPSTV</c> and <c>RRDX2.ASM</c> <c>APSTZ</c></item>
     /// <item>Disassembly: <c>$5BC6</c> (the vertical routine), <c>$F066</c> (the horizontal one) and
     /// <c>$46E6</c> (the diagonal one)</item>
@@ -191,7 +191,7 @@ public sealed class StripEffect : IEntity
         => new(() => animationFrame, bounds, StripEffectKind.Appear, axis, 0, clip, isClosedUpAtTheEnd: true);
 
     /// <summary>Makes the explosion for something that has been killed. The way the killing laser was going decides how the sprite is cut and how the strips lean.</summary>
-    /// <param name="dead">The thing that was killed. Its animation frame and its explosion box are used.</param>
+    /// <param name="dead">The thing that was killed. Its explosion sprite and its explosion box are used.</param>
     /// <param name="direction">The way the killing laser was going, or null if it was not killed by a laser.</param>
     /// <param name="clip">The inside of the playfield. A strip outside it is not drawn.</param>
     /// <returns>The new explosion.</returns>
@@ -201,7 +201,7 @@ public sealed class StripEffect : IEntity
     public static StripEffect CreateExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {
         (StripFanAxis axis, int slope) = GetFanForShot(direction);
-        return new StripEffect(() => dead.GetCurrentAnimationFrame(), dead.GetExplosionBounds(), StripEffectKind.Explode, axis, slope, clip);
+        return new StripEffect(() => dead.GetExplosionAnimationFrame(), dead.GetExplosionBounds(), StripEffectKind.Explode, axis, slope, clip);
     }
 
     /// <summary>Draws the strips. Each strip is one row or one column of the sprite.</summary>
@@ -252,7 +252,7 @@ public sealed class StripEffect : IEntity
             return;
         }
 
-        // The effect takes a step 50 times a second, as it did in the arcade. A tick comes 60 times a second, so it does not step on every tick (see ArcadeClock).
+        // It does not step on every tick (see ArcadeClock).
         _romFrameTimer += ArcadeClock.UnitsPerPortTick;
         if (_romFrameTimer < ArcadeClock.UnitsPerRomFrame)
         {

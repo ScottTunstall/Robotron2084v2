@@ -26,21 +26,21 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>How long the robot waits between one look at whether the game is live and the next, in 50ths of a second. It decides how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
+    /// <summary>How long the robot waits between one look at whether the game is live and the next. It decides how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
     /// <remarks>
     /// This number is not from the arcade (FID-4a), because this robot is not in the arcade game. The author chose it
     /// to be like the grunt's (<see cref="Grunt"/>).
     /// </remarks>
     private const int LivePollRomFrames = 2;
 
-    /// <summary>How long the robot waits after the look that finds the game live, before its first beat, in 50ths of a second.</summary>
+    /// <summary>How long the robot waits after the look that finds the game live, before its first beat.</summary>
     /// <remarks>
     /// This number is not from the arcade (FID-4a), because this robot is not in the arcade game. The author chose it
     /// to be like the grunt's (<see cref="Grunt"/>).
     /// </remarks>
     private const int FirstBeatNapRomFrames = 10;
 
-    /// <summary>How long one beat lasts, in 50ths of a second. It is the same as a grunt's.</summary>
+    /// <summary>How long one beat lasts. It is the same as a grunt's.</summary>
     private const int BeatIntervalRomFrames = 4;
 
     /// <summary>The most beats the robot waits between steps, when it is not told a number. It is the same as a grunt's.</summary>

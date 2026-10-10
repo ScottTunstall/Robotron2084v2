@@ -36,7 +36,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The most ticks a family member waits before its first step. <see cref="_startStaggerTicks"/> is set to a random number of ticks from one up to this, so that a group of family members does not all start together.</summary>
     private const int StartStaggerTicksMax = 8;
 
-    /// <summary>How long a family member waits between steps, in 50ths of a second. This number is different from the arcade's on purpose. Do not change it back.</summary>
+    /// <summary>How long a family member waits between steps. This number is different from the arcade's on purpose. Do not change it back.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRH11.ASM</c> <c>HUMAN</c>.</item>

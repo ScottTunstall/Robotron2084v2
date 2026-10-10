@@ -27,7 +27,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>When a prog picks a direction, a random number below this decides whether it goes sideways or up and down. Each is picked half the time.</summary>
     private const int AxisFlipSides = 2;
 
-    /// <summary>How long one beat lasts, in 50ths of a second.</summary>
+    /// <summary>How long one beat lasts.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>PROG</c>.</item>
@@ -118,7 +118,18 @@ public sealed class Prog : IExplodable, IRemovable
     // The order the walk animation frames are shown in. Family members walk in the same order.
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
+    /// <summary>The nearest to the right wall, in columns, that the top-left corner of a prog's explosion may be.</summary>
+    /// <remarks>Disassembly: <c>$1F45</c>, <c>LDA #$8A / CMPA $0004,X</c>. The right wall is at column <c>$8F</c>.</remarks>
+    private const int ExplosionColumnsFromRightWallMin = 0x8F - 0x8A;
+
+    /// <summary>The nearest to the bottom wall, in rows, that the top-left corner of a prog's explosion may be.</summary>
+    /// <remarks>Disassembly: <c>$1F4D</c>, <c>LDA #$DB / CMPA $0005,X</c>. The bottom wall is at row <c>$EA</c>.</remarks>
+    private const int ExplosionRowsFromBottomWallMin = 0xEA - 0xDB;
+
     private readonly (int Width, int Height) _collisionSize;
+
+    /// <summary>The inside of the wall as it was on the last update. The explosion uses it to stay clear of the right and bottom walls.</summary>
+    private Rectangle? _playfieldBounds;
 
     /// <summary>The ghosts the prog has left behind it, newest first (see <see cref="Ghost"/>).</summary>
     private readonly List<Ghost> _ghosts = new();
@@ -163,15 +174,20 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>The box the prog takes up on the screen. It is the size of the family member the prog used to be, and it is used to tell what the prog touches.</summary>
     public Rectangle GetBounds() => new(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
 
+    /// <summary>The walk animation frame the prog is showing. It is also used to tell, pixel by pixel, whether something is touching the prog.</summary>
+    /// <returns>The animation frame that is showing.</returns>
+    /// <remarks>Disassembly: the prog's animation frame pointer at <c>$0002,X</c>, which stays on the family member's walk animation frame until the prog is killed.</remarks>
+    public Texture2D GetCurrentAnimationFrame() => _kind.GetAnimationFrames(_sprites)[GetWalkAnimationFrameIndex()];
+
     /// <summary>The sprite that is blown apart when the prog is killed. It is a special sprite for this, not one of the family member's animation frames.</summary>
     /// <returns>The sprite that is blown apart.</returns>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>PRGKIL</c> swaps the sprite to the 12x16 <c>PGXPIC</c>.</item>
-    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
+    /// <item>Disassembly: <c>PROG_COLLISION_DETECTION</c>, <c>$1F40</c>, <c>LDD #$1F68 / STD $0002,X</c>.</item>
     /// </list>
     /// </remarks>
-    public Texture2D GetCurrentAnimationFrame() => _sprites.ProgBurstSprite;
+    public Texture2D GetExplosionAnimationFrame() => _sprites.ProgBurstSprite;
 
     /// <summary>The box the explosion starts in. It is at the prog's top-left corner, and it is the size of the sprite that is blown apart.</summary>
     /// <remarks>
@@ -181,12 +197,14 @@ public sealed class Prog : IExplodable, IRemovable
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
     ///
-    /// The arcade moves the corner back inside the playfield if it is outside. A prog is always inside
-    /// already, so that is not done here.
+    /// The arcade moves the corner left or up when the prog is close to the right wall or the bottom wall, so that
+    /// the explosion starts no further right than <see cref="ExplosionColumnsFromRightWallMin"/> columns from the right
+    /// wall and no lower than <see cref="ExplosionRowsFromBottomWallMin"/> rows from the bottom wall (<c>$1F45</c> to
+    /// <c>$1F53</c>).
     /// </remarks>
     public Rectangle GetExplosionBounds() => new(
-        _position.X,
-        _position.Y,
+        _playfieldBounds is { } rightLimit ? Math.Min(_position.X, rightLimit.Right - ScreenSize.ToPortPixelsFromColumns(ExplosionColumnsFromRightWallMin)) : _position.X,
+        _playfieldBounds is { } bottomLimit ? Math.Min(_position.Y, bottomLimit.Bottom - ScreenSize.ToPortPixelsFromArcadePixels(ExplosionRowsFromBottomWallMin)) : _position.Y,
         ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Width),
         ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Height));
 
@@ -302,6 +320,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
+        _playfieldBounds = field.Wall.PlayfieldBounds;
         if (!this.IsAlive())
         {
             return;

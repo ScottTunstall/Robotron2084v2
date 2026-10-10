@@ -14,7 +14,7 @@ namespace Robotron2084.Entities;
 /// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
 /// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the
 /// short freeze just after the player is killed. <see cref="_beatTimer"/> gathers the ticks until it is time for
-/// the next beat (see <see cref="ArcadeClock"/>). It also moves 50 times a second, timed by
+/// the next beat (see <see cref="ArcadeClock"/>). It also moves steadily, timed by
 /// <see cref="_moveTimer"/>, and <see cref="_growClockUnitsRemaining"/> counts down its growing.
 ///
 /// <list type="bullet">
@@ -61,7 +61,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
 
     private IntVector2 _remainderSubpixels;
 
-    /// <summary>How far the enforcer goes on each move, sideways and up or down, in 256ths of a pixel. It moves 50 times a second.</summary>
+    /// <summary>How far the enforcer goes on each move, sideways and up or down, in 256ths of a pixel. It moves steadily, separately from its beat.</summary>
     private IntVector2 _velocitySubpixels;
 
     /// <summary>Makes an enforcer. It cannot move until it has grown.</summary>
@@ -165,7 +165,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             }
         }
 
-        // The enforcer moves 50 times a second, as it did in the arcade. A tick comes 60 times a second, so it does not move on every tick (see ArcadeClock).
+        // The enforcer does not move on every tick (see ArcadeClock).
         _moveTimer += ArcadeClock.UnitsPerPortTick;
         if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
         {

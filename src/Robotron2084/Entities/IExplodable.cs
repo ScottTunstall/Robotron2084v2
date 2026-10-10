@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Robotron2084.Entities;
 
@@ -11,4 +12,8 @@ public interface IExplodable : IEntity, IAnimationFrameSource
     /// <remarks>ROM: the object's position, with the size of its current animation frame. The prog is different:
     /// its <c>PRGKIL</c> swaps in the 12x16 <c>PGXPIC</c> card where it stands.</remarks>
     Rectangle GetExplosionBounds() => GetBounds();
+
+    /// <summary>The sprite that is cut into strips when the entity is blown apart. It is the animation frame the entity is showing, unless the entity shows a different sprite when it dies.</summary>
+    /// <remarks>ROM: the object's current animation frame. The prog is different: its <c>PRGKIL</c> swaps in the <c>PGXPIC</c> card first.</remarks>
+    Texture2D GetExplosionAnimationFrame() => GetCurrentAnimationFrame();
 }

@@ -8,7 +8,7 @@ namespace Robotron2084.Entities;
 /// <summary>Something on the playfield. It is updated on each tick, it can be drawn, and it can be taken off the field.</summary>
 /// <seealso cref="PlayField"/>
 /// <remarks>
-/// The arcade has nothing like this. It keeps its objects in lists, and 50 times a second it runs each
+/// The arcade has nothing like this. It keeps its objects in lists, and it runs each
 /// object's own routine. <see cref="Update"/> stands for that call. In the disassembly, the list that the
 /// spheroid, enforcer, quark, spark and shell share is <c>object_metadata_list_2_pointer</c> (<c>$9813</c>).
 ///

@@ -23,7 +23,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next, in 50ths of a second. It decides how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
+    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next. It decides how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRP8.ASM</c> <c>ROBOT</c>, <c>BITA #$7F / BEQ ROB0A / NAP 2,ROBOT</c>.</item>
@@ -32,7 +32,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int LivePollRomFrames = 2;
 
-    /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first beat, in 50ths of a second.</summary>
+    /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first beat.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRP8.ASM</c> <c>ROB0A</c>, <c>NAP 10,ROB0</c>.</item>
@@ -41,7 +41,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int FirstBeatNapRomFrames = 10;
 
-    /// <summary>How long one beat lasts, in 50ths of a second.</summary>
+    /// <summary>How long one beat lasts.</summary>
     private const int BeatIntervalRomFrames = 4;
 
     /// <summary>The most beats a grunt waits between steps, when it is not told a number.</summary>

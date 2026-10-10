@@ -11,7 +11,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Tank"/>
 /// <seealso cref="Level.PlayField"/>
 /// <remarks>
-/// It moves 50 times a second, and has a beat every few moves. The <see cref="PlayField"/> calls
+/// It moves steadily, and has a beat every few moves. The <see cref="PlayField"/> calls
 /// <see cref="Update"/> on every tick, through <see cref="FieldEntities"/> and
 /// <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the short freeze just after the player
 /// is killed. <see cref="_frameTimer"/> gathers the ticks until it is time for the next move (see
@@ -49,7 +49,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>How many more moves the shell makes before its next beat.</summary>
     private int _framesToNextBeat = TankShellTuning.BeatIntervalRomFrames;
 
-    /// <summary>Counts up, a tick at a time, to the shell's next move. The shell moves 50 times a second (see <see cref="ArcadeClock"/>).</summary>
+    /// <summary>Counts up, a tick at a time, to the shell's next move. The shell moves on its own clock (see <see cref="ArcadeClock"/>).</summary>
     private int _frameTimer;
 
     private IntVector2 _position;
@@ -182,7 +182,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Runs one tick of the shell. It moves 50 times a second. Every few moves it has a beat, when it bounces off a wall or counts down its life.</summary>
+    /// <summary>Runs one tick of the shell. It moves steadily, separately from its beat. Every few moves it has a beat, when it bounces off a wall or counts down its life.</summary>
     /// <param name="gameTime">Not used. The shell counts ticks.</param>
     /// <param name="field">Not used.</param>
     /// <remarks>

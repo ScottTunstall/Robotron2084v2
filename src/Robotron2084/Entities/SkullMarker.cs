@@ -25,7 +25,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class SkullMarker : IEntity
 {
-    /// <summary>How long the skull stays on the field, in 50ths of a second. It is changed to ticks to set <see cref="_ticksRemaining"/>, which then counts down to nothing.</summary>
+    /// <summary>How long the skull stays on the field. It is turned into ticks to set <see cref="_ticksRemaining"/>, which then counts down to nothing.</summary>
     private const int LifeRomFrames = 90;
 
     /// <summary>How big the skull is, in port pixels. It is the size of the skull's sprite.</summary>

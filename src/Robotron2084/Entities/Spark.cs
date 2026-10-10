@@ -113,7 +113,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     internal IntVector2 AccelerationSubpixels => _accelerationSubpixels;
 
     /// <summary>Which of the flicker animation frames is showing, counting from 0.</summary>
-    /// <remarks>ROM: there are 4 flicker animation frames. Each one is shown for 4 fiftieths of a second.</remarks>
+    /// <remarks>ROM: there are 4 flicker animation frames. Each one is shown for a short time.</remarks>
     internal int GetAnimationFrameIndex() => _flickerTimer / ArcadeClock.ToClockUnits(SparkTuning.SparkFrameIntervalRomFrames) % SpriteSet.SparkAnimationFrameCount;
 
     /// <summary>How far the spark goes on each move, sideways and up or down, in 256ths of a pixel. Tests use this.</summary>
@@ -170,7 +170,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
                 _velocitySubpixels.Y + _accelerationSubpixels.Y);
         }
 
-        // The spark moves 50 times a second, as it did in the arcade. A tick comes 60 times a second, so it does not move on every tick (see ArcadeClock).
+        // The spark does not move on every tick (see ArcadeClock).
         _moveTimer += ArcadeClock.UnitsPerPortTick;
         if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
         {

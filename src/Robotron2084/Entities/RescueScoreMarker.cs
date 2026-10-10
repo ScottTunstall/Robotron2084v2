@@ -24,7 +24,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class RescueScoreMarker : IEntity
 {
-    /// <summary>How long the number stays on the field, in 50ths of a second. It is changed to ticks to set <see cref="_ticksRemaining"/>, which then counts down to nothing.</summary>
+    /// <summary>How long the number stays on the field. It is turned into ticks to set <see cref="_ticksRemaining"/>, which then counts down to nothing.</summary>
     private const int LifeRomFrames = 60;
 
     private static readonly int Size = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EntitySizeArcadePixels);

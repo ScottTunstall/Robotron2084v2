@@ -26,7 +26,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 {
-    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next, in 50ths of a second. It decides how long after the game goes live the first step comes (<see cref="BeginPlay"/>).</summary>
+    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next. It decides how long after the game goes live the first step comes (<see cref="BeginPlay"/>).</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRH11.ASM</c> <c>HULK</c> ("WAIT FOR STATUS TO GO"), <c>BITA #$7F / BEQ
@@ -202,11 +202,11 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where the hulk's top-left corner is.</param>
     /// <param name="random">Where its random numbers come from. They pick how many steps it takes before it turns, and move its aim a little.</param>
-    /// <param name="beatIntervalRomFrames">How long the hulk waits between steps, in 50ths of a second (ROM: <c>HLKSPD</c>). A bigger number makes a slower hulk.</param>
+    /// <param name="beatIntervalRomFrames">How long the hulk waits between steps (ROM: <c>HLKSPD</c>). A bigger number makes a slower hulk.</param>
     /// <param name="getTargetPosition">Gives the place the hulk is heading for now. <see cref="Level.Spawning.HulkWaveSpawner"/> decides what that is: the player, a family member, or a spot off the corner of the playfield.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRH11.ASM</c> <c>HLKSPD</c>. The time between beats is from 5 to 8 fiftieths
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HLKSPD</c>. The time between beats is set by the wave
     /// of a second.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
     /// </list>

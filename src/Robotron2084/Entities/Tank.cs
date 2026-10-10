@@ -25,7 +25,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next, in 50ths of a second. It decides how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
+    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next. It decides how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>TANK</c>, <c>BITA #$7F / BEQ TANKL / NAP 15,TANK</c>,
@@ -344,7 +344,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>MTANK</c> ("MINI TANK GROW"): four small-tank animation
-    /// frames, each shown for 12 fiftieths of a second.</item>
+    /// frames, each shown for a short time.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     /// </list>
     /// </remarks>
