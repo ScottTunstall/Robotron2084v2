@@ -39,6 +39,8 @@ the arcade's behaviour can be had back. A port-only addition (Gorf, the Berzerk 
 port-only in its summary. A known difference that has not been fixed yet is written in the notes as "still not the
 arcade", so that it is not mistaken for a decision.
 
+**FID-4a. Gorf and the Berzerk robot are not in the arcade game.** Robotron 2084 (the arcade machine this port is based on) has neither. Gorf (its attract-mode sprites and paths, `GorfPath`, `Gorf`) and the Berzerk robot (`BerzerkRobot`, its sprites and animation) were added by the port, and they are not arcade behaviour. Their code, comments and tests must say so, under FID-4, and must never cite the arcade as their source. Do not describe either as arcade-accurate, and do not let a fidelity test pin them to a ROM value.
+
 **FID-5. Faithfulness comes before tidiness.** If a clean-code rule and the arcade's behaviour pull in different
 directions, keep the behaviour and find another way to make the code clean. A refactor never changes what the game does
 (PROC-3).
