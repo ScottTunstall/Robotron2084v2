@@ -19,10 +19,12 @@ namespace Robotron2084.Persistence;
 /// bozomode=1
 /// </code>
 ///
-/// A missing file, or one with anything unreadable in it, yields the factory settings rather than
-/// throwing — the same "a fresh cabinet comes up with its defaults" rule the other stores follow.
-/// A value outside the arcade's own range (or, for EXTRA MAN EVERY, off its five-stop list) is
-/// ignored, so a hand edit cannot put the game into a state the cabinet could not reach.
+/// A missing file yields the factory settings — the same "a fresh cabinet comes up with its
+/// defaults" rule the other stores follow. A value outside the arcade's own range (or, for
+/// EXTRA MAN EVERY, off its five-stop list) is ignored, so a hand edit cannot put the game
+/// into a state the cabinet could not reach. A file that EXISTS but cannot be opened (locked,
+/// access denied) throws a <see cref="PersistenceException"/> naming it (ERR-1): silently
+/// falling back would let the next save overwrite the user's settings.
 /// </summary>
 public sealed class GameSettingsStore
 {
@@ -42,9 +44,17 @@ public sealed class GameSettingsStore
         {
             return Parse(File.ReadAllLines(path));
         }
-        catch (Exception)
+        catch (FileNotFoundException)
         {
-            return GameSettings.CreateFactoryDefaults();
+            return GameSettings.CreateFactoryDefaults(); // removed between the check and the read
+        }
+        catch (IOException exception)
+        {
+            throw new PersistenceException($"The game settings file {path} could not be read: {exception.Message}", exception);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            throw new PersistenceException($"The game settings file {path} could not be opened: {exception.Message}", exception);
         }
     }
 

@@ -4,9 +4,11 @@ using Xunit;
 namespace Robotron2084.Tests.Persistence;
 
 /// <summary>
-/// The settings INI file (notes §131). Like the controls file it must round-trip exactly and fall
-/// back to the factory values rather than throw, and — because it can be hand-edited — a value the
-/// cabinet itself could not hold must be ignored rather than put the game into an unreachable state.
+/// The settings INI file (notes §131). Like the controls file it must round-trip exactly, and a
+/// missing file yields the factory values. Because it can be hand-edited, a value the cabinet
+/// itself could not hold is ignored rather than putting the game into an unreachable state. A file
+/// that EXISTS but cannot be opened throws a <see cref="PersistenceException"/> naming it (ERR-1):
+/// silently falling back would let the next save overwrite the user's settings.
 /// </summary>
 public sealed class GameSettingsStoreTests
 {
@@ -21,6 +23,27 @@ public sealed class GameSettingsStoreTests
         Assert.Equal(25, loaded.ExtraManEvery);
         Assert.Equal(3, loaded.TurnsPerPlayer);
         Assert.Equal(5, loaded.Difficulty);
+    }
+
+    [Fact]
+    public void AFileThatCannotBeOpened_ThrowsNamingTheFile()
+    {
+        string path = TempFile();
+        File.WriteAllText(path, "[game]\n");
+        try
+        {
+            // Hold the file with no sharing so the store's read fails the way a locked file does;
+            // the handle is released before the finally deletes the file.
+            using var lockHandle = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
+
+            PersistenceException exception = Assert.Throws<PersistenceException>(() => GameSettingsStore.Load(path));
+
+            Assert.Contains(path, exception.Message); // the user must be told WHICH file failed
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     [Fact]

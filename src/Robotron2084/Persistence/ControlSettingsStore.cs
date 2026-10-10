@@ -23,10 +23,11 @@ namespace Robotron2084.Persistence;
 /// input=P
 /// </code>
 ///
-/// A missing file, or one with anything unreadable in it, yields the factory scheme
-/// rather than throwing — the same "a fresh cabinet comes up with its defaults" rule
-/// <see cref="HighScoreStore"/> follows. Unknown sections, names and values are
-/// ignored, so a file written by a later build still loads.
+/// A missing file yields the factory scheme — the same "a fresh cabinet comes up with its
+/// defaults" rule <see cref="HighScoreStore"/> follows. Unknown sections, names and values
+/// are ignored, so a file written by a later build still loads. A file that EXISTS but cannot
+/// be opened (locked, access denied) throws a <see cref="PersistenceException"/> naming it
+/// (ERR-1): silently falling back would let the next save overwrite the user's scheme.
 /// </summary>
 public sealed class ControlSettingsStore
 {
@@ -44,9 +45,17 @@ public sealed class ControlSettingsStore
         {
             return Parse(File.ReadAllLines(path));
         }
-        catch (Exception)
+        catch (FileNotFoundException)
         {
-            return ControlSettings.CreateDefaults();
+            return ControlSettings.CreateDefaults(); // removed between the check and the read
+        }
+        catch (IOException exception)
+        {
+            throw new PersistenceException($"The control definitions file {path} could not be read: {exception.Message}", exception);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            throw new PersistenceException($"The control definitions file {path} could not be opened: {exception.Message}", exception);
         }
     }
 

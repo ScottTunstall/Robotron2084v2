@@ -11,8 +11,10 @@ namespace Robotron2084.Persistence;
 /// <c>LDX #TODTAB / LDY #TODAYS / CMSMVV</c>), so the port does too
 /// (<see cref="HighScoreTable.CreateFromSaved"/>).
 ///
-/// A missing or corrupt file yields the ROM's factory defaults rather than
-/// throwing, the same way a fresh cabinet comes up with RRTESTC's default table.
+/// A missing file yields the ROM's factory defaults, the same way a fresh cabinet
+/// comes up with RRTESTC's default table. A file that EXISTS but cannot be read or
+/// parsed throws a <see cref="PersistenceException"/> naming it (ERR-1): silently
+/// falling back would let the next save overwrite the user's table.
 /// </summary>
 public sealed class HighScoreStore
 {
@@ -31,9 +33,21 @@ public sealed class HighScoreStore
             SavedTable? saved = JsonSerializer.Deserialize<SavedTable>(File.ReadAllText(path));
             return HighScoreTable.CreateFromSaved(saved?.Top, saved?.AllTime);
         }
-        catch (Exception)
+        catch (FileNotFoundException)
         {
-            return HighScoreTable.CreateWithFactoryScores();
+            return HighScoreTable.CreateWithFactoryScores(); // removed between the check and the read
+        }
+        catch (JsonException exception)
+        {
+            throw new PersistenceException($"The high score table file {path} is not valid JSON: {exception.Message}", exception);
+        }
+        catch (IOException exception)
+        {
+            throw new PersistenceException($"The high score table file {path} could not be read: {exception.Message}", exception);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            throw new PersistenceException($"The high score table file {path} could not be opened: {exception.Message}", exception);
         }
     }
 

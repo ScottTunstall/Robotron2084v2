@@ -167,16 +167,22 @@ public sealed class HighScoreTableTests
     }
 
     [Fact]
-    public void Store_WithNoFileOrABrokenOne_YieldsTheFactoryTable()
+    public void Store_WithNoFile_YieldsTheFactoryTable()
     {
         string missing = Path.Combine(Path.GetTempPath(), $"robotron-hs-{Guid.NewGuid():N}.json");
         Assert.Equal(151782, HighScoreStore.Load(missing).Top.Score);
+    }
 
+    [Fact]
+    public void Store_WithAnUnreadableJsonFile_ThrowsNamingTheFile()
+    {
         string broken = Path.Combine(Path.GetTempPath(), $"robotron-hs-{Guid.NewGuid():N}.json");
         File.WriteAllText(broken, "{ not json at all");
         try
         {
-            Assert.Equal(HighScoreTable.CreateWithFactoryScores().AllTime, HighScoreStore.Load(broken).AllTime);
+            PersistenceException exception = Assert.Throws<PersistenceException>(() => HighScoreStore.Load(broken));
+
+            Assert.Contains(broken, exception.Message); // the user must be told WHICH file failed
         }
         finally
         {
