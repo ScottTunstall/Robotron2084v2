@@ -50,10 +50,9 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private int _beatTimer;
     private int _fireCooldownBeats;
     private int _growClockUnitsRemaining;
-    private int _moveTimer;
+    private int _moveTimer; // Counts up towards the next move. It moves once per ROM frame (see ArcadeClock).
     private IntVector2 _position;
 
-    // Counts up to the next move: one per ROM frame
     private int _reaimBeatsRemaining;
 
     private IntVector2 _remainderSubpixels;
@@ -78,10 +77,10 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
         _growClockUnitsRemaining = ArcadeClock.ToClockUnits(EnforcerTuning.GrowUpRomFrames);
-        // Both countdowns are in beats; the arcade re-aims as soon as the grow-up ends.
+        // Both countdowns are counted in beats (see ArcadeClock). The enforcer aims again as soon as its grow-up ends.
         _reaimBeatsRemaining = 0;
         _fireCooldownBeats = 1 + random.Next(0, _fireIntervalBeats);
-        // The mover starts on its first active frame; the accumulator is still while growing.
+        // The mover starts on the first frame it is active. Its velocity accumulator stays still while it grows.
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
@@ -152,7 +151,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             return;
         }
 
-        // Grow-up: immobile and silent; the carry keeps the animation frames on the ROM's 9-frame mark.
+        // While it grows up it cannot move and makes no sound. The carry keeps the animation frames in step with the ROM's 9-frame mark.
         if (_growClockUnitsRemaining > 0)
         {
             _growClockUnitsRemaining -= ArcadeClock.UnitsPerPortTick;
@@ -162,7 +161,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             }
         }
 
-        // One velocity integration per ROM frame.
+        // The velocity is added to the position once per ROM frame (see ArcadeClock).
         _moveTimer += ArcadeClock.UnitsPerPortTick;
         if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
         {
@@ -178,7 +177,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
 
         _beatTimer -= ArcadeClock.ToClockUnits(EnforcerTuning.BeatIntervalRomFrames);
 
-        // Both countdowns tick once per beat (ROM: ENFR1).
+        // Both countdowns go down once per beat (see ArcadeClock) (ROM: ENFR1).
         if (--_reaimBeatsRemaining <= 0)
         {
             _reaimBeatsRemaining = NextReaimBeats(_random);
@@ -190,7 +189,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             _fireCooldownBeats = NextFireBeats(_random);
             if (field.GetActiveSparkCount() < SparkTuning.GlobalActiveSparkCap)
             {
-                // The ROM aims with the player's position, so velocity follows distance per axis.
+                // The arcade aims at the Player's position, so the velocity follows the distance to the Player on each axis. (see Player)
                 field.SpawnSpark(_position, field.Player.Position);
             }
         }
@@ -238,7 +237,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
 
         IntVector2 delta = new(targetX - _position.X, targetY - _position.Y);
 
-        // Velocity is in 1/256-port-px units per ROM frame.
+        // The velocity is in 1/256ths of a port pixel, per ROM frame (see ArcadeClock).
         _velocitySubpixels = new IntVector2(delta.X / ApproachDivisor, delta.Y / ApproachDivisor);
     }
 }

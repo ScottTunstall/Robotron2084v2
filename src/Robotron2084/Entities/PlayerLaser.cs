@@ -68,7 +68,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // The ROM draws the laser in its flashing palette slot, so the whole bolt flashes with it.
+        // The arcade draws the laser in a colour that flashes, so the whole bolt flashes with it.
         _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
     }
 
@@ -94,13 +94,13 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // The wall is tested along the whole step, not only where the laser lands: a laser fired from beside the
-        // wall can start inside it and finish a step past it, and would otherwise fly on.
+        // The wall is tested along the whole step, not only where the laser lands. A laser fired from beside a
+        // wall can start inside it and finish a step past it, so without this test it would fly on through.
         Rectangle boundsBeforeMove = GetBounds();
         _position += Direction.ToIntVector() * PlayerTuning.LaserSpeed;
         if (field.HitsWall(Rectangle.Union(boundsBeforeMove, GetBounds())))
         {
-            // RRG23 LASDIE: a brief flare in the wave's LASCOL slot, then the wall colour.
+            // When it hits the wall, a short flare is shown in the wave's laser colour slot, then the wall colour (ROM: RRG23 LASDIE).
             field.SpawnLaserWallFlare(GetBounds(), Direction);
             Kill();
         }

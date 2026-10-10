@@ -65,7 +65,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 
     private IntVector2 _position;
 
-    private int _walkAnimationFrameNumber = 1;
+    private int _walkAnimationFrameNumber = 1; // The arcade's walk animation frame number, 1 to 4. A newly spawned grunt starts on frame 1.
 
     /// <summary>Creates a grunt, with its first stagger already rolled.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -83,7 +83,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         _position = position;
         _moveLimitBeats = moveLimitBeats;
         _random = random ?? new Random();
-        // The spawn countdown is a random 1..this wave's stagger limit, in beats.
+        // The spawn countdown is a random number of beats (see ArcadeClock) from 1 up to this wave's stagger limit.
         _moveCountdownBeats = _random.Next(1, _moveLimitBeats + 1);
     }
 
@@ -107,7 +107,6 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>True when the grunt took a step during the last update (it asks for the robot-move sound).</summary>
     public bool SteppedThisUpdate { get; private set; }
 
-    // the ROM's walk animation frame 1..4; a freshly spawned grunt starts on animation frame 1
     /// <summary>Top-left of the grunt.</summary>
     /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position => _position;
@@ -195,7 +194,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        // One beat pass; only the step branch below advances the walk frame.
+        // One beat (see ArcadeClock). Only the step part below moves the walk frame on.
         _beatTimer -= BeatIntervalClockUnits;
 
         if (--_moveCountdownBeats > 0)
@@ -205,7 +204,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 
         _moveCountdownBeats = _random.Next(1, _moveLimitBeats + 1);
         SteppedThisUpdate = true;
-        _walkAnimationFrameNumber = _walkAnimationFrameNumber % WalkAnimationFrameCount + 1; // DRAW_GRUNT: one frame per step
+        _walkAnimationFrameNumber = _walkAnimationFrameNumber % WalkAnimationFrameCount + 1; // Moves the walk frame on by one for each step (DRAW_GRUNT).
 
         _position = GruntChaseStep.GetNextPosition(_position, field.Player.Position, field.Wall.PlayfieldBounds, CollisionSize);
     }

@@ -54,10 +54,10 @@ public sealed class StripEffect : IEntity
     private Rectangle _bounds;
     private readonly StripClip _clip;
     private readonly StripEffectKind _kind;
-    private readonly int _slope;          // the diagonal lean: -1 / 0 / +1 (ROM: SLOPE)
+    private readonly int _slope;          // which way the cut leans: -1 one way, 0 not at all, +1 the other way (ROM: SLOPE)
     private int _romFramesRemaining;
-    private int _spacingAccumulator;                   // the spacing accumulator; its high byte is this frame's step (ROM: YSIZER)
-    private int _romFrameTimer;                  // Counts up to the next ROM frame: 5 per tick, 6 per arcade frame (notes §52, §67.4)
+    private int _spacingAccumulator;                   // adds up the spacing each frame; its high byte is how far the strips move this frame (ROM: YSIZER)
+    private int _romFrameTimer;                  // Counts up to the next ROM frame (one redraw of the arcade screen; see docs/glossary.md). Each port tick adds 5 and a ROM frame takes 6 (see ArcadeClock; notes §52, §67.4)
 
     /// <summary>True once an appear has taken its first step. The arcade draws nothing for an appear until then.</summary>
     private bool _hasAppearBeenDrawn;
@@ -85,15 +85,15 @@ public sealed class StripEffect : IEntity
         _romFrameTimer = startClockUnits;
         _getFollowedBounds = getFollowedBounds;
 
-        // The vertical and the horizontal routines shrink an appear by half a row a frame, and the diagonal one by a whole row.
+        // The vertical and horizontal effects shrink an appearing sprite by half a row each frame. The diagonal one shrinks it by a whole row.
         StripEngine engine = GetEngine();
         _appearSizerStep = engine == StripEngine.Diagonal ? StripExplosionTuning.SizerStep : StripExplosionTuning.SlowAppearSizerStep;
         _smallestAppearSpacing = isClosedUpAtTheEnd || engine == StripEngine.Horizontal
             ? StripExplosionTuning.SmallestClosedAppearSpacing
             : StripExplosionTuning.SmallestAppearSpacing;
 
-        // The spacing accumulator starts small for an explosion ("1 unit is the minimum") or large
-        // for an appear, so it can shrink back down; an explosion also gets a frame count.
+        // The spacing starts small for an explosion (one unit is the least it can be) and large for an appear, so an appear can shrink back down.
+        // An explosion also gets a frame count, which says how many frames it lasts.
         _spacingAccumulator = kind == StripEffectKind.Explode
             ? StripExplosionTuning.ExplosionStartSizer
             : StripExplosionTuning.AppearStartSizer;
@@ -206,13 +206,13 @@ public sealed class StripEffect : IEntity
 
         Texture2D animationFrame = _getAnimationFrame();
 
-        // The sprite's width is in pixels and its height in rows; do not scale them back down (see Layout).
+        // The sprite's width is in pixels and its height is in rows. Do not scale them down again (see Layout).
         int spriteWidth = animationFrame.Width;
         int spriteRows = animationFrame.Height;
 
         foreach (Strip strip in LayOutStrips(spriteWidth, spriteRows))
         {
-            // Sources are in texture pixels; destinations are in screen pixels (pixel x SpecScale).
+            // The source rectangle is in the sprite's texture pixels. The destination is in screen pixels, where each texture pixel is SpecScale of them.
             Rectangle source = _axis == StripFanAxis.Rows
                 ? new Rectangle(0, strip.SourceIndex, spriteWidth, 1)
                 : new Rectangle(strip.SourceIndex, 0, 1, spriteRows);
@@ -243,7 +243,7 @@ public sealed class StripEffect : IEntity
             return;
         }
 
-        // One step per ROM frame, not one per tick (see the remarks).
+        // The effect moves once per ROM frame, not once per port tick (see ArcadeClock).
         _romFrameTimer += ArcadeClock.UnitsPerPortTick;
         if (_romFrameTimer < ArcadeClock.UnitsPerRomFrame)
         {
@@ -254,7 +254,7 @@ public sealed class StripEffect : IEntity
 
         if (_kind == StripEffectKind.Explode)
         {
-            // Count the frame down; at zero the explosion is gone.
+            // Count the frame down. When it reaches zero the explosion has finished and the effect is removed.
             if (--_romFramesRemaining <= 0)
             {
                 LifeState = EntityLifeState.Dead;
@@ -332,13 +332,13 @@ public sealed class StripEffect : IEntity
     /// leaning opposite ways. These two branches are easy to swap by mistake.</remarks>
     internal static (StripFanAxis Axis, int Slope) GetFanForShot(Direction8? direction) => direction switch
     {
-        // A pure vertical shot → cut into columns.
+        // A straight up or down laser shot is cut into columns.
         Direction8.Up or Direction8.Down => (StripFanAxis.Columns, 0),
 
-        // A pure horizontal shot, and every non-laser kill → cut into rows.
+        // A straight left or right laser shot, and anything killed by something other than a laser, is cut into rows.
         Direction8.Left or Direction8.Right or null => (StripFanAxis.Rows, 0),
 
-        // The diagonals: the row split, leaning.
+        // Diagonal laser shots are cut into rows, and the rows lean.
         Direction8.UpLeft or Direction8.DownRight => (StripFanAxis.Rows, -1),
         Direction8.UpRight or Direction8.DownLeft => (StripFanAxis.Rows, 1),
         _ => (StripFanAxis.Rows, 0),
@@ -393,28 +393,28 @@ public sealed class StripEffect : IEntity
             spacing = 1;
         }
 
-        // The fan's fixed point is the strip it was given, or the sprite's middle when it was given none.
+        // The fan spreads out from the strip it was given as its fixed point, or from the middle of the sprite if it was given none.
         int split = GetCentreStripIndex(extent);
 
-        // The sprite is drawn centred in the bounds, so the fan must start from its own top-left.
+        // The sprite is centred in its bounds, so the fan must start from the sprite's own top-left corner.
         (int spriteLeft, int spriteTop) = GetSpritePlacement(_bounds, spriteWidth, spriteRows);
 
-        // The fixed point's own screen row/column.
+        // The fixed point's screen row or column.
         int centre = (fansByRows ? spriteTop : spriteLeft) + split;
 
-        // One unit is ONE pixel of the sprite along the fan axis, for BOTH families: counting the
-        // horizontal family in byte columns (2 px) would fly it off at twice the ROM's rate.
+        // One unit is one pixel of the sprite along the fan axis, for both the vertical and the horizontal effects. Counting the
+        // horizontal effects in byte columns (2 pixels each) would fly them apart at twice the ROM's rate.
         int step = spacing;
 
-        // The ROM's base: centre minus (size x offset) plus half a step. The "obscure bug" guard
-        // (no half step when the offset is zero) is kept, though a middle-anchored fan never has one.
+        // The start point is the centre, minus the size times the offset, plus half a step. The ROM's "obscure bug" check
+        // is kept: when the offset is zero there is no half step. A fan anchored in the middle never has one anyway.
         int half = split == 0 ? 0 : (spacing >> 1);
         int fanBase = centre - (spacing * split) + half;
 
-        // The diagonal lean is half the current step, signed by the shot's diagonal: strip i shifts
-        // sideways in proportion to its distance from the split, so the two halves lean opposite ways.
-        // The lean is measured in COLUMNS of the sprite the ROM cuts up, which is a pixel distance;
-        // scaling it by SpecScale instead made the chevron open wider as the render scale rose.
+        // The diagonal lean is half the current step, with its sign set by the shot's diagonal. Each strip shifts
+        // sideways in proportion to its distance from the split, so the two halves lean in opposite directions.
+        // The lean is measured in the columns of the sprite the ROM cuts up, which are pixel distances.
+        // Scaling it by SpecScale made the chevron open wider as the render scale rose, so it is not scaled.
         int drift = _slope * ((spacing >> 1) * ScreenSize.ArcadePixelsPerColumn);
 
         for (int i = 0; i < extent; i++)

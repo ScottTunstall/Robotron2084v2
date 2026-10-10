@@ -194,7 +194,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         _beatIntervalClockUnits = ArcadeClock.ToClockUnits(beatIntervalRomFrames);
         _getTargetPosition = getTargetPosition;
         _reaimStepsRemaining = RollReaimSteps();
-        _direction = Direction8.Up; // placeholder — the first Update() call picks the real starting direction
+        _direction = Direction8.Up; // A placeholder: the first Update call picks the real starting direction.
         _animationFrameIndex = VerticalAnimationFrames[0];
     }
 
@@ -289,7 +289,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 
         _beatTimer -= _beatIntervalClockUnits;
 
-        // Show this cycle's walk frame, then move; sideways steps alternate short and long.
+        // Show this cycle's walk frame, then move. Sideways steps alternate between short and long.
         _animationFrameIndex = GetFrames(_direction)[_walkCycleStep];
         int stepArcadePixels = _isMovingHorizontally
             ? (_walkCycleStep % 2 == 0 ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels)
@@ -298,7 +298,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.ToPortPixels(stepArcadePixels);
         if (field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
-            // That step would cross the wall — stay put and re-aim.
+            // That step would go through the wall, so the hulk stays put and aims again.
             Reaim(field);
             return;
         }
@@ -319,7 +319,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     {
         Direction8.Left => LeftAnimationFrames,
         Direction8.Right => RightAnimationFrames,
-        _ => VerticalAnimationFrames, // the ROM draws DOWN and UP with the same set of animation frames
+        _ => VerticalAnimationFrames, // The arcade draws DOWN and UP with the same set of animation frames.
     };
 
     /// <summary>Picks the hulk's first direction, which is always sideways, and starts its walk animation from the first frame.</summary>
@@ -353,7 +353,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         else
         {
             int targetY = target.Y + offset;
-            if (targetY < bounds.Y) // aiming above the top wall — redirect to the bottom wall instead
+            if (targetY < bounds.Y) // Aiming above the top wall, so it aims at the bottom wall instead.
             {
                 targetY = bounds.Bottom - CollisionSize.Height;
             }

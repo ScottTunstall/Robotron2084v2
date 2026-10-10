@@ -112,7 +112,7 @@ public sealed class Prog : IExplodable, IRemovable
 
     private const int WrapMarginYRows = 18;
 
-    // The walk cycle: animation frame 1, 2, 1, 3 — the same A-B-A-C pattern the humans use.
+    // The walk cycle is animation frames 1, 2, 1, 3: the same A-B-A-C pattern the humans use.
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
     private readonly (int Width, int Height) _collisionSize;
@@ -123,19 +123,21 @@ public sealed class Prog : IExplodable, IRemovable
     private readonly HumanKind _kind;
     private readonly Random _random;
     private readonly SpriteSet _sprites;
+    // Counts up towards the next beat (see ArcadeClock).
     private int _beatTimer;
 
+    // The direction the prog is walking in. It is set on the prog's first beat.
     private Direction8 _direction = Direction8.Down;
 
+    // This prog's aim offset on X: the distance it aims to the side of the Player. It is rerolled now and then. (see Player)
     private int _offsetX;
 
-    // this prog's persistent aim-offset on X, re-rolled occasionally
+    // This prog's aim offset on Y: the distance it aims above or below the Player. It is rerolled now and then. (see Player)
     private int _offsetY;
 
     private IntVector2 _position;
 
-    // set on the first beat
-    // counts up toward the next beat
+    // Which entry of WalkCycle comes next, from 0 to 3.
     private int _walkCycleStep;
 
     /// <summary>Makes a prog where the human was, carrying that human's animation frames and box.</summary>
@@ -152,7 +154,7 @@ public sealed class Prog : IExplodable, IRemovable
         _collisionSize = (
             ScreenSize.ToPortPixels(kind.GetArcadeCollisionSize().Width),
             ScreenSize.ToPortPixels(kind.GetArcadeCollisionSize().Height));
-        RollOffsets(); // ROM PROGST calls GPOFF at creation
+        RollOffsets(); // As in the arcade, PROGST calls GPOFF when a prog is made.
     }
 
     /// <summary>The converted human's own box at <see cref="Position"/> (a prog keeps its victim's size).</summary>
@@ -241,9 +243,6 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>How many clock units pass between one beat and the next. A prog's <see cref="_beatTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a beat happens and this is subtracted from it.</summary>
     private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
 
-    // which entry of WalkCycle comes next (0-3)
-    // this prog's persistent aim-offset on Y
-
     /// <summary>One shadow-ring entry: a position the prog vacated and the pose it was drawn in.</summary>
     /// <remarks>A ghost is blitted once and never re-blitted, so it keeps its creation pose for life.</remarks>
     private readonly record struct Ghost(IntVector2 Position, int AnimationFrameIndex);
@@ -260,8 +259,8 @@ public sealed class Prog : IExplodable, IRemovable
         Texture2D[] frames = _kind.GetAnimationFrames(_sprites);
         Texture2D animationFrame = frames[GetWalkAnimationFrameIndex()];
 
-        // Oldest ghost first so newer ones paint over it; each is drawn once, in the pose it
-        // had when dropped, so the trail is frozen snapshots rather than an animation.
+        // The oldest ghost is drawn first, so the newer ones paint over it. Each ghost is drawn once, in the pose it
+        // had when it was dropped. The trail is a set of frozen pictures, not an animation.
         for (int i = _ghosts.Count - 1; i >= 0; i--)
         {
             Ghost ghost = _ghosts[i];
@@ -321,11 +320,11 @@ public sealed class Prog : IExplodable, IRemovable
             return;
         }
 
-        // The animation advances on every beat, even if the step below is refused.
+        // The animation moves on at every beat (see ArcadeClock), even when the step below is refused.
         _beatTimer -= BeatIntervalClockUnits;
         _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
 
-        // Re-roll the offsets first: picking a direction uses whatever offset is current.
+        // Reroll the offsets first, because choosing a direction uses the offsets that are current.
         if (_random.Next(ThresholdRollSides) > ReOffsetThreshold256)
         {
             RollOffsets();
@@ -337,15 +336,15 @@ public sealed class Prog : IExplodable, IRemovable
             _walkCycleStep = 0;
         }
 
-        // Drop a ghost at the square being left, remembering its pose. Refused steps drop one too;
-        // the trail keeps 7 and never redraws an older one (ROM: PROG3).
+        // Drop a ghost on the square being left, remembering its pose. A refused step drops one too;
+        // the trail keeps the last 7 ghosts and never redraws an older one (ROM: PROG3).
         _ghosts.Insert(0, new Ghost(_position, GetWalkAnimationFrameIndex()));
         if (_ghosts.Count > ProgTuning.GhostCount)
         {
             _ghosts.RemoveAt(_ghosts.Count - 1);
         }
 
-        // 2 columns (4px) on X or 4 rows (4px) on Y, on one axis only.
+        // The step is 2 columns (4 pixels) on X, or 4 rows (4 pixels) on Y, on one axis only.
         int stepX = ScreenSize.ToPortPixelsFromColumns(StepXColumns);
         int stepY = ScreenSize.ToPortPixels(StepYRows);
         IntVector2 step = _direction switch
@@ -364,7 +363,7 @@ public sealed class Prog : IExplodable, IRemovable
         }
         else
         {
-            // A refused step is dropped entirely and the prog re-aims (ROM: CKLIM fails → GPDIR).
+            // A refused step is dropped completely and the prog aims again (ROM: CKLIM fails, then GPDIR).
             _direction = PickDirection(field);
             _walkCycleStep = 0;
         }
@@ -404,7 +403,7 @@ public sealed class Prog : IExplodable, IRemovable
 
         if (_random.Next(AxisFlipSides) == 0)
         {
-            // The offset is in columns, so convert to pixels first.
+            // The offset is in columns, so convert it to pixels first.
             int aimX = player.X + ScreenSize.ToPortPixelsFromColumns(_offsetX);
             if (aimX > bounds.Right + ScreenSize.ToPortPixelsFromColumns(WrapMarginXColumns))
             {

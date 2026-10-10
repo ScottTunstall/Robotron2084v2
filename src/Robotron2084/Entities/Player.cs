@@ -48,7 +48,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private readonly Random _random;
     private readonly SpriteSet _sprites;
 
-    // A wave starts on frame 7, the first DOWN frame; _animationFrameTicks counts 1..3.
+    // A wave starts on frame 7, the first DOWN frame. _animationFrameTicks counts from 1 to 3 while a frame is shown.
     private WalkSequence _walkSequence = GetWalkSequence(Direction8.Down);
 
     private int _animationFrameTicks = 1;
@@ -58,7 +58,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private int _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
     private int _deathFlashSlot = PlayerTuning.PlayerDeathWhiteSlot;
 
-    // Death: a solid-colour flash loop, then the slot-12 fade (ROM: RRX7.ASM; see the remarks).
+    // Death: a loop of solid-colour flashes, then a fade through colour slot 12 (ROM: RRX7.ASM).
     private DeathStage _deathStage = DeathStage.White;
 
     private int _deathTimer;
@@ -173,13 +173,13 @@ public sealed class Player : IEntity, IAnimationFrameSource
             return;
         }
 
-        // While invincible: visible/hidden tick-toggle flicker (no alpha blending).
+        // While invincible, the Player flickers on and off every tick (see ArcadeClock). There is no see-through blending.
         if (IsInvincible() && _invincibilityBlinkTicks >= PlayerTuning.InvincibilityFlickerVisibleTicks)
         {
             return;
         }
 
-        // One colour while dying, like the ROM's own solid-colour draw.
+        // One colour while dying, like the arcade's own solid-colour drawing.
         if (this.IsDying())
         {
             _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
@@ -195,7 +195,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     {
         if (InvincibleForTesting)
         {
-            return; // TEMPORARY playtest aid — see the property and the constant.
+            return; // A playtest aid that makes the Player unkillable (see InvincibleForTesting).
         }
 
         if (!this.IsAlive())
@@ -218,12 +218,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
         if (this.IsDying())
         {
-            // Death animation: no movement.
+            // While the death animation plays, the Player does not move.
             AdvanceDeath(field);
             return;
         }
 
-        // The arcade holds the player's motion and fire until the game is live (ROM: RRG23.ASM PLAYRV, BITA #$01).
+        // The arcade holds the Player's movement and firing until the game goes live (ROM: RRG23.ASM PLAYRV, BITA #$01).
         if (!field.IsLive())
         {
             return;
@@ -234,7 +234,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         PlayerInputState input = field.Input.Poll();
         IntVector2 move = input.MoveDirection;
 
-        // The aim drives the FIRE direction only — never the facing or the animation.
+        // The aim sets only the direction of fire. It never changes the facing or the animation.
         Direction8? aimDirection = Direction8Extensions.CreateFromDelta(input.ShootDirection);
 
         MoveFromInput(move, field);
@@ -286,7 +286,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
             Direction8.UpLeft => (0, 0),
             Direction8.DownLeft => (0, 8),
             Direction8.UpRight => (2, 0),
-            _ => (2, 12), // DownRight
+            _ => (2, 12), // Down and to the right.
         };
         return new(ScreenSize.ToPortPixels(offset.x), ScreenSize.ToPortPixels(offset.y));
     }
@@ -354,7 +354,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
                 break;
 
             default:
-                // Write the next fade byte, 4 frames apart; the last (black) ends the death.
+                // Write the next fade step, four frames after the last. The last step, which is black, ends the death.
                 _deathFadeIndex++;
                 WriteDeathFade(field);
                 if (_deathFadeIndex >= PlayerTuning.PlayerDeathFadeValues.Length - 1)
@@ -393,8 +393,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
         WalkSequence walkSequence = GetWalkSequence(FacingDirection);
         if (walkSequence != _walkSequence)
         {
-            // A new direction resets the sequence index and the frame hold, so its first
-            // frame shows immediately.
+            // A new direction resets the walk sequence and the frame hold, so the first frame
+            // of the new direction shows at once.
             _walkSequence = walkSequence;
             _walkCycleStep = 0;
             _animationFrameTicks = 1;
@@ -441,7 +441,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
         FacingDirection = Direction8Extensions.CreateFromDelta(move)!.Value;
 
-        // Per-axis move with wall revert: never allowed to overlap the wall.
+        // Each axis moves separately. If a move would overlap a wall, that axis is put back, so the Player never overlaps a wall.
         IntVector2 candidate = _position;
         int dx = move.X * PlayerTuning.PlayerSpeedX;
         if (dx != 0)

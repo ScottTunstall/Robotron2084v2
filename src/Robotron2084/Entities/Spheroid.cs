@@ -138,7 +138,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private int _accelY;
 
     /// <summary>Which animation frame is showing. It counts round as the spheroid spins.</summary>
-    private int _animationFrameIndex;
+    private int _animationFrameIndex; // It is 0 to 4 while the spheroid spins or escapes, and 0 to 7 while it drops.
 
     /// <summary>Counts up to the next beat.</summary>
     private int _beatTimer;
@@ -171,8 +171,6 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The up-and-down velocity, in 1/256 row per ROM frame.</summary>
     private int _velocityYSubpixels;
 
-    // current animation frame: 0..4 while spinning/escaping, 0..7 while dropping
-    // sideways run toward the edge of the field, then vanish
     /// <summary>Drops a spheroid at <paramref name="position"/> with its enforcer allotment already rolled; it is born mid-spin.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Top-left of the spheroid.</param>
@@ -201,15 +199,15 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _position = position;
         _random = random;
         _dropDelayRotations = dropDelayRotations;
-        // The allotment: a random roll (never 0), halved and rounded up — always 1..5.
+        // How many enforcers it may drop: a random roll that is never 0, halved and rounded up, so it is always 1 to 5.
         int roll = random.Next(1, maxDropsX2 + 1);
         _enforcersRemaining = (roll + 1) / 2;
-        // A coin flip; the arcade derives it from its own random-seed byte.
+        // A coin flip picks which way it runs when it escapes, left or right. The arcade makes this flip from its own random-number byte.
         _escapeDirectionSignX = random.Next(2) == 0 ? -1 : 1;
-        // The first drop countdown, in rotations.
+        // How many spins (rotations) it makes before its first drop.
         _dropRotationsRemaining = random.Next(1, dropDelayRotations + 1);
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
-        // Born on the spin phase's last animation frame, so the first beat is already a wrap pass.
+        // It starts on the last frame of the spin, so its first beat (see ArcadeClock) already counts as the end of a spin (a wrap pass).
         _animationFrameIndex = SpinLastAnimationFrame;
         RollAccelerations();
     }
@@ -293,14 +291,14 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // The arcade does not move its motion objects while the game is held: before it goes live, and while the player dies
+        // Like the arcade, it does not move while the robots are frozen: before the game goes live, and while the Player is dying.
         // (ROM: RRS22.ASM OPRC80, BITA #8 / BNE O80, "NO VELOCITY REFRESH ONLY"; STATUS bit 3).
         if (!field.RobotsFrozen())
         {
             AdvanceMover(field);
         }
 
-        // Every phase runs on the same 3-frame beat (see the remarks).
+        // Every phase takes one beat, which is three ROM frames (see ArcadeClock).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < ArcadeClock.ToClockUnits(SpheroidTuning.BeatIntervalRomFrames))
         {
@@ -309,7 +307,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         _beatTimer -= ArcadeClock.ToClockUnits(SpheroidTuning.BeatIntervalRomFrames);
 
-        // Wrap pass = the beat on the phase's last animation frame; the phase's countdown lives there.
+        // A wrap pass is a beat (see ArcadeClock) on the last animation frame of the current phase. The phase's countdown is counted on those beats.
         int lastAnimationFrame = _isDropping && !_isEscaping ? DropLastAnimationFrame : SpinLastAnimationFrame;
         bool wrapPass = _animationFrameIndex >= lastAnimationFrame;
 
@@ -319,7 +317,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // Accelerate/damp and re-roll the accel timer once per beat; the escape skips both.
+        // Once per beat (see ArcadeClock) it speeds up or slows down, and rerolls its acceleration timer. An escape skips both.
         AccelerateAndDamp();
         if (--_accelBeatsRemaining <= 0)
         {
@@ -355,7 +353,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         int next = position + step;
         if (next < min || next > max)
         {
-            return position; // out of bounds: keep the old coordinate AND its carried fraction
+            return position; // Off the field: keep the old position, and the fraction of a pixel it was carrying.
         }
 
         remainderSubpixels = nextRemainder - (step << ScreenSize.SubpixelBits);
@@ -418,20 +416,20 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         if (!_isDropping)
         {
-            // Spin-to-drop does NOT reset the animation frame pointer: the drop phase carries the same
-            // animation frame on for one more beat.
+            // Changing from spinning to dropping does not reset the animation frame. The drop carries on from the same frame
+            // for one more beat (see ArcadeClock).
             _isDropping = true;
             RerollDropCountdown();
             return;
         }
 
-        // A drop capped by the enforcer limit is not deferred — it re-rolls and tries again.
+        // If the limit on enforcers is already reached, the drop is not put off. The spheroid rerolls and tries again.
         if (field.CanDropEnforcer())
         {
             field.SpawnEnforcer(_position);
             if (--_enforcersRemaining <= 0)
             {
-                StartEscape(); // the animation frame stays where it is; the first escape beat wraps it
+                StartEscape(); // The animation frame stays where it is until the first escape beat (see ArcadeClock).
                 return;
             }
         }
@@ -463,7 +461,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         int rightExit = ScreenSize.ToPortPixelsFromColumns(SpheroidTuning.EscapeExitRightColumn);
         if (_position.X <= leftExit || _position.X >= rightExit)
         {
-            LifeState = EntityLifeState.Dead; // removed at once, no burst (ROM: `CIR4`)
+            LifeState = EntityLifeState.Dead; // Removed at once, with no burst (ROM: CIR4).
             return;
         }
 

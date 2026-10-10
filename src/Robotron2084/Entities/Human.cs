@@ -66,21 +66,21 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private static readonly (int Dx, int Dy, int Frame)[] Steps =
     {
-        // LEFT
+        // Four steps moving left, through walk frames 0, 1, 0 and 2 of the set.
         (-2, 0, 0), (-1, 0, 1), (-2, 0, 0), (-1, 0, 2),
-        // RIGHT
+        // Four steps moving right, through walk frames 0, 1, 0 and 2 of the set.
         (2, 0, 0), (1, 0, 1), (2, 0, 0), (1, 0, 2),
-        // DOWN
+        // Four steps moving down, through walk frames 0, 1, 0 and 2 of the set.
         (0, 1, 0), (0, 1, 1), (0, 1, 0), (0, 1, 2),
-        // UP
+        // Four steps moving up, through walk frames 0, 1, 0 and 2 of the set.
         (0, -1, 0), (0, -1, 1), (0, -1, 0), (0, -1, 2),
-        // UP+LEFT
+        // Four steps moving diagonally up and to the left.
         (-2, -1, 0), (-1, -1, 2), (-2, -1, 0), (-1, -1, 2),
-        // RIGHT+UP
+        // Four steps moving diagonally up and to the right.
         (2, -1, 0), (1, -1, 1), (2, -1, 0), (1, -1, 2),
-        // RIGHT+DOWN
+        // Four steps moving diagonally down and to the right.
         (2, 1, 0), (1, 1, 1), (2, 1, 0), (1, 1, 2),
-        // DOWN+LEFT
+        // Four steps moving diagonally down and to the left.
         (-2, 1, 0), (-1, 1, 1), (-2, 1, 0), (-1, 1, 1),
     };
 
@@ -124,7 +124,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _directionBlock = random.Next(DirectionBlockCount);
         _stepsUntilNewDirection = 1 + random.Next(NewDirectionStepsMax);
         _startStaggerTicks = 1 + random.Next(StartStaggerTicksMax);
-        _beatTimer = 0;                             // The stagger's last tick doubles as the first step.
+        _beatTimer = 0;                             // The beat timer starts at zero. The last start-up tick counts as the first step (see Update).
     }
 
     /// <summary>This member's own sprite box at <see cref="Position"/>.</summary>
@@ -147,11 +147,6 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     public bool IsBeingReprogrammed { get; private set; }
 
-    // Which of the 4 substeps within that block comes next (0-3).
-    // Counts up to the next step.
-    // Steps left before the human rolls a fresh direction.
-    // Ticks left before this human's very first step (staggers group spawns).
-    // Current animation frame, 0-11 into this family member's 12 animation frames.
     /// <summary>Which member this is (Mikey, Mommy or Daddy) — it decides the animation frames and the box.</summary>
     public HumanKind Kind => _kind;
 
@@ -198,7 +193,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
         if (IsBeingReprogrammed)
         {
-            // Reprogrammed: a solid silhouette over a solid background, both cycling slots.
+            // While it is being reprogrammed, the human is drawn as a solid silhouette on a solid background, both in colours that cycle.
             _sprites.Blitter.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[_animationFrameIndex],
@@ -244,7 +239,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        // No "robots frozen" gate: humans wander while the field is still assembling.
+        // Unlike robots, humans do not wait for the field to go live. They wander while it is still being put together.
         if (!this.IsAlive() || IsBeingReprogrammed)
         {
             return;
@@ -258,7 +253,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
                 return;
             }
 
-            // The last stagger tick doubles as the first step, so later steps stay on schedule.
+            // The last start-up tick (see ArcadeClock) also counts as the first step, so the steps that follow keep to the same schedule.
         }
         else
         {
@@ -276,12 +271,12 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         (int dx, int dy, int frame) = Steps[_directionBlock * SubStepsPerBlock + _subStep];
         _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirectionBlock[_directionBlock] + frame;
 
-        // Each unit in the walk table is one arcade pixel.
+        // Each step in the table moves the human by one arcade pixel, scaled up to port pixels.
         IntVector2 candidate = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixels(1);
         Rectangle next = GetBounds() with { X = candidate.X, Y = candidate.Y };
         if (field.HitsWall(next) || OverlapsLivingElectrode(next, field))
         {
-            // Blocked by the wall or a standing electrode: pick a fresh direction instead.
+            // A step into a wall or a live Electrode is refused, and the human picks a new direction instead. (see Electrode)
             PickNewDirection();
             return;
         }

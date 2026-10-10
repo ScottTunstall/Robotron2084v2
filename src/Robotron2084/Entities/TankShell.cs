@@ -310,7 +310,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         int stepX = DivideRoundingDown(subpixels.X, ScreenSize.SubpixelsPerPixel);
         int stepY = DivideRoundingDown(subpixels.Y, ScreenSize.SubpixelsPerPixel);
 
-        // A move that is refused leaves the position, and the carried remainder with it, exactly as it was.
+        // A refused move leaves the position, and the fraction of a pixel carried with it, exactly as they were.
         int x = _position.X;
         int remainderX = _remainderSubpixels.X;
         if (FitsInsideX(_position.X + stepX))

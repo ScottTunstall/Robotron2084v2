@@ -65,9 +65,8 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     private int _reAimBeatsRemaining;
 
-    private IntVector2 _velocity;
+    private IntVector2 _velocity; // The move on each axis for each step: StepXPortPixels or StepYPortPixels, forwards or backwards, or 0 if that axis is idle until the next aim.
 
-    // Current per-step move on each axis: ±StepXPortPixels / ±StepYPortPixels, or 0 if that axis is idle this re-aim.
     /// <summary>Fires a missile, with its first direction already rolled.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="origin">Where it appears.</param>
@@ -127,7 +126,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
             _sprites.Blitter.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight), trailColor);
         }
 
-        // The ROM's missile sprite only defines the collision box; the head is a solid dot.
+        // The arcade's missile sprite only sets the collision box. The head is drawn as a solid dot.
         _sprites.Blitter.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(_position.X, _position.Y, markWidth, markHeight),
@@ -157,7 +156,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
             return;
         }
 
-        // Counts up to the next beat: 5 per tick, 6 per arcade frame.
+        // Counts up towards the next beat. Each port tick adds 5 clock units and each ROM frame needs 6 (see ArcadeClock).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < BeatIntervalClockUnits)
         {
@@ -166,7 +165,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
         _beatTimer -= BeatIntervalClockUnits;
 
-        // The re-aim timer is checked first, then the two steps for this beat are taken (ROM: `CMISL`).
+        // The aim timer is checked first. Then the two steps for this beat are taken towards the Player (see Player; ROM: CMISL). See ArcadeClock for the beat.
         if (--_reAimBeatsRemaining <= 0)
         {
             _velocity = RollDirection(field.Player.Position);
@@ -237,7 +236,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
             _position = _position with { Y = Math.Clamp(y, bounds.Y, bounds.Bottom - rowPixels) };
         }
 
-        // A trail mark for the position just left, then drop the oldest (the tail is 9 marks).
+        // Leave a trail mark on the position just left, then drop the oldest mark. The tail is 9 marks long.
         _trail.Add(positionBeforeMove);
         if (_trail.Count > CruiseMissileTuning.TrailMarks)
         {

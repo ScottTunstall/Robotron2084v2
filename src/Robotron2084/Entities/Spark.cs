@@ -24,28 +24,29 @@ namespace Robotron2084.Entities;
 public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
     private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.MissileSizeSpecPixels);
+    // The acceleration on each axis: one fixed value, in 1/256 of a pixel per move, rolled once when the spark is made (ROM: PD2/PD4)
     private readonly IntVector2 _accelerationSubpixels;
     private readonly Random _random;
     private readonly SpriteSet _sprites;
+
+    // Counts up towards the next time the acceleration is added to the velocity. That happens every 4 ROM frames (see ArcadeClock).
     private int _accelerationTimer;
 
-    // counts up toward the next time acceleration is added to velocity, every 4 ROM frames
+    // Counts up towards the next flicker frame. Each animation frame is shown for 4 ROM frames (see ArcadeClock).
     private int _flickerTimer;
 
-    // Counts up to the next flicker animation frame: 4 ROM frames per animation frame
+    // Counts the port ticks until one ROM frame has passed, so the velocity is added once per frame and not once per tick (see ArcadeClock).
     private int _moveTimer;
 
     private IntVector2 _position;
 
+    // Keeps the fraction of a pixel left over from each move, so the steps never drift.
     private IntVector2 _positionRemainderSubpixels;
 
-    // carries the sub-pixel part so the step never drifts
+    // How long the spark has left to live, in clock units (see ArcadeClock).
     private int _lifeClockUnitsRemaining;
 
-    // the constant per-axis acceleration, in 1/256 px per move, rolled once at spawn (ROM: PD2/PD4)
-    private IntVector2 _velocitySubpixels; // current velocity, in 1/256 px per ROM frame (ROM: OXV/OYV)
-
-    // counts up to one ROM frame's worth of ticks so the mover integrates velocity once per frame, not once per tick
+    private IntVector2 _velocitySubpixels; // The current velocity, in 1/256 of a pixel per ROM frame (see ArcadeClock) (ROM: OXV/OYV)
 
     /// <summary>Fires a spark, aimed at the player once, with jitter.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -64,7 +65,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _position = position;
         _random = random;
 
-        // Aim jitter, -16..+15 columns sideways and rows up and down; none sideways when the player hugs the left wall.
+        // A random aim wobble (see Player): from -16 to +15 columns sideways and rows up and down. There is no sideways wobble when the Player is against the left wall.
         int jitterX = _random.Next(-SparkTuning.SparkJitterRange, SparkTuning.SparkJitterRange);
         int jitterY = _random.Next(-SparkTuning.SparkJitterRange, SparkTuning.SparkJitterRange);
         if (playfieldBounds is { } bounds &&
@@ -76,18 +77,18 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         int deltaX = playerPosition.X + ScreenSize.ToPortPixelsFromColumns(jitterX) - position.X;
         int deltaY = playerPosition.Y + ScreenSize.ToPortPixels(jitterY) - position.Y;
 
-        // 4x the aim delta, in subpixels (the mover only acts on the velocity's high byte).
+        // Four times the aim change, in fractions of a pixel. The mover only acts on the high byte of the velocity.
         int subpixelsPerPortPixelPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
         _velocitySubpixels = new IntVector2(deltaX * subpixelsPerPortPixelPerMove, deltaY * subpixelsPerPortPixelPerMove);
 
-        // The constant per-axis acceleration: a random -16..+15, in the same subpixel units.
-        // A sideways unit of acceleration is a column's worth, an up-and-down one a row's worth.
+        // The acceleration on each axis: a random value from -16 to +15, in the same fractions of a pixel.
+        // One unit of sideways acceleration is one column. One unit of up-and-down acceleration is one row.
         _accelerationSubpixels = new IntVector2(
             _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPixelPerMove,
             _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPixelPerMove
                 * ScreenSize.ToPortPixels(1) / ScreenSize.ToPortPixelsFromColumns(1));
 
-        // Life, in timer units: 5 per tick, 6 per arcade frame.
+        // How long the spark lives, in clock units. Each port tick adds 5, and each ROM frame needs 6 (see ArcadeClock).
         _lifeClockUnitsRemaining = ArcadeClock.ToClockUnits(_random.Next(
             SparkTuning.SparkLifeMinRomFrames,
             SparkTuning.SparkLifeMaxRomFrames + 1));
@@ -152,7 +153,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
         _flickerTimer += ArcadeClock.UnitsPerPortTick;
 
-        // Life counts down: 5 per tick, 6 per arcade frame.
+        // The life counts down. Each port tick takes 5 clock units and each ROM frame needs 6 (see ArcadeClock).
         _lifeClockUnitsRemaining -= ArcadeClock.UnitsPerPortTick;
         if (_lifeClockUnitsRemaining <= 0)
         {
@@ -160,7 +161,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // Every move the acceleration is added to the velocity, so the path curves into a parabola.
+        // Each move, the acceleration is added to the velocity, so the path bends into a curve.
         _accelerationTimer += ArcadeClock.UnitsPerPortTick;
         if (_accelerationTimer >= ArcadeClock.ToClockUnits(SparkTuning.SparkMoveIntervalRomFrames))
         {
@@ -170,7 +171,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
                 _velocitySubpixels.Y + _accelerationSubpixels.Y);
         }
 
-        // The mover adds the velocity once per ROM frame, carrying the subpixel remainder.
+        // The mover adds the velocity to the position once per ROM frame (see ArcadeClock), keeping the fraction left over.
         _moveTimer += ArcadeClock.UnitsPerPortTick;
         if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
         {
@@ -179,8 +180,8 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
                 _positionRemainderSubpixels.X + _velocitySubpixels.X,
                 _positionRemainderSubpixels.Y + _velocitySubpixels.Y);
 
-            // The step is per ROM frame, not per move-pass: spreading it over the move interval
-            // runs 4x slow. 1 port px = SparkVelocityScale subpixel units.
+            // The step is taken once per ROM frame (see ArcadeClock), not once per move pass. Spreading it over the move interval
+            // would run four times too slow. One port pixel is SparkVelocityScale fractions of a pixel.
             int stepX = _positionRemainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
             int stepY = _positionRemainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
             _positionRemainderSubpixels = new IntVector2(
@@ -197,11 +198,11 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="stepY">This frame's whole-pixel step on Y.</param>
     private void MoveBy(PlayField field, int stepX, int stepY)
     {
-        // Safety cap, reproducing the ROM's own velocity ceiling.
+        // A safety cap on the velocity, matching the ROM's own top speed.
         stepX = Math.Clamp(stepX, -SparkTuning.SparkMaxSpeed, SparkTuning.SparkMaxSpeed);
         stepY = Math.Clamp(stepY, -SparkTuning.SparkMaxSpeed, SparkTuning.SparkMaxSpeed);
 
-        // Each axis is updated only if the step stays inside the field — no clamp, no bounce.
+        // Each axis moves only if the step stays inside the playfield. Otherwise the spark stops dead, with no clamping and no bounce.
         Rectangle inner = field.Wall.PlayfieldBounds;
         int x = _position.X;
         int y = _position.Y;

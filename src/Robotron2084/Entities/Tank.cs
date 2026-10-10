@@ -122,9 +122,8 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     private int _growTimer;
 
     private IntVector2 _position;
-    private IntVector2 _stepDirection;
+    private IntVector2 _stepDirection; // The direction the tank steps in. Each part is -1, 0 or +1, so it is one of the eight directions, or still.
 
-    // current 8-way/0 step vector (±1/0 components)
     /// <summary>Counts the tread animation frames shown, one per beat.</summary>
     /// <remarks>
     /// <list type="bullet">
@@ -160,9 +159,9 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
         _destination = position;
-        // The first beat fires and moves before the re-aim check (ROM: TANKL).
+        // The first beat (see ArcadeClock) fires and moves the tank before it checks whether to aim again (ROM: TANKL).
         _aimBeatsRemaining = 0;
-        // The first shot waits the interval plus a random 0..31 beats.
+        // The first shot waits one full firing interval, plus a random 0 to 31 beats (see ArcadeClock).
         _fireCooldownBeats = fireIntervalBeats + random.Next(0, FirstShotExtraBeatsMaxExclusive);
     }
 
@@ -249,8 +248,8 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        // While being born it draws the ROM's own mini-tank sprites, each at its own size
-        // anchored at the object's position (ROM: MTNKP1..4) — not a scaled copy of the tank.
+        // While it is being born, it draws the arcade's own small tank pictures, each at its own size,
+        // anchored at the tank's position (ROM: MTNKP1..4). They are not a scaled copy of the tank.
         if (_growStep < TankTuning.GrowSteps)
         {
             (int growWidth, int growHeight) = TankTuning.GrowSizes[_growStep];
@@ -308,7 +307,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        // This wave's tank speed (2 vblanks) plus the 1 frame the process takes (ROM: TNKSPD).
+        // This wave's tank speed (two port ticks per step, see ArcadeClock) plus the one frame the process takes (ROM: TNKSPD).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames))
         {
@@ -317,13 +316,13 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 
         _beatTimer -= ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames);
 
-        // One beat, always in this order (ROM: the TANK process).
+        // One beat (see ArcadeClock), always in this order: fire if due, then step or bounce (ROM: the TANK process).
         FireIfDue(field);
         StepOrBounce(field);
 
-        _treadAnimationFrameCounter++; // one walk frame per beat (ROM: `TANK3` advances the animation frame once)
+        _treadAnimationFrameCounter++; // Moves the tread on one walk frame per beat (see ArcadeClock) (ROM: TANK3 advances the animation frame once).
 
-        // The re-aim timer counts down in beats; a blocked step already turned the tank (ROM: TANKND).
+        // The aim timer counts down in beats (see ArcadeClock). When it runs out, the tank picks a new destination, most often the Player (see Player). A step that was blocked has already turned the tank (ROM: TANKND).
         if (--_aimBeatsRemaining <= 0)
         {
             _aimBeatsRemaining = NextAimInterval(_random);
@@ -363,8 +362,8 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 
         _growTimer -= GrowIntervalClockUnits;
 
-        // MTANK applies the current animation frame's (dx,dy) before advancing, so the mini tank
-        // walks up-left and the full tank lands centred on the drop point (notes §53).
+        // The mini tank applies the current animation frame's (dx, dy) offset before the frame advances, so it
+        // walks up and to the left, and the full tank lands centred on the drop point (notes §53).
         (int columns, int rows) = TankTuning.GrowDeltas[_growStep];
         _position += new IntVector2(ScreenSize.ToPortPixelsFromColumns(columns), ScreenSize.ToPortPixels(rows));
 
@@ -385,7 +384,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             field.SpawnTankShell(_position);
         }
 
-        // Later shots reload to exactly this wave's interval — no random padding.
+        // Later shots reload to exactly this wave's firing interval, with no random extra beats (see ArcadeClock).
         _fireCooldownBeats = _fireIntervalBeats;
     }
 
@@ -409,7 +408,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        // Bounce off the wall (never crosses): mirror the axis that is blocked.
+        // Bounce off the wall, never through it: reverse the direction on the axis that is blocked.
         if (field.HitsWall(new Rectangle(_position.X + step.X, _position.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             _stepDirection = new IntVector2(-_stepDirection.X, _stepDirection.Y);

@@ -31,7 +31,7 @@ public sealed class ScoreBurst : IEntity
     private readonly int _burstSlot;
     private readonly Texture2D _pointsSprite;
 
-    // where the enemy was drawn
+    // Where the enemy was drawn when it died.
     private readonly Rectangle _pointsBounds;
 
     private readonly int _pointsSlot;
@@ -40,7 +40,7 @@ public sealed class ScoreBurst : IEntity
     private int _pointsStepsRemaining;
     private int _burstStepsRemaining;
     private bool _showingPoints;
-    private int _stepTimer;                     // Counts up to the next step: 5 per tick, 6 per arcade frame.
+    private int _stepTimer;                     // Counts up towards the next step. Each port tick adds 5 clock units and each ROM frame needs 6 (see ArcadeClock).
 
     /// <summary>Builds one burst — both static factories funnel through here.</summary>
     private ScoreBurst(
@@ -59,7 +59,7 @@ public sealed class ScoreBurst : IEntity
         _pointsSlot = pointsSlot;
         _bounds = bounds;
 
-        // The first burst animation frame appears at death, so count-1 steps remain; the last only erases.
+        // The first burst frame appears when the enemy dies, so there are count minus 1 steps left. The last step only erases.
         _burstStepsRemaining = count - 1;
         _pointsBounds = new Rectangle(
             bounds.X + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetXSpecPixels),
@@ -150,7 +150,7 @@ public sealed class ScoreBurst : IEntity
             return;
         }
 
-        // Counts up to the next step: 5 per tick, 6 per arcade frame.
+        // Counts up towards the next step. Each port tick adds 5 clock units and each ROM frame needs 6 (see ArcadeClock).
         _stepTimer += ArcadeClock.UnitsPerPortTick;
         if (_stepTimer < ArcadeClock.ToClockUnits(ScoreBurstTuning.RomFramesPerStep))
         {
@@ -161,7 +161,7 @@ public sealed class ScoreBurst : IEntity
 
         if (!_showingPoints)
         {
-            // The last burst step only erases, so count-1 animation frames appear.
+            // The last burst step only erases, so only count minus 1 animation frames appear.
             if (--_burstStepsRemaining <= 0)
             {
                 _showingPoints = true;

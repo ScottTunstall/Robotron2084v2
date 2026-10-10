@@ -123,12 +123,12 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _random = random;
         _dropDelayBeats = dropDelayBeats;
         _speedCap = speedCap;
-        // The tank allotment: half a random roll up to the wave's cap, rounded up (ROM: PD3).
+        // How many tanks it may drop: half a random roll up to the wave's cap, rounded up (ROM: PD3).
         int roll = random.Next(maxDropsX2 + 1);
         _tanksRemaining = (roll + 1) / 2;
-        // The first drop's delay, counted in animation cycles rather than beats (ROM: PD2).
+        // The delay before its first tank drop, counted in animation cycles rather than beats (see ArcadeClock) (ROM: PD2).
         _dropBeatsRemaining = 1 + random.Next(dropDelayBeats);
-        // A quark drifts and animates from the instant it exists, so both clocks start pre-loaded.
+        // A quark drifts and animates from the moment it exists, so both timers start ready and it moves on its first tick (see ArcadeClock).
         _beatTimer = BeatIntervalClockUnits;
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
@@ -214,14 +214,14 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // The arcade does not move its motion objects while the game is held: before it goes live, and while the player dies
+        // Like the arcade, it does not move while the robots are frozen: before the game goes live, and while the Player is dying.
         // (ROM: RRS22.ASM OPRC80, BITA #8 / BNE O80, "NO VELOCITY REFRESH ONLY"; STATUS bit 3).
         if (!field.RobotsFrozen())
         {
             AdvanceMover(field);
         }
 
-        // Counts up to the next beat: 5 per tick, 6 per arcade frame.
+        // Counts up towards the next beat. Each port tick adds 5 clock units and each ROM frame needs 6 (see ArcadeClock).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < BeatIntervalClockUnits)
         {
@@ -242,7 +242,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             RollVelocity(field.GetPlayfieldBounds());
         }
 
-        // Frozen: the quark still animates and re-rolls, but the tank-drop countdown is paused.
+        // While the robots are frozen, the quark still animates and rerolls, but its tank-drop countdown is paused.
         if (field.RobotsFrozen())
         {
             return;
@@ -334,8 +334,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         {
             _isDroppingTanks = true;
             _tanksRemaining--;
-            // A new tank appears 2 columns right and 5-6 rows down — 6 when the quark is on the
-            // top wall, where the ROM skips its `DECB` (ROM: TNKDRP).
+            // A new tank appears 2 columns to the right and 5 or 6 rows down. It is 6 when the quark is against the
+            // top wall, because the arcade skips a step there (ROM: TNKDRP).
             int rowOffset = _position.Y == field.GetPlayfieldBounds().Y
                 ? TankTuning.BirthOffsetRowsOnTopWall
                 : TankTuning.BirthOffsetRowsOffTopWall;
@@ -349,7 +349,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             }
         }
 
-        // The next drop's delay is roughly half the first; it also runs when the cap blocked a drop.
+        // The next drop's delay is roughly half the first. The countdown also runs when the cap stopped a drop.
         _dropBeatsRemaining = 1 + _random.Next((_dropDelayBeats / RepeatDropDelayDivisor) + 1);
     }
 

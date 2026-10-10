@@ -91,7 +91,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 
         LifeState = EntityLifeState.Dying;
         _shrivelStep = 0;
-        _shrivelTimer = 0; // the first sleep is a full period (notes §52 clock)
+        _shrivelTimer = 0; // The first wait is a full period, as in the arcade (notes §52).
     }
 
     /// <summary>Plays the shrivel: one animation frame per hold, then the electrode is removed.</summary>
@@ -104,7 +104,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // Counts up to the next shrivel animation frame: 5 per tick, 6 per arcade frame.
+        // Counts up towards the next shrivel frame. Each port tick adds 5 clock units and each ROM frame needs 6 (see ArcadeClock).
         _shrivelTimer += ArcadeClock.UnitsPerPortTick;
         if (_shrivelTimer < ArcadeClock.ToClockUnits(ShrivelSleepRomFrames[_shrivelStep]))
         {
