@@ -190,7 +190,7 @@ public sealed class RobotronGame : Game
     /// </summary>
     /// <param name="state">This tick's keyboard.</param>
     /// <remarks>End and Home drop straight into the attract sequence so a scene can be inspected without
-    /// sitting out the title's 12-second idle, and Page Up is how the hulk's walk (ROM frame ~2574) is reached
+    /// sitting out the title's 12-second idle, and Page Up is how the hulk's walk (movie frame ~2574) is reached
     /// in seconds rather than after the text crawl. They are live on the attract screens only: Insert is also
     /// the skip-a-wave key and Delete clears a line on the DEFINE INPUTS page, so they must not act anywhere else.
     /// The function keys are left to the game's own start and settings keys (F1/F2/F3, F5, F10) and the display
