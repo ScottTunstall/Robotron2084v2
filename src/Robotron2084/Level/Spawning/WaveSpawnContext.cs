@@ -8,5 +8,14 @@ namespace Robotron2084.Level.Spawning;
 /// <param name="Placement">Chooses spots on the field.</param>
 /// <param name="Random">The field's random source.</param>
 /// <param name="PlayerStart">Where the player starts, which most kinds must keep away from.</param>
-/// <param name="FamilySlotsLeftOver">The places in the family list that still held a family member when the last wave or life ended, lowest place first. The hulks pick what to stalk from these.</param>
-public sealed record WaveSpawnContext(PlayField Field, FieldEntities Entities, SpawnPlacement Placement, Random Random, IntVector2 PlayerStart, IReadOnlyList<int> FamilySlotsLeftOver);
+/// <param name="FamilySlotsLeftOver">
+///     The places in the family list that still held a family member when the last wave or
+///     life ended, lowest place first. The hulks pick what to stalk from these.
+/// </param>
+public sealed record WaveSpawnContext(
+    PlayField Field,
+    FieldEntities Entities,
+    SpawnPlacement Placement,
+    Random Random,
+    IntVector2 PlayerStart,
+    IReadOnlyList<int> FamilySlotsLeftOver);

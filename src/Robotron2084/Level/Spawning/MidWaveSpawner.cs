@@ -1,14 +1,19 @@
 using Robotron2084.Audio;
 using Robotron2084.Core;
-using Microsoft.Xna.Framework;
 using Robotron2084.Entities;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level.Spawning;
 
-/// <summary>Makes the things that robots make during a wave: a brain's missile, a spheroid's enforcer, a tank's shell and so on.</summary>
-/// <remarks>The wave-start spawners (<see cref="IWaveSpawner"/>) fill the field once. These are asked for by the robots themselves,
-/// one at a time, and each plays the sound the ROM asks for when it is made.</remarks>
+/// <summary>
+///     Makes the things that robots make during a wave: a brain's missile, a spheroid's enforcer, a tank's shell and
+///     so on.
+/// </summary>
+/// <remarks>
+///     The wave-start spawners (<see cref="IWaveSpawner" />) fill the field once. These are asked for by the robots
+///     themselves,
+///     one at a time, and each plays the sound the ROM asks for when it is made.
+/// </remarks>
 internal sealed class MidWaveSpawner
 {
     private readonly FieldEntities _entities;
@@ -50,13 +55,19 @@ internal sealed class MidWaveSpawner
     /// <param name="position">Where the human stood.</param>
     /// <param name="kind">Which family member it was, since the prog keeps their look.</param>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> and <c>PROGST</c>.</remarks>
-    public void SpawnProg(IntVector2 position, HumanKind kind) => _entities.Add(new Prog(_field.Sprites, position, kind, _random));
+    public void SpawnProg(IntVector2 position, HumanKind kind)
+    {
+        _entities.Add(new Prog(_field.Sprites, position, kind, _random));
+    }
 
     /// <summary>An enforcer fires a spark at the player.</summary>
     /// <param name="origin">Where the spark starts.</param>
     /// <param name="playerPosition">Where the player is, which the spark is aimed at.</param>
-    /// <remarks>Original source: <c>RRC11.ASM</c> <c>ENFSHT</c>, which asks for <c>ENFSND</c>. The wall's edges are passed on for its
-    /// rule that there is no sideways wobble when the player is near the left wall.</remarks>
+    /// <remarks>
+    ///     Original source: <c>RRC11.ASM</c> <c>ENFSHT</c>, which asks for <c>ENFSND</c>. The wall's edges are passed on for
+    ///     its
+    ///     rule that there is no sideways wobble when the player is near the left wall.
+    /// </remarks>
     public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition)
     {
         var spark = new Spark(_field.Sprites, origin, playerPosition, _random, _field.GetPlayfieldBounds());
@@ -70,32 +81,36 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRTK4.ASM</c>, which asks for <c>TKDSND</c>.</remarks>
     public Tank SpawnTank(IntVector2 position)
     {
-        Tank tank = new(_field.Sprites, Tank.GetPositionInside(_field.GetPlayfieldBounds(), position), _random, _field.Parameters.TankFireDelay);
+        Tank tank = new(_field.Sprites, Tank.GetPositionInside(_field.GetPlayfieldBounds(), position), _random,
+            _field.Parameters.TankFireDelay);
         _entities.Add(tank);
         _field.PlaySoundFrom(SoundTables.TankDrop, tank.GetBounds());
         return tank;
     }
 
-    /// <summary>Gorf drops a grunt: it starts where Gorf is and falls to the ground, with no appear effect. A level holds only so many.</summary>
+    /// <summary>
+    ///     Gorf drops a grunt: it starts where Gorf is and falls to the ground, with no appear effect. A level holds only
+    ///     so many.
+    /// </summary>
     /// <param name="from">Where the grunt starts, which is inside Gorf.</param>
     /// <param name="landing">Where the grunt ends up standing.</param>
     /// <remarks>
-    /// A new robot's drop (notes §138.2): there is no arcade routine for it. The grunt is kept inside the playfield, and is not dropped at all when the level
-    /// already holds as many grunts as it is allowed: the wave's own number (which the difficulty moves), or <see cref="GorfTuning.MinimumGruntCap"/> if that is fewer.
+    ///     A new robot's drop (notes §138.2): there is no arcade routine for it. The grunt is kept inside the playfield, and
+    ///     is not dropped at all when the level
+    ///     already holds as many grunts as it is allowed: the wave's own number (which the difficulty moves), or
+    ///     <see cref="GorfTuning.MinimumGruntCap" /> if that is fewer.
     /// </remarks>
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
-        if (_entities.Grunts.GetLiveCount() >= Math.Max(_field.Parameters.GruntCount, GorfTuning.MinimumGruntCap))
-        {
-            return;
-        }
+        if (_entities.Grunts.GetLiveCount() >=
+            Math.Max(_field.Parameters.GruntCount, GorfTuning.MinimumGruntCap)) return;
 
-        Rectangle bounds = _field.GetPlayfieldBounds();
-        int width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
-        int height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
-        int x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
-        int startY = Math.Clamp(from.Y, bounds.Y, bounds.Bottom - height);
-        int landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);
+        var bounds = _field.GetPlayfieldBounds();
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
+        var x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
+        var startY = Math.Clamp(from.Y, bounds.Y, bounds.Bottom - height);
+        var landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);
         var grunt = new Grunt(_field.Sprites, new IntVector2(x, startY), _field.Parameters.GruntMoveDelay, _random);
         grunt.BeginFall(landingY);
         _entities.Add(grunt);
@@ -103,12 +118,15 @@ internal sealed class MidWaveSpawner
 
     /// <summary>A tank fires a shell at, or at a wall near, the player.</summary>
     /// <param name="origin">The tank's top-left corner.</param>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, which asks for <c>TKFSND</c>. The wave's count of shells goes up
-    /// here, and only a laser hit brings it down (the fizzle bug, notes §53).</remarks>
+    /// <remarks>
+    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, which asks for <c>TKFSND</c>. The wave's count of shells goes up
+    ///     here, and only a laser hit brings it down (the fizzle bug, notes §53).
+    /// </remarks>
     public void SpawnTankShell(IntVector2 origin)
     {
         _field.CountShellFired();
-        var shell = new TankShell(_field.Sprites, origin, _field.GetPlayerPosition(), _field.Parameters.ShellSpeed, _field.GetPlayfieldBounds(), _random);
+        var shell = new TankShell(_field.Sprites, origin, _field.GetPlayerPosition(), _field.Parameters.ShellSpeed,
+            _field.GetPlayfieldBounds(), _random);
         _entities.Add(shell);
         _field.PlaySoundFrom(SoundTables.TankFire, shell.GetBounds());
     }
