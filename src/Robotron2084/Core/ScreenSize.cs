@@ -6,7 +6,7 @@ namespace Robotron2084.Core;
 /// this game draws (see docs/glossary.md).
 /// The game's screen is <see cref="WidthInArcadePixels"/> by <see cref="HeightInArcadePixels"/> arcade pixels. It is made
 /// bigger by <see cref="PortPixelsPerArcadePixel"/> for sharper rendering; every size, speed, and position in the
-/// codebase goes through <see cref="ToPortPixels(int)"/> (or derives from
+/// codebase goes through <see cref="ToPortPixelsFromArcadePixels(int)"/> (or derives from
 /// <see cref="Width"/>/<see cref="Height"/>) in one place, so raising the
 /// resolution is a change to the constants below and nothing else:
 /// <list type="bullet">
@@ -56,11 +56,15 @@ public static class ScreenSize
     /// <param name="to">The other point, in port pixels.</param>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>GETHTG</c>, "SUM OF ABS VALUES DX,DY". A sideways gap counts half what the same gap in pixels would, because a column is two arcade pixels (notes §113). Disassembly: <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c> (<c>$1B95</c>).</remarks>
     public static int ToColumnAndRowDistance(IntVector2 from, IntVector2 to) =>
-        (Math.Abs(to.X - from.X) / ToPortPixelsFromColumns(1)) + (Math.Abs(to.Y - from.Y) / ToPortPixels(1));
+        (Math.Abs(to.X - from.X) / ToPortPixelsFromColumns(1)) + (Math.Abs(to.Y - from.Y) / ToPortPixelsFromArcadePixels(1));
 
     /// <summary>Changes a number of the arcade's columns into port pixels. A column is one byte of video memory across, which is <see cref="ArcadePixelsPerByte"/> arcade pixels wide, and an arcade pixel is <see cref="PortPixelsPerArcadePixel"/> port pixels wide, so one column is 4 port pixels.</summary>
-    /// <param name="columns">How many columns.</param>
-    public static int ToPortPixelsFromColumns(int columns) => ToPortPixels(columns * ArcadePixelsPerByte);
+    /// <param name="arcadeColumns">How many columns.</param>
+    public static int ToPortPixelsFromColumns(int arcadeColumns) => ToPortPixelsFromArcadePixels(arcadeColumns * ArcadePixelsPerByte);
+
+    /// <summary>Converts a length in arcade pixels to port pixels.</summary>
+    /// <param name="arcadePixels">The length in arcade pixels.</param>
+    public static int ToPortPixelsFromArcadePixels(int arcadePixels) => arcadePixels * PortPixelsPerArcadePixel;
 
     /// <summary>
     /// Largest integer scale at which the playfield fits in the given
@@ -76,8 +80,4 @@ public static class ScreenSize
         int scale = Math.Min(availableWidth / Width, availableHeight / Height);
         return Math.Max(1, scale);
     }
-
-    /// <summary>Converts a length in arcade pixels to port pixels.</summary>
-    /// <param name="pixels">The length in arcade pixels.</param>
-    public static int ToPortPixels(int pixels) => pixels * PortPixelsPerArcadePixel;
 }
