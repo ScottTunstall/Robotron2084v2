@@ -2,37 +2,30 @@ using Robotron2084.Entities;
 
 namespace Robotron2084.Level.Collisions;
 
-/// <summary>A grunt, a BerzerkRobot or a hulk walking onto an electrode. The robot and the electrode both die; a hulk destroys the electrode and walks on.</summary>
-/// <remarks>Original source: <c>RRP8.ASM</c> <c>PSTKIL</c>. The electrode shrivels and never bursts, and every grunt that
-/// dies speeds up the grunts that are left.</remarks>
+/// <summary>
+///     A grunt, a BerzerkRobot or a hulk walking onto an electrode. The robot and the electrode both die; a hulk
+///     destroys the electrode and walks on.
+/// </summary>
+/// <remarks>
+///     Original source: <c>RRP8.ASM</c> <c>PSTKIL</c>. The electrode shrivels and never bursts, and every grunt that
+///     dies speeds up the grunts that are left.
+/// </remarks>
 internal sealed class RobotVsElectrodeCollisionRule : ICollisionRule
 {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
     {
-        foreach (Grunt grunt in entities.Grunts)
-        {
+        foreach (var grunt in entities.Grunts)
             if (grunt.IsAlive() && FindTouchedElectrode(scene, entities, grunt) is { } electrode)
-            {
                 yield return new GruntHitElectrodeResult(grunt, electrode);
-            }
-        }
 
-        foreach (BerzerkRobot robot in entities.BerzerkRobots)
-        {
+        foreach (var robot in entities.BerzerkRobots)
             if (robot.IsAlive() && FindTouchedElectrode(scene, entities, robot) is { } electrode)
-            {
                 yield return new BerzerkRobotHitElectrodeResult(robot, electrode);
-            }
-        }
 
-        foreach (Hulk hulk in entities.Hulks)
-        {
+        foreach (var hulk in entities.Hulks)
             if (FindTouchedElectrode(scene, entities, hulk) is { } electrode)
-            {
                 yield return new HulkHitElectrodeResult(hulk, electrode);
-            }
-        }
     }
 
     /// <summary>Finds the first living electrode an entity is touching.</summary>
@@ -40,6 +33,8 @@ internal sealed class RobotVsElectrodeCollisionRule : ICollisionRule
     /// <param name="entities">What is on the field.</param>
     /// <param name="walker">The grunt or hulk.</param>
     /// <returns>The electrode, or null when it touches none.</returns>
-    private static Electrode? FindTouchedElectrode(ICollisionScene scene, FieldEntities entities, IEntity walker) =>
-        entities.Electrodes.FirstOrDefault(electrode => electrode.IsAlive() && scene.Touches(walker, electrode));
+    private static Electrode? FindTouchedElectrode(ICollisionScene scene, FieldEntities entities, IEntity walker)
+    {
+        return entities.Electrodes.FirstOrDefault(electrode => electrode.IsAlive() && scene.Touches(walker, electrode));
+    }
 }
