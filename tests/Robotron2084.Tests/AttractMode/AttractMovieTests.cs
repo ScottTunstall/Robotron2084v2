@@ -248,7 +248,7 @@ public sealed class AttractMovieTests
     [Fact]
     public void PageMachine_PrintsACharacterEveryThreeFramesAndSleepsForTheRest()
     {
-        // "A", then a $5F sleep (95 ROM frames), then "B" — the ROM's SPWAKE.
+        // "A", then a $5F sleep (95 fiftieths of a second), then "B" — the ROM's SPWAKE.
         byte[] script = [0x41, 0x5F, 0x42];
         var page = new AttractPageMachine(script, new AttractObjectMachine(new Random(1)), new Random(1));
 
