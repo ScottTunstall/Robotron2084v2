@@ -3,14 +3,14 @@
 **Task (user, 2026-07):** "You should have the code such that if I decide the screen
 resolution needs to increase, the code won't break."
 
-If I decide later to raise `ScreenSize.SpecScale` (e.g. 2 → 3 or 4, internal render
+If I decide later to raise `ScreenSize.PortPixelsPerArcadePixel` (e.g. 2 → 3 or 4, internal render
 960×600 / 1280×800) or `WidthInArcadePixels`/`HeightInArcadePixels` (320×200 → larger), nothing
 should break: no crashes, no mis-rendered sprites, no failing tests.
 
 **Status: COMPLETE (2026-09-12).** All changes (a)–(e) applied and verified:
 - `dotnet build` → 0 warnings, 0 errors.
 - Tests: **89/89** pass — run via the MTP exe, NOT `dotnet test` (see "Test runner quirk").
-- Proof run: SpecScale 2→3 (960×600) 89/89; SpecScale 2→4 (1280×800) 89/89;
+- Proof run: PortPixelsPerArcadePixel 2→3 (960×600) 89/89; PortPixelsPerArcadePixel 2→4 (1280×800) 89/89;
   HeightInArcadePixels 250 (640×500) 88/89 (only the deliberate `ScreenSizeInArcadePixels_IsTheGameLayout_320x200`
   pin fails, as designed); all probes reverted — final baseline 89/89.
 - `rebuild-ledger.md` header + watch items updated. Not yet git-committed
@@ -23,17 +23,17 @@ should break: no crashes, no mis-rendered sprites, no failing tests.
 ## How resolution works today (the good news)
 
 - `src/Robotron2084/Core/ScreenSize.cs` is the single funnel:
-  `SpecScale = 2`, `WidthInArcadePixels = 320`, `HeightInArcadePixels = 200`,
-  `Width = WidthInArcadePixels * SpecScale` (640), `Height = HeightInArcadePixels * SpecScale` (400),
-  `Scaled(specPx) = specPx * SpecScale`.
+  `PortPixelsPerArcadePixel = 2`, `WidthInArcadePixels = 320`, `HeightInArcadePixels = 200`,
+  `Width = WidthInArcadePixels * PortPixelsPerArcadePixel` (640), `Height = HeightInArcadePixels * PortPixelsPerArcadePixel` (400),
+  `Scaled(specPx) = specPx * PortPixelsPerArcadePixel`.
 - All gameplay geometry (entity sizes/speeds/spawn distances, wall thickness, HUD
   margins) already goes through `ScreenSize.Scaled(GameplayConstants.XxxSpecPixels)`.
   `GameplayConstants` is the single tuning file (spec-px values, no `Scaled` in-file).
 - Sprite PNGs (ROM-extracted, `Content/Sprites/*.png`) are 1× arcade pixels
   (player 8×12, brains 14×16 max, quark 16×15 …). They are scaled at DRAW time by
-  `SpriteSet.DrawSprite` (`texture.Size * ScreenSize.SpecScale`), so any integer scale
+  `SpriteSet.DrawSprite` (`texture.Size * ScreenSize.PortPixelsPerArcadePixel`), so any integer scale
   keeps them fitting their `Scaled(16)` collision boxes (tallest/widest ROM frames are
-  16 px, so they fit at ANY integer SpecScale).
+  16 px, so they fit at ANY integer PortPixelsPerArcadePixel).
 - Walls: `PlayfieldWall` stretches a 1×1 `WallPixel` texture — resolution-independent.
 - Window sizing: `RobotronGame` renders to a `ScreenSize.Width×Height` RenderTarget2D,
   blits at integer scale; `_maxScale = ScreenSize.MaxIntegerScale(DisplayInfo.WorkArea)`
@@ -69,34 +69,34 @@ Hard-coded internal px (12 spec-px × 2). → `y += ScreenSize.Scaled(12);`
 
 ### (c) `tests/Robotron2084.Tests/Core/ScreenSizeTests.cs` — pins absolute resolution
 - `InternalResolution_Is_640x400` asserts `Width == 640`, `Height == 400`.
-- `Scaled_MultipliesSpecPixelsBySpecScale` asserts `Scaled(16) == 32`.
+- `ToPortPixels_MultipliesArcadePixelsByPortPixelsPerArcadePixel` asserts `Scaled(16) == 32`.
 - `MaxIntegerScale_FitsDisplay` InlineData expectations (e.g. (1920,1080)→2) are
   computed from 640×400 and would be wrong at other scales.
 A resolution change = red test suite.
 **Fix:** rewrite as invariants:
 - pin the SPEC space (the game layout per spec.txt): `WidthInArcadePixels == 320`,
   `HeightInArcadePixels == 200`;
-- `Width == WidthInArcadePixels * SpecScale`, `Height == HeightInArcadePixels * SpecScale`;
-- `Scaled(n) == n * SpecScale` (n = 0, 1, 16);
+- `Width == WidthInArcadePixels * PortPixelsPerArcadePixel`, `Height == HeightInArcadePixels * PortPixelsPerArcadePixel`;
+- `Scaled(n) == n * PortPixelsPerArcadePixel` (n = 0, 1, 16);
 - `MaxIntegerScale` cases expressed against the actual constants, e.g.
   `MaxIntegerScale(Width * 3, Height * 3) == 3`,
   `MaxIntegerScale(Width, Height * 2) == 1` (width-limited),
   plus tiny/zero-area inputs → 1 (never 0).
-- DO NOT pin `SpecScale` — that's exactly the knob the user may turn.
+- DO NOT pin `PortPixelsPerArcadePixel` — that's exactly the knob the user may turn.
 
 ### (d) Consistency polish (same values, route through the funnel)
 - `src/Robotron2084/Level/PlayfieldWall.cs:17` —
-  `Thickness = ScreenSize.SpecScale * GameplayConstants.WallThicknessSpecPixels`
+  `Thickness = ScreenSize.PortPixelsPerArcadePixel * GameplayConstants.WallThicknessSpecPixels`
   → `ScreenSize.Scaled(...)` (identical value; single-funnel hygiene; update comment).
 - `src/Robotron2084/Rendering/SpriteSet.cs` `DrawSprite` (~line 114) and
   `src/Robotron2084/States/PlayingState.cs` `DrawHud` (~lines 120–121) —
-  `texture.Width * ScreenSize.SpecScale` → `ScreenSize.Scaled(texture.Width)`.
+  `texture.Width * ScreenSize.PortPixelsPerArcadePixel` → `ScreenSize.Scaled(texture.Width)`.
 
 ### (e) Docs hygiene (comments that go stale)
 - `RobotronGame.cs` class doc: "The whole game is a 640x400 image (spec's 320x200
   doubled)" → phrase via `ScreenSize.Width/Height`.
 - `ScreenSize.cs` Width/Height docs "(640)"/"(400)" → formula phrasing; beef up the
-  class doc to be the explicit "how to raise resolution" guide (SpecScale = sharper
+  class doc to be the explicit "how to raise resolution" guide (PortPixelsPerArcadePixel = sharper
   same-layout; WidthInArcadePixels/HeightInArcadePixels = larger playfield, a design change).
 
 ## Confirmed NON-issues (already resolution-safe — do not touch)
@@ -109,7 +109,7 @@ A resolution change = red test suite.
 - `SpriteFont` (Arial 32) drawn with explicit scale factors — unaffected.
 - `MaxIntegerScale` guards: min-1x, degenerate inputs → 1.
 - `PlayingState.LifeIconSize = Scaled(8)` (spacing only); icon drawn at
-  `lifeIcon.Size * SpecScale` — consistent at any scale.
+  `lifeIcon.Size * PortPixelsPerArcadePixel` — consistent at any scale.
 - ROM PNGs fit the `Scaled(16)` box at any integer scale (largest frame dim is 16).
 
 ## Test runner quirk (environment, pre-existing — not caused by any change)
@@ -129,9 +129,9 @@ A resolution change = red test suite.
 3. Apply (a) PixelArtFactory design-canvas refactor.
 4. Rewrite (c) ScreenSizeTests as invariants; add small pattern-invariant tests for
    `BuildSpheroidPattern`/`BuildQuarkPattern` (length == PatternSize², centre pixel
-   filled, corner empty — holds at any SpecScale).
+   filled, corner empty — holds at any PortPixelsPerArcadePixel).
 5. `dotnet build` → 0 warnings; run test exe → all green.
-6. **Prove the task:** temporarily set `SpecScale = 3`, rebuild, run tests, confirm
+6. **Prove the task:** temporarily set `PortPixelsPerArcadePixel = 3`, rebuild, run tests, confirm
    green and (if a headless check is possible) the render target is 960×600 with sprites
    centred; then revert to 2. Same quick pass for `HeightInArcadePixels = 250` (or similar) to
    prove the spec-space knob.
