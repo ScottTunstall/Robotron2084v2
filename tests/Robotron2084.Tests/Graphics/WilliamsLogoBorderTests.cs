@@ -12,7 +12,7 @@ public sealed class WilliamsLogoBorderTests
 
     private static void TickRomFrames(WilliamsLogoBorder border, int romFrames)
     {
-        // A ROM frame is six clock units and a port tick five, so N frames take 6N/5 ticks, rounded up.
+        // A fiftieth of a second is six clock units and a port tick five, so N frames take 6N/5 ticks, rounded up.
         int ticks = (ArcadeClock.ToClockUnits(romFrames) + ArcadeClock.UnitsPerPortTick - 1) / ArcadeClock.UnitsPerPortTick;
         for (int i = 0; i < ticks; i++)
         {
@@ -53,7 +53,7 @@ public sealed class WilliamsLogoBorderTests
     {
         WilliamsLogoBorder border = NewBorder();
 
-        TickRomFrames(border, (4 * 27) + 1); // the 28th W is drawn on the 109th ROM frame
+        TickRomFrames(border, (4 * 27) + 1); // the 28th W is drawn on the 109th fiftieth of a second
 
         Assert.Equal(28, Count(border));
     }

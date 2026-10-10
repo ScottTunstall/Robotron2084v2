@@ -55,7 +55,7 @@ public sealed class DefineInputsHighlightTests
 
         Assert.True(flashTicks.Count >= 10);
 
-        // Seven steps of three ROM frames (3.6 ticks each) put a flash back roughly every 25 ticks.
+        // Seven steps of three fiftieths of a second (3.6 ticks each) put a flash back roughly every 25 ticks.
         int[] gaps = flashTicks.Zip(flashTicks.Skip(1), (first, second) => second - first).ToArray();
         Assert.All(gaps, gap => Assert.InRange(gap, 24, 27));
     }
