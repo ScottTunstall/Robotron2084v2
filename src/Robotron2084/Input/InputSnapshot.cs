@@ -7,8 +7,11 @@ namespace Robotron2084.Input;
 public readonly record struct InputSnapshot(KeyboardState Keys, GamePadState PadOne, GamePadState PadTwo)
 {
     /// <summary>Reads the live keyboard and both gamepads.</summary>
-    public static InputSnapshot Read() => new(
-        Keyboard.GetState(),
-        GamePad.GetState(PlayerIndex.One),
-        GamePad.GetState(PlayerIndex.Two));
+    public static InputSnapshot Read()
+    {
+        return new InputSnapshot(
+            Keyboard.GetState(),
+            GamePad.GetState(PlayerIndex.One),
+            GamePad.GetState(PlayerIndex.Two));
+    }
 }

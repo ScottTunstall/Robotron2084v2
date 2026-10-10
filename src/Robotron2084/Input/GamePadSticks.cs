@@ -5,10 +5,10 @@ using Robotron2084.Core;
 namespace Robotron2084.Input;
 
 /// <summary>
-/// Reads a gamepad stick as one of the eight directions (or zero), dead-zoned and
-/// quantized. The single place floating point touches port-only input code:
-/// <see cref="GamePadState.ThumbSticks"/> is <see cref="Vector2"/> at the
-/// hardware boundary and is quantized before it leaves.
+///     Reads a gamepad stick as one of the eight directions (or zero), dead-zoned and
+///     quantized. The single place floating point touches port-only input code:
+///     <see cref="GamePadState.ThumbSticks" /> is <see cref="Vector2" /> at the
+///     hardware boundary and is quantized before it leaves.
 /// </summary>
 public static class GamePadSticks
 {
@@ -17,11 +17,8 @@ public static class GamePadSticks
     /// <summary>The stick's direction in SCREEN space (Y down-positive), or zero when centred.</summary>
     public static IntVector2 Read(GamePadState pad, bool isRightStick)
     {
-        Vector2 stick = isRightStick ? pad.ThumbSticks.Right : pad.ThumbSticks.Left;
-        if (stick.LengthSquared() < DeadZoneLengthSquared)
-        {
-            return IntVector2.Zero;
-        }
+        var stick = isRightStick ? pad.ThumbSticks.Right : pad.ThumbSticks.Left;
+        if (stick.LengthSquared() < DeadZoneLengthSquared) return IntVector2.Zero;
 
         return new IntVector2(Math.Sign(stick.X), Math.Sign(-stick.Y));
     }

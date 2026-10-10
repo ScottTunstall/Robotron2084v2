@@ -1,6 +1,9 @@
 namespace Robotron2084.Input;
 
-/// <summary>Turns the held fire and START buttons of each poll into the presses (rising edges) the attract screens react to.</summary>
+/// <summary>
+///     Turns the held fire and START buttons of each poll into the presses (rising edges) the attract screens react
+///     to.
+/// </summary>
 public sealed class ButtonEdgeDetector
 {
     private PlayerInputState _previousInputState;

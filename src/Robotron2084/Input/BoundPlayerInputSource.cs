@@ -3,11 +3,11 @@ namespace Robotron2084.Input;
 /// <summary>Reads one player's input.</summary>
 public sealed class BoundPlayerInputSource : IPlayerInputSource
 {
-    /// <summary>0 for player 1, 1 for player 2.</summary>
-    private readonly int _playerIndex;
-
     /// <summary>The controls to read.</summary>
     private readonly ControlSettings _controlSettings;
+
+    /// <summary>0 for player 1, 1 for player 2.</summary>
+    private readonly int _playerIndex;
 
     /// <summary>Creates a source that reads one player's input.</summary>
     /// <param name="settings">The controls to read.</param>
@@ -19,10 +19,15 @@ public sealed class BoundPlayerInputSource : IPlayerInputSource
     }
 
     /// <summary>Reads the player's input for this tick.</summary>
-    public PlayerInputState Poll() => Poll(InputSnapshot.Read());
+    public PlayerInputState Poll()
+    {
+        return Poll(InputSnapshot.Read());
+    }
 
     /// <summary>Reads the player's input from a given snapshot — the seam the tests use.</summary>
     /// <param name="snapshot">The snapshot to read from.</param>
-    public PlayerInputState Poll(InputSnapshot snapshot) =>
-        _controlSettings.ReadPlayer(_playerIndex, snapshot.Keys, snapshot.PadOne, snapshot.PadTwo);
+    public PlayerInputState Poll(InputSnapshot snapshot)
+    {
+        return _controlSettings.ReadPlayer(_playerIndex, snapshot.Keys, snapshot.PadOne, snapshot.PadTwo);
+    }
 }

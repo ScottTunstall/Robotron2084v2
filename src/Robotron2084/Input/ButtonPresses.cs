@@ -7,5 +7,8 @@ namespace Robotron2084.Input;
 public readonly record struct ButtonPresses(bool FirePressed, bool StartOnePlayerPressed, bool StartTwoPlayersPressed)
 {
     /// <summary>True when any of them went down.</summary>
-    public bool AnyPressed() => FirePressed || StartOnePlayerPressed || StartTwoPlayersPressed;
+    public bool AnyPressed()
+    {
+        return FirePressed || StartOnePlayerPressed || StartTwoPlayersPressed;
+    }
 }
