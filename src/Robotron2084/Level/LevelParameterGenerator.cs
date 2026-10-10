@@ -5,12 +5,16 @@ namespace Robotron2084.Level;
 /// <summary>Works out what each wave contains: how many of each robot, and how fast and how often they act.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the wave tables when a wave begins</item>
-/// <item>Disassembly: <c>$2B7C</c>, which reads the counts at <c>$2E24</c> and the settings at <c>$2C20</c></item>
+/// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the wave
+/// tables when a wave begins</item>
+/// <item>Disassembly: <c>$2B7C</c>, which reads the counts at <c>$2E24</c> and the settings at
+/// <c>$2C20</c></item>
+/// </list> By default it uses the arcade's own wave tables (<see
+/// cref="WaveTable"/>, notes §11), where the waves after the fortieth repeat the second half of the
+/// table. If a <c>LevelTable.csv</c> file is found, either at a path it is given or in the game's
+/// <c>Content</c> folder, its rows are used instead and start again from the top after the last row.
+/// A missing or damaged file is ignored.</item>
 /// </list>
-/// By default it uses the arcade's own wave tables (<see cref="WaveTable"/>, notes §11), where the waves after the fortieth repeat the second half of the table.
-/// If a <c>LevelTable.csv</c> file is found, either at a path it is given or in the game's <c>Content</c> folder, its rows are used instead and
-/// start again from the top after the last row. A missing or damaged file is ignored.
 /// </remarks>
 public sealed class LevelParameterGenerator
 {

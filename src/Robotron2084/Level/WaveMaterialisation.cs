@@ -9,47 +9,87 @@ namespace Robotron2084.Level;
 /// <summary>Brings the robots on at the start of a wave: they appear one after another, each one forming out of strips of its own sprite. On a brain wave they are beamed in instead.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which makes one pass each ROM frame (<c>NAP 1,APL</c>); each pass starts the appear effect of the next robot on the robot list, and every fourth one fans in by columns (<c>HAPST</c>)</item>
+/// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which makes one pass
+/// each ROM frame (<c>NAP 1,APL</c>); each pass starts the appear effect of the next robot on the
+/// robot list, and every fourth one fans in by columns (<c>HAPST</c>)</item>
 /// <item>Disassembly: <c>$28FE</c> to <c>$2962</c></item>
+/// </list> The robots are switched off before the
+/// loop starts (<c>ROBOFF</c>), so a robot is not on the screen until the loop draws it whole. The
+/// loop does that for one more robot on each pass, starting some passes after it began (<see
+/// cref="PassesBeforeRobotIsDrawnWhole"/>), by which time that robot's appear effect has finished
+/// (notes §62, §143). <para> The arcade walks its robot list, and only the robots on that list appear
+/// this way: the grunts, the hulks, the brains and the tanks. The spheroids and the quarks are on
+/// another list and are on the screen from the start. </para> <para> "Transport" in the names here is
+/// the arcade's own name for beaming the robots in at the start of a brain wave: the original source
+/// calls that effect the transporter (<c>RRT2.ASM</c>, titled <c>TRANSPORTER</c>, started by
+/// <c>TRNSTV</c>, "START TRANSPORTING"). Here it is done by <see cref="RobotTransporter"/>. </para></item>
 /// </list>
-/// The robots are switched off before the loop starts (<c>ROBOFF</c>), so a robot is not on the screen until the loop draws it whole. The loop does that for one more robot on each pass,
-/// starting some passes after it began (<see cref="PassesBeforeRobotIsDrawnWhole"/>), by which time that robot's appear effect has finished (notes §62, §143).
-/// <para>
-/// The arcade walks its robot list, and only the robots on that list appear this way: the grunts, the hulks, the brains and the tanks. The spheroids and the quarks are on another list and are on the screen from the start.
-/// </para>
-/// <para>
-/// "Transport" in the names here is the arcade's own name for beaming the robots in at the start of a brain wave: the original source calls that effect the transporter
-/// (<c>RRT2.ASM</c>, titled <c>TRANSPORTER</c>, started by <c>TRNSTV</c>, "START TRANSPORTING"). Here it is done by <see cref="RobotTransporter"/>.
-/// </para>
 /// </remarks>
 public sealed class WaveMaterialisation
 {
     /// <summary>Picks every fourth robot to fan in by columns instead of rows. It is used on the number of passes made before the robot's own: the robot fans in by columns when the last two bits of that number are both set.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>ANDA #3 / CMPA #3</c>. Disassembly: <c>$291C</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>ANDA #3 / CMPA #3</c>.</item>
+    /// <item>Disassembly: <c>$291C</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int ColumnFanSequenceMask = 3;
 
     /// <summary>How many passes after a robot's appear effect starts the loop draws the robot whole. It is added to the robot's place in the order to give the pass on which the robot stops being held back.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>CMPA #32 / BLS AP4</c>, after which each pass moves the end of the list that <c>APREF</c> redraws one robot along ("EXPAND REFRESH LIST"). Disassembly: <c>$2930</c> to <c>$293E</c>, and <c>$2965</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>CMPA #32 / BLS AP4</c>, after which each
+    /// pass moves the end of the list that <c>APREF</c> redraws one robot along ("EXPAND REFRESH
+    /// LIST").</item>
+    /// <item>Disassembly: <c>$2930</c> to <c>$293E</c>, and <c>$2965</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int PassesBeforeRobotIsDrawnWhole = 32;
 
     /// <summary>The top row of the arcade's playfield on its screen. With <see cref="ArcadeBottomRow"/> it turns a robot's place on the port's playfield into the row the arcade would have it on, which sets the row its strips close in on.</summary>
-    /// <remarks>Original source: <c>RRF.ASM</c> <c>YMIN</c>. Disassembly: the compare at <c>$5DB6</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRF.ASM</c> <c>YMIN</c>.</item>
+    /// <item>Disassembly: the compare at <c>$5DB6</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int ArcadeTopRow = 24;
 
     /// <summary>The bottom row of the arcade's playfield on its screen.</summary>
-    /// <remarks>Original source: <c>RRF.ASM</c> <c>YMAX</c>. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRF.ASM</c> <c>YMAX</c>.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     private const int ArcadeBottomRow = 234;
 
     /// <summary>The left column of the arcade's playfield on its screen. With <see cref="ArcadeRightColumn"/> it turns a robot's place on the port's playfield into the column the arcade would have it on, which sets the column its strips close in on.</summary>
-    /// <remarks>Original source: <c>RRF.ASM</c> <c>XMIN</c>. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRF.ASM</c> <c>XMIN</c>.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     private const int ArcadeLeftColumn = 7;
 
     /// <summary>The right column of the arcade's playfield on its screen.</summary>
-    /// <remarks>Original source: <c>RRF.ASM</c> <c>XMAX</c>. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRF.ASM</c> <c>XMAX</c>.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     private const int ArcadeRightColumn = 0x8F;
 
     /// <summary>The largest number the arcade's screen coordinates and its 8-bit sums can hold. A robot's column is doubled to make it a pixel, and the doubled column is held at this when it would be more.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APCENT</c>, <c>ASLA / BCC APC1 / LDA #$FF</c>. Disassembly: <c>$29B5</c> onwards.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APCENT</c>, <c>ASLA / BCC APC1 / LDA #$FF</c>.</item>
+    /// <item>Disassembly: <c>$29B5</c> onwards.</item>
+    /// </list>
+    /// </remarks>
     private const int LargestByte = 0xFF;
 
     /// <summary>The place in the order of each robot that the loop has not drawn whole yet. A robot in here does not act and is not drawn as itself.</summary>
@@ -68,7 +108,12 @@ public sealed class WaveMaterialisation
     private readonly RobotTransporter? _transporter;
 
     /// <summary>Counts up to the next ROM frame, in clock units, because the loop makes one pass on each ROM frame. It starts with a whole ROM frame in it, so that the first pass is made on the first tick, as the arcade makes its first pass at once.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>NAP 1,APL</c>. Disassembly: <c>$2949</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>NAP 1,APL</c>.</item>
+    /// <item>Disassembly: <c>$2949</c>.</item>
+    /// </list>
+    /// </remarks>
     private int _appearClockUnits = ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>The last place in the order that has been given out.</summary>
@@ -83,7 +128,13 @@ public sealed class WaveMaterialisation
     /// <summary>Makes the sequence for one wave.</summary>
     /// <param name="random">The field's random source, which the transporter's sparkle uses.</param>
     /// <param name="beamsIn">True on a brain wave, where the robots are beamed in by the transporter instead of appearing strip by strip.</param>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS00</c> and the test of <c>BRNCNT</c> before it ("BRAIN WAVE???"). Disassembly: <c>$2860</c> to <c>$2871</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>PLS00</c> and the test of <c>BRNCNT</c> before it ("BRAIN
+    /// WAVE???").</item>
+    /// <item>Disassembly: <c>$2860</c> to <c>$2871</c>.</item>
+    /// </list>
+    /// </remarks>
     public WaveMaterialisation(Random random, bool beamsIn) => _transporter = beamsIn ? new RobotTransporter(random) : null;
 
     /// <summary>The number of robots that have not yet been given their turn to appear.</summary>
@@ -92,7 +143,12 @@ public sealed class WaveMaterialisation
     /// <summary>Moves the sequence on by one tick. On each ROM frame the loop makes a pass: it starts the appear effect of the robot whose turn it is, and it draws whole the robot whose appear effect has had time to finish.</summary>
     /// <param name="entities">Everything on the field. The appear effects join its strip effects, and it says whether a strip routine has a record free.</param>
     /// <param name="playfieldBounds">The inside of the wall, in port pixels.</param>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>. Disassembly: <c>$290D</c> to <c>$294E</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>.</item>
+    /// <item>Disassembly: <c>$290D</c> to <c>$294E</c>.</item>
+    /// </list>
+    /// </remarks>
     public void Advance(FieldEntities entities, Rectangle playfieldBounds)
     {
         if (_transporter is not null)
@@ -122,10 +178,12 @@ public sealed class WaveMaterialisation
     /// <param name="sprites">The sprite set.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRT2.ASM</c>, the transporter, which draws each image where its robots stand (<c>TRNLP</c>)</item>
+    /// <item>Original source: <c>RRT2.ASM</c>, the transporter, which draws each
+    /// image where its robots stand (<c>TRNLP</c>)</item>
     /// <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>)</item>
+    /// </list> "Transport"
+    /// is the arcade's own word for beaming the robots in.</item>
     /// </list>
-    /// "Transport" is the arcade's own word for beaming the robots in.
     /// </remarks>
     public void DrawTransport(SpriteBatch spriteBatch, SpriteSet sprites)
     {
@@ -159,7 +217,13 @@ public sealed class WaveMaterialisation
     /// <param name="robotBounds">The robot's box, in port pixels.</param>
     /// <param name="playfieldBounds">The inside of the wall, in port pixels.</param>
     /// <returns>A function that takes the number of rows in the sprite and gives the row, counted from the top.</returns>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>APCENT</c>, <c>LDB OBJH,U / LDA OBJY,X / MUL / ADDA OBJY,X</c>. Disassembly: <c>$29B5</c> onwards.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APCENT</c>, <c>LDB OBJH,U / LDA OBJY,X / MUL / ADDA
+    /// OBJY,X</c>.</item>
+    /// <item>Disassembly: <c>$29B5</c> onwards.</item>
+    /// </list>
+    /// </remarks>
     internal static Func<int, int> GetCentreRowFinder(Rectangle robotBounds, Rectangle playfieldBounds)
     {
         int arcadeRow = ArcadeTopRow + ((robotBounds.Y - playfieldBounds.Y) * (ArcadeBottomRow - ArcadeTopRow) / playfieldBounds.Height);
@@ -171,8 +235,12 @@ public sealed class WaveMaterialisation
     /// <param name="playfieldBounds">The inside of the wall, in port pixels.</param>
     /// <returns>A function that takes the number of pixel columns in the sprite and gives the column, counted from the left.</returns>
     /// <remarks>
-    /// Original source: <c>RRG23.ASM</c> <c>APCENT</c>, <c>LDB OBJW,U / LDA OBJX,X / ASLA / MUL / ADDA OBJX,X</c>, and <c>RRHX4.ASM</c> <c>APNTOK</c>, <c>ASLB</c> ("DOUBLE CENTER FOR BYTE ADJUSTMENT").
-    /// Disassembly: <c>$29B5</c> onwards.
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APCENT</c>, <c>LDB OBJW,U / LDA OBJX,X / ASLA / MUL /
+    /// ADDA OBJX,X</c>, and <c>RRHX4.ASM</c> <c>APNTOK</c>, <c>ASLB</c> ("DOUBLE CENTER FOR BYTE
+    /// ADJUSTMENT").</item>
+    /// <item>Disassembly: <c>$29B5</c> onwards.</item>
+    /// </list>
     /// </remarks>
     internal static Func<int, int> GetCentreColumnFinder(Rectangle robotBounds, Rectangle playfieldBounds)
     {
@@ -186,7 +254,8 @@ public sealed class WaveMaterialisation
     /// <param name="transporter">The transporter that does the beaming in.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRT2.ASM</c> <c>TRNSTV</c> ("START TRANSPORTING"), which <c>RRG23.ASM</c> starts with <c>MAKP TRANST</c> on a brain wave</item>
+    /// <item>Original source: <c>RRT2.ASM</c> <c>TRNSTV</c> ("START
+    /// TRANSPORTING"), which <c>RRG23.ASM</c> starts with <c>MAKP TRANST</c> on a brain wave</item>
     /// <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>)</item>
     /// </list>
     /// </remarks>
@@ -236,10 +305,14 @@ public sealed class WaveMaterialisation
     /// <param name="playfieldBounds">The inside of the wall, in port pixels.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>APL1</c> to <c>AP2</c>: <c>STX PD2,U</c> moves the loop on whether or not <c>APST</c> or <c>HAPST</c> found a record (<c>RRX7.ASM</c> <c>APBY</c> gives the robot back in <c>X</c> either way)</item>
-    /// <item>Disassembly: <c>$2911</c> to <c>$292A</c>, and <c>$5BCA</c> for the return when there is no record</item>
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APL1</c> to <c>AP2</c>: <c>STX
+    /// PD2,U</c> moves the loop on whether or not <c>APST</c> or <c>HAPST</c> found a record
+    /// (<c>RRX7.ASM</c> <c>APBY</c> gives the robot back in <c>X</c> either way)</item>
+    /// <item>Disassembly: <c>$2911</c> to <c>$292A</c>, and <c>$5BCA</c> for the return when there is no
+    /// record</item>
+    /// </list> The arcade does not set a lean before it asks for a row fan here, and
+    /// its vertical routine has none, so the lean is nothing.</item>
     /// </list>
-    /// The arcade does not set a lean before it asks for a row fan here, and its vertical routine has none, so the lean is nothing.
     /// </remarks>
     private void StartAppear(IEntity robot, FieldEntities entities, Rectangle playfieldBounds)
     {

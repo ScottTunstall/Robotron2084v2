@@ -6,15 +6,19 @@ namespace Robotron2084.Level;
 /// <summary>One animation frame being beamed in on a brain wave. Its pixels come on in groups, sparkling, and go off again, until the whole animation frame is there.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRT2.ASM</c> <c>TRNSPT</c> (the three ways a step changes the pixels), <c>TMAKE</c> and <c>UPDATE</c></item>
+/// <item>Original source: <c>RRT2.ASM</c> <c>TRNSPT</c> (the three ways a step
+/// changes the pixels), <c>TMAKE</c> and <c>UPDATE</c></item>
 /// <item>Disassembly: the transporter overlay's update routine (<c>RTORG</c>, <c>$4140</c>)</item>
 /// </list>
-/// "Transport" is the arcade's own name for beaming the robots in at the start of a brain wave.
-/// The arcade keeps one of these in a spare buffer for all the robots that show the same animation frame, and draws it for each of them every ROM frame.
-/// That is why it is a class of its own rather than part of a robot. A step takes the next entry of <see cref="TransporterTuning.Steps"/>, and turns one
-/// group of pixels on, on with a sparkle, or off. The arcade stores two pixels to a byte, a column at a time, so a group names pixels by byte, and this class
-/// maps them back to a pixel's place. Where a plain "on" meets a pixel that is still sparkling, the arcade mixes the two colour numbers;
-/// here the pixel simply takes its own colour.
+/// "Transport" is the arcade's own name for beaming the robots in at the start of a brain wave. The
+/// arcade keeps one of these in a spare buffer for all the robots that show the same animation frame,
+/// and draws it for each of them every ROM frame. That is why it is a class of its own rather than
+/// part of a robot. A step takes the next entry of <see cref="TransporterTuning.Steps"/>, and turns
+/// one group of pixels on, on with a sparkle, or off. The arcade stores two pixels to a byte, a
+/// column at a time, so a group names pixels by byte, and this class maps them back to a pixel's
+/// place. Where a plain "on" meets a pixel that is still sparkling, the arcade mixes the two colour
+/// numbers; here the pixel simply takes its own colour.</item>
+/// </list>
 /// </remarks>
 public sealed class TransportImage
 {

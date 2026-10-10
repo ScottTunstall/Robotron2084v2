@@ -3,14 +3,19 @@ namespace Robotron2084.Level;
 /// <summary>Everything that makes one wave what it is: how many of each robot it has, and how fast and how often they act.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the wave's counts and settings when a wave begins</item>
-/// <item>Disassembly: <c>INITIALISE_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE</c> (<c>$2B7C</c>)</item>
+/// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the wave's
+/// counts and settings when a wave begins</item>
+/// <item>Disassembly: <c>INITIALISE_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE</c>
+/// (<c>$2B7C</c>)</item>
+/// </list> The values come from the arcade's wave tables (<see
+/// cref="WaveTable"/>, notes §11). A parameter left out gets a value that a hand-built wave in a test
+/// can use. <c>MaxDropsX2</c> is the arcade's <c>ENFNUM</c>: a spheroid or quark rolls a number up to
+/// it and drops half of it, rounded up. <c>TankCount</c> is the tanks already on the field when a man
+/// starts. The wave table never has any, because quarks drop them, but a death keeps the ones that
+/// were alive (notes §134). <c>BerzerkRobotCount</c> and <c>GorfCount</c> are the author's own
+/// robots, which no wave has yet. Times are counted in ROM frames, and the port turns them into its
+/// own ticks where they are used.</item>
 /// </list>
-/// The values come from the arcade's wave tables (<see cref="WaveTable"/>, notes §11). A parameter left out gets a value that a hand-built wave in a test
-/// can use. <c>MaxDropsX2</c> is the arcade's <c>ENFNUM</c>: a spheroid or quark rolls a number up to it and drops half of it, rounded up.
-/// <c>TankCount</c> is the tanks already on the field when a man starts. The wave table never has any, because quarks drop them, but a death keeps the ones
-/// that were alive (notes §134). <c>BerzerkRobotCount</c> and <c>GorfCount</c> are the author's own robots, which no wave has yet.
-/// Times are counted in ROM frames, and the port turns them into its own ticks where they are used.
 /// </remarks>
 public sealed record LevelParameters(
     int LevelNumber,

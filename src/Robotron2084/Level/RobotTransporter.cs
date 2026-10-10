@@ -9,17 +9,26 @@ namespace Robotron2084.Level;
 /// <summary>Beams the robots in at the start of a brain wave. Each robot's animation frame is built up out of sparkling pixels, and robots that show the same animation frame share one build-up.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRT2.ASM</c> <c>TRNSTV</c> (which shares an image between robots with the same animation frame, up to sixteen each), <c>TRNLP</c> and <c>ROBUP</c>; <c>RRG23.ASM</c> starts it with <c>MAKP TRANST</c> when <c>BRNCNT</c> is not zero</item>
+/// <item>Original source: <c>RRT2.ASM</c> <c>TRNSTV</c> (which shares an image
+/// between robots with the same animation frame, up to sixteen each), <c>TRNLP</c> and <c>ROBUP</c>;
+/// <c>RRG23.ASM</c> starts it with <c>MAKP TRANST</c> when <c>BRNCNT</c> is not zero</item>
 /// <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>)</item>
+/// </list> Every ROM frame
+/// it takes one step of each image, and it draws each image where its robots stand. The sound is the
+/// transporter's own (<see cref="Audio.Sound.PlayTransporter"/>). Other waves use the strip appear
+/// instead (<see cref="WaveMaterialisation"/>). "Transporter" is the arcade's own name for beaming
+/// the robots in at the start of a brain wave (<c>RRT2.ASM</c> is titled <c>TRANSPORTER</c>).</item>
 /// </list>
-/// Every ROM frame it takes one step of each image, and it draws each image where its robots stand. The sound is the transporter's own
-/// (<see cref="Audio.Sound.PlayTransporter"/>). Other waves use the strip appear instead (<see cref="WaveMaterialisation"/>).
-/// "Transporter" is the arcade's own name for beaming the robots in at the start of a brain wave (<c>RRT2.ASM</c> is titled <c>TRANSPORTER</c>).
 /// </remarks>
 public sealed class RobotTransporter
 {
     /// <summary>The most robots that share one image: the first, and then fifteen more.</summary>
-    /// <remarks>Original source: <c>RRT2.ASM</c> <c>TRNSTV</c>, <c>CMPY #15</c>. Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRT2.ASM</c> <c>TRNSTV</c>, <c>CMPY #15</c>.</item>
+    /// <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int RobotsPerImage = 16;
 
     /// <summary>Each robot being beamed in, with the image it shows.</summary>
@@ -32,7 +41,13 @@ public sealed class RobotTransporter
     private readonly List<TransportImage> _images = [];
 
     /// <summary>Builds up, a tick at a time, until it is time for the next ROM frame. It starts with a whole ROM frame in it, so that the first step is taken on the first tick, as the arcade takes its first step on the frame the wave is set up.</summary>
-    /// <remarks>Original source: <c>RRT2.ASM</c> <c>TRNLP</c>, which <c>TRNSTV</c> runs on into before its first <c>NAP 1</c>. Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRT2.ASM</c> <c>TRNLP</c>, which <c>TRNSTV</c> runs on into before its
+    /// first <c>NAP 1</c>.</item>
+    /// <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>).</item>
+    /// </list>
+    /// </remarks>
     private int _clockUnits = ArcadeClock.UnitsPerRomFrame;
 
     /// <summary>Makes a transporter.</summary>

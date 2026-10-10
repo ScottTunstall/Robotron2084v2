@@ -5,20 +5,33 @@ namespace Robotron2084.Level;
 /// <summary>Makes the first few waves easier for a player who is losing men early. The arcade's second release added it, because new players found the game too hard.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, with the table <c>BOZOTB</c></item>
+/// <item>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, with the table
+/// <c>BOZOTB</c></item>
 /// <item>Disassembly: <c>$2B26</c> to <c>$2B68</c>, with the table at <c>$2B59</c></item>
+/// </list> It runs
+/// each time a player's wave is loaded. On the first four waves, a player with no spare men left gets
+/// it. On the first two waves, so does a player who has lost a man. The wave's enforcers, spheroids
+/// and grunts are then slowed to the values in the table.</item>
 /// </list>
-/// It runs each time a player's wave is loaded. On the first four waves, a player with no spare men left gets it. On the first two waves, so does a player who has lost a man.
-/// The wave's enforcers, spheroids and grunts are then slowed to the values in the table.
 /// </remarks>
 public static class BozoMode
 {
     /// <summary>The last wave the mercy is given on.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, <c>CMPA #4 / BHI</c>. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, <c>CMPA #4 / BHI</c>.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     private const int LastWave = 4;
 
     /// <summary>The last wave a player who has lost a man, but still has spare ones, is given the mercy on.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, <c>CMPA #2 / BHI</c>. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, <c>CMPA #2 / BHI</c>.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     private const int LastWaveForBehindPlayer = 2;
 
     /// <summary>One row of the table: the four settings for a wave, in the table's own order.</summary>
@@ -29,7 +42,12 @@ public static class BozoMode
     private sealed record Row(int SpheroidDropDelay, int EnforcerFireDelay, int GruntMoveDelay, int GruntSpeedFloor);
 
     /// <summary>The settings for waves 1 to 4.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>BOZOTB</c>. Disassembly: <c>$2B59</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>BOZOTB</c>.</item>
+    /// <item>Disassembly: <c>$2B59</c>.</item>
+    /// </list>
+    /// </remarks>
     private static readonly Row[] Table =
     [
         new(38, 96, 30, 15),

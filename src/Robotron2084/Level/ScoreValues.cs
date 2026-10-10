@@ -3,11 +3,13 @@ namespace Robotron2084.Level;
 /// <summary>The points the player scores for each kind of kill, and for rescuing a human.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: the <c>SCORE</c> calls in each robot's routines, checked against the title screen's score table in <c>RRET.ASM</c></item>
+/// <item>Original source: the <c>SCORE</c> calls in each robot's routines,
+/// checked against the title screen's score table in <c>RRET.ASM</c></item>
 /// <item>Disassembly: the calls to the score update routine at <c>$DB9C</c></item>
+/// </list> An electrode
+/// scores nothing, and a hulk cannot be killed. The player never loses points. A rescue's bonus is
+/// given where the rescue happens (<see cref="RescueBonus"/>), not here (notes §11.3).</item>
 /// </list>
-/// An electrode scores nothing, and a hulk cannot be killed. The player never loses points. A rescue's bonus is given where the rescue happens
-/// (<see cref="RescueBonus"/>), not here (notes §11.3).
 /// </remarks>
 public static class ScoreValues
 {
@@ -39,11 +41,21 @@ public static class ScoreValues
     public const int Quark = 1000;
 
     /// <summary>The number of rescues after which the rescue bonus stops growing.</summary>
-    /// <remarks>Original source: <c>RRH11.ASM</c> <c>SVITAB</c>. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>SVITAB</c>.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     public const int RescueBonusMaxCount = 5;
 
     /// <summary>The bonus for a life's first rescue, which each later rescue adds another of, up to <see cref="RescueBonusMaxCount"/>.</summary>
-    /// <remarks>Original source: <c>RRH11.ASM</c> <c>SVITAB</c>. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>SVITAB</c>.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     public const int RescueBonusMin = 1000;
 
     /// <summary>The points for shooting a spark.</summary>

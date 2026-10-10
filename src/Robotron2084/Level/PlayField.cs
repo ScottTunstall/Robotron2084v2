@@ -146,11 +146,23 @@ public sealed class PlayField : ICollisionScene
     public LaserSlots PlayerLasers { get; }
 
     /// <summary>How many humans the player has rescued so far on this wave. Every wave starts at none.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLINIT</c>, which clears <c>SAVCNT</c> as each wave starts. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>PLINIT</c>, which clears <c>SAVCNT</c> as each wave
+    /// starts.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     public int RescuesThisLife { get; private set; }
 
     /// <summary>True while the robots must stand still: until the game goes live at the start of the wave, and while the player is dying.</summary>
-    /// <remarks>Original source: each robot's routine waits for <c>STATUS</c> to clear (<c>RRP8.ASM</c> <c>ROBOT</c>, <c>RRH11.ASM</c> <c>HULK</c>). Disassembly: the status byte at <c>$59</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: each robot's routine waits for <c>STATUS</c> to clear (<c>RRP8.ASM</c>
+    /// <c>ROBOT</c>, <c>RRH11.ASM</c> <c>HULK</c>).</item>
+    /// <item>Disassembly: the status byte at <c>$59</c>.</item>
+    /// </list>
+    /// </remarks>
     public bool RobotsFrozen() => !IsLive() || Player.IsDying();
 
     /// <summary>The player's score.</summary>
@@ -244,8 +256,12 @@ public sealed class PlayField : ICollisionScene
     /// <summary>Draws the wall round the playfield and nothing else. It is what is on the screen, with the scores, while the arcade shows whose turn it is before it sets a wave up.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <remarks>
-    /// Original source: <c>RRG23.ASM</c> <c>GTWCOL</c>, which picks the wall's colour for the wave (<c>WALCOL</c>), and <c>BORDER</c>, which <c>TDISP</c> calls. Disassembly: not separately labelled.
-    /// The placeholder <see cref="WallColorCycle"/> is only used when there is no live palette, which is in a test.
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>GTWCOL</c>, which picks the wall's colour for the wave
+    /// (<c>WALCOL</c>), and <c>BORDER</c>, which <c>TDISP</c> calls.</item>
+    /// <item>Disassembly: not separately labelled. The placeholder <see cref="WallColorCycle"/> is only
+    /// used when there is no live palette, which is in a test.</item>
+    /// </list>
     /// </remarks>
     public void DrawWall(SpriteBatch spriteBatch) =>
         Wall.Draw(spriteBatch, Sprites.WallPixelSprite, _palette?.GetColour(WavePaletteTables.GetWallSlot(Parameters.LevelNumber)));
@@ -287,7 +303,12 @@ public sealed class PlayField : ICollisionScene
     public bool IsPlayerAlive() => Player.IsAlive();
 
     /// <summary>Says whether the game is live: the start of the wave is over, so the player can move and fire, things can touch the player, and the robots act.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS2</c>, <c>CLR STATUS</c>. Disassembly: <c>$289A</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>PLS2</c>, <c>CLR STATUS</c>.</item>
+    /// <item>Disassembly: <c>$289A</c>.</item>
+    /// </list>
+    /// </remarks>
     public bool IsLive() => _waveStart.IsLive();
 
     /// <summary>Says whether the player has finished dying.</summary>
@@ -361,7 +382,12 @@ public sealed class PlayField : ICollisionScene
     internal GamePalette? Palette => _palette;
 
     /// <summary>The shortest wait between moves that the grunts' speed-ups may bring a grunt to (test hook).</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>RMXSPD</c>. Disassembly: <c>$BE5D</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>RMXSPD</c>.</item>
+    /// <item>Disassembly: <c>$BE5D</c>.</item>
+    /// </list>
+    /// </remarks>
     internal int GetGruntSpeedFloor() => _gruntSpeedProgression.Floor;
 
     /// <summary>How many flashes of colour are showing where lasers hit the wall (test hook).</summary>
@@ -450,7 +476,13 @@ public sealed class PlayField : ICollisionScene
     }
 
     /// <summary>Kills a robot and shatters its sprite into strips. Each kind's row calls this, and each row has its own sound.</summary>
-    /// <remarks>Original source: <c>RRDX2.ASM</c> <c>NWCENT</c>, which puts the explosion at the sprite's middle (notes §73). Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRDX2.ASM</c> <c>NWCENT</c>, which puts the explosion at the sprite's
+    /// middle (notes §73).</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     /// <param name="target">The robot being killed.</param>
     /// <param name="direction">The laser's direction, which picks the explosion's axis and lean.</param>
     internal void KillWithStripExplosion(IEntity target, Direction8 direction)
@@ -466,8 +498,12 @@ public sealed class PlayField : ICollisionScene
     /// <param name="dead">The thing that died.</param>
     /// <param name="direction">The way the laser that killed it was going, or null when it was not a laser.</param>
     /// <remarks>
-    /// Original source: <c>GETBLK</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>. Each of the three strip routines has its own records, which its explosions and its appear effects share (<see cref="StripExplosionTuning.GetPoolSize"/>).
-    /// Disassembly: <c>$5B6C</c>, <c>$F03A</c> and <c>$46B2</c>.
+    /// <list type="bullet">
+    /// <item>Original source: <c>GETBLK</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>. Each
+    /// of the three strip routines has its own records, which its explosions and its appear effects
+    /// share (<see cref="StripExplosionTuning.GetPoolSize"/>).</item>
+    /// <item>Disassembly: <c>$5B6C</c>, <c>$F03A</c> and <c>$46B2</c>.</item>
+    /// </list>
     /// </remarks>
     internal void SpawnExplosion(IExplodable dead, Direction8? direction)
     {
@@ -527,7 +563,8 @@ public sealed class PlayField : ICollisionScene
     /// <summary>Plays the sounds that things make just by moving: a bounce for each tank shell that bounced, and one step for all the grunts together if any of them moved.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> for the shell's bounce (<c>SRBSND</c>) and <c>RRP8.ASM</c> <c>ROBX</c> for the grunts' step (<c>RMVSND</c>)</item>
+    /// <item>Original source: <c>RRTK4.ASM</c> for the shell's bounce (<c>SRBSND</c>) and <c>RRP8.ASM</c>
+    /// <c>ROBX</c> for the grunts' step (<c>RMVSND</c>)</item>
     /// <item>Disassembly: <c>$4FCD</c> for the bounce</item>
     /// </list>
     /// </remarks>
@@ -559,7 +596,13 @@ public sealed class PlayField : ICollisionScene
     internal bool HasPlayerAppeared() => _waveStart.HasPlayerAppeared();
 
     /// <summary>Says whether the player's own sprite is drawn. It is not until the game is live.</summary>
-    /// <remarks>Original source: <c>RRS22.ASM</c> <c>PLA0</c>, <c>BITA #$10</c>, with <c>STATUS</c> held at <c>$19</c> until <c>PLS2</c>. Disassembly: the status byte at <c>$59</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRS22.ASM</c> <c>PLA0</c>, <c>BITA #$10</c>, with <c>STATUS</c> held at
+    /// <c>$19</c> until <c>PLS2</c>.</item>
+    /// <item>Disassembly: the status byte at <c>$59</c>.</item>
+    /// </list>
+    /// </remarks>
     internal bool IsPlayerDrawn() => IsLive();
 
     /// <summary>Makes the game live at once and leaves the player's appear effect out, for a test of something that happens in play and not at the start of a wave (test hook).</summary>
@@ -577,7 +620,13 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>Lists the robots that the arcade keeps on its robot list, in the order its appear loop meets them. The arcade puts each new robot at the head of the list, so the loop meets the kind that was set up last first, and within a kind the robot that was made last first.</summary>
     /// <returns>The robots, from the first the loop meets to the last.</returns>
-    /// <remarks>Original source: <c>RRS22.ASM</c> <c>GETRBV</c> (<c>LDD RPTR / STX RPTR</c>), and <c>RRG23.ASM</c> <c>APPEAR</c>, which walks <c>RPTR</c>. Disassembly: the list at <c>$9821</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRS22.ASM</c> <c>GETRBV</c> (<c>LDD RPTR / STX RPTR</c>), and
+    /// <c>RRG23.ASM</c> <c>APPEAR</c>, which walks <c>RPTR</c>.</item>
+    /// <item>Disassembly: the list at <c>$9821</c>.</item>
+    /// </list>
+    /// </remarks>
     private IEnumerable<IEntity> GetRobotsInAppearOrder() =>
         RobotKinds.All
             .Where(kind => kind.IsOnRobotList())
@@ -594,7 +643,13 @@ public sealed class PlayField : ICollisionScene
     }
 
     /// <summary>Runs every collision rule in the arcade's order, then freezes the game for a moment if the player has just been killed. Nothing collides until the game is live.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS2</c>, which makes the collision process (<c>MAKP COLCHK</c>) only as the game goes live. Disassembly: <c>$2895</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>PLS2</c>, which makes the collision process (<c>MAKP
+    /// COLCHK</c>) only as the game goes live.</item>
+    /// <item>Disassembly: <c>$2895</c>.</item>
+    /// </list>
+    /// </remarks>
     private void ResolveCollisions()
     {
         if (!IsLive())

@@ -6,10 +6,13 @@ namespace Robotron2084.Level;
 /// <summary>The family on the field: Mommy, Daddy and Mikey, each in a numbered place that the brains and hulks pick them by.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRH11.ASM</c> <c>HTAB</c>, the family list that <c>HUMSTV</c> fills, and <c>RRB10.ASM</c> <c>GETHTG</c>, which searches it</item>
-/// <item>Disassembly: <c>asm/robomame.asm</c>, the list at <c>$B354</c> and <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c> (<c>$1B95</c>)</item>
+/// <item>Original source: <c>RRH11.ASM</c> <c>HTAB</c>, the family list that
+/// <c>HUMSTV</c> fills, and <c>RRB10.ASM</c> <c>GETHTG</c>, which searches it</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c>, the list at <c>$B354</c> and
+/// <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c> (<c>$1B95</c>)</item>
+/// </list> A member who is dead or in
+/// a brain's hold is off the ROM's list, so their place reads as empty.</item>
 /// </list>
-/// A member who is dead or in a brain's hold is off the ROM's list, so their place reads as empty.
 /// </remarks>
 public sealed class FamilyList
 {
@@ -51,10 +54,12 @@ public sealed class FamilyList
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>GETHTG</c></item>
     /// <item>Disassembly: <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c> (<c>$1B95</c>)</item>
+    /// </list> This is
+    /// where the arcade's "all the brains chase Mikey" bug lives. A brain picks its target as it is
+    /// made, before the family exists, so every brain leaves with the first place in hand; Mikey
+    /// fills that place, because the Mikeys are made first. Each brain keeps the place until it
+    /// empties (notes §18.8).</item>
     /// </list>
-    /// This is where the arcade's "all the brains chase Mikey" bug lives. A brain picks its target as it is made, before
-    /// the family exists, so every brain leaves with the first place in hand; Mikey fills that place, because the Mikeys
-    /// are made first. Each brain keeps the place until it empties (notes §18.8).
     /// </remarks>
     internal int GetNearestSlot(IntVector2 from)
     {
@@ -80,7 +85,12 @@ public sealed class FamilyList
 
     /// <summary>Finds where the last member to join is standing, if they are still alive.</summary>
     /// <returns>Their position, or null when there is no such member. A hulk that gets null goes for the player instead.</returns>
-    /// <remarks>Original source: <c>RRH11.ASM</c>, the hulk's "last slot" target. Disassembly: <c>$010D</c> and <c>$0113</c>, the fall back to the player.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c>, the hulk's "last slot" target.</item>
+    /// <item>Disassembly: <c>$010D</c> and <c>$0113</c>, the fall back to the player.</item>
+    /// </list>
+    /// </remarks>
     internal IntVector2? GetLastMemberPosition() =>
         _members.Count > 0 && _members.GetLast().IsAlive() ? _members.GetLast().Position : null;
 }

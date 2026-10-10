@@ -3,24 +3,40 @@ namespace Robotron2084.Level;
 /// <summary>The arcade's table of waves: for each of the first forty, how many of each robot there are, and how fast and how often they act.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the table when a wave begins</item>
-/// <item>Disassembly: the counts at <c>$2E24</c> and the settings at <c>$2C20</c>, read by <c>$2B7C</c></item>
+/// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the table
+/// when a wave begins</item>
+/// <item>Disassembly: the counts at <c>$2E24</c> and the settings at <c>$2C20</c>, read by
+/// <c>$2B7C</c></item>
+/// </list> The values are copied byte for byte from the arcade's ROM and checked
+/// against <c>ref/robowaves.md</c> (notes §11.1 and §11.2). The counts are nine columns, one for each
+/// kind of thing, of forty waves each. The settings are twelve records, each a multiplier, a minimum
+/// and a maximum followed by forty values. The arrays here hold the values for the recommended
+/// difficulty. A wave after the fortieth takes away twenty, again and again, until it is forty or
+/// less, so the second half of the table repeats for ever.</item>
 /// </list>
-/// The values are copied byte for byte from the arcade's ROM and checked against <c>ref/robowaves.md</c> (notes §11.1 and §11.2). The counts are nine columns, one for each
-/// kind of thing, of forty waves each. The settings are twelve records, each a multiplier, a minimum and a maximum followed by forty values. The arrays here hold the
-/// values for the recommended difficulty. A wave after the fortieth takes away twenty, again and again, until it is forty or less, so the second half of the table repeats for ever.
 /// </remarks>
 public static class WaveTable
 {
     /// <summary>How many ROM frames a brain waits after each beat, for each wave. A smaller number is a faster brain.</summary>
-    /// <remarks>The interval between beats is this plus the frame the beat itself takes. Original source: <c>RRB10.ASM</c> <c>BRNSPD</c>. Disassembly: <c>$BE63</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>The interval between beats is this plus the frame the beat itself takes. Original source:
+    /// <c>RRB10.ASM</c> <c>BRNSPD</c>.</item>
+    /// <item>Disassembly: <c>$BE63</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] BrainBeatWaitRomFrames =
     [
         8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6
     ];
 
     /// <summary>The longest a brain waits between cruise missiles, for each wave.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BSHTIM</c>. Disassembly: <c>$BE62</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BSHTIM</c>.</item>
+    /// <item>Disassembly: <c>$BE62</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] BrainFireDelay =
     [
         64, 64, 64, 64, 64, 40, 40, 38, 38, 38, 38, 38, 38, 38, 38, 38, 36, 36, 36, 36, 32, 32, 32, 32, 32, 32, 32, 30, 30, 30, 30, 30, 25, 25, 25, 25, 25, 25, 25, 25
@@ -48,7 +64,12 @@ public static class WaveTable
     ];
 
     /// <summary>How long an enforcer waits between sparks, for each wave. A smaller number is faster fire.</summary>
-    /// <remarks>Original source: <c>RRC11.ASM</c> <c>ENSTIM</c>. Disassembly: <c>$BE5F</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>ENSTIM</c>.</item>
+    /// <item>Disassembly: <c>$BE5F</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] EnforcerFireDelay =
     [
         30, 28, 26, 24, 22, 20, 18, 18, 16, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 15, 15, 15, 15, 15, 15, 15, 15, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14
@@ -56,7 +77,11 @@ public static class WaveTable
 
     /// <summary>The longest a grunt waits between moves, in beats, for each wave. A smaller number is a faster grunt.</summary>
     /// <remarks>
-    /// Each grunt waits a random time up to this, so the grunts do not all move at once (notes §29). Original source: <c>RRP8.ASM</c> <c>ROBSPD</c>. Disassembly: <c>$BE5C</c>.
+    /// <list type="bullet">
+    /// <item>Each grunt waits a random time up to this, so the grunts do not all move at once (notes §29).
+    /// Original source: <c>RRP8.ASM</c> <c>ROBSPD</c>.</item>
+    /// <item>Disassembly: <c>$BE5C</c>.</item>
+    /// </list>
     /// </remarks>
     public static readonly int[] GruntMoveDelay =
     [
@@ -71,7 +96,12 @@ public static class WaveTable
     ];
 
     /// <summary>The fewest beats that the grunts' speed-ups may bring a grunt's longest wait down to, for each wave.</summary>
-    /// <remarks>Original source: <c>RRP8.ASM</c> <c>RMXSPD</c>. Disassembly: <c>$BE5D</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRP8.ASM</c> <c>RMXSPD</c>.</item>
+    /// <item>Disassembly: <c>$BE5D</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] GruntSpeedFloor =
     [
         9, 7, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3
@@ -85,14 +115,24 @@ public static class WaveTable
     ];
 
     /// <summary>How many ROM frames pass between a hulk's beats, for each wave. A smaller number is a faster hulk.</summary>
-    /// <remarks>Original source: <c>RRH11.ASM</c> <c>HLKSPD</c>. Disassembly: <c>$BE61</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HLKSPD</c>.</item>
+    /// <item>Disassembly: <c>$BE61</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] HulkBeatIntervalRomFrames =
     [
         8, 8, 7, 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
     ];
 
     /// <summary>Twice the most that a spheroid or quark may drop, for each wave. Each rolls a number up to this when it is made, and drops half of it, rounded up.</summary>
-    /// <remarks>Original source: <c>ENFNUM</c>. Disassembly: <c>$BE5E</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>ENFNUM</c>.</item>
+    /// <item>Disassembly: <c>$BE5E</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] MaxDropsX2 =
     [
         10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11
@@ -113,7 +153,12 @@ public static class WaveTable
     ];
 
     /// <summary>How long a quark waits before dropping a tank, for each wave. It waits a random time up to this at first, and up to half of it plus one after each drop.</summary>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TDPTIM</c>. Disassembly: <c>$BE66</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>TDPTIM</c>.</item>
+    /// <item>Disassembly: <c>$BE66</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] QuarkDropDelay =
     [
         16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 15, 15, 15, 15, 15, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14
@@ -127,21 +172,36 @@ public static class WaveTable
     ];
 
     /// <summary>How fast a quark may drift, for each wave. A bigger number is a faster quark.</summary>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQSPD</c>. Disassembly: <c>$BE67</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SQSPD</c>.</item>
+    /// <item>Disassembly: <c>$BE67</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] QuarkSpeedCap =
     [
         50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60
     ];
 
     /// <summary>How fast a tank shell flies, and how well it is aimed, for each wave. A bigger number is a faster shell (notes §11.5).</summary>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SHLSPD</c>. Disassembly: <c>$BE65</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SHLSPD</c>.</item>
+    /// <item>Disassembly: <c>$BE65</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] ShellSpeed =
     [
         176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 184, 184, 184, 184, 184, 184, 184, 184, 184, 184, 192, 192, 192, 192, 192, 192, 192, 192, 192, 192
     ];
 
     /// <summary>How long a spheroid waits before dropping an enforcer, for each wave. It waits a random time up to this each time.</summary>
-    /// <remarks>Original source: <c>RRC11.ASM</c> <c>CDPTIM</c>. Disassembly: <c>$BE60</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CDPTIM</c>.</item>
+    /// <item>Disassembly: <c>$BE60</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] SpheroidDropDelay =
     [
         30, 28, 26, 24, 30, 20, 18, 16, 18, 25, 12, 12, 12, 25, 25, 12, 12, 12, 18, 20, 14, 14, 14, 14, 14, 25, 14, 14, 18, 25, 12, 12, 12, 12, 25, 12, 12, 12, 18, 20
@@ -155,7 +215,13 @@ public static class WaveTable
     ];
 
     /// <summary>How many beats a tank waits between shells, for each wave. A smaller number is faster fire.</summary>
-    /// <remarks>A random number of beats is added to it before a tank's first shell. Original source: <c>RRTK4.ASM</c> <c>TNKSHT</c>. Disassembly: <c>$BE64</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>A random number of beats is added to it before a tank's first shell. Original source:
+    /// <c>RRTK4.ASM</c> <c>TNKSHT</c>.</item>
+    /// <item>Disassembly: <c>$BE64</c>.</item>
+    /// </list>
+    /// </remarks>
     public static readonly int[] TankFireDelay =
     [
         32, 32, 32, 32, 32, 32, 32, 30, 30, 30, 30, 30, 30, 28, 28, 28, 28, 28, 28, 28, 30, 30, 30, 30, 30, 30, 28, 28, 28, 28, 28, 26, 26, 26, 26, 26, 24, 24, 24, 24
@@ -223,7 +289,12 @@ public static class WaveTable
     /// <summary>Works out which row of the table a wave uses: its own up to the fortieth, then the second half over and over.</summary>
     /// <param name="waveNumber">The wave number, starting at 1.</param>
     /// <returns>The wave number from 1 to 40.</returns>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which subtracts 20 while the wave is over 40. Disassembly: <c>$2B7C</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which subtracts 20 while the wave is over 40.</item>
+    /// <item>Disassembly: <c>$2B7C</c>.</item>
+    /// </list>
+    /// </remarks>
     public static int ResolveWave(int waveNumber)
     {
         int wave = Math.Max(1, waveNumber);

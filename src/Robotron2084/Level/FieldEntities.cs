@@ -105,9 +105,13 @@ public sealed class FieldEntities
 
     /// <summary>Says whether every enemy that must be cleared to finish the wave is gone.</summary>
     /// <remarks>
-    /// Hulks cannot be killed and electrodes are obstacles, so neither counts. Nor do progs and cruise missiles: the arcade only
-    /// counts the grunts, spheroids, enforcers, brains, tanks and quarks, and clears away anything else when the wave ends.
-    /// Original source: <c>RRG23.ASM</c> <c>WVCHEK</c>. Disassembly: <c>COUNT_ENEMIES_ON_SCREEN</c> (<c>$2A73</c>).
+    /// <list type="bullet">
+    /// <item>Hulks cannot be killed and electrodes are obstacles, so neither counts. Nor do progs and
+    /// cruise missiles: the arcade only counts the grunts, spheroids, enforcers, brains, tanks and
+    /// quarks, and clears away anything else when the wave ends. Original source: <c>RRG23.ASM</c>
+    /// <c>WVCHEK</c>.</item>
+    /// <item>Disassembly: <c>COUNT_ENEMIES_ON_SCREEN</c> (<c>$2A73</c>).</item>
+    /// </list>
     /// </remarks>
     public bool AreEnemiesGone() =>
         Grunts.GetLiveCount() == 0 && BerzerkRobots.GetLiveCount() == 0 && Gorfs.GetLiveCount() == 0 && Spheroids.GetLiveCount() == 0 && Enforcers.GetLiveCount() == 0 && Quarks.GetLiveCount() == 0
@@ -291,7 +295,13 @@ public sealed class FieldEntities
     /// <summary>Says whether one of the arcade's strip routines has a record free for another explosion or appear effect.</summary>
     /// <param name="engine">The strip routine that would run the effect.</param>
     /// <returns>True when the routine can run one more effect.</returns>
-    /// <remarks>Original source: <c>GETBLK</c> and <c>GETAP</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>, each with its own free list. Disassembly: <c>$5B6C</c>, <c>$F03A</c> and the diagonal routine's at <c>$46B2</c> onwards.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>GETBLK</c> and <c>GETAP</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and
+    /// <c>RRDX2.ASM</c>, each with its own free list.</item>
+    /// <item>Disassembly: <c>$5B6C</c>, <c>$F03A</c> and the diagonal routine's at <c>$46B2</c> onwards.</item>
+    /// </list>
+    /// </remarks>
     public bool HasRoomForStripEffect(StripEngine engine) =>
         StripExplosionTuning.GetPoolSize(engine) is not { } poolSize || Explosions.Count(effect => effect.GetEngine() == engine) < poolSize;
 

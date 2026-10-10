@@ -8,11 +8,14 @@ namespace Robotron2084.Level;
 /// <summary>Everything the playfield needs to know about one kind of robot: how many a wave has, what it is worth, how it is put on the field, what a laser does to it and whether touching it kills the player.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: each kind's own routines, such as <c>RRP8.ASM</c> for the grunt and <c>RRH11.ASM</c> for the hulk; this record gathers what they decide</item>
+/// <item>Original source: each kind's own routines, such as <c>RRP8.ASM</c> for
+/// the grunt and <c>RRH11.ASM</c> for the hulk; this record gathers what they decide</item>
 /// <item>Disassembly: not separately labelled, since it is the port's own registry of them</item>
 /// </list>
-/// The wave counts come from <see cref="LevelParameters"/>, the scores from <see cref="ScoreValues"/> (notes §11.3), and
-/// <see cref="LaserHit"/> from the part of each kind's routine that handles a laser (notes §61, §64).
+/// The wave counts come from <see cref="LevelParameters"/>, the scores from <see cref="ScoreValues"/>
+/// (notes §11.3), and <see cref="LaserHit"/> from the part of each kind's routine that handles a
+/// laser (notes §61, §64).</item>
+/// </list>
 /// </remarks>
 /// <param name="Kind">Which kind this row describes.</param>
 /// <param name="WaveCount">How many of them the wave table brings; null when only another robot makes them.</param>
@@ -39,6 +42,12 @@ public sealed record RobotKindInfo(
     int? RobotListSetUpOrder = null)
 {
     /// <summary>Says whether the arcade keeps this kind on its robot list, which is the list its appear loop walks at the start of a wave.</summary>
-    /// <remarks>Original source: <c>RRS22.ASM</c> <c>GETRBV</c>, which links a new robot in at the head of <c>RPTR</c>. Disassembly: the list at <c>$9821</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRS22.ASM</c> <c>GETRBV</c>, which links a new robot in at the head of
+    /// <c>RPTR</c>.</item>
+    /// <item>Disassembly: the list at <c>$9821</c>.</item>
+    /// </list>
+    /// </remarks>
     public bool IsOnRobotList() => RobotListSetUpOrder is not null;
 }

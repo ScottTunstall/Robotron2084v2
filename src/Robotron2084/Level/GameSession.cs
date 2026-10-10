@@ -7,10 +7,14 @@ namespace Robotron2084.Level;
 /// <summary>A game that is being played: each player's details, and whose turn it is. It is passed from screen to screen, so a cleared wave or a death keeps every player's score, men and wave.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c> <c>PLRCNT</c> for the number of players and <c>CURPLR</c> for whose turn it is; the turn passes in <c>PLEND</c>, <c>PLEND3</c> and <c>PLE1B</c></item>
+/// <item>Original source: <c>RRG23.ASM</c> <c>PLRCNT</c> for the number of
+/// players and <c>CURPLR</c> for whose turn it is; the turn passes in <c>PLEND</c>, <c>PLEND3</c> and
+/// <c>PLE1B</c></item>
 /// <item>Disassembly: not separately labelled</item>
+/// </list> When a man is lost, the turn passes to the
+/// other player if they still have men. Otherwise the same player carries on, and when nobody has any
+/// men left the game is over.</item>
 /// </list>
-/// When a man is lost, the turn passes to the other player if they still have men. Otherwise the same player carries on, and when nobody has any men left the game is over.
 /// </remarks>
 public sealed class GameSession
 {
@@ -22,7 +26,12 @@ public sealed class GameSession
     }
 
     /// <summary>Says whether at least one player still has men.</summary>
-    /// <remarks>Original source: <c>RRF.ASM</c> <c>ZP1LAS</c> and <c>ZP2LAS</c>. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRF.ASM</c> <c>ZP1LAS</c> and <c>ZP2LAS</c>.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     public bool AnyPlayerSlotHasMen() => Players.Any(p => p.HasMen());
 
     /// <summary>The keys and buttons the players have chosen. They go with the game so that every screen can read them, such as the pause key (notes §101).</summary>
@@ -35,14 +44,24 @@ public sealed class GameSession
     public PlayerSlot GetCurrent() => Players[CurrentIndex];
 
     /// <summary>The place in <see cref="Players"/> of the player whose turn it is.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>CURPLR</c>. Disassembly: <c>current_player</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>CURPLR</c>.</item>
+    /// <item>Disassembly: <c>current_player</c>.</item>
+    /// </list>
+    /// </remarks>
     public int CurrentIndex { get; private set; }
 
     /// <summary>Says whether two people are playing.</summary>
     public bool IsTwoPlayer() => Players.Count > 1;
 
     /// <summary>The players, with player 1 first. There are one or two.</summary>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLRCNT</c>. Disassembly: <c>num_players</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>PLRCNT</c>.</item>
+    /// <item>Disassembly: <c>num_players</c>.</item>
+    /// </list>
+    /// </remarks>
     public IReadOnlyList<PlayerSlot> Players { get; }
 
     /// <summary>Starts a new game for one or two players, as the arcade's two start buttons do.</summary>
@@ -68,7 +87,13 @@ public sealed class GameSession
     /// <param name="playerTwo">The second player's controls, or null to share the first player's.</param>
     /// <param name="controls">The keys and buttons the players have chosen, or null for the standard ones.</param>
     /// <param name="settings">The game adjustment settings, or null for the factory ones (notes §131). They say how many men each player starts with, and travel with the game for the screens that follow.</param>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>NSHIP</c>, the men each player starts with, which is loaded into <c>PLAS</c>. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>NSHIP</c>, the men each player starts with, which is
+    /// loaded into <c>PLAS</c>.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     public static GameSession CreateNewGame(GameMode mode, IPlayerInputSource playerOne, IPlayerInputSource? playerTwo = null, ControlSettings? controls = null, GameSettings? settings = null)
     {
         GameSettings gameSettings = settings ?? GameSettings.CreateFactoryDefaults();
@@ -99,7 +124,12 @@ public sealed class GameSession
 
     /// <summary>Passes the turn to the other player after a death, if they have men. Otherwise the turn stays where it is.</summary>
     /// <returns>True when the turn moved to the other player.</returns>
-    /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLE1B</c>. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> <c>PLE1B</c>.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     public bool SwitchToPlayerWithMen()
     {
         if (Players.Count < 2)

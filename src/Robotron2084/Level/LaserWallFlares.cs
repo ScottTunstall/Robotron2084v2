@@ -9,12 +9,14 @@ namespace Robotron2084.Level;
 /// <summary>Keeps the flashes of colour where lasers have run into the wall, draws them, and takes them away when they are done.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c> <c>LASDIE</c>, which calls <c>LASDIH</c> for the side walls and <c>LASDIV</c> for the top and bottom</item>
+/// <item>Original source: <c>RRG23.ASM</c> <c>LASDIE</c>, which calls
+/// <c>LASDIH</c> for the side walls and <c>LASDIV</c> for the top and bottom</item>
 /// <item>Disassembly: not separately labelled</item>
+/// </list> Where a laser runs off the field, the arcade
+/// paints the last pixels in the wave's laser wall colour (<c>LASCOL</c>) for two ROM frames, then
+/// paints them back in the wall's colour (<c>WALCOL</c>). A side wall is painted solid. On the top
+/// and bottom walls the colours are mixed, so the wall shows through every other row (notes §63).</item>
 /// </list>
-/// Where a laser runs off the field, the arcade paints the last pixels in the wave's laser wall colour (<c>LASCOL</c>) for two ROM frames, then paints
-/// them back in the wall's colour (<c>WALCOL</c>). A side wall is painted solid. On the top and bottom walls the colours are mixed, so the wall shows through every
-/// other row (notes §63).
 /// </remarks>
 internal sealed class LaserWallFlares
 {

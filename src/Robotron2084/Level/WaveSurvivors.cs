@@ -5,14 +5,16 @@ namespace Robotron2084.Level;
 /// <summary>Works out what is left on a field when the player dies, so the next life starts with only that.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c> <c>PLEND</c> (from <c>PLEND1</c>), <c>PLSAV</c> and <c>PLRES</c></item>
+/// <item>Original source: <c>RRG23.ASM</c> <c>PLEND</c> (from <c>PLEND1</c>),
+/// <c>PLSAV</c> and <c>PLRES</c></item>
 /// <item>Disassembly: the player-death routine and the player save and restore routines it calls</item>
+/// </list> A robot or a family member that was killed, or rescued, stays gone. What is left is
+/// counted as the arcade counts it: a thing that has begun to die is already off the count, and a
+/// human in a brain's hold has already gone. Enforcers do not carry over; they turn back into
+/// spheroids, one for every four, and at least one when there are enforcers but no spheroids, never
+/// more than the wave began with. The speed floor goes back to the wave's own, and the grunts keep
+/// the speed limit they had reached, raised to that floor if it is lower (notes §134).</item>
 /// </list>
-/// A robot or a family member that was killed, or rescued, stays gone. What is left is counted as the arcade counts it: a thing
-/// that has begun to die is already off the count, and a human in a brain's hold has already gone. Enforcers do not carry over; they
-/// turn back into spheroids, one for every four, and at least one when there are enforcers but no spheroids, never more than
-/// the wave began with. The speed floor goes back to the wave's own, and the grunts keep the speed limit they had reached,
-/// raised to that floor if it is lower (notes §134).
 /// </remarks>
 public static class WaveSurvivors
 {

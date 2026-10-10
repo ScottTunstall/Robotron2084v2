@@ -14,7 +14,8 @@ public enum GameMode
     /// <summary>Two players who take turns, each keeping their own score, men and wave.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>PLEND</c>, which passes the turn on when a man is lost</item>
+    /// <item>Original source: <c>RRG23.ASM</c> <c>PLEND</c>, which passes the
+    /// turn on when a man is lost</item>
     /// <item>Disassembly: not separately labelled</item>
     /// </list>
     /// </remarks>
