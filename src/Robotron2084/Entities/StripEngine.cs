@@ -4,9 +4,13 @@ namespace Robotron2084.Entities;
 /// <remarks>
 /// <list type="bullet">
 /// <item>Original source: <c>RRX7.ASM</c> (<see cref="Vertical"/>), <c>RRHX4.ASM</c> (<see cref="Horizontal"/>) and <c>RRDX2.ASM</c> (<see cref="Diagonal"/>)</item>
-/// <item>Disassembly: <c>$5B40</c> (<see cref="Vertical"/>), <c>$F000</c> (<see cref="Horizontal"/>) and <c>$4680</c> (<see cref="Diagonal"/>)</item>
+/// <item>Disassembly: <c>$5B40</c> (<see cref="Vertical"/>), <c>$F000</c> (<see cref="Horizontal"/>) and
+/// <c>$4680</c> (<see cref="Diagonal"/>)</item>
 /// </list>
-/// The arcade names each routine for the way its pieces move, so the vertical one cuts a sprite into rows and the horizontal one cuts it into columns.
+///
+/// The arcade names each
+/// routine for the way its pieces move, so the vertical one cuts a sprite into rows and the horizontal one
+/// cuts it into columns.
 /// </remarks>
 public enum StripEngine
 {

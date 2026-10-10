@@ -7,9 +7,13 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A BerzerkRobot is a robot that shuffles towards you exactly as a grunt does. It cannot shoot yet. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>).</summary>
+/// <summary>A BerzerkRobot is a robot that shuffles towards you exactly as a grunt does. It cannot shoot yet.</summary>
 /// <seealso cref="Grunt"/>
 /// <remarks>
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
+/// until it is time for the next beat (see <see cref="ArcadeClock"/>).
+///
 /// A new kind of robot of the author's own, with no arcade routine behind it (notes §138). It moves as a grunt does
 /// (<see cref="GruntChaseStep"/>, the same four-frame beat and the same wait), dies as one does, to a laser or by walking onto an
 /// electrode, and kills the player on touch. Its look is its own: it stands still in a six-frame cycle until it first moves,
@@ -18,12 +22,18 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>How many ROM frames the arcade's routine sleeps between one look at whether the game is live and the next. It sets how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
-    /// <remarks>Original source: none, since this is the author's own robot; it waits as a grunt does (<c>RRP8.ASM</c> <c>ROBOT</c>, <c>NAP 2,ROBOT</c>). Disassembly: <c>$39B7</c>.</remarks>
+    /// <summary>How many ROM frames to wait between one look at whether the game is live and the next. It sets how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
+    /// <remarks>
+    /// Port-only value (FID-4a): this robot has no arcade routine or disassembly behind it. The wait is the author's
+    /// choice, modelled on the grunt's (<see cref="Grunt"/>).
+    /// </remarks>
     private const int LivePollRomFrames = 2;
 
-    /// <summary>How many ROM frames the arcade's routine sleeps after the look that finds the game live, before the first beat.</summary>
-    /// <remarks>Original source: none; as a grunt does (<c>RRP8.ASM</c> <c>ROB0A</c>, <c>NAP 10,ROB0</c>). Disassembly: <c>$39B7</c> onwards.</remarks>
+    /// <summary>How many ROM frames to wait after the look that finds the game live, before the first beat.</summary>
+    /// <remarks>
+    /// Port-only value (FID-4a): this robot has no arcade routine or disassembly behind it. The wait is the author's
+    /// choice, modelled on the grunt's (<see cref="Grunt"/>).
+    /// </remarks>
     private const int FirstBeatNapRomFrames = 10;
 
     /// <summary>How many ROM frames one beat takes, the same as a grunt's.</summary>

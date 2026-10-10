@@ -7,11 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The player's laser shot: a straight bolt that flies until it hits a wall or a robot, then vanishes. It has no beat and no timer: <see cref="LaserSlots"/> holds it and calls <see cref="Update"/> on nearly every tick, and the <see cref="PlayField"/> calls <see cref="LaserSlots.Update"/> in <see cref="PlayField.Update"/>.</summary>
+/// <summary>The player's laser shot: a straight bolt that flies until it hits a wall or a robot, then vanishes.</summary>
 /// <seealso cref="LaserSlots"/>
 /// <remarks>
+/// It has no beat and no timer: <see cref="LaserSlots"/> holds it and calls <see cref="Update"/> on nearly every
+/// tick, and the <see cref="PlayField"/> calls <see cref="LaserSlots.Update"/> in <see cref="PlayField.Update"/>.
+///
 /// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c>, routine <c>LTAB</c> (sprite lookup for shapes <c>LLPC</c>/<c>ULPC</c>/<c>DLLPC</c>/<c>ULLPC</c>)</item>
+/// <item>Original source: <c>RRG23.ASM</c>, routine <c>LTAB</c> (sprite lookup for shapes
+/// <c>LLPC</c>/<c>ULPC</c>/<c>DLLPC</c>/<c>ULLPC</c>)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$3237</c> (<c>LASER_DESCRIPTOR TABLE</c>)</item>
 /// </list>
 /// </remarks>

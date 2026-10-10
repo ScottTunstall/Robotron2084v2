@@ -7,16 +7,26 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A shell fired by a tank. It is aimed once, then flies straight, bouncing off the walls until it fizzles out. It moves every ROM frame, and has a beat every few ROM frames. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_frameTimer"/> gathers the ticks until it is time for the next ROM frame (see <see cref="ArcadeClock"/>), and <see cref="_framesToNextBeat"/> counts the ROM frames to its next beat.</summary>
+/// <summary>A shell fired by a tank. It is aimed once, then flies straight, bouncing off the walls until it fizzles out.</summary>
 /// <seealso cref="Tank"/>
 /// <seealso cref="Level.PlayField"/>
 /// <remarks>
+/// It moves every ROM frame, and has a beat every few ROM frames. The <see cref="PlayField"/> calls
+/// <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and
+/// <see cref="PlayField.UpdateEntity"/>. <see cref="_frameTimer"/> gathers the ticks until it is time for the next
+/// ROM frame (see <see cref="ArcadeClock"/>), and <see cref="_framesToNextBeat"/> counts the ROM frames to its next
+/// beat.
+///
 /// <list type="bullet">
-/// <item>Original source: <c>RRTK4.ASM</c>: <c>TNKFIR</c> (aiming and speed), <c>SHELL</c> (each beat, bouncing and fizzling) and <c>SHLKIL</c></item>
-/// <item>Disassembly: <c>asm/robomame.asm</c>: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>), <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>)</item>
+/// <item>Original source: <c>RRTK4.ASM</c>: <c>TNKFIR</c> (aiming and speed), <c>SHELL</c> (each beat,
+/// bouncing and fizzling) and <c>SHLKIL</c></item>
+/// <item>Disassembly: <c>asm/robomame.asm</c>: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>),
+/// <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>)</item>
 /// </list>
-/// Half the shots are aimed at the player, give or take a miss. The other half are aimed at a wall so that they bounce back across the field.
-/// A shell's speed grows with the gap to its target and with the wave's shell setting.
+///
+/// Half the shots are
+/// aimed at the player, give or take a miss. The other half are aimed at a wall so that they bounce back
+/// across the field. A shell's speed grows with the gap to its target and with the wave's shell setting.
 /// Sideways distances are in columns and up-and-down distances in rows, as in the ROM.
 /// </remarks>
 public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
@@ -95,7 +105,13 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="gap">The gap from the shell to the target, in columns or rows. Negative means the target is to the left or above.</param>
     /// <param name="shellSpeed">The wave's shell setting.</param>
     /// <returns>The speed, in 256ths of a column or row a ROM frame.</returns>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKF2</c> to <c>TNKF4</c>. A gap to the left or above becomes one less than minus the speed, as in the ROM. Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) from <c>$4E8F</c> to <c>$4EA9</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>TNKF2</c> to <c>TNKF4</c>. A gap to the left or above
+    /// becomes one less than minus the speed, as in the ROM.</item>
+    /// <item>Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) from <c>$4E8F</c> to <c>$4EA9</c>.</item>
+    /// </list>
+    /// </remarks>
     internal static int ComputeAimedSpeed(int gap, int shellSpeed)
     {
         int distance = Math.Min(Math.Abs(gap), byte.MaxValue);
@@ -109,7 +125,12 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="velocity">The starting speed, in 256ths of a column and of a row a ROM frame.</param>
     /// <param name="shellSpeed">The wave's shell setting, which sets how fast is fast enough.</param>
     /// <returns>The speed after doubling.</returns>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TRBXY</c> to <c>TRBXYL</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) from <c>$4F3F</c> to <c>$4F7E</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>TRBXY</c> to <c>TRBXYL</c>.</item>
+    /// <item>Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) from <c>$4F3F</c> to <c>$4F7E</c>.</item>
+    /// </list>
+    /// </remarks>
     internal static IntVector2 GetBoostedVelocity(IntVector2 velocity, int shellSpeed)
     {
         int floor = (shellSpeed * TankShellTuning.ReboundFloorFactor / TankShellTuning.AimedSpeedDivisor) * TankShellTuning.ReboundFloorMultiplier;
@@ -144,7 +165,12 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Takes the shell off the field at once, as when a laser hits it.</summary>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SHLKIL</c>. Disassembly: <c>SHELL_COLLISION_HANDLER</c> (<c>$4FD5</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SHLKIL</c>.</item>
+    /// <item>Disassembly: <c>SHELL_COLLISION_HANDLER</c> (<c>$4FD5</c>).</item>
+    /// </list>
+    /// </remarks>
     public void Kill()
     {
         if (!this.IsAlive())
@@ -160,7 +186,8 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="field">Not used.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, with the movement done by the shared mover in <c>RRS22.ASM</c> (<c>OPB80</c>)</item>
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, with the movement done by the shared mover in
+    /// <c>RRS22.ASM</c> (<c>OPB80</c>)</item>
     /// <item>Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>)</item>
     /// </list>
     /// </remarks>
@@ -201,7 +228,12 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="playerPosition">The top-left corner of the player, in port pixels.</param>
     /// <param name="shellSpeed">The wave's shell setting.</param>
     /// <param name="random">Where the misses come from.</param>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>TNKF1</c> to <c>TNKF6</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) from <c>$4E7F</c> to <c>$4ECE</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>TNKF1</c> to <c>TNKF6</c>.</item>
+    /// <item>Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) from <c>$4E7F</c> to <c>$4ECE</c>.</item>
+    /// </list>
+    /// </remarks>
     private IntVector2 GetAimedVelocity(IntVector2 playerPosition, int shellSpeed, Random random)
     {
         int playerColumn = DivideRoundingDown(playerPosition.X, ColumnPixels);
@@ -225,8 +257,12 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="shellSpeed">The wave's shell setting.</param>
     /// <param name="random">Where the shot's direction and misses come from.</param>
     /// <remarks>
-    /// Original source: <c>RRTK4.ASM</c> <c>TNKFRB</c>, <c>TRBY</c> and <c>TRBXY</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) from <c>$4ED4</c> to <c>$4F7E</c>.
-    /// Seven times in eight the shot goes for the wall on the player's own side of the field; the other time it goes for the far wall.
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>TNKFRB</c>, <c>TRBY</c> and <c>TRBXY</c>.</item>
+    /// <item>Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) from <c>$4ED4</c> to <c>$4F7E</c>. Seven
+    /// times in eight the shot goes for the wall on the player's own side of the field; the other
+    /// time it goes for the far wall.</item>
+    /// </list>
     /// </remarks>
     private IntVector2 GetReboundVelocity(IntVector2 playerPosition, int shellSpeed, Random random)
     {
@@ -262,7 +298,12 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Moves the shell by one ROM frame's worth of speed. A move that would take it out of the playfield is not made.</summary>
-    /// <remarks>Original source: <c>RRS22.ASM</c> <c>OPB80</c>, the shared mover. Disassembly: not separately labelled.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRS22.ASM</c> <c>OPB80</c>, the shared mover.</item>
+    /// <item>Disassembly: not separately labelled.</item>
+    /// </list>
+    /// </remarks>
     private void MoveOneFrame()
     {
         IntVector2 subpixels = GetNextFrameSubpixels();
@@ -314,8 +355,13 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Runs one beat: bounce if the next move would hit a wall, otherwise count down the shell's life.</summary>
     /// <remarks>
-    /// Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, <c>XVNEG</c> and <c>YVNEG</c>. Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>), <c>TANK_SHELL_BOUNCE_HORIZONTAL</c> (<c>$4FC1</c>) and <c>TANK_SHELL_BOUNCE_VERTICAL</c> (<c>$4FC7</c>).
-    /// A beat that bounces the shell does not count down its life, and a sideways bounce skips the up-and-down check.
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, <c>XVNEG</c> and <c>YVNEG</c>.</item>
+    /// <item>Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>),
+    /// <c>TANK_SHELL_BOUNCE_HORIZONTAL</c> (<c>$4FC1</c>) and <c>TANK_SHELL_BOUNCE_VERTICAL</c>
+    /// (<c>$4FC7</c>). A beat that bounces the shell does not count down its life, and a sideways
+    /// bounce skips the up-and-down check.</item>
+    /// </list>
     /// </remarks>
     private void RunBeat()
     {

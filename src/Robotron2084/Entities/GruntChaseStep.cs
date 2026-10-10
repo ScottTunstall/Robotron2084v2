@@ -9,21 +9,40 @@ namespace Robotron2084.Entities;
 /// <item>Original source: <c>RRP8.ASM</c> <c>ROB1B</c> to <c>ROB4A</c></item>
 /// <item>Disassembly: <c>MOVE_GRUNT</c> (<c>$39E6</c>) from <c>$39EF</c> to <c>$3A29</c></item>
 /// </list>
-/// The two directions are decided separately. Sideways, a robot always steps: towards the player, or to the right when the columns match.
-/// Up and down, one level with the player steps down, and only a gap of exactly one row is ignored. A step that would leave the playfield is not taken.
+///
+/// The two directions are decided separately. Sideways, a
+/// robot always steps: towards the player, or to the right when the columns match. Up and down, one level
+/// with the player steps down, and only a gap of exactly one row is ignored. A step that would leave the
+/// playfield is not taken.
 /// </remarks>
 internal static class GruntChaseStep
 {
     /// <summary>How far a step goes sideways towards the player, in columns.</summary>
-    /// <remarks>Original source: <c>RRP8.ASM</c> <c>ROB3</c> to <c>ROB4A</c>, a step of 2 columns. Disassembly: <c>MOVE_GRUNT</c> (<c>$39E6</c>) at <c>$3A15</c> and <c>$3A1D</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRP8.ASM</c> <c>ROB3</c> to <c>ROB4A</c>, a step of 2 columns.</item>
+    /// <item>Disassembly: <c>MOVE_GRUNT</c> (<c>$39E6</c>) at <c>$3A15</c> and <c>$3A1D</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int StepColumns = 2;
 
     /// <summary>How far a step goes up or down towards the player, in rows.</summary>
-    /// <remarks>Original source: <c>RRP8.ASM</c> <c>ROB1B</c> to <c>ROB2A</c>, a step of 4 rows. Disassembly: <c>MOVE_GRUNT</c> (<c>$39E6</c>) at <c>$39F9</c> and <c>$3A01</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRP8.ASM</c> <c>ROB1B</c> to <c>ROB2A</c>, a step of 4 rows.</item>
+    /// <item>Disassembly: <c>MOVE_GRUNT</c> (<c>$39E6</c>) at <c>$39F9</c> and <c>$3A01</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int StepRows = 4;
 
     /// <summary>The up-and-down gap, in rows, at which a robot level with the player stays put.</summary>
-    /// <remarks>Original source: <c>RRP8.ASM</c> <c>ROB2</c> and the <c>CMPB #$FE</c> before <c>ROB2A</c>: a robot only 1 row above or below the player does not move up or down. Disassembly: <c>MOVE_GRUNT</c> (<c>$39E6</c>) at <c>$39F5</c> and <c>$39FD</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRP8.ASM</c> <c>ROB2</c> and the <c>CMPB #$FE</c> before <c>ROB2A</c>: a
+    /// robot only 1 row above or below the player does not move up or down.</item>
+    /// <item>Disassembly: <c>MOVE_GRUNT</c> (<c>$39E6</c>) at <c>$39F5</c> and <c>$39FD</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int StayPutGapRows = 1;
 
     /// <summary>One column, in port pixels.</summary>

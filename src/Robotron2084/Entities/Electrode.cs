@@ -7,9 +7,13 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>An electrode is a spiky pillar standing in the playfield. It cannot move, but it shrivels up and disappears when something destroys it. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_shrivelTimer"/> times each stage of its shrivelling (see <see cref="ArcadeClock"/>).</summary>
+/// <summary>An electrode is a spiky pillar standing in the playfield. It cannot move, but it shrivels up and disappears when something destroys it.</summary>
 /// <seealso cref="PlayField"/>
 /// <remarks>
+/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_shrivelTimer"/> times each
+/// stage of its shrivelling (see <see cref="ArcadeClock"/>).
+///
 /// <list type="bullet">
 /// <item>Original source: <c>RRP8.ASM</c>, routine <c>PSTKIL</c> (hands off to <c>PKPROC</c>)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$3AE0</c> (<c>ELECTRODE_DEATH</c>)</item>

@@ -8,12 +8,18 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The player is the hero the person plays as: it moves around, shoots at enemies, and can be killed and brought back to try again. It has no beat, and acts on every tick: The <see cref="PlayField"/> calls <see cref="Update"/> directly, on nearly every tick, in <see cref="PlayField.Update"/>. <see cref="_deathTimer"/> times the stages of its death (see <see cref="ArcadeClock"/>), <see cref="_animationFrameTicks"/> counts the ticks each animation frame is shown, and <see cref="_invincibilityBlinkTicks"/> counts the ticks of its blinking.</summary>
+/// <summary>The player is the hero the person plays as: it moves around, shoots at enemies, and can be killed and brought back to try again.</summary>
 /// <seealso cref="PlayField"/>
 /// <seealso cref="PlayerLaser"/>
 /// <remarks>
+/// It has no beat and acts on every tick. The <see cref="PlayField"/> calls <see cref="Update"/> directly, on
+/// nearly every tick, in <see cref="PlayField.Update"/>. <see cref="_deathTimer"/> times the stages of its death
+/// (see <see cref="ArcadeClock"/>), <see cref="_animationFrameTicks"/> counts the ticks each animation frame is
+/// shown, and <see cref="_invincibilityBlinkTicks"/> counts the ticks of its blinking.
+///
 /// <list type="bullet">
-/// <item>Original source: <c>RRF.ASM</c>, routine <c>PLAYER</c> (called every interrupt; see also <c>PDEATH</c> and RRG23.ASM's <c>LTAB</c> muzzle-offset table)</item>
+/// <item>Original source: <c>RRF.ASM</c>, routine <c>PLAYER</c> (called every interrupt; see also
+/// <c>PDEATH</c> and RRG23.ASM's <c>LTAB</c> muzzle-offset table)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$2FD0</c> (<c>MOVE_PLAYER</c>)</item>
 /// </list>
 /// </remarks>
@@ -23,7 +29,15 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private const int FrameTicksPerAnimationFrame = 3;
 
     /// <summary>Collision box = the player sprite's own 8x12 arcade px.</summary>
-    /// <remarks>The ROM collides against the player's sprite, not a fixed 16x16 cell.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRF.ASM</c> <c>PLAYER</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>MOVE_PLAYER</c> (<c>$2FD0</c>).</item>
+    /// </list>
+    ///
+    /// The arcade collides against the player's sprite, not a fixed
+    /// 16x16 cell.
+    /// </remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixels(CollisionSizes.PlayerCollisionSize.Width),
             ScreenSize.ToPortPixels(CollisionSizes.PlayerCollisionSize.Height));
@@ -67,7 +81,14 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     /// <summary>The death animation's stages: a white flash, a colour flash, then the fade to black.</summary>
-    /// <remarks>The ROM's death stages: a fixed white, then a random colour, then the slot-12 fade.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRF.ASM</c> <c>PDEATH</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
+    /// </list>
+    ///
+    /// The death stages: a fixed white, then a random colour, then the slot-12 fade.
+    /// </remarks>
     private enum DeathStage
     {
         White,
@@ -75,7 +96,14 @@ public sealed class Player : IEntity, IAnimationFrameSource
         Fade,
     }
 
-    /// <summary>The player sprite's own 8x12 box at <see cref="Position"/> (the ROM intersects the sprite).</summary>
+    /// <summary>The player sprite's own 8x12 box at <see cref="Position"/>.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRF.ASM</c> <c>PLAYER</c> — the arcade intersects the sprite, not a fixed
+    /// cell.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>MOVE_PLAYER</c> (<c>$2FD0</c>).</item>
+    /// </list>
+    /// </remarks>
     public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>
@@ -96,17 +124,35 @@ public sealed class Player : IEntity, IAnimationFrameSource
     public bool FiredLaserThisUpdate { get; private set; }
 
     /// <summary>Alive, Dying (the death animation's flash and fade), or Dead pending respawn.</summary>
-    /// <remarks>The ROM's `PDTHV` flash and fade.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRX7.ASM</c> <c>PDTHV</c> — the flash and fade.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
+    /// </list>
+    /// </remarks>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Men remaining, including the one on screen; a death takes one off.</summary>
     public int Lives { get; private set; }
 
-    /// <summary>Top-left of the player (the ROM's OBJX/OBJY).</summary>
+    /// <summary>Top-left of the player.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRF.ASM</c> the OBJX/OBJY registers.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>MOVE_PLAYER</c> (<c>$2FD0</c>).</item>
+    /// </list>
+    /// </remarks>
     public IntVector2 Position => _position;
 
     /// <summary>The palette slot the dying player is drawn solid in.</summary>
-    /// <remarks>The ROM's death colour: a fixed white slot, a random colour slot, or the fading slot.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRF.ASM</c> <c>PDEATH</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
+    /// </list>
+    ///
+    /// The death colour: a fixed white slot, a random colour slot, or the fading slot.
+    /// </remarks>
     internal int GetDeathSolidSlot() => _deathStage == DeathStage.Fade
         ? PlayerTuning.PlayerDeathFadeSlot
         : _deathFlashSlot;
@@ -223,7 +269,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Where a shot in this direction leaves the player: spec px from the player cell's top-left.</summary>
     /// <param name="direction">The direction the shot is fired in.</param>
     /// <returns>The muzzle's offset from the player's top-left, in port pixels.</returns>
-    /// <remarks>ROM: the muzzle-offset table (RRG23.ASM).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRG23.ASM</c> the muzzle-offset table.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>MOVE_PLAYER_LASER_RIGHT</c> (<c>$3279</c>) area.</item>
+    /// </list>
+    /// </remarks>
     private static IntVector2 GetMuzzleOffset(Direction8 direction)
     {
         (int x, int y) offset = direction switch
@@ -254,8 +305,15 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     /// <summary>One tick of the death animation: the flash loop, then the fade.</summary>
     /// <param name="field">The playfield, whose palette runs the fade.</param>
-    /// <remarks>ROM: RRX7.ASM's death routine. The fade takes over palette slot 12 and suspends that
-    /// slot's own colour-cycling ("decay") process while it runs, then resumes it.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRX7.ASM</c> the death routine.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
+    /// </list>
+    ///
+    /// The fade takes over palette slot 12 and suspends that slot's own colour-cycling
+    /// ("decay") process while it runs, then resumes it.
+    /// </remarks>
     private void AdvanceDeath(PlayField field)
     {
         _deathTimer += ArcadeClock.UnitsPerPortTick;
@@ -354,7 +412,15 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     /// <summary>Starts the fade: suspends the slot-12 decay and writes the first byte.</summary>
     /// <param name="field">The playfield, whose palette runs the fade.</param>
-    /// <remarks>ROM: the colour processes carry on as normal; only the decay suspends.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRX7.ASM</c> the death routine (the colour processes live in RRS22.ASM).</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
+    /// </list>
+    ///
+    /// The colour processes carry on as normal;
+    /// only the decay suspends.
+    /// </remarks>
     private void BeginDeathFade(PlayField field)
     {
         _deathStage = DeathStage.Fade;
@@ -412,7 +478,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     /// <summary>Fires on the fire control: a fresh press at once, a held one on the auto-fire cadence.</summary>
     /// <param name="input">This tick's controls.</param>
-    /// <param name="aim">The aimDirection stick's direction, or null when it is centred.</param>
+    /// <param name="aimDirection">The aim stick's direction, or null when it is centred.</param>
     /// <param name="field">The playfield, which owns the laser slots.</param>
     /// <remarks>A shot re-fires every <see cref="PlayerTuning.PlayerAutoFireTicks"/> ticks; the attempt
     /// is a no-op when the three slots are full.</remarks>

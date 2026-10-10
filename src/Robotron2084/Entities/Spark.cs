@@ -7,11 +7,17 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A shot fired by an enforcer robot. It curves through the air along a bent path and stops dead at a wall instead of bouncing. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_moveTimer"/> times its moves, <see cref="_accelerationTimer"/> times its speeding up, and <see cref="_flickerTimer"/> times its flicker (see <see cref="ArcadeClock"/>).</summary>
+/// <summary>A shot fired by an enforcer robot. It curves through the air along a bent path and stops dead at a wall instead of bouncing.</summary>
 /// <seealso cref="Enforcer"/>
 /// <remarks>
+/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_moveTimer"/> times its moves,
+/// <see cref="_accelerationTimer"/> times its speeding up, and <see cref="_flickerTimer"/> times its flicker (see
+/// <see cref="ArcadeClock"/>).
+///
 /// <list type="bullet">
-/// <item>Original source: <c>RRC11.ASM</c>, routine <c>SPARK</c> (fired via <c>ENFSHT</c>, flicker frames <c>SPKP0</c>-<c>SPKP3</c>)</item>
+/// <item>Original source: <c>RRC11.ASM</c>, routine <c>SPARK</c> (fired via <c>ENFSHT</c>, flicker frames
+/// <c>SPKP0</c>-<c>SPKP3</c>)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$1404</c> (<c>CREATE_SPARK</c>)</item>
 /// </list>
 /// </remarks>

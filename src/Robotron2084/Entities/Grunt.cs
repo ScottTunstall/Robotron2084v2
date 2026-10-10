@@ -7,22 +7,37 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A grunt is a slow, clumsy robot that shuffles towards you. It's the most common enemy in the game. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>).</summary>
+/// <summary>A grunt is a slow, clumsy robot that shuffles towards you. It's the most common enemy in the game.</summary>
 /// <seealso cref="PlayField"/>
 /// <remarks>
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
+/// until it is time for the next beat (see <see cref="ArcadeClock"/>).
+///
 /// <list type="bullet">
 /// <item>Original source: <c>RRP8.ASM</c>, routine <c>ROBOT</c> (with <c>ROB0</c>..<c>ROB11</c> sub-blocks)</item>
-/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$39E6</c> (grunt speed/movement timer check, part of the shared grunt/hulk/brain/prog/tank update loop)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$39E6</c> (grunt speed/movement timer check, part of
+/// the shared grunt/hulk/brain/prog/tank update loop)</item>
 /// </list>
 /// </remarks>
 public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>How many ROM frames the arcade's routine sleeps between one look at whether the game is live and the next. It sets how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
-    /// <remarks>Original source: <c>RRP8.ASM</c> <c>ROBOT</c>, <c>BITA #$7F / BEQ ROB0A / NAP 2,ROBOT</c>. Disassembly: <c>$39B7</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRP8.ASM</c> <c>ROBOT</c>, <c>BITA #$7F / BEQ ROB0A / NAP 2,ROBOT</c>.</item>
+    /// <item>Disassembly: <c>$39B7</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int LivePollRomFrames = 2;
 
     /// <summary>How many ROM frames the arcade's routine sleeps after the look that finds the game live, before the first beat.</summary>
-    /// <remarks>Original source: <c>RRP8.ASM</c> <c>ROB0A</c>, <c>NAP 10,ROB0</c>. Disassembly: <c>$39B7</c> onwards.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRP8.ASM</c> <c>ROB0A</c>, <c>NAP 10,ROB0</c>.</item>
+    /// <item>Disassembly: <c>$39B7</c> onwards.</item>
+    /// </list>
+    /// </remarks>
     private const int FirstBeatNapRomFrames = 10;
 
     /// <summary>How many ROM frames one beat takes (4 vblanks).</summary>

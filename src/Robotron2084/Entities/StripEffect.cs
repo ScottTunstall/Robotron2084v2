@@ -6,11 +6,18 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The effect where a dying creature's sprite breaks into strips and fans apart, or a new robot's sprite shrinks into view. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_romFrameTimer"/> gathers the ticks until it is time for the next ROM frame, and it takes a step every ROM frame (see <see cref="ArcadeClock"/>).</summary>
+/// <summary>The effect where a dying creature's sprite breaks into strips and fans apart, or a new robot's sprite shrinks into view.</summary>
 /// <remarks>
+/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_romFrameTimer"/> gathers the
+/// ticks until it is time for the next ROM frame, and it takes a step every ROM frame (see
+/// <see cref="ArcadeClock"/>).
+///
 /// <list type="bullet">
-/// <item>Original source: <c>RRX7.ASM</c>/<c>RRHX4.ASM</c>/<c>RRDX2.ASM</c> (the death explosion) and <c>RRG23.ASM</c>, routine <c>APPEAR</c> (the shrinking appear)</item>
-/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$5C1F</c> (<c>MAKE_ENEMY_EXPLODE</c>) and <c>$473F</c> (<c>CREATE_DIRECTIONAL_EXPLOSION</c>)</item>
+/// <item>Original source: <c>RRX7.ASM</c>/<c>RRHX4.ASM</c>/<c>RRDX2.ASM</c> (the death explosion) and
+/// <c>RRG23.ASM</c>, routine <c>APPEAR</c> (the shrinking appear)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$5C1F</c> (<c>MAKE_ENEMY_EXPLODE</c>) and <c>$473F</c>
+/// (<c>CREATE_DIRECTIONAL_EXPLOSION</c>)</item>
 /// </list>
 /// </remarks>
 public sealed class StripEffect : IEntity
@@ -18,13 +25,24 @@ public sealed class StripEffect : IEntity
     private readonly Func<Texture2D> _getAnimationFrame;
 
     /// <summary>Gets the box of the thing an appear is forming, when the appear must stay with it as it moves; null when the effect stays where it started.</summary>
-    /// <remarks>Original source: <c>RRX7.ASM</c> <c>AWRIT0</c>, <c>LDD PX / STA UL,Y</c> ("SCROLL EM"), which moves an appear to the player once the game is live. Disassembly: <c>$5D57</c> to <c>$5D61</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRX7.ASM</c> <c>AWRIT0</c>, <c>LDD PX / STA UL,Y</c> ("SCROLL EM"), which
+    /// moves an appear to the player once the game is live.</item>
+    /// <item>Disassembly: <c>$5D57</c> to <c>$5D61</c>.</item>
+    /// </list>
+    /// </remarks>
     private readonly Func<Rectangle>? _getFollowedBounds;
 
     private readonly StripFanAxis _axis;
 
     /// <summary>Works out which strip of the sprite the others close in on or fly away from, counted from the top row or the left column, when it is given how many strips the sprite has; null for the middle one.</summary>
-    /// <remarks>Original source: <c>RRX7.ASM</c> <c>YOF</c>, and <c>RRHX4.ASM</c> <c>XOF</c>. Disassembly: the byte at offset <c>5</c> of a record, as at <c>$5BEF</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRX7.ASM</c> <c>YOF</c>, and <c>RRHX4.ASM</c> <c>XOF</c>.</item>
+    /// <item>Disassembly: the byte at offset <c>5</c> of a record, as at <c>$5BEF</c>.</item>
+    /// </list>
+    /// </remarks>
     private readonly Func<int, int>? _getCentreStripIndex;
 
     /// <summary>How much the gap shrinks on each ROM frame, when the effect is an appear.</summary>
@@ -116,8 +134,10 @@ public sealed class StripEffect : IEntity
     /// <returns>The new appear record.</returns>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which makes one of these on each ROM frame; <c>RRX7.ASM</c> <c>APSTV</c>, <c>RRHX4.ASM</c> <c>HAPSTV</c> and <c>RRDX2.ASM</c> <c>APSTZ</c></item>
-    /// <item>Disassembly: <c>$5BC6</c> (the vertical routine), <c>$F066</c> (the horizontal one) and <c>$46E6</c> (the diagonal one)</item>
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which makes one of these on each ROM frame;
+    /// <c>RRX7.ASM</c> <c>APSTV</c>, <c>RRHX4.ASM</c> <c>HAPSTV</c> and <c>RRDX2.ASM</c> <c>APSTZ</c></item>
+    /// <item>Disassembly: <c>$5BC6</c> (the vertical routine), <c>$F066</c> (the horizontal one) and
+    /// <c>$46E6</c> (the diagonal one)</item>
     /// </list>
     /// </remarks>
     public static StripEffect CreateAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip, Func<int, int>? getCentreStripIndex = null, int startClockUnits = 0)
@@ -134,7 +154,9 @@ public sealed class StripEffect : IEntity
     /// <returns>The new appear record.</returns>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRX7.ASM</c> <c>AWRIT0</c> ("SCROLL EM"), <c>RRHX4.ASM</c> <c>AWRIT0</c> ("SCROLL PLAYER APPEAR") and <c>RRDX2.ASM</c> <c>AWRIT0</c>, each of which moves the appear to the player when <c>STATUS</c> is clear</item>
+    /// <item>Original source: <c>RRX7.ASM</c> <c>AWRIT0</c> ("SCROLL EM"), <c>RRHX4.ASM</c> <c>AWRIT0</c>
+    /// ("SCROLL PLAYER APPEAR") and <c>RRDX2.ASM</c> <c>AWRIT0</c>, each of which moves the appear to
+    /// the player when <c>STATUS</c> is clear</item>
     /// <item>Disassembly: <c>$5D57</c> to <c>$5D61</c> for the vertical routine</item>
     /// </list>
     /// </remarks>
@@ -148,7 +170,14 @@ public sealed class StripEffect : IEntity
     /// <param name="axis">Which way the picture is cut: rows or columns.</param>
     /// <param name="clip">The area strips are dropped outside of.</param>
     /// <returns>The new appear record.</returns>
-    /// <remarks>Original source: <c>RRLOG.ASM</c> <c>WDONE1</c>, which asks the attract-mode appear (<c>AMAP</c>) for each letter. That appear draws the strips closed up before it ends (<c>RRX7.ASM</c> <c>AWW2</c>, "FORCE SIZE OF 1"). Disassembly: <c>$5B98</c> and <c>$5D7C</c> to <c>$5D85</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRLOG.ASM</c> <c>WDONE1</c>, which asks the attract-mode appear
+    /// (<c>AMAP</c>) for each letter. That appear draws the strips closed up before it ends
+    /// (<c>RRX7.ASM</c> <c>AWW2</c>, "FORCE SIZE OF 1").</item>
+    /// <item>Disassembly: <c>$5B98</c> and <c>$5D7C</c> to <c>$5D85</c>.</item>
+    /// </list>
+    /// </remarks>
     internal static StripEffect CreateAppear(Texture2D animationFrame, Rectangle bounds, StripFanAxis axis, StripClip clip)
         => new(() => animationFrame, bounds, StripEffectKind.Appear, axis, 0, clip, isClosedUpAtTheEnd: true);
 
@@ -241,7 +270,13 @@ public sealed class StripEffect : IEntity
 
     /// <summary>Says which of the arcade's three strip routines runs this effect.</summary>
     /// <returns>The horizontal routine for a column fan, the diagonal one for a row fan that leans, and the vertical one for a row fan that does not.</returns>
-    /// <remarks>Original source: <c>RRX7.ASM</c> <c>EXSTV</c>, which picks the routine from the laser's direction. Disassembly: <c>$5C1F</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRX7.ASM</c> <c>EXSTV</c>, which picks the routine from the laser's
+    /// direction.</item>
+    /// <item>Disassembly: <c>$5C1F</c>.</item>
+    /// </list>
+    /// </remarks>
     internal StripEngine GetEngine()
     {
         if (_axis == StripFanAxis.Columns)
@@ -258,7 +293,9 @@ public sealed class StripEffect : IEntity
     /// <summary>Takes one ROM frame off an appear's gap. The picture changes only when the whole-row part of the gap changes, and the appear is over when the gap would fall below the smallest that its routine draws.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>AWRITE</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>: <c>CMPA YSIZER,Y</c> ("CHANGE?") skips the frame when the row count is the same, and the tests after <c>AWRIT1</c> end the appear</item>
+    /// <item>Original source: <c>AWRITE</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>:
+    /// <c>CMPA YSIZER,Y</c> ("CHANGE?") skips the frame when the row count is the same, and the tests
+    /// after <c>AWRIT1</c> end the appear</item>
     /// <item>Disassembly: <c>$5D48</c> to <c>$5D85</c> for the vertical routine</item>
     /// </list>
     /// </remarks>

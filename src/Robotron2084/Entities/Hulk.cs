@@ -7,25 +7,50 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A hulk is a huge, tough robot that can't be killed by shooting it — it just gets knocked back. It slowly stomps after you or a human. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>).</summary>
+/// <summary>A hulk is a huge, tough robot that can't be killed by shooting it — it just gets knocked back. It slowly stomps after you or a human.</summary>
 /// <seealso cref="Player"/>
 /// <seealso cref="Human"/>
 /// <remarks>
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
+/// until it is time for the next beat (see <see cref="ArcadeClock"/>).
+///
 /// <list type="bullet">
-/// <item>Original source: <c>RRH11.ASM</c>, routine <c>HULK</c> (with <c>HULKND</c>, <c>HULKIL</c> sub-blocks)</item>
-/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ANIMATE_HULK</c> (<c>$003E</c>), with movement in <c>HULK_MOVE_HORIZONTALLY</c>/<c>MAKE_HULK_MOVE_VERTICALLY</c> and direction changes in <c>HULK_CHANGE_DIRECTION</c></item>
+/// <item>Original source: <c>RRH11.ASM</c>, routine <c>HULK</c> (with <c>HULKND</c>, <c>HULKIL</c>
+/// sub-blocks)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ANIMATE_HULK</c> (<c>$003E</c>), with movement in
+/// <c>HULK_MOVE_HORIZONTALLY</c>/<c>MAKE_HULK_MOVE_VERTICALLY</c> and direction changes in
+/// <c>HULK_CHANGE_DIRECTION</c></item>
 /// </list>
 /// </remarks>
 public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 {
     /// <summary>How many ROM frames the arcade's routine sleeps between one look at whether the game is live and the next. It sets how long after the game goes live the first step comes (<see cref="BeginPlay"/>).</summary>
-    /// <remarks>Original source: <c>RRH11.ASM</c> <c>HULK</c> ("WAIT FOR STATUS TO GO"), <c>BITA #$7F / BEQ HULKL / NAP 8,HULK</c>, which runs on into its first step with no more sleep. Disassembly: <c>$0030</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULK</c> ("WAIT FOR STATUS TO GO"), <c>BITA #$7F / BEQ
+    /// HULKL / NAP 8,HULK</c>, which runs on into its first step with no more sleep.</item>
+    /// <item>Disassembly: <c>$0030</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int LivePollRomFrames = 8;
 
-    /// <summary>ROM <c>HNDX</c>/<c>HNDY</c>: ...and less than this many (exclusive bound of the random roll).</summary>
+    /// <summary>The aim offset is rolled less than this many arcade pixels (exclusive bound of the random roll).</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int AimOffsetMaxExclusiveArcadePixels = 16;
 
-    /// <summary>ROM <c>HNDX</c>/<c>HNDY</c>: the aim is the target's coordinate plus at least this many arcade px.</summary>
+    /// <summary>The aim is the target's coordinate plus at least this many arcade pixels (negative for up and left).</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int AimOffsetMinArcadePixels = -16;
 
     /// <summary>One more than the most steps a hulk may take before it aims again. The number of steps is picked at random, from <see cref="ReaimStepsMin"/> up to one less than this, and counted down in <see cref="_reaimStepsRemaining"/>.</summary>
@@ -34,25 +59,61 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <summary>The fewest steps a hulk takes before it aims again. The number of steps is picked at random, from this up to one less than <see cref="ReaimStepsMaxExclusive"/>, and counted down in <see cref="_reaimStepsRemaining"/>.</summary>
     private const int ReaimStepsMin = 1;
 
-    /// <summary>ROM <c>HULKIL</c>: how much a doubled sideways shove is multiplied.</summary>
+    /// <summary>How much a doubled sideways shove is multiplied.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int ShoveSidewaysDoubleFactor = 2;
 
-    /// <summary>ROM <c>HULKIL</c>: a sideways shove is doubled when a roll of this many sides comes up 0 (half the time).</summary>
+    /// <summary>A sideways shove is doubled when a roll of this many sides comes up 0 (half the time).</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int ShoveSidewaysDoubleRollSides = 2;
 
-    /// <summary>ROM <c>HULKIL</c>: how much a quadrupled up/down shove is multiplied.</summary>
+    /// <summary>How much a quadrupled up/down shove is multiplied.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int ShoveVerticalQuadrupleFactor = 4;
 
-    /// <summary>ROM <c>HULKIL</c>: the roll must come up below this for the up/down shove to be quadrupled (three quarters of the time).</summary>
+    /// <summary>The roll must come up below this for the up/down shove to be quadrupled (three quarters of the time).</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int ShoveVerticalQuadrupleRollBelow = 3;
 
-    /// <summary>ROM <c>HULKIL</c>: an up/down shove is quadrupled when a roll of this many sides comes up below the threshold.</summary>
+    /// <summary>An up/down shove is quadrupled when a roll of this many sides comes up below the threshold.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int ShoveVerticalQuadrupleRollSides = 4;
 
     /// <summary>The longer sideways step, taken on the odd entries of the walk pattern.</summary>
     private const int SidewaysLongStepArcadePixels = 4;
 
-    /// <summary>The shorter sideways step, taken on the even entries of the walk pattern (ROM horizontal animation table).</summary>
+    /// <summary>The shorter sideways step, taken on the even entries of the walk pattern.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> the horizontal animation tables (<c>HLKAL</c>/<c>HLKAR</c>).</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int SidewaysShortStepArcadePixels = 3;
 
     /// <summary>The flat up/down step.</summary>
@@ -78,7 +139,12 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private readonly SpriteSet _sprites;
 
     /// <summary>How long one beat takes, in clock units.</summary>
-    /// <remarks>ROM: the wave's <c>HLKSPD</c> frame count.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> the wave's <c>HLKSPD</c> frame count.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
+    /// </list>
+    /// </remarks>
     private readonly int _beatIntervalClockUnits;
 
     private readonly Func<IntVector2> _getTargetPosition;
@@ -108,7 +174,13 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <param name="random">The random source, for the re-aim timer and the aim offsets.</param>
     /// <param name="beatIntervalRomFrames">How many ROM frames between steps (ROM <c>HLKSPD</c>): a bigger number is a SLOWER hulk.</param>
     /// <param name="getTargetPosition">Returns who this hulk hunts right now: the player, or a human that falls back to the player once it is gone.</param>
-    /// <remarks>The interval between beats (ROM: <c>HLKSPD</c>) is 5-8 ROM frames.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HLKSPD</c> — the interval between beats is 5-8 ROM
+    /// frames.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
+    /// </list>
+    /// </remarks>
     public Hulk(
         SpriteSet sprites,
         IntVector2 position,
@@ -137,7 +209,12 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     public EntityLifeState LifeState => EntityLifeState.Alive;
 
     /// <summary>Top-left of the hulk.</summary>
-    /// <remarks>The ROM's OBJX/OBJY.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULK</c> — the OBJX/OBJY registers.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
+    /// </list>
+    /// </remarks>
     public IntVector2 Position => _position;
 
     /// <summary>Current walk frame, 0-based index into <see cref="SpriteSet.HulkAnimationFrames"/> (test hook).</summary>
@@ -148,8 +225,13 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 
     /// <summary>Pushes the hulk along the laser's travel direction, stopping at the wall.</summary>
     /// <param name="direction">The laser's travel direction, per axis (-1, 0 or +1).</param>
-    /// <remarks>ROM: <c>HULKIL</c> — sideways the shove is 1 arcade px, doubling about half the
-    /// time; up/down it is 1, quadrupling about three-quarters of the time.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c> — sideways the shove is 1 arcade px, doubling
+    /// about half the time; up/down it is 1, quadrupling about three-quarters of the time.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    /// </list>
+    /// </remarks>
     public void ApplyKnockback(IntVector2 direction)
     {
         int dx = direction.X != 0 && _random.Next(ShoveSidewaysDoubleRollSides) == 0
@@ -251,8 +333,13 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     }
 
     /// <summary>Aims along the current axis at the target's coordinate plus a random offset.</summary>
-    /// <remarks>ROM: <c>HNDX</c>/<c>HNDY</c> — an aim outside the wall is pulled back in; an aim
-    /// above the top wall is redirected to the bottom wall.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c> — an aim outside the wall is pulled
+    /// back in; an aim above the top wall is redirected to the bottom wall.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
+    /// </list>
+    /// </remarks>
     private void PickDirection(PlayField field)
     {
         IntVector2 target = _getTargetPosition();
@@ -276,7 +363,13 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     }
 
     /// <summary>Re-rolls the step timer, switches axis and picks a new direction.</summary>
-    /// <remarks>ROM: <c>HULKND</c>/<c>HND10</c> — the walk animation restarts at its first frame.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULKND</c>/<c>HND10</c> — the walk animation restarts at
+    /// its first frame.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    /// </list>
+    /// </remarks>
     private void Reaim(PlayField field)
     {
         _reaimStepsRemaining = RollReaimSteps();
@@ -286,6 +379,12 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         _animationFrameIndex = GetFrames(_direction)[0];
     }
 
-    /// <summary>The steps until the next fresh direction: a random count (ROM <c>HULKND</c>).</summary>
+    /// <summary>The steps until the next fresh direction: a random count.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULKND</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    /// </list>
+    /// </remarks>
     private int RollReaimSteps() => _random.Next(ReaimStepsMin, ReaimStepsMaxExclusive);
 }

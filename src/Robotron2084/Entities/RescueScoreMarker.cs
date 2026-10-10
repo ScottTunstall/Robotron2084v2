@@ -7,9 +7,13 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The "1000" to "5000" number that pops up where you just rescued a family member, showing the points you earned. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_ticksRemaining"/> counts down the ticks until it goes.</summary>
+/// <summary>The "1000" to "5000" number that pops up where you just rescued a family member, showing the points you earned.</summary>
 /// <seealso cref="Human"/>
 /// <remarks>
+/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_ticksRemaining"/> counts down
+/// the ticks until it goes.
+///
 /// <list type="bullet">
 /// <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMKIL</c> (the <c>PCFLG</c> path)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$03C5</c> (<c>RESCUE_FAMILY_POINTS_TABLE</c>)</item>

@@ -7,12 +7,17 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The flashing shape and floating score number that appear for a moment when you kill a spheroid or a quark. It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_stepTimer"/> gathers the ticks until it is time for the next step (see <see cref="ArcadeClock"/>).</summary>
+/// <summary>The flashing shape and floating score number that appear for a moment when you kill a spheroid or a quark.</summary>
 /// <seealso cref="Spheroid"/>
 /// <seealso cref="Quark"/>
 /// <remarks>
+/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_stepTimer"/> gathers the ticks
+/// until it is time for the next step (see <see cref="ArcadeClock"/>).
+///
 /// <list type="bullet">
-/// <item>Original source: <c>RRC11.ASM</c>, routine <c>CIRKIL</c>/<c>CIRKP</c> (spheroid) and <c>RRTK4.ASM</c>, routine <c>SQKIL</c>/<c>CIRKV</c> (quark)</item>
+/// <item>Original source: <c>RRC11.ASM</c>, routine <c>CIRKIL</c>/<c>CIRKP</c> (spheroid) and
+/// <c>RRTK4.ASM</c>, routine <c>SQKIL</c>/<c>CIRKV</c> (quark)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$131E</c> (<c>DRAW_SPHEROID_POINTS_VALUE</c>)</item>
 /// </list>
 /// </remarks>

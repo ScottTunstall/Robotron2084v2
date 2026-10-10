@@ -7,35 +7,83 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A spheroid is a drifting ring that floats around dropping little enforcer robots, then flies off the edge of the screen. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by <see cref="_moveTimer"/>.</summary>
+/// <summary>A spheroid is a drifting ring that floats around dropping little enforcer robots, then flies off the edge of the screen.</summary>
 /// <seealso cref="Enforcer"/>
 /// <remarks>
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
+/// until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by
+/// <see cref="_moveTimer"/>.
+///
 /// <list type="bullet">
-/// <item>Original source: <c>RRC11.ASM</c>, routine <c>CIRCLE</c> (with <c>CIRNAC</c>/<c>CIRGO</c>/<c>CIRC2L</c>/<c>CIRC3L</c>)</item>
+/// <item>Original source: <c>RRC11.ASM</c>, routine <c>CIRCLE</c> (with
+/// <c>CIRNAC</c>/<c>CIRGO</c>/<c>CIRC2L</c>/<c>CIRC3L</c>)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$11AF</c> (<c>ANIMATE_SPHEROID</c>)</item>
 /// </list>
 /// </remarks>
 public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
-    /// <summary>ROM <c>CIRNAC</c>: the accelerations hold for a random 1..this many beats.</summary>
+    /// <summary>The accelerations hold for a random 1 to this many beats.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int AccelBeatsMax = 15;
 
-    /// <summary>ROM <c>CIRNAC</c>: ...and is offset down by this much.</summary>
+    /// <summary>The sideways acceleration roll is offset down by this much, so it can be negative.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int AccelXOffset = 16;
 
-    /// <summary>ROM <c>CIRNAC</c>: the X acceleration roll has this many sides (-16..+15 once offset)...</summary>
+    /// <summary>The sideways acceleration roll has this many sides (from -16 to +15 once offset).</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int AccelXRollSides = 32;
 
-    /// <summary>ROM <c>CIRNAC</c>: ...and is offset down by this much.</summary>
+    /// <summary>The up-and-down acceleration roll is offset down by this much, so it can be negative.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int AccelYOffset = 32;
 
-    /// <summary>ROM <c>CIRNAC</c>: the Y acceleration roll has this many sides (-32..+31 once offset) — twice X, because a column is 2 pixels...</summary>
+    /// <summary>The up-and-down acceleration roll has this many sides (from -32 to +31 once offset) — twice the sideways roll, because a column is 2 pixels.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int AccelYRollSides = 64;
 
-    /// <summary>ROM <c>CIRGO</c>: ...less this small constant, so it converges on a multiple of the acceleration.</summary>
+    /// <summary>The damping is reduced by this small constant, so the velocity converges on a multiple of the acceleration.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRGO</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int DampingBias = 4;
 
-    /// <summary>ROM <c>CIRGO</c>: each beat the velocity is damped by this many 256ths of itself (a 64th)...</summary>
+    /// <summary>Each beat the velocity is damped by this many 256ths of itself (a 64th).</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRGO</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int DampingPer256 = 4;
 
     /// <summary>The wave's rotation delay when the caller gives none.</summary>
@@ -45,14 +93,31 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private const int DefaultMaxDropsX2 = 10;
 
     /// <summary>The drop phase's wrap boundary, so it spins all eight animation frames.</summary>
-    /// <remarks>ROM: <c>CIRC2L</c> wraps after its eighth animation frame.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRC2L</c> wraps after its eighth animation frame.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int DropLastAnimationFrame = 7;
 
-    /// <summary>ROM <c>CIRC2</c>: a re-armed drop countdown is a random 1..(the wave's delay over this) rotations.</summary>
+    /// <summary>A re-armed drop countdown is a random 1 to (the wave's delay over this) rotations.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRC2</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int DropRerollDivisor = 4;
 
     /// <summary>The last animation frame of the spin and escape, i.e. the pointer value whose step wraps.</summary>
-    /// <remarks>ROM: <c>CIRCLE</c>/<c>CIRC3L</c> wrap after animation frame 5 (index 4).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRCLE</c>/<c>CIRC3L</c> wrap after animation frame 5
+    /// (index 4).</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int SpinLastAnimationFrame = 4;
 
     /// <summary>Collision box = the ROM sprite dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
@@ -114,9 +179,17 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="random">The random source: the allotment, the accelerations and the escape direction.</param>
     /// <param name="maxDropsX2">This wave's enforcer-allotment bound; the roll happens here.</param>
     /// <param name="dropDelayRotations">The most rotations this wave's spheroid makes before it drops an enforcer.</param>
-    /// <remarks>ROM: <c>ENFNUM</c> and <c>CDPTIM</c> — this wave's allotment bound and rotation
-    /// delay. There is deliberately no speed parameter: the spheroid's speed IS its accumulated,
-    /// damped glide velocity, so a "speed bonus" cannot be expressed in this model.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>ENFNUM</c> and <c>CDPTIM</c> — this wave's allotment
+    /// bound and rotation delay.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    ///
+    /// There
+    /// is deliberately no speed parameter: the spheroid's speed IS its accumulated, damped glide velocity,
+    /// so a "speed bonus" cannot be expressed in this model.
+    /// </remarks>
     public Spheroid(
         SpriteSet sprites,
         IntVector2 position,
@@ -152,15 +225,31 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Alive until shot or until it finishes its sideways escape; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Top-left of the spheroid (the ROM's OBJX/OBJY).</summary>
+    /// <summary>Top-left of the spheroid.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> the OBJX/OBJY registers.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     public IntVector2 Position => _position;
 
     /// <summary>Test hook: true once the sideways exit run has started.</summary>
-    /// <remarks>ROM: the `CIRC3` escape phase.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> the <c>CIRC3</c> escape phase.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     internal bool IsEscaping => _isEscaping;
 
     /// <summary>Test hook: which animation frame is showing — 0..4 spinning or escaping, 0..7 dropping.</summary>
-    /// <remarks>The ROM's current-animation-frame pointer.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRCLE</c> — the current-animation-frame pointer.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     internal int AnimationFrameIndex => _animationFrameIndex;
 
     /// <summary>Draws the current animation frame; its shimmer comes from cycling palette slots, not a flash.</summary>
@@ -176,8 +265,14 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Kills the spheroid outright; a laser hit plays its own burst instead of the strip explosion.</summary>
-    /// <remarks>ROM: <c>CIRKIL</c> plays a 7-frame bubble burst then a "1000"; <see cref="RobotKinds"/> wires
-    /// <see cref="ScoreBurst.CreateForSpheroid"/> to the laser phase.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRKIL</c> plays a 7-frame bubble burst then a "1000".</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    ///
+    /// <see cref="RobotKinds"/> wires <see cref="ScoreBurst.CreateForSpheroid"/> to the laser phase.
+    /// </remarks>
     public void Kill()
     {
         if (!this.IsAlive())
@@ -268,9 +363,14 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Clamps the velocity to the limit, then damps it toward 64 x the acceleration.</summary>
-    /// <remarks>ROM: the second half of <c>CIRGO</c> — the damping nudges the velocity toward -4x
-    /// itself minus a small constant, so it converges on 64 x the acceleration and the clamp is the
-    /// usual terminal state.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> the second half of <c>CIRGO</c> — the damping nudges the
+    /// velocity toward -4x itself minus a small constant, so it converges on 64 x the acceleration
+    /// and the clamp is the usual terminal state.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private static int ClampThenDamp(int velocitySubpixels, int limitSubpixels)
     {
         velocitySubpixels = Math.Clamp(velocitySubpixels, -limitSubpixels, limitSubpixels);
@@ -278,7 +378,12 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Adds the acceleration, clamps to the top speed, then damps by a 64th.</summary>
-    /// <remarks>ROM: <c>CIRGO</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRGO</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private void AccelerateAndDamp()
     {
         _velocityXSubpixels = ClampThenDamp(_velocityXSubpixels + _accelX, SpheroidTuning.MaxVelocityXSubpixels);
@@ -287,9 +392,16 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>The wrap beat of the spin/drop cycle: hold the animation frame, release it, or drop an enforcer.</summary>
     /// <param name="field">The playfield, which owns the enforcer cap and the new enforcer.</param>
-    /// <remarks>ROM: <c>CIRC2</c>. While spinning, a frozen game holds the animation frame at its wrap target without
-    /// decrementing the countdown; drop and escape have no such freeze check, because the arcade's freeze test
-    /// is per routine, not per object.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRC2</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    ///
+    /// While spinning, a frozen game holds the animation frame at
+    /// its wrap target without decrementing the countdown; drop and escape have no such freeze check,
+    /// because the arcade's freeze test is per routine, not per object.
+    /// </remarks>
     private void AdvanceDropBeat(PlayField field)
     {
         if (!_isDropping && field.RobotsFrozen())
@@ -331,8 +443,13 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>One escape beat: step the animation frame, or leave for good once the far edge is reached.</summary>
     /// <param name="field">The playfield, whose bounds the exit is measured against.</param>
     /// <param name="wrapPass">True on the beat that lands on the phase's last animation frame.</param>
-    /// <remarks>The exit test lives inside the wrap branch, so it is tried once per animation frame cycle (ROM:
-    /// <c>CIRC3L</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRC3L</c> — the exit test lives inside the wrap branch,
+    /// so it is tried once per animation frame cycle.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    /// </list>
+    /// </remarks>
     private void AdvanceEscapeBeat(PlayField field, bool wrapPass)
     {
         if (!wrapPass)

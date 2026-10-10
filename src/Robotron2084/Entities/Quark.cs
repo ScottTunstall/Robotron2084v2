@@ -7,10 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A quark is a drifting robot that wanders the screen dropping tanks, then flees off the edge once it has dropped enough. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by <see cref="_moveTimer"/>.</summary>
+/// <summary>A quark is a drifting robot that wanders the screen dropping tanks, then flees off the edge once it has dropped enough.</summary>
 /// <seealso cref="Tank"/>
 /// <seealso cref="StripEffect"/>
 /// <remarks>
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
+/// until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by
+/// <see cref="_moveTimer"/>.
+///
 /// <list type="bullet">
 /// <item>Original source: <c>RRTK4.ASM</c>, routine <c>SQUARE</c> (with <c>SQVEL</c>/<c>SQ3</c>)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$4BFB</c> (<c>ANIMATE_QUARK</c>)</item>
@@ -42,14 +47,24 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private readonly SpriteSet _sprites;
 
     /// <summary>Which rotation animation frame is showing.</summary>
-    /// <remarks>ROM: <c>OPICT</c>, animation frames <c>SQP0</c> to <c>SQP8</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>OPICT</c>, animation frames <c>SQP0</c> to <c>SQP8</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
+    /// </list>
+    /// </remarks>
     private int _animationFrameIndex;
 
     /// <summary>Counts up to the next beat.</summary>
     private int _beatTimer;
 
     /// <summary>Beats left before the next tank drop is due.</summary>
-    /// <remarks>ROM: <c>PD2</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>PD2</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
+    /// </list>
+    /// </remarks>
     private int _dropBeatsRemaining;
 
     /// <summary>True once the quark has started dropping tanks. It stays true until every tank has been dropped.</summary>
@@ -64,7 +79,12 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private IntVector2 _position;
 
     /// <summary>Beats left before the quark picks a new direction to drift in.</summary>
-    /// <remarks>ROM: <c>PD7</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>PD7</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
+    /// </list>
+    /// </remarks>
     private int _reaimBeatsRemaining;
 
     /// <summary>Sub-pixel carry, so a slow drift still accumulates into movement.</summary>
@@ -83,8 +103,13 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="maxDropsX2">This wave's tank-allotment bound; the roll happens here.</param>
     /// <param name="dropDelayBeats">The most beats this wave's quark waits between tank drops.</param>
     /// <param name="speedCap">This wave's drift-speed cap, the velocity roll's maximum (ROM <c>SQSPD</c>).</param>
-    /// <remarks>ROM: <c>ENFNUM</c>, <c>TDPTIM</c> and <c>SQSPD</c> — this wave's allotment bound,
-    /// drop delay and drift-speed cap.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>ENFNUM</c>, <c>TDPTIM</c> and <c>SQSPD</c> — this wave's
+    /// allotment bound, drop delay and drift-speed cap.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
+    /// </list>
+    /// </remarks>
     public Quark(
         SpriteSet sprites,
         IntVector2 position,
@@ -111,7 +136,13 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Picks where a quark starts a wave: anywhere along the top wall or the bottom wall.</summary>
     /// <param name="playfieldBounds">The edges of the playfield.</param>
     /// <param name="random">Where the sideways spot and the top-or-bottom choice come from.</param>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQST1</c> and <c>SQST2</c> (<c>YMIN+2</c> or <c>YMAX-14</c>, then a random X). Disassembly: <c>$4B48</c> to <c>$4B5A</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SQST1</c> and <c>SQST2</c> (<c>YMIN+2</c> or
+    /// <c>YMAX-14</c>, then a random X).</item>
+    /// <item>Disassembly: <c>$4B48</c> to <c>$4B5A</c>.</item>
+    /// </list>
+    /// </remarks>
     internal static IntVector2 GetStartPosition(Rectangle playfieldBounds, Random random)
     {
         int x = random.Next(playfieldBounds.X, playfieldBounds.Right - CollisionSize.Width + 1);
@@ -129,7 +160,13 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Alive until it is hit or flees off the field; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Top-left of the quark (the ROM's OBJX/OBJY).</summary>
+    /// <summary>Top-left of the quark.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> the OBJX/OBJY registers.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
+    /// </list>
+    /// </remarks>
     public IntVector2 Position => _position;
 
     /// <summary>How many clock units pass between one beat and the next. A quark's <see cref="_beatTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a beat happens and this is subtracted from it.</summary>
@@ -148,8 +185,15 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Kills the quark outright; a laser hit plays its own burst instead of the strip explosion.</summary>
-    /// <remarks>ROM: RRTK4.ASM's <c>SQKIL</c> plays a bespoke shrink-and-burst, not a blink. <see cref="RobotKinds"/>
-    /// wires <see cref="ScoreBurst.CreateForQuark"/> to the laser phase.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SQKIL</c> plays a bespoke shrink-and-burst, not a blink.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
+    /// </list>
+    ///
+    /// <see cref="RobotKinds"/>
+    /// wires <see cref="ScoreBurst.CreateForQuark"/> to the laser phase.
+    /// </remarks>
     public void Kill()
     {
         if (!this.IsAlive())
@@ -220,8 +264,13 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Advances the animation one animation frame per beat; the range depends on the phase.</summary>
-    /// <remarks>ROM: SQP0..SQP4 while wandering, SQP0..SQP8 while dropping tanks, and SQP8..SQP0
-    /// during the exit.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> — SQP0..SQP4 while wandering, SQP0..SQP8 while dropping
+    /// tanks, and SQP8..SQP0 during the exit.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
+    /// </list>
+    /// </remarks>
     private void AdvanceAnimation()
     {
         if (_isFleeing)
@@ -259,9 +308,16 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Counts the drop beat down, and drops a tank when it is due and the field allows another.</summary>
     /// <param name="field">The playfield, which owns the tank cap and the new tank.</param>
-    /// <remarks>ROM: <c>SQ2</c>/<c>TNKDRP</c>. Before the first drop the countdown ticks once per animation
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SQ2</c>/<c>TNKDRP</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
+    /// </list>
+    ///
+    /// Before the first drop the countdown ticks once per animation
     /// cycle, after it once per beat. The drop phase is never left: when the allotment runs out the quark
-    /// flees.</remarks>
+    /// flees.
+    /// </remarks>
     private void AdvanceTankDrop(PlayField field)
     {
         if (!_isDroppingTanks && _animationFrameIndex != 0)
@@ -298,9 +354,16 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>One axis's magnitude: the roll (1..this wave's cap) times the axis scale, in subpixels.</summary>
-    /// <remarks>The arcade addresses video memory as <c>column*256 + row</c>, so X counts 2-pixel
-    /// columns and Y counts 1-pixel rows: the ROM's X scale of 4 and Y scale of 8 give the same
-    /// on-screen speed once columns are halved. The mover integrates this once per ROM frame.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SQVEL</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
+    /// </list>
+    ///
+    /// The arcade addresses video memory as <c>column*256 + row</c>,
+    /// so X counts 2-pixel columns and Y counts 1-pixel rows: the ROM's X scale of 4 and Y scale of 8 give
+    /// the same on-screen speed once columns are halved. The mover integrates this once per ROM frame.
+    /// </remarks>
     private int ComputeAxisVelocitySubpixels(int scale, bool isPositive, int coordinateUnitArcadePixels)
     {
         int roll = 1 + _random.Next(_speedCap);
@@ -318,7 +381,12 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Leaves for good the moment the quark is fully off the top or bottom edge.</summary>
     /// <param name="field">The playfield, whose bounds the exit is measured against.</param>
-    /// <remarks>ROM: <c>SQ3L</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SQ3L</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
+    /// </list>
+    /// </remarks>
     private void LeaveWhenClearOfTheField(PlayField field)
     {
         int topExitY = field.GetPlayfieldBounds().Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowRows);

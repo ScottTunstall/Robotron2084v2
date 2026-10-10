@@ -8,8 +8,13 @@ namespace Robotron2084.Entities;
 /// <summary>Holds every enemy or object of one kind that is currently on screen, and does the shared jobs of updating, cleaning out dead ones, and drawing them all.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: no single matching routine — this is a C# implementation structure. It mirrors the original game's own convention of keeping a separate list per object kind, each object carrying its own "next" pointer (see <c>RRDX2.ASM</c>'s <c>NEXT</c>/<c>NEXTZ</c> field)</item>
-/// <item>Disassembly: Not separately labelled in <c>asm/robomame.asm</c>, though it documents the same convention (for example <c>spheroids_enforcers_quarks_sparks_shells</c>, <c>family_list_pointer</c> and <c>electrode_list_pointer</c>, each described as a "linked list of..." its own object kind).</item>
+/// <item>Original source: no single matching routine — this is a C# implementation structure. It mirrors
+/// the original game's own convention of keeping a separate list per object kind, each object
+/// carrying its own "next" pointer (see <c>RRDX2.ASM</c>'s <c>NEXT</c>/<c>NEXTZ</c> field)</item>
+/// <item>Disassembly: Not separately labelled in <c>asm/robomame.asm</c>, though it documents the same
+/// convention (for example <c>spheroids_enforcers_quarks_sparks_shells</c>,
+/// <c>family_list_pointer</c> and <c>electrode_list_pointer</c>, each described as a "linked list
+/// of..." its own object kind).</item>
 /// </list>
 /// </remarks>
 /// <typeparam name="T">The entity type the list holds.</typeparam>

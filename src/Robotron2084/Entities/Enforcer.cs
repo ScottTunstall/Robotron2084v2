@@ -7,13 +7,20 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>An enforcer is a small, fast robot dropped by spheroids. It grows in place for a moment, then flies around firing sparks at you. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by <see cref="_moveTimer"/>, and <see cref="_growClockUnitsRemaining"/> counts down its growing.</summary>
+/// <summary>An enforcer is a small, fast robot dropped by spheroids. It grows in place for a moment, then flies around firing sparks at you.</summary>
 /// <seealso cref="Spheroid"/>
 /// <seealso cref="Spark"/>
 /// <remarks>
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
+/// until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by
+/// <see cref="_moveTimer"/>, and <see cref="_growClockUnitsRemaining"/> counts down its growing.
+///
 /// <list type="bullet">
-/// <item>Original source: <c>RRC11.ASM</c>, routine <c>ENFR1</c> (with <c>ENFNV</c>, <c>ENFDRP</c> sub-blocks)</item>
-/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ENFORCER_AI</c> (<c>$1951</c> area), with spawning in <c>DROP_ENFORCER</c>/<c>CREATE_ENFORCER</c></item>
+/// <item>Original source: <c>RRC11.ASM</c>, routine <c>ENFR1</c> (with <c>ENFNV</c>, <c>ENFDRP</c>
+/// sub-blocks)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ENFORCER_AI</c> (<c>$139D</c>), with spawning in
+/// <c>DROP_ENFORCER</c>/<c>CREATE_ENFORCER</c></item>
 /// </list>
 /// </remarks>
 public sealed class Enforcer : IEntity, IExplodable, IRemovable

@@ -7,10 +7,15 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A human is one of the family members the player is trying to rescue: Mikey, Mommy or Daddy. It wanders about until it is saved, killed or captured. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). <see cref="_startStaggerTicks"/> counts the ticks before its first step.</summary>
+/// <summary>A human is one of the family members the player is trying to rescue: Mikey, Mommy or Daddy. It wanders about until it is saved, killed or captured.</summary>
 /// <seealso cref="Brain"/>
 /// <seealso cref="SkullMarker"/>
 /// <remarks>
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
+/// until it is time for the next beat (see <see cref="ArcadeClock"/>). <see cref="_startStaggerTicks"/> counts the
+/// ticks before its first step.
+///
 /// <list type="bullet">
 /// <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMAN</c> (with the <c>HUMATB</c> walk table)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$02B2</c> (<c>INITIALISE_FAMILY_MEMBERS</c>)</item>
@@ -31,8 +36,16 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     private const int StartStaggerTicksMax = 8;
 
     /// <summary>The interval between beats, in ROM frames. The ONE deliberate gameplay override — do not "fix" it.</summary>
-    /// <remarks>The arcade steps every 8 frames and moves one arcade pixel; the port deliberately
-    /// slows this to 16, because the ROM-accurate pace reads as too fast (notes §70).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HUMAN</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
+    /// </list>
+    ///
+    /// The arcade steps every 8 frames and moves one
+    /// arcade pixel; the port deliberately slows this to 16, because the ROM-accurate pace reads as too
+    /// fast (notes §70).
+    /// </remarks>
     private const int BeatIntervalRomFrames = 16;
 
     /// <summary>How many substeps each direction block of the walk table has. <see cref="_subStep"/> counts up to this and then goes back to the first.</summary>
@@ -42,8 +55,15 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     private static readonly int[] AnimationFrameGroupByDirectionBlock = { 0, 1, 2, 3, 0, 1, 1, 0 };
 
     /// <summary>The walk table: 4 substeps for each of the 8 travel directions, in arcade pixels.</summary>
-    /// <remarks>Copied from the ROM's <c>HUMATB</c> — each substep is an animation frame number with an X/Y
-    /// delta. Block order: LEFT, RIGHT, DOWN, UP, UP+LEFT, RIGHT+UP, RIGHT+DOWN, DOWN+LEFT.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HUMATB</c> — each substep is an animation frame number
+    /// with an X/Y delta.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
+    /// </list>
+    ///
+    /// Block order: LEFT, RIGHT, DOWN, UP, UP+LEFT, RIGHT+UP, RIGHT+DOWN, DOWN+LEFT.
+    /// </remarks>
     private static readonly (int Dx, int Dy, int Frame)[] Steps =
     {
         // LEFT
@@ -118,7 +138,13 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     public Texture2D GetCurrentAnimationFrame() => _kind.GetAnimationFrames(_sprites)[_animationFrameIndex];
 
     /// <summary>True while this human is being reprogrammed: it cannot walk, be rescued or be killed.</summary>
-    /// <remarks>ROM: <c>BMUT</c> — the human comes off the human list while the brain drives it.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUT</c> — the human comes off the human list while the
+    /// brain drives it.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c>.</item>
+    /// </list>
+    /// </remarks>
     public bool IsBeingReprogrammed { get; private set; }
 
     // Which of the 4 substeps within that block comes next (0-3).
@@ -133,15 +159,27 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Top-left of the human.</summary>
-    /// <remarks>The ROM's OBJX/OBJY.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HUMAN</c> — the OBJX/OBJY registers.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
+    /// </list>
+    /// </remarks>
     public IntVector2 Position => _position;
 
     /// <summary>
-    /// This member's slot in the family list (the ROM's <c>$B354</c>), handed out in spawn order by
+    /// This member's slot in the family list, handed out in spawn order by
     /// <see cref="PlayField"/> — so the first Mikey holds slot 0.
     /// </summary>
-    /// <remarks>A brain's target is a SLOT rather than a person, which is why every brain on a wave can
-    /// chase the same member (notes §18.8).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HUMAN</c> (ROM <c>$B354</c>).</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
+    /// </list>
+    ///
+    /// A brain's target is a SLOT
+    /// rather than a person, which is why every brain on a wave can chase the same member (notes §18.8).
+    /// </remarks>
     internal int FamilySlot { get; set; }
 
     /// <summary>Steps taken so far — test hook for the step cadence.</summary>
@@ -174,7 +212,12 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Killed: gone at once, with no death animation.</summary>
-    /// <remarks>ROM: <c>DMAOFF</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>DMAOFF</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
+    /// </list>
+    /// </remarks>
     public void Kill()
     {
         if (!this.IsAlive())
@@ -268,7 +311,12 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     internal void BeginReprogramming() => IsBeingReprogrammed = true;
 
     /// <summary>Finishes reprogramming: the human is gone.</summary>
-    /// <remarks>ROM: <c>PROGST</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>PROGST</c>.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c>.</item>
+    /// </list>
+    /// </remarks>
     internal void FinishReprogramming()
     {
         IsBeingReprogrammed = false;
@@ -277,7 +325,14 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>The brain's hold on its victim: moves the human directly, without walking it.</summary>
     /// <param name="position">Where the brain puts the human.</param>
-    /// <remarks>ROM: <c>BMUT</c>, the reprogramming lift and drop. A test can also use it to place one.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUT</c> — the reprogramming lift and drop.</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c>.</item>
+    /// </list>
+    ///
+    /// A test can also use it to place one.
+    /// </remarks>
     internal void MoveTo(IntVector2 position) => _position = position;
 
     /// <summary>True when the human's next step would overlap an electrode that is still standing.</summary>

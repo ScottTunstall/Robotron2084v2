@@ -8,56 +8,123 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A brain is a floating robot that chases a family member and turns them into a prog. It also shoots cruise missiles at you. It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>). <see cref="_reprogramTimer"/> times the steps of reprogramming a human.</summary>
+/// <summary>A brain is a floating robot that chases a family member and turns them into a prog. It also shoots cruise missiles at you.</summary>
 /// <seealso cref="PlayField"/>
 /// <seealso cref="Human"/>
 /// <remarks>
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
+/// until it is time for the next beat (see <see cref="ArcadeClock"/>). <see cref="_reprogramTimer"/> times the
+/// steps of reprogramming a human.
+///
 /// <list type="bullet">
-/// <item>Original source: <c>RRB10.ASM</c>: <c>BRNSTV</c> (start the brains), <c>BRAIN</c>/<c>BRNL</c>/<c>BRNL1</c> (each beat), <c>BMUT</c> (reprogram a human), <c>BRNSHT</c> (fire a cruise missile), <c>BRNKIL</c> (shot by a laser)</item>
-/// <item>Disassembly: <c>asm/robomame.asm</c>: <c>INITIALISE_ALL_BRAINS</c> (<c>$1AF6</c>), <c>BRAIN_AI</c> (<c>$1BEE</c>), <c>ANIMATE_BRAIN</c> (<c>$1C11</c>), <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>), <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>), <c>BRAIN_COLLISION_HANDLER</c> (<c>$1DD6</c>)</item>
+/// <item>Original source: <c>RRB10.ASM</c>: <c>BRNSTV</c> (start the brains),
+/// <c>BRAIN</c>/<c>BRNL</c>/<c>BRNL1</c> (each beat), <c>BMUT</c> (reprogram a human), <c>BRNSHT</c>
+/// (fire a cruise missile), <c>BRNKIL</c> (shot by a laser)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c>: <c>INITIALISE_ALL_BRAINS</c> (<c>$1AF4</c>), <c>BRAIN_AI</c>
+/// (<c>$1BEE</c>), <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>), <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c>
+/// (<c>$1CC2</c>), <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>), <c>BRAIN_COLLISION_HANDLER</c>
+/// (<c>$1DD6</c>)</item>
 /// </list>
-/// Sideways distances here are in columns (two arcade pixels each) and up-and-down distances in rows (one arcade pixel each), as in the ROM; see docs/glossary.md.
+///
+/// Sideways distances here are in columns
+/// (two arcade pixels each) and up-and-down distances in rows (one arcade pixel each), as in the ROM; see
+/// docs/glossary.md.
 /// </remarks>
 public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>How many ROM frames the arcade's routine sleeps between one look at whether the game is live and the next. It sets how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRAIN</c>, <c>BITA #$7F / BEQ BRN0A / NAP 4,BRAIN</c>. Disassembly: <c>$1BD8</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRAIN</c>, <c>BITA #$7F / BEQ BRN0A / NAP 4,BRAIN</c>.</item>
+    /// <item>Disassembly: <c>$1BD8</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int LivePollRomFrames = 4;
 
     /// <summary>How many ROM frames the arcade's routine sleeps after the look that finds the game live, before the first beat.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRN0A</c>, <c>NAP 12,BRNL</c>. Disassembly: <c>$1BD8</c> onwards.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRN0A</c>, <c>NAP 12,BRNL</c>.</item>
+    /// <item>Disassembly: <c>$1BD8</c> onwards.</item>
+    /// </list>
+    /// </remarks>
     private const int FirstBeatNapRomFrames = 12;
 
     /// <summary>The number of ROM frames a brain spends on the beat itself. It is added to the wave's wait to give the interval between beats, which is stored in <see cref="_beatIntervalClockUnits"/>.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSLP</c>, the sleep of <c>BRNSPD</c> frames at the end of each beat. Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>), the wait loaded from <c>$BE63</c> at <c>$1C9C</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNSLP</c>, the sleep of <c>BRNSPD</c> frames at the end
+    /// of each beat.</item>
+    /// <item>Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>), the wait loaded from <c>$BE63</c> at
+    /// <c>$1C9C</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int BeatExecutionRomFrames = 1;
 
     /// <summary>How far to the right of the brain's top-left corner a new cruise missile appears.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>ADDD #$0304</c>, the 3 columns. Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>ADDD #$0304</c>, the 3 columns.</item>
+    /// <item>Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int MissileMuzzleXColumns = 3;
 
     /// <summary>How far below the brain's top-left corner a new cruise missile appears.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>ADDD #$0304</c>, the 4 rows. Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>ADDD #$0304</c>, the 4 rows.</item>
+    /// <item>Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>).</item>
+    /// </list>
+    /// </remarks>
     private const int MissileMuzzleYRows = 4;
 
     /// <summary>How many rows below the brain's top-left corner the victim stands while being reprogrammed. It is added to the brain's Y position to set <see cref="_victimRestingY"/>.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT1</c>, <c>ADDA #2</c> on Y, 2 rows. Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CEB</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUT1</c>, <c>ADDA #2</c> on Y, 2 rows.</item>
+    /// <item>Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CEB</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int VictimDropRows = 2;
 
     /// <summary>The gap between the victim and the brain's left side when the victim stands on the left.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT00</c>, <c>SUBA #1</c> on X, 1 column. Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CCD</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUT00</c>, <c>SUBA #1</c> on X, 1 column.</item>
+    /// <item>Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CCD</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int VictimGapColumns = 1;
 
     /// <summary>How far right of the brain's top-left corner the victim stands when there is no room on the left.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT10</c>, <c>ADDA #8</c> on X, 8 columns (16 arcade pixels). Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CDC</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUT10</c>, <c>ADDA #8</c> on X, 8 columns (16 arcade
+    /// pixels).</item>
+    /// <item>Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CDC</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int VictimRightOffsetColumns = 8;
 
     /// <summary>How close to the right wall the victim may stand before the brain tries the left side again.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT10</c>, <c>CMPA #XMAX-4</c> on X, 4 columns. Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CDE</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUT10</c>, <c>CMPA #XMAX-4</c> on X, 4 columns.</item>
+    /// <item>Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>) at <c>$1CDE</c>.</item>
+    /// </list>
+    /// </remarks>
     private const int VictimRightWallMarginColumns = 4;
 
     /// <summary>How close sideways the brain gets to its target before it stops moving sideways. Up and down has no such gap.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, <c>ADDA #2 / CMPA #4 / BLS</c> on X, 2 columns. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>) at <c>$1C11</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, <c>ADDA #2 / CMPA #4 / BLS</c> on X, 2
+    /// columns.</item>
+    /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>) at <c>$1C11</c>.</item>
+    /// </list>
+    /// </remarks>
     private static readonly int ApproachDeadZonePixels = ScreenSize.ToPortPixelsFromColumns(2);
 
     /// <summary>How close sideways the brain's and the human's top-left corners must be for a catch, in port pixels.</summary>
@@ -67,20 +134,41 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     private static readonly int CatchReachY = ScreenSize.ToPortPixels(ReprogramTuning.CatchReachRows);
 
     /// <summary>The size of the brain's sprite, which is also the size of its hit box.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRDP1</c>, 7 bytes by 16 rows (14 by 16 arcade pixels). Disassembly: the brain standing still, <c>$2159</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRDP1</c>, 7 bytes by 16 rows (14 by 16 arcade pixels).</item>
+    /// <item>Disassembly: the brain standing still, <c>$2159</c>.</item>
+    /// </list>
+    /// </remarks>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixels(CollisionSizes.BrainCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.BrainCollisionSize.Height));
 
     /// <summary>How far the brain moves sideways on each beat.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 column. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 column.</item>
+    /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>).</item>
+    /// </list>
+    /// </remarks>
     private static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(1);
 
     /// <summary>How far the brain moves up or down on each beat.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 row. Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 row.</item>
+    /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>).</item>
+    /// </list>
+    /// </remarks>
     private static readonly int StepYPixels = ScreenSize.ToPortPixels(1);
 
     /// <summary>The order the brain's three walking animation frames are shown in: first, second, first, third.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNAL</c>, <c>BRNAR</c>, <c>BRNAD</c> and <c>BRNAU</c>, each listing its frames as 1, 2, 1, 3. Disassembly: <c>BRAIN_ANIMATION_TABLES</c> (<c>$1CA2</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNAL</c>, <c>BRNAR</c>, <c>BRNAD</c> and <c>BRNAU</c>,
+    /// each listing its frames as 1, 2, 1, 3.</item>
+    /// <item>Disassembly: <c>BRAIN_ANIMATION_TABLES</c> (<c>$1CA2</c>).</item>
+    /// </list>
+    /// </remarks>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
     /// <summary>How long between beats, in clock units.</summary>
@@ -132,8 +220,14 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <param name="fireIntervalBeats">The longest this wave's brains wait between cruise missiles, in beats.</param>
     /// <param name="targetFamilySlot">Which place in the family list the brain chases at the start.</param>
     /// <remarks>
-    /// Original source: <c>RRB10.ASM</c> <c>BRNSTV</c> (the wait is <c>BSHTIM</c> through <c>RMAX</c>, the target comes from <c>GETHTG</c>). Disassembly: <c>INITIALISE_ALL_BRAINS</c> (<c>$1AF6</c>) and <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c> (<c>$1B95</c>).
-    /// The playfield passes the nearest slot as the brain is made, before the family exists. That is the ROM's own order, and it is why every brain in the arcade chases Mikey (notes §18.8).
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNSTV</c> (the wait is <c>BSHTIM</c> through
+    /// <c>RMAX</c>, the target comes from <c>GETHTG</c>).</item>
+    /// <item>Disassembly: <c>INITIALISE_ALL_BRAINS</c> (<c>$1AF4</c>) and
+    /// <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c> (<c>$1B95</c>). The playfield passes the nearest
+    /// slot as the brain is made, before the family exists. That is the ROM's own order, and it is
+    /// why every brain in the arcade chases Mikey (notes §18.8).</item>
+    /// </list>
     /// </remarks>
     public Brain(
         SpriteSet sprites,
@@ -159,7 +253,13 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     public Texture2D GetCurrentAnimationFrame() => _sprites.BrainAnimationFrames[GetWalkAnimationFrameIndex()];
 
     /// <summary>True while this brain is turning a human into a prog.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> to <c>BMUT4</c>. Disassembly: the "progging" flag at <c>$9895</c> (<c>brain_progging_flag</c>) and <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUT</c> to <c>BMUT4</c>.</item>
+    /// <item>Disassembly: the "progging" flag at <c>$9895</c> (<c>brain_progging_flag</c>) and
+    /// <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>).</item>
+    /// </list>
+    /// </remarks>
     public bool IsReprogramming() => _victim is not null;
 
     /// <summary>Alive until a laser hits it, then dead at once. The brain never plays a dying animation of its own.</summary>
@@ -167,15 +267,32 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>The top-left corner of the brain.</summary>
-    /// <remarks>Original source: <c>OBJX</c> and <c>OBJY</c>. Disassembly: the blitter destination at offsets <c>$04</c> and <c>$05</c> of the object.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>OBJX</c> and <c>OBJY</c>.</item>
+    /// <item>Disassembly: the blitter destination at offsets <c>$04</c> and <c>$05</c> of the object.</item>
+    /// </list>
+    /// </remarks>
     public IntVector2 Position => _position;
 
     /// <summary>The family member this brain is chasing, or null when it is chasing the player.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL0</c>, the object the brain's <c>PD2</c> pointer resolves to. It is null until the first beat, because the ROM works the target out inside the beat (notes §18.8). Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNL0</c>, the object the brain's <c>PD2</c> pointer
+    /// resolves to. It is null until the first beat, because the ROM works the target out inside the
+    /// beat (notes §18.8).</item>
+    /// <item>Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>).</item>
+    /// </list>
+    /// </remarks>
     internal Human? Target { get; private set; }
 
     /// <summary>Which place in the family list this brain is chasing.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>PD2</c>, the brain's target. Disassembly: the brain's target field at offset <c>$09</c> of its process (<c>$1BEE</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>PD2</c>, the brain's target.</item>
+    /// <item>Disassembly: the brain's target field at offset <c>$09</c> of its process (<c>$1BEE</c>).</item>
+    /// </list>
+    /// </remarks>
     internal int TargetFamilySlot => _targetSlot;
 
     /// <summary>Gives the brain a new place in the family list to chase.</summary>
@@ -187,7 +304,12 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     internal int GetWalkAnimationFrameIndex() => (int)_walkSequence * 3 + WalkCycle[_walkCycleStep];
 
     /// <summary>Draws the brain. While it is reprogramming, it is drawn on top of a solid block of colour.</summary>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNON</c>. Disassembly: <c>DRAW_BRAIN_IN_PROGGING_STATE</c> (<c>$1DAF</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNON</c>.</item>
+    /// <item>Disassembly: <c>DRAW_BRAIN_IN_PROGGING_STATE</c> (<c>$1DAF</c>).</item>
+    /// </list>
+    /// </remarks>
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
@@ -207,10 +329,13 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <summary>Takes the brain off the field at once. The playfield makes the explosion and gives the points.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNKIL</c> (the explosion is <c>HVEXST</c>, the score <c>$0150</c> and the sound <c>BKSND</c>)</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNKIL</c> (the explosion is <c>HVEXST</c>, the score
+    /// <c>$0150</c> and the sound <c>BKSND</c>)</item>
     /// <item>Disassembly: <c>BRAIN_COLLISION_HANDLER</c> (<c>$1DD6</c>)</item>
     /// </list>
-    /// A brain shot while it is reprogramming loses its victim, which is done by <see cref="PlayField"/> (<c>ReleaseVictimsOfDeadBrains</c>).
+    ///
+    /// A brain shot while it is reprogramming loses its victim, which is done by <see cref="PlayField"/>
+    /// (<c>ReleaseVictimsOfDeadBrains</c>).
     /// </remarks>
     public void Kill()
     {
@@ -233,7 +358,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>BRAIN</c>, <c>BRNL</c> and <c>BRNL1</c></item>
-    /// <item>Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>) and <c>ANIMATE_BRAIN</c> (<c>$1C11</c>)</item>
+    /// <item>Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>) and <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>)</item>
     /// </list>
     /// </remarks>
     public void Update(GameTime gameTime, PlayField field)
@@ -276,7 +401,8 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <param name="playfieldBounds">The edges of the playfield, so the human is placed inside them.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUT</c>, <c>BMUT00</c>, <c>BMUT10</c> and <c>BMUT1</c>; the test that the brain is close enough is the end of <c>BRNL1</c></item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUT</c>, <c>BMUT00</c>, <c>BMUT10</c> and <c>BMUT1</c>;
+    /// the test that the brain is close enough is the end of <c>BRNL1</c></item>
     /// <item>Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>)</item>
     /// </list>
     /// </remarks>
@@ -313,11 +439,14 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <returns>The family member, or null when the brain cannot catch anyone.</returns>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c>, the end of <c>BRNL1</c> (<c>ADDB #3 / CMPB #$6 / BHI</c> then <c>ADDA #3 / CMPA #6 / BLS BMUT</c>)</item>
-    /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>) from <c>$1C48</c> to <c>$1C56</c></item>
+    /// <item>Original source: <c>RRB10.ASM</c>, the end of <c>BRNL1</c> (<c>ADDB #3 / CMPB #$6 / BHI</c>
+    /// then <c>ADDA #3 / CMPA #6 / BLS BMUT</c>)</item>
+    /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>) from <c>$1C48</c> to <c>$1C56</c></item>
     /// </list>
-    /// The test compares the two top-left corners, not the sprites, and only the brain's own target can be caught. This only
-    /// asks: starting the reprogramming is for the field to decide (<see cref="BeginReprogramming"/>).
+    ///
+    /// The test compares the two top-left corners, not the sprites, and only
+    /// the brain's own target can be caught. This only asks: starting the reprogramming is for the field to
+    /// decide (<see cref="BeginReprogramming"/>).
     /// </remarks>
     internal Human? GetCatchableTarget()
     {
@@ -338,7 +467,13 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>Lets go of the human being reprogrammed, if there is one, who is then lost. Used when the brain is shot part way through.</summary>
     /// <returns>The human the brain was reprogramming, or null if it was not reprogramming anyone.</returns>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNKIL</c>, the <c>BRNK2</c> branch for a brain shot while reprogramming. Disassembly: <c>BRAIN_COLLISION_HANDLER</c> (<c>$1DD6</c>).</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNKIL</c>, the <c>BRNK2</c> branch for a brain shot
+    /// while reprogramming.</item>
+    /// <item>Disassembly: <c>BRAIN_COLLISION_HANDLER</c> (<c>$1DD6</c>).</item>
+    /// </list>
+    /// </remarks>
     internal Human? ReleaseVictim()
     {
         Human? victim = _victim;
@@ -360,10 +495,14 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <param name="victim">The human being reprogrammed.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUTL</c> to <c>BMUT4</c> (20 rounds of a move down then a move up, a random 0 to 7 rows each; <c>PROGST</c> at the end)</item>
-    /// <item>Disassembly: <c>DRAW_PROG_STARTING_TO_SHAKE</c> (<c>$1D37</c>) and <c>CREATE_PROG</c> (<c>$1E19</c>)</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BMUTL</c> to <c>BMUT4</c> (20 rounds of a move down then
+    /// a move up, a random 0 to 7 rows each; <c>PROGST</c> at the end)</item>
+    /// <item>Disassembly: <c>DRAW_PROG_STARTING_TO_SHAKE</c> (<c>$1D37</c>) and <c>CREATE_PROG</c>
+    /// (<c>$1E19</c>)</item>
     /// </list>
-    /// Each shake is measured from the human's resting place, as in the ROM, so the shakes never drift.
+    ///
+    /// Each shake
+    /// is measured from the human's resting place, as in the ROM, so the shakes never drift.
     /// </remarks>
     private void AdvanceReprogramming(PlayField field, Human victim)
     {
@@ -402,7 +541,13 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>Moves the brain on to its next walking animation frame. If it has turned to face a new way, the walking starts again from the first frame.</summary>
     /// <param name="step">The step the brain tried to take this beat.</param>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRN5</c> to <c>BRNSD1</c> (<c>BRNDIR</c> and <c>BRNSD</c>). Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>), from <c>$1C58</c> to <c>$1C8F</c>.</remarks>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRN5</c> to <c>BRNSD1</c> (<c>BRNDIR</c> and
+    /// <c>BRNSD</c>).</item>
+    /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>), from <c>$1C58</c> to <c>$1C8F</c>.</item>
+    /// </list>
+    /// </remarks>
     private void AdvanceWalkAnimation(IntVector2 step)
     {
         WalkSequence nextWalkSequence = step.X != 0
@@ -424,7 +569,8 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <param name="field">The playfield, which says whether there is room and makes the missile.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c> (at most 8 missiles; the wait is picked first, even when no missile is made)</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c> (at most 8 missiles; the wait is picked first,
+    /// even when no missile is made)</item>
     /// <item>Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>)</item>
     /// </list>
     /// </remarks>
@@ -446,9 +592,13 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>BRNL0</c> and <c>GETHTG</c></item>
-    /// <item>Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>) and <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c> (<c>$1B95</c>)</item>
+    /// <item>Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>) and <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c>
+    /// (<c>$1B95</c>)</item>
     /// </list>
-    /// An empty slot sends the brain to the player, unless a family member is still about, in which case it picks the nearest one straight away.
+    ///
+    /// An empty slot sends the
+    /// brain to the player, unless a family member is still about, in which case it picks the nearest one
+    /// straight away.
     /// </remarks>
     private Human? ResolveTarget(PlayField field)
     {
@@ -473,11 +623,13 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>BRNL1</c> to <c>BRN40</c></item>
-    /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C11</c>)</item>
+    /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>)</item>
     /// </list>
-    /// Sideways, the brain stops moving once it is close enough. Up and down, it always moves, and goes down when the target is level with it.
-    /// The ROM undoes both steps if either would leave the playfield, which pins a brain against a wall for good. This port deliberately
-    /// checks each step on its own, so a brain against a wall slides along it (the author's decision).
+    ///
+    /// Sideways, the brain stops moving once it is close enough. Up and down, it always
+    /// moves, and goes down when the target is level with it. The ROM undoes both steps if either would
+    /// leave the playfield, which pins a brain against a wall for good. This port deliberately checks each
+    /// step on its own, so a brain against a wall slides along it (the author's decision).
     /// </remarks>
     private IntVector2 StepTowardTarget(PlayField field, IntVector2 target)
     {
