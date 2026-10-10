@@ -31,9 +31,8 @@ public class NativeBoardFidelityTests
     /// <summary>The most of the time the boards may disagree, from 0 to 1: the noise sounds change level every few dozen cycles, so a few cycles' lag shows.</summary>
     private const double MostDisagreement = 0.03;
 
-    /// <summary>Every sound number the game sends, from its sound tables.</summary>
-    public static TheoryData<int> GameSoundNumbers =>
-        [.. SoundTables.All.SelectMany(table => table.Entries).Select(entry => (int)entry.SoundNumber).Distinct().Order()];
+    /// <summary>Every sound number the board has (the sound test page's list), which includes every one the game sends.</summary>
+    public static TheoryData<int> GameSoundNumbers => [.. BoardSounds.All.Select(sound => sound.Number)];
 
     /// <summary>Every sound the game plays, by its name in the player's catalog.</summary>
     public static TheoryData<string> GameSoundNames => [.. new SoundCatalog().GameSounds.Select(sound => sound.Name)];
