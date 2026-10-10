@@ -244,7 +244,8 @@ public sealed class RobotronGame : Game
     /// <summary>
     /// The game's start keys, live on EVERY attract screen (notes §101): F1 one player, F2 two players
     /// alternating turns, F3 the arcade's two-player game (selected now, played later), F5 the GAME
-    /// ADJUSTMENT page (notes §131), F10 the DEFINE INPUTS page.
+    /// ADJUSTMENT page (notes §131), F10 the DEFINE INPUTS page, F4 the SOUND TEST page, and 5 drops a coin in the slot (the port has no credits, so it only makes the
+    /// coin sound, one of the eight at random).
     /// </summary>
     /// <param name="state">This tick's keyboard.</param>
     /// <remarks>Handling them here rather than in the title means the attract movie, the demo and the high
@@ -257,6 +258,12 @@ public sealed class RobotronGame : Game
             return;
         }
 
+        if (WasPressed(state, Keys.D5))
+        {
+            Sound.PlayCoin(Random.Shared);
+            return;
+        }
+
         GameMode? mode = WasPressed(state, Keys.F1) ? GameMode.OnePlayer
             : WasPressed(state, Keys.F2) ? GameMode.TwoPlayerAlternate
             : WasPressed(state, Keys.F3) ? GameMode.TwoPlayerSimultaneous
@@ -265,6 +272,10 @@ public sealed class RobotronGame : Game
         if (mode is { } chosen)
         {
             _stateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _sprites, _highScoreStore));
+        }
+        else if (WasPressed(state, Keys.F4))
+        {
+            _stateManager.TransitionTo(new SoundTestState(_services));
         }
         else if (WasPressed(state, Keys.F5))
         {
