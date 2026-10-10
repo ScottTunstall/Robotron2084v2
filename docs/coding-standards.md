@@ -362,7 +362,7 @@ uses them.
 **NUM-2. The clock is never written as `5` and `6`.** Use `ArcadeClock.UnitsPerPortTick` and
 `ArcadeClock.UnitsPerRomFrame` (or `RomFrameTimer`). Never copy them into a private constant.
 
-**NUM-3. The column is never written as `2`.** Use `ScreenSize.Columns(n)` / `ArcadePixelsPerColumn`.
+**NUM-3. The column is never written as `2`.** Use `ScreenSize.Columns(n)` / `ArcadePixelsPerByte`.
 
 **NUM-4. Unit conversions go through named helpers** (`ScreenSize.ToPortPixels`,
 `ScreenSize.ToPortPixelsFromColumns`, `ArcadeClock.ToClockUnits`), never through inline arithmetic like `* ScreenSize.SpecScale`,
