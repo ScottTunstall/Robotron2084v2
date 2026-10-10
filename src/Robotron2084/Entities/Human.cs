@@ -131,7 +131,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     public Rectangle GetBounds()
     {
         (int w, int h) = _kind.GetArcadeCollisionSize();
-        return new(_position.X, _position.Y, ScreenSize.ToPortPixels(w), ScreenSize.ToPortPixels(h));
+        return new(_position.X, _position.Y, ScreenSize.ToPortPixelsFromArcadePixels(w), ScreenSize.ToPortPixelsFromArcadePixels(h));
     }
 
     /// <summary>The walk animation frame the family member is showing. It is also used to tell, pixel by pixel, whether something is touching the family member.</summary>
@@ -272,7 +272,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirectionBlock[_directionBlock] + frame;
 
         // The walk table is in arcade pixels, so the step is changed to port pixels.
-        IntVector2 candidate = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixels(1);
+        IntVector2 candidate = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixelsFromArcadePixels(1);
         Rectangle next = GetBounds() with { X = candidate.X, Y = candidate.Y };
         if (field.HitsWall(next) || OverlapsLivingElectrode(next, field))
         {
@@ -295,7 +295,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     internal static int SpawnSquarePortPixels(HumanKind kind)
     {
         (int width, int height) = kind.GetArcadeCollisionSize();
-        return ScreenSize.ToPortPixels(Math.Max(width, height));
+        return ScreenSize.ToPortPixelsFromArcadePixels(Math.Max(width, height));
     }
 
     /// <summary>Says whether this family member is on the field and free: alive, and not being held by a brain.</summary>

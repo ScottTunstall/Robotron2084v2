@@ -132,7 +132,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     private static readonly int CatchReachX = ScreenSize.ToPortPixelsFromColumns(ReprogramTuning.CatchReachColumns);
 
     /// <summary>How close up and down the brain's and the family member's top-left corners must be for a catch, in port pixels.</summary>
-    private static readonly int CatchReachY = ScreenSize.ToPortPixels(ReprogramTuning.CatchReachRows);
+    private static readonly int CatchReachY = ScreenSize.ToPortPixelsFromArcadePixels(ReprogramTuning.CatchReachRows);
 
     /// <summary>How big the brain is, in port pixels. It is the size of the brain's sprite, and it is used to tell what the brain touches.</summary>
     /// <remarks>
@@ -142,7 +142,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// </list>
     /// </remarks>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.BrainCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.BrainCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BrainCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BrainCollisionSize.Height));
 
     /// <summary>How far the brain moves sideways on each beat, in port pixels.</summary>
     /// <remarks>
@@ -160,7 +160,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     /// <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>).</item>
     /// </list>
     /// </remarks>
-    private static readonly int StepYPixels = ScreenSize.ToPortPixels(1);
+    private static readonly int StepYPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
     /// <summary>The order the brain's three walking animation frames are shown in: first, second, first, third.</summary>
     /// <remarks>
@@ -432,7 +432,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
         _walkSequence = walkSequence;
         _walkCycleStep = 0;
 
-        _victimRestingY = _position.Y + ScreenSize.ToPortPixels(VictimDropRows);
+        _victimRestingY = _position.Y + ScreenSize.ToPortPixelsFromArcadePixels(VictimDropRows);
         human.MoveTo(new IntVector2(x, _victimRestingY));
     }
 
@@ -584,7 +584,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
         {
             field.SpawnCruiseMissile(_position + new IntVector2(
                 ScreenSize.ToPortPixelsFromColumns(MissileMuzzleXColumns),
-                ScreenSize.ToPortPixels(MissileMuzzleYRows)));
+                ScreenSize.ToPortPixelsFromArcadePixels(MissileMuzzleYRows)));
         }
 
         _fireBeatsRemaining = 1 + _random.Next(_fireIntervalBeats);

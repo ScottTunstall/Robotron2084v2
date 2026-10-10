@@ -32,16 +32,16 @@ namespace Robotron2084.Entities;
 public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>How tall the shell is, in port pixels.</summary>
-    private static readonly int BoxHeight = ScreenSize.ToPortPixels(CollisionSizes.TankShellCollisionSize.Height);
+    private static readonly int BoxHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankShellCollisionSize.Height);
 
     /// <summary>How wide the shell is, in port pixels.</summary>
-    private static readonly int BoxWidth = ScreenSize.ToPortPixels(CollisionSizes.TankShellCollisionSize.Width);
+    private static readonly int BoxWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankShellCollisionSize.Width);
 
     /// <summary>One column, in port pixels.</summary>
     private static readonly int ColumnPixels = ScreenSize.ToPortPixelsFromColumns(1);
 
     /// <summary>One row, in port pixels.</summary>
-    private static readonly int RowPixels = ScreenSize.ToPortPixels(1);
+    private static readonly int RowPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
     private readonly Rectangle _playfieldBounds;
     private readonly SpriteSet _sprites;

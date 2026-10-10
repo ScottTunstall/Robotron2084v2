@@ -30,7 +30,7 @@ public sealed class SkullMarker : IEntity
 
     /// <summary>How big the skull is, in port pixels. It is the size of the skull's sprite.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.SkullCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.SkullCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SkullCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SkullCollisionSize.Height));
 
     private readonly IntVector2 _position;
     private readonly SpriteSet _sprites;

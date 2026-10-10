@@ -27,7 +27,7 @@ public sealed class RescueScoreMarker : IEntity
     /// <summary>How long the number stays on the field, in 50ths of a second. It is changed to ticks to set <see cref="_ticksRemaining"/>, which then counts down to nothing.</summary>
     private const int LifeRomFrames = 60;
 
-    private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeArcadePixels);
+    private static readonly int Size = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EntitySizeArcadePixels);
 
     /// <summary>Which number is shown, as a place in <see cref="SpriteSet.RescueScoreDisplays"/>. The first place is the 1000 and the last is the 5000.</summary>
     private readonly int _displayIndex;

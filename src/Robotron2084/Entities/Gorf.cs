@@ -31,7 +31,7 @@ public sealed class Gorf : IExplodable, IRemovable
 {
     /// <summary>How big Gorf is, in port pixels. This size is used to tell what Gorf touches.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.GorfCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.GorfCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height));
 
     /// <summary>The time from one step to the next, in clock units (see <see cref="ArcadeClock"/>). <see cref="_stepTimer"/> counts up to this. When it gets there, a step is taken and this is taken off it.</summary>
     private static readonly int StepClockUnits = ArcadeClock.ToClockUnits(GorfTuning.StepRomFrames);
@@ -43,7 +43,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private static readonly int StepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
 
     /// <summary>How high every hop goes, in port pixels.</summary>
-    private static readonly int HopPixels = ScreenSize.ToPortPixels(GorfTuning.HopRows);
+    private static readonly int HopPixels = ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows);
 
     private readonly int _directionSignX;
     private readonly Queue<int> _dropSteps = new();
@@ -120,7 +120,7 @@ public sealed class Gorf : IExplodable, IRemovable
             return;
         }
 
-        int pixel = ScreenSize.ToPortPixels(1);
+        int pixel = ScreenSize.ToPortPixelsFromArcadePixels(1);
         var source = new Rectangle((visible.X - drawn.X) / pixel, (visible.Y - drawn.Y) / pixel, visible.Width / pixel, visible.Height / pixel);
         _sprites.Blitter.UsePassThrough();
         spriteBatch.Draw(animationFrame, visible, source, Color.White);
@@ -201,8 +201,8 @@ public sealed class Gorf : IExplodable, IRemovable
     private void DropGrunts(PlayField field)
     {
         int count = Math.Min(GorfTuning.MaxGruntsPerDrop, (_random.Next(_maxDropsX2) + 2) / 2);
-        int gruntWidth = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Width);
-        int gruntHeight = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Height);
+        int gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
+        int gruntHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
         int spacing = gruntWidth + GorfTuning.DropGapPixels;
         int centreX = _position.X + ((CollisionSize.Width - gruntWidth) / 2);
         int bodyY = _position.Y + ((CollisionSize.Height - gruntHeight) / 2);

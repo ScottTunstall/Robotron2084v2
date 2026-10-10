@@ -40,8 +40,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// square of a fixed size.
     /// </remarks>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.PlayerCollisionSize.Width),
-            ScreenSize.ToPortPixels(CollisionSizes.PlayerCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.PlayerCollisionSize.Width),
+            ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.PlayerCollisionSize.Height));
 
     /// <summary>The order each walk shows its three animation frames in: first, second, first, third.</summary>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
@@ -294,7 +294,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
             Direction8.UpRight => (2, 0),
             _ => (2, 12), // Down and to the right.
         };
-        return new(ScreenSize.ToPortPixels(offset.x), ScreenSize.ToPortPixels(offset.y));
+        return new(ScreenSize.ToPortPixelsFromArcadePixels(offset.x), ScreenSize.ToPortPixelsFromArcadePixels(offset.y));
     }
 
     /// <summary>Makes a move either sideways or up-and-down, unless it would put the player in the wall.</summary>

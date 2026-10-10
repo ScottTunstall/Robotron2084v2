@@ -155,8 +155,8 @@ public sealed class Prog : IExplodable, IRemovable
         _kind = kind;
         _random = random;
         _collisionSize = (
-            ScreenSize.ToPortPixels(kind.GetArcadeCollisionSize().Width),
-            ScreenSize.ToPortPixels(kind.GetArcadeCollisionSize().Height));
+            ScreenSize.ToPortPixelsFromArcadePixels(kind.GetArcadeCollisionSize().Width),
+            ScreenSize.ToPortPixelsFromArcadePixels(kind.GetArcadeCollisionSize().Height));
         RollOffsets(); // A new prog picks at once how far from the Player it aims (ROM: PROGST calls GPOFF).
     }
 
@@ -187,8 +187,8 @@ public sealed class Prog : IExplodable, IRemovable
     public Rectangle GetExplosionBounds() => new(
         _position.X,
         _position.Y,
-        ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Width),
-        ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Height));
+        ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Width),
+        ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Height));
 
     /// <summary>Which family member this prog used to be. This decides its animation frames and its size.</summary>
     public HumanKind Kind => _kind;
@@ -343,7 +343,7 @@ public sealed class Prog : IExplodable, IRemovable
 
         // A step goes left, right, up or down. It never goes diagonally.
         int stepX = ScreenSize.ToPortPixelsFromColumns(StepXColumns);
-        int stepY = ScreenSize.ToPortPixels(StepYRows);
+        int stepY = ScreenSize.ToPortPixelsFromArcadePixels(StepYRows);
         IntVector2 step = _direction switch
         {
             Direction8.Left => new IntVector2(-stepX, 0),
@@ -413,8 +413,8 @@ public sealed class Prog : IExplodable, IRemovable
             return aimX <= _position.X ? Direction8.Left : Direction8.Right;
         }
 
-        int aimY = player.Y + ScreenSize.ToPortPixels(_offsetY);
-        if (aimY > bounds.Bottom + ScreenSize.ToPortPixels(WrapMarginYRows))
+        int aimY = player.Y + ScreenSize.ToPortPixelsFromArcadePixels(_offsetY);
+        if (aimY > bounds.Bottom + ScreenSize.ToPortPixelsFromArcadePixels(WrapMarginYRows))
         {
             aimY = bounds.Top;
         }

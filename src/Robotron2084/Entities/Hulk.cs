@@ -7,7 +7,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A hulk is a huge, tough robot that can't be killed by shooting it. A shot just knocks it back. It slowly stomps after you or a family member.</summary>
+/// <summary>A hulk is a huge, tough robot that can't be killed by shooting it. A shot just knocks it back. It slowly stomps after you, after a family member, or off into a corner.</summary>
 /// <seealso cref="Player"/>
 /// <seealso cref="Human"/>
 /// <remarks>
@@ -36,26 +36,55 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </remarks>
     private const int LivePollRomFrames = 8;
 
-    /// <summary>The hulk does not aim exactly at its target. A random number of arcade pixels is added to where the target is. That number is always less than this.</summary>
+    /// <summary>The hulk does not aim exactly at its target. A random number is added to where the target is: so many columns when the hulk is picking left or right, and so many rows when it is picking up or down. That number is always less than this.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
-    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
+    /// <item>Disassembly: <c>HULK_MOVE_HORIZONTALLY</c> (<c>$0125</c>) and <c>MAKE_HULK_MOVE_VERTICALLY</c> (<c>$0145</c>),
+    /// <c>ANDA #$1F / ADDA #$F0</c>, added to the column or the row of the target's top-left corner.</item>
     /// </list>
     /// </remarks>
-    private const int AimOffsetMaxExclusiveArcadePixels = 16;
+    private const int AimOffsetFromTargetMaxExclusive = 16;
 
-    /// <summary>The smallest number of arcade pixels that can be added to where the target is (see <see cref="AimOffsetMaxExclusiveArcadePixels"/>). It is negative, which moves the aim left or up.</summary>
+    /// <summary>The smallest number of columns or rows that can be added to where the target is (see <see cref="AimOffsetFromTargetMaxExclusive"/>). It is negative, which moves the aim left or up.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
-    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
+    /// <item>Disassembly: <c>$0125</c> and <c>$0145</c>, <c>ADDA #$F0</c>.</item>
     /// </list>
     /// </remarks>
-    private const int AimOffsetMinArcadePixels = -16;
+    private const int AimOffsetFromTargetMin = -16;
+
+    /// <summary>If the spot a hulk aims at is more than this many columns past the right wall, the hulk aims at the left wall instead. Only a hulk with nothing real to stalk aims that far out (see <see cref="GetPhantomTargetPosition"/>).</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>.</item>
+    /// <item>Disassembly: <c>$012D</c> to <c>$0135</c>, <c>CMPA #$8F / BLS / CMPA #$CF / BLS / LDA #$07</c>. <c>$8F</c> is the
+    /// right wall and <c>$CF</c> is 64 columns past it.</item>
+    /// </list>
+    /// </remarks>
+    private const int AimWrapColumnsPastRightWall = 0xCF - 0x8F;
+
+    /// <summary>If the spot a hulk aims at is more than this many rows above the top wall, the hulk aims at the bottom wall instead. Only a hulk with nothing real to stalk aims that high (see <see cref="GetPhantomTargetPosition"/>).</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HNDY</c>.</item>
+    /// <item>Disassembly: <c>$014D</c> to <c>$0151</c>, <c>CMPA #$06 / BCC / LDA #$EA</c>. The top wall is at row <c>$18</c>,
+    /// which is 18 rows below row 6, and <c>$EA</c> is the bottom wall.</item>
+    /// </list>
+    /// </remarks>
+    private const int AimWrapRowsAboveTopWall = 0x18 - 0x06;
+
+    /// <summary>How many columns past the right wall the phantom target is (see <see cref="GetPhantomTargetPosition"/>).</summary>
+    /// <remarks>Disassembly: the byte <c>$C8</c> at <c>$7E05</c>, read as a column. The right wall is at column <c>$8F</c>.</remarks>
+    private const int PhantomColumnsPastRightWall = 0xC8 - 0x8F;
+
+    /// <summary>How many rows above the top wall the phantom target is (see <see cref="GetPhantomTargetPosition"/>).</summary>
+    /// <remarks>Disassembly: the byte <c>$13</c> at <c>$7E06</c>, read as a row. The top wall is at row <c>$18</c>.</remarks>
+    private const int PhantomRowsAboveTopWall = 0x18 - 0x13;
 
     /// <summary>One more than the most steps a hulk may take before it aims again. The number of steps is picked at random, from <see cref="ReaimStepsMin"/> up to one less than this, and counted down in <see cref="_reaimStepsRemaining"/>.</summary>
-    private const int ReaimStepsMaxExclusive = 32;
+    private const int ReaimStepsMaxExclusive = 33;
 
     /// <summary>The fewest steps a hulk takes before it aims again. The number of steps is picked at random, from this up to one less than <see cref="ReaimStepsMaxExclusive"/>, and counted down in <see cref="_reaimStepsRemaining"/>.</summary>
     private const int ReaimStepsMin = 1;
@@ -125,7 +154,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 
     /// <summary>How big the hulk is, in port pixels. It is the size of the hulk's sprite, and it is used to tell what the hulk touches.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.HulkCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.HulkCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height));
 
     /// <summary>The walk animation frames for each direction, in the order they are shown, as places in <see cref="SpriteSet.HulkAnimationFrames"/>.</summary>
     /// <remarks>Each direction shows four animation frames, and the first and third are the same one. So each direction
@@ -174,7 +203,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <param name="position">Where the hulk's top-left corner is.</param>
     /// <param name="random">Where its random numbers come from. They pick how many steps it takes before it turns, and move its aim a little.</param>
     /// <param name="beatIntervalRomFrames">How long the hulk waits between steps, in 50ths of a second (ROM: <c>HLKSPD</c>). A bigger number makes a slower hulk.</param>
-    /// <param name="getTargetPosition">Gives the place the hulk is hunting now: where the player is, or where a family member is. Once that family member has gone, it gives where the player is.</param>
+    /// <param name="getTargetPosition">Gives the place the hulk is heading for now. <see cref="Level.Spawning.HulkWaveSpawner"/> decides what that is: the player, a family member, or a spot off the corner of the playfield.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRH11.ASM</c> <c>HLKSPD</c>. The time between beats is from 5 to 8 fiftieths
@@ -224,6 +253,9 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <summary>Which way the hulk is walking. Tests use this.</summary>
     internal Direction8 Direction => _direction;
 
+    /// <summary>Where the hulk is heading for now: the player, a family member, or the spot off the corner of the playfield. Tests use this.</summary>
+    internal IntVector2 GetTargetPosition() => _getTargetPosition();
+
     /// <summary>Shoves the hulk the way the laser that hit it was going. The hulk stops at the wall.</summary>
     /// <param name="direction">The way the laser was going: left, right or neither, and up, down or neither.</param>
     /// <remarks>
@@ -241,7 +273,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         int dy = direction.Y != 0 && _random.Next(ShoveVerticalQuadrupleRollSides) < ShoveVerticalQuadrupleRollBelow
             ? direction.Y * ShoveVerticalQuadrupleFactor
             : direction.Y;
-        _position += new IntVector2(ScreenSize.ToPortPixels(dx), ScreenSize.ToPortPixels(dy));
+        _position += new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(dx), ScreenSize.ToPortPixelsFromArcadePixels(dy));
         if (_playfieldBounds is { } bounds)
         {
             int x = Math.Clamp(_position.X, bounds.X, bounds.Right - CollisionSize.Width);
@@ -296,7 +328,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
             ? (_walkCycleStep % 2 == 0 ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels)
             : VerticalStepArcadePixels;
         _walkCycleStep = (_walkCycleStep + 1) % WalkPatternLength;
-        IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.ToPortPixels(stepArcadePixels);
+        IntVector2 next = _position + _direction.ToIntVector() * ScreenSize.ToPortPixelsFromArcadePixels(stepArcadePixels);
         if (field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             // The step would go into the wall, so the hulk stays where it is and picks a new direction.
@@ -335,34 +367,55 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         _animationFrameIndex = GetFrames(_direction)[0];
     }
 
-    /// <summary>Picks which way the hulk walks. A hulk that is walking sideways picks left or right, and one that is walking up and down picks up or down. It picks the way that leads to a spot a random distance from its target.</summary>
-    /// <param name="field">The playfield, whose walls limit where that spot can be.</param>
+    /// <summary>Works out where a hulk with nothing real to stalk heads for: a fixed spot off the top-right corner of the playfield. Such a hulk drifts to that corner and stays near it.</summary>
+    /// <param name="playfieldBounds">The inside of the playfield wall, in port pixels.</param>
+    /// <returns>The spot, in port pixels. It is outside the wall.</returns>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>. A spot outside the left or right wall is moved
-    /// back inside. A spot above the top wall is changed to the bottom wall.</item>
-    /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HULKND</c>, which follows the hulk's target pointer without checking it.</item>
+    /// <item>Disassembly: <c>$010D</c>, <c>LDY [$09,U]</c>. A hulk whose search of the family list found nobody holds a
+    /// target of 0, so this reads the two bytes at <c>$0000</c> and gets <c>$7E01</c>, which is not an object. The hulk
+    /// takes the bytes at <c>$7E05</c> and <c>$7E06</c> (<c>$C8</c> and <c>$13</c>) as that object's column and row.</item>
+    /// </list>
+    /// </remarks>
+    internal static IntVector2 GetPhantomTargetPosition(Rectangle playfieldBounds) => new(
+        playfieldBounds.Right + ScreenSize.ToPortPixelsFromColumns(PhantomColumnsPastRightWall),
+        playfieldBounds.Y - ScreenSize.ToPortPixelsFromArcadePixels(PhantomRowsAboveTopWall));
+
+    /// <summary>Picks which way the hulk walks. A hulk that is walking sideways picks left or right, and one that is walking up and down picks up or down. It picks the way that leads to a spot a random distance from its target.</summary>
+    /// <param name="field">The playfield, whose walls are used when the spot is far outside them.</param>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
+    /// <item>Disassembly: <c>HULK_MOVE_HORIZONTALLY</c> (<c>$0125</c>) and <c>MAKE_HULK_MOVE_VERTICALLY</c> (<c>$0145</c>). The
+    /// random distance is up to 16 columns sideways, or up to 16 rows up or down, so a hulk close to its target often turns
+    /// the wrong way.</item>
     /// </list>
     /// </remarks>
     private void PickDirection(PlayField field)
     {
         IntVector2 target = _getTargetPosition();
-        int offset = _random.Next(AimOffsetMinArcadePixels, AimOffsetMaxExclusiveArcadePixels);
+        int offsetFromTarget = _random.Next(AimOffsetFromTargetMin, AimOffsetFromTargetMaxExclusive);
         Rectangle bounds = field.Wall.PlayfieldBounds;
         if (_isMovingHorizontally)
         {
-            int targetX = Math.Clamp(target.X + offset, bounds.X, bounds.Right - CollisionSize.Width);
-            _direction = targetX <= _position.X ? Direction8.Left : Direction8.Right;
+            int aimX = target.X + ScreenSize.ToPortPixelsFromColumns(offsetFromTarget);
+            if (aimX > bounds.Right + ScreenSize.ToPortPixelsFromColumns(AimWrapColumnsPastRightWall))
+            {
+                aimX = bounds.X;
+            }
+
+            _direction = aimX <= _position.X ? Direction8.Left : Direction8.Right;
         }
         else
         {
-            int targetY = target.Y + offset;
-            if (targetY < bounds.Y) // The spot the hulk is aiming at is above the top wall, so it aims at the bottom wall instead.
+            int aimY = target.Y + ScreenSize.ToPortPixelsFromArcadePixels(offsetFromTarget);
+            if (aimY < bounds.Y - ScreenSize.ToPortPixelsFromArcadePixels(AimWrapRowsAboveTopWall))
             {
-                targetY = bounds.Bottom - CollisionSize.Height;
+                aimY = bounds.Bottom;
             }
 
-            _direction = targetY <= _position.Y ? Direction8.Up : Direction8.Down;
+            _direction = aimY <= _position.Y ? Direction8.Up : Direction8.Down;
         }
     }
 

@@ -54,7 +54,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>How big the robot is, in port pixels. This size is used to tell what the robot touches.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.BerzerkRobotCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.BerzerkRobotCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BerzerkRobotCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BerzerkRobotCollisionSize.Height));
 
     /// <summary>The time from one beat to the next, in clock units (see <see cref="ArcadeClock"/>). <see cref="_beatTimer"/> counts up to this. When it gets there, a beat happens and this is taken off it.</summary>
     private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);

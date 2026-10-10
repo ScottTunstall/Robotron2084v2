@@ -40,7 +40,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private const int RepeatDropDelayDivisor = 2;
 
     /// <summary>How big the quark is, in port pixels. It is the size of the quark's sprite, and it is used to tell what the quark touches.</summary>
-    private static readonly (int Width, int Height) CollisionSize = (ScreenSize.ToPortPixels(CollisionSizes.QuarkCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.QuarkCollisionSize.Height));
+    private static readonly (int Width, int Height) CollisionSize = (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Height));
 
     private readonly int _dropDelayBeats;
     private readonly Random _random;
@@ -340,7 +340,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
                 : TankTuning.BirthOffsetRowsOffTopWall;
             field.SpawnTank(_position + new IntVector2(
                 ScreenSize.ToPortPixelsFromColumns(TankTuning.BirthOffsetColumns),
-                ScreenSize.ToPortPixels(rowOffset)));
+                ScreenSize.ToPortPixelsFromArcadePixels(rowOffset)));
             if (_tanksRemaining == 0)
             {
                 StartFlee();
@@ -370,7 +370,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private int ComputeAxisVelocitySubpixels(int scale, bool isPositive, int coordinateUnitArcadePixels)
     {
         int roll = 1 + _random.Next(_speedCap);
-        int subpixels = roll * scale * ScreenSize.ToPortPixels(coordinateUnitArcadePixels);
+        int subpixels = roll * scale * ScreenSize.ToPortPixelsFromArcadePixels(coordinateUnitArcadePixels);
         return isPositive ? subpixels : -subpixels;
     }
 
@@ -396,8 +396,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private void LeaveWhenClearOfTheField(PlayField field)
     {
-        int topExitY = field.GetPlayfieldBounds().Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowRows);
-        int bottomExitY = field.GetPlayfieldBounds().Bottom - ScreenSize.ToPortPixels(QuarkTuning.FleeExitHighRows);
+        int topExitY = field.GetPlayfieldBounds().Y + ScreenSize.ToPortPixelsFromArcadePixels(QuarkTuning.FleeExitLowRows);
+        int bottomExitY = field.GetPlayfieldBounds().Bottom - ScreenSize.ToPortPixelsFromArcadePixels(QuarkTuning.FleeExitHighRows);
         if (_position.Y <= topExitY || _position.Y >= bottomExitY)
         {
             LifeState = EntityLifeState.Dead;
@@ -410,8 +410,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     {
         int lowX = bounds.X + ScreenSize.ToPortPixelsFromColumns(QuarkTuning.WallMarginLeftColumns);
         int highX = bounds.Right - ScreenSize.ToPortPixelsFromColumns(QuarkTuning.WallMarginRightColumns);
-        int lowY = bounds.Y + ScreenSize.ToPortPixels(QuarkTuning.WallMarginTopRows);
-        int highY = bounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.WallMarginBottomRows);
+        int lowY = bounds.Y + ScreenSize.ToPortPixelsFromArcadePixels(QuarkTuning.WallMarginTopRows);
+        int highY = bounds.Bottom - ScreenSize.ToPortPixelsFromArcadePixels(QuarkTuning.WallMarginBottomRows);
 
         bool xPositive = _position.X <= lowX || (_position.X < highX && _random.Next(CoinFlipSides) == 0);
         bool yPositive = _position.Y <= lowY || (_position.Y < highY && _random.Next(CoinFlipSides) != 0);
@@ -428,7 +428,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private void StartFlee()
     {
         _isFleeing = true;
-        int subpixels = QuarkTuning.FleeVelocityRom * ScreenSize.ToPortPixels(1);
+        int subpixels = QuarkTuning.FleeVelocityRom * ScreenSize.ToPortPixelsFromArcadePixels(1);
         _velocitySubpixels = new IntVector2(0, _random.Next(CoinFlipSides) == 0 ? subpixels : -subpixels);
         _remainderSubpixels = IntVector2.Zero;
     }

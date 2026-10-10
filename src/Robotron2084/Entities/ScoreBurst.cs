@@ -70,8 +70,8 @@ public sealed class ScoreBurst : IEntity
         // The first burst animation frame is already showing, so there is one step fewer left to take.
         _burstStepsRemaining = count - 1;
         _pointsBounds = new Rectangle(
-            bounds.X + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetXArcadePixels),
-            bounds.Y + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetYArcadePixels),
+            bounds.X + ScreenSize.ToPortPixelsFromArcadePixels(ScoreBurstTuning.PointsOffsetXArcadePixels),
+            bounds.Y + ScreenSize.ToPortPixelsFromArcadePixels(ScoreBurstTuning.PointsOffsetYArcadePixels),
             bounds.Width,
             bounds.Height);
     }

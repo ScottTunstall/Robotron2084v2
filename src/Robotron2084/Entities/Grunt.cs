@@ -52,7 +52,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>How big the grunt is, in port pixels. It is the size of the grunt's sprite, and it is used to tell what the grunt touches.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height));
 
     private readonly Random _random;
     private readonly SpriteSet _sprites;

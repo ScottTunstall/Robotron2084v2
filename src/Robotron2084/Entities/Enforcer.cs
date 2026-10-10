@@ -46,7 +46,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
 
     /// <summary>How big the enforcer is, in port pixels. It is the size of the enforcer's sprite, and it is used to tell what the enforcer touches.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.EnforcerCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.EnforcerCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EnforcerCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EnforcerCollisionSize.Height));
 
     private readonly int _fireIntervalBeats;
     private readonly Random _random;
@@ -235,7 +235,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
         int targetX = field.GetPlayerPosition().X + ScreenSize.ToPortPixelsFromColumns(_random.Next(0, AimZoneColumns));
-        int targetY = field.GetPlayerPosition().Y + ScreenSize.ToPortPixels(_random.Next(0, AimZoneRows));
+        int targetY = field.GetPlayerPosition().Y + ScreenSize.ToPortPixelsFromArcadePixels(_random.Next(0, AimZoneRows));
         targetX = Math.Clamp(targetX, bounds.X, bounds.Right - CollisionSize.Width);
         targetY = Math.Clamp(targetY, bounds.Y, bounds.Bottom - CollisionSize.Height);
 

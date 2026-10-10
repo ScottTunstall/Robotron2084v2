@@ -44,14 +44,14 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <remarks>The disassembly calls this box "FAT PHONY GUY". It is much bigger than the dot the missile is drawn as, which is
     /// <see cref="CruiseMissileTuning.MarkArcadeWidth"/> by <see cref="CruiseMissileTuning.MarkArcadeHeight"/> arcade pixels.</remarks>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.CruiseMissileCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.CruiseMissileCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.CruiseMissileCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.CruiseMissileCollisionSize.Height));
 
     /// <summary>How far the missile goes left or right on each move, in port pixels. It is one column.</summary>
     /// <remarks>The arcade moves it one column on each move. A column is 2 arcade pixels wide.</remarks>
     private static readonly int StepXPortPixels = ScreenSize.ToPortPixelsFromColumns(1);
 
     /// <summary>How far the missile goes up or down on each move, in port pixels. It is one row.</summary>
-    private static readonly int StepYPortPixels = ScreenSize.ToPortPixels(1);
+    private static readonly int StepYPortPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
     private readonly Random _random;
     private readonly SpriteSet _sprites;
@@ -86,7 +86,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <remarks>ROM: the "FAT PHONY GUY" box, which sits up and to the left of the missile's own position.</remarks>
     public Rectangle GetBounds() => new(
         _position.X + ScreenSize.ToPortPixelsFromColumns(CollisionSizes.CruiseMissileBoxOffsetColumns),
-        _position.Y + ScreenSize.ToPortPixels(CollisionSizes.CruiseMissileBoxOffsetRows),
+        _position.Y + ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.CruiseMissileBoxOffsetRows),
         CollisionSize.Width,
         CollisionSize.Height);
 
@@ -117,8 +117,8 @@ public sealed class CruiseMissile : IEntity, IRemovable
             return;
         }
 
-        int markWidth = ScreenSize.ToPortPixels(CruiseMissileTuning.MarkArcadeWidth);
-        int markHeight = ScreenSize.ToPortPixels(CruiseMissileTuning.MarkArcadeHeight);
+        int markWidth = ScreenSize.ToPortPixelsFromArcadePixels(CruiseMissileTuning.MarkArcadeWidth);
+        int markHeight = ScreenSize.ToPortPixelsFromArcadePixels(CruiseMissileTuning.MarkArcadeHeight);
 
         Color trailColor = _sprites.Blitter.GetSlotColour(CruiseMissileTuning.TrailSlot);
         foreach (IntVector2 mark in _trail)
@@ -214,7 +214,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
         Rectangle bounds = field.Wall.PlayfieldBounds;
         IntVector2 positionBeforeMove = _position;
         int columnPixels = ScreenSize.ToPortPixelsFromColumns(1);
-        int rowPixels = ScreenSize.ToPortPixels(1);
+        int rowPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
         if (_velocity.X != 0)
         {

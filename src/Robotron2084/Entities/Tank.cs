@@ -96,9 +96,9 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>How big the tank is, in port pixels. It is the size of the tank's sprite, and it is used to tell what the tank touches.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.TankCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.TankCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Height));
 
-    private static readonly int VerticalMoveThreshold = ScreenSize.ToPortPixels(VerticalMoveThresholdArcadePixels);
+    private static readonly int VerticalMoveThreshold = ScreenSize.ToPortPixelsFromArcadePixels(VerticalMoveThresholdArcadePixels);
     private readonly int _fireIntervalBeats;
     private readonly Random _random;
     private readonly SpriteSet _sprites;
@@ -172,7 +172,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         if (_growStep < TankTuning.GrowSteps)
         {
             (int w, int h) = TankTuning.GrowSizes[_growStep];
-            return new(_position.X, _position.Y, ScreenSize.ToPortPixels(w), ScreenSize.ToPortPixels(h));
+            return new(_position.X, _position.Y, ScreenSize.ToPortPixelsFromArcadePixels(w), ScreenSize.ToPortPixelsFromArcadePixels(h));
         }
 
         return new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
@@ -256,8 +256,8 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             Rectangle growBounds = new(
                 _position.X,
                 _position.Y,
-                ScreenSize.ToPortPixels(growWidth),
-                ScreenSize.ToPortPixels(growHeight));
+                ScreenSize.ToPortPixelsFromArcadePixels(growWidth),
+                ScreenSize.ToPortPixelsFromArcadePixels(growHeight));
             _sprites.Blitter.DrawSprite(spriteBatch, _sprites.TankGrowAnimationFrames[_growStep], growBounds, Color.White);
             return;
         }
@@ -365,7 +365,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 
         // The growing tank moves up and to the left a little each time its animation frame changes, so that the full-size tank ends up centred on the spot where it was dropped (notes §53).
         (int columns, int rows) = TankTuning.GrowDeltas[_growStep];
-        _position += new IntVector2(ScreenSize.ToPortPixelsFromColumns(columns), ScreenSize.ToPortPixels(rows));
+        _position += new IntVector2(ScreenSize.ToPortPixelsFromColumns(columns), ScreenSize.ToPortPixelsFromArcadePixels(rows));
 
         return ++_growStep < TankTuning.GrowSteps;
     }
@@ -399,7 +399,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private void StepOrBounce(PlayField field)
     {
-        int stepPixels = ScreenSize.ToPortPixels(TankTuning.StepArcadePixels);
+        int stepPixels = ScreenSize.ToPortPixelsFromArcadePixels(TankTuning.StepArcadePixels);
         IntVector2 step = new(_stepDirection.X * stepPixels, _stepDirection.Y * stepPixels);
         IntVector2 next = _position + step;
         if (!field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))

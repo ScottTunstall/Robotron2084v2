@@ -24,7 +24,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
-    private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.MissileSizeArcadePixels);
+    private static readonly int Size = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.MissileSizeArcadePixels);
     // How much is added to the spark's speed each time the speed changes: one amount for sideways and one for up or down, in 256ths of a pixel. They are picked at random when the spark is made and never change (ROM: PD2/PD4).
     private readonly IntVector2 _accelerationSubpixels;
     private readonly Random _random;
@@ -76,7 +76,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         }
 
         int deltaX = playerPosition.X + ScreenSize.ToPortPixelsFromColumns(jitterX) - position.X;
-        int deltaY = playerPosition.Y + ScreenSize.ToPortPixels(jitterY) - position.Y;
+        int deltaY = playerPosition.Y + ScreenSize.ToPortPixelsFromArcadePixels(jitterY) - position.Y;
 
         // The starting speed is set so that, if it never changed, the spark would reach the spot it is aimed at after SparkTuning.SparkAimDivisor moves.
         int subpixelsPerPortPixelPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
@@ -86,7 +86,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _accelerationSubpixels = new IntVector2(
             _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPixelPerMove,
             _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPixelPerMove
-                * ScreenSize.ToPortPixels(1) / ScreenSize.ToPortPixelsFromColumns(1));
+                * ScreenSize.ToPortPixelsFromArcadePixels(1) / ScreenSize.ToPortPixelsFromColumns(1));
 
         // Pick at random how long the spark lasts.
         _lifeClockUnitsRemaining = ArcadeClock.ToClockUnits(_random.Next(

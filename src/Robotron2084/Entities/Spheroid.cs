@@ -123,7 +123,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>How big the spheroid is, in port pixels. It is the size of the spheroid's sprite, and it is used to tell what the spheroid touches.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.SpheroidCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.SpheroidCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SpheroidCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SpheroidCollisionSize.Height));
 
     private readonly int _dropDelayRotations;
     private readonly Random _random;

@@ -24,7 +24,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>How big the electrode is, in port pixels. It is the size of the electrode's sprite, and it is used to tell what touches the electrode.</summary>
     private static readonly (int Width, int Height) CollisionSize =
-        (ScreenSize.ToPortPixels(CollisionSizes.ElectrodeCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.ElectrodeCollisionSize.Height));
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ElectrodeCollisionSize.Width), ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ElectrodeCollisionSize.Height));
 
     /// <summary>How long each shrivel animation frame is shown for, in 50ths of a second.</summary>
     private static readonly int[] ShrivelSleepRomFrames = [6, 3, 2];
