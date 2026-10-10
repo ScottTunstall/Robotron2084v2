@@ -23,7 +23,7 @@ public sealed class WilliamsLogoBorderTests
     private static int Count(WilliamsLogoBorder border) => border.Pixels.Count(pixel => pixel != 0);
 
     private static byte PixelAt(WilliamsLogoBorder border, int column, int row) =>
-        border.Pixels[(row * WilliamsLogoBorder.Width) + (column * ScreenSize.ArcadePixelsPerColumn)];
+        border.Pixels[(row * WilliamsLogoBorder.Width) + (column * ScreenSize.ArcadePixelsPerByte)];
 
     [Fact]
     public void TheFirstWIsDrawnAtOnceInSlotSeven()
