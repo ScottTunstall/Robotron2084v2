@@ -76,6 +76,20 @@ public static class Sound
         _engine?.HoldVoice(SoundTuning.WaveEndMusicTicks);
     }
 
+    /// <summary>
+    /// Plays a coin sound: one of the eight <see cref="SoundTables.Coin"/> tables, chosen at random, as the original
+    /// does when a coin goes in.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRS22.ASM</c>, the coin process <c>CN1</c> (<c>LDA #5</c>, <c>LDB SEED</c>, <c>ANDB #7</c>, <c>MUL</c>,
+    /// <c>ADDD #CNSND</c>, <c>JSR SNDLD</c>)</item>
+    /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$D0CE</c> (the tables)</item>
+    /// </list>
+    /// </remarks>
+    /// <param name="random">The source of the random choice.</param>
+    public static void PlayCoin(Random random) => Play(SoundTables.Coin[random.Next(SoundTables.Coin.Count)]);
+
     /// <summary>Starts the transporter's hum: the sound made while a brain wave's robots are beamed in.</summary>
     /// <remarks>
     /// <list type="bullet">
@@ -92,6 +106,21 @@ public static class Sound
         }
 
         _transporterSound.Start(_engine);
+    }
+
+    /// <summary>
+    /// Sends a sound number straight to the board, skipping the priority check and the tables: what the sound test
+    /// page does (<c>SDOUT</c>).
+    /// </summary>
+    /// <param name="soundNumber">The sound number (<c>SND#</c>), 1 to 63.</param>
+    public static void SendDirect(int soundNumber)
+    {
+        if (!Enabled || AttractMuted)
+        {
+            return;
+        }
+
+        _engine?.SendDirect(soundNumber, 0f);
     }
 
     /// <summary>Moves the sound on by one port tick.</summary>

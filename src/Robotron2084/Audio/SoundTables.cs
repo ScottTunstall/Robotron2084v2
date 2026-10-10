@@ -14,9 +14,9 @@ namespace Robotron2084.Audio;
 /// </list>
 /// Each field is named after the original label's own comment ("ROBOT HIT" is <see cref="RobotHit"/>).
 /// The original's circle and square are the port's spheroid and quark (<c>docs/terminology-ledger.md</c>).
-/// Two tables are not here because nothing in the port can ask for them: <c>HLKSND</c> ("HULK KILL",
-/// R5 <c>$0021</c>), which no routine in the original calls, and <c>CNSND</c> ("COIN", R5 <c>$D0CE</c>),
-/// since the port has no coin slot.
+/// One table is not here because nothing can ask for it: <c>HLKSND</c> ("HULK KILL", R5 <c>$0021</c>), which no
+/// routine in the original calls. <c>CNSND</c> ("COIN") is <see cref="Coin"/>: eight tables, one of which the
+/// original picks at random when a coin goes in.
 /// </remarks>
 public static class SoundTables
 {
@@ -110,9 +110,27 @@ public static class SoundTables
     /// <summary><c>WVSND</c> "WAVE END": the last robot of a wave dies (<c>RRG23.ASM</c>); R5 <c>$26EB</c>, asked for at <c>$2A9C</c>.</summary>
     public static readonly SoundSequence WaveEnd = new(0xE0, 0x26EB, [new(29, 4, 0x0E)]);
 
+    /// <summary>
+    /// <c>CNSND</c> "COIN" (<c>RRS22.ASM</c>): the eight sounds a coin can make. The coin routine (<c>CN1</c>) picks one
+    /// at random, <c>CNSND</c> plus five bytes for each of the low three bits of the random seed
+    /// (<c>LDB SEED</c>, <c>ANDB #7</c>, <c>MUL</c> by 5). All have the top priority; R5 <c>$D0CE</c> onwards.
+    /// </summary>
+    public static readonly IReadOnlyList<SoundSequence> Coin =
+    [
+        new(0xFF, 0xD0CE, [new(1, 32, 0x0C)]),
+        new(0xFF, 0xD0D3, [new(1, 32, 0x20)]),
+        new(0xFF, 0xD0D8, [new(3, 16, 0x24)]),
+        new(0xFF, 0xD0DD, [new(1, 32, 0x27)]),
+        new(0xFF, 0xD0E2, [new(1, 32, 0x2D)]),
+        new(0xFF, 0xD0E7, [new(2, 16, 0x35)]),
+        new(0xFF, 0xD0EC, [new(1, 32, 0x3A)]),
+        new(0xFF, 0xD0F1, [new(1, 32, 0x3E)]),
+    ];
+
     /// <summary>Every table, for the check against the ROM's own bytes.</summary>
     public static IReadOnlyList<SoundSequence> All { get; } =
     [
+        .. Coin,
         BrainKill, BrainShoot, CircleKill, ClearTheSystem, CruiseMissileKill, EnforcerDropOff, EnforcerKill,
         EnforcerShoot, HulkHit, HumanProgFinalConversion, KillAHuman, Laser, PlayerDeath, PostKill, ProgKill,
         Programming, Replay, RobotHit, RobotMove, SaveAHuman, ShellKill, ShellRebound, SparkKill, SquareKill,
