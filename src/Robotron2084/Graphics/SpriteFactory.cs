@@ -29,7 +29,7 @@ public sealed class SpriteFactory
     private const int LaserDiagonalSize = 6;
 
     /// <summary>Runtime pattern size: the 16 arcade pixel entity box × PortPixelsPerArcadePixel (32x32 at 2x).</summary>
-    private static readonly int PatternSize = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeArcadePixels);
+    private static readonly int PatternSize = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EntitySizeArcadePixels);
 
     private readonly GraphicsDevice _device;
 

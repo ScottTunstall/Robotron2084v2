@@ -74,7 +74,7 @@ public sealed class ArcadeText
         {
             if (character == ' ')
             {
-                x += ScreenSize.ToPortPixels(HudLayout.HudSmallFontBlankAdvancePixels);
+                x += ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudSmallFontBlankAdvancePixels);
                 continue;
             }
 
@@ -85,7 +85,7 @@ public sealed class ArcadeText
             }
 
             _blitter.DrawGlyphSlot(spriteBatch, _fontLarge, index, x, y, slot);
-            x += ScreenSize.ToPortPixels(_fontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
+            x += ScreenSize.ToPortPixelsFromArcadePixels(_fontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
         }
 
         return x;
@@ -105,7 +105,7 @@ public sealed class ArcadeText
         _blitter.UsePassThrough();
         spriteBatch.Draw(
             _miniManSprite,
-            new Rectangle(x, y, ScreenSize.ToPortPixels(_miniManSprite.Width), ScreenSize.ToPortPixels(_miniManSprite.Height)),
+            new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_miniManSprite.Width), ScreenSize.ToPortPixelsFromArcadePixels(_miniManSprite.Height)),
             Color.White);
     }
 
@@ -130,7 +130,7 @@ public sealed class ArcadeText
         {
             if (character == ' ')
             {
-                x += ScreenSize.ToPortPixels(HudLayout.HudSmallFontSpaceAdvancePixels);
+                x += ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudSmallFontSpaceAdvancePixels);
                 continue;
             }
 
@@ -138,7 +138,7 @@ public sealed class ArcadeText
             if (index >= 0 && index < _fontSmall.Length)
             {
                 _blitter.DrawGlyphSlot(spriteBatch, _fontSmall, index, x, y, slot);
-                x += ScreenSize.ToPortPixels(_fontSmall[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
+                x += ScreenSize.ToPortPixelsFromArcadePixels(_fontSmall[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
                 continue;
             }
 
@@ -151,7 +151,7 @@ public sealed class ArcadeText
             if (index >= 0 && index < _fontLarge.Length)
             {
                 _blitter.DrawGlyphSlot(spriteBatch, _fontLarge, index, x, y, slot);
-                x += ScreenSize.ToPortPixels(_fontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
+                x += ScreenSize.ToPortPixelsFromArcadePixels(_fontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
             }
         }
 
@@ -179,7 +179,7 @@ public sealed class ArcadeText
             }
 
             _blitter.DrawGlyphSlot(spriteBatch, glyphs, digit.Value, x, y, slot);
-            x += ScreenSize.ToPortPixels(glyphs[digit.Value].Width + HudLayout.HudSmallFontGlyphGapPixels);
+            x += ScreenSize.ToPortPixelsFromArcadePixels(glyphs[digit.Value].Width + HudLayout.HudSmallFontGlyphGapPixels);
         }
 
         return x;

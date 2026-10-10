@@ -53,8 +53,8 @@ public sealed class BlitterDraw
     /// <param name="animationFrame">The animation frame being drawn.</param>
     public static Rectangle DrawnRect(Rectangle bounds, Texture2D animationFrame)
     {
-        int width = ScreenSize.ToPortPixels(animationFrame.Width);
-        int height = ScreenSize.ToPortPixels(animationFrame.Height);
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Width);
+        int height = ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Height);
         return new Rectangle(
             bounds.X + (bounds.Width - width) / 2,
             bounds.Y + (bounds.Height - height) / 2,
@@ -72,8 +72,8 @@ public sealed class BlitterDraw
     /// </summary>
     public void DrawGlyphCycling(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot)
     {
-        int width = ScreenSize.ToPortPixels(glyph.Width);
-        int height = ScreenSize.ToPortPixels(glyph.Height);
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Width);
+        int height = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Height);
         if (ColorCycleEffect is { } effect &&
             effect.Techniques[GlyphCycleTechnique] is { } technique)
         {
@@ -127,8 +127,8 @@ public sealed class BlitterDraw
         SpriteEffects effects = SpriteEffects.None)
     {
         Color tint = Palette?.GetColour(slot) ?? Color.White;
-        int width = ScreenSize.ToPortPixels(glyph.Width);
-        int height = ScreenSize.ToPortPixels(glyph.Height);
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Width);
+        int height = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Height);
         spriteBatch.Draw(glyph, new Rectangle(x, y, width, height), null, tint, 0f, Vector2.Zero, effects, 0f);
     }
 
