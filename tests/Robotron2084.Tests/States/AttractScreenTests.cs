@@ -42,6 +42,7 @@ public sealed class AttractScreenTests
         typeof(EntriesMaximumState),
         typeof(DefineInputsState),
         typeof(SettingsState),
+        typeof(SoundTestState),
     ];
 
     [Fact]
