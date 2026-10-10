@@ -26,6 +26,8 @@ namespace Robotron2084.States;
 /// (<c>LDA #$40</c>, <c>STA PD+4,U</c>), after the board has been silenced and given a vblank to settle
 /// (sound lines high, <c>$2C</c>, high again). The arcade steps through the six sound lines, so it only
 /// reaches the numbers 1, 2, 4, 8, 16 and 32; this page steps through all 63, which is the one difference.
+/// After the 63 comes one entry that is not a single sound: the transporter, the sound of a brain wave's robots
+/// being beamed in (<c>RRT2.ASM</c> <c>TRSPRC</c>), which the main board makes by sending sound <c>$12</c> over and over.
 /// The port's keys: Enter, Space, Right or Down is ADVANCE, Left or Up goes back one, A is AUTO UP.
 /// The fonts have no <c>$</c>, so it is shown as <c>S</c>; apostrophes and <c>#</c> in the source's words are left out.
 /// </remarks>
@@ -53,6 +55,16 @@ public sealed class SoundTestState : IGameState
     private const int InstructionsRow = 294;
     private const int SecondInstructionRow = 312;
     private const int ExitRow = 342;
+
+    /// <summary>
+    /// The page's list: the board's 63 sounds in sound-number order, then the transporter.
+    /// </summary>
+    private static readonly IReadOnlyList<SoundTestEntry> Entries =
+    [
+        .. BoardSounds.All.Select(sound => new SoundTestEntry(
+            "SOUND " + sound.Number.ToString("X2", CultureInfo.InvariantCulture), sound.Name, sound.Description, sound.Number)),
+        new SoundTestEntry("TRANSPORTER", "TRSPRC", "BRAIN WAVE", null),
+    ];
 
     private const string AdvanceLine = "ENTER SPACE RIGHT DOWN - ADVANCE   LEFT UP - BACK";
     private const string AutoLine = "A - AUTO UP";
@@ -82,17 +94,17 @@ public sealed class SoundTestState : IGameState
         StartSound();
     }
 
-    /// <summary>The sound the page is on.</summary>
-    internal BoardSound Current => BoardSounds.All[_index];
+    /// <summary>The entry the page is on.</summary>
+    internal SoundTestEntry Current => Entries[_index];
 
     /// <inheritdoc />
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        BoardSound sound = Current;
-        DrawLarge(spriteBatch, "SOUND " + sound.Number.ToString("X2", CultureInfo.InvariantCulture), NumberRow);
-        DrawLarge(spriteBatch, ToDisplay(sound.Name), NameRow);
-        DrawSmall(spriteBatch, ToDisplay(sound.Description), DescriptionRow);
-        DrawSmall(spriteBatch, $"{_index + 1} OF {BoardSounds.All.Count}   AUTO UP {(_isAutoUp ? "ON" : "OFF")}", PositionRow);
+        SoundTestEntry entry = Current;
+        DrawLarge(spriteBatch, entry.Heading, NumberRow);
+        DrawLarge(spriteBatch, ToDisplay(entry.Name), NameRow);
+        DrawSmall(spriteBatch, ToDisplay(entry.Description), DescriptionRow);
+        DrawSmall(spriteBatch, $"{_index + 1} OF {Entries.Count}   AUTO UP {(_isAutoUp ? "ON" : "OFF")}", PositionRow);
         DrawSmall(spriteBatch, AdvanceLine, InstructionsRow);
         DrawSmall(spriteBatch, AutoLine, SecondInstructionRow);
         DrawSmall(spriteBatch, ExitLine, ExitRow);
@@ -105,7 +117,7 @@ public sealed class SoundTestState : IGameState
 
         if (IsPressed(now, Keys.F10))
         {
-            Sound.SendDirect(SilenceNumber);
+            Silence();
             manager.TransitionTo(new TitleScreenState(_services));
             return;
         }
@@ -132,10 +144,10 @@ public sealed class SoundTestState : IGameState
     }
 
     /// <summary>Moves to a sound, wrapping at either end, and starts it.</summary>
-    /// <param name="index">The place in <see cref="BoardSounds.All"/>.</param>
+    /// <param name="index">The place in <see cref="Entries"/>.</param>
     private void MoveTo(int index)
     {
-        int count = BoardSounds.All.Count;
+        int count = Entries.Count;
         _index = ((index % count) + count) % count;
         StartSound();
     }
@@ -143,7 +155,7 @@ public sealed class SoundTestState : IGameState
     /// <summary>Silences the board; the sound itself is sent <see cref="SettleTicks"/> vblanks later (<c>SNDCYC</c>).</summary>
     private void StartSound()
     {
-        Sound.SendDirect(SilenceNumber);
+        Silence();
         _settleTicksLeft = SettleTicks;
         _repeatTicksLeft = 0;
         _quietTicks = 0;
@@ -157,7 +169,7 @@ public sealed class SoundTestState : IGameState
             _settleTicksLeft--;
             if (_settleTicksLeft == 0)
             {
-                Sound.SendDirect(Current.Number);
+                Play(Current);
                 _repeatTicksLeft = RepeatTicks;
             }
 
@@ -165,7 +177,7 @@ public sealed class SoundTestState : IGameState
         }
 
         _repeatTicksLeft--;
-        _quietTicks = Sound.IsPlaying ? 0 : _quietTicks + 1;
+        _quietTicks = Sound.IsPlaying || Sound.IsTransporterRunning() ? 0 : _quietTicks + 1;
         if (_repeatTicksLeft > 0 || _quietTicks < QuietTicksNeeded)
         {
             return;
@@ -178,6 +190,27 @@ public sealed class SoundTestState : IGameState
         else
         {
             StartSound();
+        }
+    }
+
+    /// <summary>Stops whatever is playing: the transporter's sends, and the sound on the board.</summary>
+    private static void Silence()
+    {
+        Sound.StopTransporter();
+        Sound.SendDirect(SilenceNumber);
+    }
+
+    /// <summary>Starts an entry: sends its sound number, or starts the transporter when it has none.</summary>
+    /// <param name="entry">The entry.</param>
+    private static void Play(SoundTestEntry entry)
+    {
+        if (entry.SoundNumber is { } soundNumber)
+        {
+            Sound.SendDirect(soundNumber);
+        }
+        else
+        {
+            Sound.PlayTransporter();
         }
     }
 
