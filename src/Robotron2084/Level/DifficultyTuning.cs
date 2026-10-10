@@ -2,23 +2,31 @@ using Robotron2084.Persistence;
 
 namespace Robotron2084.Level;
 
-/// <summary>Makes a wave easier or harder to match the difficulty setting, by moving the speeds and delays the wave table gives.</summary>
+/// <summary>
+///     Makes a wave easier or harder to match the difficulty setting, by moving the speeds and delays the wave table
+///     gives.
+/// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the
-/// difficulty setting and adjusts the wave</item>
-/// <item>Disassembly: <c>INITIALISE_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE</c>
-/// (<c>$2B7C</c>)</item>
-/// </list> Each of the twelve values is moved away from the recommended one, by
-/// an amount that grows with how far the setting is from the recommended one, and is then kept
-/// between the minimum and maximum its record in the table at <c>$2C20</c> allows (notes §131). At
-/// the recommended setting nothing moves. The amount is worked out as the arcade works it out, byte
-/// for byte: the value times the distance from the recommended setting times the record's multiplier,
-/// with the multiplier's top bit saying that the value falls as the difficulty rises, as a delay
-/// does. An easy setting is quietly raised to the recommended one for a player who is doing well,
-/// which stops an easy setting carrying a strong player through the late waves (<c>$2B8C</c> to
-/// <c>$2B9E</c>).</item>
-/// </list>
+///     <list type="bullet">
+///         <item>
+///             Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the
+///             difficulty setting and adjusts the wave
+///         </item>
+///         <item>
+///             Disassembly: <c>INITIALISE_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE</c>
+///             (<c>$2B7C</c>)
+///         </item>
+///     </list>
+///     Each of the twelve values is moved away from the recommended one, by
+///     an amount that grows with how far the setting is from the recommended one, and is then kept
+///     between the minimum and maximum its record in the table at <c>$2C20</c> allows (notes §131). At
+///     the recommended setting nothing moves. The amount is worked out as the arcade works it out, byte
+///     for byte: the value times the distance from the recommended setting times the record's multiplier,
+///     with the multiplier's top bit saying that the value falls as the difficulty rises, as a delay
+///     does. An easy setting is quietly raised to the recommended one for a player who is doing well,
+///     which stops an easy setting carrying a strong player through the late waves (<c>$2B8C</c> to
+///     <c>$2B9E</c>).</item>
+///     </list>
 /// </remarks>
 public static class DifficultyTuning
 {
@@ -30,163 +38,168 @@ public static class DifficultyTuning
 
     /// <summary>The wave from which a player is thought to be doing well, so an easy setting is not allowed.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, <c>CMPA #14</c>.</item>
-    /// <item>Disassembly: <c>$2B90</c>, <c>CMPA #$0E</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, <c>CMPA #14</c>.</item>
+    ///         <item>Disassembly: <c>$2B90</c>, <c>CMPA #$0E</c>.</item>
+    ///     </list>
     /// </remarks>
     private const int WellPlayedWave = 14;
 
     /// <summary>The wave from which a player with plenty of men is thought to be doing well.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, <c>CMPA #5</c>.</item>
-    /// <item>Disassembly: <c>$2B94</c>, <c>CMPA #$05</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, <c>CMPA #5</c>.</item>
+    ///         <item>Disassembly: <c>$2B94</c>, <c>CMPA #$05</c>.</item>
+    ///     </list>
     /// </remarks>
     private const int EarlyWave = 5;
 
     /// <summary>How many men a player on an early wave must have to be thought to be doing well.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, <c>CMPA #3</c>.</item>
-    /// <item>Disassembly: <c>$2B9A</c>, <c>CMPA #$03</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, <c>CMPA #3</c>.</item>
+    ///         <item>Disassembly: <c>$2B9A</c>, <c>CMPA #$03</c>.</item>
+    ///     </list>
     /// </remarks>
     private const int ComfortableLives = 3;
 
     /// <summary>The settings for the longest a grunt waits between moves, in beats. A smaller number is a faster grunt.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>ROBSPD</c>.</item>
-    /// <item>Disassembly: the record at <c>$2C20</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>ROBSPD</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2C20</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header GruntMoveDelayHeader = new(0x8E, 10, 20);
 
     /// <summary>The settings for the fewest beats that the grunts' speed-ups may bring a grunt's longest wait down to.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>RMXSPD</c>.</item>
-    /// <item>Disassembly: the record at <c>$2C4B</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RMXSPD</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2C4B</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header GruntSpeedFloorHeader = new(0x8E, 3, 10);
 
     /// <summary>The settings for how much a spheroid or quark may drop. A bigger number is more.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>ENFNUM</c>.</item>
-    /// <item>Disassembly: the record at <c>$2C76</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>ENFNUM</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2C76</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header MaxDropsX2Header = new(0x0E, 8, 12);
 
     /// <summary>The settings for how long an enforcer waits between sparks.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>ENSTIM</c>.</item>
-    /// <item>Disassembly: the record at <c>$2CA1</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>ENSTIM</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2CA1</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header EnforcerFireDelayHeader = new(0x8E, 13, 40);
 
     /// <summary>The settings for how long a spheroid waits before dropping an enforcer.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>CDPTIM</c>.</item>
-    /// <item>Disassembly: the record at <c>$2CCC</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>CDPTIM</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2CCC</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header SpheroidDropDelayHeader = new(0x8E, 12, 40);
 
     /// <summary>The settings for how long a hulk waits between beats. A smaller number is a faster hulk.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>HLKSPD</c>.</item>
-    /// <item>Disassembly: the record at <c>$2CF7</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>HLKSPD</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2CF7</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header HulkBeatIntervalHeader = new(0x8E, 5, 9);
 
     /// <summary>The settings for how long a brain waits between cruise missiles.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>BSHTIM</c>.</item>
-    /// <item>Disassembly: the record at <c>$2D22</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>BSHTIM</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2D22</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header BrainFireDelayHeader = new(0x8E, 25, 80);
 
     /// <summary>The settings for how long a brain waits after each beat. A smaller number is a faster brain.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>BRNSPD</c>.</item>
-    /// <item>Disassembly: the record at <c>$2D4D</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>BRNSPD</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2D4D</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header BrainBeatWaitHeader = new(0x8E, 6, 10);
 
     /// <summary>The settings for how long a tank waits between shells.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>TNKSHT</c>.</item>
-    /// <item>Disassembly: the record at <c>$2D78</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>TNKSHT</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2D78</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header TankFireDelayHeader = new(0x8E, 20, 40);
 
     /// <summary>The settings for how fast a tank shell flies and how well it is aimed. A bigger number is harder.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>SHLSPD</c>.</item>
-    /// <item>Disassembly: the record at <c>$2DA3</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>SHLSPD</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2DA3</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header ShellSpeedHeader = new(0x0E, 160, 255);
 
     /// <summary>The settings for how long a quark waits before dropping a tank.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>TDPTIM</c>.</item>
-    /// <item>Disassembly: the record at <c>$2DCE</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>TDPTIM</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2DCE</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header QuarkDropDelayHeader = new(0x8E, 12, 48);
 
     /// <summary>The settings for how fast a quark may drift. A bigger number is faster.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>SQSPD</c>.</item>
-    /// <item>Disassembly: the record at <c>$2DF9</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>SQSPD</c>.</item>
+    ///         <item>Disassembly: the record at <c>$2DF9</c>.</item>
+    ///     </list>
     /// </remarks>
     private static readonly Header QuarkSpeedCapHeader = new(0x0E, 40, 68);
 
-    /// <summary>Works out what a wave is like at the chosen difficulty. At the recommended setting the wave is returned as it was.</summary>
-    /// <param name="parameters">The wave as the table gives it, for the recommended setting. Apply <see cref="BozoMode"/> first, as the arcade does.</param>
+    /// <summary>
+    ///     Works out what a wave is like at the chosen difficulty. At the recommended setting the wave is returned as it
+    ///     was.
+    /// </summary>
+    /// <param name="parameters">
+    ///     The wave as the table gives it, for the recommended setting. Apply <see cref="BozoMode" />
+    ///     first, as the arcade does.
+    /// </param>
     /// <param name="difficulty">The difficulty setting, from the lowest to the highest the game allows.</param>
     /// <param name="lives">The men the player has, counting the one in play.</param>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, with the difficulty in
-    /// <c>difficulty_of_play</c> (<c>$CC14</c>) and the men in <c>PLAS</c>.</item>
-    /// <item>Disassembly: <c>$2B7C</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRG23.ASM</c> <c>GETWV</c>, with the difficulty in
+    ///             <c>difficulty_of_play</c> (<c>$CC14</c>) and the men in <c>PLAS</c>.
+    ///         </item>
+    ///         <item>Disassembly: <c>$2B7C</c>.</item>
+    ///     </list>
     /// </remarks>
     public static LevelParameters Apply(LevelParameters parameters, int difficulty, int lives)
     {
-        int effectiveDifficulty = GetEffectiveDifficulty(parameters.LevelNumber, difficulty, lives);
-        if (effectiveDifficulty == GameSettings.RecommendedDifficulty)
-        {
-            return parameters;
-        }
+        var effectiveDifficulty = GetEffectiveDifficulty(parameters.LevelNumber, difficulty, lives);
+        if (effectiveDifficulty == GameSettings.RecommendedDifficulty) return parameters;
 
-        int delta = effectiveDifficulty - GameSettings.RecommendedDifficulty;
-        int magnitude = Math.Abs(delta);
+        var delta = effectiveDifficulty - GameSettings.RecommendedDifficulty;
+        var magnitude = Math.Abs(delta);
 
         // The two fields worked out from the maxDropsX2 value must follow it, as LevelParameters.CreateFromWave works them out.
-        int maxDropsX2 = Adjust(parameters.MaxDropsX2, MaxDropsX2Header, delta, magnitude);
+        var maxDropsX2 = Adjust(parameters.MaxDropsX2, MaxDropsX2Header, delta, magnitude);
 
         return parameters with
         {
@@ -197,48 +210,40 @@ public static class DifficultyTuning
             MaxTanksPerQuark = (maxDropsX2 + 1) / 2,
             EnforcerFireDelay = Adjust(parameters.EnforcerFireDelay, EnforcerFireDelayHeader, delta, magnitude),
             SpheroidDropDelay = Adjust(parameters.SpheroidDropDelay, SpheroidDropDelayHeader, delta, magnitude),
-            HulkBeatIntervalRomFrames = Adjust(parameters.HulkBeatIntervalRomFrames, HulkBeatIntervalHeader, delta, magnitude),
+            HulkBeatIntervalRomFrames =
+            Adjust(parameters.HulkBeatIntervalRomFrames, HulkBeatIntervalHeader, delta, magnitude),
             BrainFireDelay = Adjust(parameters.BrainFireDelay, BrainFireDelayHeader, delta, magnitude),
             BrainBeatWaitRomFrames = Adjust(parameters.BrainBeatWaitRomFrames, BrainBeatWaitHeader, delta, magnitude),
             TankFireDelay = Adjust(parameters.TankFireDelay, TankFireDelayHeader, delta, magnitude),
             ShellSpeed = Adjust(parameters.ShellSpeed, ShellSpeedHeader, delta, magnitude),
             QuarkDropDelay = Adjust(parameters.QuarkDropDelay, QuarkDropDelayHeader, delta, magnitude),
-            QuarkSpeedCap = Adjust(parameters.QuarkSpeedCap, QuarkSpeedCapHeader, delta, magnitude),
+            QuarkSpeedCap = Adjust(parameters.QuarkSpeedCap, QuarkSpeedCapHeader, delta, magnitude)
         };
     }
 
-    /// <summary>Works out the difficulty a wave really uses. It is the setting, except that an easy setting becomes the recommended one for a player who is doing well.</summary>
+    /// <summary>
+    ///     Works out the difficulty a wave really uses. It is the setting, except that an easy setting becomes the
+    ///     recommended one for a player who is doing well.
+    /// </summary>
     /// <param name="wave">The wave number.</param>
     /// <param name="difficulty">The difficulty setting.</param>
     /// <param name="lives">The men the player has, counting the one in play.</param>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>.</item>
-    /// <item>Disassembly: <c>$2B8C</c> to <c>$2B9E</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>.</item>
+    ///         <item>Disassembly: <c>$2B8C</c> to <c>$2B9E</c>.</item>
+    ///     </list>
     /// </remarks>
     private static int GetEffectiveDifficulty(int wave, int difficulty, int lives)
     {
-        int effective = Math.Clamp(difficulty, GameSettings.MinimumDifficulty, GameSettings.MaximumDifficulty);
-        if (effective >= GameSettings.RecommendedDifficulty)
-        {
-            return effective;
-        }
+        var effective = Math.Clamp(difficulty, GameSettings.MinimumDifficulty, GameSettings.MaximumDifficulty);
+        if (effective >= GameSettings.RecommendedDifficulty) return effective;
 
         if (wave >= WellPlayedWave || (wave >= EarlyWave && lives >= ComfortableLives))
-        {
             return GameSettings.RecommendedDifficulty;
-        }
 
         return effective;
     }
-
-    /// <summary>The start of one record in the table of settings.</summary>
-    /// <remarks>Disassembly: the records at <c>$2C20</c>.</remarks>
-    /// <param name="Multiplier">The byte that says how big a step to take, and whether the value falls as the difficulty rises.</param>
-    /// <param name="Min">The smallest value the setting may have.</param>
-    /// <param name="Max">The biggest value the setting may have.</param>
-    private readonly record struct Header(int Multiplier, int Min, int Max);
 
     /// <summary>Moves one value for the difficulty, and keeps it between its minimum and maximum.</summary>
     /// <param name="value">The value the table gives.</param>
@@ -246,22 +251,32 @@ public static class DifficultyTuning
     /// <param name="delta">How far the difficulty is from the recommended one, below or above it.</param>
     /// <param name="magnitude">How far the difficulty is from the recommended one, without the sign.</param>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>.</item>
-    /// <item>Disassembly: <c>$2BC4</c>.</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>.</item>
+    ///         <item>Disassembly: <c>$2BC4</c>.</item>
+    ///     </list>
     /// </remarks>
     private static int Adjust(int value, Header header, int delta, int magnitude)
     {
-        int fraction = (magnitude * (header.Multiplier & MultiplierMask)) & 0xFF;
-        int product = value * fraction;
+        var fraction = (magnitude * (header.Multiplier & MultiplierMask)) & 0xFF;
+        var product = value * fraction;
 
         // The ROM takes the high byte of the product and rounds it with ADCA #0, which carries
         // bit 7 of the product's low byte.
-        int step = (product >> 8) + ((product >> 7) & 1);
+        var step = (product >> 8) + ((product >> 7) & 1);
 
-        bool isSubtracted = (((delta & 0xFF) ^ header.Multiplier) & ReversedFlag) != 0;
-        int adjusted = isSubtracted ? value - step : value + step;
+        var isSubtracted = (((delta & 0xFF) ^ header.Multiplier) & ReversedFlag) != 0;
+        var adjusted = isSubtracted ? value - step : value + step;
         return Math.Clamp(adjusted, header.Min, header.Max);
     }
+
+    /// <summary>The start of one record in the table of settings.</summary>
+    /// <remarks>Disassembly: the records at <c>$2C20</c>.</remarks>
+    /// <param name="Multiplier">
+    ///     The byte that says how big a step to take, and whether the value falls as the difficulty
+    ///     rises.
+    /// </param>
+    /// <param name="Min">The smallest value the setting may have.</param>
+    /// <param name="Max">The biggest value the setting may have.</param>
+    private readonly record struct Header(int Multiplier, int Min, int Max);
 }
