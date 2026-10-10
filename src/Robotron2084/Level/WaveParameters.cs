@@ -17,9 +17,9 @@ namespace Robotron2084.Level;
 /// <param name="GruntSpeedFloor">The fewest beats that the grunts' speed-ups may bring a grunt's longest wait down to.</param>
 /// <param name="EnforcerFireDelay">How long an enforcer waits between sparks. A smaller number is faster fire.</param>
 /// <param name="SpheroidDropDelay">How long a spheroid waits before dropping an enforcer. A smaller number is a quicker drop.</param>
-/// <param name="HulkBeatIntervalRomFrames">How many ROM frames pass between a hulk's beats. A smaller number is a faster hulk.</param>
+/// <param name="HulkBeatIntervalRomFrames">How many fiftieths of a second pass between a hulk's beats. A smaller number is a faster hulk.</param>
 /// <param name="BrainFireDelay">The longest a brain waits between cruise missiles, in beats.</param>
-/// <param name="BrainBeatWaitRomFrames">How many ROM frames a brain waits after each beat. A smaller number is a faster brain.</param>
+/// <param name="BrainBeatWaitRomFrames">How many fiftieths of a second a brain waits after each beat. A smaller number is a faster brain.</param>
 /// <param name="TankFireDelay">How many beats a tank waits between shells. A smaller number is faster fire.</param>
 /// <param name="ShellSpeed">How fast tank shells fly. A bigger number is a faster shell.</param>
 /// <param name="QuarkDropDelay">How long a quark waits before dropping a tank. A smaller number is a quicker drop.</param>

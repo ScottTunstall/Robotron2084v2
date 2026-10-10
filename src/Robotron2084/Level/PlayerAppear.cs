@@ -74,7 +74,7 @@ public sealed class PlayerAppear
     /// <param name="player">The player.</param>
     /// <param name="entities">Everything on the field.</param>
     /// <param name="clip">The edges the strips are cut off at.</param>
-    /// <param name="startClockUnits">How far into a ROM frame the effects start, in clock units.</param>
+    /// <param name="startClockUnits">How far into a fiftieth of a second the effects start, in clock units.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>PAPPR1</c> (<c>JSR APST</c>, "VERTS") and <c>PAPPR2</c>
@@ -103,7 +103,7 @@ public sealed class PlayerAppear
     /// <param name="player">The player.</param>
     /// <param name="entities">Everything on the field.</param>
     /// <param name="clip">The edges the strips are cut off at.</param>
-    /// <param name="startClockUnits">How far into a ROM frame the effects start, in clock units.</param>
+    /// <param name="startClockUnits">How far into a fiftieth of a second the effects start, in clock units.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>PDAPPR</c>.</item>

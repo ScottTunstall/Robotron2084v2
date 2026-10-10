@@ -21,6 +21,6 @@ internal sealed record LaserWallFlare(
     bool Dithered,
     int RemainingClockUnits = LaserWallFlare.LifeClockUnits)
 {
-    /// <summary>How long a new flash lasts, in clock units: two ROM frames. It is the starting value of <see cref="RemainingClockUnits"/>, which then counts down to nothing.</summary>
+    /// <summary>How long a new flash lasts, in clock units: two fiftieths of a second. It is the starting value of <see cref="RemainingClockUnits"/>, which then counts down to nothing.</summary>
     public const int LifeClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
 }

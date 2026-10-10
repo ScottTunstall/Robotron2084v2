@@ -10,12 +10,12 @@ namespace Robotron2084.Level;
 /// <c>GEXEC4</c>); the table value is <c>RMXSPD</c></item>
 /// <item>Disassembly: <c>$2A85</c> to <c>$2B08</c>, working on <c>$BE5D</c></item>
 /// </list> A grunt has a
-/// beat every few ROM frames, and moves only after a random number of beats, so the fewer beats it
+/// beat every few fiftieths of a second, and moves only after a random number of beats, so the fewer beats it
 /// waits, the faster it is. Each time a grunt dies, the grunts that are left have their waits made
 /// shorter. The floor is the fewest beats they may be brought down to, so it is the grunts' speed
 /// limit. Lowering the floor eases that limit and lets them get faster. The wave starts at the floor
 /// the wave table gives it (notes §31, §134). Every so often the game makes a check on the floor, and
-/// ROM frames are used in this class only to time those checks. The count of ROM frames starts when
+/// fiftieths of a second are used in this class only to time those checks. The count of fiftieths of a second starts when
 /// the game goes live (the arcade's <c>CLR STATUS</c> at <c>PLS2</c>, when the player may move and
 /// fire and the robots may act), so the playfield does not call <see cref="Update"/> before then. At
 /// a check the game lowers the floor, unless many grunts are still alive. The waits and the floor
@@ -24,7 +24,7 @@ namespace Robotron2084.Level;
 /// </remarks>
 public sealed class GruntSpeedProgression
 {
-    /// <summary>How many ROM frames the game sleeps between one pass of its loop and the next. A pass is the unit the game counts its checks in: <see cref="FirstCheckPasses"/> and <see cref="CheckIntervalPasses"/> are both counted in passes.</summary>
+    /// <summary>How many fiftieths of a second the game sleeps between one pass of its loop and the next. A pass is the unit the game counts its checks in: <see cref="FirstCheckPasses"/> and <see cref="CheckIntervalPasses"/> are both counted in passes.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>NAP 15,GEXEC0</c>.</item>
@@ -52,7 +52,7 @@ public sealed class GruntSpeedProgression
     /// </remarks>
     private const int CheckIntervalPasses = 15;
 
-    /// <summary>How many ROM frames the game sleeps after it goes live before it switches the robots on again. It is the first part of <see cref="ExecutiveStartRomFrames"/>.</summary>
+    /// <summary>How many fiftieths of a second the game sleeps after it goes live before it switches the robots on again. It is the first part of <see cref="ExecutiveStartRomFrames"/>.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>NAP 12,PLS3</c>, straight after <c>CLR STATUS</c> at
@@ -62,7 +62,7 @@ public sealed class GruntSpeedProgression
     /// </remarks>
     private const int Pls3NapRomFrames = 12;
 
-    /// <summary>How many ROM frames the game then sleeps before it starts its loop of passes. It is the second part of <see cref="ExecutiveStartRomFrames"/>.</summary>
+    /// <summary>How many fiftieths of a second the game then sleeps before it starts its loop of passes. It is the second part of <see cref="ExecutiveStartRomFrames"/>.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>NAP 10,PLS4</c>; <c>PLS4</c> runs on into <c>JMP
@@ -72,7 +72,7 @@ public sealed class GruntSpeedProgression
     /// </remarks>
     private const int Pls4NapRomFrames = 10;
 
-    /// <summary>How many ROM frames go by, from when the game goes live, before the game starts its loop of passes. When <see cref="_checkClockUnits"/> has counted this many, the loop has started, and a score made before then is forgotten (<see cref="_hasPlayerScoredSinceLastCheck"/>).</summary>
+    /// <summary>How many fiftieths of a second go by, from when the game goes live, before the game starts its loop of passes. When <see cref="_checkClockUnits"/> has counted this many, the loop has started, and a score made before then is forgotten (<see cref="_hasPlayerScoredSinceLastCheck"/>).</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>PLS2</c> to <c>HIDEND</c>; <c>GEXEC</c> opens with <c>CLR
@@ -82,7 +82,7 @@ public sealed class GruntSpeedProgression
     /// </remarks>
     private const int ExecutiveStartRomFrames = Pls3NapRomFrames + Pls4NapRomFrames;
 
-    /// <summary>How many ROM frames go by, from when the game goes live, before its first check on whether to lower <see cref="Floor"/>. It is the starting value of <see cref="_checkWaitRomFrames"/>.</summary>
+    /// <summary>How many fiftieths of a second go by, from when the game goes live, before its first check on whether to lower <see cref="Floor"/>. It is the starting value of <see cref="_checkWaitRomFrames"/>.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>PLS2</c> to <c>GEXEC1</c>: the two sleeps before the loop
@@ -138,7 +138,7 @@ public sealed class GruntSpeedProgression
     /// </remarks>
     private const int SmallFloorStep = 1;
 
-    /// <summary>How many ROM frames the game waits between one check on whether to lower <see cref="Floor"/> and the next. It is the value <see cref="_checkWaitRomFrames"/> has after the first check.</summary>
+    /// <summary>How many fiftieths of a second the game waits between one check on whether to lower <see cref="Floor"/> and the next. It is the value <see cref="_checkWaitRomFrames"/> has after the first check.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which counts down fifteen passes of fifteen
@@ -154,7 +154,7 @@ public sealed class GruntSpeedProgression
     /// <summary>Counts up to the next check, in clock units. It only counts while the game is live.</summary>
     private int _checkClockUnits;
 
-    /// <summary>How many ROM frames <see cref="_checkClockUnits"/> counts up to before the next check.</summary>
+    /// <summary>How many fiftieths of a second <see cref="_checkClockUnits"/> counts up to before the next check.</summary>
     private int _checkWaitRomFrames = FirstCheckRomFrames;
 
     /// <summary>True once the game has started its loop of passes, which is <see cref="ExecutiveStartRomFrames"/> after the game goes live.</summary>

@@ -14,11 +14,16 @@ public sealed class ElectrodeWaveSpawner : IWaveSpawner
         PlayField field = context.Field;
         FieldEntities entities = context.Entities;
         SpawnPlacement placement = context.Placement;
+        int wave = field.Parameters.LevelNumber;
+
+        // A spot is found for a square the size of most things. The "2084" electrode is wider than that, so it is moved left if it would stick into the right wall.
+        int furthestRight = field.GetPlayfieldBounds().Right - Electrode.GetCollisionSize(wave).Width;
         for (int i = 0; i < field.Parameters.ElectrodeCount; i++)
         {
             IntVector2 position = placement.FindSpawnPointAwayFrom(
                 context.PlayerStart, SpawnTuning.ElectrodeMinDistanceFromPlayer, field.IsClearOfElectrodes);
-            entities.Add(new Electrode(field.Sprites, position, field.Parameters.LevelNumber));
+            position = position with { X = Math.Min(position.X, furthestRight) };
+            entities.Add(new Electrode(field.Sprites, position, wave));
         }
     }
 }

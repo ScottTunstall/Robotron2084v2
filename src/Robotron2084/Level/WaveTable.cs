@@ -17,7 +17,7 @@ namespace Robotron2084.Level;
 /// </remarks>
 public static class WaveTable
 {
-    /// <summary>How many ROM frames a brain waits after each beat, for each wave. A smaller number is a faster brain.</summary>
+    /// <summary>How many fiftieths of a second a brain waits after each beat, for each wave. A smaller number is a faster brain.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>The interval between beats is this plus the frame the beat itself takes. Original source:
@@ -114,7 +114,7 @@ public static class WaveTable
         0, 5, 6, 7, 0, 7, 12, 8, 4, 0, 8, 13, 8, 20, 2, 3, 14, 8, 3, 2, 8, 15, 8, 13, 1, 8, 16, 8, 4, 1, 8, 16, 8, 25, 2, 8, 16, 8, 6, 2
     ];
 
-    /// <summary>How many ROM frames pass between a hulk's beats, for each wave. A smaller number is a faster hulk.</summary>
+    /// <summary>How many fiftieths of a second pass between a hulk's beats, for each wave. A smaller number is a faster hulk.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRH11.ASM</c> <c>HLKSPD</c>.</item>

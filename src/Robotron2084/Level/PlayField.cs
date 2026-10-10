@@ -589,12 +589,12 @@ public sealed class PlayField : ICollisionScene
         }
     }
 
-    /// <summary>Gets how many ROM frames after the wave is set up the game goes live (test hook).</summary>
-    /// <returns>The ROM frames.</returns>
+    /// <summary>Gets how many fiftieths of a second after the wave is set up the game goes live (test hook).</summary>
+    /// <returns>The fiftieths of a second.</returns>
     internal int GetLiveRomFrames() => _waveStart.LiveRomFrames;
 
-    /// <summary>Gets how many ROM frames after the wave is set up the player appears (test hook).</summary>
-    /// <returns>The ROM frames.</returns>
+    /// <summary>Gets how many fiftieths of a second after the wave is set up the player appears (test hook).</summary>
+    /// <returns>The fiftieths of a second.</returns>
     internal int GetPlayerAppearRomFrames() => _waveStart.PlayerAppearRomFrames;
 
     /// <summary>Says whether the player has started to appear, so that the strips of its appear effect are on the screen (test hook).</summary>
@@ -618,8 +618,8 @@ public sealed class PlayField : ICollisionScene
     }
 
     /// <summary>Works out how long a robot waits before its first move, counted from the start of the tick on which the game goes live.</summary>
-    /// <param name="pollRomFrames">How many ROM frames the robot sleeps between one look at whether the game is live and the next.</param>
-    /// <param name="napRomFrames">How many ROM frames the robot sleeps after the look that finds the game live, before its first move.</param>
+    /// <param name="pollRomFrames">How many fiftieths of a second the robot sleeps between one look at whether the game is live and the next.</param>
+    /// <param name="napRomFrames">How many fiftieths of a second the robot sleeps after the look that finds the game live, before its first move.</param>
     /// <returns>The clock units from the start of this tick to the robot's first move.</returns>
     internal int GetClockUnitsToFirstBeat(int pollRomFrames, int napRomFrames) => _waveStart.GetClockUnitsToFirstBeat(pollRomFrames, napRomFrames);
 

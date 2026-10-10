@@ -10,7 +10,7 @@ namespace Robotron2084.Level;
 /// <remarks>
 /// <list type="bullet">
 /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which makes one pass
-/// each ROM frame (<c>NAP 1,APL</c>); each pass starts the appear effect of the next robot on the
+/// each fiftieth of a second (<c>NAP 1,APL</c>); each pass starts the appear effect of the next robot on the
 /// robot list, and every fourth one fans in by columns (<c>HAPST</c>)</item>
 /// <item>Disassembly: <c>$28FE</c> to <c>$2962</c></item>
 /// </list> The robots are switched off before the
@@ -107,7 +107,7 @@ public sealed class WaveMaterialisation
     /// <summary>The transporter that beams the robots in, or null when the wave is not a brain wave.</summary>
     private readonly RobotTransporter? _transporter;
 
-    /// <summary>Counts up to the next ROM frame, in clock units, because the loop makes one pass on each ROM frame. It starts with a whole ROM frame in it, so that the first pass is made on the first tick, as the arcade makes its first pass at once.</summary>
+    /// <summary>Counts up to the next fiftieth of a second, in clock units, because the loop makes one pass on each fiftieth of a second. It starts with a whole fiftieth of a second in it, so that the first pass is made on the first tick, as the arcade makes its first pass at once.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>NAP 1,APL</c>.</item>
@@ -140,7 +140,7 @@ public sealed class WaveMaterialisation
     /// <summary>The number of robots that have not yet been given their turn to appear.</summary>
     public int GetPendingCount() => _appearNumbers.Values.Count(appearNumber => appearNumber > _passes) + _transportQueue.Count;
 
-    /// <summary>Moves the sequence on by one tick. On each ROM frame the loop makes a pass: it starts the appear effect of the robot whose turn it is, and it draws whole the robot whose appear effect has had time to finish.</summary>
+    /// <summary>Moves the sequence on by one tick. On each fiftieth of a second the loop makes a pass: it starts the appear effect of the robot whose turn it is, and it draws whole the robot whose appear effect has had time to finish.</summary>
     /// <param name="entities">Everything on the field. The appear effects join its strip effects, and it says whether a strip routine has a record free.</param>
     /// <param name="playfieldBounds">The inside of the wall, in port pixels.</param>
     /// <remarks>
@@ -329,7 +329,7 @@ public sealed class WaveMaterialisation
 
         Rectangle robotBounds = robot.GetBounds();
 
-        // The arcade's strip routines take their first step on the ROM frame after this pass, so the effect starts with what is left of this one.
+        // The arcade's strip routines take their first step on the fiftieth of a second after this pass, so the effect starts with what is left of this one.
         int startClockUnits = _appearClockUnits - ArcadeClock.UnitsPerPortTick;
         entities.Add(StripEffect.CreateAppear(
             frameSource,

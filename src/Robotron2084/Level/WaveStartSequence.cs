@@ -11,7 +11,7 @@ namespace Robotron2084.Level;
 /// <c>$2962</c></item>
 /// </list> The arcade sets the wave up with everything switched off (<c>LDA #$19
 /// / STA STATUS</c>), brings the robots in, brings the player in (<c>PLS1</c>), and then switches
-/// everything on (<c>CLR STATUS</c> at <c>PLS2</c>). The times here are counted in ROM frames from
+/// everything on (<c>CLR STATUS</c> at <c>PLS2</c>). The times here are counted in fiftieths of a second from
 /// when the wave is set up, on the clock described on <see cref="ArcadeClock"/> (notes §141, §142).</item>
 /// </list>
 /// </remarks>
@@ -26,7 +26,7 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int AppearExtraPasses = 32;
 
-    /// <summary>How many ROM frames the arcade sleeps between one pass of its appear loop and the next.</summary>
+    /// <summary>How many fiftieths of a second the arcade sleeps between one pass of its appear loop and the next.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>NAP 1,APL</c>.</item>
@@ -35,7 +35,7 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int AppearPassRomFrames = 1;
 
-    /// <summary>How many ROM frames the arcade sleeps after its appear loop finishes, to let the last appear effects finish.</summary>
+    /// <summary>How many fiftieths of a second the arcade sleeps after its appear loop finishes, to let the last appear effects finish.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>NAP 2,APX2</c> ("LET EVERYONE FINISH").</item>
@@ -44,7 +44,7 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int AppearFinishNapRomFrames = 2;
 
-    /// <summary>How many ROM frames the arcade then sleeps, with the robots switched on, before the player appears.</summary>
+    /// <summary>How many fiftieths of a second the arcade then sleeps, with the robots switched on, before the player appears.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>NAP 10,PLS1</c>.</item>
@@ -53,7 +53,7 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int RobotsOnNapRomFrames = 10;
 
-    /// <summary>How many ROM frames after the wave is set up the player appears on a brain wave, where the robots are beamed in and the appear loop is not run.</summary>
+    /// <summary>How many fiftieths of a second after the wave is set up the player appears on a brain wave, where the robots are beamed in and the appear loop is not run.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>NAP 150,PLS1</c>.</item>
@@ -62,7 +62,7 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int BrainWavePlayerAppearRomFrames = 150;
 
-    /// <summary>How many ROM frames the arcade sleeps after the player starts to appear, before the second part of the player's appear, which is the strips that lean.</summary>
+    /// <summary>How many fiftieths of a second the arcade sleeps after the player starts to appear, before the second part of the player's appear, which is the strips that lean.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>NAP 06,PLS1A</c>.</item>
@@ -71,7 +71,7 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int PlayerAppearNapRomFrames = 6;
 
-    /// <summary>How many ROM frames the arcade then sleeps before it switches the game on.</summary>
+    /// <summary>How many fiftieths of a second the arcade then sleeps before it switches the game on.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>NAP 4,PLS2</c>.</item>
@@ -80,10 +80,10 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int DiagonalPlayerAppearNapRomFrames = 4;
 
-    /// <summary>How many ROM frames after the wave is set up the game goes live.</summary>
+    /// <summary>How many fiftieths of a second after the wave is set up the game goes live.</summary>
     private readonly int _liveRomFrames;
 
-    /// <summary>How many ROM frames after the wave is set up the player appears.</summary>
+    /// <summary>How many fiftieths of a second after the wave is set up the player appears.</summary>
     private readonly int _playerAppearRomFrames;
 
     /// <summary>Counts the time since the wave was set up, in clock units. It stops counting once the game is live.</summary>
@@ -134,7 +134,7 @@ public sealed class WaveStartSequence
     /// </remarks>
     public bool HasPlayerAppeared() => _clockUnits >= ArcadeClock.ToClockUnits(_playerAppearRomFrames);
 
-    /// <summary>Gets how long ago the player started to appear, in clock units, so that the appear effect takes its first step on the right ROM frame.</summary>
+    /// <summary>Gets how long ago the player started to appear, in clock units, so that the appear effect takes its first step on the right fiftieth of a second.</summary>
     /// <returns>The clock units since then. It is less than nothing before the player has started to appear.</returns>
     public int GetClockUnitsSincePlayerAppeared() => _clockUnits - ArcadeClock.ToClockUnits(_playerAppearRomFrames);
 
@@ -159,8 +159,8 @@ public sealed class WaveStartSequence
     /// It looks at intervals, and its looks are counted from when the wave was set up, so the first look that finds the game live can be some frames after it went live.
     /// Some robots then sleep once more before they move.
     /// </summary>
-    /// <param name="pollRomFrames">How many ROM frames the robot sleeps between one look and the next.</param>
-    /// <param name="napRomFrames">How many ROM frames the robot sleeps after the look that finds the game live, before its first move.</param>
+    /// <param name="pollRomFrames">How many fiftieths of a second the robot sleeps between one look and the next.</param>
+    /// <param name="napRomFrames">How many fiftieths of a second the robot sleeps after the look that finds the game live, before its first move.</param>
     /// <returns>The clock units from the start of this tick to the robot's first move. Call it only on the tick that <see cref="HasJustGoneLive"/> is true.</returns>
     /// <remarks>
     /// <list type="bullet">
@@ -189,18 +189,18 @@ public sealed class WaveStartSequence
     /// </remarks>
     public bool IsLive() => _clockUnits >= ArcadeClock.ToClockUnits(_liveRomFrames);
 
-    /// <summary>How many ROM frames after the wave is set up the game goes live (test hook).</summary>
+    /// <summary>How many fiftieths of a second after the wave is set up the game goes live (test hook).</summary>
     internal int LiveRomFrames => _liveRomFrames;
 
-    /// <summary>How many ROM frames after the wave is set up the player appears (test hook).</summary>
+    /// <summary>How many fiftieths of a second after the wave is set up the player appears (test hook).</summary>
     internal int PlayerAppearRomFrames => _playerAppearRomFrames;
 
     /// <summary>Makes the game live at once, for a test of something that happens in play and not at the start of a wave (test hook).</summary>
     internal void SkipToLive() => _clockUnits = ArcadeClock.ToClockUnits(_liveRomFrames);
 
-    /// <summary>Works out how many ROM frames the arcade's appear loop runs for. Its first pass is made at once, so it sleeps one time fewer than it makes passes.</summary>
+    /// <summary>Works out how many fiftieths of a second the arcade's appear loop runs for. Its first pass is made at once, so it sleeps one time fewer than it makes passes.</summary>
     /// <param name="robotListCount">How many robots are on the arcade's robot list.</param>
-    /// <returns>The ROM frames from the first pass to the last.</returns>
+    /// <returns>The fiftieths of a second from the first pass to the last.</returns>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>.</item>

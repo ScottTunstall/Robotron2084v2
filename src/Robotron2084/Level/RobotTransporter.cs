@@ -13,7 +13,7 @@ namespace Robotron2084.Level;
 /// between robots with the same animation frame, up to sixteen each), <c>TRNLP</c> and <c>ROBUP</c>;
 /// <c>RRG23.ASM</c> starts it with <c>MAKP TRANST</c> when <c>BRNCNT</c> is not zero</item>
 /// <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>)</item>
-/// </list> Every ROM frame
+/// </list> Every fiftieth of a second
 /// it takes one step of each image, and it draws each image where its robots stand. The sound is the
 /// transporter's own (<see cref="Audio.Sound.PlayTransporter"/>). Other waves use the strip appear
 /// instead (<see cref="WaveMaterialisation"/>). "Transporter" is the arcade's own name for beaming
@@ -40,7 +40,7 @@ public sealed class RobotTransporter
     /// <summary>The images being built up. Robots with the same animation frame share one.</summary>
     private readonly List<TransportImage> _images = [];
 
-    /// <summary>Builds up, a tick at a time, until it is time for the next ROM frame. It starts with a whole ROM frame in it, so that the first step is taken on the first tick, as the arcade takes its first step on the frame the wave is set up.</summary>
+    /// <summary>Builds up, a tick at a time, until it is time for the next fiftieth of a second. It starts with a whole fiftieth of a second in it, so that the first step is taken on the first tick, as the arcade takes its first step on the frame the wave is set up.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRT2.ASM</c> <c>TRNLP</c>, which <c>TRNSTV</c> runs on into before its
@@ -108,7 +108,7 @@ public sealed class RobotTransporter
         }
     }
 
-    /// <summary>Moves on by one port tick, which does a step of each image on the ROM frames.</summary>
+    /// <summary>Moves on by one port tick, which does a step of each image every fiftieth of a second.</summary>
     public void Update()
     {
         _clockUnits += ArcadeClock.UnitsPerPortTick;

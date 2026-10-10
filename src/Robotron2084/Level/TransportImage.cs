@@ -12,7 +12,7 @@ namespace Robotron2084.Level;
 /// </list>
 /// "Transport" is the arcade's own name for beaming the robots in at the start of a brain wave. The
 /// arcade keeps one of these in a spare buffer for all the robots that show the same animation frame,
-/// and draws it for each of them every ROM frame. That is why it is a class of its own rather than
+/// and draws it for each of them 50 times a second. That is why it is a class of its own rather than
 /// part of a robot. A step takes the next entry of <see cref="TransporterTuning.Steps"/>, and turns
 /// one group of pixels on, on with a sparkle, or off. The arcade stores two pixels to a byte, a
 /// column at a time, so a group names pixels by byte, and this class maps them back to a pixel's

@@ -13,7 +13,7 @@ namespace Robotron2084.Level;
 /// it and drops half of it, rounded up. <c>TankCount</c> is the tanks already on the field when a man
 /// starts. The wave table never has any, because quarks drop them, but a death keeps the ones that
 /// were alive (notes §134). <c>BerzerkRobotCount</c> and <c>GorfCount</c> are the author's own
-/// robots, which no wave has yet. Times are counted in ROM frames, and the port turns them into its
+/// robots, which no wave has yet. Times are counted in fiftieths of a second, and the port turns them into its
 /// own ticks where they are used.</item>
 /// </list>
 /// </remarks>
