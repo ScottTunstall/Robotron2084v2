@@ -3,55 +3,68 @@ using Robotron2084.Core;
 namespace Robotron2084.Palette;
 
 /// <summary>
-/// The Williams presentation page's OWN colour set (notes §106) — the seven colours and the two
-/// clocks the page runs. Every call site here is the
-/// ROM's, on the page that prints the welcome message (`$87A6` onward):
-///
-/// | ROM | what it does |
-/// |-----|--------------|
-/// | `$8A3A` | copies the seven bytes at `$8A70` into the RAM palette's entries **1..7**, leaving the other nine on their CRTAB defaults |
-/// | `$8A4F` | re-copies that table and sets ONE entry to `$FF` — WHITE — every **3 fiftieths of a second**, stepping 2,3,…,7,1 and round: a white flash running through the seven |
-/// | `$884E` | the text colour operand `$66` — the welcome message and the page's credit strings are drawn in entry **6** |
-/// | `$89DA` | the border "W" logos step their colour operand `$77 → $66 → … → $11 → $77`, i.e. one entry per step down through 7…1 |
-///
-/// The seven entries are red, blue, red-orange, green, magenta, ORANGE and yellow, so the page's
-/// text is ORANGE with a white flash sweeping through it, and the border logos
-/// around it cycle through the seven.
-///
-/// **Two clocks, both on notes §52's clock-unit accumulator** (a fiftieth of a second is 6/5 of a port tick):
-/// the WHITE CHASE steps every 3 fiftieths of a second, and the border logos' colour operand steps every 28 frames —
-/// the border ring's own rate, which comes out of the animation loop at `$88EF` waiting on
-/// <c>vidctrs</c> and moving six logos a frame over a ring of 28 (`$87D9`'s `LDA #$1C`), so a given
-/// logo is re-coloured once every 28 frames.
+///     The Williams presentation page's OWN colour set (notes §106) — the seven colours and the two
+///     clocks the page runs. Every call site here is the
+///     ROM's, on the page that prints the welcome message (`$87A6` onward):
+///     | ROM | what it does |
+///     |-----|--------------|
+///     | `$8A3A` | copies the seven bytes at `$8A70` into the RAM palette's entries **1..7**, leaving the other nine on
+///     their CRTAB defaults |
+///     | `$8A4F` | re-copies that table and sets ONE entry to `$FF` — WHITE — every **3 fiftieths of a second**, stepping
+///     2,3,…,7,1 and round: a white flash running through the seven |
+///     | `$884E` | the text colour operand `$66` — the welcome message and the page's credit strings are drawn in entry
+///     **6** |
+///     | `$89DA` | the border "W" logos step their colour operand `$77 → $66 → … → $11 → $77`, i.e. one entry per step
+///     down through 7…1 |
+///     The seven entries are red, blue, red-orange, green, magenta, ORANGE and yellow, so the page's
+///     text is ORANGE with a white flash sweeping through it, and the border logos
+///     around it cycle through the seven.
+///     **Two clocks, both on notes §52's clock-unit accumulator** (a fiftieth of a second is 6/5 of a port tick):
+///     the WHITE CHASE steps every 3 fiftieths of a second, and the border logos' colour operand steps every 28 frames —
+///     the border ring's own rate, which comes out of the animation loop at `$88EF` waiting on
+///     <c>vidctrs</c> and moving six logos a frame over a ring of 28 (`$87D9`'s `LDA #$1C`), so a given
+///     logo is re-coloured once every 28 frames.
 /// </summary>
 public sealed class PresentationPagePalette
 {
-    /// <summary>The first entry the page writes. It is subtracted from <see cref="LastSlot"/>, with one added, to give <see cref="_slotCount"/>.</summary>
+    /// <summary>
+    ///     The first entry the page writes. It is subtracted from <see cref="LastSlot" />, with one added, to give
+    ///     <see cref="_slotCount" />.
+    /// </summary>
     public const int FirstSlot = 1;
 
-    /// <summary>The last entry the page writes (seven of them). It has <see cref="FirstSlot"/> subtracted from it, with one added, to give <see cref="_slotCount"/>.</summary>
+    /// <summary>
+    ///     The last entry the page writes (seven of them). It has <see cref="FirstSlot" /> subtracted from it, with one
+    ///     added, to give <see cref="_slotCount" />.
+    /// </summary>
     public const int LastSlot = 7;
 
     /// <summary>
-    /// The entry the page's own text is drawn in — the ROM's text colour operand `$66`: entry 6,
-    /// which the page's table makes ORANGE (`$1F`).
+    ///     The entry the page's own text is drawn in — the ROM's text colour operand `$66`: entry 6,
+    ///     which the page's table makes ORANGE (`$1F`).
     /// </summary>
     public const int TextSlot = 6;
-
-    /// <summary>
-    /// The seven entries the page's own code writes (ROM `$8A70`), in slot order: red, blue,
-    /// red-orange, green, magenta, orange, yellow. Slots 1..7 are the page's; 8..15 keep CRTAB.
-    /// </summary>
-    public static readonly byte[] PageColors = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
 
     /// <summary>The colour the chase writes (`$8A64`'s `LDA #$FF`).</summary>
     private const byte ChaseColor = 0xFF;
 
-    /// <summary>`$8A68`'s `LDA #$03` — the chase takes a step every three fiftieths of a second. It is how many fiftieths of a second are gathered in <see cref="_chaseClockUnits"/> before the chase takes a step.</summary>
+    /// <summary>
+    ///     `$8A68`'s `LDA #$03` — the chase takes a step every three fiftieths of a second. It is how many fiftieths of a
+    ///     second are gathered in <see cref="_chaseClockUnits" /> before the chase takes a step.
+    /// </summary>
     private const int ChaseRomFramesPerStep = 3;
 
-    /// <summary>One step per logo-handling, and the ring is 28 logos of one frame each. It is how many fiftieths of a second are gathered in <see cref="_wordmarkClockUnits"/> before the wordmark takes a step.</summary>
+    /// <summary>
+    ///     One step per logo-handling, and the ring is 28 logos of one frame each. It is how many fiftieths of a second
+    ///     are gathered in <see cref="_wordmarkClockUnits" /> before the wordmark takes a step.
+    /// </summary>
     private const int WordmarkRomFramesPerStep = 28;
+
+    /// <summary>
+    ///     The seven entries the page's own code writes (ROM `$8A70`), in slot order: red, blue,
+    ///     red-orange, green, magenta, orange, yellow. Slots 1..7 are the page's; 8..15 keep CRTAB.
+    /// </summary>
+    public static readonly byte[] PageColors = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
 
     private readonly int _slotCount = LastSlot - FirstSlot + 1;
 
@@ -61,41 +74,41 @@ public sealed class PresentationPagePalette
     private int _wordmarkStep;
 
     /// <summary>
-    /// The palette entry the page's wordmark is drawn in on this step: slot 7, 6, 5, …, 1 and round
-    /// (the ROM's `$77 → $66 → … → $11 → $77`).
+    ///     The palette entry the page's wordmark is drawn in on this step: slot 7, 6, 5, …, 1 and round
+    ///     (the ROM's `$77 → $66 → … → $11 → $77`).
     /// </summary>
-    public int GetWordmarkColorSlot() => LastSlot - _wordmarkStep;
-
-    /// <summary>
-    /// The entry one step BEHIND <see cref="GetWordmarkColorSlot()"/> (slot 1 wraps to 7). The port's traced
-    /// wordmark draws its rim here so the reference screenshot's two-tone survives the cycle — and
-    /// at the wrap the pair is the reference's own red body on a yellow rim.
-    /// </summary>
-    public int GetWordmarkRimSlot() => GetWordmarkColorSlot() == FirstSlot ? LastSlot : GetWordmarkColorSlot() - 1;
-
-    /// <summary>
-    /// The page's seven colours, and NO white yet: the ROM copies the table at `$8A3A` before its
-    /// chase task exists, and that task (`$8A4F`) advances to the next entry before whitening it —
-    /// so the first white lands on entry 2.
-    /// </summary>
-    public void Start(GamePalette palette)
+    public int GetWordmarkColorSlot()
     {
-        for (int slot = FirstSlot; slot <= LastSlot; slot++)
-        {
-            palette.SetSlot(slot, PageColors[slot - FirstSlot]);
-        }
+        return LastSlot - _wordmarkStep;
     }
 
     /// <summary>
-    /// The page's slots go back to the ROM's CRTAB defaults as it leaves — the colour processes die
-    /// with the page and the page after it (<c>FAMPAG</c>) sets its own (notes §103.3).
+    ///     The entry one step BEHIND <see cref="GetWordmarkColorSlot()" /> (slot 1 wraps to 7). The port's traced
+    ///     wordmark draws its rim here so the reference screenshot's two-tone survives the cycle — and
+    ///     at the wrap the pair is the reference's own red body on a yellow rim.
+    /// </summary>
+    public int GetWordmarkRimSlot()
+    {
+        return GetWordmarkColorSlot() == FirstSlot ? LastSlot : GetWordmarkColorSlot() - 1;
+    }
+
+    /// <summary>
+    ///     The page's seven colours, and NO white yet: the ROM copies the table at `$8A3A` before its
+    ///     chase task exists, and that task (`$8A4F`) advances to the next entry before whitening it —
+    ///     so the first white lands on entry 2.
+    /// </summary>
+    public void Start(GamePalette palette)
+    {
+        for (var slot = FirstSlot; slot <= LastSlot; slot++) palette.SetSlot(slot, PageColors[slot - FirstSlot]);
+    }
+
+    /// <summary>
+    ///     The page's slots go back to the ROM's CRTAB defaults as it leaves — the colour processes die
+    ///     with the page and the page after it (<c>FAMPAG</c>) sets its own (notes §103.3).
     /// </summary>
     public void Stop(GamePalette palette)
     {
-        for (int slot = FirstSlot; slot <= LastSlot; slot++)
-        {
-            palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
-        }
+        for (var slot = FirstSlot; slot <= LastSlot; slot++) palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
     }
 
     /// <summary>Advances both clocks by one port tick (call once per Update).</summary>
@@ -111,19 +124,14 @@ public sealed class PresentationPagePalette
 
         _wordmarkClockUnits += ArcadeClock.UnitsPerPortTick;
         if (IsStepDue(ref _wordmarkClockUnits, WordmarkRomFramesPerStep))
-        {
             _wordmarkStep = (_wordmarkStep + 1) % _slotCount;
-        }
     }
 
-    /// <summary>True when a clock's accumulator has reached <paramref name="romFrames"/> frames.</summary>
+    /// <summary>True when a clock's accumulator has reached <paramref name="romFrames" /> frames.</summary>
     private static bool IsStepDue(ref int clockUnits, int romFrames)
     {
-        int period = ArcadeClock.ToClockUnits(romFrames);
-        if (clockUnits < period)
-        {
-            return false;
-        }
+        var period = ArcadeClock.ToClockUnits(romFrames);
+        if (clockUnits < period) return false;
 
         clockUnits -= period;
         return true;

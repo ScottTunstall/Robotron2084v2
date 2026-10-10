@@ -4,17 +4,17 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Palette;
 
 /// <summary>
-/// The wall's colour cycling (spec: "go from light to bright, but never fully
-/// dark"; "the colours in the colour cycling should be definable"). Steps
-/// through a caller-supplied palette (default: 4 cyan shades) on a fixed
-/// time step, wrapping forward — the palette itself never includes black.
+///     The wall's colour cycling (spec: "go from light to bright, but never fully
+///     dark"; "the colours in the colour cycling should be definable"). Steps
+///     through a caller-supplied palette (default: 4 cyan shades) on a fixed
+///     time step, wrapping forward — the palette itself never includes black.
 /// </summary>
 public sealed class WallColorCycle
 {
     private readonly IReadOnlyList<Color> _colours;
     private readonly TimeSpan _stepDuration;
-    private TimeSpan _elapsed;
     private int _colourIndex;
+    private TimeSpan _elapsed;
 
     public WallColorCycle(IReadOnlyList<Color>? colours = null, TimeSpan? stepDuration = null)
     {
