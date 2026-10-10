@@ -122,6 +122,9 @@ public sealed class SoundBoard : ISoundBoard
         _routines = BuildRoutines();
     }
 
+    /// <inheritdoc />
+    public bool IsPlaying => _waitingSoundNumber != NoSoundNumber || _outputChanges is not null || _cyclesLeftInChange > 0;
+
     /// <summary>The level the board is sending to the loudspeaker circuit right now, 0 to 255.</summary>
     public byte OutputLevel { get; private set; }
 

@@ -10,4 +10,7 @@ public interface IAudioSink
 
     /// <summary>Moves the sound on by one port tick.</summary>
     void Tick();
+
+    /// <summary>True while a sound is still being played: sent and not yet over. Sinks that cannot tell say false.</summary>
+    bool IsPlaying => false;
 }

@@ -33,6 +33,9 @@ public sealed class SoundEngine
     /// <param name="sink">Where the sound numbers go.</param>
     public SoundEngine(IAudioSink sink) => _sink = sink;
 
+    /// <summary>True while the board is still playing the last number sent to it.</summary>
+    public bool IsBoardPlaying => _sink.IsPlaying;
+
     /// <summary>The priority of the sound holding the voice, or 0 when the voice is free (<c>SNDPRI</c>).</summary>
     public int CurrentPriority => _priority;
 

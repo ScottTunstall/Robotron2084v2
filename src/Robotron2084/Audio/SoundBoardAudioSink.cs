@@ -70,6 +70,9 @@ public sealed class SoundBoardAudioSink : IAudioSink
         _board.SendSoundNumber(soundNumber);
     }
 
+    /// <inheritdoc />
+    public bool IsPlaying => _board.IsPlaying;
+
     /// <summary>Runs the board for one port tick and queues what it played, topping the queue up if it is running low.</summary>
     public void Tick()
     {

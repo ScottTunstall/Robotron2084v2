@@ -20,4 +20,7 @@ public interface ISoundBoard
     /// <summary>Sends the board a sound number. The sound playing stops at once and the new one starts.</summary>
     /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>), 0 to 63.</param>
     void SendSoundNumber(int soundNumber);
+
+    /// <summary>True while a sound is waiting to start or still running; false once it has played to its end (a sound that never ends stays true).</summary>
+    bool IsPlaying => false;
 }

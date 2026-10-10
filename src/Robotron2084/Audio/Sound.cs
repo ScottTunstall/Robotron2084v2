@@ -108,6 +108,9 @@ public static class Sound
         _transporterSound.Start(_engine);
     }
 
+    /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying"/>).</summary>
+    public static bool IsPlaying => _engine?.IsBoardPlaying ?? false;
+
     /// <summary>
     /// Sends a sound number straight to the board, skipping the priority check and the tables: what the sound test
     /// page does (<c>SDOUT</c>).
