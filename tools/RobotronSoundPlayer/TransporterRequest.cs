@@ -12,7 +12,7 @@ internal sealed class TransporterRequest : ISoundRequest
     public string Name => "Transporter";
 
     /// <summary>Says what it is.</summary>
-    public string Description => "a brain wave's robots beaming in (sends $12 over and over)";
+    public string Description => "BRAIN WAVE: a brain wave's robots beaming in (sends $12 over and over)";
 
     /// <summary>Clears the board and starts the warp-in.</summary>
     /// <param name="engine">The sequencer that sends sound numbers to the board.</param>
