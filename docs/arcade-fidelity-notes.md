@@ -3043,7 +3043,7 @@ slower than the port's previous value, so sparks now travel roughly `delta/64`
 port px per move over a 20-35 move life (about a third of the screen) — a
 nuisance curtain rather than the faster direct threat the port had. That is what
 the Gospel says, but it changes difficulty, so it needs a playtest judgement.
-Also unmodelled: `OVCNT < 17` (the port has the 20-spark cap only).
+Also unmodelled: `OVCNT < 17` (the port has the 20-spark cap only). **Superseded by §145: the 17 gate is a slowdown guard, not a missing cap.**
 
 ## 42. Spheroids — the motion MODEL is wrong; the SPEED needs the mover cadence (2026-09-16)
 
@@ -11035,3 +11035,128 @@ mistakes in that reading.
    phantom cannot. Ask the author before adding one.
 
 **Not checked on screen.**
+
+---
+
+## §145 — THE 17 GATE IS A SLOWDOWN GUARD, NOT AN OBJECT COUNT; THE ENFORCER'S FIRE PICK WAS EVEN (author, 2026-10-10)
+
+**Author:** *"Check its meaning"* (the `$42 < 17` gate, called `OVCNT` in §41 and §42), then *"do you think the enforcers are firing too often?"*
+
+### 145.1 What `$42` is
+
+1. **It is not a count of objects.** `$42` is written in one place only, in the main loop at `$D196` (`D1A4` to `D1A7`):
+   `$42 = (8 × $10 + $42) / 2`, where `$10` is the number of screen-refresh interrupts since the last pass, and the pass
+   waits until `$10 ≥ 2` (`D19B` to `D19F`).
+2. **`$10` counts refreshes.** The refresh interrupt adds 1 to `$10` at two points in each frame (`DC6D` and `DC9F`), so
+   two counts is one full refresh, about 1/50 of a second.
+3. **So `$42` is a smoothed measure of how long each pass takes.** Its steady value is `8 × n`, where `n` is the refreshes per pass.
+   A pass every refresh gives 16. A pass that takes 2.1 refreshes or more pushes it to 17 or above.
+4. **The gate closes when the game is running slow.** `CMPA #$11 / BCC` (`$1416`, `$11FC`, `$4C34`, `$4E4F`) stops new
+   sparks, enforcers, tanks and tank shells while `$42` is 17 or more. It is a guard against running behind, not a cap on
+   how many things exist.
+
+**Port.** The port runs at a fixed 60 ticks a second, so the arcade's slowdown never happens and the gate is always open.
+Copying the measure would make the port's behaviour depend on how fast the PC runs, so it is left out on purpose. The
+20-spark cap (`$1412`, `$8A`) is the real limit and is in place.
+
+**The open item in §41, §42 and §143.9 (`OVCNT < 17` unmodelled) is closed by this note.** It is not a cap the port is missing.
+
+### 145.2 The enforcer's fire delay was picked evenly; the arcade's pick is not even
+
+1. **The arcade's pick** is `$D6B6`: take a random byte, halve it until it is no bigger than the limit, and make 0 into 1.
+   Halving favours the larger values, so the result is not an even spread.
+2. **The port's pick** was `Random.Next(1, N + 1)`, which is even.
+3. **The table (`$2CA1`, the wave's `ENSTIM`)** matches the port's `WaveTable.EnforcerFireDelay`, so the limit `N` was right.
+   The fault was only the pick.
+4. **Measured by simulation** (100,000 picks each):
+
+   | Limit N | Arcade mean wait | Port mean wait (before) | Port fired |
+   |---|---|---|---|
+   | 30 (wave 1) | 21.6 beats (86 frames) | 15.5 beats (62 frames) | about 39% more often |
+   | 28 | 19.8 beats | 14.5 beats | about 37% more often |
+   | 15 | 11.3 beats | 8.0 beats | about 40% more often |
+
+   So the port's enforcers fired about 40 percent too often at every wave.
+
+### 145.3 What the port does now
+
+- `ArcadeRandom.PickUpTo(random, limit)` does the arcade's halving (`Core/ArcadeRandom.cs`).
+- `Enforcer` uses it both for the first shot's delay when it is made and for each later delay.
+- Tests: `ArcadeRandomTests` check the range, and that the mean is near 21.5 for a limit of 30.
+
+### 145.4 Not yet changed: the other picks that use the same routine (**done in §146**)
+
+The disassembly calls the same routine (`$D03F`, which goes to `$D6B6`) at 16 places, including the spheroid, the quark,
+the tank and the tank shell. The port picks those evenly too. They are not changed by this note and need a decision
+before they are, because each one changes how often something happens on screen. Check each against its call site first.
+
+**Not checked on screen.** The change alters how often enforcers fire, so it should be judged in play.
+
+---
+
+## §146 — EVERY CALL SITE OF THE HALVING PICK (`$D6B6`): WHICH WERE EVENLY PICKED IN THE PORT, AND WHAT CHANGED (author, 2026-10-10)
+
+**Author:** *"Check all the call sites - do not change unless ABSOLUTELY SURE by double checking."* §145 found the
+enforcer's fire delay picked evenly. This section checks every other call.
+
+### 146.1 The routine
+
+- `$D03F` jumps to `$D6B6`: take one random byte (`$D6CD`, 8 bits, the port's `random.Next(256)`), halve it until it
+  is no bigger than the limit in A, and make 0 into 1. The result is 1 to the limit. The limit is the value in A.
+- `$D03C` jumps to `$D6C8`, which is a different routine: one random byte into A, and a second into B. It is not
+  halved. The port's uniform `ANDA #$1F` equivalent is correct there, and it is not changed.
+
+### 146.2 The 15 halving sites, and what the port did
+
+Every site below takes the limit from a wave-table byte, except the prog's offsets and the cruise missile's re-aim.
+Each countdown is decremented once per beat and fires when it reaches zero, so a value `v` means `v` beats. The port's
+countdowns use the same semantics, so only the pick needed changing.
+
+| Arcade site | What it sets | Limit (A) | Port before | Port after |
+|---|---|---|---|---|
+| `$118E` spheroid init | drop countdown | `$BE60` | even `1..N` | `ArcadeRandom.PickUpTo(N)` |
+| `$1196` spheroid init | enforcers to drop: `(r+1)/2` | `$BE5E` | even `1..N` | `PickUpTo(N)` |
+| `$11E0` spheroid re-arm | drop countdown | `$BE60 ÷ 4` | even `1..N/4` | `PickUpTo(N/4)` |
+| `$1370` enforcer made | first spark countdown | `$BE5F` | even (§145) | `PickUpTo(N)` |
+| `$140B` spark fired | next spark countdown | `$BE5F` | even (§145) | `PickUpTo(N)` |
+| `$1B49` brain made | first missile countdown | `$BE62` | even `1..N` | `PickUpTo(N)` |
+| `$200B` cruise missile fired | brain's next missile countdown | `$BE62` | even `1..N` | `PickUpTo(N)` |
+| `$20AA` missile direction | turns until it changes direction | 7 | even `1..7` | `PickUpTo(7)` |
+| `$1E57` prog X offset | X offset, columns | 15 | even | `(16 − r − 8) × 4`, see 146.3 |
+| `$1E65` prog Y offset | Y offset, rows | 18 | even | `PickUpTo(18)` |
+| `$4B61` quark init | first tank countdown | `$BE66` | even `1..N` | `PickUpTo(N)` |
+| `$4B69` quark init | tanks to drop: `(r+1)/2` | `$BE5E` | even `0..N` | `PickUpTo(N)` |
+| `$4C29` quark after a tank | next tank countdown | `(BE66 ÷ 2) + 1` | even `1..k` | `PickUpTo(k)` |
+| `$4B85` quark X direction | X speed | `$BE67` | even `1..N` | `PickUpTo(N)` |
+| `$4BA3` quark Y direction | Y speed | `$BE67` | even `1..N` | `PickUpTo(N)` |
+
+Two of these differ in range, not just in spread:
+- **The quark's tank count** could be 0 in the port (`random.Next(N+1)` can be 0), but the arcade's comment says
+  "ensure that value is non zero", and `D6B6` never returns 0. So it could never be 0 in the arcade.
+- **The spheroid's and the quark's count**, `(r+1)/2`, is the arcade's `LSRA / ADCA #0`. That is the same as the
+  port's `(roll + 1) / 2`, and only the roll changes.
+
+### 146.3 The prog's X offset has its sign reversed in the port
+
+The arcade (`$1E57`): `r = D6B6(15)`, then `ADDA #$F0` (−16), `NEGA`, `ASLA` twice, `ADDA #$E0` (−32). So
+`X = 4 × (16 − r) − 32`. The port had `(r − 8) × 4`. For an even pick the two have the same spread, but with the
+arcade's halving the sign changes the result, so the port now uses `(16 − r − 8) × 4`, which is the arcade's exact sum.
+
+The Y offset matches the arcade's sum exactly (`$1E65`: `2 × (19 − r) − 18`), so only the pick changed.
+
+### 146.4 The site not changed
+
+- `$13B5` enforcer destination: `$D6C8` (uniform bytes, `ANDA #$1F`). The port's `Random.Next(32)` is the same spread.
+
+### 146.5 What was checked, and what it does not cover
+
+- Every limit comes from the same wave-table byte in the port as in the arcade (`BrainFireDelay` = `$BE62`,
+  `EnforcerFireDelay` = `$BE5F`, `MaxDropsX2` = `$BE5E`, `QuarkDropDelay` = `$BE66`, `QuarkSpeedCap` = `$BE67`,
+  `SpheroidDropDelay` = `$BE60`).
+- Each countdown is decremented and tested the same way in the arcade and the port: decrement, then fire at zero.
+- The prog's offsets are rolled at creation and again when a random byte is above `$F8`, as in the port.
+- The existing 929 tests pass. None of them checks these ranges directly, so the check above is by reading the code.
+  Tests for the prog's offset sign and the quark's count of at least one would be worth adding.
+
+**Not checked on screen.** These changes alter how often spheroids, quarks, tanks, brains and cruise missiles act, so
+the difficulty should be judged in play.
