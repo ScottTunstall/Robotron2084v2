@@ -6,12 +6,12 @@ namespace Robotron2084.Tests.Rendering;
 /// <summary>
 /// The Williams presentation page's own colour set (notes §106): the seven entries at ROM `$8A70`
 /// written into palette slots 1-7 (`$8A3A`), the WHITE flash the page chases through them every
-/// three ROM frames (`$8A4F`/`$8A68`), and the border logos' colour step (`$89DA`'s `$77 → $66 → … → $11 →
+/// three fiftieths of a second (`$8A4F`/`$8A68`), and the border logos' colour step (`$89DA`'s `$77 → $66 → … → $11 →
 /// $77`) that the port's traced wordmark borrows.
 /// </summary>
 public sealed class PresentationPagePaletteTests
 {
-    /// <summary>A ROM frame is 6/5 of a port tick (notes §52): n frames land on ceil(n × 6/5).</summary>
+    /// <summary>A fiftieth of a second is 6/5 of a port tick (notes §52): n frames land on ceil(n × 6/5).</summary>
     private static int Ticks(int romFrames) => (int)Math.Ceiling(romFrames * 6.0 / 5.0);
 
     private static (GamePalette Palette, PresentationPagePalette Page) Started()
@@ -80,7 +80,7 @@ public sealed class PresentationPagePaletteTests
         int[] expected = [2, 3, 4, 5, 6, 7, 1, 2, 3];
         Assert.Equal(expected, moves.Select(move => move.Slot));
 
-        // Three ROM frames is 18 clock units and the clock advances 5 clock units a tick, so a step lands on
+        // Three fiftieths of a second is 18 clock units and the clock advances 5 clock units a tick, so a step lands on
         // the third or the fourth tick — never earlier and never later.
         int[] gaps = moves.Zip(moves.Skip(1), (first, second) => second.Tick - first.Tick).ToArray();
         Assert.All(gaps, gap => Assert.InRange(gap, 3, 4));

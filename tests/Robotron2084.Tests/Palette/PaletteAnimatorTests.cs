@@ -9,7 +9,7 @@ namespace Robotron2084.Tests.Rendering;
 /// loops.
 ///
 /// The timings are the ROM's frame counts converted through the clock-unit rule
-/// of §52 (a ROM frame is 6/5 of a port tick), so a 1-frame process steps every
+/// of §52 (a fiftieth of a second is 6/5 of a port tick), so a 1-frame process steps every
 /// 1.2 ticks, a 2-frame one every 2.4 and an 8-frame one every 9.6. These tests
 /// therefore pin where a step really lands (the 3rd, 5th, 8th … tick), which is
 /// what distinguishes them from the old 20%-fast tick counts.
@@ -138,7 +138,7 @@ public sealed class PaletteAnimatorTests
         Tick(animator, 1); // tick 3 = 15 clock units: the first (white) flash
         Assert.Equal(0xFF, palette.GetSlotValue(10));
 
-        Tick(animator, 2); // tick 5: white again — the flash period is 2 ROM frames
+        Tick(animator, 2); // tick 5: white again — the flash period is 2 fiftieths of a second
         Assert.Equal(0xFF, palette.GetSlotValue(10));
 
         Tick(animator, 3); // tick 8: every 3rd flash is a random COLTAB hue
