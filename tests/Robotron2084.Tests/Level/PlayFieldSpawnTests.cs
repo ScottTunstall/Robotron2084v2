@@ -94,10 +94,10 @@ public sealed class PlayFieldSpawnTests
         return new PlayFieldBuilder().WithParameters(parameters).WithBounds(InnerBounds).WithSeed(1234).Build();
     }
 
-    private static void AssertAllAreFartherThan<T>(IReadOnlyList<T> entities, IntVector2 playerStart, int minSpecPixels)
+    private static void AssertAllAreFartherThan<T>(IReadOnlyList<T> entities, IntVector2 playerStart, int minArcadePixels)
         where T : IEntity
     {
-        long minSquared = ScreenSize.ToPortPixels(minSpecPixels) * (long)ScreenSize.ToPortPixels(minSpecPixels);
+        long minSquared = ScreenSize.ToPortPixels(minArcadePixels) * (long)ScreenSize.ToPortPixels(minArcadePixels);
         foreach (T entity in entities)
         {
             Assert.True(IntVector2.ComputeDistanceSquared(entity.Position, playerStart) > minSquared, $"{typeof(T).Name} spawned too close to the player start");

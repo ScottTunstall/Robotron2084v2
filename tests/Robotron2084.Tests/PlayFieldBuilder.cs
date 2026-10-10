@@ -14,7 +14,7 @@ namespace Robotron2084.Tests;
 /// </summary>
 internal sealed class PlayFieldBuilder
 {
-    /// <summary>The inner play area every test field uses unless it says otherwise: the canvas less a 20 spec-pixel margin.</summary>
+    /// <summary>The inner play area every test field uses unless it says otherwise: the canvas less a 20 arcade pixel margin.</summary>
     public static readonly Rectangle DefaultBounds = new(
         ScreenSize.ToPortPixels(20),
         ScreenSize.ToPortPixels(20),

@@ -19,7 +19,7 @@ public sealed class PlayfieldLayoutTests
 {
     private static readonly Rectangle Canvas = new(0, 0, ScreenSize.Width, ScreenSize.Height);
 
-    private static int Margin => ScreenSize.ToPortPixels(CollisionSizes.PlayfieldMarginSpecPixels);
+    private static int Margin => ScreenSize.ToPortPixels(CollisionSizes.PlayfieldMarginArcadePixels);
 
     [Fact]
     public void InnerBounds_IsTheCanvasInsetByThePlayfieldMargin()

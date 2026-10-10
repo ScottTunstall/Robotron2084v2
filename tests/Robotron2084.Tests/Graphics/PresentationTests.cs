@@ -8,7 +8,7 @@ namespace Robotron2084.Tests;
 /// <summary>
 /// The window fit: the canvas is drawn at ONE scale for both axes, centred with black bars, at any
 /// client size — including one smaller than the canvas — and the two fit modes differ only in how
-/// the scale is chosen. These are invariants, not 2x numbers, so they hold at any SpecScale.
+/// the scale is chosen. These are invariants, not 2x numbers, so they hold at any PortPixelsPerArcadePixel.
 /// </summary>
 public sealed class PresentationTests
 {

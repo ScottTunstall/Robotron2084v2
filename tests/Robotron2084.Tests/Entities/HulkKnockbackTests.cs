@@ -12,7 +12,7 @@ namespace Robotron2084.Tests.Entities;
 /// indestructible and is pushed along the laser's direction PER AXIS at ROM
 /// magnitudes — X = ±1 arcade px, doubled to ±2 by SEED's sign bit (50%);
 /// Y = ±1, quadrupled to ±4 when LSEED &gt;= $C0 (75%) — then clamped at the
-/// wall. (Playtest 2026-09-13: the old fixed 20-spec-px push "jumps too far".)
+/// wall. (Playtest 2026-09-13: the old fixed 20 arcade pixel push "jumps too far".)
 /// All magnitudes here are in internal px (1 arcade px = ScreenSize.ToPortPixels(1)).
 /// </summary>
 public sealed class HulkKnockbackTests

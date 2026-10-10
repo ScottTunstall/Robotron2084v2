@@ -83,7 +83,7 @@ public sealed class EntityOwnRulesTests
 
         StripClip clip = StripClip.CreateFromPortPixels(bounds);
 
-        Assert.Equal(new StripClip(20 / ScreenSize.SpecScale, 420 / ScreenSize.SpecScale, 30 / ScreenSize.SpecScale, 330 / ScreenSize.SpecScale), clip);
+        Assert.Equal(new StripClip(20 / ScreenSize.PortPixelsPerArcadePixel, 420 / ScreenSize.PortPixelsPerArcadePixel, 30 / ScreenSize.PortPixelsPerArcadePixel, 330 / ScreenSize.PortPixelsPerArcadePixel), clip);
     }
 
     [Fact]

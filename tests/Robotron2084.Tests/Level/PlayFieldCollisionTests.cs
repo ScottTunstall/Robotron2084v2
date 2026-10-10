@@ -20,7 +20,7 @@ public sealed class PlayFieldCollisionTests
 
         // The laser moves 12 px on its first Update before collisions resolve;
         // from just above the electrode's top-left, moving Down, it still
-        // overlaps the 10x9 (spec) electrode box.
+        // overlaps the 10x9 arcade pixel electrode box.
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
         Assert.True(field.PlayerLasers.TryFire(laserOrigin, Direction8.Down, out PlayerLaser? laser));
         Assert.NotNull(laser);
@@ -297,7 +297,7 @@ public sealed class PlayFieldCollisionTests
         IntVector2 positionBefore = hulk.Position;
 
         // Laser moving Left knocks the hulk left. Spawn it to the RIGHT of the hulk so the
-        // first 12 spec-px move still leaves it overlapping the 14x16 (spec) hulk box.
+        // first 12 arcade pixel move still leaves it overlapping the 14x16 arcade pixel hulk box.
         Assert.True(field.PlayerLasers.TryFire(new IntVector2(spot.X + 32, spot.Y), Direction8.Left, out PlayerLaser? laser));
         field.Update(new GameTime());
 

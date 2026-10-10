@@ -427,7 +427,7 @@ public sealed class StripEffectTests
 
         IReadOnlyList<Strip> strips = appear.LayOutStrips(spriteWidth: 8, spriteRows: 12);
 
-        int top = sprite.Y / ScreenSize.SpecScale;
+        int top = sprite.Y / ScreenSize.PortPixelsPerArcadePixel;
         Assert.Equal(top, strips[0].Y); // the top row stays where it is
         Assert.Equal(top + 15, strips[1].Y); // and every other row is below it, a gap apart
     }

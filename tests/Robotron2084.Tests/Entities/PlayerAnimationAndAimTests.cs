@@ -137,7 +137,7 @@ public sealed class PlayerAnimationAndAimTests
     /// <summary>
     /// ROM LTAB muzzle offsets (RRG23; notes 2026-09-12 (19) + 2026-09-13 (21)):
     /// the laser box top-left spawns at the player box top-left plus the
-    /// per-direction offset (spec px), then moves one LaserSpeed step in the
+    /// per-direction offset (arcade pixels), then moves one LaserSpeed step in the
     /// same field update it is fired (Player updates before PlayerLasers).
     /// </summary>
     [Theory]

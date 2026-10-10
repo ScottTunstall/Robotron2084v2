@@ -4,10 +4,10 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// Resolution invariants. These must hold at ANY SpecScale, so the suite
+/// Resolution invariants. These must hold at ANY PortPixelsPerArcadePixel, so the suite
 /// stays green when the render scale is raised (ScreenSize is the single
 /// source of truth). The 320 by 200 screen size IS pinned — that is the game's
-/// layout. SpecScale is deliberately NOT pinned: it is the knob
+/// layout. PortPixelsPerArcadePixel is deliberately NOT pinned: it is the knob
 /// a resolution increase turns.
 /// </summary>
 public sealed class ScreenSizeTests
@@ -22,16 +22,16 @@ public sealed class ScreenSizeTests
     [Fact]
     public void InternalResolution_DerivesFromScreenSizeInArcadePixels()
     {
-        Assert.Equal(ScreenSize.WidthInArcadePixels * ScreenSize.SpecScale, ScreenSize.Width);
-        Assert.Equal(ScreenSize.HeightInArcadePixels * ScreenSize.SpecScale, ScreenSize.Height);
+        Assert.Equal(ScreenSize.WidthInArcadePixels * ScreenSize.PortPixelsPerArcadePixel, ScreenSize.Width);
+        Assert.Equal(ScreenSize.HeightInArcadePixels * ScreenSize.PortPixelsPerArcadePixel, ScreenSize.Height);
     }
 
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(16)]
-    public void Scaled_MultipliesSpecPixelsBySpecScale(int specPixels) =>
-        Assert.Equal(specPixels * ScreenSize.SpecScale, ScreenSize.ToPortPixels(specPixels));
+    public void ToPortPixels_MultipliesArcadePixelsByPortPixelsPerArcadePixel(int arcadePixels) =>
+        Assert.Equal(arcadePixels * ScreenSize.PortPixelsPerArcadePixel, ScreenSize.ToPortPixels(arcadePixels));
 
     [Fact]
     public void MaxIntegerScale_FitsThreeTimesThePlayfield_At3x() =>

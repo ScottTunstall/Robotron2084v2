@@ -149,7 +149,7 @@ public sealed class DemoPlayerInputSourceTests
         var left = new MutableStick { State = new PlayerInputState(new IntVector2(-1, 0), false) };
         PlayField field = EmptyFieldWithInput(small, left);
 
-        int clearance = ScreenSize.ToPortPixels(AttractTuning.DemoWallClearanceSpecPixels);
+        int clearance = ScreenSize.ToPortPixels(AttractTuning.DemoWallClearanceArcadePixels);
         while (field.Player.Position.X >= clearance)
         {
             field.Update(new GameTime());

@@ -17,7 +17,7 @@ namespace Robotron2084.Tests;
 /// - spheroids always drop 1..5 enforcers (ENFNUM roll, ceil(v/2));
 /// - enforcers have a 40-ROM-tick grow-up (immobile), a 3-tick AI pass with
 ///   re-aim (RND(1..31)) and fire (RND(1..ENSTIM)) countdowns, and swoop at
-///   ~1.5 spec px/tick toward a 32x32 zone down-right of the player.
+///   ~1.5 arcade pixels/tick toward a 32x32 zone down-right of the player.
 /// All tests are seeded — the assertions pin the deterministic ROM contract.
 /// </summary>
 public sealed class SpheroidEnforcerTimingTests
@@ -199,7 +199,7 @@ public sealed class SpheroidEnforcerTimingTests
     [Fact]
     public void Enforcer_LoiterCirclesNearThePlayer()
     {
-        // The destination zone is a 32x32 spec-px (64 internal px) box
+        // The destination zone is a 32x32 arcade pixel (64 port pixel) box
         // down-right of the player; over a long run the enforcer must
         // spend time close to the player, not wander the whole field.
         PlayField field = CreateField(11);

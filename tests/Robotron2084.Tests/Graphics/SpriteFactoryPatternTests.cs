@@ -7,10 +7,10 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-/// The hand-authored patterns must stay correct at ANY SpecScale: each Build*
-/// returns PatternSize×PatternSize pixels (the 16 spec-px entity box ×
-/// SpecScale) with the shape centred — centre pixel filled, corners empty —
-/// so a resolution change (SpecScale 2 → 3 → 4…) never mis-renders them.
+/// The hand-authored patterns must stay correct at ANY PortPixelsPerArcadePixel: each Build*
+/// returns PatternSize×PatternSize pixels (the 16 by 16 arcade pixel entity box ×
+/// PortPixelsPerArcadePixel) with the shape centred — centre pixel filled, corners empty —
+/// so a resolution change (PortPixelsPerArcadePixel 2 → 3 → 4…) never mis-renders them.
 /// </summary>
 public sealed class SpriteFactoryPatternTests
 {
@@ -30,10 +30,10 @@ public sealed class SpriteFactoryPatternTests
     [MemberData(nameof(AllPatterns))]
     public void Pattern_IsSizedToSpecBox_Centred_AndCornerTransparent(string name, Func<Color, Color[]> build)
     {
-        int size = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeSpecPixels);
+        int size = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeArcadePixels);
         Color[] pattern = build(Color.White);
 
-        Assert.True(pattern.Length == size * size, $"{name} pattern must be {size}x{size} at the current SpecScale");
+        Assert.True(pattern.Length == size * size, $"{name} pattern must be {size}x{size} at the current PortPixelsPerArcadePixel");
         Assert.True(pattern[(size / 2) * size + size / 2] == Color.White, $"{name} centre pixel must be filled");
         Assert.True(pattern[0] == Color.Transparent, $"{name} corner must be transparent");
     }

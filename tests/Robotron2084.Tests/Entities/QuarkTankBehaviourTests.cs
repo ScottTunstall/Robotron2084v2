@@ -87,7 +87,7 @@ public sealed class QuarkTankBehaviourTests
         // Both bounds are in port px, so they follow the render scale: the peak step stays
         // under 2 arcade px on one axis, and the average path under 3.5 px a tick at 2x.
         Assert.True(maxAxisSeen <= ScreenSize.ToPortPixels(2), $"axis step {maxAxisSeen} is too large for a sub-pixel drift");
-        Assert.True(pathLength <= aliveTicksSampled * 3.5 * ScreenSize.SpecScale,
+        Assert.True(pathLength <= aliveTicksSampled * 3.5 * ScreenSize.PortPixelsPerArcadePixel,
             $"average path {pathLength / (double)aliveTicksSampled:F2} units/tick — that is a dart, not a drift");
     }
 
