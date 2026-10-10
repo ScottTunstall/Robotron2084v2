@@ -3,12 +3,11 @@ using System.Text;
 namespace Robotron2084.Persistence;
 
 /// <summary>
-/// Persists the port's game settings (notes §131) in a plain INI file beside the controls and the
-/// high score table: <c>%LocalAppData%\Robotron2084\settings.ini</c>. The INI form is deliberate, as
-/// for <see cref="ControlSettingsStore"/>: the file can be read and hand-edited, and every value uses
-/// the same words the GAME ADJUSTMENT page shows.
-///
-/// <code>
+///     Persists the port's game settings (notes §131) in a plain INI file beside the controls and the
+///     high score table: <c>%LocalAppData%\Robotron2084\settings.ini</c>. The INI form is deliberate, as
+///     for <see cref="ControlSettingsStore" />: the file can be read and hand-edited, and every value uses
+///     the same words the GAME ADJUSTMENT page shows.
+///     <code>
 /// [game]
 /// extramanevery=25
 /// turnsperplayer=3
@@ -18,13 +17,12 @@ namespace Robotron2084.Persistence;
 /// brainschasemikeybug=1
 /// bozomode=1
 /// </code>
-///
-/// A missing file yields the factory settings — the same "a fresh cabinet comes up with its
-/// defaults" rule the other stores follow. A value outside the arcade's own range (or, for
-/// EXTRA MAN EVERY, off its five-stop list) is ignored, so a hand edit cannot put the game
-/// into a state the cabinet could not reach. A file that EXISTS but cannot be opened (locked,
-/// access denied) throws a <see cref="PersistenceException"/> naming it (ERR-1): silently
-/// falling back would let the next save overwrite the user's settings.
+///     A missing file yields the factory settings — the same "a fresh cabinet comes up with its
+///     defaults" rule the other stores follow. A value outside the arcade's own range (or, for
+///     EXTRA MAN EVERY, off its five-stop list) is ignored, so a hand edit cannot put the game
+///     into a state the cabinet could not reach. A file that EXISTS but cannot be opened (locked,
+///     access denied) throws a <see cref="PersistenceException" /> naming it (ERR-1): silently
+///     falling back would let the next save overwrite the user's settings.
 /// </summary>
 public sealed class GameSettingsStore
 {
@@ -35,10 +33,7 @@ public sealed class GameSettingsStore
     /// <summary>Loads from a given file — the seam the tests use.</summary>
     public static GameSettings Load(string path)
     {
-        if (!File.Exists(path))
-        {
-            return GameSettings.CreateFactoryDefaults();
-        }
+        if (!File.Exists(path)) return GameSettings.CreateFactoryDefaults();
 
         try
         {
@@ -50,27 +45,26 @@ public sealed class GameSettingsStore
         }
         catch (IOException exception)
         {
-            throw new PersistenceException($"The game settings file {path} could not be read: {exception.Message}", exception);
+            throw new PersistenceException($"The game settings file {path} could not be read: {exception.Message}",
+                exception);
         }
         catch (UnauthorizedAccessException exception)
         {
-            throw new PersistenceException($"The game settings file {path} could not be opened: {exception.Message}", exception);
+            throw new PersistenceException($"The game settings file {path} could not be opened: {exception.Message}",
+                exception);
         }
     }
 
     /// <summary>Parses the file's text; anything missing or out of range keeps the factory value.</summary>
     public static GameSettings Parse(IEnumerable<string> lines)
     {
-        GameSettings gameSettings = GameSettings.CreateFactoryDefaults();
-        string section = string.Empty;
+        var gameSettings = GameSettings.CreateFactoryDefaults();
+        var section = string.Empty;
 
-        foreach (string raw in lines)
+        foreach (var raw in lines)
         {
-            string line = raw.Trim();
-            if (line.Length == 0 || line[0] is ';' or '#')
-            {
-                continue;
-            }
+            var line = raw.Trim();
+            if (line.Length == 0 || line[0] is ';' or '#') continue;
 
             if (line[0] == '[' && line[^1] == ']')
             {
@@ -78,17 +72,11 @@ public sealed class GameSettingsStore
                 continue;
             }
 
-            int separator = line.IndexOf('=');
-            if (separator <= 0 || section != Section)
-            {
-                continue;
-            }
+            var separator = line.IndexOf('=');
+            if (separator <= 0 || section != Section) continue;
 
-            string name = line[..separator].Trim().ToLowerInvariant();
-            if (!int.TryParse(line[(separator + 1)..].Trim(), out int value))
-            {
-                continue;
-            }
+            var name = line[..separator].Trim().ToLowerInvariant();
+            if (!int.TryParse(line[(separator + 1)..].Trim(), out var value)) continue;
 
             Apply(gameSettings, name, value);
         }
@@ -100,7 +88,7 @@ public sealed class GameSettingsStore
     public static void Save(string path, GameSettings gameSettings)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, Write(gameSettings), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        File.WriteAllText(path, Write(gameSettings), new UTF8Encoding(false));
     }
 
     /// <summary>Builds the file's text (also the tests' seam).</summary>
@@ -125,10 +113,16 @@ public sealed class GameSettingsStore
     }
 
     /// <summary>Loads the saved settings, or the factory settings when there are none.</summary>
-    public GameSettings Load() => Load(FilePath);
+    public GameSettings Load()
+    {
+        return Load(FilePath);
+    }
 
     /// <summary>Saves the settings.</summary>
-    public void Save(GameSettings gameSettings) => Save(FilePath, gameSettings);
+    public void Save(GameSettings gameSettings)
+    {
+        Save(FilePath, gameSettings);
+    }
 
     /// <summary>Applies one key when the value is one the cabinet could hold, ignoring it otherwise.</summary>
     private static void Apply(GameSettings gameSettings, string name, int value)
@@ -138,7 +132,8 @@ public sealed class GameSettingsStore
             case "extramanevery" when GameSettings.IsExtraManEveryValue(value):
                 gameSettings.ExtraManEvery = value;
                 break;
-            case "turnsperplayer" when value is >= GameSettings.MinimumTurnsPerPlayer and <= GameSettings.MaximumTurnsPerPlayer:
+            case "turnsperplayer"
+                when value is >= GameSettings.MinimumTurnsPerPlayer and <= GameSettings.MaximumTurnsPerPlayer:
                 gameSettings.TurnsPerPlayer = value;
                 break;
             case "difficulty" when value is >= GameSettings.MinimumDifficulty and <= GameSettings.MaximumDifficulty:
