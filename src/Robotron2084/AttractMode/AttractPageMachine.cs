@@ -220,7 +220,7 @@ public sealed class AttractPageMachine
         switch (opcode)
         {
             case 0: // CURSAB — set the text cursor (column, row).
-                _cursorX = NextByte() * ScreenSize.ArcadePixelsPerColumn;
+                _cursorX = NextByte() * ScreenSize.ArcadePixelsPerByte;
                 _cursorY = NextByte();
                 return;
 
@@ -241,7 +241,7 @@ public sealed class AttractPageMachine
 
             case 5: // MESS — a name popup in the score row.
                 {
-                    int x = NextByte() * ScreenSize.ArcadePixelsPerColumn;
+                    int x = NextByte() * ScreenSize.ArcadePixelsPerByte;
                     int number = NextByte();
                     ClearTextCells(TextLeft, MessageRow, ClearWidth, MessageHeight);
                     Message = new MovieMessage(

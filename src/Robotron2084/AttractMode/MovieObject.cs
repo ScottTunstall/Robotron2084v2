@@ -82,7 +82,7 @@ public sealed record MovieObject
     public int GetRow() => (YSubpixels >> 8) + ShakeRowOffset;
 
     /// <summary>The column as arcade pixels.</summary>
-    public int GetArcadeX() => GetColumn() * ScreenSize.ArcadePixelsPerColumn;
+    public int GetArcadeX() => GetColumn() * ScreenSize.ArcadePixelsPerByte;
 
     /// <summary>The row as arcade pixels.</summary>
     public int GetArcadeY() => GetRow();
