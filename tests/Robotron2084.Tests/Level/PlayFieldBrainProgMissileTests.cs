@@ -39,7 +39,7 @@ public sealed class PlayFieldBrainProgMissileTests
     /// <summary>
     /// Ticks past the brain's first beat. ROM <c>BRAIN_AI</c> resolves its target — and tests its catch
     /// reach — inside its body, so a brain that has not had a beat yet has no target at all. With
-    /// <c>beatWaitRomFrames: 0</c> the period is one ROM frame (6 clock units) and a tick adds 5, so the
+    /// <c>beatWaitRomFrames: 0</c> the period is one fiftieth of a second (6 clock units) and a tick adds 5, so the
     /// SECOND tick is the beat (notes §18.8).
     /// </summary>
     private static void RunFirstBeat(PlayField field)
@@ -313,7 +313,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // LEFT — BRLP1 is BRNAL's frame 0, i.e. the left base's first frame.
         Assert.Equal(0, brain.GetWalkAnimationFrameIndex());
 
-        // The animation is 20 iterations x 2 redraws x 3 ROM frames = 144 ticks
+        // The animation is 20 iterations x 2 redraws x 3 fiftieths of a second = 144 ticks
         // on the clock-unit clock (notes §52; PortTicks(3) = 3 would have made it
         // 120). Through it the brain must not move (it is a solid block, not a
         // chaser).
@@ -560,7 +560,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var missile = new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(7));
         field.Entities.CruiseMissiles.Add(missile);
 
-        // The first beat (2 x 1px CMMOV) lands on tick 4 (3 ROM frames = 3.6),
+        // The first beat (2 x 1px CMMOV) lands on tick 4 (3 fiftieths of a second = 3.6),
         // and the re-aim timer cannot fire that early (RND(1..7) >= 1 decrement
         // per beat, re-aim on reaching 0).
         for (int tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3); tick++)

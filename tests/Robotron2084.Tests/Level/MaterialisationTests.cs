@@ -9,7 +9,7 @@ namespace Robotron2084.Tests;
 
 /// <summary>
 /// How the robots are brought on at the start of a wave (notes §62, §143), from `RRG23.ASM` `APPEAR` (R5 $28FE to $2962).
-/// The loop makes one pass a ROM frame (`NAP 1,APL`, $2949). Each pass starts the appear effect of the next robot on the
+/// The loop makes one pass a fiftieth of a second (`NAP 1,APL`, $2949). Each pass starts the appear effect of the next robot on the
 /// robot list `RPTR`, and every fourth one is a column fan (`ANDA #3 / CMPA #3`, $291C). The robots are off meanwhile
 /// (`ROBOFF`), and the loop draws robot j whole from pass 32 + j on (`CMPA #32`, $2930; `APREF`, $2965).
 /// </summary>
@@ -101,12 +101,12 @@ public class MaterialisationTests
     [Fact]
     public void OneAppearStarts_OnEachRomFrame_NotOnEachPortTick()
     {
-        // `NAP 1,APL` (R5 $2949): one robot's appear a ROM frame, the first at once. A ROM frame is 6/5 of a port
+        // `NAP 1,APL` (R5 $2949): one robot's appear a fiftieth of a second, the first at once. A fiftieth of a second is 6/5 of a port
         // tick, so robot k starts on tick ceil(1.2 x (k - 1)), and the 7th tick starts none.
         PlayField field = CreateField(grunts: 8);
 
         Advance(field, 1);
-        Assert.Equal(7, field.GetPendingAppearCount()); // ROM frame 0, on the first tick
+        Assert.Equal(7, field.GetPendingAppearCount()); // fiftieth of a second 0, on the first tick
         Assert.Single(field.Entities.Explosions);
         Assert.Equal(StripEffectKind.Appear, field.Entities.Explosions[0].Kind);
 
@@ -114,10 +114,10 @@ public class MaterialisationTests
         Assert.Equal(2, field.GetPendingAppearCount()); // ticks 2 to 6 start robots 2 to 6
 
         Advance(field, 1);
-        Assert.Equal(2, field.GetPendingAppearCount()); // tick 7 is still ROM frame 5
+        Assert.Equal(2, field.GetPendingAppearCount()); // tick 7 is still fiftieth of a second 5
 
         Advance(field, 1);
-        Assert.Equal(1, field.GetPendingAppearCount()); // tick 8 reaches ROM frame 6
+        Assert.Equal(1, field.GetPendingAppearCount()); // tick 8 reaches fiftieth of a second 6
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public class MaterialisationTests
         // (column) fan, the rest the row fan.
         PlayField field = CreateField(grunts: 8);
 
-        // One appear starts on each ROM frame, so some ticks start none: note each one as it starts.
+        // One appear starts on each fiftieth of a second, so some ticks start none: note each one as it starts.
         var axes = new List<StripFanAxis>();
         while (axes.Count < 8)
         {
@@ -152,13 +152,13 @@ public class MaterialisationTests
         // `AP2 STX PD2,U` ($292A) moves the loop on to robot 13 on the next pass all the same.
         PlayField field = CreateField(grunts: 13);
 
-        Advance(field, ArcadeClock.ToPortTicksRoundedUp(11)); // pass 12, on ROM frame 11
+        Advance(field, ArcadeClock.ToPortTicksRoundedUp(11)); // pass 12, on fiftieth of a second 11
 
         Assert.Equal(1, field.GetPendingAppearCount());
         Assert.Equal(11, field.Entities.Explosions.Count);
         Assert.Equal(StripExplosionTuning.HorizontalPoolSize, field.Entities.Explosions.Count(effect => effect.Axis == StripFanAxis.Columns));
 
-        Advance(field, 1); // tick 15 reaches ROM frame 12: pass 13
+        Advance(field, 1); // tick 15 reaches fiftieth of a second 12: pass 13
 
         Assert.Equal(0, field.GetPendingAppearCount());
         Assert.Equal(12, field.Entities.Explosions.Count);
@@ -206,8 +206,8 @@ public class MaterialisationTests
     [Fact]
     public void ARobotIsDrawnWhole_ThirtyTwoPassesAfterItsAppearStarts()
     {
-        // The first robot's appear starts on pass 1. Its vertical effect is over on ROM frame 29, and APREF draws the
-        // robot itself from pass 33, which is ROM frame 32. Draw-time behaviour cannot be tested (there is no graphics
+        // The first robot's appear starts on pass 1. Its vertical effect is over on fiftieth of a second 29, and APREF draws the
+        // robot itself from pass 33, which is fiftieth of a second 32. Draw-time behaviour cannot be tested (there is no graphics
         // device), so this pins the flag that the field's DrawEntity reads.
         PlayField field = CreateField(grunts: 1);
         Grunt grunt = field.Entities.Grunts[0];

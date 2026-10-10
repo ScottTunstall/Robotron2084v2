@@ -30,7 +30,7 @@ public sealed class PlayFieldMovementTests
         field.Update(new GameTime());
         IntVector2 afterAim = hulk.Position; // first unfrozen update = the spawn aim, no move
 
-        // Step period = 8 ROM frames = 9.6 ticks, so the step lands on the 10th.
+        // Step period = 8 fiftieths of a second = 9.6 ticks, so the step lands on the 10th.
         int beatIntervalClockUnits = ArcadeClock.ToPortTicksRoundedUp(8);
         for (int i = 1; i < beatIntervalClockUnits; i++)
         {

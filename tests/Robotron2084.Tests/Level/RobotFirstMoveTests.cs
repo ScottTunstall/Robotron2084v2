@@ -40,7 +40,7 @@ public sealed class RobotFirstMoveTests
     [InlineData(15, 0, 75)] // a tank: the look on frame 75
     public void TheWaitToTheFirstBeat_RunsFromTheFirstLookThatFindsTheGameLive(int pollRomFrames, int napRomFrames, int firstBeatRomFrame)
     {
-        // Fifteen robots: the game goes live on ROM frame 68, which is tick 82, and that tick starts at 405 clock units.
+        // Fifteen robots: the game goes live on fiftieth of a second 68, which is tick 82, and that tick starts at 405 clock units.
         var sequence = new WaveStartSequence(15, isBrainWave: false);
         for (int tick = 1; tick <= 82; tick++)
         {
@@ -82,7 +82,7 @@ public sealed class RobotFirstMoveTests
     [Fact]
     public void AHulk_TakesItsFirstStep_OnItsFirstLookAfterTheGameGoesLive()
     {
-        // One hulk: the player appears on ROM frame 44 and the game is live on 54. The hulk looks on frames 0, 8, 16
+        // One hulk: the player appears on fiftieth of a second 44 and the game is live on 54. The hulk looks on frames 0, 8, 16
         // and so on, so its first look after that is on frame 56, and it steps on that look.
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1, HulkCount: 1));
         Hulk hulk = field.Entities.Hulks[0];
@@ -100,7 +100,7 @@ public sealed class RobotFirstMoveTests
     [Fact]
     public void ABrain_TakesItsFirstBeat_TwelveFramesAfterItsFirstLook()
     {
-        // A brain wave is live on ROM frame 160, which is a frame the brains look on, so the first beat is on 172.
+        // A brain wave is live on fiftieth of a second 160, which is a frame the brains look on, so the first beat is on 172.
         // A brain has no target until its first beat (BRNL0 resolves it).
         PlayField field = CreateField(new LevelParameters(LevelNumber: 5, BrainCount: 1, MikeyCount: 1));
         Brain brain = field.Entities.Brains[0];
@@ -117,7 +117,7 @@ public sealed class RobotFirstMoveTests
     [Fact]
     public void ATankLeftFromTheLastMan_TakesItsFirstBeat_OnItsFirstLookAfterTheGameGoesLive()
     {
-        // One tank: the game is live on ROM frame 54. The tank looks on frames 0, 15, 30 and so on, so its first
+        // One tank: the game is live on fiftieth of a second 54. The tank looks on frames 0, 15, 30 and so on, so its first
         // look after that is on frame 60. Its tread moves on by one picture each beat (TANK3).
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1, TankCount: 1));
         Tank tank = field.Entities.Tanks[0];

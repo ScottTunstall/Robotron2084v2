@@ -11,8 +11,8 @@ namespace Robotron2084.Tests;
 /// The start of a wave (notes §142), from `RRG23.ASM` `PLS0A` to `PLS2` (R5 $2831 to $289A).
 /// The arcade sets the wave up with everything held (`LDA #$19 / STA STATUS`, $285B), runs `APPEAR`, and then:
 /// <list type="bullet">
-/// <item>`PLS1` — the player appears. `APPEAR` makes N + 32 passes a ROM frame apart for the N robots on its robot
-/// list (`CMPA #32 / BLS`, $2930; `NAP 1`, $2949), then `NAP 2` ($2953) and `NAP 10` ($295D): ROM frame N + 43.
+/// <item>`PLS1` — the player appears. `APPEAR` makes N + 32 passes a fiftieth of a second apart for the N robots on its robot
+/// list (`CMPA #32 / BLS`, $2930; `NAP 1`, $2949), then `NAP 2` ($2953) and `NAP 10` ($295D): fiftieth of a second N + 43.
 /// With no robots the loop still makes 33 passes: frame 44. On a brain wave it is `NAP 150,PLS1` ($2869).</item>
 /// <item>`PLS2` — the game goes live, `NAP 06` ($287A) and `NAP 4` ($2885) later: `MAKP LSPROC / MAKP COLCHK /
 /// CLR STATUS` ($2890 to $289A). Until then the player cannot move or fire (`PLAYRV`, `BITA #$01`), nothing
@@ -117,7 +117,7 @@ public sealed class WaveStartSequenceTests
 
         Tick(field, 1);
         Assert.True(field.HasPlayerAppeared());
-        Assert.False(field.IsLive()); // PLS1 is ten ROM frames before PLS2
+        Assert.False(field.IsLive()); // PLS1 is ten fiftieths of a second before PLS2
     }
 
     [Fact]

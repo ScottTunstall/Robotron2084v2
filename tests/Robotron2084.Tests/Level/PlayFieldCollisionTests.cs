@@ -178,7 +178,7 @@ public sealed class PlayFieldCollisionTests
         Assert.True(flare.Bounds.Y < field.Wall.PlayfieldBounds.Top, $"flare {flare.Bounds} is not on the top wall band");
         Assert.True(flare.Dithered);
 
-        // It lives 2 ROM frames = 12 clock units, so it survives two ticks and is
+        // It lives 2 fiftieths of a second = 12 clock units, so it survives two ticks and is
         // dropped on the third (the ROM's `NAP 2`).
         field.Update(Tick);
         Assert.Equal(1, field.GetLaserWallFlareCount());

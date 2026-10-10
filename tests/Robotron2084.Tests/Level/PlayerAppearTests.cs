@@ -11,13 +11,13 @@ namespace Robotron2084.Tests;
 /// <summary>
 /// The player's appear effect at the start of a wave (notes §143), from `RRG23.ASM` `PAPPR` (R5 $29F5) and `PDAPPR` ($29D2).
 /// At `PLS1` ($2874) the arcade asks for a row fan for every row of the player's sprite (`JSR APST`, "VERTS") and a column
-/// fan for every column of it (`JSR HAPST`). Six ROM frames later, at `PLS1A` ($2882), it asks for a pair of leaning fans
+/// fan for every column of it (`JSR HAPST`). Six fiftieths of a second later, at `PLS1A` ($2882), it asks for a pair of leaning fans
 /// for every third row. The player's own sprite is held until `PLS2` (STATUS bit 4, "PLAYER OUTPUT"). The player's sprite
 /// is 8 pixels by 12 rows, which is 4 of the arcade's columns.
 /// </summary>
 public sealed class PlayerAppearTests
 {
-    /// <summary>The ROM frame the player appears on in a wave with no robots: the appear loop's 33 passes, then `NAP 2` and `NAP 10`.</summary>
+    /// <summary>The fiftieth of a second the player appears on in a wave with no robots: the appear loop's 33 passes, then `NAP 2` and `NAP 10`.</summary>
     private const int PlayerAppearRomFrame = 44;
 
     private const int PlayerSpriteRows = 12;
@@ -120,7 +120,7 @@ public sealed class PlayerAppearTests
     [Fact]
     public void TheAppearIsOver_WhenTheLastColumnFanHasClosedUp()
     {
-        // The leaning fans last 15 ROM frames from frame 50, the row fans 29 from frame 44, and the column fans 31.
+        // The leaning fans last 15 fiftieths of a second from frame 50, the row fans 29 from frame 44, and the column fans 31.
         PlayField field = CreateEmptyField();
         int ticks = 0;
 

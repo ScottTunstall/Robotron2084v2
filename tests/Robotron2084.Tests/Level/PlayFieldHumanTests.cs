@@ -84,7 +84,7 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void Human_StepCadence_RunsOnTheClockUnitAccumulator()
     {
-        // 16 ROM frames = 19.2 port ticks (the period is an author override of the
+        // 16 fiftieths of a second = 19.2 port ticks (the period is an author override of the
         // ROM's NAP 8 — see Human.BeatIntervalRomFrames and notes §70), so the clock-unit
         // clock fires ceil(19.2k) ticks after the FIRST step: 20, 39, 58, 77, 96 … The
         // truncated PortTicks(16) = 19 fired every 19 — a tick further ahead every five
