@@ -13,7 +13,7 @@ namespace Robotron2084.Tests;
 ///
 /// 1. a solid-colour FLASH loop — `$99` (slot 9) for 2 frames, then a random
 ///    PDCTAB colour (`$00,$11,$33,$77` → slots 0/1/3/7) for 6 frames, ten times
-///    (`LDA #10`), i.e. 80 ROM frames;
+///    (`LDA #10`), i.e. 80 fiftieths of a second;
 /// 2. the slot-12 FADE — the DECAY process is stopped, the player keeps being
 ///    drawn solid in slot 12, and `FF F6 AD A4 5B 52 09 00` is written into slot
 ///    12 a byte per 4 frames; the trailing `$00` ends the death.
@@ -56,7 +56,7 @@ public sealed class PlayerDeathTests
         Assert.Equal(EntityLifeState.Dying, player.LifeState);
         Assert.Equal(PlayerTuning.PlayerDeathWhiteSlot, player.GetDeathSolidSlot());
 
-        // The flash is 80 ROM frames (48 clock units each iteration): every slot seen
+        // The flash is 80 fiftieths of a second (48 clock units each iteration): every slot seen
         // through it is either $99's slot 9 or a PDCTAB entry. Tick to 95 — the
         // 96th tick is where the fade takes over.
         int[] allowed = [.. PlayerTuning.PlayerDeathFlashSlots, PlayerTuning.PlayerDeathWhiteSlot];
@@ -93,7 +93,7 @@ public sealed class PlayerDeathTests
         Assert.True(palette.IsSlotSuspended(12), "the ROM kills the DECAY process off before the fade");
         Assert.Equal(PlayerTuning.PlayerDeathFadeValues[0], palette.GetSlotValue(12));
 
-        // The remaining writes are 4 ROM frames apart, which the clock-unit clock puts
+        // The remaining writes are 4 fiftieths of a second apart, which the clock-unit clock puts
         // on ticks 101/106/111/116/120/125/130 — gaps of 5,5,5,5,4,5,5.
         int[] gaps = [5, 5, 5, 5, 4, 5, 5];
         for (int i = 0; i < gaps.Length; i++)

@@ -7,7 +7,7 @@ namespace Robotron2084.Tests;
 
 /// <summary>
 /// The spheroid's sprite CHAIN (notes §56.2 as corrected by §90) — `OPICT += 4` once
-/// per beat (`NAP 2` = 3 ROM frames = 3.6 port ticks), where the wrap boundary decides
+/// per beat (`NAP 2` = 3 fiftieths of a second = 3.6 port ticks), where the wrap boundary decides
 /// how many animation frames a phase has:
 /// <list type="bullet">
 /// <item>`CIRCLE` (`ANIMATE_SPHEROID`) and `CIRC3L` both compare against `CIRP4`

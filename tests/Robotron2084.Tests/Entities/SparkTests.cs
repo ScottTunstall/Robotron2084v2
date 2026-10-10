@@ -104,7 +104,7 @@ public sealed class SparkTests
         field.SpawnSpark(centre, new IntVector2(centre.X + 1, centre.Y));
         Spark spark = field.Entities.Sparks[^1];
 
-        // 4 ROM frames = 4.8 ticks, so the frame boundary lands on tick 5 of each
+        // 4 fiftieths of a second = 4.8 ticks, so the frame boundary lands on tick 5 of each
         // period on the clock-unit clock (notes §52, §65).
         int period = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.SparkFrameIntervalRomFrames);
         Assert.Equal(0, spark.GetAnimationFrameIndex()); // born on SPKP0

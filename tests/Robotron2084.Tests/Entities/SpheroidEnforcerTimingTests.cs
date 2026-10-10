@@ -75,7 +75,7 @@ public sealed class SpheroidEnforcerTimingTests
     {
         // Minimum initial countdown = RND(1..CDPTIM) = 1 step, and a step is now a
         // full FIVE-animation-frame wrap (CIRCLE advances `OPICT += 4` per `NAP 2` beat and
-        // wraps at CIRP4, notes §90): 5 x 3 = 15 ROM frames = 18 port ticks. (It was
+        // wraps at CIRP4, notes §90): 5 x 3 = 15 fiftieths of a second = 18 port ticks. (It was
         // 16 frames while §56.2 mis-read the boundary as CIRP3.) The start of the wave
         // holds everything until the game goes live, so the earliest possible drop is
         // 18 ticks after that; no drop through the 17th for every seed pins that floor.
@@ -125,7 +125,7 @@ public sealed class SpheroidEnforcerTimingTests
     [Fact]
     public void Enforcer_GrowFrames_ChangeOnTheRomsNineFrameBoundaries()
     {
-        // FIVE grow animation frames over 45 ROM frames = 9 frames each, on the clock-unit
+        // FIVE grow animation frames over 45 fiftieths of a second = 9 frames each, on the clock-unit
         // clock, so animation frame n starts on the first tick where 5t >= 9n x 6 — i.e.
         // ticks 1, 11, 22, 33, 44. The old PortTicks(9) = 10 switched every 10 ticks
         // and ran out early inside a correctly-timed growth (notes §65.3).

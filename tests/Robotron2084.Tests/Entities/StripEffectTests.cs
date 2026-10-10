@@ -350,7 +350,7 @@ public sealed class StripEffectTests
         slope,
         clip: Clip);
 
-    /// <summary>Runs an effect on to the tick a ROM frame falls on, counted from when the effect was made.</summary>
+    /// <summary>Runs an effect on to the tick a fiftieth of a second falls on, counted from when the effect was made.</summary>
     private static void UpdateToRomFrame(StripEffect effect, ref int ticks, int romFrame)
     {
         while (ticks < ArcadeClock.ToPortTicksRoundedUp(romFrame))

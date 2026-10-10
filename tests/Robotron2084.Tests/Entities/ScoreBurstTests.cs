@@ -61,12 +61,12 @@ public sealed class ScoreBurstTests
     [Fact]
     public void EachStepTakesTwoRomFrames_NotTwoPortTicks()
     {
-        // `NAP 2` = 2 ROM frames = 12 clock units, and a port tick is 5 clock units, so a
+        // `NAP 2` = 2 fiftieths of a second = 12 clock units, and a port tick is 5 clock units, so a
         // step lands every 2-3 ticks (2.4). PortTicks(2) would also be 2 here,
         // but the accumulator is the repo's rule for short ROM delays (§52).
         ScoreBurst burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
 
-        // Animation frame 2 is shown from the kill itself; each step is 2 ROM frames.
+        // Animation frame 2 is shown from the kill itself; each step is 2 fiftieths of a second.
         Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, burst.AnimationFrameIndex);
         Advance(burst, 2);
         Assert.Equal(2, burst.AnimationFrameIndex); // 10 clock units: not yet

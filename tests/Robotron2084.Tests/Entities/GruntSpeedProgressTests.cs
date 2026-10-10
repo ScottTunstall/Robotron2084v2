@@ -28,18 +28,18 @@ public sealed class GruntSpeedProgressTests
 {
     private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    /// <summary>ROM frames from the game going live to GEXEC starting: `NAP 12,PLS3` and `NAP 10,PLS4`.</summary>
+    /// <summary>fiftieths of a second from the game going live to GEXEC starting: `NAP 12,PLS3` and `NAP 10,PLS4`.</summary>
     private const int ExecutiveStartRomFrames = 12 + 10;
 
-    /// <summary>ROM frames from the game going live to the first check: GEXEC's 18th pass is 17 sleeps of 15 after it starts.</summary>
+    /// <summary>fiftieths of a second from the game going live to the first check: GEXEC's 18th pass is 17 sleeps of 15 after it starts.</summary>
     private const int FirstCheckRomFrames = ExecutiveStartRomFrames + (17 * 15);
 
-    /// <summary>ROM frames between one check and the next: 15 passes of 15.</summary>
+    /// <summary>fiftieths of a second between one check and the next: 15 passes of 15.</summary>
     private const int CheckIntervalRomFrames = 15 * 15;
 
     private static GameTime Frame() => new(TimeSpan.Zero, FrameSpan);
 
-    /// <summary>The port tick, counted from the field being made, on which a ROM frame that many after the game goes live falls.</summary>
+    /// <summary>The port tick, counted from the field being made, on which a fiftieth of a second that many after the game goes live falls.</summary>
     private static int TickOfRomFrameAfterLive(PlayField field, int romFrames) => ArcadeClock.ToPortTicksRoundedUp(field.GetLiveRomFrames() + romFrames);
 
     private static void Tick(PlayField field, int ticks)

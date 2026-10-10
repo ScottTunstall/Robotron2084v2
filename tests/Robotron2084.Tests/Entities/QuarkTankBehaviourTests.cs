@@ -138,7 +138,7 @@ public sealed class QuarkTankBehaviourTests
         IntVector2 start = tank.Position;
 
         // ROM MTANK ("MINI TANK GROW"): a dropped tank plays four mini-tank
-        // animation frames at NAP 12 ROM frames each — 48 ROM frames = 4.8x12 = 57.6
+        // animation frames at NAP 12 fiftieths of a second each — 48 fiftieths of a second = 4.8x12 = 57.6
         // port ticks — and it does not move, aim or fire until they are done.
         // Author, 2026-09-16: "tanks spawn instantly whereas they are 'born'
         // like the enforcer." The old test asserted movement on the FIRST frame,
@@ -167,7 +167,7 @@ public sealed class QuarkTankBehaviourTests
         Assert.InRange(tank.Position.Y, grown.Y - 2, grown.Y + 2);
 
         // From here it is a normal tank, and it moves one pixel per axis per BEAT
-        // (TNKSPD 2 + 1 = 3 ROM frames ≈ 4 ticks) — not every tick like the port
+        // (TNKSPD 2 + 1 = 3 fiftieths of a second ≈ 4 ticks) — not every tick like the port
         // used to.
         IntVector2 beforeStep = tank.Position;
         for (int tick = 0; tick < 8 && tank.Position == beforeStep; tick++)
