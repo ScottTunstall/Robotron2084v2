@@ -117,7 +117,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         _movie.Update(gameTime);
 
-        // Page Up held (dev key, notes §97): run the movie's ROM frame clock extra
+        // Page Up held (dev key, notes §97): run the movie's clock extra
         // times so a later scene can be reached without waiting out the text
         // crawl. The clock itself is untouched — this is the same accumulator,
         // just stepped more often.

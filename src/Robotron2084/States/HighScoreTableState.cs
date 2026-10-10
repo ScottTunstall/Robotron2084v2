@@ -34,7 +34,7 @@ namespace Robotron2084.States;
 /// the highlight colour — the ROM's <c>CLSET</c> test against <c>ZP1SCR</c>/
 /// <c>ZP2SCR</c>, which is how the player finds their own entry.
 ///
-/// It holds for 600 ROM frames (12 s) and then, exactly as the ROM does, waits
+/// It holds for 600 fiftieths of a second (12 s) and then, exactly as the ROM does, waits
 /// for any switch/start press — up to another 255 × 4 frames — before handing
 /// back to the title page (<c>FAMPAG</c>).
 /// </summary>
