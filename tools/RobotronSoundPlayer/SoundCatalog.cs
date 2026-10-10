@@ -52,14 +52,15 @@ internal sealed class SoundCatalog
         return isPlace && place >= 1 && place <= GameSounds.Count ? GameSounds[place - 1] : null;
     }
 
-    /// <summary>Reads every table in <see cref="SoundTables"/>, in name order.</summary>
+    /// <summary>Reads every table in <see cref="SoundTables"/>, in name order, then the eight coin tables (Coin1 to Coin8).</summary>
     private static IEnumerable<ISoundRequest> ReadSoundTables()
     {
         return typeof(SoundTables)
             .GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(field => field.FieldType == typeof(SoundSequence))
             .OrderBy(field => field.Name, StringComparer.Ordinal)
-            .Select(field => new SoundTableRequest(field.Name, (SoundSequence)field.GetValue(null)!));
+            .Select(field => new SoundTableRequest(field.Name, (SoundSequence)field.GetValue(null)!))
+            .Concat(SoundTables.Coin.Select((table, index) => new SoundTableRequest($"Coin{index + 1}", table)));
     }
 
     /// <summary>Reads a sound number written as <c>$0E</c>, <c>0x0E</c> or <c>#14</c>.</summary>
