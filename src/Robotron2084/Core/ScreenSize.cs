@@ -58,7 +58,8 @@ public static class ScreenSize
     public static int ToColumnAndRowDistance(IntVector2 from, IntVector2 to) =>
         (Math.Abs(to.X - from.X) / ToPortPixelsFromColumns(1)) + (Math.Abs(to.Y - from.Y) / ToPortPixels(1));
 
-    /// <summary>ROM columns to port pixels: a column is two arcade pixels.</summary>
+    /// <summary>Changes a number of the arcade's columns into port pixels. A column is <see cref="ArcadePixelsPerColumn"/> arcade pixels wide, and an arcade pixel is <see cref="SpecScale"/> port pixels wide, so one column is 4 port pixels.</summary>
+    /// <param name="columns">How many columns.</param>
     public static int ToPortPixelsFromColumns(int columns) => ToPortPixels(columns * ArcadePixelsPerColumn);
 
     /// <summary>
