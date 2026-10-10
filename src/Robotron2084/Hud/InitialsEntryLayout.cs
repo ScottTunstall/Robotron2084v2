@@ -70,7 +70,7 @@ public static class InitialsEntryLayout
     public static int GetMarkerHeightPixels() => HudLayout.ToPortY(EchoRow + MarkerRowOffset + 1) - GetMarkerY();
 
     /// <summary>The marker's width: the raw video byte <c>$99</c> lights both pixels of one column.</summary>
-    public static int GetMarkerWidthPixels() => HudLayout.ToPortX(ScreenSize.ArcadePixelsPerColumn);
+    public static int GetMarkerWidthPixels() => HudLayout.ToPortX(ScreenSize.ArcadePixelsPerByte);
 
     /// <summary>The Y of the row the frob markers sit on, in port pixels.</summary>
     public static int GetMarkerY() => HudLayout.ToPortY(EchoRow + MarkerRowOffset);
