@@ -10,13 +10,13 @@ namespace Robotron2084.AttractMode;
 /// <list type="bullet">
 /// <item>a byte below 10 is an action — CURSAB, CLEARM, NEWLIN, SCRPT, SNOOZE,
 /// MESS, DONE, COLOR, GRUNTS, DONE2;</item>
-/// <item>a byte of $5F or more is a sleep that many ROM frames;</item>
+/// <item>a byte of $5F or more is a sleep that many fiftieths of a second;</item>
 /// <item>anything else is a character to blit in the LARGE font — one every
 /// three frames, exactly the ROM's `NAP 3`.</item>
 /// </list>
 /// It drives the object machine (SCRPT/FORK/GRUNTS) and builds the text layer the
 /// renderer draws. Timing is the ROM's frame clock: one <see cref="StepFrame"/>
-/// per ROM frame.
+/// per fiftieth of a second.
 /// </summary>
 public sealed class AttractPageMachine
 {
@@ -68,7 +68,7 @@ public sealed class AttractPageMachine
     /// <summary>The current text colour slot (the ROM's `TEXCOL`).</summary>
     public int TextSlot { get; private set; } = 10;
 
-    /// <summary>Runs one ROM frame of the page script.</summary>
+    /// <summary>Runs one fiftieth of a second of the page script.</summary>
     public void StepFrame()
     {
         SpawnQueuedGrunts();

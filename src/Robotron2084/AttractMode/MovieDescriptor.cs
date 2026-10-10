@@ -8,7 +8,7 @@ namespace Robotron2084.AttractMode;
 /// <param name="AnimationFrameCount">The ROM's animation frame count (the walk animation frames cycle within it).</param>
 /// <param name="Walk">Which walker its MOVE opcodes use.</param>
 /// <param name="StepSize">BR* walkers only: the descriptor's step byte (half-columns).</param>
-/// <param name="StepNap">BR* walkers only: the descriptor's nap byte (ROM frames a step).</param>
+/// <param name="StepNap">BR* walkers only: the descriptor's nap byte (fiftieths of a second a step).</param>
 public readonly record struct MovieDescriptor(
     MovieAnimation Animation,
     int AnimationFrameCount,

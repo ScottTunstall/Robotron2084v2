@@ -12,7 +12,7 @@ namespace Robotron2084.AttractMode;
 ///
 /// It runs the ROM's own bytes (<see cref="AttractMovieData.Scripts"/>) with the
 /// ROM's own opcodes at the ROM's own frame clock: one <see cref="StepFrame"/>
-/// call per ROM frame. The one thing the ROM's listings leave implicit here is
+/// call per fiftieth of a second. The one thing the ROM's listings leave implicit here is
 /// the per-frame velocity integrator — the movie's `SETXV`/`SETYV` are read by
 /// the object refresh (the same `OPB80` mover the playfield uses, notes §93),
 /// and MONO moves its OWN hidden object explicitly because `HIB` has taken that
@@ -21,7 +21,7 @@ namespace Robotron2084.AttractMode;
 /// </summary>
 public sealed class AttractObjectMachine
 {
-    /// <summary>The ANA* walker's `NAP 8` (notes §95.7) — ROM frames per walk step. It is the value the machine's <see cref="MovieProcess.WaitRomFrames"/> is set to between walk steps.</summary>
+    /// <summary>The ANA* walker's `NAP 8` (notes §95.7) — fiftieths of a second per walk step. It is the value the machine's <see cref="MovieProcess.WaitRomFrames"/> is set to between walk steps.</summary>
     public const int WalkStepRomFrames = 8;
 
     /// <summary>ROM `EXPP` stores ACTHIT+6 into the explosion's centre row.</summary>
@@ -76,7 +76,7 @@ public sealed class AttractObjectMachine
         _processes.Add(process);
     }
 
-    /// <summary>Runs one ROM frame: move what moves, then advance every process.</summary>
+    /// <summary>Runs one fiftieth of a second: move what moves, then advance every process.</summary>
     public void StepFrame()
     {
         MoveObjects();
@@ -179,7 +179,7 @@ public sealed class AttractObjectMachine
 
         public bool IsAlive { get; set; } = true;
 
-        /// <summary>One ROM frame of this process.</summary>
+        /// <summary>One step of this process.</summary>
         public void Step(AttractObjectMachine machine)
         {
             if (WaitRomFrames > 0 && --WaitRomFrames > 0)

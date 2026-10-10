@@ -31,7 +31,7 @@ public sealed record MovieObject
     /// <summary>A left/right laser bolt fired by LFIRE/RFIRE — drawn as the laser, killed on its timer.</summary>
     public bool IsLaser { get; set; }
 
-    /// <summary>ROM frames a laser bolt stays alive (LFIRE/RFIRE's first operand).</summary>
+    /// <summary>fiftieths of a second a laser bolt stays alive (LFIRE/RFIRE's first operand).</summary>
     public int LaserRomFramesLeft { get; set; }
 
     /// <summary>Which animation frame of the descriptor's animation the object is showing.</summary>
@@ -43,10 +43,10 @@ public sealed record MovieObject
     /// <summary>Y in 1/256 rows (256 = one row = 1 arcade px).</summary>
     public int YSubpixels { get; set; }
 
-    /// <summary>Velocity in 1/256 columns per ROM frame (the ROM's OXV).</summary>
+    /// <summary>Velocity in 1/256 columns per fiftieth of a second (the ROM's OXV).</summary>
     public int XVelocitySubpixels { get; set; }
 
-    /// <summary>Velocity in 1/256 rows per ROM frame (the ROM's OYV).</summary>
+    /// <summary>Velocity in 1/256 rows per fiftieth of a second (the ROM's OYV).</summary>
     public int YVelocitySubpixels { get; set; }
 
     /// <summary>

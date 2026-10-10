@@ -9,7 +9,7 @@ namespace Robotron2084.AttractMode;
 /// page-script interpreter and the object-script interpreter and runs them on the
 /// ROM's frame clock — a 50 Hz frame is 6/5 of a 60 Hz tick, so the movie is
 /// driven by the same clock-unit accumulator the entities use (notes §52/§93):
-/// five clock units a tick, a ROM frame every time the accumulator reaches six.
+/// five clock units a tick, a fiftieth of a second every time the accumulator reaches six.
 /// </summary>
 public sealed class AttractMovie
 {
@@ -30,10 +30,10 @@ public sealed class AttractMovie
     /// <summary>The text/action interpreter that drives them.</summary>
     public AttractPageMachine PageMachine { get; }
 
-    /// <summary>ROM frames played so far (a test hook).</summary>
+    /// <summary>Movie time played so far, in fiftieths of a second (a test hook).</summary>
     public int RomFrames { get; private set; }
 
-    /// <summary>Advances the movie by one port tick (0 or 1 ROM frames of work).</summary>
+    /// <summary>Advances the movie by one port tick (0 or 1 fiftieths of a second of work).</summary>
     public void Update(GameTime gameTime)
     {
         _clockUnits += ArcadeClock.UnitsPerPortTick;
