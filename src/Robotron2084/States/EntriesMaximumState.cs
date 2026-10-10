@@ -6,16 +6,16 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>
-/// The ONLY5P page (notes §116) — "5 ENTRIES MAXIMUM PER PLAYER / LOWEST ENTRY REPLACED", which the
-/// arcade shows when the all-time list's per-initials cap has just applied, held for 1.2 s before the
-/// ceremony carries on.
+///     The ONLY5P page (notes §116) — "5 ENTRIES MAXIMUM PER PLAYER / LOWEST ENTRY REPLACED", which the
+///     arcade shows when the all-time list's per-initials cap has just applied, held for 1.2 s before the
+///     ceremony carries on.
 /// </summary>
 /// <remarks>
-/// ROM RRTESTC <c>GTTHM8</c>: <c>SCRCLR</c>, then RRET message 100 (<c>ONLY5P</c>) —
-/// <c>COLOR $BB</c> with "5 ENTRIES MAXIMUM" + " PER PLAYER" at (32, 112) and "LOWEST ENTRY REPLACED"
-/// at (40, 144) — and <c>NAP $60</c>. Slot 11 is one of the ROM's cycling slots, but <c>ENDGAM</c>
-/// kills the colour processes before any of these pages, so on the cabinet this text does not cycle;
-/// the port's animator is global, so in the port it does (a parked deviation, notes §116).
+///     ROM RRTESTC <c>GTTHM8</c>: <c>SCRCLR</c>, then RRET message 100 (<c>ONLY5P</c>) —
+///     <c>COLOR $BB</c> with "5 ENTRIES MAXIMUM" + " PER PLAYER" at (32, 112) and "LOWEST ENTRY REPLACED"
+///     at (40, 144) — and <c>NAP $60</c>. Slot 11 is one of the ROM's cycling slots, but <c>ENDGAM</c>
+///     kills the colour processes before any of these pages, so on the cabinet this text does not cycle;
+///     the port's animator is global, so in the port it does (a parked deviation, notes §116).
 /// </remarks>
 public sealed class EntriesMaximumState : IGameState
 {
@@ -46,19 +46,18 @@ public sealed class EntriesMaximumState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
-        if (++_elapsedTicks < _holdTicks)
-        {
-            return;
-        }
+        if (++_elapsedTicks < _holdTicks) return;
 
         manager.TransitionTo(_ceremony.NextScreen());
     }
 
-    private void DrawLine(SpriteBatch spriteBatch, string text, int column, int row) =>
+    private void DrawLine(SpriteBatch spriteBatch, string text, int column, int row)
+    {
         _services.Sprites.TextRenderer.DrawLargeFontText(
             spriteBatch,
             text,
             HudLayout.ToPortColumnX(column),
             HudLayout.ToPortY(row),
             ScreenTuning.EntriesMaximumSlot);
+    }
 }

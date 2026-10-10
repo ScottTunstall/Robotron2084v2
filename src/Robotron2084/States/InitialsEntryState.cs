@@ -5,21 +5,20 @@ using Robotron2084.Hud;
 using Robotron2084.Input;
 using Robotron2084.Level;
 using Robotron2084.Palette;
-using Robotron2084.Persistence;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.States;
 
 /// <summary>
-/// The CONG screen — the arcade's "YOU ARE A ROBOTRON HERO / ENTER YOUR INITIALS:" page (notes §116).
-/// It collects one player's initials through <see cref="InitialsEntryModel"/>, offers the score to the
-/// table under them, and hands the ceremony on to its next screen.
+///     The CONG screen — the arcade's "YOU ARE A ROBOTRON HERO / ENTER YOUR INITIALS:" page (notes §116).
+///     It collects one player's initials through <see cref="InitialsEntryModel" />, offers the score to the
+///     table under them, and hands the ceremony on to its next screen.
 /// </summary>
 /// <remarks>
-/// ROM RRTESTC <c>EGSUB</c> printing RRET message 95 (<c>CONGP</c>): <c>COLOR $44</c>, "PLAYER n" at
-/// (64, 16), "YOU ARE A ROBOTRON HERO" at (41, 48), "ENTER YOUR INITIALS:" at (45, 88), then
-/// <c>TELSUB</c>'s small-font white instructions under the letters' echo region. Cursors, slots and
-/// cell geometry are <see cref="InitialsEntryLayout"/>'s.
+///     ROM RRTESTC <c>EGSUB</c> printing RRET message 95 (<c>CONGP</c>): <c>COLOR $44</c>, "PLAYER n" at
+///     (64, 16), "YOU ARE A ROBOTRON HERO" at (41, 48), "ENTER YOUR INITIALS:" at (45, 88), then
+///     <c>TELSUB</c>'s small-font white instructions under the letters' echo region. Cursors, slots and
+///     cell geometry are <see cref="InitialsEntryLayout" />'s.
 /// </remarks>
 public sealed class InitialsEntryState : IGameState
 {
@@ -52,13 +51,10 @@ public sealed class InitialsEntryState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager manager)
     {
-        PlayerInputState input = _input.Poll();
-        if (!_entry.Tick(input))
-        {
-            return;
-        }
+        var input = _input.Poll();
+        if (!_entry.Tick(input)) return;
 
-        SubmitResult result = _ceremony.Submit(_score, _entry.GetInitials());
+        var result = _ceremony.Submit(_score, _entry.GetInitials());
         manager.TransitionTo(result.ReachedEntriesMaximum
             ? new EntriesMaximumState(_services, _ceremony)
             : _ceremony.NextScreen());
@@ -68,63 +64,75 @@ public sealed class InitialsEntryState : IGameState
     {
         if (cell == _entry.LetterIndex && _entry.IsPreviewRub())
         {
-            _sprites.TextRenderer.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
+            _sprites.TextRenderer.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(),
+                InitialsEntryLayout.InkSlot);
             return;
         }
 
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, _entry.GetInitials()[cell].ToString(), x, InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, _entry.GetInitials()[cell].ToString(), x,
+            InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
     }
 
     /// <summary>
-    /// The three cells of the echo region: each letter, the cursor's cell showing its preview — the ROM's
-    /// own rub marker when that is what the cell holds — and G0SUB's white dash under every cell.
+    ///     The three cells of the echo region: each letter, the cursor's cell showing its preview — the ROM's
+    ///     own rub marker when that is what the cell holds — and G0SUB's white dash under every cell.
     /// </summary>
     private void DrawCells(SpriteBatch spriteBatch)
     {
-        for (int cell = 0; cell < InitialsEntryModel.LetterCount; cell++)
+        for (var cell = 0; cell < InitialsEntryModel.LetterCount; cell++)
         {
-            int x = InitialsEntryLayout.GetCellX(cell);
+            var x = InitialsEntryLayout.GetCellX(cell);
             DrawCell(spriteBatch, cell, x);
             DrawMarker(spriteBatch, x);
         }
     }
 
-    private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row) =>
-            _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, HudLayout.ToPortColumnX(column), HudLayout.ToPortY(row), InitialsEntryLayout.InkSlot);
+    private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row)
+    {
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
+            HudLayout.ToPortY(row), InitialsEntryLayout.InkSlot);
+    }
 
     /// <summary>G0SUB's "frob" marker: a two-pixel dash one row of the arcade below its cell.</summary>
-    private void DrawMarker(SpriteBatch spriteBatch, int x) =>
+    private void DrawMarker(SpriteBatch spriteBatch, int x)
+    {
         _sprites.Blitter.DrawSolidRectangle(
             spriteBatch,
-            new Rectangle(x, InitialsEntryLayout.GetMarkerY(), InitialsEntryLayout.GetMarkerWidthPixels(), InitialsEntryLayout.GetMarkerHeightPixels()),
+            new Rectangle(x, InitialsEntryLayout.GetMarkerY(), InitialsEntryLayout.GetMarkerWidthPixels(),
+                InitialsEntryLayout.GetMarkerHeightPixels()),
             _sprites.Blitter.GetSlotColour(InitialsEntryLayout.InstructionSlot));
+    }
 
     /// <summary>CONGP's three large-font lines and TELSUB's two small-font instructions.</summary>
     private void DrawPage(SpriteBatch spriteBatch)
     {
-        DrawLarge(spriteBatch, $"PLAYER {_score.PlayerNumber}", InitialsEntryLayout.PlayerColumn, InitialsEntryLayout.PlayerRow);
+        DrawLarge(spriteBatch, $"PLAYER {_score.PlayerNumber}", InitialsEntryLayout.PlayerColumn,
+            InitialsEntryLayout.PlayerRow);
         DrawLarge(spriteBatch, "YOU ARE A ROBOTRON HERO", InitialsEntryLayout.HeroColumn, InitialsEntryLayout.HeroRow);
         DrawLarge(spriteBatch, "ENTER YOUR INITIALS:", InitialsEntryLayout.PromptColumn, InitialsEntryLayout.PromptRow);
-        DrawSmall(spriteBatch, "USE -MOVE- TO SELECT LETTER", InitialsEntryLayout.SelectColumn, InitialsEntryLayout.SelectRow);
-        DrawSmall(spriteBatch, "-FIRE UP- TO ENTER LETTER", InitialsEntryLayout.FireColumn, InitialsEntryLayout.FireRow);
+        DrawSmall(spriteBatch, "USE -MOVE- TO SELECT LETTER", InitialsEntryLayout.SelectColumn,
+            InitialsEntryLayout.SelectRow);
+        DrawSmall(spriteBatch, "-FIRE UP- TO ENTER LETTER", InitialsEntryLayout.FireColumn,
+            InitialsEntryLayout.FireRow);
     }
 
-    private void DrawSmall(SpriteBatch spriteBatch, string text, int column, int row) =>
-            _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, HudLayout.ToPortColumnX(column), HudLayout.ToPortY(row), InitialsEntryLayout.InstructionSlot);
+    private void DrawSmall(SpriteBatch spriteBatch, string text, int column, int row)
+    {
+        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
+            HudLayout.ToPortY(row), InitialsEntryLayout.InstructionSlot);
+    }
 
     /// <summary>
-    /// The two entries the page draws with, put back on their CRTAB values: the screen it follows may
-    /// have left them holding anything (the in-play animator and the wave colours own slots 0-15), and
-    /// the page's own colours are CONGP's slot 4 and TELSUB's slot 9.
+    ///     The two entries the page draws with, put back on their CRTAB values: the screen it follows may
+    ///     have left them holding anything (the in-play animator and the wave colours own slots 0-15), and
+    ///     the page's own colours are CONGP's slot 4 and TELSUB's slot 9.
     /// </summary>
     private void RestorePalette()
     {
-        if (_sprites.Blitter.Palette is not { } palette)
-        {
-            return;
-        }
+        if (_sprites.Blitter.Palette is not { } palette) return;
 
         palette.SetSlot(InitialsEntryLayout.InkSlot, GamePalette.DefaultSlotValues[InitialsEntryLayout.InkSlot]);
-        palette.SetSlot(InitialsEntryLayout.InstructionSlot, GamePalette.DefaultSlotValues[InitialsEntryLayout.InstructionSlot]);
+        palette.SetSlot(InitialsEntryLayout.InstructionSlot,
+            GamePalette.DefaultSlotValues[InitialsEntryLayout.InstructionSlot]);
     }
 }
