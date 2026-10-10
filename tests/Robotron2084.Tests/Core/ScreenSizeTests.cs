@@ -6,24 +6,24 @@ namespace Robotron2084.Tests;
 /// <summary>
 /// Resolution invariants. These must hold at ANY SpecScale, so the suite
 /// stays green when the render scale is raised (ScreenSize is the single
-/// source of truth). The 320x200 spec space IS pinned — that is the game's
-/// layout per spec.txt. SpecScale is deliberately NOT pinned: it is the knob
+/// source of truth). The 320 by 200 screen size IS pinned — that is the game's
+/// layout. SpecScale is deliberately NOT pinned: it is the knob
 /// a resolution increase turns.
 /// </summary>
 public sealed class ScreenSizeTests
 {
     [Fact]
-    public void SpecSpace_IsTheGameLayout_320x200()
+    public void ScreenSizeInArcadePixels_IsTheGameLayout_320x200()
     {
-        Assert.Equal(320, ScreenSize.SpecWidth);
-        Assert.Equal(200, ScreenSize.SpecHeight);
+        Assert.Equal(320, ScreenSize.WidthInArcadePixels);
+        Assert.Equal(200, ScreenSize.HeightInArcadePixels);
     }
 
     [Fact]
-    public void InternalResolution_DerivesFromSpecSpace()
+    public void InternalResolution_DerivesFromScreenSizeInArcadePixels()
     {
-        Assert.Equal(ScreenSize.SpecWidth * ScreenSize.SpecScale, ScreenSize.Width);
-        Assert.Equal(ScreenSize.SpecHeight * ScreenSize.SpecScale, ScreenSize.Height);
+        Assert.Equal(ScreenSize.WidthInArcadePixels * ScreenSize.SpecScale, ScreenSize.Width);
+        Assert.Equal(ScreenSize.HeightInArcadePixels * ScreenSize.SpecScale, ScreenSize.Height);
     }
 
     [Theory]
