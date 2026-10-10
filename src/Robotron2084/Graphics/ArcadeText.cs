@@ -96,7 +96,7 @@ public sealed class ArcadeText
         DrawTableNumber(spriteBatch, _fontLarge, value, x, y, slot);
 
     /// <summary>
-    /// Draws the mini man LIVES icon (notes §58.2) at (x, y), SpecScale x its
+    /// Draws the mini man LIVES icon (notes §58.2) at (x, y), PortPixelsPerArcadePixel x its
     /// 6x8 arcade-pixel size, through the colour-cycle effect so its slot-11
     /// body/arms cycle like the arcade's.
     /// </summary>
@@ -189,7 +189,7 @@ public sealed class ArcadeText
     public int MeasureLargeText(string text) => MeasureText(_fontLarge, text);
 
     /// <summary>
-    /// The width of a string in the arcade's SMALL font, in SPEC pixels: each glyph advances its own
+    /// The width of a string in the arcade's SMALL font, in arcade pixels: each glyph advances its own
     /// width + 1 (the ROM's $6009 rule) and a space advances the blank's 2 (the ROM blits its 1-px
     /// ':' glyph for a space). The states that CENTRE a line use this rather than assuming a fixed
     /// advance — the glyph widths differ, and the LARGE font's differ from the small one's.

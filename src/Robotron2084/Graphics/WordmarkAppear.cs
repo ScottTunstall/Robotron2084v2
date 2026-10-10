@@ -43,7 +43,7 @@ public sealed class WordmarkAppear
         _coreSprite = coreSprite;
         _letters = letters;
         _spriteHeight = spriteSize.Y;
-        _bounds = new Rectangle(origin.X, origin.Y, spriteSize.X * ScreenSize.SpecScale, spriteSize.Y * ScreenSize.SpecScale);
+        _bounds = new Rectangle(origin.X, origin.Y, spriteSize.X * ScreenSize.PortPixelsPerArcadePixel, spriteSize.Y * ScreenSize.PortPixelsPerArcadePixel);
         StripClip wholeScreenClip = StripClip.CreateFromPortPixels(new Rectangle(0, 0, ScreenSize.Width, ScreenSize.Height));
         _effects = [.. letters.Select(letter => StripEffect.CreateAppear(rimSprite, GetLetterBounds(letter), StripFanAxis.Rows, wholeScreenClip))];
     }
@@ -140,7 +140,7 @@ public sealed class WordmarkAppear
     private int GetRomFrames() => _clockUnits / ArcadeClock.UnitsPerRomFrame;
 
     private Rectangle GetLetterBounds(LetterSpan letter) =>
-        new(_bounds.X + (letter.Start * ScreenSize.SpecScale), _bounds.Y, letter.Width * ScreenSize.SpecScale, _bounds.Height);
+        new(_bounds.X + (letter.Start * ScreenSize.PortPixelsPerArcadePixel), _bounds.Y, letter.Width * ScreenSize.PortPixelsPerArcadePixel, _bounds.Height);
 
     private void DrawWhole(SpriteBatch spriteBatch, BlitterDraw blitter, LetterSpan letter, int rimSlot, int coreSlot)
     {
@@ -157,10 +157,10 @@ public sealed class WordmarkAppear
         {
             Rectangle source = new(letter.Start, strip.SourceIndex, letter.Width, 1);
             Rectangle destination = new(
-                strip.X * ScreenSize.SpecScale,
-                strip.Y * ScreenSize.SpecScale,
-                letter.Width * ScreenSize.SpecScale,
-                ScreenSize.SpecScale);
+                strip.X * ScreenSize.PortPixelsPerArcadePixel,
+                strip.Y * ScreenSize.PortPixelsPerArcadePixel,
+                letter.Width * ScreenSize.PortPixelsPerArcadePixel,
+                ScreenSize.PortPixelsPerArcadePixel);
             blitter.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitter.GetSlotColour(rimSlot));
             blitter.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination, blitter.GetSlotColour(coreSlot));
         }

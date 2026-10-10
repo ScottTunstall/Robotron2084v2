@@ -14,7 +14,7 @@ namespace Robotron2084.Graphics;
 /// dimensions. Entity patterns are authored on a fixed
 /// <see cref="DesignSize"/>×<see cref="DesignSize"/> design canvas and
 /// nearest-neighbour scaled to <see cref="PatternSize"/>, so they stay
-/// correct at any <c>ScreenSize.SpecScale</c>.
+/// correct at any <c>ScreenSize.PortPixelsPerArcadePixel</c>.
 /// </summary>
 public sealed class SpriteFactory
 {
@@ -28,8 +28,8 @@ public sealed class SpriteFactory
 
     private const int LaserDiagonalSize = 6;
 
-    /// <summary>Runtime pattern size: the 16 spec-px entity box × SpecScale (32x32 at 2x).</summary>
-    private static readonly int PatternSize = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeSpecPixels);
+    /// <summary>Runtime pattern size: the 16 arcade pixel entity box × PortPixelsPerArcadePixel (32x32 at 2x).</summary>
+    private static readonly int PatternSize = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeArcadePixels);
 
     private readonly GraphicsDevice _device;
 
@@ -107,7 +107,7 @@ public sealed class SpriteFactory
     //      RRG23 LLPC/ULPC/DLLPC/ULLPC, author ROM-verified 2026-09-13) ----
     // 4 bits per pixel, high nibble = left pixel. Authored at arcade-pixel
     // dimensions (1 arcade pixel = 1 texture pixel); BlitterDraw.DrawSprite scales
-    // them by SpecScale at draw time.
+    // them by PortPixelsPerArcadePixel at draw time.
     /// <summary>ULPC ($35C1, 1 byte × 6 rows = 2×6): the left column lit — UP and DOWN.</summary>
     public static Color[] BuildLaserColumnPattern(Color color)
     {

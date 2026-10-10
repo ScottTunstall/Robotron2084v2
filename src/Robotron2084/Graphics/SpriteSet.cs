@@ -12,8 +12,8 @@ namespace Robotron2084.Graphics;
 /// textures for the four player laser sprites (ROM data R5 $35BE-$35DC,
 /// see the Laser* properties) and the 1x1 wall pixel.
 ///
-/// Arcade fidelity: ROM frames are drawn at SpecScale× arcade pixels (the
-/// screen is the spec's 320x200 space widened by SpecScale) and centered
+/// Arcade fidelity: ROM frames are drawn at PortPixelsPerArcadePixel× arcade pixels (the
+/// screen is WidthInArcadePixels by HeightInArcadePixels arcade pixels, each drawn PortPixelsPerArcadePixel port pixels wide) and centered
 /// inside the entity's collision box.
 /// </summary>
 public sealed class SpriteSet
@@ -213,8 +213,8 @@ public sealed class SpriteSet
     /// <summary>
     /// Player laser sprites — the four ROM sprites (R5 $35BE-$35DC, byte-identical
     /// to old source RRG23 LLPC/ULPC/DLLPC/ULLPC). Built at arcade-pixel size (1 arcade pixel = 1 texture pixel);
-    /// <see cref="BlitterDraw.DrawSprite"/> scales by SpecScale and centers in the laser's
-    /// 4x4 (spec) collision box. ROM LTAB picks one per direction, no flipping:
+    /// <see cref="BlitterDraw.DrawSprite"/> scales by PortPixelsPerArcadePixel and centers in the laser's
+    /// 4x4 arcade pixel collision box. ROM LTAB picks one per direction, no flipping:
     /// L/R = bar, U/D = column (left pixel lit), UL/DR = main diagonal,
     /// DL/UR = anti-diagonal.
     /// </summary>
