@@ -6,30 +6,31 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Graphics;
 
 /// <summary>
-/// Builds every sprite at runtime as a pixel-array <see cref="Texture2D"/> —
-/// no Content pipeline assets needed. Entity silhouettes are
-/// authored fresh for this project (simple symmetric shapes on
-/// a transparent background, in the spec's colour per entity); the four
-/// player laser sprites come from the ROM (R5 $35BE-$35DC) and are built at arcade-pixel
-/// dimensions. Entity patterns are authored on a fixed
-/// <see cref="DesignSize"/>×<see cref="DesignSize"/> design canvas and
-/// nearest-neighbour scaled to <see cref="PatternSize"/>, so they stay
-/// correct at any <c>ScreenSize.PortPixelsPerArcadePixel</c>.
+///     Builds every sprite at runtime as a pixel-array <see cref="Texture2D" /> —
+///     no Content pipeline assets needed. Entity silhouettes are
+///     authored fresh for this project (simple symmetric shapes on
+///     a transparent background, in the spec's colour per entity); the four
+///     player laser sprites come from the ROM (R5 $35BE-$35DC) and are built at arcade-pixel
+///     dimensions. Entity patterns are authored on a fixed
+///     <see cref="DesignSize" />×<see cref="DesignSize" /> design canvas and
+///     nearest-neighbour scaled to <see cref="PatternSize" />, so they stay
+///     correct at any <c>ScreenSize.PortPixelsPerArcadePixel</c>.
 /// </summary>
 public sealed class SpriteFactory
 {
     /// <summary>
-    /// Canvas every hand-authored pattern is written on (2x arcade pixels in
-    /// the original 2x design). Patterns are scaled to <see cref="PatternSize"/>
-    /// before use, so the authoring coordinates never change when the
-    /// resolution changes.
+    ///     Canvas every hand-authored pattern is written on (2x arcade pixels in
+    ///     the original 2x design). Patterns are scaled to <see cref="PatternSize" />
+    ///     before use, so the authoring coordinates never change when the
+    ///     resolution changes.
     /// </summary>
     private const int DesignSize = 32;
 
     private const int LaserDiagonalSize = 6;
 
     /// <summary>Runtime pattern size: the 16 arcade pixel entity box × PortPixelsPerArcadePixel (32x32 at 2x).</summary>
-    private static readonly int PatternSize = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EntitySizeArcadePixels);
+    private static readonly int PatternSize =
+        ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EntitySizeArcadePixels);
 
     private readonly GraphicsDevice _device;
 
@@ -41,12 +42,12 @@ public sealed class SpriteFactory
     /// <summary>Spiked tower: top ball, stem, diamond midsection, base.</summary>
     public static Color[] BuildElectrodePattern(Color color)
     {
-        Color[] canvas = CreateCanvas();
-        FillRect(canvas, 13, 3, 6, 5, color);  // top ball
-        FillRect(canvas, 15, 8, 2, 9, color);  // stem
-        for (int dy = -5; dy <= 5; dy++)       // diamond midsection
+        var canvas = CreateCanvas();
+        FillRect(canvas, 13, 3, 6, 5, color); // top ball
+        FillRect(canvas, 15, 8, 2, 9, color); // stem
+        for (var dy = -5; dy <= 5; dy++) // diamond midsection
         {
-            int width = (5 - Math.Abs(dy)) * 3 + 2;
+            var width = (5 - Math.Abs(dy)) * 3 + 2;
             FillRect(canvas, 16 - width / 2, 22 + dy, width, 1, color);
         }
 
@@ -57,13 +58,13 @@ public sealed class SpriteFactory
     /// <summary>Four-legged angular stalker: core + corner legs + mid nubs.</summary>
     public static Color[] BuildEnforcerPattern(Color color)
     {
-        Color[] canvas = CreateCanvas();
+        var canvas = CreateCanvas();
         FillRect(canvas, 11, 11, 10, 10, color); // core
-        FillRect(canvas, 4, 4, 5, 5, color);     // corner legs
+        FillRect(canvas, 4, 4, 5, 5, color); // corner legs
         FillRect(canvas, 23, 4, 5, 5, color);
         FillRect(canvas, 4, 23, 5, 5, color);
         FillRect(canvas, 23, 23, 5, 5, color);
-        FillRect(canvas, 15, 2, 2, 3, color);    // mid nubs
+        FillRect(canvas, 15, 2, 2, 3, color); // mid nubs
         FillRect(canvas, 15, 27, 2, 3, color);
         FillRect(canvas, 2, 15, 3, 2, color);
         FillRect(canvas, 27, 15, 3, 2, color);
@@ -73,32 +74,32 @@ public sealed class SpriteFactory
     /// <summary>Small blocky robot: head, torso, arms, legs.</summary>
     public static Color[] BuildGruntPattern(Color color)
     {
-        Color[] canvas = CreateCanvas();
-        FillRect(canvas, 12, 5, 8, 6, color);   // head
+        var canvas = CreateCanvas();
+        FillRect(canvas, 12, 5, 8, 6, color); // head
         FillRect(canvas, 9, 11, 14, 10, color); // torso
-        FillRect(canvas, 4, 12, 3, 8, color);   // left arm
-        FillRect(canvas, 25, 12, 3, 8, color);  // right arm
-        FillRect(canvas, 11, 21, 4, 9, color);  // left leg
-        FillRect(canvas, 17, 21, 4, 9, color);  // right leg
+        FillRect(canvas, 4, 12, 3, 8, color); // left arm
+        FillRect(canvas, 25, 12, 3, 8, color); // right arm
+        FillRect(canvas, 11, 21, 4, 9, color); // left leg
+        FillRect(canvas, 17, 21, 4, 9, color); // right leg
         return ScalePattern(canvas);
     }
 
     /// <summary>Bulky robot: wide head, shoulders, torso, short legs.</summary>
     public static Color[] BuildHulkPattern(Color color)
     {
-        Color[] canvas = CreateCanvas();
-        FillRect(canvas, 11, 3, 10, 8, color);  // head
-        FillRect(canvas, 4, 11, 24, 6, color);  // shoulders
-        FillRect(canvas, 8, 17, 16, 9, color);  // torso
-        FillRect(canvas, 8, 26, 6, 5, color);   // left leg
-        FillRect(canvas, 18, 26, 6, 5, color);  // right leg
+        var canvas = CreateCanvas();
+        FillRect(canvas, 11, 3, 10, 8, color); // head
+        FillRect(canvas, 4, 11, 24, 6, color); // shoulders
+        FillRect(canvas, 8, 17, 16, 9, color); // torso
+        FillRect(canvas, 8, 26, 6, 5, color); // left leg
+        FillRect(canvas, 18, 26, 6, 5, color); // right leg
         return ScalePattern(canvas);
     }
 
     /// <summary>LLPC ($35BE, 3 bytes × 1 row = 6×1): a solid bar — LEFT and RIGHT.</summary>
     public static Color[] BuildLaserBarPattern(Color color)
     {
-        Color[] pattern = new Color[6];
+        var pattern = new Color[6];
         pattern.AsSpan().Fill(color);
         return pattern;
     }
@@ -111,41 +112,33 @@ public sealed class SpriteFactory
     /// <summary>ULPC ($35C1, 1 byte × 6 rows = 2×6): the left column lit — UP and DOWN.</summary>
     public static Color[] BuildLaserColumnPattern(Color color)
     {
-        Color[] pattern = new Color[2 * LaserDiagonalSize];
-        for (int row = 0; row < LaserDiagonalSize; row++)
-        {
-            pattern[row * 2] = color; // left pixel (the ROM high nibble)
-        }
+        var pattern = new Color[2 * LaserDiagonalSize];
+        for (var row = 0; row < LaserDiagonalSize; row++) pattern[row * 2] = color; // left pixel (the ROM high nibble)
 
         return pattern;
     }
 
     /// <summary>
-    /// DLLPC ($35C7, 3 bytes × 6 rows = 6×6): the anti-diagonal
-    /// (top-right → bottom-left) — DOWN-LEFT and UP-RIGHT.
+    ///     DLLPC ($35C7, 3 bytes × 6 rows = 6×6): the anti-diagonal
+    ///     (top-right → bottom-left) — DOWN-LEFT and UP-RIGHT.
     /// </summary>
     public static Color[] BuildLaserDiagonalAntiPattern(Color color)
     {
-        Color[] pattern = new Color[LaserDiagonalSize * LaserDiagonalSize];
-        for (int i = 0; i < LaserDiagonalSize; i++)
-        {
+        var pattern = new Color[LaserDiagonalSize * LaserDiagonalSize];
+        for (var i = 0; i < LaserDiagonalSize; i++)
             pattern[i * LaserDiagonalSize + (LaserDiagonalSize - 1 - i)] = color;
-        }
 
         return pattern;
     }
 
     /// <summary>
-    /// ULLPC ($35D9, 3 bytes × 6 rows = 6×6): the main diagonal
-    /// (top-left → bottom-right) — UP-LEFT and DOWN-RIGHT.
+    ///     ULLPC ($35D9, 3 bytes × 6 rows = 6×6): the main diagonal
+    ///     (top-left → bottom-right) — UP-LEFT and DOWN-RIGHT.
     /// </summary>
     public static Color[] BuildLaserDiagonalMainPattern(Color color)
     {
-        Color[] pattern = new Color[LaserDiagonalSize * LaserDiagonalSize];
-        for (int i = 0; i < LaserDiagonalSize; i++)
-        {
-            pattern[i * LaserDiagonalSize + i] = color;
-        }
+        var pattern = new Color[LaserDiagonalSize * LaserDiagonalSize];
+        for (var i = 0; i < LaserDiagonalSize; i++) pattern[i * LaserDiagonalSize + i] = color;
 
         return pattern;
     }
@@ -153,8 +146,8 @@ public sealed class SpriteFactory
     /// <summary>Humanoid: head + torso + two arms + two legs.</summary>
     public static Color[] BuildPlayerPattern(Color color)
     {
-        Color[] canvas = CreateCanvas();
-        FillRect(canvas, 12, 2, 8, 8, color);    // head
+        var canvas = CreateCanvas();
+        FillRect(canvas, 12, 2, 8, 8, color); // head
         FillRect(canvas, 10, 10, 12, 12, color); // torso
         FillRect(canvas, 5, 11, 3, 8, color); // left arm
         FillRect(canvas, 24, 11, 3, 8, color); // right arm
@@ -166,18 +159,13 @@ public sealed class SpriteFactory
     /// <summary>Angular gem: filled diamond.</summary>
     public static Color[] BuildQuarkPattern(Color color)
     {
-        Color[] canvas = CreateCanvas();
-        for (int y = 0; y < DesignSize; y++)
+        var canvas = CreateCanvas();
+        for (var y = 0; y < DesignSize; y++)
+        for (var x = 0; x < DesignSize; x++)
         {
-            for (int x = 0; x < DesignSize; x++)
-            {
-                int dx = x - 15;
-                int dy = y - 15;
-                if (Math.Abs(dx) + Math.Abs(dy) <= 13)
-                {
-                    canvas[y * DesignSize + x] = color;
-                }
-            }
+            var dx = x - 15;
+            var dy = y - 15;
+            if (Math.Abs(dx) + Math.Abs(dy) <= 13) canvas[y * DesignSize + x] = color;
         }
 
         return ScalePattern(canvas);
@@ -187,18 +175,13 @@ public sealed class SpriteFactory
     /// <summary>Orb: filled disc.</summary>
     public static Color[] BuildSpheroidPattern(Color color)
     {
-        Color[] canvas = CreateCanvas();
-        for (int y = 0; y < DesignSize; y++)
+        var canvas = CreateCanvas();
+        for (var y = 0; y < DesignSize; y++)
+        for (var x = 0; x < DesignSize; x++)
         {
-            for (int x = 0; x < DesignSize; x++)
-            {
-                int dx = x - 15;
-                int dy = y - 15;
-                if (dx * dx + dy * dy <= 13 * 13)
-                {
-                    canvas[y * DesignSize + x] = color;
-                }
-            }
+            var dx = x - 15;
+            var dy = y - 15;
+            if (dx * dx + dy * dy <= 13 * 13) canvas[y * DesignSize + x] = color;
         }
 
         return ScalePattern(canvas);
@@ -207,11 +190,11 @@ public sealed class SpriteFactory
     /// <summary>Turret + barrel, hull, treads.</summary>
     public static Color[] BuildTankPattern(Color color)
     {
-        Color[] canvas = CreateCanvas();
-        FillRect(canvas, 12, 8, 8, 7, color);   // turret
-        FillRect(canvas, 14, 2, 3, 6, color);   // barrel
-        FillRect(canvas, 5, 15, 22, 9, color);  // hull
-        FillRect(canvas, 4, 24, 24, 6, color);  // treads
+        var canvas = CreateCanvas();
+        FillRect(canvas, 12, 8, 8, 7, color); // turret
+        FillRect(canvas, 14, 2, 3, 6, color); // barrel
+        FillRect(canvas, 5, 15, 22, 9, color); // hull
+        FillRect(canvas, 4, 24, 24, 6, color); // treads
         return ScalePattern(canvas);
     }
 
@@ -226,39 +209,35 @@ public sealed class SpriteFactory
     /// <summary>The single flat texture primitive: a solid rectangle of one colour.</summary>
     public Texture2D CreateSolid(int width, int height, Color color)
     {
-        Color[] pixels = new Color[width * height];
+        var pixels = new Color[width * height];
         pixels.AsSpan().Fill(color);
         return Create(width, height, pixels);
     }
 
     private static void FillRect(Color[] canvas, int x, int y, int width, int height, Color color)
     {
-        for (int row = Math.Max(0, y); row < Math.Min(DesignSize, y + height); row++)
-        {
-            for (int col = Math.Max(0, x); col < Math.Min(DesignSize, x + width); col++)
-            {
-                canvas[row * DesignSize + col] = color;
-            }
-        }
+        for (var row = Math.Max(0, y); row < Math.Min(DesignSize, y + height); row++)
+        for (var col = Math.Max(0, x); col < Math.Min(DesignSize, x + width); col++)
+            canvas[row * DesignSize + col] = color;
     }
 
-    private static Color[] CreateCanvas() => new Color[DesignSize * DesignSize];
+    private static Color[] CreateCanvas()
+    {
+        return new Color[DesignSize * DesignSize];
+    }
 
     /// <summary>Nearest-neighbour scales a DesignSize×DesignSize pattern to PatternSize×PatternSize.</summary>
     private static Color[] ScalePattern(Color[] design)
     {
-        if (PatternSize == DesignSize)
-        {
-            return design;
-        }
+        if (PatternSize == DesignSize) return design;
 
-        Color[] output = new Color[PatternSize * PatternSize];
-        for (int y = 0; y < PatternSize; y++)
+        var output = new Color[PatternSize * PatternSize];
+        for (var y = 0; y < PatternSize; y++)
         {
-            int sourceY = y * DesignSize / PatternSize;
-            for (int x = 0; x < PatternSize; x++)
+            var sourceY = y * DesignSize / PatternSize;
+            for (var x = 0; x < PatternSize; x++)
             {
-                int sourceX = x * DesignSize / PatternSize;
+                var sourceX = x * DesignSize / PatternSize;
                 output[y * PatternSize + x] = design[sourceY * DesignSize + sourceX];
             }
         }

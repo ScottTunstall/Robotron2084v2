@@ -3,45 +3,51 @@ using Robotron2084.Core;
 
 namespace Robotron2084.Graphics;
 
-/// <summary>Fits the canvas into a window's client area: one scale for both axes, centred, black bars where it does not fit.</summary>
-/// <remarks>Port-only: the arcade's canvas IS its screen, so it has no fit to choose. The canvas is never
-/// stretched — it keeps the shape <see cref="ScreenSize.WidthInArcadePixels"/>:<see cref="ScreenSize.HeightInArcadePixels"/>
-/// gives it — and a client area smaller than the canvas crops it rather than scaling below 1x. Pure, so
-/// any client size can be checked without a graphics device.</remarks>
-/// <seealso cref="ScreenSize"/>
+/// <summary>
+///     Fits the canvas into a window's client area: one scale for both axes, centred, black bars where it does not
+///     fit.
+/// </summary>
+/// <remarks>
+///     Port-only: the arcade's canvas IS its screen, so it has no fit to choose. The canvas is never
+///     stretched — it keeps the shape <see cref="ScreenSize.WidthInArcadePixels" />:
+///     <see cref="ScreenSize.HeightInArcadePixels" />
+///     gives it — and a client area smaller than the canvas crops it rather than scaling below 1x. Pure, so
+///     any client size can be checked without a graphics device.
+/// </remarks>
+/// <seealso cref="ScreenSize" />
 public static class Presentation
 {
     /// <summary>The canvas's destination rect in the client area: scaled uniformly and centred.</summary>
-    /// <remarks>The leftover on the wider axis is the black bars. The rect starts off-screen (negative)
-    /// when the canvas is larger than the client area, which crops it evenly.</remarks>
+    /// <remarks>
+    ///     The leftover on the wider axis is the black bars. The rect starts off-screen (negative)
+    ///     when the canvas is larger than the client area, which crops it evenly.
+    /// </remarks>
     public static Rectangle CanvasDestination(int clientWidth, int clientHeight, ScaleMode mode)
     {
-        float scale = GetScale(clientWidth, clientHeight, mode);
-        int width = Math.Max(1, (int)MathF.Round(ScreenSize.Width * scale));
-        int height = Math.Max(1, (int)MathF.Round(ScreenSize.Height * scale));
+        var scale = GetScale(clientWidth, clientHeight, mode);
+        var width = Math.Max(1, (int)MathF.Round(ScreenSize.Width * scale));
+        var height = Math.Max(1, (int)MathF.Round(ScreenSize.Height * scale));
         return new Rectangle((clientWidth - width) / 2, (clientHeight - height) / 2, width, height);
     }
 
     /// <summary>The scale mode the next F8 press selects.</summary>
-    public static ScaleMode NextScaleMode(ScaleMode mode) =>
-        mode == ScaleMode.Integer ? ScaleMode.Fill : ScaleMode.Integer;
+    public static ScaleMode NextScaleMode(ScaleMode mode)
+    {
+        return mode == ScaleMode.Integer ? ScaleMode.Fill : ScaleMode.Integer;
+    }
 
     /// <summary>The uniform scale the canvas is drawn at, for a client area of any size.</summary>
-    /// <remarks><see cref="ScaleMode.Integer"/> is the largest whole multiple that fits and never less
-    /// than 1, so a window smaller than the canvas crops it; <see cref="ScaleMode.Fill"/> is the exact
-    /// fraction of the limiting axis. A client area with no area at all falls back to 1, so nothing here
-    /// can divide by zero.</remarks>
+    /// <remarks>
+    ///     <see cref="ScaleMode.Integer" /> is the largest whole multiple that fits and never less
+    ///     than 1, so a window smaller than the canvas crops it; <see cref="ScaleMode.Fill" /> is the exact
+    ///     fraction of the limiting axis. A client area with no area at all falls back to 1, so nothing here
+    ///     can divide by zero.
+    /// </remarks>
     public static float GetScale(int clientWidth, int clientHeight, ScaleMode mode)
     {
-        if (clientWidth <= 0 || clientHeight <= 0)
-        {
-            return 1f;
-        }
+        if (clientWidth <= 0 || clientHeight <= 0) return 1f;
 
-        if (mode == ScaleMode.Integer)
-        {
-            return ScreenSize.ComputeMaxIntegerScale(clientWidth, clientHeight);
-        }
+        if (mode == ScaleMode.Integer) return ScreenSize.ComputeMaxIntegerScale(clientWidth, clientHeight);
 
         return Math.Min((float)clientWidth / ScreenSize.Width, (float)clientHeight / ScreenSize.Height);
     }
