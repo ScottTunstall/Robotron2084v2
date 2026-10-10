@@ -82,5 +82,5 @@ public sealed class FamilyList
     /// <returns>Their position, or null when there is no such member. A hulk that gets null goes for the player instead.</returns>
     /// <remarks>Original source: <c>RRH11.ASM</c>, the hulk's "last slot" target. Disassembly: <c>$010D</c> and <c>$0113</c>, the fall back to the player.</remarks>
     internal IntVector2? GetLastMemberPosition() =>
-        _members.Count > 0 && _members.Last.IsAlive() ? _members.Last.Position : null;
+        _members.Count > 0 && _members.GetLast().IsAlive() ? _members.GetLast().Position : null;
 }

@@ -52,13 +52,13 @@ public sealed class WordmarkAppearTests
             appear.Update();
         }
 
-        Assert.False(appear.IsFinished);
+        Assert.False(appear.IsFinished());
         appear.Update();
-        Assert.True(appear.IsFinished);
+        Assert.True(appear.IsFinished());
     }
 
     [Fact]
-    public void AWordWithNoLetters_IsFinishedAtOnce() => Assert.True(CreateAppear(0).IsFinished);
+    public void AWordWithNoLetters_IsFinishedAtOnce() => Assert.True(CreateAppear(0).IsFinished());
 
     private static int Started(WordmarkAppear appear, int ticks)
     {
@@ -67,6 +67,6 @@ public sealed class WordmarkAppearTests
             appear.Update();
         }
 
-        return appear.StartedLetterCount;
+        return appear.GetStartedLetterCount();
     }
 }

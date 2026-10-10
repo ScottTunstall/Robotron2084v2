@@ -110,7 +110,7 @@ public sealed class GameSettings
     public bool BozoModeEnabled { get; set; } = FactoryBozoModeEnabled;
 
     /// <summary>The EXTRA MAN EVERY score in points, as the game compares scores (<c>0</c> = never).</summary>
-    public int ExtraManEveryPoints => ExtraManEvery * 1000;
+    public int GetExtraManEveryPoints() => ExtraManEvery * 1000;
 
     /// <summary>
     /// Whether the attract sequence should be silent (notes §131): true while an attract screen is

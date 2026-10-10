@@ -42,6 +42,6 @@ public sealed class PlayfieldLayoutTests
     {
         var wall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColorCycle());
 
-        Assert.True(Canvas.Contains(wall.OuterBounds), $"the wall {wall.OuterBounds} must lie inside the {Canvas} canvas");
+        Assert.True(Canvas.Contains(wall.GetOuterBounds()), $"the wall {wall.GetOuterBounds()} must lie inside the {Canvas} canvas");
     }
 }

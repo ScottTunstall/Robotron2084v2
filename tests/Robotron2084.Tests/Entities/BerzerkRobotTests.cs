@@ -17,7 +17,7 @@ public sealed class BerzerkRobotTests
     {
         PlayField field = CreateField();
         var frame = new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
-        for (int tick = 0; tick < 400 && field.RobotsFrozen; tick++)
+        for (int tick = 0; tick < 400 && field.RobotsFrozen(); tick++)
         {
             field.Update(frame);
         }

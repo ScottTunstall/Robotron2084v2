@@ -168,7 +168,7 @@ public sealed class SettingsModel
     /// <summary>The row's value: the setting itself, ON/OFF for the port's own rows, or NO/YES on an action row.</summary>
     public string GetValue(GameSettings settings, int line) => line switch
     {
-        ExtraManLine => settings.ExtraManEveryPoints.ToString(),
+        ExtraManLine => settings.GetExtraManEveryPoints().ToString(),
         TurnsLine => settings.TurnsPerPlayer.ToString(),
         DifficultyLine => settings.Difficulty.ToString(),
         AttractSoundLine => GetOnOff(settings.AttractModeSoundEnabled),

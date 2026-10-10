@@ -26,13 +26,13 @@ public sealed class InitialsEntryModelTests
         // nothing else at all.
         Tick(model, Fire, 30);
 
-        Assert.Equal(' ', model.Preview);
+        Assert.Equal(' ', model.GetPreview());
         Assert.Equal(0, model.LetterIndex);
         Assert.False(model.IsComplete);
 
         Tick(model, Idle, 5);
         Press(model, Up);
-        Assert.Equal('A', model.Preview);
+        Assert.Equal('A', model.GetPreview());
     }
 
     [Fact]
@@ -41,20 +41,20 @@ public sealed class InitialsEntryModelTests
         InitialsEntryModel model = Started();
 
         Press(model, Up);
-        Assert.Equal('A', model.Preview);
+        Assert.Equal('A', model.GetPreview());
 
         Press(model, Up);
-        Assert.Equal('B', model.Preview);
+        Assert.Equal('B', model.GetPreview());
 
         Press(model, Down);
-        Assert.Equal('A', model.Preview);
+        Assert.Equal('A', model.GetPreview());
 
         // Down from a blank is Z, because the rub marker needs a committed letter first (GETLST).
         Press(model, Down);
-        Assert.Equal(' ', model.Preview);
+        Assert.Equal(' ', model.GetPreview());
 
         Press(model, Down);
-        Assert.Equal('Z', model.Preview);
+        Assert.Equal('Z', model.GetPreview());
     }
 
     [Fact]
@@ -64,15 +64,15 @@ public sealed class InitialsEntryModelTests
 
         // Z wraps to a blank before anything is committed...
         Press(model, Up);
-        Assert.Equal('A', model.Preview);
+        Assert.Equal('A', model.GetPreview());
 
         // ...but after a commit the ring goes Z, then the rub marker (LUPP1/LDN1's GETLST test).
         PressFire(model);
         Assert.Equal(1, model.LetterIndex);
 
         Press(model, Down);
-        Assert.Equal(InitialsEntryModel.RubLetter, model.Preview);
-        Assert.True(model.PreviewIsRub);
+        Assert.Equal(InitialsEntryModel.RubLetter, model.GetPreview());
+        Assert.True(model.IsPreviewRub());
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public sealed class InitialsEntryModelTests
 
         Assert.Equal("A  ", model.GetInitials());
         Assert.Equal(1, model.LetterIndex);
-        Assert.Equal(' ', model.Preview);
+        Assert.Equal(' ', model.GetPreview());
         Assert.False(model.IsComplete);
     }
 
@@ -114,7 +114,7 @@ public sealed class InitialsEntryModelTests
 
         // Down from the blank cell reaches the rub marker, and fire there takes the C away.
         Press(model, Down);
-        Assert.Equal(InitialsEntryModel.RubLetter, model.Preview);
+        Assert.Equal(InitialsEntryModel.RubLetter, model.GetPreview());
         PressFire(model);
 
         Assert.False(model.IsComplete);
@@ -165,20 +165,20 @@ public sealed class InitialsEntryModelTests
 
         // The cycle happens the moment the switch is seen (LUP's first LUPP1)...
         Tick(model, Up, 3);
-        Assert.Equal('A', model.Preview);
+        Assert.Equal('A', model.GetPreview());
 
         // ...and then LUP/LDOWN hold their ten DELAY1 turns before the repeat: half a second in
         // which the letter does not move at all.
         Tick(model, Up, 25);
-        Assert.Equal('A', model.Preview);
+        Assert.Equal('A', model.GetPreview());
 
         // The first repeat lands about 0.5 s in, and after that a repeat costs DELAY1 plus LUP's
         // NAP 1 — about 70 ms, so nine more are typed inside the next second.
         Tick(model, Up, 5);
-        Assert.Equal('B', model.Preview);
+        Assert.Equal('B', model.GetPreview());
 
         Tick(model, Up, 40);
-        Assert.True(model.Preview >= 'F', $"expected several fast repeats, the preview was {model.Preview}");
+        Assert.True(model.GetPreview() >= 'F', $"expected several fast repeats, the preview was {model.GetPreview()}");
     }
 
     [Fact]
@@ -203,7 +203,7 @@ public sealed class InitialsEntryModelTests
 
         CommitLetter(model, Up);          // A, and the rub marker joins the ring
         Press(model, Down);               // the preview is the rub marker
-        Assert.True(model.PreviewIsRub);
+        Assert.True(model.IsPreviewRub());
 
         // TIMPR2 stores a space rather than let a timed-out name end on the marker.
         Tick(model, Idle, TicksForRomFrames(2 * 640) + 10);

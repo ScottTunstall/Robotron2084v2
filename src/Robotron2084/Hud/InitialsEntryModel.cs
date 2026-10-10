@@ -111,10 +111,10 @@ public sealed class InitialsEntryModel
     public int LetterIndex => _letterIndex;
 
     /// <summary>The letter shown in the cursor's cell — the ROM's preview, which cycling rewrites in place.</summary>
-    public char Preview => _letterIndex < LetterCount ? _letters[_letterIndex] : Blank;
+    public char GetPreview() => _letterIndex < LetterCount ? _letters[_letterIndex] : Blank;
 
     /// <summary>True while the preview is the rub marker, which the page draws with the ROM's own sprite.</summary>
-    public bool PreviewIsRub => Preview == RubLetter;
+    public bool IsPreviewRub() => GetPreview() == RubLetter;
 
     /// <summary>
     /// Advances the entry one port tick and returns true once it is over.
@@ -157,7 +157,7 @@ public sealed class InitialsEntryModel
             return;
         }
 
-        if (_letterIndex < LetterCount && PreviewIsRub)
+        if (_letterIndex < LetterCount && IsPreviewRub())
         {
             _letters[_letterIndex] = Blank;
         }
@@ -191,7 +191,7 @@ public sealed class InitialsEntryModel
     /// <param name="typematicCounts">The count the ROM's typematic waits before typing the next letter by itself.</param>
     private void Commit(int typematicCounts)
     {
-        if (PreviewIsRub)
+        if (IsPreviewRub())
         {
             RubOut();
             return;
@@ -215,7 +215,7 @@ public sealed class InitialsEntryModel
 
     /// <summary>The alpha-only ring (LUPP1/LDN1): space, A to Z, and the rub marker once a letter has been committed.</summary>
     private void Cycle(int direction) =>
-        _letters[_letterIndex] = direction == UpDirection ? NextLetter(Preview) : GetPreviousLetter(Preview);
+        _letters[_letterIndex] = direction == UpDirection ? NextLetter(GetPreview()) : GetPreviousLetter(GetPreview());
 
     /// <summary>GETLT1: back to reading the switches every two frames.</summary>
     private void EnterMainLoop()

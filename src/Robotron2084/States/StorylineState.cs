@@ -109,7 +109,7 @@ public sealed class StorylineState : IGameState, IAttractState
         // A human at the coin door takes the machine back to the title, exactly as
         // the arcade's coin/start handler does while attract is running.
         PlayerInputState human = _humanInput.Poll();
-        if (_buttons.Advance(human).AnyPressed)
+        if (_buttons.Advance(human).AnyPressed())
         {
             manager.TransitionTo(new TitleScreenState(_services));
             return;
@@ -163,7 +163,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         // HISTO ends with DONE2, which the ROM answers with RUNIT: the machine
         // starts its phony-player game.
-        if (_movie.IsFinished)
+        if (_movie.IsFinished())
         {
             manager.TransitionTo(new AttractState(_services));
         }
@@ -196,8 +196,8 @@ public sealed class StorylineState : IGameState, IAttractState
             }
 
             var bounds = new Rectangle(
-                HudLayout.ToPortX(item.ArcadeX),
-                HudLayout.ToPortY(item.ArcadeY),
+                HudLayout.ToPortX(item.GetArcadeX()),
+                HudLayout.ToPortY(item.GetArcadeY()),
                 ScreenSize.ToPortPixels(animationFrame.Width),
                 ScreenSize.ToPortPixels(animationFrame.Height));
 
@@ -214,8 +214,8 @@ public sealed class StorylineState : IGameState, IAttractState
     /// <summary>Draws a laser bolt: <c>LASPIC</c>, the rotating laser table's horizontal bar.</summary>
     private void DrawLaser(SpriteBatch spriteBatch, MovieObject item)
     {
-        int x = HudLayout.ToPortX(item.ArcadeX);
-        int y = HudLayout.ToPortY(item.ArcadeY);
+        int x = HudLayout.ToPortX(item.GetArcadeX());
+        int y = HudLayout.ToPortY(item.GetArcadeY());
         var bolt = new Rectangle(x, y, ScreenSize.ToPortPixels(_sprites.LaserBarSprite.Width), ScreenSize.ToPortPixels(_sprites.LaserBarSprite.Height));
         _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBarSprite, bolt, _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
     }
@@ -254,9 +254,9 @@ public sealed class StorylineState : IGameState, IAttractState
             _bounds = bounds;
         }
 
-        public Rectangle Bounds => _bounds;
+        public Rectangle GetBounds() => _bounds;
         public Texture2D GetCurrentAnimationFrame() => _animationFrame;
-        public Rectangle ExplosionBounds => _bounds;
+        public Rectangle GetExplosionBounds() => _bounds;
         public EntityLifeState LifeState => EntityLifeState.Dead;
         public IntVector2 Position => new(_bounds.X, _bounds.Y);
 

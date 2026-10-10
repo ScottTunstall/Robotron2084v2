@@ -55,7 +55,7 @@ public sealed class AttractState : IGameState, IAttractState
     {
         _field.Draw(spriteBatch);
         ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds(), showSpareMen: false);
-        ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
+        ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.GetCurrent().Wave);
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -63,7 +63,7 @@ public sealed class AttractState : IGameState, IAttractState
         // A human at the coin door takes the machine back (arcade: start works
         // any time attract is running).
         PlayerInputState humanInputState = _humanInput.Poll();
-        if (_buttons.Advance(humanInputState).AnyPressed)
+        if (_buttons.Advance(humanInputState).AnyPressed())
         {
             manager.TransitionTo(new TitleScreenState(_services));
             return;
@@ -82,7 +82,7 @@ public sealed class AttractState : IGameState, IAttractState
 
         if (_field.IsLevelCleared())
         {
-            PlayerSlot playerSlot = _session.Current;
+            PlayerSlot playerSlot = _session.GetCurrent();
             SyncSlotFromField();
             playerSlot.Wave = (playerSlot.Wave % 255) + 1; // ROM GEXX: skip 0
             playerSlot.SavedWaveParameters = null;
@@ -93,7 +93,7 @@ public sealed class AttractState : IGameState, IAttractState
         if (_field.IsPlayerDead())
         {
             SyncSlotFromField();
-            _session.Current.SavedWaveParameters = WaveSurvivors.GetFrom(_field);
+            _session.GetCurrent().SavedWaveParameters = WaveSurvivors.GetFrom(_field);
 
             if (!_session.AnyPlayerSlotHasMen())
             {
@@ -112,12 +112,12 @@ public sealed class AttractState : IGameState, IAttractState
 
     private PlayField BuildField()
     {
-        PlayerSlot slot = _session.Current;
+        PlayerSlot slot = _session.GetCurrent();
         // The demo is the same game, so a death keeps the survivors here too (notes §134).
-        LevelParameters parameters = BozoMode.Apply(slot.SavedWaveParameters ?? _generator.Generate(slot.Wave), slot.SpareMen);
+        LevelParameters parameters = BozoMode.Apply(slot.SavedWaveParameters ?? _generator.Generate(slot.Wave), slot.GetSpareMen());
         WallColorCycle cycle = new();
         return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.GetInnerBounds(), cycle, _random, slot.Lives, slot.Score, _sprites.Blitter.Palette, playerInvincibleForTesting: false, contactTest: new PixelContactTest(new SpriteCollision()));
     }
 
-    private void SyncSlotFromField() => _field.SyncInto(_session.Current);
+    private void SyncSlotFromField() => _field.SyncInto(_session.GetCurrent());
 }

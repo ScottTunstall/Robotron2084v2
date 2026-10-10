@@ -40,7 +40,7 @@ public sealed class RobotTransporter
     public RobotTransporter(Random random) => _random = random;
 
     /// <summary>Says whether every image has run out of steps.</summary>
-    public bool IsFinished => _images.All(image => image.IsFinished);
+    public bool IsFinished() => _images.All(image => image.IsFinished());
 
     /// <summary>Works out which image each robot shares, from the animation frame each is showing.</summary>
     /// <param name="animationFrames">The animation frame each robot is showing, in order. Two robots are showing the same one when these are the same object.</param>
@@ -115,7 +115,7 @@ public sealed class RobotTransporter
         sprites.Blitter.UsePassThrough();
         foreach ((IEntity robot, TransportImage image) in _robots)
         {
-            Rectangle bounds = robot.Bounds;
+            Rectangle bounds = robot.GetBounds();
             int left = bounds.X + ((bounds.Width - ScreenSize.ToPortPixels(image.Width)) / 2);
             int top = bounds.Y + ((bounds.Height - ScreenSize.ToPortPixels(image.Height)) / 2);
             DrawImage(spriteBatch, sprites, image, new Point(left, top));

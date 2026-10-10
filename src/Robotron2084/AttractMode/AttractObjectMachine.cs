@@ -314,7 +314,7 @@ public sealed class AttractObjectMachine
                     machine._explosions.Add(new MovieExplosion(
                         Object.Descriptor?.Animation ?? MovieAnimation.Grunt,
                         Object.AnimationFrameIndex,
-                        Object.Column,
+                        Object.GetColumn(),
                         ExplosionRow));
                     KillObject();
                     return false;

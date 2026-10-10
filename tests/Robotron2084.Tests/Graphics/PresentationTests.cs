@@ -13,7 +13,7 @@ namespace Robotron2084.Tests;
 public sealed class PresentationTests
 {
     /// <summary>Client areas to check: the author's screen, the classics, cramped, tiny and empty.</summary>
-    public static TheoryData<int, int> ClientAreas => new()
+    public static TheoryData<int, int> ClientAreas() => new()
     {
         { 1920, 1200 },
         { 1920, 1080 },

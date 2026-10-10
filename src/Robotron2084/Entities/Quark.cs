@@ -120,7 +120,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The quark sprite's own 16x15 box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The current rotation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <returns>The texture for the current rotation frame.</returns>
@@ -144,7 +144,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>Kills the quark outright; a laser hit plays its own burst instead of the strip explosion.</summary>
@@ -172,7 +172,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
         // The arcade does not move its motion objects while the game is held: before it goes live, and while the player dies
         // (ROM: RRS22.ASM OPRC80, BITA #8 / BNE O80, "NO VELOCITY REFRESH ONLY"; STATUS bit 3).
-        if (!field.RobotsFrozen)
+        if (!field.RobotsFrozen())
         {
             AdvanceMover(field);
         }
@@ -195,11 +195,11 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 
         if (--_reaimBeatsRemaining <= 0)
         {
-            RollVelocity(field.PlayfieldBounds);
+            RollVelocity(field.GetPlayfieldBounds());
         }
 
         // Frozen: the quark still animates and re-rolls, but the tank-drop countdown is paused.
-        if (field.RobotsFrozen)
+        if (field.RobotsFrozen())
         {
             return;
         }
@@ -237,7 +237,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Moves by the whole-pixel part of the velocity, carrying the fraction.</summary>
     private void AdvancePosition(PlayField field)
     {
-        Rectangle bounds = field.PlayfieldBounds;
+        Rectangle bounds = field.GetPlayfieldBounds();
 
         _remainderSubpixels += _velocitySubpixels;
         int stepX = _remainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
@@ -280,7 +280,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             _tanksRemaining--;
             // A new tank appears 2 columns right and 5-6 rows down — 6 when the quark is on the
             // top wall, where the ROM skips its `DECB` (ROM: TNKDRP).
-            int rowOffset = _position.Y == field.PlayfieldBounds.Y
+            int rowOffset = _position.Y == field.GetPlayfieldBounds().Y
                 ? TankTuning.BirthOffsetRowsOnTopWall
                 : TankTuning.BirthOffsetRowsOffTopWall;
             field.SpawnTank(_position + new IntVector2(
@@ -321,8 +321,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>ROM: <c>SQ3L</c>.</remarks>
     private void LeaveWhenClearOfTheField(PlayField field)
     {
-        int topExitY = field.PlayfieldBounds.Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowRows);
-        int bottomExitY = field.PlayfieldBounds.Bottom - ScreenSize.ToPortPixels(QuarkTuning.FleeExitHighRows);
+        int topExitY = field.GetPlayfieldBounds().Y + ScreenSize.ToPortPixels(QuarkTuning.FleeExitLowRows);
+        int bottomExitY = field.GetPlayfieldBounds().Bottom - ScreenSize.ToPortPixels(QuarkTuning.FleeExitHighRows);
         if (_position.Y <= topExitY || _position.Y >= bottomExitY)
         {
             LifeState = EntityLifeState.Dead;

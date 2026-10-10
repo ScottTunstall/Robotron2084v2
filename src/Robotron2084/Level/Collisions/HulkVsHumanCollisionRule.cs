@@ -10,7 +10,7 @@ internal sealed class HulkVsHumanCollisionRule : ICollisionRule
     /// <inheritdoc/>
     public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
     {
-        if (scene.RobotsFrozen)
+        if (scene.RobotsFrozen())
         {
             yield break;
         }

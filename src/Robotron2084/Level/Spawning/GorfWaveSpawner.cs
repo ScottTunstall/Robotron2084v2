@@ -12,7 +12,7 @@ public sealed class GorfWaveSpawner : IWaveSpawner
         PlayField field = context.Field;
         for (int i = 0; i < field.Parameters.GorfCount; i++)
         {
-            context.Entities.Add(new Gorf(field.Sprites, context.Random, field.PlayfieldBounds, field.Parameters.MaxDropsX2));
+            context.Entities.Add(new Gorf(field.Sprites, context.Random, field.GetPlayfieldBounds(), field.Parameters.MaxDropsX2));
         }
     }
 }

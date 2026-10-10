@@ -166,18 +166,18 @@ public sealed class TunnelEffectTests
         Ticks(tunnel, TicksPerPass);       // four
 
         Assert.Equal(4, tunnel.RingsDrawn);
-        Assert.Equal(4, tunnel.RingsRetained);          // nothing has been discarded
+        Assert.Equal(4, tunnel.GetRingsRetained());          // nothing has been discarded
 
         // The rings keep growing until the outward walk covers the screen: the last ring of the
         // colouring pass starts at $0616 (column 6, row 22) and ends on the screen's own edges.
         int guard = 0;
-        while (!tunnel.IsErasing && guard++ < 1000)
+        while (!tunnel.IsErasing() && guard++ < 1000)
         {
             tunnel.Update();
         }
 
-        Assert.Equal(54, tunnel.RingsRetained);          // every coloured ring is still there
-        (int left, int top, int right, int bottom) = tunnel.OutermostRing;
+        Assert.Equal(54, tunnel.GetRingsRetained());          // every coloured ring is still there
+        (int left, int top, int right, int bottom) = tunnel.GetOutermostRing();
 
         Assert.Equal(0x06, left);
         Assert.Equal(0x16, top);
@@ -193,12 +193,12 @@ public sealed class TunnelEffectTests
         var tunnel = new TunnelEffect();
 
         int guard = 0;
-        while (!tunnel.IsErasing && guard++ < 500)
+        while (!tunnel.IsErasing() && guard++ < 500)
         {
             tunnel.Update();
         }
 
-        Assert.True(tunnel.IsErasing);
+        Assert.True(tunnel.IsErasing());
         Assert.Equal(0, tunnel.PackedColourPair);
         Assert.Equal((0x3B, 0x80, 0x5A, 0x82), tunnel.Corners); // back to the outermost ring
 

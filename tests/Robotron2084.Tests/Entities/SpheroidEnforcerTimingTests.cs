@@ -98,7 +98,7 @@ public sealed class SpheroidEnforcerTimingTests
         Enforcer enforcer = new(TestSprites.Shared, new IntVector2(ScreenSize.ToPortPixels(30), ScreenSize.ToPortPixels(30)), new Random(42), fireIntervalBeats: 30);
         IntVector2 start = enforcer.Position;
 
-        // Run through the start of the wave so RobotsFrozen is false for the enforcer.
+        // Run through the start of the wave so RobotsFrozen() is false for the enforcer.
         for (int tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++)
         {
             field.Update(Frame());
@@ -144,11 +144,11 @@ public sealed class SpheroidEnforcerTimingTests
         {
             enforcer.Update(Frame(), field);
             int expected = Array.FindLastIndex(expectedStarts, s => s <= tick);
-            Assert.Equal(expected, enforcer.GrowAnimationFrameIndex);
+            Assert.Equal(expected, enforcer.GetGrowAnimationFrameIndex());
         }
 
         enforcer.Update(Frame(), field); // tick 54: the grow-up ends, ENFR10 runs
-        Assert.Equal(-1, enforcer.GrowAnimationFrameIndex);
+        Assert.Equal(-1, enforcer.GetGrowAnimationFrameIndex());
     }
 
     [Fact]

@@ -20,11 +20,11 @@ public class GameSessionTests
     {
         GameSession session = GameSession.CreateNewGame(new FakeInputSource(), playerCount: 1);
 
-        Assert.False(session.IsTwoPlayer);
+        Assert.False(session.IsTwoPlayer());
         Assert.Single(session.Players);
-        Assert.Equal(1, session.Current.Number);
-        Assert.Equal(PlayerTuning.StartingLives, session.Current.Lives);
-        Assert.Equal(PlayerTuning.StartingLevelNumber, session.Current.Wave);
+        Assert.Equal(1, session.GetCurrent().Number);
+        Assert.Equal(PlayerTuning.StartingLives, session.GetCurrent().Lives);
+        Assert.Equal(PlayerTuning.StartingLevelNumber, session.GetCurrent().Wave);
     }
 
     [Fact]
@@ -32,9 +32,9 @@ public class GameSessionTests
     {
         GameSession session = NewTwoPlayerGame();
 
-        Assert.True(session.IsTwoPlayer);
+        Assert.True(session.IsTwoPlayer());
         Assert.Equal(2, session.Players.Count);
-        Assert.Equal(1, session.Current.Number);
+        Assert.Equal(1, session.GetCurrent().Number);
 
         session.Players[1].Score = 4200;
         session.Players[1].Wave = 7;
@@ -49,14 +49,14 @@ public class GameSessionTests
         // 3 ships the HUD shows 2 icons during the first life.
         GameSession session = GameSession.CreateNewGame(new FakeInputSource(), playerCount: 1);
 
-        Assert.Equal(3, session.Current.Lives);
-        Assert.Equal(2, session.Current.SpareMen);
+        Assert.Equal(3, session.GetCurrent().Lives);
+        Assert.Equal(2, session.GetCurrent().GetSpareMen());
 
-        session.Current.Lives = 1;
-        Assert.Equal(0, session.Current.SpareMen);
+        session.GetCurrent().Lives = 1;
+        Assert.Equal(0, session.GetCurrent().GetSpareMen());
 
-        session.Current.Lives = 0;
-        Assert.Equal(0, session.Current.SpareMen);
+        session.GetCurrent().Lives = 0;
+        Assert.Equal(0, session.GetCurrent().GetSpareMen());
     }
 
     [Fact]
@@ -65,12 +65,12 @@ public class GameSessionTests
         // ROM MANDSV: "DISPLAY MEN LEFT / MAX OF 7".
         GameSession session = GameSession.CreateNewGame(new FakeInputSource(), playerCount: 1);
 
-        session.Current.Lives = 9; // 8 spare
-        Assert.Equal(8, session.Current.SpareMen);
-        Assert.Equal(HudLayout.HudMaxMen, session.Current.DisplayedMen);
+        session.GetCurrent().Lives = 9; // 8 spare
+        Assert.Equal(8, session.GetCurrent().GetSpareMen());
+        Assert.Equal(HudLayout.HudMaxMen, session.GetCurrent().GetDisplayedMen());
 
-        session.Current.Lives = 4;
-        Assert.Equal(3, session.Current.DisplayedMen);
+        session.GetCurrent().Lives = 4;
+        Assert.Equal(3, session.GetCurrent().GetDisplayedMen());
     }
 
     [Fact]
@@ -79,10 +79,10 @@ public class GameSessionTests
         GameSession session = NewTwoPlayerGame();
 
         Assert.True(session.SwitchToPlayerWithMen());
-        Assert.Equal(2, session.Current.Number);
+        Assert.Equal(2, session.GetCurrent().Number);
 
         Assert.True(session.SwitchToPlayerWithMen());
-        Assert.Equal(1, session.Current.Number);
+        Assert.Equal(1, session.GetCurrent().Number);
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class GameSessionTests
         session.Players[1].Lives = 0;
 
         Assert.False(session.SwitchToPlayerWithMen());
-        Assert.Equal(1, session.Current.Number);
+        Assert.Equal(1, session.GetCurrent().Number);
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class GameSessionTests
         GameSession session = GameSession.CreateNewGame(new FakeInputSource(), playerCount: 1);
 
         Assert.False(session.SwitchToPlayerWithMen());
-        Assert.Equal(1, session.Current.Number);
+        Assert.Equal(1, session.GetCurrent().Number);
     }
 
     [Fact]
@@ -143,7 +143,7 @@ public class GameSessionTests
 
         GameSession session = GameSession.CreateNewGame(GameMode.OnePlayer, new FakeInputSource(), settings: settings);
 
-        Assert.Equal(5, session.Current.Lives);
+        Assert.Equal(5, session.GetCurrent().Lives);
         Assert.Same(settings, session.GameSettings);
     }
 
@@ -152,6 +152,6 @@ public class GameSessionTests
     {
         GameSession session = GameSession.CreateNewGame(new FakeInputSource(), playerCount: 1);
 
-        Assert.Equal(GameSettings.FactoryTurnsPerPlayer, session.Current.Lives);
+        Assert.Equal(GameSettings.FactoryTurnsPerPlayer, session.GetCurrent().Lives);
     }
 }

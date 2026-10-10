@@ -51,10 +51,10 @@ public sealed class HighScorePrintSequence
     public bool HeadersPrinted { get; private set; }
 
     /// <summary>True when the page has finished printing.</summary>
-    public bool IsDone => _phase == Phase.Done;
+    public bool IsDone() => _phase == Phase.Done;
 
     /// <summary>True while the page is still being printed (nothing is drawn before it starts).</summary>
-    public bool IsPrinting => _phase is not (Phase.Waiting or Phase.Done);
+    public bool IsPrinting() => _phase is not (Phase.Waiting or Phase.Done);
 
     /// <summary>Today's rows printed so far (0 until the frame has finished).</summary>
     public int TodayRows { get; private set; }

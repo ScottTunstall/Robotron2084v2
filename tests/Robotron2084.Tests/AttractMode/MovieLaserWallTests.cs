@@ -19,6 +19,6 @@ public sealed class MovieLaserWallTests
             AttractObjectMachine.MoveLaserWithinTheWalls(bolt);
         }
 
-        Assert.InRange(bolt.Column, 7, 0x8F + 1 - 3);
+        Assert.InRange(bolt.GetColumn(), 7, 0x8F + 1 - 3);
     }
 }

@@ -111,7 +111,7 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>The converted human's own box at <see cref="Position"/> (a prog keeps its victim's size).</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
 
     /// <summary>The animation frame the death explosion shatters: the phony burst card, not the human's animation frames.</summary>
     /// <returns>The phony burst card.</returns>
@@ -122,7 +122,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <remarks>ROM: <c>PRGKIL</c>/<c>EXSTV</c> swap the sprite without moving the object, and the
     /// explosion uses that corner with the sprite's own size. The arcade clamps the corner inside the
     /// field; a prog is always inside it already.</remarks>
-    public Rectangle ExplosionBounds => new(
+    public Rectangle GetExplosionBounds() => new(
         _position.X,
         _position.Y,
         ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Width),
@@ -162,19 +162,16 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>The current walk animation frame: the facing direction's set, following <see cref="WalkCycle"/>.</summary>
-    internal int WalkAnimationFrameIndex
+    internal int GetWalkAnimationFrameIndex()
     {
-        get
+        WalkSequence walkSequence = _direction switch
         {
-            WalkSequence walkSequence = _direction switch
-            {
-                Direction8.Left => WalkSequence.Left,
-                Direction8.Right => WalkSequence.Right,
-                Direction8.Down => WalkSequence.Down,
-                _ => WalkSequence.Up,
-            };
-            return (int)walkSequence * 3 + WalkCycle[_walkCycleStep];
-        }
+            Direction8.Left => WalkSequence.Left,
+            Direction8.Right => WalkSequence.Right,
+            Direction8.Down => WalkSequence.Down,
+            _ => WalkSequence.Up,
+        };
+        return (int)walkSequence * 3 + WalkCycle[_walkCycleStep];
     }
 
     /// <summary>How many clock units pass between one beat and the next. A prog's <see cref="_beatTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a beat happens and this is subtracted from it.</summary>
@@ -197,7 +194,7 @@ public sealed class Prog : IExplodable, IRemovable
         }
 
         Texture2D[] frames = _kind.GetAnimationFrames(_sprites);
-        Texture2D animationFrame = frames[WalkAnimationFrameIndex];
+        Texture2D animationFrame = frames[GetWalkAnimationFrameIndex()];
 
         // Oldest ghost first so newer ones paint over it; each is drawn once, in the pose it
         // had when dropped, so the trail is frozen snapshots rather than an animation.
@@ -215,7 +212,7 @@ public sealed class Prog : IExplodable, IRemovable
         _sprites.Blitter.DrawSpriteSolidWithBackground(
             spriteBatch,
             animationFrame,
-            Bounds,
+            GetBounds(),
             _sprites.Blitter.GetSlotColour(ProgTuning.BackgroundSlot),
             _sprites.Blitter.GetSlotColour(ProgTuning.ShapeSlot));
     }
@@ -241,7 +238,7 @@ public sealed class Prog : IExplodable, IRemovable
             return;
         }
 
-        if (field.RobotsFrozen)
+        if (field.RobotsFrozen())
         {
             return;
         }
@@ -270,7 +267,7 @@ public sealed class Prog : IExplodable, IRemovable
 
         // Drop a ghost at the square being left, remembering its pose. Refused steps drop one too;
         // the trail keeps 7 and never redraws an older one (ROM: PROG3).
-        _ghosts.Insert(0, new Ghost(_position, WalkAnimationFrameIndex));
+        _ghosts.Insert(0, new Ghost(_position, GetWalkAnimationFrameIndex()));
         if (_ghosts.Count > ProgTuning.GhostCount)
         {
             _ghosts.RemoveAt(_ghosts.Count - 1);

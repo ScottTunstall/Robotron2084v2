@@ -92,7 +92,7 @@ public sealed class WaveClearState : IGameState
         {
             RestorePalette();
             manager.TransitionTo(_isAttractMode
-                ? new AttractState(GameServices.CreateFrom(_session, _sprites, _highScoreStore, _session.Current.Input))
+                ? new AttractState(GameServices.CreateFrom(_session, _sprites, _highScoreStore, _session.GetCurrent().Input))
                 : new PlayingState(_sprites, _highScoreStore, _session));
         }
     }

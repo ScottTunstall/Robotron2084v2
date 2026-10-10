@@ -50,8 +50,8 @@ public sealed class FieldStrategyTests
     {
         var test = new BoxContactTest();
         var first = new Electrode(TestSprites.Shared, new IntVector2(100, 100));
-        var overlapping = new Electrode(TestSprites.Shared, new IntVector2(100 + (first.Bounds.Width / 2), 100));
-        var apart = new Electrode(TestSprites.Shared, new IntVector2(100 + first.Bounds.Width, 100));
+        var overlapping = new Electrode(TestSprites.Shared, new IntVector2(100 + (first.GetBounds().Width / 2), 100));
+        var apart = new Electrode(TestSprites.Shared, new IntVector2(100 + first.GetBounds().Width, 100));
 
         Assert.True(test.Touches(first, overlapping));
         Assert.False(test.Touches(first, apart));
@@ -120,10 +120,10 @@ public sealed class FieldStrategyTests
         field.Entities.Add(grunt);
 
         Assert.Contains(grunt, field.Entities.GetEntities(RobotKind.Grunt));
-        Assert.Equal(field.Player.Position, field.PlayerPosition);
-        Assert.Equal(field.Wall.PlayfieldBounds, field.PlayfieldBounds);
-        Assert.True(field.HitsWall(new Microsoft.Xna.Framework.Rectangle(field.Wall.OuterBounds.X, field.Wall.OuterBounds.Y, 4, 4)));
-        Assert.False(field.HitsWall(new Microsoft.Xna.Framework.Rectangle(field.PlayfieldBounds.X + 40, field.PlayfieldBounds.Y + 40, 4, 4)));
+        Assert.Equal(field.Player.Position, field.GetPlayerPosition());
+        Assert.Equal(field.Wall.PlayfieldBounds, field.GetPlayfieldBounds());
+        Assert.True(field.HitsWall(new Microsoft.Xna.Framework.Rectangle(field.Wall.GetOuterBounds().X, field.Wall.GetOuterBounds().Y, 4, 4)));
+        Assert.False(field.HitsWall(new Microsoft.Xna.Framework.Rectangle(field.GetPlayfieldBounds().X + 40, field.GetPlayfieldBounds().Y + 40, 4, 4)));
         Assert.True(field.IsPlayerAlive());
         Assert.False(field.IsPlayerDead());
     }
@@ -153,7 +153,7 @@ public sealed class FieldStrategyTests
     public void TheLaserRule_ReportsOneHitPerLaser_AsTheFieldKillsTheLaserBetweenReports()
     {
         PlayField field = new PlayFieldBuilder().Build();
-        Rectangle bounds = field.PlayfieldBounds;
+        Rectangle bounds = field.GetPlayfieldBounds();
         IntVector2 spot = new(bounds.X + 200, bounds.Y + 200);
         field.Entities.Add(new Grunt(TestSprites.Shared, spot));
         field.Entities.Add(new Grunt(TestSprites.Shared, spot));

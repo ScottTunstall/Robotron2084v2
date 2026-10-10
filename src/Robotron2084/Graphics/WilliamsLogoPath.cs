@@ -65,7 +65,7 @@ public sealed class WilliamsLogoPath
     public int Row { get; private set; }
 
     /// <summary>The palette slot the W is drawn in: the colour operand's nibble, 7 down to 1 and round.</summary>
-    public int Slot => ColorOperand & 0x0F;
+    public int GetSlot() => ColorOperand & 0x0F;
 
     private int ColorOperand { get; set; }
 

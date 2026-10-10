@@ -81,14 +81,14 @@ public static class ArcadeHud
             // ROM $DC13/$DC19: the player whose turn it is blits their score with
             // $AA (slot 10 — one of the colour-CYCLING slots); an idle player's
             // uses $11 (slot 1).
-            int slot = ReferenceEquals(player, session.Current)
+            int slot = ReferenceEquals(player, session.GetCurrent())
                 ? HudLayout.HudScoreSlotCurrent
                 : HudLayout.HudScoreSlotIdle;
 
             DrawScore(spriteBatch, sprites, player.Score, HudLayout.ToPortX(scoreColumn * 2), hudY, slot);
             if (showSpareMen)
             {
-                DrawSpareMen(spriteBatch, sprites, player.DisplayedMen, HudLayout.ToPortX(menColumn * 2), hudY);
+                DrawSpareMen(spriteBatch, sprites, player.GetDisplayedMen(), HudLayout.ToPortX(menColumn * 2), hudY);
             }
         }
     }

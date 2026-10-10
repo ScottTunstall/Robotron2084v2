@@ -25,7 +25,7 @@ public sealed class PixelCollisionTests
         public bool Overlaps(SpriteShape a, SpriteShape b) => touching;
     }
 
-    private static LevelParameters OneMikey => new(
+    private static LevelParameters OneMikey() => new(
         LevelNumber: 1,
         GruntCount: 0,
         ElectrodeCount: 0,
@@ -35,7 +35,7 @@ public sealed class PixelCollisionTests
         HulkCount: 0);
 
     private static PlayField CreateField(IPixelCollision? collision) =>
-        new PlayFieldBuilder().WithParameters(OneMikey).WithSeed(99).WithPixelCollision(collision).Build();
+        new PlayFieldBuilder().WithParameters(OneMikey()).WithSeed(99).WithPixelCollision(collision).Build();
 
     [Fact]
     public void ASpriteThatDoesNotTouchDoesNotRescue_EvenWhereTheBoxesOverlap()

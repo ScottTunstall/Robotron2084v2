@@ -84,7 +84,7 @@ public sealed class StripEffect : IEntity
     }
 
     /// <summary>The dead entity's own box.</summary>
-    public Rectangle Bounds => _bounds;
+    public Rectangle GetBounds() => _bounds;
 
     /// <summary>Alive for the record's life: a fixed frame count, or until an appear's size would reach 1.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -103,7 +103,7 @@ public sealed class StripEffect : IEntity
     internal int Slope => _slope;
 
     /// <summary>The current spacing (the sizer's high byte) — test hook.</summary>
-    internal int Spacing => Math.Max(1, _spacingAccumulator >> 8);
+    internal int GetSpacing() => Math.Max(1, _spacingAccumulator >> 8);
 
     /// <summary>Starts an appear: the same record with the size running down, so the strips converge.</summary>
     /// <param name="source">The object materialising; its current animation frame is used.</param>
@@ -140,7 +140,7 @@ public sealed class StripEffect : IEntity
     /// </remarks>
     public static StripEffect CreateFollowingAppear<T>(T source, StripFanAxis axis, int slope, StripClip clip, int centreStripIndex, int startClockUnits)
         where T : IEntity, IAnimationFrameSource
-        => new(() => source.GetCurrentAnimationFrame(), source.Bounds, StripEffectKind.Appear, axis, slope, clip, _ => centreStripIndex, startClockUnits, getFollowedBounds: () => source.Bounds);
+        => new(() => source.GetCurrentAnimationFrame(), source.GetBounds(), StripEffectKind.Appear, axis, slope, clip, _ => centreStripIndex, startClockUnits, getFollowedBounds: () => source.GetBounds());
 
     /// <summary>Starts an appear for a plain picture rather than an entity: the logo's letters on the attract pages.</summary>
     /// <param name="animationFrame">The picture materialising.</param>
@@ -163,7 +163,7 @@ public sealed class StripEffect : IEntity
     public static StripEffect CreateExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {
         (StripFanAxis axis, int slope) = GetFanForShot(direction);
-        return new StripEffect(() => dead.GetCurrentAnimationFrame(), dead.ExplosionBounds, StripEffectKind.Explode, axis, slope, clip);
+        return new StripEffect(() => dead.GetCurrentAnimationFrame(), dead.GetExplosionBounds(), StripEffectKind.Explode, axis, slope, clip);
     }
 
     /// <summary>Draws the frame's strips, each from its own row or column of the dead entity's sprite.</summary>

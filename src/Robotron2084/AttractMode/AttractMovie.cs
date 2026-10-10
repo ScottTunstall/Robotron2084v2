@@ -22,7 +22,7 @@ public sealed class AttractMovie
     }
 
     /// <summary>The script reached DONE / DONE2.</summary>
-    public bool IsFinished => PageMachine.IsFinished;
+    public bool IsFinished() => PageMachine.IsFinished;
 
     /// <summary>The characters the movie has walking about.</summary>
     public AttractObjectMachine ObjectMachine { get; }

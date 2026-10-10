@@ -42,7 +42,7 @@ public sealed class RescueScoreMarker : IEntity
     }
 
     /// <summary>The display's own box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, Size, Size);
 
     /// <summary>Alive until the linger runs out.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -59,7 +59,7 @@ public sealed class RescueScoreMarker : IEntity
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, _sprites.RescueScoreDisplays[_displayIndex], Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, _sprites.RescueScoreDisplays[_displayIndex], GetBounds(), Color.White);
     }
 
     /// <summary>Counts the linger down.</summary>

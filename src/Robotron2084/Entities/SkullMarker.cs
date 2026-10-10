@@ -39,7 +39,7 @@ public sealed class SkullMarker : IEntity
     }
 
     /// <summary>The skull sprite's own box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>Alive until the linger runs out.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -56,7 +56,7 @@ public sealed class SkullMarker : IEntity
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, _sprites.SkullSprite, Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, _sprites.SkullSprite, GetBounds(), Color.White);
     }
 
     /// <summary>Counts the linger down.</summary>

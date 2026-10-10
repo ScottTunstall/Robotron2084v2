@@ -42,7 +42,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The electrode sprite's own 10x9 box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>This electrode's animation frame: the live frame, or the current shrivel frame while it is dying.</summary>
     public Texture2D GetCurrentAnimationFrame()
@@ -74,7 +74,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), Bounds, _sprites.Blitter.GetSlotColour(GetTintSlot()));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), _sprites.Blitter.GetSlotColour(GetTintSlot()));
     }
 
     /// <summary>Starts the shrivel; does nothing unless the electrode is alive.</summary>

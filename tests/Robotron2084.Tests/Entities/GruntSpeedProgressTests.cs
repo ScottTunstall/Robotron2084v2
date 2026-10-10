@@ -106,7 +106,7 @@ public sealed class GruntSpeedProgressTests
         // player nothing can kill the 29 grunts we add, so the exact cadence
         // stays deterministic. Wave 7 floor = 5, ROBSPD = 15.
         PlayField field = CreateField(wave: 7);
-        Assert.Equal(5, field.GruntSpeedFloor); // wave 7: RMXSPD = 5, 0 electrodes
+        Assert.Equal(5, field.GetGruntSpeedFloor()); // wave 7: RMXSPD = 5, 0 electrodes
 
         Grunt? tracked = null;
         for (int i = 0; i < 29; i++)
@@ -126,25 +126,25 @@ public sealed class GruntSpeedProgressTests
         int firstCheckTick = TickOfRomFrameAfterLive(field, FirstCheckRomFrames);
         Tick(field, firstCheckTick - 1);
 
-        Assert.Equal(5, field.GruntSpeedFloor);
+        Assert.Equal(5, field.GetGruntSpeedFloor());
         Assert.Equal(15, tracked.MoveDelayBeats);
 
         field.Update(Frame()); // first level-progress tick (277 vblanks after the game went live)
 
-        Assert.Equal(3, field.GruntSpeedFloor); // 5 − 2
+        Assert.Equal(3, field.GetGruntSpeedFloor()); // 5 − 2
         Assert.Equal(11, tracked.MoveDelayBeats); // 15 − 4
 
         // One tick short of the next check: unchanged.
         int secondCheckTick = TickOfRomFrameAfterLive(field, FirstCheckRomFrames + CheckIntervalRomFrames);
         Tick(field, secondCheckTick - firstCheckTick - 1);
 
-        Assert.Equal(3, field.GruntSpeedFloor);
+        Assert.Equal(3, field.GetGruntSpeedFloor());
 
         field.Update(Frame()); // second tick (225 vblanks after the first)
 
         // Nothing was scored since the first pass, so this one is the harsh one again: the
         // floor drops by 2 (3 → 1) and the limit by 4 (11 → 7).
-        Assert.Equal(1, field.GruntSpeedFloor);
+        Assert.Equal(1, field.GetGruntSpeedFloor());
         Assert.Equal(7, tracked.MoveDelayBeats);
     }
 
@@ -162,13 +162,13 @@ public sealed class GruntSpeedProgressTests
         field.AwardScore(100); // SCRFLG is set by any score (ROM UPDATE_PLAYER_SCORE, $DB9C)
         Tick(field, firstCheckTick - executiveStartTick);
 
-        Assert.Equal(4, field.GruntSpeedFloor); // 5 − 1, not 5 − 2
+        Assert.Equal(4, field.GetGruntSpeedFloor()); // 5 − 1, not 5 − 2
         Assert.Equal(13, tracked.MoveDelayBeats); // 15 − 2, not 15 − 4
 
         // The pass cleared the flag, so with no further score the next one is the harsh one.
         Tick(field, TickOfRomFrameAfterLive(field, FirstCheckRomFrames + CheckIntervalRomFrames) - firstCheckTick);
 
-        Assert.Equal(2, field.GruntSpeedFloor); // 4 − 2
+        Assert.Equal(2, field.GetGruntSpeedFloor()); // 4 − 2
         Assert.Equal(9, tracked.MoveDelayBeats); // 13 − 4
     }
 
@@ -185,7 +185,7 @@ public sealed class GruntSpeedProgressTests
         field.AwardScore(100);
         Tick(field, TickOfRomFrameAfterLive(field, FirstCheckRomFrames) - scoreTick);
 
-        Assert.Equal(3, field.GruntSpeedFloor); // 5 − 2, not 5 − 1
+        Assert.Equal(3, field.GetGruntSpeedFloor()); // 5 − 2, not 5 − 1
         Assert.Equal(11, tracked.MoveDelayBeats); // 15 − 4, not 15 − 2
     }
 
@@ -201,6 +201,6 @@ public sealed class GruntSpeedProgressTests
         // The start of the wave and two full checks with 30 grunts on screen: the $2ACA gate (cur_grunts >= 30, BCC) skips the update.
         Tick(field, TickOfRomFrameAfterLive(field, FirstCheckRomFrames + CheckIntervalRomFrames));
 
-        Assert.Equal(9, field.GruntSpeedFloor);
+        Assert.Equal(9, field.GetGruntSpeedFloor());
     }
 }

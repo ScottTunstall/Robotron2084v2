@@ -66,7 +66,7 @@ public sealed class InitialsEntryState : IGameState
 
     private void DrawCell(SpriteBatch spriteBatch, int cell, int x)
     {
-        if (cell == _entry.LetterIndex && _entry.PreviewIsRub)
+        if (cell == _entry.LetterIndex && _entry.IsPreviewRub())
         {
             _sprites.TextRenderer.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
             return;

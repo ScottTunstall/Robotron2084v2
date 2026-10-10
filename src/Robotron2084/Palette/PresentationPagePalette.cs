@@ -64,14 +64,14 @@ public sealed class PresentationPagePalette
     /// The palette entry the page's wordmark is drawn in on this step: slot 7, 6, 5, …, 1 and round
     /// (the ROM's `$77 → $66 → … → $11 → $77`).
     /// </summary>
-    public int WordmarkColorSlot => LastSlot - _wordmarkStep;
+    public int GetWordmarkColorSlot() => LastSlot - _wordmarkStep;
 
     /// <summary>
-    /// The entry one step BEHIND <see cref="WordmarkColorSlot"/> (slot 1 wraps to 7). The port's traced
+    /// The entry one step BEHIND <see cref="GetWordmarkColorSlot()"/> (slot 1 wraps to 7). The port's traced
     /// wordmark draws its rim here so the reference screenshot's two-tone survives the cycle — and
     /// at the wrap the pair is the reference's own red body on a yellow rim.
     /// </summary>
-    public int WordmarkRimSlot => WordmarkColorSlot == FirstSlot ? LastSlot : WordmarkColorSlot - 1;
+    public int GetWordmarkRimSlot() => GetWordmarkColorSlot() == FirstSlot ? LastSlot : GetWordmarkColorSlot() - 1;
 
     /// <summary>
     /// The page's seven colours, and NO white yet: the ROM copies the table at `$8A3A` before its

@@ -104,7 +104,7 @@ public sealed class WaveSurvivorsTests
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1, TankCount: 3));
 
         Assert.Equal(3, field.Entities.Tanks.Count);
-        Assert.All(field.Entities.Tanks, tank => Assert.False(tank.IsBeingBorn));
+        Assert.All(field.Entities.Tanks, tank => Assert.False(tank.IsBeingBorn()));
 
         field.Entities.Tanks[0].Kill();
         Assert.Equal(2, WaveSurvivors.GetFrom(field).TankCount);

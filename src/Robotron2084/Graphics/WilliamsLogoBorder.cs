@@ -65,7 +65,7 @@ public sealed class WilliamsLogoBorder
     public WilliamsLogoBorder(SpriteMask logoMask) => _logoMask = logoMask;
 
     /// <summary>True once the second phase has run its course; the ROM then goes on to the next page.</summary>
-    public bool IsFinished => _isMoving && _movingFramesRemaining <= 0;
+    public bool IsFinished() => _isMoving && _movingFramesRemaining <= 0;
 
     /// <summary>Which palette slot each arcade pixel of the screen holds; 0 is empty.</summary>
     public IReadOnlyList<byte> Pixels => _pixels;
@@ -157,7 +157,7 @@ public sealed class WilliamsLogoBorder
             return;
         }
 
-        Blit(_path.Column, _path.Row, _path.Slot);
+        Blit(_path.Column, _path.Row, _path.GetSlot());
         _path.Step();
         _drawnLogoCount++;
         _sleepRomFrames = DrawIntervalRomFrames - 1;
@@ -180,7 +180,7 @@ public sealed class WilliamsLogoBorder
 
             (int column, int row) = _logoPositions[_logoIndex];
             Blit(column, row, 0);
-            Blit(_path.Column, _path.Row, _path.Slot);
+            Blit(_path.Column, _path.Row, _path.GetSlot());
             _logoPositions[_logoIndex] = (_path.Column, _path.Row);
         }
 

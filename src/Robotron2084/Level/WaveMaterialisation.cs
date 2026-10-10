@@ -87,7 +87,7 @@ public sealed class WaveMaterialisation
     public WaveMaterialisation(Random random, bool beamsIn) => _transporter = beamsIn ? new RobotTransporter(random) : null;
 
     /// <summary>The number of robots that have not yet been given their turn to appear.</summary>
-    public int PendingCount => _appearNumbers.Values.Count(appearNumber => appearNumber > _passes) + _transportQueue.Count;
+    public int GetPendingCount() => _appearNumbers.Values.Count(appearNumber => appearNumber > _passes) + _transportQueue.Count;
 
     /// <summary>Moves the sequence on by one tick. On each ROM frame the loop makes a pass: it starts the appear effect of the robot whose turn it is, and it draws whole the robot whose appear effect has had time to finish.</summary>
     /// <param name="entities">Everything on the field. The appear effects join its strip effects, and it says whether a strip routine has a record free.</param>
@@ -129,7 +129,7 @@ public sealed class WaveMaterialisation
     /// </remarks>
     public void DrawTransport(SpriteBatch spriteBatch, SpriteSet sprites)
     {
-        if (_transportBegun && _transporter is { IsFinished: false })
+        if (_transportBegun && _transporter is not null && !_transporter.IsFinished())
         {
             _transporter.Draw(spriteBatch, sprites);
         }
@@ -206,7 +206,7 @@ public sealed class WaveMaterialisation
         }
 
         transporter.Update();
-        if (transporter.IsFinished)
+        if (transporter.IsFinished())
         {
             _transported.Clear();
         }
@@ -254,7 +254,7 @@ public sealed class WaveMaterialisation
             return;
         }
 
-        Rectangle robotBounds = robot.Bounds;
+        Rectangle robotBounds = robot.GetBounds();
 
         // The arcade's strip routines take their first step on the ROM frame after this pass, so the effect starts with what is left of this one.
         int startClockUnits = _appearClockUnits - ArcadeClock.UnitsPerPortTick;

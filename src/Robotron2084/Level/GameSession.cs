@@ -23,7 +23,7 @@ public sealed class GameSession
 
     /// <summary>Says whether at least one player still has men.</summary>
     /// <remarks>Original source: <c>RRF.ASM</c> <c>ZP1LAS</c> and <c>ZP2LAS</c>. Disassembly: not separately labelled.</remarks>
-    public bool AnyPlayerSlotHasMen() => Players.Any(p => p.HasMen);
+    public bool AnyPlayerSlotHasMen() => Players.Any(p => p.HasMen());
 
     /// <summary>The keys and buttons the players have chosen. They go with the game so that every screen can read them, such as the pause key (notes §101).</summary>
     public ControlSettings ControlSettings { get; private init; } = ControlSettings.CreateDefaults();
@@ -32,14 +32,14 @@ public sealed class GameSession
     public GameSettings GameSettings { get; private init; } = GameSettings.CreateFactoryDefaults();
 
     /// <summary>The player whose turn it is.</summary>
-    public PlayerSlot Current => Players[CurrentIndex];
+    public PlayerSlot GetCurrent() => Players[CurrentIndex];
 
     /// <summary>The place in <see cref="Players"/> of the player whose turn it is.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>CURPLR</c>. Disassembly: <c>current_player</c>.</remarks>
     public int CurrentIndex { get; private set; }
 
     /// <summary>Says whether two people are playing.</summary>
-    public bool IsTwoPlayer => Players.Count > 1;
+    public bool IsTwoPlayer() => Players.Count > 1;
 
     /// <summary>The players, with player 1 first. There are one or two.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLRCNT</c>. Disassembly: <c>num_players</c>.</remarks>
@@ -108,7 +108,7 @@ public sealed class GameSession
         }
 
         int otherIndex = (CurrentIndex + 1) % Players.Count;
-        if (!Players[otherIndex].HasMen)
+        if (!Players[otherIndex].HasMen())
         {
             return false; // ROM: PLE1, EORA #3 / PLDX / LDB PLAS,X / BEQ PLE1 (toggles back)
         }

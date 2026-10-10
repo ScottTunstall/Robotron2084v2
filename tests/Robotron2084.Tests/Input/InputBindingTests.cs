@@ -77,8 +77,8 @@ public sealed class InputBindingTests
     {
         InputBinding down = InputBinding.CreateStick(0, isRightStick: false, 0, 1);
 
-        Assert.Equal(0, down.DirectionX);
-        Assert.Equal(1, down.DirectionY); // Y down, like every other coordinate in the port
+        Assert.Equal(0, down.GetDirectionX());
+        Assert.Equal(1, down.GetDirectionY()); // Y down, like every other coordinate in the port
     }
 
     [Fact]

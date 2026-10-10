@@ -143,8 +143,8 @@ public sealed class PresentationPagePaletteTests
             (7, 6), (6, 5), (5, 4), (4, 3), (3, 2), (2, 1), (1, 7),
         ];
 
-        Assert.Equal(expected[0].Slot, page.WordmarkColorSlot);
-        Assert.Equal(expected[0].Rim, page.WordmarkRimSlot);
+        Assert.Equal(expected[0].Slot, page.GetWordmarkColorSlot());
+        Assert.Equal(expected[0].Rim, page.GetWordmarkRimSlot());
 
         for (int step = 1; step < expected.Length; step++)
         {
@@ -153,14 +153,14 @@ public sealed class PresentationPagePaletteTests
                 page.Update(palette);
             }
 
-            Assert.Equal(expected[step].Slot, page.WordmarkColorSlot);
-            Assert.Equal(expected[step].Rim, page.WordmarkRimSlot);
+            Assert.Equal(expected[step].Slot, page.GetWordmarkColorSlot());
+            Assert.Equal(expected[step].Rim, page.GetWordmarkRimSlot());
         }
 
         // At the wrap the pair is the reference screenshot's own: a red body (slot 1, $07) on a
         // yellow rim (slot 7, $3F).
-        Assert.Equal(0x07, PresentationPagePalette.PageColors[page.WordmarkColorSlot - 1]);
-        Assert.Equal(0x3F, PresentationPagePalette.PageColors[page.WordmarkRimSlot - 1]);
+        Assert.Equal(0x07, PresentationPagePalette.PageColors[page.GetWordmarkColorSlot() - 1]);
+        Assert.Equal(0x3F, PresentationPagePalette.PageColors[page.GetWordmarkRimSlot() - 1]);
     }
 
     [Fact]

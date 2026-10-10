@@ -39,9 +39,9 @@ public sealed class HumanSpawnTests
                     foreach (Electrode electrode in field.Entities.Electrodes)
                     {
                         Assert.False(
-                            electrode.Bounds.Intersects(human.Bounds),
-                            $"level {level} seed {seed}: {human.Kind} at {human.Bounds} spawns on an "
-                            + $"electrode at {electrode.Bounds}");
+                            electrode.GetBounds().Intersects(human.GetBounds()),
+                            $"level {level} seed {seed}: {human.Kind} at {human.GetBounds()} spawns on an "
+                            + $"electrode at {electrode.GetBounds()}");
                     }
                 }
             }
@@ -74,7 +74,7 @@ public sealed class HumanSpawnTests
                     }
 
                     Assert.False(
-                        electrode.Bounds.Intersects(human.Bounds),
+                        electrode.GetBounds().Intersects(human.GetBounds()),
                         $"tick {tick}: a {human.Kind} walked into an electrode");
                 }
             }
@@ -85,7 +85,7 @@ public sealed class HumanSpawnTests
     public void TheFamilyStartsWalkingWhileTheRobotsAreStillHeld()
     {
         // Two things were holding the family at the start of a wave: the shared
-        // `RobotsFrozen` (which the ROM's robots check but the humans do not), and a whole extra
+        // `RobotsFrozen()` (which the ROM's robots check but the humans do not), and a whole extra
         // step period seeded into the walk clock — `HUMSTV`'s stagger IS the first wait. Within
         // half a second the family must be moving even though the robots are not.
         PlayField field = CreateField(3, 7);
@@ -99,7 +99,7 @@ public sealed class HumanSpawnTests
             field.Update(Frame());
         }
 
-        Assert.True(field.RobotsFrozen, "the start of the wave must still be holding the robots");
+        Assert.True(field.RobotsFrozen(), "the start of the wave must still be holding the robots");
 
         int moved = humans.Count(h => h.IsAlive() && h.Position != start[h]);
         Assert.True(moved > 0, "the family was still standing after half a second");

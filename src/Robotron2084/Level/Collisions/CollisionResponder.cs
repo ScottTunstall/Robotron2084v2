@@ -57,13 +57,13 @@ internal sealed class CollisionResponder
     /// <summary>The brain starts reprogramming the human it caught.</summary>
     /// <param name="caught">The catch.</param>
     private void RespondToBrainCatchingHuman(BrainCaughtHumanResult caught) =>
-        caught.Brain.BeginReprogramming(caught.Human, _field.PlayfieldBounds);
+        caught.Brain.BeginReprogramming(caught.Human, _field.GetPlayfieldBounds());
 
     /// <summary>A laser is used up by the robot it hits: the robot's kind says what happens to it and what sound it makes, and the kill is scored.</summary>
     /// <param name="hit">The hit.</param>
     private void RespondToLaserHit(LaserHitResult hit)
     {
-        Rectangle hitBounds = hit.Target.Bounds;
+        Rectangle hitBounds = hit.Target.GetBounds();
         hit.KindInfo.LaserHit(_field, hit.Target, hit.Laser.Direction);
         _field.PlaySoundFrom(hit.KindInfo.LaserHitSound, hitBounds);
         _field.AwardScore(hit.KindInfo.Score);
@@ -79,8 +79,8 @@ internal sealed class CollisionResponder
         _field.SpawnExplosion(hit.Grunt, null);
         hit.Electrode.Kill();
         _field.SpeedUpGrunts();
-        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.Bounds);
-        _field.PlaySoundFrom(SoundTables.RobotHit, hit.Grunt.Bounds);
+        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.GetBounds());
+        _field.PlaySoundFrom(SoundTables.RobotHit, hit.Grunt.GetBounds());
     }
 
     /// <summary>The BerzerkRobot and the electrode both die, as a grunt's do, but the other robots do not speed up.</summary>
@@ -90,8 +90,8 @@ internal sealed class CollisionResponder
         hit.Robot.Kill();
         _field.SpawnExplosion(hit.Robot, null);
         hit.Electrode.Kill();
-        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.Bounds);
-        _field.PlaySoundFrom(SoundTables.RobotHit, hit.Robot.Bounds);
+        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.GetBounds());
+        _field.PlaySoundFrom(SoundTables.RobotHit, hit.Robot.GetBounds());
     }
 
     /// <summary>The electrode is destroyed. The hulk is not harmed.</summary>
@@ -99,7 +99,7 @@ internal sealed class CollisionResponder
     private void RespondToHulkHittingElectrode(HulkHitElectrodeResult hit)
     {
         hit.Electrode.Kill();
-        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.Bounds);
+        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.GetBounds());
     }
 
     /// <summary>The conversion never finishes: the human is lost, no prog appears, and a skull is left where they stood.</summary>
@@ -118,7 +118,7 @@ internal sealed class CollisionResponder
     {
         killed.Human.Kill();
         _field.LeaveSkull(killed.Human.Position);
-        _field.PlaySoundFrom(SoundTables.KillAHuman, killed.Human.Bounds);
+        _field.PlaySoundFrom(SoundTables.KillAHuman, killed.Human.GetBounds());
     }
 
     /// <summary>The human is saved, the rescue is counted and shown, and the bonus is scored.</summary>
@@ -128,7 +128,7 @@ internal sealed class CollisionResponder
         rescued.Human.Rescue();
         int rescues = _field.CountRescuedFamilyMembers();
         _field.ShowRescueScore(rescued.Human.Position);
-        _field.PlaySoundFrom(SoundTables.SaveAHuman, rescued.Human.Bounds);
+        _field.PlaySoundFrom(SoundTables.SaveAHuman, rescued.Human.GetBounds());
         _field.AwardRescueBonus(rescues);
     }
 }

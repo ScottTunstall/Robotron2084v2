@@ -38,22 +38,22 @@ public sealed class HighScoreFrameAnimation
     /// The growing pass's frontier: the outermost stroke it has drawn, or -1 before it has
     /// drawn any (notes §98.5 — the first two strokes are drawn before the first sleep).
     /// </summary>
-    public int DrawnStroke => _isErasing ? HighScoreTableLayout.FrameLastStroke : _strokesDrawn - 1;
+    public int GetDrawnStroke() => _isErasing ? HighScoreTableLayout.FrameLastStroke : _strokesDrawn - 1;
 
     /// <summary>
     /// The erase pass's frontier: the innermost stroke it has BLACKED, or -1 while that pass
     /// has not started. Everything at or below this stroke is gone; the wall is what is left
-    /// between it and <see cref="DrawnStroke"/>.
+    /// between it and <see cref="GetDrawnStroke()"/>.
     /// </summary>
-    public int ErasedStroke => _isErasing ? _strokesDrawn - 1 : -1;
+    public int GetErasedStroke() => _isErasing ? _strokesDrawn - 1 : -1;
 
     /// <summary>True once the erase pass has reached its terminal point — the wall is complete.</summary>
-    public bool IsFinished => _isErasing && _strokesDrawn >= HighScoreTableLayout.FrameEraseStrokeCount;
+    public bool IsFinished() => _isErasing && _strokesDrawn >= HighScoreTableLayout.FrameEraseStrokeCount;
 
     /// <summary>Advances the pass by one port tick (call once per Update).</summary>
     public void Tick()
     {
-        if (IsFinished)
+        if (IsFinished())
         {
             return;
         }
@@ -85,7 +85,7 @@ public sealed class HighScoreFrameAnimation
                     _strokesDrawn++;
                 }
             }
-            else if (!IsFinished)
+            else if (!IsFinished())
             {
                 _strokesDrawn++;
             }

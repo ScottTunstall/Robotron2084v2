@@ -35,13 +35,13 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives,
     public LevelParameters? SavedWaveParameters { get; set; }
 
     /// <summary>True while the player can still be given a turn.</summary>
-    public bool HasMen => Lives > 0;
+    public bool HasMen() => Lives > 0;
 
     /// <summary>The spare men: the men the player has besides the one in play. With three men, the player sees two spare ones during their first.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c>, the count that <c>MANDSV</c> draws. Disassembly: <c>p1_men</c> and <c>p2_men</c>.</remarks>
-    public int SpareMen => System.Math.Max(0, Lives - 1);
+    public int GetSpareMen() => System.Math.Max(0, Lives - 1);
 
     /// <summary>How many little men are drawn on the screen: the spare men, though never more than the screen has room for.</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>MANDSV</c>, which stops at <c>#$07</c>. Disassembly: not separately labelled.</remarks>
-    public int DisplayedMen => System.Math.Min(SpareMen, HudLayout.HudMaxMen);
+    public int GetDisplayedMen() => System.Math.Min(GetSpareMen(), HudLayout.HudMaxMen);
 }

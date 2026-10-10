@@ -32,7 +32,7 @@ public sealed class PlayerAnimationAndAimTests
     {
         // WAVE_START_PLAYER points the player metadata at $3603 = frame 7.
         PlayField field = CreateField(new FakeInputSource());
-        Assert.Equal(6, field.Player.WalkAnimationFrameIndex); // 0-based index into PlayerAnimationFrames
+        Assert.Equal(6, field.Player.GetWalkAnimationFrameIndex()); // 0-based index into PlayerAnimationFrames
     }
 
     [Fact]
@@ -49,8 +49,8 @@ public sealed class PlayerAnimationAndAimTests
         {
             field.Update(new GameTime());
             Assert.True(
-                field.Player.WalkAnimationFrameIndex == expected[tick],
-                $"tick {tick + 1}: expected frame index {expected[tick]}, got {field.Player.WalkAnimationFrameIndex}");
+                field.Player.GetWalkAnimationFrameIndex() == expected[tick],
+                $"tick {tick + 1}: expected frame index {expected[tick]}, got {field.Player.GetWalkAnimationFrameIndex()}");
         }
     }
 
@@ -81,7 +81,7 @@ public sealed class PlayerAnimationAndAimTests
         Assert.Equal(Direction8.Up, field.Player.FacingDirection); // the initial facing, untouched
         PlayerLaser laser = Assert.Single(field.PlayerLasers.GetActiveLasers());
         Assert.Equal(Direction8.Right, laser.Direction);
-        Assert.Equal(6, field.Player.WalkAnimationFrameIndex); // idle frame, untouched
+        Assert.Equal(6, field.Player.GetWalkAnimationFrameIndex()); // idle frame, untouched
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public sealed class PlayerAnimationAndAimTests
             field.Update(new GameTime());
         }
 
-        Assert.Equal(1, field.Player.WalkAnimationFrameIndex); // left walk, frame 2 (index 1)
+        Assert.Equal(1, field.Player.GetWalkAnimationFrameIndex()); // left walk, frame 2 (index 1)
 
         // Round 8: aim UP while still moving left — the facing and the walk
         // animation must stay LEFT (the old behaviour switched the sprite to
@@ -105,15 +105,15 @@ public sealed class PlayerAnimationAndAimTests
         field.Update(new GameTime());
 
         Assert.Equal(Direction8.Left, field.Player.FacingDirection);
-        Assert.InRange(field.Player.WalkAnimationFrameIndex, 0, 2); // still the left walk group
+        Assert.InRange(field.Player.GetWalkAnimationFrameIndex(), 0, 2); // still the left walk group
 
         // Idle: the animation freezes on the current frame (R5 $2FFE early-out).
         input.State = default;
-        int frozen = field.Player.WalkAnimationFrameIndex;
+        int frozen = field.Player.GetWalkAnimationFrameIndex();
         for (int tick = 0; tick < 12; tick++)
         {
             field.Update(new GameTime());
-            Assert.True(field.Player.WalkAnimationFrameIndex == frozen, $"idle tick {tick + 1} changed the frame");
+            Assert.True(field.Player.GetWalkAnimationFrameIndex() == frozen, $"idle tick {tick + 1} changed the frame");
         }
     }
 

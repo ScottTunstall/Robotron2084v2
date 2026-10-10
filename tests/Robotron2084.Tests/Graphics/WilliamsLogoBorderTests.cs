@@ -69,7 +69,7 @@ public sealed class WilliamsLogoBorderTests
 
         // Each move erases its slot's W (nothing there for the first lap) and draws one, so the ring grows.
         Assert.True(Count(border) >= before);
-        Assert.False(border.IsFinished);
+        Assert.False(border.IsFinished());
     }
 
     [Fact]
@@ -79,6 +79,6 @@ public sealed class WilliamsLogoBorderTests
 
         TickRomFrames(border, (4 * 28) + 704 + 8);
 
-        Assert.True(border.IsFinished);
+        Assert.True(border.IsFinished());
     }
 }

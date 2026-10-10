@@ -183,11 +183,11 @@ public sealed class WaveStartSequenceTests
 
         Tick(field, WaveStartTicks.UntilLive(field) - 1);
 
-        Assert.True(field.RobotsFrozen);
+        Assert.True(field.RobotsFrozen());
         Assert.Equal(starts, field.Entities.Grunts.Select(grunt => grunt.Position));
 
         Tick(field, 1);
 
-        Assert.False(field.RobotsFrozen);
+        Assert.False(field.RobotsFrozen());
     }
 }

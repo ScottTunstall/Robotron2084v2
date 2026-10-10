@@ -52,7 +52,7 @@ public sealed class DefineInputsModel
     public bool IsArmed { get; private set; }
 
     /// <summary>True while the highlight is on the shared PAUSE line.</summary>
-    public bool IsPauseLine => Line == PauseLine;
+    public bool IsPauseLine() => Line == PauseLine;
 
     /// <summary>The highlighted line, from player 1's first MOVE to the PAUSE line.</summary>
     public int Line { get; private set; }

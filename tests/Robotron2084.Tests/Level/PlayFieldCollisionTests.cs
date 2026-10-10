@@ -173,19 +173,19 @@ public sealed class PlayFieldCollisionTests
         // The laser is gone and its flare sits in the TOP wall band, dithered
         // (LASDIV — the ROM mixes WALCOL into LASCOL there).
         Assert.Equal(EntityLifeState.Dead, laser.LifeState);
-        Assert.Equal(1, field.LaserWallFlareCount);
-        LaserWallFlare flare = field.LaserWallFlares[0];
+        Assert.Equal(1, field.GetLaserWallFlareCount());
+        LaserWallFlare flare = field.GetLaserWallFlares()[0];
         Assert.True(flare.Bounds.Y < field.Wall.PlayfieldBounds.Top, $"flare {flare.Bounds} is not on the top wall band");
         Assert.True(flare.Dithered);
 
         // It lives 2 ROM frames = 12 clock units, so it survives two ticks and is
         // dropped on the third (the ROM's `NAP 2`).
         field.Update(Tick);
-        Assert.Equal(1, field.LaserWallFlareCount);
+        Assert.Equal(1, field.GetLaserWallFlareCount());
         field.Update(Tick);
-        Assert.Equal(1, field.LaserWallFlareCount);
+        Assert.Equal(1, field.GetLaserWallFlareCount());
         field.Update(Tick);
-        Assert.Equal(0, field.LaserWallFlareCount);
+        Assert.Equal(0, field.GetLaserWallFlareCount());
     }
 
     [Fact]
@@ -202,7 +202,7 @@ public sealed class PlayFieldCollisionTests
         field.Update(Tick);
 
         Assert.Equal(EntityLifeState.Dead, laser!.LifeState);
-        Assert.Equal(1, field.LaserWallFlareCount);
+        Assert.Equal(1, field.GetLaserWallFlareCount());
     }
 
     [Fact]
@@ -213,15 +213,15 @@ public sealed class PlayFieldCollisionTests
 
         // A laser that crossed the RIGHT wall: LASDIH — a solid fill.
         field.SpawnLaserWallFlare(new Rectangle(inner.Right - 2, inner.Center.Y, 4, 4), Direction8.Right);
-        Assert.Equal(1, field.LaserWallFlareCount);
-        LaserWallFlare flare = field.LaserWallFlares[0];
+        Assert.Equal(1, field.GetLaserWallFlareCount());
+        LaserWallFlare flare = field.GetLaserWallFlares()[0];
         Assert.False(flare.Dithered);
         Assert.True(flare.Bounds.Right > inner.Right, $"flare {flare.Bounds} is not on the right wall band");
 
         // A diagonal that ran off the same wall is still a vertical-wall death:
         // only the CROSSED EDGE decides, not the travel axis.
         field.SpawnLaserWallFlare(new Rectangle(inner.Right - 2, inner.Center.Y, 4, 4), Direction8.UpRight);
-        Assert.False(field.LaserWallFlares[1].Dithered);
+        Assert.False(field.GetLaserWallFlares()[1].Dithered);
     }
 
     // The round-7 playtest aid (`PlayerInvincibleForTesting`) makes contact a no-op

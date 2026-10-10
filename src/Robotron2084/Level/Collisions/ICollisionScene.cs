@@ -8,7 +8,7 @@ namespace Robotron2084.Level.Collisions;
 internal interface ICollisionScene
 {
     /// <summary>Says whether the robots must stand still: until the game goes live at the start of the wave, and while the player is dying.</summary>
-    bool RobotsFrozen { get; }
+    bool RobotsFrozen();
 
     /// <summary>Says whether the player can be killed just now: alive, and not the invincible playtest player.</summary>
     bool CanPlayerBeHurt();

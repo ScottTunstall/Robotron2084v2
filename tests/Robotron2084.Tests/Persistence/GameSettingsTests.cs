@@ -12,7 +12,7 @@ public sealed class GameSettingsTests
         GameSettings settings = GameSettings.CreateFactoryDefaults();
 
         Assert.Equal(25, settings.ExtraManEvery);
-        Assert.Equal(25_000, settings.ExtraManEveryPoints);
+        Assert.Equal(25_000, settings.GetExtraManEveryPoints());
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(GameSettings.RecommendedDifficulty, settings.Difficulty);
         Assert.False(settings.AttractModeSoundEnabled); // the port's demo is silent until the operator turns it on
@@ -38,7 +38,7 @@ public sealed class GameSettingsTests
         }
 
         Assert.Equal(0, settings.ExtraManEvery);
-        Assert.Equal(0, settings.ExtraManEveryPoints);
+        Assert.Equal(0, settings.GetExtraManEveryPoints());
     }
 
     [Fact]

@@ -177,7 +177,7 @@ public sealed class TankShellTests
         for (int tick = 0; tick < 200 && shell.IsAlive(); tick++)
         {
             shell.Update(new GameTime(), field);
-            Assert.True(shell.Bounds.Right <= bounds.Right, $"the shell crossed the right wall on tick {tick}");
+            Assert.True(shell.GetBounds().Right <= bounds.Right, $"the shell crossed the right wall on tick {tick}");
             Assert.False(lastTickBounced && shell.BouncedThisUpdate, "a bounce was reported on two ticks running");
             lastTickBounced = shell.BouncedThisUpdate;
             if (shell.BouncedThisUpdate)

@@ -28,7 +28,7 @@ public class TransporterSoundTests
         Assert.Equal(72, ticks[72]); // TRSPR1 sends its first spaced one in the same vblank
         Assert.Equal(74, ticks[73]);
         Assert.Equal(142, ticks[^1]);
-        Assert.False(transporter.IsRunning);
+        Assert.False(transporter.IsRunning());
     }
 
     private static (RecordingSink Sink, TransporterSound Transporter) Run(int ticks)

@@ -67,13 +67,13 @@ public sealed class DefineInputsModelTests
             model.MoveDown();
         }
 
-        Assert.True(model.IsPauseLine); // the gap before PAUSE is stepped over too
+        Assert.True(model.IsPauseLine()); // the gap before PAUSE is stepped over too
 
         model.MoveDown();
         Assert.Equal(0, model.Line); // and the wrap round the page
 
         model.MoveUp();
-        Assert.True(model.IsPauseLine); // back up over the gap
+        Assert.True(model.IsPauseLine()); // back up over the gap
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public sealed class DefineInputsModelTests
             model.MoveDown();
         }
 
-        Assert.True(model.IsPauseLine);
+        Assert.True(model.IsPauseLine());
 
         model.MoveDown();
         Assert.Equal(0, model.Line); // and back round to the top
@@ -111,7 +111,7 @@ public sealed class DefineInputsModelTests
 
         model.MoveUp();
 
-        Assert.True(model.IsPauseLine);
+        Assert.True(model.IsPauseLine());
         Assert.Equal(DefineInputsModel.PauseLine, model.Line);
     }
 

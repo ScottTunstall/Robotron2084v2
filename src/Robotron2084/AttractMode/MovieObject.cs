@@ -76,14 +76,14 @@ public sealed record MovieObject
 
     /// <summary>The object's drawn position as arcade pixels — the ROM's `OBJX`/`OBJY`.</summary>
     /// <summary>The integer column (the ROM's `OBJX`).</summary>
-    public int Column => XSubpixels >> 8;
+    public int GetColumn() => XSubpixels >> 8;
 
     /// <summary>The integer row, including the shake (the ROM's `OBJY`).</summary>
-    public int Row => (YSubpixels >> 8) + ShakeRowOffset;
+    public int GetRow() => (YSubpixels >> 8) + ShakeRowOffset;
 
     /// <summary>The column as arcade pixels.</summary>
-    public int ArcadeX => Column * ScreenSize.ArcadePixelsPerColumn;
+    public int GetArcadeX() => GetColumn() * ScreenSize.ArcadePixelsPerColumn;
 
     /// <summary>The row as arcade pixels.</summary>
-    public int ArcadeY => Row;
+    public int GetArcadeY() => GetRow();
 }

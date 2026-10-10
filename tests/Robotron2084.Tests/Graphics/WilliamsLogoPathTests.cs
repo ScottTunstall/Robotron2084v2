@@ -9,10 +9,10 @@ public sealed class WilliamsLogoPathTests
     private static List<(int Column, int Row, int Slot)> Walk(int count)
     {
         var path = new WilliamsLogoPath();
-        var places = new List<(int, int, int)>();
+        var places = new List<(int Column, int Row, int Slot)>();
         for (int i = 0; i < count; i++)
         {
-            places.Add((path.Column, path.Row, path.Slot));
+            places.Add((Column: path.Column, Row: path.Row, Slot: path.GetSlot()));
             path.Step();
         }
 
@@ -65,6 +65,6 @@ public sealed class WilliamsLogoPathTests
 
         path.Reset();
 
-        Assert.Equal((5, 0x0F, 7), (path.Column, path.Row, path.Slot));
+        Assert.Equal((5, 0x0F, 7), (path.Column, path.Row, path.GetSlot()));
     }
 }

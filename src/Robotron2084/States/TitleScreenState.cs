@@ -174,8 +174,8 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
         // body on a yellow rim. The "2084" mark keeps its traced colours. Both at the port's 2x
         // sprite scale.
-        _wordmark.Draw(spriteBatch, _sprites.Blitter, _pagePalette.WordmarkRimSlot, _pagePalette.WordmarkColorSlot);
-        if (_wordmark.IsFinished)
+        _wordmark.Draw(spriteBatch, _sprites.Blitter, _pagePalette.GetWordmarkRimSlot(), _pagePalette.GetWordmarkColorSlot());
+        if (_wordmark.IsFinished())
         {
             DrawCentredLogo(spriteBatch, _sprites.Title2084Sprite, Logo2084Row);
         }

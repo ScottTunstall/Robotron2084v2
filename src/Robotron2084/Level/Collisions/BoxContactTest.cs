@@ -6,5 +6,5 @@ namespace Robotron2084.Level.Collisions;
 public sealed class BoxContactTest : IContactTest
 {
     /// <inheritdoc/>
-    public bool Touches(IEntity a, IEntity b) => a.Bounds.Intersects(b.Bounds);
+    public bool Touches(IEntity a, IEntity b) => a.GetBounds().Intersects(b.GetBounds());
 }

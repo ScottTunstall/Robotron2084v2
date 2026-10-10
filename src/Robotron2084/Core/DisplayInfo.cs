@@ -20,9 +20,9 @@ public static class DisplayInfo
     /// <summary>Available desktop area (work area) as width/height in pixels.</summary>
     public static Point GetWorkArea()
     {
-        if (SystemParametersInfo(SpiGetWorkArea, SpiGetWorkArea, out Rect workArea, 0) && workArea.Width > 0 && workArea.Height > 0)
+        if (SystemParametersInfo(SpiGetWorkArea, SpiGetWorkArea, out Rect workArea, 0) && workArea.GetWidth() > 0 && workArea.GetHeight() > 0)
         {
-            return new Point(workArea.Width, workArea.Height);
+            return new Point(workArea.GetWidth(), workArea.GetHeight());
         }
 
         return GetDesktopResolution();
@@ -43,7 +43,7 @@ public static class DisplayInfo
         public int Right;
         public int Bottom;
 
-        public int Width => Right - Left;
-        public int Height => Bottom - Top;
+        public int GetWidth() => Right - Left;
+        public int GetHeight() => Bottom - Top;
     }
 }

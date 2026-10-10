@@ -104,18 +104,15 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>The collision box: the current birth animation frame's size while being born, else the tank's.</summary>
-    public Rectangle Bounds
+    public Rectangle GetBounds()
     {
-        get
+        if (_growStep < TankTuning.GrowSteps)
         {
-            if (_growStep < TankTuning.GrowSteps)
-            {
-                (int w, int h) = TankTuning.GrowSizes[_growStep];
-                return new Rectangle(_position.X, _position.Y, ScreenSize.ToPortPixels(w), ScreenSize.ToPortPixels(h));
-            }
-
-            return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+            (int w, int h) = TankTuning.GrowSizes[_growStep];
+            return new(_position.X, _position.Y, ScreenSize.ToPortPixels(w), ScreenSize.ToPortPixels(h));
         }
+
+        return new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
     }
 
     /// <summary>The frame an explosion would copy (see <see cref="IAnimationFrameSource"/>): the birth animation frame while being born, else the tread frame.</summary>
@@ -146,7 +143,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         Math.Clamp(position.Y, playfieldBounds.Y, playfieldBounds.Bottom - CollisionSize.Height));
 
     /// <summary>True while the ROM birth sequence is still playing (test hook).</summary>
-    internal bool IsBeingBorn => _growStep < TankTuning.GrowSteps;
+    internal bool IsBeingBorn() => _growStep < TankTuning.GrowSteps;
 
     /// <summary>Which tread animation frame is showing: the index into <see cref="SpriteSet.TankAnimationFrames"/>.</summary>
     /// <remarks>Playing backwards while the tank moves left is the ROM's own rule: TANK3 takes the
@@ -187,7 +184,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>Kills the tank outright: no death animation.</summary>
@@ -217,7 +214,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        if (field.RobotsFrozen)
+        if (field.RobotsFrozen())
         {
             return;
         }

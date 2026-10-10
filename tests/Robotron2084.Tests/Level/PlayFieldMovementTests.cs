@@ -40,7 +40,7 @@ public sealed class PlayFieldMovementTests
 
         field.Update(new GameTime());
         Assert.NotEqual(afterAim, hulk.Position);
-        Assert.True(IsFullyInside(hulk.Bounds, bounds));
+        Assert.True(IsFullyInside(hulk.GetBounds(), bounds));
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public sealed class PlayFieldMovementTests
         for (int i = 0; i < 300; i++)
         {
             field.Update(new GameTime());
-            Assert.True(IsFullyInside(hulk.Bounds, bounds));
+            Assert.True(IsFullyInside(hulk.GetBounds(), bounds));
         }
 
         Assert.Equal(EntityLifeState.Alive, hulk.LifeState);

@@ -60,9 +60,9 @@ public sealed class QuarkTankBehaviourTests
             moved |= dx + dy > 0;
             pathLength += dx + dy;
 
-            Assert.True(quark.Bounds.X >= bounds.X && quark.Bounds.Right <= bounds.Right,
+            Assert.True(quark.GetBounds().X >= bounds.X && quark.GetBounds().Right <= bounds.Right,
                 $"tick {tick}: quark left the playfield horizontally");
-            Assert.True(quark.Bounds.Y >= bounds.Y && quark.Bounds.Bottom <= bounds.Bottom,
+            Assert.True(quark.GetBounds().Y >= bounds.Y && quark.GetBounds().Bottom <= bounds.Bottom,
                 $"tick {tick}: quark left the playfield vertically");
             maxAxisSeen = Math.Max(maxAxisSeen, Math.Max(dx, dy));
 
@@ -148,11 +148,11 @@ public sealed class QuarkTankBehaviourTests
         for (int tick = 0; tick < bornTicks - 1; tick++)
         {
             field.Update(Frame());
-            Assert.True(tank.IsBeingBorn, $"tick {tick + 1}: the birth ended early");
+            Assert.True(tank.IsBeingBorn(), $"tick {tick + 1}: the birth ended early");
         }
 
         // It finishes growing.
-        while (tank.IsBeingBorn)
+        while (tank.IsBeingBorn())
         {
             field.Update(Frame());
         }
@@ -187,8 +187,8 @@ public sealed class QuarkTankBehaviourTests
         field.SpawnTank(new IntVector2(bounds.Right + 100, bounds.Bottom + 100));
 
         Tank tank = Assert.Single(field.Entities.Tanks);
-        Assert.True(tank.Bounds.X >= bounds.X && tank.Bounds.Right <= bounds.Right, "tank not inside horizontally");
-        Assert.True(tank.Bounds.Y >= bounds.Y && tank.Bounds.Bottom <= bounds.Bottom, "tank not inside vertically");
+        Assert.True(tank.GetBounds().X >= bounds.X && tank.GetBounds().Right <= bounds.Right, "tank not inside horizontally");
+        Assert.True(tank.GetBounds().Y >= bounds.Y && tank.GetBounds().Bottom <= bounds.Bottom, "tank not inside vertically");
     }
 
     [Fact]
@@ -210,7 +210,7 @@ public sealed class QuarkTankBehaviourTests
 
         // ROM MTANK: the tank plays four birth animation frames before it can move, aim or
         // fire, so no beat happens while it is being born either.
-        while (tank.IsBeingBorn)
+        while (tank.IsBeingBorn())
         {
             field.Update(Frame());
             Assert.Equal(treadAtSpawn, tank.TreadFrameIndex);

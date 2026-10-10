@@ -108,13 +108,10 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>This member's own sprite box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds
+    public Rectangle GetBounds()
     {
-        get
-        {
-            (int w, int h) = _kind.GetArcadeCollisionSize();
-            return new(_position.X, _position.Y, ScreenSize.ToPortPixels(w), ScreenSize.ToPortPixels(h));
-        }
+        (int w, int h) = _kind.GetArcadeCollisionSize();
+        return new(_position.X, _position.Y, ScreenSize.ToPortPixels(w), ScreenSize.ToPortPixels(h));
     }
 
     /// <summary>The walk frame this human is showing — the sprite pixel-perfect collision compares.</summary>
@@ -167,13 +164,13 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
             _sprites.Blitter.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[_animationFrameIndex],
-                Bounds,
+                GetBounds(),
                 _sprites.Blitter.GetSlotColour(ReprogramTuning.BackgroundSlot),
                 _sprites.Blitter.GetSlotColour(ReprogramTuning.ShapeSlot));
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, frames[_animationFrameIndex], Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, frames[_animationFrameIndex], GetBounds(), Color.White);
     }
 
     /// <summary>Killed: gone at once, with no death animation.</summary>
@@ -238,7 +235,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
         // Each unit in the walk table is one arcade pixel.
         IntVector2 candidate = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixels(1);
-        Rectangle next = Bounds with { X = candidate.X, Y = candidate.Y };
+        Rectangle next = GetBounds() with { X = candidate.X, Y = candidate.Y };
         if (field.HitsWall(next) || OverlapsLivingElectrode(next, field))
         {
             // Blocked by the wall or a standing electrode: pick a fresh direction instead.
@@ -288,7 +285,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     {
         foreach (Electrode electrode in field.GetElectrodes())
         {
-            if (electrode.IsAlive() && electrode.Bounds.Intersects(next))
+            if (electrode.IsAlive() && electrode.GetBounds().Intersects(next))
             {
                 return true;
             }

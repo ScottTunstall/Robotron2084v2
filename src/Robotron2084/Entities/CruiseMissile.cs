@@ -80,7 +80,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     /// <summary>The collision box: the tracked point shifted one pixel up and left.</summary>
     /// <remarks>ROM: the "FAT PHONY GUY" hitbox, offset up and left of the tracked point.</remarks>
-    public Rectangle Bounds => new(
+    public Rectangle GetBounds() => new(
         _position.X + ScreenSize.ToPortPixelsFromColumns(CollisionSizes.CruiseMissileBoxOffsetColumns),
         _position.Y + ScreenSize.ToPortPixels(CollisionSizes.CruiseMissileBoxOffsetRows),
         CollisionSize.Width,

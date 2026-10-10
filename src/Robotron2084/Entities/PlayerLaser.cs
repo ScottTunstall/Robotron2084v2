@@ -33,7 +33,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The 4x4 spec-pixel collision box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, Size, Size);
 
     /// <summary>The sprite for this laser's direction — the ROM's four laser sprites (`LTAB`, notes §19).</summary>
     public Texture2D GetCurrentAnimationFrame() =>
@@ -65,7 +65,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
         }
 
         // The ROM draws the laser in its flashing palette slot, so the whole bolt flashes with it.
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), Bounds, _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
     }
 
     /// <summary>Removes the laser at once, vacating its slot.</summary>
@@ -92,12 +92,12 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
 
         // The wall is tested along the whole step, not only where the laser lands: a laser fired from beside the
         // wall can start inside it and finish a step past it, and would otherwise fly on.
-        Rectangle boundsBeforeMove = Bounds;
+        Rectangle boundsBeforeMove = GetBounds();
         _position += Direction.ToIntVector() * PlayerTuning.LaserSpeed;
-        if (field.HitsWall(Rectangle.Union(boundsBeforeMove, Bounds)))
+        if (field.HitsWall(Rectangle.Union(boundsBeforeMove, GetBounds())))
         {
             // RRG23 LASDIE: a brief flare in the wave's LASCOL slot, then the wall colour.
-            field.SpawnLaserWallFlare(Bounds, Direction);
+            field.SpawnLaserWallFlare(GetBounds(), Direction);
             Kill();
         }
     }

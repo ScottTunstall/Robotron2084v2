@@ -108,9 +108,9 @@ public sealed class PlayerAppear
 
     /// <summary>Gets how many of the arcade's columns wide the player's sprite is. A column is two pixels.</summary>
     /// <param name="player">The player.</param>
-    private static int GetSpriteColumns(Player player) => player.Bounds.Width / ScreenSize.ToPortPixelsFromColumns(1);
+    private static int GetSpriteColumns(Player player) => player.GetBounds().Width / ScreenSize.ToPortPixelsFromColumns(1);
 
     /// <summary>Gets how many rows high the player's sprite is.</summary>
     /// <param name="player">The player.</param>
-    private static int GetSpriteRows(Player player) => player.Bounds.Height / ScreenSize.ToPortPixels(1);
+    private static int GetSpriteRows(Player player) => player.GetBounds().Height / ScreenSize.ToPortPixels(1);
 }

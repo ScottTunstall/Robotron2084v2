@@ -25,7 +25,7 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
     public IEnumerable<IEntity> Entities => _items;
 
     /// <summary>The entity at the end of the list — the ROM's "last slot" (<c>[^1]</c>).</summary>
-    public T Last => _items[^1];
+    public T GetLast() => _items[^1];
 
     /// <summary>The entity at <paramref name="index"/>.</summary>
     /// <param name="index">Its position in the list.</param>

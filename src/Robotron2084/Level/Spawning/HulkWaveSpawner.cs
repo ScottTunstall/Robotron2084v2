@@ -30,8 +30,8 @@ public sealed class HulkWaveSpawner : IWaveSpawner
         {
             IntVector2 position = placement.FindSpawnPointAwayFrom(context.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
             Func<IntVector2> getTargetPosition = context.Random.Next(TargetRollSides) == 0
-                ? () => entities.GetLastFamilyMemberPosition() ?? field.PlayerPosition
-                : () => field.PlayerPosition;
+                ? () => entities.GetLastFamilyMemberPosition() ?? field.GetPlayerPosition()
+                : () => field.GetPlayerPosition();
             var hulk = new Hulk(field.Sprites, position, context.Random, field.Parameters.HulkBeatIntervalRomFrames, getTargetPosition);
             entities.Add(hulk);
         }

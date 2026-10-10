@@ -131,13 +131,13 @@ public sealed class TunnelEffect
     internal (int Left, int Top, int Right, int Bottom) Corners => (_leftColumn, _topRow, _rightColumn, _bottomRow);
 
     /// <summary>True while the tunnel is being redrawn in black to erase itself.</summary>
-    internal bool IsErasing => _packedColourPair == 0;
+    internal bool IsErasing() => _packedColourPair == 0;
 
     /// <summary>
     /// The last ring of the colouring pass (test hook) — the walk's outer extent, which must
     /// cover the playfield once the tunnel has finished growing.
     /// </summary>
-    internal (int Left, int Top, int Right, int Bottom) OutermostRing
+    internal (int Left, int Top, int Right, int Bottom) GetOutermostRing()
         => _rings.Count > 0
             ? (_rings[^1].Left, _rings[^1].Top, _rings[^1].Right, _rings[^1].Bottom)
             : (_leftColumn, _topRow, _rightColumn, _bottomRow);
@@ -149,7 +149,7 @@ public sealed class TunnelEffect
     internal int RingsDrawn { get; private set; }
 
     /// <summary>Rings still on screen (test hook): nothing is erased until the black pass reaches it.</summary>
-    internal int RingsRetained => _rings.Count + _blackRings.Count;
+    internal int GetRingsRetained() => _rings.Count + _blackRings.Count;
 
     /// <summary>
     /// Draws EVERY ring the walk has reached — they accumulate, two pixels apart, which is what

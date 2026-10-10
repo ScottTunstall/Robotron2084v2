@@ -69,7 +69,7 @@ public static class CollisionSizes
     /// 12x16 px. PRGKIL swaps the object's sprite descriptor to this card and then
     /// calls the ordinary `EXST`, so the card is what the strip explosion shatters,
     /// and `EXSTV` sizes its record from the sprite — see
-    /// <see cref="Entities.Prog.ExplosionBounds"/> (notes §90).
+    /// <see cref="Entities.Prog.GetExplosionBounds()"/> (notes §90).
     /// </summary>
     public static readonly (int Width, int Height) ProgBurstSize = (12, 16);
 

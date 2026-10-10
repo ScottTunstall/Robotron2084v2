@@ -286,7 +286,7 @@ public sealed class FieldEntities
 
     /// <summary>Says whether no electrode touches a box, so that something can be put there.</summary>
     /// <param name="box">The box to test, in port pixels.</param>
-    public bool IsClearOfElectrodes(Rectangle box) => Electrodes.All(electrode => !electrode.Bounds.Intersects(box));
+    public bool IsClearOfElectrodes(Rectangle box) => Electrodes.All(electrode => !electrode.GetBounds().Intersects(box));
 
     /// <summary>Says whether one of the arcade's strip routines has a record free for another explosion or appear effect.</summary>
     /// <param name="engine">The strip routine that would run the effect.</param>

@@ -34,13 +34,15 @@ public sealed class StripEffectTests
 
     private sealed class FakeDead : IExplodable
     {
-        public FakeDead(Rectangle bounds) => Bounds = bounds;
+        private Rectangle _bounds;
 
-        public Rectangle Bounds { get; private set; }
+        public FakeDead(Rectangle bounds) => _bounds = bounds;
 
-        public void MoveTo(Rectangle bounds) => Bounds = bounds;
+        public Rectangle GetBounds() => _bounds;
 
-        public IntVector2 Position => new(Bounds.X, Bounds.Y);
+        public void MoveTo(Rectangle bounds) => _bounds = bounds;
+
+        public IntVector2 Position => new(GetBounds().X, GetBounds().Y);
 
         public EntityLifeState LifeState => EntityLifeState.Dead;
 
@@ -66,9 +68,9 @@ public sealed class StripEffectTests
     /// <summary>Ticks the record forward one ROM FRAME at a time (the clock is 1.2 ticks).</summary>
     private static void Steps(StripEffect explosion, int frames)
     {
-        int target = explosion.Spacing + frames;
+        int target = explosion.GetSpacing() + frames;
         int guard = 0;
-        while ((explosion.Spacing < target || target < 1) && guard++ < 200)
+        while ((explosion.GetSpacing() < target || target < 1) && guard++ < 200)
         {
             explosion.Update(new GameTime(), null!);
         }
@@ -386,16 +388,16 @@ public sealed class StripEffectTests
 
         UpdateToRomFrame(appear, ref ticks, 1);
         Assert.True(appear.IsDrawn());
-        Assert.Equal(15, appear.Spacing);
+        Assert.Equal(15, appear.GetSpacing());
 
         UpdateToRomFrame(appear, ref ticks, 2);
-        Assert.Equal(15, appear.Spacing);
+        Assert.Equal(15, appear.GetSpacing());
 
         UpdateToRomFrame(appear, ref ticks, 3);
-        Assert.Equal(14, appear.Spacing);
+        Assert.Equal(14, appear.GetSpacing());
 
         UpdateToRomFrame(appear, ref ticks, 28);
-        Assert.Equal(2, appear.Spacing);
+        Assert.Equal(2, appear.GetSpacing());
         Assert.True(appear.IsAlive());
     }
 
@@ -406,10 +408,10 @@ public sealed class StripEffectTests
         int ticks = 0;
 
         UpdateToRomFrame(appear, ref ticks, 28);
-        Assert.Equal(2, appear.Spacing);
+        Assert.Equal(2, appear.GetSpacing());
 
         UpdateToRomFrame(appear, ref ticks, 30);
-        Assert.Equal(1, appear.Spacing);
+        Assert.Equal(1, appear.GetSpacing());
         Assert.True(appear.IsAlive());
     }
 
@@ -441,10 +443,10 @@ public sealed class StripEffectTests
 
         player.MoveTo(new Rectangle(140, 200, 16, 24));
         UpdateToRomFrame(appear, ref ticks, 2); // the gap is the same, so nothing is redrawn
-        Assert.Equal(100, appear.Bounds.X);
+        Assert.Equal(100, appear.GetBounds().X);
 
         UpdateToRomFrame(appear, ref ticks, 3);
-        Assert.Equal(140, appear.Bounds.X);
+        Assert.Equal(140, appear.GetBounds().X);
     }
 
     [Fact]

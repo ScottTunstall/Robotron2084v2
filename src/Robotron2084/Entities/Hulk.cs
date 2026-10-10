@@ -127,7 +127,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     }
 
     /// <summary>The hulk sprite's own 14x16 box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>This hulk's current walk animation frame, for the appear effect.</summary>
     /// <remarks>It never shatters, but it still materialises at the start of a wave.</remarks>
@@ -171,7 +171,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <param name="spriteBatch">The batch to draw into.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>Aims the hulk and sets the time of its first step, on the tick the game goes live. The beat timer is set so that it comes due when that time has gone by.</summary>
@@ -188,7 +188,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     public void Update(GameTime gameTime, PlayField field)
     {
         _playfieldBounds = field.Wall.PlayfieldBounds;
-        if (field.RobotsFrozen)
+        if (field.RobotsFrozen())
         {
             return;
         }

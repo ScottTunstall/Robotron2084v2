@@ -88,7 +88,7 @@ public sealed class PlayFieldRobotRegistryTests
         (RobotKind.Gorf, typeof(Gorf)),
     ];
 
-    private static LevelParameters OneOfEverything => new(
+    private static LevelParameters OneOfEverything() => new(
         LevelNumber: 1,
         GruntCount: 2,
         ElectrodeCount: 3,
@@ -147,7 +147,7 @@ public sealed class PlayFieldRobotRegistryTests
     [Fact]
     public void OnlyTheWaveBroughtKindsHaveAWaveCount_AndEachReadsItsOwnCount()
     {
-        LevelParameters parameters = OneOfEverything;
+        LevelParameters parameters = OneOfEverything();
 
         foreach ((RobotKind kind, Func<LevelParameters, int> count) in WaveBrought)
         {

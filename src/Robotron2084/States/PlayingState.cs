@@ -106,7 +106,7 @@ public sealed class PlayingState : IGameState
         }
 
         ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds());
-        ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.Current.Wave);
+        ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.GetCurrent().Wave);
 
         if (_pause.IsPaused)
         {
@@ -118,13 +118,13 @@ public sealed class PlayingState : IGameState
                 "PAUSED",
                 HudLayout.PausedMessageColumn,
                 HudLayout.PausedMessageRow,
-                WavePaletteTables.GetElectrodeSlot(_session.Current.Wave));
+                WavePaletteTables.GetElectrodeSlot(_session.GetCurrent().Wave));
         }
 
         if (_playerOutMessageTicks > 0)
         {
             // ROM string 75: "PLAYER n" at $3F79 then "GAME OVER" at $3E86.
-            int messageSlot = WavePaletteTables.GetElectrodeSlot(_session.Current.Wave);
+            int messageSlot = WavePaletteTables.GetElectrodeSlot(_session.GetCurrent().Wave);
             ArcadeHud.DrawMessageText(spriteBatch, _sprites, $"PLAYER {_playerOutNumber}", HudLayout.PlayerTurnMessageColumn, HudLayout.PlayerGameOverMessageRow, messageSlot);
             ArcadeHud.DrawMessageText(spriteBatch, _sprites, "GAME OVER", HudLayout.GameOverMessageColumn, HudLayout.GameOverMessageRow, messageSlot);
         }
@@ -135,10 +135,10 @@ public sealed class PlayingState : IGameState
             ArcadeHud.DrawMessageText(
                 spriteBatch,
                 _sprites,
-                $"PLAYER {_session.Current.Number}",
+                $"PLAYER {_session.GetCurrent().Number}",
                 HudLayout.PlayerTurnMessageColumn,
                 HudLayout.PlayerTurnMessageRow,
-                WavePaletteTables.GetElectrodeSlot(_session.Current.Wave));
+                WavePaletteTables.GetElectrodeSlot(_session.GetCurrent().Wave));
         }
     }
 
@@ -177,7 +177,7 @@ public sealed class PlayingState : IGameState
         // spare man) stale for the rest of the wave.
         SyncSlotFromField();
 
-        PlayerInputState input = _session.Current.Input.Poll();
+        PlayerInputState input = _session.GetCurrent().Input.Poll();
 
         // Wave clear — checked before the death check. The P key (the port's test
         // key) takes the same path so waves can be skipped.
@@ -218,7 +218,7 @@ public sealed class PlayingState : IGameState
     /// <param name="parameters">The wave's parameters.</param>
     /// <param name="slot">The player whose turn it is.</param>
     private LevelParameters ApplyBozoMode(LevelParameters parameters, PlayerSlot slot) =>
-        _gameSettings.BozoModeEnabled ? BozoMode.Apply(parameters, slot.SpareMen, _gameSettings.TurnsPerPlayer) : parameters;
+        _gameSettings.BozoModeEnabled ? BozoMode.Apply(parameters, slot.GetSpareMen(), _gameSettings.TurnsPerPlayer) : parameters;
 
     /// <summary>The start sound for a mode: <c>ST1SND</c> for one player, <c>ST2SND</c> for two (RRG23 <c>SST01</c>, from <c>PLRCNT</c>).</summary>
     private static SoundSequence StartSoundFor(GameMode mode) =>
@@ -234,7 +234,7 @@ public sealed class PlayingState : IGameState
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLS0D</c>, <c>LDA PLRCNT / DECA / BEQ PLS0A</c> ("1 PLAYER GAME"), then <c>NAP 115,PLS0B</c> ("PLAYER UP MESSAGE"). Disassembly: <c>$2803</c> to <c>$281A</c>.</remarks>
     private void AnnounceTurn()
     {
-        _turnMessageTicks = _session.IsTwoPlayer
+        _turnMessageTicks = _session.IsTwoPlayer()
             ? ArcadeClock.ToPortTicks(ScreenTuning.PlayerTurnMessageRomFrames)
             : 0;
     }
@@ -242,7 +242,7 @@ public sealed class PlayingState : IGameState
     /// <summary>Builds the playfield for whoever's turn it is, from their own state.</summary>
     private PlayField BuildField()
     {
-        PlayerSlot slot = _session.Current;
+        PlayerSlot slot = _session.GetCurrent();
 
         LevelParameters parameters = GetWaveToPlay(slot);
 
@@ -258,7 +258,7 @@ public sealed class PlayingState : IGameState
             slot.Score,
             _sprites.Blitter.Palette,
             contactTest: new PixelContactTest(new SpriteCollision()),
-            extraManEveryPoints: _gameSettings.ExtraManEveryPoints,
+            extraManEveryPoints: _gameSettings.GetExtraManEveryPoints(),
             tankShellBugEnabled: _gameSettings.TankShellBugEnabled,
             brainsChaseMikeyBugEnabled: _gameSettings.BrainsChaseMikeyBugEnabled);
     }
@@ -270,11 +270,11 @@ public sealed class PlayingState : IGameState
     /// </summary>
     private void HandlePlayerDeath(GameStateManager manager)
     {
-        PlayerSlot deadPlayerSlot = _session.Current;
+        PlayerSlot deadPlayerSlot = _session.GetCurrent();
         SyncSlotFromField();
         deadPlayerSlot.SavedWaveParameters = WaveSurvivors.GetFrom(_field);
 
-        if (_session.IsTwoPlayer)
+        if (_session.IsTwoPlayer())
         {
             // ROM PLE1B: the turn passes to the other player while they have men.
             _session.SwitchToPlayerWithMen();
@@ -285,11 +285,11 @@ public sealed class PlayingState : IGameState
             // The score that ends the game is the CURRENT player's — but a 2-player
             // game offers both scores to the high-score table (RRTESTC checks
             // ZP1SCR and ZP2SCR), so the session hands over all of them.
-            manager.TransitionTo(GameOverState.CreateFromSession(_session.Current.Input, _sprites, _highScoreStore, _session));
+            manager.TransitionTo(GameOverState.CreateFromSession(_session.GetCurrent().Input, _sprites, _highScoreStore, _session));
             return;
         }
 
-        if (!deadPlayerSlot.HasMen && _session.IsTwoPlayer)
+        if (!deadPlayerSlot.HasMen() && _session.IsTwoPlayer())
         {
             // ROM PLEND3: this player is out and the other still has men — print
             // "PLAYER n GAME OVER" and wait NAP $60 before the turn passes.
@@ -309,7 +309,7 @@ public sealed class PlayingState : IGameState
     /// </summary>
     private void HandleWaveCleared(GameStateManager manager)
     {
-        PlayerSlot slot = _session.Current;
+        PlayerSlot slot = _session.GetCurrent();
         SyncSlotFromField();
 
         // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
@@ -320,5 +320,5 @@ public sealed class PlayingState : IGameState
     }
 
     /// <summary>Copies the live field's counters back into the current player's slot.</summary>
-    private void SyncSlotFromField() => _field.SyncInto(_session.Current);
+    private void SyncSlotFromField() => _field.SyncInto(_session.GetCurrent());
 }

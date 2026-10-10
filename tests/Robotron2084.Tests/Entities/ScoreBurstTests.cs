@@ -175,7 +175,7 @@ public sealed class ScoreBurstTests
         Settle(field);
 
         Spheroid spheroid = field.Entities.Spheroids[0];
-        IntVector2 aim = new(spheroid.Bounds.Center.X, spheroid.Bounds.Y - 6);
+        IntVector2 aim = new(spheroid.GetBounds().Center.X, spheroid.GetBounds().Y - 6);
         Assert.True(field.PlayerLasers.TryFire(aim, Direction8.Down, out PlayerLaser? laser));
         Assert.NotNull(laser);
         field.Update(Tick16);
@@ -194,7 +194,7 @@ public sealed class ScoreBurstTests
         Settle(field);
 
         Quark quark = field.Entities.Quarks[0];
-        IntVector2 aim = new(quark.Bounds.Center.X, quark.Bounds.Y - 6);
+        IntVector2 aim = new(quark.GetBounds().Center.X, quark.GetBounds().Y - 6);
         Assert.True(field.PlayerLasers.TryFire(aim, Direction8.Down, out PlayerLaser? laser));
         Assert.NotNull(laser);
         field.Update(Tick16);

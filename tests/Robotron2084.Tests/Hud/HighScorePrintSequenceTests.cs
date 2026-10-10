@@ -24,12 +24,12 @@ public sealed class HighScorePrintSequenceTests
             print.Tick(frameFinished: false, Today, AllTime);
         }
 
-        Assert.False(print.IsPrinting);
+        Assert.False(print.IsPrinting());
         Assert.Equal(0, print.TodayRows);
         Assert.Equal(0, print.AllTimeRows);
         Assert.False(print.TopPrinted);
         Assert.False(print.HeadersPrinted);
-        Assert.False(print.IsDone);
+        Assert.False(print.IsDone());
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class HighScorePrintSequenceTests
 
         // PRJNK's first group prints the moment it is called (TOD44 falls into TOD33).
         Assert.Equal(4, print.TodayRows);
-        Assert.True(print.IsPrinting);
+        Assert.True(print.IsPrinting());
     }
 
     [Fact]
@@ -67,12 +67,12 @@ public sealed class HighScorePrintSequenceTests
 
         TickUntil(print, p => p.HeadersPrinted);
         Assert.Equal(AllTime, print.AllTimeRows);
-        Assert.True(print.IsDone);
+        Assert.True(print.IsDone());
 
         // The page is a still screen once printed.
         TickFrames(print, 10);
         Assert.Equal(AllTime, print.AllTimeRows);
-        Assert.True(print.IsDone);
+        Assert.True(print.IsDone());
     }
 
     [Fact]
@@ -82,13 +82,13 @@ public sealed class HighScorePrintSequenceTests
         // = twelve ticks, a fifth of a second of printing after the frame's own 53.
         var print = new HighScorePrintSequence();
         int ticks = 0;
-        while (!print.IsDone && ticks < 200)
+        while (!print.IsDone() && ticks < 200)
         {
             print.Tick(frameFinished: true, Today, AllTime);
             ticks++;
         }
 
-        Assert.True(print.IsDone);
+        Assert.True(print.IsDone());
         Assert.InRange(ticks, 11, 14);
     }
 
@@ -100,7 +100,7 @@ public sealed class HighScorePrintSequenceTests
         print.Tick(frameFinished: true, 0, 0);
 
         Assert.True(print.HeadersPrinted);
-        Assert.True(print.IsDone);
+        Assert.True(print.IsDone());
         Assert.Equal(0, print.TodayRows);
     }
 

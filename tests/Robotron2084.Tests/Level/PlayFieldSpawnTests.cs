@@ -35,7 +35,7 @@ public sealed class PlayFieldSpawnTests
         {
             for (int j = i + 1; j < electrodes.Count; j++)
             {
-                Assert.False(electrodes[i].Bounds.Intersects(electrodes[j].Bounds), $"electrodes {i} and {j} overlap");
+                Assert.False(electrodes[i].GetBounds().Intersects(electrodes[j].GetBounds()), $"electrodes {i} and {j} overlap");
             }
         }
     }
@@ -45,7 +45,7 @@ public sealed class PlayFieldSpawnTests
     {
         PlayField field = CreateField(4, 2, 2, 1, 6);
 
-        AssertEveryEntityIsFullyInsidePlayArea(e => e.Bounds, field.Entities.Electrodes);
+        AssertEveryEntityIsFullyInsidePlayArea(e => e.GetBounds(), field.Entities.Electrodes);
     }
 
     [Fact]
@@ -71,10 +71,10 @@ public sealed class PlayFieldSpawnTests
         Assert.Equal(3, field.Entities.Quarks.GetLiveCount());
         foreach (Quark quark in field.Entities.Quarks)
         {
-            int bottomEdgeY = bounds.Bottom - quark.Bounds.Height;
-            Assert.True(quark.Bounds.Y == bounds.Y || quark.Bounds.Y == bottomEdgeY,
-                $"quark at y {quark.Bounds.Y} is not on a wall edge (top {bounds.Y}, bottom {bottomEdgeY})");
-            Assert.InRange(quark.Bounds.X, bounds.X, bounds.Right - quark.Bounds.Width);
+            int bottomEdgeY = bounds.Bottom - quark.GetBounds().Height;
+            Assert.True(quark.GetBounds().Y == bounds.Y || quark.GetBounds().Y == bottomEdgeY,
+                $"quark at y {quark.GetBounds().Y} is not on a wall edge (top {bounds.Y}, bottom {bottomEdgeY})");
+            Assert.InRange(quark.GetBounds().X, bounds.X, bounds.Right - quark.GetBounds().Width);
         }
     }
 

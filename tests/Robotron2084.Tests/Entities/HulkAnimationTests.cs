@@ -52,7 +52,7 @@ public sealed class HulkAnimationTests
         for (int i = 0; i < 400; i++)
         {
             field.Update(new GameTime());
-            Assert.True(IsFullyInside(hulk.Bounds, bounds), $"hulk left the playfield at update {i}");
+            Assert.True(IsFullyInside(hulk.GetBounds(), bounds), $"hulk left the playfield at update {i}");
 
             bool moved = hulk.Position != lastPosition;
             reaimed = hulk.Direction != lastDirection;

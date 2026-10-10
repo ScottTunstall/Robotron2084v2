@@ -55,7 +55,7 @@ public sealed class PlayerAppearTests
         Assert.Equal(StripExplosionTuning.HorizontalPoolSize, Count(field, StripEngine.Horizontal));
         Assert.Equal(0, Count(field, StripEngine.Diagonal));
         Assert.All(field.Entities.Explosions, effect => Assert.Equal(StripEffectKind.Appear, effect.Kind));
-        Assert.All(field.Entities.Explosions, effect => Assert.Equal(field.Player.Bounds, effect.Bounds));
+        Assert.All(field.Entities.Explosions, effect => Assert.Equal(field.Player.GetBounds(), effect.GetBounds()));
     }
 
     [Fact]
@@ -100,21 +100,21 @@ public sealed class PlayerAppearTests
         PlayField field = CreateEmptyField(input);
         int ticks = 0;
         TickToRomFrame(field, ref ticks, PlayerAppearRomFrame + 10);
-        Rectangle start = field.Player.Bounds;
+        Rectangle start = field.Player.GetBounds();
 
         for (int tick = 0; tick < 12; tick++)
         {
-            Dictionary<StripEffect, int> spacingBefore = field.Entities.Explosions.ToDictionary(effect => effect, effect => effect.Spacing);
+            Dictionary<StripEffect, int> spacingBefore = field.Entities.Explosions.ToDictionary(effect => effect, effect => effect.GetSpacing());
             field.Update(Frame());
 
-            foreach (StripEffect effect in field.Entities.Explosions.Where(effect => effect.Spacing != spacingBefore[effect]))
+            foreach (StripEffect effect in field.Entities.Explosions.Where(effect => effect.GetSpacing() != spacingBefore[effect]))
             {
-                Assert.Equal(field.Player.Bounds, effect.Bounds);
+                Assert.Equal(field.Player.GetBounds(), effect.GetBounds());
             }
         }
 
-        Assert.NotEqual(start, field.Player.Bounds);
-        Assert.All(field.Entities.Explosions, effect => Assert.NotEqual(start, effect.Bounds));
+        Assert.NotEqual(start, field.Player.GetBounds());
+        Assert.All(field.Entities.Explosions, effect => Assert.NotEqual(start, effect.GetBounds()));
     }
 
     [Fact]

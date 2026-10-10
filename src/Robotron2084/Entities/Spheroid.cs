@@ -142,7 +142,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The spheroid sprite's own 16x15 box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The current animation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <returns>The texture for the current rotation frame.</returns>
@@ -172,7 +172,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>Kills the spheroid outright; a laser hit plays its own burst instead of the strip explosion.</summary>
@@ -200,7 +200,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         // The arcade does not move its motion objects while the game is held: before it goes live, and while the player dies
         // (ROM: RRS22.ASM OPRC80, BITA #8 / BNE O80, "NO VELOCITY REFRESH ONLY"; STATUS bit 3).
-        if (!field.RobotsFrozen)
+        if (!field.RobotsFrozen())
         {
             AdvanceMover(field);
         }
@@ -292,7 +292,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// is per routine, not per object.</remarks>
     private void AdvanceDropBeat(PlayField field)
     {
-        if (!_isDropping && field.RobotsFrozen)
+        if (!_isDropping && field.RobotsFrozen())
         {
             _animationFrameIndex = 0;
             return;

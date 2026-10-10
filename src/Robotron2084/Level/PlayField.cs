@@ -151,7 +151,7 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>True while the robots must stand still: until the game goes live at the start of the wave, and while the player is dying.</summary>
     /// <remarks>Original source: each robot's routine waits for <c>STATUS</c> to clear (<c>RRP8.ASM</c> <c>ROBOT</c>, <c>RRH11.ASM</c> <c>HULK</c>). Disassembly: the status byte at <c>$59</c>.</remarks>
-    public bool RobotsFrozen => !IsLive() || Player.IsDying();
+    public bool RobotsFrozen() => !IsLive() || Player.IsDying();
 
     /// <summary>The player's score.</summary>
     public ScoreBoard ScoreBoard { get; }
@@ -160,10 +160,10 @@ public sealed class PlayField : ICollisionScene
     public PlayfieldWall Wall { get; }
 
     /// <summary>Where the player's top-left corner is.</summary>
-    public IntVector2 PlayerPosition => Player.Position;
+    public IntVector2 GetPlayerPosition() => Player.Position;
 
     /// <summary>The inside of the wall, in port pixels.</summary>
-    public Rectangle PlayfieldBounds => Wall.PlayfieldBounds;
+    public Rectangle GetPlayfieldBounds() => Wall.PlayfieldBounds;
 
     /// <summary>Moves the whole field on by one tick.</summary>
     /// <param name="gameTime">The time for this tick.</param>
@@ -201,7 +201,7 @@ public sealed class PlayField : ICollisionScene
         // RRG23 LSPROC asks for LASSND as each laser starts (R5 $3221).
         if (Player.FiredLaserThisUpdate)
         {
-            PlaySoundFrom(SoundTables.Laser, Player.Bounds);
+            PlaySoundFrom(SoundTables.Laser, Player.GetBounds());
         }
         PlayerLasers.Update(gameTime, this);
 
@@ -294,7 +294,7 @@ public sealed class PlayField : ICollisionScene
     public bool IsPlayerDead() => Player.IsDead();
 
     /// <summary>Says whether the player can be killed just now: alive, and not the invincible playtest player.</summary>
-    public bool CanPlayerBeHurt() => Player.IsAlive() && !Player.IsInvincible;
+    public bool CanPlayerBeHurt() => Player.IsAlive() && !Player.IsInvincible();
 
     /// <summary>Kills the player.</summary>
     public void KillPlayer() => Player.Kill();
@@ -362,16 +362,16 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>The shortest wait between moves that the grunts' speed-ups may bring a grunt to (test hook).</summary>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>RMXSPD</c>. Disassembly: <c>$BE5D</c>.</remarks>
-    internal int GruntSpeedFloor => _gruntSpeedProgression.Floor;
+    internal int GetGruntSpeedFloor() => _gruntSpeedProgression.Floor;
 
     /// <summary>How many flashes of colour are showing where lasers hit the wall (test hook).</summary>
-    internal int LaserWallFlareCount => _laserWallFlares.Flares.Count;
+    internal int GetLaserWallFlareCount() => _laserWallFlares.Flares.Count;
 
     /// <summary>The flashes of colour that are showing where lasers hit the wall (test hook).</summary>
-    internal IReadOnlyList<LaserWallFlare> LaserWallFlares => _laserWallFlares.Flares;
+    internal IReadOnlyList<LaserWallFlare> GetLaserWallFlares() => _laserWallFlares.Flares;
 
     /// <summary>How many robots are still waiting for their turn to appear at the start of the wave (test hook).</summary>
-    internal int PendingAppearCount => _materialisation.PendingCount;
+    internal int GetPendingAppearCount() => _materialisation.GetPendingCount();
 
     /// <summary>Fires one of the player's lasers, if one of their three slots is free.</summary>
     /// <param name="position">Where the laser starts.</param>
@@ -537,7 +537,7 @@ public sealed class PlayField : ICollisionScene
         {
             if (shell.BouncedThisUpdate)
             {
-                PlaySoundFrom(SoundTables.ShellRebound, shell.Bounds);
+                PlaySoundFrom(SoundTables.ShellRebound, shell.GetBounds());
             }
         }
 
@@ -616,7 +616,7 @@ public sealed class PlayField : ICollisionScene
         {
             _hitStopTicksRemaining = PlayerTuning.HitStopTicks;
             // R5 $30EF (KILL_PLAYER): the death sound ($26D9, p238).
-            PlaySoundFrom(SoundTables.PlayerDeath, Player.Bounds);
+            PlaySoundFrom(SoundTables.PlayerDeath, Player.GetBounds());
         }
     }
 }

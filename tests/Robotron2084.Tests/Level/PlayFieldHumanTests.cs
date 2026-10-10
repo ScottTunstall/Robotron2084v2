@@ -57,9 +57,9 @@ public sealed class PlayFieldHumanTests
             field.Update(Frame());
             foreach (Human human in field.Entities.Family.Members)
             {
-                Assert.InRange(human.Bounds.X, inner.X, inner.Right - human.Bounds.Width);
-                Assert.InRange(human.Bounds.Y, inner.Y, inner.Bottom - human.Bounds.Height);
-                Assert.True(human.Bounds.Right <= inner.Right && human.Bounds.Bottom <= inner.Bottom, $"tick {tick}: human {human.Bounds} escapes {inner}");
+                Assert.InRange(human.GetBounds().X, inner.X, inner.Right - human.GetBounds().Width);
+                Assert.InRange(human.GetBounds().Y, inner.Y, inner.Bottom - human.GetBounds().Height);
+                Assert.True(human.GetBounds().Right <= inner.Right && human.GetBounds().Bottom <= inner.Bottom, $"tick {tick}: human {human.GetBounds()} escapes {inner}");
             }
         }
     }

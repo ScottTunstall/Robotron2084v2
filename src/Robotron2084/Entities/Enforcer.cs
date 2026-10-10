@@ -79,7 +79,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     }
 
     /// <summary>The enforcer sprite's own 10x11 box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The animation frame on screen: a grow-up frame while it grows, else the full animation frame.</summary>
     /// <remarks>The grow frames are the ROM's ENGD1..5, which are frames 2..6 (1-based) of the set.</remarks>
@@ -90,7 +90,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             return _sprites.EnforcerSprite;
         }
 
-        int frame = Math.Clamp(GrowAnimationFrameIndex, 0, _sprites.EnforcerAnimationFrames.Length - 2);
+        int frame = Math.Clamp(GetGrowAnimationFrameIndex(), 0, _sprites.EnforcerAnimationFrames.Length - 2);
         return _sprites.EnforcerAnimationFrames[1 + frame];
     }
 
@@ -102,7 +102,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     public IntVector2 Position => _position;
 
     /// <summary>Which of the five grow-up animation frames is showing (0..4), or -1 once grown (test hook).</summary>
-    internal int GrowAnimationFrameIndex => _growClockUnitsRemaining > 0
+    internal int GetGrowAnimationFrameIndex() => _growClockUnitsRemaining > 0
         ? (ArcadeClock.ToClockUnits(EnforcerTuning.GrowUpRomFrames) - _growClockUnitsRemaining)
             / ArcadeClock.ToClockUnits(EnforcerTuning.GrowStepRomFrames)
         : -1;
@@ -116,7 +116,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>Kills it at once (ROM <c>ENFKIL</c>); there is no death animation.</summary>
@@ -140,7 +140,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             return;
         }
 
-        if (field.RobotsFrozen)
+        if (field.RobotsFrozen())
         {
             return;
         }
@@ -224,8 +224,8 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private void RollVelocity(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
-        int targetX = field.PlayerPosition.X + ScreenSize.ToPortPixelsFromColumns(_random.Next(0, AimZoneColumns));
-        int targetY = field.PlayerPosition.Y + ScreenSize.ToPortPixels(_random.Next(0, AimZoneRows));
+        int targetX = field.GetPlayerPosition().X + ScreenSize.ToPortPixelsFromColumns(_random.Next(0, AimZoneColumns));
+        int targetY = field.GetPlayerPosition().Y + ScreenSize.ToPortPixels(_random.Next(0, AimZoneRows));
         targetX = Math.Clamp(targetX, bounds.X, bounds.Right - CollisionSize.Width);
         targetY = Math.Clamp(targetY, bounds.Y, bounds.Bottom - CollisionSize.Height);
 
@@ -235,3 +235,4 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         _velocitySubpixels = new IntVector2(delta.X / ApproachDivisor, delta.Y / ApproachDivisor);
     }
 }
+

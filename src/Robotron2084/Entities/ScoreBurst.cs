@@ -64,7 +64,7 @@ public sealed class ScoreBurst : IEntity
     }
 
     /// <summary>The dead enemy's own box, which is also the box the burst draws in.</summary>
-    public Rectangle Bounds => _bounds;
+    public Rectangle GetBounds() => _bounds;
 
     /// <summary>Alive for both phases (silhouette, then points), then Dead.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;

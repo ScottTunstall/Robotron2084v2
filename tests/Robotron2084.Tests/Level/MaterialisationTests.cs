@@ -49,7 +49,7 @@ public class MaterialisationTests
         // object list OPTR (RRC11 CIRST, RRTK4 SQSTV), which APPEAR never walks, so they are on the screen from the start.
         PlayField field = CreateField(grunts: 3, hulks: 2, spheroids: 1, quarks: 1);
 
-        Assert.Equal(5, field.PendingAppearCount);
+        Assert.Equal(5, field.GetPendingAppearCount());
         Assert.All(field.Entities.Grunts, grunt => Assert.True(field.IsMaterialising(grunt)));
         Assert.All(field.Entities.Hulks, hulk => Assert.True(field.IsMaterialising(hulk)));
         Assert.False(field.IsMaterialising(field.Entities.Spheroids[0]));
@@ -69,16 +69,16 @@ public class MaterialisationTests
             Advance(field, 1);
             if (field.Entities.Explosions.Count > appearBounds.Count)
             {
-                appearBounds.Add(field.Entities.Explosions[^1].Bounds);
+                appearBounds.Add(field.Entities.Explosions[^1].GetBounds());
             }
         }
 
         Rectangle[] expected =
         [
-            field.Entities.Grunts[1].Bounds,
-            field.Entities.Grunts[0].Bounds,
-            field.Entities.Tanks[0].Bounds,
-            field.Entities.Hulks[0].Bounds,
+            field.Entities.Grunts[1].GetBounds(),
+            field.Entities.Grunts[0].GetBounds(),
+            field.Entities.Tanks[0].GetBounds(),
+            field.Entities.Hulks[0].GetBounds(),
         ];
         Assert.Equal(expected, appearBounds);
     }
@@ -106,18 +106,18 @@ public class MaterialisationTests
         PlayField field = CreateField(grunts: 8);
 
         Advance(field, 1);
-        Assert.Equal(7, field.PendingAppearCount); // ROM frame 0, on the first tick
+        Assert.Equal(7, field.GetPendingAppearCount()); // ROM frame 0, on the first tick
         Assert.Single(field.Entities.Explosions);
         Assert.Equal(StripEffectKind.Appear, field.Entities.Explosions[0].Kind);
 
         Advance(field, 5);
-        Assert.Equal(2, field.PendingAppearCount); // ticks 2 to 6 start robots 2 to 6
+        Assert.Equal(2, field.GetPendingAppearCount()); // ticks 2 to 6 start robots 2 to 6
 
         Advance(field, 1);
-        Assert.Equal(2, field.PendingAppearCount); // tick 7 is still ROM frame 5
+        Assert.Equal(2, field.GetPendingAppearCount()); // tick 7 is still ROM frame 5
 
         Advance(field, 1);
-        Assert.Equal(1, field.PendingAppearCount); // tick 8 reaches ROM frame 6
+        Assert.Equal(1, field.GetPendingAppearCount()); // tick 8 reaches ROM frame 6
     }
 
     [Fact]
@@ -154,13 +154,13 @@ public class MaterialisationTests
 
         Advance(field, ArcadeClock.ToPortTicksRoundedUp(11)); // pass 12, on ROM frame 11
 
-        Assert.Equal(1, field.PendingAppearCount);
+        Assert.Equal(1, field.GetPendingAppearCount());
         Assert.Equal(11, field.Entities.Explosions.Count);
         Assert.Equal(StripExplosionTuning.HorizontalPoolSize, field.Entities.Explosions.Count(effect => effect.Axis == StripFanAxis.Columns));
 
         Advance(field, 1); // tick 15 reaches ROM frame 12: pass 13
 
-        Assert.Equal(0, field.PendingAppearCount);
+        Assert.Equal(0, field.GetPendingAppearCount());
         Assert.Equal(12, field.Entities.Explosions.Count);
         Assert.Equal(StripFanAxis.Rows, field.Entities.Explosions[^1].Axis);
     }
@@ -174,7 +174,7 @@ public class MaterialisationTests
         Advance(field, 1);
 
         StripEffect appear = field.Entities.Explosions[0];
-        Assert.Equal(grunt.Bounds, appear.Bounds);
+        Assert.Equal(grunt.GetBounds(), appear.GetBounds());
     }
 
     [Fact]

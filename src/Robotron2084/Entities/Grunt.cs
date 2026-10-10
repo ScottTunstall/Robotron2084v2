@@ -73,7 +73,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>The grunt sprite's own 10x13 box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>This grunt's current walk animation frame, for the appear and explosion effects.</summary>
     /// <returns>The texture for the current walk frame.</returns>
@@ -87,7 +87,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     public int MoveDelayBeats => _moveLimitBeats;
 
     /// <summary>True while the grunt is still falling after being dropped by Gorf. It does not move on until it lands.</summary>
-    public bool IsFalling => _position.Y < _landingY;
+    public bool IsFalling() => _position.Y < _landingY;
 
     /// <summary>True when the grunt took a step during the last update (it asks for the robot-move sound).</summary>
     public bool SteppedThisUpdate { get; private set; }
@@ -113,7 +113,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>Lets the grunt fall from where it is to the ground, as when Gorf drops it. It waits there until it lands.</summary>
@@ -163,12 +163,12 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        if (field.RobotsFrozen)
+        if (field.RobotsFrozen())
         {
             return;
         }
 
-        if (IsFalling)
+        if (IsFalling())
         {
             _position = _position with { Y = Math.Min(_landingY, _position.Y + GorfTuning.FallPixelsPerTick) };
             return;

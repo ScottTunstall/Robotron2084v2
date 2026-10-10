@@ -31,9 +31,9 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, which asks for <c>BSHSND</c>.</remarks>
     public void SpawnCruiseMissile(IntVector2 origin)
     {
-        var missile = new CruiseMissile(_field.Sprites, origin, _field.PlayerPosition, _random);
+        var missile = new CruiseMissile(_field.Sprites, origin, _field.GetPlayerPosition(), _random);
         _entities.Add(missile);
-        _field.PlaySoundFrom(SoundTables.BrainShoot, missile.Bounds);
+        _field.PlaySoundFrom(SoundTables.BrainShoot, missile.GetBounds());
     }
 
     /// <summary>A spheroid drops an enforcer.</summary>
@@ -43,7 +43,7 @@ internal sealed class MidWaveSpawner
     {
         var enforcer = new Enforcer(_field.Sprites, position, _random, _field.Parameters.EnforcerFireDelay);
         _entities.Add(enforcer);
-        _field.PlaySoundFrom(SoundTables.EnforcerDropOff, enforcer.Bounds);
+        _field.PlaySoundFrom(SoundTables.EnforcerDropOff, enforcer.GetBounds());
     }
 
     /// <summary>A brain's touch turns a human into a prog where they stand.</summary>
@@ -59,9 +59,9 @@ internal sealed class MidWaveSpawner
     /// rule that there is no sideways wobble when the player is near the left wall.</remarks>
     public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition)
     {
-        var spark = new Spark(_field.Sprites, origin, playerPosition, _random, _field.PlayfieldBounds);
+        var spark = new Spark(_field.Sprites, origin, playerPosition, _random, _field.GetPlayfieldBounds());
         _entities.Add(spark);
-        _field.PlaySoundFrom(SoundTables.EnforcerShoot, spark.Bounds);
+        _field.PlaySoundFrom(SoundTables.EnforcerShoot, spark.GetBounds());
     }
 
     /// <summary>A quark drops a tank. The tank is kept inside the playfield, because the quark can be against a wall.</summary>
@@ -70,9 +70,9 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRTK4.ASM</c>, which asks for <c>TKDSND</c>.</remarks>
     public Tank SpawnTank(IntVector2 position)
     {
-        Tank tank = new(_field.Sprites, Tank.GetPositionInside(_field.PlayfieldBounds, position), _random, _field.Parameters.TankFireDelay);
+        Tank tank = new(_field.Sprites, Tank.GetPositionInside(_field.GetPlayfieldBounds(), position), _random, _field.Parameters.TankFireDelay);
         _entities.Add(tank);
-        _field.PlaySoundFrom(SoundTables.TankDrop, tank.Bounds);
+        _field.PlaySoundFrom(SoundTables.TankDrop, tank.GetBounds());
         return tank;
     }
 
@@ -90,7 +90,7 @@ internal sealed class MidWaveSpawner
             return;
         }
 
-        Rectangle bounds = _field.PlayfieldBounds;
+        Rectangle bounds = _field.GetPlayfieldBounds();
         int width = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Width);
         int height = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Height);
         int x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
@@ -108,8 +108,8 @@ internal sealed class MidWaveSpawner
     public void SpawnTankShell(IntVector2 origin)
     {
         _field.CountShellFired();
-        var shell = new TankShell(_field.Sprites, origin, _field.PlayerPosition, _field.Parameters.ShellSpeed, _field.PlayfieldBounds, _random);
+        var shell = new TankShell(_field.Sprites, origin, _field.GetPlayerPosition(), _field.Parameters.ShellSpeed, _field.GetPlayfieldBounds(), _random);
         _entities.Add(shell);
-        _field.PlaySoundFrom(SoundTables.TankFire, shell.Bounds);
+        _field.PlaySoundFrom(SoundTables.TankFire, shell.GetBounds());
     }
 }

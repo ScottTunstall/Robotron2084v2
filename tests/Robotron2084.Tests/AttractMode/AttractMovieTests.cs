@@ -82,7 +82,7 @@ public sealed class AttractMovieTests
         var messages = new HashSet<string>();
         bool exploded = false;
 
-        for (int tick = 0; tick < 60_000 && !movie.IsFinished; tick++)
+        for (int tick = 0; tick < 60_000 && !movie.IsFinished(); tick++)
         {
             movie.Update(Tick());
             foreach (MovieObject item in movie.ObjectMachine.Objects)
@@ -101,7 +101,7 @@ public sealed class AttractMovieTests
             exploded |= movie.ObjectMachine.DrainExplosions().Count > 0;
         }
 
-        Assert.True(movie.IsFinished, "HISTO never reached DONE2");
+        Assert.True(movie.IsFinished(), "HISTO never reached DONE2");
         Assert.Contains(MovieAnimation.Player, seen);     // the hero walks on and shoots
         Assert.Contains(MovieAnimation.Grunt, seen);      // the 14 grunts
         Assert.Contains(MovieAnimation.Hulk, seen);       // the hulk bounces in
@@ -131,7 +131,7 @@ public sealed class AttractMovieTests
         machine.StepFrame();
 
         MovieObject hero = machine.Objects[0];
-        Assert.Equal(104, hero.Column);
+        Assert.Equal(104, hero.GetColumn());
 
         // The BR* walker cycles ANATAB (0,1,0,2) on top of the direction's base
         // image, so a LEFT walk shows animation frames 0,1,0,2 — every one of them inside
@@ -144,7 +144,7 @@ public sealed class AttractMovieTests
             animationFrames.Add(hero.AnimationFrameIndex);
         }
 
-        Assert.Equal(104 - 64, hero.Column);
+        Assert.Equal(104 - 64, hero.GetColumn());
         Assert.All(animationFrames, index => Assert.InRange(index, 0, 11));
 
         // The ROM's BANA1 sleeps the descriptor's nap BEFORE the first step and

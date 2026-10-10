@@ -54,7 +54,7 @@ public sealed class PlayerDeathTests
         // PDTH0: `LDA #$99 / JSR OPON` — the first thing on screen is the player
         // as a WHITE silhouette.
         Assert.Equal(EntityLifeState.Dying, player.LifeState);
-        Assert.Equal(PlayerTuning.PlayerDeathWhiteSlot, player.DeathSolidSlot);
+        Assert.Equal(PlayerTuning.PlayerDeathWhiteSlot, player.GetDeathSolidSlot());
 
         // The flash is 80 ROM frames (48 clock units each iteration): every slot seen
         // through it is either $99's slot 9 or a PDCTAB entry. Tick to 95 — the
@@ -65,7 +65,7 @@ public sealed class PlayerDeathTests
         for (int tick = 0; tick < 95; tick++)
         {
             field.Update(Tick);
-            int slot = player.DeathSolidSlot;
+            int slot = player.GetDeathSolidSlot();
             Assert.Contains(slot, allowed);
             sawWhite |= slot == PlayerTuning.PlayerDeathWhiteSlot;
             sawColour |= slot != PlayerTuning.PlayerDeathWhiteSlot;
@@ -89,7 +89,7 @@ public sealed class PlayerDeathTests
         }
 
         Assert.Equal(EntityLifeState.Dying, player.LifeState);
-        Assert.Equal(PlayerTuning.PlayerDeathFadeSlot, player.DeathSolidSlot);
+        Assert.Equal(PlayerTuning.PlayerDeathFadeSlot, player.GetDeathSolidSlot());
         Assert.True(palette.IsSlotSuspended(12), "the ROM kills the DECAY process off before the fade");
         Assert.Equal(PlayerTuning.PlayerDeathFadeValues[0], palette.GetSlotValue(12));
 

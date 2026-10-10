@@ -33,7 +33,7 @@ public sealed class TransporterSound
     private int _ticksUntilNextSend;
 
     /// <summary>True while the warp-in is still being sent.</summary>
-    public bool IsRunning => _closeSendsLeft > 0 || _spacedSendsLeft > 0;
+    public bool IsRunning() => _closeSendsLeft > 0 || _spacedSendsLeft > 0;
 
     /// <summary>Starts the warp-in: clears the sound board, then sends the warp-in sound on the ticks that follow.</summary>
     /// <param name="engine">The sound sequencer, which carries the "clear the system" request.</param>
@@ -49,7 +49,7 @@ public sealed class TransporterSound
     /// <param name="engine">The sound sequencer, which passes the send straight to the board.</param>
     public void Tick(SoundEngine engine)
     {
-        if (!IsRunning || --_ticksUntilNextSend > 0)
+        if (!IsRunning() || --_ticksUntilNextSend > 0)
         {
             return;
         }

@@ -153,10 +153,10 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>The box around the brain, from its top-left corner.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The animation frame the brain is showing now. The explosion copies this when the brain is shot.</summary>
-    public Texture2D GetCurrentAnimationFrame() => _sprites.BrainAnimationFrames[WalkAnimationFrameIndex];
+    public Texture2D GetCurrentAnimationFrame() => _sprites.BrainAnimationFrames[GetWalkAnimationFrameIndex()];
 
     /// <summary>True while this brain is turning a human into a prog.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> to <c>BMUT4</c>. Disassembly: the "progging" flag at <c>$9895</c> (<c>brain_progging_flag</c>) and <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>).</remarks>
@@ -184,7 +184,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
     internal void Retarget(int targetFamilySlot) => _targetSlot = targetFamilySlot;
 
     /// <summary>Which of the brain's animation frames is showing, counting from 0 in <see cref="SpriteSet.BrainAnimationFrames"/>.</summary>
-    internal int WalkAnimationFrameIndex => (int)_walkSequence * 3 + WalkCycle[_walkCycleStep];
+    internal int GetWalkAnimationFrameIndex() => (int)_walkSequence * 3 + WalkCycle[_walkCycleStep];
 
     /// <summary>Draws the brain. While it is reprogramming, it is drawn on top of a solid block of colour.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNON</c>. Disassembly: <c>DRAW_BRAIN_IN_PROGGING_STATE</c> (<c>$1DAF</c>).</remarks>
@@ -198,10 +198,10 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
 
         if (IsReprogramming())
         {
-            _sprites.Blitter.DrawSolidRectangle(spriteBatch, Bounds, _sprites.Blitter.GetSlotColour(ReprogramTuning.ShapeSlot));
+            _sprites.Blitter.DrawSolidRectangle(spriteBatch, GetBounds(), _sprites.Blitter.GetSlotColour(ReprogramTuning.ShapeSlot));
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>Takes the brain off the field at once. The playfield makes the explosion and gives the points.</summary>
@@ -243,7 +243,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        if (field.RobotsFrozen)
+        if (field.RobotsFrozen())
         {
             return;
         }
@@ -288,7 +288,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
         _reprogramMovingDown = true;
         _reprogramTimer = ArcadeClock.ToClockUnits(ReprogramTuning.StepRomFrames);
 
-        int humanWidth = human.Bounds.Width;
+        int humanWidth = human.GetBounds().Width;
         int x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
         WalkSequence walkSequence = WalkSequence.Left;
         if (x < playfieldBounds.X)
@@ -377,7 +377,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
 
         Rectangle bounds = field.Wall.PlayfieldBounds;
         int jitter = _random.Next(ReprogramTuning.JitterPixels);
-        int height = victim.Bounds.Height;
+        int height = victim.GetBounds().Height;
         int y = _reprogramMovingDown
             ? Math.Min(_victimRestingY + jitter, bounds.Bottom - height)
             : Math.Max(_victimRestingY - jitter, bounds.Y);
@@ -385,7 +385,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
 
         if (_reprogramMovingDown)
         {
-            field.PlaySoundFrom(SoundTables.Programming, victim.Bounds);
+            field.PlaySoundFrom(SoundTables.Programming, victim.GetBounds());
         }
 
         if (--_reprogramRedrawsRemaining > 0)
@@ -394,7 +394,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        field.PlaySoundFrom(SoundTables.HumanProgFinalConversion, victim.Bounds);
+        field.PlaySoundFrom(SoundTables.HumanProgFinalConversion, victim.GetBounds());
         victim.FinishReprogramming();
         field.SpawnProg(victim.Position, victim.Kind);
         _victim = null;

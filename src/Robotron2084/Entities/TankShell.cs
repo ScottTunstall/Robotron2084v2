@@ -74,7 +74,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     public bool BouncedThisUpdate { get; private set; }
 
     /// <summary>The box around the shell, from its top-left corner.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, BoxWidth, BoxHeight);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, BoxWidth, BoxHeight);
 
     /// <summary>The shell's one animation frame. It never flashes.</summary>
     public Texture2D GetCurrentAnimationFrame() => _sprites.TankShellSprite;
@@ -139,7 +139,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     {
         if (this.IsAlive())
         {
-            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
         }
     }
 

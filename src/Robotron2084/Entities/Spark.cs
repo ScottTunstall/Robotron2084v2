@@ -90,10 +90,10 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The spark's 4x4 spec-pixel collision box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, Size, Size);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, Size, Size);
 
     /// <summary>The flicker frame this spark is showing — the sprite pixel-perfect collision compares.</summary>
-    public Texture2D GetCurrentAnimationFrame() => _sprites.SparkAnimationFrames[AnimationFrameIndex];
+    public Texture2D GetCurrentAnimationFrame() => _sprites.SparkAnimationFrames[GetAnimationFrameIndex()];
 
     /// <summary>Only ever transitions Alive -> Dead (immediate removal, no death animation).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -107,7 +107,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Which of the four flicker frames is showing (test hook).</summary>
     /// <remarks>The ROM's 4 flicker animation frames, one per 4-ROM-frame cycle.</remarks>
-    internal int AnimationFrameIndex => _flickerTimer / ArcadeClock.ToClockUnits(SparkTuning.SparkFrameIntervalRomFrames) % SpriteSet.SparkAnimationFrameCount;
+    internal int GetAnimationFrameIndex() => _flickerTimer / ArcadeClock.ToClockUnits(SparkTuning.SparkFrameIntervalRomFrames) % SpriteSet.SparkAnimationFrameCount;
 
     /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
     internal IntVector2 VelocitySubpixels => _velocitySubpixels;
@@ -119,7 +119,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     {
         if (this.IsAlive())
         {
-            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
         }
     }
 

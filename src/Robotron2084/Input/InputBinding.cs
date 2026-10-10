@@ -43,11 +43,11 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
             gamePadIndex);
     }
 
-    public int DirectionX => Kind is InputBindingKind.GamePadLeftStick or InputBindingKind.GamePadRightStick
+    public int GetDirectionX() => Kind is InputBindingKind.GamePadLeftStick or InputBindingKind.GamePadRightStick
         ? (Code / 3) - 1
         : 0;
 
-    public int DirectionY => Kind is InputBindingKind.GamePadLeftStick or InputBindingKind.GamePadRightStick
+    public int GetDirectionY() => Kind is InputBindingKind.GamePadLeftStick or InputBindingKind.GamePadRightStick
         ? (Code % 3) - 1
         : 0;
 
@@ -60,8 +60,8 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
         {
             InputBindingKind.Key => keys.IsKeyDown((Keys)Code),
             InputBindingKind.GamePadButton => pad.IsButtonDown((Buttons)Code),
-            InputBindingKind.GamePadLeftStick => GamePadSticks.Read(pad, isRightStick: false) == new IntVector2(DirectionX, DirectionY),
-            InputBindingKind.GamePadRightStick => GamePadSticks.Read(pad, isRightStick: true) == new IntVector2(DirectionX, DirectionY),
+            InputBindingKind.GamePadLeftStick => GamePadSticks.Read(pad, isRightStick: false) == new IntVector2(GetDirectionX(), GetDirectionY()),
+            InputBindingKind.GamePadRightStick => GamePadSticks.Read(pad, isRightStick: true) == new IntVector2(GetDirectionX(), GetDirectionY()),
             _ => false,
         };
     }

@@ -73,7 +73,7 @@ public sealed class Gorf : IExplodable, IRemovable
     }
 
     /// <summary>The robot's own box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>Alive until shot or across the screen; never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -82,7 +82,7 @@ public sealed class Gorf : IExplodable, IRemovable
     public IntVector2 Position => _position;
 
     /// <summary>How many stops it has still to make to drop grunts (test hook).</summary>
-    internal int DropStopsRemaining => _dropSteps.Count;
+    internal int GetDropStopsRemaining() => _dropSteps.Count;
 
     /// <summary>Which of the two animation frames is showing, 0 or 1 (test hook).</summary>
     internal int AnimationFrameIndex => _animationFrameIndex;
@@ -101,7 +101,7 @@ public sealed class Gorf : IExplodable, IRemovable
         }
 
         Texture2D animationFrame = GetCurrentAnimationFrame();
-        Rectangle drawn = BlitterDraw.DrawnRect(Bounds, animationFrame);
+        Rectangle drawn = BlitterDraw.DrawnRect(GetBounds(), animationFrame);
         Rectangle visible = Rectangle.Intersect(drawn, _playfieldBounds);
         if (visible.IsEmpty)
         {
@@ -130,7 +130,7 @@ public sealed class Gorf : IExplodable, IRemovable
     /// <param name="field">The playfield, which the dropped grunts are put on.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (!this.IsAlive() || field.RobotsFrozen)
+        if (!this.IsAlive() || field.RobotsFrozen())
         {
             return;
         }

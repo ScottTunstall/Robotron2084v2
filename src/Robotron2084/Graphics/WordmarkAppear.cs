@@ -49,7 +49,7 @@ public sealed class WordmarkAppear
     }
 
     /// <summary>Says whether every letter has finished coming in and been left to settle, so the next thing can go up.</summary>
-    public bool IsFinished => _letters.Count == 0 || GetRomFrames() >= GetStartFrame(_letters.Count - 1) + RomFramesAfterLastLetter;
+    public bool IsFinished() => _letters.Count == 0 || GetRomFrames() >= GetStartFrame(_letters.Count - 1) + RomFramesAfterLastLetter;
 
     /// <summary>Makes the appear for a word drawn as two white masks, finding its letters from the outline mask.</summary>
     /// <param name="rimSprite">The white mask of the letters' outline.</param>
@@ -69,7 +69,7 @@ public sealed class WordmarkAppear
     }
 
     /// <summary>How many letters have started to appear (test hook).</summary>
-    internal int StartedLetterCount => Enumerable.Range(0, _letters.Count).Count(index => GetRomFrames() >= GetStartFrame(index));
+    internal int GetStartedLetterCount() => Enumerable.Range(0, _letters.Count).Count(index => GetRomFrames() >= GetStartFrame(index));
 
     /// <summary>Finds where the letters are across a mask, which are the runs of columns that have something drawn in them.</summary>
     /// <param name="columnHasPixel">For each column of the mask, whether anything is drawn in it.</param>

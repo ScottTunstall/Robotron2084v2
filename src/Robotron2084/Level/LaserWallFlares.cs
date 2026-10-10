@@ -73,7 +73,7 @@ internal sealed class LaserWallFlares
     public void Spawn(Rectangle laserBounds, Direction8 direction, PlayfieldWall wall)
     {
         Rectangle inner = wall.PlayfieldBounds;
-        Rectangle outer = wall.OuterBounds;
+        Rectangle outer = wall.GetOuterBounds();
 
         // Which wall did it cross? A laser whose bounds are outside the TOP/BOTTOM edges died against a horizontal
         // wall (the ROM's LASDIV, dithered); one outside the LEFT/RIGHT edges died against a vertical wall (LASDIH).

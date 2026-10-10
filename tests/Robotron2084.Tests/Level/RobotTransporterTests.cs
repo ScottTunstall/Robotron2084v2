@@ -14,7 +14,7 @@ public sealed class RobotTransporterTests
     private static void RunToTheEnd(TransportImage image)
     {
         var random = new Random(3);
-        while (!image.IsFinished)
+        while (!image.IsFinished())
         {
             image.Step(random);
         }
@@ -42,13 +42,13 @@ public sealed class RobotTransporterTests
         var random = new Random(1);
         for (int step = 0; step < TransporterTuning.StepCount; step++)
         {
-            Assert.False(image.IsFinished);
+            Assert.False(image.IsFinished());
             image.Step(random);
         }
 
-        Assert.False(image.IsFinished);
+        Assert.False(image.IsFinished());
         image.Step(random); // the 131st update takes the image off the arcade's list
-        Assert.True(image.IsFinished);
+        Assert.True(image.IsFinished());
     }
 
     [Fact]

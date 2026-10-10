@@ -21,7 +21,7 @@ namespace Robotron2084.Entities;
 public interface IEntity
 {
     /// <summary>Collision and draw rectangle; the player's hit box is the exception.</summary>
-    Rectangle Bounds { get; }
+    Rectangle GetBounds();
 
     /// <summary>Where the entity is in its life cycle — see <see cref="EntityLifeState"/>.</summary>
     EntityLifeState LifeState { get; }

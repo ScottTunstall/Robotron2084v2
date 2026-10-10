@@ -62,7 +62,7 @@ public sealed class TransportImage
     public int Height { get; }
 
     /// <summary>Says whether the sequence has run out: nothing more will change.</summary>
-    public bool IsFinished => _nextStep > TransporterTuning.StepCount;
+    public bool IsFinished() => _nextStep > TransporterTuning.StepCount;
 
     /// <summary>Gets what a pixel is showing.</summary>
     /// <param name="x">The pixel's column.</param>
@@ -74,7 +74,7 @@ public sealed class TransportImage
     /// <param name="random">Where the sparkle's starting point comes from.</param>
     public void Step(Random random)
     {
-        if (IsFinished)
+        if (IsFinished())
         {
             return;
         }

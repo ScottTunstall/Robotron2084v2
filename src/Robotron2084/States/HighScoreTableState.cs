@@ -121,9 +121,9 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         // TABORG), and only when it returns does PRJNK print the lists four rows a ROM
         // frame, then the top entry, then the headers — and only THEN do the four ramp
         // processes start and the 600-frame hold begin (notes §98.6).
-        _printSequence.Tick(_frameAnimation.IsFinished, _highScoreTable.Today.Count, _highScoreTable.AllTime.Count);
+        _printSequence.Tick(_frameAnimation.IsFinished(), _highScoreTable.Today.Count, _highScoreTable.AllTime.Count);
 
-        if (_printSequence.IsDone)
+        if (_printSequence.IsDone())
         {
             if (!_rampsStarted)
             {
@@ -202,11 +202,11 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// LOOPP keeps rewriting slots 1-8, so all eight stripes cycle together, three frames apart.
     ///
     /// The erase pass paints those same pixels black, so only the strokes above
-    /// <see cref="HighScoreFrameAnimation.ErasedStroke"/> are drawn.
+    /// <see cref="HighScoreFrameAnimation.GetErasedStroke()"/> are drawn.
     /// </summary>
     private void DrawFrame(SpriteBatch spriteBatch)
     {
-        for (int stroke = _frameAnimation.ErasedStroke + 1; stroke <= _frameAnimation.DrawnStroke; stroke++)
+        for (int stroke = _frameAnimation.GetErasedStroke() + 1; stroke <= _frameAnimation.GetDrawnStroke(); stroke++)
         {
             DrawStroke(spriteBatch, stroke);
         }

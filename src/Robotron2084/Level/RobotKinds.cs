@@ -64,7 +64,7 @@ public static class RobotKinds
         new(RobotKind.Spheroid,
             WaveCount: static parameters => parameters.SpheroidCount,
             Score: ScoreValues.Spheroid,
-            LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.CreateForSpheroid(field.Sprites, target.Bounds)),
+            LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.CreateForSpheroid(field.Sprites, target.GetBounds())),
             LaserHitSound: SoundTables.CircleKill,
             Spawn: new SpheroidWaveSpawner()),
 
@@ -77,7 +77,7 @@ public static class RobotKinds
         new(RobotKind.Quark,
             WaveCount: static parameters => parameters.QuarkCount,
             Score: ScoreValues.Quark,
-            LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.CreateForQuark(field.Sprites, target.Bounds)),
+            LaserHit: static (field, target, direction) => field.KillWithScoreBurst(target, ScoreBurst.CreateForQuark(field.Sprites, target.GetBounds())),
             LaserHitSound: SoundTables.SquareKill,
             Spawn: new QuarkWaveSpawner()),
 

@@ -74,7 +74,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>The robot's own box at <see cref="Position"/>.</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The way the robot is walking.</summary>
     public WalkSequence WalkSequence => _walkSequence;
@@ -113,7 +113,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>Kills the robot outright: no flash, no death animation.</summary>
@@ -138,7 +138,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     public void Update(GameTime gameTime, PlayField field)
     {
         SteppedThisUpdate = false;
-        if (!this.IsAlive() || field.RobotsFrozen)
+        if (!this.IsAlive() || field.RobotsFrozen())
         {
             return;
         }

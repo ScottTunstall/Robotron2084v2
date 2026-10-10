@@ -55,8 +55,8 @@ public sealed class SparkTests
             }
 
             // Never leaves the playfield, even pinned against the wall.
-            Assert.True(spark.Bounds.X >= inner.X, $"tick {tick}: x {spark.Bounds.X} < {inner.X}");
-            Assert.True(spark.Bounds.Right <= inner.Right, $"tick {tick}: right {spark.Bounds.Right} > {inner.Right}");
+            Assert.True(spark.GetBounds().X >= inner.X, $"tick {tick}: x {spark.GetBounds().X} < {inner.X}");
+            Assert.True(spark.GetBounds().Right <= inner.Right, $"tick {tick}: right {spark.GetBounds().Right} > {inner.Right}");
         }
 
         // It died of its ROM life (<= 168 ticks), not of the wall.
@@ -107,7 +107,7 @@ public sealed class SparkTests
         // 4 ROM frames = 4.8 ticks, so the frame boundary lands on tick 5 of each
         // period on the clock-unit clock (notes §52, §65).
         int period = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.SparkFrameIntervalRomFrames);
-        Assert.Equal(0, spark.AnimationFrameIndex); // born on SPKP0
+        Assert.Equal(0, spark.GetAnimationFrameIndex()); // born on SPKP0
 
         // Each full period advances exactly one frame; four periods wrap to 0.
         for (int frame = 1; frame <= 4; frame++)
@@ -115,12 +115,12 @@ public sealed class SparkTests
             for (int tick = 1; tick < period; tick++)
             {
                 field.Update(Frame());
-                Assert.Equal(frame - 1, spark.AnimationFrameIndex); // stable within a period
+                Assert.Equal(frame - 1, spark.GetAnimationFrameIndex()); // stable within a period
             }
 
             field.Update(Frame());
             int expected = frame % SpriteSet.SparkAnimationFrameCount;
-            Assert.Equal(expected, spark.AnimationFrameIndex);
+            Assert.Equal(expected, spark.GetAnimationFrameIndex());
         }
     }
 

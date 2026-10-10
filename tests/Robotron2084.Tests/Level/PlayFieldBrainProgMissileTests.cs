@@ -175,7 +175,7 @@ public sealed class PlayFieldBrainProgMissileTests
         Rectangle inner = field.Wall.PlayfieldBounds;
 
         field.Entities.Family.Add(new Human(TestSprites.Shared, new IntVector2(inner.X + 300, inner.Y + 150), HumanKind.Mommy, new Random(1)));
-        WarmUp(field); // run through the start of the wave (RobotsFrozen)
+        WarmUp(field); // run through the start of the wave (RobotsFrozen())
 
         // 30 arcade px left of (where the human is now) → steps right/up.
         IntVector2 humanSpot = field.Entities.Family.Members[0].Position;
@@ -202,7 +202,7 @@ public sealed class PlayFieldBrainProgMissileTests
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         IntVector2 playerSpot = field.Player.Position;
 
-        WarmUp(field); // run through the start of the wave (RobotsFrozen)
+        WarmUp(field); // run through the start of the wave (RobotsFrozen())
 
         // 30 arcade px right of the player, on the player's OWN row → the
         // brain steps left at it AND one px DOWN: ROM BRN3A has no dead zone
@@ -281,7 +281,7 @@ public sealed class PlayFieldBrainProgMissileTests
     public void Brain_CatchingHuman_ReprogramsItThenLeavesAProg_NoSkull()
     {
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
-        // The reprogram animation is robot activity, so RobotsFrozen pauses it
+        // The reprogram animation is robot activity, so RobotsFrozen() pauses it
         // (the port's "ALL ROBOTS ARE IMMOBILE" rule) — run through the start of the wave
         // or the loop never advances.
         WarmUp(field);
@@ -306,13 +306,13 @@ public sealed class PlayFieldBrainProgMissileTests
         Assert.Null(field.Entities.Family.GetMemberInSlot(human.FamilySlot)); // off the family list now
 
         // ROM BMUT's placement: just left of the brain (a gap of 1 column), 2 rows below it.
-        Assert.Equal(brain.Position.X - human.Bounds.Width - ScreenSize.ToPortPixelsFromColumns(1), human.Position.X);
+        Assert.Equal(brain.Position.X - human.GetBounds().Width - ScreenSize.ToPortPixelsFromColumns(1), human.Position.X);
         Assert.Equal(brain.Position.Y + ScreenSize.ToPortPixels(2), human.Position.Y);
 
         // …and the placement SETS THE BRAIN'S sprite (BMUT00 `LDD #BRLP1` /
         // BMUT1 `STD OPICT,X`): the human went to its LEFT, so the brain faces
         // LEFT — BRLP1 is BRNAL's frame 0, i.e. the left base's first frame.
-        Assert.Equal(0, brain.WalkAnimationFrameIndex);
+        Assert.Equal(0, brain.GetWalkAnimationFrameIndex());
 
         // The animation is 20 iterations x 2 redraws x 3 ROM frames = 144 ticks
         // on the clock-unit clock (notes §52; PortTicks(3) = 3 would have made it
@@ -366,7 +366,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // The human could not fit on the left, so it went right…
         Assert.Equal(brain.Position.X + ScreenSize.ToPortPixelsFromColumns(8), human.Position.X);
         // …and the brain's sprite is BRNAR's frame 0 (BRRP1) — facing RIGHT.
-        Assert.Equal(3, brain.WalkAnimationFrameIndex);
+        Assert.Equal(3, brain.GetWalkAnimationFrameIndex());
     }
 
     [Fact]
@@ -402,7 +402,7 @@ public sealed class PlayFieldBrainProgMissileTests
     public void Brain_CatchNeedsTheCornersWithinThreePx_NotASpriteOverlap()
     {
         // ROM BRNL1 compares TOP-LEFT CORNERS within ±3px on both axes. The old
-        // Bounds.Overlaps test fired whenever the 14x16 brain box touched the
+        // GetBounds().Overlaps test fired whenever the 14x16 brain box touched the
         // human box — far too eager.
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
@@ -450,11 +450,11 @@ public sealed class PlayFieldBrainProgMissileTests
         PlayField field = CreateField(new LevelParameters(LevelNumber: 1));
         Rectangle inner = field.Wall.PlayfieldBounds;
         // NOT the field center: the player stands there, and prog contact
-        // kills the player (RobotsFrozen would stop the simulation).
+        // kills the player (RobotsFrozen() would stop the simulation).
         IntVector2 spot = new(inner.X + 100, inner.Y + 100);
         var prog = new Prog(TestSprites.Shared, spot, HumanKind.Daddy, new Random(6));
         field.Entities.Progs.Add(prog);
-        WarmUp(field); // run through the start of the wave (RobotsFrozen)
+        WarmUp(field); // run through the start of the wave (RobotsFrozen())
 
         // The prog re-aims on small odds (3%/9% per beat) and when blocked,
         // so over a long window it WILL turn — the arcade property is that
@@ -463,7 +463,7 @@ public sealed class PlayFieldBrainProgMissileTests
         for (int tick = 0; tick < 600; tick++)
         {
             field.Update(new GameTime());
-            Assert.True(prog.Bounds.Right <= inner.Right && prog.Bounds.Bottom <= inner.Bottom, $"tick {tick}: prog escapes {inner}");
+            Assert.True(prog.GetBounds().Right <= inner.Right && prog.GetBounds().Bottom <= inner.Bottom, $"tick {tick}: prog escapes {inner}");
             path.Add(prog.Position);
         }
 
@@ -698,8 +698,8 @@ public sealed class PlayFieldBrainProgMissileTests
         // corner, NOT the smaller human box it was walking in.
         Assert.Equal(spot.X, explosion.Position.X);
         Assert.Equal(spot.Y, explosion.Position.Y);
-        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Width), explosion.Bounds.Width);
-        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Height), explosion.Bounds.Height);
+        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Width), explosion.GetBounds().Width);
+        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Height), explosion.GetBounds().Height);
     }
 
     [Fact]
@@ -715,8 +715,8 @@ public sealed class PlayFieldBrainProgMissileTests
         for (int tick = 0; tick < 1200; tick++)
         {
             field.Update(new GameTime());
-            Assert.InRange(missile.Bounds.X, inner.X, inner.Right - missile.Bounds.Width);
-            Assert.InRange(missile.Bounds.Y, inner.Y, inner.Bottom - missile.Bounds.Height);
+            Assert.InRange(missile.GetBounds().X, inner.X, inner.Right - missile.GetBounds().Width);
+            Assert.InRange(missile.GetBounds().Y, inner.Y, inner.Bottom - missile.GetBounds().Height);
         }
     }
 
@@ -767,8 +767,8 @@ public sealed class PlayFieldBrainProgMissileTests
         StripEffect card = field.Entities.Explosions[1];
         Assert.Equal(progSpot.X, card.Position.X);
         Assert.Equal(progSpot.Y, card.Position.Y); // UL = OBJX/OBJY, unchanged by PRGKIL
-        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Width), card.Bounds.Width);
-        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Height), card.Bounds.Height);
+        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Width), card.GetBounds().Width);
+        Assert.Equal(ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Height), card.GetBounds().Height);
         Assert.Equal(StripFanAxis.Columns, card.Axis); // a vertical shot -> the H family
     }
 

@@ -76,10 +76,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     /// <summary>The player sprite's own 8x12 box at <see cref="Position"/> (the ROM intersects the sprite).</summary>
-    public Rectangle Bounds => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
     /// <summary>The walk frame this player is showing — a dying player is the same shape, drawn as a solid colour.</summary>
-    public Texture2D GetCurrentAnimationFrame() => _sprites.PlayerAnimationFrames[WalkAnimationFrameIndex];
+    public Texture2D GetCurrentAnimationFrame() => _sprites.PlayerAnimationFrames[GetWalkAnimationFrameIndex()];
 
     /// <summary>The way the player is drawn and walks — his last MOVEMENT direction.</summary>
     public Direction8 FacingDirection { get; private set; } = Direction8.Up;
@@ -90,7 +90,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     public bool InvincibleForTesting { get; set; } = PlayerTuning.PlayerInvincibleForTesting;
 
     /// <summary>Passes through hazards unharmed for a short time after a respawn.</summary>
-    public bool IsInvincible => _invincibilityTicksRemaining > 0;
+    public bool IsInvincible() => _invincibilityTicksRemaining > 0;
 
     /// <summary>True when this update fired a laser.</summary>
     public bool FiredLaserThisUpdate { get; private set; }
@@ -107,13 +107,13 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     /// <summary>The palette slot the dying player is drawn solid in.</summary>
     /// <remarks>The ROM's death colour: a fixed white slot, a random colour slot, or the fading slot.</remarks>
-    internal int DeathSolidSlot => _deathStage == DeathStage.Fade
+    internal int GetDeathSolidSlot() => _deathStage == DeathStage.Fade
         ? PlayerTuning.PlayerDeathFadeSlot
         : _deathFlashSlot;
 
     /// <summary>0-based index into <see cref="SpriteSet.PlayerAnimationFrames"/>.</summary>
     /// <remarks>The arcade numbers its frames 1 through 12, so arcade frame N is index N - 1.</remarks>
-    internal int WalkAnimationFrameIndex => (int)_walkSequence * 3 + WalkCycle[_walkCycleStep];
+    internal int GetWalkAnimationFrameIndex() => (int)_walkSequence * 3 + WalkCycle[_walkCycleStep];
 
     /// <summary>Awards an extra life when a score crosses an extra-life threshold.</summary>
     public void AddLife() => Lives += 1;
@@ -128,7 +128,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         }
 
         // While invincible: visible/hidden tick-toggle flicker (no alpha blending).
-        if (IsInvincible && _invincibilityBlinkTicks >= PlayerTuning.InvincibilityFlickerVisibleTicks)
+        if (IsInvincible() && _invincibilityBlinkTicks >= PlayerTuning.InvincibilityFlickerVisibleTicks)
         {
             return;
         }
@@ -136,12 +136,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
         // One colour while dying, like the ROM's own solid-colour draw.
         if (this.IsDying())
         {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), Bounds,
-                _sprites.Blitter.GetSlotColour(DeathSolidSlot));
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
+                _sprites.Blitter.GetSlotColour(GetDeathSolidSlot()));
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), Bounds, Color.White);
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>Kills the player (contact with a live hazard). No-op while dying/dead.</summary>
