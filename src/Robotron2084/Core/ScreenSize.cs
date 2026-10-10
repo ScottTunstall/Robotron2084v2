@@ -5,13 +5,13 @@ namespace Robotron2084.Core;
 /// game, as opposed to the original arcade machine, so a <b>port pixel</b> is one dot of the 640 by 400 screen
 /// this game draws (see docs/glossary.md).
 /// The game's screen is <see cref="WidthInArcadePixels"/> by <see cref="HeightInArcadePixels"/> arcade pixels. It is made
-/// bigger by <see cref="SpecScale"/> for sharper rendering; every size, speed, and position in the
+/// bigger by <see cref="PortPixelsPerArcadePixel"/> for sharper rendering; every size, speed, and position in the
 /// codebase goes through <see cref="ToPortPixels(int)"/> (or derives from
 /// <see cref="Width"/>/<see cref="Height"/>) in one place, so raising the
 /// resolution is a change to the constants below and nothing else:
 /// <list type="bullet">
 /// <item>
-/// <see cref="SpecScale"/> — port pixels per arcade pixel. Raise it
+/// <see cref="PortPixelsPerArcadePixel"/> — port pixels per arcade pixel. Raise it
 /// (2 → 3, 4…) to render the SAME layout sharper: the render target, window
 /// integer scaling, sprite draw sizes, and all gameplay geometry follow
 /// automatically.
@@ -30,14 +30,14 @@ public static class ScreenSize
     /// <c>column * 256 + row</c>, so one column is one byte across, which is this many arcade pixels (notes §113).</summary>
     public const int ArcadePixelsPerByte = 2;
 
-    /// <summary>How tall the screen the game draws is, in port pixels. It is <see cref="HeightInArcadePixels"/> times <see cref="SpecScale"/>.</summary>
-    public const int Height = HeightInArcadePixels * SpecScale;
+    /// <summary>How tall the screen the game draws is, in port pixels. It is <see cref="HeightInArcadePixels"/> times <see cref="PortPixelsPerArcadePixel"/>.</summary>
+    public const int Height = HeightInArcadePixels * PortPixelsPerArcadePixel;
 
-    /// <summary>How tall the game's screen is, in arcade pixels, before it is made bigger by <see cref="SpecScale"/>.</summary>
+    /// <summary>How tall the game's screen is, in arcade pixels, before it is made bigger by <see cref="PortPixelsPerArcadePixel"/>.</summary>
     public const int HeightInArcadePixels = 200;
 
     /// <summary>How many port pixels wide and tall one arcade pixel is drawn. Raise it to draw the same screen sharper.</summary>
-    public const int SpecScale = 2;
+    public const int PortPixelsPerArcadePixel = 2;
 
     /// <summary>Bits of a 16-bit ROM coordinate below the whole pixel (the low byte).</summary>
     public const int SubpixelBits = 8;
@@ -45,10 +45,10 @@ public static class ScreenSize
     /// <summary>Subpixels in one pixel: the ROM's 16-bit coordinates keep the pixel in the high byte, so 1/256 of a pixel is the smallest step.</summary>
     public const int SubpixelsPerPixel = 1 << SubpixelBits;
 
-    /// <summary>How wide the screen the game draws is, in port pixels. It is <see cref="WidthInArcadePixels"/> times <see cref="SpecScale"/>.</summary>
-    public const int Width = WidthInArcadePixels * SpecScale;
+    /// <summary>How wide the screen the game draws is, in port pixels. It is <see cref="WidthInArcadePixels"/> times <see cref="PortPixelsPerArcadePixel"/>.</summary>
+    public const int Width = WidthInArcadePixels * PortPixelsPerArcadePixel;
 
-    /// <summary>How wide the game's screen is, in arcade pixels, before it is made bigger by <see cref="SpecScale"/>.</summary>
+    /// <summary>How wide the game's screen is, in arcade pixels, before it is made bigger by <see cref="PortPixelsPerArcadePixel"/>.</summary>
     public const int WidthInArcadePixels = 320;
 
     /// <summary>Turns the gap between two points, given in port pixels, into the ROM's own count: columns sideways plus rows up and down.</summary>
@@ -58,7 +58,7 @@ public static class ScreenSize
     public static int ToColumnAndRowDistance(IntVector2 from, IntVector2 to) =>
         (Math.Abs(to.X - from.X) / ToPortPixelsFromColumns(1)) + (Math.Abs(to.Y - from.Y) / ToPortPixels(1));
 
-    /// <summary>Changes a number of the arcade's columns into port pixels. A column is one byte of video memory across, which is <see cref="ArcadePixelsPerByte"/> arcade pixels wide, and an arcade pixel is <see cref="SpecScale"/> port pixels wide, so one column is 4 port pixels.</summary>
+    /// <summary>Changes a number of the arcade's columns into port pixels. A column is one byte of video memory across, which is <see cref="ArcadePixelsPerByte"/> arcade pixels wide, and an arcade pixel is <see cref="PortPixelsPerArcadePixel"/> port pixels wide, so one column is 4 port pixels.</summary>
     /// <param name="columns">How many columns.</param>
     public static int ToPortPixelsFromColumns(int columns) => ToPortPixels(columns * ArcadePixelsPerByte);
 
@@ -77,7 +77,7 @@ public static class ScreenSize
         return Math.Max(1, scale);
     }
 
-    /// <summary>Converts a length in arcade pixels or spec pixels to port pixels. The two are the same size, so one method serves both.</summary>
-    /// <param name="pixels">The length in arcade pixels or spec pixels.</param>
-    public static int ToPortPixels(int pixels) => pixels * SpecScale;
+    /// <summary>Converts a length in arcade pixels to port pixels.</summary>
+    /// <param name="pixels">The length in arcade pixels.</param>
+    public static int ToPortPixels(int pixels) => pixels * PortPixelsPerArcadePixel;
 }
