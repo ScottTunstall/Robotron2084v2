@@ -36,7 +36,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     ///     How many direction blocks the walk table has, one for each way a family member can walk.
     ///     <see cref="_directionBlock" /> is set to a random one of them.
     /// </summary>
-    private const int DirectionBlockCount = 8;
+    private const int PossibleDirections = 8;
 
     /// <summary>
     ///     The most steps a family member takes before it picks a new direction. <see cref="_stepsUntilNewDirection" />
@@ -68,13 +68,13 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     ///     How many steps each direction block of the walk table has. <see cref="_subStep" /> counts up to this and then
     ///     goes back to the first.
     /// </summary>
-    private const int SubStepsPerBlock = 4;
+    private const int SubStepsPerDirection = 4;
 
     /// <summary>
     ///     Which set of three animation frames each direction block uses. Walking diagonally uses the left set or the
     ///     right set.
     /// </summary>
-    private static readonly int[] AnimationFrameGroupByDirectionBlock = { 0, 1, 2, 3, 0, 1, 1, 0 };
+    private static readonly int[] AnimationFrameGroupByDirection = [0, 1, 2, 3, 0, 1, 1, 0];
 
     /// <summary>
     ///     The walk table. It has 4 steps for each of the 8 ways a family member can walk. Each step says how far to go
@@ -154,7 +154,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _position = position;
         Kind = kind;
         _random = random;
-        _directionBlock = random.Next(DirectionBlockCount);
+        _directionBlock = random.Next(PossibleDirections);
         _stepsUntilNewDirection = 1 + random.Next(NewDirectionStepsMax);
         _startWalkingTicks = 1 + random.Next(StartStaggerTicksMax);
         _beatTimer = 0; // The first step does not wait for this timer (see Update).
@@ -271,28 +271,29 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         else
         {
             _beatTimer += ArcadeClock.UnitsPerPortTick;
-            if (_beatTimer < ArcadeClock.ToClockUnits(BeatIntervalRomFrames)) return;
+            if (_beatTimer < ArcadeClock.ToClockUnits(BeatIntervalRomFrames))
+                return;
 
             _beatTimer -= ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
         }
 
         StepCount++;
 
-        var (dx, dy, frame) = Steps[_directionBlock * SubStepsPerBlock + _subStep];
-        _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirectionBlock[_directionBlock] + frame;
+        var (dx, dy, frame) = Steps[(_directionBlock * SubStepsPerDirection) + _subStep];
+        _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirection[_directionBlock] + frame;
 
         // The walk table is in arcade pixels, so the step is changed to port pixels.
-        var candidate = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixelsFromArcadePixels(1);
-        var next = GetBounds() with { X = candidate.X, Y = candidate.Y };
-        if (field.HitsWall(next) || OverlapsLivingElectrode(next, field))
+        var possibleNextPosition = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixelsFromArcadePixels(1);
+        var nextPosition = GetBounds() with { X = possibleNextPosition.X, Y = possibleNextPosition.Y };
+        if (field.HitsWall(nextPosition) || OverlapsLivingElectrode(nextPosition, field))
         {
             // The step would go into the wall or a live electrode, so the family member stays where it is and picks a new direction.
             PickNewDirection();
             return;
         }
 
-        _position = candidate;
-        _subStep = (_subStep + 1) % SubStepsPerBlock;
+        _position = possibleNextPosition;
+        _subStep = (_subStep + 1) % SubStepsPerDirection;
         if (--_stepsUntilNewDirection <= 0) PickNewDirection();
     }
 
@@ -310,7 +311,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Rescues the family member. It is gone at once.</summary>
+    /// <summary>Rescues the family member.</summary>
     public void Rescue()
     {
         if (!this.IsAlive()) return;
@@ -391,9 +392,9 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Picks a new direction at random, and picks at random how many steps to take before the next change.</summary>
     private void PickNewDirection()
     {
-        _directionBlock = _random.Next(DirectionBlockCount);
+        _directionBlock = _random.Next(PossibleDirections);
         _subStep = 0;
-        _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirectionBlock[_directionBlock];
+        _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirection[_directionBlock];
         _stepsUntilNewDirection = 1 + _random.Next(NewDirectionStepsMax);
     }
 }
