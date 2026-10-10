@@ -24,7 +24,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
-    private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.MissileSizeSpecPixels);
+    private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.MissileSizeArcadePixels);
     // How much is added to the spark's speed each time the speed changes: one amount for sideways and one for up or down, in 256ths of a pixel. They are picked at random when the spark is made and never change (ROM: PD2/PD4).
     private readonly IntVector2 _accelerationSubpixels;
     private readonly Random _random;

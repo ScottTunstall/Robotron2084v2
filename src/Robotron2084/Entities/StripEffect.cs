@@ -221,22 +221,22 @@ public sealed class StripEffect : IEntity
 
         foreach (Strip strip in LayOutStrips(spriteWidth, spriteRows))
         {
-            // Each strip is one row or one column of the sprite, drawn SpecScale times bigger on the screen.
+            // Each strip is one row or one column of the sprite, drawn PortPixelsPerArcadePixel times bigger on the screen.
             Rectangle source = _axis == StripFanAxis.Rows
                 ? new Rectangle(0, strip.SourceIndex, spriteWidth, 1)
                 : new Rectangle(strip.SourceIndex, 0, 1, spriteRows);
 
             Rectangle destination = _axis == StripFanAxis.Rows
                 ? new Rectangle(
-                    strip.X * ScreenSize.SpecScale,
-                    strip.Y * ScreenSize.SpecScale,
-                    spriteWidth * ScreenSize.SpecScale,
-                    ScreenSize.SpecScale)
+                    strip.X * ScreenSize.PortPixelsPerArcadePixel,
+                    strip.Y * ScreenSize.PortPixelsPerArcadePixel,
+                    spriteWidth * ScreenSize.PortPixelsPerArcadePixel,
+                    ScreenSize.PortPixelsPerArcadePixel)
                 : new Rectangle(
-                    strip.X * ScreenSize.SpecScale,
-                    strip.Y * ScreenSize.SpecScale,
-                    ScreenSize.SpecScale,
-                    spriteRows * ScreenSize.SpecScale);
+                    strip.X * ScreenSize.PortPixelsPerArcadePixel,
+                    strip.Y * ScreenSize.PortPixelsPerArcadePixel,
+                    ScreenSize.PortPixelsPerArcadePixel,
+                    spriteRows * ScreenSize.PortPixelsPerArcadePixel);
 
             spriteBatch.Draw(animationFrame, destination, source, Color.White);
         }
@@ -360,12 +360,12 @@ public sealed class StripEffect : IEntity
     internal static (int Left, int Top) GetSpritePlacement(
         Rectangle bounds, int spriteWidth, int spriteRows)
     {
-        int boundsWidth = bounds.Width / ScreenSize.SpecScale;
-        int boundsRows = bounds.Height / ScreenSize.SpecScale;
+        int boundsWidth = bounds.Width / ScreenSize.PortPixelsPerArcadePixel;
+        int boundsRows = bounds.Height / ScreenSize.PortPixelsPerArcadePixel;
 
         return (
-            (bounds.X / ScreenSize.SpecScale) + ((boundsWidth - spriteWidth) / 2),
-            (bounds.Y / ScreenSize.SpecScale) + ((boundsRows - spriteRows) / 2));
+            (bounds.X / ScreenSize.PortPixelsPerArcadePixel) + ((boundsWidth - spriteWidth) / 2),
+            (bounds.Y / ScreenSize.PortPixelsPerArcadePixel) + ((boundsRows - spriteRows) / 2));
     }
 
     /// <summary>Works out where every strip goes on this step. It changes nothing, so tests can check the shape.</summary>

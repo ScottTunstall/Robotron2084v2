@@ -22,7 +22,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
 {
-    private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.MissileSizeSpecPixels);
+    private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.MissileSizeArcadePixels);
     private readonly SpriteSet _sprites;
     private IntVector2 _position;
 

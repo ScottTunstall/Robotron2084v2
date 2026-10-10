@@ -11,8 +11,8 @@ public readonly record struct StripClip(int MinX, int MaxX, int MinY, int MaxY)
     /// <summary>Makes the clip for a playfield whose edges are given in port pixels.</summary>
     /// <param name="playfieldBounds">The inside of the playfield wall, in port pixels.</param>
     public static StripClip CreateFromPortPixels(Rectangle playfieldBounds) => new(
-        playfieldBounds.Left / ScreenSize.SpecScale,
-        playfieldBounds.Right / ScreenSize.SpecScale,
-        playfieldBounds.Top / ScreenSize.SpecScale,
-        playfieldBounds.Bottom / ScreenSize.SpecScale);
+        playfieldBounds.Left / ScreenSize.PortPixelsPerArcadePixel,
+        playfieldBounds.Right / ScreenSize.PortPixelsPerArcadePixel,
+        playfieldBounds.Top / ScreenSize.PortPixelsPerArcadePixel,
+        playfieldBounds.Bottom / ScreenSize.PortPixelsPerArcadePixel);
 }
