@@ -423,6 +423,17 @@ and writing it into a comment as if it were established.
 **CMT-7. No tombstones.** Do not write "(No XyzBlinkTicks: ...)" about code that does not exist. If the fact
 matters, put it in the summary of the member that behaves that way ("dies at once; no death animation").
 
+**CMT-10. A summary says what the thing IS; the remarks say how it works and where it comes from.** The `<summary>` of a
+type or member names it in plain words: what it is, or what it does for its caller. It does not describe the mechanism
+(the counts, the states, the arithmetic, the order of steps). That goes in `<remarks>`, together with the
+cross-references: the original source (`<item>Original source: ...</item>`, file and routine) and the disassembly
+(`<item>Disassembly: ...</item>`, file and address or label), in the same list form the existing classes use.
+
+For example, `Enforcer`'s summary says it is the arcade's enforcer robot. Its remarks say how it moves, fires and drops
+sparks, with the ROM routine and the disassembly label. A summary such as "walks in eight directions, firing a spark
+every 30 ticks" is wrong: the walk and the rate belong in the remarks, and the rate is a named constant (CMT-4). The
+same holds for a method: its first sentence says what it is for, and its steps go in the remarks.
+
 **CMT-8. Every member has a `<summary>` (§109.1)**: public, internal and private members, constructors
 included. `<param>` tags match the real parameters exactly: no stale tags, none missing. `cref`s resolve.
 One `<summary>` per member. `GenerateDocumentationFile` must be on, so the compiler enforces all of this.
