@@ -108,6 +108,13 @@ public static class Sound
         _transporterSound.Start(_engine);
     }
 
+    /// <summary>True while the transporter is still sending its sound to the board.</summary>
+    /// <returns>True from <see cref="PlayTransporter"/> until its last send, or until <see cref="StopTransporter"/>.</returns>
+    public static bool IsTransporterRunning() => _transporterSound.IsRunning();
+
+    /// <summary>Stops the transporter's sends where they are, so that they do not cut across the next sound.</summary>
+    public static void StopTransporter() => _transporterSound.Stop();
+
     /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying"/>).</summary>
     public static bool IsPlaying => _engine?.IsBoardPlaying ?? false;
 

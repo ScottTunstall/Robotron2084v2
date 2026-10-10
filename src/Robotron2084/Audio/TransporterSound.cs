@@ -45,6 +45,13 @@ public sealed class TransporterSound
         _ticksUntilNextSend = 0;
     }
 
+    /// <summary>Stops the warp-in where it is: no more sends follow. The sound test page uses it when it moves on to another sound.</summary>
+    public void Stop()
+    {
+        _closeSendsLeft = 0;
+        _spacedSendsLeft = 0;
+    }
+
     /// <summary>One port tick (one vblank): sends the warp-in sound when it is due.</summary>
     /// <param name="engine">The sound sequencer, which passes the send straight to the board.</param>
     public void Tick(SoundEngine engine)
