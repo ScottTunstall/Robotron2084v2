@@ -11,11 +11,11 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Tank"/>
 /// <seealso cref="Level.PlayField"/>
 /// <remarks>
-/// It moves every ROM frame, and has a beat every few ROM frames. The <see cref="PlayField"/> calls
-/// <see cref="Update"/> on nearly every tick, through <see cref="FieldEntities"/> and
-/// <see cref="PlayField.UpdateEntity"/>. <see cref="_frameTimer"/> gathers the ticks until it is time for the next
-/// ROM frame (see <see cref="ArcadeClock"/>), and <see cref="_framesToNextBeat"/> counts the ROM frames to its next
-/// beat.
+/// It moves 50 times a second, and has a beat every few moves. The <see cref="PlayField"/> calls
+/// <see cref="Update"/> on every tick, through <see cref="FieldEntities"/> and
+/// <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the short freeze just after the player
+/// is killed. <see cref="_frameTimer"/> gathers the ticks until it is time for the next move (see
+/// <see cref="ArcadeClock"/>), and <see cref="_framesToNextBeat"/> counts the moves to its next beat.
 ///
 /// <list type="bullet">
 /// <item>Original source: <c>RRTK4.ASM</c>: <c>TNKFIR</c> (aiming and speed), <c>SHELL</c> (each beat,
@@ -31,9 +31,10 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 {
+    /// <summary>How tall the shell is, in port pixels.</summary>
     private static readonly int BoxHeight = ScreenSize.ToPortPixels(CollisionSizes.TankShellCollisionSize.Height);
 
-    /// <summary>The shell sprite's own 8x7 arcade px box, in port pixels.</summary>
+    /// <summary>How wide the shell is, in port pixels.</summary>
     private static readonly int BoxWidth = ScreenSize.ToPortPixels(CollisionSizes.TankShellCollisionSize.Width);
 
     /// <summary>One column, in port pixels.</summary>
@@ -45,30 +46,30 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     private readonly Rectangle _playfieldBounds;
     private readonly SpriteSet _sprites;
 
-    /// <summary>ROM frames left before the shell's next beat.</summary>
+    /// <summary>How many more moves the shell makes before its next beat.</summary>
     private int _framesToNextBeat = TankShellTuning.BeatIntervalRomFrames;
 
-    /// <summary>Builds up, a tick at a time, until it is time for the next ROM frame.</summary>
+    /// <summary>Counts up, a tick at a time, to the shell's next move. The shell moves 50 times a second (see <see cref="ArcadeClock"/>).</summary>
     private int _frameTimer;
 
     private IntVector2 _position;
 
-    /// <summary>The part of a port pixel the shell has moved but not yet shown, in 256ths, carried from frame to frame. A shell held against a wall can stop for good if its speed is under a pixel a ROM frame, as in the ROM.</summary>
+    /// <summary>The fraction of a pixel left over from the last move, in 256ths of a pixel. It is added to the next move. A shell held against a wall can stop for good if it goes less than a pixel on each move, as it can in the arcade.</summary>
     private IntVector2 _remainderSubpixels;
 
     /// <summary>Beats left before the shell fizzles out.</summary>
     private int _beatsRemaining;
 
-    /// <summary>How fast the shell goes sideways, in 256ths of a column a ROM frame, and up and down, in 256ths of a row a ROM frame.</summary>
+    /// <summary>How far the shell goes on each move: sideways in 256ths of a column, and up or down in 256ths of a row.</summary>
     private IntVector2 _velocity;
 
-    /// <summary>Fires a shell. It starts a column to the right of the given position and is aimed once, at the player or at a wall.</summary>
+    /// <summary>Makes a shell. It starts a column to the right of the given position and is aimed once, at the player or at a wall.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">The top-left corner of the tank that fired it, in port pixels.</param>
     /// <param name="playerPosition">The top-left corner of the player, in port pixels.</param>
     /// <param name="shellSpeed">The wave's shell setting. A bigger number is a faster shell.</param>
-    /// <param name="playfieldBounds">The edges of the playfield, in port pixels.</param>
-    /// <param name="random">Where the shot type, the aim misses and the shell's life come from.</param>
+    /// <param name="playfieldBounds">The inside of the playfield wall, in port pixels.</param>
+    /// <param name="random">Where its random numbers come from. They pick what the shell is aimed at, how far the aim is off, and how long the shell lasts.</param>
     public TankShell(SpriteSet sprites, IntVector2 position, IntVector2 playerPosition, int shellSpeed, Rectangle playfieldBounds, Random random)
     {
         _sprites = sprites;
@@ -83,28 +84,28 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True when this tick's beat bounced the shell off a wall, so the bounce sound can be played.</summary>
     public bool BouncedThisUpdate { get; private set; }
 
-    /// <summary>The box around the shell, from its top-left corner.</summary>
+    /// <summary>The box the shell takes up on the screen. It is used to tell what the shell hits.</summary>
     public Rectangle GetBounds() => new(_position.X, _position.Y, BoxWidth, BoxHeight);
 
     /// <summary>The shell's one animation frame. It never flashes.</summary>
     public Texture2D GetCurrentAnimationFrame() => _sprites.TankShellSprite;
 
-    /// <summary>Alive until it fizzles out or is shot, then dead at once. A shell has no dying animation.</summary>
+    /// <summary>Alive until it fizzles out or is shot, then dead at once. A shell has no death animation.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>The top-left corner of the shell.</summary>
+    /// <summary>Where the shell's top-left corner is.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>How fast the shell goes sideways, in 256ths of a column a ROM frame.</summary>
+    /// <summary>How far the shell goes sideways on each move, in 256ths of a column.</summary>
     internal int VelocityX => _velocity.X;
 
-    /// <summary>How fast the shell goes up and down, in 256ths of a row a ROM frame.</summary>
+    /// <summary>How far the shell goes up or down on each move, in 256ths of a row.</summary>
     internal int VelocityY => _velocity.Y;
 
-    /// <summary>Works out the speed of an aimed shot on one axis: the gap to the target, scaled by the wave's shell setting.</summary>
+    /// <summary>Works out how fast an aimed shot goes, either sideways or up-and-down. The bigger the gap to the target and the bigger the wave's shell setting, the faster it goes.</summary>
     /// <param name="gap">The gap from the shell to the target, in columns or rows. Negative means the target is to the left or above.</param>
     /// <param name="shellSpeed">The wave's shell setting.</param>
-    /// <returns>The speed, in 256ths of a column or row a ROM frame.</returns>
+    /// <returns>How far the shell goes on each move, in 256ths of a column or of a row.</returns>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>TNKF2</c> to <c>TNKF4</c>. A gap to the left or above
@@ -121,8 +122,8 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
             : -(scaled + 1) * TankShellTuning.AimedSpeedMultiplier;
     }
 
-    /// <summary>Speeds a rebound shot up, by doubling, until it is fast enough on either axis.</summary>
-    /// <param name="velocity">The starting speed, in 256ths of a column and of a row a ROM frame.</param>
+    /// <summary>Speeds up a shot that is aimed at a wall. Its speed is doubled again and again until it is fast enough, either sideways or up-and-down.</summary>
+    /// <param name="velocity">The starting speed: sideways in 256ths of a column for each move, and up or down in 256ths of a row.</param>
     /// <param name="shellSpeed">The wave's shell setting, which sets how fast is fast enough.</param>
     /// <returns>The speed after doubling.</returns>
     /// <remarks>
@@ -155,7 +156,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Draws the shell. It is drawn at its own size and never flashes.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="spriteBatch">What the shell is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (this.IsAlive())
@@ -181,13 +182,13 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Runs one tick of the shell. Each ROM frame it moves, and every second ROM frame it has a beat: bouncing off a wall or counting down its life.</summary>
-    /// <param name="gameTime">Not used. The shell counts in ticks, not in seconds.</param>
+    /// <summary>Runs one tick of the shell. It moves 50 times a second. Every few moves it has a beat, when it bounces off a wall or counts down its life.</summary>
+    /// <param name="gameTime">Not used. The shell counts ticks.</param>
     /// <param name="field">Not used.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, with the movement done by the shared mover in
-    /// <c>RRS22.ASM</c> (<c>OPB80</c>)</item>
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>. The moving is done by the routine that moves
+    /// every moving object, in <c>RRS22.ASM</c> (<c>OPB80</c>)</item>
     /// <item>Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>)</item>
     /// </list>
     /// </remarks>
@@ -297,10 +298,10 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         return GetBoostedVelocity(new IntVector2(targetColumn - shellColumn, targetRow - shellRow), shellSpeed);
     }
 
-    /// <summary>Moves the shell by one ROM frame's worth of speed. A move that would take it out of the playfield is not made.</summary>
+    /// <summary>Makes one move. A move that would take the shell out of the playfield is not made.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRS22.ASM</c> <c>OPB80</c>, the shared mover.</item>
+    /// <item>Original source: <c>RRS22.ASM</c> <c>OPB80</c>, the routine that moves every moving object.</item>
     /// <item>Disassembly: not separately labelled.</item>
     /// </list>
     /// </remarks>
@@ -310,7 +311,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         int stepX = DivideRoundingDown(subpixels.X, ScreenSize.SubpixelsPerPixel);
         int stepY = DivideRoundingDown(subpixels.Y, ScreenSize.SubpixelsPerPixel);
 
-        // A refused move leaves the position, and the fraction of a pixel carried with it, exactly as they were.
+        // The sideways move is made only if it keeps the shell inside the playfield. The same goes for the up-or-down move. A move that is not made changes nothing.
         int x = _position.X;
         int remainderX = _remainderSubpixels.X;
         if (FitsInsideX(_position.X + stepX))
@@ -339,12 +340,12 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="y">The up-and-down position of the shell's top.</param>
     private bool FitsInsideY(int y) => y >= _playfieldBounds.Y && y + BoxHeight <= _playfieldBounds.Bottom;
 
-    /// <summary>Works out, in 256ths of a port pixel, how far the shell has to go after one more ROM frame, counting what it carried over.</summary>
+    /// <summary>Works out how far the shell goes on its next move, in 256ths of a pixel, counting the fraction left over from the last move.</summary>
     private IntVector2 GetNextFrameSubpixels() => new(
         _remainderSubpixels.X + (_velocity.X * ColumnPixels),
         _remainderSubpixels.Y + (_velocity.Y * RowPixels));
 
-    /// <summary>Works out where the shell will be after one more ROM frame, from its speed and its carried remainder.</summary>
+    /// <summary>Works out where the shell will be after its next move, from its speed and the fraction left over from the last move.</summary>
     private IntVector2 GetNextPosition()
     {
         IntVector2 subpixels = GetNextFrameSubpixels();
@@ -353,7 +354,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
             _position.Y + DivideRoundingDown(subpixels.Y, ScreenSize.SubpixelsPerPixel));
     }
 
-    /// <summary>Runs one beat: bounce if the next move would hit a wall, otherwise count down the shell's life.</summary>
+    /// <summary>Runs one beat. The shell bounces if its next move would hit a wall. Otherwise it counts down its life.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, <c>XVNEG</c> and <c>YVNEG</c>.</item>

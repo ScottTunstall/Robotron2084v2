@@ -11,20 +11,21 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Quark"/>
 /// <seealso cref="TankShell"/>
 /// <remarks>
-/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
-/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
-/// until it is time for the next beat (see <see cref="ArcadeClock"/>). <see cref="_growTimer"/> times the stages of
-/// its birth.
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. There are two times it does not: while the
+/// tank is still appearing at the start of a wave, and during the short freeze just after the player is killed.
+/// <see cref="_beatTimer"/> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock"/>).
+/// <see cref="_growTimer"/> times the stages of its growing.
 ///
 /// <list type="bullet">
 /// <item>Original source: <c>RRTK4.ASM</c>, routine <c>TANK</c></item>
-/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ANIMATE_TANK</c> (<c>$4D99</c>, near <c>$4D55</c>'s
-/// fire-delay check)</item>
+/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>ANIMATE_TANK</c> (<c>$4D99</c>, near the check of the wait
+/// between shots at <c>$4D55</c>)</item>
 /// </list>
 /// </remarks>
 public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>How many ROM frames the arcade's routine sleeps between one look at whether the game is live and the next. It sets how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
+    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next, in 50ths of a second. It decides how long after the game goes live the first beat comes (<see cref="BeginPlay"/>).</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>TANK</c>, <c>BITA #$7F / BEQ TANKL / NAP 15,TANK</c>,
@@ -34,7 +35,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int LivePollRomFrames = 15;
 
-    /// <summary>A destination roll at or below this aims the tank at the player (about 38% of the time).</summary>
+    /// <summary>When a tank picks where to go, it picks a random number below <see cref="DestinationRollSides"/>. If the number is this or less, the tank goes for the player. That is about 38 times in 100.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>ANIMATE_TANK</c>.</item>
@@ -43,7 +44,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int AimAtPlayerRollAtMost = 96;
 
-    /// <summary>A re-aim interval is rolled before this many beats (exclusive bound of the random roll).</summary>
+    /// <summary>The tank waits a random number of beats before it picks a new place to go. That number is always less than this.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>TANKND</c>.</item>
@@ -52,7 +53,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int AimIntervalMaxExclusiveBeats = 32;
 
-    /// <summary>A re-aim comes after at least this many beats.</summary>
+    /// <summary>The fewest beats a tank waits before it picks a new place to go.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>TANKND</c>.</item>
@@ -61,10 +62,10 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int AimIntervalMinBeats = 1;
 
-    /// <summary>The wave's tank fire interval when the caller gives none.</summary>
+    /// <summary>How many beats a tank waits between shots, when it is not told a number.</summary>
     private const int DefaultFireIntervalBeats = 32;
 
-    /// <summary>The destination roll has this many sides.</summary>
+    /// <summary>The random number that decides where a tank goes is from 0 up to one less than this (see <see cref="AimAtPlayerRollAtMost"/>).</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>ANIMATE_TANK</c>.</item>
@@ -73,7 +74,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int DestinationRollSides = 256;
 
-    /// <summary>The first shot waits the interval plus a random count of beats below this.</summary>
+    /// <summary>A tank's first shot waits the usual beats between shots, plus a random number of extra beats. The extra is always less than this.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>TNKSHT</c>.</item>
@@ -83,7 +84,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     private const int FirstShotExtraBeatsMaxExclusive = 32;
 
     /// <summary>
-    /// A tank moves vertically only when its target is more than this many arcade pixels off.
+    /// A tank only goes up or down when the place it is going to is more than this many arcade pixels above or below it.
     /// </summary>
     /// <remarks>
     /// <list type="bullet">
@@ -93,7 +94,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int VerticalMoveThresholdArcadePixels = 16;
 
-    /// <summary>Collision box = the ROM sprite dimensions (14x16 arcade px), top-left anchored at <see cref="Position"/>.</summary>
+    /// <summary>How big the tank is, in port pixels. It is the size of the tank's sprite, and it is used to tell what the tank touches.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixels(CollisionSizes.TankCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.TankCollisionSize.Height));
 
@@ -109,40 +110,40 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     private IntVector2 _destination;
     private int _fireCooldownBeats;
 
-    /// <summary>Which grow (birth) animation frame is showing, 0..TankGrowSteps.</summary>
+    /// <summary>Which of the growing animation frames is showing, counting from 0. When it reaches <see cref="TankTuning.GrowSteps"/>, the tank is fully grown.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> <c>MTANK</c> birth.</item>
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>MTANK</c>, the growing tank.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     /// </list>
     /// </remarks>
     private int _growStep;
 
-    /// <summary>Counts up to the next grow (birth) animation frame.</summary>
+    /// <summary>Counts up to the next growing animation frame.</summary>
     private int _growTimer;
 
     private IntVector2 _position;
-    private IntVector2 _stepDirection; // The direction the tank steps in. Each part is -1, 0 or +1, so it is one of the eight directions, or still.
+    private IntVector2 _stepDirection; // Which way the tank steps on each beat: left or right (or neither), and up or down (or neither).
 
-    /// <summary>Counts the tread animation frames shown, one per beat.</summary>
+    /// <summary>How many beats the tank has had. The treads show their next animation frame on each beat.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> <c>TANK3</c> advances the animation frame once per beat.</item>
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>TANK3</c>, which moves the animation on once a beat.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     /// </list>
     /// </remarks>
     private int _treadAnimationFrameCounter;
 
-    /// <summary>Creates a tank at <paramref name="position"/>; it must be born before it can move or fire.</summary>
+    /// <summary>Makes a tank at <paramref name="position"/>. Unless it starts fully grown, it has to grow before it can move or fire.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    /// <param name="position">Top-left of the tank.</param>
-    /// <param name="random">The random source: the aim rolls, the destinations and the first-fire delay.</param>
-    /// <param name="fireIntervalBeats">The beats between this wave's tank shots.</param>
-    /// <param name="startFullyGrown">True for a tank put on at the start of a life, which does not grow first.</param>
+    /// <param name="position">Where the tank's top-left corner is.</param>
+    /// <param name="random">Where its random numbers come from. They pick where it goes, how long before it picks again, and the wait before its first shot.</param>
+    /// <param name="fireIntervalBeats">How many beats this wave's tank waits between shots.</param>
+    /// <param name="startFullyGrown">True for a tank that is on the field at the start of a life. It does not grow first.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> <c>TNKSHT</c> — this wave's firing interval; <c>TNKSTV</c>
-    /// puts a tank on at full size, and only a dropped one grows (<c>MTANK</c>).</item>
+    /// <item>Original source: <c>RRTK4.ASM</c>. <c>TNKSHT</c> is this wave's number of beats between shots. <c>TNKSTV</c>
+    /// puts a tank on at full size. Only a tank dropped by a quark grows (<c>MTANK</c>).</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     /// </list>
     /// </remarks>
@@ -159,13 +160,13 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
         _destination = position;
-        // The first beat (see ArcadeClock) fires and moves the tank before it checks whether to aim again (ROM: TANKL).
+        // The tank picks where to go at the end of its first beat (ROM: TANKL).
         _aimBeatsRemaining = 0;
-        // The first shot waits one full firing interval, plus a random 0 to 31 beats (see ArcadeClock).
+        // The first shot waits this wave's gap between shots, plus a random number of extra beats.
         _fireCooldownBeats = fireIntervalBeats + random.Next(0, FirstShotExtraBeatsMaxExclusive);
     }
 
-    /// <summary>The collision box: the current birth animation frame's size while being born, else the tank's.</summary>
+    /// <summary>The box the tank takes up on the screen, which is used to tell what the tank touches. While the tank is growing, the box is the size of the growing animation frame that is showing.</summary>
     public Rectangle GetBounds()
     {
         if (_growStep < TankTuning.GrowSteps)
@@ -177,11 +178,11 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         return new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
     }
 
-    /// <summary>The frame an explosion would copy (see <see cref="IAnimationFrameSource"/>): the birth animation frame while being born, else the tread frame.</summary>
+    /// <summary>The animation frame the tank is showing: a growing one while it grows, and a tread one after that. An explosion is made from it (see <see cref="IAnimationFrameSource"/>).</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> <c>TANK3</c> takes the direction from the X step's sign —
-    /// the walk frame advances once per beat and plays backwards while moving left.</item>
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>TANK3</c>. The animation moves on once a beat. It plays
+    /// backwards while the tank is going left.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     /// </list>
     /// </remarks>
@@ -195,10 +196,10 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         return _sprites.TankAnimationFrames[TreadFrameIndex];
     }
 
-    /// <summary>Alive until shot or until it walks into an electrode; never Dying (see <see cref="Kill"/>).</summary>
+    /// <summary>Alive until it is killed. It is never Dying, because it has no death animation (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Top-left of the tank.</summary>
+    /// <summary>Where the tank's top-left corner is.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> the OBJX/OBJY registers.</item>
@@ -208,21 +209,21 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     public IntVector2 Position => _position;
 
     /// <summary>Moves a spot so that a tank standing on it is wholly inside the playfield.</summary>
-    /// <param name="playfieldBounds">The edges of the playfield.</param>
+    /// <param name="playfieldBounds">The inside of the playfield wall.</param>
     /// <param name="position">Where the tank would stand, which may be against or past a wall.</param>
-    /// <returns>The nearest spot at which the tank's box fits.</returns>
+    /// <returns>The nearest spot where the whole tank fits.</returns>
     internal static IntVector2 GetPositionInside(Rectangle playfieldBounds, IntVector2 position) => new(
         Math.Clamp(position.X, playfieldBounds.X, playfieldBounds.Right - CollisionSize.Width),
         Math.Clamp(position.Y, playfieldBounds.Y, playfieldBounds.Bottom - CollisionSize.Height));
 
-    /// <summary>True while the ROM birth sequence is still playing (test hook).</summary>
+    /// <summary>True while the tank is still growing. Tests use this.</summary>
     internal bool IsBeingBorn() => _growStep < TankTuning.GrowSteps;
 
-    /// <summary>Which tread animation frame is showing: the index into <see cref="SpriteSet.TankAnimationFrames"/>.</summary>
+    /// <summary>Which tread animation frame is showing, as a place in <see cref="SpriteSet.TankAnimationFrames"/>.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> <c>TANK3</c> — playing backwards while the tank moves left
-    /// is the arcade's own rule: the direction comes from the X step's sign.</item>
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>TANK3</c>. Playing the animation backwards while the tank goes
+    /// left is the arcade's own rule.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     /// </list>
     /// </remarks>
@@ -236,11 +237,11 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         }
     }
 
-    /// <summary>How many timer units one grow step takes (a tick adds 5; an arcade frame is 6 units).</summary>
+    /// <summary>How long each growing animation frame is shown for, in clock units (see <see cref="ArcadeClock"/>). <see cref="_growTimer"/> counts up to this.</summary>
     private static readonly int GrowIntervalClockUnits = ArcadeClock.ToClockUnits(TankTuning.GrowIntervalRomFrames);
 
-    /// <summary>Draws the birth animation frames while being born, else the tread frame.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <summary>Draws the tank: a growing animation frame while it grows, and a tread one after that.</summary>
+    /// <param name="spriteBatch">What the tank is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (!this.IsAlive())
@@ -248,8 +249,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        // While it is being born, it draws the arcade's own small tank pictures, each at its own size,
-        // anchored at the tank's position (ROM: MTNKP1..4). They are not a scaled copy of the tank.
+        // A tank being born is drawn with the arcade's own small tank animation frames, each at its own size (ROM: MTNKP1..4). They are not the full-size tank made smaller.
         if (_growStep < TankTuning.GrowSteps)
         {
             (int growWidth, int growHeight) = TankTuning.GrowSizes[_growStep];
@@ -265,7 +265,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
-    /// <summary>Kills the tank outright: no death animation.</summary>
+    /// <summary>Kills the tank at once, with no death animation.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>TNKIL</c>.</item>
@@ -287,8 +287,8 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     public void BeginPlay(PlayField field) =>
         _beatTimer = ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames) - field.GetClockUnitsToFirstBeat(LivePollRomFrames, napRomFrames: 0);
 
-    /// <summary>Runs the birth animation, then the beat: fire, move, animate and re-aim.</summary>
-    /// <param name="gameTime">Unused — the clocks are counted in ticks.</param>
+    /// <summary>Runs one tick. A growing tank only grows. After that, on a beat, the tank fires if it is time to, takes a step, and may pick a new place to go.</summary>
+    /// <param name="gameTime">Not used. The tank counts ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -307,7 +307,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        // This wave's tank speed (two port ticks per step, see ArcadeClock) plus the one frame the process takes (ROM: TNKSPD).
+        // Wait for the tank's next beat, which is its next turn to act (see ArcadeClock; ROM: TNKSPD).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames))
         {
@@ -316,13 +316,13 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 
         _beatTimer -= ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames);
 
-        // One beat (see ArcadeClock), always in this order: fire if due, then step or bounce (ROM: the TANK process).
+        // On a beat the tank first fires, if it is time to, and then steps or bounces (ROM: the TANK process).
         FireIfDue(field);
         StepOrBounce(field);
 
-        _treadAnimationFrameCounter++; // Moves the tread on one walk frame per beat (see ArcadeClock) (ROM: TANK3 advances the animation frame once).
+        _treadAnimationFrameCounter++; // The treads show their next animation frame on each beat (ROM: TANK3).
 
-        // The aim timer counts down in beats (see ArcadeClock). When it runs out, the tank picks a new destination, most often the Player (see Player). A step that was blocked has already turned the tank (ROM: TANKND).
+        // When the aim countdown runs out, the tank picks a new place to go. Sometimes it is where the Player is, and otherwise it is a random place (ROM: TANKND).
         if (--_aimBeatsRemaining <= 0)
         {
             _aimBeatsRemaining = NextAimInterval(_random);
@@ -330,7 +330,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         }
     }
 
-    /// <summary>The next re-aim interval: a random count of beats.</summary>
+    /// <summary>Picks at random how many beats the tank waits before it picks a new place to go.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>TANKND</c>.</item>
@@ -339,11 +339,12 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private static int NextAimInterval(Random random) => random.Next(AimIntervalMinBeats, AimIntervalMaxExclusiveBeats);
 
-    /// <summary>Runs the mini-tank grow-up; true while the tank is still growing and must not act.</summary>
+    /// <summary>Runs one tick of the tank's growing.</summary>
+    /// <returns>True while the tank is still growing, when it must not move or fire.</returns>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> <c>MTANK</c> ("MINI TANK GROW"): four mini-tank animation
-    /// frames, one per 12 ROM frames.</item>
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>MTANK</c> ("MINI TANK GROW"): four small-tank animation
+    /// frames, each shown for 12 fiftieths of a second.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     /// </list>
     /// </remarks>
@@ -362,15 +363,14 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 
         _growTimer -= GrowIntervalClockUnits;
 
-        // The mini tank applies the current animation frame's (dx, dy) offset before the frame advances, so it
-        // walks up and to the left, and the full tank lands centred on the drop point (notes §53).
+        // The growing tank moves up and to the left a little each time its animation frame changes, so that the full-size tank ends up centred on the spot where it was dropped (notes §53).
         (int columns, int rows) = TankTuning.GrowDeltas[_growStep];
         _position += new IntVector2(ScreenSize.ToPortPixelsFromColumns(columns), ScreenSize.ToPortPixels(rows));
 
         return ++_growStep < TankTuning.GrowSteps;
     }
 
-    /// <summary>Counts the fire cooldown down one beat and fires a shell at the player when it runs out.</summary>
+    /// <summary>Counts down one beat towards the next shot. When the count runs out, the tank fires a shell, if the playfield allows another shell.</summary>
     /// <param name="field">The playfield.</param>
     private void FireIfDue(PlayField field)
     {
@@ -384,16 +384,16 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             field.SpawnTankShell(_position);
         }
 
-        // Later shots reload to exactly this wave's firing interval, with no random extra beats (see ArcadeClock).
+        // Every shot after the first waits this wave's gap between shots, with no random extra beats.
         _fireCooldownBeats = _fireIntervalBeats;
     }
 
-    /// <summary>Takes one step, or mirrors the blocked axis when the step would hit the wall.</summary>
+    /// <summary>Takes one step. If the step would hit the wall, the tank does not take it and turns round instead. A wall to its left or right turns it round sideways, and a wall above or below it turns it round up-and-down.</summary>
     /// <param name="field">The playfield.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> the <c>TANK1</c> step, one arcade pixel on each active axis
-    /// per beat.</item>
+    /// <item>Original source: <c>RRTK4.ASM</c>, the <c>TANK1</c> step. On each beat the tank goes one arcade pixel
+    /// sideways, one arcade pixel up or down, or both.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     /// </list>
     /// </remarks>
@@ -408,7 +408,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        // Bounce off the wall, never through it: reverse the direction on the axis that is blocked.
+        // The tank bounces off the wall. A wall to its left or right turns its left-or-right direction round. A wall above or below it turns its up-or-down direction round.
         if (field.HitsWall(new Rectangle(_position.X + step.X, _position.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             _stepDirection = new IntVector2(-_stepDirection.X, _stepDirection.Y);
@@ -421,7 +421,8 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         }
     }
 
-    /// <summary>Picks the next destination: the player about 38% of the time, else a random point.</summary>
+    /// <summary>Picks the place the tank goes next. About 38 times in 100 it is where the player is. Otherwise it is a random place.</summary>
+    /// <param name="field">The playfield, which says where the player and the walls are.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>ANIMATE_TANK</c>.</item>
@@ -441,7 +442,8 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         _stepDirection = new IntVector2(dx, dy);
     }
 
-    /// <summary>A random point inside the playfield, inset by the tank's own box.</summary>
+    /// <summary>Picks a random place inside the playfield, at least a tank's size away from every wall.</summary>
+    /// <param name="field">The playfield, whose walls the place is inside.</param>
     private IntVector2 PickRandomPointIn(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;

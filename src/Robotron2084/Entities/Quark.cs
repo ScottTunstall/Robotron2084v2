@@ -7,13 +7,14 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A quark is a drifting robot that wanders the screen dropping tanks, then flees off the edge once it has dropped enough.</summary>
+/// <summary>A quark is a drifting robot that wanders the screen dropping tanks. Once it has dropped all its tanks, it flees off the top or bottom edge.</summary>
 /// <seealso cref="Tank"/>
 /// <seealso cref="StripEffect"/>
 /// <remarks>
-/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
-/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
-/// until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the
+/// short freeze just after the player is killed. <see cref="_beatTimer"/> gathers the ticks until it is time for
+/// the next beat (see <see cref="ArcadeClock"/>). It also moves 50 times a second, timed by
 /// <see cref="_moveTimer"/>.
 ///
 /// <list type="bullet">
@@ -23,22 +24,22 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 {
-    /// <summary>Sides of the ROM's coin flips (the drift signs and the flee direction).</summary>
+    /// <summary>A random number below this decides each either-or choice: which way to drift, and which way to flee. Each choice comes up half the time.</summary>
     private const int CoinFlipSides = 2;
 
-    /// <summary>The wave's tank-drop delay when the caller gives none.</summary>
+    /// <summary>The most beats a quark waits between tank drops, when it is not told a number.</summary>
     private const int DefaultDropDelayBeats = 12;
 
-    /// <summary>The wave's tank-allotment bound when the caller gives none.</summary>
+    /// <summary>The limit used to pick how many tanks a quark drops, when it is not told a number. The most it can drop is half of this.</summary>
     private const int DefaultMaxDropsX2 = 10;
 
-    /// <summary>The wave's drift-speed cap when the caller gives none.</summary>
+    /// <summary>The quark's top drifting speed, when it is not told a number.</summary>
     private const int DefaultSpeedCap = 50;
 
     /// <summary>After a quark has dropped a tank, its drop delay is divided by this to give the most beats it waits before the next drop. A random number up to that is stored in <see cref="_dropBeatsRemaining"/>.</summary>
     private const int RepeatDropDelayDivisor = 2;
 
-    /// <summary>Collision box = the ROM sprite dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
+    /// <summary>How big the quark is, in port pixels. It is the size of the quark's sprite, and it is used to tell what the quark touches.</summary>
     private static readonly (int Width, int Height) CollisionSize = (ScreenSize.ToPortPixels(CollisionSizes.QuarkCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.QuarkCollisionSize.Height));
 
     private readonly int _dropDelayBeats;
@@ -46,7 +47,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private readonly int _speedCap;
     private readonly SpriteSet _sprites;
 
-    /// <summary>Which rotation animation frame is showing.</summary>
+    /// <summary>Which animation frame of the quark's spin is showing.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>OPICT</c>, animation frames <c>SQP0</c> to <c>SQP8</c>.</item>
@@ -70,10 +71,10 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True once the quark has started dropping tanks. It stays true until every tank has been dropped.</summary>
     private bool _isDroppingTanks;
 
-    /// <summary>True once the quark is running for the nearest edge of the playfield, where it vanishes.</summary>
+    /// <summary>True once the quark is fleeing up or down to the edge of the playfield, where it vanishes.</summary>
     private bool _isFleeing;
 
-    /// <summary>Counts up to the next move: one move per ROM frame.</summary>
+    /// <summary>Counts up to the next move. The quark moves 50 times a second.</summary>
     private int _moveTimer;
 
     private IntVector2 _position;
@@ -87,26 +88,26 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private int _reaimBeatsRemaining;
 
-    /// <summary>Sub-pixel carry, so a slow drift still accumulates into movement.</summary>
+    /// <summary>The fraction of a pixel left over from the last move, in 256ths of a pixel. It is added to the next move, so even a slow drift gets somewhere.</summary>
     private IntVector2 _remainderSubpixels;
 
     /// <summary>How many tanks this quark still has left to drop.</summary>
     private int _tanksRemaining;
 
-    /// <summary>Velocity in 1/256 port px per ROM frame, integrated once per frame by the shared mover.</summary>
+    /// <summary>How far the quark goes on each move, sideways and up or down, in 256ths of a pixel.</summary>
     private IntVector2 _velocitySubpixels;
 
-    /// <summary>Drops a quark at <paramref name="position"/> with its tank allotment and first drift already rolled.</summary>
+    /// <summary>Makes a quark at <paramref name="position"/>. It picks at random how many tanks it will drop, and how long it waits before the first.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    /// <param name="position">Top-left of the quark.</param>
-    /// <param name="random">The random source: the allotment, the drift rolls and the flee direction.</param>
-    /// <param name="maxDropsX2">This wave's tank-allotment bound; the roll happens here.</param>
+    /// <param name="position">Where the quark's top-left corner is.</param>
+    /// <param name="random">Where its random numbers come from. They pick how many tanks it drops, how it drifts and which way it flees.</param>
+    /// <param name="maxDropsX2">This wave's limit for picking how many tanks the quark drops. The most it can drop is half of this.</param>
     /// <param name="dropDelayBeats">The most beats this wave's quark waits between tank drops.</param>
-    /// <param name="speedCap">This wave's drift-speed cap, the velocity roll's maximum (ROM <c>SQSPD</c>).</param>
+    /// <param name="speedCap">The quark's top drifting speed on this wave (ROM: <c>SQSPD</c>).</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> <c>ENFNUM</c>, <c>TDPTIM</c> and <c>SQSPD</c> — this wave's
-    /// allotment bound, drop delay and drift-speed cap.</item>
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>ENFNUM</c>, <c>TDPTIM</c> and <c>SQSPD</c>: this wave's limit on
+    /// tanks, its wait between drops and its top drifting speed.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
     /// </list>
     /// </remarks>
@@ -123,23 +124,23 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _random = random;
         _dropDelayBeats = dropDelayBeats;
         _speedCap = speedCap;
-        // How many tanks it may drop: half a random roll up to the wave's cap, rounded up (ROM: PD3).
+        // How many tanks the quark may drop: a random number up to this wave's limit, halved and rounded up (ROM: PD3).
         int roll = random.Next(maxDropsX2 + 1);
         _tanksRemaining = (roll + 1) / 2;
-        // The delay before its first tank drop, counted in animation cycles rather than beats (see ArcadeClock) (ROM: PD2).
+        // The wait before the first tank drop. It counts down once each time the animation starts again, not once a beat (ROM: PD2).
         _dropBeatsRemaining = 1 + random.Next(dropDelayBeats);
-        // A quark drifts and animates from the moment it exists, so both timers start ready and it moves on its first tick (see ArcadeClock).
+        // Both timers start full, so a new quark does not have to wait for its first beat or its first move.
         _beatTimer = BeatIntervalClockUnits;
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
     /// <summary>Picks where a quark starts a wave: anywhere along the top wall or the bottom wall.</summary>
-    /// <param name="playfieldBounds">The edges of the playfield.</param>
-    /// <param name="random">Where the sideways spot and the top-or-bottom choice come from.</param>
+    /// <param name="playfieldBounds">The inside of the playfield wall.</param>
+    /// <param name="random">Where its random numbers come from. They pick how far along the wall, and whether the top or the bottom.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>SQST1</c> and <c>SQST2</c> (<c>YMIN+2</c> or
-    /// <c>YMAX-14</c>, then a random X).</item>
+    /// <c>YMAX-14</c>, then a random place along the wall).</item>
     /// <item>Disassembly: <c>$4B48</c> to <c>$4B5A</c>.</item>
     /// </list>
     /// </remarks>
@@ -150,17 +151,17 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         return new IntVector2(x, startsAtTop ? playfieldBounds.Y : playfieldBounds.Bottom - CollisionSize.Height);
     }
 
-    /// <summary>The quark sprite's own 16x15 box at <see cref="Position"/>.</summary>
+    /// <summary>The box the quark takes up on the screen. It is used to tell what the quark touches.</summary>
     public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
-    /// <summary>The current rotation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
-    /// <returns>The texture for the current rotation frame.</returns>
+    /// <summary>The animation frame the quark is showing. The death burst is drawn from it (see <see cref="IAnimationFrameSource"/>).</summary>
+    /// <returns>The animation frame that is showing.</returns>
     public Texture2D GetCurrentAnimationFrame() => _sprites.QuarkAnimationFrames[_animationFrameIndex];
 
-    /// <summary>Alive until it is hit or flees off the field; never Dying (see <see cref="Kill"/>).</summary>
+    /// <summary>Alive until it is shot or flees off the field. It is never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Top-left of the quark.</summary>
+    /// <summary>Where the quark's top-left corner is.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> the OBJX/OBJY registers.</item>
@@ -169,11 +170,11 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     public IntVector2 Position => _position;
 
-    /// <summary>How many clock units pass between one beat and the next. A quark's <see cref="_beatTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a beat happens and this is subtracted from it.</summary>
+    /// <summary>The time from one beat to the next, in clock units (see <see cref="ArcadeClock"/>). <see cref="_beatTimer"/> counts up to this. When it gets there, a beat happens and this is taken off it.</summary>
     private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(QuarkTuning.BeatIntervalRomFrames);
 
-    /// <summary>Draws the current rotation frame.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <summary>Draws the animation frame that is showing.</summary>
+    /// <param name="spriteBatch">What the quark is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (!this.IsAlive())
@@ -184,15 +185,15 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
-    /// <summary>Kills the quark outright; a laser hit plays its own burst instead of the strip explosion.</summary>
+    /// <summary>Kills the quark at once. A quark that is shot leaves a death burst, not a strip explosion.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> <c>SQKIL</c> plays a bespoke shrink-and-burst, not a blink.</item>
+    /// <item>Original source: <c>RRTK4.ASM</c> <c>SQKIL</c>, which plays the quark's own shrinking burst.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
     /// </list>
     ///
-    /// <see cref="RobotKinds"/>
-    /// wires <see cref="ScoreBurst.CreateForQuark"/> to the laser phase.
+    /// <see cref="RobotKinds"/> says that a quark killed by a laser leaves the burst that
+    /// <see cref="ScoreBurst.CreateForQuark"/> makes.
     /// </remarks>
     public void Kill()
     {
@@ -204,8 +205,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Runs one beat: moves on the mover's clock, advances the rotation, re-rolls and drops.</summary>
-    /// <param name="gameTime">Unused — the clocks are counted in ticks.</param>
+    /// <summary>Runs one tick. The quark moves when it is time to. On a beat it shows its next animation frame, may pick a new way to drift, and may drop a tank.</summary>
+    /// <param name="gameTime">Not used. The quark counts ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -214,14 +215,13 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // Like the arcade, it does not move while the robots are frozen: before the game goes live, and while the Player is dying.
-        // (ROM: RRS22.ASM OPRC80, BITA #8 / BNE O80, "NO VELOCITY REFRESH ONLY"; STATUS bit 3).
+        // The quark does not move while the robots are frozen: before the wave has started, and while the Player is dying (ROM: RRS22.ASM OPRC80; STATUS bit 3).
         if (!field.RobotsFrozen())
         {
             AdvanceMover(field);
         }
 
-        // Counts up towards the next beat. Each port tick adds 5 clock units and each ROM frame needs 6 (see ArcadeClock).
+        // Wait for the quark's next beat, which is its next turn to act (see ArcadeClock).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < BeatIntervalClockUnits)
         {
@@ -242,7 +242,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             RollVelocity(field.GetPlayfieldBounds());
         }
 
-        // While the robots are frozen, the quark still animates and rerolls, but its tank-drop countdown is paused.
+        // While the robots are frozen, the quark still animates and still picks new directions, but it does not count down to its next tank drop.
         if (field.RobotsFrozen())
         {
             return;
@@ -251,7 +251,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         AdvanceTankDrop(field);
     }
 
-    /// <summary>Counts one tick towards the next ROM frame, and moves the quark when the frame comes. Movement shares the per-frame mover clock, not the beat (see the remarks on the class).</summary>
+    /// <summary>Counts one tick towards the quark's next move, and makes the move when it is due. The quark moves 50 times a second, which is more often than it has a beat.</summary>
     /// <param name="field">The playfield.</param>
     private void AdvanceMover(PlayField field)
     {
@@ -263,11 +263,11 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         }
     }
 
-    /// <summary>Advances the animation one animation frame per beat; the range depends on the phase.</summary>
+    /// <summary>Shows the next animation frame. Which animation frames are used depends on whether the quark is drifting, dropping tanks or fleeing.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRTK4.ASM</c> — SQP0..SQP4 while wandering, SQP0..SQP8 while dropping
-    /// tanks, and SQP8..SQP0 during the exit.</item>
+    /// <item>Original source: <c>RRTK4.ASM</c>: <c>SQP0</c> to <c>SQP4</c> while drifting, <c>SQP0</c> to <c>SQP8</c>
+    /// while dropping tanks, and <c>SQP8</c> back down to <c>SQP0</c> while fleeing.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
     /// </list>
     /// </remarks>
@@ -283,7 +283,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _animationFrameIndex = _animationFrameIndex >= last ? 0 : _animationFrameIndex + 1;
     }
 
-    /// <summary>Moves by the whole-pixel part of the velocity, carrying the fraction.</summary>
+    /// <summary>Makes one move, by whole pixels. The fraction of a pixel left over is kept for the next move. The sideways part is made only if it keeps the quark inside the playfield, and the same goes for the up-or-down part.</summary>
+    /// <param name="field">The playfield, whose walls the quark stays inside.</param>
     private void AdvancePosition(PlayField field)
     {
         Rectangle bounds = field.GetPlayfieldBounds();
@@ -306,17 +307,16 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         }
     }
 
-    /// <summary>Counts the drop beat down, and drops a tank when it is due and the field allows another.</summary>
-    /// <param name="field">The playfield, which owns the tank cap and the new tank.</param>
+    /// <summary>Counts down to the next tank drop. When the count runs out, it drops a tank if the playfield has room for one.</summary>
+    /// <param name="field">The playfield. It says whether there is room for another tank, and the new tank is put on it.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>SQ2</c>/<c>TNKDRP</c>.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
     /// </list>
     ///
-    /// Before the first drop the countdown ticks once per animation
-    /// cycle, after it once per beat. The drop phase is never left: when the allotment runs out the quark
-    /// flees.
+    /// Before the first drop, the count goes down once each time the animation starts again. After that it goes
+    /// down once a beat. When the quark has dropped all its tanks, it flees.
     /// </remarks>
     private void AdvanceTankDrop(PlayField field)
     {
@@ -334,8 +334,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         {
             _isDroppingTanks = true;
             _tanksRemaining--;
-            // A new tank appears 2 columns to the right and 5 or 6 rows down. It is 6 when the quark is against the
-            // top wall, because the arcade skips a step there (ROM: TNKDRP).
+            // The new tank appears a little to the right of the quark and below it. It is one row lower when the quark is against the top wall (ROM: TNKDRP).
             int rowOffset = _position.Y == field.GetPlayfieldBounds().Y
                 ? TankTuning.BirthOffsetRowsOnTopWall
                 : TankTuning.BirthOffsetRowsOffTopWall;
@@ -349,20 +348,24 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             }
         }
 
-        // The next drop's delay is roughly half the first. The countdown also runs when the cap stopped a drop.
+        // Pick the wait before the next drop. This is done even when no tank could be dropped this time.
         _dropBeatsRemaining = 1 + _random.Next((_dropDelayBeats / RepeatDropDelayDivisor) + 1);
     }
 
-    /// <summary>One axis's magnitude: the roll (1..this wave's cap) times the axis scale, in subpixels.</summary>
+    /// <summary>Picks at random how fast the quark drifts, either sideways or up-and-down.</summary>
+    /// <param name="scale">The arcade's number that the random speed is multiplied by.</param>
+    /// <param name="isPositive">True to drift right or down, false to drift left or up.</param>
+    /// <param name="coordinateUnitArcadePixels">How many arcade pixels one of the arcade's units is: 2 for a column, 1 for a row.</param>
+    /// <returns>How far the quark goes on each move, in 256ths of a pixel. It is negative for left or up.</returns>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>SQVEL</c>.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
     /// </list>
     ///
-    /// The arcade addresses video memory as <c>column*256 + row</c>,
-    /// so X counts 2-pixel columns and Y counts 1-pixel rows: the ROM's X scale of 4 and Y scale of 8 give
-    /// the same on-screen speed once columns are halved. The mover integrates this once per ROM frame.
+    /// The arcade counts across the screen in columns, which are 2 pixels wide, and down the screen in rows,
+    /// which are 1 pixel tall. So its sideways number of 4 and its up-and-down number of 8 give the same speed
+    /// on the screen.
     /// </remarks>
     private int ComputeAxisVelocitySubpixels(int scale, bool isPositive, int coordinateUnitArcadePixels)
     {
@@ -371,16 +374,20 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         return isPositive ? subpixels : -subpixels;
     }
 
-    /// <summary>True when an X coordinate keeps the quark's whole box inside the playfield.</summary>
+    /// <summary>Says whether the whole quark would be inside the playfield if its left edge were at <paramref name="x"/>.</summary>
+    /// <param name="bounds">The inside of the playfield wall.</param>
+    /// <param name="x">Where the quark's left edge would be.</param>
     private bool IsInsideX(Rectangle bounds, int x) =>
         x >= bounds.X && x + CollisionSize.Width <= bounds.Right;
 
-    /// <summary>True when a Y coordinate keeps the quark's whole box inside the playfield.</summary>
+    /// <summary>Says whether the whole quark would be inside the playfield if its top edge were at <paramref name="y"/>.</summary>
+    /// <param name="bounds">The inside of the playfield wall.</param>
+    /// <param name="y">Where the quark's top edge would be.</param>
     private bool IsInsideY(Rectangle bounds, int y) =>
         y >= bounds.Y && y + CollisionSize.Height <= bounds.Bottom;
 
-    /// <summary>Leaves for good the moment the quark is fully off the top or bottom edge.</summary>
-    /// <param name="field">The playfield, whose bounds the exit is measured against.</param>
+    /// <summary>Takes the fleeing quark off the field once it has reached the top or bottom edge.</summary>
+    /// <param name="field">The playfield, whose top and bottom edges the quark flees to.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRTK4.ASM</c> <c>SQ3L</c>.</item>
@@ -397,7 +404,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         }
     }
 
-    /// <summary>Rolls a fresh random speed per axis, biased away from the walls.</summary>
+    /// <summary>Picks at random a new way and speed to drift, and how many beats to keep it for. A quark that is close to a wall always drifts away from that wall.</summary>
+    /// <param name="bounds">The inside of the playfield wall.</param>
     private void RollVelocity(Rectangle bounds)
     {
         int lowX = bounds.X + ScreenSize.ToPortPixelsFromColumns(QuarkTuning.WallMarginLeftColumns);
@@ -415,7 +423,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _reaimBeatsRemaining = 1 + _random.Next(QuarkTuning.ReaimMaxBeats);
     }
 
-    /// <summary>Starts the exit run: X stops dead, Y becomes a fixed 2 arcade px per frame, from a coin flip up or down.</summary>
+    /// <summary>Starts the quark fleeing. It stops going sideways and goes straight up or straight down at a set speed. Which of the two is picked at random.</summary>
     /// <remarks>ROM: RRTK4.ASM's <c>SQ3</c>.</remarks>
     private void StartFlee()
     {

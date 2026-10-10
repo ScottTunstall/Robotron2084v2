@@ -1,11 +1,11 @@
 namespace Robotron2084.Entities;
 
-/// <summary>Which way a strip explosion runs.</summary>
+/// <summary>Which of the two strip effects this is: strips flying apart, or strips closing up.</summary>
 public enum StripEffectKind
 {
-    /// <summary>The spacing grows: the fan opens.</summary>
+    /// <summary>An explosion: the strips fly apart.</summary>
     Explode,
 
-    /// <summary>The spacing shrinks: the fan converges.</summary>
+    /// <summary>An appear: the strips close up to make the sprite.</summary>
     Appear,
 }

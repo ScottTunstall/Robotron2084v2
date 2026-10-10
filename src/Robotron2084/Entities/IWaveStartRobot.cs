@@ -11,8 +11,8 @@ namespace Robotron2084.Entities;
 /// <item>Disassembly: the status byte at <c>$59</c></item>
 /// </list>
 ///
-/// Each kind looks at its own
-/// interval, so each kind's first move comes a different time after the game goes live (notes §143).
+/// Each kind of robot waits its own length of time between looks, so each kind's first move comes a
+/// different time after the game goes live (notes §143).
 /// </remarks>
 public interface IWaveStartRobot
 {

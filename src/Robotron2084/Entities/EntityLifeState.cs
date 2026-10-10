@@ -1,15 +1,15 @@
 namespace Robotron2084.Entities;
 
-/// <summary>An entity's life cycle: alive, playing its death animation, or finished.</summary>
+/// <summary>Where an entity is in its life: alive, playing its death animation, or finished.</summary>
 public enum EntityLifeState
 {
-    /// <summary>Alive: updating, colliding and drawn.</summary>
+    /// <summary>Alive: it moves, can be hit and is drawn.</summary>
     Alive,
 
-    /// <summary>Playing its death animation: still drawn, no longer collides.</summary>
+    /// <summary>Playing its death animation: it is still drawn but can no longer be hit.</summary>
     /// <remarks>A strip explosion, a shrivel, or the player's <c>PDTHV</c> flash (RRX7.ASM).</remarks>
     Dying,
 
-    /// <summary>Finished: removed from play.</summary>
+    /// <summary>Finished: it is waiting to be taken off the field.</summary>
     Dead,
 }

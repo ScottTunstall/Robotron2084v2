@@ -10,10 +10,10 @@ namespace Robotron2084.Entities;
 /// <item>Disassembly: <c>MOVE_GRUNT</c> (<c>$39E6</c>) from <c>$39EF</c> to <c>$3A29</c></item>
 /// </list>
 ///
-/// The two directions are decided separately. Sideways, a
-/// robot always steps: towards the player, or to the right when the columns match. Up and down, one level
-/// with the player steps down, and only a gap of exactly one row is ignored. A step that would leave the
-/// playfield is not taken.
+/// Sideways and up-and-down are worked out separately. Sideways, the robot always steps: towards the player, or
+/// to the right when it is in the same column as the player. Up and down, it steps towards the player, with two
+/// odd cases: a robot exactly one row above or below the player does not step, and a robot level with the player
+/// steps down. A step that would leave the playfield is not taken.
 /// </remarks>
 internal static class GruntChaseStep
 {
@@ -35,7 +35,7 @@ internal static class GruntChaseStep
     /// </remarks>
     private const int StepRows = 4;
 
-    /// <summary>The up-and-down gap, in rows, at which a robot level with the player stays put.</summary>
+    /// <summary>How many rows above or below the player a robot is when it makes no step up or down.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRP8.ASM</c> <c>ROB2</c> and the <c>CMPB #$FE</c> before <c>ROB2A</c>: a

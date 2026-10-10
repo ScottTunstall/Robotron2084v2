@@ -1,9 +1,9 @@
 ﻿namespace Robotron2084.Entities;
 
-/// <summary>The arc of one of Gorf's hops, worked out with whole numbers and no trigonometry.</summary>
+/// <summary>Works out the curve Gorf follows through the air on each hop, using whole numbers only.</summary>
 /// <remarks>
-/// A hop is the arch of a parabola, which is close to the top of a sine wave: it leaves the ground, reaches its full height half way through, and lands where
-/// it left, so a string of hops is a string of arches along the ground.
+/// A hop is shaped like an arch: Gorf leaves the ground, is at full height half way through, and lands at the
+/// height it left from. A string of hops makes a string of arches along the ground.
 /// </remarks>
 public static class GorfPath
 {

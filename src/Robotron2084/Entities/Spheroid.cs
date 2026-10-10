@@ -10,9 +10,10 @@ namespace Robotron2084.Entities;
 /// <summary>A spheroid is a drifting ring that floats around dropping little enforcer robots, then flies off the edge of the screen.</summary>
 /// <seealso cref="Enforcer"/>
 /// <remarks>
-/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
-/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
-/// until it is time for the next beat (see <see cref="ArcadeClock"/>). It also moves every ROM frame, timed by
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the
+/// short freeze just after the player is killed. <see cref="_beatTimer"/> gathers the ticks until it is time for
+/// the next beat (see <see cref="ArcadeClock"/>). It also moves 50 times a second, timed by
 /// <see cref="_moveTimer"/>.
 ///
 /// <list type="bullet">
@@ -23,7 +24,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
-    /// <summary>The accelerations hold for a random 1 to this many beats.</summary>
+    /// <summary>The spheroid changes its speed by the same amounts for a random number of beats, from 1 up to this. Then it picks new amounts.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
@@ -32,7 +33,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int AccelBeatsMax = 15;
 
-    /// <summary>The sideways acceleration roll is offset down by this much, so it can be negative.</summary>
+    /// <summary>This is taken off the random number that sets <see cref="_accelX"/>, so that the answer can be negative, which means to the left.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
@@ -41,7 +42,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int AccelXOffset = 16;
 
-    /// <summary>The sideways acceleration roll has this many sides (from -16 to +15 once offset).</summary>
+    /// <summary>The random number that sets <see cref="_accelX"/> is from 0 up to one less than this, before <see cref="AccelXOffset"/> is taken off.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
@@ -50,7 +51,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int AccelXRollSides = 32;
 
-    /// <summary>The up-and-down acceleration roll is offset down by this much, so it can be negative.</summary>
+    /// <summary>This is taken off the random number that sets <see cref="_accelY"/>, so that the answer can be negative, which means upwards.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
@@ -59,7 +60,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int AccelYOffset = 32;
 
-    /// <summary>The up-and-down acceleration roll has this many sides (from -32 to +31 once offset) — twice the sideways roll, because a column is 2 pixels.</summary>
+    /// <summary>The random number that sets <see cref="_accelY"/> is from 0 up to one less than this, before <see cref="AccelYOffset"/> is taken off. It is twice the sideways number, because a column is 2 pixels wide and a row is 1 pixel tall.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
@@ -68,7 +69,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int AccelYRollSides = 64;
 
-    /// <summary>The damping is reduced by this small constant, so the velocity converges on a multiple of the acceleration.</summary>
+    /// <summary>A small extra amount that is taken off the speed on each beat, along with the slowing down that <see cref="DampingPer256"/> does.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> <c>CIRGO</c>.</item>
@@ -77,7 +78,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int DampingBias = 4;
 
-    /// <summary>Each beat the velocity is damped by this many 256ths of itself (a 64th).</summary>
+    /// <summary>On each beat the spheroid is slowed down by this many 256ths of its speed.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> <c>CIRGO</c>.</item>
@@ -86,22 +87,22 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int DampingPer256 = 4;
 
-    /// <summary>The wave's rotation delay when the caller gives none.</summary>
+    /// <summary>The most times a spheroid spins before it drops an enforcer, when it is not told a number.</summary>
     private const int DefaultDropDelayRotations = 24;
 
-    /// <summary>The wave's enforcer-allotment bound when the caller gives none.</summary>
+    /// <summary>The limit used to pick how many enforcers a spheroid drops, when it is not told a number. The most it can drop is half of this.</summary>
     private const int DefaultMaxDropsX2 = 10;
 
-    /// <summary>The drop phase's wrap boundary, so it spins all eight animation frames.</summary>
+    /// <summary>The last animation frame the spheroid shows while it is dropping enforcers, counting from 0. After it, the animation starts again.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRC2L</c> wraps after its eighth animation frame.</item>
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRC2L</c>, which starts again after its eighth animation frame.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     /// </list>
     /// </remarks>
     private const int DropLastAnimationFrame = 7;
 
-    /// <summary>A re-armed drop countdown is a random 1 to (the wave's delay over this) rotations.</summary>
+    /// <summary>After the first drop, the wave's number of spins between drops is divided by this. The spheroid then waits a random number of spins, from 1 up to the answer, before each later drop.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> <c>CIRC2</c>.</item>
@@ -110,17 +111,17 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int DropRerollDivisor = 4;
 
-    /// <summary>The last animation frame of the spin and escape, i.e. the pointer value whose step wraps.</summary>
+    /// <summary>The last animation frame the spheroid shows while it spins or escapes, counting from 0. After it, the animation starts again.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRCLE</c>/<c>CIRC3L</c> wrap after animation frame 5
-    /// (index 4).</item>
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRCLE</c>/<c>CIRC3L</c>, which start again after the fifth
+    /// animation frame.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     /// </list>
     /// </remarks>
     private const int SpinLastAnimationFrame = 4;
 
-    /// <summary>Collision box = the ROM sprite dimensions (16x15 arcade px), top-left anchored at <see cref="Position"/>.</summary>
+    /// <summary>How big the spheroid is, in port pixels. It is the size of the spheroid's sprite, and it is used to tell what the spheroid touches.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixels(CollisionSizes.SpheroidCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.SpheroidCollisionSize.Height));
 
@@ -128,28 +129,28 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private readonly Random _random;
     private readonly SpriteSet _sprites;
 
-    /// <summary>Beats left before the accelerations are rolled again.</summary>
+    /// <summary>Beats left before the spheroid picks new amounts to change its speed by.</summary>
     private int _accelBeatsRemaining;
 
-    /// <summary>The sideways acceleration now, in 1/256 column per ROM frame per beat.</summary>
+    /// <summary>How much is added to the spheroid's sideways speed on each beat. A negative number pushes it left.</summary>
     private int _accelX;
 
-    /// <summary>The up-and-down acceleration now, in 1/256 row per ROM frame per beat.</summary>
+    /// <summary>How much is added to the spheroid's up-and-down speed on each beat. A negative number pushes it up.</summary>
     private int _accelY;
 
     /// <summary>Which animation frame is showing. It counts round as the spheroid spins.</summary>
-    private int _animationFrameIndex; // It is 0 to 4 while the spheroid spins or escapes, and 0 to 7 while it drops.
+    private int _animationFrameIndex; // It goes up to SpinLastAnimationFrame while the spheroid spins or escapes, and up to DropLastAnimationFrame while it drops enforcers.
 
     /// <summary>Counts up to the next beat.</summary>
     private int _beatTimer;
 
-    /// <summary>Rotations left until the next enforcer is dropped.</summary>
+    /// <summary>How many more times the spheroid spins before it drops its next enforcer.</summary>
     private int _dropRotationsRemaining;
 
     /// <summary>How many enforcers this spheroid still has to drop.</summary>
     private int _enforcersRemaining;
 
-    /// <summary>Which way the spheroid runs when it escapes: -1 for left, +1 for right.</summary>
+    /// <summary>Which way the spheroid goes when it escapes: -1 for left, +1 for right.</summary>
     private int _escapeDirectionSignX;
 
     /// <summary>True once the spheroid has stopped spinning and started dropping enforcers.</summary>
@@ -158,35 +159,34 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True once the spheroid is running sideways for the edge of the playfield, where it vanishes.</summary>
     private bool _isEscaping;
 
-    /// <summary>Counts up to the next move: one move per ROM frame.</summary>
+    /// <summary>Counts up to the next move. The spheroid moves 50 times a second.</summary>
     private int _moveTimer;
 
     private IntVector2 _position;
     private int _remainderXSubpixels;
     private int _remainderYSubpixels;
 
-    /// <summary>The sideways velocity, in 1/256 column per ROM frame.</summary>
+    /// <summary>How far the spheroid goes sideways on each move, in 256ths of a pixel. A negative number is to the left.</summary>
     private int _velocityXSubpixels;
 
-    /// <summary>The up-and-down velocity, in 1/256 row per ROM frame.</summary>
+    /// <summary>How far the spheroid goes up or down on each move, in 256ths of a pixel. A negative number is up.</summary>
     private int _velocityYSubpixels;
 
-    /// <summary>Drops a spheroid at <paramref name="position"/> with its enforcer allotment already rolled; it is born mid-spin.</summary>
+    /// <summary>Makes a spheroid at <paramref name="position"/>, part of the way through a spin. It picks at random how many enforcers it will drop.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    /// <param name="position">Top-left of the spheroid.</param>
-    /// <param name="random">The random source: the allotment, the accelerations and the escape direction.</param>
-    /// <param name="maxDropsX2">This wave's enforcer-allotment bound; the roll happens here.</param>
-    /// <param name="dropDelayRotations">The most rotations this wave's spheroid makes before it drops an enforcer.</param>
+    /// <param name="position">Where the spheroid's top-left corner is.</param>
+    /// <param name="random">Where its random numbers come from. They pick how many enforcers it drops, how its speed changes and which way it escapes.</param>
+    /// <param name="maxDropsX2">This wave's limit for picking how many enforcers the spheroid drops. The most it can drop is half of this.</param>
+    /// <param name="dropDelayRotations">The most times this wave's spheroid spins before it drops an enforcer.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRC11.ASM</c> <c>ENFNUM</c> and <c>CDPTIM</c> — this wave's allotment
-    /// bound and rotation delay.</item>
+    /// <item>Original source: <c>RRC11.ASM</c> <c>ENFNUM</c> and <c>CDPTIM</c>: this wave's limit on enforcers
+    /// and its number of spins between drops.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     /// </list>
     ///
-    /// There
-    /// is deliberately no speed parameter: the spheroid's speed IS its accumulated, damped glide velocity,
-    /// so a "speed bonus" cannot be expressed in this model.
+    /// There is no speed to pass in, on purpose. A spheroid's speed comes from the pushes it gives itself on each
+    /// beat, so there is no single number that could make it faster.
     /// </remarks>
     public Spheroid(
         SpriteSet sprites,
@@ -199,31 +199,31 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _position = position;
         _random = random;
         _dropDelayRotations = dropDelayRotations;
-        // How many enforcers it may drop: a random roll that is never 0, halved and rounded up, so it is always 1 to 5.
+        // How many enforcers the spheroid may drop: a random number from 1 up to this wave's limit, halved and rounded up.
         int roll = random.Next(1, maxDropsX2 + 1);
         _enforcersRemaining = (roll + 1) / 2;
-        // A coin flip picks which way it runs when it escapes, left or right. The arcade makes this flip from its own random-number byte.
+        // Pick at random whether the spheroid will escape to the left or to the right.
         _escapeDirectionSignX = random.Next(2) == 0 ? -1 : 1;
-        // How many spins (rotations) it makes before its first drop.
+        // How many times the spheroid spins before it first drops an enforcer.
         _dropRotationsRemaining = random.Next(1, dropDelayRotations + 1);
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
-        // It starts on the last frame of the spin, so its first beat (see ArcadeClock) already counts as the end of a spin (a wrap pass).
+        // The spheroid starts on the last animation frame of a spin, so its first beat finishes a spin.
         _animationFrameIndex = SpinLastAnimationFrame;
         RollAccelerations();
     }
 
-    /// <summary>The spheroid sprite's own 16x15 box at <see cref="Position"/>.</summary>
+    /// <summary>The box the spheroid takes up on the screen. It is used to tell what the spheroid touches.</summary>
     public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
-    /// <summary>The current animation frame, for the death burst (see <see cref="IAnimationFrameSource"/>).</summary>
-    /// <returns>The texture for the current rotation frame.</returns>
+    /// <summary>The animation frame the spheroid is showing. The death burst is drawn from it (see <see cref="IAnimationFrameSource"/>).</summary>
+    /// <returns>The animation frame that is showing.</returns>
     public Texture2D GetCurrentAnimationFrame() =>
         _sprites.SpheroidAnimationFrames[_animationFrameIndex % _sprites.SpheroidAnimationFrames.Length];
 
-    /// <summary>Alive until shot or until it finishes its sideways escape; never Dying (see <see cref="Kill"/>).</summary>
+    /// <summary>Alive until it is shot or it has escaped off the side. It is never Dying (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Top-left of the spheroid.</summary>
+    /// <summary>Where the spheroid's top-left corner is.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> the OBJX/OBJY registers.</item>
@@ -232,26 +232,26 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     public IntVector2 Position => _position;
 
-    /// <summary>Test hook: true once the sideways exit run has started.</summary>
+    /// <summary>True once the spheroid has started to escape off the side. Tests use this.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRC11.ASM</c> the <c>CIRC3</c> escape phase.</item>
+    /// <item>Original source: <c>RRC11.ASM</c>, the <c>CIRC3</c> escape.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     /// </list>
     /// </remarks>
     internal bool IsEscaping => _isEscaping;
 
-    /// <summary>Test hook: which animation frame is showing — 0..4 spinning or escaping, 0..7 dropping.</summary>
+    /// <summary>Which animation frame is showing, counting from 0. Tests use this.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRCLE</c> — the current-animation-frame pointer.</item>
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRCLE</c>, the pointer to the animation frame that is showing.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     /// </list>
     /// </remarks>
     internal int AnimationFrameIndex => _animationFrameIndex;
 
-    /// <summary>Draws the current animation frame; its shimmer comes from cycling palette slots, not a flash.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <summary>Draws the animation frame that is showing. The spheroid shimmers because it is drawn in palette slots whose colours keep changing.</summary>
+    /// <param name="spriteBatch">What the spheroid is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (!this.IsAlive())
@@ -262,14 +262,14 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
-    /// <summary>Kills the spheroid outright; a laser hit plays its own burst instead of the strip explosion.</summary>
+    /// <summary>Kills the spheroid at once. A spheroid that is shot leaves a death burst, not a strip explosion.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRKIL</c> plays a 7-frame bubble burst then a "1000".</item>
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRKIL</c>, which plays a burst of 7 animation frames and then shows "1000".</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     /// </list>
     ///
-    /// <see cref="RobotKinds"/> wires <see cref="ScoreBurst.CreateForSpheroid"/> to the laser phase.
+    /// <see cref="RobotKinds"/> says that a spheroid killed by a laser leaves the burst that <see cref="ScoreBurst.CreateForSpheroid"/> makes.
     /// </remarks>
     public void Kill()
     {
@@ -281,8 +281,8 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Runs the glide, then the beat: accelerate and damp, or drop, or escape.</summary>
-    /// <param name="gameTime">Unused — the clocks are counted in ticks.</param>
+    /// <summary>Runs one tick. The spheroid moves when it is time to. On a beat its speed changes, and it spins, drops an enforcer or escapes.</summary>
+    /// <param name="gameTime">Not used. The spheroid counts ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -291,14 +291,13 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // Like the arcade, it does not move while the robots are frozen: before the game goes live, and while the Player is dying.
-        // (ROM: RRS22.ASM OPRC80, BITA #8 / BNE O80, "NO VELOCITY REFRESH ONLY"; STATUS bit 3).
+        // The spheroid does not move while the robots are frozen, before the wave has started, and while the Player is dying (ROM: RRS22.ASM OPRC80; STATUS bit 3).
         if (!field.RobotsFrozen())
         {
             AdvanceMover(field);
         }
 
-        // Every phase takes one beat, which is three ROM frames (see ArcadeClock).
+        // Wait for the spheroid's next beat, which is its next turn to act (see ArcadeClock).
         _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < ArcadeClock.ToClockUnits(SpheroidTuning.BeatIntervalRomFrames))
         {
@@ -307,7 +306,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         _beatTimer -= ArcadeClock.ToClockUnits(SpheroidTuning.BeatIntervalRomFrames);
 
-        // A wrap pass is a beat (see ArcadeClock) on the last animation frame of the current phase. The phase's countdown is counted on those beats.
+        // wrapPass is true when the animation is on its last animation frame. The count of spins left before a drop only goes down on those beats.
         int lastAnimationFrame = _isDropping && !_isEscaping ? DropLastAnimationFrame : SpinLastAnimationFrame;
         bool wrapPass = _animationFrameIndex >= lastAnimationFrame;
 
@@ -317,7 +316,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // Once per beat (see ArcadeClock) it speeds up or slows down, and rerolls its acceleration timer. An escape skips both.
+        // On every beat the spheroid's speed changes. When its countdown runs out, it picks a new random amount for the speed to change by.
         AccelerateAndDamp();
         if (--_accelBeatsRemaining <= 0)
         {
@@ -333,7 +332,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         AdvanceDropBeat(field);
     }
 
-    /// <summary>Counts one tick towards the next ROM frame, and moves the spheroid when the frame comes: once per ROM frame, not once per tick (see the remarks on the class).</summary>
+    /// <summary>Counts one tick towards the spheroid's next move, and makes the move when it is due. The spheroid moves 50 times a second, which is more often than it has a beat.</summary>
     /// <param name="field">The playfield.</param>
     private void AdvanceMover(PlayField field)
     {
@@ -345,7 +344,13 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         }
     }
 
-    /// <summary>One axis of the mover's step: whole pixels, keeping the 1/256 fraction for next time.</summary>
+    /// <summary>Makes one move, either sideways or up-and-down, by whole pixels. The fraction of a pixel left over is kept for the next move. The move is not made if it would take the spheroid out of the playfield.</summary>
+    /// <param name="position">Where the spheroid is, measured sideways or up-and-down.</param>
+    /// <param name="velocitySubpixels">How far it goes on each move, in 256ths of a pixel.</param>
+    /// <param name="remainderSubpixels">The fraction of a pixel left over from the last move. This is brought up to date.</param>
+    /// <param name="min">The lowest place the spheroid may be.</param>
+    /// <param name="max">The highest place the spheroid may be.</param>
+    /// <returns>Where the spheroid is after the move.</returns>
     private static int AdvanceAxis(int position, int velocitySubpixels, ref int remainderSubpixels, int min, int max)
     {
         int nextRemainder = remainderSubpixels + velocitySubpixels;
@@ -353,19 +358,22 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         int next = position + step;
         if (next < min || next > max)
         {
-            return position; // Off the field: keep the old position, and the fraction of a pixel it was carrying.
+            return position; // The move would leave the playfield, so it is not made.
         }
 
         remainderSubpixels = nextRemainder - (step << ScreenSize.SubpixelBits);
         return next;
     }
 
-    /// <summary>Clamps the velocity to the limit, then damps it toward 64 x the acceleration.</summary>
+    /// <summary>Keeps a speed within the top speed, and then slows it down a little.</summary>
+    /// <param name="velocitySubpixels">The speed, in 256ths of a pixel for each move.</param>
+    /// <param name="limitSubpixels">The top speed, measured the same way.</param>
+    /// <returns>The new speed.</returns>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRC11.ASM</c> the second half of <c>CIRGO</c> — the damping nudges the
-    /// velocity toward -4x itself minus a small constant, so it converges on 64 x the acceleration
-    /// and the clamp is the usual terminal state.</item>
+    /// <item>Original source: <c>RRC11.ASM</c>, the second half of <c>CIRGO</c>. The speed is pushed the same way on
+    /// every beat and slowed a little on every beat, so it settles at about 64 times the push. That is usually
+    /// more than the top speed, so the spheroid usually ends up going at its top speed.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     /// </list>
     /// </remarks>
@@ -375,7 +383,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         return velocitySubpixels + (((-DampingPer256 * velocitySubpixels) - DampingBias) >> ScreenSize.SubpixelBits);
     }
 
-    /// <summary>Adds the acceleration, clamps to the top speed, then damps by a 64th.</summary>
+    /// <summary>Changes the spheroid's speed for one beat. It adds the push, keeps the speed within the top speed, and then slows it down a little.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> <c>CIRGO</c>.</item>
@@ -388,17 +396,17 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _velocityYSubpixels = ClampThenDamp(_velocityYSubpixels + _accelY, SpheroidTuning.MaxVelocityYSubpixels);
     }
 
-    /// <summary>The wrap beat of the spin/drop cycle: hold the animation frame, release it, or drop an enforcer.</summary>
-    /// <param name="field">The playfield, which owns the enforcer cap and the new enforcer.</param>
+    /// <summary>Runs the beat that ends a spin. The spheroid counts down its spins. When the count runs out, it drops an enforcer if the playfield has room for one.</summary>
+    /// <param name="field">The playfield. It says whether there is room for another enforcer, and the new enforcer is put on it.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRC11.ASM</c> <c>CIRC2</c>.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     /// </list>
     ///
-    /// While spinning, a frozen game holds the animation frame at
-    /// its wrap target without decrementing the countdown; drop and escape have no such freeze check,
-    /// because the arcade's freeze test is per routine, not per object.
+    /// While the robots are frozen, a spinning spheroid goes back to its first animation frame but does not count
+    /// down. A spheroid that is dropping or escaping is not held up like this, because the arcade only makes this
+    /// check in its spinning routine.
     /// </remarks>
     private void AdvanceDropBeat(PlayField field)
     {
@@ -416,20 +424,19 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         if (!_isDropping)
         {
-            // Changing from spinning to dropping does not reset the animation frame. The drop carries on from the same frame
-            // for one more beat (see ArcadeClock).
+            // When the spheroid changes from spinning to dropping, the animation does not start again. It carries on from the animation frame it is on.
             _isDropping = true;
             RerollDropCountdown();
             return;
         }
 
-        // If the limit on enforcers is already reached, the drop is not put off. The spheroid rerolls and tries again.
+        // If there are already too many enforcers on the field, none is dropped this time. The spheroid picks a new wait and tries again after it.
         if (field.CanDropEnforcer())
         {
             field.SpawnEnforcer(_position);
             if (--_enforcersRemaining <= 0)
             {
-                StartEscape(); // The animation frame stays where it is until the first escape beat (see ArcadeClock).
+                StartEscape(); // The animation frame does not change until the first beat of the escape.
                 return;
             }
         }
@@ -438,13 +445,13 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _animationFrameIndex = 0;
     }
 
-    /// <summary>One escape beat: step the animation frame, or leave for good once the far edge is reached.</summary>
-    /// <param name="field">The playfield, whose bounds the exit is measured against.</param>
-    /// <param name="wrapPass">True on the beat that lands on the phase's last animation frame.</param>
+    /// <summary>Runs one beat of the escape. The spheroid shows its next animation frame. At the end of each spin, it is taken off the field if it has reached the edge.</summary>
+    /// <param name="field">The playfield, whose left and right edges the spheroid escapes to.</param>
+    /// <param name="wrapPass">True on the beat when the last animation frame of the spin is showing.</param>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRC3L</c> — the exit test lives inside the wrap branch,
-    /// so it is tried once per animation frame cycle.</item>
+    /// <item>Original source: <c>RRC11.ASM</c> <c>CIRC3L</c>. The check for the edge is made only at the end of a
+    /// spin.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     /// </list>
     /// </remarks>
@@ -461,14 +468,15 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         int rightExit = ScreenSize.ToPortPixelsFromColumns(SpheroidTuning.EscapeExitRightColumn);
         if (_position.X <= leftExit || _position.X >= rightExit)
         {
-            LifeState = EntityLifeState.Dead; // Removed at once, with no burst (ROM: CIR4).
+            LifeState = EntityLifeState.Dead; // The spheroid has reached the edge. It vanishes at once, with no death burst (ROM: CIR4).
             return;
         }
 
         _animationFrameIndex = 0;
     }
 
-    /// <summary>Integrates the velocity on both axes for one frame; a step that would leave the field is rejected.</summary>
+    /// <summary>Makes one move. The sideways part is made only if it keeps the spheroid inside the playfield, and the same goes for the up-or-down part.</summary>
+    /// <param name="field">The playfield, whose walls the spheroid stays inside.</param>
     private void AdvancePosition(PlayField field)
     {
         Rectangle bounds = field.Wall.PlayfieldBounds;
@@ -477,13 +485,13 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
             AdvanceAxis(_position.Y, _velocityYSubpixels, ref _remainderYSubpixels, bounds.Y, bounds.Bottom - CollisionSize.Height));
     }
 
-    /// <summary>Re-arms the drop countdown: a random count of rotations between drops.</summary>
-    /// <remarks>ROM: the <c>CIRC2</c> re-arm.</remarks>
+    /// <summary>Picks at random how many times the spheroid spins before its next drop.</summary>
+    /// <remarks>ROM: <c>CIRC2</c>.</remarks>
     private void RerollDropCountdown() =>
         _dropRotationsRemaining = 1 + _random.Next(0, _dropDelayRotations / DropRerollDivisor);
 
-    /// <summary>Re-rolls both accelerations and the timer that re-rolls them.</summary>
-    /// <remarks>ROM: `CIRNAC`.</remarks>
+    /// <summary>Picks new random amounts to change the spheroid's speed by, sideways and up-and-down, and how many beats to keep them for.</summary>
+    /// <remarks>ROM: <c>CIRNAC</c>.</remarks>
     private void RollAccelerations()
     {
         _accelX = _random.Next(0, AccelXRollSides) - AccelXOffset;
@@ -491,9 +499,9 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _accelBeatsRemaining = 1 + _random.Next(0, AccelBeatsMax);
     }
 
-    /// <summary>Starts the escape: Y velocity 0, X exactly ±1 column per frame, animation frame untouched.</summary>
-    /// <remarks>ROM: <c>CIRC3</c> — the arcade leaves the animation frame on the last drop-phase frame, and
-    /// the first escape beat wraps it back to the first spin animation frame.</remarks>
+    /// <summary>Starts the escape. The spheroid stops going up or down and goes sideways at its top speed. Its animation frame is left as it is.</summary>
+    /// <remarks>ROM: <c>CIRC3</c>. The arcade leaves the last animation frame of the drop showing, and the first beat of
+    /// the escape goes back to the first animation frame of the spin.</remarks>
     private void StartEscape()
     {
         _isEscaping = true;

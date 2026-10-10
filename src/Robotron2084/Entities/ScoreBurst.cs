@@ -11,9 +11,10 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Spheroid"/>
 /// <seealso cref="Quark"/>
 /// <remarks>
-/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
-/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_stepTimer"/> gathers the ticks
-/// until it is time for the next step (see <see cref="ArcadeClock"/>).
+/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the
+/// short freeze just after the player is killed. <see cref="_stepTimer"/> gathers the ticks until it is time for
+/// the next step (see <see cref="ArcadeClock"/>).
 ///
 /// <list type="bullet">
 /// <item>Original source: <c>RRC11.ASM</c>, routine <c>CIRKIL</c>/<c>CIRKP</c> (spheroid) and
@@ -31,7 +32,7 @@ public sealed class ScoreBurst : IEntity
     private readonly int _burstSlot;
     private readonly Texture2D _pointsSprite;
 
-    // Where the enemy was drawn when it died.
+    // Where the points are drawn: a little to the right of the dead enemy and below it.
     private readonly Rectangle _pointsBounds;
 
     private readonly int _pointsSlot;
@@ -40,9 +41,16 @@ public sealed class ScoreBurst : IEntity
     private int _pointsStepsRemaining;
     private int _burstStepsRemaining;
     private bool _showingPoints;
-    private int _stepTimer;                     // Counts up towards the next step. Each port tick adds 5 clock units and each ROM frame needs 6 (see ArcadeClock).
+    private int _stepTimer; // Counts up to the burst's next step (see ArcadeClock).
 
-    /// <summary>Builds one burst — both static factories funnel through here.</summary>
+    /// <summary>Makes one burst. <see cref="CreateForQuark"/> and <see cref="CreateForSpheroid"/> both use it.</summary>
+    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="frames">The dead enemy's animation frames, which the burst is drawn from.</param>
+    /// <param name="pointsSprite">The sprite of the points number.</param>
+    /// <param name="count">How many steps the burst takes, counting the one that ends it.</param>
+    /// <param name="burstSlot">The palette slot the burst is drawn in.</param>
+    /// <param name="pointsSlot">The palette slot the points are drawn in.</param>
+    /// <param name="bounds">The box the enemy took up when it died.</param>
     private ScoreBurst(
         SpriteSet sprites,
         Texture2D[] frames,
@@ -59,7 +67,7 @@ public sealed class ScoreBurst : IEntity
         _pointsSlot = pointsSlot;
         _bounds = bounds;
 
-        // The first burst frame appears when the enemy dies, so there are count minus 1 steps left. The last step only erases.
+        // The first burst animation frame is already showing, so there is one step fewer left to take.
         _burstStepsRemaining = count - 1;
         _pointsBounds = new Rectangle(
             bounds.X + ScreenSize.ToPortPixels(ScoreBurstTuning.PointsOffsetXSpecPixels),
@@ -68,34 +76,34 @@ public sealed class ScoreBurst : IEntity
             bounds.Height);
     }
 
-    /// <summary>The dead enemy's own box, which is also the box the burst draws in.</summary>
+    /// <summary>The box the dead enemy took up, which is also the box the burst is drawn in.</summary>
     public Rectangle GetBounds() => _bounds;
 
-    /// <summary>Alive for both phases (silhouette, then points), then Dead.</summary>
+    /// <summary>Alive while the burst, and then the points, are shown. Dead after that.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>The dead enemy's top-left corner; the burst is drawn at the size it died at.</summary>
+    /// <summary>Where the dead enemy's top-left corner was. The burst is drawn there, at the enemy's size.</summary>
     public IntVector2 Position => new(_bounds.X, _bounds.Y);
 
-    /// <summary>The animation frame the burst is currently drawing (valid while <see cref="ShowingPoints"/> is false).</summary>
+    /// <summary>Which animation frame the burst is showing. It only means something until the points are shown (see <see cref="ShowingPoints"/>).</summary>
     internal int AnimationFrameIndex => _animationFrameIndex;
 
-    /// <summary>The burst's palette slot (test hook — a cycling slot, so it shimmers).</summary>
+    /// <summary>The palette slot the burst is drawn in. Its colour keeps changing, so the burst shimmers. Tests use this.</summary>
     internal int BurstSlot => _burstSlot;
 
-    /// <summary>Where the points sprite is drawn: the death spot + 1 column / +5 rows (test hook).</summary>
+    /// <summary>Where the points are drawn: a little to the right of the dead enemy and below it. Tests use this.</summary>
     internal Rectangle PointsBounds => _pointsBounds;
 
-    /// <summary>The points sprite's palette slot (test hook).</summary>
+    /// <summary>The palette slot the points are drawn in. Tests use this.</summary>
     internal int PointsSlot => _pointsSlot;
 
-    /// <summary>The steps left of the "1000" display (its 30-step countdown).</summary>
+    /// <summary>How many more steps the points are shown for.</summary>
     internal int PointsStepsRemaining => _pointsStepsRemaining;
 
-    /// <summary>True once the burst has finished and the "1000" is showing.</summary>
+    /// <summary>True once the burst is over and the points are showing.</summary>
     internal bool ShowingPoints => _showingPoints;
 
-    /// <summary>Creates the burst a killed quark leaves: both phases in the same slot-13 colour.</summary>
+    /// <summary>Makes the burst that a killed quark leaves. The burst and the points are drawn in the same palette slot.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="bounds">Where the quark was drawn when it died.</param>
     public static ScoreBurst CreateForQuark(SpriteSet sprites, Rectangle bounds) => new(
@@ -107,7 +115,7 @@ public sealed class ScoreBurst : IEntity
         pointsSlot: ScoreBurstTuning.QuarkPointsSlot,
         bounds: bounds);
 
-    /// <summary>Creates the burst a killed spheroid leaves: silhouette in the player's score colour, points in slot 15.</summary>
+    /// <summary>Makes the burst that a killed spheroid leaves. The burst is drawn in one palette slot and the points in another.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="bounds">Where the spheroid was drawn when it died.</param>
     public static ScoreBurst CreateForSpheroid(SpriteSet sprites, Rectangle bounds) => new(
@@ -119,8 +127,8 @@ public sealed class ScoreBurst : IEntity
         pointsSlot: ScoreBurstTuning.SpheroidPointsSlot,
         bounds: bounds);
 
-    /// <summary>Draws the current phase: the solid silhouette, or the solid "1000" once the enemy is gone.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <summary>Draws the burst as a shape filled with one colour. Once the burst is over, it draws the points the same way.</summary>
+    /// <param name="spriteBatch">What the burst is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (!this.IsAlive())
@@ -140,9 +148,9 @@ public sealed class ScoreBurst : IEntity
         }
     }
 
-    /// <summary>Advances the effect on its 2-frame clock: one silhouette per step, then the points.</summary>
-    /// <param name="gameTime">Unused — the steps are counted in ticks.</param>
-    /// <param name="field">Unused.</param>
+    /// <summary>Runs one tick. On each step the burst shows its next animation frame. When the burst is over the points are shown, and then the whole thing is gone.</summary>
+    /// <param name="gameTime">Not used. The burst counts ticks.</param>
+    /// <param name="field">Not used.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (!this.IsAlive())
@@ -150,7 +158,7 @@ public sealed class ScoreBurst : IEntity
             return;
         }
 
-        // Counts up towards the next step. Each port tick adds 5 clock units and each ROM frame needs 6 (see ArcadeClock).
+        // Wait until it is time for the next step (see ArcadeClock).
         _stepTimer += ArcadeClock.UnitsPerPortTick;
         if (_stepTimer < ArcadeClock.ToClockUnits(ScoreBurstTuning.RomFramesPerStep))
         {
@@ -161,7 +169,7 @@ public sealed class ScoreBurst : IEntity
 
         if (!_showingPoints)
         {
-            // The last burst step only erases, so only count minus 1 animation frames appear.
+            // When the burst's steps run out, the burst goes and the points are shown in its place.
             if (--_burstStepsRemaining <= 0)
             {
                 _showingPoints = true;

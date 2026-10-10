@@ -10,8 +10,11 @@ namespace Robotron2084.Entities;
 /// <summary>The little skull left on the ground where a robot killed a family member. It fades away after a while.</summary>
 /// <seealso cref="Human"/>
 /// <remarks>
-/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
-/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_ticksRemaining"/> counts down
+/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>.
+/// The one time it does not is during the short freeze just after the player is killed.
+///
+/// <see cref="_ticksRemaining"/> counts down
 /// the ticks until it goes.
 ///
 /// <list type="bullet">
@@ -22,10 +25,10 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class SkullMarker : IEntity
 {
-    /// <summary>How many ROM frames the skull stays on the field. It is converted to port ticks to set <see cref="_ticksRemaining"/>, which then counts down to nothing.</summary>
+    /// <summary>How long the skull stays on the field, in 50ths of a second. It is changed to ticks to set <see cref="_ticksRemaining"/>, which then counts down to nothing.</summary>
     private const int LifeRomFrames = 90;
 
-    /// <summary>The skull sprite's own 12x11 arcade px box, in port pixels.</summary>
+    /// <summary>How big the skull is, in port pixels. It is the size of the skull's sprite.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixels(CollisionSizes.SkullCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.SkullCollisionSize.Height));
 
@@ -33,9 +36,9 @@ public sealed class SkullMarker : IEntity
     private readonly SpriteSet _sprites;
     private int _ticksRemaining;
 
-    /// <summary>Leaves a skull at the given position.</summary>
+    /// <summary>Leaves a skull where a family member was killed.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    /// <param name="position">Where the human was killed.</param>
+    /// <param name="position">Where the family member was killed.</param>
     public SkullMarker(SpriteSet sprites, IntVector2 position)
     {
         _sprites = sprites;
@@ -43,17 +46,17 @@ public sealed class SkullMarker : IEntity
         _ticksRemaining = ArcadeClock.ToPortTicks(LifeRomFrames);
     }
 
-    /// <summary>The skull sprite's own box at <see cref="Position"/>.</summary>
+    /// <summary>The box the skull is drawn in.</summary>
     public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
-    /// <summary>Alive until the linger runs out.</summary>
+    /// <summary>Alive until its time on the field runs out.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>The death spot.</summary>
+    /// <summary>Where the family member was killed.</summary>
     public IntVector2 Position => _position;
 
     /// <summary>Draws the skull in the sprite's own colours.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="spriteBatch">What the skull is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (!this.IsAlive())
@@ -64,9 +67,9 @@ public sealed class SkullMarker : IEntity
         _sprites.Blitter.DrawSprite(spriteBatch, _sprites.SkullSprite, GetBounds(), Color.White);
     }
 
-    /// <summary>Counts the linger down.</summary>
-    /// <param name="gameTime">Unused — the linger is counted in ticks, not seconds.</param>
-    /// <param name="field">Unused.</param>
+    /// <summary>Counts down the time the skull has left on the field.</summary>
+    /// <param name="gameTime">Not used. The time is counted in ticks.</param>
+    /// <param name="field">Not used.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (--_ticksRemaining <= 0)

@@ -6,16 +6,16 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The effect where a dying creature's sprite breaks into strips and fans apart, or a new robot's sprite shrinks into view.</summary>
+/// <summary>The effect where a sprite is cut into strips. When something is killed, the strips fly apart. When something appears, the strips start far apart and close up to make the sprite.</summary>
 /// <remarks>
-/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
-/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_romFrameTimer"/> gathers the
-/// ticks until it is time for the next ROM frame, and it takes a step every ROM frame (see
-/// <see cref="ArcadeClock"/>).
+/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the
+/// short freeze just after the player is killed. <see cref="_romFrameTimer"/> gathers the ticks until it is time
+/// for the effect's next step. It takes a step 50 times a second (see <see cref="ArcadeClock"/>).
 ///
 /// <list type="bullet">
-/// <item>Original source: <c>RRX7.ASM</c>/<c>RRHX4.ASM</c>/<c>RRDX2.ASM</c> (the death explosion) and
-/// <c>RRG23.ASM</c>, routine <c>APPEAR</c> (the shrinking appear)</item>
+/// <item>Original source: <c>RRX7.ASM</c>/<c>RRHX4.ASM</c>/<c>RRDX2.ASM</c> (the explosion) and
+/// <c>RRG23.ASM</c>, routine <c>APPEAR</c> (the appear)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$5C1F</c> (<c>MAKE_ENEMY_EXPLODE</c>) and <c>$473F</c>
 /// (<c>CREATE_DIRECTIONAL_EXPLOSION</c>)</item>
 /// </list>
@@ -24,7 +24,7 @@ public sealed class StripEffect : IEntity
 {
     private readonly Func<Texture2D> _getAnimationFrame;
 
-    /// <summary>Gets the box of the thing an appear is forming, when the appear must stay with it as it moves; null when the effect stays where it started.</summary>
+    /// <summary>Gets the box of the thing that is appearing, so that the appear can stay with it as it moves. It is null when the effect stays where it started.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRX7.ASM</c> <c>AWRIT0</c>, <c>LDD PX / STA UL,Y</c> ("SCROLL EM"), which
@@ -36,33 +36,43 @@ public sealed class StripEffect : IEntity
 
     private readonly StripFanAxis _axis;
 
-    /// <summary>Works out which strip of the sprite the others close in on or fly away from, counted from the top row or the left column, when it is given how many strips the sprite has; null for the middle one.</summary>
+    /// <summary>Works out which strip the other strips close in on or fly away from. It is given how many strips the sprite has, and gives back a strip counted from the top or the left. If it is null, the middle strip is used.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRX7.ASM</c> <c>YOF</c>, and <c>RRHX4.ASM</c> <c>XOF</c>.</item>
-    /// <item>Disassembly: the byte at offset <c>5</c> of a record, as at <c>$5BEF</c>.</item>
+    /// <item>Disassembly: the byte 5 bytes from the start of a record, as at <c>$5BEF</c>.</item>
     /// </list>
     /// </remarks>
     private readonly Func<int, int>? _getCentreStripIndex;
 
-    /// <summary>How much the gap shrinks on each ROM frame, when the effect is an appear.</summary>
+    /// <summary>How much the gap between the strips shrinks on each step, when the effect is an appear. It is measured the way <see cref="_spacingAccumulator"/> is.</summary>
     private readonly int _appearSizerStep;
 
-    /// <summary>The smallest gap at which an appear is still drawn. When the gap would fall below it the appear is over.</summary>
+    /// <summary>The smallest gap at which an appear is still drawn. When the gap would be smaller than this, the appear is over.</summary>
     private readonly int _smallestAppearSpacing;
 
     private Rectangle _bounds;
     private readonly StripClip _clip;
     private readonly StripEffectKind _kind;
-    private readonly int _slope;          // which way the cut leans: -1 one way, 0 not at all, +1 the other way (ROM: SLOPE)
+    private readonly int _slope;          // How the strips lean. 0 is no lean. +1 puts each strip further right than the strip above it, and -1 puts it further left (ROM: SLOPE).
     private int _romFramesRemaining;
-    private int _spacingAccumulator;                   // adds up the spacing each frame; its high byte is how far the strips move this frame (ROM: YSIZER)
-    private int _romFrameTimer;                  // Counts up to the next ROM frame (one redraw of the arcade screen; see docs/glossary.md). Each port tick adds 5 and a ROM frame takes 6 (see ArcadeClock; notes §52, §67.4)
+    private int _spacingAccumulator;                   // 256 times the gap between the strips, so that the gap can change by less than a whole pixel at a time (ROM: YSIZER).
+    private int _romFrameTimer;                  // Counts up to the effect's next step (see ArcadeClock; notes §52, §67.4).
 
     /// <summary>True once an appear has taken its first step. The arcade draws nothing for an appear until then.</summary>
     private bool _hasAppearBeenDrawn;
 
-    /// <summary>Builds one record; the two static factories below are the only callers.</summary>
+    /// <summary>Makes one effect. Only the <c>Create</c> methods below use it.</summary>
+    /// <param name="getAnimationFrame">Gets the animation frame the strips are cut from.</param>
+    /// <param name="bounds">The box the sprite is drawn in.</param>
+    /// <param name="kind">Whether it is an explosion or an appear.</param>
+    /// <param name="axis">Which way the sprite is cut: into rows or into columns.</param>
+    /// <param name="slope">How the strips lean: -1, 0 or +1.</param>
+    /// <param name="clip">The inside of the playfield. A strip outside it is not drawn.</param>
+    /// <param name="getCentreStripIndex">Works out which strip the others close in on or fly away from. If it is null, the middle strip is used.</param>
+    /// <param name="startClockUnits">How far into the wait for its first step the effect starts, in clock units.</param>
+    /// <param name="isClosedUpAtTheEnd">True for an appear that is drawn with its strips fully closed up before it ends.</param>
+    /// <param name="getFollowedBounds">Gets the box of the thing that is appearing, so that the appear can stay with it. It is null when the effect stays where it started.</param>
     private StripEffect(
         Func<Texture2D> getAnimationFrame,
         Rectangle bounds,
@@ -85,15 +95,14 @@ public sealed class StripEffect : IEntity
         _romFrameTimer = startClockUnits;
         _getFollowedBounds = getFollowedBounds;
 
-        // The vertical and horizontal effects shrink an appearing sprite by half a row each frame. The diagonal one shrinks it by a whole row.
+        // How fast an appear closes up. The diagonal routine closes it twice as fast as the other two routines.
         StripEngine engine = GetEngine();
         _appearSizerStep = engine == StripEngine.Diagonal ? StripExplosionTuning.SizerStep : StripExplosionTuning.SlowAppearSizerStep;
         _smallestAppearSpacing = isClosedUpAtTheEnd || engine == StripEngine.Horizontal
             ? StripExplosionTuning.SmallestClosedAppearSpacing
             : StripExplosionTuning.SmallestAppearSpacing;
 
-        // The spacing starts small for an explosion (one unit is the least it can be) and large for an appear, so an appear can shrink back down.
-        // An explosion also gets a frame count, which says how many frames it lasts.
+        // The gap between the strips starts small for an explosion, which then spreads out. It starts large for an appear, which then closes up.
         _spacingAccumulator = kind == StripEffectKind.Explode
             ? StripExplosionTuning.ExplosionStartSizer
             : StripExplosionTuning.AppearStartSizer;
@@ -101,40 +110,40 @@ public sealed class StripEffect : IEntity
         _romFramesRemaining = StripExplosionTuning.ExplosionFrames;
     }
 
-    /// <summary>The dead entity's own box.</summary>
+    /// <summary>The box of the thing that is exploding or appearing.</summary>
     public Rectangle GetBounds() => _bounds;
 
-    /// <summary>Alive for the record's life: a fixed frame count, or until an appear's size would reach 1.</summary>
+    /// <summary>Alive while the effect runs. An explosion runs for a set number of steps. An appear runs until its strips have closed up.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>The dead entity's top-left, which is also where the fan is centred (its middle).</summary>
+    /// <summary>Where the top-left corner of the effect's box is.</summary>
     public IntVector2 Position => new(_bounds.X, _bounds.Y);
 
-    /// <summary>The axis the pieces fly along: Rows for a vertical fan, Columns for a horizontal one (test hook).</summary>
-    /// <remarks>The ROM calls these the vertical family (rows) and the horizontal family (columns).</remarks>
+    /// <summary>Which way the sprite is cut: into rows, which move up and down, or into columns, which move left and right. Tests use this.</summary>
+    /// <remarks>The ROM calls the code for rows "vertical" and the code for columns "horizontal".</remarks>
     internal StripFanAxis Axis => _axis;
 
-    /// <summary>Explode or Appear (test hook).</summary>
+    /// <summary>Whether this is an explosion or an appear. Tests use this.</summary>
     internal StripEffectKind Kind => _kind;
 
-    /// <summary>The diagonal lean, -1 / 0 / +1 (test hook — see <see cref="GetFanForShot"/>).</summary>
+    /// <summary>How the strips lean: -1, 0 or +1 (see <see cref="GetFanForShot"/>). Tests use this.</summary>
     internal int Slope => _slope;
 
-    /// <summary>The current spacing (the sizer's high byte) — test hook.</summary>
+    /// <summary>The gap between the strips now, in the sprite's own pixels. It is never less than 1. Tests use this.</summary>
     internal int GetSpacing() => Math.Max(1, _spacingAccumulator >> 8);
 
-    /// <summary>Starts an appear: the same record with the size running down, so the strips converge.</summary>
-    /// <param name="source">The object materialising; its current animation frame is used.</param>
-    /// <param name="bounds">The rect the strips are laid out in.</param>
-    /// <param name="axis">Which way the sprite is cut: rows or columns.</param>
-    /// <param name="slope">The diagonal lean, -1 / 0 / +1.</param>
-    /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
-    /// <param name="getCentreStripIndex">Works out which row or column the others close in on, counted from the top or the left, when it is given how many rows or columns the sprite has; null for the middle one.</param>
-    /// <param name="startClockUnits">How far into a ROM frame the effect starts, in clock units, so that its first step falls on the right ROM frame. It is less than nothing when the first step is more than a tick away.</param>
-    /// <returns>The new appear record.</returns>
+    /// <summary>Makes an appear for an entity. The strips start far apart and close up to make the sprite.</summary>
+    /// <param name="source">The thing that is appearing. The animation frame it is showing is used.</param>
+    /// <param name="bounds">The box the sprite is drawn in.</param>
+    /// <param name="axis">Which way the sprite is cut: into rows or into columns.</param>
+    /// <param name="slope">How the strips lean: -1, 0 or +1.</param>
+    /// <param name="clip">The inside of the playfield. A strip outside it is not drawn.</param>
+    /// <param name="getCentreStripIndex">Works out which strip the others close in on. It is given how many strips the sprite has, and gives back a strip counted from the top or the left. If it is null, the middle strip is used.</param>
+    /// <param name="startClockUnits">How far into the wait for its first step the effect starts, in clock units (see <see cref="ArcadeClock"/>). This makes the first step come at the right time. It is below zero when the effect has to wait longer than usual for its first step.</param>
+    /// <returns>The new appear.</returns>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which makes one of these on each ROM frame;
+    /// <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, which makes one of these 50 times a second;
     /// <c>RRX7.ASM</c> <c>APSTV</c>, <c>RRHX4.ASM</c> <c>HAPSTV</c> and <c>RRDX2.ASM</c> <c>APSTZ</c></item>
     /// <item>Disassembly: <c>$5BC6</c> (the vertical routine), <c>$F066</c> (the horizontal one) and
     /// <c>$46E6</c> (the diagonal one)</item>
@@ -143,15 +152,15 @@ public sealed class StripEffect : IEntity
     public static StripEffect CreateAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope, StripClip clip, Func<int, int>? getCentreStripIndex = null, int startClockUnits = 0)
         => new(() => source.GetCurrentAnimationFrame(), bounds, StripEffectKind.Appear, axis, slope, clip, getCentreStripIndex, startClockUnits);
 
-    /// <summary>Starts an appear that stays with the thing it is forming as that thing moves. The player's appear is the one that does: it is still running when the game goes live and the player can walk.</summary>
+    /// <summary>Makes an appear that stays with the thing that is appearing as that thing moves. The player's appear does this, because it is still running when the game goes live and the player can walk.</summary>
     /// <typeparam name="T">The kind of thing that is appearing.</typeparam>
-    /// <param name="source">The thing that is appearing. Its animation frame and its box are read again each time the picture changes.</param>
-    /// <param name="axis">Which way the sprite is cut: rows or columns.</param>
-    /// <param name="slope">The diagonal lean, -1 / 0 / +1.</param>
-    /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
-    /// <param name="centreStripIndex">Which row or column the others close in on, counted from the top or the left.</param>
-    /// <param name="startClockUnits">How far into a ROM frame the effect starts, in clock units.</param>
-    /// <returns>The new appear record.</returns>
+    /// <param name="source">The thing that is appearing. Its animation frame and its box are looked up again as the effect runs.</param>
+    /// <param name="axis">Which way the sprite is cut: into rows or into columns.</param>
+    /// <param name="slope">How the strips lean: -1, 0 or +1.</param>
+    /// <param name="clip">The inside of the playfield. A strip outside it is not drawn.</param>
+    /// <param name="centreStripIndex">Which strip the others close in on, counted from the top or the left.</param>
+    /// <param name="startClockUnits">How far into the wait for its first step the effect starts, in clock units.</param>
+    /// <returns>The new appear.</returns>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRX7.ASM</c> <c>AWRIT0</c> ("SCROLL EM"), <c>RRHX4.ASM</c> <c>AWRIT0</c>
@@ -164,12 +173,12 @@ public sealed class StripEffect : IEntity
         where T : IEntity, IAnimationFrameSource
         => new(() => source.GetCurrentAnimationFrame(), source.GetBounds(), StripEffectKind.Appear, axis, slope, clip, _ => centreStripIndex, startClockUnits, getFollowedBounds: () => source.GetBounds());
 
-    /// <summary>Starts an appear for a plain picture rather than an entity: the logo's letters on the attract pages.</summary>
-    /// <param name="animationFrame">The picture materialising.</param>
-    /// <param name="bounds">The rect the strips are laid out in.</param>
-    /// <param name="axis">Which way the picture is cut: rows or columns.</param>
-    /// <param name="clip">The area strips are dropped outside of.</param>
-    /// <returns>The new appear record.</returns>
+    /// <summary>Makes an appear for a sprite that is not an entity. The letters of the logo on the attract pages use it.</summary>
+    /// <param name="animationFrame">The sprite that is appearing.</param>
+    /// <param name="bounds">The box the sprite is drawn in.</param>
+    /// <param name="axis">Which way the sprite is cut: into rows or into columns.</param>
+    /// <param name="clip">The area strips may be drawn in. A strip outside it is not drawn.</param>
+    /// <returns>The new appear.</returns>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRLOG.ASM</c> <c>WDONE1</c>, which asks the attract-mode appear
@@ -181,22 +190,22 @@ public sealed class StripEffect : IEntity
     internal static StripEffect CreateAppear(Texture2D animationFrame, Rectangle bounds, StripFanAxis axis, StripClip clip)
         => new(() => animationFrame, bounds, StripEffectKind.Appear, axis, 0, clip, isClosedUpAtTheEnd: true);
 
-    /// <summary>Starts the explosion for a killed object; the killing shot picks the axis and lean.</summary>
-    /// <param name="dead">The object being exploded; its animation frame and explosion bounds are used.</param>
-    /// <param name="direction">The killing shot's direction, or null for a kill with no laser.</param>
-    /// <param name="clip">The playfield interior that strips are dropped outside of.</param>
-    /// <returns>The new explosion record.</returns>
-    /// <remarks>ROM: the "make an enemy explode" entry point, which dispatches to its straight or
-    /// directional setup. The rect is the object's position with the size of the sprite it points at,
-    /// which can be bigger than its collision box.</remarks>
+    /// <summary>Makes the explosion for something that has been killed. The way the killing laser was going decides how the sprite is cut and how the strips lean.</summary>
+    /// <param name="dead">The thing that was killed. Its animation frame and its explosion box are used.</param>
+    /// <param name="direction">The way the killing laser was going, or null if it was not killed by a laser.</param>
+    /// <param name="clip">The inside of the playfield. A strip outside it is not drawn.</param>
+    /// <returns>The new explosion.</returns>
+    /// <remarks>ROM: the "make an enemy explode" routine, which goes on to the code for a straight explosion or for a
+    /// leaning one. The box is at the object's position and is the size of the sprite the object shows, which can be
+    /// bigger than the box used to tell what the object touches.</remarks>
     public static StripEffect CreateExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {
         (StripFanAxis axis, int slope) = GetFanForShot(direction);
         return new StripEffect(() => dead.GetCurrentAnimationFrame(), dead.GetExplosionBounds(), StripEffectKind.Explode, axis, slope, clip);
     }
 
-    /// <summary>Draws the frame's strips, each from its own row or column of the dead entity's sprite.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <summary>Draws the strips. Each strip is one row or one column of the sprite.</summary>
+    /// <param name="spriteBatch">What the strips are drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (!this.IsAlive() || !IsDrawn())
@@ -206,13 +215,13 @@ public sealed class StripEffect : IEntity
 
         Texture2D animationFrame = _getAnimationFrame();
 
-        // The sprite's width is in pixels and its height is in rows. Do not scale them down again (see Layout).
+        // LayOutStrips works in the sprite's own pixels, so it is given the sprite's own width and height.
         int spriteWidth = animationFrame.Width;
         int spriteRows = animationFrame.Height;
 
         foreach (Strip strip in LayOutStrips(spriteWidth, spriteRows))
         {
-            // The source rectangle is in the sprite's texture pixels. The destination is in screen pixels, where each texture pixel is SpecScale of them.
+            // Each strip is one row or one column of the sprite, drawn SpecScale times bigger on the screen.
             Rectangle source = _axis == StripFanAxis.Rows
                 ? new Rectangle(0, strip.SourceIndex, spriteWidth, 1)
                 : new Rectangle(strip.SourceIndex, 0, 1, spriteRows);
@@ -233,9 +242,9 @@ public sealed class StripEffect : IEntity
         }
     }
 
-    /// <summary>One ROM frame of the record's life.</summary>
-    /// <param name="gameTime">Unused — the record is stepped once per ROM frame.</param>
-    /// <param name="field">Unused; kept for the update call shape.</param>
+    /// <summary>Runs one tick. When a step is due, an explosion's strips move further apart and an appear's strips move closer together.</summary>
+    /// <param name="gameTime">Not used. The effect counts ticks.</param>
+    /// <param name="field">Not used.</param>
     public void Update(GameTime gameTime, PlayField? field = null)
     {
         if (!this.IsAlive())
@@ -243,7 +252,7 @@ public sealed class StripEffect : IEntity
             return;
         }
 
-        // The effect moves once per ROM frame, not once per port tick (see ArcadeClock).
+        // The effect takes a step 50 times a second, as it did in the arcade. A tick comes 60 times a second, so it does not step on every tick (see ArcadeClock).
         _romFrameTimer += ArcadeClock.UnitsPerPortTick;
         if (_romFrameTimer < ArcadeClock.UnitsPerRomFrame)
         {
@@ -254,7 +263,7 @@ public sealed class StripEffect : IEntity
 
         if (_kind == StripEffectKind.Explode)
         {
-            // Count the frame down. When it reaches zero the explosion has finished and the effect is removed.
+            // When the explosion's time runs out, it is over. Until then, the strips move further apart on each step.
             if (--_romFramesRemaining <= 0)
             {
                 LifeState = EntityLifeState.Dead;
@@ -269,7 +278,7 @@ public sealed class StripEffect : IEntity
     }
 
     /// <summary>Says which of the arcade's three strip routines runs this effect.</summary>
-    /// <returns>The horizontal routine for a column fan, the diagonal one for a row fan that leans, and the vertical one for a row fan that does not.</returns>
+    /// <returns>The horizontal routine when the sprite is cut into columns. The diagonal routine when it is cut into rows that lean. The vertical routine when it is cut into rows that do not lean.</returns>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRX7.ASM</c> <c>EXSTV</c>, which picks the routine from the laser's
@@ -290,12 +299,12 @@ public sealed class StripEffect : IEntity
     /// <summary>Says whether the effect has anything on the screen. An appear has nothing until its first step.</summary>
     internal bool IsDrawn() => _kind == StripEffectKind.Explode || _hasAppearBeenDrawn;
 
-    /// <summary>Takes one ROM frame off an appear's gap. The picture changes only when the whole-row part of the gap changes, and the appear is over when the gap would fall below the smallest that its routine draws.</summary>
+    /// <summary>Takes one step of an appear, which makes the gap between the strips a little smaller. The strips are only redrawn when the gap has shrunk by a whole pixel. The appear is over when the gap would be smaller than the smallest its routine draws.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>AWRITE</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>:
-    /// <c>CMPA YSIZER,Y</c> ("CHANGE?") skips the frame when the row count is the same, and the tests
-    /// after <c>AWRIT1</c> end the appear</item>
+    /// <c>CMPA YSIZER,Y</c> ("CHANGE?") skips the step when the whole number of rows has not changed, and the
+    /// tests after <c>AWRIT1</c> end the appear</item>
     /// <item>Disassembly: <c>$5D48</c> to <c>$5D85</c> for the vertical routine</item>
     /// </list>
     /// </remarks>
@@ -322,33 +331,32 @@ public sealed class StripEffect : IEntity
         }
     }
 
-    /// <summary>Maps a killing shot's direction to the fan axis and lean it produces.</summary>
-    /// <param name="direction">The killing shot's direction, or null for a kill with no laser.</param>
-    /// <returns>The fan axis and the lean: -1, 0 or +1.</returns>
-    /// <remarks>ROM: RRX7.ASM's explosion-style routine, reached from "make an enemy explode". The
-    /// engine is named for the axis the pieces MOVE, which is ACROSS the shot, not along it: a pure
-    /// vertical shot uses the columns split (they fly apart horizontally), a pure horizontal shot or no
-    /// direction at all uses the rows split, and a diagonal shot uses the rows split with the halves
-    /// leaning opposite ways. These two branches are easy to swap by mistake.</remarks>
+    /// <summary>Works out how a sprite is cut and how its strips lean, from the way the killing laser was going.</summary>
+    /// <param name="direction">The way the killing laser was going, or null if it was not killed by a laser.</param>
+    /// <returns>Which way the sprite is cut, and how the strips lean: -1, 0 or +1.</returns>
+    /// <remarks>ROM: RRX7.ASM's routine that picks the kind of explosion. The strips fly apart across the path of the
+    /// laser, not along it. A laser going straight up or down cuts the sprite into columns, which fly apart sideways.
+    /// A laser going straight left or right, or a kill with no laser, cuts it into rows, which fly apart up and down.
+    /// A diagonal laser cuts it into rows that lean. It is easy to get the first two the wrong way round.</remarks>
     internal static (StripFanAxis Axis, int Slope) GetFanForShot(Direction8? direction) => direction switch
     {
-        // A straight up or down laser shot is cut into columns.
+        // A laser going straight up or straight down cuts the sprite into columns.
         Direction8.Up or Direction8.Down => (StripFanAxis.Columns, 0),
 
-        // A straight left or right laser shot, and anything killed by something other than a laser, is cut into rows.
+        // A laser going straight left or straight right cuts the sprite into rows. So does a kill that was not made by a laser.
         Direction8.Left or Direction8.Right or null => (StripFanAxis.Rows, 0),
 
-        // Diagonal laser shots are cut into rows, and the rows lean.
+        // A laser going diagonally cuts the sprite into rows, and the rows lean (see _slope).
         Direction8.UpLeft or Direction8.DownRight => (StripFanAxis.Rows, -1),
         Direction8.UpRight or Direction8.DownLeft => (StripFanAxis.Rows, 1),
         _ => (StripFanAxis.Rows, 0),
     };
 
-    /// <summary>Where a sprite sits when drawn into the bounds, in pixels and rows.</summary>
-    /// <param name="bounds">The entity's bounds, in screen pixels.</param>
-    /// <param name="spriteWidth">The sprite's width in pixels.</param>
-    /// <param name="spriteRows">The sprite's height in rows.</param>
-    /// <returns>The top-left the sprite is drawn at, in pixels and rows.</returns>
+    /// <summary>Works out where a sprite's top-left corner goes when the sprite is drawn in the middle of a box.</summary>
+    /// <param name="bounds">The box, in port pixels.</param>
+    /// <param name="spriteWidth">How wide the sprite is, in its own pixels.</param>
+    /// <param name="spriteRows">How tall the sprite is, in its own rows.</param>
+    /// <returns>Where the sprite's top-left corner goes, in arcade pixels across and rows down.</returns>
     internal static (int Left, int Top) GetSpritePlacement(
         Rectangle bounds, int spriteWidth, int spriteRows)
     {
@@ -360,27 +368,26 @@ public sealed class StripEffect : IEntity
             (bounds.Y / ScreenSize.SpecScale) + ((boundsRows - spriteRows) / 2));
     }
 
-    /// <summary>The strips for the current frame (pixels and rows), pure so the shape is unit-testable.</summary>
-    /// <param name="spriteWidth">The dead sprite's width in pixels.</param>
-    /// <param name="spriteRows">The dead sprite's height in rows.</param>
-    /// <returns>The strips to draw this frame, in draw order.</returns>
-    /// <remarks>ROM: RRX7.ASM/RRHX4.ASM/RRDX2.ASM's strip-layout logic:
+    /// <summary>Works out where every strip goes on this step. It changes nothing, so tests can check the shape.</summary>
+    /// <param name="spriteWidth">How wide the sprite is, in its own pixels.</param>
+    /// <param name="spriteRows">How tall the sprite is, in its own rows.</param>
+    /// <returns>The strips to draw on this step, in the order they are drawn.</returns>
+    /// <remarks>ROM: how RRX7.ASM, RRHX4.ASM and RRDX2.ASM place the strips:
     ///
     /// <code>
-    /// YSIZE  = YSIZER >> 8                     ; this frame's step (1, 2, 3, …)
-    /// base   = YCENT − YSIZE*YOF + YSIZE/2     ; the FIRST segment's screen row
-    /// segment i: row = base + i*YSIZE          ; each further one steps DOWN
+    /// YSIZE  = YSIZER >> 8                     ; the gap on this step (1, 2, 3, …)
+    /// base   = YCENT − YSIZE*YOF + YSIZE/2     ; the screen row of the first strip
+    /// strip i:   row = base + i*YSIZE          ; each strip after it is one gap further down
     /// </code>
     ///
-    /// At step 1 the offset term cancels, so the base is the sprite's top row and frame 0 reconstructs
-    /// the sprite exactly — the ROM's own "1 unit is the minimum" rule. One fan opens both ways at
-    /// once: the base climbs while the segments march down, so the fan tears UP and DOWN. The fixed
-    /// point is the sprite's MIDDLE, so the halves are mirrored — the same strips and the same reach
-    /// each way — and a diagonal shot leans them opposite ways (a chevron). The same maths runs on
-    /// columns for a vertical shot. The middle anchor matches the ROM's own centring logic, the
-    /// sprite's top plus half its height, and keeps both halves equal; anchoring at the collision
-    /// point instead is lopsided, because a shot strikes the sprite's near edge. A strip outside the
-    /// playfield is DROPPED, not clamped.</remarks>
+    /// When the gap is 1, the first strip is on the sprite's top row and every strip touches the next, so the sprite
+    /// looks whole. This is the ROM's own "1 unit is the minimum" rule. As the gap grows, the first strip moves up
+    /// while the later strips move down, so the sprite tears apart both upwards and downwards. The strips spread from
+    /// the middle of the sprite, so both halves spread the same distance. A diagonal shot also makes the strips lean.
+    /// The same sums are done on columns for a shot going up or down. Spreading from the middle is what the ROM does:
+    /// it uses the sprite's top plus half its height. Spreading from the point the laser hit would look lopsided,
+    /// because a laser hits the near edge of the sprite. A strip outside the playfield is left out. It is not moved
+    /// back inside.</remarks>
     internal IReadOnlyList<Strip> LayOutStrips(int spriteWidth, int spriteRows)
     {
         bool fansByRows = _axis == StripFanAxis.Rows;
@@ -393,28 +400,24 @@ public sealed class StripEffect : IEntity
             spacing = 1;
         }
 
-        // The fan spreads out from the strip it was given as its fixed point, or from the middle of the sprite if it was given none.
+        // The strips spread out from one chosen strip, or from the middle strip when none was chosen.
         int split = GetCentreStripIndex(extent);
 
-        // The sprite is centred in its bounds, so the fan must start from the sprite's own top-left corner.
+        // The sprite is drawn in the middle of its box, so this finds where the sprite's own top-left corner is.
         (int spriteLeft, int spriteTop) = GetSpritePlacement(_bounds, spriteWidth, spriteRows);
 
-        // The fixed point's screen row or column.
+        // Where the chosen strip is on the screen: its row, or its column when the sprite is cut into columns.
         int centre = (fansByRows ? spriteTop : spriteLeft) + split;
 
-        // One unit is one pixel of the sprite along the fan axis, for both the vertical and the horizontal effects. Counting the
-        // horizontal effects in byte columns (2 pixels each) would fly them apart at twice the ROM's rate.
+        // The gap is counted in the sprite's own pixels, for rows and for columns alike. Counting a column as 2 pixels wide would make the strips fly apart twice as fast as in the arcade.
         int step = spacing;
 
-        // The start point is the centre, minus the size times the offset, plus half a step. The ROM's "obscure bug" check
-        // is kept: when the offset is zero there is no half step. A fan anchored in the middle never has one anyway.
+        // Where the first strip goes. The arcade has a bug here, and it is kept: when the chosen strip is the very first strip, the half gap is left out.
         int half = split == 0 ? 0 : (spacing >> 1);
         int fanBase = centre - (spacing * split) + half;
 
-        // The diagonal lean is half the current step, with its sign set by the shot's diagonal. Each strip shifts
-        // sideways in proportion to its distance from the split, so the two halves lean in opposite directions.
-        // The lean is measured in the columns of the sprite the ROM cuts up, which are pixel distances.
-        // Scaling it by SpecScale made the chevron open wider as the render scale rose, so it is not scaled.
+        // How far each strip slides to the side for a diagonal shot. A strip slides further the further it is from the chosen strip, and strips on opposite sides of the chosen strip slide opposite ways.
+        // The slide is not scaled up with the screen, because then the strips would slide too far.
         int drift = _slope * ((spacing >> 1) * ScreenSize.ArcadePixelsPerColumn);
 
         for (int i = 0; i < extent; i++)
@@ -439,8 +442,12 @@ public sealed class StripEffect : IEntity
     /// <returns>The strip the effect was given, or the middle one when it was given none.</returns>
     private int GetCentreStripIndex(int extent) => _getCentreStripIndex?.Invoke(extent) ?? (extent / 2);
 
-    /// <summary>True when the strip lies inside the clip rectangle; a strip outside is dropped.</summary>
-    /// <remarks>Matches the ROM's own per-strip clip check.</remarks>
+    /// <summary>Says whether a strip is inside the area strips may be drawn in. A strip outside it is not drawn.</summary>
+    /// <param name="x">Where the strip's left edge is.</param>
+    /// <param name="y">Where the strip's top edge is.</param>
+    /// <param name="spriteWidth">How wide the sprite is, in its own pixels.</param>
+    /// <param name="spriteRows">How tall the sprite is, in its own rows.</param>
+    /// <remarks>The ROM makes the same check on each strip.</remarks>
     private bool IsInside(int x, int y, int spriteWidth, int spriteRows)
     {
         if (_axis == StripFanAxis.Rows)

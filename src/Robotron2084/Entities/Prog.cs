@@ -7,13 +7,14 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A prog is a family member the brain has captured and turned into an enemy. It looks like the human it used to be, but now hunts the player instead of running from danger.</summary>
+/// <summary>A prog is a family member that a brain has caught and turned into an enemy. It looks like the family member it used to be, but now it hunts the player.</summary>
 /// <seealso cref="Human"/>
 /// <seealso cref="StripEffect"/>
 /// <remarks>
-/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
-/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_beatTimer"/> gathers the ticks
-/// until it is time for the next beat (see <see cref="ArcadeClock"/>).
+/// It acts on a beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the
+/// short freeze just after the player is killed. <see cref="_beatTimer"/> gathers the ticks until it is time for
+/// the next beat (see <see cref="ArcadeClock"/>).
 ///
 /// <list type="bullet">
 /// <item>Original source: <c>RRB10.ASM</c>, routine <c>PROG</c> (with
@@ -23,36 +24,36 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Prog : IExplodable, IRemovable
 {
-    /// <summary>Sides of the coin flip that picks whether a re-aim considers X or Y.</summary>
+    /// <summary>When a prog picks a direction, a random number below this decides whether it goes sideways or up and down. Each is picked half the time.</summary>
     private const int AxisFlipSides = 2;
 
-    /// <summary>How many ROM frames pass between beats.</summary>
+    /// <summary>How long one beat lasts, in 50ths of a second.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>PROG</c>.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
     ///
-    /// The arcade re-runs the prog's step logic every 3 frames.
+    /// The arcade runs the prog's routine this often.
     /// </remarks>
     private const int BeatIntervalRomFrames = 3;
 
-    /// <summary>Half of the range of the sideways aim offset. A random roll has this subtracted from it, and the result is multiplied by <see cref="OffsetXStepColumns"/> to give <see cref="_offsetX"/>.</summary>
+    /// <summary>A prog aims a little to the left or right of the player. To work out how far, a random number has this taken off it, and the answer is multiplied by <see cref="OffsetXStepColumns"/> to give <see cref="_offsetX"/>.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c> gives ±28 columns of offset in steps of 4.</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c>, which gives up to 28 columns left or right of the player, in steps of 4.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
     /// </remarks>
     private const int OffsetXHalfRange = 8;
 
-    /// <summary>The biggest number the sideways aim offset's random roll can come up with. The roll starts at one. It is used to work out <see cref="_offsetX"/>.</summary>
+    /// <summary>The biggest the random number used to work out <see cref="_offsetX"/> can be. The smallest is one.</summary>
     private const int OffsetXRollMax = 15;
 
-    /// <summary>How many columns each step of the sideways aim offset is. The rolled number of steps is multiplied by this to give <see cref="_offsetX"/>.</summary>
+    /// <summary>How far to the left or right of the player a prog aims goes up in steps of this many columns (see <see cref="_offsetX"/>).</summary>
     private const int OffsetXStepColumns = 4;
 
-    /// <summary>The Y offset is (this minus a roll of 1..<see cref="OffsetYSteps"/>) times the step, less <see cref="OffsetYSteps"/>.</summary>
+    /// <summary>A prog aims a little above or below the player. To work out how far, a random number from 1 up to <see cref="OffsetYSteps"/> is taken off this. The answer is multiplied by <see cref="OffsetYStepRows"/>, and then <see cref="OffsetYSteps"/> is taken off, to give <see cref="_offsetY"/>.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c>.</item>
@@ -61,90 +62,92 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     private const int OffsetYCentre = 19;
 
-    /// <summary>How many rows each step of the up-and-down aim offset is. The rolled number of steps is multiplied by this to give <see cref="_offsetY"/>.</summary>
+    /// <summary>How far above or below the player a prog aims goes up in steps of this many rows (see <see cref="_offsetY"/>).</summary>
     private const int OffsetYStepRows = 2;
 
-    /// <summary>The span of the up-and-down aim offset, in steps. A random roll from one up to this is used to work out <see cref="_offsetY"/>.</summary>
+    /// <summary>The biggest the random number used to work out <see cref="_offsetY"/> can be. The smallest is one.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c> computes this from a random 1..18 roll.</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c>, which works it out from a random number from 1 to 18.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
     /// </remarks>
     private const int OffsetYSteps = 18;
 
+    /// <summary>On each beat a prog picks a random number below <see cref="ThresholdRollSides"/>. If it is above this, the prog picks a new direction. That happens on about one beat in ten.</summary>
     private const int ReDirectionThreshold256 = 0xE4;
 
-    /// <summary>Roll thresholds out of 256: above the first the offsets re-roll, above the second it re-aims.</summary>
+    /// <summary>On each beat a prog picks a random number below <see cref="ThresholdRollSides"/>. If it is above this, the prog picks again how far from the player it aims. That happens on about 3 beats in 100.</summary>
     private const int ReOffsetThreshold256 = 0xF8;
 
-    /// <summary>The horizontal step: 2 columns = 4 arcade px, the same distance as the vertical step.</summary>
+    /// <summary>How far a prog goes on a step to the left or right, in columns. It is the same distance on the screen as a step up or down.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c> — the X step table moves 2 columns at a time,
-    /// and a column is 2 arcade px.</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c>. The table of sideways steps moves 2 columns at a time,
+    /// and a column is 2 arcade pixels wide.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
     /// </remarks>
     private const int StepXColumns = 2;
 
-    /// <summary>The vertical step: ±4 rows on Y.</summary>
+    /// <summary>How far a prog goes on a step up or down, in rows.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c> — the Y step table.</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c>, the table of up and down steps.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
     /// </remarks>
     private const int StepYRows = 4;
 
-    /// <summary>Sides of the ROM rolls the re-offset and re-aim thresholds are compared against.</summary>
+    /// <summary>The random numbers that are checked against <see cref="ReOffsetThreshold256"/> and <see cref="ReDirectionThreshold256"/> are from 0 up to one less than this.</summary>
     private const int ThresholdRollSides = 256;
 
-    /// <summary>The aim-wrap margin past the field's far edge, in columns (X) and rows (Y).</summary>
+    /// <summary>If the spot a prog aims at is more than this many columns past the right wall, the prog aims at the left wall instead.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>GPDIR</c> wraps an aim past this margin to the opposite
-    /// edge.</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>GPDIR</c>, which moves an aim that is this far past one wall to
+    /// the opposite wall.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
     /// </remarks>
     private const int WrapMarginXColumns = 0x30;
 
+    /// <summary>If the spot a prog aims at is more than this many rows below the bottom wall, the prog aims at the top wall instead.</summary>
     private const int WrapMarginYRows = 18;
 
-    // The walk cycle is animation frames 1, 2, 1, 3: the same A-B-A-C pattern the humans use.
+    // The order the walk animation frames are shown in. Family members walk in the same order.
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
     private readonly (int Width, int Height) _collisionSize;
 
-    /// <summary>The shadow ring, NEWEST FIRST (see <see cref="Ghost"/>).</summary>
+    /// <summary>The ghosts the prog has left behind it, newest first (see <see cref="Ghost"/>).</summary>
     private readonly List<Ghost> _ghosts = new();
 
     private readonly HumanKind _kind;
     private readonly Random _random;
     private readonly SpriteSet _sprites;
-    // Counts up towards the next beat (see ArcadeClock).
+    // Counts up to the prog's next beat, which is its next turn to move (see ArcadeClock).
     private int _beatTimer;
 
-    // The direction the prog is walking in. It is set on the prog's first beat.
+    // The way the prog is walking: up, down, left or right. A new prog walks down until it picks a direction.
     private Direction8 _direction = Direction8.Down;
 
-    // This prog's aim offset on X: the distance it aims to the side of the Player. It is rerolled now and then. (see Player)
+    // How far to the left or right of the Player the prog aims, in columns.
     private int _offsetX;
 
-    // This prog's aim offset on Y: the distance it aims above or below the Player. It is rerolled now and then. (see Player)
+    // How far above or below the Player the prog aims, in rows.
     private int _offsetY;
 
     private IntVector2 _position;
 
-    // Which entry of WalkCycle comes next, from 0 to 3.
+    // Which place in WalkCycle the prog has reached.
     private int _walkCycleStep;
 
-    /// <summary>Makes a prog where the human was, carrying that human's animation frames and box.</summary>
+    /// <summary>Makes a prog where the family member was. It has that family member's animation frames and size.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    /// <param name="position">Top-left of the prog.</param>
-    /// <param name="kind">Which human it became; this picks the animation frames and the collision box.</param>
-    /// <param name="random">The random source: the aim offsets and the re-aim rolls.</param>
+    /// <param name="position">Where the prog's top-left corner is.</param>
+    /// <param name="kind">Which family member it used to be. This decides its animation frames and its size.</param>
+    /// <param name="random">Where its random numbers come from. They pick how far from the player it aims, and when it turns.</param>
     public Prog(SpriteSet sprites, IntVector2 position, HumanKind kind, Random random)
     {
         _sprites = sprites;
@@ -154,14 +157,14 @@ public sealed class Prog : IExplodable, IRemovable
         _collisionSize = (
             ScreenSize.ToPortPixels(kind.GetArcadeCollisionSize().Width),
             ScreenSize.ToPortPixels(kind.GetArcadeCollisionSize().Height));
-        RollOffsets(); // As in the arcade, PROGST calls GPOFF when a prog is made.
+        RollOffsets(); // A new prog picks at once how far from the Player it aims (ROM: PROGST calls GPOFF).
     }
 
-    /// <summary>The converted human's own box at <see cref="Position"/> (a prog keeps its victim's size).</summary>
+    /// <summary>The box the prog takes up on the screen. It is the size of the family member the prog used to be, and it is used to tell what the prog touches.</summary>
     public Rectangle GetBounds() => new(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
 
-    /// <summary>The animation frame the death explosion shatters: the phony burst card, not the human's animation frames.</summary>
-    /// <returns>The phony burst card.</returns>
+    /// <summary>The sprite that is blown apart when the prog is killed. It is a special sprite for this, not one of the family member's animation frames.</summary>
+    /// <returns>The sprite that is blown apart.</returns>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>PRGKIL</c> swaps the sprite to the 12x16 <c>PGXPIC</c>.</item>
@@ -170,7 +173,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     public Texture2D GetCurrentAnimationFrame() => _sprites.ProgBurstSprite;
 
-    /// <summary>The explosion's rect: the burst card's size at the prog's corner.</summary>
+    /// <summary>The box the explosion starts in. It is at the prog's top-left corner, and it is the size of the sprite that is blown apart.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>PRGKIL</c>/<c>EXSTV</c> swap the sprite without moving
@@ -178,9 +181,8 @@ public sealed class Prog : IExplodable, IRemovable
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
     ///
-    /// The explosion uses
-    /// that corner with the sprite's own size. The arcade clamps the corner inside the field; a prog is
-    /// always inside it already.
+    /// The arcade moves the corner back inside the playfield if it is outside. A prog is always inside
+    /// already, so that is not done here.
     /// </remarks>
     public Rectangle GetExplosionBounds() => new(
         _position.X,
@@ -188,13 +190,13 @@ public sealed class Prog : IExplodable, IRemovable
         ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Width),
         ScreenSize.ToPortPixels(CollisionSizes.ProgBurstSize.Height));
 
-    /// <summary>Which human's animation frames and box this prog carries (it became that human).</summary>
+    /// <summary>Which family member this prog used to be. This decides its animation frames and its size.</summary>
     public HumanKind Kind => _kind;
 
-    /// <summary>Alive until shot; never Dying (it dies by exploding, see <see cref="Kill"/>).</summary>
+    /// <summary>Alive until it is shot. It is never Dying, because it is blown apart at once (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Top-left of the prog.</summary>
+    /// <summary>Where the prog's top-left corner is.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> the OBJX/OBJY registers.</item>
@@ -203,7 +205,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     public IntVector2 Position => _position;
 
-    /// <summary>Test hook: the pose each ghost was frozen in, newest first.</summary>
+    /// <summary>The animation frame each ghost shows, newest first. Tests use this.</summary>
     internal IReadOnlyList<int> GetGhostFrames()
     {
         var frames = new List<int>(_ghosts.Count);
@@ -215,7 +217,7 @@ public sealed class Prog : IExplodable, IRemovable
         return frames;
     }
 
-    /// <summary>Test hook: the ghost trail's positions, newest first.</summary>
+    /// <summary>Where each ghost is, newest first. Tests use this.</summary>
     internal IReadOnlyList<IntVector2> GetGhostTrail()
     {
         var positions = new List<IntVector2>(_ghosts.Count);
@@ -227,7 +229,7 @@ public sealed class Prog : IExplodable, IRemovable
         return positions;
     }
 
-    /// <summary>The current walk animation frame: the facing direction's set, following <see cref="WalkCycle"/>.</summary>
+    /// <summary>Which walk animation frame the prog is showing. It comes from the set for the way the prog is walking, in the order <see cref="WalkCycle"/> gives.</summary>
     internal int GetWalkAnimationFrameIndex()
     {
         WalkSequence walkSequence = _direction switch
@@ -240,15 +242,15 @@ public sealed class Prog : IExplodable, IRemovable
         return (int)walkSequence * 3 + WalkCycle[_walkCycleStep];
     }
 
-    /// <summary>How many clock units pass between one beat and the next. A prog's <see cref="_beatTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a beat happens and this is subtracted from it.</summary>
+    /// <summary>The time from one beat to the next, in clock units (see <see cref="ArcadeClock"/>). <see cref="_beatTimer"/> counts up to this. When it gets there, a beat happens and this is taken off it.</summary>
     private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
 
-    /// <summary>One shadow-ring entry: a position the prog vacated and the pose it was drawn in.</summary>
-    /// <remarks>A ghost is blitted once and never re-blitted, so it keeps its creation pose for life.</remarks>
+    /// <summary>One ghost: a place the prog has left, and the animation frame the prog was showing there.</summary>
+    /// <remarks>The arcade draws a ghost once and never draws it again, so a ghost keeps the animation frame it started with.</remarks>
     private readonly record struct Ghost(IntVector2 Position, int AnimationFrameIndex);
 
-    /// <summary>Draws the ghost trail (oldest first) and then the prog, all as two-colour remap pairs.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <summary>Draws the ghosts, oldest first, and then the prog. Each is drawn as a one-colour shape on a one-colour box.</summary>
+    /// <param name="spriteBatch">What the prog is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (!this.IsAlive())
@@ -259,8 +261,7 @@ public sealed class Prog : IExplodable, IRemovable
         Texture2D[] frames = _kind.GetAnimationFrames(_sprites);
         Texture2D animationFrame = frames[GetWalkAnimationFrameIndex()];
 
-        // The oldest ghost is drawn first, so the newer ones paint over it. Each ghost is drawn once, in the pose it
-        // had when it was dropped. The trail is a set of frozen pictures, not an animation.
+        // The oldest ghost is drawn first, so that newer ghosts cover older ones. Each ghost keeps the animation frame the prog had when it left the ghost behind.
         for (int i = _ghosts.Count - 1; i >= 0; i--)
         {
             Ghost ghost = _ghosts[i];
@@ -280,16 +281,13 @@ public sealed class Prog : IExplodable, IRemovable
             _sprites.Blitter.GetSlotColour(ProgTuning.ShapeSlot));
     }
 
-    /// <summary>Kills the prog outright; the strip explosion is the whole visual.</summary>
+    /// <summary>Kills the prog at once. All that is seen is the strip explosion.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>PRGKIL</c> — the object is gone immediately, leaving only
-    /// the strip explosion.</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>PRGKIL</c>. The object is gone at once, and only the strip
+    /// explosion is left.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
-    ///
-    /// of the
-    /// sprite it swapped in.
     /// </remarks>
     public void Kill()
     {
@@ -299,8 +297,8 @@ public sealed class Prog : IExplodable, IRemovable
         }
     }
 
-    /// <summary>Runs one beat: animate, maybe re-roll, drop a ghost, then step.</summary>
-    /// <param name="gameTime">Unused — the beat timer is counted in ticks.</param>
+    /// <summary>Runs one tick. On a beat the prog shows its next walk animation frame, may change its aim or its direction, leaves a ghost, and takes a step.</summary>
+    /// <param name="gameTime">Not used. The prog counts ticks.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -320,11 +318,11 @@ public sealed class Prog : IExplodable, IRemovable
             return;
         }
 
-        // The animation moves on at every beat (see ArcadeClock), even when the step below is refused.
+        // The walk animation moves on at every beat, even when the prog cannot take its step.
         _beatTimer -= BeatIntervalClockUnits;
         _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
 
-        // Reroll the offsets first, because choosing a direction uses the offsets that are current.
+        // Now and then the prog changes how far from the Player it aims. This comes before picking a direction, because the direction depends on it.
         if (_random.Next(ThresholdRollSides) > ReOffsetThreshold256)
         {
             RollOffsets();
@@ -336,15 +334,14 @@ public sealed class Prog : IExplodable, IRemovable
             _walkCycleStep = 0;
         }
 
-        // Drop a ghost on the square being left, remembering its pose. A refused step drops one too;
-        // the trail keeps the last 7 ghosts and never redraws an older one (ROM: PROG3).
+        // Leave a ghost where the prog is standing, even if it then cannot take its step. Only the newest ghosts are kept (ROM: PROG3).
         _ghosts.Insert(0, new Ghost(_position, GetWalkAnimationFrameIndex()));
         if (_ghosts.Count > ProgTuning.GhostCount)
         {
             _ghosts.RemoveAt(_ghosts.Count - 1);
         }
 
-        // The step is 2 columns (4 pixels) on X, or 4 rows (4 pixels) on Y, on one axis only.
+        // A step goes left, right, up or down. It never goes diagonally.
         int stepX = ScreenSize.ToPortPixelsFromColumns(StepXColumns);
         int stepY = ScreenSize.ToPortPixels(StepYRows);
         IntVector2 step = _direction switch
@@ -363,13 +360,15 @@ public sealed class Prog : IExplodable, IRemovable
         }
         else
         {
-            // A refused step is dropped completely and the prog aims again (ROM: CKLIM fails, then GPDIR).
+            // The step would leave the playfield, so it is not taken and the prog picks a new direction (ROM: CKLIM fails, then GPDIR).
             _direction = PickDirection(field);
             _walkCycleStep = 0;
         }
     }
 
-    /// <summary>True when the box is inside the playfield; a failure rejects the whole move.</summary>
+    /// <summary>Says whether a box is wholly inside the playfield. If the prog's next step would not be, the prog does not take it.</summary>
+    /// <param name="bounds">The inside of the playfield wall.</param>
+    /// <param name="box">The box to check.</param>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRH11.ASM</c> <c>CKLIMV</c>.</item>
@@ -382,17 +381,18 @@ public sealed class Prog : IExplodable, IRemovable
         && box.Right <= bounds.Right
         && box.Bottom <= bounds.Bottom;
 
-    /// <summary>This prog's box placed at an arbitrary position (used for the frozen ghosts).</summary>
+    /// <summary>The prog's box, as it would be at another place. It is used to draw the ghosts.</summary>
+    /// <param name="position">Where the top-left corner of the box is.</param>
     private Rectangle GetBoundsAt(IntVector2 position) =>
         new(position.X, position.Y, _collisionSize.Width, _collisionSize.Height);
 
-    /// <summary>Picks the next cardinal direction: half the re-aims consider X, half Y, so never diagonal.</summary>
-    /// <param name="field">The playfield: the player and the bounds to aim and wrap against.</param>
-    /// <returns>The direction to walk — always one of left, right, up or down.</returns>
+    /// <summary>Picks which way the prog walks next. Half the time it picks left or right, and half the time up or down, so it never walks diagonally. It picks the way that leads towards the spot it is aiming at.</summary>
+    /// <param name="field">The playfield, which says where the player and the walls are.</param>
+    /// <returns>The way to walk: left, right, up or down.</returns>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>GPDIR</c> — an exact match counts as "arrived", so ties
-    /// turn the prog around.</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>GPDIR</c>. When the prog is already level with the spot it is
+    /// aiming at, it goes left, or up.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
     /// </remarks>
@@ -403,7 +403,7 @@ public sealed class Prog : IExplodable, IRemovable
 
         if (_random.Next(AxisFlipSides) == 0)
         {
-            // The offset is in columns, so convert it to pixels first.
+            // _offsetX is in columns, so it is changed to pixels.
             int aimX = player.X + ScreenSize.ToPortPixelsFromColumns(_offsetX);
             if (aimX > bounds.Right + ScreenSize.ToPortPixelsFromColumns(WrapMarginXColumns))
             {
@@ -422,11 +422,11 @@ public sealed class Prog : IExplodable, IRemovable
         return aimY <= _position.Y ? Direction8.Up : Direction8.Down;
     }
 
-    /// <summary>Rolls the persistent aim offsets: X in columns (-28..+28), Y in rows (-16..+18).</summary>
+    /// <summary>Picks at random how far from the player the prog aims: some columns to the left or right, and some rows above or below. The prog keeps aiming that far off until this is called again.</summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c> — the offsets are the prog's standing error
-    /// against the player.</item>
+    /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c>. These numbers are how far the prog's aim stays off
+    /// the player.</item>
     /// <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     /// </list>
     /// </remarks>

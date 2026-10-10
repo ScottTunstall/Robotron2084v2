@@ -1,15 +1,15 @@
 namespace Robotron2084.Entities;
 
 /// <summary>
-/// Which of the four walk sequences a walker is showing. The numeric values are the ROM's own block order, so
-/// <c>(int)walkSequence * 3</c> is the first animation frame of that sequence's three.
+/// Which way a walker is walking, which decides the three walk animation frames it uses. The numbers are in
+/// the arcade's own order, so <c>(int)walkSequence * 3</c> is the place of the first of the three.
 /// </summary>
 public enum WalkSequence
 {
-    /// <summary>Walking left (diagonals to the left reuse it).</summary>
+    /// <summary>Walking left. Walking diagonally to the left uses it too.</summary>
     Left = 0,
 
-    /// <summary>Walking right (diagonals to the right reuse it).</summary>
+    /// <summary>Walking right. Walking diagonally to the right uses it too.</summary>
     Right = 1,
 
     /// <summary>Walking down.</summary>

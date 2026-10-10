@@ -3,9 +3,9 @@ using Robotron2084.Core;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The playfield interior in the strip engine's units: X in arcade pixels, Y in rows.</summary>
-/// <remarks>ROM: RRF.ASM's playfield-edge constants, here expressed as the wall rectangle. A strip
-/// outside it is dropped, never scaled.</remarks>
+/// <summary>The inside of the playfield, measured the way strips are: in arcade pixels across and in rows down. A strip outside it is not drawn.</summary>
+/// <remarks>ROM: RRF.ASM's playfield-edge constants, given here as the rectangle inside the wall. A strip
+/// outside it is left out. It is never squeezed to fit.</remarks>
 public readonly record struct StripClip(int MinX, int MaxX, int MinY, int MaxY)
 {
     /// <summary>Makes the clip for a playfield whose edges are given in port pixels.</summary>

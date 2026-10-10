@@ -5,19 +5,19 @@ using Robotron2084.Level;
 
 namespace Robotron2084.Entities;
 
-/// <summary>Holds every enemy or object of one kind that is currently on screen, and does the shared jobs of updating, cleaning out dead ones, and drawing them all.</summary>
+/// <summary>Holds every enemy or object of one kind that is on the field, and does the jobs they all share: updating them, clearing out the dead ones and drawing them.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: no single matching routine — this is a C# implementation structure. It mirrors
-/// the original game's own convention of keeping a separate list per object kind, each object
-/// carrying its own "next" pointer (see <c>RRDX2.ASM</c>'s <c>NEXT</c>/<c>NEXTZ</c> field)</item>
-/// <item>Disassembly: Not separately labelled in <c>asm/robomame.asm</c>, though it documents the same
-/// convention (for example <c>spheroids_enforcers_quarks_sparks_shells</c>,
+/// <item>Original source: no single matching routine. This list belongs to the C# version. It copies
+/// the original game's habit of keeping a separate list for each kind of object, where each object
+/// holds a pointer to the next one (see <c>RRDX2.ASM</c>'s <c>NEXT</c>/<c>NEXTZ</c> field)</item>
+/// <item>Disassembly: not separately labelled in <c>asm/robomame.asm</c>, though it describes the same
+/// habit (for example <c>spheroids_enforcers_quarks_sparks_shells</c>,
 /// <c>family_list_pointer</c> and <c>electrode_list_pointer</c>, each described as a "linked list
-/// of..." its own object kind).</item>
+/// of..." its own kind of object).</item>
 /// </list>
 /// </remarks>
-/// <typeparam name="T">The entity type the list holds.</typeparam>
+/// <typeparam name="T">The kind of entity the list holds.</typeparam>
 public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
     where T : class, IEntity
 {
@@ -26,22 +26,22 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
     /// <inheritdoc/>
     public int Count => _items.Count;
 
-    /// <summary>The entities in the list, as the common type the registry-driven phases walk.</summary>
+    /// <summary>Every entity in the list, whatever kind it is.</summary>
     public IEnumerable<IEntity> Entities => _items;
 
-    /// <summary>The entity at the end of the list — the ROM's "last slot" (<c>[^1]</c>).</summary>
+    /// <summary>The last entity in the list.</summary>
     public T GetLast() => _items[^1];
 
     /// <summary>The entity at <paramref name="index"/>.</summary>
-    /// <param name="index">Its position in the list.</param>
+    /// <param name="index">Its place in the list, counting from 0.</param>
     public T this[int index] => _items[index];
 
     /// <summary>Adds an entity to the list.</summary>
     /// <param name="entity">The entity to add.</param>
     public void Add(T entity) => _items.Add(entity);
 
-    /// <summary>True when at least one entity in the list satisfies the predicate.</summary>
-    /// <param name="predicate">What to look for.</param>
+    /// <summary>Says whether at least one entity in the list passes a test.</summary>
+    /// <param name="predicate">The test.</param>
     public bool Any(Func<T, bool> predicate) => _items.Any(predicate);
 
     /// <inheritdoc/>
@@ -53,7 +53,7 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
         }
     }
 
-    /// <summary>Walks the list in order.</summary>
+    /// <summary>Goes through the list in order.</summary>
     public IEnumerator<T> GetEnumerator() => _items.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

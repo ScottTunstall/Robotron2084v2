@@ -7,53 +7,54 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A shot fired by an enforcer robot. It curves through the air along a bent path and stops dead at a wall instead of bouncing.</summary>
+/// <summary>A shot fired by an enforcer. Its path curves, and it stops at a wall and does not bounce.</summary>
 /// <seealso cref="Enforcer"/>
 /// <remarks>
-/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
-/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_moveTimer"/> times its moves,
-/// <see cref="_accelerationTimer"/> times its speeding up, and <see cref="_flickerTimer"/> times its flicker (see
-/// <see cref="ArcadeClock"/>).
+/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. The one time it does not is during the
+/// short freeze just after the player is killed. <see cref="_moveTimer"/> times its moves,
+/// <see cref="_accelerationTimer"/> times the changes in its speed, and <see cref="_flickerTimer"/> times its
+/// flicker (see <see cref="ArcadeClock"/>).
 ///
 /// <list type="bullet">
-/// <item>Original source: <c>RRC11.ASM</c>, routine <c>SPARK</c> (fired via <c>ENFSHT</c>, flicker frames
-/// <c>SPKP0</c>-<c>SPKP3</c>)</item>
+/// <item>Original source: <c>RRC11.ASM</c>, routine <c>SPARK</c> (fired by <c>ENFSHT</c>. Its flicker animation
+/// frames are <c>SPKP0</c> to <c>SPKP3</c>)</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$1404</c> (<c>CREATE_SPARK</c>)</item>
 /// </list>
 /// </remarks>
 public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
     private static readonly int Size = ScreenSize.ToPortPixels(CollisionSizes.MissileSizeSpecPixels);
-    // The acceleration on each axis: one fixed value, in 1/256 of a pixel per move, rolled once when the spark is made (ROM: PD2/PD4)
+    // How much is added to the spark's speed each time the speed changes: one amount for sideways and one for up or down, in 256ths of a pixel. They are picked at random when the spark is made and never change (ROM: PD2/PD4).
     private readonly IntVector2 _accelerationSubpixels;
     private readonly Random _random;
     private readonly SpriteSet _sprites;
 
-    // Counts up towards the next time the acceleration is added to the velocity. That happens every 4 ROM frames (see ArcadeClock).
+    // Counts up to the next time the spark's speed changes (see ArcadeClock).
     private int _accelerationTimer;
 
-    // Counts up towards the next flicker frame. Each animation frame is shown for 4 ROM frames (see ArcadeClock).
+    // How long the spark has been alive. It decides which flicker animation frame is shown (see ArcadeClock).
     private int _flickerTimer;
 
-    // Counts the port ticks until one ROM frame has passed, so the velocity is added once per frame and not once per tick (see ArcadeClock).
+    // Counts up to the spark's next move (see ArcadeClock).
     private int _moveTimer;
 
     private IntVector2 _position;
 
-    // Keeps the fraction of a pixel left over from each move, so the steps never drift.
+    // The fraction of a pixel left over from the last move, in 256ths of a pixel. It is added to the next move, so nothing is lost.
     private IntVector2 _positionRemainderSubpixels;
 
-    // How long the spark has left to live, in clock units (see ArcadeClock).
+    // How much longer the spark lasts (see ArcadeClock).
     private int _lifeClockUnitsRemaining;
 
-    private IntVector2 _velocitySubpixels; // The current velocity, in 1/256 of a pixel per ROM frame (see ArcadeClock) (ROM: OXV/OYV)
+    private IntVector2 _velocitySubpixels; // How far the spark goes on each move, sideways and up or down, in 256ths of a pixel (ROM: OXV/OYV).
 
-    /// <summary>Fires a spark, aimed at the player once, with jitter.</summary>
+    /// <summary>Makes a spark and aims it near the player. It is aimed only this once.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    /// <param name="position">Where it appears — the firing enforcer's position.</param>
-    /// <param name="playerPosition">The player, which the spark is aimed at.</param>
-    /// <param name="random">The random source, standing in for the arcade's SEED/LSEED/HSEED rolls.</param>
-    /// <param name="playfieldBounds">The playfield, used only for the "no X jitter near the left wall" rule. Null applies no suppression.</param>
+    /// <param name="position">Where it starts, which is where the enforcer that fired it is.</param>
+    /// <param name="playerPosition">Where the player is, which the spark is aimed at.</param>
+    /// <param name="random">Where its random numbers come from. It stands in for the arcade's own random numbers (<c>SEED</c>, <c>LSEED</c> and <c>HSEED</c>).</param>
+    /// <param name="playfieldBounds">The inside of the wall. When the player is near the left wall, the spark's aim is not moved sideways. If this is null, that rule is not used.</param>
     public Spark(
         SpriteSet sprites,
         IntVector2 position,
@@ -65,7 +66,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _position = position;
         _random = random;
 
-        // A random aim wobble (see Player): from -16 to +15 columns sideways and rows up and down. There is no sideways wobble when the Player is against the left wall.
+        // The spark is not aimed exactly at the Player. Its aim is moved a random amount sideways and a random amount up or down. There is no sideways change when the Player is near the left wall.
         int jitterX = _random.Next(-SparkTuning.SparkJitterRange, SparkTuning.SparkJitterRange);
         int jitterY = _random.Next(-SparkTuning.SparkJitterRange, SparkTuning.SparkJitterRange);
         if (playfieldBounds is { } bounds &&
@@ -77,18 +78,17 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         int deltaX = playerPosition.X + ScreenSize.ToPortPixelsFromColumns(jitterX) - position.X;
         int deltaY = playerPosition.Y + ScreenSize.ToPortPixels(jitterY) - position.Y;
 
-        // Four times the aim change, in fractions of a pixel. The mover only acts on the high byte of the velocity.
+        // The starting speed is set so that, if it never changed, the spark would reach the spot it is aimed at after SparkTuning.SparkAimDivisor moves.
         int subpixelsPerPortPixelPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
         _velocitySubpixels = new IntVector2(deltaX * subpixelsPerPortPixelPerMove, deltaY * subpixelsPerPortPixelPerMove);
 
-        // The acceleration on each axis: a random value from -16 to +15, in the same fractions of a pixel.
-        // One unit of sideways acceleration is one column. One unit of up-and-down acceleration is one row.
+        // Pick how much the speed will change by each time. The up-or-down amount is halved, because the arcade counts up and down in rows, and a row is half the size of a column.
         _accelerationSubpixels = new IntVector2(
             _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPixelPerMove,
             _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPixelPerMove
                 * ScreenSize.ToPortPixels(1) / ScreenSize.ToPortPixelsFromColumns(1));
 
-        // How long the spark lives, in clock units. Each port tick adds 5, and each ROM frame needs 6 (see ArcadeClock).
+        // Pick at random how long the spark lasts.
         _lifeClockUnitsRemaining = ArcadeClock.ToClockUnits(_random.Next(
             SparkTuning.SparkLifeMinRomFrames,
             SparkTuning.SparkLifeMaxRomFrames + 1));
@@ -96,32 +96,31 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
-    /// <summary>The spark's 4x4 spec-pixel collision box at <see cref="Position"/>.</summary>
+    /// <summary>The box used to tell what the spark hits.</summary>
     public Rectangle GetBounds() => new(_position.X, _position.Y, Size, Size);
 
-    /// <summary>The flicker frame this spark is showing — the sprite pixel-perfect collision compares.</summary>
+    /// <summary>The flicker animation frame the spark is showing. It is also used to tell, pixel by pixel, whether the spark is touching something.</summary>
     public Texture2D GetCurrentAnimationFrame() => _sprites.SparkAnimationFrames[GetAnimationFrameIndex()];
 
-    /// <summary>Only ever transitions Alive -> Dead (immediate removal, no death animation).</summary>
+    /// <summary>Alive until it is shot or its time runs out. Then it is Dead at once, with no death animation.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Top-left of the spark's collision box.</summary>
+    /// <summary>Where the top-left corner of the spark's box is.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>The per-axis acceleration, in 1/256 port px per ROM frame of velocity, applied once per move (test hook).</summary>
-    /// <remarks>Rolled once at spawn and CONSTANT for the spark's life.</remarks>
+    /// <summary>How much is added to the spark's speed each time the speed changes: one amount for sideways and one for up or down, in 256ths of a pixel. Tests use this.</summary>
+    /// <remarks>It is picked at random when the spark is made, and it never changes.</remarks>
     internal IntVector2 AccelerationSubpixels => _accelerationSubpixels;
 
-    /// <summary>Which of the four flicker frames is showing (test hook).</summary>
-    /// <remarks>The ROM's 4 flicker animation frames, one per 4-ROM-frame cycle.</remarks>
+    /// <summary>Which of the flicker animation frames is showing, counting from 0.</summary>
+    /// <remarks>ROM: there are 4 flicker animation frames. Each one is shown for 4 fiftieths of a second.</remarks>
     internal int GetAnimationFrameIndex() => _flickerTimer / ArcadeClock.ToClockUnits(SparkTuning.SparkFrameIntervalRomFrames) % SpriteSet.SparkAnimationFrameCount;
 
-    /// <summary>The current velocity, in 1/256 port pixels per ROM frame (test hook, for the ballistic tests).</summary>
+    /// <summary>How far the spark goes on each move, sideways and up or down, in 256ths of a pixel. Tests use this.</summary>
     internal IntVector2 VelocitySubpixels => _velocitySubpixels;
 
-    /// <summary>Draws the current flicker frame.
-    /// </summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <summary>Draws the flicker animation frame that is showing.</summary>
+    /// <param name="spriteBatch">What the spark is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (this.IsAlive())
@@ -130,7 +129,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         }
     }
 
-    /// <summary>Laser hit: removed at once.</summary>
+    /// <summary>Kills the spark at once. A laser does this.</summary>
     public void Kill()
     {
         if (!this.IsAlive())
@@ -141,9 +140,9 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Runs the spark's clocks: flicker, life, the move step and the shared mover.</summary>
-    /// <param name="gameTime">Unused — every clock is counted in ticks.</param>
-    /// <param name="field">The playfield wall.</param>
+    /// <summary>Runs one tick. The spark flickers and its time counts down. When it is time to, its speed changes and it moves.</summary>
+    /// <param name="gameTime">Not used. The spark counts ticks.</param>
+    /// <param name="field">The playfield, whose walls the spark stays inside.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (!this.IsAlive())
@@ -153,7 +152,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
         _flickerTimer += ArcadeClock.UnitsPerPortTick;
 
-        // The life counts down. Each port tick takes 5 clock units and each ROM frame needs 6 (see ArcadeClock).
+        // Count down the spark's life. When it runs out, the spark is gone.
         _lifeClockUnitsRemaining -= ArcadeClock.UnitsPerPortTick;
         if (_lifeClockUnitsRemaining <= 0)
         {
@@ -161,7 +160,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        // Each move, the acceleration is added to the velocity, so the path bends into a curve.
+        // The spark's speed changes a little at a steady rate. This is what makes its path curve.
         _accelerationTimer += ArcadeClock.UnitsPerPortTick;
         if (_accelerationTimer >= ArcadeClock.ToClockUnits(SparkTuning.SparkMoveIntervalRomFrames))
         {
@@ -171,7 +170,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
                 _velocitySubpixels.Y + _accelerationSubpixels.Y);
         }
 
-        // The mover adds the velocity to the position once per ROM frame (see ArcadeClock), keeping the fraction left over.
+        // The spark moves 50 times a second, as it did in the arcade. A tick comes 60 times a second, so it does not move on every tick (see ArcadeClock).
         _moveTimer += ArcadeClock.UnitsPerPortTick;
         if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
         {
@@ -180,8 +179,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
                 _positionRemainderSubpixels.X + _velocitySubpixels.X,
                 _positionRemainderSubpixels.Y + _velocitySubpixels.Y);
 
-            // The step is taken once per ROM frame (see ArcadeClock), not once per move pass. Spreading it over the move interval
-            // would run four times too slow. One port pixel is SparkVelocityScale fractions of a pixel.
+            // The spark moves by whole pixels only. The fraction of a pixel left over is kept for the next move.
             int stepX = _positionRemainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
             int stepY = _positionRemainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
             _positionRemainderSubpixels = new IntVector2(
@@ -192,17 +190,17 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         }
     }
 
-    /// <summary>Applies one mover step and the wall rejection.</summary>
-    /// <param name="field">The playfield wall.</param>
-    /// <param name="stepX">This frame's whole-pixel step on X.</param>
-    /// <param name="stepY">This frame's whole-pixel step on Y.</param>
+    /// <summary>Makes one move. The sideways part is made only if it keeps the spark inside the playfield, and the same goes for the up-or-down part.</summary>
+    /// <param name="field">The playfield, whose walls the spark stays inside.</param>
+    /// <param name="stepX">How many pixels to go left or right on this move.</param>
+    /// <param name="stepY">How many pixels to go up or down on this move.</param>
     private void MoveBy(PlayField field, int stepX, int stepY)
     {
-        // A safety cap on the velocity, matching the ROM's own top speed.
+        // A safety limit on how far the spark can go in one move.
         stepX = Math.Clamp(stepX, -SparkTuning.SparkMaxSpeed, SparkTuning.SparkMaxSpeed);
         stepY = Math.Clamp(stepY, -SparkTuning.SparkMaxSpeed, SparkTuning.SparkMaxSpeed);
 
-        // Each axis moves only if the step stays inside the playfield. Otherwise the spark stops dead, with no clamping and no bounce.
+        // The sideways move is made only if it keeps the spark inside the playfield. The same goes for the up-or-down move. The spark does not bounce.
         Rectangle inner = field.Wall.PlayfieldBounds;
         int x = _position.X;
         int y = _position.Y;

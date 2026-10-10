@@ -24,19 +24,19 @@ public sealed class LaserSlots
     private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
     private readonly SpriteSet _sprites;
 
-    /// <summary>Wires the slots to the sprites their lasers are drawn with.</summary>
+    /// <summary>Makes the empty slots, and keeps the sprites that new lasers are drawn with.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     public LaserSlots(SpriteSet sprites) => _sprites = sprites;
 
-    /// <summary>The lasers currently alive, never more than <see cref="Capacity"/>.</summary>
+    /// <summary>The lasers that are in flight now. There are never more than <see cref="Capacity"/>.</summary>
     public IEnumerable<PlayerLaser> GetActiveLasers() =>
         _slots.OfType<PlayerLaser>().Where(laser => laser.IsAlive());
 
-    /// <summary>Every slot in order; null means empty. Exposed for tests and diagnostics.</summary>
+    /// <summary>Every slot in order. An empty slot is null. Tests and debugging tools use this.</summary>
     public IReadOnlyList<PlayerLaser?> Slots => _slots;
 
     /// <summary>Draws every laser that is in flight.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="spriteBatch">What the lasers are drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         foreach (PlayerLaser? laser in _slots)
@@ -47,9 +47,9 @@ public sealed class LaserSlots
 
     /// <summary>Fires a laser into the first empty slot.</summary>
     /// <param name="position">Where the laser appears.</param>
-    /// <param name="direction">The direction it travels in.</param>
-    /// <param name="laser">The laser that was fired, or null when every slot is busy.</param>
-    /// <returns>True when a laser was fired, false when all slots are live.</returns>
+    /// <param name="direction">The way it flies.</param>
+    /// <param name="laser">The laser that was fired, or null when every slot is in use.</param>
+    /// <returns>True when a laser was fired, false when every slot is in use.</returns>
     public bool TryFire(IntVector2 position, Direction8 direction, [NotNullWhen(true)] out PlayerLaser? laser)
     {
         for (int i = 0; i < Capacity; i++)
@@ -66,8 +66,8 @@ public sealed class LaserSlots
         return false;
     }
 
-    /// <summary>Updates every laser that is still alive.</summary>
-    /// <param name="gameTime">Elapsed time for this tick.</param>
+    /// <summary>Moves every laser that is in flight on by one tick.</summary>
+    /// <param name="gameTime">The game's own clock for this tick.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {

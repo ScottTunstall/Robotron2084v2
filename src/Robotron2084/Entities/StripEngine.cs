@@ -14,7 +14,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public enum StripEngine
 {
-    /// <summary>Rows that move straight up and down. Its records are taken from the arcade's list of free objects, which the port does not keep, so it never runs out here.</summary>
+    /// <summary>Rows that move straight up and down. Its records are taken from the arcade's list of free objects, which this game does not keep, so it never runs out here.</summary>
     Vertical,
 
     /// <summary>Columns that move left and right.</summary>

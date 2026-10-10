@@ -9,29 +9,37 @@ namespace Robotron2084.Entities;
 
 /// <summary>Gorf hops across the screen in a string of jumps, from one side to the other, dropping grunts as it goes. It does not shoot.</summary>
 /// <remarks>
-/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on nearly every tick, through
-/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>. <see cref="_stepTimer"/> times its steps
+/// It has no beat. The <see cref="PlayField"/> calls <see cref="Update"/> on every tick, through
+/// <see cref="FieldEntities"/> and <see cref="PlayField.UpdateEntity"/>.
+/// The one time it does not is during the short freeze just after the player is killed.
+///
+/// <see cref="_stepTimer"/> times its steps
 /// and <see cref="_animationTimer"/> times its animation frames (see <see cref="ArcadeClock"/>).
 ///
-/// A new kind of robot of the author's own with no arcade routine behind it (notes §138.2). It starts off the screen, on a random side and at a random
-/// height, and hops to the far side (<see cref="GorfPath"/>), then goes. Every hop is the same height, 16 pixels for now (<see cref="GorfTuning.HopRows"/>).
-/// It stops three times on the way (<see cref="GorfTuning.DropStops"/>) and drops a handful of grunts side by side from its body, which fall to the ground, up to six at a stop.
-/// How many is rolled as a spheroid rolls its enforcers: from the wave's <c>ENFNUM</c> (<see cref="LevelParameters.MaxDropsX2"/>), so it grows with the wave and the
-/// difficulty; the level can only hold so many grunts, and a stop drops fewer, or none, when it is full. A Gorf that gets across is gone for good and scores nothing; one that is shot scores as a grunt does.
+/// Gorf is the author's own robot. It is not in the arcade game (notes §138.2). It starts off the screen, on a random side and
+/// at a random height. It hops to the far side (<see cref="GorfPath"/>) and then it is gone. Every hop is the same height
+/// (<see cref="GorfTuning.HopRows"/>).
+///
+/// At a few points on the way (<see cref="GorfTuning.DropStops"/>) it drops some grunts side by side, which fall to the ground.
+/// How many it drops is picked at random, the way a spheroid picks how many enforcers to drop, from the wave's <c>ENFNUM</c>
+/// (<see cref="LevelParameters.MaxDropsX2"/>). So later waves and harder settings drop more. A level can only hold so many
+/// grunts, so Gorf drops fewer, or none, when the level is full.
+///
+/// A Gorf that gets across scores nothing. A Gorf that is shot scores the same as a grunt.
 /// </remarks>
 public sealed class Gorf : IExplodable, IRemovable
 {
-    /// <summary>The robot's own box, in port pixels.</summary>
+    /// <summary>How big Gorf is, in port pixels. This size is used to tell what Gorf touches.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixels(CollisionSizes.GorfCollisionSize.Width), ScreenSize.ToPortPixels(CollisionSizes.GorfCollisionSize.Height));
 
-    /// <summary>How many clock units pass between one step and the next. <see cref="_stepTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, a step is taken and this is subtracted from it.</summary>
+    /// <summary>The time from one step to the next, in clock units (see <see cref="ArcadeClock"/>). <see cref="_stepTimer"/> counts up to this. When it gets there, a step is taken and this is taken off it.</summary>
     private static readonly int StepClockUnits = ArcadeClock.ToClockUnits(GorfTuning.StepRomFrames);
 
-    /// <summary>How many clock units each animation frame is shown for. <see cref="_animationTimer"/> goes up by one port tick's worth of clock units each tick, and when it reaches this, the next animation frame is shown and this is subtracted from it.</summary>
+    /// <summary>How long each animation frame is shown for, in clock units (see <see cref="ArcadeClock"/>). <see cref="_animationTimer"/> counts up to this. When it gets there, the next animation frame is shown and this is taken off it.</summary>
     private static readonly int AnimationFrameClockUnits = ArcadeClock.ToClockUnits(GorfTuning.AnimationFrameRomFrames);
 
-    /// <summary>How far each step goes sideways, in port pixels. It is added to or subtracted from the X of <see cref="_position"/> at each step, and it sets how many steps cross the playfield, which is stored in <see cref="_totalSteps"/>.</summary>
+    /// <summary>How far Gorf goes sideways on each step, in port pixels. Each step moves <see cref="_position"/> this far left or right. It also decides how many steps it takes to cross the playfield (<see cref="_totalSteps"/>).</summary>
     private static readonly int StepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
 
     /// <summary>How high every hop goes, in port pixels.</summary>
@@ -52,11 +60,11 @@ public sealed class Gorf : IExplodable, IRemovable
     private int _stepInHop;
     private int _stepTimer;
 
-    /// <summary>Creates a Gorf just off the screen, on a random side and at a random height, with its drops already rolled.</summary>
+    /// <summary>Makes a Gorf just off the screen, on a random side and at a random height, and works out where on its way it will drop grunts.</summary>
     /// <param name="sprites">The shared sprite set.</param>
-    /// <param name="random">The random source: the side, the height and the drops.</param>
+    /// <param name="random">Where its random numbers come from. They pick the side, the height and how many grunts it drops.</param>
     /// <param name="playfieldBounds">The inside of the wall, in port pixels. Gorf starts and ends outside it.</param>
-    /// <param name="maxDropsX2">This wave's drop bound, rolled as a spheroid's is.</param>
+    /// <param name="maxDropsX2">This wave's limit on how many grunts it drops at once. The number is picked the way a spheroid picks its enforcers.</param>
     public Gorf(SpriteSet sprites, Random random, Rectangle playfieldBounds, int maxDropsX2)
     {
         _sprites = sprites;
@@ -76,27 +84,27 @@ public sealed class Gorf : IExplodable, IRemovable
         }
     }
 
-    /// <summary>The robot's own box at <see cref="Position"/>.</summary>
+    /// <summary>The box Gorf takes up on the screen. It is used to tell what Gorf touches.</summary>
     public Rectangle GetBounds() => new(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
 
-    /// <summary>Alive until shot or across the screen; never Dying (see <see cref="Kill"/>).</summary>
+    /// <summary>Alive until it is shot or gets across the screen. It is never Dying, because it has no death animation (see <see cref="Kill"/>).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
-    /// <summary>Top-left of the Gorf.</summary>
+    /// <summary>Where Gorf's top-left corner is.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>How many stops it has still to make to drop grunts (test hook).</summary>
+    /// <summary>How many more times it will drop grunts. Only tests use this.</summary>
     internal int GetDropStopsRemaining() => _dropSteps.Count;
 
-    /// <summary>Which of the two animation frames is showing, 0 or 1 (test hook).</summary>
+    /// <summary>Which of the two animation frames is showing, 0 or 1. Only tests use this.</summary>
     internal int AnimationFrameIndex => _animationFrameIndex;
 
     /// <summary>Gets the animation frame the Gorf is showing, for drawing and for the appear and explosion effects.</summary>
-    /// <returns>The texture for the current frame.</returns>
+    /// <returns>The animation frame that is showing.</returns>
     public Texture2D GetCurrentAnimationFrame() => _sprites.GorfAnimationFrames[_animationFrameIndex];
 
     /// <summary>Draws the part of the current animation frame that is inside the wall, so Gorf comes in from off the screen.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="spriteBatch">What Gorf is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (!this.IsAlive())
@@ -118,7 +126,7 @@ public sealed class Gorf : IExplodable, IRemovable
         spriteBatch.Draw(animationFrame, visible, source, Color.White);
     }
 
-    /// <summary>Kills the Gorf outright: no flash, no death animation.</summary>
+    /// <summary>Kills Gorf at once, with no flash and no death animation.</summary>
     public void Kill()
     {
         if (!this.IsAlive())
@@ -129,8 +137,8 @@ public sealed class Gorf : IExplodable, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Runs one tick: animates, and on each step moves along its hop and drops a grunt when one is due.</summary>
-    /// <param name="gameTime">Unused — the steps are counted in ticks.</param>
+    /// <summary>Runs one tick. Gorf animates. When a step is due, it moves along its hop, and drops grunts if it has reached a drop point.</summary>
+    /// <param name="gameTime">Not used. Gorf counts ticks.</param>
     /// <param name="field">The playfield, which the dropped grunts are put on.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -150,6 +158,7 @@ public sealed class Gorf : IExplodable, IRemovable
         Step(field);
     }
 
+    /// <summary>Shows the next animation frame when it is time to.</summary>
     private void Animate()
     {
         _animationTimer += ArcadeClock.UnitsPerPortTick;
@@ -162,6 +171,8 @@ public sealed class Gorf : IExplodable, IRemovable
         _animationFrameIndex = (_animationFrameIndex + 1) % _sprites.GorfAnimationFrames.Length;
     }
 
+    /// <summary>Takes one step along the hop. Gorf drops grunts if a drop is due, and it is gone once it has crossed the playfield.</summary>
+    /// <param name="field">The playfield, which the dropped grunts are put on.</param>
     private void Step(PlayField field)
     {
         _stepCount++;
@@ -185,7 +196,7 @@ public sealed class Gorf : IExplodable, IRemovable
         }
     }
 
-    /// <summary>Drops a handful of grunts side by side from Gorf's body, rolled as a spheroid rolls its enforcers: a roll from 1 to the wave's bound, halved and rounded up, and no more than six.</summary>
+    /// <summary>Drops some grunts side by side from Gorf's body. How many is picked the way a spheroid picks its enforcers: a random number from 1 up to the wave's limit, halved and rounded up. It is never more than <see cref="GorfTuning.MaxGruntsPerDrop"/>.</summary>
     /// <param name="field">The playfield, which puts the grunts on the field and holds them back when the level is full.</param>
     private void DropGrunts(PlayField field)
     {
