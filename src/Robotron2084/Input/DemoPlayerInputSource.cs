@@ -67,7 +67,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         // port's facing-follow fire rule never overrides the AI's aim.
         if (nearest is { } target &&
             Math.Abs(target.X - position.X) + Math.Abs(target.Y - position.Y)
-                < ScreenSize.ToPortPixels(AttractTuning.DemoFireRangeArcadePixels))
+                < ScreenSize.ToPortPixelsFromArcadePixels(AttractTuning.DemoFireRangeArcadePixels))
         {
             // 8-way digital: exactly -1/0/1 per component (PlayerInputState contract).
             IntVector2 aim = new(Math.Sign(target.X - position.X), Math.Sign(target.Y - position.Y));
@@ -99,7 +99,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
     /// <returns>The direction, with its X component bent when it was heading into a wall.</returns>
     private static IntVector2 SteerClearOnX(IntVector2 move, IntVector2 position, Rectangle bounds, IntVector2 centre)
     {
-        int clearance = ScreenSize.ToPortPixels(AttractTuning.DemoWallClearanceArcadePixels);
+        int clearance = ScreenSize.ToPortPixelsFromArcadePixels(AttractTuning.DemoWallClearanceArcadePixels);
         bool headingIntoWall = (move.X < 0 && position.X < bounds.X + clearance)
             || (move.X > 0 && position.X > bounds.Right - clearance);
 
@@ -116,7 +116,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
     /// <returns>The direction, with its Y component bent when it was heading into a wall.</returns>
     private static IntVector2 SteerClearOnY(IntVector2 move, IntVector2 position, Rectangle bounds, IntVector2 centre)
     {
-        int clearance = ScreenSize.ToPortPixels(AttractTuning.DemoWallClearanceArcadePixels);
+        int clearance = ScreenSize.ToPortPixelsFromArcadePixels(AttractTuning.DemoWallClearanceArcadePixels);
         bool headingIntoWall = (move.Y < 0 && position.Y < bounds.Y + clearance)
             || (move.Y > 0 && position.Y > bounds.Bottom - clearance);
 
@@ -140,7 +140,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         {
             int dx = position.X - robot.X;
             int dy = position.Y - robot.Y;
-            if (Math.Abs(dx) + Math.Abs(dy) < ScreenSize.ToPortPixels(AttractTuning.DemoThreatDistanceArcadePixels))
+            if (Math.Abs(dx) + Math.Abs(dy) < ScreenSize.ToPortPixelsFromArcadePixels(AttractTuning.DemoThreatDistanceArcadePixels))
             {
                 return SteerClearOfWalls(new IntVector2(Math.Sign(dx), Math.Sign(dy)), position, bounds, centre);
             }
