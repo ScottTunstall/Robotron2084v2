@@ -131,8 +131,8 @@ public sealed class RobotTransporter
         foreach ((IEntity robot, TransportImage image) in _robots)
         {
             Rectangle bounds = robot.GetBounds();
-            int left = bounds.X + ((bounds.Width - ScreenSize.ToPortPixels(image.Width)) / 2);
-            int top = bounds.Y + ((bounds.Height - ScreenSize.ToPortPixels(image.Height)) / 2);
+            int left = bounds.X + ((bounds.Width - ScreenSize.ToPortPixelsFromArcadePixels(image.Width)) / 2);
+            int top = bounds.Y + ((bounds.Height - ScreenSize.ToPortPixelsFromArcadePixels(image.Height)) / 2);
             DrawImage(spriteBatch, sprites, image, new Point(left, top));
         }
     }
@@ -144,7 +144,7 @@ public sealed class RobotTransporter
     /// <param name="topLeft">Where the image's top-left corner goes, in port pixels.</param>
     private static void DrawImage(SpriteBatch spriteBatch, SpriteSet sprites, TransportImage image, Point topLeft)
     {
-        int pixelSize = ScreenSize.ToPortPixels(1);
+        int pixelSize = ScreenSize.ToPortPixelsFromArcadePixels(1);
         for (int y = 0; y < image.Height; y++)
         {
             for (int x = 0; x < image.Width; x++)

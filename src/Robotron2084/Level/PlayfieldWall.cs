@@ -15,7 +15,7 @@ namespace Robotron2084.Level;
 public sealed class PlayfieldWall
 {
     /// <summary>How thick the wall is, in port pixels. It is added to each side of <see cref="PlayfieldBounds"/> to make <see cref="GetOuterBounds()"/>.</summary>
-    public static readonly int Thickness = ScreenSize.ToPortPixels(CollisionSizes.WallThicknessArcadePixels);
+    public static readonly int Thickness = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.WallThicknessArcadePixels);
 
     private readonly WallColorCycle _colourCycle;
     private readonly Rectangle _playfieldBounds;

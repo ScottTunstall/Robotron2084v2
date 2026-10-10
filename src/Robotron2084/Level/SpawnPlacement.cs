@@ -14,7 +14,7 @@ public sealed class SpawnPlacement
     private const int PercentSides = 100;
 
     /// <summary>How big a spot to look for when the thing being put down does not say, in port pixels.</summary>
-    private static readonly int EntitySize = ScreenSize.ToPortPixels(CollisionSizes.EntitySizeArcadePixels);
+    private static readonly int EntitySize = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EntitySizeArcadePixels);
 
     /// <summary>The play area inside the wall, in port pixels.</summary>
     private readonly Rectangle _playfieldBounds;
@@ -104,7 +104,7 @@ public sealed class SpawnPlacement
     /// <param name="point">The point to keep away from.</param>
     /// <param name="minDistanceArcadePixels">The distance, in arcade pixels.</param>
     private static bool IsFarEnough(Rectangle box, IntVector2 point, int minDistanceArcadePixels) =>
-        new IntVector2(box.X, box.Y).IsFartherThan(point, ScreenSize.ToPortPixels(minDistanceArcadePixels));
+        new IntVector2(box.X, box.Y).IsFartherThan(point, ScreenSize.ToPortPixelsFromArcadePixels(minDistanceArcadePixels));
 
     /// <summary>Picks a random spot where a square of the given size fits inside the play area.</summary>
     /// <param name="size">The side of the square, in port pixels.</param>
@@ -120,7 +120,7 @@ public sealed class SpawnPlacement
             return PickRandomPointInside(EntitySize);
         }
 
-        int bias = ScreenSize.ToPortPixels(SpheroidTuning.NearWallBiasDistance);
+        int bias = ScreenSize.ToPortPixelsFromArcadePixels(SpheroidTuning.NearWallBiasDistance);
         Rectangle inner = _playfieldBounds;
         int x = _random.Next(inner.X, inner.Right - EntitySize);
         int y = _random.Next(inner.Y, inner.Bottom - EntitySize);

@@ -71,6 +71,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="extraManEveryPoints">How many points earn a spare man.</param>
     /// <param name="tankShellBugEnabled">True to keep the arcade's bug: a shell that fizzles out stays on the wave's shell count.</param>
     /// <param name="brainsChaseMikeyBugEnabled">True to keep the arcade's bug: every brain starts the wave chasing the first Mikey.</param>
+    /// <param name="familySlotsLeftOver">The places in the family list that still held a family member when the last wave or life ended. The hulks pick what to stalk from these. Null means none were left.</param>
     public PlayField(
             SpriteSet sprites,
             LevelParameters parameters,
@@ -85,7 +86,8 @@ public sealed class PlayField : ICollisionScene
             IContactTest? contactTest = null,
             int extraManEveryPoints = GameSettings.FactoryExtraManEveryPoints,
             bool tankShellBugEnabled = GameSettings.FactoryTankShellBugEnabled,
-            bool brainsChaseMikeyBugEnabled = GameSettings.FactoryBrainsChaseMikeyBugEnabled)
+            bool brainsChaseMikeyBugEnabled = GameSettings.FactoryBrainsChaseMikeyBugEnabled,
+            IReadOnlyList<int>? familySlotsLeftOver = null)
     {
         _tankShellBugEnabled = tankShellBugEnabled;
         Sprites = sprites;
@@ -105,7 +107,7 @@ public sealed class PlayField : ICollisionScene
         PlayerLasers = new LaserSlots(Sprites);
 
         // Each kind's spawner is in its registry row, so a new kind needs no edit here (notes §119).
-        var spawning = new WaveSpawnContext(this, Entities, new SpawnPlacement(random, innerBounds), random, playerStart);
+        var spawning = new WaveSpawnContext(this, Entities, new SpawnPlacement(random, innerBounds), random, playerStart, familySlotsLeftOver ?? []);
         foreach (RobotKindInfo robot in RobotKinds.All)
         {
             robot.Spawn?.Spawn(spawning);
@@ -418,6 +420,9 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>Says whether any family member is standing on the field and free.</summary>
     internal bool AnyFamilyMemberAvailable() => Entities.AnyFamilyMemberAvailable();
+
+    /// <summary>Lists the places in the family list that still hold a family member who is standing on the field and free, lowest place first. When this field ends, the next field's hulks pick what to stalk from them.</summary>
+    public IReadOnlyList<int> GetOccupiedFamilySlots() => Entities.GetOccupiedFamilySlots();
 
     /// <summary>Finds the family list place of the member nearest a point.</summary>
     /// <param name="from">The point to measure from.</param>

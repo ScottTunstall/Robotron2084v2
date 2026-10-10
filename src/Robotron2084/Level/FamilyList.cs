@@ -20,6 +20,14 @@ public sealed class FamilyList
     /// <remarks>Disassembly: <c>$B354</c>.</remarks>
     internal const int FirstSlot = 0;
 
+    /// <summary>How many places the family list has.</summary>
+    /// <remarks>Disassembly: the list runs from <c>$B354</c> up to, but not including, <c>$B3A4</c>, at two bytes a place.</remarks>
+    internal const int SlotCount = 40;
+
+    /// <summary>The last place in the family list. It is empty unless the wave has <see cref="SlotCount"/> family members, so a hulk that is given it hunts the player.</summary>
+    /// <remarks>Disassembly: <c>$B3A2</c>, which <c>HULK_INITIALISE</c> gives to about one hulk in four (<c>$01B9</c>).</remarks>
+    internal const int LastSlot = SlotCount - 1;
+
     private readonly EntityList<Human> _members = new();
 
     /// <summary>The next place to give out. The places are given out in order, starting from the first.</summary>
@@ -83,14 +91,15 @@ public sealed class FamilyList
         return nearestSlot;
     }
 
-    /// <summary>Finds where the last member to join is standing, if they are still alive.</summary>
-    /// <returns>Their position, or null when there is no such member. A hulk that gets null goes for the player instead.</returns>
+    /// <summary>Lists the places that still hold a member who is standing on the field and free, lowest place first.</summary>
+    /// <returns>The places. When a wave or a life ends, these are the places the arcade's list is left holding, and the next wave's hulks pick what to stalk from them.</returns>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>Original source: <c>RRH11.ASM</c>, the hulk's "last slot" target.</item>
-    /// <item>Disassembly: <c>$010D</c> and <c>$0113</c>, the fall back to the player.</item>
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HTAB</c>, which is only cleared when the next family is put on.</item>
+    /// <item>Disassembly: <c>CLEAR_FAMILY_MEMBER_LIST</c> (<c>$0200</c>), called only from
+    /// <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>), which runs after the hulks are made (<c>$2831</c>, then <c>$283A</c>).</item>
     /// </list>
     /// </remarks>
-    internal IntVector2? GetLastMemberPosition() =>
-        _members.Count > 0 && _members.GetLast().IsAlive() ? _members.GetLast().Position : null;
+    internal IReadOnlyList<int> GetOccupiedSlots() =>
+        [.. _members.Where(human => human.IsGraspable()).Select(human => human.FamilySlot).Order()];
 }

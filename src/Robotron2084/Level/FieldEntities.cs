@@ -272,8 +272,8 @@ public sealed class FieldEntities
     /// <summary>Lists every family member who has been put on the field.</summary>
     public IReadOnlyList<Human> GetFamilyMembers() => Family.Members;
 
-    /// <summary>Finds where the last family member to join is standing, if they are alive.</summary>
-    public IntVector2? GetLastFamilyMemberPosition() => Family.GetLastMemberPosition();
+    /// <summary>Lists the places in the family list that still hold a family member who is standing on the field and free, lowest place first.</summary>
+    public IReadOnlyList<int> GetOccupiedFamilySlots() => Family.GetOccupiedSlots();
 
     /// <summary>Finds the family list place of the member nearest a point.</summary>
     /// <param name="from">The point to measure from.</param>

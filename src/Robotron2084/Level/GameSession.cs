@@ -25,6 +25,16 @@ public sealed class GameSession
         Players = players;
     }
 
+    /// <summary>The places in the family list that still held a family member when the last wave or life ended, lowest place first. The next field's hulks pick what to stalk from these. A new game starts with none.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Original source: <c>RRH11.ASM</c> <c>HTAB</c>. There is one list for the whole machine, so in a two-player game
+    /// one player's hulks search what the other player left.</item>
+    /// <item>Disassembly: the list at <c>$B354</c>, which is only cleared when a family is put on (<c>$0200</c>).</item>
+    /// </list>
+    /// </remarks>
+    public IReadOnlyList<int> FamilySlotsLeftOver { get; set; } = [];
+
     /// <summary>Says whether at least one player still has men.</summary>
     /// <remarks>
     /// <list type="bullet">

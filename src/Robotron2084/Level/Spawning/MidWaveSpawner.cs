@@ -91,8 +91,8 @@ internal sealed class MidWaveSpawner
         }
 
         Rectangle bounds = _field.GetPlayfieldBounds();
-        int width = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Width);
-        int height = ScreenSize.ToPortPixels(CollisionSizes.GruntCollisionSize.Height);
+        int width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
+        int height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
         int x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
         int startY = Math.Clamp(from.Y, bounds.Y, bounds.Bottom - height);
         int landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);

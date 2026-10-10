@@ -134,5 +134,5 @@ public sealed class PlayerAppear
 
     /// <summary>Gets how many rows high the player's sprite is.</summary>
     /// <param name="player">The player.</param>
-    private static int GetSpriteRows(Player player) => player.GetBounds().Height / ScreenSize.ToPortPixels(1);
+    private static int GetSpriteRows(Player player) => player.GetBounds().Height / ScreenSize.ToPortPixelsFromArcadePixels(1);
 }
