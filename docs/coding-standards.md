@@ -330,6 +330,26 @@ name; the method name only needs to supply it where the class name does not (`Pl
 - **Interface methods count too.** `ICollisionRule.Detect` loops over what is on the field and gives no hint what kind
   of thing it finds; see the refactoring ledger for why it was left for the author to decide.
 
+**NAM-21. A relative term says what it is relative to.** Any name, comment or document that uses a word meaning
+"measured from something else" must also say what that something else is. The words are `Offset`, `Delta`, `Relative`,
+`Distance`, `Gap`, `Margin`, `Shift`, `Displacement`, `Before`/`After` (when used for a position) and the like. The
+reader must never have to open the code to find out. Two parts:
+
+- **An offset names both ends: what it is an offset OF, and what it is an offset FROM.** Write
+  `AimOffsetFromTargetMaxExclusiveArcadePixels` (the hulk's aim, measured from the target's own coordinate), not
+  `AimOffsetMaxExclusiveArcadePixels`. Likewise `SpawnOffsetFromPlayerColumns`, `PitchOffsetFromPatternStart`,
+  `_wallRowOffsetFromScreenTop`. When the "of" is already obvious from the field or class it sits in, the "from" is
+  still required.
+- **When the name would become unreasonably long, the XML summary must say it in full**, naming both ends in words:
+  "the aim, as arcade pixels away from the target's coordinate". A summary that only repeats the name ("the aim offset")
+  does not count.
+
+The same goes for a coordinate or position, which is always measured from an origin: say which one (`...FromScreenTopLeft`,
+`...FromPlayfieldOrigin`) unless the whole type works in one frame that its summary names, and for a time (`...SinceWaveStart`,
+`...UntilNextShot`), a count (`...BeforeReaim`) and a distance (`...ToNearestFamilyMember`). A bare `Distance`, `Offset`
+or `Delta` is a finding. A name that says the "from" in its own words (`Jitter`, `Gap` between two named things) is
+fine only when the two things are named in the same sentence of its summary.
+
 ## 4. Numbers and units (§112, §113)
 
 **NUM-1. No magic numbers.** Every literal other than `0`, `1`, `-1` (and `2` when halving) is a named constant.
@@ -666,6 +686,9 @@ grep -rnE 'ForTesting\s*=\s*true' src --include=*.cs
 # more than one type. Check each hit by eye.
 grep -rnP '^\s+private (static )?(readonly )?bool _(?!is|has|can|was|should|are|have)' src --include=*.cs
 grep -rhoP '^\s+private (readonly )?[\w<>\[\]?,]+ _\w+' src --include=*.cs | awk '{print $NF, $(NF-1)}' | sort -u | awk '{n[$1]++; t[$1]=t[$1]" "$2} END{for (k in n) if (n[k]>1) print k":"t[k]}'
+
+# Relative terms with no "from" (NAM-21): every hit needs the thing it is relative to in the name or the summary
+grep -rnE 'w*(Offset|Delta|Displacement|Relative)w*' src tests --include=*.cs | grep -v "From"
 
 # Calculated properties (NAM-10): every hit is a property that must become a method
 grep -rnP '^s+(public|internal|private|protected) (static |override )*[w<>[]?,.() ]+ [A-Z]w* =>' src --include=*.cs
