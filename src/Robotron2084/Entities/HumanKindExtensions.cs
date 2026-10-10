@@ -10,19 +10,25 @@ public static class HumanKindExtensions
     /// <summary>The walk animation frames the family member is drawn with (notes §49).</summary>
     /// <param name="kind">Which family member.</param>
     /// <param name="sprites">The sprite set that holds them.</param>
-    public static Texture2D[] GetAnimationFrames(this HumanKind kind, SpriteSet sprites) => kind switch
+    public static Texture2D[] GetAnimationFrames(this HumanKind kind, SpriteSet sprites)
     {
-        HumanKind.Mikey => sprites.MikeyAnimationFrames,
-        HumanKind.Mommy => sprites.MommyAnimationFrames,
-        _ => sprites.DaddyAnimationFrames,
-    };
+        return kind switch
+        {
+            HumanKind.Mikey => sprites.MikeyAnimationFrames,
+            HumanKind.Mommy => sprites.MommyAnimationFrames,
+            _ => sprites.DaddyAnimationFrames
+        };
+    }
 
     /// <summary>How big the family member is, in arcade pixels. This size is used to tell what the family member touches.</summary>
     /// <param name="kind">Which family member.</param>
-    public static (int Width, int Height) GetArcadeCollisionSize(this HumanKind kind) => kind switch
+    public static (int Width, int Height) GetArcadeCollisionSize(this HumanKind kind)
     {
-        HumanKind.Mikey => CollisionSizes.MikeyCollisionSize,
-        HumanKind.Mommy => CollisionSizes.MommyCollisionSize,
-        _ => CollisionSizes.DaddyCollisionSize,
-    };
+        return kind switch
+        {
+            HumanKind.Mikey => CollisionSizes.MikeyCollisionSize,
+            HumanKind.Mommy => CollisionSizes.MommyCollisionSize,
+            _ => CollisionSizes.DaddyCollisionSize
+        };
+    }
 }

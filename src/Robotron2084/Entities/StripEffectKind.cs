@@ -7,5 +7,5 @@ public enum StripEffectKind
     Explode,
 
     /// <summary>An appear: the strips close up to make the sprite.</summary>
-    Appear,
+    Appear
 }

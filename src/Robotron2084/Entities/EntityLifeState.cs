@@ -11,5 +11,5 @@ public enum EntityLifeState
     Dying,
 
     /// <summary>Finished: it is waiting to be taken off the field.</summary>
-    Dead,
+    Dead
 }

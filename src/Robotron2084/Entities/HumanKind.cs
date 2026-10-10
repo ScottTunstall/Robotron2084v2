@@ -11,5 +11,5 @@ public enum HumanKind
     Mommy,
 
     /// <summary>Daddy.</summary>
-    Daddy,
+    Daddy
 }

@@ -4,8 +4,11 @@ using Robotron2084.Level;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The jobs every list of entities can do, whatever kind of entity it holds: update them, draw them, count them and clear out the dead ones.</summary>
-/// <remarks>See <see cref="EntityList{T}"/>. See <see cref="PlayField"/> for the order these jobs are done in.</remarks>
+/// <summary>
+///     The jobs every list of entities can do, whatever kind of entity it holds: update them, draw them, count them
+///     and clear out the dead ones.
+/// </summary>
+/// <remarks>See <see cref="EntityList{T}" />. See <see cref="PlayField" /> for the order these jobs are done in.</remarks>
 public interface IEntityList
 {
     /// <summary>Every entity in the list, whatever kind it is.</summary>
