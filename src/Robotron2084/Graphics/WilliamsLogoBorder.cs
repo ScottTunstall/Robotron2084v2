@@ -12,10 +12,10 @@ namespace Robotron2084.Graphics;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The first phase (<c>$87D9</c>) draws the ring: one W every four ROM frames along <see cref="WilliamsLogoPath"/>,
-/// 28 of them. The second (<c>$88CD</c>) keeps the ring moving: every ROM frame it takes six of the 28 W slots in
+/// The first phase (<c>$87D9</c>) draws the ring: one W every four fiftieths of a second along <see cref="WilliamsLogoPath"/>,
+/// 28 of them. The second (<c>$88CD</c>) keeps the ring moving: 50 times a second it takes six of the 28 W slots in
 /// turn, erases that slot's last W and draws it again at the next place on the path, in the path's next colour.
-/// It runs for <see cref="MovingRomFrames"/> ROM frames.
+/// It runs for <see cref="MovingRomFrames"/> fiftieths of a second.
 /// </para>
 /// <para>
 /// The ROM waits for the video beam to clear a W's rows before it redraws it (<c>$88EF</c>, to avoid tearing). The
@@ -30,7 +30,7 @@ public sealed class WilliamsLogoBorder
     /// <summary>The screen the W is blitted into, in arcade pixels: the ROM's 304x256. It is multiplied by <see cref="Height"/> to give the size of <see cref="_pixels"/>.</summary>
     public const int Width = HudLayout.ArcadeScreenWidth;
 
-    /// <summary>ROM <c>$87E9</c>: the first phase draws a W every this many ROM frames. One less than this is the value <see cref="_sleepRomFrames"/> is set to after each draw, and it then counts down.</summary>
+    /// <summary>ROM <c>$87E9</c>: the first phase draws a W every this many fiftieths of a second. One less than this is the value <see cref="_sleepRomFrames"/> is set to after each draw, and it then counts down.</summary>
     private const int DrawIntervalRomFrames = 4;
 
     /// <summary>ROM <c>$8960</c>: a slot's W is at this column until it has drawn one (nothing is there)... It is stored in <see cref="_logoPositions"/>, with <see cref="EmptySlotRow"/>, to mark a slot that has no logo in it.</summary>
@@ -42,10 +42,10 @@ public sealed class WilliamsLogoBorder
     /// <summary>ROM <c>$87D9</c>: the W's on the screen, and so the slots of the second phase. It is the size of <see cref="_logoPositions"/>.</summary>
     private const int LogoCount = 28;
 
-    /// <summary>ROM <c>$88DB</c>: the second phase moves this many W's each ROM frame.</summary>
+    /// <summary>ROM <c>$88DB</c>: the second phase moves this many W's each fiftieth of a second.</summary>
     private const int MovesPerRomFrame = 6;
 
-    /// <summary>ROM <c>$88D6</c>: the second phase runs for this many ROM frames (704). It is the value <see cref="_movingFramesRemaining"/> is set to when the logos start to move, and it then counts down.</summary>
+    /// <summary>ROM <c>$88D6</c>: the second phase runs for this many fiftieths of a second (704). It is the value <see cref="_movingFramesRemaining"/> is set to when the logos start to move, and it then counts down.</summary>
     private const int MovingRomFrames = 0x02C0;
 
     private readonly SpriteMask _logoMask;
@@ -101,7 +101,7 @@ public sealed class WilliamsLogoBorder
         }
     }
 
-    /// <summary>Advances by one port tick (a ROM frame is 6/5 of one).</summary>
+    /// <summary>Advances by one port tick (a fiftieth of a second is 6/5 of one).</summary>
     public void Tick()
     {
         _clockUnits += ArcadeClock.UnitsPerPortTick;
@@ -163,7 +163,7 @@ public sealed class WilliamsLogoBorder
         _sleepRomFrames = DrawIntervalRomFrames - 1;
     }
 
-    /// <summary>ROM <c>$88E5</c>: one ROM frame of the second phase.</summary>
+    /// <summary>ROM <c>$88E5</c>: one fiftieth of a second of the second phase.</summary>
     private void MoveSomeLogos()
     {
         for (int move = 0; move < MovesPerRomFrame; move++)

@@ -145,7 +145,7 @@ public sealed class BlitterDraw
     }
 
     /// <summary>
-    /// Draws a ROM frame at PortPixelsPerArcadePixel× arcade pixels, centered inside
+    /// Draws one animation frame at PortPixelsPerArcadePixel× arcade pixels, centered inside
     /// <paramref name="bounds"/> (the entity's collision box).
     /// </summary>
     public void DrawSprite(SpriteBatch spriteBatch, Texture2D texture, Rectangle bounds, Color tint)

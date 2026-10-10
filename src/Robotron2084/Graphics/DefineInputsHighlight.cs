@@ -6,7 +6,7 @@ namespace Robotron2084.Graphics;
 /// <summary>
 /// The DEFINE INPUTS page's selected-line colour cycle (notes §115): the label of the line the
 /// cursor is on ("P1 MOVE UP", say) is drawn in palette slot 8, and this process chases a WHITE
-/// flash through it on the PRESENTATION PAGE'S OWN clock (notes §106) — a step every 3 ROM frames,
+/// flash through it on the PRESENTATION PAGE'S OWN clock (notes §106) — a step every 3 fiftieths of a second,
 /// the slot white for one step in seven — so the label strobes green/white exactly the way the
 /// title page's message strobes orange/white. The line's value (the bound key or joystick input)
 /// stays in the page's static green and does not cycle.
@@ -22,7 +22,7 @@ public sealed class DefineInputsHighlight
     public const int Slot = 8;
 
     /// <summary>
-    /// The chase takes a step every 3 ROM frames — the presentation page's own rate (ROM
+    /// The chase takes a step every 3 fiftieths of a second — the presentation page's own rate (ROM
     /// $8A4F/$8A68), the same clock the intro pages' colour processes run on.
     /// </summary>
     private const int RomFramesPerStep = 3;

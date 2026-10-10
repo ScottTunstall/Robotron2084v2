@@ -169,7 +169,7 @@ public sealed class TunnelEffect
     }
 
     /// <summary>
-    /// Runs one ROM task pass, which takes two ROM frames (see <see cref="PassClockUnits"/>). `$5726` resets
+    /// Runs one ROM task pass, which takes two fiftieths of a second (see <see cref="PassClockUnits"/>). `$5726` resets
     /// the two-ring counter, then the ring is
     /// drawn, the pair advances (unless it is black), the corners step out — and all of that
     /// happens a second time before the task yields.

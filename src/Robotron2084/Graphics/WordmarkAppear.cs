@@ -8,7 +8,7 @@ namespace Robotron2084.Graphics;
 /// <summary>The big ROBOTRON letters coming into view one after another, each pulled together from strips, like an explosion run backwards.</summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Original source: <c>RRLOG.ASM</c> <c>WDONE</c> to <c>WDONE1</c>, which stages the appear for each letter eight ROM frames after the last, then waits <c>$20</c> frames for them to finish before the "2084" goes up</item>
+/// <item>Original source: <c>RRLOG.ASM</c> <c>WDONE</c> to <c>WDONE1</c>, which stages the appear for each letter eight fiftieths of a second after the last, then waits <c>$20</c> frames for them to finish before the "2084" goes up</item>
 /// <item>Disassembly: <c>asm/robomame.asm</c>, the attract-mode appear that <c>AMAP</c> jumps to</item>
 /// </list>
 /// Each letter is cut into rows that start far apart and close in on the letter's middle row, the way a robot appears at the start
@@ -17,10 +17,10 @@ namespace Robotron2084.Graphics;
 /// </remarks>
 public sealed class WordmarkAppear
 {
-    /// <summary>ROM frames between one letter starting to appear and the next (<c>WDONE0 NAP 8</c>).</summary>
+    /// <summary>fiftieths of a second between one letter starting to appear and the next (<c>WDONE0 NAP 8</c>).</summary>
     private const int RomFramesBetweenLetters = 8;
 
-    /// <summary>ROM frames the last letter is left to finish before whatever comes next (<c>NAP $20,LOGG2</c>). It is added to the start time of the last letter to decide when <see cref="IsFinished"/> becomes true.</summary>
+    /// <summary>fiftieths of a second the last letter is left to finish before whatever comes next (<c>NAP $20,LOGG2</c>). It is added to the start time of the last letter to decide when <see cref="IsFinished"/> becomes true.</summary>
     private const int RomFramesAfterLastLetter = 0x20;
 
     private readonly StripEffect[] _effects;

@@ -12,7 +12,7 @@ namespace Robotron2084.Graphics;
 /// textures for the four player laser sprites (ROM data R5 $35BE-$35DC,
 /// see the Laser* properties) and the 1x1 wall pixel.
 ///
-/// Arcade fidelity: ROM frames are drawn at PortPixelsPerArcadePixel× arcade pixels (the
+/// Arcade fidelity: animation frames are drawn at PortPixelsPerArcadePixel× arcade pixels (the
 /// screen is WidthInArcadePixels by HeightInArcadePixels arcade pixels, each drawn PortPixelsPerArcadePixel port pixels wide) and centered
 /// inside the entity's collision box.
 /// </summary>
