@@ -4,14 +4,14 @@
 resolution needs to increase, the code won't break."
 
 If I decide later to raise `ScreenSize.SpecScale` (e.g. 2 → 3 or 4, internal render
-960×600 / 1280×800) or `SpecWidth`/`SpecHeight` (320×200 spec space → larger), nothing
+960×600 / 1280×800) or `WidthInArcadePixels`/`HeightInArcadePixels` (320×200 → larger), nothing
 should break: no crashes, no mis-rendered sprites, no failing tests.
 
 **Status: COMPLETE (2026-09-12).** All changes (a)–(e) applied and verified:
 - `dotnet build` → 0 warnings, 0 errors.
 - Tests: **89/89** pass — run via the MTP exe, NOT `dotnet test` (see "Test runner quirk").
 - Proof run: SpecScale 2→3 (960×600) 89/89; SpecScale 2→4 (1280×800) 89/89;
-  SpecHeight 250 (640×500) 88/89 (only the deliberate `SpecSpace_IsTheGameLayout_320x200`
+  HeightInArcadePixels 250 (640×500) 88/89 (only the deliberate `ScreenSizeInArcadePixels_IsTheGameLayout_320x200`
   pin fails, as designed); all probes reverted — final baseline 89/89.
 - `rebuild-ledger.md` header + watch items updated. Not yet git-committed
   (checkpoint per ledger convention happens at the author's commit).
@@ -23,8 +23,8 @@ should break: no crashes, no mis-rendered sprites, no failing tests.
 ## How resolution works today (the good news)
 
 - `src/Robotron2084/Core/ScreenSize.cs` is the single funnel:
-  `SpecScale = 2`, `SpecWidth = 320`, `SpecHeight = 200`,
-  `Width = SpecWidth * SpecScale` (640), `Height = SpecHeight * SpecScale` (400),
+  `SpecScale = 2`, `WidthInArcadePixels = 320`, `HeightInArcadePixels = 200`,
+  `Width = WidthInArcadePixels * SpecScale` (640), `Height = HeightInArcadePixels * SpecScale` (400),
   `Scaled(specPx) = specPx * SpecScale`.
 - All gameplay geometry (entity sizes/speeds/spawn distances, wall thickness, HUD
   margins) already goes through `ScreenSize.Scaled(GameplayConstants.XxxSpecPixels)`.
@@ -74,9 +74,9 @@ Hard-coded internal px (12 spec-px × 2). → `y += ScreenSize.Scaled(12);`
   computed from 640×400 and would be wrong at other scales.
 A resolution change = red test suite.
 **Fix:** rewrite as invariants:
-- pin the SPEC space (the game layout per spec.txt): `SpecWidth == 320`,
-  `SpecHeight == 200`;
-- `Width == SpecWidth * SpecScale`, `Height == SpecHeight * SpecScale`;
+- pin the SPEC space (the game layout per spec.txt): `WidthInArcadePixels == 320`,
+  `HeightInArcadePixels == 200`;
+- `Width == WidthInArcadePixels * SpecScale`, `Height == HeightInArcadePixels * SpecScale`;
 - `Scaled(n) == n * SpecScale` (n = 0, 1, 16);
 - `MaxIntegerScale` cases expressed against the actual constants, e.g.
   `MaxIntegerScale(Width * 3, Height * 3) == 3`,
@@ -97,7 +97,7 @@ A resolution change = red test suite.
   doubled)" → phrase via `ScreenSize.Width/Height`.
 - `ScreenSize.cs` Width/Height docs "(640)"/"(400)" → formula phrasing; beef up the
   class doc to be the explicit "how to raise resolution" guide (SpecScale = sharper
-  same-layout; SpecWidth/SpecHeight = larger playfield, a design change).
+  same-layout; WidthInArcadePixels/HeightInArcadePixels = larger playfield, a design change).
 
 ## Confirmed NON-issues (already resolution-safe — do not touch)
 
@@ -133,6 +133,6 @@ A resolution change = red test suite.
 5. `dotnet build` → 0 warnings; run test exe → all green.
 6. **Prove the task:** temporarily set `SpecScale = 3`, rebuild, run tests, confirm
    green and (if a headless check is possible) the render target is 960×600 with sprites
-   centred; then revert to 2. Same quick pass for `SpecHeight = 250` (or similar) to
+   centred; then revert to 2. Same quick pass for `HeightInArcadePixels = 250` (or similar) to
    prove the spec-space knob.
 7. Update `status.md` / `rebuild-ledger.md` per project convention when done.
