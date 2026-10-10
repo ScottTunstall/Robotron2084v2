@@ -117,8 +117,8 @@ public static class HudLayout
     // Port-only: the title's F-key menu, and how far apart its lines sit.
     public const int TitleOptionRowStepPixels = 12;
 
-    /// <summary>An arcade COLUMN to the port screen's x — a column is <see cref="ScreenSize.ArcadePixelsPerColumn"/> arcade pixels.</summary>
-    public static int ToPortColumnX(int column) => ToPortX(column * ScreenSize.ArcadePixelsPerColumn);
+    /// <summary>An arcade COLUMN to the port screen's x — a column is <see cref="ScreenSize.ArcadePixelsPerByte"/> arcade pixels.</summary>
+    public static int ToPortColumnX(int column) => ToPortX(column * ScreenSize.ArcadePixelsPerByte);
 
     /// <summary>Arcade screen x (of 304) mapped to the port screen (proportional, integer math).</summary>
     public static int ToPortX(int arcadePx) => arcadePx * ScreenSize.Width / ArcadeScreenWidth;
