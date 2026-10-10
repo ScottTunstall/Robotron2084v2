@@ -125,11 +125,61 @@ public class SoundBoardTests
     }
 
     [Fact]
-    public void ASoundNumberWithNoRoutine_IsRefused()
+    public void SoundNumber0_IsNotASound_AndIsIgnored()
     {
-        var board = new SoundBoard();
+        (SoundBoard board, SoundBoardRenderer renderer) = StartBoard();
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => board.SendSoundNumber(0x02));
+        board.SendSoundNumber(0);
+
+        Assert.False(board.CanPlay(0));
+        Assert.True(Loudness(renderer, seconds: 0.5) < Silence);
+    }
+
+    /// <summary>
+    /// The eight coin sounds (<c>CNSND</c>, notes §130): each is built, is heard, and ends by itself within a few seconds
+    /// (the board has no loop in any of them, so a run that never ends would be a mistake in the port).
+    /// </summary>
+    [Theory]
+    [InlineData(0x0C)]
+    [InlineData(0x20)]
+    [InlineData(0x24)]
+    [InlineData(0x27)]
+    [InlineData(0x2D)]
+    [InlineData(0x35)]
+    [InlineData(0x3A)]
+    [InlineData(0x3E)]
+    public void EachCoinSound_IsHeard_ThenEndsByItself(int soundNumber)
+    {
+        (SoundBoard board, SoundBoardRenderer renderer) = StartBoard();
+
+        board.SendSoundNumber(soundNumber);
+
+        Assert.True(board.CanPlay(soundNumber));
+        float whileItPlays = Loudness(renderer, seconds: 1.0);
+        Loudness(renderer, seconds: 9.0);
+        Assert.True(whileItPlays > Silence, $"Coin sound ${soundNumber:X2} was silent.");
+        Assert.True(Loudness(renderer, seconds: 0.5) < Silence, $"Coin sound ${soundNumber:X2} had not ended after ten seconds.");
+    }
+
+    /// <summary>
+    /// Every one of the board's 63 sounds (<see cref="BoardSounds"/>, the sound test page's list) has a routine, and each can be
+    /// played for three seconds without the board failing or going quiet when it should not: only the three that
+    /// are silent in the source (<c>BGEND</c>, <c>ORGANT</c>, <c>ORGANN</c>) make no sound.
+    /// </summary>
+    [Fact]
+    public void EveryBoardSound_HasARoutine_AndIsHeardUnlessTheSourceMakesItSilent()
+    {
+        int[] silent = [0x13, 0x1B, 0x1C];
+        foreach (BoardSound sound in BoardSounds.All)
+        {
+            (SoundBoard board, SoundBoardRenderer renderer) = StartBoard();
+            Assert.True(board.CanPlay(sound.Number), $"{sound.Name} has no routine.");
+
+            board.SendSoundNumber(sound.Number);
+
+            float loudness = Loudness(renderer, seconds: 3);
+            Assert.Equal(silent.Contains(sound.Number), loudness < Silence);
+        }
     }
 
     private static (SoundBoard Board, SoundBoardRenderer Renderer) StartBoard()
