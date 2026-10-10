@@ -61,7 +61,7 @@ public static class InitialsEntryLayout
     /// pixels) per letter, which cannot hold a six-pixel glyph, so the port spaces the cells by an
     /// advance wide enough to print one — the deviation notes §116 records.
     /// </summary>
-    public static int GetCellAdvancePixels() => ScreenSize.ToPortPixels(HudLayout.HudScoreDigitAdvancePixels);
+    public static int GetCellAdvancePixels() => ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudScoreDigitAdvancePixels);
 
     /// <summary>The Y the three letters are drawn at, in port pixels.</summary>
     public static int GetEchoY() => HudLayout.ToPortY(EchoRow);
