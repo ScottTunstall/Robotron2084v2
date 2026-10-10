@@ -7,5 +7,5 @@ public enum ScaleMode
     Integer,
 
     /// <summary>The exact uniform fraction, so the canvas fills as much of the window as its shape allows.</summary>
-    Fill,
+    Fill
 }
