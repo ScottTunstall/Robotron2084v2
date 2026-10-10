@@ -17,7 +17,7 @@ namespace Robotron2084.Entities;
 ///     It acts on a beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
 ///     short freeze just after the player is killed. <see cref="_beatTimer" /> gathers the ticks until it is time for
-///     the next beat (see <see cref="ArcadeClock" />). <see cref="_startStaggerTicks" /> counts the ticks before its
+///     the next beat (see <see cref="ArcadeClock" />). <see cref="_startWalkingTicks" /> counts the ticks before its
 ///     first step.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMAN</c> (with the <c>HUMATB</c> walk table)</item>
@@ -45,7 +45,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     private const int NewDirectionStepsMax = 128;
 
     /// <summary>
-    ///     The most ticks a family member waits before its first step. <see cref="_startStaggerTicks" /> is set to a
+    ///     The most ticks a family member waits before its first step. <see cref="_startWalkingTicks" /> is set to a
     ///     random number of ticks from one up to this, so that a group of family members does not all start together.
     /// </summary>
     private const int StartStaggerTicksMax = 8;
@@ -129,7 +129,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     ///     Ticks left before the family member takes its first step. Each family member gets its own number, so a group
     ///     does not all step together.
     /// </summary>
-    private int _startStaggerTicks;
+    private int _startWalkingTicks;
 
     /// <summary>Steps left before the family member picks a new direction.</summary>
     private int _stepsUntilNewDirection;
@@ -156,7 +156,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _random = random;
         _directionBlock = random.Next(DirectionBlockCount);
         _stepsUntilNewDirection = 1 + random.Next(NewDirectionStepsMax);
-        _startStaggerTicks = 1 + random.Next(StartStaggerTicksMax);
+        _startWalkingTicks = 1 + random.Next(StartStaggerTicksMax);
         _beatTimer = 0; // The first step does not wait for this timer (see Update).
     }
 
@@ -261,10 +261,10 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         // Unlike the robots, family members do not wait for the wave to start. They walk about while the robots are still appearing.
         if (!this.IsAlive() || IsBeingReprogrammed) return;
 
-        if (_startStaggerTicks > 0)
+        if (_startWalkingTicks > 0)
         {
-            _startStaggerTicks--;
-            if (_startStaggerTicks > 0) return;
+            _startWalkingTicks--;
+            if (_startWalkingTicks > 0) return;
 
             // The wait is over, so the family member takes its first step on this tick.
         }
