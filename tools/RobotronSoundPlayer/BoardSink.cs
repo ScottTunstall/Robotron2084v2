@@ -13,8 +13,14 @@ internal sealed class BoardSink(ISoundBoard board, SoundBoardRenderer renderer) 
     /// <summary>Sends a sound number to the board. The player is mono, so where it is heard is ignored.</summary>
     /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>), 0 to 63.</param>
     /// <param name="pan">Where the game would place the sound; not used.</param>
-    public void SendSoundNumber(int soundNumber, float pan) => board.SendSoundNumber(soundNumber);
+    public void SendSoundNumber(int soundNumber, float pan)
+    {
+        board.SendSoundNumber(soundNumber);
+    }
 
     /// <summary>Runs the board for one port tick and keeps what it played.</summary>
-    public void Tick() => renderer.Render(LastPortTick);
+    public void Tick()
+    {
+        renderer.Render(LastPortTick);
+    }
 }

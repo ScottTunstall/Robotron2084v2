@@ -11,15 +11,9 @@ internal sealed class CommandLine
     /// <param name="args">The words after the player's name.</param>
     public CommandLine(IReadOnlyList<string> args)
     {
-        for (int i = 0; i < args.Count && Error is null; i++)
-        {
-            i = ReadWord(args, i);
-        }
+        for (var i = 0; i < args.Count && Error is null; i++) i = ReadWord(args, i);
 
-        if (Error is null && _words.Count > 2)
-        {
-            Error = $"Too many words: {string.Join(" ", _words)}";
-        }
+        if (Error is null && _words.Count > 2) Error = $"Too many words: {string.Join(" ", _words)}";
     }
 
     /// <summary>The command: <c>list</c>, <c>play</c> or <c>help</c>, or null to show the menu.</summary>
@@ -46,7 +40,7 @@ internal sealed class CommandLine
     /// <returns>Where the last word read is.</returns>
     private int ReadWord(IReadOnlyList<string> args, int index)
     {
-        string word = args[index];
+        var word = args[index];
         if (!word.StartsWith("--", StringComparison.Ordinal))
         {
             _words.Add(word);
@@ -89,7 +83,7 @@ internal sealed class CommandLine
     /// <param name="value">The value.</param>
     private void ReadSeconds(string value)
     {
-        bool isNumber = double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds);
+        var isNumber = double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds);
         if (!isNumber || seconds <= 0)
         {
             Error = $"--seconds needs a number above zero, not {value}.";

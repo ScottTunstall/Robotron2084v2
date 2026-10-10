@@ -1,17 +1,19 @@
 namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>
-/// The processor on the arcade's sound board. It runs the sound board's own program, which makes
-/// every noise the game plays.
+///     The processor on the arcade's sound board. It runs the sound board's own program, which makes
+///     every noise the game plays.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: none. The sound board's program is not in the original source; the main
-/// board only sends it a sound number (<c>RRS22.ASM</c>, routine <c>SNDOUT</c>).</item>
-/// <item>Disassembly: not in <c>asm/robomame.asm</c>, which covers the main board's processor only.</item>
-/// </list>
-/// The board's chip is a Motorola 6808: a 6800 with no memory of its own, so it has the 6800's
-/// instructions and timings.
+///     <list type="bullet">
+///         <item>
+///             Original source: none. The sound board's program is not in the original source; the main
+///             board only sends it a sound number (<c>RRS22.ASM</c>, routine <c>SNDOUT</c>).
+///         </item>
+///         <item>Disassembly: not in <c>asm/robomame.asm</c>, which covers the main board's processor only.</item>
+///     </list>
+///     The board's chip is a Motorola 6808: a 6800 with no memory of its own, so it has the 6800's
+///     instructions and timings.
 /// </remarks>
 public sealed class Mc6800Cpu
 {
@@ -39,9 +41,12 @@ public sealed class Mc6800Cpu
     private readonly IMc6800Bus _bus;
     private bool _isWaitingForInterrupt;
 
-    /// <summary>Creates a processor wired to its memory and chips. Call <see cref="Reset"/> before running it.</summary>
+    /// <summary>Creates a processor wired to its memory and chips. Call <see cref="Reset" /> before running it.</summary>
     /// <param name="bus">The memory and chips the processor reads and writes.</param>
-    public Mc6800Cpu(IMc6800Bus bus) => _bus = bus;
+    public Mc6800Cpu(IMc6800Bus bus)
+    {
+        _bus = bus;
+    }
 
     /// <summary>Accumulator A.</summary>
     public byte A { get; internal set; }
@@ -76,17 +81,11 @@ public sealed class Mc6800Cpu
     /// <returns>The clock cycles used.</returns>
     public int Step()
     {
-        if (IsInterruptRequested && !HasFlag(Mc6800ConditionCodes.InterruptMask))
-        {
-            return AnswerInterrupt();
-        }
+        if (IsInterruptRequested && !HasFlag(Mc6800ConditionCodes.InterruptMask)) return AnswerInterrupt();
 
-        if (_isWaitingForInterrupt)
-        {
-            return WaitCycles;
-        }
+        if (_isWaitingForInterrupt) return WaitCycles;
 
-        Mc6800Instruction instruction = Mc6800InstructionSet.GetInstruction(FetchByte());
+        var instruction = Mc6800InstructionSet.GetInstruction(FetchByte());
         instruction.Execute(this);
         return instruction.Cycles;
     }
@@ -96,10 +95,7 @@ public sealed class Mc6800Cpu
     internal void BranchIf(bool condition)
     {
         var offset = (sbyte)FetchByte();
-        if (condition)
-        {
-            ProgramCounter = (ushort)(ProgramCounter + offset);
-        }
+        if (condition) ProgramCounter = (ushort)(ProgramCounter + offset);
     }
 
     /// <summary>Saves where to come back to, then moves on by the offset in the next byte (BSR).</summary>
@@ -112,46 +108,70 @@ public sealed class Mc6800Cpu
 
     /// <summary>The condition codes as the byte the processor stores for them (TPA, and when saving registers).</summary>
     /// <returns>The flags, with the two unused top bits set.</returns>
-    internal byte ConditionCodesAsByte() => (byte)((byte)ConditionCodes | UnusedConditionCodeBits);
+    internal byte ConditionCodesAsByte()
+    {
+        return (byte)((byte)ConditionCodes | UnusedConditionCodeBits);
+    }
 
     /// <summary>The address in the next byte, which points into the first 256 bytes of memory.</summary>
     /// <returns>The address.</returns>
-    internal ushort DirectAddress() => FetchByte();
+    internal ushort DirectAddress()
+    {
+        return FetchByte();
+    }
 
     /// <summary>The address in the next two bytes.</summary>
     /// <returns>The address.</returns>
-    internal ushort ExtendedAddress() => FetchWord();
+    internal ushort ExtendedAddress()
+    {
+        return FetchWord();
+    }
 
     /// <summary>Reads the next byte of the program and moves past it.</summary>
     /// <returns>The byte.</returns>
-    internal byte FetchByte() => _bus.ReadByte(ProgramCounter++);
+    internal byte FetchByte()
+    {
+        return _bus.ReadByte(ProgramCounter++);
+    }
 
     /// <summary>Reads the next two bytes of the program, high byte first, and moves past them.</summary>
     /// <returns>The 16-bit word.</returns>
     internal ushort FetchWord()
     {
-        byte high = FetchByte();
-        byte low = FetchByte();
+        var high = FetchByte();
+        var low = FetchByte();
         return Word(high, low);
     }
 
     /// <summary>The value in one of the two accumulators.</summary>
     /// <param name="accumulator">Which accumulator.</param>
     /// <returns>Its value.</returns>
-    internal byte GetAccumulator(Mc6800Accumulator accumulator) => accumulator == Mc6800Accumulator.A ? A : B;
+    internal byte GetAccumulator(Mc6800Accumulator accumulator)
+    {
+        return accumulator == Mc6800Accumulator.A ? A : B;
+    }
 
     /// <summary>Whether a flag is set.</summary>
     /// <param name="flag">The flag to test.</param>
     /// <returns>True when it is set.</returns>
-    internal bool HasFlag(Mc6800ConditionCodes flag) => (ConditionCodes & flag) != 0;
+    internal bool HasFlag(Mc6800ConditionCodes flag)
+    {
+        return (ConditionCodes & flag) != 0;
+    }
 
     /// <summary>The index register plus the offset in the next byte.</summary>
     /// <returns>The address.</returns>
-    internal ushort IndexedAddress() => (ushort)(X + FetchByte());
+    internal ushort IndexedAddress()
+    {
+        return (ushort)(X + FetchByte());
+    }
 
     /// <summary>True when the last comparison found the left number smaller, reading both as signed numbers.</summary>
     /// <returns>Whether the negative and overflow flags differ.</returns>
-    internal bool IsSignedLess() => HasFlag(Mc6800ConditionCodes.Negative) != HasFlag(Mc6800ConditionCodes.Overflow);
+    internal bool IsSignedLess()
+    {
+        return HasFlag(Mc6800ConditionCodes.Negative) != HasFlag(Mc6800ConditionCodes.Overflow);
+    }
 
     /// <summary>Saves where to come back to, then jumps to a routine (JSR).</summary>
     /// <param name="address">The routine's address.</param>
@@ -163,8 +183,10 @@ public sealed class Mc6800Cpu
 
     /// <summary>Sets the condition codes from a byte (TAP, and when restoring registers).</summary>
     /// <param name="value">The byte; its two unused top bits are ignored.</param>
-    internal void LoadConditionCodes(byte value) =>
+    internal void LoadConditionCodes(byte value)
+    {
         ConditionCodes = (Mc6800ConditionCodes)(value & ~UnusedConditionCodeBits);
+    }
 
     /// <summary>Takes the last byte off the stack.</summary>
     /// <returns>The byte.</returns>
@@ -185,15 +207,18 @@ public sealed class Mc6800Cpu
     /// <summary>Reads the byte at an address.</summary>
     /// <param name="address">The address.</param>
     /// <returns>The byte.</returns>
-    internal byte ReadByte(ushort address) => _bus.ReadByte(address);
+    internal byte ReadByte(ushort address)
+    {
+        return _bus.ReadByte(address);
+    }
 
     /// <summary>Reads the 16-bit word at an address, high byte first.</summary>
     /// <param name="address">The address of the high byte.</param>
     /// <returns>The word.</returns>
     internal ushort ReadWord(ushort address)
     {
-        byte high = _bus.ReadByte(address);
-        byte low = _bus.ReadByte((ushort)(address + 1));
+        var high = _bus.ReadByte(address);
+        var low = _bus.ReadByte((ushort)(address + 1));
         return Word(high, low);
     }
 
@@ -208,7 +233,10 @@ public sealed class Mc6800Cpu
     }
 
     /// <summary>Goes back to where the last subroutine call came from (RTS).</summary>
-    internal void ReturnFromSubroutine() => ProgramCounter = PullWord();
+    internal void ReturnFromSubroutine()
+    {
+        ProgramCounter = PullWord();
+    }
 
     /// <summary>Sets one of the two accumulators.</summary>
     /// <param name="accumulator">Which accumulator.</param>
@@ -256,7 +284,10 @@ public sealed class Mc6800Cpu
     /// <summary>Writes a byte to an address.</summary>
     /// <param name="address">The address.</param>
     /// <param name="value">The byte.</param>
-    internal void WriteByte(ushort address, byte value) => _bus.WriteByte(address, value);
+    internal void WriteByte(ushort address, byte value)
+    {
+        _bus.WriteByte(address, value);
+    }
 
     /// <summary>Writes a 16-bit word to an address, high byte first.</summary>
     /// <param name="address">The address for the high byte.</param>
@@ -268,22 +299,28 @@ public sealed class Mc6800Cpu
     }
 
     /// <summary>The high byte of a word.</summary>
-    private static byte High(ushort value) => (byte)(value >> BitsPerByte);
+    private static byte High(ushort value)
+    {
+        return (byte)(value >> BitsPerByte);
+    }
 
     /// <summary>The low byte of a word.</summary>
-    private static byte Low(ushort value) => (byte)value;
+    private static byte Low(ushort value)
+    {
+        return (byte)value;
+    }
 
     /// <summary>Joins a high byte and a low byte into a word.</summary>
-    private static ushort Word(byte high, byte low) => (ushort)((high << BitsPerByte) | low);
+    private static ushort Word(byte high, byte low)
+    {
+        return (ushort)((high << BitsPerByte) | low);
+    }
 
     /// <summary>Saves every register (unless a WAI already did) and jumps to the interrupt routine.</summary>
     /// <returns>The clock cycles used.</returns>
     private int AnswerInterrupt()
     {
-        if (!_isWaitingForInterrupt)
-        {
-            SaveRegisters();
-        }
+        if (!_isWaitingForInterrupt) SaveRegisters();
 
         _isWaitingForInterrupt = false;
         SetFlag(Mc6800ConditionCodes.InterruptMask, true);
@@ -294,8 +331,8 @@ public sealed class Mc6800Cpu
     /// <summary>Takes a word off the stack, high byte first.</summary>
     private ushort PullWord()
     {
-        byte high = Pull();
-        byte low = Pull();
+        var high = Pull();
+        var low = Pull();
         return Word(high, low);
     }
 

@@ -3,8 +3,8 @@ using Microsoft.Xna.Framework.Audio;
 namespace RobotronSoundPlayer;
 
 /// <summary>
-/// Robotron sound player: plays the arcade's sounds by running the real sound ROM on an emulated sound
-/// board. Run it with no words for a menu.
+///     Robotron sound player: plays the arcade's sounds by running the real sound ROM on an emulated sound
+///     board. Run it with no words for a menu.
 /// </summary>
 internal static class Program
 {
@@ -23,10 +23,7 @@ internal static class Program
     private static int Main(string[] args)
     {
         var commandLine = new CommandLine(args);
-        if (commandLine.Error is not null)
-        {
-            return Fail(commandLine.Error);
-        }
+        if (commandLine.Error is not null) return Fail(commandLine.Error);
 
         switch (commandLine.Command)
         {
@@ -54,15 +51,15 @@ internal static class Program
         {
             request = catalog.Find(commandLine.Choice ?? string.Empty);
             if (request is null)
-            {
-                return Fail($"There is no sound called '{commandLine.Choice}'. Run 'RobotronSoundPlayer list' to see them all.");
-            }
+                return Fail(
+                    $"There is no sound called '{commandLine.Choice}'. Run 'RobotronSoundPlayer list' to see them all.");
         }
 
-        string? romPath = SoundRomLocator.Find(commandLine.RomPath);
+        var romPath = SoundRomLocator.Find(commandLine.RomPath);
         if (romPath is null)
         {
-            Console.Error.WriteLine($"The sound ROM ({SoundRomLocator.RomFileName}) was not found. Copy it into ref/rom, or pass --rom <file>.");
+            Console.Error.WriteLine(
+                $"The sound ROM ({SoundRomLocator.RomFileName}) was not found. Copy it into ref/rom, or pass --rom <file>.");
             return CannotPlay;
         }
 
@@ -75,7 +72,8 @@ internal static class Program
     /// <param name="commandLine">The command line, for its options.</param>
     /// <param name="playback">Plays a sound.</param>
     /// <returns>An exit code.</returns>
-    private static int Play(SoundCatalog catalog, ISoundRequest? request, CommandLine commandLine, SoundPlayback playback)
+    private static int Play(SoundCatalog catalog, ISoundRequest? request, CommandLine commandLine,
+        SoundPlayback playback)
     {
         if (request is not null && commandLine.WavPath is not null)
         {
@@ -96,7 +94,8 @@ internal static class Program
         }
         catch (NoAudioHardwareException)
         {
-            Console.Error.WriteLine("This computer has no sound output. Use --wav <file> to write the sound to a file instead.");
+            Console.Error.WriteLine(
+                "This computer has no sound output. Use --wav <file> to write the sound to a file instead.");
             return CannotPlay;
         }
     }
@@ -116,23 +115,23 @@ internal static class Program
     private static void PrintUsage()
     {
         Console.WriteLine("""
-            Robotron sound player: plays the arcade's sounds on an emulated sound board running the real
-            sound ROM.
+                          Robotron sound player: plays the arcade's sounds on an emulated sound board running the real
+                          sound ROM.
 
-            Usage:
-              RobotronSoundPlayer                      a menu: pick sounds to play, one after another
-              RobotronSoundPlayer list                 list every sound
-              RobotronSoundPlayer play <sound>         play one sound, then stop
+                          Usage:
+                            RobotronSoundPlayer                      a menu: pick sounds to play, one after another
+                            RobotronSoundPlayer list                 list every sound
+                            RobotronSoundPlayer play <sound>         play one sound, then stop
 
-            <sound> is a name from the list (WaveEnd, Laser, Transporter ...), its number in the
-            list, or one of the board's sound numbers written $0E, 0x0E or #14.
+                          <sound> is a name from the list (WaveEnd, Laser, Transporter ...), its number in the
+                          list, or one of the board's sound numbers written $0E, 0x0E or #14.
 
-            Options:
-              --seconds <n>   play for exactly n seconds (otherwise: until it goes quiet, at most 15 s)
-              --wav <file>    write the sound to a WAV file instead of playing it
-              --rom <file>    the sound ROM (otherwise: looked for in ref/rom)
+                          Options:
+                            --seconds <n>   play for exactly n seconds (otherwise: until it goes quiet, at most 15 s)
+                            --wav <file>    write the sound to a WAV file instead of playing it
+                            --rom <file>    the sound ROM (otherwise: looked for in ref/rom)
 
-            Press any key while a sound plays to stop it.
-            """);
+                          Press any key while a sound plays to stop it.
+                          """);
     }
 }

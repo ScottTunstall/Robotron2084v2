@@ -14,17 +14,15 @@ internal static class CatalogPrinter
     public static void Print(SoundCatalog catalog)
     {
         Console.WriteLine("The game's sounds (pick by name or number):");
-        for (int i = 0; i < catalog.GameSounds.Count; i++)
+        for (var i = 0; i < catalog.GameSounds.Count; i++)
         {
-            ISoundRequest sound = catalog.GameSounds[i];
+            var sound = catalog.GameSounds[i];
             Console.WriteLine($"  {i + 1,3}  {sound.Name.PadRight(NameWidth)}{sound.Description}");
         }
 
         Console.WriteLine();
         Console.WriteLine("The board's sound numbers on their own (pick as $00 to $3F):");
-        foreach (ISoundRequest[] row in catalog.SoundNumbers.Chunk(SoundNumbersPerRow))
-        {
+        foreach (var row in catalog.SoundNumbers.Chunk(SoundNumbersPerRow))
             Console.WriteLine("  " + string.Join(" ", row.Select(sound => sound.Name)));
-        }
     }
 }

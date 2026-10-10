@@ -7,5 +7,5 @@ public enum Mc6800Accumulator
     A,
 
     /// <summary>Accumulator B.</summary>
-    B,
+    B
 }

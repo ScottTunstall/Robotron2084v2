@@ -1,8 +1,8 @@
 namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>
-/// The 6800 processor's arithmetic: the sums, shifts and tests its instructions do, and the flags
-/// each one leaves behind (Motorola MC6800 data sheet).
+///     The 6800 processor's arithmetic: the sums, shifts and tests its instructions do, and the flags
+///     each one leaves behind (Motorola MC6800 data sheet).
 /// </summary>
 internal static class Mc6800Alu
 {
@@ -47,8 +47,8 @@ internal static class Mc6800Alu
     /// <returns>The sum.</returns>
     internal static byte Add(Mc6800Cpu cpu, byte left, byte right, bool withCarry)
     {
-        int carryIn = withCarry && cpu.HasFlag(Mc6800ConditionCodes.Carry) ? 1 : 0;
-        int sum = left + right + carryIn;
+        var carryIn = withCarry && cpu.HasFlag(Mc6800ConditionCodes.Carry) ? 1 : 0;
+        var sum = left + right + carryIn;
         var result = (byte)sum;
         cpu.SetFlag(Mc6800ConditionCodes.HalfCarry, ((left ^ right ^ sum) & HalfCarryBit) != 0);
         cpu.SetFlag(Mc6800ConditionCodes.Overflow, ((left ^ result) & (right ^ result) & SignBit) != 0);
@@ -71,7 +71,7 @@ internal static class Mc6800Alu
     /// <param name="operand">The word to compare with.</param>
     internal static void CompareIndex(Mc6800Cpu cpu, ushort operand)
     {
-        ushort index = cpu.X;
+        var index = cpu.X;
         var result = (ushort)(index - operand);
         cpu.SetFlag(Mc6800ConditionCodes.Zero, result == 0);
         cpu.SetFlag(Mc6800ConditionCodes.Negative, (result & WordSignBit) != 0);
@@ -94,14 +94,11 @@ internal static class Mc6800Alu
     /// <returns>The fixed byte.</returns>
     internal static byte DecimalAdjust(Mc6800Cpu cpu, byte value)
     {
-        int lowDigit = value & LowDigitMask;
-        int highDigit = value >> BitsPerDigit;
-        bool carry = cpu.HasFlag(Mc6800ConditionCodes.Carry);
-        int correction = 0;
-        if (lowDigit > LargestDigit || cpu.HasFlag(Mc6800ConditionCodes.HalfCarry))
-        {
-            correction |= LowDigitCorrection;
-        }
+        var lowDigit = value & LowDigitMask;
+        var highDigit = value >> BitsPerDigit;
+        var carry = cpu.HasFlag(Mc6800ConditionCodes.Carry);
+        var correction = 0;
+        if (lowDigit > LargestDigit || cpu.HasFlag(Mc6800ConditionCodes.HalfCarry)) correction |= LowDigitCorrection;
 
         if (carry || highDigit > LargestDigit || (highDigit >= LargestDigit && lowDigit > LargestDigit))
         {
@@ -139,7 +136,10 @@ internal static class Mc6800Alu
         return result;
     }
 
-    /// <summary>Sets the flags for a byte that has been loaded, stored or combined bit by bit (LDA, STA, AND, ORA, EOR, BIT, TAB, TBA).</summary>
+    /// <summary>
+    ///     Sets the flags for a byte that has been loaded, stored or combined bit by bit (LDA, STA, AND, ORA, EOR, BIT,
+    ///     TAB, TBA).
+    /// </summary>
     /// <param name="cpu">The processor whose flags are set.</param>
     /// <param name="value">The byte.</param>
     /// <returns>The same byte.</returns>
@@ -181,7 +181,7 @@ internal static class Mc6800Alu
     /// <returns>The rotated byte.</returns>
     internal static byte RotateLeft(Mc6800Cpu cpu, byte value)
     {
-        int carryIn = cpu.HasFlag(Mc6800ConditionCodes.Carry) ? LowBit : 0;
+        var carryIn = cpu.HasFlag(Mc6800ConditionCodes.Carry) ? LowBit : 0;
         var result = (byte)((value << 1) | carryIn);
         return Shifted(cpu, result, (value & SignBit) != 0);
     }
@@ -192,7 +192,7 @@ internal static class Mc6800Alu
     /// <returns>The rotated byte.</returns>
     internal static byte RotateRight(Mc6800Cpu cpu, byte value)
     {
-        int carryIn = cpu.HasFlag(Mc6800ConditionCodes.Carry) ? SignBit : 0;
+        var carryIn = cpu.HasFlag(Mc6800ConditionCodes.Carry) ? SignBit : 0;
         var result = (byte)((value >> 1) | carryIn);
         return Shifted(cpu, result, (value & LowBit) != 0);
     }
@@ -235,8 +235,8 @@ internal static class Mc6800Alu
     /// <returns>The difference.</returns>
     internal static byte Subtract(Mc6800Cpu cpu, byte left, byte right, bool withCarry)
     {
-        int borrowIn = withCarry && cpu.HasFlag(Mc6800ConditionCodes.Carry) ? 1 : 0;
-        int difference = left - right - borrowIn;
+        var borrowIn = withCarry && cpu.HasFlag(Mc6800ConditionCodes.Carry) ? 1 : 0;
+        var difference = left - right - borrowIn;
         var result = (byte)difference;
         cpu.SetFlag(Mc6800ConditionCodes.Overflow, ((left ^ right) & (left ^ result) & SignBit) != 0);
         cpu.SetFlag(Mc6800ConditionCodes.Carry, difference < 0);
@@ -261,7 +261,10 @@ internal static class Mc6800Alu
         cpu.SetFlag(Mc6800ConditionCodes.Zero, result == 0);
     }
 
-    /// <summary>Sets the flags a shift or rotate leaves: the bit pushed out goes to carry, and overflow is negative-differs-from-carry.</summary>
+    /// <summary>
+    ///     Sets the flags a shift or rotate leaves: the bit pushed out goes to carry, and overflow is
+    ///     negative-differs-from-carry.
+    /// </summary>
     private static byte Shifted(Mc6800Cpu cpu, byte result, bool carryOut)
     {
         cpu.SetFlag(Mc6800ConditionCodes.Carry, carryOut);

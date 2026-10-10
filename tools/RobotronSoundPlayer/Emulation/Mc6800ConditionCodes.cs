@@ -23,5 +23,5 @@ public enum Mc6800ConditionCodes : byte
     InterruptMask = 0x10,
 
     /// <summary>The last sum carried out of its low four bits (used when adding decimal digits).</summary>
-    HalfCarry = 0x20,
+    HalfCarry = 0x20
 }

@@ -3,8 +3,8 @@ using static RobotronSoundPlayer.Emulation.Mc6800Opcodes;
 namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>
-/// The 6800 processor's instruction set: for each of the 256 possible opcode bytes, what the
-/// instruction does and how many clock cycles it takes (Motorola MC6800 data sheet).
+///     The 6800 processor's instruction set: for each of the 256 possible opcode bytes, what the
+///     instruction does and how many clock cycles it takes (Motorola MC6800 data sheet).
 /// </summary>
 /// <remarks>A byte that is not a 6800 instruction does nothing for two cycles.</remarks>
 internal static class Mc6800InstructionSet
@@ -96,7 +96,10 @@ internal static class Mc6800InstructionSet
     /// <summary>The instruction an opcode byte stands for.</summary>
     /// <param name="opcode">The opcode byte.</param>
     /// <returns>Its instruction.</returns>
-    internal static Mc6800Instruction GetInstruction(byte opcode) => Instructions[opcode];
+    internal static Mc6800Instruction GetInstruction(byte opcode)
+    {
+        return Instructions[opcode];
+    }
 
     /// <summary>Fills in every opcode.</summary>
     private static Mc6800Instruction[] Build()
@@ -120,8 +123,11 @@ internal static class Mc6800InstructionSet
     /// <param name="opcode">The opcode byte.</param>
     /// <param name="execute">What the instruction does.</param>
     /// <param name="cycles">How many clock cycles it takes.</param>
-    private static void Define(Mc6800Instruction[] set, int opcode, Action<Mc6800Cpu> execute, int cycles = InherentCycles) =>
+    private static void Define(Mc6800Instruction[] set, int opcode, Action<Mc6800Cpu> execute,
+        int cycles = InherentCycles)
+    {
         set[opcode] = new Mc6800Instruction(execute, cycles);
+    }
 
     /// <summary>The instructions that set and clear single flags, or copy the flags to and from accumulator A.</summary>
     private static void AddFlagInstructions(Mc6800Instruction[] set)
@@ -140,12 +146,12 @@ internal static class Mc6800InstructionSet
     /// <summary>The instructions that work between the two accumulators, and on the index register.</summary>
     private static void AddRegisterInstructions(Mc6800Instruction[] set)
     {
-        Define(set, SubtractBFromA, cpu => cpu.A = Mc6800Alu.Subtract(cpu, cpu.A, cpu.B, withCarry: false));
-        Define(set, CompareAWithB, cpu => Mc6800Alu.Subtract(cpu, cpu.A, cpu.B, withCarry: false));
+        Define(set, SubtractBFromA, cpu => cpu.A = Mc6800Alu.Subtract(cpu, cpu.A, cpu.B, false));
+        Define(set, CompareAWithB, cpu => Mc6800Alu.Subtract(cpu, cpu.A, cpu.B, false));
         Define(set, TransferAToB, cpu => cpu.B = Mc6800Alu.Load(cpu, cpu.A));
         Define(set, TransferBToA, cpu => cpu.A = Mc6800Alu.Load(cpu, cpu.B));
         Define(set, DecimalAdjustA, cpu => cpu.A = Mc6800Alu.DecimalAdjust(cpu, cpu.A));
-        Define(set, AddBToA, cpu => cpu.A = Mc6800Alu.Add(cpu, cpu.A, cpu.B, withCarry: false));
+        Define(set, AddBToA, cpu => cpu.A = Mc6800Alu.Add(cpu, cpu.A, cpu.B, false));
         Define(set, IncrementIndex, cpu => StepIndex(cpu, 1), RegisterWordCycles);
         Define(set, DecrementIndex, cpu => StepIndex(cpu, -1), RegisterWordCycles);
     }
@@ -161,8 +167,10 @@ internal static class Mc6800InstructionSet
     private static void AddBranches(Mc6800Instruction[] set)
     {
         AddBranch(set, BranchAlways, _ => true);
-        AddBranch(set, BranchIfHigher, cpu => !cpu.HasFlag(Mc6800ConditionCodes.Carry) && !cpu.HasFlag(Mc6800ConditionCodes.Zero));
-        AddBranch(set, BranchIfLowerOrSame, cpu => cpu.HasFlag(Mc6800ConditionCodes.Carry) || cpu.HasFlag(Mc6800ConditionCodes.Zero));
+        AddBranch(set, BranchIfHigher,
+            cpu => !cpu.HasFlag(Mc6800ConditionCodes.Carry) && !cpu.HasFlag(Mc6800ConditionCodes.Zero));
+        AddBranch(set, BranchIfLowerOrSame,
+            cpu => cpu.HasFlag(Mc6800ConditionCodes.Carry) || cpu.HasFlag(Mc6800ConditionCodes.Zero));
         AddBranch(set, BranchIfCarryClear, cpu => !cpu.HasFlag(Mc6800ConditionCodes.Carry));
         AddBranch(set, BranchIfCarrySet, cpu => cpu.HasFlag(Mc6800ConditionCodes.Carry));
         AddBranch(set, BranchIfNotEqual, cpu => !cpu.HasFlag(Mc6800ConditionCodes.Zero));
@@ -179,8 +187,10 @@ internal static class Mc6800InstructionSet
     }
 
     /// <summary>Puts one branch in the table.</summary>
-    private static void AddBranch(Mc6800Instruction[] set, int opcode, Func<Mc6800Cpu, bool> condition) =>
+    private static void AddBranch(Mc6800Instruction[] set, int opcode, Func<Mc6800Cpu, bool> condition)
+    {
         Define(set, opcode, cpu => cpu.BranchIf(condition(cpu)), BranchCycles);
+    }
 
     /// <summary>The stack instructions, returns and interrupts.</summary>
     private static void AddStackInstructions(Mc6800Instruction[] set)
@@ -202,17 +212,17 @@ internal static class Mc6800InstructionSet
     /// <summary>The one-value operations, each on accumulator A, accumulator B and memory.</summary>
     private static void AddUnaryOperations(Mc6800Instruction[] set)
     {
-        AddUnary(set, Negate, Mc6800Alu.Negate, writesBack: true);
-        AddUnary(set, Complement, Mc6800Alu.Complement, writesBack: true);
-        AddUnary(set, ShiftRightLogical, Mc6800Alu.ShiftRightLogical, writesBack: true);
-        AddUnary(set, RotateRight, Mc6800Alu.RotateRight, writesBack: true);
-        AddUnary(set, ShiftRightArithmetic, Mc6800Alu.ShiftRightArithmetic, writesBack: true);
-        AddUnary(set, ShiftLeft, Mc6800Alu.ShiftLeft, writesBack: true);
-        AddUnary(set, RotateLeft, Mc6800Alu.RotateLeft, writesBack: true);
-        AddUnary(set, Decrement, Mc6800Alu.Decrement, writesBack: true);
-        AddUnary(set, Increment, Mc6800Alu.Increment, writesBack: true);
-        AddUnary(set, Test, Mc6800Alu.Test, writesBack: false);
-        AddUnary(set, Clear, (cpu, _) => Mc6800Alu.Clear(cpu), writesBack: true);
+        AddUnary(set, Negate, Mc6800Alu.Negate, true);
+        AddUnary(set, Complement, Mc6800Alu.Complement, true);
+        AddUnary(set, ShiftRightLogical, Mc6800Alu.ShiftRightLogical, true);
+        AddUnary(set, RotateRight, Mc6800Alu.RotateRight, true);
+        AddUnary(set, ShiftRightArithmetic, Mc6800Alu.ShiftRightArithmetic, true);
+        AddUnary(set, ShiftLeft, Mc6800Alu.ShiftLeft, true);
+        AddUnary(set, RotateLeft, Mc6800Alu.RotateLeft, true);
+        AddUnary(set, Decrement, Mc6800Alu.Decrement, true);
+        AddUnary(set, Increment, Mc6800Alu.Increment, true);
+        AddUnary(set, Test, Mc6800Alu.Test, false);
+        AddUnary(set, Clear, (cpu, _) => Mc6800Alu.Clear(cpu), true);
     }
 
     /// <summary>Puts one one-value operation in the table in all four of its forms.</summary>
@@ -220,47 +230,55 @@ internal static class Mc6800InstructionSet
     /// <param name="operation">The operation's low four bits.</param>
     /// <param name="compute">Works out the new value and sets the flags.</param>
     /// <param name="writesBack">False for TST, which must not write to memory: a write to a chip can change it.</param>
-    private static void AddUnary(Mc6800Instruction[] set, byte operation, Func<Mc6800Cpu, byte, byte> compute, bool writesBack)
+    private static void AddUnary(Mc6800Instruction[] set, byte operation, Func<Mc6800Cpu, byte, byte> compute,
+        bool writesBack)
     {
         Define(set, UnaryOnA | operation, cpu => cpu.A = compute(cpu, cpu.A));
         Define(set, UnaryOnB | operation, cpu => cpu.B = compute(cpu, cpu.B));
-        Define(set, UnaryIndexed | operation, cpu => ModifyMemory(cpu, cpu.IndexedAddress(), compute, writesBack), UnaryIndexedCycles);
-        Define(set, UnaryExtended | operation, cpu => ModifyMemory(cpu, cpu.ExtendedAddress(), compute, writesBack), UnaryExtendedCycles);
+        Define(set, UnaryIndexed | operation, cpu => ModifyMemory(cpu, cpu.IndexedAddress(), compute, writesBack),
+            UnaryIndexedCycles);
+        Define(set, UnaryExtended | operation, cpu => ModifyMemory(cpu, cpu.ExtendedAddress(), compute, writesBack),
+            UnaryExtendedCycles);
     }
 
     /// <summary>Reads a byte, works out its new value, and writes it back when the operation does.</summary>
-    private static void ModifyMemory(Mc6800Cpu cpu, ushort address, Func<Mc6800Cpu, byte, byte> compute, bool writesBack)
+    private static void ModifyMemory(Mc6800Cpu cpu, ushort address, Func<Mc6800Cpu, byte, byte> compute,
+        bool writesBack)
     {
-        byte result = compute(cpu, cpu.ReadByte(address));
-        if (writesBack)
-        {
-            cpu.WriteByte(address, result);
-        }
+        var result = compute(cpu, cpu.ReadByte(address));
+        if (writesBack) cpu.WriteByte(address, result);
     }
 
     /// <summary>The two-value operations between an accumulator and a value.</summary>
     private static void AddAccumulatorOperations(Mc6800Instruction[] set)
     {
-        AddForBothAccumulators(set, Subtract, (cpu, value, operand) => Mc6800Alu.Subtract(cpu, value, operand, withCarry: false));
+        AddForBothAccumulators(set, Subtract, (cpu, value, operand) => Mc6800Alu.Subtract(cpu, value, operand, false));
         AddForBothAccumulators(set, Compare, CompareWith);
-        AddForBothAccumulators(set, SubtractWithCarry, (cpu, value, operand) => Mc6800Alu.Subtract(cpu, value, operand, withCarry: true));
+        AddForBothAccumulators(set, SubtractWithCarry,
+            (cpu, value, operand) => Mc6800Alu.Subtract(cpu, value, operand, true));
         AddForBothAccumulators(set, And, (cpu, value, operand) => Mc6800Alu.Load(cpu, (byte)(value & operand)));
         AddForBothAccumulators(set, BitTest, TestBitsWith);
         AddForBothAccumulators(set, Load, (cpu, _, operand) => Mc6800Alu.Load(cpu, operand));
         AddForBothAccumulators(set, ExclusiveOr, (cpu, value, operand) => Mc6800Alu.Load(cpu, (byte)(value ^ operand)));
-        AddForBothAccumulators(set, AddWithCarry, (cpu, value, operand) => Mc6800Alu.Add(cpu, value, operand, withCarry: true));
+        AddForBothAccumulators(set, AddWithCarry, (cpu, value, operand) => Mc6800Alu.Add(cpu, value, operand, true));
         AddForBothAccumulators(set, Or, (cpu, value, operand) => Mc6800Alu.Load(cpu, (byte)(value | operand)));
-        AddForBothAccumulators(set, Add, (cpu, value, operand) => Mc6800Alu.Add(cpu, value, operand, withCarry: false));
+        AddForBothAccumulators(set, Add, (cpu, value, operand) => Mc6800Alu.Add(cpu, value, operand, false));
     }
 
-    /// <summary>Compares an accumulator with a value: sets the flags a subtraction would, and leaves the accumulator alone (CMP).</summary>
+    /// <summary>
+    ///     Compares an accumulator with a value: sets the flags a subtraction would, and leaves the accumulator alone
+    ///     (CMP).
+    /// </summary>
     private static byte CompareWith(Mc6800Cpu cpu, byte value, byte operand)
     {
-        Mc6800Alu.Subtract(cpu, value, operand, withCarry: false);
+        Mc6800Alu.Subtract(cpu, value, operand, false);
         return value;
     }
 
-    /// <summary>Tests which bits an accumulator shares with a value: sets the flags an AND would, and leaves the accumulator alone (BIT).</summary>
+    /// <summary>
+    ///     Tests which bits an accumulator shares with a value: sets the flags an AND would, and leaves the accumulator
+    ///     alone (BIT).
+    /// </summary>
     private static byte TestBitsWith(Mc6800Cpu cpu, byte value, byte operand)
     {
         Mc6800Alu.Load(cpu, (byte)(value & operand));
@@ -268,44 +286,53 @@ internal static class Mc6800InstructionSet
     }
 
     /// <summary>Puts one two-value operation in the table for both accumulators.</summary>
-    private static void AddForBothAccumulators(Mc6800Instruction[] set, byte operation, Func<Mc6800Cpu, byte, byte, byte> compute)
+    private static void AddForBothAccumulators(Mc6800Instruction[] set, byte operation,
+        Func<Mc6800Cpu, byte, byte, byte> compute)
     {
         AddForAccumulator(set, AccumulatorAFamily | operation, Mc6800Accumulator.A, compute);
         AddForAccumulator(set, AccumulatorBFamily | operation, Mc6800Accumulator.B, compute);
     }
 
     /// <summary>Puts one two-value operation in the table for one accumulator, in all four addressing modes.</summary>
-    private static void AddForAccumulator(Mc6800Instruction[] set, int immediateOpcode, Mc6800Accumulator accumulator, Func<Mc6800Cpu, byte, byte, byte> compute)
+    private static void AddForAccumulator(Mc6800Instruction[] set, int immediateOpcode, Mc6800Accumulator accumulator,
+        Func<Mc6800Cpu, byte, byte, byte> compute)
     {
-        Define(set, immediateOpcode, cpu => Apply(cpu, accumulator, compute, cpu.FetchByte()), ImmediateByteCycles);
-        Define(set, immediateOpcode + DirectMode, cpu => Apply(cpu, accumulator, compute, cpu.ReadByte(cpu.DirectAddress())), DirectByteCycles);
-        Define(set, immediateOpcode + IndexedMode, cpu => Apply(cpu, accumulator, compute, cpu.ReadByte(cpu.IndexedAddress())), IndexedByteCycles);
-        Define(set, immediateOpcode + ExtendedMode, cpu => Apply(cpu, accumulator, compute, cpu.ReadByte(cpu.ExtendedAddress())), ExtendedByteCycles);
+        Define(set, immediateOpcode, cpu => Apply(cpu, accumulator, compute, cpu.FetchByte()));
+        Define(set, immediateOpcode + DirectMode,
+            cpu => Apply(cpu, accumulator, compute, cpu.ReadByte(cpu.DirectAddress())), DirectByteCycles);
+        Define(set, immediateOpcode + IndexedMode,
+            cpu => Apply(cpu, accumulator, compute, cpu.ReadByte(cpu.IndexedAddress())), IndexedByteCycles);
+        Define(set, immediateOpcode + ExtendedMode,
+            cpu => Apply(cpu, accumulator, compute, cpu.ReadByte(cpu.ExtendedAddress())), ExtendedByteCycles);
     }
 
     /// <summary>Works an operation out between an accumulator and a value, and puts the answer in the accumulator.</summary>
-    private static void Apply(Mc6800Cpu cpu, Mc6800Accumulator accumulator, Func<Mc6800Cpu, byte, byte, byte> compute, byte operand)
+    private static void Apply(Mc6800Cpu cpu, Mc6800Accumulator accumulator, Func<Mc6800Cpu, byte, byte, byte> compute,
+        byte operand)
     {
-        byte current = cpu.GetAccumulator(accumulator);
+        var current = cpu.GetAccumulator(accumulator);
         cpu.SetAccumulator(accumulator, compute(cpu, current, operand));
     }
 
     /// <summary>STA and STB, at a direct, indexed and full address.</summary>
     private static void AddStores(Mc6800Instruction[] set)
     {
-        foreach (Mc6800Accumulator accumulator in new[] { Mc6800Accumulator.A, Mc6800Accumulator.B })
+        foreach (var accumulator in new[] { Mc6800Accumulator.A, Mc6800Accumulator.B })
         {
             int family = accumulator == Mc6800Accumulator.A ? AccumulatorAFamily : AccumulatorBFamily;
-            Define(set, family + DirectMode + Store, cpu => StoreAccumulator(cpu, accumulator, cpu.DirectAddress()), DirectStoreCycles);
-            Define(set, family + IndexedMode + Store, cpu => StoreAccumulator(cpu, accumulator, cpu.IndexedAddress()), IndexedStoreCycles);
-            Define(set, family + ExtendedMode + Store, cpu => StoreAccumulator(cpu, accumulator, cpu.ExtendedAddress()), ExtendedStoreCycles);
+            Define(set, family + DirectMode + Store, cpu => StoreAccumulator(cpu, accumulator, cpu.DirectAddress()),
+                DirectStoreCycles);
+            Define(set, family + IndexedMode + Store, cpu => StoreAccumulator(cpu, accumulator, cpu.IndexedAddress()),
+                IndexedStoreCycles);
+            Define(set, family + ExtendedMode + Store, cpu => StoreAccumulator(cpu, accumulator, cpu.ExtendedAddress()),
+                ExtendedStoreCycles);
         }
     }
 
     /// <summary>Writes an accumulator to memory and sets the flags from it.</summary>
     private static void StoreAccumulator(Mc6800Cpu cpu, Mc6800Accumulator accumulator, ushort address)
     {
-        byte value = Mc6800Alu.Load(cpu, cpu.GetAccumulator(accumulator));
+        var value = Mc6800Alu.Load(cpu, cpu.GetAccumulator(accumulator));
         cpu.WriteByte(address, value);
     }
 
@@ -316,7 +343,7 @@ internal static class Mc6800InstructionSet
         AddWordLoad(set, AccumulatorBFamily | LoadWord, (cpu, value) => cpu.X = value);
         AddWordStore(set, AccumulatorAFamily | StoreWord, cpu => cpu.StackPointer);
         AddWordStore(set, AccumulatorBFamily | StoreWord, cpu => cpu.X);
-        AddWordLoad(set, AccumulatorAFamily | CompareIndex, Mc6800Alu.CompareIndex, setsFlagsItself: true);
+        AddWordLoad(set, AccumulatorAFamily | CompareIndex, Mc6800Alu.CompareIndex, true);
     }
 
     /// <summary>Puts one 16-bit load (or CPX) in the table in all four addressing modes.</summary>
@@ -324,27 +351,34 @@ internal static class Mc6800InstructionSet
     /// <param name="immediateOpcode">The opcode that takes the word from the next two bytes.</param>
     /// <param name="use">What to do with the word.</param>
     /// <param name="setsFlagsItself">True for CPX, whose flags come from the comparison rather than the load.</param>
-    private static void AddWordLoad(Mc6800Instruction[] set, int immediateOpcode, Action<Mc6800Cpu, ushort> use, bool setsFlagsItself = false)
+    private static void AddWordLoad(Mc6800Instruction[] set, int immediateOpcode, Action<Mc6800Cpu, ushort> use,
+        bool setsFlagsItself = false)
     {
         Func<Mc6800Cpu, ushort, ushort> flags = setsFlagsItself ? (_, value) => value : Mc6800Alu.LoadWord;
         Define(set, immediateOpcode, cpu => use(cpu, flags(cpu, cpu.FetchWord())), ImmediateWordCycles);
-        Define(set, immediateOpcode + DirectMode, cpu => use(cpu, flags(cpu, cpu.ReadWord(cpu.DirectAddress()))), DirectWordCycles);
-        Define(set, immediateOpcode + IndexedMode, cpu => use(cpu, flags(cpu, cpu.ReadWord(cpu.IndexedAddress()))), IndexedWordCycles);
-        Define(set, immediateOpcode + ExtendedMode, cpu => use(cpu, flags(cpu, cpu.ReadWord(cpu.ExtendedAddress()))), ExtendedWordCycles);
+        Define(set, immediateOpcode + DirectMode, cpu => use(cpu, flags(cpu, cpu.ReadWord(cpu.DirectAddress()))),
+            DirectWordCycles);
+        Define(set, immediateOpcode + IndexedMode, cpu => use(cpu, flags(cpu, cpu.ReadWord(cpu.IndexedAddress()))),
+            IndexedWordCycles);
+        Define(set, immediateOpcode + ExtendedMode, cpu => use(cpu, flags(cpu, cpu.ReadWord(cpu.ExtendedAddress()))),
+            ExtendedWordCycles);
     }
 
     /// <summary>Puts one 16-bit store in the table at a direct, indexed and full address.</summary>
     private static void AddWordStore(Mc6800Instruction[] set, int immediateOpcode, Func<Mc6800Cpu, ushort> read)
     {
-        Define(set, immediateOpcode + DirectMode, cpu => StoreWordAt(cpu, cpu.DirectAddress(), read), DirectWordStoreCycles);
-        Define(set, immediateOpcode + IndexedMode, cpu => StoreWordAt(cpu, cpu.IndexedAddress(), read), IndexedWordStoreCycles);
-        Define(set, immediateOpcode + ExtendedMode, cpu => StoreWordAt(cpu, cpu.ExtendedAddress(), read), ExtendedWordStoreCycles);
+        Define(set, immediateOpcode + DirectMode, cpu => StoreWordAt(cpu, cpu.DirectAddress(), read),
+            DirectWordStoreCycles);
+        Define(set, immediateOpcode + IndexedMode, cpu => StoreWordAt(cpu, cpu.IndexedAddress(), read),
+            IndexedWordStoreCycles);
+        Define(set, immediateOpcode + ExtendedMode, cpu => StoreWordAt(cpu, cpu.ExtendedAddress(), read),
+            ExtendedWordStoreCycles);
     }
 
     /// <summary>Writes a 16-bit register to memory and sets the flags from it.</summary>
     private static void StoreWordAt(Mc6800Cpu cpu, ushort address, Func<Mc6800Cpu, ushort> read)
     {
-        ushort value = Mc6800Alu.LoadWord(cpu, read(cpu));
+        var value = Mc6800Alu.LoadWord(cpu, read(cpu));
         cpu.WriteWord(address, value);
     }
 

@@ -14,7 +14,10 @@ internal sealed class SoundNumberRequest(int soundNumber) : ISoundRequest
 
     /// <summary>Sends the sound number to the board.</summary>
     /// <param name="engine">The sequencer that passes the number straight to the board.</param>
-    public void Start(SoundEngine engine) => engine.SendDirect(soundNumber, 0f);
+    public void Start(SoundEngine engine)
+    {
+        engine.SendDirect(soundNumber, 0f);
+    }
 
     /// <summary>Does nothing: the number is sent once.</summary>
     /// <param name="engine">The sequencer that sends sound numbers to the board.</param>

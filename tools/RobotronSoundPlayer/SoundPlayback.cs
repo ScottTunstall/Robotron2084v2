@@ -14,7 +14,7 @@ internal sealed class SoundPlayback(byte[] soundRom)
     {
         var length = new PlaybackLength(seconds);
         Console.WriteLine($"Playing {request.Name} ({request.Description}). Press any key to stop.");
-        bool wasStopped = SpeakerOutput.Play(StartSource(request), length);
+        var wasStopped = SpeakerOutput.Play(StartSource(request), length);
         Console.WriteLine(wasStopped ? "Stopped." : DescribeEnding(length, seconds));
     }
 
@@ -31,24 +31,22 @@ internal sealed class SoundPlayback(byte[] soundRom)
 
     /// <summary>Switches a fresh emulated board on and asks it for the request.</summary>
     /// <param name="request">What to play.</param>
-    private BoardSoundSource StartSource(ISoundRequest request) => new(new EmulatedSoundBoard(soundRom), request);
+    private BoardSoundSource StartSource(ISoundRequest request)
+    {
+        return new BoardSoundSource(new EmulatedSoundBoard(soundRom), request);
+    }
 
     /// <summary>Says why the sound stopped.</summary>
     /// <param name="length">The length that stopped it.</param>
     /// <param name="seconds">The time the user gave, or null.</param>
     private static string DescribeEnding(PlaybackLength length, double? seconds)
     {
-        string heard = length.HeardSeconds.ToString("F1", CultureInfo.InvariantCulture);
-        if (seconds is not null)
-        {
-            return $"Played {heard} s, as asked.";
-        }
+        var heard = length.HeardSeconds.ToString("F1", CultureInfo.InvariantCulture);
+        if (seconds is not null) return $"Played {heard} s, as asked.";
 
-        if (length.FellSilent)
-        {
-            return $"It went quiet after {heard} s.";
-        }
+        if (length.FellSilent) return $"It went quiet after {heard} s.";
 
-        return $"Still sounding at the {PlaybackLength.LimitSeconds} s limit: this sound does not stop by itself. Use --seconds to hear more.";
+        return
+            $"Still sounding at the {PlaybackLength.LimitSeconds} s limit: this sound does not stop by itself. Use --seconds to hear more.";
     }
 }

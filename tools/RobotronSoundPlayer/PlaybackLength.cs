@@ -1,8 +1,8 @@
 namespace RobotronSoundPlayer;
 
 /// <summary>
-/// Decides when to stop: after a set time when one is given, otherwise once the sound has been quiet for
-/// a while, or at a limit for the sounds that never stop by themselves.
+///     Decides when to stop: after a set time when one is given, otherwise once the sound has been quiet for
+///     a while, or at a limit for the sounds that never stop by themselves.
 /// </summary>
 internal sealed class PlaybackLength
 {
@@ -52,13 +52,9 @@ internal sealed class PlaybackLength
     /// <param name="samples">The samples.</param>
     private static bool IsQuiet(ReadOnlySpan<float> samples)
     {
-        foreach (float sample in samples)
-        {
+        foreach (var sample in samples)
             if (Math.Abs(sample) >= Silence)
-            {
                 return false;
-            }
-        }
 
         return true;
     }

@@ -14,11 +14,8 @@ internal static class InteractiveMenu
         {
             Console.WriteLine();
             Console.Write("Play which? (a name, a number from the list, $00-$3F, 'list', or 'q' to quit): ");
-            string? answer = Console.ReadLine()?.Trim();
-            if (answer is null || IsQuit(answer))
-            {
-                return;
-            }
+            var answer = Console.ReadLine()?.Trim();
+            if (answer is null || IsQuit(answer)) return;
 
             Answer(answer, catalog, playback, seconds);
         }
@@ -31,10 +28,7 @@ internal static class InteractiveMenu
     /// <param name="seconds">How long to play, or null to stop when it goes quiet.</param>
     private static void Answer(string answer, SoundCatalog catalog, SoundPlayback playback, double? seconds)
     {
-        if (answer.Length == 0)
-        {
-            return;
-        }
+        if (answer.Length == 0) return;
 
         if (answer.Equals("list", StringComparison.OrdinalIgnoreCase))
         {
@@ -42,7 +36,7 @@ internal static class InteractiveMenu
             return;
         }
 
-        ISoundRequest? request = catalog.Find(answer);
+        var request = catalog.Find(answer);
         if (request is null)
         {
             Console.WriteLine($"There is no sound called '{answer}'. Type 'list' to see them all.");
@@ -54,6 +48,9 @@ internal static class InteractiveMenu
 
     /// <summary>True when the answer asks to quit.</summary>
     /// <param name="answer">What the user typed.</param>
-    private static bool IsQuit(string answer) =>
-        answer.Equals("q", StringComparison.OrdinalIgnoreCase) || answer.Equals("quit", StringComparison.OrdinalIgnoreCase);
+    private static bool IsQuit(string answer)
+    {
+        return answer.Equals("q", StringComparison.OrdinalIgnoreCase) ||
+               answer.Equals("quit", StringComparison.OrdinalIgnoreCase);
+    }
 }

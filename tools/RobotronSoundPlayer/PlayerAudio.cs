@@ -22,12 +22,12 @@ internal static class PlayerAudio
     public static byte[] ToPcm16(ReadOnlySpan<float> samples, float volume)
     {
         var pcm = new byte[samples.Length * sizeof(short)];
-        for (int i = 0; i < samples.Length; i++)
+        for (var i = 0; i < samples.Length; i++)
         {
-            float scaled = Math.Clamp(samples[i] * volume, -1f, 1f) * FullScale16Bit;
+            var scaled = Math.Clamp(samples[i] * volume, -1f, 1f) * FullScale16Bit;
             var value = (short)MathF.Round(scaled);
             pcm[i * sizeof(short)] = (byte)value;
-            pcm[(i * sizeof(short)) + 1] = (byte)(value >> 8);
+            pcm[i * sizeof(short) + 1] = (byte)(value >> 8);
         }
 
         return pcm;

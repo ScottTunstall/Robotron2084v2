@@ -1,13 +1,13 @@
 namespace RobotronSoundPlayer.Emulation;
 
 /// <summary>
-/// The 6800 processor's opcode bytes, named after what they do, with the Motorola mnemonic in each
-/// summary (Motorola MC6800 data sheet).
+///     The 6800 processor's opcode bytes, named after what they do, with the Motorola mnemonic in each
+///     summary (Motorola MC6800 data sheet).
 /// </summary>
 /// <remarks>
-/// Most instructions come in families that differ only in where the value comes from. A family is
-/// written as a base opcode plus the operation in its low four bits, and the addressing mode picks
-/// the base: see <see cref="Mc6800InstructionSet"/>.
+///     Most instructions come in families that differ only in where the value comes from. A family is
+///     written as a base opcode plus the operation in its low four bits, and the addressing mode picks
+///     the base: see <see cref="Mc6800InstructionSet" />.
 /// </remarks>
 internal static class Mc6800Opcodes
 {

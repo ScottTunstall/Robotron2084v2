@@ -25,10 +25,7 @@ internal static class SpeakerOutput
         output.Play();
         while (!length.IsOver)
         {
-            if (WasKeyPressed())
-            {
-                return true;
-            }
+            if (WasKeyPressed()) return true;
 
             TopUp(output, source, length, samples);
             Thread.Sleep(PollMilliseconds);
@@ -38,7 +35,8 @@ internal static class SpeakerOutput
     }
 
     /// <summary>Queues port ticks of sound until the queue is full or the sound has ended.</summary>
-    private static void TopUp(DynamicSoundEffectInstance output, ISoundSource source, PlaybackLength length, float[] samples)
+    private static void TopUp(DynamicSoundEffectInstance output, ISoundSource source, PlaybackLength length,
+        float[] samples)
     {
         FrameworkDispatcher.Update();
         while (output.PendingBufferCount < QueuedTicks && !length.IsOver)
@@ -55,10 +53,7 @@ internal static class SpeakerOutput
     {
         while (output.PendingBufferCount > 0)
         {
-            if (WasKeyPressed())
-            {
-                return true;
-            }
+            if (WasKeyPressed()) return true;
 
             FrameworkDispatcher.Update();
             Thread.Sleep(PollMilliseconds);
@@ -70,12 +65,9 @@ internal static class SpeakerOutput
     /// <summary>True when a key has been pressed in the console; the key is used up.</summary>
     private static bool WasKeyPressed()
     {
-        if (Console.IsInputRedirected || !Console.KeyAvailable)
-        {
-            return false;
-        }
+        if (Console.IsInputRedirected || !Console.KeyAvailable) return false;
 
-        Console.ReadKey(intercept: true);
+        Console.ReadKey(true);
         return true;
     }
 }

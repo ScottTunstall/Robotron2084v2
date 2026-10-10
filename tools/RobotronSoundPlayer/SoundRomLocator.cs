@@ -1,6 +1,9 @@
 namespace RobotronSoundPlayer;
 
-/// <summary>Finds the sound board's ROM, which is not in git: beside the player, or in <c>ref/rom</c> above it or above the current folder.</summary>
+/// <summary>
+///     Finds the sound board's ROM, which is not in git: beside the player, or in <c>ref/rom</c> above it or above
+///     the current folder.
+/// </summary>
 internal static class SoundRomLocator
 {
     /// <summary>The sound ROM's file name in MAME's <c>robotron</c> set.</summary>
@@ -11,16 +14,10 @@ internal static class SoundRomLocator
     /// <returns>The ROM's path, or null when it is nowhere to be found.</returns>
     public static string? Find(string? givenPath)
     {
-        if (givenPath is not null)
-        {
-            return File.Exists(givenPath) ? givenPath : null;
-        }
+        if (givenPath is not null) return File.Exists(givenPath) ? givenPath : null;
 
-        string besideThePlayer = Path.Combine(AppContext.BaseDirectory, "Roms", RomFileName);
-        if (File.Exists(besideThePlayer))
-        {
-            return besideThePlayer;
-        }
+        var besideThePlayer = Path.Combine(AppContext.BaseDirectory, "Roms", RomFileName);
+        if (File.Exists(besideThePlayer)) return besideThePlayer;
 
         return FindInRefRomAbove(AppContext.BaseDirectory) ?? FindInRefRomAbove(Environment.CurrentDirectory);
     }
@@ -32,11 +29,8 @@ internal static class SoundRomLocator
     {
         for (DirectoryInfo? folder = new(start); folder is not null; folder = folder.Parent)
         {
-            string candidate = Path.Combine(folder.FullName, "ref", "rom", RomFileName);
-            if (File.Exists(candidate))
-            {
-                return candidate;
-            }
+            var candidate = Path.Combine(folder.FullName, "ref", "rom", RomFileName);
+            if (File.Exists(candidate)) return candidate;
         }
 
         return null;
