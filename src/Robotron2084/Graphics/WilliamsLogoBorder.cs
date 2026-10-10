@@ -133,7 +133,7 @@ public sealed class WilliamsLogoBorder
     /// <summary>ROM <c>$8A19</c>: the W's shape in one palette slot; slot 0 erases it.</summary>
     private void Blit(int column, int row, int slot)
     {
-        int left = column * ScreenSize.ArcadePixelsPerColumn;
+        int left = column * ScreenSize.ArcadePixelsPerByte;
         for (int y = 0; y < _logoMask.Height; y++)
         {
             for (int x = 0; x < _logoMask.Width; x++)
