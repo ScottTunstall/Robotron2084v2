@@ -8,7 +8,7 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>A brain is a floating robot that chases a family member and turns them into a prog. It also shoots cruise missiles at you.</summary>
+/// <summary>A brain is a robot that chases a family member and turns them into a prog. It also shoots cruise missiles at you.</summary>
 /// <seealso cref="PlayField"/>
 /// <seealso cref="Human"/>
 /// <remarks>
