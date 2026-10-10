@@ -1,9 +1,9 @@
 namespace Robotron2084.Hud;
 
 /// <summary>
-/// The port's PAUSE toggle (notes §101) — port-only, the arcade has no pause. Pure and
-/// unit-tested because it is an edge detector: the key is held while the player reaches
-/// for the door, and a held key must not flap the game in and out of pause.
+///     The port's PAUSE toggle (notes §101) — port-only, the arcade has no pause. Pure and
+///     unit-tested because it is an edge detector: the key is held while the player reaches
+///     for the door, and a held key must not flap the game in and out of pause.
 /// </summary>
 public sealed class PauseToggle
 {
@@ -19,13 +19,10 @@ public sealed class PauseToggle
         _wasHeld = true; // swallowing the current state, so the key that left must be released
     }
 
-    /// <summary>One tick: toggles when <paramref name="isPauseHeld"/> goes from up to down.</summary>
+    /// <summary>One tick: toggles when <paramref name="isPauseHeld" /> goes from up to down.</summary>
     public void Tick(bool isPauseHeld)
     {
-        if (isPauseHeld && !_wasHeld)
-        {
-            IsPaused = !IsPaused;
-        }
+        if (isPauseHeld && !_wasHeld) IsPaused = !IsPaused;
 
         _wasHeld = isPauseHeld;
     }

@@ -4,18 +4,18 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Hud;
 
 /// <summary>
-/// The CONG page's cursors, colours and cell geometry (notes §116). The initials screen is RRET.ASM's
-/// message 95 (<c>CONGP</c>), so every position here is one of its control codes; cursors are the
-/// ROM's (column, row) units and a column is two arcade pixels.
+///     The CONG page's cursors, colours and cell geometry (notes §116). The initials screen is RRET.ASM's
+///     message 95 (<c>CONGP</c>), so every position here is one of its control codes; cursors are the
+///     ROM's (column, row) units and a column is two arcade pixels.
 /// </summary>
 /// <remarks>
-/// <c>CONGP</c> prints "PLAYER n" at <c>CURSAB $40,$10</c> = (64, 16), "YOU ARE A ROBOTRON HERO" at
-/// (41, 48), and "ENTER YOUR INITIALS:" at (45, 88) — all in the LARGE font (the <c>WRD7V</c>
-/// default) in <c>COLOR $44</c> = slot 4. <c>TELSUB</c> then switches to the SMALL font and white
-/// (<c>SFONT,COLOR $99</c>) for the two instructions at (47, 192) and (50, 204). The letters are typed
-/// into the echo region <c>$4680</c> = (column 70, row 128), the screen's centre, and <c>G0SUB</c>'s
-/// "frob" markers — the raw video byte <c>$99</c>, a two-pixel dash — sit eight rows below the echo
-/// cursor.
+///     <c>CONGP</c> prints "PLAYER n" at <c>CURSAB $40,$10</c> = (64, 16), "YOU ARE A ROBOTRON HERO" at
+///     (41, 48), and "ENTER YOUR INITIALS:" at (45, 88) — all in the LARGE font (the <c>WRD7V</c>
+///     default) in <c>COLOR $44</c> = slot 4. <c>TELSUB</c> then switches to the SMALL font and white
+///     (<c>SFONT,COLOR $99</c>) for the two instructions at (47, 192) and (50, 204). The letters are typed
+///     into the echo region <c>$4680</c> = (column 70, row 128), the screen's centre, and <c>G0SUB</c>'s
+///     "frob" markers — the raw video byte <c>$99</c>, a two-pixel dash — sit eight rows below the echo
+///     cursor.
 /// </remarks>
 public static class InitialsEntryLayout
 {
@@ -56,25 +56,43 @@ public static class InitialsEntryLayout
     public const int SelectRow = 192;
 
     /// <summary>
-    /// One cell's width: the port's own large-font advance — a glyph plus the ROM's one-pixel gap
-    /// (<c>$6009</c>, the HUD's 7 arcade pixels). The ROM advances its echo pointer one COLUMN (two
-    /// pixels) per letter, which cannot hold a six-pixel glyph, so the port spaces the cells by an
-    /// advance wide enough to print one — the deviation notes §116 records.
+    ///     One cell's width: the port's own large-font advance — a glyph plus the ROM's one-pixel gap
+    ///     (<c>$6009</c>, the HUD's 7 arcade pixels). The ROM advances its echo pointer one COLUMN (two
+    ///     pixels) per letter, which cannot hold a six-pixel glyph, so the port spaces the cells by an
+    ///     advance wide enough to print one — the deviation notes §116 records.
     /// </summary>
-    public static int GetCellAdvancePixels() => ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudScoreDigitAdvancePixels);
+    public static int GetCellAdvancePixels()
+    {
+        return ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudScoreDigitAdvancePixels);
+    }
 
     /// <summary>The Y the three letters are drawn at, in port pixels.</summary>
-    public static int GetEchoY() => HudLayout.ToPortY(EchoRow);
+    public static int GetEchoY()
+    {
+        return HudLayout.ToPortY(EchoRow);
+    }
 
     /// <summary>The height of one arcade row on the port's canvas — the marker is a single row.</summary>
-    public static int GetMarkerHeightPixels() => HudLayout.ToPortY(EchoRow + MarkerRowOffset + 1) - GetMarkerY();
+    public static int GetMarkerHeightPixels()
+    {
+        return HudLayout.ToPortY(EchoRow + MarkerRowOffset + 1) - GetMarkerY();
+    }
 
     /// <summary>The marker's width: the raw video byte <c>$99</c> lights both pixels of one column.</summary>
-    public static int GetMarkerWidthPixels() => HudLayout.ToPortX(ScreenSize.ArcadePixelsPerByte);
+    public static int GetMarkerWidthPixels()
+    {
+        return HudLayout.ToPortX(ScreenSize.ArcadePixelsPerByte);
+    }
 
     /// <summary>The Y of the row the frob markers sit on, in port pixels.</summary>
-    public static int GetMarkerY() => HudLayout.ToPortY(EchoRow + MarkerRowOffset);
+    public static int GetMarkerY()
+    {
+        return HudLayout.ToPortY(EchoRow + MarkerRowOffset);
+    }
 
-    /// <summary>The X of cell <paramref name="index"/> (0-based), in port pixels.</summary>
-    public static int GetCellX(int index) => HudLayout.ToPortColumnX(EchoColumn) + (index * GetCellAdvancePixels());
+    /// <summary>The X of cell <paramref name="index" /> (0-based), in port pixels.</summary>
+    public static int GetCellX(int index)
+    {
+        return HudLayout.ToPortColumnX(EchoColumn) + index * GetCellAdvancePixels();
+    }
 }

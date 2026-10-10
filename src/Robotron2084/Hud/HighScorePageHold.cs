@@ -4,10 +4,9 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Hud;
 
 /// <summary>
-/// RRTABLE's <c>TABLE</c> hold and exit (notes §98.8) — the two loops at the end of the
-/// high score page, which are NOT what the port first shipped:
-///
-/// <code>
+///     RRTABLE's <c>TABLE</c> hold and exit (notes §98.8) — the two loops at the end of the
+///     high score page, which are NOT what the port first shipped:
+///     <code>
 ///        LDA    #200
 ///        STA    PD,U           NUMBER OF FRAMES TO FREEZE
 /// TAB888 NAP    3,TABLE6        ; 200 x NAP 3 = 600 frames, and NO switch check at all
@@ -24,51 +23,48 @@ namespace Robotron2084.Hud;
 ///        BNE    TAB777
 /// TABLE7 JMP    [PD+18,U]      RETURN
 /// </code>
-///
-/// So the page is played for its full 600 frames (12 s) <b>whatever the player is
-/// doing</b> — a press can never shorten it — and only then does the ROM leave, and it
-/// leaves the moment the switches are <b>CLEAR</b>. A switch that is still held DELAYS
-/// the exit (that is the point: the page is followed by the title/attract, which must
-/// not be skipped because a button is bent), for at most <c>$FF</c> checks of four
-/// frames each.
-///
-/// The switch bits are ACTIVE HIGH — a set bit is a pressed switch. The movement
-/// descriptor table at $3031 settles it: <c>MOVE_PLAYER</c> reads PIA-A's four stick
-/// bits and indexes that table, and entry 1 (bit 0 set = PIA-A bit 0 = "Move up") is the
-/// up delta <c>00 FF</c>. So <c>ORAA PIA2 / BEQ</c> means "no switch at all is down".
-///
-/// The timing runs on the clock-unit clock the entity bodies use (notes §52): a port
-/// tick advances a ROM-frame clock by 5 clock units.
+///     So the page is played for its full 600 frames (12 s)
+///     <b>
+///         whatever the player is
+///         doing
+///     </b>
+///     — a press can never shorten it — and only then does the ROM leave, and it
+///     leaves the moment the switches are <b>CLEAR</b>. A switch that is still held DELAYS
+///     the exit (that is the point: the page is followed by the title/attract, which must
+///     not be skipped because a button is bent), for at most <c>$FF</c> checks of four
+///     frames each.
+///     The switch bits are ACTIVE HIGH — a set bit is a pressed switch. The movement
+///     descriptor table at $3031 settles it: <c>MOVE_PLAYER</c> reads PIA-A's four stick
+///     bits and indexes that table, and entry 1 (bit 0 set = PIA-A bit 0 = "Move up") is the
+///     up delta <c>00 FF</c>. So <c>ORAA PIA2 / BEQ</c> means "no switch at all is down".
+///     The timing runs on the clock-unit clock the entity bodies use (notes §52): a port
+///     tick advances a ROM-frame clock by 5 clock units.
 /// </summary>
 public sealed class HighScorePageHold
 {
     private int _checkClockUnits;
-    private int _checksWithSwitchDown;
     private int _holdClockUnits;
 
     /// <summary>
-    /// How many of the ROM's <c>$FF</c> post-hold checks have found a switch down — the
-    /// page leaves when this reaches <see cref="ScreenTuning.HighScoreLeaveChecks"/>.
+    ///     How many of the ROM's <c>$FF</c> post-hold checks have found a switch down — the
+    ///     page leaves when this reaches <see cref="ScreenTuning.HighScoreLeaveChecks" />.
     /// </summary>
-    public int ChecksWithSwitchDown => _checksWithSwitchDown;
+    public int ChecksWithSwitchDown { get; private set; }
 
     /// <summary>True once the 600-frame hold has run out and the switches are being read.</summary>
     public bool HoldIsOver { get; private set; }
 
     /// <summary>
-    /// Advances the page one port tick. <paramref name="anySwitchHeld"/> is the ROM's read
-    /// of PIA2 <c>OR</c> PIA3 (active high — any of the sticks, the fire buttons or the
-    /// START buttons). Returns true when the ROM would leave the page.
+    ///     Advances the page one port tick. <paramref name="anySwitchHeld" /> is the ROM's read
+    ///     of PIA2 <c>OR</c> PIA3 (active high — any of the sticks, the fire buttons or the
+    ///     START buttons). Returns true when the ROM would leave the page.
     /// </summary>
     public bool Tick(bool anySwitchHeld)
     {
         if (!HoldIsOver)
         {
             _holdClockUnits += ArcadeClock.UnitsPerPortTick;
-            if (_holdClockUnits < ArcadeClock.ToClockUnits(ScreenTuning.HighScoreHoldRomFrames))
-            {
-                return false;
-            }
+            if (_holdClockUnits < ArcadeClock.ToClockUnits(ScreenTuning.HighScoreHoldRomFrames)) return false;
 
             // The hold is over and TAB777's first NAP 4 starts now, so the first switch
             // read is four fiftieths of a second away.
@@ -78,20 +74,15 @@ public sealed class HighScorePageHold
         }
 
         _checkClockUnits += ArcadeClock.UnitsPerPortTick;
-        if (_checkClockUnits < ArcadeClock.ToClockUnits(ScreenTuning.HighScoreLeaveCheckRomFrames))
-        {
-            return false;
-        }
+        if (_checkClockUnits < ArcadeClock.ToClockUnits(ScreenTuning.HighScoreLeaveCheckRomFrames)) return false;
 
         _checkClockUnits -= ArcadeClock.ToClockUnits(ScreenTuning.HighScoreLeaveCheckRomFrames);
 
         if (!anySwitchHeld)
-        {
             // TAB999's BEQ: nothing is down, so the page returns.
             return true;
-        }
 
-        _checksWithSwitchDown++;
-        return _checksWithSwitchDown >= ScreenTuning.HighScoreLeaveChecks;
+        ChecksWithSwitchDown++;
+        return ChecksWithSwitchDown >= ScreenTuning.HighScoreLeaveChecks;
     }
 }

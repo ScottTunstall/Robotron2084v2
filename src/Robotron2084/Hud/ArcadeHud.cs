@@ -8,25 +8,25 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Hud;
 
 /// <summary>
-/// The arcade HUD (notes §58), shared by the playing state, the attract demo
-/// and the title screen: in the top band, each player's score at
-/// their own column (P1 col 21, P2 col 85) with their spare men as mini man
-/// icons immediately to its right (P1 col 46, P2 col 110); at the bottom, the
-/// "&lt;c&gt; WAVE" indicator (drawn by <see cref="DrawWaveMessage"/>, not by
-/// <see cref="DrawScoresAndMen"/> — the title screen has no wave).
+///     The arcade HUD (notes §58), shared by the playing state, the attract demo
+///     and the title screen: in the top band, each player's score at
+///     their own column (P1 col 21, P2 col 85) with their spare men as mini man
+///     icons immediately to its right (P1 col 46, P2 col 110); at the bottom, the
+///     "&lt;c&gt; WAVE" indicator (drawn by <see cref="DrawWaveMessage" />, not by
+///     <see cref="DrawScoresAndMen" /> — the title screen has no wave).
 /// </summary>
 public static class ArcadeHud
 {
     /// <summary>
-    /// The ROM's title string (128, TITLEM: "ROBOTRON 2084") and its tagline
-    /// (129, FAMMM: "SAVE THE LAST HUMAN FAMILY"), both in the LARGE font in
-    /// slot $AA. The caller places them; the title screen and the attract
-    /// movie's story band each use their own rows (notes §94.1, §96.3).
+    ///     The ROM's title string (128, TITLEM: "ROBOTRON 2084") and its tagline
+    ///     (129, FAMMM: "SAVE THE LAST HUMAN FAMILY"), both in the LARGE font in
+    ///     slot $AA. The caller places them; the title screen and the attract
+    ///     movie's story band each use their own rows (notes §94.1, §96.3).
     /// </summary>
     public static void DrawCenteredLargeText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int y, int slot)
     {
-        int width = 0;
-        foreach (char character in text)
+        var width = 0;
+        foreach (var character in text)
         {
             if (character == ' ')
             {
@@ -34,20 +34,19 @@ public static class ArcadeHud
                 continue;
             }
 
-            int index = ArcadeText.GetGlyphIndex(character);
-            if (index < 0 || index >= sprites.FontLarge.Length)
-            {
-                continue;
-            }
+            var index = ArcadeText.GetGlyphIndex(character);
+            if (index < 0 || index >= sprites.FontLarge.Length) continue;
 
-            width += ScreenSize.ToPortPixelsFromArcadePixels(sprites.FontLarge[index].Width + HudLayout.HudSmallFontGlyphGapPixels);
+            width += ScreenSize.ToPortPixelsFromArcadePixels(sprites.FontLarge[index].Width +
+                                                             HudLayout.HudSmallFontGlyphGapPixels);
         }
 
         sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
     }
 
     /// <summary>Draws one of the ROM's message strings at its own cursor column/row.</summary>
-    public static void DrawMessageText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int arcadeColumn, int arcadeRow, int slot)
+    public static void DrawMessageText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int arcadeColumn,
+        int arcadeRow, int slot)
     {
         sprites.TextRenderer.DrawSmallFontText(
             spriteBatch,
@@ -61,7 +60,10 @@ public static class ArcadeHud
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The sprite set, which holds the text and the little men.</param>
     /// <param name="session">The game being played, which says who the players are.</param>
-    /// <param name="innerBounds">The play area inside the wall. The row is placed a set distance above its top edge, as in the arcade.</param>
+    /// <param name="innerBounds">
+    ///     The play area inside the wall. The row is placed a set distance above its top edge, as in the
+    ///     arcade.
+    /// </param>
     /// <param name="showSpareMen">False while the demo plays: the phony player's spare men are not shown.</param>
     public static void DrawScoresAndMen(
         SpriteBatch spriteBatch,
@@ -70,58 +72,55 @@ public static class ArcadeHud
         Rectangle innerBounds,
         bool showSpareMen = true)
     {
-        int hudY = GetScoresAndMenRowY(innerBounds);
+        var hudY = GetScoresAndMenRowY(innerBounds);
 
-        foreach (PlayerSlot player in session.Players)
+        foreach (var player in session.Players)
         {
-            bool isPlayerOne = player.Number == 1;
-            int scoreColumn = isPlayerOne ? HudLayout.HudScoreOriginColumnP1 : HudLayout.HudScoreOriginColumnP2;
-            int menColumn = isPlayerOne ? HudLayout.HudMenOriginColumnP1 : HudLayout.HudMenOriginColumnP2;
+            var isPlayerOne = player.Number == 1;
+            var scoreColumn = isPlayerOne ? HudLayout.HudScoreOriginColumnP1 : HudLayout.HudScoreOriginColumnP2;
+            var menColumn = isPlayerOne ? HudLayout.HudMenOriginColumnP1 : HudLayout.HudMenOriginColumnP2;
 
             // ROM $DC13/$DC19: the player whose turn it is blits their score with
             // $AA (slot 10 — one of the colour-CYCLING slots); an idle player's
             // uses $11 (slot 1).
-            int slot = ReferenceEquals(player, session.GetCurrent())
+            var slot = ReferenceEquals(player, session.GetCurrent())
                 ? HudLayout.HudScoreSlotCurrent
                 : HudLayout.HudScoreSlotIdle;
 
             DrawScore(spriteBatch, sprites, player.Score, HudLayout.ToPortX(scoreColumn * 2), hudY, slot);
             if (showSpareMen)
-            {
                 DrawSpareMen(spriteBatch, sprites, player.GetDisplayedMen(), HudLayout.ToPortX(menColumn * 2), hudY);
-            }
         }
     }
 
     /// <summary>
-    /// The canvas row the scores and the spare-men icons are drawn at: the top wall less the ROM's
-    /// eight arcade pixels. It is negative — and the whole HUD invisible — when
-    /// <paramref name="innerBounds"/> runs to the top of the canvas.
+    ///     The canvas row the scores and the spare-men icons are drawn at: the top wall less the ROM's
+    ///     eight arcade pixels. It is negative — and the whole HUD invisible — when
+    ///     <paramref name="innerBounds" /> runs to the top of the canvas.
     /// </summary>
-    internal static int GetScoresAndMenRowY(Rectangle innerBounds) =>
-        innerBounds.Top - ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.WallThicknessArcadePixels) - ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudRowAboveWallPixels);
+    internal static int GetScoresAndMenRowY(Rectangle innerBounds)
+    {
+        return innerBounds.Top - ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.WallThicknessArcadePixels) -
+               ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudRowAboveWallPixels);
+    }
 
     /// <summary>
-    /// ROM string 104: the wave number in $AA at the BOTTOM of the screen (row
-    /// 238, well below the playfield), then +6 px, then " WAVE" in $BB. The ROM
-    /// draws it at each wave start and leaves it up while the wave runs.
+    ///     ROM string 104: the wave number in $AA at the BOTTOM of the screen (row
+    ///     238, well below the playfield), then +6 px, then " WAVE" in $BB. The ROM
+    ///     draws it at each wave start and leaves it up while the wave runs.
     /// </summary>
     public static void DrawWaveMessage(SpriteBatch spriteBatch, SpriteSet sprites, int wave)
     {
-        int x = HudLayout.ToPortX(HudLayout.HudWaveTextColumn * 2);
-        int y = HudLayout.ToPortY(HudLayout.HudWaveTextRow);
+        var x = HudLayout.ToPortX(HudLayout.HudWaveTextColumn * 2);
+        var y = HudLayout.ToPortY(HudLayout.HudWaveTextRow);
         const int numberSlot = HudLayout.HudScoreSlotCurrent;
 
         if (wave >= 10)
-        {
-            x = sprites.TextRenderer.DrawSmallFontText(spriteBatch, ((wave / 10) % 10).ToString(), x, y, numberSlot);
-        }
+            x = sprites.TextRenderer.DrawSmallFontText(spriteBatch, (wave / 10 % 10).ToString(), x, y, numberSlot);
         else
-        {
             // PRINT_BCD_NUMBER with $D1 = 2 (string 104's $15 op): a leading zero
             // advances without drawing — 4 px in the small font.
             x += ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudSmallFontBlankAdvancePixels);
-        }
 
         x = sprites.TextRenderer.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberSlot);
         x += ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudWaveNumberGapPixels);
@@ -129,29 +128,24 @@ public static class ArcadeHud
     }
 
     /// <summary>
-    /// ROM $DC13 → $6096: the score as seven large-font glyphs at the cursor, a
-    /// drawn digit advancing 7 px and a suppressed leading zero 6 px.
+    ///     ROM $DC13 → $6096: the score as seven large-font glyphs at the cursor, a
+    ///     drawn digit advancing 7 px and a suppressed leading zero 6 px.
     /// </summary>
     private static void DrawScore(SpriteBatch spriteBatch, SpriteSet sprites, int score, int originX, int y, int slot)
     {
-        foreach (ScoreGlyph glyph in ScoreFormatter.LayOutGlyphs(
-            score,
-            originX,
-            ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudScoreDigitAdvancePixels),
-            ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudScoreBlankAdvancePixels)))
-        {
+        foreach (var glyph in ScoreFormatter.LayOutGlyphs(
+                     score,
+                     originX,
+                     ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudScoreDigitAdvancePixels),
+                     ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudScoreBlankAdvancePixels)))
             sprites.Blitter.DrawGlyphSlot(spriteBatch, sprites.FontLarge, glyph.Digit, glyph.X, y, slot);
-        }
     }
 
     /// <summary>ROM $34E0: the spare-man icons, 8 px apart.</summary>
     private static void DrawSpareMen(SpriteBatch spriteBatch, SpriteSet sprites, int count, int originX, int y)
     {
-        int pitch = ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudMenPitchPixels);
+        var pitch = ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudMenPitchPixels);
 
-        for (int i = 0; i < count; i++)
-        {
-            sprites.TextRenderer.DrawMiniMan(spriteBatch, originX + (i * pitch), y);
-        }
+        for (var i = 0; i < count; i++) sprites.TextRenderer.DrawMiniMan(spriteBatch, originX + i * pitch, y);
     }
 }
