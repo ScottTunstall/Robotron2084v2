@@ -17,7 +17,7 @@ public sealed class HighScorePageHoldTests
     {
         var hold = new HighScorePageHold();
 
-        // 600 ROM frames = 720 port ticks.
+        // 600 fiftieths of a second = 720 port ticks.
         for (int tick = 0; tick < 719; tick++)
         {
             Assert.False(hold.Tick(true), $"the page left during the hold (tick {tick})");
@@ -37,7 +37,7 @@ public sealed class HighScorePageHoldTests
             hold.Tick(false);
         }
 
-        // TAB777's NAP 4 — 4 ROM frames ≈ 4.8 ticks — is the first switch read.
+        // TAB777's NAP 4 — 4 fiftieths of a second ≈ 4.8 ticks — is the first switch read.
         int ticks = 0;
         while (!hold.Tick(false))
         {

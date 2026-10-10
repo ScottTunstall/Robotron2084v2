@@ -5,7 +5,7 @@ namespace Robotron2084.Tests.Hud;
 
 /// <summary>
 /// RRTABLE's <c>FRAMER</c> (notes §98.5) — the high score page's frame is DRAWN: two
-/// strokes a ROM frame grow it from (col 62, row 125)-(col 89, row 127) out to the
+/// strokes a fiftieth of a second grow it from (col 62, row 125)-(col 89, row 127) out to the
 /// terminal point $060D = (col 6, row 13), and then the same walk runs again in flavour
 /// 0 (black) up to $0E1D = (col 14, row 29), leaving the hatched band between them.
 /// Both passes draw their first two strokes before the first sleep.
@@ -28,7 +28,7 @@ public sealed class HighScoreFrameAnimationTests
     {
         var frame = new HighScoreFrameAnimation();
 
-        // A ROM frame is 6/5 of a port tick, so the first pair lands on tick 2 — and
+        // A fiftieth of a second is 6/5 of a port tick, so the first pair lands on tick 2 — and
         // never more than two strokes a tick, which is what the ROM's `LDA #2` counter
         // and its one-frame `NAP` add up to.
         frame.Tick();
@@ -46,7 +46,7 @@ public sealed class HighScoreFrameAnimationTests
     [Fact]
     public void TheExpandAndErasePasses_TakeAboutASecond()
     {
-        // 57 growing strokes + 49 erase strokes at two a ROM frame = 53 ROM frames
+        // 57 growing strokes + 49 erase strokes at two a fiftieth of a second = 53 fiftieths of a second
         // = 1.06 s — which at 6/5 of a tick each is about 64 port ticks.
         var frame = new HighScoreFrameAnimation();
 

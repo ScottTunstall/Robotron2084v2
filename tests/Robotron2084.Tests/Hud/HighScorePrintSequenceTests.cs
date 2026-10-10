@@ -51,7 +51,7 @@ public sealed class HighScorePrintSequenceTests
         print.Tick(frameFinished: true, Today, AllTime);
         Assert.Equal(4, print.TodayRows);
 
-        // A ROM frame is 6/5 of a port tick.
+        // A fiftieth of a second is 6/5 of a port tick.
         print.Tick(false, Today, AllTime);
         Assert.Equal(4, print.TodayRows); // 5 clock units — not a frame yet
 
@@ -78,7 +78,7 @@ public sealed class HighScorePrintSequenceTests
     [Fact]
     public void TheWholePagePrintsInAboutTenRomFrames()
     {
-        // 10 rows = 3 groups (2 sleeps) and 36 rows = 9 groups (8 sleeps): ten ROM frames
+        // 10 rows = 3 groups (2 sleeps) and 36 rows = 9 groups (8 sleeps): ten fiftieths of a second
         // = twelve ticks, a fifth of a second of printing after the frame's own 53.
         var print = new HighScorePrintSequence();
         int ticks = 0;
@@ -114,7 +114,7 @@ public sealed class HighScorePrintSequenceTests
         Assert.True(condition(print), "the page never reached the expected state");
     }
 
-    /// <summary>Ticks <paramref name="frames"/> ROM frames' worth of printing.</summary>
+    /// <summary>Ticks <paramref name="frames"/> fiftieths of a second' worth of printing.</summary>
     private static void TickFrames(HighScorePrintSequence print, int frames)
     {
         for (int tick = 0; tick < ((frames * 6) + 4) / 5; tick++)

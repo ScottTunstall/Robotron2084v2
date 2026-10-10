@@ -139,7 +139,7 @@ public sealed class InitialsEntryModelTests
             ticks++;
         }
 
-        // GETLT3/GETLT4: the first auto-commit waits 32 counts of two frames (64 ROM frames,
+        // GETLT3/GETLT4: the first auto-commit waits 32 counts of two frames (64 fiftieths of a second,
         // under two seconds) and types the second letter with a blank of its own.
         Assert.Equal("A  ", model.GetInitials());
         Assert.Equal(2, model.LetterIndex);
@@ -186,7 +186,7 @@ public sealed class InitialsEntryModelTests
     {
         InitialsEntryModel model = Started();
 
-        // TIMPRC gives each remaining letter 640 ROM frames (768 port ticks), and the entry ends
+        // TIMPRC gives each remaining letter 640 fiftieths of a second (768 port ticks), and the entry ends
         // when the last of them runs out — three deadlines for three letters.
         Tick(model, Idle, TicksForRomFrames(2 * 640));
         Assert.False(model.IsComplete);
@@ -255,6 +255,6 @@ public sealed class InitialsEntryModelTests
         }
     }
 
-    /// <summary>A port tick is five clock units, and a ROM frame is six, so N frames are (N x 6 + 4) / 5 ticks.</summary>
+    /// <summary>A port tick is five clock units, and a fiftieth of a second is six, so N frames are (N x 6 + 4) / 5 ticks.</summary>
     private static int TicksForRomFrames(int romFrames) => ((romFrames * 6) + 4) / 5;
 }
