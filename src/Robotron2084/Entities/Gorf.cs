@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
@@ -8,7 +8,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-///     Gorf hops across the screen in a string of jumps, from one side to the other, dropping grunts as it goes. It
+///     GORF (Galactic Orbiting Robot Force Leader) hops across the screen in a string of jumps, from one side to the other, dropping grunts as it goes. It
 ///     does not shoot.
 /// </summary>
 /// <remarks>
