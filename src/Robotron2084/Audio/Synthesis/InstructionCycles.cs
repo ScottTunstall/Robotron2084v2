@@ -1,18 +1,21 @@
 namespace Robotron2084.Audio.Synthesis;
 
 /// <summary>
-/// How many clock cycles each kind of 6800 instruction takes (Motorola MC6800 data sheet). The sound
-/// board's program times every sound by counting instructions, so the port times its sounds with these.
+///     How many clock cycles each kind of 6800 instruction takes (Motorola MC6800 data sheet). The sound
+///     board's program times every sound by counting instructions, so the port times its sounds with these.
 /// </summary>
 /// <remarks>
-/// The board's variables sit in the first 128 bytes of memory, so the source's loads, stores, adds and
-/// compares of them are "direct" instructions. The one-value operations (<c>CLR</c>, <c>COM</c>,
-/// <c>DEC</c>, <c>INC</c>, <c>ROR</c>, <c>LSR</c>, <c>TST</c>) have no direct form and use a full
-/// address, as does every access to the output port <c>SOUND</c>.
+///     The board's variables sit in the first 128 bytes of memory, so the source's loads, stores, adds and
+///     compares of them are "direct" instructions. The one-value operations (<c>CLR</c>, <c>COM</c>,
+///     <c>DEC</c>, <c>INC</c>, <c>ROR</c>, <c>LSR</c>, <c>TST</c>) have no direct form and use a full
+///     address, as does every access to the output port <c>SOUND</c>.
 /// </remarks>
 internal static class InstructionCycles
 {
-    /// <summary>An instruction on registers only: <c>TAB</c>, <c>ABA</c>, <c>LSRA</c>, <c>DECB</c>, <c>COMA</c>, <c>NOP</c> and the like.</summary>
+    /// <summary>
+    ///     An instruction on registers only: <c>TAB</c>, <c>ABA</c>, <c>LSRA</c>, <c>DECB</c>, <c>COMA</c>, <c>NOP</c>
+    ///     and the like.
+    /// </summary>
     public const int Inherent = 2;
 
     /// <summary><c>INX</c> or <c>DEX</c>.</summary>
@@ -36,7 +39,10 @@ internal static class InstructionCycles
     /// <summary><c>JSR</c> to a full address.</summary>
     public const int CallExtended = 9;
 
-    /// <summary>A one-value operation on memory at a full address: <c>CLR</c>, <c>COM</c>, <c>DEC</c>, <c>INC</c>, <c>ROR</c>, <c>TST</c>.</summary>
+    /// <summary>
+    ///     A one-value operation on memory at a full address: <c>CLR</c>, <c>COM</c>, <c>DEC</c>, <c>INC</c>, <c>ROR</c>,
+    ///     <c>TST</c>.
+    /// </summary>
     public const int ModifyExtended = 6;
 
     /// <summary>A one-value operation on memory through the index register.</summary>

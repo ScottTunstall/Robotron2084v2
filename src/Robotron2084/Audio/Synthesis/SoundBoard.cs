@@ -3,31 +3,37 @@ using static Robotron2084.Audio.Synthesis.InstructionCycles;
 namespace Robotron2084.Audio.Synthesis;
 
 /// <summary>
-/// The arcade's sound board, rebuilt from its program's source: it waits for a sound number, then plays
-/// that sound by changing its output level at the same moments the real board does.
+///     The arcade's sound board, rebuilt from its program's source: it waits for a sound number, then plays
+///     that sound by changing its output level at the same moments the real board does.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>VSNDRM3.SRC</c> ("ROBOTRON SOUNDS VERSION 1.0 3-8-82"), routine <c>IRQ</c>
-/// ("INTERRUPT PROCESSING") and the sound routines it calls.</item>
-/// <item>Disassembly: none in this repo; ROM <c>$FB11</c> (<c>IRQ</c>, the sound ROM's interrupt vector).</item>
-/// </list>
-/// The board runs each sound as a program timed by its own instructions. The port times each sound with
-/// the same instruction costs (<see cref="InstructionCycles"/>), so pitches and lengths match the arcade's.
-/// Every sound number the game sends is built, and so are the eight coin sounds (<c>CNSND</c>); the notes (§130) explain how they were checked.
+///     <list type="bullet">
+///         <item>
+///             Original source: <c>VSNDRM3.SRC</c> ("ROBOTRON SOUNDS VERSION 1.0 3-8-82"), routine <c>IRQ</c>
+///             ("INTERRUPT PROCESSING") and the sound routines it calls.
+///         </item>
+///         <item>Disassembly: none in this repo; ROM <c>$FB11</c> (<c>IRQ</c>, the sound ROM's interrupt vector).</item>
+///     </list>
+///     The board runs each sound as a program timed by its own instructions. The port times each sound with
+///     the same instruction costs (<see cref="InstructionCycles" />), so pitches and lengths match the arcade's.
+///     Every sound number the game sends is built, and so are the eight coin sounds (<c>CNSND</c>); the notes (§130)
+///     explain how they were checked.
 /// </remarks>
 public sealed class SoundBoard : ISoundBoard
 {
     /// <summary>
-    /// The board's processor clock in cycles a second: its 3.579545 MHz crystal divided by four inside
-    /// the chip (MAME's Williams driver).
+    ///     The board's processor clock in cycles a second: its 3.579545 MHz crystal divided by four inside
+    ///     the chip (MAME's Williams driver).
     /// </summary>
     public const int ClockHertz = 894_886;
 
     /// <summary>The six sound lines (<c>RRF.ASM</c>: "B0-B5 SOUND"): a sound number is 0 to 63.</summary>
     private const int SoundLines = 0x3F;
 
-    /// <summary>No sound number is waiting to be answered. It is the starting value of <see cref="_waitingSoundNumber"/>, which means that no sound is waiting.</summary>
+    /// <summary>
+    ///     No sound number is waiting to be answered. It is the starting value of <see cref="_waitingSoundNumber" />,
+    ///     which means that no sound is waiting.
+    /// </summary>
     private const int NoSoundNumber = -1;
 
     /// <summary>The spinner sound, which keeps its send count (<c>SP1SND</c>).</summary>
@@ -39,22 +45,27 @@ public sealed class SoundBoard : ISoundBoard
     /// <summary>What the handler takes off a low sound number to find its wave table settings (<c>DECA</c>).</summary>
     private const int LowWaveTableOffset = 0x01;
 
-    /// <summary>What the handler takes off a high sound number to find its wave table settings (<c>DECA</c>, <c>SUBA #$10</c>).</summary>
+    /// <summary>
+    ///     What the handler takes off a high sound number to find its wave table settings (<c>DECA</c>, <c>SUBA #$10</c>
+    ///     ).
+    /// </summary>
     private const int HighWaveTableOffset = 0x11;
 
     /// <summary>What the handler takes off a square wave sound number to find its settings (<c>DECA</c>, <c>SUBA #$1C</c>).</summary>
     private const int SquareWaveOffset = 0x1D;
 
     /// <summary>
-    /// <c>IRQ</c> up to the flag checks: <c>LDS</c>, <c>LDAA SOUND+2</c>, <c>LDX</c>, <c>STX XDECAY</c>, <c>LDX</c>,
-    /// <c>STX XPTR</c>, <c>LDAB</c>, <c>STAB AMP0</c>, <c>CLI</c>, <c>COMA</c>, <c>ANDA</c>, <c>LDAB ORGFLG</c>, <c>BEQ</c>.
+    ///     <c>IRQ</c> up to the flag checks: <c>LDS</c>, <c>LDAA SOUND+2</c>, <c>LDX</c>, <c>STX XDECAY</c>, <c>LDX</c>,
+    ///     <c>STX XPTR</c>, <c>LDAB</c>, <c>STAB AMP0</c>, <c>CLI</c>, <c>COMA</c>, <c>ANDA</c>, <c>LDAB ORGFLG</c>,
+    ///     <c>BEQ</c>.
     /// </summary>
     private const int HandlerStartCycles =
-        WordImmediate + Extended + WordImmediate + WordStoreDirect + WordImmediate + WordStoreDirect + Immediate + StoreDirect
+        WordImmediate + Extended + WordImmediate + WordStoreDirect + WordImmediate + WordStoreDirect + Immediate +
+        StoreDirect
         + Inherent + Inherent + Immediate + Direct + Branch;
 
     /// <summary><c>IRQ00</c>/<c>IRQ00A</c> checking both flags: <c>CLRB</c>, then <c>CMPA</c>, <c>BEQ</c> twice.</summary>
-    private const int FlagCheckCycles = Inherent + (2 * (Immediate + Branch));
+    private const int FlagCheckCycles = Inherent + 2 * (Immediate + Branch);
 
     /// <summary><c>IRQ000</c> sorting the number: <c>TSTA</c>, <c>BEQ</c>, <c>DECA</c>, <c>CMPA #$1F</c>, <c>BLT</c>.</summary>
     private const int SortCycles = Inherent + Branch + Inherent + Immediate + Branch;
@@ -66,16 +77,23 @@ public sealed class SoundBoard : ISoundBoard
     private const int MiddleRangeCycles = Immediate + Branch + Immediate;
 
     /// <summary>
-    /// <c>IRQ2</c> calling a routine through the jump table: <c>ASLA</c>, <c>LDX #JMPTBL</c>, <c>BSR ADDX</c>,
-    /// <c>LDX 0,X</c>, <c>JSR 0,X</c>.
+    ///     <c>IRQ2</c> calling a routine through the jump table: <c>ASLA</c>, <c>LDX #JMPTBL</c>, <c>BSR ADDX</c>,
+    ///     <c>LDX 0,X</c>, <c>JSR 0,X</c>.
     /// </summary>
     private const int JumpTableCycles =
-        Inherent + WordImmediate + CallShort + (SubroutineCycles.CallAddToIndex - CallExtended) + WordIndexed + CallShort;
+        Inherent + WordImmediate + CallShort + (SubroutineCycles.CallAddToIndex - CallExtended) + WordIndexed +
+        CallShort;
 
-    /// <summary>The high range: <c>CMPA #$3D</c>, <c>BGT</c>, <c>CMPA #$2A</c>, <c>BHI</c>, <c>SUBA #$10</c>, <c>BRA IRQ002</c>.</summary>
+    /// <summary>
+    ///     The high range: <c>CMPA #$3D</c>, <c>BGT</c>, <c>CMPA #$2A</c>, <c>BHI</c>, <c>SUBA #$10</c>,
+    ///     <c>BRA IRQ002</c>.
+    /// </summary>
     private const int HighRangeCycles = Immediate + Branch + Immediate + Branch + Immediate + Branch;
 
-    /// <summary>The first and last wave table sounds the handler reaches by the low range (<c>IRQ001</c>), and by the high range (<c>IRQ00</c>).</summary>
+    /// <summary>
+    ///     The first and last wave table sounds the handler reaches by the low range (<c>IRQ001</c>), and by the high
+    ///     range (<c>IRQ00</c>).
+    /// </summary>
     private const int FirstLowWaveTable = 0x01;
 
     private const int LastLowWaveTable = 0x0D;
@@ -99,7 +117,10 @@ public sealed class SoundBoard : ISoundBoard
     /// <summary><c>IRQ3</c> starting a background: <c>CLRA</c>, <c>STAA B2FLG</c>, <c>LDAA BG1FLG</c>, <c>BEQ</c>, <c>JMP</c>.</summary>
     private const int BackgroundStartCycles = Inherent + StoreDirect + Direct + Branch + JumpExtended;
 
-    /// <summary>The handler seeing that an organ tune is next: <c>LDAB ORGFLG</c>, <c>BEQ</c>, <c>JSR ORGNT1</c>, then the tune search, which the port does not play.</summary>
+    /// <summary>
+    ///     The handler seeing that an organ tune is next: <c>LDAB ORGFLG</c>, <c>BEQ</c>, <c>JSR ORGNT1</c>, then the
+    ///     tune search, which the port does not play.
+    /// </summary>
     private const int OrganTuneCycles = Direct + Branch + CallExtended + CallShort + ModifyExtended + Return;
 
     /// <summary><c>BGEND</c>: <c>CLRA</c>, two <c>STAA</c>, <c>RTS</c>.</summary>
@@ -109,11 +130,11 @@ public sealed class SoundBoard : ISoundBoard
     private readonly BoardOutput _output = new();
     private readonly IReadOnlyDictionary<int, Func<IEnumerable<OutputChange>>> _routines;
     private readonly WaveTableSound _waveTableSound;
-    private IEnumerator<OutputChange>? _outputChanges;
-    private int _waitingSoundNumber = NoSoundNumber;
     private int _cyclesLeftInChange;
     private byte _nextLevel;
     private int _nextWriteCycles;
+    private IEnumerator<OutputChange>? _outputChanges;
+    private int _waitingSoundNumber = NoSoundNumber;
 
     /// <summary>Switches the board on: silent, waiting for a sound number.</summary>
     public SoundBoard()
@@ -123,82 +144,67 @@ public sealed class SoundBoard : ISoundBoard
     }
 
     /// <inheritdoc />
-    public bool IsPlaying => _waitingSoundNumber != NoSoundNumber || _outputChanges is not null || _cyclesLeftInChange > 0;
+    public bool IsPlaying =>
+        _waitingSoundNumber != NoSoundNumber || _outputChanges is not null || _cyclesLeftInChange > 0;
 
     /// <summary>The level the board is sending to the loudspeaker circuit right now, 0 to 255.</summary>
     public byte OutputLevel { get; private set; }
 
-    /// <summary>True when the board can play a sound number: one of the numbers the game sends.</summary>
-    /// <param name="soundNumber">The sound number.</param>
-    /// <returns>True when its routine has been built.</returns>
-    public bool CanPlay(int soundNumber) => _routines.ContainsKey(soundNumber);
-
-    /// <summary>Runs the board on, until the next change of level or for <paramref name="maxCycles"/>, whichever comes first.</summary>
+    /// <summary>Runs the board on, until the next change of level or for <paramref name="maxCycles" />, whichever comes first.</summary>
     /// <param name="maxCycles">The most cycles to run; at least 1.</param>
     /// <returns>How many cycles ran.</returns>
     public int Run(int maxCycles)
     {
-        if (_cyclesLeftInChange == 0)
-        {
-            AnswerWaitingSoundNumber();
-        }
+        if (_cyclesLeftInChange == 0) AnswerWaitingSoundNumber();
 
-        if (_cyclesLeftInChange == 0 && !TakeNextChange())
-        {
-            return maxCycles;
-        }
+        if (_cyclesLeftInChange == 0 && !TakeNextChange()) return maxCycles;
 
-        int cycles = Math.Min(maxCycles, _cyclesLeftInChange);
+        var cycles = Math.Min(maxCycles, _cyclesLeftInChange);
         _cyclesLeftInChange -= cycles;
-        if (_cyclesLeftInChange == 0)
-        {
-            OutputLevel = _nextLevel;
-        }
+        if (_cyclesLeftInChange == 0) OutputLevel = _nextLevel;
 
         return cycles;
     }
 
     /// <summary>
-    /// Sends the board a sound number. The sound playing stops at once, except that a write to the output
-    /// port already under way finishes first, as the processor answers an interrupt only between
-    /// instructions. Like the arcade's input chip, the board holds the number until it next runs, so a
-    /// second number sent before then replaces the first.
+    ///     Sends the board a sound number. The sound playing stops at once, except that a write to the output
+    ///     port already under way finishes first, as the processor answers an interrupt only between
+    ///     instructions. Like the arcade's input chip, the board holds the number until it next runs, so a
+    ///     second number sent before then replaces the first.
     /// </summary>
     /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>), 1 to 63; 0 does not reach the board.</param>
     /// <exception cref="ArgumentOutOfRangeException">The board has no routine for the number.</exception>
     public void SendSoundNumber(int soundNumber)
     {
-        int number = soundNumber & SoundLines;
-        if (number == 0)
-        {
-            return;
-        }
+        var number = soundNumber & SoundLines;
+        if (number == 0) return;
 
         if (!CanPlay(number))
-        {
             throw new ArgumentOutOfRangeException(
-                nameof(soundNumber), $"Sound ${number:X2} has no routine. Port it from VSNDRM3.SRC and add it to {nameof(BuildRoutines)}.");
-        }
+                nameof(soundNumber),
+                $"Sound ${number:X2} has no routine. Port it from VSNDRM3.SRC and add it to {nameof(BuildRoutines)}.");
 
         _waitingSoundNumber = number;
-        if (!IsWriteUnderWay())
-        {
-            _cyclesLeftInChange = 0;
-        }
+        if (!IsWriteUnderWay()) _cyclesLeftInChange = 0;
+    }
+
+    /// <summary>True when the board can play a sound number: one of the numbers the game sends.</summary>
+    /// <param name="soundNumber">The sound number.</param>
+    /// <returns>True when its routine has been built.</returns>
+    public bool CanPlay(int soundNumber)
+    {
+        return _routines.ContainsKey(soundNumber);
     }
 
     /// <summary>
-    /// Answers a waiting sound number as the board's interrupt handler does: stops the sound playing, clears
-    /// the repeat counts of the sounds that keep them, and starts the new sound (<c>IRQ</c>).
+    ///     Answers a waiting sound number as the board's interrupt handler does: stops the sound playing, clears
+    ///     the repeat counts of the sounds that keep them, and starts the new sound (<c>IRQ</c>).
     /// </summary>
     private void AnswerWaitingSoundNumber()
     {
-        if (_waitingSoundNumber == NoSoundNumber)
-        {
-            return;
-        }
+        if (_waitingSoundNumber == NoSoundNumber) return;
 
-        int number = _waitingSoundNumber;
+        var number = _waitingSoundNumber;
         _waitingSoundNumber = NoSoundNumber;
         _outputChanges?.Dispose();
         _output.Restart(OutputLevel);
@@ -220,11 +226,14 @@ public sealed class SoundBoard : ISoundBoard
     }
 
     /// <summary>True when the instruction that writes the next level has started but not finished.</summary>
-    private bool IsWriteUnderWay() => _cyclesLeftInChange > 0 && _cyclesLeftInChange < _nextWriteCycles;
+    private bool IsWriteUnderWay()
+    {
+        return _cyclesLeftInChange > 0 && _cyclesLeftInChange < _nextWriteCycles;
+    }
 
     /// <summary>
-    /// Clears the spinner's send count unless the number is the spinner, and the laser ball bonus's repeat
-    /// unless it is the bonus (<c>IRQ00</c>: <c>STAB SP1FLG</c>; <c>IRQ00A</c>: <c>STAB B2FLG</c>).
+    ///     Clears the spinner's send count unless the number is the spinner, and the laser ball bonus's repeat
+    ///     unless it is the bonus (<c>IRQ00</c>: <c>STAB SP1FLG</c>; <c>IRQ00A</c>: <c>STAB B2FLG</c>).
     /// </summary>
     /// <param name="number">The sound number being answered.</param>
     private void ClearRepeatCounts(int number)
@@ -248,14 +257,11 @@ public sealed class SoundBoard : ISoundBoard
     {
         while (_outputChanges is not null && _outputChanges.MoveNext())
         {
-            OutputChange change = _outputChanges.Current;
+            var change = _outputChanges.Current;
             _nextLevel = change.Level;
             _nextWriteCycles = change.WriteCycles;
             _cyclesLeftInChange = change.CyclesBefore;
-            if (_cyclesLeftInChange > 0)
-            {
-                return true;
-            }
+            if (_cyclesLeftInChange > 0) return true;
 
             OutputLevel = change.Level;
         }
@@ -265,22 +271,18 @@ public sealed class SoundBoard : ISoundBoard
     }
 
     /// <summary>
-    /// Every sound number the board has, with the routine the board's handler sends it to. This is the one place
-    /// a sound number is matched to its routine; the names are the source's (<see cref="BoardSounds"/>).
+    ///     Every sound number the board has, with the routine the board's handler sends it to. This is the one place
+    ///     a sound number is matched to its routine; the names are the source's (<see cref="BoardSounds" />).
     /// </summary>
     /// <returns>The routines, by sound number.</returns>
     private Dictionary<int, Func<IEnumerable<OutputChange>>> BuildRoutines()
     {
         var routines = new Dictionary<int, Func<IEnumerable<OutputChange>>>();
-        for (int number = FirstLowWaveTable; number <= LastLowWaveTable; number++)
-        {
+        for (var number = FirstLowWaveTable; number <= LastLowWaveTable; number++)
             routines[number] = CreateLowWaveTableRoutine(number);
-        }
 
-        for (int number = FirstHighWaveTable; number <= LastHighWaveTable; number++)
-        {
+        for (var number = FirstHighWaveTable; number <= LastHighWaveTable; number++)
             routines[number] = CreateHighWaveTableRoutine(number);
-        }
 
         AddJumpTableRoutines(routines);
         AddHighJumpTableRoutines(routines);
@@ -340,58 +342,77 @@ public sealed class SoundBoard : ISoundBoard
     /// <summary>A wave table sound numbered 1 to 13 (<c>IRQ001</c> to <c>IRQ002</c>).</summary>
     /// <param name="soundNumber">The sound number.</param>
     /// <returns>The routine.</returns>
-    private Func<IEnumerable<OutputChange>> CreateLowWaveTableRoutine(int soundNumber) => () =>
+    private Func<IEnumerable<OutputChange>> CreateLowWaveTableRoutine(int soundNumber)
     {
-        _output.Wait(LowRangeCycles);
-        return _waveTableSound.LoadAndPlay(soundNumber - LowWaveTableOffset);
-    };
+        return () =>
+        {
+            _output.Wait(LowRangeCycles);
+            return _waveTableSound.LoadAndPlay(soundNumber - LowWaveTableOffset);
+        };
+    }
 
-    /// <summary>A wave table sound numbered 32 to 43, which the handler moves down to follow the low ones (<c>IRQ00</c>'s high range).</summary>
+    /// <summary>
+    ///     A wave table sound numbered 32 to 43, which the handler moves down to follow the low ones (<c>IRQ00</c>'s high
+    ///     range).
+    /// </summary>
     /// <param name="soundNumber">The sound number.</param>
     /// <returns>The routine.</returns>
-    private Func<IEnumerable<OutputChange>> CreateHighWaveTableRoutine(int soundNumber) => () =>
+    private Func<IEnumerable<OutputChange>> CreateHighWaveTableRoutine(int soundNumber)
     {
-        _output.Wait(HighRangeCycles);
-        return _waveTableSound.LoadAndPlay(soundNumber - HighWaveTableOffset);
-    };
+        return () =>
+        {
+            _output.Wait(HighRangeCycles);
+            return _waveTableSound.LoadAndPlay(soundNumber - HighWaveTableOffset);
+        };
+    }
 
     /// <summary>A sound with its own routine, reached through the jump table <c>JMPTBL</c> (<c>IRQ10</c>, <c>IRQ2</c>).</summary>
     /// <param name="routine">The routine.</param>
     /// <returns>The routine, after the handler's time to reach it.</returns>
-    private Func<IEnumerable<OutputChange>> CreateJumpTableRoutine(Func<IEnumerable<OutputChange>> routine) => () =>
+    private Func<IEnumerable<OutputChange>> CreateJumpTableRoutine(Func<IEnumerable<OutputChange>> routine)
     {
-        _output.Wait(LowRangeCycles + MiddleRangeCycles + JumpTableCycles);
-        return routine();
-    };
+        return () =>
+        {
+            _output.Wait(LowRangeCycles + MiddleRangeCycles + JumpTableCycles);
+            return routine();
+        };
+    }
 
     /// <summary>
-    /// A sound with its own routine, reached through the jump table by the handler's high range (<c>IRQ00B</c>, <c>IRQ2</c>): the
-    /// sounds numbered 44 and up.
+    ///     A sound with its own routine, reached through the jump table by the handler's high range (<c>IRQ00B</c>,
+    ///     <c>IRQ2</c>): the
+    ///     sounds numbered 44 and up.
     /// </summary>
     /// <param name="routine">The routine.</param>
     /// <returns>The routine, after the handler's time to reach it.</returns>
-    private Func<IEnumerable<OutputChange>> CreateHighJumpTableRoutine(Func<IEnumerable<OutputChange>> routine) => () =>
+    private Func<IEnumerable<OutputChange>> CreateHighJumpTableRoutine(Func<IEnumerable<OutputChange>> routine)
     {
-        _output.Wait(HighRangeCycles + JumpTableCycles);
-        return routine();
-    };
+        return () =>
+        {
+            _output.Wait(HighRangeCycles + JumpTableCycles);
+            return routine();
+        };
+    }
 
     /// <summary>A square wave sound (<c>IRQ20</c>, <c>IRQ21</c>: <c>JSR VARILD</c>, <c>JSR VARI</c>).</summary>
     /// <param name="vectorIndex">The sound's place in the square wave settings table.</param>
     /// <param name="handlerCycles">The time the handler takes to sort the number into this range.</param>
     /// <returns>The routine.</returns>
-    private Func<IEnumerable<OutputChange>> CreateSquareWaveRoutine(int vectorIndex, int handlerCycles) => () =>
+    private Func<IEnumerable<OutputChange>> CreateSquareWaveRoutine(int vectorIndex, int handlerCycles)
     {
-        _output.Wait(handlerCycles + CallExtended);
-        var square = new SquareWaveSound(_output);
-        square.Load(vectorIndex);
-        _output.Wait(CallExtended);
-        return square.Play();
-    };
+        return () =>
+        {
+            _output.Wait(handlerCycles + CallExtended);
+            var square = new SquareWaveSound(_output);
+            square.Load(vectorIndex);
+            _output.Wait(CallExtended);
+            return square.Play();
+        };
+    }
 
     /// <summary>
-    /// Turns the background sounds off (<c>BGEND</c>). The game only uses it to stop the sound playing ("BACKY OFFY",
-    /// notes §126).
+    ///     Turns the background sounds off (<c>BGEND</c>). The game only uses it to stop the sound playing ("BACKY OFFY",
+    ///     notes §126).
     /// </summary>
     /// <returns>No output changes.</returns>
     private IEnumerable<OutputChange> EndBackground()
@@ -402,7 +423,10 @@ public sealed class SoundBoard : ISoundBoard
         return [];
     }
 
-    /// <summary>Starts the first background sound (<c>BG1</c>): it plays until another sound number arrives, and again after every sound that follows.</summary>
+    /// <summary>
+    ///     Starts the first background sound (<c>BG1</c>): it plays until another sound number arrives, and again after
+    ///     every sound that follows.
+    /// </summary>
     /// <returns>The sound's output changes.</returns>
     private IEnumerable<OutputChange> StartBackground1()
     {
@@ -410,13 +434,16 @@ public sealed class SoundBoard : ISoundBoard
         return FilteredNoise.PlayBackground1(_memory, _output);
     }
 
-    /// <summary>Moves the second background sound up one pitch and turns it on (<c>BG2INC</c>); it then plays after this sound, and after every sound that follows.</summary>
+    /// <summary>
+    ///     Moves the second background sound up one pitch and turns it on (<c>BG2INC</c>); it then plays after this
+    ///     sound, and after every sound that follows.
+    /// </summary>
     /// <returns>No output changes.</returns>
     private IEnumerable<OutputChange> IncrementBackground2()
     {
         _output.Wait(ModifyExtended + Direct + Immediate + Immediate + Branch + Inherent + StoreDirect + Return);
         _memory.IsBackground1On = false;
-        byte level = _memory.Background2Level;
+        var level = _memory.Background2Level;
         _memory.Background2Level = (byte)(level == Background2MaxLevel ? 1 : level + 1);
         return [];
     }
@@ -439,32 +466,23 @@ public sealed class SoundBoard : ISoundBoard
     }
 
     /// <summary>
-    /// Plays a sound's routine and then, as the handler does after every sound (<c>IRQ3</c>), whichever
-    /// background sound is on, which goes on until the next sound number arrives.
+    ///     Plays a sound's routine and then, as the handler does after every sound (<c>IRQ3</c>), whichever
+    ///     background sound is on, which goes on until the next sound number arrives.
     /// </summary>
     /// <param name="routine">The sound's output changes.</param>
     /// <returns>The sound's output changes, and the background's.</returns>
     private IEnumerable<OutputChange> WithBackground(IEnumerable<OutputChange> routine)
     {
-        foreach (OutputChange change in routine)
-        {
-            yield return change;
-        }
+        foreach (var change in routine) yield return change;
 
         _output.Wait(BackgroundCheckCycles);
-        if (!_memory.IsBackground1On && _memory.Background2Level == 0)
-        {
-            yield break;
-        }
+        if (!_memory.IsBackground1On && _memory.Background2Level == 0) yield break;
 
         _output.Wait(BackgroundStartCycles);
         _memory.IsLaserBallBonusRepeating = false;
-        IEnumerable<OutputChange> background = _memory.IsBackground1On
+        var background = _memory.IsBackground1On
             ? FilteredNoise.PlayBackground1(_memory, _output)
             : _waveTableSound.PlayBackground2(_memory.Background2Level);
-        foreach (OutputChange change in background)
-        {
-            yield return change;
-        }
+        foreach (var change in background) yield return change;
     }
 }

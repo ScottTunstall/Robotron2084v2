@@ -3,14 +3,14 @@ using static Robotron2084.Audio.Synthesis.InstructionCycles;
 namespace Robotron2084.Audio.Synthesis;
 
 /// <summary>
-/// A buzz whose two halves change balance: each cycle flips the level once part-way through and once at
-/// the end, and the part-way flip moves later every cycle.
+///     A buzz whose two halves change balance: each cycle flips the level once part-way through and once at
+///     the end, and the part-way flip moves later every cycle.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>VSNDRM3.SRC</c>, routine <c>HYPER</c>.</item>
-/// <item>Disassembly: none in this repo; ROM <c>$F859</c> (from the jump table <c>JMPTBL</c>).</item>
-/// </list>
+///     <list type="bullet">
+///         <item>Original source: <c>VSNDRM3.SRC</c>, routine <c>HYPER</c>.</item>
+///         <item>Disassembly: none in this repo; ROM <c>$F859</c> (from the jump table <c>JMPTBL</c>).</item>
+///     </list>
 /// </remarks>
 internal static class HyperSound
 {
@@ -30,7 +30,7 @@ internal static class HyperSound
     private const int CheckFlipCycles = Direct + Branch;
 
     /// <summary>One count: <c>LDAB #18</c>, eighteen <c>DECB</c>/<c>BNE</c>, then <c>INCA</c>, <c>BPL</c>.</summary>
-    private const int CountCycles = Immediate + (DelayCounts * (Inherent + Branch)) + Inherent + Branch;
+    private const int CountCycles = Immediate + DelayCounts * (Inherent + Branch) + Inherent + Branch;
 
     /// <summary>Ending a cycle, after the flip: <c>INC TEMPA</c>, <c>BPL</c>.</summary>
     private const int EndCycleCycles = ModifyExtended + Branch;
@@ -48,13 +48,10 @@ internal static class HyperSound
         do
         {
             output.Wait(StartCycleCycles);
-            for (int count = 0; count < CountsPerCycle; count++)
+            for (var count = 0; count < CountsPerCycle; count++)
             {
                 output.Wait(CheckFlipCycles);
-                if (count == memory.ScratchA)
-                {
-                    yield return output.Complement();
-                }
+                if (count == memory.ScratchA) yield return output.Complement();
 
                 output.Wait(CountCycles);
             }
@@ -62,7 +59,6 @@ internal static class HyperSound
             yield return output.Complement();
             output.Wait(EndCycleCycles);
             memory.ScratchA++;
-        }
-        while (memory.ScratchA < CountsPerCycle);
+        } while (memory.ScratchA < CountsPerCycle);
     }
 }

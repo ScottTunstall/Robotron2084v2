@@ -5,18 +5,20 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Audio;
 
 /// <summary>
-/// Plays the sound board through the computer's speakers, in stereo. Each port tick it runs the board
-/// for one tick's worth of time and queues what the board played.
+///     Plays the sound board through the computer's speakers, in stereo. Each port tick it runs the board
+///     for one tick's worth of time and queues what the board played.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>RRS22.ASM</c>, routine <c>SNDOUT</c> (where the main board hands a sound
-/// number to the sound board).</item>
-/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$D3B6</c>.</item>
-/// </list>
-/// A couple of ticks of sound are kept queued so a slow frame does not leave a gap. If the game runs
-/// ahead and the queue grows, the extra audio is dropped rather than letting the sound fall behind
-/// the sprite.
+///     <list type="bullet">
+///         <item>
+///             Original source: <c>RRS22.ASM</c>, routine <c>SNDOUT</c> (where the main board hands a sound
+///             number to the sound board).
+///         </item>
+///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$D3B6</c>.</item>
+///     </list>
+///     A couple of ticks of sound are kept queued so a slow frame does not leave a gap. If the game runs
+///     ahead and the queue grows, the extra audio is dropped rather than letting the sound fall behind
+///     the sprite.
 /// </remarks>
 public sealed class SoundBoardAudioSink : IAudioSink
 {
@@ -26,10 +28,16 @@ public sealed class SoundBoardAudioSink : IAudioSink
     /// <summary>The port's fixed update rate: port ticks a second.</summary>
     private const int PortTicksPerSecond = 60;
 
-    /// <summary>Samples in one port tick. It is the size of <see cref="_monoSamples"/>, and it is multiplied by <see cref="ChannelsPerFrame"/> to give the size of <see cref="_stereoSamples"/>.</summary>
+    /// <summary>
+    ///     Samples in one port tick. It is the size of <see cref="_monoSamples" />, and it is multiplied by
+    ///     <see cref="ChannelsPerFrame" /> to give the size of <see cref="_stereoSamples" />.
+    /// </summary>
     private const int SamplesPerPortTick = SampleRate / PortTicksPerSecond;
 
-    /// <summary>Samples per output frame: left and right. It is multiplied by <see cref="SamplesPerPortTick"/> to give the size of <see cref="_stereoSamples"/>.</summary>
+    /// <summary>
+    ///     Samples per output frame: left and right. It is multiplied by <see cref="SamplesPerPortTick" /> to give the
+    ///     size of <see cref="_stereoSamples" />.
+    /// </summary>
     private const int ChannelsPerFrame = 2;
 
     /// <summary>Queued ticks of sound below which another tick is made at once, so the speakers never run dry.</summary>
@@ -40,9 +48,9 @@ public sealed class SoundBoardAudioSink : IAudioSink
 
     private readonly ISoundBoard _board;
     private readonly float[] _monoSamples = new float[SamplesPerPortTick];
-    private readonly DynamicSoundEffectInstance _soundEffect;
     private readonly StereoPanner _panner = new();
     private readonly SoundBoardRenderer _renderer;
+    private readonly DynamicSoundEffectInstance _soundEffect;
     private readonly short[] _stereoSamples = new short[SamplesPerPortTick * ChannelsPerFrame];
 
     /// <summary>Starts playing a sound board through the speakers.</summary>
@@ -53,10 +61,7 @@ public sealed class SoundBoardAudioSink : IAudioSink
         _board = board;
         _renderer = new SoundBoardRenderer(board, SampleRate);
         _soundEffect = new DynamicSoundEffectInstance(SampleRate, AudioChannels.Stereo);
-        for (int tick = 0; tick < MinimumQueuedTicks; tick++)
-        {
-            QueueOnePortTick();
-        }
+        for (var tick = 0; tick < MinimumQueuedTicks; tick++) QueueOnePortTick();
 
         _soundEffect.Play();
     }
@@ -77,10 +82,7 @@ public sealed class SoundBoardAudioSink : IAudioSink
     public void Tick()
     {
         QueueOnePortTick();
-        while (_soundEffect.PendingBufferCount < MinimumQueuedTicks)
-        {
-            QueueOnePortTick();
-        }
+        while (_soundEffect.PendingBufferCount < MinimumQueuedTicks) QueueOnePortTick();
     }
 
     /// <summary>Runs the board for one port tick and queues the sound, unless the queue is already full.</summary>
@@ -88,12 +90,9 @@ public sealed class SoundBoardAudioSink : IAudioSink
     {
         _renderer.Render(_monoSamples);
         _panner.Spread(_monoSamples, SoundTuning.MasterVolume, _stereoSamples);
-        if (_soundEffect.PendingBufferCount >= MaximumQueuedTicks)
-        {
-            return;
-        }
+        if (_soundEffect.PendingBufferCount >= MaximumQueuedTicks) return;
 
-        byte[] pcmBytes = MemoryMarshal.AsBytes(_stereoSamples.AsSpan()).ToArray();
+        var pcmBytes = MemoryMarshal.AsBytes(_stereoSamples.AsSpan()).ToArray();
         _soundEffect.SubmitBuffer(pcmBytes);
     }
 }

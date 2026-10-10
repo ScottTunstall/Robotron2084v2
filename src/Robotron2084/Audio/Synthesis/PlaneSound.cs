@@ -3,16 +3,16 @@ using static Robotron2084.Audio.Synthesis.InstructionCycles;
 namespace Robotron2084.Audio.Synthesis;
 
 /// <summary>
-/// A diving plane: the output goes low for a time that grows every cycle and high for a fixed time, so the
-/// pitch falls for as long as the sound plays.
+///     A diving plane: the output goes low for a time that grows every cycle and high for a fixed time, so the
+///     pitch falls for as long as the sound plays.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>VSNDRM3.SRC</c>, routine <c>PLANE</c> ("DIVING PLANE SOUND").</item>
-/// <item>Disassembly: none in this repo (the sound ROM is not disassembled).</item>
-/// </list>
-/// The sound never ends by itself: the low time grows by one count a cycle, and the sound has gone on until
-/// another sound number arrives long before the count could wrap.
+///     <list type="bullet">
+///         <item>Original source: <c>VSNDRM3.SRC</c>, routine <c>PLANE</c> ("DIVING PLANE SOUND").</item>
+///         <item>Disassembly: none in this repo (the sound ROM is not disassembled).</item>
+///     </list>
+///     The sound never ends by itself: the low time grows by one count a cycle, and the sound has gone on until
+///     another sound number arrives long before the count could wrap.
 /// </remarks>
 internal static class PlaneSound
 {
@@ -43,7 +43,7 @@ internal static class PlaneSound
     public static IEnumerable<OutputChange> Play(BoardOutput output)
     {
         output.Wait(SetUpCycles);
-        int lowCount = FirstLowCount;
+        var lowCount = FirstLowCount;
         while (true)
         {
             output.Wait(ModifyExtended - StoreExtended);
@@ -52,7 +52,7 @@ internal static class PlaneSound
             lowCount = (lowCount + 1) % WordWrap;
             output.Wait(CountCycles * CountdownLoop.Runs((ushort)lowCount));
             yield return output.Complement();
-            output.Wait(LoadHighCycles + (CountCycles * HighCount) + Branch);
+            output.Wait(LoadHighCycles + CountCycles * HighCount + Branch);
         }
     }
 }

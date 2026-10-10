@@ -3,16 +3,20 @@ using static Robotron2084.Audio.Synthesis.InstructionCycles;
 namespace Robotron2084.Audio.Synthesis;
 
 /// <summary>
-/// Crackling noise: the level flips at random moments, and the gap between chances to flip grows or
-/// shrinks steadily until it comes round to nothing.
+///     Crackling noise: the level flips at random moments, and the gap between chances to flip grows or
+///     shrinks steadily until it comes round to nothing.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>VSNDRM3.SRC</c>, routines <c>LITE</c> ("LIGHTNING"), <c>APPEAR</c> and
-/// <c>LITEN</c> ("LIGHTNING+APPEAR NOISE ROUTINE").</item>
-/// <item>Disassembly: none in this repo; ROM <c>$F55A</c> (<c>LITE</c>) and <c>$F562</c> (<c>APPEAR</c>),
-/// from the jump table <c>JMPTBL</c>.</item>
-/// </list>
+///     <list type="bullet">
+///         <item>
+///             Original source: <c>VSNDRM3.SRC</c>, routines <c>LITE</c> ("LIGHTNING"), <c>APPEAR</c> and
+///             <c>LITEN</c> ("LIGHTNING+APPEAR NOISE ROUTINE").
+///         </item>
+///         <item>
+///             Disassembly: none in this repo; ROM <c>$F55A</c> (<c>LITE</c>) and <c>$F562</c> (<c>APPEAR</c>),
+///             from the jump table <c>JMPTBL</c>.
+///         </item>
+///     </list>
 /// </remarks>
 internal static class LightningNoise
 {
@@ -37,7 +41,10 @@ internal static class LightningNoise
     /// <summary><c>LITEN</c>'s first level: as loud as it goes (<c>LDAA #$FF</c>).</summary>
     private const byte StartLevel = 0xFF;
 
-    /// <summary><c>LAUNCH</c>'s gap change (<c>LDAA #$FF</c>: one less each round), first gap (<c>LDAA #$60</c>) and chances (<c>LDAB #$FF</c>).</summary>
+    /// <summary>
+    ///     <c>LAUNCH</c>'s gap change (<c>LDAA #$FF</c>: one less each round), first gap (<c>LDAA #$60</c>) and chances (
+    ///     <c>LDAB #$FF</c>).
+    /// </summary>
     private const byte LaunchGapChange = 0xFF;
 
     private const byte LaunchFirstGap = 0x60;
@@ -82,7 +89,10 @@ internal static class LightningNoise
         return Play(memory, output, AppearFirstGap, AppearGapChange, AppearChancesPerGap);
     }
 
-    /// <summary>Plays the launch sound (sound <c>LAUNCH</c>): the gap shrinks by one each round, from $60, with 255 chances at each.</summary>
+    /// <summary>
+    ///     Plays the launch sound (sound <c>LAUNCH</c>): the gap shrinks by one each round, from $60, with 255 chances at
+    ///     each.
+    /// </summary>
     /// <param name="memory">The board's lasting variables, for the random numbers.</param>
     /// <param name="output">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
@@ -99,7 +109,8 @@ internal static class LightningNoise
     /// <param name="gapChange">How much the gap changes each round (<c>DFREQ</c>).</param>
     /// <param name="chancesPerGap">How many chances to flip come at each gap (<c>CYCNT</c>).</param>
     /// <returns>The sound's output changes.</returns>
-    private static IEnumerable<OutputChange> Play(BoardMemory memory, BoardOutput output, byte gap, byte gapChange, byte chancesPerGap)
+    private static IEnumerable<OutputChange> Play(BoardMemory memory, BoardOutput output, byte gap, byte gapChange,
+        byte chancesPerGap)
     {
         output.Wait(StoreDirect + Immediate);
         yield return output.Store(StartLevel);
@@ -107,28 +118,21 @@ internal static class LightningNoise
         do
         {
             output.Wait(Direct);
-            byte chancesLeft = chancesPerGap;
+            var chancesLeft = chancesPerGap;
             do
             {
-                foreach (OutputChange change in RandomStep.Run(memory, output, memory.RandomLow, RandomStep.MixLowCycles))
-                {
+                foreach (var change in RandomStep.Run(memory, output, memory.RandomLow, RandomStep.MixLowCycles))
                     yield return change;
-                }
 
                 output.Wait(Branch);
-                if (memory.RandomBitOut)
-                {
-                    yield return output.Complement();
-                }
+                if (memory.RandomBitOut) yield return output.Complement();
 
-                output.Wait(FinishChanceCycles + (CountdownLoop.Runs(gap) * GapCountCycles));
+                output.Wait(FinishChanceCycles + CountdownLoop.Runs(gap) * GapCountCycles);
                 chancesLeft--;
-            }
-            while (chancesLeft != 0);
+            } while (chancesLeft != 0);
 
             output.Wait(ChangeGapCycles);
             gap += gapChange;
-        }
-        while (gap != 0);
+        } while (gap != 0);
     }
 }

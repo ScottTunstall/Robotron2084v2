@@ -3,14 +3,14 @@ using static Robotron2084.Audio.Synthesis.InstructionCycles;
 namespace Robotron2084.Audio.Synthesis;
 
 /// <summary>
-/// White noise that fades out and slows down: each level is silence or the current loudness at random,
-/// the loudness drops a step each round, and the gap between levels grows.
+///     White noise that fades out and slows down: each level is silence or the current loudness at random,
+///     the loudness drops a step each round, and the gap between levels grows.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>VSNDRM3.SRC</c>, routines <c>TURBO</c> and <c>MOISE</c> ("WHITE NOISE ROUTINE").</item>
-/// <item>Disassembly: none in this repo; ROM <c>$F59B</c> (<c>TURBO</c>, from the jump table <c>JMPTBL</c>).</item>
-/// </list>
+///     <list type="bullet">
+///         <item>Original source: <c>VSNDRM3.SRC</c>, routines <c>TURBO</c> and <c>MOISE</c> ("WHITE NOISE ROUTINE").</item>
+///         <item>Disassembly: none in this repo; ROM <c>$F59B</c> (<c>TURBO</c>, from the jump table <c>JMPTBL</c>).</item>
+///     </list>
 /// </remarks>
 internal static class WhiteNoise
 {
@@ -27,10 +27,11 @@ internal static class WhiteNoise
     private const byte TurboFirstLoudness = 0xFF;
 
     /// <summary>
-    /// <c>TURBO</c> setting up: <c>LDAA</c>, <c>STAA CYCNT</c>, <c>STAA NFFLG</c>, <c>LDAA</c>, <c>LDX</c>, <c>LDAB</c>,
-    /// <c>BRA</c>. The <c>NFFLG</c> it sets is not zero, so the gap grows every round.
+    ///     <c>TURBO</c> setting up: <c>LDAA</c>, <c>STAA CYCNT</c>, <c>STAA NFFLG</c>, <c>LDAA</c>, <c>LDX</c>, <c>LDAB</c>,
+    ///     <c>BRA</c>. The <c>NFFLG</c> it sets is not zero, so the gap grows every round.
     /// </summary>
-    private const int TurboSetUpCycles = Immediate + StoreDirect + StoreDirect + Immediate + WordImmediate + Immediate + Branch;
+    private const int TurboSetUpCycles =
+        Immediate + StoreDirect + StoreDirect + Immediate + WordImmediate + Immediate + Branch;
 
     /// <summary><c>MOISE</c> keeping the fade (<c>STAA DECAY</c>).</summary>
     private const int StoreFadeCycles = StoreDirect;
@@ -63,22 +64,16 @@ internal static class WhiteNoise
     public static IEnumerable<OutputChange> PlayTurbo(BoardMemory memory, BoardOutput output)
     {
         output.Wait(TurboSetUpCycles + StoreFadeCycles);
-        ushort gap = TurboFirstGap;
-        byte loudness = TurboFirstLoudness;
+        var gap = TurboFirstGap;
+        var loudness = TurboFirstLoudness;
         while (true)
         {
             output.Wait(StoreGapCycles + StartRoundCycles);
-            foreach (OutputChange change in PlayRound(memory, output, gap, loudness))
-            {
-                yield return change;
-            }
+            foreach (var change in PlayRound(memory, output, gap, loudness)) yield return change;
 
             output.Wait(FadeCycles);
             loudness -= TurboFade;
-            if (loudness == 0)
-            {
-                yield break;
-            }
+            if (loudness == 0) yield break;
 
             output.Wait(GrowGapCycles + Branch);
             gap++;
@@ -91,15 +86,14 @@ internal static class WhiteNoise
     /// <param name="gap">The gap after each level, in counts (<c>NFRQ1</c>).</param>
     /// <param name="loudness">The level a random 1 gives (<c>NAMP</c>).</param>
     /// <returns>The output changes.</returns>
-    private static IEnumerable<OutputChange> PlayRound(BoardMemory memory, BoardOutput output, ushort gap, byte loudness)
+    private static IEnumerable<OutputChange> PlayRound(BoardMemory memory, BoardOutput output, ushort gap,
+        byte loudness)
     {
-        byte levelsLeft = TurboLevelsPerRound;
+        var levelsLeft = TurboLevelsPerRound;
         do
         {
-            foreach (OutputChange change in RandomStep.Run(memory, output, memory.RandomLow, RandomStep.MixLowCycles))
-            {
+            foreach (var change in RandomStep.Run(memory, output, memory.RandomLow, RandomStep.MixLowCycles))
                 yield return change;
-            }
 
             output.Wait(ChooseLevelCycles);
             byte level = 0;
@@ -110,9 +104,8 @@ internal static class WhiteNoise
             }
 
             yield return output.Store(level);
-            output.Wait(FinishLevelCycles + (CountdownLoop.Runs(gap) * GapCountCycles));
+            output.Wait(FinishLevelCycles + CountdownLoop.Runs(gap) * GapCountCycles);
             levelsLeft--;
-        }
-        while (levelsLeft != 0);
+        } while (levelsLeft != 0);
     }
 }

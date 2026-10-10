@@ -3,18 +3,20 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Audio;
 
 /// <summary>
-/// The game's one sound service. Like the arcade, which has one sound board playing one sound at a
-/// time, the port has one <see cref="SoundEngine"/>: set up once when the game loads, moved on once a
-/// port tick, and asked for sounds from anywhere in the game.
+///     The game's one sound service. Like the arcade, which has one sound board playing one sound at a
+///     time, the port has one <see cref="SoundEngine" />: set up once when the game loads, moved on once a
+///     port tick, and asked for sounds from anywhere in the game.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>RRS22.ASM</c>, routine <c>SNDLDV</c> (reached through the <c>SNDLD</c>
-/// jump vector in <c>RRF.ASM</c>).</item>
-/// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$D3C7</c>.</item>
-/// </list>
-/// Until <see cref="Initialize"/> runs (in the tests, or when the computer has no sound output), asking
-/// for a sound does nothing.
+///     <list type="bullet">
+///         <item>
+///             Original source: <c>RRS22.ASM</c>, routine <c>SNDLDV</c> (reached through the <c>SNDLD</c>
+///             jump vector in <c>RRF.ASM</c>).
+///         </item>
+///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$D3C7</c>.</item>
+///     </list>
+///     Until <see cref="Initialize" /> runs (in the tests, or when the computer has no sound output), asking
+///     for a sound does nothing.
 /// </remarks>
 public static class Sound
 {
@@ -22,17 +24,20 @@ public static class Sound
     private static SoundEngine? _engine;
 
     /// <summary>
-    /// The master switch. Sound is on whenever the game runs; the tests, which share this one static
-    /// service process-wide, turn it off. While it is off, asking for a sound does nothing.
+    ///     The master switch. Sound is on whenever the game runs; the tests, which share this one static
+    ///     service process-wide, turn it off. While it is off, asking for a sound does nothing.
     /// </summary>
     public static bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Set by the app shell every tick (notes §131): true while the attract sequence is on screen and
-    /// the operator's ATTRACT MODE SOUND setting is off. While it is set, asking for a sound does
-    /// nothing — a real game keeps its sound.
+    ///     Set by the app shell every tick (notes §131): true while the attract sequence is on screen and
+    ///     the operator's ATTRACT MODE SOUND setting is off. While it is set, asking for a sound does
+    ///     nothing — a real game keeps its sound.
     /// </summary>
     public static bool AttractMuted { get; set; }
+
+    /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying" />).</summary>
+    public static bool IsPlaying => _engine?.IsBoardPlaying ?? false;
 
     /// <summary>Sets up the sound service with the sink that will play the sound numbers.</summary>
     /// <param name="sink">Where the sound numbers go.</param>
@@ -44,91 +49,94 @@ public static class Sound
 
     /// <summary>Asks for a sound that is heard in the middle, between both speakers.</summary>
     /// <param name="sequence">The sound's table.</param>
-    public static void Play(SoundSequence sequence) => Play(sequence, 0f);
+    public static void Play(SoundSequence sequence)
+    {
+        Play(sequence, 0f);
+    }
 
     /// <summary>Asks for a sound that is heard from a place between the speakers.</summary>
     /// <param name="sequence">The sound's table.</param>
     /// <param name="pan">Where the sound is heard: -1 is wholly left, 0 the middle, 1 wholly right.</param>
     public static void Play(SoundSequence sequence, float pan)
     {
-        if (!Enabled || AttractMuted)
-        {
-            return;
-        }
+        if (!Enabled || AttractMuted) return;
 
         _engine?.Play(sequence, pan);
     }
 
     /// <summary>
-    /// Asks for the wave-end music and keeps the voice for its whole play-out (notes §128). The board
-    /// loops that sound until another number arrives, so without the hold the new level's first sound —
-    /// a shot, a robot's step — replaces it wherever the loop has got to, which is the music being "cut
-    /// short". The hold makes the new level's sounds wait for the music to finish.
+    ///     Asks for the wave-end music and keeps the voice for its whole play-out (notes §128). The board
+    ///     loops that sound until another number arrives, so without the hold the new level's first sound —
+    ///     a shot, a robot's step — replaces it wherever the loop has got to, which is the music being "cut
+    ///     short". The hold makes the new level's sounds wait for the music to finish.
     /// </summary>
     public static void PlayWaveEnd()
     {
-        if (!Enabled || AttractMuted)
-        {
-            return;
-        }
+        if (!Enabled || AttractMuted) return;
 
         Play(SoundTables.WaveEnd);
         _engine?.HoldVoice(SoundTuning.WaveEndMusicTicks);
     }
 
     /// <summary>
-    /// Plays a coin sound: one of the eight <see cref="SoundTables.Coin"/> tables, chosen at random, as the original
-    /// does when a coin goes in.
+    ///     Plays a coin sound: one of the eight <see cref="SoundTables.Coin" /> tables, chosen at random, as the original
+    ///     does when a coin goes in.
     /// </summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>RRS22.ASM</c>, the coin process <c>CN1</c> (<c>LDA #5</c>, <c>LDB SEED</c>, <c>ANDB #7</c>, <c>MUL</c>,
-    /// <c>ADDD #CNSND</c>, <c>JSR SNDLD</c>)</item>
-    /// <item>Disassembly: <c>asm/robomame.asm</c> at <c>$D0CE</c> (the tables)</item>
-    /// </list>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRS22.ASM</c>, the coin process <c>CN1</c> (<c>LDA #5</c>, <c>LDB SEED</c>,
+    ///             <c>ANDB #7</c>, <c>MUL</c>,
+    ///             <c>ADDD #CNSND</c>, <c>JSR SNDLD</c>)
+    ///         </item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$D0CE</c> (the tables)</item>
+    ///     </list>
     /// </remarks>
     /// <param name="random">The source of the random choice.</param>
-    public static void PlayCoin(Random random) => Play(SoundTables.Coin[random.Next(SoundTables.Coin.Count)]);
+    public static void PlayCoin(Random random)
+    {
+        Play(SoundTables.Coin[random.Next(SoundTables.Coin.Count)]);
+    }
 
     /// <summary>Starts the transporter's hum: the sound made while a brain wave's robots are beamed in.</summary>
     /// <remarks>
-    /// <list type="bullet">
-    /// <item>Original source: <c>RRT2.ASM</c> <c>TRSPRC</c> ("TRANSPORTER SOUND PROCESS"), started by <c>TRNSTV</c> ("START TRANSPORTING")</item>
-    /// <item>Disassembly: <c>PLAY_BRAIN_WAVE_WARP_IN_SOUNDS</c> (<c>$4607</c>)</item>
-    /// </list>
-    /// "Transporter" is the arcade's own name for beaming the robots in at the start of a brain wave.
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRT2.ASM</c> <c>TRSPRC</c> ("TRANSPORTER SOUND PROCESS"), started by <c>TRNSTV</c>
+    ///             ("START TRANSPORTING")
+    ///         </item>
+    ///         <item>Disassembly: <c>PLAY_BRAIN_WAVE_WARP_IN_SOUNDS</c> (<c>$4607</c>)</item>
+    ///     </list>
+    ///     "Transporter" is the arcade's own name for beaming the robots in at the start of a brain wave.
     /// </remarks>
     public static void PlayTransporter()
     {
-        if (!Enabled || AttractMuted || _engine is null)
-        {
-            return;
-        }
+        if (!Enabled || AttractMuted || _engine is null) return;
 
         _transporterSound.Start(_engine);
     }
 
     /// <summary>True while the transporter is still sending its sound to the board.</summary>
-    /// <returns>True from <see cref="PlayTransporter"/> until its last send, or until <see cref="StopTransporter"/>.</returns>
-    public static bool IsTransporterRunning() => _transporterSound.IsRunning();
+    /// <returns>True from <see cref="PlayTransporter" /> until its last send, or until <see cref="StopTransporter" />.</returns>
+    public static bool IsTransporterRunning()
+    {
+        return _transporterSound.IsRunning();
+    }
 
     /// <summary>Stops the transporter's sends where they are, so that they do not cut across the next sound.</summary>
-    public static void StopTransporter() => _transporterSound.Stop();
-
-    /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying"/>).</summary>
-    public static bool IsPlaying => _engine?.IsBoardPlaying ?? false;
+    public static void StopTransporter()
+    {
+        _transporterSound.Stop();
+    }
 
     /// <summary>
-    /// Sends a sound number straight to the board, skipping the priority check and the tables: what the sound test
-    /// page does (<c>SDOUT</c>).
+    ///     Sends a sound number straight to the board, skipping the priority check and the tables: what the sound test
+    ///     page does (<c>SDOUT</c>).
     /// </summary>
     /// <param name="soundNumber">The sound number (<c>SND#</c>), 1 to 63.</param>
     public static void SendDirect(int soundNumber)
     {
-        if (!Enabled || AttractMuted)
-        {
-            return;
-        }
+        if (!Enabled || AttractMuted) return;
 
         _engine?.SendDirect(soundNumber, 0f);
     }
@@ -136,10 +144,7 @@ public static class Sound
     /// <summary>Moves the sound on by one port tick.</summary>
     public static void Tick()
     {
-        if (!Enabled || AttractMuted || _engine is null)
-        {
-            return;
-        }
+        if (!Enabled || AttractMuted || _engine is null) return;
 
         _engine.Tick();
         _transporterSound.Tick(_engine);

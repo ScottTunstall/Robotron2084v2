@@ -7,20 +7,23 @@ namespace Robotron2084.Audio;
 public sealed record BoardSound(int Number, string Name, string Description);
 
 /// <summary>
-/// Every sound the board can play, in sound-number order, named as the sound ROM's source names them. It is the
-/// list the sound test page steps through.
+///     Every sound the board can play, in sound-number order, named as the sound ROM's source names them. It is the
+///     list the sound test page steps through.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>VSNDRM3.SRC</c> ("ROBOTRON SOUNDS VERSION 1.0 3-8-82"): the handler <c>IRQ</c> decides
-/// which routine a number reaches, so the order here is the handler's: numbers 1 to 13 are the first
-/// thirteen wave table vectors of <c>SVTAB</c>; 14 to 28 are <c>JMPTBL</c>; 29 to 31 are the first three
-/// <c>VVECT</c> square waves; 32 to 43 are the next twelve <c>SVTAB</c> vectors; 44 to 62 are <c>JMPTB1</c>; and 63
-/// is the fifth <c>VVECT</c>, which the handler reaches by subtracting $39.</item>
-/// <item>Disassembly: none in this repo (the sound ROM is not disassembled).</item>
-/// </list>
-/// The source's wave table vectors are named but not described; the description given for them is the name of
-/// the pitch pattern the vector plays, which is the only words the source has for them.
+///     <list type="bullet">
+///         <item>
+///             Original source: <c>VSNDRM3.SRC</c> ("ROBOTRON SOUNDS VERSION 1.0 3-8-82"): the handler <c>IRQ</c> decides
+///             which routine a number reaches, so the order here is the handler's: numbers 1 to 13 are the first
+///             thirteen wave table vectors of <c>SVTAB</c>; 14 to 28 are <c>JMPTBL</c>; 29 to 31 are the first three
+///             <c>VVECT</c> square waves; 32 to 43 are the next twelve <c>SVTAB</c> vectors; 44 to 62 are <c>JMPTB1</c>;
+///             and 63
+///             is the fifth <c>VVECT</c>, which the handler reaches by subtracting $39.
+///         </item>
+///         <item>Disassembly: none in this repo (the sound ROM is not disassembled).</item>
+///     </list>
+///     The source's wave table vectors are named but not described; the description given for them is the name of
+///     the pitch pattern the vector plays, which is the only words the source has for them.
 /// </remarks>
 public static class BoardSounds
 {
@@ -95,6 +98,6 @@ public static class BoardSounds
         new(0x3C, "ZIREN", "SIREN   AIR RAID"),
         new(0x3D, "WHIST", "THE BOMB OOOOOH NOOOOO!"),
         new(0x3E, "HBOMB", string.Empty),
-        new(0x3F, "MOSQTO", "VARI VECTOR"),
+        new(0x3F, "MOSQTO", "VARI VECTOR")
     ];
 }

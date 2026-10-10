@@ -8,7 +8,10 @@ namespace Robotron2084.Audio.Synthesis;
 /// <param name="HighWaitStep">How much the high wait grows at each sweep (<c>HIDT</c>).</param>
 /// <param name="HighWaitEnd">The high wait at which the sweeps stop (<c>HIEN</c>).</param>
 /// <param name="SweepLength">How many counts pass between sweeps (<c>SWPDT</c>, two bytes).</param>
-/// <param name="LowWaitChange">How much the starting low wait changes when the sweeps stop, or 0 to end the sound (<c>LOMOD</c>).</param>
+/// <param name="LowWaitChange">
+///     How much the starting low wait changes when the sweeps stop, or 0 to end the sound (
+///     <c>LOMOD</c>).
+/// </param>
 /// <param name="Level">The level the sound starts by writing (<c>VAMP</c>).</param>
 internal readonly record struct SquareWaveVector(
     byte LowWait,

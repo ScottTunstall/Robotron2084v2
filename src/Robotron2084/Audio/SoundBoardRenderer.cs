@@ -3,23 +3,27 @@ using Robotron2084.Audio.Synthesis;
 namespace Robotron2084.Audio;
 
 /// <summary>
-/// Turns a sound board's output into audio samples, by running the board for exactly as long as
-/// each sample lasts and averaging its output level over that time.
+///     Turns a sound board's output into audio samples, by running the board for exactly as long as
+///     each sample lasts and averaging its output level over that time.
 /// </summary>
 /// <remarks>
-/// The arcade's amplifier is joined to the board through a capacitor, which lets the sound through
-/// but not a steady level. <see cref="RemoveSteadyLevel"/> does the same job, so a board resting at
-/// any level is silent.
+///     The arcade's amplifier is joined to the board through a capacitor, which lets the sound through
+///     but not a steady level. <see cref="RemoveSteadyLevel" /> does the same job, so a board resting at
+///     any level is silent.
 /// </remarks>
 public sealed class SoundBoardRenderer
 {
-    /// <summary>The output level in the middle of the board's 0 to 255 range. It is subtracted from <see cref="_level"/>, and the result is divided by it, to set <see cref="_previousInput"/>.</summary>
+    /// <summary>
+    ///     The output level in the middle of the board's 0 to 255 range. It is subtracted from <see cref="_level" />, and
+    ///     the result is divided by it, to set <see cref="_previousInput" />.
+    /// </summary>
     private const float MidLevel = 128f;
 
     /// <summary>
-    /// How much of its last output the steady-level filter keeps each sample. Close to 1, so it only
-    /// removes changes slower than about 20 times a second.
-    ///  It is multiplied by <see cref="_previousOutput"/> and the result is added in to work out the next output.</summary>
+    ///     How much of its last output the steady-level filter keeps each sample. Close to 1, so it only
+    ///     removes changes slower than about 20 times a second.
+    ///     It is multiplied by <see cref="_previousOutput" /> and the result is added in to work out the next output.
+    /// </summary>
     private const float SteadyLevelRetention = 0.997f;
 
     /// <summary>How long the board runs before the first sample, so its start-up settles out of earshot: a tenth of a second.</summary>
@@ -46,21 +50,21 @@ public sealed class SoundBoardRenderer
     /// <param name="samples">The buffer to fill.</param>
     public void Render(Span<float> samples)
     {
-        for (int i = 0; i < samples.Length; i++)
+        for (var i = 0; i < samples.Length; i++)
         {
-            float centredLevel = (AverageLevelOverOneSample() - MidLevel) / MidLevel;
+            var centredLevel = (AverageLevelOverOneSample() - MidLevel) / MidLevel;
             samples[i] = RemoveSteadyLevel(centredLevel);
         }
     }
 
     /// <summary>
-    /// Runs the board for one sample's worth of time and averages its output level. A level holds while
-    /// the board runs towards its next change, and the new level counts from the moment it is made.
+    ///     Runs the board for one sample's worth of time and averages its output level. A level holds while
+    ///     the board runs towards its next change, and the new level counts from the moment it is made.
     /// </summary>
     /// <returns>The average level, 0 to 255.</returns>
     private float AverageLevelOverOneSample()
     {
-        double cyclesLeft = _cyclesPerSample;
+        var cyclesLeft = _cyclesPerSample;
         double weightedLevels = 0;
         while (cyclesLeft > 0)
         {
@@ -70,7 +74,7 @@ public sealed class SoundBoardRenderer
                 _unspentCycles += _board.Run((int)Math.Ceiling(cyclesLeft));
             }
 
-            double cycles = Math.Min(cyclesLeft, _unspentCycles);
+            var cycles = Math.Min(cyclesLeft, _unspentCycles);
             weightedLevels += cycles * _level;
             cyclesLeft -= cycles;
             _unspentCycles -= cycles;
@@ -84,7 +88,7 @@ public sealed class SoundBoardRenderer
     /// <returns>This sample, after it.</returns>
     private float RemoveSteadyLevel(float input)
     {
-        float output = input - _previousInput + (SteadyLevelRetention * _previousOutput);
+        var output = input - _previousInput + SteadyLevelRetention * _previousOutput;
         _previousInput = input;
         _previousOutput = output;
         return output;
@@ -93,10 +97,7 @@ public sealed class SoundBoardRenderer
     /// <summary>Runs the board's start-up, then starts the filter from the level the board settled on.</summary>
     private void WarmUp()
     {
-        for (int cycles = 0; cycles < WarmUpCycles;)
-        {
-            cycles += _board.Run(WarmUpCycles - cycles);
-        }
+        for (var cycles = 0; cycles < WarmUpCycles;) cycles += _board.Run(WarmUpCycles - cycles);
 
         _level = _board.OutputLevel;
         _previousInput = (_level - MidLevel) / MidLevel;

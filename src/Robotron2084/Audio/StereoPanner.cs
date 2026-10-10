@@ -1,19 +1,23 @@
 namespace Robotron2084.Audio;
 
 /// <summary>
-/// Places one channel of sound between the left and right speakers, and glides there when the place
-/// changes so the move makes no click.
+///     Places one channel of sound between the left and right speakers, and glides there when the place
+///     changes so the move makes no click.
 /// </summary>
 /// <remarks>
-/// The volumes follow the "constant power" rule: a sound in the middle is played at about 71% in each
-/// speaker, so it sounds as loud as the same sound placed wholly in one.
+///     The volumes follow the "constant power" rule: a sound in the middle is played at about 71% in each
+///     speaker, so it sounds as loud as the same sound placed wholly in one.
 /// </remarks>
 public sealed class StereoPanner
 {
     /// <summary>Samples per output frame: one for the left speaker, one for the right.</summary>
     private const int ChannelsPerFrame = 2;
 
-    /// <summary>How far each sample moves the speaker volumes towards their targets: a glide of about 5 ms at 44.1 kHz. It is multiplied by how far <see cref="_leftVolume"/> still has to go to reach <see cref="_targetLeftVolume"/>, and the result is added to <see cref="_leftVolume"/> at every sample. The right side works the same way.</summary>
+    /// <summary>
+    ///     How far each sample moves the speaker volumes towards their targets: a glide of about 5 ms at 44.1 kHz. It is
+    ///     multiplied by how far <see cref="_leftVolume" /> still has to go to reach <see cref="_targetLeftVolume" />, and the
+    ///     result is added to <see cref="_leftVolume" /> at every sample. The right side works the same way.
+    /// </summary>
     private const float GlidePerSample = 0.005f;
 
     /// <summary>A quarter turn, in radians: the angle between "all left" and "all right".</summary>
@@ -36,8 +40,8 @@ public sealed class StereoPanner
     /// <param name="pan">-1 is wholly left, 0 is the middle, 1 is wholly right.</param>
     public void PanTo(float pan)
     {
-        float leftToRight = (Math.Clamp(pan, -1f, 1f) + 1f) / 2;
-        float angle = leftToRight * QuarterTurn;
+        var leftToRight = (Math.Clamp(pan, -1f, 1f) + 1f) / 2;
+        var angle = leftToRight * QuarterTurn;
         _targetLeftVolume = MathF.Cos(angle);
         _targetRightVolume = MathF.Sin(angle);
     }
@@ -48,17 +52,20 @@ public sealed class StereoPanner
     /// <param name="stereo">Where to write: two slots per sample, left then right.</param>
     public void Spread(ReadOnlySpan<float> samples, float volume, Span<short> stereo)
     {
-        for (int i = 0; i < samples.Length; i++)
+        for (var i = 0; i < samples.Length; i++)
         {
             _leftVolume += (_targetLeftVolume - _leftVolume) * GlidePerSample;
             _rightVolume += (_targetRightVolume - _rightVolume) * GlidePerSample;
-            float sample = samples[i] * volume;
-            int leftSampleIndex = i * ChannelsPerFrame;
+            var sample = samples[i] * volume;
+            var leftSampleIndex = i * ChannelsPerFrame;
             stereo[leftSampleIndex] = ToPcm(sample * _leftVolume);
             stereo[leftSampleIndex + 1] = ToPcm(sample * _rightVolume);
         }
     }
 
     /// <summary>Turns a sample from -1 to 1 into a 16-bit number, clipping anything louder.</summary>
-    private static short ToPcm(float sample) => (short)(Math.Clamp(sample, -1f, 1f) * short.MaxValue);
+    private static short ToPcm(float sample)
+    {
+        return (short)(Math.Clamp(sample, -1f, 1f) * short.MaxValue);
+    }
 }

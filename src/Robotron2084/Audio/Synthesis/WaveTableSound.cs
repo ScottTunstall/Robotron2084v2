@@ -3,35 +3,38 @@ using static Robotron2084.Audio.Synthesis.InstructionCycles;
 namespace Robotron2084.Audio.Synthesis;
 
 /// <summary>
-/// The board's wave table synthesiser: it copies a wave shape into memory and plays it over and over,
-/// waiting a little between each level, with the wait taken from a pattern of pitches. Each pass through
-/// the pattern can echo, quieter each time, and then move every pitch up or down and start again.
+///     The board's wave table synthesiser: it copies a wave shape into memory and plays it over and over,
+///     waiting a little between each level, with the wait taken from a pattern of pitches. Each pass through
+///     the pattern can echo, quieter each time, and then move every pitch up or down and start again.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>VSNDRM3.SRC</c>, routines <c>GWLD</c> ("GWAVE LOADER"), <c>GWAVE</c>,
-/// <c>WVTRAN</c> ("WAVE TRANSFER ROUTINE") and <c>WVDECA</c> ("WAVE DECAY ROUTINE").</item>
-/// <item>Disassembly: none in this repo (the sound ROM is not disassembled).</item>
-/// </list>
-/// The settings live in the board's memory between sounds, so the laser ball bonus can pick up where the
-/// last one stopped (<c>BON2</c>'s <c>JMP GEND50</c>).
+///     <list type="bullet">
+///         <item>
+///             Original source: <c>VSNDRM3.SRC</c>, routines <c>GWLD</c> ("GWAVE LOADER"), <c>GWAVE</c>,
+///             <c>WVTRAN</c> ("WAVE TRANSFER ROUTINE") and <c>WVDECA</c> ("WAVE DECAY ROUTINE").
+///         </item>
+///         <item>Disassembly: none in this repo (the sound ROM is not disassembled).</item>
+///     </list>
+///     The settings live in the board's memory between sounds, so the laser ball bonus can pick up where the
+///     last one stopped (<c>BON2</c>'s <c>JMP GEND50</c>).
 /// </remarks>
 internal sealed class WaveTableSound
 {
     /// <summary>
-    /// <c>GWLD</c> up to the echo count: multiply the sound's place by 7 (<c>TAB</c>, <c>ASLB</c>, three
-    /// <c>ABA</c>), find its settings (<c>LDX #SVTAB</c>, <c>ADDX</c>), then split byte 0 (<c>LDAA</c>,
-    /// <c>TAB</c>, <c>ANDA</c>, <c>STAA</c>, four <c>LSRB</c>, <c>STAB</c>).
+    ///     <c>GWLD</c> up to the echo count: multiply the sound's place by 7 (<c>TAB</c>, <c>ASLB</c>, three
+    ///     <c>ABA</c>), find its settings (<c>LDX #SVTAB</c>, <c>ADDX</c>), then split byte 0 (<c>LDAA</c>,
+    ///     <c>TAB</c>, <c>ANDA</c>, <c>STAA</c>, four <c>LSRB</c>, <c>STAB</c>).
     /// </summary>
     private const int LoadSettingsCycles =
-        (5 * Inherent) + WordImmediate + SubroutineCycles.CallAddToIndex + Indexed + Inherent + Immediate + StoreDirect + (4 * Inherent) + StoreDirect;
+        5 * Inherent + WordImmediate + SubroutineCycles.CallAddToIndex + Indexed + Inherent + Immediate + StoreDirect +
+        4 * Inherent + StoreDirect;
 
     /// <summary>
-    /// <c>GWLD</c> splitting byte 1 (<c>LDAA 1,X</c>, <c>TAB</c>, four <c>LSRB</c>, <c>STAB</c>, <c>ANDA</c>,
-    /// <c>STAA TEMPA</c>) and getting ready to find the wave (<c>STX TEMPX</c>, <c>LDX #GWVTAB</c>).
+    ///     <c>GWLD</c> splitting byte 1 (<c>LDAA 1,X</c>, <c>TAB</c>, four <c>LSRB</c>, <c>STAB</c>, <c>ANDA</c>,
+    ///     <c>STAA TEMPA</c>) and getting ready to find the wave (<c>STX TEMPX</c>, <c>LDX #GWVTAB</c>).
     /// </summary>
     private const int LoadWaveNumberCycles =
-        Indexed + Inherent + (4 * Inherent) + StoreDirect + Immediate + StoreDirect + WordStoreDirect + WordImmediate;
+        Indexed + Inherent + 4 * Inherent + StoreDirect + Immediate + StoreDirect + WordStoreDirect + WordImmediate;
 
     /// <summary><c>GWLD2</c> checking whether it has reached the wave yet (<c>DEC TEMPA</c>, <c>BMI</c>).</summary>
     private const int WaveSearchCheckCycles = ModifyExtended + Branch;
@@ -42,21 +45,25 @@ internal sealed class WaveTableSound
     /// <summary><c>GWLD3</c> keeping the wave's place and calling the transfer (<c>STX GWFRM</c>, <c>JSR WVTRAN</c>).</summary>
     private const int CallTransferFromLoadCycles = WordStoreDirect + CallExtended;
 
-    /// <summary><c>GWLD</c> fetching the first decay and calling the decay routine (<c>LDX</c>, <c>LDAA 2,X</c>, <c>STAA</c>, <c>JSR WVDECA</c>).</summary>
+    /// <summary>
+    ///     <c>GWLD</c> fetching the first decay and calling the decay routine (<c>LDX</c>, <c>LDAA 2,X</c>, <c>STAA</c>,
+    ///     <c>JSR WVDECA</c>).
+    /// </summary>
     private const int CallPreDecayFromLoadCycles = WordDirect + Indexed + StoreDirect + CallExtended;
 
     /// <summary>
-    /// The rest of <c>GWLD</c>: the pitch settings (<c>LDX</c>, then <c>LDAA</c> and <c>STAA</c> twice),
-    /// the pattern's start and end (<c>LDAA</c>, <c>TAB</c>, <c>LDAA</c>, <c>LDX #GFRTAB</c>, <c>ADDX</c>,
-    /// <c>TBA</c>, <c>STX</c>, <c>CLR FOFSET</c>, <c>ADDX</c>, <c>STX</c>) and <c>RTS</c>.
+    ///     The rest of <c>GWLD</c>: the pitch settings (<c>LDX</c>, then <c>LDAA</c> and <c>STAA</c> twice),
+    ///     the pattern's start and end (<c>LDAA</c>, <c>TAB</c>, <c>LDAA</c>, <c>LDX #GFRTAB</c>, <c>ADDX</c>,
+    ///     <c>TBA</c>, <c>STX</c>, <c>CLR FOFSET</c>, <c>ADDX</c>, <c>STX</c>) and <c>RTS</c>.
     /// </summary>
     private const int LoadPatternCycles =
-        WordDirect + (2 * (Indexed + StoreDirect)) + Indexed + Inherent + Indexed + WordImmediate + SubroutineCycles.CallAddToIndex
+        WordDirect + 2 * (Indexed + StoreDirect) + Indexed + Inherent + Indexed + WordImmediate +
+        SubroutineCycles.CallAddToIndex
         + Inherent + WordStoreDirect + ModifyExtended + SubroutineCycles.CallAddToIndex + WordStoreDirect + Return;
 
     /// <summary>
-    /// <c>WVTRAN</c> without the bytes it copies: <c>LDX</c>, <c>STX</c>, <c>LDX</c>, <c>LDAB ,X</c>, <c>INX</c>,
-    /// <c>JSR TRANS</c> and <c>TRANS</c> itself, then <c>LDX</c>, <c>STX WVEND</c>, <c>RTS</c>.
+    ///     <c>WVTRAN</c> without the bytes it copies: <c>LDX</c>, <c>STX</c>, <c>LDX</c>, <c>LDAB ,X</c>, <c>INX</c>,
+    ///     <c>JSR TRANS</c> and <c>TRANS</c> itself, then <c>LDX</c>, <c>STX WVEND</c>, <c>RTS</c>.
     /// </summary>
     private const int TransferCycles =
         WordImmediate + WordStoreDirect + WordDirect + Indexed + IndexStep + CallExtended + SubroutineCycles.Transfer
@@ -66,18 +73,20 @@ internal sealed class WaveTableSound
     private const int NoDecayCycles = Inherent + Branch + Return;
 
     /// <summary>
-    /// <c>WVDECA</c> without its loop: <c>TSTA</c>, <c>BEQ</c>, <c>LDX</c>, <c>STX</c>, <c>LDX #GWTAB</c>,
-    /// <c>STAA TEMPB</c>, and the <c>RTS</c> at <c>WVDCX</c>.
+    ///     <c>WVDECA</c> without its loop: <c>TSTA</c>, <c>BEQ</c>, <c>LDX</c>, <c>STX</c>, <c>LDX #GWTAB</c>,
+    ///     <c>STAA TEMPB</c>, and the <c>RTS</c> at <c>WVDCX</c>.
     /// </summary>
-    private const int DecayCycles = Inherent + Branch + WordDirect + WordStoreDirect + WordImmediate + StoreDirect + Return;
+    private const int DecayCycles =
+        Inherent + Branch + WordDirect + WordStoreDirect + WordImmediate + StoreDirect + Return;
 
     /// <summary>
-    /// <c>WVDLP</c> for one level, besides the take-offs: <c>STX</c>, <c>LDX</c>, <c>LDAB</c>, <c>STAB</c>,
-    /// <c>LDAB 1,X</c>, four <c>LSRB</c>, <c>INX</c>, <c>STX</c>, <c>LDX</c>, <c>LDAA ,X</c>, then <c>STAA ,X</c>,
-    /// <c>INX</c>, <c>CPX</c>, <c>BNE</c>.
+    ///     <c>WVDLP</c> for one level, besides the take-offs: <c>STX</c>, <c>LDX</c>, <c>LDAB</c>, <c>STAB</c>,
+    ///     <c>LDAB 1,X</c>, four <c>LSRB</c>, <c>INX</c>, <c>STX</c>, <c>LDX</c>, <c>LDAA ,X</c>, then <c>STAA ,X</c>,
+    ///     <c>INX</c>, <c>CPX</c>, <c>BNE</c>.
     /// </summary>
     private const int DecayPerLevelCycles =
-        WordStoreDirect + WordDirect + Direct + StoreDirect + Indexed + (4 * Inherent) + IndexStep + WordStoreDirect + WordDirect + Indexed
+        WordStoreDirect + WordDirect + Direct + StoreDirect + Indexed + 4 * Inherent + IndexStep + WordStoreDirect +
+        WordDirect + Indexed
         + StoreIndexed + IndexStep + WordDirect + Branch;
 
     /// <summary><c>WVDLP1</c> taking one sixteenth off a level: <c>SBA</c>, <c>DEC TEMPA</c>, <c>BNE</c>.</summary>
@@ -92,7 +101,10 @@ internal sealed class WaveTableSound
     /// <summary><c>GWT4</c> going back to the pattern's start: <c>LDX GWFRQ</c>, <c>STX XPLAY</c>.</summary>
     private const int StartPatternCycles = WordDirect + WordStoreDirect;
 
-    /// <summary><c>GPLAY</c> reading the next pitch and checking for the pattern's end: <c>LDX</c>, <c>LDAA ,X</c>, <c>ADDA</c>, <c>STAA</c>, <c>CPX</c>, <c>BEQ</c>.</summary>
+    /// <summary>
+    ///     <c>GPLAY</c> reading the next pitch and checking for the pattern's end: <c>LDX</c>, <c>LDAA ,X</c>,
+    ///     <c>ADDA</c>, <c>STAA</c>, <c>CPX</c>, <c>BEQ</c>.
+    /// </summary>
     private const int ReadPitchCycles = WordDirect + Indexed + Direct + StoreDirect + WordDirect + Branch;
 
     /// <summary><c>GPLAY</c> getting ready to play at that pitch: <c>LDAB GCCNT</c>, <c>INX</c>, <c>STX</c>.</summary>
@@ -113,8 +125,11 @@ internal sealed class WaveTableSound
     /// <summary>Counting one play of the wave: <c>DECB</c>, <c>BEQ</c>.</summary>
     private const int CountPlayCycles = Inherent + Branch;
 
-    /// <summary>The source's padding before the wave plays again, so each play lasts the same ("SYNC 36"), and <c>BRA GOUT</c>.</summary>
-    private const int ReplaySyncCycles = (4 * 2 * IndexStep) + (2 * Inherent) + Branch;
+    /// <summary>
+    ///     The source's padding before the wave plays again, so each play lasts the same ("SYNC 36"), and <c>BRA GOUT</c>
+    ///     .
+    /// </summary>
+    private const int ReplaySyncCycles = 4 * 2 * IndexStep + 2 * Inherent + Branch;
 
     /// <summary><c>GEND</c> calling the echo decay: <c>LDAA GECDEC</c>, <c>BSR WVDECA</c>.</summary>
     private const int CallEchoDecayCycles = Direct + CallShort;
@@ -149,32 +164,60 @@ internal sealed class WaveTableSound
     /// <summary><c>GW2B</c> moving to the next pitch: <c>INX</c>, <c>CPX FRQEND</c>, <c>BNE</c>.</summary>
     private const int NextPitchCycles = IndexStep + WordDirect + Branch;
 
-    /// <summary><c>GW3</c> marking the end and checking whether to copy the wave again: <c>STX FRQEND</c>, <c>LDAA GECDEC</c>, <c>BEQ</c>.</summary>
+    /// <summary>
+    ///     <c>GW3</c> marking the end and checking whether to copy the wave again: <c>STX FRQEND</c>, <c>LDAA GECDEC</c>,
+    ///     <c>BEQ</c>.
+    /// </summary>
     private const int MarkEndCycles = WordStoreDirect + Direct + Branch;
 
-    /// <summary>The top bit: a pitch move above 127 lowers the waits instead of raising them. <see cref="BoardMemory.ScratchA"/> is compared with this to tell whether its top bit is set.</summary>
+    /// <summary>
+    ///     The top bit: a pitch move above 127 lowers the waits instead of raising them.
+    ///     <see cref="BoardMemory.ScratchA" /> is compared with this to tell whether its top bit is set.
+    /// </summary>
     private const int NegativeBit = 0x80;
 
-    /// <summary>The bottom four bits of a settings byte. It picks the low half of the settings byte, which becomes <see cref="_playsPerPitch"/>.</summary>
+    /// <summary>
+    ///     The bottom four bits of a settings byte. It picks the low half of the settings byte, which becomes
+    ///     <see cref="_playsPerPitch" />.
+    /// </summary>
     private const int LowNibble = 0x0F;
 
-    /// <summary>How far the top four bits of a settings byte are shifted down. The settings byte is shifted down by this many bits to give its high half, which becomes <see cref="_echoes"/>.</summary>
+    /// <summary>
+    ///     How far the top four bits of a settings byte are shifted down. The settings byte is shifted down by this many
+    ///     bits to give its high half, which becomes <see cref="_echoes" />.
+    /// </summary>
     private const int HighNibbleShift = 4;
+
+    /// <summary>
+    ///     The place of <c>TRBV</c>, "TURBINE START UP", the second background sound's settings, in
+    ///     <see cref="WaveTableData.Vectors" /> (<c>BG2</c>: <c>LDAA #(TRBV-SVTAB)/7</c>).
+    /// </summary>
+    private const int BackgroundVector = 14;
+
+    /// <summary>
+    ///     <c>BG2</c>: <c>LDAA #</c>, <c>JSR GWLD</c> (counted with the load), then <c>LDAA BG2FLG</c>, two <c>ASLA</c>,
+    ///     <c>COMA</c>, <c>JSR GEND60</c>, <c>STAA FOFSET</c>.
+    /// </summary>
+    private const int BackgroundSetUpCycles =
+        Immediate + CallExtended + Direct + 3 * Inherent + CallExtended + StoreDirect;
+
+    /// <summary><c>BG2LP</c>: <c>INC GDCNT</c>, <c>JSR GEND61</c>, and the <c>BRA</c> back.</summary>
+    private const int BackgroundLoopCycles = ModifyExtended + CallExtended + Branch;
 
     private readonly BoardMemory _memory;
     private readonly BoardOutput _output;
     private readonly byte[] _waveSamples = new byte[WaveTableData.LongestWave];
-    private byte _echoes;
-    private byte _playsPerPitch;
     private byte _echoDecay;
+    private byte _echoes;
+    private int _patternEnd;
+    private int _patternStart;
+    private byte _pitchOffset;
     private byte _pitchStep;
     private byte _pitchStepsLeft;
+    private byte _playsPerPitch;
     private byte _preDecay;
-    private byte _pitchOffset;
-    private int _patternStart;
-    private int _patternEnd;
-    private int _waveStart;
     private int _waveLength;
+    private int _waveStart;
 
     /// <summary>Creates the synthesiser, sharing the board's memory and output port.</summary>
     /// <param name="memory">The board's lasting variables.</param>
@@ -186,7 +229,7 @@ internal sealed class WaveTableSound
     }
 
     /// <summary>Loads a sound's settings and wave, then plays it (<c>JSR GWLD</c>, <c>JSR GWAVE</c>).</summary>
-    /// <param name="vectorIndex">The sound's place in <see cref="WaveTableData.Vectors"/>.</param>
+    /// <param name="vectorIndex">The sound's place in <see cref="WaveTableData.Vectors" />.</param>
     /// <returns>The sound's output changes.</returns>
     public IEnumerable<OutputChange> LoadAndPlay(int vectorIndex)
     {
@@ -197,8 +240,8 @@ internal sealed class WaveTableSound
     }
 
     /// <summary>
-    /// The laser ball bonus (<c>BON2</c>): the first send plays the bonus sound once; each send after it,
-    /// while nothing else is sent, moves the pitch one step and plays it again.
+    ///     The laser ball bonus (<c>BON2</c>): the first send plays the bonus sound once; each send after it,
+    ///     while nothing else is sent, moves the pitch one step and plays it again.
     /// </summary>
     /// <returns>The sound's output changes.</returns>
     public IEnumerable<OutputChange> PlayLaserBallBonus()
@@ -217,18 +260,9 @@ internal sealed class WaveTableSound
         return Play();
     }
 
-    /// <summary>The place of <c>TRBV</c>, "TURBINE START UP", the second background sound's settings, in <see cref="WaveTableData.Vectors"/> (<c>BG2</c>: <c>LDAA #(TRBV-SVTAB)/7</c>).</summary>
-    private const int BackgroundVector = 14;
-
-    /// <summary><c>BG2</c>: <c>LDAA #</c>, <c>JSR GWLD</c> (counted with the load), then <c>LDAA BG2FLG</c>, two <c>ASLA</c>, <c>COMA</c>, <c>JSR GEND60</c>, <c>STAA FOFSET</c>.</summary>
-    private const int BackgroundSetUpCycles = Immediate + CallExtended + Direct + (3 * Inherent) + CallExtended + StoreDirect;
-
-    /// <summary><c>BG2LP</c>: <c>INC GDCNT</c>, <c>JSR GEND61</c>, and the <c>BRA</c> back.</summary>
-    private const int BackgroundLoopCycles = ModifyExtended + CallExtended + Branch;
-
     /// <summary>
-    /// The second background sound (<c>BG2</c>): the turbine wave, played over and over, its pitch set by how many
-    /// times <c>BG2INC</c> has been sent. It goes on until another sound number arrives.
+    ///     The second background sound (<c>BG2</c>): the turbine wave, played over and over, its pitch set by how many
+    ///     times <c>BG2INC</c> has been sent. It goes on until another sound number arrives.
     /// </summary>
     /// <param name="level">The background's level, 1 to 29 (<c>BG2FLG</c>).</param>
     /// <returns>The sound's output changes.</returns>
@@ -244,10 +278,7 @@ internal sealed class WaveTableSound
     {
         while (FindPlayableRange())
         {
-            foreach (OutputChange change in Play())
-            {
-                yield return change;
-            }
+            foreach (var change in Play()) yield return change;
 
             _output.Wait(BackgroundLoopCycles);
             _pitchStepsLeft++;
@@ -255,11 +286,11 @@ internal sealed class WaveTableSound
     }
 
     /// <summary>Loads a sound's settings, copies its wave into memory and makes it quieter if asked (<c>GWLD</c>).</summary>
-    /// <param name="vectorIndex">The sound's place in <see cref="WaveTableData.Vectors"/>.</param>
+    /// <param name="vectorIndex">The sound's place in <see cref="WaveTableData.Vectors" />.</param>
     private void Load(int vectorIndex)
     {
         _output.Wait(LoadSettingsCycles + LoadWaveNumberCycles);
-        WaveTableVector vector = WaveTableData.Vectors[vectorIndex];
+        var vector = WaveTableData.Vectors[vectorIndex];
         _playsPerPitch = (byte)(vector.EchoesAndPlays & LowNibble);
         _echoes = (byte)(vector.EchoesAndPlays >> HighNibbleShift);
         _echoDecay = (byte)(vector.EchoDecayAndWave >> HighNibbleShift);
@@ -287,10 +318,7 @@ internal sealed class WaveTableSound
         {
             _output.Wait(WaveSearchCheckCycles);
             _memory.ScratchA--;
-            if (_memory.ScratchA >= NegativeBit)
-            {
-                return;
-            }
+            if (_memory.ScratchA >= NegativeBit) return;
 
             _output.Wait(WaveSearchStepCycles);
             _waveStart += WaveTableData.Waves[_waveStart] + 1;
@@ -301,16 +329,13 @@ internal sealed class WaveTableSound
     private void CopyWave()
     {
         _waveLength = WaveTableData.Waves[_waveStart];
-        _output.Wait(TransferCycles + (_waveLength * SubroutineCycles.TransferPerByte));
-        for (int i = 0; i < _waveLength; i++)
-        {
-            _waveSamples[i] = WaveTableData.Waves[_waveStart + 1 + i];
-        }
+        _output.Wait(TransferCycles + _waveLength * SubroutineCycles.TransferPerByte);
+        for (var i = 0; i < _waveLength; i++) _waveSamples[i] = WaveTableData.Waves[_waveStart + 1 + i];
     }
 
     /// <summary>
-    /// Makes the wave in memory quieter: each level loses a sixteenth of the table's level, as many times as
-    /// asked (<c>WVDECA</c>).
+    ///     Makes the wave in memory quieter: each level loses a sixteenth of the table's level, as many times as
+    ///     asked (<c>WVDECA</c>).
     /// </summary>
     /// <param name="steps">How many sixteenths to take off; 0 leaves the wave alone.</param>
     private void Decay(byte steps)
@@ -321,97 +346,83 @@ internal sealed class WaveTableSound
             return;
         }
 
-        _output.Wait(DecayCycles + (_waveLength * (DecayPerLevelCycles + (steps * DecayStepCycles))));
+        _output.Wait(DecayCycles + _waveLength * (DecayPerLevelCycles + steps * DecayStepCycles));
         _memory.ScratchB = steps;
         _memory.ScratchA = 0;
-        for (int i = 0; i < _waveLength; i++)
+        for (var i = 0; i < _waveLength; i++)
         {
-            int sixteenth = WaveTableData.Waves[_waveStart + 1 + i] >> SixteenthShift;
-            _waveSamples[i] = (byte)(_waveSamples[i] - (steps * sixteenth));
+            var sixteenth = WaveTableData.Waves[_waveStart + 1 + i] >> SixteenthShift;
+            _waveSamples[i] = (byte)(_waveSamples[i] - steps * sixteenth);
         }
     }
 
     /// <summary>
-    /// Plays the pattern with all its echoes, then moves the pitch and plays it again for as long as the
-    /// settings ask (<c>GWAVE</c>). The laser ball bonus stops after the echoes.
+    ///     Plays the pattern with all its echoes, then moves the pitch and plays it again for as long as the
+    ///     settings ask (<c>GWAVE</c>). The laser ball bonus stops after the echoes.
     /// </summary>
     /// <returns>The sound's output changes.</returns>
     private IEnumerable<OutputChange> Play()
     {
         do
         {
-            foreach (OutputChange change in PlayEchoes())
-            {
-                yield return change;
-            }
+            foreach (var change in PlayEchoes()) yield return change;
 
             _output.Wait(CheckFlagCycles);
-            if (_memory.IsLaserBallBonusRepeating)
-            {
-                yield break;
-            }
-        }
-        while (MovePitch());
+            if (_memory.IsLaserBallBonusRepeating) yield break;
+        } while (MovePitch());
     }
 
     /// <summary>Moves the pitch, then plays on if the pattern can still be played (<c>GEND50</c> then <c>GWAVE</c>).</summary>
     /// <returns>The sound's output changes.</returns>
-    private IEnumerable<OutputChange> MovePitchThenPlay() => MovePitch() ? Play() : [];
+    private IEnumerable<OutputChange> MovePitchThenPlay()
+    {
+        return MovePitch() ? Play() : [];
+    }
 
     /// <summary>Plays the pattern once for each echo, making the wave quieter after each (<c>GWT4</c> to <c>GEND40</c>).</summary>
     /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> PlayEchoes()
     {
         _output.Wait(StartEchoesCycles);
-        byte echoesLeft = _echoes;
+        var echoesLeft = _echoes;
         do
         {
             _output.Wait(StartPatternCycles);
-            foreach (OutputChange change in PlayPattern())
-            {
-                yield return change;
-            }
+            foreach (var change in PlayPattern()) yield return change;
 
             _output.Wait(CallEchoDecayCycles);
             Decay(_echoDecay);
             _output.Wait(CountEchoCycles);
             echoesLeft--;
-        }
-        while (echoesLeft != 0);
+        } while (echoesLeft != 0);
     }
 
     /// <summary>Plays the wave at each pitch of the pattern in turn (<c>GPLAY</c>).</summary>
     /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> PlayPattern()
     {
-        for (int place = _patternStart; ; place++)
+        for (var place = _patternStart;; place++)
         {
             _output.Wait(ReadPitchCycles);
-            if (place == _patternEnd)
-            {
-                yield break;
-            }
+            if (place == _patternEnd) yield break;
 
             var wait = (byte)(WaveTableData.Patterns[place] + _pitchOffset);
             _output.Wait(StartPitchCycles);
-            foreach (OutputChange change in PlayAtPitch(wait))
-            {
-                yield return change;
-            }
+            foreach (var change in PlayAtPitch(wait)) yield return change;
         }
     }
 
     /// <summary>Plays the whole wave as many times as the settings ask, at one pitch (<c>GOUT</c>).</summary>
-    /// <param name="wait">The wait between levels, in counts of <see cref="WaitCountCycles"/>.</param>
+    /// <param name="wait">The wait between levels, in counts of <see cref="WaitCountCycles" />.</param>
     /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> PlayAtPitch(byte wait)
     {
-        int cyclesBeforeEachLevel = ReadLevelCycles + (CountdownLoop.Runs(wait) * WaitCountCycles);
-        byte playsLeft = _playsPerPitch;
+        var cyclesBeforeEachLevel = ReadLevelCycles + CountdownLoop.Runs(wait) * WaitCountCycles;
+        var playsLeft = _playsPerPitch;
         while (true)
         {
             _output.Wait(StartWaveCycles);
-            for (int i = 0; i < _waveLength; i++)
+            for (var i = 0; i < _waveLength; i++)
             {
                 _output.Wait(cyclesBeforeEachLevel);
                 yield return _output.Store(_waveSamples[i]);
@@ -420,18 +431,15 @@ internal sealed class WaveTableSound
 
             _output.Wait(CountPlayCycles);
             playsLeft--;
-            if (playsLeft == 0)
-            {
-                yield break;
-            }
+            if (playsLeft == 0) yield break;
 
             _output.Wait(ReplaySyncCycles);
         }
     }
 
     /// <summary>
-    /// Moves every pitch by the step, if the settings move it and have steps left, and finds the part of
-    /// the pattern that can still be played (<c>GEND50</c> to <c>GEND0</c>).
+    ///     Moves every pitch by the step, if the settings move it and have steps left, and finds the part of
+    ///     the pattern that can still be played (<c>GEND50</c> to <c>GEND0</c>).
     /// </summary>
     /// <returns>True when there is something left to play.</returns>
     private bool MovePitch()
@@ -457,14 +465,14 @@ internal sealed class WaveTableSound
     }
 
     /// <summary>
-    /// Finds the run of pitches that the moved offset does not push past the top or the bottom, and makes it
-    /// the pattern; then copies a fresh wave if echoes made it quieter (<c>GEND61</c> to <c>GEND0</c>).
+    ///     Finds the run of pitches that the moved offset does not push past the top or the bottom, and makes it
+    ///     the pattern; then copies a fresh wave if echoes made it quieter (<c>GEND61</c> to <c>GEND0</c>).
     /// </summary>
     /// <returns>True when some pitch can still be played.</returns>
     private bool FindPlayableRange()
     {
         _output.Wait(StartSearchCycles);
-        int? end = SearchPattern();
+        var end = SearchPattern();
         if (end is null)
         {
             _output.Wait(Return);
@@ -489,11 +497,11 @@ internal sealed class WaveTableSound
     /// <returns>Where the playable run ends, or null when no pitch is playable.</returns>
     private int? SearchPattern()
     {
-        bool hasStart = false;
-        for (int place = _patternStart; ; place++)
+        var hasStart = false;
+        for (var place = _patternStart;; place++)
         {
             _output.Wait(CheckDirectionCycles);
-            bool isPlayable = IsPlayable(WaveTableData.Patterns[place]);
+            var isPlayable = IsPlayable(WaveTableData.Patterns[place]);
             _output.Wait(CheckFoundCycles);
             if (!isPlayable && hasStart)
             {
@@ -509,10 +517,7 @@ internal sealed class WaveTableSound
             }
 
             _output.Wait(NextPitchCycles);
-            if (place + 1 != _patternEnd)
-            {
-                continue;
-            }
+            if (place + 1 != _patternEnd) continue;
 
             _output.Wait(CheckFoundCycles);
             return hasStart ? place + 1 : null;
@@ -520,29 +525,23 @@ internal sealed class WaveTableSound
     }
 
     /// <summary>
-    /// True when a pitch, moved by the offset, still fits in a byte: rising, it must not carry past 255;
-    /// falling, it must not reach 0 or go below it (<c>GW0</c>/<c>GW1</c>).
+    ///     True when a pitch, moved by the offset, still fits in a byte: rising, it must not carry past 255;
+    ///     falling, it must not reach 0 or go below it (<c>GW0</c>/<c>GW1</c>).
     /// </summary>
     /// <param name="pitch">The pattern's pitch.</param>
     private bool IsPlayable(byte pitch)
     {
-        int sum = _pitchOffset + pitch;
-        bool hasCarry = sum > byte.MaxValue;
+        var sum = _pitchOffset + pitch;
+        var hasCarry = sum > byte.MaxValue;
         _output.Wait(TestPitchCycles);
         if (_pitchStep < NegativeBit)
         {
-            if (!hasCarry)
-            {
-                _output.Wait(Branch);
-            }
+            if (!hasCarry) _output.Wait(Branch);
 
             return !hasCarry;
         }
 
-        if ((byte)sum == 0)
-        {
-            return false;
-        }
+        if ((byte)sum == 0) return false;
 
         _output.Wait(Branch);
         return hasCarry;

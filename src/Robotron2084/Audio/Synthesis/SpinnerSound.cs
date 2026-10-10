@@ -3,14 +3,14 @@ using static Robotron2084.Audio.Synthesis.InstructionCycles;
 namespace Robotron2084.Audio.Synthesis;
 
 /// <summary>
-/// The spinner sound: a square wave that plays forever, and starts a little higher each time it is sent
-/// again before anything else is. The game sends it over and over as a wave ends.
+///     The spinner sound: a square wave that plays forever, and starts a little higher each time it is sent
+///     again before anything else is. The game sends it over and over as a wave ends.
 /// </summary>
 /// <remarks>
-/// <list type="bullet">
-/// <item>Original source: <c>VSNDRM3.SRC</c>, routine <c>SP1</c> ("SPINNER #1 SOUND").</item>
-/// <item>Disassembly: none in this repo; ROM <c>$F9A4</c> (from the jump table <c>JMPTBL</c>).</item>
-/// </list>
+///     <list type="bullet">
+///         <item>Original source: <c>VSNDRM3.SRC</c>, routine <c>SP1</c> ("SPINNER #1 SOUND").</item>
+///         <item>Disassembly: none in this repo; ROM <c>$F9A4</c> (from the jump table <c>JMPTBL</c>).</item>
+///     </list>
 /// </remarks>
 internal static class SpinnerSound
 {
@@ -32,7 +32,10 @@ internal static class SpinnerSound
     /// <summary>Checking the send count against its top: <c>LDAB SP1FLG</c>, <c>CMPB</c>, <c>BNE</c>.</summary>
     private const int CheckSendsCycles = Direct + Immediate + Branch;
 
-    /// <summary>Counting the send and getting ready to work out the low time: <c>INCB</c>, <c>STAB</c>, <c>LDAA #</c>, <c>SBA</c>, <c>CLRB</c>.</summary>
+    /// <summary>
+    ///     Counting the send and getting ready to work out the low time: <c>INCB</c>, <c>STAB</c>, <c>LDAA #</c>,
+    ///     <c>SBA</c>, <c>CLRB</c>.
+    /// </summary>
     private const int CountSendCycles = Inherent + StoreDirect + Immediate + Inherent + Inherent;
 
     /// <summary><c>SP11</c>'s test: <c>CMPA #20</c>, <c>BLS</c>.</summary>
@@ -57,10 +60,7 @@ internal static class SpinnerSound
         while (true)
         {
             output.Wait(CallExtended);
-            foreach (OutputChange change in square.Play())
-            {
-                yield return change;
-            }
+            foreach (var change in square.Play()) yield return change;
 
             output.Wait(Branch);
         }
@@ -73,7 +73,7 @@ internal static class SpinnerSound
     private static byte CountSend(BoardMemory memory, BoardOutput output)
     {
         output.Wait(CheckSendsCycles);
-        byte sends = memory.SpinnerSends;
+        var sends = memory.SpinnerSends;
         if (sends == SendsPerClimb - 1)
         {
             output.Wait(Inherent);
@@ -87,8 +87,8 @@ internal static class SpinnerSound
     }
 
     /// <summary>
-    /// Works out the low time: the more sends so far, the shorter it is, so the pitch rises
-    /// (<c>SP11</c>, <c>SP12</c>, <c>STAB LOPER</c>).
+    ///     Works out the low time: the more sends so far, the shorter it is, so the pitch rises
+    ///     (<c>SP11</c>, <c>SP12</c>, <c>STAB LOPER</c>).
     /// </summary>
     /// <param name="sends">The send count.</param>
     /// <param name="output">The board's output port, for the time it takes.</param>
@@ -100,10 +100,7 @@ internal static class SpinnerSound
         while (true)
         {
             output.Wait(LargeStepTestCycles);
-            if (stepsLeft <= LargeStepThreshold)
-            {
-                break;
-            }
+            if (stepsLeft <= LargeStepThreshold) break;
 
             output.Wait(LargeStepCycles);
             lowWait += LargeLowWaitStep;
@@ -115,8 +112,7 @@ internal static class SpinnerSound
             output.Wait(SmallStepCycles);
             lowWait += SmallLowWaitStep;
             stepsLeft--;
-        }
-        while (stepsLeft != 0);
+        } while (stepsLeft != 0);
 
         output.Wait(StoreDirect);
         return lowWait;
