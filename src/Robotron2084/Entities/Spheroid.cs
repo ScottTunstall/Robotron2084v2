@@ -200,12 +200,12 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _random = random;
         _dropDelayRotations = dropDelayRotations;
         // How many enforcers the spheroid may drop: a random number from 1 up to this wave's limit, halved and rounded up.
-        int roll = random.Next(1, maxDropsX2 + 1);
+        int roll = ArcadeRandom.PickUpTo(random, maxDropsX2);
         _enforcersRemaining = (roll + 1) / 2;
         // Pick at random whether the spheroid will escape to the left or to the right.
         _escapeDirectionSignX = random.Next(2) == 0 ? -1 : 1;
         // How many times the spheroid spins before it first drops an enforcer.
-        _dropRotationsRemaining = random.Next(1, dropDelayRotations + 1);
+        _dropRotationsRemaining = ArcadeRandom.PickUpTo(random, dropDelayRotations);
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
         // The spheroid starts on the last animation frame of a spin, so its first beat finishes a spin.
         _animationFrameIndex = SpinLastAnimationFrame;
@@ -488,7 +488,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Picks at random how many times the spheroid spins before its next drop.</summary>
     /// <remarks>ROM: <c>CIRC2</c>.</remarks>
     private void RerollDropCountdown() =>
-        _dropRotationsRemaining = 1 + _random.Next(0, _dropDelayRotations / DropRerollDivisor);
+        _dropRotationsRemaining = ArcadeRandom.PickUpTo(_random, _dropDelayRotations / DropRerollDivisor);
 
     /// <summary>Picks new random amounts to change the spheroid's speed by, sideways and up-and-down, and how many beats to keep them for.</summary>
     /// <remarks>ROM: <c>CIRNAC</c>.</remarks>

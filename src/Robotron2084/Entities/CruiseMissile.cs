@@ -79,7 +79,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
         _position = origin;
         _random = random;
         _velocity = RollDirection(playerPosition);
-        _reAimBeatsRemaining = 1 + _random.Next(ReAimMaxBeats);
+        _reAimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReAimMaxBeats);
     }
 
     /// <summary>The box used to tell what the missile touches. It starts a little up and to the left of the missile's own position.</summary>
@@ -169,7 +169,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
         if (--_reAimBeatsRemaining <= 0)
         {
             _velocity = RollDirection(field.Player.Position);
-            _reAimBeatsRemaining = 1 + _random.Next(ReAimMaxBeats);
+            _reAimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReAimMaxBeats);
         }
 
         for (int move = 0; move < MovesPerBeat; move++)

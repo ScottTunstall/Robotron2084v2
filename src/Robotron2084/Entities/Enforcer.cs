@@ -83,7 +83,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         _growClockUnitsRemaining = ArcadeClock.ToClockUnits(EnforcerTuning.GrowUpRomFrames);
         // The enforcer picks where to go on its first beat. Its first shot comes after a random number of beats.
         _reaimBeatsRemaining = 0;
-        _fireCooldownBeats = 1 + random.Next(0, _fireIntervalBeats);
+        _fireCooldownBeats = ArcadeRandom.PickUpTo(random, _fireIntervalBeats);
         // The move timer starts full, so the enforcer does not have to wait for its first move.
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
@@ -226,8 +226,8 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         }
     }
 
-    /// <summary>Picks at random how many beats the enforcer waits before its next shot.</summary>
-    private int NextFireBeats(Random random) => random.Next(1, _fireIntervalBeats + 1);
+    /// <summary>Picks at random how many beats the enforcer waits before its next shot. The pick is the arcade's own (see <see cref="ArcadeRandom"/>), which gives longer waits more often than an even spread would.</summary>
+    private int NextFireBeats(Random random) => ArcadeRandom.PickUpTo(random, _fireIntervalBeats);
 
     /// <summary>Picks the next spot to head for, which is a random distance below and to the right of the player, and sets the enforcer's speed to get there.</summary>
     /// <param name="field">The playfield. It says where the player is, and its walls limit where the spot can be.</param>

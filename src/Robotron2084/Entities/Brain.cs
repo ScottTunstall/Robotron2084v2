@@ -244,7 +244,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
         _fireIntervalBeats = fireIntervalBeats;
         _targetSlot = targetFamilySlot;
         _beatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatExecutionRomFrames + beatWaitRomFrames);
-        _fireBeatsRemaining = 1 + random.Next(fireIntervalBeats);
+        _fireBeatsRemaining = ArcadeRandom.PickUpTo(random, fireIntervalBeats);
     }
 
     /// <summary>The box the brain takes up on the screen. It is used to tell what the brain touches.</summary>
@@ -587,7 +587,7 @@ public sealed class Brain : IEntity, IExplodable, IRemovable, IWaveStartRobot
                 ScreenSize.ToPortPixelsFromArcadePixels(MissileMuzzleYRows)));
         }
 
-        _fireBeatsRemaining = 1 + _random.Next(_fireIntervalBeats);
+        _fireBeatsRemaining = ArcadeRandom.PickUpTo(_random, _fireIntervalBeats);
     }
 
     /// <summary>Works out who the brain should chase: the family member it was chasing, a new one if that one is gone, or the player if the whole family is gone.</summary>

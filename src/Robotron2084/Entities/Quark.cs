@@ -125,10 +125,10 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _dropDelayBeats = dropDelayBeats;
         _speedCap = speedCap;
         // How many tanks the quark may drop: a random number up to this wave's limit, halved and rounded up (ROM: PD3).
-        int roll = random.Next(maxDropsX2 + 1);
+        int roll = ArcadeRandom.PickUpTo(random, maxDropsX2);
         _tanksRemaining = (roll + 1) / 2;
         // The wait before the first tank drop. It counts down once each time the animation starts again, not once a beat (ROM: PD2).
-        _dropBeatsRemaining = 1 + random.Next(dropDelayBeats);
+        _dropBeatsRemaining = ArcadeRandom.PickUpTo(random, dropDelayBeats);
         // Both timers start full, so a new quark does not have to wait for its first beat or its first move.
         _beatTimer = BeatIntervalClockUnits;
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
@@ -349,7 +349,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         }
 
         // Pick the wait before the next drop. This is done even when no tank could be dropped this time.
-        _dropBeatsRemaining = 1 + _random.Next((_dropDelayBeats / RepeatDropDelayDivisor) + 1);
+        _dropBeatsRemaining = ArcadeRandom.PickUpTo(_random, (_dropDelayBeats / RepeatDropDelayDivisor) + 1);
     }
 
     /// <summary>Picks at random how fast the quark drifts, either sideways or up-and-down.</summary>
@@ -369,7 +369,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private int ComputeAxisVelocitySubpixels(int scale, bool isPositive, int coordinateUnitArcadePixels)
     {
-        int roll = 1 + _random.Next(_speedCap);
+        int roll = ArcadeRandom.PickUpTo(_random, _speedCap);
         int subpixels = roll * scale * ScreenSize.ToPortPixelsFromArcadePixels(coordinateUnitArcadePixels);
         return isPositive ? subpixels : -subpixels;
     }

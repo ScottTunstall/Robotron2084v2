@@ -38,7 +38,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     private const int BeatIntervalRomFrames = 3;
 
-    /// <summary>A prog aims a little to the left or right of the player. To work out how far, a random number has this taken off it, and the answer is multiplied by <see cref="OffsetXStepColumns"/> to give <see cref="_offsetX"/>.</summary>
+    /// <summary>A prog aims a little to the left or right of the player. To work out how far, a random number from 1 to <see cref="OffsetXRollMax"/> is taken from one more than <see cref="OffsetXRollMax"/>, and this is taken off the answer. That is multiplied by <see cref="OffsetXStepColumns"/> to give <see cref="_offsetX"/>.</summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c>, which gives up to 28 columns left or right of the player, in steps of 4.</item>
@@ -451,7 +451,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     private void RollOffsets()
     {
-        _offsetX = (_random.Next(1, OffsetXRollMax + 1) - OffsetXHalfRange) * OffsetXStepColumns;
-        _offsetY = ((OffsetYCentre - _random.Next(1, OffsetYSteps + 1)) * OffsetYStepRows) - OffsetYSteps;
+        _offsetX = (OffsetXRollMax + 1 - ArcadeRandom.PickUpTo(_random, OffsetXRollMax) - OffsetXHalfRange) * OffsetXStepColumns;
+        _offsetY = ((OffsetYCentre - ArcadeRandom.PickUpTo(_random, OffsetYSteps)) * OffsetYStepRows) - OffsetYSteps;
     }
 }
