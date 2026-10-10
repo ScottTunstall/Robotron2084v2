@@ -147,7 +147,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         _wordmark = WordmarkAppear.CreateFromMasks(
             _sprites.TitleWordmarkRimSprite,
             _sprites.TitleWordmarkCoreSprite,
-            new Point((ScreenSize.Width - (_sprites.TitleWordmarkRimSprite.Width * ScreenSize.SpecScale)) / 2, WordmarkRow));
+            new Point((ScreenSize.Width - (_sprites.TitleWordmarkRimSprite.Width * ScreenSize.PortPixelsPerArcadePixel)) / 2, WordmarkRow));
 
         // The presentation page runs its OWN decoded colour set (notes §106): entries 1-7 come
         // from the ROM's seven-byte table ($8A70) with a white flash chasing through them every
@@ -308,8 +308,8 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// <summary>Centres one traced logo horizontally, at the port's 2x sprite scale.</summary>
     private void DrawCentredLogo(SpriteBatch spriteBatch, Texture2D texture, int y)
     {
-        int width = texture.Width * ScreenSize.SpecScale;
-        int height = texture.Height * ScreenSize.SpecScale;
+        int width = texture.Width * ScreenSize.PortPixelsPerArcadePixel;
+        int height = texture.Height * ScreenSize.PortPixelsPerArcadePixel;
         var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
         _sprites.Blitter.DrawSprite(spriteBatch, texture, bounds, Color.White);
     }
