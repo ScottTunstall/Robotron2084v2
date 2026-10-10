@@ -59,7 +59,7 @@ float4 MainPS(PSInput input) : COLOR
 
     // Slot 10 (LF) — marker $C4
     if (abs(t.r - 0.56470588f) < 0.004f &&
-        abs(t.g - 0.0f)         < 0.004f &&
+        abs(t.g - 0.0f) < 0.004f &&
         abs(t.b - 0.94117647f) < 0.004f)
     {
         t = float4(Live10.rgb, t.a);
@@ -80,14 +80,14 @@ float4 MainPS(PSInput input) : COLOR
     }
     // Slot 13 (LASER) — marker $81
     if (abs(t.r - 0.12549020f) < 0.004f &&
-        abs(t.g - 0.0f)         < 0.004f &&
+        abs(t.g - 0.0f) < 0.004f &&
         abs(t.b - 0.62745098f) < 0.004f)
     {
         t = float4(Live13.rgb, t.a);
     }
     // Slot 14 (BPR) — marker $45
     if (abs(t.r - 0.69019608f) < 0.004f &&
-        abs(t.g - 0.0f)         < 0.004f &&
+        abs(t.g - 0.0f) < 0.004f &&
         abs(t.b - 0.31372549f) < 0.004f)
     {
         t = float4(Live14.rgb, t.a);
@@ -95,7 +95,7 @@ float4 MainPS(PSInput input) : COLOR
     // Slot 15 (RGOLD) — marker $2F
     if (abs(t.r - 0.94117647f) < 0.004f &&
         abs(t.g - 0.69019608f) < 0.004f &&
-        abs(t.b - 0.0f)         < 0.004f)
+        abs(t.b - 0.0f) < 0.004f)
     {
         t = float4(Live15.rgb, t.a);
     }
@@ -135,6 +135,7 @@ technique MainTech
         // unrolled six-marker PS exceeds the ps_2_0 64-slot arithmetic limit
         // (X5608 with vs/ps_2_0).
         PixelShader = compile ps_3_0 MainPS();
+    
     }
 }
 
@@ -148,6 +149,7 @@ technique SolidRemap
     pass SolidRemapPass
     {
         PixelShader = compile ps_3_0 SolidRemapPS();
+    
     }
 }
 
@@ -178,5 +180,6 @@ technique GlyphCycle
     pass GlyphCyclePass
     {
         PixelShader = compile ps_3_0 GlyphCyclePS();
+    
     }
 }
