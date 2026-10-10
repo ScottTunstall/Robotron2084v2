@@ -365,7 +365,7 @@ uses them.
 **NUM-3. The column is never written as `2`.** Use `ScreenSize.Columns(n)` / `ArcadePixelsPerByte`.
 
 **NUM-4. Unit conversions go through named helpers** (`ScreenSize.ToPortPixels`,
-`ScreenSize.ToPortPixelsFromColumns`, `ArcadeClock.ToClockUnits`), never through inline arithmetic like `* ScreenSize.SpecScale`,
+`ScreenSize.ToPortPixelsFromColumns`, `ArcadeClock.ToClockUnits`), never through inline arithmetic like `* ScreenSize.PortPixelsPerArcadePixel`,
 `>> 8` or `* 256`. Name the subpixel scale once (`SubpixelsPerPixel`).
 
 **NUM-5. Store values in the unit the source gives them**, and convert at the use site. Do not pre-multiply
@@ -668,7 +668,7 @@ done
 grep -rnE '(\+=|-=) 5;|\* 6\b|>= 6\b|< 6\b|= 6;|SixthsPer|Fifths|_sixths|_fifths' src --include=*.cs
 
 # Column literal and hand-rolled scaling (NUM-3, NUM-4)
-grep -rnE 'ToPortPixels\(2\b|ToPortPixels\(2 \*|\* ScreenSize\.SpecScale|/ 256\b|>> 8\b|<< 8\b' src --include=*.cs
+grep -rnE 'ToPortPixels\(2\b|ToPortPixels\(2 \*|\* ScreenSize\.PortPixelsPerArcadePixel|/ 256\b|>> 8\b|<< 8\b' src --include=*.cs
 
 # Unit-suffix mistakes (NAM-2)
 grep -rnoE '\w*RomTicks\w*' src tests --include=*.cs

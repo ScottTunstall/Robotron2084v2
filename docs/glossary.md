@@ -26,7 +26,6 @@ Never call the clock unit "fifths", "sixths" or "6ths".
 | **arcade pixel** | One dot on the original arcade screen, which was 304 dots across and 256 down. | `...ArcadePixels` |
 | **column** | The arcade's way of counting across: one column is 2 arcade pixels wide. | `...Columns` |
 | **row** | The arcade's way of counting down: one row is 1 arcade pixel tall. | `...Rows` |
-| **spec pixel** | One dot on the 320 by 200 layout in `spec.txt`. Used only to scale sizes up. | `...SpecPixels` |
 | **port pixel** | One dot on the 640 by 400 screen this version of the game draws. Everything in the game is measured in these. | `...PortPixels` |
 | **canvas pixel** | One dot on the real window, after that screen is stretched to fit it. Only used inside `Presentation`. | (none) |
 | **subpixel** | A 256th of a pixel. The arcade kept positions this precisely. | `...Subpixels` |
