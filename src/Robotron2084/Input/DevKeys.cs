@@ -11,8 +11,8 @@ namespace Robotron2084.Input;
 /// the hulk, the grunts, the spheroid/tank/enforcer scene, the brain);</item>
 /// <item><b>Home</b> — jump straight into the attract DEMO game (the phony player
 /// rescuing the family and being killed by the robots);</item>
-/// <item><b>Page Up</b> — HELD, fast-forward the movie's ROM frame clock so a later
-/// scene (the hulk's walk, at ROM frame ~2574) can be reached without waiting
+/// <item><b>Page Up</b> — HELD, fast-forward the movie's clock so a later
+/// scene (the hulk's walk, at fiftieth of a second ~2574) can be reached without waiting
 /// out the text crawl;</item>
 /// <item><b>Insert</b> — jump straight to the high score TABLE (notes §98);</item>
 /// <item><b>Delete</b> — jump straight to the END OF A GAME: the GAME OVER page and
