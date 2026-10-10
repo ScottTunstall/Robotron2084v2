@@ -16,14 +16,16 @@ using Robotron2084.States;
 namespace Robotron2084;
 
 /// <summary>The application shell: it owns the window and the fixed-timestep loop and runs one game state at a time.</summary>
-/// <remarks>Port-only (no arcade counterpart). Every state draws into a <see cref="ScreenSize.Width"/> x
-/// <see cref="ScreenSize.Height"/> canvas, which is blitted to the window at ONE uniform scale and centred
-/// there, so the game screen is never stretched and the window may be any size. <b>F8</b> cycles the canvas fit
-/// (Integer = the largest whole multiple, Fill = the exact fraction), <b>F11</b> and <b>Alt+Enter</b> toggle
-/// full screen, <b>Escape</b> exits. It also owns the shared instances every state passes onward:
-/// <see cref="SpriteSet"/>, the input source and the high score store, all created once in LoadContent.</remarks>
-/// <seealso cref="Presentation"/>
-/// <seealso cref="ScreenSize"/>
+/// <remarks>
+///     Port-only (no arcade counterpart). Every state draws into a <see cref="ScreenSize.Width" /> x
+///     <see cref="ScreenSize.Height" /> canvas, which is blitted to the window at ONE uniform scale and centred
+///     there, so the game screen is never stretched and the window may be any size. <b>F8</b> cycles the canvas fit
+///     (Integer = the largest whole multiple, Fill = the exact fraction), <b>F11</b> and <b>Alt+Enter</b> toggle
+///     full screen, <b>Escape</b> exits. It also owns the shared instances every state passes onward:
+///     <see cref="SpriteSet" />, the input source and the high score store, all created once in LoadContent.
+/// </remarks>
+/// <seealso cref="Presentation" />
+/// <seealso cref="ScreenSize" />
 public sealed class RobotronGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
@@ -31,14 +33,14 @@ public sealed class RobotronGame : Game
     private ControlSettings _controlSettings = null!;
     private ControlSettingsStore _controlSettingsStore = null!;
     private SpriteFont _font = null!;
-    private bool _isFullScreen;
     private GameSettings _gameSettings = null!;
     private GameSettingsStore _gameSettingsStore = null!;
     private HighScoreStore _highScoreStore = null!;
     private IPlayerInputSource _input = null!;
+    private bool _isFullScreen;
     private PaletteAnimator _paletteAnimator = null!;
-    private RenderTarget2D _renderTarget = null!;
     private KeyboardState _previousKeyboardState;
+    private RenderTarget2D _renderTarget = null!;
     private ScaleMode _scaleMode = ScaleMode.Integer;
     private GameServices _services = null!;
     private SpriteBatch _spriteBatch = null!;
@@ -85,9 +87,9 @@ public sealed class RobotronGame : Game
 
         // The windowed window is the canvas at the largest whole multiple that fits the
         // desktop; the window can be dragged to any size afterwards and the fit follows.
-        Point workArea = DisplayInfo.GetWorkArea();
+        var workArea = DisplayInfo.GetWorkArea();
         _windowedScale = ScreenSize.ComputeMaxIntegerScale(workArea.X, workArea.Y);
-        ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, isFullScreen: false);
+        ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, false);
 
         base.Initialize();
     }
@@ -119,7 +121,7 @@ public sealed class RobotronGame : Game
         // next game, so a change is live from the next START.
         _gameSettingsStore = new GameSettingsStore();
         _gameSettings = _gameSettingsStore.Load();
-        _input = new BoundPlayerInputSource(_controlSettings, playerIndex: 0);
+        _input = new BoundPlayerInputSource(_controlSettings, 0);
         _highScoreStore = new HighScoreStore();
         _services = new GameServices(_sprites, _highScoreStore, _controlSettings, _input, _gameSettings);
         _stateManager = new GameStateManager(new TitleScreenState(_services));
@@ -129,12 +131,9 @@ public sealed class RobotronGame : Game
 
     protected override void Update(GameTime gameTime)
     {
-        KeyboardState state = Keyboard.GetState();
+        var state = Keyboard.GetState();
 
-        if (state.IsKeyDown(Keys.Escape))
-        {
-            Exit();
-        }
+        if (state.IsKeyDown(Keys.Escape)) Exit();
 
         HandlePresentationKeys(state);
         HandleAttractDevKeys(state);
@@ -154,7 +153,7 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>
-    /// Switches the sound board on (notes §130). Without a sound output the game runs silently.
+    ///     Switches the sound board on (notes §130). Without a sound output the game runs silently.
     /// </summary>
     private static void StartSound()
     {
@@ -180,46 +179,39 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>Re-solves where the canvas sits in the window's current client area.</summary>
-    private void FitCanvas() =>
-        _canvasBounds = Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, _scaleMode);
+    private void FitCanvas()
+    {
+        _canvasBounds =
+            Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, _scaleMode);
+    }
 
     /// <summary>
-    /// The port-only attract dev keys (notes §97, re-keyed in §101, §131 and §137): End the storyline movie,
-    /// Home the demo game, Insert the high score table, Delete the end of a game, and Page Up HELD to
-    /// fast-forward the movie.
+    ///     The port-only attract dev keys (notes §97, re-keyed in §101, §131 and §137): End the storyline movie,
+    ///     Home the demo game, Insert the high score table, Delete the end of a game, and Page Up HELD to
+    ///     fast-forward the movie.
     /// </summary>
     /// <param name="state">This tick's keyboard.</param>
-    /// <remarks>End and Home drop straight into the attract sequence so a scene can be inspected without
-    /// sitting out the title's 12-second idle, and Page Up is how the hulk's walk (movie frame ~2574) is reached
-    /// in seconds rather than after the text crawl. They are live on the attract screens only: Insert is also
-    /// the skip-a-wave key and Delete clears a line on the DEFINE INPUTS page, so they must not act anywhere else.
-    /// The function keys are left to the game's own start and settings keys (F1/F2/F3, F5, F10) and the display
-    /// keys (F8, F11).</remarks>
+    /// <remarks>
+    ///     End and Home drop straight into the attract sequence so a scene can be inspected without
+    ///     sitting out the title's 12-second idle, and Page Up is how the hulk's walk (movie frame ~2574) is reached
+    ///     in seconds rather than after the text crawl. They are live on the attract screens only: Insert is also
+    ///     the skip-a-wave key and Delete clears a line on the DEFINE INPUTS page, so they must not act anywhere else.
+    ///     The function keys are left to the game's own start and settings keys (F1/F2/F3, F5, F10) and the display
+    ///     keys (F8, F11).
+    /// </remarks>
     private void HandleAttractDevKeys(KeyboardState state)
     {
-        bool onAttractScreen = _stateManager.Current is IAttractState;
+        var onAttractScreen = _stateManager.Current is IAttractState;
         DevKeys.AttractFastForward = onAttractScreen && state.IsKeyDown(Keys.PageUp);
-        if (!onAttractScreen)
-        {
-            return;
-        }
+        if (!onAttractScreen) return;
 
         if (WasPressed(state, Keys.End))
-        {
             _stateManager.TransitionTo(new StorylineState(_services, new Random()));
-        }
         else if (WasPressed(state, Keys.Home))
-        {
             _stateManager.TransitionTo(new AttractState(_services));
-        }
         else if (WasPressed(state, Keys.Insert))
-        {
             _stateManager.TransitionTo(new HighScoreTableState(_services));
-        }
-        else if (WasPressed(state, Keys.Delete))
-        {
-            StartEndOfGameFlow();
-        }
+        else if (WasPressed(state, Keys.Delete)) StartEndOfGameFlow();
     }
 
     /// <summary>The port-only presentation keys: full screen, and the canvas fit.</summary>
@@ -229,7 +221,7 @@ public sealed class RobotronGame : Game
         // F11 is the Windows convention for full screen and Alt+Enter is the game
         // convention; F8 cycles the canvas fit between the largest whole multiple
         // (crisp, the default) and the exact uniform fraction (fills the window).
-        bool altHeld = state.IsKeyDown(Keys.LeftAlt) || state.IsKeyDown(Keys.RightAlt);
+        var altHeld = state.IsKeyDown(Keys.LeftAlt) || state.IsKeyDown(Keys.RightAlt);
         if (WasPressed(state, Keys.F11) || (altHeld && WasPressed(state, Keys.Enter)))
         {
             ToggleFullScreen();
@@ -242,21 +234,21 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>
-    /// The game's start keys, live on EVERY attract screen (notes §101): F1 one player, F2 two players
-    /// alternating turns, F3 the arcade's two-player game (selected now, played later), F5 the GAME
-    /// ADJUSTMENT page (notes §131), F10 the DEFINE INPUTS page, F4 the SOUND TEST page, and 5 drops a coin in the slot (the port has no credits, so it only makes the
-    /// coin sound, one of the eight at random).
+    ///     The game's start keys, live on EVERY attract screen (notes §101): F1 one player, F2 two players
+    ///     alternating turns, F3 the arcade's two-player game (selected now, played later), F5 the GAME
+    ///     ADJUSTMENT page (notes §131), F10 the DEFINE INPUTS page, F4 the SOUND TEST page, and 5 drops a coin in the slot
+    ///     (the port has no credits, so it only makes the
+    ///     coin sound, one of the eight at random).
     /// </summary>
     /// <param name="state">This tick's keyboard.</param>
-    /// <remarks>Handling them here rather than in the title means the attract movie, the demo and the high
-    /// score table can all be interrupted by a real player sitting down — or by the operator opening
-    /// the settings.</remarks>
+    /// <remarks>
+    ///     Handling them here rather than in the title means the attract movie, the demo and the high
+    ///     score table can all be interrupted by a real player sitting down — or by the operator opening
+    ///     the settings.
+    /// </remarks>
     private void HandleStartKeys(KeyboardState state)
     {
-        if (_stateManager.Current is not IAttractState)
-        {
-            return;
-        }
+        if (_stateManager.Current is not IAttractState) return;
 
         if (WasPressed(state, Keys.D5))
         {
@@ -270,33 +262,31 @@ public sealed class RobotronGame : Game
             : null;
 
         if (mode is { } chosen)
-        {
-            _stateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _sprites, _highScoreStore));
-        }
+            _stateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _sprites,
+                _highScoreStore));
         else if (WasPressed(state, Keys.F4))
-        {
             _stateManager.TransitionTo(new SoundTestState(_services));
-        }
         else if (WasPressed(state, Keys.F5))
-        {
             _stateManager.TransitionTo(new SettingsState(_services, _gameSettingsStore));
-        }
         else if (WasPressed(state, Keys.F10))
-        {
             _stateManager.TransitionTo(new DefineInputsState(_services, _controlSettingsStore));
-        }
     }
 
-    /// <summary>True on the tick <paramref name="key"/> goes down (press, not hold).</summary>
-    private bool WasPressed(KeyboardState current, Keys key) =>
-        !_previousKeyboardState.IsKeyDown(key) && current.IsKeyDown(key);
+    /// <summary>True on the tick <paramref name="key" /> goes down (press, not hold).</summary>
+    private bool WasPressed(KeyboardState current, Keys key)
+    {
+        return !_previousKeyboardState.IsKeyDown(key) && current.IsKeyDown(key);
+    }
 
     /// <summary>Drops straight into the end of a game, with a score that has to qualify (notes §116).</summary>
-    /// <remarks>The GAME OVER page, the CONG initials screen and the table are otherwise a whole game away,
-    /// which is how the ceremony was verified.</remarks>
+    /// <remarks>
+    ///     The GAME OVER page, the CONG initials screen and the table are otherwise a whole game away,
+    ///     which is how the ceremony was verified.
+    /// </remarks>
     private void StartEndOfGameFlow()
     {
-        GameSession session = GameSession.CreateNewGame(GameMode.OnePlayer, _input, controls: _controlSettings, settings: _gameSettings);
+        var session = GameSession.CreateNewGame(GameMode.OnePlayer, _input, controls: _controlSettings,
+            settings: _gameSettings);
         session.GetCurrent().Score = DevKeys.QualifyingScore;
         _stateManager.TransitionTo(GameOverState.CreateFromSession(_input, _sprites, _highScoreStore, session));
     }
@@ -306,11 +296,11 @@ public sealed class RobotronGame : Game
     {
         if (_isFullScreen)
         {
-            ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, isFullScreen: false);
+            ApplyBackBuffer(ScreenSize.Width * _windowedScale, ScreenSize.Height * _windowedScale, false);
             return;
         }
 
-        Point desktopSize = DisplayInfo.GetDesktopResolution();
-        ApplyBackBuffer(desktopSize.X, desktopSize.Y, isFullScreen: true);
+        var desktopSize = DisplayInfo.GetDesktopResolution();
+        ApplyBackBuffer(desktopSize.X, desktopSize.Y, true);
     }
 }
