@@ -31,11 +31,11 @@ public static class SpawnTuning
 
     public const int SpawnPlacementMaxAttempts = 100;
 
-    // spec-px (apply ScreenSize.ToPortPixels at the use site)
+    // arcade pixels (apply ScreenSize.ToPortPixels at the use site)
 
-    // spec-px, spec-stated
+    // arcade pixels, spec-stated
 
-    // spec-px (spec gives a 30–40 range; 35 = midpoint)
+    // arcade pixels (spec gives a 30–40 range; 35 = midpoint)
     /// <summary>ROM `TNKCNT`: at most this many quark-dropped tanks live at once (notes §11).</summary>
     public const int TankCap = 20;
 }

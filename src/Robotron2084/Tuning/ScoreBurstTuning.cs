@@ -5,9 +5,9 @@ public static class ScoreBurstTuning
 {
     // `ADDD #$0105` on the blitter's column:row destination: +1 column (2 px) and
     // +5 rows, so the "1000" sits down-right of where the enemy died.
-    public const int PointsOffsetXSpecPixels = 2;
+    public const int PointsOffsetXArcadePixels = 2;
 
-    public const int PointsOffsetYSpecPixels = 5;
+    public const int PointsOffsetYArcadePixels = 5;
 
     public const int PointsSteps = 30;
 

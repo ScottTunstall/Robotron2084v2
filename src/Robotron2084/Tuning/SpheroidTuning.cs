@@ -18,10 +18,10 @@ public static class SpheroidTuning
     public const int MaxVelocityXSubpixels = 0x0100; // 1/256-column units per frame
 
     public const int MaxVelocityYSubpixels = 0x0200; // 1/256-row units per frame
-    public const int MinDistanceFromPlayer = 100; // spec-px, spec-stated
+    public const int MinDistanceFromPlayer = 100; // arcade pixels, spec-stated
 
     public const int NearWallBiasDistance = 30;
     public const int NearWallBiasPercent = 70;
 
-    // spec-px
+    // arcade pixels
 }

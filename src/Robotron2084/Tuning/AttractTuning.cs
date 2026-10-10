@@ -21,13 +21,13 @@ public static class AttractTuning
     /// </summary>
     public const int DemoDirectionSwitchTicks = 3;
 
-    public const int DemoFireRangeSpecPixels = 120;
+    public const int DemoFireRangeArcadePixels = 120;
 
     public const int DemoStutterChanceDenominator = 16;
 
-    public const int DemoThreatDistanceSpecPixels = 60;
+    public const int DemoThreatDistanceArcadePixels = 60;
 
-    public const int DemoWallClearanceSpecPixels = 24;
+    public const int DemoWallClearanceArcadePixels = 24;
 
     /// <summary>
     /// ROM `SPGSUB` ($79AF) prints string 128 at the cursor (54, 36) — column 54,

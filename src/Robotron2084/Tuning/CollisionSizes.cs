@@ -1,6 +1,6 @@
 namespace Robotron2084.Tuning;
 
-/// <summary>The sizes of every entity's collision box, in arcade or spec pixels as each constant says.</summary>
+/// <summary>The sizes of every entity's collision box, in arcade pixels or in columns and rows, as each constant says.</summary>
 public static class CollisionSizes
 {
     /// <summary>ROM `SUBD #$0101`: the fat box sits -1 column / -1 row from the true coordinate.</summary>
@@ -11,16 +11,16 @@ public static class CollisionSizes
 
     // The spec's 16x16 entity box is not a collision box — see the
     // per-entity *CollisionSize table below. Still used for the spawn-candidate grid
-    // (the largest entity box is 16 spec-px wide) and the sprite factory
+    // (the largest entity box is 16 arcade pixels wide) and the sprite factory
     // pattern size.
-    public const int EntitySizeSpecPixels = 16;
+    public const int EntitySizeArcadePixels = 16;
 
-    public const int MissileSizeSpecPixels = 4;
+    public const int MissileSizeArcadePixels = 4;
 
     // Playfield layout
-    public const int PlayfieldMarginSpecPixels = 20;
+    public const int PlayfieldMarginArcadePixels = 20;
 
-    public const int WallThicknessSpecPixels = 4;
+    public const int WallThicknessArcadePixels = 4;
 
     // Brain sprite (notes (18) RRB10 decode): 7 bytes x 16 rows =
     // 14x16 px; a prog re-draws its converted human's animation frames and keeps that
