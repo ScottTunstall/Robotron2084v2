@@ -10,12 +10,13 @@ For the rule that keeps this list to one word per idea, see [coding-standards.md
 
 | Word | What it means | Name ending in code |
 |---|---|---|
-$1 The playfield calls every entity's `Update` on every tick, except during the freeze, and except for a robot that is still appearing at the start of a wave. Never write "nearly every tick". "Port" means this version of the game, as opposed to the original arcade machine. | `...Ticks` |
-$1 In a comment, write "50ths of a second" or "50 times a second" instead, so a reader who does not know the arcade can follow it; keep "ROM frame" for names and this page.$2`...RomFrames` (never `...RomTicks`) |
+| **port tick** | One go round the game loop: one call of `Update`. The game does 60 of these every second. "Port" means this version of the game, as opposed to the original arcade machine. The playfield calls every entity's `Update` on every tick, except during the freeze, and except for a robot that is still appearing at the start of a wave. | `...Ticks` |
+| **ROM frame** | One redraw of the original arcade screen. The arcade did 50 a second, so the original game counted its waiting times in these. One ROM frame is 1/50 of a second. In a comment, write "fiftieths of a second" (or "50 times a second") instead, so a reader who does not know the arcade can follow it. Keep "ROM frame" for names and this page. | `...RomFrames` (never `...RomTicks`) |
 | **clock unit** | A small counting unit that lets a port tick and a ROM frame both be whole numbers: a port tick is 5 units and a ROM frame is 6. A timer adds 5 every tick and goes off when it has 6 for each ROM frame it is waiting for. | `...ClockUnits`, or a `_...Timer` field whose summary says "clock units" |
 | **beat** | One go of a character's own thinking and moving routine. It happens every few ROM frames. The character's own timer (a `_beatTimer` field) counts the ticks until it is due; the playfield does not count beats. | `...Beats` |
 | **interval** | The gap from one beat to the next, or from one flicker, flash or other repeat to the next. A slower character has a longer interval. | `...IntervalRomFrames`, `...IntervalClockUnits`, `...IntervalBeats` |
-$1| **freeze** | The short stop of the whole game, `HitStopTicks` ticks long, just after the player is killed. The playfield calls nobody's `Update` while it lasts. Not the same as the robots being frozen. | `...HitStop...` |
+| **wait** | The part of an interval the ROM sets by itself, such as the frames a brain sleeps after a beat. The interval is the wait plus the frame the beat takes. | `...WaitRomFrames` |
+| **freeze** | The short stop of the whole game, `HitStopTicks` ticks long, just after the player is killed. The playfield calls nobody's `Update` while it lasts. Not the same as the robots being frozen. | `...HitStop...` |
 | **robots frozen** | The robots stand still until the start of a wave is over, and while the player is dying (`PlayField.RobotsFrozen()`). The playfield still calls their `Update`, and each robot checks for itself. | `RobotsFrozen` |
 
 Never call the clock unit "fifths", "sixths" or "6ths".
@@ -64,7 +65,7 @@ Words that used to be used here and must not come back. Do not use them in a nam
 | `SpecWidth`, `SpecHeight` | `WidthInArcadePixels`, `HeightInArcadePixels` | The size of the game's screen, in arcade pixels. |
 | `ArcadePixelsPerColumn` | `ArcadePixelsPerByte` | A pixel takes 4 bits, so a byte holds two; a column is one byte across. |
 | "nearly every tick" | "on every tick, except ..." and say the exceptions | The playfield skips `Update` only in the freeze, and for robots still appearing. |
-| ROM frame (in a comment) | "50ths of a second", "50 times a second" | A reader should not need the arcade's word to follow a comment. |
+| ROM frame (in a comment) | "fiftieths of a second", "50 times a second" | A reader should not need the arcade's word to follow a comment. |
 | picture | animation frame | The glossary's word for one drawing. |
 | human (in prose) | family member | The class `Human` keeps its name until the author decides. |
 | X and Y, axis (in a comment) | left or right, up or down, sideways | Plain words, not maths words. |
