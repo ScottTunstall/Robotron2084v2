@@ -1120,6 +1120,7 @@ Called via KIDKIL/MOMKIL/DADKIL (DEC KIDCNT/MOMCNT/DADCNT first).
   quarks -> (brain-wave task if brains). So **hulks and brains are
   initialised while the family list is still EMPTY** — this drives two
   targeting quirks below.
+  **(7) is superseded by §144 (2026-10-10): the roll is 3 in 4, $B3A2 is an empty place, and the list is stale, not empty.**
   (7) **R5 hulk target roll** ($017C HULK_INITIALISE, $0106 re-aim):
   per-hulk coin at spawn: 50% (SEED<$C0) -> **$0237** = round-robin scan of
   the family list (cursor in $49, returns the SLOT ADDRESS of the first
@@ -10960,5 +10961,77 @@ The arcade shows it only when `PCFLG` is set, which is at the start of a game an
 6. **The transporter's sound** (72 frames at one a frame, then 36 at one every two) was not checked against the port's.
 7. **While held, the arcade redraws a spheroid or a quark only on every eighth interrupt.** The port draws it every tick.
 8. **The message's hold has no test.** `PlayingState.Update` reads the keyboard, which a test cannot do, so only the rule for when the message is shown is tested.
+
+**Not checked on screen.**
+
+---
+
+## §144 — WHAT A HULK STALKS: THE STALE FAMILY LIST, THE PHANTOM, AND THE AIM SPREAD (author, 2026-10-10)
+
+**Author:** *"I think the hulks are killing family members too often. Look at my disassembly, there may be an explanation
+why, in the arcade game, they don't always go for humans."* Asked how to fix it, the author chose **match the arcade**.
+This reverses the port decision logged in the hulk notes above ("skip the $7E01 phantom chase") and corrects three
+mistakes in that reading.
+
+### 144.1 What the disassembly says
+
+1. **The roll is about 3 in 4, not half.** `HULK_INITIALISE`, `$01B3`: `LDA $84 / CMPA #$C0 / BLS $01BE`. A random byte
+   of `$C0` or less (193 values in 256) goes to the list search at `$0237`. The rest are given `$B3A2`.
+2. **`$B3A2` is the last place in the list, not the last family member.** The list runs `$B354` to `$B3A3`, 40 places.
+   `ADD_ENTRY_TO_FAMILY_MEMBER_LIST` (`$020D`) fills the first empty place from the front, so the last place is empty
+   unless there are 40 family members. An empty place means the player (`$0111`, `$0113`). So about one hulk in four
+   hunts the player for the whole wave.
+3. **The list the hulks search is not empty: it is stale.** `CLEAR_FAMILY_MEMBER_LIST` (`$0200`) is called from one
+   place only, `INITIALISE_FAMILY_MEMBERS` (`$02B2`), and `BEGIN_WAVE` runs the hulks first (`$2831`) and the family after
+   (`$283A`). So the search sees the places of whoever was still on the field when the last wave **or the last life**
+   ended (the death path at `$27A3` runs on into `BEGIN_WAVE` too). The cursor at `$9849` is back at the first place
+   each time, because the clear resets it.
+4. **The search hands the places out in turn** (`GET_FAMILY_MEMBER_FROM_LIST`, `$0237`): it returns the address of the
+   next place that is not empty, and leaves the cursor after it. It returns 0 when every place is empty.
+5. **A place, once taken, is all the hulk ever has.** `HULK_CHANGE_DIRECTION` (`$0106`) only does `LDY [$09,U]`. The
+   hulk stalks whoever is put in that place by this wave's family set-up. When that family member is rescued, killed or
+   taken by a brain, the place is empty and the hulk hunts the player. It never searches again.
+6. **A target of 0 is the phantom.** `LDY [$09,U]` then reads the word at `$0000`, which is `7E 01` (the `JMP $016D`
+   there). `$7E01` is not zero, so it is used as an object. Its "column" and "row" are the bytes at `$7E05` and `$7E06`:
+   `$C8` and `$13`. That is 57 columns past the right wall (`$8F`) and 5 rows above the top wall (`$18`).
+   - Sideways (`$0125`): the aim is `$C8` plus -16 to +15. It is always past `$8F`. Up to `$CF` it is kept, so the hulk
+     goes right (24 times in 32). Above `$CF` it becomes 7, the left wall, so the hulk goes left (8 in 32).
+   - Up and down (`$0145`): the aim is `$13` plus -16 to +15. Below 6 it becomes `$EA`, the bottom wall (3 in 32).
+     Otherwise the hulk goes up, unless it is already in the top few rows.
+   - So these hulks drift to the top-right corner and stay near it. This is the author's own comment at `$010D`.
+7. **The aim spread is in columns and rows.** `ANDA #$1F / ADDA #$F0` is added to the target's column (`$0004,Y`) when
+   picking left or right, and to its row (`$0005,Y`) when picking up or down. The port was adding -16 to +15 **port
+   pixels** to both, which is four times too tight sideways and twice too tight up and down.
+8. **Steps before the next turn** are `(random & $1F) + 1`, which is 1 to 32. The port had 1 to 31.
+
+### 144.2 What this means in play
+
+- If the player rescued or lost every family member last time, about three hulks in four go and sit in the top-right
+  corner, and one in four hunts the player. None hunts the family.
+- If family members were left standing (the player died, or cleared the wave without collecting them), the searching
+  hulks take those places in turn and stalk whoever lands in them. This is why hulks hunt harder after a death.
+- Hulks kill family members mostly by walking over them, not by hunting them.
+
+### 144.3 What the port does now
+
+- `HulkWaveSpawner` makes the roll, takes the left-over places in turn, and gives each hulk one of three things to head
+  for: the player (through the empty last place), a place in the family list, or the phantom spot.
+- `Hulk.GetPhantomTargetPosition` gives the phantom spot, measured from the port's own walls.
+- `Hulk.PickDirection` adds the spread in columns or rows, and has the two rules that only the phantom reaches: an aim
+  more than 64 columns past the right wall becomes the left wall, and an aim more than 18 rows above the top wall
+  becomes the bottom wall. The old clamp to the walls is gone, as the arcade has none.
+- `GameSession.FamilySlotsLeftOver` carries the left-over places from one field to the next. There is one for the whole
+  game, as the arcade has one list, so in a two-player game one player's hulks search what the other left.
+  `PlayingState` sets it when a wave is cleared and when the player dies.
+- Tests: `HulkTargetTests`.
+
+### 144.4 Still not the arcade
+
+1. **The hulk's first aim.** The arcade aims the hulk as it is made (`$01C2`), while the list is still stale, so a
+   hulk that took a place first aims at where last wave's family member was standing. The port aims when the game goes
+   live (§143.9, item 3), at whoever is in the place now.
+2. **The attract demo** starts with nothing left over. The arcade's demo uses whatever the list last held.
+3. **There is no switch for this.** The tank-shell bug and the Mikey bug can be switched off in the settings. The
+   phantom cannot. Ask the author before adding one.
 
 **Not checked on screen.**

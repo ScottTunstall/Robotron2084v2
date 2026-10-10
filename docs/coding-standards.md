@@ -142,7 +142,7 @@ the inside of another object, and will break when that inside changes. Fix it on
 near object a method that does the whole job (`field.HitsWall(box)`, `field.GetEntities(kind)`), or pass the
 collaborator in as a parameter. A short-lived local that only renames a parameter's collaborator is not a fix.
 - **Exempt:** reading plain data (`point.X`, `box.Bounds.Width`, `parameters.GruntCount`), one fluent chain on a single
-  object (LINQ, builders), and static, namespace and enum paths (`ScreenSize.ToPortPixels`, `EntityLifeState.Alive`).
+  object (LINQ, builders), and static, namespace and enum paths (`ScreenSize.ToPortPixelsFromArcadePixels`, `EntityLifeState.Alive`).
 - **The price:** a thin delegating method on the near object. That is correct. It keeps callers from knowing the
   structure behind it, so the structure can change in one place.
 
@@ -236,7 +236,7 @@ follows NAM-8: the American spelling is gone everywhere, not only from the decla
 **NAM-13. Method names start with the verb Microsoft's guidelines give them.**
 - **Fetch a value:** `Get…`: `GetElectrodeVariant(wave)`, not `ElectrodeVariantForWave(wave)`. A fetch that can
   fail is `TryGet…(…, out T value)`. A search that may find nothing is `Find…`.
-- **Convert one thing to another:** `To…`: `ToPortPixels(specPixels)`, `ToClockUnits(romFrames)`,
+- **Convert one thing to another:** `To…`: `ToPortPixelsFromArcadePixels(arcadePixels)`, `ToClockUnits(romFrames)`,
   `ToPortTicks(romFrames)`. Never `Scaled`, `Units` or `…For…`.
 - **Make a new object:** `Create…`: `CreateDefaults()`, `CreateFromWave(…)`, `CreateKey(…)`. Use `From…` or
   `New…` only where the framework itself does and `Create…` would read as something else (`Parse` stays
@@ -369,7 +369,7 @@ uses them.
 
 **NUM-3. The column is never written as `2`.** Use `ScreenSize.Columns(n)` / `ArcadePixelsPerByte`.
 
-**NUM-4. Unit conversions go through named helpers** (`ScreenSize.ToPortPixels`,
+**NUM-4. Unit conversions go through named helpers** (`ScreenSize.ToPortPixelsFromArcadePixels`,
 `ScreenSize.ToPortPixelsFromColumns`, `ArcadeClock.ToClockUnits`), never through inline arithmetic like `* ScreenSize.PortPixelsPerArcadePixel`,
 `>> 8` or `* 256`. Name the subpixel scale once (`SubpixelsPerPixel`).
 
@@ -673,7 +673,7 @@ done
 grep -rnE '(\+=|-=) 5;|\* 6\b|>= 6\b|< 6\b|= 6;|SixthsPer|Fifths|_sixths|_fifths' src --include=*.cs
 
 # Column literal and hand-rolled scaling (NUM-3, NUM-4)
-grep -rnE 'ToPortPixels\(2\b|ToPortPixels\(2 \*|\* ScreenSize\.PortPixelsPerArcadePixel|/ 256\b|>> 8\b|<< 8\b' src --include=*.cs
+grep -rnE 'ToPortPixelsFromArcadePixels\(2\b|ToPortPixelsFromArcadePixels\(2 \*|\* ScreenSize\.PortPixelsPerArcadePixel|/ 256\b|>> 8\b|<< 8\b' src --include=*.cs
 
 # Unit-suffix mistakes (NAM-2)
 grep -rnoE '\w*RomTicks\w*' src tests --include=*.cs
