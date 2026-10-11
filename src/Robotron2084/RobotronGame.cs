@@ -143,6 +143,7 @@ public sealed class RobotronGame : Game
         HandlePresentationKeys(state);
         HandleAttractDevKeys(state);
         HandleStartKeys(state);
+        HandleDeveloperToolsKey(state);
 
         _previousKeyboardState = state;
 
@@ -243,9 +244,11 @@ public sealed class RobotronGame : Game
     /// <summary>
     ///     The game's start keys, live on EVERY attract screen (notes §101): F1 one player, F2 two players
     ///     alternating turns, F3 the arcade's two-player game (selected now, played later), F5 the GAME
-    ///     ADJUSTMENT page (notes §131), F10 the DEFINE INPUTS page, F4 the SOUND TEST page, and 5 drops a coin in the slot
+    ///     ADJUSTMENT page (notes §131), F4 the SOUND TEST page, and 5 drops a coin in the slot
     ///     (the port has no credits, so it only makes the
     ///     coin sound, one of the eight at random).
+    ///     F10 is NOT one of them: it opens the DEVELOPER TOOLS page from every screen, attract screens
+    ///     included (see <see cref="HandleDeveloperToolsKey" />).
     /// </summary>
     /// <param name="state">This tick's keyboard.</param>
     /// <remarks>
@@ -275,8 +278,25 @@ public sealed class RobotronGame : Game
             _stateManager.TransitionTo(new SoundTestState(_services));
         else if (WasPressed(state, Keys.F5))
             _stateManager.TransitionTo(new SettingsState(_services, _gameSettingsStore));
-        else if (WasPressed(state, Keys.F10))
-            _stateManager.TransitionTo(new DefineInputsState(_services, _controlSettingsStore));
+    }
+
+    /// <summary>
+    ///     The DEVELOPER TOOLS page (port-only): F10 opens it from EVERY screen — the attract cycle, a
+    ///     game in play, anything — and it is the one page F10 closes back to the title. The three
+    ///     service pages (GAME ADJUSTMENT, DEFINE INPUTS, SOUND TEST) take F10 themselves, to the
+    ///     DEVELOPER TOOLS page and back, because each has work to do on the way out: the settings and
+    ///     the control definitions are written to their files, and the sound test silences the board.
+    /// </summary>
+    /// <param name="state">This tick's keyboard.</param>
+    private void HandleDeveloperToolsKey(KeyboardState state)
+    {
+        if (!WasPressed(state, Keys.F10)) return;
+
+        // The page's own F10 closes it, and the service pages handle their own way out.
+        if (_stateManager.Current is DeveloperToolsState or SettingsState or DefineInputsState or SoundTestState)
+            return;
+
+        _stateManager.TransitionTo(new DeveloperToolsState(_services, _controlSettingsStore, _gameSettingsStore));
     }
 
     /// <summary>True on the tick <paramref name="key" /> goes down (press, not hold).</summary>
