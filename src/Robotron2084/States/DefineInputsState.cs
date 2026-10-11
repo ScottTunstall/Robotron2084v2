@@ -39,7 +39,7 @@ public sealed class DefineInputsState : IGameState
     // is that page's own cursor glyph — the small font's "->" (notes §108.4).
     private const int CursorColumn = 57;
 
-    private const string ExitLine = "F10 - TITLE";
+    private const string ExitLine = "F10 - DEVELOPER TOOLS";
     private const int ExitRow = 342;
     private const int FirstLineRow = 70;
 
@@ -288,7 +288,7 @@ public sealed class DefineInputsState : IGameState
         if (WasKeyboardPressed(now, Keys.F10))
         {
             _controlSettingsStore.Save(_controlSettings);
-            manager.TransitionTo(new TitleScreenState(_services));
+            manager.TransitionTo(new DeveloperToolsState(_services, _controlSettingsStore));
         }
     }
 

@@ -12,7 +12,8 @@ namespace Robotron2084.States;
 
 /// <summary>
 ///     The GAME ADJUSTMENT page (notes §131) — the cabinet's service-mode settings, opened with F5 from
-///     the attract screens and closed with F10.
+///     the attract screens and closed with F10, which goes back to the DEVELOPER TOOLS page that leads
+///     to every service page.
 ///     It is the same page the arcade's own GAME ADJUSTMENT screen is: a left column of setting names
 ///     with their values in a second column, the page's own "->" cursor at the left of the line the
 ///     cursor is on, and the instructions under the list (notes §108) — WHITE for the heading, the
@@ -34,7 +35,7 @@ public sealed class SettingsState : IGameState
     // prints its cursor (column $0C), and it is that page's own cursor glyph — the small font's "->".
     private const int CursorColumn = 57;
 
-    private const string ExitLine = "F10 - TITLE";
+    private const string ExitLine = "F10 - DEVELOPER TOOLS";
     private const int ExitRow = 342;
     private const int FirstLineRow = 76;
 
@@ -123,7 +124,7 @@ public sealed class SettingsState : IGameState
         if (WasKeyboardPressed(now, Keys.F10))
         {
             _gameSettingsStore.Save(_gameSettings);
-            manager.TransitionTo(new TitleScreenState(_services));
+            manager.TransitionTo(new DeveloperToolsState(_services, null, _gameSettingsStore));
         }
 
         _previousSnapshot = now;

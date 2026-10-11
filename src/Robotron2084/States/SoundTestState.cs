@@ -11,7 +11,8 @@ using Robotron2084.Palette;
 namespace Robotron2084.States;
 
 /// <summary>
-///     The SOUND TEST page (opened with F4 from the attract screens, closed with F10): the arcade's own sound test
+///     The SOUND TEST page (opened with F4 from the attract screens, closed with F10 to the DEVELOPER
+///     TOOLS page): the arcade's own sound test
 ///     with every sound the board has, each named as the sound ROM's source names it.
 /// </summary>
 /// <remarks>
@@ -75,7 +76,7 @@ public sealed class SoundTestState : IGameState
 
     private const string AdvanceLine = "ENTER SPACE RIGHT DOWN - ADVANCE   LEFT UP - BACK";
     private const string AutoLine = "A - AUTO UP";
-    private const string ExitLine = "F10 - TITLE";
+    private const string ExitLine = "F10 - DEVELOPER TOOLS";
 
     /// <summary>
     ///     The page's list: the board's 63 sounds in sound-number order, then the transporter.
@@ -133,7 +134,7 @@ public sealed class SoundTestState : IGameState
         if (IsPressed(now, Keys.F10))
         {
             Silence();
-            manager.TransitionTo(new TitleScreenState(_services));
+            manager.TransitionTo(new DeveloperToolsState(_services));
             return;
         }
 

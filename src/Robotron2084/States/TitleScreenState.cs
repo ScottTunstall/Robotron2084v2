@@ -26,7 +26,8 @@ namespace Robotron2084.States;
 ///     drawn here.
 ///     Port conventions kept on top: **1** starts a one-player game and **2** a two-player game (the
 ///     arcade's START 1 / START 2 buttons, ROM RRG23 START1/START2; fire is the one-player alias),
-///     the port's F1/F2/F3/F10 menu (notes §101), and after
+///     the port's F1/F2/F3 start keys (notes §101; F10 is the DEVELOPER TOOLS page's key now, and is
+///     live on every screen), and after
 ///     <see cref="AttractTuning.TitleIdleSeconds" /> of no start press the arcade's attract movie
 ///     takes over (notes §95/§96).
 ///     TEXT (notes §107): the page's two text panes alternate every
@@ -128,11 +129,26 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// <summary>True while the ARCADE's text pane is up; it alternates with the port's (notes §107).</summary>
     private bool _isShowingArcadeText = true;
 
+    /// <summary>
+    ///     The pane the page HOLDS, or null to alternate the two as the attract cycle does (notes §107).
+    /// </summary>
+    private readonly TitleTextPane? _pinnedPane;
+
     private TimeSpan _textElapsed;
 
-    public TitleScreenState(GameServices services)
+    /// <summary>
+    ///     Opens the title page.
+    /// </summary>
+    /// <param name="services">The attract screens' shared dependencies.</param>
+    /// <param name="pinnedPane">
+    ///     The text pane to open on and hold (notes §107) — what the DEVELOPER TOOLS page's
+    ///     TITLE PAGE 1 / TITLE PAGE 2 options pass. Null, the attract cycle's own, alternates the two.
+    /// </param>
+    public TitleScreenState(GameServices services, TitleTextPane? pinnedPane = null)
     {
         _services = services;
+        _pinnedPane = pinnedPane;
+        _isShowingArcadeText = pinnedPane != TitleTextPane.Port;
         _input = services.Input;
         _sprites = services.Sprites;
         _highScoreStore = services.HighScoreStore;
@@ -214,12 +230,16 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
         // The page's two TEXT PANES alternate (notes §107): the arcade's own lines, then the port's
         // credit. Nothing else on the page changes with them — the logos and the
-        // colour cycling carry on regardless.
-        _textElapsed += gameTime.ElapsedGameTime;
-        if (_textElapsed >= (_isShowingArcadeText ? _arcadeTextDuration : _portTextDuration))
+        // colour cycling carry on regardless. A page opened ON a pane (the DEVELOPER TOOLS page's
+        // TITLE PAGE 1 / TITLE PAGE 2) holds it, so the pane can be looked at.
+        if (_pinnedPane is null)
         {
-            _textElapsed = TimeSpan.Zero;
-            _isShowingArcadeText = !_isShowingArcadeText;
+            _textElapsed += gameTime.ElapsedGameTime;
+            if (_textElapsed >= (_isShowingArcadeText ? _arcadeTextDuration : _portTextDuration))
+            {
+                _textElapsed = TimeSpan.Zero;
+                _isShowingArcadeText = !_isShowingArcadeText;
+            }
         }
 
         // The port's old "top ten" swap lived here; the arcade's table is its
