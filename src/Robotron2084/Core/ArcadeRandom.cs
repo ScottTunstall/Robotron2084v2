@@ -16,7 +16,7 @@ namespace Robotron2084.Core;
 public static class ArcadeRandom
 {
     /// <summary>The sides of the random byte the arcade starts from.</summary>
-    private const int ByteSides = 256;
+    private const int MaxValue = 256;
 
     /// <summary>Picks a number from 1 up to <paramref name="limit" />, the way the arcade does.</summary>
     /// <param name="random">Where the random byte comes from.</param>
@@ -24,7 +24,7 @@ public static class ArcadeRandom
     /// <returns>A number from 1 up to the limit.</returns>
     public static int PickUpTo(Random random, int limit)
     {
-        var value = random.Next(ByteSides);
+        var value = random.Next(MaxValue);
         while (value > limit) value >>= 1;
 
         return value == 0 ? 1 : value;
