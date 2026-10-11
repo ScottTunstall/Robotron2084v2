@@ -34,7 +34,8 @@ namespace Robotron2084.States;
 ///     arcade's own lines (the welcome
 ///     message, with an empty row between its two lines as the arcade prints it, and the credit strings
 ///     in the SMALL font with the copyright an empty row below them in a colour of its own), then the
-///     port's own (its credit line and the F-key menu). There is no room for both at once, and the
+///     port's own (its two LARGE-font credit lines, on the arcade message's own rows). There is no
+///     room for both at once, and the
 ///     port's lines are drawn in the page's text slot so they flash orange and white like the arcade's.
 /// </summary>
 public sealed class TitleScreenState : IGameState, IAttractState
@@ -52,27 +53,31 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private const int CopyrightSlot = 2;
 
     /// <summary>
-    ///     The port's own credit line, which sits among these (notes §102.1). The
+    ///     The port's own credit, which sits among these (notes §102.1). The
     ///     arcade's presentation page has no such line, so this one is a deliberate, labelled
-    ///     addition — in the SMALL font, like the cabinet's own credit lines.
+    ///     addition — two LARGE-font lines, on the arcade pane's own message rows.
     /// </summary>
-    private const string CreditLine = "REVERSE ENGINEERING AND DEVELOPMENT BY SCOTT TUNSTALL";
+    private const string CreditLineOne = "REMAKE DEVELOPED BY";
 
-    // Pane 2 — the port's own lines: its credit and the F-key menu (notes §101/§102.1).
-    private const int CreditRow = 214;
+    private const string CreditLineTwo = "SCOTT TUNSTALL";
+
+    // Pane 2 — the port's own lines: its two LARGE-font credit lines (notes §102.1).
+    // The credit's two lines sit on the arcade pane's message rows (LARGE font, an empty
+    // row apart) so the panes swap in the same slot.
+    private const int CreditRowOne = WelcomeRowOne;
+    private const int CreditRowTwo = WelcomeRowTwo;
 
     /// <summary>
     ///     The ROM's own credit strings under the message (notes §103): "DESIGNED BY VID KIDZ" and
     ///     "FOR WILLIAMS ELECTRONICS INC." are at ROM $6D85 (with a copy at $7F50 for the copyright).
     ///     The reference screen prints them in the SMALL font.
     /// </summary>
-    private const string DesignedByLine = "DESIGNED BY VID KIDZ";
+    private const string DesignedByLine = "ORIGINALLY DESIGNED BY VID KIDZ";
 
     private const int DesignedByRow = 268;
     private const string ForWilliamsLine = "FOR WILLIAMS ELECTRONICS INC.";
     private const int ForWilliamsRow = 284;
     private const int Logo2084Row = 138;
-    private const int MenuRow = 236;
 
     /// <summary>
     ///     The palette entry the page's text is drawn in: the ROM's text colour operand (notes §106) —
@@ -102,15 +107,6 @@ public sealed class TitleScreenState : IGameState, IAttractState
     // them (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
     // an 8-row line grid, i.e. one blank line).
     private const int WordmarkRow = 72;
-
-    /// <summary>The title's port-only menu (notes §101).</summary>
-    private static readonly string[] Options =
-    [
-        "F1 ONE PLAYER GAME",
-        "F2 TWO PLAYER GAME (ALTERNATE)",
-        "F3 TWO PLAYER (SIMULTANEOUS)",
-        "F10 DEFINE INPUTS"
-    ];
 
     private readonly TimeSpan _arcadeTextDuration = TimeSpan.FromSeconds(AttractTuning.TitleArcadeTextSeconds);
     private readonly ButtonEdgeDetector _buttons = new();
@@ -213,11 +209,11 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // attract only runs while the cabinet sits idle.
         if (input.FireHeld || input.StartOnePlayerHeld || input.StartTwoPlayersHeld) _idleElapsed = TimeSpan.Zero;
 
-        // Blink removed with the port's old prompt: the F-key menu is a menu, and
+        // Blink removed with the port's old prompt: the port's credit is not a prompt, and
         // flickering it every second made it hard to read (notes §101).
 
         // The page's two TEXT PANES alternate (notes §107): the arcade's own lines, then the port's
-        // credit and F-key menu. Nothing else on the page changes with them — the logos and the
+        // credit. Nothing else on the page changes with them — the logos and the
         // colour cycling carry on regardless.
         _textElapsed += gameTime.ElapsedGameTime;
         if (_textElapsed >= (_isShowingArcadeText ? _arcadeTextDuration : _portTextDuration))
@@ -302,20 +298,15 @@ public sealed class TitleScreenState : IGameState, IAttractState
     }
 
     /// <summary>
-    ///     Pane 2 — the port's own lines: its credit (notes §102.1) and the F-key menu
-    ///     (notes §101). Port-only and labelled as such; they take the arcade pane's place, and the
-    ///     arcade's START buttons keep working exactly as they did either way.
+    ///     Pane 2 — the port's own lines: its two LARGE-font credit lines (notes §102.1).
+    ///     Port-only and labelled as such; they take the arcade pane's place in its message rows, and
+    ///     the arcade's START buttons and the port's F-keys (notes §101) keep working exactly as they
+    ///     did either way.
     /// </summary>
     private void DrawPortText(SpriteBatch spriteBatch)
     {
-        DrawCenteredSmallText(spriteBatch, CreditLine, CreditRow, TextSlot);
-
-        var y = MenuRow;
-        foreach (var option in Options)
-        {
-            DrawCenteredSmallText(spriteBatch, option, y, TextSlot);
-            y += ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.TitleOptionRowStepPixels);
-        }
+        DrawCenteredLargeText(spriteBatch, CreditLineOne, CreditRowOne, TextSlot);
+        DrawCenteredLargeText(spriteBatch, CreditLineTwo, CreditRowTwo, TextSlot);
     }
 
     /// <summary>Draws an arcade-small-font line centred on the canvas.</summary>
