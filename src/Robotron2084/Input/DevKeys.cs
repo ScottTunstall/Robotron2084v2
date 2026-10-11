@@ -28,7 +28,8 @@ namespace Robotron2084.Input;
 ///         </item>
 ///     </list>
 ///     The function keys belong to the game: F1/F2/F3 start a game (ONE PLAYER / TWO PLAYER ALTERNATE / TWO PLAYER
-///     SIMULTANEOUS), F5 opens the GAME ADJUSTMENT page and F10 DEFINE INPUTS, on every attract screen. Page Down is free.
+///     SIMULTANEOUS) on every attract screen, F5 opens the GAME ADJUSTMENT page there, and F10 opens the
+///     DEVELOPER TOOLS page from EVERY screen. Page Down is free.
 /// </summary>
 public static class DevKeys
 {
