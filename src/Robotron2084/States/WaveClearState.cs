@@ -23,7 +23,8 @@ public sealed class WaveClearState : IGameState
     /// <summary>
     ///     When true the tunnel belongs to the ATTRACT demo
     ///     (notes §94) and the game resumes in <see cref="AttractState" /> (the machine keeps
-    ///     playing itself) instead of <see cref="PlayingState" />.
+    ///     playing itself) instead of <see cref="PlayingState" />. The shell reads this through
+    ///     <see cref="IsAttractMode" /> for the ATTRACT MODE SOUND switch (notes §131).
     /// </summary>
     private readonly bool _isAttractMode;
 
@@ -50,6 +51,13 @@ public sealed class WaveClearState : IGameState
     private int _ringsPaletted = -1;
 
     private int _ticksRemaining = ScreenTuning.WaveClearDisplayTicks;
+
+    /// <summary>
+    ///     True while this tunnel belongs to the ATTRACT demo. The shell's attract-cycle sound
+    ///     switch (notes §131) treats the demo's tunnel as part of the attract sequence, so the
+    ///     wave-end music it asks for obeys ATTRACT MODE SOUND like every other attract sound.
+    /// </summary>
+    public bool IsAttractMode => _isAttractMode;
 
     public WaveClearState(SpriteSet sprites, HighScoreStore highScoreStore, GameSession session,
         bool isAttractMode = false)
