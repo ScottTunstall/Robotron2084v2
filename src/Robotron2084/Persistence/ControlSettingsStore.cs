@@ -98,7 +98,7 @@ public sealed class ControlSettingsStore
     {
         var text = new StringBuilder();
         text.AppendLine("; Robotron 2084 (port) control definitions - see notes section 101.");
-        text.AppendLine("; Edit by hand, or press F10 on the title screen and use the page.");
+        text.AppendLine("; Edit by hand, or press F10 and choose DEFINE INPUTS.");
         text.AppendLine("; A value is what the page shows: a key name (W, UP, INSERT), or");
         text.AppendLine("; P<n> <BUTTON> / P<n> LS <DIR> / P<n> RS <DIR>. NONE means unbound.");
         text.AppendLine("; (Colons or dashes are accepted in place of the spaces when reading.)");
