@@ -6,9 +6,11 @@ namespace Robotron2084.Tests.States;
 /// <summary>
 ///     The attract cycle and the author's start keys (notes §101). <c>RobotronGame.Update</c>
 ///     reads F1 (one player) / F2 (two players, alternating) / F3 (two players, simultaneous)
-///     and F10 (DEFINE INPUTS) on EVERY screen of the attract cycle — the author's question of
+///     on EVERY screen of the attract cycle — the author's question of
 ///     2026-09-20 — and it recognises those screens by the <see cref="IAttractState" /> marker,
 ///     so a screen that joins the cycle without the marker silently loses the keys.
+///     F10 is NOT one of those keys: it opens the DEVELOPER TOOLS page from EVERY screen, attract
+///     screens and games alike, so it is not what the marker is for.
 ///     That is what these tests guard, from both ends: the marker covers exactly the four
 ///     attract screens, and EVERY <see cref="IGameState" /> in the assembly is either one of
 ///     them or named in <see cref="NotAttractScreens" /> — so adding a screen forces the
@@ -30,7 +32,9 @@ public sealed class AttractScreenTests
     ///     front of), the arcade's own rule applies instead — no key restarts the machine under a
     ///     player mid-game — and so do the screens that finish a game, which the cabinet also runs
     ///     outside the attract cycle: the game-over message, the CONG initials entry (notes §116) and
-    ///     the ONLY5P page, plus the port-only definitions and GAME ADJUSTMENT pages.
+    ///     the ONLY5P page, plus the port-only definitions and GAME ADJUSTMENT pages, the sound test,
+    ///     and the DEVELOPER TOOLS page — which is opened by F10 from every screen, so it deliberately
+    ///     does NOT take the attract cycle's F1/F2/F3 (its own number keys choose an option).
     /// </summary>
     private static readonly Type[] NotAttractScreens =
     [
@@ -41,7 +45,8 @@ public sealed class AttractScreenTests
         typeof(EntriesMaximumState),
         typeof(DefineInputsState),
         typeof(SettingsState),
-        typeof(SoundTestState)
+        typeof(SoundTestState),
+        typeof(DeveloperToolsState)
     ];
 
     [Fact]
@@ -69,7 +74,7 @@ public sealed class AttractScreenTests
         Assert.True(
             unexplained.Length == 0,
             $"new screen(s) {string.Join(", ", unexplained.Select(screen => screen.Name))} — add them to "
-            + $"{nameof(AttractScreens)} (they take F1/F2/F3/F10, so they also need IAttractState) or to "
+            + $"{nameof(AttractScreens)} (they take F1/F2/F3, so they also need IAttractState) or to "
             + $"{nameof(NotAttractScreens)} (they do not)");
     }
 
