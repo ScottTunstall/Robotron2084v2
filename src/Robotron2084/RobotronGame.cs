@@ -148,8 +148,10 @@ public sealed class RobotronGame : Game
 
         // The attract-cycle sound switch (notes §131): while the attract sequence is on screen and
         // ATTRACT MODE SOUND is off, the sound service ignores every request — a real game keeps its
-        // sound.
-        Sound.AttractMuted = _gameSettings.IsAttractSilent(_stateManager.Current is IAttractState);
+        // sound. The demo's wave-clear tunnel is part of the attract sequence too: the phony player
+        // clearing a wave asks for the wave-end music, and that must obey the setting as well.
+        Sound.AttractMuted = _gameSettings.IsAttractSilent(_stateManager.Current is IAttractState
+            || (_stateManager.Current as WaveClearState)?.IsAttractMode == true);
 
         _paletteAnimator.Update();
         _stateManager.Update(gameTime);
