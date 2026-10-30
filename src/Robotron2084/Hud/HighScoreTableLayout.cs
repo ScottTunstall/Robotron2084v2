@@ -137,7 +137,9 @@ public static class HighScoreTableLayout
     /// </summary>
     public static int GetFrameStrokeSlot(int stroke)
     {
-        return stroke <= 0 ? 1 : 8 - (stroke - 1) % 8;
+        if (stroke <= 0) return 1;
+
+        return 8 - (stroke - 1) % 8;
     }
 
     /// <summary>The (column, row) of the ROM's cursor for today's rank <paramref name="index" /> (1-based).</summary>

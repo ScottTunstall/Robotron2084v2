@@ -259,6 +259,9 @@ public sealed class SettingsModel
     /// <summary>The hint under an action row once it has been set to YES.</summary>
     public string GetActionHint(int line)
     {
-        return IsActionLine(line) && _armedLines[line] ? "PRESS ENTER" : string.Empty;
+        var isArmedActionLine = IsActionLine(line) && _armedLines[line];
+        if (isArmedActionLine) return "PRESS ENTER";
+
+        return string.Empty;
     }
 }
