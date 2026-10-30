@@ -40,12 +40,6 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
     }
 
     /// <inheritdoc />
-    public int GetLiveCount()
-    {
-        return _items.Count(entity => !entity.IsDead());
-    }
-
-    /// <inheritdoc />
     public void PruneDead()
     {
         _items.RemoveAll(entity => entity.IsDead());
@@ -75,23 +69,10 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
         return GetEnumerator();
     }
 
-    /// <summary>The last entity in the list.</summary>
-    public T GetLast()
-    {
-        return _items[^1];
-    }
-
     /// <summary>Adds an entity to the list.</summary>
     /// <param name="entity">The entity to add.</param>
     public void Add(T entity)
     {
         _items.Add(entity);
-    }
-
-    /// <summary>Says whether at least one entity in the list passes a test.</summary>
-    /// <param name="predicate">The test.</param>
-    public bool HasAny(Func<T, bool> predicate)
-    {
-        return _items.Any(predicate);
     }
 }

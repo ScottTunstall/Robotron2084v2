@@ -69,6 +69,7 @@ public sealed class SkullMarker : IEntity
     /// <param name="field">Not used.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (_lifeTimer.Tick(LifeArcadeFrames)) LifeState = EntityLifeState.Dead;
+        if (_lifeTimer.Tick(LifeArcadeFrames)) 
+            LifeState = EntityLifeState.Dead;
     }
 }

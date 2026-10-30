@@ -5,8 +5,8 @@ using Robotron2084.Level;
 namespace Robotron2084.Entities;
 
 /// <summary>
-///     A list of entities that can update them, draw them, count them and clear out the dead ones, whatever kind of
-///     entity it holds.
+///     A list of entities that can update them, draw them and clear out the dead ones, whatever kind of entity it
+///     holds.
 /// </summary>
 public interface IEntityList
 {
@@ -17,9 +17,6 @@ public interface IEntityList
     /// <param name="spriteBatch">What the entities are drawn with.</param>
     /// <param name="field">The playfield the entities are on.</param>
     void DrawAll(SpriteBatch spriteBatch, PlayField field);
-
-    /// <summary>Counts the entities that are not dead yet.</summary>
-    int GetLiveCount();
 
     /// <summary>Takes the dead entities out of the list.</summary>
     void PruneDead();
