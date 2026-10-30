@@ -123,7 +123,9 @@ internal sealed class CollisionResponder
     /// <param name="lost">The dead brain.</param>
     private void RespondToBrainLosingVictim(BrainLostVictimResult lost)
     {
-        if (lost.Brain.ReleaseVictim() is { } released) _field.LeaveSkull(released.Position);
+        var victim = lost.Brain.GetVictim();
+        lost.Brain.ReleaseVictim();
+        if (victim is not null) _field.LeaveSkull(victim.Position);
     }
 
     /// <summary>The human dies at once and leaves a skull.</summary>
