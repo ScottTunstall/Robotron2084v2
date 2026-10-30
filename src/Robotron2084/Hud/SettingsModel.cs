@@ -110,30 +110,30 @@ public sealed class SettingsModel
     ///     Left (<paramref name="direction" /> −1) or right (+1) on the highlighted line: a value row
     ///     steps to the next stop, an action row is set to NO (left) or YES (right).
     /// </summary>
-    public void Change(GameSettings settings, int direction)
+    public void Change(GameSettings gameSettings, int direction)
     {
         switch (Line)
         {
             case ExtraManLine:
-                settings.BumpExtraManEvery(direction);
+                gameSettings.BumpExtraManEvery(direction);
                 break;
             case TurnsLine:
-                settings.BumpTurnsPerPlayer(direction);
+                gameSettings.BumpTurnsPerPlayer(direction);
                 break;
             case DifficultyLine:
-                settings.BumpDifficulty(direction);
+                gameSettings.BumpDifficulty(direction);
                 break;
             case AttractSoundLine:
-                settings.BumpAttractModeSound(direction);
+                gameSettings.BumpAttractModeSound(direction);
                 break;
             case TankShellBugLine:
-                settings.BumpTankShellBug(direction);
+                gameSettings.BumpTankShellBug(direction);
                 break;
             case BrainsChaseMikeyBugLine:
-                settings.BumpBrainsChaseMikeyBug(direction);
+                gameSettings.BumpBrainsChaseMikeyBug(direction);
                 break;
             case BozoModeLine:
-                settings.BumpBozoModeEnabled(direction);
+                gameSettings.BumpBozoModeEnabled(direction);
                 break;
             default:
                 _armedLines[Line] = direction > 0;
@@ -145,7 +145,7 @@ public sealed class SettingsModel
     ///     Enter on the highlighted line: performs an action row that reads YES, and does nothing
     ///     otherwise (the arcade's "advance to activate").
     /// </summary>
-    public SettingsAction Activate(GameSettings settings)
+    public SettingsAction Activate(GameSettings gameSettings)
     {
         if (!IsActionLine(Line) || !_armedLines[Line]) return SettingsAction.None;
 
@@ -153,7 +153,7 @@ public sealed class SettingsModel
 
         if (Line == RestoreFactoryLine)
         {
-            settings.ResetToFactory();
+            gameSettings.ResetToFactory();
             return SettingsAction.RestoreFactorySettings;
         }
 
@@ -179,17 +179,17 @@ public sealed class SettingsModel
     }
 
     /// <summary>The row's value: the setting itself, ON/OFF for the port's own rows, or NO/YES on an action row.</summary>
-    public string GetValue(GameSettings settings, int line)
+    public string GetValue(GameSettings gameSettings, int line)
     {
         return line switch
         {
-            ExtraManLine => settings.GetExtraManEveryPoints().ToString(),
-            TurnsLine => settings.TurnsPerPlayer.ToString(),
-            DifficultyLine => settings.Difficulty.ToString(),
-            AttractSoundLine => GetOnOff(settings.AttractModeSoundEnabled),
-            TankShellBugLine => GetOnOff(settings.TankShellBugEnabled),
-            BrainsChaseMikeyBugLine => GetOnOff(settings.BrainsChaseMikeyBugEnabled),
-            BozoModeLine => GetOnOff(settings.BozoModeEnabled),
+            ExtraManLine => gameSettings.GetExtraManEveryPoints().ToString(),
+            TurnsLine => gameSettings.TurnsPerPlayer.ToString(),
+            DifficultyLine => gameSettings.Difficulty.ToString(),
+            AttractSoundLine => GetOnOff(gameSettings.AttractModeSoundEnabled),
+            TankShellBugLine => GetOnOff(gameSettings.TankShellBugEnabled),
+            BrainsChaseMikeyBugLine => GetOnOff(gameSettings.BrainsChaseMikeyBugEnabled),
+            BozoModeLine => GetOnOff(gameSettings.BozoModeEnabled),
             _ => _armedLines[line] ? "YES" : "NO"
         };
     }
@@ -199,11 +199,11 @@ public sealed class SettingsModel
     ///     $704C (TURNS PER PLAYER) and $7079 (DIFFICULTY OF PLAY). Empty where the arcade prints nothing.
     ///     The port's bug and Bozo rows borrow "RECOMMENDED" for ON, which is the arcade as it shipped.
     /// </summary>
-    public static string GetNote(GameSettings settings, int line)
+    public static string GetNote(GameSettings gameSettings, int line)
     {
         return line switch
         {
-            ExtraManLine => settings.ExtraManEvery switch
+            ExtraManLine => gameSettings.ExtraManEvery switch
             {
                 < 20 => "NO EXTRA MEN",
                 < 25 => "LIBERAL",
@@ -211,7 +211,7 @@ public sealed class SettingsModel
                 < 50 => "CONSERVATIVE",
                 _ => "EXTRA CONSERVATIVE"
             },
-            TurnsLine => settings.TurnsPerPlayer switch
+            TurnsLine => gameSettings.TurnsPerPlayer switch
             {
                 < 2 => string.Empty,
                 < 3 => "HIGH VOLUME ARCADES",
@@ -219,7 +219,7 @@ public sealed class SettingsModel
                 < 5 => "FOR WEAKER PLAYERS",
                 _ => string.Empty
             },
-            DifficultyLine => settings.Difficulty switch
+            DifficultyLine => gameSettings.Difficulty switch
             {
                 < 3 => "EXTRA LIBERAL",
                 < 5 => "LIBERAL",
@@ -227,9 +227,9 @@ public sealed class SettingsModel
                 < 8 => "CONSERVATIVE",
                 _ => "EXTRA CONSERVATIVE"
             },
-            TankShellBugLine => GetArcadeNote(settings.TankShellBugEnabled),
-            BrainsChaseMikeyBugLine => GetArcadeNote(settings.BrainsChaseMikeyBugEnabled),
-            BozoModeLine => GetArcadeNote(settings.BozoModeEnabled),
+            TankShellBugLine => GetArcadeNote(gameSettings.TankShellBugEnabled),
+            BrainsChaseMikeyBugLine => GetArcadeNote(gameSettings.BrainsChaseMikeyBugEnabled),
+            BozoModeLine => GetArcadeNote(gameSettings.BozoModeEnabled),
             _ => string.Empty
         };
     }

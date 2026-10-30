@@ -102,11 +102,11 @@ public sealed class DefineInputsModel
     ///     moves on to the next line and disarms. The PAUSE line has nowhere to go,
     ///     so the highlight stays there. Returns false when the page was not armed.
     /// </summary>
-    public bool Assign(ControlSettings settings, InputBinding binding)
+    public bool Assign(ControlSettings controlSettings, InputBinding binding)
     {
         if (!IsArmed || binding.Kind == InputBindingKind.None) return false;
 
-        SetLine(settings, Line, binding);
+        SetLine(controlSettings, Line, binding);
         if (Line < PauseLine) MoveTo(NextLine(Line));
 
         IsArmed = false;
@@ -120,10 +120,10 @@ public sealed class DefineInputsModel
     }
 
     /// <summary>Clears the highlighted line (Del) — both device slots go unbound.</summary>
-    public void ClearHighlighted(ControlSettings settings)
+    public void ClearHighlighted(ControlSettings controlSettings)
     {
         IsArmed = false;
-        SetLine(settings, Line, InputBinding.None);
+        SetLine(controlSettings, Line, InputBinding.None);
     }
 
     /// <summary>True when the highlight is on <paramref name="line" /> (and not mid-capture).</summary>
@@ -148,9 +148,9 @@ public sealed class DefineInputsModel
     }
 
     /// <summary>The page's <c>R</c>: every line of both players, and PAUSE, back to the factory scheme.</summary>
-    public void ResetAll(ControlSettings settings)
+    public void ResetAll(ControlSettings controlSettings)
     {
-        settings.ResetToDefaults();
+        controlSettings.ResetToDefaults();
     }
 
     /// <summary>The nearest line below that is not a blank spacer, wrapping round the page.</summary>
@@ -178,16 +178,16 @@ public sealed class DefineInputsModel
     }
 
     /// <summary>Writes one line — the device slot the new binding belongs to, or both for a clear.</summary>
-    private static void SetLine(ControlSettings settings, int line, InputBinding binding)
+    private static void SetLine(ControlSettings controlSettings, int line, InputBinding binding)
     {
         var clearing = binding.Kind == InputBindingKind.None;
         if (line == PauseLine)
         {
-            settings.Pause = clearing ? InputBinding.None : binding;
+            controlSettings.Pause = clearing ? InputBinding.None : binding;
             return;
         }
 
-        var controls = settings[PlayerOf(line)];
+        var controls = controlSettings[PlayerOf(line)];
         var action = GetAction(line)!.Value;
         controls[action] = clearing ? ActionBinding.None : controls[action].With(binding);
     }

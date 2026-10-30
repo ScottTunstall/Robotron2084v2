@@ -74,22 +74,22 @@ public static class ArcadeHud
     {
         var hudY = GetScoresAndMenRowY(innerBounds);
 
-        foreach (var player in session.Players)
+        foreach (var playerSlot in session.Players)
         {
-            var isPlayerOne = player.Number == 1;
+            var isPlayerOne = playerSlot.Number == 1;
             var scoreColumn = isPlayerOne ? HudLayout.HudScoreOriginColumnP1 : HudLayout.HudScoreOriginColumnP2;
             var menColumn = isPlayerOne ? HudLayout.HudMenOriginColumnP1 : HudLayout.HudMenOriginColumnP2;
 
             // ROM $DC13/$DC19: the player whose turn it is blits their score with
             // $AA (slot 10 — one of the colour-CYCLING slots); an idle player's
             // uses $11 (slot 1).
-            var slot = ReferenceEquals(player, session.GetCurrent())
+            var slot = ReferenceEquals(playerSlot, session.GetCurrent())
                 ? HudLayout.HudScoreSlotCurrent
                 : HudLayout.HudScoreSlotIdle;
 
-            DrawScore(spriteBatch, sprites, player.Score, HudLayout.ToPortX(scoreColumn * 2), hudY, slot);
+            DrawScore(spriteBatch, sprites, playerSlot.Score, HudLayout.ToPortX(scoreColumn * 2), hudY, slot);
             if (showSpareMen)
-                DrawSpareMen(spriteBatch, sprites, player.GetDisplayedMen(), HudLayout.ToPortX(menColumn * 2), hudY);
+                DrawSpareMen(spriteBatch, sprites, playerSlot.GetDisplayedMen(), HudLayout.ToPortX(menColumn * 2), hudY);
         }
     }
 
