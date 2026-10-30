@@ -97,20 +97,20 @@ public sealed class GruntSpeedProgressTests
     }
 
     [Fact]
-    public void WaveSpeedTick_LowersLimitBy4_ClampedAtTheFloor()
+    public void SpeedUpAsWaveGoesOn_LowersLimitBy4_ClampedAtTheFloor()
     {
         var grunt = CreateGruntAt(CreateField(), 100, 100, 2);
 
-        grunt.WaveSpeedTick(9);
+        grunt.SpeedUpAsWaveGoesOn(9);
         Assert.Equal(16, grunt.MoveDelayBeats);
 
-        grunt.WaveSpeedTick(9);
+        grunt.SpeedUpAsWaveGoesOn(9);
         Assert.Equal(12, grunt.MoveDelayBeats);
 
-        grunt.WaveSpeedTick(9);
+        grunt.SpeedUpAsWaveGoesOn(9);
         Assert.Equal(9, grunt.MoveDelayBeats); // clamped, does not go below the floor
 
-        grunt.WaveSpeedTick(1);
+        grunt.SpeedUpAsWaveGoesOn(1);
         Assert.Equal(5, grunt.MoveDelayBeats); // 9 − 4, floor 1
     }
 

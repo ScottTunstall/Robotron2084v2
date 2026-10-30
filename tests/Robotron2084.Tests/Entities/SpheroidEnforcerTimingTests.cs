@@ -105,7 +105,7 @@ public sealed class SpheroidEnforcerTimingTests
         // The ROM grow-up is 45 frames = 54 port ticks (notes §65; the old model said
         // 40 frames, which is why this used to stop at PortTicks(40) = 48). The last
         // of those ticks is the one ENFR10 runs on, so immobility covers 1..53.
-        for (var tick = 1; tick < ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowUpRomFrames); tick++)
+        for (var tick = 1; tick < ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalRomFrames); tick++)
         {
             enforcer.Update(OneTick(), field);
             Assert.True(enforcer.Position == start, $"moved during grow-up at tick {tick}");
@@ -132,7 +132,7 @@ public sealed class SpheroidEnforcerTimingTests
         for (var tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
 
         int[] expectedStarts = { 1, 11, 22, 33, 44 };
-        var growTicks = ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowUpRomFrames); // 54
+        var growTicks = ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalRomFrames); // 54
 
         for (var tick = 1; tick < growTicks; tick++)
         {

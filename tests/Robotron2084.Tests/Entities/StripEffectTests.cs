@@ -598,6 +598,16 @@ public sealed class StripEffectTests
             throw new NotSupportedException("no texture in unit tests");
         }
 
+        public Rectangle GetExplosionBounds()
+        {
+            return GetBounds();
+        }
+
+        public Texture2D GetExplosionAnimationFrame()
+        {
+            return GetCurrentAnimationFrame();
+        }
+
         public void MoveTo(Rectangle bounds)
         {
             _bounds = bounds;

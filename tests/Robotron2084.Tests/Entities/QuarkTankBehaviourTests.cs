@@ -145,11 +145,11 @@ public sealed class QuarkTankBehaviourTests
         for (var tick = 0; tick < bornTicks - 1; tick++)
         {
             field.Update(OneTick());
-            Assert.True(tank.IsBeingBorn(), $"tick {tick + 1}: the birth ended early");
+            Assert.True(tank.IsGrowing(), $"tick {tick + 1}: the birth ended early");
         }
 
         // It finishes growing.
-        while (tank.IsBeingBorn()) field.Update(OneTick());
+        while (tank.IsGrowing()) field.Update(OneTick());
 
         // MTANK walks the mini tank up-left as it grows: the four animation frames' own
         // (dx,dy) come to -2 columns and -6 rows (notes §53), so the full 14x16
@@ -204,7 +204,7 @@ public sealed class QuarkTankBehaviourTests
 
         // ROM MTANK: the tank plays four birth animation frames before it can move, aim or
         // fire, so no beat happens while it is being born either.
-        while (tank.IsBeingBorn())
+        while (tank.IsGrowing())
         {
             field.Update(OneTick());
             Assert.Equal(treadAtSpawn, tank.TreadFrameIndex);

@@ -109,7 +109,7 @@ public sealed class SparkTests
 
         // 4 fiftieths of a second = 4.8 ticks, so the frame boundary lands on tick 5 of each
         // period on the clock-unit clock (notes §52, §65).
-        var period = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.SparkFrameIntervalRomFrames);
+        var period = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.BeatIntervalRomFrames);
         Assert.Equal(0, spark.GetAnimationFrameIndex()); // born on SPKP0
 
         // Each full period advances exactly one frame; four periods wrap to 0.
@@ -171,13 +171,13 @@ public sealed class SparkTests
         field.SpawnSpark(origin, new IntVector2(inner.X + 40, inner.Y + 120));
         var spark = field.Entities.Sparks[^1];
 
-        var moveInterval = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.SparkMoveIntervalRomFrames);
+        var beatInterval = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.BeatIntervalRomFrames);
         var changes = new List<IntVector2>();
         var previous = spark.VelocitySubpixels;
 
         for (var move = 0; move < 6; move++)
         {
-            for (var tick = 0; tick < moveInterval; tick++) field.Update(OneTick());
+            for (var tick = 0; tick < beatInterval; tick++) field.Update(OneTick());
 
             changes.Add(new IntVector2(spark.VelocitySubpixels.X - previous.X, spark.VelocitySubpixels.Y - previous.Y));
             previous = spark.VelocitySubpixels;

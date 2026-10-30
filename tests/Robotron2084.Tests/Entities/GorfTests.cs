@@ -265,7 +265,7 @@ public sealed class GorfTests
     {
         var field = CreateFieldInPlay();
         var gorf = CreateGorf(field, 0, 0, 0);
-        var ticksPerFrame = ArcadeClock.ToPortTicksRoundedUp(GorfTuning.AnimationFrameRomFrames);
+        var ticksPerFrame = ArcadeClock.ToPortTicksRoundedUp(GorfTuning.AnimationIntervalRomFrames);
         Assert.Equal(0, gorf.AnimationFrameIndex);
 
         for (var tick = 0; tick < ticksPerFrame; tick++) gorf.Update(OneTick, field);
