@@ -27,13 +27,13 @@ namespace Robotron2084.Graphics;
 public sealed class WordmarkAppear
 {
     /// <summary>fiftieths of a second between one letter starting to appear and the next (<c>WDONE0 NAP 8</c>).</summary>
-    private const int RomFramesBetweenLetters = 8;
+    private const int ArcadeFramesBetweenLetters = 8;
 
     /// <summary>
     ///     fiftieths of a second the last letter is left to finish before whatever comes next (<c>NAP $20,LOGG2</c>). It
     ///     is added to the start time of the last letter to decide when <see cref="IsFinished" /> becomes true.
     /// </summary>
-    private const int RomFramesAfterLastLetter = 0x20;
+    private const int ArcadeFramesAfterLastLetter = 0x20;
 
     private readonly Rectangle _bounds;
     private readonly Texture2D _coreSprite;
@@ -70,7 +70,7 @@ public sealed class WordmarkAppear
     /// <summary>Says whether every letter has finished coming in and been left to settle, so the next thing can go up.</summary>
     public bool IsFinished()
     {
-        return _letters.Count == 0 || GetRomFrames() >= GetStartFrame(_letters.Count - 1) + RomFramesAfterLastLetter;
+        return _letters.Count == 0 || GetArcadeFrames() >= GetStartFrame(_letters.Count - 1) + ArcadeFramesAfterLastLetter;
     }
 
     /// <summary>Makes the appear for a word drawn as two white masks, finding its letters from the outline mask.</summary>
@@ -92,7 +92,7 @@ public sealed class WordmarkAppear
     /// <summary>How many letters have started to appear (test hook).</summary>
     internal int GetStartedLetterCount()
     {
-        return Enumerable.Range(0, _letters.Count).Count(index => GetRomFrames() >= GetStartFrame(index));
+        return Enumerable.Range(0, _letters.Count).Count(index => GetArcadeFrames() >= GetStartFrame(index));
     }
 
     /// <summary>Finds where the letters are across a mask, which are the runs of columns that have something drawn in them.</summary>
@@ -123,9 +123,9 @@ public sealed class WordmarkAppear
     public void Update()
     {
         _clockUnits += ArcadeClock.UnitsPerPortTick;
-        var romFrames = GetRomFrames();
+        var arcadeFrames = GetArcadeFrames();
         for (var index = 0; index < _effects.Length; index++)
-            if (romFrames >= GetStartFrame(index))
+            if (arcadeFrames >= GetStartFrame(index))
                 _effects[index].Update(new GameTime());
     }
 
@@ -136,10 +136,10 @@ public sealed class WordmarkAppear
     /// <param name="coreSlot">The palette slot the body is drawn in.</param>
     public void Draw(SpriteBatch spriteBatch, BlitterDraw blitter, int rimSlot, int coreSlot)
     {
-        var romFrames = GetRomFrames();
+        var arcadeFrames = GetArcadeFrames();
         for (var index = 0; index < _effects.Length; index++)
         {
-            if (romFrames < GetStartFrame(index)) continue;
+            if (arcadeFrames < GetStartFrame(index)) continue;
 
             if (_effects[index].IsAlive())
                 DrawStrips(spriteBatch, blitter, index, rimSlot, coreSlot);
@@ -150,12 +150,12 @@ public sealed class WordmarkAppear
 
     private static int GetStartFrame(int index)
     {
-        return index * RomFramesBetweenLetters;
+        return index * ArcadeFramesBetweenLetters;
     }
 
-    private int GetRomFrames()
+    private int GetArcadeFrames()
     {
-        return _clockUnits / ArcadeClock.UnitsPerRomFrame;
+        return _clockUnits / ArcadeClock.UnitsPerArcadeFrame;
     }
 
     private Rectangle GetLetterBounds(LetterSpan letter)

@@ -17,7 +17,7 @@ namespace Robotron2084.Graphics;
 ///         28 of them. The second (<c>$88CD</c>) keeps the ring moving: 50 times a second it takes six of the 28 W slots
 ///         in
 ///         turn, erases that slot's last W and draws it again at the next place on the path, in the path's next colour.
-///         It runs for <see cref="MovingRomFrames" /> fiftieths of a second.
+///         It runs for <see cref="MovingArcadeFrames" /> fiftieths of a second.
 ///     </para>
 ///     <para>
 ///         The ROM waits for the video beam to clear a W's rows before it redraws it (<c>$88EF</c>, to avoid tearing). The
@@ -40,9 +40,9 @@ public sealed class WilliamsLogoBorder
 
     /// <summary>
     ///     ROM <c>$87E9</c>: the first phase draws a W every this many fiftieths of a second. One less than this is the
-    ///     value <see cref="_sleepRomFrames" /> is set to after each draw, and it then counts down.
+    ///     value <see cref="_sleepArcadeFrames" /> is set to after each draw, and it then counts down.
     /// </summary>
-    private const int DrawIntervalRomFrames = 4;
+    private const int DrawIntervalArcadeFrames = 4;
 
     /// <summary>
     ///     ROM <c>$8960</c>: a slot's W is at this column until it has drawn one (nothing is there)... It is stored in
@@ -63,13 +63,13 @@ public sealed class WilliamsLogoBorder
     private const int LogoCount = 28;
 
     /// <summary>ROM <c>$88DB</c>: the second phase moves this many W's each fiftieth of a second.</summary>
-    private const int MovesPerRomFrame = 6;
+    private const int MovesPerArcadeFrame = 6;
 
     /// <summary>
     ///     ROM <c>$88D6</c>: the second phase runs for this many fiftieths of a second (704). It is the value
     ///     <see cref="_movingFramesRemaining" /> is set to when the logos start to move, and it then counts down.
     /// </summary>
-    private const int MovingRomFrames = 0x02C0;
+    private const int MovingArcadeFrames = 0x02C0;
 
     private readonly SpriteMask _logoMask;
     private readonly (int Column, int Row)[] _logoPositions = new (int, int)[LogoCount];
@@ -81,7 +81,7 @@ public sealed class WilliamsLogoBorder
     private bool _isMoving;
     private int _logoIndex;
     private int _movingFramesRemaining;
-    private int _sleepRomFrames;
+    private int _sleepArcadeFrames;
 
     /// <summary>Starts the ring from nothing.</summary>
     /// <param name="logo">The W's shape: the mask of <c>WilliamsLogo.png</c>, its opaque pixels the colour-1 pixels.</param>
@@ -131,18 +131,18 @@ public sealed class WilliamsLogoBorder
     public void Tick()
     {
         _clockUnits += ArcadeClock.UnitsPerPortTick;
-        while (_clockUnits >= ArcadeClock.UnitsPerRomFrame)
+        while (_clockUnits >= ArcadeClock.UnitsPerArcadeFrame)
         {
-            _clockUnits -= ArcadeClock.UnitsPerRomFrame;
-            AdvanceRomFrame();
+            _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
+            AdvanceArcadeFrame();
         }
     }
 
-    private void AdvanceRomFrame()
+    private void AdvanceArcadeFrame()
     {
-        if (_sleepRomFrames > 0)
+        if (_sleepArcadeFrames > 0)
         {
-            _sleepRomFrames--;
+            _sleepArcadeFrames--;
             return;
         }
 
@@ -177,13 +177,13 @@ public sealed class WilliamsLogoBorder
         Blit(_path.Column, _path.Row, _path.GetSlot());
         _path.Step();
         _drawnLogoCount++;
-        _sleepRomFrames = DrawIntervalRomFrames - 1;
+        _sleepArcadeFrames = DrawIntervalArcadeFrames - 1;
     }
 
     /// <summary>ROM <c>$88E5</c>: one fiftieth of a second of the second phase.</summary>
     private void MoveSomeLogos()
     {
-        for (var move = 0; move < MovesPerRomFrame; move++)
+        for (var move = 0; move < MovesPerArcadeFrame; move++)
         {
             if (_isFirstMove)
             {
@@ -212,7 +212,7 @@ public sealed class WilliamsLogoBorder
         _logoIndex = 0;
         _isMoving = true;
         _isFirstMove = true;
-        _movingFramesRemaining = MovingRomFrames;
+        _movingFramesRemaining = MovingArcadeFrames;
         MoveSomeLogos();
     }
 }

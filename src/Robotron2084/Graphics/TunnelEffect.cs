@@ -94,9 +94,9 @@ public sealed class TunnelEffect
     ///     <see cref="ScreenSize.Width" />x<see cref="ScreenSize.Height" /> real pixels, so a ROM pixel is
     ///     that ratio across and that ratio down (notes §84).
     /// </summary>
-    private const float RomPixelToScreenX = ScreenSize.Width / (float)HudLayout.ArcadeScreenWidth;
+    private const float ArcadePixelToScreenX = ScreenSize.Width / (float)HudLayout.ArcadeScreenWidth;
 
-    private const float RomPixelToScreenY = ScreenSize.Height / (float)HudLayout.ArcadeScreenHeight;
+    private const float ArcadePixelToScreenY = ScreenSize.Height / (float)HudLayout.ArcadeScreenHeight;
 
     /// <summary>The erase pass's rings, drawn ON TOP of the coloured ones in black.</summary>
     private readonly List<Ring> _blackRings = new();
@@ -233,14 +233,14 @@ public sealed class TunnelEffect
     ///     one to a whole pixel is what drew a black line between every band and made the inner
     ///     rings read as thin outlines (notes §84/§85).
     /// </summary>
-    internal static int ToPixelX(int romPixel)
+    internal static int ToPixelX(int arcadePixel)
     {
-        return (int)MathF.Round(romPixel * RomPixelToScreenX);
+        return (int)MathF.Round(arcadePixel * ArcadePixelToScreenX);
     }
 
-    internal static int GetRowY(int romRow)
+    internal static int GetRowY(int arcadeRow)
     {
-        return (int)MathF.Round(romRow * RomPixelToScreenY);
+        return (int)MathF.Round(arcadeRow * ArcadePixelToScreenY);
     }
 
     /// <summary>Blits one edge rectangle, already in the port's screen pixels.</summary>

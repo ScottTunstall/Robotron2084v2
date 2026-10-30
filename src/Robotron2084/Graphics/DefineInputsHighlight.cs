@@ -25,7 +25,7 @@ public sealed class DefineInputsHighlight
     ///     The chase takes a step every 3 fiftieths of a second — the presentation page's own rate (ROM
     ///     $8A4F/$8A68), the same clock the intro pages' colour processes run on.
     /// </summary>
-    private const int RomFramesPerStep = 3;
+    private const int ArcadeFramesPerStep = 3;
 
     /// <summary>
     ///     The presentation page chases through SEVEN entries (notes §106), so the text drawn in one
@@ -61,7 +61,7 @@ public sealed class DefineInputsHighlight
     public void Update(GamePalette palette)
     {
         _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
-        var stepClockUnits = ArcadeClock.ToClockUnits(RomFramesPerStep);
+        var stepClockUnits = ArcadeClock.ToClockUnits(ArcadeFramesPerStep);
         if (_chaseClockUnits < stepClockUnits) return;
 
         _chaseClockUnits -= stepClockUnits;
