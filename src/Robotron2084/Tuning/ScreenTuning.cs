@@ -3,8 +3,8 @@ namespace Robotron2084.Tuning;
 /// <summary>The between-game screens: wave clear, game over, entries maximum and the high score pages.</summary>
 public static class ScreenTuning
 {
-    /// <summary>ONLY5P's <c>NAP $60</c>: the "5 ENTRIES MAXIMUM" page is held for 60 <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieths of a second</see> (1.2 s).</summary>
-    public const int EntriesMaximumHoldRomFrames = 0x60;
+    /// <summary>ONLY5P's <c>NAP $60</c>: the "5 ENTRIES MAXIMUM" page is held for 60 <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see> (1.2 s).</summary>
+    public const int EntriesMaximumHoldArcadeFrames = 0x60;
 
     // INITIALS ENTRY (notes §116) — RRTESTC's ENDGAM/EGSUB, RRET's messages 95 (CONG) and 100
     // (ONLY5P), and RRTESTB's GETLET. The page's geometry is InitialsEntryLayout's and the input
@@ -15,7 +15,7 @@ public static class ScreenTuning
     // The game-over message: RRG23 PLEND prints string 40 (GOMP = "GAME OVER") in
     // the LARGE font, colour $AA, at CURSAB $3E,$80, and waits NAP 120. Its cursor is
     // the Messages block's GameOverMessageColumn/Row.
-    public const int GameOverMessageRomFrames = 120;
+    public const int GameOverMessageArcadeFrames = 120;
 
     // The wall is NOT one slot: FRAMER's flavour starts at $88 and GETA walks it down by
     // $11 a stroke, so each of the eight visible strokes takes its own slot — see
@@ -31,9 +31,9 @@ public static class ScreenTuning
 
     // HIGH SCORE TABLE (notes §98) — RRTABLE's TABLE, RRTESTC's CMOS lists and
     // RRET's texts; every value is a ROM constant.
-    public const int HighScoreHoldRomFrames = 200 * 3;
+    public const int HighScoreHoldArcadeFrames = 200 * 3;
 
-    public const int HighScoreLeaveCheckRomFrames = 4;
+    public const int HighScoreLeaveCheckArcadeFrames = 4;
 
     public const int HighScoreLeaveChecks = 255;
 
@@ -45,15 +45,15 @@ public static class ScreenTuning
     public const int HighScoreTodaySlot = 9;
 
     /// <summary>ROM RRG23 PLEND3: "PLAYER n GAME OVER" is shown for <c>NAP $60</c>.</summary>
-    public const int PlayerGameOverMessageRomFrames = 0x60;
+    public const int PlayerGameOverMessageArcadeFrames = 0x60;
 
     // SCRMEP: COLOR $77 = slot 7
     /// <summary>
     ///     ROM RRG23 PLS0D: the "PLAYER n" message is drawn and the game waits
-    ///     <c>NAP 115</c> before erasing it — 115 <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieths of a second</see> at a turn start in a
+    ///     <c>NAP 115</c> before erasing it — 115 <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see> at a turn start in a
     ///     2-player game (1-player games skip it: <c>LDA PLRCNT / DECA / BEQ</c>).
     /// </summary>
-    public const int PlayerTurnMessageRomFrames = 115;
+    public const int PlayerTurnMessageArcadeFrames = 115;
 
     // Wave clear
     public const int WaveClearDisplayTicks = 90; // 1.5s at 60Hz fixed timestep

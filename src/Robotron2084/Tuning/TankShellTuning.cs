@@ -4,8 +4,8 @@ namespace Robotron2084.Tuning;
 public static class TankShellTuning
 {
     /// <summary>
-    ///     The fewest <see cref="Robotron2084.Core.RomFrameTimer">beats</see> a shell gets before it fizzles out. A <see cref="Robotron2084.Core.RomFrameTimer">beat</see> comes every <see cref="BeatIntervalRomFrames" />
-    ///     <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieths of a second</see>.
+    ///     The fewest <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a shell gets before it fizzles out. A <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> comes every <see cref="BeatIntervalArcadeFrames" />
+    ///     <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>.
     /// </summary>
     /// <remarks>
     ///     Original source: <c>RRTK4.ASM</c> <c>TNKFX1</c>, <c>ADDA #$30</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (
@@ -13,19 +13,19 @@ public static class TankShellTuning
     /// </remarks>
     public const int LifeBaseBeats = 48;
 
-    /// <summary>Extra random <see cref="Robotron2084.Core.RomFrameTimer">beats</see> on top of <see cref="LifeBaseBeats" />: from none up to one less than this.</summary>
+    /// <summary>Extra random <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> on top of <see cref="LifeBaseBeats" />: from none up to one less than this.</summary>
     /// <remarks>
     ///     Original source: <c>RRTK4.ASM</c> <c>TNKFX1</c>, <c>ANDA #$1F</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (
     ///     <c>$4E46</c>) at <c>$4F86</c>.
     /// </remarks>
     public const int LifeExtraBeatsMaxExclusive = 32;
 
-    /// <summary>How many <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieths of a second</see> pass between one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> of a shell and the next.</summary>
+    /// <summary>How many <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see> pass between one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> of a shell and the next.</summary>
     /// <remarks>
     ///     Original source: <c>RRTK4.ASM</c> <c>SHELLP</c>, <c>NAP 2</c>. Disassembly:
     ///     <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>) at <c>$4FB3</c>.
     /// </remarks>
-    public const int BeatIntervalRomFrames = 2;
+    public const int BeatIntervalArcadeFrames = 2;
 
     /// <summary>How far to the right of the tank's top-left corner a shell starts, in columns.</summary>
     /// <remarks>

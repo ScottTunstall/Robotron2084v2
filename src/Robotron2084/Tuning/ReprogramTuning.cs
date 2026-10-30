@@ -46,5 +46,5 @@ public static class ReprogramTuning
     /// </summary>
     public const int ShapeSlot = 0x0B;
 
-    public const int StepIntervalRomFrames = 3; // NAP 2 + the beat vblank
+    public const int StepIntervalArcadeFrames = 3; // NAP 2 + the beat vblank
 }

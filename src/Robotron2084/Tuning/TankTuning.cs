@@ -6,10 +6,10 @@ public static class TankTuning
     /// <summary>
     ///     ROM `TNKSPD` = **2**, and it is a CONSTANT, not a wave value: `LDA #2 / STA
     ///     TNKSPD` in the per-level reset (RRG23:677). `TANK6` does `LDA TNKSPD / LDX
-    ///     #TANKL / JMP SLEEP`, so the tank's process re-runs every TNKSPD <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">vblanks</see> — a
-    ///     <see cref="Robotron2084.Core.RomFrameTimer">beat</see> of 2 <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">vblanks</see> plus the frame it runs in = **3 <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieths of a second</see>**.
+    ///     #TANKL / JMP SLEEP`, so the tank's process re-runs every TNKSPD <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">vblanks</see> — a
+    ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> of 2 <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">vblanks</see> plus the frame it runs in = **3 <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>**.
     /// </summary>
-    public const int BeatIntervalRomFrames = 3;
+    public const int BeatIntervalArcadeFrames = 3;
 
     // $4CAC (`TNKDRP`): the tank's blitter address = the quark's + `ADDD #$0206`,
     // i.e. **+2 COLUMNS and +6 ROWS — not +2 px**. A column is 2 px (notes §53),
@@ -27,7 +27,7 @@ public static class TankTuning
     public const int BirthOffsetRowsOnTopWall = 6;
 
     /// <summary>ROM `MTANK`: `NAP 12` per grow step.</summary>
-    public const int GrowIntervalRomFrames = 12;
+    public const int GrowIntervalArcadeFrames = 12;
 
     /// <summary>ROM `MTANK`: grow animation frames `MTNKP1..4` — 4x4, 8x7, 8x8, 12x12 arcade px (notes §53).</summary>
     public const int GrowSteps = 4;
@@ -36,7 +36,7 @@ public static class TankTuning
     ///     ROM `TANK1`: `LDA PD4,U / CLRB / ASRA / RORB / ADDD OX16,X` — the X step is
     ///     the direction byte HALVED, exactly like the player's table, so ±1 means 0.5
     ///     COLUMNS = **1 arcade px**; `ADDB PD5,U` steps Y by 1 ROW = 1 px. Both axes
-    ///     therefore move one pixel per <see cref="Robotron2084.Core.RomFrameTimer">BEAT</see> (the port moved one unit per <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, ~1.8x
+    ///     therefore move one pixel per <see cref="Robotron2084.Core.ArcadeFrameTimer">BEAT</see> (the port moved one unit per <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, ~1.8x
     ///     too fast).
     /// </summary>
     public const int StepArcadePixels = 1;

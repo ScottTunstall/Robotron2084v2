@@ -6,7 +6,7 @@ public static class SparkTuning
     // Enforcer (R5 retune, notes §17)
     public const int GlobalActiveSparkCap = 20; // R5 $1412: $14 (20) sparks max
 
-    public const int SparkAccelRomRange = 16;
+    public const int SparkAccelArcadeRange = 16;
 
     public const int SparkAimDivisor = 64;
 
@@ -19,9 +19,9 @@ public static class SparkTuning
 
     public const int SparkLeftWallJitterColumns = 16;
 
-    public const int SparkLifeMaxRomFrames = 140;
+    public const int SparkLifeMaxArcadeFrames = 140;
 
-    public const int SparkLifeMinRomFrames = 80;
+    public const int SparkLifeMinArcadeFrames = 80;
 
     public const int SparkMaxSpeed = 8;
 
@@ -51,7 +51,7 @@ public static class SparkTuning
     // Port units: 1 ROM column = 2 arcade px = ToPortPixelsFromArcadePixels(2) port px = 4 port px,
     // so one frame advances deltaPort/64 port px and the acceleration is
     // a/64 port px per frame of velocity. Both live in 1/256-px fixed point.
-    public const int BeatIntervalRomFrames = 4; // NAP 4
+    public const int BeatIntervalArcadeFrames = 4; // NAP 4
 
     // ROM: the delta is covered in 64 frames
 

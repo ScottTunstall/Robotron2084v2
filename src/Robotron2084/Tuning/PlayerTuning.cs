@@ -27,9 +27,9 @@ public static class PlayerTuning
     /// </summary>
     public const int PlayerAutoFireTicks = 12;
 
-    public const int PlayerDeathColourRomFrames = 6;
+    public const int PlayerDeathColourArcadeFrames = 6;
 
-    public const int PlayerDeathFadeRomFrames = 4;
+    public const int PlayerDeathFadeArcadeFrames = 4;
 
     public const int PlayerDeathFadeSlot = 0x0C;
 
@@ -44,7 +44,7 @@ public static class PlayerTuning
     // 8-byte fade table = 108 fiftieths of a second (129.6 port ticks).
     public const int PlayerDeathFlashIterations = 10;
 
-    public const int PlayerDeathWhiteRomFrames = 2;
+    public const int PlayerDeathWhiteArcadeFrames = 2;
 
     public const int PlayerDeathWhiteSlot = 0x09;
 
