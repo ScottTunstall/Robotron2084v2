@@ -178,7 +178,7 @@ public sealed class GorfTests
         // The field has no grunts of its own and a cap of 30, so nothing holds the drops back.
         var (field, _) = RunAGorfAcross(new LevelParameters(1, 30), 12, 0, 0, randomNumber, randomNumber, randomNumber);
 
-        Assert.Equal(3 * expected, field.Entities.Grunts.GetLiveCount());
+        Assert.Equal(3 * expected, field.Entities.Grunts.Count(entity => !entity.IsDead()));
     }
 
     [Fact]
@@ -188,8 +188,8 @@ public sealed class GorfTests
         var (small, _) = RunAGorfAcross(new LevelParameters(1, 30), 4, 0, 0, 3, 3, 3);
         var (big, _) = RunAGorfAcross(new LevelParameters(1, 30), 12, 0, 0, 11, 11, 11);
 
-        Assert.Equal(6, small.Entities.Grunts.GetLiveCount());
-        Assert.Equal(18, big.Entities.Grunts.GetLiveCount());
+        Assert.Equal(6, small.Entities.Grunts.Count(entity => !entity.IsDead()));
+        Assert.Equal(18, big.Entities.Grunts.Count(entity => !entity.IsDead()));
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public sealed class GorfTests
         // The wave's grunt count is 2, but a level always holds at least six: three stops of six drop one burst and no more.
         var (field, _) = RunAGorfAcross(new LevelParameters(1, 2), 12, 0, 0, 11, 11, 11);
 
-        Assert.Equal(GorfTuning.MinimumGruntCap, field.Entities.Grunts.GetLiveCount());
+        Assert.Equal(GorfTuning.MinimumGruntCap, field.Entities.Grunts.Count(entity => !entity.IsDead()));
     }
 
     [Fact]

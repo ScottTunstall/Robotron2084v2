@@ -61,7 +61,7 @@ public sealed class SpheroidEnforcerTimingTests
             for (var tick = 0; tick < 2000 && !spheroid.IsDead(); tick++) spheroid.Update(OneTick(), field);
 
             Assert.Equal(EntityLifeState.Dead, spheroid.LifeState);
-            var dropped = field.Entities.Enforcers.GetLiveCount();
+            var dropped = field.Entities.Enforcers.Count(entity => !entity.IsDead());
             Assert.InRange(dropped, 1, 5);
             observed.Add(dropped);
         }
@@ -85,7 +85,7 @@ public sealed class SpheroidEnforcerTimingTests
             for (var tick = 1; tick <= WaveStartTicks.UntilLive(field) + 17; tick++)
             {
                 field.Update(OneTick());
-                Assert.True(field.Entities.Enforcers.GetLiveCount() == 0, $"seed {seed}: drop at tick {tick}");
+                Assert.True(field.Entities.Enforcers.Count(entity => !entity.IsDead()) == 0, $"seed {seed}: drop at tick {tick}");
             }
         }
     }

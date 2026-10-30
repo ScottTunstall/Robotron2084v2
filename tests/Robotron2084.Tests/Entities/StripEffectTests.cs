@@ -464,7 +464,7 @@ public sealed class StripEffectTests
 
         Assert.Equal(EntityLifeState.Dead, enforcer.LifeState); // no Dying state at all
         Assert.Single(field.Entities.Explosions);
-        Assert.Equal(0, field.Entities.Enforcers.GetLiveCount());
+        Assert.Equal(0, field.Entities.Enforcers.Count(entity => !entity.IsDead()));
     }
 
     [Fact]

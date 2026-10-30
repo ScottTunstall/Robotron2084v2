@@ -70,11 +70,11 @@ public sealed class EntityOwnRulesTests
             new(TestSprites.Shared, new IntVector2(10, 10)),
             new(TestSprites.Shared, new IntVector2(50, 10))
         };
-        Assert.Equal(2, list.GetLiveCount());
+        Assert.Equal(2, list.Count(entity => !entity.IsDead()));
 
         // A shrivelling electrode is dying, not dead, so it still counts.
         list[0].Kill();
-        Assert.Equal(2, list.GetLiveCount());
+        Assert.Equal(2, list.Count(entity => !entity.IsDead()));
     }
 
     [Fact]

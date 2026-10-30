@@ -105,7 +105,7 @@ public sealed class QuarkTankBehaviourTests
 
         // Robots are frozen until the game goes live at the start of the wave; the
         // first drop is due within 2 ticks after it ends.
-        for (var tick = 0; tick < 200 && field.Entities.Tanks.GetLiveCount() == 0; tick++) field.Update(OneTick());
+        for (var tick = 0; tick < 200 && field.Entities.Tanks.Count(entity => !entity.IsDead()) == 0; tick++) field.Update(OneTick());
 
         var tank = Assert.Single(field.Entities.Tanks);
         // The drop happens after the quark's own move in the same Update, so at
