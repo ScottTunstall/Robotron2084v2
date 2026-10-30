@@ -87,7 +87,8 @@ public sealed class ControlSettings
         var controls = _players[playerIndex];
         var move = controls.GetMoveDirection(keyboardState, padOne, padTwo);
         var shoot = controls.GetShootDirection(keyboardState, padOne, padTwo);
-        var ownPad = playerIndex == 1 ? padTwo : padOne;
+        var ownPad = padOne;
+        if (playerIndex == 1) ownPad = padTwo;
 
         var fire = controls.IsFiring(keyboardState, padOne, padTwo)
                    || keyboardState.IsKeyDown(FireAliasKey)

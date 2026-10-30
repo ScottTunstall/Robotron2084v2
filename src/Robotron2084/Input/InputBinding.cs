@@ -56,30 +56,40 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
         dy = Math.Clamp(dy, -1, 1);
         if (dx == 0 && dy == 0) throw new ArgumentOutOfRangeException(nameof(dx), "a stick binding needs a direction");
 
+        var kind = InputBindingKind.GamePadLeftStick;
+        if (isRightStick) kind = InputBindingKind.GamePadRightStick;
+
         return new InputBinding(
-            isRightStick ? InputBindingKind.GamePadRightStick : InputBindingKind.GamePadLeftStick,
+            kind,
             GetDirectionCode(dx, dy),
             gamePadIndex);
     }
 
     public int GetDirectionX()
     {
-        return Kind is InputBindingKind.GamePadLeftStick or InputBindingKind.GamePadRightStick
-            ? Code / 3 - 1
-            : 0;
+        if (IsStick()) return Code / 3 - 1;
+
+        return 0;
     }
 
     public int GetDirectionY()
     {
-        return Kind is InputBindingKind.GamePadLeftStick or InputBindingKind.GamePadRightStick
-            ? Code % 3 - 1
-            : 0;
+        if (IsStick()) return Code % 3 - 1;
+
+        return 0;
+    }
+
+    /// <summary>Whether this binding is a direction on one of the gamepad sticks.</summary>
+    private bool IsStick()
+    {
+        return Kind is InputBindingKind.GamePadLeftStick or InputBindingKind.GamePadRightStick;
     }
 
     /// <summary>True while this binding is held down, per the ROM's active-HIGH switch convention.</summary>
     public bool IsHeld(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
     {
-        var pad = GamePadIndex == 1 ? padTwo : padOne;
+        var pad = padOne;
+        if (GamePadIndex == 1) pad = padTwo;
 
         return Kind switch
         {
@@ -106,8 +116,8 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
         {
             InputBindingKind.Key => ((Keys)Code).ToString().ToUpperInvariant(),
             InputBindingKind.GamePadButton => $"P{GamePadIndex + 1} {((Buttons)Code).ToString().ToUpperInvariant()}",
-            InputBindingKind.GamePadLeftStick or InputBindingKind.GamePadRightStick =>
-                $"P{GamePadIndex + 1} {(Kind == InputBindingKind.GamePadRightStick ? "RIGHT STICK" : "LEFT STICK")} {GetDirectionName(Code)}",
+            InputBindingKind.GamePadLeftStick => $"P{GamePadIndex + 1} LEFT STICK {GetDirectionName(Code)}",
+            InputBindingKind.GamePadRightStick => $"P{GamePadIndex + 1} RIGHT STICK {GetDirectionName(Code)}",
             _ => "NONE"
         };
     }

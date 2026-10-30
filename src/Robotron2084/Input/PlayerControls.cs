@@ -39,7 +39,8 @@ public sealed class PlayerControls
     {
         var controls = new PlayerControls();
         var isSecondPlayer = playerIndex == 1;
-        var pad = isSecondPlayer ? 1 : 0;
+        var pad = 0;
+        if (isSecondPlayer) pad = 1;
 
         (int dx, int dy)[] directions =
         [
@@ -53,12 +54,13 @@ public sealed class PlayerControls
             (1, 0) // ShootRight
         ];
 
-        Keys[] moveKeys = isSecondPlayer
-            ? [Keys.Up, Keys.Down, Keys.Left, Keys.Right]
-            : [Keys.W, Keys.S, Keys.A, Keys.D];
-        Keys[] shootKeys = isSecondPlayer
-            ? [Keys.NumPad8, Keys.NumPad5, Keys.NumPad4, Keys.NumPad6]
-            : [Keys.I, Keys.K, Keys.J, Keys.L];
+        Keys[] moveKeys = [Keys.W, Keys.S, Keys.A, Keys.D];
+        Keys[] shootKeys = [Keys.I, Keys.K, Keys.J, Keys.L];
+        if (isSecondPlayer)
+        {
+            moveKeys = [Keys.Up, Keys.Down, Keys.Left, Keys.Right];
+            shootKeys = [Keys.NumPad8, Keys.NumPad5, Keys.NumPad4, Keys.NumPad6];
+        }
 
         for (var i = 0; i < InputActions.All.Length; i++)
         {
@@ -67,8 +69,11 @@ public sealed class PlayerControls
             var index = i % 4;
             var (dx, dy) = directions[i];
 
+            var key = moveKeys[index];
+            if (shooting) key = shootKeys[index];
+
             controls[action] = new ActionBinding(
-                InputBinding.CreateKey(shooting ? shootKeys[index] : moveKeys[index]),
+                InputBinding.CreateKey(key),
                 InputBinding.CreateStick(pad, shooting, dx, dy));
         }
 
@@ -106,8 +111,10 @@ public sealed class PlayerControls
         GamePadState padOne,
         GamePadState padTwo)
     {
-        var value = (this[positive].IsHeld(keyboardState, padOne, padTwo) ? 1 : 0)
-                    - (this[negative].IsHeld(keyboardState, padOne, padTwo) ? 1 : 0);
+        var value = 0;
+        if (this[positive].IsHeld(keyboardState, padOne, padTwo)) value++;
+        if (this[negative].IsHeld(keyboardState, padOne, padTwo)) value--;
+
         return Math.Clamp(value, -1, 1);
     }
 }

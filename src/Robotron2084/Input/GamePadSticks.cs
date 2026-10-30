@@ -17,7 +17,9 @@ public static class GamePadSticks
     /// <summary>The stick's direction in SCREEN space (Y down-positive), or zero when centred.</summary>
     public static IntVector2 Read(GamePadState pad, bool isRightStick)
     {
-        var stick = isRightStick ? pad.ThumbSticks.Right : pad.ThumbSticks.Left;
+        var stick = pad.ThumbSticks.Left;
+        if (isRightStick) stick = pad.ThumbSticks.Right;
+
         if (stick.LengthSquared() < DeadZoneLengthSquared) return IntVector2.Zero;
 
         return new IntVector2(Math.Sign(stick.X), Math.Sign(-stick.Y));

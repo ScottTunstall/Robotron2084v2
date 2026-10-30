@@ -109,9 +109,13 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         var headingIntoWall = (move.X < 0 && position.X < bounds.X + clearance)
                               || (move.X > 0 && position.X > bounds.Right - clearance);
 
-        return headingIntoWall
-            ? move + new IntVector2(centre.X >= position.X ? 1 : -1, 0)
-            : move;
+        if (!headingIntoWall) return move;
+
+        var bendX = -1;
+        var isCentreToTheRight = centre.X >= position.X;
+        if (isCentreToTheRight) bendX = 1;
+
+        return move + new IntVector2(bendX, 0);
     }
 
     /// <summary>Bends the Y component toward the centre when the flee heads into the top or bottom wall.</summary>
@@ -126,9 +130,13 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         var headingIntoWall = (move.Y < 0 && position.Y < bounds.Y + clearance)
                               || (move.Y > 0 && position.Y > bounds.Bottom - clearance);
 
-        return headingIntoWall
-            ? move + new IntVector2(0, centre.Y >= position.Y ? 1 : -1)
-            : move;
+        if (!headingIntoWall) return move;
+
+        var bendY = -1;
+        var isCentreBelow = centre.Y >= position.Y;
+        if (isCentreBelow) bendY = 1;
+
+        return move + new IntVector2(0, bendY);
     }
 
     /// <summary>Picks this tick's raw direction: flee a robot inside the threat distance, else drift to the centre.</summary>
@@ -175,7 +183,8 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
             // first move (and the first stop) is adopted at once.
             _heldMove = move;
             _directionVotes = 0;
-            _holdTicks = move == IntVector2.Zero ? 0 : AttractTuning.DemoDirectionHoldTicks;
+            _holdTicks = AttractTuning.DemoDirectionHoldTicks;
+            if (move == IntVector2.Zero) _holdTicks = 0;
         }
 
         if (_holdTicks > 0) _holdTicks--;

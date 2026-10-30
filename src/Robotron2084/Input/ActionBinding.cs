@@ -22,12 +22,15 @@ public readonly record struct ActionBinding(InputBinding KeyBinding, InputBindin
     {
         get
         {
-            if (KeyBinding.Kind == InputBindingKind.None)
-                return PadBinding.Kind == InputBindingKind.None ? "NONE" : PadBinding.GetDisplayName();
+            var hasKey = KeyBinding.Kind != InputBindingKind.None;
+            var hasPad = PadBinding.Kind != InputBindingKind.None;
+            if (!hasKey && !hasPad) return "NONE";
 
-            return PadBinding.Kind == InputBindingKind.None
-                ? KeyBinding.GetDisplayName()
-                : $"{KeyBinding.GetDisplayName()} OR {PadBinding.GetDisplayName()}";
+            if (!hasKey) return PadBinding.GetDisplayName();
+
+            if (!hasPad) return KeyBinding.GetDisplayName();
+
+            return $"{KeyBinding.GetDisplayName()} OR {PadBinding.GetDisplayName()}";
         }
     }
 

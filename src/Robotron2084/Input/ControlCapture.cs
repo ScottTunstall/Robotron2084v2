@@ -62,8 +62,8 @@ public static class ControlCapture
 
     private static InputBinding GetNewlyPressedButton(int padIndex, InputSnapshot previous, InputSnapshot current)
     {
-        var previousPad = padIndex == 1 ? previous.PadTwo : previous.PadOne;
-        var currentPad = padIndex == 1 ? current.PadTwo : current.PadOne;
+        var previousPad = previous.GetPad(padIndex);
+        var currentPad = current.GetPad(padIndex);
 
         foreach (var button in CapturableButtons)
             if (currentPad.IsButtonDown(button) && !previousPad.IsButtonDown(button))
@@ -82,8 +82,8 @@ public static class ControlCapture
 
     private static InputBinding GetNewlyPressedStick(int padIndex, InputSnapshot previous, InputSnapshot current)
     {
-        var previousPad = padIndex == 1 ? previous.PadTwo : previous.PadOne;
-        var currentPad = padIndex == 1 ? current.PadTwo : current.PadOne;
+        var previousPad = previous.GetPad(padIndex);
+        var currentPad = current.GetPad(padIndex);
 
         foreach (var isRightStick in (bool[])[false, true])
         {
