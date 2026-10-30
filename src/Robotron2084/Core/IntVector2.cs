@@ -3,7 +3,7 @@ namespace Robotron2084.Core;
 /// <summary>
 ///     2D vector of plain integers — the only vector type used in gameplay code
 ///     (integer-math policy: no float/Vector2 anywhere in gameplay logic).
-///     Positions and velocities are per fixed-timestep tick.
+///     Positions and velocities are per fixed-timestep <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.
 /// </summary>
 public readonly record struct IntVector2(int X, int Y)
 {

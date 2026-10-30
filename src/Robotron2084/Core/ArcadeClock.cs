@@ -1,65 +1,98 @@
 namespace Robotron2084.Core;
 
-/// <summary>The arcade's frame clock expressed in whole numbers (notes §52).</summary>
-/// <remarks>
-///     <para>
-///         A fiftieth of a second is 6/5 of a port tick, so both are whole numbers of a CLOCK UNIT: a port tick
-///         is <see cref="UnitsPerPortTick" /> units and a fiftieth of a second is <see cref="UnitsPerRomFrame" />.
-///         A timer adds <see cref="UnitsPerPortTick" /> each tick and fires each time it has gathered a
-///         fiftieth of a second's worth, carrying the remainder, so it never drifts.
-///     </para>
-///     <para>
-///         <b>Why a third unit.</b> The arcade board redraws the screen 50 times a second and its game
-///         logic is driven straight off that redraw signal (the "vertical blank", or "vblank", interrupt),
-///         so the ROM counts its delays in <i>fiftieths of a second</i> (1 fiftieth of a second = 1/50 second). This port
-///         (this C# version of the game, not the arcade machine) runs a
-///         fixed 60-updates-per-second game loop (MonoGame's fixed time step, switched on in <see cref="RobotronGame" />),
-///         so its own timing unit — a <i>port tick</i> — is 1/60
-///         second. Since 60/50 reduces to 6/5, one fiftieth of a second of arcade time is exactly 6/5 = 1.2 port
-///         ticks, and 1.2 is not a whole number: a timer cannot simply count down 4.8 ticks. Floating
-///         point would work but drifts out of sync over a long session, so a timer counts in clock units
-///         instead — the smallest unit for which both a port tick (5 units) and a fiftieth of a second (6 units) are
-///         whole. Each tick it adds 5; when it has gathered <c>romFrames * 6</c> units the timed action
-///         fires and that many units are subtracted, carrying any remainder forward. That holds the
-///         long-run average exactly on the arcade's clock, with no drift and no floating point. See notes
-///         §52 for the derivation and the bug (entities running 17-20% fast) that this pattern replaced.
-///     </para>
-/// </remarks>
+/// <summary>The units the game measures time in, and how to change one into another.</summary>
 public static class ArcadeClock
 {
-    /// <summary>Clock units in one port tick (1/60 s).</summary>
-    public const int UnitsPerPortTick = 5;
+    /// <summary>How many ticks the game has each second.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             A tick is one call of <see cref="Robotron2084.RobotronGame.Update(Microsoft.Xna.Framework.GameTime)" />.
+    ///         </item>
+    ///         <item>The game's code only runs during a tick, so nothing can happen between two ticks.</item>
+    ///         <item><see cref="Robotron2084.RobotronGame" /> sets MonoGame's fixed time step from this.</item>
+    ///     </list>
+    /// </remarks>
+    public const int PortTicksPerSecond = 60;
 
-    /// <summary>Clock units in one fiftieth of a second (1/50 s).</summary>
-    public const int UnitsPerRomFrame = 6;
+    /// <summary>How many fiftieths of a second there are in a second.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             The arcade redrew its screen this many times a second, and ran its game code once for each redraw.
+    ///         </item>
+    ///         <item>
+    ///             So the arcade measured every wait in these. Names in the code call one a ROM frame
+    ///             (<c>...RomFrames</c>), and the arcade's source calls the redraw a vblank.
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    public const int RomFramesPerSecond = 50;
+
+    /// <summary>How many clock units there are in a second.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             A clock unit is a abstraction to make translating arcade game time into this port game time easier. Both a tick (<see cref="PortTicksPerSecond" />) and a fiftieth
+    ///             of a second (<see cref="RomFramesPerSecond" />) are a whole number of clock units.
+    ///         </item>
+    ///         <item>
+    ///             That lets timers count both in <c>int</c>s, so nothing is lost to rounding. This is the smallest
+    ///             number that both <see cref="PortTicksPerSecond" /> and <see cref="RomFramesPerSecond" /> divide into.
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    public const int ClockUnitsPerSecond = 300;
+
+    /// <summary>How many clock units (<see cref="ClockUnitsPerSecond" />) there are in one tick.</summary>
+    public const int UnitsPerPortTick = ClockUnitsPerSecond / PortTicksPerSecond;
+
+    /// <summary>How many clock units (<see cref="ClockUnitsPerSecond" />) there are in one fiftieth of a second.</summary>
+    public const int UnitsPerRomFrame = ClockUnitsPerSecond / RomFramesPerSecond;
 
     /// <summary>
-    ///     Converts a delay in fiftieths of a second to the equivalent number of port ticks, so every timer in
-    ///     this port waits for the same real-world length of time the arcade did.
+    ///     How often the arcade moves everything that is moving, in fiftieths of a second
+    ///     (<see cref="RomFramesPerSecond" />).
     /// </summary>
+    /// <remarks>ROM: <c>RRS22.ASM</c> <c>OPB80</c>, which moves every moving object once each frame.</remarks>
+    public const int MoveIntervalRomFrames = 1;
+
+    /// <summary>
+    ///     Changes fiftieths of a second (<see cref="RomFramesPerSecond" />) into ticks
+    ///     (<see cref="PortTicksPerSecond" />), rounding down.
+    /// </summary>
+    /// <param name="romFrames">The time, in fiftieths of a second.</param>
+    /// <returns>The time in ticks, rounded down to a whole tick.</returns>
     /// <remarks>
-    ///     Truncates, so it is one tick early for a period that does not divide evenly — see
-    ///     <see cref="ArcadeClock" /> for the clock itself and <see cref="ToPortTicksRoundedUp" /> for the
-    ///     first tick a period actually fires on.
+    ///     Rounding down means it can be a tick shorter than a <see cref="RomFrameTimer" /> with the same wait. Use
+    ///     <see cref="ToPortTicksRoundedUp" /> to find the tick a <see cref="RomFrameTimer" /> first says "over" on.
     /// </remarks>
     public static int ToPortTicks(int romFrames)
     {
-        return romFrames * UnitsPerRomFrame / UnitsPerPortTick;
+        return ToClockUnits(romFrames) / UnitsPerPortTick;
     }
 
     /// <summary>
-    ///     The FIRST port tick on which a <paramref name="romFrames" />-period clock running on the
-    ///     clock units described on <see cref="ArcadeClock" /> fires:
-    ///     <c>ceil(romFrames * 6 / 5)</c>. Use this in tests that tick to a boundary —
-    ///     <see cref="ToPortTicks" /> TRUNCATES, so it is always one tick too early for a short
-    ///     period (<c>ToPortTicks(3)</c> = 3, but the step actually lands on tick 4).
+    ///     Changes fiftieths of a second (<see cref="RomFramesPerSecond" />) into ticks
+    ///     (<see cref="PortTicksPerSecond" />), rounding up.
     /// </summary>
+    /// <param name="romFrames">The time, in fiftieths of a second.</param>
+    /// <returns>The time in ticks, rounded up to a whole tick.</returns>
+    /// <remarks>
+    ///     This is the tick on which a new <see cref="RomFrameTimer" /> first says this wait is over. Tests use it to
+    ///     tick to that moment.
+    /// </remarks>
     public static int ToPortTicksRoundedUp(int romFrames)
     {
-        return (romFrames * UnitsPerRomFrame + 4) / UnitsPerPortTick;
+        return (ToClockUnits(romFrames) + UnitsPerPortTick - 1) / UnitsPerPortTick;
     }
 
-    /// <summary>A number of fiftieths of a second, in clock units.</summary>
+    /// <summary>
+    ///     Changes fiftieths of a second (<see cref="RomFramesPerSecond" />) into clock units
+    ///     (<see cref="ClockUnitsPerSecond" />).
+    /// </summary>
+    /// <param name="romFrames">The time, in fiftieths of a second.</param>
+    /// <returns>The same time, in clock units.</returns>
     public static int ToClockUnits(int romFrames)
     {
         return romFrames * UnitsPerRomFrame;
