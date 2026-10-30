@@ -16,9 +16,10 @@ internal sealed class HulkVsHumanCollisionRule : ICollisionRule
 
         foreach (var human in entities.GetFamilyMembers())
         {
-            var hulk = human.IsGraspable()
-                ? entities.Hulks.FirstOrDefault(candidate => candidate.IsAlive() && scene.Touches(candidate, human))
-                : null;
+            Hulk? hulk = null;
+            if (human.IsGraspable())
+                hulk = entities.Hulks.FirstOrDefault(candidate => candidate.IsAlive() && scene.Touches(candidate, human));
+
             if (hulk is not null) yield return new HulkKilledHumanResult(hulk, human);
         }
     }
