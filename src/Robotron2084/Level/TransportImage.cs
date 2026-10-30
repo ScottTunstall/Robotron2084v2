@@ -22,8 +22,7 @@ namespace Robotron2084.Level;
 ///     one group of pixels on, on with a sparkle, or off. The arcade stores two pixels to a byte, a
 ///     column at a time, so a group names pixels by byte, and this class maps them back to a pixel's
 ///     place. Where a plain "on" meets a pixel that is still sparkling, the arcade mixes the two colour
-///     numbers; here the pixel simply takes its own colour.</item>
-///     </list>
+///     numbers; here the pixel simply takes its own colour.   
 /// </remarks>
 public sealed class TransportImage
 {

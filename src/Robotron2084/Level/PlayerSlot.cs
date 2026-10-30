@@ -93,7 +93,7 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives,
         return Math.Max(0, Lives - 1);
     }
 
-    /// <summary>How many little men are drawn on the screen: the spare men, though never more than the screen has room for.</summary>
+    /// <summary>How many little men are drawn on the screen: minimum between the spare men and the room allocated for men on screen.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>MANDSV</c>, which stops at <c>#$07</c>.</item>

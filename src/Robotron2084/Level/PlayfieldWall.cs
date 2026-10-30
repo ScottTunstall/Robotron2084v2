@@ -59,8 +59,7 @@ public sealed class PlayfieldWall
 
         spriteBatch.Draw(wallPixel, new Rectangle(outer.X, outer.Y, outer.Width, Thickness), color);
         spriteBatch.Draw(wallPixel, new Rectangle(outer.X, outer.Bottom - Thickness, outer.Width, Thickness), color);
-        spriteBatch.Draw(wallPixel, new Rectangle(outer.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height),
-            color);
+        spriteBatch.Draw(wallPixel, new Rectangle(outer.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height), color);
         spriteBatch.Draw(wallPixel,
             new Rectangle(outer.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height), color);
     }

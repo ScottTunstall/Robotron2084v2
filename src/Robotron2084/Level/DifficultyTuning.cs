@@ -25,8 +25,7 @@ namespace Robotron2084.Level;
 ///     with the multiplier's top bit saying that the value falls as the difficulty rises, as a delay
 ///     does. An easy setting is quietly raised to the recommended one for a player who is doing well,
 ///     which stops an easy setting carrying a strong player through the late waves (<c>$2B8C</c> to
-///     <c>$2B9E</c>).</item>
-///     </list>
+///     <c>$2B9E</c>).
 /// </remarks>
 public static class DifficultyTuning
 {

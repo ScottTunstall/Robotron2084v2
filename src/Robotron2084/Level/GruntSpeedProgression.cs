@@ -330,7 +330,7 @@ public sealed class GruntSpeedProgression
         _checkClockUnits -= ArcadeClock.ToClockUnits(_checkWaitArcadeFrames);
         _checkWaitArcadeFrames = CheckIntervalArcadeFrames;
 
-        if (grunts.GetLiveCount() >= GruntCountThatHoldsTheFloor) return;
+        if (grunts.Count(entity => !entity.IsDead()) >= GruntCountThatHoldsTheFloor) return;
 
         var floorStep = _hasPlayerScoredSinceLastCheck ? SmallFloorStep : LargeFloorStep;
         _hasPlayerScoredSinceLastCheck = false;

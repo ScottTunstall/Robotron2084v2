@@ -21,8 +21,7 @@ namespace Robotron2084.Level;
 ///     Where a laser runs off the field, the arcade
 ///     paints the last pixels in the wave's laser wall colour (<c>LASCOL</c>) for two fiftieths of a second, then
 ///     paints them back in the wall's colour (<c>WALCOL</c>). A side wall is painted solid. On the top
-///     and bottom walls the colours are mixed, so the wall shows through every other row (notes §63).</item>
-///     </list>
+///     and bottom walls the colours are mixed, so the wall shows through every other row (notes §63).
 /// </remarks>
 internal sealed class LaserWallFlares
 {

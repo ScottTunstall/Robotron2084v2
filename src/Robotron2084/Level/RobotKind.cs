@@ -1,12 +1,6 @@
 namespace Robotron2084.Level;
 
 /// <summary>The kinds of robot and enemy shot that a laser can hit, or that the player can run into.</summary>
-/// <remarks>
-///     The family (<see cref="Entities.Human" />) is not a kind here, and neither are the skulls, rescue scores,
-///     explosions and score bursts that the
-///     port leaves on the field, because nothing collides with those.
-///     The source file of each kind's routines is given on its value.
-/// </remarks>
 public enum RobotKind
 {
     /// <summary>A fixed obstacle that kills whatever walks into it, except a hulk.</summary>

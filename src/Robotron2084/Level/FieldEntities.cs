@@ -126,9 +126,8 @@ public sealed class FieldEntities
     /// </remarks>
     public bool AreEnemiesGone()
     {
-        return Grunts.GetLiveCount() == 0 && BerzerkRobots.GetLiveCount() == 0 && Gorfs.GetLiveCount() == 0 &&
-               Spheroids.GetLiveCount() == 0 && Enforcers.GetLiveCount() == 0 && Quarks.GetLiveCount() == 0
-               && Tanks.GetLiveCount() == 0 && Brains.GetLiveCount() == 0;
+        IEntityList[] enemyLists = [Grunts, BerzerkRobots, Gorfs, Spheroids, Enforcers, Quarks, Tanks, Brains];
+        return enemyLists.All(list => list.Entities.All(entity => entity.IsDead()));
     }
 
     /// <summary>Draws the lists that go behind the player's lasers.</summary>
@@ -343,13 +342,13 @@ public sealed class FieldEntities
     /// <summary>Counts the cruise missiles in flight.</summary>
     public int GetCruiseMissileCount()
     {
-        return CruiseMissiles.GetLiveCount();
+        return CruiseMissiles.Count(entity => !entity.IsDead());
     }
 
     /// <summary>Counts the enforcers on the field.</summary>
     public int GetEnforcerCount()
     {
-        return Enforcers.GetLiveCount();
+        return Enforcers.Count(entity => !entity.IsDead());
     }
 
     /// <summary>Finds every entity of one kind of robot.</summary>
@@ -397,7 +396,7 @@ public sealed class FieldEntities
     /// <summary>Counts the tanks on the field.</summary>
     public int GetTankCount()
     {
-        return Tanks.GetLiveCount();
+        return Tanks.Count(entity => !entity.IsDead());
     }
 
     /// <summary>Says whether any grunt took a step in the last tick.</summary>

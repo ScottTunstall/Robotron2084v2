@@ -19,8 +19,7 @@ namespace Robotron2084.Level;
 ///     </list>
 ///     When a man is lost, the turn passes to the
 ///     other player if they still have men. Otherwise the same player carries on, and when nobody has any
-///     men left the game is over.</item>
-///     </list>
+///     men left the game is over.
 /// </remarks>
 public sealed class GameSession
 {
