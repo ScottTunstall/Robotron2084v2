@@ -103,6 +103,9 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     /// <summary>The level the board is sending to the loudspeaker circuit right now, 0 to 255.</summary>
     public byte OutputLevel => _pia.PortAPins;
 
+    /// <summary>Always false: the emulated board cannot tell when a sound has ended.</summary>
+    public bool IsPlaying => false;
+
     /// <summary>Runs the board's processor for one instruction, however many cycles were asked for.</summary>
     /// <param name="maxCycles">Not used: an instruction cannot be split.</param>
     /// <returns>How many clock cycles passed.</returns>
