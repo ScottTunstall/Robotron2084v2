@@ -14,7 +14,7 @@ public sealed class WaveTableTests
     [InlineData(61, 21)]
     [InlineData(100, 40)]
     [InlineData(0, 1)]
-    public void ResolveWave_AppliesRomRepeatRule(int wave, int expected)
+    public void ResolveWave_AppliesArcadeRepeatRule(int wave, int expected)
     {
         Assert.Equal(expected, WaveTable.ResolveWave(wave));
     }
@@ -26,7 +26,7 @@ public sealed class WaveTableTests
     }
 
     [Fact]
-    public void ForWave_KnownRomValues()
+    public void ForWave_KnownArcadeValues()
     {
         var w9 = WaveTable.GetParameters(9);
         Assert.Equal(60, w9.GruntCount);

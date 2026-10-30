@@ -45,7 +45,7 @@ public sealed class PlayFieldBrainProgMissileTests
     /// <summary>
     ///     Ticks past the brain's first beat. ROM <c>BRAIN_AI</c> resolves its target — and tests its catch
     ///     reach — inside its body, so a brain that has not had a beat yet has no target at all. With
-    ///     <c>beatWaitRomFrames: 0</c> the period is one fiftieth of a second (6 clock units) and a tick adds 5, so the
+    ///     <c>beatWaitArcadeFrames: 0</c> the period is one fiftieth of a second (6 clock units) and a tick adds 5, so the
     ///     SECOND tick is the beat (notes §18.8).
     /// </summary>
     private static void RunFirstBeat(PlayField field)
@@ -87,7 +87,7 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brains_AllChaseMikey_EvenWhenAnotherFamilyMemberIsNearer()
     {
-        LevelParameters wave = new(1, BrainCount: 2, DaddyCount: 1, MikeyCount: 1, BrainBeatWaitRomFrames: 0);
+        LevelParameters wave = new(1, BrainCount: 2, DaddyCount: 1, MikeyCount: 1, BrainBeatWaitArcadeFrames: 0);
         var field = CreateField(wave);
         WarmUp(field);
 
@@ -142,7 +142,7 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brains_TargetTheNearestMember_OnceMikeysSlotIsFree()
     {
-        LevelParameters wave = new(1, BrainCount: 1, DaddyCount: 1, MikeyCount: 1, BrainBeatWaitRomFrames: 0);
+        LevelParameters wave = new(1, BrainCount: 1, DaddyCount: 1, MikeyCount: 1, BrainBeatWaitArcadeFrames: 0);
         var field = CreateField(wave);
         WarmUp(field);
 
@@ -201,7 +201,7 @@ public sealed class PlayFieldBrainProgMissileTests
         field.Entities.Brains.Add(brain);
 
         // Beat period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
-        // (notes 26: SLEEP(BRNSPD) + one beat-execution ROM frame). In the
+        // (notes 26: SLEEP(BRNSPD) + one beat-execution arcade frame). In the
         // 19-tick window exactly one beat runs = 1 column sideways (RRB10 BRNL1
         // steps XTEMP = 1 in column units) and 1 row up or down toward the target.
         for (var tick = 0; tick < ArcadeClock.ToPortTicks(16); tick++) field.Update(OneTick());

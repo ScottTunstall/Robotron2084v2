@@ -37,11 +37,11 @@ public sealed class PlayFieldCollisionTests
     }
 
     [Fact]
-    public void ElectrodeLaserKill_ShrivelsForTheRomFrameTimes_ThenDies()
+    public void ElectrodeLaserKill_ShrivelsForTheArcadeFrameTimes_ThenDies()
     {
         // RRP8.ASM PKPROC (the POST KILL PROCESS): the post plays its 3 death
         // sprites (PSP1 → PSP2 → PSP3), holding each for its own sleep time —
-        // 6, 3, 2 ROM frames — and then the image is turned off (DMAOFF). It is a
+        // 6, 3, 2 arcade frames — and then the image is turned off (DMAOFF). It is a
         // shape collapse, NOT a blink (the old port toggled visibility for 2 s).
         var field = CreateEmptyField();
         var electrode = new Electrode(TestSprites.Shared,
@@ -113,7 +113,7 @@ public sealed class PlayFieldCollisionTests
     }
 
     [Fact]
-    public void WallAndLaserCollideSlots_FollowTheRomWaveTables()
+    public void WallAndLaserCollideSlots_FollowTheArcadeWaveTables()
     {
         // WALCOL — the FIRST of RRG23's four per-wave tables (`LDA ,U / STA
         // WALCOL`), and LASCOL — the FOURTH (`LDA 30,U / STA LASCOL`, which

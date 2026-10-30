@@ -60,7 +60,7 @@ public sealed class WaveSurvivorsTests
     [InlineData(3, 1, 3, 1)] // fewer than four make none, so only the spheroid left
     [InlineData(7, 1, 3, 2)] // one for every four
     [InlineData(13, 2, 3, 3)] // 3 + 2 = 5, but never more than the wave began with
-    public void LeftoverEnforcers_TurnBackIntoSpheroids_AsTheRomDoes(int enforcers, int spheroidsLeft, int startedWith,
+    public void LeftoverEnforcers_TurnBackIntoSpheroids_AsTheArcadeDoes(int enforcers, int spheroidsLeft, int startedWith,
         int expected)
     {
         var field = CreateField(new LevelParameters(1, SpheroidCount: startedWith));

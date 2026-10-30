@@ -25,7 +25,7 @@ public sealed class PlayerAppearTests
     ///     The fiftieth of a second the player appears on in a wave with no robots: the appear loop's 33 passes, then
     ///     `NAP 2` and `NAP 10`.
     /// </summary>
-    private const int PlayerAppearRomFrame = 44;
+    private const int PlayerAppearArcadeFrame = 44;
 
     private const int PlayerSpriteRows = 12;
 
@@ -40,9 +40,9 @@ public sealed class PlayerAppearTests
             .WithSeed(7).Build();
     }
 
-    private static void TickToRomFrame(PlayField field, ref int ticks, int romFrame)
+    private static void TickToArcadeFrame(PlayField field, ref int ticks, int arcadeFrame)
     {
-        while (ticks < ArcadeClock.ToPortTicksRoundedUp(romFrame))
+        while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
         {
             field.Update(OneTick());
             ticks++;
@@ -60,10 +60,10 @@ public sealed class PlayerAppearTests
         var field = CreateEmptyField();
         var ticks = 0;
 
-        TickToRomFrame(field, ref ticks, PlayerAppearRomFrame - 1);
+        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame - 1);
         Assert.Empty(field.Entities.Explosions);
 
-        TickToRomFrame(field, ref ticks, PlayerAppearRomFrame);
+        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame);
 
         // The vertical routine takes its records from the object list, so all 12 are made. The sprite is 4 columns
         // wide, but the horizontal routine has 2 records, so only the first 2 asked for are made.
@@ -75,15 +75,15 @@ public sealed class PlayerAppearTests
     }
 
     [Fact]
-    public void SixRomFramesLater_APairOfLeaningFansIsMadeForEveryThirdRow()
+    public void SixArcadeFramesLater_APairOfLeaningFansIsMadeForEveryThirdRow()
     {
         var field = CreateEmptyField();
         var ticks = 0;
 
-        TickToRomFrame(field, ref ticks, PlayerAppearRomFrame + 5);
+        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 5);
         Assert.Equal(0, Count(field, StripEngine.Diagonal));
 
-        TickToRomFrame(field, ref ticks, PlayerAppearRomFrame + 6);
+        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 6);
 
         // The count runs 12, 9, 6, 3, 0 (`SUBA #3 / BPL DPAPP1`), and each one makes two fans (`CLRA`, then `COMA`):
         // ten, which is every record the diagonal routine has.
@@ -98,11 +98,11 @@ public sealed class PlayerAppearTests
         var field = CreateEmptyField();
         var ticks = 0;
 
-        TickToRomFrame(field, ref ticks, PlayerAppearRomFrame + 9);
+        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 9);
         Assert.True(field.HasPlayerAppeared());
         Assert.False(field.IsPlayerDrawn());
 
-        TickToRomFrame(field, ref ticks, PlayerAppearRomFrame + 10); // PLS2: CLR STATUS
+        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 10); // PLS2: CLR STATUS
         Assert.True(field.IsLive());
         Assert.True(field.IsPlayerDrawn());
         Assert.NotEmpty(field.Entities.Explosions); // the appear is still running
@@ -115,7 +115,7 @@ public sealed class PlayerAppearTests
         var input = new FakeInputSource(new PlayerInputState(new IntVector2(1, 0), IntVector2.Zero, false));
         var field = CreateEmptyField(input);
         var ticks = 0;
-        TickToRomFrame(field, ref ticks, PlayerAppearRomFrame + 10);
+        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 10);
         var start = field.Player.GetBounds();
 
         for (var tick = 0; tick < 12; tick++)
@@ -139,14 +139,14 @@ public sealed class PlayerAppearTests
         var field = CreateEmptyField();
         var ticks = 0;
 
-        TickToRomFrame(field, ref ticks, PlayerAppearRomFrame + 6 + 15);
+        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 6 + 15);
         Assert.Equal(0, Count(field, StripEngine.Diagonal));
 
-        TickToRomFrame(field, ref ticks, PlayerAppearRomFrame + 29);
+        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 29);
         Assert.Equal(0, Count(field, StripEngine.Vertical));
         Assert.Equal(StripExplosionTuning.HorizontalPoolSize, Count(field, StripEngine.Horizontal));
 
-        TickToRomFrame(field, ref ticks, PlayerAppearRomFrame + 31);
+        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 31);
         Assert.Empty(field.Entities.Explosions);
     }
 

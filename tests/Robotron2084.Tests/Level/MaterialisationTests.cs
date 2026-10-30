@@ -97,7 +97,7 @@ public class MaterialisationTests
     }
 
     [Fact]
-    public void OneAppearStarts_OnEachRomFrame_NotOnEachPortTick()
+    public void OneAppearStarts_OnEachArcadeFrame_NotOnEachPortTick()
     {
         // `NAP 1,APL` (R5 $2949): one robot's appear a fiftieth of a second, the first at once. A fiftieth of a second is 6/5 of a port
         // tick, so robot k starts on tick ceil(1.2 x (k - 1)), and the 7th tick starts none.

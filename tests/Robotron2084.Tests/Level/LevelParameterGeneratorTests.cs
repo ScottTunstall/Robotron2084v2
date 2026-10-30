@@ -6,7 +6,7 @@ namespace Robotron2084.Tests;
 public sealed class LevelParameterGeneratorTests
 {
     [Fact]
-    public void Generate_UsesRomWaveTable_ExactValues()
+    public void Generate_UsesArcadeWaveTable_ExactValues()
     {
         var p = new LevelParameterGenerator().Generate(1);
 
@@ -108,7 +108,7 @@ public sealed class LevelParameterGeneratorTests
     }
 
     [Fact]
-    public void Generate_MissingTable_FallsBackToRomWaveTable()
+    public void Generate_MissingTable_FallsBackToArcadeWaveTable()
     {
         var path = Path.Combine(Path.GetTempPath(), $"robotron-missing-{Guid.NewGuid():N}.csv");
         var generator = new LevelParameterGenerator(path);
@@ -120,7 +120,7 @@ public sealed class LevelParameterGeneratorTests
     }
 
     [Fact]
-    public void Generate_MalformedTable_FallsBackToRomWaveTable()
+    public void Generate_MalformedTable_FallsBackToArcadeWaveTable()
     {
         var path = Path.Combine(Path.GetTempPath(), $"robotron-bad-{Guid.NewGuid():N}.csv");
         File.WriteAllText(

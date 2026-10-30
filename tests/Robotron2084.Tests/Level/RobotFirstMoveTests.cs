@@ -30,9 +30,9 @@ public sealed class RobotFirstMoveTests
         return new PlayFieldBuilder().WithParameters(parameters).WithInput(new FakeInputSource()).WithSeed(7).Build();
     }
 
-    private static void TickToRomFrame(PlayField field, ref int ticks, int romFrame)
+    private static void TickToArcadeFrame(PlayField field, ref int ticks, int arcadeFrame)
     {
-        while (ticks < ArcadeClock.ToPortTicksRoundedUp(romFrame))
+        while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
         {
             field.Update(OneTick());
             ticks++;
@@ -40,12 +40,12 @@ public sealed class RobotFirstMoveTests
     }
 
     [Theory]
-    [InlineData(2, 10, 78)] // a grunt: the look on ROM frame 68, then 10
+    [InlineData(2, 10, 78)] // a grunt: the look on arcade frame 68, then 10
     [InlineData(8, 0, 72)] // a hulk: the look on frame 72
-    [InlineData(4, 12, 80)] // a brain: the look on ROM frame 68, then 12
+    [InlineData(4, 12, 80)] // a brain: the look on arcade frame 68, then 12
     [InlineData(15, 0, 75)] // a tank: the look on frame 75
-    public void TheWaitToTheFirstBeat_RunsFromTheFirstLookThatFindsTheGameLive(int pollRomFrames, int napRomFrames,
-        int firstBeatRomFrame)
+    public void TheWaitToTheFirstBeat_RunsFromTheFirstLookThatFindsTheGameLive(int pollArcadeFrames, int napArcadeFrames,
+        int firstBeatArcadeFrame)
     {
         // Fifteen robots: the game goes live on fiftieth of a second 68, which is tick 82, and that tick starts at 405 clock units.
         var sequence = new WaveStartSequence(15, false);
@@ -56,26 +56,26 @@ public sealed class RobotFirstMoveTests
         }
 
         Assert.True(sequence.HasJustGoneLive());
-        Assert.Equal(ArcadeClock.ToClockUnits(firstBeatRomFrame) - 405,
-            sequence.GetClockUnitsToFirstBeat(pollRomFrames, napRomFrames));
+        Assert.Equal(ArcadeClock.ToClockUnits(firstBeatArcadeFrame) - 405,
+            sequence.GetClockUnitsToFirstBeat(pollArcadeFrames, napArcadeFrames));
 
         sequence.Update();
         Assert.False(sequence.HasJustGoneLive());
     }
 
     [Theory]
-    [InlineData(15, 78)] // live on ROM frame 68, which is a ROM frame the grunts look on
+    [InlineData(15, 78)] // live on arcade frame 68, which is an arcade frame the grunts look on
     [InlineData(14, 78)] // live on frame 67: the next look is on 68
     [InlineData(16, 80)] // live on frame 69: the next look is on 70
-    public void TheGrunts_TakeTheirFirstStep_TenFramesAfterTheirFirstLook(int grunts, int firstStepRomFrame)
+    public void TheGrunts_TakeTheirFirstStep_TenFramesAfterTheirFirstLook(int grunts, int firstStepArcadeFrame)
     {
         // A move delay of 1 makes every grunt step on every pass, so the first pass is the first step.
         var field = CreateField(new LevelParameters(1, grunts, GruntMoveDelay: 1));
         IntVector2[] starts = [.. field.Entities.Grunts.Select(grunt => grunt.Position)];
         var ticks = 0;
 
-        TickToRomFrame(field, ref ticks, firstStepRomFrame - 1);
-        while (ticks < ArcadeClock.ToPortTicksRoundedUp(firstStepRomFrame) - 1)
+        TickToArcadeFrame(field, ref ticks, firstStepArcadeFrame - 1);
+        while (ticks < ArcadeClock.ToPortTicksRoundedUp(firstStepArcadeFrame) - 1)
         {
             field.Update(OneTick());
             ticks++;
@@ -97,11 +97,11 @@ public sealed class RobotFirstMoveTests
         var start = hulk.Position;
         var ticks = 0;
 
-        TickToRomFrame(field, ref ticks, 55);
+        TickToArcadeFrame(field, ref ticks, 55);
         Assert.True(field.IsLive());
         Assert.Equal(start, hulk.Position);
 
-        TickToRomFrame(field, ref ticks, 56);
+        TickToArcadeFrame(field, ref ticks, 56);
         Assert.NotEqual(start, hulk.Position);
     }
 
@@ -114,11 +114,11 @@ public sealed class RobotFirstMoveTests
         var brain = field.Entities.Brains[0];
         var ticks = 0;
 
-        TickToRomFrame(field, ref ticks, 171);
+        TickToArcadeFrame(field, ref ticks, 171);
         Assert.True(field.IsLive());
         Assert.Null(brain.Target);
 
-        TickToRomFrame(field, ref ticks, 172);
+        TickToArcadeFrame(field, ref ticks, 172);
         Assert.NotNull(brain.Target);
     }
 
@@ -132,11 +132,11 @@ public sealed class RobotFirstMoveTests
         var treadAtStart = tank.TreadFrameIndex;
         var ticks = 0;
 
-        TickToRomFrame(field, ref ticks, 59);
+        TickToArcadeFrame(field, ref ticks, 59);
         Assert.True(field.IsLive());
         Assert.Equal(treadAtStart, tank.TreadFrameIndex);
 
-        TickToRomFrame(field, ref ticks, 60);
+        TickToArcadeFrame(field, ref ticks, 60);
         Assert.NotEqual(treadAtStart, tank.TreadFrameIndex);
     }
 }

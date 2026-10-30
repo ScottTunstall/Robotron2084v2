@@ -51,12 +51,12 @@ public sealed class WaveStartSequenceTests
     [InlineData(0, 44, 54)] // no robots: still 33 passes, because the marker is at the end at once
     [InlineData(40, 83, 93)]
     public void AnOrdinaryWave_BringsThePlayerInAfterTheAppearLoop_AndGoesLiveTenFramesLater(int robots,
-        int playerAppearRomFrames, int liveRomFrames)
+        int playerAppearArcadeFrames, int liveArcadeFrames)
     {
         var sequence = new WaveStartSequence(robots, false);
 
-        Assert.Equal(playerAppearRomFrames, sequence.PlayerAppearRomFrames);
-        Assert.Equal(liveRomFrames, sequence.LiveRomFrames);
+        Assert.Equal(playerAppearArcadeFrames, sequence.PlayerAppearArcadeFrames);
+        Assert.Equal(liveArcadeFrames, sequence.LiveArcadeFrames);
     }
 
     [Theory]
@@ -66,12 +66,12 @@ public sealed class WaveStartSequenceTests
     {
         var sequence = new WaveStartSequence(robots, true);
 
-        Assert.Equal(150, sequence.PlayerAppearRomFrames);
-        Assert.Equal(160, sequence.LiveRomFrames);
+        Assert.Equal(150, sequence.PlayerAppearArcadeFrames);
+        Assert.Equal(160, sequence.LiveArcadeFrames);
     }
 
     [Fact]
-    public void TheSequence_ReachesEachMoment_OnTheTickItsRomFrameFallsOn()
+    public void TheSequence_ReachesEachMoment_OnTheTickItsArcadeFrameFallsOn()
     {
         var sequence = new WaveStartSequence(15, false);
         var playerAppearTick = ArcadeClock.ToPortTicksRoundedUp(58); // 69.6 ticks
@@ -91,7 +91,7 @@ public sealed class WaveStartSequenceTests
     [Fact]
     public void TheTickTheGameGoesLive_CountsOnlyThePartOfItThatIsLive()
     {
-        // ROM frame 68 is 408 clock units and tick 82 is 410, so 2 units of that tick are live play. A timer
+        // arcade frame 68 is 408 clock units and tick 82 is 410, so 2 units of that tick are live play. A timer
         // that starts when the game goes live (GEXEC's) starts from there, not from the whole tick.
         var sequence = new WaveStartSequence(15, false);
         for (var tick = 1; tick < 82; tick++)
@@ -114,8 +114,8 @@ public sealed class WaveStartSequenceTests
         // list instead, so APPEAR never walks them and they do not lengthen the start.
         var field = CreateField(new LevelParameters(1, 3, HulkCount: 2, SpheroidCount: 4, QuarkCount: 1, TankCount: 1));
 
-        Assert.Equal(6 + 43, field.GetPlayerAppearRomFrames());
-        Assert.Equal(6 + 53, field.GetLiveRomFrames());
+        Assert.Equal(6 + 43, field.GetPlayerAppearArcadeFrames());
+        Assert.Equal(6 + 53, field.GetLiveArcadeFrames());
     }
 
     [Fact]
