@@ -89,7 +89,10 @@ public sealed class PresentationPagePalette
     /// </summary>
     public int GetWordmarkRimSlot()
     {
-        return GetWordmarkColorSlot() == FirstSlot ? LastSlot : GetWordmarkColorSlot() - 1;
+        var wordmarkSlot = GetWordmarkColorSlot();
+        if (wordmarkSlot == FirstSlot) return LastSlot;
+
+        return wordmarkSlot - 1;
     }
 
     /// <summary>
@@ -117,7 +120,10 @@ public sealed class PresentationPagePalette
         _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
         if (IsStepDue(ref _chaseClockUnits, ChaseArcadeFramesPerStep))
         {
-            _chaseSlot = _chaseSlot >= LastSlot ? FirstSlot : _chaseSlot + 1;
+            var isOnLastSlot = _chaseSlot >= LastSlot;
+            if (isOnLastSlot) _chaseSlot = FirstSlot;
+            else _chaseSlot++;
+
             Start(palette); // the ROM re-copies the table on every step...
             palette.SetSlot(_chaseSlot, ChaseColor); // ...and then whitens the current entry
         }

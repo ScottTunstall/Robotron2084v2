@@ -95,11 +95,11 @@ public sealed class PaletteAnimator
             _laserFlashStep++;
             if (_palette.IsSlotSuspended(10)) continue; // the death fade or a caller owns slot 10
 
-            _palette.SetSlot(
-                10,
-                _laserFlashStep % 3 == 0
-                    ? LaserTab[_random.Next(LaserTab.Length)]
-                    : (byte)0xFF);
+            byte flashColour = 0xFF;
+            var isFlashLit = _laserFlashStep % 3 == 0;
+            if (isFlashLit) flashColour = LaserTab[_random.Next(LaserTab.Length)];
+
+            _palette.SetSlot(10, flashColour);
         }
 
         foreach (var process in _processes)

@@ -151,7 +151,8 @@ public sealed class TunnelPalette
         var ramp = Ramps[RampIndex];
         while (_windowStartIndex >= ramp.Length) _windowStartIndex -= ramp.Length;
 
-        BlackOffset = BlackOffset == 0 ? 4 : BlackOffset - 1;
+        if (BlackOffset == 0) BlackOffset = 4;
+        else BlackOffset--;
     }
 
     /// <summary>
