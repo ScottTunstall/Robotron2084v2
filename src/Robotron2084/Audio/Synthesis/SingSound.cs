@@ -212,22 +212,22 @@ internal sealed class SingSound
         return (setsLoudness ? Immediate + StoreDirect : 0) + WordImmediate + Branch;
     }
 
-    private IEnumerable<OutputChange> PlayOnceFrom(byte[] settings)
+    private IEnumerable<OutputChange> PlayOnceFrom(byte[] singSettings)
     {
         _output.Wait(WordImmediate + Branch + CallExtended);
-        Move(settings);
+        Move(singSettings);
         _output.Wait(CallExtended);
         return Sing();
     }
 
-    private IEnumerable<OutputChange> PlayEchoing(byte[] settings, byte loudness, int setUpCycles)
+    private IEnumerable<OutputChange> PlayEchoing(byte[] singSettings, byte loudness, int setUpCycles)
     {
         _output.Wait(setUpCycles);
         _loudness = loudness;
         while (true)
         {
             _output.Wait(CallShort + CallExtended);
-            Move(settings);
+            Move(singSettings);
             _output.Wait(CallExtended);
             foreach (var change in Sing()) yield return change;
 
@@ -249,10 +249,10 @@ internal sealed class SingSound
         _loudness = FullLoudness;
         for (var round = 0; round < SirenRounds; round++)
         {
-            foreach (var settings in new[] { SirenLow, SirenHigh })
+            foreach (var singSettings in new[] { SirenLow, SirenHigh })
             {
                 _output.Wait(WordImmediate + CallShort + CallExtended);
-                Move(settings);
+                Move(singSettings);
                 _output.Wait(CallExtended);
                 foreach (var change in Sing()) yield return change;
 
@@ -284,16 +284,16 @@ internal sealed class SingSound
     }
 
     /// <summary>Copies a setting into the working variables (<c>MOVE</c>).</summary>
-    /// <param name="settings">The six bytes.</param>
-    private void Move(byte[] settings)
+    /// <param name="singSettings">The six bytes.</param>
+    private void Move(byte[] singSettings)
     {
         _output.Wait(MoveCycles);
-        _pitch = settings[0];
-        _cyclesAtPitch = settings[1];
-        _pitchChange = settings[2];
-        _lastPitch = settings[3];
-        _cyclesAtLoudness = settings[4];
-        _loudnessChange = settings[5];
+        _pitch = singSettings[0];
+        _cyclesAtPitch = singSettings[1];
+        _pitchChange = singSettings[2];
+        _lastPitch = singSettings[3];
+        _cyclesAtLoudness = singSettings[4];
+        _loudnessChange = singSettings[5];
     }
 
 

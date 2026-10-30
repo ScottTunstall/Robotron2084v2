@@ -284,14 +284,14 @@ internal sealed class CrowdRoarSound
     }
 
     /// <summary>Loads a noise's settings (<c>NOISLD</c>).</summary>
-    /// <param name="settings">The five bytes: <c>CY2</c>, <c>NAMP</c>, <c>DECAY</c>, <c>NFFLG</c> and <c>NFRQ2</c>.</param>
-    private void LoadNoise(byte[] settings)
+    /// <param name="noiseSettings">The five bytes: <c>CY2</c>, <c>NAMP</c>, <c>DECAY</c>, <c>NFFLG</c> and <c>NFRQ2</c>.</param>
+    private void LoadNoise(byte[] noiseSettings)
     {
         _output.Wait(LoadNoiseCycles);
-        _noiseCyclesPerChange = settings[0];
-        _noiseLoudness = settings[1];
-        _noiseLoudnessChange = settings[2];
-        _noisePitchReload = settings[4];
+        _noiseCyclesPerChange = noiseSettings[0];
+        _noiseLoudness = noiseSettings[1];
+        _noiseLoudnessChange = noiseSettings[2];
+        _noisePitchReload = noiseSettings[4];
     }
 
     /// <summary>

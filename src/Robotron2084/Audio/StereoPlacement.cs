@@ -12,14 +12,14 @@ public static class StereoPlacement
 {
     /// <summary>The place between the speakers for a sound made by something on the playfield.</summary>
     /// <param name="maker">The box of whatever made the sound.</param>
-    /// <param name="playfield">The playfield's inner area.</param>
+    /// <param name="playfieldBounds">The playfield's inner area.</param>
     /// <returns>
     ///     Where the sound is heard, from -1 (left) to 1 (right), narrowed by <see cref="SoundTuning.StereoWidth" />.
     /// </returns>
-    public static float GetPan(Rectangle maker, Rectangle playfield)
+    public static float GetPan(Rectangle maker, Rectangle playfieldBounds)
     {
-        var halfWidth = playfield.Width / 2f;
-        float offsetFromCentre = maker.Center.X - playfield.Center.X;
+        var halfWidth = playfieldBounds.Width / 2f;
+        float offsetFromCentre = maker.Center.X - playfieldBounds.Center.X;
         var pan = Math.Clamp(offsetFromCentre / halfWidth, -1f, 1f);
         return pan * SoundTuning.StereoWidth;
     }
