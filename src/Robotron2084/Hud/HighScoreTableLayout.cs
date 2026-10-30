@@ -67,7 +67,7 @@ public static class HighScoreTableLayout
     // (col 14, row 29)
     public const int FrameStrokeCount = FrameLastStroke + 1;
 
-    public const int FrameStrokesPerRomFrame = 2;
+    public const int FrameStrokesPerArcadeFrame = 2;
 
     public const int HeaderColumn = 53;
 

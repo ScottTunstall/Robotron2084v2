@@ -38,7 +38,7 @@ namespace Robotron2084.Hud;
 ///     bits and indexes that table, and entry 1 (bit 0 set = PIA-A bit 0 = "Move up") is the
 ///     up delta <c>00 FF</c>. So <c>ORAA PIA2 / BEQ</c> means "no switch at all is down".
 ///     The timing runs on the clock-unit clock the entity bodies use (notes §52): a port
-///     tick advances a ROM-frame clock by 5 clock units.
+///     tick advances an arcade frame clock by 5 clock units.
 /// </summary>
 public sealed class HighScorePageHold
 {
@@ -64,7 +64,7 @@ public sealed class HighScorePageHold
         if (!HoldIsOver)
         {
             _holdClockUnits += ArcadeClock.UnitsPerPortTick;
-            if (_holdClockUnits < ArcadeClock.ToClockUnits(ScreenTuning.HighScoreHoldRomFrames)) return false;
+            if (_holdClockUnits < ArcadeClock.ToClockUnits(ScreenTuning.HighScoreHoldArcadeFrames)) return false;
 
             // The hold is over and TAB777's first NAP 4 starts now, so the first switch
             // read is four fiftieths of a second away.
@@ -74,9 +74,9 @@ public sealed class HighScorePageHold
         }
 
         _checkClockUnits += ArcadeClock.UnitsPerPortTick;
-        if (_checkClockUnits < ArcadeClock.ToClockUnits(ScreenTuning.HighScoreLeaveCheckRomFrames)) return false;
+        if (_checkClockUnits < ArcadeClock.ToClockUnits(ScreenTuning.HighScoreLeaveCheckArcadeFrames)) return false;
 
-        _checkClockUnits -= ArcadeClock.ToClockUnits(ScreenTuning.HighScoreLeaveCheckRomFrames);
+        _checkClockUnits -= ArcadeClock.ToClockUnits(ScreenTuning.HighScoreLeaveCheckArcadeFrames);
 
         if (!anySwitchHeld)
             // TAB999's BEQ: nothing is down, so the page returns.

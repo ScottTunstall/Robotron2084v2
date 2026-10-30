@@ -33,10 +33,10 @@ public sealed class HighScoreFrameAnimation
 
     /// <summary>
     ///     Strokes drawn so far by the pass that is running, and which pass that is. Both
-    ///     passes have drawn <see cref="HighScoreTableLayout.FrameStrokesPerRomFrame" /> of
+    ///     passes have drawn <see cref="HighScoreTableLayout.FrameStrokesPerArcadeFrame" /> of
     ///     them by the time the page first appears.
     /// </summary>
-    private int _strokesDrawn = HighScoreTableLayout.FrameStrokesPerRomFrame;
+    private int _strokesDrawn = HighScoreTableLayout.FrameStrokesPerArcadeFrame;
 
     /// <summary>
     ///     The growing pass's frontier: the outermost stroke it has drawn, or -1 before it has
@@ -69,10 +69,10 @@ public sealed class HighScoreFrameAnimation
         if (IsFinished()) return;
 
         _clockUnits += ArcadeClock.UnitsPerPortTick;
-        while (_clockUnits >= ArcadeClock.UnitsPerRomFrame)
+        while (_clockUnits >= ArcadeClock.UnitsPerArcadeFrame)
         {
-            _clockUnits -= ArcadeClock.UnitsPerRomFrame;
-            Advance(HighScoreTableLayout.FrameStrokesPerRomFrame);
+            _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
+            Advance(HighScoreTableLayout.FrameStrokesPerArcadeFrame);
         }
     }
 
@@ -87,7 +87,7 @@ public sealed class HighScoreFrameAnimation
                     // flavour and jumps back to its start — the erase's first two strokes
                     // are drawn at once, exactly as the growing pass's were.
                     _isErasing = true;
-                    _strokesDrawn = HighScoreTableLayout.FrameStrokesPerRomFrame;
+                    _strokesDrawn = HighScoreTableLayout.FrameStrokesPerArcadeFrame;
                 }
                 else
                 {

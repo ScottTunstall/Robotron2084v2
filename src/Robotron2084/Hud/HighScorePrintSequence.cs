@@ -13,7 +13,7 @@ namespace Robotron2084.Hud;
 ///             screen until the frame's two passes have finished;
 ///         </item>
 ///         <item>
-///             <c>PRJNK</c> prints TODAY'S list, FOUR ROWS A ROM FRAME (<c>TOD44</c>'s
+///             <c>PRJNK</c> prints TODAY'S list, FOUR ROWS A ARCADE FRAME (<c>TOD44</c>'s
 ///             <c>LDA #4 / STA PD+17,U</c> with a <c>NAP 1</c> per group — the first group prints at
 ///             once, and the last group of a list does not sleep);
 ///         </item>
@@ -89,9 +89,9 @@ public sealed class HighScorePrintSequence
         if (_phase == Phase.Done) return;
 
         _clockUnits += ArcadeClock.UnitsPerPortTick;
-        while (_clockUnits >= ArcadeClock.UnitsPerRomFrame)
+        while (_clockUnits >= ArcadeClock.UnitsPerArcadeFrame)
         {
-            _clockUnits -= ArcadeClock.UnitsPerRomFrame;
+            _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
             Advance(todayCount, allTimeCount);
         }
     }

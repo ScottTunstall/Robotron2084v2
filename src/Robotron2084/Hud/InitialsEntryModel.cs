@@ -42,19 +42,19 @@ public sealed class InitialsEntryModel
     ///     LUP/LDOWN's <c>DELAY1</c> loop — 8192 turns of a six-cycle loop, about 49 ms, i.e. two and a half fiftieths of
     ///     a second.
     /// </summary>
-    private const int CycleWaitClockUnits = ArcadeClock.UnitsPerRomFrame * 5 / 2;
+    private const int CycleWaitClockUnits = ArcadeClock.UnitsPerArcadeFrame * 5 / 2;
 
     /// <summary>
     ///     A repeat after those ten costs <c>DELAY1</c> plus LUP's <c>NAP 1</c>. It is the value
     ///     <see cref="_repeatClockUnits" /> is set to once a letter is cycling steadily.
     /// </summary>
-    private const int CycleIntervalClockUnits = CycleWaitClockUnits + ArcadeClock.UnitsPerRomFrame;
+    private const int CycleIntervalClockUnits = CycleWaitClockUnits + ArcadeClock.UnitsPerArcadeFrame;
 
     /// <summary>
     ///     How often a held direction is looked at — LUP/LDOWN poll their own switch inside the delay loop. It is the
     ///     value <see cref="_periodClockUnits" /> is set to while a letter is cycling.
     /// </summary>
-    private const int CyclePollClockUnits = ArcadeClock.UnitsPerRomFrame;
+    private const int CyclePollClockUnits = ArcadeClock.UnitsPerArcadeFrame;
 
     /// <summary>The at-rest move stick's down (<c>RORA / LBCS LDOWN</c>): cycles the letter back.</summary>
     private const int DownDirection = 1;
@@ -67,7 +67,7 @@ public sealed class InitialsEntryModel
     ///     value of <see cref="_periodClockUnits" />, and the value it is set to while the fire button is being checked for
     ///     release.
     /// </summary>
-    private const int FireReleaseCheckClockUnits = 4 * ArcadeClock.UnitsPerRomFrame;
+    private const int FireReleaseCheckClockUnits = 4 * ArcadeClock.UnitsPerArcadeFrame;
 
     /// <summary>
     ///     The first repeat's period: the ten <c>DELAY1</c> turns of the <c>DECA / BNE LUP1</c> loop. It is the value
@@ -86,19 +86,19 @@ public sealed class InitialsEntryModel
     ///     (12.8 s). <see cref="_timeoutClockUnits" /> is compared with this to tell whether the player has run out of time to
     ///     choose a letter.
     /// </summary>
-    private const int LetterTimeoutClockUnits = (0xFF + 0xFF + 0x82) * ArcadeClock.UnitsPerRomFrame;
+    private const int LetterTimeoutClockUnits = (0xFF + 0xFF + 0x82) * ArcadeClock.UnitsPerArcadeFrame;
 
     /// <summary>
     ///     GETLT1's <c>NAP 2</c>: the main loop reads the switches every two frames. It is the value
     ///     <see cref="_periodClockUnits" /> is set to in the main waiting loop.
     /// </summary>
-    private const int MainLoopClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
+    private const int MainLoopClockUnits = 2 * ArcadeClock.UnitsPerArcadeFrame;
 
     /// <summary>
     ///     GETLT3's <c>NAP 2</c> between two typematic counts. It is the value <see cref="_periodClockUnits" /> is set to
     ///     while a direction is held and the letter repeats.
     /// </summary>
-    private const int TypematicStepClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
+    private const int TypematicStepClockUnits = 2 * ArcadeClock.UnitsPerArcadeFrame;
 
     /// <summary>The at-rest move stick's up (GETLT2's <c>RORA / LBCS LUP</c>): cycles the letter forward.</summary>
     private const int UpDirection = -1;
