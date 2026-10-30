@@ -13,11 +13,11 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public sealed class HumanSpawnTests
 {
-    private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+    private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
-        return new GameTime(TimeSpan.Zero, FrameSpan);
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 
     /// <summary>The ROM's own wave table, so the family, electrodes and robots are the arcade's.</summary>
@@ -57,7 +57,7 @@ public sealed class HumanSpawnTests
 
         for (var tick = 0; tick < 1800; tick++)
         {
-            field.Update(Frame());
+            field.Update(OneTick());
 
             foreach (var human in field.Entities.Family.Members)
             {
@@ -88,7 +88,7 @@ public sealed class HumanSpawnTests
         Assert.NotEmpty(humans);
         var start = humans.ToDictionary(h => h, h => h.Position);
 
-        for (var tick = 0; tick < 30; tick++) field.Update(Frame());
+        for (var tick = 0; tick < 30; tick++) field.Update(OneTick());
 
         Assert.True(field.RobotsFrozen(), "the start of the wave must still be holding the robots");
 

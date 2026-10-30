@@ -28,14 +28,14 @@ namespace Robotron2084.Tests;
 /// </summary>
 public sealed class WaveStartSequenceTests
 {
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
         return new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
     }
 
     private static void Tick(PlayField field, int ticks)
     {
-        for (var tick = 0; tick < ticks; tick++) field.Update(Frame());
+        for (var tick = 0; tick < ticks; tick++) field.Update(OneTick());
     }
 
     private static PlayField CreateField(LevelParameters parameters, IPlayerInputSource? input = null,
@@ -91,7 +91,7 @@ public sealed class WaveStartSequenceTests
     [Fact]
     public void TheTickTheGameGoesLive_CountsOnlyThePartOfItThatIsLive()
     {
-        // Frame 68 is 408 clock units and tick 82 is 410, so 2 units of that tick are live play. A timer
+        // ROM frame 68 is 408 clock units and tick 82 is 410, so 2 units of that tick are live play. A timer
         // that starts when the game goes live (GEXEC's) starts from there, not from the whole tick.
         var sequence = new WaveStartSequence(15, false);
         for (var tick = 1; tick < 82; tick++)
@@ -162,13 +162,13 @@ public sealed class WaveStartSequenceTests
         for (var tick = 1; tick < WaveStartTicks.UntilLive(field); tick++)
         {
             mikey.MoveTo(field.Player.Position);
-            field.Update(Frame());
+            field.Update(OneTick());
         }
 
         Assert.Equal(0, field.RescuesThisLife);
 
         mikey.MoveTo(field.Player.Position);
-        field.Update(Frame()); // the game goes live
+        field.Update(OneTick()); // the game goes live
 
         Assert.Equal(1, field.RescuesThisLife);
     }

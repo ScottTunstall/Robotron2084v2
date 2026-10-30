@@ -34,7 +34,7 @@ public sealed class PlayFieldHumanTests
     /// <summary>
     ///     One port tick.
     /// </summary>
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
         return new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
     }
@@ -61,7 +61,7 @@ public sealed class PlayFieldHumanTests
 
         for (var tick = 0; tick < 600; tick++)
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             foreach (var human in field.Entities.Family.Members)
             {
                 Assert.InRange(human.GetBounds().X, inner.X, inner.Right - human.GetBounds().Width);
@@ -82,7 +82,7 @@ public sealed class PlayFieldHumanTests
 
         for (var tick = 0; tick < 300 && !anyMoved; tick++)
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             anyMoved = first.Position != firstPosition;
         }
 
@@ -100,7 +100,7 @@ public sealed class PlayFieldHumanTests
         // why the grid is measured from it rather than from the object's creation.
         // The human is driven directly so a wave change cannot swap the object out.
         var field = CreateField(HumanWave(0, 0, 4));
-        for (var tick = 0; tick < 130; tick++) field.Update(Frame()); // the robots are held until the game goes live
+        for (var tick = 0; tick < 130; tick++) field.Update(OneTick()); // the robots are held until the game goes live
 
         var inner = field.Wall.PlayfieldBounds;
         var human = new Human(TestSprites.Shared, new IntVector2(inner.Center.X, inner.Center.Y), HumanKind.Mommy,
@@ -110,7 +110,7 @@ public sealed class PlayFieldHumanTests
         var seen = 0;
         for (var tick = 1; tick <= 400 && starts.Count < 10; tick++)
         {
-            human.Update(Frame(), field);
+            human.Update(OneTick(), field);
             if (human.StepCount > seen)
             {
                 seen = human.StepCount;
@@ -193,13 +193,13 @@ public sealed class PlayFieldHumanTests
         // The hulk waits for STATUS (`HULK LDA STATUS WAIT FOR STATUS TO GO`) and the ROM
         // creates its collision process only after the wave-start appear, so no robot can touch
         // a human before the game goes live — run through the start of the wave first (notes §88).
-        for (var tick = 0; tick < WaveStartTicks.UntilLive(field); tick++) field.Update(Frame());
+        for (var tick = 0; tick < WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
 
         var human = field.Entities.Family.Members[0];
         var scoreBefore = field.ScoreBoard.Score;
         human.MoveTo(field.Entities.Hulks[0].Position);
 
-        field.Update(Frame());
+        field.Update(OneTick());
 
         Assert.Equal(EntityLifeState.Dead, human.LifeState);
         Assert.Empty(field.Entities.Family.Members); // pruned after the update
@@ -216,18 +216,18 @@ public sealed class PlayFieldHumanTests
 
         for (var tick = 0;
              tick < WaveStartTicks.UntilLive(field);
-             tick++) field.Update(Frame()); // the hulk cannot act until the game is live (notes §88)
+             tick++) field.Update(OneTick()); // the hulk cannot act until the game is live (notes §88)
 
         var human = field.Entities.Family.Members[0];
         human.MoveTo(field.Entities.Hulks[0].Position);
-        field.Update(Frame());
+        field.Update(OneTick());
         Assert.Single(field.Entities.Skulls);
 
-        for (var tick = 0; tick < ArcadeClock.ToPortTicks(90) - 1; tick++) field.Update(Frame());
+        for (var tick = 0; tick < ArcadeClock.ToPortTicks(90) - 1; tick++) field.Update(OneTick());
 
         Assert.Single(field.Entities.Skulls); // still up just before the linger ends
 
-        field.Update(Frame());
+        field.Update(OneTick());
         Assert.Empty(field.Entities.Skulls); // pruned once expired
     }
 

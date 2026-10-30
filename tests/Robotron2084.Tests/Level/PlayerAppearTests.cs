@@ -29,7 +29,7 @@ public sealed class PlayerAppearTests
 
     private const int PlayerSpriteRows = 12;
 
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
         return new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
     }
@@ -44,7 +44,7 @@ public sealed class PlayerAppearTests
     {
         while (ticks < ArcadeClock.ToPortTicksRoundedUp(romFrame))
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             ticks++;
         }
     }
@@ -121,7 +121,7 @@ public sealed class PlayerAppearTests
         for (var tick = 0; tick < 12; tick++)
         {
             var spacingBefore = field.Entities.Explosions.ToDictionary(effect => effect, effect => effect.GetSpacing());
-            field.Update(Frame());
+            field.Update(OneTick());
 
             foreach (var effect in field.Entities.Explosions.Where(effect =>
                          effect.GetSpacing() != spacingBefore[effect]))
@@ -156,7 +156,7 @@ public sealed class PlayerAppearTests
         var field = CreateEmptyField();
         field.SkipWaveStart();
 
-        field.Update(Frame());
+        field.Update(OneTick());
 
         Assert.Empty(field.Entities.Explosions);
         Assert.True(field.IsPlayerDrawn());

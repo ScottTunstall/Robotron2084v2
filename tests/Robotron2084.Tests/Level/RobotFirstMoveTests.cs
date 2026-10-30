@@ -20,7 +20,7 @@ namespace Robotron2084.Tests;
 /// </summary>
 public sealed class RobotFirstMoveTests
 {
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
         return new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
     }
@@ -34,15 +34,15 @@ public sealed class RobotFirstMoveTests
     {
         while (ticks < ArcadeClock.ToPortTicksRoundedUp(romFrame))
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             ticks++;
         }
     }
 
     [Theory]
-    [InlineData(2, 10, 78)] // a grunt: the look on frame 68, then 10
+    [InlineData(2, 10, 78)] // a grunt: the look on ROM frame 68, then 10
     [InlineData(8, 0, 72)] // a hulk: the look on frame 72
-    [InlineData(4, 12, 80)] // a brain: the look on frame 68, then 12
+    [InlineData(4, 12, 80)] // a brain: the look on ROM frame 68, then 12
     [InlineData(15, 0, 75)] // a tank: the look on frame 75
     public void TheWaitToTheFirstBeat_RunsFromTheFirstLookThatFindsTheGameLive(int pollRomFrames, int napRomFrames,
         int firstBeatRomFrame)
@@ -64,7 +64,7 @@ public sealed class RobotFirstMoveTests
     }
 
     [Theory]
-    [InlineData(15, 78)] // live on frame 68, which is a frame the grunts look on
+    [InlineData(15, 78)] // live on ROM frame 68, which is a ROM frame the grunts look on
     [InlineData(14, 78)] // live on frame 67: the next look is on 68
     [InlineData(16, 80)] // live on frame 69: the next look is on 70
     public void TheGrunts_TakeTheirFirstStep_TenFramesAfterTheirFirstLook(int grunts, int firstStepRomFrame)
@@ -77,13 +77,13 @@ public sealed class RobotFirstMoveTests
         TickToRomFrame(field, ref ticks, firstStepRomFrame - 1);
         while (ticks < ArcadeClock.ToPortTicksRoundedUp(firstStepRomFrame) - 1)
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             ticks++;
         }
 
         Assert.Equal(starts, field.Entities.Grunts.Select(grunt => grunt.Position));
 
-        field.Update(Frame());
+        field.Update(OneTick());
         Assert.All(field.Entities.Grunts, grunt => Assert.True(grunt.SteppedThisUpdate));
     }
 

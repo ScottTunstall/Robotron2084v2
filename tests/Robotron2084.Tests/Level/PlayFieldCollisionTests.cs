@@ -41,7 +41,7 @@ public sealed class PlayFieldCollisionTests
     {
         // RRP8.ASM PKPROC (the POST KILL PROCESS): the post plays its 3 death
         // sprites (PSP1 → PSP2 → PSP3), holding each for its own sleep time —
-        // 6, 3, 2 vblanks — and then the image is turned off (DMAOFF). It is a
+        // 6, 3, 2 ROM frames — and then the image is turned off (DMAOFF). It is a
         // shape collapse, NOT a blink (the old port toggled visibility for 2 s).
         var field = CreateEmptyField();
         var electrode = new Electrode(TestSprites.Shared,

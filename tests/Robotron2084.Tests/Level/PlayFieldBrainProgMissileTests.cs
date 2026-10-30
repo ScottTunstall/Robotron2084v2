@@ -19,7 +19,7 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public sealed class PlayFieldBrainProgMissileTests
 {
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
         return new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(1000.0 / 60));
     }
@@ -50,8 +50,8 @@ public sealed class PlayFieldBrainProgMissileTests
     /// </summary>
     private static void RunFirstBeat(PlayField field)
     {
-        field.Update(Frame());
-        field.Update(Frame());
+        field.Update(OneTick());
+        field.Update(OneTick());
     }
 
     /// <summary>Plain Manhattan distance in port pixels — used only to set a test's premise up.</summary>
@@ -201,10 +201,10 @@ public sealed class PlayFieldBrainProgMissileTests
         field.Entities.Brains.Add(brain);
 
         // Beat period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
-        // (notes 26: SLEEP(BRNSPD) + one beat-execution vblank). In the
+        // (notes 26: SLEEP(BRNSPD) + one beat-execution ROM frame). In the
         // 19-tick window exactly one beat runs = 1 column sideways (RRB10 BRNL1
         // steps XTEMP = 1 in column units) and 1 row up or down toward the target.
-        for (var tick = 0; tick < ArcadeClock.ToPortTicks(16); tick++) field.Update(Frame());
+        for (var tick = 0; tick < ArcadeClock.ToPortTicks(16); tick++) field.Update(OneTick());
 
         Assert.Equal(brainSpot.X + ScreenSize.ToPortPixelsFromColumns(1), brain.Position.X);
         Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixelsFromArcadePixels(1), brain.Position.Y);
@@ -228,7 +228,7 @@ public sealed class PlayFieldBrainProgMissileTests
         field.Entities.Brains.Add(brain);
 
         // One beat in the 19-tick window (period PortTicks(9) = 10, notes 26).
-        for (var tick = 0; tick < ArcadeClock.ToPortTicks(16); tick++) field.Update(Frame());
+        for (var tick = 0; tick < ArcadeClock.ToPortTicks(16); tick++) field.Update(OneTick());
 
         Assert.Equal(brainSpot.X - ScreenSize.ToPortPixelsFromColumns(1), brain.Position.X);
         Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixelsFromArcadePixels(1), brain.Position.Y);
@@ -250,7 +250,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var brain = new Brain(TestSprites.Shared, brainSpot, new Random(21), 8, 40, FamilyList.FirstSlot);
         field.Entities.Brains.Add(brain);
 
-        for (var tick = 0; tick < ArcadeClock.ToPortTicks(12); tick++) field.Update(Frame());
+        for (var tick = 0; tick < ArcadeClock.ToPortTicks(12); tick++) field.Update(OneTick());
 
         Assert.Equal(brainSpot.X, brain.Position.X); // dead zone holds X
         Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixelsFromArcadePixels(1), brain.Position.Y); // Y keeps closing
@@ -280,7 +280,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var brain = new Brain(TestSprites.Shared, brainSpot, new Random(22), 8, 40, FamilyList.FirstSlot);
         field.Entities.Brains.Add(brain);
 
-        for (var tick = 0; tick < ArcadeClock.ToPortTicks(12); tick++) field.Update(Frame());
+        for (var tick = 0; tick < ArcadeClock.ToPortTicks(12); tick++) field.Update(OneTick());
 
         Assert.Equal(brainSpot.X, brain.Position.X); // the wall still holds
         Assert.Equal(brainSpot.Y + ScreenSize.ToPortPixelsFromArcadePixels(1), brain.Position.Y); // but it is not stuck
@@ -329,13 +329,13 @@ public sealed class PlayFieldBrainProgMissileTests
         // 120). Through it the brain must not move (it is a solid block, not a
         // chaser).
         var brainSpot = brain.Position;
-        for (var tick = 0; tick < 130; tick++) field.Update(Frame());
+        for (var tick = 0; tick < 130; tick++) field.Update(OneTick());
 
         Assert.True(brain.IsReprogramming());
         Assert.Equal(brainSpot, brain.Position);
         Assert.Equal(0, field.Entities.Progs.GetLiveCount());
 
-        for (var tick = 0; tick < 25; tick++) field.Update(Frame());
+        for (var tick = 0; tick < 25; tick++) field.Update(OneTick());
 
         // Done: the human is gone, a PROG stands at its last position and keeps
         // its animation frames and box, and the brain is free to move again.
@@ -393,7 +393,7 @@ public sealed class PlayFieldBrainProgMissileTests
         Assert.True(brain.IsReprogramming());
 
         brain.Kill(); // laser hit, mid-animation
-        field.Update(Frame());
+        field.Update(OneTick());
 
         Assert.False(human.IsBeingReprogrammed);
         Assert.Equal(EntityLifeState.Dead, human.LifeState);
@@ -499,7 +499,7 @@ public sealed class PlayFieldBrainProgMissileTests
             var prog = new Prog(TestSprites.Shared, spot, HumanKind.Daddy, new Random(seed));
             field.Entities.Progs.Add(prog);
 
-            for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3); tick++) field.Update(Frame());
+            for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3); tick++) field.Update(OneTick());
 
             var dx = Math.Abs(prog.Position.X - spot.X);
             var dy = Math.Abs(prog.Position.Y - spot.Y);
@@ -559,7 +559,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // The first beat (2 x 1px CMMOV) lands on tick 4 (3 fiftieths of a second = 3.6),
         // and the re-aim timer cannot fire that early (RND(1..7) >= 1 decrement
         // per beat, re-aim on reaching 0).
-        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3); tick++) field.Update(Frame());
+        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3); tick++) field.Update(OneTick());
 
         var dx = Math.Abs(missile.Position.X - spot.X);
         var dy = Math.Abs(missile.Position.Y - spot.Y);
@@ -593,7 +593,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         // Two beats = 4 CMMOVs = 4 marks (the missile flies on while the
         // start of the wave holds the robots). Beats land on ticks 4 and 8.
-        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 2; tick++) field.Update(Frame());
+        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 2; tick++) field.Update(OneTick());
 
         Assert.Equal(4, missile.Trail.Count);
         Assert.Equal(spot, missile.Trail[0]); // the fire position is vacated first
@@ -609,7 +609,7 @@ public sealed class PlayFieldBrainProgMissileTests
         }
 
         // A long flight must not grow the tail past the ring.
-        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 40; tick++) field.Update(Frame());
+        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 40; tick++) field.Update(OneTick());
 
         Assert.Equal(CruiseMissileTuning.TrailMarks, missile.Trail.Count);
 
@@ -634,14 +634,14 @@ public sealed class PlayFieldBrainProgMissileTests
         var prog = new Prog(TestSprites.Shared, spot, HumanKind.Daddy, new Random(6));
         field.Entities.Progs.Add(prog);
 
-        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 3; tick++) field.Update(Frame());
+        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 3; tick++) field.Update(OneTick());
 
         Assert.Equal(3, prog.GetGhostTrail().Count); // one per beat
         Assert.Equal(spot, prog.GetGhostTrail()[^1]); // newest first, so the spawn spot is last
         Assert.Equal(3, prog.GetGhostFrames().Count);
 
         // Capped at the ROM's seven — the ring never grows.
-        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 12; tick++) field.Update(Frame());
+        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 12; tick++) field.Update(OneTick());
 
         Assert.Equal(ProgTuning.GhostCount, prog.GetGhostTrail().Count);
         Assert.Equal(ProgTuning.GhostCount, prog.GetGhostFrames().Count);
@@ -780,7 +780,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // ROM WVCHEK counts only grunts, spheroids, enforcers, brains, tanks and quarks:
         // a prog and a cruise missile left flying do not hold the wave open.
         brain.Kill();
-        for (var tick = 0; tick < 200 && !field.IsLevelCleared(); tick++) field.Update(Frame());
+        for (var tick = 0; tick < 200 && !field.IsLevelCleared(); tick++) field.Update(OneTick());
 
         Assert.True(field.IsLevelCleared());
         Assert.True(prog.IsAlive());
