@@ -387,6 +387,19 @@ name, comment or doc, and when a rename retires a word, add it to that table in 
 random number). Use "random number" in comments, and `…RandomRange` for the size of the range a random number is
 drawn from.
 
+**NAM-25. A parameter or variable is not named after something else that exists.** Least surprise: a reader who sees
+`playfield` expects a `PlayField`, `player` a `Player`, `keys` the `Keys` enum, `effect` MonoGame's `Effect`, `sound`
+the `Sound` service, `point` a `Point`. If the thing is not that, say what it is: `playfieldBounds` for the
+`Rectangle`, `playerPosition` for the `IntVector2`, `playerSlot` for a `PlayerSlot`, `playerIndex` for the number,
+`keyboardState`, `stripEffect`, `soundSequence`, `boardSound`, `avoidedPosition`. A variable named after its own type
+is fine (`Grunt grunt`, `KeyboardState keyboardState`, `Texture2D texture`, `PlayField field`). This covers the
+types the project declares and the framework types it uses, and applies to parameters, locals, loop variables and
+lambda parameters.
+
+The same goes for a bare `settings`, because the project has more than one kind: `GameSettings`, `ControlSettings`
+and the sound tables' `NoiseSettings`. Name it for what it is: `gameSettings`, `controlSettings`, `noiseSettings`,
+`singSettings`. A named argument uses the same name (`gameSettings: _gameSettings`).
+
 ## 4. Numbers and units (§112, §113)
 
 **NUM-1. No magic numbers.** Every literal other than `0`, `1`, `-1` (and `2` when halving) is a named constant.
@@ -734,6 +747,12 @@ grep -rnP --include=*.cs '^ {4}(?:public |internal |private |protected )(?:stati
 grep -rnP --include=*.cs '^(?!\s*//)[^/]*\b(?:ref|out)\s+(?:var\s+|[\w<>?\[\]]+\s+)?_?\w' $D
 # A Get… or Is… method must not write to a field (NAM-23). There is no safe grep for this: read the body of every
 # value-returning method you add or change.
+
+# A name that is another thing's name (NAM-25): the usual offenders, each should print nothing. There is no complete
+# grep for this: when you add a parameter, check its name against the type names (`ls src/Robotron2084/**/*.cs`).
+grep -rnE --include=*.cs '\b(IntVector2|Rectangle|int|var) (player|playfield|point)\b|\bKeyboardState keys\b|\b(var|StripEffect) effect\b|\bSoundSequence sound\b' src
+# ...and a bare settings (a PlayerControls named controls is fine), which should also print nothing
+grep -rnwE --include=*.cs 'settings' src | grep -v '///'
 
 # The word roll (NAM-24)
 grep -rniE --include=*.cs '\b\w*(re-?)?roll\w*\b' $D | grep -v -i -E 'scroll|control|corollary'
