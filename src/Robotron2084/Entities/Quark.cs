@@ -14,11 +14,10 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Tank" />
 /// <seealso cref="StripEffect" />
 /// <remarks>
-///     It acts on a beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_beatTimer" /> gathers the ticks until it is time for
-///     the next beat (see <see cref="ArcadeClock" />). It also moves steadily, timed by
-///     <see cref="_moveTimer" />.
+///     short freeze just after the player is killed. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+///     It also moves steadily, timed by <see cref="_moveTimer" />.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRTK4.ASM</c>, routine <c>SQUARE</c> (with <c>SQVEL</c>/<c>SQ3</c>)</item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$4BFB</c> (<c>ANIMATE_QUARK</c>)</item>
@@ -32,7 +31,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// </summary>
     private const int CoinFlipSides = 2;
 
-    /// <summary>The most beats a quark waits between tank drops, when it is not told a number.</summary>
+    /// <summary>The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> a quark waits between tank drops, when it is not told a number.</summary>
     private const int DefaultDropDelayBeats = 12;
 
     /// <summary>
@@ -45,7 +44,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private const int DefaultSpeedCap = 50;
 
     /// <summary>
-    ///     After a quark has dropped a tank, its drop delay is divided by this to give the most beats it waits before the
+    ///     After a quark has dropped a tank, its drop delay is divided by this to give the most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> it waits before the
     ///     next drop. A random number up to that is stored in <see cref="_dropBeatsRemaining" />.
     /// </summary>
     private const int RepeatDropDelayDivisor = 2;
@@ -57,12 +56,6 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private static readonly (int Width, int Height) CollisionSize = (
         ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Width),
         ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Height));
-
-    /// <summary>
-    ///     The time from one beat to the next, in clock units (see <see cref="ArcadeClock" />). <see cref="_beatTimer" />
-    ///     counts up to this. When it gets there, a beat happens and this is taken off it.
-    /// </summary>
-    private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(QuarkTuning.BeatIntervalRomFrames);
 
     private readonly int _dropDelayBeats;
     private readonly Random _random;
@@ -78,10 +71,10 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private int _animationFrameIndex;
 
-    /// <summary>Counts up to the next beat.</summary>
-    private int _beatTimer;
+    /// <summary>Starts due, so a new quark does not have to wait for its first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</summary>
+    private readonly RomFrameTimer _beatTimer = RomFrameTimer.CreateDue(QuarkTuning.BeatIntervalRomFrames);
 
-    /// <summary>Beats left before the next tank drop is due.</summary>
+    /// <summary><see cref="Robotron2084.Core.RomFrameTimer">Beats</see> left before the next tank drop is due.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>PD2</c>.</item>
@@ -96,12 +89,12 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True once the quark is fleeing up or down to the edge of the playfield, where it vanishes.</summary>
     private bool _isFleeing;
 
-    /// <summary>Counts up to the next move. The quark moves steadily.</summary>
-    private int _moveTimer;
+    /// <summary>Starts due, so a new quark does not have to wait for its first move.</summary>
+    private readonly RomFrameTimer _moveTimer = RomFrameTimer.CreateDue(ArcadeClock.MoveIntervalRomFrames);
 
     private IntVector2 _position;
 
-    /// <summary>Beats left before the quark picks a new direction to drift in.</summary>
+    /// <summary><see cref="Robotron2084.Core.RomFrameTimer">Beats</see> left before the quark picks a new direction to drift in.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>PD7</c>.</item>
@@ -136,7 +129,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     This wave's limit for picking how many tanks the quark drops. The most it can drop is half of
     ///     this.
     /// </param>
-    /// <param name="dropDelayBeats">The most beats this wave's quark waits between tank drops.</param>
+    /// <param name="dropDelayBeats">The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> this wave's quark waits between tank drops.</param>
     /// <param name="speedCap">The quark's top drifting speed on this wave (ROM: <c>SQSPD</c>).</param>
     /// <remarks>
     ///     <list type="bullet">
@@ -165,9 +158,6 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _tanksRemaining = (roll + 1) / 2;
         // The wait before the first tank drop. It counts down once each time the animation starts again, not once a beat (ROM: PD2).
         _dropBeatsRemaining = ArcadeRandom.PickUpTo(random, dropDelayBeats);
-        // Both timers start full, so a new quark does not have to wait for its first beat or its first move.
-        _beatTimer = BeatIntervalClockUnits;
-        _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
 
     /// <summary>
@@ -208,37 +198,19 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs one tick. The quark moves when it is time to. On a beat it shows its next animation frame, may pick a new
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The quark moves when it is time to. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> it shows its next animation frame, may pick a new
     ///     way to drift, and may drop a tank.
     /// </summary>
-    /// <param name="gameTime">Not used. The quark counts ticks.</param>
+    /// <param name="gameTime">Not used. The quark counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (!this.IsAlive()) return;
 
         // The quark does not move while the robots are frozen: before the wave has started, and while the Player is dying (ROM: RRS22.ASM OPRC80; STATUS bit 3).
-        if (!field.RobotsFrozen()) AdvanceMover(field);
+        if (!field.RobotsFrozen() && _moveTimer.Tick(ArcadeClock.MoveIntervalRomFrames)) MoveOnce(field);
 
-        // Wait for the quark's next beat, which is its next turn to act (see ArcadeClock).
-        _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < BeatIntervalClockUnits) return;
-
-        _beatTimer -= BeatIntervalClockUnits;
-        AdvanceAnimation();
-
-        if (_isFleeing)
-        {
-            LeaveWhenClearOfTheField(field);
-            return;
-        }
-
-        if (--_reaimBeatsRemaining <= 0) RollVelocity(field.GetPlayfieldBounds());
-
-        // While the robots are frozen, the quark still animates and still picks new directions, but it does not count down to its next tank drop.
-        if (field.RobotsFrozen()) return;
-
-        AdvanceTankDrop(field);
+        if (_beatTimer.Tick(QuarkTuning.BeatIntervalRomFrames)) ActOnBeat(field);
     }
 
     /// <summary>Kills the quark at once. A quark that is shot leaves a death burst, not a strip explosion.</summary>
@@ -280,18 +252,26 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Counts one tick towards the quark's next move, and makes the move when it is due. The quark moves on its own
-    ///     clock, which is more often than it has a beat.
+    ///     What the quark does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It shows its next animation frame, may pick a new way to drift, and may drop
+    ///     a tank.
     /// </summary>
     /// <param name="field">The playfield.</param>
-    private void AdvanceMover(PlayField field)
+    private void ActOnBeat(PlayField field)
     {
-        _moveTimer += ArcadeClock.UnitsPerPortTick;
-        if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
+        AdvanceAnimation();
+
+        if (_isFleeing)
         {
-            _moveTimer -= ArcadeClock.UnitsPerRomFrame;
-            AdvancePosition(field);
+            LeaveWhenClearOfTheField(field);
+            return;
         }
+
+        if (--_reaimBeatsRemaining <= 0) RollVelocity(field.GetPlayfieldBounds());
+
+        // While the robots are frozen, the quark still animates and still picks new directions, but it does not count down to its next tank drop.
+        if (field.RobotsFrozen()) return;
+
+        AdvanceTankDrop(field);
     }
 
     /// <summary>
@@ -326,7 +306,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     part is made only if it keeps the quark inside the playfield, and the same goes for the up-or-down part.
     /// </summary>
     /// <param name="field">The playfield, whose walls the quark stays inside.</param>
-    private void AdvancePosition(PlayField field)
+    private void MoveOnce(PlayField field)
     {
         var bounds = field.GetPlayfieldBounds();
 
@@ -352,7 +332,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
     ///     </list>
     ///     Before the first drop, the count goes down once each time the animation starts again. After that it goes
-    ///     down once a beat. When the quark has dropped all its tanks, it flees.
+    ///     down once a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. When the quark has dropped all its tanks, it flees.
     /// </remarks>
     private void AdvanceTankDrop(PlayField field)
     {
@@ -440,7 +420,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Picks at random a new way and speed to drift, and how many beats to keep it for. A quark that is close to a
+    ///     Picks at random a new way and speed to drift, and how many <see cref="Robotron2084.Core.RomFrameTimer">beats</see> to keep it for. A quark that is close to a
     ///     wall always drifts away from that wall.
     /// </summary>
     /// <param name="bounds">The inside of the playfield wall.</param>

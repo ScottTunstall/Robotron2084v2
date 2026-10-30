@@ -10,8 +10,8 @@ namespace Robotron2084.Entities;
 /// <summary>The player's laser shot: a straight bolt that flies until it hits a wall or a robot, then vanishes.</summary>
 /// <seealso cref="LaserSlots" />
 /// <remarks>
-///     It has no beat and no timer. <see cref="LaserSlots" /> holds it and calls <see cref="Update" />. The
-///     <see cref="PlayField" /> calls <see cref="LaserSlots.Update" /> on every tick, in <see cref="PlayField.Update" />.
+///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see> and no timer. <see cref="LaserSlots" /> holds it and calls <see cref="Update" />. The
+///     <see cref="PlayField" /> calls <see cref="LaserSlots.Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, in <see cref="PlayField.Update" />.
 ///     The one time it does not is during the short freeze just after the player is killed.
 ///     <list type="bullet">
 ///         <item>
@@ -77,8 +77,8 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
             _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
     }
 
-    /// <summary>Runs one tick. The laser flies one step the way it is going, and dies if it reaches the wall.</summary>
-    /// <param name="gameTime">Not used. The laser goes the same distance on every tick.</param>
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The laser flies one step the way it is going, and dies if it reaches the wall.</summary>
+    /// <param name="gameTime">Not used. The laser goes the same distance on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</param>
     /// <param name="field">The playfield. It tells the laser when it has reached the wall, and makes the flash there.</param>
     /// <remarks>ROM: RRG23.ASM's <c>LASDIE</c>.</remarks>
     public void Update(GameTime gameTime, PlayField field)

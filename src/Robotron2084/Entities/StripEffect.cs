@@ -11,14 +11,16 @@ namespace Robotron2084.Entities;
 ///     appears, the strips start far apart and close up to make the sprite.
 /// </summary>
 /// <remarks>
-///     It has no beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_romFrameTimer" /> gathers the ticks until it is time
-///     for the effect's next step. It takes a step steadily (see <see cref="ArcadeClock" />).
+///     short freeze just after the player is killed. <see cref="_stepTimer" /> says when it is time for the effect's
+///     next step.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRX7.ASM</c>/<c>RRHX4.ASM</c>/<c>RRDX2.ASM</c> (the explosion) and
-///             <c>RRG23.ASM</c>, routine <c>APPEAR</c> (the appear)
+///             <c>RRG23.ASM</c>, routine <c>APPEAR</c> (the appear). Both copy the object's animation frame pointer
+///             (<c>OPICT</c>, notes §35.5): the appear through <c>APSTV</c>/<c>APSTZ</c>, the explosion through
+///             <c>EXSTV</c>/<c>EXSTZ</c>
 ///         </item>
 ///         <item>
 ///             Disassembly: <c>asm/robomame.asm</c> at <c>$5C1F</c> (<c>MAKE_ENEMY_EXPLODE</c>) and <c>$473F</c>
@@ -28,6 +30,9 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class StripEffect : IEntity
 {
+    /// <summary>How often the effect takes a step: once every <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieth of a second</see>, as in the arcade.</summary>
+    private const int StepIntervalRomFrames = 1;
+
     /// <summary>
     ///     How much the gap between the strips shrinks on each step, when the effect is an appear. It is measured the way
     ///     <see cref="_spacingAccumulator" /> is.
@@ -75,7 +80,7 @@ public sealed class StripEffect : IEntity
     /// <summary>True once an appear has taken its first step. The arcade draws nothing for an appear until then.</summary>
     private bool _hasAppearBeenDrawn;
 
-    private int _romFrameTimer; // Counts up to the effect's next step (see ArcadeClock; notes §52, §67.4).
+    private readonly RomFrameTimer _stepTimer; // notes §52, §67.4
     private int _romFramesRemaining;
 
     private int
@@ -92,7 +97,7 @@ public sealed class StripEffect : IEntity
     ///     Works out which strip the others close in on or fly away from. If it is null, the
     ///     middle strip is used.
     /// </param>
-    /// <param name="startClockUnits">How far into the wait for its first step the effect starts, in clock units.</param>
+    /// <param name="startClockUnits">How far into the wait for its first step the effect starts, in <see cref="Robotron2084.Core.ArcadeClock.ClockUnitsPerSecond">clock units</see>.</param>
     /// <param name="isClosedUpAtTheEnd">True for an appear that is drawn with its strips fully closed up before it ends.</param>
     /// <param name="getFollowedBounds">
     ///     Gets the box of the thing that is appearing, so that the appear can stay with it. It is
@@ -117,7 +122,7 @@ public sealed class StripEffect : IEntity
         Slope = slope;
         _clip = clip;
         _getCentreStripIndex = getCentreStripIndex;
-        _romFrameTimer = startClockUnits;
+        _stepTimer = new RomFrameTimer(startClockUnits);
         _getFollowedBounds = getFollowedBounds;
 
         // How fast an appear closes up. The diagonal routine closes it twice as fast as the other two routines.
@@ -201,20 +206,16 @@ public sealed class StripEffect : IEntity
     }
 
     /// <summary>
-    ///     Runs one tick. When a step is due, an explosion's strips move further apart and an appear's strips move closer
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. When a step is due, an explosion's strips move further apart and an appear's strips move closer
     ///     together.
     /// </summary>
-    /// <param name="gameTime">Not used. The effect counts ticks.</param>
+    /// <param name="gameTime">Not used. The effect counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">Not used.</param>
     public void Update(GameTime gameTime, PlayField? field = null)
     {
         if (!this.IsAlive()) return;
 
-        // It does not step on every tick (see ArcadeClock).
-        _romFrameTimer += ArcadeClock.UnitsPerPortTick;
-        if (_romFrameTimer < ArcadeClock.UnitsPerRomFrame) return;
-
-        _romFrameTimer -= ArcadeClock.UnitsPerRomFrame;
+        if (!_stepTimer.Tick(StepIntervalRomFrames)) return;
 
         if (Kind == StripEffectKind.Explode)
         {
@@ -249,8 +250,8 @@ public sealed class StripEffect : IEntity
     ///     has, and gives back a strip counted from the top or the left. If it is null, the middle strip is used.
     /// </param>
     /// <param name="startClockUnits">
-    ///     How far into the wait for its first step the effect starts, in clock units (see
-    ///     <see cref="ArcadeClock" />). This makes the first step come at the right time. It is below zero when the effect has
+    ///     How far into the wait for its first step the effect starts, in <see cref="Robotron2084.Core.ArcadeClock.ClockUnitsPerSecond">clock units</see> (see
+    ///     <see cref="RomFrameTimer" />). This makes the first step come at the right time. It is below zero when the effect has
     ///     to wait longer than usual for its first step.
     /// </param>
     /// <returns>The new appear.</returns>
@@ -287,7 +288,7 @@ public sealed class StripEffect : IEntity
     /// <param name="slope">How the strips lean: -1, 0 or +1.</param>
     /// <param name="clip">The inside of the playfield. A strip outside it is not drawn.</param>
     /// <param name="centreStripIndex">Which strip the others close in on, counted from the top or the left.</param>
-    /// <param name="startClockUnits">How far into the wait for its first step the effect starts, in clock units.</param>
+    /// <param name="startClockUnits">How far into the wait for its first step the effect starts, in <see cref="Robotron2084.Core.ArcadeClock.ClockUnitsPerSecond">clock units</see>.</param>
     /// <returns>The new appear.</returns>
     /// <remarks>
     ///     <list type="bullet">

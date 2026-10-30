@@ -10,15 +10,14 @@ namespace Robotron2084.Entities;
 /// <summary>A BerzerkRobot is a robot that shuffles towards you exactly as a grunt does. It cannot shoot yet.</summary>
 /// <seealso cref="Grunt" />
 /// <remarks>
-///     It acts on a beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />.
 ///     There are two times it does not: while the robot is still appearing at the start of a wave, and during the
 ///     short freeze just after the player is killed.
-///     <see cref="_beatTimer" /> gathers the ticks
-///     until it is time for the next beat (see <see cref="ArcadeClock" />).
+///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
 ///     This robot is the author's own. It is not in the arcade game (notes §138). It moves as a grunt does (
 ///     <see cref="GruntChaseStep" />),
-///     with the same time between beats and the same wait between steps. It dies as a grunt does, to a laser or by walking
+///     with the same time between <see cref="Robotron2084.Core.RomFrameTimer">beats</see> and the same wait between steps. It dies as a grunt does, to a laser or by walking
 ///     onto an
 ///     electrode, and it kills the player by touching them. It has its own look. Until it first moves, it stands still and
 ///     plays its
@@ -29,7 +28,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>
     ///     How long the robot waits between one look at whether the game is live and the next. It decides how long after
-    ///     the game goes live the first beat comes (<see cref="BeginPlay" />).
+    ///     the game goes live the first <see cref="Robotron2084.Core.RomFrameTimer">beat</see> comes (<see cref="BeginPlay" />).
     /// </summary>
     /// <remarks>
     ///     This number is not from the arcade (FID-4a), because this robot is not in the arcade game. The author chose it
@@ -37,17 +36,17 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int LivePollRomFrames = 2;
 
-    /// <summary>How long the robot waits after the look that finds the game live, before its first beat.</summary>
+    /// <summary>How long the robot waits after the look that finds the game live, before its first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</summary>
     /// <remarks>
     ///     This number is not from the arcade (FID-4a), because this robot is not in the arcade game. The author chose it
     ///     to be like the grunt's (<see cref="Grunt" />).
     /// </remarks>
     private const int FirstBeatNapRomFrames = 10;
 
-    /// <summary>How long one beat lasts. It is the same as a grunt's.</summary>
+    /// <summary>How long one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> lasts. It is the same as a grunt's.</summary>
     private const int BeatIntervalRomFrames = 4;
 
-    /// <summary>The most beats the robot waits between steps, when it is not told a number. It is the same as a grunt's.</summary>
+    /// <summary>The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> the robot waits between steps, when it is not told a number. It is the same as a grunt's.</summary>
     private const int DefaultMoveLimitBeats = 15;
 
     /// <summary>How many animation frames each sideways walk has. They are shown in order: the first, then the second.</summary>
@@ -61,18 +60,12 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BerzerkRobotCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BerzerkRobotCollisionSize.Height));
 
-    /// <summary>
-    ///     The time from one beat to the next, in clock units (see <see cref="ArcadeClock" />). <see cref="_beatTimer" />
-    ///     counts up to this. When it gets there, a beat happens and this is taken off it.
-    /// </summary>
-    private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
-
     private readonly Random _random;
     private readonly SpriteSet _sprites;
     private int _animationStep;
-    private int _beatTimer;
+    private RomFrameTimer _beatTimer = new();
     private bool _hasMoved;
-    /// <summary>Beats left before the robot takes its next step.</summary>
+    /// <summary><see cref="Robotron2084.Core.RomFrameTimer">Beats</see> left before the robot takes its next step.</summary>
     private int _moveBeatsRemaining;
     private IntVector2 _position;
 
@@ -80,7 +73,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where the robot's top-left corner is.</param>
     /// <param name="moveLimitBeats">
-    ///     The most beats the robot waits between steps. Each wait is a random number of beats from 1
+    ///     The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> the robot waits between steps. Each wait is a random number of <see cref="Robotron2084.Core.RomFrameTimer">beats</see> from 1
     ///     up to this, as a grunt's is.
     /// </param>
     /// <param name="random">Where its random numbers come from. If this is null, the robot makes its own.</param>
@@ -100,7 +93,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>The way the robot is walking.</summary>
     public WalkSequence WalkSequence { get; private set; } = WalkSequence.Down;
 
-    /// <summary>The most beats the robot waits between steps.</summary>
+    /// <summary>The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> the robot waits between steps.</summary>
     public int MoveDelayBeats { get; }
 
     /// <summary>True when the robot took a step during the last update.</summary>
@@ -110,6 +103,20 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the same box as <see cref="GetBounds" />.</remarks>
+    public Rectangle GetExplosionBounds()
+    {
+        return GetBounds();
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
+    public Texture2D GetExplosionAnimationFrame()
+    {
+        return GetCurrentAnimationFrame();
     }
 
     /// <summary>Alive until it is killed. It is never Dying, because it has no death animation (see <see cref="Kill" />).</summary>
@@ -137,24 +144,15 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
         _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
-    /// <summary>Runs one tick. When its wait is over the robot takes a step towards the player and picks a new wait.</summary>
-    /// <param name="gameTime">Not used. The robot counts ticks.</param>
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. When its wait is over the robot takes a step towards the player and picks a new wait.</summary>
+    /// <param name="gameTime">Not used. The robot counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         SteppedThisUpdate = false;
         if (!this.IsAlive() || field.RobotsFrozen()) return;
 
-        _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < BeatIntervalClockUnits) return;
-
-        _beatTimer -= BeatIntervalClockUnits;
-        if (!_hasMoved) _animationStep++;
-
-        if (--_moveBeatsRemaining > 0) return;
-
-        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
-        Step(field);
+        if (_beatTimer.Tick(BeatIntervalRomFrames)) ActOnBeat(field);
     }
 
     /// <summary>Kills the robot at once, with no flash and no death animation.</summary>
@@ -166,13 +164,13 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Sets the time of the robot's first beat, on the tick the game goes live. The beat timer is set so that it
+    ///     Sets the time of the robot's first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.RomFrameTimer">beat</see> timer is set so that it
     ///     comes due when that time has gone by.
     /// </summary>
     /// <param name="field">The playfield, which works out how long the wait is.</param>
     public void BeginPlay(PlayField field)
     {
-        _beatTimer = BeatIntervalClockUnits - field.GetClockUnitsToFirstBeat(LivePollRomFrames, FirstBeatNapRomFrames);
+        _beatTimer = field.CreateFirstBeatTimer(LivePollRomFrames, FirstBeatNapRomFrames, BeatIntervalRomFrames);
     }
 
     /// <summary>Works out which animation frame of a walk to show.</summary>
@@ -206,6 +204,21 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
         if (Math.Abs(gapX) >= Math.Abs(gapY)) return gapX >= 0 ? WalkSequence.Right : WalkSequence.Left;
 
         return gapY >= 0 ? WalkSequence.Down : WalkSequence.Up;
+    }
+
+    /// <summary>
+    ///     What the robot does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. Until it first moves, it plays its standing animation. It only takes a step
+    ///     when <see cref="_moveBeatsRemaining" /> runs out.
+    /// </summary>
+    /// <param name="field">The playfield.</param>
+    private void ActOnBeat(PlayField field)
+    {
+        if (!_hasMoved) _animationStep++;
+
+        if (--_moveBeatsRemaining > 0) return;
+
+        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
+        Step(field);
     }
 
     /// <summary>Gets the set of animation frames for a walk.</summary>

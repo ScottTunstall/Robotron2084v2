@@ -13,11 +13,10 @@ namespace Robotron2084.Entities;
 /// </summary>
 /// <seealso cref="Human" />
 /// <remarks>
-///     It has no beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />.
 ///     The one time it does not is during the short freeze just after the player is killed.
-///     <see cref="_ticksRemaining" /> counts down
-///     the ticks until it goes.
+///     <see cref="_lifeTimer" /> says when it is time for it to go.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMKIL</c> (the <c>PCFLG</c> path)</item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$03C5</c> (<c>RESCUE_FAMILY_POINTS_TABLE</c>)</item>
@@ -26,8 +25,7 @@ namespace Robotron2084.Entities;
 public sealed class RescueScoreMarker : IEntity
 {
     /// <summary>
-    ///     How long the number stays on the field. It is turned into ticks to set <see cref="_ticksRemaining" />, which
-    ///     then counts down to nothing.
+    ///     How long the number stays on the field. <see cref="_lifeTimer" /> says when this time is up.
     /// </summary>
     private const int LifeRomFrames = 60;
 
@@ -41,7 +39,7 @@ public sealed class RescueScoreMarker : IEntity
 
     private readonly IntVector2 _position;
     private readonly SpriteSet _sprites;
-    private int _ticksRemaining;
+    private readonly RomFrameTimer _lifeTimer = new();
 
     /// <summary>Makes the number for one rescue.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -54,7 +52,6 @@ public sealed class RescueScoreMarker : IEntity
     {
         _sprites = sprites;
         _position = position;
-        _ticksRemaining = ArcadeClock.ToPortTicks(LifeRomFrames);
         _displayIndex = Math.Clamp(rescuesThisLife, 1, ScoreValues.RescueBonusMaxCount) - 1;
     }
 
@@ -80,10 +77,10 @@ public sealed class RescueScoreMarker : IEntity
     }
 
     /// <summary>Counts down the time the number has left on the field.</summary>
-    /// <param name="gameTime">Not used. The time is counted in ticks.</param>
+    /// <param name="gameTime">Not used. The time is counted in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">Not used.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (--_ticksRemaining <= 0) LifeState = EntityLifeState.Dead;
+        if (_lifeTimer.Tick(LifeRomFrames)) LifeState = EntityLifeState.Dead;
     }
 }

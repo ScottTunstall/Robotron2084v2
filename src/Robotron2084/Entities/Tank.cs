@@ -11,11 +11,11 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Quark" />
 /// <seealso cref="TankShell" />
 /// <remarks>
-///     It acts on a beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. There are two times it does not: while the
 ///     tank is still appearing at the start of a wave, and during the short freeze just after the player is killed.
-///     <see cref="_beatTimer" /> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock" />).
-///     <see cref="_growTimer" /> times the stages of its growing.
+///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, and <see cref="_growTimer" /> times the stages
+///     of its growing.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRTK4.ASM</c>, routine <c>TANK</c></item>
 ///         <item>
@@ -28,13 +28,13 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>
     ///     How long the arcade's routine sleeps between one look at whether the game is live and the next. It decides how
-    ///     long after the game goes live the first beat comes (<see cref="BeginPlay" />).
+    ///     long after the game goes live the first <see cref="Robotron2084.Core.RomFrameTimer">beat</see> comes (<see cref="BeginPlay" />).
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRTK4.ASM</c> <c>TANK</c>, <c>BITA #$7F / BEQ TANKL / NAP 15,TANK</c>,
-    ///             which runs on into its first beat with no more sleep.
+    ///             which runs on into its first <see cref="Robotron2084.Core.RomFrameTimer">beat</see> with no more sleep.
     ///         </item>
     ///         <item>Disassembly: <c>$4D8B</c>.</item>
     ///     </list>
@@ -54,7 +54,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     private const int AimAtPlayerRollAtMost = 96;
 
     /// <summary>
-    ///     The tank waits a random number of beats before it picks a new place to go. That number is always less than
+    ///     The tank waits a random number of <see cref="Robotron2084.Core.RomFrameTimer">beats</see> before it picks a new place to go. That number is always less than
     ///     this.
     /// </summary>
     /// <remarks>
@@ -65,7 +65,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int AimIntervalMaxExclusiveBeats = 32;
 
-    /// <summary>The fewest beats a tank waits before it picks a new place to go.</summary>
+    /// <summary>The fewest <see cref="Robotron2084.Core.RomFrameTimer">beats</see> a tank waits before it picks a new place to go.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>TANKND</c>.</item>
@@ -74,7 +74,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int AimIntervalMinBeats = 1;
 
-    /// <summary>How many beats a tank waits between shots, when it is not told a number.</summary>
+    /// <summary>How many <see cref="Robotron2084.Core.RomFrameTimer">beats</see> a tank waits between shots, when it is not told a number.</summary>
     private const int DefaultFireIntervalBeats = 32;
 
     /// <summary>
@@ -90,7 +90,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     private const int DestinationRollSides = 256;
 
     /// <summary>
-    ///     A tank's first shot waits the usual beats between shots, plus a random number of extra beats. The extra is
+    ///     A tank's first shot waits the usual <see cref="Robotron2084.Core.RomFrameTimer">beats</see> between shots, plus a random number of extra <see cref="Robotron2084.Core.RomFrameTimer">beats</see>. The extra is
     ///     always less than this.
     /// </summary>
     /// <remarks>
@@ -123,19 +123,11 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     private static readonly int VerticalMoveThreshold =
         ScreenSize.ToPortPixelsFromArcadePixels(VerticalMoveThresholdArcadePixels);
 
-    /// <summary>
-    ///     How long each growing animation frame is shown for, in clock units (see <see cref="ArcadeClock" />).
-    ///     <see cref="_growTimer" /> counts up to this.
-    /// </summary>
-    private static readonly int GrowIntervalClockUnits = ArcadeClock.ToClockUnits(TankTuning.GrowIntervalRomFrames);
-
     private readonly int _fireIntervalBeats;
+    private readonly RomFrameTimer _growTimer = new();
     private readonly Random _random;
     private readonly SpriteSet _sprites;
-    private int _aimBeatsRemaining;
-
-    /// <summary>Counts up to the next beat.</summary>
-    private int _beatTimer;
+    private RomFrameTimer _beatTimer = new();
 
     private IntVector2 _destination;
     private int _fireBeatsRemaining;
@@ -152,18 +144,17 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private int _growStep;
 
-    /// <summary>Counts up to the next growing animation frame.</summary>
-    private int _growTimer;
-
     private IntVector2 _position;
+
+    private int _reaimBeatsRemaining;
 
     private IntVector2
         _stepDirection; // Which way the tank steps on each beat: left or right (or neither), and up or down (or neither).
 
-    /// <summary>How many beats the tank has had. The treads show their next animation frame on each beat.</summary>
+    /// <summary>How many <see cref="Robotron2084.Core.RomFrameTimer">beats</see> the tank has had. The treads show their next animation frame on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRTK4.ASM</c> <c>TANK3</c>, which moves the animation on once a beat.</item>
+    ///         <item>Original source: <c>RRTK4.ASM</c> <c>TANK3</c>, which moves the animation on once a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
@@ -179,12 +170,12 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     Where its random numbers come from. They pick where it goes, how long before it picks again, and
     ///     the wait before its first shot.
     /// </param>
-    /// <param name="fireIntervalBeats">How many beats this wave's tank waits between shots.</param>
+    /// <param name="fireIntervalBeats">How many <see cref="Robotron2084.Core.RomFrameTimer">beats</see> this wave's tank waits between shots.</param>
     /// <param name="startFullyGrown">True for a tank that is on the field at the start of a life. It does not grow first.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRTK4.ASM</c>. <c>TNKSHT</c> is this wave's number of beats between shots.
+    ///             Original source: <c>RRTK4.ASM</c>. <c>TNKSHT</c> is this wave's number of <see cref="Robotron2084.Core.RomFrameTimer">beats</see> between shots.
     ///             <c>TNKSTV</c>
     ///             puts a tank on at full size. Only a tank dropped by a quark grows (<c>MTANK</c>).
     ///         </item>
@@ -205,7 +196,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         _fireIntervalBeats = fireIntervalBeats;
         _destination = position;
         // The tank picks where to go at the end of its first beat (ROM: TANKL).
-        _aimBeatsRemaining = 0;
+        _reaimBeatsRemaining = 0;
         // The first shot waits this wave's gap between shots, plus a random number of extra beats.
         _fireBeatsRemaining = fireIntervalBeats + random.Next(0, FirstShotExtraBeatsMaxExclusive);
     }
@@ -246,6 +237,20 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
     }
 
+    /// <inheritdoc />
+    /// <remarks>It is the same box as <see cref="GetBounds" />.</remarks>
+    public Rectangle GetExplosionBounds()
+    {
+        return GetBounds();
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
+    public Texture2D GetExplosionAnimationFrame()
+    {
+        return GetCurrentAnimationFrame();
+    }
+
     /// <summary>
     ///     The animation frame the tank is showing: a growing one while it grows, and a tread one after that. An
     ///     explosion is made from it (see <see cref="IAnimationFrameSource" />).
@@ -253,7 +258,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRTK4.ASM</c> <c>TANK3</c>. The animation moves on once a beat. It plays
+    ///             Original source: <c>RRTK4.ASM</c> <c>TANK3</c>. The animation moves on once a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It plays
     ///             backwards while the tank is going left.
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
@@ -302,10 +307,10 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Runs one tick. A growing tank only grows. After that, on a beat, the tank fires if it is time to, takes a
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. A growing tank only grows. After that, on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, the tank fires if it is time to, takes a
     ///     step, and may pick a new place to go.
     /// </summary>
-    /// <param name="gameTime">Not used. The tank counts ticks.</param>
+    /// <param name="gameTime">Not used. The tank counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -313,26 +318,11 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 
         if (field.RobotsFrozen()) return;
 
+        // A growing tank cannot move or fire. It may finish growing on this tick, and then it can have a beat at once.
+        if (IsGrowing() && _growTimer.Tick(TankTuning.GrowIntervalRomFrames)) TakeGrowStep();
         if (IsGrowing()) return;
 
-        // Wait for the tank's next beat, which is its next turn to act (see ArcadeClock; ROM: TNKSPD).
-        _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames)) return;
-
-        _beatTimer -= ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames);
-
-        // On a beat the tank first fires, if it is time to, and then steps or bounces (ROM: the TANK process).
-        FireIfDue(field);
-        StepOrBounce(field);
-
-        _treadAnimationFrameCounter++; // The treads show their next animation frame on each beat (ROM: TANK3).
-
-        // When the aim countdown runs out, the tank picks a new place to go. Sometimes it is where the Player is, and otherwise it is a random place (ROM: TANKND).
-        if (--_aimBeatsRemaining <= 0)
-        {
-            _aimBeatsRemaining = NextAimInterval(_random);
-            PickDestination(field);
-        }
+        if (_beatTimer.Tick(TankTuning.BeatIntervalRomFrames)) ActOnBeat(field);
     }
 
     /// <summary>Kills the tank at once, with no death animation.</summary>
@@ -350,14 +340,13 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Sets the time of the first beat of a tank that was on the field when the wave started, on the tick the game
-    ///     goes live. The beat timer is set so that it comes due when that time has gone by.
+    ///     Sets the time of the first <see cref="Robotron2084.Core.RomFrameTimer">beat</see> of a tank that was on the field when the wave started, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game
+    ///     goes live. The <see cref="Robotron2084.Core.RomFrameTimer">beat</see> timer is set so that it comes due when that time has gone by.
     /// </summary>
     /// <param name="field">The playfield, which works out how long the wait is.</param>
     public void BeginPlay(PlayField field)
     {
-        _beatTimer = ArcadeClock.ToClockUnits(TankTuning.BeatIntervalRomFrames) -
-                     field.GetClockUnitsToFirstBeat(LivePollRomFrames, 0);
+        _beatTimer = field.CreateFirstBeatTimer(LivePollRomFrames, 0, TankTuning.BeatIntervalRomFrames);
     }
 
     /// <summary>Moves a spot so that a tank standing on it is wholly inside the playfield.</summary>
@@ -371,26 +360,25 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             Math.Clamp(position.Y, playfieldBounds.Y, playfieldBounds.Bottom - CollisionSize.Height));
     }
 
-    /// <summary>True while the tank is still growing. Tests use this.</summary>
-    internal bool IsBeingBorn()
+    /// <summary>True while the tank is still growing, when it must not move or fire.</summary>
+    internal bool IsGrowing()
     {
         return _growStep < TankTuning.GrowSteps;
     }
 
-    /// <summary>Picks at random how many beats the tank waits before it picks a new place to go.</summary>
+    /// <summary>Picks at random how many <see cref="Robotron2084.Core.RomFrameTimer">beats</see> the tank waits before it picks a new place to go.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>TANKND</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    private static int NextAimInterval(Random random)
+    private static int NextReaimBeats(Random random)
     {
         return random.Next(AimIntervalMinBeats, AimIntervalMaxExclusiveBeats);
     }
 
-    /// <summary>Runs one tick of the tank's growing.</summary>
-    /// <returns>True while the tank is still growing, when it must not move or fire.</returns>
+    /// <summary>Shows the next growing animation frame.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -400,25 +388,38 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    private bool IsGrowing()
+    private void TakeGrowStep()
     {
-        if (_growStep >= TankTuning.GrowSteps) return false;
-
-        _growTimer += ArcadeClock.UnitsPerPortTick;
-        if (_growTimer < GrowIntervalClockUnits) return true;
-
-        _growTimer -= GrowIntervalClockUnits;
-
         // The growing tank moves up and to the left a little each time its animation frame changes, so that the full-size tank ends up centred on the spot where it was dropped (notes §53).
         var (columns, rows) = TankTuning.GrowDeltas[_growStep];
         _position += new IntVector2(ScreenSize.ToPortPixelsFromColumns(columns),
             ScreenSize.ToPortPixelsFromArcadePixels(rows));
 
-        return ++_growStep < TankTuning.GrowSteps;
+        _growStep++;
     }
 
     /// <summary>
-    ///     Counts down one beat towards the next shot. When the count runs out, the tank fires a shell, if the playfield
+    ///     What the tank does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It fires, if it is time to, then steps or bounces, and may pick a new place to
+    ///     go (ROM: the <c>TANK</c> process).
+    /// </summary>
+    /// <param name="field">The playfield.</param>
+    private void ActOnBeat(PlayField field)
+    {
+        FireIfDue(field);
+        StepOrBounce(field);
+
+        _treadAnimationFrameCounter++; // The treads show their next animation frame on each beat (ROM: TANK3).
+
+        // When the aim countdown runs out, the tank picks a new place to go. Sometimes it is where the Player is, and otherwise it is a random place (ROM: TANKND).
+        if (--_reaimBeatsRemaining <= 0)
+        {
+            _reaimBeatsRemaining = NextReaimBeats(_random);
+            PickDestination(field);
+        }
+    }
+
+    /// <summary>
+    ///     Counts down one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> towards the next shot. When the count runs out, the tank fires a shell, if the playfield
     ///     allows another shell.
     /// </summary>
     /// <param name="field">The playfield.</param>
@@ -440,7 +441,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRTK4.ASM</c>, the <c>TANK1</c> step. On each beat the tank goes one arcade pixel
+    ///             Original source: <c>RRTK4.ASM</c>, the <c>TANK1</c> step. On each <see cref="Robotron2084.Core.RomFrameTimer">beat</see> the tank goes one arcade pixel
     ///             sideways, one arcade pixel up or down, or both.
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>

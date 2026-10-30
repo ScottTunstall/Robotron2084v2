@@ -13,11 +13,10 @@ namespace Robotron2084.Entities;
 /// </summary>
 /// <seealso cref="Enforcer" />
 /// <remarks>
-///     It acts on a beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_beatTimer" /> gathers the ticks until it is time for
-///     the next beat (see <see cref="ArcadeClock" />). It also moves steadily, timed by
-///     <see cref="_moveTimer" />.
+///     short freeze just after the player is killed. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+///     It also moves steadily, timed by <see cref="_moveTimer" />.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRC11.ASM</c>, routine <c>CIRCLE</c> (with
@@ -29,7 +28,7 @@ namespace Robotron2084.Entities;
 public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>
-    ///     The spheroid changes its speed by the same amounts for a random number of beats, from 1 up to this. Then it
+    ///     The spheroid changes its speed by the same amounts for a random number of <see cref="Robotron2084.Core.RomFrameTimer">beats</see>, from 1 up to this. Then it
     ///     picks new amounts.
     /// </summary>
     /// <remarks>
@@ -90,7 +89,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private const int AccelYRollSides = 64;
 
     /// <summary>
-    ///     A small extra amount that is taken off the speed on each beat, along with the slowing down that
+    ///     A small extra amount that is taken off the speed on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, along with the slowing down that
     ///     <see cref="DampingPer256" /> does.
     /// </summary>
     /// <remarks>
@@ -101,7 +100,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int DampingBias = 4;
 
-    /// <summary>On each beat the spheroid is slowed down by this many 256ths of its speed.</summary>
+    /// <summary>On each <see cref="Robotron2084.Core.RomFrameTimer">beat</see> the spheroid is slowed down by this many 256ths of its speed.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRC11.ASM</c> <c>CIRGO</c>.</item>
@@ -170,21 +169,20 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private readonly Random _random;
     private readonly SpriteSet _sprites;
 
-    /// <summary>Beats left before the spheroid picks new amounts to change its speed by.</summary>
+    /// <summary><see cref="Robotron2084.Core.RomFrameTimer">Beats</see> left before the spheroid picks new amounts to change its speed by.</summary>
     private int _accelBeatsRemaining;
 
-    /// <summary>How much is added to the spheroid's sideways speed on each beat. A negative number pushes it left.</summary>
+    /// <summary>How much is added to the spheroid's sideways speed on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. A negative number pushes it left.</summary>
     private int _accelX;
 
-    /// <summary>How much is added to the spheroid's up-and-down speed on each beat. A negative number pushes it up.</summary>
+    /// <summary>How much is added to the spheroid's up-and-down speed on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. A negative number pushes it up.</summary>
     private int _accelY;
 
     /// <summary>Which animation frame is showing. It counts round as the spheroid spins.</summary>
     private int
         _animationFrameIndex; // It goes up to SpinLastAnimationFrame while the spheroid spins or escapes, and up to DropLastAnimationFrame while it drops enforcers.
 
-    /// <summary>Counts up to the next beat.</summary>
-    private int _beatTimer;
+    private readonly RomFrameTimer _beatTimer = new();
 
     /// <summary>How many more times the spheroid spins before it drops its next enforcer.</summary>
     private int _dropRotationsRemaining;
@@ -201,8 +199,8 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True once the spheroid is running sideways for the edge of the playfield, where it vanishes.</summary>
     private bool _isEscaping;
 
-    /// <summary>Counts up to the next move. The spheroid moves steadily.</summary>
-    private int _moveTimer;
+    /// <summary>Starts due, so a new spheroid does not have to wait for its first move.</summary>
+    private readonly RomFrameTimer _moveTimer = RomFrameTimer.CreateDue(ArcadeClock.MoveIntervalRomFrames);
 
     private IntVector2 _position;
     private int _remainderXSubpixels;
@@ -238,7 +236,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     ///     </list>
     ///     There is no speed to pass in, on purpose. A spheroid's speed comes from the pushes it gives itself on each
-    ///     beat, so there is no single number that could make it faster.
+    ///     <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, so there is no single number that could make it faster.
     /// </remarks>
     public Spheroid(
         SpriteSet sprites,
@@ -258,7 +256,6 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _escapeDirectionSignX = random.Next(2) == 0 ? -1 : 1;
         // How many times the spheroid spins before it first drops an enforcer.
         _dropRotationsRemaining = ArcadeRandom.PickUpTo(random, dropDelayRotations);
-        _moveTimer = ArcadeClock.UnitsPerRomFrame;
         // The spheroid starts on the last animation frame of a spin, so its first beat finishes a spin.
         _animationFrameIndex = SpinLastAnimationFrame;
         RollAccelerations();
@@ -323,45 +320,19 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs one tick. The spheroid moves when it is time to. On a beat its speed changes, and it spins, drops an
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The spheroid moves when it is time to. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> its speed changes, and it spins, drops an
     ///     enforcer or escapes.
     /// </summary>
-    /// <param name="gameTime">Not used. The spheroid counts ticks.</param>
+    /// <param name="gameTime">Not used. The spheroid counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (!this.IsAlive()) return;
 
         // The spheroid does not move while the robots are frozen, before the wave has started, and while the Player is dying (ROM: RRS22.ASM OPRC80; STATUS bit 3).
-        if (!field.RobotsFrozen()) AdvanceMover(field);
+        if (!field.RobotsFrozen() && _moveTimer.Tick(ArcadeClock.MoveIntervalRomFrames)) MoveOnce(field);
 
-        // Wait for the spheroid's next beat, which is its next turn to act (see ArcadeClock).
-        _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < ArcadeClock.ToClockUnits(SpheroidTuning.BeatIntervalRomFrames)) return;
-
-        _beatTimer -= ArcadeClock.ToClockUnits(SpheroidTuning.BeatIntervalRomFrames);
-
-        // wrapPass is true when the animation is on its last animation frame. The count of spins left before a drop only goes down on those beats.
-        var lastAnimationFrame = _isDropping && !_isEscaping ? DropLastAnimationFrame : SpinLastAnimationFrame;
-        var wrapPass = _animationFrameIndex >= lastAnimationFrame;
-
-        if (_isEscaping)
-        {
-            AdvanceEscapeBeat(field, wrapPass);
-            return;
-        }
-
-        // On every beat the spheroid's speed changes. When its countdown runs out, it picks a new random amount for the speed to change by.
-        AccelerateAndDamp();
-        if (--_accelBeatsRemaining <= 0) RollAccelerations();
-
-        if (!wrapPass)
-        {
-            _animationFrameIndex++;
-            return;
-        }
-
-        AdvanceDropBeat(field);
+        if (_beatTimer.Tick(SpheroidTuning.BeatIntervalRomFrames)) ActOnBeat(field);
     }
 
     /// <summary>Kills the spheroid at once. A spheroid that is shot leaves a death burst, not a strip explosion.</summary>
@@ -384,18 +355,32 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Counts one tick towards the spheroid's next move, and makes the move when it is due. The spheroid moves on its
-    ///     own clock, which is more often than it has a beat.
+    ///     What the spheroid does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. Its speed changes, and it spins, drops an enforcer or escapes.
     /// </summary>
     /// <param name="field">The playfield.</param>
-    private void AdvanceMover(PlayField field)
+    private void ActOnBeat(PlayField field)
     {
-        _moveTimer += ArcadeClock.UnitsPerPortTick;
-        if (_moveTimer >= ArcadeClock.UnitsPerRomFrame)
+        // wrapPass is true when the animation is on its last animation frame. The count of spins left before a drop only goes down on those beats.
+        var lastAnimationFrame = _isDropping && !_isEscaping ? DropLastAnimationFrame : SpinLastAnimationFrame;
+        var wrapPass = _animationFrameIndex >= lastAnimationFrame;
+
+        if (_isEscaping)
         {
-            _moveTimer -= ArcadeClock.UnitsPerRomFrame;
-            AdvancePosition(field);
+            ActOnEscapeBeat(field, wrapPass);
+            return;
         }
+
+        // On every beat the spheroid's speed changes. When its countdown runs out, it picks a new random amount for the speed to change by.
+        AccelerateAndDamp();
+        if (--_accelBeatsRemaining <= 0) RollAccelerations();
+
+        if (!wrapPass)
+        {
+            _animationFrameIndex++;
+            return;
+        }
+
+        ActOnSpinEndBeat(field);
     }
 
     /// <summary>
@@ -427,7 +412,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRC11.ASM</c>, the second half of <c>CIRGO</c>. The speed is pushed the same way on
-    ///             every beat and slowed a little on every beat, so it settles at about 64 times the push. That is usually
+    ///             every <see cref="Robotron2084.Core.RomFrameTimer">beat</see> and slowed a little on every <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, so it settles at about 64 times the push. That is usually
     ///             more than the top speed, so the spheroid usually ends up going at its top speed.
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
@@ -440,7 +425,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Changes the spheroid's speed for one beat. It adds the push, keeps the speed within the top speed, and then
+    ///     Changes the spheroid's speed for one <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It adds the push, keeps the speed within the top speed, and then
     ///     slows it down a little.
     /// </summary>
     /// <remarks>
@@ -456,7 +441,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs the beat that ends a spin. The spheroid counts down its spins. When the count runs out, it drops an
+    ///     Runs the <see cref="Robotron2084.Core.RomFrameTimer">beat</see> that ends a spin. The spheroid counts down its spins. When the count runs out, it drops an
     ///     enforcer if the playfield has room for one.
     /// </summary>
     /// <param name="field">
@@ -472,7 +457,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///     down. A spheroid that is dropping or escaping is not held up like this, because the arcade only makes this
     ///     check in its spinning routine.
     /// </remarks>
-    private void AdvanceDropBeat(PlayField field)
+    private void ActOnSpinEndBeat(PlayField field)
     {
         if (!_isDropping && field.RobotsFrozen())
         {
@@ -510,11 +495,11 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs one beat of the escape. The spheroid shows its next animation frame. At the end of each spin, it is taken
+    ///     Runs one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> of the escape. The spheroid shows its next animation frame. At the end of each spin, it is taken
     ///     off the field if it has reached the edge.
     /// </summary>
     /// <param name="field">The playfield, whose left and right edges the spheroid escapes to.</param>
-    /// <param name="wrapPass">True on the beat when the last animation frame of the spin is showing.</param>
+    /// <param name="wrapPass">True on the <see cref="Robotron2084.Core.RomFrameTimer">beat</see> when the last animation frame of the spin is showing.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -524,7 +509,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     ///     </list>
     /// </remarks>
-    private void AdvanceEscapeBeat(PlayField field, bool wrapPass)
+    private void ActOnEscapeBeat(PlayField field, bool wrapPass)
     {
         if (!wrapPass)
         {
@@ -550,7 +535,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///     goes for the up-or-down part.
     /// </summary>
     /// <param name="field">The playfield, whose walls the spheroid stays inside.</param>
-    private void AdvancePosition(PlayField field)
+    private void MoveOnce(PlayField field)
     {
         var bounds = field.Wall.PlayfieldBounds;
         _position = new IntVector2(
@@ -568,7 +553,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Picks new random amounts to change the spheroid's speed by, sideways and up-and-down, and how many beats to
+    ///     Picks new random amounts to change the spheroid's speed by, sideways and up-and-down, and how many <see cref="Robotron2084.Core.RomFrameTimer">beats</see> to
     ///     keep them for.
     /// </summary>
     /// <remarks>ROM: <c>CIRNAC</c>.</remarks>
@@ -584,7 +569,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///     is left as it is.
     /// </summary>
     /// <remarks>
-    ///     ROM: <c>CIRC3</c>. The arcade leaves the last animation frame of the drop showing, and the first beat of
+    ///     ROM: <c>CIRC3</c>. The arcade leaves the last animation frame of the drop showing, and the first <see cref="Robotron2084.Core.RomFrameTimer">beat</see> of
     ///     the escape goes back to the first animation frame of the spin.
     /// </remarks>
     private void StartEscape()

@@ -70,8 +70,8 @@ public sealed class LaserSlots
         return false;
     }
 
-    /// <summary>Moves every laser that is in flight on by one tick.</summary>
-    /// <param name="gameTime">The game's own clock for this tick.</param>
+    /// <summary>Moves every laser that is in flight on by one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</summary>
+    /// <param name="gameTime">The game's own clock for this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {

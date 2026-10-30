@@ -10,11 +10,10 @@ namespace Robotron2084.Entities;
 /// <summary>The little skull left on the ground where a robot killed a family member. It fades away after a while.</summary>
 /// <seealso cref="Human" />
 /// <remarks>
-///     It has no beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />.
 ///     The one time it does not is during the short freeze just after the player is killed.
-///     <see cref="_ticksRemaining" /> counts down
-///     the ticks until it goes.
+///     <see cref="_lifeTimer" /> says when it is time for it to go.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRH11.ASM</c>, routine <c>HUMKIL</c> (draws <c>SKULP</c> and plays
@@ -26,8 +25,7 @@ namespace Robotron2084.Entities;
 public sealed class SkullMarker : IEntity
 {
     /// <summary>
-    ///     How long the skull stays on the field. It is turned into ticks to set <see cref="_ticksRemaining" />, which
-    ///     then counts down to nothing.
+    ///     How long the skull stays on the field. <see cref="_lifeTimer" /> says when this time is up.
     /// </summary>
     private const int LifeRomFrames = 90;
 
@@ -38,7 +36,7 @@ public sealed class SkullMarker : IEntity
 
     private readonly IntVector2 _position;
     private readonly SpriteSet _sprites;
-    private int _ticksRemaining;
+    private readonly RomFrameTimer _lifeTimer = new();
 
     /// <summary>Leaves a skull where a family member was killed.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -47,7 +45,6 @@ public sealed class SkullMarker : IEntity
     {
         _sprites = sprites;
         _position = position;
-        _ticksRemaining = ArcadeClock.ToPortTicks(LifeRomFrames);
     }
 
     /// <summary>The box the skull is drawn in.</summary>
@@ -72,10 +69,10 @@ public sealed class SkullMarker : IEntity
     }
 
     /// <summary>Counts down the time the skull has left on the field.</summary>
-    /// <param name="gameTime">Not used. The time is counted in ticks.</param>
+    /// <param name="gameTime">Not used. The time is counted in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">Not used.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (--_ticksRemaining <= 0) LifeState = EntityLifeState.Dead;
+        if (_lifeTimer.Tick(LifeRomFrames)) LifeState = EntityLifeState.Dead;
     }
 }

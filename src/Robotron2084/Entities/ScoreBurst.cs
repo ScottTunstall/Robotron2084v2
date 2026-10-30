@@ -11,10 +11,9 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Spheroid" />
 /// <seealso cref="Quark" />
 /// <remarks>
-///     It has no beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_stepTimer" /> gathers the ticks until it is time for
-///     the next step (see <see cref="ArcadeClock" />).
+///     short freeze just after the player is killed. <see cref="_stepTimer" /> says when it is time for the next step.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRC11.ASM</c>, routine <c>CIRKIL</c>/<c>CIRKP</c> (spheroid) and
@@ -40,7 +39,7 @@ public sealed class ScoreBurst : IEntity
     private readonly SpriteSet _sprites;
     private int _animationFrameIndex = FirstBurstAnimationFrameIndex;
     private int _burstStepsRemaining;
-    private int _stepTimer; // Counts up to the burst's next step (see ArcadeClock).
+    private readonly RomFrameTimer _stepTimer = new();
 
     /// <summary>Makes one burst. <see cref="CreateForQuark" /> and <see cref="CreateForSpheroid" /> both use it.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -127,20 +126,16 @@ public sealed class ScoreBurst : IEntity
     }
 
     /// <summary>
-    ///     Runs one tick. On each step the burst shows its next animation frame. When the burst is over the points are
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On each step the burst shows its next animation frame. When the burst is over the points are
     ///     shown, and then the whole thing is gone.
     /// </summary>
-    /// <param name="gameTime">Not used. The burst counts ticks.</param>
+    /// <param name="gameTime">Not used. The burst counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">Not used.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (!this.IsAlive()) return;
 
-        // Wait until it is time for the next step (see ArcadeClock).
-        _stepTimer += ArcadeClock.UnitsPerPortTick;
-        if (_stepTimer < ArcadeClock.ToClockUnits(ScoreBurstTuning.RomFramesPerStep)) return;
-
-        _stepTimer -= ArcadeClock.ToClockUnits(ScoreBurstTuning.RomFramesPerStep);
+        if (!_stepTimer.Tick(ScoreBurstTuning.StepIntervalRomFrames)) return;
 
         if (!ShowingPoints)
         {

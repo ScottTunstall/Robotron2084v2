@@ -15,12 +15,12 @@ namespace Robotron2084.Entities;
 /// <seealso cref="PlayField" />
 /// <seealso cref="PlayerLaser" />
 /// <remarks>
-///     It has no beat. The <see cref="PlayField" /> calls <see cref="Update" /> directly, in
+///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> directly, in
 ///     <see cref="PlayField.Update" />,
-///     on every tick. The one time it does not is during the short freeze just after the player is killed.
-///     <see cref="_deathTimer" /> times the stages of its death (see <see cref="ArcadeClock" />),
-///     <see cref="_animationFrameTicks" /> counts the ticks each animation frame is shown, and
-///     <see cref="_invincibilityBlinkTicks" /> counts the ticks of its blinking.
+///     on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The one time it does not is during the short freeze just after the player is killed.
+///     <see cref="_deathTimer" /> times the stages of its death,
+///     <see cref="_walkAnimationTicks" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> each animation frame is shown, and
+///     <see cref="_invincibilityFlickerTicks" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> of its blinking.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRF.ASM</c>, routine <c>PLAYER</c> (called every interrupt; see also
@@ -32,10 +32,10 @@ namespace Robotron2084.Entities;
 public sealed class Player : IEntity, IAnimationFrameSource
 {
     /// <summary>
-    ///     How many ticks of walking each animation frame is shown for. <see cref="_animationFrameTicks" /> counts up to
+    ///     How many <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> of walking each animation frame is shown for. <see cref="_walkAnimationTicks" /> counts up to
     ///     this and then the next animation frame is shown.
     /// </summary>
-    private const int FrameTicksPerAnimationFrame = 3;
+    private const int WalkAnimationIntervalTicks = 3;
 
     /// <summary>
     ///     How big the player is, in port pixels. It is the size of the player's sprite, and it is used to tell what the
@@ -60,7 +60,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private readonly SpriteSet _sprites;
 
     private int
-        _animationFrameTicks = 1; // How many ticks of walking the current walk animation frame has been shown for.
+        _walkAnimationTicks = 1; // How many ticks of walking the current walk animation frame has been shown for.
 
     private int _autoFireTicksRemaining;
     private int _deathFadeIndex;
@@ -70,8 +70,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
     // Which stage of the death animation is playing: a white flash, a coloured flash, or the fade to black (ROM: RRX7.ASM).
     private DeathStage _deathStage = DeathStage.White;
 
-    private int _deathTimer;
-    private int _invincibilityBlinkTicks;
+    private readonly RomFrameTimer _deathTimer = new();
+    private int _invincibilityFlickerTicks;
     private int _invincibilityTicksRemaining;
     private IntVector2 _position;
     private int _walkCycleStep;
@@ -161,7 +161,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         if (this.IsDead()) return;
 
         // A Player who cannot be hurt flickers. This is the part of the flicker when the Player is not drawn.
-        if (IsInvincible() && _invincibilityBlinkTicks >= PlayerTuning.InvincibilityFlickerVisibleTicks) return;
+        if (IsInvincible() && _invincibilityFlickerTicks >= PlayerTuning.InvincibilityFlickerVisibleTicks) return;
 
         // A dying Player is drawn as a shape filled with one colour.
         if (this.IsDying())
@@ -175,10 +175,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     /// <summary>
-    ///     Runs one tick. A dying player plays the death animation. A living player moves, fires and animates. Before the
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. A dying player plays the death animation. A living player moves, fires and animates. Before the
     ///     game is live the player does nothing.
     /// </summary>
-    /// <param name="gameTime">Not used. The player counts ticks.</param>
+    /// <param name="gameTime">Not used. The player counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -323,7 +323,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         return wall.Intersects(box) ? from : stepped;
     }
 
-    /// <summary>Runs one tick of the death animation: the flashes, then the fade.</summary>
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the death animation: the flashes, then the fade.</summary>
     /// <param name="field">The playfield, whose palette is used for the fade.</param>
     /// <remarks>
     ///     <list type="bullet">
@@ -335,18 +335,14 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// </remarks>
     private void AdvanceDeath(PlayField field)
     {
-        _deathTimer += ArcadeClock.UnitsPerPortTick;
-
-        var romFrames = _deathStage switch
+        var intervalRomFrames = _deathStage switch
         {
             DeathStage.White => PlayerTuning.PlayerDeathWhiteRomFrames,
             DeathStage.Colour => PlayerTuning.PlayerDeathColourRomFrames,
             _ => PlayerTuning.PlayerDeathFadeRomFrames
         };
 
-        if (_deathTimer < ArcadeClock.ToClockUnits(romFrames)) return;
-
-        _deathTimer -= ArcadeClock.ToClockUnits(romFrames);
+        if (!_deathTimer.Tick(intervalRomFrames)) return;
 
         switch (_deathStage)
         {
@@ -379,13 +375,13 @@ public sealed class Player : IEntity, IAnimationFrameSource
         }
     }
 
-    /// <summary>Runs one tick of the countdown for the time the player cannot be hurt, and of its flicker.</summary>
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the countdown for the time the player cannot be hurt, and of its flicker.</summary>
     private void AdvanceInvincibility()
     {
         if (_invincibilityTicksRemaining > 0) _invincibilityTicksRemaining--;
 
-        _invincibilityBlinkTicks =
-            (_invincibilityBlinkTicks + 1) % (PlayerTuning.InvincibilityFlickerVisibleTicks +
+        _invincibilityFlickerTicks =
+            (_invincibilityFlickerTicks + 1) % (PlayerTuning.InvincibilityFlickerVisibleTicks +
                                               PlayerTuning.InvincibilityFlickerHiddenTicks);
     }
 
@@ -401,16 +397,16 @@ public sealed class Player : IEntity, IAnimationFrameSource
             // The Player has turned, so the walk starts again from the first animation frame for the new direction.
             _walkSequence = walkSequence;
             _walkCycleStep = 0;
-            _animationFrameTicks = 1;
+            _walkAnimationTicks = 1;
         }
-        else if (_animationFrameTicks >= FrameTicksPerAnimationFrame)
+        else if (_walkAnimationTicks >= WalkAnimationIntervalTicks)
         {
-            _animationFrameTicks = 1;
+            _walkAnimationTicks = 1;
             _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
         }
         else
         {
-            _animationFrameTicks++;
+            _walkAnimationTicks++;
         }
     }
 
@@ -438,7 +434,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     /// <summary>
-    ///     Moves the player the way the move stick is pushed, for one tick. The player turns to face that way, and cannot
+    ///     Moves the player the way the move stick is pushed, for one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The player turns to face that way, and cannot
     ///     go into the wall.
     /// </summary>
     /// <param name="move">The way the move stick is pushed: left, right or neither, and up, down or neither.</param>
@@ -464,7 +460,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private void ResetDeathAnimation()
     {
         _deathStage = DeathStage.White;
-        _deathTimer = 0;
+        _deathTimer.Restart();
         _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
         _deathFlashSlot = PlayerTuning.PlayerDeathWhiteSlot;
         _deathFadeIndex = 0;
@@ -485,11 +481,11 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///     Fires a laser when the fire control is used. A new press fires at once. Holding it down keeps firing, with a
     ///     set wait between shots.
     /// </summary>
-    /// <param name="input">The controls as they are on this tick.</param>
+    /// <param name="input">The controls as they are on this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</param>
     /// <param name="aimDirection">The way the shoot stick is pushed, or null when it is not pushed.</param>
     /// <param name="field">The playfield, which holds the lasers.</param>
     /// <remarks>
-    ///     A held control fires again every <see cref="PlayerTuning.PlayerAutoFireTicks" /> ticks. No laser is fired
+    ///     A held control fires again every <see cref="PlayerTuning.PlayerAutoFireTicks" /> <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>. No laser is fired
     ///     when the player already has as many lasers in flight as are allowed.
     /// </remarks>
     private void UpdateFiring(PlayerInputState input, Direction8? aimDirection, PlayField field)

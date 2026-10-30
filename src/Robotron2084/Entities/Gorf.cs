@@ -12,11 +12,11 @@ namespace Robotron2084.Entities;
 ///     does not shoot.
 /// </summary>
 /// <remarks>
-///     It has no beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />.
+///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, and takes one step on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on
+///     every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />.
 ///     The one time it does not is during the short freeze just after the player is killed.
-///     <see cref="_stepTimer" /> times its steps
-///     and <see cref="_animationTimer" /> times its animation frames (see <see cref="ArcadeClock" />).
+///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, and <see cref="_animationTimer" /> when it is
+///     time for the next animation frame.
 ///     Gorf is the author's own robot. It is not in the arcade game (notes §138.2). It starts off the screen, on a random
 ///     side and
 ///     at a random height. It hops to the far side (<see cref="GorfPath" />) and then it is gone. Every hop is the same
@@ -39,19 +39,6 @@ public sealed class Gorf : IExplodable, IRemovable
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height));
 
     /// <summary>
-    ///     The time from one step to the next, in clock units (see <see cref="ArcadeClock" />). <see cref="_stepTimer" />
-    ///     counts up to this. When it gets there, a step is taken and this is taken off it.
-    /// </summary>
-    private static readonly int StepClockUnits = ArcadeClock.ToClockUnits(GorfTuning.StepRomFrames);
-
-    /// <summary>
-    ///     How long each animation frame is shown for, in clock units (see <see cref="ArcadeClock" />).
-    ///     <see cref="_animationTimer" /> counts up to this. When it gets there, the next animation frame is shown and this is
-    ///     taken off it.
-    /// </summary>
-    private static readonly int AnimationFrameClockUnits = ArcadeClock.ToClockUnits(GorfTuning.AnimationFrameRomFrames);
-
-    /// <summary>
     ///     How far Gorf goes sideways on each step, in port pixels. Each step moves <see cref="_position" /> this far
     ///     left or right. It also decides how many steps it takes to cross the playfield (<see cref="_totalSteps" />).
     /// </summary>
@@ -68,11 +55,11 @@ public sealed class Gorf : IExplodable, IRemovable
     private readonly Random _random;
     private readonly SpriteSet _sprites;
     private readonly int _totalSteps;
-    private int _animationTimer;
+    private readonly RomFrameTimer _animationTimer = new();
+    private readonly RomFrameTimer _beatTimer = new();
     private IntVector2 _position;
     private int _stepCount;
     private int _stepInHop;
-    private int _stepTimer;
 
     /// <summary>
     ///     Makes a Gorf just off the screen, on a random side and at a random height, and works out where on its way it
@@ -112,6 +99,20 @@ public sealed class Gorf : IExplodable, IRemovable
         return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
     }
 
+    /// <inheritdoc />
+    /// <remarks>It is the same box as <see cref="GetBounds" />.</remarks>
+    public Rectangle GetExplosionBounds()
+    {
+        return GetBounds();
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
+    public Texture2D GetExplosionAnimationFrame()
+    {
+        return GetCurrentAnimationFrame();
+    }
+
     /// <summary>
     ///     Alive until it is shot or gets across the screen. It is never Dying, because it has no death animation (see
     ///     <see cref="Kill" />).
@@ -147,21 +148,17 @@ public sealed class Gorf : IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     Runs one tick. Gorf animates. When a step is due, it moves along its hop, and drops grunts if it has reached a
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. Gorf animates. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> it takes a step along its hop, and drops grunts if it has reached a
     ///     drop point.
     /// </summary>
-    /// <param name="gameTime">Not used. Gorf counts ticks.</param>
+    /// <param name="gameTime">Not used. Gorf counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield, which the dropped grunts are put on.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (!this.IsAlive() || field.RobotsFrozen()) return;
 
-        Animate();
-        _stepTimer += ArcadeClock.UnitsPerPortTick;
-        if (_stepTimer < StepClockUnits) return;
-
-        _stepTimer -= StepClockUnits;
-        Step(field);
+        if (_animationTimer.Tick(GorfTuning.AnimationIntervalRomFrames)) ShowNextAnimationFrame();
+        if (_beatTimer.Tick(GorfTuning.BeatIntervalRomFrames)) ActOnBeat(field);
     }
 
     /// <summary>Kills Gorf at once, with no flash and no death animation.</summary>
@@ -178,22 +175,18 @@ public sealed class Gorf : IExplodable, IRemovable
         return _dropSteps.Count;
     }
 
-    /// <summary>Shows the next animation frame when it is time to.</summary>
-    private void Animate()
+    /// <summary>Shows the next animation frame.</summary>
+    private void ShowNextAnimationFrame()
     {
-        _animationTimer += ArcadeClock.UnitsPerPortTick;
-        if (_animationTimer < AnimationFrameClockUnits) return;
-
-        _animationTimer -= AnimationFrameClockUnits;
         AnimationFrameIndex = (AnimationFrameIndex + 1) % _sprites.GorfAnimationFrames.Length;
     }
 
     /// <summary>
-    ///     Takes one step along the hop. Gorf drops grunts if a drop is due, and it is gone once it has crossed the
-    ///     playfield.
+    ///     What Gorf does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It takes one step along the hop, drops grunts if a drop is due, and is gone once
+    ///     it has crossed the playfield.
     /// </summary>
     /// <param name="field">The playfield, which the dropped grunts are put on.</param>
-    private void Step(PlayField field)
+    private void ActOnBeat(PlayField field)
     {
         _stepCount++;
         _stepInHop++;

@@ -14,10 +14,9 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Brain" />
 /// <seealso cref="PlayerLaser" />
 /// <remarks>
-///     It acts on a beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_beatTimer" /> gathers the ticks until it is time for
-///     the next beat (see <see cref="ArcadeClock" />).
+///     short freeze just after the player is killed. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRB10.ASM</c>, routine <c>CMISL</c> (fired via <c>BRNSHT</c>, aimed by
@@ -40,16 +39,16 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// </summary>
     private const int AimNoiseRange = 16;
 
-    /// <summary>How long one beat lasts.</summary>
+    /// <summary>How long one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> lasts.</summary>
     /// <remarks>ROM: <c>NAP 2</c>, plus the one the routine runs in.</remarks>
     private const int BeatIntervalRomFrames = 3;
 
-    /// <summary>How many moves the missile makes on each beat.</summary>
+    /// <summary>How many moves the missile makes on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</summary>
     private const int MovesPerBeat = 2;
 
     /// <summary>
-    ///     The most beats a missile may go before it aims again. <see cref="_reaimBeatsRemaining" /> is set to a random
-    ///     number of beats from one up to this.
+    ///     The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> a missile may go before it aims again. <see cref="_reaimBeatsRemaining" /> is set to a random
+    ///     number of <see cref="Robotron2084.Core.RomFrameTimer">beats</see> from one up to this.
     /// </summary>
     private const int ReaimMaxBeats = 7;
 
@@ -73,12 +72,6 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>How far the missile goes up or down on each move, in port pixels. It is one row.</summary>
     private static readonly int StepYPortPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
-    /// <summary>
-    ///     The time from one beat to the next, in clock units (see <see cref="ArcadeClock" />). <see cref="_beatTimer" />
-    ///     counts up to this. When it gets there, a beat happens and this is taken off it.
-    /// </summary>
-    private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
-
     private readonly Random _random;
     private readonly SpriteSet _sprites;
 
@@ -88,7 +81,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// </summary>
     private readonly List<IntVector2> _trail = new();
 
-    private int _beatTimer;
+    private readonly RomFrameTimer _beatTimer = new();
 
     private IntVector2 _position;
 
@@ -167,27 +160,14 @@ public sealed class CruiseMissile : IEntity, IRemovable
             _sprites.Blitter.GetSlotColour(CruiseMissileTuning.HeadSlot));
     }
 
-    /// <summary>Runs one tick. On a beat, the missile aims at the player again if it is time to, and then moves.</summary>
-    /// <param name="gameTime">Not used. The missile counts ticks.</param>
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, the missile aims at the player again if it is time to, and then moves.</summary>
+    /// <param name="gameTime">Not used. The missile counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (!this.IsAlive()) return;
 
-        // Wait for the missile's next beat, which is its next turn to aim and move (see ArcadeClock).
-        _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < BeatIntervalClockUnits) return;
-
-        _beatTimer -= BeatIntervalClockUnits;
-
-        // On each beat the missile first aims at the Player again, if it is time to, and then moves (ROM: CMISL).
-        if (--_reaimBeatsRemaining <= 0)
-        {
-            _velocity = RollDirection(field.Player.Position);
-            _reaimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReaimMaxBeats);
-        }
-
-        for (var move = 0; move < MovesPerBeat; move++) Step(field);
+        if (_beatTimer.Tick(BeatIntervalRomFrames)) ActOnBeat(field);
     }
 
     /// <summary>Kills the missile at once. Its trail goes with it.</summary>
@@ -198,6 +178,22 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
         LifeState = EntityLifeState.Dead;
         _trail.Clear();
+    }
+
+    /// <summary>
+    ///     What the missile does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It first aims at the player again, if it is time to, and then moves
+    ///     (ROM: <c>CMISL</c>).
+    /// </summary>
+    /// <param name="field">The playfield.</param>
+    private void ActOnBeat(PlayField field)
+    {
+        if (--_reaimBeatsRemaining <= 0)
+        {
+            _velocity = RollDirection(field.Player.Position);
+            _reaimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReaimMaxBeats);
+        }
+
+        for (var move = 0; move < MovesPerBeat; move++) MoveOnce(field);
     }
 
     /// <summary>
@@ -239,7 +235,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     ///     turned round and made the other way. The bounce is worked out from the missile's own position, not from
     ///     its bigger box.
     /// </remarks>
-    private void Step(PlayField field)
+    private void MoveOnce(PlayField field)
     {
         var bounds = field.Wall.PlayfieldBounds;
         var positionBeforeMove = _position;

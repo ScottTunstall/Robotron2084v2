@@ -14,11 +14,10 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Brain" />
 /// <seealso cref="SkullMarker" />
 /// <remarks>
-///     It acts on a beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_beatTimer" /> gathers the ticks until it is time for
-///     the next beat (see <see cref="ArcadeClock" />). <see cref="_startWalkingTicks" /> counts the ticks before its
-///     first step.
+///     short freeze just after the player is killed. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+///     <see cref="_firstStepTicksRemaining" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> before its first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMAN</c> (with the <c>HUMATB</c> walk table)</item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$02B2</c> (<c>INITIALISE_FAMILY_MEMBERS</c>)</item>
@@ -39,16 +38,16 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     private const int PossibleDirections = 8;
 
     /// <summary>
-    ///     The most steps a family member takes before it picks a new direction. <see cref="_stepsUntilNewDirection" />
+    ///     The most steps a family member takes before it picks a new direction. <see cref="_newDirectionStepsRemaining" />
     ///     is set to a random number of steps from one up to this.
     /// </summary>
-    private const int NewDirectionStepsMax = 128;
+    private const int NewDirectionMaxSteps = 128;
 
     /// <summary>
-    ///     The most ticks a family member waits before its first step. <see cref="_startWalkingTicks" /> is set to a
-    ///     random number of ticks from one up to this, so that a group of family members does not all start together.
+    ///     The most <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> a family member waits before its first step. <see cref="_firstStepTicksRemaining" /> is set to a
+    ///     random number of <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> from one up to this, so that a group of family members does not all start together.
     /// </summary>
-    private const int StartStaggerTicksMax = 8;
+    private const int FirstStepMaxTicks = 8;
 
     /// <summary>
     ///     How long a family member waits between steps. This number is different from the arcade's on purpose. Do not
@@ -117,8 +116,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Which walk animation frame is showing, counted through this family member's own animation frames.</summary>
     private int _animationFrameIndex;
 
-    /// <summary>Counts up to the next beat.</summary>
-    private int _beatTimer;
+    /// <summary>The first <see cref="Robotron2084.Core.RomFrameTimer">beat</see> does not wait for this timer (see <see cref="Update" />).</summary>
+    private readonly RomFrameTimer _beatTimer = new();
 
     /// <summary>Which direction block of the walk table (see <see cref="Steps" />) the family member is using.</summary>
     private int _directionBlock;
@@ -126,13 +125,13 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     private IntVector2 _position;
 
     /// <summary>
-    ///     Ticks left before the family member takes its first step. Each family member gets its own number, so a group
+    ///     <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">Ticks</see> left before the family member takes its first step. Each family member gets its own number, so a group
     ///     does not all step together.
     /// </summary>
-    private int _startWalkingTicks;
+    private int _firstStepTicksRemaining;
 
     /// <summary>Steps left before the family member picks a new direction.</summary>
-    private int _stepsUntilNewDirection;
+    private int _newDirectionStepsRemaining;
 
     /// <summary>Which step of the direction block comes next.</summary>
     private int _subStep;
@@ -155,9 +154,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         Kind = kind;
         _random = random;
         _directionBlock = random.Next(PossibleDirections);
-        _stepsUntilNewDirection = 1 + random.Next(NewDirectionStepsMax);
-        _startWalkingTicks = 1 + random.Next(StartStaggerTicksMax);
-        _beatTimer = 0; // The first step does not wait for this timer (see Update).
+        _newDirectionStepsRemaining = 1 + random.Next(NewDirectionMaxSteps);
+        _firstStepTicksRemaining = 1 + random.Next(FirstStepMaxTicks);
     }
 
     /// <summary>
@@ -251,50 +249,27 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs one tick. On a beat the family member takes the next step of its walk. If the step is blocked, it picks a
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> the family member takes the next step of its walk. If the step is blocked, it picks a
     ///     new direction.
     /// </summary>
-    /// <param name="gameTime">Not used. The family member counts ticks.</param>
+    /// <param name="gameTime">Not used. The family member counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         // Unlike the robots, family members do not wait for the wave to start. They walk about while the robots are still appearing.
         if (!this.IsAlive() || IsBeingReprogrammed) return;
 
-        if (_startWalkingTicks > 0)
+        if (_firstStepTicksRemaining > 0)
         {
-            _startWalkingTicks--;
-            if (_startWalkingTicks > 0) return;
-
-            // The wait is over, so the family member takes its first step on this tick.
+            // When this wait is over, the family member has its first beat on this tick.
+            if (--_firstStepTicksRemaining > 0) return;
         }
-        else
+        else if (!_beatTimer.Tick(BeatIntervalRomFrames))
         {
-            _beatTimer += ArcadeClock.UnitsPerPortTick;
-            if (_beatTimer < ArcadeClock.ToClockUnits(BeatIntervalRomFrames))
-                return;
-
-            _beatTimer -= ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
-        }
-
-        StepCount++;
-
-        var (dx, dy, frame) = Steps[(_directionBlock * SubStepsPerDirection) + _subStep];
-        _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirection[_directionBlock] + frame;
-
-        // The walk table is in arcade pixels, so the step is changed to port pixels.
-        var possibleNextPosition = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixelsFromArcadePixels(1);
-        var nextPosition = GetBounds() with { X = possibleNextPosition.X, Y = possibleNextPosition.Y };
-        if (field.HitsWall(nextPosition) || OverlapsLivingElectrode(nextPosition, field))
-        {
-            // The step would go into the wall or a live electrode, so the family member stays where it is and picks a new direction.
-            PickNewDirection();
             return;
         }
 
-        _position = possibleNextPosition;
-        _subStep = (_subStep + 1) % SubStepsPerDirection;
-        if (--_stepsUntilNewDirection <= 0) PickNewDirection();
+        ActOnBeat(field);
     }
 
     /// <summary>Kills the family member. It is gone at once, with no death animation.</summary>
@@ -377,6 +352,33 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _position = position;
     }
 
+    /// <summary>
+    ///     What the family member does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It takes the next step of its walk. If the step is blocked, it picks a
+    ///     new direction.
+    /// </summary>
+    /// <param name="field">The playfield.</param>
+    private void ActOnBeat(PlayField field)
+    {
+        StepCount++;
+
+        var (dx, dy, frame) = Steps[(_directionBlock * SubStepsPerDirection) + _subStep];
+        _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirection[_directionBlock] + frame;
+
+        // The walk table is in arcade pixels, so the step is changed to port pixels.
+        var possibleNextPosition = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixelsFromArcadePixels(1);
+        var nextPosition = GetBounds() with { X = possibleNextPosition.X, Y = possibleNextPosition.Y };
+        if (field.HitsWall(nextPosition) || OverlapsLivingElectrode(nextPosition, field))
+        {
+            // The step would go into the wall or a live electrode, so the family member stays where it is and picks a new direction.
+            PickNewDirection();
+            return;
+        }
+
+        _position = possibleNextPosition;
+        _subStep = (_subStep + 1) % SubStepsPerDirection;
+        if (--_newDirectionStepsRemaining <= 0) PickNewDirection();
+    }
+
     /// <summary>True when the family member's next step would touch an electrode that is still standing.</summary>
     /// <param name="next">The box the family member would take up after the step.</param>
     /// <param name="field">The playfield, which holds the electrodes.</param>
@@ -395,6 +397,6 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _directionBlock = _random.Next(PossibleDirections);
         _subStep = 0;
         _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirection[_directionBlock];
-        _stepsUntilNewDirection = 1 + _random.Next(NewDirectionStepsMax);
+        _newDirectionStepsRemaining = 1 + _random.Next(NewDirectionMaxSteps);
     }
 }

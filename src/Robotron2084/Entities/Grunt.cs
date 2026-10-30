@@ -10,10 +10,10 @@ namespace Robotron2084.Entities;
 /// <summary>A grunt is a slow, clumsy robot that shuffles towards you. It's the most common enemy in the game.</summary>
 /// <seealso cref="PlayField" />
 /// <remarks>
-///     It acts on a beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. There are two times it does not: while the
 ///     grunt is still appearing at the start of a wave, and during the short freeze just after the player is killed.
-///     <see cref="_beatTimer" /> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock" />).
+///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRP8.ASM</c>, routine <c>ROBOT</c> (with <c>ROB0</c>..<c>ROB11</c> sub-blocks)</item>
 ///         <item>
@@ -26,7 +26,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>
     ///     How long the arcade's routine sleeps between one look at whether the game is live and the next. It decides how
-    ///     long after the game goes live the first beat comes (<see cref="BeginPlay" />).
+    ///     long after the game goes live the first <see cref="Robotron2084.Core.RomFrameTimer">beat</see> comes (<see cref="BeginPlay" />).
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -36,7 +36,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int LivePollRomFrames = 2;
 
-    /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first beat.</summary>
+    /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRP8.ASM</c> <c>ROB0A</c>, <c>NAP 10,ROB0</c>.</item>
@@ -45,10 +45,10 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int FirstBeatNapRomFrames = 10;
 
-    /// <summary>How long one beat lasts.</summary>
+    /// <summary>How long one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> lasts.</summary>
     private const int BeatIntervalRomFrames = 4;
 
-    /// <summary>The most beats a grunt waits between steps, when it is not told a number.</summary>
+    /// <summary>The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> a grunt waits between steps, when it is not told a number.</summary>
     private const int DefaultMoveLimitBeats = 15;
 
     /// <summary>
@@ -65,19 +65,13 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height));
 
-    /// <summary>
-    ///     The time from one beat to the next, in clock units (see <see cref="ArcadeClock" />). <see cref="_beatTimer" />
-    ///     counts up to this. When it gets there, a beat happens and this is taken off it.
-    /// </summary>
-    private static readonly int BeatIntervalClockUnits = ArcadeClock.ToClockUnits(BeatIntervalRomFrames);
-
     private readonly Random _random;
     private readonly SpriteSet _sprites;
-    private int _beatTimer;
+    private RomFrameTimer _beatTimer = new();
 
     private int _landingY;
 
-    /// <summary>Beats left before the grunt takes its next step.</summary>
+    /// <summary><see cref="Robotron2084.Core.RomFrameTimer">Beats</see> left before the grunt takes its next step.</summary>
     private int _moveBeatsRemaining;
 
     private IntVector2 _position;
@@ -90,8 +84,8 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where the grunt's top-left corner is.</param>
     /// <param name="moveLimitBeats">
-    ///     The most beats a grunt waits between steps on this wave. Each wait is a random number of
-    ///     beats from 1 up to this.
+    ///     The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> a grunt waits between steps on this wave. Each wait is a random number of
+    ///     <see cref="Robotron2084.Core.RomFrameTimer">beats</see> from 1 up to this.
     /// </param>
     /// <param name="random">Where its random numbers come from. If this is null, the grunt makes its own.</param>
     /// <remarks>ROM: <c>ROBSPD</c>.</remarks>
@@ -109,7 +103,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
     }
 
-    /// <summary>The most beats the grunt waits between steps, as it stands now. It gets smaller as the wave goes on.</summary>
+    /// <summary>The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> the grunt waits between steps, as it stands now. It gets smaller as the wave goes on.</summary>
     public int MoveDelayBeats { get; private set; }
 
     /// <summary>
@@ -126,6 +120,20 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the same box as <see cref="GetBounds" />.</remarks>
+    public Rectangle GetExplosionBounds()
+    {
+        return GetBounds();
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
+    public Texture2D GetExplosionAnimationFrame()
+    {
+        return GetCurrentAnimationFrame();
     }
 
     /// <summary>This grunt's current walk animation frame, for the appear and explosion effects.</summary>
@@ -151,8 +159,8 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
-    /// <summary>Runs one tick of the grunt. When its wait is over it takes a step towards the player and picks a new wait.</summary>
-    /// <param name="gameTime">Not used. The grunt counts ticks.</param>
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the grunt. When its wait is over it takes a step towards the player and picks a new wait.</summary>
+    /// <param name="gameTime">Not used. The grunt counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -167,22 +175,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < BeatIntervalClockUnits) return;
-
-        // A beat has come, which is the grunt's turn to act (see ArcadeClock). It only takes a step on the beat when <see cref="_moveBeatsRemaining" /> runs out.
-        _beatTimer -= BeatIntervalClockUnits;
-
-        if (--_moveBeatsRemaining > 0) return;
-
-        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
-        SteppedThisUpdate = true;
-        _walkAnimationFrameNumber =
-            _walkAnimationFrameNumber % WalkAnimationFrameCount +
-            1; // Each step shows the next walk animation frame (DRAW_GRUNT).
-
-        _position = GruntChaseStep.GetNextPosition(_position, field.Player.Position, field.Wall.PlayfieldBounds,
-            CollisionSize);
+        if (_beatTimer.Tick(BeatIntervalRomFrames)) ActOnBeat(field);
     }
 
     /// <summary>Kills the grunt at once, with no flash and no death animation.</summary>
@@ -195,13 +188,13 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Sets the time of the grunt's first beat, on the tick the game goes live. The beat timer is set so that it
+    ///     Sets the time of the grunt's first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.RomFrameTimer">beat</see> timer is set so that it
     ///     comes due when that time has gone by.
     /// </summary>
     /// <param name="field">The playfield, which works out how long the wait is.</param>
     public void BeginPlay(PlayField field)
     {
-        _beatTimer = BeatIntervalClockUnits - field.GetClockUnitsToFirstBeat(LivePollRomFrames, FirstBeatNapRomFrames);
+        _beatTimer = field.CreateFirstBeatTimer(LivePollRomFrames, FirstBeatNapRomFrames, BeatIntervalRomFrames);
     }
 
     /// <summary>True while the grunt is still falling after being dropped by Gorf. It does not move on until it lands.</summary>
@@ -219,7 +212,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Speeds this grunt up when any grunt is killed. The most beats it waits between steps is cut to seven eighths
+    ///     Speeds this grunt up when any grunt is killed. The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> it waits between steps is cut to seven eighths
     ///     of what it was.
     /// </summary>
     /// <param name="floorBeats">The smallest that number is allowed to be on this wave.</param>
@@ -235,15 +228,15 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         if (next >= floorBeats) MoveDelayBeats = next;
     }
 
-    /// <summary>Speeds the grunt up as the wave goes on, by taking some beats off the most it waits between steps.</summary>
+    /// <summary>Speeds the grunt up as the wave goes on, by taking some <see cref="Robotron2084.Core.RomFrameTimer">beats</see> off the most it waits between steps.</summary>
     /// <param name="floorBeats">The smallest that number is allowed to be on this wave.</param>
-    /// <param name="stepBeats">How many beats to take off. The arcade takes off 4, then 2, then 4, and so on.</param>
+    /// <param name="stepBeats">How many <see cref="Robotron2084.Core.RomFrameTimer">beats</see> to take off. The arcade takes off 4, then 2, then 4, and so on.</param>
     /// <remarks>
     ///     Here the arcade does stop the number at <paramref name="floorBeats" />, which itself goes down as far as 1.
-    ///     A grunt that steps on every beat goes as fast as the player. A wait that has already started is finished
+    ///     A grunt that steps on every <see cref="Robotron2084.Core.RomFrameTimer">beat</see> goes as fast as the player. A wait that has already started is finished
     ///     before the new number is used.
     /// </remarks>
-    public void WaveSpeedTick(int floorBeats, int stepBeats = 4)
+    public void SpeedUpAsWaveGoesOn(int floorBeats, int stepBeats = 4)
     {
         MoveDelayBeats = Math.Max(floorBeats, MoveDelayBeats - stepBeats);
     }
@@ -263,5 +256,21 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
             4 => 2,
             _ => 0
         };
+    }
+
+    /// <summary>What the grunt does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It only takes a step when <see cref="_moveBeatsRemaining" /> runs out.</summary>
+    /// <param name="field">The playfield.</param>
+    private void ActOnBeat(PlayField field)
+    {
+        if (--_moveBeatsRemaining > 0) return;
+
+        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
+        SteppedThisUpdate = true;
+        _walkAnimationFrameNumber =
+            _walkAnimationFrameNumber % WalkAnimationFrameCount +
+            1; // Each step shows the next walk animation frame (DRAW_GRUNT).
+
+        _position = GruntChaseStep.GetNextPosition(_position, field.Player.Position, field.Wall.PlayfieldBounds,
+            CollisionSize);
     }
 }

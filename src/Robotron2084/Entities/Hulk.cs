@@ -14,10 +14,10 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Player" />
 /// <seealso cref="Human" />
 /// <remarks>
-///     It acts on a beat. The <see cref="PlayField" /> calls <see cref="Update" /> on every tick, through
+///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
 ///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. There are two times it does not: while the
 ///     hulk is still appearing at the start of a wave, and during the short freeze just after the player is killed.
-///     <see cref="_beatTimer" /> gathers the ticks until it is time for the next beat (see <see cref="ArcadeClock" />).
+///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRH11.ASM</c>, routine <c>HULK</c> (with <c>HULKND</c>, <c>HULKIL</c>
@@ -237,8 +237,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private static readonly int[] VerticalAnimationFrames = { 3, 4, 3, 5 };
 
     /// <summary>
-    ///     The time from one beat to the next, in clock units (see <see cref="ArcadeClock" />). It is set from the wave's
-    ///     hulk speed.
+    ///     The time from one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> to the next. It is set from the wave's hulk speed.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -246,7 +245,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
     ///     </list>
     /// </remarks>
-    private readonly int _beatIntervalClockUnits;
+    private readonly int _beatIntervalRomFrames;
 
     private readonly Func<IntVector2> _getTargetPosition;
 
@@ -256,8 +255,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <summary>Which animation frame is showing, as a place in the sprite set's hulk animation frames.</summary>
     private int _animationFrameIndex;
 
-    /// <summary>Counts up to the next beat.</summary>
-    private int _beatTimer;
+    private RomFrameTimer _beatTimer = new();
 
     private bool _hasAimed;
     private bool _isMovingHorizontally;
@@ -293,7 +291,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRH11.ASM</c> <c>HLKSPD</c>. The time between beats is set by the wave
+    ///             Original source: <c>RRH11.ASM</c> <c>HLKSPD</c>. The time between <see cref="Robotron2084.Core.RomFrameTimer">beats</see> is set by the wave
     ///             of a second.
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
@@ -309,7 +307,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         _sprites = sprites;
         _position = position;
         _random = random;
-        _beatIntervalClockUnits = ArcadeClock.ToClockUnits(beatIntervalRomFrames);
+        _beatIntervalRomFrames = beatIntervalRomFrames;
         _getTargetPosition = getTargetPosition;
         _reaimStepsRemaining = RollReaimSteps();
         Direction = Direction8.Up; // Up is only a stand-in. When the hulk first aims, this changes to left or right.
@@ -355,10 +353,10 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Runs one tick. On a beat the hulk takes a step. If the wall is in the way, it does not step and picks a new
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> the hulk takes a step. If the wall is in the way, it does not step and picks a new
     ///     direction.
     /// </summary>
-    /// <param name="gameTime">Not used. The hulk counts ticks.</param>
+    /// <param name="gameTime">Not used. The hulk counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
@@ -371,39 +369,18 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
             return;
         }
 
-        _beatTimer += ArcadeClock.UnitsPerPortTick;
-        if (_beatTimer < _beatIntervalClockUnits) return;
-
-        _beatTimer -= _beatIntervalClockUnits;
-
-        // Show this step's walk animation frame, then move. Sideways steps go short, long, short, long.
-        _animationFrameIndex = GetFrames(Direction)[_walkCycleStep];
-        var stepArcadePixels = _isMovingHorizontally
-            ? _walkCycleStep % 2 == 0 ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels
-            : VerticalStepArcadePixels;
-        _walkCycleStep = (_walkCycleStep + 1) % WalkPatternLength;
-        var next = _position + Direction.ToIntVector() * ScreenSize.ToPortPixelsFromArcadePixels(stepArcadePixels);
-        if (field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
-        {
-            // The step would go into the wall, so the hulk stays where it is and picks a new direction.
-            Reaim(field);
-            return;
-        }
-
-        _position = next;
-
-        if (--_reaimStepsRemaining <= 0) Reaim(field);
+        if (_beatTimer.Tick(_beatIntervalRomFrames)) ActOnBeat(field);
     }
 
     /// <summary>
-    ///     Aims the hulk and sets the time of its first step, on the tick the game goes live. The beat timer is set so
+    ///     Aims the hulk and sets the time of its first step, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.RomFrameTimer">beat</see> timer is set so
     ///     that it comes due when that time has gone by.
     /// </summary>
     /// <param name="field">The playfield, which works out how long the wait is.</param>
     public void BeginPlay(PlayField field)
     {
         AimForTheFirstTime(field);
-        _beatTimer = _beatIntervalClockUnits - field.GetClockUnitsToFirstBeat(LivePollRomFrames, 0);
+        _beatTimer = field.CreateFirstBeatTimer(LivePollRomFrames, 0, _beatIntervalRomFrames);
     }
 
     /// <summary>
@@ -449,6 +426,32 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     internal void TeleportTo(IntVector2 position)
     {
         _position = position;
+    }
+
+    /// <summary>
+    ///     What the hulk does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It takes a step. If the wall is in the way, it does not step and picks a new
+    ///     direction.
+    /// </summary>
+    /// <param name="field">The playfield.</param>
+    private void ActOnBeat(PlayField field)
+    {
+        // Show this step's walk animation frame, then move. Sideways steps go short, long, short, long.
+        _animationFrameIndex = GetFrames(Direction)[_walkCycleStep];
+        var stepArcadePixels = _isMovingHorizontally
+            ? _walkCycleStep % 2 == 0 ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels
+            : VerticalStepArcadePixels;
+        _walkCycleStep = (_walkCycleStep + 1) % WalkPatternLength;
+        var next = _position + Direction.ToIntVector() * ScreenSize.ToPortPixelsFromArcadePixels(stepArcadePixels);
+        if (field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
+        {
+            // The step would go into the wall, so the hulk stays where it is and picks a new direction.
+            Reaim(field);
+            return;
+        }
+
+        _position = next;
+
+        if (--_reaimStepsRemaining <= 0) Reaim(field);
     }
 
     /// <summary>Gets the walk animation frames for a direction, in the order they are shown.</summary>
