@@ -54,7 +54,7 @@ public sealed class SoundWiringTests : IDisposable
         field.Entities.CruiseMissiles.Add(new CruiseMissile(TestSprites.Shared, spot, field.Player.Position,
             new Random(8)));
 
-        Assert.True(field.PlayerLasers.TryFire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down, out var _));
+        field.PlayerLasers.Fire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down);
         field.Update(new GameTime());
         Sound.Tick();
 
