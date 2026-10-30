@@ -22,9 +22,9 @@ public sealed class AttractObjectMachine
 {
     /// <summary>
     ///     The ANA* walker's `NAP 8` (notes §95.7) — fiftieths of a second per walk step. It is the value the machine's
-    ///     <see cref="MovieProcess.WaitRomFrames" /> is set to between walk steps.
+    ///     <see cref="MovieProcess.WaitArcadeFrames" /> is set to between walk steps.
     /// </summary>
-    public const int WalkStepRomFrames = 8;
+    public const int WalkStepArcadeFrames = 8;
 
     /// <summary>ROM `EXPP` stores ACTHIT+6 into the explosion's centre row.</summary>
     private const int ExplosionRow = 0xA0 + 6;
@@ -85,7 +85,7 @@ public sealed class AttractObjectMachine
             if (_processes[i].IsAlive)
                 _processes[i].Step(this);
 
-        _objects.RemoveAll(item => item.IsDead || (item.IsLaser && item.LaserRomFramesLeft <= 0));
+        _objects.RemoveAll(item => item.IsDead || (item.IsLaser && item.LaserArcadeFramesLeft <= 0));
         _processes.RemoveAll(p => !p.IsAlive);
     }
 
@@ -121,7 +121,7 @@ public sealed class AttractObjectMachine
             if (item.IsLaser)
             {
                 MoveLaserWithinTheWalls(item);
-                item.LaserRomFramesLeft--;
+                item.LaserArcadeFramesLeft--;
                 continue;
             }
 
@@ -164,7 +164,7 @@ public sealed class AttractObjectMachine
         _objects.Add(new MovieObject(null, 0, column << 8, source.YSubpixels + (6 << 8))
         {
             IsLaser = true,
-            LaserRomFramesLeft = lifetime,
+            LaserArcadeFramesLeft = lifetime,
             XVelocitySubpixels = firesRight ? 0x0280 : -0x0280
         });
     }
@@ -185,7 +185,7 @@ public sealed class AttractObjectMachine
         /// <summary>Index into <see cref="AttractMovieData.Scripts" /> (scripts address it by ROM address).</summary>
         public int ScriptIndex { get; set; }
 
-        public int WaitRomFrames { get; set; }
+        public int WaitArcadeFrames { get; set; }
 
         public MovieAction Action { get; set; }
 
@@ -197,7 +197,7 @@ public sealed class AttractObjectMachine
 
         public int CycleAdvancesLeft { get; set; }
 
-        public int CycleRomFrames { get; set; }
+        public int CycleArcadeFrames { get; set; }
 
         public int MonoStepsLeft { get; set; }
 
@@ -212,12 +212,12 @@ public sealed class AttractObjectMachine
         /// <summary>One step of this process.</summary>
         public void Step(AttractObjectMachine machine)
         {
-            if (WaitRomFrames > 0 && --WaitRomFrames > 0) return;
+            if (WaitArcadeFrames > 0 && --WaitArcadeFrames > 0) return;
 
             if (Action != MovieAction.None)
             {
                 RunAction(machine);
-                if (WaitRomFrames > 0 || !IsAlive || Action != MovieAction.None) return;
+                if (WaitArcadeFrames > 0 || !IsAlive || Action != MovieAction.None) return;
 
                 // The action finished: the ROM returns into the script loop with
                 // `JMP [LEV2,U]`, i.e. the next opcode runs in this same pass.
@@ -319,15 +319,15 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 10: // CYCLE — frames per image, number of advances.
-                    CycleRomFrames = machine.Read(this);
+                    CycleArcadeFrames = machine.Read(this);
                     CycleAdvancesLeft = machine.Read(this);
                     Action = MovieAction.Cycle;
                     AdvanceImage();
-                    WaitRomFrames = CycleRomFrames;
+                    WaitArcadeFrames = CycleArcadeFrames;
                     return false;
 
                 case 11: // REST
-                    WaitRomFrames = machine.Read(this);
+                    WaitArcadeFrames = machine.Read(this);
                     return false;
 
                 case 12: // DIE
@@ -373,7 +373,7 @@ public sealed class AttractObjectMachine
                 {
                     int lifetime = machine.Read(this);
                     machine.SpawnLaser(Object, lifetime, false);
-                    WaitRomFrames = machine.Read(this);
+                    WaitArcadeFrames = machine.Read(this);
                     return false;
                 }
 
@@ -381,7 +381,7 @@ public sealed class AttractObjectMachine
                 {
                     int lifetime = machine.Read(this);
                     machine.SpawnLaser(Object, lifetime, true);
-                    WaitRomFrames = machine.Read(this);
+                    WaitArcadeFrames = machine.Read(this);
                     return false;
                 }
 
@@ -455,7 +455,7 @@ public sealed class AttractObjectMachine
                     var showsBrain = machine.Read(this) != 0;
                     BeginMono(Object, boxSlot, silhouetteSlot, showsBrain);
                     Action = MovieAction.Mono;
-                    WaitRomFrames = 3;
+                    WaitArcadeFrames = 3;
                     return false;
                 }
 
@@ -465,7 +465,7 @@ public sealed class AttractObjectMachine
                     ReprogramShakesLeft = 0x40;
                     IsShakingUp = false;
                     Action = MovieAction.ReprogramShake;
-                    WaitRomFrames = 0;
+                    WaitArcadeFrames = 0;
                     return false;
 
                 case 27: // PDEAD — the score electrodes' retirement (notes §95.10).
@@ -498,12 +498,12 @@ public sealed class AttractObjectMachine
             {
                 WalkIndex = (int)walkSequence;
                 WalkCycleStep = 0;
-                WaitRomFrames = descriptor.StepNap;
+                WaitArcadeFrames = descriptor.StepNap;
             }
             else
             {
                 WalkIndex = (int)walkSequence * 13;
-                WaitRomFrames = WalkStepRomFrames;
+                WaitArcadeFrames = WalkStepArcadeFrames;
             }
 
             return false;
@@ -525,7 +525,7 @@ public sealed class AttractObjectMachine
                     }
 
                     AdvanceImage();
-                    WaitRomFrames = CycleRomFrames;
+                    WaitArcadeFrames = CycleArcadeFrames;
                     break;
 
                 case MovieAction.Mono:
@@ -558,12 +558,12 @@ public sealed class AttractObjectMachine
             if (descriptor.Walk == MovieWalk.BrainStep)
             {
                 BrainStep(descriptor);
-                WaitRomFrames = --StepsLeft > 0 ? descriptor.StepNap : 0;
+                WaitArcadeFrames = --StepsLeft > 0 ? descriptor.StepNap : 0;
             }
             else
             {
                 TableStep(descriptor.Walk);
-                WaitRomFrames = --StepsLeft > 0 ? WalkStepRomFrames : 0;
+                WaitArcadeFrames = --StepsLeft > 0 ? WalkStepArcadeFrames : 0;
             }
 
             if (StepsLeft <= 0) Action = MovieAction.None;
@@ -588,7 +588,7 @@ public sealed class AttractObjectMachine
                 return;
             }
 
-            WaitRomFrames = 3;
+            WaitArcadeFrames = 3;
         }
 
         /// <summary>RPROGP: bounce the row by ±(random 0..7) a frame apart, 64 times, then die.</summary>
@@ -611,7 +611,7 @@ public sealed class AttractObjectMachine
             }
 
             IsShakingUp = !IsShakingUp;
-            WaitRomFrames = 1;
+            WaitArcadeFrames = 1;
         }
 
         /// <summary>ANA* — one walk step out of HUMANA / HLKANA (notes §95.7).</summary>

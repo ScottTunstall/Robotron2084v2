@@ -31,7 +31,7 @@ public sealed record MovieObject
     public bool IsLaser { get; set; }
 
     /// <summary>fiftieths of a second a laser bolt stays alive (LFIRE/RFIRE's first operand).</summary>
-    public int LaserRomFramesLeft { get; set; }
+    public int LaserArcadeFramesLeft { get; set; }
 
     /// <summary>Which animation frame of the descriptor's animation the object is showing.</summary>
     public int AnimationFrameIndex { get; set; }

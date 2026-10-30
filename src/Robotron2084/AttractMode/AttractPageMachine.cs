@@ -54,7 +54,7 @@ public sealed class AttractPageMachine
     private int _gruntTimer;
     private int _gruntsLeft;
     private int _scriptIndex;
-    private int _waitRomFrames;
+    private int _waitArcadeFrames;
 
     public AttractPageMachine(byte[] scriptBytes, AttractObjectMachine objectMachine, Random random)
     {
@@ -80,7 +80,7 @@ public sealed class AttractPageMachine
     {
         SpawnQueuedGrunts();
 
-        if (_waitRomFrames > 0 && --_waitRomFrames > 0) return;
+        if (_waitArcadeFrames > 0 && --_waitArcadeFrames > 0) return;
 
         while (!IsFinished)
         {
@@ -94,19 +94,19 @@ public sealed class AttractPageMachine
             if (opcode <= 9)
             {
                 RunAction(opcode);
-                if (_waitRomFrames > 0 || IsFinished) return;
+                if (_waitArcadeFrames > 0 || IsFinished) return;
 
                 continue;
             }
 
             if (opcode >= 0x5F)
             {
-                _waitRomFrames = opcode;
+                _waitArcadeFrames = opcode;
                 return;
             }
 
             PrintCharacter(opcode);
-            _waitRomFrames = 3;
+            _waitArcadeFrames = 3;
             return;
         }
     }
@@ -195,7 +195,7 @@ public sealed class AttractPageMachine
                 return;
 
             case 4: // SNOOZE
-                _waitRomFrames = NextByte();
+                _waitArcadeFrames = NextByte();
                 return;
 
             case 6: // DONE

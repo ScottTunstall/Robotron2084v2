@@ -15,7 +15,7 @@ public sealed class AttractMovie
 {
     private int
         _clockUnits =
-            ArcadeClock.UnitsPerRomFrame; // seeded so the first tick runs a frame, as the ROM's first cycle does
+            ArcadeClock.UnitsPerArcadeFrame; // seeded so the first tick runs a frame, as the ROM's first cycle does
 
     public AttractMovie(byte[] script, Random random)
     {
@@ -30,7 +30,7 @@ public sealed class AttractMovie
     public AttractPageMachine PageMachine { get; }
 
     /// <summary>Movie time played so far, in fiftieths of a second (a test hook).</summary>
-    public int RomFrames { get; private set; }
+    public int ArcadeFrames { get; private set; }
 
     /// <summary>The script reached DONE / DONE2.</summary>
     public bool IsFinished()
@@ -42,10 +42,10 @@ public sealed class AttractMovie
     public void Update(GameTime gameTime)
     {
         _clockUnits += ArcadeClock.UnitsPerPortTick;
-        if (_clockUnits < ArcadeClock.UnitsPerRomFrame) return;
+        if (_clockUnits < ArcadeClock.UnitsPerArcadeFrame) return;
 
-        _clockUnits -= ArcadeClock.UnitsPerRomFrame;
-        RomFrames++;
+        _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
+        ArcadeFrames++;
         PageMachine.StepFrame();
         ObjectMachine.StepFrame();
     }
