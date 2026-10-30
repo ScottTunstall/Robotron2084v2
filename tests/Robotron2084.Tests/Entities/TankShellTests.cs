@@ -98,7 +98,7 @@ public sealed class TankShellTests
     }
 
     [Fact]
-    public void AnAimedShotAtTheSpotItStartsOn_DoesNotMove_AndFizzlesAfterFortyEightTurnsOfTwoRomFrames()
+    public void AnAimedShotAtTheSpotItStartsOn_DoesNotMove_AndFizzlesAfterFortyEightBeatsOfTwoRomFrames()
     {
         var field = new PlayFieldBuilder().Build();
         var bounds = field.Wall.PlayfieldBounds;

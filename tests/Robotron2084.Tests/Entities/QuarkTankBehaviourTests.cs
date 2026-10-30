@@ -20,11 +20,11 @@ namespace Robotron2084.Tests.Entities;
 /// </summary>
 public sealed class QuarkTankBehaviourTests
 {
-    private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+    private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
-        return new GameTime(TimeSpan.Zero, FrameSpan);
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 
     private static PlayField CreateField(int seed)
@@ -53,7 +53,7 @@ public sealed class QuarkTankBehaviourTests
 
         for (var tick = 0; tick < 400; tick++)
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             if (!quark.IsAlive()) break;
 
             aliveTicksSampled++;
@@ -105,7 +105,7 @@ public sealed class QuarkTankBehaviourTests
 
         // Robots are frozen until the game goes live at the start of the wave; the
         // first drop is due within 2 ticks after it ends.
-        for (var tick = 0; tick < 200 && field.Entities.Tanks.GetLiveCount() == 0; tick++) field.Update(Frame());
+        for (var tick = 0; tick < 200 && field.Entities.Tanks.GetLiveCount() == 0; tick++) field.Update(OneTick());
 
         var tank = Assert.Single(field.Entities.Tanks);
         // The drop happens after the quark's own move in the same Update, so at
@@ -128,7 +128,7 @@ public sealed class QuarkTankBehaviourTests
 
         // Robots are frozen until the game goes live at the start of the wave — run through it so
         // the tank's birth runs unfrozen.
-        for (var tick = 0; tick < 130; tick++) field.Update(Frame());
+        for (var tick = 0; tick < 130; tick++) field.Update(OneTick());
 
         field.SpawnTank(new IntVector2(400, 200)); // 80 px right of the player start
         var tank = Assert.Single(field.Entities.Tanks);
@@ -144,12 +144,12 @@ public sealed class QuarkTankBehaviourTests
 
         for (var tick = 0; tick < bornTicks - 1; tick++)
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             Assert.True(tank.IsBeingBorn(), $"tick {tick + 1}: the birth ended early");
         }
 
         // It finishes growing.
-        while (tank.IsBeingBorn()) field.Update(Frame());
+        while (tank.IsBeingBorn()) field.Update(OneTick());
 
         // MTANK walks the mini tank up-left as it grows: the four animation frames' own
         // (dx,dy) come to -2 columns and -6 rows (notes §53), so the full 14x16
@@ -165,7 +165,7 @@ public sealed class QuarkTankBehaviourTests
         // (TNKSPD 2 + 1 = 3 fiftieths of a second ≈ 4 ticks) — not every tick like the port
         // used to.
         var beforeStep = tank.Position;
-        for (var tick = 0; tick < 8 && tank.Position == beforeStep; tick++) field.Update(Frame());
+        for (var tick = 0; tick < 8 && tank.Position == beforeStep; tick++) field.Update(OneTick());
 
         Assert.NotEqual(beforeStep, tank.Position);
     }
@@ -198,7 +198,7 @@ public sealed class QuarkTankBehaviourTests
         var treadAtSpawn = tank.TreadFrameIndex;
         for (var tick = 0; tick < 20; tick++)
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             Assert.Equal(treadAtSpawn, tank.TreadFrameIndex);
         }
 
@@ -206,7 +206,7 @@ public sealed class QuarkTankBehaviourTests
         // fire, so no beat happens while it is being born either.
         while (tank.IsBeingBorn())
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             Assert.Equal(treadAtSpawn, tank.TreadFrameIndex);
         }
 
@@ -219,7 +219,7 @@ public sealed class QuarkTankBehaviourTests
         var advanced = false;
         for (var tick = 0; tick < 20 && !advanced; tick++)
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             advanced = tank.TreadFrameIndex != treadAtSpawn;
         }
 
@@ -241,7 +241,7 @@ public sealed class QuarkTankBehaviourTests
             field.Entities.Quarks.Add(quark);
             var startX = quark.Position.X;
 
-            for (var tick = 0; tick < 12; tick++) field.Update(Frame());
+            for (var tick = 0; tick < 12; tick++) field.Update(OneTick());
 
             Assert.True(quark.Position.X >= startX,
                 $"seed {seed}: the quark drifted left from {startX} to {quark.Position.X}");

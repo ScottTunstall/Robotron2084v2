@@ -12,7 +12,7 @@ namespace Robotron2084.Tests.Entities;
 ///     Notes 27 (playtest round 9: "when the sparks hit the wall, they don't
 ///     immediately fizzle out, sometimes they linger for a while (and keep
 ///     moving)") — the port re-checked against the R5 disasm:
-///     - life = RND(0..15)+20 cycles x 4 vblanks = 80..140 ROM ticks
+///     - life = RND(0..15)+20 cycles x 4 ROM frames = 80..140 ROM frames
 ///     (1.6-2.8 s), NOT the spec's 10-15 s;
 ///     - the mover ($DCFF) REJECTS an axis update that would push the sprite
 ///     out of the playfield: the spark clamps/slides at the wall and dies on
@@ -23,11 +23,11 @@ namespace Robotron2084.Tests.Entities;
 /// </summary>
 public sealed class SparkTests
 {
-    private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+    private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
-        return new GameTime(TimeSpan.Zero, FrameSpan);
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 
     private static PlayField CreateField(int seed)
@@ -53,7 +53,7 @@ public sealed class SparkTests
 
         for (var tick = 1; tick <= 250; tick++)
         {
-            field.Update(Frame());
+            field.Update(OneTick());
             if (spark.IsDead()) break;
 
             // Never leaves the playfield, even pinned against the wall.
@@ -81,7 +81,7 @@ public sealed class SparkTests
             var diedAt = -1;
             for (var tick = 1; tick <= 400; tick++)
             {
-                field.Update(Frame());
+                field.Update(OneTick());
                 if (spark.IsDead())
                 {
                     diedAt = tick;
@@ -97,10 +97,10 @@ public sealed class SparkTests
     }
 
     [Fact]
-    public void Spark_Flicker_CyclesAllFourFrames_AtFourVblanksPerFrame()
+    public void Spark_Flicker_CyclesAllFourAnimationFrames_AtFourRomFramesPerAnimationFrame()
     {
         // Notes 32: the ROM SPARK process advances OPICT one SPKP entry per
-        // beat pass, re-running every 4 vblanks (NAP 4) → 4-frame flash.
+        // beat pass, re-running every 4 ROM frames (NAP 4) → 4-animation-frame flash.
         var field = CreateField(4);
         var inner = field.Wall.PlayfieldBounds;
         IntVector2 centre = new(inner.X + inner.Width / 2, inner.Y + inner.Height / 2);
@@ -117,11 +117,11 @@ public sealed class SparkTests
         {
             for (var tick = 1; tick < period; tick++)
             {
-                field.Update(Frame());
+                field.Update(OneTick());
                 Assert.Equal(frame - 1, spark.GetAnimationFrameIndex()); // stable within a period
             }
 
-            field.Update(Frame());
+            field.Update(OneTick());
             var expected = frame % SpriteSet.SparkAnimationFrameCount;
             Assert.Equal(expected, spark.GetAnimationFrameIndex());
         }
@@ -144,7 +144,7 @@ public sealed class SparkTests
         field.SpawnSpark(origin, new IntVector2(inner.X, inner.Y + 100));
         var spark = field.Entities.Sparks[^1];
 
-        for (var tick = 0; tick < 4; tick++) field.Update(Frame());
+        for (var tick = 0; tick < 4; tick++) field.Update(OneTick());
 
         Assert.InRange(spark.Position.X - origin.X, -24, -13);
         // Y had zero aim distance: only the jitter (±64 port px → ±1 px per
@@ -177,7 +177,7 @@ public sealed class SparkTests
 
         for (var move = 0; move < 6; move++)
         {
-            for (var tick = 0; tick < moveInterval; tick++) field.Update(Frame());
+            for (var tick = 0; tick < moveInterval; tick++) field.Update(OneTick());
 
             changes.Add(new IntVector2(spark.VelocitySubpixels.X - previous.X, spark.VelocitySubpixels.Y - previous.Y));
             previous = spark.VelocitySubpixels;

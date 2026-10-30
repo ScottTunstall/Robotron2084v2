@@ -20,11 +20,11 @@ namespace Robotron2084.Tests;
 /// </remarks>
 public sealed class SpheroidEscapeTests
 {
-    private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+    private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
-        return new GameTime(TimeSpan.Zero, FrameSpan);
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 
     private static PlayField CreateField(int seed)
@@ -72,9 +72,9 @@ public sealed class SpheroidEscapeTests
     /// <returns>True when the spheroid is escaping.</returns>
     private static bool StartEscape(PlayField field, Spheroid spheroid)
     {
-        for (var tick = 0; tick < WaveStartTicks.UntilLive(field); tick++) field.Update(Frame());
+        for (var tick = 0; tick < WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
 
-        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(Frame(), field);
+        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(OneTick(), field);
 
         return spheroid.IsEscaping;
     }
@@ -89,7 +89,7 @@ public sealed class SpheroidEscapeTests
 
         for (var tick = 0; tick < 900; tick++)
         {
-            spheroid.Update(Frame(), field);
+            spheroid.Update(OneTick(), field);
 
             if (spheroid.Position.X < startX) return null; // this seed escaped leftwards
 

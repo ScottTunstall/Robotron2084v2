@@ -10,12 +10,12 @@ namespace Robotron2084.Tests;
 /// <summary>Gorf: the author's own robot, which crosses the screen in a wave dropping grunts (notes §138.2).</summary>
 public sealed class GorfTests
 {
-    private static readonly GameTime Frame = new(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
+    private static readonly GameTime OneTick = new(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
 
     private static PlayField CreateFieldInPlay(LevelParameters? parameters = null)
     {
         var field = new PlayFieldBuilder().WithParameters(parameters ?? new LevelParameters(1)).WithSeed(5).Build();
-        for (var tick = 0; tick < 400 && field.RobotsFrozen(); tick++) field.Update(Frame);
+        for (var tick = 0; tick < 400 && field.RobotsFrozen(); tick++) field.Update(OneTick);
 
         return field;
     }
@@ -38,7 +38,7 @@ public sealed class GorfTests
         var ticks = 0;
         while (gorf.IsAlive() && ticks < 3000)
         {
-            field.Update(Frame);
+            field.Update(OneTick);
             ticks++;
         }
 
@@ -86,7 +86,7 @@ public sealed class GorfTests
 
         for (var tick = 0; tick < 3000 && gorf.IsAlive(); tick++)
         {
-            gorf.Update(Frame, field);
+            gorf.Update(OneTick, field);
             var risen = groundY - gorf.Position.Y;
             highestSeen = Math.Max(highestSeen, risen);
             peakOfThisHop = Math.Max(peakOfThisHop, risen);
@@ -208,7 +208,7 @@ public sealed class GorfTests
         var gorf = new Gorf(TestSprites.Shared, new ScriptedRandom(0, 0, 0, 0, 0), field.GetPlayfieldBounds(), 10);
         field.Entities.Add(gorf);
 
-        for (var tick = 0; tick < 3000 && field.Entities.Grunts.Count == 0; tick++) field.Update(Frame);
+        for (var tick = 0; tick < 3000 && field.Entities.Grunts.Count == 0; tick++) field.Update(OneTick);
 
         var dropped = field.Entities.Grunts[0];
         Assert.True(dropped.IsFalling());
@@ -217,7 +217,7 @@ public sealed class GorfTests
         var startY = dropped.Position.Y;
 
         var guard = 0;
-        while (dropped.IsFalling() && guard++ < 200) field.Update(Frame);
+        while (dropped.IsFalling() && guard++ < 200) field.Update(OneTick);
 
         Assert.False(dropped.IsFalling());
         Assert.True(dropped.Position.Y >= startY);
@@ -230,7 +230,7 @@ public sealed class GorfTests
         var grunt = new Grunt(TestSprites.Shared, new IntVector2(300, 100), 1, new Random(1));
         grunt.BeginFall(100 + 40);
 
-        for (var tick = 0; tick < 4; tick++) grunt.Update(Frame, field);
+        for (var tick = 0; tick < 4; tick++) grunt.Update(OneTick, field);
 
         Assert.True(grunt.IsFalling());
         Assert.Equal(300, grunt.Position.X);
@@ -268,11 +268,11 @@ public sealed class GorfTests
         var ticksPerFrame = ArcadeClock.ToPortTicksRoundedUp(GorfTuning.AnimationFrameRomFrames);
         Assert.Equal(0, gorf.AnimationFrameIndex);
 
-        for (var tick = 0; tick < ticksPerFrame; tick++) gorf.Update(Frame, field);
+        for (var tick = 0; tick < ticksPerFrame; tick++) gorf.Update(OneTick, field);
 
         Assert.Equal(1, gorf.AnimationFrameIndex);
 
-        for (var tick = 0; tick < ticksPerFrame; tick++) gorf.Update(Frame, field);
+        for (var tick = 0; tick < ticksPerFrame; tick++) gorf.Update(OneTick, field);
 
         Assert.Equal(0, gorf.AnimationFrameIndex);
     }

@@ -27,11 +27,11 @@ namespace Robotron2084.Tests;
 /// </summary>
 public sealed class SpheroidAnimationTests
 {
-    private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+    private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
-        return new GameTime(TimeSpan.Zero, FrameSpan);
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 
     /// <summary>
@@ -58,9 +58,9 @@ public sealed class SpheroidAnimationTests
         var field = CreateField(seed);
         var spheroid = field.Entities.Spheroids[0];
 
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++) field.Update(Frame());
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
 
-        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(Frame(), field);
+        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(OneTick(), field);
 
         Assert.True(spheroid.IsEscaping, "the spheroid never reached its escape phase");
         return (field, spheroid);
@@ -85,7 +85,7 @@ public sealed class SpheroidAnimationTests
 
             for (var tick = 1; tick <= 600 && !spheroid.IsDead(); tick++)
             {
-                spheroid.Update(Frame(), field);
+                spheroid.Update(OneTick(), field);
 
                 if (spheroid.AnimationFrameIndex == previous) continue;
 
@@ -137,9 +137,9 @@ public sealed class SpheroidAnimationTests
         for (var tick = 1; tick <= 4000 && !spheroid.IsEscaping; tick++)
         {
             if (tick <= WaveStartTicks.UntilLive(field))
-                field.Update(Frame()); // run through the start of the wave
+                field.Update(OneTick()); // run through the start of the wave
             else
-                spheroid.Update(Frame(), field);
+                spheroid.Update(OneTick(), field);
 
             if (spheroid.AnimationFrameIndex > 4) dropping = true;
 

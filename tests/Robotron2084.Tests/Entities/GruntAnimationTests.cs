@@ -7,20 +7,20 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-///     R5 grunt stagger (notes §29): beat every 4 vblanks; the move countdown
+///     R5 grunt stagger (notes §29): beat every 4 ROM frames; the moves-remaining count
 ///     re-rolls to RND(1..ROBSPD) (never 0) on each step; a step moves 8 screen
 ///     px on each axis past a 4-screen-px dead zone (axes independent); the
 ///     RWDP frame advances ONLY on a step (DRAW_GRUNT is in the step branch —
-///     a paused grunt freezes mid-pose). Frame table maps
+///     a paused grunt freezes mid-pose). The animation frame table maps
 ///     RWDP1/2/3/4 → arts RWDD1/RWDD2/RWDD1/RWDD3 (3 unique, [A,B,A,C]).
 /// </summary>
 public sealed class GruntAnimationTests
 {
-    private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+    private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
-        return new GameTime(TimeSpan.Zero, FrameSpan);
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 
     private static PlayField CreateField()
@@ -31,7 +31,7 @@ public sealed class GruntAnimationTests
     /// <summary>Drives the field through the start of the wave, until the game is live.</summary>
     private static void RunUntilLive(PlayField field)
     {
-        for (var tick = 0; tick < WaveStartTicks.UntilLive(field); tick++) field.Update(Frame());
+        for (var tick = 0; tick < WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
     }
 
     [Theory]
@@ -60,7 +60,7 @@ public sealed class GruntAnimationTests
         var steps = 0;
         for (var tick = 0; tick < 600; tick++)
         {
-            grunt.Update(Frame(), field);
+            grunt.Update(OneTick(), field);
             if (grunt.Position == last) continue;
 
             var dx = grunt.Position.X - last.X;
@@ -92,7 +92,7 @@ public sealed class GruntAnimationTests
             new Random(3));
         var startY = grunt.Position.Y;
 
-        for (var tick = 0; tick < 600 && !grunt.SteppedThisUpdate; tick++) grunt.Update(Frame(), field);
+        for (var tick = 0; tick < 600 && !grunt.SteppedThisUpdate; tick++) grunt.Update(OneTick(), field);
 
         Assert.True(grunt.SteppedThisUpdate);
         Assert.Equal(startY + expectedDy, grunt.Position.Y);
@@ -111,7 +111,7 @@ public sealed class GruntAnimationTests
         var stepTicks = new List<int>();
         for (var tick = 1; tick <= 1200; tick++)
         {
-            grunt.Update(Frame(), field);
+            grunt.Update(OneTick(), field);
             if (grunt.Position != last)
             {
                 stepTicks.Add(tick);
@@ -132,7 +132,7 @@ public sealed class GruntAnimationTests
             gaps.Add(gap);
         }
 
-        // Each gap = countdown re-roll (1..15 beats) x 4-vblank beat.
+        // Each gap = moves-remaining re-roll (1..15 beats) x 4-ROM-frame beat.
         Assert.InRange(minGap, ArcadeClock.ToPortTicks(4), ArcadeClock.ToPortTicksRoundedUp(4) * 15);
         Assert.InRange(maxGap, ArcadeClock.ToPortTicks(4), ArcadeClock.ToPortTicksRoundedUp(4) * 15);
         // The stagger: NOT a fixed period — at least two distinct gaps.
@@ -153,7 +153,7 @@ public sealed class GruntAnimationTests
         Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 300, player.Y - 300), 300, new Random(11));
 
         Assert.Equal(1, grunt.WalkAnimationFrameNumber);
-        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(4) * 10; tick++) grunt.Update(Frame(), field);
+        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(4) * 10; tick++) grunt.Update(OneTick(), field);
 
         Assert.Equal(1, grunt.WalkAnimationFrameNumber); // 10 beat passes, no step, no frame change
 
@@ -164,7 +164,7 @@ public sealed class GruntAnimationTests
         var advanced = false;
         for (var tick = 0; tick < 6000; tick++)
         {
-            grunt.Update(Frame(), field);
+            grunt.Update(OneTick(), field);
             if (grunt.Position != last) last = grunt.Position;
 
             if (grunt.WalkAnimationFrameNumber != 1) advanced = true;

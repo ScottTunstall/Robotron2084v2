@@ -14,11 +14,11 @@ namespace Robotron2084.Tests.Entities;
 /// </summary>
 public sealed class QuarkDropTimerTests
 {
-    private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+    private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
-        return new GameTime(TimeSpan.Zero, FrameSpan);
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 
     private static PlayField CreateField(int seed)
@@ -46,7 +46,7 @@ public sealed class QuarkDropTimerTests
         field.Entities.Quarks.Add(quark);
 
         var tick = 0;
-        for (; tick < 800 && field.Entities.Tanks.GetLiveCount() == 0; tick++) field.Update(Frame());
+        for (; tick < 800 && field.Entities.Tanks.GetLiveCount() == 0; tick++) field.Update(OneTick());
 
         var beatTicks = (int)Math.Ceiling(QuarkTuning.BeatIntervalRomFrames * 1.2); // 6/5 a frame
         var oneCycle = (QuarkTuning.TravelAnimationFrames + 1) * beatTicks;
@@ -72,7 +72,7 @@ public sealed class QuarkDropTimerTests
         field.Entities.Quarks.Add(quark);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(QuarkTuning.BeatIntervalRomFrames) + 2; tick++)
-            field.Update(Frame());
+            field.Update(OneTick());
 
         Assert.Equal(0, field.Entities.Tanks.GetLiveCount());
         Assert.Equal(EntityLifeState.Alive, quark.LifeState);

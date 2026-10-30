@@ -12,7 +12,7 @@ namespace Robotron2084.Tests;
 ///     limit becomes the high byte of limit × 224 (limit × 7/8, TRUNCATED) ONLY
 ///     if that is still ≥ the floor; otherwise the limit is left ALONE. The
 ///     in-flight countdown is NOT re-rolled.
-///     2. Level-progress tick (R5 $2AC7-2AF1): every 225 vblanks. The first is 277 vblanks after the game goes
+///     2. Level-progress tick (R5 $2AC7-2AF1): every 225 ROM frames. The first is 277 ROM frames after the game goes
 ///     live (`CLR STATUS` at PLS2, R5 $289A): 22 to reach GEXEC (`NAP 12`, `NAP 10`), then 17 sleeps of 15, because
 ///     GEXEC loads 18 and counts down on its very first pass. A score made before GEXEC starts is forgotten
 ///     (`CLR SCRFLG`, R5 $2A8B). It runs
@@ -21,7 +21,7 @@ namespace Robotron2084.Tests;
 ///     scored since the last pass (SCRFLG, $F0), the limit clamped to the floor.
 ///     3. The floor reaches 1 = the arcade player's speed (player deltas ±1
 ///     arcade px/frame at $3031; a grunt at limit 1 steps 4 arcade px every
-///     4-vblank beat = 1 arcade px/frame) — grunts end "at least as fast as
+///     4-ROM-frame beat = 1 arcade px/frame) — grunts end "at least as fast as
 ///     the player" (author-verified against source + disasm).
 /// </summary>
 public sealed class GruntSpeedProgressTests
@@ -38,11 +38,11 @@ public sealed class GruntSpeedProgressTests
     /// <summary>fiftieths of a second between one check and the next: 15 passes of 15.</summary>
     private const int CheckIntervalRomFrames = 15 * 15;
 
-    private static readonly TimeSpan FrameSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+    private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime Frame()
+    private static GameTime OneTick()
     {
-        return new GameTime(TimeSpan.Zero, FrameSpan);
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 
     /// <summary>
@@ -56,7 +56,7 @@ public sealed class GruntSpeedProgressTests
 
     private static void Tick(PlayField field, int ticks)
     {
-        for (var tick = 0; tick < ticks; tick++) field.Update(Frame());
+        for (var tick = 0; tick < ticks; tick++) field.Update(OneTick());
     }
 
     private static PlayField CreateField(int wave = 1)
@@ -115,7 +115,7 @@ public sealed class GruntSpeedProgressTests
     }
 
     [Fact]
-    public void Floor_DescendsFirst277VblanksAfterTheGameGoesLive_ThenEvery225_OnlyWithFewerThan30Grunts()
+    public void Floor_DescendsFirst277RomFramesAfterTheGameGoesLive_ThenEvery225_OnlyWithFewerThan30Grunts()
     {
         // Wave 7 (ROM $2E24): 0 grunts, 0 ELECTRODES — with the stationary
         // player nothing can kill the 29 grunts we add, so the exact cadence
@@ -142,7 +142,7 @@ public sealed class GruntSpeedProgressTests
         Assert.Equal(5, field.GetGruntSpeedFloor());
         Assert.Equal(15, tracked.MoveDelayBeats);
 
-        field.Update(Frame()); // first level-progress tick (277 vblanks after the game went live)
+        field.Update(OneTick()); // first level-progress tick (277 ROM frames after the game went live)
 
         Assert.Equal(3, field.GetGruntSpeedFloor()); // 5 − 2
         Assert.Equal(11, tracked.MoveDelayBeats); // 15 − 4
@@ -153,7 +153,7 @@ public sealed class GruntSpeedProgressTests
 
         Assert.Equal(3, field.GetGruntSpeedFloor());
 
-        field.Update(Frame()); // second tick (225 vblanks after the first)
+        field.Update(OneTick()); // second tick (225 ROM frames after the first)
 
         // Nothing was scored since the first pass, so this one is the harsh one again: the
         // floor drops by 2 (3 → 1) and the limit by 4 (11 → 7).
@@ -192,7 +192,7 @@ public sealed class GruntSpeedProgressTests
         Grunt tracked = new(TestSprites.Shared, new IntVector2(100, 100), 15, new Random(1));
         field.Entities.Grunts.Add(tracked);
 
-        // GEXEC opens with CLR SCRFLG (R5 $2A8B), 22 vblanks after the game goes live, so this score does not count.
+        // GEXEC opens with CLR SCRFLG (R5 $2A8B), 22 ROM frames after the game goes live, so this score does not count.
         var scoreTick = WaveStartTicks.UntilLive(field) + 1;
         Tick(field, scoreTick);
         field.AwardScore(100);
