@@ -523,7 +523,10 @@ public sealed class PlayField : ICollisionScene
     /// <returns>True when a laser was fired.</returns>
     internal bool TryFirePlayerLaser(IntVector2 position, Direction8 direction)
     {
-        return PlayerLasers.TryFire(position, direction, out _);
+        if (!PlayerLasers.HasFreeSlot()) return false;
+
+        PlayerLasers.Fire(position, direction);
+        return true;
     }
 
     /// <summary>Lists the electrodes.</summary>
@@ -628,7 +631,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="burst">The burst its kind's row built from it.</param>
     internal void KillWithScoreBurst(IEntity target, ScoreBurst burst)
     {
-        target.Require<IRemovable>().Kill();
+        target.GetAs<IRemovable>().Kill();
         Entities.Add(burst);
     }
 
@@ -646,7 +649,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="direction">The laser's direction, which picks the explosion's axis and lean.</param>
     internal void KillWithStripExplosion(IEntity target, Direction8 direction)
     {
-        target.Require<IRemovable>().Kill();
+        target.GetAs<IRemovable>().Kill();
         if (target is IExplodable explodable) SpawnExplosion(explodable, direction);
     }
 

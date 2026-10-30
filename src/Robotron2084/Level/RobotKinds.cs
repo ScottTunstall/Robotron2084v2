@@ -59,7 +59,7 @@ public static class RobotKinds
         new(RobotKind.Hulk,
             static parameters => parameters.HulkCount,
             0,
-            static (field, target, direction) => target.Require<Hulk>().ApplyKnockback(direction.ToIntVector()),
+            static (field, target, direction) => target.GetAs<Hulk>().ApplyKnockback(direction.ToIntVector()),
             SoundTables.HulkHit,
             true,
             new HulkWaveSpawner(),
@@ -118,7 +118,7 @@ public static class RobotKinds
         new(RobotKind.Spark,
             null,
             ScoreValues.Spark,
-            static (field, target, direction) => target.Require<IRemovable>().Kill(),
+            static (field, target, direction) => target.GetAs<IRemovable>().Kill(),
             SoundTables.SparkKill,
             true,
             IsChasedByDemoPlayer: false),
@@ -128,7 +128,7 @@ public static class RobotKinds
             ScoreValues.TankShell,
             static (field, target, direction) =>
             {
-                target.Require<IRemovable>().Kill();
+                target.GetAs<IRemovable>().Kill();
                 // Only a laser kill gives one of the wave's shells back (the fizzle bug, notes §53).
                 field.CountShellDestroyed();
             },
@@ -139,7 +139,7 @@ public static class RobotKinds
         new(RobotKind.CruiseMissile,
             null,
             ScoreValues.CruiseMissile,
-            static (field, target, direction) => target.Require<IRemovable>().Kill(),
+            static (field, target, direction) => target.GetAs<IRemovable>().Kill(),
             SoundTables.CruiseMissileKill,
             true),
 
