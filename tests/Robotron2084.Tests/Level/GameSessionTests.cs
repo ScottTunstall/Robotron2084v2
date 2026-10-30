@@ -143,7 +143,7 @@ public class GameSessionTests
     {
         var settings = new GameSettings { TurnsPerPlayer = 5 };
 
-        var session = GameSession.CreateNewGame(GameMode.OnePlayer, new FakeInputSource(), settings: settings);
+        var session = GameSession.CreateNewGame(GameMode.OnePlayer, new FakeInputSource(), gameSettings: settings);
 
         Assert.Equal(5, session.GetCurrent().Lives);
         Assert.Same(settings, session.GameSettings);
