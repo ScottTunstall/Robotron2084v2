@@ -54,12 +54,14 @@ public sealed class HulkWaveSpawner : IWaveSpawner
         {
             var position =
                 context.Placement.FindSpawnPointAwayFrom(context.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
-            var slot = context.Random.Next(TargetRollSides) <= SearchFamilyListRollAtMost
-                ? TakeNextLeftOverSlot(context.FamilySlotsLeftOver, ref nextSlotToSearch)
-                : FamilyList.LastSlot;
-            Func<IntVector2> getTargetPosition = slot is { } stalkedSlot
-                ? () => field.GetFamilyMemberInSlot(stalkedSlot)?.Position ?? field.GetPlayerPosition()
-                : () => phantomTargetPosition;
+            int? slot = FamilyList.LastSlot;
+            var isSearchingFamilyList = context.Random.Next(TargetRollSides) <= SearchFamilyListRollAtMost;
+            if (isSearchingFamilyList) slot = TakeNextLeftOverSlot(context.FamilySlotsLeftOver, ref nextSlotToSearch);
+
+            Func<IntVector2> getTargetPosition = () => phantomTargetPosition;
+            if (slot is { } stalkedSlot)
+                getTargetPosition = () => field.GetFamilyMemberInSlot(stalkedSlot)?.Position ?? field.GetPlayerPosition();
+
             context.Entities.Add(new Hulk(field.Sprites, position, context.Random,
                 field.Parameters.HulkBeatIntervalArcadeFrames, getTargetPosition));
         }
