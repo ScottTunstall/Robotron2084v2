@@ -64,6 +64,8 @@ Words that used to be used here and must not come back. Do not use them in a nam
 | `SpecScale` | `PortPixelsPerArcadePixel` | It is how many port pixels one arcade pixel is drawn as. |
 | `SpecWidth`, `SpecHeight` | `WidthInArcadePixels`, `HeightInArcadePixels` | The size of the game's screen, in arcade pixels. |
 | `ArcadePixelsPerColumn` | `ArcadePixelsPerByte` | A pixel takes 4 bits, so a byte holds two; a column is one byte across. |
+| reaim, re-aim, `Reaim…`, and "aim" for a robot heading for a point (`AimZone…`, `AimOffsetFromTarget`) | new direction (`NewDirection…`) or new destination (`NewDestination…`); "heads for" | A robot does not aim, it heads for a spot. Only a shot is aimed (a spark, a tank shell, the player's lasers), so "aim" stays for those. |
+| roll, re-roll, `Reroll…`, `…RollSides` | random number, pick again, `…RandomRange` | Dice talk. The code draws a random number; a method that does is `GetRandom…` or `SetRandom…`. |
 | "nearly every tick" | "on every tick, except ..." and say the exceptions | The playfield skips `Update` only in the freeze, and for robots still appearing. |
 | arcade frame (in a comment) | "fiftieths of a second", "50 times a second" | A reader should not need the arcade's word to follow a comment. |
 | picture | animation frame | The glossary's word for one drawing. |

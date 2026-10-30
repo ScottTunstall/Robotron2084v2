@@ -165,8 +165,8 @@ place, so they can change without touching the objects.
 
 ## 3. Naming (§114)
 
-**NAM-1. Methods are verb phrases in the domain's own words**: `RollOffsets`, `PickDirection`,
-`AdvanceReprogramming`. Never `Process`, `Handle` or `Do` alone, never `Step1`, and never a bare verb with no
+**NAM-1. Methods are verb phrases in the domain's own words**: `SetRandomOffsets`, `GetRandomDirection`,
+`TakeReprogramStep`. Never `Process`, `Handle` or `Do` alone, never `Step1`, and never a bare verb with no
 object (`Burst`, `Dispatch`).
 
 **NAM-2. Numeric identifiers carry their unit** when the unit is not obvious, using the suffixes in section 1:
@@ -176,8 +176,9 @@ a defect: `StepColumns` holding port pixels, `...ArcadeTicks` holding beats.
 **NAM-3. A name says what the value is, not what it once was or how it is used.** `HulkSpeed` for a delay
 (where bigger is slower) is wrong. `_wallPalette` for the whole palette is wrong.
 
-**NAM-4. Booleans read as predicates**: `IsHitStopActive`, `HasMen`, `CanFireShell`. A state that is true
-*while held* is `...Held`, not `...Pressed`.
+**NAM-4. Booleans read as predicates**: `IsHitStopActive`, `HasMen`. A method that returns a `bool` starts with
+`Is` or `Has`: `IsInsideX`, `IsOverlappingLivingElectrode`, `HasFreeSlot`. Never `Can…`, `Try…`, `Fits…` or
+`Overlaps…`. A state that is true *while held* is `...Held`, not `...Pressed`.
 
 **NAM-5. No abbreviations** except `X`/`Y`, `Rom`, well-known ones (`Id`, `Hud`), and ROM labels quoted as ROM
 labels. `Len`, `Dur`, `Pc`, `Rprog`, `gw`/`gh` and `reDir` are not allowed.
@@ -234,15 +235,17 @@ sit next to a framework one, ours is British (`SlotColour` returning a `Color`).
 follows NAM-8: the American spelling is gone everywhere, not only from the declaration.
 
 **NAM-13. Method names start with the verb Microsoft's guidelines give them.**
-- **Fetch a value:** `Get…`: `GetElectrodeVariant(wave)`, not `ElectrodeVariantForWave(wave)`. A fetch that can
-  fail is `TryGet…(…, out T value)`. A search that may find nothing is `Find…`.
+- **Return a value:** every method that returns something other than a `bool` starts with `Get…`, whether it reads
+  a stored value, works something out, finds something or picks at random: `GetElectrodeVariant(wave)`,
+  `GetAimedSpeed(gap, shellSpeed)`, `GetRandomDirection(player)`. Not `ElectrodeVariantForWave(wave)`, `Compute…`,
+  `Find…`, `Pick…` or `Next…`. A fetch that can come back empty returns `null`, or is guarded by a `Has…` method;
+  there is no `TryGet…(…, out T value)`. The one exception is `Create…` below.
 - **Convert one thing to another:** `To…`: `ToPortPixelsFromArcadePixels(arcadePixels)`, `ToClockUnits(arcadeFrames)`,
   `ToPortTicks(arcadeFrames)`. Never `Scaled`, `Units` or `…For…`.
 - **Make a new object:** `Create…`: `CreateDefaults()`, `CreateFromWave(…)`, `CreateKey(…)`. Use `From…` or
   `New…` only where the framework itself does and `Create…` would read as something else (`Parse` stays
   `Parse`). If `Create…` would mislead, as `CreateFactory` suggested a factory object, pick a name that says
   what is created (`CreateWithFactoryScores`).
-- **Work something out that is not a plain fetch:** `Compute…` (`ComputeMaxIntegerScale`).
 A method with no parameters that only returns a value is almost always a property: check NAM-10 before keeping
 it a method.
 
@@ -357,6 +360,25 @@ fine only when the two things are named in the same sentence of its summary.
 `Spec...`, `...SpecPixels`, `ArcadePixelsPerColumn`, "nearly every tick", "picture" and the rest. Do not use one in a
 name, comment or doc, and when a rename retires a word, add it to that table in the same change. The dated records
 (`status.md`, the ledgers, `arcade-fidelity-notes.md`) keep their original words.
+
+**NAM-23. Command–query separation: a method changes something or returns something, never both.**
+- A **command** is a verb that returns nothing: `SetRandomVelocity`, `Fire`, `TakeStep`, `ReleaseVictim`.
+- A **query** starts with `Get…` (`Is…` or `Has…` for a `bool`, NAM-4 and NAM-13) and changes nothing: not the object,
+  not its arguments (no `ref` or `out` results), not anything else.
+- A step that both changes something and answers a question is split into a query and a command, and the caller
+  calls them in order: `var step = GetStepTowardTarget(target); TakeStep(field, step);`. A query that has two
+  answers returns them together as a tuple (`GetAxisAfterMove` returns the new position and the remainder).
+- A method that tries something and answers with a `bool` (`TryFire`) is split the same way: ask with
+  `HasFreeSlot()`, then `Fire(…)`. A command that cannot do its job when it should not have been called throws
+  `InvalidOperationException` and its docs say what to call first.
+- Drawing a number from a `Random` is not counted as changing something, so a query may do it; its name says
+  `Random` (`GetRandomDirection`, NAM-24).
+- Factories are the one exception: `Create…` makes and returns a new object, and may be called any number of times.
+
+**NAM-24. A random pick says Random, never Roll.** `GetRandomDirection`, `SetRandomVelocity`, `ThresholdRandomRange`,
+`OffsetXRandomMax`. The words "roll", "re-roll", "Reroll" and `…RollSides` are retired (dice talk: the code draws a
+random number). Use "random number" in comments, and `…RandomRange` for the size of the range a random number is
+drawn from.
 
 ## 4. Numbers and units (§112, §113)
 
@@ -502,7 +524,7 @@ the unit the ROM used, and its `<remarks>` quotes the instruction (`ADDA #8`) an
 port deliberately uses a different value, the `<remarks>` says so and says why; if it does not, the constant is a
 bug. Never label a column count as arcade pixels.
 
-**CMT-15. A constant that changes a field or property says which one, with `<see cref>`.** If a constant is added to, subtracted from, assigned to or compared with a field or property, its `<summary>` names that field or property with `<see cref="..."/>`, and says what the constant does to it: "The number of beats subtracted from <see cref="Floor"/> at a check." A reader must never have to search the class to find what a number is for. Where the field is private, `cref` it anyway; it resolves inside its own class.
+**CMT-15. A field's docs say what it is for, never how it is used.** The `<summary>` of a field or constant states its purpose (what the value is, and its unit) and, in the `<remarks>`, its relation to the original source or the disassembly (routine, address, instruction). It never says which code reads or changes it, or how: not "is added to", "is taken off", "counts up to this", "is compared with", "decides how long", "is picked at random when". Saying how a field is used lets the field dictate to the method that uses it, and the doc goes stale when that method changes. A reader finds the use with the IDE. This replaces the old rule that a constant's docs must name the field it is added to or compared with.
 
 **CMT-16. An orchestrator's docs say what it does, not how the things it runs work inside.** A class that drives other objects (the playfield driving the entities, a state driving the playfield, a list driving its items) documents its own part: what it calls, when, in what order, and when it does not. It must not describe how the called object works inside: its fields, its timers, its counting, its private steps. Write "on each tick the playfield calls each character's `Update`", not "each character keeps a timer and adds to it". How an object works is documented on that object, once, where it cannot go stale. This is CMT-12 seen from the caller's side: the interface says what is promised, the orchestrator says what it asks for, and only the implementer says how.
 
@@ -693,6 +715,20 @@ grep -rnE 'ToPortPixelsFromArcadePixels\(2\b|ToPortPixelsFromArcadePixels\(2 \*|
 
 # Unit-suffix mistakes (NAM-2)
 grep -rnoE '\w*ArcadeTicks\w*' src tests --include=*.cs
+
+# A method that returns a value but does not start with Get or Create (NAM-13), and a bool method that does not
+# start with Is or Has (NAM-4). Give the folder to check; each should print nothing.
+D=src/Robotron2084/Entities
+grep -rnP --include=*.cs '^ {4}(?:public |internal |private |protected )(?:static )?(?!void\b|bool\b|readonly\b|const\b|class\b|sealed\b|abstract\b|record\b|struct\b|enum\b|interface\b|event\b|new\b|override\b|virtual\b|static\b)[\w<>\[\]?,.() ]+? (?!Get|Create)[A-Z]\w*\(' $D
+grep -rnP --include=*.cs '^ {4}(?:public |internal |private |protected )(?:static )?bool (?!Is|Has)\w+\(' $D
+
+# A method that hands a result back through ref or out (NAM-23). Each hit should be a command split in two.
+grep -rnP --include=*.cs '^(?!\s*//)[^/]*\b(?:ref|out)\s+(?:var\s+|[\w<>?\[\]]+\s+)?_?\w' $D
+# A Get… or Is… method must not write to a field (NAM-23). There is no safe grep for this: read the body of every
+# value-returning method you add or change.
+
+# The word roll (NAM-24)
+grep -rniE --include=*.cs '\b\w*(re-?)?roll\w*\b' $D | grep -v -i -E 'scroll|control|corollary'
 
 # History, plan and milestone references (CMT-3, CMT-5)
 grep -rnE "M4\b|M5\b|round [0-9]|Phase [0-9]|PHASE [A-Z]|plan [0-9]|author's report|\(author, 20|playtest 20|used to |The old |was wrong" src --include=*.cs
