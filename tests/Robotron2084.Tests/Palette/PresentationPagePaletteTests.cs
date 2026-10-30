@@ -12,9 +12,9 @@ namespace Robotron2084.Tests.Rendering;
 public sealed class PresentationPagePaletteTests
 {
     /// <summary>A fiftieth of a second is 6/5 of a port tick (notes §52): n frames land on ceil(n × 6/5).</summary>
-    private static int Ticks(int romFrames)
+    private static int Ticks(int arcadeFrames)
     {
-        return (int)Math.Ceiling(romFrames * 6.0 / 5.0);
+        return (int)Math.Ceiling(arcadeFrames * 6.0 / 5.0);
     }
 
     private static (GamePalette Palette, PresentationPagePalette Page) Started()
@@ -53,7 +53,7 @@ public sealed class PresentationPagePaletteTests
     }
 
     [Fact]
-    public void TheWhiteFlash_StepsOneSlotEveryThreeRomFrames_StartingAtTwo()
+    public void TheWhiteFlash_StepsOneSlotEveryThreeArcadeFrames_StartingAtTwo()
     {
         var (palette, page) = Started();
         var moves = new List<(int Slot, int Tick)>();

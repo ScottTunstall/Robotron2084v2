@@ -13,7 +13,7 @@ namespace Robotron2084.Tests;
 public sealed class TunnelPaletteTests
 {
     [Fact]
-    public void TheRomShipsTwelveRampsAndTheirStartMasks()
+    public void TheArcadeShipsTwelveRampsAndTheirStartMasks()
     {
         // $576D: twelve 4-byte descriptors (address, mask, 0) — `$59B9`'s `CMPA #$0C` retries
         // until the random index is under twelve.

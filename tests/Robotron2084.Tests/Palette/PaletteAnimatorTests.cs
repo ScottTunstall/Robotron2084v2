@@ -5,7 +5,7 @@ namespace Robotron2084.Tests.Rendering;
 
 /// <summary>
 ///     The six ROM colour processes (arcade-fidelity-notes §4.12, §65) replayed over
-///     a <see cref="GamePalette" /> — exact tables, exact ROM-FRAME timings, wrap
+///     a <see cref="GamePalette" /> — exact tables, exact ARCADE FRAME timings, wrap
 ///     loops.
 ///     The timings are the ROM's frame counts converted through the clock-unit rule
 ///     of §52 (a fiftieth of a second is 6/5 of a port tick), so a 1-frame process steps every
@@ -43,7 +43,7 @@ public sealed class PaletteAnimatorTests
     }
 
     [Fact]
-    public void RgbProcessStepsEveryEightRomFrames_WhichIs9Point6Ticks()
+    public void RgbProcessStepsEveryEightArcadeFrames_WhichIs9Point6Ticks()
     {
         var (palette, animator) = NewPair();
 
@@ -64,7 +64,7 @@ public sealed class PaletteAnimatorTests
     }
 
     [Fact]
-    public void DecayProcessStepsEveryTwoRomFrames_WhichIs2Point4Ticks()
+    public void DecayProcessStepsEveryTwoArcadeFrames_WhichIs2Point4Ticks()
     {
         var (palette, animator) = NewPair();
 
@@ -79,7 +79,7 @@ public sealed class PaletteAnimatorTests
     }
 
     [Fact]
-    public void BluePurpleRedProcessStepsEveryRomFrame_WhichIs1Point2Ticks()
+    public void BluePurpleRedProcessStepsEveryArcadeFrame_WhichIs1Point2Ticks()
     {
         var (palette, animator) = NewPair();
 
@@ -94,7 +94,7 @@ public sealed class PaletteAnimatorTests
     }
 
     [Fact]
-    public void RedGoldProcessStepsEverySixRomFrames_WhichIs7Point2Ticks()
+    public void RedGoldProcessStepsEverySixArcadeFrames_WhichIs7Point2Ticks()
     {
         var (palette, animator) = NewPair();
 
@@ -109,7 +109,7 @@ public sealed class PaletteAnimatorTests
     }
 
     [Fact]
-    public void LaserProcessStepsEveryTwoRomFrames_WhichIs2Point4Ticks()
+    public void LaserProcessStepsEveryTwoArcadeFrames_WhichIs2Point4Ticks()
     {
         var (palette, animator) = NewPair();
 
@@ -124,7 +124,7 @@ public sealed class PaletteAnimatorTests
     }
 
     [Fact]
-    public void LaserFlashIsWhiteEverySecondRomFrameAndRandomEverySixthRomFrame()
+    public void LaserFlashIsWhiteEverySecondArcadeFrameAndRandomEverySixthArcadeFrame()
     {
         var (palette, animator) = NewPair();
 

@@ -105,7 +105,7 @@ public sealed class HighScorePaletteTests
     }
 
     [Fact]
-    public void TheWallCycle_StepsEveryThreeRomFramesAndWalksTheOldColourDownASlot()
+    public void TheWallCycle_StepsEveryThreeArcadeFramesAndWalksTheOldColourDownASlot()
     {
         var (palette, cycle) = Started();
 
@@ -138,7 +138,7 @@ public sealed class HighScorePaletteTests
     }
 
     [Fact]
-    public void TheListRamps_StepEveryFourRomFramesAndWrapAtTheTablesTerminator()
+    public void TheListRamps_StepEveryFourArcadeFramesAndWrapAtTheTablesTerminator()
     {
         var (palette, cycle) = Started();
 
