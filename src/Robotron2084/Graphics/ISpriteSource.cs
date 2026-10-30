@@ -3,20 +3,16 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Robotron2084.Graphics;
 
-/// <summary>
-///     Where a <see cref="SpriteSet" />'s textures come from: the content pipeline for the sprites extracted from the
-///     ROM, and code for the few sprites the port draws itself. Splitting this out is what lets a
-///     <see cref="SpriteSet" /> be built without a graphics device — a test needs entities, not sprites.
-/// </summary>
+/// <summary>Makes sprites from pixels, and loads sprites by name.</summary>
 public interface ISpriteSource
 {
-    /// <summary>Creates a sprite from pixels the port draws itself (the four player laser shapes).</summary>
+    /// <summary>Makes a sprite from the given pixels.</summary>
     /// <param name="width">Sprite width in pixels.</param>
     /// <param name="height">Sprite height in pixels.</param>
-    /// <param name="pixels">The pixels, row-major.</param>
+    /// <param name="pixels">The pixels, row by row from the top.</param>
     Texture2D Create(int width, int height, Color[] pixels);
 
-    /// <summary>Creates a sprite of one flat colour (the wall pixel).</summary>
+    /// <summary>Makes a sprite of one flat colour.</summary>
     /// <param name="width">Sprite width in pixels.</param>
     /// <param name="height">Sprite height in pixels.</param>
     /// <param name="color">The colour to fill it with.</param>
@@ -26,7 +22,8 @@ public interface ISpriteSource
     /// <param name="assetName">The asset's name in the content pipeline.</param>
     Texture2D Load(string assetName);
 
-    /// <summary>Loads several sprites by asset name, in order — a numbered run, or a font's glyphs.</summary>
-    /// <param name="assetNames">The assets' names, in the order the caller wants them.</param>
+    /// <summary>Loads several sprites by asset name.</summary>
+    /// <param name="assetNames">The assets' names.</param>
+    /// <returns>The sprites, in the same order as <paramref name="assetNames" />.</returns>
     Texture2D[] LoadAll(string[] assetNames);
 }
