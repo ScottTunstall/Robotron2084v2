@@ -60,15 +60,14 @@ internal static class GruntChaseStep
 
     /// <summary>Works out where a robot is after one step towards the player.</summary>
     /// <param name="position">The robot's top-left corner now, in port pixels.</param>
-    /// <param name="player">The player's top-left corner.</param>
-    /// <param name="playfield">The inside of the wall.</param>
+    /// <param name="playerPosition">The player's top-left corner.</param>
+    /// <param name="playfieldBounds">The inside of the wall.</param>
     /// <param name="size">The robot's size, in port pixels.</param>
     /// <returns>Where the robot's top-left corner is after the step.</returns>
-    public static IntVector2 GetNextPosition(IntVector2 position, IntVector2 player, Rectangle playfield,
-        (int Width, int Height) size)
+    public static IntVector2 GetNextPosition(IntVector2 position, IntVector2 playerPosition, Rectangle playfieldBounds, (int Width, int Height) size)
     {
-        var columnsRightOfPlayer = GetQuotientRoundedDown(position.X - player.X, ColumnPixels);
-        var rowsBelowPlayer = GetQuotientRoundedDown(position.Y - player.Y, RowPixels);
+        var columnsRightOfPlayer = GetQuotientRoundedDown(position.X - playerPosition.X, ColumnPixels);
+        var rowsBelowPlayer = GetQuotientRoundedDown(position.Y - playerPosition.Y, RowPixels);
 
         var dx = columnsRightOfPlayer > 0 ? -StepXPixels : StepXPixels;
         var dy = 0;
@@ -77,10 +76,10 @@ internal static class GruntChaseStep
         else if (rowsBelowPlayer != -StayPutGapRows) dy = StepYPixels;
 
         var y = position.Y + dy;
-        if (dy != 0 && y >= playfield.Y && y + size.Height <= playfield.Bottom) position = position with { Y = y };
+        if (dy != 0 && y >= playfieldBounds.Y && y + size.Height <= playfieldBounds.Bottom) position = position with { Y = y };
 
         var x = position.X + dx;
-        if (x >= playfield.X && x + size.Width <= playfield.Right) position = position with { X = x };
+        if (x >= playfieldBounds.X && x + size.Width <= playfieldBounds.Right) position = position with { X = x };
 
         return position;
     }

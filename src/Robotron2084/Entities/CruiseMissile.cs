@@ -203,18 +203,18 @@ public sealed class CruiseMissile : IEntity, IRemovable
     ///     Picks at random which way the missile goes until it next picks a new direction: up or down only, sideways only, or diagonally.
     ///     Whichever it is, it goes towards the player.
     /// </summary>
-    /// <param name="player">Where the player is.</param>
+    /// <param name="playerPosition">Where the player is.</param>
     /// <returns>How far the missile goes on each move, sideways and up or down. A zero means it does not go that way.</returns>
     /// <remarks>
     ///     Half the time it goes up or down only. A quarter of the time it goes sideways only, and a quarter of the time
     ///     diagonally (ROM: <c>GCMDIR</c>).
     /// </remarks>
-    private IntVector2 GetRandomDirection(IntVector2 player)
+    private IntVector2 GetRandomDirection(IntVector2 playerPosition)
     {
-        if (_random.Next(2) != 0) return new IntVector2(0, GetRandomDirectionSign(player.Y, _position.Y) * StepYPortPixels);
+        if (_random.Next(2) != 0) return new IntVector2(0, GetRandomDirectionSign(playerPosition.Y, _position.Y) * StepYPortPixels);
 
-        var dx = GetRandomDirectionSign(player.X, _position.X) * StepXPortPixels;
-        var dy = _random.Next(2) == 0 ? GetRandomDirectionSign(player.Y, _position.Y) * StepYPortPixels : 0;
+        var dx = GetRandomDirectionSign(playerPosition.X, _position.X) * StepXPortPixels;
+        var dy = _random.Next(2) == 0 ? GetRandomDirectionSign(playerPosition.Y, _position.Y) * StepYPortPixels : 0;
         return new IntVector2(dx, dy);
     }
 

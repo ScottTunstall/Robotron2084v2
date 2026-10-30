@@ -474,18 +474,18 @@ public sealed class Prog : IExplodable, IRemovable
     private Direction8 GetRandomDirection(PlayField field)
     {
         var bounds = field.Wall.PlayfieldBounds;
-        var player = field.Player.Position;
+        var playerPosition = field.Player.Position;
 
         if (_random.Next(AxisFlipSides) == 0)
         {
             // _offsetX is in columns, so it is changed to pixels.
-            var destinationX = player.X + ScreenSize.ToPortPixelsFromColumns(_offsetX);
+            var destinationX = playerPosition.X + ScreenSize.ToPortPixelsFromColumns(_offsetX);
             if (destinationX > bounds.Right + ScreenSize.ToPortPixelsFromColumns(WrapMarginXColumns)) destinationX = bounds.Left;
 
             return destinationX <= _position.X ? Direction8.Left : Direction8.Right;
         }
 
-        var destinationY = player.Y + ScreenSize.ToPortPixelsFromArcadePixels(_offsetY);
+        var destinationY = playerPosition.Y + ScreenSize.ToPortPixelsFromArcadePixels(_offsetY);
         if (destinationY > bounds.Bottom + ScreenSize.ToPortPixelsFromArcadePixels(WrapMarginYRows)) destinationY = bounds.Top;
 
         return destinationY <= _position.Y ? Direction8.Up : Direction8.Down;
