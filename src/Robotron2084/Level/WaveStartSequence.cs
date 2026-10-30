@@ -134,9 +134,12 @@ public sealed class WaveStartSequence
     /// </param>
     public WaveStartSequence(int robotListCount, bool isBrainWave)
     {
-        _playerAppearArcadeFrames = isBrainWave
-            ? BrainWavePlayerAppearArcadeFrames
-            : GetAppearLoopArcadeFrames(robotListCount) + AppearFinishNapArcadeFrames + RobotsOnNapArcadeFrames;
+        if (isBrainWave)
+            _playerAppearArcadeFrames = BrainWavePlayerAppearArcadeFrames;
+        else
+            _playerAppearArcadeFrames =
+                GetAppearLoopArcadeFrames(robotListCount) + AppearFinishNapArcadeFrames + RobotsOnNapArcadeFrames;
+
         _liveArcadeFrames = _playerAppearArcadeFrames + PlayerAppearNapArcadeFrames + DiagonalPlayerAppearNapArcadeFrames;
     }
 

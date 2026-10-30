@@ -389,8 +389,10 @@ public sealed class PlayField : ICollisionScene
     /// </remarks>
     public bool CanFireShell()
     {
-        return (_tankShellBugEnabled ? _shellsFiredThisWave : Entities.TankShells.Count(entity => !entity.IsDead())) <=
-               SpawnTuning.ShellCountLimit;
+        if (_tankShellBugEnabled) return _shellsFiredThisWave <= SpawnTuning.ShellCountLimit;
+
+        var shellsOnField = Entities.TankShells.Count(entity => !entity.IsDead());
+        return shellsOnField <= SpawnTuning.ShellCountLimit;
     }
 
     /// <summary>

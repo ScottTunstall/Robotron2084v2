@@ -184,7 +184,7 @@ public sealed class WaveMaterialisation
     /// </remarks>
     public WaveMaterialisation(Random random, bool beamsIn)
     {
-        _transporter = beamsIn ? new RobotTransporter(random) : null;
+        if (beamsIn) _transporter = new RobotTransporter(random);
     }
 
     /// <summary>The number of robots that have not yet been given their turn to appear.</summary>
@@ -412,21 +412,30 @@ public sealed class WaveMaterialisation
         if (robot is not IAnimationFrameSource frameSource) return;
 
         var fansInByColumns = ((_passes - 1) & ColumnFanSequenceMask) == ColumnFanSequenceMask;
-        if (!entities.HasRoomForStripEffect(fansInByColumns ? StripEngine.Horizontal : StripEngine.Vertical)) return;
+        var engine = StripEngine.Vertical;
+        if (fansInByColumns) engine = StripEngine.Horizontal;
+
+        if (!entities.HasRoomForStripEffect(engine)) return;
 
         var robotBounds = robot.GetBounds();
 
         // The arcade's strip routines take their first step on the fiftieth of a second after this pass, so the effect starts with what is left of this one.
         var startClockUnits = _appearClockUnits - ArcadeClock.UnitsPerPortTick;
+        var fanAxis = StripFanAxis.Rows;
+        var centreFinder = GetCentreRowFinder(robotBounds, playfieldBounds);
+        if (fansInByColumns)
+        {
+            fanAxis = StripFanAxis.Columns;
+            centreFinder = GetCentreColumnFinder(robotBounds, playfieldBounds);
+        }
+
         entities.Add(StripEffect.CreateAppear(
             frameSource,
             robotBounds,
-            fansInByColumns ? StripFanAxis.Columns : StripFanAxis.Rows,
+            fanAxis,
             0,
             StripClip.CreateFromPortPixels(playfieldBounds),
-            fansInByColumns
-                ? GetCentreColumnFinder(robotBounds, playfieldBounds)
-                : GetCentreRowFinder(robotBounds, playfieldBounds),
+            centreFinder,
             startClockUnits));
     }
 }

@@ -89,13 +89,19 @@ internal sealed class LaserWallFlares
         Rectangle bounds;
         if (horizontalWall)
         {
-            var y = laserBounds.Top < inner.Top ? outer.Y : outer.Bottom - FlareThickness;
+            var y = outer.Bottom - FlareThickness;
+            var isAtTopWall = laserBounds.Top < inner.Top;
+            if (isAtTopWall) y = outer.Y;
+
             var x = Math.Clamp(laserBounds.Center.X - FlareThickness / 2, inner.Left, inner.Right - FlareThickness);
             bounds = new Rectangle(x, y, FlareThickness, FlareLength);
         }
         else
         {
-            var x = laserBounds.Left < inner.Left ? outer.X : outer.Right - FlareThickness;
+            var x = outer.Right - FlareThickness;
+            var isAtLeftWall = laserBounds.Left < inner.Left;
+            if (isAtLeftWall) x = outer.X;
+
             var y = Math.Clamp(laserBounds.Center.Y - FlareThickness / 2, inner.Top, inner.Bottom - FlareLength);
             bounds = new Rectangle(x, y, FlareThickness, FlareLength);
         }

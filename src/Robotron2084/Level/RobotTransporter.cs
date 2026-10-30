@@ -170,9 +170,10 @@ public sealed class RobotTransporter
             var pixel = image.GetPixel(x, y);
             if (pixel == TransportImage.PixelOff) continue;
 
-            var colour = pixel == TransportImage.PixelOwnColour
-                ? image.Template[y * image.Width + x]
-                : sprites.Blitter.GetSlotColour(pixel);
+            Color colour;
+            if (pixel == TransportImage.PixelOwnColour) colour = image.Template[y * image.Width + x];
+            else colour = sprites.Blitter.GetSlotColour(pixel);
+
             spriteBatch.Draw(sprites.WallPixelSprite,
                 new Rectangle(topLeft.X + x * pixelSize, topLeft.Y + y * pixelSize, pixelSize, pixelSize), colour);
         }

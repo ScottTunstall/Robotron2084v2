@@ -111,8 +111,11 @@ public sealed class GameSession
             throw new ArgumentOutOfRangeException(nameof(playerCount), playerCount,
                 "Robotron is a 1 or 2 player game (ROM PLRCNT).");
 
+        var mode = GameMode.OnePlayer;
+        if (playerCount == 2) mode = GameMode.TwoPlayerAlternate;
+
         return CreateNewGame(
-            playerCount == 2 ? GameMode.TwoPlayerAlternate : GameMode.OnePlayer,
+            mode,
             input,
             secondPlayerInput);
     }
@@ -142,7 +145,9 @@ public sealed class GameSession
         IPlayerInputSource? playerTwo = null, ControlSettings? controlSettings = null, GameSettings? gameSettings = null)
     {
         var chosenGameSettings = gameSettings ?? GameSettings.CreateFactoryDefaults();
-        var playerCount = mode == GameMode.OnePlayer ? 1 : 2;
+        var playerCount = 2;
+        if (mode == GameMode.OnePlayer) playerCount = 1;
+
         var players = new PlayerSlot[playerCount];
         for (var i = 0; i < playerCount; i++)
             players[i] = new PlayerSlot(

@@ -25,9 +25,9 @@ public sealed class ScoreBoard
     {
         Score = startingScore;
         _extraLifeEveryPoints = extraLifeEveryPoints;
-        _nextExtraLifeThreshold = _extraLifeEveryPoints > 0
-            ? (startingScore / _extraLifeEveryPoints + 1) * _extraLifeEveryPoints
-            : int.MaxValue;
+        _nextExtraLifeThreshold = int.MaxValue;
+        if (_extraLifeEveryPoints > 0)
+            _nextExtraLifeThreshold = (startingScore / _extraLifeEveryPoints + 1) * _extraLifeEveryPoints;
     }
 
     /// <summary>The player's score.</summary>

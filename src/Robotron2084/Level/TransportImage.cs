@@ -152,7 +152,9 @@ public sealed class TransportImage
             if (!_drawnInTemplate[pixel]) continue;
 
             var colourPair = TransporterTuning.SparkleColours[sparkle++ % TransporterTuning.SparkleColours.Length];
-            _pixels[pixel] = half == 0xF0 ? colourPair >> 4 : colourPair & 0x0F;
+            var isLeftPixel = half == 0xF0;
+            _pixels[pixel] = colourPair & 0x0F;
+            if (isLeftPixel) _pixels[pixel] = colourPair >> 4;
         }
     }
 
@@ -165,7 +167,10 @@ public sealed class TransportImage
     {
         var bytesInPicture = Width / 2 * Height;
         var column = byteIndex / Height;
-        var x = column * 2 + (half == 0xF0 ? 0 : 1);
+        var isLeftPixel = half == 0xF0;
+        var x = column * 2 + 1;
+        if (isLeftPixel) x = column * 2;
+
         var y = byteIndex % Height;
         pixel = y * Width + x;
         return byteIndex < bytesInPicture;

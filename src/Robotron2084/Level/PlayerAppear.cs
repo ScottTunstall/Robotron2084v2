@@ -138,7 +138,10 @@ public sealed class PlayerAppear
     {
         for (var rowsLeft = GetSpriteRows(player); rowsLeft >= 0; rowsLeft -= LeaningStripRowStep)
         {
-            var row = rowsLeft > 0 ? rowsLeft - 1 : GetSpriteColumns(player) / 2;
+            var row = GetSpriteColumns(player) / 2;
+            var isAboveLastRow = rowsLeft > 0;
+            if (isAboveLastRow) row = rowsLeft - 1;
+
             foreach (var slope in LeaningStripSlopes)
                 if (entities.HasRoomForStripEffect(StripEngine.Diagonal))
                     entities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, slope, clip, row,

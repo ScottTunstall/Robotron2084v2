@@ -332,7 +332,9 @@ public sealed class GruntSpeedProgression
 
         if (grunts.Count(entity => !entity.IsDead()) >= GruntCountThatHoldsTheFloor) return;
 
-        var floorStep = _hasPlayerScoredSinceLastCheck ? SmallFloorStep : LargeFloorStep;
+        var floorStep = LargeFloorStep;
+        if (_hasPlayerScoredSinceLastCheck) floorStep = SmallFloorStep;
+
         _hasPlayerScoredSinceLastCheck = false;
 
         Floor = Math.Max(LowestFloor, Floor - floorStep);

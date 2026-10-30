@@ -265,7 +265,9 @@ public static class DifficultyTuning
         var step = (product >> 8) + ((product >> 7) & 1);
 
         var isSubtracted = (((delta & 0xFF) ^ header.Multiplier) & ReversedFlag) != 0;
-        var adjusted = isSubtracted ? value - step : value + step;
+        var adjusted = value + step;
+        if (isSubtracted) adjusted = value - step;
+
         return Math.Clamp(adjusted, header.Min, header.Max);
     }
 
