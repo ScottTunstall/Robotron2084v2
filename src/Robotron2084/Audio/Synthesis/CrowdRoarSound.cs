@@ -319,8 +319,14 @@ internal sealed class CrowdRoarSound
             _output.Wait(ModifyExtended);
             yield return _output.Pass();
             _memory.RotateRandomLow();
-            _output.Wait(ModifyExtended + Noise2EndCycles + (_memory.RandomBitOut ? Direct : 0));
-            _noiseNext = _memory.RandomBitOut ? _noiseLoudness : (byte)0;
+            var isBitSet = _memory.RandomBitOut;
+            var bitCycles = 0;
+            if (isBitSet) bitCycles = Direct;
+
+            _output.Wait(ModifyExtended + Noise2EndCycles + bitCycles);
+            _noiseNext = 0;
+            if (isBitSet) _noiseNext = _noiseLoudness;
+
             yield return WriteWhistle(CallWhistleFromJsrCycles);
             _output.Wait(Return);
 
@@ -386,8 +392,10 @@ internal sealed class CrowdRoarSound
         _whistleCount--;
         if (_whistleCount != 0)
         {
-            _output.Wait(WhistleCountWaitingCycles +
-                         (_noiseLoudness != 0 ? Return : WhistleCountSilentCycles + Return));
+            var endCycles = WhistleCountSilentCycles + Return;
+            if (_noiseLoudness != 0) endCycles = Return;
+
+            _output.Wait(WhistleCountWaitingCycles + endCycles);
             return;
         }
 

@@ -267,7 +267,10 @@ internal sealed class OscillatorSound
     private static IEnumerable<OutputChange> Start(BoardMemory memory, BoardOutput output, byte[] vector,
         bool isReachedByBranch)
     {
-        output.Wait(isReachedByBranch ? CopyAndCallCycles : CopyAndCallCycles - Branch);
+        var copyCycles = CopyAndCallCycles - Branch;
+        if (isReachedByBranch) copyCycles = CopyAndCallCycles;
+
+        output.Wait(copyCycles);
         return new OscillatorSound(memory, output, vector).Play();
     }
 
@@ -326,7 +329,10 @@ internal sealed class OscillatorSound
     /// <returns>False when the oscillator reached its last pitch and the sound is over.</returns>
     private bool ChangeOscillator(int voice)
     {
-        _output.Wait(SelectVoiceCycles + (voice < 2 ? SelectVoiceBranchCycles : 0) + CheckCyclesCycles);
+        var branchCycles = 0;
+        if (voice < 2) branchCycles = SelectVoiceBranchCycles;
+
+        _output.Wait(SelectVoiceCycles + branchCycles + CheckCyclesCycles);
         if (_ram[CycleCounterGroup + voice] != 0)
         {
             _output.Wait(CountCyclesCycles);

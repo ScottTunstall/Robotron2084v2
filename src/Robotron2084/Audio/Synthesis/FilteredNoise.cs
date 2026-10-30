@@ -202,7 +202,10 @@ internal sealed class FilteredNoise
     {
         foreach (var change in RandomStep.Run(_memory, _output, _level, RandomStep.MixLevelCycles)) yield return change;
 
-        _output.Wait(_noiseSettings.IsDistorted ? ChooseSlopeCycles : ChooseSlopeCycles - 2 * Direct);
+        var slopeCycles = ChooseSlopeCycles;
+        if (!_noiseSettings.IsDistorted) slopeCycles = ChooseSlopeCycles - 2 * Direct;
+
+        _output.Wait(slopeCycles);
         var slopeHigh = ChooseSlopeHigh();
         var slope = (slopeHigh << ByteBits) | (byte)_limit;
         var position = (_level << ByteBits) | (byte)_limit;
@@ -215,7 +218,9 @@ internal sealed class FilteredNoise
 
             yield return _output.Store(_level);
             _output.Wait(SlideCycles);
-            var next = isFalling ? position - slope : position + slope;
+            var next = position + slope;
+            if (isFalling) next = position - slope;
+
             if (next < 0 || next > WordMask) break;
 
             position = next;
@@ -243,7 +248,9 @@ internal sealed class FilteredNoise
     private byte ChooseSlopeHigh()
     {
         var limitHigh = (byte)(_limit >> ByteBits);
-        return _noiseSettings.IsDistorted ? (byte)((limitHigh & _memory.RandomHigh) + _noiseSettings.SmallestSlope) : limitHigh;
+        if (!_noiseSettings.IsDistorted) return limitHigh;
+
+        return (byte)((limitHigh & _memory.RandomHigh) + _noiseSettings.SmallestSlope);
     }
 
     /// <summary>Takes an eighth off the slope limit (<c>FNOIS6</c>).</summary>

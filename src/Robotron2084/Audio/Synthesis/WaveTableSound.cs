@@ -376,7 +376,9 @@ internal sealed class WaveTableSound
     /// <returns>The sound's output changes.</returns>
     private IEnumerable<OutputChange> MovePitchThenPlay()
     {
-        return MovePitch() ? Play() : [];
+        if (MovePitch()) return Play();
+
+        return [];
     }
 
     /// <summary>Plays the pattern once for each echo, making the wave quieter after each (<c>GWT4</c> to <c>GEND40</c>).</summary>

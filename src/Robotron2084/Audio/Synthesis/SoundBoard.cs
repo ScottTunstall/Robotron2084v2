@@ -444,7 +444,10 @@ public sealed class SoundBoard : ISoundBoard
         _output.Wait(ModifyExtended + Direct + Immediate + Immediate + Branch + Inherent + StoreDirect + Return);
         _memory.IsBackground1On = false;
         var level = _memory.Background2Level;
-        _memory.Background2Level = (byte)(level == Background2MaxLevel ? 1 : level + 1);
+        var nextLevel = level + 1;
+        if (level == Background2MaxLevel) nextLevel = 1;
+
+        _memory.Background2Level = (byte)nextLevel;
         return [];
     }
 
@@ -480,9 +483,10 @@ public sealed class SoundBoard : ISoundBoard
 
         _output.Wait(BackgroundStartCycles);
         _memory.IsLaserBallBonusRepeating = false;
-        var background = _memory.IsBackground1On
-            ? FilteredNoise.PlayBackground1(_memory, _output)
-            : _waveTableSound.PlayBackground2(_memory.Background2Level);
+        IEnumerable<OutputChange> background;
+        if (_memory.IsBackground1On) background = FilteredNoise.PlayBackground1(_memory, _output);
+        else background = _waveTableSound.PlayBackground2(_memory.Background2Level);
+
         foreach (var change in background) yield return change;
     }
 }

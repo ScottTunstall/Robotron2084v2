@@ -131,7 +131,11 @@ internal sealed class SirenSound
                 _length = (ushort)(_length + _sweep);
             }
 
-            _output.Wait(GrowSweepCycles + ((_sweep & 0xFF) + slope > 0xFF ? ModifyExtended : 0));
+            var carryCycles = 0;
+            var sweepCarries = (_sweep & 0xFF) + slope > 0xFF;
+            if (sweepCarries) carryCycles = ModifyExtended;
+
+            _output.Wait(GrowSweepCycles + carryCycles);
             _sweep = (ushort)(_sweep + slope);
             _output.Wait(WordImmediate);
         } while (_sweep != end);

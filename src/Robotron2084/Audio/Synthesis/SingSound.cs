@@ -209,7 +209,10 @@ internal sealed class SingSound
     /// <returns>The cycles.</returns>
     private static int CyclesBeforeEcho(bool setsLoudness)
     {
-        return (setsLoudness ? Immediate + StoreDirect : 0) + WordImmediate + Branch;
+        var loudnessCycles = 0;
+        if (setsLoudness) loudnessCycles = Immediate + StoreDirect;
+
+        return loudnessCycles + WordImmediate + Branch;
     }
 
     private IEnumerable<OutputChange> PlayOnceFrom(byte[] singSettings)
