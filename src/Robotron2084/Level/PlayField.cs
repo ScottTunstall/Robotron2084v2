@@ -725,12 +725,12 @@ public sealed class PlayField : ICollisionScene
     ///     Asks for a sound that is heard from where its maker is on the playfield: something on the left is heard on the
     ///     left.
     /// </summary>
-    /// <param name="sound">The sound's table.</param>
+    /// <param name="soundSequence">The sound's table.</param>
     /// <param name="maker">The box of whatever made the sound.</param>
-    internal void PlaySoundFrom(SoundSequence sound, Rectangle maker)
+    internal void PlaySoundFrom(SoundSequence soundSequence, Rectangle maker)
     {
         var pan = StereoPlacement.GetPan(maker, Wall.PlayfieldBounds);
-        Sound.Play(sound, pan);
+        Sound.Play(soundSequence, pan);
     }
 
     /// <summary>

@@ -427,7 +427,7 @@ public sealed class FieldEntities
     public bool HasRoomForStripEffect(StripEngine engine)
     {
         return StripExplosionTuning.GetPoolSize(engine) is not { } poolSize ||
-               Explosions.Count(effect => effect.GetEngine() == engine) < poolSize;
+               Explosions.Count(stripEffect => stripEffect.GetEngine() == engine) < poolSize;
     }
 
     /// <summary>Takes the dead out of every list.</summary>

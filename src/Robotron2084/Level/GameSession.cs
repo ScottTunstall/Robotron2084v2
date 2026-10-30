@@ -124,8 +124,8 @@ public sealed class GameSession
     /// <param name="mode">How many people are playing, and whether two take turns.</param>
     /// <param name="playerOne">The first player's controls.</param>
     /// <param name="playerTwo">The second player's controls, or null to share the first player's.</param>
-    /// <param name="controls">The keys and buttons the players have chosen, or null for the standard ones.</param>
-    /// <param name="settings">
+    /// <param name="controlSettings">The keys and buttons the players have chosen, or null for the standard ones.</param>
+    /// <param name="gameSettings">
     ///     The game adjustment settings, or null for the factory ones (notes §131). They say how many men
     ///     each player starts with, and travel with the game for the screens that follow.
     /// </param>
@@ -139,22 +139,22 @@ public sealed class GameSession
     ///     </list>
     /// </remarks>
     public static GameSession CreateNewGame(GameMode mode, IPlayerInputSource playerOne,
-        IPlayerInputSource? playerTwo = null, ControlSettings? controls = null, GameSettings? settings = null)
+        IPlayerInputSource? playerTwo = null, ControlSettings? controlSettings = null, GameSettings? gameSettings = null)
     {
-        var gameSettings = settings ?? GameSettings.CreateFactoryDefaults();
+        var chosenGameSettings = gameSettings ?? GameSettings.CreateFactoryDefaults();
         var playerCount = mode == GameMode.OnePlayer ? 1 : 2;
         var players = new PlayerSlot[playerCount];
         for (var i = 0; i < playerCount; i++)
             players[i] = new PlayerSlot(
                 i + 1,
                 i == 0 ? playerOne : playerTwo ?? playerOne,
-                settings?.TurnsPerPlayer ?? PlayerTuning.StartingLives,
+                gameSettings?.TurnsPerPlayer ?? PlayerTuning.StartingLives,
                 PlayerTuning.StartingLevelNumber);
 
         return new GameSession(players)
         {
-            ControlSettings = controls ?? ControlSettings.CreateDefaults(),
-            GameSettings = gameSettings
+            ControlSettings = controlSettings ?? ControlSettings.CreateDefaults(),
+            GameSettings = chosenGameSettings
         };
     }
 
@@ -166,7 +166,7 @@ public sealed class GameSession
     {
         return
         [
-            .. Players.Select(player => new FinalScore(player.Number, player.Score))
+            .. Players.Select(playerSlot => new FinalScore(playerSlot.Number, playerSlot.Score))
                 .OrderByDescending(score => score.Score)
         ];
     }

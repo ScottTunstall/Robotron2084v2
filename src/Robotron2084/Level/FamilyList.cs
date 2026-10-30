@@ -19,8 +19,7 @@ namespace Robotron2084.Level;
 ///         </item>
 ///     </list>
 ///     A member who is dead or in
-///     a brain's hold is off the ROM's list, so their place reads as empty.</item>
-///     </list>
+///     a brain's hold is off the ROM's list, so their place reads as empty.
 /// </remarks>
 public sealed class FamilyList
 {
@@ -81,8 +80,7 @@ public sealed class FamilyList
     ///     where the arcade's "all the brains chase Mikey" bug lives. A brain picks its target as it is
     ///     made, before the family exists, so every brain leaves with the first place in hand; Mikey
     ///     fills that place, because the Mikeys are made first. Each brain keeps the place until it
-    ///     empties (notes §18.8).</item>
-    ///     </list>
+    ///     empties (notes §18.8).
     /// </remarks>
     internal int GetNearestSlot(IntVector2 from)
     {
@@ -120,6 +118,10 @@ public sealed class FamilyList
     /// </remarks>
     internal IReadOnlyList<int> GetOccupiedSlots()
     {
-        return [.. Members.Where(human => human.IsGraspable()).Select(human => human.FamilySlot).Order()];
+        return [
+            .. Members.Where(human => human.IsGraspable())
+            .Select(human => human.FamilySlot)
+            .Order()
+        ];
     }
 }

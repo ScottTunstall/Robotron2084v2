@@ -13,8 +13,7 @@ namespace Robotron2084.Level;
 ///         <item>Disassembly: not separately labelled</item>
 ///     </list>
 ///     The arcade offers player 1 and then player 2.
-///     The port offers the highest score first (notes §98).</item>
-///     </list>
+///     The port offers the highest score first (notes §98).
 /// </remarks>
 /// <param name="PlayerNumber">1 or 2. It is printed after "PLAYER " on the initials screen.</param>
 /// <param name="Score">The player's score when the game ended.</param>

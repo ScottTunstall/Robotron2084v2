@@ -76,19 +76,19 @@ public sealed class SpawnPlacement
     /// <param name="point">The point to keep away from, in port pixels.</param>
     /// <param name="minDistanceArcadePixels">How far away the spot must be, in arcade pixels.</param>
     /// <param name="isAlsoAcceptable">A further test of a candidate's box; null when being far enough is all that is asked.</param>
-    public IntVector2 FindSpawnPointAwayFrom(IntVector2 point, int minDistanceArcadePixels,
+    public IntVector2 FindSpawnPointAwayFrom(IntVector2 avoidedPosition, int minDistanceArcadePixels,
         Func<Rectangle, bool>? isAlsoAcceptable = null)
     {
         return FindSpawnPoint(box =>
-            IsFarEnough(box, point, minDistanceArcadePixels) && (isAlsoAcceptable?.Invoke(box) ?? true));
+            IsFarEnough(box, avoidedPosition, minDistanceArcadePixels) && (isAlsoAcceptable?.Invoke(box) ?? true));
     }
 
     /// <summary>Finds a spot for a spheroid (see <see cref="FindSpheroidSpawnPoint" />) that is far enough from a point.</summary>
     /// <param name="point">The point to keep away from, in port pixels.</param>
     /// <param name="minDistanceArcadePixels">How far away the spot must be, in arcade pixels.</param>
-    public IntVector2 FindSpheroidSpawnPointAwayFrom(IntVector2 point, int minDistanceArcadePixels)
+    public IntVector2 FindSpheroidSpawnPointAwayFrom(IntVector2 avoidedPosition, int minDistanceArcadePixels)
     {
-        return FindSpheroidSpawnPoint(box => IsFarEnough(box, point, minDistanceArcadePixels));
+        return FindSpheroidSpawnPoint(box => IsFarEnough(box, avoidedPosition, minDistanceArcadePixels));
     }
 
     /// <summary>Finds a spot for a spheroid. Spheroids like to start near a wall, so most of the spots tried are close to one.</summary>
@@ -106,9 +106,9 @@ public sealed class SpawnPlacement
     /// <param name="box">The candidate's box, in port pixels.</param>
     /// <param name="point">The point to keep away from.</param>
     /// <param name="minDistanceArcadePixels">The distance, in arcade pixels.</param>
-    private static bool IsFarEnough(Rectangle box, IntVector2 point, int minDistanceArcadePixels)
+    private static bool IsFarEnough(Rectangle box, IntVector2 avoidedPosition, int minDistanceArcadePixels)
     {
-        return new IntVector2(box.X, box.Y).IsFartherThan(point,
+        return new IntVector2(box.X, box.Y).IsFartherThan(avoidedPosition,
             ScreenSize.ToPortPixelsFromArcadePixels(minDistanceArcadePixels));
     }
 
