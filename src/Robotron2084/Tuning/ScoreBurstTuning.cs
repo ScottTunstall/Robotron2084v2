@@ -17,7 +17,7 @@ public static class ScoreBurstTuning
 
     public const int QuarkPointsSlot = 0x0D;
 
-    public const int RomFramesPerStep = 2;
+    public const int StepIntervalRomFrames = 2;
 
     public const int SpheroidBurstSlot = 0x0A;
 

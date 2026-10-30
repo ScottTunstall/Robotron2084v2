@@ -26,7 +26,7 @@ public static class StripExplosionTuning
     public const int AppearStartSizer = 0x1000;
 
     /// <summary>
-    ///     How many fiftieths of a second an explosion lasts. It is counted down once each fiftieth of a second, and the
+    ///     How many <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieths of a second</see> an explosion lasts. It is counted down once each <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieth of a second</see>, and the
     ///     explosion is gone when it reaches nothing.
     /// </summary>
     /// <remarks>
@@ -43,8 +43,9 @@ public static class StripExplosionTuning
     public const int ExplosionStartSizer = 0x0100;
 
     /// <summary>
-    ///     How much the gap changes each fiftieth of a second for an explosion, and for an appear run by the diagonal
-    ///     routine. It is a whole row, so the picture changes on 50 times a second.
+    ///     How much the gap changes each <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieth of a second</see> for an explosion, and for an appear run by the diagonal
+    ///     routine. It is a whole row, so the picture changes every
+    ///     <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieth of a second</see>.
     /// </summary>
     /// <remarks>
     ///     Original source: <c>RRX7.ASM</c> <c>WRITE</c>, <c>ADDD #$100</c>, and <c>RRDX2.ASM</c> <c>AWRITE</c>,
@@ -53,8 +54,8 @@ public static class StripExplosionTuning
     public const int SizerStep = 0x0100;
 
     /// <summary>
-    ///     How much the gap shrinks each fiftieth of a second for an appear run by the vertical or the horizontal
-    ///     routine. It is half a row, so the picture changes on every second fiftieth of a second and the appear takes twice
+    ///     How much the gap shrinks each <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieth of a second</see> for an appear run by the vertical or the horizontal
+    ///     routine. It is half a row, so the picture changes on every second <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieth of a second</see> and the appear takes twice
     ///     as long as a diagonal one.
     /// </summary>
     /// <remarks>

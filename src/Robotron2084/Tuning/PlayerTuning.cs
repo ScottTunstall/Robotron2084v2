@@ -22,7 +22,7 @@ public static class PlayerTuning
 
     /// <summary>
     ///     A press fires immediately (the arcade's rising edge) and HOLDING the fire
-    ///     button re-fires every this many ticks; the 3-laser SLOT cap (LaserSlots)
+    ///     button re-fires every this many <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>; the 3-laser SLOT cap (LaserSlots)
     ///     is the real binding limit.
     /// </summary>
     public const int PlayerAutoFireTicks = 12;

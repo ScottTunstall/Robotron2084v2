@@ -5,17 +5,17 @@ public static class AttractTuning
 {
     /// <summary>
     ///     AI stick minimum hold: once the stick follows a new direction it keeps it
-    ///     this many ticks. The arcade's walk animation is a four-frame cycle at three
-    ///     ticks a frame (twelve ticks), so a direction that lasts fewer ticks than that
+    ///     this many <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>. The arcade's walk animation is a four-frame cycle at three
+    ///     <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> a frame (twelve <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>), so a direction that lasts fewer <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> than that
     ///     can never show a complete walk (notes §97.5).
     /// </summary>
     public const int DemoDirectionHoldTicks = 9;
 
     /// <summary>
     ///     AI stick hysteresis: a freshly computed flee/drift direction must win this
-    ///     many ticks IN A ROW before the stick follows it. The flee direction is
+    ///     many <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> IN A ROW before the stick follows it. The flee direction is
     ///     `sign(player − robot)` recomputed against a moving field, so without hysteresis it flipped on
-    ///     ~75% of ticks; the arcade's walk animation RESETS on every facing change
+    ///     ~75% of <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>; the arcade's walk animation RESETS on every facing change
     ///     (R5 $3003-3009), which makes the demo's man twitch in place instead of walking
     ///     (notes §97.5).
     /// </summary>

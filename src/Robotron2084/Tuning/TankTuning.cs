@@ -6,8 +6,8 @@ public static class TankTuning
     /// <summary>
     ///     ROM `TNKSPD` = **2**, and it is a CONSTANT, not a wave value: `LDA #2 / STA
     ///     TNKSPD` in the per-level reset (RRG23:677). `TANK6` does `LDA TNKSPD / LDX
-    ///     #TANKL / JMP SLEEP`, so the tank's process re-runs every TNKSPD vblanks — a
-    ///     beat of 2 vblanks plus the frame it runs in = **3 fiftieths of a second**.
+    ///     #TANKL / JMP SLEEP`, so the tank's process re-runs every TNKSPD <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">vblanks</see> — a
+    ///     <see cref="Robotron2084.Core.RomFrameTimer">beat</see> of 2 <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">vblanks</see> plus the frame it runs in = **3 <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieths of a second</see>**.
     /// </summary>
     public const int BeatIntervalRomFrames = 3;
 
@@ -36,7 +36,7 @@ public static class TankTuning
     ///     ROM `TANK1`: `LDA PD4,U / CLRB / ASRA / RORB / ADDD OX16,X` — the X step is
     ///     the direction byte HALVED, exactly like the player's table, so ±1 means 0.5
     ///     COLUMNS = **1 arcade px**; `ADDB PD5,U` steps Y by 1 ROW = 1 px. Both axes
-    ///     therefore move one pixel per BEAT (the port moved one unit per tick, ~1.8x
+    ///     therefore move one pixel per <see cref="Robotron2084.Core.RomFrameTimer">BEAT</see> (the port moved one unit per <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, ~1.8x
     ///     too fast).
     /// </summary>
     public const int StepArcadePixels = 1;

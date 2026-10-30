@@ -6,8 +6,8 @@
 /// </summary>
 public static class GorfTuning
 {
-    /// <summary>How many fiftieths of a second Gorf waits between steps.</summary>
-    public const int StepRomFrames = 2;
+    /// <summary>How long one of Gorf's <see cref="Robotron2084.Core.RomFrameTimer">beats</see> lasts. Gorf takes one step on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</summary>
+    public const int BeatIntervalRomFrames = 2;
 
     /// <summary>How far Gorf goes sideways each step, in columns (2 arcade pixels each).</summary>
     public const int StepColumns = 1;
@@ -30,12 +30,12 @@ public static class GorfTuning
     /// </summary>
     public const int MinimumGruntCap = 6;
 
-    /// <summary>How far a dropped grunt falls each tick, in port pixels.</summary>
+    /// <summary>How far a dropped grunt falls each <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, in port pixels.</summary>
     public const int FallPixelsPerTick = 4;
 
     /// <summary>The gap left between grunts dropped side by side, in port pixels.</summary>
     public const int DropGapPixels = 4;
 
-    /// <summary>How many fiftieths of a second each of Gorf's two animation frames shows for.</summary>
-    public const int AnimationFrameRomFrames = 8;
+    /// <summary>How many <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieths of a second</see> each of Gorf's two animation frames shows for.</summary>
+    public const int AnimationIntervalRomFrames = 8;
 }
