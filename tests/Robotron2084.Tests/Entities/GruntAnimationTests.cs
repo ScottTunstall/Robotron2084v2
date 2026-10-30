@@ -7,7 +7,7 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-///     R5 grunt stagger (notes §29): beat every 4 ROM frames; the moves-remaining count
+///     R5 grunt stagger (notes §29): beat every 4 arcade frames; the moves-remaining count
 ///     re-rolls to RND(1..ROBSPD) (never 0) on each step; a step moves 8 screen
 ///     px on each axis past a 4-screen-px dead zone (axes independent); the
 ///     RWDP frame advances ONLY on a step (DRAW_GRUNT is in the step branch —
@@ -39,9 +39,9 @@ public sealed class GruntAnimationTests
     [InlineData(2, 1)] // RWDP2 → RWDD2
     [InlineData(3, 0)] // RWDP3 → RWDD1 (the ROM reuses the first animation frame)
     [InlineData(4, 2)] // RWDP4 → RWDD3
-    public void RomAnimationFrameTable_MapsTheFourRWDPFramesOntoThreeRepoFrames(int romFrame, int repoIndex)
+    public void ArcadeAnimationFrameTable_MapsTheFourRWDPFramesOntoThreeRepoFrames(int arcadeFrame, int repoIndex)
     {
-        Assert.Equal(repoIndex, Grunt.GetAnimationFrameIndex(romFrame));
+        Assert.Equal(repoIndex, Grunt.GetAnimationFrameIndex(arcadeFrame));
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public sealed class GruntAnimationTests
             gaps.Add(gap);
         }
 
-        // Each gap = moves-remaining re-roll (1..15 beats) x 4-ROM-frame beat.
+        // Each gap = moves-remaining re-roll (1..15 beats) x 4-arcade frame beat.
         Assert.InRange(minGap, ArcadeClock.ToPortTicks(4), ArcadeClock.ToPortTicksRoundedUp(4) * 15);
         Assert.InRange(maxGap, ArcadeClock.ToPortTicks(4), ArcadeClock.ToPortTicksRoundedUp(4) * 15);
         // The stagger: NOT a fixed period — at least two distinct gaps.

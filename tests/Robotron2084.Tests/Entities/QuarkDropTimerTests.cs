@@ -48,7 +48,7 @@ public sealed class QuarkDropTimerTests
         var tick = 0;
         for (; tick < 800 && field.Entities.Tanks.GetLiveCount() == 0; tick++) field.Update(OneTick());
 
-        var beatTicks = (int)Math.Ceiling(QuarkTuning.BeatIntervalRomFrames * 1.2); // 6/5 a frame
+        var beatTicks = (int)Math.Ceiling(QuarkTuning.BeatIntervalArcadeFrames * 1.2); // 6/5 a frame
         var oneCycle = (QuarkTuning.TravelAnimationFrames + 1) * beatTicks;
 
         Assert.True(field.Entities.Tanks.GetLiveCount() > 0, "the quark must eventually drop a tank");
@@ -71,7 +71,7 @@ public sealed class QuarkDropTimerTests
             10, 16);
         field.Entities.Quarks.Add(quark);
 
-        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(QuarkTuning.BeatIntervalRomFrames) + 2; tick++)
+        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(QuarkTuning.BeatIntervalArcadeFrames) + 2; tick++)
             field.Update(OneTick());
 
         Assert.Equal(0, field.Entities.Tanks.GetLiveCount());

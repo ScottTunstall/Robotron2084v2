@@ -25,7 +25,7 @@ public sealed class ScoreBurstTests
     }
 
     [Fact]
-    public void TheBurstShowsTheEnemysAnimationFrames_FromTwo_UpToTheRomCount()
+    public void TheBurstShowsTheEnemysAnimationFrames_FromTwo_UpToTheArcadeCount()
     {
         var bounds = new Rectangle(100, 200, 16, 15);
         var burst = ScoreBurst.CreateForSpheroid(TestSprites.Shared, bounds);
@@ -54,7 +54,7 @@ public sealed class ScoreBurstTests
     }
 
     [Fact]
-    public void EachStepTakesTwoRomFrames_NotTwoPortTicks()
+    public void EachStepTakesTwoArcadeFrames_NotTwoPortTicks()
     {
         // `NAP 2` = 2 fiftieths of a second = 12 clock units, and a port tick is 5 clock units, so a
         // step lands every 2-3 ticks (2.4). PortTicks(2) would also be 2 here,
@@ -104,7 +104,7 @@ public sealed class ScoreBurstTests
     }
 
     [Fact]
-    public void TheRomColours_AreSlotsTenFifteenAndThirteen()
+    public void TheArcadeColours_AreSlotsTenFifteenAndThirteen()
     {
         // `LDD #$FFAA`: $AA = slot 10 (the current player's score slot) for the
         // dying silhouette and $FF = slot 15 for the points value; the quark's

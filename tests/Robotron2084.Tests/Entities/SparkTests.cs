@@ -12,7 +12,7 @@ namespace Robotron2084.Tests.Entities;
 ///     Notes 27 (playtest round 9: "when the sparks hit the wall, they don't
 ///     immediately fizzle out, sometimes they linger for a while (and keep
 ///     moving)") — the port re-checked against the R5 disasm:
-///     - life = RND(0..15)+20 cycles x 4 ROM frames = 80..140 ROM frames
+///     - life = RND(0..15)+20 cycles x 4 arcade frames = 80..140 arcade frames
 ///     (1.6-2.8 s), NOT the spec's 10-15 s;
 ///     - the mover ($DCFF) REJECTS an axis update that would push the sprite
 ///     out of the playfield: the spark clamps/slides at the wall and dies on
@@ -67,7 +67,7 @@ public sealed class SparkTests
     }
 
     [Fact]
-    public void Spark_Life_Is80To140RomFrames()
+    public void Spark_Life_Is80To140ArcadeFrames()
     {
         var field = CreateField(2);
         var inner = field.Wall.PlayfieldBounds;
@@ -90,17 +90,17 @@ public sealed class SparkTests
             }
 
             Assert.True(diedAt > 0, $"seed {seed}: spark never died");
-            var minTicks = ArcadeClock.ToPortTicks(SparkTuning.SparkLifeMinRomFrames);
-            var maxTicks = ArcadeClock.ToPortTicks(SparkTuning.SparkLifeMaxRomFrames);
+            var minTicks = ArcadeClock.ToPortTicks(SparkTuning.SparkLifeMinArcadeFrames);
+            var maxTicks = ArcadeClock.ToPortTicks(SparkTuning.SparkLifeMaxArcadeFrames);
             Assert.InRange(diedAt, minTicks, maxTicks);
         }
     }
 
     [Fact]
-    public void Spark_Flicker_CyclesAllFourAnimationFrames_AtFourRomFramesPerAnimationFrame()
+    public void Spark_Flicker_CyclesAllFourAnimationFrames_AtFourArcadeFramesPerAnimationFrame()
     {
         // Notes 32: the ROM SPARK process advances OPICT one SPKP entry per
-        // beat pass, re-running every 4 ROM frames (NAP 4) → 4-animation-frame flash.
+        // beat pass, re-running every 4 arcade frames (NAP 4) → 4-animation-frame flash.
         var field = CreateField(4);
         var inner = field.Wall.PlayfieldBounds;
         IntVector2 centre = new(inner.X + inner.Width / 2, inner.Y + inner.Height / 2);
@@ -109,7 +109,7 @@ public sealed class SparkTests
 
         // 4 fiftieths of a second = 4.8 ticks, so the frame boundary lands on tick 5 of each
         // period on the clock-unit clock (notes §52, §65).
-        var period = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.BeatIntervalRomFrames);
+        var period = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.BeatIntervalArcadeFrames);
         Assert.Equal(0, spark.GetAnimationFrameIndex()); // born on SPKP0
 
         // Each full period advances exactly one frame; four periods wrap to 0.
@@ -171,7 +171,7 @@ public sealed class SparkTests
         field.SpawnSpark(origin, new IntVector2(inner.X + 40, inner.Y + 120));
         var spark = field.Entities.Sparks[^1];
 
-        var beatInterval = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.BeatIntervalRomFrames);
+        var beatInterval = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.BeatIntervalArcadeFrames);
         var changes = new List<IntVector2>();
         var previous = spark.VelocitySubpixels;
 
@@ -190,7 +190,7 @@ public sealed class SparkTests
         // ...and it must be the acceleration the spark was built with, i.e. the
         // ROM's (seed & $1F) - 16 range scaled by the fixed-point factor.
         var subpixelsPerPortPxPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
-        var maxAccelSubpixels = SparkTuning.SparkAccelRomRange * subpixelsPerPortPxPerMove;
+        var maxAccelSubpixels = SparkTuning.SparkAccelArcadeRange * subpixelsPerPortPxPerMove;
         Assert.InRange(expected.X, -maxAccelSubpixels, maxAccelSubpixels);
         Assert.InRange(expected.Y, -maxAccelSubpixels, maxAccelSubpixels);
     }
@@ -201,7 +201,7 @@ public sealed class SparkTests
         // ROM ENFSHT: OXV/OYV are in 1/256 of a column / of a row per frame, and a column is
         // twice a row, so a sideways unit of acceleration is twice an up-and-down one.
         var subpixelsPerPortPxPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
-        var sidewaysLimit = SparkTuning.SparkAccelRomRange * subpixelsPerPortPxPerMove;
+        var sidewaysLimit = SparkTuning.SparkAccelArcadeRange * subpixelsPerPortPxPerMove;
         var upAndDownLimit = sidewaysLimit / 2;
         var sidewaysUsedMoreThanTheUpAndDownRange = false;
 

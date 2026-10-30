@@ -98,7 +98,7 @@ public sealed class TankShellTests
     }
 
     [Fact]
-    public void AnAimedShotAtTheSpotItStartsOn_DoesNotMove_AndFizzlesAfterFortyEightBeatsOfTwoRomFrames()
+    public void AnAimedShotAtTheSpotItStartsOn_DoesNotMove_AndFizzlesAfterFortyEightBeatsOfTwoArcadeFrames()
     {
         var field = new PlayFieldBuilder().Build();
         var bounds = field.Wall.PlayfieldBounds;
@@ -117,7 +117,7 @@ public sealed class TankShellTests
         Assert.Equal(0, shell.VelocityX);
         Assert.Equal(0, shell.VelocityY);
         Assert.Equal(
-            ArcadeClock.ToPortTicksRoundedUp(TankShellTuning.LifeBaseBeats * TankShellTuning.BeatIntervalRomFrames),
+            ArcadeClock.ToPortTicksRoundedUp(TankShellTuning.LifeBaseBeats * TankShellTuning.BeatIntervalArcadeFrames),
             ticks);
     }
 

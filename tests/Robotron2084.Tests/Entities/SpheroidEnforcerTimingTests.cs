@@ -12,7 +12,7 @@ namespace Robotron2084.Tests;
 ///     "spheroids spawn enforcers WAY too fast" / 2026-09-13 "screen full of
 ///     sparks"):
 ///     - spheroid drop countdown decrements once per full 8-frame animation
-///     cycle (16 ROM frames per step; the 2-ROM-frame beat reaches the DEC only
+///     cycle (16 arcade frames per step; the 2-arcade frame beat reaches the DEC only
 ///     on the last-frame pass) and the randoms are RND(1..A), never 0;
 ///     - spheroids always drop 1..5 enforcers (ENFNUM roll, ceil(v/2));
 ///     - enforcers have a 40-ROM-tick grow-up (immobile), a 3-tick AI pass with
@@ -105,7 +105,7 @@ public sealed class SpheroidEnforcerTimingTests
         // The ROM grow-up is 45 frames = 54 port ticks (notes §65; the old model said
         // 40 frames, which is why this used to stop at PortTicks(40) = 48). The last
         // of those ticks is the one ENFR10 runs on, so immobility covers 1..53.
-        for (var tick = 1; tick < ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalRomFrames); tick++)
+        for (var tick = 1; tick < ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalArcadeFrames); tick++)
         {
             enforcer.Update(OneTick(), field);
             Assert.True(enforcer.Position == start, $"moved during grow-up at tick {tick}");
@@ -132,7 +132,7 @@ public sealed class SpheroidEnforcerTimingTests
         for (var tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
 
         int[] expectedStarts = { 1, 11, 22, 33, 44 };
-        var growTicks = ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalRomFrames); // 54
+        var growTicks = ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalArcadeFrames); // 54
 
         for (var tick = 1; tick < growTicks; tick++)
         {
@@ -146,7 +146,7 @@ public sealed class SpheroidEnforcerTimingTests
     }
 
     [Fact]
-    public void Enforcer_FireGaps_MatchTheRomRate()
+    public void Enforcer_FireGaps_MatchTheArcadeRate()
     {
         // Fire countdown = RND(1..ENSTIM) BEATS, a beat being NAP 3 + 1 = 4 ROM
         // frames (notes §43/§55), so with ENSTIM = 30 every gap sits in
@@ -177,8 +177,8 @@ public sealed class SpheroidEnforcerTimingTests
             var gap = fireTicks[i] - fireTicks[i - 1];
             Assert.InRange(
                 gap,
-                ArcadeClock.ToPortTicks(EnforcerTuning.BeatIntervalRomFrames) - 1,
-                ArcadeClock.ToPortTicks(EnforcerTuning.BeatIntervalRomFrames * 30) + 1);
+                ArcadeClock.ToPortTicks(EnforcerTuning.BeatIntervalArcadeFrames) - 1,
+                ArcadeClock.ToPortTicks(EnforcerTuning.BeatIntervalArcadeFrames * 30) + 1);
         }
 
         var maxGap = fireTicks.Zip(fireTicks.Skip(1), (a, b) => b - a).Max();

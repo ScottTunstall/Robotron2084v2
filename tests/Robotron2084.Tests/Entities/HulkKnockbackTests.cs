@@ -41,7 +41,7 @@ public sealed class HulkKnockbackTests
     }
 
     [Fact]
-    public void Hulk_Knockback_UsesOnlyTheRomPerAxisMagnitudes_OnAllEightDirections()
+    public void Hulk_Knockback_UsesOnlyTheArcadePerAxisMagnitudes_OnAllEightDirections()
     {
         var field = CreateField();
         var spot = Center(field);

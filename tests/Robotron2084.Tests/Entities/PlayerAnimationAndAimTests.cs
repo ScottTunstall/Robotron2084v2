@@ -31,7 +31,7 @@ public sealed class PlayerAnimationAndAimTests
     }
 
     [Fact]
-    public void Player_WalkCycle_IsThreeTicksPerFrame_InTheRomABACPattern()
+    public void Player_WalkCycle_IsThreeTicksPerFrame_InTheArcadeABACPattern()
     {
         var field = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(-1, 0), false)));
         field.SkipWaveStart();
@@ -141,7 +141,7 @@ public sealed class PlayerAnimationAndAimTests
     [InlineData(Direction8.DownLeft, 0, 8)]
     [InlineData(Direction8.UpRight, 2, 0)]
     [InlineData(Direction8.DownRight, 2, 12)]
-    public void Fire_LaserSpawnsAtTheRomLtabMuzzleOffset(Direction8 direction, int offsetXSpec, int offsetYSpec)
+    public void Fire_LaserSpawnsAtTheArcadeLtabMuzzleOffset(Direction8 direction, int offsetXSpec, int offsetYSpec)
     {
         var field = CreateField(
             new FakeInputSource(new PlayerInputState(IntVector2.Zero, direction.ToIntVector(), true)));

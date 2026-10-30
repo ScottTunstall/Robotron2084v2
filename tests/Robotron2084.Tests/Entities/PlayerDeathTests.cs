@@ -74,7 +74,7 @@ public sealed class PlayerDeathTests
     }
 
     [Fact]
-    public void TheFadeWritesTheRomTableIntoSlotTwelve_AndStopsTheDecayProcess()
+    public void TheFadeWritesTheArcadeTableIntoSlotTwelve_AndStopsTheDecayProcess()
     {
         var (field, palette) = CreateField();
         var player = field.Player;

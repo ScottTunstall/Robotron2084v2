@@ -40,7 +40,7 @@ public sealed class StripEffectTests
             Clip);
     }
 
-    /// <summary>Ticks the record forward one ROM FRAME at a time (the clock is 1.2 ticks).</summary>
+    /// <summary>Ticks the record forward one ARCADE FRAME at a time (the clock is 1.2 ticks).</summary>
     private static void Steps(StripEffect explosion, int frames)
     {
         var target = explosion.GetSpacing() + frames;
@@ -286,7 +286,7 @@ public sealed class StripEffectTests
     }
 
     [Fact]
-    public void Dispatch_MatchesTheRomLaserDirectionRules()
+    public void Dispatch_MatchesTheArcadeLaserDirectionRules()
     {
         // RRX7 `EXSTV`: `LDA LASDIR / BNE EXST1 / JSR HEXST` — a shot with NO
         // horizontal component (a straight VERTICAL shot) takes the HORIZONTAL
@@ -322,9 +322,9 @@ public sealed class StripEffectTests
     }
 
     /// <summary>Runs an effect on to the tick a fiftieth of a second falls on, counted from when the effect was made.</summary>
-    private static void UpdateToRomFrame(StripEffect effect, ref int ticks, int romFrame)
+    private static void UpdateToArcadeFrame(StripEffect effect, ref int ticks, int arcadeFrame)
     {
-        while (ticks < ArcadeClock.ToPortTicksRoundedUp(romFrame))
+        while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
         {
             effect.Update(new GameTime());
             ticks++;
@@ -337,21 +337,21 @@ public sealed class StripEffectTests
     [InlineData(StripFanAxis.Columns, 0,
         31)] // RRHX4 AWRITE: `SUBD #$80`, and drawn closed up before it goes (`TSTA / BHI APGO`)
     [InlineData(StripFanAxis.Rows, 1, 15)] // RRDX2 AWRITE: `SUBD #$100`, and gone when the gap would be 1
-    public void AnAppear_LastsAsManyRomFramesAsItsStripRoutineTakes(StripFanAxis axis, int slope, int romFrames)
+    public void AnAppear_LastsAsManyArcadeFramesAsItsStripRoutineTakes(StripFanAxis axis, int slope, int arcadeFrames)
     {
         var appear = NewAppear(axis, slope);
         Assert.Equal(StripEffectKind.Appear, appear.Kind);
 
         var ticks = 0;
-        UpdateToRomFrame(appear, ref ticks, romFrames - 1);
+        UpdateToArcadeFrame(appear, ref ticks, arcadeFrames - 1);
         Assert.True(appear.IsAlive());
 
-        UpdateToRomFrame(appear, ref ticks, romFrames);
+        UpdateToArcadeFrame(appear, ref ticks, arcadeFrames);
         Assert.Equal(EntityLifeState.Dead, appear.LifeState);
     }
 
     [Fact]
-    public void AVerticalAppear_ShowsNothingBeforeItsFirstStep_ThenEachGapForTwoRomFrames()
+    public void AVerticalAppear_ShowsNothingBeforeItsFirstStep_ThenEachGapForTwoArcadeFrames()
     {
         // YSIZER starts at $1000 and the routine redraws only when its high byte changes (`CMPA YSIZER,Y`, "CHANGE?",
         // $5D4D): 15 on frames 1 and 2, 14 on frames 3 and 4, and so on down to 2 on frames 27 and 28.
@@ -359,17 +359,17 @@ public sealed class StripEffectTests
         var ticks = 0;
         Assert.False(appear.IsDrawn());
 
-        UpdateToRomFrame(appear, ref ticks, 1);
+        UpdateToArcadeFrame(appear, ref ticks, 1);
         Assert.True(appear.IsDrawn());
         Assert.Equal(15, appear.GetSpacing());
 
-        UpdateToRomFrame(appear, ref ticks, 2);
+        UpdateToArcadeFrame(appear, ref ticks, 2);
         Assert.Equal(15, appear.GetSpacing());
 
-        UpdateToRomFrame(appear, ref ticks, 3);
+        UpdateToArcadeFrame(appear, ref ticks, 3);
         Assert.Equal(14, appear.GetSpacing());
 
-        UpdateToRomFrame(appear, ref ticks, 28);
+        UpdateToArcadeFrame(appear, ref ticks, 28);
         Assert.Equal(2, appear.GetSpacing());
         Assert.True(appear.IsAlive());
     }
@@ -380,10 +380,10 @@ public sealed class StripEffectTests
         var appear = NewAppear(StripFanAxis.Columns, 0);
         var ticks = 0;
 
-        UpdateToRomFrame(appear, ref ticks, 28);
+        UpdateToArcadeFrame(appear, ref ticks, 28);
         Assert.Equal(2, appear.GetSpacing());
 
-        UpdateToRomFrame(appear, ref ticks, 30);
+        UpdateToArcadeFrame(appear, ref ticks, 30);
         Assert.Equal(1, appear.GetSpacing());
         Assert.True(appear.IsAlive());
     }
@@ -396,7 +396,7 @@ public sealed class StripEffectTests
         var sprite = new Rectangle(100, 200, 16, 24);
         var appear = StripEffect.CreateAppear(new FakeDead(sprite), sprite, StripFanAxis.Rows, 0, Clip, _ => 0);
         var ticks = 0;
-        UpdateToRomFrame(appear, ref ticks, 1);
+        UpdateToArcadeFrame(appear, ref ticks, 1);
 
         var strips = appear.LayOutStrips(8, 12);
 
@@ -412,13 +412,13 @@ public sealed class StripEffectTests
         var player = new FakeDead(new Rectangle(100, 200, 16, 24));
         var appear = StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, 0, Clip, 3, 0);
         var ticks = 0;
-        UpdateToRomFrame(appear, ref ticks, 1);
+        UpdateToArcadeFrame(appear, ref ticks, 1);
 
         player.MoveTo(new Rectangle(140, 200, 16, 24));
-        UpdateToRomFrame(appear, ref ticks, 2); // the gap is the same, so nothing is redrawn
+        UpdateToArcadeFrame(appear, ref ticks, 2); // the gap is the same, so nothing is redrawn
         Assert.Equal(100, appear.GetBounds().X);
 
-        UpdateToRomFrame(appear, ref ticks, 3);
+        UpdateToArcadeFrame(appear, ref ticks, 3);
         Assert.Equal(140, appear.GetBounds().X);
     }
 

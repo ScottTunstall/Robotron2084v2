@@ -261,11 +261,11 @@ public sealed class GorfTests
     }
 
     [Fact]
-    public void ItSwapsToTheOtherFrameEveryEightRomFrames_AndBackAgain()
+    public void ItSwapsToTheOtherFrameEveryEightArcadeFrames_AndBackAgain()
     {
         var field = CreateFieldInPlay();
         var gorf = CreateGorf(field, 0, 0, 0);
-        var ticksPerFrame = ArcadeClock.ToPortTicksRoundedUp(GorfTuning.AnimationIntervalRomFrames);
+        var ticksPerFrame = ArcadeClock.ToPortTicksRoundedUp(GorfTuning.AnimationIntervalArcadeFrames);
         Assert.Equal(0, gorf.AnimationFrameIndex);
 
         for (var tick = 0; tick < ticksPerFrame; tick++) gorf.Update(OneTick, field);

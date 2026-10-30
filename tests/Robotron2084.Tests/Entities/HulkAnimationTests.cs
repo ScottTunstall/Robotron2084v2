@@ -30,7 +30,7 @@ public sealed class HulkAnimationTests
     }
 
     [Fact]
-    public void Hulk_WalksTheRomFrameSequence_AndRestartsOnEveryDirectionChange()
+    public void Hulk_WalksTheArcadeFrameSequence_AndRestartsOnEveryDirectionChange()
     {
         var field = CreateField();
         var bounds = field.Wall.PlayfieldBounds;
