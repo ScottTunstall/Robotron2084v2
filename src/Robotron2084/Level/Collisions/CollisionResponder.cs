@@ -22,19 +22,15 @@ internal sealed class CollisionResponder
         _responses = new Dictionary<Type, Action<CollisionResult>>
         {
             [typeof(LaserHitResult)] = result => RespondToLaserHit((LaserHitResult)result),
-            [typeof(GruntHitElectrodeResult)] =
-                result => RespondToGruntHittingElectrode((GruntHitElectrodeResult)result),
-            [typeof(BerzerkRobotHitElectrodeResult)] = result =>
-                RespondToBerzerkRobotHittingElectrode((BerzerkRobotHitElectrodeResult)result),
+            [typeof(GruntHitElectrodeResult)] = result => RespondToGruntHittingElectrode((GruntHitElectrodeResult)result),
+            [typeof(BerzerkRobotHitElectrodeResult)] = result => RespondToBerzerkRobotHittingElectrode((BerzerkRobotHitElectrodeResult)result),
             [typeof(HulkHitElectrodeResult)] = result => RespondToHulkHittingElectrode((HulkHitElectrodeResult)result),
-            [typeof(PlayerHitElectrodeResult)] =
-                result => RespondToPlayerHittingElectrode((PlayerHitElectrodeResult)result),
+            [typeof(PlayerHitElectrodeResult)] =result => RespondToPlayerHittingElectrode((PlayerHitElectrodeResult)result),
             [typeof(PlayerTouchedDeadThingResult)] = _ => _field.KillPlayer(),
             [typeof(BrainLostVictimResult)] = result => RespondToBrainLosingVictim((BrainLostVictimResult)result),
             [typeof(BrainCaughtHumanResult)] = result => RespondToBrainCatchingHuman((BrainCaughtHumanResult)result),
             [typeof(HulkKilledHumanResult)] = result => RespondToHulkKillingHuman((HulkKilledHumanResult)result),
-            [typeof(PlayerRescuedHumanResult)] =
-                result => RespondToPlayerRescuingHuman((PlayerRescuedHumanResult)result)
+            [typeof(PlayerRescuedHumanResult)] = result => RespondToPlayerRescuingHuman((PlayerRescuedHumanResult)result)
         };
     }
 
@@ -72,6 +68,10 @@ internal sealed class CollisionResponder
     ///     the kill is scored.
     /// </summary>
     /// <param name="hit">The hit.</param>
+    /// <remarks>
+    ///     Original source: <c>RRS22.ASM</c> <c>KILROB</c>/<c>KILLOF</c> only free the object. The explosion, the burst
+    ///     and the score are made by the killer's own calls, as here (notes §61, §64).
+    /// </remarks>
     private void RespondToLaserHit(LaserHitResult hit)
     {
         var hitBounds = hit.Target.GetBounds();
