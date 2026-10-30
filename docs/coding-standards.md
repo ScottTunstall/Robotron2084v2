@@ -240,6 +240,13 @@ follows NAM-8: the American spelling is gone everywhere, not only from the decla
   `GetAimedSpeed(gap, shellSpeed)`, `GetRandomDirection(player)`. Not `ElectrodeVariantForWave(wave)`, `Compute…`,
   `Find…`, `Pick…` or `Next…`. A fetch that can come back empty returns `null`, or is guarded by a `Has…` method;
   there is no `TryGet…(…, out T value)`. The one exception is `Create…` below.
+- **Do not write what LINQ already does.** A method that would take the same arguments and give the same answer as a
+  LINQ operator (`Any`, `All`, `Count`, `First`, `Last`, `Single`, `Min`, `Max`, `Sum`, `Where`, `Select`,
+  `Contains` and the rest) is not written. The caller uses the LINQ operator: `list.Any(grunt => grunt.SteppedThisUpdate)`,
+  `list.Count(entity => !entity.IsDead())`, `list.Last()`. A collection class that holds its items in a list gets
+  these for free by being an `IEnumerable<T>`; it does not add a `GetLast()`, a `GetLiveCount()` or an `Any(…)` of
+  its own. A method that gives a domain meaning to a query over a collection it owns (`HasGruntStepped`,
+  `IsClearOfElectrodes`) is fine, and is named by the rules above.
 - **Convert one thing to another:** `To…`: `ToPortPixelsFromArcadePixels(arcadePixels)`, `ToClockUnits(arcadeFrames)`,
   `ToPortTicks(arcadeFrames)`. Never `Scaled`, `Units` or `…For…`.
 - **Make a new object:** `Create…`: `CreateDefaults()`, `CreateFromWave(…)`, `CreateKey(…)`. Use `From…` or
@@ -717,7 +724,8 @@ grep -rnE 'ToPortPixelsFromArcadePixels\(2\b|ToPortPixelsFromArcadePixels\(2 \*|
 grep -rnoE '\w*ArcadeTicks\w*' src tests --include=*.cs
 
 # A method that returns a value but does not start with Get or Create (NAM-13), and a bool method that does not
-# start with Is or Has (NAM-4). Give the folder to check; each should print nothing.
+# start with Is or Has (NAM-4). Give the folder to check; each should print nothing. A hit named like a LINQ operator
+# (Any, All, Contains, Count, First, Last, Single, Min, Max, Sum, Where, Select) is a method to delete (NAM-13).
 D=src/Robotron2084/Entities
 grep -rnP --include=*.cs '^ {4}(?:public |internal |private |protected )(?:static )?(?!void\b|bool\b|readonly\b|const\b|class\b|sealed\b|abstract\b|record\b|struct\b|enum\b|interface\b|event\b|new\b|override\b|virtual\b|static\b)[\w<>\[\]?,.() ]+? (?!Get|Create)[A-Z]\w*\(' $D
 grep -rnP --include=*.cs '^ {4}(?:public |internal |private |protected )(?:static )?bool (?!Is|Has)\w+\(' $D
