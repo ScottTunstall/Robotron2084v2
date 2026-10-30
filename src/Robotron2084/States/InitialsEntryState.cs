@@ -55,9 +55,13 @@ public sealed class InitialsEntryState : IGameState
         if (!_entry.Tick(input)) return;
 
         var result = _ceremony.Submit(_score, _entry.GetInitials());
-        manager.TransitionTo(result.ReachedEntriesMaximum
-            ? new EntriesMaximumState(_services, _ceremony)
-            : _ceremony.NextScreen());
+        if (result.ReachedEntriesMaximum)
+        {
+            manager.TransitionTo(new EntriesMaximumState(_services, _ceremony));
+            return;
+        }
+
+        manager.TransitionTo(_ceremony.NextScreen());
     }
 
     private void DrawCell(SpriteBatch spriteBatch, int cell, int x)

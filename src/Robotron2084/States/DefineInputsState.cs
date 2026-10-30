@@ -151,9 +151,9 @@ public sealed class DefineInputsState : IGameState
 
     private ActionBinding GetBinding(int line)
     {
-        return line == DefineInputsModel.PauseLine
-            ? new ActionBinding(_controlSettings.Pause, InputBinding.None)
-            : _controlSettings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.GetAction(line)!.Value];
+        if (line == DefineInputsModel.PauseLine) return new ActionBinding(_controlSettings.Pause, InputBinding.None);
+
+        return _controlSettings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.GetAction(line)!.Value];
     }
 
     /// <summary>The armed half of the page: the next input pressed becomes the binding.</summary>
@@ -173,9 +173,10 @@ public sealed class DefineInputsState : IGameState
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
     private int GetCenteredX(string text, bool isLarge = false)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(isLarge
-            ? _sprites.TextRenderer.MeasureLargeText(text)
-            : _sprites.TextRenderer.MeasureSmallText(text));
+        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
+        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
     }
 
@@ -223,7 +224,9 @@ public sealed class DefineInputsState : IGameState
 
         // The selected line's label is the page's one cycling thing (notes §115): it strobes in the
         // highlight's slot — while armed as well — and the line's value stays on the page's green.
-        var labelSlot = _model.Line == line ? DefineInputsHighlight.Slot : InputSlot;
+        var labelSlot = InputSlot;
+        if (_model.Line == line) labelSlot = DefineInputsHighlight.Slot;
+
         DrawText(spriteBatch, GetLabel(line), LabelColumn, y, labelSlot);
         DrawValue(spriteBatch, line, isArmed, InputSlot, y);
     }

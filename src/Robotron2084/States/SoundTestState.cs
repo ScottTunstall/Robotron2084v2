@@ -120,7 +120,10 @@ public sealed class SoundTestState : IGameState
         DrawLarge(spriteBatch, entry.Heading, NumberRow);
         DrawLarge(spriteBatch, ToDisplay(entry.Name), NameRow);
         DrawSmall(spriteBatch, ToDisplay(entry.Description), DescriptionRow);
-        DrawSmall(spriteBatch, $"{_index + 1} OF {Entries.Count}   AUTO UP {(_isAutoUp ? "ON" : "OFF")}", PositionRow);
+        var autoUpWord = "OFF";
+        if (_isAutoUp) autoUpWord = "ON";
+
+        DrawSmall(spriteBatch, $"{_index + 1} OF {Entries.Count}   AUTO UP {autoUpWord}", PositionRow);
         DrawSmall(spriteBatch, AdvanceLine, InstructionsRow);
         DrawSmall(spriteBatch, AutoLine, SecondInstructionRow);
         DrawSmall(spriteBatch, ExitLine, ExitRow);
@@ -188,7 +191,10 @@ public sealed class SoundTestState : IGameState
         }
 
         _repeatTicksLeft--;
-        _quietTicks = Sound.IsPlaying || Sound.IsTransporterRunning() ? 0 : _quietTicks + 1;
+        var isSoundActive = Sound.IsPlaying || Sound.IsTransporterRunning();
+        if (isSoundActive) _quietTicks = 0;
+        else _quietTicks++;
+
         if (_repeatTicksLeft > 0 || _quietTicks < QuietTicksNeeded) return;
 
         if (_isAutoUp)

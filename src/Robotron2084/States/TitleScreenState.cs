@@ -235,7 +235,10 @@ public sealed class TitleScreenState : IGameState, IAttractState
         if (_pinnedPane is null)
         {
             _textElapsed += gameTime.ElapsedGameTime;
-            if (_textElapsed >= (_isShowingArcadeText ? _arcadeTextDuration : _portTextDuration))
+            var textDuration = _portTextDuration;
+            if (_isShowingArcadeText) textDuration = _arcadeTextDuration;
+
+            if (_textElapsed >= textDuration)
             {
                 _textElapsed = TimeSpan.Zero;
                 _isShowingArcadeText = !_isShowingArcadeText;
@@ -276,9 +279,10 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private int GetCenteredX(string text, bool isLarge)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(isLarge
-            ? _sprites.TextRenderer.MeasureLargeText(text)
-            : _sprites.TextRenderer.MeasureSmallText(text));
+        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
+        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
     }
 

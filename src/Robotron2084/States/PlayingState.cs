@@ -219,9 +219,9 @@ public sealed class PlayingState : IGameState
     /// <param name="slot">The player whose turn it is.</param>
     private LevelParameters ApplyBozoMode(LevelParameters parameters, PlayerSlot slot)
     {
-        return _gameSettings.BozoModeEnabled
-            ? BozoMode.Apply(parameters, slot.GetSpareMen(), _gameSettings.TurnsPerPlayer)
-            : parameters;
+        if (!_gameSettings.BozoModeEnabled) return parameters;
+
+        return BozoMode.Apply(parameters, slot.GetSpareMen(), _gameSettings.TurnsPerPlayer);
     }
 
     /// <summary>
@@ -250,9 +250,8 @@ public sealed class PlayingState : IGameState
     /// </remarks>
     private void AnnounceTurn()
     {
-        _turnMessageTicks = _session.IsTwoPlayer()
-            ? ArcadeClock.ToPortTicks(ScreenTuning.PlayerTurnMessageArcadeFrames)
-            : 0;
+        _turnMessageTicks = 0;
+        if (_session.IsTwoPlayer()) _turnMessageTicks = ArcadeClock.ToPortTicks(ScreenTuning.PlayerTurnMessageArcadeFrames);
     }
 
     /// <summary>Builds the playfield for whoever's turn it is, from their own state.</summary>

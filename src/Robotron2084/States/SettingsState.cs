@@ -133,9 +133,10 @@ public sealed class SettingsState : IGameState
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
     private int GetCenteredX(string text, bool isLarge = false)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(isLarge
-            ? _sprites.TextRenderer.MeasureLargeText(text)
-            : _sprites.TextRenderer.MeasureSmallText(text));
+        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
+        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
     }
 
@@ -169,13 +170,16 @@ public sealed class SettingsState : IGameState
     {
         if (_model.Line == line) DrawCursor(spriteBatch, y);
 
-        var labelSlot = _model.Line == line ? DefineInputsHighlight.Slot : InputSlot;
+        var labelSlot = InputSlot;
+        if (_model.Line == line) labelSlot = DefineInputsHighlight.Slot;
+
         DrawText(spriteBatch, SettingsModel.GetLabel(line), LabelColumn, y, labelSlot);
         DrawText(spriteBatch, _model.GetValue(_gameSettings, line), ValueColumn, y, InputSlot);
 
-        var note = SettingsModel.IsActionLine(line)
-            ? _model.GetActionHint(line)
-            : SettingsModel.GetNote(_gameSettings, line);
+        string note;
+        if (SettingsModel.IsActionLine(line)) note = _model.GetActionHint(line);
+        else note = SettingsModel.GetNote(_gameSettings, line);
+
         if (note.Length > 0) DrawText(spriteBatch, note, NoteColumn, y, HeadingSlot);
     }
 

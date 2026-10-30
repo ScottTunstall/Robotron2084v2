@@ -270,9 +270,9 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     private int DrawRank(SpriteBatch spriteBatch, int rank, int x, int y, int slot, bool isLarge)
     {
         var text = $"{rank}) ";
-        return isLarge
-            ? _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, x, y, slot)
-            : _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, slot);
+        if (isLarge) return _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, x, y, slot);
+
+        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, slot);
     }
 
     /// <summary>
@@ -368,6 +368,9 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
     private int GetSlot(int score, int normalSlot, int highlightSlot)
     {
-        return score != 0 && _postedScores.Contains(score) ? highlightSlot : normalSlot;
+        var isPostedScore = score != 0 && _postedScores.Contains(score);
+        if (isPostedScore) return highlightSlot;
+
+        return normalSlot;
     }
 }

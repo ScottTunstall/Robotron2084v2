@@ -208,9 +208,10 @@ public sealed class DeveloperToolsState : IGameState
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
     private int GetCenteredX(string text, bool isLarge = false)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(isLarge
-            ? _sprites.TextRenderer.MeasureLargeText(text)
-            : _sprites.TextRenderer.MeasureSmallText(text));
+        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
+        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
     }
 
@@ -243,7 +244,9 @@ public sealed class DeveloperToolsState : IGameState
     {
         if (_line == line) DrawCursor(spriteBatch, y);
 
-        var slot = _line == line ? DefineInputsHighlight.Slot : OptionSlot;
+        var slot = OptionSlot;
+        if (_line == line) slot = DefineInputsHighlight.Slot;
+
         DrawText(spriteBatch, Options[line], LabelColumn, y, slot);
     }
 

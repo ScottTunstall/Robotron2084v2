@@ -98,10 +98,12 @@ public sealed class WaveClearState : IGameState
         if (--_ticksRemaining <= 0 && _tunnel.IsFinished)
         {
             RestorePalette();
-            manager.TransitionTo(_isAttractMode
-                ? new AttractState(GameServices.CreateFrom(_session, _sprites, _highScoreStore,
-                    _session.GetCurrent().Input))
-                : new PlayingState(_sprites, _highScoreStore, _session));
+            IGameState nextState = new PlayingState(_sprites, _highScoreStore, _session);
+            if (_isAttractMode)
+                nextState = new AttractState(GameServices.CreateFrom(_session, _sprites, _highScoreStore,
+                    _session.GetCurrent().Input));
+
+            manager.TransitionTo(nextState);
         }
     }
 
