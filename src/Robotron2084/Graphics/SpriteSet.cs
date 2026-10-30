@@ -380,9 +380,15 @@ public sealed class SpriteSet
         for (var row = 0; row < height; row++)
         for (var column = 0; column < widthBytes * 2; column++)
         {
-            var value = (nibbles[row * widthBytes + column / 2] >> (column % 2 == 0 ? 4 : 0)) & 0x0F;
-            pixels[row * widthBytes * 2 + column] =
-                value == 0 ? Color.Transparent : GetPaletteColour(value);
+            var shift = 0;
+            var isLeftPixel = column % 2 == 0;
+            if (isLeftPixel) shift = 4;
+
+            var value = (nibbles[row * widthBytes + column / 2] >> shift) & 0x0F;
+            var colour = Color.Transparent;
+            if (value != 0) colour = GetPaletteColour(value);
+
+            pixels[row * widthBytes * 2 + column] = colour;
         }
 
         return source.Create(widthBytes * 2, height, pixels);

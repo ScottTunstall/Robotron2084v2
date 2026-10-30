@@ -66,6 +66,9 @@ public sealed class DefineInputsHighlight
 
         _chaseClockUnits -= stepClockUnits;
         _stepIndex = (_stepIndex + 1) % StepsPerLap;
-        palette.SetSlot(Slot, _stepIndex == 0 ? White : Green);
+        var colour = Green;
+        if (_stepIndex == 0) colour = White;
+
+        palette.SetSlot(Slot, colour);
     }
 }

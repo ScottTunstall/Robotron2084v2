@@ -134,7 +134,8 @@ public sealed class WilliamsLogoPath
     private void StepColor()
     {
         var next = ColorOperand - ColorOperandStep;
-        ColorOperand = next <= 0 ? StartColorOperand : next;
+        ColorOperand = next;
+        if (next <= 0) ColorOperand = StartColorOperand;
     }
 
     private void StepDown()

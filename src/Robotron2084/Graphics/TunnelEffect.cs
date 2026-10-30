@@ -153,9 +153,10 @@ public sealed class TunnelEffect
     /// </summary>
     internal (int Left, int Top, int Right, int Bottom) GetOutermostRing()
     {
-        return _rings.Count > 0
-            ? (_rings[^1].Left, _rings[^1].Top, _rings[^1].Right, _rings[^1].Bottom)
-            : (_leftColumn, _topRow, _rightColumn, _bottomRow);
+        if (_rings.Count == 0) return (_leftColumn, _topRow, _rightColumn, _bottomRow);
+
+        var outermost = _rings[^1];
+        return (outermost.Left, outermost.Top, outermost.Right, outermost.Bottom);
     }
 
     /// <summary>Rings still on screen (test hook): nothing is erased until the black pass reaches it.</summary>
@@ -256,8 +257,10 @@ public sealed class TunnelEffect
     private void AdvanceRing()
     {
         // 5731 draws the ring from the CURRENT corners and pair — so record it before stepping.
-        (_packedColourPair == 0 ? _blackRings : _rings).Add(new Ring(_leftColumn, _topRow, _rightColumn, _bottomRow,
-            _packedColourPair));
+        var ringsToRecordIn = _rings;
+        if (_packedColourPair == 0) ringsToRecordIn = _blackRings;
+
+        ringsToRecordIn.Add(new Ring(_leftColumn, _topRow, _rightColumn, _bottomRow, _packedColourPair));
         RingsDrawn++;
 
         // 5734: `TSTA / BEQ $5751` — a black pass does not touch the colours.
@@ -298,8 +301,14 @@ public sealed class TunnelEffect
     {
         if (row < 0 || row > 255) return;
 
-        var firstColumn = isInset ? left + 1 : left;
-        var lastColumn = isInset ? right - 1 : right;
+        var firstColumn = left;
+        var lastColumn = right;
+        if (isInset)
+        {
+            firstColumn = left + 1;
+            lastColumn = right - 1;
+        }
+
         if (lastColumn < firstColumn) return;
 
         var x = ToPixelX(firstColumn * 2);
