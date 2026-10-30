@@ -222,7 +222,9 @@ public sealed class HighScoreTable
     /// <summary>The three initials a name starts with (the ROM's `GODINT`, three CMOS characters).</summary>
     private static string GetInitialsOf(string name)
     {
-        return name.Length >= InitialsLength ? name[..InitialsLength] : name.PadRight(InitialsLength);
+        if (name.Length >= InitialsLength) return name[..InitialsLength];
+
+        return name.PadRight(InitialsLength);
     }
 
     /// <summary>
