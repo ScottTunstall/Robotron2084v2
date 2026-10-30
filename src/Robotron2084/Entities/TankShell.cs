@@ -14,8 +14,8 @@ namespace Robotron2084.Entities;
 ///     It moves steadily, and has a beat every few moves. The <see cref="PlayField" /> calls
 ///     <see cref="Update" /> on every tick, through <see cref="FieldEntities" /> and
 ///     <see cref="PlayField.UpdateEntity" />. The one time it does not is during the short freeze just after the player
-///     is killed. <see cref="_frameTimer" /> gathers the ticks until it is time for the next move (see
-///     <see cref="ArcadeClock" />), and <see cref="_framesToNextBeat" /> counts the moves to its next beat.
+///     is killed. <see cref="_moveTimer" /> gathers the ticks until it is time for the next move (one move every
+///     ROM frame, see <see cref="ArcadeClock" />), and <see cref="_movesToNextBeat" /> counts the moves to its next beat.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRTK4.ASM</c>: <c>TNKFIR</c> (aiming and speed), <c>SHELL</c> (each beat,
@@ -57,10 +57,10 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///     Counts up, a tick at a time, to the shell's next move. The shell moves on its own clock (see
     ///     <see cref="ArcadeClock" />).
     /// </summary>
-    private int _frameTimer;
+    private int _moveTimer;
 
     /// <summary>How many more moves the shell makes before its next beat.</summary>
-    private int _framesToNextBeat = TankShellTuning.BeatIntervalRomFrames;
+    private int _movesToNextBeat = TankShellTuning.BeatIntervalRomFrames;
 
     private IntVector2 _position;
 
@@ -155,15 +155,15 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 
         if (!this.IsAlive()) return;
 
-        _frameTimer += ArcadeClock.UnitsPerPortTick;
-        if (_frameTimer < ArcadeClock.UnitsPerRomFrame) return;
+        _moveTimer += ArcadeClock.UnitsPerPortTick;
+        if (_moveTimer < ArcadeClock.UnitsPerRomFrame) return;
 
-        _frameTimer -= ArcadeClock.UnitsPerRomFrame;
-        MoveOneFrame();
+        _moveTimer -= ArcadeClock.UnitsPerRomFrame;
+        MoveOnce();
 
-        if (--_framesToNextBeat > 0) return;
+        if (--_movesToNextBeat > 0) return;
 
-        _framesToNextBeat = TankShellTuning.BeatIntervalRomFrames;
+        _movesToNextBeat = TankShellTuning.BeatIntervalRomFrames;
         RunBeat();
     }
 
@@ -335,9 +335,9 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: not separately labelled.</item>
     ///     </list>
     /// </remarks>
-    private void MoveOneFrame()
+    private void MoveOnce()
     {
-        var subpixels = GetNextFrameSubpixels();
+        var subpixels = GetNextMoveSubpixels();
         var stepX = DivideRoundingDown(subpixels.X, ScreenSize.SubpixelsPerPixel);
         var stepY = DivideRoundingDown(subpixels.Y, ScreenSize.SubpixelsPerPixel);
 
@@ -380,7 +380,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///     Works out how far the shell goes on its next move, in 256ths of a pixel, counting the fraction left over from
     ///     the last move.
     /// </summary>
-    private IntVector2 GetNextFrameSubpixels()
+    private IntVector2 GetNextMoveSubpixels()
     {
         return new IntVector2(
             _remainderSubpixels.X + _velocity.X * ColumnPixels,
@@ -393,7 +393,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// </summary>
     private IntVector2 GetNextPosition()
     {
-        var subpixels = GetNextFrameSubpixels();
+        var subpixels = GetNextMoveSubpixels();
         return new IntVector2(
             _position.X + DivideRoundingDown(subpixels.X, ScreenSize.SubpixelsPerPixel),
             _position.Y + DivideRoundingDown(subpixels.Y, ScreenSize.SubpixelsPerPixel));

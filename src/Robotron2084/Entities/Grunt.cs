@@ -77,7 +77,8 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 
     private int _landingY;
 
-    private int _moveCountdownBeats;
+    /// <summary>Beats left before the grunt takes its next step.</summary>
+    private int _moveBeatsRemaining;
 
     private IntVector2 _position;
 
@@ -105,7 +106,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         MoveDelayBeats = moveLimitBeats;
         _random = random ?? new Random();
         // The grunt waits a random number of beats before its first step.
-        _moveCountdownBeats = _random.Next(1, MoveDelayBeats + 1);
+        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
     }
 
     /// <summary>The most beats the grunt waits between steps, as it stands now. It gets smaller as the wave goes on.</summary>
@@ -169,12 +170,12 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         _beatTimer += ArcadeClock.UnitsPerPortTick;
         if (_beatTimer < BeatIntervalClockUnits) return;
 
-        // A beat has come, which is the grunt's turn to act (see ArcadeClock). It only takes a step on the beat when its countdown runs out.
+        // A beat has come, which is the grunt's turn to act (see ArcadeClock). It only takes a step on the beat when <see cref="_moveBeatsRemaining" /> runs out.
         _beatTimer -= BeatIntervalClockUnits;
 
-        if (--_moveCountdownBeats > 0) return;
+        if (--_moveBeatsRemaining > 0) return;
 
-        _moveCountdownBeats = _random.Next(1, MoveDelayBeats + 1);
+        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
         SteppedThisUpdate = true;
         _walkAnimationFrameNumber =
             _walkAnimationFrameNumber % WalkAnimationFrameCount +

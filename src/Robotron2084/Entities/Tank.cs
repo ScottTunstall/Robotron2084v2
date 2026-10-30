@@ -138,7 +138,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     private int _beatTimer;
 
     private IntVector2 _destination;
-    private int _fireCooldownBeats;
+    private int _fireBeatsRemaining;
 
     /// <summary>
     ///     Which of the growing animation frames is showing, counting from 0. When it reaches
@@ -207,7 +207,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         // The tank picks where to go at the end of its first beat (ROM: TANKL).
         _aimBeatsRemaining = 0;
         // The first shot waits this wave's gap between shots, plus a random number of extra beats.
-        _fireCooldownBeats = fireIntervalBeats + random.Next(0, FirstShotExtraBeatsMaxExclusive);
+        _fireBeatsRemaining = fireIntervalBeats + random.Next(0, FirstShotExtraBeatsMaxExclusive);
     }
 
     /// <summary>Which tread animation frame is showing, as a place in <see cref="SpriteSet.TankAnimationFrames" />.</summary>
@@ -424,12 +424,12 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// <param name="field">The playfield.</param>
     private void FireIfDue(PlayField field)
     {
-        if (--_fireCooldownBeats > 0) return;
+        if (--_fireBeatsRemaining > 0) return;
 
         if (field.CanFireShell()) field.SpawnTankShell(_position);
 
         // Every shot after the first waits this wave's gap between shots, with no random extra beats.
-        _fireCooldownBeats = _fireIntervalBeats;
+        _fireBeatsRemaining = _fireIntervalBeats;
     }
 
     /// <summary>

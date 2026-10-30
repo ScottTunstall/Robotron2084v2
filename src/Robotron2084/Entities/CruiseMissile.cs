@@ -48,10 +48,10 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private const int MovesPerBeat = 2;
 
     /// <summary>
-    ///     The most beats a missile may go before it aims again. <see cref="_reAimBeatsRemaining" /> is set to a random
+    ///     The most beats a missile may go before it aims again. <see cref="_reaimBeatsRemaining" /> is set to a random
     ///     number of beats from one up to this.
     /// </summary>
-    private const int ReAimMaxBeats = 7;
+    private const int ReaimMaxBeats = 7;
 
     /// <summary>
     ///     How big the missile's box is, in port pixels. The box is used to tell what the missile touches. It sits up and
@@ -92,7 +92,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     private IntVector2 _position;
 
-    private int _reAimBeatsRemaining;
+    private int _reaimBeatsRemaining;
 
     private IntVector2
         _velocity; // How many pixels the missile goes left or right, and how many up or down, each time it moves.
@@ -112,7 +112,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
         _position = origin;
         _random = random;
         _velocity = RollDirection(playerPosition);
-        _reAimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReAimMaxBeats);
+        _reaimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReaimMaxBeats);
     }
 
     /// <summary>The places the missile has just been, oldest first. Tests use this.</summary>
@@ -181,10 +181,10 @@ public sealed class CruiseMissile : IEntity, IRemovable
         _beatTimer -= BeatIntervalClockUnits;
 
         // On each beat the missile first aims at the Player again, if it is time to, and then moves (ROM: CMISL).
-        if (--_reAimBeatsRemaining <= 0)
+        if (--_reaimBeatsRemaining <= 0)
         {
             _velocity = RollDirection(field.Player.Position);
-            _reAimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReAimMaxBeats);
+            _reaimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReaimMaxBeats);
         }
 
         for (var move = 0; move < MovesPerBeat; move++) Step(field);

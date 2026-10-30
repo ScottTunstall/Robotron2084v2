@@ -72,7 +72,8 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     private int _animationStep;
     private int _beatTimer;
     private bool _hasMoved;
-    private int _moveCountdownBeats;
+    /// <summary>Beats left before the robot takes its next step.</summary>
+    private int _moveBeatsRemaining;
     private IntVector2 _position;
 
     /// <summary>Makes a robot, and picks at random how long it waits before its first step.</summary>
@@ -93,7 +94,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
         _position = position;
         MoveDelayBeats = moveLimitBeats;
         _random = random ?? new Random();
-        _moveCountdownBeats = _random.Next(1, MoveDelayBeats + 1);
+        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
     }
 
     /// <summary>The way the robot is walking.</summary>
@@ -150,9 +151,9 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
         _beatTimer -= BeatIntervalClockUnits;
         if (!_hasMoved) _animationStep++;
 
-        if (--_moveCountdownBeats > 0) return;
+        if (--_moveBeatsRemaining > 0) return;
 
-        _moveCountdownBeats = _random.Next(1, MoveDelayBeats + 1);
+        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
         Step(field);
     }
 

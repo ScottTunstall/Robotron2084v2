@@ -71,7 +71,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private readonly Random _random;
     private readonly SpriteSet _sprites;
     private int _beatTimer;
-    private int _fireCooldownBeats;
+    private int _fireBeatsRemaining;
     private int _growClockUnitsRemaining;
     private int _moveTimer; // Counts up to the enforcer's next move.
     private IntVector2 _position;
@@ -111,7 +111,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         _growClockUnitsRemaining = ArcadeClock.ToClockUnits(EnforcerTuning.GrowUpRomFrames);
         // The enforcer picks where to go on its first beat. Its first shot comes after a random number of beats.
         _reaimBeatsRemaining = 0;
-        _fireCooldownBeats = ArcadeRandom.PickUpTo(random, _fireIntervalBeats);
+        _fireBeatsRemaining = ArcadeRandom.PickUpTo(random, _fireIntervalBeats);
         // The move timer starts full, so the enforcer does not have to wait for its first move.
         _moveTimer = ArcadeClock.UnitsPerRomFrame;
     }
@@ -177,9 +177,9 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
             RollVelocity(field);
         }
 
-        if (--_fireCooldownBeats <= 0)
+        if (--_fireBeatsRemaining <= 0)
         {
-            _fireCooldownBeats = NextFireBeats(_random);
+            _fireBeatsRemaining = NextFireBeats(_random);
             if (field.GetActiveSparkCount() < SparkTuning.GlobalActiveSparkCap)
                 // The spark is aimed at the place where the Player is now.
                 field.SpawnSpark(_position, field.Player.Position);
