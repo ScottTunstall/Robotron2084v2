@@ -83,9 +83,9 @@ public sealed class SoundTestState : IGameState
     /// </summary>
     private static readonly IReadOnlyList<SoundTestEntry> Entries =
     [
-        .. BoardSounds.All.Select(sound => new SoundTestEntry(
-            "SOUND " + sound.Number.ToString("X2", CultureInfo.InvariantCulture), sound.Name, sound.Description,
-            sound.Number)),
+        .. BoardSounds.All.Select(boardSound => new SoundTestEntry(
+            "SOUND " + boardSound.Number.ToString("X2", CultureInfo.InvariantCulture), boardSound.Name, boardSound.Description,
+            boardSound.Number)),
         new("TRANSPORTER", "TRSPRC", "BRAIN WAVE", null)
     ];
 
@@ -217,7 +217,7 @@ public sealed class SoundTestState : IGameState
     /// <summary>True on the tick a key goes down.</summary>
     private bool IsPressed(InputSnapshot now, Keys key)
     {
-        return now.Keys.IsKeyDown(key) && !_previousSnapshot.Keys.IsKeyDown(key);
+        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
     }
 
     /// <summary>

@@ -265,7 +265,7 @@ public sealed class DefineInputsState : IGameState
 
     private bool WasKeyboardPressed(InputSnapshot now, Keys key)
     {
-        return now.Keys.IsKeyDown(key) && !_previousSnapshot.Keys.IsKeyDown(key);
+        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
     }
 
     /// <summary>The idle half: scrolling, arming, clearing, defaults, and leaving.</summary>

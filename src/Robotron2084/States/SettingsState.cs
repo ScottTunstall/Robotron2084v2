@@ -186,7 +186,7 @@ public sealed class SettingsState : IGameState
 
     private bool WasKeyboardPressed(InputSnapshot now, Keys key)
     {
-        return now.Keys.IsKeyDown(key) && !_previousSnapshot.Keys.IsKeyDown(key);
+        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
     }
 
     /// <summary>True on the tick the key or the pad button (either pad) goes down.</summary>

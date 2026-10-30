@@ -126,7 +126,7 @@ public sealed class PlayingState : IGameState
         // The port's PAUSE (notes §101) — port-only, the arcade has none. The field is
         // frozen but the toggle still polls, or the key that paused could never unpause.
         var snapshot = InputSnapshot.Read();
-        _pause.Tick(_session.ControlSettings.IsPauseHeld(snapshot.Keys, snapshot.PadOne, snapshot.PadTwo));
+        _pause.Tick(_session.ControlSettings.IsPauseHeld(snapshot.KeyboardState, snapshot.PadOne, snapshot.PadTwo));
         if (_pause.IsPaused) return;
 
         // "PLAYER n GAME OVER" is a WAIT in the ROM (NAP $60): the field behind it
@@ -178,8 +178,8 @@ public sealed class PlayingState : IGameState
     ///     the title and from anywhere in the attract cycle; TWO PLAYER SIMULTANEOUS is
     ///     carried as far as this call and the second input (the simultaneous field itself is not built yet).
     /// </summary>
-    /// <param name="controls">The keys and buttons the players have chosen.</param>
-    /// <param name="settings">
+    /// <param name="controlSettings">The keys and buttons the players have chosen.</param>
+    /// <param name="gameSettings">
     ///     The GAME ADJUSTMENT settings (notes §131): TURNS PER PLAYER is the men each player starts
     ///     with, EXTRA MAN EVERY the score that earns a spare man, and DIFFICULTY OF PLAY nudges every
     ///     wave's tuning.
@@ -187,14 +187,14 @@ public sealed class PlayingState : IGameState
     /// <param name="mode">How many people are playing, and whether two of them take turns.</param>
     /// <param name="sprites">The sprite set that everything is drawn with.</param>
     /// <param name="highScoreStore">The high score table, which is offered the scores when the game ends.</param>
-    public static PlayingState CreateNewGame(ControlSettings controls, GameSettings settings, GameMode mode,
+    public static PlayingState CreateNewGame(ControlSettings controlSettings, GameSettings gameSettings, GameMode mode,
         SpriteSet sprites, HighScoreStore highScoreStore)
     {
-        var playerOne = new BoundPlayerInputSource(controls, 0);
-        var playerTwo = new BoundPlayerInputSource(controls, 1);
+        var playerOne = new BoundPlayerInputSource(controlSettings, 0);
+        var playerTwo = new BoundPlayerInputSource(controlSettings, 1);
         Sound.Play(StartSoundFor(mode));
         return new PlayingState(sprites, highScoreStore,
-            GameSession.CreateNewGame(mode, playerOne, playerTwo, controls, settings), true);
+            GameSession.CreateNewGame(mode, playerOne, playerTwo, controlSettings, gameSettings), true);
     }
 
     /// <summary>Gets the wave a player is about to play: what was left after their last death, or a fresh wave.</summary>
