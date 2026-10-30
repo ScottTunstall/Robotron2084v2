@@ -74,7 +74,7 @@ public sealed class PlayFieldBrainProgMissileTests
     public void Constructor_SpawnsTheWaveBrainCount()
     {
         var field = CreateField(BrainWave(3));
-        Assert.Equal(3, field.Entities.Brains.GetLiveCount());
+        Assert.Equal(3, field.Entities.Brains.Count(entity => !entity.IsDead()));
     }
 
     /// <summary>
@@ -310,7 +310,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // — the human is not a prog yet, and is off the human list.
         Assert.True(brain.IsReprogramming());
         Assert.True(human.IsBeingReprogrammed);
-        Assert.Equal(0, field.Entities.Progs.GetLiveCount());
+        Assert.Equal(0, field.Entities.Progs.Count(entity => !entity.IsDead()));
         Assert.Empty(field.Entities.Skulls); // ROM BRNFLG — never a skull on conversion
         Assert.Null(field.Entities.Family.GetMemberInSlot(human.FamilySlot)); // off the family list now
 
@@ -333,7 +333,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         Assert.True(brain.IsReprogramming());
         Assert.Equal(brainSpot, brain.Position);
-        Assert.Equal(0, field.Entities.Progs.GetLiveCount());
+        Assert.Equal(0, field.Entities.Progs.Count(entity => !entity.IsDead()));
 
         for (var tick = 0; tick < 25; tick++) field.Update(OneTick());
 
@@ -341,7 +341,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // its animation frames and box, and the brain is free to move again.
         Assert.False(brain.IsReprogramming());
         Assert.NotEqual(EntityLifeState.Alive, human.LifeState);
-        Assert.Equal(1, field.Entities.Progs.GetLiveCount());
+        Assert.Equal(1, field.Entities.Progs.Count(entity => !entity.IsDead()));
         Assert.Equal(HumanKind.Mommy, field.Entities.Progs[0].Kind);
         Assert.Empty(field.Entities.Skulls);
     }
@@ -397,7 +397,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         Assert.False(human.IsBeingReprogrammed);
         Assert.Equal(EntityLifeState.Dead, human.LifeState);
-        Assert.Equal(0, field.Entities.Progs.GetLiveCount()); // the conversion never completed
+        Assert.Equal(0, field.Entities.Progs.Count(entity => !entity.IsDead())); // the conversion never completed
         Assert.Single(field.Entities.Skulls);
         Assert.False(brain.IsReprogramming());
     }
@@ -673,7 +673,7 @@ public sealed class PlayFieldBrainProgMissileTests
         field.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dead, prog.LifeState); // instant off, no pop
-        Assert.Equal(0, field.Entities.Progs.GetLiveCount());
+        Assert.Equal(0, field.Entities.Progs.Count(entity => !entity.IsDead()));
         var explosion = Assert.Single(field.Entities.Explosions);
         // UL = OBJX/OBJY with the sprite's W/H: the 12x16 card's rect at the prog's
         // corner, NOT the smaller human box it was walking in.

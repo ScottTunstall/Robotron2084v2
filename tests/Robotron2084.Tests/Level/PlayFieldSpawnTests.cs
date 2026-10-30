@@ -16,13 +16,13 @@ public sealed class PlayFieldSpawnTests
     {
         var field = CreateField(4, 2, 2, 1, 6);
 
-        Assert.Equal(6, field.Entities.Electrodes.GetLiveCount());
-        Assert.Equal(4, field.Entities.Grunts.GetLiveCount());
-        Assert.Equal(2, field.Entities.Hulks.GetLiveCount());
-        Assert.Equal(2, field.Entities.Spheroids.GetLiveCount());
-        Assert.Equal(1, field.Entities.Quarks.GetLiveCount());
-        Assert.Equal(0, field.Entities.Enforcers.GetLiveCount()); // only dropped by spheroids later
-        Assert.Equal(0, field.Entities.Tanks.GetLiveCount()); // only dropped by quarks later
+        Assert.Equal(6, field.Entities.Electrodes.Count(entity => !entity.IsDead()));
+        Assert.Equal(4, field.Entities.Grunts.Count(entity => !entity.IsDead()));
+        Assert.Equal(2, field.Entities.Hulks.Count(entity => !entity.IsDead()));
+        Assert.Equal(2, field.Entities.Spheroids.Count(entity => !entity.IsDead()));
+        Assert.Equal(1, field.Entities.Quarks.Count(entity => !entity.IsDead()));
+        Assert.Equal(0, field.Entities.Enforcers.Count(entity => !entity.IsDead())); // only dropped by spheroids later
+        Assert.Equal(0, field.Entities.Tanks.Count(entity => !entity.IsDead())); // only dropped by quarks later
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public sealed class PlayFieldSpawnTests
         var field = CreateField(0, 0, 0, 3, 0);
         var bounds = field.Wall.PlayfieldBounds;
 
-        Assert.Equal(3, field.Entities.Quarks.GetLiveCount());
+        Assert.Equal(3, field.Entities.Quarks.Count(entity => !entity.IsDead()));
         foreach (var quark in field.Entities.Quarks)
         {
             var bottomEdgeY = bounds.Bottom - quark.GetBounds().Height;
