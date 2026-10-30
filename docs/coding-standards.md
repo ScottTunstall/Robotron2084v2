@@ -609,11 +609,35 @@ loss.
 **FMT-1. One declaration per line.** A `///` comment starts its own line and sits directly above its member.
 No blank line directly after an opening brace. Use target-typed `new()` or `var` consistently within a file.
 
-**FMT-2. Ternary operators only for very simple expressions.** A ternary is fine when the condition and both
-branches are plain values or a single short call: `isRight ? 1 : -1`, `pad == 1 ? padTwo : padOne`. If the
-condition is compound, a branch does arithmetic or calls something with arguments of its own, the ternary is
-nested, or the line has to wrap, write an `if` with an early return (FMT-3) or a well-named helper instead. Always favour
-readability over cleverness.
+**FMT-2. A ternary (`? :`) is allowed only as the whole value of a simple `return`.** Allowed: `return isRight ? 1 : -1;`
+and `return pad == 1 ? padTwo : padOne;`. The condition is one name, one short comparison, or one `Is…`/`Has…`
+call. Each branch is a name, a literal or a constant: no arithmetic, no calls, no slicing. Everywhere else, write an `if`. That means never:
+- on the same line as an `if`: `if (a) return b ? c : d;`
+- as an argument, inside a string, or inside another expression
+- nested, or with `&&`/`||` in the condition
+- with a branch that does arithmetic or calls something with arguments
+- on a line that has to wrap
+
+When a ternary is not allowed, name the parts (NAM-11): put each condition in a `bool` that says what it means, then
+use `if` and early returns (FMT-3). The reader should never have to work out which `?` goes with which `:`.
+```csharp
+// Hard to follow: two decisions on one line.
+if (Math.Abs(gapX) >= Math.Abs(gapY)) return gapX >= 0 ? WalkSequence.Right : WalkSequence.Left;
+
+// Clear: each decision has a name and its own line.
+var isSidewaysFurther = Math.Abs(gapX) >= Math.Abs(gapY);
+if (isSidewaysFurther)
+{
+    var isPlayerToTheRight = gapX >= 0;
+    if (isPlayerToTheRight) return WalkSequence.Right;
+
+    return WalkSequence.Left;
+}
+```
+
+**FMT-2a. Clever, compact code that is hard to read is not acceptable.** Shorter is not better. If a reader has to
+stop and work out what a line does, rewrite it with explanatory variables (NAM-11) and one step per line (STR-7).
+This applies to ternaries, chained `&&`/`||`, nested calls, and `switch` expressions that hide logic in their arms.
 
 **FMT-3. Early returns, not `else`.** When one branch of an `if` finishes the method's work, return from it and
 let the other path carry on unindented. Do not write `if (x) { ...; return; } else { ... }`, or
@@ -753,6 +777,12 @@ grep -rnP --include=*.cs '^(?!\s*//)[^/]*\b(?:ref|out)\s+(?:var\s+|[\w<>?\[\]]+\
 grep -rnE --include=*.cs '\b(IntVector2|Rectangle|int|var) (player|playfield|point)\b|\bKeyboardState keys\b|\b(var|StripEffect) effect\b|\bSoundSequence sound\b' src
 # ...and a bare settings (a PlayerControls named controls is fine), which should also print nothing
 grep -rnwE --include=*.cs 'settings' src | grep -v '///'
+
+# A ternary anywhere but the whole value of a return (FMT-2): each hit is a violation to rewrite with named bools
+# and ifs. A return line that is left out of this list still needs a look: its condition and branches must be plain.
+grep -rnE --include=*.cs '\S \? [^:]+ : ' src | grep -v -E '^\S+:[0-9]+:\s*return [^?]* \? [^?:]+ : [^?:]+;\s*$' | grep -v -E '///|\?\? |\?\.'
+# ...and a ternary that wraps onto several lines (its second line starts with ?)
+grep -rnE --include=*.cs '^\s+\? ' src
 
 # The word roll (NAM-24)
 grep -rniE --include=*.cs '\b\w*(re-?)?roll\w*\b' $D | grep -v -i -E 'scroll|control|corollary'
