@@ -103,13 +103,13 @@ public sealed class ControlSettingsStore
         text.AppendLine("; P<n> <BUTTON> / P<n> LS <DIR> / P<n> RS <DIR>. NONE means unbound.");
         text.AppendLine("; (Colons or dashes are accepted in place of the spaces when reading.)");
 
-        for (var player = 0; player < ControlSettings.PlayerCount; player++)
+        for (var playerIndex = 0; playerIndex < ControlSettings.PlayerCount; playerIndex++)
         {
             text.AppendLine();
-            text.AppendLine($"[player{player + 1}]");
+            text.AppendLine($"[player{playerIndex + 1}]");
             foreach (var action in InputActions.All)
             {
-                var binding = controlSettings[player][action];
+                var binding = controlSettings[playerIndex][action];
                 text.AppendLine($"{GetName(action)}.key={binding.KeyBinding.GetDisplayName()}");
                 text.AppendLine($"{GetName(action)}.pad={binding.PadBinding.GetDisplayName()}");
             }
