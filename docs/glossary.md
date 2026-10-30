@@ -11,11 +11,11 @@ For the rule that keeps this list to one word per idea, see [coding-standards.md
 | Word | What it means | Name ending in code |
 |---|---|---|
 | **port tick** | One go round the game loop: one call of `Update`. The game does 60 of these every second. "Port" means this version of the game, as opposed to the original arcade machine. The playfield calls every entity's `Update` on every tick, except during the freeze, and except for a robot that is still appearing at the start of a wave. | `...Ticks` |
-| **ROM frame** | One redraw of the original arcade screen. The arcade did 50 a second, so the original game counted its waiting times in these. One ROM frame is 1/50 of a second. In a comment, write "fiftieths of a second" (or "50 times a second") instead, so a reader who does not know the arcade can follow it. Keep "ROM frame" for names and this page. | `...RomFrames` (never `...RomTicks`) |
-| **clock unit** | A small counting unit that lets a port tick and a ROM frame both be whole numbers: a port tick is 5 units and a ROM frame is 6, so one unit is 1/300 of a second. Nothing runs 300 times a second; it is only a way of counting. `RomFrameTimer` uses it inside, and entities never see it. | `...ClockUnits` |
-| **beat** | A character's turn to move or act. It comes every few ROM frames. The character's `_beatTimer` (a `RomFrameTimer`) says when it is due, and then the character calls its `ActOnBeat`; the playfield does not count beats. | `...Beats` |
-| **interval** | The gap from one beat to the next, or from one move, grow step, animation frame, flash or other repeat to the next. A slower character has a longer interval. | `...IntervalRomFrames`, `...IntervalBeats` |
-| **wait** | The part of an interval the ROM sets by itself, such as the frames a brain sleeps after a beat. The interval is the wait plus the frame the beat takes. | `...WaitRomFrames` |
+| **arcade frame** | One redraw of the original arcade screen. The arcade did 50 a second, so the original game counted its waiting times in these. One arcade frame is 1/50 of a second. In a comment, write "fiftieths of a second" (or "50 times a second") instead, so a reader who does not know the arcade can follow it. Keep "arcade frame" for names and this page. | `...ArcadeFrames` (never `...ArcadeTicks`) |
+| **clock unit** | A small counting unit that lets a port tick and an arcade frame both be whole numbers: a port tick is 5 units and an arcade frame is 6, so one unit is 1/300 of a second. Nothing runs 300 times a second; it is only a way of counting. `ArcadeFrameTimer` uses it inside, and entities never see it. | `...ClockUnits` |
+| **beat** | A character's turn to move or act. It comes every few arcade frames. The character's `_beatTimer` (an `ArcadeFrameTimer`) says when it is due, and then the character calls its `ActOnBeat`; the playfield does not count beats. | `...Beats` |
+| **interval** | The gap from one beat to the next, or from one move, grow step, animation frame, flash or other repeat to the next. A slower character has a longer interval. | `...IntervalArcadeFrames`, `...IntervalBeats` |
+| **wait** | The part of an interval the ROM sets by itself, such as the frames a brain sleeps after a beat. The interval is the wait plus the frame the beat takes. | `...WaitArcadeFrames` |
 | **freeze** | The short stop of the whole game, `HitStopTicks` ticks long, just after the player is killed. The playfield calls nobody's `Update` while it lasts. Not the same as the robots being frozen. | `...HitStop...` |
 | **robots frozen** | The robots stand still until the start of a wave is over, and while the player is dying (`PlayField.RobotsFrozen()`). The playfield still calls their `Update`, and each robot checks for itself. | `RobotsFrozen` |
 
@@ -38,7 +38,7 @@ A table's layout column ("5 per column") must be named something else, such as `
 
 | Say | Don't say | What it means |
 |---|---|---|
-| **animation frame** | picture, art, image, frame (alone) | One drawing of a character, out of the set that makes it look like it is moving. A standing-still thing, like a shell, has just one. "Frame" on its own means a ROM frame. "Sprite" is fine too, as a name for the whole set of drawings a character has, or for one of them. |
+| **animation frame** | picture, art, image, frame (alone) | One drawing of a character, out of the set that makes it look like it is moving. A standing-still thing, like a shell, has just one. "Frame" on its own means an arcade frame. "Sprite" is fine too, as a name for the whole set of drawings a character has, or for one of them. |
 | **palette slot** or **slot** | colour index, colour | One of the 16 colours the game can show at once. Slots 0-9 stay the same; 10-15 keep changing, which makes things flash. |
 | **strip explosion** | explosion (on its own) | A robot's animation frame cut into thin strips that fly apart. |
 | **appear** or **materialise** | spawn-in, warp-in | The strips of a new robot's animation frame rushing together at the start of a wave. |
@@ -65,7 +65,7 @@ Words that used to be used here and must not come back. Do not use them in a nam
 | `SpecWidth`, `SpecHeight` | `WidthInArcadePixels`, `HeightInArcadePixels` | The size of the game's screen, in arcade pixels. |
 | `ArcadePixelsPerColumn` | `ArcadePixelsPerByte` | A pixel takes 4 bits, so a byte holds two; a column is one byte across. |
 | "nearly every tick" | "on every tick, except ..." and say the exceptions | The playfield skips `Update` only in the freeze, and for robots still appearing. |
-| ROM frame (in a comment) | "fiftieths of a second", "50 times a second" | A reader should not need the arcade's word to follow a comment. |
+| arcade frame (in a comment) | "fiftieths of a second", "50 times a second" | A reader should not need the arcade's word to follow a comment. |
 | picture | animation frame | The glossary's word for one drawing. |
 | human (in prose) | family member | The class `Human` keeps its name until the author decides. |
 | X and Y, axis (in a comment) | left or right, up or down, sideways | Plain words, not maths words. |

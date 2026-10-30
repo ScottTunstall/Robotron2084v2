@@ -25,7 +25,7 @@ not copy a number forward from a comment, a test or the notes without checking i
 
 **FID-2. A timing is counted from the arcade's own event, in the arcade's own unit.** Find the ROM event the count
 starts at (a `NAP`, a `MAKP`, `CLR STATUS`) and start the port's count at the port's version of that event, not at
-whatever moment is handy, such as when an object is made. Count it in ROM frames or beats on the clock-unit timer
+whatever moment is handy, such as when an object is made. Count it in arcade frames or beats on the clock-unit timer
 (TIME-1). A loop that counts down from 18 and tests on its first pass takes 17 sleeps, not 18: work the count through.
 
 **FID-3. A test of arcade behaviour pins the arcade's value and says where it comes from.** It names the ROM routine
@@ -170,8 +170,8 @@ place, so they can change without touching the objects.
 object (`Burst`, `Dispatch`).
 
 **NAM-2. Numeric identifiers carry their unit** when the unit is not obvious, using the suffixes in section 1:
-`BeatIntervalRomFrames`, `JitterColumns`, `_velocitySubpixels`. A name that says one unit while holding another is
-a defect: `StepColumns` holding port pixels, `...RomTicks` holding beats.
+`BeatIntervalArcadeFrames`, `JitterColumns`, `_velocitySubpixels`. A name that says one unit while holding another is
+a defect: `StepColumns` holding port pixels, `...ArcadeTicks` holding beats.
 
 **NAM-3. A name says what the value is, not what it once was or how it is used.** `HulkSpeed` for a delay
 (where bigger is slower) is wrong. `_wallPalette` for the whole palette is wrong.
@@ -236,8 +236,8 @@ follows NAM-8: the American spelling is gone everywhere, not only from the decla
 **NAM-13. Method names start with the verb Microsoft's guidelines give them.**
 - **Fetch a value:** `Get…`: `GetElectrodeVariant(wave)`, not `ElectrodeVariantForWave(wave)`. A fetch that can
   fail is `TryGet…(…, out T value)`. A search that may find nothing is `Find…`.
-- **Convert one thing to another:** `To…`: `ToPortPixelsFromArcadePixels(arcadePixels)`, `ToClockUnits(romFrames)`,
-  `ToPortTicks(romFrames)`. Never `Scaled`, `Units` or `…For…`.
+- **Convert one thing to another:** `To…`: `ToPortPixelsFromArcadePixels(arcadePixels)`, `ToClockUnits(arcadeFrames)`,
+  `ToPortTicks(arcadeFrames)`. Never `Scaled`, `Units` or `…For…`.
 - **Make a new object:** `Create…`: `CreateDefaults()`, `CreateFromWave(…)`, `CreateKey(…)`. Use `From…` or
   `New…` only where the framework itself does and `Create…` would read as something else (`Parse` stays
   `Parse`). If `Create…` would mislead, as `CreateFactory` suggested a factory object, pick a name that says
@@ -262,13 +262,13 @@ Daddies, Electrodes, Brains, Grunts, Progs). A new character gets the name the a
 has none, ask the author (CMT-6). Content file names follow the same rule (`Sprites/Mommy_1`).
 
 **NAM-16. The gap between beats is an interval.** The time from one beat to the next is the **interval**:
-`BeatIntervalRomFrames` in ROM frames, and `_beatTimer` for the `RomFrameTimer` that says when it is over. Never call
+`BeatIntervalArcadeFrames` in arcade frames, and `_beatTimer` for the `ArcadeFrameTimer` that says when it is over. Never call
 it a period, delay, rate, sleep or step, and never call a beat a "step" or a "turn"
 (a hulk's or a human's beat is a beat; its steps are the moves inside it). The same word names any other repeating
-gap: a move, a grow step, an animation frame (`MoveIntervalRomFrames`, `GrowIntervalRomFrames`,
-`AnimationIntervalRomFrames`), a flash, a cycle (`CycleIntervalClockUnits`), and a gap counted in beats
+gap: a move, a grow step, an animation frame (`MoveIntervalArcadeFrames`, `GrowIntervalArcadeFrames`,
+`AnimationIntervalArcadeFrames`), a flash, a cycle (`CycleIntervalClockUnits`), and a gap counted in beats
 (`fireIntervalBeats`). Where the ROM supplies only part of the interval, such as the frames a brain sleeps after its
-beat, that value is a **wait** (`beatWaitRomFrames`), and the interval is the wait plus the frame the beat takes.
+beat, that value is a **wait** (`beatWaitArcadeFrames`), and the interval is the wait plus the frame the beat takes.
 
 **NAM-17. A class is named for what it holds.** A class that holds rules is `...Rules`, and one rule is
 `...Rule` (`CollisionRules`, `ICollisionRule`, `LaserCollisionRule`), never "phases", "passes" or "steps". In the
@@ -366,7 +366,7 @@ Its `<summary>` says **what it is** and **where it comes from**: a ROM routine a
 uses them.
 
 **NUM-2. The clock is never written as `5` and `6`.** Use `ArcadeClock.UnitsPerPortTick` and
-`ArcadeClock.UnitsPerRomFrame` (or `RomFrameTimer`). Never copy them into a private constant.
+`ArcadeClock.UnitsPerArcadeFrame` (or `ArcadeFrameTimer`). Never copy them into a private constant.
 
 **NUM-3. The column is never written as `2`.** Use `ScreenSize.Columns(n)` / `ArcadePixelsPerByte`.
 
@@ -387,24 +387,24 @@ caller.
 ## 5. Time and state
 
 **TIME-1. One timer idiom.** Anything that happens every so many fiftieths of a second is timed by a
-`Core/RomFrameTimer`, called once per `Update`: `if (_beatTimer.Tick(BeatIntervalRomFrames)) ActOnBeat(field);`. An
+`Core/ArcadeFrameTimer`, called once per `Update`: `if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);`. An
 entity never adds clock units itself. Do not introduce `TimeSpan`/`GameTime` timers in gameplay code.
 
 **TIME-1a. The same idea has the same name in every entity.**
 
 | Idea | Timer field | Interval constant | Method it calls |
 |---|---|---|---|
-| The entity's turn to move or act | `_beatTimer` | `BeatIntervalRomFrames` | `ActOnBeat` |
-| A move made every fiftieth of a second | `_moveTimer` | `ArcadeClock.MoveIntervalRomFrames` | `MoveOnce` |
-| A step of growing | `_growTimer` | `GrowIntervalRomFrames` | `TakeGrowStep` (and `IsGrowing`) |
-| The next animation frame, when not on the beat | `_animationTimer` | `AnimationIntervalRomFrames` | `ShowNextAnimationFrame` |
-| How long a short-lived thing lasts | `_lifeTimer` | `LifeRomFrames` | (it dies) |
+| The entity's turn to move or act | `_beatTimer` | `BeatIntervalArcadeFrames` | `ActOnBeat` |
+| A move made every fiftieth of a second | `_moveTimer` | `ArcadeClock.MoveIntervalArcadeFrames` | `MoveOnce` |
+| A step of growing | `_growTimer` | `GrowIntervalArcadeFrames` | `TakeGrowStep` (and `IsGrowing`) |
+| The next animation frame, when not on the beat | `_animationTimer` | `AnimationIntervalArcadeFrames` | `ShowNextAnimationFrame` |
+| How long a short-lived thing lasts | `_lifeTimer` | `LifeArcadeFrames` | (it dies) |
 
 A count of beats, steps or ticks left is `_<what>BeatsRemaining`, `_<what>StepsRemaining` or
 `_<what>TicksRemaining`. A robot that waits for the wave to start gets its beat timer from
 `PlayField.CreateFirstBeatTimer`.
 
-**TIME-2. `ToPortTicks(romFrames)` truncates** and fires up to a tick early. Use it only for one-shot display
+**TIME-2. `ToPortTicks(arcadeFrames)` truncates** and fires up to a tick early. Use it only for one-shot display
 durations, and say so in the caller's comment.
 
 **TIME-3. No hidden randomness.** Gameplay classes take a `Random` in their constructor. `random ?? new Random()`
@@ -489,7 +489,7 @@ member would only be true for some implementations, it does not belong there at 
 
 **CMT-13. Say "animation frame" or "sprite", never "picture".** A drawing of a character is an **animation frame**, in
 summaries, remarks, comments and identifiers alike (`...AnimationFrame`, not `...Picture`). Do not write
-"picture", "art" or "image" for it, and do not use bare "frame", which means a ROM frame. "Sprite" is
+"picture", "art" or "image" for it, and do not use bare "frame", which means an arcade frame. "Sprite" is
 fine, since everyone knows it: use it for a character's drawings in general, and "animation frame" when it matters
 which one. A thing
 with one drawing, such as a shell, has one animation frame. The ROM's own labels (`OPICT`, `PGXPIC`, `RWDP1`)
@@ -692,7 +692,7 @@ grep -rnE '(\+=|-=) 5;|\* 6\b|>= 6\b|< 6\b|= 6;|SixthsPer|Fifths|_sixths|_fifths
 grep -rnE 'ToPortPixelsFromArcadePixels\(2\b|ToPortPixelsFromArcadePixels\(2 \*|\* ScreenSize\.PortPixelsPerArcadePixel|/ 256\b|>> 8\b|<< 8\b' src --include=*.cs
 
 # Unit-suffix mistakes (NAM-2)
-grep -rnoE '\w*RomTicks\w*' src tests --include=*.cs
+grep -rnoE '\w*ArcadeTicks\w*' src tests --include=*.cs
 
 # History, plan and milestone references (CMT-3, CMT-5)
 grep -rnE "M4\b|M5\b|round [0-9]|Phase [0-9]|PHASE [A-Z]|plan [0-9]|author's report|\(author, 20|playtest 20|used to |The old |was wrong" src --include=*.cs
@@ -743,7 +743,7 @@ git status --porcelain | grep '^??'
 |---|---|---|
 | **Blocker** | Wrong behaviour, data loss, or a production default that favours tests | a counter bumped twice; `catch (Exception)` that overwrites a save; `ForTesting = true` in a production path |
 | **Major** | Violates SOLID/STR in new code, or a comment/summary that states something false | new god-class growth; a hard cast; a stale value in a summary; a new magic number |
-| **Minor** | Naming, consistency, formatting, missing unit suffix | `RomTicks` for frames; summary on a field's line |
+| **Minor** | Naming, consistency, formatting, missing unit suffix | `ArcadeTicks` for frames; summary on a field's line |
 | **Note** | A question for the author, or a pre-existing issue next to the change | an unexplained asymmetry that may be the ROM's |
 
 A stale or false comment is **Major**, not Minor. In this codebase the comments are how the ROM mapping is
@@ -763,8 +763,8 @@ Example:
 
 ```
 [Major] CMT-4 src/Robotron2084/Entities/Enforcer.cs:14 — remark says the grow-up is "40 in all"; the constant is 45.
-  Why: the prose restates a value and has already drifted from EnforcerGrowUpRomFrames.
-  Fix: replace "five pictures of 9 frames (40 in all)" with "EnforcerGrowUpRomFrames, in steps of EnforcerGrowStepRomFrames".
+  Why: the prose restates a value and has already drifted from EnforcerGrowUpArcadeFrames.
+  Fix: replace "five pictures of 9 frames (40 in all)" with "EnforcerGrowUpArcadeFrames, in steps of EnforcerGrowStepArcadeFrames".
 ```
 
 End the review with a one-paragraph summary: how many findings at each level, the most important one, and any
@@ -773,7 +773,7 @@ question that needs the author.
 ## What not to flag
 
 - ROM labels, addresses and `notes §NN` references. These are required (CMT-1).
-- Deliberate deviations marked "do not revert without asking" (e.g. `Human.BeatIntervalRomFrames`), unless the marking is missing.
+- Deliberate deviations marked "do not revert without asking" (e.g. `Human.BeatIntervalArcadeFrames`), unless the marking is missing.
 - Byte tables copied from the ROM (`WaveTable`, `AttractMovieData`), as long as they have a summary giving the ROM
   address. They are data, not magic numbers.
 - Style choices the `.editorconfig` and analyzers already enforce. The build reports those.
