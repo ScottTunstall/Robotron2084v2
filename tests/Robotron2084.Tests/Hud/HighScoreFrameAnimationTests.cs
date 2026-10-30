@@ -25,7 +25,7 @@ public sealed class HighScoreFrameAnimationTests
     }
 
     [Fact]
-    public void TwoStrokesAreDrawnPerRomFrame()
+    public void TwoStrokesAreDrawnPerArcadeFrame()
     {
         var frame = new HighScoreFrameAnimation();
 

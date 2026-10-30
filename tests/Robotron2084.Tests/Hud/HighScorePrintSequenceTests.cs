@@ -6,7 +6,7 @@ namespace Robotron2084.Tests.Hud;
 /// <summary>
 ///     RRTABLE's printing order (notes §98.6) — the page BUILDS ITSELF: <c>MAKP LOOPP</c>
 ///     and <c>JSR FRAMER</c> put the wall on an empty screen, then <c>PRJNK</c> prints the
-///     lists FOUR ROWS A ROM FRAME (<c>LDA #4 / STA PD+17,U</c> + <c>NAP 1</c>), with the top
+///     lists FOUR ROWS A ARCADE FRAME (<c>LDA #4 / STA PD+17,U</c> + <c>NAP 1</c>), with the top
 ///     entry between them and the headers last, and only then do the ramp processes start.
 /// </summary>
 public sealed class HighScorePrintSequenceTests
@@ -42,7 +42,7 @@ public sealed class HighScorePrintSequenceTests
     }
 
     [Fact]
-    public void FourRowsPrintPerRomFrame_AndThePageEndsWithTheHeaders()
+    public void FourRowsPrintPerArcadeFrame_AndThePageEndsWithTheHeaders()
     {
         var print = new HighScorePrintSequence();
         print.Tick(true, Today, AllTime);
@@ -73,7 +73,7 @@ public sealed class HighScorePrintSequenceTests
     }
 
     [Fact]
-    public void TheWholePagePrintsInAboutTenRomFrames()
+    public void TheWholePagePrintsInAboutTenArcadeFrames()
     {
         // 10 rows = 3 groups (2 sleeps) and 36 rows = 9 groups (8 sleeps): ten fiftieths of a second
         // = twelve ticks, a fifth of a second of printing after the frame's own 53.

@@ -159,7 +159,7 @@ public sealed class InitialsEntryModelTests
     }
 
     [Fact]
-    public void AHeldDirectionRepeatsTheRomWay_ALateFirstRepeatThenEverySeventyMilliseconds()
+    public void AHeldDirectionRepeatsTheArcadeWay_ALateFirstRepeatThenEverySeventyMilliseconds()
     {
         var model = Started();
 
@@ -188,10 +188,10 @@ public sealed class InitialsEntryModelTests
 
         // TIMPRC gives each remaining letter 640 fiftieths of a second (768 port ticks), and the entry ends
         // when the last of them runs out — three deadlines for three letters.
-        Tick(model, Idle, TicksForRomFrames(2 * 640));
+        Tick(model, Idle, TicksForArcadeFrames(2 * 640));
         Assert.False(model.IsComplete);
 
-        Tick(model, Idle, TicksForRomFrames(640) + 10);
+        Tick(model, Idle, TicksForArcadeFrames(640) + 10);
         Assert.True(model.IsComplete);
         Assert.Equal("   ", model.GetInitials());
     }
@@ -206,7 +206,7 @@ public sealed class InitialsEntryModelTests
         Assert.True(model.IsPreviewRub());
 
         // TIMPR2 stores a space rather than let a timed-out name end on the marker.
-        Tick(model, Idle, TicksForRomFrames(2 * 640) + 10);
+        Tick(model, Idle, TicksForArcadeFrames(2 * 640) + 10);
 
         Assert.True(model.IsComplete);
         Assert.Equal("A  ", model.GetInitials());
@@ -253,8 +253,8 @@ public sealed class InitialsEntryModelTests
     }
 
     /// <summary>A port tick is five clock units, and a fiftieth of a second is six, so N frames are (N x 6 + 4) / 5 ticks.</summary>
-    private static int TicksForRomFrames(int romFrames)
+    private static int TicksForArcadeFrames(int arcadeFrames)
     {
-        return (romFrames * 6 + 4) / 5;
+        return (arcadeFrames * 6 + 4) / 5;
     }
 }
