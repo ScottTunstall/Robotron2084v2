@@ -1,14 +1,14 @@
 namespace Robotron2084.Core;
 
 /// <summary>
-///     Tells its owner when a wait, measured in <see cref="ArcadeClock.RomFramesPerSecond">fiftieths of a second</see>,
+///     Tells its owner when a wait, measured in <see cref="ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>,
 ///     is over.
 /// </summary>
 /// <remarks>
 ///     <para>Why it is needed:</para>
 ///     <list type="bullet">
 ///         <item>
-///             The arcade measured its waits in <see cref="ArcadeClock.RomFramesPerSecond">fiftieths of a second</see>,
+///             The arcade measured its waits in <see cref="ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>,
 ///             but the game can only act on a <see cref="ArcadeClock.PortTicksPerSecond">tick</see>.
 ///         </item>
 ///         <item>
@@ -49,13 +49,13 @@ namespace Robotron2084.Core;
 ///     <list type="bullet">
 ///         <item>A beat is an entity's turn to move or act.</item>
 ///         <item>
-///             An entity that has beats keeps a <see cref="RomFrameTimer" /> for them, and passes it the time between
-///             beats, in <see cref="ArcadeClock.RomFramesPerSecond">fiftieths of a second</see>.
+///             An entity that has beats keeps a <see cref="ArcadeFrameTimer" /> for them, and passes it the time between
+///             beats, in <see cref="ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>.
 ///         </item>
 ///     </list>
-///     <code>if (_beatTimer.Tick(BeatIntervalRomFrames)) ActOnBeat(field);</code>
+///     <code>if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);</code>
 /// </remarks>
-public sealed class RomFrameTimer
+public sealed class ArcadeFrameTimer
 {
     /// <summary>
     ///     The time gathered towards the current wait, in <see cref="ArcadeClock.ClockUnitsPerSecond">clock units</see>.
@@ -63,7 +63,7 @@ public sealed class RomFrameTimer
     private int _clockUnits;
 
     /// <summary>Makes a timer with no time gathered.</summary>
-    public RomFrameTimer()
+    public ArcadeFrameTimer()
     {
     }
 
@@ -73,33 +73,33 @@ public sealed class RomFrameTimer
     ///     value makes the first wait longer.
     /// </param>
     /// <remarks>Use it when the timer must keep in step with another clock that is already running.</remarks>
-    public RomFrameTimer(int clockUnits)
+    public ArcadeFrameTimer(int clockUnits)
     {
         _clockUnits = clockUnits;
     }
 
     /// <summary>
-    ///     Makes a timer that has already gathered the whole of <paramref name="intervalRomFrames" />, so the first call
+    ///     Makes a timer that has already gathered the whole of <paramref name="intervalArcadeFrames" />, so the first call
     ///     of <see cref="Tick" /> with that same wait returns true.
     /// </summary>
-    /// <param name="intervalRomFrames">
+    /// <param name="intervalArcadeFrames">
     ///     The wait the owner will pass to <see cref="Tick" />, in
-    ///     <see cref="ArcadeClock.RomFramesPerSecond">fiftieths of a second</see>.
+    ///     <see cref="ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>.
     /// </param>
     /// <remarks>
     ///     Use it for something that must happen on the owner's very first
     ///     <see cref="ArcadeClock.PortTicksPerSecond">tick</see>.
     /// </remarks>
-    public static RomFrameTimer CreateDue(int intervalRomFrames)
+    public static ArcadeFrameTimer CreateDue(int intervalArcadeFrames)
     {
-        return new RomFrameTimer(ArcadeClock.ToClockUnits(intervalRomFrames));
+        return new ArcadeFrameTimer(ArcadeClock.ToClockUnits(intervalArcadeFrames));
     }
 
     /// <summary>
     ///     Counts one <see cref="ArcadeClock.PortTicksPerSecond">tick</see>, and says whether the wait is over.
     /// </summary>
-    /// <param name="intervalRomFrames">
-    ///     How long the wait is, in <see cref="ArcadeClock.RomFramesPerSecond">fiftieths of a second</see>. It may be
+    /// <param name="intervalArcadeFrames">
+    ///     How long the wait is, in <see cref="ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>. It may be
     ///     different from the wait passed last time.
     /// </param>
     /// <returns>True if the wait is over on this <see cref="ArcadeClock.PortTicksPerSecond">tick</see>.</returns>
@@ -119,10 +119,10 @@ public sealed class RomFrameTimer
     ///         </item>
     ///     </list>
     /// </remarks>
-    public bool Tick(int intervalRomFrames)
+    public bool Tick(int intervalArcadeFrames)
     {
         _clockUnits += ArcadeClock.UnitsPerPortTick;
-        var intervalClockUnits = ArcadeClock.ToClockUnits(intervalRomFrames);
+        var intervalClockUnits = ArcadeClock.ToClockUnits(intervalArcadeFrames);
         if (_clockUnits < intervalClockUnits) return false;
 
         _clockUnits -= intervalClockUnits;
