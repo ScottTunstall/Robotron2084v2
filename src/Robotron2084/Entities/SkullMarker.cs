@@ -10,9 +10,7 @@ namespace Robotron2084.Entities;
 /// <summary>The little skull left on the ground where a robot killed a family member. It fades away after a while.</summary>
 /// <seealso cref="Human" />
 /// <remarks>
-///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />.
-///     The one time it does not is during the short freeze just after the player is killed.
+///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <see cref="_lifeTimer" /> says when it is time for it to go.
 ///     <list type="bullet">
 ///         <item>
@@ -27,7 +25,7 @@ public sealed class SkullMarker : IEntity
     /// <summary>
     ///     How long the skull stays on the field. <see cref="_lifeTimer" /> says when this time is up.
     /// </summary>
-    private const int LifeRomFrames = 90;
+    private const int LifeArcadeFrames = 90;
 
     /// <summary>How big the skull is, in port pixels. It is the size of the skull's sprite.</summary>
     private static readonly (int Width, int Height) CollisionSize =
@@ -36,7 +34,7 @@ public sealed class SkullMarker : IEntity
 
     private readonly IntVector2 _position;
     private readonly SpriteSet _sprites;
-    private readonly RomFrameTimer _lifeTimer = new();
+    private readonly ArcadeFrameTimer _lifeTimer = new();
 
     /// <summary>Leaves a skull where a family member was killed.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -73,6 +71,6 @@ public sealed class SkullMarker : IEntity
     /// <param name="field">Not used.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (_lifeTimer.Tick(LifeRomFrames)) LifeState = EntityLifeState.Dead;
+        if (_lifeTimer.Tick(LifeArcadeFrames)) LifeState = EntityLifeState.Dead;
     }
 }

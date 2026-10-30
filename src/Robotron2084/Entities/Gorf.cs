@@ -12,10 +12,8 @@ namespace Robotron2084.Entities;
 ///     does not shoot.
 /// </summary>
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, and takes one step on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on
-///     every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />.
-///     The one time it does not is during the short freeze just after the player is killed.
-///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, and <see cref="_animationTimer" /> when it is
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, and takes one step on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, and <see cref="_animationTimer" /> when it is
 ///     time for the next animation frame.
 ///     Gorf is the author's own robot. It is not in the arcade game (notes §138.2). It starts off the screen, on a random
 ///     side and
@@ -33,7 +31,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Gorf : IExplodable, IRemovable
 {
-    /// <summary>How big Gorf is, in port pixels. This size is used to tell what Gorf touches.</summary>
+    /// <summary>How big Gorf is, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height));
@@ -55,8 +53,8 @@ public sealed class Gorf : IExplodable, IRemovable
     private readonly Random _random;
     private readonly SpriteSet _sprites;
     private readonly int _totalSteps;
-    private readonly RomFrameTimer _animationTimer = new();
-    private readonly RomFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _animationTimer = new();
+    private readonly ArcadeFrameTimer _beatTimer = new();
     private IntVector2 _position;
     private int _stepCount;
     private int _stepInHop;
@@ -90,10 +88,10 @@ public sealed class Gorf : IExplodable, IRemovable
             _dropSteps.Enqueue(stop * _totalSteps / (GorfTuning.DropStops + 1));
     }
 
-    /// <summary>Which of the two animation frames is showing, 0 or 1. Only tests use this.</summary>
+    /// <summary>Which of the two animation frames is showing, 0 or 1.</summary>
     internal int AnimationFrameIndex { get; private set; }
 
-    /// <summary>The box Gorf takes up on the screen. It is used to tell what Gorf touches.</summary>
+    /// <summary>The box Gorf takes up on the screen.</summary>
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
@@ -122,7 +120,7 @@ public sealed class Gorf : IExplodable, IRemovable
     /// <summary>Where Gorf's top-left corner is.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>Gets the animation frame the Gorf is showing, for drawing and for the appear and explosion effects.</summary>
+    /// <summary>Gets the animation frame Gorf is showing.</summary>
     /// <returns>The animation frame that is showing.</returns>
     public Texture2D GetCurrentAnimationFrame()
     {
@@ -148,7 +146,7 @@ public sealed class Gorf : IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. Gorf animates. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> it takes a step along its hop, and drops grunts if it has reached a
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. Gorf animates. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> it takes a step along its hop, and drops grunts if it has reached a
     ///     drop point.
     /// </summary>
     /// <param name="gameTime">Not used. Gorf counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
@@ -157,8 +155,8 @@ public sealed class Gorf : IExplodable, IRemovable
     {
         if (!this.IsAlive() || field.RobotsFrozen()) return;
 
-        if (_animationTimer.Tick(GorfTuning.AnimationIntervalRomFrames)) ShowNextAnimationFrame();
-        if (_beatTimer.Tick(GorfTuning.BeatIntervalRomFrames)) ActOnBeat(field);
+        if (_animationTimer.Tick(GorfTuning.AnimationIntervalArcadeFrames)) ShowNextAnimationFrame();
+        if (_beatTimer.Tick(GorfTuning.BeatIntervalArcadeFrames)) ActOnBeat(field);
     }
 
     /// <summary>Kills Gorf at once, with no flash and no death animation.</summary>
@@ -169,7 +167,7 @@ public sealed class Gorf : IExplodable, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>How many more times it will drop grunts. Only tests use this.</summary>
+    /// <summary>How many more times it will drop grunts.</summary>
     internal int GetDropStopsRemaining()
     {
         return _dropSteps.Count;
@@ -182,7 +180,7 @@ public sealed class Gorf : IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     What Gorf does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It takes one step along the hop, drops grunts if a drop is due, and is gone once
+    ///     What Gorf does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It takes one step along the hop, drops grunts if a drop is due, and is gone once
     ///     it has crossed the playfield.
     /// </summary>
     /// <param name="field">The playfield, which the dropped grunts are put on.</param>

@@ -14,10 +14,8 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Player" />
 /// <seealso cref="Human" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. There are two times it does not: while the
-///     hulk is still appearing at the start of a wave, and during the short freeze just after the player is killed.
-///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRH11.ASM</c>, routine <c>HULK</c> (with <c>HULKND</c>, <c>HULKIL</c>
@@ -49,7 +47,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         <item>Disassembly: <c>$0030</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int LivePollRomFrames = 8;
+    private const int LivePollArcadeFrames = 8;
 
     /// <summary>
     ///     The hulk does not aim exactly at its target. A random number is added to where the target is: so many columns
@@ -215,8 +213,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private const int WalkPatternLength = 4;
 
     /// <summary>
-    ///     How big the hulk is, in port pixels. It is the size of the hulk's sprite, and it is used to tell what the hulk
-    ///     touches.
+    ///     How big the hulk is, in port pixels. It is the size of the hulk's sprite.
     /// </summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width),
@@ -237,7 +234,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private static readonly int[] VerticalAnimationFrames = { 3, 4, 3, 5 };
 
     /// <summary>
-    ///     The time from one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> to the next. It is set from the wave's hulk speed.
+    ///     The time from one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> to the next. It is set from the wave's hulk speed.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -245,7 +242,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
     ///     </list>
     /// </remarks>
-    private readonly int _beatIntervalRomFrames;
+    private readonly int _beatIntervalArcadeFrames;
 
     private readonly Func<IntVector2> _getTargetPosition;
 
@@ -255,7 +252,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <summary>Which animation frame is showing, as a place in the sprite set's hulk animation frames.</summary>
     private int _animationFrameIndex;
 
-    private RomFrameTimer _beatTimer = new();
+    private ArcadeFrameTimer _beatTimer = new();
 
     private bool _hasAimed;
     private bool _isMovingHorizontally;
@@ -279,7 +276,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     Where its random numbers come from. They pick how many steps it takes before it turns, and move
     ///     its aim a little.
     /// </param>
-    /// <param name="beatIntervalRomFrames">
+    /// <param name="beatIntervalArcadeFrames">
     ///     How long the hulk waits between steps (ROM: <c>HLKSPD</c>). A bigger number makes a
     ///     slower hulk.
     /// </param>
@@ -291,7 +288,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRH11.ASM</c> <c>HLKSPD</c>. The time between <see cref="Robotron2084.Core.RomFrameTimer">beats</see> is set by the wave
+    ///             Original source: <c>RRH11.ASM</c> <c>HLKSPD</c>. The time between <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> is set by the wave
     ///             of a second.
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_HULK</c> (<c>$003E</c>).</item>
@@ -301,23 +298,23 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         SpriteSet sprites,
         IntVector2 position,
         Random random,
-        int beatIntervalRomFrames,
+        int beatIntervalArcadeFrames,
         Func<IntVector2> getTargetPosition)
     {
         _sprites = sprites;
         _position = position;
         _random = random;
-        _beatIntervalRomFrames = beatIntervalRomFrames;
+        _beatIntervalArcadeFrames = beatIntervalArcadeFrames;
         _getTargetPosition = getTargetPosition;
         _reaimStepsRemaining = RollReaimSteps();
         Direction = Direction8.Up; // Up is only a stand-in. When the hulk first aims, this changes to left or right.
         _animationFrameIndex = VerticalAnimationFrames[0];
     }
 
-    /// <summary>Which animation frame is showing, as a place in <see cref="SpriteSet.HulkAnimationFrames" />. Tests use this.</summary>
+    /// <summary>Which animation frame is showing, as a place in <see cref="SpriteSet.HulkAnimationFrames" />.</summary>
     internal int AnimationFrameIndex => _animationFrameIndex;
 
-    /// <summary>Which way the hulk is walking. Tests use this.</summary>
+    /// <summary>Which way the hulk is walking.</summary>
     internal Direction8 Direction { get; private set; }
 
     /// <summary>The walk animation frame the hulk is showing. The appear effect needs it.</summary>
@@ -327,7 +324,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         return _sprites.HulkAnimationFrames[_animationFrameIndex];
     }
 
-    /// <summary>The box the hulk takes up on the screen. It is used to tell what the hulk touches.</summary>
+    /// <summary>The box the hulk takes up on the screen.</summary>
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
@@ -353,7 +350,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> the hulk takes a step. If the wall is in the way, it does not step and picks a new
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the hulk takes a step. If the wall is in the way, it does not step and picks a new
     ///     direction.
     /// </summary>
     /// <param name="gameTime">Not used. The hulk counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
@@ -369,23 +366,22 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
             return;
         }
 
-        if (_beatTimer.Tick(_beatIntervalRomFrames)) ActOnBeat(field);
+        if (_beatTimer.Tick(_beatIntervalArcadeFrames)) ActOnBeat(field);
     }
 
     /// <summary>
-    ///     Aims the hulk and sets the time of its first step, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.RomFrameTimer">beat</see> timer is set so
+    ///     Aims the hulk and sets the time of its first step, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> timer is set so
     ///     that it comes due when that time has gone by.
     /// </summary>
     /// <param name="field">The playfield, which works out how long the wait is.</param>
     public void BeginPlay(PlayField field)
     {
         AimForTheFirstTime(field);
-        _beatTimer = field.CreateFirstBeatTimer(LivePollRomFrames, 0, _beatIntervalRomFrames);
+        _beatTimer = field.CreateFirstBeatTimer(LivePollArcadeFrames, 0, _beatIntervalArcadeFrames);
     }
 
     /// <summary>
     ///     Where the hulk is heading for now: the player, a family member, or the spot off the corner of the playfield.
-    ///     Tests use this.
     /// </summary>
     internal IntVector2 GetTargetPosition()
     {
@@ -421,7 +417,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         }
     }
 
-    /// <summary>Puts the hulk at <paramref name="position" />. Tests use this.</summary>
+    /// <summary>Puts the hulk at <paramref name="position" />.</summary>
     /// <param name="position">Where to put the hulk's top-left corner.</param>
     internal void TeleportTo(IntVector2 position)
     {
@@ -429,7 +425,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     }
 
     /// <summary>
-    ///     What the hulk does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It takes a step. If the wall is in the way, it does not step and picks a new
+    ///     What the hulk does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It takes a step. If the wall is in the way, it does not step and picks a new
     ///     direction.
     /// </summary>
     /// <param name="field">The playfield.</param>

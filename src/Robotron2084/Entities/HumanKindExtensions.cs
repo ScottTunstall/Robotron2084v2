@@ -20,7 +20,7 @@ public static class HumanKindExtensions
         };
     }
 
-    /// <summary>How big the family member is, in arcade pixels. This size is used to tell what the family member touches.</summary>
+    /// <summary>How big the family member is, in arcade pixels.</summary>
     /// <param name="kind">Which family member.</param>
     public static (int Width, int Height) GetArcadeCollisionSize(this HumanKind kind)
     {

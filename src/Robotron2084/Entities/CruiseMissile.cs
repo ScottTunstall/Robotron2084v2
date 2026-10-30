@@ -14,9 +14,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Brain" />
 /// <seealso cref="PlayerLaser" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRB10.ASM</c>, routine <c>CMISL</c> (fired via <c>BRNSHT</c>, aimed by
@@ -39,22 +37,22 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// </summary>
     private const int AimNoiseRange = 16;
 
-    /// <summary>How long one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> lasts.</summary>
+    /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
     /// <remarks>ROM: <c>NAP 2</c>, plus the one the routine runs in.</remarks>
-    private const int BeatIntervalRomFrames = 3;
+    private const int BeatIntervalArcadeFrames = 3;
 
-    /// <summary>How many moves the missile makes on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</summary>
+    /// <summary>How many moves the missile makes on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
     private const int MovesPerBeat = 2;
 
     /// <summary>
-    ///     The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> a missile may go before it aims again. <see cref="_reaimBeatsRemaining" /> is set to a random
-    ///     number of <see cref="Robotron2084.Core.RomFrameTimer">beats</see> from one up to this.
+    ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a missile may go before it aims again. <see cref="_reaimBeatsRemaining" /> is set to a random
+    ///     number of <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> from one up to this.
     /// </summary>
     private const int ReaimMaxBeats = 7;
 
     /// <summary>
-    ///     How big the missile's box is, in port pixels. The box is used to tell what the missile touches. It sits up and
-    ///     to the left of the missile's own position (see <see cref="GetBounds" />).
+    ///     How big the missile's box is, in port pixels. The box sits up and to the left of the missile's own position
+    ///     (see <see cref="GetBounds" />).
     /// </summary>
     /// <remarks>
     ///     The disassembly calls this box "FAT PHONY GUY". It is much bigger than the dot the missile is drawn as, which is
@@ -81,7 +79,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// </summary>
     private readonly List<IntVector2> _trail = new();
 
-    private readonly RomFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _beatTimer = new();
 
     private IntVector2 _position;
 
@@ -108,14 +106,14 @@ public sealed class CruiseMissile : IEntity, IRemovable
         _reaimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReaimMaxBeats);
     }
 
-    /// <summary>The places the missile has just been, oldest first. Tests use this.</summary>
+    /// <summary>The places the missile has just been, oldest first.</summary>
     internal IReadOnlyList<IntVector2> Trail => _trail;
 
-    /// <summary>How many pixels the missile goes left or right, and how many up or down, each time it moves. Tests use this.</summary>
+    /// <summary>How many pixels the missile goes left or right, and how many up or down, each time it moves.</summary>
     internal IntVector2 Velocity => _velocity;
 
     /// <summary>
-    ///     The box used to tell what the missile touches. It starts a little up and to the left of the missile's own
+    ///     The box the missile takes up on the screen. It starts a little up and to the left of the missile's own
     ///     position.
     /// </summary>
     /// <remarks>ROM: the "FAT PHONY GUY" box, which sits up and to the left of the missile's own position.</remarks>
@@ -160,14 +158,14 @@ public sealed class CruiseMissile : IEntity, IRemovable
             _sprites.Blitter.GetSlotColour(CruiseMissileTuning.HeadSlot));
     }
 
-    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, the missile aims at the player again if it is time to, and then moves.</summary>
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, the missile aims at the player again if it is time to, and then moves.</summary>
     /// <param name="gameTime">Not used. The missile counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
         if (!this.IsAlive()) return;
 
-        if (_beatTimer.Tick(BeatIntervalRomFrames)) ActOnBeat(field);
+        if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);
     }
 
     /// <summary>Kills the missile at once. Its trail goes with it.</summary>
@@ -181,7 +179,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     }
 
     /// <summary>
-    ///     What the missile does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It first aims at the player again, if it is time to, and then moves
+    ///     What the missile does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It first aims at the player again, if it is time to, and then moves
     ///     (ROM: <c>CMISL</c>).
     /// </summary>
     /// <param name="field">The playfield.</param>

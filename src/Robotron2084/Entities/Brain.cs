@@ -15,15 +15,13 @@ namespace Robotron2084.Entities;
 /// <seealso cref="PlayField" />
 /// <seealso cref="Human" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. There are two times it does not: while the
-///     brain is still appearing at the start of a wave, and during the short freeze just after the player is killed.
-///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <see cref="_reprogramTimer" /> times the steps of reprogramming a family member.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRB10.ASM</c>: <c>BRNSTV</c> (start the brains),
-///             <c>BRAIN</c>/<c>BRNL</c>/<c>BRNL1</c> (each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>), <c>BMUT</c> (reprogram a family member), <c>BRNSHT</c>
+///             <c>BRAIN</c>/<c>BRNL</c>/<c>BRNL1</c> (each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>), <c>BMUT</c> (reprogram a family member), <c>BRNSHT</c>
 ///             (fire a cruise missile), <c>BRNKIL</c> (shot by a laser)
 ///         </item>
 ///         <item>
@@ -41,7 +39,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>
     ///     How long the arcade's routine sleeps between one look at whether the game is live and the next. It decides how
-    ///     long after the game goes live the first <see cref="Robotron2084.Core.RomFrameTimer">beat</see> comes (<see cref="BeginPlay" />).
+    ///     long after the game goes live the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> comes (<see cref="BeginPlay" />).
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -49,23 +47,23 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>$1BD8</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int LivePollRomFrames = 4;
+    private const int LivePollArcadeFrames = 4;
 
-    /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</summary>
+    /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRB10.ASM</c> <c>BRN0A</c>, <c>NAP 12,BRNL</c>.</item>
     ///         <item>Disassembly: <c>$1BD8</c> onwards.</item>
     ///     </list>
     /// </remarks>
-    private const int FirstBeatNapRomFrames = 12;
+    private const int FirstBeatNapArcadeFrames = 12;
 
-    /// <summary>How long one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> takes to run. The time from one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> to the next.</summary>
+    /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> takes to run. The time from one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> to the next.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRB10.ASM</c> <c>BRNSLP</c>, the sleep of <c>BRNSPD</c> frames at the end
-    ///             of each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+    ///             of each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
     ///         </item>
     ///         <item>
     ///             Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>), the wait loaded from <c>$BE63</c> at
@@ -73,7 +71,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///         </item>
     ///     </list>
     /// </remarks>
-    private const int BeatExecutionRomFrames = 1;
+    private const int BeatExecutionArcadeFrames = 1;
 
     /// <summary>How far to the right of the brain's top-left corner a new cruise missile appears, in columns.</summary>
     /// <remarks>
@@ -164,8 +162,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private static readonly int CatchReachY = ScreenSize.ToPortPixelsFromArcadePixels(ReprogramTuning.CatchReachRows);
 
     /// <summary>
-    ///     How big the brain is, in port pixels. It is the size of the brain's sprite, and it is used to tell what the
-    ///     brain touches.
+    ///     How big the brain is, in port pixels. It is the size of the brain's sprite.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -177,7 +174,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BrainCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BrainCollisionSize.Height));
 
-    /// <summary>How far the brain moves sideways on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, in port pixels.</summary>
+    /// <summary>How far the brain moves sideways on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, in port pixels.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 column.</item>
@@ -186,7 +183,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(1);
 
-    /// <summary>How far the brain moves up or down on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, in port pixels.</summary>
+    /// <summary>How far the brain moves up or down on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, in port pixels.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 row.</item>
@@ -207,18 +204,18 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
-    /// <summary>The time from one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> to the next.</summary>
-    private readonly int _beatIntervalRomFrames;
+    /// <summary>The time from one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> to the next.</summary>
+    private readonly int _beatIntervalArcadeFrames;
 
-    /// <summary>The longest wait, in <see cref="Robotron2084.Core.RomFrameTimer">beats</see>, between cruise missiles. Each wait is a random number from 1 up to this.</summary>
+    /// <summary>The longest wait, in <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>, between cruise missiles. Each wait is a random number from 1 up to this.</summary>
     private readonly int _fireIntervalBeats;
 
     private readonly Random _random;
     private readonly SpriteSet _sprites;
 
-    private RomFrameTimer _beatTimer = new();
+    private ArcadeFrameTimer _beatTimer = new();
 
-    /// <summary><see cref="Robotron2084.Core.RomFrameTimer">Beats</see> left before the brain fires its next cruise missile.</summary>
+    /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the brain fires its next cruise missile.</summary>
     private int _fireBeatsRemaining;
 
     private IntVector2 _position;
@@ -230,7 +227,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private int _reprogramRedrawsRemaining;
 
     /// <summary>Says when it is time for the next reprogramming step.</summary>
-    private RomFrameTimer _reprogramTimer = new();
+    private ArcadeFrameTimer _reprogramTimer = new();
 
     /// <summary>Which place in the family list the brain is chasing.</summary>
     private int _targetSlot;
@@ -247,18 +244,18 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>Which walk the brain is showing. A new brain shows the one for walking down.</summary>
     private WalkSequence _walkSequence = WalkSequence.Down;
 
-    /// <summary>Makes a brain. It takes its first step on its first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</summary>
+    /// <summary>Makes a brain. It takes its first step on its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where the brain's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick the waits between missiles and the shaking during
     ///     reprogramming.
     /// </param>
-    /// <param name="beatWaitRomFrames">
-    ///     How long this wave's brains wait after each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. A bigger number makes a slower brain.
-    ///     The time from one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> to the next is this plus <see cref="BeatExecutionRomFrames" />.
+    /// <param name="beatWaitArcadeFrames">
+    ///     How long this wave's brains wait after each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. A bigger number makes a slower brain.
+    ///     The time from one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> to the next is this plus <see cref="BeatExecutionArcadeFrames" />.
     /// </param>
-    /// <param name="fireIntervalBeats">The longest this wave's brains wait between cruise missiles, in <see cref="Robotron2084.Core.RomFrameTimer">beats</see>.</param>
+    /// <param name="fireIntervalBeats">The longest this wave's brains wait between cruise missiles, in <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>.</param>
     /// <param name="targetFamilySlot">Which place in the family list the brain chases at the start.</param>
     /// <remarks>
     ///     <list type="bullet">
@@ -268,9 +265,9 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///         </item>
     ///         <item>
     ///             Disassembly: <c>INITIALISE_ALL_BRAINS</c> (<c>$1AF4</c>) and
-    ///             <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c> (<c>$1B95</c>). The playfield passes the nearest place in the
-    ///             family list as the brain is made, before the family is on the field. That is the ROM's own order, and it is
-    ///             why every brain in the arcade chases Mikey (notes §18.8).
+    ///             <c>FIND_NEAREST_FAMILY_MEMBER_TO_PROG</c> (<c>$1B95</c>). The ROM picks the nearest place in the family
+    ///             list as each brain is made, before the family is on the field, which is why every brain in the arcade
+    ///             chases Mikey (notes §18.8).
     ///         </item>
     ///     </list>
     /// </remarks>
@@ -278,7 +275,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         SpriteSet sprites,
         IntVector2 position,
         Random random,
-        int beatWaitRomFrames,
+        int beatWaitArcadeFrames,
         int fireIntervalBeats,
         int targetFamilySlot)
     {
@@ -287,7 +284,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
         _targetSlot = targetFamilySlot;
-        _beatIntervalRomFrames = BeatExecutionRomFrames + beatWaitRomFrames;
+        _beatIntervalArcadeFrames = BeatExecutionArcadeFrames + beatWaitArcadeFrames;
         _fireBeatsRemaining = ArcadeRandom.PickUpTo(random, fireIntervalBeats);
     }
 
@@ -296,8 +293,8 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRB10.ASM</c> <c>BRNL0</c>, the object the brain's <c>PD2</c> pointer
-    ///             leads to. It is null until the first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, because the ROM works the target out inside the
-    ///             <see cref="Robotron2084.Core.RomFrameTimer">beat</see> (notes §18.8).
+    ///             leads to. It is null until the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, because the ROM works the target out inside the
+    ///             <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> (notes §18.8).
     ///         </item>
     ///         <item>Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>).</item>
     ///     </list>
@@ -313,7 +310,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     internal int TargetFamilySlot => _targetSlot;
 
-    /// <summary>The box the brain takes up on the screen. It is used to tell what the brain touches.</summary>
+    /// <summary>The box the brain takes up on the screen.</summary>
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
@@ -339,8 +336,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         return _sprites.BrainAnimationFrames[GetWalkAnimationFrameIndex()];
     }
 
-    /// <summary>Alive until a laser hits it, then dead at once. The brain has no death animation of its own.</summary>
-    /// <remarks>The explosion that follows is made by the playfield, not by the brain (<see cref="IExplodable" />).</remarks>
+    /// <summary>Alive until it is killed, then dead at once. The brain has no death animation of its own.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Where the brain's top-left corner is.</summary>
@@ -372,7 +368,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the brain. When a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> is due it chases its target, takes a step, changes its animation frame
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the brain. When a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> is due it chases its target, takes a step, changes its animation frame
     ///     and counts down to its next missile.
     /// </summary>
     /// <param name="gameTime">Not used. The brain counts in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>, not in seconds.</param>
@@ -391,14 +387,14 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 
         if (_victim is { } victim)
         {
-            if (_reprogramTimer.Tick(ReprogramTuning.StepIntervalRomFrames)) TakeReprogramStep(field, victim);
+            if (_reprogramTimer.Tick(ReprogramTuning.StepIntervalArcadeFrames)) TakeReprogramStep(field, victim);
             return;
         }
 
-        if (_beatTimer.Tick(_beatIntervalRomFrames)) ActOnBeat(field);
+        if (_beatTimer.Tick(_beatIntervalArcadeFrames)) ActOnBeat(field);
     }
 
-    /// <summary>Takes the brain off the field at once. The playfield makes the explosion and gives the points.</summary>
+    /// <summary>Takes the brain off the field at once.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -407,8 +403,6 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///         </item>
     ///         <item>Disassembly: <c>BRAIN_COLLISION_HANDLER</c> (<c>$1DD6</c>)</item>
     ///     </list>
-    ///     A brain shot while it is reprogramming loses its victim, which is done by <see cref="PlayField" />
-    ///     (<c>ReleaseVictimsOfDeadBrains</c>).
     /// </remarks>
     public void Kill()
     {
@@ -418,13 +412,13 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Sets the time of the brain's first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.RomFrameTimer">beat</see> timer is set so that it
+    ///     Sets the time of the brain's first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> timer is set so that it
     ///     comes due when that time has gone by.
     /// </summary>
     /// <param name="field">The playfield, which works out how long the wait is.</param>
     public void BeginPlay(PlayField field)
     {
-        _beatTimer = field.CreateFirstBeatTimer(LivePollRomFrames, FirstBeatNapRomFrames, _beatIntervalRomFrames);
+        _beatTimer = field.CreateFirstBeatTimer(LivePollArcadeFrames, FirstBeatNapArcadeFrames, _beatIntervalArcadeFrames);
     }
 
     /// <summary>True while this brain is turning a family member into a prog.</summary>
@@ -445,8 +439,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>Gives the brain a new place in the family list to chase.</summary>
     /// <param name="targetFamilySlot">The place to chase from now on.</param>
     /// <remarks>
-    ///     This is not in the arcade game. The playfield uses it when the "all the brains chase Mikey" bug is switched
-    ///     off, to let each brain pick again once the family is on the field.
+    ///     This is not in the arcade game. It lets the brain pick its target again once the family is on the field.
     /// </remarks>
     internal void Retarget(int targetFamilySlot)
     {
@@ -483,7 +476,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         human.BeginReprogramming();
         _reprogramRedrawsRemaining = ReprogramTuning.Iterations * ReprogramTuning.RedrawsPerIteration;
         _reprogramMovingDown = true;
-        _reprogramTimer = RomFrameTimer.CreateDue(ReprogramTuning.StepIntervalRomFrames);
+        _reprogramTimer = ArcadeFrameTimer.CreateDue(ReprogramTuning.StepIntervalArcadeFrames);
 
         var humanWidth = human.GetBounds().Width;
         var x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
@@ -517,8 +510,8 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>) from <c>$1C48</c> to <c>$1C56</c></item>
     ///     </list>
     ///     The check compares the two top-left corners, not the sprites. Only the family member the brain is chasing
-    ///     can be caught. This method only answers the question. The playfield decides whether to start the
-    ///     reprogramming (<see cref="BeginReprogramming" />).
+    ///     can be caught. This method only answers the question. It does not start the reprogramming (see
+    ///     <see cref="BeginReprogramming" />).
     /// </remarks>
     internal Human? GetCatchableTarget()
     {
@@ -532,8 +525,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Lets go of the family member being reprogrammed, if there is one. That family member is then lost. This is
-    ///     used when the brain is shot part of the way through.
+    ///     Lets go of the family member being reprogrammed, if there is one. That family member is then lost.
     /// </summary>
     /// <returns>The family member the brain was reprogramming, or null if it was not reprogramming anyone.</returns>
     /// <remarks>
@@ -570,7 +562,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     What the brain does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It picks who to chase, takes a step towards them, and fires a cruise missile
+    ///     What the brain does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It picks who to chase, takes a step towards them, and fires a cruise missile
     ///     if it is time to.
     /// </summary>
     /// <param name="field">The playfield.</param>
@@ -629,7 +621,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     Moves the brain on to its next walking animation frame. If it has turned to face a new way, the walking starts
     ///     again from the first animation frame.
     /// </summary>
-    /// <param name="step">The step the brain tried to take this <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</param>
+    /// <param name="step">The step the brain tried to take this <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>

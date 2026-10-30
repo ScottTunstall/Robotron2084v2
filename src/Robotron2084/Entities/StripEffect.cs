@@ -11,9 +11,7 @@ namespace Robotron2084.Entities;
 ///     appears, the strips start far apart and close up to make the sprite.
 /// </summary>
 /// <remarks>
-///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_stepTimer" /> says when it is time for the effect's
+///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_stepTimer" /> says when it is time for the effect's
 ///     next step.
 ///     <list type="bullet">
 ///         <item>
@@ -30,8 +28,8 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class StripEffect : IEntity
 {
-    /// <summary>How often the effect takes a step: once every <see cref="Robotron2084.Core.ArcadeClock.RomFramesPerSecond">fiftieth of a second</see>, as in the arcade.</summary>
-    private const int StepIntervalRomFrames = 1;
+    /// <summary>How often the effect takes a step: once every <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieth of a second</see>, as in the arcade.</summary>
+    private const int StepIntervalArcadeFrames = 1;
 
     /// <summary>
     ///     How much the gap between the strips shrinks on each step, when the effect is an appear. It is measured the way
@@ -80,8 +78,8 @@ public sealed class StripEffect : IEntity
     /// <summary>True once an appear has taken its first step. The arcade draws nothing for an appear until then.</summary>
     private bool _hasAppearBeenDrawn;
 
-    private readonly RomFrameTimer _stepTimer; // notes §52, §67.4
-    private int _romFramesRemaining;
+    private readonly ArcadeFrameTimer _stepTimer; // notes §52, §67.4
+    private int _arcadeFramesRemaining;
 
     private int
         _spacingAccumulator; // 256 times the gap between the strips, so that the gap can change by less than a whole pixel at a time (ROM: YSIZER).
@@ -122,7 +120,7 @@ public sealed class StripEffect : IEntity
         Slope = slope;
         _clip = clip;
         _getCentreStripIndex = getCentreStripIndex;
-        _stepTimer = new RomFrameTimer(startClockUnits);
+        _stepTimer = new ArcadeFrameTimer(startClockUnits);
         _getFollowedBounds = getFollowedBounds;
 
         // How fast an appear closes up. The diagonal routine closes it twice as fast as the other two routines.
@@ -139,20 +137,19 @@ public sealed class StripEffect : IEntity
             ? StripExplosionTuning.ExplosionStartSizer
             : StripExplosionTuning.AppearStartSizer;
 
-        _romFramesRemaining = StripExplosionTuning.ExplosionFrames;
+        _arcadeFramesRemaining = StripExplosionTuning.ExplosionFrames;
     }
 
     /// <summary>
     ///     Which way the sprite is cut: into rows, which move up and down, or into columns, which move left and right.
-    ///     Tests use this.
     /// </summary>
     /// <remarks>The ROM calls the code for rows "vertical" and the code for columns "horizontal".</remarks>
     internal StripFanAxis Axis { get; }
 
-    /// <summary>Whether this is an explosion or an appear. Tests use this.</summary>
+    /// <summary>Whether this is an explosion or an appear.</summary>
     internal StripEffectKind Kind { get; }
 
-    /// <summary>How the strips lean: -1, 0 or +1 (see <see cref="GetFanForShot" />). Tests use this.</summary>
+    /// <summary>How the strips lean: -1, 0 or +1 (see <see cref="GetFanForShot" />).</summary>
     internal int Slope { get; }
 
     /// <summary>The box of the thing that is exploding or appearing.</summary>
@@ -215,12 +212,12 @@ public sealed class StripEffect : IEntity
     {
         if (!this.IsAlive()) return;
 
-        if (!_stepTimer.Tick(StepIntervalRomFrames)) return;
+        if (!_stepTimer.Tick(StepIntervalArcadeFrames)) return;
 
         if (Kind == StripEffectKind.Explode)
         {
             // When the explosion's time runs out, it is over. Until then, the strips move further apart on each step.
-            if (--_romFramesRemaining <= 0)
+            if (--_arcadeFramesRemaining <= 0)
             {
                 LifeState = EntityLifeState.Dead;
                 return;
@@ -233,7 +230,7 @@ public sealed class StripEffect : IEntity
         StepAppear();
     }
 
-    /// <summary>The gap between the strips now, in the sprite's own pixels. It is never less than 1. Tests use this.</summary>
+    /// <summary>The gap between the strips now, in the sprite's own pixels. It is never less than 1.</summary>
     internal int GetSpacing()
     {
         return Math.Max(1, _spacingAccumulator >> 8);
@@ -251,7 +248,7 @@ public sealed class StripEffect : IEntity
     /// </param>
     /// <param name="startClockUnits">
     ///     How far into the wait for its first step the effect starts, in <see cref="Robotron2084.Core.ArcadeClock.ClockUnitsPerSecond">clock units</see> (see
-    ///     <see cref="RomFrameTimer" />). This makes the first step come at the right time. It is below zero when the effect has
+    ///     <see cref="ArcadeFrameTimer" />). This makes the first step come at the right time. It is below zero when the effect has
     ///     to wait longer than usual for its first step.
     /// </param>
     /// <returns>The new appear.</returns>
@@ -343,7 +340,7 @@ public sealed class StripEffect : IEntity
     /// <remarks>
     ///     ROM: the "make an enemy explode" routine, which goes on to the code for a straight explosion or for a
     ///     leaning one. The box is at the object's position and is the size of the sprite the object shows, which can be
-    ///     bigger than the box used to tell what the object touches.
+    ///     bigger than the object's <see cref="IEntity.GetBounds" />.
     /// </remarks>
     public static StripEffect CreateExplosion(IExplodable dead, Direction8? direction, StripClip clip)
     {

@@ -15,10 +15,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="PlayField" />
 /// <seealso cref="PlayerLaser" />
 /// <remarks>
-///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> directly, in
-///     <see cref="PlayField.Update" />,
-///     on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The one time it does not is during the short freeze just after the player is killed.
-///     <see cref="_deathTimer" /> times the stages of its death,
+///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_deathTimer" /> times the stages of its death,
 ///     <see cref="_walkAnimationTicks" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> each animation frame is shown, and
 ///     <see cref="_invincibilityFlickerTicks" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> of its blinking.
 ///     <list type="bullet">
@@ -38,8 +35,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private const int WalkAnimationIntervalTicks = 3;
 
     /// <summary>
-    ///     How big the player is, in port pixels. It is the size of the player's sprite, and it is used to tell what the
-    ///     player touches.
+    ///     How big the player is, in port pixels. It is the size of the player's sprite.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -70,7 +66,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     // Which stage of the death animation is playing: a white flash, a coloured flash, or the fade to black (ROM: RRX7.ASM).
     private DeathStage _deathStage = DeathStage.White;
 
-    private readonly RomFrameTimer _deathTimer = new();
+    private readonly ArcadeFrameTimer _deathTimer = new();
     private int _invincibilityFlickerTicks;
     private int _invincibilityTicksRemaining;
     private IntVector2 _position;
@@ -121,7 +117,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         return _sprites.PlayerAnimationFrames[GetWalkAnimationFrameIndex()];
     }
 
-    /// <summary>The box the player takes up on the screen. It is used to tell what the player touches.</summary>
+    /// <summary>The box the player takes up on the screen.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -272,13 +268,13 @@ public sealed class Player : IEntity, IAnimationFrameSource
         };
     }
 
-    /// <summary>Starts the death animation, even when <see cref="InvincibleForTesting" /> is on. Tests use this.</summary>
+    /// <summary>Starts the death animation, even when <see cref="InvincibleForTesting" /> is on.</summary>
     internal void StartDeathForTesting()
     {
         if (this.IsAlive()) StartDeath();
     }
 
-    /// <summary>Puts the player at <paramref name="position" />. Tests use this.</summary>
+    /// <summary>Puts the player at <paramref name="position" />.</summary>
     /// <param name="position">Where to put the player's top-left corner.</param>
     internal void TeleportTo(IntVector2 position)
     {
@@ -335,14 +331,14 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// </remarks>
     private void AdvanceDeath(PlayField field)
     {
-        var intervalRomFrames = _deathStage switch
+        var intervalArcadeFrames = _deathStage switch
         {
-            DeathStage.White => PlayerTuning.PlayerDeathWhiteRomFrames,
-            DeathStage.Colour => PlayerTuning.PlayerDeathColourRomFrames,
-            _ => PlayerTuning.PlayerDeathFadeRomFrames
+            DeathStage.White => PlayerTuning.PlayerDeathWhiteArcadeFrames,
+            DeathStage.Colour => PlayerTuning.PlayerDeathColourArcadeFrames,
+            _ => PlayerTuning.PlayerDeathFadeArcadeFrames
         };
 
-        if (!_deathTimer.Tick(intervalRomFrames)) return;
+        if (!_deathTimer.Tick(intervalArcadeFrames)) return;
 
         switch (_deathStage)
         {

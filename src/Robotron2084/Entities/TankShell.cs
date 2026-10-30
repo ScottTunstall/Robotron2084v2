@@ -11,14 +11,11 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Tank" />
 /// <seealso cref="Level.PlayField" />
 /// <remarks>
-///     It moves steadily, and has a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> every few moves. The <see cref="PlayField" /> calls
-///     <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through <see cref="FieldEntities" /> and
-///     <see cref="PlayField.UpdateEntity" />. The one time it does not is during the short freeze just after the player
-///     is killed. <see cref="_moveTimer" /> says when it is time for the next move, and <see cref="_beatTimer" /> when
-///     it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+///     It moves steadily, and has a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> every few moves. <see cref="_moveTimer" /> says when it is time for the next move, and <see cref="_beatTimer" /> when
+///     it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>
-///             Original source: <c>RRTK4.ASM</c>: <c>TNKFIR</c> (aiming and speed), <c>SHELL</c> (each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>,
+///             Original source: <c>RRTK4.ASM</c>: <c>TNKFIR</c> (aiming and speed), <c>SHELL</c> (each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>,
 ///             bouncing and fizzling) and <c>SHLKIL</c>
 ///         </item>
 ///         <item>
@@ -47,12 +44,12 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>One row, in port pixels.</summary>
     private static readonly int RowPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
-    private readonly RomFrameTimer _beatTimer = new();
-    private readonly RomFrameTimer _moveTimer = new();
+    private readonly ArcadeFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _moveTimer = new();
     private readonly Rectangle _playfieldBounds;
     private readonly SpriteSet _sprites;
 
-    /// <summary><see cref="Robotron2084.Core.RomFrameTimer">Beats</see> left before the shell fizzles out.</summary>
+    /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the shell fizzles out.</summary>
     private int _lifeBeatsRemaining;
 
     private IntVector2 _position;
@@ -92,7 +89,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         _lifeBeatsRemaining = TankShellTuning.LifeBaseBeats + random.Next(TankShellTuning.LifeExtraBeatsMaxExclusive);
     }
 
-    /// <summary>True when this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>'s <see cref="Robotron2084.Core.RomFrameTimer">beat</see> bounced the shell off a wall, so the bounce sound can be played.</summary>
+    /// <summary>True when this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>'s <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> bounced the shell off a wall, so the bounce sound can be played.</summary>
     public bool BouncedThisUpdate { get; private set; }
 
     /// <summary>How far the shell goes sideways on each move, in 256ths of a column.</summary>
@@ -107,7 +104,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         return _sprites.TankShellSprite;
     }
 
-    /// <summary>The box the shell takes up on the screen. It is used to tell what the shell hits.</summary>
+    /// <summary>The box the shell takes up on the screen.</summary>
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, BoxWidth, BoxHeight);
@@ -128,7 +125,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the shell. It moves steadily, separately from its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. Every few moves it has a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>, when
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the shell. It moves steadily, separately from its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. Every few moves it has a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, when
     ///     it bounces off a wall or counts down its life.
     /// </summary>
     /// <param name="gameTime">Not used. The shell counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
@@ -148,11 +145,11 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 
         if (!this.IsAlive()) return;
 
-        if (_moveTimer.Tick(ArcadeClock.MoveIntervalRomFrames)) MoveOnce();
-        if (_beatTimer.Tick(TankShellTuning.BeatIntervalRomFrames)) ActOnBeat();
+        if (_moveTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce();
+        if (_beatTimer.Tick(TankShellTuning.BeatIntervalArcadeFrames)) ActOnBeat();
     }
 
-    /// <summary>Takes the shell off the field at once, as when a laser hits it.</summary>
+    /// <summary>Takes the shell off the field at once.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>SHLKIL</c>.</item>
@@ -384,14 +381,14 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
             _position.Y + DivideRoundingDown(subpixels.Y, ScreenSize.SubpixelsPerPixel));
     }
 
-    /// <summary>Runs one <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The shell bounces if its next move would hit a wall. Otherwise it counts down its life.</summary>
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. The shell bounces if its next move would hit a wall. Otherwise it counts down its life.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, <c>XVNEG</c> and <c>YVNEG</c>.</item>
     ///         <item>
     ///             Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>),
     ///             <c>TANK_SHELL_BOUNCE_HORIZONTAL</c> (<c>$4FC1</c>) and <c>TANK_SHELL_BOUNCE_VERTICAL</c>
-    ///             (<c>$4FC7</c>). A <see cref="Robotron2084.Core.RomFrameTimer">beat</see> that bounces the shell does not count down its life, and a sideways
+    ///             (<c>$4FC7</c>). A <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> that bounces the shell does not count down its life, and a sideways
     ///             bounce skips the up-and-down check.
     ///         </item>
     ///     </list>

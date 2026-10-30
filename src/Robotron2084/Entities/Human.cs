@@ -14,10 +14,8 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Brain" />
 /// <seealso cref="SkullMarker" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
-///     <see cref="_firstStepTicksRemaining" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> before its first <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     <see cref="_firstStepTicksRemaining" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> before its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMAN</c> (with the <c>HUMATB</c> walk table)</item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$02B2</c> (<c>INITIALISE_FAMILY_MEMBERS</c>)</item>
@@ -58,10 +56,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HUMAN</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
     ///     </list>
-    ///     The arcade's number is 8. This game uses 16 on purpose, because the arcade's speed looks too fast here
-    ///     (notes §70).
     /// </remarks>
-    private const int BeatIntervalRomFrames = 16;
+    private const int BeatIntervalArcadeFrames = 16;
 
     /// <summary>
     ///     How many steps each direction block of the walk table has. <see cref="_subStep" /> counts up to this and then
@@ -87,8 +83,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
     ///     </list>
-    ///     The blocks are in this order: left, right, down, up, up and left, up and right, down and right, down and left.
-    /// </remarks>
+    ///  </remarks>
     private static readonly (int Dx, int Dy, int Frame)[] Steps =
     {
         // Walking left.
@@ -116,8 +111,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Which walk animation frame is showing, counted through this family member's own animation frames.</summary>
     private int _animationFrameIndex;
 
-    /// <summary>The first <see cref="Robotron2084.Core.RomFrameTimer">beat</see> does not wait for this timer (see <see cref="Update" />).</summary>
-    private readonly RomFrameTimer _beatTimer = new();
+    /// <summary>The first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> does not wait for this timer (see <see cref="Update" />).</summary>
+    private readonly ArcadeFrameTimer _beatTimer = new();
 
     /// <summary>Which direction block of the walk table (see <see cref="Steps" />) the family member is using.</summary>
     private int _directionBlock;
@@ -176,10 +171,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Which family member this is: Mikey, Mommy or Daddy. This decides its animation frames and its size.</summary>
     public HumanKind Kind { get; }
 
-    /// <summary>
-    ///     This family member's place in the family list. <see cref="PlayField" /> hands the places out in the order the
-    ///     family members are put on the field, so the first Mikey has place 0.
-    /// </summary>
+    /// <summary>This family member's place in the family list.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HUMAN</c> (ROM <c>$B354</c>).</item>
@@ -190,19 +182,16 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     internal int FamilySlot { get; set; }
 
-    /// <summary>How many steps the family member has taken. Tests use this to check how often it steps.</summary>
+    /// <summary>How many steps the family member has taken.</summary>
     internal int StepCount { get; private set; }
 
-    /// <summary>
-    ///     The walk animation frame the family member is showing. It is also used to tell, pixel by pixel, whether
-    ///     something is touching the family member.
-    /// </summary>
+    /// <summary>The walk animation frame the family member is showing.</summary>
     public Texture2D GetCurrentAnimationFrame()
     {
         return Kind.GetAnimationFrames(_sprites)[_animationFrameIndex];
     }
 
-    /// <summary>The box the family member takes up on the screen. It is used to tell what the family member touches.</summary>
+    /// <summary>The box the family member takes up on the screen.</summary>
     public Rectangle GetBounds()
     {
         var (w, h) = Kind.GetArcadeCollisionSize();
@@ -249,7 +238,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> the family member takes the next step of its walk. If the step is blocked, it picks a
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the family member takes the next step of its walk. If the step is blocked, it picks a
     ///     new direction.
     /// </summary>
     /// <param name="gameTime">Not used. The family member counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
@@ -264,7 +253,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
             // When this wait is over, the family member has its first beat on this tick.
             if (--_firstStepTicksRemaining > 0) return;
         }
-        else if (!_beatTimer.Tick(BeatIntervalRomFrames))
+        else if (!_beatTimer.Tick(BeatIntervalArcadeFrames))
         {
             return;
         }
@@ -335,17 +324,13 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>
-    ///     Puts the family member somewhere without walking it there. A brain uses this while it has hold of the family
-    ///     member.
-    /// </summary>
-    /// <param name="position">Where the brain puts the family member.</param>
+    /// <summary>Puts the family member somewhere without walking it there.</summary>
+    /// <param name="position">Where to put the family member.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRB10.ASM</c> <c>BMUT</c>, which lifts the family member up and drops it.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c>.</item>
     ///     </list>
-    ///     A test can also use it to place one.
     /// </remarks>
     internal void MoveTo(IntVector2 position)
     {
@@ -353,7 +338,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     What the family member does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It takes the next step of its walk. If the step is blocked, it picks a
+    ///     What the family member does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It takes the next step of its walk. If the step is blocked, it picks a
     ///     new direction.
     /// </summary>
     /// <param name="field">The playfield.</param>

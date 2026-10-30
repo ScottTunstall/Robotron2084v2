@@ -13,9 +13,7 @@ namespace Robotron2084.Entities;
 /// </summary>
 /// <seealso cref="PlayField" />
 /// <remarks>
-///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_shrivelTimer" /> times each stage of its shrivelling.
+///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_shrivelTimer" /> times each stage of its shrivelling.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRP8.ASM</c>, routine <c>PSTKIL</c> (hands off to <c>PKPROC</c>)</item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$3AE0</c> (<c>ELECTRODE_DEATH</c>)</item>
@@ -24,11 +22,10 @@ namespace Robotron2084.Entities;
 public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>How long each shrivel animation frame is shown for.</summary>
-    private static readonly int[] ShrivelIntervalRomFrames = [6, 3, 2];
+    private static readonly int[] ShrivelIntervalArcadeFrames = [6, 3, 2];
 
     /// <summary>
-    ///     How big the electrode is, in port pixels. It is the size of the sprite for this wave's shape of electrode, and
-    ///     it is used to tell what touches the electrode.
+    ///     How big the electrode is, in port pixels. It is the size of the sprite for this wave's shape of electrode.
     /// </summary>
     private readonly (int Width, int Height) _collisionSize;
 
@@ -36,7 +33,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     private readonly int _wave;
     private readonly IntVector2 _position;
     private int _shrivelStep;
-    private readonly RomFrameTimer _shrivelTimer = new();
+    private readonly ArcadeFrameTimer _shrivelTimer = new();
 
     /// <summary>Makes an electrode for the given wave.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -58,7 +55,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         return _sprites.ElectrodeAnimationFrames[frame];
     }
 
-    /// <summary>The box the electrode takes up on the screen. It is used to tell what touches the electrode.</summary>
+    /// <summary>The box the electrode takes up on the screen.</summary>
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
@@ -90,10 +87,10 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     {
         if (!this.IsDying()) return;
 
-        if (!_shrivelTimer.Tick(ShrivelIntervalRomFrames[_shrivelStep])) return;
+        if (!_shrivelTimer.Tick(ShrivelIntervalArcadeFrames[_shrivelStep])) return;
 
         _shrivelStep++;
-        if (_shrivelStep >= ShrivelIntervalRomFrames.Length) LifeState = EntityLifeState.Dead;
+        if (_shrivelStep >= ShrivelIntervalArcadeFrames.Length) LifeState = EntityLifeState.Dead;
     }
 
     /// <summary>Starts the electrode shrivelling. It does nothing if the electrode is not alive.</summary>

@@ -10,9 +10,7 @@ namespace Robotron2084.Entities;
 /// <summary>A shot fired by an enforcer. Its path curves, and it stops at a wall and does not bounce.</summary>
 /// <seealso cref="Enforcer" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>,
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>,
 ///     <see cref="_moveTimer" /> times its moves, and <see cref="_lifeTimer" /> times how long it lasts.
 ///     <list type="bullet">
 ///         <item>
@@ -28,15 +26,15 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
     // How much is added to the spark's speed each time the speed changes: one amount for sideways and one for up or down, in 256ths of a pixel. They are picked at random when the spark is made and never change (ROM: PD2/PD4).
     private readonly IntVector2 _accelerationSubpixels;
-    private readonly RomFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _beatTimer = new();
 
     // How long the spark lasts. It is picked at random when the spark is made.
-    private readonly int _lifeRomFrames;
+    private readonly int _lifeArcadeFrames;
 
-    private readonly RomFrameTimer _lifeTimer = new();
+    private readonly ArcadeFrameTimer _lifeTimer = new();
 
     // Starts due, so the spark does not have to wait for its first move.
-    private readonly RomFrameTimer _moveTimer = RomFrameTimer.CreateDue(ArcadeClock.MoveIntervalRomFrames);
+    private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
     private readonly SpriteSet _sprites;
@@ -92,35 +90,32 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
         // Pick how much the speed will change by each time. The up-or-down amount is halved, because the arcade counts up and down in rows, and a row is half the size of a column.
         _accelerationSubpixels = new IntVector2(
-            _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) *
+            _random.Next(-SparkTuning.SparkAccelArcadeRange, SparkTuning.SparkAccelArcadeRange) *
             subpixelsPerPortPixelPerMove,
-            _random.Next(-SparkTuning.SparkAccelRomRange, SparkTuning.SparkAccelRomRange) * subpixelsPerPortPixelPerMove
+            _random.Next(-SparkTuning.SparkAccelArcadeRange, SparkTuning.SparkAccelArcadeRange) * subpixelsPerPortPixelPerMove
             * ScreenSize.ToPortPixelsFromArcadePixels(1) / ScreenSize.ToPortPixelsFromColumns(1));
 
         // Pick at random how long the spark lasts.
-        _lifeRomFrames = _random.Next(SparkTuning.SparkLifeMinRomFrames, SparkTuning.SparkLifeMaxRomFrames + 1);
+        _lifeArcadeFrames = _random.Next(SparkTuning.SparkLifeMinArcadeFrames, SparkTuning.SparkLifeMaxArcadeFrames + 1);
     }
 
     /// <summary>
     ///     How much is added to the spark's speed each time the speed changes: one amount for sideways and one for up or
-    ///     down, in 256ths of a pixel. Tests use this.
+    ///     down, in 256ths of a pixel.
     /// </summary>
     /// <remarks>It is picked at random when the spark is made, and it never changes.</remarks>
     internal IntVector2 AccelerationSubpixels => _accelerationSubpixels;
 
-    /// <summary>How far the spark goes on each move, sideways and up or down, in 256ths of a pixel. Tests use this.</summary>
+    /// <summary>How far the spark goes on each move, sideways and up or down, in 256ths of a pixel.</summary>
     internal IntVector2 VelocitySubpixels => _velocitySubpixels;
 
-    /// <summary>
-    ///     The flicker animation frame the spark is showing. It is also used to tell, pixel by pixel, whether the spark
-    ///     is touching something.
-    /// </summary>
+    /// <summary>The flicker animation frame the spark is showing.</summary>
     public Texture2D GetCurrentAnimationFrame()
     {
         return _sprites.SparkAnimationFrames[GetAnimationFrameIndex()];
     }
 
-    /// <summary>The box used to tell what the spark hits.</summary>
+    /// <summary>The box the spark takes up on the screen.</summary>
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, Size, Size);
@@ -141,7 +136,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. When its time is up the spark is gone. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> its speed changes and it flickers, and it
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. When its time is up the spark is gone. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> its speed changes and it flickers, and it
     ///     moves when it is time to.
     /// </summary>
     /// <param name="gameTime">Not used. The spark counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
@@ -150,17 +145,17 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     {
         if (!this.IsAlive()) return;
 
-        if (_lifeTimer.Tick(_lifeRomFrames))
+        if (_lifeTimer.Tick(_lifeArcadeFrames))
         {
             LifeState = EntityLifeState.Dead;
             return;
         }
 
-        if (_beatTimer.Tick(SparkTuning.BeatIntervalRomFrames)) ActOnBeat();
-        if (_moveTimer.Tick(ArcadeClock.MoveIntervalRomFrames)) MoveOnce(field);
+        if (_beatTimer.Tick(SparkTuning.BeatIntervalArcadeFrames)) ActOnBeat();
+        if (_moveTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce(field);
     }
 
-    /// <summary>Kills the spark at once. A laser does this.</summary>
+    /// <summary>Kills the spark at once.</summary>
     public void Kill()
     {
         if (!this.IsAlive()) return;
@@ -169,14 +164,14 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Which of the flicker animation frames is showing, counting from 0.</summary>
-    /// <remarks>ROM: there are 4 flicker animation frames, and the spark shows the next one on each <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.</remarks>
+    /// <remarks>ROM: there are 4 flicker animation frames, and the spark shows the next one on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</remarks>
     internal int GetAnimationFrameIndex()
     {
         return _animationFrameIndex;
     }
 
     /// <summary>
-    ///     What the spark does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. Its speed changes a little, which is what makes its path curve, and it shows
+    ///     What the spark does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. Its speed changes a little, which is what makes its path curve, and it shows
     ///     its next flicker animation frame.
     /// </summary>
     /// <remarks>ROM: <c>SPARK</c>, which adds <c>PD2</c>/<c>PD4</c> to the speed and moves <c>OPICT</c> on.</remarks>

@@ -10,9 +10,7 @@ namespace Robotron2084.Entities;
 /// <summary>The player's laser shot: a straight bolt that flies until it hits a wall or a robot, then vanishes.</summary>
 /// <seealso cref="LaserSlots" />
 /// <remarks>
-///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see> and no timer. <see cref="LaserSlots" /> holds it and calls <see cref="Update" />. The
-///     <see cref="PlayField" /> calls <see cref="LaserSlots.Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, in <see cref="PlayField.Update" />.
-///     The one time it does not is during the short freeze just after the player is killed.
+///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> and no timer.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRG23.ASM</c>, routine <c>LTAB</c> (the table of laser sprites:
@@ -54,7 +52,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
         };
     }
 
-    /// <summary>The box used to tell what the laser hits.</summary>
+    /// <summary>The box the laser takes up on the screen.</summary>
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, Size, Size);

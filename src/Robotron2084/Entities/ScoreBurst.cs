@@ -11,9 +11,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Spheroid" />
 /// <seealso cref="Quark" />
 /// <remarks>
-///     It has no <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_stepTimer" /> says when it is time for the next step.
+///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_stepTimer" /> says when it is time for the next step.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRC11.ASM</c>, routine <c>CIRKIL</c>/<c>CIRKP</c> (spheroid) and
@@ -39,7 +37,7 @@ public sealed class ScoreBurst : IEntity
     private readonly SpriteSet _sprites;
     private int _animationFrameIndex = FirstBurstAnimationFrameIndex;
     private int _burstStepsRemaining;
-    private readonly RomFrameTimer _stepTimer = new();
+    private readonly ArcadeFrameTimer _stepTimer = new();
 
     /// <summary>Makes one burst. <see cref="CreateForQuark" /> and <see cref="CreateForSpheroid" /> both use it.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -80,13 +78,13 @@ public sealed class ScoreBurst : IEntity
     /// </summary>
     internal int AnimationFrameIndex => _animationFrameIndex;
 
-    /// <summary>The palette slot the burst is drawn in. Its colour keeps changing, so the burst shimmers. Tests use this.</summary>
+    /// <summary>The palette slot the burst is drawn in. Its colour keeps changing, so the burst shimmers.</summary>
     internal int BurstSlot { get; }
 
-    /// <summary>Where the points are drawn: a little to the right of the dead enemy and below it. Tests use this.</summary>
+    /// <summary>Where the points are drawn: a little to the right of the dead enemy and below it.</summary>
     internal Rectangle PointsBounds { get; }
 
-    /// <summary>The palette slot the points are drawn in. Tests use this.</summary>
+    /// <summary>The palette slot the points are drawn in.</summary>
     internal int PointsSlot { get; }
 
     /// <summary>How many more steps the points are shown for.</summary>
@@ -135,7 +133,7 @@ public sealed class ScoreBurst : IEntity
     {
         if (!this.IsAlive()) return;
 
-        if (!_stepTimer.Tick(ScoreBurstTuning.StepIntervalRomFrames)) return;
+        if (!_stepTimer.Tick(ScoreBurstTuning.StepIntervalArcadeFrames)) return;
 
         if (!ShowingPoints)
         {

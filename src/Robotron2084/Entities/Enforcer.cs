@@ -14,9 +14,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Spheroid" />
 /// <seealso cref="Spark" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     It also moves steadily, timed by <see cref="_moveTimer" />, and <see cref="_growTimer" /> times its growing.
 ///     <list type="bullet">
 ///         <item>
@@ -48,19 +46,18 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// </summary>
     private const int ApproachDivisor = 2;
 
-    /// <summary>The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> an enforcer waits between shots, when it is not told a number.</summary>
+    /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> an enforcer waits between shots, when it is not told a number.</summary>
     private const int DefaultFireIntervalBeats = 24;
 
     /// <summary>
-    ///     The enforcer waits a random number of <see cref="Robotron2084.Core.RomFrameTimer">beats</see> before it picks a new spot to head for. That number is from 0 up
+    ///     The enforcer waits a random number of <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> before it picks a new spot to head for. That number is from 0 up
     ///     to one less than this.
     /// </summary>
     /// <remarks>ROM: <c>ENFR1</c>.</remarks>
     private const int ReaimBeatsMaxExclusive = 32;
 
     /// <summary>
-    ///     How big the enforcer is, in port pixels. It is the size of the enforcer's sprite, and it is used to tell what
-    ///     the enforcer touches.
+    ///     How big the enforcer is, in port pixels. It is the size of the enforcer's sprite.
     /// </summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EnforcerCollisionSize.Width),
@@ -69,7 +66,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private readonly int _fireIntervalBeats;
     private readonly Random _random;
     private readonly SpriteSet _sprites;
-    private readonly RomFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _beatTimer = new();
     private int _fireBeatsRemaining;
 
     /// <summary>
@@ -78,10 +75,10 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// </summary>
     private int _growStep;
 
-    private readonly RomFrameTimer _growTimer = new();
+    private readonly ArcadeFrameTimer _growTimer = new();
 
     /// <summary>Starts due, so the enforcer does not have to wait for its first move.</summary>
-    private readonly RomFrameTimer _moveTimer = RomFrameTimer.CreateDue(ArcadeClock.MoveIntervalRomFrames);
+    private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private IntVector2 _position;
 
@@ -91,7 +88,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
 
     /// <summary>
     ///     How far the enforcer goes on each move, sideways and up or down, in 256ths of a pixel. It moves steadily,
-    ///     separately from its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+    ///     separately from its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
     /// </summary>
     private IntVector2 _velocitySubpixels;
 
@@ -103,8 +100,8 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     ///     shots.
     /// </param>
     /// <param name="fireIntervalBeats">
-    ///     The most <see cref="Robotron2084.Core.RomFrameTimer">beats</see> this wave's enforcer waits between shots. Each wait is a random number
-    ///     of <see cref="Robotron2084.Core.RomFrameTimer">beats</see> from 1 up to this.
+    ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> this wave's enforcer waits between shots. Each wait is a random number
+    ///     of <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> from 1 up to this.
     /// </param>
     /// <remarks>ROM: <c>ENSTIM</c>.</remarks>
     public Enforcer(
@@ -122,7 +119,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         _fireBeatsRemaining = ArcadeRandom.PickUpTo(random, _fireIntervalBeats);
     }
 
-    /// <summary>The box the enforcer takes up on the screen. It is used to tell what the enforcer touches.</summary>
+    /// <summary>The box the enforcer takes up on the screen.</summary>
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
@@ -159,7 +156,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The enforcer grows, then it moves, and on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> it picks where to head for and fires a spark
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The enforcer grows, then it moves, and on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> it picks where to head for and fires a spark
     ///     if it is time to.
     /// </summary>
     /// <param name="gameTime">Not used. The enforcer counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
@@ -171,11 +168,11 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         if (field.RobotsFrozen()) return;
 
         // A growing enforcer cannot move or shoot. It may finish growing on this tick, and then it moves at once.
-        if (IsGrowing() && _growTimer.Tick(EnforcerTuning.GrowIntervalRomFrames)) TakeGrowStep();
+        if (IsGrowing() && _growTimer.Tick(EnforcerTuning.GrowIntervalArcadeFrames)) TakeGrowStep();
         if (IsGrowing()) return;
 
-        if (_moveTimer.Tick(ArcadeClock.MoveIntervalRomFrames)) MoveOnce(field);
-        if (_beatTimer.Tick(EnforcerTuning.BeatIntervalRomFrames)) ActOnBeat(field);
+        if (_moveTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce(field);
+        if (_beatTimer.Tick(EnforcerTuning.BeatIntervalArcadeFrames)) ActOnBeat(field);
     }
 
     /// <summary>
@@ -208,7 +205,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         return IsGrowing() ? _growStep : -1;
     }
 
-    /// <summary>Picks at random how many <see cref="Robotron2084.Core.RomFrameTimer">beats</see> the enforcer waits before it picks a new spot to head for.</summary>
+    /// <summary>Picks at random how many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the enforcer waits before it picks a new spot to head for.</summary>
     private static int NextReaimBeats(Random random)
     {
         return random.Next(0, ReaimBeatsMaxExclusive);
@@ -252,7 +249,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     What the enforcer does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It counts down to its next aim and to its next shot (ROM: <c>ENFR1</c>).
+    ///     What the enforcer does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It counts down to its next aim and to its next shot (ROM: <c>ENFR1</c>).
     /// </summary>
     /// <param name="field">The playfield.</param>
     private void ActOnBeat(PlayField field)
@@ -273,7 +270,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     Picks at random how many <see cref="Robotron2084.Core.RomFrameTimer">beats</see> the enforcer waits before its next shot. The pick is the arcade's own (see
+    ///     Picks at random how many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the enforcer waits before its next shot. The pick is the arcade's own (see
     ///     <see cref="ArcadeRandom" />), which gives longer waits more often than an even spread would.
     /// </summary>
     private int NextFireBeats(Random random)

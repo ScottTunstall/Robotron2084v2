@@ -14,9 +14,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Human" />
 /// <seealso cref="StripEffect" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. The <see cref="PlayField" /> calls <see cref="Update" /> on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, through
-///     <see cref="FieldEntities" /> and <see cref="PlayField.UpdateEntity" />. The one time it does not is during the
-///     short freeze just after the player is killed. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.RomFrameTimer">beat</see>.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRB10.ASM</c>, routine <c>PROG</c> (with
@@ -33,7 +31,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// </summary>
     private const int AxisFlipSides = 2;
 
-    /// <summary>How long one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> lasts.</summary>
+    /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRB10.ASM</c> <c>PROG</c>.</item>
@@ -41,7 +39,7 @@ public sealed class Prog : IExplodable, IRemovable
     ///     </list>
     ///     The arcade runs the prog's routine this often.
     /// </remarks>
-    private const int BeatIntervalRomFrames = 3;
+    private const int BeatIntervalArcadeFrames = 3;
 
     /// <summary>
     ///     A prog aims a little to the left or right of the player. To work out how far, a random number from 1 to
@@ -97,14 +95,14 @@ public sealed class Prog : IExplodable, IRemovable
     private const int OffsetYSteps = 18;
 
     /// <summary>
-    ///     On each <see cref="Robotron2084.Core.RomFrameTimer">beat</see> a prog picks a random number below <see cref="ThresholdRollSides" />. If it is above this, the
-    ///     prog picks a new direction. That happens on about one <see cref="Robotron2084.Core.RomFrameTimer">beat</see> in ten.
+    ///     On each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> a prog picks a random number below <see cref="ThresholdRollSides" />. If it is above this, the
+    ///     prog picks a new direction. That happens on about one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> in ten.
     /// </summary>
     private const int ReDirectionThreshold256 = 0xE4;
 
     /// <summary>
-    ///     On each <see cref="Robotron2084.Core.RomFrameTimer">beat</see> a prog picks a random number below <see cref="ThresholdRollSides" />. If it is above this, the
-    ///     prog picks again how far from the player it aims. That happens on about 3 <see cref="Robotron2084.Core.RomFrameTimer">beats</see> in 100.
+    ///     On each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> a prog picks a random number below <see cref="ThresholdRollSides" />. If it is above this, the
+    ///     prog picks again how far from the player it aims. That happens on about 3 <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> in 100.
     /// </summary>
     private const int ReOffsetThreshold256 = 0xF8;
 
@@ -170,7 +168,7 @@ public sealed class Prog : IExplodable, IRemovable
     // The order the walk animation frames are shown in. Family members walk in the same order.
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
-    private readonly RomFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _beatTimer = new();
     private readonly (int Width, int Height) _collisionSize;
 
     /// <summary>The ghosts the prog has left behind it, newest first (see <see cref="Ghost" />).</summary>
@@ -221,18 +219,14 @@ public sealed class Prog : IExplodable, IRemovable
     public HumanKind Kind { get; }
 
     /// <summary>
-    ///     The box the prog takes up on the screen. It is the size of the family member the prog used to be, and it is
-    ///     used to tell what the prog touches.
+    ///     The box the prog takes up on the screen. It is the size of the family member the prog used to be.
     /// </summary>
     public Rectangle GetBounds()
     {
         return new Rectangle(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
     }
 
-    /// <summary>
-    ///     The walk animation frame the prog is showing. It is also used to tell, pixel by pixel, whether something is
-    ///     touching the prog.
-    /// </summary>
+    /// <summary>The walk animation frame the prog is showing.</summary>
     /// <returns>The animation frame that is showing.</returns>
     /// <remarks>
     ///     Disassembly: the prog's animation frame pointer at <c>$0002,X</c>, which stays on the family member's walk
@@ -333,7 +327,7 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.RomFrameTimer">beat</see> the prog shows its next walk animation frame, may change its aim or its direction,
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the prog shows its next walk animation frame, may change its aim or its direction,
     ///     leaves a ghost, and takes a step.
     /// </summary>
     /// <param name="gameTime">Not used. The prog counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
@@ -345,7 +339,7 @@ public sealed class Prog : IExplodable, IRemovable
 
         if (field.RobotsFrozen()) return;
 
-        if (_beatTimer.Tick(BeatIntervalRomFrames)) ActOnBeat(field);
+        if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);
     }
 
     /// <summary>Kills the prog at once. All that is seen is the strip explosion.</summary>
@@ -363,7 +357,7 @@ public sealed class Prog : IExplodable, IRemovable
         if (this.IsAlive()) LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>The animation frame each ghost shows, newest first. Tests use this.</summary>
+    /// <summary>The animation frame each ghost shows, newest first.</summary>
     internal IReadOnlyList<int> GetGhostFrames()
     {
         var frames = new List<int>(_ghosts.Count);
@@ -372,7 +366,7 @@ public sealed class Prog : IExplodable, IRemovable
         return frames;
     }
 
-    /// <summary>Where each ghost is, newest first. Tests use this.</summary>
+    /// <summary>Where each ghost is, newest first.</summary>
     internal IReadOnlyList<IntVector2> GetGhostTrail()
     {
         var positions = new List<IntVector2>(_ghosts.Count);
@@ -418,7 +412,7 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     What the prog does on its <see cref="Robotron2084.Core.RomFrameTimer">beat</see>. It shows its next walk animation frame, may change its aim or its direction,
+    ///     What the prog does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It shows its next walk animation frame, may change its aim or its direction,
     ///     leaves a ghost, and takes a step.
     /// </summary>
     /// <param name="field">The playfield.</param>
