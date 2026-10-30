@@ -251,7 +251,7 @@ public sealed class PlayingState : IGameState
     private void AnnounceTurn()
     {
         _turnMessageTicks = _session.IsTwoPlayer()
-            ? ArcadeClock.ToPortTicks(ScreenTuning.PlayerTurnMessageRomFrames)
+            ? ArcadeClock.ToPortTicks(ScreenTuning.PlayerTurnMessageArcadeFrames)
             : 0;
     }
 
@@ -311,7 +311,7 @@ public sealed class PlayingState : IGameState
             // ROM PLEND3: this player is out and the other still has men — print
             // "PLAYER n GAME OVER" and wait NAP $60 before the turn passes.
             _playerOutNumber = deadPlayerSlot.Number;
-            _playerOutMessageTicks = ArcadeClock.ToPortTicks(ScreenTuning.PlayerGameOverMessageRomFrames);
+            _playerOutMessageTicks = ArcadeClock.ToPortTicks(ScreenTuning.PlayerGameOverMessageArcadeFrames);
         }
 
         _field = BuildField();

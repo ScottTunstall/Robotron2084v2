@@ -23,7 +23,7 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class GameOverState : IGameState
 {
-    private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.GameOverMessageRomFrames);
+    private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.GameOverMessageArcadeFrames);
     private readonly IReadOnlyList<FinalScore> _scores;
     private readonly GameServices _services;
     private int _elapsedTicks;

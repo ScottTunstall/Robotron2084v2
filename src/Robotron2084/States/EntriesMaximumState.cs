@@ -25,7 +25,7 @@ public sealed class EntriesMaximumState : IGameState
     private const int SecondLineRow = 144;
 
     private readonly ScoreEntryCeremony _ceremony;
-    private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.EntriesMaximumHoldRomFrames);
+    private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.EntriesMaximumHoldArcadeFrames);
     private readonly GameServices _services;
     private int _elapsedTicks;
 
