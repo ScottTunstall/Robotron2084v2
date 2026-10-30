@@ -1,8 +1,8 @@
 namespace Robotron2084.Input;
 
-/// <summary>A source of player input (keyboard, gamepad, or a composite of both).</summary>
+/// <summary>Somewhere a player's controls can be read from.</summary>
 public interface IPlayerInputSource
 {
-    /// <summary>Reads the current input state. Cheap; called once per tick per consumer.</summary>
+    /// <summary>Reads the controls as they are now.</summary>
     PlayerInputState Poll();
 }
