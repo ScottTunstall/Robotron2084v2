@@ -97,13 +97,17 @@ public sealed class SettingsModel
     /// <summary>Scrolls the highlight down one line, wrapping round the page.</summary>
     public void MoveDown()
     {
-        Line = Line == LineCount - 1 ? 0 : Line + 1;
+        var isOnLastLine = Line == LineCount - 1;
+        if (isOnLastLine) Line = 0;
+        else Line++;
     }
 
     /// <summary>Scrolls the highlight up one line, wrapping round the page.</summary>
     public void MoveUp()
     {
-        Line = Line == 0 ? LineCount - 1 : Line - 1;
+        var isOnFirstLine = Line == 0;
+        if (isOnFirstLine) Line = LineCount - 1;
+        else Line--;
     }
 
     /// <summary>
@@ -190,7 +194,7 @@ public sealed class SettingsModel
             TankShellBugLine => GetOnOff(gameSettings.TankShellBugEnabled),
             BrainsChaseMikeyBugLine => GetOnOff(gameSettings.BrainsChaseMikeyBugEnabled),
             BozoModeLine => GetOnOff(gameSettings.BozoModeEnabled),
-            _ => _armedLines[line] ? "YES" : "NO"
+            _ => GetYesNo(_armedLines[line])
         };
     }
 
@@ -238,6 +242,12 @@ public sealed class SettingsModel
     private static string GetOnOff(bool isOn)
     {
         return isOn ? "ON" : "OFF";
+    }
+
+    /// <summary>The word for a YES/NO row's value.</summary>
+    private static string GetYesNo(bool isYes)
+    {
+        return isYes ? "YES" : "NO";
     }
 
     /// <summary>The word beside a row that is ON in the arcade: "RECOMMENDED" while it is on.</summary>

@@ -159,7 +159,9 @@ public sealed class DefineInputsModel
         var candidate = line;
         do
         {
-            candidate = candidate == PauseLine ? 0 : candidate + 1;
+            var isOnLastLine = candidate == PauseLine;
+            if (isOnLastLine) candidate = 0;
+            else candidate++;
         } while (IsSpacer(candidate) && candidate != line);
 
         return candidate;
@@ -171,7 +173,9 @@ public sealed class DefineInputsModel
         var candidate = line;
         do
         {
-            candidate = candidate == 0 ? PauseLine : candidate - 1;
+            var isOnFirstLine = candidate == 0;
+            if (isOnFirstLine) candidate = PauseLine;
+            else candidate--;
         } while (IsSpacer(candidate) && candidate != line);
 
         return candidate;
@@ -183,13 +187,16 @@ public sealed class DefineInputsModel
         var clearing = binding.Kind == InputBindingKind.None;
         if (line == PauseLine)
         {
-            controlSettings.Pause = clearing ? InputBinding.None : binding;
+            controlSettings.Pause = binding;
+            if (clearing) controlSettings.Pause = InputBinding.None;
+
             return;
         }
 
         var controls = controlSettings[PlayerOf(line)];
         var action = GetAction(line)!.Value;
-        controls[action] = clearing ? ActionBinding.None : controls[action].With(binding);
+        controls[action] = controls[action].With(binding);
+        if (clearing) controls[action] = ActionBinding.None;
     }
 
     /// <summary>Moves the highlight and scrolls the window just enough to keep it visible.</summary>

@@ -231,7 +231,10 @@ public sealed class InitialsEntryModel
     /// <summary>The alpha-only ring (LUPP1/LDN1): space, A to Z, and the rub marker once a letter has been committed.</summary>
     private void Cycle(int direction)
     {
-        _letters[LetterIndex] = direction == UpDirection ? NextLetter(GetPreview()) : GetPreviousLetter(GetPreview());
+        var preview = GetPreview();
+        var isGoingUp = direction == UpDirection;
+        if (isGoingUp) _letters[LetterIndex] = NextLetter(preview);
+        else _letters[LetterIndex] = GetPreviousLetter(preview);
     }
 
     /// <summary>GETLT1: back to reading the switches every two frames.</summary>
@@ -258,7 +261,8 @@ public sealed class InitialsEntryModel
     {
         return current switch
         {
-            Blank => _isRubAllowed ? RubLetter : 'Z',
+            Blank when _isRubAllowed => RubLetter,
+            Blank => 'Z',
             'A' => Blank,
             RubLetter => 'Z',
             _ => (char)(current - 1)
