@@ -53,6 +53,10 @@ public sealed class RobotronGame : Game
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsFixedTimeStep = true; // fixed timestep drives Update(GameTime); gameplay uses per-tick integer math
+
+        // One tick, rounded to the nearest TimeSpan tick. This is exactly MonoGame's own default for 60 a second.
+        TargetElapsedTime = TimeSpan.FromTicks(
+            (TimeSpan.TicksPerSecond + ArcadeClock.PortTicksPerSecond / 2) / ArcadeClock.PortTicksPerSecond);
     }
 
     protected override void Draw(GameTime gameTime)
