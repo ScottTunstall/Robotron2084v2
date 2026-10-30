@@ -337,7 +337,7 @@ public sealed class GruntSpeedProgression
 
         Floor = Math.Max(LowestFloor, Floor - floorStep);
         foreach (var grunt in grunts.Where(grunt => grunt.IsAlive()))
-            grunt.WaveSpeedTick(Floor, LimitStepPerFloorStep * floorStep);
+            grunt.SpeedUpAsWaveGoesOn(Floor, LimitStepPerFloorStep * floorStep);
     }
 
     /// <summary>Forgets any score made before the game started its loop of passes, at the moment the loop starts.</summary>

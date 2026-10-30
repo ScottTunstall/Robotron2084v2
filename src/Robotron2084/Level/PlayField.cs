@@ -801,8 +801,8 @@ public sealed class PlayField : ICollisionScene
     }
 
     /// <summary>
-    ///     Works out how long a robot waits before its first move, counted from the start of the tick on which the game
-    ///     goes live.
+    ///     Makes a robot's beat timer on the tick the game goes live, set so that the robot's first beat comes when the
+    ///     arcade's would.
     /// </summary>
     /// <param name="pollRomFrames">
     ///     How many fiftieths of a second the robot sleeps between one look at whether the game is
@@ -810,12 +810,14 @@ public sealed class PlayField : ICollisionScene
     /// </param>
     /// <param name="napRomFrames">
     ///     How many fiftieths of a second the robot sleeps after the look that finds the game live,
-    ///     before its first move.
+    ///     before its first beat.
     /// </param>
-    /// <returns>The clock units from the start of this tick to the robot's first move.</returns>
-    internal int GetClockUnitsToFirstBeat(int pollRomFrames, int napRomFrames)
+    /// <param name="beatIntervalRomFrames">The time from one of the robot's beats to the next.</param>
+    /// <returns>The robot's beat timer.</returns>
+    internal RomFrameTimer CreateFirstBeatTimer(int pollRomFrames, int napRomFrames, int beatIntervalRomFrames)
     {
-        return _waveStart.GetClockUnitsToFirstBeat(pollRomFrames, napRomFrames);
+        return new RomFrameTimer(ArcadeClock.ToClockUnits(beatIntervalRomFrames) -
+                                 _waveStart.GetClockUnitsToFirstBeat(pollRomFrames, napRomFrames));
     }
 
     /// <summary>
@@ -866,6 +868,8 @@ public sealed class PlayField : ICollisionScene
     ///         </item>
     ///         <item>Disassembly: <c>$2895</c>.</item>
     ///     </list>
+    ///     Each result is responded to before the rule is asked for the next one, so the rule sees the field as it is
+    ///     after each response: a laser that has hit something is gone before the next robot is tried.
     /// </remarks>
     private void ResolveCollisions()
     {
