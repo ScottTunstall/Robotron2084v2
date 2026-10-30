@@ -262,10 +262,11 @@ Daddies, Electrodes, Brains, Grunts, Progs). A new character gets the name the a
 has none, ask the author (CMT-6). Content file names follow the same rule (`Sprites/Mommy_1`).
 
 **NAM-16. The gap between beats is an interval.** The time from one beat to the next is the **interval**:
-`BeatIntervalRomFrames` in ROM frames, `BeatIntervalClockUnits` in clock units, and `_beatTimer` for the timer that
-counts up to it. Never call it a period, delay, rate, sleep or step, and never call a beat a "step" or a "turn"
+`BeatIntervalRomFrames` in ROM frames, and `_beatTimer` for the `RomFrameTimer` that says when it is over. Never call
+it a period, delay, rate, sleep or step, and never call a beat a "step" or a "turn"
 (a hulk's or a human's beat is a beat; its steps are the moves inside it). The same word names any other repeating
-gap: a flicker, a flash, a cycle (`SparkFrameIntervalRomFrames`, `CycleIntervalClockUnits`), and a gap counted in beats
+gap: a move, a grow step, an animation frame (`MoveIntervalRomFrames`, `GrowIntervalRomFrames`,
+`AnimationIntervalRomFrames`), a flash, a cycle (`CycleIntervalClockUnits`), and a gap counted in beats
 (`fireIntervalBeats`). Where the ROM supplies only part of the interval, such as the frames a brain sleeps after its
 beat, that value is a **wait** (`beatWaitRomFrames`), and the interval is the wait plus the frame the beat takes.
 
@@ -385,8 +386,23 @@ caller.
 
 ## 5. Time and state
 
-**TIME-1. One timer idiom.** Periodic work uses the clock-unit accumulator (add `UnitsPerPortTick`, compare to
-`Units(period)`, subtract and carry). Do not introduce `TimeSpan`/`GameTime` timers in gameplay code.
+**TIME-1. One timer idiom.** Anything that happens every so many fiftieths of a second is timed by a
+`Core/RomFrameTimer`, called once per `Update`: `if (_beatTimer.Tick(BeatIntervalRomFrames)) ActOnBeat(field);`. An
+entity never adds clock units itself. Do not introduce `TimeSpan`/`GameTime` timers in gameplay code.
+
+**TIME-1a. The same idea has the same name in every entity.**
+
+| Idea | Timer field | Interval constant | Method it calls |
+|---|---|---|---|
+| The entity's turn to move or act | `_beatTimer` | `BeatIntervalRomFrames` | `ActOnBeat` |
+| A move made every fiftieth of a second | `_moveTimer` | `ArcadeClock.MoveIntervalRomFrames` | `MoveOnce` |
+| A step of growing | `_growTimer` | `GrowIntervalRomFrames` | `TakeGrowStep` (and `IsGrowing`) |
+| The next animation frame, when not on the beat | `_animationTimer` | `AnimationIntervalRomFrames` | `ShowNextAnimationFrame` |
+| How long a short-lived thing lasts | `_lifeTimer` | `LifeRomFrames` | (it dies) |
+
+A count of beats, steps or ticks left is `_<what>BeatsRemaining`, `_<what>StepsRemaining` or
+`_<what>TicksRemaining`. A robot that waits for the wave to start gets its beat timer from
+`PlayField.CreateFirstBeatTimer`.
 
 **TIME-2. `ToPortTicks(romFrames)` truncates** and fires up to a tick early. Use it only for one-shot display
 durations, and say so in the caller's comment.
