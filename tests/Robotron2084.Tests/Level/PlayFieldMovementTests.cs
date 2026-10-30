@@ -43,7 +43,7 @@ public sealed class PlayFieldMovementTests
     }
 
     [Fact]
-    public void Hulk_PressingTheLeftWall_ReaimsAndNeverLeavesPlayfield()
+    public void Hulk_PressingTheLeftWall_TurnsAndNeverLeavesPlayfield()
     {
         var field = CreateEmptyField();
         var bounds = field.Wall.PlayfieldBounds;

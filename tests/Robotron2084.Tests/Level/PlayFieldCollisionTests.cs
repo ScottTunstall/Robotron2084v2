@@ -24,7 +24,7 @@ public sealed class PlayFieldCollisionTests
         // from just above the electrode's top-left, moving Down, it still
         // overlaps the 10x9 arcade pixel electrode box.
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
-        Assert.True(field.PlayerLasers.TryFire(laserOrigin, Direction8.Down, out var laser));
+        var laser = field.PlayerLasers.FireAndGet(laserOrigin, Direction8.Down);
         Assert.NotNull(laser);
 
         field.Update(new GameTime());
@@ -163,9 +163,8 @@ public sealed class PlayFieldCollisionTests
     {
         var field = CreateEmptyField();
         var slots = field.PlayerLasers;
-        Assert.True(slots.TryFire(
-            new IntVector2(field.Wall.PlayfieldBounds.Center.X, field.Wall.PlayfieldBounds.Top + 40), Direction8.Up,
-            out var laser));
+        var laser = slots.FireAndGet(
+            new IntVector2(field.Wall.PlayfieldBounds.Center.X, field.Wall.PlayfieldBounds.Top + 40), Direction8.Up);
         Assert.NotNull(laser);
 
         // Fly it up into the top wall.
@@ -200,7 +199,7 @@ public sealed class PlayFieldCollisionTests
         // Fired straight down from just inside the bottom edge: the laser starts overlapping the wall, and one
         // step later it lies wholly beyond it, so a test of only where it lands would let it fly on.
         IntVector2 muzzle = new(inner.Center.X, inner.Bottom - 4);
-        Assert.True(field.PlayerLasers.TryFire(muzzle, Direction8.Down, out var laser));
+        var laser = field.PlayerLasers.FireAndGet(muzzle, Direction8.Down);
 
         field.Update(Tick);
 
@@ -276,7 +275,7 @@ public sealed class PlayFieldCollisionTests
         var grunt = new Grunt(TestSprites.Shared, spot);
         field.Entities.Grunts.Add(grunt);
 
-        Assert.True(field.PlayerLasers.TryFire(spot, Direction8.Down, out var laser));
+        var laser = field.PlayerLasers.FireAndGet(spot, Direction8.Down);
         field.Update(new GameTime());
 
         // RRP8.ASM ROBKIL: `LDA PCFLG / BNE ROBKON / JSR EXST` — a laser kill
@@ -301,7 +300,7 @@ public sealed class PlayFieldCollisionTests
 
         // Laser moving Left knocks the hulk left. Spawn it to the RIGHT of the hulk so the
         // first 12 arcade pixel move still leaves it overlapping the 14x16 arcade pixel hulk box.
-        Assert.True(field.PlayerLasers.TryFire(new IntVector2(spot.X + 32, spot.Y), Direction8.Left, out var laser));
+        var laser = field.PlayerLasers.FireAndGet(new IntVector2(spot.X + 32, spot.Y), Direction8.Left);
         field.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Alive, hulk.LifeState); // indestructible

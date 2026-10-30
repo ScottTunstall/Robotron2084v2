@@ -669,7 +669,7 @@ public sealed class PlayFieldBrainProgMissileTests
         field.Entities.Progs.Add(prog);
         var spot = prog.Position;
 
-        Assert.True(field.PlayerLasers.TryFire(new IntVector2(spot.X + 3, spot.Y - 12), Direction8.Down, out _));
+        field.PlayerLasers.Fire(new IntVector2(spot.X + 3, spot.Y - 12), Direction8.Down);
         field.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dead, prog.LifeState); // instant off, no pop
@@ -713,7 +713,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var missile = new CruiseMissile(TestSprites.Shared, spot, field.Player.Position, new Random(8));
         field.Entities.CruiseMissiles.Add(missile);
 
-        Assert.True(field.PlayerLasers.TryFire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down, out var _));
+        field.PlayerLasers.Fire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down);
         field.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dead, missile.LifeState);
@@ -730,8 +730,7 @@ public sealed class PlayFieldBrainProgMissileTests
         IntVector2 brainSpot = new(inner.X + 150, inner.Y + 120);
         var brain = new Brain(TestSprites.Shared, brainSpot, new Random(9), 0, 40, FamilyList.FirstSlot);
         field.Entities.Brains.Add(brain);
-        Assert.True(field.PlayerLasers.TryFire(new IntVector2(brainSpot.X + 7, brainSpot.Y - 12), Direction8.Down,
-            out var _));
+        field.PlayerLasers.Fire(new IntVector2(brainSpot.X + 7, brainSpot.Y - 12), Direction8.Down);
         field.Update(new GameTime());
         Assert.Equal(EntityLifeState.Dead, brain.LifeState); // BRNKIL: explode, then off — no blink
         Assert.Equal(500, field.ScoreBoard.Score);
@@ -739,8 +738,7 @@ public sealed class PlayFieldBrainProgMissileTests
         IntVector2 progSpot = new(inner.X + 300, inner.Y + 120);
         var prog = new Prog(TestSprites.Shared, progSpot, HumanKind.Daddy, new Random(10));
         field.Entities.Progs.Add(prog);
-        Assert.True(field.PlayerLasers.TryFire(new IntVector2(progSpot.X + 5, progSpot.Y - 12), Direction8.Down,
-            out var _));
+        field.PlayerLasers.Fire(new IntVector2(progSpot.X + 5, progSpot.Y - 12), Direction8.Down);
         field.Update(new GameTime());
 
         // ROM PRGKIL: `JSR KILL` then the sprite swap, so the prog is gone AT ONCE

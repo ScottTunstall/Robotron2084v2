@@ -153,7 +153,7 @@ public sealed class FieldStrategyTests
         IntVector2 spot = new(bounds.X + 200, bounds.Y + 200);
         field.Entities.Add(new Grunt(TestSprites.Shared, spot));
         field.Entities.Add(new Grunt(TestSprites.Shared, spot));
-        field.PlayerLasers.TryFire(spot, Direction8.Up, out _);
+        field.PlayerLasers.Fire(spot, Direction8.Up);
         var responder = new CollisionResponder(field);
 
         var hits = 0;
