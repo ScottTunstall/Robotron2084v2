@@ -43,7 +43,7 @@ public static class ControlCapture
     /// </summary>
     public static InputBinding GetNewlyPressed(InputSnapshot previous, InputSnapshot current)
     {
-        foreach (var key in GetNewlyPressedKeys(previous.Keys, current.Keys)) return InputBinding.CreateKey(key);
+        foreach (var key in GetNewlyPressedKeys(previous.KeyboardState, current.KeyboardState)) return InputBinding.CreateKey(key);
 
         for (var pad = 0; pad < 2; pad++)
         {

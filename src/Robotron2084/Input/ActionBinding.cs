@@ -47,8 +47,8 @@ public readonly record struct ActionBinding(InputBinding KeyBinding, InputBindin
     }
 
     /// <summary>True while either slot is held.</summary>
-    public bool IsHeld(KeyboardState keys, GamePadState padOne, GamePadState padTwo)
+    public bool IsHeld(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
     {
-        return KeyBinding.IsHeld(keys, padOne, padTwo) || PadBinding.IsHeld(keys, padOne, padTwo);
+        return KeyBinding.IsHeld(keyboardState, padOne, padTwo) || PadBinding.IsHeld(keyboardState, padOne, padTwo);
     }
 }

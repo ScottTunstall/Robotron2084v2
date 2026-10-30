@@ -77,13 +77,13 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     }
 
     /// <summary>True while this binding is held down, per the ROM's active-HIGH switch convention.</summary>
-    public bool IsHeld(KeyboardState keys, GamePadState padOne, GamePadState padTwo)
+    public bool IsHeld(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
     {
         var pad = GamePadIndex == 1 ? padTwo : padOne;
 
         return Kind switch
         {
-            InputBindingKind.Key => keys.IsKeyDown((Keys)Code),
+            InputBindingKind.Key => keyboardState.IsKeyDown((Keys)Code),
             InputBindingKind.GamePadButton => pad.IsButtonDown((Buttons)Code),
             InputBindingKind.GamePadLeftStick => GamePadSticks.Read(pad, false) ==
                                                  new IntVector2(GetDirectionX(), GetDirectionY()),

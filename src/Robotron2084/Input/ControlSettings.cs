@@ -70,9 +70,9 @@ public sealed class ControlSettings
     }
 
     /// <summary>True while the pause binding is held.</summary>
-    public bool IsPauseHeld(KeyboardState keys, GamePadState padOne, GamePadState padTwo)
+    public bool IsPauseHeld(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
     {
-        return Pause.IsHeld(keys, padOne, padTwo);
+        return Pause.IsHeld(keyboardState, padOne, padTwo);
     }
 
     /// <summary>
@@ -82,15 +82,15 @@ public sealed class ControlSettings
     ///     long-standing port aliases: Space as a fire button and <c>Insert</c> as the
     ///     skip-level test key (<c>P</c> is PAUSE, not skip-level).
     /// </summary>
-    public PlayerInputState ReadPlayer(int playerIndex, KeyboardState keys, GamePadState padOne, GamePadState padTwo)
+    public PlayerInputState ReadPlayer(int playerIndex, KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
     {
         var controls = _players[playerIndex];
-        var move = controls.GetMoveDirection(keys, padOne, padTwo);
-        var shoot = controls.GetShootDirection(keys, padOne, padTwo);
+        var move = controls.GetMoveDirection(keyboardState, padOne, padTwo);
+        var shoot = controls.GetShootDirection(keyboardState, padOne, padTwo);
         var ownPad = playerIndex == 1 ? padTwo : padOne;
 
-        var fire = controls.IsFiring(keys, padOne, padTwo)
-                   || keys.IsKeyDown(FireAliasKey)
+        var fire = controls.IsFiring(keyboardState, padOne, padTwo)
+                   || keyboardState.IsKeyDown(FireAliasKey)
                    || ownPad.IsButtonDown(FireAliasButton)
                    || ownPad.Triggers.Right > FireTriggerThreshold;
 
@@ -98,15 +98,15 @@ public sealed class ControlSettings
             move,
             shoot,
             fire,
-            keys.IsKeyDown(SkipLevelKey),
-            keys.IsKeyDown(StartOneKey) || keys.IsKeyDown(StartOneNumPadKey) || padOne.IsButtonDown(StartOneButton),
-            keys.IsKeyDown(StartTwoKey) || keys.IsKeyDown(StartTwoNumPadKey) || padOne.IsButtonDown(StartTwoButton));
+            keyboardState.IsKeyDown(SkipLevelKey),
+            keyboardState.IsKeyDown(StartOneKey) || keyboardState.IsKeyDown(StartOneNumPadKey) || padOne.IsButtonDown(StartOneButton),
+            keyboardState.IsKeyDown(StartTwoKey) || keyboardState.IsKeyDown(StartTwoNumPadKey) || padOne.IsButtonDown(StartTwoButton));
     }
 
     /// <summary>The page's <c>R</c>: every line back to the factory scheme.</summary>
     public void ResetToDefaults()
     {
-        for (var player = 0; player < PlayerCount; player++) _players[player] = PlayerControls.CreateDefaults(player);
+        for (var playerIndex = 0; playerIndex < PlayerCount; playerIndex++) _players[playerIndex] = PlayerControls.CreateDefaults(playerIndex);
 
         Pause = InputBinding.CreateKey(Keys.P);
     }

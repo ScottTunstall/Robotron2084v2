@@ -10,11 +10,11 @@ public sealed class BoundPlayerInputSource : IPlayerInputSource
     private readonly int _playerIndex;
 
     /// <summary>Creates a source that reads one player's input.</summary>
-    /// <param name="settings">The controls to read.</param>
+    /// <param name="controlSettings">The controls to read.</param>
     /// <param name="playerIndex">0 for player 1, 1 for player 2.</param>
-    public BoundPlayerInputSource(ControlSettings settings, int playerIndex)
+    public BoundPlayerInputSource(ControlSettings controlSettings, int playerIndex)
     {
-        _controlSettings = settings;
+        _controlSettings = controlSettings;
         _playerIndex = playerIndex;
     }
 
@@ -28,6 +28,6 @@ public sealed class BoundPlayerInputSource : IPlayerInputSource
     /// <param name="snapshot">The snapshot to read from.</param>
     public PlayerInputState Poll(InputSnapshot snapshot)
     {
-        return _controlSettings.ReadPlayer(_playerIndex, snapshot.Keys, snapshot.PadOne, snapshot.PadTwo);
+        return _controlSettings.ReadPlayer(_playerIndex, snapshot.KeyboardState, snapshot.PadOne, snapshot.PadTwo);
     }
 }

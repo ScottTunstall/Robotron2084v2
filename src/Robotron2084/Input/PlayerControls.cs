@@ -78,36 +78,36 @@ public sealed class PlayerControls
     /// <summary>
     ///     True while ANY shoot action is held (holding an aim key fires).
     /// </summary>
-    public bool IsFiring(KeyboardState keys, GamePadState padOne, GamePadState padTwo)
+    public bool IsFiring(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
     {
-        return GetShootDirection(keys, padOne, padTwo) != IntVector2.Zero;
+        return GetShootDirection(keyboardState, padOne, padTwo) != IntVector2.Zero;
     }
 
     /// <summary>The move stick's direction (-1/0/1 per axis), from the bound MOVE actions.</summary>
-    public IntVector2 GetMoveDirection(KeyboardState keys, GamePadState padOne, GamePadState padTwo)
+    public IntVector2 GetMoveDirection(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
     {
         return new IntVector2(
-            GetAxis(InputAction.MoveRight, InputAction.MoveLeft, keys, padOne, padTwo),
-            GetAxis(InputAction.MoveDown, InputAction.MoveUp, keys, padOne, padTwo));
+            GetAxis(InputAction.MoveRight, InputAction.MoveLeft, keyboardState, padOne, padTwo),
+            GetAxis(InputAction.MoveDown, InputAction.MoveUp, keyboardState, padOne, padTwo));
     }
 
     /// <summary>The fire stick's direction, from the bound SHOOT actions.</summary>
-    public IntVector2 GetShootDirection(KeyboardState keys, GamePadState padOne, GamePadState padTwo)
+    public IntVector2 GetShootDirection(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
     {
         return new IntVector2(
-            GetAxis(InputAction.ShootRight, InputAction.ShootLeft, keys, padOne, padTwo),
-            GetAxis(InputAction.ShootDown, InputAction.ShootUp, keys, padOne, padTwo));
+            GetAxis(InputAction.ShootRight, InputAction.ShootLeft, keyboardState, padOne, padTwo),
+            GetAxis(InputAction.ShootDown, InputAction.ShootUp, keyboardState, padOne, padTwo));
     }
 
     private int GetAxis(
         InputAction positive,
         InputAction negative,
-        KeyboardState keys,
+        KeyboardState keyboardState,
         GamePadState padOne,
         GamePadState padTwo)
     {
-        var value = (this[positive].IsHeld(keys, padOne, padTwo) ? 1 : 0)
-                    - (this[negative].IsHeld(keys, padOne, padTwo) ? 1 : 0);
+        var value = (this[positive].IsHeld(keyboardState, padOne, padTwo) ? 1 : 0)
+                    - (this[negative].IsHeld(keyboardState, padOne, padTwo) ? 1 : 0);
         return Math.Clamp(value, -1, 1);
     }
 }
