@@ -8,7 +8,7 @@ namespace Robotron2084.Core;
 ///     <para>Why it is needed:</para>
 ///     <list type="bullet">
 ///         <item>
-///             The arcade measured its waits in <see cref="ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>,
+///             The arcade game measured its waits in <see cref="ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>,
 ///             but the game can only act on a <see cref="ArcadeClock.PortTicksPerSecond">tick</see>.
 ///         </item>
 ///         <item>
