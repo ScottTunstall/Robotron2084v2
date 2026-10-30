@@ -239,6 +239,11 @@ public sealed class StorylineState : IGameState, IAttractState
             return _bounds;
         }
 
+        public Texture2D GetExplosionAnimationFrame()
+        {
+            return _animationFrame;
+        }
+
         public EntityLifeState LifeState => EntityLifeState.Dead;
         public IntVector2 Position => new(_bounds.X, _bounds.Y);
 
