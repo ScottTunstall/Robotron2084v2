@@ -61,7 +61,7 @@ public sealed class HulkWaveSpawner : IWaveSpawner
                 ? () => field.GetFamilyMemberInSlot(stalkedSlot)?.Position ?? field.GetPlayerPosition()
                 : () => phantomTargetPosition;
             context.Entities.Add(new Hulk(field.Sprites, position, context.Random,
-                field.Parameters.HulkBeatIntervalRomFrames, getTargetPosition));
+                field.Parameters.HulkBeatIntervalArcadeFrames, getTargetPosition));
         }
     }
 

@@ -33,7 +33,7 @@ public sealed class BrainWaveSpawner : IWaveSpawner
                 field.Sprites,
                 position,
                 context.Random,
-                field.Parameters.BrainBeatWaitRomFrames,
+                field.Parameters.BrainBeatWaitArcadeFrames,
                 field.Parameters.BrainFireDelay,
                 entities.GetNearestFamilySlot(position));
             entities.Add(brain);
