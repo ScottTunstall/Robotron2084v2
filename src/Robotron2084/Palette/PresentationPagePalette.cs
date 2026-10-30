@@ -52,13 +52,13 @@ public sealed class PresentationPagePalette
     ///     `$8A68`'s `LDA #$03` — the chase takes a step every three fiftieths of a second. It is how many fiftieths of a
     ///     second are gathered in <see cref="_chaseClockUnits" /> before the chase takes a step.
     /// </summary>
-    private const int ChaseRomFramesPerStep = 3;
+    private const int ChaseArcadeFramesPerStep = 3;
 
     /// <summary>
     ///     One step per logo-handling, and the ring is 28 logos of one frame each. It is how many fiftieths of a second
     ///     are gathered in <see cref="_wordmarkClockUnits" /> before the wordmark takes a step.
     /// </summary>
-    private const int WordmarkRomFramesPerStep = 28;
+    private const int WordmarkArcadeFramesPerStep = 28;
 
     /// <summary>
     ///     The seven entries the page's own code writes (ROM `$8A70`), in slot order: red, blue,
@@ -115,7 +115,7 @@ public sealed class PresentationPagePalette
     public void Update(GamePalette palette)
     {
         _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
-        if (IsStepDue(ref _chaseClockUnits, ChaseRomFramesPerStep))
+        if (IsStepDue(ref _chaseClockUnits, ChaseArcadeFramesPerStep))
         {
             _chaseSlot = _chaseSlot >= LastSlot ? FirstSlot : _chaseSlot + 1;
             Start(palette); // the ROM re-copies the table on every step...
@@ -123,14 +123,14 @@ public sealed class PresentationPagePalette
         }
 
         _wordmarkClockUnits += ArcadeClock.UnitsPerPortTick;
-        if (IsStepDue(ref _wordmarkClockUnits, WordmarkRomFramesPerStep))
+        if (IsStepDue(ref _wordmarkClockUnits, WordmarkArcadeFramesPerStep))
             _wordmarkStep = (_wordmarkStep + 1) % _slotCount;
     }
 
-    /// <summary>True when a clock's accumulator has reached <paramref name="romFrames" /> frames.</summary>
-    private static bool IsStepDue(ref int clockUnits, int romFrames)
+    /// <summary>True when a clock's accumulator has reached <paramref name="arcadeFrames" /> frames.</summary>
+    private static bool IsStepDue(ref int clockUnits, int arcadeFrames)
     {
-        var period = ArcadeClock.ToClockUnits(romFrames);
+        var period = ArcadeClock.ToClockUnits(arcadeFrames);
         if (clockUnits < period) return false;
 
         clockUnits -= period;

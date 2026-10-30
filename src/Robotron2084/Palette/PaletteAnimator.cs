@@ -28,7 +28,7 @@ namespace Robotron2084.Palette;
 public sealed class PaletteAnimator
 {
     /// <summary>The ROM's LF flash period in fiftieths of a second (every 3rd flash is the random hue).</summary>
-    private const int LaserFlashRomFrames = 2;
+    private const int LaserFlashArcadeFrames = 2;
 
     /// <summary>The LASER (slot 13) ramp — also the random-hue table for the LF flash.</summary>
     public static readonly byte[] LaserTab =
@@ -56,7 +56,7 @@ public sealed class PaletteAnimator
         _random = random ?? new Random();
         _processes =
         [
-            new Process { Slot = 11, ColourTable = [0x38, 0x07, 0xC0], RomFramesPerStep = 8 }, // RGB
+            new Process { Slot = 11, ColourTable = [0x38, 0x07, 0xC0], ArcadeFramesPerStep = 8 }, // RGB
             new Process
             {
                 Slot = 12,
@@ -65,7 +65,7 @@ public sealed class PaletteAnimator
                     0xC0, 0xC0, 0xD0, 0xE0, 0xF0, 0xF8, 0xFA, 0xBA, 0x7A, 0x3A, 0x34, 0x2D, 0x1F, 0x17, 0x0F, 0x07,
                     0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
                 ],
-                RomFramesPerStep = 2
+                ArcadeFramesPerStep = 2
             }, // DECAY
             new Process
             {
@@ -75,10 +75,10 @@ public sealed class PaletteAnimator
                     0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0x87, 0x87, 0x47, 0x47, 0x07, 0x07, 0x47, 0x47,
                     0x87, 0x87, 0xC7, 0xC7, 0xC6, 0xC5, 0xC4, 0xC3, 0xC2, 0xC1
                 ],
-                RomFramesPerStep = 1
+                ArcadeFramesPerStep = 1
             }, // BLU-PURP-RED
-            new Process { Slot = 15, ColourTable = [0x07, 0x07, 0x2F], RomFramesPerStep = 6 }, // RED-GOLD
-            new Process { Slot = 13, ColourTable = LaserTab, RomFramesPerStep = 2 } // LASER
+            new Process { Slot = 15, ColourTable = [0x07, 0x07, 0x2F], ArcadeFramesPerStep = 6 }, // RED-GOLD
+            new Process { Slot = 13, ColourTable = LaserTab, ArcadeFramesPerStep = 2 } // LASER
         ];
     }
 
@@ -88,7 +88,7 @@ public sealed class PaletteAnimator
         // LF (slot 10): a white flash every 2 fiftieths of a second, and every 6th frame a
         // random hue from the COLTAB ramp INSTEAD of the white one.
         _laserFlashClockUnits += ArcadeClock.UnitsPerPortTick;
-        var flashInterval = ArcadeClock.ToClockUnits(LaserFlashRomFrames);
+        var flashInterval = ArcadeClock.ToClockUnits(LaserFlashArcadeFrames);
         while (_laserFlashClockUnits >= flashInterval)
         {
             _laserFlashClockUnits -= flashInterval;
@@ -109,9 +109,9 @@ public sealed class PaletteAnimator
             if (_palette.IsSlotSuspended(process.Slot)) continue;
 
             process.ClockUnits += ArcadeClock.UnitsPerPortTick;
-            if (process.ClockUnits < ArcadeClock.ToClockUnits(process.RomFramesPerStep)) continue;
+            if (process.ClockUnits < ArcadeClock.ToClockUnits(process.ArcadeFramesPerStep)) continue;
 
-            process.ClockUnits -= ArcadeClock.ToClockUnits(process.RomFramesPerStep);
+            process.ClockUnits -= ArcadeClock.ToClockUnits(process.ArcadeFramesPerStep);
             _palette.SetSlot(process.Slot, process.ColourTable[process.ColourIndex]);
             process.ColourIndex = (process.ColourIndex + 1) % process.ColourTable.Length;
         }
@@ -122,7 +122,7 @@ public sealed class PaletteAnimator
         public int ClockUnits;
         public int ColourIndex;
         public byte[] ColourTable = [];
-        public int RomFramesPerStep = 1;
+        public int ArcadeFramesPerStep = 1;
         public int Slot;
     }
 }

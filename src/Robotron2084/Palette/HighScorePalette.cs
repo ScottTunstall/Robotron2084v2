@@ -73,11 +73,11 @@ public sealed class HighScorePalette
         // (`LDX #CATAB+7` "OUT OF PHASE PLEASE", `LDX #CCTAB+7").
         _processes =
         [
-            new Process { Slot = LoopSlot, ColourTable = CycleTable, RomFramesPerStep = 3 },
-            new Process { Slot = 9, ColourTable = RampTable, ColourIndex = 7, RomFramesPerStep = 4 },
-            new Process { Slot = 10, ColourTable = RampTable, RomFramesPerStep = 4 },
-            new Process { Slot = 12, ColourTable = AccentTable, ColourIndex = 7, RomFramesPerStep = 4 },
-            new Process { Slot = 13, ColourTable = AccentTable, RomFramesPerStep = 4 }
+            new Process { Slot = LoopSlot, ColourTable = CycleTable, ArcadeFramesPerStep = 3 },
+            new Process { Slot = 9, ColourTable = RampTable, ColourIndex = 7, ArcadeFramesPerStep = 4 },
+            new Process { Slot = 10, ColourTable = RampTable, ArcadeFramesPerStep = 4 },
+            new Process { Slot = 12, ColourTable = AccentTable, ColourIndex = 7, ArcadeFramesPerStep = 4 },
+            new Process { Slot = 13, ColourTable = AccentTable, ArcadeFramesPerStep = 4 }
         ];
     }
 
@@ -136,7 +136,7 @@ public sealed class HighScorePalette
 
             var process = _processes[i];
             process.ClockUnits += ArcadeClock.UnitsPerPortTick;
-            var period = ArcadeClock.ToClockUnits(process.RomFramesPerStep);
+            var period = ArcadeClock.ToClockUnits(process.ArcadeFramesPerStep);
             if (process.ClockUnits < period) continue;
 
             process.ClockUnits -= period;
@@ -177,7 +177,7 @@ public sealed class HighScorePalette
         public int ClockUnits;
         public int ColourIndex;
         public byte[] ColourTable = [];
-        public int RomFramesPerStep;
+        public int ArcadeFramesPerStep;
         public int Slot;
     }
 }
