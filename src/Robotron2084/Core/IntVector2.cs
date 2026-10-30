@@ -30,7 +30,7 @@ public readonly record struct IntVector2(int X, int Y)
     {
         long dx = a.X - b.X;
         long dy = a.Y - b.Y;
-        return dx * dx + dy * dy;
+        return (dx * dx) + (dy * dy);
     }
 
     /// <summary>
