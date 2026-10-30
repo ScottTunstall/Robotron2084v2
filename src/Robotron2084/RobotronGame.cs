@@ -316,8 +316,8 @@ public sealed class RobotronGame : Game
     /// </remarks>
     private void StartEndOfGameFlow()
     {
-        var session = GameSession.CreateNewGame(GameMode.OnePlayer, _input, controls: _controlSettings,
-            settings: _gameSettings);
+        var session = GameSession.CreateNewGame(GameMode.OnePlayer, _input, controlSettings: _controlSettings,
+            gameSettings: _gameSettings);
         session.GetCurrent().Score = DevKeys.QualifyingScore;
         _stateManager.TransitionTo(GameOverState.CreateFromSession(_input, _sprites, _highScoreStore, session));
     }
