@@ -28,5 +28,5 @@ internal sealed record LaserWallFlare(
     ///     How long a new flash lasts, in clock units: two fiftieths of a second. It is the starting value of
     ///     <see cref="RemainingClockUnits" />, which then counts down to nothing.
     /// </summary>
-    public const int LifeClockUnits = 2 * ArcadeClock.UnitsPerRomFrame;
+    public const int LifeClockUnits = 2 * ArcadeClock.UnitsPerArcadeFrame;
 }

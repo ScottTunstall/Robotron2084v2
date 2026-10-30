@@ -754,16 +754,16 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>Gets how many fiftieths of a second after the wave is set up the game goes live (test hook).</summary>
     /// <returns>The fiftieths of a second.</returns>
-    internal int GetLiveRomFrames()
+    internal int GetLiveArcadeFrames()
     {
-        return _waveStart.LiveRomFrames;
+        return _waveStart.LiveArcadeFrames;
     }
 
     /// <summary>Gets how many fiftieths of a second after the wave is set up the player appears (test hook).</summary>
     /// <returns>The fiftieths of a second.</returns>
-    internal int GetPlayerAppearRomFrames()
+    internal int GetPlayerAppearArcadeFrames()
     {
-        return _waveStart.PlayerAppearRomFrames;
+        return _waveStart.PlayerAppearArcadeFrames;
     }
 
     /// <summary>
@@ -804,20 +804,20 @@ public sealed class PlayField : ICollisionScene
     ///     Makes a robot's beat timer on the tick the game goes live, set so that the robot's first beat comes when the
     ///     arcade's would.
     /// </summary>
-    /// <param name="pollRomFrames">
+    /// <param name="pollArcadeFrames">
     ///     How many fiftieths of a second the robot sleeps between one look at whether the game is
     ///     live and the next.
     /// </param>
-    /// <param name="napRomFrames">
+    /// <param name="napArcadeFrames">
     ///     How many fiftieths of a second the robot sleeps after the look that finds the game live,
     ///     before its first beat.
     /// </param>
-    /// <param name="beatIntervalRomFrames">The time from one of the robot's beats to the next.</param>
+    /// <param name="beatIntervalArcadeFrames">The time from one of the robot's beats to the next.</param>
     /// <returns>The robot's beat timer.</returns>
-    internal RomFrameTimer CreateFirstBeatTimer(int pollRomFrames, int napRomFrames, int beatIntervalRomFrames)
+    internal ArcadeFrameTimer CreateFirstBeatTimer(int pollArcadeFrames, int napArcadeFrames, int beatIntervalArcadeFrames)
     {
-        return new RomFrameTimer(ArcadeClock.ToClockUnits(beatIntervalRomFrames) -
-                                 _waveStart.GetClockUnitsToFirstBeat(pollRomFrames, napRomFrames));
+        return new ArcadeFrameTimer(ArcadeClock.ToClockUnits(beatIntervalArcadeFrames) -
+                                 _waveStart.GetClockUnitsToFirstBeat(pollArcadeFrames, napArcadeFrames));
     }
 
     /// <summary>

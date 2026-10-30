@@ -26,12 +26,12 @@ namespace Robotron2084.Level;
 ///     How long a spheroid waits before dropping an enforcer. A smaller number is a quicker
 ///     drop.
 /// </param>
-/// <param name="HulkBeatIntervalRomFrames">
+/// <param name="HulkBeatIntervalArcadeFrames">
 ///     How many fiftieths of a second pass between a hulk's beats. A smaller number is
 ///     a faster hulk.
 /// </param>
 /// <param name="BrainFireDelay">The longest a brain waits between cruise missiles, in beats.</param>
-/// <param name="BrainBeatWaitRomFrames">
+/// <param name="BrainBeatWaitArcadeFrames">
 ///     How many fiftieths of a second a brain waits after each beat. A smaller number is
 ///     a faster brain.
 /// </param>
@@ -55,9 +55,9 @@ public sealed record WaveParameters(
     int GruntSpeedFloor,
     int EnforcerFireDelay,
     int SpheroidDropDelay,
-    int HulkBeatIntervalRomFrames,
+    int HulkBeatIntervalArcadeFrames,
     int BrainFireDelay,
-    int BrainBeatWaitRomFrames,
+    int BrainBeatWaitArcadeFrames,
     int TankFireDelay,
     int ShellSpeed,
     int QuarkDropDelay,

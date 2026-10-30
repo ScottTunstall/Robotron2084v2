@@ -60,7 +60,7 @@ public sealed class RobotTransporter
     ///         <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>).</item>
     ///     </list>
     /// </remarks>
-    private int _clockUnits = ArcadeClock.UnitsPerRomFrame;
+    private int _clockUnits = ArcadeClock.UnitsPerArcadeFrame;
 
     /// <summary>Makes a transporter.</summary>
     /// <param name="random">The field's random source, which picks each image's sparkle.</param>
@@ -134,9 +134,9 @@ public sealed class RobotTransporter
     public void Update()
     {
         _clockUnits += ArcadeClock.UnitsPerPortTick;
-        while (_clockUnits >= ArcadeClock.UnitsPerRomFrame)
+        while (_clockUnits >= ArcadeClock.UnitsPerArcadeFrame)
         {
-            _clockUnits -= ArcadeClock.UnitsPerRomFrame;
+            _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
             foreach (var image in _images) image.Step(_random);
         }
     }

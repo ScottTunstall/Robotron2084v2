@@ -42,13 +42,13 @@ public sealed class GruntSpeedProgression
     ///         <item>Disassembly: <c>$2A85</c> to <c>$2B08</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int PassRomFrames = 15;
+    private const int PassArcadeFrames = 15;
 
     /// <summary>
     ///     The pass on which the game makes its first check on whether to lower <see cref="Floor" />. The game makes its
     ///     first pass at once and then sleeps before each of the others, so one fewer than this many sleeps of
-    ///     <see cref="PassRomFrames" /> go by before the first check. It is used to work out
-    ///     <see cref="FirstCheckRomFrames" />.
+    ///     <see cref="PassArcadeFrames" /> go by before the first check. It is used to work out
+    ///     <see cref="FirstCheckArcadeFrames" />.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -63,7 +63,7 @@ public sealed class GruntSpeedProgression
 
     /// <summary>
     ///     How many passes the game counts between one check on whether to lower <see cref="Floor" /> and the next. With
-    ///     <see cref="PassRomFrames" /> it gives <see cref="CheckIntervalRomFrames" />.
+    ///     <see cref="PassArcadeFrames" /> it gives <see cref="CheckIntervalArcadeFrames" />.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -75,7 +75,7 @@ public sealed class GruntSpeedProgression
 
     /// <summary>
     ///     How many fiftieths of a second the game sleeps after it goes live before it switches the robots on again. It
-    ///     is the first part of <see cref="ExecutiveStartRomFrames" />.
+    ///     is the first part of <see cref="ExecutiveStartArcadeFrames" />.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -86,11 +86,11 @@ public sealed class GruntSpeedProgression
     ///         <item>Disassembly: <c>$289A</c> to <c>$28A1</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int Pls3NapRomFrames = 12;
+    private const int Pls3NapArcadeFrames = 12;
 
     /// <summary>
     ///     How many fiftieths of a second the game then sleeps before it starts its loop of passes. It is the second part
-    ///     of <see cref="ExecutiveStartRomFrames" />.
+    ///     of <see cref="ExecutiveStartArcadeFrames" />.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -105,7 +105,7 @@ public sealed class GruntSpeedProgression
     ///         <item>Disassembly: <c>$28AA</c> to <c>$28D7</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int Pls4NapRomFrames = 10;
+    private const int Pls4NapArcadeFrames = 10;
 
     /// <summary>
     ///     How many fiftieths of a second go by, from when the game goes live, before the game starts its loop of passes.
@@ -125,11 +125,11 @@ public sealed class GruntSpeedProgression
     ///         <item>Disassembly: <c>$289A</c> to <c>$2A8B</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int ExecutiveStartRomFrames = Pls3NapRomFrames + Pls4NapRomFrames;
+    private const int ExecutiveStartArcadeFrames = Pls3NapArcadeFrames + Pls4NapArcadeFrames;
 
     /// <summary>
     ///     How many fiftieths of a second go by, from when the game goes live, before its first check on whether to lower
-    ///     <see cref="Floor" />. It is the starting value of <see cref="_checkWaitRomFrames" />.
+    ///     <see cref="Floor" />. It is the starting value of <see cref="_checkWaitArcadeFrames" />.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -140,7 +140,7 @@ public sealed class GruntSpeedProgression
     ///         <item>Disassembly: <c>$289A</c> to <c>$2AC5</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int FirstCheckRomFrames = ExecutiveStartRomFrames + (FirstCheckPasses - 1) * PassRomFrames;
+    private const int FirstCheckArcadeFrames = ExecutiveStartArcadeFrames + (FirstCheckPasses - 1) * PassArcadeFrames;
 
     /// <summary>
     ///     The number of beats subtracted from <see cref="Floor" /> at a check when the player has scored nothing since
@@ -208,7 +208,7 @@ public sealed class GruntSpeedProgression
 
     /// <summary>
     ///     How many fiftieths of a second the game waits between one check on whether to lower <see cref="Floor" /> and
-    ///     the next. It is the value <see cref="_checkWaitRomFrames" /> has after the first check.
+    ///     the next. It is the value <see cref="_checkWaitArcadeFrames" /> has after the first check.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -219,16 +219,16 @@ public sealed class GruntSpeedProgression
     ///         <item>Disassembly: <c>$2A85</c> to <c>$2B08</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int CheckIntervalRomFrames = CheckIntervalPasses * PassRomFrames;
+    private const int CheckIntervalArcadeFrames = CheckIntervalPasses * PassArcadeFrames;
 
     /// <summary>Counts up to the next check, in clock units. It only counts while the game is live.</summary>
     private int _checkClockUnits;
 
     /// <summary>How many fiftieths of a second <see cref="_checkClockUnits" /> counts up to before the next check.</summary>
-    private int _checkWaitRomFrames = FirstCheckRomFrames;
+    private int _checkWaitArcadeFrames = FirstCheckArcadeFrames;
 
     /// <summary>
-    ///     True once the game has started its loop of passes, which is <see cref="ExecutiveStartRomFrames" /> after the
+    ///     True once the game has started its loop of passes, which is <see cref="ExecutiveStartArcadeFrames" /> after the
     ///     game goes live.
     /// </summary>
     private bool _hasExecutiveStarted;
@@ -325,10 +325,10 @@ public sealed class GruntSpeedProgression
     {
         _checkClockUnits += clockUnits;
         ForgetScoreWhenTheExecutiveStarts();
-        if (_checkClockUnits < ArcadeClock.ToClockUnits(_checkWaitRomFrames)) return;
+        if (_checkClockUnits < ArcadeClock.ToClockUnits(_checkWaitArcadeFrames)) return;
 
-        _checkClockUnits -= ArcadeClock.ToClockUnits(_checkWaitRomFrames);
-        _checkWaitRomFrames = CheckIntervalRomFrames;
+        _checkClockUnits -= ArcadeClock.ToClockUnits(_checkWaitArcadeFrames);
+        _checkWaitArcadeFrames = CheckIntervalArcadeFrames;
 
         if (grunts.GetLiveCount() >= GruntCountThatHoldsTheFloor) return;
 
@@ -349,7 +349,7 @@ public sealed class GruntSpeedProgression
     /// </remarks>
     private void ForgetScoreWhenTheExecutiveStarts()
     {
-        if (_hasExecutiveStarted || _checkClockUnits < ArcadeClock.ToClockUnits(ExecutiveStartRomFrames)) return;
+        if (_hasExecutiveStarted || _checkClockUnits < ArcadeClock.ToClockUnits(ExecutiveStartArcadeFrames)) return;
 
         _hasExecutiveStarted = true;
         _hasPlayerScoredSinceLastCheck = false;

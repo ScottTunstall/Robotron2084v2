@@ -210,10 +210,10 @@ public static class DifficultyTuning
             MaxTanksPerQuark = (maxDropsX2 + 1) / 2,
             EnforcerFireDelay = Adjust(parameters.EnforcerFireDelay, EnforcerFireDelayHeader, delta, magnitude),
             SpheroidDropDelay = Adjust(parameters.SpheroidDropDelay, SpheroidDropDelayHeader, delta, magnitude),
-            HulkBeatIntervalRomFrames =
-            Adjust(parameters.HulkBeatIntervalRomFrames, HulkBeatIntervalHeader, delta, magnitude),
+            HulkBeatIntervalArcadeFrames =
+            Adjust(parameters.HulkBeatIntervalArcadeFrames, HulkBeatIntervalHeader, delta, magnitude),
             BrainFireDelay = Adjust(parameters.BrainFireDelay, BrainFireDelayHeader, delta, magnitude),
-            BrainBeatWaitRomFrames = Adjust(parameters.BrainBeatWaitRomFrames, BrainBeatWaitHeader, delta, magnitude),
+            BrainBeatWaitArcadeFrames = Adjust(parameters.BrainBeatWaitArcadeFrames, BrainBeatWaitHeader, delta, magnitude),
             TankFireDelay = Adjust(parameters.TankFireDelay, TankFireDelayHeader, delta, magnitude),
             ShellSpeed = Adjust(parameters.ShellSpeed, ShellSpeedHeader, delta, magnitude),
             QuarkDropDelay = Adjust(parameters.QuarkDropDelay, QuarkDropDelayHeader, delta, magnitude),

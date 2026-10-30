@@ -49,7 +49,7 @@ public sealed class WaveStartSequence
     ///         <item>Disassembly: <c>$2949</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int AppearPassRomFrames = 1;
+    private const int AppearPassArcadeFrames = 1;
 
     /// <summary>
     ///     How many fiftieths of a second the arcade sleeps after its appear loop finishes, to let the last appear
@@ -61,7 +61,7 @@ public sealed class WaveStartSequence
     ///         <item>Disassembly: <c>$2953</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int AppearFinishNapRomFrames = 2;
+    private const int AppearFinishNapArcadeFrames = 2;
 
     /// <summary>How many fiftieths of a second the arcade then sleeps, with the robots switched on, before the player appears.</summary>
     /// <remarks>
@@ -70,7 +70,7 @@ public sealed class WaveStartSequence
     ///         <item>Disassembly: <c>$295D</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int RobotsOnNapRomFrames = 10;
+    private const int RobotsOnNapArcadeFrames = 10;
 
     /// <summary>
     ///     How many fiftieths of a second after the wave is set up the player appears on a brain wave, where the robots
@@ -82,7 +82,7 @@ public sealed class WaveStartSequence
     ///         <item>Disassembly: <c>$2869</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int BrainWavePlayerAppearRomFrames = 150;
+    private const int BrainWavePlayerAppearArcadeFrames = 150;
 
     /// <summary>
     ///     How many fiftieths of a second the arcade sleeps after the player starts to appear, before the second part of
@@ -94,7 +94,7 @@ public sealed class WaveStartSequence
     ///         <item>Disassembly: <c>$287A</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int PlayerAppearNapRomFrames = 6;
+    private const int PlayerAppearNapArcadeFrames = 6;
 
     /// <summary>How many fiftieths of a second the arcade then sleeps before it switches the game on.</summary>
     /// <remarks>
@@ -103,13 +103,13 @@ public sealed class WaveStartSequence
     ///         <item>Disassembly: <c>$2885</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int DiagonalPlayerAppearNapRomFrames = 4;
+    private const int DiagonalPlayerAppearNapArcadeFrames = 4;
 
     /// <summary>How many fiftieths of a second after the wave is set up the game goes live.</summary>
-    private readonly int _liveRomFrames;
+    private readonly int _liveArcadeFrames;
 
     /// <summary>How many fiftieths of a second after the wave is set up the player appears.</summary>
-    private readonly int _playerAppearRomFrames;
+    private readonly int _playerAppearArcadeFrames;
 
     /// <summary>Counts the time since the wave was set up, in clock units. It stops counting once the game is live.</summary>
     private int _clockUnits;
@@ -134,17 +134,17 @@ public sealed class WaveStartSequence
     /// </param>
     public WaveStartSequence(int robotListCount, bool isBrainWave)
     {
-        _playerAppearRomFrames = isBrainWave
-            ? BrainWavePlayerAppearRomFrames
-            : GetAppearLoopRomFrames(robotListCount) + AppearFinishNapRomFrames + RobotsOnNapRomFrames;
-        _liveRomFrames = _playerAppearRomFrames + PlayerAppearNapRomFrames + DiagonalPlayerAppearNapRomFrames;
+        _playerAppearArcadeFrames = isBrainWave
+            ? BrainWavePlayerAppearArcadeFrames
+            : GetAppearLoopArcadeFrames(robotListCount) + AppearFinishNapArcadeFrames + RobotsOnNapArcadeFrames;
+        _liveArcadeFrames = _playerAppearArcadeFrames + PlayerAppearNapArcadeFrames + DiagonalPlayerAppearNapArcadeFrames;
     }
 
     /// <summary>How many fiftieths of a second after the wave is set up the game goes live (test hook).</summary>
-    internal int LiveRomFrames => _liveRomFrames;
+    internal int LiveArcadeFrames => _liveArcadeFrames;
 
     /// <summary>How many fiftieths of a second after the wave is set up the player appears (test hook).</summary>
-    internal int PlayerAppearRomFrames => _playerAppearRomFrames;
+    internal int PlayerAppearArcadeFrames => _playerAppearArcadeFrames;
 
     /// <summary>Moves the count on by one port tick.</summary>
     public void Update()
@@ -157,7 +157,7 @@ public sealed class WaveStartSequence
         }
 
         _clockUnits += ArcadeClock.UnitsPerPortTick;
-        _liveClockUnitsThisTick = Math.Max(0, _clockUnits - ArcadeClock.ToClockUnits(_liveRomFrames));
+        _liveClockUnitsThisTick = Math.Max(0, _clockUnits - ArcadeClock.ToClockUnits(_liveArcadeFrames));
         _hasJustGoneLive = IsLive();
     }
 
@@ -183,7 +183,7 @@ public sealed class WaveStartSequence
     /// </remarks>
     public bool HasPlayerAppeared()
     {
-        return _clockUnits >= ArcadeClock.ToClockUnits(_playerAppearRomFrames);
+        return _clockUnits >= ArcadeClock.ToClockUnits(_playerAppearArcadeFrames);
     }
 
     /// <summary>
@@ -193,7 +193,7 @@ public sealed class WaveStartSequence
     /// <returns>The clock units since then. It is less than nothing before the player has started to appear.</returns>
     public int GetClockUnitsSincePlayerAppeared()
     {
-        return _clockUnits - ArcadeClock.ToClockUnits(_playerAppearRomFrames);
+        return _clockUnits - ArcadeClock.ToClockUnits(_playerAppearArcadeFrames);
     }
 
     /// <summary>Says whether the second part of the player's appear has started, which is the strips that lean.</summary>
@@ -212,7 +212,7 @@ public sealed class WaveStartSequence
     /// <returns>The clock units since then. It is less than nothing before that part has started.</returns>
     public int GetClockUnitsSincePlayerDiagonalAppearStarted()
     {
-        return _clockUnits - ArcadeClock.ToClockUnits(_playerAppearRomFrames + PlayerAppearNapRomFrames);
+        return _clockUnits - ArcadeClock.ToClockUnits(_playerAppearArcadeFrames + PlayerAppearNapArcadeFrames);
     }
 
     /// <summary>
@@ -231,8 +231,8 @@ public sealed class WaveStartSequence
     ///     game live can be some frames after it went live.
     ///     Some robots then sleep once more before they move.
     /// </summary>
-    /// <param name="pollRomFrames">How many fiftieths of a second the robot sleeps between one look and the next.</param>
-    /// <param name="napRomFrames">
+    /// <param name="pollArcadeFrames">How many fiftieths of a second the robot sleeps between one look and the next.</param>
+    /// <param name="napArcadeFrames">
     ///     How many fiftieths of a second the robot sleeps after the look that finds the game live,
     ///     before its first move.
     /// </param>
@@ -256,12 +256,12 @@ public sealed class WaveStartSequence
     ///         <item>Disassembly: the status byte at <c>$59</c></item>
     ///     </list>
     /// </remarks>
-    public int GetClockUnitsToFirstBeat(int pollRomFrames, int napRomFrames)
+    public int GetClockUnitsToFirstBeat(int pollArcadeFrames, int napArcadeFrames)
     {
-        var looksBeforeLive = (_liveRomFrames + pollRomFrames - 1) / pollRomFrames;
-        var firstBeatRomFrames = looksBeforeLive * pollRomFrames + napRomFrames;
+        var looksBeforeLive = (_liveArcadeFrames + pollArcadeFrames - 1) / pollArcadeFrames;
+        var firstBeatArcadeFrames = looksBeforeLive * pollArcadeFrames + napArcadeFrames;
         var clockUnitsAtStartOfTick = _clockUnits - ArcadeClock.UnitsPerPortTick;
-        return ArcadeClock.ToClockUnits(firstBeatRomFrames) - clockUnitsAtStartOfTick;
+        return ArcadeClock.ToClockUnits(firstBeatArcadeFrames) - clockUnitsAtStartOfTick;
     }
 
     /// <summary>Says whether the game is live: the player can move and fire, things can touch the player, and the robots act.</summary>
@@ -273,7 +273,7 @@ public sealed class WaveStartSequence
     /// </remarks>
     public bool IsLive()
     {
-        return _clockUnits >= ArcadeClock.ToClockUnits(_liveRomFrames);
+        return _clockUnits >= ArcadeClock.ToClockUnits(_liveArcadeFrames);
     }
 
     /// <summary>
@@ -282,7 +282,7 @@ public sealed class WaveStartSequence
     /// </summary>
     internal void SkipToLive()
     {
-        _clockUnits = ArcadeClock.ToClockUnits(_liveRomFrames);
+        _clockUnits = ArcadeClock.ToClockUnits(_liveArcadeFrames);
     }
 
     /// <summary>
@@ -304,9 +304,9 @@ public sealed class WaveStartSequence
     ///         </item>
     ///     </list>
     /// </remarks>
-    private static int GetAppearLoopRomFrames(int robotListCount)
+    private static int GetAppearLoopArcadeFrames(int robotListCount)
     {
         var passes = Math.Max(robotListCount, 1) + AppearExtraPasses;
-        return (passes - 1) * AppearPassRomFrames;
+        return (passes - 1) * AppearPassArcadeFrames;
     }
 }

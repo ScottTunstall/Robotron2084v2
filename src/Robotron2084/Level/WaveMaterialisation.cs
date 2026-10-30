@@ -156,7 +156,7 @@ public sealed class WaveMaterialisation
     ///         <item>Disassembly: <c>$2949</c>.</item>
     ///     </list>
     /// </remarks>
-    private int _appearClockUnits = ArcadeClock.UnitsPerRomFrame;
+    private int _appearClockUnits = ArcadeClock.UnitsPerArcadeFrame;
 
     /// <summary>The last place in the order that has been given out.</summary>
     private int _lastAppearNumber;
@@ -215,14 +215,14 @@ public sealed class WaveMaterialisation
         if (_appearNumbers.Count == 0)
         {
             // There is nobody to bring on. A robot added later takes a pass on the next tick.
-            _appearClockUnits = ArcadeClock.UnitsPerRomFrame;
+            _appearClockUnits = ArcadeClock.UnitsPerArcadeFrame;
             return;
         }
 
         _appearClockUnits += ArcadeClock.UnitsPerPortTick;
-        if (_appearClockUnits < ArcadeClock.UnitsPerRomFrame) return;
+        if (_appearClockUnits < ArcadeClock.UnitsPerArcadeFrame) return;
 
-        _appearClockUnits -= ArcadeClock.UnitsPerRomFrame;
+        _appearClockUnits -= ArcadeClock.UnitsPerArcadeFrame;
         MakePass(entities, playfieldBounds);
     }
 

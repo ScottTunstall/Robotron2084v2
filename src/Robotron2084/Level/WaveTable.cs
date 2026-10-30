@@ -44,7 +44,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE63</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] BrainBeatWaitRomFrames =
+    public static readonly int[] BrainBeatWaitArcadeFrames =
     [
         8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
         6, 6, 6
@@ -152,7 +152,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE61</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] HulkBeatIntervalRomFrames =
+    public static readonly int[] HulkBeatIntervalArcadeFrames =
     [
         8, 8, 7, 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
         5, 5, 5
@@ -288,7 +288,7 @@ public static class WaveTable
     [
         Grunts, Electrodes, Mommies, Daddies, Mikeys, Hulks, Brains, Spheroids, Quarks,
         GruntMoveDelay, GruntSpeedFloor, MaxDropsX2, EnforcerFireDelay, SpheroidDropDelay,
-        HulkBeatIntervalRomFrames, BrainFireDelay, BrainBeatWaitRomFrames, TankFireDelay, ShellSpeed, QuarkDropDelay,
+        HulkBeatIntervalArcadeFrames, BrainFireDelay, BrainBeatWaitArcadeFrames, TankFireDelay, ShellSpeed, QuarkDropDelay,
         QuarkSpeedCap
     ];
 
@@ -327,9 +327,9 @@ public static class WaveTable
             GruntSpeedFloor[i],
             EnforcerFireDelay[i],
             SpheroidDropDelay[i],
-            HulkBeatIntervalRomFrames[i],
+            HulkBeatIntervalArcadeFrames[i],
             BrainFireDelay[i],
-            BrainBeatWaitRomFrames[i],
+            BrainBeatWaitArcadeFrames[i],
             TankFireDelay[i],
             ShellSpeed[i],
             QuarkDropDelay[i],
