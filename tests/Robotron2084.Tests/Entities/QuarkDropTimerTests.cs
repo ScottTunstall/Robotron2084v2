@@ -34,7 +34,7 @@ public sealed class QuarkDropTimerTests
         // SQUARE reads `ADDD #4 / CMPD #SQP4 / BLS SQ1` and puts `DEC PD2,U` on the WRAP
         // branch, so PD2 counts CYCLES of the idle animation: five animation frames to walk plus the
         // pass that wraps = six beats. With TDPTIM = 1 (the shortest first timer the ROM can
-        // roll) the first tank is therefore due six beats after the quark starts running —
+        // random number) the first tank is therefore due six beats after the quark starts running —
         // never on the next beat, which is what counting beats did and why the author saw
         // "the Quarks are dropping tanks WAY too quickly".
         var field = CreateField(2);

@@ -8,7 +8,7 @@ namespace Robotron2084.Tests;
 
 /// <summary>
 ///     R5 grunt stagger (notes §29): beat every 4 arcade frames; the moves-remaining count
-///     re-rolls to RND(1..ROBSPD) (never 0) on each step; a step moves 8 screen
+///     picks again from RND(1..ROBSPD) (never 0) on each step; a step moves 8 screen
 ///     px on each axis past a 4-screen-px dead zone (axes independent); the
 ///     RWDP frame advances ONLY on a step (DRAW_GRUNT is in the step branch —
 ///     a paused grunt freezes mid-pose). The animation frame table maps
@@ -99,7 +99,7 @@ public sealed class GruntAnimationTests
     }
 
     [Fact]
-    public void Grunt_StepGaps_AreIrregular_AndBoundedByTheRerollLimit()
+    public void Grunt_StepGaps_AreIrregular_AndBoundedByTheMoveDelayLimit()
     {
         var field = CreateField();
         RunUntilLive(field);
@@ -132,7 +132,7 @@ public sealed class GruntAnimationTests
             gaps.Add(gap);
         }
 
-        // Each gap = moves-remaining re-roll (1..15 beats) x 4-arcade frame beat.
+        // Each gap = moves-remaining pick (1..15 beats) x 4-arcade frame beat.
         Assert.InRange(minGap, ArcadeClock.ToPortTicks(4), ArcadeClock.ToPortTicksRoundedUp(4) * 15);
         Assert.InRange(maxGap, ArcadeClock.ToPortTicks(4), ArcadeClock.ToPortTicksRoundedUp(4) * 15);
         // The stagger: NOT a fixed period — at least two distinct gaps.
@@ -146,7 +146,7 @@ public sealed class GruntAnimationTests
         RunUntilLive(field);
 
         var player = field.Player.Position;
-        // Huge re-roll limit: no steps for a long time — beats keep firing.
+        // Huge move delay limit: no steps for a long time — beats keep firing.
         // DRAW_GRUNT ($3A2B) is only reached from the step branch, so the
         // legs must FREEZE while the grunt is paused (playtest round 12:
         // "even when they are standing still, their legs are moving").

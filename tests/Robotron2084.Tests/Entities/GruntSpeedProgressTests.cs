@@ -11,7 +11,7 @@ namespace Robotron2084.Tests;
 ///     1. Per death (R5 $3A94-3A9F): `LDA $BE5C / LDB #$E0 / MUL / CMPA $BE5D` — the
 ///     limit becomes the high byte of limit × 224 (limit × 7/8, TRUNCATED) ONLY
 ///     if that is still ≥ the floor; otherwise the limit is left ALONE. The
-///     in-flight countdown is NOT re-rolled.
+///     in-flight countdown is NOT picked again.
 ///     2. Level-progress tick (R5 $2AC7-2AF1): every 225 arcade frames. The first is 277 arcade frames after the game goes
 ///     live (`CLR STATUS` at PLS2, R5 $289A): 22 to reach GEXEC (`NAP 12`, `NAP 10`), then 17 sleeps of 15, because
 ///     GEXEC loads 18 and counts down on its very first pass. A score made before GEXEC starts is forgotten
@@ -93,7 +93,7 @@ public sealed class GruntSpeedProgressTests
 
         // And it stops there: 14 × 7/8 = 12 < 14. The in-flight countdown is
         // deliberately untouched by a kill (the ROM only changes the shared limit),
-        // so the survivors accelerate on their own next re-roll.
+        // so the survivors accelerate on their own next pick.
     }
 
     [Fact]

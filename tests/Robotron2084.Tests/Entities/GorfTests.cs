@@ -20,14 +20,14 @@ public sealed class GorfTests
         return field;
     }
 
-    /// <summary>A Gorf whose rolls are chosen: the side, the ground's height and the drops.</summary>
-    private static Gorf CreateGorf(PlayField field, params int[] rolls)
+    /// <summary>A Gorf whose random numbers are chosen: the side, the ground's height and the drops.</summary>
+    private static Gorf CreateGorf(PlayField field, params int[] randomNumbers)
     {
-        return new Gorf(TestSprites.Shared, new ScriptedRandom(rolls), field.GetPlayfieldBounds(), 10);
+        return new Gorf(TestSprites.Shared, new ScriptedRandom(randomNumbers), field.GetPlayfieldBounds(), 10);
     }
 
-    /// <summary>A Gorf that rolls as a real game would, for the tests that run it right across.</summary>
-    private static Gorf CreateRollingGorf(PlayField field, int seed)
+    /// <summary>A Gorf that picks at random as a real game would, for the tests that run it right across.</summary>
+    private static Gorf CreateRandomGorf(PlayField field, int seed)
     {
         return new Gorf(TestSprites.Shared, new Random(seed), field.GetPlayfieldBounds(), 10);
     }
@@ -75,7 +75,7 @@ public sealed class GorfTests
     public void ItHopsAcrossInJumpsOfTheSameHeight_AndLandsOnTheGroundBetweenThem()
     {
         var field = CreateFieldInPlay();
-        var gorf = CreateRollingGorf(field, 21);
+        var gorf = CreateRandomGorf(field, 21);
         var groundY = gorf.Position.Y;
         var startX = gorf.Position.X;
         var stepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
@@ -130,7 +130,7 @@ public sealed class GorfTests
     public void ItCrossesTheWholeScreenAndThenIsGone_WithNoScore()
     {
         var field = CreateFieldInPlay();
-        var gorf = CreateRollingGorf(field, 3);
+        var gorf = CreateRandomGorf(field, 3);
         field.Entities.Add(gorf);
         var scoreBefore = field.ScoreBoard.Score;
 
@@ -143,16 +143,16 @@ public sealed class GorfTests
         Assert.Equal(scoreBefore, field.ScoreBoard.Score);
     }
 
-    /// <summary>Builds a field, puts a Gorf with these rolls on it, and runs it right across.</summary>
+    /// <summary>Builds a field, puts a Gorf with these random numbers on it, and runs it right across.</summary>
     private static (PlayField Field, Gorf Gorf) RunAGorfAcross(LevelParameters parameters, int maxDropsX2,
-        params int[] rolls)
+        params int[] randomNumbers)
     {
         var field = CreateFieldInPlay(parameters);
         foreach (var grunt in
                  field.Entities.Grunts
                      .ToList()) grunt.Kill(); // the wave's own grunts: only the ones Gorf drops are counted
 
-        var gorf = new Gorf(TestSprites.Shared, new ScriptedRandom(rolls), field.GetPlayfieldBounds(), maxDropsX2);
+        var gorf = new Gorf(TestSprites.Shared, new ScriptedRandom(randomNumbers), field.GetPlayfieldBounds(), maxDropsX2);
         field.Entities.Add(gorf);
         RunUntilGone(field, gorf);
         return (field, gorf);
@@ -173,10 +173,10 @@ public sealed class GorfTests
     [InlineData(2, 2)]
     [InlineData(9, 5)]
     [InlineData(11, 6)]
-    public void EachStopDropsHalfTheRollRoundedUp_AsASpheroidRollsItsEnforcers_UpToSix(int roll, int expected)
+    public void EachStopDropsHalfTheRandomNumberRoundedUp_AsASpheroidPicksItsEnforcers_UpToSix(int randomNumber, int expected)
     {
         // The field has no grunts of its own and a cap of 30, so nothing holds the drops back.
-        var (field, _) = RunAGorfAcross(new LevelParameters(1, 30), 12, 0, 0, roll, roll, roll);
+        var (field, _) = RunAGorfAcross(new LevelParameters(1, 30), 12, 0, 0, randomNumber, randomNumber, randomNumber);
 
         Assert.Equal(3 * expected, field.Entities.Grunts.GetLiveCount());
     }
@@ -184,7 +184,7 @@ public sealed class GorfTests
     [Fact]
     public void ABiggerWaveBoundCanDropMoreAtOnceThanASmallOne()
     {
-        // A bound of 4 never gives more than 2 (a roll of 4 halved and rounded up); a bound of 12 can give 6.
+        // A bound of 4 never gives more than 2 (a random number of 4 halved and rounded up); a bound of 12 can give 6.
         var (small, _) = RunAGorfAcross(new LevelParameters(1, 30), 4, 0, 0, 3, 3, 3);
         var (big, _) = RunAGorfAcross(new LevelParameters(1, 30), 12, 0, 0, 11, 11, 11);
 

@@ -14,7 +14,7 @@ namespace Robotron2084.Tests;
 ///     - spheroid drop countdown decrements once per full 8-frame animation
 ///     cycle (16 arcade frames per step; the 2-arcade frame beat reaches the DEC only
 ///     on the last-frame pass) and the randoms are RND(1..A), never 0;
-///     - spheroids always drop 1..5 enforcers (ENFNUM roll, ceil(v/2));
+///     - spheroids always drop 1..5 enforcers (ENFNUM random number, ceil(v/2));
 ///     - enforcers have a 40-ROM-tick grow-up (immobile), a 3-tick AI pass with
 ///     re-aim (RND(1..31)) and fire (RND(1..ENSTIM)) countdowns, and swoop at
 ///     ~1.5 arcade pixels/tick toward a 32x32 zone down-right of the player.

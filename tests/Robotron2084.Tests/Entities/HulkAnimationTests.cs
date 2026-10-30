@@ -51,14 +51,14 @@ public sealed class HulkAnimationTests
         var lastPosition = hulk.Position;
         Assert.Equal(expectedFrame, hulk.AnimationFrameIndex);
 
-        var reaimed = false;
+        var turned = false;
         for (var i = 0; i < 400; i++)
         {
             field.Update(new GameTime());
             Assert.True(IsFullyInside(hulk.GetBounds(), bounds), $"hulk left the playfield at update {i}");
 
             var moved = hulk.Position != lastPosition;
-            reaimed = hulk.Direction != lastDirection;
+            turned = hulk.Direction != lastDirection;
 
             if (moved)
             {
@@ -90,7 +90,7 @@ public sealed class HulkAnimationTests
                 entry = (stepEntry + 1) & 3;
             }
 
-            if (reaimed)
+            if (turned)
             {
                 // ROM HND10: the walk restarts at the new block's first frame
                 // (this wins over the step's frame when both happen in one

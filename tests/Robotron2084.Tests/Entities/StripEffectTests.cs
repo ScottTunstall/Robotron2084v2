@@ -52,7 +52,7 @@ public sealed class StripEffectTests
     private static IReadOnlyList<Strip> Strips(StripEffect explosion, int frames = 0)
     {
         Steps(explosion, frames);
-        return explosion.LayOutStrips(WidthArcadePixels, HeightRows);
+        return explosion.GetStrips(WidthArcadePixels, HeightRows);
     }
 
     [Fact]
@@ -398,7 +398,7 @@ public sealed class StripEffectTests
         var ticks = 0;
         UpdateToArcadeFrame(appear, ref ticks, 1);
 
-        var strips = appear.LayOutStrips(8, 12);
+        var strips = appear.GetStrips(8, 12);
 
         var top = sprite.Y / ScreenSize.PortPixelsPerArcadePixel;
         Assert.Equal(top, strips[0].Y); // the top row stays where it is
@@ -459,7 +459,7 @@ public sealed class StripEffectTests
         var enforcer = field.Entities.Enforcers[0];
 
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
-        Assert.True(field.PlayerLasers.TryFire(laserOrigin, Direction8.Down, out _));
+        field.PlayerLasers.Fire(laserOrigin, Direction8.Down);
         field.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dead, enforcer.LifeState); // no Dying state at all
@@ -481,7 +481,7 @@ public sealed class StripEffectTests
         field.Entities.Electrodes.Add(electrode);
 
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
-        Assert.True(field.PlayerLasers.TryFire(laserOrigin, Direction8.Down, out _));
+        field.PlayerLasers.Fire(laserOrigin, Direction8.Down);
         field.Update(new GameTime());
 
         Assert.Empty(field.Entities.Explosions);

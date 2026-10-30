@@ -167,7 +167,7 @@ public sealed class ScoreBurstTests
 
         var spheroid = field.Entities.Spheroids[0];
         IntVector2 aim = new(spheroid.GetBounds().Center.X, spheroid.GetBounds().Y - 6);
-        Assert.True(field.PlayerLasers.TryFire(aim, Direction8.Down, out var laser));
+        var laser = field.PlayerLasers.FireAndGet(aim, Direction8.Down);
         Assert.NotNull(laser);
         field.Update(Tick16);
 
@@ -186,7 +186,7 @@ public sealed class ScoreBurstTests
 
         var quark = field.Entities.Quarks[0];
         IntVector2 aim = new(quark.GetBounds().Center.X, quark.GetBounds().Y - 6);
-        Assert.True(field.PlayerLasers.TryFire(aim, Direction8.Down, out var laser));
+        var laser = field.PlayerLasers.FireAndGet(aim, Direction8.Down);
         Assert.NotNull(laser);
         field.Update(Tick16);
 

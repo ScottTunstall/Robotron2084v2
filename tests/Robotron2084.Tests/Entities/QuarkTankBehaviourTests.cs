@@ -13,7 +13,7 @@ namespace Robotron2084.Tests.Entities;
 ///     half was re-decoded from the Gospel in notes §51: the R5-based waypoint
 ///     model (speed proportional to distance, capped) was WRONG and made the quark
 ///     a dart; <c>SQVEL</c> has no distance term at all.
-///     - quark = a random-speed DRIFT (RND(1..SQSPD) per axis, re-rolled every
+///     - quark = a random-speed DRIFT (RND(1..SQSPD) per axis, picked again every
 ///     RND(1..32) beats), never a constant-speed chase of the player;
 ///     - tank birth = quark position + (4, 12) screen px, clamped in-field, and
 ///     the tank picks its destination immediately (moves on its first frame).
@@ -80,7 +80,7 @@ public sealed class QuarkTankBehaviourTests
         // SQSPD 60 the peak is 2.6 position units/tick (1.3 arcade px) per axis.
         // Measured over 600 ticks x 5 seeds: 1.05-1.28 units/tick/axis average
         // (31-38 arcade px/s - the quark crosses the field in ~7 s) and a peak
-        // step of 3-4 units. 4 is legitimate: the roll can reach SQSPD 60 AND the
+        // step of 3-4 units. 4 is legitimate: the random number can reach SQSPD 60 AND the
         // sub-pixel carry adds up to another whole unit -- so the peak bound is a
         // dart guard, not a precise pin; the AVERAGE is the real assertion.
         // The port used to derive the speed from the DISTANCE to a waypoint (the
@@ -230,7 +230,7 @@ public sealed class QuarkTankBehaviourTests
     public void ANearLeftWallQuark_IsTurnedRight_WithinFiveColumnsNotFiveArcadePixels()
     {
         // ROM SQVEL: `CMPB #XMIN+5` is in columns, so a quark within 5 columns (10 arcade
-        // pixels) of the left wall always rolls a rightward speed. 15 port pixels in is
+        // pixels) of the left wall always picks a rightward speed. 15 port pixels in is
         // inside that margin, but outside a margin of 5 arcade pixels.
         for (var seed = 0; seed < 40; seed++)
         {

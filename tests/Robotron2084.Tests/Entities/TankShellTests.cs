@@ -14,8 +14,8 @@ namespace Robotron2084.Tests;
 public sealed class TankShellTests
 {
     private const int ShellSpeed = 176;
-    private const int AimedRoll = 0;
-    private const int ReboundRoll = 0x80;
+    private const int AimedRandom = 0;
+    private const int ReboundRandom = 0x80;
     private const int NoMiss = 16;
 
     [Theory]
@@ -27,7 +27,7 @@ public sealed class TankShellTests
     {
         // MUL keeps the top byte of gap x setting (40 x 176 / 256 = 27, x 8 = 216). A gap to the left or above is
         // one less than minus that (COMB), so -40 gives -(27 + 1) x 8.
-        Assert.Equal(expectedSpeed, TankShell.ComputeAimedSpeed(gap, ShellSpeed));
+        Assert.Equal(expectedSpeed, TankShell.GetAimedSpeed(gap, ShellSpeed));
     }
 
     [Theory]
@@ -105,7 +105,7 @@ public sealed class TankShellTests
         IntVector2 tank = new(bounds.X + 200, bounds.Y + 100);
         var player = tank + new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
         var shell = new TankShell(TestSprites.Shared, tank, player, ShellSpeed, bounds,
-            new ScriptedRandom(AimedRoll, NoMiss, NoMiss, 0));
+            new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0));
 
         var ticks = 0;
         while (shell.IsAlive() && ticks < 1000)
@@ -131,7 +131,7 @@ public sealed class TankShellTests
         var player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(40), 0);
 
         var shell = new TankShell(TestSprites.Shared, tank, player, ShellSpeed, bounds,
-            new ScriptedRandom(AimedRoll, NoMiss, NoMiss, 0));
+            new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0));
 
         Assert.Equal(216, shell.VelocityX);
         Assert.Equal(0, shell.VelocityY);
@@ -145,14 +145,14 @@ public sealed class TankShellTests
         IntVector2 tank = new(bounds.X + bounds.Width * 3 / 4, bounds.Y + 100);
         IntVector2 playerOnTheLeft = new(bounds.X + bounds.Width / 4, bounds.Y + 100);
 
-        // Not the top-or-bottom kind (a coin of 0), the near side (a roll of 1), no miss.
+        // Not the top-or-bottom kind (a coin of 0), the near side (a random number of 1), no miss.
         var nearSide = new TankShell(TestSprites.Shared, tank, playerOnTheLeft, ShellSpeed, bounds,
-            new ScriptedRandom(ReboundRoll, 0, 1, NoMiss, 0));
+            new ScriptedRandom(ReboundRandom, 0, 1, NoMiss, 0));
         var farSide = new TankShell(TestSprites.Shared, tank, playerOnTheLeft, ShellSpeed, bounds,
-            new ScriptedRandom(ReboundRoll, 0, TankShellTuning.ReboundFarSideRoll, NoMiss, 0));
+            new ScriptedRandom(ReboundRandom, 0, TankShellTuning.ReboundFarSideRandom, NoMiss, 0));
 
         Assert.True(nearSide.VelocityX < 0, "a player on the left sends the shell to the left wall");
-        Assert.True(farSide.VelocityX > 0, "the one roll in eight sends it to the far wall");
+        Assert.True(farSide.VelocityX > 0, "the one random number in eight sends it to the far wall");
     }
 
     [Fact]
@@ -168,7 +168,7 @@ public sealed class TankShellTests
         var start = tank + new IntVector2(startOffset, 0);
         var player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(20), 0);
         var shell = new TankShell(TestSprites.Shared, tank, player, ShellSpeed, bounds,
-            new ScriptedRandom(AimedRoll, NoMiss, NoMiss, TankShellTuning.LifeExtraBeatsMaxExclusive - 1));
+            new ScriptedRandom(AimedRandom, NoMiss, NoMiss, TankShellTuning.LifeExtraBeatsMaxExclusive - 1));
         var sidewaysBefore = shell.VelocityX;
         Assert.True(sidewaysBefore > 0);
 
