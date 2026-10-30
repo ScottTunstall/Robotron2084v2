@@ -34,15 +34,15 @@ public static class TankShellTuning
     /// </remarks>
     public const int StartOffsetColumns = 1;
 
-    /// <summary>A shot is a rebound shot, aimed at a wall, when a roll of 0 to 255 comes up at or above this.</summary>
+    /// <summary>A shot is a rebound shot, aimed at a wall, when a random number from 0 to 255 is at or above this.</summary>
     /// <remarks>
     ///     Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>LDB #$80 / CMPB SEED / BLS TNKFRB</c>. Disassembly:
     ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4E79</c>.
     /// </remarks>
-    public const int ReboundRollAtOrAbove = 0x80;
+    public const int ReboundRandomAtOrAbove = 0x80;
 
-    /// <summary>How many different rolls there are for the shot type, 0 to 255.</summary>
-    public const int RollSides = 256;
+    /// <summary>How many different random numbers there are for the shot type, 0 to 255.</summary>
+    public const int ShotTypeRandomRange = 256;
 
     /// <summary>
     ///     How far an aimed shot can miss its target on either axis: from minus this to one less than this, in columns
@@ -98,15 +98,15 @@ public static class TankShellTuning
     /// </remarks>
     public const int ReboundWidthMissRange = 8;
 
-    /// <summary>How many different rolls decide whether a rebound shot goes for the player's own side, 0 to 7.</summary>
+    /// <summary>How many different random numbers decide whether a rebound shot goes for the player's own side, 0 to 7.</summary>
     /// <remarks>
     ///     Original source: <c>RRTK4.ASM</c> <c>TNKFRB</c> and <c>TRBY</c>, <c>ANDA #7</c>. Disassembly:
     ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4EEB</c> and <c>$4F14</c>.
     /// </remarks>
-    public const int ReboundSideRollSides = 8;
+    public const int ReboundSideRandomRange = 8;
 
-    /// <summary>The roll that sends a rebound shot to the wall on the far side from the player instead of the near side.</summary>
-    public const int ReboundFarSideRoll = 0;
+    /// <summary>The random number that sends a rebound shot to the wall on the far side from the player instead of the near side.</summary>
+    public const int ReboundFarSideRandom = 0;
 
     /// <summary>
     ///     The setting is turned into a speed floor by multiplying by this and keeping the top byte, then by

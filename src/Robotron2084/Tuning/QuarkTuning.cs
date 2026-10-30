@@ -26,7 +26,7 @@ public static class QuarkTuning
     public const int FleeExitLowRows = 2;
 
     public const int FleeVelocityRom = 0x0200;
-    public const int ReaimMaxBeats = 32;
+    public const int NewDirectionMaxBeats = 32;
     public const int TotalAnimationFrames = 9;
     public const int TravelAnimationFrames = 5;
     public const int VelocityXScale = 4; // ROM: two ASLB/ROLA pairs
