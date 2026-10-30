@@ -57,7 +57,12 @@ public static class MovieAnimationFrames
         };
 
         var index = animationFrameIndex;
-        if (remap is not null) index = index >= 0 && index < remap.Length ? remap[index] : 0;
+        if (remap is not null)
+        {
+            var isInRange = index >= 0 && index < remap.Length;
+            if (isInRange) index = remap[index];
+            else index = 0;
+        }
 
         return frames[index % frames.Length];
     }

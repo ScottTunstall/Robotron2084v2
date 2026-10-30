@@ -160,12 +160,20 @@ public sealed class AttractObjectMachine
     /// </summary>
     private void SpawnLaser(MovieObject source, int lifetime, bool firesRight)
     {
-        var column = (source.XSubpixels >> 8) + (firesRight ? 2 : -1);
+        var columnOffset = -1;
+        var xVelocitySubpixels = -0x0280;
+        if (firesRight)
+        {
+            columnOffset = 2;
+            xVelocitySubpixels = 0x0280;
+        }
+
+        var column = (source.XSubpixels >> 8) + columnOffset;
         _objects.Add(new MovieObject(null, 0, column << 8, source.YSubpixels + (6 << 8))
         {
             IsLaser = true,
             LaserArcadeFramesLeft = lifetime,
-            XVelocitySubpixels = firesRight ? 0x0280 : -0x0280
+            XVelocitySubpixels = xVelocitySubpixels
         });
     }
 
@@ -558,12 +566,16 @@ public sealed class AttractObjectMachine
             if (descriptor.Walk == MovieWalk.BrainStep)
             {
                 BrainStep(descriptor);
-                WaitArcadeFrames = --StepsLeft > 0 ? descriptor.StepNap : 0;
+                StepsLeft--;
+                WaitArcadeFrames = 0;
+                if (StepsLeft > 0) WaitArcadeFrames = descriptor.StepNap;
             }
             else
             {
                 TableStep(descriptor.Walk);
-                WaitArcadeFrames = --StepsLeft > 0 ? WalkStepArcadeFrames : 0;
+                StepsLeft--;
+                WaitArcadeFrames = 0;
+                if (StepsLeft > 0) WaitArcadeFrames = WalkStepArcadeFrames;
             }
 
             if (StepsLeft <= 0) Action = MovieAction.None;
@@ -617,7 +629,8 @@ public sealed class AttractObjectMachine
         /// <summary>ANA* — one walk step out of HUMANA / HLKANA (notes §95.7).</summary>
         private void TableStep(MovieWalk walk)
         {
-            var table = walk == MovieWalk.Hulk ? AttractMovieData.WalkHulk : AttractMovieData.WalkHuman;
+            var table = AttractMovieData.WalkHuman;
+            if (walk == MovieWalk.Hulk) table = AttractMovieData.WalkHulk;
 
             SetImage(table[WalkIndex] >> 2);
             ApplyStep((sbyte)table[WalkIndex + 1], (sbyte)table[WalkIndex + 2]);

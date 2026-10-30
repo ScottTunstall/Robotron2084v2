@@ -133,9 +133,10 @@ public sealed class AttractPageMachine
     private static string GetMessageText(int number)
     {
         var index = number - AttractMovieData.FirstMessageNumber;
-        return index >= 0 && index < AttractMovieData.Messages.Length
-            ? AttractMovieData.Messages[index]
-            : string.Empty;
+        var isKnownMessage = index >= 0 && index < AttractMovieData.Messages.Length;
+        if (!isKnownMessage) return string.Empty;
+
+        return AttractMovieData.Messages[index];
     }
 
     /// <summary>Drops every character inside a cleared block (the ROM's `BLKCLR`).</summary>
