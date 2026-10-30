@@ -87,8 +87,8 @@ public sealed class WaveSurvivorsTests
         var field = CreateField(new LevelParameters(1, 2, GruntMoveDelay: 20, GruntSpeedFloor: 15));
         foreach (var grunt in field.Entities.Grunts)
         {
-            grunt.WaveSpeedTick(1);
-            grunt.WaveSpeedTick(1);
+            grunt.SpeedUpAsWaveGoesOn(1);
+            grunt.SpeedUpAsWaveGoesOn(1);
         }
 
         Assert.True(field.Entities.Grunts[0].MoveDelayBeats < 15);
@@ -101,7 +101,7 @@ public sealed class WaveSurvivorsTests
         var field = CreateField(new LevelParameters(1, TankCount: 3));
 
         Assert.Equal(3, field.Entities.Tanks.Count);
-        Assert.All(field.Entities.Tanks, tank => Assert.False(tank.IsBeingBorn()));
+        Assert.All(field.Entities.Tanks, tank => Assert.False(tank.IsGrowing()));
 
         field.Entities.Tanks[0].Kill();
         Assert.Equal(2, WaveSurvivors.GetFrom(field).TankCount);
