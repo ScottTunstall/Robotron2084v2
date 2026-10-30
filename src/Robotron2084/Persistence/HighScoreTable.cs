@@ -182,7 +182,9 @@ public sealed class HighScoreTable
                 EnforceAllTimeInitialsCap(initials));
         }
 
-        var initialsCap = TopCarriesInitials(initials) ? AllTimeTopInitialsCap : AllTimeInitialsCap;
+        var initialsCap = AllTimeInitialsCap;
+        if (TopCarriesInitials(initials)) initialsCap = AllTimeTopInitialsCap;
+
         var enteredToday = Insert(_today, new HighScoreEntry(initials, score), TodayCapacity);
         var (enteredAllTime, reachedMaximum) = InsertAllTime(score, initials, initialsCap);
         return new SubmitResult(
@@ -234,7 +236,10 @@ public sealed class HighScoreTable
         if (list.Count >= capacity && entry.Score <= list[^1].Score) return false;
 
         var insertIndex = list.FindIndex(e => entry.Score > e.Score);
-        list.Insert(insertIndex < 0 ? list.Count : insertIndex, entry);
+        var isLowestScore = insertIndex < 0;
+        if (isLowestScore) insertIndex = list.Count;
+
+        list.Insert(insertIndex, entry);
         if (list.Count > capacity) list.RemoveAt(list.Count - 1);
 
         return true;
@@ -249,7 +254,9 @@ public sealed class HighScoreTable
     private static List<HighScoreEntry> PadToCapacity(IReadOnlyList<HighScoreEntry>? entries, int capacity,
         IReadOnlyList<HighScoreEntry> fallback)
     {
-        List<HighScoreEntry> source = entries is { Count: > 0 } ? [.. entries] : [.. fallback];
+        List<HighScoreEntry> source = [.. fallback];
+        if (entries is { Count: > 0 }) source = [.. entries];
+
         Fill(source, capacity);
         return source;
     }

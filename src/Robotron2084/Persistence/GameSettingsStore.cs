@@ -105,11 +105,20 @@ public sealed class GameSettingsStore
         text.AppendLine($"extramanevery={gameSettings.ExtraManEvery}");
         text.AppendLine($"turnsperplayer={gameSettings.TurnsPerPlayer}");
         text.AppendLine($"difficulty={gameSettings.Difficulty}");
-        text.AppendLine($"attractsound={(gameSettings.AttractModeSoundEnabled ? 1 : 0)}");
-        text.AppendLine($"tankshellbug={(gameSettings.TankShellBugEnabled ? 1 : 0)}");
-        text.AppendLine($"brainschasemikeybug={(gameSettings.BrainsChaseMikeyBugEnabled ? 1 : 0)}");
-        text.AppendLine($"bozomode={(gameSettings.BozoModeEnabled ? 1 : 0)}");
+        text.AppendLine($"attractsound={GetFlag(gameSettings.AttractModeSoundEnabled)}");
+        text.AppendLine($"tankshellbug={GetFlag(gameSettings.TankShellBugEnabled)}");
+        text.AppendLine($"brainschasemikeybug={GetFlag(gameSettings.BrainsChaseMikeyBugEnabled)}");
+        text.AppendLine($"bozomode={GetFlag(gameSettings.BozoModeEnabled)}");
         return text.ToString();
+    }
+
+    /// <summary>Gets the number the file uses for an on-off setting: 1 for on, 0 for off.</summary>
+    /// <param name="isOn">Whether the setting is on.</param>
+    private static int GetFlag(bool isOn)
+    {
+        if (isOn) return 1;
+
+        return 0;
     }
 
     /// <summary>Loads the saved settings, or the factory settings when there are none.</summary>
