@@ -25,14 +25,12 @@ public sealed class SoundBoardAudioSink : IAudioSink
     /// <summary>Samples a second sent to the speakers.</summary>
     private const int SampleRate = 44_100;
 
-    /// <summary>The port's fixed update rate: port ticks a second.</summary>
-    private const int PortTicksPerSecond = 60;
-
     /// <summary>
-    ///     Samples in one port tick. It is the size of <see cref="_monoSamples" />, and it is multiplied by
-    ///     <see cref="ChannelsPerFrame" /> to give the size of <see cref="_stereoSamples" />.
+    ///     Samples in one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. It is the size of
+    ///     <see cref="_monoSamples" />, and it is multiplied by <see cref="ChannelsPerFrame" /> to give the size of
+    ///     <see cref="_stereoSamples" />.
     /// </summary>
-    private const int SamplesPerPortTick = SampleRate / PortTicksPerSecond;
+    private const int SamplesPerPortTick = SampleRate / Robotron2084.Core.ArcadeClock.PortTicksPerSecond;
 
     /// <summary>
     ///     Samples per output frame: left and right. It is multiplied by <see cref="SamplesPerPortTick" /> to give the

@@ -1,19 +1,19 @@
 namespace Robotron2084.Audio;
 
 /// <summary>
-///     A sound board: it is sent sound numbers and plays each one as a changing output level, which the
-///     arcade's amplifier turns into sound. Time is counted in the board's own clock cycles.
+///     A sound board: it is sent sound numbers and plays each one as a changing output level. Time is counted in the
+///     board's own clock cycles.
 /// </summary>
 public interface ISoundBoard
 {
-    /// <summary>The level the board is sending to the loudspeaker circuit right now, 0 to 255.</summary>
+    /// <summary>The board's output level right now, 0 to 255.</summary>
     byte OutputLevel { get; }
 
     /// <summary>
     ///     True while a sound is waiting to start or still running; false once it has played to its end (a sound that
     ///     never ends stays true).
     /// </summary>
-    bool IsPlaying => false;
+    bool IsPlaying { get; }
 
     /// <summary>
     ///     Runs the board on. It stops at or soon after <paramref name="maxCycles" />, and never before its
