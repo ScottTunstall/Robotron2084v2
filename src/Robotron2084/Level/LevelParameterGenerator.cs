@@ -86,7 +86,9 @@ public sealed class LevelParameterGenerator
                 if (row is not null) rows.Add(row);
             }
 
-            return rows.Count > 0 ? rows.ToArray() : null;
+            if (rows.Count == 0) return null;
+
+            return rows.ToArray();
         }
         catch (IOException)
         {
