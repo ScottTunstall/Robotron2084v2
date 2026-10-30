@@ -236,7 +236,10 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     {
         var x = random.Next(playfieldBounds.X, playfieldBounds.Right - CollisionSize.Width + 1);
         var startsAtTop = random.Next(2) == 0;
-        return new IntVector2(x, startsAtTop ? playfieldBounds.Y : playfieldBounds.Bottom - CollisionSize.Height);
+        var y = playfieldBounds.Bottom - CollisionSize.Height;
+        if (startsAtTop) y = playfieldBounds.Y;
+
+        return new IntVector2(x, y);
     }
 
     /// <summary>
