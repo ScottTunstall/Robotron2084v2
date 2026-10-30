@@ -23,10 +23,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>
-    ///     How long the robot waits between one look at whether the game is live and the next. It decides how long after
-    ///     the game goes live the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> comes (<see cref="BeginPlay" />).
-    /// </summary>
+    /// <summary>How long the robot waits between one look at whether the game is live and the next.</summary>
     /// <remarks>
     ///     This number is not from the arcade (FID-4a), because this robot is not in the arcade game. The author chose it
     ///     to be like the grunt's (<see cref="Grunt" />).

@@ -22,9 +22,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class RescueScoreMarker : IEntity
 {
-    /// <summary>
-    ///     How long the number stays on the field. <see cref="_lifeTimer" /> says when this time is up.
-    /// </summary>
+    /// <summary>How long the number stays on the field.</summary>
     private const int LifeArcadeFrames = 60;
 
     private static readonly int Size = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EntitySizeArcadePixels);

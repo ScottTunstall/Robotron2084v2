@@ -67,10 +67,7 @@ public sealed class StripEffect : IEntity
     /// </remarks>
     private readonly Func<Rectangle>? _getFollowedBounds;
 
-    /// <summary>
-    ///     The smallest gap at which an appear is still drawn. When the gap would be smaller than this, the appear is
-    ///     over.
-    /// </summary>
+    /// <summary>The smallest gap at which an appear is still drawn.</summary>
     private readonly int _smallestAppearSpacing;
 
     private Rectangle _bounds;
@@ -175,11 +172,11 @@ public sealed class StripEffect : IEntity
 
         var animationFrame = _getAnimationFrame();
 
-        // LayOutStrips works in the sprite's own pixels, so it is given the sprite's own width and height.
+        // GetStrips works in the sprite's own pixels, so it is given the sprite's own width and height.
         var spriteWidth = animationFrame.Width;
         var spriteRows = animationFrame.Height;
 
-        foreach (var strip in LayOutStrips(spriteWidth, spriteRows))
+        foreach (var strip in GetStrips(spriteWidth, spriteRows))
         {
             // Each strip is one row or one column of the sprite, drawn PortPixelsPerArcadePixel times bigger on the screen.
             var source = Axis == StripFanAxis.Rows
@@ -473,7 +470,7 @@ public sealed class StripEffect : IEntity
     ///     because a laser hits the near edge of the sprite. A strip outside the playfield is left out. It is not moved
     ///     back inside.
     /// </remarks>
-    internal IReadOnlyList<Strip> LayOutStrips(int spriteWidth, int spriteRows)
+    internal IReadOnlyList<Strip> GetStrips(int spriteWidth, int spriteRows)
     {
         var fansByRows = Axis == StripFanAxis.Rows;
         var extent = fansByRows ? spriteRows : spriteWidth;

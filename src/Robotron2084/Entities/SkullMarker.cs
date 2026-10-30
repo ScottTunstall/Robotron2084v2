@@ -22,9 +22,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class SkullMarker : IEntity
 {
-    /// <summary>
-    ///     How long the skull stays on the field. <see cref="_lifeTimer" /> says when this time is up.
-    /// </summary>
+    /// <summary>How long the skull stays on the field.</summary>
     private const int LifeArcadeFrames = 90;
 
     /// <summary>How big the skull is, in port pixels. It is the size of the skull's sprite.</summary>

@@ -26,8 +26,8 @@ namespace Robotron2084.Entities;
 public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>
-    ///     The spheroid changes its speed by the same amounts for a random number of <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>, from 1 up to this. Then it
-    ///     picks new amounts.
+    ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a spheroid keeps changing its speed by the
+    ///     same amounts before it picks new ones.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -37,10 +37,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int AccelBeatsMax = 15;
 
-    /// <summary>
-    ///     This is taken off the random number that sets <see cref="_accelX" />, so that the answer can be negative,
-    ///     which means to the left.
-    /// </summary>
+    /// <summary>The strongest push to the left that a spheroid's sideways speed can change by.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
@@ -49,22 +46,16 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int AccelXOffset = 16;
 
-    /// <summary>
-    ///     The random number that sets <see cref="_accelX" /> is from 0 up to one less than this, before
-    ///     <see cref="AccelXOffset" /> is taken off.
-    /// </summary>
+    /// <summary>How many different amounts a spheroid's sideways push can be.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     ///     </list>
     /// </remarks>
-    private const int AccelXRollSides = 32;
+    private const int AccelXRandomRange = 32;
 
-    /// <summary>
-    ///     This is taken off the random number that sets <see cref="_accelY" />, so that the answer can be negative,
-    ///     which means upwards.
-    /// </summary>
+    /// <summary>The strongest push upwards that a spheroid's up-and-down speed can change by.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRC11.ASM</c> <c>CIRNAC</c>.</item>
@@ -74,9 +65,8 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private const int AccelYOffset = 32;
 
     /// <summary>
-    ///     The random number that sets <see cref="_accelY" /> is from 0 up to one less than this, before
-    ///     <see cref="AccelYOffset" /> is taken off. It is twice the sideways number, because a column is 2 pixels wide and a
-    ///     row is 1 pixel tall.
+    ///     How many different amounts a spheroid's up-and-down push can be. It is twice the sideways number, because a
+    ///     column is 2 pixels wide and a row is 1 pixel tall.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -84,12 +74,9 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     ///     </list>
     /// </remarks>
-    private const int AccelYRollSides = 64;
+    private const int AccelYRandomRange = 64;
 
-    /// <summary>
-    ///     A small extra amount that is taken off the speed on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, along with the slowing down that
-    ///     <see cref="DampingPer256" /> does.
-    /// </summary>
+    /// <summary>A small extra slowing of a spheroid, on top of <see cref="DampingPer256" />.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRC11.ASM</c> <c>CIRGO</c>.</item>
@@ -98,7 +85,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int DampingBias = 4;
 
-    /// <summary>On each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the spheroid is slowed down by this many 256ths of its speed.</summary>
+    /// <summary>How much a spheroid slows down: this many 256ths of its speed.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRC11.ASM</c> <c>CIRGO</c>.</item>
@@ -111,15 +98,12 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private const int DefaultDropDelayRotations = 24;
 
     /// <summary>
-    ///     The limit used to pick how many enforcers a spheroid drops, when it is not told a number. The most it can drop
-    ///     is half of this.
+    ///     The limit on how many enforcers a spheroid drops, when it is not told a number. The most it can drop is half of
+    ///     this.
     /// </summary>
     private const int DefaultMaxDropsX2 = 10;
 
-    /// <summary>
-    ///     The last animation frame the spheroid shows while it is dropping enforcers, counting from 0. After it, the
-    ///     animation starts again.
-    /// </summary>
+    /// <summary>The last animation frame the spheroid shows while it is dropping enforcers, counting from 0.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRC11.ASM</c> <c>CIRC2L</c>, which starts again after its eighth animation frame.</item>
@@ -128,22 +112,16 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int DropLastAnimationFrame = 7;
 
-    /// <summary>
-    ///     After the first drop, the wave's number of spins between drops is divided by this. The spheroid then waits a
-    ///     random number of spins, from 1 up to the answer, before each later drop.
-    /// </summary>
+    /// <summary>How many times shorter a spheroid's wait between drops is once it has made its first drop.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRC11.ASM</c> <c>CIRC2</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     ///     </list>
     /// </remarks>
-    private const int DropRerollDivisor = 4;
+    private const int RepeatDropDelayDivisor = 4;
 
-    /// <summary>
-    ///     The last animation frame the spheroid shows while it spins or escapes, counting from 0. After it, the
-    ///     animation starts again.
-    /// </summary>
+    /// <summary>The last animation frame the spheroid shows while it spins or escapes, counting from 0.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -169,15 +147,14 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the spheroid picks new amounts to change its speed by.</summary>
     private int _accelBeatsRemaining;
 
-    /// <summary>How much is added to the spheroid's sideways speed on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. A negative number pushes it left.</summary>
+    /// <summary>The spheroid's sideways push. A negative number pushes it left.</summary>
     private int _accelX;
 
-    /// <summary>How much is added to the spheroid's up-and-down speed on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. A negative number pushes it up.</summary>
+    /// <summary>The spheroid's up-and-down push. A negative number pushes it up.</summary>
     private int _accelY;
 
     /// <summary>Which animation frame is showing. It counts round as the spheroid spins.</summary>
-    private int
-        _animationFrameIndex; // It goes up to SpinLastAnimationFrame while the spheroid spins or escapes, and up to DropLastAnimationFrame while it drops enforcers.
+    private int _animationFrameIndex;
 
     private readonly ArcadeFrameTimer _beatTimer = new();
 
@@ -196,7 +173,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True once the spheroid is running sideways for the edge of the playfield, where it vanishes.</summary>
     private bool _isEscaping;
 
-    /// <summary>Starts due, so a new spheroid does not have to wait for its first move.</summary>
+    /// <summary>Times the spheroid's moves.</summary>
     private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private IntVector2 _position;
@@ -247,15 +224,15 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         _random = random;
         _dropDelayRotations = dropDelayRotations;
         // How many enforcers the spheroid may drop: a random number from 1 up to this wave's limit, halved and rounded up.
-        var roll = ArcadeRandom.PickUpTo(random, maxDropsX2);
-        _enforcersRemaining = (roll + 1) / 2;
+        var randomDrops = ArcadeRandom.PickUpTo(random, maxDropsX2);
+        _enforcersRemaining = (randomDrops + 1) / 2;
         // Pick at random whether the spheroid will escape to the left or to the right.
         _escapeDirectionSignX = random.Next(2) == 0 ? -1 : 1;
         // How many times the spheroid spins before it first drops an enforcer.
         _dropRotationsRemaining = ArcadeRandom.PickUpTo(random, dropDelayRotations);
         // The spheroid starts on the last animation frame of a spin, so its first beat finishes a spin.
         _animationFrameIndex = SpinLastAnimationFrame;
-        RollAccelerations();
+        SetRandomAccelerations();
     }
 
     /// <summary>True once the spheroid has started to escape off the side.</summary>
@@ -367,7 +344,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 
         // On every beat the spheroid's speed changes. When its countdown runs out, it picks a new random amount for the speed to change by.
         AccelerateAndDamp();
-        if (--_accelBeatsRemaining <= 0) RollAccelerations();
+        if (--_accelBeatsRemaining <= 0) SetRandomAccelerations();
 
         if (!wrapPass)
         {
@@ -379,24 +356,25 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Makes one move, either sideways or up-and-down, by whole pixels. The fraction of a pixel left over is kept for
-    ///     the next move. The move is not made if it would take the spheroid out of the playfield.
+    ///     Works out one move, either sideways or up-and-down, by whole pixels. The fraction of a pixel left over is
+    ///     kept for the next move. The move is not made if it would take the spheroid out of the playfield.
     /// </summary>
     /// <param name="position">Where the spheroid is, measured sideways or up-and-down.</param>
     /// <param name="velocitySubpixels">How far it goes on each move, in 256ths of a pixel.</param>
-    /// <param name="remainderSubpixels">The fraction of a pixel left over from the last move. This is brought up to date.</param>
+    /// <param name="remainderSubpixels">The fraction of a pixel left over from the last move.</param>
     /// <param name="min">The lowest place the spheroid may be.</param>
     /// <param name="max">The highest place the spheroid may be.</param>
-    /// <returns>Where the spheroid is after the move.</returns>
-    private static int AdvanceAxis(int position, int velocitySubpixels, ref int remainderSubpixels, int min, int max)
+    /// <returns>Where the spheroid is after the move, and the fraction of a pixel left over from it.</returns>
+    private static (int Position, int RemainderSubpixels) GetAxisAfterMove(
+        int position, int velocitySubpixels, int remainderSubpixels, int min, int max)
     {
         var nextRemainder = remainderSubpixels + velocitySubpixels;
         var step = nextRemainder >> ScreenSize.SubpixelBits;
         var next = position + step;
-        if (next < min || next > max) return position; // The move would leave the playfield, so it is not made.
+        // The move would leave the playfield, so it is not made.
+        if (next < min || next > max) return (position, remainderSubpixels);
 
-        remainderSubpixels = nextRemainder - (step << ScreenSize.SubpixelBits);
-        return next;
+        return (next, nextRemainder - (step << ScreenSize.SubpixelBits));
     }
 
     /// <summary>Keeps a speed within the top speed, and then slows it down a little.</summary>
@@ -413,7 +391,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     ///     </list>
     /// </remarks>
-    private static int ClampThenDamp(int velocitySubpixels, int limitSubpixels)
+    private static int GetClampedAndDampedVelocity(int velocitySubpixels, int limitSubpixels)
     {
         velocitySubpixels = Math.Clamp(velocitySubpixels, -limitSubpixels, limitSubpixels);
         return velocitySubpixels + ((-DampingPer256 * velocitySubpixels - DampingBias) >> ScreenSize.SubpixelBits);
@@ -431,8 +409,8 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private void AccelerateAndDamp()
     {
-        _velocityXSubpixels = ClampThenDamp(_velocityXSubpixels + _accelX, SpheroidTuning.MaxVelocityXSubpixels);
-        _velocityYSubpixels = ClampThenDamp(_velocityYSubpixels + _accelY, SpheroidTuning.MaxVelocityYSubpixels);
+        _velocityXSubpixels = GetClampedAndDampedVelocity(_velocityXSubpixels + _accelX, SpheroidTuning.MaxVelocityXSubpixels);
+        _velocityYSubpixels = GetClampedAndDampedVelocity(_velocityYSubpixels + _accelY, SpheroidTuning.MaxVelocityYSubpixels);
     }
 
     /// <summary>
@@ -470,7 +448,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         {
             // When the spheroid changes from spinning to dropping, the animation does not start again. It carries on from the animation frame it is on.
             _isDropping = true;
-            RerollDropCountdown();
+            SetRandomDropCountdown();
             return;
         }
 
@@ -485,7 +463,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
             }
         }
 
-        RerollDropCountdown();
+        SetRandomDropCountdown();
         _animationFrameIndex = 0;
     }
 
@@ -533,18 +511,20 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private void MoveOnce(PlayField field)
     {
         var bounds = field.Wall.PlayfieldBounds;
-        _position = new IntVector2(
-            AdvanceAxis(_position.X, _velocityXSubpixels, ref _remainderXSubpixels, bounds.X,
-                bounds.Right - CollisionSize.Width),
-            AdvanceAxis(_position.Y, _velocityYSubpixels, ref _remainderYSubpixels, bounds.Y,
-                bounds.Bottom - CollisionSize.Height));
+        var x = GetAxisAfterMove(_position.X, _velocityXSubpixels, _remainderXSubpixels, bounds.X,
+            bounds.Right - CollisionSize.Width);
+        var y = GetAxisAfterMove(_position.Y, _velocityYSubpixels, _remainderYSubpixels, bounds.Y,
+            bounds.Bottom - CollisionSize.Height);
+        _position = new IntVector2(x.Position, y.Position);
+        _remainderXSubpixels = x.RemainderSubpixels;
+        _remainderYSubpixels = y.RemainderSubpixels;
     }
 
     /// <summary>Picks at random how many times the spheroid spins before its next drop.</summary>
     /// <remarks>ROM: <c>CIRC2</c>.</remarks>
-    private void RerollDropCountdown()
+    private void SetRandomDropCountdown()
     {
-        _dropRotationsRemaining = ArcadeRandom.PickUpTo(_random, _dropDelayRotations / DropRerollDivisor);
+        _dropRotationsRemaining = ArcadeRandom.PickUpTo(_random, _dropDelayRotations / RepeatDropDelayDivisor);
     }
 
     /// <summary>
@@ -552,10 +532,10 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///     keep them for.
     /// </summary>
     /// <remarks>ROM: <c>CIRNAC</c>.</remarks>
-    private void RollAccelerations()
+    private void SetRandomAccelerations()
     {
-        _accelX = _random.Next(0, AccelXRollSides) - AccelXOffset;
-        _accelY = _random.Next(0, AccelYRollSides) - AccelYOffset;
+        _accelX = _random.Next(0, AccelXRandomRange) - AccelXOffset;
+        _accelY = _random.Next(0, AccelYRandomRange) - AccelYOffset;
         _accelBeatsRemaining = 1 + _random.Next(0, AccelBeatsMax);
     }
 

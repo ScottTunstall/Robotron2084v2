@@ -90,7 +90,7 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
 
     /// <summary>Says whether at least one entity in the list passes a test.</summary>
     /// <param name="predicate">The test.</param>
-    public bool Any(Func<T, bool> predicate)
+    public bool HasAny(Func<T, bool> predicate)
     {
         return _items.Any(predicate);
     }

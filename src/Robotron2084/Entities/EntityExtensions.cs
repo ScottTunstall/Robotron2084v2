@@ -7,7 +7,7 @@ internal static class EntityExtensions
     /// <typeparam name="T">The type that is wanted.</typeparam>
     /// <param name="entity">The entity.</param>
     /// <exception cref="InvalidOperationException">The entity is not a <typeparamref name="T" />.</exception>
-    public static T Require<T>(this IEntity entity)
+    public static T GetAs<T>(this IEntity entity)
         where T : class
     {
         return entity as T ??

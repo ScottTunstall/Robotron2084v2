@@ -22,10 +22,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>
-    ///     How long the arcade's routine sleeps between one look at whether the game is live and the next. It decides how
-    ///     long after the game goes live the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> comes (<see cref="BeginPlay" />).
-    /// </summary>
+    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRP8.ASM</c> <c>ROBOT</c>, <c>BITA #$7F / BEQ ROB0A / NAP 2,ROBOT</c>.</item>
@@ -49,10 +46,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a grunt waits between steps, when it is not told a number.</summary>
     private const int DefaultMoveLimitBeats = 15;
 
-    /// <summary>
-    ///     How many walk animation frames a grunt has. <see cref="_walkAnimationFrameNumber" /> counts up to this and
-    ///     then goes back to the first.
-    /// </summary>
+    /// <summary>How many walk animation frames a grunt has.</summary>
     private const int WalkAnimationFrameCount = 4;
 
     /// <summary>

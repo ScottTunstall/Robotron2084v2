@@ -55,8 +55,8 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     private IntVector2 _position;
 
     /// <summary>
-    ///     The fraction of a pixel left over from the last move, in 256ths of a pixel. It is added to the next move. A
-    ///     shell held against a wall can stop for good if it goes less than a pixel on each move, as it can in the arcade.
+    ///     The fraction of a pixel left over from the last move, in 256ths of a pixel. A shell held against a wall can stop
+    ///     for good if it goes less than a pixel on each move, as it can in the arcade.
     /// </summary>
     private IntVector2 _remainderSubpixels;
 
@@ -83,7 +83,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         _playfieldBounds = playfieldBounds;
         _position = position +
                     new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
-        _velocity = random.Next(TankShellTuning.RollSides) >= TankShellTuning.ReboundRollAtOrAbove
+        _velocity = random.Next(TankShellTuning.ShotTypeRandomRange) >= TankShellTuning.ReboundRandomAtOrAbove
             ? GetReboundVelocity(playerPosition, shellSpeed, random)
             : GetAimedVelocity(playerPosition, shellSpeed, random);
         _lifeBeatsRemaining = TankShellTuning.LifeBaseBeats + random.Next(TankShellTuning.LifeExtraBeatsMaxExclusive);
@@ -182,7 +182,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) from <c>$4E8F</c> to <c>$4EA9</c>.</item>
     ///     </list>
     /// </remarks>
-    internal static int ComputeAimedSpeed(int gap, int shellSpeed)
+    internal static int GetAimedSpeed(int gap, int shellSpeed)
     {
         var distance = Math.Min(Math.Abs(gap), byte.MaxValue);
         var scaled = distance * shellSpeed / TankShellTuning.AimedSpeedDivisor;
@@ -231,7 +231,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Divides, rounding towards the lower number.</summary>
     /// <param name="value">The number to divide, which may be negative.</param>
     /// <param name="divisor">The number to divide by.</param>
-    private static int DivideRoundingDown(int value, int divisor)
+    private static int GetQuotientRoundedDown(int value, int divisor)
     {
         return (int)Math.Floor(value / (double)divisor);
     }
@@ -248,17 +248,17 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private IntVector2 GetAimedVelocity(IntVector2 playerPosition, int shellSpeed, Random random)
     {
-        var playerColumn = DivideRoundingDown(playerPosition.X, ColumnPixels);
-        var playerRow = DivideRoundingDown(playerPosition.Y, RowPixels);
+        var playerColumn = GetQuotientRoundedDown(playerPosition.X, ColumnPixels);
+        var playerRow = GetQuotientRoundedDown(playerPosition.Y, RowPixels);
         var missColumns = random.Next(2 * TankShellTuning.AimMissRange) - TankShellTuning.AimMissRange;
         var missRows = random.Next(2 * TankShellTuning.AimMissRange) - TankShellTuning.AimMissRange;
 
-        var columnsFromLeftWall = playerColumn - DivideRoundingDown(_playfieldBounds.X, ColumnPixels);
+        var columnsFromLeftWall = playerColumn - GetQuotientRoundedDown(_playfieldBounds.X, ColumnPixels);
         if (columnsFromLeftWall < TankShellTuning.NoSidewaysMissColumnsFromLeftWall) missColumns = 0;
 
-        var gapColumns = playerColumn + missColumns - DivideRoundingDown(_position.X, ColumnPixels);
-        var gapRows = playerRow + missRows - DivideRoundingDown(_position.Y, RowPixels);
-        return new IntVector2(ComputeAimedSpeed(gapColumns, shellSpeed), ComputeAimedSpeed(gapRows, shellSpeed));
+        var gapColumns = playerColumn + missColumns - GetQuotientRoundedDown(_position.X, ColumnPixels);
+        var gapRows = playerRow + missRows - GetQuotientRoundedDown(_position.Y, RowPixels);
+        return new IntVector2(GetAimedSpeed(gapColumns, shellSpeed), GetAimedSpeed(gapRows, shellSpeed));
     }
 
     /// <summary>Works out the starting speed of a shot aimed at a wall, so that it bounces back across the field.</summary>
@@ -277,24 +277,24 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private IntVector2 GetReboundVelocity(IntVector2 playerPosition, int shellSpeed, Random random)
     {
-        var shellColumn = DivideRoundingDown(_position.X, ColumnPixels);
-        var shellRow = DivideRoundingDown(_position.Y, RowPixels);
-        var playerColumn = DivideRoundingDown(playerPosition.X, ColumnPixels);
-        var playerRow = DivideRoundingDown(playerPosition.Y, RowPixels);
-        var leftColumn = DivideRoundingDown(_playfieldBounds.X, ColumnPixels);
-        var rightColumn = DivideRoundingDown(_playfieldBounds.Right, ColumnPixels);
-        var topRow = DivideRoundingDown(_playfieldBounds.Y, RowPixels);
-        var bottomRow = DivideRoundingDown(_playfieldBounds.Bottom, RowPixels);
+        var shellColumn = GetQuotientRoundedDown(_position.X, ColumnPixels);
+        var shellRow = GetQuotientRoundedDown(_position.Y, RowPixels);
+        var playerColumn = GetQuotientRoundedDown(playerPosition.X, ColumnPixels);
+        var playerRow = GetQuotientRoundedDown(playerPosition.Y, RowPixels);
+        var leftColumn = GetQuotientRoundedDown(_playfieldBounds.X, ColumnPixels);
+        var rightColumn = GetQuotientRoundedDown(_playfieldBounds.Right, ColumnPixels);
+        var topRow = GetQuotientRoundedDown(_playfieldBounds.Y, RowPixels);
+        var bottomRow = GetQuotientRoundedDown(_playfieldBounds.Bottom, RowPixels);
 
         var aimAtTopOrBottom = random.Next(2) == 1;
-        var farSide = random.Next(TankShellTuning.ReboundSideRollSides) == TankShellTuning.ReboundFarSideRoll;
+        var farSide = random.Next(TankShellTuning.ReboundSideRandomRange) == TankShellTuning.ReboundFarSideRandom;
         int targetColumn;
         int targetRow;
         if (aimAtTopOrBottom)
         {
             var missColumns = random.Next(2 * TankShellTuning.ReboundWidthMissRange) -
                               TankShellTuning.ReboundWidthMissRange;
-            targetColumn = DivideRoundingDown(missColumns + shellColumn + playerColumn, 2);
+            targetColumn = GetQuotientRoundedDown(missColumns + shellColumn + playerColumn, 2);
             var playerInBottomHalf = playerRow >= (topRow + bottomRow) / 2;
             targetRow = playerInBottomHalf != farSide ? bottomRow : topRow;
         }
@@ -302,7 +302,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         {
             var missRows = random.Next(2 * TankShellTuning.ReboundHeightMissRange) -
                            TankShellTuning.ReboundHeightMissRange;
-            targetRow = DivideRoundingDown(missRows + shellRow + playerRow, 2);
+            targetRow = GetQuotientRoundedDown(missRows + shellRow + playerRow, 2);
             var playerInRightHalf = playerColumn >= (leftColumn + rightColumn) / 2;
             targetColumn = playerInRightHalf != farSide ? rightColumn : leftColumn;
         }
@@ -320,13 +320,13 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     private void MoveOnce()
     {
         var subpixels = GetNextMoveSubpixels();
-        var stepX = DivideRoundingDown(subpixels.X, ScreenSize.SubpixelsPerPixel);
-        var stepY = DivideRoundingDown(subpixels.Y, ScreenSize.SubpixelsPerPixel);
+        var stepX = GetQuotientRoundedDown(subpixels.X, ScreenSize.SubpixelsPerPixel);
+        var stepY = GetQuotientRoundedDown(subpixels.Y, ScreenSize.SubpixelsPerPixel);
 
         // The sideways move is made only if it keeps the shell inside the playfield. The same goes for the up-or-down move. A move that is not made changes nothing.
         var x = _position.X;
         var remainderX = _remainderSubpixels.X;
-        if (FitsInsideX(_position.X + stepX))
+        if (IsInsideX(_position.X + stepX))
         {
             x += stepX;
             remainderX = subpixels.X - stepX * ScreenSize.SubpixelsPerPixel;
@@ -334,7 +334,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 
         var y = _position.Y;
         var remainderY = _remainderSubpixels.Y;
-        if (FitsInsideY(_position.Y + stepY))
+        if (IsInsideY(_position.Y + stepY))
         {
             y += stepY;
             remainderY = subpixels.Y - stepY * ScreenSize.SubpixelsPerPixel;
@@ -346,14 +346,14 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Says whether the shell, put at this sideways position, would be inside the playfield.</summary>
     /// <param name="x">The sideways position of the shell's left side.</param>
-    private bool FitsInsideX(int x)
+    private bool IsInsideX(int x)
     {
         return x >= _playfieldBounds.X && x + BoxWidth <= _playfieldBounds.Right;
     }
 
     /// <summary>Says whether the shell, put at this up-and-down position, would be inside the playfield.</summary>
     /// <param name="y">The up-and-down position of the shell's top.</param>
-    private bool FitsInsideY(int y)
+    private bool IsInsideY(int y)
     {
         return y >= _playfieldBounds.Y && y + BoxHeight <= _playfieldBounds.Bottom;
     }
@@ -377,8 +377,8 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     {
         var subpixels = GetNextMoveSubpixels();
         return new IntVector2(
-            _position.X + DivideRoundingDown(subpixels.X, ScreenSize.SubpixelsPerPixel),
-            _position.Y + DivideRoundingDown(subpixels.Y, ScreenSize.SubpixelsPerPixel));
+            _position.X + GetQuotientRoundedDown(subpixels.X, ScreenSize.SubpixelsPerPixel),
+            _position.Y + GetQuotientRoundedDown(subpixels.Y, ScreenSize.SubpixelsPerPixel));
     }
 
     /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. The shell bounces if its next move would hit a wall. Otherwise it counts down its life.</summary>
@@ -396,14 +396,14 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     private void ActOnBeat()
     {
         var next = GetNextPosition();
-        if (!FitsInsideX(next.X))
+        if (!IsInsideX(next.X))
         {
             _velocity = new IntVector2(~_velocity.X, _velocity.Y);
             BouncedThisUpdate = true;
             return;
         }
 
-        if (!FitsInsideY(next.Y))
+        if (!IsInsideY(next.Y))
         {
             _velocity = new IntVector2(_velocity.X, ~_velocity.Y);
             BouncedThisUpdate = true;

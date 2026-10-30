@@ -24,8 +24,8 @@ namespace Robotron2084.Entities;
 public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>
-    ///     A random number below this decides each either-or choice: which way to drift, and which way to flee. Each
-    ///     choice comes up half the time.
+    ///     The range of the random number behind each either-or choice a quark makes: which way to drift, and which way to
+    ///     flee. Each choice comes up half the time.
     /// </summary>
     private const int CoinFlipSides = 2;
 
@@ -33,18 +33,14 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private const int DefaultDropDelayBeats = 12;
 
     /// <summary>
-    ///     The limit used to pick how many tanks a quark drops, when it is not told a number. The most it can drop is
-    ///     half of this.
+    ///     The limit on how many tanks a quark drops, when it is not told a number. The most it can drop is half of this.
     /// </summary>
     private const int DefaultMaxDropsX2 = 10;
 
     /// <summary>The quark's top drifting speed, when it is not told a number.</summary>
     private const int DefaultSpeedCap = 50;
 
-    /// <summary>
-    ///     After a quark has dropped a tank, its drop delay is divided by this to give the most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> it waits before the
-    ///     next drop. A random number up to that is stored in <see cref="_dropBeatsRemaining" />.
-    /// </summary>
+    /// <summary>How many times shorter a quark's wait between tank drops is once it has dropped its first tank.</summary>
     private const int RepeatDropDelayDivisor = 2;
 
     /// <summary>
@@ -68,7 +64,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private int _animationFrameIndex;
 
-    /// <summary>Starts due, so a new quark does not have to wait for its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
+    /// <summary>Times the quark's <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>.</summary>
     private readonly ArcadeFrameTimer _beatTimer = ArcadeFrameTimer.CreateDue(QuarkTuning.BeatIntervalArcadeFrames);
 
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the next tank drop is due.</summary>
@@ -86,7 +82,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True once the quark is fleeing up or down to the edge of the playfield, where it vanishes.</summary>
     private bool _isFleeing;
 
-    /// <summary>Starts due, so a new quark does not have to wait for its first move.</summary>
+    /// <summary>Times the quark's moves.</summary>
     private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private IntVector2 _position;
@@ -98,12 +94,9 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_QUARK</c> (<c>$4BFB</c>).</item>
     ///     </list>
     /// </remarks>
-    private int _reaimBeatsRemaining;
+    private int _newDirectionBeatsRemaining;
 
-    /// <summary>
-    ///     The fraction of a pixel left over from the last move, in 256ths of a pixel. It is added to the next move, so
-    ///     even a slow drift gets somewhere.
-    /// </summary>
+    /// <summary>The fraction of a pixel left over from the last move, in 256ths of a pixel.</summary>
     private IntVector2 _remainderSubpixels;
 
     /// <summary>How many tanks this quark still has left to drop.</summary>
@@ -151,8 +144,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _dropDelayBeats = dropDelayBeats;
         _speedCap = speedCap;
         // How many tanks the quark may drop: a random number up to this wave's limit, halved and rounded up (ROM: PD3).
-        var roll = ArcadeRandom.PickUpTo(random, maxDropsX2);
-        _tanksRemaining = (roll + 1) / 2;
+        var randomDrops = ArcadeRandom.PickUpTo(random, maxDropsX2);
+        _tanksRemaining = (randomDrops + 1) / 2;
         // The wait before the first tank drop. It counts down once each time the animation starts again, not once a beat (ROM: PD2).
         _dropBeatsRemaining = ArcadeRandom.PickUpTo(random, dropDelayBeats);
     }
@@ -261,7 +254,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             return;
         }
 
-        if (--_reaimBeatsRemaining <= 0) RollVelocity(field.GetPlayfieldBounds());
+        if (--_newDirectionBeatsRemaining <= 0) SetRandomVelocity(field.GetPlayfieldBounds());
 
         // While the robots are frozen, the quark still animates and still picks new directions, but it does not count down to its next tank drop.
         if (field.RobotsFrozen()) return;
@@ -374,10 +367,10 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     which are 1 pixel tall. So its sideways number of 4 and its up-and-down number of 8 give the same speed
     ///     on the screen.
     /// </remarks>
-    private int ComputeAxisVelocitySubpixels(int scale, bool isPositive, int coordinateUnitArcadePixels)
+    private int GetAxisVelocitySubpixels(int scale, bool isPositive, int coordinateUnitArcadePixels)
     {
-        var roll = ArcadeRandom.PickUpTo(_random, _speedCap);
-        var subpixels = roll * scale * ScreenSize.ToPortPixelsFromArcadePixels(coordinateUnitArcadePixels);
+        var randomSpeed = ArcadeRandom.PickUpTo(_random, _speedCap);
+        var subpixels = randomSpeed * scale * ScreenSize.ToPortPixelsFromArcadePixels(coordinateUnitArcadePixels);
         return isPositive ? subpixels : -subpixels;
     }
 
@@ -419,7 +412,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     wall always drifts away from that wall.
     /// </summary>
     /// <param name="bounds">The inside of the playfield wall.</param>
-    private void RollVelocity(Rectangle bounds)
+    private void SetRandomVelocity(Rectangle bounds)
     {
         var lowX = bounds.X + ScreenSize.ToPortPixelsFromColumns(QuarkTuning.WallMarginLeftColumns);
         var highX = bounds.Right - ScreenSize.ToPortPixelsFromColumns(QuarkTuning.WallMarginRightColumns);
@@ -430,10 +423,10 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         var yPositive = _position.Y <= lowY || (_position.Y < highY && _random.Next(CoinFlipSides) != 0);
 
         _velocitySubpixels = new IntVector2(
-            ComputeAxisVelocitySubpixels(QuarkTuning.VelocityXScale, xPositive, ScreenSize.ArcadePixelsPerByte),
-            ComputeAxisVelocitySubpixels(QuarkTuning.VelocityYScale, yPositive, 1));
+            GetAxisVelocitySubpixels(QuarkTuning.VelocityXScale, xPositive, ScreenSize.ArcadePixelsPerByte),
+            GetAxisVelocitySubpixels(QuarkTuning.VelocityYScale, yPositive, 1));
 
-        _reaimBeatsRemaining = 1 + _random.Next(QuarkTuning.ReaimMaxBeats);
+        _newDirectionBeatsRemaining = 1 + _random.Next(QuarkTuning.NewDirectionMaxBeats);
     }
 
     /// <summary>

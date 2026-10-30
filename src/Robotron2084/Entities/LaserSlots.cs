@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
@@ -22,7 +21,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class LaserSlots
 {
-    /// <summary>How many lasers the player can have in flight at once. It is the size of <see cref="_slots" />.</summary>
+    /// <summary>How many lasers the player can have in flight at once.</summary>
     public const int Capacity = 3;
 
     private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
@@ -51,23 +50,30 @@ public sealed class LaserSlots
         foreach (var laser in _slots) laser?.Draw(spriteBatch);
     }
 
-    /// <summary>Fires a laser into the first empty slot.</summary>
+    /// <summary>Says whether a slot is free, so that <see cref="Fire" /> can put a laser into it.</summary>
+    public bool HasFreeSlot()
+    {
+        for (var i = 0; i < Capacity; i++)
+            if (_slots[i] is not { } existing || !existing.IsAlive())
+                return true;
+
+        return false;
+    }
+
+    /// <summary>Fires a laser into the first empty slot. Call <see cref="HasFreeSlot" /> first.</summary>
     /// <param name="position">Where the laser appears.</param>
     /// <param name="direction">The way it flies.</param>
-    /// <param name="laser">The laser that was fired, or null when every slot is in use.</param>
-    /// <returns>True when a laser was fired, false when every slot is in use.</returns>
-    public bool TryFire(IntVector2 position, Direction8 direction, [NotNullWhen(true)] out PlayerLaser? laser)
+    /// <exception cref="InvalidOperationException">Every slot is in use.</exception>
+    public void Fire(IntVector2 position, Direction8 direction)
     {
         for (var i = 0; i < Capacity; i++)
             if (_slots[i] is not { } existing || !existing.IsAlive())
             {
-                laser = new PlayerLaser(_sprites, position, direction);
-                _slots[i] = laser;
-                return true;
+                _slots[i] = new PlayerLaser(_sprites, position, direction);
+                return;
             }
 
-        laser = null;
-        return false;
+        throw new InvalidOperationException("Every laser slot is in use.");
     }
 
     /// <summary>Moves every laser that is in flight on by one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</summary>

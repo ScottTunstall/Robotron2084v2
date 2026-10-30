@@ -26,8 +26,8 @@ namespace Robotron2084.Entities;
 public sealed class Prog : IExplodable, IRemovable
 {
     /// <summary>
-    ///     When a prog picks a direction, a random number below this decides whether it goes sideways or up and down.
-    ///     Each is picked half the time.
+    ///     The range of the random number that decides whether a prog goes sideways or up and down. Each is picked half the
+    ///     time.
     /// </summary>
     private const int AxisFlipSides = 2;
 
@@ -42,9 +42,8 @@ public sealed class Prog : IExplodable, IRemovable
     private const int BeatIntervalArcadeFrames = 3;
 
     /// <summary>
-    ///     A prog aims a little to the left or right of the player. To work out how far, a random number from 1 to
-    ///     <see cref="OffsetXRollMax" /> is taken from one more than <see cref="OffsetXRollMax" />, and this is taken off the
-    ///     answer. That is multiplied by <see cref="OffsetXStepColumns" /> to give <see cref="_offsetX" />.
+    ///     A prog heads for a spot a little to the left or right of the player. This, with <see cref="OffsetXRandomMax" />, sets how far
+    ///     off it can be, in steps of <see cref="OffsetXStepColumns" />.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -57,19 +56,15 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     private const int OffsetXHalfRange = 8;
 
-    /// <summary>The biggest the random number used to work out <see cref="_offsetX" /> can be. The smallest is one.</summary>
-    private const int OffsetXRollMax = 15;
+    /// <summary>The biggest random number behind a prog's sideways offset. The smallest is one.</summary>
+    private const int OffsetXRandomMax = 15;
 
-    /// <summary>
-    ///     How far to the left or right of the player a prog aims goes up in steps of this many columns (see
-    ///     <see cref="_offsetX" />).
-    /// </summary>
+    /// <summary>The size of one step of a prog's sideways offset, in columns.</summary>
     private const int OffsetXStepColumns = 4;
 
     /// <summary>
-    ///     A prog aims a little above or below the player. To work out how far, a random number from 1 up to
-    ///     <see cref="OffsetYSteps" /> is taken off this. The answer is multiplied by <see cref="OffsetYStepRows" />, and then
-    ///     <see cref="OffsetYSteps" /> is taken off, to give <see cref="_offsetY" />.
+    ///     A prog heads for a spot a little above or below the player. This, with <see cref="OffsetYSteps" />, sets how far off it can
+    ///     be, in steps of <see cref="OffsetYStepRows" />.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -79,13 +74,10 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     private const int OffsetYCentre = 19;
 
-    /// <summary>
-    ///     How far above or below the player a prog aims goes up in steps of this many rows (see <see cref="_offsetY" />
-    ///     ).
-    /// </summary>
+    /// <summary>The size of one step of a prog's up-and-down offset, in rows.</summary>
     private const int OffsetYStepRows = 2;
 
-    /// <summary>The biggest the random number used to work out <see cref="_offsetY" /> can be. The smallest is one.</summary>
+    /// <summary>The biggest random number behind a prog's up-and-down offset. The smallest is one.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRB10.ASM</c> <c>GPOFF</c>, which works it out from a random number from 1 to 18.</item>
@@ -95,14 +87,14 @@ public sealed class Prog : IExplodable, IRemovable
     private const int OffsetYSteps = 18;
 
     /// <summary>
-    ///     On each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> a prog picks a random number below <see cref="ThresholdRollSides" />. If it is above this, the
-    ///     prog picks a new direction. That happens on about one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> in ten.
+    ///     How often a prog picks a new direction: about one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> in
+    ///     ten.
     /// </summary>
     private const int ReDirectionThreshold256 = 0xE4;
 
     /// <summary>
-    ///     On each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> a prog picks a random number below <see cref="ThresholdRollSides" />. If it is above this, the
-    ///     prog picks again how far from the player it aims. That happens on about 3 <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> in 100.
+    ///     How often a prog picks again how far off the player the spot it heads for is: about 3
+    ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> in 100.
     /// </summary>
     private const int ReOffsetThreshold256 = 0xF8;
 
@@ -131,19 +123,18 @@ public sealed class Prog : IExplodable, IRemovable
     private const int StepYRows = 4;
 
     /// <summary>
-    ///     The random numbers that are checked against <see cref="ReOffsetThreshold256" /> and
-    ///     <see cref="ReDirectionThreshold256" /> are from 0 up to one less than this.
+    ///     The range of the random numbers that decide how often a prog picks a new direction or a new offset: from 0 up to
+    ///     one less than this.
     /// </summary>
-    private const int ThresholdRollSides = 256;
+    private const int ThresholdRandomRange = 256;
 
     /// <summary>
-    ///     If the spot a prog aims at is more than this many columns past the right wall, the prog aims at the left wall
-    ///     instead.
+    ///     How far past the right wall, in columns, the spot a prog heads for can be before it wraps round to the left wall.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRB10.ASM</c> <c>GPDIR</c>, which moves an aim that is this far past one wall to
+    ///             Original source: <c>RRB10.ASM</c> <c>GPDIR</c>, which moves a spot that is this far past one wall to
     ///             the opposite wall.
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
@@ -152,8 +143,7 @@ public sealed class Prog : IExplodable, IRemovable
     private const int WrapMarginXColumns = 0x30;
 
     /// <summary>
-    ///     If the spot a prog aims at is more than this many rows below the bottom wall, the prog aims at the top wall
-    ///     instead.
+    ///     How far below the bottom wall, in rows, the spot a prog heads for can be before it wraps round to the top wall.
     /// </summary>
     private const int WrapMarginYRows = 18;
 
@@ -181,15 +171,15 @@ public sealed class Prog : IExplodable, IRemovable
     // The way the prog is walking: up, down, left or right. A new prog walks down until it picks a direction.
     private Direction8 _direction = Direction8.Down;
 
-    // How far to the left or right of the Player the prog aims, in columns.
+    // How far to the left or right of the Player the spot is that the prog heads for, in columns.
     private int _offsetX;
 
-    // How far above or below the Player the prog aims, in rows.
+    // How far above or below the Player the spot is that the prog heads for, in rows.
     private int _offsetY;
 
     /// <summary>
-    ///     The inside of the wall as it was on the last update. The explosion uses it to stay clear of the right and
-    ///     bottom walls.
+    ///     The inside of the wall as it was on the last update, for keeping the explosion clear of the right and bottom
+    ///     walls.
     /// </summary>
     private Rectangle? _playfieldBounds;
 
@@ -202,7 +192,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where the prog's top-left corner is.</param>
     /// <param name="kind">Which family member it used to be. This decides its animation frames and its size.</param>
-    /// <param name="random">Where its random numbers come from. They pick how far from the player it aims, and when it turns.</param>
+    /// <param name="random">Where its random numbers come from. They pick how far off the player the spot it heads for is, and when it turns.</param>
     public Prog(SpriteSet sprites, IntVector2 position, HumanKind kind, Random random)
     {
         _sprites = sprites;
@@ -212,7 +202,7 @@ public sealed class Prog : IExplodable, IRemovable
         _collisionSize = (
             ScreenSize.ToPortPixelsFromArcadePixels(kind.GetArcadeCollisionSize().Width),
             ScreenSize.ToPortPixelsFromArcadePixels(kind.GetArcadeCollisionSize().Height));
-        RollOffsets(); // A new prog picks at once how far from the Player it aims (ROM: PROGST calls GPOFF).
+        SetRandomOffsets(); // A new prog picks at once how far off the Player the spot is that it heads for (ROM: PROGST calls GPOFF).
     }
 
     /// <summary>Which family member this prog used to be. This decides its animation frames and its size.</summary>
@@ -327,7 +317,7 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the prog shows its next walk animation frame, may change its aim or its direction,
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the prog shows its next walk animation frame, may change its offset or its direction,
     ///     leaves a ghost, and takes a step.
     /// </summary>
     /// <param name="gameTime">Not used. The prog counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
@@ -403,7 +393,7 @@ public sealed class Prog : IExplodable, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     ///     </list>
     /// </remarks>
-    private static bool FitsInside(Rectangle bounds, Rectangle box)
+    private static bool IsInside(Rectangle bounds, Rectangle box)
     {
         return box.X >= bounds.X
                && box.Y >= bounds.Y
@@ -412,7 +402,7 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     What the prog does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It shows its next walk animation frame, may change its aim or its direction,
+    ///     What the prog does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It shows its next walk animation frame, may change its offset or its direction,
     ///     leaves a ghost, and takes a step.
     /// </summary>
     /// <param name="field">The playfield.</param>
@@ -421,12 +411,12 @@ public sealed class Prog : IExplodable, IRemovable
         // The walk animation moves on at every beat, even when the prog cannot take its step.
         _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
 
-        // Now and then the prog changes how far from the Player it aims. This comes before picking a direction, because the direction depends on it.
-        if (_random.Next(ThresholdRollSides) > ReOffsetThreshold256) RollOffsets();
+        // Now and then the prog changes how far off the Player the spot is that it heads for. This comes before picking a direction, because the direction depends on it.
+        if (_random.Next(ThresholdRandomRange) > ReOffsetThreshold256) SetRandomOffsets();
 
-        if (_random.Next(ThresholdRollSides) > ReDirectionThreshold256)
+        if (_random.Next(ThresholdRandomRange) > ReDirectionThreshold256)
         {
-            _direction = PickDirection(field);
+            _direction = GetRandomDirection(field);
             _walkCycleStep = 0;
         }
 
@@ -447,14 +437,14 @@ public sealed class Prog : IExplodable, IRemovable
 
         var candidate = _position + step;
         Rectangle next = new(candidate.X, candidate.Y, _collisionSize.Width, _collisionSize.Height);
-        if (FitsInside(field.Wall.PlayfieldBounds, next))
+        if (IsInside(field.Wall.PlayfieldBounds, next))
         {
             _position = candidate;
         }
         else
         {
             // The step would leave the playfield, so it is not taken and the prog picks a new direction (ROM: CKLIM fails, then GPDIR).
-            _direction = PickDirection(field);
+            _direction = GetRandomDirection(field);
             _walkCycleStep = 0;
         }
     }
@@ -468,7 +458,7 @@ public sealed class Prog : IExplodable, IRemovable
 
     /// <summary>
     ///     Picks which way the prog walks next. Half the time it picks left or right, and half the time up or down, so it
-    ///     never walks diagonally. It picks the way that leads towards the spot it is aiming at.
+    ///     never walks diagonally. It picks the way that leads towards the spot it is heading for.
     /// </summary>
     /// <param name="field">The playfield, which says where the player and the walls are.</param>
     /// <returns>The way to walk: left, right, up or down.</returns>
@@ -476,12 +466,12 @@ public sealed class Prog : IExplodable, IRemovable
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRB10.ASM</c> <c>GPDIR</c>. When the prog is already level with the spot it is
-    ///             aiming at, it goes left, or up.
+    ///             heading for, it goes left, or up.
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     ///     </list>
     /// </remarks>
-    private Direction8 PickDirection(PlayField field)
+    private Direction8 GetRandomDirection(PlayField field)
     {
         var bounds = field.Wall.PlayfieldBounds;
         var player = field.Player.Position;
@@ -489,34 +479,34 @@ public sealed class Prog : IExplodable, IRemovable
         if (_random.Next(AxisFlipSides) == 0)
         {
             // _offsetX is in columns, so it is changed to pixels.
-            var aimX = player.X + ScreenSize.ToPortPixelsFromColumns(_offsetX);
-            if (aimX > bounds.Right + ScreenSize.ToPortPixelsFromColumns(WrapMarginXColumns)) aimX = bounds.Left;
+            var destinationX = player.X + ScreenSize.ToPortPixelsFromColumns(_offsetX);
+            if (destinationX > bounds.Right + ScreenSize.ToPortPixelsFromColumns(WrapMarginXColumns)) destinationX = bounds.Left;
 
-            return aimX <= _position.X ? Direction8.Left : Direction8.Right;
+            return destinationX <= _position.X ? Direction8.Left : Direction8.Right;
         }
 
-        var aimY = player.Y + ScreenSize.ToPortPixelsFromArcadePixels(_offsetY);
-        if (aimY > bounds.Bottom + ScreenSize.ToPortPixelsFromArcadePixels(WrapMarginYRows)) aimY = bounds.Top;
+        var destinationY = player.Y + ScreenSize.ToPortPixelsFromArcadePixels(_offsetY);
+        if (destinationY > bounds.Bottom + ScreenSize.ToPortPixelsFromArcadePixels(WrapMarginYRows)) destinationY = bounds.Top;
 
-        return aimY <= _position.Y ? Direction8.Up : Direction8.Down;
+        return destinationY <= _position.Y ? Direction8.Up : Direction8.Down;
     }
 
     /// <summary>
-    ///     Picks at random how far from the player the prog aims: some columns to the left or right, and some rows above
-    ///     or below. The prog keeps aiming that far off until this is called again.
+    ///     Picks at random how far off the player the spot is that the prog heads for: some columns to the left or right, and some rows above
+    ///     or below. The prog keeps heading for a spot that far off until this is called again.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRB10.ASM</c> <c>GPOFF</c>. These numbers are how far the prog's aim stays off
+    ///             Original source: <c>RRB10.ASM</c> <c>GPOFF</c>. These numbers are how far off the spot the prog heads for stays from
     ///             the player.
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     ///     </list>
     /// </remarks>
-    private void RollOffsets()
+    private void SetRandomOffsets()
     {
-        _offsetX = (OffsetXRollMax + 1 - ArcadeRandom.PickUpTo(_random, OffsetXRollMax) - OffsetXHalfRange) *
+        _offsetX = (OffsetXRandomMax + 1 - ArcadeRandom.PickUpTo(_random, OffsetXRandomMax) - OffsetXHalfRange) *
                    OffsetXStepColumns;
         _offsetY = (OffsetYCentre - ArcadeRandom.PickUpTo(_random, OffsetYSteps)) * OffsetYStepRows - OffsetYSteps;
     }

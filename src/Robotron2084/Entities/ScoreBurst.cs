@@ -22,10 +22,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class ScoreBurst : IEntity
 {
-    /// <summary>
-    ///     The place of the first animation frame the burst shows. It is the starting value of
-    ///     <see cref="_animationFrameIndex" />.
-    /// </summary>
+    /// <summary>The place of the first animation frame the burst shows.</summary>
     internal const int FirstBurstAnimationFrameIndex = 2;
 
     private readonly Texture2D[] _animationFrames;

@@ -17,7 +17,7 @@ namespace Robotron2084.Entities;
 ///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>
-///             Original source: <c>RRB10.ASM</c>, routine <c>CMISL</c> (fired via <c>BRNSHT</c>, aimed by
+///             Original source: <c>RRB10.ASM</c>, routine <c>CMISL</c> (fired via <c>BRNSHT</c>, steered by
 ///             <c>GCMDIR</c>, moved by <c>CMMOV</c>)
 ///         </item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$2006</c> (<c>CREATE_CRUISE_MISSILE</c>)</item>
@@ -26,16 +26,12 @@ namespace Robotron2084.Entities;
 public sealed class CruiseMissile : IEntity, IRemovable
 {
     /// <summary>
-    ///     How far to the left of the player, or above the player, the missile's aim can be moved, in port pixels. A
-    ///     random number below <see cref="AimNoiseRange" /> is added to where the player is, and then this is taken off.
+    ///     How far to the left of the player, or above the player, the spot the missile heads for can be moved, in port pixels.
     /// </summary>
-    private const int AimNoiseBase = 6;
+    private const int DirectionNoiseBase = 6;
 
-    /// <summary>
-    ///     The random number that moves the missile's aim is picked from 0 up to one less than this (see
-    ///     <see cref="AimNoiseBase" />).
-    /// </summary>
-    private const int AimNoiseRange = 16;
+    /// <summary>How wide the range is that the spot the missile heads for can be moved across, in port pixels.</summary>
+    private const int DirectionNoiseRange = 16;
 
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
     /// <remarks>ROM: <c>NAP 2</c>, plus the one the routine runs in.</remarks>
@@ -45,14 +41,12 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private const int MovesPerBeat = 2;
 
     /// <summary>
-    ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a missile may go before it aims again. <see cref="_reaimBeatsRemaining" /> is set to a random
-    ///     number of <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> from one up to this.
+    ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a missile may go before it picks a new direction.
     /// </summary>
-    private const int ReaimMaxBeats = 7;
+    private const int NewDirectionMaxBeats = 7;
 
     /// <summary>
-    ///     How big the missile's box is, in port pixels. The box sits up and to the left of the missile's own position
-    ///     (see <see cref="GetBounds" />).
+    ///     How big the missile's box is, in port pixels. The box sits up and to the left of the missile's own position.
     /// </summary>
     /// <remarks>
     ///     The disassembly calls this box "FAT PHONY GUY". It is much bigger than the dot the missile is drawn as, which is
@@ -74,7 +68,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private readonly SpriteSet _sprites;
 
     /// <summary>
-    ///     The places the missile has just been, oldest first. A mark is drawn at each one. There are never more than
+    ///     The places the missile has just been, oldest first. There are never more than
     ///     <see cref="CruiseMissileTuning.TrailMarks" />.
     /// </summary>
     private readonly List<IntVector2> _trail = new();
@@ -83,18 +77,16 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     private IntVector2 _position;
 
-    private int _reaimBeatsRemaining;
+    private int _newDirectionBeatsRemaining;
 
-    private IntVector2
-        _velocity; // How many pixels the missile goes left or right, and how many up or down, each time it moves.
+    private IntVector2 _velocity; // How many pixels the missile goes left or right, and how many up or down, each time it moves.
 
-    /// <summary>Makes a missile and aims it at the player.</summary>
+    /// <summary>Makes a missile and sends it towards the player.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="origin">Where it appears.</param>
-    /// <param name="playerPosition">Where the player is, which the missile aims at first.</param>
+    /// <param name="playerPosition">Where the player is, which the missile heads for first.</param>
     /// <param name="random">
-    ///     Where its random numbers come from. They change its aim and pick how long it goes before it aims
-    ///     again.
+    ///     Where its random numbers come from. They pick which way it goes, and how long it goes before it picks a new direction.
     /// </param>
     /// <remarks>ROM: it starts 3 columns to the right of the brain's top-left corner and 4 rows below it.</remarks>
     public CruiseMissile(SpriteSet sprites, IntVector2 origin, IntVector2 playerPosition, Random random)
@@ -102,8 +94,8 @@ public sealed class CruiseMissile : IEntity, IRemovable
         _sprites = sprites;
         _position = origin;
         _random = random;
-        _velocity = RollDirection(playerPosition);
-        _reaimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReaimMaxBeats);
+        _velocity = GetRandomDirection(playerPosition);
+        _newDirectionBeatsRemaining = ArcadeRandom.PickUpTo(_random, NewDirectionMaxBeats);
     }
 
     /// <summary>The places the missile has just been, oldest first.</summary>
@@ -158,7 +150,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
             _sprites.Blitter.GetSlotColour(CruiseMissileTuning.HeadSlot));
     }
 
-    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, the missile aims at the player again if it is time to, and then moves.</summary>
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, the missile turns towards the player again if it is time to, and then moves.</summary>
     /// <param name="gameTime">Not used. The missile counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">The playfield.</param>
     public void Update(GameTime gameTime, PlayField field)
@@ -179,36 +171,36 @@ public sealed class CruiseMissile : IEntity, IRemovable
     }
 
     /// <summary>
-    ///     What the missile does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It first aims at the player again, if it is time to, and then moves
+    ///     What the missile does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It first turns towards the player again, if it is time to, and then moves
     ///     (ROM: <c>CMISL</c>).
     /// </summary>
     /// <param name="field">The playfield.</param>
     private void ActOnBeat(PlayField field)
     {
-        if (--_reaimBeatsRemaining <= 0)
+        if (--_newDirectionBeatsRemaining <= 0)
         {
-            _velocity = RollDirection(field.Player.Position);
-            _reaimBeatsRemaining = ArcadeRandom.PickUpTo(_random, ReaimMaxBeats);
+            _velocity = GetRandomDirection(field.Player.Position);
+            _newDirectionBeatsRemaining = ArcadeRandom.PickUpTo(_random, NewDirectionMaxBeats);
         }
 
         for (var move = 0; move < MovesPerBeat; move++) MoveOnce(field);
     }
 
     /// <summary>
-    ///     Works out which way to go to get nearer the player, either sideways or up-and-down. The spot it aims for is
+    ///     Works out which way to go to get nearer the player, either sideways or up-and-down. The spot it heads for is
     ///     moved a little at random.
     /// </summary>
     /// <param name="target">Where the player is, measured sideways or up-and-down.</param>
     /// <param name="mine">Where the missile is, measured the same way.</param>
     /// <returns>1 to go right or down, or -1 to go left or up.</returns>
-    private int AimSign(int target, int mine)
+    private int GetRandomDirectionSign(int target, int mine)
     {
-        var aimedCoordinate = target + _random.Next(AimNoiseRange) - AimNoiseBase;
-        return aimedCoordinate >= mine ? 1 : -1;
+        var noisyTargetCoordinate = target + _random.Next(DirectionNoiseRange) - DirectionNoiseBase;
+        return noisyTargetCoordinate >= mine ? 1 : -1;
     }
 
     /// <summary>
-    ///     Picks at random which way the missile goes until it next aims: up or down only, sideways only, or diagonally.
+    ///     Picks at random which way the missile goes until it next picks a new direction: up or down only, sideways only, or diagonally.
     ///     Whichever it is, it goes towards the player.
     /// </summary>
     /// <param name="player">Where the player is.</param>
@@ -217,12 +209,12 @@ public sealed class CruiseMissile : IEntity, IRemovable
     ///     Half the time it goes up or down only. A quarter of the time it goes sideways only, and a quarter of the time
     ///     diagonally (ROM: <c>GCMDIR</c>).
     /// </remarks>
-    private IntVector2 RollDirection(IntVector2 player)
+    private IntVector2 GetRandomDirection(IntVector2 player)
     {
-        if (_random.Next(2) != 0) return new IntVector2(0, AimSign(player.Y, _position.Y) * StepYPortPixels);
+        if (_random.Next(2) != 0) return new IntVector2(0, GetRandomDirectionSign(player.Y, _position.Y) * StepYPortPixels);
 
-        var dx = AimSign(player.X, _position.X) * StepXPortPixels;
-        var dy = _random.Next(2) == 0 ? AimSign(player.Y, _position.Y) * StepYPortPixels : 0;
+        var dx = GetRandomDirectionSign(player.X, _position.X) * StepXPortPixels;
+        var dy = _random.Next(2) == 0 ? GetRandomDirectionSign(player.Y, _position.Y) * StepYPortPixels : 0;
         return new IntVector2(dx, dy);
     }
 

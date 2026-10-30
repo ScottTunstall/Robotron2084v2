@@ -30,10 +30,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 {
-    /// <summary>
-    ///     How long the arcade's routine sleeps between one look at whether the game is live and the next. It decides how
-    ///     long after the game goes live the first step comes (<see cref="BeginPlay" />).
-    /// </summary>
+    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -50,9 +47,8 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private const int LivePollArcadeFrames = 8;
 
     /// <summary>
-    ///     The hulk does not aim exactly at its target. A random number is added to where the target is: so many columns
-    ///     when the hulk is picking left or right, and so many rows when it is picking up or down. That number is always less
-    ///     than this.
+    ///     The hulk does not head exactly for its target. The spot it heads for can be off to the right or below by up to one less than
+    ///     this many columns or rows.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -64,11 +60,11 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         </item>
     ///     </list>
     /// </remarks>
-    private const int AimOffsetFromTargetMaxExclusive = 16;
+    private const int TargetOffsetMaxExclusive = 16;
 
     /// <summary>
-    ///     The smallest number of columns or rows that can be added to where the target is (see
-    ///     <see cref="AimOffsetFromTargetMaxExclusive" />). It is negative, which moves the aim left or up.
+    ///     The furthest to the left or above its target that the spot the hulk heads for can be, in columns or rows (see
+    ///     <see cref="TargetOffsetMaxExclusive" />). It is negative.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -76,11 +72,10 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         <item>Disassembly: <c>$0125</c> and <c>$0145</c>, <c>ADDA #$F0</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int AimOffsetFromTargetMin = -16;
+    private const int TargetOffsetMin = -16;
 
     /// <summary>
-    ///     If the spot a hulk aims at is more than this many columns past the right wall, the hulk aims at the left wall
-    ///     instead. Only a hulk with nothing real to stalk aims that far out (see <see cref="GetPhantomTargetPosition" />).
+    ///     How far past the right wall, in columns, the spot a hulk heads for can be before it wraps round to the left wall.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -92,11 +87,10 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         </item>
     ///     </list>
     /// </remarks>
-    private const int AimWrapColumnsPastRightWall = 0xCF - 0x8F;
+    private const int DestinationWrapColumnsPastRightWall = 0xCF - 0x8F;
 
     /// <summary>
-    ///     If the spot a hulk aims at is more than this many rows above the top wall, the hulk aims at the bottom wall
-    ///     instead. Only a hulk with nothing real to stalk aims that high (see <see cref="GetPhantomTargetPosition" />).
+    ///     How far above the top wall, in rows, the spot a hulk heads for can be before it wraps round to the bottom wall.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -108,7 +102,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         </item>
     ///     </list>
     /// </remarks>
-    private const int AimWrapRowsAboveTopWall = 0x18 - 0x06;
+    private const int DestinationWrapRowsAboveTopWall = 0x18 - 0x06;
 
     /// <summary>How many columns past the right wall the phantom target is (see <see cref="GetPhantomTargetPosition" />).</summary>
     /// <remarks>Disassembly: the byte <c>$C8</c> at <c>$7E05</c>, read as a column. The right wall is at column <c>$8F</c>.</remarks>
@@ -118,22 +112,15 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>Disassembly: the byte <c>$13</c> at <c>$7E06</c>, read as a row. The top wall is at row <c>$18</c>.</remarks>
     private const int PhantomRowsAboveTopWall = 0x18 - 0x13;
 
-    /// <summary>
-    ///     One more than the most steps a hulk may take before it aims again. The number of steps is picked at random,
-    ///     from <see cref="ReaimStepsMin" /> up to one less than this, and counted down in <see cref="_reaimStepsRemaining" />
-    ///     .
-    /// </summary>
-    private const int ReaimStepsMaxExclusive = 33;
+    /// <summary>One more than the most steps a hulk may take before it picks a new direction.</summary>
+    private const int NewDirectionStepsMaxExclusive = 33;
 
-    /// <summary>
-    ///     The fewest steps a hulk takes before it aims again. The number of steps is picked at random, from this up to
-    ///     one less than <see cref="ReaimStepsMaxExclusive" />, and counted down in <see cref="_reaimStepsRemaining" />.
-    /// </summary>
-    private const int ReaimStepsMin = 1;
+    /// <summary>The fewest steps a hulk takes before it picks a new direction.</summary>
+    private const int NewDirectionStepsMin = 1;
 
     /// <summary>
     ///     A laser shoves a hulk sideways by one arcade pixel. Some shoves are this many times bigger (see
-    ///     <see cref="ShoveSidewaysDoubleRollSides" />).
+    ///     <see cref="ShoveSidewaysDoubleRandomRange" />).
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -143,21 +130,18 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </remarks>
     private const int ShoveSidewaysDoubleFactor = 2;
 
-    /// <summary>
-    ///     A sideways shove is made bigger when a random number, from 0 up to one less than this, comes up 0. That is
-    ///     half the time.
-    /// </summary>
+    /// <summary>The range of the random number that makes some sideways shoves bigger. That is half the time.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int ShoveSidewaysDoubleRollSides = 2;
+    private const int ShoveSidewaysDoubleRandomRange = 2;
 
     /// <summary>
     ///     A laser shoves a hulk up or down by one arcade pixel. Some shoves are this many times bigger (see
-    ///     <see cref="ShoveVerticalQuadrupleRollSides" />).
+    ///     <see cref="ShoveVerticalQuadrupleRandomRange" />).
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -167,29 +151,23 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </remarks>
     private const int ShoveVerticalQuadrupleFactor = 4;
 
-    /// <summary>
-    ///     A shove up or down is made bigger when the random number comes up below this. That is three quarters of the
-    ///     time (see <see cref="ShoveVerticalQuadrupleRollSides" />).
-    /// </summary>
+    /// <summary>How often a shove up or down is made bigger: three quarters of the time.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int ShoveVerticalQuadrupleRollBelow = 3;
+    private const int ShoveVerticalQuadrupleRandomBelow = 3;
 
-    /// <summary>
-    ///     The random number that decides whether a shove up or down is made bigger is from 0 up to one less than this
-    ///     (see <see cref="ShoveVerticalQuadrupleRollBelow" />).
-    /// </summary>
+    /// <summary>The range of the random number that makes some shoves up or down bigger.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int ShoveVerticalQuadrupleRollSides = 4;
+    private const int ShoveVerticalQuadrupleRandomRange = 4;
 
     /// <summary>How far the longer sideways step goes, in arcade pixels. It is the second and fourth step of the walk pattern.</summary>
     private const int SidewaysLongStepArcadePixels = 4;
@@ -206,10 +184,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <summary>How far every step up or down goes, in arcade pixels.</summary>
     private const int VerticalStepArcadePixels = 2;
 
-    /// <summary>
-    ///     How many steps make up the walk pattern. <see cref="_walkCycleStep" /> counts up to this and then goes back to
-    ///     the first step.
-    /// </summary>
+    /// <summary>How many steps make up the walk pattern.</summary>
     private const int WalkPatternLength = 4;
 
     /// <summary>
@@ -233,9 +208,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private static readonly int[] RightAnimationFrames = { 6, 7, 6, 8 };
     private static readonly int[] VerticalAnimationFrames = { 3, 4, 3, 5 };
 
-    /// <summary>
-    ///     The time from one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> to the next. It is set from the wave's hulk speed.
-    /// </summary>
+    /// <summary>The time from one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> to the next.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> the wave's <c>HLKSPD</c> frame count.</item>
@@ -254,17 +227,14 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 
     private ArcadeFrameTimer _beatTimer = new();
 
-    private bool _hasAimed;
+    private bool _hasPickedFirstDirection;
     private bool _isMovingHorizontally;
 
-    /// <summary>
-    ///     The inside of the wall as it was on the last update. A shove from a laser uses it, to keep the hulk inside the
-    ///     wall.
-    /// </summary>
+    /// <summary>The inside of the wall as it was on the last update, for keeping the hulk inside it.</summary>
     private Rectangle? _playfieldBounds;
 
     private IntVector2 _position;
-    private int _reaimStepsRemaining;
+    private int _newDirectionStepsRemaining;
 
     /// <summary>Which step of the walk pattern comes next.</summary>
     private int _walkCycleStep;
@@ -274,7 +244,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <param name="position">Where the hulk's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick how many steps it takes before it turns, and move
-    ///     its aim a little.
+    ///     its direction a little.
     /// </param>
     /// <param name="beatIntervalArcadeFrames">
     ///     How long the hulk waits between steps (ROM: <c>HLKSPD</c>). A bigger number makes a
@@ -306,8 +276,8 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         _random = random;
         _beatIntervalArcadeFrames = beatIntervalArcadeFrames;
         _getTargetPosition = getTargetPosition;
-        _reaimStepsRemaining = RollReaimSteps();
-        Direction = Direction8.Up; // Up is only a stand-in. When the hulk first aims, this changes to left or right.
+        _newDirectionStepsRemaining = GetRandomNewDirectionSteps();
+        Direction = Direction8.Up; // Up is only a stand-in. When the hulk first picks a direction, this changes to left or right.
         _animationFrameIndex = VerticalAnimationFrames[0];
     }
 
@@ -360,9 +330,9 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         _playfieldBounds = field.Wall.PlayfieldBounds;
         if (field.RobotsFrozen()) return;
 
-        if (!_hasAimed)
+        if (!_hasPickedFirstDirection)
         {
-            AimForTheFirstTime(field);
+            SetFirstDirection(field);
             return;
         }
 
@@ -370,13 +340,13 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Aims the hulk and sets the time of its first step, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> timer is set so
+    ///     Picks the hulk's first direction and sets the time of its first step, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> timer is set so
     ///     that it comes due when that time has gone by.
     /// </summary>
     /// <param name="field">The playfield, which works out how long the wait is.</param>
     public void BeginPlay(PlayField field)
     {
-        AimForTheFirstTime(field);
+        SetFirstDirection(field);
         _beatTimer = field.CreateFirstBeatTimer(LivePollArcadeFrames, 0, _beatIntervalArcadeFrames);
     }
 
@@ -401,10 +371,10 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </remarks>
     public void ApplyKnockback(IntVector2 direction)
     {
-        var dx = direction.X != 0 && _random.Next(ShoveSidewaysDoubleRollSides) == 0
+        var dx = direction.X != 0 && _random.Next(ShoveSidewaysDoubleRandomRange) == 0
             ? direction.X * ShoveSidewaysDoubleFactor
             : direction.X;
-        var dy = direction.Y != 0 && _random.Next(ShoveVerticalQuadrupleRollSides) < ShoveVerticalQuadrupleRollBelow
+        var dy = direction.Y != 0 && _random.Next(ShoveVerticalQuadrupleRandomRange) < ShoveVerticalQuadrupleRandomBelow
             ? direction.Y * ShoveVerticalQuadrupleFactor
             : direction.Y;
         _position += new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(dx),
@@ -441,13 +411,13 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         if (field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             // The step would go into the wall, so the hulk stays where it is and picks a new direction.
-            Reaim(field);
+            TurnToNewDirection(field);
             return;
         }
 
         _position = next;
 
-        if (--_reaimStepsRemaining <= 0) Reaim(field);
+        if (--_newDirectionStepsRemaining <= 0) TurnToNewDirection(field);
     }
 
     /// <summary>Gets the walk animation frames for a direction, in the order they are shown.</summary>
@@ -467,9 +437,9 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     frame.
     /// </summary>
     /// <param name="field">The playfield.</param>
-    private void AimForTheFirstTime(PlayField field)
+    private void SetFirstDirection(PlayField field)
     {
-        _hasAimed = true;
+        _hasPickedFirstDirection = true;
         _isMovingHorizontally = true;
         PickDirection(field);
         _animationFrameIndex = GetFrames(Direction)[0];
@@ -523,22 +493,22 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private void PickDirection(PlayField field)
     {
         var target = _getTargetPosition();
-        var offsetFromTarget = _random.Next(AimOffsetFromTargetMin, AimOffsetFromTargetMaxExclusive);
+        var offsetFromTarget = _random.Next(TargetOffsetMin, TargetOffsetMaxExclusive);
         var bounds = field.Wall.PlayfieldBounds;
         if (_isMovingHorizontally)
         {
-            var aimX = target.X + ScreenSize.ToPortPixelsFromColumns(offsetFromTarget);
-            if (aimX > bounds.Right + ScreenSize.ToPortPixelsFromColumns(AimWrapColumnsPastRightWall)) aimX = bounds.X;
+            var destinationX = target.X + ScreenSize.ToPortPixelsFromColumns(offsetFromTarget);
+            if (destinationX > bounds.Right + ScreenSize.ToPortPixelsFromColumns(DestinationWrapColumnsPastRightWall)) destinationX = bounds.X;
 
-            Direction = aimX <= _position.X ? Direction8.Left : Direction8.Right;
+            Direction = destinationX <= _position.X ? Direction8.Left : Direction8.Right;
         }
         else
         {
-            var aimY = target.Y + ScreenSize.ToPortPixelsFromArcadePixels(offsetFromTarget);
-            if (aimY < bounds.Y - ScreenSize.ToPortPixelsFromArcadePixels(AimWrapRowsAboveTopWall))
-                aimY = bounds.Bottom;
+            var destinationY = target.Y + ScreenSize.ToPortPixelsFromArcadePixels(offsetFromTarget);
+            if (destinationY < bounds.Y - ScreenSize.ToPortPixelsFromArcadePixels(DestinationWrapRowsAboveTopWall))
+                destinationY = bounds.Bottom;
 
-            Direction = aimY <= _position.Y ? Direction8.Up : Direction8.Down;
+            Direction = destinationY <= _position.Y ? Direction8.Up : Direction8.Down;
         }
     }
 
@@ -556,9 +526,9 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
     ///     </list>
     /// </remarks>
-    private void Reaim(PlayField field)
+    private void TurnToNewDirection(PlayField field)
     {
-        _reaimStepsRemaining = RollReaimSteps();
+        _newDirectionStepsRemaining = GetRandomNewDirectionSteps();
         _isMovingHorizontally = !_isMovingHorizontally;
         PickDirection(field);
         _walkCycleStep = 0;
@@ -572,8 +542,8 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
     ///     </list>
     /// </remarks>
-    private int RollReaimSteps()
+    private int GetRandomNewDirectionSteps()
     {
-        return _random.Next(ReaimStepsMin, ReaimStepsMaxExclusive);
+        return _random.Next(NewDirectionStepsMin, NewDirectionStepsMaxExclusive);
     }
 }

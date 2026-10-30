@@ -23,27 +23,18 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 {
-    /// <summary>
-    ///     How many animation frames are in each of a family member's walk sets. It is multiplied by the set a direction
-    ///     uses to find the first animation frame, which is stored in <see cref="_animationFrameIndex" />.
-    /// </summary>
+    /// <summary>How many animation frames are in each of a family member's walk sets.</summary>
     private const int AnimationFramesPerSet = 3;
 
-    /// <summary>
-    ///     How many direction blocks the walk table has, one for each way a family member can walk.
-    ///     <see cref="_directionBlock" /> is set to a random one of them.
-    /// </summary>
+    /// <summary>How many direction blocks the walk table has, one for each way a family member can walk.</summary>
     private const int PossibleDirections = 8;
 
-    /// <summary>
-    ///     The most steps a family member takes before it picks a new direction. <see cref="_newDirectionStepsRemaining" />
-    ///     is set to a random number of steps from one up to this.
-    /// </summary>
+    /// <summary>The most steps a family member takes before it picks a new direction.</summary>
     private const int NewDirectionMaxSteps = 128;
 
     /// <summary>
-    ///     The most <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> a family member waits before its first step. <see cref="_firstStepTicksRemaining" /> is set to a
-    ///     random number of <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> from one up to this, so that a group of family members does not all start together.
+    ///     The most <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> a family member waits before
+    ///     its first step, so that a group of family members does not all start together.
     /// </summary>
     private const int FirstStepMaxTicks = 8;
 
@@ -59,10 +50,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int BeatIntervalArcadeFrames = 16;
 
-    /// <summary>
-    ///     How many steps each direction block of the walk table has. <see cref="_subStep" /> counts up to this and then
-    ///     goes back to the first.
-    /// </summary>
+    /// <summary>How many steps each direction block of the walk table has.</summary>
     private const int SubStepsPerDirection = 4;
 
     /// <summary>
@@ -111,7 +99,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Which walk animation frame is showing, counted through this family member's own animation frames.</summary>
     private int _animationFrameIndex;
 
-    /// <summary>The first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> does not wait for this timer (see <see cref="Update" />).</summary>
+    /// <summary>Times the family member's <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>.</summary>
     private readonly ArcadeFrameTimer _beatTimer = new();
 
     /// <summary>Which direction block of the walk table (see <see cref="Steps" />) the family member is using.</summary>
@@ -289,7 +277,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// </summary>
     /// <param name="kind">Which family member.</param>
     /// <returns>The length of the square's side, in port pixels.</returns>
-    internal static int SpawnSquarePortPixels(HumanKind kind)
+    internal static int GetSpawnSquarePortPixels(HumanKind kind)
     {
         var (width, height) = kind.GetArcadeCollisionSize();
         return ScreenSize.ToPortPixelsFromArcadePixels(Math.Max(width, height));
@@ -352,7 +340,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         // The walk table is in arcade pixels, so the step is changed to port pixels.
         var possibleNextPosition = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixelsFromArcadePixels(1);
         var nextPosition = GetBounds() with { X = possibleNextPosition.X, Y = possibleNextPosition.Y };
-        if (field.HitsWall(nextPosition) || OverlapsLivingElectrode(nextPosition, field))
+        if (field.HitsWall(nextPosition) || IsOverlappingLivingElectrode(nextPosition, field))
         {
             // The step would go into the wall or a live electrode, so the family member stays where it is and picks a new direction.
             PickNewDirection();
@@ -367,7 +355,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True when the family member's next step would touch an electrode that is still standing.</summary>
     /// <param name="next">The box the family member would take up after the step.</param>
     /// <param name="field">The playfield, which holds the electrodes.</param>
-    private static bool OverlapsLivingElectrode(Rectangle next, PlayField field)
+    private static bool IsOverlappingLivingElectrode(Rectangle next, PlayField field)
     {
         foreach (var electrode in field.GetElectrodes())
             if (electrode.IsAlive() && electrode.GetBounds().Intersects(next))

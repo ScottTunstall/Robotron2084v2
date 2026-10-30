@@ -67,8 +67,8 @@ internal static class GruntChaseStep
     public static IntVector2 GetNextPosition(IntVector2 position, IntVector2 player, Rectangle playfield,
         (int Width, int Height) size)
     {
-        var columnsRightOfPlayer = DivideRoundingDown(position.X - player.X, ColumnPixels);
-        var rowsBelowPlayer = DivideRoundingDown(position.Y - player.Y, RowPixels);
+        var columnsRightOfPlayer = GetQuotientRoundedDown(position.X - player.X, ColumnPixels);
+        var rowsBelowPlayer = GetQuotientRoundedDown(position.Y - player.Y, RowPixels);
 
         var dx = columnsRightOfPlayer > 0 ? -StepXPixels : StepXPixels;
         var dy = 0;
@@ -88,7 +88,7 @@ internal static class GruntChaseStep
     /// <summary>Divides, rounding towards the lower number, so a gap in pixels becomes a whole number of columns or rows.</summary>
     /// <param name="pixels">The gap in port pixels, which may be negative.</param>
     /// <param name="unitPixels">How many port pixels make one column or one row.</param>
-    private static int DivideRoundingDown(int pixels, int unitPixels)
+    private static int GetQuotientRoundedDown(int pixels, int unitPixels)
     {
         return (int)Math.Floor(pixels / (double)unitPixels);
     }

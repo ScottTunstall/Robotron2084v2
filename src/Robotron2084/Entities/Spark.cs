@@ -24,16 +24,16 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
     private static readonly int Size = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.MissileSizeArcadePixels);
 
-    // How much is added to the spark's speed each time the speed changes: one amount for sideways and one for up or down, in 256ths of a pixel. They are picked at random when the spark is made and never change (ROM: PD2/PD4).
+    // How much the spark's speed changes by each time it changes: one amount for sideways and one for up or down, in 256ths of a pixel (ROM: PD2/PD4).
     private readonly IntVector2 _accelerationSubpixels;
     private readonly ArcadeFrameTimer _beatTimer = new();
 
-    // How long the spark lasts. It is picked at random when the spark is made.
+    // How long the spark lasts.
     private readonly int _lifeArcadeFrames;
 
     private readonly ArcadeFrameTimer _lifeTimer = new();
 
-    // Starts due, so the spark does not have to wait for its first move.
+    // Times the spark's moves.
     private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
@@ -44,7 +44,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
     private IntVector2 _position;
 
-    // The fraction of a pixel left over from the last move, in 256ths of a pixel. It is added to the next move, so nothing is lost.
+    // The fraction of a pixel left over from the last move, in 256ths of a pixel.
     private IntVector2 _positionRemainderSubpixels;
 
     private IntVector2
@@ -100,10 +100,9 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     How much is added to the spark's speed each time the speed changes: one amount for sideways and one for up or
-    ///     down, in 256ths of a pixel.
+    ///     How much the spark's speed changes by each time it changes: one amount for sideways and one for up or down,
+    ///     in 256ths of a pixel.
     /// </summary>
-    /// <remarks>It is picked at random when the spark is made, and it never changes.</remarks>
     internal IntVector2 AccelerationSubpixels => _accelerationSubpixels;
 
     /// <summary>How far the spark goes on each move, sideways and up or down, in 256ths of a pixel.</summary>

@@ -29,8 +29,8 @@ namespace Robotron2084.Entities;
 public sealed class Player : IEntity, IAnimationFrameSource
 {
     /// <summary>
-    ///     How many <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> of walking each animation frame is shown for. <see cref="_walkAnimationTicks" /> counts up to
-    ///     this and then the next animation frame is shown.
+    ///     How many <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> of walking each animation
+    ///     frame is shown for.
     /// </summary>
     private const int WalkAnimationIntervalTicks = 3;
 
@@ -312,7 +312,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <param name="delta">The move: either sideways or up-and-down, never both.</param>
     /// <param name="wall">The wall, which the player must not go into.</param>
     /// <returns>Where the player is after the move, or <paramref name="from" /> when the wall is in the way.</returns>
-    private static IntVector2 StepAxis(IntVector2 from, IntVector2 delta, PlayfieldWall wall)
+    private static IntVector2 GetPositionAfterStep(IntVector2 from, IntVector2 delta, PlayfieldWall wall)
     {
         var stepped = from + delta;
         Rectangle box = new(stepped.X, stepped.Y, CollisionSize.Width, CollisionSize.Height);
@@ -444,10 +444,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
         // The sideways move is tried first, then the up-or-down move. A move that would put the Player in the wall is not made.
         var candidate = _position;
         var dx = move.X * PlayerTuning.PlayerSpeedX;
-        if (dx != 0) candidate = StepAxis(candidate, new IntVector2(dx, 0), field.Wall);
+        if (dx != 0) candidate = GetPositionAfterStep(candidate, new IntVector2(dx, 0), field.Wall);
 
         var dy = move.Y * PlayerTuning.PlayerSpeedY;
-        if (dy != 0) candidate = StepAxis(candidate, new IntVector2(0, dy), field.Wall);
+        if (dy != 0) candidate = GetPositionAfterStep(candidate, new IntVector2(0, dy), field.Wall);
 
         _position = candidate;
     }

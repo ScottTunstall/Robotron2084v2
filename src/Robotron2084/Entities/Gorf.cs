@@ -36,10 +36,7 @@ public sealed class Gorf : IExplodable, IRemovable
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height));
 
-    /// <summary>
-    ///     How far Gorf goes sideways on each step, in port pixels. Each step moves <see cref="_position" /> this far
-    ///     left or right. It also decides how many steps it takes to cross the playfield (<see cref="_totalSteps" />).
-    /// </summary>
+    /// <summary>How far Gorf goes sideways on each step, in port pixels.</summary>
     private static readonly int StepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
 
     /// <summary>How high every hop goes, in port pixels.</summary>

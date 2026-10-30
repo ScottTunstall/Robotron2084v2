@@ -24,10 +24,7 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>
-    ///     How long the arcade's routine sleeps between one look at whether the game is live and the next. It decides how
-    ///     long after the game goes live the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> comes (<see cref="BeginPlay" />).
-    /// </summary>
+    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -39,21 +36,18 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int LivePollArcadeFrames = 15;
 
-    /// <summary>
-    ///     When a tank picks where to go, it picks a random number below <see cref="DestinationRollSides" />. If the
-    ///     number is this or less, the tank goes for the player. That is about 38 times in 100.
-    /// </summary>
+    /// <summary>How often a tank goes for the player when it picks where to go: about 38 times in 100.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>ANIMATE_TANK</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    private const int AimAtPlayerRollAtMost = 96;
+    private const int PlayerDestinationRandomAtMost = 96;
 
     /// <summary>
-    ///     The tank waits a random number of <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> before it picks a new place to go. That number is always less than
-    ///     this.
+    ///     One more than the most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a tank waits before it picks a
+    ///     new place to go.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -61,7 +55,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    private const int AimIntervalMaxExclusiveBeats = 32;
+    private const int NewDestinationBeatsMaxExclusive = 32;
 
     /// <summary>The fewest <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a tank waits before it picks a new place to go.</summary>
     /// <remarks>
@@ -70,26 +64,23 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    private const int AimIntervalMinBeats = 1;
+    private const int NewDestinationBeatsMin = 1;
 
     /// <summary>How many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a tank waits between shots, when it is not told a number.</summary>
     private const int DefaultFireIntervalBeats = 32;
 
-    /// <summary>
-    ///     The random number that decides where a tank goes is from 0 up to one less than this (see
-    ///     <see cref="AimAtPlayerRollAtMost" />).
-    /// </summary>
+    /// <summary>The range of the random number behind where a tank goes: from 0 up to one less than this.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>ANIMATE_TANK</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    private const int DestinationRollSides = 256;
+    private const int DestinationRandomRange = 256;
 
     /// <summary>
-    ///     A tank's first shot waits the usual <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> between shots, plus a random number of extra <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>. The extra is
-    ///     always less than this.
+    ///     One more than the most extra <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a tank's first shot
+    ///     waits.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -129,10 +120,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     private IntVector2 _destination;
     private int _fireBeatsRemaining;
 
-    /// <summary>
-    ///     Which of the growing animation frames is showing, counting from 0. When it reaches
-    ///     <see cref="TankTuning.GrowSteps" />, the tank is fully grown.
-    /// </summary>
+    /// <summary>Which of the growing animation frames is showing, counting from 0.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>MTANK</c>, the growing tank.</item>
@@ -143,12 +131,12 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 
     private IntVector2 _position;
 
-    private int _reaimBeatsRemaining;
+    private int _newDestinationBeatsRemaining;
 
     private IntVector2
         _stepDirection; // Which way the tank steps on each beat: left or right (or neither), and up or down (or neither).
 
-    /// <summary>How many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the tank has had. The treads show their next animation frame on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
+    /// <summary>How many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the tank has had.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>TANK3</c>, which moves the animation on once a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</item>
@@ -193,7 +181,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         _fireIntervalBeats = fireIntervalBeats;
         _destination = position;
         // The tank picks where to go at the end of its first beat (ROM: TANKL).
-        _reaimBeatsRemaining = 0;
+        _newDestinationBeatsRemaining = 0;
         // The first shot waits this wave's gap between shots, plus a random number of extra beats.
         _fireBeatsRemaining = fireIntervalBeats + random.Next(0, FirstShotExtraBeatsMaxExclusive);
     }
@@ -370,9 +358,9 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    private static int NextReaimBeats(Random random)
+    private static int GetRandomNewDestinationBeats(Random random)
     {
-        return random.Next(AimIntervalMinBeats, AimIntervalMaxExclusiveBeats);
+        return random.Next(NewDestinationBeatsMin, NewDestinationBeatsMaxExclusive);
     }
 
     /// <summary>Shows the next growing animation frame.</summary>
@@ -407,10 +395,10 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 
         _treadAnimationFrameCounter++; // The treads show their next animation frame on each beat (ROM: TANK3).
 
-        // When the aim countdown runs out, the tank picks a new place to go. Sometimes it is where the Player is, and otherwise it is a random place (ROM: TANKND).
-        if (--_reaimBeatsRemaining <= 0)
+        // When the new-destination countdown runs out, the tank picks a new place to go. Sometimes it is where the Player is, and otherwise it is a random place (ROM: TANKND).
+        if (--_newDestinationBeatsRemaining <= 0)
         {
-            _reaimBeatsRemaining = NextReaimBeats(_random);
+            _newDestinationBeatsRemaining = GetRandomNewDestinationBeats(_random);
             PickDestination(field);
         }
     }
@@ -479,9 +467,9 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private void PickDestination(PlayField field)
     {
-        _destination = _random.Next(DestinationRollSides) <= AimAtPlayerRollAtMost
+        _destination = _random.Next(DestinationRandomRange) <= PlayerDestinationRandomAtMost
             ? field.Player.Position
-            : PickRandomPointIn(field);
+            : GetRandomPointIn(field);
 
         var dx = Math.Sign(_destination.X - _position.X);
         var dy = Math.Abs(_destination.Y - _position.Y) > VerticalMoveThreshold
@@ -492,7 +480,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>Picks a random place inside the playfield, at least a tank's size away from every wall.</summary>
     /// <param name="field">The playfield, whose walls the place is inside.</param>
-    private IntVector2 PickRandomPointIn(PlayField field)
+    private IntVector2 GetRandomPointIn(PlayField field)
     {
         var bounds = field.Wall.PlayfieldBounds;
         return new IntVector2(

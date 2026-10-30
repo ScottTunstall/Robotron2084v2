@@ -34,15 +34,15 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     ///     wide that area is.
     /// </summary>
     /// <remarks>ROM: <c>ENFR1</c>.</remarks>
-    private const int AimZoneColumns = 32;
+    private const int DestinationZoneColumns = 32;
 
-    /// <summary>How many rows tall the area the enforcer heads for is (see <see cref="AimZoneColumns" />).</summary>
+    /// <summary>How many rows tall the area the enforcer heads for is (see <see cref="DestinationZoneColumns" />).</summary>
     /// <remarks>ROM: <c>ENFR1</c>.</remarks>
-    private const int AimZoneRows = 32;
+    private const int DestinationZoneRows = 32;
 
     /// <summary>
-    ///     The distance to the spot the enforcer is heading for is divided by this to set
-    ///     <see cref="_velocitySubpixels" />, which is how far the enforcer goes on each move.
+    ///     How much slower the enforcer goes than the gap to the spot it is heading for. The bigger this is, the slower it
+    ///     goes.
     /// </summary>
     private const int ApproachDivisor = 2;
 
@@ -50,11 +50,11 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private const int DefaultFireIntervalBeats = 24;
 
     /// <summary>
-    ///     The enforcer waits a random number of <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> before it picks a new spot to head for. That number is from 0 up
-    ///     to one less than this.
+    ///     One more than the most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the enforcer waits before it
+    ///     picks a new spot to head for. The fewest is 0.
     /// </summary>
     /// <remarks>ROM: <c>ENFR1</c>.</remarks>
-    private const int ReaimBeatsMaxExclusive = 32;
+    private const int NewDestinationBeatsMaxExclusive = 32;
 
     /// <summary>
     ///     How big the enforcer is, in port pixels. It is the size of the enforcer's sprite.
@@ -69,20 +69,17 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private readonly ArcadeFrameTimer _beatTimer = new();
     private int _fireBeatsRemaining;
 
-    /// <summary>
-    ///     Which of the growing animation frames is showing, counting from 0. When it reaches
-    ///     <see cref="EnforcerTuning.GrowSteps" />, the enforcer has grown.
-    /// </summary>
+    /// <summary>Which of the growing animation frames is showing, counting from 0.</summary>
     private int _growStep;
 
     private readonly ArcadeFrameTimer _growTimer = new();
 
-    /// <summary>Starts due, so the enforcer does not have to wait for its first move.</summary>
+    /// <summary>Times the enforcer's moves.</summary>
     private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private IntVector2 _position;
 
-    private int _reaimBeatsRemaining;
+    private int _newDestinationBeatsRemaining;
 
     private IntVector2 _remainderSubpixels;
 
@@ -115,7 +112,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
         // The enforcer picks where to go on its first beat. Its first shot comes after a random number of beats.
-        _reaimBeatsRemaining = 0;
+        _newDestinationBeatsRemaining = 0;
         _fireBeatsRemaining = ArcadeRandom.PickUpTo(random, _fireIntervalBeats);
     }
 
@@ -206,9 +203,9 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     }
 
     /// <summary>Picks at random how many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the enforcer waits before it picks a new spot to head for.</summary>
-    private static int NextReaimBeats(Random random)
+    private static int GetRandomNewDestinationBeats(Random random)
     {
-        return random.Next(0, ReaimBeatsMaxExclusive);
+        return random.Next(0, NewDestinationBeatsMaxExclusive);
     }
 
     /// <summary>True while the enforcer is still growing, when it must not move or shoot.</summary>
@@ -249,20 +246,20 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     What the enforcer does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It counts down to its next aim and to its next shot (ROM: <c>ENFR1</c>).
+    ///     What the enforcer does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It counts down to picking a new spot to head for and to its next shot (ROM: <c>ENFR1</c>).
     /// </summary>
     /// <param name="field">The playfield.</param>
     private void ActOnBeat(PlayField field)
     {
-        if (--_reaimBeatsRemaining <= 0)
+        if (--_newDestinationBeatsRemaining <= 0)
         {
-            _reaimBeatsRemaining = NextReaimBeats(_random);
-            RollVelocity(field);
+            _newDestinationBeatsRemaining = GetRandomNewDestinationBeats(_random);
+            SetRandomVelocity(field);
         }
 
         if (--_fireBeatsRemaining <= 0)
         {
-            _fireBeatsRemaining = NextFireBeats(_random);
+            _fireBeatsRemaining = GetRandomFireBeats(_random);
             if (field.GetActiveSparkCount() < SparkTuning.GlobalActiveSparkCap)
                 // The spark is aimed at the place where the Player is now.
                 field.SpawnSpark(_position, field.Player.Position);
@@ -273,7 +270,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     ///     Picks at random how many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the enforcer waits before its next shot. The pick is the arcade's own (see
     ///     <see cref="ArcadeRandom" />), which gives longer waits more often than an even spread would.
     /// </summary>
-    private int NextFireBeats(Random random)
+    private int GetRandomFireBeats(Random random)
     {
         return ArcadeRandom.PickUpTo(random, _fireIntervalBeats);
     }
@@ -283,12 +280,12 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     ///     enforcer's speed to get there.
     /// </summary>
     /// <param name="field">The playfield. It says where the player is, and its walls limit where the spot can be.</param>
-    private void RollVelocity(PlayField field)
+    private void SetRandomVelocity(PlayField field)
     {
         var bounds = field.Wall.PlayfieldBounds;
-        var targetX = field.GetPlayerPosition().X + ScreenSize.ToPortPixelsFromColumns(_random.Next(0, AimZoneColumns));
+        var targetX = field.GetPlayerPosition().X + ScreenSize.ToPortPixelsFromColumns(_random.Next(0, DestinationZoneColumns));
         var targetY = field.GetPlayerPosition().Y +
-                      ScreenSize.ToPortPixelsFromArcadePixels(_random.Next(0, AimZoneRows));
+                      ScreenSize.ToPortPixelsFromArcadePixels(_random.Next(0, DestinationZoneRows));
         targetX = Math.Clamp(targetX, bounds.X, bounds.Right - CollisionSize.Width);
         targetY = Math.Clamp(targetY, bounds.Y, bounds.Bottom - CollisionSize.Height);
 
