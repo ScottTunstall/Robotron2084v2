@@ -227,7 +227,10 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         var randomDrops = ArcadeRandom.PickUpTo(random, maxDropsX2);
         _enforcersRemaining = (randomDrops + 1) / 2;
         // Pick at random whether the spheroid will escape to the left or to the right.
-        _escapeDirectionSignX = random.Next(2) == 0 ? -1 : 1;
+        _escapeDirectionSignX = 1;
+        var isEscapingLeft = random.Next(2) == 0;
+        if (isEscapingLeft) _escapeDirectionSignX = -1;
+
         // How many times the spheroid spins before it first drops an enforcer.
         _dropRotationsRemaining = ArcadeRandom.PickUpTo(random, dropDelayRotations);
         // The spheroid starts on the last animation frame of a spin, so its first beat finishes a spin.
@@ -333,7 +336,10 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private void ActOnBeat(PlayField field)
     {
         // wrapPass is true when the animation is on its last animation frame. The count of spins left before a drop only goes down on those beats.
-        var lastAnimationFrame = _isDropping && !_isEscaping ? DropLastAnimationFrame : SpinLastAnimationFrame;
+        var lastAnimationFrame = SpinLastAnimationFrame;
+        var isDroppingAnEnforcer = _isDropping && !_isEscaping;
+        if (isDroppingAnEnforcer) lastAnimationFrame = DropLastAnimationFrame;
+
         var wrapPass = _animationFrameIndex >= lastAnimationFrame;
 
         if (_isEscaping)

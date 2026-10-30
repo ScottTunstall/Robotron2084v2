@@ -214,7 +214,10 @@ public sealed class CruiseMissile : IEntity, IRemovable
         if (_random.Next(2) != 0) return new IntVector2(0, GetRandomDirectionSign(playerPosition.Y, _position.Y) * StepYPortPixels);
 
         var dx = GetRandomDirectionSign(playerPosition.X, _position.X) * StepXPortPixels;
-        var dy = _random.Next(2) == 0 ? GetRandomDirectionSign(playerPosition.Y, _position.Y) * StepYPortPixels : 0;
+        var dy = 0;
+        var isMovingDiagonally = _random.Next(2) == 0;
+        if (isMovingDiagonally) dy = GetRandomDirectionSign(playerPosition.Y, _position.Y) * StepYPortPixels;
+
         return new IntVector2(dx, dy);
     }
 

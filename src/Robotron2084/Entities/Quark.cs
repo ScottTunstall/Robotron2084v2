@@ -279,14 +279,21 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     {
         if (_isFleeing)
         {
-            _animationFrameIndex = _animationFrameIndex <= 0
-                ? QuarkTuning.TotalAnimationFrames - 1
-                : _animationFrameIndex - 1;
+            var isOnFirstFrame = _animationFrameIndex <= 0;
+            if (isOnFirstFrame) _animationFrameIndex = QuarkTuning.TotalAnimationFrames - 1;
+            else _animationFrameIndex--;
+
             return;
         }
 
-        var last = _isDroppingTanks ? QuarkTuning.TotalAnimationFrames - 1 : QuarkTuning.TravelAnimationFrames - 1;
-        _animationFrameIndex = _animationFrameIndex >= last ? 0 : _animationFrameIndex + 1;
+        var last = QuarkTuning.TravelAnimationFrames - 1;
+        if (_isDroppingTanks) last = QuarkTuning.TotalAnimationFrames - 1;
+
+        var isOnLastFrame = _animationFrameIndex >= last;
+        var nextFrameIndex = _animationFrameIndex + 1;
+        if (isOnLastFrame) nextFrameIndex = 0;
+
+        _animationFrameIndex = nextFrameIndex;
     }
 
     /// <summary>
@@ -333,9 +340,10 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
             _isDroppingTanks = true;
             _tanksRemaining--;
             // The new tank appears a little to the right of the quark and below it. It is one row lower when the quark is against the top wall (ROM: TNKDRP).
-            var rowOffset = _position.Y == field.GetPlayfieldBounds().Y
-                ? TankTuning.BirthOffsetRowsOnTopWall
-                : TankTuning.BirthOffsetRowsOffTopWall;
+            var rowOffset = TankTuning.BirthOffsetRowsOffTopWall;
+            var isAgainstTopWall = _position.Y == field.GetPlayfieldBounds().Y;
+            if (isAgainstTopWall) rowOffset = TankTuning.BirthOffsetRowsOnTopWall;
+
             field.SpawnTank(_position + new IntVector2(
                 ScreenSize.ToPortPixelsFromColumns(TankTuning.BirthOffsetColumns),
                 ScreenSize.ToPortPixelsFromArcadePixels(rowOffset)));
@@ -438,7 +446,11 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     {
         _isFleeing = true;
         var subpixels = QuarkTuning.FleeVelocityRom * ScreenSize.ToPortPixelsFromArcadePixels(1);
-        _velocitySubpixels = new IntVector2(0, _random.Next(CoinFlipSides) == 0 ? subpixels : -subpixels);
+        var verticalSubpixels = -subpixels;
+        var isFleeingDown = _random.Next(CoinFlipSides) == 0;
+        if (isFleeingDown) verticalSubpixels = subpixels;
+
+        _velocitySubpixels = new IntVector2(0, verticalSubpixels);
         _remainderSubpixels = IntVector2.Zero;
     }
 }

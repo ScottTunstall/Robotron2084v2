@@ -122,17 +122,16 @@ public sealed class StripEffect : IEntity
 
         // How fast an appear closes up. The diagonal routine closes it twice as fast as the other two routines.
         var engine = GetEngine();
-        _appearSizerStep = engine == StripEngine.Diagonal
-            ? StripExplosionTuning.SizerStep
-            : StripExplosionTuning.SlowAppearSizerStep;
-        _smallestAppearSpacing = isClosedUpAtTheEnd || engine == StripEngine.Horizontal
-            ? StripExplosionTuning.SmallestClosedAppearSpacing
-            : StripExplosionTuning.SmallestAppearSpacing;
+        _appearSizerStep = StripExplosionTuning.SlowAppearSizerStep;
+        if (engine == StripEngine.Diagonal) _appearSizerStep = StripExplosionTuning.SizerStep;
+
+        _smallestAppearSpacing = StripExplosionTuning.SmallestAppearSpacing;
+        var closesUpFully = isClosedUpAtTheEnd || engine == StripEngine.Horizontal;
+        if (closesUpFully) _smallestAppearSpacing = StripExplosionTuning.SmallestClosedAppearSpacing;
 
         // The gap between the strips starts small for an explosion, which then spreads out. It starts large for an appear, which then closes up.
-        _spacingAccumulator = kind == StripEffectKind.Explode
-            ? StripExplosionTuning.ExplosionStartSizer
-            : StripExplosionTuning.AppearStartSizer;
+        _spacingAccumulator = StripExplosionTuning.AppearStartSizer;
+        if (kind == StripEffectKind.Explode) _spacingAccumulator = StripExplosionTuning.ExplosionStartSizer;
 
         _arcadeFramesRemaining = StripExplosionTuning.ExplosionFrames;
     }
@@ -179,21 +178,17 @@ public sealed class StripEffect : IEntity
         foreach (var strip in GetStrips(spriteWidth, spriteRows))
         {
             // Each strip is one row or one column of the sprite, drawn PortPixelsPerArcadePixel times bigger on the screen.
-            var source = Axis == StripFanAxis.Rows
-                ? new Rectangle(0, strip.SourceIndex, spriteWidth, 1)
-                : new Rectangle(strip.SourceIndex, 0, 1, spriteRows);
-
-            var destination = Axis == StripFanAxis.Rows
-                ? new Rectangle(
-                    strip.X * ScreenSize.PortPixelsPerArcadePixel,
-                    strip.Y * ScreenSize.PortPixelsPerArcadePixel,
-                    spriteWidth * ScreenSize.PortPixelsPerArcadePixel,
-                    ScreenSize.PortPixelsPerArcadePixel)
-                : new Rectangle(
-                    strip.X * ScreenSize.PortPixelsPerArcadePixel,
-                    strip.Y * ScreenSize.PortPixelsPerArcadePixel,
-                    ScreenSize.PortPixelsPerArcadePixel,
-                    spriteRows * ScreenSize.PortPixelsPerArcadePixel);
+            var scale = ScreenSize.PortPixelsPerArcadePixel;
+            var left = strip.X * scale;
+            var top = strip.Y * scale;
+            var source = new Rectangle(strip.SourceIndex, 0, 1, spriteRows);
+            var destination = new Rectangle(left, top, scale, spriteRows * scale);
+            var isOneRow = Axis == StripFanAxis.Rows;
+            if (isOneRow)
+            {
+                source = new Rectangle(0, strip.SourceIndex, spriteWidth, 1);
+                destination = new Rectangle(left, top, spriteWidth * scale, scale);
+            }
 
             spriteBatch.Draw(animationFrame, destination, source, Color.White);
         }
@@ -473,7 +468,8 @@ public sealed class StripEffect : IEntity
     internal IReadOnlyList<Strip> GetStrips(int spriteWidth, int spriteRows)
     {
         var fansByRows = Axis == StripFanAxis.Rows;
-        var extent = fansByRows ? spriteRows : spriteWidth;
+        var extent = spriteWidth;
+        if (fansByRows) extent = spriteRows;
 
         var strips = new List<Strip>(extent);
         var spacing = _spacingAccumulator >> 8;
@@ -486,13 +482,18 @@ public sealed class StripEffect : IEntity
         var (spriteLeft, spriteTop) = GetSpritePlacement(_bounds, spriteWidth, spriteRows);
 
         // Where the chosen strip is on the screen: its row, or its column when the sprite is cut into columns.
-        var centre = (fansByRows ? spriteTop : spriteLeft) + split;
+        var spriteStart = spriteLeft;
+        if (fansByRows) spriteStart = spriteTop;
+
+        var centre = spriteStart + split;
 
         // The gap is counted in the sprite's own pixels, for rows and for columns alike. Counting a column as 2 pixels wide would make the strips fly apart twice as fast as in the arcade.
         var step = spacing;
 
         // Where the first strip goes. The arcade has a bug here, and it is kept: when the chosen strip is the very first strip, the half gap is left out.
-        var half = split == 0 ? 0 : spacing >> 1;
+        var half = spacing >> 1;
+        if (split == 0) half = 0;
+
         var fanBase = centre - spacing * split + half;
 
         // How far each strip slides to the side for a diagonal shot. A strip slides further the further it is from the chosen strip, and strips on opposite sides of the chosen strip slide opposite ways.
@@ -504,8 +505,13 @@ public sealed class StripEffect : IEntity
             var along = fanBase + i * step;
             var lateral = (i - split) * drift;
 
-            var x = fansByRows ? spriteLeft + lateral : along;
-            var y = fansByRows ? along : spriteTop + lateral;
+            var x = along;
+            var y = spriteTop + lateral;
+            if (fansByRows)
+            {
+                x = spriteLeft + lateral;
+                y = along;
+            }
 
             if (IsInside(x, y, spriteWidth, spriteRows)) strips.Add(new Strip(i, x, y));
         }

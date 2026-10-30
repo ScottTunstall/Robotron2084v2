@@ -222,9 +222,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// </remarks>
     internal int GetDeathSolidSlot()
     {
-        return _deathStage == DeathStage.Fade
-            ? PlayerTuning.PlayerDeathFadeSlot
-            : _deathFlashSlot;
+        var isFading = _deathStage == DeathStage.Fade;
+        if (isFading) return PlayerTuning.PlayerDeathFadeSlot;
+
+        return _deathFlashSlot;
     }
 
     /// <summary>

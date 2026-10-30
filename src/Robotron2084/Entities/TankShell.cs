@@ -83,9 +83,10 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         _playfieldBounds = playfieldBounds;
         _position = position +
                     new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
-        _velocity = random.Next(TankShellTuning.ShotTypeRandomRange) >= TankShellTuning.ReboundRandomAtOrAbove
-            ? GetReboundVelocity(playerPosition, shellSpeed, random)
-            : GetAimedVelocity(playerPosition, shellSpeed, random);
+        var isReboundShot = random.Next(TankShellTuning.ShotTypeRandomRange) >= TankShellTuning.ReboundRandomAtOrAbove;
+        if (isReboundShot) _velocity = GetReboundVelocity(playerPosition, shellSpeed, random);
+        else _velocity = GetAimedVelocity(playerPosition, shellSpeed, random);
+
         _lifeBeatsRemaining = TankShellTuning.LifeBaseBeats + random.Next(TankShellTuning.LifeExtraBeatsMaxExclusive);
     }
 
@@ -186,9 +187,10 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     {
         var distance = Math.Min(Math.Abs(gap), byte.MaxValue);
         var scaled = distance * shellSpeed / TankShellTuning.AimedSpeedDivisor;
-        return gap >= 0
-            ? scaled * TankShellTuning.AimedSpeedMultiplier
-            : -(scaled + 1) * TankShellTuning.AimedSpeedMultiplier;
+        var isMovingForwards = gap >= 0;
+        if (isMovingForwards) return scaled * TankShellTuning.AimedSpeedMultiplier;
+
+        return -(scaled + 1) * TankShellTuning.AimedSpeedMultiplier;
     }
 
     /// <summary>
@@ -296,7 +298,9 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
                               TankShellTuning.ReboundWidthMissRange;
             targetColumn = GetQuotientRoundedDown(missColumns + shellColumn + playerColumn, 2);
             var playerInBottomHalf = playerRow >= (topRow + bottomRow) / 2;
-            targetRow = playerInBottomHalf != farSide ? bottomRow : topRow;
+            var aimsAtBottomRow = playerInBottomHalf != farSide;
+            targetRow = topRow;
+            if (aimsAtBottomRow) targetRow = bottomRow;
         }
         else
         {
@@ -304,7 +308,9 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
                            TankShellTuning.ReboundHeightMissRange;
             targetRow = GetQuotientRoundedDown(missRows + shellRow + playerRow, 2);
             var playerInRightHalf = playerColumn >= (leftColumn + rightColumn) / 2;
-            targetColumn = playerInRightHalf != farSide ? rightColumn : leftColumn;
+            var aimsAtRightColumn = playerInRightHalf != farSide;
+            targetColumn = leftColumn;
+            if (aimsAtRightColumn) targetColumn = rightColumn;
         }
 
         return GetBoostedVelocity(new IntVector2(targetColumn - shellColumn, targetRow - shellRow), shellSpeed);

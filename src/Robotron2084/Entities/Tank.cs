@@ -174,7 +174,9 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         int fireIntervalBeats = DefaultFireIntervalBeats,
         bool startFullyGrown = false)
     {
-        _growStep = startFullyGrown ? TankTuning.GrowSteps : 0;
+        _growStep = 0;
+        if (startFullyGrown) _growStep = TankTuning.GrowSteps;
+
         _sprites = sprites;
         _position = position;
         _random = random;
@@ -467,14 +469,15 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private void PickDestination(PlayField field)
     {
-        _destination = _random.Next(DestinationRandomRange) <= PlayerDestinationRandomAtMost
-            ? field.Player.Position
-            : GetRandomPointIn(field);
+        var isHeadingForPlayer = _random.Next(DestinationRandomRange) <= PlayerDestinationRandomAtMost;
+        if (isHeadingForPlayer) _destination = field.Player.Position;
+        else _destination = GetRandomPointIn(field);
 
         var dx = Math.Sign(_destination.X - _position.X);
-        var dy = Math.Abs(_destination.Y - _position.Y) > VerticalMoveThreshold
-            ? Math.Sign(_destination.Y - _position.Y)
-            : 0;
+        var dy = 0;
+        var isFarEnoughAwayVertically = Math.Abs(_destination.Y - _position.Y) > VerticalMoveThreshold;
+        if (isFarEnoughAwayVertically) dy = Math.Sign(_destination.Y - _position.Y);
+
         _stepDirection = new IntVector2(dx, dy);
     }
 

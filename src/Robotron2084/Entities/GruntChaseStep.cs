@@ -69,11 +69,19 @@ internal static class GruntChaseStep
         var columnsRightOfPlayer = GetQuotientRoundedDown(position.X - playerPosition.X, ColumnPixels);
         var rowsBelowPlayer = GetQuotientRoundedDown(position.Y - playerPosition.Y, RowPixels);
 
-        var dx = columnsRightOfPlayer > 0 ? -StepXPixels : StepXPixels;
+        var dx = StepXPixels;
+        if (columnsRightOfPlayer > 0) dx = -StepXPixels;
+
         var dy = 0;
         if (rowsBelowPlayer > 0)
-            dy = rowsBelowPlayer > StayPutGapRows ? -StepYPixels : 0;
-        else if (rowsBelowPlayer != -StayPutGapRows) dy = StepYPixels;
+        {
+            var isFarBelowPlayer = rowsBelowPlayer > StayPutGapRows;
+            if (isFarBelowPlayer) dy = -StepYPixels;
+        }
+        else if (rowsBelowPlayer != -StayPutGapRows)
+        {
+            dy = StepYPixels;
+        }
 
         var y = position.Y + dy;
         if (dy != 0 && y >= playfieldBounds.Y && y + size.Height <= playfieldBounds.Bottom) position = position with { Y = y };

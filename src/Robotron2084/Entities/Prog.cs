@@ -262,15 +262,19 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     public Rectangle GetExplosionBounds()
     {
+        var x = _position.X;
+        var y = _position.Y;
+        if (_playfieldBounds is { } playfieldBounds)
+        {
+            var rightLimit = playfieldBounds.Right - ScreenSize.ToPortPixelsFromColumns(ExplosionColumnsFromRightWallMin);
+            var bottomLimit = playfieldBounds.Bottom - ScreenSize.ToPortPixelsFromArcadePixels(ExplosionRowsFromBottomWallMin);
+            x = Math.Min(x, rightLimit);
+            y = Math.Min(y, bottomLimit);
+        }
+
         return new Rectangle(
-            _playfieldBounds is { } rightLimit
-                ? Math.Min(_position.X,
-                    rightLimit.Right - ScreenSize.ToPortPixelsFromColumns(ExplosionColumnsFromRightWallMin))
-                : _position.X,
-            _playfieldBounds is { } bottomLimit
-                ? Math.Min(_position.Y,
-                    bottomLimit.Bottom - ScreenSize.ToPortPixelsFromArcadePixels(ExplosionRowsFromBottomWallMin))
-                : _position.Y,
+            x,
+            y,
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Height));
     }

@@ -195,9 +195,15 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     {
         var gapX = playerPosition.X - from.X;
         var gapY = playerPosition.Y - from.Y;
-        if (Math.Abs(gapX) >= Math.Abs(gapY)) return gapX >= 0 ? WalkSequence.Right : WalkSequence.Left;
+        var isSidewaysFurther = Math.Abs(gapX) >= Math.Abs(gapY);
+        if (isSidewaysFurther)
+        {
+            var isPlayerToTheRight = gapX >= 0;
+            return isPlayerToTheRight ? WalkSequence.Right : WalkSequence.Left;
+        }
 
-        return gapY >= 0 ? WalkSequence.Down : WalkSequence.Up;
+        var isPlayerBelow = gapY >= 0;
+        return isPlayerBelow ? WalkSequence.Down : WalkSequence.Up;
     }
 
     /// <summary>

@@ -602,9 +602,9 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         var bounds = field.Wall.PlayfieldBounds;
         var jitter = _random.Next(ReprogramTuning.JitterPixels);
         var height = victim.GetBounds().Height;
-        var y = _reprogramMovingDown
-            ? Math.Min(_victimRestingY + jitter, bounds.Bottom - height)
-            : Math.Max(_victimRestingY - jitter, bounds.Y);
+        var y = Math.Max(_victimRestingY - jitter, bounds.Y);
+        if (_reprogramMovingDown) y = Math.Min(_victimRestingY + jitter, bounds.Bottom - height);
+
         victim.MoveTo(new IntVector2(victim.Position.X, y));
 
         if (_reprogramMovingDown) field.PlaySoundFrom(SoundTables.Programming, victim.GetBounds());
@@ -637,11 +637,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private void AdvanceWalkAnimation(IntVector2 step)
     {
-        var nextWalkSequence = step.X != 0
-            ? step.X > 0 ? WalkSequence.Right : WalkSequence.Left
-            : step.Y < 0
-                ? WalkSequence.Up
-                : WalkSequence.Down;
+        var nextWalkSequence = GetWalkSequence(step);
 
         if (nextWalkSequence == _walkSequence)
         {
@@ -652,6 +648,26 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
             _walkSequence = nextWalkSequence;
             _walkCycleStep = 0;
         }
+    }
+
+    /// <summary>Gets the walk that matches a step. Left and right win over up and down.</summary>
+    /// <param name="step">The step the brain tried to take.</param>
+    /// <returns>The walk for the way the step goes.</returns>
+    private static WalkSequence GetWalkSequence(IntVector2 step)
+    {
+        var isMovingSideways = step.X != 0;
+        if (isMovingSideways)
+        {
+            var isMovingRight = step.X > 0;
+            if (isMovingRight) return WalkSequence.Right;
+
+            return WalkSequence.Left;
+        }
+
+        var isMovingUp = step.Y < 0;
+        if (isMovingUp) return WalkSequence.Up;
+
+        return WalkSequence.Down;
     }
 
     /// <summary>Fires a cruise missile if there is room for one, then picks how long to wait for the next.</summary>
@@ -724,7 +740,9 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         var targetDeltaX = target.X - _position.X;
         if (Math.Abs(targetDeltaX) > ApproachDeadZonePixels) dx = Math.Sign(targetDeltaX) * StepXPixels;
 
-        var dy = target.Y >= _position.Y ? StepYPixels : -StepYPixels;
+        var dy = -StepYPixels;
+        var isTargetBelowOrLevel = target.Y >= _position.Y;
+        if (isTargetBelowOrLevel) dy = StepYPixels;
 
         return new IntVector2(dx, dy);
     }

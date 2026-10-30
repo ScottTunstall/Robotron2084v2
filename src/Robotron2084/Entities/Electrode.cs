@@ -51,7 +51,9 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     public Texture2D GetCurrentAnimationFrame()
     {
         var baseFrame = GetVariantIndex() * WavePaletteTables.ElectrodeAnimationFramesPerVariant;
-        var frame = this.IsDying() ? baseFrame + _shrivelStep : baseFrame;
+        var frame = baseFrame;
+        if (this.IsDying()) frame = baseFrame + _shrivelStep;
+
         return _sprites.ElectrodeAnimationFrames[frame];
     }
 

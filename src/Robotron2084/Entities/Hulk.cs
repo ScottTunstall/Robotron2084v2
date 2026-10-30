@@ -371,12 +371,15 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </remarks>
     public void ApplyKnockback(IntVector2 direction)
     {
-        var dx = direction.X != 0 && _random.Next(ShoveSidewaysDoubleRandomRange) == 0
-            ? direction.X * ShoveSidewaysDoubleFactor
-            : direction.X;
-        var dy = direction.Y != 0 && _random.Next(ShoveVerticalQuadrupleRandomRange) < ShoveVerticalQuadrupleRandomBelow
-            ? direction.Y * ShoveVerticalQuadrupleFactor
-            : direction.Y;
+        var dx = direction.X;
+        var isShovedSidewaysDouble = direction.X != 0 && _random.Next(ShoveSidewaysDoubleRandomRange) == 0;
+        if (isShovedSidewaysDouble) dx = direction.X * ShoveSidewaysDoubleFactor;
+
+        var dy = direction.Y;
+        var isShovedVerticalQuadruple = direction.Y != 0 &&
+                                        _random.Next(ShoveVerticalQuadrupleRandomRange) < ShoveVerticalQuadrupleRandomBelow;
+        if (isShovedVerticalQuadruple) dy = direction.Y * ShoveVerticalQuadrupleFactor;
+
         _position += new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(dx),
             ScreenSize.ToPortPixelsFromArcadePixels(dy));
         if (_playfieldBounds is { } bounds)
@@ -403,9 +406,14 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     {
         // Show this step's walk animation frame, then move. Sideways steps go short, long, short, long.
         _animationFrameIndex = GetFrames(Direction)[_walkCycleStep];
-        var stepArcadePixels = _isMovingHorizontally
-            ? _walkCycleStep % 2 == 0 ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels
-            : VerticalStepArcadePixels;
+        var stepArcadePixels = VerticalStepArcadePixels;
+        if (_isMovingHorizontally)
+        {
+            var isShortStep = _walkCycleStep % 2 == 0;
+            stepArcadePixels = SidewaysLongStepArcadePixels;
+            if (isShortStep) stepArcadePixels = SidewaysShortStepArcadePixels;
+        }
+
         _walkCycleStep = (_walkCycleStep + 1) % WalkPatternLength;
         var next = _position + Direction.ToIntVector() * ScreenSize.ToPortPixelsFromArcadePixels(stepArcadePixels);
         if (field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
@@ -500,7 +508,9 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
             var destinationX = target.X + ScreenSize.ToPortPixelsFromColumns(offsetFromTarget);
             if (destinationX > bounds.Right + ScreenSize.ToPortPixelsFromColumns(DestinationWrapColumnsPastRightWall)) destinationX = bounds.X;
 
-            Direction = destinationX <= _position.X ? Direction8.Left : Direction8.Right;
+            Direction = Direction8.Right;
+            var isDestinationLeftOrLevel = destinationX <= _position.X;
+            if (isDestinationLeftOrLevel) Direction = Direction8.Left;
         }
         else
         {
@@ -508,7 +518,9 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
             if (destinationY < bounds.Y - ScreenSize.ToPortPixelsFromArcadePixels(DestinationWrapRowsAboveTopWall))
                 destinationY = bounds.Bottom;
 
-            Direction = destinationY <= _position.Y ? Direction8.Up : Direction8.Down;
+            Direction = Direction8.Down;
+            var isDestinationAboveOrLevel = destinationY <= _position.Y;
+            if (isDestinationAboveOrLevel) Direction = Direction8.Up;
         }
     }
 

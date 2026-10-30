@@ -73,12 +73,17 @@ public sealed class Gorf : IExplodable, IRemovable
         _playfieldBounds = playfieldBounds;
         _random = random;
         _maxDropsX2 = maxDropsX2;
-        _directionSignX = random.Next(2) == 0 ? 1 : -1;
+        _directionSignX = -1;
+        var isEnteringFromLeft = random.Next(2) == 0;
+        if (isEnteringFromLeft) _directionSignX = 1;
+
         var highest = playfieldBounds.Y + HopPixels;
         var lowest = Math.Max(highest, playfieldBounds.Bottom - CollisionSize.Height);
         _groundY = highest + random.Next(lowest - highest + 1);
-        _position = new IntVector2(
-            _directionSignX > 0 ? playfieldBounds.X - CollisionSize.Width : playfieldBounds.Right, _groundY);
+        var startX = playfieldBounds.Right;
+        if (isEnteringFromLeft) startX = playfieldBounds.X - CollisionSize.Width;
+
+        _position = new IntVector2(startX, _groundY);
         _totalSteps = (playfieldBounds.Width + CollisionSize.Width) / StepPixels;
 
         for (var stop = 1; stop <= GorfTuning.DropStops; stop++)
