@@ -15,12 +15,12 @@ internal static class WaveStartTicks
     /// </summary>
     public static int UntilLive(PlayField field)
     {
-        return ArcadeClock.ToPortTicksRoundedUp(field.GetLiveRomFrames());
+        return ArcadeClock.ToPortTicksRoundedUp(field.GetLiveArcadeFrames());
     }
 
     /// <summary>The port ticks from a field being made to the first tick on which the player is drawn: <c>PLS1</c> (R5 $2874).</summary>
     public static int UntilPlayerAppears(PlayField field)
     {
-        return ArcadeClock.ToPortTicksRoundedUp(field.GetPlayerAppearRomFrames());
+        return ArcadeClock.ToPortTicksRoundedUp(field.GetPlayerAppearArcadeFrames());
     }
 }
