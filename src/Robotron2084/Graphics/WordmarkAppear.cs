@@ -175,7 +175,7 @@ public sealed class WordmarkAppear
     private void DrawStrips(SpriteBatch spriteBatch, BlitterDraw blitter, int index, int rimSlot, int coreSlot)
     {
         var letter = _letters[index];
-        foreach (var strip in _effects[index].LayOutStrips(letter.Width, _spriteHeight))
+        foreach (var strip in _effects[index].GetStrips(letter.Width, _spriteHeight))
         {
             Rectangle source = new(letter.Start, strip.SourceIndex, letter.Width, 1);
             Rectangle destination = new(
