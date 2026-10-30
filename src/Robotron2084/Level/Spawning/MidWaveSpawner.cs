@@ -102,7 +102,7 @@ internal sealed class MidWaveSpawner
     /// </remarks>
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
-        if (_entities.Grunts.GetLiveCount() >=
+        if (_entities.Grunts.Count(entity => !entity.IsDead()) >=
             Math.Max(_field.Parameters.GruntCount, GorfTuning.MinimumGruntCap)) return;
 
         var bounds = _field.GetPlayfieldBounds();
