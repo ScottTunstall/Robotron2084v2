@@ -29,7 +29,7 @@ public sealed class WordmarkAppearTests
     }
 
     [Fact]
-    public void ALetterStartsEveryEightRomFrames_BeginningWithTheFirstAtOnce()
+    public void ALetterStartsEveryEightArcadeFrames_BeginningWithTheFirstAtOnce()
     {
         var appear = CreateAppear(9);
         Assert.Equal(1, Started(appear, 1));
@@ -45,7 +45,7 @@ public sealed class WordmarkAppearTests
     }
 
     [Fact]
-    public void TheNextThingGoesUp_ThirtyTwoRomFramesAfterTheLastLetterStarts()
+    public void TheNextThingGoesUp_ThirtyTwoArcadeFramesAfterTheLastLetterStarts()
     {
         var appear = CreateAppear(9);
         var ticks = ArcadeClock.ToPortTicksRoundedUp(8 * 8 + 0x20);

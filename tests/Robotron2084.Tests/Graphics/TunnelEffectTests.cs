@@ -121,7 +121,7 @@ public sealed class TunnelEffectTests
     }
 
     [Fact]
-    public void EveryRomRowAndPixelGetsItsOwnWholePortPixelSoNothingLeavesASeam()
+    public void EveryArcadeRowAndPixelGetsItsOwnWholePortPixelSoNothingLeavesASeam()
     {
         // The ring's edges are ONE ROM pixel thick and the walk lays its bands two rows apart, so
         // the rows have to TILE: each row's span must run to the next row's first pixel. Rounding

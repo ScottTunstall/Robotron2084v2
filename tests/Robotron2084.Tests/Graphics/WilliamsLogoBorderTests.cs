@@ -13,10 +13,10 @@ public sealed class WilliamsLogoBorderTests
         return new WilliamsLogoBorder(SpriteMask.CreateFromPixels(28, 27, [(0, 0)]));
     }
 
-    private static void TickRomFrames(WilliamsLogoBorder border, int romFrames)
+    private static void TickArcadeFrames(WilliamsLogoBorder border, int arcadeFrames)
     {
         // A fiftieth of a second is six clock units and a port tick five, so N frames take 6N/5 ticks, rounded up.
-        var ticks = (ArcadeClock.ToClockUnits(romFrames) + ArcadeClock.UnitsPerPortTick - 1) /
+        var ticks = (ArcadeClock.ToClockUnits(arcadeFrames) + ArcadeClock.UnitsPerPortTick - 1) /
                     ArcadeClock.UnitsPerPortTick;
         for (var i = 0; i < ticks; i++) border.Tick();
     }
@@ -36,18 +36,18 @@ public sealed class WilliamsLogoBorderTests
     {
         var border = NewBorder();
 
-        TickRomFrames(border, 1);
+        TickArcadeFrames(border, 1);
 
         Assert.Equal(7, PixelAt(border, 5, 0x0F));
         Assert.Equal(1, Count(border));
     }
 
     [Fact]
-    public void AnotherWComesEveryFourRomFrames()
+    public void AnotherWComesEveryFourArcadeFrames()
     {
         var border = NewBorder();
 
-        TickRomFrames(border, 12);
+        TickArcadeFrames(border, 12);
 
         Assert.Equal(3, Count(border));
         Assert.Equal(6, PixelAt(border, 21, 0x0F));
@@ -59,19 +59,19 @@ public sealed class WilliamsLogoBorderTests
     {
         var border = NewBorder();
 
-        TickRomFrames(border, 4 * 27 + 1); // the 28th W is drawn on the 109th fiftieth of a second
+        TickArcadeFrames(border, 4 * 27 + 1); // the 28th W is drawn on the 109th fiftieth of a second
 
         Assert.Equal(28, Count(border));
     }
 
     [Fact]
-    public void ThenSixWsMoveEveryRomFrame()
+    public void ThenSixWsMoveEveryArcadeFrame()
     {
         var border = NewBorder();
-        TickRomFrames(border, 4 * 28 + 1); // the moving phase begins four frames after the 28th W
+        TickArcadeFrames(border, 4 * 28 + 1); // the moving phase begins four frames after the 28th W
 
         var before = Count(border);
-        TickRomFrames(border, 1);
+        TickArcadeFrames(border, 1);
 
         // Each move erases its slot's W (nothing there for the first lap) and draws one, so the ring grows.
         Assert.True(Count(border) >= before);
@@ -83,7 +83,7 @@ public sealed class WilliamsLogoBorderTests
     {
         var border = NewBorder();
 
-        TickRomFrames(border, 4 * 28 + 704 + 8);
+        TickArcadeFrames(border, 4 * 28 + 704 + 8);
 
         Assert.True(border.IsFinished());
     }

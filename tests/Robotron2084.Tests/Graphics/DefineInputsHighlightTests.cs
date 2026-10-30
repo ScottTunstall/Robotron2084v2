@@ -6,7 +6,7 @@ namespace Robotron2084.Tests.Rendering;
 
 /// <summary>
 ///     The DEFINE INPUTS page's selected-line colour cycle (notes §115): palette slot 8 on the page's
-///     GREEN, with a WHITE flash landing one step in seven on the presentation page's own 3-ROM-frame
+///     GREEN, with a WHITE flash landing one step in seven on the presentation page's own 3-arcade frame
 ///     chase clock (notes §106) — the same cycling the intro pages run on their text.
 /// </summary>
 public sealed class DefineInputsHighlightTests
@@ -33,7 +33,7 @@ public sealed class DefineInputsHighlightTests
     }
 
     [Fact]
-    public void TheWhiteFlash_ReturnsOnceInSevenSteps_ThreeRomFramesApart()
+    public void TheWhiteFlash_ReturnsOnceInSevenSteps_ThreeArcadeFramesApart()
     {
         var (palette, highlight) = Started();
         var flashTicks = new List<int>();
