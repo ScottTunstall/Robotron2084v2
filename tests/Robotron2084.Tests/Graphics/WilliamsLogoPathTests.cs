@@ -6,13 +6,13 @@ namespace Robotron2084.Tests.Rendering;
 /// <summary>The walk of the Williams "W"s round the attract page's border (ROM <c>$896C</c>).</summary>
 public sealed class WilliamsLogoPathTests
 {
-    private static List<(int Column, int Row, int Slot)> Walk(int count)
+    private static List<(int Column, int Row, int PaletteIndex)> Walk(int count)
     {
         var path = new WilliamsLogoPath();
-        var places = new List<(int Column, int Row, int Slot)>();
+        var places = new List<(int Column, int Row, int PaletteIndex)>();
         for (var i = 0; i < count; i++)
         {
-            places.Add((path.Column, path.Row, Slot: path.GetSlot()));
+            places.Add((path.Column, path.Row, PaletteIndex: path.GetPaletteIndex()));
             path.Step();
         }
 
@@ -47,11 +47,11 @@ public sealed class WilliamsLogoPathTests
     }
 
     [Fact]
-    public void TheColoursStepDownThroughSevenSlotsAndRoundAgain()
+    public void TheColoursStepDownThroughSevenPaletteIndicesAndRoundAgain()
     {
         var places = Walk(9);
 
-        Assert.Equal([7, 6, 5, 4, 3, 2, 1, 7, 6], places.Select(p => p.Slot));
+        Assert.Equal([7, 6, 5, 4, 3, 2, 1, 7, 6], places.Select(p => p.PaletteIndex));
     }
 
     [Fact]
@@ -62,6 +62,6 @@ public sealed class WilliamsLogoPathTests
 
         path.Reset();
 
-        Assert.Equal((5, 0x0F, 7), (path.Column, path.Row, path.GetSlot()));
+        Assert.Equal((5, 0x0F, 7), (path.Column, path.Row, path.GetPaletteIndex()));
     }
 }

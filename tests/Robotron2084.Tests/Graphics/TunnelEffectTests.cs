@@ -103,15 +103,15 @@ public sealed class TunnelEffectTests
     }
 
     [Fact]
-    public void EveryColourTheRingDrawsWithIsAValidPaletteSlot()
+    public void EveryColourTheRingDrawsWithIsAValidPaletteIndex()
     {
         // The first cut passed the ROM's `(colour0 << 4) | colour1` — a BLITTER PLANE MASK,
-        // 0-255 — straight to the palette, so a wave clear threw on slot 239 and the game
+        // 0-255 — straight to the palette, so a wave clear threw on palette index 239 and the game
         // ended. Assert the whole chain stays inside 0-15.
         var pair = 0xEF;
         for (var i = 0; i < 200; i++)
         {
-            var (colour0, colour1) = TunnelEffect.GetColourSlots(pair);
+            var (colour0, colour1) = TunnelEffect.GetColourPaletteIndices(pair);
             Assert.InRange(colour0, 0, 15);
             Assert.InRange(colour1, 0, 15);
 

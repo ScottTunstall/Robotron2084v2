@@ -32,7 +32,7 @@ public sealed class WilliamsLogoBorderTests
     }
 
     [Fact]
-    public void TheFirstWIsDrawnAtOnceInSlotSeven()
+    public void TheFirstWIsDrawnAtOnceInPaletteIndexSeven()
     {
         var border = NewBorder();
 
@@ -73,7 +73,7 @@ public sealed class WilliamsLogoBorderTests
         var before = Count(border);
         TickArcadeFrames(border, 1);
 
-        // Each move erases its slot's W (nothing there for the first lap) and draws one, so the ring grows.
+        // Each move erases its palette index's W (nothing there for the first lap) and draws one, so the ring grows.
         Assert.True(Count(border) >= before);
         Assert.False(border.IsFinished());
     }
