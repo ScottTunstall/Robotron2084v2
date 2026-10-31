@@ -104,10 +104,10 @@ public sealed class RobotronGame : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _font = Content.Load<SpriteFont>("Fonts/Default");
 
-        // Arcade-fidelity colour engine: 16-slot palette + the six ROM
+        // Arcade-fidelity colour engine: 16-index palette + the six ROM
         // colour processes replayed per tick, and the pixel shader that maps
-        // sprite marker colours to the slots' live colours. The wall cycles on
-        // palette slot 11 (RGB process); sprites cycle through the colour-cycle shader
+        // sprite marker colours to the palette indices' live colours. The wall cycles on
+        // palette index 11 (RGB process); sprites cycle through the colour-cycle shader
         // (Content/Effects/ColorCycle.fx — notes §3.3, §34).
         GamePalette palette = new();
         _paletteAnimator = new PaletteAnimator(palette);
