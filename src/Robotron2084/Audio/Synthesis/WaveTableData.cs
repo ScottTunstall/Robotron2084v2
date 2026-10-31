@@ -58,13 +58,6 @@ internal static class WaveTableData
     /// <summary><c>HBTSND</c> "HUNDRED POINT SOUND".</summary>
     private static readonly byte[] HundredPointSound = [1, 1, 2, 2, 4, 4, 8, 8, 0x10, 0x10, 0x30, 0x60, 0xC0, 0xE0];
 
-    /// <summary>The pitch patterns in the order <c>GFRTAB</c> holds them.</summary>
-    private static readonly byte[][] PatternsInOrder =
-    [
-        BonusSound, HundredPointSound, SpinnerSound, TurbineStartUp, HeartbeatDistorto, BigBenSounds, HeartbeatEcho,
-        SpinnerDrip, CoolDowner, StartDistorto, EdsSoundTen, EdsSoundThirteen, Yuksnd, Sp2snd, Sspsnd, Bwssnd
-    ];
-
     /// <summary><c>SP2SND</c> (no comment in the source).</summary>
     private static readonly byte[] Sp2snd = [1, 8, 0x10, 1, 8, 0x10, 1, 8, 0x10, 1, 8, 0x10, 1, 8, 0x10, 1, 8, 0x10, 0];
 
@@ -94,6 +87,13 @@ internal static class WaveTableData
     /// <summary><c>YUKSND</c> (no comment in the source).</summary>
     private static readonly byte[] Yuksnd =
         [8, 0x80, 0x10, 0x78, 0x18, 0x70, 0x20, 0x60, 0x28, 0x58, 0x30, 0x50, 0x40, 0x48, 0];
+
+    /// <summary>The pitch patterns in the order <c>GFRTAB</c> holds them.</summary>
+    private static readonly byte[][] PatternsInOrder =
+    [
+        BonusSound, HundredPointSound, SpinnerSound, TurbineStartUp, HeartbeatDistorto, BigBenSounds, HeartbeatEcho,
+        SpinnerDrip, CoolDowner, StartDistorto, EdsSoundTen, EdsSoundThirteen, Yuksnd, Sp2snd, Sspsnd, Bwssnd
+    ];
 
     /// <summary><c>GFRTAB</c>: every pitch pattern, one after another. Each byte is the wait between two levels of the wave.</summary>
     public static IReadOnlyList<byte> Patterns { get; } = [.. PatternsInOrder.SelectMany(pattern => pattern)];
