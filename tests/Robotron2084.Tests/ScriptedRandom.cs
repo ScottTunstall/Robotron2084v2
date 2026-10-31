@@ -2,7 +2,7 @@ using Xunit;
 
 namespace Robotron2084.Tests;
 
-/// <summary>A random source that hands back the numbers a test gives it, in order, so a test can choose every roll.</summary>
+/// <summary>A random source that hands back the numbers a test gives it, in order, so a test can choose every random number.</summary>
 internal sealed class ScriptedRandom : Random
 {
     private readonly Queue<int> _values;
