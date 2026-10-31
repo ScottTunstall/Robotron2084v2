@@ -27,9 +27,6 @@ namespace Robotron2084.Palette;
 /// </summary>
 public sealed class PaletteAnimator
 {
-    /// <summary>The ROM's LF flash period in fiftieths of a second (every 3rd flash is the random hue).</summary>
-    private const int LaserFlashArcadeFrames = 2;
-
     /// <summary>The LASER (slot 13) ramp — also the random-hue table for the LF flash.</summary>
     public static readonly byte[] LaserTab =
     [
@@ -39,6 +36,9 @@ public sealed class PaletteAnimator
         0xDA, 0xE8, 0xF8, 0xF9, 0xFA, 0xFB, 0xFD, 0xFF,
         0xBF, 0x3F, 0x3E, 0x3C
     ];
+
+    /// <summary>The ROM's LF flash period in fiftieths of a second (every 3rd flash is the random hue).</summary>
+    private const int LaserFlashArcadeFrames = 2;
 
     private readonly GamePalette _palette;
 
@@ -119,10 +119,10 @@ public sealed class PaletteAnimator
 
     private sealed class Process
     {
+        public int ArcadeFramesPerStep = 1;
         public int ClockUnits;
         public int ColourIndex;
         public byte[] ColourTable = [];
-        public int ArcadeFramesPerStep = 1;
         public int Slot;
     }
 }

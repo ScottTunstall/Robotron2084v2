@@ -31,15 +31,6 @@ namespace Robotron2084.Palette;
 /// </summary>
 public sealed class HighScorePalette
 {
-    /// <summary>The slot <c>LOOPP</c> shifts through — its value is the wall's own slot.</summary>
-    private const int LoopSlot = 0;
-
-    /// <summary>
-    ///     The first of the four processes the ROM starts AFTER the page is printed
-    ///     (<c>MAKP DECAZ/COLA/COLC/COLD</c>); everything before it comes up with the frame.
-    /// </summary>
-    private const int RampProcessStart = 1;
-
     /// <summary>`CCTAB` (RRTABLE `$E2D1`): the highlight ramp — white, down to `$C0` and back.</summary>
     public static readonly byte[] AccentTable =
     [
@@ -64,6 +55,15 @@ public sealed class HighScorePalette
         0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
         0x57, 0xA7, 0xFF, 0xFF, 0xA7, 0x57, 0x00
     ];
+
+    /// <summary>The slot <c>LOOPP</c> shifts through — its value is the wall's own slot.</summary>
+    private const int LoopSlot = 0;
+
+    /// <summary>
+    ///     The first of the four processes the ROM starts AFTER the page is printed
+    ///     (<c>MAKP DECAZ/COLA/COLC/COLD</c>); everything before it comes up with the frame.
+    /// </summary>
+    private const int RampProcessStart = 1;
 
     private readonly Process[] _processes;
 
@@ -174,10 +174,10 @@ public sealed class HighScorePalette
 
     private sealed class Process
     {
+        public int ArcadeFramesPerStep;
         public int ClockUnits;
         public int ColourIndex;
         public byte[] ColourTable = [];
-        public int ArcadeFramesPerStep;
         public int Slot;
     }
 }

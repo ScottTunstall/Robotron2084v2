@@ -40,6 +40,12 @@ public sealed class GamePalette
         return RobotronColor.CreateFromByte(_slotValues[slot]);
     }
 
+    /// <summary>The current 8-bit colour code of a slot (0-15).</summary>
+    public int GetSlotValue(int slot)
+    {
+        return _slotValues[slot];
+    }
+
     /// <summary>True while a slot's colour process is stopped.</summary>
     public bool IsSlotSuspended(int slot)
     {
@@ -56,12 +62,6 @@ public sealed class GamePalette
     public void SetSlot(int slot, byte value)
     {
         _slotValues[slot] = value;
-    }
-
-    /// <summary>The current 8-bit colour code of a slot (0-15).</summary>
-    public int GetSlotValue(int slot)
-    {
-        return _slotValues[slot];
     }
 
     /// <summary>

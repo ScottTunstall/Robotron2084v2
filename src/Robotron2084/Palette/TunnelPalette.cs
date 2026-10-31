@@ -135,11 +135,11 @@ public sealed class TunnelPalette
     /// <summary>Which slot of each five is black (test hook) — the ROM's `$000B,U`.</summary>
     internal int BlackOffset { get; private set; } = 4;
 
-    /// <summary>Where the fifteen-value window starts in that ramp (test hook).</summary>
-    internal int WindowStartIndex => _windowStartIndex;
-
     /// <summary>Which ramp is running (test hook).</summary>
     internal int RampIndex { get; private set; }
+
+    /// <summary>Where the fifteen-value window starts in that ramp (test hook).</summary>
+    internal int WindowStartIndex => _windowStartIndex;
 
     /// <summary>
     ///     One pass of the ROM's `$59D0` task: slide the window on sixteen values, then step the
