@@ -1,7 +1,7 @@
 namespace Robotron2084.Core;
 
 /// <summary>
-///     The sign of a step in each direction. Sideways, left is -1 and right is 1. Up and down: screen Y grows
+///     The mathematical sign of a step in each direction. Sideways, left is -1 and right is 1. Up and down: screen Y grows
 ///     downward, so up is -1 and down is 1.
 /// </summary>
 public static class DirectionSigns
