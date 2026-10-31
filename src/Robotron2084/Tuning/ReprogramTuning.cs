@@ -3,8 +3,8 @@ namespace Robotron2084.Tuning;
 /// <summary>A brain reprogramming a human (notes §46, §47).</summary>
 public static class ReprogramTuning
 {
-    /// <summary>Blitter colour 1 for the reprogramming human ($AA = palette slot 10).</summary>
-    public const int BackgroundSlot = 0x0A;
+    /// <summary>Blitter colour 1 for the reprogramming human ($AA = palette index 10).</summary>
+    public const int BackgroundPaletteIndex = 0x0A;
 
     /// <summary>
     ///     How close sideways the brain's and human's top-left corners must be for the brain to catch the human, in
@@ -40,11 +40,11 @@ public static class ReprogramTuning
     // ROM: SEED & 7, i.e. 0..7
     /// <summary>
     ///     Blitter colour 2 for the reprogramming human AND the BACKDROP the brain is drawn
-    ///     on ($BB = slot 11). For the brain this is a backdrop, not a replacement: ROM
+    ///     on ($BB = palette index 11). For the brain this is a backdrop, not a replacement: ROM
     ///     $1DAF fills the brain's rectangle with it ($DA61 / BLKON, op $12) and then blits
     ///     the brain's own sprite over the top (JMP $D018) — notes §72.
     /// </summary>
-    public const int ShapeSlot = 0x0B;
+    public const int ShapePaletteIndex = 0x0B;
 
     public const int StepIntervalArcadeFrames = 3; // NAP 2 + the beat vblank
 }

@@ -4,13 +4,13 @@ namespace Robotron2084.Tuning;
 public static class CruiseMissileTuning
 {
     // CMMOV never blits the CMPIC/CMP1 sprites; it writes VIDEO MEMORY
-    // directly, one 16-bit word per step: `$AAAA` (two pixels of slot 10) at
-    // the new coordinate and `$DDDD` (two of slot 13) at the coordinate it just
+    // directly, one 16-bit word per step: `$AAAA` (two pixels of palette index 10) at
+    // the new coordinate and `$DDDD` (two of palette index 13) at the coordinate it just
     // left. The video address is COLUMN-MAJOR — `column*256 + row`, proved by
     // RRG23's BORDER loop, which draws its vertical border with `STA ,X+` (one
     // address per ROW) — so a 16-bit word is TWO VERTICALLY ADJACENT PIXELS:
     // the mark is 1px wide and 2px tall.
-    public const int HeadSlot = 0x0A;
+    public const int HeadPaletteIndex = 0x0A;
 
     public const int MarkArcadeHeight = 2;
 
@@ -38,5 +38,5 @@ public static class CruiseMissileTuning
     /// </summary>
     public const int TrailMarks = 9;
 
-    public const int TrailSlot = 0x0D; // $DD
+    public const int TrailPaletteIndex = 0x0D; // $DD
 }

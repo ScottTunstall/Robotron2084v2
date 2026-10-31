@@ -11,13 +11,13 @@ public static class ScoreBurstTuning
 
     public const int PointsSteps = 30;
 
-    public const int QuarkBurstSlot = 0x0D;
+    public const int QuarkBurstPaletteIndex = 0x0D;
 
     public const int QuarkCount = 8;
 
-    public const int QuarkPointsSlot = 0x0D;
+    public const int QuarkPointsPaletteIndex = 0x0D;
 
-    public const int SpheroidBurstSlot = 0x0A;
+    public const int SpheroidBurstPaletteIndex = 0x0A;
 
     // Spheroid / quark DEATH BURST (notes §64) — the spheroid's `CIRKP`
     // ("DRAW_SPHEROID_IN_DEATH_THROES", RRG23.ASM $12F1) and the quark's
@@ -26,11 +26,11 @@ public static class ScoreBurstTuning
     // its "1000" sprite is displayed. `LDD #$FFAA` (spheroid) / `LDD #$DDDD`
     // (quark) sets one colour per phase, named by the disassembly's own comment
     // as "the same colour as the player score"; each is a PALETTE SLOT in the
-    // doubled-nibble form, so both effects shimmer, because all the slots used
+    // doubled-nibble form, so both effects shimmer, because all the palette indices used
     // here (10, 13, 15) are colour-CYCLING ones.
     public const int SpheroidCount = 7;
 
-    public const int SpheroidPointsSlot = 0x0F;
+    public const int SpheroidPointsPaletteIndex = 0x0F;
     public const int StepIntervalArcadeFrames = 2;
     // `LDA #7` — = the LAST animation frame's index
 
@@ -40,11 +40,11 @@ public static class ScoreBurstTuning
 
     // `LDA #$1E`
 
-    // $AA = slot 10
+    // $AA = palette index 10
 
-    // $FF = slot 15
+    // $FF = palette index 15
 
-    // $DD = slot 13
+    // $DD = palette index 13
 
-    // $DD = slot 13
+    // $DD = palette index 13
 }

@@ -56,8 +56,8 @@ public static class HudLayout
     //           zero advances 6 px ($6128: 4 px, then +2 for the large font)
     //   lives   P1 col 46 (x 92), P2 col 110 (x 220) in the arcade; the port: 50 and 114. Row 14, 8 px apart,
     //           the 6x8 spare-life sprite ($3592/$3596), capped at SEVEN
-    //   colour  the CURRENT player's score blits in slot 10 ($AA — a CYCLING
-    //           slot: the LF process); everyone else's in slot 1 ($11)
+    //   colour  the CURRENT player's score blits in palette index 10 ($AA — a CYCLING
+    //           palette index: the LF process); everyone else's in palette index 1 ($11)
     //   wave    "<n>  WAVE" at col 62 / row 238 (the BOTTOM), string 104,
     //           small font, number in $AA and " WAVE" in $BB
     //
@@ -78,9 +78,9 @@ public static class HudLayout
 
     // ROM $6128 + $6136 (4 + 2)
 
-    public const int HudScoreSlotCurrent = 10; // ROM $DC19: $AA, the LF process
+    public const int HudScorePaletteIndexCurrent = 10; // ROM $DC19: $AA, the LF process
 
-    public const int HudScoreSlotIdle = 1; // ROM $DC13: $11
+    public const int HudScorePaletteIndexIdle = 1; // ROM $DC13: $11
 
     public const int HudSmallFontBlankAdvancePixels = 4;
 
@@ -100,7 +100,7 @@ public static class HudLayout
     public const int HudWaveTextRow = 238;
     // string 104: MOVE_CURSOR_REL +$03
 
-    public const int HudWaveTextSlot = 0x0B; // string 104: colour $BB
+    public const int HudWaveTextPaletteIndex = 0x0B; // string 104: colour $BB
 
     // string 40 / 75: cursor $3E80/$3E86
     // Port-only (notes §101): the PAUSE banner, on the same centre line the ROM's own

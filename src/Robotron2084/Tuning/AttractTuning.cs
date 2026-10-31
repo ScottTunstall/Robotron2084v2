@@ -60,7 +60,7 @@ public static class AttractTuning
 
     // Attract mode (notes §94) — the arcade's attract cycle: idle
     // title, then the machine plays itself (CMOS "FANCY ATTRACT MODE" when on).
-    public const int TitleWallSlot = 12; // ROM title screen: $79C8 LDA #$CC / STA $8F — the wall is solid slot 12
+    public const int TitleWallPaletteIndex = 12; // ROM title screen: $79C8 LDA #$CC / STA $8F — the wall is solid palette index 12
 
     // port choice: how long the title sits before the demo takes over
     // AI: flee a robot closer than this (arcade AI is OS-ROM-only, §94.3)
