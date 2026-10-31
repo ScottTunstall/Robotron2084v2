@@ -226,6 +226,25 @@ public sealed class RobotronGame : Game
         else if (WasPressed(state, Keys.Delete)) StartEndOfGameFlow();
     }
 
+    /// <summary>
+    ///     The DEVELOPER TOOLS page (port-only): F10 opens it from EVERY screen — the attract cycle, a
+    ///     game in play, anything — and it is the one page F10 closes back to the title. The three
+    ///     service pages (GAME ADJUSTMENT, DEFINE INPUTS, SOUND TEST) take F10 themselves, to the
+    ///     DEVELOPER TOOLS page and back, because each has work to do on the way out: the settings and
+    ///     the control definitions are written to their files, and the sound test silences the board.
+    /// </summary>
+    /// <param name="state">This tick's keyboard.</param>
+    private void HandleDeveloperToolsKey(KeyboardState state)
+    {
+        if (!WasPressed(state, Keys.F10)) return;
+
+        // The page's own F10 closes it, and the service pages handle their own way out.
+        if (_stateManager.Current is DeveloperToolsState or SettingsState or DefineInputsState or SoundTestState)
+            return;
+
+        _stateManager.TransitionTo(new DeveloperToolsState(_services, _controlSettingsStore, _gameSettingsStore));
+    }
+
     /// <summary>The port-only presentation keys: full screen, and the canvas fit.</summary>
     /// <param name="state">This tick's keyboard.</param>
     private void HandlePresentationKeys(KeyboardState state)
@@ -284,31 +303,6 @@ public sealed class RobotronGame : Game
             _stateManager.TransitionTo(new SettingsState(_services, _gameSettingsStore));
     }
 
-    /// <summary>
-    ///     The DEVELOPER TOOLS page (port-only): F10 opens it from EVERY screen — the attract cycle, a
-    ///     game in play, anything — and it is the one page F10 closes back to the title. The three
-    ///     service pages (GAME ADJUSTMENT, DEFINE INPUTS, SOUND TEST) take F10 themselves, to the
-    ///     DEVELOPER TOOLS page and back, because each has work to do on the way out: the settings and
-    ///     the control definitions are written to their files, and the sound test silences the board.
-    /// </summary>
-    /// <param name="state">This tick's keyboard.</param>
-    private void HandleDeveloperToolsKey(KeyboardState state)
-    {
-        if (!WasPressed(state, Keys.F10)) return;
-
-        // The page's own F10 closes it, and the service pages handle their own way out.
-        if (_stateManager.Current is DeveloperToolsState or SettingsState or DefineInputsState or SoundTestState)
-            return;
-
-        _stateManager.TransitionTo(new DeveloperToolsState(_services, _controlSettingsStore, _gameSettingsStore));
-    }
-
-    /// <summary>True on the tick <paramref name="key" /> goes down (press, not hold).</summary>
-    private bool WasPressed(KeyboardState current, Keys key)
-    {
-        return !_previousKeyboardState.IsKeyDown(key) && current.IsKeyDown(key);
-    }
-
     /// <summary>Drops straight into the end of a game, with a score that has to qualify (notes §116).</summary>
     /// <remarks>
     ///     The GAME OVER page, the CONG initials screen and the table are otherwise a whole game away,
@@ -333,5 +327,11 @@ public sealed class RobotronGame : Game
 
         var desktopSize = DisplayInfo.GetDesktopResolution();
         ApplyBackBuffer(desktopSize.X, desktopSize.Y, true);
+    }
+
+    /// <summary>True on the tick <paramref name="key" /> goes down (press, not hold).</summary>
+    private bool WasPressed(KeyboardState current, Keys key)
+    {
+        return !_previousKeyboardState.IsKeyDown(key) && current.IsKeyDown(key);
     }
 }

@@ -21,11 +21,11 @@ internal static class NativeMessageBox
 {
     private const uint MbIconError = 0x00000010;
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    private static extern int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);
-
     public static void Show(string message)
     {
         MessageBoxW(IntPtr.Zero, message, "Robotron 2084", MbIconError);
     }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);
 }
