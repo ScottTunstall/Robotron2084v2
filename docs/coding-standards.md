@@ -176,7 +176,7 @@ a defect: `StepColumns` holding port pixels, `...ArcadeTicks` holding beats.
 **NAM-3. A name says what the value is, not what it once was or how it is used.** `HulkSpeed` for a delay
 (where bigger is slower) is wrong. `_wallPalette` for the whole palette is wrong.
 
-**NAM-4. Booleans read as predicates**: `IsHitStopActive`, `HasMen`. A method that returns a `bool` starts with
+**NAM-4. Booleans read as predicates**: `IsHitStopActive`, `HasLives`. A method that returns a `bool` starts with
 `Is` or `Has`: `IsInsideX`, `IsOverlappingLivingElectrode`, `HasFreeSlot`. Never `Can…`, `Try…`, `Fits…` or
 `Overlaps…`. A state that is true *while held* is `...Held`, not `...Pressed`.
 
@@ -202,8 +202,8 @@ glossary, or the terminology ledger for ROM concepts), use that word rather than
 **NAM-10. A property is a stored value; a computation is a method. This follows Microsoft's member design
 guidelines and is not optional.** A property getter does one thing: it returns a value that is stored in a field, or in an auto-property.
 **A calculated value is a method, never a property**, however small the calculation. `Width => Right - Left`,
-`HasMen => Lives > 0` and `ExtraManEveryPoints => ExtraManEvery * 1000` are `GetWidth()`, `HasMen()` and
-`GetExtraManEveryPoints()`: the parentheses tell the caller that something is worked out each time it asks. A
+`HasLives => Lives > 0` and `ExtraLifeEveryPoints => ExtraLifeEvery * 1000` are `GetWidth()`, `HasLives()` and
+`GetExtraLifeEveryPoints()`: the parentheses tell the caller that something is worked out each time it asks. A
 `bool` answer worked out from other members is a question, so it is a method named as one (`IsDying()`,
 `IsAlive()`). Anything else that a getter might do is also a method, named with a verb (NAM-13). It is a method when
 the getter:
@@ -325,7 +325,7 @@ are listed in [refactoring-ledger.md](refactoring-ledger.md), which is also a li
 **NAM-20. A method that works on a collection names what the collection holds.** If a method loops over, counts,
 searches, filters or changes a collection of things, and the class it is on is not itself a collection, the method's
 name says what the things are. `CountRescue` does not say what was rescued; `CountRescuedFamilyMembers` does.
-`ClearText` becomes `ClearTextCells` and `AnyMenLeft` becomes `AnyPlayerSlotHasMen`.
+`ClearText` becomes `ClearTextCells` and `AnyMenLeft` becomes `AnyPlayerSlotHasLives`.
 - **A class whose own name already says what the items are does not repeat it.** `GruntSpeedProgression.SpeedUp(grunts)`
 is right, and `SpeedUpGrunts` says "grunt" twice. `RobotTransporter.Begin(robots)` and `AttractObjectMachine.MoveObjects()`
 are right for the same reason (NAM-18: a method name does not repeat its class name). The reader gets the type from the class

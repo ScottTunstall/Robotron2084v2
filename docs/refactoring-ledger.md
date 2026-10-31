@@ -24,6 +24,78 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 
 ---
 
+## 2026-10-31: wave, lives and Max: one word each
+
+### What was wrong
+
+[terminology-duplicates-2026-10-31.md](terminology-duplicates-2026-10-31.md) found three ideas with two or more words in
+our own names (NAM-7, NAM-9). The author chose the word for each:
+
+- **Wave, not level.** `LevelParameters`' own summary said "everything that makes one wave", and `LevelParameterGenerator`
+  said "works out what each wave contains". The arcade and the screen say WAVE.
+- **Lives, not men, ships or mini man.** `Lives`, `SpareMen`, `HasMen`, `shipsPerGame`, `ExtraManEvery` and `MiniManSprite`
+  were one idea. `BozoMode` passed `StartingLives` as `shipsPerGame` and `GetSpareMen()` as `spareMen` in one call.
+- **Max and Min, not Cap, Limit or Maximum.** `EnforcerCap`, `TankCap`, `ShellCountLimit` and `MaximumDifficulty` were all
+  "the most allowed".
+
+The fourth decision, that the sound tables keep the ROM's names, needed no rename: every field of `SoundTables` was
+already named after its ROM label's comment (`BrainKill` is "BRAIN KILL", not a port word), so the ledger's claim that the
+table mixed two vocabularies was wrong. The summary of `SoundTables` now says the names are the ROM's on purpose.
+
+### How it got in
+
+Not traced. The wave and level words come from two stages of the port (the table row `WaveParameters`, then the wider
+`LevelParameters` built from it).
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| `WaveParameters` (one row of the arcade's wave table) | `WaveTableRow` |
+| `LevelParameters` | `WaveParameters` |
+| `LevelParameterGenerator`, `LevelParameterGeneratorTests` | `WaveParameterGenerator`, `WaveParameterGeneratorTests` |
+| `LevelNumber`, `levelNumber` | `WaveNumber`, `waveNumber` |
+| `LevelTableRow`, `_levelTable`, `levelTablePath`, `Content/LevelTable.csv` | `CustomWaveTableRow`, `_customWaveTable`, `customWaveTablePath`, `Content/CustomWaveTable.csv` (its header column is `Wave`) |
+| `IsLevelCleared`, `SkipLevelKey`, `SkipLevelHeld`, `StartingLevelNumber` | `IsWaveCleared`, `SkipWaveKey`, `SkipWaveHeld`, `StartingWaveNumber` |
+| `EnemySpeedBonusCapPerLevel` | `EnemySpeedBonusMaxPerWave` |
+| `SpareMen`, `spareMen`, `GetSpareMen`, `DrawSpareMen`, `showSpareMen` | `SpareLives`, `spareLives`, `GetSpareLives`, `DrawSpareLives`, `showSpareLives` |
+| `HasMen`, `AnyPlayerSlotHasMen`, `SwitchToPlayerWithMen` | `HasLives`, `AnyPlayerSlotHasLives`, `SwitchToPlayerWithLives` |
+| `GetDisplayedMen`, `HudMaxMen`, `HudMenOriginColumnP1/P2`, `HudMenPitchPixels`, `menColumn` | `GetDisplayedSpareLives`, `HudMaxSpareLives`, `HudLivesOriginColumnP1/P2`, `HudLivesPitchPixels`, `livesColumn` |
+| `DrawScoresAndMen`, `GetScoresAndMenRowY` | `DrawScoresAndLives`, `GetScoresAndLivesRowY` |
+| `shipsPerGame` | `startingLives` |
+| `ExtraMan…` (`ExtraManEvery`, `ExtraManEveryValues`, `GetExtraManEveryPoints`, `FactoryExtraMan…`, `ExtraManLine`, `BumpExtraManEvery`) | `ExtraLife…` |
+| `MiniManSprite`, `BuildMiniMan`, `DrawMiniMan`, `HudMiniMan…Pixels` | `SpareLifeSprite`, `BuildSpareLifeSprite`, `DrawSpareLife`, `HudSpareLife…Pixels` |
+| `EnforcerCap`, `TankCap`, `GlobalActiveSparkCap`, `ShellCountLimit` | `MaxEnforcers`, `MaxTanks`, `MaxActiveSparks`, `MaxShellCount` |
+| `QuarkSpeedCap`, `QuarkSpeedCapHeader`, `DefaultSpeedCap`, `_speedCap`, `speedCap` | `QuarkMaxSpeed`, `QuarkMaxSpeedHeader`, `DefaultMaxSpeed`, `_maxSpeed`, `maxSpeed` |
+| `AllTimeInitialsCap`, `AllTimeTopInitialsCap`, `EnforceAllTimeInitialsCap`, `initialsCap`, `atCap` | `MaxAllTimeInitials`, `MaxAllTimeTopInitials`, `EnforceMaxAllTimeInitials`, `maxInitials`, `isAtMaxInitials` |
+| `MinimumGruntCap`, `MaximumDifficulty`, `MaximumTurnsPerPlayer`, `MinimumTurnsPerPlayer` | `MinGruntCount`, `MaxDifficulty`, `MaxTurnsPerPlayer`, `MinTurnsPerPlayer` |
+
+Test names that held an old word went with them (`IsLevelCleared_…`, `SkipLevelHeld_…`, `ALevelOnlyHoldsSoManyGrunts_…`,
+`Generate_WithLevelTable_…`, `Generate_LevelsAbove40_…`). Comments that said "level" for a wave, or "man", "men" or "ship"
+for a life, were reworded. The glossary has the new words and the retired ones.
+
+### What was left alone, and why
+
+- **The namespace and folder `Robotron2084.Level`.** It holds `PlayField`, the spawners and the collision rules, which are
+  not only about waves. The author has not asked for it to change.
+- **The arcade's on-screen text and the saved keys:** `EXTRA MAN EVERY`, `NO EXTRA MEN`, `TURNS PER PLAYER`, and
+  `extramanevery=` / `turnsperplayer=` in `settings.ini`. A renamed key would silently throw away a saved setting.
+- **`TurnsPerPlayer` and `TurnsLine`**, the arcade's name for the setting.
+- **Sound "level" and sound "wave"** (`OutputLevel`, `SquareWaveSound`, `WaveTableSound`), and "level with" meaning equal height
+  (`isTargetBelowOrLevel`). They are other ideas that share a spelling.
+- **`GruntSpeedFloor`** and the other `Floor` names, which are the arcade's table columns for a minimum that works the other
+  way round (a floor on a delay), and **`rightLimit`, `bottomLimit`, `gruntLimit`, `LapInsetLimit`**, which are positions or
+  belong to the beat-interval clash (R06 in the audit).
+- **`EntriesMaximumState` and `ReachedEntriesMaximum`**, which are named after the arcade's "5 ENTRIES MAXIMUM" page.
+- **Every `SoundTables` field**, for the reason above.
+
+### How it was checked
+
+`dotnet build Robotron2084.slnx` in Debug and Release: 0 warnings, 0 errors. `Robotron2084.Tests`: 808 tests, 1 skipped
+(no ROM dump), as before. `RobotronSoundPlayer.Tests`: 121 tests, 102 skipped, as before. No string literal was changed.
+
+---
+
 ## 2026-10-04: the strip effects' one store of ten, and the robot list flag
 
 ### What was wrong
