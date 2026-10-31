@@ -45,6 +45,16 @@ public sealed class HighScorePrintSequence
 
     private Phase _phase = Phase.Waiting;
 
+    private enum Phase
+    {
+        Waiting,
+        Today,
+        Top,
+        AllTime,
+        Headers,
+        Done
+    }
+
     /// <summary>All-time rows printed so far.</summary>
     public int AllTimeRows { get; private set; }
 
@@ -132,15 +142,5 @@ public sealed class HighScorePrintSequence
                 default:
                     return;
             }
-    }
-
-    private enum Phase
-    {
-        Waiting,
-        Today,
-        Top,
-        AllTime,
-        Headers,
-        Done
     }
 }

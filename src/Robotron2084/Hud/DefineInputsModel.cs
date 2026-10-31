@@ -52,18 +52,6 @@ public sealed class DefineInputsModel
     /// <summary>The highlighted line, from player 1's first MOVE to the PAUSE line.</summary>
     public int Line { get; private set; }
 
-    /// <summary>The highlighted action, or null on the PAUSE line.</summary>
-    public InputAction? GetHighlightedAction()
-    {
-        return GetAction(Line);
-    }
-
-    /// <summary>True while the highlight is on the shared PAUSE line.</summary>
-    public bool IsPauseLine()
-    {
-        return Line == PauseLine;
-    }
-
     /// <summary>The action a line sets, or null on a blank spacer or on the PAUSE line.</summary>
     public static InputAction? GetAction(int line)
     {
@@ -126,10 +114,22 @@ public sealed class DefineInputsModel
         SetLine(controlSettings, Line, InputBinding.None);
     }
 
+    /// <summary>The highlighted action, or null on the PAUSE line.</summary>
+    public InputAction? GetHighlightedAction()
+    {
+        return GetAction(Line);
+    }
+
     /// <summary>True when the highlight is on <paramref name="line" /> (and not mid-capture).</summary>
     public bool IsCursorOn(int line)
     {
         return !IsArmed && Line == line;
+    }
+
+    /// <summary>True while the highlight is on the shared PAUSE line.</summary>
+    public bool IsPauseLine()
+    {
+        return Line == PauseLine;
     }
 
     /// <summary>Scrolls the highlight down one line, wrapping and skipping the spacers.</summary>
@@ -153,20 +153,6 @@ public sealed class DefineInputsModel
         controlSettings.ResetToDefaults();
     }
 
-    /// <summary>The nearest line below that is not a blank spacer, wrapping round the page.</summary>
-    private static int NextLine(int line)
-    {
-        var candidate = line;
-        do
-        {
-            var isOnLastLine = candidate == PauseLine;
-            if (isOnLastLine) candidate = 0;
-            else candidate++;
-        } while (IsSpacer(candidate) && candidate != line);
-
-        return candidate;
-    }
-
     /// <summary>The nearest line above that is not a blank spacer, wrapping round the page.</summary>
     private static int GetPreviousLine(int line)
     {
@@ -176,6 +162,20 @@ public sealed class DefineInputsModel
             var isOnFirstLine = candidate == 0;
             if (isOnFirstLine) candidate = PauseLine;
             else candidate--;
+        } while (IsSpacer(candidate) && candidate != line);
+
+        return candidate;
+    }
+
+    /// <summary>The nearest line below that is not a blank spacer, wrapping round the page.</summary>
+    private static int NextLine(int line)
+    {
+        var candidate = line;
+        do
+        {
+            var isOnLastLine = candidate == PauseLine;
+            if (isOnLastLine) candidate = 0;
+            else candidate++;
         } while (IsSpacer(candidate) && candidate != line);
 
         return candidate;

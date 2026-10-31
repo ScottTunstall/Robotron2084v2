@@ -28,6 +28,16 @@ public static class ScoreFormatter
     public const int MaxScore = 99_999_999;
 
     /// <summary>
+    ///     The digits of the score with the ROM's leading-zero suppression applied,
+    ///     in reading order ("100", and "00" for a score of 0). Kept for callers that
+    ///     only need the digits, not the layout.
+    /// </summary>
+    public static int[] DrawnDigits(int score)
+    {
+        return GetDigits(score).Where(d => !d.Suppressed).Select(d => d.Value).ToArray();
+    }
+
+    /// <summary>
     ///     The score's eight digit positions in the order the ROM draws them, with
     ///     the leading zeros marked suppressed.
     /// </summary>
@@ -53,16 +63,6 @@ public static class ScoreFormatter
         }
 
         return digits;
-    }
-
-    /// <summary>
-    ///     The digits of the score with the ROM's leading-zero suppression applied,
-    ///     in reading order ("100", and "00" for a score of 0). Kept for callers that
-    ///     only need the digits, not the layout.
-    /// </summary>
-    public static int[] DrawnDigits(int score)
-    {
-        return GetDigits(score).Where(d => !d.Suppressed).Select(d => d.Value).ToArray();
     }
 
     /// <summary>

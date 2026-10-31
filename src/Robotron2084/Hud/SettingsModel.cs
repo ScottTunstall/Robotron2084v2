@@ -46,18 +46,6 @@ public enum SettingsAction
 /// </summary>
 public sealed class SettingsModel
 {
-    /// <summary>Every line on the page. It is the size of <see cref="_armedLines" />.</summary>
-    public const int LineCount = 9;
-
-    /// <summary>EXTRA MAN EVERY — the first row, as on the cabinet.</summary>
-    public const int ExtraManLine = 0;
-
-    /// <summary>TURNS PER PLAYER — how many men a player starts with.</summary>
-    public const int TurnsLine = 1;
-
-    /// <summary>DIFFICULTY OF PLAY — the wave-table adjustment.</summary>
-    public const int DifficultyLine = 2;
-
     /// <summary>ATTRACT MODE SOUND — port-only: whether the attract sequence makes its noises.</summary>
     public const int AttractSoundLine = 3;
 
@@ -67,102 +55,32 @@ public sealed class SettingsModel
     /// <summary>BRAINS CHASE MIKEY BUG — port-only: whether the arcade's brain target bug is kept.</summary>
     public const int BrainsChaseMikeyBugLine = 5;
 
-    /// <summary>TANK SHELL BUG — port-only: whether the arcade's shell count bug is kept.</summary>
-    public const int TankShellBugLine = 6;
+    /// <summary>DIFFICULTY OF PLAY — the wave-table adjustment.</summary>
+    public const int DifficultyLine = 2;
+
+    /// <summary>EXTRA MAN EVERY — the first row, as on the cabinet.</summary>
+    public const int ExtraManLine = 0;
+
+    /// <summary>HIGH SCORE TABLE RESET — an action row.</summary>
+    public const int HighScoreResetLine = 8;
+
+    /// <summary>Every line on the page. It is the size of <see cref="_armedLines" />.</summary>
+    public const int LineCount = 9;
 
     /// <summary>RESTORE FACTORY SETTINGS — an action row.</summary>
     public const int RestoreFactoryLine = 7;
 
-    /// <summary>HIGH SCORE TABLE RESET — an action row.</summary>
-    public const int HighScoreResetLine = 8;
+    /// <summary>TANK SHELL BUG — port-only: whether the arcade's shell count bug is kept.</summary>
+    public const int TankShellBugLine = 6;
+
+    /// <summary>TURNS PER PLAYER — how many men a player starts with.</summary>
+    public const int TurnsLine = 1;
 
     /// <summary>The YES/NO state of each action row.</summary>
     private readonly bool[] _armedLines = new bool[LineCount];
 
     /// <summary>The highlighted line, 0 to <see cref="LineCount" /> − 1.</summary>
     public int Line { get; private set; }
-
-    /// <summary>True for the rows that perform something rather than hold a value.</summary>
-    public static bool IsActionLine(int line)
-    {
-        return line is RestoreFactoryLine or HighScoreResetLine;
-    }
-
-    /// <summary>True once an action row has been set to YES (Enter will perform it).</summary>
-    public bool IsArmed(int line)
-    {
-        return _armedLines[line];
-    }
-
-    /// <summary>Scrolls the highlight down one line, wrapping round the page.</summary>
-    public void MoveDown()
-    {
-        var isOnLastLine = Line == LineCount - 1;
-        if (isOnLastLine) Line = 0;
-        else Line++;
-    }
-
-    /// <summary>Scrolls the highlight up one line, wrapping round the page.</summary>
-    public void MoveUp()
-    {
-        var isOnFirstLine = Line == 0;
-        if (isOnFirstLine) Line = LineCount - 1;
-        else Line--;
-    }
-
-    /// <summary>
-    ///     Left (<paramref name="direction" /> −1) or right (+1) on the highlighted line: a value row
-    ///     steps to the next stop, an action row is set to NO (left) or YES (right).
-    /// </summary>
-    public void Change(GameSettings gameSettings, int direction)
-    {
-        switch (Line)
-        {
-            case ExtraManLine:
-                gameSettings.BumpExtraManEvery(direction);
-                break;
-            case TurnsLine:
-                gameSettings.BumpTurnsPerPlayer(direction);
-                break;
-            case DifficultyLine:
-                gameSettings.BumpDifficulty(direction);
-                break;
-            case AttractSoundLine:
-                gameSettings.BumpAttractModeSound(direction);
-                break;
-            case TankShellBugLine:
-                gameSettings.BumpTankShellBug(direction);
-                break;
-            case BrainsChaseMikeyBugLine:
-                gameSettings.BumpBrainsChaseMikeyBug(direction);
-                break;
-            case BozoModeLine:
-                gameSettings.BumpBozoModeEnabled(direction);
-                break;
-            default:
-                _armedLines[Line] = direction > 0;
-                break;
-        }
-    }
-
-    /// <summary>
-    ///     Enter on the highlighted line: performs an action row that reads YES, and does nothing
-    ///     otherwise (the arcade's "advance to activate").
-    /// </summary>
-    public SettingsAction Activate(GameSettings gameSettings)
-    {
-        if (!IsActionLine(Line) || !_armedLines[Line]) return SettingsAction.None;
-
-        _armedLines[Line] = false;
-
-        if (Line == RestoreFactoryLine)
-        {
-            gameSettings.ResetToFactory();
-            return SettingsAction.RestoreFactorySettings;
-        }
-
-        return SettingsAction.ResetHighScores;
-    }
 
     /// <summary>The row's name, in the arcade's own words (the ON/OFF rows are the port's own).</summary>
     public static string GetLabel(int line)
@@ -179,22 +97,6 @@ public sealed class SettingsModel
             RestoreFactoryLine => "RESTORE FACTORY SETTINGS",
             HighScoreResetLine => "HIGH SCORE TABLE RESET",
             _ => throw new ArgumentOutOfRangeException(nameof(line), line, null)
-        };
-    }
-
-    /// <summary>The row's value: the setting itself, ON/OFF for the port's own rows, or NO/YES on an action row.</summary>
-    public string GetValue(GameSettings gameSettings, int line)
-    {
-        return line switch
-        {
-            ExtraManLine => gameSettings.GetExtraManEveryPoints().ToString(),
-            TurnsLine => gameSettings.TurnsPerPlayer.ToString(),
-            DifficultyLine => gameSettings.Difficulty.ToString(),
-            AttractSoundLine => GetOnOff(gameSettings.AttractModeSoundEnabled),
-            TankShellBugLine => GetOnOff(gameSettings.TankShellBugEnabled),
-            BrainsChaseMikeyBugLine => GetOnOff(gameSettings.BrainsChaseMikeyBugEnabled),
-            BozoModeLine => GetOnOff(gameSettings.BozoModeEnabled),
-            _ => GetYesNo(_armedLines[line])
         };
     }
 
@@ -238,6 +140,126 @@ public sealed class SettingsModel
         };
     }
 
+    /// <summary>True for the rows that perform something rather than hold a value.</summary>
+    public static bool IsActionLine(int line)
+    {
+        return line is RestoreFactoryLine or HighScoreResetLine;
+    }
+
+    /// <summary>
+    ///     Enter on the highlighted line: performs an action row that reads YES, and does nothing
+    ///     otherwise (the arcade's "advance to activate").
+    /// </summary>
+    public SettingsAction Activate(GameSettings gameSettings)
+    {
+        if (!IsActionLine(Line) || !_armedLines[Line]) return SettingsAction.None;
+
+        _armedLines[Line] = false;
+
+        if (Line == RestoreFactoryLine)
+        {
+            gameSettings.ResetToFactory();
+            return SettingsAction.RestoreFactorySettings;
+        }
+
+        return SettingsAction.ResetHighScores;
+    }
+
+    /// <summary>
+    ///     Left (<paramref name="direction" /> −1) or right (+1) on the highlighted line: a value row
+    ///     steps to the next stop, an action row is set to NO (left) or YES (right).
+    /// </summary>
+    public void Change(GameSettings gameSettings, int direction)
+    {
+        switch (Line)
+        {
+            case ExtraManLine:
+                gameSettings.BumpExtraManEvery(direction);
+                break;
+
+            case TurnsLine:
+                gameSettings.BumpTurnsPerPlayer(direction);
+                break;
+
+            case DifficultyLine:
+                gameSettings.BumpDifficulty(direction);
+                break;
+
+            case AttractSoundLine:
+                gameSettings.BumpAttractModeSound(direction);
+                break;
+
+            case TankShellBugLine:
+                gameSettings.BumpTankShellBug(direction);
+                break;
+
+            case BrainsChaseMikeyBugLine:
+                gameSettings.BumpBrainsChaseMikeyBug(direction);
+                break;
+
+            case BozoModeLine:
+                gameSettings.BumpBozoModeEnabled(direction);
+                break;
+
+            default:
+                _armedLines[Line] = direction > 0;
+                break;
+        }
+    }
+
+    /// <summary>The hint under an action row once it has been set to YES.</summary>
+    public string GetActionHint(int line)
+    {
+        var isArmedActionLine = IsActionLine(line) && _armedLines[line];
+        if (isArmedActionLine) return "PRESS ENTER";
+
+        return string.Empty;
+    }
+
+    /// <summary>The row's value: the setting itself, ON/OFF for the port's own rows, or NO/YES on an action row.</summary>
+    public string GetValue(GameSettings gameSettings, int line)
+    {
+        return line switch
+        {
+            ExtraManLine => gameSettings.GetExtraManEveryPoints().ToString(),
+            TurnsLine => gameSettings.TurnsPerPlayer.ToString(),
+            DifficultyLine => gameSettings.Difficulty.ToString(),
+            AttractSoundLine => GetOnOff(gameSettings.AttractModeSoundEnabled),
+            TankShellBugLine => GetOnOff(gameSettings.TankShellBugEnabled),
+            BrainsChaseMikeyBugLine => GetOnOff(gameSettings.BrainsChaseMikeyBugEnabled),
+            BozoModeLine => GetOnOff(gameSettings.BozoModeEnabled),
+            _ => GetYesNo(_armedLines[line])
+        };
+    }
+
+    /// <summary>True once an action row has been set to YES (Enter will perform it).</summary>
+    public bool IsArmed(int line)
+    {
+        return _armedLines[line];
+    }
+
+    /// <summary>Scrolls the highlight down one line, wrapping round the page.</summary>
+    public void MoveDown()
+    {
+        var isOnLastLine = Line == LineCount - 1;
+        if (isOnLastLine) Line = 0;
+        else Line++;
+    }
+
+    /// <summary>Scrolls the highlight up one line, wrapping round the page.</summary>
+    public void MoveUp()
+    {
+        var isOnFirstLine = Line == 0;
+        if (isOnFirstLine) Line = LineCount - 1;
+        else Line--;
+    }
+
+    /// <summary>The word beside a row that is ON in the arcade: "RECOMMENDED" while it is on.</summary>
+    private static string GetArcadeNote(bool isOn)
+    {
+        return isOn ? "RECOMMENDED" : string.Empty;
+    }
+
     /// <summary>The word for an ON/OFF row's value.</summary>
     private static string GetOnOff(bool isOn)
     {
@@ -248,20 +270,5 @@ public sealed class SettingsModel
     private static string GetYesNo(bool isYes)
     {
         return isYes ? "YES" : "NO";
-    }
-
-    /// <summary>The word beside a row that is ON in the arcade: "RECOMMENDED" while it is on.</summary>
-    private static string GetArcadeNote(bool isOn)
-    {
-        return isOn ? "RECOMMENDED" : string.Empty;
-    }
-
-    /// <summary>The hint under an action row once it has been set to YES.</summary>
-    public string GetActionHint(int line)
-    {
-        var isArmedActionLine = IsActionLine(line) && _armedLines[line];
-        if (isArmedActionLine) return "PRESS ENTER";
-
-        return string.Empty;
     }
 }

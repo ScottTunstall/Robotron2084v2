@@ -99,17 +99,6 @@ public static class ArcadeHud
     }
 
     /// <summary>
-    ///     The canvas row the scores and the spare-men icons are drawn at: the top wall less the ROM's
-    ///     eight arcade pixels. It is negative — and the whole HUD invisible — when
-    ///     <paramref name="innerBounds" /> runs to the top of the canvas.
-    /// </summary>
-    internal static int GetScoresAndMenRowY(Rectangle innerBounds)
-    {
-        return innerBounds.Top - ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.WallThicknessArcadePixels) -
-               ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudRowAboveWallPixels);
-    }
-
-    /// <summary>
     ///     ROM string 104: the wave number in $AA at the BOTTOM of the screen (row
     ///     238, well below the playfield), then +6 px, then " WAVE" in $BB. The ROM
     ///     draws it at each wave start and leaves it up while the wave runs.
@@ -130,6 +119,17 @@ public static class ArcadeHud
         x = sprites.TextRenderer.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberSlot);
         x += ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudWaveNumberGapPixels);
         sprites.TextRenderer.DrawSmallFontText(spriteBatch, " WAVE", x, y, HudLayout.HudWaveTextSlot);
+    }
+
+    /// <summary>
+    ///     The canvas row the scores and the spare-men icons are drawn at: the top wall less the ROM's
+    ///     eight arcade pixels. It is negative — and the whole HUD invisible — when
+    ///     <paramref name="innerBounds" /> runs to the top of the canvas.
+    /// </summary>
+    internal static int GetScoresAndMenRowY(Rectangle innerBounds)
+    {
+        return innerBounds.Top - ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.WallThicknessArcadePixels) -
+               ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudRowAboveWallPixels);
     }
 
     /// <summary>

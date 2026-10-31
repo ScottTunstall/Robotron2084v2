@@ -66,6 +66,12 @@ public static class InitialsEntryLayout
         return ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudScoreDigitAdvancePixels);
     }
 
+    /// <summary>The X of cell <paramref name="index" /> (0-based), in port pixels.</summary>
+    public static int GetCellX(int index)
+    {
+        return HudLayout.ToPortColumnX(EchoColumn) + index * GetCellAdvancePixels();
+    }
+
     /// <summary>The Y the three letters are drawn at, in port pixels.</summary>
     public static int GetEchoY()
     {
@@ -88,11 +94,5 @@ public static class InitialsEntryLayout
     public static int GetMarkerY()
     {
         return HudLayout.ToPortY(EchoRow + MarkerRowOffset);
-    }
-
-    /// <summary>The X of cell <paramref name="index" /> (0-based), in port pixels.</summary>
-    public static int GetCellX(int index)
-    {
-        return HudLayout.ToPortColumnX(EchoColumn) + index * GetCellAdvancePixels();
     }
 }

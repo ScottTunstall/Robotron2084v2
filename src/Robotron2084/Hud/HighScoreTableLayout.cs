@@ -102,16 +102,6 @@ public static class HighScoreTableLayout
     }
 
     /// <summary>
-    ///     MARQ's hatch: of every pair of pixels its two horizontal passes and its two
-    ///     vertical passes light exactly ONE — the outer pixel taking the flavour's high
-    ///     nibble, the inner one the low.
-    /// </summary>
-    public static bool IsFramePixelLit(int arcadeX, int arcadeY)
-    {
-        return ((arcadeX + arcadeY) & 1) != 0;
-    }
-
-    /// <summary>
     ///     Stroke <paramref name="stroke" />'s rectangle in ARCADE PIXELS, inclusive: MARQ's
     ///     corners are (column, row) units and one column is two pixels.
     /// </summary>
@@ -140,6 +130,16 @@ public static class HighScoreTableLayout
         if (stroke <= 0) return 1;
 
         return 8 - (stroke - 1) % 8;
+    }
+
+    /// <summary>
+    ///     MARQ's hatch: of every pair of pixels its two horizontal passes and its two
+    ///     vertical passes light exactly ONE — the outer pixel taking the flavour's high
+    ///     nibble, the inner one the low.
+    /// </summary>
+    public static bool IsFramePixelLit(int arcadeX, int arcadeY)
+    {
+        return ((arcadeX + arcadeY) & 1) != 0;
     }
 
     /// <summary>The (column, row) of the ROM's cursor for today's rank <paramref name="index" /> (1-based).</summary>

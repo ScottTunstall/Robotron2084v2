@@ -39,12 +39,6 @@ public sealed class InitialsEntryModel
     private const char Blank = ' ';
 
     /// <summary>
-    ///     LUP/LDOWN's <c>DELAY1</c> loop — 8192 turns of a six-cycle loop, about 49 ms, i.e. two and a half fiftieths of
-    ///     a second.
-    /// </summary>
-    private const int CycleWaitClockUnits = ArcadeClock.UnitsPerArcadeFrame * 5 / 2;
-
-    /// <summary>
     ///     A repeat after those ten costs <c>DELAY1</c> plus LUP's <c>NAP 1</c>. It is the value
     ///     <see cref="_repeatClockUnits" /> is set to once a letter is cycling steadily.
     /// </summary>
@@ -55,6 +49,12 @@ public sealed class InitialsEntryModel
     ///     value <see cref="_periodClockUnits" /> is set to while a letter is cycling.
     /// </summary>
     private const int CyclePollClockUnits = ArcadeClock.UnitsPerArcadeFrame;
+
+    /// <summary>
+    ///     LUP/LDOWN's <c>DELAY1</c> loop — 8192 turns of a six-cycle loop, about 49 ms, i.e. two and a half fiftieths of
+    ///     a second.
+    /// </summary>
+    private const int CycleWaitClockUnits = ArcadeClock.UnitsPerArcadeFrame * 5 / 2;
 
     /// <summary>The at-rest move stick's down (<c>RORA / LBCS LDOWN</c>): cycles the letter back.</summary>
     private const int DownDirection = 1;
@@ -122,6 +122,14 @@ public sealed class InitialsEntryModel
     private int _timeoutClockUnits;
 
     private int _typematicCounts;
+
+    private enum Phase
+    {
+        AwaitingFireRelease,
+        AwaitingInput,
+        Cycling,
+        Typematic
+    }
 
     /// <summary>True once every letter has been committed or timed out (the ROM's G2LET).</summary>
     public bool IsComplete { get; private set; }
@@ -245,18 +253,6 @@ public sealed class InitialsEntryModel
         _clockUnits = 0;
     }
 
-    private char NextLetter(char current)
-    {
-        return current switch
-        {
-            Blank => 'A',
-            'Z' when _isRubAllowed => RubLetter,
-            'Z' => Blank,
-            RubLetter => Blank,
-            _ => (char)(current + 1)
-        };
-    }
-
     private char GetPreviousLetter(char current)
     {
         return current switch
@@ -266,6 +262,18 @@ public sealed class InitialsEntryModel
             'A' => Blank,
             RubLetter => 'Z',
             _ => (char)(current - 1)
+        };
+    }
+
+    private char NextLetter(char current)
+    {
+        return current switch
+        {
+            Blank => 'A',
+            'Z' when _isRubAllowed => RubLetter,
+            'Z' => Blank,
+            RubLetter => Blank,
+            _ => (char)(current + 1)
         };
     }
 
@@ -366,13 +374,5 @@ public sealed class InitialsEntryModel
                 RepeatTypematic(input);
                 break;
         }
-    }
-
-    private enum Phase
-    {
-        AwaitingFireRelease,
-        AwaitingInput,
-        Cycling,
-        Typematic
     }
 }
