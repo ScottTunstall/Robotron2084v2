@@ -186,7 +186,7 @@ public sealed class ControlSettingsStoreTests
         Assert.Equal(new IntVector2(0, -1), state.MoveDirection);
         Assert.Equal(new IntVector2(1, 0), state.ShootDirection);
         Assert.True(state.FireHeld);
-        Assert.False(state.SkipLevelHeld);
+        Assert.False(state.SkipWaveHeld);
     }
 
     [Fact]
@@ -210,7 +210,7 @@ public sealed class ControlSettingsStoreTests
             new GamePadState());
 
         Assert.True(state.FireHeld); // Space has always fired
-        Assert.True(state.SkipLevelHeld); // Insert is the skip-level key since P became PAUSE
+        Assert.True(state.SkipWaveHeld); // Insert is the skip-wave key since P became PAUSE
     }
 
     [Fact]

@@ -22,7 +22,7 @@ public sealed class GameSettingsStoreTests
     {
         var loaded = GameSettingsStore.Load(TempFile());
 
-        Assert.Equal(25, loaded.ExtraManEvery);
+        Assert.Equal(25, loaded.ExtraLifeEvery);
         Assert.Equal(3, loaded.TurnsPerPlayer);
         Assert.Equal(5, loaded.Difficulty);
     }
@@ -55,12 +55,12 @@ public sealed class GameSettingsStoreTests
         try
         {
             var settings = new GameSettings
-                { ExtraManEvery = 50, TurnsPerPlayer = 5, Difficulty = 10, AttractModeSoundEnabled = false };
+                { ExtraLifeEvery = 50, TurnsPerPlayer = 5, Difficulty = 10, AttractModeSoundEnabled = false };
 
             GameSettingsStore.Save(path, settings);
             var loaded = GameSettingsStore.Load(path);
 
-            Assert.Equal(50, loaded.ExtraManEvery);
+            Assert.Equal(50, loaded.ExtraLifeEvery);
             Assert.Equal(5, loaded.TurnsPerPlayer);
             Assert.Equal(10, loaded.Difficulty);
             Assert.False(loaded.AttractModeSoundEnabled);
@@ -78,7 +78,7 @@ public sealed class GameSettingsStoreTests
     {
         var loaded = GameSettingsStore.Parse(["[game]", line]);
 
-        Assert.Equal(25, loaded.ExtraManEvery);
+        Assert.Equal(25, loaded.ExtraLifeEvery);
     }
 
     [Theory]
@@ -136,6 +136,6 @@ public sealed class GameSettingsStoreTests
         ]);
 
         Assert.Equal(1, loaded.Difficulty);
-        Assert.Equal(25, loaded.ExtraManEvery); // untouched
+        Assert.Equal(25, loaded.ExtraLifeEvery); // untouched
     }
 }

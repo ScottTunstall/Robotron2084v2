@@ -11,41 +11,41 @@ public sealed class GameSettingsTests
     {
         var settings = GameSettings.CreateFactoryDefaults();
 
-        Assert.Equal(25, settings.ExtraManEvery);
-        Assert.Equal(25_000, settings.GetExtraManEveryPoints());
+        Assert.Equal(25, settings.ExtraLifeEvery);
+        Assert.Equal(25_000, settings.GetExtraLifeEveryPoints());
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(GameSettings.RecommendedDifficulty, settings.Difficulty);
         Assert.False(settings.AttractModeSoundEnabled); // the port's demo is silent until the operator turns it on
     }
 
     [Fact]
-    public void ExtraManEveryStepsThroughTheRomsFiveStopsAndStopsAtTheEnds()
+    public void ExtraLifeEveryStepsThroughTheRomsFiveStopsAndStopsAtTheEnds()
     {
         var settings = GameSettings.CreateFactoryDefaults(); // 25
 
-        settings.BumpExtraManEvery(1);
-        Assert.Equal(30, settings.ExtraManEvery);
+        settings.BumpExtraLifeEvery(1);
+        Assert.Equal(30, settings.ExtraLifeEvery);
 
-        settings.BumpExtraManEvery(1);
-        Assert.Equal(50, settings.ExtraManEvery);
+        settings.BumpExtraLifeEvery(1);
+        Assert.Equal(50, settings.ExtraLifeEvery);
 
-        settings.BumpExtraManEvery(1); // already at the top
-        Assert.Equal(50, settings.ExtraManEvery);
+        settings.BumpExtraLifeEvery(1); // already at the top
+        Assert.Equal(50, settings.ExtraLifeEvery);
 
-        for (var i = 0; i < 5; i++) settings.BumpExtraManEvery(-1);
+        for (var i = 0; i < 5; i++) settings.BumpExtraLifeEvery(-1);
 
-        Assert.Equal(0, settings.ExtraManEvery);
-        Assert.Equal(0, settings.GetExtraManEveryPoints());
+        Assert.Equal(0, settings.ExtraLifeEvery);
+        Assert.Equal(0, settings.GetExtraLifeEveryPoints());
     }
 
     [Fact]
-    public void ExtraManEveryUsesTheItemsOwnValuesWhenTheSettingIsOffTheList()
+    public void ExtraLifeEveryUsesTheItemsOwnValuesWhenTheSettingIsOffTheList()
     {
-        var settings = new GameSettings { ExtraManEvery = 17 };
+        var settings = new GameSettings { ExtraLifeEvery = 17 };
 
-        settings.BumpExtraManEvery(1);
+        settings.BumpExtraLifeEvery(1);
 
-        Assert.Equal(30, settings.ExtraManEvery); // steps on from the factory stop, 25
+        Assert.Equal(30, settings.ExtraLifeEvery); // steps on from the factory stop, 25
     }
 
     [Theory]
@@ -75,7 +75,7 @@ public sealed class GameSettingsTests
     {
         var settings = new GameSettings
         {
-            ExtraManEvery = 0,
+            ExtraLifeEvery = 0,
             TurnsPerPlayer = 20,
             Difficulty = 10,
             AttractModeSoundEnabled = true,
@@ -86,7 +86,7 @@ public sealed class GameSettingsTests
 
         settings.ResetToFactory();
 
-        Assert.Equal(25, settings.ExtraManEvery);
+        Assert.Equal(25, settings.ExtraLifeEvery);
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(5, settings.Difficulty);
         Assert.False(settings.AttractModeSoundEnabled);
@@ -128,8 +128,8 @@ public sealed class GameSettingsTests
     [InlineData(10, false)]
     [InlineData(17, false)]
     [InlineData(100, false)]
-    public void OnlyTheRomsFiveStopsAreValidExtraManValues(int value, bool expected)
+    public void OnlyTheRomsFiveStopsAreValidExtraLifeValues(int value, bool expected)
     {
-        Assert.Equal(expected, GameSettings.IsExtraManEveryValue(value));
+        Assert.Equal(expected, GameSettings.IsExtraLifeEveryValue(value));
     }
 }

@@ -117,8 +117,8 @@ public sealed class HighScoreTableTests
     {
         var table = HighScoreTable.CreateWithFactoryScores();
 
-        // The all-time tail is blank, so five "ABC" scores fit and the cap never fires.
-        for (var i = 0; i < HighScoreTable.AllTimeInitialsCap; i++)
+        // The all-time tail is blank, so five "ABC" scores fit and the maximum never applies.
+        for (var i = 0; i < HighScoreTable.MaxAllTimeInitials; i++)
         {
             var entered = table.Submit(26000 + i, "ABC");
             Assert.True(entered.EnteredAllTime);
@@ -137,7 +137,7 @@ public sealed class HighScoreTableTests
 
         Assert.True(replaced.ReachedEntriesMaximum);
         Assert.True(replaced.EnteredAllTime);
-        Assert.Equal(HighScoreTable.AllTimeInitialsCap, table.AllTime.Count(e => e.Initials == "ABC"));
+        Assert.Equal(HighScoreTable.MaxAllTimeInitials, table.AllTime.Count(e => e.Initials == "ABC"));
         Assert.DoesNotContain(table.AllTime, e => e.Score == 26000);
     }
 
