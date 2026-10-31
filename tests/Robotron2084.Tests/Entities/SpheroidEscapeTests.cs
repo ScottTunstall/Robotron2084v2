@@ -29,7 +29,7 @@ public sealed class SpheroidEscapeTests
 
     private static PlayField CreateField(int seed)
     {
-        return new PlayFieldBuilder().WithParameters(new LevelParameters(
+        return new PlayFieldBuilder().WithParameters(new WaveParameters(
             1,
             SpheroidCount: 1,
             MaxDropsX2: 2,

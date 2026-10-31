@@ -552,7 +552,7 @@ public sealed class StripEffectTests
 
     private static PlayField CreateEmptyField()
     {
-        var parameters = new LevelParameters(
+        var parameters = new WaveParameters(
             1,
             HulkCount: 0,
             SpheroidCount: 0,

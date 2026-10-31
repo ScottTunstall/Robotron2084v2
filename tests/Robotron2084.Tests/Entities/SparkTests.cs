@@ -32,7 +32,7 @@ public sealed class SparkTests
 
     private static PlayField CreateField(int seed)
     {
-        return new PlayFieldBuilder().WithParameters(new LevelParameters(
+        return new PlayFieldBuilder().WithParameters(new WaveParameters(
             1,
             SpheroidCount: 0,
             MaxDropsX2: 10,

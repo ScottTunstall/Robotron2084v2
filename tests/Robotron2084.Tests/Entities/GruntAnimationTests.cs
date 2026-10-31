@@ -25,7 +25,7 @@ public sealed class GruntAnimationTests
 
     private static PlayField CreateField()
     {
-        return new PlayFieldBuilder().WithParameters(new LevelParameters(1)).WithSeed(1).Build();
+        return new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithSeed(1).Build();
     }
 
     /// <summary>Drives the field through the start of the wave, until the game is live.</summary>

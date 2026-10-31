@@ -23,7 +23,7 @@ public sealed class QuarkDropTimerTests
 
     private static PlayField CreateField(int seed)
     {
-        return new PlayFieldBuilder().WithParameters(new LevelParameters(7, SpheroidCount: 0, MaxDropsX2: 10,
+        return new PlayFieldBuilder().WithParameters(new WaveParameters(7, SpheroidCount: 0, MaxDropsX2: 10,
             SpheroidDropDelay: 18,
             QuarkDropDelay: 16)).WithRandom(new Random(seed)).Build();
     }

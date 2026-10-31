@@ -19,7 +19,7 @@ public sealed class PlayerAnimationAndAimTests
 {
     private static PlayField CreateField(IPlayerInputSource input)
     {
-        return new PlayFieldBuilder().WithParameters(new LevelParameters(1)).WithInput(input).WithSeed(1).Build();
+        return new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithInput(input).WithSeed(1).Build();
     }
 
     [Fact]

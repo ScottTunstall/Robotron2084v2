@@ -9,9 +9,9 @@ namespace Robotron2084.Tests;
 /// <summary>The BerzerkRobot: the author's own robot, which moves, dies and kills as a grunt does (notes §138).</summary>
 public sealed class BerzerkRobotTests
 {
-    private static PlayField CreateField(LevelParameters? parameters = null)
+    private static PlayField CreateField(WaveParameters? parameters = null)
     {
-        return new PlayFieldBuilder().WithParameters(parameters ?? new LevelParameters(1)).WithSeed(5).Build();
+        return new PlayFieldBuilder().WithParameters(parameters ?? new WaveParameters(1)).WithSeed(5).Build();
     }
 
     /// <summary>A field whose robots are free to move: the start of the wave is over, so the game is live.</summary>
@@ -99,7 +99,7 @@ public sealed class BerzerkRobotTests
     [Fact]
     public void ItIsRegisteredLikeAGrunt_ScoringTheSame_FatalToTouch_AndPutOnTheFieldByTheWave()
     {
-        var field = CreateField(new LevelParameters(1, BerzerkRobotCount: 3));
+        var field = CreateField(new WaveParameters(1, BerzerkRobotCount: 3));
 
         Assert.Equal(3, field.Entities.BerzerkRobots.Count);
         Assert.Equal(ScoreValues.Grunt, RobotKinds.GetInfo(RobotKind.BerzerkRobot).Score);
@@ -126,8 +126,8 @@ public sealed class BerzerkRobotTests
     [Fact]
     public void TheWaveIsNotWonWhileOneIsLeft_AndADeathKeepsTheOnesThatSurvive()
     {
-        var field = CreateField(new LevelParameters(1, BerzerkRobotCount: 3));
-        Assert.False(field.IsLevelCleared());
+        var field = CreateField(new WaveParameters(1, BerzerkRobotCount: 3));
+        Assert.False(field.IsWaveCleared());
 
         field.Entities.BerzerkRobots[0].Kill();
 
@@ -135,6 +135,6 @@ public sealed class BerzerkRobotTests
 
         foreach (var robot in field.Entities.BerzerkRobots) robot.Kill();
 
-        Assert.True(field.IsLevelCleared());
+        Assert.True(field.IsWaveCleared());
     }
 }

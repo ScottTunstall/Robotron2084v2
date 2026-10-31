@@ -58,7 +58,7 @@ public sealed class TankShellTests
             fired++;
         }
 
-        Assert.Equal(SpawnTuning.ShellCountLimit + 1, fired);
+        Assert.Equal(SpawnTuning.MaxShellCount + 1, fired);
 
         // A shell that fizzles out does not give its place back (SHELL never does DEC SHLCNT).
         for (var tick = 0; tick < 1000 && field.Entities.TankShells.Any(shell => shell.IsAlive()); tick++)
@@ -88,7 +88,7 @@ public sealed class TankShellTests
         }
 
         // The limit on how many are out at once is still the ROM's.
-        Assert.Equal(SpawnTuning.ShellCountLimit + 1, fired);
+        Assert.Equal(SpawnTuning.MaxShellCount + 1, fired);
 
         for (var tick = 0; tick < 1000 && field.Entities.TankShells.Any(shell => shell.IsAlive()); tick++)
             foreach (var shell in field.Entities.TankShells.ToList())

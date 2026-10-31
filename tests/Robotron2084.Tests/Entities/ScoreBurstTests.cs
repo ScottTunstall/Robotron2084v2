@@ -137,7 +137,7 @@ public sealed class ScoreBurstTests
 
     private static PlayField CreateField(int spheroids = 0, int quarks = 0)
     {
-        var parameters = new LevelParameters(
+        var parameters = new WaveParameters(
             1,
             HulkCount: 0,
             SpheroidCount: spheroids,

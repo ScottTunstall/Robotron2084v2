@@ -12,9 +12,9 @@ public sealed class GorfTests
 {
     private static readonly GameTime OneTick = new(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
 
-    private static PlayField CreateFieldInPlay(LevelParameters? parameters = null)
+    private static PlayField CreateFieldInPlay(WaveParameters? parameters = null)
     {
-        var field = new PlayFieldBuilder().WithParameters(parameters ?? new LevelParameters(1)).WithSeed(5).Build();
+        var field = new PlayFieldBuilder().WithParameters(parameters ?? new WaveParameters(1)).WithSeed(5).Build();
         for (var tick = 0; tick < 400 && field.RobotsFrozen(); tick++) field.Update(OneTick);
 
         return field;
@@ -144,7 +144,7 @@ public sealed class GorfTests
     }
 
     /// <summary>Builds a field, puts a Gorf with these random numbers on it, and runs it right across.</summary>
-    private static (PlayField Field, Gorf Gorf) RunAGorfAcross(LevelParameters parameters, int maxDropsX2,
+    private static (PlayField Field, Gorf Gorf) RunAGorfAcross(WaveParameters parameters, int maxDropsX2,
         params int[] randomNumbers)
     {
         var field = CreateFieldInPlay(parameters);
@@ -175,8 +175,8 @@ public sealed class GorfTests
     [InlineData(11, 6)]
     public void EachStopDropsHalfTheRandomNumberRoundedUp_AsASpheroidPicksItsEnforcers_UpToSix(int randomNumber, int expected)
     {
-        // The field has no grunts of its own and a cap of 30, so nothing holds the drops back.
-        var (field, _) = RunAGorfAcross(new LevelParameters(1, 30), 12, 0, 0, randomNumber, randomNumber, randomNumber);
+        // The field has no grunts of its own and a maximum of 30, so nothing holds the drops back.
+        var (field, _) = RunAGorfAcross(new WaveParameters(1, 30), 12, 0, 0, randomNumber, randomNumber, randomNumber);
 
         Assert.Equal(3 * expected, field.Entities.Grunts.Count(entity => !entity.IsDead()));
     }
@@ -185,20 +185,20 @@ public sealed class GorfTests
     public void ABiggerWaveBoundCanDropMoreAtOnceThanASmallOne()
     {
         // A bound of 4 never gives more than 2 (a random number of 4 halved and rounded up); a bound of 12 can give 6.
-        var (small, _) = RunAGorfAcross(new LevelParameters(1, 30), 4, 0, 0, 3, 3, 3);
-        var (big, _) = RunAGorfAcross(new LevelParameters(1, 30), 12, 0, 0, 11, 11, 11);
+        var (small, _) = RunAGorfAcross(new WaveParameters(1, 30), 4, 0, 0, 3, 3, 3);
+        var (big, _) = RunAGorfAcross(new WaveParameters(1, 30), 12, 0, 0, 11, 11, 11);
 
         Assert.Equal(6, small.Entities.Grunts.Count(entity => !entity.IsDead()));
         Assert.Equal(18, big.Entities.Grunts.Count(entity => !entity.IsDead()));
     }
 
     [Fact]
-    public void ALevelOnlyHoldsSoManyGrunts_SoAFullOneGetsFewerOrNone()
+    public void AWaveOnlyHoldsSoManyGrunts_SoAFullOneGetsFewerOrNone()
     {
-        // The wave's grunt count is 2, but a level always holds at least six: three stops of six drop one burst and no more.
-        var (field, _) = RunAGorfAcross(new LevelParameters(1, 2), 12, 0, 0, 11, 11, 11);
+        // The wave's grunt count is 2, but a wave always holds at least six: three stops of six drop one burst and no more.
+        var (field, _) = RunAGorfAcross(new WaveParameters(1, 2), 12, 0, 0, 11, 11, 11);
 
-        Assert.Equal(GorfTuning.MinimumGruntCap, field.Entities.Grunts.Count(entity => !entity.IsDead()));
+        Assert.Equal(GorfTuning.MinGruntCount, field.Entities.Grunts.Count(entity => !entity.IsDead()));
     }
 
     [Fact]
@@ -240,21 +240,21 @@ public sealed class GorfTests
     [Fact]
     public void AGorfThatIsShotScoresLikeAGrunt_AndMustBeKilledOrPassToWinTheWave()
     {
-        var field = CreateFieldInPlay(new LevelParameters(1, GorfCount: 2));
+        var field = CreateFieldInPlay(new WaveParameters(1, GorfCount: 2));
 
         Assert.Equal(2, field.Entities.Gorfs.Count);
         Assert.Equal(ScoreValues.Grunt, RobotKinds.GetInfo(RobotKind.Gorf).Score);
-        Assert.False(field.IsLevelCleared());
+        Assert.False(field.IsWaveCleared());
 
         foreach (var gorf in field.Entities.Gorfs) gorf.Kill();
 
-        Assert.True(field.IsLevelCleared());
+        Assert.True(field.IsWaveCleared());
     }
 
     [Fact]
     public void ADeathKeepsTheOnesThatSurvive()
     {
-        var field = CreateFieldInPlay(new LevelParameters(1, GorfCount: 3));
+        var field = CreateFieldInPlay(new WaveParameters(1, GorfCount: 3));
         field.Entities.Gorfs[0].Kill();
 
         Assert.Equal(2, WaveSurvivors.GetFrom(field).GorfCount);

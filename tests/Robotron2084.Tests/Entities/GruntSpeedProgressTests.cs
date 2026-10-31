@@ -12,7 +12,7 @@ namespace Robotron2084.Tests;
 ///     limit becomes the high byte of limit × 224 (limit × 7/8, TRUNCATED) ONLY
 ///     if that is still ≥ the floor; otherwise the limit is left ALONE. The
 ///     in-flight countdown is NOT picked again.
-///     2. Level-progress tick (R5 $2AC7-2AF1): every 225 arcade frames. The first is 277 arcade frames after the game goes
+///     2. Wave-progress tick (R5 $2AC7-2AF1): every 225 arcade frames. The first is 277 arcade frames after the game goes
 ///     live (`CLR STATUS` at PLS2, R5 $289A): 22 to reach GEXEC (`NAP 12`, `NAP 10`), then 17 sleeps of 15, because
 ///     GEXEC loads 18 and counts down on its very first pass. A score made before GEXEC starts is forgotten
 ///     (`CLR SCRFLG`, R5 $2A8B). It runs
@@ -62,7 +62,7 @@ public sealed class GruntSpeedProgressTests
     private static PlayField CreateField(int wave = 1)
     {
         return new PlayFieldBuilder()
-            .WithParameters(LevelParameters.CreateFromWave(wave, WaveTable.GetParameters(wave))).WithSeed(1).Build();
+            .WithParameters(WaveParameters.CreateFromWave(wave, WaveTable.GetParameters(wave))).WithSeed(1).Build();
     }
 
     private static Grunt CreateGruntAt(PlayField field, int x, int y, int seed)
@@ -142,7 +142,7 @@ public sealed class GruntSpeedProgressTests
         Assert.Equal(5, field.GetGruntSpeedFloor());
         Assert.Equal(15, tracked.MoveDelayBeats);
 
-        field.Update(OneTick()); // first level-progress tick (277 arcade frames after the game went live)
+        field.Update(OneTick()); // first wave-progress tick (277 arcade frames after the game went live)
 
         Assert.Equal(3, field.GetGruntSpeedFloor()); // 5 − 2
         Assert.Equal(11, tracked.MoveDelayBeats); // 15 − 4

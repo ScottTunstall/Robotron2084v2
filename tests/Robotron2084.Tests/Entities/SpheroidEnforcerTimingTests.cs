@@ -34,7 +34,7 @@ public sealed class SpheroidEnforcerTimingTests
 
     private static PlayField CreateField(int seed, int spheroids = 0, int enfnum = 10, int cdpTim = 30)
     {
-        return new PlayFieldBuilder().WithParameters(new LevelParameters(
+        return new PlayFieldBuilder().WithParameters(new WaveParameters(
             1,
             SpheroidCount: spheroids,
             MaxDropsX2: enfnum,

@@ -26,7 +26,7 @@ public sealed class PlayerDeathTests
 
     private static (PlayField Field, GamePalette Palette) CreateField()
     {
-        var parameters = new LevelParameters(
+        var parameters = new WaveParameters(
             1,
             0,
             HulkCount: 0,
