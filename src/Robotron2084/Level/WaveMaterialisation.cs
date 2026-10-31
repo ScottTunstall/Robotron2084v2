@@ -41,46 +41,6 @@ namespace Robotron2084.Level;
 /// </remarks>
 public sealed class WaveMaterialisation
 {
-    /// <summary>
-    ///     Picks every fourth robot to fan in by columns instead of rows. It is used on the number of passes made before
-    ///     the robot's own: the robot fans in by columns when the last two bits of that number are both set.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>ANDA #3 / CMPA #3</c>.</item>
-    ///         <item>Disassembly: <c>$291C</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int ColumnFanSequenceMask = 3;
-
-    /// <summary>
-    ///     How many passes after a robot's appear effect starts the loop draws the robot whole. It is added to the
-    ///     robot's place in the order to give the pass on which the robot stops being held back.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>CMPA #32 / BLS AP4</c>, after which each
-    ///             pass moves the end of the list that <c>APREF</c> redraws one robot along ("EXPAND REFRESH
-    ///             LIST").
-    ///         </item>
-    ///         <item>Disassembly: <c>$2930</c> to <c>$293E</c>, and <c>$2965</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int PassesBeforeRobotIsDrawnWhole = 32;
-
-    /// <summary>
-    ///     The top row of the arcade's playfield on its screen. With <see cref="ArcadeBottomRow" /> it turns a robot's
-    ///     place on the port's playfield into the row the arcade would have it on, which sets the row its strips close in on.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRF.ASM</c> <c>YMIN</c>.</item>
-    ///         <item>Disassembly: the compare at <c>$5DB6</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int ArcadeTopRow = 24;
-
     /// <summary>The bottom row of the arcade's playfield on its screen.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -113,6 +73,30 @@ public sealed class WaveMaterialisation
     private const int ArcadeRightColumn = 0x8F;
 
     /// <summary>
+    ///     The top row of the arcade's playfield on its screen. With <see cref="ArcadeBottomRow" /> it turns a robot's
+    ///     place on the port's playfield into the row the arcade would have it on, which sets the row its strips close in on.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRF.ASM</c> <c>YMIN</c>.</item>
+    ///         <item>Disassembly: the compare at <c>$5DB6</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int ArcadeTopRow = 24;
+
+    /// <summary>
+    ///     Picks every fourth robot to fan in by columns instead of rows. It is used on the number of passes made before
+    ///     the robot's own: the robot fans in by columns when the last two bits of that number are both set.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>ANDA #3 / CMPA #3</c>.</item>
+    ///         <item>Disassembly: <c>$291C</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int ColumnFanSequenceMask = 3;
+
+    /// <summary>
     ///     The largest number the arcade's screen coordinates and its 8-bit sums can hold. A robot's column is doubled to
     ///     make it a pixel, and the doubled column is held at this when it would be more.
     /// </summary>
@@ -125,6 +109,22 @@ public sealed class WaveMaterialisation
     private const int LargestByte = 0xFF;
 
     /// <summary>
+    ///     How many passes after a robot's appear effect starts the loop draws the robot whole. It is added to the
+    ///     robot's place in the order to give the pass on which the robot stops being held back.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRG23.ASM</c> <c>APPEAR</c>, <c>CMPA #32 / BLS AP4</c>, after which each
+    ///             pass moves the end of the list that <c>APREF</c> redraws one robot along ("EXPAND REFRESH
+    ///             LIST").
+    ///         </item>
+    ///         <item>Disassembly: <c>$2930</c> to <c>$293E</c>, and <c>$2965</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int PassesBeforeRobotIsDrawnWhole = 32;
+
+    /// <summary>
     ///     The place in the order of each robot that the loop has not drawn whole yet. A robot in here does not act and
     ///     is not drawn as itself.
     /// </summary>
@@ -133,17 +133,17 @@ public sealed class WaveMaterialisation
     /// <summary>The robot that has each place in the order, for the robots the loop has not drawn whole yet.</summary>
     private readonly Dictionary<int, IEntity> _robotsByAppearNumber = [];
 
-    /// <summary>
-    ///     The robots waiting to be beamed in together, when the wave is a brain wave. "Transport" is the arcade's own
-    ///     word for beaming in.
-    /// </summary>
-    private readonly List<IEntity> _transportQueue = [];
-
     /// <summary>The robots being beamed in.</summary>
     private readonly HashSet<IEntity> _transported = [];
 
     /// <summary>The transporter that beams the robots in, or null when the wave is not a brain wave.</summary>
     private readonly RobotTransporter? _transporter;
+
+    /// <summary>
+    ///     The robots waiting to be beamed in together, when the wave is a brain wave. "Transport" is the arcade's own
+    ///     word for beaming in.
+    /// </summary>
+    private readonly List<IEntity> _transportQueue = [];
 
     /// <summary>
     ///     Counts up to the next fiftieth of a second, in clock units, because the loop makes one pass on each fiftieth
@@ -185,12 +185,6 @@ public sealed class WaveMaterialisation
     public WaveMaterialisation(Random random, bool beamsIn)
     {
         if (beamsIn) _transporter = new RobotTransporter(random);
-    }
-
-    /// <summary>The number of robots that have not yet been given their turn to appear.</summary>
-    public int GetPendingCount()
-    {
-        return _appearNumbers.Values.Count(appearNumber => appearNumber > _passes) + _transportQueue.Count;
     }
 
     /// <summary>
@@ -247,6 +241,12 @@ public sealed class WaveMaterialisation
             _transporter.Draw(spriteBatch, sprites);
     }
 
+    /// <summary>The number of robots that have not yet been given their turn to appear.</summary>
+    public int GetPendingCount()
+    {
+        return _appearNumbers.Values.Count(appearNumber => appearNumber > _passes) + _transportQueue.Count;
+    }
+
     /// <summary>
     ///     Says whether a robot is still being brought on. It does not act and is not drawn as itself: its appear effect,
     ///     or the transporter, draws it.
@@ -274,34 +274,6 @@ public sealed class WaveMaterialisation
         _lastAppearNumber = Math.Max(_lastAppearNumber, _passes) + 1;
         _appearNumbers[robot] = _lastAppearNumber;
         _robotsByAppearNumber[_lastAppearNumber] = robot;
-    }
-
-    /// <summary>
-    ///     Works out which row of a robot's sprite its strips close in on. It is the same share of the way down the
-    ///     sprite as the robot is of the way down the arcade's screen, so a robot near the top closes in on a row near its top
-    ///     and its strips stay on the screen.
-    /// </summary>
-    /// <param name="robotBounds">The robot's box, in port pixels.</param>
-    /// <param name="playfieldBounds">The inside of the wall, in port pixels.</param>
-    /// <returns>A function that takes the number of rows in the sprite and gives the row, counted from the top.</returns>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRG23.ASM</c> <c>APCENT</c>,
-    ///             <c>
-    ///                 LDB OBJH,U / LDA OBJY,X / MUL / ADDA
-    ///                 OBJY,X
-    ///             </c>
-    ///             .
-    ///         </item>
-    ///         <item>Disassembly: <c>$29B5</c> onwards.</item>
-    ///     </list>
-    /// </remarks>
-    internal static Func<int, int> GetCentreRowFinder(Rectangle robotBounds, Rectangle playfieldBounds)
-    {
-        var arcadeRow = ArcadeTopRow + (robotBounds.Y - playfieldBounds.Y) * (ArcadeBottomRow - ArcadeTopRow) /
-            playfieldBounds.Height;
-        return spriteRows => (spriteRows * arcadeRow) >> ScreenSize.SubpixelBits;
     }
 
     /// <summary>
@@ -334,6 +306,34 @@ public sealed class WaveMaterialisation
         return spritePixelColumns =>
             ((spritePixelColumns / ScreenSize.ArcadePixelsPerByte * arcadePixel) >> ScreenSize.SubpixelBits) *
             ScreenSize.ArcadePixelsPerByte;
+    }
+
+    /// <summary>
+    ///     Works out which row of a robot's sprite its strips close in on. It is the same share of the way down the
+    ///     sprite as the robot is of the way down the arcade's screen, so a robot near the top closes in on a row near its top
+    ///     and its strips stay on the screen.
+    /// </summary>
+    /// <param name="robotBounds">The robot's box, in port pixels.</param>
+    /// <param name="playfieldBounds">The inside of the wall, in port pixels.</param>
+    /// <returns>A function that takes the number of rows in the sprite and gives the row, counted from the top.</returns>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRG23.ASM</c> <c>APCENT</c>,
+    ///             <c>
+    ///                 LDB OBJH,U / LDA OBJY,X / MUL / ADDA
+    ///                 OBJY,X
+    ///             </c>
+    ///             .
+    ///         </item>
+    ///         <item>Disassembly: <c>$29B5</c> onwards.</item>
+    ///     </list>
+    /// </remarks>
+    internal static Func<int, int> GetCentreRowFinder(Rectangle robotBounds, Rectangle playfieldBounds)
+    {
+        var arcadeRow = ArcadeTopRow + (robotBounds.Y - playfieldBounds.Y) * (ArcadeBottomRow - ArcadeTopRow) /
+            playfieldBounds.Height;
+        return spriteRows => (spriteRows * arcadeRow) >> ScreenSize.SubpixelBits;
     }
 
     /// <summary>

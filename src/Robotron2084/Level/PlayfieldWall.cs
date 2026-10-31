@@ -38,16 +38,6 @@ public sealed class PlayfieldWall
     /// <summary>The play area inside the wall, in port pixels. Everything on the field must stay wholly inside it.</summary>
     public Rectangle PlayfieldBounds => _playfieldBounds;
 
-    /// <summary>The play area and the wall around it, in port pixels.</summary>
-    public Rectangle GetOuterBounds()
-    {
-        return new Rectangle(
-            _playfieldBounds.X - Thickness,
-            _playfieldBounds.Y - Thickness,
-            _playfieldBounds.Width + 2 * Thickness,
-            _playfieldBounds.Height + 2 * Thickness);
-    }
-
     /// <summary>Draws the wall as four coloured strips.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="wallPixel">A single white pixel, which is stretched and tinted to make each strip.</param>
@@ -62,6 +52,16 @@ public sealed class PlayfieldWall
         spriteBatch.Draw(wallPixel, new Rectangle(outer.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height), color);
         spriteBatch.Draw(wallPixel,
             new Rectangle(outer.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height), color);
+    }
+
+    /// <summary>The play area and the wall around it, in port pixels.</summary>
+    public Rectangle GetOuterBounds()
+    {
+        return new Rectangle(
+            _playfieldBounds.X - Thickness,
+            _playfieldBounds.Y - Thickness,
+            _playfieldBounds.Width + 2 * Thickness,
+            _playfieldBounds.Height + 2 * Thickness);
     }
 
     /// <summary>Says whether a box overlaps any part of the wall.</summary>

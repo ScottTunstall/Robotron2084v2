@@ -35,6 +35,15 @@ public sealed class SpawnPlacement
         _playfieldBounds = playfieldBounds;
     }
 
+    /// <summary>The four sides of the play area that a spheroid may be put against.</summary>
+    private enum Edge
+    {
+        Top,
+        Bottom,
+        Left,
+        Right
+    }
+
     /// <summary>Finds a random spot that a standard-sized thing could be put on.</summary>
     /// <param name="isAcceptable">Says whether a spot's box is acceptable.</param>
     public IntVector2 FindSpawnPoint(Func<Rectangle, bool> isAcceptable)
@@ -64,9 +73,9 @@ public sealed class SpawnPlacement
 
         // Last resort: one pixel at a time so a gap between two obstacles cannot be stepped over.
         for (var y = _playfieldBounds.Y; y + size <= _playfieldBounds.Bottom; y += GridScanStep)
-        for (var x = _playfieldBounds.X; x + size <= _playfieldBounds.Right; x += GridScanStep)
-            if (isAcceptable(new Rectangle(x, y, size, size)))
-                return new IntVector2(x, y);
+            for (var x = _playfieldBounds.X; x + size <= _playfieldBounds.Right; x += GridScanStep)
+                if (isAcceptable(new Rectangle(x, y, size, size)))
+                    return new IntVector2(x, y);
 
         // Nothing fits (a degenerate field): a predicate failure here must still return SOMETHING.
         return PickRandomPointInside(size);
@@ -83,14 +92,6 @@ public sealed class SpawnPlacement
             IsFarEnough(box, avoidedPosition, minDistanceArcadePixels) && (isAlsoAcceptable?.Invoke(box) ?? true));
     }
 
-    /// <summary>Finds a spot for a spheroid (see <see cref="FindSpheroidSpawnPoint" />) that is far enough from a point.</summary>
-    /// <param name="point">The point to keep away from, in port pixels.</param>
-    /// <param name="minDistanceArcadePixels">How far away the spot must be, in arcade pixels.</param>
-    public IntVector2 FindSpheroidSpawnPointAwayFrom(IntVector2 avoidedPosition, int minDistanceArcadePixels)
-    {
-        return FindSpheroidSpawnPoint(box => IsFarEnough(box, avoidedPosition, minDistanceArcadePixels));
-    }
-
     /// <summary>Finds a spot for a spheroid. Spheroids like to start near a wall, so most of the spots tried are close to one.</summary>
     /// <param name="isAcceptable">Says whether a spot's box is acceptable.</param>
     /// <remarks>
@@ -100,6 +101,14 @@ public sealed class SpawnPlacement
     public IntVector2 FindSpheroidSpawnPoint(Func<Rectangle, bool> isAcceptable)
     {
         return FindSpawnPoint(isAcceptable, EntitySize, () => PickRandomSpheroidCandidate());
+    }
+
+    /// <summary>Finds a spot for a spheroid (see <see cref="FindSpheroidSpawnPoint" />) that is far enough from a point.</summary>
+    /// <param name="point">The point to keep away from, in port pixels.</param>
+    /// <param name="minDistanceArcadePixels">How far away the spot must be, in arcade pixels.</param>
+    public IntVector2 FindSpheroidSpawnPointAwayFrom(IntVector2 avoidedPosition, int minDistanceArcadePixels)
+    {
+        return FindSpheroidSpawnPoint(box => IsFarEnough(box, avoidedPosition, minDistanceArcadePixels));
     }
 
     /// <summary>Says whether a candidate box's top-left corner is more than the given distance from a point.</summary>
@@ -150,14 +159,5 @@ public sealed class SpawnPlacement
         }
 
         return new IntVector2(x, y);
-    }
-
-    /// <summary>The four sides of the play area that a spheroid may be put against.</summary>
-    private enum Edge
-    {
-        Top,
-        Bottom,
-        Left,
-        Right
     }
 }

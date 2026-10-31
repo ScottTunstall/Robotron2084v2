@@ -51,6 +51,34 @@ internal sealed class MidWaveSpawner
         _field.PlaySoundFrom(SoundTables.EnforcerDropOff, enforcer.GetBounds());
     }
 
+    /// <summary>
+    ///     Gorf drops a grunt: it starts where Gorf is and falls to the ground, with no appear effect. A level holds only
+    ///     so many.
+    /// </summary>
+    /// <param name="from">Where the grunt starts, which is inside Gorf.</param>
+    /// <param name="landing">Where the grunt ends up standing.</param>
+    /// <remarks>
+    ///     A new robot's drop (notes §138.2): there is no arcade routine for it. The grunt is kept inside the playfield, and
+    ///     is not dropped at all when the level
+    ///     already holds as many grunts as it is allowed: the wave's own number (which the difficulty moves), or
+    ///     <see cref="GorfTuning.MinimumGruntCap" /> if that is fewer.
+    /// </remarks>
+    public void SpawnGrunt(IntVector2 from, IntVector2 landing)
+    {
+        if (_entities.Grunts.Count(entity => !entity.IsDead()) >=
+            Math.Max(_field.Parameters.GruntCount, GorfTuning.MinimumGruntCap)) return;
+
+        var bounds = _field.GetPlayfieldBounds();
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
+        var x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
+        var startY = Math.Clamp(from.Y, bounds.Y, bounds.Bottom - height);
+        var landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);
+        var grunt = new Grunt(_field.Sprites, new IntVector2(x, startY), _field.Parameters.GruntMoveDelay, _random);
+        grunt.BeginFall(landingY);
+        _entities.Add(grunt);
+    }
+
     /// <summary>A brain's touch turns a human into a prog where they stand.</summary>
     /// <param name="position">Where the human stood.</param>
     /// <param name="kind">Which family member it was, since the prog keeps their look.</param>
@@ -86,34 +114,6 @@ internal sealed class MidWaveSpawner
         _entities.Add(tank);
         _field.PlaySoundFrom(SoundTables.TankDrop, tank.GetBounds());
         return tank;
-    }
-
-    /// <summary>
-    ///     Gorf drops a grunt: it starts where Gorf is and falls to the ground, with no appear effect. A level holds only
-    ///     so many.
-    /// </summary>
-    /// <param name="from">Where the grunt starts, which is inside Gorf.</param>
-    /// <param name="landing">Where the grunt ends up standing.</param>
-    /// <remarks>
-    ///     A new robot's drop (notes §138.2): there is no arcade routine for it. The grunt is kept inside the playfield, and
-    ///     is not dropped at all when the level
-    ///     already holds as many grunts as it is allowed: the wave's own number (which the difficulty moves), or
-    ///     <see cref="GorfTuning.MinimumGruntCap" /> if that is fewer.
-    /// </remarks>
-    public void SpawnGrunt(IntVector2 from, IntVector2 landing)
-    {
-        if (_entities.Grunts.Count(entity => !entity.IsDead()) >=
-            Math.Max(_field.Parameters.GruntCount, GorfTuning.MinimumGruntCap)) return;
-
-        var bounds = _field.GetPlayfieldBounds();
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
-        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
-        var x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
-        var startY = Math.Clamp(from.Y, bounds.Y, bounds.Bottom - height);
-        var landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);
-        var grunt = new Grunt(_field.Sprites, new IntVector2(x, startY), _field.Parameters.GruntMoveDelay, _random);
-        grunt.BeginFall(landingY);
-        _entities.Add(grunt);
     }
 
     /// <summary>A tank fires a shell at, or at a wall near, the player.</summary>

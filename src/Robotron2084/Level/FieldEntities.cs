@@ -112,94 +112,6 @@ public sealed class FieldEntities
     /// <summary>Every list the field moves on and clears of the dead, in the order the arcade does them.</summary>
     public IReadOnlyList<IEntityList> UpdateOrder => _updateOrder;
 
-    /// <summary>Says whether every enemy that must be cleared to finish the wave is gone.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Hulks cannot be killed and electrodes are obstacles, so neither counts. Nor do progs and
-    ///             cruise missiles: the arcade only counts the grunts, spheroids, enforcers, brains, tanks and
-    ///             quarks, and clears away anything else when the wave ends. Original source: <c>RRG23.ASM</c>
-    ///             <c>WVCHEK</c>.
-    ///         </item>
-    ///         <item>Disassembly: <c>COUNT_ENEMIES_ON_SCREEN</c> (<c>$2A73</c>).</item>
-    ///     </list>
-    /// </remarks>
-    public bool AreEnemiesGone()
-    {
-        IEntityList[] enemyLists = [Grunts, BerzerkRobots, Gorfs, Spheroids, Enforcers, Quarks, Tanks, Brains];
-        return enemyLists.All(list => list.Entities.All(entity => entity.IsDead()));
-    }
-
-    /// <summary>Draws the lists that go behind the player's lasers.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="field">The field, which decides what may be drawn yet.</param>
-    public void DrawBehindShots(SpriteBatch spriteBatch, PlayField field)
-    {
-        DrawAll(_drawOrderBehindShots, spriteBatch, field);
-    }
-
-    /// <summary>Draws the lists that go in front of the player's lasers.</summary>
-    /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="field">The field, which decides what may be drawn yet.</param>
-    public void DrawInFrontOfShots(SpriteBatch spriteBatch, PlayField field)
-    {
-        DrawAll(_drawOrderInFrontOfShots, spriteBatch, field);
-    }
-
-    /// <summary>Finds the list a kind of robot lives in. This is the one link from the kinds to the lists.</summary>
-    /// <param name="kind">The kind to look up.</param>
-    /// <exception cref="ArgumentOutOfRangeException">The kind has no list. A new kind needs one here.</exception>
-    public IEntityList GetList(RobotKind kind)
-    {
-        return kind switch
-        {
-            RobotKind.Electrode => Electrodes,
-            RobotKind.Grunt => Grunts,
-            RobotKind.BerzerkRobot => BerzerkRobots,
-            RobotKind.Gorf => Gorfs,
-            RobotKind.Hulk => Hulks,
-            RobotKind.Spheroid => Spheroids,
-            RobotKind.Enforcer => Enforcers,
-            RobotKind.Quark => Quarks,
-            RobotKind.Tank => Tanks,
-            RobotKind.Brain => Brains,
-            RobotKind.Prog => Progs,
-            RobotKind.Spark => Sparks,
-            RobotKind.TankShell => TankShells,
-            RobotKind.CruiseMissile => CruiseMissiles,
-            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "No list holds this robot kind.")
-        };
-    }
-
-    /// <summary>Finds where the nearest living robot to a point is, for the attract demo's player to steer by.</summary>
-    /// <param name="from">The point to measure from.</param>
-    /// <returns>The robot's position, or null when there is none.</returns>
-    /// <remarks>
-    ///     Only the kinds the demo's player chases are looked at (<see cref="RobotKindInfo.IsChasedByDemoPlayer" />).
-    ///     The distance is <see cref="IntVector2.GetManhattanDistance" /> (notes §94).
-    /// </remarks>
-    public IntVector2? GetNearestLivingRobotPosition(IntVector2 from)
-    {
-        var living = RobotKinds.All
-            .Where(kind => kind.IsChasedByDemoPlayer)
-            .SelectMany(kind => GetList(kind.Kind).Entities)
-            .Where(entity => entity.IsAlive());
-
-        IntVector2? nearest = null;
-        var nearestDistance = int.MaxValue;
-        foreach (var entity in living)
-        {
-            var distance = entity.Position.GetManhattanDistance(from);
-            if (distance < nearestDistance)
-            {
-                nearestDistance = distance;
-                nearest = entity.Position;
-            }
-        }
-
-        return nearest;
-    }
-
     /// <summary>Puts a Brain on the field.</summary>
     /// <param name="entity">The Brain to add.</param>
     public void Add(Brain entity)
@@ -339,6 +251,40 @@ public sealed class FieldEntities
         return Family.AnyAvailable();
     }
 
+    /// <summary>Says whether every enemy that must be cleared to finish the wave is gone.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Hulks cannot be killed and electrodes are obstacles, so neither counts. Nor do progs and
+    ///             cruise missiles: the arcade only counts the grunts, spheroids, enforcers, brains, tanks and
+    ///             quarks, and clears away anything else when the wave ends. Original source: <c>RRG23.ASM</c>
+    ///             <c>WVCHEK</c>.
+    ///         </item>
+    ///         <item>Disassembly: <c>COUNT_ENEMIES_ON_SCREEN</c> (<c>$2A73</c>).</item>
+    ///     </list>
+    /// </remarks>
+    public bool AreEnemiesGone()
+    {
+        IEntityList[] enemyLists = [Grunts, BerzerkRobots, Gorfs, Spheroids, Enforcers, Quarks, Tanks, Brains];
+        return enemyLists.All(list => list.Entities.All(entity => entity.IsDead()));
+    }
+
+    /// <summary>Draws the lists that go behind the player's lasers.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="field">The field, which decides what may be drawn yet.</param>
+    public void DrawBehindShots(SpriteBatch spriteBatch, PlayField field)
+    {
+        DrawAll(_drawOrderBehindShots, spriteBatch, field);
+    }
+
+    /// <summary>Draws the lists that go in front of the player's lasers.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="field">The field, which decides what may be drawn yet.</param>
+    public void DrawInFrontOfShots(SpriteBatch spriteBatch, PlayField field)
+    {
+        DrawAll(_drawOrderInFrontOfShots, spriteBatch, field);
+    }
+
     /// <summary>Counts the cruise missiles in flight.</summary>
     public int GetCruiseMissileCount()
     {
@@ -371,13 +317,29 @@ public sealed class FieldEntities
         return Family.Members;
     }
 
-    /// <summary>
-    ///     Lists the places in the family list that still hold a family member who is standing on the field and free,
-    ///     lowest place first.
-    /// </summary>
-    public IReadOnlyList<int> GetOccupiedFamilySlots()
+    /// <summary>Finds the list a kind of robot lives in. This is the one link from the kinds to the lists.</summary>
+    /// <param name="kind">The kind to look up.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The kind has no list. A new kind needs one here.</exception>
+    public IEntityList GetList(RobotKind kind)
     {
-        return Family.GetOccupiedSlots();
+        return kind switch
+        {
+            RobotKind.Electrode => Electrodes,
+            RobotKind.Grunt => Grunts,
+            RobotKind.BerzerkRobot => BerzerkRobots,
+            RobotKind.Gorf => Gorfs,
+            RobotKind.Hulk => Hulks,
+            RobotKind.Spheroid => Spheroids,
+            RobotKind.Enforcer => Enforcers,
+            RobotKind.Quark => Quarks,
+            RobotKind.Tank => Tanks,
+            RobotKind.Brain => Brains,
+            RobotKind.Prog => Progs,
+            RobotKind.Spark => Sparks,
+            RobotKind.TankShell => TankShells,
+            RobotKind.CruiseMissile => CruiseMissiles,
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "No list holds this robot kind.")
+        };
     }
 
     /// <summary>Finds the family list place of the member nearest a point.</summary>
@@ -385,6 +347,44 @@ public sealed class FieldEntities
     public int GetNearestFamilySlot(IntVector2 from)
     {
         return Family.GetNearestSlot(from);
+    }
+
+    /// <summary>Finds where the nearest living robot to a point is, for the attract demo's player to steer by.</summary>
+    /// <param name="from">The point to measure from.</param>
+    /// <returns>The robot's position, or null when there is none.</returns>
+    /// <remarks>
+    ///     Only the kinds the demo's player chases are looked at (<see cref="RobotKindInfo.IsChasedByDemoPlayer" />).
+    ///     The distance is <see cref="IntVector2.GetManhattanDistance" /> (notes §94).
+    /// </remarks>
+    public IntVector2? GetNearestLivingRobotPosition(IntVector2 from)
+    {
+        var living = RobotKinds.All
+            .Where(kind => kind.IsChasedByDemoPlayer)
+            .SelectMany(kind => GetList(kind.Kind).Entities)
+            .Where(entity => entity.IsAlive());
+
+        IntVector2? nearest = null;
+        var nearestDistance = int.MaxValue;
+        foreach (var entity in living)
+        {
+            var distance = entity.Position.GetManhattanDistance(from);
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearest = entity.Position;
+            }
+        }
+
+        return nearest;
+    }
+
+    /// <summary>
+    ///     Lists the places in the family list that still hold a family member who is standing on the field and free,
+    ///     lowest place first.
+    /// </summary>
+    public IReadOnlyList<int> GetOccupiedFamilySlots()
+    {
+        return Family.GetOccupiedSlots();
     }
 
     /// <summary>Counts the sparks in flight.</summary>
@@ -405,13 +405,6 @@ public sealed class FieldEntities
         return Grunts.Any(grunt => grunt.SteppedThisUpdate);
     }
 
-    /// <summary>Says whether no electrode touches a box, so that something can be put there.</summary>
-    /// <param name="box">The box to test, in port pixels.</param>
-    public bool IsClearOfElectrodes(Rectangle box)
-    {
-        return Electrodes.All(electrode => !electrode.GetBounds().Intersects(box));
-    }
-
     /// <summary>Says whether one of the arcade's strip routines has a record free for another explosion or appear effect.</summary>
     /// <param name="engine">The strip routine that would run the effect.</param>
     /// <returns>True when the routine can run one more effect.</returns>
@@ -428,6 +421,13 @@ public sealed class FieldEntities
     {
         return StripExplosionTuning.GetPoolSize(engine) is not { } poolSize ||
                Explosions.Count(stripEffect => stripEffect.GetEngine() == engine) < poolSize;
+    }
+
+    /// <summary>Says whether no electrode touches a box, so that something can be put there.</summary>
+    /// <param name="box">The box to test, in port pixels.</param>
+    public bool IsClearOfElectrodes(Rectangle box)
+    {
+        return Electrodes.All(electrode => !electrode.GetBounds().Intersects(box));
     }
 
     /// <summary>Takes the dead out of every list.</summary>

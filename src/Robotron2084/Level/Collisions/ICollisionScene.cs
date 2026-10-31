@@ -5,9 +5,6 @@ namespace Robotron2084.Level.Collisions;
 /// <summary>Questions about the field. None of them change it.</summary>
 internal interface ICollisionScene
 {
-    /// <summary>Says whether the robots must stand still just now.</summary>
-    bool RobotsFrozen();
-
     /// <summary>Says whether the player can be killed just now.</summary>
     bool CanPlayerBeHurt();
 
@@ -16,6 +13,9 @@ internal interface ICollisionScene
 
     /// <summary>Says whether the player is alive.</summary>
     bool IsPlayerAlive();
+
+    /// <summary>Says whether the robots must stand still just now.</summary>
+    bool RobotsFrozen();
 
     /// <summary>Says whether two entities are touching.</summary>
     /// <param name="a">One entity.</param>

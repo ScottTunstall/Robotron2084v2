@@ -25,12 +25,6 @@ namespace Robotron2084.Level;
 /// </remarks>
 public static class WaveTable
 {
-    /// <summary>How many waves a wave after the last one goes back by, each time it is too big for the table.</summary>
-    private const int RepeatedCount = 20;
-
-    /// <summary>How many waves the table has.</summary>
-    private const int WaveCount = 40;
-
     /// <summary>
     ///     How many fiftieths of a second a brain waits after each beat, for each wave. A smaller number is a faster
     ///     brain.
@@ -137,14 +131,6 @@ public static class WaveTable
         3, 4, 3
     ];
 
-    /// <summary>How many hulks each wave has.</summary>
-    /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Hulks =
-    [
-        0, 5, 6, 7, 0, 7, 12, 8, 4, 0, 8, 13, 8, 20, 2, 3, 14, 8, 3, 2, 8, 15, 8, 13, 1, 8, 16, 8, 4, 1, 8, 16, 8, 25,
-        2, 8, 16, 8, 6, 2
-    ];
-
     /// <summary>How many fiftieths of a second pass between a hulk's beats, for each wave. A smaller number is a faster hulk.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -156,6 +142,14 @@ public static class WaveTable
     [
         8, 8, 7, 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
         5, 5, 5
+    ];
+
+    /// <summary>How many hulks each wave has.</summary>
+    /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
+    public static readonly int[] Hulks =
+    [
+        0, 5, 6, 7, 0, 7, 12, 8, 4, 0, 8, 13, 8, 20, 2, 3, 14, 8, 3, 2, 8, 15, 8, 13, 1, 8, 16, 8, 4, 1, 8, 16, 8, 25,
+        2, 8, 16, 8, 6, 2
     ];
 
     /// <summary>
@@ -282,6 +276,12 @@ public static class WaveTable
         32, 32, 32, 32, 32, 32, 32, 30, 30, 30, 30, 30, 30, 28, 28, 28, 28, 28, 28, 28, 30, 30, 30, 30, 30, 30, 28, 28,
         28, 28, 28, 26, 26, 26, 26, 26, 24, 24, 24, 24
     ];
+
+    /// <summary>How many waves a wave after the last one goes back by, each time it is too big for the table.</summary>
+    private const int RepeatedCount = 20;
+
+    /// <summary>How many waves the table has.</summary>
+    private const int WaveCount = 40;
 
     /// <summary>Every array in the table, so they can be checked together.</summary>
     private static readonly int[][] AllTables =

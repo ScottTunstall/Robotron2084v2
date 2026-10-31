@@ -25,7 +25,7 @@ internal sealed class CollisionResponder
             [typeof(GruntHitElectrodeResult)] = result => RespondToGruntHittingElectrode((GruntHitElectrodeResult)result),
             [typeof(BerzerkRobotHitElectrodeResult)] = result => RespondToBerzerkRobotHittingElectrode((BerzerkRobotHitElectrodeResult)result),
             [typeof(HulkHitElectrodeResult)] = result => RespondToHulkHittingElectrode((HulkHitElectrodeResult)result),
-            [typeof(PlayerHitElectrodeResult)] =result => RespondToPlayerHittingElectrode((PlayerHitElectrodeResult)result),
+            [typeof(PlayerHitElectrodeResult)] = result => RespondToPlayerHittingElectrode((PlayerHitElectrodeResult)result),
             [typeof(PlayerTouchedDeadThingResult)] = _ => _field.KillPlayer(),
             [typeof(BrainLostVictimResult)] = result => RespondToBrainLosingVictim((BrainLostVictimResult)result),
             [typeof(BrainCaughtHumanResult)] = result => RespondToBrainCatchingHuman((BrainCaughtHumanResult)result),
@@ -48,12 +48,15 @@ internal sealed class CollisionResponder
         respond(result);
     }
 
-    /// <summary>The player and the electrode both die.</summary>
+    /// <summary>The BerzerkRobot and the electrode both die, as a grunt's do, but the other robots do not speed up.</summary>
     /// <param name="hit">The hit.</param>
-    private void RespondToPlayerHittingElectrode(PlayerHitElectrodeResult hit)
+    private void RespondToBerzerkRobotHittingElectrode(BerzerkRobotHitElectrodeResult hit)
     {
-        _field.KillPlayer();
+        hit.Robot.Kill();
+        _field.SpawnExplosion(hit.Robot, null);
         hit.Electrode.Kill();
+        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.GetBounds());
+        _field.PlaySoundFrom(SoundTables.RobotHit, hit.Robot.GetBounds());
     }
 
     /// <summary>The brain starts reprogramming the human it caught.</summary>
@@ -63,22 +66,13 @@ internal sealed class CollisionResponder
         caught.Brain.BeginReprogramming(caught.Human, _field.GetPlayfieldBounds());
     }
 
-    /// <summary>
-    ///     A laser is used up by the robot it hits: the robot's kind says what happens to it and what sound it makes, and
-    ///     the kill is scored.
-    /// </summary>
-    /// <param name="hit">The hit.</param>
-    /// <remarks>
-    ///     Original source: <c>RRS22.ASM</c> <c>KILROB</c>/<c>KILLOF</c> only free the object. The explosion, the burst
-    ///     and the score are made by the killer's own calls, as here (notes §61, §64).
-    /// </remarks>
-    private void RespondToLaserHit(LaserHitResult hit)
+    /// <summary>The conversion never finishes: the human is lost, no prog appears, and a skull is left where they stood.</summary>
+    /// <param name="lost">The dead brain.</param>
+    private void RespondToBrainLosingVictim(BrainLostVictimResult lost)
     {
-        var hitBounds = hit.Target.GetBounds();
-        hit.KindInfo.LaserHit(_field, hit.Target, hit.Laser.Direction);
-        _field.PlaySoundFrom(hit.KindInfo.LaserHitSound, hitBounds);
-        _field.AwardScore(hit.KindInfo.Score);
-        hit.Laser.Kill();
+        var victim = lost.Brain.GetVictim();
+        lost.Brain.ReleaseVictim();
+        if (victim is not null) _field.LeaveSkull(victim.Position);
     }
 
     /// <summary>
@@ -100,32 +94,12 @@ internal sealed class CollisionResponder
         _field.PlaySoundFrom(SoundTables.RobotHit, hit.Grunt.GetBounds());
     }
 
-    /// <summary>The BerzerkRobot and the electrode both die, as a grunt's do, but the other robots do not speed up.</summary>
-    /// <param name="hit">The hit.</param>
-    private void RespondToBerzerkRobotHittingElectrode(BerzerkRobotHitElectrodeResult hit)
-    {
-        hit.Robot.Kill();
-        _field.SpawnExplosion(hit.Robot, null);
-        hit.Electrode.Kill();
-        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.GetBounds());
-        _field.PlaySoundFrom(SoundTables.RobotHit, hit.Robot.GetBounds());
-    }
-
     /// <summary>The electrode is destroyed. The hulk is not harmed.</summary>
     /// <param name="hit">The hit.</param>
     private void RespondToHulkHittingElectrode(HulkHitElectrodeResult hit)
     {
         hit.Electrode.Kill();
         _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.GetBounds());
-    }
-
-    /// <summary>The conversion never finishes: the human is lost, no prog appears, and a skull is left where they stood.</summary>
-    /// <param name="lost">The dead brain.</param>
-    private void RespondToBrainLosingVictim(BrainLostVictimResult lost)
-    {
-        var victim = lost.Brain.GetVictim();
-        lost.Brain.ReleaseVictim();
-        if (victim is not null) _field.LeaveSkull(victim.Position);
     }
 
     /// <summary>The human dies at once and leaves a skull.</summary>
@@ -135,6 +109,32 @@ internal sealed class CollisionResponder
         killed.Human.Kill();
         _field.LeaveSkull(killed.Human.Position);
         _field.PlaySoundFrom(SoundTables.KillAHuman, killed.Human.GetBounds());
+    }
+
+    /// <summary>
+    ///     A laser is used up by the robot it hits: the robot's kind says what happens to it and what sound it makes, and
+    ///     the kill is scored.
+    /// </summary>
+    /// <param name="hit">The hit.</param>
+    /// <remarks>
+    ///     Original source: <c>RRS22.ASM</c> <c>KILROB</c>/<c>KILLOF</c> only free the object. The explosion, the burst
+    ///     and the score are made by the killer's own calls, as here (notes §61, §64).
+    /// </remarks>
+    private void RespondToLaserHit(LaserHitResult hit)
+    {
+        var hitBounds = hit.Target.GetBounds();
+        hit.KindInfo.LaserHit(_field, hit.Target, hit.Laser.Direction);
+        _field.PlaySoundFrom(hit.KindInfo.LaserHitSound, hitBounds);
+        _field.AwardScore(hit.KindInfo.Score);
+        hit.Laser.Kill();
+    }
+
+    /// <summary>The player and the electrode both die.</summary>
+    /// <param name="hit">The hit.</param>
+    private void RespondToPlayerHittingElectrode(PlayerHitElectrodeResult hit)
+    {
+        _field.KillPlayer();
+        hit.Electrode.Kill();
     }
 
     /// <summary>The human is saved, the rescue is counted and shown, and the bonus is scored.</summary>

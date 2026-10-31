@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Entities;
@@ -69,12 +69,6 @@ public sealed class RobotTransporter
         _random = random;
     }
 
-    /// <summary>Says whether every image has run out of steps.</summary>
-    public bool IsFinished()
-    {
-        return _images.All(image => image.IsFinished());
-    }
-
     /// <summary>Works out which image each robot shares, from the animation frame each is showing.</summary>
     /// <param name="animationFrames">
     ///     The animation frame each robot is showing, in order. Two robots are showing the same one
@@ -130,17 +124,6 @@ public sealed class RobotTransporter
         }
     }
 
-    /// <summary>Moves on by one port tick, which does a step of each image every fiftieth of a second.</summary>
-    public void Update()
-    {
-        _clockUnits += ArcadeClock.UnitsPerPortTick;
-        while (_clockUnits >= ArcadeClock.UnitsPerArcadeFrame)
-        {
-            _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
-            foreach (var image in _images) image.Step(_random);
-        }
-    }
-
     /// <summary>Draws each image where its robots stand.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The sprite set, for the palette and the one-pixel square the pixels are drawn with.</param>
@@ -156,6 +139,23 @@ public sealed class RobotTransporter
         }
     }
 
+    /// <summary>Says whether every image has run out of steps.</summary>
+    public bool IsFinished()
+    {
+        return _images.All(image => image.IsFinished());
+    }
+
+    /// <summary>Moves on by one port tick, which does a step of each image every fiftieth of a second.</summary>
+    public void Update()
+    {
+        _clockUnits += ArcadeClock.UnitsPerPortTick;
+        while (_clockUnits >= ArcadeClock.UnitsPerArcadeFrame)
+        {
+            _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
+            foreach (var image in _images) image.Step(_random);
+        }
+    }
+
     /// <summary>Draws one image, a pixel at a time.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The sprite set, for the palette and the one-pixel square.</param>
@@ -165,18 +165,18 @@ public sealed class RobotTransporter
     {
         var pixelSize = ScreenSize.ToPortPixelsFromArcadePixels(1);
         for (var y = 0; y < image.Height; y++)
-        for (var x = 0; x < image.Width; x++)
-        {
-            var pixel = image.GetPixel(x, y);
-            if (pixel == TransportImage.PixelOff) continue;
+            for (var x = 0; x < image.Width; x++)
+            {
+                var pixel = image.GetPixel(x, y);
+                if (pixel == TransportImage.PixelOff) continue;
 
-            Color colour;
-            if (pixel == TransportImage.PixelOwnColour) colour = image.Template[y * image.Width + x];
-            else colour = sprites.Blitter.GetSlotColour(pixel);
+                Color colour;
+                if (pixel == TransportImage.PixelOwnColour) colour = image.Template[y * image.Width + x];
+                else colour = sprites.Blitter.GetSlotColour(pixel);
 
-            spriteBatch.Draw(sprites.WallPixelSprite,
-                new Rectangle(topLeft.X + x * pixelSize, topLeft.Y + y * pixelSize, pixelSize, pixelSize), colour);
-        }
+                spriteBatch.Draw(sprites.WallPixelSprite,
+                    new Rectangle(topLeft.X + x * pixelSize, topLeft.Y + y * pixelSize, pixelSize, pixelSize), colour);
+            }
     }
 
     /// <summary>Makes an empty image for an animation frame, with a sparkle picked at random.</summary>

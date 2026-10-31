@@ -27,16 +27,16 @@ public sealed class FamilyList
     /// <remarks>Disassembly: <c>$B354</c>.</remarks>
     internal const int FirstSlot = 0;
 
-    /// <summary>How many places the family list has.</summary>
-    /// <remarks>Disassembly: the list runs from <c>$B354</c> up to, but not including, <c>$B3A4</c>, at two bytes a place.</remarks>
-    internal const int SlotCount = 40;
-
     /// <summary>
     ///     The last place in the family list. It is empty unless the wave has <see cref="SlotCount" /> family members, so
     ///     a hulk that is given it hunts the player.
     /// </summary>
     /// <remarks>Disassembly: <c>$B3A2</c>, which <c>HULK_INITIALISE</c> gives to about one hulk in four (<c>$01B9</c>).</remarks>
     internal const int LastSlot = SlotCount - 1;
+
+    /// <summary>How many places the family list has.</summary>
+    /// <remarks>Disassembly: the list runs from <c>$B354</c> up to, but not including, <c>$B3A4</c>, at two bytes a place.</remarks>
+    internal const int SlotCount = 40;
 
     /// <summary>The next place to give out. The places are given out in order, starting from the first.</summary>
     private int _nextSlot;

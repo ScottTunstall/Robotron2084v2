@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
@@ -22,7 +22,7 @@ namespace Robotron2084.Level;
 ///     one group of pixels on, on with a sparkle, or off. The arcade stores two pixels to a byte, a
 ///     column at a time, so a group names pixels by byte, and this class maps them back to a pixel's
 ///     place. Where a plain "on" meets a pixel that is still sparkling, the arcade mixes the two colour
-///     numbers; here the pixel simply takes its own colour.   
+///     numbers; here the pixel simply takes its own colour.
 /// </remarks>
 public sealed class TransportImage
 {
@@ -69,20 +69,14 @@ public sealed class TransportImage
         _sparkleSetStart = TransporterTuning.SparkleSetByPick[sparkleSetPick] * TransporterTuning.SparkleColoursPerSet;
     }
 
+    /// <summary>The animation frame's height in rows.</summary>
+    public int Height { get; }
+
     /// <summary>The animation frame's own pixels.</summary>
     public Color[] Template { get; }
 
     /// <summary>The animation frame's width in pixels.</summary>
     public int Width { get; }
-
-    /// <summary>The animation frame's height in rows.</summary>
-    public int Height { get; }
-
-    /// <summary>Says whether the sequence has run out: nothing more will change.</summary>
-    public bool IsFinished()
-    {
-        return _nextStep > TransporterTuning.StepCount;
-    }
 
     /// <summary>Gets what a pixel is showing.</summary>
     /// <param name="x">The pixel's column.</param>
@@ -91,6 +85,12 @@ public sealed class TransportImage
     public int GetPixel(int x, int y)
     {
         return _pixels[y * Width + x];
+    }
+
+    /// <summary>Says whether the sequence has run out: nothing more will change.</summary>
+    public bool IsFinished()
+    {
+        return _nextStep > TransporterTuning.StepCount;
     }
 
     /// <summary>Does one step of the sequence, which the arcade does once a frame.</summary>
@@ -113,6 +113,24 @@ public sealed class TransportImage
             TurnOnSparkling(group, random);
         else
             TurnOnOwnColour(group);
+    }
+
+    /// <summary>Works out where a pixel is, from the byte it is in and which half of the byte it is.</summary>
+    /// <param name="byteIndex">The byte, counting a column at a time.</param>
+    /// <param name="half">Which half of the byte: <c>0xF0</c> for the left pixel, otherwise the right.</param>
+    /// <param name="pixel">The pixel's place, counting a row at a time.</param>
+    /// <returns>False when the byte is past the end of the animation frame.</returns>
+    private bool TryGetPixelIndex(int byteIndex, int half, out int pixel)
+    {
+        var bytesInPicture = Width / 2 * Height;
+        var column = byteIndex / Height;
+        var isLeftPixel = half == 0xF0;
+        var x = column * 2 + 1;
+        if (isLeftPixel) x = column * 2;
+
+        var y = byteIndex % Height;
+        pixel = y * Width + x;
+        return byteIndex < bytesInPicture;
     }
 
     /// <summary>Turns a group of pixels off.</summary>
@@ -156,23 +174,5 @@ public sealed class TransportImage
             _pixels[pixel] = colourPair & 0x0F;
             if (isLeftPixel) _pixels[pixel] = colourPair >> 4;
         }
-    }
-
-    /// <summary>Works out where a pixel is, from the byte it is in and which half of the byte it is.</summary>
-    /// <param name="byteIndex">The byte, counting a column at a time.</param>
-    /// <param name="half">Which half of the byte: <c>0xF0</c> for the left pixel, otherwise the right.</param>
-    /// <param name="pixel">The pixel's place, counting a row at a time.</param>
-    /// <returns>False when the byte is past the end of the animation frame.</returns>
-    private bool TryGetPixelIndex(int byteIndex, int half, out int pixel)
-    {
-        var bytesInPicture = Width / 2 * Height;
-        var column = byteIndex / Height;
-        var isLeftPixel = half == 0xF0;
-        var x = column * 2 + 1;
-        if (isLeftPixel) x = column * 2;
-
-        var y = byteIndex % Height;
-        pixel = y * Width + x;
-        return byteIndex < bytesInPicture;
     }
 }

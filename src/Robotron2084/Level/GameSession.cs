@@ -31,6 +31,21 @@ public sealed class GameSession
     }
 
     /// <summary>
+    ///     The keys and buttons the players have chosen. They go with the game so that every screen can read them, such
+    ///     as the pause key (notes §101).
+    /// </summary>
+    public ControlSettings ControlSettings { get; private init; } = ControlSettings.CreateDefaults();
+
+    /// <summary>The place in <see cref="Players" /> of the player whose turn it is.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>CURPLR</c>.</item>
+    ///         <item>Disassembly: <c>current_player</c>.</item>
+    ///     </list>
+    /// </remarks>
+    public int CurrentIndex { get; private set; }
+
+    /// <summary>
     ///     The places in the family list that still held a family member when the last wave or life ended, lowest place
     ///     first. The next field's hulks pick what to stalk from these. A new game starts with none.
     /// </summary>
@@ -47,25 +62,10 @@ public sealed class GameSession
     public IReadOnlyList<int> FamilySlotsLeftOver { get; set; } = [];
 
     /// <summary>
-    ///     The keys and buttons the players have chosen. They go with the game so that every screen can read them, such
-    ///     as the pause key (notes §101).
-    /// </summary>
-    public ControlSettings ControlSettings { get; private init; } = ControlSettings.CreateDefaults();
-
-    /// <summary>
     ///     The game adjustment settings the game was started with. They go with the game, as <see cref="Controls" /> do,
     ///     because the screens after a game over need them (notes §131).
     /// </summary>
     public GameSettings GameSettings { get; private init; } = GameSettings.CreateFactoryDefaults();
-
-    /// <summary>The place in <see cref="Players" /> of the player whose turn it is.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>CURPLR</c>.</item>
-    ///         <item>Disassembly: <c>current_player</c>.</item>
-    ///     </list>
-    /// </remarks>
-    public int CurrentIndex { get; private set; }
 
     /// <summary>The players, with player 1 first. There are one or two.</summary>
     /// <remarks>
@@ -75,30 +75,6 @@ public sealed class GameSession
     ///     </list>
     /// </remarks>
     public IReadOnlyList<PlayerSlot> Players { get; }
-
-    /// <summary>Says whether at least one player still has men.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRF.ASM</c> <c>ZP1LAS</c> and <c>ZP2LAS</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
-    ///     </list>
-    /// </remarks>
-    public bool AnyPlayerSlotHasMen()
-    {
-        return Players.Any(p => p.HasMen());
-    }
-
-    /// <summary>The player whose turn it is.</summary>
-    public PlayerSlot GetCurrent()
-    {
-        return Players[CurrentIndex];
-    }
-
-    /// <summary>Says whether two people are playing.</summary>
-    public bool IsTwoPlayer()
-    {
-        return Players.Count > 1;
-    }
 
     /// <summary>Starts a new game for one or two players, as the arcade's two start buttons do.</summary>
     /// <param name="input">The first player's controls.</param>
@@ -163,6 +139,24 @@ public sealed class GameSession
         };
     }
 
+    /// <summary>Says whether at least one player still has men.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRF.ASM</c> <c>ZP1LAS</c> and <c>ZP2LAS</c>.</item>
+    ///         <item>Disassembly: not separately labelled.</item>
+    ///     </list>
+    /// </remarks>
+    public bool AnyPlayerSlotHasMen()
+    {
+        return Players.Any(p => p.HasMen());
+    }
+
+    /// <summary>The player whose turn it is.</summary>
+    public PlayerSlot GetCurrent()
+    {
+        return Players[CurrentIndex];
+    }
+
     /// <summary>
     ///     Gets every player's score with their number, highest first. It is the order they are offered to the high score
     ///     table in (notes §98).
@@ -180,6 +174,12 @@ public sealed class GameSession
     public int[] GetScoresHighestFirst()
     {
         return [.. GetFinalScoresHighestFirst().Select(score => score.Score)];
+    }
+
+    /// <summary>Says whether two people are playing.</summary>
+    public bool IsTwoPlayer()
+    {
+        return Players.Count > 1;
     }
 
     /// <summary>Passes the turn to the other player after a death, if they have men. Otherwise the turn stays where it is.</summary>

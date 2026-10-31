@@ -1,4 +1,4 @@
-﻿using Robotron2084.Entities;
+using Robotron2084.Entities;
 
 namespace Robotron2084.Level;
 
@@ -53,20 +53,6 @@ public static class WaveSurvivors
         };
     }
 
-    /// <summary>Works out how many spheroids there are once the leftover enforcers have turned back into them.</summary>
-    /// <param name="enforcers">The enforcers left.</param>
-    /// <param name="spheroids">The spheroids left.</param>
-    /// <param name="startedWith">How many spheroids the life began with, which is the most there can be.</param>
-    private static int CountSpheroidsAfterConverting(int enforcers, int spheroids, int startedWith)
-    {
-        if (enforcers == 0) return spheroids;
-
-        var spheroidsFromEnforcers = enforcers / EnforcersPerSpheroid;
-        if (spheroidsFromEnforcers == 0 && spheroids == 0) spheroidsFromEnforcers = 1;
-
-        return Math.Min(spheroidsFromEnforcers + spheroids, startedWith);
-    }
-
     /// <summary>Counts the things in a list that are still alive.</summary>
     /// <param name="list">The list to count.</param>
     private static int CountAlive<T>(EntityList<T> list)
@@ -81,5 +67,19 @@ public static class WaveSurvivors
     private static int CountFamilyMembers(FieldEntities entities, HumanKind kind)
     {
         return entities.Family.Members.Count(human => human.Kind == kind && human.IsGraspable());
+    }
+
+    /// <summary>Works out how many spheroids there are once the leftover enforcers have turned back into them.</summary>
+    /// <param name="enforcers">The enforcers left.</param>
+    /// <param name="spheroids">The spheroids left.</param>
+    /// <param name="startedWith">How many spheroids the life began with, which is the most there can be.</param>
+    private static int CountSpheroidsAfterConverting(int enforcers, int spheroids, int startedWith)
+    {
+        if (enforcers == 0) return spheroids;
+
+        var spheroidsFromEnforcers = enforcers / EnforcersPerSpheroid;
+        if (spheroidsFromEnforcers == 0 && spheroids == 0) spheroidsFromEnforcers = 1;
+
+        return Math.Min(spheroidsFromEnforcers + spheroids, startedWith);
     }
 }

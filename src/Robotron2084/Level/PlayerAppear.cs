@@ -84,35 +84,18 @@ public sealed class PlayerAppear
         _hasLeaningPartStarted = true;
     }
 
-    /// <summary>
-    ///     Starts the strips that come straight in: a row fan for every row of the player's sprite, and then a column fan
-    ///     for every one of the arcade's columns of it.
-    /// </summary>
+    /// <summary>Gets how many of the arcade's columns wide the player's sprite is. A column is two pixels.</summary>
     /// <param name="player">The player.</param>
-    /// <param name="entities">Everything on the field.</param>
-    /// <param name="clip">The edges the strips are cut off at.</param>
-    /// <param name="startClockUnits">How far into a fiftieth of a second the effects start, in clock units.</param>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRG23.ASM</c> <c>PAPPR1</c> (<c>JSR APST</c>, "VERTS") and <c>PAPPR2</c>
-    ///             (<c>JSR HAPST</c>), each counting down from the far edge of the sprite.
-    ///         </item>
-    ///         <item>
-    ///             Disassembly: <c>$29F5</c> onwards. The arcade's column is two pixels wide, so the column fans
-    ///             close in on every second pixel column.
-    ///         </item>
-    ///     </list>
-    /// </remarks>
-    private static void StartStraightStrips(Player player, FieldEntities entities, StripClip clip, int startClockUnits)
+    private static int GetSpriteColumns(Player player)
     {
-        for (var row = GetSpriteRows(player) - 1; row >= 0; row--)
-            entities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, 0, clip, row, startClockUnits));
+        return player.GetBounds().Width / ScreenSize.ToPortPixelsFromColumns(1);
+    }
 
-        for (var column = GetSpriteColumns(player) - 1; column >= 0; column--)
-            if (entities.HasRoomForStripEffect(StripEngine.Horizontal))
-                entities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Columns, 0, clip,
-                    column * ScreenSize.ArcadePixelsPerByte, startClockUnits));
+    /// <summary>Gets how many rows high the player's sprite is.</summary>
+    /// <param name="player">The player.</param>
+    private static int GetSpriteRows(Player player)
+    {
+        return player.GetBounds().Height / ScreenSize.ToPortPixelsFromArcadePixels(1);
     }
 
     /// <summary>
@@ -149,17 +132,34 @@ public sealed class PlayerAppear
         }
     }
 
-    /// <summary>Gets how many of the arcade's columns wide the player's sprite is. A column is two pixels.</summary>
+    /// <summary>
+    ///     Starts the strips that come straight in: a row fan for every row of the player's sprite, and then a column fan
+    ///     for every one of the arcade's columns of it.
+    /// </summary>
     /// <param name="player">The player.</param>
-    private static int GetSpriteColumns(Player player)
+    /// <param name="entities">Everything on the field.</param>
+    /// <param name="clip">The edges the strips are cut off at.</param>
+    /// <param name="startClockUnits">How far into a fiftieth of a second the effects start, in clock units.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRG23.ASM</c> <c>PAPPR1</c> (<c>JSR APST</c>, "VERTS") and <c>PAPPR2</c>
+    ///             (<c>JSR HAPST</c>), each counting down from the far edge of the sprite.
+    ///         </item>
+    ///         <item>
+    ///             Disassembly: <c>$29F5</c> onwards. The arcade's column is two pixels wide, so the column fans
+    ///             close in on every second pixel column.
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    private static void StartStraightStrips(Player player, FieldEntities entities, StripClip clip, int startClockUnits)
     {
-        return player.GetBounds().Width / ScreenSize.ToPortPixelsFromColumns(1);
-    }
+        for (var row = GetSpriteRows(player) - 1; row >= 0; row--)
+            entities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, 0, clip, row, startClockUnits));
 
-    /// <summary>Gets how many rows high the player's sprite is.</summary>
-    /// <param name="player">The player.</param>
-    private static int GetSpriteRows(Player player)
-    {
-        return player.GetBounds().Height / ScreenSize.ToPortPixelsFromArcadePixels(1);
+        for (var column = GetSpriteColumns(player) - 1; column >= 0; column--)
+            if (entities.HasRoomForStripEffect(StripEngine.Horizontal))
+                entities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Columns, 0, clip,
+                    column * ScreenSize.ArcadePixelsPerByte, startClockUnits));
     }
 }

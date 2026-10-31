@@ -32,34 +32,19 @@ namespace Robotron2084.Level;
 public sealed class GruntSpeedProgression
 {
     /// <summary>
-    ///     How many fiftieths of a second the game sleeps between one pass of its loop and the next. A pass is the unit
-    ///     the game counts its checks in: <see cref="FirstCheckPasses" /> and <see cref="CheckIntervalPasses" /> are both
-    ///     counted in passes.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>NAP 15,GEXEC0</c>.</item>
-    ///         <item>Disassembly: <c>$2A85</c> to <c>$2B08</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int PassArcadeFrames = 15;
-
-    /// <summary>
-    ///     The pass on which the game makes its first check on whether to lower <see cref="Floor" />. The game makes its
-    ///     first pass at once and then sleeps before each of the others, so one fewer than this many sleeps of
-    ///     <see cref="PassArcadeFrames" /> go by before the first check. It is used to work out
-    ///     <see cref="FirstCheckArcadeFrames" />.
+    ///     How many fiftieths of a second the game waits between one check on whether to lower <see cref="Floor" /> and
+    ///     the next. It is the value <see cref="_checkWaitArcadeFrames" /> has after the first check.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>LDA #18 / STA PD,U</c>, counted down by
-    ///             <c>DEC PD,U</c> on every pass, the first one included.
+    ///             Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which counts down fifteen passes of fifteen
+    ///             frames.
     ///         </item>
-    ///         <item>Disassembly: <c>$2A87</c> and <c>$2ABF</c>.</item>
+    ///         <item>Disassembly: <c>$2A85</c> to <c>$2B08</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int FirstCheckPasses = 18;
+    private const int CheckIntervalArcadeFrames = CheckIntervalPasses * PassArcadeFrames;
 
     /// <summary>
     ///     How many passes the game counts between one check on whether to lower <see cref="Floor" /> and the next. With
@@ -72,40 +57,6 @@ public sealed class GruntSpeedProgression
     ///     </list>
     /// </remarks>
     private const int CheckIntervalPasses = 15;
-
-    /// <summary>
-    ///     How many fiftieths of a second the game sleeps after it goes live before it switches the robots on again. It
-    ///     is the first part of <see cref="ExecutiveStartArcadeFrames" />.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRG23.ASM</c> <c>NAP 12,PLS3</c>, straight after <c>CLR STATUS</c> at
-    ///             <c>PLS2</c>.
-    ///         </item>
-    ///         <item>Disassembly: <c>$289A</c> to <c>$28A1</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int Pls3NapArcadeFrames = 12;
-
-    /// <summary>
-    ///     How many fiftieths of a second the game then sleeps before it starts its loop of passes. It is the second part
-    ///     of <see cref="ExecutiveStartArcadeFrames" />.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRG23.ASM</c> <c>NAP 10,PLS4</c>; <c>PLS4</c> runs on into
-    ///             <c>
-    ///                 JMP
-    ///                 GEXEC
-    ///             </c>
-    ///             with no more sleeps.
-    ///         </item>
-    ///         <item>Disassembly: <c>$28AA</c> to <c>$28D7</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int Pls4NapArcadeFrames = 10;
 
     /// <summary>
     ///     How many fiftieths of a second go by, from when the game goes live, before the game starts its loop of passes.
@@ -141,6 +92,35 @@ public sealed class GruntSpeedProgression
     ///     </list>
     /// </remarks>
     private const int FirstCheckArcadeFrames = ExecutiveStartArcadeFrames + (FirstCheckPasses - 1) * PassArcadeFrames;
+
+    /// <summary>
+    ///     The pass on which the game makes its first check on whether to lower <see cref="Floor" />. The game makes its
+    ///     first pass at once and then sleeps before each of the others, so one fewer than this many sleeps of
+    ///     <see cref="PassArcadeFrames" /> go by before the first check. It is used to work out
+    ///     <see cref="FirstCheckArcadeFrames" />.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>LDA #18 / STA PD,U</c>, counted down by
+    ///             <c>DEC PD,U</c> on every pass, the first one included.
+    ///         </item>
+    ///         <item>Disassembly: <c>$2A87</c> and <c>$2ABF</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int FirstCheckPasses = 18;
+
+    /// <summary>
+    ///     The number of live grunts at or above which a check leaves <see cref="Floor" /> alone. A check lowers the
+    ///     floor only while fewer grunts than this are alive.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>CMPA #30 / BHS</c>.</item>
+    ///         <item>Disassembly: <c>$2ACA</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int GruntCountThatHoldsTheFloor = 30;
 
     /// <summary>
     ///     The number of beats subtracted from <see cref="Floor" /> at a check when the player has scored nothing since
@@ -182,16 +162,51 @@ public sealed class GruntSpeedProgression
     private const int LowestFloor = 1;
 
     /// <summary>
-    ///     The number of live grunts at or above which a check leaves <see cref="Floor" /> alone. A check lowers the
-    ///     floor only while fewer grunts than this are alive.
+    ///     How many fiftieths of a second the game sleeps between one pass of its loop and the next. A pass is the unit
+    ///     the game counts its checks in: <see cref="FirstCheckPasses" /> and <see cref="CheckIntervalPasses" /> are both
+    ///     counted in passes.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>CMPA #30 / BHS</c>.</item>
-    ///         <item>Disassembly: <c>$2ACA</c>.</item>
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, <c>NAP 15,GEXEC0</c>.</item>
+    ///         <item>Disassembly: <c>$2A85</c> to <c>$2B08</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int GruntCountThatHoldsTheFloor = 30;
+    private const int PassArcadeFrames = 15;
+
+    /// <summary>
+    ///     How many fiftieths of a second the game sleeps after it goes live before it switches the robots on again. It
+    ///     is the first part of <see cref="ExecutiveStartArcadeFrames" />.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRG23.ASM</c> <c>NAP 12,PLS3</c>, straight after <c>CLR STATUS</c> at
+    ///             <c>PLS2</c>.
+    ///         </item>
+    ///         <item>Disassembly: <c>$289A</c> to <c>$28A1</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int Pls3NapArcadeFrames = 12;
+
+    /// <summary>
+    ///     How many fiftieths of a second the game then sleeps before it starts its loop of passes. It is the second part
+    ///     of <see cref="ExecutiveStartArcadeFrames" />.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRG23.ASM</c> <c>NAP 10,PLS4</c>; <c>PLS4</c> runs on into
+    ///             <c>
+    ///                 JMP
+    ///                 GEXEC
+    ///             </c>
+    ///             with no more sleeps.
+    ///         </item>
+    ///         <item>Disassembly: <c>$28AA</c> to <c>$28D7</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int Pls4NapArcadeFrames = 10;
 
     /// <summary>
     ///     The number of beats subtracted from <see cref="Floor" /> at a check when the player has scored at least once
@@ -205,21 +220,6 @@ public sealed class GruntSpeedProgression
     ///     </list>
     /// </remarks>
     private const int SmallFloorStep = 1;
-
-    /// <summary>
-    ///     How many fiftieths of a second the game waits between one check on whether to lower <see cref="Floor" /> and
-    ///     the next. It is the value <see cref="_checkWaitArcadeFrames" /> has after the first check.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, which counts down fifteen passes of fifteen
-    ///             frames.
-    ///         </item>
-    ///         <item>Disassembly: <c>$2A85</c> to <c>$2B08</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int CheckIntervalArcadeFrames = CheckIntervalPasses * PassArcadeFrames;
 
     /// <summary>Counts up to the next check, in clock units. It only counts while the game is live.</summary>
     private int _checkClockUnits;

@@ -16,14 +16,14 @@ namespace Robotron2084.Level;
 /// </remarks>
 public static class ScoreValues
 {
-    /// <summary>The points for killing a brain.</summary>
-    public const int Brain = 500;
-
     /// <summary>
     ///     The points for killing a BerzerkRobot. It is worth what a grunt is, because it is the author's own robot and
     ///     the arcade has no score for it.
     /// </summary>
     public const int BerzerkRobot = 100;
+
+    /// <summary>The points for killing a brain.</summary>
+    public const int Brain = 500;
 
     /// <summary>The points for shooting a cruise missile.</summary>
     public const int CruiseMissile = 25;
@@ -34,14 +34,14 @@ public static class ScoreValues
     /// <summary>The points for killing an enforcer.</summary>
     public const int Enforcer = 150;
 
-    /// <summary>The points for killing a grunt.</summary>
-    public const int Grunt = 100;
-
     /// <summary>
     ///     The points for killing a Gorf. It is worth what a grunt is, because it is the author's own robot and the
     ///     arcade has no score for it.
     /// </summary>
     public const int Gorf = 100;
+
+    /// <summary>The points for killing a grunt.</summary>
+    public const int Grunt = 100;
 
     /// <summary>The points for killing a prog.</summary>
     public const int Prog = 100;

@@ -42,15 +42,6 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int AppearExtraPasses = 32;
 
-    /// <summary>How many fiftieths of a second the arcade sleeps between one pass of its appear loop and the next.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>NAP 1,APL</c>.</item>
-    ///         <item>Disassembly: <c>$2949</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int AppearPassArcadeFrames = 1;
-
     /// <summary>
     ///     How many fiftieths of a second the arcade sleeps after its appear loop finishes, to let the last appear
     ///     effects finish.
@@ -63,14 +54,14 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int AppearFinishNapArcadeFrames = 2;
 
-    /// <summary>How many fiftieths of a second the arcade then sleeps, with the robots switched on, before the player appears.</summary>
+    /// <summary>How many fiftieths of a second the arcade sleeps between one pass of its appear loop and the next.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>NAP 10,PLS1</c>.</item>
-    ///         <item>Disassembly: <c>$295D</c>.</item>
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>NAP 1,APL</c>.</item>
+    ///         <item>Disassembly: <c>$2949</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int RobotsOnNapArcadeFrames = 10;
+    private const int AppearPassArcadeFrames = 1;
 
     /// <summary>
     ///     How many fiftieths of a second after the wave is set up the player appears on a brain wave, where the robots
@@ -84,6 +75,15 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int BrainWavePlayerAppearArcadeFrames = 150;
 
+    /// <summary>How many fiftieths of a second the arcade then sleeps before it switches the game on.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>NAP 4,PLS2</c>.</item>
+    ///         <item>Disassembly: <c>$2885</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int DiagonalPlayerAppearNapArcadeFrames = 4;
+
     /// <summary>
     ///     How many fiftieths of a second the arcade sleeps after the player starts to appear, before the second part of
     ///     the player's appear, which is the strips that lean.
@@ -96,14 +96,14 @@ public sealed class WaveStartSequence
     /// </remarks>
     private const int PlayerAppearNapArcadeFrames = 6;
 
-    /// <summary>How many fiftieths of a second the arcade then sleeps before it switches the game on.</summary>
+    /// <summary>How many fiftieths of a second the arcade then sleeps, with the robots switched on, before the player appears.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>NAP 4,PLS2</c>.</item>
-    ///         <item>Disassembly: <c>$2885</c>.</item>
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>NAP 10,PLS1</c>.</item>
+    ///         <item>Disassembly: <c>$295D</c>.</item>
     ///     </list>
     /// </remarks>
-    private const int DiagonalPlayerAppearNapArcadeFrames = 4;
+    private const int RobotsOnNapArcadeFrames = 10;
 
     /// <summary>How many fiftieths of a second after the wave is set up the game goes live.</summary>
     private readonly int _liveArcadeFrames;
@@ -149,46 +149,6 @@ public sealed class WaveStartSequence
     /// <summary>How many fiftieths of a second after the wave is set up the player appears (test hook).</summary>
     internal int PlayerAppearArcadeFrames => _playerAppearArcadeFrames;
 
-    /// <summary>Moves the count on by one port tick.</summary>
-    public void Update()
-    {
-        if (IsLive())
-        {
-            _liveClockUnitsThisTick = ArcadeClock.UnitsPerPortTick;
-            _hasJustGoneLive = false;
-            return;
-        }
-
-        _clockUnits += ArcadeClock.UnitsPerPortTick;
-        _liveClockUnitsThisTick = Math.Max(0, _clockUnits - ArcadeClock.ToClockUnits(_liveArcadeFrames));
-        _hasJustGoneLive = IsLive();
-    }
-
-    /// <summary>
-    ///     Gets how much of the latest tick was live play, in clock units, so that a timer that starts when the game goes
-    ///     live starts at exactly that moment and not at the nearest tick.
-    /// </summary>
-    /// <returns>
-    ///     The clock units: none before the game is live, the part of the tick left over on the tick it goes live, and a
-    ///     whole tick's worth after that.
-    /// </returns>
-    public int GetLiveClockUnitsThisTick()
-    {
-        return _liveClockUnitsThisTick;
-    }
-
-    /// <summary>Says whether the player has started to appear. Before this the player is not on the screen.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>PLS1</c>, <c>JSR PAPPR</c>.</item>
-    ///         <item>Disassembly: <c>$2874</c>.</item>
-    ///     </list>
-    /// </remarks>
-    public bool HasPlayerAppeared()
-    {
-        return _clockUnits >= ArcadeClock.ToClockUnits(_playerAppearArcadeFrames);
-    }
-
     /// <summary>
     ///     Gets how long ago the player started to appear, in clock units, so that the appear effect takes its first step
     ///     on the right fiftieth of a second.
@@ -199,32 +159,11 @@ public sealed class WaveStartSequence
         return _clockUnits - ArcadeClock.ToClockUnits(_playerAppearArcadeFrames);
     }
 
-    /// <summary>Says whether the second part of the player's appear has started, which is the strips that lean.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>PLS1A</c>, <c>JSR PDAPPR</c>.</item>
-    ///         <item>Disassembly: <c>$2882</c>.</item>
-    ///     </list>
-    /// </remarks>
-    public bool HasPlayerDiagonalAppearStarted()
-    {
-        return GetClockUnitsSincePlayerDiagonalAppearStarted() >= 0;
-    }
-
     /// <summary>Gets how long ago the second part of the player's appear started, in clock units.</summary>
     /// <returns>The clock units since then. It is less than nothing before that part has started.</returns>
     public int GetClockUnitsSincePlayerDiagonalAppearStarted()
     {
         return _clockUnits - ArcadeClock.ToClockUnits(_playerAppearArcadeFrames + PlayerAppearNapArcadeFrames);
-    }
-
-    /// <summary>
-    ///     Says whether this is the tick on which the game goes live. The playfield tells the robots on that tick, so
-    ///     that each one can set the time of its first move.
-    /// </summary>
-    public bool HasJustGoneLive()
-    {
-        return _hasJustGoneLive;
     }
 
     /// <summary>
@@ -267,6 +206,52 @@ public sealed class WaveStartSequence
         return ArcadeClock.ToClockUnits(firstBeatArcadeFrames) - clockUnitsAtStartOfTick;
     }
 
+    /// <summary>
+    ///     Gets how much of the latest tick was live play, in clock units, so that a timer that starts when the game goes
+    ///     live starts at exactly that moment and not at the nearest tick.
+    /// </summary>
+    /// <returns>
+    ///     The clock units: none before the game is live, the part of the tick left over on the tick it goes live, and a
+    ///     whole tick's worth after that.
+    /// </returns>
+    public int GetLiveClockUnitsThisTick()
+    {
+        return _liveClockUnitsThisTick;
+    }
+
+    /// <summary>
+    ///     Says whether this is the tick on which the game goes live. The playfield tells the robots on that tick, so
+    ///     that each one can set the time of its first move.
+    /// </summary>
+    public bool HasJustGoneLive()
+    {
+        return _hasJustGoneLive;
+    }
+
+    /// <summary>Says whether the player has started to appear. Before this the player is not on the screen.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>PLS1</c>, <c>JSR PAPPR</c>.</item>
+    ///         <item>Disassembly: <c>$2874</c>.</item>
+    ///     </list>
+    /// </remarks>
+    public bool HasPlayerAppeared()
+    {
+        return _clockUnits >= ArcadeClock.ToClockUnits(_playerAppearArcadeFrames);
+    }
+
+    /// <summary>Says whether the second part of the player's appear has started, which is the strips that lean.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>PLS1A</c>, <c>JSR PDAPPR</c>.</item>
+    ///         <item>Disassembly: <c>$2882</c>.</item>
+    ///     </list>
+    /// </remarks>
+    public bool HasPlayerDiagonalAppearStarted()
+    {
+        return GetClockUnitsSincePlayerDiagonalAppearStarted() >= 0;
+    }
+
     /// <summary>Says whether the game is live: the player can move and fire, things can touch the player, and the robots act.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -277,6 +262,21 @@ public sealed class WaveStartSequence
     public bool IsLive()
     {
         return _clockUnits >= ArcadeClock.ToClockUnits(_liveArcadeFrames);
+    }
+
+    /// <summary>Moves the count on by one port tick.</summary>
+    public void Update()
+    {
+        if (IsLive())
+        {
+            _liveClockUnitsThisTick = ArcadeClock.UnitsPerPortTick;
+            _hasJustGoneLive = false;
+            return;
+        }
+
+        _clockUnits += ArcadeClock.UnitsPerPortTick;
+        _liveClockUnitsThisTick = Math.Max(0, _clockUnits - ArcadeClock.ToClockUnits(_liveArcadeFrames));
+        _hasJustGoneLive = IsLive();
     }
 
     /// <summary>

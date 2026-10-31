@@ -14,11 +14,11 @@ internal sealed class LaserCollisionRule : ICollisionRule
     public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
     {
         foreach (var robot in RobotKinds.All)
-        foreach (var laser in scene.GetActiveLasers())
-        {
-            var target = entities.GetEntities(robot.Kind)
-                .FirstOrDefault(entity => entity.IsAlive() && scene.Touches(laser, entity));
-            if (target is not null) yield return new LaserHitResult(laser, target, robot);
-        }
+            foreach (var laser in scene.GetActiveLasers())
+            {
+                var target = entities.GetEntities(robot.Kind)
+                    .FirstOrDefault(entity => entity.IsAlive() && scene.Touches(laser, entity));
+                if (target is not null) yield return new LaserHitResult(laser, target, robot);
+            }
     }
 }
