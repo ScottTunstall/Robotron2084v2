@@ -40,7 +40,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
 {
     private readonly Random _random;
     private int _directionVotes;
-    private PlayField? _field;
+    private PlayField? _playField;
     private IntVector2 _heldMove;
     private int _holdTicks;
 
@@ -52,18 +52,18 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
     }
 
     /// <summary>Attaches the field this poll will reason about (the demo state calls it every tick).</summary>
-    public void Bind(PlayField field)
+    public void Bind(PlayField playField)
     {
-        _field = field;
+        _playField = playField;
     }
 
     public PlayerInputState Poll()
     {
-        if (_field is not { } field || !field.IsPlayerAlive()) return new PlayerInputState(IntVector2.Zero, false);
+        if (_playField is not { } playField || !playField.IsPlayerAlive()) return new PlayerInputState(IntVector2.Zero, false);
 
-        var position = field.Player.Position;
-        var nearest = field.GetNearestLivingRobotPosition(position);
-        var move = HoldDirection(ChooseDirection(field, position, nearest));
+        var position = playField.Player.Position;
+        var nearest = playField.GetNearestLivingRobotPosition(position);
+        var move = HoldDirection(ChooseDirection(playField, position, nearest));
 
         if (move != IntVector2.Zero && _random.Next(AttractTuning.DemoStutterChanceDenominator) == 0)
             move = IntVector2.Zero;
@@ -83,13 +83,13 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
     }
 
     /// <summary>Picks this tick's raw direction: flee a robot inside the threat distance, else drift to the centre.</summary>
-    /// <param name="field">The bound playfield.</param>
+    /// <param name="playField">The bound playfield.</param>
     /// <param name="position">The player's position.</param>
     /// <param name="nearest">The nearest living robot, if any.</param>
     /// <returns>The raw 8-way direction, before hysteresis.</returns>
-    private static IntVector2 ChooseDirection(PlayField field, IntVector2 position, IntVector2? nearest)
+    private static IntVector2 ChooseDirection(PlayField playField, IntVector2 position, IntVector2? nearest)
     {
-        var bounds = field.Wall.PlayfieldBounds;
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 centre = new(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
 
         // A robot past the threat distance is ignored for movement — the centre drift stays.

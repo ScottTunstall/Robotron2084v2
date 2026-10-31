@@ -86,10 +86,10 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     }
 
     /// <summary>True while this binding is held down, per the ROM's active-HIGH switch convention.</summary>
-    public bool IsHeld(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
+    public bool IsHeld(KeyboardState keyboardState, GamePadState playerOneGamePadState, GamePadState playerTwoGamePadState)
     {
-        var pad = padOne;
-        if (GamePadIndex == 1) pad = padTwo;
+        var pad = playerOneGamePadState;
+        if (GamePadIndex == 1) pad = playerTwoGamePadState;
 
         return Kind switch
         {

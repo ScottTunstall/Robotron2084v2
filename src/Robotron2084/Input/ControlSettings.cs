@@ -70,9 +70,9 @@ public sealed class ControlSettings
     }
 
     /// <summary>True while the pause binding is held.</summary>
-    public bool IsPauseHeld(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
+    public bool IsPauseHeld(KeyboardState keyboardState, GamePadState playerOneGamePadState, GamePadState playerTwoGamePadState)
     {
-        return Pause.IsHeld(keyboardState, padOne, padTwo);
+        return Pause.IsHeld(keyboardState, playerOneGamePadState, playerTwoGamePadState);
     }
 
     /// <summary>
@@ -82,15 +82,15 @@ public sealed class ControlSettings
     ///     long-standing port aliases: Space as a fire button and <c>Insert</c> as the
     ///     skip-wave test key (<c>P</c> is PAUSE, not skip-wave).
     /// </summary>
-    public PlayerInputState ReadPlayer(int playerIndex, KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
+    public PlayerInputState ReadPlayer(int playerIndex, KeyboardState keyboardState, GamePadState playerOneGamePadState, GamePadState playerTwoGamePadState)
     {
         var controls = _players[playerIndex];
-        var move = controls.GetMoveDirection(keyboardState, padOne, padTwo);
-        var shoot = controls.GetShootDirection(keyboardState, padOne, padTwo);
-        var ownPad = padOne;
-        if (playerIndex == 1) ownPad = padTwo;
+        var move = controls.GetMoveDirection(keyboardState, playerOneGamePadState, playerTwoGamePadState);
+        var shoot = controls.GetShootDirection(keyboardState, playerOneGamePadState, playerTwoGamePadState);
+        var ownPad = playerOneGamePadState;
+        if (playerIndex == 1) ownPad = playerTwoGamePadState;
 
-        var fire = controls.IsFiring(keyboardState, padOne, padTwo)
+        var fire = controls.IsFiring(keyboardState, playerOneGamePadState, playerTwoGamePadState)
                    || keyboardState.IsKeyDown(FireAliasKey)
                    || ownPad.IsButtonDown(FireAliasButton)
                    || ownPad.Triggers.Right > FireTriggerThreshold;
@@ -100,8 +100,8 @@ public sealed class ControlSettings
             shoot,
             fire,
             keyboardState.IsKeyDown(SkipWaveKey),
-            keyboardState.IsKeyDown(StartOneKey) || keyboardState.IsKeyDown(StartOneNumPadKey) || padOne.IsButtonDown(StartOneButton),
-            keyboardState.IsKeyDown(StartTwoKey) || keyboardState.IsKeyDown(StartTwoNumPadKey) || padOne.IsButtonDown(StartTwoButton));
+            keyboardState.IsKeyDown(StartOneKey) || keyboardState.IsKeyDown(StartOneNumPadKey) || playerOneGamePadState.IsButtonDown(StartOneButton),
+            keyboardState.IsKeyDown(StartTwoKey) || keyboardState.IsKeyDown(StartTwoNumPadKey) || playerOneGamePadState.IsButtonDown(StartTwoButton));
     }
 
     /// <summary>The page's <c>R</c>: every line back to the factory scheme.</summary>

@@ -37,7 +37,7 @@ public sealed class PlayerControls
     /// </summary>
     public static PlayerControls CreateDefaults(int playerIndex)
     {
-        var controls = new PlayerControls();
+        var playerControls = new PlayerControls();
         var isSecondPlayer = playerIndex == 1;
         var pad = 0;
         if (isSecondPlayer) pad = 1;
@@ -72,48 +72,48 @@ public sealed class PlayerControls
             var key = moveKeys[index];
             if (shooting) key = shootKeys[index];
 
-            controls[action] = new ActionBinding(
+            playerControls[action] = new ActionBinding(
                 InputBinding.CreateKey(key),
                 InputBinding.CreateStick(pad, shooting, dx, dy));
         }
 
-        return controls;
+        return playerControls;
     }
 
     /// <summary>The move stick's direction (-1/0/1 per axis), from the bound MOVE actions.</summary>
-    public IntVector2 GetMoveDirection(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
+    public IntVector2 GetMoveDirection(KeyboardState keyboardState, GamePadState playerOneGamePadState, GamePadState playerTwoGamePadState)
     {
         return new IntVector2(
-            GetAxis(InputAction.MoveRight, InputAction.MoveLeft, keyboardState, padOne, padTwo),
-            GetAxis(InputAction.MoveDown, InputAction.MoveUp, keyboardState, padOne, padTwo));
+            GetAxis(InputAction.MoveRight, InputAction.MoveLeft, keyboardState, playerOneGamePadState, playerTwoGamePadState),
+            GetAxis(InputAction.MoveDown, InputAction.MoveUp, keyboardState, playerOneGamePadState, playerTwoGamePadState));
     }
 
     /// <summary>The fire stick's direction, from the bound SHOOT actions.</summary>
-    public IntVector2 GetShootDirection(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
+    public IntVector2 GetShootDirection(KeyboardState keyboardState, GamePadState playerOneGamePadState, GamePadState playerTwoGamePadState)
     {
         return new IntVector2(
-            GetAxis(InputAction.ShootRight, InputAction.ShootLeft, keyboardState, padOne, padTwo),
-            GetAxis(InputAction.ShootDown, InputAction.ShootUp, keyboardState, padOne, padTwo));
+            GetAxis(InputAction.ShootRight, InputAction.ShootLeft, keyboardState, playerOneGamePadState, playerTwoGamePadState),
+            GetAxis(InputAction.ShootDown, InputAction.ShootUp, keyboardState, playerOneGamePadState, playerTwoGamePadState));
     }
 
     /// <summary>
     ///     True while ANY shoot action is held (holding an aim key fires).
     /// </summary>
-    public bool IsFiring(KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
+    public bool IsFiring(KeyboardState keyboardState, GamePadState playerOneGamePadState, GamePadState playerTwoGamePadState)
     {
-        return GetShootDirection(keyboardState, padOne, padTwo) != IntVector2.Zero;
+        return GetShootDirection(keyboardState, playerOneGamePadState, playerTwoGamePadState) != IntVector2.Zero;
     }
 
     private int GetAxis(
         InputAction positive,
         InputAction negative,
         KeyboardState keyboardState,
-        GamePadState padOne,
-        GamePadState padTwo)
+        GamePadState playerOneGamePadState,
+        GamePadState playerTwoGamePadState)
     {
         var value = 0;
-        if (this[positive].IsHeld(keyboardState, padOne, padTwo)) value++;
-        if (this[negative].IsHeld(keyboardState, padOne, padTwo)) value--;
+        if (this[positive].IsHeld(keyboardState, playerOneGamePadState, playerTwoGamePadState)) value++;
+        if (this[negative].IsHeld(keyboardState, playerOneGamePadState, playerTwoGamePadState)) value--;
 
         return Math.Clamp(value, -1, 1);
     }

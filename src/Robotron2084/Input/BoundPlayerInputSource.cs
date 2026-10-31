@@ -28,6 +28,6 @@ public sealed class BoundPlayerInputSource : IPlayerInputSource
     /// <param name="snapshot">The snapshot to read from.</param>
     public PlayerInputState Poll(InputSnapshot snapshot)
     {
-        return _controlSettings.ReadPlayer(_playerIndex, snapshot.KeyboardState, snapshot.PadOne, snapshot.PadTwo);
+        return _controlSettings.ReadPlayer(_playerIndex, snapshot.KeyboardState, snapshot.PlayerOneGamePadState, snapshot.PlayerTwoGamePadState);
     }
 }

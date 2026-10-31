@@ -73,10 +73,10 @@ public static class ControlCapture
     }
 
     /// <summary>The keys that went down, in <see cref="Keys" /> order so the result is deterministic.</summary>
-    private static IEnumerable<Keys> GetNewlyPressedKeys(KeyboardState previous, KeyboardState current)
+    private static IEnumerable<Keys> GetNewlyPressedKeys(KeyboardState previousKeyboardState, KeyboardState currentKeyboardState)
     {
-        return current.GetPressedKeys()
-            .Where(key => !previous.IsKeyDown(key))
+        return currentKeyboardState.GetPressedKeys()
+            .Where(key => !previousKeyboardState.IsKeyDown(key))
             .OrderBy(key => (int)key);
     }
 
