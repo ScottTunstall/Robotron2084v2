@@ -19,7 +19,7 @@ public sealed class PlayerLaserAnimationFrameTests
     [Fact]
     public void Bar_Is6x1_Solid()
     {
-        var pattern = SpriteFactory.BuildLaserBarPattern(Color.White);
+        var pattern = TextureFactory.BuildLaserBarPattern(Color.White);
 
         Assert.Equal(6, pattern.Length);
         Assert.All(pattern, pixel => Assert.Equal(Color.White, pixel));
@@ -28,7 +28,7 @@ public sealed class PlayerLaserAnimationFrameTests
     [Fact]
     public void Column_Is2x6_LeftColumnOnly()
     {
-        var pattern = SpriteFactory.BuildLaserColumnPattern(Color.White);
+        var pattern = TextureFactory.BuildLaserColumnPattern(Color.White);
 
         Assert.Equal(2 * N, pattern.Length);
         for (var row = 0; row < N; row++)
@@ -41,7 +41,7 @@ public sealed class PlayerLaserAnimationFrameTests
     [Fact]
     public void DiagonalMain_Is6x6_TopLeftToBottomRight()
     {
-        var pattern = SpriteFactory.BuildLaserDiagonalMainPattern(Color.White);
+        var pattern = TextureFactory.BuildLaserDiagonalMainPattern(Color.White);
 
         Assert.Equal(N * N, pattern.Length);
         for (var y = 0; y < N; y++)
@@ -55,7 +55,7 @@ public sealed class PlayerLaserAnimationFrameTests
     [Fact]
     public void DiagonalAnti_Is6x6_TopRightToBottomLeft()
     {
-        var pattern = SpriteFactory.BuildLaserDiagonalAntiPattern(Color.White);
+        var pattern = TextureFactory.BuildLaserDiagonalAntiPattern(Color.White);
 
         Assert.Equal(N * N, pattern.Length);
         for (var y = 0; y < N; y++)

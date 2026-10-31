@@ -12,18 +12,18 @@ namespace Robotron2084.Tests;
 ///     PortPixelsPerArcadePixel) with the shape centred — centre pixel filled, corners empty —
 ///     so a resolution change (PortPixelsPerArcadePixel 2 → 3 → 4…) never mis-renders them.
 /// </summary>
-public sealed class SpriteFactoryPatternTests
+public sealed class TextureFactoryPatternTests
 {
     public static IEnumerable<object[]> AllPatterns()
     {
-        yield return new object[] { "Player", (Func<Color, Color[]>)SpriteFactory.BuildPlayerPattern };
-        yield return new object[] { "Electrode", (Func<Color, Color[]>)SpriteFactory.BuildElectrodePattern };
-        yield return new object[] { "Grunt", (Func<Color, Color[]>)SpriteFactory.BuildGruntPattern };
-        yield return new object[] { "Hulk", (Func<Color, Color[]>)SpriteFactory.BuildHulkPattern };
-        yield return new object[] { "Spheroid", (Func<Color, Color[]>)SpriteFactory.BuildSpheroidPattern };
-        yield return new object[] { "Enforcer", (Func<Color, Color[]>)SpriteFactory.BuildEnforcerPattern };
-        yield return new object[] { "Quark", (Func<Color, Color[]>)SpriteFactory.BuildQuarkPattern };
-        yield return new object[] { "Tank", (Func<Color, Color[]>)SpriteFactory.BuildTankPattern };
+        yield return new object[] { "Player", (Func<Color, Color[]>)TextureFactory.BuildPlayerPattern };
+        yield return new object[] { "Electrode", (Func<Color, Color[]>)TextureFactory.BuildElectrodePattern };
+        yield return new object[] { "Grunt", (Func<Color, Color[]>)TextureFactory.BuildGruntPattern };
+        yield return new object[] { "Hulk", (Func<Color, Color[]>)TextureFactory.BuildHulkPattern };
+        yield return new object[] { "Spheroid", (Func<Color, Color[]>)TextureFactory.BuildSpheroidPattern };
+        yield return new object[] { "Enforcer", (Func<Color, Color[]>)TextureFactory.BuildEnforcerPattern };
+        yield return new object[] { "Quark", (Func<Color, Color[]>)TextureFactory.BuildQuarkPattern };
+        yield return new object[] { "Tank", (Func<Color, Color[]>)TextureFactory.BuildTankPattern };
     }
 
     [Theory]

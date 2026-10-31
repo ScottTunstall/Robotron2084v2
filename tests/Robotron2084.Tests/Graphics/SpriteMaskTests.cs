@@ -28,13 +28,13 @@ public sealed class SpriteMaskTests
         // Two 4x4 sprites: one marked only at its top-left, the other only at its bottom-right.
         var topLeft = SpriteMask.CreateFromPixels(4, 4, [(0, 0)]);
         var bottomRight = SpriteMask.CreateFromPixels(4, 4, [(3, 3)]);
-        var box = new Rectangle(100, 100, 4, 4);
+        var drawnBounds = new Rectangle(100, 100, 4, 4);
 
         // Drawn in the same place the two marks are three pixels apart: the boxes overlap, the sprites do not.
-        Assert.False(SpriteMask.Overlaps(topLeft, box, bottomRight, box));
+        Assert.False(SpriteMask.Overlaps(topLeft, drawnBounds, bottomRight, drawnBounds));
 
         // Slide the second sprite up and left until its mark lands on the first one's.
-        Assert.True(SpriteMask.Overlaps(topLeft, box, bottomRight, new Rectangle(97, 97, 4, 4)));
+        Assert.True(SpriteMask.Overlaps(topLeft, drawnBounds, bottomRight, new Rectangle(97, 97, 4, 4)));
     }
 
     [Fact]
@@ -57,12 +57,12 @@ public sealed class SpriteMaskTests
     public void BoxesThatMissNeverTouch_WhateverThePixels()
     {
         var solid = SpriteMask.CreateFromPixels(2, 2, [(0, 0), (1, 0), (0, 1), (1, 1)]);
-        var box = new Rectangle(0, 0, 2, 2);
+        var drawnBounds = new Rectangle(0, 0, 2, 2);
 
-        Assert.True(SpriteMask.Overlaps(solid, box, solid, box));
+        Assert.True(SpriteMask.Overlaps(solid, drawnBounds, solid, drawnBounds));
 
         // Adjacent and apart, with no shared screen pixel.
-        Assert.False(SpriteMask.Overlaps(solid, box, solid, new Rectangle(2, 0, 2, 2)));
-        Assert.False(SpriteMask.Overlaps(solid, box, solid, new Rectangle(0, 2, 2, 2)));
+        Assert.False(SpriteMask.Overlaps(solid, drawnBounds, solid, new Rectangle(2, 0, 2, 2)));
+        Assert.False(SpriteMask.Overlaps(solid, drawnBounds, solid, new Rectangle(0, 2, 2, 2)));
     }
 }
