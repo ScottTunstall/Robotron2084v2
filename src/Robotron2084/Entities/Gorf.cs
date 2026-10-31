@@ -42,15 +42,15 @@ public sealed class Gorf : IExplodable, IRemovable
     /// <summary>How far Gorf goes sideways on each step, in port pixels.</summary>
     private static readonly int StepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
 
-    private readonly ArcadeFrameTimer _animationTimer = new();
-    private readonly ArcadeFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _animationArcadeFrameTimer = new();
+    private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly int _directionSignX;
     private readonly Queue<int> _dropSteps = new();
     private readonly int _groundY;
     private readonly int _maxDropsX2;
     private readonly Rectangle _playfieldBounds;
     private readonly Random _random;
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
     private readonly int _totalSteps;
     private IntVector2 _position;
     private int _stepCount;
@@ -60,16 +60,16 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     Makes a Gorf just off the screen, on a random side and at a random height, and works out where on its way it
     ///     will drop grunts.
     /// </summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="random">Where its random numbers come from. They pick the side, the height and how many grunts it drops.</param>
     /// <param name="playfieldBounds">The inside of the wall, in port pixels. Gorf starts and ends outside it.</param>
     /// <param name="maxDropsX2">
     ///     This wave's limit on how many grunts it drops at once. The number is picked the way a spheroid
     ///     picks its enforcers.
     /// </param>
-    public Gorf(SpriteSet sprites, Random random, Rectangle playfieldBounds, int maxDropsX2)
+    public Gorf(SpriteSet spriteSet, Random random, Rectangle playfieldBounds, int maxDropsX2)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _playfieldBounds = playfieldBounds;
         _random = random;
         _maxDropsX2 = maxDropsX2;
@@ -116,7 +116,7 @@ public sealed class Gorf : IExplodable, IRemovable
         var pixel = ScreenSize.ToPortPixelsFromArcadePixels(1);
         var source = new Rectangle((visible.X - drawn.X) / pixel, (visible.Y - drawn.Y) / pixel, visible.Width / pixel,
             visible.Height / pixel);
-        _sprites.Blitter.UsePassThrough();
+        _spriteSet.BlitterDraw.UsePassThrough();
         spriteBatch.Draw(animationFrame, visible, source, Color.White);
     }
 
@@ -130,7 +130,7 @@ public sealed class Gorf : IExplodable, IRemovable
     /// <returns>The animation frame that is showing.</returns>
     public Texture2D GetCurrentAnimationFrame()
     {
-        return _sprites.GorfAnimationFrames[AnimationFrameIndex];
+        return _spriteSet.GorfAnimationFrames[AnimationFrameIndex];
     }
 
     /// <inheritdoc />
@@ -160,13 +160,13 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     drop point.
     /// </summary>
     /// <param name="gameTime">Not used. Gorf counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield, which the dropped grunts are put on.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">The playfield, which the dropped grunts are put on.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
-        if (!this.IsAlive() || field.RobotsFrozen()) return;
+        if (!this.IsAlive() || playField.RobotsFrozen()) return;
 
-        if (_animationTimer.Tick(GorfTuning.AnimationIntervalArcadeFrames)) ShowNextAnimationFrame();
-        if (_beatTimer.Tick(GorfTuning.BeatIntervalArcadeFrames)) ActOnBeat(field);
+        if (_animationArcadeFrameTimer.Tick(GorfTuning.AnimationIntervalArcadeFrames)) ShowNextAnimationFrame();
+        if (_beatArcadeFrameTimer.Tick(GorfTuning.BeatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
     /// <summary>How many more times it will drop grunts.</summary>
@@ -179,8 +179,8 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     What Gorf does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It takes one step along the hop, drops grunts if a drop is due, and is gone once
     ///     it has crossed the playfield.
     /// </summary>
-    /// <param name="field">The playfield, which the dropped grunts are put on.</param>
-    private void ActOnBeat(PlayField field)
+    /// <param name="playField">The playfield, which the dropped grunts are put on.</param>
+    private void ActOnBeat(PlayField playField)
     {
         _stepCount++;
         _stepInHop++;
@@ -191,7 +191,7 @@ public sealed class Gorf : IExplodable, IRemovable
         if (_dropSteps.Count > 0 && _stepCount >= _dropSteps.Peek())
         {
             _dropSteps.Dequeue();
-            DropGrunts(field);
+            DropGrunts(playField);
         }
 
         if (_stepCount >= _totalSteps) Kill();
@@ -202,8 +202,8 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     random number from 1 up to the wave's limit, halved and rounded up. It is never more than
     ///     <see cref="GorfTuning.MaxGruntsPerDrop" />.
     /// </summary>
-    /// <param name="field">The playfield, which puts the grunts on the field and holds them back when the wave is full.</param>
-    private void DropGrunts(PlayField field)
+    /// <param name="playField">The playfield, which puts the grunts on the field and holds them back when the wave is full.</param>
+    private void DropGrunts(PlayField playField)
     {
         var count = Math.Min(GorfTuning.MaxGruntsPerDrop, (_random.Next(_maxDropsX2) + 2) / 2);
         var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
@@ -216,13 +216,13 @@ public sealed class Gorf : IExplodable, IRemovable
         for (var index = 0; index < count; index++)
         {
             var sideways = (2 * index - (count - 1)) * spacing / 2;
-            field.SpawnGrunt(new IntVector2(centreX + sideways, bodyY), new IntVector2(centreX + sideways, groundY));
+            playField.SpawnGrunt(new IntVector2(centreX + sideways, bodyY), new IntVector2(centreX + sideways, groundY));
         }
     }
 
     /// <summary>Shows the next animation frame.</summary>
     private void ShowNextAnimationFrame()
     {
-        AnimationFrameIndex = (AnimationFrameIndex + 1) % _sprites.GorfAnimationFrames.Length;
+        AnimationFrameIndex = (AnimationFrameIndex + 1) % _spriteSet.GorfAnimationFrames.Length;
     }
 }

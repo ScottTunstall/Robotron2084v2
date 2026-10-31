@@ -70,7 +70,7 @@ public sealed class StripEffect : IEntity
     /// <summary>The smallest gap at which an appear is still drawn.</summary>
     private readonly int _smallestAppearSpacing;
 
-    private readonly ArcadeFrameTimer _stepTimer;
+    private readonly ArcadeFrameTimer _stepArcadeFrameTimer;
 
     // notes §52, §67.4
     private int _arcadeFramesRemaining;
@@ -119,16 +119,16 @@ public sealed class StripEffect : IEntity
         Slope = slope;
         _clip = clip;
         _getCentreStripIndex = getCentreStripIndex;
-        _stepTimer = new ArcadeFrameTimer(startClockUnits);
+        _stepArcadeFrameTimer = new ArcadeFrameTimer(startClockUnits);
         _getFollowedBounds = getFollowedBounds;
 
         // How fast an appear closes up. The diagonal routine closes it twice as fast as the other two routines.
-        var engine = GetEngine();
+        var stripEngine = GetEngine();
         _appearSizerStep = StripExplosionTuning.SlowAppearSizerStep;
-        if (engine == StripEngine.Diagonal) _appearSizerStep = StripExplosionTuning.SizerStep;
+        if (stripEngine == StripEngine.Diagonal) _appearSizerStep = StripExplosionTuning.SizerStep;
 
         _smallestAppearSpacing = StripExplosionTuning.SmallestAppearSpacing;
-        var closesUpFully = isClosedUpAtTheEnd || engine == StripEngine.Horizontal;
+        var closesUpFully = isClosedUpAtTheEnd || stripEngine == StripEngine.Horizontal;
         if (closesUpFully) _smallestAppearSpacing = StripExplosionTuning.SmallestClosedAppearSpacing;
 
         // The gap between the strips starts small for an explosion, which then spreads out. It starts large for an appear, which then closes up.
@@ -160,7 +160,7 @@ public sealed class StripEffect : IEntity
     internal int Slope { get; }
 
     /// <summary>Makes an appear for an entity. The strips start far apart and close up to make the sprite.</summary>
-    /// <param name="source">The thing that is appearing. The animation frame it is showing is used.</param>
+    /// <param name="animationFrameSource">The thing that is appearing. The animation frame it is showing is used.</param>
     /// <param name="bounds">The box the sprite is drawn in.</param>
     /// <param name="axis">Which way the sprite is cut: into rows or into columns.</param>
     /// <param name="slope">How the strips lean: -1, 0 or +1.</param>
@@ -187,10 +187,10 @@ public sealed class StripEffect : IEntity
     ///         </item>
     ///     </list>
     /// </remarks>
-    public static StripEffect CreateAppear(IAnimationFrameSource source, Rectangle bounds, StripFanAxis axis, int slope,
+    public static StripEffect CreateAppear(IAnimationFrameSource animationFrameSource, Rectangle bounds, StripFanAxis axis, int slope,
         StripClip clip, Func<int, int>? getCentreStripIndex = null, int startClockUnits = 0)
     {
-        return new StripEffect(() => source.GetCurrentAnimationFrame(), bounds, StripEffectKind.Appear, axis, slope,
+        return new StripEffect(() => animationFrameSource.GetCurrentAnimationFrame(), bounds, StripEffectKind.Appear, axis, slope,
             clip,
             getCentreStripIndex, startClockUnits);
     }
@@ -199,7 +199,7 @@ public sealed class StripEffect : IEntity
     ///     Makes the explosion for something that has been killed. The way the killing laser was going decides how the
     ///     sprite is cut and how the strips lean.
     /// </summary>
-    /// <param name="dead">The thing that was killed. Its explosion sprite and its explosion box are used.</param>
+    /// <param name="deadExplodable">The thing that was killed. Its explosion sprite and its explosion box are used.</param>
     /// <param name="direction">The way the killing laser was going, or null if it was not killed by a laser.</param>
     /// <param name="clip">The inside of the playfield. A strip outside it is not drawn.</param>
     /// <returns>The new explosion.</returns>
@@ -208,10 +208,10 @@ public sealed class StripEffect : IEntity
     ///     leaning one. The box is at the object's position and is the size of the sprite the object shows, which can be
     ///     bigger than the object's <see cref="IEntity.GetBounds" />.
     /// </remarks>
-    public static StripEffect CreateExplosion(IExplodable dead, Direction8? direction, StripClip clip)
+    public static StripEffect CreateExplosion(IExplodable deadExplodable, Direction8? direction, StripClip clip)
     {
         var (axis, slope) = GetFanForShot(direction);
-        return new StripEffect(() => dead.GetExplosionAnimationFrame(), dead.GetExplosionBounds(),
+        return new StripEffect(() => deadExplodable.GetExplosionAnimationFrame(), deadExplodable.GetExplosionBounds(),
             StripEffectKind.Explode, axis, slope, clip);
     }
 
@@ -291,12 +291,12 @@ public sealed class StripEffect : IEntity
     ///     together.
     /// </summary>
     /// <param name="gameTime">Not used. The effect counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">Not used.</param>
-    public void Update(GameTime gameTime, PlayField? field = null)
+    /// <param name="playField">Not used.</param>
+    public void Update(GameTime gameTime, PlayField? playField = null)
     {
         if (!this.IsAlive()) return;
 
-        if (!_stepTimer.Tick(StepIntervalArcadeFrames)) return;
+        if (!_stepArcadeFrameTimer.Tick(StepIntervalArcadeFrames)) return;
 
         if (Kind == StripEffectKind.Explode)
         {

@@ -33,20 +33,20 @@ public sealed class RescueScoreMarker : IEntity
     /// </summary>
     private readonly int _displayIndex;
 
-    private readonly ArcadeFrameTimer _lifeTimer = new();
+    private readonly ArcadeFrameTimer _lifeArcadeFrameTimer = new();
     private readonly IntVector2 _position;
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
 
     /// <summary>Makes the number for one rescue.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="position">Where the family member was rescued.</param>
     /// <param name="rescuesThisLife">
     ///     How many family members have been rescued in this life, counting this one. The number
     ///     shown never goes above 5000.
     /// </param>
-    public RescueScoreMarker(SpriteSet sprites, IntVector2 position, int rescuesThisLife)
+    public RescueScoreMarker(SpriteSet spriteSet, IntVector2 position, int rescuesThisLife)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = position;
         _displayIndex = Math.Clamp(rescuesThisLife, 1, ScoreValues.RescueBonusMaxCount) - 1;
     }
@@ -63,7 +63,7 @@ public sealed class RescueScoreMarker : IEntity
     {
         if (!this.IsAlive()) return;
 
-        _sprites.Blitter.DrawSprite(spriteBatch, _sprites.RescueScoreDisplays[_displayIndex], GetBounds(), Color.White);
+        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, _spriteSet.RescueScoreDisplays[_displayIndex], GetBounds(), Color.White);
     }
 
     /// <summary>The box the number is drawn in.</summary>
@@ -74,9 +74,9 @@ public sealed class RescueScoreMarker : IEntity
 
     /// <summary>Counts down the time the number has left on the field.</summary>
     /// <param name="gameTime">Not used. The time is counted in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">Not used.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">Not used.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
-        if (_lifeTimer.Tick(LifeArcadeFrames)) LifeState = EntityLifeState.Dead;
+        if (_lifeArcadeFrameTimer.Tick(LifeArcadeFrames)) LifeState = EntityLifeState.Dead;
     }
 }

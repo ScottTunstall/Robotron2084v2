@@ -9,14 +9,14 @@ public static class HumanKindExtensions
 {
     /// <summary>The walk animation frames the family member is drawn with (notes §49).</summary>
     /// <param name="kind">Which family member.</param>
-    /// <param name="sprites">The sprite set that holds them.</param>
-    public static Texture2D[] GetAnimationFrames(this HumanKind kind, SpriteSet sprites)
+    /// <param name="spriteSet">The sprite set that holds them.</param>
+    public static Texture2D[] GetAnimationFrames(this HumanKind kind, SpriteSet spriteSet)
     {
         return kind switch
         {
-            HumanKind.Mikey => sprites.MikeyAnimationFrames,
-            HumanKind.Mommy => sprites.MommyAnimationFrames,
-            _ => sprites.DaddyAnimationFrames
+            HumanKind.Mikey => spriteSet.MikeyAnimationFrames,
+            HumanKind.Mommy => spriteSet.MommyAnimationFrames,
+            _ => spriteSet.DaddyAnimationFrames
         };
     }
 

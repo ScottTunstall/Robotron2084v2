@@ -52,9 +52,9 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>The order each walk shows its three animation frames in: first, second, first, third.</summary>
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
-    private readonly ArcadeFrameTimer _deathTimer = new();
+    private readonly ArcadeFrameTimer _deathArcadeFrameTimer = new();
     private readonly Random _random;
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
 
     private int _autoFireTicksRemaining;
 
@@ -84,16 +84,16 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private bool _wasFiring;
 
     /// <summary>Makes the player at <paramref name="startPosition" />, with <paramref name="lives" /> lives.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="startPosition">Where the player's top-left corner is.</param>
     /// <param name="lives">How many lives the player starts with. Each death takes one off.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick the colours of the death animation. If this is null,
     ///     the player makes its own.
     /// </param>
-    public Player(SpriteSet sprites, IntVector2 startPosition, int lives, Random? random = null)
+    public Player(SpriteSet spriteSet, IntVector2 startPosition, int lives, Random? random = null)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = startPosition;
         _random = random ?? new Random();
         Lives = lives;
@@ -175,12 +175,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
         // A dying Player is drawn as a shape filled with one colour.
         if (this.IsDying())
         {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
-                _sprites.Blitter.GetPaletteIndexColour(GetDeathSolidPaletteIndex()));
+            _spriteSet.BlitterDraw.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
+                _spriteSet.BlitterDraw.GetPaletteIndexColour(GetDeathSolidPaletteIndex()));
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the player takes up on the screen.</summary>
@@ -201,7 +201,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>The walk animation frame the player is showing. A dying player is the same shape, filled with one colour.</summary>
     public Texture2D GetCurrentAnimationFrame()
     {
-        return _sprites.PlayerAnimationFrames[GetWalkAnimationFrameIndex()];
+        return _spriteSet.PlayerAnimationFrames[GetWalkAnimationFrameIndex()];
     }
 
     /// <summary>
@@ -228,31 +228,31 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///     game is live the player does nothing.
     /// </summary>
     /// <param name="gameTime">Not used. The player counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
         if (this.IsDead()) return;
 
         if (this.IsDying())
         {
             // The Player does not move while the death animation plays.
-            AdvanceDeath(field);
+            AdvanceDeath(playField);
             return;
         }
 
         // The Player cannot move or fire until the start of the wave is over (ROM: RRG23.ASM PLAYRV).
-        if (!field.IsLive()) return;
+        if (!playField.IsLive()) return;
 
         AdvanceInvincibility();
 
-        var input = field.Input.Poll();
-        var move = input.MoveDirection;
+        var playerInputState = playField.PlayerInputSource.Poll();
+        var move = playerInputState.MoveDirection;
 
         // The shoot stick only picks which way the Player fires. It does not change which way the Player faces.
-        var aimDirection = Direction8Extensions.CreateFromDelta(input.ShootDirection);
+        var aimDirection = Direction8Extensions.CreateFromDelta(playerInputState.ShootDirection);
 
-        MoveFromInput(move, field);
-        UpdateFiring(input, aimDirection, field);
+        MoveFromInput(move, playField);
+        UpdateFiring(playerInputState, aimDirection, playField);
         AdvanceWalkAnimation(move);
     }
 
@@ -339,17 +339,17 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Makes a move either sideways or up-and-down, unless it would put the player in the wall.</summary>
     /// <param name="from">Where the player is before the move.</param>
     /// <param name="delta">The move: either sideways or up-and-down, never both.</param>
-    /// <param name="wall">The wall, which the player must not go into.</param>
+    /// <param name="playfieldWall">The wall, which the player must not go into.</param>
     /// <returns>Where the player is after the move, or <paramref name="from" /> when the wall is in the way.</returns>
-    private static IntVector2 GetPositionAfterStep(IntVector2 from, IntVector2 delta, PlayfieldWall wall)
+    private static IntVector2 GetPositionAfterStep(IntVector2 from, IntVector2 delta, PlayfieldWall playfieldWall)
     {
         var stepped = from + delta;
         Rectangle box = new(stepped.X, stepped.Y, CollisionSize.Width, CollisionSize.Height);
-        return wall.Intersects(box) ? from : stepped;
+        return playfieldWall.Intersects(box) ? from : stepped;
     }
 
     /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the death animation: the flashes, then the fade.</summary>
-    /// <param name="field">The playfield, whose palette is used for the fade.</param>
+    /// <param name="playField">The playfield, whose palette is used for the fade.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRX7.ASM</c> the death routine.</item>
@@ -358,7 +358,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///     The fade takes over one palette index. That palette index's own colour changes are stopped while the fade runs,
     ///     and are started again when it is over.
     /// </remarks>
-    private void AdvanceDeath(PlayField field)
+    private void AdvanceDeath(PlayField playField)
     {
         var intervalArcadeFrames = _deathStage switch
         {
@@ -367,7 +367,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
             _ => PlayerTuning.PlayerDeathFadeArcadeFrames
         };
 
-        if (!_deathTimer.Tick(intervalArcadeFrames)) return;
+        if (!_deathArcadeFrameTimer.Tick(intervalArcadeFrames)) return;
 
         switch (_deathStage)
         {
@@ -380,7 +380,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
             case DeathStage.Colour:
                 if (--_deathFlashIterationsRemaining <= 0)
-                    BeginDeathFade(field);
+                    BeginDeathFade(playField);
                 else
                     _deathStage = DeathStage.White;
 
@@ -389,10 +389,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
             default:
                 // Show the next colour of the fade. The last colour is black, and after it the Player is dead.
                 _deathFadeIndex++;
-                WriteDeathFade(field);
+                WriteDeathFade(playField);
                 if (_deathFadeIndex >= PlayerTuning.PlayerDeathFadeValues.Length - 1)
                 {
-                    field.Palette?.ResumePaletteIndex(PlayerTuning.PlayerDeathFadePaletteIndex);
+                    playField.GamePalette?.ResumePaletteIndex(PlayerTuning.PlayerDeathFadePaletteIndex);
                     LifeState = EntityLifeState.Dead;
                 }
 
@@ -439,7 +439,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///     Starts the fade. It stops the fade palette index's own colour changes, and sets the palette index to the first colour of the
     ///     fade.
     /// </summary>
-    /// <param name="field">The playfield, whose palette is used for the fade.</param>
+    /// <param name="playField">The playfield, whose palette is used for the fade.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -450,12 +450,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///     </list>
     ///     The other colour changes carry on as normal. Only the fade palette index's own changes are stopped.
     /// </remarks>
-    private void BeginDeathFade(PlayField field)
+    private void BeginDeathFade(PlayField playField)
     {
         _deathStage = DeathStage.Fade;
         _deathFadeIndex = 0;
-        field.Palette?.SuspendPaletteIndex(PlayerTuning.PlayerDeathFadePaletteIndex);
-        WriteDeathFade(field);
+        playField.GamePalette?.SuspendPaletteIndex(PlayerTuning.PlayerDeathFadePaletteIndex);
+        WriteDeathFade(playField);
     }
 
     /// <summary>
@@ -463,8 +463,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///     go into the wall.
     /// </summary>
     /// <param name="move">The way the move stick is pushed: left, right or neither, and up, down or neither.</param>
-    /// <param name="field">The playfield, whose wall the player cannot go into.</param>
-    private void MoveFromInput(IntVector2 move, PlayField field)
+    /// <param name="playField">The playfield, whose wall the player cannot go into.</param>
+    private void MoveFromInput(IntVector2 move, PlayField playField)
     {
         if (move == IntVector2.Zero) return;
 
@@ -473,10 +473,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
         // The sideways move is tried first, then the up-or-down move. A move that would put the Player in the wall is not made.
         var candidate = _position;
         var dx = move.X * PlayerTuning.PlayerSpeedX;
-        if (dx != 0) candidate = GetPositionAfterStep(candidate, new IntVector2(dx, 0), field.Wall);
+        if (dx != 0) candidate = GetPositionAfterStep(candidate, new IntVector2(dx, 0), playField.PlayfieldWall);
 
         var dy = move.Y * PlayerTuning.PlayerSpeedY;
-        if (dy != 0) candidate = GetPositionAfterStep(candidate, new IntVector2(0, dy), field.Wall);
+        if (dy != 0) candidate = GetPositionAfterStep(candidate, new IntVector2(0, dy), playField.PlayfieldWall);
 
         _position = candidate;
     }
@@ -485,7 +485,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private void ResetDeathAnimation()
     {
         _deathStage = DeathStage.White;
-        _deathTimer.Restart();
+        _deathArcadeFrameTimer.Restart();
         _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
         _deathFlashPaletteIndex = PlayerTuning.PlayerDeathWhitePaletteIndex;
         _deathFadeIndex = 0;
@@ -506,21 +506,21 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///     Fires a laser when the fire control is used. A new press fires at once. Holding it down keeps firing, with a
     ///     set wait between shots.
     /// </summary>
-    /// <param name="input">The controls as they are on this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</param>
+    /// <param name="playerInputState">The controls as they are on this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</param>
     /// <param name="aimDirection">The way the shoot stick is pushed, or null when it is not pushed.</param>
-    /// <param name="field">The playfield, which holds the lasers.</param>
+    /// <param name="playField">The playfield, which holds the lasers.</param>
     /// <remarks>
     ///     A held control fires again every <see cref="PlayerTuning.PlayerAutoFireTicks" /> <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>. No laser is fired
     ///     when the player already has as many lasers in flight as are allowed.
     /// </remarks>
-    private void UpdateFiring(PlayerInputState input, Direction8? aimDirection, PlayField field)
+    private void UpdateFiring(PlayerInputState playerInputState, Direction8? aimDirection, PlayField playField)
     {
-        var isFireHeld = input.FireHeld;
+        var isFireHeld = playerInputState.FireHeld;
         if (isFireHeld && (!_wasFiring || --_autoFireTicksRemaining <= 0))
         {
             var fireDirection = aimDirection ?? FacingDirection;
             var muzzle = _position + GetMuzzleOffset(fireDirection);
-            FiredLaserThisUpdate = field.TryFirePlayerLaser(muzzle, fireDirection);
+            FiredLaserThisUpdate = playField.TryFirePlayerLaser(muzzle, fireDirection);
             _autoFireTicksRemaining = PlayerTuning.PlayerAutoFireTicks;
         }
         else
@@ -532,9 +532,9 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     /// <summary>Sets the fade palette index to the next colour of the fade.</summary>
-    /// <param name="field">The playfield, whose palette holds the fade palette index.</param>
-    private void WriteDeathFade(PlayField field)
+    /// <param name="playField">The playfield, whose palette holds the fade palette index.</param>
+    private void WriteDeathFade(PlayField playField)
     {
-        field.Palette?.SetPaletteIndexValue(PlayerTuning.PlayerDeathFadePaletteIndex, PlayerTuning.PlayerDeathFadeValues[_deathFadeIndex]);
+        playField.GamePalette?.SetPaletteIndexValue(PlayerTuning.PlayerDeathFadePaletteIndex, PlayerTuning.PlayerDeathFadeValues[_deathFadeIndex]);
     }
 }

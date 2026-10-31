@@ -27,18 +27,18 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     // How much the spark's speed changes by each time it changes: one amount for sideways and one for up or down, in 256ths of a pixel (ROM: PD2/PD4).
     private readonly IntVector2 _accelerationSubpixels;
 
-    private readonly ArcadeFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
     // How long the spark lasts.
     private readonly int _lifeArcadeFrames;
 
-    private readonly ArcadeFrameTimer _lifeTimer = new();
+    private readonly ArcadeFrameTimer _lifeArcadeFrameTimer = new();
 
     // Times the spark's moves.
-    private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
+    private readonly ArcadeFrameTimer _moveArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
 
     // Which flicker animation frame is showing.
     private int _animationFrameIndex;
@@ -52,7 +52,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _velocitySubpixels; // How far the spark goes on each move, sideways and up or down, in 256ths of a pixel (ROM: OXV/OYV).
 
     /// <summary>Makes a spark and aims it near the player. It is aimed only this once.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="position">Where it starts, which is where the enforcer that fired it is.</param>
     /// <param name="playerPosition">Where the player is, which the spark is aimed at.</param>
     /// <param name="random">
@@ -64,13 +64,13 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     ///     moved sideways. If this is null, that rule is not used.
     /// </param>
     public Spark(
-        SpriteSet sprites,
+        SpriteSet spriteSet,
         IntVector2 position,
         IntVector2 playerPosition,
         Random random,
         Rectangle? playfieldBounds = null)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = position;
         _random = random;
 
@@ -120,7 +120,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     public void Draw(SpriteBatch spriteBatch)
     {
         if (this.IsAlive())
-            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+            _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the spark takes up on the screen.</summary>
@@ -132,7 +132,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The flicker animation frame the spark is showing.</summary>
     public Texture2D GetCurrentAnimationFrame()
     {
-        return _sprites.SparkAnimationFrames[GetAnimationFrameIndex()];
+        return _spriteSet.SparkAnimationFrames[GetAnimationFrameIndex()];
     }
 
     /// <summary>Kills the spark at once.</summary>
@@ -148,19 +148,19 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     ///     moves when it is time to.
     /// </summary>
     /// <param name="gameTime">Not used. The spark counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield, whose walls the spark stays inside.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">The playfield, whose walls the spark stays inside.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
         if (!this.IsAlive()) return;
 
-        if (_lifeTimer.Tick(_lifeArcadeFrames))
+        if (_lifeArcadeFrameTimer.Tick(_lifeArcadeFrames))
         {
             LifeState = EntityLifeState.Dead;
             return;
         }
 
-        if (_beatTimer.Tick(SparkTuning.BeatIntervalArcadeFrames)) ActOnBeat();
-        if (_moveTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce(field);
+        if (_beatArcadeFrameTimer.Tick(SparkTuning.BeatIntervalArcadeFrames)) ActOnBeat();
+        if (_moveArcadeFrameTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce(playField);
     }
 
     /// <summary>Which of the flicker animation frames is showing, counting from 0.</summary>
@@ -187,17 +187,17 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes one move. The sideways part is made only if it keeps the spark inside the playfield, and the same goes
     ///     for the up-or-down part.
     /// </summary>
-    /// <param name="field">The playfield, whose walls the spark stays inside.</param>
+    /// <param name="playField">The playfield, whose walls the spark stays inside.</param>
     /// <param name="stepX">How many pixels to go left or right on this move.</param>
     /// <param name="stepY">How many pixels to go up or down on this move.</param>
-    private void MoveBy(PlayField field, int stepX, int stepY)
+    private void MoveBy(PlayField playField, int stepX, int stepY)
     {
         // A safety limit on how far the spark can go in one move.
         stepX = Math.Clamp(stepX, -SparkTuning.SparkMaxSpeed, SparkTuning.SparkMaxSpeed);
         stepY = Math.Clamp(stepY, -SparkTuning.SparkMaxSpeed, SparkTuning.SparkMaxSpeed);
 
         // The sideways move is made only if it keeps the spark inside the playfield. The same goes for the up-or-down move. The spark does not bounce.
-        var inner = field.Wall.PlayfieldBounds;
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
         var x = _position.X;
         var y = _position.Y;
         if (_position.X + stepX >= inner.X && _position.X + stepX + Size <= inner.Right) x += stepX;
@@ -208,8 +208,8 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>Makes one move, by whole pixels. The fraction of a pixel left over is kept for the next move.</summary>
-    /// <param name="field">The playfield, whose walls the spark stays inside.</param>
-    private void MoveOnce(PlayField field)
+    /// <param name="playField">The playfield, whose walls the spark stays inside.</param>
+    private void MoveOnce(PlayField playField)
     {
         _positionRemainderSubpixels = new IntVector2(
             _positionRemainderSubpixels.X + _velocitySubpixels.X,
@@ -221,6 +221,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
             _positionRemainderSubpixels.X - stepX * ScreenSize.SubpixelsPerPixel,
             _positionRemainderSubpixels.Y - stepY * ScreenSize.SubpixelsPerPixel);
 
-        MoveBy(field, stepX, stepY);
+        MoveBy(playField, stepX, stepY);
     }
 }

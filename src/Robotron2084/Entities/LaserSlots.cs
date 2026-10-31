@@ -25,13 +25,13 @@ public sealed class LaserSlots
     public const int Capacity = 3;
 
     private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
 
     /// <summary>Makes the empty slots, and keeps the sprites that new lasers are drawn with.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
-    public LaserSlots(SpriteSet sprites)
+    /// <param name="spriteSet">The shared sprite set.</param>
+    public LaserSlots(SpriteSet spriteSet)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
     }
 
     /// <summary>Every slot in order. An empty slot is null. Tests and debugging tools use this.</summary>
@@ -53,7 +53,7 @@ public sealed class LaserSlots
         for (var i = 0; i < Capacity; i++)
             if (_slots[i] is not { } existing || !existing.IsAlive())
             {
-                _slots[i] = new PlayerLaser(_sprites, position, direction);
+                _slots[i] = new PlayerLaser(_spriteSet, position, direction);
                 return;
             }
 
@@ -78,11 +78,11 @@ public sealed class LaserSlots
 
     /// <summary>Moves every laser that is in flight on by one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</summary>
     /// <param name="gameTime">The game's own clock for this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
         for (var i = 0; i < Capacity; i++)
             if (_slots[i] is { } slot && slot.IsAlive())
-                slot.Update(gameTime, field);
+                slot.Update(gameTime, playField);
     }
 }

@@ -220,12 +220,12 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private readonly Func<IntVector2> _getTargetPosition;
 
     private readonly Random _random;
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
 
     /// <summary>Which animation frame is showing, as a place in the sprite set's hulk animation frames.</summary>
     private int _animationFrameIndex;
 
-    private ArcadeFrameTimer _beatTimer = new();
+    private ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
     private bool _hasPickedFirstDirection;
     private bool _isMovingHorizontally;
@@ -241,7 +241,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private int _walkCycleStep;
 
     /// <summary>Makes a hulk. It picks its first direction when the game goes live.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="position">Where the hulk's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick how many steps it takes before it turns, and move
@@ -266,13 +266,13 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Hulk(
-        SpriteSet sprites,
+        SpriteSet spriteSet,
         IntVector2 position,
         Random random,
         int beatIntervalArcadeFrames,
         Func<IntVector2> getTargetPosition)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = position;
         _random = random;
         _beatIntervalArcadeFrames = beatIntervalArcadeFrames;
@@ -336,18 +336,18 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     Picks the hulk's first direction and sets the time of its first step, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> timer is set so
     ///     that it comes due when that time has gone by.
     /// </summary>
-    /// <param name="field">The playfield, which works out how long the wait is.</param>
-    public void BeginPlay(PlayField field)
+    /// <param name="playField">The playfield, which works out how long the wait is.</param>
+    public void BeginPlay(PlayField playField)
     {
-        SetFirstDirection(field);
-        _beatTimer = field.CreateFirstBeatTimer(LivePollArcadeFrames, 0, _beatIntervalArcadeFrames);
+        SetFirstDirection(playField);
+        _beatArcadeFrameTimer = playField.CreateFirstBeatTimer(LivePollArcadeFrames, 0, _beatIntervalArcadeFrames);
     }
 
     /// <summary>Draws the walk animation frame that is showing.</summary>
     /// <param name="spriteBatch">What the hulk is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the hulk takes up on the screen.</summary>
@@ -360,7 +360,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>A hulk is never blown apart, but it does appear at the start of a wave.</remarks>
     public Texture2D GetCurrentAnimationFrame()
     {
-        return _sprites.HulkAnimationFrames[_animationFrameIndex];
+        return _spriteSet.HulkAnimationFrames[_animationFrameIndex];
     }
 
     /// <summary>
@@ -368,19 +368,19 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     direction.
     /// </summary>
     /// <param name="gameTime">Not used. The hulk counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
-        _playfieldBounds = field.Wall.PlayfieldBounds;
-        if (field.RobotsFrozen()) return;
+        _playfieldBounds = playField.PlayfieldWall.PlayfieldBounds;
+        if (playField.RobotsFrozen()) return;
 
         if (!_hasPickedFirstDirection)
         {
-            SetFirstDirection(field);
+            SetFirstDirection(playField);
             return;
         }
 
-        if (_beatTimer.Tick(_beatIntervalArcadeFrames)) ActOnBeat(field);
+        if (_beatArcadeFrameTimer.Tick(_beatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
     /// <summary>
@@ -442,8 +442,8 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     What the hulk does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It takes a step. If the wall is in the way, it does not step and picks a new
     ///     direction.
     /// </summary>
-    /// <param name="field">The playfield.</param>
-    private void ActOnBeat(PlayField field)
+    /// <param name="playField">The playfield.</param>
+    private void ActOnBeat(PlayField playField)
     {
         // Show this step's walk animation frame, then move. Sideways steps go short, long, short, long.
         _animationFrameIndex = GetFrames(Direction)[_walkCycleStep];
@@ -457,16 +457,16 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 
         _walkCycleStep = (_walkCycleStep + 1) % WalkPatternLength;
         var next = _position + Direction.ToIntVector() * ScreenSize.ToPortPixelsFromArcadePixels(stepArcadePixels);
-        if (field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
+        if (playField.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             // The step would go into the wall, so the hulk stays where it is and picks a new direction.
-            TurnToNewDirection(field);
+            TurnToNewDirection(playField);
             return;
         }
 
         _position = next;
 
-        if (--_newDirectionStepsRemaining <= 0) TurnToNewDirection(field);
+        if (--_newDirectionStepsRemaining <= 0) TurnToNewDirection(playField);
     }
 
     /// <summary>Picks at random how many steps the hulk takes before its next turn.</summary>
@@ -485,7 +485,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     Picks which way the hulk walks. A hulk that is walking sideways picks left or right, and one that is walking
     ///     up and down picks up or down. It picks the way that leads to a spot a random distance from its target.
     /// </summary>
-    /// <param name="field">The playfield, whose walls are used when the spot is far outside them.</param>
+    /// <param name="playField">The playfield, whose walls are used when the spot is far outside them.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
@@ -498,11 +498,11 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         </item>
     ///     </list>
     /// </remarks>
-    private void PickDirection(PlayField field)
+    private void PickDirection(PlayField playField)
     {
         var target = _getTargetPosition();
         var offsetFromTarget = _random.Next(TargetOffsetMin, TargetOffsetMaxExclusive);
-        var bounds = field.Wall.PlayfieldBounds;
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         if (_isMovingHorizontally)
         {
             var destinationX = target.X + ScreenSize.ToPortPixelsFromColumns(offsetFromTarget);
@@ -528,12 +528,12 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     Picks the hulk's first direction, which is always left or right, and starts its walk from its first animation
     ///     frame.
     /// </summary>
-    /// <param name="field">The playfield.</param>
-    private void SetFirstDirection(PlayField field)
+    /// <param name="playField">The playfield.</param>
+    private void SetFirstDirection(PlayField playField)
     {
         _hasPickedFirstDirection = true;
         _isMovingHorizontally = true;
-        PickDirection(field);
+        PickDirection(playField);
         _animationFrameIndex = GetFrames(Direction)[0];
     }
 
@@ -541,7 +541,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     Turns the hulk. A hulk that was walking sideways now walks up or down, and the other way about. It also picks
     ///     at random how many steps it takes before its next turn.
     /// </summary>
-    /// <param name="field">The playfield.</param>
+    /// <param name="playField">The playfield.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -551,11 +551,11 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
     ///     </list>
     /// </remarks>
-    private void TurnToNewDirection(PlayField field)
+    private void TurnToNewDirection(PlayField playField)
     {
         _newDirectionStepsRemaining = GetRandomNewDirectionSteps();
         _isMovingHorizontally = !_isMovingHorizontally;
-        PickDirection(field);
+        PickDirection(playField);
         _walkCycleStep = 0;
         _animationFrameIndex = GetFrames(Direction)[0];
     }

@@ -30,16 +30,16 @@ public sealed class SkullMarker : IEntity
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SkullCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SkullCollisionSize.Height));
 
-    private readonly ArcadeFrameTimer _lifeTimer = new();
+    private readonly ArcadeFrameTimer _lifeArcadeFrameTimer = new();
     private readonly IntVector2 _position;
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
 
     /// <summary>Leaves a skull where a family member was killed.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="position">Where the family member was killed.</param>
-    public SkullMarker(SpriteSet sprites, IntVector2 position)
+    public SkullMarker(SpriteSet spriteSet, IntVector2 position)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = position;
     }
 
@@ -55,7 +55,7 @@ public sealed class SkullMarker : IEntity
     {
         if (!this.IsAlive()) return;
 
-        _sprites.Blitter.DrawSprite(spriteBatch, _sprites.SkullSprite, GetBounds(), Color.White);
+        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, _spriteSet.SkullSprite, GetBounds(), Color.White);
     }
 
     /// <summary>The box the skull is drawn in.</summary>
@@ -66,10 +66,10 @@ public sealed class SkullMarker : IEntity
 
     /// <summary>Counts down the time the skull has left on the field.</summary>
     /// <param name="gameTime">Not used. The time is counted in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">Not used.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">Not used.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
-        if (_lifeTimer.Tick(LifeArcadeFrames))
+        if (_lifeArcadeFrameTimer.Tick(LifeArcadeFrames))
             LifeState = EntityLifeState.Dead;
     }
 }

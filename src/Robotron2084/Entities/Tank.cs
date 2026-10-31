@@ -112,10 +112,10 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         ScreenSize.ToPortPixelsFromArcadePixels(VerticalMoveThresholdArcadePixels);
 
     private readonly int _fireIntervalBeats;
-    private readonly ArcadeFrameTimer _growTimer = new();
+    private readonly ArcadeFrameTimer _growArcadeFrameTimer = new();
     private readonly Random _random;
-    private readonly SpriteSet _sprites;
-    private ArcadeFrameTimer _beatTimer = new();
+    private readonly SpriteSet _spriteSet;
+    private ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
     private IntVector2 _destination;
     private int _fireBeatsRemaining;
@@ -148,7 +148,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     Makes a tank at <paramref name="position" />. Unless it starts fully grown, it has to grow before it can move
     ///     or fire.
     /// </summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="position">Where the tank's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick where it goes, how long before it picks again, and
@@ -167,7 +167,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Tank(
-        SpriteSet sprites,
+        SpriteSet spriteSet,
         IntVector2 position,
         Random random,
         int fireIntervalBeats = DefaultFireIntervalBeats,
@@ -176,7 +176,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         _growStep = 0;
         if (startFullyGrown) _growStep = TankTuning.GrowSteps;
 
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
@@ -213,7 +213,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     {
         get
         {
-            var animationFrameCount = _sprites.TankAnimationFrames.Length;
+            var animationFrameCount = _spriteSet.TankAnimationFrames.Length;
             var forward = _treadAnimationFrameCounter % animationFrameCount;
             return _stepDirection.X < 0 ? animationFrameCount - 1 - forward : forward;
         }
@@ -223,10 +223,10 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     Sets the time of the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> of a tank that was on the field when the wave started, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game
     ///     goes live. The <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> timer is set so that it comes due when that time has gone by.
     /// </summary>
-    /// <param name="field">The playfield, which works out how long the wait is.</param>
-    public void BeginPlay(PlayField field)
+    /// <param name="playField">The playfield, which works out how long the wait is.</param>
+    public void BeginPlay(PlayField playField)
     {
-        _beatTimer = field.CreateFirstBeatTimer(LivePollArcadeFrames, 0, TankTuning.BeatIntervalArcadeFrames);
+        _beatArcadeFrameTimer = playField.CreateFirstBeatTimer(LivePollArcadeFrames, 0, TankTuning.BeatIntervalArcadeFrames);
     }
 
     /// <summary>Draws the tank: a growing animation frame while it grows, and a tread one after that.</summary>
@@ -244,12 +244,12 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
                 _position.Y,
                 ScreenSize.ToPortPixelsFromArcadePixels(growWidth),
                 ScreenSize.ToPortPixelsFromArcadePixels(growHeight));
-            _sprites.Blitter.DrawSprite(spriteBatch, _sprites.TankGrowAnimationFrames[_growStep], growBounds,
+            _spriteSet.BlitterDraw.DrawSprite(spriteBatch, _spriteSet.TankGrowAnimationFrames[_growStep], growBounds,
                 Color.White);
             return;
         }
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>
@@ -283,9 +283,9 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     public Texture2D GetCurrentAnimationFrame()
     {
-        if (_growStep < TankTuning.GrowSteps) return _sprites.TankGrowAnimationFrames[_growStep];
+        if (_growStep < TankTuning.GrowSteps) return _spriteSet.TankGrowAnimationFrames[_growStep];
 
-        return _sprites.TankAnimationFrames[TreadFrameIndex];
+        return _spriteSet.TankAnimationFrames[TreadFrameIndex];
     }
 
     /// <inheritdoc />
@@ -321,18 +321,18 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     step, and may pick a new place to go.
     /// </summary>
     /// <param name="gameTime">Not used. The tank counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
         if (!this.IsAlive()) return;
 
-        if (field.RobotsFrozen()) return;
+        if (playField.RobotsFrozen()) return;
 
         // A growing tank cannot move or fire. It may finish growing on this tick, and then it can have a beat at once.
-        if (IsGrowing() && _growTimer.Tick(TankTuning.GrowIntervalArcadeFrames)) TakeGrowStep();
+        if (IsGrowing() && _growArcadeFrameTimer.Tick(TankTuning.GrowIntervalArcadeFrames)) TakeGrowStep();
         if (IsGrowing()) return;
 
-        if (_beatTimer.Tick(TankTuning.BeatIntervalArcadeFrames)) ActOnBeat(field);
+        if (_beatArcadeFrameTimer.Tick(TankTuning.BeatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
     /// <summary>Moves a spot so that a tank standing on it is wholly inside the playfield.</summary>
@@ -368,11 +368,11 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     What the tank does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It fires, if it is time to, then steps or bounces, and may pick a new place to
     ///     go (ROM: the <c>TANK</c> process).
     /// </summary>
-    /// <param name="field">The playfield.</param>
-    private void ActOnBeat(PlayField field)
+    /// <param name="playField">The playfield.</param>
+    private void ActOnBeat(PlayField playField)
     {
-        FireIfDue(field);
-        StepOrBounce(field);
+        FireIfDue(playField);
+        StepOrBounce(playField);
 
         _treadAnimationFrameCounter++; // The treads show their next animation frame on each beat (ROM: TANK3).
 
@@ -380,7 +380,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         if (--_newDestinationBeatsRemaining <= 0)
         {
             _newDestinationBeatsRemaining = GetRandomNewDestinationBeats(_random);
-            PickDestination(field);
+            PickDestination(playField);
         }
     }
 
@@ -388,22 +388,22 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     Counts down one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> towards the next shot. When the count runs out, the tank fires a shell, if the playfield
     ///     allows another shell.
     /// </summary>
-    /// <param name="field">The playfield.</param>
-    private void FireIfDue(PlayField field)
+    /// <param name="playField">The playfield.</param>
+    private void FireIfDue(PlayField playField)
     {
         if (--_fireBeatsRemaining > 0) return;
 
-        if (field.CanFireShell()) field.SpawnTankShell(_position);
+        if (playField.CanFireShell()) playField.SpawnTankShell(_position);
 
         // Every shot after the first waits this wave's gap between shots, with no random extra beats.
         _fireBeatsRemaining = _fireIntervalBeats;
     }
 
     /// <summary>Picks a random place inside the playfield, at least a tank's size away from every wall.</summary>
-    /// <param name="field">The playfield, whose walls the place is inside.</param>
-    private IntVector2 GetRandomPointIn(PlayField field)
+    /// <param name="playField">The playfield, whose walls the place is inside.</param>
+    private IntVector2 GetRandomPointIn(PlayField playField)
     {
-        var bounds = field.Wall.PlayfieldBounds;
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         return new IntVector2(
             _random.Next(bounds.X + CollisionSize.Width, bounds.Right - CollisionSize.Width + 1),
             _random.Next(bounds.Y + CollisionSize.Height, bounds.Bottom - CollisionSize.Height + 1));
@@ -413,18 +413,18 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     Picks the place the tank goes next. About 38 times in 100 it is where the player is. Otherwise it is a random
     ///     place.
     /// </summary>
-    /// <param name="field">The playfield, which says where the player and the walls are.</param>
+    /// <param name="playField">The playfield, which says where the player and the walls are.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>ANIMATE_TANK</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    private void PickDestination(PlayField field)
+    private void PickDestination(PlayField playField)
     {
         var isHeadingForPlayer = _random.Next(DestinationRandomRange) <= PlayerDestinationRandomAtMost;
-        if (isHeadingForPlayer) _destination = field.Player.Position;
-        else _destination = GetRandomPointIn(field);
+        if (isHeadingForPlayer) _destination = playField.Player.Position;
+        else _destination = GetRandomPointIn(playField);
 
         var dx = Math.Sign(_destination.X - _position.X);
         var dy = 0;
@@ -438,7 +438,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     Takes one step. If the step would hit the wall, the tank does not take it and turns round instead. A wall to
     ///     its left or right turns it round sideways, and a wall above or below it turns it round up-and-down.
     /// </summary>
-    /// <param name="field">The playfield.</param>
+    /// <param name="playField">The playfield.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -448,25 +448,25 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    private void StepOrBounce(PlayField field)
+    private void StepOrBounce(PlayField playField)
     {
         var stepPixels = ScreenSize.ToPortPixelsFromArcadePixels(TankTuning.StepArcadePixels);
         IntVector2 step = new(_stepDirection.X * stepPixels, _stepDirection.Y * stepPixels);
         var next = _position + step;
-        if (!field.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
+        if (!playField.HitsWall(new Rectangle(next.X, next.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             _position = next;
             return;
         }
 
         // The tank bounces off the wall. A wall to its left or right turns its left-or-right direction round. A wall above or below it turns its up-or-down direction round.
-        if (field.HitsWall(new Rectangle(_position.X + step.X, _position.Y, CollisionSize.Width, CollisionSize.Height)))
+        if (playField.HitsWall(new Rectangle(_position.X + step.X, _position.Y, CollisionSize.Width, CollisionSize.Height)))
         {
             _stepDirection = new IntVector2(-_stepDirection.X, _stepDirection.Y);
             step = new IntVector2(-step.X, step.Y);
         }
 
-        if (field.HitsWall(new Rectangle(_position.X, _position.Y + step.Y, CollisionSize.Width, CollisionSize.Height)))
+        if (playField.HitsWall(new Rectangle(_position.X, _position.Y + step.Y, CollisionSize.Width, CollisionSize.Height)))
             _stepDirection = new IntVector2(_stepDirection.X, -_stepDirection.Y);
     }
 

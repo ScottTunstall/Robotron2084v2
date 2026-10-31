@@ -30,18 +30,18 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     private readonly (int Width, int Height) _collisionSize;
 
     private readonly IntVector2 _position;
-    private readonly ArcadeFrameTimer _shrivelTimer = new();
-    private readonly SpriteSet _sprites;
+    private readonly ArcadeFrameTimer _shrivelArcadeFrameTimer = new();
+    private readonly SpriteSet _spriteSet;
     private readonly int _wave;
     private int _shrivelStep;
 
     /// <summary>Makes an electrode for the given wave.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="position">Where the electrode's top-left corner is.</param>
     /// <param name="wave">The wave number. It decides which shape of electrode is drawn, and in which palette index.</param>
-    public Electrode(SpriteSet sprites, IntVector2 position, int wave = 1)
+    public Electrode(SpriteSet spriteSet, IntVector2 position, int wave = 1)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = position;
         _wave = wave;
         _collisionSize = GetCollisionSize(wave);
@@ -59,8 +59,8 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     {
         if (this.IsDead()) return;
 
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
-            _sprites.Blitter.GetPaletteIndexColour(GetTintPaletteIndex()));
+        _spriteSet.BlitterDraw.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
+            _spriteSet.BlitterDraw.GetPaletteIndexColour(GetTintPaletteIndex()));
     }
 
     /// <summary>The box the electrode takes up on the screen.</summary>
@@ -76,7 +76,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         var frame = baseFrame;
         if (this.IsDying()) frame = baseFrame + _shrivelStep;
 
-        return _sprites.ElectrodeAnimationFrames[frame];
+        return _spriteSet.ElectrodeAnimationFrames[frame];
     }
 
     /// <summary>Starts the electrode shrivelling. It does nothing if the electrode is not alive.</summary>
@@ -86,7 +86,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 
         LifeState = EntityLifeState.Dying;
         _shrivelStep = 0;
-        _shrivelTimer.Restart(); // The first shrivel animation frame is shown for its full time (notes §52).
+        _shrivelArcadeFrameTimer.Restart(); // The first shrivel animation frame is shown for its full time (notes §52).
     }
 
     /// <summary>
@@ -94,12 +94,12 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     ///     the last one the electrode is gone.
     /// </summary>
     /// <param name="gameTime">Not used. The electrode counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">Not used.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">Not used.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
         if (!this.IsDying()) return;
 
-        if (!_shrivelTimer.Tick(ShrivelIntervalArcadeFrames[_shrivelStep])) return;
+        if (!_shrivelArcadeFrameTimer.Tick(ShrivelIntervalArcadeFrames[_shrivelStep])) return;
 
         _shrivelStep++;
         if (_shrivelStep >= ShrivelIntervalArcadeFrames.Length) LifeState = EntityLifeState.Dead;

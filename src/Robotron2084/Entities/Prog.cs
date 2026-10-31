@@ -158,7 +158,7 @@ public sealed class Prog : IExplodable, IRemovable
     // The order the walk animation frames are shown in. Family members walk in the same order.
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
-    private readonly ArcadeFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly (int Width, int Height) _collisionSize;
 
     /// <summary>The ghosts the prog has left behind it, newest first (see <see cref="Ghost" />).</summary>
@@ -166,7 +166,7 @@ public sealed class Prog : IExplodable, IRemovable
 
     private readonly Random _random;
 
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
 
     // The way the prog is walking: up, down, left or right. A new prog walks down until it picks a direction.
     private Direction8 _direction = Direction8.Down;
@@ -189,13 +189,13 @@ public sealed class Prog : IExplodable, IRemovable
     private int _walkCycleStep;
 
     /// <summary>Makes a prog where the family member was. It has that family member's animation frames and size.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="position">Where the prog's top-left corner is.</param>
     /// <param name="kind">Which family member it used to be. This decides its animation frames and its size.</param>
     /// <param name="random">Where its random numbers come from. They pick how far off the player the spot it heads for is, and when it turns.</param>
-    public Prog(SpriteSet sprites, IntVector2 position, HumanKind kind, Random random)
+    public Prog(SpriteSet spriteSet, IntVector2 position, HumanKind kind, Random random)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = position;
         Kind = kind;
         _random = random;
@@ -226,27 +226,27 @@ public sealed class Prog : IExplodable, IRemovable
     {
         if (!this.IsAlive()) return;
 
-        var frames = Kind.GetAnimationFrames(_sprites);
+        var frames = Kind.GetAnimationFrames(_spriteSet);
         var animationFrame = frames[GetWalkAnimationFrameIndex()];
 
         // The oldest ghost is drawn first, so that newer ghosts cover older ones. Each ghost keeps the animation frame the prog had when it left the ghost behind.
         for (var i = _ghosts.Count - 1; i >= 0; i--)
         {
             var ghost = _ghosts[i];
-            _sprites.Blitter.DrawSpriteSolidWithBackground(
+            _spriteSet.BlitterDraw.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[ghost.AnimationFrameIndex],
                 GetBoundsAt(ghost.Position),
-                _sprites.Blitter.GetPaletteIndexColour(ProgTuning.GhostBackgroundPaletteIndex),
-                _sprites.Blitter.GetPaletteIndexColour(ProgTuning.GhostShapePaletteIndex));
+                _spriteSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.GhostBackgroundPaletteIndex),
+                _spriteSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.GhostShapePaletteIndex));
         }
 
-        _sprites.Blitter.DrawSpriteSolidWithBackground(
+        _spriteSet.BlitterDraw.DrawSpriteSolidWithBackground(
             spriteBatch,
             animationFrame,
             GetBounds(),
-            _sprites.Blitter.GetPaletteIndexColour(ProgTuning.BackgroundPaletteIndex),
-            _sprites.Blitter.GetPaletteIndexColour(ProgTuning.ShapePaletteIndex));
+            _spriteSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.BackgroundPaletteIndex),
+            _spriteSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.ShapePaletteIndex));
     }
 
     /// <summary>
@@ -265,7 +265,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     public Texture2D GetCurrentAnimationFrame()
     {
-        return Kind.GetAnimationFrames(_sprites)[GetWalkAnimationFrameIndex()];
+        return Kind.GetAnimationFrames(_spriteSet)[GetWalkAnimationFrameIndex()];
     }
 
     /// <summary>
@@ -281,7 +281,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     public Texture2D GetExplosionAnimationFrame()
     {
-        return _sprites.ProgBurstSprite;
+        return _spriteSet.ProgBurstSprite;
     }
 
     /// <summary>
@@ -340,15 +340,15 @@ public sealed class Prog : IExplodable, IRemovable
     ///     leaves a ghost, and takes a step.
     /// </summary>
     /// <param name="gameTime">Not used. The prog counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
-        _playfieldBounds = field.Wall.PlayfieldBounds;
+        _playfieldBounds = playField.PlayfieldWall.PlayfieldBounds;
         if (!this.IsAlive()) return;
 
-        if (field.RobotsFrozen()) return;
+        if (playField.RobotsFrozen()) return;
 
-        if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);
+        if (_beatArcadeFrameTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
     /// <summary>The animation frame each ghost shows, newest first.</summary>
@@ -409,8 +409,8 @@ public sealed class Prog : IExplodable, IRemovable
     ///     What the prog does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It shows its next walk animation frame, may change its offset or its direction,
     ///     leaves a ghost, and takes a step.
     /// </summary>
-    /// <param name="field">The playfield.</param>
-    private void ActOnBeat(PlayField field)
+    /// <param name="playField">The playfield.</param>
+    private void ActOnBeat(PlayField playField)
     {
         // The walk animation moves on at every beat, even when the prog cannot take its step.
         _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
@@ -420,7 +420,7 @@ public sealed class Prog : IExplodable, IRemovable
 
         if (_random.Next(ThresholdRandomRange) > ReDirectionThreshold256)
         {
-            _direction = GetRandomDirection(field);
+            _direction = GetRandomDirection(playField);
             _walkCycleStep = 0;
         }
 
@@ -441,14 +441,14 @@ public sealed class Prog : IExplodable, IRemovable
 
         var candidate = _position + step;
         Rectangle next = new(candidate.X, candidate.Y, _collisionSize.Width, _collisionSize.Height);
-        if (IsInside(field.Wall.PlayfieldBounds, next))
+        if (IsInside(playField.PlayfieldWall.PlayfieldBounds, next))
         {
             _position = candidate;
         }
         else
         {
             // The step would leave the playfield, so it is not taken and the prog picks a new direction (ROM: CKLIM fails, then GPDIR).
-            _direction = GetRandomDirection(field);
+            _direction = GetRandomDirection(playField);
             _walkCycleStep = 0;
         }
     }
@@ -464,7 +464,7 @@ public sealed class Prog : IExplodable, IRemovable
     ///     Picks which way the prog walks next. Half the time it picks left or right, and half the time up or down, so it
     ///     never walks diagonally. It picks the way that leads towards the spot it is heading for.
     /// </summary>
-    /// <param name="field">The playfield, which says where the player and the walls are.</param>
+    /// <param name="playField">The playfield, which says where the player and the walls are.</param>
     /// <returns>The way to walk: left, right, up or down.</returns>
     /// <remarks>
     ///     <list type="bullet">
@@ -475,10 +475,10 @@ public sealed class Prog : IExplodable, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     ///     </list>
     /// </remarks>
-    private Direction8 GetRandomDirection(PlayField field)
+    private Direction8 GetRandomDirection(PlayField playField)
     {
-        var bounds = field.Wall.PlayfieldBounds;
-        var playerPosition = field.Player.Position;
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
+        var playerPosition = playField.Player.Position;
 
         if (_random.Next(AxisFlipSides) == 0)
         {

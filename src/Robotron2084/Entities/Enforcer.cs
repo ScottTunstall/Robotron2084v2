@@ -63,15 +63,15 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EnforcerCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EnforcerCollisionSize.Height));
 
-    private readonly ArcadeFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly int _fireIntervalBeats;
-    private readonly ArcadeFrameTimer _growTimer = new();
+    private readonly ArcadeFrameTimer _growArcadeFrameTimer = new();
 
     /// <summary>Times the enforcer's moves.</summary>
-    private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
+    private readonly ArcadeFrameTimer _moveArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
     private int _fireBeatsRemaining;
 
     /// <summary>Which of the growing animation frames is showing, counting from 0.</summary>
@@ -88,7 +88,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private IntVector2 _velocitySubpixels;
 
     /// <summary>Makes an enforcer. It cannot move until it has grown.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="position">Where the enforcer's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick where it heads for and how long it waits between
@@ -100,12 +100,12 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// </param>
     /// <remarks>ROM: <c>ENSTIM</c>.</remarks>
     public Enforcer(
-        SpriteSet sprites,
+        SpriteSet spriteSet,
         IntVector2 position,
         Random random,
         int fireIntervalBeats = DefaultFireIntervalBeats)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
@@ -127,7 +127,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     {
         if (!this.IsAlive()) return;
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the enforcer takes up on the screen.</summary>
@@ -146,10 +146,10 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// </remarks>
     public Texture2D GetCurrentAnimationFrame()
     {
-        if (!this.IsAlive() || !IsGrowing()) return _sprites.EnforcerSprite;
+        if (!this.IsAlive() || !IsGrowing()) return _spriteSet.EnforcerSprite;
 
-        var frame = Math.Clamp(GetGrowAnimationFrameIndex(), 0, _sprites.EnforcerAnimationFrames.Length - 2);
-        return _sprites.EnforcerAnimationFrames[1 + frame];
+        var frame = Math.Clamp(GetGrowAnimationFrameIndex(), 0, _spriteSet.EnforcerAnimationFrames.Length - 2);
+        return _spriteSet.EnforcerAnimationFrames[1 + frame];
     }
 
     /// <inheritdoc />
@@ -179,19 +179,19 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     ///     if it is time to.
     /// </summary>
     /// <param name="gameTime">Not used. The enforcer counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
         if (!this.IsAlive()) return;
 
-        if (field.RobotsFrozen()) return;
+        if (playField.RobotsFrozen()) return;
 
         // A growing enforcer cannot move or shoot. It may finish growing on this tick, and then it moves at once.
-        if (IsGrowing() && _growTimer.Tick(EnforcerTuning.GrowIntervalArcadeFrames)) TakeGrowStep();
+        if (IsGrowing() && _growArcadeFrameTimer.Tick(EnforcerTuning.GrowIntervalArcadeFrames)) TakeGrowStep();
         if (IsGrowing()) return;
 
-        if (_moveTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce(field);
-        if (_beatTimer.Tick(EnforcerTuning.BeatIntervalArcadeFrames)) ActOnBeat(field);
+        if (_moveArcadeFrameTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce(playField);
+        if (_beatArcadeFrameTimer.Tick(EnforcerTuning.BeatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
     /// <summary>Which of the growing animation frames is showing, counting from 0, or -1 once the enforcer has grown.</summary>
@@ -209,21 +209,21 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <summary>
     ///     What the enforcer does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It counts down to picking a new spot to head for and to its next shot (ROM: <c>ENFR1</c>).
     /// </summary>
-    /// <param name="field">The playfield.</param>
-    private void ActOnBeat(PlayField field)
+    /// <param name="playField">The playfield.</param>
+    private void ActOnBeat(PlayField playField)
     {
         if (--_newDestinationBeatsRemaining <= 0)
         {
             _newDestinationBeatsRemaining = GetRandomNewDestinationBeats(_random);
-            SetRandomVelocity(field);
+            SetRandomVelocity(playField);
         }
 
         if (--_fireBeatsRemaining <= 0)
         {
             _fireBeatsRemaining = GetRandomFireBeats(_random);
-            if (field.GetActiveSparkCount() < SparkTuning.MaxActiveSparks)
+            if (playField.GetActiveSparkCount() < SparkTuning.MaxActiveSparks)
                 // The spark is aimed at the place where the Player is now.
-                field.SpawnSpark(_position, field.Player.Position);
+                playField.SpawnSpark(_position, playField.Player.Position);
         }
     }
 
@@ -246,11 +246,11 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     ///     Makes one move. The sideways part of the move is made only if it keeps the enforcer inside the playfield, and
     ///     the same goes for the up-and-down part.
     /// </summary>
-    /// <param name="field">The playfield, whose walls the enforcer stays inside.</param>
+    /// <param name="playField">The playfield, whose walls the enforcer stays inside.</param>
     /// <remarks>ROM: the routine that moves every moving object (RRS22.ASM's <c>OPB80</c>).</remarks>
-    private void MoveOnce(PlayField field)
+    private void MoveOnce(PlayField playField)
     {
-        var bounds = field.Wall.PlayfieldBounds;
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         _remainderSubpixels += _velocitySubpixels;
         var stepX = _remainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
         var stepY = _remainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
@@ -270,12 +270,12 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     ///     Picks the next spot to head for, which is a random distance below and to the right of the player, and sets the
     ///     enforcer's speed to get there.
     /// </summary>
-    /// <param name="field">The playfield. It says where the player is, and its walls limit where the spot can be.</param>
-    private void SetRandomVelocity(PlayField field)
+    /// <param name="playField">The playfield. It says where the player is, and its walls limit where the spot can be.</param>
+    private void SetRandomVelocity(PlayField playField)
     {
-        var bounds = field.Wall.PlayfieldBounds;
-        var targetX = field.GetPlayerPosition().X + ScreenSize.ToPortPixelsFromColumns(_random.Next(0, DestinationZoneColumns));
-        var targetY = field.GetPlayerPosition().Y +
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
+        var targetX = playField.GetPlayerPosition().X + ScreenSize.ToPortPixelsFromColumns(_random.Next(0, DestinationZoneColumns));
+        var targetY = playField.GetPlayerPosition().Y +
                       ScreenSize.ToPortPixelsFromArcadePixels(_random.Next(0, DestinationZoneRows));
         targetX = Math.Clamp(targetX, bounds.X, bounds.Right - CollisionSize.Width);
         targetY = Math.Clamp(targetY, bounds.Y, bounds.Bottom - CollisionSize.Height);

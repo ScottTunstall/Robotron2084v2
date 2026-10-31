@@ -34,7 +34,7 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
     public int Count => _items.Count;
 
     /// <summary>Every entity in the list, whatever kind it is.</summary>
-    public IEnumerable<IEntity> Entities => _items;
+    public IEnumerable<IEntity> FieldEntities => _items;
 
     /// <summary>The entity at <paramref name="index" />.</summary>
     /// <param name="index">Its place in the list, counting from 0.</param>
@@ -48,9 +48,9 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
     }
 
     /// <inheritdoc />
-    public void DrawAll(SpriteBatch spriteBatch, PlayField field)
+    public void DrawAll(SpriteBatch spriteBatch, PlayField playField)
     {
-        foreach (var entity in _items) field.DrawEntity(entity, spriteBatch);
+        foreach (var entity in _items) playField.DrawEntity(entity, spriteBatch);
     }
 
     /// <summary>Goes through the list in order.</summary>
@@ -71,8 +71,8 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
     }
 
     /// <inheritdoc />
-    public void UpdateAll(GameTime gameTime, PlayField field)
+    public void UpdateAll(GameTime gameTime, PlayField playField)
     {
-        foreach (var entity in _items) field.UpdateEntity(entity, gameTime);
+        foreach (var entity in _items) playField.UpdateEntity(entity, gameTime);
     }
 }

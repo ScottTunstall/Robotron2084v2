@@ -23,6 +23,6 @@ public interface IEntity
 
     /// <summary>Moves the entity on by one <see cref="ArcadeClock.PortTicksPerSecond">tick</see>.</summary>
     /// <param name="gameTime">The game's own clock for this <see cref="ArcadeClock.PortTicksPerSecond">tick</see>.</param>
-    /// <param name="field">The playfield the entity is on.</param>
-    void Update(GameTime gameTime, PlayField field);
+    /// <param name="playField">The playfield the entity is on.</param>
+    void Update(GameTime gameTime, PlayField playField);
 }

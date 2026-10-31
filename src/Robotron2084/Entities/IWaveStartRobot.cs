@@ -6,6 +6,6 @@ namespace Robotron2084.Entities;
 public interface IWaveStartRobot
 {
     /// <summary>Tells the robot that the game has just gone live.</summary>
-    /// <param name="field">The playfield the robot is on.</param>
-    void BeginPlay(PlayField field);
+    /// <param name="playField">The playfield the robot is on.</param>
+    void BeginPlay(PlayField playField);
 }

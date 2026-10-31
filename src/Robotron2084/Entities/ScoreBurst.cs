@@ -31,13 +31,13 @@ public sealed class ScoreBurst : IEntity
     // Where the points are drawn: a little to the right of the dead enemy and below it.
 
     private readonly Texture2D _pointsSprite;
-    private readonly SpriteSet _sprites;
-    private readonly ArcadeFrameTimer _stepTimer = new();
+    private readonly SpriteSet _spriteSet;
+    private readonly ArcadeFrameTimer _stepArcadeFrameTimer = new();
     private int _animationFrameIndex = FirstBurstAnimationFrameIndex;
     private int _burstStepsRemaining;
 
     /// <summary>Makes one burst. <see cref="CreateForQuark" /> and <see cref="CreateForSpheroid" /> both use it.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="frames">The dead enemy's animation frames, which the burst is drawn from.</param>
     /// <param name="pointsSprite">The sprite of the points number.</param>
     /// <param name="count">How many steps the burst takes, counting the one that ends it.</param>
@@ -45,7 +45,7 @@ public sealed class ScoreBurst : IEntity
     /// <param name="pointsPaletteIndex">The palette index the points are drawn in.</param>
     /// <param name="bounds">The box the enemy took up when it died.</param>
     private ScoreBurst(
-        SpriteSet sprites,
+        SpriteSet spriteSet,
         Texture2D[] frames,
         Texture2D pointsSprite,
         int count,
@@ -53,7 +53,7 @@ public sealed class ScoreBurst : IEntity
         int pointsPaletteIndex,
         Rectangle bounds)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _animationFrames = frames;
         _pointsSprite = pointsSprite;
         BurstPaletteIndex = burstPaletteIndex;
@@ -97,14 +97,14 @@ public sealed class ScoreBurst : IEntity
     internal bool ShowingPoints { get; private set; }
 
     /// <summary>Makes the burst that a killed quark leaves. The burst and the points are drawn in the same palette index.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="bounds">Where the quark was drawn when it died.</param>
-    public static ScoreBurst CreateForQuark(SpriteSet sprites, Rectangle bounds)
+    public static ScoreBurst CreateForQuark(SpriteSet spriteSet, Rectangle bounds)
     {
         return new ScoreBurst(
-            sprites,
-            sprites.QuarkAnimationFrames,
-            sprites.RescueScoreDisplays[0],
+            spriteSet,
+            spriteSet.QuarkAnimationFrames,
+            spriteSet.RescueScoreDisplays[0],
             ScoreBurstTuning.QuarkCount,
             ScoreBurstTuning.QuarkBurstPaletteIndex,
             ScoreBurstTuning.QuarkPointsPaletteIndex,
@@ -115,14 +115,14 @@ public sealed class ScoreBurst : IEntity
     ///     Makes the burst that a killed spheroid leaves. The burst is drawn in one palette index and the points in
     ///     another.
     /// </summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="bounds">Where the spheroid was drawn when it died.</param>
-    public static ScoreBurst CreateForSpheroid(SpriteSet sprites, Rectangle bounds)
+    public static ScoreBurst CreateForSpheroid(SpriteSet spriteSet, Rectangle bounds)
     {
         return new ScoreBurst(
-            sprites,
-            sprites.SpheroidAnimationFrames,
-            sprites.RescueScoreDisplays[0],
+            spriteSet,
+            spriteSet.SpheroidAnimationFrames,
+            spriteSet.RescueScoreDisplays[0],
             ScoreBurstTuning.SpheroidCount,
             ScoreBurstTuning.SpheroidBurstPaletteIndex,
             ScoreBurstTuning.SpheroidPointsPaletteIndex,
@@ -137,14 +137,14 @@ public sealed class ScoreBurst : IEntity
 
         if (ShowingPoints)
         {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _pointsSprite, PointsBounds,
-                _sprites.Blitter.GetPaletteIndexColour(PointsPaletteIndex));
+            _spriteSet.BlitterDraw.DrawSpriteSolid(spriteBatch, _pointsSprite, PointsBounds,
+                _spriteSet.BlitterDraw.GetPaletteIndexColour(PointsPaletteIndex));
             return;
         }
 
         if (_animationFrameIndex < _animationFrames.Length)
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds,
-                _sprites.Blitter.GetPaletteIndexColour(BurstPaletteIndex));
+            _spriteSet.BlitterDraw.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds,
+                _spriteSet.BlitterDraw.GetPaletteIndexColour(BurstPaletteIndex));
     }
 
     /// <summary>The box the dead enemy took up, which is also the box the burst is drawn in.</summary>
@@ -158,12 +158,12 @@ public sealed class ScoreBurst : IEntity
     ///     shown, and then the whole thing is gone.
     /// </summary>
     /// <param name="gameTime">Not used. The burst counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">Not used.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">Not used.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
         if (!this.IsAlive()) return;
 
-        if (!_stepTimer.Tick(ScoreBurstTuning.StepIntervalArcadeFrames)) return;
+        if (!_stepArcadeFrameTimer.Tick(ScoreBurstTuning.StepIntervalArcadeFrames)) return;
 
         if (!ShowingPoints)
         {

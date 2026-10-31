@@ -44,10 +44,10 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>One row, in port pixels.</summary>
     private static readonly int RowPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
-    private readonly ArcadeFrameTimer _beatTimer = new();
-    private readonly ArcadeFrameTimer _moveTimer = new();
+    private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
+    private readonly ArcadeFrameTimer _moveArcadeFrameTimer = new();
     private readonly Rectangle _playfieldBounds;
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
 
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the shell fizzles out.</summary>
     private int _lifeBeatsRemaining;
@@ -67,7 +67,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes a shell. It starts a column to the right of the given position and is aimed once, at the player or at a
     ///     wall.
     /// </summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="position">The top-left corner of the tank that fired it, in port pixels.</param>
     /// <param name="playerPosition">The top-left corner of the player, in port pixels.</param>
     /// <param name="shellSpeed">The wave's shell setting. A bigger number is a faster shell.</param>
@@ -76,10 +76,10 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///     Where its random numbers come from. They pick what the shell is aimed at, how far the aim is off,
     ///     and how long the shell lasts.
     /// </param>
-    public TankShell(SpriteSet sprites, IntVector2 position, IntVector2 playerPosition, int shellSpeed,
+    public TankShell(SpriteSet spriteSet, IntVector2 position, IntVector2 playerPosition, int shellSpeed,
         Rectangle playfieldBounds, Random random)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _playfieldBounds = playfieldBounds;
         _position = position +
                     new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
@@ -110,7 +110,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     public void Draw(SpriteBatch spriteBatch)
     {
         if (this.IsAlive())
-            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+            _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the shell takes up on the screen.</summary>
@@ -122,7 +122,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The shell's one animation frame. It never flashes.</summary>
     public Texture2D GetCurrentAnimationFrame()
     {
-        return _sprites.TankShellSprite;
+        return _spriteSet.TankShellSprite;
     }
 
     /// <summary>Takes the shell off the field at once.</summary>
@@ -144,7 +144,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///     it bounces off a wall or counts down its life.
     /// </summary>
     /// <param name="gameTime">Not used. The shell counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">Not used.</param>
+    /// <param name="playField">Not used.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -154,14 +154,14 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>)</item>
     ///     </list>
     /// </remarks>
-    public void Update(GameTime gameTime, PlayField field)
+    public void Update(GameTime gameTime, PlayField playField)
     {
         BouncedThisUpdate = false;
 
         if (!this.IsAlive()) return;
 
-        if (_moveTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce();
-        if (_beatTimer.Tick(TankShellTuning.BeatIntervalArcadeFrames)) ActOnBeat();
+        if (_moveArcadeFrameTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce();
+        if (_beatArcadeFrameTimer.Tick(TankShellTuning.BeatIntervalArcadeFrames)) ActOnBeat();
     }
 
     /// <summary>

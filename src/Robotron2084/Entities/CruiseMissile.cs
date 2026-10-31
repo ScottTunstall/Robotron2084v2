@@ -64,9 +64,9 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>How far the missile goes up or down on each move, in port pixels. It is one row.</summary>
     private static readonly int StepYPortPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
-    private readonly ArcadeFrameTimer _beatTimer = new();
+    private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly Random _random;
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
 
     /// <summary>
     ///     The places the missile has just been, oldest first. There are never more than
@@ -79,16 +79,16 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private IntVector2 _velocity; // How many pixels the missile goes left or right, and how many up or down, each time it moves.
 
     /// <summary>Makes a missile and sends it towards the player.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="origin">Where it appears.</param>
     /// <param name="playerPosition">Where the player is, which the missile heads for first.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick which way it goes, and how long it goes before it picks a new direction.
     /// </param>
     /// <remarks>ROM: it starts 3 columns to the right of the brain's top-left corner and 4 rows below it.</remarks>
-    public CruiseMissile(SpriteSet sprites, IntVector2 origin, IntVector2 playerPosition, Random random)
+    public CruiseMissile(SpriteSet spriteSet, IntVector2 origin, IntVector2 playerPosition, Random random)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = origin;
         _random = random;
         _velocity = GetRandomDirection(playerPosition);
@@ -121,16 +121,16 @@ public sealed class CruiseMissile : IEntity, IRemovable
         var markWidth = ScreenSize.ToPortPixelsFromArcadePixels(CruiseMissileTuning.MarkArcadeWidth);
         var markHeight = ScreenSize.ToPortPixelsFromArcadePixels(CruiseMissileTuning.MarkArcadeHeight);
 
-        var trailColor = _sprites.Blitter.GetPaletteIndexColour(CruiseMissileTuning.TrailPaletteIndex);
+        var trailColor = _spriteSet.BlitterDraw.GetPaletteIndexColour(CruiseMissileTuning.TrailPaletteIndex);
         foreach (var mark in _trail)
-            _sprites.Blitter.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight),
+            _spriteSet.BlitterDraw.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight),
                 trailColor);
 
         // The missile's head is drawn as a plain dot, as in the arcade. The arcade's missile sprite is only used for its size, to tell when the missile hits something.
-        _sprites.Blitter.DrawSolidRectangle(
+        _spriteSet.BlitterDraw.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(_position.X, _position.Y, markWidth, markHeight),
-            _sprites.Blitter.GetPaletteIndexColour(CruiseMissileTuning.HeadPaletteIndex));
+            _spriteSet.BlitterDraw.GetPaletteIndexColour(CruiseMissileTuning.HeadPaletteIndex));
     }
 
     /// <summary>
@@ -159,28 +159,28 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, the missile turns towards the player again if it is time to, and then moves.</summary>
     /// <param name="gameTime">Not used. The missile counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <param name="playField">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField playField)
     {
         if (!this.IsAlive()) return;
 
-        if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);
+        if (_beatArcadeFrameTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
     /// <summary>
     ///     What the missile does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It first turns towards the player again, if it is time to, and then moves
     ///     (ROM: <c>CMISL</c>).
     /// </summary>
-    /// <param name="field">The playfield.</param>
-    private void ActOnBeat(PlayField field)
+    /// <param name="playField">The playfield.</param>
+    private void ActOnBeat(PlayField playField)
     {
         if (--_newDirectionBeatsRemaining <= 0)
         {
-            _velocity = GetRandomDirection(field.Player.Position);
+            _velocity = GetRandomDirection(playField.Player.Position);
             _newDirectionBeatsRemaining = ArcadeRandom.PickUpTo(_random, NewDirectionMaxBeats);
         }
 
-        for (var move = 0; move < MovesPerBeat; move++) MoveOnce(field);
+        for (var move = 0; move < MovesPerBeat; move++) MoveOnce(playField);
     }
 
     /// <summary>
@@ -219,15 +219,15 @@ public sealed class CruiseMissile : IEntity, IRemovable
     }
 
     /// <summary>Makes one move, bouncing off the walls, and leaves a trail mark where the missile was.</summary>
-    /// <param name="field">The playfield, whose walls the missile bounces off.</param>
+    /// <param name="playField">The playfield, whose walls the missile bounces off.</param>
     /// <remarks>
     ///     ROM: <c>CMMOV</c>. Sideways and up-and-down bounce separately. A move that would cross a wall is
     ///     turned round and made the other way. The bounce is worked out from the missile's own position, not from
     ///     its bigger box.
     /// </remarks>
-    private void MoveOnce(PlayField field)
+    private void MoveOnce(PlayField playField)
     {
-        var bounds = field.Wall.PlayfieldBounds;
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         var positionBeforeMove = _position;
         var columnPixels = ScreenSize.ToPortPixelsFromColumns(1);
         var rowPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);

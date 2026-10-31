@@ -11,12 +11,12 @@ namespace Robotron2084.Entities;
 public interface IEntityList
 {
     /// <summary>Every entity in the list, whatever kind it is.</summary>
-    IEnumerable<IEntity> Entities { get; }
+    IEnumerable<IEntity> FieldEntities { get; }
 
     /// <summary>Draws the entities, in the order they are in the list.</summary>
     /// <param name="spriteBatch">What the entities are drawn with.</param>
-    /// <param name="field">The playfield the entities are on.</param>
-    void DrawAll(SpriteBatch spriteBatch, PlayField field);
+    /// <param name="playField">The playfield the entities are on.</param>
+    void DrawAll(SpriteBatch spriteBatch, PlayField playField);
 
     /// <summary>Takes the dead entities out of the list.</summary>
     void PruneDead();
@@ -26,6 +26,6 @@ public interface IEntityList
     ///     <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.
     /// </summary>
     /// <param name="gameTime">The game's own clock for this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</param>
-    /// <param name="field">The playfield the entities are on.</param>
-    void UpdateAll(GameTime gameTime, PlayField field);
+    /// <param name="playField">The playfield the entities are on.</param>
+    void UpdateAll(GameTime gameTime, PlayField playField);
 }

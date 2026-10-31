@@ -207,9 +207,9 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private readonly int _fireIntervalBeats;
 
     private readonly Random _random;
-    private readonly SpriteSet _sprites;
+    private readonly SpriteSet _spriteSet;
 
-    private ArcadeFrameTimer _beatTimer = new();
+    private ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the brain fires its next cruise missile.</summary>
     private int _fireBeatsRemaining;
@@ -223,13 +223,13 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private int _reprogramRedrawsRemaining;
 
     /// <summary>Says when it is time for the next reprogramming step.</summary>
-    private ArcadeFrameTimer _reprogramTimer = new();
+    private ArcadeFrameTimer _reprogramArcadeFrameTimer = new();
 
     /// <summary>Which place in the family list the brain is chasing.</summary>
     private int _targetSlot;
 
     /// <summary>The family member being reprogrammed right now, or null.</summary>
-    private Human? _victim;
+    private Human? _victimHuman;
 
     /// <summary>Where the family member stands, up and down, while being reprogrammed.</summary>
     private int _victimRestingY;
@@ -241,7 +241,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private WalkSequence _walkSequence = WalkSequence.Down;
 
     /// <summary>Makes a brain. It takes its first step on its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
-    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="spriteSet">The shared sprite set.</param>
     /// <param name="position">Where the brain's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick the waits between missiles and the shaking during
@@ -268,14 +268,14 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Brain(
-        SpriteSet sprites,
+        SpriteSet spriteSet,
         IntVector2 position,
         Random random,
         int beatWaitArcadeFrames,
         int fireIntervalBeats,
         int targetFamilySlot)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
@@ -307,7 +307,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>).</item>
     ///     </list>
     /// </remarks>
-    internal Human? Target { get; private set; }
+    internal Human? TargetHuman { get; private set; }
 
     /// <summary>Which place in the family list this brain is chasing.</summary>
     /// <remarks>
@@ -322,10 +322,10 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     Sets the time of the brain's first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> timer is set so that it
     ///     comes due when that time has gone by.
     /// </summary>
-    /// <param name="field">The playfield, which works out how long the wait is.</param>
-    public void BeginPlay(PlayField field)
+    /// <param name="playField">The playfield, which works out how long the wait is.</param>
+    public void BeginPlay(PlayField playField)
     {
-        _beatTimer = field.CreateFirstBeatTimer(LivePollArcadeFrames, FirstBeatNapArcadeFrames, _beatIntervalArcadeFrames);
+        _beatArcadeFrameTimer = playField.CreateFirstBeatTimer(LivePollArcadeFrames, FirstBeatNapArcadeFrames, _beatIntervalArcadeFrames);
     }
 
     /// <summary>Draws the brain. While it is reprogramming, it is drawn on top of a solid block of colour.</summary>
@@ -341,10 +341,10 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         if (!this.IsAlive()) return;
 
         if (IsReprogramming())
-            _sprites.Blitter.DrawSolidRectangle(spriteBatch, GetBounds(),
-                _sprites.Blitter.GetPaletteIndexColour(ReprogramTuning.ShapePaletteIndex));
+            _spriteSet.BlitterDraw.DrawSolidRectangle(spriteBatch, GetBounds(),
+                _spriteSet.BlitterDraw.GetPaletteIndexColour(ReprogramTuning.ShapePaletteIndex));
 
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the brain takes up on the screen.</summary>
@@ -356,7 +356,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>The animation frame the brain is showing now. The explosion copies this when the brain is shot.</summary>
     public Texture2D GetCurrentAnimationFrame()
     {
-        return _sprites.BrainAnimationFrames[GetWalkAnimationFrameIndex()];
+        return _spriteSet.BrainAnimationFrames[GetWalkAnimationFrameIndex()];
     }
 
     /// <inheritdoc />
@@ -385,7 +385,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     public bool IsReprogramming()
     {
-        return _victim is not null;
+        return _victimHuman is not null;
     }
 
     /// <summary>Takes the brain off the field at once.</summary>
@@ -410,26 +410,26 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     and counts down to its next missile.
     /// </summary>
     /// <param name="gameTime">Not used. The brain counts in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>, not in seconds.</param>
-    /// <param name="field">The playfield the brain is on.</param>
+    /// <param name="playField">The playfield the brain is on.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRB10.ASM</c> <c>BRAIN</c>, <c>BRNL</c> and <c>BRNL1</c></item>
     ///         <item>Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>) and <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>)</item>
     ///     </list>
     /// </remarks>
-    public void Update(GameTime gameTime, PlayField field)
+    public void Update(GameTime gameTime, PlayField playField)
     {
         if (!this.IsAlive()) return;
 
-        if (field.RobotsFrozen()) return;
+        if (playField.RobotsFrozen()) return;
 
-        if (_victim is { } victim)
+        if (_victimHuman is { } victimHuman)
         {
-            if (_reprogramTimer.Tick(ReprogramTuning.StepIntervalArcadeFrames)) TakeReprogramStep(field, victim);
+            if (_reprogramArcadeFrameTimer.Tick(ReprogramTuning.StepIntervalArcadeFrames)) TakeReprogramStep(playField, victimHuman);
             return;
         }
 
-        if (_beatTimer.Tick(_beatIntervalArcadeFrames)) ActOnBeat(field);
+        if (_beatArcadeFrameTimer.Tick(_beatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
     /// <summary>
@@ -449,11 +449,11 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     internal void BeginReprogramming(Human human, Rectangle playfieldBounds)
     {
-        _victim = human;
+        _victimHuman = human;
         human.BeginReprogramming();
         _reprogramRedrawsRemaining = ReprogramTuning.Iterations * ReprogramTuning.RedrawsPerIteration;
         _reprogramMovingDown = true;
-        _reprogramTimer = ArcadeFrameTimer.CreateDue(ReprogramTuning.StepIntervalArcadeFrames);
+        _reprogramArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ReprogramTuning.StepIntervalArcadeFrames);
 
         var humanWidth = human.GetBounds().Width;
         var x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
@@ -494,7 +494,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     {
         if (!this.IsAlive() || IsReprogramming()) return null;
 
-        if (Target is not { } human || !human.IsGraspable()) return null;
+        if (TargetHuman is not { } human || !human.IsGraspable()) return null;
 
         var inReach = Math.Abs(_position.X - human.Position.X) <= CatchReachX
                       && Math.Abs(_position.Y - human.Position.Y) <= CatchReachY;
@@ -504,7 +504,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>The family member being reprogrammed, or null if the brain is not reprogramming anyone.</summary>
     internal Human? GetVictim()
     {
-        return _victim;
+        return _victimHuman;
     }
 
     /// <summary>
@@ -531,9 +531,9 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     internal void ReleaseVictim()
     {
-        var victim = _victim;
-        _victim = null;
-        victim?.FinishReprogramming();
+        var victimHuman = _victimHuman;
+        _victimHuman = null;
+        victimHuman?.FinishReprogramming();
     }
 
     /// <summary>Gives the brain a new place in the family list to chase.</summary>
@@ -586,16 +586,16 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     What the brain does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It picks who to chase, takes a step towards them, and fires a cruise missile
     ///     if it is time to.
     /// </summary>
-    /// <param name="field">The playfield.</param>
-    private void ActOnBeat(PlayField field)
+    /// <param name="playField">The playfield.</param>
+    private void ActOnBeat(PlayField playField)
     {
-        UpdateTargetSlot(field);
-        Target = GetTarget(field);
-        var step = GetStepTowardTarget(Target?.Position ?? field.Player.Position);
-        TakeStep(field, step);
+        UpdateTargetSlot(playField);
+        TargetHuman = GetTarget(playField);
+        var step = GetStepTowardTarget(TargetHuman?.Position ?? playField.Player.Position);
+        TakeStep(playField, step);
         AdvanceWalkAnimation(step);
 
-        if (--_fireBeatsRemaining <= 0) FireIfPossible(field);
+        if (--_fireBeatsRemaining <= 0) FireIfPossible(playField);
     }
 
     /// <summary>
@@ -628,7 +628,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>Fires a cruise missile if there is room for one, then picks how long to wait for the next.</summary>
-    /// <param name="field">The playfield, which says whether there is room and makes the missile.</param>
+    /// <param name="playField">The playfield, which says whether there is room and makes the missile.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -638,10 +638,10 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>CREATE_CRUISE_MISSILE</c> (<c>$2006</c>)</item>
     ///     </list>
     /// </remarks>
-    private void FireIfPossible(PlayField field)
+    private void FireIfPossible(PlayField playField)
     {
-        if (field.CanFireCruiseMissile())
-            field.SpawnCruiseMissile(_position + new IntVector2(
+        if (playField.CanFireCruiseMissile())
+            playField.SpawnCruiseMissile(_position + new IntVector2(
                 ScreenSize.ToPortPixelsFromColumns(MissileMuzzleXColumns),
                 ScreenSize.ToPortPixelsFromArcadePixels(MissileMuzzleYRows)));
 
@@ -673,18 +673,18 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>The family member the brain is chasing, or null if the brain is chasing the player.</summary>
-    /// <param name="field">The playfield, which keeps the family list.</param>
-    private Human? GetTarget(PlayField field)
+    /// <param name="playField">The playfield, which keeps the family list.</param>
+    private Human? GetTarget(PlayField playField)
     {
-        return field.GetFamilyMemberInSlot(_targetSlot);
+        return playField.GetFamilyMemberInSlot(_targetSlot);
     }
 
     /// <summary>
     ///     Does one step of the reprogramming. The family member is shaken a little way down, then a little way back up,
     ///     until the steps run out and a prog appears.
     /// </summary>
-    /// <param name="field">The playfield the brain is on.</param>
-    /// <param name="victim">The family member being reprogrammed.</param>
+    /// <param name="playField">The playfield the brain is on.</param>
+    /// <param name="victimHuman">The family member being reprogrammed.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -698,17 +698,17 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     ///     Each shake is measured from the family member's resting place, as in the ROM, so the shakes never drift.
     /// </remarks>
-    private void TakeReprogramStep(PlayField field, Human victim)
+    private void TakeReprogramStep(PlayField playField, Human victimHuman)
     {
-        var bounds = field.Wall.PlayfieldBounds;
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         var jitter = _random.Next(ReprogramTuning.JitterPixels);
-        var height = victim.GetBounds().Height;
+        var height = victimHuman.GetBounds().Height;
         var y = Math.Max(_victimRestingY - jitter, bounds.Y);
         if (_reprogramMovingDown) y = Math.Min(_victimRestingY + jitter, bounds.Bottom - height);
 
-        victim.MoveTo(new IntVector2(victim.Position.X, y));
+        victimHuman.MoveTo(new IntVector2(victimHuman.Position.X, y));
 
-        if (_reprogramMovingDown) field.PlaySoundFrom(SoundTables.Programming, victim.GetBounds());
+        if (_reprogramMovingDown) playField.PlaySoundFrom(SoundTables.Programming, victimHuman.GetBounds());
 
         if (--_reprogramRedrawsRemaining > 0)
         {
@@ -716,23 +716,23 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        field.PlaySoundFrom(SoundTables.HumanProgFinalConversion, victim.GetBounds());
-        victim.FinishReprogramming();
-        field.SpawnProg(victim.Position, victim.Kind);
-        _victim = null;
+        playField.PlaySoundFrom(SoundTables.HumanProgFinalConversion, victimHuman.GetBounds());
+        victimHuman.FinishReprogramming();
+        playField.SpawnProg(victimHuman.Position, victimHuman.Kind);
+        _victimHuman = null;
     }
 
     /// <summary>Takes a step, as long as the step stays inside the playfield.</summary>
-    /// <param name="field">The playfield, whose walls the brain must stay inside.</param>
+    /// <param name="playField">The playfield, whose walls the brain must stay inside.</param>
     /// <param name="step">The step to take (see <see cref="GetStepTowardTarget" />).</param>
     /// <remarks>
     ///     The ROM undoes both steps if either would leave the playfield, which pins a brain against a wall for good.
     ///     This game checks each step by itself on purpose, so a brain against a wall slides along it. That is the
     ///     author's choice.
     /// </remarks>
-    private void TakeStep(PlayField field, IntVector2 step)
+    private void TakeStep(PlayField playField, IntVector2 step)
     {
-        var bounds = field.Wall.PlayfieldBounds;
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         if (step.X != 0 && IsInsideX(bounds, _position.X + step.X)) _position = _position with { X = _position.X + step.X };
 
         if (IsInsideY(bounds, _position.Y + step.Y)) _position = _position with { Y = _position.Y + step.Y };
@@ -742,7 +742,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     Moves the brain on to the nearest family member to chase, if the family member it was chasing is gone and
     ///     another is still on the field.
     /// </summary>
-    /// <param name="field">The playfield, which keeps the family list.</param>
+    /// <param name="playField">The playfield, which keeps the family list.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRB10.ASM</c> <c>BRNL0</c> and <c>GETHTG</c></item>
@@ -754,12 +754,12 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     If the place the brain was chasing is empty, the brain chases the player. But if any family member is still
     ///     on the field, it picks the nearest one at once.
     /// </remarks>
-    private void UpdateTargetSlot(PlayField field)
+    private void UpdateTargetSlot(PlayField playField)
     {
-        if (field.GetFamilyMemberInSlot(_targetSlot) is not null) return;
+        if (playField.GetFamilyMemberInSlot(_targetSlot) is not null) return;
 
-        if (!field.AnyFamilyMemberAvailable()) return;
+        if (!playField.AnyFamilyMemberAvailable()) return;
 
-        _targetSlot = field.GetNearestFamilySlot(_position);
+        _targetSlot = playField.GetNearestFamilySlot(_position);
     }
 }
