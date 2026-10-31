@@ -3,18 +3,6 @@ namespace Robotron2084.Core;
 /// <summary>The units the game measures time in, and how to change one into another.</summary>
 public static class ArcadeClock
 {
-    /// <summary>How many ticks the game has each second.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             A tick is one call of <see cref="Robotron2084.RobotronGame.Update(Microsoft.Xna.Framework.GameTime)" />.
-    ///         </item>
-    ///         <item>The game's code only runs during a tick, so nothing can happen between two ticks.</item>
-    ///         <item><see cref="Robotron2084.RobotronGame" /> sets MonoGame's fixed time step from this.</item>
-    ///     </list>
-    /// </remarks>
-    public const int PortTicksPerSecond = 60;
-
     /// <summary>How many FPS the original arcade game ran at.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -44,18 +32,41 @@ public static class ArcadeClock
     /// </remarks>
     public const int ClockUnitsPerSecond = 300;
 
-    /// <summary>How many clock units (<see cref="ClockUnitsPerSecond" />) there are in one tick.</summary>
-    public const int UnitsPerPortTick = ClockUnitsPerSecond / PortTicksPerSecond;
-
-    /// <summary>How many clock units (<see cref="ClockUnitsPerSecond" />) there are in one fiftieth of a second.</summary>
-    public const int UnitsPerArcadeFrame = ClockUnitsPerSecond / ArcadeFramesPerSecond;
-
     /// <summary>
     ///     How often the arcade moves everything that is moving, in fiftieths of a second
     ///     (<see cref="ArcadeFramesPerSecond" />).
     /// </summary>
     /// <remarks>ROM: <c>RRS22.ASM</c> <c>OPB80</c>, which moves every moving object once each frame.</remarks>
     public const int MoveIntervalArcadeFrames = 1;
+
+    /// <summary>How many ticks the game has each second.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             A tick is one call of <see cref="Robotron2084.RobotronGame.Update(Microsoft.Xna.Framework.GameTime)" />.
+    ///         </item>
+    ///         <item>The game's code only runs during a tick, so nothing can happen between two ticks.</item>
+    ///         <item><see cref="Robotron2084.RobotronGame" /> sets MonoGame's fixed time step from this.</item>
+    ///     </list>
+    /// </remarks>
+    public const int PortTicksPerSecond = 60;
+
+    /// <summary>How many clock units (<see cref="ClockUnitsPerSecond" />) there are in one fiftieth of a second.</summary>
+    public const int UnitsPerArcadeFrame = ClockUnitsPerSecond / ArcadeFramesPerSecond;
+
+    /// <summary>How many clock units (<see cref="ClockUnitsPerSecond" />) there are in one tick.</summary>
+    public const int UnitsPerPortTick = ClockUnitsPerSecond / PortTicksPerSecond;
+
+    /// <summary>
+    ///     Changes fiftieths of a second (<see cref="ArcadeFramesPerSecond" />) into clock units
+    ///     (<see cref="ClockUnitsPerSecond" />).
+    /// </summary>
+    /// <param name="arcadeFrames">The time, in fiftieths of a second.</param>
+    /// <returns>The same time, in clock units.</returns>
+    public static int ToClockUnits(int arcadeFrames)
+    {
+        return arcadeFrames * UnitsPerArcadeFrame;
+    }
 
     /// <summary>
     ///     Changes fiftieths of a second (<see cref="ArcadeFramesPerSecond" />) into ticks
@@ -85,16 +96,5 @@ public static class ArcadeClock
     public static int ToPortTicksRoundedUp(int arcadeFrames)
     {
         return (ToClockUnits(arcadeFrames) + UnitsPerPortTick - 1) / UnitsPerPortTick;
-    }
-
-    /// <summary>
-    ///     Changes fiftieths of a second (<see cref="ArcadeFramesPerSecond" />) into clock units
-    ///     (<see cref="ClockUnitsPerSecond" />).
-    /// </summary>
-    /// <param name="arcadeFrames">The time, in fiftieths of a second.</param>
-    /// <returns>The same time, in clock units.</returns>
-    public static int ToClockUnits(int arcadeFrames)
-    {
-        return arcadeFrames * UnitsPerArcadeFrame;
     }
 }

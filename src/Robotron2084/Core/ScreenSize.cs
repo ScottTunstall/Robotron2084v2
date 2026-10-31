@@ -71,6 +71,18 @@ public static class ScreenSize
     public const int WidthInArcadePixels = 320;
 
     /// <summary>
+    ///     Largest integer scale at which the playfield fits in the given
+    ///     available area. Never downscales (minimum 1x).
+    /// </summary>
+    public static int ComputeMaxIntegerScale(int availableWidth, int availableHeight)
+    {
+        if (availableWidth <= 0 || availableHeight <= 0) return 1;
+
+        var scale = Math.Min(availableWidth / Width, availableHeight / Height);
+        return Math.Max(1, scale);
+    }
+
+    /// <summary>
     ///     Turns the gap between two points, given in port pixels, into the ROM's own count: columns sideways plus rows
     ///     up and down.
     /// </summary>
@@ -87,6 +99,13 @@ public static class ScreenSize
                Math.Abs(to.Y - from.Y) / ToPortPixelsFromArcadePixels(1);
     }
 
+    /// <summary>Converts a length in arcade pixels to port pixels.</summary>
+    /// <param name="arcadePixels">The length in arcade pixels.</param>
+    public static int ToPortPixelsFromArcadePixels(int arcadePixels)
+    {
+        return arcadePixels * PortPixelsPerArcadePixel;
+    }
+
     /// <summary>
     ///     Changes a number of the arcade's columns into port pixels. A column is one byte of video memory across, which
     ///     is <see cref="ArcadePixelsPerByte" /> arcade pixels wide, and an arcade pixel is
@@ -96,24 +115,5 @@ public static class ScreenSize
     public static int ToPortPixelsFromColumns(int arcadeColumns)
     {
         return ToPortPixelsFromArcadePixels(arcadeColumns * ArcadePixelsPerByte);
-    }
-
-    /// <summary>Converts a length in arcade pixels to port pixels.</summary>
-    /// <param name="arcadePixels">The length in arcade pixels.</param>
-    public static int ToPortPixelsFromArcadePixels(int arcadePixels)
-    {
-        return arcadePixels * PortPixelsPerArcadePixel;
-    }
-
-    /// <summary>
-    ///     Largest integer scale at which the playfield fits in the given
-    ///     available area. Never downscales (minimum 1x).
-    /// </summary>
-    public static int ComputeMaxIntegerScale(int availableWidth, int availableHeight)
-    {
-        if (availableWidth <= 0 || availableHeight <= 0) return 1;
-
-        var scale = Math.Min(availableWidth / Width, availableHeight / Height);
-        return Math.Max(1, scale);
     }
 }

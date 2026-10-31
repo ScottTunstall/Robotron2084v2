@@ -95,6 +95,13 @@ public sealed class ArcadeFrameTimer
         return new ArcadeFrameTimer(ArcadeClock.ToClockUnits(intervalArcadeFrames));
     }
 
+    /// <summary>Throws away all the time gathered, so the next wait is counted in full.</summary>
+    /// <remarks>Use it when the owner starts something again, so time left over from before cannot cut it short.</remarks>
+    public void Restart()
+    {
+        _clockUnits = 0;
+    }
+
     /// <summary>
     ///     Counts one <see cref="ArcadeClock.PortTicksPerSecond">tick</see>, and says whether the wait is over.
     /// </summary>
@@ -127,12 +134,5 @@ public sealed class ArcadeFrameTimer
 
         _clockUnits -= intervalClockUnits;
         return true;
-    }
-
-    /// <summary>Throws away all the time gathered, so the next wait is counted in full.</summary>
-    /// <remarks>Use it when the owner starts something again, so time left over from before cannot cut it short.</remarks>
-    public void Restart()
-    {
-        _clockUnits = 0;
     }
 }
