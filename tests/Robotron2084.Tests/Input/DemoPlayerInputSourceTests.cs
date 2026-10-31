@@ -26,116 +26,116 @@ public sealed class DemoPlayerInputSourceTests
         return EmptyFieldWithInput(bounds, new FakeInputSource());
     }
 
-    private static PlayField EmptyFieldWithInput(Rectangle bounds, IPlayerInputSource input)
+    private static PlayField EmptyFieldWithInput(Rectangle bounds, IPlayerInputSource playerInputSource)
     {
-        var parameters = new WaveParameters(1);
-        return new PlayFieldBuilder().WithParameters(parameters).WithInput(input).WithBounds(bounds).WithSeed(1234)
+        var waveParameters = new WaveParameters(1);
+        return new PlayFieldBuilder().WithParameters(waveParameters).WithInput(playerInputSource).WithBounds(bounds).WithSeed(1234)
             .Build();
     }
 
     [Fact]
     public void Poll_WithoutABoundField_IsIdle()
     {
-        var demo = new DemoPlayerInputSource();
+        var demoPlayerInputSource = new DemoPlayerInputSource();
 
-        var state = demo.Poll();
+        var playerInputState = demoPlayerInputSource.Poll();
 
-        Assert.Equal(IntVector2.Zero, state.MoveDirection);
-        Assert.False(state.FireHeld);
+        Assert.Equal(IntVector2.Zero, playerInputState.MoveDirection);
+        Assert.False(playerInputState.FireHeld);
     }
 
     [Fact]
     public void Poll_WithACloseRobot_FleesItAndFiresAtIt()
     {
-        var field = EmptyField(FullBounds);
-        var player = field.Player.Position;
-        field.SpawnEnforcer(player +
+        var playField = EmptyField(FullBounds);
+        var player = playField.Player.Position;
+        playField.SpawnEnforcer(player +
                             new IntVector2(0,
                                 -ScreenSize.ToPortPixelsFromArcadePixels(
                                     30))); // straight above, inside the threat distance
 
-        var demo = new DemoPlayerInputSource(new Random(7));
-        demo.Bind(field);
+        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
+        demoPlayerInputSource.Bind(playField);
 
-        var state = demo.Poll();
+        var playerInputState = demoPlayerInputSource.Poll();
 
         // Running straight down, away from it, and firing up at it.
-        Assert.Equal(new IntVector2(0, 1), state.MoveDirection);
-        Assert.Equal(new IntVector2(0, -1), state.ShootDirection);
-        Assert.True(state.FireHeld);
+        Assert.Equal(new IntVector2(0, 1), playerInputState.MoveDirection);
+        Assert.Equal(new IntVector2(0, -1), playerInputState.ShootDirection);
+        Assert.True(playerInputState.FireHeld);
     }
 
     [Fact]
     public void Poll_WithNoRobots_IsIdleAndNotFiring()
     {
-        var field = EmptyField(FullBounds); // the player starts exactly at the centre
+        var playField = EmptyField(FullBounds); // the player starts exactly at the centre
 
-        var demo = new DemoPlayerInputSource(new Random(7));
-        demo.Bind(field);
+        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
+        demoPlayerInputSource.Bind(playField);
 
-        var state = demo.Poll();
+        var playerInputState = demoPlayerInputSource.Poll();
 
-        Assert.Equal(IntVector2.Zero, state.MoveDirection); // nothing to flee, and the centre is where it is
-        Assert.False(state.FireHeld);
+        Assert.Equal(IntVector2.Zero, playerInputState.MoveDirection); // nothing to flee, and the centre is where it is
+        Assert.False(playerInputState.FireHeld);
     }
 
     [Fact]
     public void Poll_WithARobotOutOfRange_DriftsToCentreAndDoesNotFire()
     {
-        var field = EmptyField(FullBounds);
-        field.SkipWaveStart();
+        var playField = EmptyField(FullBounds);
+        playField.SkipWaveStart();
 
         // Walk the player off-centre with a plain fake stick, then hand the wheel to the demo.
-        var left = new MutableStick { State = new PlayerInputState(new IntVector2(-1, 0), false) };
-        field = EmptyFieldWithInput(FullBounds, left);
-        field.SkipWaveStart();
-        for (var i = 0; i < 40; i++) field.Update(new GameTime());
+        var leftMutableStick = new MutableStick { State = new PlayerInputState(new IntVector2(-1, 0), false) };
+        playField = EmptyFieldWithInput(FullBounds, leftMutableStick);
+        playField.SkipWaveStart();
+        for (var i = 0; i < 40; i++) playField.Update(new GameTime());
 
-        IntVector2 centre = new(field.Wall.PlayfieldBounds.X + field.Wall.PlayfieldBounds.Width / 2,
-            field.Wall.PlayfieldBounds.Y + field.Wall.PlayfieldBounds.Height / 2);
-        field.SpawnEnforcer(new IntVector2(centre.X + ScreenSize.ToPortPixelsFromArcadePixels(120),
+        IntVector2 centre = new(playField.PlayfieldWall.PlayfieldBounds.X + playField.PlayfieldWall.PlayfieldBounds.Width / 2,
+            playField.PlayfieldWall.PlayfieldBounds.Y + playField.PlayfieldWall.PlayfieldBounds.Height / 2);
+        playField.SpawnEnforcer(new IntVector2(centre.X + ScreenSize.ToPortPixelsFromArcadePixels(120),
             centre.Y)); // well past the fire range
 
-        var demo = new DemoPlayerInputSource(new Random(7));
-        demo.Bind(field);
+        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
+        demoPlayerInputSource.Bind(playField);
 
-        var state = demo.Poll();
+        var playerInputState = demoPlayerInputSource.Poll();
 
-        Assert.Equal(1, state.MoveDirection.X); // back toward the centre
-        Assert.Equal(0, state.MoveDirection.Y);
-        Assert.False(state.FireHeld);
+        Assert.Equal(1, playerInputState.MoveDirection.X); // back toward the centre
+        Assert.Equal(0, playerInputState.MoveDirection.Y);
+        Assert.False(playerInputState.FireHeld);
     }
 
     [Fact]
     public void Poll_HoldsItsDirectionBeforeFollowingANewThreat()
     {
-        var field = EmptyField(FullBounds);
-        var start = field.Player.Position;
-        field.SpawnEnforcer(start +
+        var playField = EmptyField(FullBounds);
+        var start = playField.Player.Position;
+        playField.SpawnEnforcer(start +
                             new IntVector2(0, -ScreenSize.ToPortPixelsFromArcadePixels(30))); // above him → flee DOWN
 
-        var demo = new DemoPlayerInputSource(new Random(7));
-        demo.Bind(field);
+        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
+        demoPlayerInputSource.Bind(playField);
 
         // The first decision is adopted at once (an empty stick is not a direction).
-        Assert.Equal(new IntVector2(0, 1), demo.Poll().MoveDirection);
+        Assert.Equal(new IntVector2(0, 1), demoPlayerInputSource.Poll().MoveDirection);
 
         // Now the threat is on the other side of him, so the RAW flee direction is
         // UP. The stick must not follow it yet: the arcade RESETS the walk animation
         // on every facing change, and the raw direction flips against a moving field
         // — which is what left the demo's man twitching instead of walking (notes
         // §97.5). It may pause (the deliberate stutter), but it must not reverse.
-        field.Player.TeleportTo(start + new IntVector2(0, -ScreenSize.ToPortPixelsFromArcadePixels(40)));
+        playField.Player.TeleportTo(start + new IntVector2(0, -ScreenSize.ToPortPixelsFromArcadePixels(40)));
 
         for (var tick = 0; tick < AttractTuning.DemoDirectionHoldTicks; tick++)
-            Assert.NotEqual(new IntVector2(0, -1), demo.Poll().MoveDirection);
+            Assert.NotEqual(new IntVector2(0, -1), demoPlayerInputSource.Poll().MoveDirection);
 
         var move = IntVector2.Zero;
         for (var tick = 0;
              tick < AttractTuning.DemoDirectionHoldTicks + AttractTuning.DemoDirectionSwitchTicks + 2
              && move != new IntVector2(0, -1);
              tick++)
-            move = demo.Poll().MoveDirection;
+            move = demoPlayerInputSource.Poll().MoveDirection;
 
         Assert.Equal(new IntVector2(0, -1), move); // ...and eventually it does follow it
     }
@@ -145,25 +145,25 @@ public sealed class DemoPlayerInputSourceTests
     {
         // A small field so the player can be pushed close to the left wall.
         Rectangle small = new(0, 0, 200, 200);
-        var left = new MutableStick { State = new PlayerInputState(new IntVector2(-1, 0), false) };
-        var field = EmptyFieldWithInput(small, left);
+        var leftMutableStick = new MutableStick { State = new PlayerInputState(new IntVector2(-1, 0), false) };
+        var playField = EmptyFieldWithInput(small, leftMutableStick);
 
         var clearance = ScreenSize.ToPortPixelsFromArcadePixels(AttractTuning.DemoWallClearanceArcadePixels);
-        while (field.Player.Position.X >= clearance) field.Update(new GameTime());
+        while (playField.Player.Position.X >= clearance) playField.Update(new GameTime());
 
         // A robot on the CENTRE side of the player: fleeing it means running
         // into the left wall, which the demo must refuse.
-        var player = field.Player.Position;
-        field.SpawnEnforcer(player + new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(40), 0));
+        var player = playField.Player.Position;
+        playField.SpawnEnforcer(player + new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(40), 0));
 
-        var demo = new DemoPlayerInputSource(new Random(7));
-        demo.Bind(field);
+        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
+        demoPlayerInputSource.Bind(playField);
 
-        var state = demo.Poll();
+        var playerInputState = demoPlayerInputSource.Poll();
 
-        Assert.NotEqual(-1, state.MoveDirection.X);
-        Assert.InRange(state.MoveDirection.X, -1, 1);
-        Assert.InRange(state.MoveDirection.Y, -1, 1);
+        Assert.NotEqual(-1, playerInputState.MoveDirection.X);
+        Assert.InRange(playerInputState.MoveDirection.X, -1, 1);
+        Assert.InRange(playerInputState.MoveDirection.Y, -1, 1);
     }
 
     /// <summary>A stick the test can flip (PlayField's input reference is fixed at construction).</summary>

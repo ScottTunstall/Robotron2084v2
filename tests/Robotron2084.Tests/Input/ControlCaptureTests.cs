@@ -12,9 +12,9 @@ namespace Robotron2084.Tests.Input;
 /// </summary>
 public sealed class ControlCaptureTests
 {
-    private static InputSnapshot Bare(KeyboardState? keys = null, GamePadState? pad = null)
+    private static InputSnapshot Bare(KeyboardState? keyboardState = null, GamePadState? gamePadState = null)
     {
-        return new InputSnapshot(keys ?? new KeyboardState(), pad ?? new GamePadState(), new GamePadState());
+        return new InputSnapshot(keyboardState ?? new KeyboardState(), gamePadState ?? new GamePadState(), new GamePadState());
     }
 
     [Fact]
@@ -40,9 +40,9 @@ public sealed class ControlCaptureTests
     [Fact]
     public void AGamePadButton_IsCapturedWithItsPadAndButton()
     {
-        var pad = TestPads.WithButton(Buttons.Y);
+        var gamePadState = TestPads.WithButton(Buttons.Y);
 
-        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(pad: pad));
+        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(gamePadState: gamePadState));
 
         Assert.Equal(InputBinding.CreateButton(0, Buttons.Y), captured);
     }
@@ -50,9 +50,9 @@ public sealed class ControlCaptureTests
     [Fact]
     public void AStickPush_IsCapturedAsADirection_NotAsAButton()
     {
-        var pad = TestPads.Pad(new Vector2(0f, 1f));
+        var gamePadState = TestPads.Pad(new Vector2(0f, 1f));
 
-        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(pad: pad));
+        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(gamePadState: gamePadState));
 
         // Up on the left stick, in screen space (XNA's Y is up-positive).
         Assert.Equal(InputBinding.CreateStick(0, false, 0, -1), captured);
@@ -61,9 +61,9 @@ public sealed class ControlCaptureTests
     [Fact]
     public void TheSecondPadsInputSaysSo()
     {
-        var pad = TestPads.WithButton(Buttons.A);
+        var gamePadState = TestPads.WithButton(Buttons.A);
         InputSnapshot previous = new(new KeyboardState(), new GamePadState(), new GamePadState());
-        InputSnapshot current = new(new KeyboardState(), new GamePadState(), pad);
+        InputSnapshot current = new(new KeyboardState(), new GamePadState(), gamePadState);
 
         var captured = ControlCapture.GetNewlyPressed(previous, current);
 
@@ -75,9 +75,9 @@ public sealed class ControlCaptureTests
     public void AKeyBeatsAPadPressOnTheSameTick()
     {
         // A keyboard-defining pass is the common case, so it wins the tie.
-        var pad = TestPads.WithButton(Buttons.A);
+        var gamePadState = TestPads.WithButton(Buttons.A);
 
-        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(new KeyboardState(Keys.R), pad));
+        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(new KeyboardState(Keys.R), gamePadState));
 
         Assert.Equal(InputBinding.CreateKey(Keys.R), captured);
     }
@@ -91,9 +91,9 @@ public sealed class ControlCaptureTests
     [InlineData(Buttons.BigButton)]
     public void EveryCaptureableButton_IsCapturable(Buttons button)
     {
-        var pad = TestPads.WithButton(button);
+        var gamePadState = TestPads.WithButton(button);
 
-        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(pad: pad));
+        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(gamePadState: gamePadState));
 
         Assert.Equal(InputBinding.CreateButton(0, button), captured);
     }

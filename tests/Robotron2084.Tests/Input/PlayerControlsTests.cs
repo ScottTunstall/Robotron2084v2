@@ -13,7 +13,7 @@ namespace Robotron2084.Tests.Input;
 /// </summary>
 public sealed class PlayerControlsTests
 {
-    private static readonly GamePadState NoPad = new();
+    private static readonly GamePadState NoGamePadState = new();
 
     [Fact]
     public void PlayerOneDefaults_AreThePortsKeyboardScheme()
@@ -57,7 +57,7 @@ public sealed class PlayerControlsTests
     {
         var controls = PlayerControls.CreateDefaults(0);
 
-        var diagonal = controls.GetMoveDirection(new KeyboardState(Keys.W, Keys.D), NoPad, NoPad);
+        var diagonal = controls.GetMoveDirection(new KeyboardState(Keys.W, Keys.D), NoGamePadState, NoGamePadState);
 
         Assert.Equal(new IntVector2(1, -1), diagonal);
     }
@@ -66,20 +66,20 @@ public sealed class PlayerControlsTests
     public void IJKL_ProducesTheShootVector_AndFires()
     {
         var controls = PlayerControls.CreateDefaults(0);
-        var keys = new KeyboardState(Keys.J); // shoot left
+        var keyboardState = new KeyboardState(Keys.J); // shoot left
 
-        Assert.Equal(new IntVector2(-1, 0), controls.GetShootDirection(keys, NoPad, NoPad));
-        Assert.True(controls.IsFiring(keys, NoPad, NoPad));
+        Assert.Equal(new IntVector2(-1, 0), controls.GetShootDirection(keyboardState, NoGamePadState, NoGamePadState));
+        Assert.True(controls.IsFiring(keyboardState, NoGamePadState, NoGamePadState));
     }
 
     [Fact]
     public void OppositeDirectionsCancel_AndNothingHeldMeansNoFire()
     {
         var controls = PlayerControls.CreateDefaults(0);
-        var both = new KeyboardState(Keys.A, Keys.D);
+        var bothKeyboardState = new KeyboardState(Keys.A, Keys.D);
 
-        Assert.Equal(IntVector2.Zero, controls.GetMoveDirection(both, NoPad, NoPad));
-        Assert.False(controls.IsFiring(new KeyboardState(), NoPad, NoPad));
+        Assert.Equal(IntVector2.Zero, controls.GetMoveDirection(bothKeyboardState, NoGamePadState, NoGamePadState));
+        Assert.False(controls.IsFiring(new KeyboardState(), NoGamePadState, NoGamePadState));
     }
 
     [Fact]
@@ -88,9 +88,9 @@ public sealed class PlayerControlsTests
         var controls = PlayerControls.CreateDefaults(0);
         var pad = TestPads.Pad(new Vector2(0f, 1f), new Vector2(-1f, 0f));
 
-        Assert.Equal(new IntVector2(0, -1), controls.GetMoveDirection(new KeyboardState(), pad, NoPad));
-        Assert.Equal(new IntVector2(-1, 0), controls.GetShootDirection(new KeyboardState(), pad, NoPad));
-        Assert.True(controls.IsFiring(new KeyboardState(), pad, NoPad));
+        Assert.Equal(new IntVector2(0, -1), controls.GetMoveDirection(new KeyboardState(), pad, NoGamePadState));
+        Assert.Equal(new IntVector2(-1, 0), controls.GetShootDirection(new KeyboardState(), pad, NoGamePadState));
+        Assert.True(controls.IsFiring(new KeyboardState(), pad, NoGamePadState));
     }
 
     [Fact]
