@@ -39,7 +39,7 @@ A table's layout column ("5 per column") must be named something else, such as `
 | Say | Don't say | What it means |
 |---|---|---|
 | **animation frame** | picture, art, image, frame (alone) | One drawing of a character, out of the set that makes it look like it is moving. A standing-still thing, like a shell, has just one. "Frame" on its own means an arcade frame. "Sprite" is fine too, as a name for the whole set of drawings a character has, or for one of them. |
-| **palette slot** or **slot** | colour index, colour | One of the 16 colours the game can show at once. Slots 0-9 stay the same; 10-15 keep changing, which makes things flash. |
+| **palette index** | slot, colour index, colour | One of the 16 colours the game can show at once, numbered 0 to 15. Indices 0-9 stay the same; 10-15 keep changing, which makes things flash. Names end in `...PaletteIndex` (`LaserPaletteIndex`, `GetPaletteIndexColour`) and several are `...PaletteIndices`. "Slot" is not used for this any more; it still names a place in a list: `PlayerSlot` (a player's record), a family member's place in `FamilyList`, and `LaserSlots` (the three places for lasers). |
 | **strip explosion** | explosion (on its own) | A robot's animation frame cut into thin strips that fly apart. |
 | **appear** or **materialise** | spawn-in, warp-in | The strips of a new robot's animation frame rushing together at the start of a wave. |
 | **transporter**, **transport** | warp-in, teleport | The arcade's own name for the way the robots arrive at the start of a brain wave: they are beamed in, sparkling, instead of forming out of strips. Any name in the code with `Transport` or `Transporter` in it is about this and nothing else. The word comes from the original source, `RRT2.ASM`, which is titled `TRANSPORTER`. |
@@ -69,7 +69,7 @@ Words that used to be used here and must not come back. Do not use them in a nam
 | `SpecWidth`, `SpecHeight` | `WidthInArcadePixels`, `HeightInArcadePixels` | The size of the game's screen, in arcade pixels. |
 | `ArcadePixelsPerColumn` | `ArcadePixelsPerByte` | A pixel takes 4 bits, so a byte holds two; a column is one byte across. |
 | reaim, re-aim, `Reaim…`, and "aim" for a robot heading for a point (`AimZone…`, `AimOffsetFromTarget`) | new direction (`NewDirection…`) or new destination (`NewDestination…`); "heads for" | A robot does not aim, it heads for a spot. Only a shot is aimed (a spark, a tank shell, the player's lasers), so "aim" stays for those. |
-| roll, re-roll, `Reroll…`, `…RollSides` | random number, pick again, `…RandomRange` | Dice talk. The code draws a random number; a method that does is `GetRandom…` or `SetRandom…`. |
+| roll, re-roll, `Reroll…`, `…RollSides`, `…RollAtMost`, `RollUpTo` | random number, pick at random, pick again, `…MaxExclusive`, `…Threshold`, `GetRandomBelow` | Dice talk, and the author does not like the word for random numbers anywhere (NAM-24). The code draws a random number; a method that does is `GetRandom…` or `SetRandom…`; the cut-off it is compared with is a `…Threshold`. |
 | "nearly every tick" | "on every tick, except ..." and say the exceptions | The playfield skips `Update` only in the freeze, and for robots still appearing. |
 | arcade frame (in a comment) | "fiftieths of a second", "50 times a second" | A reader should not need the arcade's word to follow a comment. |
 | picture | animation frame | The glossary's word for one drawing. |
@@ -77,6 +77,7 @@ Words that used to be used here and must not come back. Do not use them in a nam
 | level (as a round of the game), `Level…`, `…PerLevel`, `LevelNumber`, `LevelParameters` | wave, `WaveNumber`, `WaveParameters` | The arcade says WAVE, and so does the screen. "Level" stays only for "level with" (equal height) and for a sound's level. |
 | men, man, ships, mini man, `SpareMen`, `HasMen`, `ExtraMan…`, `shipsPerGame` | lives, spare lives, extra life, `SpareLives`, `HasLives`, `ExtraLife…`, `startingLives` | One word for what a player may lose. The arcade's on-screen text and the keys the game saves keep theirs. |
 | cap, limit, maximum, minimum (in our own names): `EnforcerCap`, `ShellCountLimit`, `MaximumDifficulty` | `Max…` and `Min…`: `MaxEnforcers`, `MaxShellCount`, `MaxDifficulty` | One word for the biggest and one for the smallest. A position that is a limit on a line (`rightLimit`) is not a count and is left. |
+| slot, `...Slot`, `GetSlotColour`, `FontSlots`, `DefaultSlotValues` (for a colour) | palette index, `...PaletteIndex`, `GetPaletteIndexColour`, `FontPaletteIndices`, `DefaultPaletteValues` | "Slot" meant five things, and the laser's colour (`LaserSlot`) sat beside the store of lasers (`LaserSlots`). Palette index is plain and says what the number is. |
 | X and Y, axis (in a comment) | left or right, up or down, sideways | Plain words, not maths words. |
 
 A comment is for a reader of about ten who has never seen the arcade game. If a word needs explaining, explain it in

@@ -231,7 +231,7 @@ followed by the velocity call is the pattern to copy.
 text: `colour`, `centre`, `initialise`, `materialise`, `behaviour`, `grey`, `serialise`, `normalise`. The
 exceptions are names we do not own: a framework or library member keeps its own spelling (MonoGame's `Color`,
 `Rectangle.Center`, `SpriteBatch`), and so does a ROM label quoted from the source. Where our own name has to
-sit next to a framework one, ours is British (`SlotColour` returning a `Color`). A rename to British spelling
+sit next to a framework one, ours is British (`PaletteIndexColour` returning a `Color`). A rename to British spelling
 follows NAM-8: the American spelling is gone everywhere, not only from the declaration.
 
 **NAM-13. Method names start with the verb Microsoft's guidelines give them.**
@@ -258,7 +258,7 @@ it a method.
 
 **NAM-14. It is an electrode, never a post.** The original source calls the obstacle a "post" (`PSTKIL`,
 `PKPROC`), but this port has chosen **electrode**: the class is `Electrode`, and every name we write uses it
-(`GetElectrodeVariant`, `ElectrodeSlotByWaveMod10`). "Post" appears only inside a quoted ROM label or a comment
+(`GetElectrodeVariant`, `ElectrodePaletteIndexByWaveMod10`). "Post" appears only inside a quoted ROM label or a comment
 that says which ROM routine it maps to. This is a decision of the author, and it overrides the terminology
 ledger's "original word wins" for this one concept. Do not reopen it.
 
@@ -384,8 +384,12 @@ name, comment or doc, and when a rename retires a word, add it to that table in 
 
 **NAM-24. A random pick says Random, never Roll.** `GetRandomDirection`, `SetRandomVelocity`, `ThresholdRandomRange`,
 `OffsetXRandomMax`. The words "roll", "re-roll", "Reroll" and `…RollSides` are retired (dice talk: the code draws a
-random number). Use "random number" in comments, and `…RandomRange` for the size of the range a random number is
-drawn from.
+random number). Use "random number" or "picks at random" in comments, and `…MaxExclusive` for the number a random pick must stay below (`Random.Next(max)` never returns it). **This is the author's own preference and applies everywhere the word could stand for a random
+number**: identifiers (`RollUpTo`, `SearchFamilyListRollAtMost`), constants, parameters, locals, comments, test names and
+test helpers ("choose every roll", "direction roll", "rolls a number"). Name the cut-off a random number is compared
+with a `…Threshold` (`SearchFamilyListThreshold`: a hulk whose random number is at or below it searches the family list),
+and a method that returns a random number is `GetRandom…` (`GetRandomBelow`). The word is fine where it means something
+else: a tank "rolls" along, "scroll", "stroll", "hand-rolled".
 
 **NAM-25. A parameter or variable is not named after something else that exists.** Least surprise: a reader who sees
 `playfield` expects a `PlayField`, `player` a `Player`, `keys` the `Keys` enum, `effect` MonoGame's `Effect`, `sound`

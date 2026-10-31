@@ -14,8 +14,8 @@ ours. This list only compares our own words with each other.
 > after its ROM label's comment, so the table does not mix two vocabularies. The items below are left as they were written,
 > because they are the record of what was found. Their status:
 > D01 **done** (the namespace `Robotron2084.Level` was left), D02 **done** (`TurnsPerPlayer` and the arcade's on-screen words were left),
-> D03 **done** (`Floor`, and the positions called `…Limit`, were left), D12 **no change needed** (the summary now says the names are
-> the ROM's on purpose). Every other item is still open.
+> D03 **done** (`Floor`, and the positions called `…Limit`, were left), R02 **done** (the author does not like "roll" for random numbers; it is in NAM-24), D12 **no change needed** (the summary now says the names are
+> the ROM's on purpose). D07 is partly done: the colour meaning is now `PaletteIndex` everywhere, which removes the `LaserSlot` and `LaserSlots` clash; the player record, the family place and the key and pad halves are still open. Every other item is still open.
 
 ## How this list was made
 

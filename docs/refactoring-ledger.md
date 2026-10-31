@@ -24,6 +24,74 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 
 ---
 
+## 2026-10-31: no "roll" for a random number
+
+### What was wrong
+
+The author does not like "roll" for random numbers. NAM-24 already retired it, but it was still in names and comments
+(audit item R02 in [terminology-duplicates-2026-10-31.md](terminology-duplicates-2026-10-31.md)). NAM-24 now says it is the
+author's preference and applies everywhere the word could stand for a random number.
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| `HulkWaveSpawner.SearchFamilyListRollAtMost` | `SearchFamilyListThreshold` |
+| `HulkWaveSpawner.TargetRollSides` | `TargetMaxExclusive` |
+| `AttractObjectMachine.RollUpTo` | `GetRandomBelow` |
+| `SpawnPlacement.PercentSides` | `PercentMaxExclusive` |
+
+Comments that said "rolls a number", "direction roll" or "every roll" now say "picks a random number", "random direction" or "every
+random number" (the quark and spheroid spawners, `WaveParameters`, `WaveTable`, `WaveTableRow`, `SpawnPlacement`, `ScriptedRandom`,
+`PlayFieldBrainProgMissileTests`).
+
+### What was left alone, and why
+
+- "roll" in other senses: a tank rolling along, "scroll", "stroll", "hand-rolled", "corollary".
+- `CoinFlipSides` and `AxisFlipSides` (`Quark`, `Prog`): they are dice talk too ("sides"), but they are not the word "roll". The author
+  has not been asked about them.
+
+---
+
+## 2026-10-31: palette index, not slot, for a colour
+
+### What was wrong
+
+`Slot` meant five things (audit item D07 in [terminology-duplicates-2026-10-31.md](terminology-duplicates-2026-10-31.md)). The
+sharpest clash was `PlayerTuning.LaserSlot`, a colour (palette entry 10), beside `LaserSlots`, the store of three lasers. The author
+chose **palette index** for the colour meaning, in every name.
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| every `...Slot` constant of a palette entry: `LaserSlot`, `BackgroundSlot`, `ShapeSlot`, `HeadSlot`, `TrailSlot`, `BurstSlot`, `PointsSlot`, `TextSlot`, `HeadingSlot`, `InkSlot`, `PlayerDeathFadeSlot`, `HighScoreTodaySlot`, `TitleWallSlot` and the rest in `Tuning/` and the screens | the same name ending `...PaletteIndex` |
+| `GetSlotColour`, `GetSlotValue`, `SetSlot`, `SuspendSlot`, `ResumeSlot`, `IsSlotSuspended` | `GetPaletteIndexColour`, `GetPaletteIndexValue`, `SetPaletteIndexValue`, `SuspendPaletteIndex`, `ResumePaletteIndex`, `IsPaletteIndexSuspended` |
+| `DefaultSlotValues`, `_slotValues`, `_suspendedSlots` | `DefaultPaletteValues`, `_paletteValues`, `_suspendedPaletteIndices` |
+| `FontSlots` (class and file), `FirstCyclingSlot`, `LastCyclingSlot`, `CyclingSlotMarkers`, `BlackSlots`, `OwnedSlots`, `PlayerDeathFlashSlots` | `FontPaletteIndices`, `FirstCyclingPaletteIndex`, `LastCyclingPaletteIndex`, `CyclingPaletteIndexMarkers`, `BlackPaletteIndices`, `OwnedPaletteIndices`, `PlayerDeathFlashPaletteIndices` |
+| `GetWallSlot`, `GetLaserWallSlot`, `GetElectrodeSlot`, `GetTintSlot`, `GetDeathSolidSlot`, `GetFrameStrokeSlot`, `GetWordmarkColorSlot`, `GetWordmarkRimSlot` | the same with `PaletteIndex` (the wordmark one is also spelt `Colour`) |
+| `HudScoreSlotCurrent`, `HudScoreSlotIdle` | `HudScorePaletteIndexCurrent`, `HudScorePaletteIndexIdle` |
+| `GetColourSlots`, `GetSlot` (the Williams ring and the high score table) | `GetColourPaletteIndices`, `GetPaletteIndex` |
+| the plain `slot` / `slots` / `Slot` in the palette, graphics, HUD, tuning, attract-movie and screen files, and `FirstSlot`, `LastSlot`, `SlotCount` in the two page palettes | `paletteIndex` / `paletteIndices` / `PaletteIndex`, `FirstPaletteIndex`, `LastPaletteIndex`, `PaletteIndexCount` |
+| `FontSlotsTests` and test names that held "Slot" | `FontPaletteIndicesTests` and the same names with "PaletteIndex" |
+
+Comments follow: "palette slot" and "slot" for a colour now read "palette index".
+
+### What was left alone, and why
+
+- `PlayerSlot` (a player's record), the family member's place in `FamilyList` (`FamilySlot`, `FirstSlot`, `GetMemberInSlot`), `LaserSlots`
+  (the three places for lasers) and the key half and pad half of a controls line (`AssignSlot`, `isPadSlot`, "device slot"). They are
+  other ideas that share the word, and the audit's D07 still lists them for a decision.
+- The Williams ring's `EmptySlotColumn` and `EmptySlotRow`: a "slot" there is the place a W sits on the ring.
+- The shader parameter strings `"SlotId"` and `"RemapColor"`: they are names inside the compiled shader, not C# names.
+- Sound-buffer "slots" in `Audio` comments (one sample per slot).
+
+### How it was checked
+
+`dotnet build Robotron2084.slnx` in Debug and Release, then both test assemblies; counts unchanged from the last entry.
+
+---
+
 ## 2026-10-31: wave, lives and Max: one word each
 
 ### What was wrong
