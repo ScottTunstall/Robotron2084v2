@@ -26,6 +26,55 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 
 ---
 
+## 2026-10-31: TeleportTo becomes MoveTo
+
+### What was wrong
+
+`Hulk.TeleportTo` and `Player.TeleportTo` only set the position. "Teleport" says more than that, and `FamilyMember` already used `MoveTo` for the
+same job, so the three classes used two words for one thing.
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| `Hulk.TeleportTo`, `Player.TeleportTo` | `MoveTo` |
+| the six test callers, and the example in TEST-1 | `MoveTo` |
+
+### What was left alone, and why
+
+- **`docs/code-review-*.md`**: they are records of past reviews and keep the name they were written with.
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors; tests unchanged.
+
+---
+
+## 2026-10-31: direction signs are DirectionSigns, not -1 and 1 (NUM-1)
+
+### What was wrong
+
+`Spheroid` stored its escape direction as `_escapeDirectionSignX`, set to `1` or `-1`. `Gorf` did the same with `_directionSignX`. The numbers
+say nothing about which way is which, and the author does not want magic numbers.
+
+### What was changed
+
+- New `Core/DirectionSigns.cs`: `Left = -1`, `Right = 1`, `Up = -1`, `Down = 1`, as the author gave them.
+- `Spheroid`: the escape direction is set from `DirectionSigns.Left` or `DirectionSigns.Right`, and its summary names them.
+- `Gorf`: the entry direction is set from `DirectionSigns.Left` or `DirectionSigns.Right`.
+
+### What was left alone, and why
+
+- **`CruiseMissile.GetRandomDirectionSign`** returns 1 or -1 for both the sideways and the up-and-down axis. One pair of names would be wrong for one
+  of them, so it needs the helper split first. Not done yet.
+- **Other `-1` literals** (sentinels such as `_entryIndex = -1` and `NoSoundNumber`) break the new NUM-1 wording as well. They are not direction signs and were not changed here.
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors; tests run after the change.
+
+---
+
 ## 2026-10-31: Human becomes FamilyMember
 
 ### What was wrong

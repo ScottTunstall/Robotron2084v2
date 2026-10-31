@@ -163,6 +163,8 @@ playfield a question or asks it to make something (STR-10, `field.HitsWall(box)`
 playfield, it should return a result and let the playfield decide. This keeps the order and the game's response in one
 place, so they can change without touching the objects.
 
+**STR-14. Declare a variable as close to its first use as possible.** Declare each one on the line that first gives it a value, not in a block of locals at the top of the method. A variable needed in two separate parts of a method is declared before the first of them.
+
 ## 3. Naming (§114)
 
 **NAM-1. Methods are verb phrases in the domain's own words**: `SetRandomOffsets`, `GetRandomDirection`,
@@ -478,6 +480,9 @@ Most of the decisions below are one principle applied to a particular name, so i
 | **Each fact is documented once, by its owner**: interfaces are contracts and never explain a concrete implementation; implementations say what they do and what they talk to, not who calls them (unless that is critical to use) and not how the objects they hold behave. | "Interfaces are contracts - they MUST NOT explain how the concrete implementation behaves. On the other hand, implementations are concerned ONLY with what they do and what they talk to (ie: what they are composed of or aggregated with), NOT who calls them (unless that is critical to use). Implementations should not talk about how contained/aggregated objects behave though, if the implementations change the comments will rot." | CMT-17 (draws together CMT-12, CMT-15 and CMT-16) |
 | **Every text file is CRLF on disk**; the repository still stores LF. | "I need all files to be in windows format - CR LF". | `.gitattributes` (`eol=crlf`), `.editorconfig` |
 | **`Human` is renamed to `FamilyMember`**, with `FamilyMemberKind`, the `…FamilyMemberResult` records and the file names. "Human" in a comment is changed only where it means the family member; where it means a person (the player, a reader), it stays. | "Human should be renamed to FamilyMember." The author chose the recommended scope: "Follow recommended and rename file names". The author gave no reason. | Refactoring ledger, 2026-10-31 |
+| **No magic numbers, including `-1` and `1` as a direction's sign.** A sign is `DirectionSigns.Left`, `Right`, `Up` or `Down`. | "I don't like code like `_escapeDirectionSignX = -1`. It uses magic numbers. I want you to create a class with constants called DirectionSigns, where Left = -1, Right = 1, Up = -1, Down = 1. Also record in coding standards not to use magic numbers." The author gave no further reason. | NUM-1 |
+| **A variable is declared as close to its first use as possible** (STR-14). | "Make it a coding rule that variables should always be declared as close to first use as possible." The author gave no reason. | STR-14 |
+| **A method that only sets a position is `MoveTo`, not `TeleportTo`.** | "I do not like the name TeleportTo if all it does it set the position. Change it to MoveTo throughout codebase". The author gave no further reason. (`FamilyMember` already used `MoveTo`.) | Refactoring ledger, 2026-10-31 |
 
 If you are the author and want to add the story behind any row, add it in the second column in your own words.
 
@@ -495,7 +500,7 @@ Not `Showing…`, `Shows…`, `…Shown`, `…Drawn` or `show…`.
 
 ## 4. Numbers and units (§112, §113)
 
-**NUM-1. No magic numbers.** Every literal other than `0`, `1`, `-1` (and `2` when halving) is a named constant.
+**NUM-1. No magic numbers.** Every literal other than `0` and `1` (and `2` when halving) is a named constant, `-1` included. A direction's sign is `DirectionSigns.Left`, `Right`, `Up` or `Down`, never `-1` or `1`.
 Its `<summary>` says **what it is** and **where it comes from**: a ROM routine and address, a measurement, or
 "the author's tuning". Tunable values live in `Tuning/`. Values fixed by the ROM may live in the class that
 uses them.
@@ -683,7 +688,7 @@ injected snapshot, not `Keyboard.GetState()` inside a state.
 ## 8. Test seams and dead code
 
 **TEST-1. Test hooks are `internal`, labelled "(test hook)" in their summary, and grouped last in the class
-(STR-5).** One idiom per need: position overrides are `internal void TeleportTo(...)`, never an
+(STR-5).** One idiom per need: position overrides are `internal void MoveTo(...)`, never an
 `internal set` on a public property.
 
 **TEST-2. Production defaults never favour tests.** A constructor parameter like
