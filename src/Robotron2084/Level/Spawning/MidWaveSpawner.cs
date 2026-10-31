@@ -52,21 +52,21 @@ internal sealed class MidWaveSpawner
     }
 
     /// <summary>
-    ///     Gorf drops a grunt: it starts where Gorf is and falls to the ground, with no appear effect. A level holds only
+    ///     Gorf drops a grunt: it starts where Gorf is and falls to the ground, with no appear effect. A wave holds only
     ///     so many.
     /// </summary>
     /// <param name="from">Where the grunt starts, which is inside Gorf.</param>
     /// <param name="landing">Where the grunt ends up standing.</param>
     /// <remarks>
     ///     A new robot's drop (notes §138.2): there is no arcade routine for it. The grunt is kept inside the playfield, and
-    ///     is not dropped at all when the level
+    ///     is not dropped at all when the wave
     ///     already holds as many grunts as it is allowed: the wave's own number (which the difficulty moves), or
-    ///     <see cref="GorfTuning.MinimumGruntCap" /> if that is fewer.
+    ///     <see cref="GorfTuning.MinGruntCount" /> if that is fewer.
     /// </remarks>
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
         if (_entities.Grunts.Count(entity => !entity.IsDead()) >=
-            Math.Max(_field.Parameters.GruntCount, GorfTuning.MinimumGruntCap)) return;
+            Math.Max(_field.Parameters.GruntCount, GorfTuning.MinGruntCount)) return;
 
         var bounds = _field.GetPlayfieldBounds();
         var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
