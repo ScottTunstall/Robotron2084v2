@@ -11,10 +11,10 @@ namespace Robotron2084.Level.Collisions;
 internal sealed class PlayerRescueRule : ICollisionRule
 {
     /// <inheritdoc />
-    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities)
     {
-        foreach (var human in entities.GetFamilyMembers())
-            if (human.IsGraspable() && scene.IsPlayerAlive() && scene.TouchesPlayer(human))
+        foreach (var human in fieldEntities.GetFamilyMembers())
+            if (human.IsGraspable() && collisionScene.IsPlayerAlive() && collisionScene.TouchesPlayer(human))
                 yield return new PlayerRescuedHumanResult(human);
     }
 }

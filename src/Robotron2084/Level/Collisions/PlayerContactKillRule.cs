@@ -13,14 +13,14 @@ namespace Robotron2084.Level.Collisions;
 internal sealed class PlayerContactKillRule : ICollisionRule
 {
     /// <inheritdoc />
-    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities)
     {
-        if (!scene.CanPlayerBeHurt()) yield break;
+        if (!collisionScene.CanPlayerBeHurt()) yield break;
 
         foreach (var robot in RobotKinds.All.Where(kind => kind.KillsPlayerOnContact))
         {
-            var touched = entities.GetEntities(robot.Kind)
-                .FirstOrDefault(entity => entity.IsAlive() && scene.TouchesPlayer(entity));
+            var touched = fieldEntities.GetEntities(robot.Kind)
+                .FirstOrDefault(entity => entity.IsAlive() && collisionScene.TouchesPlayer(entity));
             if (touched is not null)
             {
                 yield return new PlayerTouchedDeadThingResult(touched);

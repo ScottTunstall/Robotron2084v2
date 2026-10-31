@@ -7,8 +7,8 @@ namespace Robotron2084.Level.Collisions;
 internal interface ICollisionRule
 {
     /// <summary>Finds every pair this rule is about that is touching, and reports each one as it is found.</summary>
-    /// <param name="scene">What the rule may ask about the field.</param>
-    /// <param name="entities">What is on the field.</param>
+    /// <param name="collisionScene">What the rule may ask about the field.</param>
+    /// <param name="fieldEntities">What is on the field.</param>
     /// <returns>The results, one at a time. The rule does not look for the next until it is asked for it.</returns>
-    IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities);
+    IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities);
 }

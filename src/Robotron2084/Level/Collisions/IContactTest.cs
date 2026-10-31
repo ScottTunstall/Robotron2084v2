@@ -6,7 +6,7 @@ namespace Robotron2084.Level.Collisions;
 public interface IContactTest
 {
     /// <summary>Says whether the two entities are touching.</summary>
-    /// <param name="a">One entity.</param>
-    /// <param name="b">The other entity.</param>
-    bool Touches(IEntity a, IEntity b);
+    /// <param name="firstEntity">One entity.</param>
+    /// <param name="secondEntity">The other entity.</param>
+    bool Touches(IEntity firstEntity, IEntity secondEntity);
 }

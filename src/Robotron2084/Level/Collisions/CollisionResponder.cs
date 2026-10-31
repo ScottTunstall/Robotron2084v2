@@ -11,140 +11,140 @@ namespace Robotron2084.Level.Collisions;
 /// </remarks>
 internal sealed class CollisionResponder
 {
-    private readonly PlayField _field;
+    private readonly PlayField _playField;
     private readonly Dictionary<Type, Action<CollisionResult>> _responses;
 
     /// <summary>Makes a responder for one field.</summary>
-    /// <param name="field">The field that responds.</param>
-    public CollisionResponder(PlayField field)
+    /// <param name="playField">The field that responds.</param>
+    public CollisionResponder(PlayField playField)
     {
-        _field = field;
+        _playField = playField;
         _responses = new Dictionary<Type, Action<CollisionResult>>
         {
-            [typeof(LaserHitResult)] = result => RespondToLaserHit((LaserHitResult)result),
-            [typeof(GruntHitElectrodeResult)] = result => RespondToGruntHittingElectrode((GruntHitElectrodeResult)result),
-            [typeof(BerzerkRobotHitElectrodeResult)] = result => RespondToBerzerkRobotHittingElectrode((BerzerkRobotHitElectrodeResult)result),
-            [typeof(HulkHitElectrodeResult)] = result => RespondToHulkHittingElectrode((HulkHitElectrodeResult)result),
-            [typeof(PlayerHitElectrodeResult)] = result => RespondToPlayerHittingElectrode((PlayerHitElectrodeResult)result),
-            [typeof(PlayerTouchedDeadThingResult)] = _ => _field.KillPlayer(),
-            [typeof(BrainLostVictimResult)] = result => RespondToBrainLosingVictim((BrainLostVictimResult)result),
-            [typeof(BrainCaughtHumanResult)] = result => RespondToBrainCatchingHuman((BrainCaughtHumanResult)result),
-            [typeof(HulkKilledHumanResult)] = result => RespondToHulkKillingHuman((HulkKilledHumanResult)result),
-            [typeof(PlayerRescuedHumanResult)] = result => RespondToPlayerRescuingHuman((PlayerRescuedHumanResult)result)
+            [typeof(LaserHitResult)] = collisionResult => RespondToLaserHit((LaserHitResult)collisionResult),
+            [typeof(GruntHitElectrodeResult)] = collisionResult => RespondToGruntHittingElectrode((GruntHitElectrodeResult)collisionResult),
+            [typeof(BerzerkRobotHitElectrodeResult)] = collisionResult => RespondToBerzerkRobotHittingElectrode((BerzerkRobotHitElectrodeResult)collisionResult),
+            [typeof(HulkHitElectrodeResult)] = collisionResult => RespondToHulkHittingElectrode((HulkHitElectrodeResult)collisionResult),
+            [typeof(PlayerHitElectrodeResult)] = collisionResult => RespondToPlayerHittingElectrode((PlayerHitElectrodeResult)collisionResult),
+            [typeof(PlayerTouchedDeadThingResult)] = _ => _playField.KillPlayer(),
+            [typeof(BrainLostVictimResult)] = collisionResult => RespondToBrainLosingVictim((BrainLostVictimResult)collisionResult),
+            [typeof(BrainCaughtHumanResult)] = collisionResult => RespondToBrainCatchingHuman((BrainCaughtHumanResult)collisionResult),
+            [typeof(HulkKilledHumanResult)] = collisionResult => RespondToHulkKillingHuman((HulkKilledHumanResult)collisionResult),
+            [typeof(PlayerRescuedHumanResult)] = collisionResult => RespondToPlayerRescuingHuman((PlayerRescuedHumanResult)collisionResult)
         };
     }
 
     /// <summary>Does what the field does when a collision rule reports a result.</summary>
-    /// <param name="result">What the rule found.</param>
+    /// <param name="collisionResult">What the rule found.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     ///     The result is one the field has no response for. A new result needs a
     ///     response in the constructor.
     /// </exception>
-    public void Respond(CollisionResult result)
+    public void Respond(CollisionResult collisionResult)
     {
-        if (!_responses.TryGetValue(result.GetType(), out var respond))
-            throw new ArgumentOutOfRangeException(nameof(result), result, "The field has no response for this result.");
+        if (!_responses.TryGetValue(collisionResult.GetType(), out var respond))
+            throw new ArgumentOutOfRangeException(nameof(collisionResult), collisionResult, "The field has no response for this result.");
 
-        respond(result);
+        respond(collisionResult);
     }
 
     /// <summary>The BerzerkRobot and the electrode both die, as a grunt's do, but the other robots do not speed up.</summary>
-    /// <param name="hit">The hit.</param>
-    private void RespondToBerzerkRobotHittingElectrode(BerzerkRobotHitElectrodeResult hit)
+    /// <param name="berzerkRobotHitElectrodeResult">The hit.</param>
+    private void RespondToBerzerkRobotHittingElectrode(BerzerkRobotHitElectrodeResult berzerkRobotHitElectrodeResult)
     {
-        hit.Robot.Kill();
-        _field.SpawnExplosion(hit.Robot, null);
-        hit.Electrode.Kill();
-        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.GetBounds());
-        _field.PlaySoundFrom(SoundTables.RobotHit, hit.Robot.GetBounds());
+        berzerkRobotHitElectrodeResult.BerzerkRobot.Kill();
+        _playField.SpawnExplosion(berzerkRobotHitElectrodeResult.BerzerkRobot, null);
+        berzerkRobotHitElectrodeResult.Electrode.Kill();
+        _playField.PlaySoundFrom(SoundTables.PostKill, berzerkRobotHitElectrodeResult.Electrode.GetBounds());
+        _playField.PlaySoundFrom(SoundTables.RobotHit, berzerkRobotHitElectrodeResult.BerzerkRobot.GetBounds());
     }
 
     /// <summary>The brain starts reprogramming the human it caught.</summary>
-    /// <param name="caught">The catch.</param>
-    private void RespondToBrainCatchingHuman(BrainCaughtHumanResult caught)
+    /// <param name="brainCaughtHumanResult">The catch.</param>
+    private void RespondToBrainCatchingHuman(BrainCaughtHumanResult brainCaughtHumanResult)
     {
-        caught.Brain.BeginReprogramming(caught.Human, _field.GetPlayfieldBounds());
+        brainCaughtHumanResult.Brain.BeginReprogramming(brainCaughtHumanResult.Human, _playField.GetPlayfieldBounds());
     }
 
     /// <summary>The conversion never finishes: the human is lost, no prog appears, and a skull is left where they stood.</summary>
-    /// <param name="lost">The dead brain.</param>
-    private void RespondToBrainLosingVictim(BrainLostVictimResult lost)
+    /// <param name="brainLostVictimResult">The dead brain.</param>
+    private void RespondToBrainLosingVictim(BrainLostVictimResult brainLostVictimResult)
     {
-        var victim = lost.Brain.GetVictim();
-        lost.Brain.ReleaseVictim();
-        if (victim is not null) _field.LeaveSkull(victim.Position);
+        var victim = brainLostVictimResult.Brain.GetVictim();
+        brainLostVictimResult.Brain.ReleaseVictim();
+        if (victim is not null) _playField.LeaveSkull(victim.Position);
     }
 
     /// <summary>
     ///     The grunt and the electrode both die, the surviving grunts speed up, and the electrode's sound is kept over
     ///     the grunt's.
     /// </summary>
-    /// <param name="hit">The hit.</param>
+    /// <param name="gruntHitElectrodeResult">The hit.</param>
     /// <remarks>
     ///     Original source: <c>RRP8.ASM</c> <c>PSTKIL</c>, which asks for <c>PSKSND</c>, then <c>ROBKIL</c> for
     ///     <c>RBSND</c> in the same frame; the voice keeps the first.
     /// </remarks>
-    private void RespondToGruntHittingElectrode(GruntHitElectrodeResult hit)
+    private void RespondToGruntHittingElectrode(GruntHitElectrodeResult gruntHitElectrodeResult)
     {
-        hit.Grunt.Kill();
-        _field.SpawnExplosion(hit.Grunt, null);
-        hit.Electrode.Kill();
-        _field.SpeedUpGrunts();
-        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.GetBounds());
-        _field.PlaySoundFrom(SoundTables.RobotHit, hit.Grunt.GetBounds());
+        gruntHitElectrodeResult.Grunt.Kill();
+        _playField.SpawnExplosion(gruntHitElectrodeResult.Grunt, null);
+        gruntHitElectrodeResult.Electrode.Kill();
+        _playField.SpeedUpGrunts();
+        _playField.PlaySoundFrom(SoundTables.PostKill, gruntHitElectrodeResult.Electrode.GetBounds());
+        _playField.PlaySoundFrom(SoundTables.RobotHit, gruntHitElectrodeResult.Grunt.GetBounds());
     }
 
     /// <summary>The electrode is destroyed. The hulk is not harmed.</summary>
-    /// <param name="hit">The hit.</param>
-    private void RespondToHulkHittingElectrode(HulkHitElectrodeResult hit)
+    /// <param name="hulkHitElectrodeResult">The hit.</param>
+    private void RespondToHulkHittingElectrode(HulkHitElectrodeResult hulkHitElectrodeResult)
     {
-        hit.Electrode.Kill();
-        _field.PlaySoundFrom(SoundTables.PostKill, hit.Electrode.GetBounds());
+        hulkHitElectrodeResult.Electrode.Kill();
+        _playField.PlaySoundFrom(SoundTables.PostKill, hulkHitElectrodeResult.Electrode.GetBounds());
     }
 
     /// <summary>The human dies at once and leaves a skull.</summary>
-    /// <param name="killed">The kill.</param>
-    private void RespondToHulkKillingHuman(HulkKilledHumanResult killed)
+    /// <param name="hulkKilledHumanResult">The kill.</param>
+    private void RespondToHulkKillingHuman(HulkKilledHumanResult hulkKilledHumanResult)
     {
-        killed.Human.Kill();
-        _field.LeaveSkull(killed.Human.Position);
-        _field.PlaySoundFrom(SoundTables.KillAHuman, killed.Human.GetBounds());
+        hulkKilledHumanResult.Human.Kill();
+        _playField.LeaveSkull(hulkKilledHumanResult.Human.Position);
+        _playField.PlaySoundFrom(SoundTables.KillAHuman, hulkKilledHumanResult.Human.GetBounds());
     }
 
     /// <summary>
     ///     A laser is used up by the robot it hits: the robot's kind says what happens to it and what sound it makes, and
     ///     the kill is scored.
     /// </summary>
-    /// <param name="hit">The hit.</param>
+    /// <param name="laserHitResult">The hit.</param>
     /// <remarks>
     ///     Original source: <c>RRS22.ASM</c> <c>KILROB</c>/<c>KILLOF</c> only free the object. The explosion, the burst
     ///     and the score are made by the killer's own calls, as here (notes §61, §64).
     /// </remarks>
-    private void RespondToLaserHit(LaserHitResult hit)
+    private void RespondToLaserHit(LaserHitResult laserHitResult)
     {
-        var hitBounds = hit.Target.GetBounds();
-        hit.KindInfo.LaserHit(_field, hit.Target, hit.Laser.Direction);
-        _field.PlaySoundFrom(hit.KindInfo.LaserHitSound, hitBounds);
-        _field.AwardScore(hit.KindInfo.Score);
-        hit.Laser.Kill();
+        var hitBounds = laserHitResult.TargetEntity.GetBounds();
+        laserHitResult.RobotKindInfo.LaserHit(_playField, laserHitResult.TargetEntity, laserHitResult.PlayerLaser.Direction);
+        _playField.PlaySoundFrom(laserHitResult.RobotKindInfo.LaserHitSound, hitBounds);
+        _playField.AwardScore(laserHitResult.RobotKindInfo.Score);
+        laserHitResult.PlayerLaser.Kill();
     }
 
     /// <summary>The player and the electrode both die.</summary>
-    /// <param name="hit">The hit.</param>
-    private void RespondToPlayerHittingElectrode(PlayerHitElectrodeResult hit)
+    /// <param name="playerHitElectrodeResult">The hit.</param>
+    private void RespondToPlayerHittingElectrode(PlayerHitElectrodeResult playerHitElectrodeResult)
     {
-        _field.KillPlayer();
-        hit.Electrode.Kill();
+        _playField.KillPlayer();
+        playerHitElectrodeResult.Electrode.Kill();
     }
 
     /// <summary>The human is saved, the rescue is counted and shown, and the bonus is scored.</summary>
-    /// <param name="rescued">The rescue.</param>
-    private void RespondToPlayerRescuingHuman(PlayerRescuedHumanResult rescued)
+    /// <param name="playerRescuedHumanResult">The rescue.</param>
+    private void RespondToPlayerRescuingHuman(PlayerRescuedHumanResult playerRescuedHumanResult)
     {
-        rescued.Human.Rescue();
-        var rescues = _field.CountRescuedFamilyMembers();
-        _field.ShowRescueScore(rescued.Human.Position);
-        _field.PlaySoundFrom(SoundTables.SaveAHuman, rescued.Human.GetBounds());
-        _field.AwardRescueBonus(rescues);
+        playerRescuedHumanResult.Human.Rescue();
+        var rescues = _playField.CountRescuedFamilyMembers();
+        _playField.ShowRescueScore(playerRescuedHumanResult.Human.Position);
+        _playField.PlaySoundFrom(SoundTables.SaveAHuman, playerRescuedHumanResult.Human.GetBounds());
+        _playField.AwardRescueBonus(rescues);
     }
 }

@@ -18,9 +18,9 @@ namespace Robotron2084.Level.Collisions;
 internal sealed class BrainVictimReleaseRule : ICollisionRule
 {
     /// <inheritdoc />
-    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities)
     {
-        foreach (var brain in entities.Brains)
+        foreach (var brain in fieldEntities.Brains)
             if (!brain.IsAlive() && brain.IsReprogramming())
                 yield return new BrainLostVictimResult(brain);
     }

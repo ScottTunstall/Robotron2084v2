@@ -10,11 +10,11 @@ namespace Robotron2084.Level.Collisions;
 internal sealed class BrainCatchRule : ICollisionRule
 {
     /// <inheritdoc />
-    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities)
     {
-        if (scene.RobotsFrozen()) yield break;
+        if (collisionScene.RobotsFrozen()) yield break;
 
-        foreach (var brain in entities.Brains)
+        foreach (var brain in fieldEntities.Brains)
             if (brain.GetCatchableTarget() is { } human)
                 yield return new BrainCaughtHumanResult(brain, human);
     }

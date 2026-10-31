@@ -13,28 +13,28 @@ namespace Robotron2084.Level.Collisions;
 internal sealed class RobotVsElectrodeCollisionRule : ICollisionRule
 {
     /// <inheritdoc />
-    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities)
     {
-        foreach (var grunt in entities.Grunts)
-            if (grunt.IsAlive() && FindTouchedElectrode(scene, entities, grunt) is { } electrode)
+        foreach (var grunt in fieldEntities.Grunts)
+            if (grunt.IsAlive() && FindTouchedElectrode(collisionScene, fieldEntities, grunt) is { } electrode)
                 yield return new GruntHitElectrodeResult(grunt, electrode);
 
-        foreach (var robot in entities.BerzerkRobots)
-            if (robot.IsAlive() && FindTouchedElectrode(scene, entities, robot) is { } electrode)
+        foreach (var robot in fieldEntities.BerzerkRobots)
+            if (robot.IsAlive() && FindTouchedElectrode(collisionScene, fieldEntities, robot) is { } electrode)
                 yield return new BerzerkRobotHitElectrodeResult(robot, electrode);
 
-        foreach (var hulk in entities.Hulks)
-            if (FindTouchedElectrode(scene, entities, hulk) is { } electrode)
+        foreach (var hulk in fieldEntities.Hulks)
+            if (FindTouchedElectrode(collisionScene, fieldEntities, hulk) is { } electrode)
                 yield return new HulkHitElectrodeResult(hulk, electrode);
     }
 
     /// <summary>Finds the first living electrode an entity is touching.</summary>
-    /// <param name="scene">What the rule may ask about the field.</param>
-    /// <param name="entities">What is on the field.</param>
-    /// <param name="walker">The grunt or hulk.</param>
+    /// <param name="collisionScene">What the rule may ask about the field.</param>
+    /// <param name="fieldEntities">What is on the field.</param>
+    /// <param name="walkerEntity">The grunt or hulk.</param>
     /// <returns>The electrode, or null when it touches none.</returns>
-    private static Electrode? FindTouchedElectrode(ICollisionScene scene, FieldEntities entities, IEntity walker)
+    private static Electrode? FindTouchedElectrode(ICollisionScene collisionScene, FieldEntities fieldEntities, IEntity walkerEntity)
     {
-        return entities.Electrodes.FirstOrDefault(electrode => electrode.IsAlive() && scene.Touches(walker, electrode));
+        return fieldEntities.Electrodes.FirstOrDefault(electrode => electrode.IsAlive() && collisionScene.Touches(walkerEntity, electrode));
     }
 }

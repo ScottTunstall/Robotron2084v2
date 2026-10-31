@@ -10,15 +10,15 @@ namespace Robotron2084.Level.Collisions;
 internal sealed class HulkVsHumanCollisionRule : ICollisionRule
 {
     /// <inheritdoc />
-    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities)
     {
-        if (scene.RobotsFrozen()) yield break;
+        if (collisionScene.RobotsFrozen()) yield break;
 
-        foreach (var human in entities.GetFamilyMembers())
+        foreach (var human in fieldEntities.GetFamilyMembers())
         {
             Hulk? hulk = null;
             if (human.IsGraspable())
-                hulk = entities.Hulks.FirstOrDefault(candidate => candidate.IsAlive() && scene.Touches(candidate, human));
+                hulk = fieldEntities.Hulks.FirstOrDefault(candidate => candidate.IsAlive() && collisionScene.Touches(candidate, human));
 
             if (hulk is not null) yield return new HulkKilledHumanResult(hulk, human);
         }

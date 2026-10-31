@@ -18,9 +18,9 @@ internal interface ICollisionScene
     bool RobotsFrozen();
 
     /// <summary>Says whether two entities are touching.</summary>
-    /// <param name="a">One entity.</param>
-    /// <param name="b">The other entity.</param>
-    bool Touches(IEntity a, IEntity b);
+    /// <param name="firstEntity">One entity.</param>
+    /// <param name="secondEntity">The other entity.</param>
+    bool Touches(IEntity firstEntity, IEntity secondEntity);
 
     /// <summary>Says whether the player is touching an entity.</summary>
     /// <param name="entity">The entity to test.</param>

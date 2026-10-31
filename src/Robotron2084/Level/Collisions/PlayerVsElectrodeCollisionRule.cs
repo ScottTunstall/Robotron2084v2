@@ -9,12 +9,12 @@ namespace Robotron2084.Level.Collisions;
 internal sealed class PlayerVsElectrodeCollisionRule : ICollisionRule
 {
     /// <inheritdoc />
-    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities)
     {
-        if (!scene.CanPlayerBeHurt()) yield break;
+        if (!collisionScene.CanPlayerBeHurt()) yield break;
 
         var touched =
-            entities.Electrodes.FirstOrDefault(electrode => electrode.IsAlive() && scene.TouchesPlayer(electrode));
+            fieldEntities.Electrodes.FirstOrDefault(electrode => electrode.IsAlive() && collisionScene.TouchesPlayer(electrode));
         if (touched is not null) yield return new PlayerHitElectrodeResult(touched);
     }
 }

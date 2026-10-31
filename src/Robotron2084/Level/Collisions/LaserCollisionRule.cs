@@ -11,13 +11,13 @@ namespace Robotron2084.Level.Collisions;
 internal sealed class LaserCollisionRule : ICollisionRule
 {
     /// <inheritdoc />
-    public IEnumerable<CollisionResult> Detect(ICollisionScene scene, FieldEntities entities)
+    public IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities)
     {
         foreach (var robot in RobotKinds.All)
-            foreach (var laser in scene.GetActiveLasers())
+            foreach (var laser in collisionScene.GetActiveLasers())
             {
-                var target = entities.GetEntities(robot.Kind)
-                    .FirstOrDefault(entity => entity.IsAlive() && scene.Touches(laser, entity));
+                var target = fieldEntities.GetEntities(robot.Kind)
+                    .FirstOrDefault(entity => entity.IsAlive() && collisionScene.Touches(laser, entity));
                 if (target is not null) yield return new LaserHitResult(laser, target, robot);
             }
     }

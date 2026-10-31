@@ -31,11 +31,11 @@ public sealed class PixelContactTest : IContactTest
     }
 
     /// <inheritdoc />
-    public bool Touches(IEntity a, IEntity b)
+    public bool Touches(IEntity firstEntity, IEntity secondEntity)
     {
-        if (_pixelCollision.GetShape(a) is { } shapeA && _pixelCollision.GetShape(b) is { } shapeB)
+        if (_pixelCollision.GetShape(firstEntity) is { } shapeA && _pixelCollision.GetShape(secondEntity) is { } shapeB)
             return _pixelCollision.Overlaps(shapeA, shapeB);
 
-        return _boxContactTest.Touches(a, b);
+        return _boxContactTest.Touches(firstEntity, secondEntity);
     }
 }
