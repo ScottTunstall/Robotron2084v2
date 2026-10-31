@@ -23,16 +23,16 @@ public enum SettingsAction
 ///     (its coin/pricing rows are not built):
 ///     <list type="number">
 ///         <item>
-///             EXTRA MAN EVERY — the score that earns a spare man, stepping the ROM's own five stops
+///             EXTRA MAN EVERY — the score that earns a spare life, stepping the ROM's own five stops
 ///             (0, 20, 25, 30, 50 thousand);
 ///         </item>
-///         <item>TURNS PER PLAYER — the men a player starts with, 1-20;</item>
+///         <item>TURNS PER PLAYER — the lives a player starts with, 1-20;</item>
 ///         <item>DIFFICULTY OF PLAY — 0-10;</item>
 ///         <item>
 ///             ATTRACT MODE SOUND — port-only: whether the attract sequence (the demo machine playing
 ///             itself) keeps its sound;
 ///         </item>
-///         <item>BOZO MODE — port-only: whether the arcade's mercy for a player losing ships early is given;</item>
+///         <item>BOZO MODE — port-only: whether the arcade's mercy for a player losing lives early is given;</item>
 ///         <item>BRAINS CHASE MIKEY BUG — port-only: whether every brain starts the wave chasing Mikey, as in the arcade;</item>
 ///         <item>TANK SHELL BUG — port-only: whether a fizzled shell stays on the wave's shell count, as in the arcade;</item>
 ///         <item>RESTORE FACTORY SETTINGS — an action row;</item>
@@ -59,7 +59,7 @@ public sealed class SettingsModel
     public const int DifficultyLine = 2;
 
     /// <summary>EXTRA MAN EVERY — the first row, as on the cabinet.</summary>
-    public const int ExtraManLine = 0;
+    public const int ExtraLifeLine = 0;
 
     /// <summary>HIGH SCORE TABLE RESET — an action row.</summary>
     public const int HighScoreResetLine = 8;
@@ -73,7 +73,7 @@ public sealed class SettingsModel
     /// <summary>TANK SHELL BUG — port-only: whether the arcade's shell count bug is kept.</summary>
     public const int TankShellBugLine = 6;
 
-    /// <summary>TURNS PER PLAYER — how many men a player starts with.</summary>
+    /// <summary>TURNS PER PLAYER — how many lives a player starts with.</summary>
     public const int TurnsLine = 1;
 
     /// <summary>The YES/NO state of each action row.</summary>
@@ -87,7 +87,7 @@ public sealed class SettingsModel
     {
         return line switch
         {
-            ExtraManLine => "EXTRA MAN EVERY",
+            ExtraLifeLine => "EXTRA MAN EVERY",
             TurnsLine => "TURNS PER PLAYER",
             DifficultyLine => "DIFFICULTY OF PLAY",
             AttractSoundLine => "ATTRACT MODE SOUND",
@@ -109,7 +109,7 @@ public sealed class SettingsModel
     {
         return line switch
         {
-            ExtraManLine => gameSettings.ExtraManEvery switch
+            ExtraLifeLine => gameSettings.ExtraLifeEvery switch
             {
                 < 20 => "NO EXTRA MEN",
                 < 25 => "LIBERAL",
@@ -173,8 +173,8 @@ public sealed class SettingsModel
     {
         switch (Line)
         {
-            case ExtraManLine:
-                gameSettings.BumpExtraManEvery(direction);
+            case ExtraLifeLine:
+                gameSettings.BumpExtraLifeEvery(direction);
                 break;
 
             case TurnsLine:
@@ -221,7 +221,7 @@ public sealed class SettingsModel
     {
         return line switch
         {
-            ExtraManLine => gameSettings.GetExtraManEveryPoints().ToString(),
+            ExtraLifeLine => gameSettings.GetExtraLifeEveryPoints().ToString(),
             TurnsLine => gameSettings.TurnsPerPlayer.ToString(),
             DifficultyLine => gameSettings.Difficulty.ToString(),
             AttractSoundLine => GetOnOff(gameSettings.AttractModeSoundEnabled),

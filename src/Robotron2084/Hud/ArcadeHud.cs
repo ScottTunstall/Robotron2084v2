@@ -10,10 +10,10 @@ namespace Robotron2084.Hud;
 /// <summary>
 ///     The arcade HUD (notes §58), shared by the playing state, the attract demo
 ///     and the title screen: in the top band, each player's score at
-///     their own column (P1 col 21, P2 col 85) with their spare men as mini man
+///     their own column (P1 col 21, P2 col 85) with their spare lives as spare-life
 ///     icons immediately to its right (P1 col 46, P2 col 110); at the bottom, the
 ///     "&lt;c&gt; WAVE" indicator (drawn by <see cref="DrawWaveMessage" />, not by
-///     <see cref="DrawScoresAndMen" /> — the title screen has no wave).
+///     <see cref="DrawScoresAndLives" /> — the title screen has no wave).
 /// </summary>
 public static class ArcadeHud
 {
@@ -56,33 +56,33 @@ public static class ArcadeHud
             slot);
     }
 
-    /// <summary>Draws each player's score and spare men along the top of the screen, just above the wall.</summary>
+    /// <summary>Draws each player's score and spare lives along the top of the screen, just above the wall.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The sprite set, which holds the text and the little men.</param>
+    /// <param name="sprites">The sprite set, which holds the text and the spare-life icons.</param>
     /// <param name="session">The game being played, which says who the players are.</param>
     /// <param name="innerBounds">
     ///     The play area inside the wall. The row is placed a set distance above its top edge, as in the
     ///     arcade.
     /// </param>
-    /// <param name="showSpareMen">False while the demo plays: the phony player's spare men are not shown.</param>
-    public static void DrawScoresAndMen(
+    /// <param name="showSpareLives">False while the demo plays: the phony player's spare lives are not shown.</param>
+    public static void DrawScoresAndLives(
         SpriteBatch spriteBatch,
         SpriteSet sprites,
         GameSession session,
         Rectangle innerBounds,
-        bool showSpareMen = true)
+        bool showSpareLives = true)
     {
-        var hudY = GetScoresAndMenRowY(innerBounds);
+        var hudY = GetScoresAndLivesRowY(innerBounds);
 
         foreach (var playerSlot in session.Players)
         {
             var isPlayerOne = playerSlot.Number == 1;
             var scoreColumn = HudLayout.HudScoreOriginColumnP2;
-            var menColumn = HudLayout.HudMenOriginColumnP2;
+            var livesColumn = HudLayout.HudLivesOriginColumnP2;
             if (isPlayerOne)
             {
                 scoreColumn = HudLayout.HudScoreOriginColumnP1;
-                menColumn = HudLayout.HudMenOriginColumnP1;
+                livesColumn = HudLayout.HudLivesOriginColumnP1;
             }
 
             // ROM $DC13/$DC19: the player whose turn it is blits their score with
@@ -93,8 +93,8 @@ public static class ArcadeHud
             if (isCurrentPlayer) slot = HudLayout.HudScoreSlotCurrent;
 
             DrawScore(spriteBatch, sprites, playerSlot.Score, HudLayout.ToPortX(scoreColumn * 2), hudY, slot);
-            if (showSpareMen)
-                DrawSpareMen(spriteBatch, sprites, playerSlot.GetDisplayedMen(), HudLayout.ToPortX(menColumn * 2), hudY);
+            if (showSpareLives)
+                DrawSpareLives(spriteBatch, sprites, playerSlot.GetDisplayedSpareLives(), HudLayout.ToPortX(livesColumn * 2), hudY);
         }
     }
 
@@ -122,11 +122,11 @@ public static class ArcadeHud
     }
 
     /// <summary>
-    ///     The canvas row the scores and the spare-men icons are drawn at: the top wall less the ROM's
+    ///     The canvas row the scores and the spare-life icons are drawn at: the top wall less the ROM's
     ///     eight arcade pixels. It is negative — and the whole HUD invisible — when
     ///     <paramref name="innerBounds" /> runs to the top of the canvas.
     /// </summary>
-    internal static int GetScoresAndMenRowY(Rectangle innerBounds)
+    internal static int GetScoresAndLivesRowY(Rectangle innerBounds)
     {
         return innerBounds.Top - ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.WallThicknessArcadePixels) -
                ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudRowAboveWallPixels);
@@ -146,11 +146,11 @@ public static class ArcadeHud
             sprites.Blitter.DrawGlyphSlot(spriteBatch, sprites.FontLarge, glyph.Digit, glyph.X, y, slot);
     }
 
-    /// <summary>ROM $34E0: the spare-man icons, 8 px apart.</summary>
-    private static void DrawSpareMen(SpriteBatch spriteBatch, SpriteSet sprites, int count, int originX, int y)
+    /// <summary>ROM $34E0: the spare-life icons, 8 px apart.</summary>
+    private static void DrawSpareLives(SpriteBatch spriteBatch, SpriteSet sprites, int count, int originX, int y)
     {
-        var pitch = ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudMenPitchPixels);
+        var pitch = ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudLivesPitchPixels);
 
-        for (var i = 0; i < count; i++) sprites.TextRenderer.DrawMiniMan(spriteBatch, originX + i * pitch, y);
+        for (var i = 0; i < count; i++) sprites.TextRenderer.DrawSpareLife(spriteBatch, originX + i * pitch, y);
     }
 }
