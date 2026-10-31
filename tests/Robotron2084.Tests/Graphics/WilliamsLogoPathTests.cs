@@ -8,12 +8,12 @@ public sealed class WilliamsLogoPathTests
 {
     private static List<(int Column, int Row, int PaletteIndex)> Walk(int count)
     {
-        var path = new WilliamsLogoPath();
+        var williamsLogoPath = new WilliamsLogoPath();
         var places = new List<(int Column, int Row, int PaletteIndex)>();
         for (var i = 0; i < count; i++)
         {
-            places.Add((path.Column, path.Row, PaletteIndex: path.GetPaletteIndex()));
-            path.Step();
+            places.Add((williamsLogoPath.Column, williamsLogoPath.Row, PaletteIndex: williamsLogoPath.GetPaletteIndex()));
+            williamsLogoPath.Step();
         }
 
         return places;
@@ -57,11 +57,11 @@ public sealed class WilliamsLogoPathTests
     [Fact]
     public void ResetGoesBackToTheFirstW()
     {
-        var path = new WilliamsLogoPath();
-        for (var i = 0; i < 40; i++) path.Step();
+        var williamsLogoPath = new WilliamsLogoPath();
+        for (var i = 0; i < 40; i++) williamsLogoPath.Step();
 
-        path.Reset();
+        williamsLogoPath.Reset();
 
-        Assert.Equal((5, 0x0F, 7), (path.Column, path.Row, path.GetPaletteIndex()));
+        Assert.Equal((5, 0x0F, 7), (williamsLogoPath.Column, williamsLogoPath.Row, williamsLogoPath.GetPaletteIndex()));
     }
 }

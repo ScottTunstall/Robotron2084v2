@@ -13,78 +13,78 @@ public sealed class WilliamsLogoBorderTests
         return new WilliamsLogoBorder(SpriteMask.CreateFromPixels(28, 27, [(0, 0)]));
     }
 
-    private static void TickArcadeFrames(WilliamsLogoBorder border, int arcadeFrames)
+    private static void TickArcadeFrames(WilliamsLogoBorder williamsLogoBorder, int arcadeFrames)
     {
         // A fiftieth of a second is six clock units and a port tick five, so N frames take 6N/5 ticks, rounded up.
         var ticks = (ArcadeClock.ToClockUnits(arcadeFrames) + ArcadeClock.UnitsPerPortTick - 1) /
                     ArcadeClock.UnitsPerPortTick;
-        for (var i = 0; i < ticks; i++) border.Tick();
+        for (var i = 0; i < ticks; i++) williamsLogoBorder.Tick();
     }
 
-    private static int Count(WilliamsLogoBorder border)
+    private static int Count(WilliamsLogoBorder williamsLogoBorder)
     {
-        return border.Pixels.Count(pixel => pixel != 0);
+        return williamsLogoBorder.Pixels.Count(pixel => pixel != 0);
     }
 
-    private static byte PixelAt(WilliamsLogoBorder border, int column, int row)
+    private static byte PixelAt(WilliamsLogoBorder williamsLogoBorder, int column, int row)
     {
-        return border.Pixels[row * WilliamsLogoBorder.Width + column * ScreenSize.ArcadePixelsPerByte];
+        return williamsLogoBorder.Pixels[row * WilliamsLogoBorder.Width + column * ScreenSize.ArcadePixelsPerByte];
     }
 
     [Fact]
     public void TheFirstWIsDrawnAtOnceInPaletteIndexSeven()
     {
-        var border = NewBorder();
+        var williamsLogoBorder = NewBorder();
 
-        TickArcadeFrames(border, 1);
+        TickArcadeFrames(williamsLogoBorder, 1);
 
-        Assert.Equal(7, PixelAt(border, 5, 0x0F));
-        Assert.Equal(1, Count(border));
+        Assert.Equal(7, PixelAt(williamsLogoBorder, 5, 0x0F));
+        Assert.Equal(1, Count(williamsLogoBorder));
     }
 
     [Fact]
     public void AnotherWComesEveryFourArcadeFrames()
     {
-        var border = NewBorder();
+        var williamsLogoBorder = NewBorder();
 
-        TickArcadeFrames(border, 12);
+        TickArcadeFrames(williamsLogoBorder, 12);
 
-        Assert.Equal(3, Count(border));
-        Assert.Equal(6, PixelAt(border, 21, 0x0F));
-        Assert.Equal(5, PixelAt(border, 37, 0x0F));
+        Assert.Equal(3, Count(williamsLogoBorder));
+        Assert.Equal(6, PixelAt(williamsLogoBorder, 21, 0x0F));
+        Assert.Equal(5, PixelAt(williamsLogoBorder, 37, 0x0F));
     }
 
     [Fact]
     public void TheRingHasTwentyEightWsBeforeItStartsToMove()
     {
-        var border = NewBorder();
+        var williamsLogoBorder = NewBorder();
 
-        TickArcadeFrames(border, 4 * 27 + 1); // the 28th W is drawn on the 109th fiftieth of a second
+        TickArcadeFrames(williamsLogoBorder, 4 * 27 + 1); // the 28th W is drawn on the 109th fiftieth of a second
 
-        Assert.Equal(28, Count(border));
+        Assert.Equal(28, Count(williamsLogoBorder));
     }
 
     [Fact]
     public void ThenSixWsMoveEveryArcadeFrame()
     {
-        var border = NewBorder();
-        TickArcadeFrames(border, 4 * 28 + 1); // the moving phase begins four frames after the 28th W
+        var williamsLogoBorder = NewBorder();
+        TickArcadeFrames(williamsLogoBorder, 4 * 28 + 1); // the moving phase begins four frames after the 28th W
 
-        var before = Count(border);
-        TickArcadeFrames(border, 1);
+        var before = Count(williamsLogoBorder);
+        TickArcadeFrames(williamsLogoBorder, 1);
 
         // Each move erases its palette index's W (nothing there for the first lap) and draws one, so the ring grows.
-        Assert.True(Count(border) >= before);
-        Assert.False(border.IsFinished());
+        Assert.True(Count(williamsLogoBorder) >= before);
+        Assert.False(williamsLogoBorder.IsFinished());
     }
 
     [Fact]
     public void ItFinishesAfterSevenHundredAndFourMovingFrames()
     {
-        var border = NewBorder();
+        var williamsLogoBorder = NewBorder();
 
-        TickArcadeFrames(border, 4 * 28 + 704 + 8);
+        TickArcadeFrames(williamsLogoBorder, 4 * 28 + 704 + 8);
 
-        Assert.True(border.IsFinished());
+        Assert.True(williamsLogoBorder.IsFinished());
     }
 }

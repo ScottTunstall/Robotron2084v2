@@ -19,17 +19,17 @@ public sealed class TunnelEffectTests
     public void TheTunnelStartsAsACentreLineWithTheFirstColourPair()
     {
         // $570E: `LDA #$EF`, $5710: `LDX #$3B80`, $5713: `LDY #$5A82`.
-        var tunnel = new TunnelEffect();
+        var tunnelEffect = new TunnelEffect();
 
-        Assert.Equal((0x3B, 0x80, 0x5A, 0x82), tunnel.Corners);
-        Assert.Equal(0xEF, tunnel.PackedColourPair);
-        Assert.False(tunnel.IsFinished);
+        Assert.Equal((0x3B, 0x80, 0x5A, 0x82), tunnelEffect.Corners);
+        Assert.Equal(0xEF, tunnelEffect.PackedColourPair);
+        Assert.False(tunnelEffect.IsFinished);
     }
 
     /// <summary>Ticks the effect the way the game does — one call a tick — for <paramref name="ticks" /> ticks.</summary>
-    private static void Ticks(TunnelEffect tunnel, int ticks)
+    private static void Ticks(TunnelEffect tunnelEffect, int ticks)
     {
-        for (var i = 0; i < ticks; i++) tunnel.Update();
+        for (var i = 0; i < ticks; i++) tunnelEffect.Update();
     }
 
     [Fact]
@@ -37,13 +37,13 @@ public sealed class TunnelEffectTests
     {
         // $572D seeds the counter with 2, and $5756/$575A step the top-left one COLUMN left
         // and TWO ROWS up, the bottom-right one column right and two rows down.
-        var tunnel = new TunnelEffect();
+        var tunnelEffect = new TunnelEffect();
 
-        Ticks(tunnel, TicksPerPass); // exactly one pass
+        Ticks(tunnelEffect, TicksPerPass); // exactly one pass
 
-        Assert.Equal(TunnelEffect.RingsPerPass, tunnel.RingsDrawn);
-        Assert.Equal((0x39, 0x7C, 0x5C, 0x86), tunnel.Corners);
-        Assert.Equal(0xAB, tunnel.PackedColourPair); // $EF -> $CD -> $AB, one step per ring
+        Assert.Equal(TunnelEffect.RingsPerPass, tunnelEffect.RingsDrawn);
+        Assert.Equal((0x39, 0x7C, 0x5C, 0x86), tunnelEffect.Corners);
+        Assert.Equal(0xAB, tunnelEffect.PackedColourPair); // $EF -> $CD -> $AB, one step per ring
     }
 
     [Fact]
@@ -53,16 +53,16 @@ public sealed class TunnelEffectTests
         // every 183 port ticks (3.05 s, measured through the emulated board — notes §128), so the
         // 54 passes at PassClockUnits must land on or just past that: the music is never cut
         // mid-phrase, which is what the author heard before this (notes §83's "~2 s" was a floor).
-        var tunnel = new TunnelEffect();
+        var tunnelEffect = new TunnelEffect();
 
         var ticks = 0;
-        while (!tunnel.IsFinished && ticks < 1000)
+        while (!tunnelEffect.IsFinished && ticks < 1000)
         {
-            tunnel.Update();
+            tunnelEffect.Update();
             ticks++;
         }
 
-        Assert.True(tunnel.IsFinished);
+        Assert.True(tunnelEffect.IsFinished);
         Assert.InRange(ticks, 180, 190); // one phrase of the wave-end music
         Assert.InRange(ticks / 60.0, 3.0, 3.2);
     }
@@ -93,13 +93,13 @@ public sealed class TunnelEffectTests
     {
         // 53 rings of steps to reach $0616 (column 6, row 22), plus the ring drawn at the
         // start and at the middle: 54 rings a phase, so 108 draws over 54 frames.
-        var tunnel = new TunnelEffect();
+        var tunnelEffect = new TunnelEffect();
 
         var guard = 0;
-        while (!tunnel.IsFinished && guard++ < 500) tunnel.Update();
+        while (!tunnelEffect.IsFinished && guard++ < 500) tunnelEffect.Update();
 
-        Assert.True(tunnel.IsFinished, "the tunnel must finish");
-        Assert.Equal(108, tunnel.RingsDrawn);
+        Assert.True(tunnelEffect.IsFinished, "the tunnel must finish");
+        Assert.Equal(108, tunnelEffect.RingsDrawn);
     }
 
     [Fact]
@@ -147,21 +147,21 @@ public sealed class TunnelEffectTests
         // The ROM never erases the rings it has passed — each pass leaves one more behind, two
         // pixels apart, and by the end the walk has covered the whole area. Drawing only the
         // CURRENT ring left a handful of small rectangles instead (the author's report).
-        var tunnel = new TunnelEffect();
+        var tunnelEffect = new TunnelEffect();
 
-        Ticks(tunnel, TicksPerPass); // two rings
-        Ticks(tunnel, TicksPerPass); // four
+        Ticks(tunnelEffect, TicksPerPass); // two rings
+        Ticks(tunnelEffect, TicksPerPass); // four
 
-        Assert.Equal(4, tunnel.RingsDrawn);
-        Assert.Equal(4, tunnel.GetRingsRetained()); // nothing has been discarded
+        Assert.Equal(4, tunnelEffect.RingsDrawn);
+        Assert.Equal(4, tunnelEffect.GetRingsRetained()); // nothing has been discarded
 
         // The rings keep growing until the outward walk covers the screen: the last ring of the
         // colouring pass starts at $0616 (column 6, row 22) and ends on the screen's own edges.
         var guard = 0;
-        while (!tunnel.IsErasing() && guard++ < 1000) tunnel.Update();
+        while (!tunnelEffect.IsErasing() && guard++ < 1000) tunnelEffect.Update();
 
-        Assert.Equal(54, tunnel.GetRingsRetained()); // every coloured ring is still there
-        var (left, top, right, bottom) = tunnel.GetOutermostRing();
+        Assert.Equal(54, tunnelEffect.GetRingsRetained()); // every coloured ring is still there
+        var (left, top, right, bottom) = tunnelEffect.GetOutermostRing();
 
         Assert.Equal(0x06, left);
         Assert.Equal(0x16, top);
@@ -174,16 +174,16 @@ public sealed class TunnelEffectTests
     {
         // $5767: `CLRA / BRA $5710` — the erase pass restarts at the outer corners with the
         // colour forced to 0, and $5734's `TSTA / BEQ` leaves it there.
-        var tunnel = new TunnelEffect();
+        var tunnelEffect = new TunnelEffect();
 
         var guard = 0;
-        while (!tunnel.IsErasing() && guard++ < 500) tunnel.Update();
+        while (!tunnelEffect.IsErasing() && guard++ < 500) tunnelEffect.Update();
 
-        Assert.True(tunnel.IsErasing());
-        Assert.Equal(0, tunnel.PackedColourPair);
-        Assert.Equal((0x3B, 0x80, 0x5A, 0x82), tunnel.Corners); // back to the outermost ring
+        Assert.True(tunnelEffect.IsErasing());
+        Assert.Equal(0, tunnelEffect.PackedColourPair);
+        Assert.Equal((0x3B, 0x80, 0x5A, 0x82), tunnelEffect.Corners); // back to the outermost ring
 
-        tunnel.Update();
-        Assert.Equal(0, tunnel.PackedColourPair); // still black — the pair never advances again
+        tunnelEffect.Update();
+        Assert.Equal(0, tunnelEffect.PackedColourPair); // still black — the pair never advances again
     }
 }

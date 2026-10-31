@@ -31,30 +31,30 @@ public sealed class WordmarkAppearTests
     [Fact]
     public void ALetterStartsEveryEightArcadeFrames_BeginningWithTheFirstAtOnce()
     {
-        var appear = CreateAppear(9);
-        Assert.Equal(1, Started(appear, 1));
+        var wordmarkAppear = CreateAppear(9);
+        Assert.Equal(1, Started(wordmarkAppear, 1));
 
-        appear = CreateAppear(9);
-        Assert.Equal(1, Started(appear, ArcadeClock.ToPortTicksRoundedUp(7)));
+        wordmarkAppear = CreateAppear(9);
+        Assert.Equal(1, Started(wordmarkAppear, ArcadeClock.ToPortTicksRoundedUp(7)));
 
-        appear = CreateAppear(9);
-        Assert.Equal(2, Started(appear, ArcadeClock.ToPortTicksRoundedUp(8)));
+        wordmarkAppear = CreateAppear(9);
+        Assert.Equal(2, Started(wordmarkAppear, ArcadeClock.ToPortTicksRoundedUp(8)));
 
-        appear = CreateAppear(9);
-        Assert.Equal(9, Started(appear, ArcadeClock.ToPortTicksRoundedUp(8 * 8)));
+        wordmarkAppear = CreateAppear(9);
+        Assert.Equal(9, Started(wordmarkAppear, ArcadeClock.ToPortTicksRoundedUp(8 * 8)));
     }
 
     [Fact]
     public void TheNextThingGoesUp_ThirtyTwoArcadeFramesAfterTheLastLetterStarts()
     {
-        var appear = CreateAppear(9);
+        var wordmarkAppear = CreateAppear(9);
         var ticks = ArcadeClock.ToPortTicksRoundedUp(8 * 8 + 0x20);
 
-        for (var tick = 0; tick < ticks - 1; tick++) appear.Update();
+        for (var tick = 0; tick < ticks - 1; tick++) wordmarkAppear.Update();
 
-        Assert.False(appear.IsFinished());
-        appear.Update();
-        Assert.True(appear.IsFinished());
+        Assert.False(wordmarkAppear.IsFinished());
+        wordmarkAppear.Update();
+        Assert.True(wordmarkAppear.IsFinished());
     }
 
     [Fact]
@@ -63,10 +63,10 @@ public sealed class WordmarkAppearTests
         Assert.True(CreateAppear(0).IsFinished());
     }
 
-    private static int Started(WordmarkAppear appear, int ticks)
+    private static int Started(WordmarkAppear wordmarkAppear, int ticks)
     {
-        for (var tick = 0; tick < ticks; tick++) appear.Update();
+        for (var tick = 0; tick < ticks; tick++) wordmarkAppear.Update();
 
-        return appear.GetStartedLetterCount();
+        return wordmarkAppear.GetStartedLetterCount();
     }
 }

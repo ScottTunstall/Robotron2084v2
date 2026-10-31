@@ -11,38 +11,38 @@ namespace Robotron2084.Tests.Rendering;
 /// </summary>
 public sealed class DefineInputsHighlightTests
 {
-    private static (GamePalette Palette, DefineInputsHighlight Highlight) Started()
+    private static (GamePalette GamePalette, DefineInputsHighlight DefineInputsHighlight) Started()
     {
-        var palette = new GamePalette();
-        var highlight = new DefineInputsHighlight();
-        highlight.Start(palette);
-        return (palette, highlight);
+        var gamePalette = new GamePalette();
+        var defineInputsHighlight = new DefineInputsHighlight();
+        defineInputsHighlight.Start(gamePalette);
+        return (gamePalette, defineInputsHighlight);
     }
 
     [Fact]
     public void Start_PutsThePaletteIndexOnThePagesGreenAndLeavesEveryOtherPaletteIndexAlone()
     {
-        var (palette, _) = Started();
+        var (gamePalette, _) = Started();
 
         // The page comes up green with no white on it, as the presentation page does: its table
         // copy (ROM $8A3A) runs before its first chase step.
-        Assert.Equal(0x38, palette.GetPaletteIndexValue(DefineInputsHighlight.PaletteIndex));
+        Assert.Equal(0x38, gamePalette.GetPaletteIndexValue(DefineInputsHighlight.PaletteIndex));
 
         foreach (var paletteIndex in new[] { 0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15 })
-            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], palette.GetPaletteIndexValue(paletteIndex));
+            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], gamePalette.GetPaletteIndexValue(paletteIndex));
     }
 
     [Fact]
     public void TheWhiteFlash_ReturnsOnceInSevenSteps_ThreeArcadeFramesApart()
     {
-        var (palette, highlight) = Started();
+        var (gamePalette, defineInputsHighlight) = Started();
         var flashTicks = new List<int>();
         var wasWhite = false;
 
         for (var tick = 1; tick <= 300; tick++)
         {
-            highlight.Update(palette);
-            var isWhite = palette.GetPaletteIndexValue(DefineInputsHighlight.PaletteIndex) == 0xFF;
+            defineInputsHighlight.Update(gamePalette);
+            var isWhite = gamePalette.GetPaletteIndexValue(DefineInputsHighlight.PaletteIndex) == 0xFF;
             if (isWhite && !wasWhite) flashTicks.Add(tick);
 
             wasWhite = isWhite;
@@ -58,12 +58,12 @@ public sealed class DefineInputsHighlightTests
     [Fact]
     public void ThePaletteIndexSitsOnGreenBetweenTheFlashes()
     {
-        var (palette, highlight) = Started();
+        var (gamePalette, defineInputsHighlight) = Started();
 
         for (var tick = 0; tick < 300; tick++)
         {
-            highlight.Update(palette);
-            var value = palette.GetPaletteIndexValue(DefineInputsHighlight.PaletteIndex);
+            defineInputsHighlight.Update(gamePalette);
+            var value = gamePalette.GetPaletteIndexValue(DefineInputsHighlight.PaletteIndex);
             Assert.True(value is 0x38 or 0xFF, $"the palette index held {value:X2}");
         }
     }
@@ -71,15 +71,15 @@ public sealed class DefineInputsHighlightTests
     [Fact]
     public void ThePaletteIndexIsWhiteForOneStepInSeven()
     {
-        var (palette, highlight) = Started();
+        var (gamePalette, defineInputsHighlight) = Started();
         const int Ticks = 700;
         var white = 0;
 
         for (var tick = 0; tick < Ticks; tick++)
         {
-            if (palette.GetPaletteIndexValue(DefineInputsHighlight.PaletteIndex) == 0xFF) white++;
+            if (gamePalette.GetPaletteIndexValue(DefineInputsHighlight.PaletteIndex) == 0xFF) white++;
 
-            highlight.Update(palette);
+            defineInputsHighlight.Update(gamePalette);
         }
 
         // One step in seven is white, so the label flashes for a seventh of the time — the same
@@ -90,11 +90,11 @@ public sealed class DefineInputsHighlightTests
     [Fact]
     public void TheChase_TouchesOnlyItsOwnPaletteIndex()
     {
-        var (palette, highlight) = Started();
+        var (gamePalette, defineInputsHighlight) = Started();
 
-        for (var tick = 0; tick < 300; tick++) highlight.Update(palette);
+        for (var tick = 0; tick < 300; tick++) defineInputsHighlight.Update(gamePalette);
 
         foreach (var paletteIndex in new[] { 0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15 })
-            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], palette.GetPaletteIndexValue(paletteIndex));
+            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], gamePalette.GetPaletteIndexValue(paletteIndex));
     }
 }
