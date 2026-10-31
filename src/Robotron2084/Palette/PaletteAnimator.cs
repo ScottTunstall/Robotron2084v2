@@ -6,7 +6,7 @@ namespace Robotron2084.Palette;
 ///     Replays the ROM's six colour processes (decoded from RRS22.ASM —
 ///     arcade-fidelity-notes §4.12) as per-game-tick state over a
 ///     <see cref="GamePalette" />:
-///     | slot | process | table | step |
+///     | palette index | process | table | step |
 ///     |------|---------|-------|------|
 ///     | 11   | RGB     | 38 07 C0 | 8 fiftieths of a second |
 ///     | 12   | DECAY   | C0 C0 D0 E0 F0 F8 FA BA 7A 3A 34 2D 1F 17 0F 07 06 05 04 03 02 01 00 | 2 fiftieths of a second |
@@ -27,7 +27,7 @@ namespace Robotron2084.Palette;
 /// </summary>
 public sealed class PaletteAnimator
 {
-    /// <summary>The LASER (slot 13) ramp — also the random-hue table for the LF flash.</summary>
+    /// <summary>The LASER (palette index 13) ramp — also the random-hue table for the LF flash.</summary>
     public static readonly byte[] LaserTab =
     [
         0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
@@ -56,10 +56,10 @@ public sealed class PaletteAnimator
         _random = random ?? new Random();
         _processes =
         [
-            new Process { Slot = 11, ColourTable = [0x38, 0x07, 0xC0], ArcadeFramesPerStep = 8 }, // RGB
+            new Process { PaletteIndex = 11, ColourTable = [0x38, 0x07, 0xC0], ArcadeFramesPerStep = 8 }, // RGB
             new Process
             {
-                Slot = 12,
+                PaletteIndex = 12,
                 ColourTable =
                 [
                     0xC0, 0xC0, 0xD0, 0xE0, 0xF0, 0xF8, 0xFA, 0xBA, 0x7A, 0x3A, 0x34, 0x2D, 0x1F, 0x17, 0x0F, 0x07,
@@ -69,7 +69,7 @@ public sealed class PaletteAnimator
             }, // DECAY
             new Process
             {
-                Slot = 14,
+                PaletteIndex = 14,
                 ColourTable =
                 [
                     0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0x87, 0x87, 0x47, 0x47, 0x07, 0x07, 0x47, 0x47,
@@ -77,15 +77,15 @@ public sealed class PaletteAnimator
                 ],
                 ArcadeFramesPerStep = 1
             }, // BLU-PURP-RED
-            new Process { Slot = 15, ColourTable = [0x07, 0x07, 0x2F], ArcadeFramesPerStep = 6 }, // RED-GOLD
-            new Process { Slot = 13, ColourTable = LaserTab, ArcadeFramesPerStep = 2 } // LASER
+            new Process { PaletteIndex = 15, ColourTable = [0x07, 0x07, 0x2F], ArcadeFramesPerStep = 6 }, // RED-GOLD
+            new Process { PaletteIndex = 13, ColourTable = LaserTab, ArcadeFramesPerStep = 2 } // LASER
         ];
     }
 
     /// <summary>Advances every process by one game tick (call once per Update).</summary>
     public void Update()
     {
-        // LF (slot 10): a white flash every 2 fiftieths of a second, and every 6th frame a
+        // LF (palette index 10): a white flash every 2 fiftieths of a second, and every 6th frame a
         // random hue from the COLTAB ramp INSTEAD of the white one.
         _laserFlashClockUnits += ArcadeClock.UnitsPerPortTick;
         var flashInterval = ArcadeClock.ToClockUnits(LaserFlashArcadeFrames);
@@ -93,26 +93,26 @@ public sealed class PaletteAnimator
         {
             _laserFlashClockUnits -= flashInterval;
             _laserFlashStep++;
-            if (_palette.IsSlotSuspended(10)) continue; // the death fade or a caller owns slot 10
+            if (_palette.IsPaletteIndexSuspended(10)) continue; // the death fade or a caller owns palette index 10
 
             byte flashColour = 0xFF;
             var isFlashLit = _laserFlashStep % 3 == 0;
             if (isFlashLit) flashColour = LaserTab[_random.Next(LaserTab.Length)];
 
-            _palette.SetSlot(10, flashColour);
+            _palette.SetPaletteIndexValue(10, flashColour);
         }
 
         foreach (var process in _processes)
         {
-            // A suspended slot is a KILLED process in the ROM: it does not even
+            // A suspended palette index is a KILLED process in the ROM: it does not even
             // advance, so resuming restarts it where it left off.
-            if (_palette.IsSlotSuspended(process.Slot)) continue;
+            if (_palette.IsPaletteIndexSuspended(process.PaletteIndex)) continue;
 
             process.ClockUnits += ArcadeClock.UnitsPerPortTick;
             if (process.ClockUnits < ArcadeClock.ToClockUnits(process.ArcadeFramesPerStep)) continue;
 
             process.ClockUnits -= ArcadeClock.ToClockUnits(process.ArcadeFramesPerStep);
-            _palette.SetSlot(process.Slot, process.ColourTable[process.ColourIndex]);
+            _palette.SetPaletteIndexValue(process.PaletteIndex, process.ColourTable[process.ColourIndex]);
             process.ColourIndex = (process.ColourIndex + 1) % process.ColourTable.Length;
         }
     }
@@ -123,6 +123,6 @@ public sealed class PaletteAnimator
         public int ClockUnits;
         public int ColourIndex;
         public byte[] ColourTable = [];
-        public int Slot;
+        public int PaletteIndex;
     }
 }

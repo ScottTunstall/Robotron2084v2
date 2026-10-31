@@ -6,10 +6,10 @@ namespace Robotron2084.Palette;
 ///     The five colour processes the high score page starts for itself — RRTABLE's
 ///     <c>MAKP LOOPP</c> / <c>MAKP DECAZ</c> / <c>MAKP COLA</c> / <c>MAKP COLC</c> /
 ///     <c>MAKP COLD</c> (notes §98.5). This is why the arcade's page is never still:
-///     | process | slot | table | step | what it does on screen |
+///     | process | palette index | table | step | what it does on screen |
 ///     |---------|------|-------|------|------------------------|
-///     | LOOPP   | 1-8  | COLTAB `$E2FE` | 3 fiftieths of a second | shifts the wall's next colour into slot 8 and pushes
-///     the old one down a slot — slot 7 is the headers ("ROBOTRON HEROES"), so they trail the wall by one step |
+///     | LOOPP   | 1-8  | COLTAB `$E2FE` | 3 fiftieths of a second | shifts the wall's next colour into palette index 8 and pushes
+///     the old one down a palette index — palette index 7 is the headers ("ROBOTRON HEROES"), so they trail the wall by one step |
 ///     | DECAZ   | 9    | CATAB `$E2C2` from index 7 | 4 fiftieths of a second | today's list, out of phase: `$07` to
 ///     white and back |
 ///     | COLA    | 10   | CATAB from index 0 | 4 fiftieths of a second | the top entry `( WILLY ELKTRIX )`, in phase |
@@ -25,8 +25,8 @@ namespace Robotron2084.Palette;
 ///     in-game processes were counted in port ticks, which ran them 20% fast — this one is
 ///     exact from the start.
 ///     The page also CLEARS the palette (RRTABLE's <c>FRAMER</c> zeroes `PCRAM`..`PCRAM+15`)
-///     before the processes fill their slots, so the arcade's page comes up from black; and
-///     slots 10, 12 and 13 are taken over from the in-game animator, which the ROM does by
+///     before the processes fill their palette indices, so the arcade's page comes up from black; and
+///     palette indices 10, 12 and 13 are taken over from the in-game animator, which the ROM does by
 ///     killing its colour processes with the game (notes §4.12).
 /// </summary>
 public sealed class HighScorePalette
@@ -46,8 +46,8 @@ public sealed class HighScorePalette
         0xC0, 0xD0, 0x98, 0x38, 0x33
     ];
 
-    /// <summary>The slots the page takes over from the in-game colour animator.</summary>
-    public static readonly int[] OwnedSlots = [10, 12, 13];
+    /// <summary>The palette indices the page takes over from the in-game colour animator.</summary>
+    public static readonly int[] OwnedPaletteIndices = [10, 12, 13];
 
     /// <summary>`CATAB` (RRTABLE `$E2C2`): the two list ramps — dark red, to white, and back.</summary>
     public static readonly byte[] RampTable =
@@ -56,8 +56,8 @@ public sealed class HighScorePalette
         0x57, 0xA7, 0xFF, 0xFF, 0xA7, 0x57, 0x00
     ];
 
-    /// <summary>The slot <c>LOOPP</c> shifts through — its value is the wall's own slot.</summary>
-    private const int LoopSlot = 0;
+    /// <summary>The palette index <c>LOOPP</c> shifts through — its value is the wall's own palette index.</summary>
+    private const int LoopPaletteIndex = 0;
 
     /// <summary>
     ///     The first of the four processes the ROM starts AFTER the page is printed
@@ -73,11 +73,11 @@ public sealed class HighScorePalette
         // (`LDX #CATAB+7` "OUT OF PHASE PLEASE", `LDX #CCTAB+7").
         _processes =
         [
-            new Process { Slot = LoopSlot, ColourTable = CycleTable, ArcadeFramesPerStep = 3 },
-            new Process { Slot = 9, ColourTable = RampTable, ColourIndex = 7, ArcadeFramesPerStep = 4 },
-            new Process { Slot = 10, ColourTable = RampTable, ArcadeFramesPerStep = 4 },
-            new Process { Slot = 12, ColourTable = AccentTable, ColourIndex = 7, ArcadeFramesPerStep = 4 },
-            new Process { Slot = 13, ColourTable = AccentTable, ArcadeFramesPerStep = 4 }
+            new Process { PaletteIndex = LoopPaletteIndex, ColourTable = CycleTable, ArcadeFramesPerStep = 3 },
+            new Process { PaletteIndex = 9, ColourTable = RampTable, ColourIndex = 7, ArcadeFramesPerStep = 4 },
+            new Process { PaletteIndex = 10, ColourTable = RampTable, ArcadeFramesPerStep = 4 },
+            new Process { PaletteIndex = 12, ColourTable = AccentTable, ColourIndex = 7, ArcadeFramesPerStep = 4 },
+            new Process { PaletteIndex = 13, ColourTable = AccentTable, ArcadeFramesPerStep = 4 }
         ];
     }
 
@@ -86,15 +86,15 @@ public sealed class HighScorePalette
 
     /// <summary>
     ///     The page's <c>FRAMER</c> clear plus the wall's cycle: the ROM starts
-    ///     <c>MAKP LOOPP</c> BEFORE it draws the frame, so slots 1-8 come alive first and the
-    ///     palette comes up black (FRAMER zeroes all sixteen slots). The four ramps the
+    ///     <c>MAKP LOOPP</c> BEFORE it draws the frame, so palette indices 1-8 come alive first and the
+    ///     palette comes up black (FRAMER zeroes all sixteen palette indices). The four ramps the
     ///     text uses do not exist yet — see <see cref="StartRamps" />.
     /// </summary>
     public void Start(GamePalette palette)
     {
-        for (var slot = 0; slot <= 15; slot++) palette.SetSlot(slot, 0x00);
+        for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, 0x00);
 
-        foreach (var slot in OwnedSlots) palette.SuspendSlot(slot);
+        foreach (var paletteIndex in OwnedPaletteIndices) palette.SuspendPaletteIndex(paletteIndex);
 
         Apply(palette, _processes[0], _processes[0].ColourTable[_processes[0].ColourIndex]);
     }
@@ -102,7 +102,7 @@ public sealed class HighScorePalette
     /// <summary>
     ///     The ROM's second <c>MAKP</c> group — <c>DECAZ</c>/<c>COLA</c>/<c>COLC</c>/<c>COLD</c>,
     ///     started once the page has finished printing and before the 600-frame hold. Until
-    ///     this runs, slots 9/10/12/13 are the zeroes FRAMER left behind, which is why the
+    ///     this runs, palette indices 9/10/12/13 are the zeroes FRAMER left behind, which is why the
     ///     printed rows are invisible for their first few frames.
     /// </summary>
     public void StartRamps(GamePalette palette)
@@ -116,14 +116,14 @@ public sealed class HighScorePalette
 
     /// <summary>
     ///     The ROM's processes die with the page, and the page after it (<c>FAMPAG</c>) sets
-    ///     its own slots. The port stands the ROM's default CRTAB values back up and lets the
-    ///     in-game animator have slots 10-15 again.
+    ///     its own palette indices. The port stands the ROM's default CRTAB values back up and lets the
+    ///     in-game animator have palette indices 10-15 again.
     /// </summary>
     public void Stop(GamePalette palette)
     {
-        for (var slot = 0; slot <= 15; slot++) palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
+        for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
 
-        foreach (var slot in OwnedSlots) palette.ResumeSlot(slot);
+        foreach (var paletteIndex in OwnedPaletteIndices) palette.ResumePaletteIndex(paletteIndex);
     }
 
     /// <summary>Advances every process by one port tick (call once per Update).</summary>
@@ -159,17 +159,17 @@ public sealed class HighScorePalette
 
     private static void Apply(GamePalette palette, Process process, byte value)
     {
-        if (process.Slot != LoopSlot)
+        if (process.PaletteIndex != LoopPaletteIndex)
         {
-            palette.SetSlot(process.Slot, value);
+            palette.SetPaletteIndexValue(process.PaletteIndex, value);
             return;
         }
 
         // OUTCOL: PCRAM+1 ← +2, +2 ← +3 … +7 ← +8, then the new byte lands in +8 — a
-        // shift register, so the wall's colour history walks down slots 7…1 behind it.
-        for (var slot = 1; slot <= 7; slot++) palette.SetSlot(slot, (byte)palette.GetSlotValue(slot + 1));
+        // shift register, so the wall's colour history walks down palette indices 7…1 behind it.
+        for (var paletteIndex = 1; paletteIndex <= 7; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, (byte)palette.GetPaletteIndexValue(paletteIndex + 1));
 
-        palette.SetSlot(8, value);
+        palette.SetPaletteIndexValue(8, value);
     }
 
     private sealed class Process
@@ -178,6 +178,6 @@ public sealed class HighScorePalette
         public int ClockUnits;
         public int ColourIndex;
         public byte[] ColourTable = [];
-        public int Slot;
+        public int PaletteIndex;
     }
 }

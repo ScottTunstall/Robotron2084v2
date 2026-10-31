@@ -28,26 +28,26 @@ namespace Robotron2084.Palette;
 public sealed class PresentationPagePalette
 {
     /// <summary>
-    ///     The first entry the page writes. It is subtracted from <see cref="LastSlot" />, with one added, to give
-    ///     <see cref="_slotCount" />.
+    ///     The first entry the page writes. It is subtracted from <see cref="LastPaletteIndex" />, with one added, to give
+    ///     <see cref="_paletteIndexCount" />.
     /// </summary>
-    public const int FirstSlot = 1;
+    public const int FirstPaletteIndex = 1;
 
     /// <summary>
-    ///     The last entry the page writes (seven of them). It has <see cref="FirstSlot" /> subtracted from it, with one
-    ///     added, to give <see cref="_slotCount" />.
+    ///     The last entry the page writes (seven of them). It has <see cref="FirstPaletteIndex" /> subtracted from it, with one
+    ///     added, to give <see cref="_paletteIndexCount" />.
     /// </summary>
-    public const int LastSlot = 7;
+    public const int LastPaletteIndex = 7;
 
     /// <summary>
     ///     The entry the page's own text is drawn in — the ROM's text colour operand `$66`: entry 6,
     ///     which the page's table makes ORANGE (`$1F`).
     /// </summary>
-    public const int TextSlot = 6;
+    public const int TextPaletteIndex = 6;
 
     /// <summary>
-    ///     The seven entries the page's own code writes (ROM `$8A70`), in slot order: red, blue,
-    ///     red-orange, green, magenta, orange, yellow. Slots 1..7 are the page's; 8..15 keep CRTAB.
+    ///     The seven entries the page's own code writes (ROM `$8A70`), in palette index order: red, blue,
+    ///     red-orange, green, magenta, orange, yellow. Palette indices 1..7 are the page's; 8..15 keep CRTAB.
     /// </summary>
     public static readonly byte[] PageColors = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
 
@@ -66,33 +66,33 @@ public sealed class PresentationPagePalette
     /// </summary>
     private const int WordmarkArcadeFramesPerStep = 28;
 
-    private readonly int _slotCount = LastSlot - FirstSlot + 1;
+    private readonly int _paletteIndexCount = LastPaletteIndex - FirstPaletteIndex + 1;
 
     private int _chaseClockUnits;
-    private int _chaseSlot = FirstSlot;
+    private int _chasePaletteIndex = FirstPaletteIndex;
     private int _wordmarkClockUnits;
     private int _wordmarkStep;
 
     /// <summary>
-    ///     The palette entry the page's wordmark is drawn in on this step: slot 7, 6, 5, …, 1 and round
+    ///     The palette entry the page's wordmark is drawn in on this step: palette index 7, 6, 5, …, 1 and round
     ///     (the ROM's `$77 → $66 → … → $11 → $77`).
     /// </summary>
-    public int GetWordmarkColorSlot()
+    public int GetWordmarkPaletteIndex()
     {
-        return LastSlot - _wordmarkStep;
+        return LastPaletteIndex - _wordmarkStep;
     }
 
     /// <summary>
-    ///     The entry one step BEHIND <see cref="GetWordmarkColorSlot()" /> (slot 1 wraps to 7). The port's traced
+    ///     The entry one step BEHIND <see cref="GetWordmarkPaletteIndex()" /> (palette index 1 wraps to 7). The port's traced
     ///     wordmark draws its rim here so the reference screenshot's two-tone survives the cycle — and
     ///     at the wrap the pair is the reference's own red body on a yellow rim.
     /// </summary>
-    public int GetWordmarkRimSlot()
+    public int GetWordmarkRimPaletteIndex()
     {
-        var wordmarkSlot = GetWordmarkColorSlot();
-        if (wordmarkSlot == FirstSlot) return LastSlot;
+        var wordmarkPaletteIndex = GetWordmarkPaletteIndex();
+        if (wordmarkPaletteIndex == FirstPaletteIndex) return LastPaletteIndex;
 
-        return wordmarkSlot - 1;
+        return wordmarkPaletteIndex - 1;
     }
 
     /// <summary>
@@ -102,16 +102,16 @@ public sealed class PresentationPagePalette
     /// </summary>
     public void Start(GamePalette palette)
     {
-        for (var slot = FirstSlot; slot <= LastSlot; slot++) palette.SetSlot(slot, PageColors[slot - FirstSlot]);
+        for (var paletteIndex = FirstPaletteIndex; paletteIndex <= LastPaletteIndex; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, PageColors[paletteIndex - FirstPaletteIndex]);
     }
 
     /// <summary>
-    ///     The page's slots go back to the ROM's CRTAB defaults as it leaves — the colour processes die
+    ///     The page's palette indices go back to the ROM's CRTAB defaults as it leaves — the colour processes die
     ///     with the page and the page after it (<c>FAMPAG</c>) sets its own (notes §103.3).
     /// </summary>
     public void Stop(GamePalette palette)
     {
-        for (var slot = FirstSlot; slot <= LastSlot; slot++) palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
+        for (var paletteIndex = FirstPaletteIndex; paletteIndex <= LastPaletteIndex; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
     }
 
     /// <summary>Advances both clocks by one port tick (call once per Update).</summary>
@@ -120,17 +120,17 @@ public sealed class PresentationPagePalette
         _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
         if (IsStepDue(ref _chaseClockUnits, ChaseArcadeFramesPerStep))
         {
-            var isOnLastSlot = _chaseSlot >= LastSlot;
-            if (isOnLastSlot) _chaseSlot = FirstSlot;
-            else _chaseSlot++;
+            var isOnLastPaletteIndex = _chasePaletteIndex >= LastPaletteIndex;
+            if (isOnLastPaletteIndex) _chasePaletteIndex = FirstPaletteIndex;
+            else _chasePaletteIndex++;
 
             Start(palette); // the ROM re-copies the table on every step...
-            palette.SetSlot(_chaseSlot, ChaseColor); // ...and then whitens the current entry
+            palette.SetPaletteIndexValue(_chasePaletteIndex, ChaseColor); // ...and then whitens the current entry
         }
 
         _wordmarkClockUnits += ArcadeClock.UnitsPerPortTick;
         if (IsStepDue(ref _wordmarkClockUnits, WordmarkArcadeFramesPerStep))
-            _wordmarkStep = (_wordmarkStep + 1) % _slotCount;
+            _wordmarkStep = (_wordmarkStep + 1) % _paletteIndexCount;
     }
 
     /// <summary>True when a clock's accumulator has reached <paramref name="arcadeFrames" /> frames.</summary>

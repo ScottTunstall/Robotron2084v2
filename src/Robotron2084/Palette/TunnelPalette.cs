@@ -6,14 +6,14 @@ namespace Robotron2084.Palette;
 ///     <para>
 ///         `DRAW_COLOUR_CYCLING_TUNNEL_EFFECT` only DRAWS the tunnel; the colours it draws in come from
 ///         the ramp tables that live in the SAME block of the ROM as the walker's task data ($576D),
-///         filled into palette slots 1-15 fifteen values at a time. A ramp is a colour WHEEL (blue ->
+///         filled into palette indices 1-15 fifteen values at a time. A ramp is a colour WHEEL (blue ->
 ///         cyan -> green -> yellow -> red -> magenta -> blue), so fifteen CONSECUTIVE values are a
-///         smooth gradient across a third of the wheel, and the walk leaves one palette slot per ROW —
+///         smooth gradient across a third of the wheel, and the walk leaves one palette index per ROW —
 ///         which is why the arcade reads as a handful of thick bars rather than as fifteen stripes.
 ///     </para>
 ///     <para>
-///         **Three of the fifteen slots are then blacked out** — slot `1+A`, `6+A` and `11+A` — and `A`
-///         walks 4,3,2,1,0 with every pass. That is one dark slot per group of five, spaced five rows
+///         **Three of the fifteen palette indices are then blacked out** — palette index `1+A`, `6+A` and `11+A` — and `A`
+///         walks 4,3,2,1,0 with every pass. That is one dark palette index per group of five, spaced five rows
 ///         apart on screen, and it is what the arcade reference measures (a 4-row bar
 ///         with a 1-row dark seam, three of them per fifteen-row colour cycle).
 ///     </para>
@@ -25,8 +25,8 @@ namespace Robotron2084.Palette;
 /// </summary>
 public sealed class TunnelPalette
 {
-    /// <summary>First palette slot a ramp fills (the ROM's `LDY #$9801`).</summary>
-    internal const int FirstSlot = 1;
+    /// <summary>First palette index a ramp fills (the ROM's `LDY #$9801`).</summary>
+    internal const int FirstPaletteIndex = 1;
 
     /// <summary>
     ///     How far the window slides each pass. `$59D2`'s `LEAX $0001,X` bumps the STORED pointer —
@@ -36,11 +36,11 @@ public sealed class TunnelPalette
     /// </summary>
     internal const int SlidePerPass = 1;
 
-    /// <summary>How many slots a ramp fills (the ROM's `CMPY #$9810`).</summary>
-    internal const int SlotCount = 15;
+    /// <summary>How many palette indices a ramp fills (the ROM's `CMPY #$9810`).</summary>
+    internal const int PaletteIndexCount = 15;
 
-    /// <summary>Palette slots blacked out per pass, as offsets from the first slot.</summary>
-    internal static readonly int[] BlackSlots = [0, 5, 10];
+    /// <summary>Palette indices blacked out per pass, as offsets from the first palette index.</summary>
+    internal static readonly int[] BlackPaletteIndices = [0, 5, 10];
 
     /// <summary>
     ///     The ROM's twelve ramps with the random-start mask each descriptor carries at $576D
@@ -132,7 +132,7 @@ public sealed class TunnelPalette
         _random = random ?? new Random();
     }
 
-    /// <summary>Which slot of each five is black (test hook) — the ROM's `$000B,U`.</summary>
+    /// <summary>Which palette index of each five is black (test hook) — the ROM's `$000B,U`.</summary>
     internal int BlackOffset { get; private set; } = 4;
 
     /// <summary>Which ramp is running (test hook).</summary>
@@ -143,7 +143,7 @@ public sealed class TunnelPalette
 
     /// <summary>
     ///     One pass of the ROM's `$59D0` task: slide the window on sixteen values, then step the
-    ///     black-slot offset down one (4,3,2,1,0,4...).
+    ///     black palette index offset down one (4,3,2,1,0,4...).
     /// </summary>
     public void Advance()
     {
@@ -156,26 +156,26 @@ public sealed class TunnelPalette
     }
 
     /// <summary>
-    ///     Writes the window into slots 1-15 as the ROM's write loop does — fifteen values, in
-    ///     slot order, wrapping at the ramp's zero terminator — and then blacks the three slots.
+    ///     Writes the window into palette indices 1-15 as the ROM's write loop does — fifteen values, in
+    ///     palette index order, wrapping at the ramp's zero terminator — and then blacks the three palette indices.
     /// </summary>
     public void Apply(GamePalette palette)
     {
         var ramp = Ramps[RampIndex];
         var index = _windowStartIndex;
-        for (var slot = 0; slot < SlotCount; slot++)
+        for (var paletteIndex = 0; paletteIndex < PaletteIndexCount; paletteIndex++)
         {
-            palette.SetSlot(FirstSlot + slot, ramp[index]);
+            palette.SetPaletteIndexValue(FirstPaletteIndex + paletteIndex, ramp[index]);
             index++;
             if (index >= ramp.Length) index = 0; // $59E4: a zero wraps to the table start
         }
 
-        foreach (var offset in BlackSlots) palette.SetSlot(FirstSlot + offset + BlackOffset, 0x00); // $5A00: `STB A,X`
+        foreach (var offset in BlackPaletteIndices) palette.SetPaletteIndexValue(FirstPaletteIndex + offset + BlackOffset, 0x00); // $5A00: `STB A,X`
     }
 
     /// <summary>
     ///     `$59B1`: pick a ramp at random, then a random window inside it (`random &amp; mask`). The
-    ///     ROM's own initial `A` for the black slot is whatever the task block held; 4 is the
+    ///     ROM's own initial `A` for the black palette index is whatever the task block held; 4 is the
     ///     value it settles into, and every pass cycles it 4,3,2,1,0.
     /// </summary>
     public void Start()
