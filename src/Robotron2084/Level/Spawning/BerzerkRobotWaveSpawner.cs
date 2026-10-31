@@ -14,15 +14,15 @@ namespace Robotron2084.Level.Spawning;
 public sealed class BerzerkRobotWaveSpawner : IWaveSpawner
 {
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext context)
+    public void Spawn(WaveSpawnContext waveSpawnContext)
     {
-        var field = context.Field;
-        for (var i = 0; i < field.Parameters.BerzerkRobotCount; i++)
+        var playField = waveSpawnContext.PlayField;
+        for (var i = 0; i < playField.WaveParameters.BerzerkRobotCount; i++)
         {
-            var position = context.Placement.FindSpawnPointAwayFrom(
-                context.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, field.IsClearOfElectrodes);
-            var robot = new BerzerkRobot(field.Sprites, position, field.Parameters.GruntMoveDelay, context.Random);
-            context.Entities.Add(robot);
+            var position = waveSpawnContext.SpawnPlacement.FindSpawnPointAwayFrom(
+                waveSpawnContext.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, playField.IsClearOfElectrodes);
+            var berzerkRobot = new BerzerkRobot(playField.SpriteSet, position, playField.WaveParameters.GruntMoveDelay, waveSpawnContext.Random);
+            waveSpawnContext.FieldEntities.Add(berzerkRobot);
         }
     }
 }

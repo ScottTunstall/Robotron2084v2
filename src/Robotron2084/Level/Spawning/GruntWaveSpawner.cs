@@ -11,17 +11,17 @@ namespace Robotron2084.Level.Spawning;
 public sealed class GruntWaveSpawner : IWaveSpawner
 {
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext context)
+    public void Spawn(WaveSpawnContext waveSpawnContext)
     {
-        var field = context.Field;
-        var entities = context.Entities;
-        var placement = context.Placement;
-        for (var i = 0; i < field.Parameters.GruntCount; i++)
+        var playField = waveSpawnContext.PlayField;
+        var fieldEntities = waveSpawnContext.FieldEntities;
+        var placement = waveSpawnContext.SpawnPlacement;
+        for (var i = 0; i < playField.WaveParameters.GruntCount; i++)
         {
             var position = placement.FindSpawnPointAwayFrom(
-                context.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, field.IsClearOfElectrodes);
-            var grunt = new Grunt(field.Sprites, position, field.Parameters.GruntMoveDelay, context.Random);
-            entities.Add(grunt);
+                waveSpawnContext.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, playField.IsClearOfElectrodes);
+            var grunt = new Grunt(playField.SpriteSet, position, playField.WaveParameters.GruntMoveDelay, waveSpawnContext.Random);
+            fieldEntities.Add(grunt);
         }
     }
 }

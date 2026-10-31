@@ -11,18 +11,18 @@ namespace Robotron2084.Level.Spawning;
 public sealed class SpheroidWaveSpawner : IWaveSpawner
 {
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext context)
+    public void Spawn(WaveSpawnContext waveSpawnContext)
     {
-        var field = context.Field;
-        var entities = context.Entities;
-        var placement = context.Placement;
-        for (var i = 0; i < field.Parameters.SpheroidCount; i++)
+        var playField = waveSpawnContext.PlayField;
+        var fieldEntities = waveSpawnContext.FieldEntities;
+        var placement = waveSpawnContext.SpawnPlacement;
+        for (var i = 0; i < playField.WaveParameters.SpheroidCount; i++)
         {
             var position =
-                placement.FindSpheroidSpawnPointAwayFrom(context.PlayerStart, SpheroidTuning.MinDistanceFromPlayer);
-            var spheroid = new Spheroid(field.Sprites, position, context.Random, field.Parameters.MaxDropsX2,
-                field.Parameters.SpheroidDropDelay);
-            entities.Add(spheroid);
+                placement.FindSpheroidSpawnPointAwayFrom(waveSpawnContext.PlayerStart, SpheroidTuning.MinDistanceFromPlayer);
+            var spheroid = new Spheroid(playField.SpriteSet, position, waveSpawnContext.Random, playField.WaveParameters.MaxDropsX2,
+                playField.WaveParameters.SpheroidDropDelay);
+            fieldEntities.Add(spheroid);
         }
     }
 }

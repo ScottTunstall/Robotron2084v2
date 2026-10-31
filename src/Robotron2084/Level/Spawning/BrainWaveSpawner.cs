@@ -21,24 +21,24 @@ namespace Robotron2084.Level.Spawning;
 public sealed class BrainWaveSpawner : IWaveSpawner
 {
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext context)
+    public void Spawn(WaveSpawnContext waveSpawnContext)
     {
-        var field = context.Field;
-        var entities = context.Entities;
-        var placement = context.Placement;
-        for (var i = 0; i < field.Parameters.BrainCount; i++)
+        var playField = waveSpawnContext.PlayField;
+        var fieldEntities = waveSpawnContext.FieldEntities;
+        var placement = waveSpawnContext.SpawnPlacement;
+        for (var i = 0; i < playField.WaveParameters.BrainCount; i++)
         {
-            var position = placement.FindSpawnPointAwayFrom(context.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
+            var position = placement.FindSpawnPointAwayFrom(waveSpawnContext.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
             var brain = new Brain(
-                field.Sprites,
+                playField.SpriteSet,
                 position,
-                context.Random,
-                field.Parameters.BrainBeatWaitArcadeFrames,
-                field.Parameters.BrainFireDelay,
-                entities.GetNearestFamilySlot(position));
-            entities.Add(brain);
+                waveSpawnContext.Random,
+                playField.WaveParameters.BrainBeatWaitArcadeFrames,
+                playField.WaveParameters.BrainFireDelay,
+                fieldEntities.GetNearestFamilySlot(position));
+            fieldEntities.Add(brain);
         }
 
-        if (field.Parameters.BrainCount > 0) Sound.PlayTransporter();
+        if (playField.WaveParameters.BrainCount > 0) Sound.PlayTransporter();
     }
 }

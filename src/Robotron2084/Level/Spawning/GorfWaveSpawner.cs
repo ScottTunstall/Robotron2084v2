@@ -10,11 +10,11 @@ namespace Robotron2084.Level.Spawning;
 public sealed class GorfWaveSpawner : IWaveSpawner
 {
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext context)
+    public void Spawn(WaveSpawnContext waveSpawnContext)
     {
-        var field = context.Field;
-        for (var i = 0; i < field.Parameters.GorfCount; i++)
-            context.Entities.Add(new Gorf(field.Sprites, context.Random, field.GetPlayfieldBounds(),
-                field.Parameters.MaxDropsX2));
+        var playField = waveSpawnContext.PlayField;
+        for (var i = 0; i < playField.WaveParameters.GorfCount; i++)
+            waveSpawnContext.FieldEntities.Add(new Gorf(playField.SpriteSet, waveSpawnContext.Random, playField.GetPlayfieldBounds(),
+                playField.WaveParameters.MaxDropsX2));
     }
 }

@@ -4,6 +4,6 @@ namespace Robotron2084.Level.Spawning;
 public interface IWaveSpawner
 {
     /// <summary>Puts this wave's share of the kind on the field.</summary>
-    /// <param name="context">The field being filled and what is needed to choose spots on it.</param>
-    void Spawn(WaveSpawnContext context);
+    /// <param name="waveSpawnContext">The field being filled and what is needed to choose spots on it.</param>
+    void Spawn(WaveSpawnContext waveSpawnContext);
 }

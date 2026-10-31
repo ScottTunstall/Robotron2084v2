@@ -45,25 +45,25 @@ public sealed class HulkWaveSpawner : IWaveSpawner
     private const int TargetMaxExclusive = 256;
 
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext context)
+    public void Spawn(WaveSpawnContext waveSpawnContext)
     {
-        var field = context.Field;
-        var phantomTargetPosition = Hulk.GetPhantomTargetPosition(field.GetPlayfieldBounds());
+        var playField = waveSpawnContext.PlayField;
+        var phantomTargetPosition = Hulk.GetPhantomTargetPosition(playField.GetPlayfieldBounds());
         var nextSlotToSearch = FamilyList.FirstSlot;
-        for (var i = 0; i < field.Parameters.HulkCount; i++)
+        for (var i = 0; i < playField.WaveParameters.HulkCount; i++)
         {
             var position =
-                context.Placement.FindSpawnPointAwayFrom(context.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
+                waveSpawnContext.SpawnPlacement.FindSpawnPointAwayFrom(waveSpawnContext.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
             int? slot = FamilyList.LastSlot;
-            var isSearchingFamilyList = context.Random.Next(TargetMaxExclusive) <= SearchFamilyListThreshold;
-            if (isSearchingFamilyList) slot = TakeNextLeftOverSlot(context.FamilySlotsLeftOver, ref nextSlotToSearch);
+            var isSearchingFamilyList = waveSpawnContext.Random.Next(TargetMaxExclusive) <= SearchFamilyListThreshold;
+            if (isSearchingFamilyList) slot = TakeNextLeftOverSlot(waveSpawnContext.FamilySlotsLeftOver, ref nextSlotToSearch);
 
             Func<IntVector2> getTargetPosition = () => phantomTargetPosition;
             if (slot is { } stalkedSlot)
-                getTargetPosition = () => field.GetFamilyMemberInSlot(stalkedSlot)?.Position ?? field.GetPlayerPosition();
+                getTargetPosition = () => playField.GetFamilyMemberInSlot(stalkedSlot)?.Position ?? playField.GetPlayerPosition();
 
-            context.Entities.Add(new Hulk(field.Sprites, position, context.Random,
-                field.Parameters.HulkBeatIntervalArcadeFrames, getTargetPosition));
+            waveSpawnContext.FieldEntities.Add(new Hulk(playField.SpriteSet, position, waveSpawnContext.Random,
+                playField.WaveParameters.HulkBeatIntervalArcadeFrames, getTargetPosition));
         }
     }
 

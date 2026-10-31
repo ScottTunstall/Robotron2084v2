@@ -14,27 +14,27 @@ namespace Robotron2084.Level.Spawning;
 public sealed class FamilyWaveSpawner : IWaveSpawner
 {
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext context)
+    public void Spawn(WaveSpawnContext waveSpawnContext)
     {
-        var parameters = context.Field.Parameters;
-        SpawnKind(context, HumanKind.Mikey, parameters.MikeyCount);
-        SpawnKind(context, HumanKind.Mommy, parameters.MommyCount);
-        SpawnKind(context, HumanKind.Daddy, parameters.DaddyCount);
+        var waveParameters = waveSpawnContext.PlayField.WaveParameters;
+        SpawnKind(waveSpawnContext, HumanKind.Mikey, waveParameters.MikeyCount);
+        SpawnKind(waveSpawnContext, HumanKind.Mommy, waveParameters.MommyCount);
+        SpawnKind(waveSpawnContext, HumanKind.Daddy, waveParameters.DaddyCount);
     }
 
     /// <summary>Puts a number of one family member on the field.</summary>
-    /// <param name="context">The field being filled and what is needed to choose spots on it.</param>
+    /// <param name="waveSpawnContext">The field being filled and what is needed to choose spots on it.</param>
     /// <param name="kind">Which member.</param>
     /// <param name="count">How many of them.</param>
-    private static void SpawnKind(WaveSpawnContext context, HumanKind kind, int count)
+    private static void SpawnKind(WaveSpawnContext waveSpawnContext, HumanKind kind, int count)
     {
-        var field = context.Field;
-        var entities = context.Entities;
-        var placement = context.Placement;
+        var playField = waveSpawnContext.PlayField;
+        var fieldEntities = waveSpawnContext.FieldEntities;
+        var placement = waveSpawnContext.SpawnPlacement;
         for (var i = 0; i < count; i++)
         {
-            var position = placement.FindSpawnPoint(field.IsClearOfElectrodes, Human.GetSpawnSquarePortPixels(kind));
-            entities.Add(new Human(field.Sprites, position, kind, context.Random));
+            var position = placement.FindSpawnPoint(playField.IsClearOfElectrodes, Human.GetSpawnSquarePortPixels(kind));
+            fieldEntities.Add(new Human(playField.SpriteSet, position, kind, waveSpawnContext.Random));
         }
     }
 }

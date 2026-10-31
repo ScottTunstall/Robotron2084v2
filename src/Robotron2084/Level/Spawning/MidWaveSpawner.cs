@@ -16,18 +16,18 @@ namespace Robotron2084.Level.Spawning;
 /// </remarks>
 internal sealed class MidWaveSpawner
 {
-    private readonly FieldEntities _entities;
-    private readonly PlayField _field;
+    private readonly FieldEntities _fieldEntities;
+    private readonly PlayField _playField;
     private readonly Random _random;
 
     /// <summary>Makes a spawner for one field.</summary>
-    /// <param name="field">The field the things are made on, which also plays their sounds.</param>
-    /// <param name="entities">What is on the field, which the things are added to.</param>
+    /// <param name="playField">The field the things are made on, which also plays their sounds.</param>
+    /// <param name="fieldEntities">What is on the field, which the things are added to.</param>
     /// <param name="random">The field's random source.</param>
-    public MidWaveSpawner(PlayField field, FieldEntities entities, Random random)
+    public MidWaveSpawner(PlayField playField, FieldEntities fieldEntities, Random random)
     {
-        _field = field;
-        _entities = entities;
+        _playField = playField;
+        _fieldEntities = fieldEntities;
         _random = random;
     }
 
@@ -36,9 +36,9 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, which asks for <c>BSHSND</c>.</remarks>
     public void SpawnCruiseMissile(IntVector2 origin)
     {
-        var missile = new CruiseMissile(_field.Sprites, origin, _field.GetPlayerPosition(), _random);
-        _entities.Add(missile);
-        _field.PlaySoundFrom(SoundTables.BrainShoot, missile.GetBounds());
+        var cruiseMissile = new CruiseMissile(_playField.SpriteSet, origin, _playField.GetPlayerPosition(), _random);
+        _fieldEntities.Add(cruiseMissile);
+        _playField.PlaySoundFrom(SoundTables.BrainShoot, cruiseMissile.GetBounds());
     }
 
     /// <summary>A spheroid drops an enforcer.</summary>
@@ -46,9 +46,9 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRC11.ASM</c>, which asks for <c>ENDSND</c>.</remarks>
     public void SpawnEnforcer(IntVector2 position)
     {
-        var enforcer = new Enforcer(_field.Sprites, position, _random, _field.Parameters.EnforcerFireDelay);
-        _entities.Add(enforcer);
-        _field.PlaySoundFrom(SoundTables.EnforcerDropOff, enforcer.GetBounds());
+        var enforcer = new Enforcer(_playField.SpriteSet, position, _random, _playField.WaveParameters.EnforcerFireDelay);
+        _fieldEntities.Add(enforcer);
+        _playField.PlaySoundFrom(SoundTables.EnforcerDropOff, enforcer.GetBounds());
     }
 
     /// <summary>
@@ -65,18 +65,18 @@ internal sealed class MidWaveSpawner
     /// </remarks>
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
-        if (_entities.Grunts.Count(entity => !entity.IsDead()) >=
-            Math.Max(_field.Parameters.GruntCount, GorfTuning.MinGruntCount)) return;
+        if (_fieldEntities.Grunts.Count(entity => !entity.IsDead()) >=
+            Math.Max(_playField.WaveParameters.GruntCount, GorfTuning.MinGruntCount)) return;
 
-        var bounds = _field.GetPlayfieldBounds();
+        var bounds = _playField.GetPlayfieldBounds();
         var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
         var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
         var x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
         var startY = Math.Clamp(from.Y, bounds.Y, bounds.Bottom - height);
         var landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);
-        var grunt = new Grunt(_field.Sprites, new IntVector2(x, startY), _field.Parameters.GruntMoveDelay, _random);
+        var grunt = new Grunt(_playField.SpriteSet, new IntVector2(x, startY), _playField.WaveParameters.GruntMoveDelay, _random);
         grunt.BeginFall(landingY);
-        _entities.Add(grunt);
+        _fieldEntities.Add(grunt);
     }
 
     /// <summary>A brain's touch turns a human into a prog where they stand.</summary>
@@ -85,7 +85,7 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> and <c>PROGST</c>.</remarks>
     public void SpawnProg(IntVector2 position, HumanKind kind)
     {
-        _entities.Add(new Prog(_field.Sprites, position, kind, _random));
+        _fieldEntities.Add(new Prog(_playField.SpriteSet, position, kind, _random));
     }
 
     /// <summary>An enforcer fires a spark at the player.</summary>
@@ -98,9 +98,9 @@ internal sealed class MidWaveSpawner
     /// </remarks>
     public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition)
     {
-        var spark = new Spark(_field.Sprites, origin, playerPosition, _random, _field.GetPlayfieldBounds());
-        _entities.Add(spark);
-        _field.PlaySoundFrom(SoundTables.EnforcerShoot, spark.GetBounds());
+        var spark = new Spark(_playField.SpriteSet, origin, playerPosition, _random, _playField.GetPlayfieldBounds());
+        _fieldEntities.Add(spark);
+        _playField.PlaySoundFrom(SoundTables.EnforcerShoot, spark.GetBounds());
     }
 
     /// <summary>A quark drops a tank. The tank is kept inside the playfield, because the quark can be against a wall.</summary>
@@ -109,10 +109,10 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRTK4.ASM</c>, which asks for <c>TKDSND</c>.</remarks>
     public Tank SpawnTank(IntVector2 position)
     {
-        Tank tank = new(_field.Sprites, Tank.GetPositionInside(_field.GetPlayfieldBounds(), position), _random,
-            _field.Parameters.TankFireDelay);
-        _entities.Add(tank);
-        _field.PlaySoundFrom(SoundTables.TankDrop, tank.GetBounds());
+        Tank tank = new(_playField.SpriteSet, Tank.GetPositionInside(_playField.GetPlayfieldBounds(), position), _random,
+            _playField.WaveParameters.TankFireDelay);
+        _fieldEntities.Add(tank);
+        _playField.PlaySoundFrom(SoundTables.TankDrop, tank.GetBounds());
         return tank;
     }
 
@@ -124,10 +124,10 @@ internal sealed class MidWaveSpawner
     /// </remarks>
     public void SpawnTankShell(IntVector2 origin)
     {
-        _field.CountShellFired();
-        var shell = new TankShell(_field.Sprites, origin, _field.GetPlayerPosition(), _field.Parameters.ShellSpeed,
-            _field.GetPlayfieldBounds(), _random);
-        _entities.Add(shell);
-        _field.PlaySoundFrom(SoundTables.TankFire, shell.GetBounds());
+        _playField.CountShellFired();
+        var tankShell = new TankShell(_playField.SpriteSet, origin, _playField.GetPlayerPosition(), _playField.WaveParameters.ShellSpeed,
+            _playField.GetPlayfieldBounds(), _random);
+        _fieldEntities.Add(tankShell);
+        _playField.PlaySoundFrom(SoundTables.TankFire, tankShell.GetBounds());
     }
 }

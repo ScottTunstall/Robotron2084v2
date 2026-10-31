@@ -8,21 +8,21 @@ namespace Robotron2084.Level.Spawning;
 public sealed class ElectrodeWaveSpawner : IWaveSpawner
 {
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext context)
+    public void Spawn(WaveSpawnContext waveSpawnContext)
     {
-        var field = context.Field;
-        var entities = context.Entities;
-        var placement = context.Placement;
-        var wave = field.Parameters.WaveNumber;
+        var playField = waveSpawnContext.PlayField;
+        var fieldEntities = waveSpawnContext.FieldEntities;
+        var placement = waveSpawnContext.SpawnPlacement;
+        var wave = playField.WaveParameters.WaveNumber;
 
         // A spot is found for a square the size of most things. The "2084" electrode is wider than that, so it is moved left if it would stick into the right wall.
-        var furthestRight = field.GetPlayfieldBounds().Right - Electrode.GetCollisionSize(wave).Width;
-        for (var i = 0; i < field.Parameters.ElectrodeCount; i++)
+        var furthestRight = playField.GetPlayfieldBounds().Right - Electrode.GetCollisionSize(wave).Width;
+        for (var i = 0; i < playField.WaveParameters.ElectrodeCount; i++)
         {
             var position = placement.FindSpawnPointAwayFrom(
-                context.PlayerStart, SpawnTuning.ElectrodeMinDistanceFromPlayer, field.IsClearOfElectrodes);
+                waveSpawnContext.PlayerStart, SpawnTuning.ElectrodeMinDistanceFromPlayer, playField.IsClearOfElectrodes);
             position = position with { X = Math.Min(position.X, furthestRight) };
-            entities.Add(new Electrode(field.Sprites, position, wave));
+            fieldEntities.Add(new Electrode(playField.SpriteSet, position, wave));
         }
     }
 }
