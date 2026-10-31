@@ -55,8 +55,8 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     /// <summary>Every line high: what the board sees when the main board sends "get ready".</summary>
     private const int AllLinesHigh = 0xFF;
 
-    private readonly Mc6800Cpu _cpu;
-    private readonly Pia6821 _pia = new();
+    private readonly Mc6800Cpu _mc6800Cpu;
+    private readonly Pia6821 _pia6821 = new();
     private readonly byte[] _ram = new byte[RamAddressBits + 1];
     private readonly byte[] _rom;
 
@@ -70,8 +70,8 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
                 nameof(rom));
 
         _rom = rom;
-        _cpu = new Mc6800Cpu(this);
-        _cpu.Reset();
+        _mc6800Cpu = new Mc6800Cpu(this);
+        _mc6800Cpu.Reset();
     }
 
     /// <summary>Reads the byte at an address in the board's memory.</summary>
@@ -79,7 +79,7 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     /// <returns>The byte there; an address with nothing wired to it reads as zero.</returns>
     public byte ReadByte(ushort address)
     {
-        if (IsPiaAddress(address)) return _pia.ReadRegister(address & PiaRegisterBits);
+        if (IsPiaAddress(address)) return _pia6821.ReadRegister(address & PiaRegisterBits);
 
         if (IsRamAddress(address)) return _ram[address & RamAddressBits];
 
@@ -93,7 +93,7 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     {
         if (IsPiaAddress(address))
         {
-            _pia.WriteRegister(address & PiaRegisterBits, value);
+            _pia6821.WriteRegister(address & PiaRegisterBits, value);
             return;
         }
 
@@ -101,7 +101,7 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     }
 
     /// <summary>The level the board is sending to the loudspeaker circuit right now, 0 to 255.</summary>
-    public byte OutputLevel => _pia.PortAPins;
+    public byte OutputLevel => _pia6821.PortAPins;
 
     /// <summary>Always false: the emulated board cannot tell when a sound has ended.</summary>
     public bool IsPlaying => false;
@@ -111,8 +111,8 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     /// <returns>How many clock cycles passed.</returns>
     public int Run(int maxCycles)
     {
-        _cpu.IsInterruptRequested = _pia.IsInterruptRequested;
-        return _cpu.Step();
+        _mc6800Cpu.IsInterruptRequested = _pia6821.IsInterruptRequested;
+        return _mc6800Cpu.Step();
     }
 
     /// <summary>
@@ -144,7 +144,7 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     private void SetSoundLines(int value)
     {
         var lines = (byte)(value | HeldHighLines);
-        _pia.SetPortBInput(lines);
-        _pia.SetCb1(lines != AllLinesHigh);
+        _pia6821.SetPortBInput(lines);
+        _pia6821.SetCb1(lines != AllLinesHigh);
     }
 }

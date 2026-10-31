@@ -38,14 +38,14 @@ public sealed class Mc6800Cpu
     /// <summary>Bits in a byte, used to split and join 16-bit words.</summary>
     private const int BitsPerByte = 8;
 
-    private readonly IMc6800Bus _bus;
+    private readonly IMc6800Bus _mc6800Bus;
     private bool _isWaitingForInterrupt;
 
     /// <summary>Creates a processor wired to its memory and chips. Call <see cref="Reset" /> before running it.</summary>
-    /// <param name="bus">The memory and chips the processor reads and writes.</param>
-    public Mc6800Cpu(IMc6800Bus bus)
+    /// <param name="mc6800Bus">The memory and chips the processor reads and writes.</param>
+    public Mc6800Cpu(IMc6800Bus mc6800Bus)
     {
-        _bus = bus;
+        _mc6800Bus = mc6800Bus;
     }
 
     /// <summary>Accumulator A.</summary>
@@ -131,7 +131,7 @@ public sealed class Mc6800Cpu
     /// <returns>The byte.</returns>
     internal byte FetchByte()
     {
-        return _bus.ReadByte(ProgramCounter++);
+        return _mc6800Bus.ReadByte(ProgramCounter++);
     }
 
     /// <summary>Reads the next two bytes of the program, high byte first, and moves past them.</summary>
@@ -193,14 +193,14 @@ public sealed class Mc6800Cpu
     internal byte Pull()
     {
         StackPointer++;
-        return _bus.ReadByte(StackPointer);
+        return _mc6800Bus.ReadByte(StackPointer);
     }
 
     /// <summary>Puts a byte on the stack.</summary>
     /// <param name="value">The byte.</param>
     internal void Push(byte value)
     {
-        _bus.WriteByte(StackPointer, value);
+        _mc6800Bus.WriteByte(StackPointer, value);
         StackPointer--;
     }
 
@@ -209,7 +209,7 @@ public sealed class Mc6800Cpu
     /// <returns>The byte.</returns>
     internal byte ReadByte(ushort address)
     {
-        return _bus.ReadByte(address);
+        return _mc6800Bus.ReadByte(address);
     }
 
     /// <summary>Reads the 16-bit word at an address, high byte first.</summary>
@@ -217,8 +217,8 @@ public sealed class Mc6800Cpu
     /// <returns>The word.</returns>
     internal ushort ReadWord(ushort address)
     {
-        var high = _bus.ReadByte(address);
-        var low = _bus.ReadByte((ushort)(address + 1));
+        var high = _mc6800Bus.ReadByte(address);
+        var low = _mc6800Bus.ReadByte((ushort)(address + 1));
         return Word(high, low);
     }
 
@@ -286,7 +286,7 @@ public sealed class Mc6800Cpu
     /// <param name="value">The byte.</param>
     internal void WriteByte(ushort address, byte value)
     {
-        _bus.WriteByte(address, value);
+        _mc6800Bus.WriteByte(address, value);
     }
 
     /// <summary>Writes a 16-bit word to an address, high byte first.</summary>
@@ -294,8 +294,8 @@ public sealed class Mc6800Cpu
     /// <param name="value">The word.</param>
     internal void WriteWord(ushort address, ushort value)
     {
-        _bus.WriteByte(address, High(value));
-        _bus.WriteByte((ushort)(address + 1), Low(value));
+        _mc6800Bus.WriteByte(address, High(value));
+        _mc6800Bus.WriteByte((ushort)(address + 1), Low(value));
     }
 
     /// <summary>The high byte of a word.</summary>
