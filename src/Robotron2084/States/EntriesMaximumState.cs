@@ -53,7 +53,7 @@ public sealed class EntriesMaximumState : IGameState
 
     private void DrawLine(SpriteBatch spriteBatch, string text, int column, int row)
     {
-        _gameServices.SpriteSet.ArcadeText.DrawLargeFontText(
+        _gameServices.TextureSet.ArcadeText.DrawLargeFontText(
             spriteBatch,
             text,
             HudLayout.ToPortColumnX(column),

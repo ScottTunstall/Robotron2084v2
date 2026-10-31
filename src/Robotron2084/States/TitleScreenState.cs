@@ -128,7 +128,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     private readonly TimeSpan _portTextDuration = TimeSpan.FromSeconds(AttractTuning.TitlePortTextSeconds);
     private readonly GameServices _gameServices;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private readonly WordmarkAppear _wordmarkAppear;
 
     private TimeSpan _idleElapsed;
@@ -152,23 +152,23 @@ public sealed class TitleScreenState : IGameState, IAttractState
         _pinnedPane = pinnedPane;
         _isShowingArcadeText = pinnedPane != TitleTextPane.Port;
         _playerInputSource = gameServices.PlayerInputSource;
-        _spriteSet = gameServices.SpriteSet;
+        _textureSet = gameServices.TextureSet;
         _highScoreStore = gameServices.HighScoreStore;
         _controlSettings = gameServices.ControlSettings;
         _gameSettings = gameServices.GameSettings;
-        _williamsLogoBorder = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_spriteSet.WilliamsLogoSprite));
+        _williamsLogoBorder = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_textureSet.WilliamsLogoTexture));
         _wordmarkAppear = WordmarkAppear.CreateFromMasks(
-            _spriteSet.TitleWordmarkRimSprite,
-            _spriteSet.TitleWordmarkCoreSprite,
+            _textureSet.TitleWordmarkRimTexture,
+            _textureSet.TitleWordmarkCoreTexture,
             new Point(
-                (ScreenSize.Width - _spriteSet.TitleWordmarkRimSprite.Width * ScreenSize.PortPixelsPerArcadePixel) / 2,
+                (ScreenSize.Width - _textureSet.TitleWordmarkRimTexture.Width * ScreenSize.PortPixelsPerArcadePixel) / 2,
                 WordmarkRow));
 
         // The presentation page runs its OWN decoded colour set (notes §106): entries 1-7 come
         // from the ROM's seven-byte table ($8A70) with a white flash chasing through them every
         // 3 frames, and the message sits in entry 6. The message reads as "cycling between orange
         // and white", which is what this chase does (notes §106).
-        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Start(palette);
+        if (_textureSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Start(palette);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -178,7 +178,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // 25-character lines) and the credit strings. The arcade's "CREDITS: n" line is not drawn,
         // because the port has no credits, and neither the playfield wall nor the score/lives belong to
         // this page: the cabinet's other attract page carries those.
-        _williamsLogoBorder.Draw(spriteBatch, _spriteSet.BlitterDraw);
+        _williamsLogoBorder.Draw(spriteBatch, _textureSet.BlitterDraw);
 
         // The two logos, traced from an arcade screenshot (notes §103.4) — the R5 CPU
         // ROM we hold has no attract wordmark (§103.2). The wordmark's masks are drawn in the two
@@ -186,9 +186,9 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
         // body on a yellow rim. The "2084" mark keeps its traced colours. Both at the port's 2x
         // sprite scale.
-        _wordmarkAppear.Draw(spriteBatch, _spriteSet.BlitterDraw, _presentationPagePalette.GetWordmarkRimPaletteIndex(),
+        _wordmarkAppear.Draw(spriteBatch, _textureSet.BlitterDraw, _presentationPagePalette.GetWordmarkRimPaletteIndex(),
             _presentationPagePalette.GetWordmarkPaletteIndex());
-        if (_wordmarkAppear.IsFinished()) DrawCentredLogo(spriteBatch, _spriteSet.Title2084Sprite, Logo2084Row);
+        if (_wordmarkAppear.IsFinished()) DrawCentredLogo(spriteBatch, _textureSet.Title2084Texture, Logo2084Row);
 
         // The page's text: ONE of its two panes, alternating (the arcade pane for TitleArcadeTextSeconds, the port's for TitlePortTextSeconds)
         // (notes §107). Both are drawn in the page's own text palette index — the ROM's operand `$66`, entry
@@ -202,7 +202,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
-        if (_spriteSet.BlitterDraw.GamePalette is { } live) _presentationPagePalette.Update(live);
+        if (_textureSet.BlitterDraw.GamePalette is { } live) _presentationPagePalette.Update(live);
 
         _williamsLogoBorder.Tick();
         _wordmarkAppear.Update();
@@ -218,7 +218,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         if (ChooseMode(_buttonEdgeDetector.Advance(playerInputState)) is { } chosen)
         {
             StopColours();
-            gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _spriteSet,
+            gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _textureSet,
                 _highScoreStore));
             return;
         }
@@ -282,22 +282,22 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private void DrawArcadeText(SpriteBatch spriteBatch)
     {
-        DrawCenteredLargeText(spriteBatch, WelcomeLineOne, WelcomeRowOne, TextPaletteIndex);
-        DrawCenteredLargeText(spriteBatch, WelcomeLineTwo, WelcomeRowTwo, TextPaletteIndex);
-        DrawCenteredSmallText(spriteBatch, DesignedByLine, DesignedByRow, TextPaletteIndex);
-        DrawCenteredSmallText(spriteBatch, ForWilliamsLine, ForWilliamsRow, TextPaletteIndex);
-        DrawCenteredSmallText(spriteBatch, CopyrightLine, CopyrightRow, CopyrightPaletteIndex);
+        DrawCentredLargeText(spriteBatch, WelcomeLineOne, WelcomeRowOne, TextPaletteIndex);
+        DrawCentredLargeText(spriteBatch, WelcomeLineTwo, WelcomeRowTwo, TextPaletteIndex);
+        DrawCentredSmallText(spriteBatch, DesignedByLine, DesignedByRow, TextPaletteIndex);
+        DrawCentredSmallText(spriteBatch, ForWilliamsLine, ForWilliamsRow, TextPaletteIndex);
+        DrawCentredSmallText(spriteBatch, CopyrightLine, CopyrightRow, CopyrightPaletteIndex);
     }
 
     /// <summary>Centres a large-font line horizontally and prints it in one palette index.</summary>
-    private void DrawCenteredLargeText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
+    private void DrawCentredLargeText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
     {
-        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, paletteIndex);
+        _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, text, GetCentredX(text, true), y, paletteIndex);
     }
 
-    private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
+    private void DrawCentredSmallText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
     {
-        _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, GetCenteredX(text, false), y, paletteIndex);
+        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, GetCentredX(text, false), y, paletteIndex);
     }
 
     /// <summary>Centres one traced logo horizontally, at the port's 2x sprite scale.</summary>
@@ -306,7 +306,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         var width = texture.Width * ScreenSize.PortPixelsPerArcadePixel;
         var height = texture.Height * ScreenSize.PortPixelsPerArcadePixel;
         var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
-        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, texture, bounds, Color.White);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, texture, bounds, Color.White);
     }
 
     /// <summary>
@@ -317,8 +317,8 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private void DrawPortText(SpriteBatch spriteBatch)
     {
-        DrawCenteredLargeText(spriteBatch, CreditLineOne, CreditRowOne, TextPaletteIndex);
-        DrawCenteredLargeText(spriteBatch, CreditLineTwo, CreditRowTwo, TextPaletteIndex);
+        DrawCentredLargeText(spriteBatch, CreditLineOne, CreditRowOne, TextPaletteIndex);
+        DrawCentredLargeText(spriteBatch, CreditLineTwo, CreditRowTwo, TextPaletteIndex);
     }
 
     /// <summary>
@@ -326,10 +326,10 @@ public sealed class TitleScreenState : IGameState, IAttractState
     ///     (<see cref="ArcadeText.MeasureSmallText" />/<see cref="ArcadeText.MeasureLargeText" />) — the two
     ///     fonts advance differently, so a fixed per-character width would mis-centre one of them.
     /// </summary>
-    private int GetCenteredX(string text, bool isLarge)
+    private int GetCentredX(string text, bool isLarge)
     {
-        var textWidth = _spriteSet.ArcadeText.MeasureSmallText(text);
-        if (isLarge) textWidth = _spriteSet.ArcadeText.MeasureLargeText(text);
+        var textWidth = _textureSet.ArcadeText.MeasureSmallText(text);
+        if (isLarge) textWidth = _textureSet.ArcadeText.MeasureLargeText(text);
 
         var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
@@ -342,6 +342,6 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private void StopColours()
     {
-        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Stop(palette);
+        if (_textureSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Stop(palette);
     }
 }

@@ -30,33 +30,33 @@ public sealed class GameOverState : IGameState
 
     /// <summary>Builds the screen for a finished game's scores.</summary>
     /// <param name="playerInputSource">Player 1's input, which the states that follow read.</param>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="highScoreStore">The high score store the ceremony writes to.</param>
     /// <param name="scores">Every player's final score, highest first — the ROM's <c>EGSUB</c> runs once per player.</param>
     /// <param name="controlSettings">The port's control definitions.</param>
     /// <param name="gameSettings">The GAME ADJUSTMENT settings (notes §131).</param>
     public GameOverState(
         IPlayerInputSource playerInputSource,
-        SpriteSet spriteSet,
+        TextureSet textureSet,
         HighScoreStore highScoreStore,
         IReadOnlyList<FinalScore> scores,
         ControlSettings? controlSettings = null,
         GameSettings? gameSettings = null)
     {
-        _gameServices = new GameServices(spriteSet, highScoreStore, controlSettings ?? ControlSettings.CreateDefaults(),
+        _gameServices = new GameServices(textureSet, highScoreStore, controlSettings ?? ControlSettings.CreateDefaults(),
             playerInputSource, gameSettings ?? GameSettings.CreateFactoryDefaults());
         _scores = scores;
     }
 
     /// <summary>Builds the screen from a session that has just ended.</summary>
     /// <param name="playerInputSource">Player 1's input.</param>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="highScoreStore">The high score store.</param>
     /// <param name="gameSession">The finished game, which supplies the final scores, the controls and the settings.</param>
-    public static GameOverState CreateFromSession(IPlayerInputSource playerInputSource, SpriteSet spriteSet,
+    public static GameOverState CreateFromSession(IPlayerInputSource playerInputSource, TextureSet textureSet,
         HighScoreStore highScoreStore, GameSession gameSession)
     {
-        return new GameOverState(playerInputSource, spriteSet, highScoreStore, gameSession.GetFinalScoresHighestFirst(),
+        return new GameOverState(playerInputSource, textureSet, highScoreStore, gameSession.GetFinalScoresHighestFirst(),
             gameSession.ControlSettings,
             gameSession.GameSettings);
     }
@@ -64,7 +64,7 @@ public sealed class GameOverState : IGameState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         // ROM string 40 (GOMP): "GAME OVER" in the LARGE font, colour $AA, at (62, 128).
-        _gameServices.SpriteSet.ArcadeText.DrawLargeFontText(
+        _gameServices.TextureSet.ArcadeText.DrawLargeFontText(
             spriteBatch,
             "GAME OVER",
             HudLayout.ToPortColumnX(HudLayout.GameOverMessageColumn),

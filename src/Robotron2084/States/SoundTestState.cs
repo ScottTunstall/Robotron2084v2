@@ -98,7 +98,7 @@ public sealed class SoundTestState : IGameState
     ];
 
     private readonly GameServices _gameServices;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private int _index;
     private bool _isAutoUp;
     private InputSnapshot _previousSnapshot;
@@ -111,9 +111,9 @@ public sealed class SoundTestState : IGameState
     public SoundTestState(GameServices gameServices)
     {
         _gameServices = gameServices;
-        _spriteSet = gameServices.SpriteSet;
+        _textureSet = gameServices.TextureSet;
         _previousSnapshot = InputSnapshot.Read();
-        if (_spriteSet.BlitterDraw.GamePalette is { } palette) palette.SetPaletteIndexValue(TextPaletteIndex, GamePalette.DefaultPaletteValues[TextPaletteIndex]);
+        if (_textureSet.BlitterDraw.GamePalette is { } palette) palette.SetPaletteIndexValue(TextPaletteIndex, GamePalette.DefaultPaletteValues[TextPaletteIndex]);
 
         StartSound();
     }
@@ -194,14 +194,14 @@ public sealed class SoundTestState : IGameState
 
     private void DrawLarge(SpriteBatch spriteBatch, string text, int y)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(_spriteSet.ArcadeText.MeasureLargeText(text));
-        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.ArcadeText.MeasureLargeText(text));
+        _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
     }
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int y)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(_spriteSet.ArcadeText.MeasureSmallText(text));
-        _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.ArcadeText.MeasureSmallText(text));
+        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
     }
 
     /// <summary>True on the tick a key goes down.</summary>

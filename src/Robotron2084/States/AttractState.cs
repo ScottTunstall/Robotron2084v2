@@ -40,13 +40,13 @@ public sealed class AttractState : IGameState, IAttractState
     private readonly Random _random = new();
     private readonly GameServices _gameServices;
     private readonly GameSession _gameSession;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private PlayField _playField;
 
     public AttractState(GameServices gameServices)
     {
         _gameServices = gameServices;
-        _spriteSet = gameServices.SpriteSet;
+        _textureSet = gameServices.TextureSet;
         _highScoreStore = gameServices.HighScoreStore;
         _humanPlayerInputSource = gameServices.PlayerInputSource;
         _gameSession = GameSession.CreateNewGame(_demoPlayerInputSource, 1);
@@ -56,8 +56,8 @@ public sealed class AttractState : IGameState, IAttractState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _playField.Draw(spriteBatch);
-        ArcadeHud.DrawScoresAndLives(spriteBatch, _spriteSet, _gameSession, PlayfieldLayout.GetInnerBounds(), false);
-        ArcadeHud.DrawWaveMessage(spriteBatch, _spriteSet, _gameSession.GetCurrent().Wave);
+        ArcadeHud.DrawScoresAndLives(spriteBatch, _textureSet, _gameSession, PlayfieldLayout.GetInnerBounds(), false);
+        ArcadeHud.DrawWaveMessage(spriteBatch, _textureSet, _gameSession.GetCurrent().Wave);
     }
 
     public void Update(GameTime gameTime, GameStateManager gameStateManager)
@@ -88,7 +88,7 @@ public sealed class AttractState : IGameState, IAttractState
             SyncSlotFromField();
             playerSlot.Wave = playerSlot.Wave % 255 + 1; // ROM GEXX: skip 0
             playerSlot.SavedWaveParameters = null;
-            gameStateManager.TransitionTo(new WaveClearState(_spriteSet, _highScoreStore, _gameSession, true));
+            gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession, true));
             return;
         }
 
@@ -117,9 +117,9 @@ public sealed class AttractState : IGameState, IAttractState
         var slot = _gameSession.GetCurrent();
         // The demo is the same game, so a death keeps the survivors here too (notes §134).
         var waveParameters = BozoMode.Apply(slot.SavedWaveParameters ?? _waveParameterGenerator.Generate(slot.Wave), slot.GetSpareLives());
-        WallColorCycle wallColorCycle = new();
-        return new PlayField(_spriteSet, waveParameters, _demoPlayerInputSource, PlayfieldLayout.GetInnerBounds(), wallColorCycle, _random,
-            slot.Lives, slot.Score, _spriteSet.BlitterDraw.GamePalette, false, new PixelContactTest(new SpriteCollision()));
+        WallColourCycle wallColourCycle = new();
+        return new PlayField(_textureSet, waveParameters, _demoPlayerInputSource, PlayfieldLayout.GetInnerBounds(), wallColourCycle, _random,
+            slot.Lives, slot.Score, _textureSet.BlitterDraw.GamePalette, false, new PixelContactTest(new SpriteCollision()));
     }
 
     private void SyncSlotFromField()

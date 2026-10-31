@@ -93,7 +93,7 @@ public sealed class DeveloperToolsState : IGameState
     private readonly GameSettingsStore _gameSettingsStore;
     private readonly DefineInputsHighlight _defineInputsHighlight = new();
     private readonly GameServices _gameServices;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     private int _line;
     private InputSnapshot _previousSnapshot;
@@ -114,13 +114,13 @@ public sealed class DeveloperToolsState : IGameState
         GameSettingsStore? gameSettingsStore = null)
     {
         _gameServices = gameServices;
-        _spriteSet = gameServices.SpriteSet;
+        _textureSet = gameServices.TextureSet;
         _controlSettingsStore = controlSettingsStore ?? new ControlSettingsStore();
         _gameSettingsStore = gameSettingsStore ?? new GameSettingsStore();
         _previousSnapshot = InputSnapshot.Read();
         RestorePalette();
 
-        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _defineInputsHighlight.Start(palette);
+        if (_textureSet.BlitterDraw.GamePalette is { } palette) _defineInputsHighlight.Start(palette);
     }
 
     /// <summary>The option the cursor is on.</summary>
@@ -140,7 +140,7 @@ public sealed class DeveloperToolsState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
-        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _defineInputsHighlight.Update(palette);
+        if (_textureSet.BlitterDraw.GamePalette is { } palette) _defineInputsHighlight.Update(palette);
 
         var now = InputSnapshot.Read();
 
@@ -219,19 +219,19 @@ public sealed class DeveloperToolsState : IGameState
     /// </summary>
     private void DrawCursor(SpriteBatch spriteBatch, int y)
     {
-        _spriteSet.BlitterDraw.DrawGlyphStatic(spriteBatch, _spriteSet.CursorArrowSprite, CursorColumn, y, HeadingPaletteIndex);
+        _textureSet.BlitterDraw.DrawGlyphStatic(spriteBatch, _textureSet.CursorArrowTexture, CursorColumn, y, HeadingPaletteIndex);
     }
 
     /// <summary>The heading: the arcade's LARGE font, centred, in the page's WHITE.</summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y)
     {
-        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingPaletteIndex);
+        _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, text, GetCentredX(text, true), y, HeadingPaletteIndex);
     }
 
     /// <summary>An instruction line under the list: the SMALL font, centred, in the page's WHITE.</summary>
     private void DrawInstruction(SpriteBatch spriteBatch, string text, int y)
     {
-        DrawText(spriteBatch, text, GetCenteredX(text), y, HeadingPaletteIndex);
+        DrawText(spriteBatch, text, GetCentredX(text), y, HeadingPaletteIndex);
     }
 
     /// <summary>
@@ -250,14 +250,14 @@ public sealed class DeveloperToolsState : IGameState
 
     private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int paletteIndex)
     {
-        return _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
+        return _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
     }
 
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
-    private int GetCenteredX(string text, bool isLarge = false)
+    private int GetCentredX(string text, bool isLarge = false)
     {
-        var textWidth = _spriteSet.ArcadeText.MeasureSmallText(text);
-        if (isLarge) textWidth = _spriteSet.ArcadeText.MeasureLargeText(text);
+        var textWidth = _textureSet.ArcadeText.MeasureSmallText(text);
+        if (isLarge) textWidth = _textureSet.ArcadeText.MeasureLargeText(text);
 
         var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
@@ -269,7 +269,7 @@ public sealed class DeveloperToolsState : IGameState
     /// </summary>
     private void RestorePalette()
     {
-        if (_spriteSet.BlitterDraw.GamePalette is not { } palette) return;
+        if (_textureSet.BlitterDraw.GamePalette is not { } palette) return;
 
         foreach (var paletteIndex in OwnedPaletteIndices) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
     }

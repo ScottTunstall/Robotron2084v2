@@ -57,7 +57,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     private readonly HighScorePageHold _highScorePageHold = new();
     private readonly int[] _postedScores;
     private readonly HighScorePrintSequence _highScorePrintSequence = new();
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private bool _rampsStarted;
 
     /// <summary>Creates the table screen for the scores this session just offered.</summary>
@@ -77,7 +77,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         HighScoreTable? highScoreTable = null)
     {
         _playerInputSource = gameServices.PlayerInputSource;
-        _spriteSet = gameServices.SpriteSet;
+        _textureSet = gameServices.TextureSet;
         _highScoreStore = gameServices.HighScoreStore;
         _gameSettings = gameServices.GameSettings;
         _postedScores = [.. postedScores ?? []];
@@ -89,7 +89,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
         // RRTABLE's TABLE starts the page's colour processes before it draws anything
         // (MAKP LOOPP comes first, the other four after the lists are printed).
-        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Start(palette);
+        if (_textureSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Start(palette);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -131,7 +131,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             if (!_rampsStarted)
             {
                 _rampsStarted = true;
-                if (_spriteSet.BlitterDraw.GamePalette is { } livePalette) _highScorePalette.StartRamps(livePalette);
+                if (_textureSet.BlitterDraw.GamePalette is { } livePalette) _highScorePalette.StartRamps(livePalette);
             }
 
             // TAB888's 200 x NAP 3 with NO switch check at all, then TAB777/TAB999 —
@@ -144,7 +144,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             }
         }
 
-        if (_spriteSet.BlitterDraw.GamePalette is { } live) _highScorePalette.Update(live);
+        if (_textureSet.BlitterDraw.GamePalette is { } live) _highScorePalette.Update(live);
     }
 
     /// <summary>
@@ -187,10 +187,10 @@ public sealed class HighScoreTableState : IGameState, IAttractState
                 ScreenTuning.HighScoreAllTimeHighlightPaletteIndex);
 
             var afterRank = DrawRank(spriteBatch, rank, x, y, paletteIndex, false);
-            _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, paletteIndex);
+            _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, paletteIndex);
 
             if (entries[rank - 2].Score != 0)
-                _spriteSet.ArcadeText.DrawSmallTableNumber(
+                _textureSet.ArcadeText.DrawSmallTableNumber(
                     spriteBatch,
                     entries[rank - 2].Score,
                     afterRank + ScreenSize.ToPortPixelsFromArcadePixels(HighScoreTableLayout.AllTimeScoreOffsetColumns *
@@ -227,7 +227,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             if (!HighScoreTableLayout.IsFramePixelLit(column, y)) continue;
 
             var portY = HudLayout.ToPortY(y);
-            _spriteSet.BlitterDraw.DrawSolidRectangle(
+            _textureSet.BlitterDraw.DrawSolidRectangle(
                 spriteBatch,
                 new Rectangle(portX, portY, width, HudLayout.ToPortY(y + 1) - portY),
                 colour);
@@ -245,7 +245,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             if (!HighScoreTableLayout.IsFramePixelLit(x, row)) continue;
 
             var portX = HudLayout.ToPortX(x);
-            _spriteSet.BlitterDraw.DrawSolidRectangle(
+            _textureSet.BlitterDraw.DrawSolidRectangle(
                 spriteBatch,
                 new Rectangle(portX, top, HudLayout.ToPortX(x + 1) - portX, height),
                 colour);
@@ -254,7 +254,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
     private void DrawHeader(SpriteBatch spriteBatch, string text, int row)
     {
-        _spriteSet.ArcadeText.DrawLargeFontText(
+        _textureSet.ArcadeText.DrawLargeFontText(
             spriteBatch,
             text,
             GetColumnX(HighScoreTableLayout.HeaderColumn),
@@ -270,9 +270,9 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     private int DrawRank(SpriteBatch spriteBatch, int rank, int x, int y, int paletteIndex, bool isLarge)
     {
         var text = $"{rank}) ";
-        if (isLarge) return _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, x, y, paletteIndex);
+        if (isLarge) return _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, text, x, y, paletteIndex);
 
-        return _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
+        return _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
     }
 
     /// <summary>
@@ -285,7 +285,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// </summary>
     private void DrawStroke(SpriteBatch spriteBatch, int stroke)
     {
-        var colour = _spriteSet.BlitterDraw.GetPaletteIndexColour(HighScoreTableLayout.GetFrameStrokePaletteIndex(stroke));
+        var colour = _textureSet.BlitterDraw.GetPaletteIndexColour(HighScoreTableLayout.GetFrameStrokePaletteIndex(stroke));
         var (left, top, right, bottom) = HighScoreTableLayout.GetFrameStroke(stroke);
 
         DrawHatchedRow(spriteBatch, colour, left, right, top);
@@ -313,7 +313,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
                 ScreenTuning.HighScoreTodayHighlightPaletteIndex);
 
             var afterRank = DrawRank(spriteBatch, rank, x, y, paletteIndex, true);
-            _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, entries[rank - 1].Initials, afterRank, y, paletteIndex);
+            _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, entries[rank - 1].Initials, afterRank, y, paletteIndex);
 
             // The ROM's fixed offset from the POST-RANK cursor (RRTABLE's
             // `PSHS X` right after the rank message, then `LEAX D,X`): 11 columns
@@ -321,7 +321,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             // exactly what the arcade's rows look like — 3 large glyphs = 21 portX of
             // the 22 portX the offset leaves.
             if (entries[rank - 1].Score != 0)
-                _spriteSet.ArcadeText.DrawLargeTableNumber(
+                _textureSet.ArcadeText.DrawLargeTableNumber(
                     spriteBatch,
                     entries[rank - 1].Score,
                     afterRank + ScreenSize.ToPortPixelsFromArcadePixels(
@@ -341,10 +341,10 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             ScreenTuning.HighScoreAllTimeHighlightPaletteIndex);
 
         var x = GetColumnX(HighScoreTableLayout.TopColumn);
-        x = _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, "(", x, y, paletteIndex);
-        x = _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, _highScoreTable.TopScoreEntry.Name, x, y, paletteIndex);
-        x = _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, ")", x, y, paletteIndex);
-        _spriteSet.ArcadeText.DrawLargeTableNumber(spriteBatch, _highScoreTable.TopScoreEntry.Score,
+        x = _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, "(", x, y, paletteIndex);
+        x = _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, _highScoreTable.TopScoreEntry.Name, x, y, paletteIndex);
+        x = _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, ")", x, y, paletteIndex);
+        _textureSet.ArcadeText.DrawLargeTableNumber(spriteBatch, _highScoreTable.TopScoreEntry.Score,
             x + ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudSmallFontBlankAdvancePixels), y, paletteIndex);
     }
 
@@ -368,9 +368,9 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
     private void Leave(GameStateManager gameStateManager)
     {
-        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Stop(palette);
+        if (_textureSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Stop(palette);
 
-        gameStateManager.TransitionTo(new TitleScreenState(new GameServices(_spriteSet, _highScoreStore,
+        gameStateManager.TransitionTo(new TitleScreenState(new GameServices(_textureSet, _highScoreStore,
             ControlSettings.CreateDefaults(), _playerInputSource, _gameSettings)));
     }
 }

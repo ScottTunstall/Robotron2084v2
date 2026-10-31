@@ -38,28 +38,28 @@ public sealed class StorylineState : IGameState, IAttractState
     private readonly AttractMovie _attractMovie;
     private readonly GameServices _gameServices;
     private readonly GameSession _gameSession;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private readonly PlayfieldWall _playfieldWall;
 
     public StorylineState(GameServices gameServices, Random random)
     {
         _gameServices = gameServices;
-        _spriteSet = gameServices.SpriteSet;
+        _textureSet = gameServices.TextureSet;
         _humanPlayerInputSource = gameServices.PlayerInputSource;
 
-        _playfieldWall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColorCycle());
+        _playfieldWall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColourCycle());
         _gameSession = GameSession.CreateNewGame(_humanPlayerInputSource, 1);
         _attractMovie = new AttractMovie(AttractMovieData.Histo, random);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        _playfieldWall.Draw(spriteBatch, _spriteSet.WallPixelSprite, _spriteSet.BlitterDraw.GetPaletteIndexColour(AttractTuning.TitleWallPaletteIndex));
-        ArcadeHud.DrawScoresAndLives(spriteBatch, _spriteSet, _gameSession, PlayfieldLayout.GetInnerBounds(), false);
+        _playfieldWall.Draw(spriteBatch, _textureSet.WallPixelTexture, _textureSet.BlitterDraw.GetPaletteIndexColour(AttractTuning.TitleWallPaletteIndex));
+        ArcadeHud.DrawScoresAndLives(spriteBatch, _textureSet, _gameSession, PlayfieldLayout.GetInnerBounds(), false);
 
-        ArcadeHud.DrawCenteredLargeText(
+        ArcadeHud.DrawCentredLargeText(
             spriteBatch,
-            _spriteSet,
+            _textureSet,
             TitleText,
             HudLayout.ToPortY(AttractTuning.StoryTitleRow),
             HudLayout.HudScorePaletteIndexCurrent);
@@ -71,10 +71,10 @@ public sealed class StorylineState : IGameState, IAttractState
         foreach (var cell in _attractMovie.AttractPageMachine.TextCells)
         {
             var index = ArcadeText.GetGlyphIndex(cell.Character);
-            if (index >= 0 && index < _spriteSet.FontLarge.Length)
-                _spriteSet.BlitterDraw.DrawGlyphPaletteIndex(
+            if (index >= 0 && index < _textureSet.FontLargeTextures.Length)
+                _textureSet.BlitterDraw.DrawGlyphPaletteIndex(
                     spriteBatch,
-                    _spriteSet.FontLarge,
+                    _textureSet.FontLargeTextures,
                     index,
                     HudLayout.ToPortX(cell.X),
                     HudLayout.ToPortY(cell.Y),
@@ -82,7 +82,7 @@ public sealed class StorylineState : IGameState, IAttractState
         }
 
         if (_attractMovie.AttractPageMachine.Message is { } message)
-            _spriteSet.ArcadeText.DrawSmallFontText(
+            _textureSet.ArcadeText.DrawSmallFontText(
                 spriteBatch,
                 message.Text,
                 HudLayout.ToPortX(message.X),
@@ -107,8 +107,8 @@ public sealed class StorylineState : IGameState, IAttractState
         // times so a later scene can be reached without waiting out the text
         // crawl. The clock itself is untouched — this is the same accumulator,
         // just stepped more often.
-        if (DevKeys.AttractFastForward)
-            for (var i = 1; i < DevKeys.AttractFastForwardMultiplier; i++)
+        if (DeveloperKeys.AttractFastForward)
+            for (var i = 1; i < DeveloperKeys.AttractFastForwardMultiplier; i++)
                 _attractMovie.Update(gameTime);
 
         foreach (var exploded in _attractMovie.AttractObjectMachine.DrainExplosions())
@@ -116,18 +116,18 @@ public sealed class StorylineState : IGameState, IAttractState
             // EXPP: the explosion takes the sprite the object was showing and the
             // direction of a pure HORIZONTAL laser ($FF00), which the Gospel's
             // dispatch turns into the ROW-splitting fan.
-            var animationFrame =
-                MovieAnimationFrames.Resolve(_spriteSet, exploded.Animation, exploded.AnimationFrameIndex);
-            if (animationFrame is null) continue;
+            var animationFrameTexture =
+                MovieAnimationFrames.Resolve(_textureSet, exploded.Animation, exploded.AnimationFrameIndex);
+            if (animationFrameTexture is null) continue;
 
             _explosions.Add(StripEffect.CreateExplosion(
                 new MovieExplosionSource(
-                    animationFrame,
+                    animationFrameTexture,
                     new Rectangle(
                         HudLayout.ToPortX(exploded.Column * 2),
                         HudLayout.ToPortY(exploded.Row),
-                        ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Width),
-                        ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Height))),
+                        ScreenSize.ToPortPixelsFromArcadePixels(animationFrameTexture.Width),
+                        ScreenSize.ToPortPixelsFromArcadePixels(animationFrameTexture.Height))),
                 Direction8.Left,
                 GetClip()));
         }
@@ -155,24 +155,24 @@ public sealed class StorylineState : IGameState, IAttractState
     {
         var x = HudLayout.ToPortX(movieObject.GetArcadeX());
         var y = HudLayout.ToPortY(movieObject.GetArcadeY());
-        var bolt = new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_spriteSet.LaserBarSprite.Width),
-            ScreenSize.ToPortPixelsFromArcadePixels(_spriteSet.LaserBarSprite.Height));
-        _spriteSet.BlitterDraw.DrawSpriteSolid(spriteBatch, _spriteSet.LaserBarSprite, bolt,
-            _spriteSet.BlitterDraw.GetPaletteIndexColour(PlayerTuning.LaserPaletteIndex));
+        var bolt = new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.LaserBarTexture.Width),
+            ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.LaserBarTexture.Height));
+        _textureSet.BlitterDraw.DrawSpriteSolid(spriteBatch, _textureSet.LaserBarTexture, bolt,
+            _textureSet.BlitterDraw.GetPaletteIndexColour(PlayerTuning.LaserPaletteIndex));
     }
 
     /// <summary>
     ///     ROM <c>OPON</c>: the box in the first colour, the object's SHAPE in the second, and — for the
     ///     brain's box — the brain's own sprite over the top (the ROM's second blit, <c>JMP $D018</c>, notes §72.1).
     /// </summary>
-    private void DrawMonoBox(SpriteBatch spriteBatch, MovieObject movieObject, Texture2D animationFrame, Rectangle bounds)
+    private void DrawMonoBox(SpriteBatch spriteBatch, MovieObject movieObject, Texture2D animationFrameTexture, Rectangle bounds)
     {
         if (movieObject.MonoBoxPaletteIndex != 0)
-            _spriteSet.BlitterDraw.DrawSolidRectangle(spriteBatch, bounds, _spriteSet.BlitterDraw.GetPaletteIndexColour(movieObject.MonoBoxPaletteIndex));
+            _textureSet.BlitterDraw.DrawSolidRectangle(spriteBatch, bounds, _textureSet.BlitterDraw.GetPaletteIndexColour(movieObject.MonoBoxPaletteIndex));
 
-        _spriteSet.BlitterDraw.DrawSpriteSolid(spriteBatch, animationFrame, bounds,
-            _spriteSet.BlitterDraw.GetPaletteIndexColour(movieObject.MonoSilhouettePaletteIndex));
-        if (movieObject.ShowsMonoBrain) _spriteSet.BlitterDraw.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
+        _textureSet.BlitterDraw.DrawSpriteSolid(spriteBatch, animationFrameTexture, bounds,
+            _textureSet.BlitterDraw.GetPaletteIndexColour(movieObject.MonoSilhouettePaletteIndex));
+        if (movieObject.BrainVisible) _textureSet.BlitterDraw.DrawSprite(spriteBatch, animationFrameTexture, bounds, Color.White);
     }
 
     private void DrawObjects(SpriteBatch spriteBatch)
@@ -189,22 +189,22 @@ public sealed class StorylineState : IGameState, IAttractState
 
             if (movieObject.Descriptor is not { } descriptor) continue;
 
-            var animationFrame = MovieAnimationFrames.Resolve(_spriteSet, descriptor.Animation, movieObject.AnimationFrameIndex);
-            if (animationFrame is null) continue;
+            var animationFrameTexture = MovieAnimationFrames.Resolve(_textureSet, descriptor.Animation, movieObject.AnimationFrameIndex);
+            if (animationFrameTexture is null) continue;
 
             var bounds = new Rectangle(
                 HudLayout.ToPortX(movieObject.GetArcadeX()),
                 HudLayout.ToPortY(movieObject.GetArcadeY()),
-                ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Width),
-                ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Height));
+                ScreenSize.ToPortPixelsFromArcadePixels(animationFrameTexture.Width),
+                ScreenSize.ToPortPixelsFromArcadePixels(animationFrameTexture.Height));
 
             if (movieObject.IsMonoActive)
             {
-                DrawMonoBox(spriteBatch, movieObject, animationFrame, bounds);
+                DrawMonoBox(spriteBatch, movieObject, animationFrameTexture, bounds);
                 continue;
             }
 
-            _spriteSet.BlitterDraw.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
+            _textureSet.BlitterDraw.DrawSprite(spriteBatch, animationFrameTexture, bounds, Color.White);
         }
     }
 
@@ -215,12 +215,12 @@ public sealed class StorylineState : IGameState, IAttractState
     /// </summary>
     private sealed class MovieExplosionSource : IExplodable
     {
-        private readonly Texture2D _animationFrame;
+        private readonly Texture2D _animationFrameTexture;
         private readonly Rectangle _bounds;
 
-        public MovieExplosionSource(Texture2D animationFrame, Rectangle bounds)
+        public MovieExplosionSource(Texture2D animationFrameTexture, Rectangle bounds)
         {
-            _animationFrame = animationFrame;
+            _animationFrameTexture = animationFrameTexture;
             _bounds = bounds;
         }
 
@@ -237,14 +237,14 @@ public sealed class StorylineState : IGameState, IAttractState
             return _bounds;
         }
 
-        public Texture2D GetCurrentAnimationFrame()
+        public Texture2D GetCurrentAnimationFrameTexture()
         {
-            return _animationFrame;
+            return _animationFrameTexture;
         }
 
-        public Texture2D GetExplosionAnimationFrame()
+        public Texture2D GetExplosionAnimationFrameTexture()
         {
-            return _animationFrame;
+            return _animationFrameTexture;
         }
 
         public Rectangle GetExplosionBounds()

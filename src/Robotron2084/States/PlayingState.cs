@@ -43,7 +43,7 @@ public sealed class PlayingState : IGameState
     private readonly PauseToggle _pauseToggle = new();
     private readonly Random _random = new();
     private readonly GameSession _gameSession;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private PlayField _playField;
     private int _playerOutMessageTicks;
 
@@ -54,7 +54,7 @@ public sealed class PlayingState : IGameState
     private int _turnMessageTicks; // "PLAYER n" at a 2-player turn start (ROM NAP 115)
 
     /// <summary>Makes the state for the wave the current player is about to play.</summary>
-    /// <param name="spriteSet">The sprite set that everything is drawn with.</param>
+    /// <param name="textureSet">The texture set that everything is drawn with.</param>
     /// <param name="highScoreStore">The high score table, which is offered the scores when the game ends.</param>
     /// <param name="gameSession">The game in progress: its players, and whose turn it is.</param>
     /// <param name="isStartOfTurn">
@@ -65,10 +65,10 @@ public sealed class PlayingState : IGameState
     ///     Original source: <c>RRG23.ASM</c> <c>PLS000</c>, <c>LDA PCFLG / BNE PLS00C</c> ("NO DEATH.. NO MESSIE POOH");
     ///     <c>PCFLG</c> is set when a game starts and is left set when the player dies. Disassembly: <c>$27E7</c>.
     /// </remarks>
-    public PlayingState(SpriteSet spriteSet, HighScoreStore highScoreStore, GameSession gameSession,
+    public PlayingState(TextureSet textureSet, HighScoreStore highScoreStore, GameSession gameSession,
         bool isStartOfTurn = false)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _highScoreStore = highScoreStore;
         _gameSession = gameSession;
         _gameSettings = gameSession.GameSettings;
@@ -90,15 +90,15 @@ public sealed class PlayingState : IGameState
     ///     wave's tuning.
     /// </param>
     /// <param name="mode">How many people are playing, and whether two of them take turns.</param>
-    /// <param name="spriteSet">The sprite set that everything is drawn with.</param>
+    /// <param name="textureSet">The texture set that everything is drawn with.</param>
     /// <param name="highScoreStore">The high score table, which is offered the scores when the game ends.</param>
     public static PlayingState CreateNewGame(ControlSettings controlSettings, GameSettings gameSettings, GameMode mode,
-        SpriteSet spriteSet, HighScoreStore highScoreStore)
+        TextureSet textureSet, HighScoreStore highScoreStore)
     {
         var playerOneBoundPlayerInputSource = new BoundPlayerInputSource(controlSettings, 0);
         var playerTwoBoundPlayerInputSource = new BoundPlayerInputSource(controlSettings, 1);
         Sound.Play(StartSoundFor(mode));
-        return new PlayingState(spriteSet, highScoreStore,
+        return new PlayingState(textureSet, highScoreStore,
             GameSession.CreateNewGame(mode, playerOneBoundPlayerInputSource, playerTwoBoundPlayerInputSource, controlSettings, gameSettings), true);
     }
 
@@ -110,15 +110,15 @@ public sealed class PlayingState : IGameState
         else
             _playField.Draw(spriteBatch);
 
-        ArcadeHud.DrawScoresAndLives(spriteBatch, _spriteSet, _gameSession, PlayfieldLayout.GetInnerBounds());
-        ArcadeHud.DrawWaveMessage(spriteBatch, _spriteSet, _gameSession.GetCurrent().Wave);
+        ArcadeHud.DrawScoresAndLives(spriteBatch, _textureSet, _gameSession, PlayfieldLayout.GetInnerBounds());
+        ArcadeHud.DrawWaveMessage(spriteBatch, _textureSet, _gameSession.GetCurrent().Wave);
 
         if (_pauseToggle.IsPaused)
             // Port-only banner, in the wave's own message colour so it reads as part of
             // the cabinet's vocabulary rather than a debug overlay.
             ArcadeHud.DrawMessageText(
                 spriteBatch,
-                _spriteSet,
+                _textureSet,
                 "PAUSED",
                 HudLayout.PausedMessageColumn,
                 HudLayout.PausedMessageRow,
@@ -128,9 +128,9 @@ public sealed class PlayingState : IGameState
         {
             // ROM string 75: "PLAYER n" at $3F79 then "GAME OVER" at $3E86.
             var messagePaletteIndex = WavePaletteTables.GetElectrodePaletteIndex(_gameSession.GetCurrent().Wave);
-            ArcadeHud.DrawMessageText(spriteBatch, _spriteSet, $"PLAYER {_playerOutNumber}",
+            ArcadeHud.DrawMessageText(spriteBatch, _textureSet, $"PLAYER {_playerOutNumber}",
                 HudLayout.PlayerTurnMessageColumn, HudLayout.PlayerGameOverMessageRow, messagePaletteIndex);
-            ArcadeHud.DrawMessageText(spriteBatch, _spriteSet, "GAME OVER", HudLayout.GameOverMessageColumn,
+            ArcadeHud.DrawMessageText(spriteBatch, _textureSet, "GAME OVER", HudLayout.GameOverMessageColumn,
                 HudLayout.GameOverMessageRow, messagePaletteIndex);
         }
         else if (IsAnnouncingTurn())
@@ -139,7 +139,7 @@ public sealed class PlayingState : IGameState
             // (PLS0D: LDA PSTCOL / STA TEXCOL), for NAP 115.
             ArcadeHud.DrawMessageText(
                 spriteBatch,
-                _spriteSet,
+                _textureSet,
                 $"PLAYER {_gameSession.GetCurrent().Number}",
                 HudLayout.PlayerTurnMessageColumn,
                 HudLayout.PlayerTurnMessageRow,
@@ -244,17 +244,17 @@ public sealed class PlayingState : IGameState
 
         var waveParameters = GetWaveToPlay(playerSlot);
 
-        WallColorCycle wallColorCycle = new();
+        WallColourCycle wallColourCycle = new();
         return new PlayField(
-            _spriteSet,
+            _textureSet,
             waveParameters,
             playerSlot.PlayerInputSource,
             PlayfieldLayout.GetInnerBounds(),
-            wallColorCycle,
+            wallColourCycle,
             _random,
             playerSlot.Lives,
             playerSlot.Score,
-            _spriteSet.BlitterDraw.GamePalette,
+            _textureSet.BlitterDraw.GamePalette,
             contactTest: new PixelContactTest(new SpriteCollision()),
             extraLifeEveryPoints: _gameSettings.GetExtraLifeEveryPoints(),
             tankShellBugEnabled: _gameSettings.TankShellBugEnabled,
@@ -300,7 +300,7 @@ public sealed class PlayingState : IGameState
             // The score that ends the game is the CURRENT player's — but a 2-player
             // game offers both scores to the high-score table (RRTESTC checks
             // ZP1SCR and ZP2SCR), so the session hands over all of them.
-            gameStateManager.TransitionTo(GameOverState.CreateFromSession(_gameSession.GetCurrent().PlayerInputSource, _spriteSet, _highScoreStore,
+            gameStateManager.TransitionTo(GameOverState.CreateFromSession(_gameSession.GetCurrent().PlayerInputSource, _textureSet, _highScoreStore,
                 _gameSession));
             return;
         }
@@ -333,7 +333,7 @@ public sealed class PlayingState : IGameState
         playerSlot.Wave = playerSlot.Wave % WaveCounterWrap + 1;
         playerSlot.SavedWaveParameters = null;
 
-        gameStateManager.TransitionTo(new WaveClearState(_spriteSet, _highScoreStore, _gameSession));
+        gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession));
     }
 
     /// <summary>

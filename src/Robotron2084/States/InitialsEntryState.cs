@@ -27,7 +27,7 @@ public sealed class InitialsEntryState : IGameState
     private readonly IPlayerInputSource _playerInputSource;
     private readonly FinalScore _score;
     private readonly GameServices _gameServices;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     /// <summary>Builds the screen for one qualifying score.</summary>
     /// <param name="gameServices">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
@@ -38,7 +38,7 @@ public sealed class InitialsEntryState : IGameState
         _gameServices = gameServices;
         _scoreEntryCeremony = scoreEntryCeremony;
         _score = score;
-        _spriteSet = gameServices.SpriteSet;
+        _textureSet = gameServices.TextureSet;
         _playerInputSource = gameServices.PlayerInputSource;
         RestorePalette();
     }
@@ -68,12 +68,12 @@ public sealed class InitialsEntryState : IGameState
     {
         if (cell == _initialsEntryModel.LetterIndex && _initialsEntryModel.IsPreviewRub())
         {
-            _spriteSet.ArcadeText.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(),
+            _textureSet.ArcadeText.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(),
                 InitialsEntryLayout.InkPaletteIndex);
             return;
         }
 
-        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, _initialsEntryModel.GetInitials()[cell].ToString(), x,
+        _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, _initialsEntryModel.GetInitials()[cell].ToString(), x,
             InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkPaletteIndex);
     }
 
@@ -93,18 +93,18 @@ public sealed class InitialsEntryState : IGameState
 
     private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row)
     {
-        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
+        _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
             HudLayout.ToPortY(row), InitialsEntryLayout.InkPaletteIndex);
     }
 
     /// <summary>G0SUB's "frob" marker: a two-pixel dash one row of the arcade below its cell.</summary>
     private void DrawMarker(SpriteBatch spriteBatch, int x)
     {
-        _spriteSet.BlitterDraw.DrawSolidRectangle(
+        _textureSet.BlitterDraw.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(x, InitialsEntryLayout.GetMarkerY(), InitialsEntryLayout.GetMarkerWidthPixels(),
                 InitialsEntryLayout.GetMarkerHeightPixels()),
-            _spriteSet.BlitterDraw.GetPaletteIndexColour(InitialsEntryLayout.InstructionPaletteIndex));
+            _textureSet.BlitterDraw.GetPaletteIndexColour(InitialsEntryLayout.InstructionPaletteIndex));
     }
 
     /// <summary>CONGP's three large-font lines and TELSUB's two small-font instructions.</summary>
@@ -122,7 +122,7 @@ public sealed class InitialsEntryState : IGameState
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int column, int row)
     {
-        _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
+        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
             HudLayout.ToPortY(row), InitialsEntryLayout.InstructionPaletteIndex);
     }
 
@@ -133,7 +133,7 @@ public sealed class InitialsEntryState : IGameState
     /// </summary>
     private void RestorePalette()
     {
-        if (_spriteSet.BlitterDraw.GamePalette is not { } palette) return;
+        if (_textureSet.BlitterDraw.GamePalette is not { } palette) return;
 
         palette.SetPaletteIndexValue(InitialsEntryLayout.InkPaletteIndex, GamePalette.DefaultPaletteValues[InitialsEntryLayout.InkPaletteIndex]);
         palette.SetPaletteIndexValue(InitialsEntryLayout.InstructionPaletteIndex,
