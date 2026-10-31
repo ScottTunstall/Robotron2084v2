@@ -10,11 +10,11 @@ namespace Robotron2084.Tests;
 /// <summary>
 ///     The player's DEATH — RRX7.ASM's `PDTHV` (notes §66), which replaced the port's
 ///     wall-clock 2-second placeholder:
-///     1. a solid-colour FLASH loop — `$99` (slot 9) for 2 frames, then a random
-///     PDCTAB colour (`$00,$11,$33,$77` → slots 0/1/3/7) for 6 frames, ten times
+///     1. a solid-colour FLASH loop — `$99` (palette index 9) for 2 frames, then a random
+///     PDCTAB colour (`$00,$11,$33,$77` → palette indices 0/1/3/7) for 6 frames, ten times
 ///     (`LDA #10`), i.e. 80 fiftieths of a second;
-///     2. the slot-12 FADE — the DECAY process is stopped, the player keeps being
-///     drawn solid in slot 12, and `FF F6 AD A4 5B 52 09 00` is written into slot
+///     2. the palette index 12 FADE — the DECAY process is stopped, the player keeps being
+///     drawn solid in palette index 12, and `FF F6 AD A4 5B 52 09 00` is written into palette index
 ///     12 a byte per 4 frames; the trailing `$00` ends the death.
 ///     On the clock-unit clock that is 129.6 port ticks: the flash runs to tick 95,
 ///     the eight fade writes land on ticks 96/101/106/111/116/120/125/130, and the
@@ -43,7 +43,7 @@ public sealed class PlayerDeathTests
     }
 
     [Fact]
-    public void TheFlashStartsInSlotNine_AndThenUsesOnlyPdctabColours()
+    public void TheFlashStartsInPaletteIndexNine_AndThenUsesOnlyPdctabColours()
     {
         var (field, _) = CreateField();
         var player = field.Player;
@@ -52,21 +52,21 @@ public sealed class PlayerDeathTests
         // PDTH0: `LDA #$99 / JSR OPON` — the first thing on screen is the player
         // as a WHITE silhouette.
         Assert.Equal(EntityLifeState.Dying, player.LifeState);
-        Assert.Equal(PlayerTuning.PlayerDeathWhiteSlot, player.GetDeathSolidSlot());
+        Assert.Equal(PlayerTuning.PlayerDeathWhitePaletteIndex, player.GetDeathSolidPaletteIndex());
 
-        // The flash is 80 fiftieths of a second (48 clock units each iteration): every slot seen
-        // through it is either $99's slot 9 or a PDCTAB entry. Tick to 95 — the
+        // The flash is 80 fiftieths of a second (48 clock units each iteration): every palette index seen
+        // through it is either $99's palette index 9 or a PDCTAB entry. Tick to 95 — the
         // 96th tick is where the fade takes over.
-        int[] allowed = [.. PlayerTuning.PlayerDeathFlashSlots, PlayerTuning.PlayerDeathWhiteSlot];
+        int[] allowed = [.. PlayerTuning.PlayerDeathFlashPaletteIndices, PlayerTuning.PlayerDeathWhitePaletteIndex];
         var sawWhite = false;
         var sawColour = false;
         for (var tick = 0; tick < 95; tick++)
         {
             field.Update(Tick);
-            var slot = player.GetDeathSolidSlot();
-            Assert.Contains(slot, allowed);
-            sawWhite |= slot == PlayerTuning.PlayerDeathWhiteSlot;
-            sawColour |= slot != PlayerTuning.PlayerDeathWhiteSlot;
+            var paletteIndex = player.GetDeathSolidPaletteIndex();
+            Assert.Contains(paletteIndex, allowed);
+            sawWhite |= paletteIndex == PlayerTuning.PlayerDeathWhitePaletteIndex;
+            sawColour |= paletteIndex != PlayerTuning.PlayerDeathWhitePaletteIndex;
         }
 
         Assert.True(sawWhite && sawColour, "the flash should alternate white and a PDCTAB colour");
@@ -74,7 +74,7 @@ public sealed class PlayerDeathTests
     }
 
     [Fact]
-    public void TheFadeWritesTheArcadeTableIntoSlotTwelve_AndStopsTheDecayProcess()
+    public void TheFadeWritesTheArcadeTableIntoPaletteIndexTwelve_AndStopsTheDecayProcess()
     {
         var (field, palette) = CreateField();
         var player = field.Player;
@@ -84,9 +84,9 @@ public sealed class PlayerDeathTests
         for (var tick = 0; tick < 96; tick++) field.Update(Tick);
 
         Assert.Equal(EntityLifeState.Dying, player.LifeState);
-        Assert.Equal(PlayerTuning.PlayerDeathFadeSlot, player.GetDeathSolidSlot());
-        Assert.True(palette.IsSlotSuspended(12), "the ROM kills the DECAY process off before the fade");
-        Assert.Equal(PlayerTuning.PlayerDeathFadeValues[0], palette.GetSlotValue(12));
+        Assert.Equal(PlayerTuning.PlayerDeathFadePaletteIndex, player.GetDeathSolidPaletteIndex());
+        Assert.True(palette.IsPaletteIndexSuspended(12), "the ROM kills the DECAY process off before the fade");
+        Assert.Equal(PlayerTuning.PlayerDeathFadeValues[0], palette.GetPaletteIndexValue(12));
 
         // The remaining writes are 4 fiftieths of a second apart, which the clock-unit clock puts
         // on ticks 101/106/111/116/120/125/130 — gaps of 5,5,5,5,4,5,5.
@@ -96,11 +96,11 @@ public sealed class PlayerDeathTests
             for (var tick = 0; tick < gaps[i]; tick++) field.Update(Tick);
 
             // The last write is the trailing $00 — the death ends with it.
-            Assert.Equal(PlayerTuning.PlayerDeathFadeValues[i + 1], palette.GetSlotValue(12));
+            Assert.Equal(PlayerTuning.PlayerDeathFadeValues[i + 1], palette.GetPaletteIndexValue(12));
         }
 
         Assert.Equal(EntityLifeState.Dead, player.LifeState);
-        Assert.False(palette.IsSlotSuspended(12), "the colour processes restart when the fade is done");
+        Assert.False(palette.IsPaletteIndexSuspended(12), "the colour processes restart when the fade is done");
         Assert.Equal(2, player.Lives); // one life spent
     }
 

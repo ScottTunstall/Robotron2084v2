@@ -10,7 +10,7 @@ namespace Robotron2084.Tests;
 /// <summary>
 ///     The spheroid's and the quark's DEATH BURST (notes §64) — the ROM's
 ///     `CIRKP`/`CIRKV`, which is NOT the strip explosion: the enemy's own animation frames
-///     play as a solid silhouette in a palette slot, then its "1000" sprite is
+///     play as a solid silhouette in a palette index, then its "1000" sprite is
 ///     displayed down-right of where it died.
 /// </summary>
 public sealed class ScoreBurstTests
@@ -104,18 +104,18 @@ public sealed class ScoreBurstTests
     }
 
     [Fact]
-    public void TheArcadeColours_AreSlotsTenFifteenAndThirteen()
+    public void TheArcadeColours_ArePaletteIndicesTenFifteenAndThirteen()
     {
-        // `LDD #$FFAA`: $AA = slot 10 (the current player's score slot) for the
-        // dying silhouette and $FF = slot 15 for the points value; the quark's
-        // `LDD #$DDDD` uses slot 13 for both. All three cycle with the palette.
+        // `LDD #$FFAA`: $AA = palette index 10 (the current player's score palette index) for the
+        // dying silhouette and $FF = palette index 15 for the points value; the quark's
+        // `LDD #$DDDD` uses palette index 13 for both. All three cycle with the palette.
         var spheroid = ScoreBurst.CreateForSpheroid(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
-        Assert.Equal(10, spheroid.BurstSlot);
-        Assert.Equal(15, spheroid.PointsSlot);
+        Assert.Equal(10, spheroid.BurstPaletteIndex);
+        Assert.Equal(15, spheroid.PointsPaletteIndex);
 
         var quark = ScoreBurst.CreateForQuark(TestSprites.Shared, new Rectangle(0, 0, 16, 15));
-        Assert.Equal(13, quark.BurstSlot);
-        Assert.Equal(13, quark.PointsSlot);
+        Assert.Equal(13, quark.BurstPaletteIndex);
+        Assert.Equal(13, quark.PointsPaletteIndex);
     }
 
     [Fact]
