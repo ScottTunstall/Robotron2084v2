@@ -18,6 +18,9 @@ namespace Robotron2084.Audio;
 ///     </list>
 ///     Each field is named after the original label's own comment ("ROBOT HIT" is <see cref="RobotHit" />).
 ///     The original's circle and square are the port's spheroid and quark (<c>docs/terminology-ledger.md</c>).
+///     The names are the original's own words on purpose, so a table can be found by the label in the listing:
+///     <see cref="CircleKill" /> is a spheroid dying, <see cref="SquareKill" /> a quark, <see cref="PostKill" /> an
+///     electrode, and <see cref="KillAHuman" /> and <see cref="SaveAHuman" /> a family member (see the glossary).
 ///     One table is not here because nothing can ask for it: <c>HLKSND</c> ("HULK KILL", R5 <c>$0021</c>), which no
 ///     routine in the original calls. <c>CNSND</c> ("COIN") is <see cref="Coin" />: eight tables, one of which the
 ///     original picks at random when a coin goes in.
@@ -121,7 +124,7 @@ public static class SoundTables
     public static readonly SoundSequence Programming = new(0xD0, 0x1AEA, [new SoundEntry(2, 3, 0x12)]);
 
     /// <summary>
-    ///     <c>RPSND</c> "REPLAY": the score earns a spare man (<c>RRS22.ASM</c>); R5 <c>$D0C9</c>, asked for at
+    ///     <c>RPSND</c> "REPLAY": the score earns a spare life (<c>RRS22.ASM</c>); R5 <c>$D0C9</c>, asked for at
     ///     <c>$DBF9</c>.
     /// </summary>
     public static readonly SoundSequence Replay = new(0xEF, 0xD0C9, [new SoundEntry(1, 32, 0x1E)]);
