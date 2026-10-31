@@ -89,31 +89,31 @@ public sealed class PlayFieldCollisionTests
 
         // PSTCOL — the second of RRG23's four per-wave tables (`LDA 10,U / STA
         // PSTCOL`): $FF,$EE,$BB,$DD,$EE,$FF,$11,$BB,$DD,$AA. These are PALETTE
-        // SLOTS in the arcade's doubled-nibble form ($XX = two pixels of slot X
+        // SLOTS in the arcade's doubled-nibble form ($XX = two pixels of palette index X
         // — the video is 4bpp, 2 pixels per byte, and a SOLID fill needs both
         // nibbles equal), so only the low nibble matters. The old reading took
         // them as colour BYTES, which made wave 1 white and wave 3 dark green;
         // the author confirmed the index reading on 2026-09-16 (notes §47).
-        byte[] expectedSlot = [0xFF, 0xEE, 0xBB, 0xDD, 0xEE, 0xFF, 0x11, 0xBB, 0xDD, 0xAA];
-        for (var wave = 1; wave <= expectedSlot.Length; wave++)
+        byte[] expectedPaletteIndex = [0xFF, 0xEE, 0xBB, 0xDD, 0xEE, 0xFF, 0x11, 0xBB, 0xDD, 0xAA];
+        for (var wave = 1; wave <= expectedPaletteIndex.Length; wave++)
         {
-            Assert.Equal(expectedSlot[wave - 1], WavePaletteTables.ElectrodeSlotByWaveMod10[wave - 1]);
-            Assert.Equal(expectedSlot[wave - 1] & 0x0F, WavePaletteTables.GetElectrodeSlot(wave));
+            Assert.Equal(expectedPaletteIndex[wave - 1], WavePaletteTables.ElectrodePaletteIndexByWaveMod10[wave - 1]);
+            Assert.Equal(expectedPaletteIndex[wave - 1] & 0x0F, WavePaletteTables.GetElectrodePaletteIndex(wave));
         }
 
-        Assert.Equal(0x0F, WavePaletteTables.GetElectrodeSlot(11)); // wraps every 10
-        // Wave 1 names slot 15 and wave 3 names slot 11 — both CYCLING slots
+        Assert.Equal(0x0F, WavePaletteTables.GetElectrodePaletteIndex(11)); // wraps every 10
+        // Wave 1 names palette index 15 and wave 3 names palette index 11 — both CYCLING palette indices
         // (10-15), so those waves' posts cycle, like the hardware palette.
-        Assert.Equal(15, WavePaletteTables.GetElectrodeSlot(1));
-        Assert.Equal(11, WavePaletteTables.GetElectrodeSlot(3));
-        Assert.Equal(1, WavePaletteTables.GetElectrodeSlot(7)); // slot 1 = RED in the ROM's own CRTAB
-        Assert.Equal(new Electrode(TestSprites.Shared, new IntVector2(0, 0)).GetTintSlot(),
-            WavePaletteTables.GetElectrodeSlot(1));
-        Assert.True(WavePaletteTables.GetElectrodeSlot(1) >= 10); // 10-15 are the cycling slots
+        Assert.Equal(15, WavePaletteTables.GetElectrodePaletteIndex(1));
+        Assert.Equal(11, WavePaletteTables.GetElectrodePaletteIndex(3));
+        Assert.Equal(1, WavePaletteTables.GetElectrodePaletteIndex(7)); // palette index 1 = RED in the ROM's own CRTAB
+        Assert.Equal(new Electrode(TestSprites.Shared, new IntVector2(0, 0)).GetTintPaletteIndex(),
+            WavePaletteTables.GetElectrodePaletteIndex(1));
+        Assert.True(WavePaletteTables.GetElectrodePaletteIndex(1) >= 10); // 10-15 are the cycling palette indices
     }
 
     [Fact]
-    public void WallAndLaserCollideSlots_FollowTheArcadeWaveTables()
+    public void WallAndLaserCollidePaletteIndices_FollowTheArcadeWaveTables()
     {
         // WALCOL — the FIRST of RRG23's four per-wave tables (`LDA ,U / STA
         // WALCOL`), and LASCOL — the FOURTH (`LDA 30,U / STA LASCOL`, which
@@ -124,38 +124,38 @@ public sealed class PlayFieldCollisionTests
 
         for (var wave = 1; wave <= wall.Length; wave++)
         {
-            Assert.Equal(wall[wave - 1], WavePaletteTables.WallSlotByWaveMod10[wave - 1]);
-            Assert.Equal(wall[wave - 1] & 0x0F, WavePaletteTables.GetWallSlot(wave));
-            Assert.Equal(laser[wave - 1], WavePaletteTables.LaserWallSlotByWaveMod10[wave - 1]);
-            Assert.Equal(laser[wave - 1] & 0x0F, WavePaletteTables.GetLaserWallSlot(wave));
+            Assert.Equal(wall[wave - 1], WavePaletteTables.WallPaletteIndexByWaveMod10[wave - 1]);
+            Assert.Equal(wall[wave - 1] & 0x0F, WavePaletteTables.GetWallPaletteIndex(wave));
+            Assert.Equal(laser[wave - 1], WavePaletteTables.LaserWallPaletteIndexByWaveMod10[wave - 1]);
+            Assert.Equal(laser[wave - 1] & 0x0F, WavePaletteTables.GetLaserWallPaletteIndex(wave));
         }
 
-        // The wall is NOT the port's old hard-coded slot 11, and it is different
+        // The wall is NOT the port's old hard-coded palette index 11, and it is different
         // on (nearly) every wave — that colour change IS the arcade's look.
-        Assert.NotEqual(11, WavePaletteTables.GetWallSlot(1));
-        Assert.Equal(2, WavePaletteTables.GetWallSlot(1)); // $22 = slot 2 = ORANGE
-        Assert.Equal(1, WavePaletteTables.GetWallSlot(3)); // $11 = slot 1 = RED
-        Assert.Equal(14, WavePaletteTables.GetWallSlot(4)); // $EE = a CYCLING slot
-        Assert.Equal(12, WavePaletteTables.GetWallSlot(10)); // $CC = a CYCLING slot
-        Assert.True(WavePaletteTables.GetWallSlot(4) >= 10 && WavePaletteTables.GetWallSlot(10) >= 10);
+        Assert.NotEqual(11, WavePaletteTables.GetWallPaletteIndex(1));
+        Assert.Equal(2, WavePaletteTables.GetWallPaletteIndex(1)); // $22 = palette index 2 = ORANGE
+        Assert.Equal(1, WavePaletteTables.GetWallPaletteIndex(3)); // $11 = palette index 1 = RED
+        Assert.Equal(14, WavePaletteTables.GetWallPaletteIndex(4)); // $EE = a CYCLING palette index
+        Assert.Equal(12, WavePaletteTables.GetWallPaletteIndex(10)); // $CC = a CYCLING palette index
+        Assert.True(WavePaletteTables.GetWallPaletteIndex(4) >= 10 && WavePaletteTables.GetWallPaletteIndex(10) >= 10);
 
-        // Faithful but surprising: wave 9's border is BLACK (slot 0) and wave 2's
+        // Faithful but surprising: wave 9's border is BLACK (palette index 0) and wave 2's
         // laser-wall flare is black too — the ROM's own tables mean that.
-        Assert.Equal(0, WavePaletteTables.GetWallSlot(9));
-        Assert.Equal(0, WavePaletteTables.GetLaserWallSlot(2));
+        Assert.Equal(0, WavePaletteTables.GetWallPaletteIndex(9));
+        Assert.Equal(0, WavePaletteTables.GetLaserWallPaletteIndex(2));
 
-        // The laser-wall flare is NOT the laser's own slot: wave 1 white (slot 9),
-        // wave 4 green (slot 6), wave 8 red (slot 1), wave 9 a cycling slot.
-        Assert.Equal(9, WavePaletteTables.GetLaserWallSlot(1));
-        Assert.Equal(6, WavePaletteTables.GetLaserWallSlot(4));
-        Assert.Equal(1, WavePaletteTables.GetLaserWallSlot(8));
-        Assert.Equal(10, WavePaletteTables.GetLaserWallSlot(9));
+        // The laser-wall flare is NOT the laser's own palette index: wave 1 white (palette index 9),
+        // wave 4 green (palette index 6), wave 8 red (palette index 1), wave 9 a cycling palette index.
+        Assert.Equal(9, WavePaletteTables.GetLaserWallPaletteIndex(1));
+        Assert.Equal(6, WavePaletteTables.GetLaserWallPaletteIndex(4));
+        Assert.Equal(1, WavePaletteTables.GetLaserWallPaletteIndex(8));
+        Assert.Equal(10, WavePaletteTables.GetLaserWallPaletteIndex(9));
 
         // Both wrap every 10 waves (the ROM's GTWCOL subtract-10 loop).
-        Assert.Equal(WavePaletteTables.GetWallSlot(1), WavePaletteTables.GetWallSlot(11));
-        Assert.Equal(WavePaletteTables.GetWallSlot(9), WavePaletteTables.GetWallSlot(19));
-        Assert.Equal(WavePaletteTables.GetWallSlot(10), WavePaletteTables.GetWallSlot(20));
-        Assert.Equal(WavePaletteTables.GetLaserWallSlot(2), WavePaletteTables.GetLaserWallSlot(12));
+        Assert.Equal(WavePaletteTables.GetWallPaletteIndex(1), WavePaletteTables.GetWallPaletteIndex(11));
+        Assert.Equal(WavePaletteTables.GetWallPaletteIndex(9), WavePaletteTables.GetWallPaletteIndex(19));
+        Assert.Equal(WavePaletteTables.GetWallPaletteIndex(10), WavePaletteTables.GetWallPaletteIndex(20));
+        Assert.Equal(WavePaletteTables.GetLaserWallPaletteIndex(2), WavePaletteTables.GetLaserWallPaletteIndex(12));
     }
 
     [Fact]

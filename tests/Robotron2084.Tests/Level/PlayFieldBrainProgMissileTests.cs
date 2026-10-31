@@ -13,7 +13,7 @@ namespace Robotron2084.Tests.Level;
 ///     human target, 1px/beat chase, ABAC, cruise missiles, touch-conversion to
 ///     progs), progs (straight-line walkers that keep the human's animation frames and box and
 ///     die in a strip explosion of the phony burst card, notes §90),
-///     cruise missiles (50/25/25 direction roll,
+///     cruise missiles (50/25/25 random direction,
 ///     wall-reflected, 25 pts), plus the round-6 autofire cadence and the P
 ///     "skip wave" port key.
 /// </summary>
@@ -540,7 +540,7 @@ public sealed class PlayFieldBrainProgMissileTests
         }
 
         // X is armed on 50% of re-aims (SEED bit 7); Y on 75%. The port's old
-        // 50/25/25 "roll" armed X on 75% — the axis bias was backwards.
+        // 50/25/25 random pick armed X on 75% — the axis bias was backwards.
         var fraction = xArmed / 400.0;
         Assert.InRange(fraction, 0.42, 0.58);
     }
@@ -579,7 +579,7 @@ public sealed class PlayFieldBrainProgMissileTests
     {
         // ROM CMMOV writes video memory directly: `$AAAA` (a 16-BIT write, and the
         // address space is column-major with 2 px per byte, so it paints a 2x2 px
-        // block of slot 10) at the new coordinate, and `$DDDD` (slot 13) at the one
+        // block of palette index 10) at the new coordinate, and `$DDDD` (palette index 13) at the one
         // it left.
         // The apparent "8 point storage" is a RING OF NINE whose oldest entry
         // is erased off the screen EVERY STEP, so the tail is a fixed nine
