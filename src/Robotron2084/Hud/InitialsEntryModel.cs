@@ -36,7 +36,7 @@ public sealed class InitialsEntryModel
     public const char RubLetter = '\u005E';
 
     /// <summary>The blank a cell starts on — the ROM's own space code, stored as each cell becomes current.</summary>
-    private const char Blank = ' ';
+    private const char BlankHighScoreEntry = ' ';
 
     /// <summary>
     ///     A repeat after those ten costs <c>DELAY1</c> plus LUP's <c>NAP 1</c>. It is the value
@@ -103,7 +103,7 @@ public sealed class InitialsEntryModel
     /// <summary>The at-rest move stick's up (GETLT2's <c>RORA / LBCS LUP</c>): cycles the letter forward.</summary>
     private const int UpDirection = -1;
 
-    private readonly char[] _letters = new string(Blank, LetterCount).ToCharArray();
+    private readonly char[] _letters = new string(BlankHighScoreEntry, LetterCount).ToCharArray();
 
     private int _clockUnits;
 
@@ -146,7 +146,7 @@ public sealed class InitialsEntryModel
     /// <summary>The letter shown in the cursor's cell — the ROM's preview, which cycling rewrites in place.</summary>
     public char GetPreview()
     {
-        return LetterIndex < LetterCount ? _letters[LetterIndex] : Blank;
+        return LetterIndex < LetterCount ? _letters[LetterIndex] : BlankHighScoreEntry;
     }
 
     /// <summary>True while the preview is the rub marker, which the page draws with the ROM's own sprite.</summary>
@@ -186,7 +186,7 @@ public sealed class InitialsEntryModel
         _timeoutClockUnits -= LetterTimeoutClockUnits;
         if (--_lettersLeft > 0) return;
 
-        if (LetterIndex < LetterCount && IsPreviewRub()) _letters[LetterIndex] = Blank;
+        if (LetterIndex < LetterCount && IsPreviewRub()) _letters[LetterIndex] = BlankHighScoreEntry;
 
         IsComplete = true;
     }
@@ -257,9 +257,9 @@ public sealed class InitialsEntryModel
     {
         return current switch
         {
-            Blank when _isRubAllowed => RubLetter,
-            Blank => 'Z',
-            'A' => Blank,
+            BlankHighScoreEntry when _isRubAllowed => RubLetter,
+            BlankHighScoreEntry => 'Z',
+            'A' => BlankHighScoreEntry,
             RubLetter => 'Z',
             _ => (char)(current - 1)
         };
@@ -269,10 +269,10 @@ public sealed class InitialsEntryModel
     {
         return current switch
         {
-            Blank => 'A',
+            BlankHighScoreEntry => 'A',
             'Z' when _isRubAllowed => RubLetter,
-            'Z' => Blank,
-            RubLetter => Blank,
+            'Z' => BlankHighScoreEntry,
+            RubLetter => BlankHighScoreEntry,
             _ => (char)(current + 1)
         };
     }
@@ -330,7 +330,7 @@ public sealed class InitialsEntryModel
     /// <summary>GETRUB: the rub marker clears its own cell, steps back one and asks for that letter again.</summary>
     private void RubOut()
     {
-        _letters[LetterIndex] = Blank;
+        _letters[LetterIndex] = BlankHighScoreEntry;
         LetterIndex--;
         _lettersLeft++;
 
@@ -346,7 +346,7 @@ public sealed class InitialsEntryModel
     /// <summary>G0SUB: puts a blank in the cell the cursor is on, so it is always a valid letter position.</summary>
     private void SeedCell()
     {
-        _letters[LetterIndex] = Blank;
+        _letters[LetterIndex] = BlankHighScoreEntry;
     }
 
     /// <summary>Runs the current phase once its own period has elapsed.</summary>
