@@ -27,11 +27,11 @@ internal sealed class PlayFieldBuilder
     private Rectangle _bounds = DefaultBounds;
     private bool _brainsChaseMikeyBug = true;
     private IReadOnlyList<int> _familySlotsLeftOver = [];
-    private IPlayerInputSource _input = new FakeInputSource();
+    private IPlayerInputSource _playerInputSource = new FakeInputSource();
     private int _lives = DefaultLives;
-    private GamePalette? _palette;
+    private GamePalette? _gamePalette;
 
-    private WaveParameters _parameters = new(1);
+    private WaveParameters _waveParameters = new(1);
     private IPixelCollision? _pixelCollision;
     private bool _playerInvincible = true;
     private Random _random = new(DefaultSeed);
@@ -39,18 +39,18 @@ internal sealed class PlayFieldBuilder
     private bool _tankShellBugEnabled = true;
 
     /// <summary>Uses these wave parameters.</summary>
-    /// <param name="parameters">The wave.</param>
-    public PlayFieldBuilder WithParameters(WaveParameters parameters)
+    /// <param name="waveParameters">The wave.</param>
+    public PlayFieldBuilder WithParameters(WaveParameters waveParameters)
     {
-        _parameters = parameters;
+        _waveParameters = waveParameters;
         return this;
     }
 
     /// <summary>Uses this input for the player.</summary>
-    /// <param name="input">The input source.</param>
-    public PlayFieldBuilder WithInput(IPlayerInputSource input)
+    /// <param name="playerInputSource">The input source.</param>
+    public PlayFieldBuilder WithInput(IPlayerInputSource playerInputSource)
     {
-        _input = input;
+        _playerInputSource = playerInputSource;
         return this;
     }
 
@@ -96,10 +96,10 @@ internal sealed class PlayFieldBuilder
 
 
     /// <summary>Wires in a live palette.</summary>
-    /// <param name="palette">The palette.</param>
-    public PlayFieldBuilder WithPalette(GamePalette palette)
+    /// <param name="gamePalette">The palette.</param>
+    public PlayFieldBuilder WithPalette(GamePalette gamePalette)
     {
-        _palette = palette;
+        _gamePalette = gamePalette;
         return this;
     }
 
@@ -147,15 +147,15 @@ internal sealed class PlayFieldBuilder
     public PlayField Build()
     {
         return new PlayField(
-            TestSprites.Shared,
-            _parameters,
-            _input,
+            TestSprites.SharedSpriteSet,
+            _waveParameters,
+            _playerInputSource,
             _bounds,
             new WallColorCycle(),
             _random,
             _lives,
             _score,
-            _palette,
+            _gamePalette,
             _playerInvincible,
             _pixelCollision is null ? null : new PixelContactTest(_pixelCollision),
             tankShellBugEnabled: _tankShellBugEnabled,

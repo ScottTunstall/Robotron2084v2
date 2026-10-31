@@ -6,5 +6,5 @@ namespace Robotron2084.Tests;
 internal static class TestSprites
 {
     /// <summary>The shared set; see <see cref="NoSpriteSource" /> for what it does and does not hold.</summary>
-    public static readonly SpriteSet Shared = new(new NoSpriteSource());
+    public static readonly SpriteSet SharedSpriteSet = new(new NoSpriteSource());
 }

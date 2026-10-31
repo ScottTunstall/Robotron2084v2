@@ -13,14 +13,14 @@ internal static class WaveStartTicks
     ///     The port ticks from a field being made to the first tick on which the game is live: the arcade's
     ///     <c>CLR STATUS</c> at <c>PLS2</c> (R5 $289A). The robots first act on that tick.
     /// </summary>
-    public static int UntilLive(PlayField field)
+    public static int UntilLive(PlayField playField)
     {
-        return ArcadeClock.ToPortTicksRoundedUp(field.GetLiveArcadeFrames());
+        return ArcadeClock.ToPortTicksRoundedUp(playField.GetLiveArcadeFrames());
     }
 
     /// <summary>The port ticks from a field being made to the first tick on which the player is drawn: <c>PLS1</c> (R5 $2874).</summary>
-    public static int UntilPlayerAppears(PlayField field)
+    public static int UntilPlayerAppears(PlayField playField)
     {
-        return ArcadeClock.ToPortTicksRoundedUp(field.GetPlayerAppearArcadeFrames());
+        return ArcadeClock.ToPortTicksRoundedUp(playField.GetPlayerAppearArcadeFrames());
     }
 }
