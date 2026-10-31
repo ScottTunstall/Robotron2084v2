@@ -78,22 +78,22 @@ public sealed class HighScoreFrameAnimationTests
     }
 
     [Fact]
-    public void TheVisibleBand_IsEightStrokesOfEightDifferentSlots()
+    public void TheVisibleBand_IsEightStrokesOfEightDifferentPaletteIndices()
     {
         // MARQ's flavour walks down by $11 a stroke, so the eight strokes the erase pass
-        // leaves behind are slots 8…1 — the eight simultaneously cycling colours the
+        // leaves behind are palette indices 8…1 — the eight simultaneously cycling colours the
         // author sees on the cabinet.
         var frame = new HighScoreFrameAnimation();
         while (!frame.IsFinished()) frame.Tick();
 
-        var slots = new int[frame.GetDrawnStroke() - frame.GetErasedStroke()];
+        var paletteIndices = new int[frame.GetDrawnStroke() - frame.GetErasedStroke()];
         for (var stroke = frame.GetErasedStroke() + 1; stroke <= frame.GetDrawnStroke(); stroke++)
-            slots[stroke - frame.GetErasedStroke() - 1] = HighScoreTableLayout.GetFrameStrokeSlot(stroke);
+            paletteIndices[stroke - frame.GetErasedStroke() - 1] = HighScoreTableLayout.GetFrameStrokePaletteIndex(stroke);
 
-        Assert.Equal(new[] { 8, 7, 6, 5, 4, 3, 2, 1 }, slots);
+        Assert.Equal(new[] { 8, 7, 6, 5, 4, 3, 2, 1 }, paletteIndices);
 
-        // …and the walk repeats, so the whole page's outer edge came back to $11's slot.
-        Assert.Equal(1, HighScoreTableLayout.GetFrameStrokeSlot(HighScoreTableLayout.FrameLastStroke));
-        Assert.Equal(8, HighScoreTableLayout.GetFrameStrokeSlot(HighScoreTableLayout.FrameLastStroke - 7));
+        // …and the walk repeats, so the whole page's outer edge came back to $11's palette index.
+        Assert.Equal(1, HighScoreTableLayout.GetFrameStrokePaletteIndex(HighScoreTableLayout.FrameLastStroke));
+        Assert.Equal(8, HighScoreTableLayout.GetFrameStrokePaletteIndex(HighScoreTableLayout.FrameLastStroke - 7));
     }
 }
