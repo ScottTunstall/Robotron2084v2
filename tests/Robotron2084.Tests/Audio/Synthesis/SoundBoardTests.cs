@@ -23,46 +23,46 @@ public class SoundBoardTests
     [Fact]
     public void TheBoardIsSilent_UntilItIsSentASoundNumber()
     {
-        var (_, renderer) = StartBoard();
+        var (_, soundBoardRenderer) = StartBoard();
 
-        Assert.True(Loudness(renderer, 0.5) < Silence);
+        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence);
     }
 
     [Fact]
     public void TheLaser_IsHeard_ThenDiesAwayWithinThreeSeconds()
     {
-        var (board, renderer) = StartBoard();
+        var (soundBoard, soundBoardRenderer) = StartBoard();
 
-        board.SendSoundNumber(0x25);
+        soundBoard.SendSoundNumber(0x25);
 
-        Assert.True(Loudness(renderer, 0.25) > 0.3f);
-        Loudness(renderer, 2.75);
-        Assert.True(Loudness(renderer, 0.5) < Silence);
+        Assert.True(Loudness(soundBoardRenderer, 0.25) > 0.3f);
+        Loudness(soundBoardRenderer, 2.75);
+        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence);
     }
 
     [Fact]
     public void TheShellFireSound_KeepsGoing_UntilSomethingReplacesIt()
     {
-        var (board, renderer) = StartBoard();
+        var (soundBoard, soundBoardRenderer) = StartBoard();
 
-        board.SendSoundNumber(0x04);
-        Loudness(renderer, 5);
+        soundBoard.SendSoundNumber(0x04);
+        Loudness(soundBoardRenderer, 5);
 
-        Assert.True(Loudness(renderer, 0.5) > 0.3f);
+        Assert.True(Loudness(soundBoardRenderer, 0.5) > 0.3f);
     }
 
     [Fact]
     public void SoundNumber13_StopsWhateverIsPlaying()
     {
         // The shell bounce table ends with it for one vblank (R5 $4B16: (1,4,$14) (1,1,$13)).
-        var (board, renderer) = StartBoard();
-        board.SendSoundNumber(0x04);
-        Loudness(renderer, 0.5);
+        var (soundBoard, soundBoardRenderer) = StartBoard();
+        soundBoard.SendSoundNumber(0x04);
+        Loudness(soundBoardRenderer, 0.5);
 
-        board.SendSoundNumber(0x13);
-        Loudness(renderer, 0.25);
+        soundBoard.SendSoundNumber(0x13);
+        Loudness(soundBoardRenderer, 0.25);
 
-        Assert.True(Loudness(renderer, 0.5) < Silence);
+        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence);
     }
 
     /// <summary>
@@ -74,14 +74,14 @@ public class SoundBoardTests
     [Fact]
     public void TheHeldVoiceStaysWithinTheWaveEndMusic()
     {
-        var board = new SoundBoard();
-        var renderer = new SoundBoardRenderer(board, SampleRate);
-        board.SendSoundNumber(0x0E);
+        var soundBoard = new SoundBoard();
+        var soundBoardRenderer = new SoundBoardRenderer(soundBoard, SampleRate);
+        soundBoard.SendSoundNumber(0x0E);
 
         const int measuredTicks = 1800;
         var level = new float[measuredTicks + 1];
         for (var tick = 1; tick <= measuredTicks; tick++)
-            level[tick] = Loudness(renderer, 1 / (double)PortTicksPerSecond);
+            level[tick] = Loudness(soundBoardRenderer, 1 / (double)PortTicksPerSecond);
 
         var period = 0;
         var best = double.MaxValue;
@@ -114,21 +114,21 @@ public class SoundBoardTests
     [Fact]
     public void EverySoundNumberTheGameSends_HasARoutine()
     {
-        var board = new SoundBoard();
+        var soundBoard = new SoundBoard();
         var sent = SoundTables.All.SelectMany(table => table.Entries).Select(entry => (int)entry.SoundNumber);
 
-        Assert.All(sent, soundNumber => Assert.True(board.CanPlay(soundNumber), $"sound ${soundNumber:X2}"));
+        Assert.All(sent, soundNumber => Assert.True(soundBoard.CanPlay(soundNumber), $"sound ${soundNumber:X2}"));
     }
 
     [Fact]
     public void SoundNumber0_IsNotASound_AndIsIgnored()
     {
-        var (board, renderer) = StartBoard();
+        var (soundBoard, soundBoardRenderer) = StartBoard();
 
-        board.SendSoundNumber(0);
+        soundBoard.SendSoundNumber(0);
 
-        Assert.False(board.CanPlay(0));
-        Assert.True(Loudness(renderer, 0.5) < Silence);
+        Assert.False(soundBoard.CanPlay(0));
+        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence);
     }
 
     /// <summary>
@@ -146,15 +146,15 @@ public class SoundBoardTests
     [InlineData(0x3E)]
     public void EachCoinSound_IsHeard_ThenEndsByItself(int soundNumber)
     {
-        var (board, renderer) = StartBoard();
+        var (soundBoard, soundBoardRenderer) = StartBoard();
 
-        board.SendSoundNumber(soundNumber);
+        soundBoard.SendSoundNumber(soundNumber);
 
-        Assert.True(board.CanPlay(soundNumber));
-        var whileItPlays = Loudness(renderer, 1.0);
-        Loudness(renderer, 9.0);
+        Assert.True(soundBoard.CanPlay(soundNumber));
+        var whileItPlays = Loudness(soundBoardRenderer, 1.0);
+        Loudness(soundBoardRenderer, 9.0);
         Assert.True(whileItPlays > Silence, $"Coin sound ${soundNumber:X2} was silent.");
-        Assert.True(Loudness(renderer, 0.5) < Silence,
+        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence,
             $"Coin sound ${soundNumber:X2} had not ended after ten seconds.");
     }
 
@@ -170,26 +170,26 @@ public class SoundBoardTests
         int[] silent = [0x13, 0x1B, 0x1C];
         foreach (var sound in BoardSounds.All)
         {
-            var (board, renderer) = StartBoard();
-            Assert.True(board.CanPlay(sound.Number), $"{sound.Name} has no routine.");
+            var (soundBoard, soundBoardRenderer) = StartBoard();
+            Assert.True(soundBoard.CanPlay(sound.Number), $"{sound.Name} has no routine.");
 
-            board.SendSoundNumber(sound.Number);
+            soundBoard.SendSoundNumber(sound.Number);
 
-            var loudness = Loudness(renderer, 3);
+            var loudness = Loudness(soundBoardRenderer, 3);
             Assert.Equal(silent.Contains(sound.Number), loudness < Silence);
         }
     }
 
-    private static (SoundBoard Board, SoundBoardRenderer Renderer) StartBoard()
+    private static (SoundBoard SoundBoard, SoundBoardRenderer SoundBoardRenderer) StartBoard()
     {
-        var board = new SoundBoard();
-        return (board, new SoundBoardRenderer(board, SampleRate));
+        var soundBoard = new SoundBoard();
+        return (soundBoard, new SoundBoardRenderer(soundBoard, SampleRate));
     }
 
-    private static float Loudness(SoundBoardRenderer renderer, double seconds)
+    private static float Loudness(SoundBoardRenderer soundBoardRenderer, double seconds)
     {
         var samples = new float[(int)(SampleRate * seconds)];
-        renderer.Render(samples);
+        soundBoardRenderer.Render(samples);
         var sumOfSquares = samples.Sum(sample => (double)sample * sample);
         return (float)Math.Sqrt(sumOfSquares / samples.Length);
     }
