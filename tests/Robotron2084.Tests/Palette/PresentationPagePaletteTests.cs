@@ -38,7 +38,7 @@ public sealed class PresentationPagePaletteTests
         var (gamePalette, _) = Started();
 
         for (var paletteIndex = PresentationPagePalette.FirstPaletteIndex; paletteIndex <= PresentationPagePalette.LastPaletteIndex; paletteIndex++)
-            Assert.Equal(PresentationPagePalette.PageColors[paletteIndex - 1], gamePalette.GetPaletteIndexValue(paletteIndex));
+            Assert.Equal(PresentationPagePalette.PageColours[paletteIndex - 1], gamePalette.GetPaletteIndexValue(paletteIndex));
 
         // The other nine entries are untouched — this page owns palette indices 1-7 and nothing else.
         foreach (var paletteIndex in new[] { 0, 8, 9, 10, 11, 12, 13, 14, 15 })
@@ -96,7 +96,7 @@ public sealed class PresentationPagePaletteTests
             var white = WhitePaletteIndex(gamePalette);
             for (var paletteIndex = PresentationPagePalette.FirstPaletteIndex; paletteIndex <= PresentationPagePalette.LastPaletteIndex; paletteIndex++)
                 if (paletteIndex != white)
-                    Assert.Equal(PresentationPagePalette.PageColors[paletteIndex - 1], gamePalette.GetPaletteIndexValue(paletteIndex));
+                    Assert.Equal(PresentationPagePalette.PageColours[paletteIndex - 1], gamePalette.GetPaletteIndexValue(paletteIndex));
         }
     }
 
@@ -144,8 +144,8 @@ public sealed class PresentationPagePaletteTests
 
         // At the wrap the pair is the reference screenshot's own: a red body (palette index 1, $07) on a
         // yellow rim (palette index 7, $3F).
-        Assert.Equal(0x07, PresentationPagePalette.PageColors[presentationPagePalette.GetWordmarkPaletteIndex() - 1]);
-        Assert.Equal(0x3F, PresentationPagePalette.PageColors[presentationPagePalette.GetWordmarkRimPaletteIndex() - 1]);
+        Assert.Equal(0x07, PresentationPagePalette.PageColours[presentationPagePalette.GetWordmarkPaletteIndex() - 1]);
+        Assert.Equal(0x3F, PresentationPagePalette.PageColours[presentationPagePalette.GetWordmarkRimPaletteIndex() - 1]);
     }
 
     [Fact]
