@@ -17,7 +17,7 @@ public sealed class PlayingStateTurnMessageTests
     private static PlayingState CreateState(int playerCount, bool isStartOfTurn)
     {
         return new PlayingState(
-            TestSprites.Shared,
+            TestSprites.SharedSpriteSet,
             null!,
             GameSession.CreateNewGame(new FakeInputSource(), playerCount, new FakeInputSource()),
             isStartOfTurn);
