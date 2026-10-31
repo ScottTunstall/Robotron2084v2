@@ -72,8 +72,8 @@ public sealed class AttractPageMachine
     /// <summary>Every character currently on the story screen.</summary>
     public IReadOnlyList<MovieTextCell> TextCells => _textCells;
 
-    /// <summary>The current text colour slot (the ROM's `TEXCOL`).</summary>
-    public int TextSlot { get; private set; } = 10;
+    /// <summary>The current text colour palette index (the ROM's `TEXCOL`).</summary>
+    public int TextPaletteIndex { get; private set; } = 10;
 
     /// <summary>Runs one fiftieth of a second of the page script.</summary>
     public void StepFrame()
@@ -180,7 +180,7 @@ public sealed class AttractPageMachine
             if (_textCells.Count > 0 && _textCells[^1].X == _cursorX && _textCells[^1].Y == _cursorY)
                 _textCells.RemoveAt(_textCells.Count - 1);
 
-            _textCells.Add(new MovieTextCell(_cursorX, _cursorY, character.Value, TextSlot));
+            _textCells.Add(new MovieTextCell(_cursorX, _cursorY, character.Value, TextPaletteIndex));
         }
 
         _cursorX += AttractMovieData.FontWidths[code - 0x30] + 1;
@@ -249,12 +249,12 @@ public sealed class AttractPageMachine
                         x,
                         MessageRow,
                         GetMessageText(number),
-                        TextSlot);
+                        TextPaletteIndex);
                     return;
                 }
 
-            case 7: // COLOR — the text's palette slot (a doubled nibble like $AA).
-                TextSlot = NextByte() >> 4;
+            case 7: // COLOR — the text's palette index (a doubled nibble like $AA).
+                TextPaletteIndex = NextByte() >> 4;
                 return;
         }
     }

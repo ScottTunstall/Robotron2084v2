@@ -111,12 +111,12 @@ public sealed class AttractObjectMachine
     }
 
     /// <summary>MONOP: hide the object, then every third frame move it in whole columns and box it.</summary>
-    private static void BeginMono(MovieObject item, int boxSlot, int imageSlot, bool showsBrain)
+    private static void BeginMono(MovieObject item, int boxPaletteIndex, int imagePaletteIndex, bool showsBrain)
     {
         item.IsOnList = false;
         item.IsMonoActive = true;
-        item.MonoBoxSlot = boxSlot;
-        item.MonoSilhouetteSlot = imageSlot;
+        item.MonoBoxPaletteIndex = boxPaletteIndex;
+        item.MonoSilhouettePaletteIndex = imagePaletteIndex;
         item.ShowsMonoBrain = showsBrain;
     }
 
@@ -157,7 +157,7 @@ public sealed class AttractObjectMachine
         return (Read(process) << 8) | Read(process);
     }
 
-    private int RollUpTo(int exclusive)
+    private int GetRandomBelow(int exclusive)
     {
         return _random.Next(exclusive);
     }
@@ -455,13 +455,13 @@ public sealed class AttractObjectMachine
                 case 25: // MONO — box colour, image colour, frames, special (brain in the box).
                     {
                         // The colour operands are doubled-nibble palette values exactly
-                        // like the page script's COLOR ($AA = slot 10), so the slot is the
+                        // like the page script's COLOR ($AA = palette index 10), so the palette index is the
                         // HIGH nibble — and 0 means "no box".
-                        var boxSlot = machine.Read(this) >> 4;
-                        var silhouetteSlot = machine.Read(this) >> 4;
+                        var boxPaletteIndex = machine.Read(this) >> 4;
+                        var silhouettePaletteIndex = machine.Read(this) >> 4;
                         MonoStepsLeft = machine.Read(this);
                         var showsBrain = machine.Read(this) != 0;
-                        BeginMono(Object, boxSlot, silhouetteSlot, showsBrain);
+                        BeginMono(Object, boxPaletteIndex, silhouettePaletteIndex, showsBrain);
                         Action = MovieAction.Mono;
                         WaitArcadeFrames = 3;
                         return false;
@@ -606,7 +606,7 @@ public sealed class AttractObjectMachine
         /// <summary>RPROGP: bounce the row by ±(random 0..7) a frame apart, 64 times, then die.</summary>
         private void StepReprogramShake(AttractObjectMachine machine)
         {
-            var magnitude = machine.RollUpTo(8);
+            var magnitude = machine.GetRandomBelow(8);
             if (IsShakingUp)
             {
                 Object.ShakeRowOffset = -magnitude;

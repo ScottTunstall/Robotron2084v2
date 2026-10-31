@@ -58,11 +58,11 @@ public sealed record MovieObject
     /// <summary>The object's process(es) have all ended.</summary>
     public bool IsDead { get; set; }
 
-    /// <summary>MONO: the box is filled in this palette slot (0 = no box).</summary>
-    public int MonoBoxSlot { get; set; }
+    /// <summary>MONO: the box is filled in this palette index (0 = no box).</summary>
+    public int MonoBoxPaletteIndex { get; set; }
 
-    /// <summary>MONO: the object is drawn as a solid silhouette in this palette slot.</summary>
-    public int MonoSilhouetteSlot { get; set; }
+    /// <summary>MONO: the object is drawn as a solid silhouette in this palette index.</summary>
+    public int MonoSilhouettePaletteIndex { get; set; }
 
     /// <summary>MONO: draw the BRAIN inside the box too (the ROM's `DMAON` "brain in the square").</summary>
     public bool ShowsMonoBrain { get; set; }
