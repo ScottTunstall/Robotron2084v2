@@ -32,98 +32,98 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class AttractState : IGameState, IAttractState
 {
-    private readonly ButtonEdgeDetector _buttons = new();
-    private readonly DemoPlayerInputSource _demoInput = new();
-    private readonly WaveParameterGenerator _generator = new();
+    private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
+    private readonly DemoPlayerInputSource _demoPlayerInputSource = new();
+    private readonly WaveParameterGenerator _waveParameterGenerator = new();
     private readonly HighScoreStore _highScoreStore;
-    private readonly IPlayerInputSource _humanInput;
+    private readonly IPlayerInputSource _humanPlayerInputSource;
     private readonly Random _random = new();
-    private readonly GameServices _services;
-    private readonly GameSession _session;
-    private readonly SpriteSet _sprites;
-    private PlayField _field;
+    private readonly GameServices _gameServices;
+    private readonly GameSession _gameSession;
+    private readonly SpriteSet _spriteSet;
+    private PlayField _playField;
 
-    public AttractState(GameServices services)
+    public AttractState(GameServices gameServices)
     {
-        _services = services;
-        _sprites = services.Sprites;
-        _highScoreStore = services.HighScoreStore;
-        _humanInput = services.Input;
-        _session = GameSession.CreateNewGame(_demoInput, 1);
-        _field = BuildField();
+        _gameServices = gameServices;
+        _spriteSet = gameServices.SpriteSet;
+        _highScoreStore = gameServices.HighScoreStore;
+        _humanPlayerInputSource = gameServices.PlayerInputSource;
+        _gameSession = GameSession.CreateNewGame(_demoPlayerInputSource, 1);
+        _playField = BuildField();
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        _field.Draw(spriteBatch);
-        ArcadeHud.DrawScoresAndLives(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds(), false);
-        ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.GetCurrent().Wave);
+        _playField.Draw(spriteBatch);
+        ArcadeHud.DrawScoresAndLives(spriteBatch, _spriteSet, _gameSession, PlayfieldLayout.GetInnerBounds(), false);
+        ArcadeHud.DrawWaveMessage(spriteBatch, _spriteSet, _gameSession.GetCurrent().Wave);
     }
 
-    public void Update(GameTime gameTime, GameStateManager manager)
+    public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
         // A human at the coin door takes the machine back (arcade: start works
         // any time attract is running).
-        var humanInputState = _humanInput.Poll();
-        if (_buttons.Advance(humanInputState).AnyPressed())
+        var humanInputState = _humanPlayerInputSource.Poll();
+        if (_buttonEdgeDetector.Advance(humanInputState).AnyPressed())
         {
-            manager.TransitionTo(new TitleScreenState(_services));
+            gameStateManager.TransitionTo(new TitleScreenState(_gameServices));
             return;
         }
 
         // The phony player reasons about the field BEFORE it moves this tick —
         // the same order PlayingState polls after its Update, except the AI needs
         // the pre-move sprite to decide its own move.
-        _demoInput.Bind(_field);
-        _field.Update(gameTime);
+        _demoPlayerInputSource.Bind(_playField);
+        _playField.Update(gameTime);
 
         // The demo's HUD is drawn from the session slot, so the live counters go
         // over every tick (notes §97) — a rescue's 1000-5000 points showed up in
         // the score only at the next wave clear / death before this.
         SyncSlotFromField();
 
-        if (_field.IsWaveCleared())
+        if (_playField.IsWaveCleared())
         {
-            var playerSlot = _session.GetCurrent();
+            var playerSlot = _gameSession.GetCurrent();
             SyncSlotFromField();
             playerSlot.Wave = playerSlot.Wave % 255 + 1; // ROM GEXX: skip 0
             playerSlot.SavedWaveParameters = null;
-            manager.TransitionTo(new WaveClearState(_sprites, _highScoreStore, _session, true));
+            gameStateManager.TransitionTo(new WaveClearState(_spriteSet, _highScoreStore, _gameSession, true));
             return;
         }
 
-        if (_field.IsPlayerDead())
+        if (_playField.IsPlayerDead())
         {
             SyncSlotFromField();
-            _session.GetCurrent().SavedWaveParameters = WaveSurvivors.GetFrom(_field);
+            _gameSession.GetCurrent().SavedWaveParameters = WaveSurvivors.GetFrom(_playField);
 
-            if (!_session.AnyPlayerSlotHasLives())
+            if (!_gameSession.AnyPlayerSlotHasLives())
             {
                 // RRG23 PLEND: the last life gone ends the game — "GAME OVER", then
                 // ENDPRC → GOV → LOGG1, whose first act is the high score TABLE
                 // (`JSR SCRCLR / JSR TABORG`), and only then the family page again
                 // (notes §98.1). The demo's own score is NOT posted (notes §98.4,
                 // open question).
-                manager.TransitionTo(new HighScoreTableState(_services));
+                gameStateManager.TransitionTo(new HighScoreTableState(_gameServices));
                 return;
             }
 
-            _field = BuildField();
+            _playField = BuildField();
         }
     }
 
     private PlayField BuildField()
     {
-        var slot = _session.GetCurrent();
+        var slot = _gameSession.GetCurrent();
         // The demo is the same game, so a death keeps the survivors here too (notes §134).
-        var parameters = BozoMode.Apply(slot.SavedWaveParameters ?? _generator.Generate(slot.Wave), slot.GetSpareLives());
-        WallColorCycle cycle = new();
-        return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.GetInnerBounds(), cycle, _random,
-            slot.Lives, slot.Score, _sprites.Blitter.Palette, false, new PixelContactTest(new SpriteCollision()));
+        var waveParameters = BozoMode.Apply(slot.SavedWaveParameters ?? _waveParameterGenerator.Generate(slot.Wave), slot.GetSpareLives());
+        WallColorCycle wallColorCycle = new();
+        return new PlayField(_spriteSet, waveParameters, _demoPlayerInputSource, PlayfieldLayout.GetInnerBounds(), wallColorCycle, _random,
+            slot.Lives, slot.Score, _spriteSet.BlitterDraw.GamePalette, false, new PixelContactTest(new SpriteCollision()));
     }
 
     private void SyncSlotFromField()
     {
-        _field.SyncInto(_session.GetCurrent());
+        _playField.SyncInto(_gameSession.GetCurrent());
     }
 }

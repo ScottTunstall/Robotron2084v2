@@ -91,9 +91,9 @@ public sealed class DeveloperToolsState : IGameState
 
     private readonly ControlSettingsStore _controlSettingsStore;
     private readonly GameSettingsStore _gameSettingsStore;
-    private readonly DefineInputsHighlight _highlight = new();
-    private readonly GameServices _services;
-    private readonly SpriteSet _sprites;
+    private readonly DefineInputsHighlight _defineInputsHighlight = new();
+    private readonly GameServices _gameServices;
+    private readonly SpriteSet _spriteSet;
 
     private int _line;
     private InputSnapshot _previousSnapshot;
@@ -101,7 +101,7 @@ public sealed class DeveloperToolsState : IGameState
     /// <summary>
     ///     Opens the page.
     /// </summary>
-    /// <param name="services">The attract screens' shared dependencies.</param>
+    /// <param name="gameServices">The attract screens' shared dependencies.</param>
     /// <param name="controlSettingsStore">
     ///     The store the DEFINE INPUTS option hands to the definitions page itself. The shell passes its own;
     ///     a page opened from outside the shell (the sound test, the settings page) takes the default.
@@ -110,17 +110,17 @@ public sealed class DeveloperToolsState : IGameState
     ///     The store the GAME ADJUSTMENT option hands to that page (notes §131), on the same
     ///     terms as <paramref name="controlSettingsStore" />.
     /// </param>
-    public DeveloperToolsState(GameServices services, ControlSettingsStore? controlSettingsStore = null,
+    public DeveloperToolsState(GameServices gameServices, ControlSettingsStore? controlSettingsStore = null,
         GameSettingsStore? gameSettingsStore = null)
     {
-        _services = services;
-        _sprites = services.Sprites;
+        _gameServices = gameServices;
+        _spriteSet = gameServices.SpriteSet;
         _controlSettingsStore = controlSettingsStore ?? new ControlSettingsStore();
         _gameSettingsStore = gameSettingsStore ?? new GameSettingsStore();
         _previousSnapshot = InputSnapshot.Read();
         RestorePalette();
 
-        if (_sprites.Blitter.Palette is { } palette) _highlight.Start(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _defineInputsHighlight.Start(palette);
     }
 
     /// <summary>The option the cursor is on.</summary>
@@ -138,9 +138,9 @@ public sealed class DeveloperToolsState : IGameState
         DrawInstruction(spriteBatch, ExitLine, ExitRow);
     }
 
-    public void Update(GameTime gameTime, GameStateManager manager)
+    public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
-        if (_sprites.Blitter.Palette is { } palette) _highlight.Update(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _defineInputsHighlight.Update(palette);
 
         var now = InputSnapshot.Read();
 
@@ -159,11 +159,11 @@ public sealed class DeveloperToolsState : IGameState
 
         if (WasKeyboardPressed(now, Keys.F10))
         {
-            manager.TransitionTo(new TitleScreenState(_services));
+            gameStateManager.TransitionTo(new TitleScreenState(_gameServices));
             return;
         }
 
-        if (chosen) Choose(_line, manager);
+        if (chosen) Choose(_line, gameStateManager);
 
         _previousSnapshot = now;
     }
@@ -176,39 +176,39 @@ public sealed class DeveloperToolsState : IGameState
     }
 
     /// <summary>Leaves the page for the screen the highlighted option names.</summary>
-    private void Choose(int line, GameStateManager manager)
+    private void Choose(int line, GameStateManager gameStateManager)
     {
         switch (line)
         {
             case 0:
                 // The title page as the cabinet prints it: its own pane, held open (notes §107).
-                manager.TransitionTo(new TitleScreenState(_services, TitleTextPane.Arcade));
+                gameStateManager.TransitionTo(new TitleScreenState(_gameServices, TitleTextPane.Arcade));
                 break;
 
             case 1:
                 // The title page on the pane that carries the port's credit.
-                manager.TransitionTo(new TitleScreenState(_services, TitleTextPane.Port));
+                gameStateManager.TransitionTo(new TitleScreenState(_gameServices, TitleTextPane.Port));
                 break;
 
             case 2:
-                manager.TransitionTo(new StorylineState(_services, new Random()));
+                gameStateManager.TransitionTo(new StorylineState(_gameServices, new Random()));
                 break;
 
             case 3:
-                manager.TransitionTo(new AttractState(_services));
+                gameStateManager.TransitionTo(new AttractState(_gameServices));
                 break;
 
             case 4:
-                manager.TransitionTo(new HighScoreTableState(_services));
+                gameStateManager.TransitionTo(new HighScoreTableState(_gameServices));
                 break;
 
             case 5:
-                manager.TransitionTo(new DefineInputsState(_services, _controlSettingsStore));
+                gameStateManager.TransitionTo(new DefineInputsState(_gameServices, _controlSettingsStore));
                 break;
 
             case 6:
                 // The arcade's service-mode settings: the gameplay adjustments (notes §131).
-                manager.TransitionTo(new SettingsState(_services, _gameSettingsStore));
+                gameStateManager.TransitionTo(new SettingsState(_gameServices, _gameSettingsStore));
                 break;
         }
     }
@@ -219,13 +219,13 @@ public sealed class DeveloperToolsState : IGameState
     /// </summary>
     private void DrawCursor(SpriteBatch spriteBatch, int y)
     {
-        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingPaletteIndex);
+        _spriteSet.BlitterDraw.DrawGlyphStatic(spriteBatch, _spriteSet.CursorArrowSprite, CursorColumn, y, HeadingPaletteIndex);
     }
 
     /// <summary>The heading: the arcade's LARGE font, centred, in the page's WHITE.</summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y)
     {
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingPaletteIndex);
+        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingPaletteIndex);
     }
 
     /// <summary>An instruction line under the list: the SMALL font, centred, in the page's WHITE.</summary>
@@ -250,14 +250,14 @@ public sealed class DeveloperToolsState : IGameState
 
     private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int paletteIndex)
     {
-        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
+        return _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
     }
 
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
     private int GetCenteredX(string text, bool isLarge = false)
     {
-        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
-        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+        var textWidth = _spriteSet.ArcadeText.MeasureSmallText(text);
+        if (isLarge) textWidth = _spriteSet.ArcadeText.MeasureLargeText(text);
 
         var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
@@ -269,7 +269,7 @@ public sealed class DeveloperToolsState : IGameState
     /// </summary>
     private void RestorePalette()
     {
-        if (_sprites.Blitter.Palette is not { } palette) return;
+        if (_spriteSet.BlitterDraw.GamePalette is not { } palette) return;
 
         foreach (var paletteIndex in OwnedPaletteIndices) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
     }
@@ -281,8 +281,8 @@ public sealed class DeveloperToolsState : IGameState
 
     private bool WasPadPressed(InputSnapshot now, Buttons button)
     {
-        return (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
-               || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
+        return (now.PlayerOneGamePadState.IsButtonDown(button) && !_previousSnapshot.PlayerOneGamePadState.IsButtonDown(button))
+               || (now.PlayerTwoGamePadState.IsButtonDown(button) && !_previousSnapshot.PlayerTwoGamePadState.IsButtonDown(button));
     }
 
     /// <summary>True on the tick the key or the pad button (either pad) goes down.</summary>

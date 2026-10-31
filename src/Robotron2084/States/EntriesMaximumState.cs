@@ -24,18 +24,18 @@ public sealed class EntriesMaximumState : IGameState
     private const int SecondLineColumn = 40;
     private const int SecondLineRow = 144;
 
-    private readonly ScoreEntryCeremony _ceremony;
+    private readonly ScoreEntryCeremony _scoreEntryCeremony;
     private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.EntriesMaximumHoldArcadeFrames);
-    private readonly GameServices _services;
+    private readonly GameServices _gameServices;
     private int _elapsedTicks;
 
     /// <summary>Builds the page for the score whose initials hit the maximum.</summary>
-    /// <param name="services">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
-    /// <param name="ceremony">The ceremony to carry on with once the page has been held.</param>
-    public EntriesMaximumState(GameServices services, ScoreEntryCeremony ceremony)
+    /// <param name="gameServices">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
+    /// <param name="scoreEntryCeremony">The ceremony to carry on with once the page has been held.</param>
+    public EntriesMaximumState(GameServices gameServices, ScoreEntryCeremony scoreEntryCeremony)
     {
-        _services = services;
-        _ceremony = ceremony;
+        _gameServices = gameServices;
+        _scoreEntryCeremony = scoreEntryCeremony;
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -44,16 +44,16 @@ public sealed class EntriesMaximumState : IGameState
         DrawLine(spriteBatch, "LOWEST ENTRY REPLACED", SecondLineColumn, SecondLineRow);
     }
 
-    public void Update(GameTime gameTime, GameStateManager manager)
+    public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
         if (++_elapsedTicks < _holdTicks) return;
 
-        manager.TransitionTo(_ceremony.NextScreen());
+        gameStateManager.TransitionTo(_scoreEntryCeremony.NextScreen());
     }
 
     private void DrawLine(SpriteBatch spriteBatch, string text, int column, int row)
     {
-        _services.Sprites.TextRenderer.DrawLargeFontText(
+        _gameServices.SpriteSet.ArcadeText.DrawLargeFontText(
             spriteBatch,
             text,
             HudLayout.ToPortColumnX(column),

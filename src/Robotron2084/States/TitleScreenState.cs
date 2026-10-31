@@ -111,15 +111,15 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private const int WordmarkRow = 72;
 
     private readonly TimeSpan _arcadeTextDuration = TimeSpan.FromSeconds(AttractTuning.TitleArcadeTextSeconds);
-    private readonly ButtonEdgeDetector _buttons = new();
+    private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
     private readonly ControlSettings _controlSettings;
     private readonly GameSettings _gameSettings;
     private readonly HighScoreStore _highScoreStore;
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(AttractTuning.TitleIdleSeconds);
-    private readonly IPlayerInputSource _input;
+    private readonly IPlayerInputSource _playerInputSource;
 
-    private readonly WilliamsLogoBorder _logoBorder;
-    private readonly PresentationPagePalette _pagePalette = new();
+    private readonly WilliamsLogoBorder _williamsLogoBorder;
+    private readonly PresentationPagePalette _presentationPagePalette = new();
 
     /// <summary>
     ///     The pane the page HOLDS, or null to alternate the two as the attract cycle does (notes §107).
@@ -127,9 +127,9 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private readonly TitleTextPane? _pinnedPane;
 
     private readonly TimeSpan _portTextDuration = TimeSpan.FromSeconds(AttractTuning.TitlePortTextSeconds);
-    private readonly GameServices _services;
-    private readonly SpriteSet _sprites;
-    private readonly WordmarkAppear _wordmark;
+    private readonly GameServices _gameServices;
+    private readonly SpriteSet _spriteSet;
+    private readonly WordmarkAppear _wordmarkAppear;
 
     private TimeSpan _idleElapsed;
 
@@ -141,34 +141,34 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// <summary>
     ///     Opens the title page.
     /// </summary>
-    /// <param name="services">The attract screens' shared dependencies.</param>
+    /// <param name="gameServices">The attract screens' shared dependencies.</param>
     /// <param name="pinnedPane">
     ///     The text pane to open on and hold (notes §107) — what the DEVELOPER TOOLS page's
     ///     TITLE PAGE 1 / TITLE PAGE 2 options pass. Null, the attract cycle's own, alternates the two.
     /// </param>
-    public TitleScreenState(GameServices services, TitleTextPane? pinnedPane = null)
+    public TitleScreenState(GameServices gameServices, TitleTextPane? pinnedPane = null)
     {
-        _services = services;
+        _gameServices = gameServices;
         _pinnedPane = pinnedPane;
         _isShowingArcadeText = pinnedPane != TitleTextPane.Port;
-        _input = services.Input;
-        _sprites = services.Sprites;
-        _highScoreStore = services.HighScoreStore;
-        _controlSettings = services.ControlSettings;
-        _gameSettings = services.GameSettings;
-        _logoBorder = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_sprites.WilliamsLogoSprite));
-        _wordmark = WordmarkAppear.CreateFromMasks(
-            _sprites.TitleWordmarkRimSprite,
-            _sprites.TitleWordmarkCoreSprite,
+        _playerInputSource = gameServices.PlayerInputSource;
+        _spriteSet = gameServices.SpriteSet;
+        _highScoreStore = gameServices.HighScoreStore;
+        _controlSettings = gameServices.ControlSettings;
+        _gameSettings = gameServices.GameSettings;
+        _williamsLogoBorder = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_spriteSet.WilliamsLogoSprite));
+        _wordmarkAppear = WordmarkAppear.CreateFromMasks(
+            _spriteSet.TitleWordmarkRimSprite,
+            _spriteSet.TitleWordmarkCoreSprite,
             new Point(
-                (ScreenSize.Width - _sprites.TitleWordmarkRimSprite.Width * ScreenSize.PortPixelsPerArcadePixel) / 2,
+                (ScreenSize.Width - _spriteSet.TitleWordmarkRimSprite.Width * ScreenSize.PortPixelsPerArcadePixel) / 2,
                 WordmarkRow));
 
         // The presentation page runs its OWN decoded colour set (notes §106): entries 1-7 come
         // from the ROM's seven-byte table ($8A70) with a white flash chasing through them every
         // 3 frames, and the message sits in entry 6. The message reads as "cycling between orange
         // and white", which is what this chase does (notes §106).
-        if (_sprites.Blitter.Palette is { } palette) _pagePalette.Start(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Start(palette);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -178,7 +178,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // 25-character lines) and the credit strings. The arcade's "CREDITS: n" line is not drawn,
         // because the port has no credits, and neither the playfield wall nor the score/lives belong to
         // this page: the cabinet's other attract page carries those.
-        _logoBorder.Draw(spriteBatch, _sprites.Blitter);
+        _williamsLogoBorder.Draw(spriteBatch, _spriteSet.BlitterDraw);
 
         // The two logos, traced from an arcade screenshot (notes §103.4) — the R5 CPU
         // ROM we hold has no attract wordmark (§103.2). The wordmark's masks are drawn in the two
@@ -186,9 +186,9 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
         // body on a yellow rim. The "2084" mark keeps its traced colours. Both at the port's 2x
         // sprite scale.
-        _wordmark.Draw(spriteBatch, _sprites.Blitter, _pagePalette.GetWordmarkRimPaletteIndex(),
-            _pagePalette.GetWordmarkPaletteIndex());
-        if (_wordmark.IsFinished()) DrawCentredLogo(spriteBatch, _sprites.Title2084Sprite, Logo2084Row);
+        _wordmarkAppear.Draw(spriteBatch, _spriteSet.BlitterDraw, _presentationPagePalette.GetWordmarkRimPaletteIndex(),
+            _presentationPagePalette.GetWordmarkPaletteIndex());
+        if (_wordmarkAppear.IsFinished()) DrawCentredLogo(spriteBatch, _spriteSet.Title2084Sprite, Logo2084Row);
 
         // The page's text: ONE of its two panes, alternating (the arcade pane for TitleArcadeTextSeconds, the port's for TitlePortTextSeconds)
         // (notes §107). Both are drawn in the page's own text palette index — the ROM's operand `$66`, entry
@@ -200,14 +200,14 @@ public sealed class TitleScreenState : IGameState, IAttractState
             DrawPortText(spriteBatch);
     }
 
-    public void Update(GameTime gameTime, GameStateManager manager)
+    public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
-        if (_sprites.Blitter.Palette is { } live) _pagePalette.Update(live);
+        if (_spriteSet.BlitterDraw.GamePalette is { } live) _presentationPagePalette.Update(live);
 
-        _logoBorder.Tick();
-        _wordmark.Update();
+        _williamsLogoBorder.Tick();
+        _wordmarkAppear.Update();
 
-        var input = _input.Poll();
+        var playerInputState = _playerInputSource.Poll();
 
         // The arcade's coin-door buttons: START 1 / START 2 pick the number of
         // players (ROM RRG23 START1/START2 → PLRCNT), and the ROM then runs the
@@ -215,17 +215,17 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // convention — spec.txt's "press fire", which the arcade does not have).
         // The shell's F1/F2/F3 (notes §101) are the same three modes and work from
         // every attract screen, this one included.
-        if (ChooseMode(_buttons.Advance(input)) is { } chosen)
+        if (ChooseMode(_buttonEdgeDetector.Advance(playerInputState)) is { } chosen)
         {
             StopColours();
-            manager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _sprites,
+            gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _spriteSet,
                 _highScoreStore));
             return;
         }
 
         // Any button held means a human is at the machine — the arcade's
         // attract only runs while the cabinet sits idle.
-        if (input.FireHeld || input.StartOnePlayerHeld || input.StartTwoPlayersHeld) _idleElapsed = TimeSpan.Zero;
+        if (playerInputState.FireHeld || playerInputState.StartOnePlayerHeld || playerInputState.StartTwoPlayersHeld) _idleElapsed = TimeSpan.Zero;
 
         // Blink removed with the port's old prompt: the port's credit is not a prompt, and
         // flickering it every second made it hard to read (notes §101).
@@ -260,7 +260,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         {
             _idleElapsed = TimeSpan.Zero;
             StopColours();
-            manager.TransitionTo(new StorylineState(_services, new Random()));
+            gameStateManager.TransitionTo(new StorylineState(_gameServices, new Random()));
         }
     }
 
@@ -292,12 +292,12 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// <summary>Centres a large-font line horizontally and prints it in one palette index.</summary>
     private void DrawCenteredLargeText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
     {
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, paletteIndex);
+        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, paletteIndex);
     }
 
     private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
     {
-        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, GetCenteredX(text, false), y, paletteIndex);
+        _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, GetCenteredX(text, false), y, paletteIndex);
     }
 
     /// <summary>Centres one traced logo horizontally, at the port's 2x sprite scale.</summary>
@@ -306,7 +306,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         var width = texture.Width * ScreenSize.PortPixelsPerArcadePixel;
         var height = texture.Height * ScreenSize.PortPixelsPerArcadePixel;
         var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
-        _sprites.Blitter.DrawSprite(spriteBatch, texture, bounds, Color.White);
+        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, texture, bounds, Color.White);
     }
 
     /// <summary>
@@ -328,8 +328,8 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private int GetCenteredX(string text, bool isLarge)
     {
-        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
-        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+        var textWidth = _spriteSet.ArcadeText.MeasureSmallText(text);
+        if (isLarge) textWidth = _spriteSet.ArcadeText.MeasureLargeText(text);
 
         var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
@@ -342,6 +342,6 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private void StopColours()
     {
-        if (_sprites.Blitter.Palette is { } palette) _pagePalette.Stop(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Stop(palette);
     }
 }

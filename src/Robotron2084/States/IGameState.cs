@@ -13,6 +13,6 @@ public interface IGameState
 
     /// <summary>Moves the screen on by one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</summary>
     /// <param name="gameTime">The game's own clock for this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</param>
-    /// <param name="manager">The manager to ask when the screen wants to change to another screen.</param>
-    void Update(GameTime gameTime, GameStateManager manager);
+    /// <param name="gameStateManager">The manager to ask when the screen wants to change to another screen.</param>
+    void Update(GameTime gameTime, GameStateManager gameStateManager);
 }

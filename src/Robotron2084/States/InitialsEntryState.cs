@@ -22,24 +22,24 @@ namespace Robotron2084.States;
 /// </remarks>
 public sealed class InitialsEntryState : IGameState
 {
-    private readonly ScoreEntryCeremony _ceremony;
-    private readonly InitialsEntryModel _entry = new();
-    private readonly IPlayerInputSource _input;
+    private readonly ScoreEntryCeremony _scoreEntryCeremony;
+    private readonly InitialsEntryModel _initialsEntryModel = new();
+    private readonly IPlayerInputSource _playerInputSource;
     private readonly FinalScore _score;
-    private readonly GameServices _services;
-    private readonly SpriteSet _sprites;
+    private readonly GameServices _gameServices;
+    private readonly SpriteSet _spriteSet;
 
     /// <summary>Builds the screen for one qualifying score.</summary>
-    /// <param name="services">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
-    /// <param name="ceremony">The ceremony this screen belongs to, which the entered score is written back into.</param>
+    /// <param name="gameServices">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
+    /// <param name="scoreEntryCeremony">The ceremony this screen belongs to, which the entered score is written back into.</param>
     /// <param name="score">The score being entered, whose player number the page prints.</param>
-    public InitialsEntryState(GameServices services, ScoreEntryCeremony ceremony, FinalScore score)
+    public InitialsEntryState(GameServices gameServices, ScoreEntryCeremony scoreEntryCeremony, FinalScore score)
     {
-        _services = services;
-        _ceremony = ceremony;
+        _gameServices = gameServices;
+        _scoreEntryCeremony = scoreEntryCeremony;
         _score = score;
-        _sprites = services.Sprites;
-        _input = services.Input;
+        _spriteSet = gameServices.SpriteSet;
+        _playerInputSource = gameServices.PlayerInputSource;
         RestorePalette();
     }
 
@@ -49,31 +49,31 @@ public sealed class InitialsEntryState : IGameState
         DrawCells(spriteBatch);
     }
 
-    public void Update(GameTime gameTime, GameStateManager manager)
+    public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
-        var input = _input.Poll();
-        if (!_entry.Tick(input)) return;
+        var playerInputState = _playerInputSource.Poll();
+        if (!_initialsEntryModel.Tick(playerInputState)) return;
 
-        var result = _ceremony.Submit(_score, _entry.GetInitials());
+        var result = _scoreEntryCeremony.Submit(_score, _initialsEntryModel.GetInitials());
         if (result.ReachedEntriesMaximum)
         {
-            manager.TransitionTo(new EntriesMaximumState(_services, _ceremony));
+            gameStateManager.TransitionTo(new EntriesMaximumState(_gameServices, _scoreEntryCeremony));
             return;
         }
 
-        manager.TransitionTo(_ceremony.NextScreen());
+        gameStateManager.TransitionTo(_scoreEntryCeremony.NextScreen());
     }
 
     private void DrawCell(SpriteBatch spriteBatch, int cell, int x)
     {
-        if (cell == _entry.LetterIndex && _entry.IsPreviewRub())
+        if (cell == _initialsEntryModel.LetterIndex && _initialsEntryModel.IsPreviewRub())
         {
-            _sprites.TextRenderer.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(),
+            _spriteSet.ArcadeText.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(),
                 InitialsEntryLayout.InkPaletteIndex);
             return;
         }
 
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, _entry.GetInitials()[cell].ToString(), x,
+        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, _initialsEntryModel.GetInitials()[cell].ToString(), x,
             InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkPaletteIndex);
     }
 
@@ -93,18 +93,18 @@ public sealed class InitialsEntryState : IGameState
 
     private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row)
     {
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
+        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
             HudLayout.ToPortY(row), InitialsEntryLayout.InkPaletteIndex);
     }
 
     /// <summary>G0SUB's "frob" marker: a two-pixel dash one row of the arcade below its cell.</summary>
     private void DrawMarker(SpriteBatch spriteBatch, int x)
     {
-        _sprites.Blitter.DrawSolidRectangle(
+        _spriteSet.BlitterDraw.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(x, InitialsEntryLayout.GetMarkerY(), InitialsEntryLayout.GetMarkerWidthPixels(),
                 InitialsEntryLayout.GetMarkerHeightPixels()),
-            _sprites.Blitter.GetPaletteIndexColour(InitialsEntryLayout.InstructionPaletteIndex));
+            _spriteSet.BlitterDraw.GetPaletteIndexColour(InitialsEntryLayout.InstructionPaletteIndex));
     }
 
     /// <summary>CONGP's three large-font lines and TELSUB's two small-font instructions.</summary>
@@ -122,7 +122,7 @@ public sealed class InitialsEntryState : IGameState
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int column, int row)
     {
-        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
+        _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
             HudLayout.ToPortY(row), InitialsEntryLayout.InstructionPaletteIndex);
     }
 
@@ -133,7 +133,7 @@ public sealed class InitialsEntryState : IGameState
     /// </summary>
     private void RestorePalette()
     {
-        if (_sprites.Blitter.Palette is not { } palette) return;
+        if (_spriteSet.BlitterDraw.GamePalette is not { } palette) return;
 
         palette.SetPaletteIndexValue(InitialsEntryLayout.InkPaletteIndex, GamePalette.DefaultPaletteValues[InitialsEntryLayout.InkPaletteIndex]);
         palette.SetPaletteIndexValue(InitialsEntryLayout.InstructionPaletteIndex,

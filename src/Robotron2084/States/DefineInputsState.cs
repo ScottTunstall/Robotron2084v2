@@ -92,31 +92,31 @@ public sealed class DefineInputsState : IGameState
     private readonly ControlSettings _controlSettings;
 
     private readonly ControlSettingsStore _controlSettingsStore;
-    private readonly DefineInputsHighlight _highlight = new();
-    private readonly DefineInputsModel _model = new();
-    private readonly GameServices _services;
-    private readonly SpriteSet _sprites;
+    private readonly DefineInputsHighlight _defineInputsHighlight = new();
+    private readonly DefineInputsModel _defineInputsModel = new();
+    private readonly GameServices _gameServices;
+    private readonly SpriteSet _spriteSet;
     private InputSnapshot _previousSnapshot;
 
-    public DefineInputsState(GameServices services, ControlSettingsStore controlSettingsStore)
+    public DefineInputsState(GameServices gameServices, ControlSettingsStore controlSettingsStore)
     {
-        _services = services;
-        _sprites = services.Sprites;
-        _controlSettings = services.ControlSettings;
+        _gameServices = gameServices;
+        _spriteSet = gameServices.SpriteSet;
+        _controlSettings = gameServices.ControlSettings;
         _controlSettingsStore = controlSettingsStore;
         _previousSnapshot = InputSnapshot.Read();
         RestorePalette();
 
-        if (_sprites.Blitter.Palette is { } palette) _highlight.Start(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _defineInputsHighlight.Start(palette);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         DrawHeading(spriteBatch, Title, TitleRow);
 
-        var last = Math.Min(_model.FirstVisibleLine + DefineInputsModel.VisibleLines, DefineInputsModel.LineCount);
+        var last = Math.Min(_defineInputsModel.FirstVisibleLine + DefineInputsModel.VisibleLines, DefineInputsModel.LineCount);
         var row = 0;
-        for (var line = _model.FirstVisibleLine; line < last; line++, row++)
+        for (var line = _defineInputsModel.FirstVisibleLine; line < last; line++, row++)
             DrawLine(spriteBatch, line, FirstLineRow + row * LineStep);
 
         DrawInstruction(spriteBatch, Instructions, InstructionsRow);
@@ -124,16 +124,16 @@ public sealed class DefineInputsState : IGameState
         DrawInstruction(spriteBatch, ExitLine, ExitRow);
     }
 
-    public void Update(GameTime gameTime, GameStateManager manager)
+    public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
-        if (_sprites.Blitter.Palette is { } palette) _highlight.Update(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _defineInputsHighlight.Update(palette);
 
         var now = InputSnapshot.Read();
 
-        if (_model.IsArmed)
+        if (_defineInputsModel.IsArmed)
             CaptureInput(now);
         else
-            Navigate(now, manager);
+            Navigate(now, gameStateManager);
 
         _previousSnapshot = now;
     }
@@ -154,12 +154,12 @@ public sealed class DefineInputsState : IGameState
     {
         if (WasKeyboardPressed(now, Keys.Back) || WasPadPressed(now, Buttons.B))
         {
-            _model.CancelArm();
+            _defineInputsModel.CancelArm();
             return;
         }
 
         var captured = ControlCapture.GetNewlyPressed(_previousSnapshot, now);
-        if (captured.Kind != InputBindingKind.None && _model.Assign(_controlSettings, captured))
+        if (captured.Kind != InputBindingKind.None && _defineInputsModel.Assign(_controlSettings, captured))
             _controlSettingsStore.Save(_controlSettings);
     }
 
@@ -171,7 +171,7 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private void DrawCursor(SpriteBatch spriteBatch, int y)
     {
-        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingPaletteIndex);
+        _spriteSet.BlitterDraw.DrawGlyphStatic(spriteBatch, _spriteSet.CursorArrowSprite, CursorColumn, y, HeadingPaletteIndex);
     }
 
     /// <summary>
@@ -179,7 +179,7 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y)
     {
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingPaletteIndex);
+        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingPaletteIndex);
     }
 
     /// <summary>
@@ -199,16 +199,16 @@ public sealed class DefineInputsState : IGameState
     {
         if (DefineInputsModel.IsSpacer(line)) return;
 
-        if (_model.IsCursorOn(line)) DrawCursor(spriteBatch, y);
+        if (_defineInputsModel.IsCursorOn(line)) DrawCursor(spriteBatch, y);
 
         // The arrow hides itself while armed (IsCursorOn): the next input pressed becomes the
         // binding rather than moving the cursor, so the armed line is identified by its prompt.
-        var isArmed = _model.IsArmed && _model.Line == line;
+        var isArmed = _defineInputsModel.IsArmed && _defineInputsModel.Line == line;
 
         // The selected line's label is the page's one cycling thing (notes §115): it strobes in the
         // highlight's palette index — while armed as well — and the line's value stays on the page's green.
         var labelPaletteIndex = InputPaletteIndex;
-        if (_model.Line == line) labelPaletteIndex = DefineInputsHighlight.PaletteIndex;
+        if (_defineInputsModel.Line == line) labelPaletteIndex = DefineInputsHighlight.PaletteIndex;
 
         DrawText(spriteBatch, GetLabel(line), LabelColumn, y, labelPaletteIndex);
         DrawValue(spriteBatch, line, isArmed, InputPaletteIndex, y);
@@ -216,7 +216,7 @@ public sealed class DefineInputsState : IGameState
 
     private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int paletteIndex)
     {
-        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
+        return _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
     }
 
     /// <summary>
@@ -259,34 +259,34 @@ public sealed class DefineInputsState : IGameState
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
     private int GetCenteredX(string text, bool isLarge = false)
     {
-        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
-        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+        var textWidth = _spriteSet.ArcadeText.MeasureSmallText(text);
+        if (isLarge) textWidth = _spriteSet.ArcadeText.MeasureLargeText(text);
 
         var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
     }
 
     /// <summary>The idle half: scrolling, arming, clearing, defaults, and leaving.</summary>
-    private void Navigate(InputSnapshot now, GameStateManager manager)
+    private void Navigate(InputSnapshot now, GameStateManager gameStateManager)
     {
         ScrollOrArm(now);
 
         if (WasKeyboardPressed(now, Keys.Delete) || WasPadPressed(now, Buttons.X))
         {
-            _model.ClearHighlighted(_controlSettings);
+            _defineInputsModel.ClearHighlighted(_controlSettings);
             _controlSettingsStore.Save(_controlSettings);
         }
 
         if (WasKeyboardPressed(now, Keys.R))
         {
-            _model.ResetAll(_controlSettings);
+            _defineInputsModel.ResetAll(_controlSettings);
             _controlSettingsStore.Save(_controlSettings);
         }
 
         if (WasKeyboardPressed(now, Keys.F10))
         {
             _controlSettingsStore.Save(_controlSettings);
-            manager.TransitionTo(new DeveloperToolsState(_services, _controlSettingsStore));
+            gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices, _controlSettingsStore));
         }
     }
 
@@ -297,7 +297,7 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private void RestorePalette()
     {
-        if (_sprites.Blitter.Palette is not { } palette) return;
+        if (_spriteSet.BlitterDraw.GamePalette is not { } palette) return;
 
         foreach (var paletteIndex in OwnedPaletteIndices) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
     }
@@ -305,11 +305,11 @@ public sealed class DefineInputsState : IGameState
     /// <summary>Moves the highlight up or down, or arms the highlighted row for a new binding.</summary>
     private void ScrollOrArm(InputSnapshot now)
     {
-        if (WasKeyboardPressed(now, Keys.Up) || WasPadPressed(now, Buttons.DPadUp)) _model.MoveUp();
+        if (WasKeyboardPressed(now, Keys.Up) || WasPadPressed(now, Buttons.DPadUp)) _defineInputsModel.MoveUp();
 
-        if (WasKeyboardPressed(now, Keys.Down) || WasPadPressed(now, Buttons.DPadDown)) _model.MoveDown();
+        if (WasKeyboardPressed(now, Keys.Down) || WasPadPressed(now, Buttons.DPadDown)) _defineInputsModel.MoveDown();
 
-        if (WasKeyboardPressed(now, Keys.Enter) || WasPadPressed(now, Buttons.A)) _model.Arm();
+        if (WasKeyboardPressed(now, Keys.Enter) || WasPadPressed(now, Buttons.A)) _defineInputsModel.Arm();
     }
 
     private bool WasKeyboardPressed(InputSnapshot now, Keys key)
@@ -319,7 +319,7 @@ public sealed class DefineInputsState : IGameState
 
     private bool WasPadPressed(InputSnapshot now, Buttons button)
     {
-        return (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
-               || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
+        return (now.PlayerOneGamePadState.IsButtonDown(button) && !_previousSnapshot.PlayerOneGamePadState.IsButtonDown(button))
+               || (now.PlayerTwoGamePadState.IsButtonDown(button) && !_previousSnapshot.PlayerTwoGamePadState.IsButtonDown(button));
     }
 }

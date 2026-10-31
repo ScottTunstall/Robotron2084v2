@@ -3,28 +3,28 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Robotron2084.States;
 
-/// <summary>Holds the current state and forwards update/draw; transitions replace <see cref="Current" />.</summary>
+/// <summary>Holds the current state and forwards update/draw; transitions replace <see cref="CurrentGameState" />.</summary>
 public sealed class GameStateManager
 {
-    public GameStateManager(IGameState firstState)
+    public GameStateManager(IGameState firstGameState)
     {
-        Current = firstState;
+        CurrentGameState = firstGameState;
     }
 
-    public IGameState Current { get; private set; }
+    public IGameState CurrentGameState { get; private set; }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        Current.Draw(spriteBatch, font);
+        CurrentGameState.Draw(spriteBatch, font);
     }
 
-    public void TransitionTo(IGameState next)
+    public void TransitionTo(IGameState nextGameState)
     {
-        Current = next;
+        CurrentGameState = nextGameState;
     }
 
     public void Update(GameTime gameTime)
     {
-        Current.Update(gameTime, this);
+        CurrentGameState.Update(gameTime, this);
     }
 }

@@ -16,16 +16,16 @@ public sealed class ScoreEntryCeremony
     private readonly HighScoreStore _highScoreStore;
     private readonly HighScoreTable _highScoreTable;
     private readonly Queue<FinalScore> _pendingScores;
-    private readonly GameServices _services;
+    private readonly GameServices _gameServices;
     private readonly int[] _sessionScores;
 
     /// <summary>Builds the ceremony for a finished game, loading the table the scores are offered to.</summary>
-    /// <param name="services">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
+    /// <param name="gameServices">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
     /// <param name="scoresHighestFirst">The game's final scores with their player numbers.</param>
-    public ScoreEntryCeremony(GameServices services, IReadOnlyList<FinalScore> scoresHighestFirst)
+    public ScoreEntryCeremony(GameServices gameServices, IReadOnlyList<FinalScore> scoresHighestFirst)
     {
-        _services = services;
-        _highScoreStore = services.HighScoreStore;
+        _gameServices = gameServices;
+        _highScoreStore = gameServices.HighScoreStore;
         _highScoreTable = _highScoreStore.Load();
         _pendingScores = new Queue<FinalScore>(scoresHighestFirst);
         _sessionScores = [.. scoresHighestFirst.Select(score => score.Score)];
@@ -37,10 +37,10 @@ public sealed class ScoreEntryCeremony
         while (_pendingScores.Count > 0)
         {
             var score = _pendingScores.Dequeue();
-            if (_highScoreTable.Qualifies(score.Score)) return new InitialsEntryState(_services, this, score);
+            if (_highScoreTable.Qualifies(score.Score)) return new InitialsEntryState(_gameServices, this, score);
         }
 
-        return new HighScoreTableState(_services, _sessionScores, _highScoreTable);
+        return new HighScoreTableState(_gameServices, _sessionScores, _highScoreTable);
     }
 
     /// <summary>

@@ -28,8 +28,8 @@ public sealed class WaveClearState : IGameState
     /// </summary>
     private readonly bool _isAttractMode;
 
-    private readonly GameSession _session;
-    private readonly SpriteSet _sprites;
+    private readonly GameSession _gameSession;
+    private readonly SpriteSet _spriteSet;
 
     /// <summary>
     ///     The arcade's wave-complete effect (notes §79): a hatched, colour-cycling tunnel that
@@ -37,7 +37,7 @@ public sealed class WaveClearState : IGameState
     ///     black. This replaces the port's old "LEVEL n COMPLETE" text — the ROM shows no text
     ///     here at all (its `&lt;n&gt; WAVE` text belongs to the wave START, §58).
     /// </summary>
-    private readonly TunnelEffect _tunnel = new();
+    private readonly TunnelEffect _tunnelEffect = new();
 
     /// <summary>
     ///     The colour-cycling palette the tunnel is drawn in (notes §86) — the ROM fills palette indices
@@ -52,12 +52,12 @@ public sealed class WaveClearState : IGameState
 
     private int _ticksRemaining = ScreenTuning.WaveClearDisplayTicks;
 
-    public WaveClearState(SpriteSet sprites, HighScoreStore highScoreStore, GameSession session,
+    public WaveClearState(SpriteSet spriteSet, HighScoreStore highScoreStore, GameSession gameSession,
             bool isAttractMode = false)
     {
-        _sprites = sprites;
+        _spriteSet = spriteSet;
         _highScoreStore = highScoreStore;
-        _session = session;
+        _gameSession = gameSession;
         _isAttractMode = isAttractMode;
     }
 
@@ -72,10 +72,10 @@ public sealed class WaveClearState : IGameState
     {
         // The wave that was just CLEARED is carried in _clearedWave (the session's counter has
         // already advanced); nothing needs to be written for it — the ROM draws the tunnel.
-        _tunnel.Draw(spriteBatch, _sprites);
+        _tunnelEffect.Draw(spriteBatch, _spriteSet);
     }
 
-    public void Update(GameTime gameTime, GameStateManager manager)
+    public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
         if (!_hasAskedForWaveEndSound)
         {
@@ -86,31 +86,31 @@ public sealed class WaveClearState : IGameState
         // Two rings a frame (the ROM's task delay is 1 and its counter is seeded 2), then the
         // black pass — 53 + 53 rings, about 0.9 s. The state still honours the display time as
         // a floor, so the tunnel is never cut off.
-        if (!_tunnel.IsFinished)
+        if (!_tunnelEffect.IsFinished)
         {
             // The palette task runs beside the walker's, on the same delay of 1, so the ramp's
             // window slides once per ring pass (notes §86).
-            if (_ringsPaletted != _tunnel.RingsDrawn) AdvancePalette();
+            if (_ringsPaletted != _tunnelEffect.RingsDrawn) AdvancePalette();
 
-            _tunnel.Update();
+            _tunnelEffect.Update();
         }
 
-        if (--_ticksRemaining <= 0 && _tunnel.IsFinished)
+        if (--_ticksRemaining <= 0 && _tunnelEffect.IsFinished)
         {
             RestorePalette();
-            IGameState nextState = new PlayingState(_sprites, _highScoreStore, _session);
+            IGameState nextGameState = new PlayingState(_spriteSet, _highScoreStore, _gameSession);
             if (_isAttractMode)
-                nextState = new AttractState(GameServices.CreateFrom(_session, _sprites, _highScoreStore,
-                    _session.GetCurrent().Input));
+                nextGameState = new AttractState(GameServices.CreateFrom(_gameSession, _spriteSet, _highScoreStore,
+                    _gameSession.GetCurrent().PlayerInputSource));
 
-            manager.TransitionTo(nextState);
+            gameStateManager.TransitionTo(nextGameState);
         }
     }
 
     /// <summary>One pass of the ROM's palette task: pick the ramp once, then slide its window.</summary>
     private void AdvancePalette()
     {
-        _ringsPaletted = _tunnel.RingsDrawn;
+        _ringsPaletted = _tunnelEffect.RingsDrawn;
 
         if (_paletteStarted)
         {
@@ -123,12 +123,12 @@ public sealed class WaveClearState : IGameState
 
             // While the ramp runs it owns every palette index, so the six colour processes must not fight
             // it for palette indices 10-15 (the ROM's own palette task writes all fifteen every pass).
-            if (_sprites.Blitter.Palette is { } live)
+            if (_spriteSet.BlitterDraw.GamePalette is { } live)
                 for (var paletteIndex = FontPaletteIndices.FirstCyclingPaletteIndex; paletteIndex <= 15; paletteIndex++)
                     live.SuspendPaletteIndex(paletteIndex);
         }
 
-        if (_sprites.Blitter.Palette is { } palette) _tunnelPalette.Apply(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _tunnelPalette.Apply(palette);
     }
 
     /// <summary>
@@ -137,7 +137,7 @@ public sealed class WaveClearState : IGameState
     /// </summary>
     private void RestorePalette()
     {
-        if (_sprites.Blitter.Palette is not { } palette) return;
+        if (_spriteSet.BlitterDraw.GamePalette is not { } palette) return;
 
         for (var paletteIndex = 1; paletteIndex <= 15; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
 

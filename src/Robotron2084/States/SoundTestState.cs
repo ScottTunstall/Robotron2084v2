@@ -97,8 +97,8 @@ public sealed class SoundTestState : IGameState
         new("TRANSPORTER", "TRSPRC", "BRAIN WAVE", null)
     ];
 
-    private readonly GameServices _services;
-    private readonly SpriteSet _sprites;
+    private readonly GameServices _gameServices;
+    private readonly SpriteSet _spriteSet;
     private int _index;
     private bool _isAutoUp;
     private InputSnapshot _previousSnapshot;
@@ -107,27 +107,27 @@ public sealed class SoundTestState : IGameState
     private int _settleTicksLeft;
 
     /// <summary>Opens the page and starts the first sound.</summary>
-    /// <param name="services">The attract sequence's shared services.</param>
-    public SoundTestState(GameServices services)
+    /// <param name="gameServices">The attract sequence's shared services.</param>
+    public SoundTestState(GameServices gameServices)
     {
-        _services = services;
-        _sprites = services.Sprites;
+        _gameServices = gameServices;
+        _spriteSet = gameServices.SpriteSet;
         _previousSnapshot = InputSnapshot.Read();
-        if (_sprites.Blitter.Palette is { } palette) palette.SetPaletteIndexValue(TextPaletteIndex, GamePalette.DefaultPaletteValues[TextPaletteIndex]);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) palette.SetPaletteIndexValue(TextPaletteIndex, GamePalette.DefaultPaletteValues[TextPaletteIndex]);
 
         StartSound();
     }
 
     /// <summary>The entry the page is on.</summary>
-    internal SoundTestEntry Current => Entries[_index];
+    internal SoundTestEntry CurrentSoundTestEntry => Entries[_index];
 
     /// <inheritdoc />
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        var entry = Current;
-        DrawLarge(spriteBatch, entry.Heading, NumberRow);
-        DrawLarge(spriteBatch, ToDisplay(entry.Name), NameRow);
-        DrawSmall(spriteBatch, ToDisplay(entry.Description), DescriptionRow);
+        var soundTestEntry = CurrentSoundTestEntry;
+        DrawLarge(spriteBatch, soundTestEntry.Heading, NumberRow);
+        DrawLarge(spriteBatch, ToDisplay(soundTestEntry.Name), NameRow);
+        DrawSmall(spriteBatch, ToDisplay(soundTestEntry.Description), DescriptionRow);
         var autoUpWord = "OFF";
         if (_isAutoUp) autoUpWord = "ON";
 
@@ -138,14 +138,14 @@ public sealed class SoundTestState : IGameState
     }
 
     /// <inheritdoc />
-    public void Update(GameTime gameTime, GameStateManager manager)
+    public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
         var now = InputSnapshot.Read();
 
         if (IsPressed(now, Keys.F10))
         {
             Silence();
-            manager.TransitionTo(new DeveloperToolsState(_services));
+            gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices));
             return;
         }
 
@@ -176,10 +176,10 @@ public sealed class SoundTestState : IGameState
     }
 
     /// <summary>Starts an entry: sends its sound number, or starts the transporter when it has none.</summary>
-    /// <param name="entry">The entry.</param>
-    private static void Play(SoundTestEntry entry)
+    /// <param name="soundTestEntry">The entry.</param>
+    private static void Play(SoundTestEntry soundTestEntry)
     {
-        if (entry.SoundNumber is { } soundNumber)
+        if (soundTestEntry.SoundNumber is { } soundNumber)
             Sound.SendDirect(soundNumber);
         else
             Sound.PlayTransporter();
@@ -194,14 +194,14 @@ public sealed class SoundTestState : IGameState
 
     private void DrawLarge(SpriteBatch spriteBatch, string text, int y)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(_sprites.TextRenderer.MeasureLargeText(text));
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(_spriteSet.ArcadeText.MeasureLargeText(text));
+        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
     }
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int y)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(_sprites.TextRenderer.MeasureSmallText(text));
-        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(_spriteSet.ArcadeText.MeasureSmallText(text));
+        _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
     }
 
     /// <summary>True on the tick a key goes down.</summary>
@@ -230,7 +230,7 @@ public sealed class SoundTestState : IGameState
             _settleTicksLeft--;
             if (_settleTicksLeft == 0)
             {
-                Play(Current);
+                Play(CurrentSoundTestEntry);
                 _repeatTicksLeft = RepeatTicks;
             }
 

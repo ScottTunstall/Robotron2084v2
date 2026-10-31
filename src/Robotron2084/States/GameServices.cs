@@ -16,10 +16,10 @@ namespace Robotron2084.States;
 ///     controls, the settings and both players' inputs.
 /// </summary>
 public sealed record GameServices(
-    SpriteSet Sprites,
+    SpriteSet SpriteSet,
     HighScoreStore HighScoreStore,
     ControlSettings ControlSettings,
-    IPlayerInputSource Input,
+    IPlayerInputSource PlayerInputSource,
     GameSettings GameSettings)
 {
     /// <summary>
@@ -27,9 +27,9 @@ public sealed record GameServices(
     ///     ends and the machine goes back to the title (the session already carries the
     ///     controls and the settings, so nothing has to be threaded through for that).
     /// </summary>
-    public static GameServices CreateFrom(GameSession session, SpriteSet sprites, HighScoreStore highScoreStore,
-        IPlayerInputSource input)
+    public static GameServices CreateFrom(GameSession gameSession, SpriteSet spriteSet, HighScoreStore highScoreStore,
+        IPlayerInputSource playerInputSource)
     {
-        return new GameServices(sprites, highScoreStore, session.ControlSettings, input, session.GameSettings);
+        return new GameServices(spriteSet, highScoreStore, gameSession.ControlSettings, playerInputSource, gameSession.GameSettings);
     }
 }

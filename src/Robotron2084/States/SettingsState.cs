@@ -73,24 +73,24 @@ public sealed class SettingsState : IGameState
 
     private readonly GameSettings _gameSettings;
     private readonly GameSettingsStore _gameSettingsStore;
-    private readonly DefineInputsHighlight _highlight = new();
+    private readonly DefineInputsHighlight _defineInputsHighlight = new();
     private readonly HighScoreStore _highScoreStore;
-    private readonly SettingsModel _model = new();
-    private readonly GameServices _services;
-    private readonly SpriteSet _sprites;
+    private readonly SettingsModel _settingsModel = new();
+    private readonly GameServices _gameServices;
+    private readonly SpriteSet _spriteSet;
     private InputSnapshot _previousSnapshot;
 
-    public SettingsState(GameServices services, GameSettingsStore settingsStore)
+    public SettingsState(GameServices gameServices, GameSettingsStore gameSettingsStore)
     {
-        _services = services;
-        _sprites = services.Sprites;
-        _gameSettings = services.GameSettings;
-        _highScoreStore = services.HighScoreStore;
-        _gameSettingsStore = settingsStore;
+        _gameServices = gameServices;
+        _spriteSet = gameServices.SpriteSet;
+        _gameSettings = gameServices.GameSettings;
+        _highScoreStore = gameServices.HighScoreStore;
+        _gameSettingsStore = gameSettingsStore;
         _previousSnapshot = InputSnapshot.Read();
         RestorePalette();
 
-        if (_sprites.Blitter.Palette is { } palette) _highlight.Start(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _defineInputsHighlight.Start(palette);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -105,15 +105,15 @@ public sealed class SettingsState : IGameState
         DrawInstruction(spriteBatch, ExitLine, ExitRow);
     }
 
-    public void Update(GameTime gameTime, GameStateManager manager)
+    public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
-        if (_sprites.Blitter.Palette is { } palette) _highlight.Update(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _defineInputsHighlight.Update(palette);
 
         var now = InputSnapshot.Read();
 
-        if (WasPressed(now, Keys.Up, Buttons.DPadUp)) _model.MoveUp();
+        if (WasPressed(now, Keys.Up, Buttons.DPadUp)) _settingsModel.MoveUp();
 
-        if (WasPressed(now, Keys.Down, Buttons.DPadDown)) _model.MoveDown();
+        if (WasPressed(now, Keys.Down, Buttons.DPadDown)) _settingsModel.MoveDown();
 
         if (WasPressed(now, Keys.Left, Buttons.DPadLeft)) Change(-1);
 
@@ -124,7 +124,7 @@ public sealed class SettingsState : IGameState
         if (WasKeyboardPressed(now, Keys.F10))
         {
             _gameSettingsStore.Save(_gameSettings);
-            manager.TransitionTo(new DeveloperToolsState(_services, null, _gameSettingsStore));
+            gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices, null, _gameSettingsStore));
         }
 
         _previousSnapshot = now;
@@ -133,7 +133,7 @@ public sealed class SettingsState : IGameState
     /// <summary>Performs the highlighted action row, if it reads YES.</summary>
     private void Activate()
     {
-        switch (_model.Activate(_gameSettings))
+        switch (_settingsModel.Activate(_gameSettings))
         {
             case SettingsAction.RestoreFactorySettings:
                 _gameSettingsStore.Save(_gameSettings);
@@ -148,7 +148,7 @@ public sealed class SettingsState : IGameState
     /// <summary>Steps the highlighted row, writing the change straight to the file.</summary>
     private void Change(int direction)
     {
-        _model.Change(_gameSettings, direction);
+        _settingsModel.Change(_gameSettings, direction);
         _gameSettingsStore.Save(_gameSettings);
     }
 
@@ -158,13 +158,13 @@ public sealed class SettingsState : IGameState
     /// </summary>
     private void DrawCursor(SpriteBatch spriteBatch, int y)
     {
-        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingPaletteIndex);
+        _spriteSet.BlitterDraw.DrawGlyphStatic(spriteBatch, _spriteSet.CursorArrowSprite, CursorColumn, y, HeadingPaletteIndex);
     }
 
     /// <summary>The heading: the arcade's LARGE font, centred, in the page's WHITE.</summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y)
     {
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingPaletteIndex);
+        _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingPaletteIndex);
     }
 
     /// <summary>An instruction line under the list: the SMALL font, centred, in the page's WHITE.</summary>
@@ -180,16 +180,16 @@ public sealed class SettingsState : IGameState
     /// </summary>
     private void DrawLine(SpriteBatch spriteBatch, int line, int y)
     {
-        if (_model.Line == line) DrawCursor(spriteBatch, y);
+        if (_settingsModel.Line == line) DrawCursor(spriteBatch, y);
 
         var labelPaletteIndex = InputPaletteIndex;
-        if (_model.Line == line) labelPaletteIndex = DefineInputsHighlight.PaletteIndex;
+        if (_settingsModel.Line == line) labelPaletteIndex = DefineInputsHighlight.PaletteIndex;
 
         DrawText(spriteBatch, SettingsModel.GetLabel(line), LabelColumn, y, labelPaletteIndex);
-        DrawText(spriteBatch, _model.GetValue(_gameSettings, line), ValueColumn, y, InputPaletteIndex);
+        DrawText(spriteBatch, _settingsModel.GetValue(_gameSettings, line), ValueColumn, y, InputPaletteIndex);
 
         string note;
-        if (SettingsModel.IsActionLine(line)) note = _model.GetActionHint(line);
+        if (SettingsModel.IsActionLine(line)) note = _settingsModel.GetActionHint(line);
         else note = SettingsModel.GetNote(_gameSettings, line);
 
         if (note.Length > 0) DrawText(spriteBatch, note, NoteColumn, y, HeadingPaletteIndex);
@@ -197,14 +197,14 @@ public sealed class SettingsState : IGameState
 
     private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int paletteIndex)
     {
-        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
+        return _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
     }
 
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
     private int GetCenteredX(string text, bool isLarge = false)
     {
-        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
-        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+        var textWidth = _spriteSet.ArcadeText.MeasureSmallText(text);
+        if (isLarge) textWidth = _spriteSet.ArcadeText.MeasureLargeText(text);
 
         var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
@@ -216,7 +216,7 @@ public sealed class SettingsState : IGameState
     /// </summary>
     private void RestorePalette()
     {
-        if (_sprites.Blitter.Palette is not { } palette) return;
+        if (_spriteSet.BlitterDraw.GamePalette is not { } palette) return;
 
         foreach (var paletteIndex in OwnedPaletteIndices) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
     }
@@ -228,8 +228,8 @@ public sealed class SettingsState : IGameState
 
     private bool WasPadPressed(InputSnapshot now, Buttons button)
     {
-        return (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
-               || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
+        return (now.PlayerOneGamePadState.IsButtonDown(button) && !_previousSnapshot.PlayerOneGamePadState.IsButtonDown(button))
+               || (now.PlayerTwoGamePadState.IsButtonDown(button) && !_previousSnapshot.PlayerTwoGamePadState.IsButtonDown(button));
     }
 
     /// <summary>True on the tick the key or the pad button (either pad) goes down.</summary>

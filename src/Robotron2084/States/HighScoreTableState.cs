@@ -48,40 +48,40 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class HighScoreTableState : IGameState, IAttractState
 {
-    private readonly HighScoreFrameAnimation _frameAnimation = new();
+    private readonly HighScoreFrameAnimation _highScoreFrameAnimation = new();
     private readonly GameSettings _gameSettings;
     private readonly HighScorePalette _highScorePalette = new();
     private readonly HighScoreStore _highScoreStore;
     private readonly HighScoreTable _highScoreTable;
-    private readonly IPlayerInputSource _input;
-    private readonly HighScorePageHold _pageHold = new();
+    private readonly IPlayerInputSource _playerInputSource;
+    private readonly HighScorePageHold _highScorePageHold = new();
     private readonly int[] _postedScores;
-    private readonly HighScorePrintSequence _printSequence = new();
-    private readonly SpriteSet _sprites;
+    private readonly HighScorePrintSequence _highScorePrintSequence = new();
+    private readonly SpriteSet _spriteSet;
     private bool _rampsStarted;
 
     /// <summary>Creates the table screen for the scores this session just offered.</summary>
-    /// <param name="services">The attract screens' shared dependencies.</param>
+    /// <param name="gameServices">The attract screens' shared dependencies.</param>
     /// <param name="postedScores">
     ///     The scores this session just offered to the table (highest first) — the
     ///     ROM's <c>ZP1SCR</c>/<c>ZP2SCR</c> at <c>CLSET</c> time: their rows are
     ///     highlighted. Empty when the table is reached from the attract cycle.
     /// </param>
-    /// <param name="table">
+    /// <param name="highScoreTable">
     ///     The table to draw. The score ceremony hands over the very table it has just written the
     ///     session's scores into, because TODAY's list is deliberately NOT persisted (the ROM reloads it
     ///     from <c>TODTAB</c> at power-up) and a reload would lose the scores just posted. Null loads it
     ///     from the store, which is what the attract cycle and the Insert dev key want.
     /// </param>
-    public HighScoreTableState(GameServices services, IReadOnlyList<int>? postedScores = null,
-        HighScoreTable? table = null)
+    public HighScoreTableState(GameServices gameServices, IReadOnlyList<int>? postedScores = null,
+        HighScoreTable? highScoreTable = null)
     {
-        _input = services.Input;
-        _sprites = services.Sprites;
-        _highScoreStore = services.HighScoreStore;
-        _gameSettings = services.GameSettings;
+        _playerInputSource = gameServices.PlayerInputSource;
+        _spriteSet = gameServices.SpriteSet;
+        _highScoreStore = gameServices.HighScoreStore;
+        _gameSettings = gameServices.GameSettings;
         _postedScores = [.. postedScores ?? []];
-        _highScoreTable = table ?? _highScoreStore.Load();
+        _highScoreTable = highScoreTable ?? _highScoreStore.Load();
 
         // The ROM's own score processing (EGSUB) has already happened by the time
         // the table is drawn; a save here is the CMOS write.
@@ -89,7 +89,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
         // RRTABLE's TABLE starts the page's colour processes before it draws anything
         // (MAKP LOOPP comes first, the other four after the lists are printed).
-        if (_sprites.Blitter.Palette is { } palette) _highScorePalette.Start(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Start(palette);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -99,52 +99,52 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         // Nothing but the wall until the frame's passes have finished, then the page
         // prints itself in the ROM's own order: today's list, the top entry, the
         // all-time list, the headers (PRJNK + TABLE + SCRMES).
-        DrawTodayList(spriteBatch, _printSequence.TodayRows);
+        DrawTodayList(spriteBatch, _highScorePrintSequence.TodayRows);
 
-        if (_printSequence.TopPrinted) DrawTopEntry(spriteBatch);
+        if (_highScorePrintSequence.TopPrinted) DrawTopEntry(spriteBatch);
 
-        DrawAllTimeList(spriteBatch, _printSequence.AllTimeRows);
+        DrawAllTimeList(spriteBatch, _highScorePrintSequence.AllTimeRows);
 
-        if (_printSequence.HeadersPrinted)
+        if (_highScorePrintSequence.HeadersPrinted)
         {
             DrawHeader(spriteBatch, "ROBOTRON HEROES", HighScoreTableLayout.TodayHeaderRow);
             DrawHeader(spriteBatch, "ALL TIME HEROES", HighScoreTableLayout.AllTimeHeaderRow);
         }
     }
 
-    public void Update(GameTime gameTime, GameStateManager manager)
+    public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
         // The switches are only READ after the 600-frame hold (TAB888 has no check),
         // but polling every tick keeps the input source's own edge state moving.
-        var input = _input.Poll();
+        var playerInputState = _playerInputSource.Poll();
 
-        _frameAnimation.Tick();
+        _highScoreFrameAnimation.Tick();
 
         // RRTABLE's order: FRAMER draws the wall on an EMPTY page (SCRCLR ran before
         // TABORG), and only when it returns does PRJNK print the lists four rows a ROM
         // frame, then the top entry, then the headers — and only THEN do the four ramp
         // processes start and the 600-frame hold begin (notes §98.6).
-        _printSequence.Tick(_frameAnimation.IsFinished(), _highScoreTable.Today.Count, _highScoreTable.AllTime.Count);
+        _highScorePrintSequence.Tick(_highScoreFrameAnimation.IsFinished(), _highScoreTable.Today.Count, _highScoreTable.AllTime.Count);
 
-        if (_printSequence.IsDone())
+        if (_highScorePrintSequence.IsDone())
         {
             if (!_rampsStarted)
             {
                 _rampsStarted = true;
-                if (_sprites.Blitter.Palette is { } livePalette) _highScorePalette.StartRamps(livePalette);
+                if (_spriteSet.BlitterDraw.GamePalette is { } livePalette) _highScorePalette.StartRamps(livePalette);
             }
 
             // TAB888's 200 x NAP 3 with NO switch check at all, then TAB777/TAB999 —
             // which leave the moment the switches are CLEAR and are delayed, not
             // shortened, by a switch that is held (see HighScorePageHold).
-            if (_pageHold.Tick(AnySwitchHeld(input)))
+            if (_highScorePageHold.Tick(AnySwitchHeld(playerInputState)))
             {
-                Leave(manager);
+                Leave(gameStateManager);
                 return;
             }
         }
 
-        if (_sprites.Blitter.Palette is { } live) _highScorePalette.Update(live);
+        if (_spriteSet.BlitterDraw.GamePalette is { } live) _highScorePalette.Update(live);
     }
 
     /// <summary>
@@ -153,13 +153,13 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     ///     A SET bit is a PRESSED switch (the $3031 movement table), and the port's own
     ///     test keys (P) are not arcade switches, so they do not hold the page up.
     /// </summary>
-    private static bool AnySwitchHeld(PlayerInputState input)
+    private static bool AnySwitchHeld(PlayerInputState playerInputState)
     {
-        return input.FireHeld
-               || input.StartOnePlayerHeld
-               || input.StartTwoPlayersHeld
-               || input.MoveDirection != IntVector2.Zero
-               || input.ShootDirection != IntVector2.Zero;
+        return playerInputState.FireHeld
+               || playerInputState.StartOnePlayerHeld
+               || playerInputState.StartTwoPlayersHeld
+               || playerInputState.MoveDirection != IntVector2.Zero
+               || playerInputState.ShootDirection != IntVector2.Zero;
     }
 
     private static int GetColumnX(int column)
@@ -187,10 +187,10 @@ public sealed class HighScoreTableState : IGameState, IAttractState
                 ScreenTuning.HighScoreAllTimeHighlightPaletteIndex);
 
             var afterRank = DrawRank(spriteBatch, rank, x, y, paletteIndex, false);
-            _sprites.TextRenderer.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, paletteIndex);
+            _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, paletteIndex);
 
             if (entries[rank - 2].Score != 0)
-                _sprites.TextRenderer.DrawSmallTableNumber(
+                _spriteSet.ArcadeText.DrawSmallTableNumber(
                     spriteBatch,
                     entries[rank - 2].Score,
                     afterRank + ScreenSize.ToPortPixelsFromArcadePixels(HighScoreTableLayout.AllTimeScoreOffsetColumns *
@@ -212,7 +212,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// </summary>
     private void DrawFrame(SpriteBatch spriteBatch)
     {
-        for (var stroke = _frameAnimation.GetErasedStroke() + 1; stroke <= _frameAnimation.GetDrawnStroke(); stroke++)
+        for (var stroke = _highScoreFrameAnimation.GetErasedStroke() + 1; stroke <= _highScoreFrameAnimation.GetDrawnStroke(); stroke++)
             DrawStroke(spriteBatch, stroke);
     }
 
@@ -227,7 +227,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             if (!HighScoreTableLayout.IsFramePixelLit(column, y)) continue;
 
             var portY = HudLayout.ToPortY(y);
-            _sprites.Blitter.DrawSolidRectangle(
+            _spriteSet.BlitterDraw.DrawSolidRectangle(
                 spriteBatch,
                 new Rectangle(portX, portY, width, HudLayout.ToPortY(y + 1) - portY),
                 colour);
@@ -245,7 +245,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             if (!HighScoreTableLayout.IsFramePixelLit(x, row)) continue;
 
             var portX = HudLayout.ToPortX(x);
-            _sprites.Blitter.DrawSolidRectangle(
+            _spriteSet.BlitterDraw.DrawSolidRectangle(
                 spriteBatch,
                 new Rectangle(portX, top, HudLayout.ToPortX(x + 1) - portX, height),
                 colour);
@@ -254,7 +254,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
 
     private void DrawHeader(SpriteBatch spriteBatch, string text, int row)
     {
-        _sprites.TextRenderer.DrawLargeFontText(
+        _spriteSet.ArcadeText.DrawLargeFontText(
             spriteBatch,
             text,
             GetColumnX(HighScoreTableLayout.HeaderColumn),
@@ -270,9 +270,9 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     private int DrawRank(SpriteBatch spriteBatch, int rank, int x, int y, int paletteIndex, bool isLarge)
     {
         var text = $"{rank}) ";
-        if (isLarge) return _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, x, y, paletteIndex);
+        if (isLarge) return _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, text, x, y, paletteIndex);
 
-        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
+        return _spriteSet.ArcadeText.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
     }
 
     /// <summary>
@@ -285,7 +285,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// </summary>
     private void DrawStroke(SpriteBatch spriteBatch, int stroke)
     {
-        var colour = _sprites.Blitter.GetPaletteIndexColour(HighScoreTableLayout.GetFrameStrokePaletteIndex(stroke));
+        var colour = _spriteSet.BlitterDraw.GetPaletteIndexColour(HighScoreTableLayout.GetFrameStrokePaletteIndex(stroke));
         var (left, top, right, bottom) = HighScoreTableLayout.GetFrameStroke(stroke);
 
         DrawHatchedRow(spriteBatch, colour, left, right, top);
@@ -313,7 +313,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
                 ScreenTuning.HighScoreTodayHighlightPaletteIndex);
 
             var afterRank = DrawRank(spriteBatch, rank, x, y, paletteIndex, true);
-            _sprites.TextRenderer.DrawLargeFontText(spriteBatch, entries[rank - 1].Initials, afterRank, y, paletteIndex);
+            _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, entries[rank - 1].Initials, afterRank, y, paletteIndex);
 
             // The ROM's fixed offset from the POST-RANK cursor (RRTABLE's
             // `PSHS X` right after the rank message, then `LEAX D,X`): 11 columns
@@ -321,7 +321,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             // exactly what the arcade's rows look like — 3 large glyphs = 21 portX of
             // the 22 portX the offset leaves.
             if (entries[rank - 1].Score != 0)
-                _sprites.TextRenderer.DrawLargeTableNumber(
+                _spriteSet.ArcadeText.DrawLargeTableNumber(
                     spriteBatch,
                     entries[rank - 1].Score,
                     afterRank + ScreenSize.ToPortPixelsFromArcadePixels(
@@ -337,14 +337,14 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         // not see the name (GA2); the port always has a name, so it always prints
         // "( NAME )" then the score.
         var y = GetRowY(HighScoreTableLayout.TopRow);
-        var paletteIndex = GetPaletteIndex(_highScoreTable.Top.Score, ScreenTuning.HighScoreAllTimePaletteIndex,
+        var paletteIndex = GetPaletteIndex(_highScoreTable.TopScoreEntry.Score, ScreenTuning.HighScoreAllTimePaletteIndex,
             ScreenTuning.HighScoreAllTimeHighlightPaletteIndex);
 
         var x = GetColumnX(HighScoreTableLayout.TopColumn);
-        x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, "(", x, y, paletteIndex);
-        x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, _highScoreTable.Top.Name, x, y, paletteIndex);
-        x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, ")", x, y, paletteIndex);
-        _sprites.TextRenderer.DrawLargeTableNumber(spriteBatch, _highScoreTable.Top.Score,
+        x = _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, "(", x, y, paletteIndex);
+        x = _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, _highScoreTable.TopScoreEntry.Name, x, y, paletteIndex);
+        x = _spriteSet.ArcadeText.DrawLargeFontText(spriteBatch, ")", x, y, paletteIndex);
+        _spriteSet.ArcadeText.DrawLargeTableNumber(spriteBatch, _highScoreTable.TopScoreEntry.Score,
             x + ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudSmallFontBlankAdvancePixels), y, paletteIndex);
     }
 
@@ -353,9 +353,9 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     ///     the second colour — but only when the NEXT table entry is not the same
     ///     score, so a repeated score highlights once.
     /// </summary>
-    private int GetPaletteIndex(HighScoreEntry entry, int normalPaletteIndex, int highlightPaletteIndex)
+    private int GetPaletteIndex(HighScoreEntry highScoreEntry, int normalPaletteIndex, int highlightPaletteIndex)
     {
-        return GetPaletteIndex(entry.Score, normalPaletteIndex, highlightPaletteIndex);
+        return GetPaletteIndex(highScoreEntry.Score, normalPaletteIndex, highlightPaletteIndex);
     }
 
     private int GetPaletteIndex(int score, int normalPaletteIndex, int highlightPaletteIndex)
@@ -366,11 +366,11 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         return normalPaletteIndex;
     }
 
-    private void Leave(GameStateManager manager)
+    private void Leave(GameStateManager gameStateManager)
     {
-        if (_sprites.Blitter.Palette is { } palette) _highScorePalette.Stop(palette);
+        if (_spriteSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Stop(palette);
 
-        manager.TransitionTo(new TitleScreenState(new GameServices(_sprites, _highScoreStore,
-            ControlSettings.CreateDefaults(), _input, _gameSettings)));
+        gameStateManager.TransitionTo(new TitleScreenState(new GameServices(_spriteSet, _highScoreStore,
+            ControlSettings.CreateDefaults(), _playerInputSource, _gameSettings)));
     }
 }
