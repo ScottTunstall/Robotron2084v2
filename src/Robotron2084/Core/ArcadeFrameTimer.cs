@@ -36,7 +36,7 @@ namespace Robotron2084.Core;
 ///     <list type="bullet">
 ///         <item>
 ///             Call <see cref="Tick" /> once each time the owner's
-///             <see cref="Robotron2084.FieldEntities.IEntity.Update(Microsoft.Xna.Framework.GameTime, Robotron2084.Level.PlayField)" />
+///             <see cref="Robotron2084.Entities.IEntity.Update(Microsoft.Xna.Framework.GameTime, Robotron2084.Level.PlayField)" />
 ///             runs.
 ///         </item>
 ///         <item>
