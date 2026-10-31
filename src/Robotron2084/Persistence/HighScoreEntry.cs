@@ -11,7 +11,7 @@ namespace Robotron2084.Persistence;
 public sealed record HighScoreEntry(string Initials, int Score)
 {
     /// <summary>ROM `NULSCR` — three spaces and 0: what an unused table row holds.</summary>
-    public static HighScoreEntry Blank { get; } = new("   ", 0);
+    public static HighScoreEntry BlankHighScoreEntry { get; } = new("   ", 0);
 
     /// <summary>The name, trimmed for display (the ROM walks its text to the first blank).</summary>
     public string GetDisplayName()

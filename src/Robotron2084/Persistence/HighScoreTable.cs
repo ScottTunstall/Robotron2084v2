@@ -49,10 +49,10 @@ public sealed class HighScoreTable
     private readonly List<HighScoreEntry> _allTime;
     private readonly List<HighScoreEntry> _today;
 
-    private HighScoreTable(TopScoreEntry top, IEnumerable<HighScoreEntry> enteredToday,
+    private HighScoreTable(TopScoreEntry topScoreEntry, IEnumerable<HighScoreEntry> enteredToday,
         IEnumerable<HighScoreEntry> allTime)
     {
-        Top = top;
+        TopScoreEntry = topScoreEntry;
         // Both lists are the ROM's FULL tables: an unused row holds NULSCR (three
         // spaces and 0) rather than being absent, which is what the screen draws and
         // what "does this score qualify?" is measured against.
@@ -112,32 +112,32 @@ public sealed class HighScoreTable
     ];
 
     /// <summary>ROM `DEFHSR`/`DEFGOD` — the factory "GOD" score: "WILLY ELKTRIX", 151782.</summary>
-    public static TopScoreEntry FactoryTop { get; } = new("WILLY ELKTRIX", 151782);
+    public static TopScoreEntry FactoryTopScoreEntry { get; } = new("WILLY ELKTRIX", 151782);
 
-    /// <summary>ROM `CMSCOR` — the small-font list, ranks 2-37 (rank 1 is <see cref="Top" />).</summary>
+    /// <summary>ROM `CMSCOR` — the small-font list, ranks 2-37 (rank 1 is <see cref="TopScoreEntry" />).</summary>
     public IReadOnlyList<HighScoreEntry> AllTime => _allTime;
 
     /// <summary>ROM `TODAYS` — the large-font list, ranks 1-10.</summary>
     public IReadOnlyList<HighScoreEntry> Today => _today;
 
     /// <summary>The operator's top entry (shown on its own line, in its own colours).</summary>
-    public TopScoreEntry Top { get; private set; }
+    public TopScoreEntry TopScoreEntry { get; private set; }
 
     /// <summary>
     ///     Builds a table from what the store had: TODAY'S always comes from the
     ///     factory table (the ROM reloads it at power-up), the all-time list and the
     ///     top entry come from the saved data when there is any.
     /// </summary>
-    public static HighScoreTable CreateFromSaved(TopScoreEntry? top, IReadOnlyList<HighScoreEntry>? allTime)
+    public static HighScoreTable CreateFromSaved(TopScoreEntry? topScoreEntry, IReadOnlyList<HighScoreEntry>? allTime)
     {
-        return new HighScoreTable(top ?? FactoryTop, FactoryToday,
+        return new HighScoreTable(topScoreEntry ?? FactoryTopScoreEntry, FactoryToday,
             PadToCapacity(allTime, AllTimeCapacity, FactoryAllTime));
     }
 
     /// <summary>The ROM's factory table: today's list, the all-time list and the top entry.</summary>
     public static HighScoreTable CreateWithFactoryScores()
     {
-        return new HighScoreTable(FactoryTop, FactoryToday, FactoryAllTime);
+        return new HighScoreTable(FactoryTopScoreEntry, FactoryToday, FactoryAllTime);
     }
 
     /// <summary>Whether a finished score earns an initials screen at all (ROM `EGSUB1`: `TODCHK`, then `ALLCHK`).</summary>
@@ -149,7 +149,7 @@ public sealed class HighScoreTable
     /// <summary>Whether a finished score beats the top entry or any all-time entry (ROM `GODCHK` and `ALLCHK`).</summary>
     public bool QualifiesForAllTime(int score)
     {
-        return score > Top.Score || Beats(_allTime, score);
+        return score > TopScoreEntry.Score || Beats(_allTime, score);
     }
 
     /// <summary>Whether a finished score beats any of TODAY's ten entries (ROM `TODCHK`).</summary>
@@ -171,7 +171,7 @@ public sealed class HighScoreTable
     /// </param>
     public SubmitResult Submit(int score, string initials)
     {
-        if (score > Top.Score)
+        if (score > TopScoreEntry.Score)
         {
             TakeTopEntry(score, initials);
             var topEnteredToday = Insert(_today, new HighScoreEntry(initials, score), TodayCapacity);
@@ -204,8 +204,8 @@ public sealed class HighScoreTable
     private static int CountInitials(List<HighScoreEntry> list, string initials)
     {
         var count = 0;
-        foreach (var entry in list)
-            if (entry.Initials == initials)
+        foreach (var highScoreEntry in list)
+            if (highScoreEntry.Initials == initials)
                 count++;
 
         return count;
@@ -214,7 +214,7 @@ public sealed class HighScoreTable
     /// <summary>Pads a list out to the ROM's full table with its blank entry (`NULSCR`).</summary>
     private static void Fill(List<HighScoreEntry> list, int capacity)
     {
-        while (list.Count < capacity) list.Add(HighScoreEntry.Blank);
+        while (list.Count < capacity) list.Add(HighScoreEntry.BlankHighScoreEntry);
 
         if (list.Count > capacity) list.RemoveRange(capacity, list.Count - capacity);
     }
@@ -222,7 +222,7 @@ public sealed class HighScoreTable
     /// <summary>The index of the list's lowest-scoring entry carrying these initials — the fifth `SETBOT` finds.</summary>
     private static int FindLowestInitialsIndex(List<HighScoreEntry> list, string initials)
     {
-        return list.FindLastIndex(entry => entry.Initials == initials);
+        return list.FindLastIndex(highScoreEntry => highScoreEntry.Initials == initials);
     }
 
     /// <summary>The three initials a name starts with (the ROM's `GODINT`, three CMOS characters).</summary>
@@ -238,16 +238,16 @@ public sealed class HighScoreTable
     ///     (or the list has room), then truncates — the ROM's "bubble down, drop the
     ///     bottom" rule (`BUBDN` + `SCTRNS`).
     /// </summary>
-    private static bool Insert(List<HighScoreEntry> list, HighScoreEntry entry, int capacity)
+    private static bool Insert(List<HighScoreEntry> list, HighScoreEntry highScoreEntry, int capacity)
     {
         Fill(list, capacity);
-        if (list.Count >= capacity && entry.Score <= list[^1].Score) return false;
+        if (list.Count >= capacity && highScoreEntry.Score <= list[^1].Score) return false;
 
-        var insertIndex = list.FindIndex(e => entry.Score > e.Score);
+        var insertIndex = list.FindIndex(e => highScoreEntry.Score > e.Score);
         var isLowestScore = insertIndex < 0;
         if (isLowestScore) insertIndex = list.Count;
 
-        list.Insert(insertIndex, entry);
+        list.Insert(insertIndex, highScoreEntry);
         if (list.Count > capacity) list.RemoveAt(list.Count - 1);
 
         return true;
@@ -302,14 +302,14 @@ public sealed class HighScoreTable
     /// </summary>
     private void TakeTopEntry(int score, string initials)
     {
-        _allTime.Insert(0, new HighScoreEntry(GetInitialsOf(Top.Name), Top.Score));
+        _allTime.Insert(0, new HighScoreEntry(GetInitialsOf(TopScoreEntry.Name), TopScoreEntry.Score));
         Fill(_allTime, AllTimeCapacity);
-        Top = new TopScoreEntry(initials, score);
+        TopScoreEntry = new TopScoreEntry(initials, score);
     }
 
     /// <summary>ROM `SETBOT`'s first test: whether the entered initials are the top entry's own.</summary>
     private bool TopCarriesInitials(string initials)
     {
-        return GetInitialsOf(Top.Name) == initials;
+        return GetInitialsOf(TopScoreEntry.Name) == initials;
     }
 }

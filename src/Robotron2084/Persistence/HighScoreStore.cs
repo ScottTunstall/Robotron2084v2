@@ -26,8 +26,8 @@ public sealed class HighScoreStore
 
         try
         {
-            var saved = JsonSerializer.Deserialize<SavedTable>(File.ReadAllText(path));
-            return HighScoreTable.CreateFromSaved(saved?.Top, saved?.AllTime);
+            var savedTable = JsonSerializer.Deserialize<SavedTable>(File.ReadAllText(path));
+            return HighScoreTable.CreateFromSaved(savedTable?.TopScoreEntry, savedTable?.AllTime);
         }
         catch (FileNotFoundException)
         {
@@ -51,14 +51,14 @@ public sealed class HighScoreStore
     }
 
     /// <summary>Saves to a given file — the seam the tests use.</summary>
-    public static void Save(string path, HighScoreTable table)
+    public static void Save(string path, HighScoreTable highScoreTable)
     {
-        var saved = new SavedTable(
-            table.Top,
-            [.. table.AllTime.Take(HighScoreTable.AllTimeCapacity)]);
+        var savedTable = new SavedTable(
+            highScoreTable.TopScoreEntry,
+            [.. highScoreTable.AllTime.Take(HighScoreTable.AllTimeCapacity)]);
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, JsonSerializer.Serialize(saved, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(path, JsonSerializer.Serialize(savedTable, new JsonSerializerOptions { WriteIndented = true }));
     }
 
     /// <summary>The table: the saved all-time list + top entry, and the ROM's factory today's list.</summary>
@@ -68,14 +68,14 @@ public sealed class HighScoreStore
     }
 
     /// <summary>Saves the all-time list and the top entry (the two CMOS things).</summary>
-    public void Save(HighScoreTable table)
+    public void Save(HighScoreTable highScoreTable)
     {
-        Save(FilePath, table);
+        Save(FilePath, highScoreTable);
     }
 
     /// <summary>The on-disk shape: the two things the arcade keeps in CMOS.</summary>
     private sealed record SavedTable(
-        [property: JsonPropertyName("top")] TopScoreEntry? Top,
+        [property: JsonPropertyName("top")] TopScoreEntry? TopScoreEntry,
         [property: JsonPropertyName("allTime")]
         List<HighScoreEntry>? AllTime);
 }
