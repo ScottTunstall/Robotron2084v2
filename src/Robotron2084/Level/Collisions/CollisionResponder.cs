@@ -28,9 +28,9 @@ internal sealed class CollisionResponder
             [typeof(PlayerHitElectrodeResult)] = collisionResult => RespondToPlayerHittingElectrode((PlayerHitElectrodeResult)collisionResult),
             [typeof(PlayerTouchedDeadThingResult)] = _ => _playField.KillPlayer(),
             [typeof(BrainLostVictimResult)] = collisionResult => RespondToBrainLosingVictim((BrainLostVictimResult)collisionResult),
-            [typeof(BrainCaughtHumanResult)] = collisionResult => RespondToBrainCatchingHuman((BrainCaughtHumanResult)collisionResult),
-            [typeof(HulkKilledHumanResult)] = collisionResult => RespondToHulkKillingHuman((HulkKilledHumanResult)collisionResult),
-            [typeof(PlayerRescuedHumanResult)] = collisionResult => RespondToPlayerRescuingHuman((PlayerRescuedHumanResult)collisionResult)
+            [typeof(BrainCaughtFamilyMemberResult)] = collisionResult => RespondToBrainCatchingFamilyMember((BrainCaughtFamilyMemberResult)collisionResult),
+            [typeof(HulkKilledFamilyMemberResult)] = collisionResult => RespondToHulkKillingFamilyMember((HulkKilledFamilyMemberResult)collisionResult),
+            [typeof(PlayerRescuedFamilyMemberResult)] = collisionResult => RespondToPlayerRescuingFamilyMember((PlayerRescuedFamilyMemberResult)collisionResult)
         };
     }
 
@@ -59,14 +59,14 @@ internal sealed class CollisionResponder
         _playField.PlaySoundFrom(SoundTables.RobotHit, berzerkRobotHitElectrodeResult.BerzerkRobot.GetBounds());
     }
 
-    /// <summary>The brain starts reprogramming the human it caught.</summary>
-    /// <param name="brainCaughtHumanResult">The catch.</param>
-    private void RespondToBrainCatchingHuman(BrainCaughtHumanResult brainCaughtHumanResult)
+    /// <summary>The brain starts reprogramming the family member it caught.</summary>
+    /// <param name="brainCaughtFamilyMemberResult">The catch.</param>
+    private void RespondToBrainCatchingFamilyMember(BrainCaughtFamilyMemberResult brainCaughtFamilyMemberResult)
     {
-        brainCaughtHumanResult.Brain.BeginReprogramming(brainCaughtHumanResult.Human, _playField.GetPlayfieldBounds());
+        brainCaughtFamilyMemberResult.Brain.BeginReprogramming(brainCaughtFamilyMemberResult.FamilyMember, _playField.GetPlayfieldBounds());
     }
 
-    /// <summary>The conversion never finishes: the human is lost, no prog appears, and a skull is left where they stood.</summary>
+    /// <summary>The conversion never finishes: the family member is lost, no prog appears, and a skull is left where they stood.</summary>
     /// <param name="brainLostVictimResult">The dead brain.</param>
     private void RespondToBrainLosingVictim(BrainLostVictimResult brainLostVictimResult)
     {
@@ -102,13 +102,13 @@ internal sealed class CollisionResponder
         _playField.PlaySoundFrom(SoundTables.PostKill, hulkHitElectrodeResult.Electrode.GetBounds());
     }
 
-    /// <summary>The human dies at once and leaves a skull.</summary>
-    /// <param name="hulkKilledHumanResult">The kill.</param>
-    private void RespondToHulkKillingHuman(HulkKilledHumanResult hulkKilledHumanResult)
+    /// <summary>The family member dies at once and leaves a skull.</summary>
+    /// <param name="hulkKilledFamilyMemberResult">The kill.</param>
+    private void RespondToHulkKillingFamilyMember(HulkKilledFamilyMemberResult hulkKilledFamilyMemberResult)
     {
-        hulkKilledHumanResult.Human.Kill();
-        _playField.LeaveSkull(hulkKilledHumanResult.Human.Position);
-        _playField.PlaySoundFrom(SoundTables.KillAHuman, hulkKilledHumanResult.Human.GetBounds());
+        hulkKilledFamilyMemberResult.FamilyMember.Kill();
+        _playField.LeaveSkull(hulkKilledFamilyMemberResult.FamilyMember.Position);
+        _playField.PlaySoundFrom(SoundTables.KillAHuman, hulkKilledFamilyMemberResult.FamilyMember.GetBounds());
     }
 
     /// <summary>
@@ -137,14 +137,14 @@ internal sealed class CollisionResponder
         playerHitElectrodeResult.Electrode.Kill();
     }
 
-    /// <summary>The human is saved, the rescue is counted and shown, and the bonus is scored.</summary>
-    /// <param name="playerRescuedHumanResult">The rescue.</param>
-    private void RespondToPlayerRescuingHuman(PlayerRescuedHumanResult playerRescuedHumanResult)
+    /// <summary>The family member is saved, the rescue is counted and shown, and the bonus is scored.</summary>
+    /// <param name="playerRescuedFamilyMemberResult">The rescue.</param>
+    private void RespondToPlayerRescuingFamilyMember(PlayerRescuedFamilyMemberResult playerRescuedFamilyMemberResult)
     {
-        playerRescuedHumanResult.Human.Rescue();
+        playerRescuedFamilyMemberResult.FamilyMember.Rescue();
         var rescues = _playField.CountRescuedFamilyMembers();
-        _playField.ShowRescueBonus(playerRescuedHumanResult.Human.Position);
-        _playField.PlaySoundFrom(SoundTables.SaveAHuman, playerRescuedHumanResult.Human.GetBounds());
+        _playField.ShowRescueBonus(playerRescuedFamilyMemberResult.FamilyMember.Position);
+        _playField.PlaySoundFrom(SoundTables.SaveAHuman, playerRescuedFamilyMemberResult.FamilyMember.GetBounds());
         _playField.AwardRescueBonus(rescues);
     }
 }

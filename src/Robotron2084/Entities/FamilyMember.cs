@@ -21,7 +21,7 @@ namespace Robotron2084.Entities;
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$02B2</c> (<c>INITIALISE_FAMILY_MEMBERS</c>)</item>
 ///     </list>
 /// </remarks>
-public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
+public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>How many animation frames are in each of a family member's walk sets.</summary>
     private const int AnimationFramesPerSet = 3;
@@ -130,7 +130,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     ///     Where its random numbers come from. They pick its direction, how many steps it takes before it
     ///     turns, and its wait before the first step.
     /// </param>
-    public Human(TextureSet textureSet, IntVector2 position, HumanKind kind, Random random)
+    public FamilyMember(TextureSet textureSet, IntVector2 position, FamilyMemberKind kind, Random random)
     {
         _textureSet = textureSet;
         _position = position;
@@ -157,7 +157,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     public bool IsBeingReprogrammed { get; private set; }
 
     /// <summary>Which family member this is: Mikey, Mommy or Daddy. This decides its animation frames and its size.</summary>
-    public HumanKind Kind { get; }
+    public FamilyMemberKind Kind { get; }
 
     /// <summary>Alive until it is killed, rescued or reprogrammed.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -280,7 +280,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// </summary>
     /// <param name="kind">Which family member.</param>
     /// <returns>The length of the square's side, in port pixels.</returns>
-    internal static int GetSpawnSquarePortPixels(HumanKind kind)
+    internal static int GetSpawnSquarePortPixels(FamilyMemberKind kind)
     {
         var (width, height) = kind.GetArcadeCollisionSize();
         return ScreenSize.ToPortPixelsFromArcadePixels(Math.Max(width, height));

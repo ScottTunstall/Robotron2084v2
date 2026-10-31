@@ -13,7 +13,7 @@ namespace Robotron2084.Entities;
 ///     cruise missiles at you.
 /// </summary>
 /// <seealso cref="PlayField" />
-/// <seealso cref="Human" />
+/// <seealso cref="FamilyMember" />
 /// <remarks>
 ///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
@@ -229,7 +229,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private int _targetSlot;
 
     /// <summary>The family member being reprogrammed right now, or null.</summary>
-    private Human? _victimHuman;
+    private FamilyMember? _victimFamilyMember;
 
     /// <summary>Where the family member stands, up and down, while being reprogrammed.</summary>
     private int _victimRestingY;
@@ -307,7 +307,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>BRAIN_AI</c> (<c>$1BEE</c>).</item>
     ///     </list>
     /// </remarks>
-    internal Human? TargetHuman { get; private set; }
+    internal FamilyMember? TargetFamilyMember { get; private set; }
 
     /// <summary>Which place in the family list this brain is chasing.</summary>
     /// <remarks>
@@ -385,7 +385,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     public bool IsReprogramming()
     {
-        return _victimHuman is not null;
+        return _victimFamilyMember is not null;
     }
 
     /// <summary>Takes the brain off the field at once.</summary>
@@ -423,9 +423,9 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 
         if (playField.RobotsFrozen()) return;
 
-        if (_victimHuman is { } victimHuman)
+        if (_victimFamilyMember is { } victimFamilyMember)
         {
-            if (_reprogramArcadeFrameTimer.Tick(ReprogramTuning.StepIntervalArcadeFrames)) TakeReprogramStep(playField, victimHuman);
+            if (_reprogramArcadeFrameTimer.Tick(ReprogramTuning.StepIntervalArcadeFrames)) TakeReprogramStep(playField, victimFamilyMember);
             return;
         }
 
@@ -436,7 +436,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     Starts turning a family member into a prog. The family member is moved next to the brain and the reprogramming
     ///     animation begins.
     /// </summary>
-    /// <param name="human">The family member being reprogrammed. They are out of play until the animation ends.</param>
+    /// <param name="familyMember">The family member being reprogrammed. They are out of play until the animation ends.</param>
     /// <param name="playfieldBounds">The inside of the playfield wall, so that the family member is put inside it.</param>
     /// <remarks>
     ///     <list type="bullet">
@@ -447,16 +447,16 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>)</item>
     ///     </list>
     /// </remarks>
-    internal void BeginReprogramming(Human human, Rectangle playfieldBounds)
+    internal void BeginReprogramming(FamilyMember familyMember, Rectangle playfieldBounds)
     {
-        _victimHuman = human;
-        human.BeginReprogramming();
+        _victimFamilyMember = familyMember;
+        familyMember.BeginReprogramming();
         _reprogramRedrawsRemaining = ReprogramTuning.Iterations * ReprogramTuning.RedrawsPerIteration;
         _reprogramMovingDown = true;
         _reprogramArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ReprogramTuning.StepIntervalArcadeFrames);
 
-        var humanWidth = human.GetBounds().Width;
-        var x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
+        var familyMemberWidth = familyMember.GetBounds().Width;
+        var x = _position.X - familyMemberWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
         var walkSequence = WalkSequence.Left;
         if (x < playfieldBounds.X)
         {
@@ -464,7 +464,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
             walkSequence = WalkSequence.Right;
             if (x >= playfieldBounds.Right - ScreenSize.ToPortPixelsFromColumns(VictimRightWallMarginColumns))
             {
-                x = _position.X - humanWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
+                x = _position.X - familyMemberWidth - ScreenSize.ToPortPixelsFromColumns(VictimGapColumns);
                 walkSequence = WalkSequence.Left;
             }
         }
@@ -473,7 +473,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         _walkCycleIndex = 0;
 
         _victimRestingY = _position.Y + ScreenSize.ToPortPixelsFromArcadePixels(VictimDropRows);
-        human.MoveTo(new IntVector2(x, _victimRestingY));
+        familyMember.MoveTo(new IntVector2(x, _victimRestingY));
     }
 
     /// <summary>Finds the family member the brain could catch right now: the one it is chasing, if it is close enough.</summary>
@@ -490,21 +490,21 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     can be caught. This method only answers the question. It does not start the reprogramming (see
     ///     <see cref="BeginReprogramming" />).
     /// </remarks>
-    internal Human? GetCatchableTarget()
+    internal FamilyMember? GetCatchableTarget()
     {
         if (!this.IsAlive() || IsReprogramming()) return null;
 
-        if (TargetHuman is not { } human || !human.IsGraspable()) return null;
+        if (TargetFamilyMember is not { } familyMember || !familyMember.IsGraspable()) return null;
 
-        var inReach = Math.Abs(_position.X - human.Position.X) <= CatchReachX
-                      && Math.Abs(_position.Y - human.Position.Y) <= CatchReachY;
-        return inReach ? human : null;
+        var inReach = Math.Abs(_position.X - familyMember.Position.X) <= CatchReachX
+                      && Math.Abs(_position.Y - familyMember.Position.Y) <= CatchReachY;
+        return inReach ? familyMember : null;
     }
 
     /// <summary>The family member being reprogrammed, or null if the brain is not reprogramming anyone.</summary>
-    internal Human? GetVictim()
+    internal FamilyMember? GetVictim()
     {
-        return _victimHuman;
+        return _victimFamilyMember;
     }
 
     /// <summary>
@@ -531,9 +531,9 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     internal void ReleaseVictim()
     {
-        var victimHuman = _victimHuman;
-        _victimHuman = null;
-        victimHuman?.FinishReprogramming();
+        var victimFamilyMember = _victimFamilyMember;
+        _victimFamilyMember = null;
+        victimFamilyMember?.FinishReprogramming();
     }
 
     /// <summary>Gives the brain a new place in the family list to chase.</summary>
@@ -590,8 +590,8 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private void ActOnBeat(PlayField playField)
     {
         UpdateTargetSlot(playField);
-        TargetHuman = GetTarget(playField);
-        var step = GetStepTowardTarget(TargetHuman?.Position ?? playField.Player.Position);
+        TargetFamilyMember = GetTarget(playField);
+        var step = GetStepTowardTarget(TargetFamilyMember?.Position ?? playField.Player.Position);
         TakeStep(playField, step);
         AdvanceWalkAnimation(step);
 
@@ -674,7 +674,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>The family member the brain is chasing, or null if the brain is chasing the player.</summary>
     /// <param name="playField">The playfield, which keeps the family list.</param>
-    private Human? GetTarget(PlayField playField)
+    private FamilyMember? GetTarget(PlayField playField)
     {
         return playField.GetFamilyMemberInSlot(_targetSlot);
     }
@@ -684,7 +684,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     until the steps run out and a prog appears.
     /// </summary>
     /// <param name="playField">The playfield the brain is on.</param>
-    /// <param name="victimHuman">The family member being reprogrammed.</param>
+    /// <param name="victimFamilyMember">The family member being reprogrammed.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -698,17 +698,17 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     ///     Each shake is measured from the family member's resting place, as in the ROM, so the shakes never drift.
     /// </remarks>
-    private void TakeReprogramStep(PlayField playField, Human victimHuman)
+    private void TakeReprogramStep(PlayField playField, FamilyMember victimFamilyMember)
     {
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
         var jitter = _random.Next(ReprogramTuning.JitterPixels);
-        var height = victimHuman.GetBounds().Height;
+        var height = victimFamilyMember.GetBounds().Height;
         var y = Math.Max(_victimRestingY - jitter, bounds.Y);
         if (_reprogramMovingDown) y = Math.Min(_victimRestingY + jitter, bounds.Bottom - height);
 
-        victimHuman.MoveTo(new IntVector2(victimHuman.Position.X, y));
+        victimFamilyMember.MoveTo(new IntVector2(victimFamilyMember.Position.X, y));
 
-        if (_reprogramMovingDown) playField.PlaySoundFrom(SoundTables.Programming, victimHuman.GetBounds());
+        if (_reprogramMovingDown) playField.PlaySoundFrom(SoundTables.Programming, victimFamilyMember.GetBounds());
 
         if (--_reprogramRedrawsRemaining > 0)
         {
@@ -716,10 +716,10 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
             return;
         }
 
-        playField.PlaySoundFrom(SoundTables.HumanProgFinalConversion, victimHuman.GetBounds());
-        victimHuman.FinishReprogramming();
-        playField.SpawnProg(victimHuman.Position, victimHuman.Kind);
-        _victimHuman = null;
+        playField.PlaySoundFrom(SoundTables.FamilyMemberProgFinalConversion, victimFamilyMember.GetBounds());
+        victimFamilyMember.FinishReprogramming();
+        playField.SpawnProg(victimFamilyMember.Position, victimFamilyMember.Kind);
+        _victimFamilyMember = null;
     }
 
     /// <summary>Takes a step, as long as the step stays inside the playfield.</summary>

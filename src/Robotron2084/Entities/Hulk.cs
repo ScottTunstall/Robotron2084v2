@@ -9,7 +9,7 @@ namespace Robotron2084.Entities;
 
 /// <summary>A hulk is a huge, tough robot that can't be killed by shooting it. A shot just knocks it back.</summary>
 /// <seealso cref="Player" />
-/// <seealso cref="Human" />
+/// <seealso cref="FamilyMember" />
 /// <remarks>
 ///     It slowly stomps after you, after a family member, or off into a corner.
 ///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.

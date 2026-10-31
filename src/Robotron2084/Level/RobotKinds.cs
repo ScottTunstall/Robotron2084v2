@@ -97,7 +97,7 @@ public static class RobotKinds
             Spawn: new TankWaveSpawner(),
             RobotListSetUpOrder: 3),
 
-        // A brain killed MID-reprogram releases its victim — the field's own human phase does that (notes §90).
+        // A brain killed MID-reprogram releases its victim — the field's own family member phase does that (notes §90).
         new(RobotKind.Brain,
             static parameters => parameters.BrainCount,
             ScoreValues.Brain,

@@ -78,13 +78,13 @@ public sealed class FieldEntities
     /// <summary>The hulks.</summary>
     public EntityList<Hulk> Hulks { get; } = new();
 
-    /// <summary>The progs: humans the brains have reprogrammed.</summary>
+    /// <summary>The progs: family members the brains have reprogrammed.</summary>
     public EntityList<Prog> Progs { get; } = new();
 
     /// <summary>The quarks.</summary>
     public EntityList<Quark> Quarks { get; } = new();
 
-    /// <summary>The bonus scores shown where humans were rescued.</summary>
+    /// <summary>The bonus scores shown where family members were rescued.</summary>
     public EntityList<RescueBonusMarker> RescueBonusMarkers { get; } = new();
 
     /// <summary>The bursts a spheroid or a quark leaves when it dies, in place of a strip explosion.</summary>
@@ -94,7 +94,7 @@ public sealed class FieldEntities
     /// </remarks>
     public EntityList<ScoreBurst> ScoreBursts { get; } = new();
 
-    /// <summary>The skulls left where humans were killed.</summary>
+    /// <summary>The skulls left where family members were killed.</summary>
     public EntityList<SkullMarker> Skulls { get; } = new();
 
     /// <summary>The sparks the enforcers have fired.</summary>
@@ -239,10 +239,10 @@ public sealed class FieldEntities
     }
 
     /// <summary>Puts a family member on the field, in the next free place in the family list.</summary>
-    /// <param name="human">The family member to add.</param>
-    public void Add(Human human)
+    /// <param name="familyMember">The family member to add.</param>
+    public void Add(FamilyMember familyMember)
     {
-        FamilyList.Add(human);
+        FamilyList.Add(familyMember);
     }
 
     /// <summary>Says whether any family member is standing on the field and free.</summary>
@@ -306,13 +306,13 @@ public sealed class FieldEntities
 
     /// <summary>Finds the family member in a place in the family list, if they are standing and free.</summary>
     /// <param name="slot">The place to look in.</param>
-    public Human? GetFamilyMemberInSlot(int slot)
+    public FamilyMember? GetFamilyMemberInSlot(int slot)
     {
         return FamilyList.GetMemberInSlot(slot);
     }
 
     /// <summary>Lists every family member who has been put on the field.</summary>
-    public IReadOnlyList<Human> GetFamilyMembers()
+    public IReadOnlyList<FamilyMember> GetFamilyMembers()
     {
         return FamilyList.Members;
     }

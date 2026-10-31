@@ -1,6 +1,6 @@
 namespace Robotron2084.Level;
 
-/// <summary>The points the player scores for each kind of kill, and for rescuing a human.</summary>
+/// <summary>The points the player scores for each kind of kill, and for rescuing a family member.</summary>
 /// <remarks>
 ///     <list type="bullet">
 ///         <item>
@@ -82,9 +82,9 @@ public static class ScoreValues
     /// <summary>The points for shooting a tank shell.</summary>
     public const int TankShell = 25;
 
-    /// <summary>Works out the bonus for rescuing a human. It grows with each rescue in a life.</summary>
+    /// <summary>Works out the bonus for rescuing a family member. It grows with each rescue in a life.</summary>
     /// <param name="rescuesThisLife">
-    ///     How many humans the player has rescued this life, counting this one. The bonus stops
+    ///     How many family members the player has rescued this life, counting this one. The bonus stops
     ///     growing at <see cref="RescueBonusMaxCount" />.
     /// </param>
     public static int RescueBonus(int rescuesThisLife)

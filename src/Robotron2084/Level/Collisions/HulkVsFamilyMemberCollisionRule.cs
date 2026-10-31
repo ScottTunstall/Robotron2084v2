@@ -2,25 +2,25 @@ using Robotron2084.Entities;
 
 namespace Robotron2084.Level.Collisions;
 
-/// <summary>A hulk walking onto a human. The human dies at once and leaves a skull.</summary>
+/// <summary>A hulk walking onto a family member. The family member dies at once and leaves a skull.</summary>
 /// <remarks>
 ///     Original source: <c>RRH11.ASM</c> <c>HULK</c>, the only robot whose collision check walks the family list,
 ///     and <c>HUMKIL</c> for the skull and the sound. No hulk kills anyone while the robots are held still.
 /// </remarks>
-internal sealed class HulkVsHumanCollisionRule : ICollisionRule
+internal sealed class HulkVsFamilyMemberCollisionRule : ICollisionRule
 {
     /// <inheritdoc />
     public IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities)
     {
         if (collisionScene.RobotsFrozen()) yield break;
 
-        foreach (var human in fieldEntities.GetFamilyMembers())
+        foreach (var familyMember in fieldEntities.GetFamilyMembers())
         {
             Hulk? hulk = null;
-            if (human.IsGraspable())
-                hulk = fieldEntities.Hulks.FirstOrDefault(candidate => candidate.IsAlive() && collisionScene.Touches(candidate, human));
+            if (familyMember.IsGraspable())
+                hulk = fieldEntities.Hulks.FirstOrDefault(candidate => candidate.IsAlive() && collisionScene.Touches(candidate, familyMember));
 
-            if (hulk is not null) yield return new HulkKilledHumanResult(hulk, human);
+            if (hulk is not null) yield return new HulkKilledFamilyMemberResult(hulk, familyMember);
         }
     }
 }

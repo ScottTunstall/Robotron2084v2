@@ -79,11 +79,11 @@ internal sealed class MidWaveSpawner
         _fieldEntities.Add(grunt);
     }
 
-    /// <summary>A brain's touch turns a human into a prog where they stand.</summary>
-    /// <param name="position">Where the human stood.</param>
+    /// <summary>A brain's touch turns a family member into a prog where they stand.</summary>
+    /// <param name="position">Where the family member stood.</param>
     /// <param name="kind">Which family member it was, since the prog keeps their look.</param>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> and <c>PROGST</c>.</remarks>
-    public void SpawnProg(IntVector2 position, HumanKind kind)
+    public void SpawnProg(IntVector2 position, FamilyMemberKind kind)
     {
         _fieldEntities.Add(new Prog(_playField.TextureSet, position, kind, _random));
     }

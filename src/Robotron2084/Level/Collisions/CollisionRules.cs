@@ -17,7 +17,7 @@ internal static class CollisionRules
         new PlayerContactKillRule(),
         new BrainVictimReleaseRule(),
         new BrainCatchRule(),
-        new HulkVsHumanCollisionRule(),
+        new HulkVsFamilyMemberCollisionRule(),
         new PlayerRescueRule()
     ];
 }

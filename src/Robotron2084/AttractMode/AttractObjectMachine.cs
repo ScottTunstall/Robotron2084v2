@@ -629,7 +629,7 @@ public sealed class AttractObjectMachine
         /// <summary>ANA* — one walk step out of HUMANA / HLKANA (notes §95.7).</summary>
         private void TableStep(MovieWalk walk)
         {
-            var table = AttractMovieData.WalkHuman;
+            var table = AttractMovieData.WalkFamilyMember;
             if (walk == MovieWalk.Hulk) table = AttractMovieData.WalkHulk;
 
             SetImage(table[WalkIndex] >> 2);

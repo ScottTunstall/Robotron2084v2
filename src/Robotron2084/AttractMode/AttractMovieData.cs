@@ -194,7 +194,7 @@ public static class AttractMovieData
     ];
 
     /// <summary>HUMANA ($03CF): the family's walk table — 4 directions of four (image x4, dx pixels, dy pixels) steps plus a $FF guard.</summary>
-    public static readonly byte[] WalkHuman =
+    public static readonly byte[] WalkFamilyMember =
     [
         0x00, 0xFE, 0x00, 0x04, 0xFF, 0x00, 0x00, 0xFE, 0x00, 0x08, 0xFF, 0x00,
         0xFF, 0x0C, 0x02, 0x00, 0x10, 0x01, 0x00, 0x0C, 0x02, 0x00, 0x14, 0x01,

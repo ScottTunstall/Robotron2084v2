@@ -162,7 +162,7 @@ public sealed class PlayField : ICollisionScene
     /// <summary>The player's lasers in flight.</summary>
     public LaserSlots PlayerLaserSlots { get; }
 
-    /// <summary>How many humans the player has rescued so far on this wave. Every wave starts at none.</summary>
+    /// <summary>How many family members the player has rescued so far on this wave. Every wave starts at none.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -405,10 +405,10 @@ public sealed class PlayField : ICollisionScene
         _midWaveSpawner.SpawnGrunt(from, landing);
     }
 
-    /// <summary>A brain's touch turns a human into a prog where they stand.</summary>
-    /// <param name="position">Where the human stood.</param>
+    /// <summary>A brain's touch turns a family member into a prog where they stand.</summary>
+    /// <param name="position">Where the family member stood.</param>
     /// <param name="kind">Which family member it was.</param>
-    public void SpawnProg(IntVector2 position, HumanKind kind)
+    public void SpawnProg(IntVector2 position, FamilyMemberKind kind)
     {
         _midWaveSpawner.SpawnProg(position, kind);
     }
@@ -505,7 +505,7 @@ public sealed class PlayField : ICollisionScene
     }
 
     /// <summary>Adds a rescue's bonus to the score, and gives the player a spare life if it earns one.</summary>
-    /// <param name="rescues">How many humans have now been rescued this life.</param>
+    /// <param name="rescues">How many family members have now been rescued this life.</param>
     internal void AwardRescueBonus(int rescues)
     {
         _gruntSpeedProgression.NoteScore();
@@ -525,7 +525,7 @@ public sealed class PlayField : ICollisionScene
         }
     }
 
-    /// <summary>Counts one more human rescued this life.</summary>
+    /// <summary>Counts one more family member rescued this life.</summary>
     /// <returns>How many have now been rescued this life.</returns>
     /// <remarks>Original source: <c>SAVCNT</c>.</remarks>
     internal int CountRescuedFamilyMembers()
@@ -581,7 +581,7 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>Finds the family member in a place in the family list, if they are standing and free.</summary>
     /// <param name="slot">The place to look in.</param>
-    internal Human? GetFamilyMemberInSlot(int slot)
+    internal FamilyMember? GetFamilyMemberInSlot(int slot)
     {
         return FieldEntities.GetFamilyMemberInSlot(slot);
     }
@@ -705,8 +705,8 @@ public sealed class PlayField : ICollisionScene
         if (targetEntity is IExplodable explodable) SpawnExplosion(explodable, direction);
     }
 
-    /// <summary>Leaves a skull where a human has been killed.</summary>
-    /// <param name="position">Where the human stood.</param>
+    /// <summary>Leaves a skull where a family member has been killed.</summary>
+    /// <param name="position">Where the family member stood.</param>
     internal void LeaveSkull(IntVector2 position)
     {
         FieldEntities.Add(new SkullMarker(TextureSet, position));
@@ -724,8 +724,8 @@ public sealed class PlayField : ICollisionScene
         Sound.Play(soundSequence, pan);
     }
 
-    /// <summary>Shows the bonus for the latest rescue where the human stood.</summary>
-    /// <param name="position">Where the human stood.</param>
+    /// <summary>Shows the bonus for the latest rescue where the family member stood.</summary>
+    /// <param name="position">Where the family member stood.</param>
     internal void ShowRescueBonus(IntVector2 position)
     {
         FieldEntities.Add(new RescueBonusMarker(TextureSet, position, RescuesThisLife));

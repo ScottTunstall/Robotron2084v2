@@ -26,8 +26,8 @@ public static class CollisionSizes
     public static readonly (int Width, int Height) BerzerkRobotCollisionSize = (8, 12);
 
     // Brain sprite (notes (18) RRB10 decode): 7 bytes x 16 rows =
-    // 14x16 px; a prog re-draws its converted human's animation frames and keeps that
-    // human's per-kind box (see HumanKindExtensions.ArcadeCollisionSize); cruise missile =
+    // 14x16 px; a prog re-draws its converted family member's animation frames and keeps that
+    // family member's per-kind box (see FamilyMemberKindExtensions.ArcadeCollisionSize); cruise missile =
     // the ROM's "FAT PHONY GUY" box (the 6x6 head inset 1 px = 4x4).
     public static readonly (int Width, int Height) BrainCollisionSize = (14, 16);
 

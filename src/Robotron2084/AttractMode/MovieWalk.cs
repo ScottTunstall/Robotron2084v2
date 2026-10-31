@@ -1,7 +1,7 @@
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-///     How an object's MOVE opcodes advance it (notes §95.3/§95.7). <see cref="Human" />
+///     How an object's MOVE opcodes advance it (notes §95.3/§95.7). <see cref="FamilyMember" />
 ///     and <see cref="Hulk" /> run the ROM's ANA* walker — 8 frames a step through
 ///     HUMANA / HLKANA, whose entries are (image x4, dx pixels, dy pixels) and whose
 ///     dx is HALVED into columns by <c>DYDX</c>. <see cref="BrainStep" /> runs the

@@ -1,7 +1,7 @@
 namespace Robotron2084.Level.Collisions;
 
 /// <summary>
-///     One rule about two kinds of thing touching, such as a laser hitting a robot or the player rescuing a human. A rule
+///     One rule about two kinds of thing touching, such as a laser hitting a robot or the player rescuing a family member. A rule
 ///     only reports what is touching. It never changes the field.
 /// </summary>
 internal interface ICollisionRule

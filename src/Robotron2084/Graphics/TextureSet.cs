@@ -268,7 +268,7 @@ public sealed class TextureSet
     public Texture2D LaserDiagonalMainTexture { get; }
 
     /// <summary>
-    ///     The human family — 12 frames each (4 directions × 3 walk
+    ///     The family members' sprites — 12 frames each (4 directions × 3 walk
     ///     frames, same layout as the player frames; Mikey = Mikey_*, Mommy =
     ///     Mommy_*, Daddy = Daddy_*).
     /// </summary>

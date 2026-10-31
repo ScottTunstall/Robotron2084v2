@@ -1,13 +1,13 @@
 namespace Robotron2084.Tuning;
 
-/// <summary>A brain reprogramming a human (notes §46, §47).</summary>
+/// <summary>A brain reprogramming a family member (notes §46, §47).</summary>
 public static class ReprogramTuning
 {
-    /// <summary>Blitter colour 1 for the reprogramming human ($AA = palette index 10).</summary>
+    /// <summary>Blitter colour 1 for the reprogramming family member ($AA = palette index 10).</summary>
     public const int BackgroundPaletteIndex = 0x0A;
 
     /// <summary>
-    ///     How close sideways the brain's and human's top-left corners must be for the brain to catch the human, in
+    ///     How close sideways the brain's and family member's top-left corners must be for the brain to catch the family member, in
     ///     columns.
     /// </summary>
     /// <remarks>
@@ -17,7 +17,7 @@ public static class ReprogramTuning
     public const int CatchReachColumns = 3;
 
     /// <summary>
-    ///     How close up and down the brain's and human's top-left corners must be for the brain to catch the human, in
+    ///     How close up and down the brain's and family member's top-left corners must be for the brain to catch the family member, in
     ///     rows.
     /// </summary>
     /// <remarks>
@@ -27,10 +27,10 @@ public static class ReprogramTuning
     public const int CatchReachRows = 3;
 
     // The ROM's 20-iteration loop, each iteration doing TWO redraws of the
-    // human (one with its Y lifted by SEED & 7, one with it dropped by the
-    // same) separated by NAP 2. Both the brain and the human are drawn in a
+    // family member (one with its Y lifted by SEED & 7, one with it dropped by the
+    // same) separated by NAP 2. Both the brain and the family member are drawn in a
     // single blitter colour for the duration: the brain as a solid block
-    // (BRNON/BLKON, op $12) and the human as a solid rectangle plus a solid
+    // (BRNON/BLKON, op $12) and the family member as a solid rectangle plus a solid
     // silhouette (HUMON with D = $AABB, op $12 then op $1A).
     public const int Iterations = 20; // ROM: `LDA #20 / STA PD4,U`
 
@@ -39,7 +39,7 @@ public static class ReprogramTuning
 
     // ROM: SEED & 7, i.e. 0..7
     /// <summary>
-    ///     Blitter colour 2 for the reprogramming human AND the BACKDROP the brain is drawn
+    ///     Blitter colour 2 for the reprogramming family member AND the BACKDROP the brain is drawn
     ///     on ($BB = palette index 11). For the brain this is a backdrop, not a replacement: ROM
     ///     $1DAF fills the brain's rectangle with it ($DA61 / BLKON, op $12) and then blits
     ///     the brain's own sprite over the top (JMP $D018) — notes §72.

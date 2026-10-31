@@ -13,7 +13,7 @@ namespace Robotron2084.Level;
 ///     </list>
 ///     A robot or a family member that was killed, or rescued, stays gone. What is left is
 ///     counted as the arcade counts it: a thing that has begun to die is already off the count, and a
-///     human in a brain's hold has already gone. Enforcers do not carry over; they turn back into
+///     family member in a brain's hold has already gone. Enforcers do not carry over; they turn back into
 ///     spheroids, one for every four, and at least one when there are enforcers but no spheroids, never
 ///     more than the wave began with. The speed floor goes back to the wave's own, and the grunts keep
 ///     the speed limit they had reached, raised to that floor if it is lower (notes §134).</item>
@@ -40,9 +40,9 @@ public static class WaveSurvivors
             BerzerkRobotCount = CountAlive(fieldEntities.BerzerkRobots),
             GorfCount = CountAlive(fieldEntities.Gorfs),
             ElectrodeCount = CountAlive(fieldEntities.Electrodes),
-            MikeyCount = CountFamilyMembers(fieldEntities, HumanKind.Mikey),
-            MommyCount = CountFamilyMembers(fieldEntities, HumanKind.Mommy),
-            DaddyCount = CountFamilyMembers(fieldEntities, HumanKind.Daddy),
+            MikeyCount = CountFamilyMembers(fieldEntities, FamilyMemberKind.Mikey),
+            MommyCount = CountFamilyMembers(fieldEntities, FamilyMemberKind.Mommy),
+            DaddyCount = CountFamilyMembers(fieldEntities, FamilyMemberKind.Daddy),
             HulkCount = CountAlive(fieldEntities.Hulks),
             BrainCount = CountAlive(fieldEntities.Brains),
             SpheroidCount = CountSpheroidsAfterConverting(CountAlive(fieldEntities.Enforcers),
@@ -64,9 +64,9 @@ public static class WaveSurvivors
     /// <summary>Counts the members of one kind of family member who are standing on the field and free.</summary>
     /// <param name="fieldEntities">What is on the field.</param>
     /// <param name="kind">Which family member to count.</param>
-    private static int CountFamilyMembers(FieldEntities fieldEntities, HumanKind kind)
+    private static int CountFamilyMembers(FieldEntities fieldEntities, FamilyMemberKind kind)
     {
-        return fieldEntities.FamilyList.Members.Count(human => human.Kind == kind && human.IsGraspable());
+        return fieldEntities.FamilyList.Members.Count(familyMember => familyMember.Kind == kind && familyMember.IsGraspable());
     }
 
     /// <summary>Works out how many spheroids there are once the leftover enforcers have turned back into them.</summary>

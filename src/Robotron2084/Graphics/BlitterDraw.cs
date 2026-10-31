@@ -142,7 +142,7 @@ public sealed class BlitterDraw
     /// <summary>
     ///     Blitter op <c>$12</c> — "SOLID" (RRS22 <c>BLKONV</c>, "ON DMA BLOCK"):
     ///     fills the rectangle with one colour, ignoring any source. The ROM uses
-    ///     it for the brain's flashing block while it reprograms a human (notes
+    ///     it for the brain's flashing block while it reprograms a family member (notes
     ///     §47) and, with colour 0, to erase a rectangle (<c>PCTOFV</c>/<c>BLKCLV</c>).
     /// </summary>
     public void DrawSolidRectangle(SpriteBatch spriteBatch, Rectangle bounds, Color colour)
@@ -166,7 +166,7 @@ public sealed class BlitterDraw
     ///     "ON MONOCHROME PICT"; notes §47): draws the sprite's SHAPE in one
     ///     colour, discarding the animation frame's own colours. This is the arcade's REMAP
     ///     COLOUR mode, and it is how the ROM draws anything in a single colour —
-    ///     an electrode being "turned on" (<c>OPON</c>), the flashing human and brain
+    ///     an electrode being "turned on" (<c>OPON</c>), the flashing family member and brain
     ///     while a brain reprograms one (<c>BRNON</c>/<c>HUMON</c>), mono text.
     ///     <paramref name="colour" /> usually comes from <see cref="GetPaletteIndexColour" /> so
     ///     the caller can name a palette index; a cycling palette index then cycles here for
@@ -218,7 +218,7 @@ public sealed class BlitterDraw
     ///     <c>BLIT_IMAGE_AS_SOLID_COLOUR_WITH_SOLID_BACKGROUND</c>): op <c>$12</c>
     ///     fills the frame with <paramref name="background" />, then op <c>$1A</c>
     ///     draws the sprite's SHAPE in <paramref name="shape" /> on top. This is how
-    ///     a human looks while a brain reprograms it (notes §46/§47). Both are
+    ///     a family member looks while a brain reprograms it (notes §46/§47). Both are
     ///     drawn on the same destination rectangle, so the block and the silhouette
     ///     stay aligned.
     /// </summary>

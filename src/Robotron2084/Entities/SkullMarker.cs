@@ -8,7 +8,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>The little skull left on the ground where a robot killed a family member. It fades away after a while.</summary>
-/// <seealso cref="Human" />
+/// <seealso cref="FamilyMember" />
 /// <remarks>
 ///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <see cref="_lifeArcadeFrameTimer" /> says when it is time for it to go.

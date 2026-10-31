@@ -92,7 +92,7 @@ public static class SoundTables
     public static readonly SoundSequence HulkHit = new(0xD0, 0x001C, [new SoundEntry(1, 16, 0x06)]);
 
     /// <summary><c>HPSND</c> "HUMAN-PROG FINAL CONVERSION" (<c>RRB10.ASM</c>); R5 <c>$1AEF</c>, asked for at <c>$1D7E</c>.</summary>
-    public static readonly SoundSequence HumanProgFinalConversion = new(0xD8, 0x1AEF, [new SoundEntry(1, 8, 0x11)]);
+    public static readonly SoundSequence FamilyMemberProgFinalConversion = new(0xD8, 0x1AEF, [new SoundEntry(1, 8, 0x11)]);
 
     /// <summary>
     ///     <c>HKSND</c> "KILL A HUMAN": a member of the family dies and leaves a skull (<c>RRH11.ASM</c>); R5
@@ -205,7 +205,7 @@ public static class SoundTables
     [
         .. Coin,
         BrainKill, BrainShoot, CircleKill, ClearTheSystem, CruiseMissileKill, EnforcerDropOff, EnforcerKill,
-        EnforcerShoot, HulkHit, HumanProgFinalConversion, KillAHuman, PlayerLaser, PlayerDeath, PostKill, ProgKill,
+        EnforcerShoot, HulkHit, FamilyMemberProgFinalConversion, KillAHuman, PlayerLaser, PlayerDeath, PostKill, ProgKill,
         Programming, Replay, RobotHit, RobotMove, SaveAHuman, ShellKill, ShellRebound, SparkKill, SquareKill,
         StartOnePlayer, StartTwoPlayers, TankDrop, TankFire, TankKill, WaveEnd
     ];

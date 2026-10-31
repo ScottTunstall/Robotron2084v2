@@ -42,30 +42,30 @@ public sealed class FamilyList
     private int _nextSlot;
 
     /// <summary>Every member, in the order they joined, whether or not they are still on the field.</summary>
-    internal EntityList<Human> Members { get; } = new();
+    internal EntityList<FamilyMember> Members { get; } = new();
 
     /// <summary>Puts a member in the next free place.</summary>
-    /// <param name="human">The member to add.</param>
+    /// <param name="familyMember">The member to add.</param>
     /// <remarks>Original source: <c>RRH11.ASM</c> <c>HUMSTV</c>.</remarks>
-    internal void Add(Human human)
+    internal void Add(FamilyMember familyMember)
     {
-        human.FamilySlot = _nextSlot++;
-        Members.Add(human);
+        familyMember.FamilySlot = _nextSlot++;
+        Members.Add(familyMember);
     }
 
     /// <summary>Says whether any member is still standing on the field and free.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL0</c>, <c>MOMCNT + DADCNT + KIDCNT</c> not being zero.</remarks>
     internal bool AnyAvailable()
     {
-        return Members.Any(human => human.IsGraspable());
+        return Members.Any(familyMember => familyMember.IsGraspable());
     }
 
     /// <summary>Finds the member in a place, if they are still standing and free.</summary>
     /// <param name="slot">The place to look in.</param>
     /// <returns>The member, or null when the place reads as empty. That is how a brain loses its target and looks for another.</returns>
-    internal Human? GetMemberInSlot(int slot)
+    internal FamilyMember? GetMemberInSlot(int slot)
     {
-        return Members.FirstOrDefault(human => human.FamilySlot == slot && human.IsGraspable());
+        return Members.FirstOrDefault(familyMember => familyMember.FamilySlot == slot && familyMember.IsGraspable());
     }
 
     /// <summary>Finds the place of the member nearest a point. When two are as near as each other, the later place wins.</summary>
@@ -86,15 +86,15 @@ public sealed class FamilyList
     {
         var nearestSlot = FirstSlot;
         var nearestDistance = int.MaxValue;
-        foreach (var human in Members)
+        foreach (var familyMember in Members)
         {
-            if (!human.IsGraspable()) continue;
+            if (!familyMember.IsGraspable()) continue;
 
-            var distance = ScreenSize.ToColumnAndRowDistance(human.Position, from);
+            var distance = ScreenSize.ToColumnAndRowDistance(familyMember.Position, from);
             if (distance <= nearestDistance)
             {
                 nearestDistance = distance;
-                nearestSlot = human.FamilySlot;
+                nearestSlot = familyMember.FamilySlot;
             }
         }
 
@@ -119,8 +119,8 @@ public sealed class FamilyList
     internal IReadOnlyList<int> GetOccupiedSlots()
     {
         return [
-            .. Members.Where(human => human.IsGraspable())
-            .Select(human => human.FamilySlot)
+            .. Members.Where(familyMember => familyMember.IsGraspable())
+            .Select(familyMember => familyMember.FamilySlot)
             .Order()
         ];
     }

@@ -11,7 +11,7 @@ namespace Robotron2084.Entities;
 ///     The "1000" to "5000" number that pops up where you just rescued a family member, showing the rescue bonus you
 ///     earned.
 /// </summary>
-/// <seealso cref="Human" />
+/// <seealso cref="FamilyMember" />
 /// <remarks>
 ///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <see cref="_lifeArcadeFrameTimer" /> says when it is time for it to go.

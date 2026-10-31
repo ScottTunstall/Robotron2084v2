@@ -11,7 +11,7 @@ namespace Robotron2084.Entities;
 ///     A prog is a family member that a brain has caught and turned into an enemy. It looks like the family member it
 ///     used to be, but now it hunts the player.
 /// </summary>
-/// <seealso cref="Human" />
+/// <seealso cref="FamilyMember" />
 /// <seealso cref="StripEffect" />
 /// <remarks>
 ///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
@@ -193,7 +193,7 @@ public sealed class Prog : IExplodable, IRemovable
     /// <param name="position">Where the prog's top-left corner is.</param>
     /// <param name="kind">Which family member it used to be. This decides its animation frames and its size.</param>
     /// <param name="random">Where its random numbers come from. They pick how far off the player the spot it heads for is, and when it turns.</param>
-    public Prog(TextureSet textureSet, IntVector2 position, HumanKind kind, Random random)
+    public Prog(TextureSet textureSet, IntVector2 position, FamilyMemberKind kind, Random random)
     {
         _textureSet = textureSet;
         _position = position;
@@ -206,7 +206,7 @@ public sealed class Prog : IExplodable, IRemovable
     }
 
     /// <summary>Which family member this prog used to be. This decides its animation frames and its size.</summary>
-    public HumanKind Kind { get; }
+    public FamilyMemberKind Kind { get; }
 
     /// <summary>Alive until it is shot. It is never Dying, because it is blown apart at once (see <see cref="Kill" />).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;

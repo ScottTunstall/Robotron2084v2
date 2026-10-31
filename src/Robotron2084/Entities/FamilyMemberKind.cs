@@ -11,7 +11,7 @@ namespace Robotron2084.Entities;
 ///         </item>
 ///     </list>
 /// </remarks>
-public enum HumanKind
+public enum FamilyMemberKind
 {
     /// <summary>Mikey, the smallest of the three.</summary>
     Mikey,
