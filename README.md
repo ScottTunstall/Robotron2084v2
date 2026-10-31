@@ -136,7 +136,7 @@ dress — the arcade's gameplay rows minus coins. `Up`/`Down` select, `Left`/`Ri
 change, `Enter` activates `RESTORE FACTORY SETTINGS` / `HIGH SCORE TABLE RESET` once
 they read `YES`, and `F10` saves and returns:
 `EXTRA MAN EVERY` (25000 points, the arcade's recommended stop), `TURNS PER PLAYER`
-(3 men), `DIFFICULTY OF PLAY` (0-10, 5 recommended — the wave tables move exactly as
+(3 lives), `DIFFICULTY OF PLAY` (0-10, 5 recommended — the wave tables move exactly as
 the ROM's `$2B7C` moves them), `ATTRACT MODE SOUND` (port-only: off by default, so the demo
 machine playing itself is silent; turn it on to hear it), `BOZO MODE` (port-only: on by
 default, as the arcade — the early-wave mercy for a player losing ships; off, it is never
