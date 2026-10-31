@@ -109,10 +109,10 @@ public sealed class WordmarkAppear
 
     /// <summary>Draws the letters that have started: the settled ones whole, and the one coming in as its strips.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="blitter">The blitter that draws a mask in a palette colour.</param>
+    /// <param name="blitterDraw">The blitter that draws a mask in a palette colour.</param>
     /// <param name="rimPaletteIndex">The palette index the outline is drawn in.</param>
     /// <param name="corePaletteIndex">The palette index the body is drawn in.</param>
-    public void Draw(SpriteBatch spriteBatch, BlitterDraw blitter, int rimPaletteIndex, int corePaletteIndex)
+    public void Draw(SpriteBatch spriteBatch, BlitterDraw blitterDraw, int rimPaletteIndex, int corePaletteIndex)
     {
         var arcadeFrames = GetArcadeFrames();
         for (var index = 0; index < _effects.Length; index++)
@@ -120,9 +120,9 @@ public sealed class WordmarkAppear
             if (arcadeFrames < GetStartFrame(index)) continue;
 
             if (_effects[index].IsAlive())
-                DrawStrips(spriteBatch, blitter, index, rimPaletteIndex, corePaletteIndex);
+                DrawStrips(spriteBatch, blitterDraw, index, rimPaletteIndex, corePaletteIndex);
             else
-                DrawWhole(spriteBatch, blitter, _letters[index], rimPaletteIndex, corePaletteIndex);
+                DrawWhole(spriteBatch, blitterDraw, _letters[index], rimPaletteIndex, corePaletteIndex);
         }
     }
 
@@ -153,7 +153,7 @@ public sealed class WordmarkAppear
         return index * ArcadeFramesBetweenLetters;
     }
 
-    private void DrawStrips(SpriteBatch spriteBatch, BlitterDraw blitter, int index, int rimPaletteIndex, int corePaletteIndex)
+    private void DrawStrips(SpriteBatch spriteBatch, BlitterDraw blitterDraw, int index, int rimPaletteIndex, int corePaletteIndex)
     {
         var letter = _letters[index];
         foreach (var strip in _effects[index].GetStrips(letter.Width, _spriteHeight))
@@ -164,18 +164,18 @@ public sealed class WordmarkAppear
                 strip.Y * ScreenSize.PortPixelsPerArcadePixel,
                 letter.Width * ScreenSize.PortPixelsPerArcadePixel,
                 ScreenSize.PortPixelsPerArcadePixel);
-            blitter.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitter.GetPaletteIndexColour(rimPaletteIndex));
-            blitter.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination,
-                blitter.GetPaletteIndexColour(corePaletteIndex));
+            blitterDraw.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitterDraw.GetPaletteIndexColour(rimPaletteIndex));
+            blitterDraw.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination,
+                blitterDraw.GetPaletteIndexColour(corePaletteIndex));
         }
     }
 
-    private void DrawWhole(SpriteBatch spriteBatch, BlitterDraw blitter, LetterSpan letter, int rimPaletteIndex, int corePaletteIndex)
+    private void DrawWhole(SpriteBatch spriteBatch, BlitterDraw blitterDraw, LetterSpan letter, int rimPaletteIndex, int corePaletteIndex)
     {
         Rectangle source = new(letter.Start, 0, letter.Width, _spriteHeight);
         var destination = GetLetterBounds(letter);
-        blitter.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitter.GetPaletteIndexColour(rimPaletteIndex));
-        blitter.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination, blitter.GetPaletteIndexColour(corePaletteIndex));
+        blitterDraw.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitterDraw.GetPaletteIndexColour(rimPaletteIndex));
+        blitterDraw.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination, blitterDraw.GetPaletteIndexColour(corePaletteIndex));
     }
 
     private int GetArcadeFrames()

@@ -71,9 +71,9 @@ public sealed class WilliamsLogoBorder
     /// </summary>
     private const int MovingArcadeFrames = 0x02C0;
 
-    private readonly SpriteMask _logoMask;
+    private readonly SpriteMask _logoSpriteMask;
     private readonly (int Column, int Row)[] _logoPositions = new (int, int)[LogoCount];
-    private readonly WilliamsLogoPath _path = new();
+    private readonly WilliamsLogoPath _williamsLogoPath = new();
     private readonly byte[] _pixels = new byte[Width * Height];
     private int _clockUnits;
     private int _drawnLogoCount;
@@ -85,9 +85,9 @@ public sealed class WilliamsLogoBorder
 
     /// <summary>Starts the ring from nothing.</summary>
     /// <param name="logo">The W's shape: the mask of <c>WilliamsLogo.png</c>, its opaque pixels the colour-1 pixels.</param>
-    public WilliamsLogoBorder(SpriteMask logoMask)
+    public WilliamsLogoBorder(SpriteMask logoSpriteMask)
     {
-        _logoMask = logoMask;
+        _logoSpriteMask = logoSpriteMask;
     }
 
     /// <summary>Which palette index each arcade pixel of the screen holds; 0 is empty.</summary>
@@ -95,8 +95,8 @@ public sealed class WilliamsLogoBorder
 
     /// <summary>Draws the ring in each pixel's palette index, the screen's arcade pixels mapped to the canvas as the HUD's are.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="blitter">The blitter that fills the runs and looks the palette indices' colours up.</param>
-    public void Draw(SpriteBatch spriteBatch, BlitterDraw blitter)
+    /// <param name="blitterDraw">The blitter that fills the runs and looks the palette indices' colours up.</param>
+    public void Draw(SpriteBatch spriteBatch, BlitterDraw blitterDraw)
     {
         for (var y = 0; y < Height; y++)
         {
@@ -113,7 +113,7 @@ public sealed class WilliamsLogoBorder
                 {
                     var left = HudLayout.ToPortX(x);
                     Rectangle runBounds = new(left, top, HudLayout.ToPortX(runEnd) - left, bottom - top);
-                    blitter.DrawSolidRectangle(spriteBatch, runBounds, blitter.GetPaletteIndexColour(paletteIndex));
+                    blitterDraw.DrawSolidRectangle(spriteBatch, runBounds, blitterDraw.GetPaletteIndexColour(paletteIndex));
                 }
 
                 x = runEnd;
@@ -155,12 +155,12 @@ public sealed class WilliamsLogoBorder
     private void Blit(int column, int row, int paletteIndex)
     {
         var left = column * ScreenSize.ArcadePixelsPerByte;
-        for (var y = 0; y < _logoMask.Height; y++)
-            for (var x = 0; x < _logoMask.Width; x++)
+        for (var y = 0; y < _logoSpriteMask.Height; y++)
+            for (var x = 0; x < _logoSpriteMask.Width; x++)
             {
                 var screenX = left + x;
                 var screenY = row + y;
-                if (_logoMask.IsOpaque(x, y) && screenX < Width && screenY < Height)
+                if (_logoSpriteMask.IsOpaque(x, y) && screenX < Width && screenY < Height)
                     _pixels[screenY * Width + screenX] = (byte)paletteIndex;
             }
     }
@@ -174,8 +174,8 @@ public sealed class WilliamsLogoBorder
             return;
         }
 
-        Blit(_path.Column, _path.Row, _path.GetPaletteIndex());
-        _path.Step();
+        Blit(_williamsLogoPath.Column, _williamsLogoPath.Row, _williamsLogoPath.GetPaletteIndex());
+        _williamsLogoPath.Step();
         _drawnLogoCount++;
         _sleepArcadeFrames = DrawIntervalArcadeFrames - 1;
     }
@@ -191,14 +191,14 @@ public sealed class WilliamsLogoBorder
             }
             else
             {
-                _path.Step();
+                _williamsLogoPath.Step();
                 _logoIndex = (_logoIndex + 1) % LogoCount;
             }
 
             var (column, row) = _logoPositions[_logoIndex];
             Blit(column, row, 0);
-            Blit(_path.Column, _path.Row, _path.GetPaletteIndex());
-            _logoPositions[_logoIndex] = (_path.Column, _path.Row);
+            Blit(_williamsLogoPath.Column, _williamsLogoPath.Row, _williamsLogoPath.GetPaletteIndex());
+            _logoPositions[_logoIndex] = (_williamsLogoPath.Column, _williamsLogoPath.Row);
         }
 
         _movingFramesRemaining--;
@@ -207,7 +207,7 @@ public sealed class WilliamsLogoBorder
     /// <summary>ROM <c>$88CD</c>: the path starts again, every palette index is empty, and the first move is made at once.</summary>
     private void StartMoving()
     {
-        _path.Reset();
+        _williamsLogoPath.Reset();
         Array.Fill(_logoPositions, (EmptySlotColumn, EmptySlotRow));
         _logoIndex = 0;
         _isMoving = true;

@@ -15,16 +15,16 @@ public sealed class SpriteCollision : IPixelCollision
     /// <inheritdoc />
     public SpriteShape? GetShape(IEntity entity)
     {
-        if (entity is not IAnimationFrameSource frameSource) return null;
+        if (entity is not IAnimationFrameSource animationFrameSource) return null;
 
-        var animationFrame = frameSource.GetCurrentAnimationFrame();
+        var animationFrame = animationFrameSource.GetCurrentAnimationFrame();
         return new SpriteShape(GetMask(animationFrame), BlitterDraw.DrawnRect(entity.GetBounds(), animationFrame));
     }
 
     /// <inheritdoc />
     public bool Overlaps(SpriteShape a, SpriteShape b)
     {
-        return SpriteMask.Overlaps(a.Mask, a.DrawnBounds, b.Mask, b.DrawnBounds);
+        return SpriteMask.Overlaps(a.SpriteMask, a.DrawnBounds, b.SpriteMask, b.DrawnBounds);
     }
 
     private SpriteMask GetMask(Texture2D animationFrame)

@@ -32,11 +32,11 @@ public sealed class SpriteFactory
     private static readonly int PatternSize =
         ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EntitySizeArcadePixels);
 
-    private readonly GraphicsDevice _device;
+    private readonly GraphicsDevice _graphicsDevice;
 
-    public SpriteFactory(GraphicsDevice device)
+    public SpriteFactory(GraphicsDevice graphicsDevice)
     {
-        _device = device;
+        _graphicsDevice = graphicsDevice;
     }
 
     /// <summary>Spiked tower: top ball, stem, diamond midsection, base.</summary>
@@ -201,7 +201,7 @@ public sealed class SpriteFactory
     /// <summary>Creates a texture from an explicit pixel array (row-major).</summary>
     public Texture2D Create(int width, int height, Color[] pixels)
     {
-        Texture2D texture = new(_device, width, height);
+        Texture2D texture = new(_graphicsDevice, width, height);
         texture.SetData(pixels);
         return texture;
     }

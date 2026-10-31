@@ -68,22 +68,22 @@ public sealed class SpriteMask
     ///     same, the tank's birth frames bigger still), so a box-only rejection would drop the near misses the
     ///     arcade counts.
     /// </summary>
-    /// <param name="a">The first sprite's mask.</param>
-    /// <param name="aDrawnBounds">The rectangle <paramref name="a" /> is drawn in, in screen pixels.</param>
-    /// <param name="b">The second sprite's mask.</param>
-    /// <param name="bDrawnBounds">The rectangle <paramref name="b" /> is drawn in, in screen pixels.</param>
-    public static bool Overlaps(SpriteMask a, Rectangle aDrawnBounds, SpriteMask b, Rectangle bDrawnBounds)
+    /// <param name="firstSpriteMask">The first sprite's mask.</param>
+    /// <param name="firstDrawnBounds">The rectangle <paramref name="firstSpriteMask" /> is drawn in, in screen pixels.</param>
+    /// <param name="secondSpriteMask">The second sprite's mask.</param>
+    /// <param name="secondDrawnBounds">The rectangle <paramref name="secondSpriteMask" /> is drawn in, in screen pixels.</param>
+    public static bool Overlaps(SpriteMask firstSpriteMask, Rectangle firstDrawnBounds, SpriteMask secondSpriteMask, Rectangle secondDrawnBounds)
     {
-        var (left, top, right, bottom) = GetSharedScreenRect(aDrawnBounds, bDrawnBounds);
+        var (left, top, right, bottom) = GetSharedScreenRect(firstDrawnBounds, secondDrawnBounds);
         if (left >= right || top >= bottom) return false;
 
-        var cell = aDrawnBounds.Width / a.Width;
+        var cell = firstDrawnBounds.Width / firstSpriteMask.Width;
         for (var y = top; y < bottom; y++)
         {
-            var rowA = (y - aDrawnBounds.Y) / cell;
-            var rowB = (y - bDrawnBounds.Y) / cell;
+            var rowA = (y - firstDrawnBounds.Y) / cell;
+            var rowB = (y - secondDrawnBounds.Y) / cell;
             for (var x = left; x < right; x++)
-                if (a.IsOpaque((x - aDrawnBounds.X) / cell, rowA) && b.IsOpaque((x - bDrawnBounds.X) / cell, rowB))
+                if (firstSpriteMask.IsOpaque((x - firstDrawnBounds.X) / cell, rowA) && secondSpriteMask.IsOpaque((x - secondDrawnBounds.X) / cell, rowB))
                     return true;
         }
 

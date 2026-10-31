@@ -145,11 +145,11 @@ public sealed class TunnelEffect
     ///     Draws EVERY ring the walk has reached — they accumulate, two pixels apart, which is what
     ///     fills the area — with the erase pass's black rings painted over the top of them.
     /// </summary>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void Draw(SpriteBatch spriteBatch, SpriteSet spriteSet)
     {
-        foreach (var ring in _rings) DrawRing(spriteBatch, sprites, ring);
+        foreach (var ring in _rings) DrawRing(spriteBatch, spriteSet, ring);
 
-        foreach (var ring in _blackRings) DrawRing(spriteBatch, sprites, ring);
+        foreach (var ring in _blackRings) DrawRing(spriteBatch, spriteSet, ring);
     }
 
     /// <summary>
@@ -245,10 +245,10 @@ public sealed class TunnelEffect
     }
 
     /// <summary>Blits one edge rectangle, already in the port's screen pixels.</summary>
-    private static void DrawEdge(SpriteBatch spriteBatch, SpriteSet sprites, Rectangle rect, Color colour)
+    private static void DrawEdge(SpriteBatch spriteBatch, SpriteSet spriteSet, Rectangle rect, Color colour)
     {
         spriteBatch.Draw(
-            sprites.WallPixelSprite,
+            spriteSet.WallPixelSprite,
             new Rectangle(rect.X, rect.Y, Math.Max(1, rect.Width), Math.Max(1, rect.Height)),
             colour);
     }
@@ -297,7 +297,7 @@ public sealed class TunnelEffect
     ///     same row one column to the right and one column narrower, i.e. a column in from each end.
     /// </summary>
     private void DrawHorizontalLine(
-        SpriteBatch spriteBatch, SpriteSet sprites, int left, int right, int row, Color colour, bool isInset)
+        SpriteBatch spriteBatch, SpriteSet spriteSet, int left, int right, int row, Color colour, bool isInset)
     {
         if (row < 0 || row > 255) return;
 
@@ -314,7 +314,7 @@ public sealed class TunnelEffect
         var x = ToPixelX(firstColumn * 2);
         var width = ToPixelX(lastColumn * 2 + 2) - x;
         var y = GetRowY(row);
-        DrawEdge(spriteBatch, sprites, new Rectangle(x, y, width, Math.Max(1, GetRowY(row + 1) - y)), colour);
+        DrawEdge(spriteBatch, spriteSet, new Rectangle(x, y, width, Math.Max(1, GetRowY(row + 1) - y)), colour);
     }
 
     /// <summary>
@@ -322,11 +322,11 @@ public sealed class TunnelEffect
     ///     `LDA #$05`/`#$05` height/width fields XOR 4 are 1 byte), so successive rows and
     ///     columns tile instead of leaving seams (see the class comment).
     /// </summary>
-    private void DrawRing(SpriteBatch spriteBatch, SpriteSet sprites, Ring ring)
+    private void DrawRing(SpriteBatch spriteBatch, SpriteSet spriteSet, Ring ring)
     {
         var (paletteIndex0, paletteIndex1) = GetColourPaletteIndices(ring.PackedColourPair); // $5A13 / $5A19
-        var colour0 = sprites.Blitter.GetPaletteIndexColour(paletteIndex0);
-        var colour1 = sprites.Blitter.GetPaletteIndexColour(paletteIndex1);
+        var colour0 = spriteSet.BlitterDraw.GetPaletteIndexColour(paletteIndex0);
+        var colour1 = spriteSet.BlitterDraw.GetPaletteIndexColour(paletteIndex1);
 
         var top = ring.Top;
         var bottom = ring.Bottom;
@@ -339,10 +339,10 @@ public sealed class TunnelEffect
         // — but through $5AAA, which moves the blit one column right and makes it one column
         // narrower, so the second line is INSET a column at each end. The bottom edge mirrors it:
         // row `bottom` full width in colour 0, row `bottom-1` inset in colour 1.
-        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, top, colour0, false);
-        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, top + 1, colour1, true);
-        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, bottom, colour0, false);
-        DrawHorizontalLine(spriteBatch, sprites, ring.Left, ring.Right, bottom - 1, colour1, true);
+        DrawHorizontalLine(spriteBatch, spriteSet, ring.Left, ring.Right, top, colour0, false);
+        DrawHorizontalLine(spriteBatch, spriteSet, ring.Left, ring.Right, top + 1, colour1, true);
+        DrawHorizontalLine(spriteBatch, spriteSet, ring.Left, ring.Right, bottom, colour0, false);
+        DrawHorizontalLine(spriteBatch, spriteSet, ring.Left, ring.Right, bottom - 1, colour1, true);
 
         // The vertical edges run from row `top + 1` to row `bottom - 1` — $5A7B's height is
         // `bottom - top - 1` starting at `top + 1`. They are ONE COLUMN wide, which is TWO ROM
@@ -351,8 +351,8 @@ public sealed class TunnelEffect
         // left edge, $5ADA re-packs them the other way round ($FE) for the right one. So the
         // left edge reads colour 0 then colour 1 and the right edge is its MIRROR. Passing one
         // flat colour instead drew solid bars where the arcade has a two-pixel hatch (notes §85).
-        DrawVerticalEdge(spriteBatch, sprites, ring.Left, top + 1, bottom - 1, colour0, colour1);
-        DrawVerticalEdge(spriteBatch, sprites, ring.Right, top + 1, bottom - 1, colour1, colour0);
+        DrawVerticalEdge(spriteBatch, spriteSet, ring.Left, top + 1, bottom - 1, colour0, colour1);
+        DrawVerticalEdge(spriteBatch, spriteSet, ring.Right, top + 1, bottom - 1, colour1, colour0);
     }
 
     /// <summary>
@@ -361,7 +361,7 @@ public sealed class TunnelEffect
     ///     two pixels, <paramref name="second" /> the right.
     /// </summary>
     private void DrawVerticalEdge(
-        SpriteBatch spriteBatch, SpriteSet sprites, int column, int topRow, int bottomRow, Color first, Color second)
+        SpriteBatch spriteBatch, SpriteSet spriteSet, int column, int topRow, int bottomRow, Color first, Color second)
     {
         if (column < 0 || column > 151 || bottomRow < topRow) return;
 
@@ -371,8 +371,8 @@ public sealed class TunnelEffect
         var middleX = ToPixelX(column * 2 + 1);
         var rightX = ToPixelX(column * 2 + 2);
 
-        DrawEdge(spriteBatch, sprites, new Rectangle(leftX, y, Math.Max(1, middleX - leftX), height), first);
-        DrawEdge(spriteBatch, sprites, new Rectangle(middleX, y, Math.Max(1, rightX - middleX), height), second);
+        DrawEdge(spriteBatch, spriteSet, new Rectangle(leftX, y, Math.Max(1, middleX - leftX), height), first);
+        DrawEdge(spriteBatch, spriteSet, new Rectangle(middleX, y, Math.Max(1, rightX - middleX), height), second);
     }
 
     /// <summary>One ring as drawn: its corners in ROM screen coordinates and the pair it used.</summary>

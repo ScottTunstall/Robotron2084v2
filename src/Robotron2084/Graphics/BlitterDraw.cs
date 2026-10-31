@@ -35,13 +35,13 @@ public sealed class BlitterDraw
     /// </summary>
     private const string SolidRemapTechnique = "SolidRemap";
 
-    private readonly Texture2D _wallPixel;
+    private readonly Texture2D _wallPixelSprite;
 
     /// <summary>Creates a blitter that fills rectangles with a 1x1 white pixel.</summary>
-    /// <param name="wallPixel">The white pixel every solid fill is a tinted, stretched copy of.</param>
-    public BlitterDraw(Texture2D wallPixel)
+    /// <param name="wallPixelSprite">The white pixel every solid fill is a tinted, stretched copy of.</param>
+    public BlitterDraw(Texture2D wallPixelSprite)
     {
-        _wallPixel = wallPixel;
+        _wallPixelSprite = wallPixelSprite;
     }
 
     /// <summary>
@@ -52,7 +52,7 @@ public sealed class BlitterDraw
     public Effect? ColorCycleEffect { get; set; }
 
     /// <summary>The live 16-index palette the effect remaps into (palette indices 10-15 cycle).</summary>
-    public GamePalette? Palette { get; set; }
+    public GamePalette? GamePalette { get; set; }
 
     /// <summary>
     ///     The rectangle an animation frame is DRAWN in inside an entity's collision box: centred in the box, at the
@@ -88,14 +88,14 @@ public sealed class BlitterDraw
         if (ColorCycleEffect is { } effect &&
             effect.Techniques[GlyphCycleTechnique] is { } technique)
         {
-            Palette?.UpdateEffectColors(effect);
+            GamePalette?.UpdateEffectColors(effect);
             effect.Parameters[GlyphPaletteIndexParameter].SetValue((float)(paletteIndex - FontPaletteIndices.FirstCyclingPaletteIndex));
             technique.Passes[0].Apply();
         }
 
         // Without the effect the draw degrades to a CPU tint of the palette index's live
         // colour (exact for the white master, and it cycles with the palette).
-        var tint = ColorCycleEffect is null ? Palette?.GetColour(paletteIndex) ?? Color.White : Color.White;
+        var tint = ColorCycleEffect is null ? GamePalette?.GetColour(paletteIndex) ?? Color.White : Color.White;
         spriteBatch.Draw(glyph, new Rectangle(x, y, width, height), tint);
 
         // Hand the pass-through back immediately: this pass is DEVICE state, and
@@ -133,7 +133,7 @@ public sealed class BlitterDraw
     public void DrawGlyphStatic(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int paletteIndex,
         SpriteEffects effects = SpriteEffects.None)
     {
-        var tint = Palette?.GetColour(paletteIndex) ?? Color.White;
+        var tint = GamePalette?.GetColour(paletteIndex) ?? Color.White;
         var width = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Width);
         var height = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Height);
         spriteBatch.Draw(glyph, new Rectangle(x, y, width, height), null, tint, 0f, Vector2.Zero, effects, 0f);
@@ -148,7 +148,7 @@ public sealed class BlitterDraw
     public void DrawSolidRectangle(SpriteBatch spriteBatch, Rectangle bounds, Color color)
     {
         UsePassThrough(); // a solid rect is NOT a remap — see UsePassThrough
-        spriteBatch.Draw(_wallPixel, bounds, color);
+        spriteBatch.Draw(_wallPixelSprite, bounds, color);
     }
 
     /// <summary>
@@ -233,14 +233,14 @@ public sealed class BlitterDraw
         // otherwise it is drawn through whatever pass was bound last and comes out
         // in that colour.
         UsePassThrough();
-        spriteBatch.Draw(_wallPixel, DrawnRect(bounds, texture), background);
+        spriteBatch.Draw(_wallPixelSprite, DrawnRect(bounds, texture), background);
         DrawSpriteSolid(spriteBatch, texture, bounds, shape);
     }
 
     /// <summary>The live RGB of a palette index (0-15); white when no palette is wired.</summary>
     public Color GetPaletteIndexColour(int paletteIndex)
     {
-        return Palette?.GetColour(paletteIndex) ?? Color.White;
+        return GamePalette?.GetColour(paletteIndex) ?? Color.White;
     }
 
     /// <summary>
@@ -256,7 +256,7 @@ public sealed class BlitterDraw
     {
         if (ColorCycleEffect is { } effect)
         {
-            Palette?.UpdateEffectColors(effect);
+            GamePalette?.UpdateEffectColors(effect);
             effect.CurrentTechnique.Passes[0].Apply();
         }
     }

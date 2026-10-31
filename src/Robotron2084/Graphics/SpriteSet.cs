@@ -104,35 +104,35 @@ public sealed class SpriteSet
     ];
 
     /// <summary>Loads the game's sprites.</summary>
-    /// <param name="source">
+    /// <param name="spriteSource">
     ///     Where the sprites come from — the content pipeline in the game, and nothing at
     ///     all in a headless test.
     /// </param>
-    public SpriteSet(ISpriteSource source)
+    public SpriteSet(ISpriteSource spriteSource)
     {
-        PlayerAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Player", PlayerAnimationFrameCount));
-        GruntAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Grunt", GruntAnimationFrameCount));
-        GorfAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Gorf", 2));
-        BerzerkRobotIdleFrames = source.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_Idle", 6));
-        BerzerkRobotWalkRightFrames = source.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkRight", 2));
-        BerzerkRobotWalkLeftFrames = source.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkLeft", 2));
-        BerzerkRobotWalkUpFrames = source.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkUp", 3));
-        BerzerkRobotWalkDownFrames = source.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkDown", 3));
-        HulkAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Hulk", HulkAnimationFrameCount));
-        SpheroidAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Spheroid", SpheroidAnimationFrameCount));
-        EnforcerAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Enforcer", EnforcerAnimationFrameCount));
+        PlayerAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Player", PlayerAnimationFrameCount));
+        GruntAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Grunt", GruntAnimationFrameCount));
+        GorfAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Gorf", 2));
+        BerzerkRobotIdleFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_Idle", 6));
+        BerzerkRobotWalkRightFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkRight", 2));
+        BerzerkRobotWalkLeftFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkLeft", 2));
+        BerzerkRobotWalkUpFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkUp", 3));
+        BerzerkRobotWalkDownFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_WalkDown", 3));
+        HulkAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Hulk", HulkAnimationFrameCount));
+        SpheroidAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Spheroid", SpheroidAnimationFrameCount));
+        EnforcerAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Enforcer", EnforcerAnimationFrameCount));
         EnforcerSprite = EnforcerAnimationFrames[0];
-        QuarkAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Quark", QuarkAnimationFrameCount));
-        TankAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Tank", TankAnimationFrameCount));
+        QuarkAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Quark", QuarkAnimationFrameCount));
+        TankAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Tank", TankAnimationFrameCount));
 
         // ROM MTNKP1..4 (notes §53): the four birth animation frames. Each is a
         // different size, so the drawer reads each texture's own dimensions
         // rather than the tank's collision box.
-        TankGrowAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/TankGrow", TankTuning.GrowSteps));
-        ElectrodeAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Electrode", ElectrodeAnimationFrameCount));
-        SparkAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Spark", SparkAnimationFrameCount));
-        SkullSprite = source.Load("Sprites/Skull");
-        RescueScoreDisplays = source.LoadAll(
+        TankGrowAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/TankGrow", TankTuning.GrowSteps));
+        ElectrodeAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Electrode", ElectrodeAnimationFrameCount));
+        SparkAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Spark", SparkAnimationFrameCount));
+        SkullSprite = spriteSource.Load("Sprites/Skull");
+        RescueScoreDisplays = spriteSource.LoadAll(
         [
             "Sprites/Score_1000",
             "Sprites/Score_2000",
@@ -140,42 +140,42 @@ public sealed class SpriteSet
             "Sprites/Score_4000",
             "Sprites/Score_5000"
         ]);
-        MikeyAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Mikey", WalkCycleAnimationFrameCount));
-        MommyAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Mommy", WalkCycleAnimationFrameCount));
-        DaddyAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Daddy", WalkCycleAnimationFrameCount));
-        BrainAnimationFrames = source.LoadAll(GetNumberedNames("Sprites/Brain", WalkCycleAnimationFrameCount));
-        ProgBurstSprite = source.Load("Sprites/ProgBurst");
-        TitleWordmarkCoreSprite = source.Load("Sprites/Title_Wordmark_Core");
-        TitleWordmarkRimSprite = source.Load("Sprites/Title_Wordmark_Rim");
-        Title2084Sprite = source.Load("Sprites/Title_2084");
-        WilliamsLogoSprite = source.Load("Sprites/WilliamsLogo");
+        MikeyAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Mikey", WalkCycleAnimationFrameCount));
+        MommyAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Mommy", WalkCycleAnimationFrameCount));
+        DaddyAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Daddy", WalkCycleAnimationFrameCount));
+        BrainAnimationFrames = spriteSource.LoadAll(GetNumberedNames("Sprites/Brain", WalkCycleAnimationFrameCount));
+        ProgBurstSprite = spriteSource.Load("Sprites/ProgBurst");
+        TitleWordmarkCoreSprite = spriteSource.Load("Sprites/Title_Wordmark_Core");
+        TitleWordmarkRimSprite = spriteSource.Load("Sprites/Title_Wordmark_Rim");
+        Title2084Sprite = spriteSource.Load("Sprites/Title_2084");
+        WilliamsLogoSprite = spriteSource.Load("Sprites/WilliamsLogo");
 
-        LaserBarSprite = source.Create(6, 1, SpriteFactory.BuildLaserBarPattern(Color.White));
-        LaserColumnSprite = source.Create(2, 6, SpriteFactory.BuildLaserColumnPattern(Color.White));
-        LaserDiagonalMainSprite = source.Create(6, 6, SpriteFactory.BuildLaserDiagonalMainPattern(Color.White));
-        LaserDiagonalAntiSprite = source.Create(6, 6, SpriteFactory.BuildLaserDiagonalAntiPattern(Color.White));
-        TankShellSprite = source.Load("Sprites/TankShell");
-        AttractCruiseSprite = source.Load("Sprites/AttractCruise");
-        AttractElectrodeAnimationFrames = source.LoadAll(
+        LaserBarSprite = spriteSource.Create(6, 1, SpriteFactory.BuildLaserBarPattern(Color.White));
+        LaserColumnSprite = spriteSource.Create(2, 6, SpriteFactory.BuildLaserColumnPattern(Color.White));
+        LaserDiagonalMainSprite = spriteSource.Create(6, 6, SpriteFactory.BuildLaserDiagonalMainPattern(Color.White));
+        LaserDiagonalAntiSprite = spriteSource.Create(6, 6, SpriteFactory.BuildLaserDiagonalAntiPattern(Color.White));
+        TankShellSprite = spriteSource.Load("Sprites/TankShell");
+        AttractCruiseSprite = spriteSource.Load("Sprites/AttractCruise");
+        AttractElectrodeAnimationFrames = spriteSource.LoadAll(
         [
             "Sprites/AttractElectrode_1",
             "Sprites/AttractElectrode_2",
             "Sprites/AttractElectrode_3",
             "Sprites/AttractElectrode_4"
         ]);
-        WallPixelSprite = source.CreateSolid(1, 1, Color.White);
-        SpareLifeSprite = BuildSpareLifeSprite(source);
-        FontLarge = source.LoadAll(GetGlyphNames("Sprites/Font_L", GlyphSuffixes.Length));
-        FontSmall = source.LoadAll(GetGlyphNames("Sprites/Font_S", SmallFontGlyphCount));
-        CursorArrowSprite = source.Load("Sprites/Font_S_cursorright");
-        Blitter = new BlitterDraw(WallPixelSprite);
-        TextRenderer = new ArcadeText(Blitter, FontLarge, FontSmall, SpareLifeSprite);
+        WallPixelSprite = spriteSource.CreateSolid(1, 1, Color.White);
+        SpareLifeSprite = BuildSpareLifeSprite(spriteSource);
+        FontLarge = spriteSource.LoadAll(GetGlyphNames("Sprites/Font_L", GlyphSuffixes.Length));
+        FontSmall = spriteSource.LoadAll(GetGlyphNames("Sprites/Font_S", SmallFontGlyphCount));
+        CursorArrowSprite = spriteSource.Load("Sprites/Font_S_cursorright");
+        BlitterDraw = new BlitterDraw(WallPixelSprite);
+        ArcadeText = new ArcadeText(BlitterDraw, FontLarge, FontSmall, SpareLifeSprite);
     }
 
     /// <summary>
     ///     The attract movie's CRUISE MISSILE — ROM `CRUSB` ($86BA, the 9x2 sprite
     ///     the movie's own CRUSM descriptor points at; notes §95.6). The playfield's
-    ///     cruise missile draws itself as solid marks, not a sprite (see <see cref="Robotron2084.Entities.CruiseMissile" />).
+    ///     cruise missile draws itself as solid marks, not a sprite (see <see cref="Robotron2084.FieldEntities.CruiseMissile" />).
     /// </summary>
     public Texture2D AttractCruiseSprite { get; }
 
@@ -203,7 +203,7 @@ public sealed class SpriteSet
     public Texture2D[] BerzerkRobotWalkUpFrames { get; }
 
     /// <summary>The blitter operations that draw these sprites.</summary>
-    public BlitterDraw Blitter { get; }
+    public BlitterDraw BlitterDraw { get; }
 
     /// <summary>
     ///     The brain's 12 walk frames (4 directions × 3, same layout as
@@ -315,7 +315,7 @@ public sealed class SpriteSet
     public Texture2D TankShellSprite { get; }
 
     /// <summary>The arcade's text, printed in these sprites' fonts.</summary>
-    public ArcadeText TextRenderer { get; }
+    public ArcadeText ArcadeText { get; }
 
     /// <summary>
     ///     The "2084" mark beneath the wordmark — COLOUR sprite, traced the same way and snapped to the
@@ -356,7 +356,7 @@ public sealed class SpriteSet
     ///     11 (a CYCLING palette index — the RGB process, which is why the little man's body
     ///     shimmers), legs palette index 8, feet palette index 3.
     /// </summary>
-    private static Texture2D BuildSpareLifeSprite(ISpriteSource source)
+    private static Texture2D BuildSpareLifeSprite(ISpriteSource spriteSource)
     {
         byte[] nibbles =
         [
@@ -388,7 +388,7 @@ public sealed class SpriteSet
                 pixels[row * widthBytes * 2 + column] = colour;
             }
 
-        return source.Create(widthBytes * 2, height, pixels);
+        return spriteSource.Create(widthBytes * 2, height, pixels);
     }
 
     /// <summary>The asset names of a font's glyphs, which are numbered by character rather than by index.</summary>

@@ -20,19 +20,19 @@ public sealed class ArcadeText
     /// </summary>
     public const int RubGlyphIndex = 39;
 
-    private readonly BlitterDraw _blitter;
+    private readonly BlitterDraw _blitterDraw;
     private readonly Texture2D[] _fontLarge;
     private readonly Texture2D[] _fontSmall;
     private readonly Texture2D _spareLifeSprite;
 
     /// <summary>Prints with these fonts through this blitter.</summary>
-    /// <param name="blitter">The blitter that draws each glyph.</param>
+    /// <param name="blitterDraw">The blitter that draws each glyph.</param>
     /// <param name="fontLarge">The large font's glyphs.</param>
     /// <param name="fontSmall">The small font's glyphs.</param>
     /// <param name="spareLifeSprite">The lives icon.</param>
-    public ArcadeText(BlitterDraw blitter, Texture2D[] fontLarge, Texture2D[] fontSmall, Texture2D spareLifeSprite)
+    public ArcadeText(BlitterDraw blitterDraw, Texture2D[] fontLarge, Texture2D[] fontSmall, Texture2D spareLifeSprite)
     {
-        _blitter = blitter;
+        _blitterDraw = blitterDraw;
         _fontLarge = fontLarge;
         _fontSmall = fontSmall;
         _spareLifeSprite = spareLifeSprite;
@@ -84,7 +84,7 @@ public sealed class ArcadeText
             var index = GetGlyphIndex(character);
             if (index < 0 || index >= _fontLarge.Length) continue;
 
-            _blitter.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, index, x, y, paletteIndex);
+            _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, index, x, y, paletteIndex);
             x += ScreenSize.ToPortPixelsFromArcadePixels(_fontLarge[index].Width +
                                                          HudLayout.HudSmallFontGlyphGapPixels);
         }
@@ -105,7 +105,7 @@ public sealed class ArcadeText
     /// </summary>
     public void DrawSpareLife(SpriteBatch spriteBatch, int x, int y)
     {
-        _blitter.UsePassThrough();
+        _blitterDraw.UsePassThrough();
         spriteBatch.Draw(
             _spareLifeSprite,
             new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeSprite.Width),
@@ -120,7 +120,7 @@ public sealed class ArcadeText
     /// </summary>
     public void DrawRubMarker(SpriteBatch spriteBatch, int x, int y, int paletteIndex)
     {
-        _blitter.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, RubGlyphIndex, x, y, paletteIndex);
+        _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, RubGlyphIndex, x, y, paletteIndex);
     }
 
     /// <summary>
@@ -143,7 +143,7 @@ public sealed class ArcadeText
             var index = GetGlyphIndex(character);
             if (index >= 0 && index < _fontSmall.Length)
             {
-                _blitter.DrawGlyphPaletteIndex(spriteBatch, _fontSmall, index, x, y, paletteIndex);
+                _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontSmall, index, x, y, paletteIndex);
                 x += ScreenSize.ToPortPixelsFromArcadePixels(_fontSmall[index].Width +
                                                              HudLayout.HudSmallFontGlyphGapPixels);
                 continue;
@@ -157,7 +157,7 @@ public sealed class ArcadeText
             // arcade fonts differ.
             if (index >= 0 && index < _fontLarge.Length)
             {
-                _blitter.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, index, x, y, paletteIndex);
+                _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, index, x, y, paletteIndex);
                 x += ScreenSize.ToPortPixelsFromArcadePixels(_fontLarge[index].Width +
                                                              HudLayout.HudSmallFontGlyphGapPixels);
             }
@@ -185,7 +185,7 @@ public sealed class ArcadeText
         {
             if (digit.Suppressed) continue;
 
-            _blitter.DrawGlyphPaletteIndex(spriteBatch, glyphs, digit.Value, x, y, paletteIndex);
+            _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, glyphs, digit.Value, x, y, paletteIndex);
             x += ScreenSize.ToPortPixelsFromArcadePixels(glyphs[digit.Value].Width +
                                                          HudLayout.HudSmallFontGlyphGapPixels);
         }

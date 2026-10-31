@@ -50,15 +50,15 @@ public sealed class DefineInputsHighlight
     ///     Puts the palette index on the page's GREEN with no white on it — the presentation page does the
     ///     same (its table copy at ROM $8A3A runs before its first chase step).
     /// </summary>
-    public void Start(GamePalette palette)
+    public void Start(GamePalette gamePalette)
     {
         _stepIndex = 0;
         _chaseClockUnits = 0;
-        palette.SetPaletteIndexValue(PaletteIndex, Green);
+        gamePalette.SetPaletteIndexValue(PaletteIndex, Green);
     }
 
     /// <summary>Advances the chase by one port tick (call once per Update).</summary>
-    public void Update(GamePalette palette)
+    public void Update(GamePalette gamePalette)
     {
         _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
         var stepClockUnits = ArcadeClock.ToClockUnits(ArcadeFramesPerStep);
@@ -69,6 +69,6 @@ public sealed class DefineInputsHighlight
         var colour = Green;
         if (_stepIndex == 0) colour = White;
 
-        palette.SetPaletteIndexValue(PaletteIndex, colour);
+        gamePalette.SetPaletteIndexValue(PaletteIndex, colour);
     }
 }

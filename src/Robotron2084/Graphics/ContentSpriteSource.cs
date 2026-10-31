@@ -10,34 +10,34 @@ namespace Robotron2084.Graphics;
 /// </summary>
 public sealed class ContentSpriteSource : ISpriteSource
 {
-    private readonly ContentManager _content;
-    private readonly SpriteFactory _factory;
+    private readonly ContentManager _contentManager;
+    private readonly SpriteFactory _spriteFactory;
 
     /// <summary>Wires the source to the game's device and content.</summary>
-    /// <param name="device">The graphics device the self-drawn sprites are created on.</param>
-    /// <param name="content">The content pipeline the ROM-extracted sprites are loaded from.</param>
-    public ContentSpriteSource(GraphicsDevice device, ContentManager content)
+    /// <param name="graphicsDevice">The graphics device the self-drawn sprites are created on.</param>
+    /// <param name="contentManager">The content pipeline the ROM-extracted sprites are loaded from.</param>
+    public ContentSpriteSource(GraphicsDevice graphicsDevice, ContentManager contentManager)
     {
-        _content = content;
-        _factory = new SpriteFactory(device);
+        _contentManager = contentManager;
+        _spriteFactory = new SpriteFactory(graphicsDevice);
     }
 
     /// <inheritdoc />
     public Texture2D Create(int width, int height, Color[] pixels)
     {
-        return _factory.Create(width, height, pixels);
+        return _spriteFactory.Create(width, height, pixels);
     }
 
     /// <inheritdoc />
     public Texture2D CreateSolid(int width, int height, Color color)
     {
-        return _factory.CreateSolid(width, height, color);
+        return _spriteFactory.CreateSolid(width, height, color);
     }
 
     /// <inheritdoc />
     public Texture2D Load(string assetName)
     {
-        return _content.Load<Texture2D>(assetName);
+        return _contentManager.Load<Texture2D>(assetName);
     }
 
     /// <inheritdoc />
