@@ -14,7 +14,7 @@ namespace Robotron2084.Graphics;
 ///     <para>
 ///         The first phase (<c>$87D9</c>) draws the ring: one W every four fiftieths of a second along
 ///         <see cref="WilliamsLogoPath" />,
-///         28 of them. The second (<c>$88CD</c>) keeps the ring moving: 50 times a second it takes six of the 28 W slots
+///         28 of them. The second (<c>$88CD</c>) keeps the ring moving: 50 times a second it takes six of the 28 W palette indices
 ///         in
 ///         turn, erases that slot's last W and draws it again at the next place on the path, in the path's next colour.
 ///         It runs for <see cref="MovingArcadeFrames" /> fiftieths of a second.
@@ -57,7 +57,7 @@ public sealed class WilliamsLogoBorder
     private const int EmptySlotRow = 0xAF;
 
     /// <summary>
-    ///     ROM <c>$87D9</c>: the W's on the screen, and so the slots of the second phase. It is the size of
+    ///     ROM <c>$87D9</c>: the W's on the screen, and so the palette indices of the second phase. It is the size of
     ///     <see cref="_logoPositions" />.
     /// </summary>
     private const int LogoCount = 28;
@@ -90,12 +90,12 @@ public sealed class WilliamsLogoBorder
         _logoMask = logoMask;
     }
 
-    /// <summary>Which palette slot each arcade pixel of the screen holds; 0 is empty.</summary>
+    /// <summary>Which palette index each arcade pixel of the screen holds; 0 is empty.</summary>
     public IReadOnlyList<byte> Pixels => _pixels;
 
-    /// <summary>Draws the ring in each pixel's palette slot, the screen's arcade pixels mapped to the canvas as the HUD's are.</summary>
+    /// <summary>Draws the ring in each pixel's palette index, the screen's arcade pixels mapped to the canvas as the HUD's are.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="blitter">The blitter that fills the runs and looks the slots' colours up.</param>
+    /// <param name="blitter">The blitter that fills the runs and looks the palette indices' colours up.</param>
     public void Draw(SpriteBatch spriteBatch, BlitterDraw blitter)
     {
         for (var y = 0; y < Height; y++)
@@ -105,15 +105,15 @@ public sealed class WilliamsLogoBorder
             var x = 0;
             while (x < Width)
             {
-                var slot = _pixels[y * Width + x];
+                var paletteIndex = _pixels[y * Width + x];
                 var runEnd = x + 1;
-                while (runEnd < Width && _pixels[y * Width + runEnd] == slot) runEnd++;
+                while (runEnd < Width && _pixels[y * Width + runEnd] == paletteIndex) runEnd++;
 
-                if (slot != 0)
+                if (paletteIndex != 0)
                 {
                     var left = HudLayout.ToPortX(x);
                     Rectangle runBounds = new(left, top, HudLayout.ToPortX(runEnd) - left, bottom - top);
-                    blitter.DrawSolidRectangle(spriteBatch, runBounds, blitter.GetSlotColour(slot));
+                    blitter.DrawSolidRectangle(spriteBatch, runBounds, blitter.GetPaletteIndexColour(paletteIndex));
                 }
 
                 x = runEnd;
@@ -151,8 +151,8 @@ public sealed class WilliamsLogoBorder
         else if (_movingFramesRemaining > 0) MoveSomeLogos();
     }
 
-    /// <summary>ROM <c>$8A19</c>: the W's shape in one palette slot; slot 0 erases it.</summary>
-    private void Blit(int column, int row, int slot)
+    /// <summary>ROM <c>$8A19</c>: the W's shape in one palette index; palette index 0 erases it.</summary>
+    private void Blit(int column, int row, int paletteIndex)
     {
         var left = column * ScreenSize.ArcadePixelsPerByte;
         for (var y = 0; y < _logoMask.Height; y++)
@@ -161,7 +161,7 @@ public sealed class WilliamsLogoBorder
                 var screenX = left + x;
                 var screenY = row + y;
                 if (_logoMask.IsOpaque(x, y) && screenX < Width && screenY < Height)
-                    _pixels[screenY * Width + screenX] = (byte)slot;
+                    _pixels[screenY * Width + screenX] = (byte)paletteIndex;
             }
     }
 
@@ -174,7 +174,7 @@ public sealed class WilliamsLogoBorder
             return;
         }
 
-        Blit(_path.Column, _path.Row, _path.GetSlot());
+        Blit(_path.Column, _path.Row, _path.GetPaletteIndex());
         _path.Step();
         _drawnLogoCount++;
         _sleepArcadeFrames = DrawIntervalArcadeFrames - 1;
@@ -197,14 +197,14 @@ public sealed class WilliamsLogoBorder
 
             var (column, row) = _logoPositions[_logoIndex];
             Blit(column, row, 0);
-            Blit(_path.Column, _path.Row, _path.GetSlot());
+            Blit(_path.Column, _path.Row, _path.GetPaletteIndex());
             _logoPositions[_logoIndex] = (_path.Column, _path.Row);
         }
 
         _movingFramesRemaining--;
     }
 
-    /// <summary>ROM <c>$88CD</c>: the path starts again, every slot is empty, and the first move is made at once.</summary>
+    /// <summary>ROM <c>$88CD</c>: the path starts again, every palette index is empty, and the first move is made at once.</summary>
     private void StartMoving()
     {
         _path.Reset();

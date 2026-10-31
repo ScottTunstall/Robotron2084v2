@@ -1,7 +1,7 @@
 namespace Robotron2084.Graphics;
 
 /// <summary>
-///     Where the next Williams "W" of the attract page's border goes and which palette slot it is drawn in:
+///     Where the next Williams "W" of the attract page's border goes and which palette index it is drawn in:
 ///     the walk round the screen edge the ROM keeps in <c>$E6</c>/<c>$E8</c>/<c>$EA</c>/<c>$E9</c> and advances at
 ///     <c>$896C</c> (R5).
 /// </summary>
@@ -53,7 +53,7 @@ public sealed class WilliamsLogoPath
     private const int SideCount = 4;
 
     /// <summary>
-    ///     ROM <c>$8957</c>: the first W's colour operand, both nibbles the palette slot. It is the starting value of
+    ///     ROM <c>$8957</c>: the first W's colour operand, both nibbles the palette index. It is the starting value of
     ///     <see cref="ColorOperand" />.
     /// </summary>
     private const int StartColorOperand = 0x77;
@@ -90,8 +90,8 @@ public sealed class WilliamsLogoPath
 
     private int ColorOperand { get; set; }
 
-    /// <summary>The palette slot the W is drawn in: the colour operand's nibble, 7 down to 1 and round.</summary>
-    public int GetSlot()
+    /// <summary>The palette index the W is drawn in: the colour operand's nibble, 7 down to 1 and round.</summary>
+    public int GetPaletteIndex()
     {
         return ColorOperand & 0x0F;
     }

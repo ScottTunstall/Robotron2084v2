@@ -239,7 +239,7 @@ public sealed class SpriteSet
     ///     the score font
     ///     (6×6 px, ROM10-12 @0xEC93); the SMALL font (4×5 px, @0xEA2B) is the
     ///     message/title font. White-on-transparent — tinted at draw time
-    ///     (arcade: solid blit, P1 = palette slot 1 blue, P2 = slot 10).
+    ///     (arcade: solid blit, P1 = palette index 1 blue, P2 = palette index 10).
     /// </summary>
     public Texture2D[] FontLarge { get; }
 
@@ -278,8 +278,8 @@ public sealed class SpriteSet
     ///     The arcade's spare-life icon sprite — the LIVES icon (notes §58.2). ROM MNPIC
     ///     (`$3592` metadata, `$3596` pixels): 3 bytes x 8 rows = 6x8 px, one icon per
     ///     spare life, 8 px apart, next to that player's score. It is NOT the 8x12
-    ///     player sprite. Built at runtime from the ROM nibbles; its slot-11 body
-    ///     pixels carry the slot-11 cycling marker.
+    ///     player sprite. Built at runtime from the ROM nibbles; its palette index 11 body
+    ///     pixels carry the palette index 11 cycling marker.
     /// </summary>
     public Texture2D SpareLifeSprite { get; }
 
@@ -330,7 +330,7 @@ public sealed class SpriteSet
     ///     §103.4): the R5 CPU ROM we hold does not contain these sprites. <see cref="TitleWordmarkCore" />
     ///     is the letters' body and <see cref="TitleWordmarkRim" /> the one-pixel rim round them,
     ///     because the arcade blits a shape in a colour taken from the LIVE palette — so the page
-    ///     draws each mask in a palette slot and the wordmark colour-cycles with the page's own
+    ///     draws each mask in a palette index and the wordmark colour-cycles with the page's own
     ///     colour processes (notes §104).
     /// </summary>
     public Texture2D TitleWordmarkCoreSprite { get; }
@@ -344,7 +344,7 @@ public sealed class SpriteSet
     /// <summary>
     ///     The Williams "W" of the attract page's border, a WHITE MASK decoded from the ROM's plotting instructions at
     ///     <c>$8CF4</c> by <c>tools/extract-williams-logo.py</c>: the opaque pixels are the ones the ROM draws, in the colour
-    ///     of the palette slot it is given.
+    ///     of the palette index it is given.
     /// </summary>
     public Texture2D WilliamsLogoSprite { get; }
 
@@ -352,9 +352,9 @@ public sealed class SpriteSet
     ///     ROM MNPIC (RRG23; R5 `$3596`, metadata `$3592` = 3 bytes x 8 rows): the
     ///     6x8 spare-life icon drawn once per spare life (notes §58.4). Each nibble is a
     ///     PALETTE INDEX, and the ROM blits it with op `$02` (no transparency, mask
-    ///     unused) — so the icon keeps its own colours: head slot 2, body/arms slot
-    ///     11 (a CYCLING slot — the RGB process, which is why the little man's body
-    ///     shimmers), legs slot 8, feet slot 3.
+    ///     unused) — so the icon keeps its own colours: head palette index 2, body/arms palette index
+    ///     11 (a CYCLING palette index — the RGB process, which is why the little man's body
+    ///     shimmers), legs palette index 8, feet palette index 3.
     /// </summary>
     private static Texture2D BuildSpareLifeSprite(ISpriteSource source)
     {
@@ -414,19 +414,19 @@ public sealed class SpriteSet
     }
 
     /// <summary>
-    ///     The colour a baked texture pixel carries for a palette slot: a cycling
-    ///     slot (10-15) uses its MARKER colour — the shader remaps it to the slot's
-    ///     live colour at draw time (notes §34/§39) — and a static slot (0-9) uses
-    ///     the slot's fixed ROM colour.
+    ///     The colour a baked texture pixel carries for a palette index: a cycling
+    ///     palette index (10-15) uses its MARKER colour — the shader remaps it to the palette index's
+    ///     live colour at draw time (notes §34/§39) — and a static palette index (0-9) uses
+    ///     the palette index's fixed ROM colour.
     /// </summary>
-    private static Color GetPaletteColour(int slot)
+    private static Color GetPaletteColour(int paletteIndex)
     {
-        if (FontSlots.IsCycling(slot))
+        if (FontPaletteIndices.IsCycling(paletteIndex))
         {
-            var marker = GamePalette.CyclingSlotMarkers[slot - FontSlots.FirstCyclingSlot];
+            var marker = GamePalette.CyclingPaletteIndexMarkers[paletteIndex - FontPaletteIndices.FirstCyclingPaletteIndex];
             return RobotronColor.CreateFromByte(marker);
         }
 
-        return RobotronColor.CreateFromByte(GamePalette.DefaultSlotValues[slot]);
+        return RobotronColor.CreateFromByte(GamePalette.DefaultPaletteValues[paletteIndex]);
     }
 }

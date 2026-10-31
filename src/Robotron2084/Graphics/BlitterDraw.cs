@@ -18,10 +18,10 @@ public sealed class BlitterDraw
     private const string GlyphCycleTechnique = "GlyphCycle";
 
     /// <summary>
-    ///     The colour-cycle shader's glyph technique's slot parameter; must match
+    ///     The colour-cycle shader's glyph technique's palette index parameter; must match
     ///     <c>Content/Effects/ColorCycle.fx</c>.
     /// </summary>
-    private const string GlyphSlotParameter = "SlotId";
+    private const string GlyphPaletteIndexParameter = "SlotId";
 
     /// <summary>
     ///     The colour-cycle shader's solid technique's colour parameter; must match
@@ -46,12 +46,12 @@ public sealed class BlitterDraw
 
     /// <summary>
     ///     When set, entity draws run through the colour-cycle pixel shader
-    ///     (remaps the six cycling-slot marker colours to their live palette
+    ///     (remaps the six cycling palette index marker colours to their live palette
     ///     colours). Null = plain draws.
     /// </summary>
     public Effect? ColorCycleEffect { get; set; }
 
-    /// <summary>The live 16-slot palette the effect remaps into (slots 10-15 cycle).</summary>
+    /// <summary>The live 16-index palette the effect remaps into (palette indices 10-15 cycle).</summary>
     public GamePalette? Palette { get; set; }
 
     /// <summary>
@@ -73,15 +73,15 @@ public sealed class BlitterDraw
     }
 
     /// <summary>
-    ///     Draws a font glyph in a COLOUR-CYCLING slot (10-15): the white master
+    ///     Draws a font glyph in a COLOUR-CYCLING palette index (10-15): the white master
     ///     through the colour-cycle effect's <c>GlyphCycle</c> pass (notes §92) —
-    ///     the pass alpha-clips the master and paints every pixel with the slot's
+    ///     the pass alpha-clips the master and paints every pixel with the palette index's
     ///     LIVE colour (the same blitter semantics as §39's marker-baked variants,
     ///     which the pass makes unnecessary). Without the effect it falls
-    ///     back to a CPU tint of the slot's live colour, so the glyph still cycles
+    ///     back to a CPU tint of the palette index's live colour, so the glyph still cycles
     ///     with the palette.
     /// </summary>
-    public void DrawGlyphCycling(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot)
+    public void DrawGlyphCycling(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int paletteIndex)
     {
         var width = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Width);
         var height = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Height);
@@ -89,13 +89,13 @@ public sealed class BlitterDraw
             effect.Techniques[GlyphCycleTechnique] is { } technique)
         {
             Palette?.UpdateEffectColors(effect);
-            effect.Parameters[GlyphSlotParameter].SetValue((float)(slot - FontSlots.FirstCyclingSlot));
+            effect.Parameters[GlyphPaletteIndexParameter].SetValue((float)(paletteIndex - FontPaletteIndices.FirstCyclingPaletteIndex));
             technique.Passes[0].Apply();
         }
 
-        // Without the effect the draw degrades to a CPU tint of the slot's live
+        // Without the effect the draw degrades to a CPU tint of the palette index's live
         // colour (exact for the white master, and it cycles with the palette).
-        var tint = ColorCycleEffect is null ? Palette?.GetColour(slot) ?? Color.White : Color.White;
+        var tint = ColorCycleEffect is null ? Palette?.GetColour(paletteIndex) ?? Color.White : Color.White;
         spriteBatch.Draw(glyph, new Rectangle(x, y, width, height), tint);
 
         // Hand the pass-through back immediately: this pass is DEVICE state, and
@@ -104,36 +104,36 @@ public sealed class BlitterDraw
     }
 
     /// <summary>
-    ///     Draws one arcade-font glyph in palette SLOT <paramref name="slot" />,
-    ///     picking the right path (notes §58.1, §92): a static slot (0-9) tints the
-    ///     white master glyph with the slot's live colour; a cycling slot (10-15)
-    ///     draws the master through the effect's slot-indexed pass, so the glyph
+    ///     Draws one arcade-font glyph in palette SLOT <paramref name="paletteIndex" />,
+    ///     picking the right path (notes §58.1, §92): a static palette index (0-9) tints the
+    ///     white master glyph with the palette index's live colour; a cycling palette index (10-15)
+    ///     draws the master through the effect's per-palette-index pass, so the glyph
     ///     cycles with the palette exactly as the arcade's solid blit does.
     /// </summary>
-    public void DrawGlyphSlot(
+    public void DrawGlyphPaletteIndex(
         SpriteBatch spriteBatch,
         Texture2D[] glyphs,
         int glyphIndex,
         int x,
         int y,
-        int slot,
+        int paletteIndex,
         SpriteEffects effects = SpriteEffects.None)
     {
-        if (FontSlots.IsCycling(slot))
-            DrawGlyphCycling(spriteBatch, glyphs[glyphIndex], x, y, slot);
+        if (FontPaletteIndices.IsCycling(paletteIndex))
+            DrawGlyphCycling(spriteBatch, glyphs[glyphIndex], x, y, paletteIndex);
         else
-            DrawGlyphStatic(spriteBatch, glyphs[glyphIndex], x, y, slot, effects);
+            DrawGlyphStatic(spriteBatch, glyphs[glyphIndex], x, y, paletteIndex, effects);
     }
 
     /// <summary>
-    ///     Draws a font glyph in a STATIC palette slot (0-9): the white master
-    ///     glyph tinted with the slot's live colour (static slots never change,
+    ///     Draws a font glyph in a STATIC palette index (0-9): the white master
+    ///     glyph tinted with the palette index's live colour (static palette indices never change,
     ///     so a tint is exact). Notes §38, §39.
     /// </summary>
-    public void DrawGlyphStatic(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int slot,
+    public void DrawGlyphStatic(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int paletteIndex,
         SpriteEffects effects = SpriteEffects.None)
     {
-        var tint = Palette?.GetColour(slot) ?? Color.White;
+        var tint = Palette?.GetColour(paletteIndex) ?? Color.White;
         var width = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Width);
         var height = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Height);
         spriteBatch.Draw(glyph, new Rectangle(x, y, width, height), null, tint, 0f, Vector2.Zero, effects, 0f);
@@ -168,8 +168,8 @@ public sealed class BlitterDraw
     ///     COLOUR mode, and it is how the ROM draws anything in a single colour —
     ///     an electrode being "turned on" (<c>OPON</c>), the flashing human and brain
     ///     while a brain reprograms one (<c>BRNON</c>/<c>HUMON</c>), mono text.
-    ///     <paramref name="color" /> usually comes from <see cref="GetSlotColour" /> so
-    ///     the caller can name a palette slot; a cycling slot then cycles here for
+    ///     <paramref name="color" /> usually comes from <see cref="GetPaletteIndexColour" /> so
+    ///     the caller can name a palette index; a cycling palette index then cycles here for
     ///     free, exactly as the hardware's palette does.
     /// </summary>
     public void DrawSpriteSolid(SpriteBatch spriteBatch, Texture2D texture, Rectangle bounds, Color color)
@@ -198,7 +198,7 @@ public sealed class BlitterDraw
     /// <param name="texture">The white mask.</param>
     /// <param name="source">The part of the mask to draw, in its own pixels.</param>
     /// <param name="destination">Where to draw it, in port pixels.</param>
-    /// <param name="color">The colour, usually from <see cref="GetSlotColour" />.</param>
+    /// <param name="color">The colour, usually from <see cref="GetPaletteIndexColour" />.</param>
     public void DrawSpriteSolidPiece(SpriteBatch spriteBatch, Texture2D texture, Rectangle source,
         Rectangle destination, Color color)
     {
@@ -237,10 +237,10 @@ public sealed class BlitterDraw
         DrawSpriteSolid(spriteBatch, texture, bounds, shape);
     }
 
-    /// <summary>The live RGB of a palette slot (0-15); white when no palette is wired.</summary>
-    public Color GetSlotColour(int slot)
+    /// <summary>The live RGB of a palette index (0-15); white when no palette is wired.</summary>
+    public Color GetPaletteIndexColour(int paletteIndex)
     {
-        return Palette?.GetColour(slot) ?? Color.White;
+        return Palette?.GetColour(paletteIndex) ?? Color.White;
     }
 
     /// <summary>

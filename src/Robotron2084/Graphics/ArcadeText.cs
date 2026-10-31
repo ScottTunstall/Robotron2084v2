@@ -66,12 +66,12 @@ public sealed class ArcadeText
     /// <summary>
     ///     Draws a string in the arcade's LARGE font (the score digits, the title
     ///     screen's "ROBOTRON 2084" / "SAVE THE LAST HUMAN FAMILY", notes §94.1) in
-    ///     one palette slot, returning the X after the last glyph. Glyphs advance
+    ///     one palette index, returning the X after the last glyph. Glyphs advance
     ///     their width + 1 (the ROM's large-font advance, the same rule the score
     ///     uses — <c>HudScoreDigitAdvancePixels</c>); a space advances the same as
     ///     the small font's blank; an unknown character is skipped.
     /// </summary>
-    public int DrawLargeFontText(SpriteBatch spriteBatch, string text, int x, int y, int slot)
+    public int DrawLargeFontText(SpriteBatch spriteBatch, string text, int x, int y, int paletteIndex)
     {
         foreach (var character in text)
         {
@@ -84,7 +84,7 @@ public sealed class ArcadeText
             var index = GetGlyphIndex(character);
             if (index < 0 || index >= _fontLarge.Length) continue;
 
-            _blitter.DrawGlyphSlot(spriteBatch, _fontLarge, index, x, y, slot);
+            _blitter.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, index, x, y, paletteIndex);
             x += ScreenSize.ToPortPixelsFromArcadePixels(_fontLarge[index].Width +
                                                          HudLayout.HudSmallFontGlyphGapPixels);
         }
@@ -93,14 +93,14 @@ public sealed class ArcadeText
     }
 
     /// <summary>The high score table's LARGE-font score (<c>PRSCOR</c> → <c>WRD7V</c>).</summary>
-    public int DrawLargeTableNumber(SpriteBatch spriteBatch, int value, int x, int y, int slot)
+    public int DrawLargeTableNumber(SpriteBatch spriteBatch, int value, int x, int y, int paletteIndex)
     {
-        return DrawTableNumber(spriteBatch, _fontLarge, value, x, y, slot);
+        return DrawTableNumber(spriteBatch, _fontLarge, value, x, y, paletteIndex);
     }
 
     /// <summary>
     ///     Draws the spare-life (LIVES) icon (notes §58.2) at (x, y), PortPixelsPerArcadePixel x its
-    ///     6x8 arcade-pixel size, through the colour-cycle effect so its slot-11
+    ///     6x8 arcade-pixel size, through the colour-cycle effect so its palette index 11
     ///     body/arms cycle like the arcade's.
     /// </summary>
     public void DrawSpareLife(SpriteBatch spriteBatch, int x, int y)
@@ -114,23 +114,23 @@ public sealed class ArcadeText
     }
 
     /// <summary>
-    ///     Draws the arcade's rub marker — the ROM's own <c>$5E</c> glyph — at (x, y) in one palette slot
+    ///     Draws the arcade's rub marker — the ROM's own <c>$5E</c> glyph — at (x, y) in one palette index
     ///     (notes §116): what the initials entry shows when the letter in the cursor's cell is the delete
     ///     marker rather than a character.
     /// </summary>
-    public void DrawRubMarker(SpriteBatch spriteBatch, int x, int y, int slot)
+    public void DrawRubMarker(SpriteBatch spriteBatch, int x, int y, int paletteIndex)
     {
-        _blitter.DrawGlyphSlot(spriteBatch, _fontLarge, RubGlyphIndex, x, y, slot);
+        _blitter.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, RubGlyphIndex, x, y, paletteIndex);
     }
 
     /// <summary>
     ///     Draws a string in the arcade's SMALL font (notes §58.3 — the font every
-    ///     ROM message uses, 4x5 glyphs) in one palette slot, returning the X after
+    ///     ROM message uses, 4x5 glyphs) in one palette index, returning the X after
     ///     the last glyph. Glyphs advance their width + 1 (ROM $6009); a space
     ///     advances 2 px without drawing (the ROM blits its 1-px ':' glyph for a
     ///     space); an unknown character is skipped.
     /// </summary>
-    public int DrawSmallFontText(SpriteBatch spriteBatch, string text, int x, int y, int slot)
+    public int DrawSmallFontText(SpriteBatch spriteBatch, string text, int x, int y, int paletteIndex)
     {
         foreach (var character in text)
         {
@@ -143,7 +143,7 @@ public sealed class ArcadeText
             var index = GetGlyphIndex(character);
             if (index >= 0 && index < _fontSmall.Length)
             {
-                _blitter.DrawGlyphSlot(spriteBatch, _fontSmall, index, x, y, slot);
+                _blitter.DrawGlyphPaletteIndex(spriteBatch, _fontSmall, index, x, y, paletteIndex);
                 x += ScreenSize.ToPortPixelsFromArcadePixels(_fontSmall[index].Width +
                                                              HudLayout.HudSmallFontGlyphGapPixels);
                 continue;
@@ -157,7 +157,7 @@ public sealed class ArcadeText
             // arcade fonts differ.
             if (index >= 0 && index < _fontLarge.Length)
             {
-                _blitter.DrawGlyphSlot(spriteBatch, _fontLarge, index, x, y, slot);
+                _blitter.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, index, x, y, paletteIndex);
                 x += ScreenSize.ToPortPixelsFromArcadePixels(_fontLarge[index].Width +
                                                              HudLayout.HudSmallFontGlyphGapPixels);
             }
@@ -167,9 +167,9 @@ public sealed class ArcadeText
     }
 
     /// <summary>The high score table's SMALL-font score (<c>PRSCOR</c> → <c>WRD5V</c>).</summary>
-    public int DrawSmallTableNumber(SpriteBatch spriteBatch, int value, int x, int y, int slot)
+    public int DrawSmallTableNumber(SpriteBatch spriteBatch, int value, int x, int y, int paletteIndex)
     {
-        return DrawTableNumber(spriteBatch, _fontSmall, value, x, y, slot);
+        return DrawTableNumber(spriteBatch, _fontSmall, value, x, y, paletteIndex);
     }
 
     /// <summary>
@@ -179,13 +179,13 @@ public sealed class ArcadeText
     ///     (a row reads "1) DRJ 52127", not "1) DRJ   52127"), which is what makes the
     ///     rows' digits line up. Returns the X after the number.
     /// </summary>
-    public int DrawTableNumber(SpriteBatch spriteBatch, Texture2D[] glyphs, int value, int x, int y, int slot)
+    public int DrawTableNumber(SpriteBatch spriteBatch, Texture2D[] glyphs, int value, int x, int y, int paletteIndex)
     {
         foreach (var digit in ScoreFormatter.GetDigits(value))
         {
             if (digit.Suppressed) continue;
 
-            _blitter.DrawGlyphSlot(spriteBatch, glyphs, digit.Value, x, y, slot);
+            _blitter.DrawGlyphPaletteIndex(spriteBatch, glyphs, digit.Value, x, y, paletteIndex);
             x += ScreenSize.ToPortPixelsFromArcadePixels(glyphs[digit.Value].Width +
                                                          HudLayout.HudSmallFontGlyphGapPixels);
         }

@@ -28,13 +28,13 @@ namespace Robotron2084.Graphics;
 ///     </para>
 ///     <para>
 ///         The colours are a packed byte — the LEFT nibble is colour 0 and the RIGHT nibble colour
-///         1, both palette slots — which steps once per ring (see <see cref="NextPair" />). That
+///         1, both palette indices — which steps once per ring (see <see cref="NextPair" />). That
 ///         chain is the "colour cycling" in the routine's name.
 ///     </para>
 ///     <para>
 ///         The HATCHING is the ring primitive's own shape (notes §85): every edge is ONE ROM pixel
 ///         tall or wide and the walk lays its bands two rows apart, so the bands TILE — successive
-///         rows carry successive palette slots, which is why the arcade reads as a smooth gradient
+///         rows carry successive palette indices, which is why the arcade reads as a smooth gradient
 ///         field rather than as discrete rings. The band's second line is the same row moved one
 ///         column right and one column narrower (`$5AAA`, so it is inset a column at each end), an
 ///         odd-height correction pulls the bottom row up by one to keep the band inside the ring,
@@ -178,12 +178,12 @@ public sealed class TunnelEffect
     }
 
     /// <summary>
-    ///     The palette slots a ring draws in: colour 0 (the left nibble) and colour 1 (the right).
+    ///     The palette indices a ring draws in: colour 0 (the left nibble) and colour 1 (the right).
     ///     Split out so the range can be asserted — the first cut passed the ROM's
     ///     <c>(colour0 &lt;&lt; 4) | colour1</c> straight to the palette, which is a blitter mask
     ///     (0-255) and threw on a wave clear.
     /// </summary>
-    internal static (int Colour0, int Colour1) GetColourSlots(int packed)
+    internal static (int Colour0, int Colour1) GetColourPaletteIndices(int packed)
     {
         return ((packed >> 4) & 0x0F, packed & 0x0F);
     }
@@ -194,7 +194,7 @@ public sealed class TunnelEffect
     }
 
     /// <summary>
-    ///     ROM $5737-$574F: the pair advances by `SUBA #$22` — both nibbles two slots down — with
+    ///     ROM $5737-$574F: the pair advances by `SUBA #$22` — both nibbles two palette indices down — with
     ///     three special cases that wrap it round again.
     /// </summary>
     internal static int NextPair(int packed)
@@ -324,9 +324,9 @@ public sealed class TunnelEffect
     /// </summary>
     private void DrawRing(SpriteBatch spriteBatch, SpriteSet sprites, Ring ring)
     {
-        var (slot0, slot1) = GetColourSlots(ring.PackedColourPair); // $5A13 / $5A19
-        var colour0 = sprites.Blitter.GetSlotColour(slot0);
-        var colour1 = sprites.Blitter.GetSlotColour(slot1);
+        var (paletteIndex0, paletteIndex1) = GetColourPaletteIndices(ring.PackedColourPair); // $5A13 / $5A19
+        var colour0 = sprites.Blitter.GetPaletteIndexColour(paletteIndex0);
+        var colour1 = sprites.Blitter.GetPaletteIndexColour(paletteIndex1);
 
         var top = ring.Top;
         var bottom = ring.Bottom;
