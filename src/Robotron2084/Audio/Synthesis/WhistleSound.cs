@@ -66,28 +66,28 @@ internal static class WhistleSound
     ];
 
     /// <summary>Plays the falling bomb (sound <c>WHIST</c>).</summary>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> Play(BoardOutput output)
+    public static IEnumerable<OutputChange> Play(BoardOutput boardOutput)
     {
-        output.Wait(SetUpCycles);
+        boardOutput.Wait(SetUpCycles);
         var speed = FirstSpeed;
         byte time = 0;
         do
         {
-            output.Wait(SpeedStartCycles);
+            boardOutput.Wait(SpeedStartCycles);
             for (var sample = 0; sample < SamplesPerSpeed; sample++)
             {
-                output.Wait(BeforeWriteCycles);
+                boardOutput.Wait(BeforeWriteCycles);
                 time += speed;
-                yield return output.Store(SineTable[time >> PlaceShift]);
-                output.Wait(AfterWriteCycles);
+                yield return boardOutput.Store(SineTable[time >> PlaceShift]);
+                boardOutput.Wait(AfterWriteCycles);
             }
 
             speed--;
-            output.Wait(SpeedEndCycles);
+            boardOutput.Wait(SpeedEndCycles);
         } while (speed != LastSpeed);
 
-        output.Wait(Return);
+        boardOutput.Wait(Return);
     }
 }

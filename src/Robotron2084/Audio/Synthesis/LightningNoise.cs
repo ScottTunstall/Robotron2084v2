@@ -70,68 +70,68 @@ internal static class LightningNoise
     private const byte StartLevel = 0xFF;
 
     /// <summary>Plays the appear sound (sound <c>APPEAR</c>).</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayAppear(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayAppear(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        output.Wait(AppearSetUpCycles);
-        return Play(memory, output, AppearFirstGap, AppearGapChange, AppearChancesPerGap);
+        boardOutput.Wait(AppearSetUpCycles);
+        return Play(boardMemory, boardOutput, AppearFirstGap, AppearGapChange, AppearChancesPerGap);
     }
 
     /// <summary>
     ///     Plays the launch sound (sound <c>LAUNCH</c>): the gap shrinks by one each round, from $60, with 255 chances at
     ///     each.
     /// </summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayLaunch(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayLaunch(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        output.Wait(LaunchSetUpCycles);
-        return Play(memory, output, LaunchFirstGap, LaunchGapChange, LaunchChancesPerGap);
+        boardOutput.Wait(LaunchSetUpCycles);
+        return Play(boardMemory, boardOutput, LaunchFirstGap, LaunchGapChange, LaunchChancesPerGap);
     }
 
     /// <summary>Plays the lightning sound (sound <c>LITE</c>).</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayLightning(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayLightning(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        output.Wait(LightningSetUpCycles);
-        return Play(memory, output, LightningFirstGap, LightningGapChange, LightningChancesPerGap);
+        boardOutput.Wait(LightningSetUpCycles);
+        return Play(boardMemory, boardOutput, LightningFirstGap, LightningGapChange, LightningChancesPerGap);
     }
 
     /// <summary>The shared noise (<c>LITEN</c>).</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <param name="gap">The first gap between chances, in counts (<c>LFREQ</c>).</param>
     /// <param name="gapChange">How much the gap changes each round (<c>DFREQ</c>).</param>
     /// <param name="chancesPerGap">How many chances to flip come at each gap (<c>CYCNT</c>).</param>
     /// <returns>The sound's output changes.</returns>
-    private static IEnumerable<OutputChange> Play(BoardMemory memory, BoardOutput output, byte gap, byte gapChange,
+    private static IEnumerable<OutputChange> Play(BoardMemory boardMemory, BoardOutput boardOutput, byte gap, byte gapChange,
         byte chancesPerGap)
     {
-        output.Wait(StoreDirect + Immediate);
-        yield return output.Store(StartLevel);
-        output.Wait(StoreDirect);
+        boardOutput.Wait(StoreDirect + Immediate);
+        yield return boardOutput.Store(StartLevel);
+        boardOutput.Wait(StoreDirect);
         do
         {
-            output.Wait(Direct);
+            boardOutput.Wait(Direct);
             var chancesLeft = chancesPerGap;
             do
             {
-                foreach (var change in RandomStep.Run(memory, output, memory.RandomLow, RandomStep.MixLowCycles))
+                foreach (var change in RandomStep.Run(boardMemory, boardOutput, boardMemory.RandomLow, RandomStep.MixLowCycles))
                     yield return change;
 
-                output.Wait(Branch);
-                if (memory.RandomBitOut) yield return output.Complement();
+                boardOutput.Wait(Branch);
+                if (boardMemory.RandomBitOut) yield return boardOutput.Complement();
 
-                output.Wait(FinishChanceCycles + CountdownLoop.Runs(gap) * GapCountCycles);
+                boardOutput.Wait(FinishChanceCycles + CountdownLoop.Runs(gap) * GapCountCycles);
                 chancesLeft--;
             } while (chancesLeft != 0);
 
-            output.Wait(ChangeGapCycles);
+            boardOutput.Wait(ChangeGapCycles);
             gap += gapChange;
         } while (gap != 0);
     }

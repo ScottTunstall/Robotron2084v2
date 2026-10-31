@@ -38,21 +38,21 @@ internal static class PlaneSound
     private const int WordWrap = 0x10000;
 
     /// <summary>Plays the diving plane (sound <c>PLANE</c>).</summary>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> Play(BoardOutput output)
+    public static IEnumerable<OutputChange> Play(BoardOutput boardOutput)
     {
-        output.Wait(SetUpCycles);
+        boardOutput.Wait(SetUpCycles);
         var lowCount = FirstLowCount;
         while (true)
         {
-            output.Wait(ModifyExtended - StoreExtended);
-            yield return output.Store(0);
-            output.Wait(GrowLowCycles);
+            boardOutput.Wait(ModifyExtended - StoreExtended);
+            yield return boardOutput.Store(0);
+            boardOutput.Wait(GrowLowCycles);
             lowCount = (lowCount + 1) % WordWrap;
-            output.Wait(CountCycles * CountdownLoop.Runs((ushort)lowCount));
-            yield return output.Complement();
-            output.Wait(LoadHighCycles + CountCycles * HighCount + Branch);
+            boardOutput.Wait(CountCycles * CountdownLoop.Runs((ushort)lowCount));
+            yield return boardOutput.Complement();
+            boardOutput.Wait(LoadHighCycles + CountCycles * HighCount + Branch);
         }
     }
 }

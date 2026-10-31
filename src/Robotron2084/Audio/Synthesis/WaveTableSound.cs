@@ -204,8 +204,8 @@ internal sealed class WaveTableSound
     /// <summary><c>GWLD2</c> stepping over one wave (<c>LDAA ,X</c>, <c>INCA</c>, <c>JSR ADDX</c>, <c>BRA</c>).</summary>
     private const int WaveSearchStepCycles = Indexed + Inherent + SubroutineCycles.CallAddToIndex + Branch;
 
-    private readonly BoardMemory _memory;
-    private readonly BoardOutput _output;
+    private readonly BoardMemory _boardMemory;
+    private readonly BoardOutput _boardOutput;
     private readonly byte[] _waveSamples = new byte[WaveTableData.LongestWave];
     private byte _echoDecay;
     private byte _echoes;
@@ -220,12 +220,12 @@ internal sealed class WaveTableSound
     private int _waveStart;
 
     /// <summary>Creates the synthesiser, sharing the board's memory and output port.</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
-    public WaveTableSound(BoardMemory memory, BoardOutput output)
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
+    public WaveTableSound(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        _memory = memory;
-        _output = output;
+        _boardMemory = boardMemory;
+        _boardOutput = boardOutput;
     }
 
     /// <summary>Loads a sound's settings and wave, then plays it (<c>JSR GWLD</c>, <c>JSR GWAVE</c>).</summary>
@@ -233,9 +233,9 @@ internal sealed class WaveTableSound
     /// <returns>The sound's output changes.</returns>
     public IEnumerable<OutputChange> LoadAndPlay(int vectorIndex)
     {
-        _output.Wait(CallExtended);
+        _boardOutput.Wait(CallExtended);
         Load(vectorIndex);
-        _output.Wait(CallExtended);
+        _boardOutput.Wait(CallExtended);
         return Play();
     }
 
@@ -248,7 +248,7 @@ internal sealed class WaveTableSound
     public IEnumerable<OutputChange> PlayBackground2(byte level)
     {
         Load(BackgroundVector);
-        _output.Wait(BackgroundSetUpCycles);
+        _boardOutput.Wait(BackgroundSetUpCycles);
         _pitchOffset = (byte)~(level << 2);
         return PlayBackgroundLoop();
     }
@@ -260,17 +260,17 @@ internal sealed class WaveTableSound
     /// <returns>The sound's output changes.</returns>
     public IEnumerable<OutputChange> PlayLaserBallBonus()
     {
-        _output.Wait(CheckFlagCycles);
-        if (_memory.IsLaserBallBonusRepeating)
+        _boardOutput.Wait(CheckFlagCycles);
+        if (_boardMemory.IsLaserBallBonusRepeating)
         {
-            _output.Wait(JumpExtended);
+            _boardOutput.Wait(JumpExtended);
             return MovePitchThenPlay();
         }
 
-        _output.Wait(ModifyExtended + Immediate + CallShort);
-        _memory.IsLaserBallBonusRepeating = true;
+        _boardOutput.Wait(ModifyExtended + Immediate + CallShort);
+        _boardMemory.IsLaserBallBonusRepeating = true;
         Load(WaveTableData.LaserBallBonusVector);
-        _output.Wait(Branch);
+        _boardOutput.Wait(Branch);
         return Play();
     }
 
@@ -278,7 +278,7 @@ internal sealed class WaveTableSound
     private void CopyWave()
     {
         _waveLength = WaveTableData.Waves[_waveStart];
-        _output.Wait(TransferCycles + _waveLength * SubroutineCycles.TransferPerByte);
+        _boardOutput.Wait(TransferCycles + _waveLength * SubroutineCycles.TransferPerByte);
         for (var i = 0; i < _waveLength; i++) _waveSamples[i] = WaveTableData.Waves[_waveStart + 1 + i];
     }
 
@@ -291,13 +291,13 @@ internal sealed class WaveTableSound
     {
         if (steps == 0)
         {
-            _output.Wait(NoDecayCycles);
+            _boardOutput.Wait(NoDecayCycles);
             return;
         }
 
-        _output.Wait(DecayCycles + _waveLength * (DecayPerLevelCycles + steps * DecayStepCycles));
-        _memory.ScratchB = steps;
-        _memory.ScratchA = 0;
+        _boardOutput.Wait(DecayCycles + _waveLength * (DecayPerLevelCycles + steps * DecayStepCycles));
+        _boardMemory.ScratchB = steps;
+        _boardMemory.ScratchA = 0;
         for (var i = 0; i < _waveLength; i++)
         {
             var sixteenth = WaveTableData.Waves[_waveStart + 1 + i] >> SixteenthShift;
@@ -312,25 +312,25 @@ internal sealed class WaveTableSound
     /// <returns>True when some pitch can still be played.</returns>
     private bool FindPlayableRange()
     {
-        _output.Wait(StartSearchCycles);
+        _boardOutput.Wait(StartSearchCycles);
         var end = SearchPattern();
         if (end is null)
         {
-            _output.Wait(Return);
+            _boardOutput.Wait(Return);
             return false;
         }
 
-        _output.Wait(MarkEndCycles);
+        _boardOutput.Wait(MarkEndCycles);
         _patternEnd = end.Value;
         if (_echoDecay != 0)
         {
-            _output.Wait(CallShort);
+            _boardOutput.Wait(CallShort);
             CopyWave();
-            _output.Wait(Direct + CallShort);
+            _boardOutput.Wait(Direct + CallShort);
             Decay(_preDecay);
         }
 
-        _output.Wait(JumpExtended);
+        _boardOutput.Wait(JumpExtended);
         return true;
     }
 
@@ -339,14 +339,14 @@ internal sealed class WaveTableSound
     private void FindWave(int waveNumber)
     {
         _waveStart = 0;
-        _memory.ScratchA = (byte)waveNumber;
+        _boardMemory.ScratchA = (byte)waveNumber;
         while (true)
         {
-            _output.Wait(WaveSearchCheckCycles);
-            _memory.ScratchA--;
-            if (_memory.ScratchA >= NegativeBit) return;
+            _boardOutput.Wait(WaveSearchCheckCycles);
+            _boardMemory.ScratchA--;
+            if (_boardMemory.ScratchA >= NegativeBit) return;
 
-            _output.Wait(WaveSearchStepCycles);
+            _boardOutput.Wait(WaveSearchStepCycles);
             _waveStart += WaveTableData.Waves[_waveStart] + 1;
         }
     }
@@ -360,17 +360,17 @@ internal sealed class WaveTableSound
     {
         var sum = _pitchOffset + pitch;
         var hasCarry = sum > byte.MaxValue;
-        _output.Wait(TestPitchCycles);
+        _boardOutput.Wait(TestPitchCycles);
         if (_pitchStep < NegativeBit)
         {
-            if (!hasCarry) _output.Wait(Branch);
+            if (!hasCarry) _boardOutput.Wait(Branch);
 
             return !hasCarry;
         }
 
         if ((byte)sum == 0) return false;
 
-        _output.Wait(Branch);
+        _boardOutput.Wait(Branch);
         return hasCarry;
     }
 
@@ -378,18 +378,18 @@ internal sealed class WaveTableSound
     /// <param name="vectorIndex">The sound's place in <see cref="WaveTableData.Vectors" />.</param>
     private void Load(int vectorIndex)
     {
-        _output.Wait(LoadSettingsCycles + LoadWaveNumberCycles);
+        _boardOutput.Wait(LoadSettingsCycles + LoadWaveNumberCycles);
         var vector = WaveTableData.Vectors[vectorIndex];
         _playsPerPitch = (byte)(vector.EchoesAndPlays & LowNibble);
         _echoes = (byte)(vector.EchoesAndPlays >> HighNibbleShift);
         _echoDecay = (byte)(vector.EchoDecayAndWave >> HighNibbleShift);
         FindWave(vector.EchoDecayAndWave & LowNibble);
-        _output.Wait(CallTransferFromLoadCycles);
+        _boardOutput.Wait(CallTransferFromLoadCycles);
         CopyWave();
-        _output.Wait(CallPreDecayFromLoadCycles);
+        _boardOutput.Wait(CallPreDecayFromLoadCycles);
         _preDecay = vector.PreDecay;
         Decay(_preDecay);
-        _output.Wait(LoadPatternCycles);
+        _boardOutput.Wait(LoadPatternCycles);
         _pitchStep = vector.PitchStep;
         _pitchStepsLeft = vector.PitchSteps;
         _patternStart = vector.PatternStart;
@@ -404,22 +404,22 @@ internal sealed class WaveTableSound
     /// <returns>True when there is something left to play.</returns>
     private bool MovePitch()
     {
-        _output.Wait(CheckFlagCycles);
+        _boardOutput.Wait(CheckFlagCycles);
         if (_pitchStep == 0)
         {
-            _output.Wait(Return);
+            _boardOutput.Wait(Return);
             return false;
         }
 
-        _output.Wait(CountPitchStepCycles);
+        _boardOutput.Wait(CountPitchStepCycles);
         _pitchStepsLeft--;
         if (_pitchStepsLeft == 0)
         {
-            _output.Wait(Return);
+            _boardOutput.Wait(Return);
             return false;
         }
 
-        _output.Wait(MovePitchCycles);
+        _boardOutput.Wait(MovePitchCycles);
         _pitchOffset += _pitchStep;
         return FindPlayableRange();
     }
@@ -444,8 +444,8 @@ internal sealed class WaveTableSound
         {
             foreach (var change in PlayEchoes()) yield return change;
 
-            _output.Wait(CheckFlagCycles);
-            if (_memory.IsLaserBallBonusRepeating) yield break;
+            _boardOutput.Wait(CheckFlagCycles);
+            if (_boardMemory.IsLaserBallBonusRepeating) yield break;
         } while (MovePitch());
     }
 
@@ -458,19 +458,19 @@ internal sealed class WaveTableSound
         var playsLeft = _playsPerPitch;
         while (true)
         {
-            _output.Wait(StartWaveCycles);
+            _boardOutput.Wait(StartWaveCycles);
             for (var i = 0; i < _waveLength; i++)
             {
-                _output.Wait(cyclesBeforeEachLevel);
-                yield return _output.Store(_waveSamples[i]);
-                _output.Wait(NextLevelCycles);
+                _boardOutput.Wait(cyclesBeforeEachLevel);
+                yield return _boardOutput.Store(_waveSamples[i]);
+                _boardOutput.Wait(NextLevelCycles);
             }
 
-            _output.Wait(CountPlayCycles);
+            _boardOutput.Wait(CountPlayCycles);
             playsLeft--;
             if (playsLeft == 0) yield break;
 
-            _output.Wait(ReplaySyncCycles);
+            _boardOutput.Wait(ReplaySyncCycles);
         }
     }
 
@@ -480,7 +480,7 @@ internal sealed class WaveTableSound
         {
             foreach (var change in Play()) yield return change;
 
-            _output.Wait(BackgroundLoopCycles);
+            _boardOutput.Wait(BackgroundLoopCycles);
             _pitchStepsLeft++;
         }
     }
@@ -489,16 +489,16 @@ internal sealed class WaveTableSound
     /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> PlayEchoes()
     {
-        _output.Wait(StartEchoesCycles);
+        _boardOutput.Wait(StartEchoesCycles);
         var echoesLeft = _echoes;
         do
         {
-            _output.Wait(StartPatternCycles);
+            _boardOutput.Wait(StartPatternCycles);
             foreach (var change in PlayPattern()) yield return change;
 
-            _output.Wait(CallEchoDecayCycles);
+            _boardOutput.Wait(CallEchoDecayCycles);
             Decay(_echoDecay);
-            _output.Wait(CountEchoCycles);
+            _boardOutput.Wait(CountEchoCycles);
             echoesLeft--;
         } while (echoesLeft != 0);
     }
@@ -509,11 +509,11 @@ internal sealed class WaveTableSound
     {
         for (var place = _patternStart; ; place++)
         {
-            _output.Wait(ReadPitchCycles);
+            _boardOutput.Wait(ReadPitchCycles);
             if (place == _patternEnd) yield break;
 
             var wait = (byte)(WaveTableData.Patterns[place] + _pitchOffset);
-            _output.Wait(StartPitchCycles);
+            _boardOutput.Wait(StartPitchCycles);
             foreach (var change in PlayAtPitch(wait)) yield return change;
         }
     }
@@ -525,26 +525,26 @@ internal sealed class WaveTableSound
         var hasStart = false;
         for (var place = _patternStart; ; place++)
         {
-            _output.Wait(CheckDirectionCycles);
+            _boardOutput.Wait(CheckDirectionCycles);
             var isPlayable = IsPlayable(WaveTableData.Patterns[place]);
-            _output.Wait(CheckFoundCycles);
+            _boardOutput.Wait(CheckFoundCycles);
             if (!isPlayable && hasStart)
             {
-                _output.Wait(Branch);
+                _boardOutput.Wait(Branch);
                 return place;
             }
 
             if (isPlayable && !hasStart)
             {
-                _output.Wait(MarkStartCycles);
+                _boardOutput.Wait(MarkStartCycles);
                 _patternStart = place;
                 hasStart = true;
             }
 
-            _output.Wait(NextPitchCycles);
+            _boardOutput.Wait(NextPitchCycles);
             if (place + 1 != _patternEnd) continue;
 
-            _output.Wait(CheckFoundCycles);
+            _boardOutput.Wait(CheckFoundCycles);
             return hasStart ? place + 1 : null;
         }
     }

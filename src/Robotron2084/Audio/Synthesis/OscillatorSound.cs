@@ -191,69 +191,69 @@ internal sealed class OscillatorSound
         0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xA0
     ];
 
-    private readonly BoardMemory _memory;
-    private readonly BoardOutput _output;
+    private readonly BoardMemory _boardMemory;
+    private readonly BoardOutput _boardOutput;
     private readonly byte[] _ram;
     private byte _level = SilentLevel;
     private int _shifts; // XDECAY: how far the decay's pointer has moved up from the bare store
 
     /// <summary>Creates the sound on the board's memory and output port, with its own copy of the settings.</summary>
-    /// <param name="memory">The board's lasting variables, whose <c>LO</c> is the noise's random number.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, whose <c>LO</c> is the noise's random number.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <param name="vector">The 28 bytes of settings.</param>
-    private OscillatorSound(BoardMemory memory, BoardOutput output, byte[] vector)
+    private OscillatorSound(BoardMemory boardMemory, BoardOutput boardOutput, byte[] vector)
     {
-        _memory = memory;
-        _output = output;
+        _boardMemory = boardMemory;
+        _boardOutput = boardOutput;
         _ram = (byte[])vector.Clone();
     }
 
     /// <summary>Plays <c>SND16</c> (settings <c>VEC016</c>).</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlaySound16(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlaySound16(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(memory, output, Vec016, true);
+        return Start(boardMemory, boardOutput, Vec016, true);
     }
 
     /// <summary>Plays <c>SND17</c> (settings <c>VEC017</c>).</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlaySound17(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlaySound17(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(memory, output, Vec017, true);
+        return Start(boardMemory, boardOutput, Vec017, true);
     }
 
     /// <summary>Plays <c>SND2</c> (settings <c>VEC02</c>).</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlaySound2(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlaySound2(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(memory, output, Vec02, true);
+        return Start(boardMemory, boardOutput, Vec02, true);
     }
 
     /// <summary>Plays the second coin sound (sound <c>SND5</c>, settings <c>VEC05</c>).</summary>
-    /// <param name="memory">The board's lasting variables, whose <c>LO</c> is the noise's random number.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, whose <c>LO</c> is the noise's random number.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlaySound5(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlaySound5(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(memory, output, Vec05, true);
+        return Start(boardMemory, boardOutput, Vec05, true);
     }
 
     /// <summary>
     ///     Plays <c>THNDR</c>, "THUNDER SOUND" (settings <c>VEC01</c>); the only one of the group that is not reached by
     ///     a <c>BRA</c>.
     /// </summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayThunder(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayThunder(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(memory, output, Vec01, false);
+        return Start(boardMemory, boardOutput, Vec01, false);
     }
 
     /// <summary>Turns the source's <c>FDB</c> words into the bytes they put in the ROM.</summary>
@@ -264,14 +264,14 @@ internal sealed class OscillatorSound
         return [.. words.SelectMany(word => new[] { (byte)(word >> 8), (byte)word })];
     }
 
-    private static IEnumerable<OutputChange> Start(BoardMemory memory, BoardOutput output, byte[] vector,
+    private static IEnumerable<OutputChange> Start(BoardMemory boardMemory, BoardOutput boardOutput, byte[] vector,
         bool isReachedByBranch)
     {
         var copyCycles = CopyAndCallCycles - Branch;
         if (isReachedByBranch) copyCycles = CopyAndCallCycles;
 
-        output.Wait(copyCycles);
-        return new OscillatorSound(memory, output, vector).Play();
+        boardOutput.Wait(copyCycles);
+        return new OscillatorSound(boardMemory, boardOutput, vector).Play();
     }
 
     /// <summary>
@@ -283,28 +283,28 @@ internal sealed class OscillatorSound
     private bool ChangeNoise(out int? noise)
     {
         noise = null;
-        _output.Wait(CountVoiceCycles);
+        _boardOutput.Wait(CountVoiceCycles);
         if (--_ram[CounterGroup + NoiseVoice] != 0) return true;
 
-        _output.Wait(CheckNoisePitchCycles);
+        _boardOutput.Wait(CheckNoisePitchCycles);
         if (_ram[FrequencyGroup + NoiseVoice] == 0) return true;
 
-        _output.Wait(ReloadNoiseCycles + NextRandomCycles + CountDecayCycles);
+        _boardOutput.Wait(ReloadNoiseCycles + NextRandomCycles + CountDecayCycles);
         _ram[CounterGroup + NoiseVoice] = (byte)(_ram[FrequencyGroup + NoiseVoice] & NotSignBit);
-        var low = _memory.RandomLow;
-        _memory.SetRandom(_memory.RandomHigh, (byte)((low << 1) + low + RandomAdd));
+        var low = _boardMemory.RandomLow;
+        _boardMemory.SetRandom(_boardMemory.RandomHigh, (byte)((low << 1) + low + RandomAdd));
         if (--_ram[CycleCounterGroup + NoiseVoice] == 0 && !StepDecay()) return false;
 
-        _output.Wait(NoiseAmplitudeCycles + AddNoiseCycles);
-        var amount = _memory.RandomLow & _ram[AmplitudeGroup + NoiseVoice] & NotSignBit;
-        if (_memory.RandomLow >= SignBit)
+        _boardOutput.Wait(NoiseAmplitudeCycles + AddNoiseCycles);
+        var amount = _boardMemory.RandomLow & _ram[AmplitudeGroup + NoiseVoice] & NotSignBit;
+        if (_boardMemory.RandomLow >= SignBit)
         {
-            _output.Wait(NegateCycles);
+            _boardOutput.Wait(NegateCycles);
             amount = -amount;
         }
         else
         {
-            _output.Wait(PositiveBranchCycles);
+            _boardOutput.Wait(PositiveBranchCycles);
         }
 
         noise = amount;
@@ -322,14 +322,14 @@ internal sealed class OscillatorSound
         var branchCycles = 0;
         if (voice < 2) branchCycles = SelectVoiceBranchCycles;
 
-        _output.Wait(SelectVoiceCycles + branchCycles + CheckCyclesCycles);
+        _boardOutput.Wait(SelectVoiceCycles + branchCycles + CheckCyclesCycles);
         if (_ram[CycleCounterGroup + voice] != 0)
         {
-            _output.Wait(CountCyclesCycles);
+            _boardOutput.Wait(CountCyclesCycles);
             if (--_ram[CycleCounterGroup + voice] == 0 && !MovePitch(voice)) return false;
         }
 
-        _output.Wait(NextLevelCycles);
+        _boardOutput.Wait(NextLevelCycles);
         _ram[CounterGroup + voice] = _ram[FrequencyGroup + voice];
         _level = (byte)(_level + _ram[AmplitudeGroup + voice]);
         _ram[AmplitudeGroup + voice] = (byte)-_ram[AmplitudeGroup + voice];
@@ -342,7 +342,7 @@ internal sealed class OscillatorSound
     {
         for (var voice = 0; voice < NoiseVoice; voice++)
         {
-            _output.Wait(CountVoiceCycles);
+            _boardOutput.Wait(CountVoiceCycles);
             if (--_ram[CounterGroup + voice] == 0) return voice;
         }
 
@@ -354,16 +354,16 @@ internal sealed class OscillatorSound
     /// <returns>False when the new pitch is the oscillator's last, which ends the sound.</returns>
     private bool MovePitch(int voice)
     {
-        _output.Wait(MovePitchCycles - StoreIndexed);
+        _boardOutput.Wait(MovePitchCycles - StoreIndexed);
         _ram[CycleCounterGroup + voice] = _ram[CyclesGroup + voice];
         var pitch = (byte)(_ram[FrequencyGroup + voice] + _ram[FrequencyStepGroup + voice]);
         if (pitch == _ram[EndFrequencyGroup + voice])
         {
-            _output.Wait(EndCycles);
+            _boardOutput.Wait(EndCycles);
             return false;
         }
 
-        _output.Wait(StoreIndexed);
+        _boardOutput.Wait(StoreIndexed);
         _ram[FrequencyGroup + voice] = pitch;
         return true;
     }
@@ -372,7 +372,7 @@ internal sealed class OscillatorSound
     /// <returns>The sound's output changes.</returns>
     private IEnumerable<OutputChange> Play()
     {
-        _output.Wait(StartCycles);
+        _boardOutput.Wait(StartCycles);
         while (true)
         {
             WaitForWhiteNoise();
@@ -395,15 +395,15 @@ internal sealed class OscillatorSound
     /// <returns>False when the step is the last, which ends the sound.</returns>
     private bool StepDecay()
     {
-        _output.Wait(StepDecayCycles);
+        _boardOutput.Wait(StepDecayCycles);
         _ram[CycleCounterGroup + NoiseVoice] = _ram[CyclesGroup + NoiseVoice];
         if (_shifts + 1 == MostShifts)
         {
-            _output.Wait(EndCycles);
+            _boardOutput.Wait(EndCycles);
             return false;
         }
 
-        _output.Wait(SaveDecayCycles);
+        _boardOutput.Wait(SaveDecayCycles);
         _shifts++;
         return true;
     }
@@ -411,11 +411,11 @@ internal sealed class OscillatorSound
     /// <summary>The white mode's extra wait, when the noise voice's pitch byte asks for it (<c>PLAY1</c> to <c>PLAY2</c>).</summary>
     private void WaitForWhiteNoise()
     {
-        _output.Wait(CheckNoiseModeCycles);
+        _boardOutput.Wait(CheckNoiseModeCycles);
         if ((_ram[FrequencyGroup + NoiseVoice] & SignBit) != 0)
         {
-            var wait = (byte)((_memory.RandomLow >> RandomShift) + 1);
-            _output.Wait(WhiteWaitSetUpCycles + CountdownLoop.Runs(wait) * WhiteWaitCountCycles);
+            var wait = (byte)((_boardMemory.RandomLow >> RandomShift) + 1);
+            _boardOutput.Wait(WhiteWaitSetUpCycles + CountdownLoop.Runs(wait) * WhiteWaitCountCycles);
         }
     }
 
@@ -425,9 +425,9 @@ internal sealed class OscillatorSound
     /// <returns>The output change.</returns>
     private OutputChange WriteLevel(byte level, int loopBackCycles)
     {
-        _output.Wait(CallDecayCycles + _shifts * Inherent);
-        var change = _output.Store((byte)(level >> _shifts));
-        _output.Wait(Return + loopBackCycles);
+        _boardOutput.Wait(CallDecayCycles + _shifts * Inherent);
+        var change = _boardOutput.Store((byte)(level >> _shifts));
+        _boardOutput.Wait(Return + loopBackCycles);
         return change;
     }
 }

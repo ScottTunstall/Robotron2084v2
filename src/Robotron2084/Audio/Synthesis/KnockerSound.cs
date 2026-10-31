@@ -69,32 +69,32 @@ internal static class KnockerSound
     ];
 
     /// <summary>Plays the knocker (sound <c>KNOCK</c>).</summary>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> Play(BoardOutput output)
+    public static IEnumerable<OutputChange> Play(BoardOutput boardOutput)
     {
-        output.Wait(SetUpCycles);
+        boardOutput.Wait(SetUpCycles);
         foreach (var burst in Pattern)
         {
             var period = (byte)(burst >> 8);
             var loud = (byte)(burst & LevelMask);
             var cycles = (byte)(burst & CountMask);
-            output.Wait(ReadBurstCycles);
+            boardOutput.Wait(ReadBurstCycles);
             do
             {
-                output.Wait(LoudStartCycles);
-                yield return output.Store(loud);
-                output.Wait(WaitStartCycles + CountdownLoop.Runs(period) * PeriodUnitCycles);
-                output.Wait(ModifyExtended - StoreExtended);
-                yield return output.Store(0);
-                output.Wait(WaitStartCycles + CountdownLoop.Runs(period) * PeriodUnitCycles);
-                output.Wait(EndCycleCycles);
+                boardOutput.Wait(LoudStartCycles);
+                yield return boardOutput.Store(loud);
+                boardOutput.Wait(WaitStartCycles + CountdownLoop.Runs(period) * PeriodUnitCycles);
+                boardOutput.Wait(ModifyExtended - StoreExtended);
+                yield return boardOutput.Store(0);
+                boardOutput.Wait(WaitStartCycles + CountdownLoop.Runs(period) * PeriodUnitCycles);
+                boardOutput.Wait(EndCycleCycles);
                 cycles--;
             } while (cycles != 0);
 
-            output.Wait(NextBurstCycles);
+            boardOutput.Wait(NextBurstCycles);
         }
 
-        output.Wait(WordDirect + Indexed + Branch + EndCycles);
+        boardOutput.Wait(WordDirect + Indexed + Branch + EndCycles);
     }
 }

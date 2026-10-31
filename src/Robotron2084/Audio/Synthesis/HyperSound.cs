@@ -36,29 +36,29 @@ internal static class HyperSound
     private const int StartCycles = Inherent;
 
     /// <summary>Plays the hyper sound (sound <c>HYPER</c>).</summary>
-    /// <param name="memory">The board's lasting variables, whose <c>TEMPA</c> holds where the part-way flip comes.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, whose <c>TEMPA</c> holds where the part-way flip comes.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> Play(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> Play(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        output.Wait(StartCycles);
-        yield return output.Store(0);
-        output.Wait(StoreDirect);
-        memory.ScratchA = 0;
+        boardOutput.Wait(StartCycles);
+        yield return boardOutput.Store(0);
+        boardOutput.Wait(StoreDirect);
+        boardMemory.ScratchA = 0;
         do
         {
-            output.Wait(StartCycleCycles);
+            boardOutput.Wait(StartCycleCycles);
             for (var count = 0; count < CountsPerCycle; count++)
             {
-                output.Wait(CheckFlipCycles);
-                if (count == memory.ScratchA) yield return output.Complement();
+                boardOutput.Wait(CheckFlipCycles);
+                if (count == boardMemory.ScratchA) yield return boardOutput.Complement();
 
-                output.Wait(CountCycles);
+                boardOutput.Wait(CountCycles);
             }
 
-            yield return output.Complement();
-            output.Wait(EndCycleCycles);
-            memory.ScratchA++;
-        } while (memory.ScratchA < CountsPerCycle);
+            yield return boardOutput.Complement();
+            boardOutput.Wait(EndCycleCycles);
+            boardMemory.ScratchA++;
+        } while (boardMemory.ScratchA < CountsPerCycle);
     }
 }

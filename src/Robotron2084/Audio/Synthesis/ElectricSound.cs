@@ -71,29 +71,29 @@ internal sealed class ElectricSound
     /// </summary>
     private const byte WaveLevel = 0x9F;
 
-    private readonly BoardOutput _output;
+    private readonly BoardOutput _boardOutput;
     private int _countsLeft;
 
     /// <summary>Creates the sound on the board's output port.</summary>
-    /// <param name="output">The board's output port.</param>
-    private ElectricSound(BoardOutput output)
+    /// <param name="boardOutput">The board's output port.</param>
+    private ElectricSound(BoardOutput boardOutput)
     {
-        _output = output;
+        _boardOutput = boardOutput;
     }
 
     /// <summary>Plays the sixth coin sound (sound <c>START</c>).</summary>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayStart(BoardOutput output)
+    public static IEnumerable<OutputChange> PlayStart(BoardOutput boardOutput)
     {
-        return new ElectricSound(output).Play();
+        return new ElectricSound(boardOutput).Play();
     }
 
     /// <summary>Counts the round down once (<c>DEX</c>, <c>BEQ SND1E</c>).</summary>
     /// <returns>True when the round has run out.</returns>
     private bool CountRound()
     {
-        _output.Wait(CountCycles);
+        _boardOutput.Wait(CountCycles);
         return --_countsLeft == 0;
     }
 
@@ -109,7 +109,7 @@ internal sealed class ElectricSound
         {
             if (CountRound()) return true;
 
-            _output.Wait(PeriodCountCycles);
+            _boardOutput.Wait(PeriodCountCycles);
             periodLeft--;
             if (periodLeft == 0) return false;
         }
@@ -123,27 +123,27 @@ internal sealed class ElectricSound
     private IEnumerable<OutputChange> Play()
     {
         var period = FirstPeriod;
-        _output.Wait(StartCycles);
+        _boardOutput.Wait(StartCycles);
         do
         {
-            _output.Wait(StartRoundCycles);
+            _boardOutput.Wait(StartRoundCycles);
             _countsLeft = CountsPerRound;
             while (!CountRound())
             {
                 // SND1B: the first half-wave.
-                _output.Wait(SetPeriodCycles);
-                yield return _output.Store(WaveLevel);
+                _boardOutput.Wait(SetPeriodCycles);
+                yield return _boardOutput.Store(WaveLevel);
                 if (HoldHalfWave(period) || CountRound()) break;
 
                 // SND1D: the second half-wave, the first's complement.
-                _output.Wait(SetPeriodCycles);
-                yield return _output.Complement();
+                _boardOutput.Wait(SetPeriodCycles);
+                yield return _boardOutput.Complement();
                 if (HoldHalfWave(period)) break;
 
-                _output.Wait(LoopBackCycles);
+                _boardOutput.Wait(LoopBackCycles);
             }
 
-            _output.Wait(EndRoundCycles);
+            _boardOutput.Wait(EndRoundCycles);
             period = (byte)(period - PeriodStep);
         } while (period > LastPeriodLimit);
     }

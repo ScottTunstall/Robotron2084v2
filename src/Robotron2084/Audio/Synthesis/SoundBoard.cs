@@ -126,8 +126,8 @@ public sealed class SoundBoard : ISoundBoard
     /// <summary>What the handler takes off a square wave sound number to find its settings (<c>DECA</c>, <c>SUBA #$1C</c>).</summary>
     private const int SquareWaveOffset = 0x1D;
 
-    private readonly BoardMemory _memory = new();
-    private readonly BoardOutput _output = new();
+    private readonly BoardMemory _boardMemory = new();
+    private readonly BoardOutput _boardOutput = new();
     private readonly IReadOnlyDictionary<int, Func<IEnumerable<OutputChange>>> _routines;
     private readonly WaveTableSound _waveTableSound;
     private int _cyclesLeftInChange;
@@ -139,7 +139,7 @@ public sealed class SoundBoard : ISoundBoard
     /// <summary>Switches the board on: silent, waiting for a sound number.</summary>
     public SoundBoard()
     {
-        _waveTableSound = new WaveTableSound(_memory, _output);
+        _waveTableSound = new WaveTableSound(_boardMemory, _boardOutput);
         _routines = BuildRoutines();
     }
 
@@ -200,44 +200,44 @@ public sealed class SoundBoard : ISoundBoard
     /// <param name="routines">The routines to add them to.</param>
     private void AddHighJumpTableRoutines(Dictionary<int, Func<IEnumerable<OutputChange>>> routines)
     {
-        routines[0x2C] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound2(_memory, _output)); // SND2
-        routines[0x2D] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound5(_memory, _output)); // SND5
-        routines[0x2E] = CreateHighJumpTableRoutine(() => OscillatorSound.PlayThunder(_memory, _output)); // THNDR
-        routines[0x2F] = CreateHighJumpTableRoutine(() => SingSound.PlayHstd(_memory, _output)); // HSTD
-        routines[0x30] = CreateHighJumpTableRoutine(() => SingSound.PlayAtari(_memory, _output)); // ATARI
-        routines[0x31] = CreateHighJumpTableRoutine(() => SingSound.PlaySiren(_memory, _output)); // SIREN
-        routines[0x32] = CreateHighJumpTableRoutine(() => SingSound.PlayOrrrr(_memory, _output)); // ORRRR
-        routines[0x33] = CreateHighJumpTableRoutine(() => SingSound.PlayPerkDollars(_memory, _output)); // PERK$$
-        routines[0x34] = CreateHighJumpTableRoutine(() => SingSound.PlaySquirts(_memory, _output)); // SQRT
-        routines[0x35] = CreateHighJumpTableRoutine(() => ElectricSound.PlayStart(_output)); // START
-        routines[0x36] = CreateHighJumpTableRoutine(() => PlaneSound.Play(_output)); // PLANE
-        routines[0x37] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound16(_memory, _output)); // SND16
-        routines[0x38] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound17(_memory, _output)); // SND17
-        routines[0x39] = CreateHighJumpTableRoutine(() => LightningNoise.PlayLaunch(_memory, _output)); // LAUNCH
-        routines[0x3A] = CreateHighJumpTableRoutine(() => CrowdRoarSound.Play(_memory, _output)); // CDR
-        routines[0x3B] = CreateHighJumpTableRoutine(() => KnockerSound.Play(_output)); // KNOCK
-        routines[0x3C] = CreateHighJumpTableRoutine(() => SirenSound.Play(_output)); // ZIREN
-        routines[0x3D] = CreateHighJumpTableRoutine(() => WhistleSound.Play(_output)); // WHIST
-        routines[0x3E] = CreateHighJumpTableRoutine(() => FilteredNoise.PlayBomb(_memory, _output)); // HBOMB
+        routines[0x2C] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound2(_boardMemory, _boardOutput)); // SND2
+        routines[0x2D] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound5(_boardMemory, _boardOutput)); // SND5
+        routines[0x2E] = CreateHighJumpTableRoutine(() => OscillatorSound.PlayThunder(_boardMemory, _boardOutput)); // THNDR
+        routines[0x2F] = CreateHighJumpTableRoutine(() => SingSound.PlayHstd(_boardMemory, _boardOutput)); // HSTD
+        routines[0x30] = CreateHighJumpTableRoutine(() => SingSound.PlayAtari(_boardMemory, _boardOutput)); // ATARI
+        routines[0x31] = CreateHighJumpTableRoutine(() => SingSound.PlaySiren(_boardMemory, _boardOutput)); // SIREN
+        routines[0x32] = CreateHighJumpTableRoutine(() => SingSound.PlayOrrrr(_boardMemory, _boardOutput)); // ORRRR
+        routines[0x33] = CreateHighJumpTableRoutine(() => SingSound.PlayPerkDollars(_boardMemory, _boardOutput)); // PERK$$
+        routines[0x34] = CreateHighJumpTableRoutine(() => SingSound.PlaySquirts(_boardMemory, _boardOutput)); // SQRT
+        routines[0x35] = CreateHighJumpTableRoutine(() => ElectricSound.PlayStart(_boardOutput)); // START
+        routines[0x36] = CreateHighJumpTableRoutine(() => PlaneSound.Play(_boardOutput)); // PLANE
+        routines[0x37] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound16(_boardMemory, _boardOutput)); // SND16
+        routines[0x38] = CreateHighJumpTableRoutine(() => OscillatorSound.PlaySound17(_boardMemory, _boardOutput)); // SND17
+        routines[0x39] = CreateHighJumpTableRoutine(() => LightningNoise.PlayLaunch(_boardMemory, _boardOutput)); // LAUNCH
+        routines[0x3A] = CreateHighJumpTableRoutine(() => CrowdRoarSound.Play(_boardMemory, _boardOutput)); // CDR
+        routines[0x3B] = CreateHighJumpTableRoutine(() => KnockerSound.Play(_boardOutput)); // KNOCK
+        routines[0x3C] = CreateHighJumpTableRoutine(() => SirenSound.Play(_boardOutput)); // ZIREN
+        routines[0x3D] = CreateHighJumpTableRoutine(() => WhistleSound.Play(_boardOutput)); // WHIST
+        routines[0x3E] = CreateHighJumpTableRoutine(() => FilteredNoise.PlayBomb(_boardMemory, _boardOutput)); // HBOMB
     }
 
     /// <summary>The sounds <c>JMPTBL</c> holds (<c>$0E</c> to <c>$1C</c>), which the handler reaches by the low range.</summary>
     /// <param name="routines">The routines to add them to.</param>
     private void AddJumpTableRoutines(Dictionary<int, Func<IEnumerable<OutputChange>>> routines)
     {
-        routines[SpinnerSoundNumber] = CreateJumpTableRoutine(() => SpinnerSound.Play(_memory, _output)); // SP1
+        routines[SpinnerSoundNumber] = CreateJumpTableRoutine(() => SpinnerSound.Play(_boardMemory, _boardOutput)); // SP1
         routines[0x0F] = CreateJumpTableRoutine(StartBackground1); // BG1
         routines[0x10] = CreateJumpTableRoutine(IncrementBackground2); // BG2INC
-        routines[0x11] = CreateJumpTableRoutine(() => LightningNoise.PlayLightning(_memory, _output)); // LITE
+        routines[0x11] = CreateJumpTableRoutine(() => LightningNoise.PlayLightning(_boardMemory, _boardOutput)); // LITE
         routines[LaserBallBonusSoundNumber] = CreateJumpTableRoutine(_waveTableSound.PlayLaserBallBonus); // BON2
         routines[0x13] = CreateJumpTableRoutine(EndBackground); // BGEND
-        routines[0x14] = CreateJumpTableRoutine(() => WhiteNoise.PlayTurbo(_memory, _output)); // TURBO
-        routines[0x15] = CreateJumpTableRoutine(() => LightningNoise.PlayAppear(_memory, _output)); // APPEAR
-        routines[0x16] = CreateJumpTableRoutine(() => FilteredNoise.PlayThrust(_memory, _output)); // THRUST
-        routines[0x17] = CreateJumpTableRoutine(() => FilteredNoise.PlayCannon(_memory, _output)); // CANNON
-        routines[0x18] = CreateJumpTableRoutine(() => RadioSound.Play(_memory, _output)); // RADIO
-        routines[0x19] = CreateJumpTableRoutine(() => HyperSound.Play(_memory, _output)); // HYPER
-        routines[0x1A] = CreateJumpTableRoutine(() => ScreamSound.Play(_memory, _output)); // SCREAM
+        routines[0x14] = CreateJumpTableRoutine(() => WhiteNoise.PlayTurbo(_boardMemory, _boardOutput)); // TURBO
+        routines[0x15] = CreateJumpTableRoutine(() => LightningNoise.PlayAppear(_boardMemory, _boardOutput)); // APPEAR
+        routines[0x16] = CreateJumpTableRoutine(() => FilteredNoise.PlayThrust(_boardMemory, _boardOutput)); // THRUST
+        routines[0x17] = CreateJumpTableRoutine(() => FilteredNoise.PlayCannon(_boardMemory, _boardOutput)); // CANNON
+        routines[0x18] = CreateJumpTableRoutine(() => RadioSound.Play(_boardMemory, _boardOutput)); // RADIO
+        routines[0x19] = CreateJumpTableRoutine(() => HyperSound.Play(_boardMemory, _boardOutput)); // HYPER
+        routines[0x1A] = CreateJumpTableRoutine(() => ScreamSound.Play(_boardMemory, _boardOutput)); // SCREAM
         routines[0x1B] = CreateJumpTableRoutine(ArmOrganTune); // ORGANT
         routines[0x1C] = CreateJumpTableRoutine(PlayOrganNote); // ORGANN
     }
@@ -253,17 +253,17 @@ public sealed class SoundBoard : ISoundBoard
         var number = _waitingSoundNumber;
         _waitingSoundNumber = NoSoundNumber;
         _outputChanges?.Dispose();
-        _output.Restart(OutputLevel);
-        _output.Wait(Interrupt + HandlerStartCycles);
+        _boardOutput.Restart(OutputLevel);
+        _boardOutput.Wait(Interrupt + HandlerStartCycles);
         IEnumerable<OutputChange> routine = [];
-        if (_memory.IsOrganTuneNext)
+        if (_boardMemory.IsOrganTuneNext)
         {
-            _memory.IsOrganTuneNext = false;
-            _output.Wait(OrganTuneCycles);
+            _boardMemory.IsOrganTuneNext = false;
+            _boardOutput.Wait(OrganTuneCycles);
         }
         else
         {
-            _output.Wait(FlagCheckCycles + SortCycles);
+            _boardOutput.Wait(FlagCheckCycles + SortCycles);
             ClearRepeatCounts(number);
             routine = _routines[number]();
         }
@@ -275,8 +275,8 @@ public sealed class SoundBoard : ISoundBoard
     /// <returns>No output changes.</returns>
     private IEnumerable<OutputChange> ArmOrganTune()
     {
-        _output.Wait(ModifyExtended + Return);
-        _memory.IsOrganTuneNext = true;
+        _boardOutput.Wait(ModifyExtended + Return);
+        _boardMemory.IsOrganTuneNext = true;
         return [];
     }
 
@@ -312,14 +312,14 @@ public sealed class SoundBoard : ISoundBoard
     {
         if (number != SpinnerSoundNumber)
         {
-            _output.Wait(StoreDirect);
-            _memory.SpinnerSends = 0;
+            _boardOutput.Wait(StoreDirect);
+            _boardMemory.SpinnerSends = 0;
         }
 
         if (number != LaserBallBonusSoundNumber)
         {
-            _output.Wait(StoreDirect);
-            _memory.IsLaserBallBonusRepeating = false;
+            _boardOutput.Wait(StoreDirect);
+            _boardMemory.IsLaserBallBonusRepeating = false;
         }
     }
 
@@ -334,7 +334,7 @@ public sealed class SoundBoard : ISoundBoard
     {
         return () =>
         {
-            _output.Wait(HighRangeCycles + JumpTableCycles);
+            _boardOutput.Wait(HighRangeCycles + JumpTableCycles);
             return routine();
         };
     }
@@ -349,7 +349,7 @@ public sealed class SoundBoard : ISoundBoard
     {
         return () =>
         {
-            _output.Wait(HighRangeCycles);
+            _boardOutput.Wait(HighRangeCycles);
             return _waveTableSound.LoadAndPlay(soundNumber - HighWaveTableOffset);
         };
     }
@@ -361,7 +361,7 @@ public sealed class SoundBoard : ISoundBoard
     {
         return () =>
         {
-            _output.Wait(LowRangeCycles + MiddleRangeCycles + JumpTableCycles);
+            _boardOutput.Wait(LowRangeCycles + MiddleRangeCycles + JumpTableCycles);
             return routine();
         };
     }
@@ -373,7 +373,7 @@ public sealed class SoundBoard : ISoundBoard
     {
         return () =>
         {
-            _output.Wait(LowRangeCycles);
+            _boardOutput.Wait(LowRangeCycles);
             return _waveTableSound.LoadAndPlay(soundNumber - LowWaveTableOffset);
         };
     }
@@ -386,11 +386,11 @@ public sealed class SoundBoard : ISoundBoard
     {
         return () =>
         {
-            _output.Wait(handlerCycles + CallExtended);
-            var square = new SquareWaveSound(_output);
-            square.Load(vectorIndex);
-            _output.Wait(CallExtended);
-            return square.Play();
+            _boardOutput.Wait(handlerCycles + CallExtended);
+            var squareWaveSound = new SquareWaveSound(_boardOutput);
+            squareWaveSound.Load(vectorIndex);
+            _boardOutput.Wait(CallExtended);
+            return squareWaveSound.Play();
         };
     }
 
@@ -401,9 +401,9 @@ public sealed class SoundBoard : ISoundBoard
     /// <returns>No output changes.</returns>
     private IEnumerable<OutputChange> EndBackground()
     {
-        _output.Wait(BackgroundEndCycles);
-        _memory.IsBackground1On = false;
-        _memory.Background2Level = 0;
+        _boardOutput.Wait(BackgroundEndCycles);
+        _boardMemory.IsBackground1On = false;
+        _boardMemory.Background2Level = 0;
         return [];
     }
 
@@ -414,13 +414,13 @@ public sealed class SoundBoard : ISoundBoard
     /// <returns>No output changes.</returns>
     private IEnumerable<OutputChange> IncrementBackground2()
     {
-        _output.Wait(ModifyExtended + Direct + Immediate + Immediate + Branch + Inherent + StoreDirect + Return);
-        _memory.IsBackground1On = false;
-        var level = _memory.Background2Level;
+        _boardOutput.Wait(ModifyExtended + Direct + Immediate + Immediate + Branch + Inherent + StoreDirect + Return);
+        _boardMemory.IsBackground1On = false;
+        var level = _boardMemory.Background2Level;
         var nextLevel = level + 1;
         if (level == Background2MaxLevel) nextLevel = 1;
 
-        _memory.Background2Level = (byte)nextLevel;
+        _boardMemory.Background2Level = (byte)nextLevel;
         return [];
     }
 
@@ -434,7 +434,7 @@ public sealed class SoundBoard : ISoundBoard
     /// <returns>No output changes.</returns>
     private IEnumerable<OutputChange> PlayOrganNote()
     {
-        _output.Wait(Return);
+        _boardOutput.Wait(Return);
         return [];
     }
 
@@ -445,8 +445,8 @@ public sealed class SoundBoard : ISoundBoard
     /// <returns>The sound's output changes.</returns>
     private IEnumerable<OutputChange> StartBackground1()
     {
-        _memory.IsBackground1On = true;
-        return FilteredNoise.PlayBackground1(_memory, _output);
+        _boardMemory.IsBackground1On = true;
+        return FilteredNoise.PlayBackground1(_boardMemory, _boardOutput);
     }
 
     /// <summary>Moves on to the sound's next change of level, or goes quiet when the sound has ended.</summary>
@@ -478,14 +478,14 @@ public sealed class SoundBoard : ISoundBoard
     {
         foreach (var change in routine) yield return change;
 
-        _output.Wait(BackgroundCheckCycles);
-        if (!_memory.IsBackground1On && _memory.Background2Level == 0) yield break;
+        _boardOutput.Wait(BackgroundCheckCycles);
+        if (!_boardMemory.IsBackground1On && _boardMemory.Background2Level == 0) yield break;
 
-        _output.Wait(BackgroundStartCycles);
-        _memory.IsLaserBallBonusRepeating = false;
+        _boardOutput.Wait(BackgroundStartCycles);
+        _boardMemory.IsLaserBallBonusRepeating = false;
         IEnumerable<OutputChange> background;
-        if (_memory.IsBackground1On) background = FilteredNoise.PlayBackground1(_memory, _output);
-        else background = _waveTableSound.PlayBackground2(_memory.Background2Level);
+        if (_boardMemory.IsBackground1On) background = FilteredNoise.PlayBackground1(_boardMemory, _boardOutput);
+        else background = _waveTableSound.PlayBackground2(_boardMemory.Background2Level);
 
         foreach (var change in background) yield return change;
     }

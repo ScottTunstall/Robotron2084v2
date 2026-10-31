@@ -81,55 +81,55 @@ internal static class ScreamSound
     private const int Tones = 4;
 
     /// <summary>Plays the scream sound (sound <c>SCREAM</c>).</summary>
-    /// <param name="memory">The board's lasting variables, whose <c>TEMPA</c> and <c>TEMPB</c> it uses.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, whose <c>TEMPA</c> and <c>TEMPB</c> it uses.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> Play(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> Play(BoardMemory boardMemory, BoardOutput boardOutput)
     {
         var pitches = new byte[Tones];
         var timers = new byte[Tones];
-        output.Wait(ClearTableCycles);
+        boardOutput.Wait(ClearTableCycles);
         pitches[0] = FirstPitch;
         do
         {
             do
             {
-                output.Wait(StartLevelCycles);
-                yield return output.Store(MixTones(memory, output, pitches, timers));
-                output.Wait(CountLevelCycles);
-                memory.ScratchB++;
-            } while (memory.ScratchB != 0);
-        } while (LowerPitches(output, pitches));
+                boardOutput.Wait(StartLevelCycles);
+                yield return boardOutput.Store(MixTones(boardMemory, boardOutput, pitches, timers));
+                boardOutput.Wait(CountLevelCycles);
+                boardMemory.ScratchB++;
+            } while (boardMemory.ScratchB != 0);
+        } while (LowerPitches(boardOutput, pitches));
     }
 
     /// <summary>
     ///     Lowers the pitch of every tone still sounding, and starts the next tone when one falls far enough
     ///     (<c>SCREM5</c> to <c>SCREM7</c>).
     /// </summary>
-    /// <param name="output">The board's output port, for the time it takes.</param>
+    /// <param name="boardOutput">The board's output port, for the time it takes.</param>
     /// <param name="pitches">Each tone's pitch.</param>
     /// <returns>True while any tone is still sounding.</returns>
-    private static bool LowerPitches(BoardOutput output, byte[] pitches)
+    private static bool LowerPitches(BoardOutput boardOutput, byte[] pitches)
     {
-        output.Wait(StartFallCycles);
+        boardOutput.Wait(StartFallCycles);
         var isSounding = false;
         for (var tone = 0; tone < Tones; tone++)
         {
-            output.Wait(CheckToneCycles);
+            boardOutput.Wait(CheckToneCycles);
             if (pitches[tone] != 0)
             {
-                output.Wait(CheckStartNextCycles);
-                if (pitches[tone] == StartNextAtPitch) StartNextTone(output, pitches, tone);
+                boardOutput.Wait(CheckStartNextCycles);
+                if (pitches[tone] == StartNextAtPitch) StartNextTone(boardOutput, pitches, tone);
 
-                output.Wait(FallCycles);
+                boardOutput.Wait(FallCycles);
                 pitches[tone]--;
                 isSounding = true;
             }
 
-            output.Wait(NextFallCycles);
+            boardOutput.Wait(NextFallCycles);
         }
 
-        output.Wait(CheckDoneCycles);
+        boardOutput.Wait(CheckDoneCycles);
         return isSounding;
     }
 
@@ -137,27 +137,27 @@ internal static class ScreamSound
     ///     Moves each tone's timer on and adds up the loudness of the tones whose wave is high (<c>SCREM3</c>,
     ///     <c>SCREM4</c>).
     /// </summary>
-    /// <param name="memory">The board's lasting variables, whose <c>TEMPA</c> holds the loudness.</param>
-    /// <param name="output">The board's output port, for the time it takes.</param>
+    /// <param name="boardMemory">The board's lasting variables, whose <c>TEMPA</c> holds the loudness.</param>
+    /// <param name="boardOutput">The board's output port, for the time it takes.</param>
     /// <param name="pitches">Each tone's pitch: what its timer moves by each level.</param>
     /// <param name="timers">Each tone's timer.</param>
     /// <returns>The level.</returns>
-    private static byte MixTones(BoardMemory memory, BoardOutput output, byte[] pitches, byte[] timers)
+    private static byte MixTones(BoardMemory boardMemory, BoardOutput boardOutput, byte[] pitches, byte[] timers)
     {
-        memory.ScratchA = FirstLoudness;
+        boardMemory.ScratchA = FirstLoudness;
         byte level = 0;
         for (var tone = 0; tone < Tones; tone++)
         {
-            output.Wait(MoveTimerCycles);
+            boardOutput.Wait(MoveTimerCycles);
             timers[tone] += pitches[tone];
             if (timers[tone] >= HighBit)
             {
-                output.Wait(Direct);
-                level += memory.ScratchA;
+                boardOutput.Wait(Direct);
+                level += boardMemory.ScratchA;
             }
 
-            output.Wait(NextToneCycles);
-            memory.ScratchA >>= 1;
+            boardOutput.Wait(NextToneCycles);
+            boardMemory.ScratchA >>= 1;
         }
 
         return level;
@@ -167,12 +167,12 @@ internal static class ScreamSound
     ///     Starts the tone after this one. The last tone has none after it: the source's store then lands just
     ///     past the table, on a byte no Robotron sound reads, so only its time is kept.
     /// </summary>
-    /// <param name="output">The board's output port, for the time it takes.</param>
+    /// <param name="boardOutput">The board's output port, for the time it takes.</param>
     /// <param name="pitches">Each tone's pitch.</param>
     /// <param name="tone">The tone that has fallen far enough.</param>
-    private static void StartNextTone(BoardOutput output, byte[] pitches, int tone)
+    private static void StartNextTone(BoardOutput boardOutput, byte[] pitches, int tone)
     {
-        output.Wait(StartNextCycles);
+        boardOutput.Wait(StartNextCycles);
         if (tone + 1 < Tones) pitches[tone + 1] = NextPitch;
     }
 }

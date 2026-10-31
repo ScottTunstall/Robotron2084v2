@@ -53,19 +53,19 @@ internal static class RadioSound
     ];
 
     /// <summary>Plays the radio sound (sound <c>RADIO</c>).</summary>
-    /// <param name="memory">The board's lasting variables, whose <c>TEMPA</c> is the timer's top byte.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, whose <c>TEMPA</c> is the timer's top byte.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> Play(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> Play(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        output.Wait(SetUpCycles);
+        boardOutput.Wait(SetUpCycles);
         var speed = FirstSpeed;
         byte timerLow = 0;
         while (true)
         {
-            output.Wait(AddSpeedCycles);
-            var timer = ((memory.ScratchA << ByteBits) | timerLow) + speed;
-            memory.ScratchA = (byte)(timer >> ByteBits);
+            boardOutput.Wait(AddSpeedCycles);
+            var timer = ((boardMemory.ScratchA << ByteBits) | timerLow) + speed;
+            boardMemory.ScratchA = (byte)(timer >> ByteBits);
             timerLow = (byte)timer;
             if (timer > ushort.MaxValue)
             {
@@ -73,9 +73,9 @@ internal static class RadioSound
                 if (speed == 0) yield break;
             }
 
-            output.Wait(PickLevelCycles);
-            yield return output.Store(Wave[memory.ScratchA & WavePlaceMask]);
-            output.Wait(Branch);
+            boardOutput.Wait(PickLevelCycles);
+            yield return boardOutput.Store(Wave[boardMemory.ScratchA & WavePlaceMask]);
+            boardOutput.Wait(Branch);
         }
     }
 }

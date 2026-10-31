@@ -98,22 +98,22 @@ internal sealed class FilteredNoise
     /// <summary>The bits of a 16-bit sum that stay in it.</summary>
     private const int WordMask = 0xFFFF;
 
-    private readonly BoardMemory _memory;
+    private readonly BoardMemory _boardMemory;
     private readonly NoiseSettings _noiseSettings;
-    private readonly BoardOutput _output;
+    private readonly BoardOutput _boardOutput;
     private bool _isFirstStretch = true;
     private byte _level;
     private ushort _levelsLeft;
     private ushort _limit;
 
     /// <summary>Creates the sound on the board's memory and output port.</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <param name="noiseSettings">The settings table's numbers.</param>
-    private FilteredNoise(BoardMemory memory, BoardOutput output, NoiseSettings noiseSettings)
+    private FilteredNoise(BoardMemory boardMemory, BoardOutput boardOutput, NoiseSettings noiseSettings)
     {
-        _memory = memory;
-        _output = output;
+        _boardMemory = boardMemory;
+        _boardOutput = boardOutput;
         _noiseSettings = noiseSettings;
         _limit = (ushort)(noiseSettings.FirstLimit << ByteBits);
     }
@@ -122,32 +122,32 @@ internal sealed class FilteredNoise
     ///     Plays the first background sound (sound <c>BG1</c>, settings <c>BG1TB</c>), which goes on until another sound
     ///     number arrives.
     /// </summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayBackground1(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayBackground1(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(memory, output,
+        return Start(boardMemory, boardOutput,
             new NoiseSettings(Background1FirstLimit, 0, 0, Immediate + StoreDirect + CannonSetUpCycles, false, false));
     }
 
     /// <summary>Plays the hyperspace bomb sound (sound <c>HBOMB</c>, settings <c>HBMBTB</c>).</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayBomb(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayBomb(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(memory, output,
+        return Start(boardMemory, boardOutput,
             new NoiseSettings(BombFirstLimit, BombLevelsPerShrink, BombSmallestSlope, CannonSetUpCycles - Branch));
     }
 
     /// <summary>Plays the cannon sound (sound <c>CANNON</c>).</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayCannon(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayCannon(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(memory, output,
+        return Start(boardMemory, boardOutput,
             new NoiseSettings(CannonFirstLimit, CannonLevelsPerShrink, CannonSmallestSlope, CannonSetUpCycles));
     }
 
@@ -155,18 +155,18 @@ internal sealed class FilteredNoise
     ///     Plays the thrust sound (sound <c>THRUST</c>, settings <c>THTB</c>), which goes on until another sound number
     ///     arrives.
     /// </summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayThrust(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayThrust(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(memory, output, new NoiseSettings(ThrustFirstLimit, 0, 0, CannonSetUpCycles, false, false));
+        return Start(boardMemory, boardOutput, new NoiseSettings(ThrustFirstLimit, 0, 0, CannonSetUpCycles, false, false));
     }
 
-    private static IEnumerable<OutputChange> Start(BoardMemory memory, BoardOutput output, NoiseSettings noiseSettings)
+    private static IEnumerable<OutputChange> Start(BoardMemory boardMemory, BoardOutput boardOutput, NoiseSettings noiseSettings)
     {
-        output.Wait(noiseSettings.SetUpCycles);
-        return new FilteredNoise(memory, output, noiseSettings).Play();
+        boardOutput.Wait(noiseSettings.SetUpCycles);
+        return new FilteredNoise(boardMemory, boardOutput, noiseSettings).Play();
     }
 
     /// <summary>
@@ -179,7 +179,7 @@ internal sealed class FilteredNoise
         var limitHigh = (byte)(_limit >> ByteBits);
         if (!_noiseSettings.IsDistorted) return limitHigh;
 
-        return (byte)((limitHigh & _memory.RandomHigh) + _noiseSettings.SmallestSlope);
+        return (byte)((limitHigh & _boardMemory.RandomHigh) + _noiseSettings.SmallestSlope);
     }
 
     /// <summary>Plays stretches of slides, shrinking the limit after each, until it reaches its end (<c>FNOIS0</c>).</summary>
@@ -190,9 +190,9 @@ internal sealed class FilteredNoise
         {
             if (_noiseSettings.Shrinks || _isFirstStretch)
             {
-                _output.Wait(StartStretchCycles);
+                _boardOutput.Wait(StartStretchCycles);
                 _levelsLeft = _noiseSettings.LevelsPerShrink;
-                _level = _output.Level;
+                _level = _boardOutput.Level;
                 _isFirstStretch = false;
             }
 
@@ -212,15 +212,15 @@ internal sealed class FilteredNoise
     {
         if (!_noiseSettings.Shrinks)
         {
-            _output.Wait(Direct + Branch);
+            _boardOutput.Wait(Direct + Branch);
             return true;
         }
 
-        _output.Wait(ShrinkCycles);
+        _boardOutput.Wait(ShrinkCycles);
         _limit = (ushort)(_limit - (_limit >> ShrinkShift));
         if (_limit >> ByteBits != 0) return true;
 
-        _output.Wait(Immediate + Branch);
+        _boardOutput.Wait(Immediate + Branch);
         return (byte)_limit != FinalLimitLow;
     }
 
@@ -231,24 +231,24 @@ internal sealed class FilteredNoise
     /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> SlideToTarget()
     {
-        foreach (var change in RandomStep.Run(_memory, _output, _level, RandomStep.MixLevelCycles)) yield return change;
+        foreach (var change in RandomStep.Run(_boardMemory, _boardOutput, _level, RandomStep.MixLevelCycles)) yield return change;
 
         var slopeCycles = ChooseSlopeCycles;
         if (!_noiseSettings.IsDistorted) slopeCycles = ChooseSlopeCycles - 2 * Direct;
 
-        _output.Wait(slopeCycles);
+        _boardOutput.Wait(slopeCycles);
         var slopeHigh = ChooseSlopeHigh();
         var slope = (slopeHigh << ByteBits) | (byte)_limit;
         var position = (_level << ByteBits) | (byte)_limit;
-        var isFalling = _level > _memory.RandomLow;
+        var isFalling = _level > _boardMemory.RandomLow;
         while (true)
         {
-            _output.Wait(CountLevelCycles);
+            _boardOutput.Wait(CountLevelCycles);
             _levelsLeft--;
             if (_levelsLeft == 0) yield break;
 
-            yield return _output.Store(_level);
-            _output.Wait(SlideCycles);
+            yield return _boardOutput.Store(_level);
+            _boardOutput.Wait(SlideCycles);
             var next = position + slope;
             if (isFalling) next = position - slope;
 
@@ -256,19 +256,19 @@ internal sealed class FilteredNoise
 
             position = next;
             _level = (byte)(position >> ByteBits);
-            _output.Wait(CheckTargetCycles);
-            if (isFalling != _level > _memory.RandomLow)
+            _boardOutput.Wait(CheckTargetCycles);
+            if (isFalling != _level > _boardMemory.RandomLow)
             {
-                if (!isFalling) _output.Wait(Branch);
+                if (!isFalling) _boardOutput.Wait(Branch);
 
                 break;
             }
         }
 
-        _output.Wait(Direct);
-        _level = _memory.RandomLow;
-        yield return _output.Store(_level);
-        _output.Wait(Branch);
+        _boardOutput.Wait(Direct);
+        _level = _boardMemory.RandomLow;
+        yield return _boardOutput.Store(_level);
+        _boardOutput.Wait(Branch);
     }
 
     /// <summary>What a settings table (<c>CANTB</c>, <c>HBMBTB</c>) gives <c>FNLOAD</c> besides the two flags.</summary>

@@ -21,19 +21,19 @@ internal static class RandomStep
     public const int MixLowCycles = Direct + 3 * Inherent + Direct + Inherent;
 
     /// <summary>Runs one step.</summary>
-    /// <param name="memory">The board's lasting variables, which hold the generator.</param>
-    /// <param name="output">The board's output port, for the time it takes.</param>
+    /// <param name="boardMemory">The board's lasting variables, which hold the generator.</param>
+    /// <param name="boardOutput">The board's output port, for the time it takes.</param>
     /// <param name="mixedWith">The byte mixed into the new bit.</param>
     /// <param name="mixCycles">How long the mixing takes: <see cref="MixLowCycles" /> or <see cref="MixLevelCycles" />.</param>
     /// <returns>Two passes of time, one before each half of the step.</returns>
-    public static IEnumerable<OutputChange> Run(BoardMemory memory, BoardOutput output, byte mixedWith, int mixCycles)
+    public static IEnumerable<OutputChange> Run(BoardMemory boardMemory, BoardOutput boardOutput, byte mixedWith, int mixCycles)
     {
-        output.Wait(mixCycles);
-        yield return output.Pass();
-        memory.RotateRandomHigh(mixedWith);
-        output.Wait(ModifyExtended);
-        yield return output.Pass();
-        memory.RotateRandomLow();
-        output.Wait(ModifyExtended);
+        boardOutput.Wait(mixCycles);
+        yield return boardOutput.Pass();
+        boardMemory.RotateRandomHigh(mixedWith);
+        boardOutput.Wait(ModifyExtended);
+        yield return boardOutput.Pass();
+        boardMemory.RotateRandomLow();
+        boardOutput.Wait(ModifyExtended);
     }
 }

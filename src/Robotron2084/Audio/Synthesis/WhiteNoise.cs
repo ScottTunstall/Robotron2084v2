@@ -58,53 +58,53 @@ internal static class WhiteNoise
         Immediate + StoreDirect + StoreDirect + Immediate + WordImmediate + Immediate + Branch;
 
     /// <summary>Plays the turbo sound (sound <c>TURBO</c>).</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayTurbo(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayTurbo(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        output.Wait(TurboSetUpCycles + StoreFadeCycles);
+        boardOutput.Wait(TurboSetUpCycles + StoreFadeCycles);
         var gap = TurboFirstGap;
         var loudness = TurboFirstLoudness;
         while (true)
         {
-            output.Wait(StoreGapCycles + StartRoundCycles);
-            foreach (var change in PlayRound(memory, output, gap, loudness)) yield return change;
+            boardOutput.Wait(StoreGapCycles + StartRoundCycles);
+            foreach (var change in PlayRound(boardMemory, boardOutput, gap, loudness)) yield return change;
 
-            output.Wait(FadeCycles);
+            boardOutput.Wait(FadeCycles);
             loudness -= TurboFade;
             if (loudness == 0) yield break;
 
-            output.Wait(GrowGapCycles + Branch);
+            boardOutput.Wait(GrowGapCycles + Branch);
             gap++;
         }
     }
 
     /// <summary>Plays one round of random levels at one loudness and gap (<c>MOISE1</c> to <c>MOISE3</c>).</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <param name="gap">The gap after each level, in counts (<c>NFRQ1</c>).</param>
     /// <param name="loudness">The level a random 1 gives (<c>NAMP</c>).</param>
     /// <returns>The output changes.</returns>
-    private static IEnumerable<OutputChange> PlayRound(BoardMemory memory, BoardOutput output, ushort gap,
+    private static IEnumerable<OutputChange> PlayRound(BoardMemory boardMemory, BoardOutput boardOutput, ushort gap,
         byte loudness)
     {
         var levelsLeft = TurboLevelsPerRound;
         do
         {
-            foreach (var change in RandomStep.Run(memory, output, memory.RandomLow, RandomStep.MixLowCycles))
+            foreach (var change in RandomStep.Run(boardMemory, boardOutput, boardMemory.RandomLow, RandomStep.MixLowCycles))
                 yield return change;
 
-            output.Wait(ChooseLevelCycles);
+            boardOutput.Wait(ChooseLevelCycles);
             byte level = 0;
-            if (memory.RandomBitOut)
+            if (boardMemory.RandomBitOut)
             {
-                output.Wait(Direct);
+                boardOutput.Wait(Direct);
                 level = loudness;
             }
 
-            yield return output.Store(level);
-            output.Wait(FinishLevelCycles + CountdownLoop.Runs(gap) * GapCountCycles);
+            yield return boardOutput.Store(level);
+            boardOutput.Wait(FinishLevelCycles + CountdownLoop.Runs(gap) * GapCountCycles);
             levelsLeft--;
         } while (levelsLeft != 0);
     }

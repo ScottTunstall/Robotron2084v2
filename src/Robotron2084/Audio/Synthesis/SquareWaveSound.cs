@@ -73,17 +73,17 @@ internal sealed class SquareWaveSound
         new(0x60, 0x01, 0x57, 0x08, 0xE1, 0x0200, 0xFE, 0x80) // VARBG1
     ];
 
-    private readonly BoardOutput _output;
+    private readonly BoardOutput _boardOutput;
     private byte _highCount;
     private byte _lowCount;
     private ushort _sweepCountsLeft;
     private SquareWaveVector _vector;
 
     /// <summary>Creates the sound on the board's output port.</summary>
-    /// <param name="output">The board's output port.</param>
-    public SquareWaveSound(BoardOutput output)
+    /// <param name="boardOutput">The board's output port.</param>
+    public SquareWaveSound(BoardOutput boardOutput)
     {
-        _output = output;
+        _boardOutput = boardOutput;
     }
 
     /// <summary>How long the wave stays low each time at the start of each sweep, in counts (<c>LOPER</c>).</summary>
@@ -97,7 +97,7 @@ internal sealed class SquareWaveSound
     /// <param name="vectorIndex">The sound's place in the settings table.</param>
     public void Load(int vectorIndex)
     {
-        _output.Wait(LoadCycles);
+        _boardOutput.Wait(LoadCycles);
         _vector = Vectors[vectorIndex];
     }
 
@@ -105,11 +105,11 @@ internal sealed class SquareWaveSound
     /// <returns>The sound's output changes.</returns>
     public IEnumerable<OutputChange> Play()
     {
-        _output.Wait(Direct);
-        yield return _output.Store(_vector.Level);
+        _boardOutput.Wait(Direct);
+        yield return _boardOutput.Store(_vector.Level);
         do
         {
-            _output.Wait(StartCountsCycles);
+            _boardOutput.Wait(StartCountsCycles);
             _lowCount = _vector.LowWait;
             _highCount = _vector.HighWait;
             do
@@ -128,14 +128,14 @@ internal sealed class SquareWaveSound
     /// <returns>True to play again from the new low time.</returns>
     private bool ChangeLowWait()
     {
-        _output.Wait(Direct + Branch);
+        _boardOutput.Wait(Direct + Branch);
         if (_vector.LowWaitChange == 0)
         {
-            _output.Wait(Return);
+            _boardOutput.Wait(Return);
             return false;
         }
 
-        _output.Wait(ChangeLowWaitCycles);
+        _boardOutput.Wait(ChangeLowWaitCycles);
         LowWait += _vector.LowWaitChange;
         return LowWait != 0;
     }
@@ -147,11 +147,11 @@ internal sealed class SquareWaveSound
     {
         while (true)
         {
-            _output.Wait(SweepCheckCycles);
+            _boardOutput.Wait(SweepCheckCycles);
             _sweepCountsLeft--;
             if (_sweepCountsLeft == 0) return false;
 
-            _output.Wait(CountCycles - SweepCheckCycles);
+            _boardOutput.Wait(CountCycles - SweepCheckCycles);
             count--;
             if (count == 0) return true;
         }
@@ -161,19 +161,19 @@ internal sealed class SquareWaveSound
     /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> PlayUntilSweep()
     {
-        _output.Wait(WordDirect);
+        _boardOutput.Wait(WordDirect);
         _sweepCountsLeft = _vector.SweepLength;
         while (true)
         {
-            _output.Wait(Direct);
-            yield return _output.Complement();
+            _boardOutput.Wait(Direct);
+            yield return _boardOutput.Complement();
             if (!CountDown(_lowCount)) yield break;
 
-            yield return _output.Complement();
-            _output.Wait(Direct);
+            yield return _boardOutput.Complement();
+            _boardOutput.Wait(Direct);
             if (!CountDown(_highCount)) yield break;
 
-            _output.Wait(Branch);
+            _boardOutput.Wait(Branch);
         }
     }
 
@@ -181,17 +181,17 @@ internal sealed class SquareWaveSound
     /// <returns>The output change.</returns>
     private IEnumerable<OutputChange> Sweep()
     {
-        _output.Wait(ReadPortCycles);
-        var level = _output.Level;
+        _boardOutput.Wait(ReadPortCycles);
+        var level = _boardOutput.Level;
         if (level < HighBit)
         {
-            _output.Wait(Inherent);
+            _boardOutput.Wait(Inherent);
             level = (byte)~level;
         }
 
-        _output.Wait(Immediate);
-        yield return _output.Store(level);
-        _output.Wait(GrowCountCycles + GrowCountCycles + CheckEndCycles);
+        _boardOutput.Wait(Immediate);
+        yield return _boardOutput.Store(level);
+        _boardOutput.Wait(GrowCountCycles + GrowCountCycles + CheckEndCycles);
         _lowCount += _vector.LowWaitStep;
         _highCount += _vector.HighWaitStep;
     }

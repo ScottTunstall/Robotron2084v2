@@ -204,8 +204,8 @@ internal sealed class CrowdRoarSound
         0x00
     ];
 
-    private readonly BoardMemory _memory;
-    private readonly BoardOutput _output;
+    private readonly BoardMemory _boardMemory;
+    private readonly BoardOutput _boardOutput;
     private byte _noiseCycles;
     private byte _noiseCyclesPerChange;
     private byte _noiseLoudness;
@@ -226,34 +226,34 @@ internal sealed class CrowdRoarSound
     private byte _whistleValue;
 
     /// <summary>Creates the sound on the board's memory and output port.</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
-    private CrowdRoarSound(BoardMemory memory, BoardOutput output)
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
+    private CrowdRoarSound(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        _memory = memory;
-        _output = output;
+        _boardMemory = boardMemory;
+        _boardOutput = boardOutput;
     }
 
     /// <summary>Plays the crowd roar (sound <c>CDR</c>).</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> Play(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> Play(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return new CrowdRoarSound(memory, output).Play();
+        return new CrowdRoarSound(boardMemory, boardOutput).Play();
     }
 
     /// <summary>After enough cycles the noise's loudness steps on (<c>RNA</c>).</summary>
     private void ChangeNoiseLoudness()
     {
-        _output.Wait(NoiseLoudnessCycles);
+        _boardOutput.Wait(NoiseLoudnessCycles);
         if (_noiseCyclesPerChange != _noiseCycles)
         {
-            _output.Wait(NoiseLoudnessWaitingCycles);
+            _boardOutput.Wait(NoiseLoudnessWaitingCycles);
             return;
         }
 
-        _output.Wait(NoiseLoudnessChangeCycles);
+        _boardOutput.Wait(NoiseLoudnessChangeCycles);
         _noiseCycles = 0;
         _noiseLoudness = (byte)(_noiseLoudness - _noiseLoudnessChange);
     }
@@ -261,18 +261,18 @@ internal sealed class CrowdRoarSound
     /// <summary>After enough passes the whistle's pitch glides on (<c>TRICNT</c>).</summary>
     private void GlideWhistle()
     {
-        _output.Wait(WhistleCountCycles);
+        _boardOutput.Wait(WhistleCountCycles);
         _whistleCount--;
         if (_whistleCount != 0)
         {
             var endCycles = WhistleCountSilentCycles + Return;
             if (_noiseLoudness != 0) endCycles = Return;
 
-            _output.Wait(WhistleCountWaitingCycles + endCycles);
+            _boardOutput.Wait(WhistleCountWaitingCycles + endCycles);
             return;
         }
 
-        _output.Wait(WhistleGlideCycles + Return);
+        _boardOutput.Wait(WhistleGlideCycles + Return);
         _whistleCount = _whistleCountReload;
         _whistlePitch = (byte)(_whistlePitch + _whistleGlide);
     }
@@ -281,7 +281,7 @@ internal sealed class CrowdRoarSound
     /// <param name="noiseSettings">The five bytes: <c>CY2</c>, <c>NAMP</c>, <c>DECAY</c>, <c>NFFLG</c> and <c>NFRQ2</c>.</param>
     private void LoadNoise(byte[] noiseSettings)
     {
-        _output.Wait(LoadNoiseCycles);
+        _boardOutput.Wait(LoadNoiseCycles);
         _noiseCyclesPerChange = noiseSettings[0];
         _noiseLoudness = noiseSettings[1];
         _noiseLoudnessChange = noiseSettings[2];
@@ -295,7 +295,7 @@ internal sealed class CrowdRoarSound
         _whistleLoudness = Whistles[at];
         if (_whistleLoudness == 0)
         {
-            _output.Wait(EndOfWhistlesCycles);
+            _boardOutput.Wait(EndOfWhistlesCycles);
             return;
         }
 
@@ -304,19 +304,19 @@ internal sealed class CrowdRoarSound
         _whistleCountReload = Whistles[at + 3];
         _whistleLowestPitch = Whistles[at + 4];
         _whistleIndex++;
-        _output.Wait(LoadWhistleCycles);
+        _boardOutput.Wait(LoadWhistleCycles);
     }
 
     /// <summary>The whole sound: the first whistle, the swell, then the fade.</summary>
     /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> Play()
     {
-        _output.Wait(StartCycles);
+        _boardOutput.Wait(StartCycles);
         LoadWhistle();
-        _memory.SetRandom(SeedHigh, SeedLow);
+        _boardMemory.SetRandom(SeedHigh, SeedLow);
 
         LoadNoise(Swell);
-        _output.Wait(StartWhistleCycles);
+        _boardOutput.Wait(StartWhistleCycles);
         _whistlePitch = 0;
         _whistleGlide = 0;
         _whistleCount = FirstWhistleCount;
@@ -324,7 +324,7 @@ internal sealed class CrowdRoarSound
         foreach (var change in RunNoise()) yield return change;
 
         LoadNoise(Fade);
-        _output.Wait(JumpToNoiseCycles + WordImmediate);
+        _boardOutput.Wait(JumpToNoiseCycles + WordImmediate);
         foreach (var change in RunNoise()) yield return change;
     }
 
@@ -336,7 +336,7 @@ internal sealed class CrowdRoarSound
     ///     <returns>The output changes.</returns>
     private IEnumerable<OutputChange> RunNoise()
     {
-        _output.Wait(StartNoiseCycles);
+        _boardOutput.Wait(StartNoiseCycles);
         _noiseCycles = 0;
         _noisePitchLeft = _noisePitchReload;
         _noiseNext = 0;
@@ -344,61 +344,61 @@ internal sealed class CrowdRoarSound
         while (true)
         {
             // NOISE1, a write, NOISE2 (the random step), a write.
-            _output.Wait(Noise1Cycles);
+            _boardOutput.Wait(Noise1Cycles);
             yield return WriteWhistle(CallWhistleFromJsrCycles);
-            _output.Wait(Return);
-            _output.Wait(Noise2StartCycles);
-            yield return _output.Pass();
-            _memory.RotateRandomHigh(_memory.RandomLow);
-            _output.Wait(ModifyExtended);
-            yield return _output.Pass();
-            _memory.RotateRandomLow();
-            var isBitSet = _memory.RandomBitOut;
+            _boardOutput.Wait(Return);
+            _boardOutput.Wait(Noise2StartCycles);
+            yield return _boardOutput.Pass();
+            _boardMemory.RotateRandomHigh(_boardMemory.RandomLow);
+            _boardOutput.Wait(ModifyExtended);
+            yield return _boardOutput.Pass();
+            _boardMemory.RotateRandomLow();
+            var isBitSet = _boardMemory.RandomBitOut;
             var bitCycles = 0;
             if (isBitSet) bitCycles = Direct;
 
-            _output.Wait(ModifyExtended + Noise2EndCycles + bitCycles);
+            _boardOutput.Wait(ModifyExtended + Noise2EndCycles + bitCycles);
             _noiseNext = 0;
             if (isBitSet) _noiseNext = _noiseLoudness;
 
             yield return WriteWhistle(CallWhistleFromJsrCycles);
-            _output.Wait(Return);
+            _boardOutput.Wait(Return);
 
             // RNT, a write, RNA, a write, TRICNT, a write.
             RunNoiseTimer();
             yield return WriteWhistle(CallWhistleFromBsrCycles);
-            _output.Wait(Return);
+            _boardOutput.Wait(Return);
             ChangeNoiseLoudness();
             yield return WriteWhistle(CallWhistleFromBsrCycles);
-            _output.Wait(Return);
+            _boardOutput.Wait(Return);
             GlideWhistle();
             yield return WriteWhistle(CallWhistleFromBsrCycles);
-            _output.Wait(Return);
+            _boardOutput.Wait(Return);
 
             // TRIFRQ: the whistle's end, which may end the whole noise, and a write.
             if (!TestWhistleEnd()) yield break;
 
             yield return WriteWhistle(CallWhistleFromBsrCycles);
-            _output.Wait(Return);
+            _boardOutput.Wait(Return);
 
             // NNW: a whistle waiting for its loudness is started, and the loop goes round.
             StartWhistle();
-            _output.Wait(LoopBackCycles);
+            _boardOutput.Wait(LoopBackCycles);
         }
     }
 
     /// <summary>The noise's timer: when it runs out, the next noise level is taken (<c>RNT</c>).</summary>
     private void RunNoiseTimer()
     {
-        _output.Wait(NoiseTimerCycles);
+        _boardOutput.Wait(NoiseTimerCycles);
         _noisePitchLeft--;
         if (_noisePitchLeft != 0)
         {
-            _output.Wait(NoiseTimerWaitingCycles);
+            _boardOutput.Wait(NoiseTimerWaitingCycles);
             return;
         }
 
-        _output.Wait(NoiseTimerReloadCycles);
+        _boardOutput.Wait(NoiseTimerReloadCycles);
         _noisePitchLeft = _noisePitchReload;
         _noiseOut = (byte)(_noiseNext >> 1);
         _noiseCycles++;
@@ -407,18 +407,18 @@ internal sealed class CrowdRoarSound
     /// <summary>A whistle waiting for the noise to reach its loudness starts (<c>NNW</c>, <c>WINIT</c>).</summary>
     private void StartWhistle()
     {
-        _output.Wait(WhistleStartTestCycles);
+        _boardOutput.Wait(WhistleStartTestCycles);
         if (_whistleLoudness == 0)
         {
-            _output.Wait(NoWhistleWaitingCycles);
+            _boardOutput.Wait(NoWhistleWaitingCycles);
         }
         else if (_whistleLoudness != _noiseLoudness)
         {
-            _output.Wait(WhistleNotDueCycles);
+            _boardOutput.Wait(WhistleNotDueCycles);
         }
         else
         {
-            _output.Wait(WhistleStartCycles);
+            _boardOutput.Wait(WhistleStartCycles);
             _whistleLoudness = 0;
             _whistlePitch = _whistleStartPitch;
             _whistleGlide = _whistleStartGlide;
@@ -432,10 +432,10 @@ internal sealed class CrowdRoarSound
     /// <returns>False when the noise is over.</returns>
     private bool TestWhistleEnd()
     {
-        _output.Wait(WhistleEndTestCycles);
+        _boardOutput.Wait(WhistleEndTestCycles);
         if (_whistlePitch == _whistleLowestPitch)
         {
-            _output.Wait(WhistleOffCycles);
+            _boardOutput.Wait(WhistleOffCycles);
             _whistlePitch = 0;
             _whistleGlide = 0;
             _whistleValue = 0;
@@ -443,10 +443,10 @@ internal sealed class CrowdRoarSound
             return true;
         }
 
-        _output.Wait(WhistleGoingCycles);
+        _boardOutput.Wait(WhistleGoingCycles);
         if (_noiseLoudness == 0) return false;
 
-        _output.Wait(Return);
+        _boardOutput.Wait(Return);
         return true;
     }
 
@@ -458,16 +458,16 @@ internal sealed class CrowdRoarSound
     /// <returns>The output change.</returns>
     private OutputChange WriteWhistle(int callCycles)
     {
-        _output.Wait(callCycles + WhistleStepCycles);
+        _boardOutput.Wait(callCycles + WhistleStepCycles);
         _whistleValue = (byte)(_whistleValue + _whistlePitch);
         var level = _whistleValue;
         if ((level & SignBit) != 0)
         {
-            _output.Wait(Inherent);
+            _boardOutput.Wait(Inherent);
             level = (byte)~level;
         }
 
-        _output.Wait(WhistleAddNoiseCycles);
-        return _output.Store((byte)(level + _noiseOut));
+        _boardOutput.Wait(WhistleAddNoiseCycles);
+        return _boardOutput.Store((byte)(level + _noiseOut));
     }
 }

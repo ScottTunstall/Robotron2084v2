@@ -83,35 +83,35 @@ internal sealed class SirenSound
     /// <summary>The step each level of the triangle moves by (<c>ADDA #$20</c>, <c>SUBA #$20</c>).</summary>
     private const int TriangleStep = 0x20;
 
-    private readonly BoardOutput _output;
+    private readonly BoardOutput _boardOutput;
     private ushort _length = FirstLengthHigh << 8;
     private ushort _sweep = FirstSweep;
 
     /// <summary>Creates the sound on the board's output port.</summary>
-    /// <param name="output">The board's output port.</param>
-    private SirenSound(BoardOutput output)
+    /// <param name="boardOutput">The board's output port.</param>
+    private SirenSound(BoardOutput boardOutput)
     {
-        _output = output;
+        _boardOutput = boardOutput;
     }
 
     /// <summary>Plays the air raid siren (sound <c>ZIREN</c>).</summary>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> Play(BoardOutput output)
+    public static IEnumerable<OutputChange> Play(BoardOutput boardOutput)
     {
-        return new SirenSound(output).Play();
+        return new SirenSound(boardOutput).Play();
     }
 
     private IEnumerable<OutputChange> Play()
     {
-        _output.Wait(SetUpCycles);
+        _boardOutput.Wait(SetUpCycles);
         foreach (var change in PlayPass(FirstSlope, FirstEnd)) yield return change;
 
-        _output.Wait(Return);
-        _output.Wait(SecondSetUpCycles);
+        _boardOutput.Wait(Return);
+        _boardOutput.Wait(SecondSetUpCycles);
         foreach (var change in PlayPass(SecondSlope, SecondEnd)) yield return change;
 
-        _output.Wait(Return);
+        _boardOutput.Wait(Return);
     }
 
     /// <summary>Plays sweeps until the sweep reaches the end (<c>ZIREN0</c> to <c>ZIREN5</c>).</summary>
@@ -120,14 +120,14 @@ internal sealed class SirenSound
     /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> PlayPass(byte slope, ushort end)
     {
-        _output.Wait(PassStartCycles);
+        _boardOutput.Wait(PassStartCycles);
         do
         {
             for (var round = 0; round < RoundsPerSweep; round++)
             {
                 foreach (var change in PlayTriangle()) yield return change;
 
-                _output.Wait(AddSweepCycles);
+                _boardOutput.Wait(AddSweepCycles);
                 _length = (ushort)(_length + _sweep);
             }
 
@@ -135,9 +135,9 @@ internal sealed class SirenSound
             var sweepCarries = (_sweep & 0xFF) + slope > 0xFF;
             if (sweepCarries) carryCycles = ModifyExtended;
 
-            _output.Wait(GrowSweepCycles + carryCycles);
+            _boardOutput.Wait(GrowSweepCycles + carryCycles);
             _sweep = (ushort)(_sweep + slope);
-            _output.Wait(WordImmediate);
+            _boardOutput.Wait(WordImmediate);
         } while (_sweep != end);
     }
 
@@ -145,19 +145,19 @@ internal sealed class SirenSound
     /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> PlayTriangle()
     {
-        _output.Wait(TriangleStartCycles);
+        _boardOutput.Wait(TriangleStartCycles);
         for (var level = 0; level <= 0xFF; level += TriangleStep)
         {
-            yield return _output.Store((byte)level);
-            _output.Wait(LevelCycles);
+            yield return _boardOutput.Store((byte)level);
+            _boardOutput.Wait(LevelCycles);
         }
 
-        _output.Wait(TriangleMiddleCycles);
+        _boardOutput.Wait(TriangleMiddleCycles);
         WaitOneLength();
         for (var level = 0xE0; level >= 0; level -= TriangleStep)
         {
-            yield return _output.Store((byte)level);
-            _output.Wait(LevelCycles);
+            yield return _boardOutput.Store((byte)level);
+            _boardOutput.Wait(LevelCycles);
         }
 
         WaitOneLength();
@@ -167,6 +167,6 @@ internal sealed class SirenSound
     private void WaitOneLength()
     {
         var count = (byte)(_length >> 8);
-        _output.Wait(DelayStartCycles + CountdownLoop.Runs(count) * DelayUnitCycles + Return);
+        _boardOutput.Wait(DelayStartCycles + CountdownLoop.Runs(count) * DelayUnitCycles + Return);
     }
 }

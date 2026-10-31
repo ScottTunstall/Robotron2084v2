@@ -48,41 +48,41 @@ internal static class SpinnerSound
     private const int SmallStepCycles = Immediate + Inherent + Branch;
 
     /// <summary>Plays the spinner sound and counts the send.</summary>
-    /// <param name="memory">The board's lasting variables, which hold the send count.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables, which hold the send count.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes; they never end.</returns>
-    public static IEnumerable<OutputChange> Play(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> Play(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        var square = new SquareWaveSound(output);
-        output.Wait(CallLoadCycles);
-        square.Load(SquareWaveSound.CabinetShakeVector);
-        square.LowWait = GetLowWaitForSend(CountSend(memory, output), output);
+        var squareWaveSound = new SquareWaveSound(boardOutput);
+        boardOutput.Wait(CallLoadCycles);
+        squareWaveSound.Load(SquareWaveSound.CabinetShakeVector);
+        squareWaveSound.LowWait = GetLowWaitForSend(CountSend(boardMemory, boardOutput), boardOutput);
         while (true)
         {
-            output.Wait(CallExtended);
-            foreach (var change in square.Play()) yield return change;
+            boardOutput.Wait(CallExtended);
+            foreach (var change in squareWaveSound.Play()) yield return change;
 
-            output.Wait(Branch);
+            boardOutput.Wait(Branch);
         }
     }
 
     /// <summary>Adds one to the send count, going back to 1 after the top (<c>SP1</c> to <c>SP1A</c>).</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port, for the time it takes.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port, for the time it takes.</param>
     /// <returns>The new send count.</returns>
-    private static byte CountSend(BoardMemory memory, BoardOutput output)
+    private static byte CountSend(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        output.Wait(CheckSendsCycles);
-        var sends = memory.SpinnerSends;
+        boardOutput.Wait(CheckSendsCycles);
+        var sends = boardMemory.SpinnerSends;
         if (sends == SendsPerClimb - 1)
         {
-            output.Wait(Inherent);
+            boardOutput.Wait(Inherent);
             sends = 0;
         }
 
-        output.Wait(CountSendCycles);
+        boardOutput.Wait(CountSendCycles);
         sends++;
-        memory.SpinnerSends = sends;
+        boardMemory.SpinnerSends = sends;
         return sends;
     }
 
@@ -91,30 +91,30 @@ internal static class SpinnerSound
     ///     (<c>SP11</c>, <c>SP12</c>, <c>STAB LOPER</c>).
     /// </summary>
     /// <param name="sends">The send count.</param>
-    /// <param name="output">The board's output port, for the time it takes.</param>
+    /// <param name="boardOutput">The board's output port, for the time it takes.</param>
     /// <returns>The low time, in counts.</returns>
-    private static byte GetLowWaitForSend(byte sends, BoardOutput output)
+    private static byte GetLowWaitForSend(byte sends, BoardOutput boardOutput)
     {
         var stepsLeft = (byte)(SendsPerClimb - sends);
         byte lowWait = 0;
         while (true)
         {
-            output.Wait(LargeStepTestCycles);
+            boardOutput.Wait(LargeStepTestCycles);
             if (stepsLeft <= LargeStepThreshold) break;
 
-            output.Wait(LargeStepCycles);
+            boardOutput.Wait(LargeStepCycles);
             lowWait += LargeLowWaitStep;
             stepsLeft--;
         }
 
         do
         {
-            output.Wait(SmallStepCycles);
+            boardOutput.Wait(SmallStepCycles);
             lowWait += SmallLowWaitStep;
             stepsLeft--;
         } while (stepsLeft != 0);
 
-        output.Wait(StoreDirect);
+        boardOutput.Wait(StoreDirect);
         return lowWait;
     }
 }

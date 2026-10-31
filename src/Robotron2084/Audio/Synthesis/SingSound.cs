@@ -117,8 +117,8 @@ internal sealed class SingSound
     private static readonly byte[] SirenLow = [0x20, 0x03, 0xFF, 0x50, 0xFF, 0x00];
     private static readonly byte[] Squirt = [0x50, 0xFF, 0x00, 0x00, 0x60, 0x80];
 
-    private readonly BoardMemory _memory;
-    private readonly BoardOutput _output;
+    private readonly BoardMemory _boardMemory;
+    private readonly BoardOutput _boardOutput;
     private byte _cyclesAtLoudness;
     private byte _cyclesAtPitch;
     private byte _delay;
@@ -134,66 +134,66 @@ internal sealed class SingSound
     private byte _pitchCyclesLeft;
 
     /// <summary>Creates the sound on the board's memory and output port.</summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
-    private SingSound(BoardMemory memory, BoardOutput output)
+    /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="boardOutput">The board's output port.</param>
+    private SingSound(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        _memory = memory;
-        _output = output;
+        _boardMemory = boardMemory;
+        _boardOutput = boardOutput;
     }
 
     /// <summary>Plays <c>ATARI</c>, once (<c>VEC02X</c>).</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayAtari(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayAtari(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return new SingSound(memory, output).PlayOnceFrom(Atari);
+        return new SingSound(boardMemory, boardOutput).PlayOnceFrom(Atari);
     }
 
     /// <summary>Plays <c>HSTD</c>, over and over, each time quieter (<c>VEC08X</c>).</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayHstd(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayHstd(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return new SingSound(memory, output).PlayEchoing(Hstd, FullLoudness, CyclesBeforeEcho(true));
+        return new SingSound(boardMemory, boardOutput).PlayEchoing(Hstd, FullLoudness, CyclesBeforeEcho(true));
     }
 
     /// <summary>Plays <c>ORRRR</c>, once (<c>VEC05X</c>).</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayOrrrr(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayOrrrr(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return new SingSound(memory, output).PlayOnceFrom(Orrrr);
+        return new SingSound(boardMemory, boardOutput).PlayOnceFrom(Orrrr);
     }
 
     /// <summary>Plays <c>PERK$$</c>, over and over, each time quieter (<c>VEC06X</c>).</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayPerkDollars(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayPerkDollars(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return new SingSound(memory, output).PlayEchoing(PerkDollars, FullLoudness, CyclesBeforeEcho(true));
+        return new SingSound(boardMemory, boardOutput).PlayEchoing(PerkDollars, FullLoudness, CyclesBeforeEcho(true));
     }
 
     /// <summary>Plays <c>SIREN</c>: two settings, one after the other, 255 times (<c>VEC03X</c>, <c>VEC04X</c>).</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlaySiren(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlaySiren(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return new SingSound(memory, output).PlaySiren();
+        return new SingSound(boardMemory, boardOutput).PlaySiren();
     }
 
     /// <summary>Plays <c>SQRT</c>: 48 short squirts at random pitches (<c>VEC09X</c>).</summary>
-    /// <param name="memory">The board's lasting variables.</param>
-    /// <param name="output">The board's output port.</param>
+    /// <param name="boardMemory">The board's lasting variables.</param>
+    /// <param name="boardOutput">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlaySquirts(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlaySquirts(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return new SingSound(memory, output).PlaySquirts();
+        return new SingSound(boardMemory, boardOutput).PlaySquirts();
     }
 
     /// <summary>
@@ -214,7 +214,7 @@ internal sealed class SingSound
     /// <param name="singSettings">The six bytes.</param>
     private void Move(byte[] singSettings)
     {
-        _output.Wait(MoveCycles);
+        _boardOutput.Wait(MoveCycles);
         _pitch = singSettings[0];
         _cyclesAtPitch = singSettings[1];
         _pitchChange = singSettings[2];
@@ -225,73 +225,73 @@ internal sealed class SingSound
 
     private IEnumerable<OutputChange> PlayEchoing(byte[] singSettings, byte loudness, int setUpCycles)
     {
-        _output.Wait(setUpCycles);
+        _boardOutput.Wait(setUpCycles);
         _loudness = loudness;
         while (true)
         {
-            _output.Wait(CallShort + CallExtended);
+            _boardOutput.Wait(CallShort + CallExtended);
             Move(singSettings);
-            _output.Wait(CallExtended);
+            _boardOutput.Wait(CallExtended);
             foreach (var change in Sing()) yield return change;
 
-            _output.Wait(Return + EchoCycles);
+            _boardOutput.Wait(Return + EchoCycles);
             if ((byte)(_loudness - EchoStep) < SignBit)
             {
-                _output.Wait(Stack + Stack + Return);
+                _boardOutput.Wait(Stack + Stack + Return);
                 yield break;
             }
 
-            _output.Wait(EchoAgainCycles);
+            _boardOutput.Wait(EchoAgainCycles);
             _loudness -= EchoStep;
         }
     }
 
     private IEnumerable<OutputChange> PlayOnceFrom(byte[] singSettings)
     {
-        _output.Wait(WordImmediate + Branch + CallExtended);
+        _boardOutput.Wait(WordImmediate + Branch + CallExtended);
         Move(singSettings);
-        _output.Wait(CallExtended);
+        _boardOutput.Wait(CallExtended);
         return Sing();
     }
 
     private IEnumerable<OutputChange> PlaySiren()
     {
-        _output.Wait(Immediate + StoreDirect);
+        _boardOutput.Wait(Immediate + StoreDirect);
         _loudness = FullLoudness;
         for (var round = 0; round < SirenRounds; round++)
         {
             foreach (var singSettings in new[] { SirenLow, SirenHigh })
             {
-                _output.Wait(WordImmediate + CallShort + CallExtended);
+                _boardOutput.Wait(WordImmediate + CallShort + CallExtended);
                 Move(singSettings);
-                _output.Wait(CallExtended);
+                _boardOutput.Wait(CallExtended);
                 foreach (var change in Sing()) yield return change;
 
-                _output.Wait(Return);
+                _boardOutput.Wait(Return);
             }
 
-            _output.Wait(Inherent + Branch);
+            _boardOutput.Wait(Inherent + Branch);
         }
     }
 
     private IEnumerable<OutputChange> PlaySquirts()
     {
-        _output.Wait(Immediate + WordImmediate + CallShort);
+        _boardOutput.Wait(Immediate + WordImmediate + CallShort);
         Move(Squirt);
         for (var squirt = 0; squirt < SquirtCount; squirt++)
         {
-            var low = _memory.RandomLow;
-            _output.Wait(Direct + Inherent + Direct + Immediate + StoreDirect + SquirtShift * Inherent + Immediate +
+            var low = _boardMemory.RandomLow;
+            _boardOutput.Wait(Direct + Inherent + Direct + Immediate + StoreDirect + SquirtShift * Inherent + Immediate +
                          StoreDirect + CallShort);
             low = (byte)((low << 1) + low + RandomAdd);
-            _memory.SetRandom(_memory.RandomHigh, low);
+            _boardMemory.SetRandom(_boardMemory.RandomHigh, low);
             _pitch = (byte)((low >> SquirtShift) + SquirtBase);
             foreach (var change in Sing()) yield return change;
 
-            _output.Wait(Inherent + Branch);
+            _boardOutput.Wait(Inherent + Branch);
         }
 
-        _output.Wait(Return);
+        _boardOutput.Wait(Return);
     }
 
     /// <summary>
@@ -302,7 +302,7 @@ internal sealed class SingSound
     /// <returns>The sound's output changes.</returns>
     private IEnumerable<OutputChange> Sing()
     {
-        _output.Wait(SingStartCycles);
+        _boardOutput.Wait(SingStartCycles);
         _loudnessCyclesLeft = _cyclesAtLoudness;
         _hasEnded = false;
         _pitchCyclesLeft = _cyclesAtPitch;
@@ -314,18 +314,18 @@ internal sealed class SingSound
             if (isStartOfCycle)
             {
                 _level = (byte)~_level;
-                _output.Wait(FirstHalfCycles);
-                yield return _output.Store(_level);
+                _boardOutput.Wait(FirstHalfCycles);
+                yield return _boardOutput.Store(_level);
                 _delay = _pitch;
             }
 
-            _output.Wait(CountdownLoop.Runs(_delay) * DelayCountCycles);
+            _boardOutput.Wait(CountdownLoop.Runs(_delay) * DelayCountCycles);
             _level = (byte)~_level;
-            _output.Wait(SecondHalfCycles);
-            yield return _output.Store(_level);
-            _output.Wait(CountdownLoop.Runs(_pitch) * DelayCountCycles);
+            _boardOutput.Wait(SecondHalfCycles);
+            yield return _boardOutput.Store(_level);
+            _boardOutput.Wait(CountdownLoop.Runs(_pitch) * DelayCountCycles);
 
-            _output.Wait(CountPitchCycles);
+            _boardOutput.Wait(CountPitchCycles);
             _pitchCyclesLeft--;
             if (_pitchCyclesLeft == 0)
             {
@@ -333,7 +333,7 @@ internal sealed class SingSound
             }
             else
             {
-                _output.Wait(CountLoudnessCycles);
+                _boardOutput.Wait(CountLoudnessCycles);
                 _loudnessCyclesLeft--;
                 isStartOfCycle = _loudnessCyclesLeft != 0;
                 if (isStartOfCycle) continue;
@@ -343,11 +343,11 @@ internal sealed class SingSound
 
             if (_hasEnded)
             {
-                _output.Wait(EndSingCycles);
+                _boardOutput.Wait(EndSingCycles);
                 yield break;
             }
 
-            _output.Wait(RejoinCycles);
+            _boardOutput.Wait(RejoinCycles);
             _delay = (byte)(_nextPitch - RejoinAdjustment);
             _pitch = _nextPitch;
         }
@@ -361,11 +361,11 @@ internal sealed class SingSound
     private IEnumerable<OutputChange> StepLoudness()
     {
         _level = (byte)~_level;
-        _output.Wait(LoudnessBeforeWriteCycles);
-        yield return _output.Store(_level);
+        _boardOutput.Wait(LoudnessBeforeWriteCycles);
+        yield return _boardOutput.Store(_level);
         _loudnessCyclesLeft = _cyclesAtLoudness;
         _nextPitch = _pitch;
-        _output.Wait(LoudnessAfterWriteCycles);
+        _boardOutput.Wait(LoudnessAfterWriteCycles);
         _level += _loudnessChange;
         _hasEnded = _level >= SignBit;
     }
@@ -375,11 +375,11 @@ internal sealed class SingSound
     private IEnumerable<OutputChange> StepPitch()
     {
         _level = (byte)~_level;
-        _output.Wait(PitchBeforeWriteCycles);
-        yield return _output.Store(_level);
+        _boardOutput.Wait(PitchBeforeWriteCycles);
+        yield return _boardOutput.Store(_level);
         _pitchCyclesLeft = _cyclesAtPitch;
         _nextPitch = (byte)(_pitch - _pitchChange);
-        _output.Wait(PitchAfterWriteCycles);
+        _boardOutput.Wait(PitchAfterWriteCycles);
         _hasEnded = _nextPitch == _lastPitch;
     }
 }
