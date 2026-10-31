@@ -21,7 +21,7 @@ public sealed class SettingsModelTests
         Assert.Equal(SettingsModel.HighScoreResetLine, model.Line);
 
         model.MoveDown();
-        Assert.Equal(SettingsModel.ExtraManLine, model.Line);
+        Assert.Equal(SettingsModel.ExtraLifeLine, model.Line);
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public sealed class SettingsModelTests
         var settings = new GameSettings();
 
         model.Change(settings, 1);
-        Assert.Equal(30, settings.ExtraManEvery); // 25 -> 30
+        Assert.Equal(30, settings.ExtraLifeEvery); // 25 -> 30
 
         model.MoveDown();
         model.Change(settings, 1);
@@ -62,10 +62,10 @@ public sealed class SettingsModelTests
     public void ActivateDoesNothingOnAValueRow()
     {
         var model = new SettingsModel();
-        var settings = new GameSettings { ExtraManEvery = 50, TurnsPerPlayer = 9, Difficulty = 9 };
+        var settings = new GameSettings { ExtraLifeEvery = 50, TurnsPerPlayer = 9, Difficulty = 9 };
 
         Assert.Equal(SettingsAction.None, model.Activate(settings));
-        Assert.Equal(50, settings.ExtraManEvery);
+        Assert.Equal(50, settings.ExtraLifeEvery);
         Assert.Equal(9, settings.Difficulty);
     }
 
@@ -84,12 +84,12 @@ public sealed class SettingsModelTests
     {
         var model = new SettingsModel();
         var settings = new GameSettings
-            { ExtraManEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSoundEnabled = true };
+            { ExtraLifeEvery = 0, TurnsPerPlayer = 20, Difficulty = 10, AttractModeSoundEnabled = true };
         GoTo(model, SettingsModel.RestoreFactoryLine);
         model.Change(settings, 1);
 
         Assert.Equal(SettingsAction.RestoreFactorySettings, model.Activate(settings));
-        Assert.Equal(25, settings.ExtraManEvery);
+        Assert.Equal(25, settings.ExtraLifeEvery);
         Assert.Equal(3, settings.TurnsPerPlayer);
         Assert.Equal(5, settings.Difficulty);
         Assert.False(settings.AttractModeSoundEnabled);
@@ -155,13 +155,13 @@ public sealed class SettingsModelTests
     [InlineData(0, "0", "NO EXTRA MEN")]
     [InlineData(25, "25000", "RECOMMENDED")]
     [InlineData(50, "50000", "EXTRA CONSERVATIVE")]
-    public void TheExtraManRowShowsTheArcadesValueAndWord(int value, string text, string note)
+    public void TheExtraLifeRowShowsTheArcadesValueAndWord(int value, string text, string note)
     {
-        var settings = new GameSettings { ExtraManEvery = value };
+        var settings = new GameSettings { ExtraLifeEvery = value };
         var model = new SettingsModel();
 
-        Assert.Equal(text, model.GetValue(settings, SettingsModel.ExtraManLine));
-        Assert.Equal(note, SettingsModel.GetNote(settings, SettingsModel.ExtraManLine));
+        Assert.Equal(text, model.GetValue(settings, SettingsModel.ExtraLifeLine));
+        Assert.Equal(note, SettingsModel.GetNote(settings, SettingsModel.ExtraLifeLine));
     }
 
     [Theory]
