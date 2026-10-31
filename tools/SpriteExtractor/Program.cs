@@ -458,18 +458,18 @@ internal static class Program
         // ($DA51); 10-15 = the service's de-duplicated values for the
         // in-game colour-cycling palette indices (duplicates would make a texel's palette index
         // ambiguous).
-        private static readonly byte[] ColorValues =
+        private static readonly byte[] ColourValues =
         [
             0x00, 0x07, 0x17, 0xC7, 0x1F, 0x3F, 0x38, 0xC0,
             0xA4, 0xFF, 0xC4, 0xF4, 0xCC, 0x81, 0x45, 0x2F,
         ];
 
-        public static readonly Rgb[] Colours = [.. ColorValues.Select(FromColorValue)];
+        public static readonly Rgb[] Colours = [.. ColourValues.Select(FromColourValue)];
 
         // Port of RobotronPaletteService.ConvertColorValue (byte = BBGGGRRR):
         // R = bits 0-2 (x2, +1 if >6), G = bits 3-5 (+1 if >6), B = bits 6-7 (x5),
         // each then x16 (clamped to 255).
-        private static Rgb CreateFromColorValue(byte value)
+        private static Rgb CreateFromColourValue(byte value)
         {
             int red = (value & 0x07) << 1;
             if (red > 6)
@@ -755,7 +755,7 @@ internal static class Program
         "MTNKP4" => "TankGrow_4",
         "CMPIC" => "MissileSmall_0",
         "CMP1" => "MissileSmall_1",
-        "MNPIC" => "PlayerExtra",
+        "MNPIC" => "SpareLife",
         "NULLP" => "Dot",
         "CRUSB" => "AttractCruise",
         _ => label,

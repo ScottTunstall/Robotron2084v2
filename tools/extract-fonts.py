@@ -2,7 +2,7 @@
 """
 Extract the arcade small/large font glyphs from ref/rom/robotron64k.bin into
 Content/Sprites/Font_S_*.png / Font_L_*.png (regenerates the hand-drawn
-placeholders — same file names, so Content.mgcb / SpriteContentPaths stay
+placeholders — same file names, so Content.mgcb / TexturePaths stay
 valid).
 
 Offsets + dimensions come from the author's sprite editor
