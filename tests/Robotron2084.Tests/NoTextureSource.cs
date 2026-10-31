@@ -10,7 +10,7 @@ namespace Robotron2084.Tests;
 ///     slots, because the entities index into those runs. Enough to construct and run an entity, never enough to
 ///     draw one — nothing in the suite draws, and no test asks an entity for its frame.
 /// </summary>
-internal sealed class NoSpriteSource : ISpriteSource
+internal sealed class NoTextureSource : ITextureSource
 {
     /// <inheritdoc />
     public Texture2D Load(string assetName)
@@ -31,7 +31,7 @@ internal sealed class NoSpriteSource : ISpriteSource
     }
 
     /// <inheritdoc />
-    public Texture2D CreateSolid(int width, int height, Color color)
+    public Texture2D CreateSolid(int width, int height, Color colour)
     {
         return null!;
     }
