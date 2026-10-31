@@ -440,7 +440,7 @@ internal static class Program
                 Console.WriteLine($"   {y,2}  {sb}");
             }
 
-            Console.WriteLine("  legend: " + string.Join(" ", Enumerable.Range(0, 16).Select(i => $"{AsciiGlyph(i)}={Palette.Colours[i]}")));
+            Console.WriteLine("  legend: " + string.Join(" ", Enumerable.Range(0, 16).Select(i => $"{AsciiGlyph(i)}={GamePalette.Colours[i]}")));
             return true;
         }
 
@@ -452,7 +452,7 @@ internal static class Program
     // Credit to Sean Riddle for the byte→RGB conversion
     // (https://www.seanriddle.com/ripper.html).
 
-    static class Palette
+    static class GamePalette
     {
         // Robotron ROM colour bytes per 16-index palette. 0-9 = ROM defaults
         // ($DA51); 10-15 = the service's de-duplicated values for the
@@ -787,7 +787,7 @@ internal static class Program
             {
                 byte b = data[y * bytesPerRow + (x >> 1)];
                 int nibble = (x & 1) == 0 ? (b >> 4) & 0xF : b & 0xF;
-                Rgb c = Palette.Colours[nibble];
+                Rgb c = GamePalette.Colours[nibble];
                 raw[rowStart + 1 + x * 4] = c.R;
                 raw[rowStart + 2 + x * 4] = c.G;
                 raw[rowStart + 3 + x * 4] = c.B;
