@@ -37,7 +37,7 @@ public sealed class GamePalette
     /// <summary>The live RGB of a palette index.</summary>
     public Color GetColour(int paletteIndex)
     {
-        return RobotronColor.CreateFromByte(_paletteValues[paletteIndex]);
+        return RobotronColour.CreateFromByte(_paletteValues[paletteIndex]);
     }
 
     /// <summary>The current 8-bit colour code of a palette index (0-15).</summary>
@@ -80,7 +80,7 @@ public sealed class GamePalette
     ///     colour-cycle effect's named uniforms <c>Live10</c>..<c>Live15</c>
     ///     (notes §34: six named uniforms — the TPGParser rejects array syntax).
     /// </summary>
-    public void UpdateEffectColors(Effect effect)
+    public void UpdateEffectColours(Effect effect)
     {
         for (var paletteIndex = 10; paletteIndex <= 15; paletteIndex++)
         {

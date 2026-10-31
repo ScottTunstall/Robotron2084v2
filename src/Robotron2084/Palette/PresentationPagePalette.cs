@@ -49,7 +49,7 @@ public sealed class PresentationPagePalette
     ///     The seven entries the page's own code writes (ROM `$8A70`), in palette index order: red, blue,
     ///     red-orange, green, magenta, orange, yellow. Palette indices 1..7 are the page's; 8..15 keep CRTAB.
     /// </summary>
-    public static readonly byte[] PageColors = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
+    public static readonly byte[] PageColours = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
 
     /// <summary>
     ///     `$8A68`'s `LDA #$03` — the chase takes a step every three fiftieths of a second. It is how many fiftieths of a
@@ -58,7 +58,7 @@ public sealed class PresentationPagePalette
     private const int ChaseArcadeFramesPerStep = 3;
 
     /// <summary>The colour the chase writes (`$8A64`'s `LDA #$FF`).</summary>
-    private const byte ChaseColor = 0xFF;
+    private const byte ChaseColour = 0xFF;
 
     /// <summary>
     ///     One step per logo-handling, and the ring is 28 logos of one frame each. It is how many fiftieths of a second
@@ -102,7 +102,7 @@ public sealed class PresentationPagePalette
     /// </summary>
     public void Start(GamePalette gamePalette)
     {
-        for (var paletteIndex = FirstPaletteIndex; paletteIndex <= LastPaletteIndex; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, PageColors[paletteIndex - FirstPaletteIndex]);
+        for (var paletteIndex = FirstPaletteIndex; paletteIndex <= LastPaletteIndex; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, PageColours[paletteIndex - FirstPaletteIndex]);
     }
 
     /// <summary>
@@ -125,7 +125,7 @@ public sealed class PresentationPagePalette
             else _chasePaletteIndex++;
 
             Start(gamePalette); // the ROM re-copies the table on every step...
-            gamePalette.SetPaletteIndexValue(_chasePaletteIndex, ChaseColor); // ...and then whitens the current entry
+            gamePalette.SetPaletteIndexValue(_chasePaletteIndex, ChaseColour); // ...and then whitens the current entry
         }
 
         _wordmarkClockUnits += ArcadeClock.UnitsPerPortTick;

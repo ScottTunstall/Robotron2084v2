@@ -9,22 +9,22 @@ namespace Robotron2084.Palette;
 ///     through a caller-supplied palette (default: 4 cyan shades) on a fixed
 ///     time step, wrapping forward — the palette itself never includes black.
 /// </summary>
-public sealed class WallColorCycle
+public sealed class WallColourCycle
 {
     private readonly IReadOnlyList<Color> _colours;
     private readonly TimeSpan _stepDuration;
     private int _colourIndex;
     private TimeSpan _elapsed;
 
-    public WallColorCycle(IReadOnlyList<Color>? colours = null, TimeSpan? stepDuration = null)
+    public WallColourCycle(IReadOnlyList<Color>? colours = null, TimeSpan? stepDuration = null)
     {
         _colours = colours ?? WavePaletteTables.DefaultWallPalette;
         _stepDuration = stepDuration ?? TimeSpan.FromMilliseconds(WavePaletteTables.WallStepDurationMilliseconds);
-        CurrentColor = _colours[0];
+        CurrentColour = _colours[0];
     }
 
     /// <summary>The wall colour for the current step.</summary>
-    public Color CurrentColor { get; private set; }
+    public Color CurrentColour { get; private set; }
 
     public void Update(GameTime gameTime)
     {
@@ -33,7 +33,7 @@ public sealed class WallColorCycle
         {
             _elapsed -= _stepDuration;
             _colourIndex = (_colourIndex + 1) % _colours.Count;
-            CurrentColor = _colours[_colourIndex];
+            CurrentColour = _colours[_colourIndex];
         }
     }
 }
