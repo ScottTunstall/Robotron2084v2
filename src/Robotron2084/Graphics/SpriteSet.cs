@@ -179,6 +179,29 @@ public sealed class SpriteSet
     /// </summary>
     public Texture2D AttractCruiseSprite { get; }
 
+    /// <summary>
+    ///     The attract movie's four SCORE ELECTRODES — ROM `POSTS` images 12, 0, 4 and 8
+    ///     (notes §95.6): the main electrode and the three that fork off it in the POSTER
+    ///     script. They are WHITE masks because the movie only ever draws them SOLID,
+    ///     through MONO's colour pair.
+    /// </summary>
+    public Texture2D[] AttractElectrodeAnimationFrames { get; }
+
+    /// <summary>The BerzerkRobot standing still: six frames that cycle (notes §138).</summary>
+    public Texture2D[] BerzerkRobotIdleFrames { get; }
+
+    /// <summary>The BerzerkRobot walking down: three frames, played 1, 2, 3, 2.</summary>
+    public Texture2D[] BerzerkRobotWalkDownFrames { get; }
+
+    /// <summary>The BerzerkRobot walking left: two frames.</summary>
+    public Texture2D[] BerzerkRobotWalkLeftFrames { get; }
+
+    /// <summary>The BerzerkRobot walking right: two frames.</summary>
+    public Texture2D[] BerzerkRobotWalkRightFrames { get; }
+
+    /// <summary>The BerzerkRobot walking up: three frames, played 1, 2, 3, 2.</summary>
+    public Texture2D[] BerzerkRobotWalkUpFrames { get; }
+
     /// <summary>The blitter operations that draw these sprites.</summary>
     public BlitterDraw Blitter { get; }
 
@@ -206,9 +229,8 @@ public sealed class SpriteSet
 
     public Texture2D[] ElectrodeAnimationFrames { get; }
 
-    public Texture2D EnforcerSprite { get; }
-
     public Texture2D[] EnforcerAnimationFrames { get; }
+    public Texture2D EnforcerSprite { get; }
 
     /// <summary>
     ///     Arcade font glyphs, extracted from the ROM (notes §38; the offsets come from
@@ -223,26 +245,10 @@ public sealed class SpriteSet
 
     public Texture2D[] FontSmall { get; }
 
-    public Texture2D[] GruntAnimationFrames { get; }
-
     /// <summary>Gorf's two animation frames, which it flaps between (notes §138.2).</summary>
     public Texture2D[] GorfAnimationFrames { get; }
 
-    /// <summary>The BerzerkRobot standing still: six frames that cycle (notes §138).</summary>
-    public Texture2D[] BerzerkRobotIdleFrames { get; }
-
-    /// <summary>The BerzerkRobot walking right: two frames.</summary>
-    public Texture2D[] BerzerkRobotWalkRightFrames { get; }
-
-    /// <summary>The BerzerkRobot walking left: two frames.</summary>
-    public Texture2D[] BerzerkRobotWalkLeftFrames { get; }
-
-    /// <summary>The BerzerkRobot walking up: three frames, played 1, 2, 3, 2.</summary>
-    public Texture2D[] BerzerkRobotWalkUpFrames { get; }
-
-    /// <summary>The BerzerkRobot walking down: three frames, played 1, 2, 3, 2.</summary>
-    public Texture2D[] BerzerkRobotWalkDownFrames { get; }
-
+    public Texture2D[] GruntAnimationFrames { get; }
     public Texture2D[] HulkAnimationFrames { get; }
 
     /// <summary>
@@ -280,15 +286,6 @@ public sealed class SpriteSet
     public Texture2D[] MommyAnimationFrames { get; }
 
     public Texture2D[] PlayerAnimationFrames { get; }
-
-    /// <summary>
-    ///     The attract movie's four SCORE ELECTRODES — ROM `POSTS` images 12, 0, 4 and 8
-    ///     (notes §95.6): the main electrode and the three that fork off it in the POSTER
-    ///     script. They are WHITE masks because the movie only ever draws them SOLID,
-    ///     through MONO's colour pair.
-    /// </summary>
-    public Texture2D[] AttractElectrodeAnimationFrames { get; }
-
     public Texture2D ProgBurstSprite { get; }
     public Texture2D[] QuarkAnimationFrames { get; }
 
@@ -378,18 +375,18 @@ public sealed class SpriteSet
         var pixels = new Color[widthBytes * 2 * height];
 
         for (var row = 0; row < height; row++)
-        for (var column = 0; column < widthBytes * 2; column++)
-        {
-            var shift = 0;
-            var isLeftPixel = column % 2 == 0;
-            if (isLeftPixel) shift = 4;
+            for (var column = 0; column < widthBytes * 2; column++)
+            {
+                var shift = 0;
+                var isLeftPixel = column % 2 == 0;
+                if (isLeftPixel) shift = 4;
 
-            var value = (nibbles[row * widthBytes + column / 2] >> shift) & 0x0F;
-            var colour = Color.Transparent;
-            if (value != 0) colour = GetPaletteColour(value);
+                var value = (nibbles[row * widthBytes + column / 2] >> shift) & 0x0F;
+                var colour = Color.Transparent;
+                if (value != 0) colour = GetPaletteColour(value);
 
-            pixels[row * widthBytes * 2 + column] = colour;
-        }
+                pixels[row * widthBytes * 2 + column] = colour;
+            }
 
         return source.Create(widthBytes * 2, height, pixels);
     }

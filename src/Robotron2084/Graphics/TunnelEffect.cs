@@ -141,30 +141,6 @@ public sealed class TunnelEffect
     /// <summary>The rings drawn so far (test hook) — 53 coloured then 53 black.</summary>
     internal int RingsDrawn { get; private set; }
 
-    /// <summary>True while the tunnel is being redrawn in black to erase itself.</summary>
-    internal bool IsErasing()
-    {
-        return _packedColourPair == 0;
-    }
-
-    /// <summary>
-    ///     The last ring of the colouring pass (test hook) — the walk's outer extent, which must
-    ///     cover the playfield once the tunnel has finished growing.
-    /// </summary>
-    internal (int Left, int Top, int Right, int Bottom) GetOutermostRing()
-    {
-        if (_rings.Count == 0) return (_leftColumn, _topRow, _rightColumn, _bottomRow);
-
-        var outermost = _rings[^1];
-        return (outermost.Left, outermost.Top, outermost.Right, outermost.Bottom);
-    }
-
-    /// <summary>Rings still on screen (test hook): nothing is erased until the black pass reaches it.</summary>
-    internal int GetRingsRetained()
-    {
-        return _rings.Count + _blackRings.Count;
-    }
-
     /// <summary>
     ///     Draws EVERY ring the walk has reached — they accumulate, two pixels apart, which is what
     ///     fills the area — with the erase pass's black rings painted over the top of them.
@@ -212,6 +188,11 @@ public sealed class TunnelEffect
         return ((packed >> 4) & 0x0F, packed & 0x0F);
     }
 
+    internal static int GetRowY(int arcadeRow)
+    {
+        return (int)MathF.Round(arcadeRow * ArcadePixelToScreenY);
+    }
+
     /// <summary>
     ///     ROM $5737-$574F: the pair advances by `SUBA #$22` — both nibbles two slots down — with
     ///     three special cases that wrap it round again.
@@ -239,9 +220,28 @@ public sealed class TunnelEffect
         return (int)MathF.Round(arcadePixel * ArcadePixelToScreenX);
     }
 
-    internal static int GetRowY(int arcadeRow)
+    /// <summary>
+    ///     The last ring of the colouring pass (test hook) — the walk's outer extent, which must
+    ///     cover the playfield once the tunnel has finished growing.
+    /// </summary>
+    internal (int Left, int Top, int Right, int Bottom) GetOutermostRing()
     {
-        return (int)MathF.Round(arcadeRow * ArcadePixelToScreenY);
+        if (_rings.Count == 0) return (_leftColumn, _topRow, _rightColumn, _bottomRow);
+
+        var outermost = _rings[^1];
+        return (outermost.Left, outermost.Top, outermost.Right, outermost.Bottom);
+    }
+
+    /// <summary>Rings still on screen (test hook): nothing is erased until the black pass reaches it.</summary>
+    internal int GetRingsRetained()
+    {
+        return _rings.Count + _blackRings.Count;
+    }
+
+    /// <summary>True while the tunnel is being redrawn in black to erase itself.</summary>
+    internal bool IsErasing()
+    {
+        return _packedColourPair == 0;
     }
 
     /// <summary>Blits one edge rectangle, already in the port's screen pixels.</summary>

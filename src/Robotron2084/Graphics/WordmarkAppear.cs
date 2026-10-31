@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Entities;
@@ -26,14 +26,14 @@ namespace Robotron2084.Graphics;
 /// </remarks>
 public sealed class WordmarkAppear
 {
-    /// <summary>fiftieths of a second between one letter starting to appear and the next (<c>WDONE0 NAP 8</c>).</summary>
-    private const int ArcadeFramesBetweenLetters = 8;
-
     /// <summary>
     ///     fiftieths of a second the last letter is left to finish before whatever comes next (<c>NAP $20,LOGG2</c>). It
     ///     is added to the start time of the last letter to decide when <see cref="IsFinished" /> becomes true.
     /// </summary>
     private const int ArcadeFramesAfterLastLetter = 0x20;
+
+    /// <summary>fiftieths of a second between one letter starting to appear and the next (<c>WDONE0 NAP 8</c>).</summary>
+    private const int ArcadeFramesBetweenLetters = 8;
 
     private readonly Rectangle _bounds;
     private readonly Texture2D _coreSprite;
@@ -67,12 +67,6 @@ public sealed class WordmarkAppear
         ];
     }
 
-    /// <summary>Says whether every letter has finished coming in and been left to settle, so the next thing can go up.</summary>
-    public bool IsFinished()
-    {
-        return _letters.Count == 0 || GetArcadeFrames() >= GetStartFrame(_letters.Count - 1) + ArcadeFramesAfterLastLetter;
-    }
-
     /// <summary>Makes the appear for a word drawn as two white masks, finding its letters from the outline mask.</summary>
     /// <param name="rimSprite">The white mask of the letters' outline.</param>
     /// <param name="coreSprite">The white mask of the letters' body, the same size as the outline.</param>
@@ -87,12 +81,6 @@ public sealed class WordmarkAppear
 
         return new WordmarkAppear(rimSprite, coreSprite, new Point(rimSprite.Width, rimSprite.Height),
             FindLetters(columnHasPixel), origin);
-    }
-
-    /// <summary>How many letters have started to appear (test hook).</summary>
-    internal int GetStartedLetterCount()
-    {
-        return Enumerable.Range(0, _letters.Count).Count(index => GetArcadeFrames() >= GetStartFrame(index));
     }
 
     /// <summary>Finds where the letters are across a mask, which are the runs of columns that have something drawn in them.</summary>
@@ -119,16 +107,6 @@ public sealed class WordmarkAppear
         return letters;
     }
 
-    /// <summary>Moves on by one port tick.</summary>
-    public void Update()
-    {
-        _clockUnits += ArcadeClock.UnitsPerPortTick;
-        var arcadeFrames = GetArcadeFrames();
-        for (var index = 0; index < _effects.Length; index++)
-            if (arcadeFrames >= GetStartFrame(index))
-                _effects[index].Update(new GameTime());
-    }
-
     /// <summary>Draws the letters that have started: the settled ones whole, and the one coming in as its strips.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="blitter">The blitter that draws a mask in a palette colour.</param>
@@ -148,28 +126,31 @@ public sealed class WordmarkAppear
         }
     }
 
+    /// <summary>Says whether every letter has finished coming in and been left to settle, so the next thing can go up.</summary>
+    public bool IsFinished()
+    {
+        return _letters.Count == 0 || GetArcadeFrames() >= GetStartFrame(_letters.Count - 1) + ArcadeFramesAfterLastLetter;
+    }
+
+    /// <summary>Moves on by one port tick.</summary>
+    public void Update()
+    {
+        _clockUnits += ArcadeClock.UnitsPerPortTick;
+        var arcadeFrames = GetArcadeFrames();
+        for (var index = 0; index < _effects.Length; index++)
+            if (arcadeFrames >= GetStartFrame(index))
+                _effects[index].Update(new GameTime());
+    }
+
+    /// <summary>How many letters have started to appear (test hook).</summary>
+    internal int GetStartedLetterCount()
+    {
+        return Enumerable.Range(0, _letters.Count).Count(index => GetArcadeFrames() >= GetStartFrame(index));
+    }
+
     private static int GetStartFrame(int index)
     {
         return index * ArcadeFramesBetweenLetters;
-    }
-
-    private int GetArcadeFrames()
-    {
-        return _clockUnits / ArcadeClock.UnitsPerArcadeFrame;
-    }
-
-    private Rectangle GetLetterBounds(LetterSpan letter)
-    {
-        return new Rectangle(_bounds.X + letter.Start * ScreenSize.PortPixelsPerArcadePixel, _bounds.Y,
-            letter.Width * ScreenSize.PortPixelsPerArcadePixel, _bounds.Height);
-    }
-
-    private void DrawWhole(SpriteBatch spriteBatch, BlitterDraw blitter, LetterSpan letter, int rimSlot, int coreSlot)
-    {
-        Rectangle source = new(letter.Start, 0, letter.Width, _spriteHeight);
-        var destination = GetLetterBounds(letter);
-        blitter.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitter.GetSlotColour(rimSlot));
-        blitter.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination, blitter.GetSlotColour(coreSlot));
     }
 
     private void DrawStrips(SpriteBatch spriteBatch, BlitterDraw blitter, int index, int rimSlot, int coreSlot)
@@ -187,5 +168,24 @@ public sealed class WordmarkAppear
             blitter.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination,
                 blitter.GetSlotColour(coreSlot));
         }
+    }
+
+    private void DrawWhole(SpriteBatch spriteBatch, BlitterDraw blitter, LetterSpan letter, int rimSlot, int coreSlot)
+    {
+        Rectangle source = new(letter.Start, 0, letter.Width, _spriteHeight);
+        var destination = GetLetterBounds(letter);
+        blitter.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitter.GetSlotColour(rimSlot));
+        blitter.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination, blitter.GetSlotColour(coreSlot));
+    }
+
+    private int GetArcadeFrames()
+    {
+        return _clockUnits / ArcadeClock.UnitsPerArcadeFrame;
+    }
+
+    private Rectangle GetLetterBounds(LetterSpan letter)
+    {
+        return new Rectangle(_bounds.X + letter.Start * ScreenSize.PortPixelsPerArcadePixel, _bounds.Y,
+            letter.Width * ScreenSize.PortPixelsPerArcadePixel, _bounds.Height);
     }
 }

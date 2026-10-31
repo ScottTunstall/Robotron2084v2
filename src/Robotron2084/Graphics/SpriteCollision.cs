@@ -13,18 +13,18 @@ public sealed class SpriteCollision : IPixelCollision
     private readonly Dictionary<Texture2D, SpriteMask> _masks = [];
 
     /// <inheritdoc />
-    public bool Overlaps(SpriteShape a, SpriteShape b)
-    {
-        return SpriteMask.Overlaps(a.Mask, a.DrawnBounds, b.Mask, b.DrawnBounds);
-    }
-
-    /// <inheritdoc />
     public SpriteShape? GetShape(IEntity entity)
     {
         if (entity is not IAnimationFrameSource frameSource) return null;
 
         var animationFrame = frameSource.GetCurrentAnimationFrame();
         return new SpriteShape(GetMask(animationFrame), BlitterDraw.DrawnRect(entity.GetBounds(), animationFrame));
+    }
+
+    /// <inheritdoc />
+    public bool Overlaps(SpriteShape a, SpriteShape b)
+    {
+        return SpriteMask.Overlaps(a.Mask, a.DrawnBounds, b.Mask, b.DrawnBounds);
     }
 
     private SpriteMask GetMask(Texture2D animationFrame)

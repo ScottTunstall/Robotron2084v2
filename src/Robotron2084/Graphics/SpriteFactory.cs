@@ -161,12 +161,12 @@ public sealed class SpriteFactory
     {
         var canvas = CreateCanvas();
         for (var y = 0; y < DesignSize; y++)
-        for (var x = 0; x < DesignSize; x++)
-        {
-            var dx = x - 15;
-            var dy = y - 15;
-            if (Math.Abs(dx) + Math.Abs(dy) <= 13) canvas[y * DesignSize + x] = color;
-        }
+            for (var x = 0; x < DesignSize; x++)
+            {
+                var dx = x - 15;
+                var dy = y - 15;
+                if (Math.Abs(dx) + Math.Abs(dy) <= 13) canvas[y * DesignSize + x] = color;
+            }
 
         return ScalePattern(canvas);
     }
@@ -177,12 +177,12 @@ public sealed class SpriteFactory
     {
         var canvas = CreateCanvas();
         for (var y = 0; y < DesignSize; y++)
-        for (var x = 0; x < DesignSize; x++)
-        {
-            var dx = x - 15;
-            var dy = y - 15;
-            if (dx * dx + dy * dy <= 13 * 13) canvas[y * DesignSize + x] = color;
-        }
+            for (var x = 0; x < DesignSize; x++)
+            {
+                var dx = x - 15;
+                var dy = y - 15;
+                if (dx * dx + dy * dy <= 13 * 13) canvas[y * DesignSize + x] = color;
+            }
 
         return ScalePattern(canvas);
     }
@@ -214,16 +214,16 @@ public sealed class SpriteFactory
         return Create(width, height, pixels);
     }
 
-    private static void FillRect(Color[] canvas, int x, int y, int width, int height, Color color)
-    {
-        for (var row = Math.Max(0, y); row < Math.Min(DesignSize, y + height); row++)
-        for (var col = Math.Max(0, x); col < Math.Min(DesignSize, x + width); col++)
-            canvas[row * DesignSize + col] = color;
-    }
-
     private static Color[] CreateCanvas()
     {
         return new Color[DesignSize * DesignSize];
+    }
+
+    private static void FillRect(Color[] canvas, int x, int y, int width, int height, Color color)
+    {
+        for (var row = Math.Max(0, y); row < Math.Min(DesignSize, y + height); row++)
+            for (var col = Math.Max(0, x); col < Math.Min(DesignSize, x + width); col++)
+                canvas[row * DesignSize + col] = color;
     }
 
     /// <summary>Nearest-neighbour scales a DesignSize×DesignSize pattern to PatternSize×PatternSize.</summary>

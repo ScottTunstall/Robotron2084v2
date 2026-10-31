@@ -93,12 +93,6 @@ public sealed class WilliamsLogoBorder
     /// <summary>Which palette slot each arcade pixel of the screen holds; 0 is empty.</summary>
     public IReadOnlyList<byte> Pixels => _pixels;
 
-    /// <summary>True once the second phase has run its course; the ROM then goes on to the next page.</summary>
-    public bool IsFinished()
-    {
-        return _isMoving && _movingFramesRemaining <= 0;
-    }
-
     /// <summary>Draws the ring in each pixel's palette slot, the screen's arcade pixels mapped to the canvas as the HUD's are.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="blitter">The blitter that fills the runs and looks the slots' colours up.</param>
@@ -125,6 +119,12 @@ public sealed class WilliamsLogoBorder
                 x = runEnd;
             }
         }
+    }
+
+    /// <summary>True once the second phase has run its course; the ROM then goes on to the next page.</summary>
+    public bool IsFinished()
+    {
+        return _isMoving && _movingFramesRemaining <= 0;
     }
 
     /// <summary>Advances by one port tick (a fiftieth of a second is 6/5 of one).</summary>
@@ -156,13 +156,13 @@ public sealed class WilliamsLogoBorder
     {
         var left = column * ScreenSize.ArcadePixelsPerByte;
         for (var y = 0; y < _logoMask.Height; y++)
-        for (var x = 0; x < _logoMask.Width; x++)
-        {
-            var screenX = left + x;
-            var screenY = row + y;
-            if (_logoMask.IsOpaque(x, y) && screenX < Width && screenY < Height)
-                _pixels[screenY * Width + screenX] = (byte)slot;
-        }
+            for (var x = 0; x < _logoMask.Width; x++)
+            {
+                var screenX = left + x;
+                var screenY = row + y;
+                if (_logoMask.IsOpaque(x, y) && screenX < Width && screenY < Height)
+                    _pixels[screenY * Width + screenX] = (byte)slot;
+            }
     }
 
     /// <summary>ROM <c>$87DF</c>: draw a W, step the path, sleep; after the 28th the ring starts moving.</summary>

@@ -190,30 +190,6 @@ public sealed class BlitterDraw
     }
 
     /// <summary>
-    ///     The ROM's two-colour object blit ($1DC2
-    ///     <c>BLIT_IMAGE_AS_SOLID_COLOUR_WITH_SOLID_BACKGROUND</c>): op <c>$12</c>
-    ///     fills the frame with <paramref name="background" />, then op <c>$1A</c>
-    ///     draws the sprite's SHAPE in <paramref name="shape" /> on top. This is how
-    ///     a human looks while a brain reprograms it (notes §46/§47). Both are
-    ///     drawn on the same destination rectangle, so the block and the silhouette
-    ///     stay aligned.
-    /// </summary>
-    public void DrawSpriteSolidWithBackground(
-        SpriteBatch spriteBatch,
-        Texture2D texture,
-        Rectangle bounds,
-        Color background,
-        Color shape)
-    {
-        // The frame is a plain fill, so it must bind the pass-through EXPLICITLY:
-        // otherwise it is drawn through whatever pass was bound last and comes out
-        // in that colour.
-        UsePassThrough();
-        spriteBatch.Draw(_wallPixel, DrawnRect(bounds, texture), background);
-        DrawSpriteSolid(spriteBatch, texture, bounds, shape);
-    }
-
-    /// <summary>
     ///     Blitter op <c>$1A</c> for a PIECE of a sprite: draws the shape of one part of a white mask in one colour, which is
     ///     how a
     ///     sprite that is being cut into strips is drawn in a palette colour.
@@ -235,6 +211,30 @@ public sealed class BlitterDraw
 
         spriteBatch.Draw(texture, destination, source, color);
         UsePassThrough();
+    }
+
+    /// <summary>
+    ///     The ROM's two-colour object blit ($1DC2
+    ///     <c>BLIT_IMAGE_AS_SOLID_COLOUR_WITH_SOLID_BACKGROUND</c>): op <c>$12</c>
+    ///     fills the frame with <paramref name="background" />, then op <c>$1A</c>
+    ///     draws the sprite's SHAPE in <paramref name="shape" /> on top. This is how
+    ///     a human looks while a brain reprograms it (notes §46/§47). Both are
+    ///     drawn on the same destination rectangle, so the block and the silhouette
+    ///     stay aligned.
+    /// </summary>
+    public void DrawSpriteSolidWithBackground(
+        SpriteBatch spriteBatch,
+        Texture2D texture,
+        Rectangle bounds,
+        Color background,
+        Color shape)
+    {
+        // The frame is a plain fill, so it must bind the pass-through EXPLICITLY:
+        // otherwise it is drawn through whatever pass was bound last and comes out
+        // in that colour.
+        UsePassThrough();
+        spriteBatch.Draw(_wallPixel, DrawnRect(bounds, texture), background);
+        DrawSpriteSolid(spriteBatch, texture, bounds, shape);
     }
 
     /// <summary>The live RGB of a palette slot (0-15); white when no palette is wired.</summary>

@@ -30,12 +30,6 @@ public static class Presentation
         return new Rectangle((clientWidth - width) / 2, (clientHeight - height) / 2, width, height);
     }
 
-    /// <summary>The scale mode the next F8 press selects.</summary>
-    public static ScaleMode NextScaleMode(ScaleMode mode)
-    {
-        return mode == ScaleMode.Integer ? ScaleMode.Fill : ScaleMode.Integer;
-    }
-
     /// <summary>The uniform scale the canvas is drawn at, for a client area of any size.</summary>
     /// <remarks>
     ///     <see cref="ScaleMode.Integer" /> is the largest whole multiple that fits and never less
@@ -50,5 +44,11 @@ public static class Presentation
         if (mode == ScaleMode.Integer) return ScreenSize.ComputeMaxIntegerScale(clientWidth, clientHeight);
 
         return Math.Min((float)clientWidth / ScreenSize.Width, (float)clientHeight / ScreenSize.Height);
+    }
+
+    /// <summary>The scale mode the next F8 press selects.</summary>
+    public static ScaleMode NextScaleMode(ScaleMode mode)
+    {
+        return mode == ScaleMode.Integer ? ScaleMode.Fill : ScaleMode.Integer;
     }
 }
