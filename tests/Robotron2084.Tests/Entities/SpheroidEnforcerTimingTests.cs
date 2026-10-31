@@ -94,7 +94,7 @@ public sealed class SpheroidEnforcerTimingTests
     public void Enforcer_IsImmobileAndSilentDuringGrowUp()
     {
         var playField = CreateField(7);
-        Enforcer enforcer = new(TestSprites.SharedSpriteSet,
+        Enforcer enforcer = new(TestTextures.SharedTextureSet,
             new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)),
             new Random(42), 30);
         var start = enforcer.Position;
@@ -125,7 +125,7 @@ public sealed class SpheroidEnforcerTimingTests
         // ticks 1, 11, 22, 33, 44. The old PortTicks(9) = 10 switched every 10 ticks
         // and ran out early inside a correctly-timed growth (notes §65.3).
         var playField = CreateField(7);
-        Enforcer enforcer = new(TestSprites.SharedSpriteSet,
+        Enforcer enforcer = new(TestTextures.SharedTextureSet,
             new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)),
             new Random(42), 30);
 
@@ -154,7 +154,7 @@ public sealed class SpheroidEnforcerTimingTests
         // slack for the 6/5 beat accumulator), and (seeded, deterministic) at least
         // one gap must exceed the old model's maximum of PortTicks(30) = 36.
         var playField = CreateField(11);
-        Enforcer enforcer = new(TestSprites.SharedSpriteSet,
+        Enforcer enforcer = new(TestTextures.SharedTextureSet,
             new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)),
             new Random(1234), 30);
 
@@ -192,7 +192,7 @@ public sealed class SpheroidEnforcerTimingTests
         // down-right of the player; over a long run the enforcer must
         // spend time close to the player, not wander the whole field.
         var playField = CreateField(11);
-        Enforcer enforcer = new(TestSprites.SharedSpriteSet,
+        Enforcer enforcer = new(TestTextures.SharedTextureSet,
             new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)),
             new Random(1234), 30);
 

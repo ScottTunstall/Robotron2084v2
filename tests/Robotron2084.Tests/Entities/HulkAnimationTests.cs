@@ -34,11 +34,11 @@ public sealed class HulkAnimationTests
     {
         var playField = CreateField();
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
-        // Hunt the playfield center from the right side: the first aim is
+        // Hunt the playfield centre from the right side: the first aim is
         // LEFT; re-aims (RND 1..31 steps or wall contact) flip the axis.
-        IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
+        IntVector2 centre = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 120, bounds.Y + 120);
-        var hulk = new Hulk(TestSprites.SharedSpriteSet, spot, new Random(19), 2, () => center);
+        var hulk = new Hulk(TestTextures.SharedTextureSet, spot, new Random(19), 2, () => centre);
         playField.FieldEntities.Hulks.Add(hulk);
 
         playField.SkipWaveStart();
@@ -105,10 +105,10 @@ public sealed class HulkAnimationTests
         }
     }
 
-    private static bool IsFullyInside(Rectangle rect, Rectangle bounds)
+    private static bool IsFullyInside(Rectangle innerBounds, Rectangle outerBounds)
     {
-        return rect.Left >= bounds.Left && rect.Right <= bounds.Right && rect.Top >= bounds.Top &&
-               rect.Bottom <= bounds.Bottom;
+        return innerBounds.Left >= outerBounds.Left && innerBounds.Right <= outerBounds.Right && innerBounds.Top >= outerBounds.Top &&
+               innerBounds.Bottom <= outerBounds.Bottom;
     }
 
     private static PlayField CreateField()

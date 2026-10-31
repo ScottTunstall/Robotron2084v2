@@ -122,7 +122,7 @@ public sealed class SparkTests
             }
 
             playField.Update(OneTick());
-            var expected = frame % SpriteSet.SparkAnimationFrameCount;
+            var expected = frame % TextureSet.SparkAnimationFrameCount;
             Assert.Equal(expected, spark.GetAnimationFrameIndex());
         }
     }
@@ -207,7 +207,7 @@ public sealed class SparkTests
 
         for (var seed = 0; seed < 200; seed++)
         {
-            var spark = new Spark(TestSprites.SharedSpriteSet, new IntVector2(300, 200), new IntVector2(100, 100),
+            var spark = new Spark(TestTextures.SharedTextureSet, new IntVector2(300, 200), new IntVector2(100, 100),
                 new Random(seed));
             Assert.InRange(spark.AccelerationSubpixels.Y, -upAndDownLimit, upAndDownLimit);
             sidewaysUsedMoreThanTheUpAndDownRange |= Math.Abs(spark.AccelerationSubpixels.X) > upAndDownLimit;

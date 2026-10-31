@@ -67,29 +67,29 @@ public sealed class GruntSpeedProgressTests
 
     private static Grunt CreateGruntAt(PlayField playField, int x, int y, int seed)
     {
-        return new Grunt(TestSprites.SharedSpriteSet, new IntVector2(x, y), 20, new Random(seed));
+        return new Grunt(TestTextures.SharedTextureSet, new IntVector2(x, y), 20, new Random(seed));
     }
 
     [Fact]
     public void SpeedUp_TruncatesTo7Eighths_AndRespectsTheCurrentFloor()
     {
         var grunt = CreateGruntAt(CreateField(), 100, 100, 1);
-        Assert.Equal(20, grunt.MoveDelayBeats);
+        Assert.Equal(20, grunt.MoveIntervalMaxBeats);
 
         // 20 × 224/256 = 17.5 → the ROM's MUL high byte truncates to 17.
         grunt.SpeedUp(1);
-        Assert.Equal(17, grunt.MoveDelayBeats);
+        Assert.Equal(17, grunt.MoveIntervalMaxBeats);
 
         // 17 × 7/8 = 14.875 → 14, which is BELOW the floor 19, so the ROM's
         // `BCS` branch leaves the limit UNCHANGED at 17 (it does not clamp UP to
         // the floor — that was the port's bug, and it made the grunts faster than
         // the arcade's).
         grunt.SpeedUp(19);
-        Assert.Equal(17, grunt.MoveDelayBeats);
+        Assert.Equal(17, grunt.MoveIntervalMaxBeats);
 
         // With a floor the next step can respect, the limit does move.
         grunt.SpeedUp(14);
-        Assert.Equal(14, grunt.MoveDelayBeats);
+        Assert.Equal(14, grunt.MoveIntervalMaxBeats);
 
         // And it stops there: 14 × 7/8 = 12 < 14. The in-flight countdown is
         // deliberately untouched by a kill (the ROM only changes the shared limit),
@@ -102,16 +102,16 @@ public sealed class GruntSpeedProgressTests
         var grunt = CreateGruntAt(CreateField(), 100, 100, 2);
 
         grunt.SpeedUpAsWaveGoesOn(9);
-        Assert.Equal(16, grunt.MoveDelayBeats);
+        Assert.Equal(16, grunt.MoveIntervalMaxBeats);
 
         grunt.SpeedUpAsWaveGoesOn(9);
-        Assert.Equal(12, grunt.MoveDelayBeats);
+        Assert.Equal(12, grunt.MoveIntervalMaxBeats);
 
         grunt.SpeedUpAsWaveGoesOn(9);
-        Assert.Equal(9, grunt.MoveDelayBeats); // clamped, does not go below the floor
+        Assert.Equal(9, grunt.MoveIntervalMaxBeats); // clamped, does not go below the floor
 
         grunt.SpeedUpAsWaveGoesOn(1);
-        Assert.Equal(5, grunt.MoveDelayBeats); // 9 − 4, floor 1
+        Assert.Equal(5, grunt.MoveIntervalMaxBeats); // 9 − 4, floor 1
     }
 
     [Fact]
@@ -126,26 +126,26 @@ public sealed class GruntSpeedProgressTests
         Grunt? trackedGrunt = null;
         for (var i = 0; i < 29; i++)
         {
-            Grunt grunt = new(TestSprites.SharedSpriteSet, new IntVector2(100 + i % 5 * 24, 100 + i / 5 * 24), 15,
+            Grunt grunt = new(TestTextures.SharedTextureSet, new IntVector2(100 + i % 5 * 24, 100 + i / 5 * 24), 15,
                 new Random(i));
             if (i == 0) trackedGrunt = grunt;
 
             playField.FieldEntities.Grunts.Add(grunt);
         }
 
-        Assert.Equal(15, trackedGrunt!.MoveDelayBeats);
+        Assert.Equal(15, trackedGrunt!.MoveIntervalMaxBeats);
 
         // The start of the wave, then one tick short of the first check: the floor must be untouched.
         var firstCheckTick = TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames);
         Tick(playField, firstCheckTick - 1);
 
         Assert.Equal(5, playField.GetGruntSpeedFloor());
-        Assert.Equal(15, trackedGrunt.MoveDelayBeats);
+        Assert.Equal(15, trackedGrunt.MoveIntervalMaxBeats);
 
         playField.Update(OneTick()); // first wave-progress tick (277 arcade frames after the game went live)
 
         Assert.Equal(3, playField.GetGruntSpeedFloor()); // 5 − 2
-        Assert.Equal(11, trackedGrunt.MoveDelayBeats); // 15 − 4
+        Assert.Equal(11, trackedGrunt.MoveIntervalMaxBeats); // 15 − 4
 
         // One tick short of the next check: unchanged.
         var secondCheckTick = TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames + CheckIntervalArcadeFrames);
@@ -158,14 +158,14 @@ public sealed class GruntSpeedProgressTests
         // Nothing was scored since the first pass, so this one is the harsh one again: the
         // floor drops by 2 (3 → 1) and the limit by 4 (11 → 7).
         Assert.Equal(1, playField.GetGruntSpeedFloor());
-        Assert.Equal(7, trackedGrunt.MoveDelayBeats);
+        Assert.Equal(7, trackedGrunt.MoveIntervalMaxBeats);
     }
 
     [Fact]
     public void APassThatFollowsScoring_IsGentler_AndTheFlagIsSpentByIt()
     {
         var playField = CreateField(7);
-        Grunt trackedGrunt = new(TestSprites.SharedSpriteSet, new IntVector2(100, 100), 15, new Random(1));
+        Grunt trackedGrunt = new(TestTextures.SharedTextureSet, new IntVector2(100, 100), 15, new Random(1));
         playField.FieldEntities.Grunts.Add(trackedGrunt);
 
         // The score must come after GEXEC has started, because GEXEC opens by clearing the flag.
@@ -176,20 +176,20 @@ public sealed class GruntSpeedProgressTests
         Tick(playField, firstCheckTick - executiveStartTick);
 
         Assert.Equal(4, playField.GetGruntSpeedFloor()); // 5 − 1, not 5 − 2
-        Assert.Equal(13, trackedGrunt.MoveDelayBeats); // 15 − 2, not 15 − 4
+        Assert.Equal(13, trackedGrunt.MoveIntervalMaxBeats); // 15 − 2, not 15 − 4
 
         // The pass cleared the flag, so with no further score the next one is the harsh one.
         Tick(playField, TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames + CheckIntervalArcadeFrames) - firstCheckTick);
 
         Assert.Equal(2, playField.GetGruntSpeedFloor()); // 4 − 2
-        Assert.Equal(9, trackedGrunt.MoveDelayBeats); // 13 − 4
+        Assert.Equal(9, trackedGrunt.MoveIntervalMaxBeats); // 13 − 4
     }
 
     [Fact]
     public void AScoreMadeBeforeTheExecutiveStarts_IsForgotten_SoTheFirstPassIsTheHarshOne()
     {
         var playField = CreateField(7);
-        Grunt trackedGrunt = new(TestSprites.SharedSpriteSet, new IntVector2(100, 100), 15, new Random(1));
+        Grunt trackedGrunt = new(TestTextures.SharedTextureSet, new IntVector2(100, 100), 15, new Random(1));
         playField.FieldEntities.Grunts.Add(trackedGrunt);
 
         // GEXEC opens with CLR SCRFLG (R5 $2A8B), 22 arcade frames after the game goes live, so this score does not count.
@@ -199,7 +199,7 @@ public sealed class GruntSpeedProgressTests
         Tick(playField, TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames) - scoreTick);
 
         Assert.Equal(3, playField.GetGruntSpeedFloor()); // 5 − 2, not 5 − 1
-        Assert.Equal(11, trackedGrunt.MoveDelayBeats); // 15 − 4, not 15 − 2
+        Assert.Equal(11, trackedGrunt.MoveIntervalMaxBeats); // 15 − 4, not 15 − 2
     }
 
     [Fact]

@@ -54,7 +54,7 @@ public sealed class GruntAnimationTests
         // steps 2 columns (8 port px) towards the player every time; level with the player
         // it steps DOWN 4 rows (8 port px), then back up, so it bobs rather than staying put.
         var player = playField.Player.Position;
-        Grunt grunt = new(TestSprites.SharedSpriteSet, new IntVector2(player.X - 200, player.Y), 15, new Random(3));
+        Grunt grunt = new(TestTextures.SharedTextureSet, new IntVector2(player.X - 200, player.Y), 15, new Random(3));
         var last = grunt.Position;
 
         var steps = 0;
@@ -87,7 +87,7 @@ public sealed class GruntAnimationTests
         RunUntilLive(playField);
 
         var player = playField.Player.Position;
-        Grunt grunt = new(TestSprites.SharedSpriteSet,
+        Grunt grunt = new(TestTextures.SharedTextureSet,
             new IntVector2(player.X - 200, player.Y + rowsBelowPlayer * ScreenSize.ToPortPixelsFromArcadePixels(1)), 15,
             new Random(3));
         var startY = grunt.Position.Y;
@@ -105,7 +105,7 @@ public sealed class GruntAnimationTests
         RunUntilLive(playField);
 
         var player = playField.Player.Position;
-        Grunt grunt = new(TestSprites.SharedSpriteSet, new IntVector2(player.X - 300, player.Y - 120), 15, new Random(7));
+        Grunt grunt = new(TestTextures.SharedTextureSet, new IntVector2(player.X - 300, player.Y - 120), 15, new Random(7));
 
         var last = grunt.Position;
         var stepTicks = new List<int>();
@@ -150,7 +150,7 @@ public sealed class GruntAnimationTests
         // DRAW_GRUNT ($3A2B) is only reached from the step branch, so the
         // legs must FREEZE while the grunt is paused (playtest round 12:
         // "even when they are standing still, their legs are moving").
-        Grunt grunt = new(TestSprites.SharedSpriteSet, new IntVector2(player.X - 300, player.Y - 300), 300, new Random(11));
+        Grunt grunt = new(TestTextures.SharedTextureSet, new IntVector2(player.X - 300, player.Y - 300), 300, new Random(11));
 
         Assert.Equal(1, grunt.WalkAnimationFrameNumber);
         for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(4) * 10; tick++) grunt.Update(OneTick(), playField);

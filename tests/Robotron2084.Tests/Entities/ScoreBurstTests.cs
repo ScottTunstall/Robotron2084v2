@@ -28,16 +28,16 @@ public sealed class ScoreBurstTests
     public void TheBurstShowsTheEnemysAnimationFrames_FromTwo_UpToTheArcadeCount()
     {
         var bounds = new Rectangle(100, 200, 16, 15);
-        var scoreBurst = ScoreBurst.CreateForSpheroid(TestSprites.SharedSpriteSet, bounds);
+        var scoreBurst = ScoreBurst.CreateForSpheroid(TestTextures.SharedTextureSet, bounds);
 
         Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, scoreBurst.AnimationFrameIndex);
-        Assert.False(scoreBurst.ShowingPoints);
+        Assert.False(scoreBurst.IsVisible);
 
         // One tick at a time, recording every change: the clock-unit accumulator makes a
         // step land on a 2- or 3-tick boundary depending on its phase, so batching
         // ticks would alias the sequence.
         var seen = new List<int>();
-        for (var i = 0; i < 60 && !scoreBurst.ShowingPoints; i++)
+        for (var i = 0; i < 60 && !scoreBurst.IsVisible; i++)
         {
             var before = scoreBurst.AnimationFrameIndex;
             Advance(scoreBurst, 1);
@@ -49,7 +49,7 @@ public sealed class ScoreBurstTests
         // draws nothing — so the showing ends there.
         Assert.Equal([3, 4, 5, 6, 7], seen);
         Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, seen[0] - 1); // it started on 2
-        Assert.True(scoreBurst.ShowingPoints);
+        Assert.True(scoreBurst.IsVisible);
         Assert.Equal(ScoreBurstTuning.PointsSteps, scoreBurst.PointsStepsRemaining);
     }
 
@@ -59,7 +59,7 @@ public sealed class ScoreBurstTests
         // `NAP 2` = 2 fiftieths of a second = 12 clock units, and a port tick is 5 clock units, so a
         // step lands every 2-3 ticks (2.4). PortTicks(2) would also be 2 here,
         // but the accumulator is the repo's rule for short ROM delays (§52).
-        var scoreBurst = ScoreBurst.CreateForSpheroid(TestSprites.SharedSpriteSet, new Rectangle(0, 0, 16, 15));
+        var scoreBurst = ScoreBurst.CreateForSpheroid(TestTextures.SharedTextureSet, new Rectangle(0, 0, 16, 15));
 
         // Animation frame 2 is shown from the kill itself; each step is 2 fiftieths of a second.
         Assert.Equal(ScoreBurst.FirstBurstAnimationFrameIndex, scoreBurst.AnimationFrameIndex);
@@ -76,13 +76,13 @@ public sealed class ScoreBurstTests
     [Fact]
     public void ThePointsValueShowsForThirtySteps_ThenTheBurstIsGone()
     {
-        var scoreBurst = ScoreBurst.CreateForSpheroid(TestSprites.SharedSpriteSet, new Rectangle(0, 0, 16, 15));
+        var scoreBurst = ScoreBurst.CreateForSpheroid(TestTextures.SharedTextureSet, new Rectangle(0, 0, 16, 15));
 
         // 36 steps in total (6 burst + 30 points) x 12 clock units = 432 clock units, and
         // 5 clock units accrue a tick => 86 ticks leave it alive, the 87th kills it.
         Advance(scoreBurst, 86);
         Assert.Equal(EntityLifeState.Alive, scoreBurst.LifeState);
-        Assert.True(scoreBurst.ShowingPoints);
+        Assert.True(scoreBurst.IsVisible);
         Advance(scoreBurst, 1);
         Assert.Equal(EntityLifeState.Dead, scoreBurst.LifeState);
     }
@@ -91,7 +91,7 @@ public sealed class ScoreBurstTests
     public void ThePointsValueSits_OneColumnRight_FiveRowsDown()
     {
         var bounds = new Rectangle(100, 200, 16, 15);
-        var scoreBurst = ScoreBurst.CreateForQuark(TestSprites.SharedSpriteSet, bounds);
+        var scoreBurst = ScoreBurst.CreateForQuark(TestTextures.SharedTextureSet, bounds);
 
         // The ROM adds #$0105 to the blitter's column:row destination.
         Assert.Equal(
@@ -109,11 +109,11 @@ public sealed class ScoreBurstTests
         // `LDD #$FFAA`: $AA = palette index 10 (the current player's score palette index) for the
         // dying silhouette and $FF = palette index 15 for the points value; the quark's
         // `LDD #$DDDD` uses palette index 13 for both. All three cycle with the palette.
-        var spheroid = ScoreBurst.CreateForSpheroid(TestSprites.SharedSpriteSet, new Rectangle(0, 0, 16, 15));
+        var spheroid = ScoreBurst.CreateForSpheroid(TestTextures.SharedTextureSet, new Rectangle(0, 0, 16, 15));
         Assert.Equal(10, spheroid.BurstPaletteIndex);
         Assert.Equal(15, spheroid.PointsPaletteIndex);
 
-        var quark = ScoreBurst.CreateForQuark(TestSprites.SharedSpriteSet, new Rectangle(0, 0, 16, 15));
+        var quark = ScoreBurst.CreateForQuark(TestTextures.SharedTextureSet, new Rectangle(0, 0, 16, 15));
         Assert.Equal(13, quark.BurstPaletteIndex);
         Assert.Equal(13, quark.PointsPaletteIndex);
     }
@@ -123,15 +123,15 @@ public sealed class ScoreBurstTests
     {
         // The quark has NINE animation frames (SQP0..SQP8) and `LDA #8`, so its burst
         // reaches index 8 — one further than the spheroid's.
-        var scoreBurst = ScoreBurst.CreateForQuark(TestSprites.SharedSpriteSet, new Rectangle(0, 0, 16, 15));
+        var scoreBurst = ScoreBurst.CreateForQuark(TestTextures.SharedTextureSet, new Rectangle(0, 0, 16, 15));
         var last = scoreBurst.AnimationFrameIndex;
-        while (!scoreBurst.ShowingPoints && last < 20)
+        while (!scoreBurst.IsVisible && last < 20)
         {
             Advance(scoreBurst, 3);
             last = scoreBurst.AnimationFrameIndex;
         }
 
-        Assert.True(scoreBurst.ShowingPoints);
+        Assert.True(scoreBurst.IsVisible);
         Assert.Equal(ScoreBurstTuning.QuarkCount, last);
     }
 

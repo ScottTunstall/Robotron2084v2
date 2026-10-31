@@ -132,7 +132,7 @@ public sealed class StripEffectTests
     public void TheFanStartsFromTheCentredArt_NotTheBoundsCorner()
     {
         // A sprite smaller than its collision box is drawn CENTRED in it
-        // (SpriteSet.CentredIn), so the fan has to start from the sprite's own top-left.
+        // (TextureSet.CentredIn), so the fan has to start from the sprite's own top-left.
         // At spacing 1 the fan IS the sprite, so strip 0 lands exactly where the sprite
         // sits: BOUNDS 11x15 arcade px holding an 8x12 sprite, so the sprite starts one
         // pixel in on both axes (notes §75).
@@ -357,10 +357,10 @@ public sealed class StripEffectTests
         // $5D4D): 15 on frames 1 and 2, 14 on frames 3 and 4, and so on down to 2 on frames 27 and 28.
         var appear = NewAppear(StripFanAxis.Rows, 0);
         var ticks = 0;
-        Assert.False(appear.IsDrawn());
+        Assert.False(appear.IsVisible());
 
         UpdateToArcadeFrame(appear, ref ticks, 1);
-        Assert.True(appear.IsDrawn());
+        Assert.True(appear.IsVisible());
         Assert.Equal(15, appear.GetSpacing());
 
         UpdateToArcadeFrame(appear, ref ticks, 2);
@@ -477,7 +477,7 @@ public sealed class StripEffectTests
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(TestSprites.SharedSpriteSet, spot);
+        var electrode = new Electrode(TestTextures.SharedTextureSet, spot);
         playField.FieldEntities.Electrodes.Add(electrode);
 
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
@@ -496,9 +496,9 @@ public sealed class StripEffectTests
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(TestSprites.SharedSpriteSet, spot);
+        var electrode = new Electrode(TestTextures.SharedTextureSet, spot);
         playField.FieldEntities.Electrodes.Add(electrode);
-        playField.FieldEntities.Grunts.Add(new Grunt(TestSprites.SharedSpriteSet, spot)); // standing on the electrode
+        playField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, spot)); // standing on the electrode
 
         playField.Update(new GameTime());
 
@@ -510,9 +510,9 @@ public sealed class StripEffectTests
 
     [Theory]
     [InlineData(Direction8.Up,
-        StripExplosionTuning.HorizontalPoolSize)] // RRHX4 HXINV links two records (R5 $F01D to $F038)
+        StripEffectTuning.HorizontalPoolSize)] // RRHX4 HXINV links two records (R5 $F01D to $F038)
     [InlineData(Direction8.UpLeft,
-        StripExplosionTuning.DiagonalPoolSize)] // RRDX2: `RMB ((10-1)*EXSIZE)` after the first (R5 $468C)
+        StripEffectTuning.DiagonalPoolSize)] // RRDX2: `RMB ((10-1)*EXSIZE)` after the first (R5 $468C)
     public void AStripRoutineWithNoRecordFree_MakesNoExplosion(Direction8 shot, int records)
     {
         // Each routine has its own records, and one more explosion than it has records is refused outright (the
@@ -542,12 +542,12 @@ public sealed class StripEffectTests
     {
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
-        for (var i = 0; i < StripExplosionTuning.HorizontalPoolSize; i++)
+        for (var i = 0; i < StripEffectTuning.HorizontalPoolSize; i++)
             playField.SpawnExplosion(new FakeDead(Sprite), Direction8.Up);
 
         playField.SpawnExplosion(new FakeDead(Sprite), Direction8.DownLeft);
 
-        Assert.Equal(StripExplosionTuning.HorizontalPoolSize + 1, playField.FieldEntities.Explosions.Count);
+        Assert.Equal(StripEffectTuning.HorizontalPoolSize + 1, playField.FieldEntities.Explosions.Count);
     }
 
     private static PlayField CreateEmptyField()
@@ -593,7 +593,7 @@ public sealed class StripEffectTests
 
         // Draw-time only; the lifecycle/geometry tests never draw.
 
-        public Texture2D GetCurrentAnimationFrame()
+        public Texture2D GetCurrentAnimationFrameTexture()
         {
             throw new NotSupportedException("no texture in unit tests");
         }
@@ -603,9 +603,9 @@ public sealed class StripEffectTests
             return GetBounds();
         }
 
-        public Texture2D GetExplosionAnimationFrame()
+        public Texture2D GetExplosionAnimationFrameTexture()
         {
-            return GetCurrentAnimationFrame();
+            return GetCurrentAnimationFrameTexture();
         }
 
         public void MoveTo(Rectangle bounds)

@@ -23,13 +23,13 @@ public sealed class GorfTests
     /// <summary>A Gorf whose random numbers are chosen: the side, the ground's height and the drops.</summary>
     private static Gorf CreateGorf(PlayField playField, params int[] randomNumbers)
     {
-        return new Gorf(TestSprites.SharedSpriteSet, new ScriptedRandom(randomNumbers), playField.GetPlayfieldBounds(), 10);
+        return new Gorf(TestTextures.SharedTextureSet, new ScriptedRandom(randomNumbers), playField.GetPlayfieldBounds(), 10);
     }
 
     /// <summary>A Gorf that picks at random as a real game would, for the tests that run it right across.</summary>
     private static Gorf CreateRandomGorf(PlayField playField, int seed)
     {
-        return new Gorf(TestSprites.SharedSpriteSet, new Random(seed), playField.GetPlayfieldBounds(), 10);
+        return new Gorf(TestTextures.SharedTextureSet, new Random(seed), playField.GetPlayfieldBounds(), 10);
     }
 
     /// <summary>Runs the field until the Gorf is gone, and counts the ticks it took (or gives up).</summary>
@@ -152,7 +152,7 @@ public sealed class GorfTests
                  playField.FieldEntities.Grunts
                      .ToList()) grunt.Kill(); // the wave's own grunts: only the ones Gorf drops are counted
 
-        var gorf = new Gorf(TestSprites.SharedSpriteSet, new ScriptedRandom(randomNumbers), playField.GetPlayfieldBounds(), maxDropsX2);
+        var gorf = new Gorf(TestTextures.SharedTextureSet, new ScriptedRandom(randomNumbers), playField.GetPlayfieldBounds(), maxDropsX2);
         playField.FieldEntities.Add(gorf);
         RunUntilGone(playField, gorf);
         return (playField, gorf);
@@ -205,7 +205,7 @@ public sealed class GorfTests
     public void ADroppedGruntFallsFromGorfToTheGround_WithNoAppearEffect()
     {
         var playField = CreateFieldInPlay();
-        var gorf = new Gorf(TestSprites.SharedSpriteSet, new ScriptedRandom(0, 0, 0, 0, 0), playField.GetPlayfieldBounds(), 10);
+        var gorf = new Gorf(TestTextures.SharedTextureSet, new ScriptedRandom(0, 0, 0, 0, 0), playField.GetPlayfieldBounds(), 10);
         playField.FieldEntities.Add(gorf);
 
         for (var tick = 0; tick < 3000 && playField.FieldEntities.Grunts.Count == 0; tick++) playField.Update(OneTickGameTime);
@@ -227,7 +227,7 @@ public sealed class GorfTests
     public void AFallingGruntDoesNotWalkUntilItHasLanded()
     {
         var playField = CreateFieldInPlay();
-        var grunt = new Grunt(TestSprites.SharedSpriteSet, new IntVector2(300, 100), 1, new Random(1));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(300, 100), 1, new Random(1));
         grunt.BeginFall(100 + 40);
 
         for (var tick = 0; tick < 4; tick++) grunt.Update(OneTickGameTime, playField);

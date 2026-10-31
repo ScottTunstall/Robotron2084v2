@@ -9,7 +9,7 @@ public sealed class LaserSlotsTests
     [Fact]
     public void Fire_AllowsThreeLiveLasersThenHasNoFreeSlot()
     {
-        LaserSlots laserSlots = new(TestSprites.SharedSpriteSet);
+        LaserSlots laserSlots = new(TestTextures.SharedTextureSet);
 
         laserSlots.Fire(new IntVector2(100, 100), Direction8.Up);
         laserSlots.Fire(new IntVector2(120, 100), Direction8.Up);
@@ -21,7 +21,7 @@ public sealed class LaserSlotsTests
     [Fact]
     public void Fire_AfterDeactivation_ReusesTheFreedSlot()
     {
-        LaserSlots laserSlots = new(TestSprites.SharedSpriteSet);
+        LaserSlots laserSlots = new(TestTextures.SharedTextureSet);
 
         for (var i = 0; i < LaserSlots.Capacity; i++)
             laserSlots.Fire(new IntVector2(100 + i * 20, 100), Direction8.Up);

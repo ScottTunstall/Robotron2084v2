@@ -36,8 +36,8 @@ public sealed class BerzerkRobotTests
     {
         var playField = CreateFieldInPlay();
         IntVector2 start = new(playField.Player.Position.X + 120, playField.Player.Position.Y - 90);
-        var grunt = new Grunt(TestSprites.SharedSpriteSet, start, 6, new Random(11));
-        var berzerkRobot = new BerzerkRobot(TestSprites.SharedSpriteSet, start, 6, new Random(11));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, start, 6, new Random(11));
+        var berzerkRobot = new BerzerkRobot(TestTextures.SharedTextureSet, start, 6, new Random(11));
 
         for (var tick = 0; tick < 200; tick++)
         {
@@ -54,7 +54,7 @@ public sealed class BerzerkRobotTests
     public void ItStandsStillInTheIdleCycleUntilItFirstMoves_ThenWalks()
     {
         var playField = CreateFieldInPlay();
-        var berzerkRobot = new BerzerkRobot(TestSprites.SharedSpriteSet,
+        var berzerkRobot = new BerzerkRobot(TestTextures.SharedTextureSet,
             new IntVector2(playField.Player.Position.X + 100, playField.Player.Position.Y), 3, new Random(2));
         var start = berzerkRobot.Position;
 
@@ -111,9 +111,9 @@ public sealed class BerzerkRobotTests
     {
         var playField = CreateField();
         playField.SkipWaveStart();
-        var electrode = new Electrode(TestSprites.SharedSpriteSet,
+        var electrode = new Electrode(TestTextures.SharedTextureSet,
             new IntVector2(playField.Player.Position.X + 200, playField.Player.Position.Y + 100));
-        var berzerkRobot = new BerzerkRobot(TestSprites.SharedSpriteSet, electrode.Position, random: new Random(1));
+        var berzerkRobot = new BerzerkRobot(TestTextures.SharedTextureSet, electrode.Position, random: new Random(1));
         playField.FieldEntities.Add(electrode);
         playField.FieldEntities.Add(berzerkRobot);
 

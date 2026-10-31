@@ -40,7 +40,7 @@ public sealed class QuarkDropTimerTests
         var playField = CreateField(2);
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestSprites.SharedSpriteSet,
+        var quark = new Quark(TestTextures.SharedTextureSet,
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(4),
             10, 1);
         playField.FieldEntities.Quarks.Add(quark);
@@ -66,7 +66,7 @@ public sealed class QuarkDropTimerTests
         var playField = CreateField(1);
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestSprites.SharedSpriteSet,
+        var quark = new Quark(TestTextures.SharedTextureSet,
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(11),
             10, 16);
         playField.FieldEntities.Quarks.Add(quark);

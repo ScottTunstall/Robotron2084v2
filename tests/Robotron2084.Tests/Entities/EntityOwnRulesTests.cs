@@ -16,13 +16,13 @@ public sealed class EntityOwnRulesTests
     [Fact]
     public void AHumanIsGraspable_OnlyWhileAliveAndNotInABrainsHold()
     {
-        var human = new Human(TestSprites.SharedSpriteSet, new IntVector2(100, 100), HumanKind.Mommy, new Random(1));
+        var human = new Human(TestTextures.SharedTextureSet, new IntVector2(100, 100), HumanKind.Mommy, new Random(1));
         Assert.True(human.IsGraspable());
 
         human.BeginReprogramming();
         Assert.False(human.IsGraspable());
 
-        var killedHuman = new Human(TestSprites.SharedSpriteSet, new IntVector2(100, 100), HumanKind.Daddy, new Random(2));
+        var killedHuman = new Human(TestTextures.SharedTextureSet, new IntVector2(100, 100), HumanKind.Daddy, new Random(2));
         killedHuman.Kill();
         Assert.False(killedHuman.IsGraspable());
     }
@@ -67,8 +67,8 @@ public sealed class EntityOwnRulesTests
     {
         var list = new EntityList<Electrode>
         {
-            new(TestSprites.SharedSpriteSet, new IntVector2(10, 10)),
-            new(TestSprites.SharedSpriteSet, new IntVector2(50, 10))
+            new(TestTextures.SharedTextureSet, new IntVector2(10, 10)),
+            new(TestTextures.SharedTextureSet, new IntVector2(50, 10))
         };
         Assert.Equal(2, list.Count(entity => !entity.IsDead()));
 
@@ -112,7 +112,7 @@ public sealed class EntityOwnRulesTests
     [Fact]
     public void TheLifeQuestions_AnswerForAnyEntity_FromItsLifeState()
     {
-        var electrode = new Electrode(TestSprites.SharedSpriteSet, new IntVector2(10, 10));
+        var electrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(10, 10));
         Assert.True(electrode.IsAlive());
         Assert.False(electrode.IsDying());
         Assert.False(electrode.IsDead());
@@ -122,7 +122,7 @@ public sealed class EntityOwnRulesTests
         Assert.True(electrode.IsDying());
         Assert.False(electrode.IsDead());
 
-        var grunt = new Grunt(TestSprites.SharedSpriteSet, new IntVector2(50, 50));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(50, 50));
         grunt.Kill();
         Assert.True(grunt.IsDead());
         Assert.False(grunt.IsAlive());

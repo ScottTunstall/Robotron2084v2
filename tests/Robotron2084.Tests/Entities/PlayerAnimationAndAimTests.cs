@@ -13,7 +13,7 @@ namespace Robotron2084.Tests;
 ///     table $35EB + (N-1)*4, images $361B..$382B). Walk sequences: left
 ///     1,2,1,3 / right 4,5,4,6 / down 7,8,7,9 / up 10,11,10,12 (diagonals
 ///     reuse the horizontal sequence), 3 ticks per frame, frozen while the
-///     stick is centered, wave start = frame 7 (first DOWN frame).
+///     stick is centred, wave start = frame 7 (first DOWN frame).
 /// </summary>
 public sealed class PlayerAnimationAndAimTests
 {
