@@ -49,6 +49,15 @@ public sealed class AttractObjectMachine
         _random = random;
     }
 
+    private enum MovieAction
+    {
+        None,
+        Walk,
+        Cycle,
+        Mono,
+        ReprogramShake
+    }
+
     /// <summary>Every live object, in spawn order (laser bolts included).</summary>
     public IReadOnlyList<MovieObject> Objects => _objects;
 
@@ -133,11 +142,6 @@ public sealed class AttractObjectMachine
         }
     }
 
-    private int RollUpTo(int exclusive)
-    {
-        return _random.Next(exclusive);
-    }
-
     private byte Read(MovieProcess process)
     {
         return _scriptBytes[process.ScriptIndex++];
@@ -151,6 +155,11 @@ public sealed class AttractObjectMachine
     private int ReadWord(MovieProcess process)
     {
         return (Read(process) << 8) | Read(process);
+    }
+
+    private int RollUpTo(int exclusive)
+    {
+        return _random.Next(exclusive);
     }
 
     /// <summary>
@@ -175,15 +184,6 @@ public sealed class AttractObjectMachine
             LaserArcadeFramesLeft = lifetime,
             XVelocitySubpixels = xVelocitySubpixels
         });
-    }
-
-    private enum MovieAction
-    {
-        None,
-        Walk,
-        Cycle,
-        Mono,
-        ReprogramShake
     }
 
     private sealed record MovieProcess
@@ -300,13 +300,13 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 7: // SETPOS — column, row.
-                {
-                    int column = machine.Read(this);
-                    int row = machine.Read(this);
-                    Object.XSubpixels = column << 8;
-                    Object.YSubpixels = row << 8;
-                    return true;
-                }
+                    {
+                        int column = machine.Read(this);
+                        int row = machine.Read(this);
+                        Object.XSubpixels = column << 8;
+                        Object.YSubpixels = row << 8;
+                        return true;
+                    }
 
                 case 8: // SETXV
                     Object.XVelocitySubpixels = machine.ReadSignedWord(this);
@@ -378,20 +378,20 @@ public sealed class AttractObjectMachine
                     return true;
 
                 case 18: // LFIRE — bolt lifetime, then the frames this script waits.
-                {
-                    int lifetime = machine.Read(this);
-                    machine.SpawnLaser(Object, lifetime, false);
-                    WaitArcadeFrames = machine.Read(this);
-                    return false;
-                }
+                    {
+                        int lifetime = machine.Read(this);
+                        machine.SpawnLaser(Object, lifetime, false);
+                        WaitArcadeFrames = machine.Read(this);
+                        return false;
+                    }
 
                 case 19: // RFIRE
-                {
-                    int lifetime = machine.Read(this);
-                    machine.SpawnLaser(Object, lifetime, true);
-                    WaitArcadeFrames = machine.Read(this);
-                    return false;
-                }
+                    {
+                        int lifetime = machine.Read(this);
+                        machine.SpawnLaser(Object, lifetime, true);
+                        WaitArcadeFrames = machine.Read(this);
+                        return false;
+                    }
 
                 default:
                     return HaltOnUnknownOpcode();
@@ -404,26 +404,26 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 20: // LOOPER — `count` passes over the block from the label.
-                {
-                    int count = machine.Read(this);
-                    var labelIndex = machine.ReadWord(this) - AttractMovieData.ScriptBase;
-                    if (LoopPassesLeft == 0) LoopPassesLeft = count;
+                    {
+                        int count = machine.Read(this);
+                        var labelIndex = machine.ReadWord(this) - AttractMovieData.ScriptBase;
+                        if (LoopPassesLeft == 0) LoopPassesLeft = count;
 
-                    if (--LoopPassesLeft != 0) ScriptIndex = labelIndex;
+                        if (--LoopPassesLeft != 0) ScriptIndex = labelIndex;
 
-                    return true;
-                }
+                        return true;
+                    }
 
                 case 21: // GHOST — another process on the SAME object.
-                {
-                    var scriptAddress = machine.ReadWord(this);
-                    machine._processes.Add(new MovieProcess
                     {
-                        Object = Object,
-                        ScriptIndex = scriptAddress - AttractMovieData.ScriptBase
-                    });
-                    return true;
-                }
+                        var scriptAddress = machine.ReadWord(this);
+                        machine._processes.Add(new MovieProcess
+                        {
+                            Object = Object,
+                            ScriptIndex = scriptAddress - AttractMovieData.ScriptBase
+                        });
+                        return true;
+                    }
 
                 default:
                     return HaltOnUnknownOpcode();
@@ -436,13 +436,13 @@ public sealed class AttractObjectMachine
             switch (opcode)
             {
                 case 22: // SETRP — a relative move in whole columns/rows, no animation.
-                {
-                    int dx = (sbyte)machine.Read(this);
-                    int dy = (sbyte)machine.Read(this);
-                    Object.XSubpixels += dx << 8;
-                    Object.YSubpixels += dy << 8;
-                    return true;
-                }
+                    {
+                        int dx = (sbyte)machine.Read(this);
+                        int dy = (sbyte)machine.Read(this);
+                        Object.XSubpixels += dx << 8;
+                        Object.YSubpixels += dy << 8;
+                        return true;
+                    }
 
                 case 23: // GDIE — kill the process, keep the object.
                     IsAlive = false;
@@ -453,19 +453,19 @@ public sealed class AttractObjectMachine
                     return true;
 
                 case 25: // MONO — box colour, image colour, frames, special (brain in the box).
-                {
-                    // The colour operands are doubled-nibble palette values exactly
-                    // like the page script's COLOR ($AA = slot 10), so the slot is the
-                    // HIGH nibble — and 0 means "no box".
-                    var boxSlot = machine.Read(this) >> 4;
-                    var silhouetteSlot = machine.Read(this) >> 4;
-                    MonoStepsLeft = machine.Read(this);
-                    var showsBrain = machine.Read(this) != 0;
-                    BeginMono(Object, boxSlot, silhouetteSlot, showsBrain);
-                    Action = MovieAction.Mono;
-                    WaitArcadeFrames = 3;
-                    return false;
-                }
+                    {
+                        // The colour operands are doubled-nibble palette values exactly
+                        // like the page script's COLOR ($AA = slot 10), so the slot is the
+                        // HIGH nibble — and 0 means "no box".
+                        var boxSlot = machine.Read(this) >> 4;
+                        var silhouetteSlot = machine.Read(this) >> 4;
+                        MonoStepsLeft = machine.Read(this);
+                        var showsBrain = machine.Read(this) != 0;
+                        BeginMono(Object, boxSlot, silhouetteSlot, showsBrain);
+                        Action = MovieAction.Mono;
+                        WaitArcadeFrames = 3;
+                        return false;
+                    }
 
                 case 26: // RPROG — the 64-step vertical shake.
                     // PSHAKE ($868C) is a ONE-BYTE script: RPROG owns the process

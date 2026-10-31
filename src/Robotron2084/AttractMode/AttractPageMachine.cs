@@ -51,8 +51,8 @@ public sealed class AttractPageMachine
     private readonly List<MovieTextCell> _textCells = [];
     private int _cursorX = TextLeft;
     private int _cursorY;
-    private int _gruntTimer;
     private int _gruntsLeft;
+    private int _gruntTimer;
     private int _scriptIndex;
     private int _waitArcadeFrames;
 
@@ -226,14 +226,14 @@ public sealed class AttractPageMachine
                 return;
 
             case 1: // CLEARM — cursor to the left margin on the given row, clear the block.
-            {
-                int row = NextByte();
-                int range = NextByte();
-                _cursorX = TextLeft;
-                _cursorY = row;
-                ClearTextCells(TextLeft, ClearTopRow, ClearWidth, range - 0x10);
-                return;
-            }
+                {
+                    int row = NextByte();
+                    int range = NextByte();
+                    _cursorX = TextLeft;
+                    _cursorY = row;
+                    ClearTextCells(TextLeft, ClearTopRow, ClearWidth, range - 0x10);
+                    return;
+                }
 
             case 2: // NEWLIN
                 _cursorX = TextLeft;
@@ -241,17 +241,17 @@ public sealed class AttractPageMachine
                 return;
 
             case 5: // MESS — a name popup in the score row.
-            {
-                var x = NextByte() * ScreenSize.ArcadePixelsPerByte;
-                int number = NextByte();
-                ClearTextCells(TextLeft, MessageRow, ClearWidth, MessageHeight);
-                Message = new MovieMessage(
-                    x,
-                    MessageRow,
-                    GetMessageText(number),
-                    TextSlot);
-                return;
-            }
+                {
+                    var x = NextByte() * ScreenSize.ArcadePixelsPerByte;
+                    int number = NextByte();
+                    ClearTextCells(TextLeft, MessageRow, ClearWidth, MessageHeight);
+                    Message = new MovieMessage(
+                        x,
+                        MessageRow,
+                        GetMessageText(number),
+                        TextSlot);
+                    return;
+                }
 
             case 7: // COLOR — the text's palette slot (a doubled nibble like $AA).
                 TextSlot = NextByte() >> 4;

@@ -23,14 +23,14 @@ public sealed class AttractMovie
         PageMachine = new AttractPageMachine(script, ObjectMachine, random);
     }
 
+    /// <summary>Movie time played so far, in fiftieths of a second (a test hook).</summary>
+    public int ArcadeFrames { get; private set; }
+
     /// <summary>The characters the movie has walking about.</summary>
     public AttractObjectMachine ObjectMachine { get; }
 
     /// <summary>The text/action interpreter that drives them.</summary>
     public AttractPageMachine PageMachine { get; }
-
-    /// <summary>Movie time played so far, in fiftieths of a second (a test hook).</summary>
-    public int ArcadeFrames { get; private set; }
 
     /// <summary>The script reached DONE / DONE2.</summary>
     public bool IsFinished()

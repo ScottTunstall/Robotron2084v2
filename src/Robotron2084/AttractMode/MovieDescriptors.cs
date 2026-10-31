@@ -11,13 +11,13 @@ public static class MovieDescriptors
     public const int Circle = 0x7EA9;
     public const int Cruise = 0x86B0;
     public const int Daddy = 0x7E53;
+    public const int Electrodes = 0x7E8F;
     public const int Enforcer = 0x7E93;
     public const int Grunt = 0x7E8B;
     public const int Hulk = 0x7E6F;
     public const int Mikey = 0x7E61;
     public const int Mommy = 0x7E41;
     public const int Points = 0x7EB5;
-    public const int Electrodes = 0x7E8F;
     public const int Skull = 0x7EB9;
     public const int Square = 0x7EA5;
     public const int Tank = 0x7EB1;
