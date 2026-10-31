@@ -14,7 +14,7 @@ catch (PersistenceException persistenceException)
 
 /// <summary>
 ///     The one native dialog the game shows: a modal error box for a saved file that
-///     exists but could not be read (ERR-1). Direct user32, as <see cref="DisplayInfo" />
+///     exists but could not be read (ERR-1). Direct user32, as <see cref="Robotron2084.Core.DisplayInfo" />
 ///     already is — no UI framework reference.
 /// </summary>
 internal static class NativeMessageBox

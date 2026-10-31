@@ -22,7 +22,7 @@ namespace Robotron2084;
 ///     there, so the game screen is never stretched and the window may be any size. <b>F8</b> cycles the canvas fit
 ///     (Integer = the largest whole multiple, Fill = the exact fraction), <b>F11</b> and <b>Alt+Enter</b> toggle
 ///     full screen, <b>Escape</b> exits. It also owns the shared instances every state passes onward:
-///     <see cref="SpriteSet" />, the input source and the high score store, all created once in LoadContent.
+///     <see cref="TextureSet" />, the input source and the high score store, all created once in LoadContent.
 /// </remarks>
 /// <seealso cref="Presentation" />
 /// <seealso cref="ScreenSize" />
@@ -44,7 +44,7 @@ public sealed class RobotronGame : Game
     private ScaleMode _scaleMode = ScaleMode.Integer;
     private GameServices _gameServices = null!;
     private SpriteBatch _spriteBatch = null!;
-    private SpriteSet _spriteSet = null!;
+    private TextureSet _textureSet = null!;
     private GameStateManager _gameStateManager = null!;
     private int _windowedScale = 1;
 
@@ -108,15 +108,15 @@ public sealed class RobotronGame : Game
         // colour processes replayed per tick, and the pixel shader that maps
         // sprite marker colours to the palette indices' live colours. The wall cycles on
         // palette index 11 (RGB process); sprites cycle through the colour-cycle shader
-        // (Content/Effects/ColorCycle.fx — notes §3.3, §34).
+        // (Content/Effects/ColourCycle.fx — notes §3.3, §34).
         GamePalette gamePalette = new();
         _paletteAnimator = new PaletteAnimator(gamePalette);
-        _spriteSet = new SpriteSet(new ContentSpriteSource(GraphicsDevice, Content))
+        _textureSet = new TextureSet(new ContentTextureSource(GraphicsDevice, Content))
         {
             BlitterDraw =
             {
                 GamePalette = gamePalette,
-                ColorCycleEffect = Content.Load<Effect>("Effects/ColorCycle")
+                ColourCycleEffect = Content.Load<Effect>("Effects/ColourCycle")
             }
         };
         // The port's control definitions (notes §101) are read from controls.ini at
@@ -132,7 +132,7 @@ public sealed class RobotronGame : Game
         _gameSettings = _gameSettingsStore.Load();
         _playerInputSource = new BoundPlayerInputSource(_controlSettings, 0);
         _highScoreStore = new HighScoreStore();
-        _gameServices = new GameServices(_spriteSet, _highScoreStore, _controlSettings, _playerInputSource, _gameSettings);
+        _gameServices = new GameServices(_textureSet, _highScoreStore, _controlSettings, _playerInputSource, _gameSettings);
         _gameStateManager = new GameStateManager(new TitleScreenState(_gameServices));
 
         StartSound();
@@ -145,7 +145,7 @@ public sealed class RobotronGame : Game
         if (keyboardState.IsKeyDown(Keys.Escape)) Exit();
 
         HandlePresentationKeys(keyboardState);
-        HandleAttractDevKeys(keyboardState);
+        HandleAttractDeveloperKeys(keyboardState);
         HandleStartKeys(keyboardState);
         HandleDeveloperToolsKey(keyboardState);
 
@@ -171,7 +171,7 @@ public sealed class RobotronGame : Game
     {
         try
         {
-            Sound.Initialize(new SoundBoardAudioSink(new SoundBoard()));
+            Sound.Initialise(new SoundBoardAudioSink(new SoundBoard()));
         }
         catch (NoAudioHardwareException exception)
         {
@@ -211,10 +211,10 @@ public sealed class RobotronGame : Game
     ///     The function keys are left to the game's own start and settings keys (F1/F2/F3, F5, F10) and the display
     ///     keys (F8, F11).
     /// </remarks>
-    private void HandleAttractDevKeys(KeyboardState keyboardState)
+    private void HandleAttractDeveloperKeys(KeyboardState keyboardState)
     {
         var onAttractScreen = _gameStateManager.CurrentGameState is IAttractState;
-        DevKeys.AttractFastForward = onAttractScreen && keyboardState.IsKeyDown(Keys.PageUp);
+        DeveloperKeys.AttractFastForward = onAttractScreen && keyboardState.IsKeyDown(Keys.PageUp);
         if (!onAttractScreen) return;
 
         if (WasPressed(keyboardState, Keys.End))
@@ -295,7 +295,7 @@ public sealed class RobotronGame : Game
             : null;
 
         if (mode is { } chosen)
-            _gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _spriteSet,
+            _gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _textureSet,
                 _highScoreStore));
         else if (WasPressed(keyboardState, Keys.F4))
             _gameStateManager.TransitionTo(new SoundTestState(_gameServices));
@@ -312,8 +312,8 @@ public sealed class RobotronGame : Game
     {
         var gameSession = GameSession.CreateNewGame(GameMode.OnePlayer, _playerInputSource, controlSettings: _controlSettings,
             gameSettings: _gameSettings);
-        gameSession.GetCurrent().Score = DevKeys.QualifyingScore;
-        _gameStateManager.TransitionTo(GameOverState.CreateFromSession(_playerInputSource, _spriteSet, _highScoreStore, gameSession));
+        gameSession.GetCurrent().Score = DeveloperKeys.QualifyingScore;
+        _gameStateManager.TransitionTo(GameOverState.CreateFromSession(_playerInputSource, _textureSet, _highScoreStore, gameSession));
     }
 
     /// <summary>Switches between the windowed window and borderless full screen at the desktop's own mode.</summary>
