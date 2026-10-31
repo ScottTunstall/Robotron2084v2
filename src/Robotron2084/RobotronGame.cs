@@ -28,7 +28,7 @@ namespace Robotron2084;
 /// <seealso cref="ScreenSize" />
 public sealed class RobotronGame : Game
 {
-    private readonly GraphicsDeviceManager _graphics;
+    private readonly GraphicsDeviceManager _graphicsDeviceManager;
     private Rectangle _canvasBounds = new(0, 0, ScreenSize.Width, ScreenSize.Height);
     private ControlSettings _controlSettings = null!;
     private ControlSettingsStore _controlSettingsStore = null!;
@@ -36,21 +36,21 @@ public sealed class RobotronGame : Game
     private GameSettings _gameSettings = null!;
     private GameSettingsStore _gameSettingsStore = null!;
     private HighScoreStore _highScoreStore = null!;
-    private IPlayerInputSource _input = null!;
+    private IPlayerInputSource _playerInputSource = null!;
     private bool _isFullScreen;
     private PaletteAnimator _paletteAnimator = null!;
     private KeyboardState _previousKeyboardState;
-    private RenderTarget2D _renderTarget = null!;
+    private RenderTarget2D _renderTarget2D = null!;
     private ScaleMode _scaleMode = ScaleMode.Integer;
-    private GameServices _services = null!;
+    private GameServices _gameServices = null!;
     private SpriteBatch _spriteBatch = null!;
-    private SpriteSet _sprites = null!;
-    private GameStateManager _stateManager = null!;
+    private SpriteSet _spriteSet = null!;
+    private GameStateManager _gameStateManager = null!;
     private int _windowedScale = 1;
 
     public RobotronGame()
     {
-        _graphics = new GraphicsDeviceManager(this);
+        _graphicsDeviceManager = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsFixedTimeStep = true; // fixed timestep drives Update(GameTime); gameplay uses per-tick integer math
 
@@ -62,11 +62,11 @@ public sealed class RobotronGame : Game
     protected override void Draw(GameTime gameTime)
     {
         // 1. Render the ScreenSize.Width x ScreenSize.Height scene (states draw onto the already-cleared target).
-        GraphicsDevice.SetRenderTarget(_renderTarget);
+        GraphicsDevice.SetRenderTarget(_renderTarget2D);
         GraphicsDevice.Clear(Color.Black);
 
         _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp);
-        _stateManager.Draw(_spriteBatch, _font);
+        _gameStateManager.Draw(_spriteBatch, _font);
         _spriteBatch.End();
 
         // 2. Blit the scene to the window at the canvas's fit: uniform, centred, the bars
@@ -77,7 +77,7 @@ public sealed class RobotronGame : Game
         GraphicsDevice.Clear(Color.Black);
 
         _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp);
-        _spriteBatch.Draw(_renderTarget, _canvasBounds, Color.White);
+        _spriteBatch.Draw(_renderTarget2D, _canvasBounds, Color.White);
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -100,7 +100,7 @@ public sealed class RobotronGame : Game
 
     protected override void LoadContent()
     {
-        _renderTarget = new RenderTarget2D(GraphicsDevice, ScreenSize.Width, ScreenSize.Height);
+        _renderTarget2D = new RenderTarget2D(GraphicsDevice, ScreenSize.Width, ScreenSize.Height);
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _font = Content.Load<SpriteFont>("Fonts/Default");
 
@@ -109,13 +109,13 @@ public sealed class RobotronGame : Game
         // sprite marker colours to the palette indices' live colours. The wall cycles on
         // palette index 11 (RGB process); sprites cycle through the colour-cycle shader
         // (Content/Effects/ColorCycle.fx — notes §3.3, §34).
-        GamePalette palette = new();
-        _paletteAnimator = new PaletteAnimator(palette);
-        _sprites = new SpriteSet(new ContentSpriteSource(GraphicsDevice, Content))
+        GamePalette gamePalette = new();
+        _paletteAnimator = new PaletteAnimator(gamePalette);
+        _spriteSet = new SpriteSet(new ContentSpriteSource(GraphicsDevice, Content))
         {
-            Blitter =
+            BlitterDraw =
             {
-                Palette = palette,
+                GamePalette = gamePalette,
                 ColorCycleEffect = Content.Load<Effect>("Effects/ColorCycle")
             }
         };
@@ -130,36 +130,36 @@ public sealed class RobotronGame : Game
         // next game, so a change is live from the next START.
         _gameSettingsStore = new GameSettingsStore();
         _gameSettings = _gameSettingsStore.Load();
-        _input = new BoundPlayerInputSource(_controlSettings, 0);
+        _playerInputSource = new BoundPlayerInputSource(_controlSettings, 0);
         _highScoreStore = new HighScoreStore();
-        _services = new GameServices(_sprites, _highScoreStore, _controlSettings, _input, _gameSettings);
-        _stateManager = new GameStateManager(new TitleScreenState(_services));
+        _gameServices = new GameServices(_spriteSet, _highScoreStore, _controlSettings, _playerInputSource, _gameSettings);
+        _gameStateManager = new GameStateManager(new TitleScreenState(_gameServices));
 
         StartSound();
     }
 
     protected override void Update(GameTime gameTime)
     {
-        var state = Keyboard.GetState();
+        var keyboardState = Keyboard.GetState();
 
-        if (state.IsKeyDown(Keys.Escape)) Exit();
+        if (keyboardState.IsKeyDown(Keys.Escape)) Exit();
 
-        HandlePresentationKeys(state);
-        HandleAttractDevKeys(state);
-        HandleStartKeys(state);
-        HandleDeveloperToolsKey(state);
+        HandlePresentationKeys(keyboardState);
+        HandleAttractDevKeys(keyboardState);
+        HandleStartKeys(keyboardState);
+        HandleDeveloperToolsKey(keyboardState);
 
-        _previousKeyboardState = state;
+        _previousKeyboardState = keyboardState;
 
         // The attract-cycle sound switch (notes §131): while the attract sequence is on screen and
         // ATTRACT MODE SOUND is off, the sound service ignores every request — a real game keeps its
         // sound. The demo's wave-clear tunnel is part of the attract sequence too: the phony player
         // clearing a wave asks for the wave-end music, and that must obey the setting as well.
-        Sound.AttractMuted = _gameSettings.IsAttractSilent(_stateManager.Current is IAttractState
-            || (_stateManager.Current as WaveClearState)?.IsAttractMode == true);
+        Sound.AttractMuted = _gameSettings.IsAttractSilent(_gameStateManager.CurrentGameState is IAttractState
+            || (_gameStateManager.CurrentGameState as WaveClearState)?.IsAttractMode == true);
 
         _paletteAnimator.Update();
-        _stateManager.Update(gameTime);
+        _gameStateManager.Update(gameTime);
         Sound.Tick();
         base.Update(gameTime);
     }
@@ -183,10 +183,10 @@ public sealed class RobotronGame : Game
     private void ApplyBackBuffer(int width, int height, bool isFullScreen)
     {
         _isFullScreen = isFullScreen;
-        _graphics.PreferredBackBufferWidth = width;
-        _graphics.PreferredBackBufferHeight = height;
-        _graphics.IsFullScreen = isFullScreen;
-        _graphics.ApplyChanges();
+        _graphicsDeviceManager.PreferredBackBufferWidth = width;
+        _graphicsDeviceManager.PreferredBackBufferHeight = height;
+        _graphicsDeviceManager.IsFullScreen = isFullScreen;
+        _graphicsDeviceManager.ApplyChanges();
         FitCanvas();
     }
 
@@ -202,7 +202,7 @@ public sealed class RobotronGame : Game
     ///     Home the demo game, Insert the high score table, Delete the end of a game, and Page Up HELD to
     ///     fast-forward the movie.
     /// </summary>
-    /// <param name="state">This tick's keyboard.</param>
+    /// <param name="keyboardState">This tick's keyboard.</param>
     /// <remarks>
     ///     End and Home drop straight into the attract sequence so a scene can be inspected without
     ///     sitting out the title's 12-second idle, and Page Up is how the hulk's walk (movie frame ~2574) is reached
@@ -211,19 +211,19 @@ public sealed class RobotronGame : Game
     ///     The function keys are left to the game's own start and settings keys (F1/F2/F3, F5, F10) and the display
     ///     keys (F8, F11).
     /// </remarks>
-    private void HandleAttractDevKeys(KeyboardState state)
+    private void HandleAttractDevKeys(KeyboardState keyboardState)
     {
-        var onAttractScreen = _stateManager.Current is IAttractState;
-        DevKeys.AttractFastForward = onAttractScreen && state.IsKeyDown(Keys.PageUp);
+        var onAttractScreen = _gameStateManager.CurrentGameState is IAttractState;
+        DevKeys.AttractFastForward = onAttractScreen && keyboardState.IsKeyDown(Keys.PageUp);
         if (!onAttractScreen) return;
 
-        if (WasPressed(state, Keys.End))
-            _stateManager.TransitionTo(new StorylineState(_services, new Random()));
-        else if (WasPressed(state, Keys.Home))
-            _stateManager.TransitionTo(new AttractState(_services));
-        else if (WasPressed(state, Keys.Insert))
-            _stateManager.TransitionTo(new HighScoreTableState(_services));
-        else if (WasPressed(state, Keys.Delete)) StartEndOfGameFlow();
+        if (WasPressed(keyboardState, Keys.End))
+            _gameStateManager.TransitionTo(new StorylineState(_gameServices, new Random()));
+        else if (WasPressed(keyboardState, Keys.Home))
+            _gameStateManager.TransitionTo(new AttractState(_gameServices));
+        else if (WasPressed(keyboardState, Keys.Insert))
+            _gameStateManager.TransitionTo(new HighScoreTableState(_gameServices));
+        else if (WasPressed(keyboardState, Keys.Delete)) StartEndOfGameFlow();
     }
 
     /// <summary>
@@ -233,31 +233,31 @@ public sealed class RobotronGame : Game
     ///     DEVELOPER TOOLS page and back, because each has work to do on the way out: the settings and
     ///     the control definitions are written to their files, and the sound test silences the board.
     /// </summary>
-    /// <param name="state">This tick's keyboard.</param>
-    private void HandleDeveloperToolsKey(KeyboardState state)
+    /// <param name="keyboardState">This tick's keyboard.</param>
+    private void HandleDeveloperToolsKey(KeyboardState keyboardState)
     {
-        if (!WasPressed(state, Keys.F10)) return;
+        if (!WasPressed(keyboardState, Keys.F10)) return;
 
         // The page's own F10 closes it, and the service pages handle their own way out.
-        if (_stateManager.Current is DeveloperToolsState or SettingsState or DefineInputsState or SoundTestState)
+        if (_gameStateManager.CurrentGameState is DeveloperToolsState or SettingsState or DefineInputsState or SoundTestState)
             return;
 
-        _stateManager.TransitionTo(new DeveloperToolsState(_services, _controlSettingsStore, _gameSettingsStore));
+        _gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices, _controlSettingsStore, _gameSettingsStore));
     }
 
     /// <summary>The port-only presentation keys: full screen, and the canvas fit.</summary>
-    /// <param name="state">This tick's keyboard.</param>
-    private void HandlePresentationKeys(KeyboardState state)
+    /// <param name="keyboardState">This tick's keyboard.</param>
+    private void HandlePresentationKeys(KeyboardState keyboardState)
     {
         // F11 is the Windows convention for full screen and Alt+Enter is the game
         // convention; F8 cycles the canvas fit between the largest whole multiple
         // (crisp, the default) and the exact uniform fraction (fills the window).
-        var altHeld = state.IsKeyDown(Keys.LeftAlt) || state.IsKeyDown(Keys.RightAlt);
-        if (WasPressed(state, Keys.F11) || (altHeld && WasPressed(state, Keys.Enter)))
+        var altHeld = keyboardState.IsKeyDown(Keys.LeftAlt) || keyboardState.IsKeyDown(Keys.RightAlt);
+        if (WasPressed(keyboardState, Keys.F11) || (altHeld && WasPressed(keyboardState, Keys.Enter)))
         {
             ToggleFullScreen();
         }
-        else if (WasPressed(state, Keys.F8))
+        else if (WasPressed(keyboardState, Keys.F8))
         {
             _scaleMode = Presentation.NextScaleMode(_scaleMode);
             FitCanvas();
@@ -273,34 +273,34 @@ public sealed class RobotronGame : Game
     ///     F10 is NOT one of them: it opens the DEVELOPER TOOLS page from every screen, attract screens
     ///     included (see <see cref="HandleDeveloperToolsKey" />).
     /// </summary>
-    /// <param name="state">This tick's keyboard.</param>
+    /// <param name="keyboardState">This tick's keyboard.</param>
     /// <remarks>
     ///     Handling them here rather than in the title means the attract movie, the demo and the high
     ///     score table can all be interrupted by a real player sitting down — or by the operator opening
     ///     the settings.
     /// </remarks>
-    private void HandleStartKeys(KeyboardState state)
+    private void HandleStartKeys(KeyboardState keyboardState)
     {
-        if (_stateManager.Current is not IAttractState) return;
+        if (_gameStateManager.CurrentGameState is not IAttractState) return;
 
-        if (WasPressed(state, Keys.D5))
+        if (WasPressed(keyboardState, Keys.D5))
         {
             Sound.PlayCoin(Random.Shared);
             return;
         }
 
-        GameMode? mode = WasPressed(state, Keys.F1) ? GameMode.OnePlayer
-            : WasPressed(state, Keys.F2) ? GameMode.TwoPlayerAlternate
-            : WasPressed(state, Keys.F3) ? GameMode.TwoPlayerSimultaneous
+        GameMode? mode = WasPressed(keyboardState, Keys.F1) ? GameMode.OnePlayer
+            : WasPressed(keyboardState, Keys.F2) ? GameMode.TwoPlayerAlternate
+            : WasPressed(keyboardState, Keys.F3) ? GameMode.TwoPlayerSimultaneous
             : null;
 
         if (mode is { } chosen)
-            _stateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _sprites,
+            _gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _spriteSet,
                 _highScoreStore));
-        else if (WasPressed(state, Keys.F4))
-            _stateManager.TransitionTo(new SoundTestState(_services));
-        else if (WasPressed(state, Keys.F5))
-            _stateManager.TransitionTo(new SettingsState(_services, _gameSettingsStore));
+        else if (WasPressed(keyboardState, Keys.F4))
+            _gameStateManager.TransitionTo(new SoundTestState(_gameServices));
+        else if (WasPressed(keyboardState, Keys.F5))
+            _gameStateManager.TransitionTo(new SettingsState(_gameServices, _gameSettingsStore));
     }
 
     /// <summary>Drops straight into the end of a game, with a score that has to qualify (notes §116).</summary>
@@ -310,10 +310,10 @@ public sealed class RobotronGame : Game
     /// </remarks>
     private void StartEndOfGameFlow()
     {
-        var session = GameSession.CreateNewGame(GameMode.OnePlayer, _input, controlSettings: _controlSettings,
+        var gameSession = GameSession.CreateNewGame(GameMode.OnePlayer, _playerInputSource, controlSettings: _controlSettings,
             gameSettings: _gameSettings);
-        session.GetCurrent().Score = DevKeys.QualifyingScore;
-        _stateManager.TransitionTo(GameOverState.CreateFromSession(_input, _sprites, _highScoreStore, session));
+        gameSession.GetCurrent().Score = DevKeys.QualifyingScore;
+        _gameStateManager.TransitionTo(GameOverState.CreateFromSession(_playerInputSource, _spriteSet, _highScoreStore, gameSession));
     }
 
     /// <summary>Switches between the windowed window and borderless full screen at the desktop's own mode.</summary>
@@ -330,8 +330,8 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>True on the tick <paramref name="key" /> goes down (press, not hold).</summary>
-    private bool WasPressed(KeyboardState current, Keys key)
+    private bool WasPressed(KeyboardState keyboardState, Keys key)
     {
-        return !_previousKeyboardState.IsKeyDown(key) && current.IsKeyDown(key);
+        return !_previousKeyboardState.IsKeyDown(key) && keyboardState.IsKeyDown(key);
     }
 }

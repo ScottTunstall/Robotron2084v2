@@ -4,12 +4,12 @@ using Robotron2084.Persistence;
 
 try
 {
-    using var game = new RobotronGame();
-    game.Run();
+    using var robotronGame = new RobotronGame();
+    robotronGame.Run();
 }
-catch (PersistenceException exception)
+catch (PersistenceException persistenceException)
 {
-    NativeMessageBox.Show(exception.Message);
+    NativeMessageBox.Show(persistenceException.Message);
 }
 
 /// <summary>
