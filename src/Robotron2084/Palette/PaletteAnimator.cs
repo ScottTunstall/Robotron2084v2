@@ -21,7 +21,7 @@ namespace Robotron2084.Palette;
 ///     the entity bodies use (notes §52, §65): a 1-frame process steps every 1.2
 ///     ticks, a 2-frame one every 2.4, an 8-frame one every 9.6. Until §65 the steps
 ///     were counted in PORT ticks, which made all six cycles run 20% fast — visible
-///     on the player's score digits, the mini man, the electrodes and the wall.
+///     on the player's score digits, the spare-life icons, the electrodes and the wall.
 ///     Tables loop (the ROM restarts each table at index 0 on its $00 sentinel —
 ///     equivalent to wrap for these sequences).
 /// </summary>
