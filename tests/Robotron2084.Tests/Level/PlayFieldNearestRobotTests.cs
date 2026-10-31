@@ -19,44 +19,44 @@ public sealed class PlayFieldNearestRobotTests
 
     private static PlayField EmptyField()
     {
-        var parameters = new WaveParameters(1);
-        return new PlayFieldBuilder().WithParameters(parameters).WithBounds(Bounds).WithSeed(42).Build();
+        var waveParameters = new WaveParameters(1);
+        return new PlayFieldBuilder().WithParameters(waveParameters).WithBounds(Bounds).WithSeed(42).Build();
     }
 
     [Fact]
     public void NearestLivingRobotPositionTo_WithNoRobots_IsNull()
     {
-        var field = EmptyField();
+        var playField = EmptyField();
 
-        Assert.Null(field.Entities.GetNearestLivingRobotPosition(field.Player.Position));
+        Assert.Null(playField.FieldEntities.GetNearestLivingRobotPosition(playField.Player.Position));
     }
 
     [Fact]
     public void NearestLivingRobotPositionTo_ReturnsTheCloserOfTwo()
     {
-        var field = EmptyField();
-        var player = field.Player.Position;
+        var playField = EmptyField();
+        var player = playField.Player.Position;
         var far = player + new IntVector2(0, 300);
         var near = player + new IntVector2(0, 100);
 
-        field.SpawnEnforcer(far);
-        var nearTank = field.SpawnTank(near);
+        playField.SpawnEnforcer(far);
+        var nearTank = playField.SpawnTank(near);
 
-        Assert.Equal(nearTank.Position, field.Entities.GetNearestLivingRobotPosition(player));
+        Assert.Equal(nearTank.Position, playField.FieldEntities.GetNearestLivingRobotPosition(player));
     }
 
     [Fact]
     public void NearestLivingRobotPositionTo_IgnoresDeadRobots()
     {
-        var field = EmptyField();
-        var player = field.Player.Position;
+        var playField = EmptyField();
+        var player = playField.Player.Position;
         var far = player + new IntVector2(0, 300);
         var near = player + new IntVector2(0, 100);
 
-        field.SpawnEnforcer(far);
-        var tank = field.SpawnTank(near);
+        playField.SpawnEnforcer(far);
+        var tank = playField.SpawnTank(near);
         tank.Kill();
 
-        Assert.Equal(far, field.Entities.GetNearestLivingRobotPosition(player));
+        Assert.Equal(far, playField.FieldEntities.GetNearestLivingRobotPosition(player));
     }
 }

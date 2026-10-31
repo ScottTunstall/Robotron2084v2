@@ -31,12 +31,12 @@ public sealed class HulkTargetTests
     [Fact]
     public void WithNobodyLeftOver_AboutThreeHulksInFourHeadForThePhantom_AndTheRestHuntThePlayer()
     {
-        var field = CreateField(1, 1, 1);
-        var phantom = Hulk.GetPhantomTargetPosition(field.GetPlayfieldBounds());
-        var player = field.GetPlayerPosition();
+        var playField = CreateField(1, 1, 1);
+        var phantom = Hulk.GetPhantomTargetPosition(playField.GetPlayfieldBounds());
+        var player = playField.GetPlayerPosition();
 
-        var phantoms = field.Entities.Hulks.Count(hulk => hulk.GetTargetPosition() == phantom);
-        var hunters = field.Entities.Hulks.Count(hulk => hulk.GetTargetPosition() == player);
+        var phantoms = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == phantom);
+        var hunters = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == player);
 
         // Nobody stalks a family member, even though there is a family on the field.
         Assert.Equal(ManyHulks, phantoms + hunters);
@@ -47,30 +47,30 @@ public sealed class HulkTargetTests
     [Fact]
     public void AHulkThatTookALeftOverPlace_StalksWhoeverIsInThatPlaceNow_ThenThePlayer()
     {
-        var field = CreateField(1, 1, 1, 1);
-        var player = field.GetPlayerPosition();
-        var mommy = field.GetFamilyMemberInSlot(1)!;
+        var playField = CreateField(1, 1, 1, 1);
+        var player = playField.GetPlayerPosition();
+        var mommy = playField.GetFamilyMemberInSlot(1)!;
         Assert.Equal(HumanKind.Mommy, mommy.Kind);
 
-        var stalkers = field.Entities.Hulks.Count(hulk => hulk.GetTargetPosition() == mommy.Position);
-        var hunters = field.Entities.Hulks.Count(hulk => hulk.GetTargetPosition() == player);
+        var stalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == mommy.Position);
+        var hunters = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == player);
         Assert.Equal(ManyHulks, stalkers + hunters);
         Assert.InRange(stalkers, 130, 170);
 
         // Once she is gone her place is empty, and every hulk hunts the player. None picks another family member.
         mommy.Kill();
-        Assert.All(field.Entities.Hulks, hulk => Assert.Equal(player, hulk.GetTargetPosition()));
+        Assert.All(playField.FieldEntities.Hulks, hulk => Assert.Equal(player, hulk.GetTargetPosition()));
     }
 
     [Fact]
     public void TheHulksTakeTheLeftOverPlacesInTurn()
     {
-        var field = CreateField(1, 1, 1, 0, 2);
-        var mikey = field.GetFamilyMemberInSlot(0)!.Position;
-        var daddy = field.GetFamilyMemberInSlot(2)!.Position;
+        var playField = CreateField(1, 1, 1, 0, 2);
+        var mikey = playField.GetFamilyMemberInSlot(0)!.Position;
+        var daddy = playField.GetFamilyMemberInSlot(2)!.Position;
 
-        var mikeyStalkers = field.Entities.Hulks.Count(hulk => hulk.GetTargetPosition() == mikey);
-        var daddyStalkers = field.Entities.Hulks.Count(hulk => hulk.GetTargetPosition() == daddy);
+        var mikeyStalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == mikey);
+        var daddyStalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == daddy);
 
         // The search goes round the list, so the two places are handed out alternately.
         Assert.InRange(mikeyStalkers - daddyStalkers, 0, 1);
@@ -81,24 +81,24 @@ public sealed class HulkTargetTests
     public void ALeftOverPlaceThatIsEmptyThisTime_SendsTheHulkAfterThePlayer()
     {
         // Place 5 held someone last time, but this wave's three family members only fill places 0 to 2.
-        var field = CreateField(1, 1, 1, 5);
-        var player = field.GetPlayerPosition();
+        var playField = CreateField(1, 1, 1, 5);
+        var player = playField.GetPlayerPosition();
 
-        Assert.All(field.Entities.Hulks, hulk => Assert.Equal(player, hulk.GetTargetPosition()));
+        Assert.All(playField.FieldEntities.Hulks, hulk => Assert.Equal(player, hulk.GetTargetPosition()));
     }
 
     [Fact]
     public void TheField_ReportsThePlacesThatStillHoldAFamilyMember()
     {
-        var field = new PlayFieldBuilder()
+        var playField = new PlayFieldBuilder()
             .WithParameters(new WaveParameters(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1))
             .Build();
-        Assert.Equal([0, 1, 2], field.GetOccupiedFamilySlots());
+        Assert.Equal([0, 1, 2], playField.GetOccupiedFamilySlots());
 
-        field.GetFamilyMemberInSlot(0)!.Rescue();
-        field.GetFamilyMemberInSlot(2)!.BeginReprogramming();
+        playField.GetFamilyMemberInSlot(0)!.Rescue();
+        playField.GetFamilyMemberInSlot(2)!.BeginReprogramming();
 
-        Assert.Equal([1], field.GetOccupiedFamilySlots());
+        Assert.Equal([1], playField.GetOccupiedFamilySlots());
     }
 
     [Fact]
@@ -119,21 +119,21 @@ public sealed class HulkTargetTests
     [Fact]
     public void AHulkWithNothingToStalk_DriftsToTheTopRightOfThePlayfield()
     {
-        var field = new PlayFieldBuilder().Build();
-        field.SkipWaveStart();
-        var bounds = field.GetPlayfieldBounds();
+        var playField = new PlayFieldBuilder().Build();
+        playField.SkipWaveStart();
+        var bounds = playField.GetPlayfieldBounds();
         var phantom = Hulk.GetPhantomTargetPosition(bounds);
-        var hulk = new Hulk(TestSprites.Shared, new IntVector2(bounds.X + 40, bounds.Bottom - 80), new Random(5), 2,
+        var hulk = new Hulk(TestSprites.SharedSpriteSet, new IntVector2(bounds.X + 40, bounds.Bottom - 80), new Random(5), 2,
             () => phantom);
-        field.Entities.Hulks.Add(hulk);
-        field.Player.TeleportTo(new IntVector2(bounds.X + 4, bounds.Bottom - 40));
+        playField.FieldEntities.Hulks.Add(hulk);
+        playField.Player.TeleportTo(new IntVector2(bounds.X + 4, bounds.Bottom - 40));
 
         long sumX = 0;
         long sumY = 0;
         const int Samples = 4000;
         for (var tick = 0; tick < 6000 + Samples; tick++)
         {
-            field.Update(new GameTime());
+            playField.Update(new GameTime());
             if (tick >= 6000)
             {
                 sumX += hulk.Position.X;
@@ -162,21 +162,21 @@ public sealed class HulkTargetTests
     /// </summary>
     private static int CountFirstDirections(Direction8 direction, int targetColumnsToTheRight)
     {
-        var field = new PlayFieldBuilder().Build();
-        field.SkipWaveStart();
-        var bounds = field.GetPlayfieldBounds();
+        var playField = new PlayFieldBuilder().Build();
+        playField.SkipWaveStart();
+        var bounds = playField.GetPlayfieldBounds();
         var spot = new IntVector2(bounds.X + 200, bounds.Y + 100);
         var target = new IntVector2(spot.X + ScreenSize.ToPortPixelsFromColumns(targetColumnsToTheRight), spot.Y);
         var hulks = new List<Hulk>();
         for (var seed = 0; seed < ManyHulks; seed++)
         {
-            var hulk = new Hulk(TestSprites.Shared, spot, new Random(seed), 8, () => target);
+            var hulk = new Hulk(TestSprites.SharedSpriteSet, spot, new Random(seed), 8, () => target);
             hulks.Add(hulk);
-            field.Entities.Hulks.Add(hulk);
+            playField.FieldEntities.Hulks.Add(hulk);
         }
 
         // The first update after the game goes live is the hulk's first aim, which is always left or right.
-        field.Update(new GameTime());
+        playField.Update(new GameTime());
 
         return hulks.Count(hulk => hulk.Direction == direction);
     }

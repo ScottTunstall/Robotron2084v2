@@ -33,15 +33,15 @@ public sealed class WaveStartSequenceTests
         return new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
     }
 
-    private static void Tick(PlayField field, int ticks)
+    private static void Tick(PlayField playField, int ticks)
     {
-        for (var tick = 0; tick < ticks; tick++) field.Update(OneTick());
+        for (var tick = 0; tick < ticks; tick++) playField.Update(OneTick());
     }
 
-    private static PlayField CreateField(WaveParameters parameters, IPlayerInputSource? input = null,
+    private static PlayField CreateField(WaveParameters waveParameters, IPlayerInputSource? playerInputSource = null,
         bool playerInvincible = true)
     {
-        return new PlayFieldBuilder().WithParameters(parameters).WithInput(input ?? new FakeInputSource())
+        return new PlayFieldBuilder().WithParameters(waveParameters).WithInput(playerInputSource ?? new FakeInputSource())
             .WithPlayerInvincible(playerInvincible).WithSeed(7).Build();
     }
 
@@ -53,10 +53,10 @@ public sealed class WaveStartSequenceTests
     public void AnOrdinaryWave_BringsThePlayerInAfterTheAppearLoop_AndGoesLiveTenFramesLater(int robots,
         int playerAppearArcadeFrames, int liveArcadeFrames)
     {
-        var sequence = new WaveStartSequence(robots, false);
+        var waveStartSequence = new WaveStartSequence(robots, false);
 
-        Assert.Equal(playerAppearArcadeFrames, sequence.PlayerAppearArcadeFrames);
-        Assert.Equal(liveArcadeFrames, sequence.LiveArcadeFrames);
+        Assert.Equal(playerAppearArcadeFrames, waveStartSequence.PlayerAppearArcadeFrames);
+        Assert.Equal(liveArcadeFrames, waveStartSequence.LiveArcadeFrames);
     }
 
     [Theory]
@@ -64,24 +64,24 @@ public sealed class WaveStartSequenceTests
     [InlineData(25)]
     public void ABrainWave_BringsThePlayerInAtFrame150_HoweverManyRobotsThereAre(int robots)
     {
-        var sequence = new WaveStartSequence(robots, true);
+        var waveStartSequence = new WaveStartSequence(robots, true);
 
-        Assert.Equal(150, sequence.PlayerAppearArcadeFrames);
-        Assert.Equal(160, sequence.LiveArcadeFrames);
+        Assert.Equal(150, waveStartSequence.PlayerAppearArcadeFrames);
+        Assert.Equal(160, waveStartSequence.LiveArcadeFrames);
     }
 
     [Fact]
     public void TheSequence_ReachesEachMoment_OnTheTickItsArcadeFrameFallsOn()
     {
-        var sequence = new WaveStartSequence(15, false);
+        var waveStartSequence = new WaveStartSequence(15, false);
         var playerAppearTick = ArcadeClock.ToPortTicksRoundedUp(58); // 69.6 ticks
         var liveTick = ArcadeClock.ToPortTicksRoundedUp(68); // 81.6 ticks
 
         for (var tick = 1; tick <= liveTick; tick++)
         {
-            sequence.Update();
-            Assert.Equal(tick >= playerAppearTick, sequence.HasPlayerAppeared());
-            Assert.Equal(tick >= liveTick, sequence.IsLive());
+            waveStartSequence.Update();
+            Assert.Equal(tick >= playerAppearTick, waveStartSequence.HasPlayerAppeared());
+            Assert.Equal(tick >= liveTick, waveStartSequence.IsLive());
         }
 
         Assert.Equal(70, playerAppearTick);
@@ -93,18 +93,18 @@ public sealed class WaveStartSequenceTests
     {
         // arcade frame 68 is 408 clock units and tick 82 is 410, so 2 units of that tick are live play. A timer
         // that starts when the game goes live (GEXEC's) starts from there, not from the whole tick.
-        var sequence = new WaveStartSequence(15, false);
+        var waveStartSequence = new WaveStartSequence(15, false);
         for (var tick = 1; tick < 82; tick++)
         {
-            sequence.Update();
-            Assert.Equal(0, sequence.GetLiveClockUnitsThisTick());
+            waveStartSequence.Update();
+            Assert.Equal(0, waveStartSequence.GetLiveClockUnitsThisTick());
         }
 
-        sequence.Update();
-        Assert.Equal(2, sequence.GetLiveClockUnitsThisTick());
+        waveStartSequence.Update();
+        Assert.Equal(2, waveStartSequence.GetLiveClockUnitsThisTick());
 
-        sequence.Update();
-        Assert.Equal(ArcadeClock.UnitsPerPortTick, sequence.GetLiveClockUnitsThisTick());
+        waveStartSequence.Update();
+        Assert.Equal(ArcadeClock.UnitsPerPortTick, waveStartSequence.GetLiveClockUnitsThisTick());
     }
 
     [Fact]
@@ -112,43 +112,43 @@ public sealed class WaveStartSequenceTests
     {
         // GETROB: grunts (RRP8), hulks (RRH11) and tanks (RRTK4). Spheroids and quarks are on the object
         // list instead, so APPEAR never walks them and they do not lengthen the start.
-        var field = CreateField(new WaveParameters(1, 3, HulkCount: 2, SpheroidCount: 4, QuarkCount: 1, TankCount: 1));
+        var playField = CreateField(new WaveParameters(1, 3, HulkCount: 2, SpheroidCount: 4, QuarkCount: 1, TankCount: 1));
 
-        Assert.Equal(6 + 43, field.GetPlayerAppearArcadeFrames());
-        Assert.Equal(6 + 53, field.GetLiveArcadeFrames());
+        Assert.Equal(6 + 43, playField.GetPlayerAppearArcadeFrames());
+        Assert.Equal(6 + 53, playField.GetLiveArcadeFrames());
     }
 
     [Fact]
     public void ThePlayer_IsNotOnTheScreen_UntilItAppears()
     {
-        var field = CreateField(new WaveParameters(1, 15));
+        var playField = CreateField(new WaveParameters(1, 15));
 
-        Tick(field, WaveStartTicks.UntilPlayerAppears(field) - 1);
-        Assert.False(field.HasPlayerAppeared());
+        Tick(playField, WaveStartTicks.UntilPlayerAppears(playField) - 1);
+        Assert.False(playField.HasPlayerAppeared());
 
-        Tick(field, 1);
-        Assert.True(field.HasPlayerAppeared());
-        Assert.False(field.IsLive()); // PLS1 is ten fiftieths of a second before PLS2
+        Tick(playField, 1);
+        Assert.True(playField.HasPlayerAppeared());
+        Assert.False(playField.IsLive()); // PLS1 is ten fiftieths of a second before PLS2
     }
 
     [Fact]
     public void ThePlayer_CannotMoveOrFire_UntilTheGameIsLive()
     {
-        var input = new FakeInputSource(new PlayerInputState(new IntVector2(1, 0), new IntVector2(1, 0), true));
-        var field = CreateField(new WaveParameters(1, 15), input);
-        var start = field.Player.Position;
+        var playerInputSource = new FakeInputSource(new PlayerInputState(new IntVector2(1, 0), new IntVector2(1, 0), true));
+        var playField = CreateField(new WaveParameters(1, 15), playerInputSource);
+        var start = playField.Player.Position;
 
-        Tick(field, WaveStartTicks.UntilLive(field) - 1);
+        Tick(playField, WaveStartTicks.UntilLive(playField) - 1);
 
-        Assert.Equal(start, field.Player.Position);
-        Assert.Empty(field.PlayerLasers.GetActiveLasers());
-        Assert.False(field.IsLive());
+        Assert.Equal(start, playField.Player.Position);
+        Assert.Empty(playField.PlayerLaserSlots.GetActiveLasers());
+        Assert.False(playField.IsLive());
 
-        Tick(field, 1); // CLR STATUS
+        Tick(playField, 1); // CLR STATUS
 
-        Assert.True(field.IsLive());
-        Assert.NotEqual(start, field.Player.Position);
-        Assert.Single(field.PlayerLasers.GetActiveLasers());
+        Assert.True(playField.IsLive());
+        Assert.NotEqual(start, playField.Player.Position);
+        Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
     }
 
     [Fact]
@@ -156,49 +156,49 @@ public sealed class WaveStartSequenceTests
     {
         // The collision process is made at PLS2 (`MAKP COLCHK`, $2895), so a family member that walks into
         // the player before then is not rescued.
-        var field = CreateField(new WaveParameters(1, MikeyCount: 1));
-        var mikey = field.Entities.Family.Members[0];
+        var playField = CreateField(new WaveParameters(1, MikeyCount: 1));
+        var mikey = playField.FieldEntities.FamilyList.Members[0];
 
-        for (var tick = 1; tick < WaveStartTicks.UntilLive(field); tick++)
+        for (var tick = 1; tick < WaveStartTicks.UntilLive(playField); tick++)
         {
-            mikey.MoveTo(field.Player.Position);
-            field.Update(OneTick());
+            mikey.MoveTo(playField.Player.Position);
+            playField.Update(OneTick());
         }
 
-        Assert.Equal(0, field.RescuesThisLife);
+        Assert.Equal(0, playField.RescuesThisLife);
 
-        mikey.MoveTo(field.Player.Position);
-        field.Update(OneTick()); // the game goes live
+        mikey.MoveTo(playField.Player.Position);
+        playField.Update(OneTick()); // the game goes live
 
-        Assert.Equal(1, field.RescuesThisLife);
+        Assert.Equal(1, playField.RescuesThisLife);
     }
 
     [Fact]
     public void ARobotOnThePlayer_DoesNotKill_UntilTheGameIsLive()
     {
-        var field = CreateField(new WaveParameters(1), playerInvincible: false);
-        field.Entities.Grunts.Add(new Grunt(TestSprites.Shared, field.Player.Position));
+        var playField = CreateField(new WaveParameters(1), playerInvincible: false);
+        playField.FieldEntities.Grunts.Add(new Grunt(TestSprites.SharedSpriteSet, playField.Player.Position));
 
-        Tick(field, WaveStartTicks.UntilLive(field) - 1);
-        Assert.Equal(EntityLifeState.Alive, field.Player.LifeState);
+        Tick(playField, WaveStartTicks.UntilLive(playField) - 1);
+        Assert.Equal(EntityLifeState.Alive, playField.Player.LifeState);
 
-        Tick(field, 1); // the game goes live
-        Assert.Equal(EntityLifeState.Dying, field.Player.LifeState);
+        Tick(playField, 1); // the game goes live
+        Assert.Equal(EntityLifeState.Dying, playField.Player.LifeState);
     }
 
     [Fact]
     public void TheRobots_StandStill_UntilTheGameIsLive()
     {
-        var field = CreateField(new WaveParameters(1, 15));
-        IntVector2[] starts = [.. field.Entities.Grunts.Select(grunt => grunt.Position)];
+        var playField = CreateField(new WaveParameters(1, 15));
+        IntVector2[] starts = [.. playField.FieldEntities.Grunts.Select(grunt => grunt.Position)];
 
-        Tick(field, WaveStartTicks.UntilLive(field) - 1);
+        Tick(playField, WaveStartTicks.UntilLive(playField) - 1);
 
-        Assert.True(field.RobotsFrozen());
-        Assert.Equal(starts, field.Entities.Grunts.Select(grunt => grunt.Position));
+        Assert.True(playField.RobotsFrozen());
+        Assert.Equal(starts, playField.FieldEntities.Grunts.Select(grunt => grunt.Position));
 
-        Tick(field, 1);
+        Tick(playField, 1);
 
-        Assert.False(field.RobotsFrozen());
+        Assert.False(playField.RobotsFrozen());
     }
 }

@@ -56,13 +56,13 @@ public sealed class WaveParameterGeneratorTests
     [Fact]
     public void Generate_WavesAbove40_RepeatWaves21To40()
     {
-        WaveParameterGenerator generator = new();
+        WaveParameterGenerator waveParameterGenerator = new();
 
-        var w41 = generator.Generate(41);
-        var w21 = generator.Generate(21);
-        var w60 = generator.Generate(60);
-        var w40 = generator.Generate(40);
-        var w61 = generator.Generate(61);
+        var w41 = waveParameterGenerator.Generate(41);
+        var w21 = waveParameterGenerator.Generate(21);
+        var w60 = waveParameterGenerator.Generate(60);
+        var w40 = waveParameterGenerator.Generate(40);
+        var w61 = waveParameterGenerator.Generate(61);
 
         Assert.Equal(w21.GruntCount, w41.GruntCount);
         Assert.Equal(w40.GruntCount, w60.GruntCount);
@@ -80,9 +80,9 @@ public sealed class WaveParameterGeneratorTests
             "2,9,3,2,2,12,4,3\n");
         try
         {
-            var generator = new WaveParameterGenerator(path);
+            var waveParameterGenerator = new WaveParameterGenerator(path);
 
-            var level1 = generator.Generate(1);
+            var level1 = waveParameterGenerator.Generate(1);
             Assert.Equal(5, level1.GruntCount);
             Assert.Equal(2, level1.HulkCount);
             Assert.Equal(1, level1.SpheroidCount);
@@ -92,12 +92,12 @@ public sealed class WaveParameterGeneratorTests
             Assert.Equal(2, level1.MaxTanksPerQuark);
             Assert.Equal(0, level1.EnemySpeedBonus);
 
-            var level2 = generator.Generate(2);
+            var level2 = waveParameterGenerator.Generate(2);
             Assert.Equal(9, level2.GruntCount);
             Assert.Equal(4, level2.MaxEnforcersPerSpheroid);
             Assert.Equal(1, level2.EnemySpeedBonus); // still computed from the wave number
 
-            var level3 = generator.Generate(3); // wraps back to row 1
+            var level3 = waveParameterGenerator.Generate(3); // wraps back to row 1
             Assert.Equal(5, level3.GruntCount);
             Assert.Equal(2, level3.EnemySpeedBonus);
         }
@@ -111,9 +111,9 @@ public sealed class WaveParameterGeneratorTests
     public void Generate_MissingTable_FallsBackToArcadeWaveTable()
     {
         var path = Path.Combine(Path.GetTempPath(), $"robotron-missing-{Guid.NewGuid():N}.csv");
-        var generator = new WaveParameterGenerator(path);
+        var waveParameterGenerator = new WaveParameterGenerator(path);
 
-        var p = generator.Generate(1);
+        var p = waveParameterGenerator.Generate(1);
 
         Assert.Equal(15, p.GruntCount); // ROM wave 1
         Assert.Equal(5, p.ElectrodeCount);
@@ -129,8 +129,8 @@ public sealed class WaveParameterGeneratorTests
             "1,notanumber,2,1,1,10,3,2\n");
         try
         {
-            var generator = new WaveParameterGenerator(path);
-            var p = generator.Generate(1);
+            var waveParameterGenerator = new WaveParameterGenerator(path);
+            var p = waveParameterGenerator.Generate(1);
 
             Assert.Equal(15, p.GruntCount);
         }

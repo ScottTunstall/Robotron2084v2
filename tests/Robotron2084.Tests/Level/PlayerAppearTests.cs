@@ -34,131 +34,131 @@ public sealed class PlayerAppearTests
         return new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
     }
 
-    private static PlayField CreateEmptyField(IPlayerInputSource? input = null)
+    private static PlayField CreateEmptyField(IPlayerInputSource? playerInputSource = null)
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithInput(input ?? new FakeInputSource())
+        return new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithInput(playerInputSource ?? new FakeInputSource())
             .WithSeed(7).Build();
     }
 
-    private static void TickToArcadeFrame(PlayField field, ref int ticks, int arcadeFrame)
+    private static void TickToArcadeFrame(PlayField playField, ref int ticks, int arcadeFrame)
     {
         while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
         {
-            field.Update(OneTick());
+            playField.Update(OneTick());
             ticks++;
         }
     }
 
-    private static int Count(PlayField field, StripEngine engine)
+    private static int Count(PlayField playField, StripEngine engine)
     {
-        return field.Entities.Explosions.Count(effect => effect.GetEngine() == engine);
+        return playField.FieldEntities.Explosions.Count(effect => effect.GetEngine() == engine);
     }
 
     [Fact]
     public void WhenThePlayerAppears_ARowFanIsMadeForEveryRow_AndAColumnFanForAsManyColumnsAsThereAreRecords()
     {
-        var field = CreateEmptyField();
+        var playField = CreateEmptyField();
         var ticks = 0;
 
-        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame - 1);
-        Assert.Empty(field.Entities.Explosions);
+        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame - 1);
+        Assert.Empty(playField.FieldEntities.Explosions);
 
-        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame);
+        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame);
 
         // The vertical routine takes its records from the object list, so all 12 are made. The sprite is 4 columns
         // wide, but the horizontal routine has 2 records, so only the first 2 asked for are made.
-        Assert.Equal(PlayerSpriteRows, Count(field, StripEngine.Vertical));
-        Assert.Equal(StripExplosionTuning.HorizontalPoolSize, Count(field, StripEngine.Horizontal));
-        Assert.Equal(0, Count(field, StripEngine.Diagonal));
-        Assert.All(field.Entities.Explosions, effect => Assert.Equal(StripEffectKind.Appear, effect.Kind));
-        Assert.All(field.Entities.Explosions, effect => Assert.Equal(field.Player.GetBounds(), effect.GetBounds()));
+        Assert.Equal(PlayerSpriteRows, Count(playField, StripEngine.Vertical));
+        Assert.Equal(StripExplosionTuning.HorizontalPoolSize, Count(playField, StripEngine.Horizontal));
+        Assert.Equal(0, Count(playField, StripEngine.Diagonal));
+        Assert.All(playField.FieldEntities.Explosions, effect => Assert.Equal(StripEffectKind.Appear, effect.Kind));
+        Assert.All(playField.FieldEntities.Explosions, effect => Assert.Equal(playField.Player.GetBounds(), effect.GetBounds()));
     }
 
     [Fact]
     public void SixArcadeFramesLater_APairOfLeaningFansIsMadeForEveryThirdRow()
     {
-        var field = CreateEmptyField();
+        var playField = CreateEmptyField();
         var ticks = 0;
 
-        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 5);
-        Assert.Equal(0, Count(field, StripEngine.Diagonal));
+        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 5);
+        Assert.Equal(0, Count(playField, StripEngine.Diagonal));
 
-        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 6);
+        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 6);
 
         // The count runs 12, 9, 6, 3, 0 (`SUBA #3 / BPL DPAPP1`), and each one makes two fans (`CLRA`, then `COMA`):
         // ten, which is every record the diagonal routine has.
-        Assert.Equal(StripExplosionTuning.DiagonalPoolSize, Count(field, StripEngine.Diagonal));
-        Assert.Equal(5, field.Entities.Explosions.Count(effect => effect.Slope == 1));
-        Assert.Equal(5, field.Entities.Explosions.Count(effect => effect.Slope == -1));
+        Assert.Equal(StripExplosionTuning.DiagonalPoolSize, Count(playField, StripEngine.Diagonal));
+        Assert.Equal(5, playField.FieldEntities.Explosions.Count(effect => effect.Slope == 1));
+        Assert.Equal(5, playField.FieldEntities.Explosions.Count(effect => effect.Slope == -1));
     }
 
     [Fact]
     public void ThePlayersOwnSprite_IsNotDrawn_UntilTheGameIsLive()
     {
-        var field = CreateEmptyField();
+        var playField = CreateEmptyField();
         var ticks = 0;
 
-        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 9);
-        Assert.True(field.HasPlayerAppeared());
-        Assert.False(field.IsPlayerDrawn());
+        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 9);
+        Assert.True(playField.HasPlayerAppeared());
+        Assert.False(playField.IsPlayerDrawn());
 
-        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 10); // PLS2: CLR STATUS
-        Assert.True(field.IsLive());
-        Assert.True(field.IsPlayerDrawn());
-        Assert.NotEmpty(field.Entities.Explosions); // the appear is still running
+        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 10); // PLS2: CLR STATUS
+        Assert.True(playField.IsLive());
+        Assert.True(playField.IsPlayerDrawn());
+        Assert.NotEmpty(playField.FieldEntities.Explosions); // the appear is still running
     }
 
     [Fact]
     public void OnceTheGameIsLive_TheStripsStayWithThePlayer()
     {
         // AWRIT0 ("SCROLL EM", $5D57): with STATUS clear, each routine takes the player's place again when it redraws.
-        var input = new FakeInputSource(new PlayerInputState(new IntVector2(1, 0), IntVector2.Zero, false));
-        var field = CreateEmptyField(input);
+        var playerInputSource = new FakeInputSource(new PlayerInputState(new IntVector2(1, 0), IntVector2.Zero, false));
+        var playField = CreateEmptyField(playerInputSource);
         var ticks = 0;
-        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 10);
-        var start = field.Player.GetBounds();
+        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 10);
+        var start = playField.Player.GetBounds();
 
         for (var tick = 0; tick < 12; tick++)
         {
-            var spacingBefore = field.Entities.Explosions.ToDictionary(effect => effect, effect => effect.GetSpacing());
-            field.Update(OneTick());
+            var spacingBefore = playField.FieldEntities.Explosions.ToDictionary(effect => effect, effect => effect.GetSpacing());
+            playField.Update(OneTick());
 
-            foreach (var effect in field.Entities.Explosions.Where(effect =>
+            foreach (var effect in playField.FieldEntities.Explosions.Where(effect =>
                          effect.GetSpacing() != spacingBefore[effect]))
-                Assert.Equal(field.Player.GetBounds(), effect.GetBounds());
+                Assert.Equal(playField.Player.GetBounds(), effect.GetBounds());
         }
 
-        Assert.NotEqual(start, field.Player.GetBounds());
-        Assert.All(field.Entities.Explosions, effect => Assert.NotEqual(start, effect.GetBounds()));
+        Assert.NotEqual(start, playField.Player.GetBounds());
+        Assert.All(playField.FieldEntities.Explosions, effect => Assert.NotEqual(start, effect.GetBounds()));
     }
 
     [Fact]
     public void TheAppearIsOver_WhenTheLastColumnFanHasClosedUp()
     {
         // The leaning fans last 15 fiftieths of a second from frame 50, the row fans 29 from frame 44, and the column fans 31.
-        var field = CreateEmptyField();
+        var playField = CreateEmptyField();
         var ticks = 0;
 
-        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 6 + 15);
-        Assert.Equal(0, Count(field, StripEngine.Diagonal));
+        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 6 + 15);
+        Assert.Equal(0, Count(playField, StripEngine.Diagonal));
 
-        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 29);
-        Assert.Equal(0, Count(field, StripEngine.Vertical));
-        Assert.Equal(StripExplosionTuning.HorizontalPoolSize, Count(field, StripEngine.Horizontal));
+        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 29);
+        Assert.Equal(0, Count(playField, StripEngine.Vertical));
+        Assert.Equal(StripExplosionTuning.HorizontalPoolSize, Count(playField, StripEngine.Horizontal));
 
-        TickToArcadeFrame(field, ref ticks, PlayerAppearArcadeFrame + 31);
-        Assert.Empty(field.Entities.Explosions);
+        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 31);
+        Assert.Empty(playField.FieldEntities.Explosions);
     }
 
     [Fact]
     public void ATestThatSkipsTheStartOfTheWave_GetsNoAppearEffect()
     {
-        var field = CreateEmptyField();
-        field.SkipWaveStart();
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
 
-        field.Update(OneTick());
+        playField.Update(OneTick());
 
-        Assert.Empty(field.Entities.Explosions);
-        Assert.True(field.IsPlayerDrawn());
+        Assert.Empty(playField.FieldEntities.Explosions);
+        Assert.True(playField.IsPlayerDrawn());
     }
 }

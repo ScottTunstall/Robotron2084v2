@@ -14,22 +14,22 @@ public sealed class PlayFieldSpawnTests
     [Fact]
     public void Constructor_SpawnsExactlyTheParameterCounts()
     {
-        var field = CreateField(4, 2, 2, 1, 6);
+        var playField = CreateField(4, 2, 2, 1, 6);
 
-        Assert.Equal(6, field.Entities.Electrodes.Count(entity => !entity.IsDead()));
-        Assert.Equal(4, field.Entities.Grunts.Count(entity => !entity.IsDead()));
-        Assert.Equal(2, field.Entities.Hulks.Count(entity => !entity.IsDead()));
-        Assert.Equal(2, field.Entities.Spheroids.Count(entity => !entity.IsDead()));
-        Assert.Equal(1, field.Entities.Quarks.Count(entity => !entity.IsDead()));
-        Assert.Equal(0, field.Entities.Enforcers.Count(entity => !entity.IsDead())); // only dropped by spheroids later
-        Assert.Equal(0, field.Entities.Tanks.Count(entity => !entity.IsDead())); // only dropped by quarks later
+        Assert.Equal(6, playField.FieldEntities.Electrodes.Count(entity => !entity.IsDead()));
+        Assert.Equal(4, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
+        Assert.Equal(2, playField.FieldEntities.Hulks.Count(entity => !entity.IsDead()));
+        Assert.Equal(2, playField.FieldEntities.Spheroids.Count(entity => !entity.IsDead()));
+        Assert.Equal(1, playField.FieldEntities.Quarks.Count(entity => !entity.IsDead()));
+        Assert.Equal(0, playField.FieldEntities.Enforcers.Count(entity => !entity.IsDead())); // only dropped by spheroids later
+        Assert.Equal(0, playField.FieldEntities.Tanks.Count(entity => !entity.IsDead())); // only dropped by quarks later
     }
 
     [Fact]
     public void Constructor_NoTwoElectrodesOverlap()
     {
-        var field = CreateField(4, 2, 2, 1, 6);
-        IReadOnlyList<Electrode> electrodes = field.Entities.Electrodes;
+        var playField = CreateField(4, 2, 2, 1, 6);
+        IReadOnlyList<Electrode> electrodes = playField.FieldEntities.Electrodes;
 
         for (var i = 0; i < electrodes.Count; i++)
         for (var j = i + 1; j < electrodes.Count; j++)
@@ -40,21 +40,21 @@ public sealed class PlayFieldSpawnTests
     [Fact]
     public void Constructor_NoInitialSpawnOverlapsTheWall()
     {
-        var field = CreateField(4, 2, 2, 1, 6);
+        var playField = CreateField(4, 2, 2, 1, 6);
 
-        AssertEveryEntityIsFullyInsidePlayArea(e => e.GetBounds(), field.Entities.Electrodes);
+        AssertEveryEntityIsFullyInsidePlayArea(e => e.GetBounds(), playField.FieldEntities.Electrodes);
     }
 
     [Fact]
     public void Constructor_InitialSpawnsRespectMinimumDistancesFromPlayer()
     {
-        var field = CreateField(4, 2, 2, 1, 6);
-        var playerStart = field.Player.Position;
+        var playField = CreateField(4, 2, 2, 1, 6);
+        var playerStart = playField.Player.Position;
 
-        AssertAllAreFartherThan(field.Entities.Electrodes, playerStart, SpawnTuning.ElectrodeMinDistanceFromPlayer);
-        AssertAllAreFartherThan(field.Entities.Grunts, playerStart, SpawnTuning.GruntMinDistanceFromPlayer);
-        AssertAllAreFartherThan(field.Entities.Hulks, playerStart, SpawnTuning.HulkMinDistanceFromPlayer);
-        AssertAllAreFartherThan(field.Entities.Spheroids, playerStart, SpheroidTuning.MinDistanceFromPlayer);
+        AssertAllAreFartherThan(playField.FieldEntities.Electrodes, playerStart, SpawnTuning.ElectrodeMinDistanceFromPlayer);
+        AssertAllAreFartherThan(playField.FieldEntities.Grunts, playerStart, SpawnTuning.GruntMinDistanceFromPlayer);
+        AssertAllAreFartherThan(playField.FieldEntities.Hulks, playerStart, SpawnTuning.HulkMinDistanceFromPlayer);
+        AssertAllAreFartherThan(playField.FieldEntities.Spheroids, playerStart, SpheroidTuning.MinDistanceFromPlayer);
         // Quarks are EXCLUDED: the ROM ($4B48-4B5A) spawns them on the top or
         // bottom wall with a uniform X — no minimum-distance rule (notes 28).
     }
@@ -62,11 +62,11 @@ public sealed class PlayFieldSpawnTests
     [Fact]
     public void Constructor_QuarksSpawnOnTheTopOrBottomWall()
     {
-        var field = CreateField(0, 0, 0, 3, 0);
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = CreateField(0, 0, 0, 3, 0);
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        Assert.Equal(3, field.Entities.Quarks.Count(entity => !entity.IsDead()));
-        foreach (var quark in field.Entities.Quarks)
+        Assert.Equal(3, playField.FieldEntities.Quarks.Count(entity => !entity.IsDead()));
+        foreach (var quark in playField.FieldEntities.Quarks)
         {
             var bottomEdgeY = bounds.Bottom - quark.GetBounds().Height;
             Assert.True(quark.GetBounds().Y == bounds.Y || quark.GetBounds().Y == bottomEdgeY,
@@ -77,7 +77,7 @@ public sealed class PlayFieldSpawnTests
 
     private static PlayField CreateField(int grunts, int hulks, int spheroids, int quarks, int electrodes)
     {
-        var parameters = new WaveParameters(
+        var waveParameters = new WaveParameters(
             1,
             grunts,
             HulkCount: hulks,
@@ -88,7 +88,7 @@ public sealed class PlayFieldSpawnTests
             MaxTanksPerQuark: 2,
             EnemySpeedBonus: 0);
 
-        return new PlayFieldBuilder().WithParameters(parameters).WithBounds(InnerBounds).WithSeed(1234).Build();
+        return new PlayFieldBuilder().WithParameters(waveParameters).WithBounds(InnerBounds).WithSeed(1234).Build();
     }
 
     private static void AssertAllAreFartherThan<T>(IReadOnlyList<T> entities, IntVector2 playerStart,

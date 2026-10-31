@@ -45,126 +45,126 @@ public sealed class FieldStrategyTests
     [Fact]
     public void TheBoxContactTest_SaysTwoThingsTouch_OnlyWhenTheirBoxesOverlap()
     {
-        var test = new BoxContactTest();
-        var first = new Electrode(TestSprites.Shared, new IntVector2(100, 100));
-        var overlapping = new Electrode(TestSprites.Shared, new IntVector2(100 + first.GetBounds().Width / 2, 100));
-        var apart = new Electrode(TestSprites.Shared, new IntVector2(100 + first.GetBounds().Width, 100));
+        var boxContactTest = new BoxContactTest();
+        var firstElectrode = new Electrode(TestSprites.SharedSpriteSet, new IntVector2(100, 100));
+        var overlappingElectrode = new Electrode(TestSprites.SharedSpriteSet, new IntVector2(100 + firstElectrode.GetBounds().Width / 2, 100));
+        var apartElectrode = new Electrode(TestSprites.SharedSpriteSet, new IntVector2(100 + firstElectrode.GetBounds().Width, 100));
 
-        Assert.True(test.Touches(first, overlapping));
-        Assert.False(test.Touches(first, apart));
+        Assert.True(boxContactTest.Touches(firstElectrode, overlappingElectrode));
+        Assert.False(boxContactTest.Touches(firstElectrode, apartElectrode));
     }
 
     [Fact]
     public void TheFamilyList_HandsOutPlacesInOrder_AndFindsTheNearestFreeMember()
     {
-        var family = new FamilyList();
-        var mikey = new Human(TestSprites.Shared, new IntVector2(100, 100), HumanKind.Mikey, new Random(1));
-        var mommy = new Human(TestSprites.Shared, new IntVector2(300, 100), HumanKind.Mommy, new Random(2));
-        Assert.Equal(FamilyList.FirstSlot, family.GetNearestSlot(new IntVector2(0, 0)));
-        Assert.Empty(family.GetOccupiedSlots());
+        var familyList = new FamilyList();
+        var mikeyHuman = new Human(TestSprites.SharedSpriteSet, new IntVector2(100, 100), HumanKind.Mikey, new Random(1));
+        var mommyHuman = new Human(TestSprites.SharedSpriteSet, new IntVector2(300, 100), HumanKind.Mommy, new Random(2));
+        Assert.Equal(FamilyList.FirstSlot, familyList.GetNearestSlot(new IntVector2(0, 0)));
+        Assert.Empty(familyList.GetOccupiedSlots());
 
-        family.Add(mikey);
-        family.Add(mommy);
+        familyList.Add(mikeyHuman);
+        familyList.Add(mommyHuman);
 
-        Assert.Equal(FamilyList.FirstSlot, mikey.FamilySlot);
-        Assert.Equal(FamilyList.FirstSlot + 1, mommy.FamilySlot);
-        Assert.Equal(mommy.FamilySlot, family.GetNearestSlot(new IntVector2(290, 100)));
-        Assert.Equal(mommy, family.GetMemberInSlot(mommy.FamilySlot));
-        Assert.Equal([mikey.FamilySlot, mommy.FamilySlot], family.GetOccupiedSlots());
+        Assert.Equal(FamilyList.FirstSlot, mikeyHuman.FamilySlot);
+        Assert.Equal(FamilyList.FirstSlot + 1, mommyHuman.FamilySlot);
+        Assert.Equal(mommyHuman.FamilySlot, familyList.GetNearestSlot(new IntVector2(290, 100)));
+        Assert.Equal(mommyHuman, familyList.GetMemberInSlot(mommyHuman.FamilySlot));
+        Assert.Equal([mikeyHuman.FamilySlot, mommyHuman.FamilySlot], familyList.GetOccupiedSlots());
 
         // In a brain's hold she is off the list: her place reads empty, and the nearest is whoever is left.
-        mommy.BeginReprogramming();
-        Assert.Null(family.GetMemberInSlot(mommy.FamilySlot));
-        Assert.Equal(mikey.FamilySlot, family.GetNearestSlot(new IntVector2(290, 100)));
-        Assert.True(family.AnyAvailable());
+        mommyHuman.BeginReprogramming();
+        Assert.Null(familyList.GetMemberInSlot(mommyHuman.FamilySlot));
+        Assert.Equal(mikeyHuman.FamilySlot, familyList.GetNearestSlot(new IntVector2(290, 100)));
+        Assert.True(familyList.AnyAvailable());
 
-        mikey.Kill();
-        Assert.False(family.AnyAvailable());
+        mikeyHuman.Kill();
+        Assert.False(familyList.AnyAvailable());
     }
 
     [Fact]
     public void TheFamilyList_GivesATieToTheLaterPlace()
     {
-        var family = new FamilyList();
-        family.Add(new Human(TestSprites.Shared, new IntVector2(100, 100), HumanKind.Mikey, new Random(1)));
-        family.Add(new Human(TestSprites.Shared, new IntVector2(100, 100), HumanKind.Daddy, new Random(2)));
+        var familyList = new FamilyList();
+        familyList.Add(new Human(TestSprites.SharedSpriteSet, new IntVector2(100, 100), HumanKind.Mikey, new Random(1)));
+        familyList.Add(new Human(TestSprites.SharedSpriteSet, new IntVector2(100, 100), HumanKind.Daddy, new Random(2)));
 
-        Assert.Equal(FamilyList.FirstSlot + 1, family.GetNearestSlot(new IntVector2(100, 100)));
+        Assert.Equal(FamilyList.FirstSlot + 1, familyList.GetNearestSlot(new IntVector2(100, 100)));
     }
 
     [Fact]
     public void TheFieldsEntities_HaveAListForEveryKind_AndIgnoreHulksAndElectrodesWhenTheWaveIsWon()
     {
-        var entities = new FieldEntities();
-        foreach (var kind in Enum.GetValues<RobotKind>()) Assert.NotNull(entities.GetList(kind));
+        var fieldEntities = new FieldEntities();
+        foreach (var kind in Enum.GetValues<RobotKind>()) Assert.NotNull(fieldEntities.GetList(kind));
 
-        entities.Electrodes.Add(new Electrode(TestSprites.Shared, new IntVector2(10, 10)));
-        entities.Hulks.Add(
-            new Hulk(TestSprites.Shared, new IntVector2(50, 50), new Random(1), 8, () => IntVector2.Zero));
-        Assert.True(entities.AreEnemiesGone());
+        fieldEntities.Electrodes.Add(new Electrode(TestSprites.SharedSpriteSet, new IntVector2(10, 10)));
+        fieldEntities.Hulks.Add(
+            new Hulk(TestSprites.SharedSpriteSet, new IntVector2(50, 50), new Random(1), 8, () => IntVector2.Zero));
+        Assert.True(fieldEntities.AreEnemiesGone());
 
-        entities.Grunts.Add(new Grunt(TestSprites.Shared, new IntVector2(90, 90)));
-        Assert.False(entities.AreEnemiesGone());
+        fieldEntities.Grunts.Add(new Grunt(TestSprites.SharedSpriteSet, new IntVector2(90, 90)));
+        Assert.False(fieldEntities.AreEnemiesGone());
     }
 
     [Fact]
     public void TheField_AnswersWithoutLettingCallersReachThroughIt()
     {
-        var field = new PlayFieldBuilder().Build();
-        var grunt = new Grunt(TestSprites.Shared, new IntVector2(90, 90));
-        field.Entities.Add(grunt);
+        var playField = new PlayFieldBuilder().Build();
+        var grunt = new Grunt(TestSprites.SharedSpriteSet, new IntVector2(90, 90));
+        playField.FieldEntities.Add(grunt);
 
-        Assert.Contains(grunt, field.Entities.GetEntities(RobotKind.Grunt));
-        Assert.Equal(field.Player.Position, field.GetPlayerPosition());
-        Assert.Equal(field.Wall.PlayfieldBounds, field.GetPlayfieldBounds());
-        Assert.True(field.HitsWall(new Rectangle(field.Wall.GetOuterBounds().X, field.Wall.GetOuterBounds().Y, 4, 4)));
-        Assert.False(field.HitsWall(new Rectangle(field.GetPlayfieldBounds().X + 40, field.GetPlayfieldBounds().Y + 40,
+        Assert.Contains(grunt, playField.FieldEntities.GetEntities(RobotKind.Grunt));
+        Assert.Equal(playField.Player.Position, playField.GetPlayerPosition());
+        Assert.Equal(playField.PlayfieldWall.PlayfieldBounds, playField.GetPlayfieldBounds());
+        Assert.True(playField.HitsWall(new Rectangle(playField.PlayfieldWall.GetOuterBounds().X, playField.PlayfieldWall.GetOuterBounds().Y, 4, 4)));
+        Assert.False(playField.HitsWall(new Rectangle(playField.GetPlayfieldBounds().X + 40, playField.GetPlayfieldBounds().Y + 40,
             4, 4)));
-        Assert.True(field.IsPlayerAlive());
-        Assert.False(field.IsPlayerDead());
+        Assert.True(playField.IsPlayerAlive());
+        Assert.False(playField.IsPlayerDead());
     }
 
     [Fact]
     public void ACollisionRule_OnlyReports_AndTheFieldResponds()
     {
-        var field = new PlayFieldBuilder().Build();
-        var human = new Human(TestSprites.Shared, field.Player.Position, HumanKind.Mommy, new Random(1));
-        field.Entities.Add(human);
+        var playField = new PlayFieldBuilder().Build();
+        var human = new Human(TestSprites.SharedSpriteSet, playField.Player.Position, HumanKind.Mommy, new Random(1));
+        playField.FieldEntities.Add(human);
 
-        var results = new PlayerRescueRule().Detect(field, field.Entities).ToArray();
+        var results = new PlayerRescueRule().Detect(playField, playField.FieldEntities).ToArray();
 
         // The rule found the rescue and changed nothing.
         var rescued = Assert.IsType<PlayerRescuedHumanResult>(Assert.Single(results));
         Assert.Same(human, rescued.Human);
         Assert.True(human.IsGraspable());
-        Assert.Equal(0, field.RescuesThisLife);
+        Assert.Equal(0, playField.RescuesThisLife);
 
         // The field's response is what rescues them.
-        new CollisionResponder(field).Respond(rescued);
+        new CollisionResponder(playField).Respond(rescued);
         Assert.False(human.IsGraspable());
-        Assert.Equal(1, field.RescuesThisLife);
+        Assert.Equal(1, playField.RescuesThisLife);
     }
 
     [Fact]
     public void TheLaserRule_ReportsOneHitPerLaser_AsTheFieldKillsTheLaserBetweenReports()
     {
-        var field = new PlayFieldBuilder().Build();
-        var bounds = field.GetPlayfieldBounds();
+        var playField = new PlayFieldBuilder().Build();
+        var bounds = playField.GetPlayfieldBounds();
         IntVector2 spot = new(bounds.X + 200, bounds.Y + 200);
-        field.Entities.Add(new Grunt(TestSprites.Shared, spot));
-        field.Entities.Add(new Grunt(TestSprites.Shared, spot));
-        field.PlayerLasers.Fire(spot, Direction8.Up);
-        var responder = new CollisionResponder(field);
+        playField.FieldEntities.Add(new Grunt(TestSprites.SharedSpriteSet, spot));
+        playField.FieldEntities.Add(new Grunt(TestSprites.SharedSpriteSet, spot));
+        playField.PlayerLaserSlots.Fire(spot, Direction8.Up);
+        var collisionResponder = new CollisionResponder(playField);
 
         var hits = 0;
-        foreach (var result in new LaserCollisionRule().Detect(field, field.Entities))
+        foreach (var result in new LaserCollisionRule().Detect(playField, playField.FieldEntities))
         {
             hits++;
-            responder.Respond(result);
+            collisionResponder.Respond(result);
         }
 
         // Two grunts stand under one laser, and the laser is spent on the first.
         Assert.Equal(1, hits);
-        Assert.Equal(1, field.Entities.Grunts.Count(grunt => grunt.IsAlive()));
+        Assert.Equal(1, playField.FieldEntities.Grunts.Count(grunt => grunt.IsAlive()));
     }
 }

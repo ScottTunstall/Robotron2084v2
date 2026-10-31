@@ -14,7 +14,7 @@ namespace Robotron2084.Tests;
 public sealed class PixelCollisionTests
 {
     /// <summary>A one-pixel sprite, which is all the stub below needs to describe.</summary>
-    private static readonly SpriteMask Dot = SpriteMask.CreateFromPixels(1, 1, [(0, 0)]);
+    private static readonly SpriteMask DotSpriteMask = SpriteMask.CreateFromPixels(1, 1, [(0, 0)]);
 
     private static WaveParameters OneMikey()
     {
@@ -28,64 +28,64 @@ public sealed class PixelCollisionTests
             0);
     }
 
-    private static PlayField CreateField(IPixelCollision? collision)
+    private static PlayField CreateField(IPixelCollision? pixelCollision)
     {
-        return new PlayFieldBuilder().WithParameters(OneMikey()).WithSeed(99).WithPixelCollision(collision).Build();
+        return new PlayFieldBuilder().WithParameters(OneMikey()).WithSeed(99).WithPixelCollision(pixelCollision).Build();
     }
 
     [Fact]
     public void ASpriteThatDoesNotTouchDoesNotRescue_EvenWhereTheBoxesOverlap()
     {
-        var field = CreateField(new StubPixelCollision(false));
-        var human = field.Entities.Family.Members[0];
-        human.MoveTo(field.Player.Position);
+        var playField = CreateField(new StubPixelCollision(false));
+        var human = playField.FieldEntities.FamilyList.Members[0];
+        human.MoveTo(playField.Player.Position);
 
-        field.Update(new GameTime());
+        playField.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Alive, human.LifeState);
-        Assert.Equal(0, field.RescuesThisLife);
+        Assert.Equal(0, playField.RescuesThisLife);
     }
 
     [Fact]
     public void ASpriteThatTouchesRescues_EvenWhereTheBoxesMiss()
     {
-        var field = CreateField(new StubPixelCollision(true));
-        field.SkipWaveStart();
-        var human = field.Entities.Family.Members[0];
+        var playField = CreateField(new StubPixelCollision(true));
+        playField.SkipWaveStart();
+        var human = playField.FieldEntities.FamilyList.Members[0];
 
         // Well outside the player's box, so nothing but the sprite test could rescue this human.
-        var inner = field.Wall.PlayfieldBounds;
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
         human.MoveTo(new IntVector2(inner.Center.X + ScreenSize.ToPortPixelsFromArcadePixels(60), inner.Center.Y));
 
-        field.Update(new GameTime());
+        playField.Update(new GameTime());
 
-        Assert.Equal(1, field.RescuesThisLife);
+        Assert.Equal(1, playField.RescuesThisLife);
     }
 
     [Fact]
     public void AnEntityWithNoSpriteOfItsOwn_FallsBackToItsBox()
     {
-        var field = CreateField(new StubPixelCollision(false, false));
-        field.SkipWaveStart();
-        var human = field.Entities.Family.Members[0];
-        human.MoveTo(field.Player.Position);
+        var playField = CreateField(new StubPixelCollision(false, false));
+        playField.SkipWaveStart();
+        var human = playField.FieldEntities.FamilyList.Members[0];
+        human.MoveTo(playField.Player.Position);
 
-        field.Update(new GameTime());
+        playField.Update(new GameTime());
 
-        Assert.Equal(1, field.RescuesThisLife);
+        Assert.Equal(1, playField.RescuesThisLife);
     }
 
     [Fact]
     public void WithNoContactTestAtAll_TheBoxesDecide()
     {
-        var field = CreateField(null);
-        field.SkipWaveStart();
-        var human = field.Entities.Family.Members[0];
-        human.MoveTo(field.Player.Position);
+        var playField = CreateField(null);
+        playField.SkipWaveStart();
+        var human = playField.FieldEntities.FamilyList.Members[0];
+        human.MoveTo(playField.Player.Position);
 
-        field.Update(new GameTime());
+        playField.Update(new GameTime());
 
-        Assert.Equal(1, field.RescuesThisLife);
+        Assert.Equal(1, playField.RescuesThisLife);
     }
 
     /// <summary>A contact test the test drives: every pair gets the same answer, whatever the boxes say.</summary>
@@ -93,7 +93,7 @@ public sealed class PixelCollisionTests
     {
         public SpriteShape? GetShape(IEntity entity)
         {
-            return hasShape ? new SpriteShape(Dot, new Rectangle(0, 0, 1, 1)) : null;
+            return hasShape ? new SpriteShape(DotSpriteMask, new Rectangle(0, 0, 1, 1)) : null;
         }
 
         public bool Overlaps(SpriteShape a, SpriteShape b)

@@ -21,7 +21,7 @@ public class MaterialisationTests
 
     private static PlayField CreateField(int grunts, int hulks = 0, int spheroids = 0, int quarks = 0, int tanks = 0)
     {
-        var parameters = new WaveParameters(
+        var waveParameters = new WaveParameters(
             1,
             grunts,
             HulkCount: hulks,
@@ -33,13 +33,13 @@ public class MaterialisationTests
             EnemySpeedBonus: 0,
             TankCount: tanks);
 
-        return new PlayFieldBuilder().WithParameters(parameters).WithBounds(InnerBounds).WithSeed(1234).Build();
+        return new PlayFieldBuilder().WithParameters(waveParameters).WithBounds(InnerBounds).WithSeed(1234).Build();
     }
 
-    private static void Advance(PlayField field, int ticks)
+    private static void Advance(PlayField playField, int ticks)
     {
         for (var i = 0; i < ticks; i++)
-            field.Update(new GameTime(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16)));
+            playField.Update(new GameTime(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16)));
     }
 
     [Fact]
@@ -47,13 +47,13 @@ public class MaterialisationTests
     {
         // GETROB puts grunts, hulks, brains and tanks on RPTR. Spheroids and quarks are made with MKPROB and go on the
         // object list OPTR (RRC11 CIRST, RRTK4 SQSTV), which APPEAR never walks, so they are on the screen from the start.
-        var field = CreateField(3, 2, 1, 1);
+        var playField = CreateField(3, 2, 1, 1);
 
-        Assert.Equal(5, field.GetPendingAppearCount());
-        Assert.All(field.Entities.Grunts, grunt => Assert.True(field.IsMaterialising(grunt)));
-        Assert.All(field.Entities.Hulks, hulk => Assert.True(field.IsMaterialising(hulk)));
-        Assert.False(field.IsMaterialising(field.Entities.Spheroids[0]));
-        Assert.False(field.IsMaterialising(field.Entities.Quarks[0]));
+        Assert.Equal(5, playField.GetPendingAppearCount());
+        Assert.All(playField.FieldEntities.Grunts, grunt => Assert.True(playField.IsMaterialising(grunt)));
+        Assert.All(playField.FieldEntities.Hulks, hulk => Assert.True(playField.IsMaterialising(hulk)));
+        Assert.False(playField.IsMaterialising(playField.FieldEntities.Spheroids[0]));
+        Assert.False(playField.IsMaterialising(playField.FieldEntities.Quarks[0]));
     }
 
     [Fact]
@@ -61,22 +61,22 @@ public class MaterialisationTests
     {
         // PLS0A sets up the hulks, then the tanks, then the grunts ($2831 to $2840), and GETRBV puts each new robot at
         // the head of RPTR. So the loop meets the last grunt made first, and the hulks last.
-        var field = CreateField(2, 1, tanks: 1);
+        var playField = CreateField(2, 1, tanks: 1);
         var appearBounds = new List<Rectangle>();
 
         while (appearBounds.Count < 4)
         {
-            Advance(field, 1);
-            if (field.Entities.Explosions.Count > appearBounds.Count)
-                appearBounds.Add(field.Entities.Explosions[^1].GetBounds());
+            Advance(playField, 1);
+            if (playField.FieldEntities.Explosions.Count > appearBounds.Count)
+                appearBounds.Add(playField.FieldEntities.Explosions[^1].GetBounds());
         }
 
         Rectangle[] expected =
         [
-            field.Entities.Grunts[1].GetBounds(),
-            field.Entities.Grunts[0].GetBounds(),
-            field.Entities.Tanks[0].GetBounds(),
-            field.Entities.Hulks[0].GetBounds()
+            playField.FieldEntities.Grunts[1].GetBounds(),
+            playField.FieldEntities.Grunts[0].GetBounds(),
+            playField.FieldEntities.Tanks[0].GetBounds(),
+            playField.FieldEntities.Hulks[0].GetBounds()
         ];
         Assert.Equal(expected, appearBounds);
     }
@@ -86,13 +86,13 @@ public class MaterialisationTests
     {
         // The ROM holds the robots OFF (ROBOFF) through the appear sequence, so a
         // robot that has not finished assembling must not move or fire.
-        var field = CreateField(1);
-        var grunt = field.Entities.Grunts[0];
+        var playField = CreateField(1);
+        var grunt = playField.FieldEntities.Grunts[0];
         var start = grunt.Position;
 
-        Advance(field, 3);
+        Advance(playField, 3);
 
-        Assert.True(field.IsMaterialising(grunt));
+        Assert.True(playField.IsMaterialising(grunt));
         Assert.Equal(start, grunt.Position);
     }
 
@@ -101,21 +101,21 @@ public class MaterialisationTests
     {
         // `NAP 1,APL` (R5 $2949): one robot's appear a fiftieth of a second, the first at once. A fiftieth of a second is 6/5 of a port
         // tick, so robot k starts on tick ceil(1.2 x (k - 1)), and the 7th tick starts none.
-        var field = CreateField(8);
+        var playField = CreateField(8);
 
-        Advance(field, 1);
-        Assert.Equal(7, field.GetPendingAppearCount()); // fiftieth of a second 0, on the first tick
-        Assert.Single(field.Entities.Explosions);
-        Assert.Equal(StripEffectKind.Appear, field.Entities.Explosions[0].Kind);
+        Advance(playField, 1);
+        Assert.Equal(7, playField.GetPendingAppearCount()); // fiftieth of a second 0, on the first tick
+        Assert.Single(playField.FieldEntities.Explosions);
+        Assert.Equal(StripEffectKind.Appear, playField.FieldEntities.Explosions[0].Kind);
 
-        Advance(field, 5);
-        Assert.Equal(2, field.GetPendingAppearCount()); // ticks 2 to 6 start robots 2 to 6
+        Advance(playField, 5);
+        Assert.Equal(2, playField.GetPendingAppearCount()); // ticks 2 to 6 start robots 2 to 6
 
-        Advance(field, 1);
-        Assert.Equal(2, field.GetPendingAppearCount()); // tick 7 is still fiftieth of a second 5
+        Advance(playField, 1);
+        Assert.Equal(2, playField.GetPendingAppearCount()); // tick 7 is still fiftieth of a second 5
 
-        Advance(field, 1);
-        Assert.Equal(1, field.GetPendingAppearCount()); // tick 8 reaches fiftieth of a second 6
+        Advance(playField, 1);
+        Assert.Equal(1, playField.GetPendingAppearCount()); // tick 8 reaches fiftieth of a second 6
     }
 
     [Fact]
@@ -123,14 +123,14 @@ public class MaterialisationTests
     {
         // `LDA PD,U / ANDA #3 / CMPA #3 / BNE AP1 / JSR HAPST` — the fourth and the eighth robots get the horizontal
         // (column) fan, the rest the row fan.
-        var field = CreateField(8);
+        var playField = CreateField(8);
 
         // One appear starts on each fiftieth of a second, so some ticks start none: note each one as it starts.
         var axes = new List<StripFanAxis>();
         while (axes.Count < 8)
         {
-            Advance(field, 1);
-            if (field.Entities.Explosions.Count > axes.Count) axes.Add(field.Entities.Explosions[^1].Axis);
+            Advance(playField, 1);
+            if (playField.FieldEntities.Explosions.Count > axes.Count) axes.Add(playField.FieldEntities.Explosions[^1].Axis);
         }
 
         Assert.Equal(StripFanAxis.Rows, axes[0]);
@@ -145,31 +145,31 @@ public class MaterialisationTests
         // The horizontal routine has two records (RRHX4 HXINV, R5 $F01D: the loop that links them runs once). Robots 4
         // and 8 take them, and they are still in use when robot 12's turn comes. HAPST then makes nothing, and
         // `AP2 STX PD2,U` ($292A) moves the loop on to robot 13 on the next pass all the same.
-        var field = CreateField(13);
+        var playField = CreateField(13);
 
-        Advance(field, ArcadeClock.ToPortTicksRoundedUp(11)); // pass 12, on fiftieth of a second 11
+        Advance(playField, ArcadeClock.ToPortTicksRoundedUp(11)); // pass 12, on fiftieth of a second 11
 
-        Assert.Equal(1, field.GetPendingAppearCount());
-        Assert.Equal(11, field.Entities.Explosions.Count);
+        Assert.Equal(1, playField.GetPendingAppearCount());
+        Assert.Equal(11, playField.FieldEntities.Explosions.Count);
         Assert.Equal(StripExplosionTuning.HorizontalPoolSize,
-            field.Entities.Explosions.Count(effect => effect.Axis == StripFanAxis.Columns));
+            playField.FieldEntities.Explosions.Count(effect => effect.Axis == StripFanAxis.Columns));
 
-        Advance(field, 1); // tick 15 reaches fiftieth of a second 12: pass 13
+        Advance(playField, 1); // tick 15 reaches fiftieth of a second 12: pass 13
 
-        Assert.Equal(0, field.GetPendingAppearCount());
-        Assert.Equal(12, field.Entities.Explosions.Count);
-        Assert.Equal(StripFanAxis.Rows, field.Entities.Explosions[^1].Axis);
+        Assert.Equal(0, playField.GetPendingAppearCount());
+        Assert.Equal(12, playField.FieldEntities.Explosions.Count);
+        Assert.Equal(StripFanAxis.Rows, playField.FieldEntities.Explosions[^1].Axis);
     }
 
     [Fact]
     public void TheAppearEffect_IsLaidOutInTheRobotsOwnBox()
     {
-        var field = CreateField(1);
-        var grunt = field.Entities.Grunts[0];
+        var playField = CreateField(1);
+        var grunt = playField.FieldEntities.Grunts[0];
 
-        Advance(field, 1);
+        Advance(playField, 1);
 
-        var appear = field.Entities.Explosions[0];
+        var appear = playField.FieldEntities.Explosions[0];
         Assert.Equal(grunt.GetBounds(), appear.GetBounds());
     }
 
@@ -205,21 +205,21 @@ public class MaterialisationTests
         // The first robot's appear starts on pass 1. Its vertical effect is over on fiftieth of a second 29, and APREF draws the
         // robot itself from pass 33, which is fiftieth of a second 32. Draw-time behaviour cannot be tested (there is no graphics
         // device), so this pins the flag that the field's DrawEntity reads.
-        var field = CreateField(1);
-        var grunt = field.Entities.Grunts[0];
+        var playField = CreateField(1);
+        var grunt = playField.FieldEntities.Grunts[0];
 
-        Advance(field, ArcadeClock.ToPortTicksRoundedUp(29) - 1);
-        Assert.Single(field.Entities.Explosions);
+        Advance(playField, ArcadeClock.ToPortTicksRoundedUp(29) - 1);
+        Assert.Single(playField.FieldEntities.Explosions);
 
-        Advance(field, 1);
-        Assert.Empty(field.Entities.Explosions);
-        Assert.True(field.IsMaterialising(grunt));
+        Advance(playField, 1);
+        Assert.Empty(playField.FieldEntities.Explosions);
+        Assert.True(playField.IsMaterialising(grunt));
 
-        Advance(field, ArcadeClock.ToPortTicksRoundedUp(32) - ArcadeClock.ToPortTicksRoundedUp(29) - 1);
-        Assert.True(field.IsMaterialising(grunt));
+        Advance(playField, ArcadeClock.ToPortTicksRoundedUp(32) - ArcadeClock.ToPortTicksRoundedUp(29) - 1);
+        Assert.True(playField.IsMaterialising(grunt));
 
-        Advance(field, 1);
-        Assert.False(field.IsMaterialising(grunt));
+        Advance(playField, 1);
+        Assert.False(playField.IsMaterialising(grunt));
     }
 
     [Fact]
@@ -227,14 +227,14 @@ public class MaterialisationTests
     {
         // With STATUS bit 3 set the arcade does not add a motion object's velocity (RRS22 OPRC80, `BITA #8 / BNE O80`),
         // and each of their routines holds its drop timer (`TST STATUS`, RRC11 CIRCLE and RRTK4 SQUARE).
-        var field = CreateField(0, spheroids: 2, quarks: 2);
-        IntVector2[] spheroidStarts = [.. field.Entities.Spheroids.Select(spheroid => spheroid.Position)];
-        IntVector2[] quarkStarts = [.. field.Entities.Quarks.Select(quark => quark.Position)];
+        var playField = CreateField(0, spheroids: 2, quarks: 2);
+        IntVector2[] spheroidStarts = [.. playField.FieldEntities.Spheroids.Select(spheroid => spheroid.Position)];
+        IntVector2[] quarkStarts = [.. playField.FieldEntities.Quarks.Select(quark => quark.Position)];
 
-        Advance(field, WaveStartTicks.UntilLive(field) - 1);
+        Advance(playField, WaveStartTicks.UntilLive(playField) - 1);
 
-        Assert.Equal(spheroidStarts, field.Entities.Spheroids.Select(spheroid => spheroid.Position));
-        Assert.Equal(quarkStarts, field.Entities.Quarks.Select(quark => quark.Position));
-        Assert.Empty(field.Entities.Enforcers);
+        Assert.Equal(spheroidStarts, playField.FieldEntities.Spheroids.Select(spheroid => spheroid.Position));
+        Assert.Equal(quarkStarts, playField.FieldEntities.Quarks.Select(quark => quark.Position));
+        Assert.Empty(playField.FieldEntities.Enforcers);
     }
 }

@@ -10,29 +10,29 @@ public sealed class ScoreBoardTests
     [Fact]
     public void TheFactoryThresholdAwardsALifeAt25000Points()
     {
-        var board = new ScoreBoard(0);
+        var scoreBoard = new ScoreBoard(0);
 
-        Assert.False(board.Add(24_999));
-        Assert.True(board.Add(1));
-        Assert.False(board.Add(24_999));
-        Assert.True(board.Add(1));
+        Assert.False(scoreBoard.Add(24_999));
+        Assert.True(scoreBoard.Add(1));
+        Assert.False(scoreBoard.Add(24_999));
+        Assert.True(scoreBoard.Add(1));
     }
 
     [Fact]
     public void AStartingScoreSkipsThresholdsAlreadyPassed()
     {
-        var board = new ScoreBoard(30_000);
+        var scoreBoard = new ScoreBoard(30_000);
 
-        Assert.False(board.Add(19_999));
-        Assert.True(board.Add(1));
+        Assert.False(scoreBoard.Add(19_999));
+        Assert.True(scoreBoard.Add(1));
     }
 
     [Fact]
     public void NoExtraMenMeansTheThresholdIsNeverCrossed()
     {
-        var board = new ScoreBoard(0, 0);
+        var scoreBoard = new ScoreBoard(0, 0);
 
-        Assert.False(board.Add(500_000));
+        Assert.False(scoreBoard.Add(500_000));
     }
 
     [Fact]

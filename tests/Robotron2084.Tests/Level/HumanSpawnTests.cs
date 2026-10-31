@@ -37,10 +37,10 @@ public sealed class HumanSpawnTests
         foreach (var wave in new[] { 1, 5, 6, 7, 12, 20, 33 })
             for (var seed = 1; seed <= 120; seed++)
             {
-                var field = CreateField(seed, wave);
+                var playField = CreateField(seed, wave);
 
-                foreach (var human in field.Entities.Family.Members)
-                foreach (var electrode in field.Entities.Electrodes)
+                foreach (var human in playField.FieldEntities.FamilyList.Members)
+                foreach (var electrode in playField.FieldEntities.Electrodes)
                     Assert.False(
                         electrode.GetBounds().Intersects(human.GetBounds()),
                         $"wave {wave} seed {seed}: {human.Kind} at {human.GetBounds()} spawns on an "
@@ -53,17 +53,17 @@ public sealed class HumanSpawnTests
     {
         // The walk's own obstacle rule, checked over a whole wave: a human may stand NEXT to an
         // electrode, never inside one.
-        var field = CreateField(9, 7);
+        var playField = CreateField(9, 7);
 
         for (var tick = 0; tick < 1800; tick++)
         {
-            field.Update(OneTick());
+            playField.Update(OneTick());
 
-            foreach (var human in field.Entities.Family.Members)
+            foreach (var human in playField.FieldEntities.FamilyList.Members)
             {
                 if (!human.IsAlive() || human.IsBeingReprogrammed) continue;
 
-                foreach (var electrode in field.Entities.Electrodes)
+                foreach (var electrode in playField.FieldEntities.Electrodes)
                 {
                     if (!electrode.IsAlive()) continue;
 
@@ -82,15 +82,15 @@ public sealed class HumanSpawnTests
         // `RobotsFrozen()` (which the ROM's robots check but the humans do not), and a whole extra
         // step period seeded into the walk clock — `HUMSTV`'s stagger IS the first wait. Within
         // half a second the family must be moving even though the robots are not.
-        var field = CreateField(3, 7);
+        var playField = CreateField(3, 7);
 
-        var humans = field.Entities.Family.Members.ToList();
+        var humans = playField.FieldEntities.FamilyList.Members.ToList();
         Assert.NotEmpty(humans);
         var start = humans.ToDictionary(h => h, h => h.Position);
 
-        for (var tick = 0; tick < 30; tick++) field.Update(OneTick());
+        for (var tick = 0; tick < 30; tick++) playField.Update(OneTick());
 
-        Assert.True(field.RobotsFrozen(), "the start of the wave must still be holding the robots");
+        Assert.True(playField.RobotsFrozen(), "the start of the wave must still be holding the robots");
 
         var moved = humans.Count(h => h.IsAlive() && h.Position != start[h]);
         Assert.True(moved > 0, "the family was still standing after half a second");

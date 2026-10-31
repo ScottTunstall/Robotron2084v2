@@ -9,31 +9,31 @@ namespace Robotron2084.Tests;
 
 public sealed class PlayFieldCollisionTests
 {
-    private static readonly GameTime Tick = new(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16));
+    private static readonly GameTime TickGameTime = new(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16));
 
     [Fact]
     public void LaserHitsElectrode_ElectrodeStartsDying_LaserIsDead_AndNoScoreIsAwarded()
     {
-        var field = CreateEmptyField();
-        field.SkipWaveStart();
-        IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(TestSprites.Shared, spot);
-        field.Entities.Electrodes.Add(electrode);
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
+        var electrode = new Electrode(TestSprites.SharedSpriteSet, spot);
+        playField.FieldEntities.Electrodes.Add(electrode);
 
         // The laser moves 12 px on its first Update before collisions resolve;
         // from just above the electrode's top-left, moving Down, it still
         // overlaps the 10x9 arcade pixel electrode box.
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
-        var laser = field.PlayerLasers.FireAndGet(laserOrigin, Direction8.Down);
+        var laser = playField.PlayerLaserSlots.FireAndGet(laserOrigin, Direction8.Down);
         Assert.NotNull(laser);
 
-        field.Update(new GameTime());
+        playField.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
         Assert.Equal(EntityLifeState.Dead, laser!.LifeState);
         // Arcade-fidelity: destroying a post scores NOTHING (no SCORE call in
         // PSTKIL / ELECTRODE_COLLISION_HANDLER - notes 11.3).
-        Assert.Equal(0, field.ScoreBoard.Score); // ScoreValues.Electrode
+        Assert.Equal(0, playField.ScoreBoard.Score); // ScoreValues.Electrode
     }
 
     [Fact]
@@ -43,10 +43,10 @@ public sealed class PlayFieldCollisionTests
         // sprites (PSP1 → PSP2 → PSP3), holding each for its own sleep time —
         // 6, 3, 2 arcade frames — and then the image is turned off (DMAOFF). It is a
         // shape collapse, NOT a blink (the old port toggled visibility for 2 s).
-        var field = CreateEmptyField();
-        var electrode = new Electrode(TestSprites.Shared,
-            new IntVector2(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100));
-        field.Entities.Electrodes.Add(electrode);
+        var playField = CreateEmptyField();
+        var electrode = new Electrode(TestSprites.SharedSpriteSet,
+            new IntVector2(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100));
+        playField.FieldEntities.Electrodes.Add(electrode);
 
         electrode.Kill();
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
@@ -55,11 +55,11 @@ public sealed class PlayFieldCollisionTests
         // 7.2/3.6/2.4 ticks: the three shrivel steps land on ticks 8, 11 and 14.
         for (var tick = 0; tick < 13; tick++)
         {
-            electrode.Update(new GameTime(), field);
+            electrode.Update(new GameTime(), playField);
             Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
         }
 
-        electrode.Update(new GameTime(), field);
+        electrode.Update(new GameTime(), playField);
         Assert.Equal(EntityLifeState.Dead, electrode.LifeState);
     }
 
@@ -82,7 +82,7 @@ public sealed class PlayFieldCollisionTests
         // An electrode is WAVE-derived — both its variant and its colour —
         // and each variant owns 3 consecutive animation frames (alive + the two shrivel
         // frames) out of the 27 electrode PNGs.
-        var electrode = new Electrode(TestSprites.Shared, new IntVector2(100, 100), 3);
+        var electrode = new Electrode(TestSprites.SharedSpriteSet, new IntVector2(100, 100), 3);
         Assert.Equal(2, electrode.GetVariantIndex());
         Assert.True(electrode.GetVariantIndex() * WavePaletteTables.ElectrodeAnimationFramesPerVariant +
             WavePaletteTables.ElectrodeAnimationFramesPerVariant <= 27);
@@ -107,7 +107,7 @@ public sealed class PlayFieldCollisionTests
         Assert.Equal(15, WavePaletteTables.GetElectrodePaletteIndex(1));
         Assert.Equal(11, WavePaletteTables.GetElectrodePaletteIndex(3));
         Assert.Equal(1, WavePaletteTables.GetElectrodePaletteIndex(7)); // palette index 1 = RED in the ROM's own CRTAB
-        Assert.Equal(new Electrode(TestSprites.Shared, new IntVector2(0, 0)).GetTintPaletteIndex(),
+        Assert.Equal(new Electrode(TestSprites.SharedSpriteSet, new IntVector2(0, 0)).GetTintPaletteIndex(),
             WavePaletteTables.GetElectrodePaletteIndex(1));
         Assert.True(WavePaletteTables.GetElectrodePaletteIndex(1) >= 10); // 10-15 are the cycling palette indices
     }
@@ -161,69 +161,69 @@ public sealed class PlayFieldCollisionTests
     [Fact]
     public void LaserLeavingThePlayfield_LeavesAFlareOnTheWall_ForTwoPortTicks()
     {
-        var field = CreateEmptyField();
-        var slots = field.PlayerLasers;
+        var playField = CreateEmptyField();
+        var slots = playField.PlayerLaserSlots;
         var laser = slots.FireAndGet(
-            new IntVector2(field.Wall.PlayfieldBounds.Center.X, field.Wall.PlayfieldBounds.Top + 40), Direction8.Up);
+            new IntVector2(playField.PlayfieldWall.PlayfieldBounds.Center.X, playField.PlayfieldWall.PlayfieldBounds.Top + 40), Direction8.Up);
         Assert.NotNull(laser);
 
         // Fly it up into the top wall.
         var guard = 0;
-        while (laser!.IsAlive() && guard++ < 200) field.Update(Tick);
+        while (laser!.IsAlive() && guard++ < 200) playField.Update(TickGameTime);
 
         // The laser is gone and its flare sits in the TOP wall band, dithered
         // (LASDIV — the ROM mixes WALCOL into LASCOL there).
         Assert.Equal(EntityLifeState.Dead, laser.LifeState);
-        Assert.Equal(1, field.GetLaserWallFlareCount());
-        var flare = field.GetLaserWallFlares()[0];
-        Assert.True(flare.Bounds.Y < field.Wall.PlayfieldBounds.Top,
+        Assert.Equal(1, playField.GetLaserWallFlareCount());
+        var flare = playField.GetLaserWallFlares()[0];
+        Assert.True(flare.Bounds.Y < playField.PlayfieldWall.PlayfieldBounds.Top,
             $"flare {flare.Bounds} is not on the top wall band");
         Assert.True(flare.Dithered);
 
         // It lives 2 fiftieths of a second = 12 clock units, so it survives two ticks and is
         // dropped on the third (the ROM's `NAP 2`).
-        field.Update(Tick);
-        Assert.Equal(1, field.GetLaserWallFlareCount());
-        field.Update(Tick);
-        Assert.Equal(1, field.GetLaserWallFlareCount());
-        field.Update(Tick);
-        Assert.Equal(0, field.GetLaserWallFlareCount());
+        playField.Update(TickGameTime);
+        Assert.Equal(1, playField.GetLaserWallFlareCount());
+        playField.Update(TickGameTime);
+        Assert.Equal(1, playField.GetLaserWallFlareCount());
+        playField.Update(TickGameTime);
+        Assert.Equal(0, playField.GetLaserWallFlareCount());
     }
 
     [Fact]
     public void ALaserFiredFromInsideTheWallDiesInsteadOfFlyingPastIt()
     {
-        var field = CreateEmptyField();
-        var inner = field.Wall.PlayfieldBounds;
+        var playField = CreateEmptyField();
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
 
         // Fired straight down from just inside the bottom edge: the laser starts overlapping the wall, and one
         // step later it lies wholly beyond it, so a test of only where it lands would let it fly on.
         IntVector2 muzzle = new(inner.Center.X, inner.Bottom - 4);
-        var laser = field.PlayerLasers.FireAndGet(muzzle, Direction8.Down);
+        var laser = playField.PlayerLaserSlots.FireAndGet(muzzle, Direction8.Down);
 
-        field.Update(Tick);
+        playField.Update(TickGameTime);
 
         Assert.Equal(EntityLifeState.Dead, laser!.LifeState);
-        Assert.Equal(1, field.GetLaserWallFlareCount());
+        Assert.Equal(1, playField.GetLaserWallFlareCount());
     }
 
     [Fact]
     public void AFlareOnAVerticalWall_IsSolid_NotDithered()
     {
-        var field = CreateEmptyField();
-        var inner = field.Wall.PlayfieldBounds;
+        var playField = CreateEmptyField();
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
 
         // A laser that crossed the RIGHT wall: LASDIH — a solid fill.
-        field.SpawnLaserWallFlare(new Rectangle(inner.Right - 2, inner.Center.Y, 4, 4), Direction8.Right);
-        Assert.Equal(1, field.GetLaserWallFlareCount());
-        var flare = field.GetLaserWallFlares()[0];
+        playField.SpawnLaserWallFlare(new Rectangle(inner.Right - 2, inner.Center.Y, 4, 4), Direction8.Right);
+        Assert.Equal(1, playField.GetLaserWallFlareCount());
+        var flare = playField.GetLaserWallFlares()[0];
         Assert.False(flare.Dithered);
         Assert.True(flare.Bounds.Right > inner.Right, $"flare {flare.Bounds} is not on the right wall band");
 
         // A diagonal that ran off the same wall is still a vertical-wall death:
         // only the CROSSED EDGE decides, not the travel axis.
-        field.SpawnLaserWallFlare(new Rectangle(inner.Right - 2, inner.Center.Y, 4, 4), Direction8.UpRight);
-        Assert.False(field.GetLaserWallFlares()[1].Dithered);
+        playField.SpawnLaserWallFlare(new Rectangle(inner.Right - 2, inner.Center.Y, 4, 4), Direction8.UpRight);
+        Assert.False(playField.GetLaserWallFlares()[1].Dithered);
     }
 
     // The round-7 playtest aid (`PlayerInvincibleForTesting`) makes contact a no-op
@@ -233,17 +233,17 @@ public sealed class PlayFieldCollisionTests
     [Fact]
     public void PlayerWalksIntoElectrode_BothStartDying()
     {
-        var field = CreateEmptyField(false);
-        field.SkipWaveStart();
-        var electrode = new Electrode(TestSprites.Shared, field.Player.Position); // directly on the player
-        field.Entities.Electrodes.Add(electrode);
+        var playField = CreateEmptyField(false);
+        playField.SkipWaveStart();
+        var electrode = new Electrode(TestSprites.SharedSpriteSet, playField.Player.Position); // directly on the player
+        playField.FieldEntities.Electrodes.Add(electrode);
 
-        var livesBefore = field.Player.Lives;
-        field.Update(new GameTime());
+        var livesBefore = playField.Player.Lives;
+        playField.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
-        Assert.Equal(EntityLifeState.Dying, field.Player.LifeState);
-        Assert.Equal(livesBefore - 1, field.Player.Lives);
+        Assert.Equal(EntityLifeState.Dying, playField.Player.LifeState);
+        Assert.Equal(livesBefore - 1, playField.Player.Lives);
     }
 
     [Fact]
@@ -255,28 +255,28 @@ public sealed class PlayFieldCollisionTests
         // it (`AttractState`), so contact kills there and only there (notes §97.5).
         var aided = CreateEmptyField();
         aided.SkipWaveStart();
-        aided.Entities.Grunts.Add(new Grunt(TestSprites.Shared, aided.Player.Position));
+        aided.FieldEntities.Grunts.Add(new Grunt(TestSprites.SharedSpriteSet, aided.Player.Position));
         aided.Update(new GameTime());
         Assert.Equal(EntityLifeState.Alive, aided.Player.LifeState);
 
-        var demo = CreateEmptyField(false);
-        demo.SkipWaveStart();
-        demo.Entities.Grunts.Add(new Grunt(TestSprites.Shared, demo.Player.Position));
-        demo.Update(new GameTime());
-        Assert.Equal(EntityLifeState.Dying, demo.Player.LifeState);
+        var demoPlayField = CreateEmptyField(false);
+        demoPlayField.SkipWaveStart();
+        demoPlayField.FieldEntities.Grunts.Add(new Grunt(TestSprites.SharedSpriteSet, demoPlayField.Player.Position));
+        demoPlayField.Update(new GameTime());
+        Assert.Equal(EntityLifeState.Dying, demoPlayField.Player.LifeState);
     }
 
     [Fact]
     public void LaserHitsGrunt_GruntDiesImmediately_AndExplodes()
     {
-        var field = CreateEmptyField();
-        field.SkipWaveStart();
-        IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 200, field.Wall.PlayfieldBounds.Y + 100);
-        var grunt = new Grunt(TestSprites.Shared, spot);
-        field.Entities.Grunts.Add(grunt);
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 200, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
+        var grunt = new Grunt(TestSprites.SharedSpriteSet, spot);
+        playField.FieldEntities.Grunts.Add(grunt);
 
-        var laser = field.PlayerLasers.FireAndGet(spot, Direction8.Down);
-        field.Update(new GameTime());
+        var laser = playField.PlayerLaserSlots.FireAndGet(spot, Direction8.Down);
+        playField.Update(new GameTime());
 
         // RRP8.ASM ROBKIL: `LDA PCFLG / BNE ROBKON / JSR EXST` — a laser kill
         // goes straight to the explosion ("BLOW HIM UP!!!!") with NO Dying
@@ -284,24 +284,24 @@ public sealed class PlayFieldCollisionTests
         // (ROBKON → DMAON), which this port does not model yet.
         Assert.Equal(EntityLifeState.Dead, grunt.LifeState);
         Assert.Equal(EntityLifeState.Dead, laser!.LifeState);
-        Assert.Equal(100, field.ScoreBoard.Score); // ScoreValues.Grunt
-        Assert.Single(field.Entities.Explosions); // the grunt's death visual
+        Assert.Equal(100, playField.ScoreBoard.Score); // ScoreValues.Grunt
+        Assert.Single(playField.FieldEntities.Explosions); // the grunt's death visual
     }
 
     [Fact]
     public void LaserHitsHulk_HulkIsKnockedBackInLaserDirection_NeverKilled()
     {
-        var field = CreateEmptyField();
-        field.SkipWaveStart();
-        IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 200, field.Wall.PlayfieldBounds.Y + 200);
-        var hulk = new Hulk(TestSprites.Shared, spot, new Random(7), 8, static () => IntVector2.Zero);
-        field.Entities.Hulks.Add(hulk);
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 200, playField.PlayfieldWall.PlayfieldBounds.Y + 200);
+        var hulk = new Hulk(TestSprites.SharedSpriteSet, spot, new Random(7), 8, static () => IntVector2.Zero);
+        playField.FieldEntities.Hulks.Add(hulk);
         var positionBefore = hulk.Position;
 
         // Laser moving Left knocks the hulk left. Spawn it to the RIGHT of the hulk so the
         // first 12 arcade pixel move still leaves it overlapping the 14x16 arcade pixel hulk box.
-        var laser = field.PlayerLasers.FireAndGet(new IntVector2(spot.X + 32, spot.Y), Direction8.Left);
-        field.Update(new GameTime());
+        var laser = playField.PlayerLaserSlots.FireAndGet(new IntVector2(spot.X + 32, spot.Y), Direction8.Left);
+        playField.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Alive, hulk.LifeState); // indestructible
         Assert.Equal(EntityLifeState.Dead, laser!.LifeState);
@@ -310,7 +310,7 @@ public sealed class PlayFieldCollisionTests
 
     private static PlayField CreateEmptyField(bool playerInvincibleForTesting = true)
     {
-        var parameters = new WaveParameters(
+        var waveParameters = new WaveParameters(
             1,
             HulkCount: 0,
             SpheroidCount: 0,
@@ -320,7 +320,7 @@ public sealed class PlayFieldCollisionTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayFieldBuilder().WithParameters(parameters).WithSeed(99)
+        return new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(99)
             .WithPlayerInvincible(playerInvincibleForTesting).Build();
     }
 }

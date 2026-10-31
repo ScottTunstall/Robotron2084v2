@@ -33,8 +33,8 @@ public sealed class BozoModeTests
     [Fact]
     public void ParametersAreUntouchedWhenTheMercyDoesNotApply()
     {
-        var parameters = new WaveParameters(3);
+        var waveParameters = new WaveParameters(3);
 
-        Assert.Same(parameters, BozoMode.Apply(parameters, 2));
+        Assert.Same(waveParameters, BozoMode.Apply(waveParameters, 2));
     }
 }

@@ -25,15 +25,15 @@ public sealed class PlayFieldRobotRegistryTests
     /// </summary>
     private static readonly (RobotKind Kind, Func<WaveParameters, int> Count)[] WaveBrought =
     [
-        (RobotKind.Electrode, static parameters => parameters.ElectrodeCount),
-        (RobotKind.Grunt, static parameters => parameters.GruntCount),
-        (RobotKind.Hulk, static parameters => parameters.HulkCount),
-        (RobotKind.Spheroid, static parameters => parameters.SpheroidCount),
-        (RobotKind.Quark, static parameters => parameters.QuarkCount),
-        (RobotKind.Tank, static parameters => parameters.TankCount),
-        (RobotKind.Brain, static parameters => parameters.BrainCount),
-        (RobotKind.BerzerkRobot, static parameters => parameters.BerzerkRobotCount),
-        (RobotKind.Gorf, static parameters => parameters.GorfCount)
+        (RobotKind.Electrode, static waveParameters => waveParameters.ElectrodeCount),
+        (RobotKind.Grunt, static waveParameters => waveParameters.GruntCount),
+        (RobotKind.Hulk, static waveParameters => waveParameters.HulkCount),
+        (RobotKind.Spheroid, static waveParameters => waveParameters.SpheroidCount),
+        (RobotKind.Quark, static waveParameters => waveParameters.QuarkCount),
+        (RobotKind.Tank, static waveParameters => waveParameters.TankCount),
+        (RobotKind.Brain, static waveParameters => waveParameters.BrainCount),
+        (RobotKind.BerzerkRobot, static waveParameters => waveParameters.BerzerkRobotCount),
+        (RobotKind.Gorf, static waveParameters => waveParameters.GorfCount)
     ];
 
     /// <summary>
@@ -134,35 +134,35 @@ public sealed class PlayFieldRobotRegistryTests
     [Fact]
     public void EveryKindsListIsWalkedOnceAndDrawnOnce()
     {
-        var field = CreateField();
-        IEntityList[] robotLists = [.. Enum.GetValues<RobotKind>().Select(field.Entities.GetList)];
+        var playField = CreateField();
+        IEntityList[] robotLists = [.. Enum.GetValues<RobotKind>().Select(playField.FieldEntities.GetList)];
 
         // One list per kind: no two kinds share a list, and none is missing.
         Assert.Equal(Enum.GetValues<RobotKind>().Length, robotLists.Distinct().Count());
 
         // The update pass holds every kind's list, plus the lists no kind owns, and no list twice.
-        Assert.Equal(robotLists.Length + NonRobotLists, field.Entities.UpdateOrder.Count);
-        Assert.Equal(field.Entities.UpdateOrder.Count, field.Entities.UpdateOrder.Distinct().Count());
-        foreach (var list in robotLists) Assert.Contains(list, field.Entities.UpdateOrder);
+        Assert.Equal(robotLists.Length + NonRobotLists, playField.FieldEntities.UpdateOrder.Count);
+        Assert.Equal(playField.FieldEntities.UpdateOrder.Count, playField.FieldEntities.UpdateOrder.Distinct().Count());
+        foreach (var list in robotLists) Assert.Contains(list, playField.FieldEntities.UpdateOrder);
 
         // The two draw passes hold every walked list exactly once between them, so nothing is invisible.
-        IEntityList[] drawn = [.. field.Entities.DrawOrderBehindShots, .. field.Entities.DrawOrderInFrontOfShots];
-        Assert.Equal(field.Entities.UpdateOrder.Count, drawn.Length);
-        Assert.Equal(field.Entities.UpdateOrder.Count, drawn.Distinct().Count());
-        foreach (var list in field.Entities.UpdateOrder) Assert.Contains(list, drawn);
+        IEntityList[] drawn = [.. playField.FieldEntities.DrawOrderBehindShots, .. playField.FieldEntities.DrawOrderInFrontOfShots];
+        Assert.Equal(playField.FieldEntities.UpdateOrder.Count, drawn.Length);
+        Assert.Equal(playField.FieldEntities.UpdateOrder.Count, drawn.Distinct().Count());
+        foreach (var list in playField.FieldEntities.UpdateOrder) Assert.Contains(list, drawn);
     }
 
     [Fact]
     public void OnlyTheWaveBroughtKindsHaveAWaveCount_AndEachReadsItsOwnCount()
     {
-        var parameters = OneOfEverything();
+        var waveParameters = OneOfEverything();
 
         foreach (var (kind, count) in WaveBrought)
         {
             var row = RobotKinds.GetInfo(kind).WaveCount;
 
             Assert.NotNull(row);
-            Assert.Equal(count(parameters), row(parameters));
+            Assert.Equal(count(waveParameters), row(waveParameters));
         }
 
         foreach (var kind in Enum.GetValues<RobotKind>())
@@ -193,20 +193,20 @@ public sealed class PlayFieldRobotRegistryTests
     [Fact]
     public void AKindsListRefusesToGuessWhenTheKindHasNoList()
     {
-        var field = CreateField();
+        var playField = CreateField();
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => field.Entities.GetList((RobotKind)999));
+        Assert.Throws<ArgumentOutOfRangeException>(() => playField.FieldEntities.GetList((RobotKind)999));
     }
 
     [Fact]
     public void EveryKindsListHoldsThatKindsEntityType()
     {
-        var field = CreateField();
+        var playField = CreateField();
 
         Assert.Equal(Enum.GetValues<RobotKind>().Length, ExpectedEntityTypes.Length);
         foreach (var (kind, entityType) in ExpectedEntityTypes)
         {
-            var listType = field.Entities.GetList(kind).GetType();
+            var listType = playField.FieldEntities.GetList(kind).GetType();
             Assert.Equal(entityType, Assert.Single(listType.GetGenericArguments()));
         }
     }

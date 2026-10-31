@@ -20,9 +20,9 @@ public sealed class DifficultyTuningTests
     [Fact]
     public void TheRecommendedDifficultyChangesNothing()
     {
-        var parameters = Wave(6);
+        var waveParameters = Wave(6);
 
-        Assert.Same(parameters, DifficultyTuning.Apply(parameters, GameSettings.RecommendedDifficulty, 3));
+        Assert.Same(waveParameters, DifficultyTuning.Apply(waveParameters, GameSettings.RecommendedDifficulty, 3));
     }
 
     [Fact]
@@ -67,17 +67,17 @@ public sealed class DifficultyTuningTests
     [Fact]
     public void AnEasierSettingIsRaisedToRecommendedForAPlayerAtWaveFourteen()
     {
-        var parameters = Wave(14);
+        var waveParameters = Wave(14);
 
-        Assert.Same(parameters, DifficultyTuning.Apply(parameters, 2, 1));
+        Assert.Same(waveParameters, DifficultyTuning.Apply(waveParameters, 2, 1));
     }
 
     [Fact]
     public void AnEasierSettingIsRaisedToRecommendedFromWaveFiveWithThreeMenLeft()
     {
-        var parameters = Wave(5);
+        var waveParameters = Wave(5);
 
-        Assert.Same(parameters, DifficultyTuning.Apply(parameters, 2, 3));
+        Assert.Same(waveParameters, DifficultyTuning.Apply(waveParameters, 2, 3));
     }
 
     [Fact]
@@ -102,8 +102,8 @@ public sealed class DifficultyTuningTests
     [InlineData(1, 6)]
     public void AHarderSettingIsNeverMercied(int wave, int difficulty)
     {
-        var parameters = Wave(wave);
+        var waveParameters = Wave(wave);
 
-        Assert.NotSame(parameters, DifficultyTuning.Apply(parameters, difficulty, 1));
+        Assert.NotSame(waveParameters, DifficultyTuning.Apply(waveParameters, difficulty, 1));
     }
 }

@@ -40,9 +40,9 @@ public sealed class PlayfieldLayoutTests
     [Fact]
     public void Wall_IsOnScreen()
     {
-        var wall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColorCycle());
+        var playfieldWall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColorCycle());
 
-        Assert.True(Canvas.Contains(wall.GetOuterBounds()),
-            $"the wall {wall.GetOuterBounds()} must lie inside the {Canvas} canvas");
+        Assert.True(Canvas.Contains(playfieldWall.GetOuterBounds()),
+            $"the wall {playfieldWall.GetOuterBounds()} must lie inside the {Canvas} canvas");
     }
 }
