@@ -26,8 +26,8 @@ public sealed class ControlSettings
     /// <summary>How far the pad's trigger must be pulled to count as fire (a trigger is an axis).</summary>
     private const float FireTriggerThreshold = 0.5f;
 
-    /// <summary>The port's skip-level test key. Fixed, like the other port-only keys in this block.</summary>
-    private const Keys SkipLevelKey = Keys.Insert;
+    /// <summary>The port's skip-wave test key. Fixed, like the other port-only keys in this block.</summary>
+    private const Keys SkipWaveKey = Keys.Insert;
 
     /// <inheritdoc cref="StartOneKey" />
     private const Buttons StartOneButton = Buttons.Start;
@@ -80,7 +80,7 @@ public sealed class ControlSettings
     ///     are NOT bindable (the arcade's START 1 / START 2 have their own keys, and the
     ///     title also offers F1/F2/F3), so they stay hardwired here, as do the two
     ///     long-standing port aliases: Space as a fire button and <c>Insert</c> as the
-    ///     skip-level test key (<c>P</c> is PAUSE, not skip-level).
+    ///     skip-wave test key (<c>P</c> is PAUSE, not skip-wave).
     /// </summary>
     public PlayerInputState ReadPlayer(int playerIndex, KeyboardState keyboardState, GamePadState padOne, GamePadState padTwo)
     {
@@ -99,7 +99,7 @@ public sealed class ControlSettings
             move,
             shoot,
             fire,
-            keyboardState.IsKeyDown(SkipLevelKey),
+            keyboardState.IsKeyDown(SkipWaveKey),
             keyboardState.IsKeyDown(StartOneKey) || keyboardState.IsKeyDown(StartOneNumPadKey) || padOne.IsButtonDown(StartOneButton),
             keyboardState.IsKeyDown(StartTwoKey) || keyboardState.IsKeyDown(StartTwoNumPadKey) || padOne.IsButtonDown(StartTwoButton));
     }
