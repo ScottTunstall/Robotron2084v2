@@ -26,6 +26,41 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 
 ---
 
+## 2026-10-31: Human becomes FamilyMember
+
+### What was wrong
+
+`Human` is the class for Mikey, Mommy and Daddy, the family members the player rescues. The name says what kind of object it is, a
+person, which is the wrong idea for a family member, and it clashes with the other meaning of "human" in the code: the person at the controls.
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| `Human` (class and `Entities/Human.cs`) | `FamilyMember`, `Entities/FamilyMember.cs` |
+| `HumanKind`, `HumanKindExtensions` (class and files) | `FamilyMemberKind`, `FamilyMemberKindExtensions` |
+| `HumanSpawnTests`, `PlayFieldHumanTests` (classes and files) | `FamilyMemberSpawnTests`, `PlayFieldFamilyMemberTests` |
+| `HulkVsHumanCollisionRule`, `HulkKilledHumanResult`, `BrainCaughtHumanResult`, `PlayerRescuedHumanResult` (classes and files) | `HulkVsFamilyMemberCollisionRule`, `HulkKilledFamilyMemberResult`, `BrainCaughtFamilyMemberResult`, `PlayerRescuedFamilyMemberResult` |
+| `HumanWave`, `HumanProgFinalConversion`, `RespondToBrainCatchingHuman` and other names with `Human` inside | the same with `FamilyMember` |
+| variables and parameters `human`, `victimHuman`, `humanSpot`, `mikeyHuman`, `humans` and so on | `familyMember`, `victimFamilyMember`, `familyMemberSpot`, `familyMembers` |
+| comments and summaries where "human" means the family member | "family member" |
+
+### What was left alone, and why
+
+- **`SoundTables.KillAHuman` and `SaveAHuman`**: the sound table names follow the ROM, which the author asked for earlier.
+- **`MovieWalk.Human`**: a label for how the attract movie walks an object. The author chose to keep it.
+- **`humanPlayerInputSource` and `humanInputState`**: they mean the person at the controls, not a family member.
+- **`Humanoid`**: a different word.
+- **Comments where "human" means a person** (the demo pausing like a person, a reader, the player at the coin door, and an author quote in a test).
+- **`docs/arcade-fidelity-notes.md`**: it records the ROM's own analysis and keeps its wording.
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors. Tests: the main suite passes with the same count as before (807 passed, 1 skipped)
+and the sound suite passes (19 passed, 102 skipped). All text files are CRLF.
+
+---
+
 ## 2026-10-31: SpriteFactory and SpriteContentPaths become TextureFactory and TexturePaths
 
 ### What was wrong
