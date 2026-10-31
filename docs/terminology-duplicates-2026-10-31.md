@@ -15,7 +15,7 @@ ours. This list only compares our own words with each other.
 > because they are the record of what was found. Their status:
 > D01 **done** (the namespace `Robotron2084.Level` was left), D02 **done** (`TurnsPerPlayer` and the arcade's on-screen words were left),
 > D03 **done** (`Floor`, and the positions called `…Limit`, were left), R02 **done** (the author does not like "roll" for random numbers; it is in NAM-24), D12 **no change needed** (the summary now says the names are
-> the ROM's on purpose). D07 is partly done: the colour meaning is now `PaletteIndex` everywhere, which removes the `LaserSlot` and `LaserSlots` clash; the player record, the family place and the key and pad halves are still open. Every other item is still open.
+> the ROM's on purpose). D07 is partly done: the colour meaning is now `PaletteIndex` everywhere, which removes the `LaserSlot` and `LaserSlots` clash; the player record, the family place and the key and pad halves are still open. R07 is **done** (258 files; see the refactoring ledger). Every other item is still open.
 
 ## How this list was made
 
@@ -94,6 +94,7 @@ for the author to read.
 | R04 | `_walkCycleStep` is an index and is not named as one | READY | 5 files |
 | R05 | A rectangle called `box`, `rect` or `Rect` | READY | 6 files |
 | R06 | The gap between beats called delay or limit | READY (Part A) / DECIDE (Part B) | ~12 files |
+| R07 | Vague parameter names: `PlayField field`, `SpriteSet sprites`, `GamePalette palette` and others (NAM-26) | **DONE** | about 270 declarations in about 85 files |
 | D01 | **Wave** and **level** | DECIDE | 36 files + 53 test files |
 | D02 | **Lives**, **men**, **ships**, **turns**, **extra man**, **extra life**, **mini man** | DECIDE | 18 files |
 | D03 | **Max**, **Maximum**, **Cap**, **Limit** (and **Min**, **Minimum**, **Floor**) | DECIDE | ~25 files |
@@ -226,6 +227,29 @@ and what unit they take (NAM-2: the unit is missing: beats? arcade frames?). Sph
 turns of the spheroid, not beats: see D13.
 
 ---
+
+## R07. Parameters whose names do not give the type (NAM-26)
+
+*Rule:* NAM-26 (new): a name must tell a reader the type without IntelliSense, with the whole type name, and `field` must
+never be used as a name. NAM-25 used to bless `PlayField field`; it now says `PlayField playField`.
+
+*Where it is now* (declarations of that exact type and name, comments excluded):
+
+| Now | Count | To |
+|---|---|---|
+| `PlayField field`, `PlayField _field` | 112 in 47 files | `playField`, `_playField` (`WaveSpawnContext.Field` becomes `PlayField`) |
+| `SpriteSet sprites`, `SpriteSet _sprites` | 81 in 43 files | `spriteSet`, `_spriteSet` |
+| `GamePalette palette`, `_palette` | 19 in 10 files | `gamePalette`, `_gamePalette` |
+| `GameSession session`, `_session` | 9 in 7 files | `gameSession`, `_gameSession` |
+| `FieldEntities entities`, `Entities` | 20 in 15 files | `fieldEntities`, `FieldEntities` |
+| `WaveSpawnContext context` | 12 in 11 files | `waveSpawnContext` |
+| `ICollisionScene scene` | 10 in 9 files | `collisionScene` |
+| `IPlayerInputSource input` | 8 in 7 files | `playerInputSource` |
+
+These are the common ones only. The rule is the test, so a reader of each method's parameter list will find more
+(for example other bare `context`, `state` and `source` names). Do them one type at a time, and add
+`field` to the retired words in the glossary if the author wants it listed there.
+
 
 # Part 2. DECIDE: ask the author first
 

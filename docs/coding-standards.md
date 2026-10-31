@@ -135,13 +135,13 @@ what it needs as arguments and let it work. A query is fine when the answer is t
 (feature envy) and STR-9 (state checks): the rule and the data live together, and the caller issues one command.
 
 **STR-11. Law of Demeter: one dot.** A method talks to its own members, its parameters, the objects it makes, and
-the things it is directly given. It does not reach through one object to another: `field.Entities.GetList(kind).Entities`,
-`field.Wall.Intersects(box)` and `sprites.Blitter.DrawSprite(...)` all call a method on something got from something
+the things it is directly given. It does not reach through one object to another: `playField.FieldEntities.GetList(kind).Entities`,
+`playField.PlayfieldWall.Intersects(box)` and `spriteSet.BlitterDraw.DrawSprite(...)` all call a method on something got from something
 else. If a statement has a second dot after a property or a call, it is a smell. More than one dot means the class knows too much about
 the inside of another object, and will break when that inside changes. Fix it one of two ways: give the
 near object a method that does the whole job (`field.HitsWall(box)`, `field.GetEntities(kind)`), or pass the
 collaborator in as a parameter. A short-lived local that only renames a parameter's collaborator is not a fix.
-- **Exempt:** reading plain data (`point.X`, `box.Bounds.Width`, `parameters.GruntCount`), one fluent chain on a single
+- **Exempt:** reading plain data (`point.X`, `box.Bounds.Width`, `waveParameters.GruntCount`), one fluent chain on a single
   object (LINQ, builders), and static, namespace and enum paths (`ScreenSize.ToPortPixelsFromArcadePixels`, `EntityLifeState.Alive`).
 - **The price:** a thin delegating method on the near object. That is correct. It keeps callers from knowing the
   structure behind it, so the structure can change in one place.
@@ -272,7 +272,7 @@ Daddies, Electrodes, Brains, Grunts, Progs). A new character gets the name the a
 has none, ask the author (CMT-6). Content file names follow the same rule (`Sprites/Mommy_1`).
 
 **NAM-16. The gap between beats is an interval.** The time from one beat to the next is the **interval**:
-`BeatIntervalArcadeFrames` in arcade frames, and `_beatTimer` for the `ArcadeFrameTimer` that says when it is over. Never call
+`BeatIntervalArcadeFrames` in arcade frames, and `_beatArcadeFrameTimer` for the `ArcadeFrameTimer` that says when it is over. Never call
 it a period, delay, rate, sleep or step, and never call a beat a "step" or a "turn"
 (a hulk's or a human's beat is a beat; its steps are the moves inside it). The same word names any other repeating
 gap: a move, a grow step, an animation frame (`MoveIntervalArcadeFrames`, `GrowIntervalArcadeFrames`,
@@ -396,13 +396,59 @@ else: a tank "rolls" along, "scroll", "stroll", "hand-rolled".
 the `Sound` service, `point` a `Point`. If the thing is not that, say what it is: `playfieldBounds` for the
 `Rectangle`, `playerPosition` for the `IntVector2`, `playerSlot` for a `PlayerSlot`, `playerIndex` for the number,
 `keyboardState`, `stripEffect`, `soundSequence`, `boardSound`, `avoidedPosition`. A variable named after its own type
-is fine (`Grunt grunt`, `KeyboardState keyboardState`, `Texture2D texture`, `PlayField field`). This covers the
+is fine (`Grunt grunt`, `KeyboardState keyboardState`, `Texture2D texture`, `PlayField playField`), but the whole
+type name is needed (NAM-26). This covers the
 types the project declares and the framework types it uses, and applies to parameters, locals, loop variables and
 lambda parameters.
 
 The same goes for a bare `settings`, because the project has more than one kind: `GameSettings`, `ControlSettings`
 and the sound tables' `NoiseSettings`. Name it for what it is: `gameSettings`, `controlSettings`, `noiseSettings`,
 `singSettings`. A named argument uses the same name (`gameSettings: _gameSettings`).
+
+**NAM-26. A name tells the reader the type without IntelliSense.** The author reviews code on paper, in a diff and in a
+pull request, with no tooltip and no go-to-definition. For every parameter, local, field, property and record component,
+the reader must be able to say what type it is from the name alone, and must not need the xmldoc to do so.
+- **An object is named with its whole type name.** Lower camel case for a parameter, local or field: `PlayField playField`,
+  `SpriteSet spriteSet`, `GamePalette gamePalette`, `GameSession gameSession`, `ICollisionScene collisionScene`,
+  `IPlayerInputSource playerInputSource` (an interface drops its `I`), `WaveSpawnContext waveSpawnContext`. Pascal case for a
+  property or record component: `PlayField PlayField`. A shortened form (`field`, `sprites`, `palette`, `session`, `context`,
+  `scene`, `input`) is an abbreviation (NAM-5), and two different types can share it, so it is not allowed.
+- **A narrower thing puts its qualifier in front of the whole type name**: `deadPlayerSlot`, `previousKeyboardState`,
+  `phantomTargetPosition`.
+- **A word that C# reserves, or gives a special meaning to, never names anything.** `field` is the one that matters most:
+  since C# 14 it is a keyword inside a property accessor (it means the backing field), so a parameter called `field` is a
+  trap as well as vague. The others are `value`, `record`, `file`, `init`, `required` and `scoped`. Say `playField`.
+- **A name another rule already fixes is fine**, because the type can be told from it: `...Bounds` (a `Rectangle`, NAM-19),
+  `...Position` (an `IntVector2`), `...Count`, `...Index`, a unit suffix (NAM-2), a predicate (NAM-4), `...Sprite` and
+  `...AnimationFrame` (a texture, NAM-19), `random` (a `Random`) and `spriteBatch` (a `SpriteBatch`). A single-letter lambda
+  parameter in a one-line LINQ call stays allowed (NAM-6).
+- **Also fine:** a collection named for what it holds (`grunts` for an `IReadOnlyList<Grunt>`), and the `SoundTables` fields, which
+  are the ROM labels' own names by the author's decision.
+- **The test:** could someone reading this line on paper say the type? If they would have to look it up, use the type name.
+- **Why:** this is the author's rule, born of reviewing without IntelliSense and finding `field` on a `PlayField` (see "Decisions and
+  why"). Do not shorten a type name to save typing: the cost falls on the reviewer.
+
+## Decisions and why
+
+These are choices the author made about names, in the order they were made, with the author's own reason where the author
+gave one. They are here so that a developer who finds a rule odd can see the pain behind it, and so nobody reopens them
+without reading it. Where the author gave a decision but no reason, it says so: that is a gap for the author to fill, not a
+sign that there was no reason.
+
+| Decision | The author's reason | Rule or record |
+|---|---|---|
+| **Name every object with its whole type name** (`PlayField playField`, never `field`). | "In WaveSpawnContext there is a parameter named \"Field\" - but what field? Field is a reserved word when in lower case. It should be called PlayField so that its completely unambiguous. I should be able to work out the type of the parameter without looking at the xmldocs. This will aid me in code review where I may not have intellisense." | NAM-26 |
+| **A palette entry is a palette index**, not a slot, in every name (`LaserPaletteIndex`, `GetPaletteIndexColour`). | Asked whether `LaserSlot` was the palette index; if so, "use PaletteIndex throughout system, e.g. LaserPaletteIndex". (The audit found `Slot` meant five things, and that `LaserSlot`, a colour, sat beside `LaserSlots`, the store of three lasers.) | Glossary; refactoring ledger 2026-10-31 |
+| **No "Colour" next to "PaletteIndex"**: `GetWordmarkPaletteIndex`, not `GetWordmarkColourPaletteIndex`. | "As a Palette is colour oriented anyway." | Glossary |
+| **No "roll" for a random number**, anywhere (`SearchFamilyListThreshold`, not `SearchFamilyListRollAtMost`). | "I do not like the term \"Roll\" for random numbers." | NAM-24; refactoring ledger 2026-10-31 |
+| **A name says what the number is**: a `…MaxExclusive` or a `…Threshold`, not a `…RandomRange`. | "TargetRandomRange isn't a range though - its a maximum or a threshold. Pick either Max or Threshold (depending on what is better suited)." | NAM-24 |
+| **Wave, not level**, for one round of the game. | The author decided and did not give a reason. (The audit found `LevelParameters`' own summary said "wave", and the arcade and the screen say WAVE.) | Glossary; refactoring ledger 2026-10-31 |
+| **Lives, not men, ships, turns or mini man**, for what a player may lose. | The author decided and did not give a reason. (The audit found `BozoMode` passing `StartingLives` as `shipsPerGame` and `GetSpareMen()` as `spareMen` in one call.) | Glossary; refactoring ledger 2026-10-31 |
+| **Max and Min, not Cap, Limit or Maximum**, for the biggest and smallest a number may be. | The author decided and did not give a reason. | Glossary; refactoring ledger 2026-10-31 |
+| **The sound tables keep the ROM's names** (`CircleKill`, `SquareKill`, `PostKill`). | The author decided and did not give a reason. (They were already the ROM labels' own comments, so nothing was renamed.) | `SoundTables` summary; glossary |
+| **Every text file is CRLF on disk**; the repository still stores LF. | "I need all files to be in windows format - CR LF". | `.gitattributes` (`eol=crlf`), `.editorconfig` |
+
+If you are the author and want to add the story behind any row, add it in the second column in your own words.
 
 ## 4. Numbers and units (§112, §113)
 
@@ -433,15 +479,15 @@ caller.
 ## 5. Time and state
 
 **TIME-1. One timer idiom.** Anything that happens every so many fiftieths of a second is timed by a
-`Core/ArcadeFrameTimer`, called once per `Update`: `if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);`. An
+`Core/ArcadeFrameTimer`, called once per `Update`: `if (_beatArcadeFrameTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(playField);`. An
 entity never adds clock units itself. Do not introduce `TimeSpan`/`GameTime` timers in gameplay code.
 
 **TIME-1a. The same idea has the same name in every entity.**
 
 | Idea | Timer field | Interval constant | Method it calls |
 |---|---|---|---|
-| The entity's turn to move or act | `_beatTimer` | `BeatIntervalArcadeFrames` | `ActOnBeat` |
-| A move made every fiftieth of a second | `_moveTimer` | `ArcadeClock.MoveIntervalArcadeFrames` | `MoveOnce` |
+| The entity's turn to move or act | `_beatArcadeFrameTimer` | `BeatIntervalArcadeFrames` | `ActOnBeat` |
+| A move made every fiftieth of a second | `_moveArcadeFrameTimer` | `ArcadeClock.MoveIntervalArcadeFrames` | `MoveOnce` |
 | A step of growing | `_growTimer` | `GrowIntervalArcadeFrames` | `TakeGrowStep` (and `IsGrowing`) |
 | The next animation frame, when not on the beat | `_animationTimer` | `AnimationIntervalArcadeFrames` | `ShowNextAnimationFrame` |
 | How long a short-lived thing lasts | `_lifeTimer` | `LifeArcadeFrames` | (it dies) |
@@ -614,7 +660,7 @@ loss.
 No blank line directly after an opening brace. Use target-typed `new()` or `var` consistently within a file.
 
 **FMT-2. A ternary (`? :`) is allowed only as the whole value of a simple `return`.** Allowed: `return isRight ? 1 : -1;`
-and `return pad == 1 ? padTwo : padOne;`. The condition is one name, one short comparison, or one `Is…`/`Has…`
+and `return pad == 1 ? playerTwoGamePadState : playerOneGamePadState;`. The condition is one name, one short comparison, or one `Is…`/`Has…`
 call. Each branch is a name, a literal or a constant: no arithmetic, no calls, no slicing. Everywhere else, write an `if`. That means never:
 - on the same line as an `if`: `if (a) return b ? c : d;`
 - as an argument, inside a string, or inside another expression
@@ -781,6 +827,12 @@ grep -rnP --include=*.cs '^(?!\s*//)[^/]*\b(?:ref|out)\s+(?:var\s+|[\w<>?\[\]]+\
 grep -rnE --include=*.cs '\b(IntVector2|Rectangle|int|var) (player|playfield|point)\b|\bKeyboardState keys\b|\b(var|StripEffect) effect\b|\bSoundSequence sound\b' src
 # ...and a bare settings (a PlayerControls named controls is fine), which should also print nothing
 grep -rnwE --include=*.cs 'settings' src | grep -v '///'
+
+# A shortened name for an object (NAM-26): each should print nothing. The list is the usual offenders; the rule is the
+# test, so also read the parameter list of every method you add.
+grep -rnE --include=*.cs '\b(PlayField (field|_field)|SpriteSet (sprites|_sprites)|GamePalette (palette|_palette)|GameSession (session|_session)|FieldEntities entities|WaveSpawnContext context|IPlayerInputSource input|ICollisionScene scene)\b' src tests tools
+# ...and a parameter called field, which is a keyword inside a property accessor since C# 14
+grep -rnE --include=*.cs '\b[A-Z]\w*(<[^>]+>)? field\b[,)]' src tests tools | grep -v '///'
 
 # A ternary anywhere but the whole value of a return (FMT-2): each hit is a violation to rewrite with named bools
 # and ifs. A return line that is left out of this list still needs a look: its condition and branches must be plain.

@@ -21,6 +21,68 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 3. **What was changed**: a table of old name to new name.
 4. **What was left alone, and why.**
 5. **How it was checked**: the build and the tests.
+6. **Why the author chose it**, in the author's own words, in the "Decisions and why" section of
+   [coding-standards.md](coding-standards.md). If the author gave no reason, say so there.
+
+---
+
+## 2026-10-31: every object is named with its whole type name (NAM-26)
+
+### What was wrong
+
+The author reviews code on paper and in diffs, with no IntelliSense, and could not tell the type of a parameter from its name:
+"in WaveSpawnContext there is a parameter named \"Field\" - but what field?" (the reason is in "Decisions and why" in
+[coding-standards.md](coding-standards.md)). `field` was also a bad name for a second reason: since C# 14 it is a keyword inside a
+property accessor. NAM-25 had even listed `PlayField field` as a good name. Audit item R07 in
+[terminology-duplicates-2026-10-31.md](terminology-duplicates-2026-10-31.md) counted about 270 of the commonest.
+
+### What was changed
+
+A scan of every parameter, local, field, property and record component whose type is a class, interface or record of ours (or
+a MonoGame service) found about 875 whose name did not contain the type's name. After this change the scan finds none, apart
+from the intended exceptions below. 258 files changed; each change is a rename.
+
+| Old name | New name |
+|---|---|
+| `PlayField field`, `_field`, `WaveSpawnContext.Field` | `playField`, `_playField`, `PlayField` |
+| `SpriteSet sprites`, `_sprites`, `.Sprites` | `spriteSet`, `_spriteSet`, `.SpriteSet` |
+| `GamePalette palette`, `.Palette` | `gamePalette`, `.GamePalette` |
+| `FieldEntities entities`, `.Entities` | `fieldEntities`, `.FieldEntities` |
+| `WaveParameters parameters`, `.Parameters` (on `PlayField`) | `waveParameters`, `.WaveParameters` |
+| `GameSession session`, `GameStateManager manager`, `GameServices services` | `gameSession`, `gameStateManager`, `gameServices` |
+| `IPlayerInputSource input`, `.Input` | `playerInputSource`, `.PlayerInputSource` |
+| `ICollisionScene scene`, `WaveSpawnContext context` | `collisionScene`, `waveSpawnContext` |
+| `BoardOutput output`, `BoardMemory memory`, `Mc6800Cpu cpu`, `SoundEngine engine`, `ISoundBoard board` | `boardOutput`, `boardMemory`, `mc6800Cpu`, `soundEngine`, `soundBoard` |
+| `ArcadeFrameTimer _beatTimer`, `_moveTimer`, `_lifeTimer` and the rest | `_beatArcadeFrameTimer`, `_moveArcadeFrameTimer`, `_lifeArcadeFrameTimer` |
+| `GamePadState padOne`, `padTwo` | `playerOneGamePadState`, `playerTwoGamePadState` |
+| `IPlayerInputSource playerOne`, `_humanInput` | `firstPlayerInputSource`, `_humanPlayerInputSource` |
+| `Human victim`, `Target` (on `Brain`) | `victimHuman`, `TargetHuman` |
+| `IEntity` in `Touches(a, b)`, `LaserHitResult.Target` | `firstEntity` / `secondEntity`, `TargetEntity` |
+| `entity`, `hit` and `slot` parameters on the `FieldEntities.Add` and `CollisionResponder` overloads | the lower-camel type name (`brain`, `gruntHitElectrodeResult`, `playerSlot`) |
+| `Texture2D wallPixel`, `frame` | `wallPixelSprite`, `animationFrame` |
+| test locals such as `var field`, `settings`, `parameters`, `sink`, `model`, `board`, `mikey` | `playField`, `gameSettings` or `controlSettings`, `waveParameters`, `recordingSink`, `defineInputsModel`, `soundBoard` or `scoreBoard`, `mikeyHuman` |
+| test fixtures `Tick`, `Tick16`, `OneTick`, `Dot`, `NoPad`, `Shared`, `Blank` | `TickGameTime`, `Tick16GameTime`, `OneTickGameTime`, `DotSpriteMask`, `NoGamePadState`, `SharedSpriteSet`, `BlankHighScoreEntry` |
+| `HighScoreTable.Top`, `FactoryTop` | `TopScoreEntry`, `FactoryTopScoreEntry` (the saved JSON key is still `"top"`) |
+
+A name that was a role plus a thing keeps the role: `mikey` is `mikeyHuman`, `nearSide` is `nearSideTankShell`, `_beatTimer` is
+`_beatArcadeFrameTimer`.
+
+### What was left alone, and why
+
+- **The `SoundTables` fields** (`BrainKill`, `CircleKill` ...): they are the ROM labels' own names, by the author's decision.
+- **Collections** (`IReadOnlyList<Grunt> grunts`): named for what they hold; the rule is about objects.
+- **Names another rule fixes:** `...Bounds`, `...Position`, `...Count`, `...Index`, unit suffixes, predicates, `random`, `spriteBatch`.
+- **The test helpers `OneTick()` and `Tick()`**, which are methods that return a `GameTime`, not objects held in a name. NAM-13 is
+  the rule for method names.
+- **The wall's colour cycle** is `wallColorCycle` for now: its class is `WallColorCycle`, and the American spelling goes with R01.
+- **A few pattern or generic uses a text tool cannot type** (a lambda parameter with no declared type, a name reused for two types in
+  one file). The scan in coding-standards.md is the check, and the author's review is the backstop.
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors, then `Robotron2084.Tests` (808, 1 skipped) and
+`RobotronSoundPlayer.Tests` (121, 102 skipped), unchanged. The scans in the coding standards print nothing. MonoGame's own
+`Effect.Parameters` and an enumerator's `.Current` were caught by the compiler and put back.
 
 ---
 
