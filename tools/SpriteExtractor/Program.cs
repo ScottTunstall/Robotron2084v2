@@ -6,7 +6,7 @@
 // Each nibble is a 0-15 palette index.
 //
 // Blit modes (arcade blitter, author 2026-09-13 round 6: "make the sprites
-// transparent where they should be"): palette slot 0 is the blitter's
+// transparent where they should be"): palette index 0 is the blitter's
 // TRANSPARENT pixel for most sprites (a 0-nibble does not draw, so sprites
 // no longer paint black boxes over the wall and each other). A few sprites
 // are SOLID blits (every nibble draws, 0 = black) — the arcade uses this
@@ -16,10 +16,10 @@
 // Palette: ported from the author's WmsGfxSpriteEditor
 // RobotronPaletteService (WmsGfxSpriteEditor.Roms.Robotron2084/Shared/Palettes).
 // That service credits Sean Riddle's Williams ripper (seanriddle.com/ripper.html)
-// for the byte→RGB conversion. Slot colour bytes: 0-9 = ROM defaults at $DA51;
+// for the byte→RGB conversion. Palette index colour bytes: 0-9 = ROM defaults at $DA51;
 // 10-15 (colour-cycling in game) = the service's de-duplicated values so every
-// slot has a distinct, identifiable RGB. No 6809 / Williams hardware modelling:
-// the PNGs hold plain RGB per slot.
+// palette index has a distinct, identifiable RGB. No 6809 / Williams hardware modelling:
+// the PNGs hold plain RGB per palette index.
 //
 // Usage:
 //   dotnet run --project tools/SpriteExtractor                                full run
@@ -426,7 +426,7 @@ internal static class Program
             Console.WriteLine($"{rowName} -> {pngName}.png");
             Console.WriteLine($"  ROM offset: ${off:X4} ({off})   size: {w * 2}x{h} px ({w} bytes x {h} rows)");
             Console.WriteLine($"  wrote: {pngPath}");
-            Console.WriteLine("  ASCII (each char = palette slot; high nibble = left pixel):");
+            Console.WriteLine("  ASCII (each char = palette index; high nibble = left pixel):");
             for (int y = 0; y < h; y++)
             {
                 var sb = new StringBuilder(2 * w);
@@ -454,9 +454,9 @@ internal static class Program
 
     static class Palette
     {
-        // Robotron ROM colour bytes per 16-slot palette. 0-9 = ROM defaults
+        // Robotron ROM colour bytes per 16-index palette. 0-9 = ROM defaults
         // ($DA51); 10-15 = the service's de-duplicated values for the
-        // in-game colour-cycling slots (duplicates would make a texel's slot
+        // in-game colour-cycling palette indices (duplicates would make a texel's palette index
         // ambiguous).
         private static readonly byte[] ColorValues =
         [
@@ -727,15 +727,15 @@ internal static class Program
     }
 
     // Solid-blit sprites: the arcade blits these with EVERY nibble drawn
-    // (slot 0 = opaque black) — currently only the prog's phony-burst
-    // sprite (PGXPIC, RRB10). Everything else is transparent-blit (slot 0
+    // (palette index 0 = opaque black) — currently only the prog's phony-burst
+    // sprite (PGXPIC, RRB10). Everything else is transparent-blit (palette index 0
     // = no pixel).
     static readonly HashSet<string> SolidNames = new() { "ProgBurst" };
 
     /// <summary>
     /// Font glyphs are NOT this tool's output. <c>tools/extract-fonts.py</c>
     /// owns them: it writes white-on-transparent masters (the port tints them
-    /// with the live palette slot at draw time) plus the six colour-cycle
+    /// with the live palette index at draw time) plus the six colour-cycle
     /// MARKER variants the M4 shader needs, which this tool knows nothing
     /// about — and this tool writes palette-coloured pixels instead, which
     /// would break both paths. Two writers also hid a real bug: the Python
@@ -764,16 +764,16 @@ internal static class Program
     // ------------------------------------------------------------------
     // ASCII preview.
 
-    static char AsciiGlyph(int slot)
+    static char AsciiGlyph(int paletteIndex)
     {
         // '0'-'9' then 'A'-'F' — matches the hex nibble notation used in the
         // notes, so rows can be cross-checked against byte dumps.
-        return slot < 10 ? (char)('0' + slot) : (char)('A' + (slot - 10));
+        return paletteIndex < 10 ? (char)('0' + paletteIndex) : (char)('A' + (paletteIndex - 10));
     }
 
     // ------------------------------------------------------------------
-    // PNG writer (32-bit colour+alpha, colour type 6). Slot 0 is transparent
-    // (alpha 0) unless <paramref name="solid"/> (solid blit: slot 0 = opaque
+    // PNG writer (32-bit colour+alpha, colour type 6). Palette index 0 is transparent
+    // (alpha 0) unless <paramref name="solid"/> (solid blit: palette index 0 = opaque
     // black) — see SolidNames.
 
     static void WritePng(string path, int width, int height, byte[] data, int bytesPerRow, bool solid)
