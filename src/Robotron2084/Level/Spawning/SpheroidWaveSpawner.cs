@@ -5,7 +5,7 @@ namespace Robotron2084.Level.Spawning;
 
 /// <summary>Puts the wave's spheroids on the field, well away from where the player starts and most often near a wall.</summary>
 /// <remarks>
-///     Each spheroid rolls how many enforcers it will drop from the wave's <c>ENFNUM</c>, and drops them at the
+///     Each spheroid picks at random how many enforcers it will drop from the wave's <c>ENFNUM</c>, and drops them at the
 ///     wave's <c>CDPTIM</c> pace (notes §11.2).
 /// </remarks>
 public sealed class SpheroidWaveSpawner : IWaveSpawner

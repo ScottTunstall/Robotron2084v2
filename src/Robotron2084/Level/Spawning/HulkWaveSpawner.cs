@@ -35,14 +35,14 @@ public sealed class HulkWaveSpawner : IWaveSpawner
     ///     rest are given <see cref="FamilyList.LastSlot" />.
     /// </summary>
     /// <remarks>Disassembly: <c>$01B5</c>, <c>CMPA #$C0 / BLS</c>.</remarks>
-    private const int SearchFamilyListRollAtMost = 0xC0;
+    private const int SearchFamilyListThreshold = 0xC0;
 
     /// <summary>
     ///     Each hulk picks a random number from 0 up to one less than this, to decide what it heads for (see
-    ///     <see cref="SearchFamilyListRollAtMost" />).
+    ///     <see cref="SearchFamilyListThreshold" />).
     /// </summary>
     /// <remarks>Disassembly: <c>$01B3</c>, <c>LDA $84</c>, one random byte.</remarks>
-    private const int TargetRollSides = 256;
+    private const int TargetMaxExclusive = 256;
 
     /// <inheritdoc />
     public void Spawn(WaveSpawnContext context)
@@ -55,7 +55,7 @@ public sealed class HulkWaveSpawner : IWaveSpawner
             var position =
                 context.Placement.FindSpawnPointAwayFrom(context.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
             int? slot = FamilyList.LastSlot;
-            var isSearchingFamilyList = context.Random.Next(TargetRollSides) <= SearchFamilyListRollAtMost;
+            var isSearchingFamilyList = context.Random.Next(TargetMaxExclusive) <= SearchFamilyListThreshold;
             if (isSearchingFamilyList) slot = TakeNextLeftOverSlot(context.FamilySlotsLeftOver, ref nextSlotToSearch);
 
             Func<IntVector2> getTargetPosition = () => phantomTargetPosition;
