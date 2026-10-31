@@ -24,17 +24,80 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal sealed class CrowdRoarSound
 {
+    private const int CallWhistleFromBsrCycles = CallShort;
+
+    /// <summary>The call to <c>TRIDR</c>: <c>JSR</c> after <c>NOISE1</c> and <c>NOISE2</c>, <c>BSR</c> after the rest.</summary>
+    private const int CallWhistleFromJsrCycles = CallExtended;
+
+    /// <summary><c>WISLD</c> finding the list's end: <c>LDAA ,X</c>, <c>STAA WHIS</c>, <c>BEQ</c>, <c>RTS</c>.</summary>
+    private const int EndOfWhistlesCycles = Indexed + StoreDirect + Branch + Return;
+
     /// <summary>
-    ///     The bytes in each whistle's settings (<c>WS1</c>): loudness to start at, first pitch, pitch change, cycles per
-    ///     pitch, lowest pitch.
+    ///     The whistle's pass counter at the start (<c>NINIT</c>: <c>LDAA #$E</c>, <c>STAA WCNT</c>): "cycle offset for
+    ///     whistle".
     /// </summary>
-    private const int WhistleBytes = 5;
+    private const byte FirstWhistleCount = 0x0E;
+
+    private const int JumpToNoiseCycles = JumpExtended;
+
+    /// <summary><c>NOISLD</c>: five <c>LDAA</c>/<c>STAA</c> pairs and <c>RTS</c>; and the <c>JSR</c> to it.</summary>
+    private const int LoadNoiseCycles = CallExtended + NoiseBytes * (Indexed + StoreDirect) + Return;
+
+    /// <summary>
+    ///     <c>WISLD</c> reading a whistle's settings: five <c>LDAA</c>/<c>STAA</c> pairs, <c>LDAA #5</c>, <c>JSR ADDX</c>
+    ///     , <c>STX PTRHI</c>, <c>RTS</c>.
+    /// </summary>
+    private const int LoadWhistleCycles =
+        5 * (Indexed + StoreDirect) + Branch + Immediate + SubroutineCycles.CallAddToIndex + WordStoreDirect + Return;
+
+    /// <summary>The loop's <c>BRA WIN</c>.</summary>
+    private const int LoopBackCycles = Branch;
+
+    /// <summary>
+    ///     <c>NOISE1</c>: <c>BSR</c>, <c>LDAA LO</c>, three <c>LSRA</c>, <c>EORA LO</c>, <c>STAA ATP</c>, <c>INX</c>,
+    ///     <c>ANDA #$7</c>, <c>RTS</c>.
+    /// </summary>
+    private const int Noise1Cycles =
+        CallShort + Direct + 3 * Inherent + Direct + StoreDirect + IndexStep + Immediate + Return;
+
+    /// <summary>
+    ///     <c>NOISE2</c> after the step: <c>LDAA #0</c>, <c>BCC</c>, (<c>LDAA NAMP</c> when the bit is set),
+    ///     <c>STAA NNOIS</c>, <c>RTS</c>.
+    /// </summary>
+    private const int Noise2EndCycles = Immediate + Branch + StoreDirect + Return;
+
+    /// <summary>
+    ///     <c>NOISE2</c> up to the random step: <c>BSR</c>, <c>LDAA ATP</c>, <c>LSRA</c>; then <c>ROR HI</c> and
+    ///     <c>ROR LO</c>.
+    /// </summary>
+    private const int Noise2StartCycles = CallShort + Direct + Inherent;
 
     /// <summary>
     ///     The noise settings' first bytes in the order <c>NOISLD</c> reads them: cycles per loudness change, loudness,
     ///     loudness change, pitch flag, pitch.
     /// </summary>
     private const int NoiseBytes = 5;
+
+    /// <summary><c>RNA</c> when it is: <c>CLR CYCNT</c>, <c>LDAA NAMP</c>, <c>SUBA DECAY</c>, <c>STAA NAMP</c>, <c>RTS</c>.</summary>
+    private const int NoiseLoudnessChangeCycles = ModifyExtended + Direct + Direct + StoreDirect + Return;
+
+    /// <summary><c>RNA</c>: <c>BSR</c>, <c>LDAA CY2</c>, <c>CMPA CYCNT</c>, <c>BEQ</c>.</summary>
+    private const int NoiseLoudnessCycles = CallShort + Direct + Direct + Branch;
+
+    /// <summary><c>RNA</c> when it is not yet time: <c>INX</c>, <c>DEX</c>, <c>BRA</c>, <c>RTS</c>.</summary>
+    private const int NoiseLoudnessWaitingCycles = IndexStep + IndexStep + Branch + Return;
+
+    /// <summary><c>RNT</c>: <c>BSR</c>, <c>LDAA NFRQ2</c>, <c>DEC NFRQ</c>, <c>BEQ</c>.</summary>
+    private const int NoiseTimerCycles = CallShort + Direct + ModifyExtended + Branch;
+
+    /// <summary><c>RNT</c> when it has: <c>STAA NFRQ</c>, <c>LDAB NNOIS</c>, <c>LSRB</c>, <c>INC CYCNT</c>, <c>RTS</c>.</summary>
+    private const int NoiseTimerReloadCycles = StoreDirect + Direct + Inherent + ModifyExtended + Return;
+
+    /// <summary><c>RNT</c> when the timer has not run out: <c>INX</c>, <c>DEX</c>, <c>BRA</c>, <c>RTS</c>.</summary>
+    private const int NoiseTimerWaitingCycles = IndexStep + IndexStep + Branch + Return;
+
+    /// <summary><c>NNW</c> with no whistle waiting: <c>INX</c>, <c>DEX</c>, <c>RTS</c>.</summary>
+    private const int NoWhistleWaitingCycles = IndexStep + IndexStep + Return;
 
     /// <summary>
     ///     What <c>CDR</c> puts in <c>HI</c> and <c>LO</c> to start the random numbers (<c>LDX #$A500</c>, <c>STX HI</c>
@@ -43,12 +106,6 @@ internal sealed class CrowdRoarSound
     private const byte SeedHigh = 0xA5;
 
     private const byte SeedLow = 0x00;
-
-    /// <summary>
-    ///     The whistle's pass counter at the start (<c>NINIT</c>: <c>LDAA #$E</c>, <c>STAA WCNT</c>): "cycle offset for
-    ///     whistle".
-    /// </summary>
-    private const byte FirstWhistleCount = 0x0E;
 
     /// <summary>The top bit, which makes a whistle's running value negative (<c>BPL GO</c>).</summary>
     private const byte SignBit = 0x80;
@@ -61,17 +118,10 @@ internal sealed class CrowdRoarSound
                                     WordImmediate;
 
     /// <summary>
-    ///     <c>WISLD</c> reading a whistle's settings: five <c>LDAA</c>/<c>STAA</c> pairs, <c>LDAA #5</c>, <c>JSR ADDX</c>
-    ///     , <c>STX PTRHI</c>, <c>RTS</c>.
+    ///     <c>NINIT2</c> calling <c>NSUB</c>: <c>BSR</c>, <c>CLR CYCNT</c>, <c>LDAA</c>, <c>STAA</c>, <c>CLR NNOIS</c>,
+    ///     <c>RTS</c>; and <c>JMP NINIT2</c> from <c>CDR</c>.
     /// </summary>
-    private const int LoadWhistleCycles =
-        5 * (Indexed + StoreDirect) + Branch + Immediate + SubroutineCycles.CallAddToIndex + WordStoreDirect + Return;
-
-    /// <summary><c>WISLD</c> finding the list's end: <c>LDAA ,X</c>, <c>STAA WHIS</c>, <c>BEQ</c>, <c>RTS</c>.</summary>
-    private const int EndOfWhistlesCycles = Indexed + StoreDirect + Branch + Return;
-
-    /// <summary><c>NOISLD</c>: five <c>LDAA</c>/<c>STAA</c> pairs and <c>RTS</c>; and the <c>JSR</c> to it.</summary>
-    private const int LoadNoiseCycles = CallExtended + NoiseBytes * (Indexed + StoreDirect) + Return;
+    private const int StartNoiseCycles = CallShort + ModifyExtended + Direct + StoreDirect + ModifyExtended + Return;
 
     /// <summary>
     ///     <c>NINIT</c> before <c>NINIT2</c>: <c>JSR</c>, <c>CLR WFRQ</c>, <c>CLR DFRQ</c>, <c>LDAA</c>, <c>STAA WCNT</c>
@@ -81,69 +131,21 @@ internal sealed class CrowdRoarSound
         CallExtended + ModifyExtended + ModifyExtended + Immediate + StoreDirect + ModifyExtended;
 
     /// <summary>
-    ///     <c>NINIT2</c> calling <c>NSUB</c>: <c>BSR</c>, <c>CLR CYCNT</c>, <c>LDAA</c>, <c>STAA</c>, <c>CLR NNOIS</c>,
-    ///     <c>RTS</c>; and <c>JMP NINIT2</c> from <c>CDR</c>.
-    /// </summary>
-    private const int StartNoiseCycles = CallShort + ModifyExtended + Direct + StoreDirect + ModifyExtended + Return;
-
-    private const int JumpToNoiseCycles = JumpExtended;
-
-    /// <summary>
-    ///     <c>NOISE1</c>: <c>BSR</c>, <c>LDAA LO</c>, three <c>LSRA</c>, <c>EORA LO</c>, <c>STAA ATP</c>, <c>INX</c>,
-    ///     <c>ANDA #$7</c>, <c>RTS</c>.
-    /// </summary>
-    private const int Noise1Cycles =
-        CallShort + Direct + 3 * Inherent + Direct + StoreDirect + IndexStep + Immediate + Return;
-
-    /// <summary>
-    ///     <c>NOISE2</c> up to the random step: <c>BSR</c>, <c>LDAA ATP</c>, <c>LSRA</c>; then <c>ROR HI</c> and
-    ///     <c>ROR LO</c>.
-    /// </summary>
-    private const int Noise2StartCycles = CallShort + Direct + Inherent;
-
-    /// <summary>
-    ///     <c>NOISE2</c> after the step: <c>LDAA #0</c>, <c>BCC</c>, (<c>LDAA NAMP</c> when the bit is set),
-    ///     <c>STAA NNOIS</c>, <c>RTS</c>.
-    /// </summary>
-    private const int Noise2EndCycles = Immediate + Branch + StoreDirect + Return;
-
-    /// <summary>
-    ///     <c>TRIDR</c> adding to the whistle's running value: <c>LDAA CURVAL</c>, <c>ADDA WFRQ</c>, <c>STAA CURVAL</c>,
-    ///     <c>BPL</c>.
-    /// </summary>
-    private const int WhistleStepCycles = Direct + Direct + StoreDirect + Branch;
-
-    /// <summary>
     ///     <c>TRIDR</c> after the optional <c>COMA</c>: <c>ABA</c>, then <c>STAA SOUND</c> and <c>RTS</c> (the write is
     ///     counted by <see cref="BoardOutput.Store" />).
     /// </summary>
     private const int WhistleAddNoiseCycles = Inherent;
 
-    /// <summary>The call to <c>TRIDR</c>: <c>JSR</c> after <c>NOISE1</c> and <c>NOISE2</c>, <c>BSR</c> after the rest.</summary>
-    private const int CallWhistleFromJsrCycles = CallExtended;
-
-    private const int CallWhistleFromBsrCycles = CallShort;
-
-    /// <summary><c>RNT</c>: <c>BSR</c>, <c>LDAA NFRQ2</c>, <c>DEC NFRQ</c>, <c>BEQ</c>.</summary>
-    private const int NoiseTimerCycles = CallShort + Direct + ModifyExtended + Branch;
-
-    /// <summary><c>RNT</c> when the timer has not run out: <c>INX</c>, <c>DEX</c>, <c>BRA</c>, <c>RTS</c>.</summary>
-    private const int NoiseTimerWaitingCycles = IndexStep + IndexStep + Branch + Return;
-
-    /// <summary><c>RNT</c> when it has: <c>STAA NFRQ</c>, <c>LDAB NNOIS</c>, <c>LSRB</c>, <c>INC CYCNT</c>, <c>RTS</c>.</summary>
-    private const int NoiseTimerReloadCycles = StoreDirect + Direct + Inherent + ModifyExtended + Return;
-
-    /// <summary><c>RNA</c>: <c>BSR</c>, <c>LDAA CY2</c>, <c>CMPA CYCNT</c>, <c>BEQ</c>.</summary>
-    private const int NoiseLoudnessCycles = CallShort + Direct + Direct + Branch;
-
-    /// <summary><c>RNA</c> when it is not yet time: <c>INX</c>, <c>DEX</c>, <c>BRA</c>, <c>RTS</c>.</summary>
-    private const int NoiseLoudnessWaitingCycles = IndexStep + IndexStep + Branch + Return;
-
-    /// <summary><c>RNA</c> when it is: <c>CLR CYCNT</c>, <c>LDAA NAMP</c>, <c>SUBA DECAY</c>, <c>STAA NAMP</c>, <c>RTS</c>.</summary>
-    private const int NoiseLoudnessChangeCycles = ModifyExtended + Direct + Direct + StoreDirect + Return;
+    /// <summary>
+    ///     The bytes in each whistle's settings (<c>WS1</c>): loudness to start at, first pitch, pitch change, cycles per
+    ///     pitch, lowest pitch.
+    /// </summary>
+    private const int WhistleBytes = 5;
 
     /// <summary><c>TRICNT</c>: <c>BSR</c>, <c>LDAA WCNT2</c>, <c>DEC WCNT</c>, <c>BEQ</c>.</summary>
     private const int WhistleCountCycles = CallShort + Direct + ModifyExtended + Branch;
+
+    private const int WhistleCountSilentCycles = Branch;
 
     /// <summary>
     ///     <c>TRICNT</c> when the count has not run out: <c>LDAA NAMP</c> (a full address, from the raw <c>FCB $B6</c>),
@@ -151,28 +153,20 @@ internal sealed class CrowdRoarSound
     /// </summary>
     private const int WhistleCountWaitingCycles = Extended + Branch;
 
-    private const int WhistleCountSilentCycles = Branch;
+    /// <summary><c>TRIFRQ</c>: <c>BSR</c>, <c>LDAA WFRQ</c>, <c>CMPA MINWIS</c>, <c>BEQ</c>.</summary>
+    private const int WhistleEndTestCycles = CallShort + Direct + Direct + Branch;
 
     /// <summary><c>TRICNT</c> when it has: <c>STAA WCNT</c>, <c>LDAA WFRQ</c>, <c>ADDA DFRQ</c>, <c>STAA WFRQ</c>.</summary>
     private const int WhistleGlideCycles = StoreDirect + Direct + Direct + StoreDirect;
 
-    /// <summary><c>TRIFRQ</c>: <c>BSR</c>, <c>LDAA WFRQ</c>, <c>CMPA MINWIS</c>, <c>BEQ</c>.</summary>
-    private const int WhistleEndTestCycles = CallShort + Direct + Direct + Branch;
-
     /// <summary><c>TRIFRQ</c> when the whistle has not ended: <c>INX</c>, <c>LDAA NAMP</c>, <c>BNE</c>.</summary>
     private const int WhistleGoingCycles = IndexStep + Direct + Branch;
 
-    /// <summary><c>TRIFRQ</c> turning the whistle off: <c>CLR WFRQ</c>, <c>CLR DFRQ</c>, <c>CLR CURVAL</c>, <c>LDX PTRHI</c>.</summary>
-    private const int WhistleOffCycles = ModifyExtended + ModifyExtended + ModifyExtended + WordDirect;
-
-    /// <summary><c>NNW</c>: <c>BSR</c>, <c>LDAA WHIS</c>, <c>BEQ</c>.</summary>
-    private const int WhistleStartTestCycles = CallShort + Direct + Branch;
-
-    /// <summary><c>NNW</c> with no whistle waiting: <c>INX</c>, <c>DEX</c>, <c>RTS</c>.</summary>
-    private const int NoWhistleWaitingCycles = IndexStep + IndexStep + Return;
-
     /// <summary><c>NNW</c> with one waiting but not yet due: <c>CMPA NAMP</c>, <c>BNE</c>, <c>RTS</c>.</summary>
     private const int WhistleNotDueCycles = Direct + Branch + Return;
+
+    /// <summary><c>TRIFRQ</c> turning the whistle off: <c>CLR WFRQ</c>, <c>CLR DFRQ</c>, <c>CLR CURVAL</c>, <c>LDX PTRHI</c>.</summary>
+    private const int WhistleOffCycles = ModifyExtended + ModifyExtended + ModifyExtended + WordDirect;
 
     /// <summary>
     ///     <c>NNW</c> starting the whistle: <c>CMPA NAMP</c>, <c>BNE</c> (not taken), <c>BRA WINIT</c>, then
@@ -181,8 +175,20 @@ internal sealed class CrowdRoarSound
     private const int WhistleStartCycles =
         Direct + Branch + Branch + ModifyExtended + Direct + StoreDirect + Direct + StoreDirect + Return;
 
-    /// <summary>The loop's <c>BRA WIN</c>.</summary>
-    private const int LoopBackCycles = Branch;
+    /// <summary><c>NNW</c>: <c>BSR</c>, <c>LDAA WHIS</c>, <c>BEQ</c>.</summary>
+    private const int WhistleStartTestCycles = CallShort + Direct + Branch;
+
+    /// <summary>
+    ///     <c>TRIDR</c> adding to the whistle's running value: <c>LDAA CURVAL</c>, <c>ADDA WFRQ</c>, <c>STAA CURVAL</c>,
+    ///     <c>BPL</c>.
+    /// </summary>
+    private const int WhistleStepCycles = Direct + Direct + StoreDirect + Branch;
+
+    /// <summary><c>CR2</c>: the fade.</summary>
+    private static readonly byte[] Fade = [0x30, 0xFC, 0x01, 0x00, 0x01];
+
+    /// <summary><c>CR1</c>: the swell (a loudness that rises by 4 each time round, since <c>SUBA</c> takes $FC off).</summary>
+    private static readonly byte[] Swell = [0x30, 0x10, 0xFC, 0x00, 0x01];
 
     /// <summary><c>WS1</c>: the whistles, in the order they are started; a zero loudness ends the list.</summary>
     private static readonly byte[] Whistles =
@@ -197,12 +203,6 @@ internal sealed class CrowdRoarSound
         0xA6, 0x58, 0xFF, 0x18, 0x22,
         0x00
     ];
-
-    /// <summary><c>CR1</c>: the swell (a loudness that rises by 4 each time round, since <c>SUBA</c> takes $FC off).</summary>
-    private static readonly byte[] Swell = [0x30, 0x10, 0xFC, 0x00, 0x01];
-
-    /// <summary><c>CR2</c>: the fade.</summary>
-    private static readonly byte[] Fade = [0x30, 0xFC, 0x01, 0x00, 0x01];
 
     private readonly BoardMemory _memory;
     private readonly BoardOutput _output;
@@ -243,25 +243,49 @@ internal sealed class CrowdRoarSound
         return new CrowdRoarSound(memory, output).Play();
     }
 
-    /// <summary>The whole sound: the first whistle, the swell, then the fade.</summary>
-    /// <returns>The output changes.</returns>
-    private IEnumerable<OutputChange> Play()
+    /// <summary>After enough cycles the noise's loudness steps on (<c>RNA</c>).</summary>
+    private void ChangeNoiseLoudness()
     {
-        _output.Wait(StartCycles);
-        LoadWhistle();
-        _memory.SetRandom(SeedHigh, SeedLow);
+        _output.Wait(NoiseLoudnessCycles);
+        if (_noiseCyclesPerChange != _noiseCycles)
+        {
+            _output.Wait(NoiseLoudnessWaitingCycles);
+            return;
+        }
 
-        LoadNoise(Swell);
-        _output.Wait(StartWhistleCycles);
-        _whistlePitch = 0;
-        _whistleGlide = 0;
-        _whistleCount = FirstWhistleCount;
-        _whistleValue = 0;
-        foreach (var change in RunNoise()) yield return change;
+        _output.Wait(NoiseLoudnessChangeCycles);
+        _noiseCycles = 0;
+        _noiseLoudness = (byte)(_noiseLoudness - _noiseLoudnessChange);
+    }
 
-        LoadNoise(Fade);
-        _output.Wait(JumpToNoiseCycles + WordImmediate);
-        foreach (var change in RunNoise()) yield return change;
+    /// <summary>After enough passes the whistle's pitch glides on (<c>TRICNT</c>).</summary>
+    private void GlideWhistle()
+    {
+        _output.Wait(WhistleCountCycles);
+        _whistleCount--;
+        if (_whistleCount != 0)
+        {
+            var endCycles = WhistleCountSilentCycles + Return;
+            if (_noiseLoudness != 0) endCycles = Return;
+
+            _output.Wait(WhistleCountWaitingCycles + endCycles);
+            return;
+        }
+
+        _output.Wait(WhistleGlideCycles + Return);
+        _whistleCount = _whistleCountReload;
+        _whistlePitch = (byte)(_whistlePitch + _whistleGlide);
+    }
+
+    /// <summary>Loads a noise's settings (<c>NOISLD</c>).</summary>
+    /// <param name="noiseSettings">The five bytes: <c>CY2</c>, <c>NAMP</c>, <c>DECAY</c>, <c>NFFLG</c> and <c>NFRQ2</c>.</param>
+    private void LoadNoise(byte[] noiseSettings)
+    {
+        _output.Wait(LoadNoiseCycles);
+        _noiseCyclesPerChange = noiseSettings[0];
+        _noiseLoudness = noiseSettings[1];
+        _noiseLoudnessChange = noiseSettings[2];
+        _noisePitchReload = noiseSettings[4];
     }
 
     /// <summary>Reads the next whistle's settings, or notes that there are no more (<c>WISLD</c>).</summary>
@@ -283,15 +307,25 @@ internal sealed class CrowdRoarSound
         _output.Wait(LoadWhistleCycles);
     }
 
-    /// <summary>Loads a noise's settings (<c>NOISLD</c>).</summary>
-    /// <param name="noiseSettings">The five bytes: <c>CY2</c>, <c>NAMP</c>, <c>DECAY</c>, <c>NFFLG</c> and <c>NFRQ2</c>.</param>
-    private void LoadNoise(byte[] noiseSettings)
+    /// <summary>The whole sound: the first whistle, the swell, then the fade.</summary>
+    /// <returns>The output changes.</returns>
+    private IEnumerable<OutputChange> Play()
     {
-        _output.Wait(LoadNoiseCycles);
-        _noiseCyclesPerChange = noiseSettings[0];
-        _noiseLoudness = noiseSettings[1];
-        _noiseLoudnessChange = noiseSettings[2];
-        _noisePitchReload = noiseSettings[4];
+        _output.Wait(StartCycles);
+        LoadWhistle();
+        _memory.SetRandom(SeedHigh, SeedLow);
+
+        LoadNoise(Swell);
+        _output.Wait(StartWhistleCycles);
+        _whistlePitch = 0;
+        _whistleGlide = 0;
+        _whistleCount = FirstWhistleCount;
+        _whistleValue = 0;
+        foreach (var change in RunNoise()) yield return change;
+
+        LoadNoise(Fade);
+        _output.Wait(JumpToNoiseCycles + WordImmediate);
+        foreach (var change in RunNoise()) yield return change;
     }
 
     /// <summary>
@@ -370,38 +404,25 @@ internal sealed class CrowdRoarSound
         _noiseCycles++;
     }
 
-    /// <summary>After enough cycles the noise's loudness steps on (<c>RNA</c>).</summary>
-    private void ChangeNoiseLoudness()
+    /// <summary>A whistle waiting for the noise to reach its loudness starts (<c>NNW</c>, <c>WINIT</c>).</summary>
+    private void StartWhistle()
     {
-        _output.Wait(NoiseLoudnessCycles);
-        if (_noiseCyclesPerChange != _noiseCycles)
+        _output.Wait(WhistleStartTestCycles);
+        if (_whistleLoudness == 0)
         {
-            _output.Wait(NoiseLoudnessWaitingCycles);
-            return;
+            _output.Wait(NoWhistleWaitingCycles);
         }
-
-        _output.Wait(NoiseLoudnessChangeCycles);
-        _noiseCycles = 0;
-        _noiseLoudness = (byte)(_noiseLoudness - _noiseLoudnessChange);
-    }
-
-    /// <summary>After enough passes the whistle's pitch glides on (<c>TRICNT</c>).</summary>
-    private void GlideWhistle()
-    {
-        _output.Wait(WhistleCountCycles);
-        _whistleCount--;
-        if (_whistleCount != 0)
+        else if (_whistleLoudness != _noiseLoudness)
         {
-            var endCycles = WhistleCountSilentCycles + Return;
-            if (_noiseLoudness != 0) endCycles = Return;
-
-            _output.Wait(WhistleCountWaitingCycles + endCycles);
-            return;
+            _output.Wait(WhistleNotDueCycles);
         }
-
-        _output.Wait(WhistleGlideCycles + Return);
-        _whistleCount = _whistleCountReload;
-        _whistlePitch = (byte)(_whistlePitch + _whistleGlide);
+        else
+        {
+            _output.Wait(WhistleStartCycles);
+            _whistleLoudness = 0;
+            _whistlePitch = _whistleStartPitch;
+            _whistleGlide = _whistleStartGlide;
+        }
     }
 
     /// <summary>
@@ -427,27 +448,6 @@ internal sealed class CrowdRoarSound
 
         _output.Wait(Return);
         return true;
-    }
-
-    /// <summary>A whistle waiting for the noise to reach its loudness starts (<c>NNW</c>, <c>WINIT</c>).</summary>
-    private void StartWhistle()
-    {
-        _output.Wait(WhistleStartTestCycles);
-        if (_whistleLoudness == 0)
-        {
-            _output.Wait(NoWhistleWaitingCycles);
-        }
-        else if (_whistleLoudness != _noiseLoudness)
-        {
-            _output.Wait(WhistleNotDueCycles);
-        }
-        else
-        {
-            _output.Wait(WhistleStartCycles);
-            _whistleLoudness = 0;
-            _whistlePitch = _whistleStartPitch;
-            _whistleGlide = _whistleStartGlide;
-        }
     }
 
     /// <summary>

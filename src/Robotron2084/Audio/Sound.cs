@@ -20,14 +20,8 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public static class Sound
 {
-    private static TransporterSound _transporterSound = new();
     private static SoundEngine? _engine;
-
-    /// <summary>
-    ///     The master switch. Sound is on whenever the game runs; the tests, which share this one static
-    ///     service process-wide, turn it off. While it is off, asking for a sound does nothing.
-    /// </summary>
-    public static bool Enabled { get; set; } = true;
+    private static TransporterSound _transporterSound = new();
 
     /// <summary>
     ///     Set by the app shell every tick (notes §131): true while the attract sequence is on screen and
@@ -35,6 +29,12 @@ public static class Sound
     ///     nothing — a real game keeps its sound.
     /// </summary>
     public static bool AttractMuted { get; set; }
+
+    /// <summary>
+    ///     The master switch. Sound is on whenever the game runs; the tests, which share this one static
+    ///     service process-wide, turn it off. While it is off, asking for a sound does nothing.
+    /// </summary>
+    public static bool Enabled { get; set; } = true;
 
     /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying" />).</summary>
     public static bool IsPlaying => _engine?.IsBoardPlaying ?? false;
@@ -45,6 +45,13 @@ public static class Sound
     {
         _engine = new SoundEngine(sink);
         _transporterSound = new TransporterSound();
+    }
+
+    /// <summary>True while the transporter is still sending its sound to the board.</summary>
+    /// <returns>True from <see cref="PlayTransporter" /> until its last send, or until <see cref="StopTransporter" />.</returns>
+    public static bool IsTransporterRunning()
+    {
+        return _transporterSound.IsRunning();
     }
 
     /// <summary>Asks for a sound that is heard in the middle, between both speakers.</summary>
@@ -62,20 +69,6 @@ public static class Sound
         if (!Enabled || AttractMuted) return;
 
         _engine?.Play(sequence, pan);
-    }
-
-    /// <summary>
-    ///     Asks for the wave-end music and keeps the voice for its whole play-out (notes §128). The board
-    ///     loops that sound until another number arrives, so without the hold the new level's first sound —
-    ///     a shot, a robot's step — replaces it wherever the loop has got to, which is the music being "cut
-    ///     short". The hold makes the new level's sounds wait for the music to finish.
-    /// </summary>
-    public static void PlayWaveEnd()
-    {
-        if (!Enabled || AttractMuted) return;
-
-        Play(SoundTables.WaveEnd);
-        _engine?.HoldVoice(SoundTuning.WaveEndMusicTicks);
     }
 
     /// <summary>
@@ -116,17 +109,18 @@ public static class Sound
         _transporterSound.Start(_engine);
     }
 
-    /// <summary>True while the transporter is still sending its sound to the board.</summary>
-    /// <returns>True from <see cref="PlayTransporter" /> until its last send, or until <see cref="StopTransporter" />.</returns>
-    public static bool IsTransporterRunning()
+    /// <summary>
+    ///     Asks for the wave-end music and keeps the voice for its whole play-out (notes §128). The board
+    ///     loops that sound until another number arrives, so without the hold the new level's first sound —
+    ///     a shot, a robot's step — replaces it wherever the loop has got to, which is the music being "cut
+    ///     short". The hold makes the new level's sounds wait for the music to finish.
+    /// </summary>
+    public static void PlayWaveEnd()
     {
-        return _transporterSound.IsRunning();
-    }
+        if (!Enabled || AttractMuted) return;
 
-    /// <summary>Stops the transporter's sends where they are, so that they do not cut across the next sound.</summary>
-    public static void StopTransporter()
-    {
-        _transporterSound.Stop();
+        Play(SoundTables.WaveEnd);
+        _engine?.HoldVoice(SoundTuning.WaveEndMusicTicks);
     }
 
     /// <summary>
@@ -139,6 +133,12 @@ public static class Sound
         if (!Enabled || AttractMuted) return;
 
         _engine?.SendDirect(soundNumber, 0f);
+    }
+
+    /// <summary>Stops the transporter's sends where they are, so that they do not cut across the next sound.</summary>
+    public static void StopTransporter()
+    {
+        _transporterSound.Stop();
     }
 
     /// <summary>Moves the sound on by one port tick.</summary>

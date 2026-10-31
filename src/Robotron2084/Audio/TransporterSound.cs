@@ -19,9 +19,6 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public sealed class TransporterSound
 {
-    /// <summary>The warp-in sound number (<c>LDB #$12</c>).</summary>
-    private const int WarpInSoundNumber = 0x12;
-
     /// <summary>
     ///     How many sends come one vblank apart (<c>LDA #$48</c>). It is the starting value of
     ///     <see cref="_closeSendsLeft" />, which counts down.
@@ -29,16 +26,19 @@ public sealed class TransporterSound
     private const int CloseSends = 0x48;
 
     /// <summary>
+    ///     The vblanks between the spaced sends (<c>NAP 2</c>). It is the value <see cref="_ticksUntilNextSend" /> is set
+    ///     to after each spaced send, and it then counts down.
+    /// </summary>
+    private const int SpacedGapTicks = 2;
+
+    /// <summary>
     ///     How many sends then come two vblanks apart (<c>LDA #$24</c>). It is the starting value of
     ///     <see cref="_spacedSendsLeft" />, which counts down.
     /// </summary>
     private const int SpacedSends = 0x24;
 
-    /// <summary>
-    ///     The vblanks between the spaced sends (<c>NAP 2</c>). It is the value <see cref="_ticksUntilNextSend" /> is set
-    ///     to after each spaced send, and it then counts down.
-    /// </summary>
-    private const int SpacedGapTicks = 2;
+    /// <summary>The warp-in sound number (<c>LDB #$12</c>).</summary>
+    private const int WarpInSoundNumber = 0x12;
 
     private int _closeSendsLeft;
     private int _spacedSendsLeft;

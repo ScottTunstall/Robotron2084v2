@@ -6,14 +6,14 @@ namespace Robotron2084.Audio;
 /// </summary>
 public interface ISoundBoard
 {
-    /// <summary>The board's output level right now, 0 to 255.</summary>
-    byte OutputLevel { get; }
-
     /// <summary>
     ///     True while a sound is waiting to start or still running; false once it has played to its end (a sound that
     ///     never ends stays true).
     /// </summary>
     bool IsPlaying { get; }
+
+    /// <summary>The board's output level right now, 0 to 255.</summary>
+    byte OutputLevel { get; }
 
     /// <summary>
     ///     Runs the board on. It stops at or soon after <paramref name="maxCycles" />, and never before its

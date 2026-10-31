@@ -23,6 +23,21 @@ internal sealed class SquareWaveSound
     /// </summary>
     public const int CabinetShakeVector = 3;
 
+    /// <summary>Changing the starting low time and branching on it: <c>ADDA LOPER</c>, <c>STAA LOPER</c>, <c>BNE</c>.</summary>
+    private const int ChangeLowWaitCycles = Direct + StoreDirect + Branch;
+
+    /// <summary>Comparing the high count with its end and branching: <c>CMPA HIEN</c>, <c>BNE</c>.</summary>
+    private const int CheckEndCycles = Direct + Branch;
+
+    /// <summary>One count of the low or high time: <c>DEX</c>, <c>BEQ</c>, <c>DECA</c>, <c>BNE</c>.</summary>
+    private const int CountCycles = IndexStep + Branch + Inherent + Branch;
+
+    /// <summary><c>VSWEEP</c> growing the low count: <c>LDAA</c>, <c>ADDA</c>, <c>STAA</c>.</summary>
+    private const int GrowCountCycles = Direct + Direct + StoreDirect;
+
+    /// <summary>The bit that marks a high level.</summary>
+    private const int HighBit = 0x80;
+
     /// <summary>
     ///     <c>VARILD</c>: find the settings (<c>TAB</c>, three <c>ASLA</c>, <c>ABA</c>, <c>LDX</c>, <c>STX XPTR</c>,
     ///     <c>LDX #VVECT</c>, <c>JSR ADDX</c>), then copy all nine bytes (<c>LDAB</c>, <c>JMP TRANS</c>).
@@ -32,32 +47,17 @@ internal sealed class SquareWaveSound
         SubroutineCycles.CallAddToIndex
         + Immediate + JumpExtended + SubroutineCycles.Transfer + VectorBytes * SubroutineCycles.TransferPerByte;
 
-    /// <summary>How many bytes a <see cref="SquareWaveVector" /> takes in the ROM.</summary>
-    private const int VectorBytes = 9;
+    /// <summary><c>VSWEEP</c> reading the port: <c>LDAA SOUND</c>, <c>BMI</c>.</summary>
+    private const int ReadPortCycles = Extended + Branch;
 
     /// <summary><c>VAR0</c> starting both counts: <c>LDAA</c>, <c>STAA</c>, <c>LDAA</c>, <c>STAA</c>.</summary>
     private const int StartCountsCycles = 2 * Direct + 2 * StoreDirect;
 
-    /// <summary>One count of the low or high time: <c>DEX</c>, <c>BEQ</c>, <c>DECA</c>, <c>BNE</c>.</summary>
-    private const int CountCycles = IndexStep + Branch + Inherent + Branch;
-
     /// <summary>The part of a count that runs before the sweep check can leave the loop: <c>DEX</c>, <c>BEQ</c>.</summary>
     private const int SweepCheckCycles = IndexStep + Branch;
 
-    /// <summary><c>VSWEEP</c> reading the port: <c>LDAA SOUND</c>, <c>BMI</c>.</summary>
-    private const int ReadPortCycles = Extended + Branch;
-
-    /// <summary><c>VSWEEP</c> growing the low count: <c>LDAA</c>, <c>ADDA</c>, <c>STAA</c>.</summary>
-    private const int GrowCountCycles = Direct + Direct + StoreDirect;
-
-    /// <summary>Comparing the high count with its end and branching: <c>CMPA HIEN</c>, <c>BNE</c>.</summary>
-    private const int CheckEndCycles = Direct + Branch;
-
-    /// <summary>Changing the starting low time and branching on it: <c>ADDA LOPER</c>, <c>STAA LOPER</c>, <c>BNE</c>.</summary>
-    private const int ChangeLowWaitCycles = Direct + StoreDirect + Branch;
-
-    /// <summary>The bit that marks a high level.</summary>
-    private const int HighBit = 0x80;
+    /// <summary>How many bytes a <see cref="SquareWaveVector" /> takes in the ROM.</summary>
+    private const int VectorBytes = 9;
 
     /// <summary>
     ///     <c>VVECT</c>: every square wave sound's settings. A sound number picks one by its place, counting from 0.
@@ -121,6 +121,42 @@ internal sealed class SquareWaveSound
         } while (ChangeLowWait());
     }
 
+    /// <summary>
+    ///     When the sweeps end, changes the starting low time and says whether to play again: not when there
+    ///     is no change, or when the low time comes round to 0 (<c>LDAA LOMOD</c> to <c>VARX</c>).
+    /// </summary>
+    /// <returns>True to play again from the new low time.</returns>
+    private bool ChangeLowWait()
+    {
+        _output.Wait(Direct + Branch);
+        if (_vector.LowWaitChange == 0)
+        {
+            _output.Wait(Return);
+            return false;
+        }
+
+        _output.Wait(ChangeLowWaitCycles);
+        LowWait += _vector.LowWaitChange;
+        return LowWait != 0;
+    }
+
+    /// <summary>Counts one low or high time down, alongside the sweep count (<c>V1</c>, <c>V2</c>).</summary>
+    /// <param name="count">The time, in counts; 0 means 256.</param>
+    /// <returns>True when the time ran out; false when the sweep count ran out first.</returns>
+    private bool CountDown(byte count)
+    {
+        while (true)
+        {
+            _output.Wait(SweepCheckCycles);
+            _sweepCountsLeft--;
+            if (_sweepCountsLeft == 0) return false;
+
+            _output.Wait(CountCycles - SweepCheckCycles);
+            count--;
+            if (count == 0) return true;
+        }
+    }
+
     /// <summary>Plays low then high, over and over, until the sweep count runs out (<c>V0</c>, <c>V0LP</c>).</summary>
     /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> PlayUntilSweep()
@@ -141,23 +177,6 @@ internal sealed class SquareWaveSound
         }
     }
 
-    /// <summary>Counts one low or high time down, alongside the sweep count (<c>V1</c>, <c>V2</c>).</summary>
-    /// <param name="count">The time, in counts; 0 means 256.</param>
-    /// <returns>True when the time ran out; false when the sweep count ran out first.</returns>
-    private bool CountDown(byte count)
-    {
-        while (true)
-        {
-            _output.Wait(SweepCheckCycles);
-            _sweepCountsLeft--;
-            if (_sweepCountsLeft == 0) return false;
-
-            _output.Wait(CountCycles - SweepCheckCycles);
-            count--;
-            if (count == 0) return true;
-        }
-    }
-
     /// <summary>Makes the level high, then grows both times (<c>VSWEEP</c>).</summary>
     /// <returns>The output change.</returns>
     private IEnumerable<OutputChange> Sweep()
@@ -175,24 +194,5 @@ internal sealed class SquareWaveSound
         _output.Wait(GrowCountCycles + GrowCountCycles + CheckEndCycles);
         _lowCount += _vector.LowWaitStep;
         _highCount += _vector.HighWaitStep;
-    }
-
-    /// <summary>
-    ///     When the sweeps end, changes the starting low time and says whether to play again: not when there
-    ///     is no change, or when the low time comes round to 0 (<c>LDAA LOMOD</c> to <c>VARX</c>).
-    /// </summary>
-    /// <returns>True to play again from the new low time.</returns>
-    private bool ChangeLowWait()
-    {
-        _output.Wait(Direct + Branch);
-        if (_vector.LowWaitChange == 0)
-        {
-            _output.Wait(Return);
-            return false;
-        }
-
-        _output.Wait(ChangeLowWaitCycles);
-        LowWait += _vector.LowWaitChange;
-        return LowWait != 0;
     }
 }

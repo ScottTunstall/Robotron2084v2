@@ -14,26 +14,26 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal static class HyperSound
 {
-    /// <summary>Counts in each cycle, and cycles in the sound: both counters stop when they reach the top bit (<c>BPL</c>).</summary>
-    private const int CountsPerCycle = 0x80;
-
-    /// <summary>The inner wait for each count (<c>LDAB #18</c>).</summary>
-    private const int DelayCounts = 18;
-
-    /// <summary><c>HYPER</c> starting: <c>CLRA</c>, then (after the store) <c>STAA TEMPA</c>.</summary>
-    private const int StartCycles = Inherent;
-
-    /// <summary><c>HYPER1</c> starting a cycle: <c>CLRA</c>.</summary>
-    private const int StartCycleCycles = Inherent;
-
     /// <summary><c>HYPER2</c> checking for the part-way flip: <c>CMPA TEMPA</c>, <c>BNE</c>.</summary>
     private const int CheckFlipCycles = Direct + Branch;
 
     /// <summary>One count: <c>LDAB #18</c>, eighteen <c>DECB</c>/<c>BNE</c>, then <c>INCA</c>, <c>BPL</c>.</summary>
     private const int CountCycles = Immediate + DelayCounts * (Inherent + Branch) + Inherent + Branch;
 
+    /// <summary>Counts in each cycle, and cycles in the sound: both counters stop when they reach the top bit (<c>BPL</c>).</summary>
+    private const int CountsPerCycle = 0x80;
+
+    /// <summary>The inner wait for each count (<c>LDAB #18</c>).</summary>
+    private const int DelayCounts = 18;
+
     /// <summary>Ending a cycle, after the flip: <c>INC TEMPA</c>, <c>BPL</c>.</summary>
     private const int EndCycleCycles = ModifyExtended + Branch;
+
+    /// <summary><c>HYPER1</c> starting a cycle: <c>CLRA</c>.</summary>
+    private const int StartCycleCycles = Inherent;
+
+    /// <summary><c>HYPER</c> starting: <c>CLRA</c>, then (after the store) <c>STAA TEMPA</c>.</summary>
+    private const int StartCycles = Inherent;
 
     /// <summary>Plays the hyper sound (sound <c>HYPER</c>).</summary>
     /// <param name="memory">The board's lasting variables, whose <c>TEMPA</c> holds where the part-way flip comes.</param>

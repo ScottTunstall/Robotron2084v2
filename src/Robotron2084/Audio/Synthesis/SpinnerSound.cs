@@ -14,18 +14,6 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal static class SpinnerSound
 {
-    /// <summary>How many sends the pitch climbs through before it starts again (<c>SP1MAX</c>).</summary>
-    private const int SendsPerClimb = 32;
-
-    /// <summary>Above this, each step of the low time is the large one (<c>SP11</c>: <c>CMPA #20</c>).</summary>
-    private const int LargeStepThreshold = 20;
-
-    /// <summary>The large step of the low time (<c>ADDB #14</c>).</summary>
-    private const int LargeLowWaitStep = 14;
-
-    /// <summary>The small step of the low time (<c>ADDB #5</c>).</summary>
-    private const int SmallLowWaitStep = 5;
-
     /// <summary>Loading the settings: <c>LDAA #</c>, <c>JSR VARILD</c>.</summary>
     private const int CallLoadCycles = Immediate + CallExtended;
 
@@ -38,11 +26,23 @@ internal static class SpinnerSound
     /// </summary>
     private const int CountSendCycles = Inherent + StoreDirect + Immediate + Inherent + Inherent;
 
-    /// <summary><c>SP11</c>'s test: <c>CMPA #20</c>, <c>BLS</c>.</summary>
-    private const int LargeStepTestCycles = Immediate + Branch;
+    /// <summary>The large step of the low time (<c>ADDB #14</c>).</summary>
+    private const int LargeLowWaitStep = 14;
 
     /// <summary><c>SP11</c>'s step: <c>ADDB #14</c>, <c>DECA</c>, <c>BRA</c>.</summary>
     private const int LargeStepCycles = Immediate + Inherent + Branch;
+
+    /// <summary><c>SP11</c>'s test: <c>CMPA #20</c>, <c>BLS</c>.</summary>
+    private const int LargeStepTestCycles = Immediate + Branch;
+
+    /// <summary>Above this, each step of the low time is the large one (<c>SP11</c>: <c>CMPA #20</c>).</summary>
+    private const int LargeStepThreshold = 20;
+
+    /// <summary>How many sends the pitch climbs through before it starts again (<c>SP1MAX</c>).</summary>
+    private const int SendsPerClimb = 32;
+
+    /// <summary>The small step of the low time (<c>ADDB #5</c>).</summary>
+    private const int SmallLowWaitStep = 5;
 
     /// <summary><c>SP12</c>'s step: <c>ADDB #5</c>, <c>DECA</c>, <c>BNE</c>.</summary>
     private const int SmallStepCycles = Immediate + Inherent + Branch;

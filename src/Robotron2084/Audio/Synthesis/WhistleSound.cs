@@ -20,26 +20,8 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal static class WhistleSound
 {
-    /// <summary>The speed the phase advances by at the start (<c>LDA #$80</c>, <c>STAA FREQZ</c>).</summary>
-    private const byte FirstSpeed = 0x80;
-
-    /// <summary>The speed at which the sound ends (<c>CMPA #$20</c>).</summary>
-    private const byte LastSpeed = 0x20;
-
-    /// <summary>Samples played at each speed (<c>LDAA #$80</c>, <c>STAA TEMPA</c>).</summary>
-    private const int SamplesPerSpeed = 0x80;
-
-    /// <summary>The wait before each sample, in counts (<c>LDAA #18</c>).</summary>
-    private const int WaitCounts = 18;
-
-    /// <summary>How far the phase is shifted to give the table's place (<c>LSRA</c> three times).</summary>
-    private const int PlaceShift = 3;
-
-    /// <summary><c>WHIST</c> setting up: <c>LDAA</c>, <c>STAA FREQZ</c>, <c>LDAA</c>, <c>STAA TABLE</c>.</summary>
-    private const int SetUpCycles = (Immediate + StoreDirect) * 2;
-
-    /// <summary><c>WHIST0</c> starting a speed: <c>LDAA #$80</c>, <c>STAA TEMPA</c>.</summary>
-    private const int SpeedStartCycles = Immediate + StoreDirect;
+    /// <summary><c>WHIST1</c> after the write: <c>DEC TEMPA</c>, <c>BNE</c>.</summary>
+    private const int AfterWriteCycles = ModifyExtended + Branch;
 
     /// <summary>
     ///     <c>WHIST1</c> to the write: <c>LDAA #18</c>, the wait (<c>DECA</c>, <c>BNE</c>), then <c>LDAA TIME</c>,
@@ -50,11 +32,29 @@ internal static class WhistleSound
         Immediate + WaitCounts * (Inherent + Branch) + Direct + Direct + StoreDirect + PlaceShift * Inherent +
         Immediate + StoreDirect + WordDirect + Indexed;
 
-    /// <summary><c>WHIST1</c> after the write: <c>DEC TEMPA</c>, <c>BNE</c>.</summary>
-    private const int AfterWriteCycles = ModifyExtended + Branch;
+    /// <summary>The speed the phase advances by at the start (<c>LDA #$80</c>, <c>STAA FREQZ</c>).</summary>
+    private const byte FirstSpeed = 0x80;
+
+    /// <summary>The speed at which the sound ends (<c>CMPA #$20</c>).</summary>
+    private const byte LastSpeed = 0x20;
+
+    /// <summary>How far the phase is shifted to give the table's place (<c>LSRA</c> three times).</summary>
+    private const int PlaceShift = 3;
+
+    /// <summary>Samples played at each speed (<c>LDAA #$80</c>, <c>STAA TEMPA</c>).</summary>
+    private const int SamplesPerSpeed = 0x80;
+
+    /// <summary><c>WHIST</c> setting up: <c>LDAA</c>, <c>STAA FREQZ</c>, <c>LDAA</c>, <c>STAA TABLE</c>.</summary>
+    private const int SetUpCycles = (Immediate + StoreDirect) * 2;
 
     /// <summary><c>WHIST</c> finishing a speed: <c>DEC FREQZ</c>, <c>LDAA FREQZ</c>, <c>CMPA #$20</c>, <c>BNE</c>.</summary>
     private const int SpeedEndCycles = ModifyExtended + Direct + Immediate + Branch;
+
+    /// <summary><c>WHIST0</c> starting a speed: <c>LDAA #$80</c>, <c>STAA TEMPA</c>.</summary>
+    private const int SpeedStartCycles = Immediate + StoreDirect;
+
+    /// <summary>The wait before each sample, in counts (<c>LDAA #18</c>).</summary>
+    private const int WaitCounts = 18;
 
     /// <summary><c>SINTBL</c>: the sine wave, 64 levels.</summary>
     private static readonly byte[] SineTable =

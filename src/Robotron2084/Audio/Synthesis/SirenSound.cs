@@ -19,49 +19,28 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal sealed class SirenSound
 {
-    /// <summary><c>ZIREN</c>'s first length (<c>LDAA #$FF</c>), whose high byte is the delay count.</summary>
-    private const byte FirstLengthHigh = 0xFF;
-
-    /// <summary><c>ZIREN</c>'s first sweep (<c>LDX #$FEC0</c>): negative, so the count falls.</summary>
-    private const ushort FirstSweep = 0xFEC0;
-
-    private const byte FirstSlope = 0x20;
-
-    private const ushort FirstEnd = 0xFFE0;
-
-    /// <summary>The second pass's slope and end (<c>LDAA #$1</c>, <c>LDX #$44</c>).</summary>
-    private const byte SecondSlope = 0x01;
-
-    private const ushort SecondEnd = 0x0044;
-
-    /// <summary>The rounds of the triangle played at each sweep (<c>LDX #$10</c>).</summary>
-    private const int RoundsPerSweep = 0x10;
-
-    /// <summary>The step each level of the triangle moves by (<c>ADDA #$20</c>, <c>SUBA #$20</c>).</summary>
-    private const int TriangleStep = 0x20;
-
-    /// <summary>The wait unit inside <c>ZIRT</c>: <c>LDAA #$2</c>, then <c>DECA</c>/<c>BNE</c> twice.</summary>
-    private const int DelayUnitCycles = Immediate + 2 * (Inherent + Branch) + Inherent + Branch;
-
-    /// <summary>
-    ///     <c>ZIREN</c> setting up the first pass: <c>LDAA</c>, <c>STAA TOP</c>, <c>LDX</c>, <c>STX SWEEP</c>,
-    ///     <c>LDAA</c>, <c>LDX</c>, <c>BSR</c>.
-    /// </summary>
-    private const int SetUpCycles = Immediate + StoreDirect + WordImmediate + WordStoreDirect + Immediate +
-                                    WordImmediate + CallShort;
-
-    /// <summary><c>ZIREN</c> setting up the second pass: <c>LDAA</c>, <c>LDX</c>, then falling into <c>ZIREN0</c>.</summary>
-    private const int SecondSetUpCycles = Immediate + WordImmediate;
-
-    /// <summary><c>ZIREN0</c> and <c>ZIREN1</c>: <c>STAA SLOPE</c>, <c>STX END2</c>, <c>LDX #$10</c>.</summary>
-    private const int PassStartCycles = StoreDirect + WordStoreDirect + WordImmediate;
-
     /// <summary>
     ///     <c>ZIREN2</c> after the triangle: <c>BSR</c> counted with it; then the 16-bit add (<c>LDAA</c>, <c>ADDA</c>,
     ///     <c>STAA</c>, <c>LDAA</c>, <c>ADCA</c>, <c>STAA</c>), <c>DEX</c>, <c>BNE</c>.
     /// </summary>
     private const int AddSweepCycles =
         CallShort + Direct + Direct + StoreDirect + Direct + Direct + StoreDirect + IndexStep + Branch;
+
+    /// <summary><c>ZIRT</c>: <c>LDAB TOP</c>, then each unit, then <c>RTS</c>.</summary>
+    private const int DelayStartCycles = Direct;
+
+    /// <summary>The wait unit inside <c>ZIRT</c>: <c>LDAA #$2</c>, then <c>DECA</c>/<c>BNE</c> twice.</summary>
+    private const int DelayUnitCycles = Immediate + 2 * (Inherent + Branch) + Inherent + Branch;
+
+    private const ushort FirstEnd = 0xFFE0;
+
+    /// <summary><c>ZIREN</c>'s first length (<c>LDAA #$FF</c>), whose high byte is the delay count.</summary>
+    private const byte FirstLengthHigh = 0xFF;
+
+    private const byte FirstSlope = 0x20;
+
+    /// <summary><c>ZIREN</c>'s first sweep (<c>LDX #$FEC0</c>): negative, so the count falls.</summary>
+    private const ushort FirstSweep = 0xFEC0;
 
     /// <summary>
     ///     <c>ZIREN5</c> and the end of a sweep: <c>LDAA</c>, <c>ADDA</c>, <c>STAA</c>, <c>BCC</c>, (<c>INC</c> on a
@@ -75,13 +54,34 @@ internal sealed class SirenSound
     /// </summary>
     private const int LevelCycles = Immediate + Branch;
 
-    /// <summary><c>ZIRLOP</c>: <c>CLRA</c>, then <c>BSR ZIRT</c> and <c>LDAA #$E0</c> between the two halves.</summary>
-    private const int TriangleStartCycles = Inherent;
+    /// <summary><c>ZIREN0</c> and <c>ZIREN1</c>: <c>STAA SLOPE</c>, <c>STX END2</c>, <c>LDX #$10</c>.</summary>
+    private const int PassStartCycles = StoreDirect + WordStoreDirect + WordImmediate;
+
+    /// <summary>The rounds of the triangle played at each sweep (<c>LDX #$10</c>).</summary>
+    private const int RoundsPerSweep = 0x10;
+
+    private const ushort SecondEnd = 0x0044;
+
+    /// <summary><c>ZIREN</c> setting up the second pass: <c>LDAA</c>, <c>LDX</c>, then falling into <c>ZIREN0</c>.</summary>
+    private const int SecondSetUpCycles = Immediate + WordImmediate;
+
+    /// <summary>The second pass's slope and end (<c>LDAA #$1</c>, <c>LDX #$44</c>).</summary>
+    private const byte SecondSlope = 0x01;
+
+    /// <summary>
+    ///     <c>ZIREN</c> setting up the first pass: <c>LDAA</c>, <c>STAA TOP</c>, <c>LDX</c>, <c>STX SWEEP</c>,
+    ///     <c>LDAA</c>, <c>LDX</c>, <c>BSR</c>.
+    /// </summary>
+    private const int SetUpCycles = Immediate + StoreDirect + WordImmediate + WordStoreDirect + Immediate +
+                                    WordImmediate + CallShort;
 
     private const int TriangleMiddleCycles = CallShort + Immediate;
 
-    /// <summary><c>ZIRT</c>: <c>LDAB TOP</c>, then each unit, then <c>RTS</c>.</summary>
-    private const int DelayStartCycles = Direct;
+    /// <summary><c>ZIRLOP</c>: <c>CLRA</c>, then <c>BSR ZIRT</c> and <c>LDAA #$E0</c> between the two halves.</summary>
+    private const int TriangleStartCycles = Inherent;
+
+    /// <summary>The step each level of the triangle moves by (<c>ADDA #$20</c>, <c>SUBA #$20</c>).</summary>
+    private const int TriangleStep = 0x20;
 
     private readonly BoardOutput _output;
     private ushort _length = FirstLengthHigh << 8;

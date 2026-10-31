@@ -20,22 +20,30 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal static class KnockerSound
 {
+    private const int CountMask = 0x0F;
+
+    /// <summary><c>LP2</c> after the quiet write and its wait, then <c>DECB</c>, <c>BNE</c>.</summary>
+    private const int EndCycleCycles = Inherent + Branch;
+
+    private const int EndCycles = Immediate + StoreExtended + Return;
+
     /// <summary>
     ///     The loud half of a burst: the top four bits of a pattern's second byte; the bottom four are how many cycles
     ///     the burst has.
     /// </summary>
     private const int LevelMask = 0xF0;
 
-    private const int CountMask = 0x0F;
+    /// <summary><c>LP0</c> before the loud write: <c>LDAA AMP</c>; after it <c>LDAA PERIOD</c>.</summary>
+    private const int LoudStartCycles = Direct;
+
+    /// <summary>The end of the pattern: <c>BRA SQLP</c> between bursts; <c>LDAA #$80</c>, <c>STAA SOUND+2</c> at the end.</summary>
+    private const int NextBurstCycles = Branch;
 
     /// <summary>
     ///     The wait unit: <c>LDX #5</c>, five <c>DEX</c>/<c>BNE</c>, then <c>DECA</c> and <c>BNE</c> (the period counts
     ///     these).
     /// </summary>
     private const int PeriodUnitCycles = WordImmediate + 5 * (IndexStep + Branch) + Inherent + Branch;
-
-    /// <summary><c>KNOCK</c> setting up: <c>CLR SOUND+2</c>, <c>LDX</c>, <c>STX SNDTMP</c>.</summary>
-    private const int SetUpCycles = ModifyExtended + WordImmediate + WordStoreDirect;
 
     /// <summary>
     ///     <c>SQLP</c> reading a burst: <c>LDX</c>, <c>LDAA</c>, <c>BEQ</c>, <c>LDAB</c>, <c>ANDB</c>, <c>STAB</c>,
@@ -45,18 +53,10 @@ internal static class KnockerSound
         WordDirect + Indexed + Branch + Indexed + Immediate + StoreDirect + Indexed + 2 * IndexStep + WordStoreDirect +
         StoreDirect + Immediate;
 
-    /// <summary><c>LP0</c> before the loud write: <c>LDAA AMP</c>; after it <c>LDAA PERIOD</c>.</summary>
-    private const int LoudStartCycles = Direct;
+    /// <summary><c>KNOCK</c> setting up: <c>CLR SOUND+2</c>, <c>LDX</c>, <c>STX SNDTMP</c>.</summary>
+    private const int SetUpCycles = ModifyExtended + WordImmediate + WordStoreDirect;
 
     private const int WaitStartCycles = Direct;
-
-    /// <summary><c>LP2</c> after the quiet write and its wait, then <c>DECB</c>, <c>BNE</c>.</summary>
-    private const int EndCycleCycles = Inherent + Branch;
-
-    /// <summary>The end of the pattern: <c>BRA SQLP</c> between bursts; <c>LDAA #$80</c>, <c>STAA SOUND+2</c> at the end.</summary>
-    private const int NextBurstCycles = Branch;
-
-    private const int EndCycles = Immediate + StoreExtended + Return;
 
     /// <summary>
     ///     <c>KNKTAB</c>: each burst's wait (the period) and its loudness and cycle count; a period of 0 ends the

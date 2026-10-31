@@ -22,6 +22,18 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public sealed class SoundBoardAudioSink : IAudioSink
 {
+    /// <summary>
+    ///     Samples per output frame: left and right. It is multiplied by <see cref="SamplesPerPortTick" /> to give the
+    ///     size of <see cref="_stereoSamples" />.
+    /// </summary>
+    private const int ChannelsPerFrame = 2;
+
+    /// <summary>Queued ticks of sound at which a new tick is dropped, so the sound does not lag the screen.</summary>
+    private const int MaximumQueuedTicks = 4;
+
+    /// <summary>Queued ticks of sound below which another tick is made at once, so the speakers never run dry.</summary>
+    private const int MinimumQueuedTicks = 2;
+
     /// <summary>Samples a second sent to the speakers.</summary>
     private const int SampleRate = 44_100;
 
@@ -31,18 +43,6 @@ public sealed class SoundBoardAudioSink : IAudioSink
     ///     <see cref="_stereoSamples" />.
     /// </summary>
     private const int SamplesPerPortTick = SampleRate / Robotron2084.Core.ArcadeClock.PortTicksPerSecond;
-
-    /// <summary>
-    ///     Samples per output frame: left and right. It is multiplied by <see cref="SamplesPerPortTick" /> to give the
-    ///     size of <see cref="_stereoSamples" />.
-    /// </summary>
-    private const int ChannelsPerFrame = 2;
-
-    /// <summary>Queued ticks of sound below which another tick is made at once, so the speakers never run dry.</summary>
-    private const int MinimumQueuedTicks = 2;
-
-    /// <summary>Queued ticks of sound at which a new tick is dropped, so the sound does not lag the screen.</summary>
-    private const int MaximumQueuedTicks = 4;
 
     private readonly ISoundBoard _board;
     private readonly float[] _monoSamples = new float[SamplesPerPortTick];
@@ -64,6 +64,9 @@ public sealed class SoundBoardAudioSink : IAudioSink
         _soundEffect.Play();
     }
 
+    /// <inheritdoc />
+    public bool IsPlaying => _board.IsPlaying;
+
     /// <summary>Sends a sound number to the board and moves the sound to where it is heard.</summary>
     /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>), 0 to 63.</param>
     /// <param name="pan">Where the sound is heard: -1 is wholly left, 0 the middle, 1 wholly right.</param>
@@ -72,9 +75,6 @@ public sealed class SoundBoardAudioSink : IAudioSink
         _panner.PanTo(pan);
         _board.SendSoundNumber(soundNumber);
     }
-
-    /// <inheritdoc />
-    public bool IsPlaying => _board.IsPlaying;
 
     /// <summary>Runs the board for one port tick and queues what it played, topping the queue up if it is running low.</summary>
     public void Tick()

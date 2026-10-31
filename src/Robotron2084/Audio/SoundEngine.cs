@@ -39,11 +39,23 @@ public sealed class SoundEngine
         _sink = sink;
     }
 
+    /// <summary>The priority of the sound holding the voice, or 0 when the voice is free (<c>SNDPRI</c>).</summary>
+    public int CurrentPriority { get; private set; }
+
     /// <summary>True while the board is still playing the last number sent to it.</summary>
     public bool IsBoardPlaying => _sink.IsPlaying;
 
-    /// <summary>The priority of the sound holding the voice, or 0 when the voice is free (<c>SNDPRI</c>).</summary>
-    public int CurrentPriority { get; private set; }
+    /// <summary>
+    ///     Keeps the voice for <paramref name="ticks" /> more port ticks. A table's end normally frees the
+    ///     voice, but some sounds outlive their table on the BOARD — the wave-end music is a looping sound
+    ///     the board plays on until another number arrives — so this stops a lower-priority sound cutting
+    ///     one short (notes §128). A sound important enough to take the voice anyway cancels the hold.
+    /// </summary>
+    /// <param name="ticks">How many port ticks to keep the voice for.</param>
+    public void HoldVoice(int ticks)
+    {
+        _holdTicksLeft = Math.Max(_holdTicksLeft, ticks);
+    }
 
     /// <summary>
     ///     Asks for a sound. It takes the voice only if it is more important than the one playing; its first
@@ -62,18 +74,6 @@ public sealed class SoundEngine
         _entryIndex = -1;
         _repetitionsLeft = 1;
         _ticksLeftInSend = 1;
-    }
-
-    /// <summary>
-    ///     Keeps the voice for <paramref name="ticks" /> more port ticks. A table's end normally frees the
-    ///     voice, but some sounds outlive their table on the BOARD — the wave-end music is a looping sound
-    ///     the board plays on until another number arrives — so this stops a lower-priority sound cutting
-    ///     one short (notes §128). A sound important enough to take the voice anyway cancels the hold.
-    /// </summary>
-    /// <param name="ticks">How many port ticks to keep the voice for.</param>
-    public void HoldVoice(int ticks)
-    {
-        _holdTicksLeft = Math.Max(_holdTicksLeft, ticks);
     }
 
     /// <summary>
@@ -107,6 +107,21 @@ public sealed class SoundEngine
         MoveToNextEntry();
     }
 
+    /// <summary>Counts a held voice down, freeing it once the sound has played itself out.</summary>
+    private void AdvanceVoiceHold()
+    {
+        if (_holdTicksLeft > 0 && --_holdTicksLeft == 0) CurrentPriority = 0;
+    }
+
+    /// <summary>Frees the voice: the table has ended (<c>STA SNDPRI</c> with the zero repeat count).</summary>
+    private void EndSequence()
+    {
+        if (_holdTicksLeft == 0) CurrentPriority = 0;
+
+        _entries = [];
+        _entryIndex = -1;
+    }
+
     /// <summary>Moves to the table's next line and sends it, or frees the voice at the table's end.</summary>
     private void MoveToNextEntry()
     {
@@ -127,20 +142,5 @@ public sealed class SoundEngine
     {
         _ticksLeftInSend = entry.LengthVblanks;
         _sink.SendSoundNumber(entry.SoundNumber, _pan);
-    }
-
-    /// <summary>Counts a held voice down, freeing it once the sound has played itself out.</summary>
-    private void AdvanceVoiceHold()
-    {
-        if (_holdTicksLeft > 0 && --_holdTicksLeft == 0) CurrentPriority = 0;
-    }
-
-    /// <summary>Frees the voice: the table has ended (<c>STA SNDPRI</c> with the zero repeat count).</summary>
-    private void EndSequence()
-    {
-        if (_holdTicksLeft == 0) CurrentPriority = 0;
-
-        _entries = [];
-        _entryIndex = -1;
     }
 }

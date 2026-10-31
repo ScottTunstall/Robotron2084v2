@@ -20,8 +20,32 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal sealed class ElectricSound
 {
+    /// <summary>One count of the round: <c>DEX</c>, <c>BEQ</c>.</summary>
+    private const int CountCycles = IndexStep + Branch;
+
+    /// <summary>Counts in each round (<c>SND1A</c>: <c>LDX #$01C0</c>).</summary>
+    private const int CountsPerRound = 0x01C0;
+
+    /// <summary><c>SND1E</c> ending a round: <c>SUBB FREQ2</c>, <c>CMPB #$10</c>, <c>BHI</c>.</summary>
+    private const int EndRoundCycles = Direct + Immediate + Branch;
+
     /// <summary>The period of the first round (<c>START</c>: <c>LDAB #$11</c>).</summary>
     private const byte FirstPeriod = 0x11;
+
+    /// <summary>
+    ///     The round that follows the last is not played: the sound ends once the period is no more than this (
+    ///     <c>CMPB #$10</c>).
+    /// </summary>
+    private const byte LastPeriodLimit = 0x10;
+
+    /// <summary>The <c>BRA SND1B</c> that ends the second half-wave.</summary>
+    private const int LoopBackCycles = Branch;
+
+    /// <summary>
+    ///     One count of the period: <c>DEC FREQ1</c>, <c>BNE</c> (the round's <c>DEX</c>/<c>BEQ</c> is counted
+    ///     separately).
+    /// </summary>
+    private const int PeriodCountCycles = ModifyExtended + Branch;
 
     /// <summary>
     ///     What is taken off the period after each round (<c>START</c>: <c>LDAA #$FE</c>, <c>STAA FREQ2</c>). Taking $FE
@@ -29,20 +53,8 @@ internal sealed class ElectricSound
     /// </summary>
     private const byte PeriodStep = 0xFE;
 
-    /// <summary>
-    ///     The level the wave is written at (<c>SND1$$</c>: <c>LDAA #$9F</c>); the other half of the wave is its
-    ///     complement.
-    /// </summary>
-    private const byte WaveLevel = 0x9F;
-
-    /// <summary>Counts in each round (<c>SND1A</c>: <c>LDX #$01C0</c>).</summary>
-    private const int CountsPerRound = 0x01C0;
-
-    /// <summary>
-    ///     The round that follows the last is not played: the sound ends once the period is no more than this (
-    ///     <c>CMPB #$10</c>).
-    /// </summary>
-    private const byte LastPeriodLimit = 0x10;
+    /// <summary>Setting the period counter: <c>STAB FREQ1</c> (a full address; the source writes it as a raw <c>FCB $F7</c>).</summary>
+    private const int SetPeriodCycles = StoreExtended;
 
     /// <summary>
     ///     <c>START</c>: <c>LDAB</c>, <c>STAB SNDX1</c>, <c>LDAA</c>, <c>STAA FREQ2</c>, <c>BRA SND1$$</c>, then
@@ -53,23 +65,11 @@ internal sealed class ElectricSound
     /// <summary><c>SND1A</c>: <c>LDX #$01C0</c>.</summary>
     private const int StartRoundCycles = WordImmediate;
 
-    /// <summary>One count of the round: <c>DEX</c>, <c>BEQ</c>.</summary>
-    private const int CountCycles = IndexStep + Branch;
-
-    /// <summary>Setting the period counter: <c>STAB FREQ1</c> (a full address; the source writes it as a raw <c>FCB $F7</c>).</summary>
-    private const int SetPeriodCycles = StoreExtended;
-
     /// <summary>
-    ///     One count of the period: <c>DEC FREQ1</c>, <c>BNE</c> (the round's <c>DEX</c>/<c>BEQ</c> is counted
-    ///     separately).
+    ///     The level the wave is written at (<c>SND1$$</c>: <c>LDAA #$9F</c>); the other half of the wave is its
+    ///     complement.
     /// </summary>
-    private const int PeriodCountCycles = ModifyExtended + Branch;
-
-    /// <summary>The <c>BRA SND1B</c> that ends the second half-wave.</summary>
-    private const int LoopBackCycles = Branch;
-
-    /// <summary><c>SND1E</c> ending a round: <c>SUBB FREQ2</c>, <c>CMPB #$10</c>, <c>BHI</c>.</summary>
-    private const int EndRoundCycles = Direct + Immediate + Branch;
+    private const byte WaveLevel = 0x9F;
 
     private readonly BoardOutput _output;
     private int _countsLeft;
@@ -87,6 +87,32 @@ internal sealed class ElectricSound
     public static IEnumerable<OutputChange> PlayStart(BoardOutput output)
     {
         return new ElectricSound(output).Play();
+    }
+
+    /// <summary>Counts the round down once (<c>DEX</c>, <c>BEQ SND1E</c>).</summary>
+    /// <returns>True when the round has run out.</returns>
+    private bool CountRound()
+    {
+        _output.Wait(CountCycles);
+        return --_countsLeft == 0;
+    }
+
+    /// <summary>
+    ///     Holds a half-wave for the period: each pass counts the round down and the period down once
+    ///     (<c>SND1C</c>, <c>SND1D</c>).
+    /// </summary>
+    /// <param name="period">The period counter's starting value (<c>FREQ1</c>).</param>
+    /// <returns>True when the round ran out before the period did.</returns>
+    private bool HoldHalfWave(byte period)
+    {
+        for (var periodLeft = period; ;)
+        {
+            if (CountRound()) return true;
+
+            _output.Wait(PeriodCountCycles);
+            periodLeft--;
+            if (periodLeft == 0) return false;
+        }
     }
 
     /// <summary>
@@ -120,31 +146,5 @@ internal sealed class ElectricSound
             _output.Wait(EndRoundCycles);
             period = (byte)(period - PeriodStep);
         } while (period > LastPeriodLimit);
-    }
-
-    /// <summary>Counts the round down once (<c>DEX</c>, <c>BEQ SND1E</c>).</summary>
-    /// <returns>True when the round has run out.</returns>
-    private bool CountRound()
-    {
-        _output.Wait(CountCycles);
-        return --_countsLeft == 0;
-    }
-
-    /// <summary>
-    ///     Holds a half-wave for the period: each pass counts the round down and the period down once
-    ///     (<c>SND1C</c>, <c>SND1D</c>).
-    /// </summary>
-    /// <param name="period">The period counter's starting value (<c>FREQ1</c>).</param>
-    /// <returns>True when the round ran out before the period did.</returns>
-    private bool HoldHalfWave(byte period)
-    {
-        for (var periodLeft = period;;)
-        {
-            if (CountRound()) return true;
-
-            _output.Wait(PeriodCountCycles);
-            periodLeft--;
-            if (periodLeft == 0) return false;
-        }
     }
 }

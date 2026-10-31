@@ -19,18 +19,6 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal static class RadioSound
 {
-    /// <summary>The first speed (<c>LDX #100</c>).</summary>
-    private const ushort FirstSpeed = 100;
-
-    /// <summary>The bits of the timer's top byte that pick a level (<c>ANDA #$F</c>).</summary>
-    private const int WavePlaceMask = 0x0F;
-
-    /// <summary>The bits of a byte.</summary>
-    private const int ByteBits = 8;
-
-    /// <summary><c>RADIO</c> setting up: <c>LDAA #</c>, <c>STAA XPTR</c>, <c>LDX #100</c>, <c>STX TEMPX</c>.</summary>
-    private const int SetUpCycles = Immediate + StoreDirect + WordImmediate + WordStoreDirect;
-
     /// <summary>
     ///     <c>RADIO1</c> adding the speed to the timer: <c>ADDB</c>, <c>LDAA</c>, <c>ADCA</c>, <c>STAA</c>,
     ///     <c>LDX</c>, <c>BCS</c>, then two more instructions either way (<c>INX</c>/<c>BEQ</c>, or the source's
@@ -39,11 +27,23 @@ internal static class RadioSound
     private const int AddSpeedCycles =
         Direct + Direct + Direct + StoreDirect + WordDirect + Branch + IndexStep + Branch;
 
+    /// <summary>The bits of a byte.</summary>
+    private const int ByteBits = 8;
+
+    /// <summary>The first speed (<c>LDX #100</c>).</summary>
+    private const ushort FirstSpeed = 100;
+
     /// <summary>
     ///     <c>RADIO3</c> picking the level: <c>STX</c>, <c>ANDA</c>, <c>ADDA</c>, <c>STAA</c>, <c>LDX</c>,
     ///     <c>LDAA ,X</c>, then (after the store) <c>BRA RADIO1</c>.
     /// </summary>
     private const int PickLevelCycles = WordStoreDirect + Immediate + Immediate + StoreDirect + WordDirect + Indexed;
+
+    /// <summary><c>RADIO</c> setting up: <c>LDAA #</c>, <c>STAA XPTR</c>, <c>LDX #100</c>, <c>STX TEMPX</c>.</summary>
+    private const int SetUpCycles = Immediate + StoreDirect + WordImmediate + WordStoreDirect;
+
+    /// <summary>The bits of the timer's top byte that pick a level (<c>ANDA #$F</c>).</summary>
+    private const int WavePlaceMask = 0x0F;
 
     /// <summary><c>RADSND</c>: the sixteen levels of the wave.</summary>
     private static readonly byte[] Wave =

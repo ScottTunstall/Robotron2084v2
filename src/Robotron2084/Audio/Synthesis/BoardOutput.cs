@@ -11,22 +11,6 @@ internal sealed class BoardOutput
     /// <summary>The level the routine last wrote to the port (what <c>LDAA SOUND</c> reads).</summary>
     public byte Level { get; private set; }
 
-    /// <summary>Counts clock cycles spent on work that does not touch the port.</summary>
-    /// <param name="cycles">The cycles spent.</param>
-    public void Wait(int cycles)
-    {
-        _cyclesSinceLastChange += cycles;
-    }
-
-    /// <summary>Writes a level to the port (<c>STAA SOUND</c>).</summary>
-    /// <param name="level">The level.</param>
-    /// <returns>The change, timed from the last one.</returns>
-    public OutputChange Store(byte level)
-    {
-        Wait(InstructionCycles.StoreExtended);
-        return Change(level, InstructionCycles.StoreExtended);
-    }
-
     /// <summary>Flips every bit of the port's level (<c>COM SOUND</c>), so a low level goes high and a high one low.</summary>
     /// <returns>The change, timed from the last one.</returns>
     public OutputChange Complement()
@@ -54,6 +38,22 @@ internal sealed class BoardOutput
     {
         Level = level;
         _cyclesSinceLastChange = 0;
+    }
+
+    /// <summary>Writes a level to the port (<c>STAA SOUND</c>).</summary>
+    /// <param name="level">The level.</param>
+    /// <returns>The change, timed from the last one.</returns>
+    public OutputChange Store(byte level)
+    {
+        Wait(InstructionCycles.StoreExtended);
+        return Change(level, InstructionCycles.StoreExtended);
+    }
+
+    /// <summary>Counts clock cycles spent on work that does not touch the port.</summary>
+    /// <param name="cycles">The cycles spent.</param>
+    public void Wait(int cycles)
+    {
+        _cyclesSinceLastChange += cycles;
     }
 
     /// <summary>Records a new level and starts counting again.</summary>

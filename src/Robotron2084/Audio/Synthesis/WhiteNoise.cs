@@ -14,8 +14,29 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal static class WhiteNoise
 {
-    /// <summary><c>TURBO</c>'s levels per round (<c>LDAA #$20</c>, <c>STAA CYCNT</c>).</summary>
-    private const byte TurboLevelsPerRound = 0x20;
+    /// <summary>Choosing a level after the random step: <c>LDAA #0</c> and <c>BCC</c>.</summary>
+    private const int ChooseLevelCycles = Immediate + Branch;
+
+    /// <summary>Fading at the end of a round: <c>LDAB NAMP</c>, <c>SUBB DECAY</c>, <c>BEQ</c>.</summary>
+    private const int FadeCycles = Direct + Direct + Branch;
+
+    /// <summary>The waits after a level: <c>LDX NFRQ1</c> before the gap, <c>DECB</c> and <c>BNE</c> after.</summary>
+    private const int FinishLevelCycles = WordDirect + Inherent + Branch;
+
+    /// <summary>One count of the gap (<c>MOISE3</c>: <c>DEX</c>, <c>BNE</c>).</summary>
+    private const int GapCountCycles = IndexStep + Branch;
+
+    /// <summary>Growing the gap: <c>LDX NFRQ1</c>, <c>INX</c>, <c>LDAA NFFLG</c>, <c>BEQ</c>.</summary>
+    private const int GrowGapCycles = WordDirect + IndexStep + Direct + Branch;
+
+    /// <summary><c>MOIS00</c> keeping the loudness and starting the round: <c>STAB NAMP</c>, <c>LDAB CYCNT</c>.</summary>
+    private const int StartRoundCycles = StoreDirect + Direct;
+
+    /// <summary><c>MOISE</c> keeping the fade (<c>STAA DECAY</c>).</summary>
+    private const int StoreFadeCycles = StoreDirect;
+
+    /// <summary><c>MOISE0</c> keeping the gap (<c>STX NFRQ1</c>).</summary>
+    private const int StoreGapCycles = WordStoreDirect;
 
     /// <summary><c>TURBO</c>'s loudness drop each round (<c>LDAA #$1</c>, <c>STAA DECAY</c>).</summary>
     private const byte TurboFade = 1;
@@ -26,36 +47,15 @@ internal static class WhiteNoise
     /// <summary><c>TURBO</c>'s first loudness (<c>LDAB #$FF</c>).</summary>
     private const byte TurboFirstLoudness = 0xFF;
 
+    /// <summary><c>TURBO</c>'s levels per round (<c>LDAA #$20</c>, <c>STAA CYCNT</c>).</summary>
+    private const byte TurboLevelsPerRound = 0x20;
+
     /// <summary>
     ///     <c>TURBO</c> setting up: <c>LDAA</c>, <c>STAA CYCNT</c>, <c>STAA NFFLG</c>, <c>LDAA</c>, <c>LDX</c>, <c>LDAB</c>,
     ///     <c>BRA</c>. The <c>NFFLG</c> it sets is not zero, so the gap grows every round.
     /// </summary>
     private const int TurboSetUpCycles =
         Immediate + StoreDirect + StoreDirect + Immediate + WordImmediate + Immediate + Branch;
-
-    /// <summary><c>MOISE</c> keeping the fade (<c>STAA DECAY</c>).</summary>
-    private const int StoreFadeCycles = StoreDirect;
-
-    /// <summary><c>MOISE0</c> keeping the gap (<c>STX NFRQ1</c>).</summary>
-    private const int StoreGapCycles = WordStoreDirect;
-
-    /// <summary><c>MOIS00</c> keeping the loudness and starting the round: <c>STAB NAMP</c>, <c>LDAB CYCNT</c>.</summary>
-    private const int StartRoundCycles = StoreDirect + Direct;
-
-    /// <summary>Choosing a level after the random step: <c>LDAA #0</c> and <c>BCC</c>.</summary>
-    private const int ChooseLevelCycles = Immediate + Branch;
-
-    /// <summary>The waits after a level: <c>LDX NFRQ1</c> before the gap, <c>DECB</c> and <c>BNE</c> after.</summary>
-    private const int FinishLevelCycles = WordDirect + Inherent + Branch;
-
-    /// <summary>One count of the gap (<c>MOISE3</c>: <c>DEX</c>, <c>BNE</c>).</summary>
-    private const int GapCountCycles = IndexStep + Branch;
-
-    /// <summary>Fading at the end of a round: <c>LDAB NAMP</c>, <c>SUBB DECAY</c>, <c>BEQ</c>.</summary>
-    private const int FadeCycles = Direct + Direct + Branch;
-
-    /// <summary>Growing the gap: <c>LDX NFRQ1</c>, <c>INX</c>, <c>LDAA NFFLG</c>, <c>BEQ</c>.</summary>
-    private const int GrowGapCycles = WordDirect + IndexStep + Direct + Branch;
 
     /// <summary>Plays the turbo sound (sound <c>TURBO</c>).</summary>
     /// <param name="memory">The board's lasting variables, for the random numbers.</param>

@@ -20,16 +20,6 @@ namespace Robotron2084.Audio.Synthesis;
 /// </remarks>
 internal sealed class FilteredNoise
 {
-    /// <summary><c>CANTB</c>'s numbers: <c>FMAX</c> $FF, <c>SAMPC</c> $03E8, <c>LOFRQ</c> 0.</summary>
-    private const byte CannonFirstLimit = 0xFF;
-
-    private const ushort CannonLevelsPerShrink = 0x03E8;
-
-    private const byte CannonSmallestSlope = 0;
-
-    /// <summary><c>THTB</c>'s <c>FMAX</c>, 3, and <c>BG1TB</c>'s, 1: the other numbers are all 0.</summary>
-    private const byte ThrustFirstLimit = 3;
-
     private const byte Background1FirstLimit = 1;
 
     /// <summary><c>HBMBTB</c>'s numbers: <c>FMAX</c> $40, <c>SAMPC</c> $1000, <c>LOFRQ</c> 1.</summary>
@@ -40,17 +30,15 @@ internal sealed class FilteredNoise
     private const byte BombSmallestSlope = 1;
 
     /// <summary>
-    ///     The low byte of the limit at which the sound ends, once the high byte is 0 (<c>CMPB #7</c>). The low byte of
-    ///     <see cref="_limit" /> is compared with this to tell whether the limit has finished shrinking.
+    ///     The bits of a byte. It is used to shift <see cref="_limit" />, both to set its starting value and to read its
+    ///     top byte.
     /// </summary>
-    private const byte FinalLimitLow = 7;
+    private const int ByteBits = 8;
 
-    /// <summary>
-    ///     How far the limit is shifted to get the eighth it shrinks by (three <c>LSRA</c>/<c>RORB</c> pairs).
-    ///     <see cref="_limit" /> is shifted down by this many bits, and the result is subtracted from <see cref="_limit" />,
-    ///     so the limit shrinks.
-    /// </summary>
-    private const int ShrinkShift = 3;
+    /// <summary><c>CANTB</c>'s numbers: <c>FMAX</c> $FF, <c>SAMPC</c> $03E8, <c>LOFRQ</c> 0.</summary>
+    private const byte CannonFirstLimit = 0xFF;
+
+    private const ushort CannonLevelsPerShrink = 0x03E8;
 
     /// <summary>
     ///     <c>CANNON</c> and <c>FNLOAD</c> loading <c>CANTB</c> (<c>LDX</c>, <c>BRA</c>, <c>LDAA</c>, <c>STAA</c>,
@@ -61,8 +49,10 @@ internal sealed class FilteredNoise
         WordImmediate + Branch + Indexed + StoreDirect + Indexed + StoreDirect + Indexed + Indexed + WordIndexed
         + StoreDirect + StoreDirect + WordStoreDirect + ModifyExtended;
 
-    /// <summary><c>FNOIS0</c> starting a stretch: <c>LDX SAMPC</c>, <c>LDAA SOUND</c>.</summary>
-    private const int StartStretchCycles = WordDirect + Extended;
+    private const byte CannonSmallestSlope = 0;
+
+    /// <summary>Checking whether the target is reached: <c>CMPA LO</c> and a branch.</summary>
+    private const int CheckTargetCycles = Direct + Branch;
 
     /// <summary>
     ///     Choosing this slide's slope: <c>LDAB FMAX</c>, <c>TST DSFLG</c>, <c>BEQ</c>, <c>ANDB HI</c>,
@@ -74,11 +64,11 @@ internal sealed class FilteredNoise
     /// <summary>Counting a level: <c>DEX</c>, <c>BEQ</c>.</summary>
     private const int CountLevelCycles = IndexStep + Branch;
 
-    /// <summary>Sliding one step: <c>ADDB</c>/<c>SUBB FLO</c>, <c>ADCA</c>/<c>SBCA FHI</c>, <c>BCS</c>.</summary>
-    private const int SlideCycles = Direct + Direct + Branch;
-
-    /// <summary>Checking whether the target is reached: <c>CMPA LO</c> and a branch.</summary>
-    private const int CheckTargetCycles = Direct + Branch;
+    /// <summary>
+    ///     The low byte of the limit at which the sound ends, once the high byte is 0 (<c>CMPB #7</c>). The low byte of
+    ///     <see cref="_limit" /> is compared with this to tell whether the limit has finished shrinking.
+    /// </summary>
+    private const byte FinalLimitLow = 7;
 
     /// <summary>
     ///     <c>FNOIS6</c> shrinking the limit by an eighth: <c>LDAB FDFLG</c>, <c>BEQ</c>, <c>LDAA</c>, <c>LDAB</c>,
@@ -90,17 +80,27 @@ internal sealed class FilteredNoise
         + Direct + Direct + StoreDirect + StoreDirect + Branch;
 
     /// <summary>
-    ///     The bits of a byte. It is used to shift <see cref="_limit" />, both to set its starting value and to read its
-    ///     top byte.
+    ///     How far the limit is shifted to get the eighth it shrinks by (three <c>LSRA</c>/<c>RORB</c> pairs).
+    ///     <see cref="_limit" /> is shifted down by this many bits, and the result is subtracted from <see cref="_limit" />,
+    ///     so the limit shrinks.
     /// </summary>
-    private const int ByteBits = 8;
+    private const int ShrinkShift = 3;
+
+    /// <summary>Sliding one step: <c>ADDB</c>/<c>SUBB FLO</c>, <c>ADCA</c>/<c>SBCA FHI</c>, <c>BCS</c>.</summary>
+    private const int SlideCycles = Direct + Direct + Branch;
+
+    /// <summary><c>FNOIS0</c> starting a stretch: <c>LDX SAMPC</c>, <c>LDAA SOUND</c>.</summary>
+    private const int StartStretchCycles = WordDirect + Extended;
+
+    /// <summary><c>THTB</c>'s <c>FMAX</c>, 3, and <c>BG1TB</c>'s, 1: the other numbers are all 0.</summary>
+    private const byte ThrustFirstLimit = 3;
 
     /// <summary>The bits of a 16-bit sum that stay in it.</summary>
     private const int WordMask = 0xFFFF;
 
     private readonly BoardMemory _memory;
-    private readonly BoardOutput _output;
     private readonly NoiseSettings _noiseSettings;
+    private readonly BoardOutput _output;
     private bool _isFirstStretch = true;
     private byte _level;
     private ushort _levelsLeft;
@@ -118,14 +118,17 @@ internal sealed class FilteredNoise
         _limit = (ushort)(noiseSettings.FirstLimit << ByteBits);
     }
 
-    /// <summary>Plays the cannon sound (sound <c>CANNON</c>).</summary>
+    /// <summary>
+    ///     Plays the first background sound (sound <c>BG1</c>, settings <c>BG1TB</c>), which goes on until another sound
+    ///     number arrives.
+    /// </summary>
     /// <param name="memory">The board's lasting variables, for the random numbers.</param>
     /// <param name="output">The board's output port.</param>
     /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayCannon(BoardMemory memory, BoardOutput output)
+    public static IEnumerable<OutputChange> PlayBackground1(BoardMemory memory, BoardOutput output)
     {
         return Start(memory, output,
-            new NoiseSettings(CannonFirstLimit, CannonLevelsPerShrink, CannonSmallestSlope, CannonSetUpCycles));
+            new NoiseSettings(Background1FirstLimit, 0, 0, Immediate + StoreDirect + CannonSetUpCycles, false, false));
     }
 
     /// <summary>Plays the hyperspace bomb sound (sound <c>HBOMB</c>, settings <c>HBMBTB</c>).</summary>
@@ -136,6 +139,16 @@ internal sealed class FilteredNoise
     {
         return Start(memory, output,
             new NoiseSettings(BombFirstLimit, BombLevelsPerShrink, BombSmallestSlope, CannonSetUpCycles - Branch));
+    }
+
+    /// <summary>Plays the cannon sound (sound <c>CANNON</c>).</summary>
+    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
+    /// <param name="output">The board's output port.</param>
+    /// <returns>The sound's output changes.</returns>
+    public static IEnumerable<OutputChange> PlayCannon(BoardMemory memory, BoardOutput output)
+    {
+        return Start(memory, output,
+            new NoiseSettings(CannonFirstLimit, CannonLevelsPerShrink, CannonSmallestSlope, CannonSetUpCycles));
     }
 
     /// <summary>
@@ -150,23 +163,23 @@ internal sealed class FilteredNoise
         return Start(memory, output, new NoiseSettings(ThrustFirstLimit, 0, 0, CannonSetUpCycles, false, false));
     }
 
-    /// <summary>
-    ///     Plays the first background sound (sound <c>BG1</c>, settings <c>BG1TB</c>), which goes on until another sound
-    ///     number arrives.
-    /// </summary>
-    /// <param name="memory">The board's lasting variables, for the random numbers.</param>
-    /// <param name="output">The board's output port.</param>
-    /// <returns>The sound's output changes.</returns>
-    public static IEnumerable<OutputChange> PlayBackground1(BoardMemory memory, BoardOutput output)
-    {
-        return Start(memory, output,
-            new NoiseSettings(Background1FirstLimit, 0, 0, Immediate + StoreDirect + CannonSetUpCycles, false, false));
-    }
-
     private static IEnumerable<OutputChange> Start(BoardMemory memory, BoardOutput output, NoiseSettings noiseSettings)
     {
         output.Wait(noiseSettings.SetUpCycles);
         return new FilteredNoise(memory, output, noiseSettings).Play();
+    }
+
+    /// <summary>
+    ///     The slope's high byte: the limit's own, or, when distorted, the limit masked by the random high byte plus the
+    ///     smallest slope.
+    /// </summary>
+    /// <returns>The byte (<c>FHI</c>).</returns>
+    private byte ChooseSlopeHigh()
+    {
+        var limitHigh = (byte)(_limit >> ByteBits);
+        if (!_noiseSettings.IsDistorted) return limitHigh;
+
+        return (byte)((limitHigh & _memory.RandomHigh) + _noiseSettings.SmallestSlope);
     }
 
     /// <summary>Plays stretches of slides, shrinking the limit after each, until it reaches its end (<c>FNOIS0</c>).</summary>
@@ -191,6 +204,24 @@ internal sealed class FilteredNoise
                 hasLevelsLeft = _levelsLeft != 0;
             } while (hasLevelsLeft);
         } while (ShrinkLimit());
+    }
+
+    /// <summary>Takes an eighth off the slope limit (<c>FNOIS6</c>).</summary>
+    /// <returns>True to play another stretch; false once the limit has shrunk to its end.</returns>
+    private bool ShrinkLimit()
+    {
+        if (!_noiseSettings.Shrinks)
+        {
+            _output.Wait(Direct + Branch);
+            return true;
+        }
+
+        _output.Wait(ShrinkCycles);
+        _limit = (ushort)(_limit - (_limit >> ShrinkShift));
+        if (_limit >> ByteBits != 0) return true;
+
+        _output.Wait(Immediate + Branch);
+        return (byte)_limit != FinalLimitLow;
     }
 
     /// <summary>
@@ -238,37 +269,6 @@ internal sealed class FilteredNoise
         _level = _memory.RandomLow;
         yield return _output.Store(_level);
         _output.Wait(Branch);
-    }
-
-    /// <summary>
-    ///     The slope's high byte: the limit's own, or, when distorted, the limit masked by the random high byte plus the
-    ///     smallest slope.
-    /// </summary>
-    /// <returns>The byte (<c>FHI</c>).</returns>
-    private byte ChooseSlopeHigh()
-    {
-        var limitHigh = (byte)(_limit >> ByteBits);
-        if (!_noiseSettings.IsDistorted) return limitHigh;
-
-        return (byte)((limitHigh & _memory.RandomHigh) + _noiseSettings.SmallestSlope);
-    }
-
-    /// <summary>Takes an eighth off the slope limit (<c>FNOIS6</c>).</summary>
-    /// <returns>True to play another stretch; false once the limit has shrunk to its end.</returns>
-    private bool ShrinkLimit()
-    {
-        if (!_noiseSettings.Shrinks)
-        {
-            _output.Wait(Direct + Branch);
-            return true;
-        }
-
-        _output.Wait(ShrinkCycles);
-        _limit = (ushort)(_limit - (_limit >> ShrinkShift));
-        if (_limit >> ByteBits != 0) return true;
-
-        _output.Wait(Immediate + Branch);
-        return (byte)_limit != FinalLimitLow;
     }
 
     /// <summary>What a settings table (<c>CANTB</c>, <c>HBMBTB</c>) gives <c>FNLOAD</c> besides the two flags.</summary>

@@ -47,6 +47,23 @@ public static class SoundTables
     /// </summary>
     public static readonly SoundSequence ClearTheSystem = new(0xFF, 0x4143, [new SoundEntry(1, 1, 0x13)]);
 
+    /// <summary>
+    ///     <c>CNSND</c> "COIN" (<c>RRS22.ASM</c>): the eight sounds a coin can make. The coin routine (<c>CN1</c>) picks one
+    ///     at random, <c>CNSND</c> plus five bytes for each of the low three bits of the random seed
+    ///     (<c>LDB SEED</c>, <c>ANDB #7</c>, <c>MUL</c> by 5). All have the top priority; R5 <c>$D0CE</c> onwards.
+    /// </summary>
+    public static readonly IReadOnlyList<SoundSequence> Coin =
+    [
+        new(0xFF, 0xD0CE, [new SoundEntry(1, 32, 0x0C)]),
+        new(0xFF, 0xD0D3, [new SoundEntry(1, 32, 0x20)]),
+        new(0xFF, 0xD0D8, [new SoundEntry(3, 16, 0x24)]),
+        new(0xFF, 0xD0DD, [new SoundEntry(1, 32, 0x27)]),
+        new(0xFF, 0xD0E2, [new SoundEntry(1, 32, 0x2D)]),
+        new(0xFF, 0xD0E7, [new SoundEntry(2, 16, 0x35)]),
+        new(0xFF, 0xD0EC, [new SoundEntry(1, 32, 0x3A)]),
+        new(0xFF, 0xD0F1, [new SoundEntry(1, 32, 0x3E)])
+    ];
+
     /// <summary><c>CMKSND</c> "CRUISE MISSILE KILL" (<c>RRB10.ASM</c>); R5 <c>$1AD5</c>, asked for at <c>$213A</c>.</summary>
     public static readonly SoundSequence CruiseMissileKill = new(0xD0, 0x1AD5, [new SoundEntry(2, 4, 0x17)]);
 
@@ -179,23 +196,6 @@ public static class SoundTables
     ///     <c>$2A9C</c>.
     /// </summary>
     public static readonly SoundSequence WaveEnd = new(0xE0, 0x26EB, [new SoundEntry(29, 4, 0x0E)]);
-
-    /// <summary>
-    ///     <c>CNSND</c> "COIN" (<c>RRS22.ASM</c>): the eight sounds a coin can make. The coin routine (<c>CN1</c>) picks one
-    ///     at random, <c>CNSND</c> plus five bytes for each of the low three bits of the random seed
-    ///     (<c>LDB SEED</c>, <c>ANDB #7</c>, <c>MUL</c> by 5). All have the top priority; R5 <c>$D0CE</c> onwards.
-    /// </summary>
-    public static readonly IReadOnlyList<SoundSequence> Coin =
-    [
-        new(0xFF, 0xD0CE, [new SoundEntry(1, 32, 0x0C)]),
-        new(0xFF, 0xD0D3, [new SoundEntry(1, 32, 0x20)]),
-        new(0xFF, 0xD0D8, [new SoundEntry(3, 16, 0x24)]),
-        new(0xFF, 0xD0DD, [new SoundEntry(1, 32, 0x27)]),
-        new(0xFF, 0xD0E2, [new SoundEntry(1, 32, 0x2D)]),
-        new(0xFF, 0xD0E7, [new SoundEntry(2, 16, 0x35)]),
-        new(0xFF, 0xD0EC, [new SoundEntry(1, 32, 0x3A)]),
-        new(0xFF, 0xD0F1, [new SoundEntry(1, 32, 0x3E)])
-    ];
 
     /// <summary>Every table, for the check against the ROM's own bytes.</summary>
     public static IReadOnlyList<SoundSequence> All { get; } =
