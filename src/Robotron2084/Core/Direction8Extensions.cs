@@ -20,14 +20,14 @@ public static class Direction8Extensions
 
         return (dx, dy) switch
         {
-            (0, -1) => Direction8.Up,
-            (1, -1) => Direction8.UpRight,
+            (0, DirectionSigns.Up) => Direction8.Up,
+            (1, DirectionSigns.Up) => Direction8.UpRight,
             (1, 0) => Direction8.Right,
             (1, 1) => Direction8.DownRight,
-            (0, 1) => Direction8.Down,
-            (-1, 1) => Direction8.DownLeft,
+            (0, DirectionSigns.Down) => Direction8.Down,
+            (DirectionSigns.Left, DirectionSigns.Down) => Direction8.DownLeft,
             (-1, 0) => Direction8.Left,
-            (-1, -1) => Direction8.UpLeft,
+            (DirectionSigns.Left, DirectionSigns.Up) => Direction8.UpLeft,
             _ => null
         };
     }
@@ -47,14 +47,14 @@ public static class Direction8Extensions
     {
         return direction switch
         {
-            Direction8.Up => new IntVector2(0, -1),
-            Direction8.UpRight => new IntVector2(1, -1),
-            Direction8.Right => new IntVector2(1, 0),
-            Direction8.DownRight => new IntVector2(1, 1),
-            Direction8.Down => new IntVector2(0, 1),
-            Direction8.DownLeft => new IntVector2(-1, 1),
-            Direction8.Left => new IntVector2(-1, 0),
-            Direction8.UpLeft => new IntVector2(-1, -1),
+            Direction8.Up => new IntVector2(0, DirectionSigns.Up),
+            Direction8.UpRight => new IntVector2(DirectionSigns.Right, DirectionSigns.Up),
+            Direction8.Right => new IntVector2(DirectionSigns.Right, 0),
+            Direction8.DownRight => new IntVector2(DirectionSigns.Right, DirectionSigns.Down),
+            Direction8.Down => new IntVector2(0, DirectionSigns.Down),
+            Direction8.DownLeft => new IntVector2(DirectionSigns.Left, DirectionSigns.Down),
+            Direction8.Left => new IntVector2(DirectionSigns.Left, 0),
+            Direction8.UpLeft => new IntVector2(DirectionSigns.Left, DirectionSigns.Up),
             _ => IntVector2.Zero // defensive: unknown (out-of-range) enum values never occur in gameplay
         };
     }

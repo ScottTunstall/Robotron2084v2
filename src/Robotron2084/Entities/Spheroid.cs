@@ -143,7 +143,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly int _dropDelayRotations;
 
-    /// <summary>Which way the spheroid goes when it escapes: -1 for left, +1 for right.</summary>
+    /// <summary>Which way the spheroid goes when it escapes: <see cref="DirectionSigns.Left" /> or <see cref="DirectionSigns.Right" />.</summary>
     private readonly int _escapeDirectionSignX;
 
     /// <summary>Times the spheroid's moves.</summary>
@@ -227,9 +227,9 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         var randomDrops = ArcadeRandom.PickUpTo(random, maxDropsX2);
         _enforcersRemaining = (randomDrops + 1) / 2;
         // Pick at random whether the spheroid will escape to the left or to the right.
-        _escapeDirectionSignX = 1;
+        _escapeDirectionSignX = DirectionSigns.Right;
         var isEscapingLeft = random.Next(2) == 0;
-        if (isEscapingLeft) _escapeDirectionSignX = -1;
+        if (isEscapingLeft) _escapeDirectionSignX = DirectionSigns.Left;
 
         // How many times the spheroid spins before it first drops an enforcer.
         _dropRotationsRemaining = ArcadeRandom.PickUpTo(random, dropDelayRotations);

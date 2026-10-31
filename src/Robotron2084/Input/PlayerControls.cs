@@ -44,14 +44,14 @@ public sealed class PlayerControls
 
         (int dx, int dy)[] directions =
         [
-            (0, -1), // MoveUp
-            (0, 1), // MoveDown
-            (-1, 0), // MoveLeft
-            (1, 0), // MoveRight
-            (0, -1), // ShootUp
-            (0, 1), // ShootDown
-            (-1, 0), // ShootLeft
-            (1, 0) // ShootRight
+            (0, DirectionSigns.Up), // MoveUp
+            (0, DirectionSigns.Down), // MoveDown
+            (DirectionSigns.Left, 0), // MoveLeft
+            (DirectionSigns.Right, 0), // MoveRight
+            (0, DirectionSigns.Up), // ShootUp
+            (0, DirectionSigns.Down), // ShootDown
+            (DirectionSigns.Left, 0), // ShootLeft
+            (DirectionSigns.Right, 0) // ShootRight
         ];
 
         Keys[] moveKeys = [Keys.W, Keys.S, Keys.A, Keys.D];
@@ -115,6 +115,6 @@ public sealed class PlayerControls
         if (this[positive].IsHeld(keyboardState, playerOneGamePadState, playerTwoGamePadState)) value++;
         if (this[negative].IsHeld(keyboardState, playerOneGamePadState, playerTwoGamePadState)) value--;
 
-        return Math.Clamp(value, -1, 1);
+        return Math.Clamp(value, DirectionSigns.Left, DirectionSigns.Right);
     }
 }

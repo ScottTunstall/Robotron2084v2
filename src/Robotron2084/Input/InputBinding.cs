@@ -24,14 +24,14 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     /// </summary>
     private static readonly (string Name, int Dx, int Dy, int Code)[] Directions =
     [
-        ("UP", 0, -1, GetDirectionCode(0, -1)),
-        ("DOWN", 0, 1, GetDirectionCode(0, 1)),
-        ("LEFT", -1, 0, GetDirectionCode(-1, 0)),
-        ("RIGHT", 1, 0, GetDirectionCode(1, 0)),
-        ("UP LEFT", -1, -1, GetDirectionCode(-1, -1)),
-        ("UP RIGHT", 1, -1, GetDirectionCode(1, -1)),
-        ("DOWN LEFT", -1, 1, GetDirectionCode(-1, 1)),
-        ("DOWN RIGHT", 1, 1, GetDirectionCode(1, 1))
+        ("UP", 0, DirectionSigns.Up, GetDirectionCode(0, DirectionSigns.Up)),
+        ("DOWN", 0, DirectionSigns.Down, GetDirectionCode(0, DirectionSigns.Down)),
+        ("LEFT", DirectionSigns.Left, 0, GetDirectionCode(DirectionSigns.Left, 0)),
+        ("RIGHT", DirectionSigns.Right, 0, GetDirectionCode(DirectionSigns.Right, 0)),
+        ("UP LEFT", DirectionSigns.Left, DirectionSigns.Up, GetDirectionCode(DirectionSigns.Left, DirectionSigns.Up)),
+        ("UP RIGHT", DirectionSigns.Right, DirectionSigns.Up, GetDirectionCode(DirectionSigns.Right, DirectionSigns.Up)),
+        ("DOWN LEFT", DirectionSigns.Left, DirectionSigns.Down, GetDirectionCode(DirectionSigns.Left, DirectionSigns.Down)),
+        ("DOWN RIGHT", DirectionSigns.Right, DirectionSigns.Down, GetDirectionCode(DirectionSigns.Right, DirectionSigns.Down))
     ];
 
     /// <summary>A keyboard key.</summary>
@@ -52,8 +52,8 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
     /// </summary>
     public static InputBinding CreateStick(int gamePadIndex, bool isRightStick, int dx, int dy)
     {
-        dx = Math.Clamp(dx, -1, 1);
-        dy = Math.Clamp(dy, -1, 1);
+        dx = Math.Clamp(dx, DirectionSigns.Left, DirectionSigns.Right);
+        dy = Math.Clamp(dy, DirectionSigns.Up, DirectionSigns.Down);
         if (dx == 0 && dy == 0) throw new ArgumentOutOfRangeException(nameof(dx), "a stick binding needs a direction");
 
         var kind = InputBindingKind.GamePadLeftStick;

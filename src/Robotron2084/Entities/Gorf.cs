@@ -73,9 +73,9 @@ public sealed class Gorf : IExplodable, IRemovable
         _playfieldBounds = playfieldBounds;
         _random = random;
         _maxDropsX2 = maxDropsX2;
-        _directionSignX = -1;
+        _directionSignX = DirectionSigns.Left;
         var isEnteringFromLeft = random.Next(2) == 0;
-        if (isEnteringFromLeft) _directionSignX = 1;
+        if (isEnteringFromLeft) _directionSignX = DirectionSigns.Right;
 
         var highest = playfieldBounds.Y + HopPixels;
         var lowest = Math.Max(highest, playfieldBounds.Bottom - CollisionSize.Height);

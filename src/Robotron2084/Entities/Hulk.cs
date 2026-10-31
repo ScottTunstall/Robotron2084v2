@@ -299,7 +299,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     internal Direction8 Direction { get; private set; }
 
     /// <summary>Shoves the hulk the way the laser that hit it was going. The hulk stops at the wall.</summary>
-    /// <param name="direction">The way the laser was going: left, right or neither, and up, down or neither.</param>
+    /// <param name="direction">The way the laser was going, as one of the eight directions.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -309,16 +309,18 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
     ///     </list>
     /// </remarks>
-    public void ApplyKnockback(IntVector2 direction)
+    public void ApplyKnockback(Direction8 direction)
     {
-        var dx = direction.X;
-        var isShovedSidewaysDouble = direction.X != 0 && _random.Next(ShoveSidewaysDoubleRandomRange) == 0;
-        if (isShovedSidewaysDouble) dx = direction.X * ShoveSidewaysDoubleFactor;
+        var unitVector = direction.ToIntVector();
+        var shouldShoveSidewaysDouble = unitVector.X != 0 && _random.Next(ShoveSidewaysDoubleRandomRange) == 0;
 
-        var dy = direction.Y;
-        var isShovedVerticalQuadruple = direction.Y != 0 &&
-                                        _random.Next(ShoveVerticalQuadrupleRandomRange) < ShoveVerticalQuadrupleRandomBelow;
-        if (isShovedVerticalQuadruple) dy = direction.Y * ShoveVerticalQuadrupleFactor;
+        var dx = unitVector.X;
+        if (shouldShoveSidewaysDouble) dx = unitVector.X * ShoveSidewaysDoubleFactor;
+
+        var dy = unitVector.Y;
+        var shouldShoveVerticalQuadruple = unitVector.Y != 0 &&
+                                           _random.Next(ShoveVerticalQuadrupleRandomRange) < ShoveVerticalQuadrupleRandomBelow;
+        if (shouldShoveVerticalQuadruple) dy = unitVector.Y * ShoveVerticalQuadrupleFactor;
 
         _position += new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(dx),
             ScreenSize.ToPortPixelsFromArcadePixels(dy));
@@ -422,7 +424,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 
     /// <summary>Puts the hulk at <paramref name="position" />.</summary>
     /// <param name="position">Where to put the hulk's top-left corner.</param>
-    internal void TeleportTo(IntVector2 position)
+    internal void MoveTo(IntVector2 position)
     {
         _position = position;
     }

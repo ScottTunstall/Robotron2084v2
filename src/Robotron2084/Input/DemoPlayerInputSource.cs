@@ -116,8 +116,8 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         move = SteerClearOnY(move, position, bounds, centre);
 
         return new IntVector2(
-            Math.Clamp(move.X, -1, 1),
-            Math.Clamp(move.Y, -1, 1));
+            Math.Clamp(move.X, DirectionSigns.Left, DirectionSigns.Right),
+            Math.Clamp(move.Y, DirectionSigns.Up, DirectionSigns.Down));
     }
 
     /// <summary>Bends the X component toward the centre when the flee heads into the left or right wall.</summary>
@@ -134,9 +134,9 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
 
         if (!headingIntoWall) return move;
 
-        var bendX = -1;
+        var bendX = DirectionSigns.Left;
         var isCentreToTheRight = centre.X >= position.X;
-        if (isCentreToTheRight) bendX = 1;
+        if (isCentreToTheRight) bendX = DirectionSigns.Right;
 
         return move + new IntVector2(bendX, 0);
     }
@@ -155,9 +155,9 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
 
         if (!headingIntoWall) return move;
 
-        var bendY = -1;
+        var bendY = DirectionSigns.Up;
         var isCentreBelow = centre.Y >= position.Y;
-        if (isCentreBelow) bendY = 1;
+        if (isCentreBelow) bendY = DirectionSigns.Down;
 
         return move + new IntVector2(0, bendY);
     }

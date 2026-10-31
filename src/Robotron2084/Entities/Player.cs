@@ -308,7 +308,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     /// <summary>Puts the player at <paramref name="position" />.</summary>
     /// <param name="position">Where to put the player's top-left corner.</param>
-    internal void TeleportTo(IntVector2 position)
+    internal void MoveTo(IntVector2 position)
     {
         _position = position;
     }
@@ -326,7 +326,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     {
         (int x, int y) offset = direction switch
         {
-            Direction8.Up => (2, -1),
+            Direction8.Up => (2, DirectionSigns.Up),
             Direction8.Down => (2, 4),
             Direction8.Left => (0, 4),
             Direction8.Right => (2, 4),

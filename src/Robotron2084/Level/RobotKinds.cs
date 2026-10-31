@@ -59,7 +59,7 @@ public static class RobotKinds
         new(RobotKind.Hulk,
             static parameters => parameters.HulkCount,
             0,
-            static (playField, targetEntity, direction) => targetEntity.GetAs<Hulk>().ApplyKnockback(direction.ToIntVector()),
+            static (playField, targetEntity, direction) => targetEntity.GetAs<Hulk>().ApplyKnockback(direction),
             SoundTables.HulkHit,
             true,
             new HulkWaveSpawner(),
