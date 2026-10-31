@@ -51,6 +51,12 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         _random = random ?? new Random();
     }
 
+    /// <summary>Attaches the field this poll will reason about (the demo state calls it every tick).</summary>
+    public void Bind(PlayField field)
+    {
+        _field = field;
+    }
+
     public PlayerInputState Poll()
     {
         if (_field is not { } field || !field.IsPlayerAlive()) return new PlayerInputState(IntVector2.Zero, false);
@@ -76,10 +82,27 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         return new PlayerInputState(move, false);
     }
 
-    /// <summary>Attaches the field this poll will reason about (the demo state calls it every tick).</summary>
-    public void Bind(PlayField field)
+    /// <summary>Picks this tick's raw direction: flee a robot inside the threat distance, else drift to the centre.</summary>
+    /// <param name="field">The bound playfield.</param>
+    /// <param name="position">The player's position.</param>
+    /// <param name="nearest">The nearest living robot, if any.</param>
+    /// <returns>The raw 8-way direction, before hysteresis.</returns>
+    private static IntVector2 ChooseDirection(PlayField field, IntVector2 position, IntVector2? nearest)
     {
-        _field = field;
+        var bounds = field.Wall.PlayfieldBounds;
+        IntVector2 centre = new(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+
+        // A robot past the threat distance is ignored for movement — the centre drift stays.
+        if (nearest is { } robot)
+        {
+            var dx = position.X - robot.X;
+            var dy = position.Y - robot.Y;
+            if (Math.Abs(dx) + Math.Abs(dy) <
+                ScreenSize.ToPortPixelsFromArcadePixels(AttractTuning.DemoThreatDistanceArcadePixels))
+                return SteerClearOfWalls(new IntVector2(Math.Sign(dx), Math.Sign(dy)), position, bounds, centre);
+        }
+
+        return new IntVector2(Math.Sign(centre.X - position.X), Math.Sign(centre.Y - position.Y));
     }
 
     /// <summary>
@@ -137,29 +160,6 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         if (isCentreBelow) bendY = 1;
 
         return move + new IntVector2(0, bendY);
-    }
-
-    /// <summary>Picks this tick's raw direction: flee a robot inside the threat distance, else drift to the centre.</summary>
-    /// <param name="field">The bound playfield.</param>
-    /// <param name="position">The player's position.</param>
-    /// <param name="nearest">The nearest living robot, if any.</param>
-    /// <returns>The raw 8-way direction, before hysteresis.</returns>
-    private static IntVector2 ChooseDirection(PlayField field, IntVector2 position, IntVector2? nearest)
-    {
-        var bounds = field.Wall.PlayfieldBounds;
-        IntVector2 centre = new(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
-
-        // A robot past the threat distance is ignored for movement — the centre drift stays.
-        if (nearest is { } robot)
-        {
-            var dx = position.X - robot.X;
-            var dy = position.Y - robot.Y;
-            if (Math.Abs(dx) + Math.Abs(dy) <
-                ScreenSize.ToPortPixelsFromArcadePixels(AttractTuning.DemoThreatDistanceArcadePixels))
-                return SteerClearOfWalls(new IntVector2(Math.Sign(dx), Math.Sign(dy)), position, bounds, centre);
-        }
-
-        return new IntVector2(Math.Sign(centre.X - position.X), Math.Sign(centre.Y - position.Y));
     }
 
     /// <summary>Applies the stick hysteresis and returns the direction the stick actually holds.</summary>

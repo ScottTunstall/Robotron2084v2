@@ -16,13 +16,6 @@ public static class InputActions
         InputAction.ShootRight
     ];
 
-    /// <summary>True for the four move actions (the left stick).</summary>
-    public static bool IsMove(this InputAction action)
-    {
-        return action
-            is InputAction.MoveUp or InputAction.MoveDown or InputAction.MoveLeft or InputAction.MoveRight;
-    }
-
     /// <summary>The page's label, e.g. "MOVE UP" / "SHOOT LEFT".</summary>
     public static string GetLabel(this InputAction action)
     {
@@ -37,5 +30,12 @@ public static class InputActions
             InputAction.ShootLeft => "SHOOT LEFT",
             _ => "SHOOT RIGHT"
         };
+    }
+
+    /// <summary>True for the four move actions (the left stick).</summary>
+    public static bool IsMove(this InputAction action)
+    {
+        return action
+            is InputAction.MoveUp or InputAction.MoveDown or InputAction.MoveLeft or InputAction.MoveRight;
     }
 }
