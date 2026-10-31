@@ -17,10 +17,10 @@
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Compressed
 /build:Fonts/Default.spritefont
-#begin Effects/ColorCycle.fx
+#begin Effects/ColourCycle.fx
 /importer:EffectImporter
 /processor:EffectProcessor
-/build:Effects/ColorCycle.fx
+/build:Effects/ColourCycle.fx
 
 #begin Sprites/AttractCruise.png
 /importer:TextureImporter
@@ -2506,7 +2506,7 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/PlayerBig.png
 
-#begin Sprites/PlayerExtra.png
+#begin Sprites/SpareLife.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2516,7 +2516,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/PlayerExtra.png
+/build:Sprites/SpareLife.png
 
 #begin Sprites/Player_1.png
 /importer:TextureImporter
