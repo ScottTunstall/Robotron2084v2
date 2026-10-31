@@ -12,7 +12,7 @@ namespace Robotron2084.Input;
 /// </summary>
 public static class GamePadSticks
 {
-    private const float DeadZoneLengthSquared = 0.0625f; // 0.25^2 — still-centered
+    private const float DeadZoneLengthSquared = 0.0625f; // 0.25^2 — still-centred
 
     /// <summary>The stick's direction in SCREEN space (Y down-positive), or zero when centred.</summary>
     public static IntVector2 Read(GamePadState gamePadState, bool isRightStick)

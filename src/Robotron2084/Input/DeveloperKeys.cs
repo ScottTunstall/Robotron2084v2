@@ -31,11 +31,11 @@ namespace Robotron2084.Input;
 ///     SIMULTANEOUS) on every attract screen, F5 opens the GAME ADJUSTMENT page there, and F10 opens the
 ///     DEVELOPER TOOLS page from EVERY screen. Page Down is free.
 /// </summary>
-public static class DevKeys
+public static class DeveloperKeys
 {
     /// <summary>
     ///     How many times a tick the movie's frame clock runs while the attract fast-forward key is
-    ///     held (see <see cref="RobotronGame.HandleAttractDevKeys" />).
+    ///     held (see <see cref="RobotronGame.HandleAttractDeveloperKeys" />).
     /// </summary>
     public const int AttractFastForwardMultiplier = 8;
 
