@@ -54,7 +54,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        _wall.Draw(spriteBatch, _sprites.WallPixelSprite, _sprites.Blitter.GetSlotColour(AttractTuning.TitleWallSlot));
+        _wall.Draw(spriteBatch, _sprites.WallPixelSprite, _sprites.Blitter.GetPaletteIndexColour(AttractTuning.TitleWallPaletteIndex));
         ArcadeHud.DrawScoresAndLives(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds(), false);
 
         ArcadeHud.DrawCenteredLargeText(
@@ -62,7 +62,7 @@ public sealed class StorylineState : IGameState, IAttractState
             _sprites,
             TitleText,
             HudLayout.ToPortY(AttractTuning.StoryTitleRow),
-            HudLayout.HudScoreSlotCurrent);
+            HudLayout.HudScorePaletteIndexCurrent);
 
         DrawObjects(spriteBatch);
 
@@ -72,13 +72,13 @@ public sealed class StorylineState : IGameState, IAttractState
         {
             var index = ArcadeText.GetGlyphIndex(cell.Character);
             if (index >= 0 && index < _sprites.FontLarge.Length)
-                _sprites.Blitter.DrawGlyphSlot(
+                _sprites.Blitter.DrawGlyphPaletteIndex(
                     spriteBatch,
                     _sprites.FontLarge,
                     index,
                     HudLayout.ToPortX(cell.X),
                     HudLayout.ToPortY(cell.Y),
-                    cell.Slot);
+                    cell.PaletteIndex);
         }
 
         if (_movie.PageMachine.Message is { } message)
@@ -87,7 +87,7 @@ public sealed class StorylineState : IGameState, IAttractState
                 message.Text,
                 HudLayout.ToPortX(message.X),
                 HudLayout.ToPortY(message.Y),
-                message.Slot);
+                message.PaletteIndex);
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)
@@ -158,7 +158,7 @@ public sealed class StorylineState : IGameState, IAttractState
         var bolt = new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_sprites.LaserBarSprite.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(_sprites.LaserBarSprite.Height));
         _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBarSprite, bolt,
-            _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
+            _sprites.Blitter.GetPaletteIndexColour(PlayerTuning.LaserPaletteIndex));
     }
 
     /// <summary>
@@ -167,11 +167,11 @@ public sealed class StorylineState : IGameState, IAttractState
     /// </summary>
     private void DrawMonoBox(SpriteBatch spriteBatch, MovieObject item, Texture2D animationFrame, Rectangle bounds)
     {
-        if (item.MonoBoxSlot != 0)
-            _sprites.Blitter.DrawSolidRectangle(spriteBatch, bounds, _sprites.Blitter.GetSlotColour(item.MonoBoxSlot));
+        if (item.MonoBoxPaletteIndex != 0)
+            _sprites.Blitter.DrawSolidRectangle(spriteBatch, bounds, _sprites.Blitter.GetPaletteIndexColour(item.MonoBoxPaletteIndex));
 
         _sprites.Blitter.DrawSpriteSolid(spriteBatch, animationFrame, bounds,
-            _sprites.Blitter.GetSlotColour(item.MonoSilhouetteSlot));
+            _sprites.Blitter.GetPaletteIndexColour(item.MonoSilhouettePaletteIndex));
         if (item.ShowsMonoBrain) _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
     }
 

@@ -122,16 +122,16 @@ public sealed class PlayingState : IGameState
                 "PAUSED",
                 HudLayout.PausedMessageColumn,
                 HudLayout.PausedMessageRow,
-                WavePaletteTables.GetElectrodeSlot(_session.GetCurrent().Wave));
+                WavePaletteTables.GetElectrodePaletteIndex(_session.GetCurrent().Wave));
 
         if (_playerOutMessageTicks > 0)
         {
             // ROM string 75: "PLAYER n" at $3F79 then "GAME OVER" at $3E86.
-            var messageSlot = WavePaletteTables.GetElectrodeSlot(_session.GetCurrent().Wave);
+            var messagePaletteIndex = WavePaletteTables.GetElectrodePaletteIndex(_session.GetCurrent().Wave);
             ArcadeHud.DrawMessageText(spriteBatch, _sprites, $"PLAYER {_playerOutNumber}",
-                HudLayout.PlayerTurnMessageColumn, HudLayout.PlayerGameOverMessageRow, messageSlot);
+                HudLayout.PlayerTurnMessageColumn, HudLayout.PlayerGameOverMessageRow, messagePaletteIndex);
             ArcadeHud.DrawMessageText(spriteBatch, _sprites, "GAME OVER", HudLayout.GameOverMessageColumn,
-                HudLayout.GameOverMessageRow, messageSlot);
+                HudLayout.GameOverMessageRow, messagePaletteIndex);
         }
         else if (IsAnnouncingTurn())
         {
@@ -143,7 +143,7 @@ public sealed class PlayingState : IGameState
                 $"PLAYER {_session.GetCurrent().Number}",
                 HudLayout.PlayerTurnMessageColumn,
                 HudLayout.PlayerTurnMessageRow,
-                WavePaletteTables.GetElectrodeSlot(_session.GetCurrent().Wave));
+                WavePaletteTables.GetElectrodePaletteIndex(_session.GetCurrent().Wave));
         }
     }
 

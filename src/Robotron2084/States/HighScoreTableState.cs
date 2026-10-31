@@ -14,12 +14,12 @@ namespace Robotron2084.States;
 ///     THE ARCADE'S HIGH SCORE TABLE (<c>TABLE</c>, notes §98, §123) — RRTABLE's <c>TABLE</c>, drawn at
 ///     its own cursors, in its own fonts and colours:
 ///     <list type="bullet">
-///         <item>"ROBOTRON HEROES" (slot 7) over TODAY'S list at the ROM's (53, 37);</item>
+///         <item>"ROBOTRON HEROES" (palette index 7) over TODAY'S list at the ROM's (53, 37);</item>
 ///         <item>
 ///             TODAY'S ten rows in the LARGE font, 5 per column × 2 columns, from
 ///             (26, 53), 9 rows / 52 columns apart — each row " N) XXX  1234567";
 ///         </item>
-///         <item>"ALL TIME HEROES" (slot 7) at (53, 110);</item>
+///         <item>"ALL TIME HEROES" (palette index 7) at (53, 110);</item>
 ///         <item>
 ///             the operator's top entry at (21, 122) in $AA/$DD (the ROM's SECOND colour
 ///             pair, which the all-time list below it shares) as "( NAME ) 1234567";
@@ -29,14 +29,14 @@ namespace Robotron2084.States;
 ///             3 columns, from (20, 136), 7 rows / 40 columns apart, ranks 2-37;
 ///         </item>
 ///         <item>
-///             a hatched frame in slot 8 between the ROM's corners, drawn the way the ROM
+///             a hatched frame in palette index 8 between the ROM's corners, drawn the way the ROM
 ///             draws it — see <see cref="HighScoreFrameAnimation" /> and <see cref="DrawFrame" />
 ///             (<c>FRAMER</c> grows it, then an erase pass in black leaves the band);
 ///         </item>
 ///         <item>
 ///             and the page's own colour processes, which are what make the arcade's page
-///             move: <see cref="HighScorePalette" /> cycles the wall's slot through COLTAB, ramps
-///             the two lists and their highlights, and drags the headers along a slot behind.
+///             move: <see cref="HighScorePalette" /> cycles the wall's palette index through COLTAB, ramps
+///             the two lists and their highlights, and drags the headers along a palette index behind.
 ///         </item>
 ///     </list>
 ///     A row whose score is one of the scores this session just posted is drawn in
@@ -183,11 +183,11 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             var (column, row) = HighScoreTableLayout.GetAllTimePosition(rank);
             var x = GetColumnX(column);
             var y = GetRowY(row);
-            var slot = GetSlot(entries[rank - 2], ScreenTuning.HighScoreAllTimeSlot,
-                ScreenTuning.HighScoreAllTimeHighlightSlot);
+            var paletteIndex = GetPaletteIndex(entries[rank - 2], ScreenTuning.HighScoreAllTimePaletteIndex,
+                ScreenTuning.HighScoreAllTimeHighlightPaletteIndex);
 
-            var afterRank = DrawRank(spriteBatch, rank, x, y, slot, false);
-            _sprites.TextRenderer.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, slot);
+            var afterRank = DrawRank(spriteBatch, rank, x, y, paletteIndex, false);
+            _sprites.TextRenderer.DrawSmallFontText(spriteBatch, entries[rank - 2].Initials, afterRank, y, paletteIndex);
 
             if (entries[rank - 2].Score != 0)
                 _sprites.TextRenderer.DrawSmallTableNumber(
@@ -196,17 +196,17 @@ public sealed class HighScoreTableState : IGameState, IAttractState
                     afterRank + ScreenSize.ToPortPixelsFromArcadePixels(HighScoreTableLayout.AllTimeScoreOffsetColumns *
                                                                         2),
                     y,
-                    slot);
+                    paletteIndex);
         }
     }
 
     /// <summary>
     ///     The ROM's frame (`FRAMER` → `MARQ`, notes §98.5/§98.7): the hatched band its two passes
-    ///     leave behind, drawn STROKE BY STROKE because every stroke has its OWN palette slot —
+    ///     leave behind, drawn STROKE BY STROKE because every stroke has its OWN palette index —
     ///     MARQ's flavour walks down by `$11` a stroke (see
-    ///     <see cref="HighScoreTableLayout.GetFrameStrokeSlot" />), so the eight visible strokes are
-    ///     slots 8…1, so the band carries eight cycling colours at once.
-    ///     LOOPP keeps rewriting slots 1-8, so all eight stripes cycle together, three frames apart.
+    ///     <see cref="HighScoreTableLayout.GetFrameStrokePaletteIndex" />), so the eight visible strokes are
+    ///     palette indices 8…1, so the band carries eight cycling colours at once.
+    ///     LOOPP keeps rewriting palette indices 1-8, so all eight stripes cycle together, three frames apart.
     ///     The erase pass paints those same pixels black, so only the strokes above
     ///     <see cref="HighScoreFrameAnimation.GetErasedStroke()" /> are drawn.
     /// </summary>
@@ -259,7 +259,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             text,
             GetColumnX(HighScoreTableLayout.HeaderColumn),
             GetRowY(row),
-            ScreenTuning.HighScoreHeaderSlot);
+            ScreenTuning.HighScoreHeaderPaletteIndex);
     }
 
     /// <summary>
@@ -267,16 +267,16 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     ///     rows are NOT padded (its 10) sits a glyph further right than its 9)), which
     ///     is what the cabinet shows.
     /// </summary>
-    private int DrawRank(SpriteBatch spriteBatch, int rank, int x, int y, int slot, bool isLarge)
+    private int DrawRank(SpriteBatch spriteBatch, int rank, int x, int y, int paletteIndex, bool isLarge)
     {
         var text = $"{rank}) ";
-        if (isLarge) return _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, x, y, slot);
+        if (isLarge) return _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, x, y, paletteIndex);
 
-        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, slot);
+        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
     }
 
     /// <summary>
-    ///     One MARQ stroke: four hatched edges in that stroke's slot, each two pixels thick. The
+    ///     One MARQ stroke: four hatched edges in that stroke's palette index, each two pixels thick. The
     ///     horizontal edges are the two rows of its top and bottom; the vertical ones are the two
     ///     pixel columns of its left edge and of its right one — which MARQ puts at `RIGHT-1` and
     ///     `RIGHT-2`, one pixel inside the rectangle's own right column: `VHIGH` runs at `RIGHT`
@@ -285,7 +285,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     /// </summary>
     private void DrawStroke(SpriteBatch spriteBatch, int stroke)
     {
-        var colour = _sprites.Blitter.GetSlotColour(HighScoreTableLayout.GetFrameStrokeSlot(stroke));
+        var colour = _sprites.Blitter.GetPaletteIndexColour(HighScoreTableLayout.GetFrameStrokePaletteIndex(stroke));
         var (left, top, right, bottom) = HighScoreTableLayout.GetFrameStroke(stroke);
 
         DrawHatchedRow(spriteBatch, colour, left, right, top);
@@ -309,11 +309,11 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             var (column, row) = HighScoreTableLayout.TodayPosition(rank);
             var x = GetColumnX(column);
             var y = GetRowY(row);
-            var slot = GetSlot(entries[rank - 1], ScreenTuning.HighScoreTodaySlot,
-                ScreenTuning.HighScoreTodayHighlightSlot);
+            var paletteIndex = GetPaletteIndex(entries[rank - 1], ScreenTuning.HighScoreTodayPaletteIndex,
+                ScreenTuning.HighScoreTodayHighlightPaletteIndex);
 
-            var afterRank = DrawRank(spriteBatch, rank, x, y, slot, true);
-            _sprites.TextRenderer.DrawLargeFontText(spriteBatch, entries[rank - 1].Initials, afterRank, y, slot);
+            var afterRank = DrawRank(spriteBatch, rank, x, y, paletteIndex, true);
+            _sprites.TextRenderer.DrawLargeFontText(spriteBatch, entries[rank - 1].Initials, afterRank, y, paletteIndex);
 
             // The ROM's fixed offset from the POST-RANK cursor (RRTABLE's
             // `PSHS X` right after the rank message, then `LEAX D,X`): 11 columns
@@ -327,7 +327,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
                     afterRank + ScreenSize.ToPortPixelsFromArcadePixels(
                         HighScoreTableLayout.TodayScoreOffsetColumns * 2),
                     y,
-                    slot);
+                    paletteIndex);
         }
     }
 
@@ -337,15 +337,15 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         // not see the name (GA2); the port always has a name, so it always prints
         // "( NAME )" then the score.
         var y = GetRowY(HighScoreTableLayout.TopRow);
-        var slot = GetSlot(_highScoreTable.Top.Score, ScreenTuning.HighScoreAllTimeSlot,
-            ScreenTuning.HighScoreAllTimeHighlightSlot);
+        var paletteIndex = GetPaletteIndex(_highScoreTable.Top.Score, ScreenTuning.HighScoreAllTimePaletteIndex,
+            ScreenTuning.HighScoreAllTimeHighlightPaletteIndex);
 
         var x = GetColumnX(HighScoreTableLayout.TopColumn);
-        x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, "(", x, y, slot);
-        x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, _highScoreTable.Top.Name, x, y, slot);
-        x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, ")", x, y, slot);
+        x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, "(", x, y, paletteIndex);
+        x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, _highScoreTable.Top.Name, x, y, paletteIndex);
+        x = _sprites.TextRenderer.DrawLargeFontText(spriteBatch, ")", x, y, paletteIndex);
         _sprites.TextRenderer.DrawLargeTableNumber(spriteBatch, _highScoreTable.Top.Score,
-            x + ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudSmallFontBlankAdvancePixels), y, slot);
+            x + ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudSmallFontBlankAdvancePixels), y, paletteIndex);
     }
 
     /// <summary>
@@ -353,17 +353,17 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     ///     the second colour — but only when the NEXT table entry is not the same
     ///     score, so a repeated score highlights once.
     /// </summary>
-    private int GetSlot(HighScoreEntry entry, int normalSlot, int highlightSlot)
+    private int GetPaletteIndex(HighScoreEntry entry, int normalPaletteIndex, int highlightPaletteIndex)
     {
-        return GetSlot(entry.Score, normalSlot, highlightSlot);
+        return GetPaletteIndex(entry.Score, normalPaletteIndex, highlightPaletteIndex);
     }
 
-    private int GetSlot(int score, int normalSlot, int highlightSlot)
+    private int GetPaletteIndex(int score, int normalPaletteIndex, int highlightPaletteIndex)
     {
         var isPostedScore = score != 0 && _postedScores.Contains(score);
-        if (isPostedScore) return highlightSlot;
+        if (isPostedScore) return highlightPaletteIndex;
 
-        return normalSlot;
+        return normalPaletteIndex;
     }
 
     private void Leave(GameStateManager manager)

@@ -43,22 +43,22 @@ public sealed class DefineInputsState : IGameState
     private const int ExitRow = 342;
     private const int FirstLineRow = 70;
 
-    /// <summary>It is one of the palette slots in <see cref="OwnedSlots" />.</summary>
-    private const int HeadingSlot = 9;
+    /// <summary>It is one of the palette indices in <see cref="OwnedPaletteIndices" />.</summary>
+    private const int HeadingPaletteIndex = 9;
 
     // The page's own colours (notes §108): the page reads like the arcade's GAME ADJUSTMENT page —
-    // HEADINGS and INSTRUCTIONS in the palette's WHITE ($FF, slot 9), the lines' input text in its
-    // GREEN ($38, slot 6), and the selected line marked by the arcade's own "->" cursor. The word OR
-    // between a line's two devices keeps its own BLUE ($C0, slot 7), so "W OR P1 LEFT STICK UP"
+    // HEADINGS and INSTRUCTIONS in the palette's WHITE ($FF, palette index 9), the lines' input text in its
+    // GREEN ($38, palette index 6), and the selected line marked by the arcade's own "->" cursor. The word OR
+    // between a line's two devices keeps its own BLUE ($C0, palette index 7), so "W OR P1 LEFT STICK UP"
     // reads as two alternatives rather than as one long string (notes §101.12). Those are the
     // palette's plain CRTAB values, and they are the very entries the arcade's page uses: its
     // cursor string sets text colour $99 (entry 9) before printing the glyph and restores $66
     // (entry 6) after it (notes §108.4). The one thing on the page that COLOUR-CYCLES is the
-    // selected line's label — strobed in its own slot the way the intro pages cycle their text
+    // selected line's label — strobed in its own palette index the way the intro pages cycle their text
     // (notes §115) — while the line's value, the bound key or joystick input, stays on the page's
     // static green.
-    /// <summary>It is one of the palette slots in <see cref="OwnedSlots" />.</summary>
-    private const int InputSlot = 6;
+    /// <summary>It is one of the palette indices in <see cref="OwnedPaletteIndices" />.</summary>
+    private const int InputPaletteIndex = 6;
 
     private const string Instructions = "USE UP AND DOWN TO MOVE BETWEEN P1 AND P2";
 
@@ -69,8 +69,8 @@ public sealed class DefineInputsState : IGameState
     private const int LabelColumn = 75;
     private const int LineStep = 26;
 
-    /// <summary>It is one of the palette slots in <see cref="OwnedSlots" />.</summary>
-    private const int SeparatorSlot = 7;
+    /// <summary>It is one of the palette indices in <see cref="OwnedPaletteIndices" />.</summary>
+    private const int SeparatorPaletteIndex = 7;
 
     private const string SetAndClear = "ENTER - SET THE INPUT   DEL - CLEAR   R - DEFAULTS";
     private const int SetAndClearRow = 312;
@@ -80,14 +80,14 @@ public sealed class DefineInputsState : IGameState
 
     /// <summary>
     ///     The three entries this page draws with STATICALLY. It writes them itself on entry (see
-    ///     <see cref="RestorePalette" />) because no slot can be assumed to hold its CRTAB value: the
+    ///     <see cref="RestorePalette" />) because no palette index can be assumed to hold its CRTAB value: the
     ///     screen it is opened FROM leaves its own colours up — the presentation page writes entries 1-7
     ///     (notes §106) and the high score table zeroes all sixteen (notes §98.6) — and F10 is handled by
     ///     the shell, so those pages never stand their colours down. The selected line's label sits in
-    ///     <see cref="DefineInputsHighlight.Slot" />, which that process itself puts on its GREEN on entry
-    ///     (notes §115). Slots 10-15 are left alone: the in-game animator owns those.
+    ///     <see cref="DefineInputsHighlight.PaletteIndex" />, which that process itself puts on its GREEN on entry
+    ///     (notes §115). Palette indices 10-15 are left alone: the in-game animator owns those.
     /// </summary>
-    private static readonly int[] OwnedSlots = [InputSlot, SeparatorSlot, HeadingSlot];
+    private static readonly int[] OwnedPaletteIndices = [InputPaletteIndex, SeparatorPaletteIndex, HeadingPaletteIndex];
 
     private readonly ControlSettings _controlSettings;
 
@@ -171,7 +171,7 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private void DrawCursor(SpriteBatch spriteBatch, int y)
     {
-        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingSlot);
+        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingPaletteIndex);
     }
 
     /// <summary>
@@ -179,7 +179,7 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y)
     {
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingSlot);
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingPaletteIndex);
     }
 
     /// <summary>
@@ -188,7 +188,7 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private void DrawInstruction(SpriteBatch spriteBatch, string text, int y)
     {
-        DrawText(spriteBatch, text, GetCenteredX(text), y, HeadingSlot);
+        DrawText(spriteBatch, text, GetCenteredX(text), y, HeadingPaletteIndex);
     }
 
     /// <summary>
@@ -206,28 +206,28 @@ public sealed class DefineInputsState : IGameState
         var isArmed = _model.IsArmed && _model.Line == line;
 
         // The selected line's label is the page's one cycling thing (notes §115): it strobes in the
-        // highlight's slot — while armed as well — and the line's value stays on the page's green.
-        var labelSlot = InputSlot;
-        if (_model.Line == line) labelSlot = DefineInputsHighlight.Slot;
+        // highlight's palette index — while armed as well — and the line's value stays on the page's green.
+        var labelPaletteIndex = InputPaletteIndex;
+        if (_model.Line == line) labelPaletteIndex = DefineInputsHighlight.PaletteIndex;
 
-        DrawText(spriteBatch, GetLabel(line), LabelColumn, y, labelSlot);
-        DrawValue(spriteBatch, line, isArmed, InputSlot, y);
+        DrawText(spriteBatch, GetLabel(line), LabelColumn, y, labelPaletteIndex);
+        DrawValue(spriteBatch, line, isArmed, InputPaletteIndex, y);
     }
 
-    private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int slot)
+    private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int paletteIndex)
     {
-        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, slot);
+        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
     }
 
     /// <summary>
     ///     The value column: the keyboard binding, then the word OR in its own colour when the line
     ///     has both devices, then the gamepad binding — or the armed prompt, or NONE.
     /// </summary>
-    private void DrawValue(SpriteBatch spriteBatch, int line, bool isArmed, int slot, int y)
+    private void DrawValue(SpriteBatch spriteBatch, int line, bool isArmed, int paletteIndex, int y)
     {
         if (isArmed)
         {
-            DrawText(spriteBatch, ArmedPrompt, ValueColumn, y, slot);
+            DrawText(spriteBatch, ArmedPrompt, ValueColumn, y, paletteIndex);
             return;
         }
 
@@ -237,16 +237,16 @@ public sealed class DefineInputsState : IGameState
 
         if (!hasKeyBinding && !hasPadBinding)
         {
-            DrawText(spriteBatch, "NONE", ValueColumn, y, slot);
+            DrawText(spriteBatch, "NONE", ValueColumn, y, paletteIndex);
             return;
         }
 
         var x = ValueColumn;
-        if (hasKeyBinding) x = DrawText(spriteBatch, binding.KeyBinding.GetDisplayName(), x, y, slot);
+        if (hasKeyBinding) x = DrawText(spriteBatch, binding.KeyBinding.GetDisplayName(), x, y, paletteIndex);
 
-        if (hasKeyBinding && hasPadBinding) x = DrawText(spriteBatch, " OR ", x, y, SeparatorSlot);
+        if (hasKeyBinding && hasPadBinding) x = DrawText(spriteBatch, " OR ", x, y, SeparatorPaletteIndex);
 
-        if (hasPadBinding) DrawText(spriteBatch, binding.PadBinding.GetDisplayName(), x, y, slot);
+        if (hasPadBinding) DrawText(spriteBatch, binding.PadBinding.GetDisplayName(), x, y, paletteIndex);
     }
 
     private ActionBinding GetBinding(int line)
@@ -293,13 +293,13 @@ public sealed class DefineInputsState : IGameState
     /// <summary>
     ///     Puts this page's three entries back on their CRTAB values (notes §108). They are what the page
     ///     draws with, and the screen it came from may have left them holding anything at all — see
-    ///     <see cref="OwnedSlots" />.
+    ///     <see cref="OwnedPaletteIndices" />.
     /// </summary>
     private void RestorePalette()
     {
         if (_sprites.Blitter.Palette is not { } palette) return;
 
-        foreach (var slot in OwnedSlots) palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
+        foreach (var paletteIndex in OwnedPaletteIndices) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
     }
 
     /// <summary>Moves the highlight up or down, or arms the highlighted row for a new binding.</summary>

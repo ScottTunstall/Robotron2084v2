@@ -37,7 +37,7 @@ namespace Robotron2084.States;
 ///     in the SMALL font with the copyright an empty row below them in a colour of its own), then the
 ///     port's own (its two LARGE-font credit lines, on the arcade message's own rows). There is no
 ///     room for both at once, and the
-///     port's lines are drawn in the page's text slot so they flash orange and white like the arcade's.
+///     port's lines are drawn in the page's text palette index so they flash orange and white like the arcade's.
 /// </summary>
 public sealed class TitleScreenState : IGameState, IAttractState
 {
@@ -45,13 +45,13 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private const int CopyrightRow = 308;
 
     /// <summary>
-    ///     The copyright line's OWN colour. Slot 2 is the page's own BLUE (`$C0`) — the
+    ///     The copyright line's OWN colour. Palette index 2 is the page's own BLUE (`$C0`) — the
     ///     colour the ROM's string script writes for a credit line (`04 22` in front of "CREDITS: n" at
     ///     `$6D95`), which is the blue an arcade reference screenshot shows on that very line. It is
     ///     one of the seven entries the page writes, so it cycles with everything else: the white chase
     ///     sweeps through it, exactly as it sweeps through the orange above (notes §106).
     /// </summary>
-    private const int CopyrightSlot = 2;
+    private const int CopyrightPaletteIndex = 2;
 
     /// <summary>
     ///     The port's own credit, which sits among these (notes §102.1). The
@@ -64,7 +64,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     // Pane 2 — the port's own lines: its two LARGE-font credit lines (notes §102.1).
     // The credit's two lines sit on the arcade pane's message rows (LARGE font, an empty
-    // row apart) so the panes swap in the same slot.
+    // row apart) so the panes swap in the same palette index.
     private const int CreditRowOne = WelcomeRowOne;
 
     private const int CreditRowTwo = WelcomeRowTwo;
@@ -89,7 +89,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     ///     between orange and white". The port's OWN lines use it too, so the whole
     ///     page's text flashes together.
     /// </summary>
-    private const int TextSlot = PresentationPagePalette.TextSlot;
+    private const int TextPaletteIndex = PresentationPagePalette.TextPaletteIndex;
 
     private const string WelcomeLineOne = "PRESENTED BY";
     private const string WelcomeLineTwo = "WILLIAMS ELECTRONICS INC.";
@@ -186,12 +186,12 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
         // body on a yellow rim. The "2084" mark keeps its traced colours. Both at the port's 2x
         // sprite scale.
-        _wordmark.Draw(spriteBatch, _sprites.Blitter, _pagePalette.GetWordmarkRimSlot(),
-            _pagePalette.GetWordmarkColorSlot());
+        _wordmark.Draw(spriteBatch, _sprites.Blitter, _pagePalette.GetWordmarkRimPaletteIndex(),
+            _pagePalette.GetWordmarkPaletteIndex());
         if (_wordmark.IsFinished()) DrawCentredLogo(spriteBatch, _sprites.Title2084Sprite, Logo2084Row);
 
         // The page's text: ONE of its two panes, alternating (the arcade pane for TitleArcadeTextSeconds, the port's for TitlePortTextSeconds)
-        // (notes §107). Both are drawn in the page's own text slot — the ROM's operand `$66`, entry
+        // (notes §107). Both are drawn in the page's own text palette index — the ROM's operand `$66`, entry
         // 6, ORANGE with the white flash sweeping through it (notes §106) — so the port's credit
         // and the shortcut keys flash with the arcade's own lines.
         if (_isShowingArcadeText)
@@ -282,22 +282,22 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private void DrawArcadeText(SpriteBatch spriteBatch)
     {
-        DrawCenteredLargeText(spriteBatch, WelcomeLineOne, WelcomeRowOne, TextSlot);
-        DrawCenteredLargeText(spriteBatch, WelcomeLineTwo, WelcomeRowTwo, TextSlot);
-        DrawCenteredSmallText(spriteBatch, DesignedByLine, DesignedByRow, TextSlot);
-        DrawCenteredSmallText(spriteBatch, ForWilliamsLine, ForWilliamsRow, TextSlot);
-        DrawCenteredSmallText(spriteBatch, CopyrightLine, CopyrightRow, CopyrightSlot);
+        DrawCenteredLargeText(spriteBatch, WelcomeLineOne, WelcomeRowOne, TextPaletteIndex);
+        DrawCenteredLargeText(spriteBatch, WelcomeLineTwo, WelcomeRowTwo, TextPaletteIndex);
+        DrawCenteredSmallText(spriteBatch, DesignedByLine, DesignedByRow, TextPaletteIndex);
+        DrawCenteredSmallText(spriteBatch, ForWilliamsLine, ForWilliamsRow, TextPaletteIndex);
+        DrawCenteredSmallText(spriteBatch, CopyrightLine, CopyrightRow, CopyrightPaletteIndex);
     }
 
-    /// <summary>Centres a large-font line horizontally and prints it in one slot.</summary>
-    private void DrawCenteredLargeText(SpriteBatch spriteBatch, string text, int y, int slot)
+    /// <summary>Centres a large-font line horizontally and prints it in one palette index.</summary>
+    private void DrawCenteredLargeText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
     {
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, slot);
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, paletteIndex);
     }
 
-    private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int slot)
+    private void DrawCenteredSmallText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
     {
-        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, GetCenteredX(text, false), y, slot);
+        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, GetCenteredX(text, false), y, paletteIndex);
     }
 
     /// <summary>Centres one traced logo horizontally, at the port's 2x sprite scale.</summary>
@@ -317,8 +317,8 @@ public sealed class TitleScreenState : IGameState, IAttractState
     /// </summary>
     private void DrawPortText(SpriteBatch spriteBatch)
     {
-        DrawCenteredLargeText(spriteBatch, CreditLineOne, CreditRowOne, TextSlot);
-        DrawCenteredLargeText(spriteBatch, CreditLineTwo, CreditRowTwo, TextSlot);
+        DrawCenteredLargeText(spriteBatch, CreditLineOne, CreditRowOne, TextPaletteIndex);
+        DrawCenteredLargeText(spriteBatch, CreditLineTwo, CreditRowTwo, TextPaletteIndex);
     }
 
     /// <summary>

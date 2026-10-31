@@ -17,7 +17,7 @@ namespace Robotron2084.States;
 /// <remarks>
 ///     ROM RRTESTC <c>EGSUB</c> printing RRET message 95 (<c>CONGP</c>): <c>COLOR $44</c>, "PLAYER n" at
 ///     (64, 16), "YOU ARE A ROBOTRON HERO" at (41, 48), "ENTER YOUR INITIALS:" at (45, 88), then
-///     <c>TELSUB</c>'s small-font white instructions under the letters' echo region. Cursors, slots and
+///     <c>TELSUB</c>'s small-font white instructions under the letters' echo region. Cursors, palette indices and
 ///     cell geometry are <see cref="InitialsEntryLayout" />'s.
 /// </remarks>
 public sealed class InitialsEntryState : IGameState
@@ -69,12 +69,12 @@ public sealed class InitialsEntryState : IGameState
         if (cell == _entry.LetterIndex && _entry.IsPreviewRub())
         {
             _sprites.TextRenderer.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(),
-                InitialsEntryLayout.InkSlot);
+                InitialsEntryLayout.InkPaletteIndex);
             return;
         }
 
         _sprites.TextRenderer.DrawLargeFontText(spriteBatch, _entry.GetInitials()[cell].ToString(), x,
-            InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkSlot);
+            InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkPaletteIndex);
     }
 
     /// <summary>
@@ -94,7 +94,7 @@ public sealed class InitialsEntryState : IGameState
     private void DrawLarge(SpriteBatch spriteBatch, string text, int column, int row)
     {
         _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
-            HudLayout.ToPortY(row), InitialsEntryLayout.InkSlot);
+            HudLayout.ToPortY(row), InitialsEntryLayout.InkPaletteIndex);
     }
 
     /// <summary>G0SUB's "frob" marker: a two-pixel dash one row of the arcade below its cell.</summary>
@@ -104,7 +104,7 @@ public sealed class InitialsEntryState : IGameState
             spriteBatch,
             new Rectangle(x, InitialsEntryLayout.GetMarkerY(), InitialsEntryLayout.GetMarkerWidthPixels(),
                 InitialsEntryLayout.GetMarkerHeightPixels()),
-            _sprites.Blitter.GetSlotColour(InitialsEntryLayout.InstructionSlot));
+            _sprites.Blitter.GetPaletteIndexColour(InitialsEntryLayout.InstructionPaletteIndex));
     }
 
     /// <summary>CONGP's three large-font lines and TELSUB's two small-font instructions.</summary>
@@ -123,20 +123,20 @@ public sealed class InitialsEntryState : IGameState
     private void DrawSmall(SpriteBatch spriteBatch, string text, int column, int row)
     {
         _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, HudLayout.ToPortColumnX(column),
-            HudLayout.ToPortY(row), InitialsEntryLayout.InstructionSlot);
+            HudLayout.ToPortY(row), InitialsEntryLayout.InstructionPaletteIndex);
     }
 
     /// <summary>
     ///     The two entries the page draws with, put back on their CRTAB values: the screen it follows may
-    ///     have left them holding anything (the in-play animator and the wave colours own slots 0-15), and
-    ///     the page's own colours are CONGP's slot 4 and TELSUB's slot 9.
+    ///     have left them holding anything (the in-play animator and the wave colours own palette indices 0-15), and
+    ///     the page's own colours are CONGP's palette index 4 and TELSUB's palette index 9.
     /// </summary>
     private void RestorePalette()
     {
         if (_sprites.Blitter.Palette is not { } palette) return;
 
-        palette.SetSlot(InitialsEntryLayout.InkSlot, GamePalette.DefaultSlotValues[InitialsEntryLayout.InkSlot]);
-        palette.SetSlot(InitialsEntryLayout.InstructionSlot,
-            GamePalette.DefaultSlotValues[InitialsEntryLayout.InstructionSlot]);
+        palette.SetPaletteIndexValue(InitialsEntryLayout.InkPaletteIndex, GamePalette.DefaultPaletteValues[InitialsEntryLayout.InkPaletteIndex]);
+        palette.SetPaletteIndexValue(InitialsEntryLayout.InstructionPaletteIndex,
+            GamePalette.DefaultPaletteValues[InitialsEntryLayout.InstructionPaletteIndex]);
     }
 }

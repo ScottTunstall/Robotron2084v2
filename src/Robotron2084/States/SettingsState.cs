@@ -39,16 +39,16 @@ public sealed class SettingsState : IGameState
     private const int ExitRow = 342;
     private const int FirstLineRow = 76;
 
-    /// <summary>It is one of the palette slots in <see cref="OwnedSlots" />.</summary>
-    private const int HeadingSlot = 9;
+    /// <summary>It is one of the palette indices in <see cref="OwnedPaletteIndices" />.</summary>
+    private const int HeadingPaletteIndex = 9;
 
     // The page's own colours (notes §108): headings, instructions and the words under each value in
-    // the palette's WHITE ($FF, slot 9), the settings' own text in its GREEN ($38, slot 6). They are
-    // the entries the arcade's page uses (its text colour $66 is slot 6). No slot can be assumed to
+    // the palette's WHITE ($FF, palette index 9), the settings' own text in its GREEN ($38, palette index 6). They are
+    // the entries the arcade's page uses (its text colour $66 is palette index 6). No palette index can be assumed to
     // hold its CRTAB value — the page is opened from an attract screen, which leaves its own colours
-    // up — so the page writes the two itself on entry (see OwnedSlots).
-    /// <summary>It is one of the palette slots in <see cref="OwnedSlots" />.</summary>
-    private const int InputSlot = 6;
+    // up — so the page writes the two itself on entry (see OwnedPaletteIndices).
+    /// <summary>It is one of the palette indices in <see cref="OwnedPaletteIndices" />.</summary>
+    private const int InputPaletteIndex = 6;
 
     private const int InstructionsRow = 294;
     private const int LabelColumn = 75;
@@ -66,10 +66,10 @@ public sealed class SettingsState : IGameState
 
     /// <summary>
     ///     The two entries this page draws with STATICALLY, written on entry. The selected line's label
-    ///     sits in <see cref="DefineInputsHighlight.Slot" />, which that process itself puts on its GREEN
-    ///     (notes §115). Slots 10-15 are left alone: the in-game animator owns those.
+    ///     sits in <see cref="DefineInputsHighlight.PaletteIndex" />, which that process itself puts on its GREEN
+    ///     (notes §115). Palette indices 10-15 are left alone: the in-game animator owns those.
     /// </summary>
-    private static readonly int[] OwnedSlots = [InputSlot, HeadingSlot];
+    private static readonly int[] OwnedPaletteIndices = [InputPaletteIndex, HeadingPaletteIndex];
 
     private readonly GameSettings _gameSettings;
     private readonly GameSettingsStore _gameSettingsStore;
@@ -158,19 +158,19 @@ public sealed class SettingsState : IGameState
     /// </summary>
     private void DrawCursor(SpriteBatch spriteBatch, int y)
     {
-        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingSlot);
+        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingPaletteIndex);
     }
 
     /// <summary>The heading: the arcade's LARGE font, centred, in the page's WHITE.</summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y)
     {
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingSlot);
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingPaletteIndex);
     }
 
     /// <summary>An instruction line under the list: the SMALL font, centred, in the page's WHITE.</summary>
     private void DrawInstruction(SpriteBatch spriteBatch, string text, int y)
     {
-        DrawText(spriteBatch, text, GetCenteredX(text), y, HeadingSlot);
+        DrawText(spriteBatch, text, GetCenteredX(text), y, HeadingPaletteIndex);
     }
 
     /// <summary>
@@ -182,22 +182,22 @@ public sealed class SettingsState : IGameState
     {
         if (_model.Line == line) DrawCursor(spriteBatch, y);
 
-        var labelSlot = InputSlot;
-        if (_model.Line == line) labelSlot = DefineInputsHighlight.Slot;
+        var labelPaletteIndex = InputPaletteIndex;
+        if (_model.Line == line) labelPaletteIndex = DefineInputsHighlight.PaletteIndex;
 
-        DrawText(spriteBatch, SettingsModel.GetLabel(line), LabelColumn, y, labelSlot);
-        DrawText(spriteBatch, _model.GetValue(_gameSettings, line), ValueColumn, y, InputSlot);
+        DrawText(spriteBatch, SettingsModel.GetLabel(line), LabelColumn, y, labelPaletteIndex);
+        DrawText(spriteBatch, _model.GetValue(_gameSettings, line), ValueColumn, y, InputPaletteIndex);
 
         string note;
         if (SettingsModel.IsActionLine(line)) note = _model.GetActionHint(line);
         else note = SettingsModel.GetNote(_gameSettings, line);
 
-        if (note.Length > 0) DrawText(spriteBatch, note, NoteColumn, y, HeadingSlot);
+        if (note.Length > 0) DrawText(spriteBatch, note, NoteColumn, y, HeadingPaletteIndex);
     }
 
-    private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int slot)
+    private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int paletteIndex)
     {
-        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, slot);
+        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
     }
 
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
@@ -218,7 +218,7 @@ public sealed class SettingsState : IGameState
     {
         if (_sprites.Blitter.Palette is not { } palette) return;
 
-        foreach (var slot in OwnedSlots) palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
+        foreach (var paletteIndex in OwnedPaletteIndices) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
     }
 
     private bool WasKeyboardPressed(InputSnapshot now, Keys key)

@@ -13,7 +13,7 @@ namespace Robotron2084.States;
 /// <remarks>
 ///     ROM RRTESTC <c>GTTHM8</c>: <c>SCRCLR</c>, then RRET message 100 (<c>ONLY5P</c>) —
 ///     <c>COLOR $BB</c> with "5 ENTRIES MAXIMUM" + " PER PLAYER" at (32, 112) and "LOWEST ENTRY REPLACED"
-///     at (40, 144) — and <c>NAP $60</c>. Slot 11 is one of the ROM's cycling slots, but <c>ENDGAM</c>
+///     at (40, 144) — and <c>NAP $60</c>. Palette index 11 is one of the ROM's cycling palette indices, but <c>ENDGAM</c>
 ///     kills the colour processes before any of these pages, so on the cabinet this text does not cycle;
 ///     the port's animator is global, so in the port it does (a parked deviation, notes §116).
 /// </remarks>
@@ -58,6 +58,6 @@ public sealed class EntriesMaximumState : IGameState
             text,
             HudLayout.ToPortColumnX(column),
             HudLayout.ToPortY(row),
-            ScreenTuning.EntriesMaximumSlot);
+            ScreenTuning.EntriesMaximumPaletteIndex);
     }
 }

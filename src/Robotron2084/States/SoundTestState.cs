@@ -81,10 +81,10 @@ public sealed class SoundTestState : IGameState
     private const int SilenceNumber = 0x13;
 
     /// <summary>
-    ///     The palette slot the page draws in: the game's white (the page's own heading colour in the other service
+    ///     The palette index the page draws in: the game's white (the page's own heading colour in the other service
     ///     pages).
     /// </summary>
-    private const int TextSlot = 9;
+    private const int TextPaletteIndex = 9;
 
     /// <summary>
     ///     The page's list: the board's 63 sounds in sound-number order, then the transporter.
@@ -113,7 +113,7 @@ public sealed class SoundTestState : IGameState
         _services = services;
         _sprites = services.Sprites;
         _previousSnapshot = InputSnapshot.Read();
-        if (_sprites.Blitter.Palette is { } palette) palette.SetSlot(TextSlot, GamePalette.DefaultSlotValues[TextSlot]);
+        if (_sprites.Blitter.Palette is { } palette) palette.SetPaletteIndexValue(TextPaletteIndex, GamePalette.DefaultPaletteValues[TextPaletteIndex]);
 
         StartSound();
     }
@@ -195,13 +195,13 @@ public sealed class SoundTestState : IGameState
     private void DrawLarge(SpriteBatch spriteBatch, string text, int y)
     {
         var width = ScreenSize.ToPortPixelsFromArcadePixels(_sprites.TextRenderer.MeasureLargeText(text));
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextSlot);
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
     }
 
     private void DrawSmall(SpriteBatch spriteBatch, string text, int y)
     {
         var width = ScreenSize.ToPortPixelsFromArcadePixels(_sprites.TextRenderer.MeasureSmallText(text));
-        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextSlot);
+        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
     }
 
     /// <summary>True on the tick a key goes down.</summary>

@@ -40,8 +40,8 @@ public sealed class WaveClearState : IGameState
     private readonly TunnelEffect _tunnel = new();
 
     /// <summary>
-    ///     The colour-cycling palette the tunnel is drawn in (notes §86) — the ROM fills palette slots
-    ///     1-15 from a ramp table that lives beside the walker's own task data, blacks one slot in each
+    ///     The colour-cycling palette the tunnel is drawn in (notes §86) — the ROM fills palette indices
+    ///     1-15 from a ramp table that lives beside the walker's own task data, blacks one palette index in each
     ///     group of five, and slides the whole window on every pass.
     /// </summary>
     private readonly TunnelPalette _tunnelPalette = new();
@@ -121,11 +121,11 @@ public sealed class WaveClearState : IGameState
             _paletteStarted = true;
             _tunnelPalette.Start();
 
-            // While the ramp runs it owns every slot, so the six colour processes must not fight
-            // it for slots 10-15 (the ROM's own palette task writes all fifteen every pass).
+            // While the ramp runs it owns every palette index, so the six colour processes must not fight
+            // it for palette indices 10-15 (the ROM's own palette task writes all fifteen every pass).
             if (_sprites.Blitter.Palette is { } live)
-                for (var slot = FontSlots.FirstCyclingSlot; slot <= 15; slot++)
-                    live.SuspendSlot(slot);
+                for (var paletteIndex = FontPaletteIndices.FirstCyclingPaletteIndex; paletteIndex <= 15; paletteIndex++)
+                    live.SuspendPaletteIndex(paletteIndex);
         }
 
         if (_sprites.Blitter.Palette is { } palette) _tunnelPalette.Apply(palette);
@@ -139,8 +139,8 @@ public sealed class WaveClearState : IGameState
     {
         if (_sprites.Blitter.Palette is not { } palette) return;
 
-        for (var slot = 1; slot <= 15; slot++) palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
+        for (var paletteIndex = 1; paletteIndex <= 15; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
 
-        for (var slot = FontSlots.FirstCyclingSlot; slot <= 15; slot++) palette.ResumeSlot(slot);
+        for (var paletteIndex = FontPaletteIndices.FirstCyclingPaletteIndex; paletteIndex <= 15; paletteIndex++) palette.ResumePaletteIndex(paletteIndex);
     }
 }

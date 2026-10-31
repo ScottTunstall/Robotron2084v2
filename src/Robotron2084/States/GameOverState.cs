@@ -69,7 +69,7 @@ public sealed class GameOverState : IGameState
             "GAME OVER",
             HudLayout.ToPortColumnX(HudLayout.GameOverMessageColumn),
             HudLayout.ToPortY(HudLayout.GameOverMessageRow),
-            ScreenTuning.GameOverTextSlot);
+            ScreenTuning.GameOverTextPaletteIndex);
     }
 
     public void Update(GameTime gameTime, GameStateManager manager)

@@ -15,7 +15,7 @@ namespace Robotron2084.States;
 ///     INPUTS pages: a centred heading in the LARGE font, the list of options in the SMALL font with the
 ///     arcade's own "->" cursor at the left of the line the cursor is on, and the instructions under the
 ///     list. WHITE for the heading, the instructions and the exit line, GREEN for the options, and the
-///     highlighted option strobing in the page's own cycling slot (notes §115) exactly as the selected
+///     highlighted option strobing in the page's own cycling palette index (notes §115) exactly as the selected
 ///     line does on those two pages.
 ///     The options jump straight to the screens the attract cycle passes through in the order the cycle
 ///     shows them: the title page on its arcade pane (the ROBOTRON 2084 presentation page as the cabinet
@@ -39,8 +39,8 @@ public sealed class DeveloperToolsState : IGameState
     private const int ExitRow = 342;
     private const int FirstLineRow = 90;
 
-    /// <summary>It is one of the palette slots in <see cref="OwnedSlots" />.</summary>
-    private const int HeadingSlot = 9;
+    /// <summary>It is one of the palette indices in <see cref="OwnedPaletteIndices" />.</summary>
+    private const int HeadingPaletteIndex = 9;
 
     private const int InstructionsRow = 294;
 
@@ -48,12 +48,12 @@ public sealed class DeveloperToolsState : IGameState
 
     private const int LineStep = 26;
 
-    // The page's own colours (notes §108) are the GAME ADJUSTMENT page's: WHITE (slot 9) for the
-    // heading, the instructions and the exit line, GREEN (slot 6) for the options themselves. No slot
+    // The page's own colours (notes §108) are the GAME ADJUSTMENT page's: WHITE (palette index 9) for the
+    // heading, the instructions and the exit line, GREEN (palette index 6) for the options themselves. No palette index
     // can be assumed to hold its CRTAB value — the page opens from any screen, and the screen it came
     // from may have left them holding anything — so the page writes the two itself on entry.
-    /// <summary>It is one of the palette slots in <see cref="OwnedSlots" />.</summary>
-    private const int OptionSlot = 6;
+    /// <summary>It is one of the palette indices in <see cref="OwnedPaletteIndices" />.</summary>
+    private const int OptionPaletteIndex = 6;
 
     private const int SecondInstructionRow = 312;
 
@@ -84,10 +84,10 @@ public sealed class DeveloperToolsState : IGameState
 
     /// <summary>
     ///     The two entries this page draws with STATICALLY, written on entry. The highlighted option's
-    ///     label sits in <see cref="DefineInputsHighlight.Slot" />, which that process itself puts on
-    ///     its GREEN (notes §115). Slots 10-15 are left alone: the in-game animator owns those.
+    ///     label sits in <see cref="DefineInputsHighlight.PaletteIndex" />, which that process itself puts on
+    ///     its GREEN (notes §115). Palette indices 10-15 are left alone: the in-game animator owns those.
     /// </summary>
-    private static readonly int[] OwnedSlots = [OptionSlot, HeadingSlot];
+    private static readonly int[] OwnedPaletteIndices = [OptionPaletteIndex, HeadingPaletteIndex];
 
     private readonly ControlSettingsStore _controlSettingsStore;
     private readonly GameSettingsStore _gameSettingsStore;
@@ -219,19 +219,19 @@ public sealed class DeveloperToolsState : IGameState
     /// </summary>
     private void DrawCursor(SpriteBatch spriteBatch, int y)
     {
-        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingSlot);
+        _sprites.Blitter.DrawGlyphStatic(spriteBatch, _sprites.CursorArrowSprite, CursorColumn, y, HeadingPaletteIndex);
     }
 
     /// <summary>The heading: the arcade's LARGE font, centred, in the page's WHITE.</summary>
     private void DrawHeading(SpriteBatch spriteBatch, string text, int y)
     {
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingSlot);
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, GetCenteredX(text, true), y, HeadingPaletteIndex);
     }
 
     /// <summary>An instruction line under the list: the SMALL font, centred, in the page's WHITE.</summary>
     private void DrawInstruction(SpriteBatch spriteBatch, string text, int y)
     {
-        DrawText(spriteBatch, text, GetCenteredX(text), y, HeadingSlot);
+        DrawText(spriteBatch, text, GetCenteredX(text), y, HeadingPaletteIndex);
     }
 
     /// <summary>
@@ -242,15 +242,15 @@ public sealed class DeveloperToolsState : IGameState
     {
         if (_line == line) DrawCursor(spriteBatch, y);
 
-        var slot = OptionSlot;
-        if (_line == line) slot = DefineInputsHighlight.Slot;
+        var paletteIndex = OptionPaletteIndex;
+        if (_line == line) paletteIndex = DefineInputsHighlight.PaletteIndex;
 
-        DrawText(spriteBatch, Options[line], LabelColumn, y, slot);
+        DrawText(spriteBatch, Options[line], LabelColumn, y, paletteIndex);
     }
 
-    private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int slot)
+    private int DrawText(SpriteBatch spriteBatch, string text, int x, int y, int paletteIndex)
     {
-        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, slot);
+        return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, paletteIndex);
     }
 
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
@@ -271,7 +271,7 @@ public sealed class DeveloperToolsState : IGameState
     {
         if (_sprites.Blitter.Palette is not { } palette) return;
 
-        foreach (var slot in OwnedSlots) palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
+        foreach (var paletteIndex in OwnedPaletteIndices) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
     }
 
     private bool WasKeyboardPressed(InputSnapshot now, Keys key)
