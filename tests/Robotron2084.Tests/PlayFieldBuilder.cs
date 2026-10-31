@@ -147,11 +147,11 @@ internal sealed class PlayFieldBuilder
     public PlayField Build()
     {
         return new PlayField(
-            TestSprites.SharedSpriteSet,
+            TestTextures.SharedTextureSet,
             _waveParameters,
             _playerInputSource,
             _bounds,
-            new WallColorCycle(),
+            new WallColourCycle(),
             _random,
             _lives,
             _score,
