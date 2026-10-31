@@ -11,11 +11,11 @@ public sealed class MovieLaserWallTests
     [InlineData(0x0A, -0x0280)] // fired left, near the left wall
     public void ABoltNeverLeavesThePlayfield(int startColumn, int velocity)
     {
-        var bolt = new MovieObject(null, 0, startColumn << 8, 100 << 8)
+        var boltMovieObject = new MovieObject(null, 0, startColumn << 8, 100 << 8)
             { IsLaser = true, XVelocitySubpixels = velocity };
 
-        for (var frame = 0; frame < 100; frame++) AttractObjectMachine.MoveLaserWithinTheWalls(bolt);
+        for (var frame = 0; frame < 100; frame++) AttractObjectMachine.MoveLaserWithinTheWalls(boltMovieObject);
 
-        Assert.InRange(bolt.GetColumn(), 7, 0x8F + 1 - 3);
+        Assert.InRange(boltMovieObject.GetColumn(), 7, 0x8F + 1 - 3);
     }
 }

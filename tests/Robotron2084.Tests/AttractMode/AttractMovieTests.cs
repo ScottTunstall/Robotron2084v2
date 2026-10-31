@@ -19,10 +19,10 @@ public sealed class AttractMovieTests
     }
 
     /// <summary>The story text as lines: cells grouped by row, in pen order.</summary>
-    private static List<string> Lines(AttractPageMachine page)
+    private static List<string> Lines(AttractPageMachine attractPageMachine)
     {
         var lines = new List<string>();
-        foreach (var group in page.TextCells.GroupBy(c => c.Y).OrderBy(g => g.Key))
+        foreach (var group in attractPageMachine.TextCells.GroupBy(c => c.Y).OrderBy(g => g.Key))
             lines.Add(new string(group.OrderBy(c => c.X).Select(c => c.Character).ToArray()));
 
         return lines;
@@ -31,13 +31,13 @@ public sealed class AttractMovieTests
     [Fact]
     public void IntroScreen_PrintsTheRomsPrologueText()
     {
-        var movie = new AttractMovie(AttractMovieData.Histo, new Random(7));
+        var attractMovie = new AttractMovie(AttractMovieData.Histo, new Random(7));
 
         List<string>? prologue = null;
         for (var tick = 0; tick < 8000 && prologue is null; tick++)
         {
-            movie.Update(Tick());
-            var lines = Lines(movie.PageMachine);
+            attractMovie.Update(Tick());
+            var lines = Lines(attractMovie.AttractPageMachine);
             if (lines.Contains("AND THEREFORE MUST BE DESTROYED.")) prologue = lines;
         }
 
@@ -60,39 +60,39 @@ public sealed class AttractMovieTests
     [Fact]
     public void IntroScreen_KeepsTheTitleBandClearOfTheStoryText()
     {
-        var movie = new AttractMovie(AttractMovieData.Histo, new Random(7));
+        var attractMovie = new AttractMovie(AttractMovieData.Histo, new Random(7));
 
         for (var tick = 0; tick < 1500; tick++)
         {
-            movie.Update(Tick());
+            attractMovie.Update(Tick());
 
             // The ROM's CLEARM starts at row 48 (and the title is printed at row
             // 36), so no story character may land above it.
-            Assert.All(movie.PageMachine.TextCells, cell => Assert.True(cell.Y >= 48, $"printed at row {cell.Y}"));
+            Assert.All(attractMovie.AttractPageMachine.TextCells, cell => Assert.True(cell.Y >= 48, $"printed at row {cell.Y}"));
         }
     }
 
     [Fact]
     public void Storyline_ReachesDoneAndPlaysEveryScene()
     {
-        var movie = new AttractMovie(AttractMovieData.Histo, new Random(3));
+        var attractMovie = new AttractMovie(AttractMovieData.Histo, new Random(3));
         var seen = new HashSet<MovieAnimation>();
         var messages = new HashSet<string>();
         var exploded = false;
 
-        for (var tick = 0; tick < 60_000 && !movie.IsFinished(); tick++)
+        for (var tick = 0; tick < 60_000 && !attractMovie.IsFinished(); tick++)
         {
-            movie.Update(Tick());
-            foreach (var item in movie.ObjectMachine.Objects)
+            attractMovie.Update(Tick());
+            foreach (var item in attractMovie.AttractObjectMachine.Objects)
                 if (item.Descriptor is { } descriptor)
                     seen.Add(descriptor.Animation);
 
-            if (movie.PageMachine.Message is { } message) messages.Add(message.Text);
+            if (attractMovie.AttractPageMachine.Message is { } message) messages.Add(message.Text);
 
-            exploded |= movie.ObjectMachine.DrainExplosions().Count > 0;
+            exploded |= attractMovie.AttractObjectMachine.DrainExplosions().Count > 0;
         }
 
-        Assert.True(movie.IsFinished(), "HISTO never reached DONE2");
+        Assert.True(attractMovie.IsFinished(), "HISTO never reached DONE2");
         Assert.Contains(MovieAnimation.Player, seen); // the hero walks on and shoots
         Assert.Contains(MovieAnimation.Grunt, seen); // the 14 grunts
         Assert.Contains(MovieAnimation.Hulk, seen); // the hulk bounces in
@@ -113,15 +113,15 @@ public sealed class AttractMovieTests
     [Fact]
     public void ObjectMachine_WalksTheHeroLeftWithTheRomsOwnStepSize()
     {
-        var machine = new AttractObjectMachine(new Random(11));
+        var attractObjectMachine = new AttractObjectMachine(new Random(11));
 
         // DUMYOU ($8739) — the title's "dumb player": YOU at (104,106), MLEFT $80,
         // DIE. YOU's descriptor walks the BR* way: step 1 (half a column) every 2
         // frames, so 128 steps cover 128 pixels.
-        machine.StartScript(0x8739);
-        machine.StepFrame();
+        attractObjectMachine.StartScript(0x8739);
+        attractObjectMachine.StepFrame();
 
-        var hero = machine.Objects[0];
+        var hero = attractObjectMachine.Objects[0];
         Assert.Equal(104, hero.GetColumn());
 
         // The BR* walker cycles ANATAB (0,1,0,2) on top of the direction's base
@@ -131,7 +131,7 @@ public sealed class AttractMovieTests
         var animationFrames = new List<int>();
         for (var frame = 0; frame < 300; frame++)
         {
-            machine.StepFrame();
+            attractObjectMachine.StepFrame();
             animationFrames.Add(hero.AnimationFrameIndex);
         }
 
@@ -148,7 +148,7 @@ public sealed class AttractMovieTests
     [Fact]
     public void ObjectMachine_WalkCostsExactlyOneStepIntervalPerStep()
     {
-        var machine = new AttractObjectMachine(new Random(4));
+        var attractObjectMachine = new AttractObjectMachine(new Random(4));
 
         // DUMYOU again: 128 left steps at YOU's 2-frame nap, then DIE — so the
         // object is gone on frame 256 exactly. ANA2/BANA2 only SLEEP again while
@@ -156,21 +156,21 @@ public sealed class AttractMovieTests
         // after the LAST step would push every following opcode a period late and
         // drag the script's phase with it (notes §96.10: the hulk reached a human
         // half a second before her scripted death).
-        machine.StartScript(0x8739);
-        machine.StepFrame();
-        Assert.NotEmpty(machine.Objects);
+        attractObjectMachine.StartScript(0x8739);
+        attractObjectMachine.StepFrame();
+        Assert.NotEmpty(attractObjectMachine.Objects);
 
-        for (var frame = 0; frame < 255; frame++) machine.StepFrame();
+        for (var frame = 0; frame < 255; frame++) attractObjectMachine.StepFrame();
 
-        Assert.NotEmpty(machine.Objects);
-        machine.StepFrame();
-        Assert.Empty(machine.Objects);
+        Assert.NotEmpty(attractObjectMachine.Objects);
+        attractObjectMachine.StepFrame();
+        Assert.Empty(attractObjectMachine.Objects);
     }
 
     [Fact]
     public void ObjectMachine_ReprogramShakeIsAWholeScript_AndDoesNotRunOnIntoTheNext()
     {
-        var machine = new AttractObjectMachine(new Random(3));
+        var attractObjectMachine = new AttractObjectMachine(new Random(3));
 
         // PSHAKE ($868C) is a ONE-BYTE script — `FCB RPROG` — GHOSTed onto the human
         // the brain is reprogramming. RPROG OWNS the process until the shake ends:
@@ -181,15 +181,15 @@ public sealed class AttractMovieTests
         // BRAING ($868D): the shaking human's object executed `SETOB BRAIN /
         // SETPOS (10,160)` on itself, and the movie showed a SECOND brain streaking
         // off across the screen instead of a reprogrammed mummy (notes §97.4).
-        machine.StartScript(0x868C);
+        attractObjectMachine.StartScript(0x868C);
 
-        var shaking = Assert.Single(machine.Objects);
+        var shaking = Assert.Single(attractObjectMachine.Objects);
         Assert.Null(shaking.Descriptor); // nothing has run on into BRAING's SETOB
 
         var shook = false;
         for (var frame = 0; frame < 300; frame++)
         {
-            machine.StepFrame();
+            attractObjectMachine.StepFrame();
 
             // The property: whatever else happens, the one-byte script never runs
             // on into the bytes that follow it (which are BRAING's).
@@ -205,30 +205,30 @@ public sealed class AttractMovieTests
     [Fact]
     public void ObjectMachine_WalksAGruntAndExplodesIt()
     {
-        var machine = new AttractObjectMachine(new Random(11));
+        var attractObjectMachine = new AttractObjectMachine(new Random(11));
 
         // GS1 ($84F5): the grunt walks left down its HUMANA steps, then GSSS1 ends
         // in EXP.
-        machine.StartScript(0x84F5);
+        attractObjectMachine.StartScript(0x84F5);
 
-        MovieObject? grunt = null;
+        MovieObject? gruntMovieObject = null;
         for (var i = 0; i < 4; i++)
         {
-            machine.StepFrame();
-            grunt ??= machine.Objects.FirstOrDefault(o => o.Descriptor?.Animation == MovieAnimation.Grunt);
+            attractObjectMachine.StepFrame();
+            gruntMovieObject ??= attractObjectMachine.Objects.FirstOrDefault(o => o.Descriptor?.Animation == MovieAnimation.Grunt);
         }
 
-        Assert.NotNull(grunt);
-        var startX = grunt.XSubpixels;
+        Assert.NotNull(gruntMovieObject);
+        var startX = gruntMovieObject.XSubpixels;
 
         List<MovieExplosion> explosions = [];
         for (var frame = 0; frame < 3000 && explosions.Count == 0; frame++)
         {
-            machine.StepFrame();
-            explosions.AddRange(machine.DrainExplosions());
+            attractObjectMachine.StepFrame();
+            explosions.AddRange(attractObjectMachine.DrainExplosions());
         }
 
-        Assert.True(grunt.XSubpixels < startX, "the grunt did not walk left");
+        Assert.True(gruntMovieObject.XSubpixels < startX, "the grunt did not walk left");
         var explosion = Assert.Single(explosions);
         Assert.Equal(MovieAnimation.Grunt, explosion.Animation);
         Assert.Equal(0xA6, explosion.Row); // EXPP's ACTHIT+6
@@ -239,14 +239,14 @@ public sealed class AttractMovieTests
     {
         // "A", then a $5F sleep (95 fiftieths of a second), then "B" — the ROM's SPWAKE.
         byte[] script = [0x41, 0x5F, 0x42];
-        var page = new AttractPageMachine(script, new AttractObjectMachine(new Random(1)), new Random(1));
+        var attractPageMachine = new AttractPageMachine(script, new AttractObjectMachine(new Random(1)), new Random(1));
 
-        for (var frame = 0; frame < 3; frame++) page.StepFrame();
+        for (var frame = 0; frame < 3; frame++) attractPageMachine.StepFrame();
 
-        Assert.Equal(['A'], page.TextCells.Select(c => c.Character).ToArray());
+        Assert.Equal(['A'], attractPageMachine.TextCells.Select(c => c.Character).ToArray());
 
-        for (var frame = 0; frame < 200; frame++) page.StepFrame();
+        for (var frame = 0; frame < 200; frame++) attractPageMachine.StepFrame();
 
-        Assert.Equal(['A', 'B'], page.TextCells.Select(c => c.Character).ToArray());
+        Assert.Equal(['A', 'B'], attractPageMachine.TextCells.Select(c => c.Character).ToArray());
     }
 }
