@@ -116,10 +116,10 @@ public sealed class RobotFirstMoveTests
 
         TickToArcadeFrame(playField, ref ticks, 171);
         Assert.True(playField.IsLive());
-        Assert.Null(brain.TargetHuman);
+        Assert.Null(brain.TargetFamilyMember);
 
         TickToArcadeFrame(playField, ref ticks, 172);
-        Assert.NotNull(brain.TargetHuman);
+        Assert.NotNull(brain.TargetFamilyMember);
     }
 
     [Fact]

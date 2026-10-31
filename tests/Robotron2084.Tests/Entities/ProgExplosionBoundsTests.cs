@@ -18,7 +18,7 @@ public sealed class ProgExplosionBoundsTests
         playField.SkipWaveStart();
         var bounds = playField.GetPlayfieldBounds();
         var spot = new IntVector2(bounds.X + 100, bounds.Y + 100);
-        var prog = new Prog(TestTextures.SharedTextureSet, spot, HumanKind.Mikey, new Random(3));
+        var prog = new Prog(TestTextures.SharedTextureSet, spot, FamilyMemberKind.Mikey, new Random(3));
         playField.FieldEntities.Progs.Add(prog);
         playField.Update(new GameTime());
 
@@ -34,9 +34,9 @@ public sealed class ProgExplosionBoundsTests
         var playField = new PlayFieldBuilder().Build();
         playField.SkipWaveStart();
         var bounds = playField.GetPlayfieldBounds();
-        var mikeyHuman = new Human(TestTextures.SharedTextureSet, IntVector2.Zero, HumanKind.Mikey, new Random(1)).GetBounds();
-        var corner = new IntVector2(bounds.Right - mikeyHuman.Width, bounds.Bottom - mikeyHuman.Height);
-        var prog = new Prog(TestTextures.SharedTextureSet, corner, HumanKind.Mikey, new Random(3));
+        var mikeyFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, IntVector2.Zero, FamilyMemberKind.Mikey, new Random(1)).GetBounds();
+        var corner = new IntVector2(bounds.Right - mikeyFamilyMember.Width, bounds.Bottom - mikeyFamilyMember.Height);
+        var prog = new Prog(TestTextures.SharedTextureSet, corner, FamilyMemberKind.Mikey, new Random(3));
         playField.FieldEntities.Progs.Add(prog);
         playField.Player.TeleportTo(new IntVector2(bounds.X + 4, bounds.Y + 4));
         playField.Update(new GameTime());

@@ -36,7 +36,7 @@ public sealed class FieldStrategyTests
                 typeof(PlayerContactKillRule),
                 typeof(BrainVictimReleaseRule),
                 typeof(BrainCatchRule),
-                typeof(HulkVsHumanCollisionRule),
+                typeof(HulkVsFamilyMemberCollisionRule),
                 typeof(PlayerRescueRule)
             ],
             order);
@@ -58,27 +58,27 @@ public sealed class FieldStrategyTests
     public void TheFamilyList_HandsOutPlacesInOrder_AndFindsTheNearestFreeMember()
     {
         var familyList = new FamilyList();
-        var mikeyHuman = new Human(TestTextures.SharedTextureSet, new IntVector2(100, 100), HumanKind.Mikey, new Random(1));
-        var mommyHuman = new Human(TestTextures.SharedTextureSet, new IntVector2(300, 100), HumanKind.Mommy, new Random(2));
+        var mikeyFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(100, 100), FamilyMemberKind.Mikey, new Random(1));
+        var mommyFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(300, 100), FamilyMemberKind.Mommy, new Random(2));
         Assert.Equal(FamilyList.FirstSlot, familyList.GetNearestSlot(new IntVector2(0, 0)));
         Assert.Empty(familyList.GetOccupiedSlots());
 
-        familyList.Add(mikeyHuman);
-        familyList.Add(mommyHuman);
+        familyList.Add(mikeyFamilyMember);
+        familyList.Add(mommyFamilyMember);
 
-        Assert.Equal(FamilyList.FirstSlot, mikeyHuman.FamilySlot);
-        Assert.Equal(FamilyList.FirstSlot + 1, mommyHuman.FamilySlot);
-        Assert.Equal(mommyHuman.FamilySlot, familyList.GetNearestSlot(new IntVector2(290, 100)));
-        Assert.Equal(mommyHuman, familyList.GetMemberInSlot(mommyHuman.FamilySlot));
-        Assert.Equal([mikeyHuman.FamilySlot, mommyHuman.FamilySlot], familyList.GetOccupiedSlots());
+        Assert.Equal(FamilyList.FirstSlot, mikeyFamilyMember.FamilySlot);
+        Assert.Equal(FamilyList.FirstSlot + 1, mommyFamilyMember.FamilySlot);
+        Assert.Equal(mommyFamilyMember.FamilySlot, familyList.GetNearestSlot(new IntVector2(290, 100)));
+        Assert.Equal(mommyFamilyMember, familyList.GetMemberInSlot(mommyFamilyMember.FamilySlot));
+        Assert.Equal([mikeyFamilyMember.FamilySlot, mommyFamilyMember.FamilySlot], familyList.GetOccupiedSlots());
 
         // In a brain's hold she is off the list: her place reads empty, and the nearest is whoever is left.
-        mommyHuman.BeginReprogramming();
-        Assert.Null(familyList.GetMemberInSlot(mommyHuman.FamilySlot));
-        Assert.Equal(mikeyHuman.FamilySlot, familyList.GetNearestSlot(new IntVector2(290, 100)));
+        mommyFamilyMember.BeginReprogramming();
+        Assert.Null(familyList.GetMemberInSlot(mommyFamilyMember.FamilySlot));
+        Assert.Equal(mikeyFamilyMember.FamilySlot, familyList.GetNearestSlot(new IntVector2(290, 100)));
         Assert.True(familyList.AnyAvailable());
 
-        mikeyHuman.Kill();
+        mikeyFamilyMember.Kill();
         Assert.False(familyList.AnyAvailable());
     }
 
@@ -86,8 +86,8 @@ public sealed class FieldStrategyTests
     public void TheFamilyList_GivesATieToTheLaterPlace()
     {
         var familyList = new FamilyList();
-        familyList.Add(new Human(TestTextures.SharedTextureSet, new IntVector2(100, 100), HumanKind.Mikey, new Random(1)));
-        familyList.Add(new Human(TestTextures.SharedTextureSet, new IntVector2(100, 100), HumanKind.Daddy, new Random(2)));
+        familyList.Add(new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(100, 100), FamilyMemberKind.Mikey, new Random(1)));
+        familyList.Add(new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(100, 100), FamilyMemberKind.Daddy, new Random(2)));
 
         Assert.Equal(FamilyList.FirstSlot + 1, familyList.GetNearestSlot(new IntVector2(100, 100)));
     }
@@ -128,20 +128,20 @@ public sealed class FieldStrategyTests
     public void ACollisionRule_OnlyReports_AndTheFieldResponds()
     {
         var playField = new PlayFieldBuilder().Build();
-        var human = new Human(TestTextures.SharedTextureSet, playField.Player.Position, HumanKind.Mommy, new Random(1));
-        playField.FieldEntities.Add(human);
+        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, playField.Player.Position, FamilyMemberKind.Mommy, new Random(1));
+        playField.FieldEntities.Add(familyMember);
 
         var results = new PlayerRescueRule().Detect(playField, playField.FieldEntities).ToArray();
 
         // The rule found the rescue and changed nothing.
-        var rescued = Assert.IsType<PlayerRescuedHumanResult>(Assert.Single(results));
-        Assert.Same(human, rescued.Human);
-        Assert.True(human.IsGraspable());
+        var rescued = Assert.IsType<PlayerRescuedFamilyMemberResult>(Assert.Single(results));
+        Assert.Same(familyMember, rescued.FamilyMember);
+        Assert.True(familyMember.IsGraspable());
         Assert.Equal(0, playField.RescuesThisLife);
 
         // The field's response is what rescues them.
         new CollisionResponder(playField).Respond(rescued);
-        Assert.False(human.IsGraspable());
+        Assert.False(familyMember.IsGraspable());
         Assert.Equal(1, playField.RescuesThisLife);
     }
 

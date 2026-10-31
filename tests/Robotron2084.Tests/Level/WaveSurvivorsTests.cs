@@ -26,8 +26,8 @@ public sealed class WaveSurvivorsTests
             2, 1, 3, 2));
         playField.FieldEntities.Grunts[0].Kill();
         playField.FieldEntities.Electrodes[0].Kill();
-        playField.FieldEntities.FamilyList.Members.First(human => human.Kind == HumanKind.Mommy).Kill();
-        playField.FieldEntities.FamilyList.Members.First(human => human.Kind == HumanKind.Mikey).Kill();
+        playField.FieldEntities.FamilyList.Members.First(familyMember => familyMember.Kind == FamilyMemberKind.Mommy).Kill();
+        playField.FieldEntities.FamilyList.Members.First(familyMember => familyMember.Kind == FamilyMemberKind.Mikey).Kill();
         playField.FieldEntities.Spheroids[0].Kill();
 
         var left = WaveSurvivors.GetFrom(playField);

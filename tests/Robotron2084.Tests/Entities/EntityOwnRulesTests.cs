@@ -8,23 +8,23 @@ using Xunit;
 namespace Robotron2084.Tests;
 
 /// <summary>
-///     The rules each entity keeps for itself, which used to sit in the playfield: whether a human can be got hold of,
+///     The rules each entity keeps for itself, which used to sit in the playfield: whether a family member can be got hold of,
 ///     where a tank or a quark may stand, how a list counts its living, and how the strip clip is made.
 /// </summary>
 public sealed class EntityOwnRulesTests
 {
     [Fact]
-    public void AHumanIsGraspable_OnlyWhileAliveAndNotInABrainsHold()
+    public void AFamilyMemberIsGraspable_OnlyWhileAliveAndNotInABrainsHold()
     {
-        var human = new Human(TestTextures.SharedTextureSet, new IntVector2(100, 100), HumanKind.Mommy, new Random(1));
-        Assert.True(human.IsGraspable());
+        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(100, 100), FamilyMemberKind.Mommy, new Random(1));
+        Assert.True(familyMember.IsGraspable());
 
-        human.BeginReprogramming();
-        Assert.False(human.IsGraspable());
+        familyMember.BeginReprogramming();
+        Assert.False(familyMember.IsGraspable());
 
-        var killedHuman = new Human(TestTextures.SharedTextureSet, new IntVector2(100, 100), HumanKind.Daddy, new Random(2));
-        killedHuman.Kill();
-        Assert.False(killedHuman.IsGraspable());
+        var killedFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(100, 100), FamilyMemberKind.Daddy, new Random(2));
+        killedFamilyMember.Kill();
+        Assert.False(killedFamilyMember.IsGraspable());
     }
 
     [Fact]

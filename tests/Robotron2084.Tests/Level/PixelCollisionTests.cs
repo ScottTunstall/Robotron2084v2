@@ -37,12 +37,12 @@ public sealed class PixelCollisionTests
     public void ASpriteThatDoesNotTouchDoesNotRescue_EvenWhereTheBoxesOverlap()
     {
         var playField = CreateField(new StubPixelCollision(false));
-        var human = playField.FieldEntities.FamilyList.Members[0];
-        human.MoveTo(playField.Player.Position);
+        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        familyMember.MoveTo(playField.Player.Position);
 
         playField.Update(new GameTime());
 
-        Assert.Equal(EntityLifeState.Alive, human.LifeState);
+        Assert.Equal(EntityLifeState.Alive, familyMember.LifeState);
         Assert.Equal(0, playField.RescuesThisLife);
     }
 
@@ -51,11 +51,11 @@ public sealed class PixelCollisionTests
     {
         var playField = CreateField(new StubPixelCollision(true));
         playField.SkipWaveStart();
-        var human = playField.FieldEntities.FamilyList.Members[0];
+        var familyMember = playField.FieldEntities.FamilyList.Members[0];
 
-        // Well outside the player's box, so nothing but the sprite test could rescue this human.
+        // Well outside the player's box, so nothing but the sprite test could rescue this family member.
         var inner = playField.PlayfieldWall.PlayfieldBounds;
-        human.MoveTo(new IntVector2(inner.Center.X + ScreenSize.ToPortPixelsFromArcadePixels(60), inner.Center.Y));
+        familyMember.MoveTo(new IntVector2(inner.Center.X + ScreenSize.ToPortPixelsFromArcadePixels(60), inner.Center.Y));
 
         playField.Update(new GameTime());
 
@@ -67,8 +67,8 @@ public sealed class PixelCollisionTests
     {
         var playField = CreateField(new StubPixelCollision(false, false));
         playField.SkipWaveStart();
-        var human = playField.FieldEntities.FamilyList.Members[0];
-        human.MoveTo(playField.Player.Position);
+        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        familyMember.MoveTo(playField.Player.Position);
 
         playField.Update(new GameTime());
 
@@ -80,8 +80,8 @@ public sealed class PixelCollisionTests
     {
         var playField = CreateField(null);
         playField.SkipWaveStart();
-        var human = playField.FieldEntities.FamilyList.Members[0];
-        human.MoveTo(playField.Player.Position);
+        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        familyMember.MoveTo(playField.Player.Position);
 
         playField.Update(new GameTime());
 

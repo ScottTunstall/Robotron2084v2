@@ -50,7 +50,7 @@ public sealed class HulkTargetTests
         var playField = CreateField(1, 1, 1, 1);
         var player = playField.GetPlayerPosition();
         var mommy = playField.GetFamilyMemberInSlot(1)!;
-        Assert.Equal(HumanKind.Mommy, mommy.Kind);
+        Assert.Equal(FamilyMemberKind.Mommy, mommy.Kind);
 
         var stalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == mommy.Position);
         var hunters = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == player);

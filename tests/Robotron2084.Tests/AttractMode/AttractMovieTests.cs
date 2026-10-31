@@ -154,7 +154,7 @@ public sealed class AttractMovieTests
         // object is gone on frame 256 exactly. ANA2/BANA2 only SLEEP again while
         // steps remain (`DEC ... / BNE` then `JMP [LEV2,U]`), so waiting once more
         // after the LAST step would push every following opcode a period late and
-        // drag the script's phase with it (notes §96.10: the hulk reached a human
+        // drag the script's phase with it (notes §96.10: the hulk reached a family member
         // half a second before her scripted death).
         attractObjectMachine.StartScript(0x8739);
         attractObjectMachine.StepFrame();
@@ -172,13 +172,13 @@ public sealed class AttractMovieTests
     {
         var attractObjectMachine = new AttractObjectMachine(new Random(3));
 
-        // PSHAKE ($868C) is a ONE-BYTE script — `FCB RPROG` — GHOSTed onto the human
+        // PSHAKE ($868C) is a ONE-BYTE script — `FCB RPROG` — GHOSTed onto the family member
         // the brain is reprogramming. RPROG OWNS the process until the shake ends:
         // R5 $7CD9 stores the base row and a 64 countdown, allocates its own
         // two-frame tasks (+RND(0..7) rows, then −RND(0..7)) and frees the process at
         // $7D16 — it never returns to the script reader. Returning "keep reading"
         // made the process run on into the bytes that FOLLOW PSHAKE, which are
-        // BRAING ($868D): the shaking human's object executed `SETOB BRAIN /
+        // BRAING ($868D): the shaking family member's object executed `SETOB BRAIN /
         // SETPOS (10,160)` on itself, and the movie showed a SECOND brain streaking
         // off across the screen instead of a reprogrammed mummy (notes §97.4).
         attractObjectMachine.StartScript(0x868C);
