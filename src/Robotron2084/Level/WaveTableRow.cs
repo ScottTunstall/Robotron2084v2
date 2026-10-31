@@ -16,7 +16,7 @@ namespace Robotron2084.Level;
 /// <param name="SpheroidCount">How many spheroids the wave starts with.</param>
 /// <param name="QuarkCount">How many quarks the wave starts with.</param>
 /// <param name="MaxDropsX2">
-///     Twice the most that a spheroid or quark may drop. Each rolls a number up to this and drops
+///     Twice the most that a spheroid or quark may drop. Each picks a random number up to this and drops
 ///     half of it, rounded up.
 /// </param>
 /// <param name="GruntMoveDelay">The longest a grunt waits between moves, in beats. A smaller number is a faster grunt.</param>

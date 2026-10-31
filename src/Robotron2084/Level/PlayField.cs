@@ -276,7 +276,7 @@ public sealed class PlayField : ICollisionScene
     public void DrawWall(SpriteBatch spriteBatch)
     {
         Wall.Draw(spriteBatch, Sprites.WallPixelSprite,
-            Palette?.GetColour(WavePaletteTables.GetWallSlot(Parameters.WaveNumber)));
+            Palette?.GetColour(WavePaletteTables.GetWallPaletteIndex(Parameters.WaveNumber)));
     }
 
     /// <summary>Lists the player's lasers that are in flight.</summary>

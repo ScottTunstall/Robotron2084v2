@@ -50,7 +50,7 @@ internal sealed class LaserWallFlares
     {
         if (_flares.Count == 0) return;
 
-        var flareColor = sprites.Blitter.GetSlotColour(WavePaletteTables.GetLaserWallSlot(waveNumber));
+        var flareColor = sprites.Blitter.GetPaletteIndexColour(WavePaletteTables.GetLaserWallPaletteIndex(waveNumber));
         foreach (var flare in _flares)
         {
             if (!flare.Dithered)

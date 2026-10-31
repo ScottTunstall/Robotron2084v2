@@ -16,7 +16,7 @@ namespace Robotron2084.Level;
 ///     <see
 ///         cref="WaveTable" />
 ///     , notes §11). A parameter left out gets a value that a hand-built wave in a test
-///     can use. <c>MaxDropsX2</c> is the arcade's <c>ENFNUM</c>: a spheroid or quark rolls a number up to
+///     can use. <c>MaxDropsX2</c> is the arcade's <c>ENFNUM</c>: a spheroid or quark picks a random number up to
 ///     it and drops half of it, rounded up. <c>TankCount</c> is the tanks already on the field when a life
 ///     starts. The wave table never has any, because quarks drop them, but a death keeps the ones that
 ///     were alive (notes §134). <c>BerzerkRobotCount</c> and <c>GorfCount</c> are the author's own

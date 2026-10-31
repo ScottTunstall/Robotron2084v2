@@ -13,8 +13,8 @@ public sealed class SpawnPlacement
     /// </summary>
     private const int GridScanStep = 4;
 
-    /// <summary>The number of sides on the roll that is checked against a percentage.</summary>
-    private const int PercentSides = 100;
+    /// <summary>The random number is drawn from 0 up to one less than this, when it is checked against a percentage.</summary>
+    private const int PercentMaxExclusive = 100;
 
     /// <summary>How big a spot to look for when the thing being put down does not say, in port pixels.</summary>
     private static readonly int EntitySize =
@@ -133,7 +133,7 @@ public sealed class SpawnPlacement
     /// <summary>Picks a spot to try for a spheroid. Usually it is near a wall.</summary>
     private IntVector2 PickRandomSpheroidCandidate()
     {
-        if (_random.Next(PercentSides) >= SpheroidTuning.NearWallBiasPercent) return PickRandomPointInside(EntitySize);
+        if (_random.Next(PercentMaxExclusive) >= SpheroidTuning.NearWallBiasPercent) return PickRandomPointInside(EntitySize);
 
         var bias = ScreenSize.ToPortPixelsFromArcadePixels(SpheroidTuning.NearWallBiasDistance);
         var inner = _playfieldBounds;

@@ -153,7 +153,7 @@ public static class WaveTable
     ];
 
     /// <summary>
-    ///     Twice the most that a spheroid or quark may drop, for each wave. Each rolls a number up to this when it is
+    ///     Twice the most that a spheroid or quark may drop, for each wave. Each picks a random number up to this when it is
     ///     made, and drops half of it, rounded up.
     /// </summary>
     /// <remarks>
