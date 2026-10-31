@@ -304,7 +304,7 @@ public sealed class GruntSpeedProgression
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRG23.ASM</c> <c>GEXEC</c>, the part that
-    ///             updates the grunts' speed as the level progresses ("BONE HIM FOR STALLING")
+    ///             updates the grunts' speed as the wave progresses ("BONE HIM FOR STALLING")
     ///         </item>
     ///         <item>Disassembly: <c>$2AC7</c> to <c>$2AF1</c></item>
     ///     </list>

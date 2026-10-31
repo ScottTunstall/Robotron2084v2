@@ -27,7 +27,7 @@ public static class WaveSurvivors
     /// <summary>Counts what is left on a field.</summary>
     /// <param name="field">The field the player has died on.</param>
     /// <returns>The wave's parameters with the counts of what is left, to start the next life with.</returns>
-    public static LevelParameters GetFrom(PlayField field)
+    public static WaveParameters GetFrom(PlayField field)
     {
         var entities = field.Entities;
         var parameters = field.Parameters;

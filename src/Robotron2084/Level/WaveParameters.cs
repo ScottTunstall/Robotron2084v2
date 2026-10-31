@@ -1,64 +1,93 @@
 namespace Robotron2084.Level;
 
-/// <summary>One row of the arcade's wave table: how many of each robot a wave has, and how fast and how often they act.</summary>
+/// <summary>Everything that makes one wave what it is: how many of each robot it has, and how fast and how often they act.</summary>
 /// <remarks>
-///     The values are the ones the arcade stores for the recommended difficulty. <see cref="DifficultyTuning" />
-///     moves them for other settings.
+///     <list type="bullet">
+///         <item>
+///             Original source: <c>RRG23.ASM</c> <c>GETWV</c>, which reads the wave's
+///             counts and settings when a wave begins
+///         </item>
+///         <item>
+///             Disassembly: <c>INITIALISE_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE</c>
+///             (<c>$2B7C</c>)
+///         </item>
+///     </list>
+///     The values come from the arcade's wave tables (
+///     <see
+///         cref="WaveTable" />
+///     , notes §11). A parameter left out gets a value that a hand-built wave in a test
+///     can use. <c>MaxDropsX2</c> is the arcade's <c>ENFNUM</c>: a spheroid or quark rolls a number up to
+///     it and drops half of it, rounded up. <c>TankCount</c> is the tanks already on the field when a life
+///     starts. The wave table never has any, because quarks drop them, but a death keeps the ones that
+///     were alive (notes §134). <c>BerzerkRobotCount</c> and <c>GorfCount</c> are the author's own
+///     robots, which no wave has yet. Times are counted in fiftieths of a second, and the port turns them into its
+///     own ticks where they are used.</item>
+///     </list>
 /// </remarks>
-/// <param name="ResolvedWave">The wave this row is for, from 1 to 40. Later waves repeat the second half of the table.</param>
-/// <param name="GruntCount">How many grunts the wave starts with.</param>
-/// <param name="ElectrodeCount">How many electrodes the wave starts with.</param>
-/// <param name="MommyCount">How many Mommies the wave starts with.</param>
-/// <param name="DaddyCount">How many Daddies the wave starts with.</param>
-/// <param name="MikeyCount">How many Mikeys the wave starts with.</param>
-/// <param name="HulkCount">How many hulks the wave starts with.</param>
-/// <param name="BrainCount">How many brains the wave starts with.</param>
-/// <param name="SpheroidCount">How many spheroids the wave starts with.</param>
-/// <param name="QuarkCount">How many quarks the wave starts with.</param>
-/// <param name="MaxDropsX2">
-///     Twice the most that a spheroid or quark may drop. Each rolls a number up to this and drops
-///     half of it, rounded up.
-/// </param>
-/// <param name="GruntMoveDelay">The longest a grunt waits between moves, in beats. A smaller number is a faster grunt.</param>
-/// <param name="GruntSpeedFloor">The fewest beats that the grunts' speed-ups may bring a grunt's longest wait down to.</param>
-/// <param name="EnforcerFireDelay">How long an enforcer waits between sparks. A smaller number is faster fire.</param>
-/// <param name="SpheroidDropDelay">
-///     How long a spheroid waits before dropping an enforcer. A smaller number is a quicker
-///     drop.
-/// </param>
-/// <param name="HulkBeatIntervalArcadeFrames">
-///     How many fiftieths of a second pass between a hulk's beats. A smaller number is
-///     a faster hulk.
-/// </param>
-/// <param name="BrainFireDelay">The longest a brain waits between cruise missiles, in beats.</param>
-/// <param name="BrainBeatWaitArcadeFrames">
-///     How many fiftieths of a second a brain waits after each beat. A smaller number is
-///     a faster brain.
-/// </param>
-/// <param name="TankFireDelay">How many beats a tank waits between shells. A smaller number is faster fire.</param>
-/// <param name="ShellSpeed">How fast tank shells fly. A bigger number is a faster shell.</param>
-/// <param name="QuarkDropDelay">How long a quark waits before dropping a tank. A smaller number is a quicker drop.</param>
-/// <param name="QuarkSpeedCap">How fast a quark may drift. A bigger number is a faster quark.</param>
 public sealed record WaveParameters(
-    int ResolvedWave,
-    int GruntCount,
-    int ElectrodeCount,
-    int MommyCount,
-    int DaddyCount,
-    int MikeyCount,
-    int HulkCount,
-    int BrainCount,
-    int SpheroidCount,
-    int QuarkCount,
-    int MaxDropsX2,
-    int GruntMoveDelay,
-    int GruntSpeedFloor,
-    int EnforcerFireDelay,
-    int SpheroidDropDelay,
-    int HulkBeatIntervalArcadeFrames,
-    int BrainFireDelay,
-    int BrainBeatWaitArcadeFrames,
-    int TankFireDelay,
-    int ShellSpeed,
-    int QuarkDropDelay,
-    int QuarkSpeedCap);
+    int WaveNumber,
+    int GruntCount = 0,
+    int ElectrodeCount = 0,
+    int MommyCount = 0,
+    int DaddyCount = 0,
+    int MikeyCount = 0,
+    int HulkCount = 0,
+    int BrainCount = 0,
+    int SpheroidCount = 0,
+    int QuarkCount = 0,
+    int MaxDropsX2 = 10,
+    int MaxEnforcersPerSpheroid = 5,
+    int MaxTanksPerQuark = 5,
+    int GruntMoveDelay = 15,
+    int GruntSpeedFloor = 4,
+    int EnforcerFireDelay = 24,
+    int SpheroidDropDelay = 24,
+    int HulkBeatIntervalArcadeFrames = 7,
+    int BrainFireDelay = 40,
+    int BrainBeatWaitArcadeFrames = 8,
+    int TankFireDelay = 32,
+    int ShellSpeed = 176,
+    int QuarkDropDelay = 16,
+    int QuarkMaxSpeed = 50,
+    int EnemySpeedBonus = 0,
+    int TankCount = 0,
+    int BerzerkRobotCount = 0,
+    int GorfCount = 0)
+{
+    /// <summary>Makes the parameters for a wave from the arcade's wave table.</summary>
+    /// <param name="waveNumber">The wave number.</param>
+    /// <param name="wave">The wave table's row for it.</param>
+    /// <remarks>
+    ///     <c>MaxEnforcersPerSpheroid</c> and <c>MaxTanksPerQuark</c> are kept in step with <c>MaxDropsX2</c>, for
+    ///     anything that still reads them.
+    /// </remarks>
+    public static WaveParameters CreateFromWave(int waveNumber, WaveTableRow wave)
+    {
+        return new WaveParameters(
+            waveNumber,
+            wave.GruntCount,
+            wave.ElectrodeCount,
+            wave.MommyCount,
+            wave.DaddyCount,
+            wave.MikeyCount,
+            wave.HulkCount,
+            wave.BrainCount,
+            wave.SpheroidCount,
+            wave.QuarkCount,
+            wave.MaxDropsX2,
+            (wave.MaxDropsX2 + 1) / 2,
+            (wave.MaxDropsX2 + 1) / 2,
+            wave.GruntMoveDelay,
+            wave.GruntSpeedFloor,
+            wave.EnforcerFireDelay,
+            wave.SpheroidDropDelay,
+            wave.HulkBeatIntervalArcadeFrames,
+            wave.BrainFireDelay,
+            wave.BrainBeatWaitArcadeFrames,
+            wave.TankFireDelay,
+            wave.ShellSpeed,
+            wave.QuarkDropDelay,
+            wave.QuarkMaxSpeed,
+            0);
+    }
+}

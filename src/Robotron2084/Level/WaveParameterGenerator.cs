@@ -18,42 +18,42 @@ namespace Robotron2084.Level;
 ///     <see
 ///         cref="WaveTable" />
 ///     , notes §11), where the waves after the fortieth repeat the second half of the
-///     table. If a <c>LevelTable.csv</c> file is found, either at a path it is given or in the game's
+///     table. If a <c>CustomWaveTable.csv</c> file is found, either at a path it is given or in the game's
 ///     <c>Content</c> folder, its rows are used instead and start again from the top after the last row.
 ///     A missing or damaged file is ignored.</item>
 ///     </list>
 /// </remarks>
-public sealed class LevelParameterGenerator
+public sealed class WaveParameterGenerator
 {
     /// <summary>The rows of the table that replaces the arcade's wave tables, or null to use the arcade's.</summary>
-    private readonly LevelTableRow[]? _levelTable;
+    private readonly CustomWaveTableRow[]? _customWaveTable;
 
-    /// <summary>Makes a generator that looks for a <c>LevelTable.csv</c> in the game's <c>Content</c> folder.</summary>
-    public LevelParameterGenerator()
+    /// <summary>Makes a generator that looks for a <c>CustomWaveTable.csv</c> in the game's <c>Content</c> folder.</summary>
+    public WaveParameterGenerator()
         : this(null)
     {
     }
 
     /// <summary>Makes a generator that looks for a table that replaces the arcade's wave tables.</summary>
-    /// <param name="levelTablePath">
-    ///     The path of a CSV file whose header reads Level, GruntCount, HulkCount, SpheroidCount,
+    /// <param name="customWaveTablePath">
+    ///     The path of a CSV file whose header reads Wave, GruntCount, HulkCount, SpheroidCount,
     ///     QuarkCount, ElectrodeCount, MaxEnforcersPerSpheroid, MaxTanksPerQuark. When it is null, the game's <c>Content</c>
     ///     folder is looked in.
     /// </param>
-    public LevelParameterGenerator(string? levelTablePath)
+    public WaveParameterGenerator(string? customWaveTablePath)
     {
-        _levelTable = LoadTable(levelTablePath);
+        _customWaveTable = LoadTable(customWaveTablePath);
     }
 
     /// <summary>Works out what a wave contains.</summary>
-    /// <param name="levelNumber">The wave number, starting at 1.</param>
-    public LevelParameters Generate(int levelNumber)
+    /// <param name="waveNumber">The wave number, starting at 1.</param>
+    public WaveParameters Generate(int waveNumber)
     {
-        if (_levelTable is { Length: > 0 } table)
+        if (_customWaveTable is { Length: > 0 } table)
         {
-            var row = table[(levelNumber - 1) % table.Length];
-            return new LevelParameters(
-                levelNumber,
+            var row = table[(waveNumber - 1) % table.Length];
+            return new WaveParameters(
+                waveNumber,
                 row.GruntCount,
                 HulkCount: row.HulkCount,
                 SpheroidCount: row.SpheroidCount,
@@ -61,23 +61,23 @@ public sealed class LevelParameterGenerator
                 ElectrodeCount: row.ElectrodeCount,
                 MaxEnforcersPerSpheroid: row.MaxEnforcersPerSpheroid,
                 MaxTanksPerQuark: row.MaxTanksPerQuark,
-                EnemySpeedBonus: Math.Min(levelNumber - 1, SpawnTuning.EnemySpeedBonusCapPerLevel));
+                EnemySpeedBonus: Math.Min(waveNumber - 1, SpawnTuning.EnemySpeedBonusMaxPerWave));
         }
 
-        return LevelParameters.CreateFromWave(levelNumber, WaveTable.GetParameters(levelNumber));
+        return WaveParameters.CreateFromWave(waveNumber, WaveTable.GetParameters(waveNumber));
     }
 
     /// <summary>Reads the replacement table.</summary>
     /// <param name="path">The CSV file's path, or null for the one in the game's <c>Content</c> folder.</param>
     /// <returns>The rows, or null when there is no file, it is damaged or it has no rows.</returns>
-    private static LevelTableRow[]? LoadTable(string? path)
+    private static CustomWaveTableRow[]? LoadTable(string? path)
     {
-        path ??= Path.Combine(AppContext.BaseDirectory, "Content", "LevelTable.csv");
+        path ??= Path.Combine(AppContext.BaseDirectory, "Content", "CustomWaveTable.csv");
         if (!File.Exists(path)) return null;
 
         try
         {
-            List<LevelTableRow> rows = new();
+            List<CustomWaveTableRow> rows = new();
             foreach (var rawLine in File.ReadAllLines(path))
             {
                 if (!TryParseRow(rawLine.Trim(),
@@ -98,13 +98,13 @@ public sealed class LevelParameterGenerator
 
     /// <summary>Reads one line of the replacement table.</summary>
     /// <param name="line">The trimmed line.</param>
-    /// <param name="row">The parsed row, or null for a line to skip (blank, the header, or no usable level number).</param>
+    /// <param name="row">The parsed row, or null for a line to skip (blank, the header, or no usable wave number).</param>
     /// <returns>False when the line is a data row with a malformed count.</returns>
-    private static bool TryParseRow(string line, out LevelTableRow? row)
+    private static bool TryParseRow(string line, out CustomWaveTableRow? row)
     {
         row = null;
         var fields = line.Split(',');
-        if (line.Length == 0 || fields.Length != 8 || !int.TryParse(fields[0], out var level) || level <= 0)
+        if (line.Length == 0 || fields.Length != 8 || !int.TryParse(fields[0], out var wave) || wave <= 0)
             return true;
 
         var counts = new int[fields.Length - 1];
@@ -112,12 +112,12 @@ public sealed class LevelParameterGenerator
             if (!int.TryParse(fields[i + 1], out counts[i]))
                 return false;
 
-        row = new LevelTableRow(counts[0], counts[1], counts[2], counts[3], counts[4], counts[5], counts[6]);
+        row = new CustomWaveTableRow(counts[0], counts[1], counts[2], counts[3], counts[4], counts[5], counts[6]);
         return true;
     }
 
     /// <summary>One row of the replacement table. The wave number is not kept, because a row's place in the table is its wave.</summary>
-    private sealed record LevelTableRow(
+    private sealed record CustomWaveTableRow(
         int GruntCount,
         int HulkCount,
         int SpheroidCount,

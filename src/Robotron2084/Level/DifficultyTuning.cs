@@ -29,7 +29,7 @@ namespace Robotron2084.Level;
 /// </remarks>
 public static class DifficultyTuning
 {
-    /// <summary>How many men a player on an early wave must have to be thought to be doing well.</summary>
+    /// <summary>How many lives a player on an early wave must have to be thought to be doing well.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, <c>CMPA #3</c>.</item>
@@ -38,7 +38,7 @@ public static class DifficultyTuning
     /// </remarks>
     private const int ComfortableLives = 3;
 
-    /// <summary>The wave from which a player with plenty of men is thought to be doing well.</summary>
+    /// <summary>The wave from which a player with plenty of lives is thought to be doing well.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>, <c>CMPA #5</c>.</item>
@@ -141,7 +141,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2DF9</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header QuarkSpeedCapHeader = new(0x0E, 40, 68);
+    private static readonly Header QuarkMaxSpeedHeader = new(0x0E, 40, 68);
 
     /// <summary>The settings for how fast a tank shell flies and how well it is aimed. A bigger number is harder.</summary>
     /// <remarks>
@@ -179,25 +179,25 @@ public static class DifficultyTuning
     ///     first, as the arcade does.
     /// </param>
     /// <param name="difficulty">The difficulty setting, from the lowest to the highest the game allows.</param>
-    /// <param name="lives">The men the player has, counting the one in play.</param>
+    /// <param name="lives">The lives the player has, counting the one in play.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRG23.ASM</c> <c>GETWV</c>, with the difficulty in
-    ///             <c>difficulty_of_play</c> (<c>$CC14</c>) and the men in <c>PLAS</c>.
+    ///             <c>difficulty_of_play</c> (<c>$CC14</c>) and the lives in <c>PLAS</c>.
     ///         </item>
     ///         <item>Disassembly: <c>$2B7C</c>.</item>
     ///     </list>
     /// </remarks>
-    public static LevelParameters Apply(LevelParameters parameters, int difficulty, int lives)
+    public static WaveParameters Apply(WaveParameters parameters, int difficulty, int lives)
     {
-        var effectiveDifficulty = GetEffectiveDifficulty(parameters.LevelNumber, difficulty, lives);
+        var effectiveDifficulty = GetEffectiveDifficulty(parameters.WaveNumber, difficulty, lives);
         if (effectiveDifficulty == GameSettings.RecommendedDifficulty) return parameters;
 
         var delta = effectiveDifficulty - GameSettings.RecommendedDifficulty;
         var magnitude = Math.Abs(delta);
 
-        // The two fields worked out from the maxDropsX2 value must follow it, as LevelParameters.CreateFromWave works them out.
+        // The two fields worked out from the maxDropsX2 value must follow it, as WaveParameters.CreateFromWave works them out.
         var maxDropsX2 = Adjust(parameters.MaxDropsX2, MaxDropsX2Header, delta, magnitude);
 
         return parameters with
@@ -216,7 +216,7 @@ public static class DifficultyTuning
             TankFireDelay = Adjust(parameters.TankFireDelay, TankFireDelayHeader, delta, magnitude),
             ShellSpeed = Adjust(parameters.ShellSpeed, ShellSpeedHeader, delta, magnitude),
             QuarkDropDelay = Adjust(parameters.QuarkDropDelay, QuarkDropDelayHeader, delta, magnitude),
-            QuarkSpeedCap = Adjust(parameters.QuarkSpeedCap, QuarkSpeedCapHeader, delta, magnitude)
+            QuarkMaxSpeed = Adjust(parameters.QuarkMaxSpeed, QuarkMaxSpeedHeader, delta, magnitude)
         };
     }
 
@@ -253,7 +253,7 @@ public static class DifficultyTuning
     /// </summary>
     /// <param name="wave">The wave number.</param>
     /// <param name="difficulty">The difficulty setting.</param>
-    /// <param name="lives">The men the player has, counting the one in play.</param>
+    /// <param name="lives">The lives the player has, counting the one in play.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>GETWV</c>.</item>
@@ -262,7 +262,7 @@ public static class DifficultyTuning
     /// </remarks>
     private static int GetEffectiveDifficulty(int wave, int difficulty, int lives)
     {
-        var effective = Math.Clamp(difficulty, GameSettings.MinimumDifficulty, GameSettings.MaximumDifficulty);
+        var effective = Math.Clamp(difficulty, GameSettings.MinimumDifficulty, GameSettings.MaxDifficulty);
         if (effective >= GameSettings.RecommendedDifficulty) return effective;
 
         if (wave >= WellPlayedWave || (wave >= EarlyWave && lives >= ComfortableLives))

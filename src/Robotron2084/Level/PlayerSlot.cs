@@ -4,7 +4,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Level;
 
 /// <summary>
-///     Everything the game remembers about one player between waves: their score, their men, their wave, and what was
+///     Everything the game remembers about one player between waves: their score, their lives, their wave, and what was
 ///     left on their field when they died.
 /// </summary>
 /// <remarks>
@@ -16,8 +16,8 @@ namespace Robotron2084.Level;
 ///         <item>Disassembly: not separately labelled</item>
 ///     </list>
 ///     In a two-player game each player keeps their
-///     own score, men and wave while the other plays. When a man is lost the turn passes to the other
-///     player, unless they have no men left, and they carry on from their own wave (<c>RRG23.ASM</c>
+///     own score, lives and wave while the other plays. When a life is lost the turn passes to the other
+///     player, unless they have no lives left, and they carry on from their own wave (<c>RRG23.ASM</c>
 ///     <c>PLE1B</c>).</item>
 ///     </list>
 /// </remarks>
@@ -26,7 +26,7 @@ namespace Robotron2084.Level;
 ///     This player's controls. Each player has their own, so a second player need not share the first
 ///     player's.
 /// </param>
-/// <param name="Lives">The men the player has, counting the one in play.</param>
+/// <param name="Lives">The lives the player has, counting the one in play.</param>
 /// <param name="Wave">The wave the player is on. Only they move it on.</param>
 public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives, int Wave)
 {
@@ -48,7 +48,7 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives,
     /// </remarks>
     public int Score { get; set; }
 
-    /// <summary>The men the player has, counting the one in play.</summary>
+    /// <summary>The lives the player has, counting the one in play.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>PLAS</c>.</item>
@@ -58,7 +58,7 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives,
     public int Lives { get; set; } = Lives;
 
     /// <summary>
-    ///     What was left on the player's field when they last died, to start their next man with. It is null when their
+    ///     What was left on the player's field when they last died, to start their next life with. It is null when their
     ///     wave has not started or has just been cleared.
     /// </summary>
     /// <remarks>
@@ -70,16 +70,16 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives,
     ///         <item>Disassembly: not separately labelled.</item>
     ///     </list>
     /// </remarks>
-    public LevelParameters? SavedWaveParameters { get; set; }
+    public WaveParameters? SavedWaveParameters { get; set; }
 
     /// <summary>True while the player can still be given a turn.</summary>
-    public bool HasMen()
+    public bool HasLives()
     {
         return Lives > 0;
     }
 
     /// <summary>
-    ///     The spare men: the men the player has besides the one in play. With three men, the player sees two spare ones
+    ///     The spare lives: the lives the player has besides the one in play. With three lives, the player sees two spare ones
     ///     during their first.
     /// </summary>
     /// <remarks>
@@ -88,20 +88,20 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives,
     ///         <item>Disassembly: <c>p1_men</c> and <c>p2_men</c>.</item>
     ///     </list>
     /// </remarks>
-    public int GetSpareMen()
+    public int GetSpareLives()
     {
         return Math.Max(0, Lives - 1);
     }
 
-    /// <summary>How many little men are drawn on the screen: minimum between the spare men and the room allocated for men on screen.</summary>
+    /// <summary>How many spare-life icons are drawn on the screen: the smaller of the spare lives and the room there is for icons.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>MANDSV</c>, which stops at <c>#$07</c>.</item>
     ///         <item>Disassembly: not separately labelled.</item>
     ///     </list>
     /// </remarks>
-    public int GetDisplayedMen()
+    public int GetDisplayedSpareLives()
     {
-        return Math.Min(GetSpareMen(), HudLayout.HudMaxMen);
+        return Math.Min(GetSpareLives(), HudLayout.HudMaxSpareLives);
     }
 }

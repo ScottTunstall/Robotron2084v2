@@ -215,7 +215,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE67</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] QuarkSpeedCap =
+    public static readonly int[] QuarkMaxSpeed =
     [
         50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56,
         60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60
@@ -289,7 +289,7 @@ public static class WaveTable
         Grunts, Electrodes, Mommies, Daddies, Mikeys, Hulks, Brains, Spheroids, Quarks,
         GruntMoveDelay, GruntSpeedFloor, MaxDropsX2, EnforcerFireDelay, SpheroidDropDelay,
         HulkBeatIntervalArcadeFrames, BrainFireDelay, BrainBeatWaitArcadeFrames, TankFireDelay, ShellSpeed, QuarkDropDelay,
-        QuarkSpeedCap
+        QuarkMaxSpeed
     ];
 
     /// <summary>Checks that every array has exactly one value for each wave.</summary>
@@ -307,11 +307,11 @@ public static class WaveTable
     ///     half.
     /// </summary>
     /// <param name="waveNumber">The wave number, starting at 1.</param>
-    public static WaveParameters GetParameters(int waveNumber)
+    public static WaveTableRow GetParameters(int waveNumber)
     {
         var wave = ResolveWave(waveNumber);
         var i = wave - 1;
-        return new WaveParameters(
+        return new WaveTableRow(
             wave,
             Grunts[i],
             Electrodes[i],
@@ -333,7 +333,7 @@ public static class WaveTable
             TankFireDelay[i],
             ShellSpeed[i],
             QuarkDropDelay[i],
-            QuarkSpeedCap[i]);
+            QuarkMaxSpeed[i]);
     }
 
     /// <summary>Works out which row of the table a wave uses: its own up to the fortieth, then the second half over and over.</summary>

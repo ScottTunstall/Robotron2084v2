@@ -83,7 +83,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="palette">The live palette, or null in a test.</param>
     /// <param name="playerInvincibleForTesting">True for the playtest player, who cannot be killed.</param>
     /// <param name="contactTest">How two things are tested for touching; null compares their boxes.</param>
-    /// <param name="extraManEveryPoints">How many points earn a spare man.</param>
+    /// <param name="extraLifeEveryPoints">How many points earn a spare life.</param>
     /// <param name="tankShellBugEnabled">
     ///     True to keep the arcade's bug: a shell that fizzles out stays on the wave's shell
     ///     count.
@@ -98,7 +98,7 @@ public sealed class PlayField : ICollisionScene
     /// </param>
     public PlayField(
         SpriteSet sprites,
-        LevelParameters parameters,
+        WaveParameters parameters,
         IPlayerInputSource input,
         Rectangle innerBounds,
         WallColorCycle cycle,
@@ -108,7 +108,7 @@ public sealed class PlayField : ICollisionScene
         GamePalette? palette = null,
         bool playerInvincibleForTesting = true,
         IContactTest? contactTest = null,
-        int extraManEveryPoints = GameSettings.FactoryExtraManEveryPoints,
+        int extraLifeEveryPoints = GameSettings.FactoryExtraLifeEveryPoints,
         bool tankShellBugEnabled = GameSettings.FactoryTankShellBugEnabled,
         bool brainsChaseMikeyBugEnabled = GameSettings.FactoryBrainsChaseMikeyBugEnabled,
         IReadOnlyList<int>? familySlotsLeftOver = null)
@@ -118,7 +118,7 @@ public sealed class PlayField : ICollisionScene
         Parameters = parameters;
         _gruntSpeedProgression = new GruntSpeedProgression(parameters.GruntSpeedFloor);
         Input = input;
-        ScoreBoard = new ScoreBoard(startingScore, extraManEveryPoints);
+        ScoreBoard = new ScoreBoard(startingScore, extraLifeEveryPoints);
         _materialisation = new WaveMaterialisation(random, parameters.BrainCount > 0);
         Palette = palette;
         _contactTest = contactTest ?? new BoxContactTest();
@@ -154,7 +154,7 @@ public sealed class PlayField : ICollisionScene
     public IPlayerInputSource Input { get; }
 
     /// <summary>The wave's numbers: how many of each kind, and how fast.</summary>
-    public LevelParameters Parameters { get; }
+    public WaveParameters Parameters { get; }
 
     /// <summary>The player.</summary>
     public Player Player { get; }
@@ -193,14 +193,14 @@ public sealed class PlayField : ICollisionScene
     /// <remarks>Original source: <c>ENFCNT</c> (notes §11).</remarks>
     public bool CanDropEnforcer()
     {
-        return Entities.GetEnforcerCount() < SpawnTuning.EnforcerCap;
+        return Entities.GetEnforcerCount() < SpawnTuning.MaxEnforcers;
     }
 
     /// <summary>Says whether a quark may drop another tank: there may be twenty at most.</summary>
     /// <remarks>Original source: <c>TNKCNT</c> (notes §11).</remarks>
     public bool CanDropTank()
     {
-        return Entities.GetTankCount() < SpawnTuning.TankCap;
+        return Entities.GetTankCount() < SpawnTuning.MaxTanks;
     }
 
     /// <summary>Says whether a brain may fire another cruise missile.</summary>
@@ -219,10 +219,10 @@ public sealed class PlayField : ICollisionScene
     /// </remarks>
     public bool CanFireShell()
     {
-        if (_tankShellBugEnabled) return _shellsFiredThisWave <= SpawnTuning.ShellCountLimit;
+        if (_tankShellBugEnabled) return _shellsFiredThisWave <= SpawnTuning.MaxShellCount;
 
         var shellsOnField = Entities.TankShells.Count(entity => !entity.IsDead());
-        return shellsOnField <= SpawnTuning.ShellCountLimit;
+        return shellsOnField <= SpawnTuning.MaxShellCount;
     }
 
     /// <summary>Says whether the player can be killed just now: alive, and not the invincible playtest player.</summary>
@@ -239,7 +239,7 @@ public sealed class PlayField : ICollisionScene
         DrawWall(spriteBatch);
 
         // 1b. Laser-vs-wall flares (RRG23 LASDIE): painted OVER the wall, exactly as the ROM writes those pixels.
-        _laserWallFlares.Draw(spriteBatch, Sprites, Parameters.LevelNumber);
+        _laserWallFlares.Draw(spriteBatch, Sprites, Parameters.WaveNumber);
 
         // 2-4. The electrodes, the family and their markers, then the robots — one loop over the field's draw order.
         Entities.DrawBehindShots(spriteBatch, this);
@@ -276,7 +276,7 @@ public sealed class PlayField : ICollisionScene
     public void DrawWall(SpriteBatch spriteBatch)
     {
         Wall.Draw(spriteBatch, Sprites.WallPixelSprite,
-            Palette?.GetColour(WavePaletteTables.GetWallSlot(Parameters.LevelNumber)));
+            Palette?.GetColour(WavePaletteTables.GetWallSlot(Parameters.WaveNumber)));
     }
 
     /// <summary>Lists the player's lasers that are in flight.</summary>
@@ -327,7 +327,7 @@ public sealed class PlayField : ICollisionScene
     }
 
     /// <summary>Says whether the wave is won: every enemy that can be killed is gone. Hulks and electrodes do not count.</summary>
-    public bool IsLevelCleared()
+    public bool IsWaveCleared()
     {
         return Entities.AreEnemiesGone();
     }
@@ -504,7 +504,7 @@ public sealed class PlayField : ICollisionScene
         return Entities.AnyFamilyMemberAvailable();
     }
 
-    /// <summary>Adds a rescue's bonus to the score, and gives the player a spare man if it earns one.</summary>
+    /// <summary>Adds a rescue's bonus to the score, and gives the player a spare life if it earns one.</summary>
     /// <param name="rescues">How many humans have now been rescued this life.</param>
     internal void AwardRescueBonus(int rescues)
     {
@@ -512,7 +512,7 @@ public sealed class PlayField : ICollisionScene
         if (ScoreBoard.Add(ScoreValues.RescueBonus(rescues))) Player.AddLife();
     }
 
-    /// <summary>Adds to the score, and gives the player a spare man with its sound if the score has earned one.</summary>
+    /// <summary>Adds to the score, and gives the player a spare life with its sound if the score has earned one.</summary>
     /// <param name="value">The points to add.</param>
     /// <remarks>Disassembly: the score routine at <c>$DBF9</c>.</remarks>
     internal void AwardScore(int value)

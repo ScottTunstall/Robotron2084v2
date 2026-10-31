@@ -12,12 +12,12 @@ public enum GameMode
     /// <summary>One player.</summary>
     OnePlayer,
 
-    /// <summary>Two players who take turns, each keeping their own score, men and wave.</summary>
+    /// <summary>Two players who take turns, each keeping their own score, lives and wave.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRG23.ASM</c> <c>PLEND</c>, which passes the
-    ///             turn on when a man is lost
+    ///             turn on when a life is lost
     ///         </item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>

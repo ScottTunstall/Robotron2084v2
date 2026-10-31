@@ -45,12 +45,12 @@ internal sealed class LaserWallFlares
     /// <summary>Draws the flashes over the wall, in the colour the wave gives them.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
     /// <param name="sprites">The sprite set, which draws the solid rectangles.</param>
-    /// <param name="levelNumber">The wave, which picks the colour.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites, int levelNumber)
+    /// <param name="waveNumber">The wave, which picks the colour.</param>
+    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites, int waveNumber)
     {
         if (_flares.Count == 0) return;
 
-        var flareColor = sprites.Blitter.GetSlotColour(WavePaletteTables.GetLaserWallSlot(levelNumber));
+        var flareColor = sprites.Blitter.GetSlotColour(WavePaletteTables.GetLaserWallSlot(waveNumber));
         foreach (var flare in _flares)
         {
             if (!flare.Dithered)

@@ -17,7 +17,7 @@ namespace Robotron2084.Level;
 ///         </item>
 ///         <item>Disassembly: not separately labelled, since it is the port's own registry of them</item>
 ///     </list>
-///     The wave counts come from <see cref="LevelParameters" />, the scores from <see cref="ScoreValues" />
+///     The wave counts come from <see cref="WaveParameters" />, the scores from <see cref="ScoreValues" />
 ///     (notes §11.3), and <see cref="LaserHit" /> from the part of each kind's routine that handles a
 ///     laser (notes §61, §64).</item>
 ///     </list>
@@ -44,7 +44,7 @@ namespace Robotron2084.Level;
 /// </param>
 public sealed record RobotKindInfo(
     RobotKind Kind,
-    Func<LevelParameters, int>? WaveCount,
+    Func<WaveParameters, int>? WaveCount,
     int Score,
     Action<PlayField, IEntity, Direction8> LaserHit,
     SoundSequence LaserHitSound,

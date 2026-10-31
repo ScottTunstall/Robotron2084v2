@@ -6,7 +6,7 @@ namespace Robotron2084.Level;
 
 /// <summary>
 ///     A game that is being played: each player's details, and whose turn it is. It is passed from screen to screen,
-///     so a cleared wave or a death keeps every player's score, men and wave.
+///     so a cleared wave or a death keeps every player's score, lives and wave.
 /// </summary>
 /// <remarks>
 ///     <list type="bullet">
@@ -17,9 +17,9 @@ namespace Robotron2084.Level;
 ///         </item>
 ///         <item>Disassembly: not separately labelled</item>
 ///     </list>
-///     When a man is lost, the turn passes to the
-///     other player if they still have men. Otherwise the same player carries on, and when nobody has any
-///     men left the game is over.
+///     When a life is lost, the turn passes to the
+///     other player if they still have lives. Otherwise the same player carries on, and when nobody has any
+///     lives left the game is over.
 /// </remarks>
 public sealed class GameSession
 {
@@ -105,13 +105,13 @@ public sealed class GameSession
     /// <param name="playerTwo">The second player's controls, or null to share the first player's.</param>
     /// <param name="controlSettings">The keys and buttons the players have chosen, or null for the standard ones.</param>
     /// <param name="gameSettings">
-    ///     The game adjustment settings, or null for the factory ones (notes §131). They say how many men
+    ///     The game adjustment settings, or null for the factory ones (notes §131). They say how many lives
     ///     each player starts with, and travel with the game for the screens that follow.
     /// </param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRG23.ASM</c> <c>NSHIP</c>, the men each player starts with, which is
+    ///             Original source: <c>RRG23.ASM</c> <c>NSHIP</c>, the lives each player starts with, which is
     ///             loaded into <c>PLAS</c>.
     ///         </item>
     ///         <item>Disassembly: not separately labelled.</item>
@@ -130,7 +130,7 @@ public sealed class GameSession
                 i + 1,
                 i == 0 ? playerOne : playerTwo ?? playerOne,
                 gameSettings?.TurnsPerPlayer ?? PlayerTuning.StartingLives,
-                PlayerTuning.StartingLevelNumber);
+                PlayerTuning.StartingWaveNumber);
 
         return new GameSession(players)
         {
@@ -139,16 +139,16 @@ public sealed class GameSession
         };
     }
 
-    /// <summary>Says whether at least one player still has men.</summary>
+    /// <summary>Says whether at least one player still has lives.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>ZP1LAS</c> and <c>ZP2LAS</c>.</item>
     ///         <item>Disassembly: not separately labelled.</item>
     ///     </list>
     /// </remarks>
-    public bool AnyPlayerSlotHasMen()
+    public bool AnyPlayerSlotHasLives()
     {
-        return Players.Any(p => p.HasMen());
+        return Players.Any(p => p.HasLives());
     }
 
     /// <summary>The player whose turn it is.</summary>
@@ -182,7 +182,7 @@ public sealed class GameSession
         return Players.Count > 1;
     }
 
-    /// <summary>Passes the turn to the other player after a death, if they have men. Otherwise the turn stays where it is.</summary>
+    /// <summary>Passes the turn to the other player after a death, if they have lives. Otherwise the turn stays where it is.</summary>
     /// <returns>True when the turn moved to the other player.</returns>
     /// <remarks>
     ///     <list type="bullet">
@@ -190,13 +190,13 @@ public sealed class GameSession
     ///         <item>Disassembly: not separately labelled.</item>
     ///     </list>
     /// </remarks>
-    public bool SwitchToPlayerWithMen()
+    public bool SwitchToPlayerWithLives()
     {
         if (Players.Count < 2) return false;
 
         var otherIndex = (CurrentIndex + 1) % Players.Count;
         if (!Players[otherIndex]
-                .HasMen()) return false; // ROM: PLE1, EORA #3 / PLDX / LDB PLAS,X / BEQ PLE1 (toggles back)
+                .HasLives()) return false; // ROM: PLE1, EORA #3 / PLDX / LDB PLAS,X / BEQ PLE1 (toggles back)
 
         CurrentIndex = otherIndex;
         return true;
