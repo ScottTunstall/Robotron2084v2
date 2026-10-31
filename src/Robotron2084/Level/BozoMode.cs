@@ -69,16 +69,16 @@ public static class BozoMode
     }
 
     /// <summary>Gives a wave's parameters, slowed down when the mercy is given.</summary>
-    /// <param name="parameters">The wave table's parameters.</param>
+    /// <param name="waveParameters">The wave table's parameters.</param>
     /// <param name="spareLives">The lives the player has left besides the one in play.</param>
     /// <param name="startingLives">The lives each player starts with (see <see cref="AppliesTo" />).</param>
-    public static WaveParameters Apply(WaveParameters parameters, int spareLives,
+    public static WaveParameters Apply(WaveParameters waveParameters, int spareLives,
         int startingLives = PlayerTuning.StartingLives)
     {
-        if (!AppliesTo(parameters.WaveNumber, spareLives, startingLives)) return parameters;
+        if (!AppliesTo(waveParameters.WaveNumber, spareLives, startingLives)) return waveParameters;
 
-        var row = Table[parameters.WaveNumber - 1];
-        return parameters with
+        var row = Table[waveParameters.WaveNumber - 1];
+        return waveParameters with
         {
             SpheroidDropDelay = row.SpheroidDropDelay,
             EnforcerFireDelay = row.EnforcerFireDelay,

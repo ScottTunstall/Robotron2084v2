@@ -53,24 +53,24 @@ public sealed class PlayerAppear
     private bool _hasStraightPartStarted;
 
     /// <summary>Starts each part of the appear on the tick its time comes.</summary>
-    /// <param name="waveStart">The timekeeper for the start of the wave, which says when each part starts.</param>
+    /// <param name="waveStartSequence">The timekeeper for the start of the wave, which says when each part starts.</param>
     /// <param name="player">The player.</param>
-    /// <param name="entities">Everything on the field. The appear effects join its strip effects.</param>
+    /// <param name="fieldEntities">Everything on the field. The appear effects join its strip effects.</param>
     /// <param name="clip">The edges the strips are cut off at.</param>
-    public void Update(WaveStartSequence waveStart, Player player, FieldEntities entities, StripClip clip)
+    public void Update(WaveStartSequence waveStartSequence, Player player, FieldEntities fieldEntities, StripClip clip)
     {
-        if (!_hasStraightPartStarted && waveStart.HasPlayerAppeared())
+        if (!_hasStraightPartStarted && waveStartSequence.HasPlayerAppeared())
         {
             _hasStraightPartStarted = true;
-            StartStraightStrips(player, entities, clip,
-                waveStart.GetClockUnitsSincePlayerAppeared() - ArcadeClock.UnitsPerPortTick);
+            StartStraightStrips(player, fieldEntities, clip,
+                waveStartSequence.GetClockUnitsSincePlayerAppeared() - ArcadeClock.UnitsPerPortTick);
         }
 
-        if (!_hasLeaningPartStarted && waveStart.HasPlayerDiagonalAppearStarted())
+        if (!_hasLeaningPartStarted && waveStartSequence.HasPlayerDiagonalAppearStarted())
         {
             _hasLeaningPartStarted = true;
-            StartLeaningStrips(player, entities, clip,
-                waveStart.GetClockUnitsSincePlayerDiagonalAppearStarted() - ArcadeClock.UnitsPerPortTick);
+            StartLeaningStrips(player, fieldEntities, clip,
+                waveStartSequence.GetClockUnitsSincePlayerDiagonalAppearStarted() - ArcadeClock.UnitsPerPortTick);
         }
     }
 
@@ -103,7 +103,7 @@ public sealed class PlayerAppear
     ///     sprite.
     /// </summary>
     /// <param name="player">The player.</param>
-    /// <param name="entities">Everything on the field.</param>
+    /// <param name="fieldEntities">Everything on the field.</param>
     /// <param name="clip">The edges the strips are cut off at.</param>
     /// <param name="startClockUnits">How far into a fiftieth of a second the effects start, in clock units.</param>
     /// <remarks>
@@ -117,7 +117,7 @@ public sealed class PlayerAppear
     ///         </item>
     ///     </list>
     /// </remarks>
-    private static void StartLeaningStrips(Player player, FieldEntities entities, StripClip clip, int startClockUnits)
+    private static void StartLeaningStrips(Player player, FieldEntities fieldEntities, StripClip clip, int startClockUnits)
     {
         for (var rowsLeft = GetSpriteRows(player); rowsLeft >= 0; rowsLeft -= LeaningStripRowStep)
         {
@@ -126,8 +126,8 @@ public sealed class PlayerAppear
             if (isAboveLastRow) row = rowsLeft - 1;
 
             foreach (var slope in LeaningStripSlopes)
-                if (entities.HasRoomForStripEffect(StripEngine.Diagonal))
-                    entities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, slope, clip, row,
+                if (fieldEntities.HasRoomForStripEffect(StripEngine.Diagonal))
+                    fieldEntities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, slope, clip, row,
                         startClockUnits));
         }
     }
@@ -137,7 +137,7 @@ public sealed class PlayerAppear
     ///     for every one of the arcade's columns of it.
     /// </summary>
     /// <param name="player">The player.</param>
-    /// <param name="entities">Everything on the field.</param>
+    /// <param name="fieldEntities">Everything on the field.</param>
     /// <param name="clip">The edges the strips are cut off at.</param>
     /// <param name="startClockUnits">How far into a fiftieth of a second the effects start, in clock units.</param>
     /// <remarks>
@@ -152,14 +152,14 @@ public sealed class PlayerAppear
     ///         </item>
     ///     </list>
     /// </remarks>
-    private static void StartStraightStrips(Player player, FieldEntities entities, StripClip clip, int startClockUnits)
+    private static void StartStraightStrips(Player player, FieldEntities fieldEntities, StripClip clip, int startClockUnits)
     {
         for (var row = GetSpriteRows(player) - 1; row >= 0; row--)
-            entities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, 0, clip, row, startClockUnits));
+            fieldEntities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, 0, clip, row, startClockUnits));
 
         for (var column = GetSpriteColumns(player) - 1; column >= 0; column--)
-            if (entities.HasRoomForStripEffect(StripEngine.Horizontal))
-                entities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Columns, 0, clip,
+            if (fieldEntities.HasRoomForStripEffect(StripEngine.Horizontal))
+                fieldEntities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Columns, 0, clip,
                     column * ScreenSize.ArcadePixelsPerByte, startClockUnits));
     }
 }

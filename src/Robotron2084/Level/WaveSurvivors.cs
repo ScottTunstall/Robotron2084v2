@@ -25,31 +25,31 @@ public static class WaveSurvivors
     private const int EnforcersPerSpheroid = 4;
 
     /// <summary>Counts what is left on a field.</summary>
-    /// <param name="field">The field the player has died on.</param>
+    /// <param name="playField">The field the player has died on.</param>
     /// <returns>The wave's parameters with the counts of what is left, to start the next life with.</returns>
-    public static WaveParameters GetFrom(PlayField field)
+    public static WaveParameters GetFrom(PlayField playField)
     {
-        var entities = field.Entities;
-        var parameters = field.Parameters;
-        var gruntLimit = entities.Grunts.Where(grunt => grunt.IsAlive()).Select(grunt => grunt.MoveDelayBeats)
-            .DefaultIfEmpty(parameters.GruntMoveDelay).Min();
+        var fieldEntities = playField.FieldEntities;
+        var waveParameters = playField.WaveParameters;
+        var gruntLimit = fieldEntities.Grunts.Where(grunt => grunt.IsAlive()).Select(grunt => grunt.MoveDelayBeats)
+            .DefaultIfEmpty(waveParameters.GruntMoveDelay).Min();
 
-        return parameters with
+        return waveParameters with
         {
-            GruntCount = CountAlive(entities.Grunts),
-            BerzerkRobotCount = CountAlive(entities.BerzerkRobots),
-            GorfCount = CountAlive(entities.Gorfs),
-            ElectrodeCount = CountAlive(entities.Electrodes),
-            MikeyCount = CountFamilyMembers(entities, HumanKind.Mikey),
-            MommyCount = CountFamilyMembers(entities, HumanKind.Mommy),
-            DaddyCount = CountFamilyMembers(entities, HumanKind.Daddy),
-            HulkCount = CountAlive(entities.Hulks),
-            BrainCount = CountAlive(entities.Brains),
-            SpheroidCount = CountSpheroidsAfterConverting(CountAlive(entities.Enforcers),
-                CountAlive(entities.Spheroids), parameters.SpheroidCount),
-            QuarkCount = CountAlive(entities.Quarks),
-            TankCount = CountAlive(entities.Tanks),
-            GruntMoveDelay = Math.Max(gruntLimit, parameters.GruntSpeedFloor)
+            GruntCount = CountAlive(fieldEntities.Grunts),
+            BerzerkRobotCount = CountAlive(fieldEntities.BerzerkRobots),
+            GorfCount = CountAlive(fieldEntities.Gorfs),
+            ElectrodeCount = CountAlive(fieldEntities.Electrodes),
+            MikeyCount = CountFamilyMembers(fieldEntities, HumanKind.Mikey),
+            MommyCount = CountFamilyMembers(fieldEntities, HumanKind.Mommy),
+            DaddyCount = CountFamilyMembers(fieldEntities, HumanKind.Daddy),
+            HulkCount = CountAlive(fieldEntities.Hulks),
+            BrainCount = CountAlive(fieldEntities.Brains),
+            SpheroidCount = CountSpheroidsAfterConverting(CountAlive(fieldEntities.Enforcers),
+                CountAlive(fieldEntities.Spheroids), waveParameters.SpheroidCount),
+            QuarkCount = CountAlive(fieldEntities.Quarks),
+            TankCount = CountAlive(fieldEntities.Tanks),
+            GruntMoveDelay = Math.Max(gruntLimit, waveParameters.GruntSpeedFloor)
         };
     }
 
@@ -62,11 +62,11 @@ public static class WaveSurvivors
     }
 
     /// <summary>Counts the members of one kind of family member who are standing on the field and free.</summary>
-    /// <param name="entities">What is on the field.</param>
+    /// <param name="fieldEntities">What is on the field.</param>
     /// <param name="kind">Which family member to count.</param>
-    private static int CountFamilyMembers(FieldEntities entities, HumanKind kind)
+    private static int CountFamilyMembers(FieldEntities fieldEntities, HumanKind kind)
     {
-        return entities.Family.Members.Count(human => human.Kind == kind && human.IsGraspable());
+        return fieldEntities.FamilyList.Members.Count(human => human.Kind == kind && human.IsGraspable());
     }
 
     /// <summary>Works out how many spheroids there are once the leftover enforcers have turned back into them.</summary>

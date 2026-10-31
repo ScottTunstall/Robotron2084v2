@@ -56,38 +56,38 @@ public sealed record WaveParameters(
 {
     /// <summary>Makes the parameters for a wave from the arcade's wave table.</summary>
     /// <param name="waveNumber">The wave number.</param>
-    /// <param name="wave">The wave table's row for it.</param>
+    /// <param name="waveTableRow">The wave table's row for it.</param>
     /// <remarks>
     ///     <c>MaxEnforcersPerSpheroid</c> and <c>MaxTanksPerQuark</c> are kept in step with <c>MaxDropsX2</c>, for
     ///     anything that still reads them.
     /// </remarks>
-    public static WaveParameters CreateFromWave(int waveNumber, WaveTableRow wave)
+    public static WaveParameters CreateFromWave(int waveNumber, WaveTableRow waveTableRow)
     {
         return new WaveParameters(
             waveNumber,
-            wave.GruntCount,
-            wave.ElectrodeCount,
-            wave.MommyCount,
-            wave.DaddyCount,
-            wave.MikeyCount,
-            wave.HulkCount,
-            wave.BrainCount,
-            wave.SpheroidCount,
-            wave.QuarkCount,
-            wave.MaxDropsX2,
-            (wave.MaxDropsX2 + 1) / 2,
-            (wave.MaxDropsX2 + 1) / 2,
-            wave.GruntMoveDelay,
-            wave.GruntSpeedFloor,
-            wave.EnforcerFireDelay,
-            wave.SpheroidDropDelay,
-            wave.HulkBeatIntervalArcadeFrames,
-            wave.BrainFireDelay,
-            wave.BrainBeatWaitArcadeFrames,
-            wave.TankFireDelay,
-            wave.ShellSpeed,
-            wave.QuarkDropDelay,
-            wave.QuarkMaxSpeed,
+            waveTableRow.GruntCount,
+            waveTableRow.ElectrodeCount,
+            waveTableRow.MommyCount,
+            waveTableRow.DaddyCount,
+            waveTableRow.MikeyCount,
+            waveTableRow.HulkCount,
+            waveTableRow.BrainCount,
+            waveTableRow.SpheroidCount,
+            waveTableRow.QuarkCount,
+            waveTableRow.MaxDropsX2,
+            (waveTableRow.MaxDropsX2 + 1) / 2,
+            (waveTableRow.MaxDropsX2 + 1) / 2,
+            waveTableRow.GruntMoveDelay,
+            waveTableRow.GruntSpeedFloor,
+            waveTableRow.EnforcerFireDelay,
+            waveTableRow.SpheroidDropDelay,
+            waveTableRow.HulkBeatIntervalArcadeFrames,
+            waveTableRow.BrainFireDelay,
+            waveTableRow.BrainBeatWaitArcadeFrames,
+            waveTableRow.TankFireDelay,
+            waveTableRow.ShellSpeed,
+            waveTableRow.QuarkDropDelay,
+            waveTableRow.QuarkMaxSpeed,
             0);
     }
 }

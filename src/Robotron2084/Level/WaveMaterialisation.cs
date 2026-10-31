@@ -137,7 +137,7 @@ public sealed class WaveMaterialisation
     private readonly HashSet<IEntity> _transported = [];
 
     /// <summary>The transporter that beams the robots in, or null when the wave is not a brain wave.</summary>
-    private readonly RobotTransporter? _transporter;
+    private readonly RobotTransporter? _robotTransporter;
 
     /// <summary>
     ///     The robots waiting to be beamed in together, when the wave is a brain wave. "Transport" is the arcade's own
@@ -184,14 +184,14 @@ public sealed class WaveMaterialisation
     /// </remarks>
     public WaveMaterialisation(Random random, bool beamsIn)
     {
-        if (beamsIn) _transporter = new RobotTransporter(random);
+        if (beamsIn) _robotTransporter = new RobotTransporter(random);
     }
 
     /// <summary>
     ///     Moves the sequence on by one tick. On each fiftieth of a second the loop makes a pass: it starts the appear
     ///     effect of the robot whose turn it is, and it draws whole the robot whose appear effect has had time to finish.
     /// </summary>
-    /// <param name="entities">
+    /// <param name="fieldEntities">
     ///     Everything on the field. The appear effects join its strip effects, and it says whether a strip
     ///     routine has a record free.
     /// </param>
@@ -202,9 +202,9 @@ public sealed class WaveMaterialisation
     ///         <item>Disassembly: <c>$290D</c> to <c>$294E</c>.</item>
     ///     </list>
     /// </remarks>
-    public void Advance(FieldEntities entities, Rectangle playfieldBounds)
+    public void Advance(FieldEntities fieldEntities, Rectangle playfieldBounds)
     {
-        if (_transporter is not null) AdvanceTransport(_transporter);
+        if (_robotTransporter is not null) AdvanceTransport(_robotTransporter);
 
         if (_appearNumbers.Count == 0)
         {
@@ -217,12 +217,12 @@ public sealed class WaveMaterialisation
         if (_appearClockUnits < ArcadeClock.UnitsPerArcadeFrame) return;
 
         _appearClockUnits -= ArcadeClock.UnitsPerArcadeFrame;
-        MakePass(entities, playfieldBounds);
+        MakePass(fieldEntities, playfieldBounds);
     }
 
     /// <summary>Draws the robots being beamed in, when this is a brain wave and the beaming is under way.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The sprite set.</param>
+    /// <param name="spriteSet">The sprite set.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -235,10 +235,10 @@ public sealed class WaveMaterialisation
     ///     is the arcade's own word for beaming the robots in.</item>
     ///     </list>
     /// </remarks>
-    public void DrawTransport(SpriteBatch spriteBatch, SpriteSet sprites)
+    public void DrawTransport(SpriteBatch spriteBatch, SpriteSet spriteSet)
     {
-        if (_transportBegun && _transporter is not null && !_transporter.IsFinished())
-            _transporter.Draw(spriteBatch, sprites);
+        if (_transportBegun && _robotTransporter is not null && !_robotTransporter.IsFinished())
+            _robotTransporter.Draw(spriteBatch, spriteSet);
     }
 
     /// <summary>The number of robots that have not yet been given their turn to appear.</summary>
@@ -261,19 +261,19 @@ public sealed class WaveMaterialisation
     ///     Adds a robot to the end of the sequence. It counts as appearing from now, because the arcade keeps every robot
     ///     off until the loop draws it whole.
     /// </summary>
-    /// <param name="robot">The robot to bring in.</param>
-    public void Queue(IEntity robot)
+    /// <param name="robotEntity">The robot to bring in.</param>
+    public void Queue(IEntity robotEntity)
     {
-        if (_transporter is not null && !_transportBegun)
+        if (_robotTransporter is not null && !_transportBegun)
         {
-            _transportQueue.Add(robot);
+            _transportQueue.Add(robotEntity);
             return;
         }
 
         // A robot added after the loop has passed its place takes the next pass.
         _lastAppearNumber = Math.Max(_lastAppearNumber, _passes) + 1;
-        _appearNumbers[robot] = _lastAppearNumber;
-        _robotsByAppearNumber[_lastAppearNumber] = robot;
+        _appearNumbers[robotEntity] = _lastAppearNumber;
+        _robotsByAppearNumber[_lastAppearNumber] = robotEntity;
     }
 
     /// <summary>
@@ -340,7 +340,7 @@ public sealed class WaveMaterialisation
     ///     Starts the beaming in once the robots are all queued, moves it on, and lets the robots go when it has
     ///     finished.
     /// </summary>
-    /// <param name="transporter">The transporter that does the beaming in.</param>
+    /// <param name="robotTransporter">The transporter that does the beaming in.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -350,11 +350,11 @@ public sealed class WaveMaterialisation
     ///         <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>)</item>
     ///     </list>
     /// </remarks>
-    private void AdvanceTransport(RobotTransporter transporter)
+    private void AdvanceTransport(RobotTransporter robotTransporter)
     {
         if (!_transportBegun && _transportQueue.Count > 0)
         {
-            transporter.Begin(_transportQueue);
+            robotTransporter.Begin(_transportQueue);
             _transported.UnionWith(_transportQueue);
             _transportQueue.Clear();
             _transportBegun = true;
@@ -362,18 +362,18 @@ public sealed class WaveMaterialisation
 
         if (!_transportBegun) return;
 
-        transporter.Update();
-        if (transporter.IsFinished()) _transported.Clear();
+        robotTransporter.Update();
+        if (robotTransporter.IsFinished()) _transported.Clear();
     }
 
     /// <summary>Makes one pass of the loop.</summary>
-    /// <param name="entities">Everything on the field.</param>
+    /// <param name="fieldEntities">Everything on the field.</param>
     /// <param name="playfieldBounds">The inside of the wall, in port pixels.</param>
-    private void MakePass(FieldEntities entities, Rectangle playfieldBounds)
+    private void MakePass(FieldEntities fieldEntities, Rectangle playfieldBounds)
     {
         _passes++;
         if (_robotsByAppearNumber.TryGetValue(_passes, out var appearingRobot))
-            StartAppear(appearingRobot, entities, playfieldBounds);
+            StartAppear(appearingRobot, fieldEntities, playfieldBounds);
 
         // The arcade's loop now draws this robot whole on every pass (ROM: APREF), so it stops being held back.
         if (_robotsByAppearNumber.Remove(_passes - PassesBeforeRobotIsDrawnWhole, out var wholeRobot))
@@ -384,8 +384,8 @@ public sealed class WaveMaterialisation
     ///     Gives a robot its appear effect, if the strip routine that would run it has a record free. When it has none
     ///     the robot gets no effect, and the loop moves on to the next robot all the same.
     /// </summary>
-    /// <param name="robot">The robot whose turn it is.</param>
-    /// <param name="entities">Everything on the field.</param>
+    /// <param name="robotEntity">The robot whose turn it is.</param>
+    /// <param name="fieldEntities">Everything on the field.</param>
     /// <param name="playfieldBounds">The inside of the wall, in port pixels.</param>
     /// <remarks>
     ///     <list type="bullet">
@@ -407,17 +407,17 @@ public sealed class WaveMaterialisation
     ///     its vertical routine has none, so the lean is nothing.</item>
     ///     </list>
     /// </remarks>
-    private void StartAppear(IEntity robot, FieldEntities entities, Rectangle playfieldBounds)
+    private void StartAppear(IEntity robotEntity, FieldEntities fieldEntities, Rectangle playfieldBounds)
     {
-        if (robot is not IAnimationFrameSource frameSource) return;
+        if (robotEntity is not IAnimationFrameSource animationFrameSource) return;
 
         var fansInByColumns = ((_passes - 1) & ColumnFanSequenceMask) == ColumnFanSequenceMask;
-        var engine = StripEngine.Vertical;
-        if (fansInByColumns) engine = StripEngine.Horizontal;
+        var stripEngine = StripEngine.Vertical;
+        if (fansInByColumns) stripEngine = StripEngine.Horizontal;
 
-        if (!entities.HasRoomForStripEffect(engine)) return;
+        if (!fieldEntities.HasRoomForStripEffect(stripEngine)) return;
 
-        var robotBounds = robot.GetBounds();
+        var robotBounds = robotEntity.GetBounds();
 
         // The arcade's strip routines take their first step on the fiftieth of a second after this pass, so the effect starts with what is left of this one.
         var startClockUnits = _appearClockUnits - ArcadeClock.UnitsPerPortTick;
@@ -429,8 +429,8 @@ public sealed class WaveMaterialisation
             centreFinder = GetCentreColumnFinder(robotBounds, playfieldBounds);
         }
 
-        entities.Add(StripEffect.CreateAppear(
-            frameSource,
+        fieldEntities.Add(StripEffect.CreateAppear(
+            animationFrameSource,
             robotBounds,
             fanAxis,
             0,

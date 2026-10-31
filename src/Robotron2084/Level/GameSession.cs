@@ -77,11 +77,11 @@ public sealed class GameSession
     public IReadOnlyList<PlayerSlot> Players { get; }
 
     /// <summary>Starts a new game for one or two players, as the arcade's two start buttons do.</summary>
-    /// <param name="input">The first player's controls.</param>
+    /// <param name="playerInputSource">The first player's controls.</param>
     /// <param name="playerCount">How many people are playing, 1 or 2.</param>
-    /// <param name="secondPlayerInput">The second player's controls, or null to share the first player's.</param>
-    public static GameSession CreateNewGame(IPlayerInputSource input, int playerCount,
-        IPlayerInputSource? secondPlayerInput = null)
+    /// <param name="secondPlayerInputSource">The second player's controls, or null to share the first player's.</param>
+    public static GameSession CreateNewGame(IPlayerInputSource playerInputSource, int playerCount,
+        IPlayerInputSource? secondPlayerInputSource = null)
     {
         if (playerCount is < 1 or > 2)
             throw new ArgumentOutOfRangeException(nameof(playerCount), playerCount,
@@ -92,8 +92,8 @@ public sealed class GameSession
 
         return CreateNewGame(
             mode,
-            input,
-            secondPlayerInput);
+            playerInputSource,
+            secondPlayerInputSource);
     }
 
     /// <summary>
@@ -101,8 +101,8 @@ public sealed class GameSession
     ///     controls (notes §101).
     /// </summary>
     /// <param name="mode">How many people are playing, and whether two take turns.</param>
-    /// <param name="playerOne">The first player's controls.</param>
-    /// <param name="playerTwo">The second player's controls, or null to share the first player's.</param>
+    /// <param name="firstPlayerInputSource">The first player's controls.</param>
+    /// <param name="secondPlayerInputSource">The second player's controls, or null to share the first player's.</param>
     /// <param name="controlSettings">The keys and buttons the players have chosen, or null for the standard ones.</param>
     /// <param name="gameSettings">
     ///     The game adjustment settings, or null for the factory ones (notes §131). They say how many lives
@@ -117,8 +117,8 @@ public sealed class GameSession
     ///         <item>Disassembly: not separately labelled.</item>
     ///     </list>
     /// </remarks>
-    public static GameSession CreateNewGame(GameMode mode, IPlayerInputSource playerOne,
-        IPlayerInputSource? playerTwo = null, ControlSettings? controlSettings = null, GameSettings? gameSettings = null)
+    public static GameSession CreateNewGame(GameMode mode, IPlayerInputSource firstPlayerInputSource,
+        IPlayerInputSource? secondPlayerInputSource = null, ControlSettings? controlSettings = null, GameSettings? gameSettings = null)
     {
         var chosenGameSettings = gameSettings ?? GameSettings.CreateFactoryDefaults();
         var playerCount = 2;
@@ -128,7 +128,7 @@ public sealed class GameSession
         for (var i = 0; i < playerCount; i++)
             players[i] = new PlayerSlot(
                 i + 1,
-                i == 0 ? playerOne : playerTwo ?? playerOne,
+                i == 0 ? firstPlayerInputSource : secondPlayerInputSource ?? firstPlayerInputSource,
                 gameSettings?.TurnsPerPlayer ?? PlayerTuning.StartingLives,
                 PlayerTuning.StartingWaveNumber);
 

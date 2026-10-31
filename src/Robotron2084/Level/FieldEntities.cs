@@ -26,11 +26,11 @@ public sealed class FieldEntities
         _updateOrder =
         [
             Electrodes, Grunts, BerzerkRobots, Gorfs, Hulks, Spheroids, Enforcers, Quarks, Tanks, Brains, Progs,
-            Sparks, TankShells, CruiseMissiles, Family.Members, Skulls, RescueScores, Explosions, ScoreBursts
+            Sparks, TankShells, CruiseMissiles, FamilyList.Members, Skulls, RescueScores, Explosions, ScoreBursts
         ];
         _drawOrderBehindShots =
         [
-            Electrodes, Skulls, RescueScores, Family.Members, Grunts, BerzerkRobots, Gorfs, Hulks, Spheroids, Enforcers,
+            Electrodes, Skulls, RescueScores, FamilyList.Members, Grunts, BerzerkRobots, Gorfs, Hulks, Spheroids, Enforcers,
             Quarks, Tanks, Brains, Progs
         ];
         _drawOrderInFrontOfShots =
@@ -67,7 +67,7 @@ public sealed class FieldEntities
     public EntityList<StripEffect> Explosions { get; } = new();
 
     /// <summary>The family: who is on the field and the places the brains and hulks pick them by.</summary>
-    public FamilyList Family { get; } = new();
+    public FamilyList FamilyList { get; } = new();
 
     /// <summary>The Gorfs.</summary>
     public EntityList<Gorf> Gorfs { get; } = new();
@@ -113,142 +113,142 @@ public sealed class FieldEntities
     public IReadOnlyList<IEntityList> UpdateOrder => _updateOrder;
 
     /// <summary>Puts a Brain on the field.</summary>
-    /// <param name="entity">The Brain to add.</param>
-    public void Add(Brain entity)
+    /// <param name="brain">The Brain to add.</param>
+    public void Add(Brain brain)
     {
-        Brains.Add(entity);
+        Brains.Add(brain);
     }
 
     /// <summary>Puts a BerzerkRobot on the field.</summary>
-    /// <param name="entity">The BerzerkRobot to add.</param>
-    public void Add(BerzerkRobot entity)
+    /// <param name="berzerkRobot">The BerzerkRobot to add.</param>
+    public void Add(BerzerkRobot berzerkRobot)
     {
-        BerzerkRobots.Add(entity);
+        BerzerkRobots.Add(berzerkRobot);
     }
 
     /// <summary>Puts a CruiseMissile on the field.</summary>
-    /// <param name="entity">The CruiseMissile to add.</param>
-    public void Add(CruiseMissile entity)
+    /// <param name="cruiseMissile">The CruiseMissile to add.</param>
+    public void Add(CruiseMissile cruiseMissile)
     {
-        CruiseMissiles.Add(entity);
+        CruiseMissiles.Add(cruiseMissile);
     }
 
     /// <summary>Puts an Electrode on the field.</summary>
-    /// <param name="entity">The Electrode to add.</param>
-    public void Add(Electrode entity)
+    /// <param name="electrode">The Electrode to add.</param>
+    public void Add(Electrode electrode)
     {
-        Electrodes.Add(entity);
+        Electrodes.Add(electrode);
     }
 
     /// <summary>Puts an Enforcer on the field.</summary>
-    /// <param name="entity">The Enforcer to add.</param>
-    public void Add(Enforcer entity)
+    /// <param name="enforcer">The Enforcer to add.</param>
+    public void Add(Enforcer enforcer)
     {
-        Enforcers.Add(entity);
+        Enforcers.Add(enforcer);
     }
 
     /// <summary>Puts a Gorf on the field.</summary>
-    /// <param name="entity">The Gorf to add.</param>
-    public void Add(Gorf entity)
+    /// <param name="gorf">The Gorf to add.</param>
+    public void Add(Gorf gorf)
     {
-        Gorfs.Add(entity);
+        Gorfs.Add(gorf);
     }
 
     /// <summary>Puts a Grunt on the field.</summary>
-    /// <param name="entity">The Grunt to add.</param>
-    public void Add(Grunt entity)
+    /// <param name="grunt">The Grunt to add.</param>
+    public void Add(Grunt grunt)
     {
-        Grunts.Add(entity);
+        Grunts.Add(grunt);
     }
 
     /// <summary>Puts a Hulk on the field.</summary>
-    /// <param name="entity">The Hulk to add.</param>
-    public void Add(Hulk entity)
+    /// <param name="hulk">The Hulk to add.</param>
+    public void Add(Hulk hulk)
     {
-        Hulks.Add(entity);
+        Hulks.Add(hulk);
     }
 
     /// <summary>Puts a Prog on the field.</summary>
-    /// <param name="entity">The Prog to add.</param>
-    public void Add(Prog entity)
+    /// <param name="prog">The Prog to add.</param>
+    public void Add(Prog prog)
     {
-        Progs.Add(entity);
+        Progs.Add(prog);
     }
 
     /// <summary>Puts a Quark on the field.</summary>
-    /// <param name="entity">The Quark to add.</param>
-    public void Add(Quark entity)
+    /// <param name="quark">The Quark to add.</param>
+    public void Add(Quark quark)
     {
-        Quarks.Add(entity);
+        Quarks.Add(quark);
     }
 
     /// <summary>Puts a Spark on the field.</summary>
-    /// <param name="entity">The Spark to add.</param>
-    public void Add(Spark entity)
+    /// <param name="spark">The Spark to add.</param>
+    public void Add(Spark spark)
     {
-        Sparks.Add(entity);
+        Sparks.Add(spark);
     }
 
     /// <summary>Puts a Spheroid on the field.</summary>
-    /// <param name="entity">The Spheroid to add.</param>
-    public void Add(Spheroid entity)
+    /// <param name="spheroid">The Spheroid to add.</param>
+    public void Add(Spheroid spheroid)
     {
-        Spheroids.Add(entity);
+        Spheroids.Add(spheroid);
     }
 
     /// <summary>Puts a Tank on the field.</summary>
-    /// <param name="entity">The Tank to add.</param>
-    public void Add(Tank entity)
+    /// <param name="tank">The Tank to add.</param>
+    public void Add(Tank tank)
     {
-        Tanks.Add(entity);
+        Tanks.Add(tank);
     }
 
     /// <summary>Puts a TankShell on the field.</summary>
-    /// <param name="entity">The TankShell to add.</param>
-    public void Add(TankShell entity)
+    /// <param name="tankShell">The TankShell to add.</param>
+    public void Add(TankShell tankShell)
     {
-        TankShells.Add(entity);
+        TankShells.Add(tankShell);
     }
 
     /// <summary>Puts a SkullMarker on the field.</summary>
-    /// <param name="entity">The SkullMarker to add.</param>
-    public void Add(SkullMarker entity)
+    /// <param name="skullMarker">The SkullMarker to add.</param>
+    public void Add(SkullMarker skullMarker)
     {
-        Skulls.Add(entity);
+        Skulls.Add(skullMarker);
     }
 
     /// <summary>Puts a RescueScoreMarker on the field.</summary>
-    /// <param name="entity">The RescueScoreMarker to add.</param>
-    public void Add(RescueScoreMarker entity)
+    /// <param name="rescueScoreMarker">The RescueScoreMarker to add.</param>
+    public void Add(RescueScoreMarker rescueScoreMarker)
     {
-        RescueScores.Add(entity);
+        RescueScores.Add(rescueScoreMarker);
     }
 
     /// <summary>Puts a ScoreBurst on the field.</summary>
-    /// <param name="entity">The ScoreBurst to add.</param>
-    public void Add(ScoreBurst entity)
+    /// <param name="scoreBurst">The ScoreBurst to add.</param>
+    public void Add(ScoreBurst scoreBurst)
     {
-        ScoreBursts.Add(entity);
+        ScoreBursts.Add(scoreBurst);
     }
 
     /// <summary>Puts a StripEffect on the field.</summary>
-    /// <param name="entity">The StripEffect to add.</param>
-    public void Add(StripEffect entity)
+    /// <param name="stripEffect">The StripEffect to add.</param>
+    public void Add(StripEffect stripEffect)
     {
-        Explosions.Add(entity);
+        Explosions.Add(stripEffect);
     }
 
     /// <summary>Puts a family member on the field, in the next free place in the family list.</summary>
     /// <param name="human">The family member to add.</param>
     public void Add(Human human)
     {
-        Family.Add(human);
+        FamilyList.Add(human);
     }
 
     /// <summary>Says whether any family member is standing on the field and free.</summary>
     public bool AnyFamilyMemberAvailable()
     {
-        return Family.AnyAvailable();
+        return FamilyList.AnyAvailable();
     }
 
     /// <summary>Says whether every enemy that must be cleared to finish the wave is gone.</summary>
@@ -266,23 +266,23 @@ public sealed class FieldEntities
     public bool AreEnemiesGone()
     {
         IEntityList[] enemyLists = [Grunts, BerzerkRobots, Gorfs, Spheroids, Enforcers, Quarks, Tanks, Brains];
-        return enemyLists.All(list => list.Entities.All(entity => entity.IsDead()));
+        return enemyLists.All(list => list.FieldEntities.All(entity => entity.IsDead()));
     }
 
     /// <summary>Draws the lists that go behind the player's lasers.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="field">The field, which decides what may be drawn yet.</param>
-    public void DrawBehindShots(SpriteBatch spriteBatch, PlayField field)
+    /// <param name="playField">The field, which decides what may be drawn yet.</param>
+    public void DrawBehindShots(SpriteBatch spriteBatch, PlayField playField)
     {
-        DrawAll(_drawOrderBehindShots, spriteBatch, field);
+        DrawAll(_drawOrderBehindShots, spriteBatch, playField);
     }
 
     /// <summary>Draws the lists that go in front of the player's lasers.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="field">The field, which decides what may be drawn yet.</param>
-    public void DrawInFrontOfShots(SpriteBatch spriteBatch, PlayField field)
+    /// <param name="playField">The field, which decides what may be drawn yet.</param>
+    public void DrawInFrontOfShots(SpriteBatch spriteBatch, PlayField playField)
     {
-        DrawAll(_drawOrderInFrontOfShots, spriteBatch, field);
+        DrawAll(_drawOrderInFrontOfShots, spriteBatch, playField);
     }
 
     /// <summary>Counts the cruise missiles in flight.</summary>
@@ -301,20 +301,20 @@ public sealed class FieldEntities
     /// <param name="kind">The kind to look for.</param>
     public IEnumerable<IEntity> GetEntities(RobotKind kind)
     {
-        return GetList(kind).Entities;
+        return GetList(kind).FieldEntities;
     }
 
     /// <summary>Finds the family member in a place in the family list, if they are standing and free.</summary>
     /// <param name="slot">The place to look in.</param>
     public Human? GetFamilyMemberInSlot(int slot)
     {
-        return Family.GetMemberInSlot(slot);
+        return FamilyList.GetMemberInSlot(slot);
     }
 
     /// <summary>Lists every family member who has been put on the field.</summary>
     public IReadOnlyList<Human> GetFamilyMembers()
     {
-        return Family.Members;
+        return FamilyList.Members;
     }
 
     /// <summary>Finds the list a kind of robot lives in. This is the one link from the kinds to the lists.</summary>
@@ -346,7 +346,7 @@ public sealed class FieldEntities
     /// <param name="from">The point to measure from.</param>
     public int GetNearestFamilySlot(IntVector2 from)
     {
-        return Family.GetNearestSlot(from);
+        return FamilyList.GetNearestSlot(from);
     }
 
     /// <summary>Finds where the nearest living robot to a point is, for the attract demo's player to steer by.</summary>
@@ -360,7 +360,7 @@ public sealed class FieldEntities
     {
         var living = RobotKinds.All
             .Where(kind => kind.IsChasedByDemoPlayer)
-            .SelectMany(kind => GetList(kind.Kind).Entities)
+            .SelectMany(kind => GetList(kind.Kind).FieldEntities)
             .Where(entity => entity.IsAlive());
 
         IntVector2? nearest = null;
@@ -384,7 +384,7 @@ public sealed class FieldEntities
     /// </summary>
     public IReadOnlyList<int> GetOccupiedFamilySlots()
     {
-        return Family.GetOccupiedSlots();
+        return FamilyList.GetOccupiedSlots();
     }
 
     /// <summary>Counts the sparks in flight.</summary>
@@ -438,18 +438,18 @@ public sealed class FieldEntities
 
     /// <summary>Moves every list on by one tick, in the order the arcade does them.</summary>
     /// <param name="gameTime">The time for this tick.</param>
-    /// <param name="field">The field the entities are on.</param>
-    public void UpdateAll(GameTime gameTime, PlayField field)
+    /// <param name="playField">The field the entities are on.</param>
+    public void UpdateAll(GameTime gameTime, PlayField playField)
     {
-        foreach (var list in _updateOrder) list.UpdateAll(gameTime, field);
+        foreach (var list in _updateOrder) list.UpdateAll(gameTime, playField);
     }
 
     /// <summary>Draws some lists in order.</summary>
     /// <param name="lists">The lists to draw.</param>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="field">The field, which decides what may be drawn yet.</param>
-    private static void DrawAll(IEntityList[] lists, SpriteBatch spriteBatch, PlayField field)
+    /// <param name="playField">The field, which decides what may be drawn yet.</param>
+    private static void DrawAll(IEntityList[] lists, SpriteBatch spriteBatch, PlayField playField)
     {
-        foreach (var list in lists) list.DrawAll(spriteBatch, field);
+        foreach (var list in lists) list.DrawAll(spriteBatch, playField);
     }
 }

@@ -51,16 +51,16 @@ public sealed class WaveParameterGenerator
     {
         if (_customWaveTable is { Length: > 0 } table)
         {
-            var row = table[(waveNumber - 1) % table.Length];
+            var customWaveTableRow = table[(waveNumber - 1) % table.Length];
             return new WaveParameters(
                 waveNumber,
-                row.GruntCount,
-                HulkCount: row.HulkCount,
-                SpheroidCount: row.SpheroidCount,
-                QuarkCount: row.QuarkCount,
-                ElectrodeCount: row.ElectrodeCount,
-                MaxEnforcersPerSpheroid: row.MaxEnforcersPerSpheroid,
-                MaxTanksPerQuark: row.MaxTanksPerQuark,
+                customWaveTableRow.GruntCount,
+                HulkCount: customWaveTableRow.HulkCount,
+                SpheroidCount: customWaveTableRow.SpheroidCount,
+                QuarkCount: customWaveTableRow.QuarkCount,
+                ElectrodeCount: customWaveTableRow.ElectrodeCount,
+                MaxEnforcersPerSpheroid: customWaveTableRow.MaxEnforcersPerSpheroid,
+                MaxTanksPerQuark: customWaveTableRow.MaxTanksPerQuark,
                 EnemySpeedBonus: Math.Min(waveNumber - 1, SpawnTuning.EnemySpeedBonusMaxPerWave));
         }
 
@@ -81,9 +81,9 @@ public sealed class WaveParameterGenerator
             foreach (var rawLine in File.ReadAllLines(path))
             {
                 if (!TryParseRow(rawLine.Trim(),
-                        out var row)) return null; // malformed data row -> treat the whole table as unusable
+                        out var customWaveTableRow)) return null; // malformed data row -> treat the whole table as unusable
 
-                if (row is not null) rows.Add(row);
+                if (customWaveTableRow is not null) rows.Add(customWaveTableRow);
             }
 
             if (rows.Count == 0) return null;
@@ -98,11 +98,11 @@ public sealed class WaveParameterGenerator
 
     /// <summary>Reads one line of the replacement table.</summary>
     /// <param name="line">The trimmed line.</param>
-    /// <param name="row">The parsed row, or null for a line to skip (blank, the header, or no usable wave number).</param>
+    /// <param name="customWaveTableRow">The parsed row, or null for a line to skip (blank, the header, or no usable wave number).</param>
     /// <returns>False when the line is a data row with a malformed count.</returns>
-    private static bool TryParseRow(string line, out CustomWaveTableRow? row)
+    private static bool TryParseRow(string line, out CustomWaveTableRow? customWaveTableRow)
     {
-        row = null;
+        customWaveTableRow = null;
         var fields = line.Split(',');
         if (line.Length == 0 || fields.Length != 8 || !int.TryParse(fields[0], out var wave) || wave <= 0)
             return true;
@@ -112,7 +112,7 @@ public sealed class WaveParameterGenerator
             if (!int.TryParse(fields[i + 1], out counts[i]))
                 return false;
 
-        row = new CustomWaveTableRow(counts[0], counts[1], counts[2], counts[3], counts[4], counts[5], counts[6]);
+        customWaveTableRow = new CustomWaveTableRow(counts[0], counts[1], counts[2], counts[3], counts[4], counts[5], counts[6]);
         return true;
     }
 

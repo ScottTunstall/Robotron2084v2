@@ -36,7 +36,7 @@ public static class RobotKinds
         new(RobotKind.Electrode,
             static parameters => parameters.ElectrodeCount,
             ScoreValues.Electrode,
-            static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            static (playField, targetEntity, direction) => playField.KillWithStripExplosion(targetEntity, direction),
             SoundTables.PostKill,
             Spawn: new ElectrodeWaveSpawner(),
             IsChasedByDemoPlayer: false),
@@ -44,11 +44,11 @@ public static class RobotKinds
         new(RobotKind.Grunt,
             static parameters => parameters.GruntCount,
             ScoreValues.Grunt,
-            static (field, target, direction) =>
+            static (playField, targetEntity, direction) =>
             {
-                field.KillWithStripExplosion(target, direction);
+                playField.KillWithStripExplosion(targetEntity, direction);
                 // Every grunt death — a laser's or an electrode's — speeds up the survivors (ROM $3A94).
-                field.SpeedUpGrunts();
+                playField.SpeedUpGrunts();
             },
             SoundTables.RobotHit,
             true,
@@ -59,7 +59,7 @@ public static class RobotKinds
         new(RobotKind.Hulk,
             static parameters => parameters.HulkCount,
             0,
-            static (field, target, direction) => target.GetAs<Hulk>().ApplyKnockback(direction.ToIntVector()),
+            static (playField, targetEntity, direction) => targetEntity.GetAs<Hulk>().ApplyKnockback(direction.ToIntVector()),
             SoundTables.HulkHit,
             true,
             new HulkWaveSpawner(),
@@ -69,22 +69,22 @@ public static class RobotKinds
         new(RobotKind.Spheroid,
             static parameters => parameters.SpheroidCount,
             ScoreValues.Spheroid,
-            static (field, target, direction) => field.KillWithScoreBurst(target,
-                ScoreBurst.CreateForSpheroid(field.Sprites, target.GetBounds())),
+            static (playField, targetEntity, direction) => playField.KillWithScoreBurst(targetEntity,
+                ScoreBurst.CreateForSpheroid(playField.SpriteSet, targetEntity.GetBounds())),
             SoundTables.CircleKill,
             Spawn: new SpheroidWaveSpawner()),
 
         new(RobotKind.Enforcer,
             null,
             ScoreValues.Enforcer,
-            static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            static (playField, targetEntity, direction) => playField.KillWithStripExplosion(targetEntity, direction),
             SoundTables.EnforcerKill),
 
         new(RobotKind.Quark,
             static parameters => parameters.QuarkCount,
             ScoreValues.Quark,
-            static (field, target, direction) =>
-                field.KillWithScoreBurst(target, ScoreBurst.CreateForQuark(field.Sprites, target.GetBounds())),
+            static (playField, targetEntity, direction) =>
+                playField.KillWithScoreBurst(targetEntity, ScoreBurst.CreateForQuark(playField.SpriteSet, targetEntity.GetBounds())),
             SoundTables.SquareKill,
             Spawn: new QuarkWaveSpawner()),
 
@@ -92,7 +92,7 @@ public static class RobotKinds
         new(RobotKind.Tank,
             static parameters => parameters.TankCount,
             ScoreValues.Tank,
-            static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            static (playField, targetEntity, direction) => playField.KillWithStripExplosion(targetEntity, direction),
             SoundTables.TankKill,
             Spawn: new TankWaveSpawner(),
             RobotListSetUpOrder: 3),
@@ -101,7 +101,7 @@ public static class RobotKinds
         new(RobotKind.Brain,
             static parameters => parameters.BrainCount,
             ScoreValues.Brain,
-            static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            static (playField, targetEntity, direction) => playField.KillWithStripExplosion(targetEntity, direction),
             SoundTables.BrainKill,
             true,
             new BrainWaveSpawner(),
@@ -110,7 +110,7 @@ public static class RobotKinds
         new(RobotKind.Prog,
             null,
             ScoreValues.Prog,
-            static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            static (playField, targetEntity, direction) => playField.KillWithStripExplosion(targetEntity, direction),
             SoundTables.ProgKill,
             true),
 
@@ -118,7 +118,7 @@ public static class RobotKinds
         new(RobotKind.Spark,
             null,
             ScoreValues.Spark,
-            static (field, target, direction) => target.GetAs<IRemovable>().Kill(),
+            static (playField, targetEntity, direction) => targetEntity.GetAs<IRemovable>().Kill(),
             SoundTables.SparkKill,
             true,
             IsChasedByDemoPlayer: false),
@@ -126,11 +126,11 @@ public static class RobotKinds
         new(RobotKind.TankShell,
             null,
             ScoreValues.TankShell,
-            static (field, target, direction) =>
+            static (playField, targetEntity, direction) =>
             {
-                target.GetAs<IRemovable>().Kill();
+                targetEntity.GetAs<IRemovable>().Kill();
                 // Only a laser kill gives one of the wave's shells back (the fizzle bug, notes §53).
-                field.CountShellDestroyed();
+                playField.CountShellDestroyed();
             },
             SoundTables.ShellKill,
             true,
@@ -139,7 +139,7 @@ public static class RobotKinds
         new(RobotKind.CruiseMissile,
             null,
             ScoreValues.CruiseMissile,
-            static (field, target, direction) => target.GetAs<IRemovable>().Kill(),
+            static (playField, targetEntity, direction) => targetEntity.GetAs<IRemovable>().Kill(),
             SoundTables.CruiseMissileKill,
             true),
 
@@ -147,7 +147,7 @@ public static class RobotKinds
         new(RobotKind.BerzerkRobot,
             static parameters => parameters.BerzerkRobotCount,
             ScoreValues.BerzerkRobot,
-            static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            static (playField, targetEntity, direction) => playField.KillWithStripExplosion(targetEntity, direction),
             SoundTables.RobotHit,
             true,
             new BerzerkRobotWaveSpawner(),
@@ -157,7 +157,7 @@ public static class RobotKinds
         new(RobotKind.Gorf,
             static parameters => parameters.GorfCount,
             ScoreValues.Gorf,
-            static (field, target, direction) => field.KillWithStripExplosion(target, direction),
+            static (playField, targetEntity, direction) => playField.KillWithStripExplosion(targetEntity, direction),
             SoundTables.RobotHit,
             true,
             new GorfWaveSpawner())

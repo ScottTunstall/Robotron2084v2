@@ -44,7 +44,7 @@ public sealed class RobotTransporter
     private readonly Random _random;
 
     /// <summary>Each robot being beamed in, with the image it shows.</summary>
-    private readonly List<(IEntity Robot, TransportImage Image)> _robots = [];
+    private readonly List<(IEntity RobotEntity, TransportImage TransportImage)> _robots = [];
 
     /// <summary>
     ///     Builds up, a tick at a time, until it is time for the next fiftieth of a second. It starts with a whole
@@ -107,42 +107,42 @@ public sealed class RobotTransporter
     public void Begin(IReadOnlyList<IEntity> robots)
     {
         // A field built without sprites (a test) has robots with no animation frame to beam in; they are simply not shown.
-        (IEntity Robot, Texture2D Frame)[] shown =
+        (IEntity RobotEntity, Texture2D AnimationFrame)[] shown =
         [
             .. robots.OfType<IAnimationFrameSource>()
-                .Select(source => (Robot: (IEntity)source, Frame: source.GetCurrentAnimationFrame()))
-                .Where(pair => pair.Frame is not null)
+                .Select(source => (RobotEntity: (IEntity)source, AnimationFrame: source.GetCurrentAnimationFrame()))
+                .Where(pair => pair.AnimationFrame is not null)
         ];
-        Texture2D[] frames = [.. shown.Select(pair => pair.Frame)];
+        Texture2D[] frames = [.. shown.Select(pair => pair.AnimationFrame)];
         var imageNumbers = AssignImages(frames);
 
         for (var index = 0; index < shown.Length; index++)
         {
             if (imageNumbers[index] == _images.Count) _images.Add(CreateImage(frames[index]));
 
-            _robots.Add((shown[index].Robot, _images[imageNumbers[index]]));
+            _robots.Add((shown[index].RobotEntity, _images[imageNumbers[index]]));
         }
     }
 
     /// <summary>Draws each image where its robots stand.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The sprite set, for the palette and the one-pixel square the pixels are drawn with.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites)
+    /// <param name="spriteSet">The sprite set, for the palette and the one-pixel square the pixels are drawn with.</param>
+    public void Draw(SpriteBatch spriteBatch, SpriteSet spriteSet)
     {
-        sprites.Blitter.UsePassThrough();
-        foreach (var (robot, image) in _robots)
+        spriteSet.BlitterDraw.UsePassThrough();
+        foreach (var (robot, transportImage) in _robots)
         {
             var bounds = robot.GetBounds();
-            var left = bounds.X + (bounds.Width - ScreenSize.ToPortPixelsFromArcadePixels(image.Width)) / 2;
-            var top = bounds.Y + (bounds.Height - ScreenSize.ToPortPixelsFromArcadePixels(image.Height)) / 2;
-            DrawImage(spriteBatch, sprites, image, new Point(left, top));
+            var left = bounds.X + (bounds.Width - ScreenSize.ToPortPixelsFromArcadePixels(transportImage.Width)) / 2;
+            var top = bounds.Y + (bounds.Height - ScreenSize.ToPortPixelsFromArcadePixels(transportImage.Height)) / 2;
+            DrawImage(spriteBatch, spriteSet, transportImage, new Point(left, top));
         }
     }
 
     /// <summary>Says whether every image has run out of steps.</summary>
     public bool IsFinished()
     {
-        return _images.All(image => image.IsFinished());
+        return _images.All(transportImage => transportImage.IsFinished());
     }
 
     /// <summary>Moves on by one port tick, which does a step of each image every fiftieth of a second.</summary>
@@ -152,39 +152,39 @@ public sealed class RobotTransporter
         while (_clockUnits >= ArcadeClock.UnitsPerArcadeFrame)
         {
             _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
-            foreach (var image in _images) image.Step(_random);
+            foreach (var transportImage in _images) transportImage.Step(_random);
         }
     }
 
     /// <summary>Draws one image, a pixel at a time.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The sprite set, for the palette and the one-pixel square.</param>
-    /// <param name="image">The image to draw.</param>
+    /// <param name="spriteSet">The sprite set, for the palette and the one-pixel square.</param>
+    /// <param name="transportImage">The image to draw.</param>
     /// <param name="topLeft">Where the image's top-left corner goes, in port pixels.</param>
-    private static void DrawImage(SpriteBatch spriteBatch, SpriteSet sprites, TransportImage image, Point topLeft)
+    private static void DrawImage(SpriteBatch spriteBatch, SpriteSet spriteSet, TransportImage transportImage, Point topLeft)
     {
         var pixelSize = ScreenSize.ToPortPixelsFromArcadePixels(1);
-        for (var y = 0; y < image.Height; y++)
-            for (var x = 0; x < image.Width; x++)
+        for (var y = 0; y < transportImage.Height; y++)
+            for (var x = 0; x < transportImage.Width; x++)
             {
-                var pixel = image.GetPixel(x, y);
+                var pixel = transportImage.GetPixel(x, y);
                 if (pixel == TransportImage.PixelOff) continue;
 
                 Color colour;
-                if (pixel == TransportImage.PixelOwnColour) colour = image.Template[y * image.Width + x];
-                else colour = sprites.Blitter.GetPaletteIndexColour(pixel);
+                if (pixel == TransportImage.PixelOwnColour) colour = transportImage.Template[y * transportImage.Width + x];
+                else colour = spriteSet.BlitterDraw.GetPaletteIndexColour(pixel);
 
-                spriteBatch.Draw(sprites.WallPixelSprite,
+                spriteBatch.Draw(spriteSet.WallPixelSprite,
                     new Rectangle(topLeft.X + x * pixelSize, topLeft.Y + y * pixelSize, pixelSize, pixelSize), colour);
             }
     }
 
     /// <summary>Makes an empty image for an animation frame, with a sparkle picked at random.</summary>
-    /// <param name="frame">The animation frame the image builds up.</param>
-    private TransportImage CreateImage(Texture2D frame)
+    /// <param name="animationFrame">The animation frame the image builds up.</param>
+    private TransportImage CreateImage(Texture2D animationFrame)
     {
-        var pixels = new Color[frame.Width * frame.Height];
-        frame.GetData(pixels);
-        return new TransportImage(pixels, frame.Width, frame.Height, _random.Next(8));
+        var pixels = new Color[animationFrame.Width * animationFrame.Height];
+        animationFrame.GetData(pixels);
+        return new TransportImage(pixels, animationFrame.Width, animationFrame.Height, _random.Next(8));
     }
 }

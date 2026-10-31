@@ -22,13 +22,13 @@ namespace Robotron2084.Level;
 ///     </list>
 /// </remarks>
 /// <param name="Number">1 or 2. It is printed after "PLAYER " when two people play.</param>
-/// <param name="Input">
+/// <param name="PlayerInputSource">
 ///     This player's controls. Each player has their own, so a second player need not share the first
 ///     player's.
 /// </param>
 /// <param name="Lives">The lives the player has, counting the one in play.</param>
 /// <param name="Wave">The wave the player is on. Only they move it on.</param>
-public sealed record PlayerSlot(int Number, IPlayerInputSource Input, int Lives, int Wave)
+public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource, int Lives, int Wave)
 {
     /// <summary>The wave the player is on. Only they move it on.</summary>
     /// <remarks>

@@ -44,24 +44,24 @@ internal sealed class LaserWallFlares
 
     /// <summary>Draws the flashes over the wall, in the colour the wave gives them.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="sprites">The sprite set, which draws the solid rectangles.</param>
+    /// <param name="spriteSet">The sprite set, which draws the solid rectangles.</param>
     /// <param name="waveNumber">The wave, which picks the colour.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet sprites, int waveNumber)
+    public void Draw(SpriteBatch spriteBatch, SpriteSet spriteSet, int waveNumber)
     {
         if (_flares.Count == 0) return;
 
-        var flareColor = sprites.Blitter.GetPaletteIndexColour(WavePaletteTables.GetLaserWallPaletteIndex(waveNumber));
+        var flareColor = spriteSet.BlitterDraw.GetPaletteIndexColour(WavePaletteTables.GetLaserWallPaletteIndex(waveNumber));
         foreach (var flare in _flares)
         {
             if (!flare.Dithered)
             {
-                sprites.Blitter.DrawSolidRectangle(spriteBatch, flare.Bounds, flareColor);
+                spriteSet.BlitterDraw.DrawSolidRectangle(spriteBatch, flare.Bounds, flareColor);
                 continue;
             }
 
             // LASDIV: the ROM's mixed nibble — one band in LASCOL, the next left as WALCOL. Draw only the LASCOL bands.
             for (var y = flare.Bounds.Y; y < flare.Bounds.Bottom; y += DitherBandHeight * 2)
-                sprites.Blitter.DrawSolidRectangle(
+                spriteSet.BlitterDraw.DrawSolidRectangle(
                     spriteBatch,
                     new Rectangle(flare.Bounds.X, y, flare.Bounds.Width, DitherBandHeight),
                     flareColor);
@@ -71,11 +71,11 @@ internal sealed class LaserWallFlares
     /// <summary>Starts a flash where a laser ran into the wall.</summary>
     /// <param name="laserBounds">The laser's box when it hit the wall.</param>
     /// <param name="direction">The way the laser was going, which picks the wall when the box alone does not.</param>
-    /// <param name="wall">The wall round the playfield.</param>
-    public void Spawn(Rectangle laserBounds, Direction8 direction, PlayfieldWall wall)
+    /// <param name="playfieldWall">The wall round the playfield.</param>
+    public void Spawn(Rectangle laserBounds, Direction8 direction, PlayfieldWall playfieldWall)
     {
-        var inner = wall.PlayfieldBounds;
-        var outer = wall.GetOuterBounds();
+        var inner = playfieldWall.PlayfieldBounds;
+        var outer = playfieldWall.GetOuterBounds();
 
         // Which wall did it cross? A laser whose bounds are outside the TOP/BOTTOM edges died against a horizontal
         // wall (the ROM's LASDIV, dithered); one outside the LEFT/RIGHT edges died against a vertical wall (LASDIH).

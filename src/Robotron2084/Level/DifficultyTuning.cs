@@ -174,7 +174,7 @@ public static class DifficultyTuning
     ///     Works out what a wave is like at the chosen difficulty. At the recommended setting the wave is returned as it
     ///     was.
     /// </summary>
-    /// <param name="parameters">
+    /// <param name="waveParameters">
     ///     The wave as the table gives it, for the recommended setting. Apply <see cref="BozoMode" />
     ///     first, as the arcade does.
     /// </param>
@@ -189,34 +189,34 @@ public static class DifficultyTuning
     ///         <item>Disassembly: <c>$2B7C</c>.</item>
     ///     </list>
     /// </remarks>
-    public static WaveParameters Apply(WaveParameters parameters, int difficulty, int lives)
+    public static WaveParameters Apply(WaveParameters waveParameters, int difficulty, int lives)
     {
-        var effectiveDifficulty = GetEffectiveDifficulty(parameters.WaveNumber, difficulty, lives);
-        if (effectiveDifficulty == GameSettings.RecommendedDifficulty) return parameters;
+        var effectiveDifficulty = GetEffectiveDifficulty(waveParameters.WaveNumber, difficulty, lives);
+        if (effectiveDifficulty == GameSettings.RecommendedDifficulty) return waveParameters;
 
         var delta = effectiveDifficulty - GameSettings.RecommendedDifficulty;
         var magnitude = Math.Abs(delta);
 
         // The two fields worked out from the maxDropsX2 value must follow it, as WaveParameters.CreateFromWave works them out.
-        var maxDropsX2 = Adjust(parameters.MaxDropsX2, MaxDropsX2Header, delta, magnitude);
+        var maxDropsX2 = Adjust(waveParameters.MaxDropsX2, MaxDropsX2Header, delta, magnitude);
 
-        return parameters with
+        return waveParameters with
         {
-            GruntMoveDelay = Adjust(parameters.GruntMoveDelay, GruntMoveDelayHeader, delta, magnitude),
-            GruntSpeedFloor = Adjust(parameters.GruntSpeedFloor, GruntSpeedFloorHeader, delta, magnitude),
+            GruntMoveDelay = Adjust(waveParameters.GruntMoveDelay, GruntMoveDelayHeader, delta, magnitude),
+            GruntSpeedFloor = Adjust(waveParameters.GruntSpeedFloor, GruntSpeedFloorHeader, delta, magnitude),
             MaxDropsX2 = maxDropsX2,
             MaxEnforcersPerSpheroid = (maxDropsX2 + 1) / 2,
             MaxTanksPerQuark = (maxDropsX2 + 1) / 2,
-            EnforcerFireDelay = Adjust(parameters.EnforcerFireDelay, EnforcerFireDelayHeader, delta, magnitude),
-            SpheroidDropDelay = Adjust(parameters.SpheroidDropDelay, SpheroidDropDelayHeader, delta, magnitude),
+            EnforcerFireDelay = Adjust(waveParameters.EnforcerFireDelay, EnforcerFireDelayHeader, delta, magnitude),
+            SpheroidDropDelay = Adjust(waveParameters.SpheroidDropDelay, SpheroidDropDelayHeader, delta, magnitude),
             HulkBeatIntervalArcadeFrames =
-            Adjust(parameters.HulkBeatIntervalArcadeFrames, HulkBeatIntervalHeader, delta, magnitude),
-            BrainFireDelay = Adjust(parameters.BrainFireDelay, BrainFireDelayHeader, delta, magnitude),
-            BrainBeatWaitArcadeFrames = Adjust(parameters.BrainBeatWaitArcadeFrames, BrainBeatWaitHeader, delta, magnitude),
-            TankFireDelay = Adjust(parameters.TankFireDelay, TankFireDelayHeader, delta, magnitude),
-            ShellSpeed = Adjust(parameters.ShellSpeed, ShellSpeedHeader, delta, magnitude),
-            QuarkDropDelay = Adjust(parameters.QuarkDropDelay, QuarkDropDelayHeader, delta, magnitude),
-            QuarkMaxSpeed = Adjust(parameters.QuarkMaxSpeed, QuarkMaxSpeedHeader, delta, magnitude)
+            Adjust(waveParameters.HulkBeatIntervalArcadeFrames, HulkBeatIntervalHeader, delta, magnitude),
+            BrainFireDelay = Adjust(waveParameters.BrainFireDelay, BrainFireDelayHeader, delta, magnitude),
+            BrainBeatWaitArcadeFrames = Adjust(waveParameters.BrainBeatWaitArcadeFrames, BrainBeatWaitHeader, delta, magnitude),
+            TankFireDelay = Adjust(waveParameters.TankFireDelay, TankFireDelayHeader, delta, magnitude),
+            ShellSpeed = Adjust(waveParameters.ShellSpeed, ShellSpeedHeader, delta, magnitude),
+            QuarkDropDelay = Adjust(waveParameters.QuarkDropDelay, QuarkDropDelayHeader, delta, magnitude),
+            QuarkMaxSpeed = Adjust(waveParameters.QuarkMaxSpeed, QuarkMaxSpeedHeader, delta, magnitude)
         };
     }
 
