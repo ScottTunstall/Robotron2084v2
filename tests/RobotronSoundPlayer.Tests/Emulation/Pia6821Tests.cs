@@ -11,48 +11,48 @@ public class Pia6821Tests
     [Fact]
     public void ARisingCb1_RequestsAnInterrupt_WhenTheChipIsSetForRisingEdges()
     {
-        var pia = new Pia6821();
-        pia.WriteRegister(3, SoundRomControlB);
+        var pia6821 = new Pia6821();
+        pia6821.WriteRegister(3, SoundRomControlB);
 
-        pia.SetCb1(true);
+        pia6821.SetCb1(true);
 
-        Assert.True(pia.IsInterruptRequested);
+        Assert.True(pia6821.IsInterruptRequested);
     }
 
     [Fact]
     public void AFallingCb1_DoesNothing_WhenTheChipIsSetForRisingEdges()
     {
-        var pia = new Pia6821();
-        pia.SetCb1(true);
-        pia.WriteRegister(3, SoundRomControlB);
+        var pia6821 = new Pia6821();
+        pia6821.SetCb1(true);
+        pia6821.WriteRegister(3, SoundRomControlB);
 
-        pia.SetCb1(false);
+        pia6821.SetCb1(false);
 
-        Assert.False(pia.IsInterruptRequested);
+        Assert.False(pia6821.IsInterruptRequested);
     }
 
     [Fact]
     public void ReadingPortB_ClearsTheInterrupt_AndReturnsTheInputPins()
     {
-        var pia = new Pia6821();
-        pia.WriteRegister(3, SoundRomControlB);
-        pia.SetPortBInput(0xDA);
-        pia.SetCb1(true);
+        var pia6821 = new Pia6821();
+        pia6821.WriteRegister(3, SoundRomControlB);
+        pia6821.SetPortBInput(0xDA);
+        pia6821.SetCb1(true);
 
-        var value = pia.ReadRegister(2);
+        var value = pia6821.ReadRegister(2);
 
         Assert.Equal(0xDA, value);
-        Assert.False(pia.IsInterruptRequested);
+        Assert.False(pia6821.IsInterruptRequested);
     }
 
     [Fact]
     public void PortA_ShowsTheWrittenValueOnOutputPins_AndHighOnInputPins()
     {
-        var pia = new Pia6821();
-        pia.WriteRegister(0, 0x0F); // direction register: low four pins are outputs
-        pia.WriteRegister(1, 0x04); // select the data register
-        pia.WriteRegister(0, 0x05);
+        var pia6821 = new Pia6821();
+        pia6821.WriteRegister(0, 0x0F); // direction register: low four pins are outputs
+        pia6821.WriteRegister(1, 0x04); // select the data register
+        pia6821.WriteRegister(0, 0x05);
 
-        Assert.Equal(0xF5, pia.PortAPins);
+        Assert.Equal(0xF5, pia6821.PortAPins);
     }
 }

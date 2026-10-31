@@ -12,38 +12,38 @@ public class EmulatedSoundBoardTests
     [Fact]
     public void TheBoardStartsSilent_UntilItIsSentASoundNumber()
     {
-        var board = new EmulatedSoundBoard(EchoRom());
+        var emulatedSoundBoard = new EmulatedSoundBoard(EchoRom());
 
-        RunInstructions(board, 100);
+        RunInstructions(emulatedSoundBoard, 100);
 
-        Assert.Equal(0, board.OutputLevel);
+        Assert.Equal(0, emulatedSoundBoard.OutputLevel);
     }
 
     [Fact]
     public void ASoundNumber_ReachesTheBoardFlipped_WithTheTopTwoLinesHigh()
     {
-        var board = new EmulatedSoundBoard(EchoRom());
-        RunInstructions(board, 100);
+        var emulatedSoundBoard = new EmulatedSoundBoard(EchoRom());
+        RunInstructions(emulatedSoundBoard, 100);
 
-        board.SendSoundNumber(0x25);
-        RunInstructions(board, 20);
+        emulatedSoundBoard.SendSoundNumber(0x25);
+        RunInstructions(emulatedSoundBoard, 20);
 
         // SNDOUT sends the number with its bits flipped (COMB, ANDB #$3F); the wiring holds the top two lines high.
-        Assert.Equal(0xDA, board.OutputLevel);
+        Assert.Equal(0xDA, emulatedSoundBoard.OutputLevel);
     }
 
     [Fact]
     public void EachNewSoundNumber_InterruptsTheBoardAgain()
     {
-        var board = new EmulatedSoundBoard(EchoRom());
-        RunInstructions(board, 100);
-        board.SendSoundNumber(0x25);
-        RunInstructions(board, 20);
+        var emulatedSoundBoard = new EmulatedSoundBoard(EchoRom());
+        RunInstructions(emulatedSoundBoard, 100);
+        emulatedSoundBoard.SendSoundNumber(0x25);
+        RunInstructions(emulatedSoundBoard, 20);
 
-        board.SendSoundNumber(0x11);
-        RunInstructions(board, 20);
+        emulatedSoundBoard.SendSoundNumber(0x11);
+        RunInstructions(emulatedSoundBoard, 20);
 
-        Assert.Equal(0xEE, board.OutputLevel);
+        Assert.Equal(0xEE, emulatedSoundBoard.OutputLevel);
     }
 
     [Fact]
@@ -52,9 +52,9 @@ public class EmulatedSoundBoardTests
         Assert.Throws<ArgumentException>(() => new EmulatedSoundBoard(new byte[100]));
     }
 
-    private static void RunInstructions(EmulatedSoundBoard board, int count)
+    private static void RunInstructions(EmulatedSoundBoard emulatedSoundBoard, int count)
     {
-        for (var i = 0; i < count; i++) board.Run(1);
+        for (var i = 0; i < count; i++) emulatedSoundBoard.Run(1);
     }
 
     /// <summary>
