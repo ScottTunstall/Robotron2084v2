@@ -19,7 +19,7 @@ public sealed class SoundTests : IDisposable
     public void WithTheSwitchOff_NothingReachesTheSink()
     {
         var recordingSink = new RecordingSink();
-        Sound.Initialize(recordingSink);
+        Sound.Initialise(recordingSink);
         Sound.Enabled = false;
 
         Sound.Play(SoundTables.PlayerLaser);
@@ -32,7 +32,7 @@ public sealed class SoundTests : IDisposable
     public void WithTheSwitchOn_ASoundIsSentToTheSink()
     {
         var recordingSink = new RecordingSink();
-        Sound.Initialize(recordingSink);
+        Sound.Initialise(recordingSink);
         Sound.Enabled = true;
         Sound.AttractMuted = false;
 
@@ -46,7 +46,7 @@ public sealed class SoundTests : IDisposable
     public void WhileTheAttractIsMuted_NothingReachesTheSink()
     {
         var recordingSink = new RecordingSink();
-        Sound.Initialize(recordingSink);
+        Sound.Initialise(recordingSink);
         Sound.Enabled = true;
         Sound.AttractMuted = true;
 
@@ -60,7 +60,7 @@ public sealed class SoundTests : IDisposable
     public void ASoundAskedForWithoutAPlaceIsHeardInTheMiddle()
     {
         var recordingSink = new RecordingSink();
-        Sound.Initialize(recordingSink);
+        Sound.Initialise(recordingSink);
         Sound.Enabled = true;
 
         Sound.Play(SoundTables.PlayerLaser);

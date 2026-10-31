@@ -20,7 +20,7 @@ public sealed class SoundWiringTests : IDisposable
     {
         Sound.AttractMuted = false;
         Sound.Enabled = true;
-        Sound.Initialize(_recordingSink);
+        Sound.Initialise(_recordingSink);
     }
 
     public void Dispose()
@@ -51,7 +51,7 @@ public sealed class SoundWiringTests : IDisposable
         playField.SkipWaveStart();
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 250, inner.Y + 120);
-        playField.FieldEntities.CruiseMissiles.Add(new CruiseMissile(TestSprites.SharedSpriteSet, spot, playField.Player.Position,
+        playField.FieldEntities.CruiseMissiles.Add(new CruiseMissile(TestTextures.SharedTextureSet, spot, playField.Player.Position,
             new Random(8)));
 
         playField.PlayerLaserSlots.Fire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down);
