@@ -31,7 +31,7 @@ internal sealed class PlayFieldBuilder
     private int _lives = DefaultLives;
     private GamePalette? _palette;
 
-    private LevelParameters _parameters = new(1);
+    private WaveParameters _parameters = new(1);
     private IPixelCollision? _pixelCollision;
     private bool _playerInvincible = true;
     private Random _random = new(DefaultSeed);
@@ -40,7 +40,7 @@ internal sealed class PlayFieldBuilder
 
     /// <summary>Uses these wave parameters.</summary>
     /// <param name="parameters">The wave.</param>
-    public PlayFieldBuilder WithParameters(LevelParameters parameters)
+    public PlayFieldBuilder WithParameters(WaveParameters parameters)
     {
         _parameters = parameters;
         return this;
