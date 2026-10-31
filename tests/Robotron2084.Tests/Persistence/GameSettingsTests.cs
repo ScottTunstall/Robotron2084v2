@@ -9,43 +9,43 @@ public sealed class GameSettingsTests
     [Fact]
     public void FactorySettingsAreTheArcardsRecommendedStops()
     {
-        var settings = GameSettings.CreateFactoryDefaults();
+        var gameSettings = GameSettings.CreateFactoryDefaults();
 
-        Assert.Equal(25, settings.ExtraLifeEvery);
-        Assert.Equal(25_000, settings.GetExtraLifeEveryPoints());
-        Assert.Equal(3, settings.TurnsPerPlayer);
-        Assert.Equal(GameSettings.RecommendedDifficulty, settings.Difficulty);
-        Assert.False(settings.AttractModeSoundEnabled); // the port's demo is silent until the operator turns it on
+        Assert.Equal(25, gameSettings.ExtraLifeEvery);
+        Assert.Equal(25_000, gameSettings.GetExtraLifeEveryPoints());
+        Assert.Equal(3, gameSettings.TurnsPerPlayer);
+        Assert.Equal(GameSettings.RecommendedDifficulty, gameSettings.Difficulty);
+        Assert.False(gameSettings.AttractModeSoundEnabled); // the port's demo is silent until the operator turns it on
     }
 
     [Fact]
     public void ExtraLifeEveryStepsThroughTheRomsFiveStopsAndStopsAtTheEnds()
     {
-        var settings = GameSettings.CreateFactoryDefaults(); // 25
+        var gameSettings = GameSettings.CreateFactoryDefaults(); // 25
 
-        settings.BumpExtraLifeEvery(1);
-        Assert.Equal(30, settings.ExtraLifeEvery);
+        gameSettings.BumpExtraLifeEvery(1);
+        Assert.Equal(30, gameSettings.ExtraLifeEvery);
 
-        settings.BumpExtraLifeEvery(1);
-        Assert.Equal(50, settings.ExtraLifeEvery);
+        gameSettings.BumpExtraLifeEvery(1);
+        Assert.Equal(50, gameSettings.ExtraLifeEvery);
 
-        settings.BumpExtraLifeEvery(1); // already at the top
-        Assert.Equal(50, settings.ExtraLifeEvery);
+        gameSettings.BumpExtraLifeEvery(1); // already at the top
+        Assert.Equal(50, gameSettings.ExtraLifeEvery);
 
-        for (var i = 0; i < 5; i++) settings.BumpExtraLifeEvery(-1);
+        for (var i = 0; i < 5; i++) gameSettings.BumpExtraLifeEvery(-1);
 
-        Assert.Equal(0, settings.ExtraLifeEvery);
-        Assert.Equal(0, settings.GetExtraLifeEveryPoints());
+        Assert.Equal(0, gameSettings.ExtraLifeEvery);
+        Assert.Equal(0, gameSettings.GetExtraLifeEveryPoints());
     }
 
     [Fact]
     public void ExtraLifeEveryUsesTheItemsOwnValuesWhenTheSettingIsOffTheList()
     {
-        var settings = new GameSettings { ExtraLifeEvery = 17 };
+        var gameSettings = new GameSettings { ExtraLifeEvery = 17 };
 
-        settings.BumpExtraLifeEvery(1);
+        gameSettings.BumpExtraLifeEvery(1);
 
-        Assert.Equal(30, settings.ExtraLifeEvery); // steps on from the factory stop, 25
+        Assert.Equal(30, gameSettings.ExtraLifeEvery); // steps on from the factory stop, 25
     }
 
     [Theory]
@@ -53,10 +53,10 @@ public sealed class GameSettingsTests
     [InlineData(20)]
     public void TurnsPerPlayerClampsToTheRomsRange(int turns)
     {
-        var settings = new GameSettings { TurnsPerPlayer = turns };
+        var gameSettings = new GameSettings { TurnsPerPlayer = turns };
 
-        settings.BumpTurnsPerPlayer(turns == 1 ? -1 : 1);
-        Assert.Equal(turns, settings.TurnsPerPlayer);
+        gameSettings.BumpTurnsPerPlayer(turns == 1 ? -1 : 1);
+        Assert.Equal(turns, gameSettings.TurnsPerPlayer);
     }
 
     [Theory]
@@ -64,16 +64,16 @@ public sealed class GameSettingsTests
     [InlineData(10)]
     public void DifficultyClampsToTheRomsRange(int difficulty)
     {
-        var settings = new GameSettings { Difficulty = difficulty };
+        var gameSettings = new GameSettings { Difficulty = difficulty };
 
-        settings.BumpDifficulty(difficulty == 0 ? -1 : 1);
-        Assert.Equal(difficulty, settings.Difficulty);
+        gameSettings.BumpDifficulty(difficulty == 0 ? -1 : 1);
+        Assert.Equal(difficulty, gameSettings.Difficulty);
     }
 
     [Fact]
     public void ResetToFactoryRestoresEverySetting()
     {
-        var settings = new GameSettings
+        var gameSettings = new GameSettings
         {
             ExtraLifeEvery = 0,
             TurnsPerPlayer = 20,
@@ -84,27 +84,27 @@ public sealed class GameSettingsTests
             BozoModeEnabled = false
         };
 
-        settings.ResetToFactory();
+        gameSettings.ResetToFactory();
 
-        Assert.Equal(25, settings.ExtraLifeEvery);
-        Assert.Equal(3, settings.TurnsPerPlayer);
-        Assert.Equal(5, settings.Difficulty);
-        Assert.False(settings.AttractModeSoundEnabled);
-        Assert.True(settings.TankShellBugEnabled);
-        Assert.True(settings.BrainsChaseMikeyBugEnabled);
-        Assert.True(settings.BozoModeEnabled);
+        Assert.Equal(25, gameSettings.ExtraLifeEvery);
+        Assert.Equal(3, gameSettings.TurnsPerPlayer);
+        Assert.Equal(5, gameSettings.Difficulty);
+        Assert.False(gameSettings.AttractModeSoundEnabled);
+        Assert.True(gameSettings.TankShellBugEnabled);
+        Assert.True(gameSettings.BrainsChaseMikeyBugEnabled);
+        Assert.True(gameSettings.BozoModeEnabled);
     }
 
     [Fact]
     public void AttractModeSoundIsTurnedOffByLeftAndOnByRight()
     {
-        var settings = new GameSettings();
+        var gameSettings = new GameSettings();
 
-        settings.BumpAttractModeSound(-1);
-        Assert.False(settings.AttractModeSoundEnabled);
+        gameSettings.BumpAttractModeSound(-1);
+        Assert.False(gameSettings.AttractModeSoundEnabled);
 
-        settings.BumpAttractModeSound(1);
-        Assert.True(settings.AttractModeSoundEnabled);
+        gameSettings.BumpAttractModeSound(1);
+        Assert.True(gameSettings.AttractModeSoundEnabled);
     }
 
     [Theory]
@@ -114,9 +114,9 @@ public sealed class GameSettingsTests
     [InlineData(false, true, false)] // ...but a real game still has sound
     public void OnlyAnAttractScreenWithTheSoundSettingOffIsSilent(bool attractShowing, bool soundOff, bool expected)
     {
-        var settings = new GameSettings { AttractModeSoundEnabled = !soundOff };
+        var gameSettings = new GameSettings { AttractModeSoundEnabled = !soundOff };
 
-        Assert.Equal(expected, settings.IsAttractSilent(attractShowing));
+        Assert.Equal(expected, gameSettings.IsAttractSilent(attractShowing));
     }
 
     [Theory]

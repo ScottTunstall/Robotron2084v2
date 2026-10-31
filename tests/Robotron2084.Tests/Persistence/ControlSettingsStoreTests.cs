@@ -34,15 +34,15 @@ public sealed class ControlSettingsStoreTests
         var path = TempFile();
         try
         {
-            var settings = ControlSettings.CreateDefaults();
-            settings[0][InputAction.MoveUp] = settings[0][InputAction.MoveUp].With(InputBinding.CreateKey(Keys.Z));
-            settings[1][InputAction.ShootRight] = settings[1][InputAction.ShootRight]
+            var controlSettings = ControlSettings.CreateDefaults();
+            controlSettings[0][InputAction.MoveUp] = controlSettings[0][InputAction.MoveUp].With(InputBinding.CreateKey(Keys.Z));
+            controlSettings[1][InputAction.ShootRight] = controlSettings[1][InputAction.ShootRight]
                 .With(InputBinding.CreateButton(1, Buttons.RightShoulder));
-            settings[1][InputAction.MoveLeft] =
-                settings[1][InputAction.MoveLeft].With(InputBinding.CreateStick(1, false, -1, -1));
-            settings.Pause = InputBinding.CreateKey(Keys.Escape);
+            controlSettings[1][InputAction.MoveLeft] =
+                controlSettings[1][InputAction.MoveLeft].With(InputBinding.CreateStick(1, false, -1, -1));
+            controlSettings.Pause = InputBinding.CreateKey(Keys.Escape);
 
-            ControlSettingsStore.Save(path, settings);
+            ControlSettingsStore.Save(path, controlSettings);
             var loaded = ControlSettingsStore.Load(path);
 
             Assert.Equal("Z", loaded[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
@@ -178,49 +178,49 @@ public sealed class ControlSettingsStoreTests
     [Fact]
     public void ReadPlayer_TurnsTheBindingsIntoAState()
     {
-        var settings = ControlSettings.CreateDefaults();
-        var keys = new KeyboardState(Keys.W, Keys.L); // player 1: move up, shoot right
+        var controlSettings = ControlSettings.CreateDefaults();
+        var keyboardState = new KeyboardState(Keys.W, Keys.L); // player 1: move up, shoot right
 
-        var state = settings.ReadPlayer(0, keys, new GamePadState(), new GamePadState());
+        var playerInputState = controlSettings.ReadPlayer(0, keyboardState, new GamePadState(), new GamePadState());
 
-        Assert.Equal(new IntVector2(0, -1), state.MoveDirection);
-        Assert.Equal(new IntVector2(1, 0), state.ShootDirection);
-        Assert.True(state.FireHeld);
-        Assert.False(state.SkipWaveHeld);
+        Assert.Equal(new IntVector2(0, -1), playerInputState.MoveDirection);
+        Assert.Equal(new IntVector2(1, 0), playerInputState.ShootDirection);
+        Assert.True(playerInputState.FireHeld);
+        Assert.False(playerInputState.SkipWaveHeld);
     }
 
     [Fact]
     public void APlayerTwoBinding_DrivesPlayerTwo()
     {
-        var settings = ControlSettings.CreateDefaults();
-        var keys = new KeyboardState(Keys.NumPad8); // player 2's default shoot-up
+        var controlSettings = ControlSettings.CreateDefaults();
+        var keyboardState = new KeyboardState(Keys.NumPad8); // player 2's default shoot-up
 
-        var state = settings.ReadPlayer(1, keys, new GamePadState(), new GamePadState());
+        var playerInputState = controlSettings.ReadPlayer(1, keyboardState, new GamePadState(), new GamePadState());
 
-        Assert.Equal(new IntVector2(0, -1), state.ShootDirection);
-        Assert.True(state.FireHeld);
+        Assert.Equal(new IntVector2(0, -1), playerInputState.ShootDirection);
+        Assert.True(playerInputState.FireHeld);
     }
 
     [Fact]
     public void SpaceAndInsert_StayAsPortAliases()
     {
-        var settings = ControlSettings.CreateDefaults();
+        var controlSettings = ControlSettings.CreateDefaults();
 
-        var state = settings.ReadPlayer(0, new KeyboardState(Keys.Space, Keys.Insert), new GamePadState(),
+        var playerInputState = controlSettings.ReadPlayer(0, new KeyboardState(Keys.Space, Keys.Insert), new GamePadState(),
             new GamePadState());
 
-        Assert.True(state.FireHeld); // Space has always fired
-        Assert.True(state.SkipWaveHeld); // Insert is the skip-wave key since P became PAUSE
+        Assert.True(playerInputState.FireHeld); // Space has always fired
+        Assert.True(playerInputState.SkipWaveHeld); // Insert is the skip-wave key since P became PAUSE
     }
 
     [Fact]
     public void TheStartButtons_AreStillTheArcanes()
     {
-        var settings = ControlSettings.CreateDefaults();
+        var controlSettings = ControlSettings.CreateDefaults();
 
-        var state = settings.ReadPlayer(0, new KeyboardState(Keys.D2), new GamePadState(), new GamePadState());
+        var playerInputState = controlSettings.ReadPlayer(0, new KeyboardState(Keys.D2), new GamePadState(), new GamePadState());
 
-        Assert.True(state.StartTwoPlayersHeld);
-        Assert.False(state.StartOnePlayerHeld);
+        Assert.True(playerInputState.StartTwoPlayersHeld);
+        Assert.False(playerInputState.StartOnePlayerHeld);
     }
 }

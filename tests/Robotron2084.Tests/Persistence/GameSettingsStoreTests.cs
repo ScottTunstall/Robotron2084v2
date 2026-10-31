@@ -54,10 +54,10 @@ public sealed class GameSettingsStoreTests
         var path = TempFile();
         try
         {
-            var settings = new GameSettings
+            var gameSettings = new GameSettings
                 { ExtraLifeEvery = 50, TurnsPerPlayer = 5, Difficulty = 10, AttractModeSoundEnabled = false };
 
-            GameSettingsStore.Save(path, settings);
+            GameSettingsStore.Save(path, gameSettings);
             var loaded = GameSettingsStore.Load(path);
 
             Assert.Equal(50, loaded.ExtraLifeEvery);
