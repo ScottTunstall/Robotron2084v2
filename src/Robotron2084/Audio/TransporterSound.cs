@@ -51,10 +51,10 @@ public sealed class TransporterSound
     }
 
     /// <summary>Starts the warp-in: clears the sound board, then sends the warp-in sound on the ticks that follow.</summary>
-    /// <param name="engine">The sound sequencer, which carries the "clear the system" request.</param>
-    public void Start(SoundEngine engine)
+    /// <param name="soundEngine">The sound sequencer, which carries the "clear the system" request.</param>
+    public void Start(SoundEngine soundEngine)
     {
-        engine.Play(SoundTables.ClearTheSystem, 0f);
+        soundEngine.Play(SoundTables.ClearTheSystem, 0f);
         _closeSendsLeft = CloseSends;
         _spacedSendsLeft = SpacedSends;
         _ticksUntilNextSend = 0;
@@ -71,33 +71,33 @@ public sealed class TransporterSound
     }
 
     /// <summary>One port tick (one vblank): sends the warp-in sound when it is due.</summary>
-    /// <param name="engine">The sound sequencer, which passes the send straight to the board.</param>
-    public void Tick(SoundEngine engine)
+    /// <param name="soundEngine">The sound sequencer, which passes the send straight to the board.</param>
+    public void Tick(SoundEngine soundEngine)
     {
         if (!IsRunning() || --_ticksUntilNextSend > 0) return;
 
         if (_closeSendsLeft > 0)
         {
-            SendClose(engine);
+            SendClose(soundEngine);
             return;
         }
 
-        SendSpaced(engine);
+        SendSpaced(soundEngine);
     }
 
     /// <summary>One of the sends a vblank apart; after the last, <c>TRSPR1</c> sends its first spaced one at once.</summary>
-    private void SendClose(SoundEngine engine)
+    private void SendClose(SoundEngine soundEngine)
     {
-        engine.SendDirect(WarpInSoundNumber, 0f);
+        soundEngine.SendDirect(WarpInSoundNumber, 0f);
         _closeSendsLeft--;
         _ticksUntilNextSend = 1;
-        if (_closeSendsLeft == 0) SendSpaced(engine);
+        if (_closeSendsLeft == 0) SendSpaced(soundEngine);
     }
 
     /// <summary>One of the sends two vblanks apart.</summary>
-    private void SendSpaced(SoundEngine engine)
+    private void SendSpaced(SoundEngine soundEngine)
     {
-        engine.SendDirect(WarpInSoundNumber, 0f);
+        soundEngine.SendDirect(WarpInSoundNumber, 0f);
         _spacedSendsLeft--;
         _ticksUntilNextSend = SpacedGapTicks;
     }

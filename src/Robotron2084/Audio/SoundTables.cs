@@ -101,7 +101,7 @@ public static class SoundTables
     public static readonly SoundSequence KillAHuman = new(0xE0, 0x002B, [new SoundEntry(1, 24, 0x1A)]);
 
     /// <summary><c>LASSND</c> "LASER SOUND": the player fires (<c>RRG23.ASM</c>); R5 <c>$26F0</c>, asked for at <c>$3221</c>.</summary>
-    public static readonly SoundSequence Laser = new(0xD0, 0x26F0, [new SoundEntry(1, 8, 0x01)]);
+    public static readonly SoundSequence PlayerLaser = new(0xD0, 0x26F0, [new SoundEntry(1, 8, 0x01)]);
 
     /// <summary><c>PDSND</c> "PLAYER DEATH" (<c>RRG23.ASM</c>); R5 <c>$26D9</c>, asked for at <c>$30EF</c>.</summary>
     public static readonly SoundSequence PlayerDeath =
@@ -205,7 +205,7 @@ public static class SoundTables
     [
         .. Coin,
         BrainKill, BrainShoot, CircleKill, ClearTheSystem, CruiseMissileKill, EnforcerDropOff, EnforcerKill,
-        EnforcerShoot, HulkHit, HumanProgFinalConversion, KillAHuman, Laser, PlayerDeath, PostKill, ProgKill,
+        EnforcerShoot, HulkHit, HumanProgFinalConversion, KillAHuman, PlayerLaser, PlayerDeath, PostKill, ProgKill,
         Programming, Replay, RobotHit, RobotMove, SaveAHuman, ShellKill, ShellRebound, SparkKill, SquareKill,
         StartOnePlayer, StartTwoPlayers, TankDrop, TankFire, TankKill, WaveEnd
     ];

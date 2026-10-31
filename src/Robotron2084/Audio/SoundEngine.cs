@@ -24,7 +24,7 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public sealed class SoundEngine
 {
-    private readonly IAudioSink _sink;
+    private readonly IAudioSink _audioSink;
     private SoundEntry[] _entries = [];
     private int _entryIndex = -1;
     private int _holdTicksLeft;
@@ -33,17 +33,17 @@ public sealed class SoundEngine
     private int _ticksLeftInSend;
 
     /// <summary>Creates a sequencer that sends its sound numbers to a sink.</summary>
-    /// <param name="sink">Where the sound numbers go.</param>
-    public SoundEngine(IAudioSink sink)
+    /// <param name="audioSink">Where the sound numbers go.</param>
+    public SoundEngine(IAudioSink audioSink)
     {
-        _sink = sink;
+        _audioSink = audioSink;
     }
 
     /// <summary>The priority of the sound holding the voice, or 0 when the voice is free (<c>SNDPRI</c>).</summary>
     public int CurrentPriority { get; private set; }
 
     /// <summary>True while the board is still playing the last number sent to it.</summary>
-    public bool IsBoardPlaying => _sink.IsPlaying;
+    public bool IsBoardPlaying => _audioSink.IsPlaying;
 
     /// <summary>
     ///     Keeps the voice for <paramref name="ticks" /> more port ticks. A table's end normally frees the
@@ -84,13 +84,13 @@ public sealed class SoundEngine
     /// <param name="pan">Where the sound is heard: -1 is wholly left, 0 the middle, 1 wholly right.</param>
     public void SendDirect(int soundNumber, float pan)
     {
-        _sink.SendSoundNumber(soundNumber, pan);
+        _audioSink.SendSoundNumber(soundNumber, pan);
     }
 
     /// <summary>One port tick (one vblank): counts the current send down, and sends the next sound number when it is due.</summary>
     public void Tick()
     {
-        _sink.Tick();
+        _audioSink.Tick();
         AdvanceVoiceHold();
 
         if (_entries.Length == 0) return;
@@ -141,6 +141,6 @@ public sealed class SoundEngine
     private void Send(SoundEntry entry)
     {
         _ticksLeftInSend = entry.LengthVblanks;
-        _sink.SendSoundNumber(entry.SoundNumber, _pan);
+        _audioSink.SendSoundNumber(entry.SoundNumber, _pan);
     }
 }

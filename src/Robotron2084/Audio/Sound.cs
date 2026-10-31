@@ -20,7 +20,7 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public static class Sound
 {
-    private static SoundEngine? _engine;
+    private static SoundEngine? _soundEngine;
     private static TransporterSound _transporterSound = new();
 
     /// <summary>
@@ -37,13 +37,13 @@ public static class Sound
     public static bool Enabled { get; set; } = true;
 
     /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying" />).</summary>
-    public static bool IsPlaying => _engine?.IsBoardPlaying ?? false;
+    public static bool IsPlaying => _soundEngine?.IsBoardPlaying ?? false;
 
     /// <summary>Sets up the sound service with the sink that will play the sound numbers.</summary>
-    /// <param name="sink">Where the sound numbers go.</param>
-    public static void Initialize(IAudioSink sink)
+    /// <param name="audioSink">Where the sound numbers go.</param>
+    public static void Initialize(IAudioSink audioSink)
     {
-        _engine = new SoundEngine(sink);
+        _soundEngine = new SoundEngine(audioSink);
         _transporterSound = new TransporterSound();
     }
 
@@ -68,7 +68,7 @@ public static class Sound
     {
         if (!Enabled || AttractMuted) return;
 
-        _engine?.Play(sequence, pan);
+        _soundEngine?.Play(sequence, pan);
     }
 
     /// <summary>
@@ -104,9 +104,9 @@ public static class Sound
     /// </remarks>
     public static void PlayTransporter()
     {
-        if (!Enabled || AttractMuted || _engine is null) return;
+        if (!Enabled || AttractMuted || _soundEngine is null) return;
 
-        _transporterSound.Start(_engine);
+        _transporterSound.Start(_soundEngine);
     }
 
     /// <summary>
@@ -120,7 +120,7 @@ public static class Sound
         if (!Enabled || AttractMuted) return;
 
         Play(SoundTables.WaveEnd);
-        _engine?.HoldVoice(SoundTuning.WaveEndMusicTicks);
+        _soundEngine?.HoldVoice(SoundTuning.WaveEndMusicTicks);
     }
 
     /// <summary>
@@ -132,7 +132,7 @@ public static class Sound
     {
         if (!Enabled || AttractMuted) return;
 
-        _engine?.SendDirect(soundNumber, 0f);
+        _soundEngine?.SendDirect(soundNumber, 0f);
     }
 
     /// <summary>Stops the transporter's sends where they are, so that they do not cut across the next sound.</summary>
@@ -144,9 +144,9 @@ public static class Sound
     /// <summary>Moves the sound on by one port tick.</summary>
     public static void Tick()
     {
-        if (!Enabled || AttractMuted || _engine is null) return;
+        if (!Enabled || AttractMuted || _soundEngine is null) return;
 
-        _engine.Tick();
-        _transporterSound.Tick(_engine);
+        _soundEngine.Tick();
+        _transporterSound.Tick(_soundEngine);
     }
 }

@@ -29,7 +29,7 @@ public sealed class SoundBoardRenderer
     /// <summary>How long the board runs before the first sample, so its start-up settles out of earshot: a tenth of a second.</summary>
     private const int WarmUpCycles = SoundBoard.ClockHertz / 10;
 
-    private readonly ISoundBoard _board;
+    private readonly ISoundBoard _soundBoard;
     private readonly double _cyclesPerSample;
     private byte _level;
     private float _previousInput;
@@ -37,11 +37,11 @@ public sealed class SoundBoardRenderer
     private double _unspentCycles;
 
     /// <summary>Creates a renderer for a board, and runs the board's start-up.</summary>
-    /// <param name="board">The sound board.</param>
+    /// <param name="soundBoard">The sound board.</param>
     /// <param name="sampleRate">Samples a second.</param>
-    public SoundBoardRenderer(ISoundBoard board, int sampleRate)
+    public SoundBoardRenderer(ISoundBoard soundBoard, int sampleRate)
     {
-        _board = board;
+        _soundBoard = soundBoard;
         _cyclesPerSample = (double)SoundBoard.ClockHertz / sampleRate;
         WarmUp();
     }
@@ -70,8 +70,8 @@ public sealed class SoundBoardRenderer
         {
             if (_unspentCycles <= 0)
             {
-                _level = _board.OutputLevel;
-                _unspentCycles += _board.Run((int)Math.Ceiling(cyclesLeft));
+                _level = _soundBoard.OutputLevel;
+                _unspentCycles += _soundBoard.Run((int)Math.Ceiling(cyclesLeft));
             }
 
             var cycles = Math.Min(cyclesLeft, _unspentCycles);
@@ -97,9 +97,9 @@ public sealed class SoundBoardRenderer
     /// <summary>Runs the board's start-up, then starts the filter from the level the board settled on.</summary>
     private void WarmUp()
     {
-        for (var cycles = 0; cycles < WarmUpCycles;) cycles += _board.Run(WarmUpCycles - cycles);
+        for (var cycles = 0; cycles < WarmUpCycles;) cycles += _soundBoard.Run(WarmUpCycles - cycles);
 
-        _level = _board.OutputLevel;
+        _level = _soundBoard.OutputLevel;
         _previousInput = (_level - MidLevel) / MidLevel;
     }
 }

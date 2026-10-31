@@ -44,53 +44,53 @@ public sealed class SoundBoardAudioSink : IAudioSink
     /// </summary>
     private const int SamplesPerPortTick = SampleRate / Robotron2084.Core.ArcadeClock.PortTicksPerSecond;
 
-    private readonly ISoundBoard _board;
+    private readonly ISoundBoard _soundBoard;
     private readonly float[] _monoSamples = new float[SamplesPerPortTick];
-    private readonly StereoPanner _panner = new();
-    private readonly SoundBoardRenderer _renderer;
-    private readonly DynamicSoundEffectInstance _soundEffect;
+    private readonly StereoPanner _stereoPanner = new();
+    private readonly SoundBoardRenderer _soundBoardRenderer;
+    private readonly DynamicSoundEffectInstance _dynamicSoundEffectInstance;
     private readonly short[] _stereoSamples = new short[SamplesPerPortTick * ChannelsPerFrame];
 
     /// <summary>Starts playing a sound board through the speakers.</summary>
-    /// <param name="board">The sound board.</param>
+    /// <param name="soundBoard">The sound board.</param>
     /// <exception cref="NoAudioHardwareException">The computer has no sound output.</exception>
-    public SoundBoardAudioSink(ISoundBoard board)
+    public SoundBoardAudioSink(ISoundBoard soundBoard)
     {
-        _board = board;
-        _renderer = new SoundBoardRenderer(board, SampleRate);
-        _soundEffect = new DynamicSoundEffectInstance(SampleRate, AudioChannels.Stereo);
+        _soundBoard = soundBoard;
+        _soundBoardRenderer = new SoundBoardRenderer(soundBoard, SampleRate);
+        _dynamicSoundEffectInstance = new DynamicSoundEffectInstance(SampleRate, AudioChannels.Stereo);
         for (var tick = 0; tick < MinimumQueuedTicks; tick++) QueueOnePortTick();
 
-        _soundEffect.Play();
+        _dynamicSoundEffectInstance.Play();
     }
 
     /// <inheritdoc />
-    public bool IsPlaying => _board.IsPlaying;
+    public bool IsPlaying => _soundBoard.IsPlaying;
 
     /// <summary>Sends a sound number to the board and moves the sound to where it is heard.</summary>
     /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>), 0 to 63.</param>
     /// <param name="pan">Where the sound is heard: -1 is wholly left, 0 the middle, 1 wholly right.</param>
     public void SendSoundNumber(int soundNumber, float pan)
     {
-        _panner.PanTo(pan);
-        _board.SendSoundNumber(soundNumber);
+        _stereoPanner.PanTo(pan);
+        _soundBoard.SendSoundNumber(soundNumber);
     }
 
     /// <summary>Runs the board for one port tick and queues what it played, topping the queue up if it is running low.</summary>
     public void Tick()
     {
         QueueOnePortTick();
-        while (_soundEffect.PendingBufferCount < MinimumQueuedTicks) QueueOnePortTick();
+        while (_dynamicSoundEffectInstance.PendingBufferCount < MinimumQueuedTicks) QueueOnePortTick();
     }
 
     /// <summary>Runs the board for one port tick and queues the sound, unless the queue is already full.</summary>
     private void QueueOnePortTick()
     {
-        _renderer.Render(_monoSamples);
-        _panner.Spread(_monoSamples, SoundTuning.MasterVolume, _stereoSamples);
-        if (_soundEffect.PendingBufferCount >= MaximumQueuedTicks) return;
+        _soundBoardRenderer.Render(_monoSamples);
+        _stereoPanner.Spread(_monoSamples, SoundTuning.MasterVolume, _stereoSamples);
+        if (_dynamicSoundEffectInstance.PendingBufferCount >= MaximumQueuedTicks) return;
 
         var pcmBytes = MemoryMarshal.AsBytes(_stereoSamples.AsSpan()).ToArray();
-        _soundEffect.SubmitBuffer(pcmBytes);
+        _dynamicSoundEffectInstance.SubmitBuffer(pcmBytes);
     }
 }
