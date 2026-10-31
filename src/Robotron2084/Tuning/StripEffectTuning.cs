@@ -13,7 +13,7 @@ namespace Robotron2084.Tuning;
 ///     An explosion starts with the strips together and the gap grows. An appear starts with them far apart and the gap
 ///     shrinks.
 /// </remarks>
-public static class StripExplosionTuning
+public static class StripEffectTuning
 {
     /// <summary>
     ///     The gap an appear starts with, as the 16-bit number. It is the starting value of a <see cref="StripEffect" />

@@ -11,7 +11,7 @@ public static class CollisionSizes
 
     // The spec's 16x16 entity box is not a collision box — see the
     // per-entity *CollisionSize table below. Still used for the spawn-candidate grid
-    // (the largest entity box is 16 arcade pixels wide) and the sprite factory
+    // (the largest entity box is 16 arcade pixels wide) and the texture factory
     // pattern size.
     public const int EntitySizeArcadePixels = 16;
 
@@ -80,7 +80,7 @@ public static class CollisionSizes
     ///     12x16 px. PRGKIL swaps the object's sprite descriptor to this card and then
     ///     calls the ordinary `EXST`, so the card is what the strip explosion shatters,
     ///     and `EXSTV` sizes its record from the sprite — see
-    ///     <see cref="FieldEntities.Prog.GetExplosionBounds()" /> (notes §90).
+    ///     <see cref="Robotron2084.Entities.Prog.GetExplosionBounds" /> (notes §90).
     /// </summary>
     public static readonly (int Width, int Height) ProgBurstSize = (12, 16);
 
