@@ -15,7 +15,7 @@ namespace Robotron2084.Audio;
 ///         </item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$D3C7</c>.</item>
 ///     </list>
-///     Until <see cref="Initialize" /> runs (in the tests, or when the computer has no sound output), asking
+///     Until <see cref="Initialise" /> runs (in the tests, or when the computer has no sound output), asking
 ///     for a sound does nothing.
 /// </remarks>
 public static class Sound
@@ -41,7 +41,7 @@ public static class Sound
 
     /// <summary>Sets up the sound service with the sink that will play the sound numbers.</summary>
     /// <param name="audioSink">Where the sound numbers go.</param>
-    public static void Initialize(IAudioSink audioSink)
+    public static void Initialise(IAudioSink audioSink)
     {
         _soundEngine = new SoundEngine(audioSink);
         _transporterSound = new TransporterSound();
