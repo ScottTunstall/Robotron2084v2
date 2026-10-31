@@ -112,15 +112,6 @@ public sealed class GameSettingsStore
         return text.ToString();
     }
 
-    /// <summary>Gets the number the file uses for an on-off setting: 1 for on, 0 for off.</summary>
-    /// <param name="isOn">Whether the setting is on.</param>
-    private static int GetFlag(bool isOn)
-    {
-        if (isOn) return 1;
-
-        return 0;
-    }
-
     /// <summary>Loads the saved settings, or the factory settings when there are none.</summary>
     public GameSettings Load()
     {
@@ -141,25 +132,40 @@ public sealed class GameSettingsStore
             case "extramanevery" when GameSettings.IsExtraManEveryValue(value):
                 gameSettings.ExtraManEvery = value;
                 break;
+
             case "turnsperplayer"
                 when value is >= GameSettings.MinimumTurnsPerPlayer and <= GameSettings.MaximumTurnsPerPlayer:
                 gameSettings.TurnsPerPlayer = value;
                 break;
+
             case "difficulty" when value is >= GameSettings.MinimumDifficulty and <= GameSettings.MaximumDifficulty:
                 gameSettings.Difficulty = value;
                 break;
+
             case "attractsound" when value is 0 or 1:
                 gameSettings.AttractModeSoundEnabled = value == 1;
                 break;
+
             case "tankshellbug" when value is 0 or 1:
                 gameSettings.TankShellBugEnabled = value == 1;
                 break;
+
             case "brainschasemikeybug" when value is 0 or 1:
                 gameSettings.BrainsChaseMikeyBugEnabled = value == 1;
                 break;
+
             case "bozomode" when value is 0 or 1:
                 gameSettings.BozoModeEnabled = value == 1;
                 break;
         }
+    }
+
+    /// <summary>Gets the number the file uses for an on-off setting: 1 for on, 0 for off.</summary>
+    /// <param name="isOn">Whether the setting is on.</param>
+    private static int GetFlag(bool isOn)
+    {
+        if (isOn) return 1;
+
+        return 0;
     }
 }

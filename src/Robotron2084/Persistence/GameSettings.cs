@@ -36,54 +36,6 @@ namespace Robotron2084.Persistence;
 public sealed class GameSettings
 {
     /// <summary>
-    ///     DIFFICULTY OF PLAY's floor — "EXTRA LIBERAL" (ROM metadata $7079: 00). It is the smallest value
-    ///     <see cref="Difficulty" /> may have.
-    /// </summary>
-    public const int MinimumDifficulty = 0;
-
-    /// <summary>
-    ///     DIFFICULTY OF PLAY's ceiling — "EXTRA CONSERVATIVE" (ROM metadata $7079: 10). It is the biggest value
-    ///     <see cref="Difficulty" /> may have.
-    /// </summary>
-    public const int MaximumDifficulty = 10;
-
-    /// <summary>The recommended difficulty: 5 — no wave-table adjustment at all (the ROM's "RECOMMENDED").</summary>
-    public const int RecommendedDifficulty = 5;
-
-    /// <summary>
-    ///     TURNS PER PLAYER's floor (ROM metadata $704C: 01). It is the smallest value <see cref="TurnsPerPlayer" /> may
-    ///     have.
-    /// </summary>
-    public const int MinimumTurnsPerPlayer = 1;
-
-    /// <summary>
-    ///     TURNS PER PLAYER's ceiling (ROM metadata $704C: 20). It is the biggest value <see cref="TurnsPerPlayer" /> may
-    ///     have.
-    /// </summary>
-    public const int MaximumTurnsPerPlayer = 20;
-
-    /// <summary>
-    ///     The factory EXTRA MAN EVERY: 25 (25000 points), the ROM's "RECOMMENDED" stop. It is the starting value of
-    ///     <see cref="ExtraManEvery" />, and the value it is set back to when the settings are restored.
-    /// </summary>
-    public const int FactoryExtraManEveryThousands = 25;
-
-    /// <summary>The factory EXTRA MAN EVERY in points, as the game compares scores.</summary>
-    public const int FactoryExtraManEveryPoints = FactoryExtraManEveryThousands * 1000;
-
-    /// <summary>
-    ///     The factory TURNS PER PLAYER: 3, the ROM's "RECOMMENDED" (and the arcade's own default). It is the starting
-    ///     value of <see cref="TurnsPerPlayer" />, and the value it is set back to when the settings are restored.
-    /// </summary>
-    public const int FactoryTurnsPerPlayer = 3;
-
-    /// <summary>
-    ///     Factory DIFFICULTY OF PLAY: 5, the ROM's "RECOMMENDED". It is the starting value of <see cref="Difficulty" />,
-    ///     and the value it is set back to when the settings are restored.
-    /// </summary>
-    public const int FactoryDifficulty = RecommendedDifficulty;
-
-    /// <summary>
     ///     Factory ATTRACT MODE SOUND: off. The arcade's attract demo is a real game and makes its real
     ///     noises, but the port's demo plays on a machine someone is usually sitting at, so it is silent
     ///     until the operator turns it on (notes §140). The setting is on the GAME ADJUSTMENT page.
@@ -93,10 +45,10 @@ public sealed class GameSettings
     public const bool FactoryAttractModeSoundEnabled = false;
 
     /// <summary>
-    ///     Factory TANK SHELL BUG: on, as the arcade is. It is the starting value of <see cref="TankShellBugEnabled" />,
-    ///     and the value it is set back to when the settings are restored.
+    ///     Factory BOZO MODE: on, as the arcade's second release is. It is the starting value of
+    ///     <see cref="BozoModeEnabled" />, and the value it is set back to when the settings are restored.
     /// </summary>
-    public const bool FactoryTankShellBugEnabled = true;
+    public const bool FactoryBozoModeEnabled = true;
 
     /// <summary>
     ///     Factory BRAINS CHASE MIKEY BUG: on, as the arcade is. It is the starting value of
@@ -105,25 +57,61 @@ public sealed class GameSettings
     public const bool FactoryBrainsChaseMikeyBugEnabled = true;
 
     /// <summary>
-    ///     Factory BOZO MODE: on, as the arcade's second release is. It is the starting value of
-    ///     <see cref="BozoModeEnabled" />, and the value it is set back to when the settings are restored.
+    ///     Factory DIFFICULTY OF PLAY: 5, the ROM's "RECOMMENDED". It is the starting value of <see cref="Difficulty" />,
+    ///     and the value it is set back to when the settings are restored.
     /// </summary>
-    public const bool FactoryBozoModeEnabled = true;
+    public const int FactoryDifficulty = RecommendedDifficulty;
+
+    /// <summary>The factory EXTRA MAN EVERY in points, as the game compares scores.</summary>
+    public const int FactoryExtraManEveryPoints = FactoryExtraManEveryThousands * 1000;
+
+    /// <summary>
+    ///     The factory EXTRA MAN EVERY: 25 (25000 points), the ROM's "RECOMMENDED" stop. It is the starting value of
+    ///     <see cref="ExtraManEvery" />, and the value it is set back to when the settings are restored.
+    /// </summary>
+    public const int FactoryExtraManEveryThousands = 25;
+
+    /// <summary>
+    ///     Factory TANK SHELL BUG: on, as the arcade is. It is the starting value of <see cref="TankShellBugEnabled" />,
+    ///     and the value it is set back to when the settings are restored.
+    /// </summary>
+    public const bool FactoryTankShellBugEnabled = true;
+
+    /// <summary>
+    ///     The factory TURNS PER PLAYER: 3, the ROM's "RECOMMENDED" (and the arcade's own default). It is the starting
+    ///     value of <see cref="TurnsPerPlayer" />, and the value it is set back to when the settings are restored.
+    /// </summary>
+    public const int FactoryTurnsPerPlayer = 3;
+
+    /// <summary>
+    ///     DIFFICULTY OF PLAY's ceiling — "EXTRA CONSERVATIVE" (ROM metadata $7079: 10). It is the biggest value
+    ///     <see cref="Difficulty" /> may have.
+    /// </summary>
+    public const int MaximumDifficulty = 10;
+
+    /// <summary>
+    ///     TURNS PER PLAYER's ceiling (ROM metadata $704C: 20). It is the biggest value <see cref="TurnsPerPlayer" /> may
+    ///     have.
+    /// </summary>
+    public const int MaximumTurnsPerPlayer = 20;
+
+    /// <summary>
+    ///     DIFFICULTY OF PLAY's floor — "EXTRA LIBERAL" (ROM metadata $7079: 00). It is the smallest value
+    ///     <see cref="Difficulty" /> may have.
+    /// </summary>
+    public const int MinimumDifficulty = 0;
+
+    /// <summary>
+    ///     TURNS PER PLAYER's floor (ROM metadata $704C: 01). It is the smallest value <see cref="TurnsPerPlayer" /> may
+    ///     have.
+    /// </summary>
+    public const int MinimumTurnsPerPlayer = 1;
+
+    /// <summary>The recommended difficulty: 5 — no wave-table adjustment at all (the ROM's "RECOMMENDED").</summary>
+    public const int RecommendedDifficulty = 5;
 
     /// <summary>The EXTRA MAN EVERY stops the ROM allows (its <c>$71DB</c> list), in thousands of points.</summary>
     public static readonly int[] ExtraManEveryValues = [0, 20, 25, 30, 50];
-
-    /// <summary>
-    ///     The score that earns a spare man, in thousands — 0 turns extra men off. One of
-    ///     <see cref="ExtraManEveryValues" />; 25 by default, the arcade's factory "RECOMMENDED".
-    /// </summary>
-    public int ExtraManEvery { get; set; } = FactoryExtraManEveryThousands;
-
-    /// <summary>How many men a player starts with (ROM <c>NSHIP</c>/<c>PLAS</c>), 1-20.</summary>
-    public int TurnsPerPlayer { get; set; } = FactoryTurnsPerPlayer;
-
-    /// <summary>DIFFICULTY OF PLAY, 0-10 (5 is the ROM's "RECOMMENDED").</summary>
-    public int Difficulty { get; set; } = FactoryDifficulty;
 
     /// <summary>
     ///     Whether the attract sequence plays its sounds (port-only; the arcade has no such row). Off
@@ -132,12 +120,10 @@ public sealed class GameSettings
     public bool AttractModeSoundEnabled { get; set; } = FactoryAttractModeSoundEnabled;
 
     /// <summary>
-    ///     Whether the arcade's tank shell bug is kept (port-only switch). On, a shell that fizzles out is never taken
-    ///     off the wave's shell count, so the tanks stop firing once the count is used up. Off, only the shells on
-    ///     the field count.
+    ///     Whether the arcade's mercy for a player losing ships early is given (port-only switch; see
+    ///     <see cref="Level.BozoMode" />).
     /// </summary>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, which has no <c>DEC SHLCNT</c>.</remarks>
-    public bool TankShellBugEnabled { get; set; } = FactoryTankShellBugEnabled;
+    public bool BozoModeEnabled { get; set; } = FactoryBozoModeEnabled;
 
     /// <summary>
     ///     Whether the arcade's "all the brains chase Mikey" bug is kept (port-only switch). On, every brain starts the
@@ -149,11 +135,85 @@ public sealed class GameSettings
     /// </remarks>
     public bool BrainsChaseMikeyBugEnabled { get; set; } = FactoryBrainsChaseMikeyBugEnabled;
 
+    /// <summary>DIFFICULTY OF PLAY, 0-10 (5 is the ROM's "RECOMMENDED").</summary>
+    public int Difficulty { get; set; } = FactoryDifficulty;
+
     /// <summary>
-    ///     Whether the arcade's mercy for a player losing ships early is given (port-only switch; see
-    ///     <see cref="Level.BozoMode" />).
+    ///     The score that earns a spare man, in thousands — 0 turns extra men off. One of
+    ///     <see cref="ExtraManEveryValues" />; 25 by default, the arcade's factory "RECOMMENDED".
     /// </summary>
-    public bool BozoModeEnabled { get; set; } = FactoryBozoModeEnabled;
+    public int ExtraManEvery { get; set; } = FactoryExtraManEveryThousands;
+
+    /// <summary>
+    ///     Whether the arcade's tank shell bug is kept (port-only switch). On, a shell that fizzles out is never taken
+    ///     off the wave's shell count, so the tanks stop firing once the count is used up. Off, only the shells on
+    ///     the field count.
+    /// </summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, which has no <c>DEC SHLCNT</c>.</remarks>
+    public bool TankShellBugEnabled { get; set; } = FactoryTankShellBugEnabled;
+
+    /// <summary>How many men a player starts with (ROM <c>NSHIP</c>/<c>PLAS</c>), 1-20.</summary>
+    public int TurnsPerPlayer { get; set; } = FactoryTurnsPerPlayer;
+
+    /// <summary>A fresh cabinet's settings.</summary>
+    public static GameSettings CreateFactoryDefaults()
+    {
+        return new GameSettings();
+    }
+
+    /// <summary>True for one of the five EXTRA MAN EVERY stops (ROM <c>$71DB</c>).</summary>
+    public static bool IsExtraManEveryValue(int value)
+    {
+        return Array.IndexOf(ExtraManEveryValues, value) >= 0;
+    }
+
+    /// <summary>Turns ATTRACT MODE SOUND on (right) or off (left).</summary>
+    public void BumpAttractModeSound(int direction)
+    {
+        AttractModeSoundEnabled = direction > 0;
+    }
+
+    /// <summary>Turns BOZO MODE on (right) or off (left).</summary>
+    public void BumpBozoModeEnabled(int direction)
+    {
+        BozoModeEnabled = direction > 0;
+    }
+
+    /// <summary>Turns BRAINS CHASE MIKEY BUG on (right) or off (left).</summary>
+    public void BumpBrainsChaseMikeyBug(int direction)
+    {
+        BrainsChaseMikeyBugEnabled = direction > 0;
+    }
+
+    /// <summary>Moves DIFFICULTY OF PLAY one step, clamped to the ROM's 0-10 range.</summary>
+    public void BumpDifficulty(int direction)
+    {
+        Difficulty = Math.Clamp(Difficulty + direction, MinimumDifficulty, MaximumDifficulty);
+    }
+
+    /// <summary>
+    ///     Moves EXTRA MAN EVERY up (<paramref name="direction" /> 1) or down (-1) one stop of the ROM's
+    ///     five-stop progression (0 → 20000 → 25000 → 30000 → 50000), stopping at the ends.
+    /// </summary>
+    public void BumpExtraManEvery(int direction)
+    {
+        var index = Array.IndexOf(ExtraManEveryValues, ExtraManEvery);
+        if (index < 0) index = Array.IndexOf(ExtraManEveryValues, FactoryExtraManEveryThousands);
+
+        ExtraManEvery = ExtraManEveryValues[Math.Clamp(index + direction, 0, ExtraManEveryValues.Length - 1)];
+    }
+
+    /// <summary>Turns TANK SHELL BUG on (right) or off (left).</summary>
+    public void BumpTankShellBug(int direction)
+    {
+        TankShellBugEnabled = direction > 0;
+    }
+
+    /// <summary>Moves TURNS PER PLAYER one step, clamped to the ROM's 1-20 range.</summary>
+    public void BumpTurnsPerPlayer(int direction)
+    {
+        TurnsPerPlayer = Math.Clamp(TurnsPerPlayer + direction, MinimumTurnsPerPlayer, MaximumTurnsPerPlayer);
+    }
 
     /// <summary>The EXTRA MAN EVERY score in points, as the game compares scores (<c>0</c> = never).</summary>
     public int GetExtraManEveryPoints()
@@ -171,18 +231,6 @@ public sealed class GameSettings
         return isAttractShowing && !AttractModeSoundEnabled;
     }
 
-    /// <summary>A fresh cabinet's settings.</summary>
-    public static GameSettings CreateFactoryDefaults()
-    {
-        return new GameSettings();
-    }
-
-    /// <summary>True for one of the five EXTRA MAN EVERY stops (ROM <c>$71DB</c>).</summary>
-    public static bool IsExtraManEveryValue(int value)
-    {
-        return Array.IndexOf(ExtraManEveryValues, value) >= 0;
-    }
-
     /// <summary>Restores every setting to its factory value.</summary>
     public void ResetToFactory()
     {
@@ -193,53 +241,5 @@ public sealed class GameSettings
         TankShellBugEnabled = FactoryTankShellBugEnabled;
         BrainsChaseMikeyBugEnabled = FactoryBrainsChaseMikeyBugEnabled;
         BozoModeEnabled = FactoryBozoModeEnabled;
-    }
-
-    /// <summary>
-    ///     Moves EXTRA MAN EVERY up (<paramref name="direction" /> 1) or down (-1) one stop of the ROM's
-    ///     five-stop progression (0 → 20000 → 25000 → 30000 → 50000), stopping at the ends.
-    /// </summary>
-    public void BumpExtraManEvery(int direction)
-    {
-        var index = Array.IndexOf(ExtraManEveryValues, ExtraManEvery);
-        if (index < 0) index = Array.IndexOf(ExtraManEveryValues, FactoryExtraManEveryThousands);
-
-        ExtraManEvery = ExtraManEveryValues[Math.Clamp(index + direction, 0, ExtraManEveryValues.Length - 1)];
-    }
-
-    /// <summary>Moves TURNS PER PLAYER one step, clamped to the ROM's 1-20 range.</summary>
-    public void BumpTurnsPerPlayer(int direction)
-    {
-        TurnsPerPlayer = Math.Clamp(TurnsPerPlayer + direction, MinimumTurnsPerPlayer, MaximumTurnsPerPlayer);
-    }
-
-    /// <summary>Moves DIFFICULTY OF PLAY one step, clamped to the ROM's 0-10 range.</summary>
-    public void BumpDifficulty(int direction)
-    {
-        Difficulty = Math.Clamp(Difficulty + direction, MinimumDifficulty, MaximumDifficulty);
-    }
-
-    /// <summary>Turns ATTRACT MODE SOUND on (right) or off (left).</summary>
-    public void BumpAttractModeSound(int direction)
-    {
-        AttractModeSoundEnabled = direction > 0;
-    }
-
-    /// <summary>Turns TANK SHELL BUG on (right) or off (left).</summary>
-    public void BumpTankShellBug(int direction)
-    {
-        TankShellBugEnabled = direction > 0;
-    }
-
-    /// <summary>Turns BRAINS CHASE MIKEY BUG on (right) or off (left).</summary>
-    public void BumpBrainsChaseMikeyBug(int direction)
-    {
-        BrainsChaseMikeyBugEnabled = direction > 0;
-    }
-
-    /// <summary>Turns BOZO MODE on (right) or off (left).</summary>
-    public void BumpBozoModeEnabled(int direction)
-    {
-        BozoModeEnabled = direction > 0;
     }
 }

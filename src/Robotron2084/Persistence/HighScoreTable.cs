@@ -123,12 +123,6 @@ public sealed class HighScoreTable
     /// <summary>The operator's top entry (shown on its own line, in its own colours).</summary>
     public TopScoreEntry Top { get; private set; }
 
-    /// <summary>The ROM's factory table: today's list, the all-time list and the top entry.</summary>
-    public static HighScoreTable CreateWithFactoryScores()
-    {
-        return new HighScoreTable(FactoryTop, FactoryToday, FactoryAllTime);
-    }
-
     /// <summary>
     ///     Builds a table from what the store had: TODAY'S always comes from the
     ///     factory table (the ROM reloads it at power-up), the all-time list and the
@@ -138,6 +132,12 @@ public sealed class HighScoreTable
     {
         return new HighScoreTable(top ?? FactoryTop, FactoryToday,
             PadToCapacity(allTime, AllTimeCapacity, FactoryAllTime));
+    }
+
+    /// <summary>The ROM's factory table: today's list, the all-time list and the top entry.</summary>
+    public static HighScoreTable CreateWithFactoryScores()
+    {
+        return new HighScoreTable(FactoryTop, FactoryToday, FactoryAllTime);
     }
 
     /// <summary>Whether a finished score earns an initials screen at all (ROM `EGSUB1`: `TODCHK`, then `ALLCHK`).</summary>
@@ -219,6 +219,12 @@ public sealed class HighScoreTable
         if (list.Count > capacity) list.RemoveRange(capacity, list.Count - capacity);
     }
 
+    /// <summary>The index of the list's lowest-scoring entry carrying these initials — the fifth `SETBOT` finds.</summary>
+    private static int FindLowestInitialsIndex(List<HighScoreEntry> list, string initials)
+    {
+        return list.FindLastIndex(entry => entry.Initials == initials);
+    }
+
     /// <summary>The three initials a name starts with (the ROM's `GODINT`, three CMOS characters).</summary>
     private static string GetInitialsOf(string name)
     {
@@ -245,12 +251,6 @@ public sealed class HighScoreTable
         if (list.Count > capacity) list.RemoveAt(list.Count - 1);
 
         return true;
-    }
-
-    /// <summary>The index of the list's lowest-scoring entry carrying these initials — the fifth `SETBOT` finds.</summary>
-    private static int FindLowestInitialsIndex(List<HighScoreEntry> list, string initials)
-    {
-        return list.FindLastIndex(entry => entry.Initials == initials);
     }
 
     private static List<HighScoreEntry> PadToCapacity(IReadOnlyList<HighScoreEntry>? entries, int capacity,

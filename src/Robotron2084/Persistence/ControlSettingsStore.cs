@@ -14,10 +14,10 @@ namespace Robotron2084.Persistence;
 /// moveup.key=W
 /// moveup.pad=P1 LEFT STICK UP
 /// ...
-/// 
+///
 /// [player2]
 /// ...
-/// 
+///
 /// [pause]
 /// input=P
 /// </code>
