@@ -8,43 +8,43 @@ namespace RobotronSoundPlayer;
 internal sealed class SoundPlayback(byte[] soundRom)
 {
     /// <summary>Plays a request through the speakers until it ends, its time runs out, or a key is pressed.</summary>
-    /// <param name="request">What to play.</param>
+    /// <param name="soundRequest">What to play.</param>
     /// <param name="seconds">How long to play, or null to stop when it goes quiet.</param>
-    public void PlayToSpeakers(ISoundRequest request, double? seconds)
+    public void PlayToSpeakers(ISoundRequest soundRequest, double? seconds)
     {
-        var length = new PlaybackLength(seconds);
-        Console.WriteLine($"Playing {request.Name} ({request.Description}). Press any key to stop.");
-        var wasStopped = SpeakerOutput.Play(StartSource(request), length);
-        Console.WriteLine(wasStopped ? "Stopped." : DescribeEnding(length, seconds));
+        var playbackLength = new PlaybackLength(seconds);
+        Console.WriteLine($"Playing {soundRequest.Name} ({soundRequest.Description}). Press any key to stop.");
+        var wasStopped = SpeakerOutput.Play(StartSource(soundRequest), playbackLength);
+        Console.WriteLine(wasStopped ? "Stopped." : DescribeEnding(playbackLength, seconds));
     }
 
     /// <summary>Writes a request to a WAV file.</summary>
-    /// <param name="request">What to play.</param>
+    /// <param name="soundRequest">What to play.</param>
     /// <param name="seconds">How long to write, or null to stop when it goes quiet.</param>
     /// <param name="wavPath">The file to write.</param>
-    public void WriteToFile(ISoundRequest request, double? seconds, string wavPath)
+    public void WriteToFile(ISoundRequest soundRequest, double? seconds, string wavPath)
     {
-        var length = new PlaybackLength(seconds);
-        WavFileWriter.Write(wavPath, StartSource(request), length);
-        Console.WriteLine($"Wrote {request.Name} to {wavPath}. {DescribeEnding(length, seconds)}");
+        var playbackLength = new PlaybackLength(seconds);
+        WavFileWriter.Write(wavPath, StartSource(soundRequest), playbackLength);
+        Console.WriteLine($"Wrote {soundRequest.Name} to {wavPath}. {DescribeEnding(playbackLength, seconds)}");
     }
 
     /// <summary>Switches a fresh emulated board on and asks it for the request.</summary>
-    /// <param name="request">What to play.</param>
-    private BoardSoundSource StartSource(ISoundRequest request)
+    /// <param name="soundRequest">What to play.</param>
+    private BoardSoundSource StartSource(ISoundRequest soundRequest)
     {
-        return new BoardSoundSource(new EmulatedSoundBoard(soundRom), request);
+        return new BoardSoundSource(new EmulatedSoundBoard(soundRom), soundRequest);
     }
 
     /// <summary>Says why the sound stopped.</summary>
-    /// <param name="length">The length that stopped it.</param>
+    /// <param name="playbackLength">The length that stopped it.</param>
     /// <param name="seconds">The time the user gave, or null.</param>
-    private static string DescribeEnding(PlaybackLength length, double? seconds)
+    private static string DescribeEnding(PlaybackLength playbackLength, double? seconds)
     {
-        var heard = length.HeardSeconds.ToString("F1", CultureInfo.InvariantCulture);
+        var heard = playbackLength.HeardSeconds.ToString("F1", CultureInfo.InvariantCulture);
         if (seconds is not null) return $"Played {heard} s, as asked.";
 
-        if (length.FellSilent) return $"It went quiet after {heard} s.";
+        if (playbackLength.FellSilent) return $"It went quiet after {heard} s.";
 
         return
             $"Still sounding at the {PlaybackLength.LimitSeconds} s limit: this sound does not stop by itself. Use --seconds to hear more.";

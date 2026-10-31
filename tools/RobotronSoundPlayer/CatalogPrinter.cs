@@ -10,19 +10,19 @@ internal static class CatalogPrinter
     private const int NameWidth = 26;
 
     /// <summary>Prints the catalog to the console.</summary>
-    /// <param name="catalog">The catalog.</param>
-    public static void Print(SoundCatalog catalog)
+    /// <param name="soundCatalog">The catalog.</param>
+    public static void Print(SoundCatalog soundCatalog)
     {
         Console.WriteLine("The game's sounds (pick by name or number):");
-        for (var i = 0; i < catalog.GameSounds.Count; i++)
+        for (var i = 0; i < soundCatalog.GameSounds.Count; i++)
         {
-            var sound = catalog.GameSounds[i];
+            var sound = soundCatalog.GameSounds[i];
             Console.WriteLine($"  {i + 1,3}  {sound.Name.PadRight(NameWidth)}{sound.Description}");
         }
 
         Console.WriteLine();
         Console.WriteLine("The board's sound numbers on their own (pick as $00 to $3F):");
-        foreach (var row in catalog.SoundNumbers.Chunk(SoundNumbersPerRow))
+        foreach (var row in soundCatalog.SoundNumbers.Chunk(SoundNumbersPerRow))
             Console.WriteLine("  " + string.Join(" ", row.Select(sound => sound.Name)));
     }
 }

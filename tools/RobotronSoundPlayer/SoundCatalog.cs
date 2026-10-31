@@ -51,9 +51,9 @@ internal sealed class SoundCatalog
     {
         return typeof(SoundTables)
             .GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(field => field.FieldType == typeof(SoundSequence))
-            .OrderBy(field => field.Name, StringComparer.Ordinal)
-            .Select(field => new SoundTableRequest(field.Name, (SoundSequence)field.GetValue(null)!))
+            .Where(playField => playField.FieldType == typeof(SoundSequence))
+            .OrderBy(playField => playField.Name, StringComparer.Ordinal)
+            .Select(playField => new SoundTableRequest(playField.Name, (SoundSequence)playField.GetValue(null)!))
             .Concat(SoundTables.Coin.Select((table, index) => new SoundTableRequest($"Coin{index + 1}", table)));
     }
 

@@ -45,12 +45,12 @@ internal static class Program
     /// <returns>An exit code.</returns>
     private static int PlayOrShowMenu(CommandLine commandLine)
     {
-        var catalog = new SoundCatalog();
-        ISoundRequest? request = null;
+        var soundCatalog = new SoundCatalog();
+        ISoundRequest? soundRequest = null;
         if (commandLine.Command == "play")
         {
-            request = catalog.Find(commandLine.Choice ?? string.Empty);
-            if (request is null)
+            soundRequest = soundCatalog.Find(commandLine.Choice ?? string.Empty);
+            if (soundRequest is null)
                 return Fail(
                     $"There is no sound called '{commandLine.Choice}'. Run 'RobotronSoundPlayer list' to see them all.");
         }
@@ -63,33 +63,33 @@ internal static class Program
             return CannotPlay;
         }
 
-        return Play(catalog, request, commandLine, new SoundPlayback(File.ReadAllBytes(romPath)));
+        return Play(soundCatalog, soundRequest, commandLine, new SoundPlayback(File.ReadAllBytes(romPath)));
     }
 
     /// <summary>Plays one sound, or runs the menu when there is none.</summary>
-    /// <param name="catalog">What can be played.</param>
-    /// <param name="request">The sound to play, or null for the menu.</param>
+    /// <param name="soundCatalog">What can be played.</param>
+    /// <param name="soundRequest">The sound to play, or null for the menu.</param>
     /// <param name="commandLine">The command line, for its options.</param>
-    /// <param name="playback">Plays a sound.</param>
+    /// <param name="soundPlayback">Plays a sound.</param>
     /// <returns>An exit code.</returns>
-    private static int Play(SoundCatalog catalog, ISoundRequest? request, CommandLine commandLine,
-        SoundPlayback playback)
+    private static int Play(SoundCatalog soundCatalog, ISoundRequest? soundRequest, CommandLine commandLine,
+        SoundPlayback soundPlayback)
     {
-        if (request is not null && commandLine.WavPath is not null)
+        if (soundRequest is not null && commandLine.WavPath is not null)
         {
-            playback.WriteToFile(request, commandLine.Seconds, commandLine.WavPath);
+            soundPlayback.WriteToFile(soundRequest, commandLine.Seconds, commandLine.WavPath);
             return Success;
         }
 
         try
         {
-            if (request is null)
+            if (soundRequest is null)
             {
-                InteractiveMenu.Run(catalog, playback, commandLine.Seconds);
+                InteractiveMenu.Run(soundCatalog, soundPlayback, commandLine.Seconds);
                 return Success;
             }
 
-            playback.PlayToSpeakers(request, commandLine.Seconds);
+            soundPlayback.PlayToSpeakers(soundRequest, commandLine.Seconds);
             return Success;
         }
         catch (NoAudioHardwareException)
@@ -123,7 +123,7 @@ internal static class Program
                             RobotronSoundPlayer list                 list every sound
                             RobotronSoundPlayer play <sound>         play one sound, then stop
 
-                          <sound> is a name from the list (WaveEnd, Laser, Transporter ...), its number in the
+                          <sound> is a name from the list (WaveEnd, PlayerLaser, TransporterSound ...), its number in the
                           list, or one of the board's sound numbers written $0E, 0x0E or #14.
 
                           Options:

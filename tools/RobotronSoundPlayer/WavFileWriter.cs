@@ -26,16 +26,16 @@ internal static class WavFileWriter
 
     /// <summary>Makes a sound until its length says to stop, and writes it to a file.</summary>
     /// <param name="path">The WAV file to write.</param>
-    /// <param name="source">Makes the sound.</param>
-    /// <param name="length">Says when to stop.</param>
-    public static void Write(string path, ISoundSource source, PlaybackLength length)
+    /// <param name="soundSource">Makes the sound.</param>
+    /// <param name="playbackLength">Says when to stop.</param>
+    public static void Write(string path, ISoundSource soundSource, PlaybackLength playbackLength)
     {
         using var pcm = new MemoryStream();
         var samples = new float[PlayerAudio.SamplesPerPortTick];
-        while (!length.IsOver)
+        while (!playbackLength.IsOver)
         {
-            source.RenderPortTick(samples);
-            length.Count(samples);
+            soundSource.RenderPortTick(samples);
+            playbackLength.Count(samples);
             pcm.Write(PlayerAudio.ToPcm16(samples, SoundTuning.MasterVolume));
         }
 

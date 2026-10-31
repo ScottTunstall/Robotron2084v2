@@ -12,10 +12,10 @@ internal interface ISoundRequest
     string Description { get; }
 
     /// <summary>Asks the sequencer for the sound.</summary>
-    /// <param name="engine">The sequencer that sends sound numbers to the board.</param>
-    void Start(SoundEngine engine);
+    /// <param name="soundEngine">The sequencer that sends sound numbers to the board.</param>
+    void Start(SoundEngine soundEngine);
 
     /// <summary>Moves the request on by one port tick, for sounds that keep sending after they start.</summary>
-    /// <param name="engine">The sequencer that sends sound numbers to the board.</param>
-    void Tick(SoundEngine engine);
+    /// <param name="soundEngine">The sequencer that sends sound numbers to the board.</param>
+    void Tick(SoundEngine soundEngine);
 }

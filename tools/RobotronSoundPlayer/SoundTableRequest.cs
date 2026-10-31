@@ -24,15 +24,15 @@ internal sealed class SoundTableRequest(string name, SoundSequence sequence) : I
     }
 
     /// <summary>Asks the sequencer for the table, heard in the middle.</summary>
-    /// <param name="engine">The sequencer that sends sound numbers to the board.</param>
-    public void Start(SoundEngine engine)
+    /// <param name="soundEngine">The sequencer that sends sound numbers to the board.</param>
+    public void Start(SoundEngine soundEngine)
     {
-        engine.Play(sequence, 0f);
+        soundEngine.Play(sequence, 0f);
     }
 
     /// <summary>Does nothing: the sequencer moves the table on by itself.</summary>
-    /// <param name="engine">The sequencer that sends sound numbers to the board.</param>
-    public void Tick(SoundEngine engine)
+    /// <param name="soundEngine">The sequencer that sends sound numbers to the board.</param>
+    public void Tick(SoundEngine soundEngine)
     {
     }
 }

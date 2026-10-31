@@ -21,16 +21,16 @@ internal sealed class TransporterRequest : ISoundRequest
     public string Description => "BRAIN WAVE: a brain wave's robots beaming in (sends $12 over and over)";
 
     /// <summary>Clears the board and starts the warp-in.</summary>
-    /// <param name="engine">The sequencer that sends sound numbers to the board.</param>
-    public void Start(SoundEngine engine)
+    /// <param name="soundEngine">The sequencer that sends sound numbers to the board.</param>
+    public void Start(SoundEngine soundEngine)
     {
-        _transporterSound.Start(engine);
+        _transporterSound.Start(soundEngine);
     }
 
     /// <summary>Sends the warp-in sound number when it is due.</summary>
-    /// <param name="engine">The sequencer that sends sound numbers to the board.</param>
-    public void Tick(SoundEngine engine)
+    /// <param name="soundEngine">The sequencer that sends sound numbers to the board.</param>
+    public void Tick(SoundEngine soundEngine)
     {
-        _transporterSound.Tick(engine);
+        _transporterSound.Tick(soundEngine);
     }
 }

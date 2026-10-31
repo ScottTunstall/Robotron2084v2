@@ -4,12 +4,12 @@ namespace RobotronSoundPlayer;
 internal static class InteractiveMenu
 {
     /// <summary>Shows the list, then plays each choice until the user types <c>q</c>.</summary>
-    /// <param name="catalog">What can be played.</param>
-    /// <param name="playback">Plays a choice.</param>
+    /// <param name="soundCatalog">What can be played.</param>
+    /// <param name="soundPlayback">Plays a choice.</param>
     /// <param name="seconds">How long to play each one, or null to stop when it goes quiet.</param>
-    public static void Run(SoundCatalog catalog, SoundPlayback playback, double? seconds)
+    public static void Run(SoundCatalog soundCatalog, SoundPlayback soundPlayback, double? seconds)
     {
-        CatalogPrinter.Print(catalog);
+        CatalogPrinter.Print(soundCatalog);
         while (true)
         {
             Console.WriteLine();
@@ -17,33 +17,33 @@ internal static class InteractiveMenu
             var answer = Console.ReadLine()?.Trim();
             if (answer is null || IsQuit(answer)) return;
 
-            Answer(answer, catalog, playback, seconds);
+            Answer(answer, soundCatalog, soundPlayback, seconds);
         }
     }
 
     /// <summary>Acts on one answer: shows the list again, plays a sound, or says nothing matched.</summary>
     /// <param name="answer">What the user typed.</param>
-    /// <param name="catalog">What can be played.</param>
-    /// <param name="playback">Plays a choice.</param>
+    /// <param name="soundCatalog">What can be played.</param>
+    /// <param name="soundPlayback">Plays a choice.</param>
     /// <param name="seconds">How long to play, or null to stop when it goes quiet.</param>
-    private static void Answer(string answer, SoundCatalog catalog, SoundPlayback playback, double? seconds)
+    private static void Answer(string answer, SoundCatalog soundCatalog, SoundPlayback soundPlayback, double? seconds)
     {
         if (answer.Length == 0) return;
 
         if (answer.Equals("list", StringComparison.OrdinalIgnoreCase))
         {
-            CatalogPrinter.Print(catalog);
+            CatalogPrinter.Print(soundCatalog);
             return;
         }
 
-        var request = catalog.Find(answer);
+        var request = soundCatalog.Find(answer);
         if (request is null)
         {
             Console.WriteLine($"There is no sound called '{answer}'. Type 'list' to see them all.");
             return;
         }
 
-        playback.PlayToSpeakers(request, seconds);
+        soundPlayback.PlayToSpeakers(request, seconds);
     }
 
     /// <summary>True when the answer asks to quit.</summary>
