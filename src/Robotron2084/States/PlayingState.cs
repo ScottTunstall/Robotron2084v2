@@ -18,13 +18,13 @@ namespace Robotron2084.States;
 ///     The in-game state: owns the current <see cref="PlayField" /> for the player
 ///     whose turn it is, plus the <see cref="GameSession" /> that keeps every player's
 ///     score, lives and wave.
-///     Turn handling is the arcade's (RRG23 PLEND/PLEND3/PLE1B): a death takes a man
+///     Turn handling is the arcade's (RRG23 PLEND/PLEND3/PLE1B): a death takes a life
 ///     and, in a 2-player game, hands the turn to the other player if they still have
-///     men — who resumes at THEIR own wave. When nobody has men the game ends; when
+///     lives — who resumes at THEIR own wave. When nobody has lives the game ends; when
 ///     only the player who just died is out, the ROM shows "PLAYER n GAME OVER"
 ///     before the other one resumes. A wave clear advances the CURRENT player's wave.
 ///     The HUD is the arcade's too (notes §58): each player's score in the top band at
-///     their own column, their spare men as mini man icons to its right, and the wave
+///     their own column, their spare lives as spare-life icons to its right, and the wave
 ///     indicator at the bottom of the screen.
 /// </summary>
 public sealed class PlayingState : IGameState
@@ -38,7 +38,7 @@ public sealed class PlayingState : IGameState
 
     private readonly GameSettings _gameSettings;
 
-    private readonly LevelParameterGenerator _generator = new();
+    private readonly WaveParameterGenerator _generator = new();
     private readonly HighScoreStore _highScoreStore;
     private readonly PauseToggle _pause = new();
     private readonly Random _random = new();
@@ -85,8 +85,8 @@ public sealed class PlayingState : IGameState
     /// </summary>
     /// <param name="controlSettings">The keys and buttons the players have chosen.</param>
     /// <param name="gameSettings">
-    ///     The GAME ADJUSTMENT settings (notes §131): TURNS PER PLAYER is the men each player starts
-    ///     with, EXTRA MAN EVERY the score that earns a spare man, and DIFFICULTY OF PLAY nudges every
+    ///     The GAME ADJUSTMENT settings (notes §131): TURNS PER PLAYER is the lives each player starts
+    ///     with, EXTRA MAN EVERY the score that earns a spare life, and DIFFICULTY OF PLAY nudges every
     ///     wave's tuning.
     /// </param>
     /// <param name="mode">How many people are playing, and whether two of them take turns.</param>
@@ -110,7 +110,7 @@ public sealed class PlayingState : IGameState
         else
             _field.Draw(spriteBatch);
 
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds());
+        ArcadeHud.DrawScoresAndLives(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds());
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.GetCurrent().Wave);
 
         if (_pause.IsPaused)
@@ -173,17 +173,17 @@ public sealed class PlayingState : IGameState
         _field.Update(gameTime);
 
         // The HUD is drawn from the session's slots, and the ROM reads the score,
-        // the men and SAVCNT out of the player's own data block every time it
+        // the lives and SAVCNT out of the player's own data block every time it
         // draws — so hand the live counters over EVERY tick (notes §97). Syncing
         // only at a wave clear / death left the displayed score (and an earned
-        // spare man) stale for the rest of the wave.
+        // spare life) stale for the rest of the wave.
         SyncSlotFromField();
 
         var input = _session.GetCurrent().Input.Poll();
 
         // Wave clear — checked before the death check. The P key (the port's test
         // key) takes the same path so waves can be skipped.
-        if (_field.IsLevelCleared() || input.SkipLevelHeld)
+        if (_field.IsWaveCleared() || input.SkipWaveHeld)
         {
             HandleWaveCleared(manager);
             return;
@@ -227,14 +227,14 @@ public sealed class PlayingState : IGameState
         if (_session.IsTwoPlayer()) _turnMessageTicks = ArcadeClock.ToPortTicks(ScreenTuning.PlayerTurnMessageArcadeFrames);
     }
 
-    /// <summary>Eases the wave for a player losing ships early, unless BOZO MODE is switched off on the GAME ADJUSTMENT page.</summary>
+    /// <summary>Eases the wave for a player losing lives early, unless BOZO MODE is switched off on the GAME ADJUSTMENT page.</summary>
     /// <param name="parameters">The wave's parameters.</param>
     /// <param name="slot">The player whose turn it is.</param>
-    private LevelParameters ApplyBozoMode(LevelParameters parameters, PlayerSlot slot)
+    private WaveParameters ApplyBozoMode(WaveParameters parameters, PlayerSlot slot)
     {
         if (!_gameSettings.BozoModeEnabled) return parameters;
 
-        return BozoMode.Apply(parameters, slot.GetSpareMen(), _gameSettings.TurnsPerPlayer);
+        return BozoMode.Apply(parameters, slot.GetSpareLives(), _gameSettings.TurnsPerPlayer);
     }
 
     /// <summary>Builds the playfield for whoever's turn it is, from their own state.</summary>
@@ -256,7 +256,7 @@ public sealed class PlayingState : IGameState
             slot.Score,
             _sprites.Blitter.Palette,
             contactTest: new PixelContactTest(new SpriteCollision()),
-            extraManEveryPoints: _gameSettings.GetExtraManEveryPoints(),
+            extraLifeEveryPoints: _gameSettings.GetExtraLifeEveryPoints(),
             tankShellBugEnabled: _gameSettings.TankShellBugEnabled,
             brainsChaseMikeyBugEnabled: _gameSettings.BrainsChaseMikeyBugEnabled,
             familySlotsLeftOver: _session.FamilySlotsLeftOver);
@@ -267,10 +267,10 @@ public sealed class PlayingState : IGameState
     /// <remarks>
     ///     Original source: <c>RRG23.ASM</c> <c>PLRES</c> brings back what <c>PLSAV</c> kept, then eases the first waves for a
     ///     player on
-    ///     their last men (Bozo). The difficulty setting is applied once, when the wave is first made (<c>GETWV</c>), so a
+    ///     their last lives (Bozo). The difficulty setting is applied once, when the wave is first made (<c>GETWV</c>), so a
     ///     life after a death does not apply it again.
     /// </remarks>
-    private LevelParameters GetWaveToPlay(PlayerSlot slot)
+    private WaveParameters GetWaveToPlay(PlayerSlot slot)
     {
         if (slot.SavedWaveParameters is { } saved) return ApplyBozoMode(saved, slot);
 
@@ -281,7 +281,7 @@ public sealed class PlayingState : IGameState
 
     /// <summary>
     ///     ROM PLEND → PLEND3 → PLE1B. <see cref="Player.Kill" /> has already taken the
-    ///     man (the ROM's <c>PLSTRT</c> takes it when a life starts), so
+    ///     life (the ROM's <c>PLSTRT</c> takes it when a life starts), so
     ///     <see cref="PlayField.Player" /> already holds the remaining count.
     /// </summary>
     private void HandlePlayerDeath(GameStateManager manager)
@@ -292,10 +292,10 @@ public sealed class PlayingState : IGameState
         deadPlayerSlot.SavedWaveParameters = WaveSurvivors.GetFrom(_field);
 
         if (_session.IsTwoPlayer())
-            // ROM PLE1B: the turn passes to the other player while they have men.
-            _session.SwitchToPlayerWithMen();
+            // ROM PLE1B: the turn passes to the other player while they have lives.
+            _session.SwitchToPlayerWithLives();
 
-        if (!_session.AnyPlayerSlotHasMen())
+        if (!_session.AnyPlayerSlotHasLives())
         {
             // The score that ends the game is the CURRENT player's — but a 2-player
             // game offers both scores to the high-score table (RRTESTC checks
@@ -305,9 +305,9 @@ public sealed class PlayingState : IGameState
             return;
         }
 
-        if (!deadPlayerSlot.HasMen() && _session.IsTwoPlayer())
+        if (!deadPlayerSlot.HasLives() && _session.IsTwoPlayer())
         {
-            // ROM PLEND3: this player is out and the other still has men — print
+            // ROM PLEND3: this player is out and the other still has lives — print
             // "PLAYER n GAME OVER" and wait NAP $60 before the turn passes.
             _playerOutNumber = deadPlayerSlot.Number;
             _playerOutMessageTicks = ArcadeClock.ToPortTicks(ScreenTuning.PlayerGameOverMessageArcadeFrames);

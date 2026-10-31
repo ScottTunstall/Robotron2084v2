@@ -176,7 +176,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // The caller clears to black. This is the ROM's Williams PRESENTATION page (notes §103):
         // the border of 28 moving "W" logos, the logos, the operator's welcome message (two
         // 25-character lines) and the credit strings. The arcade's "CREDITS: n" line is not drawn,
-        // because the port has no credits, and neither the playfield wall nor the score/men belong to
+        // because the port has no credits, and neither the playfield wall nor the score/lives belong to
         // this page: the cabinet's other attract page carries those.
         _logoBorder.Draw(spriteBatch, _sprites.Blitter);
 

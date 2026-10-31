@@ -11,7 +11,7 @@ namespace Robotron2084.States;
 
 /// <summary>
 ///     The end of a game: the arcade's own screen for it (notes §98.1). RRG23's
-///     <c>PLEND</c> — the last man gone — clears a block at (60, 126), prints string
+///     <c>PLEND</c> — the last life gone — clears a block at (60, 126), prints string
 ///     40 (<c>GOMP</c> = "GAME OVER") in the LARGE font in colour <c>$AA</c> at
 ///     <c>CURSAB $3E,$80</c> = (62, 128), holds it for <c>NAP 120</c> = 2.4 s and then
 ///     runs <c>ENDPRC</c>, the high-score processing — with no key wait.

@@ -22,7 +22,7 @@ namespace Robotron2084.States;
 ///     INSPIRED BY HIS NEVER ENDING QUEST FOR PROGRESS…"), then the hero, the family,
 ///     the grunts, the hulk, the spheroid/tank/enforcer scene, the brain's
 ///     reprogramming and the score electrodes, all on the title's solid $CC wall with the
-///     player's score and men in the HUD.
+///     player's score and lives in the HUD.
 ///     Draw order follows the screen's own layering: wall, HUD, the title string (the
 ///     ROM prints it in SPGSUB and the page script never clears above row 48), the
 ///     character objects, then the story text and the score-row name popups on top.
@@ -55,7 +55,7 @@ public sealed class StorylineState : IGameState, IAttractState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _wall.Draw(spriteBatch, _sprites.WallPixelSprite, _sprites.Blitter.GetSlotColour(AttractTuning.TitleWallSlot));
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds(), false);
+        ArcadeHud.DrawScoresAndLives(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds(), false);
 
         ArcadeHud.DrawCenteredLargeText(
             spriteBatch,

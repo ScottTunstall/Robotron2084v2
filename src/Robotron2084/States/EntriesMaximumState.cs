@@ -7,7 +7,7 @@ namespace Robotron2084.States;
 
 /// <summary>
 ///     The ONLY5P page (notes §116) — "5 ENTRIES MAXIMUM PER PLAYER / LOWEST ENTRY REPLACED", which the
-///     arcade shows when the all-time list's per-initials cap has just applied, held for 1.2 s before the
+///     arcade shows when the all-time list's per-initials maximum has just applied, held for 1.2 s before the
 ///     ceremony carries on.
 /// </summary>
 /// <remarks>
@@ -29,7 +29,7 @@ public sealed class EntriesMaximumState : IGameState
     private readonly GameServices _services;
     private int _elapsedTicks;
 
-    /// <summary>Builds the page for the score whose initials hit the cap.</summary>
+    /// <summary>Builds the page for the score whose initials hit the maximum.</summary>
     /// <param name="services">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
     /// <param name="ceremony">The ceremony to carry on with once the page has been held.</param>
     public EntriesMaximumState(GameServices services, ScoreEntryCeremony ceremony)

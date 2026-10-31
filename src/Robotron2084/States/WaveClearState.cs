@@ -10,7 +10,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>
-///     Inter-level screen: after the display time, the same player
+///     Inter-wave screen: after the display time, the same player
 ///     resumes at their next wave, carrying lives, score and rescue count over. The
 ///     session rides through unchanged — a wave clear never passes the turn in the
 ///     arcade (RRG23 GEXEC0 only advances the CURRENT player's PWAV), so a 2-player

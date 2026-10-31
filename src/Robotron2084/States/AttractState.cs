@@ -19,9 +19,9 @@ namespace Robotron2084.States;
 ///     The arcade's attract rules, kept:
 ///     <list type="bullet">
 ///         <item>wave clears advance the wave, through the same tunnel state;</item>
-///         <item>a death rebuilds the field for the next man;</item>
+///         <item>a death rebuilds the field for the next life;</item>
 ///         <item>
-///             losing ALL men silently starts a NEW game — never a high-score entry
+///             losing ALL lives silently starts a NEW game — never a high-score entry
 ///             (the OS ROM just replays the demo);
 ///         </item>
 ///         <item>
@@ -34,7 +34,7 @@ public sealed class AttractState : IGameState, IAttractState
 {
     private readonly ButtonEdgeDetector _buttons = new();
     private readonly DemoPlayerInputSource _demoInput = new();
-    private readonly LevelParameterGenerator _generator = new();
+    private readonly WaveParameterGenerator _generator = new();
     private readonly HighScoreStore _highScoreStore;
     private readonly IPlayerInputSource _humanInput;
     private readonly Random _random = new();
@@ -56,7 +56,7 @@ public sealed class AttractState : IGameState, IAttractState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         _field.Draw(spriteBatch);
-        ArcadeHud.DrawScoresAndMen(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds(), false);
+        ArcadeHud.DrawScoresAndLives(spriteBatch, _sprites, _session, PlayfieldLayout.GetInnerBounds(), false);
         ArcadeHud.DrawWaveMessage(spriteBatch, _sprites, _session.GetCurrent().Wave);
     }
 
@@ -82,7 +82,7 @@ public sealed class AttractState : IGameState, IAttractState
         // the score only at the next wave clear / death before this.
         SyncSlotFromField();
 
-        if (_field.IsLevelCleared())
+        if (_field.IsWaveCleared())
         {
             var playerSlot = _session.GetCurrent();
             SyncSlotFromField();
@@ -97,9 +97,9 @@ public sealed class AttractState : IGameState, IAttractState
             SyncSlotFromField();
             _session.GetCurrent().SavedWaveParameters = WaveSurvivors.GetFrom(_field);
 
-            if (!_session.AnyPlayerSlotHasMen())
+            if (!_session.AnyPlayerSlotHasLives())
             {
-                // RRG23 PLEND: the last man gone ends the game — "GAME OVER", then
+                // RRG23 PLEND: the last life gone ends the game — "GAME OVER", then
                 // ENDPRC → GOV → LOGG1, whose first act is the high score TABLE
                 // (`JSR SCRCLR / JSR TABORG`), and only then the family page again
                 // (notes §98.1). The demo's own score is NOT posted (notes §98.4,
@@ -116,7 +116,7 @@ public sealed class AttractState : IGameState, IAttractState
     {
         var slot = _session.GetCurrent();
         // The demo is the same game, so a death keeps the survivors here too (notes §134).
-        var parameters = BozoMode.Apply(slot.SavedWaveParameters ?? _generator.Generate(slot.Wave), slot.GetSpareMen());
+        var parameters = BozoMode.Apply(slot.SavedWaveParameters ?? _generator.Generate(slot.Wave), slot.GetSpareLives());
         WallColorCycle cycle = new();
         return new PlayField(_sprites, parameters, _demoInput, PlayfieldLayout.GetInnerBounds(), cycle, _random,
             slot.Lives, slot.Score, _sprites.Blitter.Palette, false, new PixelContactTest(new SpriteCollision()));
