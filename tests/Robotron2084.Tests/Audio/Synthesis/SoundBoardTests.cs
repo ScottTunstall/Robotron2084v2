@@ -67,7 +67,7 @@ public class SoundBoardTests
 
     /// <summary>
     ///     The wave-end music is a sound the BOARD loops: it keeps playing after the ROM's table has asked for
-    ///     it for the last time, so the next level's own sounds used to cut it short wherever the loop had got
+    ///     it for the last time, so the next wave's own sounds used to cut it short wherever the loop had got
     ///     to (the author's report). Measure the phrase here, then pin the held voice between the table's last
     ///     ask and the music's own end — the exact value inside that window is the author's ear (notes §128).
     /// </summary>
