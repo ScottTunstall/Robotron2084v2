@@ -135,7 +135,7 @@ public sealed class GruntSpeedProgression
     private const int LargeFloorStep = 2;
 
     /// <summary>
-    ///     Each time <see cref="Floor" /> is lowered, every grunt's longest wait (<see cref="Grunt.MoveDelayBeats" />) is
+    ///     Each time <see cref="Floor" /> is lowered, every grunt's longest wait (<see cref="Grunt.MoveIntervalMaxBeats" />) is
     ///     cut as well. This many times the number of beats subtracted from <see cref="Floor" /> is subtracted from it.
     /// </summary>
     /// <remarks>

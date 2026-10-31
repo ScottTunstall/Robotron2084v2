@@ -88,8 +88,8 @@ public sealed class SpawnPlacement
     public IntVector2 FindSpawnPointAwayFrom(IntVector2 avoidedPosition, int minDistanceArcadePixels,
         Func<Rectangle, bool>? isAlsoAcceptable = null)
     {
-        return FindSpawnPoint(box =>
-            IsFarEnough(box, avoidedPosition, minDistanceArcadePixels) && (isAlsoAcceptable?.Invoke(box) ?? true));
+        return FindSpawnPoint(candidateBounds =>
+            IsFarEnough(candidateBounds, avoidedPosition, minDistanceArcadePixels) && (isAlsoAcceptable?.Invoke(candidateBounds) ?? true));
     }
 
     /// <summary>Finds a spot for a spheroid. Spheroids like to start near a wall, so most of the spots tried are close to one.</summary>
@@ -108,16 +108,16 @@ public sealed class SpawnPlacement
     /// <param name="minDistanceArcadePixels">How far away the spot must be, in arcade pixels.</param>
     public IntVector2 FindSpheroidSpawnPointAwayFrom(IntVector2 avoidedPosition, int minDistanceArcadePixels)
     {
-        return FindSpheroidSpawnPoint(box => IsFarEnough(box, avoidedPosition, minDistanceArcadePixels));
+        return FindSpheroidSpawnPoint(candidateBounds => IsFarEnough(candidateBounds, avoidedPosition, minDistanceArcadePixels));
     }
 
     /// <summary>Says whether a candidate box's top-left corner is more than the given distance from a point.</summary>
-    /// <param name="box">The candidate's box, in port pixels.</param>
+    /// <param name="candidateBounds">The candidate's box, in port pixels.</param>
     /// <param name="point">The point to keep away from.</param>
     /// <param name="minDistanceArcadePixels">The distance, in arcade pixels.</param>
-    private static bool IsFarEnough(Rectangle box, IntVector2 avoidedPosition, int minDistanceArcadePixels)
+    private static bool IsFarEnough(Rectangle candidateBounds, IntVector2 avoidedPosition, int minDistanceArcadePixels)
     {
-        return new IntVector2(box.X, box.Y).IsFartherThan(avoidedPosition,
+        return new IntVector2(candidateBounds.X, candidateBounds.Y).IsFartherThan(avoidedPosition,
             ScreenSize.ToPortPixelsFromArcadePixels(minDistanceArcadePixels));
     }
 

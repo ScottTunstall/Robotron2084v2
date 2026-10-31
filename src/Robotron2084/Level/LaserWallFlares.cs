@@ -44,27 +44,27 @@ internal sealed class LaserWallFlares
 
     /// <summary>Draws the flashes over the wall, in the colour the wave gives them.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="spriteSet">The sprite set, which draws the solid rectangles.</param>
+    /// <param name="textureSet">The texture set, which draws the solid rectangles.</param>
     /// <param name="waveNumber">The wave, which picks the colour.</param>
-    public void Draw(SpriteBatch spriteBatch, SpriteSet spriteSet, int waveNumber)
+    public void Draw(SpriteBatch spriteBatch, TextureSet textureSet, int waveNumber)
     {
         if (_flares.Count == 0) return;
 
-        var flareColor = spriteSet.BlitterDraw.GetPaletteIndexColour(WavePaletteTables.GetLaserWallPaletteIndex(waveNumber));
+        var flareColour = textureSet.BlitterDraw.GetPaletteIndexColour(WavePaletteTables.GetLaserWallPaletteIndex(waveNumber));
         foreach (var flare in _flares)
         {
             if (!flare.Dithered)
             {
-                spriteSet.BlitterDraw.DrawSolidRectangle(spriteBatch, flare.Bounds, flareColor);
+                textureSet.BlitterDraw.DrawSolidRectangle(spriteBatch, flare.Bounds, flareColour);
                 continue;
             }
 
             // LASDIV: the ROM's mixed nibble — one band in LASCOL, the next left as WALCOL. Draw only the LASCOL bands.
             for (var y = flare.Bounds.Y; y < flare.Bounds.Bottom; y += DitherBandHeight * 2)
-                spriteSet.BlitterDraw.DrawSolidRectangle(
+                textureSet.BlitterDraw.DrawSolidRectangle(
                     spriteBatch,
                     new Rectangle(flare.Bounds.X, y, flare.Bounds.Width, DitherBandHeight),
-                    flareColor);
+                    flareColour);
         }
     }
 

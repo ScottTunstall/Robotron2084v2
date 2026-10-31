@@ -222,7 +222,7 @@ public sealed class WaveMaterialisation
 
     /// <summary>Draws the robots being beamed in, when this is a brain wave and the beaming is under way.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="spriteSet">The sprite set.</param>
+    /// <param name="textureSet">The texture set.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -235,10 +235,10 @@ public sealed class WaveMaterialisation
     ///     is the arcade's own word for beaming the robots in.</item>
     ///     </list>
     /// </remarks>
-    public void DrawTransport(SpriteBatch spriteBatch, SpriteSet spriteSet)
+    public void DrawTransport(SpriteBatch spriteBatch, TextureSet textureSet)
     {
         if (_transportBegun && _robotTransporter is not null && !_robotTransporter.IsFinished())
-            _robotTransporter.Draw(spriteBatch, spriteSet);
+            _robotTransporter.Draw(spriteBatch, textureSet);
     }
 
     /// <summary>The number of robots that have not yet been given their turn to appear.</summary>

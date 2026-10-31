@@ -26,11 +26,11 @@ public sealed class FieldEntities
         _updateOrder =
         [
             Electrodes, Grunts, BerzerkRobots, Gorfs, Hulks, Spheroids, Enforcers, Quarks, Tanks, Brains, Progs,
-            Sparks, TankShells, CruiseMissiles, FamilyList.Members, Skulls, RescueScores, Explosions, ScoreBursts
+            Sparks, TankShells, CruiseMissiles, FamilyList.Members, Skulls, RescueBonusMarkers, Explosions, ScoreBursts
         ];
         _drawOrderBehindShots =
         [
-            Electrodes, Skulls, RescueScores, FamilyList.Members, Grunts, BerzerkRobots, Gorfs, Hulks, Spheroids, Enforcers,
+            Electrodes, Skulls, RescueBonusMarkers, FamilyList.Members, Grunts, BerzerkRobots, Gorfs, Hulks, Spheroids, Enforcers,
             Quarks, Tanks, Brains, Progs
         ];
         _drawOrderInFrontOfShots =
@@ -85,7 +85,7 @@ public sealed class FieldEntities
     public EntityList<Quark> Quarks { get; } = new();
 
     /// <summary>The bonus scores shown where humans were rescued.</summary>
-    public EntityList<RescueScoreMarker> RescueScores { get; } = new();
+    public EntityList<RescueBonusMarker> RescueBonusMarkers { get; } = new();
 
     /// <summary>The bursts a spheroid or a quark leaves when it dies, in place of a strip explosion.</summary>
     /// <remarks>
@@ -217,11 +217,11 @@ public sealed class FieldEntities
         Skulls.Add(skullMarker);
     }
 
-    /// <summary>Puts a RescueScoreMarker on the field.</summary>
-    /// <param name="rescueScoreMarker">The RescueScoreMarker to add.</param>
-    public void Add(RescueScoreMarker rescueScoreMarker)
+    /// <summary>Puts a RescueBonusMarker on the field.</summary>
+    /// <param name="rescueBonusMarker">The RescueBonusMarker to add.</param>
+    public void Add(RescueBonusMarker rescueBonusMarker)
     {
-        RescueScores.Add(rescueScoreMarker);
+        RescueBonusMarkers.Add(rescueBonusMarker);
     }
 
     /// <summary>Puts a ScoreBurst on the field.</summary>
@@ -419,15 +419,15 @@ public sealed class FieldEntities
     /// </remarks>
     public bool HasRoomForStripEffect(StripEngine engine)
     {
-        return StripExplosionTuning.GetPoolSize(engine) is not { } poolSize ||
+        return StripEffectTuning.GetPoolSize(engine) is not { } poolSize ||
                Explosions.Count(stripEffect => stripEffect.GetEngine() == engine) < poolSize;
     }
 
     /// <summary>Says whether no electrode touches a box, so that something can be put there.</summary>
-    /// <param name="box">The box to test, in port pixels.</param>
-    public bool IsClearOfElectrodes(Rectangle box)
+    /// <param name="bounds">The box to test, in port pixels.</param>
+    public bool IsClearOfElectrodes(Rectangle bounds)
     {
-        return Electrodes.All(electrode => !electrode.GetBounds().Intersects(box));
+        return Electrodes.All(electrode => !electrode.GetBounds().Intersects(bounds));
     }
 
     /// <summary>Takes the dead out of every list.</summary>

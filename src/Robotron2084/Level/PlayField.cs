@@ -72,11 +72,11 @@ public sealed class PlayField : ICollisionScene
     private int _shellsFiredThisWave;
 
     /// <summary>Makes the field for one wave and puts everything on it.</summary>
-    /// <param name="spriteSet">The sprites everything is drawn with.</param>
+    /// <param name="textureSet">The sprites everything is drawn with.</param>
     /// <param name="waveParameters">The wave's numbers: how many of each kind, and how fast.</param>
     /// <param name="playerInputSource">Where the player's moves come from.</param>
     /// <param name="innerBounds">The inside of the wall, in port pixels.</param>
-    /// <param name="wallColorCycle">The wall's colours when no live palette is given.</param>
+    /// <param name="wallColourCycle">The wall's colours when no live palette is given.</param>
     /// <param name="random">The field's random source.</param>
     /// <param name="startingLives">How many lives the player has.</param>
     /// <param name="startingScore">The score carried in from the last wave.</param>
@@ -97,11 +97,11 @@ public sealed class PlayField : ICollisionScene
     ///     life ended. The hulks pick what to stalk from these. Null means none were left.
     /// </param>
     public PlayField(
-        SpriteSet spriteSet,
+        TextureSet textureSet,
         WaveParameters waveParameters,
         IPlayerInputSource playerInputSource,
         Rectangle innerBounds,
-        WallColorCycle wallColorCycle,
+        WallColourCycle wallColourCycle,
         Random random,
         int startingLives,
         int startingScore = 0,
@@ -114,7 +114,7 @@ public sealed class PlayField : ICollisionScene
         IReadOnlyList<int>? familySlotsLeftOver = null)
     {
         _tankShellBugEnabled = tankShellBugEnabled;
-        SpriteSet = spriteSet;
+        TextureSet = textureSet;
         WaveParameters = waveParameters;
         _gruntSpeedProgression = new GruntSpeedProgression(waveParameters.GruntSpeedFloor);
         PlayerInputSource = playerInputSource;
@@ -124,11 +124,11 @@ public sealed class PlayField : ICollisionScene
         _contactTest = contactTest ?? new BoxContactTest();
         _midWaveSpawner = new MidWaveSpawner(this, FieldEntities, random);
         _collisionResponder = new CollisionResponder(this);
-        PlayfieldWall = new PlayfieldWall(innerBounds, wallColorCycle);
+        PlayfieldWall = new PlayfieldWall(innerBounds, wallColourCycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
-        Player = new Player(SpriteSet, playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
-        PlayerLaserSlots = new LaserSlots(SpriteSet);
+        Player = new Player(TextureSet, playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
+        PlayerLaserSlots = new LaserSlots(TextureSet);
 
         // Each kind's spawner is in its registry row, so a new kind needs no edit here (notes §119).
         var waveSpawnContext = new WaveSpawnContext(this, FieldEntities, new SpawnPlacement(random, innerBounds), random,
@@ -186,8 +186,8 @@ public sealed class PlayField : ICollisionScene
     /// <summary>The live palette, or null in a test. The player's death fade writes to it (notes §66).</summary>
     internal GamePalette? GamePalette { get; }
 
-    /// <summary>The sprite set this field's entities are built and drawn with — the field owns it because it builds them.</summary>
-    internal SpriteSet SpriteSet { get; }
+    /// <summary>The texture set this field's entities are built and drawn with — the field owns it because it builds them.</summary>
+    internal TextureSet TextureSet { get; }
 
     /// <summary>Says whether a spheroid may drop another enforcer: there may be eight at most.</summary>
     /// <remarks>Original source: <c>ENFCNT</c> (notes §11).</remarks>
@@ -239,11 +239,11 @@ public sealed class PlayField : ICollisionScene
         DrawWall(spriteBatch);
 
         // 1b. Laser-vs-wall flares (RRG23 LASDIE): painted OVER the wall, exactly as the ROM writes those pixels.
-        _laserWallFlares.Draw(spriteBatch, SpriteSet, WaveParameters.WaveNumber);
+        _laserWallFlares.Draw(spriteBatch, TextureSet, WaveParameters.WaveNumber);
 
         // 2-4. The electrodes, the family and their markers, then the robots — one loop over the field's draw order.
         FieldEntities.DrawBehindShots(spriteBatch, this);
-        _waveMaterialisation.DrawTransport(spriteBatch, SpriteSet);
+        _waveMaterialisation.DrawTransport(spriteBatch, TextureSet);
 
         // 5. Player lasers.
         PlayerLaserSlots.Draw(spriteBatch);
@@ -253,7 +253,7 @@ public sealed class PlayField : ICollisionScene
 
         // 8. Player — ALWAYS last (spec states this explicitly twice). Its own sprite is not drawn until the game is live;
         //    before that only the strips of its appear effect are (ROM: STATUS bit 4, "PLAYER OUTPUT", held until PLS2; RRS22.ASM PLA0).
-        if (IsPlayerDrawn()) Player.Draw(spriteBatch);
+        if (IsPlayerVisible()) Player.Draw(spriteBatch);
     }
 
     /// <summary>
@@ -268,14 +268,14 @@ public sealed class PlayField : ICollisionScene
     ///             (<c>WALCOL</c>), and <c>BORDER</c>, which <c>TDISP</c> calls.
     ///         </item>
     ///         <item>
-    ///             Disassembly: not separately labelled. The placeholder <see cref="WallColorCycle" /> is only
+    ///             Disassembly: not separately labelled. The placeholder <see cref="WallColourCycle" /> is only
     ///             used when there is no live palette, which is in a test.
     ///         </item>
     ///     </list>
     /// </remarks>
     public void DrawWall(SpriteBatch spriteBatch)
     {
-        PlayfieldWall.Draw(spriteBatch, SpriteSet.WallPixelSprite,
+        PlayfieldWall.Draw(spriteBatch, TextureSet.WallPixelTexture,
             GamePalette?.GetColour(WavePaletteTables.GetWallPaletteIndex(WaveParameters.WaveNumber)));
     }
 
@@ -320,10 +320,10 @@ public sealed class PlayField : ICollisionScene
     }
 
     /// <summary>Says whether a box touches the wall.</summary>
-    /// <param name="box">The box to test, in port pixels.</param>
-    public bool HitsWall(Rectangle box)
+    /// <param name="bounds">The box to test, in port pixels.</param>
+    public bool HitsWall(Rectangle bounds)
     {
-        return PlayfieldWall.Intersects(box);
+        return PlayfieldWall.Intersects(bounds);
     }
 
     /// <summary>Says whether the wave is won: every enemy that can be killed is gone. Hulks and electrodes do not count.</summary>
@@ -647,10 +647,10 @@ public sealed class PlayField : ICollisionScene
     }
 
     /// <summary>Says whether a box touches no electrode, so that something can be put there.</summary>
-    /// <param name="box">The box to test, in port pixels.</param>
-    internal bool IsClearOfElectrodes(Rectangle box)
+    /// <param name="bounds">The box to test, in port pixels.</param>
+    internal bool IsClearOfElectrodes(Rectangle bounds)
     {
-        return FieldEntities.IsClearOfElectrodes(box);
+        return FieldEntities.IsClearOfElectrodes(bounds);
     }
 
     /// <summary>
@@ -673,7 +673,7 @@ public sealed class PlayField : ICollisionScene
     ///         <item>Disassembly: the status byte at <c>$59</c>.</item>
     ///     </list>
     /// </remarks>
-    internal bool IsPlayerDrawn()
+    internal bool IsPlayerVisible()
     {
         return IsLive();
     }
@@ -709,7 +709,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="position">Where the human stood.</param>
     internal void LeaveSkull(IntVector2 position)
     {
-        FieldEntities.Add(new SkullMarker(SpriteSet, position));
+        FieldEntities.Add(new SkullMarker(TextureSet, position));
     }
 
     /// <summary>
@@ -726,9 +726,9 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>Shows the bonus for the latest rescue where the human stood.</summary>
     /// <param name="position">Where the human stood.</param>
-    internal void ShowRescueScore(IntVector2 position)
+    internal void ShowRescueBonus(IntVector2 position)
     {
-        FieldEntities.Add(new RescueScoreMarker(SpriteSet, position, RescuesThisLife));
+        FieldEntities.Add(new RescueBonusMarker(TextureSet, position, RescuesThisLife));
     }
 
     /// <summary>
@@ -752,7 +752,7 @@ public sealed class PlayField : ICollisionScene
     ///         <item>
     ///             Original source: <c>GETBLK</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>. Each
     ///             of the three strip routines has its own records, which its explosions and its appear effects
-    ///             share (<see cref="StripExplosionTuning.GetPoolSize" />).
+    ///             share (<see cref="StripEffectTuning.GetPoolSize" />).
     ///         </item>
     ///         <item>Disassembly: <c>$5B6C</c>, <c>$F03A</c> and <c>$46B2</c>.</item>
     ///     </list>

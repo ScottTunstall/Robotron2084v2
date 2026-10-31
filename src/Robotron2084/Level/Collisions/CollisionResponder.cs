@@ -143,7 +143,7 @@ internal sealed class CollisionResponder
     {
         playerRescuedHumanResult.Human.Rescue();
         var rescues = _playField.CountRescuedFamilyMembers();
-        _playField.ShowRescueScore(playerRescuedHumanResult.Human.Position);
+        _playField.ShowRescueBonus(playerRescuedHumanResult.Human.Position);
         _playField.PlaySoundFrom(SoundTables.SaveAHuman, playerRescuedHumanResult.Human.GetBounds());
         _playField.AwardRescueBonus(rescues);
     }

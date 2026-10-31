@@ -36,7 +36,7 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, which asks for <c>BSHSND</c>.</remarks>
     public void SpawnCruiseMissile(IntVector2 origin)
     {
-        var cruiseMissile = new CruiseMissile(_playField.SpriteSet, origin, _playField.GetPlayerPosition(), _random);
+        var cruiseMissile = new CruiseMissile(_playField.TextureSet, origin, _playField.GetPlayerPosition(), _random);
         _fieldEntities.Add(cruiseMissile);
         _playField.PlaySoundFrom(SoundTables.BrainShoot, cruiseMissile.GetBounds());
     }
@@ -46,7 +46,7 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRC11.ASM</c>, which asks for <c>ENDSND</c>.</remarks>
     public void SpawnEnforcer(IntVector2 position)
     {
-        var enforcer = new Enforcer(_playField.SpriteSet, position, _random, _playField.WaveParameters.EnforcerFireDelay);
+        var enforcer = new Enforcer(_playField.TextureSet, position, _random, _playField.WaveParameters.EnforcerFireDelay);
         _fieldEntities.Add(enforcer);
         _playField.PlaySoundFrom(SoundTables.EnforcerDropOff, enforcer.GetBounds());
     }
@@ -74,7 +74,7 @@ internal sealed class MidWaveSpawner
         var x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
         var startY = Math.Clamp(from.Y, bounds.Y, bounds.Bottom - height);
         var landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);
-        var grunt = new Grunt(_playField.SpriteSet, new IntVector2(x, startY), _playField.WaveParameters.GruntMoveDelay, _random);
+        var grunt = new Grunt(_playField.TextureSet, new IntVector2(x, startY), _playField.WaveParameters.GruntMoveDelay, _random);
         grunt.BeginFall(landingY);
         _fieldEntities.Add(grunt);
     }
@@ -85,7 +85,7 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> and <c>PROGST</c>.</remarks>
     public void SpawnProg(IntVector2 position, HumanKind kind)
     {
-        _fieldEntities.Add(new Prog(_playField.SpriteSet, position, kind, _random));
+        _fieldEntities.Add(new Prog(_playField.TextureSet, position, kind, _random));
     }
 
     /// <summary>An enforcer fires a spark at the player.</summary>
@@ -98,7 +98,7 @@ internal sealed class MidWaveSpawner
     /// </remarks>
     public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition)
     {
-        var spark = new Spark(_playField.SpriteSet, origin, playerPosition, _random, _playField.GetPlayfieldBounds());
+        var spark = new Spark(_playField.TextureSet, origin, playerPosition, _random, _playField.GetPlayfieldBounds());
         _fieldEntities.Add(spark);
         _playField.PlaySoundFrom(SoundTables.EnforcerShoot, spark.GetBounds());
     }
@@ -109,7 +109,7 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRTK4.ASM</c>, which asks for <c>TKDSND</c>.</remarks>
     public Tank SpawnTank(IntVector2 position)
     {
-        Tank tank = new(_playField.SpriteSet, Tank.GetPositionInside(_playField.GetPlayfieldBounds(), position), _random,
+        Tank tank = new(_playField.TextureSet, Tank.GetPositionInside(_playField.GetPlayfieldBounds(), position), _random,
             _playField.WaveParameters.TankFireDelay);
         _fieldEntities.Add(tank);
         _playField.PlaySoundFrom(SoundTables.TankDrop, tank.GetBounds());
@@ -125,7 +125,7 @@ internal sealed class MidWaveSpawner
     public void SpawnTankShell(IntVector2 origin)
     {
         _playField.CountShellFired();
-        var tankShell = new TankShell(_playField.SpriteSet, origin, _playField.GetPlayerPosition(), _playField.WaveParameters.ShellSpeed,
+        var tankShell = new TankShell(_playField.TextureSet, origin, _playField.GetPlayerPosition(), _playField.WaveParameters.ShellSpeed,
             _playField.GetPlayfieldBounds(), _random);
         _fieldEntities.Add(tankShell);
         _playField.PlaySoundFrom(SoundTables.TankFire, tankShell.GetBounds());

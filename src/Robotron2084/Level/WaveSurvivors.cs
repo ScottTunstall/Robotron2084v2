@@ -31,7 +31,7 @@ public static class WaveSurvivors
     {
         var fieldEntities = playField.FieldEntities;
         var waveParameters = playField.WaveParameters;
-        var gruntLimit = fieldEntities.Grunts.Where(grunt => grunt.IsAlive()).Select(grunt => grunt.MoveDelayBeats)
+        var gruntLimit = fieldEntities.Grunts.Where(grunt => grunt.IsAlive()).Select(grunt => grunt.MoveIntervalMaxBeats)
             .DefaultIfEmpty(waveParameters.GruntMoveDelay).Min();
 
         return waveParameters with

@@ -20,7 +20,7 @@ public sealed class SpheroidWaveSpawner : IWaveSpawner
         {
             var position =
                 placement.FindSpheroidSpawnPointAwayFrom(waveSpawnContext.PlayerStart, SpheroidTuning.MinDistanceFromPlayer);
-            var spheroid = new Spheroid(playField.SpriteSet, position, waveSpawnContext.Random, playField.WaveParameters.MaxDropsX2,
+            var spheroid = new Spheroid(playField.TextureSet, position, waveSpawnContext.Random, playField.WaveParameters.MaxDropsX2,
                 playField.WaveParameters.SpheroidDropDelay);
             fieldEntities.Add(spheroid);
         }

@@ -17,7 +17,7 @@ public sealed class QuarkWaveSpawner : IWaveSpawner
         for (var i = 0; i < playField.WaveParameters.QuarkCount; i++)
         {
             var position = Quark.GetStartPosition(playField.GetPlayfieldBounds(), waveSpawnContext.Random);
-            var quark = new Quark(playField.SpriteSet, position, waveSpawnContext.Random, playField.WaveParameters.MaxDropsX2,
+            var quark = new Quark(playField.TextureSet, position, waveSpawnContext.Random, playField.WaveParameters.MaxDropsX2,
                 playField.WaveParameters.QuarkDropDelay, playField.WaveParameters.QuarkMaxSpeed);
             fieldEntities.Add(quark);
         }

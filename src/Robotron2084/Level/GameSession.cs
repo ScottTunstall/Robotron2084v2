@@ -62,7 +62,7 @@ public sealed class GameSession
     public IReadOnlyList<int> FamilySlotsLeftOver { get; set; } = [];
 
     /// <summary>
-    ///     The game adjustment settings the game was started with. They go with the game, as <see cref="Controls" /> do,
+    ///     The game adjustment settings the game was started with. They go with the game, as <see cref="ControlSettings" /> do,
     ///     because the screens after a game over need them (notes §131).
     /// </summary>
     public GameSettings GameSettings { get; private init; } = GameSettings.CreateFactoryDefaults();

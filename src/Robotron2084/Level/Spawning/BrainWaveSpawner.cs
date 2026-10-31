@@ -30,7 +30,7 @@ public sealed class BrainWaveSpawner : IWaveSpawner
         {
             var position = placement.FindSpawnPointAwayFrom(waveSpawnContext.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
             var brain = new Brain(
-                playField.SpriteSet,
+                playField.TextureSet,
                 position,
                 waveSpawnContext.Random,
                 playField.WaveParameters.BrainBeatWaitArcadeFrames,

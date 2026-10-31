@@ -23,16 +23,16 @@ public sealed class PlayfieldWall
     public static readonly int Thickness =
         ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.WallThicknessArcadePixels);
 
-    private readonly WallColorCycle _wallColorCycle;
+    private readonly WallColourCycle _wallColourCycle;
     private readonly Rectangle _playfieldBounds;
 
     /// <summary>Makes the wall for a play area.</summary>
     /// <param name="playfieldBounds">The play area inside the wall, in port pixels.</param>
     /// <param name="cycle">The colours the wall cycles through when it is not given one.</param>
-    public PlayfieldWall(Rectangle playfieldBounds, WallColorCycle wallColorCycle)
+    public PlayfieldWall(Rectangle playfieldBounds, WallColourCycle wallColourCycle)
     {
         _playfieldBounds = playfieldBounds;
-        _wallColorCycle = wallColorCycle;
+        _wallColourCycle = wallColourCycle;
     }
 
     /// <summary>The play area inside the wall, in port pixels. Everything on the field must stay wholly inside it.</summary>
@@ -40,18 +40,18 @@ public sealed class PlayfieldWall
 
     /// <summary>Draws the wall as four coloured strips.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
-    /// <param name="wallPixelSprite">A single white pixel, which is stretched and tinted to make each strip.</param>
-    /// <param name="colorOverride">The colour to draw in, or null to use the wall's own colour cycle.</param>
-    public void Draw(SpriteBatch spriteBatch, Texture2D wallPixelSprite, Color? colorOverride = null)
+    /// <param name="wallPixelTexture">A single white pixel, which is stretched and tinted to make each strip.</param>
+    /// <param name="colourOverride">The colour to draw in, or null to use the wall's own colour cycle.</param>
+    public void Draw(SpriteBatch spriteBatch, Texture2D wallPixelTexture, Color? colourOverride = null)
     {
         var outer = GetOuterBounds();
-        var color = colorOverride ?? _wallColorCycle.CurrentColor;
+        var colour = colourOverride ?? _wallColourCycle.CurrentColour;
 
-        spriteBatch.Draw(wallPixelSprite, new Rectangle(outer.X, outer.Y, outer.Width, Thickness), color);
-        spriteBatch.Draw(wallPixelSprite, new Rectangle(outer.X, outer.Bottom - Thickness, outer.Width, Thickness), color);
-        spriteBatch.Draw(wallPixelSprite, new Rectangle(outer.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height), color);
-        spriteBatch.Draw(wallPixelSprite,
-            new Rectangle(outer.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height), color);
+        spriteBatch.Draw(wallPixelTexture, new Rectangle(outer.X, outer.Y, outer.Width, Thickness), colour);
+        spriteBatch.Draw(wallPixelTexture, new Rectangle(outer.X, outer.Bottom - Thickness, outer.Width, Thickness), colour);
+        spriteBatch.Draw(wallPixelTexture, new Rectangle(outer.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height), colour);
+        spriteBatch.Draw(wallPixelTexture,
+            new Rectangle(outer.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height), colour);
     }
 
     /// <summary>The play area and the wall around it, in port pixels.</summary>
@@ -82,6 +82,6 @@ public sealed class PlayfieldWall
     /// <param name="gameTime">The time for this tick.</param>
     public void Update(GameTime gameTime)
     {
-        _wallColorCycle.Update(gameTime);
+        _wallColourCycle.Update(gameTime);
     }
 }

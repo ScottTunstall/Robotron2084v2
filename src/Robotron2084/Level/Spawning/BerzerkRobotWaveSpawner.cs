@@ -21,7 +21,7 @@ public sealed class BerzerkRobotWaveSpawner : IWaveSpawner
         {
             var position = waveSpawnContext.SpawnPlacement.FindSpawnPointAwayFrom(
                 waveSpawnContext.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, playField.IsClearOfElectrodes);
-            var berzerkRobot = new BerzerkRobot(playField.SpriteSet, position, playField.WaveParameters.GruntMoveDelay, waveSpawnContext.Random);
+            var berzerkRobot = new BerzerkRobot(playField.TextureSet, position, playField.WaveParameters.GruntMoveDelay, waveSpawnContext.Random);
             waveSpawnContext.FieldEntities.Add(berzerkRobot);
         }
     }

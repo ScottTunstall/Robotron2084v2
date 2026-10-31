@@ -34,7 +34,7 @@ public sealed class FamilyWaveSpawner : IWaveSpawner
         for (var i = 0; i < count; i++)
         {
             var position = placement.FindSpawnPoint(playField.IsClearOfElectrodes, Human.GetSpawnSquarePortPixels(kind));
-            fieldEntities.Add(new Human(playField.SpriteSet, position, kind, waveSpawnContext.Random));
+            fieldEntities.Add(new Human(playField.TextureSet, position, kind, waveSpawnContext.Random));
         }
     }
 }

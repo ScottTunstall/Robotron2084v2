@@ -70,7 +70,7 @@ public static class RobotKinds
             static parameters => parameters.SpheroidCount,
             ScoreValues.Spheroid,
             static (playField, targetEntity, direction) => playField.KillWithScoreBurst(targetEntity,
-                ScoreBurst.CreateForSpheroid(playField.SpriteSet, targetEntity.GetBounds())),
+                ScoreBurst.CreateForSpheroid(playField.TextureSet, targetEntity.GetBounds())),
             SoundTables.CircleKill,
             Spawn: new SpheroidWaveSpawner()),
 
@@ -84,7 +84,7 @@ public static class RobotKinds
             static parameters => parameters.QuarkCount,
             ScoreValues.Quark,
             static (playField, targetEntity, direction) =>
-                playField.KillWithScoreBurst(targetEntity, ScoreBurst.CreateForQuark(playField.SpriteSet, targetEntity.GetBounds())),
+                playField.KillWithScoreBurst(targetEntity, ScoreBurst.CreateForQuark(playField.TextureSet, targetEntity.GetBounds())),
             SoundTables.SquareKill,
             Spawn: new QuarkWaveSpawner()),
 

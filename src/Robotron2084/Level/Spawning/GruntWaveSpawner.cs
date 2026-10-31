@@ -20,7 +20,7 @@ public sealed class GruntWaveSpawner : IWaveSpawner
         {
             var position = placement.FindSpawnPointAwayFrom(
                 waveSpawnContext.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, playField.IsClearOfElectrodes);
-            var grunt = new Grunt(playField.SpriteSet, position, playField.WaveParameters.GruntMoveDelay, waveSpawnContext.Random);
+            var grunt = new Grunt(playField.TextureSet, position, playField.WaveParameters.GruntMoveDelay, waveSpawnContext.Random);
             fieldEntities.Add(grunt);
         }
     }
