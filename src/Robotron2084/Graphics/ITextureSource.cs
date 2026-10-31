@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 namespace Robotron2084.Graphics;
 
 /// <summary>Makes sprites from pixels, and loads sprites by name.</summary>
-public interface ISpriteSource
+public interface ITextureSource
 {
     /// <summary>Makes a sprite from the given pixels.</summary>
     /// <param name="width">Sprite width in pixels.</param>
@@ -15,8 +15,8 @@ public interface ISpriteSource
     /// <summary>Makes a sprite of one flat colour.</summary>
     /// <param name="width">Sprite width in pixels.</param>
     /// <param name="height">Sprite height in pixels.</param>
-    /// <param name="color">The colour to fill it with.</param>
-    Texture2D CreateSolid(int width, int height, Color color);
+    /// <param name="colour">The colour to fill it with.</param>
+    Texture2D CreateSolid(int width, int height, Color colour);
 
     /// <summary>Loads one sprite by its content asset name (e.g. <c>Sprites/Skull</c>).</summary>
     /// <param name="assetName">The asset's name in the content pipeline.</param>

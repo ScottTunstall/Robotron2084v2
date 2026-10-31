@@ -17,7 +17,7 @@ public sealed class WilliamsLogoPath
     private const int BottomRow = 0xCF;
 
     /// <summary>ROM <c>$89DA</c>: each W's colour operand steps down by one in both nibbles.</summary>
-    private const int ColorOperandStep = 0x11;
+    private const int ColourOperandStep = 0x11;
 
     /// <summary>ROM <c>$89C5</c>: a step along the top or bottom edge is 16 bytes, 32 arcade pixels.</summary>
     private const int HorizontalStepColumns = 0x10;
@@ -54,9 +54,9 @@ public sealed class WilliamsLogoPath
 
     /// <summary>
     ///     ROM <c>$8957</c>: the first W's colour operand, both nibbles the palette index. It is the starting value of
-    ///     <see cref="ColorOperand" />.
+    ///     <see cref="ColourOperand" />.
     /// </summary>
-    private const int StartColorOperand = 0x77;
+    private const int StartColourOperand = 0x77;
 
     /// <summary>
     ///     ROM <c>$894B</c>: the first W's column, in bytes (10 arcade pixels). It is the starting value of
@@ -88,12 +88,12 @@ public sealed class WilliamsLogoPath
     /// <summary>The W's top row in arcade pixels.</summary>
     public int Row { get; private set; }
 
-    private int ColorOperand { get; set; }
+    private int ColourOperand { get; set; }
 
     /// <summary>The palette index the W is drawn in: the colour operand's nibble, 7 down to 1 and round.</summary>
     public int GetPaletteIndex()
     {
-        return ColorOperand & 0x0F;
+        return ColourOperand & 0x0F;
     }
 
     /// <summary>Puts the walk back at the first W (ROM <c>$894B</c>).</summary>
@@ -103,7 +103,7 @@ public sealed class WilliamsLogoPath
         Row = StartRow;
         _side = 0;
         _inset = 0;
-        ColorOperand = StartColorOperand;
+        ColourOperand = StartColourOperand;
     }
 
     /// <summary>Moves on to the next W's place and colour (ROM <c>$896C</c>).</summary>
@@ -128,14 +128,14 @@ public sealed class WilliamsLogoPath
                 break;
         }
 
-        StepColor();
+        StepColour();
     }
 
-    private void StepColor()
+    private void StepColour()
     {
-        var next = ColorOperand - ColorOperandStep;
-        ColorOperand = next;
-        if (next <= 0) ColorOperand = StartColorOperand;
+        var next = ColourOperand - ColourOperandStep;
+        ColourOperand = next;
+        if (next <= 0) ColourOperand = StartColourOperand;
     }
 
     private void StepDown()

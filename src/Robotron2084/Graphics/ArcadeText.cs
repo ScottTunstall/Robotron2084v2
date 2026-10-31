@@ -21,21 +21,21 @@ public sealed class ArcadeText
     public const int RubGlyphIndex = 39;
 
     private readonly BlitterDraw _blitterDraw;
-    private readonly Texture2D[] _fontLarge;
-    private readonly Texture2D[] _fontSmall;
-    private readonly Texture2D _spareLifeSprite;
+    private readonly Texture2D[] _fontLargeTextures;
+    private readonly Texture2D[] _fontSmallTextures;
+    private readonly Texture2D _spareLifeTexture;
 
     /// <summary>Prints with these fonts through this blitter.</summary>
     /// <param name="blitterDraw">The blitter that draws each glyph.</param>
-    /// <param name="fontLarge">The large font's glyphs.</param>
-    /// <param name="fontSmall">The small font's glyphs.</param>
-    /// <param name="spareLifeSprite">The lives icon.</param>
-    public ArcadeText(BlitterDraw blitterDraw, Texture2D[] fontLarge, Texture2D[] fontSmall, Texture2D spareLifeSprite)
+    /// <param name="fontLargeTextures">The large font's glyphs.</param>
+    /// <param name="fontSmallTextures">The small font's glyphs.</param>
+    /// <param name="spareLifeTexture">The lives icon.</param>
+    public ArcadeText(BlitterDraw blitterDraw, Texture2D[] fontLargeTextures, Texture2D[] fontSmallTextures, Texture2D spareLifeTexture)
     {
         _blitterDraw = blitterDraw;
-        _fontLarge = fontLarge;
-        _fontSmall = fontSmall;
-        _spareLifeSprite = spareLifeSprite;
+        _fontLargeTextures = fontLargeTextures;
+        _fontSmallTextures = fontSmallTextures;
+        _spareLifeTexture = spareLifeTexture;
     }
 
     /// <summary>
@@ -82,10 +82,10 @@ public sealed class ArcadeText
             }
 
             var index = GetGlyphIndex(character);
-            if (index < 0 || index >= _fontLarge.Length) continue;
+            if (index < 0 || index >= _fontLargeTextures.Length) continue;
 
-            _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, index, x, y, paletteIndex);
-            x += ScreenSize.ToPortPixelsFromArcadePixels(_fontLarge[index].Width +
+            _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontLargeTextures, index, x, y, paletteIndex);
+            x += ScreenSize.ToPortPixelsFromArcadePixels(_fontLargeTextures[index].Width +
                                                          HudLayout.HudSmallFontGlyphGapPixels);
         }
 
@@ -95,7 +95,7 @@ public sealed class ArcadeText
     /// <summary>The high score table's LARGE-font score (<c>PRSCOR</c> → <c>WRD7V</c>).</summary>
     public int DrawLargeTableNumber(SpriteBatch spriteBatch, int value, int x, int y, int paletteIndex)
     {
-        return DrawTableNumber(spriteBatch, _fontLarge, value, x, y, paletteIndex);
+        return DrawTableNumber(spriteBatch, _fontLargeTextures, value, x, y, paletteIndex);
     }
 
     /// <summary>
@@ -107,9 +107,9 @@ public sealed class ArcadeText
     {
         _blitterDraw.UsePassThrough();
         spriteBatch.Draw(
-            _spareLifeSprite,
-            new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeSprite.Width),
-                ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeSprite.Height)),
+            _spareLifeTexture,
+            new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeTexture.Width),
+                ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeTexture.Height)),
             Color.White);
     }
 
@@ -120,7 +120,7 @@ public sealed class ArcadeText
     /// </summary>
     public void DrawRubMarker(SpriteBatch spriteBatch, int x, int y, int paletteIndex)
     {
-        _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, RubGlyphIndex, x, y, paletteIndex);
+        _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontLargeTextures, RubGlyphIndex, x, y, paletteIndex);
     }
 
     /// <summary>
@@ -141,10 +141,10 @@ public sealed class ArcadeText
             }
 
             var index = GetGlyphIndex(character);
-            if (index >= 0 && index < _fontSmall.Length)
+            if (index >= 0 && index < _fontSmallTextures.Length)
             {
-                _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontSmall, index, x, y, paletteIndex);
-                x += ScreenSize.ToPortPixelsFromArcadePixels(_fontSmall[index].Width +
+                _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontSmallTextures, index, x, y, paletteIndex);
+                x += ScreenSize.ToPortPixelsFromArcadePixels(_fontSmallTextures[index].Width +
                                                              HudLayout.HudSmallFontGlyphGapPixels);
                 continue;
             }
@@ -155,10 +155,10 @@ public sealed class ArcadeText
             // own sprites, and it is why the DEFINE INPUTS page can print "ENTER: SET THE INPUT"
             // (notes §101.11). The colon is one row taller than the capitals, exactly as the two
             // arcade fonts differ.
-            if (index >= 0 && index < _fontLarge.Length)
+            if (index >= 0 && index < _fontLargeTextures.Length)
             {
-                _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontLarge, index, x, y, paletteIndex);
-                x += ScreenSize.ToPortPixelsFromArcadePixels(_fontLarge[index].Width +
+                _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, _fontLargeTextures, index, x, y, paletteIndex);
+                x += ScreenSize.ToPortPixelsFromArcadePixels(_fontLargeTextures[index].Width +
                                                              HudLayout.HudSmallFontGlyphGapPixels);
             }
         }
@@ -169,7 +169,7 @@ public sealed class ArcadeText
     /// <summary>The high score table's SMALL-font score (<c>PRSCOR</c> → <c>WRD5V</c>).</summary>
     public int DrawSmallTableNumber(SpriteBatch spriteBatch, int value, int x, int y, int paletteIndex)
     {
-        return DrawTableNumber(spriteBatch, _fontSmall, value, x, y, paletteIndex);
+        return DrawTableNumber(spriteBatch, _fontSmallTextures, value, x, y, paletteIndex);
     }
 
     /// <summary>
@@ -179,14 +179,14 @@ public sealed class ArcadeText
     ///     (a row reads "1) DRJ 52127", not "1) DRJ   52127"), which is what makes the
     ///     rows' digits line up. Returns the X after the number.
     /// </summary>
-    public int DrawTableNumber(SpriteBatch spriteBatch, Texture2D[] glyphs, int value, int x, int y, int paletteIndex)
+    public int DrawTableNumber(SpriteBatch spriteBatch, Texture2D[] glyphTextures, int value, int x, int y, int paletteIndex)
     {
         foreach (var digit in ScoreFormatter.GetDigits(value))
         {
             if (digit.Suppressed) continue;
 
-            _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, glyphs, digit.Value, x, y, paletteIndex);
-            x += ScreenSize.ToPortPixelsFromArcadePixels(glyphs[digit.Value].Width +
+            _blitterDraw.DrawGlyphPaletteIndex(spriteBatch, glyphTextures, digit.Value, x, y, paletteIndex);
+            x += ScreenSize.ToPortPixelsFromArcadePixels(glyphTextures[digit.Value].Width +
                                                          HudLayout.HudSmallFontGlyphGapPixels);
         }
 
@@ -196,7 +196,7 @@ public sealed class ArcadeText
     /// <summary>The same measurement for the LARGE font (the score's own advance rule).</summary>
     public int MeasureLargeText(string text)
     {
-        return MeasureText(_fontLarge, text);
+        return MeasureText(_fontLargeTextures, text);
     }
 
     /// <summary>
@@ -207,10 +207,10 @@ public sealed class ArcadeText
     /// </summary>
     public int MeasureSmallText(string text)
     {
-        return MeasureText(_fontSmall, text);
+        return MeasureText(_fontSmallTextures, text);
     }
 
-    private static int MeasureText(Texture2D[] glyphs, string text)
+    private static int MeasureText(Texture2D[] glyphTextures, string text)
     {
         var width = 0;
         foreach (var character in text)
@@ -222,8 +222,8 @@ public sealed class ArcadeText
             }
 
             var index = GetGlyphIndex(character);
-            if (index >= 0 && index < glyphs.Length)
-                width += glyphs[index].Width + HudLayout.HudSmallFontGlyphGapPixels;
+            if (index >= 0 && index < glyphTextures.Length)
+                width += glyphTextures[index].Width + HudLayout.HudSmallFontGlyphGapPixels;
         }
 
         return width;

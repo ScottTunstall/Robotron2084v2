@@ -59,7 +59,7 @@ public sealed class SpriteMask
 
     /// <summary>
     ///     True when the two sprites cover a common screen pixel. Each mask is placed by the rectangle its
-    ///     sprite is DRAWN in — <see cref="BlitterDraw.DrawnRect" /> is the one definition of that
+    ///     sprite is DRAWN in — <see cref="BlitterDraw.GetDrawnBounds" /> is the one definition of that
     ///     placement, so the collision follows the sprite wherever the drawer puts it — and one sprite pixel
     ///     covers a square of screen pixels (the render scale).
     ///     The cheap test comes first and the pixel walk only ever runs over the band the two sprites share.
@@ -74,7 +74,7 @@ public sealed class SpriteMask
     /// <param name="secondDrawnBounds">The rectangle <paramref name="secondSpriteMask" /> is drawn in, in screen pixels.</param>
     public static bool Overlaps(SpriteMask firstSpriteMask, Rectangle firstDrawnBounds, SpriteMask secondSpriteMask, Rectangle secondDrawnBounds)
     {
-        var (left, top, right, bottom) = GetSharedScreenRect(firstDrawnBounds, secondDrawnBounds);
+        var (left, top, right, bottom) = GetSharedScreenEdges(firstDrawnBounds, secondDrawnBounds);
         if (left >= right || top >= bottom) return false;
 
         var cell = firstDrawnBounds.Width / firstSpriteMask.Width;
@@ -99,7 +99,7 @@ public sealed class SpriteMask
     }
 
     /// <summary>The screen pixels both drawn rectangles cover, or an empty rectangle when they miss.</summary>
-    private static (int Left, int Top, int Right, int Bottom) GetSharedScreenRect(Rectangle a, Rectangle b)
+    private static (int Left, int Top, int Right, int Bottom) GetSharedScreenEdges(Rectangle a, Rectangle b)
     {
         return (Math.Max(a.Left, b.Left), Math.Max(a.Top, b.Top), Math.Min(a.Right, b.Right),
             Math.Min(a.Bottom, b.Bottom));

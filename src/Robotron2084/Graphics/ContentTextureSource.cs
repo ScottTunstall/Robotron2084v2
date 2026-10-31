@@ -6,32 +6,32 @@ namespace Robotron2084.Graphics;
 
 /// <summary>
 ///     The game's sprites: the ROM-extracted sprites from the content pipeline, and the handful the port draws
-///     itself, which <see cref="SpriteFactory" /> builds against the graphics device.
+///     itself, which <see cref="TextureFactory" /> builds against the graphics device.
 /// </summary>
-public sealed class ContentSpriteSource : ISpriteSource
+public sealed class ContentTextureSource : ITextureSource
 {
     private readonly ContentManager _contentManager;
-    private readonly SpriteFactory _spriteFactory;
+    private readonly TextureFactory _textureFactory;
 
     /// <summary>Wires the source to the game's device and content.</summary>
     /// <param name="graphicsDevice">The graphics device the self-drawn sprites are created on.</param>
     /// <param name="contentManager">The content pipeline the ROM-extracted sprites are loaded from.</param>
-    public ContentSpriteSource(GraphicsDevice graphicsDevice, ContentManager contentManager)
+    public ContentTextureSource(GraphicsDevice graphicsDevice, ContentManager contentManager)
     {
         _contentManager = contentManager;
-        _spriteFactory = new SpriteFactory(graphicsDevice);
+        _textureFactory = new TextureFactory(graphicsDevice);
     }
 
     /// <inheritdoc />
     public Texture2D Create(int width, int height, Color[] pixels)
     {
-        return _spriteFactory.Create(width, height, pixels);
+        return _textureFactory.Create(width, height, pixels);
     }
 
     /// <inheritdoc />
-    public Texture2D CreateSolid(int width, int height, Color color)
+    public Texture2D CreateSolid(int width, int height, Color colour)
     {
-        return _spriteFactory.CreateSolid(width, height, color);
+        return _textureFactory.CreateSolid(width, height, colour);
     }
 
     /// <inheritdoc />

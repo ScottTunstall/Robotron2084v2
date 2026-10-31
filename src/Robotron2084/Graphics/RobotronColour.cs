@@ -12,7 +12,7 @@ namespace Robotron2084.Graphics;
 ///     Accepts ANY 8-bit code, not just the 16 default palette entries (the
 ///     colour-cycle processes write intermediate codes at runtime).
 /// </summary>
-public static class RobotronColor
+public static class RobotronColour
 {
     /// <summary>Converts a Robotron colour byte (BBGGGRRR) to its RGB value.</summary>
     public static Color CreateFromByte(byte value)

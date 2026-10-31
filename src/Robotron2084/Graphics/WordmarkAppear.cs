@@ -36,25 +36,25 @@ public sealed class WordmarkAppear
     private const int ArcadeFramesBetweenLetters = 8;
 
     private readonly Rectangle _bounds;
-    private readonly Texture2D _coreSprite;
+    private readonly Texture2D _coreTexture;
 
     private readonly StripEffect[] _effects;
     private readonly IReadOnlyList<LetterSpan> _letters;
-    private readonly Texture2D _rimSprite;
+    private readonly Texture2D _rimTexture;
     private readonly int _spriteHeight;
     private int _clockUnits;
 
     /// <summary>Makes the appear for a word whose letters have been found.</summary>
-    /// <param name="rimSprite">The white mask of the letters' outline.</param>
-    /// <param name="coreSprite">The white mask of the letters' body, the same size as the outline.</param>
+    /// <param name="rimTexture">The white mask of the letters' outline.</param>
+    /// <param name="coreTexture">The white mask of the letters' body, the same size as the outline.</param>
     /// <param name="spriteSize">The size of each mask, in its own pixels.</param>
     /// <param name="letters">Where each letter sits across the masks.</param>
     /// <param name="origin">Where the whole picture is drawn, in port pixels.</param>
-    public WordmarkAppear(Texture2D rimSprite, Texture2D coreSprite, Point spriteSize,
+    public WordmarkAppear(Texture2D rimTexture, Texture2D coreTexture, Point spriteSize,
         IReadOnlyList<LetterSpan> letters, Point origin)
     {
-        _rimSprite = rimSprite;
-        _coreSprite = coreSprite;
+        _rimTexture = rimTexture;
+        _coreTexture = coreTexture;
         _letters = letters;
         _spriteHeight = spriteSize.Y;
         _bounds = new Rectangle(origin.X, origin.Y, spriteSize.X * ScreenSize.PortPixelsPerArcadePixel,
@@ -63,23 +63,23 @@ public sealed class WordmarkAppear
         _effects =
         [
             .. letters.Select(letter =>
-                StripEffect.CreateAppear(rimSprite, GetLetterBounds(letter), StripFanAxis.Rows, wholeScreenClip))
+                StripEffect.CreateAppear(rimTexture, GetLetterBounds(letter), StripFanAxis.Rows, wholeScreenClip))
         ];
     }
 
     /// <summary>Makes the appear for a word drawn as two white masks, finding its letters from the outline mask.</summary>
-    /// <param name="rimSprite">The white mask of the letters' outline.</param>
-    /// <param name="coreSprite">The white mask of the letters' body, the same size as the outline.</param>
+    /// <param name="rimTexture">The white mask of the letters' outline.</param>
+    /// <param name="coreTexture">The white mask of the letters' body, the same size as the outline.</param>
     /// <param name="origin">Where the whole picture is drawn, in port pixels.</param>
-    public static WordmarkAppear CreateFromMasks(Texture2D rimSprite, Texture2D coreSprite, Point origin)
+    public static WordmarkAppear CreateFromMasks(Texture2D rimTexture, Texture2D coreTexture, Point origin)
     {
-        var pixels = new Color[rimSprite.Width * rimSprite.Height];
-        rimSprite.GetData(pixels);
-        var columnHasPixel = new bool[rimSprite.Width];
+        var pixels = new Color[rimTexture.Width * rimTexture.Height];
+        rimTexture.GetData(pixels);
+        var columnHasPixel = new bool[rimTexture.Width];
         for (var index = 0; index < pixels.Length; index++)
-            columnHasPixel[index % rimSprite.Width] |= pixels[index].A > 0;
+            columnHasPixel[index % rimTexture.Width] |= pixels[index].A > 0;
 
-        return new WordmarkAppear(rimSprite, coreSprite, new Point(rimSprite.Width, rimSprite.Height),
+        return new WordmarkAppear(rimTexture, coreTexture, new Point(rimTexture.Width, rimTexture.Height),
             FindLetters(columnHasPixel), origin);
     }
 
@@ -164,8 +164,8 @@ public sealed class WordmarkAppear
                 strip.Y * ScreenSize.PortPixelsPerArcadePixel,
                 letter.Width * ScreenSize.PortPixelsPerArcadePixel,
                 ScreenSize.PortPixelsPerArcadePixel);
-            blitterDraw.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitterDraw.GetPaletteIndexColour(rimPaletteIndex));
-            blitterDraw.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination,
+            blitterDraw.DrawSpriteSolidPiece(spriteBatch, _rimTexture, source, destination, blitterDraw.GetPaletteIndexColour(rimPaletteIndex));
+            blitterDraw.DrawSpriteSolidPiece(spriteBatch, _coreTexture, source, destination,
                 blitterDraw.GetPaletteIndexColour(corePaletteIndex));
         }
     }
@@ -174,8 +174,8 @@ public sealed class WordmarkAppear
     {
         Rectangle source = new(letter.Start, 0, letter.Width, _spriteHeight);
         var destination = GetLetterBounds(letter);
-        blitterDraw.DrawSpriteSolidPiece(spriteBatch, _rimSprite, source, destination, blitterDraw.GetPaletteIndexColour(rimPaletteIndex));
-        blitterDraw.DrawSpriteSolidPiece(spriteBatch, _coreSprite, source, destination, blitterDraw.GetPaletteIndexColour(corePaletteIndex));
+        blitterDraw.DrawSpriteSolidPiece(spriteBatch, _rimTexture, source, destination, blitterDraw.GetPaletteIndexColour(rimPaletteIndex));
+        blitterDraw.DrawSpriteSolidPiece(spriteBatch, _coreTexture, source, destination, blitterDraw.GetPaletteIndexColour(corePaletteIndex));
     }
 
     private int GetArcadeFrames()

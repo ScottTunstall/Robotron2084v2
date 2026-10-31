@@ -13,35 +13,35 @@ public sealed class BlitterDraw
 {
     /// <summary>
     ///     The colour-cycle shader's technique for a cycling glyph; must match
-    ///     <c>Content/Effects/ColorCycle.fx</c>.
+    ///     <c>Content/Effects/ColourCycle.fx</c>.
     /// </summary>
     private const string GlyphCycleTechnique = "GlyphCycle";
 
     /// <summary>
     ///     The colour-cycle shader's glyph technique's palette index parameter; must match
-    ///     <c>Content/Effects/ColorCycle.fx</c>.
+    ///     <c>Content/Effects/ColourCycle.fx</c>.
     /// </summary>
     private const string GlyphPaletteIndexParameter = "SlotId";
 
     /// <summary>
     ///     The colour-cycle shader's solid technique's colour parameter; must match
-    ///     <c>Content/Effects/ColorCycle.fx</c>.
+    ///     <c>Content/Effects/ColourCycle.fx</c>.
     /// </summary>
-    private const string SolidColorParameter = "RemapColor";
+    private const string SolidColourParameter = "RemapColor";
 
     /// <summary>
     ///     The colour-cycle shader's technique for a solid fill; must match
-    ///     <c>Content/Effects/ColorCycle.fx</c>.
+    ///     <c>Content/Effects/ColourCycle.fx</c>.
     /// </summary>
     private const string SolidRemapTechnique = "SolidRemap";
 
-    private readonly Texture2D _wallPixelSprite;
+    private readonly Texture2D _wallPixelTexture;
 
     /// <summary>Creates a blitter that fills rectangles with a 1x1 white pixel.</summary>
-    /// <param name="wallPixelSprite">The white pixel every solid fill is a tinted, stretched copy of.</param>
-    public BlitterDraw(Texture2D wallPixelSprite)
+    /// <param name="wallPixelTexture">The white pixel every solid fill is a tinted, stretched copy of.</param>
+    public BlitterDraw(Texture2D wallPixelTexture)
     {
-        _wallPixelSprite = wallPixelSprite;
+        _wallPixelTexture = wallPixelTexture;
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ public sealed class BlitterDraw
     ///     (remaps the six cycling palette index marker colours to their live palette
     ///     colours). Null = plain draws.
     /// </summary>
-    public Effect? ColorCycleEffect { get; set; }
+    public Effect? ColourCycleEffect { get; set; }
 
     /// <summary>The live 16-index palette the effect remaps into (palette indices 10-15 cycle).</summary>
     public GamePalette? GamePalette { get; set; }
@@ -61,11 +61,11 @@ public sealed class BlitterDraw
     ///     (notes §118).
     /// </summary>
     /// <param name="bounds">The entity's collision box, in screen pixels.</param>
-    /// <param name="animationFrame">The animation frame being drawn.</param>
-    public static Rectangle DrawnRect(Rectangle bounds, Texture2D animationFrame)
+    /// <param name="animationFrameTexture">The animation frame being drawn.</param>
+    public static Rectangle GetDrawnBounds(Rectangle bounds, Texture2D animationFrameTexture)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Width);
-        var height = ScreenSize.ToPortPixelsFromArcadePixels(animationFrame.Height);
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(animationFrameTexture.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(animationFrameTexture.Height);
         return new Rectangle(
             bounds.X + (bounds.Width - width) / 2,
             bounds.Y + (bounds.Height - height) / 2,
@@ -81,22 +81,22 @@ public sealed class BlitterDraw
     ///     back to a CPU tint of the palette index's live colour, so the glyph still cycles
     ///     with the palette.
     /// </summary>
-    public void DrawGlyphCycling(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int paletteIndex)
+    public void DrawGlyphCycling(SpriteBatch spriteBatch, Texture2D glyphTexture, int x, int y, int paletteIndex)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Width);
-        var height = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Height);
-        if (ColorCycleEffect is { } effect &&
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(glyphTexture.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(glyphTexture.Height);
+        if (ColourCycleEffect is { } effect &&
             effect.Techniques[GlyphCycleTechnique] is { } technique)
         {
-            GamePalette?.UpdateEffectColors(effect);
+            GamePalette?.UpdateEffectColours(effect);
             effect.Parameters[GlyphPaletteIndexParameter].SetValue((float)(paletteIndex - FontPaletteIndices.FirstCyclingPaletteIndex));
             technique.Passes[0].Apply();
         }
 
         // Without the effect the draw degrades to a CPU tint of the palette index's live
         // colour (exact for the white master, and it cycles with the palette).
-        var tint = ColorCycleEffect is null ? GamePalette?.GetColour(paletteIndex) ?? Color.White : Color.White;
-        spriteBatch.Draw(glyph, new Rectangle(x, y, width, height), tint);
+        var tint = ColourCycleEffect is null ? GamePalette?.GetColour(paletteIndex) ?? Color.White : Color.White;
+        spriteBatch.Draw(glyphTexture, new Rectangle(x, y, width, height), tint);
 
         // Hand the pass-through back immediately: this pass is DEVICE state, and
         // the caller's next draw is not a glyph-cycle (same as DrawSpriteSolid).
@@ -112,7 +112,7 @@ public sealed class BlitterDraw
     /// </summary>
     public void DrawGlyphPaletteIndex(
         SpriteBatch spriteBatch,
-        Texture2D[] glyphs,
+        Texture2D[] glyphTextures,
         int glyphIndex,
         int x,
         int y,
@@ -120,9 +120,9 @@ public sealed class BlitterDraw
         SpriteEffects effects = SpriteEffects.None)
     {
         if (FontPaletteIndices.IsCycling(paletteIndex))
-            DrawGlyphCycling(spriteBatch, glyphs[glyphIndex], x, y, paletteIndex);
+            DrawGlyphCycling(spriteBatch, glyphTextures[glyphIndex], x, y, paletteIndex);
         else
-            DrawGlyphStatic(spriteBatch, glyphs[glyphIndex], x, y, paletteIndex, effects);
+            DrawGlyphStatic(spriteBatch, glyphTextures[glyphIndex], x, y, paletteIndex, effects);
     }
 
     /// <summary>
@@ -130,13 +130,13 @@ public sealed class BlitterDraw
     ///     glyph tinted with the palette index's live colour (static palette indices never change,
     ///     so a tint is exact). Notes §38, §39.
     /// </summary>
-    public void DrawGlyphStatic(SpriteBatch spriteBatch, Texture2D glyph, int x, int y, int paletteIndex,
+    public void DrawGlyphStatic(SpriteBatch spriteBatch, Texture2D glyphTexture, int x, int y, int paletteIndex,
         SpriteEffects effects = SpriteEffects.None)
     {
         var tint = GamePalette?.GetColour(paletteIndex) ?? Color.White;
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Width);
-        var height = ScreenSize.ToPortPixelsFromArcadePixels(glyph.Height);
-        spriteBatch.Draw(glyph, new Rectangle(x, y, width, height), null, tint, 0f, Vector2.Zero, effects, 0f);
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(glyphTexture.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(glyphTexture.Height);
+        spriteBatch.Draw(glyphTexture, new Rectangle(x, y, width, height), null, tint, 0f, Vector2.Zero, effects, 0f);
     }
 
     /// <summary>
@@ -145,20 +145,20 @@ public sealed class BlitterDraw
     ///     it for the brain's flashing block while it reprograms a human (notes
     ///     §47) and, with colour 0, to erase a rectangle (<c>PCTOFV</c>/<c>BLKCLV</c>).
     /// </summary>
-    public void DrawSolidRectangle(SpriteBatch spriteBatch, Rectangle bounds, Color color)
+    public void DrawSolidRectangle(SpriteBatch spriteBatch, Rectangle bounds, Color colour)
     {
         UsePassThrough(); // a solid rect is NOT a remap — see UsePassThrough
-        spriteBatch.Draw(_wallPixelSprite, bounds, color);
+        spriteBatch.Draw(_wallPixelTexture, bounds, colour);
     }
 
     /// <summary>
-    ///     Draws one animation frame at PortPixelsPerArcadePixel× arcade pixels, centered inside
+    ///     Draws one animation frame at PortPixelsPerArcadePixel× arcade pixels, centred inside
     ///     <paramref name="bounds" /> (the entity's collision box).
     /// </summary>
     public void DrawSprite(SpriteBatch spriteBatch, Texture2D texture, Rectangle bounds, Color tint)
     {
         UsePassThrough();
-        spriteBatch.Draw(texture, DrawnRect(bounds, texture), null, tint, 0f, Vector2.Zero, SpriteEffects.None, 0f);
+        spriteBatch.Draw(texture, GetDrawnBounds(bounds, texture), null, tint, 0f, Vector2.Zero, SpriteEffects.None, 0f);
     }
 
     /// <summary>
@@ -168,21 +168,21 @@ public sealed class BlitterDraw
     ///     COLOUR mode, and it is how the ROM draws anything in a single colour —
     ///     an electrode being "turned on" (<c>OPON</c>), the flashing human and brain
     ///     while a brain reprograms one (<c>BRNON</c>/<c>HUMON</c>), mono text.
-    ///     <paramref name="color" /> usually comes from <see cref="GetPaletteIndexColour" /> so
+    ///     <paramref name="colour" /> usually comes from <see cref="GetPaletteIndexColour" /> so
     ///     the caller can name a palette index; a cycling palette index then cycles here for
     ///     free, exactly as the hardware's palette does.
     /// </summary>
-    public void DrawSpriteSolid(SpriteBatch spriteBatch, Texture2D texture, Rectangle bounds, Color color)
+    public void DrawSpriteSolid(SpriteBatch spriteBatch, Texture2D texture, Rectangle bounds, Color colour)
     {
-        if (ColorCycleEffect is { } effect &&
+        if (ColourCycleEffect is { } effect &&
             effect.Techniques[SolidRemapTechnique] is { } technique)
         {
-            effect.Parameters[SolidColorParameter].SetValue(color.ToVector4());
+            effect.Parameters[SolidColourParameter].SetValue(colour.ToVector4());
             technique.Passes[0].Apply();
         }
 
         // Without the effect the draw degrades to a tint (exact for white sprites).
-        spriteBatch.Draw(texture, DrawnRect(bounds, texture), null, color, 0f, Vector2.Zero, SpriteEffects.None, 0f);
+        spriteBatch.Draw(texture, GetDrawnBounds(bounds, texture), null, colour, 0f, Vector2.Zero, SpriteEffects.None, 0f);
 
         // Hand the pass-through back immediately: this pass is DEVICE state, and
         // the caller's next draw (usually a card fill) is not a remap.
@@ -198,18 +198,18 @@ public sealed class BlitterDraw
     /// <param name="texture">The white mask.</param>
     /// <param name="source">The part of the mask to draw, in its own pixels.</param>
     /// <param name="destination">Where to draw it, in port pixels.</param>
-    /// <param name="color">The colour, usually from <see cref="GetPaletteIndexColour" />.</param>
+    /// <param name="colour">The colour, usually from <see cref="GetPaletteIndexColour" />.</param>
     public void DrawSpriteSolidPiece(SpriteBatch spriteBatch, Texture2D texture, Rectangle source,
-        Rectangle destination, Color color)
+        Rectangle destination, Color colour)
     {
-        if (ColorCycleEffect is { } effect &&
+        if (ColourCycleEffect is { } effect &&
             effect.Techniques[SolidRemapTechnique] is { } technique)
         {
-            effect.Parameters[SolidColorParameter].SetValue(color.ToVector4());
+            effect.Parameters[SolidColourParameter].SetValue(colour.ToVector4());
             technique.Passes[0].Apply();
         }
 
-        spriteBatch.Draw(texture, destination, source, color);
+        spriteBatch.Draw(texture, destination, source, colour);
         UsePassThrough();
     }
 
@@ -233,7 +233,7 @@ public sealed class BlitterDraw
         // otherwise it is drawn through whatever pass was bound last and comes out
         // in that colour.
         UsePassThrough();
-        spriteBatch.Draw(_wallPixelSprite, DrawnRect(bounds, texture), background);
+        spriteBatch.Draw(_wallPixelTexture, GetDrawnBounds(bounds, texture), background);
         DrawSpriteSolid(spriteBatch, texture, bounds, shape);
     }
 
@@ -254,9 +254,9 @@ public sealed class BlitterDraw
     /// </summary>
     internal void UsePassThrough()
     {
-        if (ColorCycleEffect is { } effect)
+        if (ColourCycleEffect is { } effect)
         {
-            GamePalette?.UpdateEffectColors(effect);
+            GamePalette?.UpdateEffectColours(effect);
             effect.CurrentTechnique.Passes[0].Apply();
         }
     }
