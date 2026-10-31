@@ -103,7 +103,7 @@ public sealed class PlayFieldHumanTests
         for (var tick = 0; tick < 130; tick++) playField.Update(OneTick()); // the robots are held until the game goes live
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
-        var human = new Human(TestSprites.SharedSpriteSet, new IntVector2(inner.Center.X, inner.Center.Y), HumanKind.Mommy,
+        var human = new Human(TestTextures.SharedTextureSet, new IntVector2(inner.Center.X, inner.Center.Y), HumanKind.Mommy,
             new Random(7));
 
         List<int> starts = new();
@@ -232,7 +232,7 @@ public sealed class PlayFieldHumanTests
     }
 
     [Fact]
-    public void Rescue_LeavesScoreDisplay_AtTheRescueSpot_ThatExpires()
+    public void Rescue_LeavesBonusMarker_AtTheRescueSpot_ThatExpires()
     {
         var playField = CreateField(HumanWave(0, 0, 1));
         playField.SkipWaveStart();
@@ -241,15 +241,15 @@ public sealed class PlayFieldHumanTests
 
         playField.Update(new GameTime());
 
-        Assert.Single(playField.FieldEntities.RescueScores);
-        Assert.Equal(human.Position, playField.FieldEntities.RescueScores[0].Position);
+        Assert.Single(playField.FieldEntities.RescueBonusMarkers);
+        Assert.Equal(human.Position, playField.FieldEntities.RescueBonusMarkers[0].Position);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicks(60) - 1; tick++) playField.Update(new GameTime());
 
-        Assert.Single(playField.FieldEntities.RescueScores); // still up just before the linger ends
+        Assert.Single(playField.FieldEntities.RescueBonusMarkers); // still up just before the linger ends
 
         playField.Update(new GameTime());
-        Assert.Empty(playField.FieldEntities.RescueScores); // pruned once expired
+        Assert.Empty(playField.FieldEntities.RescueBonusMarkers); // pruned once expired
     }
 
     [Fact]

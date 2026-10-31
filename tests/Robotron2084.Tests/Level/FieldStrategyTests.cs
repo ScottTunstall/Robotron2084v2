@@ -46,9 +46,9 @@ public sealed class FieldStrategyTests
     public void TheBoxContactTest_SaysTwoThingsTouch_OnlyWhenTheirBoxesOverlap()
     {
         var boxContactTest = new BoxContactTest();
-        var firstElectrode = new Electrode(TestSprites.SharedSpriteSet, new IntVector2(100, 100));
-        var overlappingElectrode = new Electrode(TestSprites.SharedSpriteSet, new IntVector2(100 + firstElectrode.GetBounds().Width / 2, 100));
-        var apartElectrode = new Electrode(TestSprites.SharedSpriteSet, new IntVector2(100 + firstElectrode.GetBounds().Width, 100));
+        var firstElectrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(100, 100));
+        var overlappingElectrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(100 + firstElectrode.GetBounds().Width / 2, 100));
+        var apartElectrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(100 + firstElectrode.GetBounds().Width, 100));
 
         Assert.True(boxContactTest.Touches(firstElectrode, overlappingElectrode));
         Assert.False(boxContactTest.Touches(firstElectrode, apartElectrode));
@@ -58,8 +58,8 @@ public sealed class FieldStrategyTests
     public void TheFamilyList_HandsOutPlacesInOrder_AndFindsTheNearestFreeMember()
     {
         var familyList = new FamilyList();
-        var mikeyHuman = new Human(TestSprites.SharedSpriteSet, new IntVector2(100, 100), HumanKind.Mikey, new Random(1));
-        var mommyHuman = new Human(TestSprites.SharedSpriteSet, new IntVector2(300, 100), HumanKind.Mommy, new Random(2));
+        var mikeyHuman = new Human(TestTextures.SharedTextureSet, new IntVector2(100, 100), HumanKind.Mikey, new Random(1));
+        var mommyHuman = new Human(TestTextures.SharedTextureSet, new IntVector2(300, 100), HumanKind.Mommy, new Random(2));
         Assert.Equal(FamilyList.FirstSlot, familyList.GetNearestSlot(new IntVector2(0, 0)));
         Assert.Empty(familyList.GetOccupiedSlots());
 
@@ -86,8 +86,8 @@ public sealed class FieldStrategyTests
     public void TheFamilyList_GivesATieToTheLaterPlace()
     {
         var familyList = new FamilyList();
-        familyList.Add(new Human(TestSprites.SharedSpriteSet, new IntVector2(100, 100), HumanKind.Mikey, new Random(1)));
-        familyList.Add(new Human(TestSprites.SharedSpriteSet, new IntVector2(100, 100), HumanKind.Daddy, new Random(2)));
+        familyList.Add(new Human(TestTextures.SharedTextureSet, new IntVector2(100, 100), HumanKind.Mikey, new Random(1)));
+        familyList.Add(new Human(TestTextures.SharedTextureSet, new IntVector2(100, 100), HumanKind.Daddy, new Random(2)));
 
         Assert.Equal(FamilyList.FirstSlot + 1, familyList.GetNearestSlot(new IntVector2(100, 100)));
     }
@@ -98,12 +98,12 @@ public sealed class FieldStrategyTests
         var fieldEntities = new FieldEntities();
         foreach (var kind in Enum.GetValues<RobotKind>()) Assert.NotNull(fieldEntities.GetList(kind));
 
-        fieldEntities.Electrodes.Add(new Electrode(TestSprites.SharedSpriteSet, new IntVector2(10, 10)));
+        fieldEntities.Electrodes.Add(new Electrode(TestTextures.SharedTextureSet, new IntVector2(10, 10)));
         fieldEntities.Hulks.Add(
-            new Hulk(TestSprites.SharedSpriteSet, new IntVector2(50, 50), new Random(1), 8, () => IntVector2.Zero));
+            new Hulk(TestTextures.SharedTextureSet, new IntVector2(50, 50), new Random(1), 8, () => IntVector2.Zero));
         Assert.True(fieldEntities.AreEnemiesGone());
 
-        fieldEntities.Grunts.Add(new Grunt(TestSprites.SharedSpriteSet, new IntVector2(90, 90)));
+        fieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, new IntVector2(90, 90)));
         Assert.False(fieldEntities.AreEnemiesGone());
     }
 
@@ -111,7 +111,7 @@ public sealed class FieldStrategyTests
     public void TheField_AnswersWithoutLettingCallersReachThroughIt()
     {
         var playField = new PlayFieldBuilder().Build();
-        var grunt = new Grunt(TestSprites.SharedSpriteSet, new IntVector2(90, 90));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(90, 90));
         playField.FieldEntities.Add(grunt);
 
         Assert.Contains(grunt, playField.FieldEntities.GetEntities(RobotKind.Grunt));
@@ -128,7 +128,7 @@ public sealed class FieldStrategyTests
     public void ACollisionRule_OnlyReports_AndTheFieldResponds()
     {
         var playField = new PlayFieldBuilder().Build();
-        var human = new Human(TestSprites.SharedSpriteSet, playField.Player.Position, HumanKind.Mommy, new Random(1));
+        var human = new Human(TestTextures.SharedTextureSet, playField.Player.Position, HumanKind.Mommy, new Random(1));
         playField.FieldEntities.Add(human);
 
         var results = new PlayerRescueRule().Detect(playField, playField.FieldEntities).ToArray();
@@ -151,8 +151,8 @@ public sealed class FieldStrategyTests
         var playField = new PlayFieldBuilder().Build();
         var bounds = playField.GetPlayfieldBounds();
         IntVector2 spot = new(bounds.X + 200, bounds.Y + 200);
-        playField.FieldEntities.Add(new Grunt(TestSprites.SharedSpriteSet, spot));
-        playField.FieldEntities.Add(new Grunt(TestSprites.SharedSpriteSet, spot));
+        playField.FieldEntities.Add(new Grunt(TestTextures.SharedTextureSet, spot));
+        playField.FieldEntities.Add(new Grunt(TestTextures.SharedTextureSet, spot));
         playField.PlayerLaserSlots.Fire(spot, Direction8.Up);
         var collisionResponder = new CollisionResponder(playField);
 

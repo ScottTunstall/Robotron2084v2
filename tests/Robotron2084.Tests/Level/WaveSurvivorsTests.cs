@@ -15,7 +15,7 @@ public sealed class WaveSurvivorsTests
 
     private static Enforcer CreateEnforcer()
     {
-        return new Enforcer(TestSprites.SharedSpriteSet, new IntVector2(100, 100), new Random(1));
+        return new Enforcer(TestTextures.SharedTextureSet, new IntVector2(100, 100), new Random(1));
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public sealed class WaveSurvivorsTests
             grunt.SpeedUpAsWaveGoesOn(1);
         }
 
-        Assert.True(playField.FieldEntities.Grunts[0].MoveDelayBeats < 15);
+        Assert.True(playField.FieldEntities.Grunts[0].MoveIntervalMaxBeats < 15);
         Assert.Equal(15, WaveSurvivors.GetFrom(playField).GruntMoveDelay); // ROM PLEND2: ROBSPD raised to RMXSPD
     }
 

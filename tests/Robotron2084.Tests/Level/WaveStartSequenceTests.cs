@@ -177,7 +177,7 @@ public sealed class WaveStartSequenceTests
     public void ARobotOnThePlayer_DoesNotKill_UntilTheGameIsLive()
     {
         var playField = CreateField(new WaveParameters(1), playerInvincible: false);
-        playField.FieldEntities.Grunts.Add(new Grunt(TestSprites.SharedSpriteSet, playField.Player.Position));
+        playField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, playField.Player.Position));
 
         Tick(playField, WaveStartTicks.UntilLive(playField) - 1);
         Assert.Equal(EntityLifeState.Alive, playField.Player.LifeState);

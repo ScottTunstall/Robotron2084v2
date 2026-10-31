@@ -19,10 +19,10 @@ public sealed class PlayFieldMovementTests
         playField.SkipWaveStart();
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
         // Spawn well away from the player (player-vs-hulk contact is lethal),
-        // but hunt the playfield center so the aim is unbounded.
-        IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
+        // but hunt the playfield centre so the aim is unbounded.
+        IntVector2 centre = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 100, bounds.Y + 100);
-        var hulk = new Hulk(TestSprites.SharedSpriteSet, spot, new Random(7), 8, () => center);
+        var hulk = new Hulk(TestTextures.SharedTextureSet, spot, new Random(7), 8, () => centre);
         playField.FieldEntities.Hulks.Add(hulk);
 
         // The game is live (the robots are held until then); this update is the spawn aim.
@@ -49,7 +49,7 @@ public sealed class PlayFieldMovementTests
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
         // Right up against the left wall, hunting a point that keeps it aimed left.
         IntVector2 spot = new(bounds.X + 4, bounds.Y + bounds.Height / 2 - 16);
-        var hulk = new Hulk(TestSprites.SharedSpriteSet, spot, new Random(11), 5, () => spot);
+        var hulk = new Hulk(TestTextures.SharedTextureSet, spot, new Random(11), 5, () => spot);
         playField.FieldEntities.Hulks.Add(hulk);
 
         playField.SkipWaveStart();
@@ -66,10 +66,10 @@ public sealed class PlayFieldMovementTests
         Assert.NotEqual(positionBefore, hulk.Position);
     }
 
-    private static bool IsFullyInside(Rectangle rect, Rectangle bounds)
+    private static bool IsFullyInside(Rectangle innerBounds, Rectangle outerBounds)
     {
-        return rect.Left >= bounds.Left && rect.Right <= bounds.Right && rect.Top >= bounds.Top &&
-               rect.Bottom <= bounds.Bottom;
+        return innerBounds.Left >= outerBounds.Left && innerBounds.Right <= outerBounds.Right && innerBounds.Top >= outerBounds.Top &&
+               innerBounds.Bottom <= outerBounds.Bottom;
     }
 
     private static PlayField CreateEmptyField()

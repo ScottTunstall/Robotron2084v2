@@ -123,7 +123,7 @@ public sealed class HulkTargetTests
         playField.SkipWaveStart();
         var bounds = playField.GetPlayfieldBounds();
         var phantom = Hulk.GetPhantomTargetPosition(bounds);
-        var hulk = new Hulk(TestSprites.SharedSpriteSet, new IntVector2(bounds.X + 40, bounds.Bottom - 80), new Random(5), 2,
+        var hulk = new Hulk(TestTextures.SharedTextureSet, new IntVector2(bounds.X + 40, bounds.Bottom - 80), new Random(5), 2,
             () => phantom);
         playField.FieldEntities.Hulks.Add(hulk);
         playField.Player.TeleportTo(new IntVector2(bounds.X + 4, bounds.Bottom - 40));
@@ -170,7 +170,7 @@ public sealed class HulkTargetTests
         var hulks = new List<Hulk>();
         for (var seed = 0; seed < ManyHulks; seed++)
         {
-            var hulk = new Hulk(TestSprites.SharedSpriteSet, spot, new Random(seed), 8, () => target);
+            var hulk = new Hulk(TestTextures.SharedTextureSet, spot, new Random(seed), 8, () => target);
             hulks.Add(hulk);
             playField.FieldEntities.Hulks.Add(hulk);
         }

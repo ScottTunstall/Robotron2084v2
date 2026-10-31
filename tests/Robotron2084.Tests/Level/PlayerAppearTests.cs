@@ -68,7 +68,7 @@ public sealed class PlayerAppearTests
         // The vertical routine takes its records from the object list, so all 12 are made. The sprite is 4 columns
         // wide, but the horizontal routine has 2 records, so only the first 2 asked for are made.
         Assert.Equal(PlayerSpriteRows, Count(playField, StripEngine.Vertical));
-        Assert.Equal(StripExplosionTuning.HorizontalPoolSize, Count(playField, StripEngine.Horizontal));
+        Assert.Equal(StripEffectTuning.HorizontalPoolSize, Count(playField, StripEngine.Horizontal));
         Assert.Equal(0, Count(playField, StripEngine.Diagonal));
         Assert.All(playField.FieldEntities.Explosions, effect => Assert.Equal(StripEffectKind.Appear, effect.Kind));
         Assert.All(playField.FieldEntities.Explosions, effect => Assert.Equal(playField.Player.GetBounds(), effect.GetBounds()));
@@ -87,7 +87,7 @@ public sealed class PlayerAppearTests
 
         // The count runs 12, 9, 6, 3, 0 (`SUBA #3 / BPL DPAPP1`), and each one makes two fans (`CLRA`, then `COMA`):
         // ten, which is every record the diagonal routine has.
-        Assert.Equal(StripExplosionTuning.DiagonalPoolSize, Count(playField, StripEngine.Diagonal));
+        Assert.Equal(StripEffectTuning.DiagonalPoolSize, Count(playField, StripEngine.Diagonal));
         Assert.Equal(5, playField.FieldEntities.Explosions.Count(effect => effect.Slope == 1));
         Assert.Equal(5, playField.FieldEntities.Explosions.Count(effect => effect.Slope == -1));
     }
@@ -100,11 +100,11 @@ public sealed class PlayerAppearTests
 
         TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 9);
         Assert.True(playField.HasPlayerAppeared());
-        Assert.False(playField.IsPlayerDrawn());
+        Assert.False(playField.IsPlayerVisible());
 
         TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 10); // PLS2: CLR STATUS
         Assert.True(playField.IsLive());
-        Assert.True(playField.IsPlayerDrawn());
+        Assert.True(playField.IsPlayerVisible());
         Assert.NotEmpty(playField.FieldEntities.Explosions); // the appear is still running
     }
 
@@ -144,7 +144,7 @@ public sealed class PlayerAppearTests
 
         TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 29);
         Assert.Equal(0, Count(playField, StripEngine.Vertical));
-        Assert.Equal(StripExplosionTuning.HorizontalPoolSize, Count(playField, StripEngine.Horizontal));
+        Assert.Equal(StripEffectTuning.HorizontalPoolSize, Count(playField, StripEngine.Horizontal));
 
         TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 31);
         Assert.Empty(playField.FieldEntities.Explosions);
@@ -159,6 +159,6 @@ public sealed class PlayerAppearTests
         playField.Update(OneTick());
 
         Assert.Empty(playField.FieldEntities.Explosions);
-        Assert.True(playField.IsPlayerDrawn());
+        Assert.True(playField.IsPlayerVisible());
     }
 }

@@ -151,7 +151,7 @@ public class MaterialisationTests
 
         Assert.Equal(1, playField.GetPendingAppearCount());
         Assert.Equal(11, playField.FieldEntities.Explosions.Count);
-        Assert.Equal(StripExplosionTuning.HorizontalPoolSize,
+        Assert.Equal(StripEffectTuning.HorizontalPoolSize,
             playField.FieldEntities.Explosions.Count(effect => effect.Axis == StripFanAxis.Columns));
 
         Advance(playField, 1); // tick 15 reaches fiftieth of a second 12: pass 13
