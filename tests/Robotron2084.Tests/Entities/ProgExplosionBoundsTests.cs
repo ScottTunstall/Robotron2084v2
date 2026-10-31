@@ -38,7 +38,7 @@ public sealed class ProgExplosionBoundsTests
         var corner = new IntVector2(bounds.Right - mikeyFamilyMember.Width, bounds.Bottom - mikeyFamilyMember.Height);
         var prog = new Prog(TestTextures.SharedTextureSet, corner, FamilyMemberKind.Mikey, new Random(3));
         playField.FieldEntities.Progs.Add(prog);
-        playField.Player.TeleportTo(new IntVector2(bounds.X + 4, bounds.Y + 4));
+        playField.Player.MoveTo(new IntVector2(bounds.X + 4, bounds.Y + 4));
         playField.Update(new GameTime());
 
         var explosion = prog.GetExplosionBounds();

@@ -126,7 +126,7 @@ public sealed class HulkTargetTests
         var hulk = new Hulk(TestTextures.SharedTextureSet, new IntVector2(bounds.X + 40, bounds.Bottom - 80), new Random(5), 2,
             () => phantom);
         playField.FieldEntities.Hulks.Add(hulk);
-        playField.Player.TeleportTo(new IntVector2(bounds.X + 4, bounds.Bottom - 40));
+        playField.Player.MoveTo(new IntVector2(bounds.X + 4, bounds.Bottom - 40));
 
         long sumX = 0;
         long sumY = 0;

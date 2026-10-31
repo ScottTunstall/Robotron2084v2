@@ -58,8 +58,8 @@ public sealed class HulkKnockbackTests
 
             for (var i = 0; i < 400; i++)
             {
-                hulk.TeleportTo(spot); // reset each hit so the hulk never drifts toward a wall
-                hulk.ApplyKnockback(unit);
+                hulk.MoveTo(spot); // reset each hit so the hulk never drifts toward a wall
+                hulk.ApplyKnockback(direction);
                 observed.Add(hulk.Position - spot);
             }
 
@@ -118,7 +118,7 @@ public sealed class HulkKnockbackTests
 
         for (var i = 0; i < 50; i++)
         {
-            hulk.ApplyKnockback(Direction8.UpLeft.ToIntVector());
+            hulk.ApplyKnockback(Direction8.UpLeft);
             Assert.InRange(hulk.Position.X, b.X, b.Right - width);
             Assert.InRange(hulk.Position.Y, b.Y, b.Bottom - height);
         }

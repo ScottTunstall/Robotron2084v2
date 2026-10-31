@@ -265,7 +265,7 @@ public sealed class PlayFieldBrainProgMissileTests
         WarmUp(playField);
 
         // Player below and to the RIGHT of where the brain will sit.
-        playField.Player.TeleportTo(new IntVector2(inner.Right - ScreenSize.ToPortPixelsFromArcadePixels(5),
+        playField.Player.MoveTo(new IntVector2(inner.Right - ScreenSize.ToPortPixelsFromArcadePixels(5),
             inner.Y + ScreenSize.ToPortPixelsFromArcadePixels(130)));
 
         // Brain flush against the RIGHT wall, so its +X step is out of bounds.
@@ -795,7 +795,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         // The player aims down by default; park near the bottom wall so each
         // laser dies within a few ticks and its slot frees up.
-        playField.Player.TeleportTo(new IntVector2(inner.X + inner.Width / 2, inner.Bottom - 60));
+        playField.Player.MoveTo(new IntVector2(inner.X + inner.Width / 2, inner.Bottom - 60));
 
         int aliveLasers()
         {

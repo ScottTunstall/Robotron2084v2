@@ -125,7 +125,7 @@ public sealed class DemoPlayerInputSourceTests
         // on every facing change, and the raw direction flips against a moving field
         // — which is what left the demo's man twitching instead of walking (notes
         // §97.5). It may pause (the deliberate stutter), but it must not reverse.
-        playField.Player.TeleportTo(start + new IntVector2(0, -ScreenSize.ToPortPixelsFromArcadePixels(40)));
+        playField.Player.MoveTo(start + new IntVector2(0, -ScreenSize.ToPortPixelsFromArcadePixels(40)));
 
         for (var tick = 0; tick < AttractTuning.DemoDirectionHoldTicks; tick++)
             Assert.NotEqual(new IntVector2(0, -1), demoPlayerInputSource.Poll().MoveDirection);
