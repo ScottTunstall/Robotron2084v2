@@ -29,9 +29,9 @@ public sealed class GruntAnimationTests
     }
 
     /// <summary>Drives the field through the start of the wave, until the game is live.</summary>
-    private static void RunUntilLive(PlayField field)
+    private static void RunUntilLive(PlayField playField)
     {
-        for (var tick = 0; tick < WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
+        for (var tick = 0; tick < WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
     }
 
     [Theory]
@@ -47,20 +47,20 @@ public sealed class GruntAnimationTests
     [Fact]
     public void Grunt_StepsTwoColumnsSidewaysAndFourRowsUpAndDown_AndBobsWhenLevelWithThePlayer()
     {
-        var field = CreateField();
-        RunUntilLive(field);
+        var playField = CreateField();
+        RunUntilLive(playField);
 
         // Lone grunt 200px left of the player on the same row. ROM MOVE_GRUNT: sideways it
         // steps 2 columns (8 port px) towards the player every time; level with the player
         // it steps DOWN 4 rows (8 port px), then back up, so it bobs rather than staying put.
-        var player = field.Player.Position;
-        Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 200, player.Y), 15, new Random(3));
+        var player = playField.Player.Position;
+        Grunt grunt = new(TestSprites.SharedSpriteSet, new IntVector2(player.X - 200, player.Y), 15, new Random(3));
         var last = grunt.Position;
 
         var steps = 0;
         for (var tick = 0; tick < 600; tick++)
         {
-            grunt.Update(OneTick(), field);
+            grunt.Update(OneTick(), playField);
             if (grunt.Position == last) continue;
 
             var dx = grunt.Position.X - last.X;
@@ -83,16 +83,16 @@ public sealed class GruntAnimationTests
     {
         // ROM MOVE_GRUNT: `CMPB #$FE` and `CMPB #$02` skip the up-and-down step only when the
         // grunt is exactly one row above or below the player.
-        var field = CreateField();
-        RunUntilLive(field);
+        var playField = CreateField();
+        RunUntilLive(playField);
 
-        var player = field.Player.Position;
-        Grunt grunt = new(TestSprites.Shared,
+        var player = playField.Player.Position;
+        Grunt grunt = new(TestSprites.SharedSpriteSet,
             new IntVector2(player.X - 200, player.Y + rowsBelowPlayer * ScreenSize.ToPortPixelsFromArcadePixels(1)), 15,
             new Random(3));
         var startY = grunt.Position.Y;
 
-        for (var tick = 0; tick < 600 && !grunt.SteppedThisUpdate; tick++) grunt.Update(OneTick(), field);
+        for (var tick = 0; tick < 600 && !grunt.SteppedThisUpdate; tick++) grunt.Update(OneTick(), playField);
 
         Assert.True(grunt.SteppedThisUpdate);
         Assert.Equal(startY + expectedDy, grunt.Position.Y);
@@ -101,17 +101,17 @@ public sealed class GruntAnimationTests
     [Fact]
     public void Grunt_StepGaps_AreIrregular_AndBoundedByTheMoveDelayLimit()
     {
-        var field = CreateField();
-        RunUntilLive(field);
+        var playField = CreateField();
+        RunUntilLive(playField);
 
-        var player = field.Player.Position;
-        Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 300, player.Y - 120), 15, new Random(7));
+        var player = playField.Player.Position;
+        Grunt grunt = new(TestSprites.SharedSpriteSet, new IntVector2(player.X - 300, player.Y - 120), 15, new Random(7));
 
         var last = grunt.Position;
         var stepTicks = new List<int>();
         for (var tick = 1; tick <= 1200; tick++)
         {
-            grunt.Update(OneTick(), field);
+            grunt.Update(OneTick(), playField);
             if (grunt.Position != last)
             {
                 stepTicks.Add(tick);
@@ -142,18 +142,18 @@ public sealed class GruntAnimationTests
     [Fact]
     public void Grunt_WalkFrameFreezesWhilePaused_AndAdvancesOncePerStep()
     {
-        var field = CreateField();
-        RunUntilLive(field);
+        var playField = CreateField();
+        RunUntilLive(playField);
 
-        var player = field.Player.Position;
+        var player = playField.Player.Position;
         // Huge move delay limit: no steps for a long time — beats keep firing.
         // DRAW_GRUNT ($3A2B) is only reached from the step branch, so the
         // legs must FREEZE while the grunt is paused (playtest round 12:
         // "even when they are standing still, their legs are moving").
-        Grunt grunt = new(TestSprites.Shared, new IntVector2(player.X - 300, player.Y - 300), 300, new Random(11));
+        Grunt grunt = new(TestSprites.SharedSpriteSet, new IntVector2(player.X - 300, player.Y - 300), 300, new Random(11));
 
         Assert.Equal(1, grunt.WalkAnimationFrameNumber);
-        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(4) * 10; tick++) grunt.Update(OneTick(), field);
+        for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(4) * 10; tick++) grunt.Update(OneTick(), playField);
 
         Assert.Equal(1, grunt.WalkAnimationFrameNumber); // 10 beat passes, no step, no frame change
 
@@ -164,7 +164,7 @@ public sealed class GruntAnimationTests
         var advanced = false;
         for (var tick = 0; tick < 6000; tick++)
         {
-            grunt.Update(OneTick(), field);
+            grunt.Update(OneTick(), playField);
             if (grunt.Position != last) last = grunt.Position;
 
             if (grunt.WalkAnimationFrameNumber != 1) advanced = true;

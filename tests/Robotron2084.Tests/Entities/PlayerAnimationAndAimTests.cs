@@ -17,24 +17,24 @@ namespace Robotron2084.Tests;
 /// </summary>
 public sealed class PlayerAnimationAndAimTests
 {
-    private static PlayField CreateField(IPlayerInputSource input)
+    private static PlayField CreateField(IPlayerInputSource playerInputSource)
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithInput(input).WithSeed(1).Build();
+        return new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithInput(playerInputSource).WithSeed(1).Build();
     }
 
     [Fact]
     public void Player_StartsOnFrame7_TheFirstDownFrame()
     {
         // WAVE_START_PLAYER points the player metadata at $3603 = frame 7.
-        var field = CreateField(new FakeInputSource());
-        Assert.Equal(6, field.Player.GetWalkAnimationFrameIndex()); // 0-based index into PlayerAnimationFrames
+        var playField = CreateField(new FakeInputSource());
+        Assert.Equal(6, playField.Player.GetWalkAnimationFrameIndex()); // 0-based index into PlayerAnimationFrames
     }
 
     [Fact]
     public void Player_WalkCycle_IsThreeTicksPerFrame_InTheArcadeABACPattern()
     {
-        var field = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(-1, 0), false)));
-        field.SkipWaveStart();
+        var playField = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(-1, 0), false)));
+        playField.SkipWaveStart();
 
         // Left walk = frames 1,2,1,3 → PlayerAnimationFrames indices 0,1,0,2,
         // each drawn for exactly 3 movement ticks.
@@ -42,22 +42,22 @@ public sealed class PlayerAnimationAndAimTests
 
         for (var tick = 0; tick < expected.Length; tick++)
         {
-            field.Update(new GameTime());
+            playField.Update(new GameTime());
             Assert.True(
-                field.Player.GetWalkAnimationFrameIndex() == expected[tick],
-                $"tick {tick + 1}: expected frame index {expected[tick]}, got {field.Player.GetWalkAnimationFrameIndex()}");
+                playField.Player.GetWalkAnimationFrameIndex() == expected[tick],
+                $"tick {tick + 1}: expected frame index {expected[tick]}, got {playField.Player.GetWalkAnimationFrameIndex()}");
         }
     }
 
     [Fact]
     public void Fire_WithoutAim_UsesTheMovementFacing()
     {
-        var field = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(1, 1), IntVector2.Zero, true)));
-        field.SkipWaveStart();
-        field.Update(new GameTime());
+        var playField = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(1, 1), IntVector2.Zero, true)));
+        playField.SkipWaveStart();
+        playField.Update(new GameTime());
 
-        Assert.Equal(Direction8.DownRight, field.Player.FacingDirection);
-        var laser = Assert.Single(field.PlayerLasers.GetActiveLasers());
+        Assert.Equal(Direction8.DownRight, playField.Player.FacingDirection);
+        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
         Assert.Equal(Direction8.DownRight, laser.Direction);
     }
 
@@ -69,43 +69,43 @@ public sealed class PlayerAnimationAndAimTests
         // sprite keeps its initial DOWN facing ("IJKL will shoot in the
         // required direction ... the shooting direction should not specify
         // the walking animation").
-        var field = CreateField(new FakeInputSource(new PlayerInputState(IntVector2.Zero, new IntVector2(1, 0), true)));
-        field.SkipWaveStart();
-        field.Update(new GameTime());
+        var playField = CreateField(new FakeInputSource(new PlayerInputState(IntVector2.Zero, new IntVector2(1, 0), true)));
+        playField.SkipWaveStart();
+        playField.Update(new GameTime());
 
-        Assert.Equal(Direction8.Up, field.Player.FacingDirection); // the initial facing, untouched
-        var laser = Assert.Single(field.PlayerLasers.GetActiveLasers());
+        Assert.Equal(Direction8.Up, playField.Player.FacingDirection); // the initial facing, untouched
+        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
         Assert.Equal(Direction8.Right, laser.Direction);
-        Assert.Equal(6, field.Player.GetWalkAnimationFrameIndex()); // idle frame, untouched
+        Assert.Equal(6, playField.Player.GetWalkAnimationFrameIndex()); // idle frame, untouched
     }
 
     [Fact]
     public void Animation_FollowsMovementOnly_AimNeverChangesFacing_OrFreezesWhenIdle()
     {
-        var input = new PhaseInput { State = new PlayerInputState(new IntVector2(-1, 0), false) };
-        var field = CreateField(input);
-        field.SkipWaveStart();
+        var playerInputSource = new PhaseInput { State = new PlayerInputState(new IntVector2(-1, 0), false) };
+        var playField = CreateField(playerInputSource);
+        playField.SkipWaveStart();
 
-        for (var tick = 0; tick < 4; tick++) field.Update(new GameTime());
+        for (var tick = 0; tick < 4; tick++) playField.Update(new GameTime());
 
-        Assert.Equal(1, field.Player.GetWalkAnimationFrameIndex()); // left walk, frame 2 (index 1)
+        Assert.Equal(1, playField.Player.GetWalkAnimationFrameIndex()); // left walk, frame 2 (index 1)
 
         // Round 8: aim UP while still moving left — the facing and the walk
         // animation must stay LEFT (the old behaviour switched the sprite to
         // the UP group; the playtest called that out).
-        input.State = new PlayerInputState(new IntVector2(-1, 0), new IntVector2(0, -1), false);
-        field.Update(new GameTime());
+        playerInputSource.State = new PlayerInputState(new IntVector2(-1, 0), new IntVector2(0, -1), false);
+        playField.Update(new GameTime());
 
-        Assert.Equal(Direction8.Left, field.Player.FacingDirection);
-        Assert.InRange(field.Player.GetWalkAnimationFrameIndex(), 0, 2); // still the left walk group
+        Assert.Equal(Direction8.Left, playField.Player.FacingDirection);
+        Assert.InRange(playField.Player.GetWalkAnimationFrameIndex(), 0, 2); // still the left walk group
 
         // Idle: the animation freezes on the current frame (R5 $2FFE early-out).
-        input.State = default;
-        var frozen = field.Player.GetWalkAnimationFrameIndex();
+        playerInputSource.State = default;
+        var frozen = playField.Player.GetWalkAnimationFrameIndex();
         for (var tick = 0; tick < 12; tick++)
         {
-            field.Update(new GameTime());
-            Assert.True(field.Player.GetWalkAnimationFrameIndex() == frozen, $"idle tick {tick + 1} changed the frame");
+            playField.Update(new GameTime());
+            Assert.True(playField.Player.GetWalkAnimationFrameIndex() == frozen, $"idle tick {tick + 1} changed the frame");
         }
     }
 
@@ -115,14 +115,14 @@ public sealed class PlayerAnimationAndAimTests
         // Round 8 contract in one shot: moving LEFT, aiming RIGHT, firing —
         // the laser goes RIGHT, the facing (and thus the walk animation)
         // stays LEFT.
-        var input = new PhaseInput { State = new PlayerInputState(new IntVector2(-1, 0), new IntVector2(1, 0), true) };
-        var field = CreateField(input);
-        field.SkipWaveStart();
+        var playerInputSource = new PhaseInput { State = new PlayerInputState(new IntVector2(-1, 0), new IntVector2(1, 0), true) };
+        var playField = CreateField(playerInputSource);
+        playField.SkipWaveStart();
 
-        field.Update(new GameTime());
+        playField.Update(new GameTime());
 
-        Assert.Equal(Direction8.Left, field.Player.FacingDirection);
-        var laser = Assert.Single(field.PlayerLasers.GetActiveLasers());
+        Assert.Equal(Direction8.Left, playField.Player.FacingDirection);
+        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
         Assert.Equal(Direction8.Right, laser.Direction);
     }
 
@@ -143,13 +143,13 @@ public sealed class PlayerAnimationAndAimTests
     [InlineData(Direction8.DownRight, 2, 12)]
     public void Fire_LaserSpawnsAtTheArcadeLtabMuzzleOffset(Direction8 direction, int offsetXSpec, int offsetYSpec)
     {
-        var field = CreateField(
+        var playField = CreateField(
             new FakeInputSource(new PlayerInputState(IntVector2.Zero, direction.ToIntVector(), true)));
-        field.SkipWaveStart();
-        var start = field.Player.Position;
-        field.Update(new GameTime());
+        playField.SkipWaveStart();
+        var start = playField.Player.Position;
+        playField.Update(new GameTime());
 
-        var laser = Assert.Single(field.PlayerLasers.GetActiveLasers());
+        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
         Assert.Equal(direction, laser.Direction);
         IntVector2 muzzle = new(start.X + ScreenSize.ToPortPixelsFromArcadePixels(offsetXSpec),
             start.Y + ScreenSize.ToPortPixelsFromArcadePixels(offsetYSpec));

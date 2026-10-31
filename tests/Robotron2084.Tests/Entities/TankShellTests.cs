@@ -46,76 +46,76 @@ public sealed class TankShellTests
     [Fact]
     public void TanksStopFiringOnceTheShellCountIsOverTwenty_AndOnlyALaserKillGivesAShellBack()
     {
-        var field = new PlayFieldBuilder().Build();
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = new PlayFieldBuilder().Build();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 tank = new(bounds.X + 200, bounds.Y + 100);
 
         // CMPA #20 / LBHI: a count of 20 still fires, so the twenty-first shell is the last (R5 $4E57 to $4E5F).
         var fired = 0;
-        while (field.CanFireShell() && fired < 100)
+        while (playField.CanFireShell() && fired < 100)
         {
-            field.SpawnTankShell(tank);
+            playField.SpawnTankShell(tank);
             fired++;
         }
 
         Assert.Equal(SpawnTuning.MaxShellCount + 1, fired);
 
         // A shell that fizzles out does not give its place back (SHELL never does DEC SHLCNT).
-        for (var tick = 0; tick < 1000 && field.Entities.TankShells.Any(shell => shell.IsAlive()); tick++)
-            foreach (var shell in field.Entities.TankShells.ToList())
-                shell.Update(new GameTime(), field);
+        for (var tick = 0; tick < 1000 && playField.FieldEntities.TankShells.Any(tankShell => tankShell.IsAlive()); tick++)
+            foreach (var tankShell in playField.FieldEntities.TankShells.ToList())
+                tankShell.Update(new GameTime(), playField);
 
-        Assert.DoesNotContain(field.Entities.TankShells, shell => shell.IsAlive());
-        Assert.False(field.CanFireShell());
+        Assert.DoesNotContain(playField.FieldEntities.TankShells, tankShell => tankShell.IsAlive());
+        Assert.False(playField.CanFireShell());
 
         // A laser kill does (SHLKIL, R5 $4FD9).
-        field.CountShellDestroyed();
-        Assert.True(field.CanFireShell());
+        playField.CountShellDestroyed();
+        Assert.True(playField.CanFireShell());
     }
 
     [Fact]
     public void WithTheTankShellBugSwitchedOff_AShellThatIsGoneGivesItsPlaceBack()
     {
-        var field = new PlayFieldBuilder().WithTankShellBug(false).Build();
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = new PlayFieldBuilder().WithTankShellBug(false).Build();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 tank = new(bounds.X + 200, bounds.Y + 100);
 
         var fired = 0;
-        while (field.CanFireShell() && fired < 100)
+        while (playField.CanFireShell() && fired < 100)
         {
-            field.SpawnTankShell(tank);
+            playField.SpawnTankShell(tank);
             fired++;
         }
 
         // The limit on how many are out at once is still the ROM's.
         Assert.Equal(SpawnTuning.MaxShellCount + 1, fired);
 
-        for (var tick = 0; tick < 1000 && field.Entities.TankShells.Any(shell => shell.IsAlive()); tick++)
-            foreach (var shell in field.Entities.TankShells.ToList())
-                shell.Update(new GameTime(), field);
+        for (var tick = 0; tick < 1000 && playField.FieldEntities.TankShells.Any(tankShell => tankShell.IsAlive()); tick++)
+            foreach (var tankShell in playField.FieldEntities.TankShells.ToList())
+                tankShell.Update(new GameTime(), playField);
 
-        Assert.True(field.CanFireShell());
+        Assert.True(playField.CanFireShell());
     }
 
     [Fact]
     public void AnAimedShotAtTheSpotItStartsOn_DoesNotMove_AndFizzlesAfterFortyEightBeatsOfTwoArcadeFrames()
     {
-        var field = new PlayFieldBuilder().Build();
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = new PlayFieldBuilder().Build();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 tank = new(bounds.X + 200, bounds.Y + 100);
         var player = tank + new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
-        var shell = new TankShell(TestSprites.Shared, tank, player, ShellSpeed, bounds,
+        var tankShell = new TankShell(TestSprites.SharedSpriteSet, tank, player, ShellSpeed, bounds,
             new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0));
 
         var ticks = 0;
-        while (shell.IsAlive() && ticks < 1000)
+        while (tankShell.IsAlive() && ticks < 1000)
         {
-            shell.Update(new GameTime(), field);
+            tankShell.Update(new GameTime(), playField);
             ticks++;
         }
 
-        Assert.Equal(0, shell.VelocityX);
-        Assert.Equal(0, shell.VelocityY);
+        Assert.Equal(0, tankShell.VelocityX);
+        Assert.Equal(0, tankShell.VelocityY);
         Assert.Equal(
             ArcadeClock.ToPortTicksRoundedUp(TankShellTuning.LifeBaseBeats * TankShellTuning.BeatIntervalArcadeFrames),
             ticks);
@@ -124,42 +124,42 @@ public sealed class TankShellTests
     [Fact]
     public void AnAimedShotAimsAtThePlayer_WithASpeedThatGrowsWithTheGap()
     {
-        var field = new PlayFieldBuilder().Build();
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = new PlayFieldBuilder().Build();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 tank = new(bounds.X + 100, bounds.Y + 100);
         var start = tank + new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
         var player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(40), 0);
 
-        var shell = new TankShell(TestSprites.Shared, tank, player, ShellSpeed, bounds,
+        var tankShell = new TankShell(TestSprites.SharedSpriteSet, tank, player, ShellSpeed, bounds,
             new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0));
 
-        Assert.Equal(216, shell.VelocityX);
-        Assert.Equal(0, shell.VelocityY);
+        Assert.Equal(216, tankShell.VelocityX);
+        Assert.Equal(0, tankShell.VelocityY);
     }
 
     [Fact]
     public void AReboundShotGoesForTheWallOnThePlayersSide_SevenTimesInEight()
     {
-        var field = new PlayFieldBuilder().Build();
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = new PlayFieldBuilder().Build();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 tank = new(bounds.X + bounds.Width * 3 / 4, bounds.Y + 100);
         IntVector2 playerOnTheLeft = new(bounds.X + bounds.Width / 4, bounds.Y + 100);
 
         // Not the top-or-bottom kind (a coin of 0), the near side (a random number of 1), no miss.
-        var nearSide = new TankShell(TestSprites.Shared, tank, playerOnTheLeft, ShellSpeed, bounds,
+        var nearSideTankShell = new TankShell(TestSprites.SharedSpriteSet, tank, playerOnTheLeft, ShellSpeed, bounds,
             new ScriptedRandom(ReboundRandom, 0, 1, NoMiss, 0));
-        var farSide = new TankShell(TestSprites.Shared, tank, playerOnTheLeft, ShellSpeed, bounds,
+        var farSideTankShell = new TankShell(TestSprites.SharedSpriteSet, tank, playerOnTheLeft, ShellSpeed, bounds,
             new ScriptedRandom(ReboundRandom, 0, TankShellTuning.ReboundFarSideRandom, NoMiss, 0));
 
-        Assert.True(nearSide.VelocityX < 0, "a player on the left sends the shell to the left wall");
-        Assert.True(farSide.VelocityX > 0, "the one random number in eight sends it to the far wall");
+        Assert.True(nearSideTankShell.VelocityX < 0, "a player on the left sends the shell to the left wall");
+        Assert.True(farSideTankShell.VelocityX > 0, "the one random number in eight sends it to the far wall");
     }
 
     [Fact]
     public void AShellThatReachesAWall_BouncesBackOnItsOwnAxis_AndStaysInsideThePlayfield()
     {
-        var field = new PlayFieldBuilder().Build();
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = new PlayFieldBuilder().Build();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         var boxWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankShellCollisionSize.Width);
 
         // 12 port pixels from the right wall, aimed at a spot 20 columns further right: it flies right, then must bounce.
@@ -167,24 +167,24 @@ public sealed class TankShellTests
         IntVector2 tank = new(bounds.Right - boxWidth - 12 - startOffset, bounds.Y + 100);
         var start = tank + new IntVector2(startOffset, 0);
         var player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(20), 0);
-        var shell = new TankShell(TestSprites.Shared, tank, player, ShellSpeed, bounds,
+        var tankShell = new TankShell(TestSprites.SharedSpriteSet, tank, player, ShellSpeed, bounds,
             new ScriptedRandom(AimedRandom, NoMiss, NoMiss, TankShellTuning.LifeExtraBeatsMaxExclusive - 1));
-        var sidewaysBefore = shell.VelocityX;
+        var sidewaysBefore = tankShell.VelocityX;
         Assert.True(sidewaysBefore > 0);
 
         var bounces = 0;
         var lastTickBounced = false;
-        for (var tick = 0; tick < 200 && shell.IsAlive(); tick++)
+        for (var tick = 0; tick < 200 && tankShell.IsAlive(); tick++)
         {
-            shell.Update(new GameTime(), field);
-            Assert.True(shell.GetBounds().Right <= bounds.Right, $"the shell crossed the right wall on tick {tick}");
-            Assert.False(lastTickBounced && shell.BouncedThisUpdate, "a bounce was reported on two ticks running");
-            lastTickBounced = shell.BouncedThisUpdate;
-            if (shell.BouncedThisUpdate)
+            tankShell.Update(new GameTime(), playField);
+            Assert.True(tankShell.GetBounds().Right <= bounds.Right, $"the shell crossed the right wall on tick {tick}");
+            Assert.False(lastTickBounced && tankShell.BouncedThisUpdate, "a bounce was reported on two ticks running");
+            lastTickBounced = tankShell.BouncedThisUpdate;
+            if (tankShell.BouncedThisUpdate)
             {
                 bounces++;
-                Assert.Equal(~sidewaysBefore, shell.VelocityX);
-                Assert.Equal(0, shell.VelocityY);
+                Assert.Equal(~sidewaysBefore, tankShell.VelocityX);
+                Assert.Equal(0, tankShell.VelocityY);
                 break;
             }
         }

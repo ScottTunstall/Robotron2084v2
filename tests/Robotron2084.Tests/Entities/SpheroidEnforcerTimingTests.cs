@@ -49,19 +49,19 @@ public sealed class SpheroidEnforcerTimingTests
 
         for (var seed = 1; seed <= 16; seed++)
         {
-            var field = CreateField(seed, 1);
-            var spheroid = field.Entities.Spheroids[0];
+            var playField = CreateField(seed, 1);
+            var spheroid = playField.FieldEntities.Spheroids[0];
 
             // Run through the start of the wave, then drive the spheroid standalone:
             // its drops land in the field (field.EnforcerCount) but the
             // dropped enforcers are never updated, so they cannot kill the
             // standing player and freeze the simulation.
-            for (var tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
+            for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
 
-            for (var tick = 0; tick < 2000 && !spheroid.IsDead(); tick++) spheroid.Update(OneTick(), field);
+            for (var tick = 0; tick < 2000 && !spheroid.IsDead(); tick++) spheroid.Update(OneTick(), playField);
 
             Assert.Equal(EntityLifeState.Dead, spheroid.LifeState);
-            var dropped = field.Entities.Enforcers.Count(entity => !entity.IsDead());
+            var dropped = playField.FieldEntities.Enforcers.Count(entity => !entity.IsDead());
             Assert.InRange(dropped, 1, 5);
             observed.Add(dropped);
         }
@@ -80,12 +80,12 @@ public sealed class SpheroidEnforcerTimingTests
         // 18 ticks after that; no drop through the 17th for every seed pins that floor.
         for (var seed = 1; seed <= 8; seed++)
         {
-            var field = CreateField(seed, 1);
+            var playField = CreateField(seed, 1);
 
-            for (var tick = 1; tick <= WaveStartTicks.UntilLive(field) + 17; tick++)
+            for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField) + 17; tick++)
             {
-                field.Update(OneTick());
-                Assert.True(field.Entities.Enforcers.Count(entity => !entity.IsDead()) == 0, $"seed {seed}: drop at tick {tick}");
+                playField.Update(OneTick());
+                Assert.True(playField.FieldEntities.Enforcers.Count(entity => !entity.IsDead()) == 0, $"seed {seed}: drop at tick {tick}");
             }
         }
     }
@@ -93,26 +93,26 @@ public sealed class SpheroidEnforcerTimingTests
     [Fact]
     public void Enforcer_IsImmobileAndSilentDuringGrowUp()
     {
-        var field = CreateField(7);
-        Enforcer enforcer = new(TestSprites.Shared,
+        var playField = CreateField(7);
+        Enforcer enforcer = new(TestSprites.SharedSpriteSet,
             new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)),
             new Random(42), 30);
         var start = enforcer.Position;
 
         // Run through the start of the wave so RobotsFrozen() is false for the enforcer.
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
 
         // The ROM grow-up is 45 frames = 54 port ticks (notes §65; the old model said
         // 40 frames, which is why this used to stop at PortTicks(40) = 48). The last
         // of those ticks is the one ENFR10 runs on, so immobility covers 1..53.
         for (var tick = 1; tick < ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalArcadeFrames); tick++)
         {
-            enforcer.Update(OneTick(), field);
+            enforcer.Update(OneTick(), playField);
             Assert.True(enforcer.Position == start, $"moved during grow-up at tick {tick}");
-            Assert.True(field.GetActiveSparkCount() == 0, $"fired during grow-up at tick {tick}");
+            Assert.True(playField.GetActiveSparkCount() == 0, $"fired during grow-up at tick {tick}");
         }
 
-        for (var tick = 1; tick <= 160 && enforcer.Position == start; tick++) enforcer.Update(OneTick(), field);
+        for (var tick = 1; tick <= 160 && enforcer.Position == start; tick++) enforcer.Update(OneTick(), playField);
 
         Assert.True(enforcer.Position != start, "enforcer never left the grow-up spot");
     }
@@ -124,24 +124,24 @@ public sealed class SpheroidEnforcerTimingTests
         // clock, so animation frame n starts on the first tick where 5t >= 9n x 6 — i.e.
         // ticks 1, 11, 22, 33, 44. The old PortTicks(9) = 10 switched every 10 ticks
         // and ran out early inside a correctly-timed growth (notes §65.3).
-        var field = CreateField(7);
-        Enforcer enforcer = new(TestSprites.Shared,
+        var playField = CreateField(7);
+        Enforcer enforcer = new(TestSprites.SharedSpriteSet,
             new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)),
             new Random(42), 30);
 
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
 
         int[] expectedStarts = { 1, 11, 22, 33, 44 };
         var growTicks = ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalArcadeFrames); // 54
 
         for (var tick = 1; tick < growTicks; tick++)
         {
-            enforcer.Update(OneTick(), field);
+            enforcer.Update(OneTick(), playField);
             var expected = Array.FindLastIndex(expectedStarts, s => s <= tick);
             Assert.Equal(expected, enforcer.GetGrowAnimationFrameIndex());
         }
 
-        enforcer.Update(OneTick(), field); // tick 54: the grow-up ends, ENFR10 runs
+        enforcer.Update(OneTick(), playField); // tick 54: the grow-up ends, ENFR10 runs
         Assert.Equal(-1, enforcer.GetGrowAnimationFrameIndex());
     }
 
@@ -153,20 +153,20 @@ public sealed class SpheroidEnforcerTimingTests
         // [PortTicks(4), PortTicks(120)] = [4, 144] port ticks (allow a tick of
         // slack for the 6/5 beat accumulator), and (seeded, deterministic) at least
         // one gap must exceed the old model's maximum of PortTicks(30) = 36.
-        var field = CreateField(11);
-        Enforcer enforcer = new(TestSprites.Shared,
+        var playField = CreateField(11);
+        Enforcer enforcer = new(TestSprites.SharedSpriteSet,
             new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)),
             new Random(1234), 30);
 
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
 
         var seen = new HashSet<Spark>();
         var fireTicks = new List<int>();
 
         for (var tick = 1; tick <= 3000 && fireTicks.Count < 10; tick++)
         {
-            enforcer.Update(OneTick(), field);
-            foreach (var spark in field.Entities.Sparks)
+            enforcer.Update(OneTick(), playField);
+            foreach (var spark in playField.FieldEntities.Sparks)
                 if (seen.Add(spark) && spark.IsAlive() && fireTicks.Count < 10)
                     fireTicks.Add(tick);
         }
@@ -191,19 +191,19 @@ public sealed class SpheroidEnforcerTimingTests
         // The destination zone is a 32x32 arcade pixel (64 port pixel) box
         // down-right of the player; over a long run the enforcer must
         // spend time close to the player, not wander the whole field.
-        var field = CreateField(11);
-        Enforcer enforcer = new(TestSprites.Shared,
+        var playField = CreateField(11);
+        Enforcer enforcer = new(TestSprites.SharedSpriteSet,
             new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)),
             new Random(1234), 30);
 
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
 
-        var player = field.Player.Position;
+        var player = playField.Player.Position;
 
         var closest = int.MaxValue;
         for (var tick = 1; tick <= 3000; tick++)
         {
-            enforcer.Update(OneTick(), field);
+            enforcer.Update(OneTick(), playField);
             closest = Math.Min(closest, (int)IntVector2.ComputeDistanceSquared(enforcer.Position, player));
         }
 

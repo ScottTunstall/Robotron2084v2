@@ -41,18 +41,18 @@ public sealed class StripEffectTests
     }
 
     /// <summary>Ticks the record forward one ARCADE FRAME at a time (the clock is 1.2 ticks).</summary>
-    private static void Steps(StripEffect explosion, int frames)
+    private static void Steps(StripEffect explosionStripEffect, int frames)
     {
-        var target = explosion.GetSpacing() + frames;
+        var target = explosionStripEffect.GetSpacing() + frames;
         var guard = 0;
-        while ((explosion.GetSpacing() < target || target < 1) && guard++ < 200) explosion.Update(new GameTime());
+        while ((explosionStripEffect.GetSpacing() < target || target < 1) && guard++ < 200) explosionStripEffect.Update(new GameTime());
     }
 
     /// <summary>Advances whole frames, then lays the strips out.</summary>
-    private static IReadOnlyList<Strip> Strips(StripEffect explosion, int frames = 0)
+    private static IReadOnlyList<Strip> Strips(StripEffect explosionStripEffect, int frames = 0)
     {
-        Steps(explosion, frames);
-        return explosion.GetStrips(WidthArcadePixels, HeightRows);
+        Steps(explosionStripEffect, frames);
+        return explosionStripEffect.GetStrips(WidthArcadePixels, HeightRows);
     }
 
     [Fact]
@@ -61,9 +61,9 @@ public sealed class StripEffectTests
         // YSIZER starts at $0100, "1 UNIT IS MIN": spacing 1, so the base is the
         // sprite's own top row (the YSIZE*YOF term cancels) and the strips ARE the
         // sprite, row for row — the ROM's own frame-0 sanity check.
-        var explosion = NewExplosion(Direction8.Left);
+        var explosionStripEffect = NewExplosion(Direction8.Left);
 
-        var strips = Strips(explosion);
+        var strips = Strips(explosionStripEffect);
 
         Assert.Equal(HeightRows, strips.Count);
         for (var row = 0; row < HeightRows; row++)
@@ -87,9 +87,9 @@ public sealed class StripEffectTests
         // mirrored on the other side ... the half going UP is bigger than the half
         // going DOWN"* — is exactly what anchoring at the hit gives, because a laser
         // strikes the sprite's near edge. Half the strips and the same reach each way.
-        var explosion = NewExplosion(Direction8.Left); // horizontal shot -> rows
+        var explosionStripEffect = NewExplosion(Direction8.Left); // horizontal shot -> rows
 
-        var strips = Strips(explosion, 2); // spacing 3
+        var strips = Strips(explosionStripEffect, 2); // spacing 3
 
         Assert.Equal(HeightRows, strips.Count);
 
@@ -116,9 +116,9 @@ public sealed class StripEffectTests
     {
         // The same mirror rule on the column axis (the H family, a vertical shot):
         // the author's *"the explosion half going LEFT is bigger than ... RIGHT"*.
-        var explosion = NewExplosion(Direction8.Up);
+        var explosionStripEffect = NewExplosion(Direction8.Up);
 
-        var strips = Strips(explosion, 2); // spacing 3
+        var strips = Strips(explosionStripEffect, 2); // spacing 3
 
         Assert.Equal(WidthArcadePixels, strips.Count);
         Assert.All(strips, s => Assert.Equal(SpriteTop, s.Y));
@@ -142,12 +142,12 @@ public sealed class StripEffectTests
             ScreenSize.ToPortPixelsFromArcadePixels(WidthArcadePixels + 3),
             ScreenSize.ToPortPixelsFromArcadePixels(HeightRows + 3));
 
-        var explosion = StripEffect.CreateExplosion(
+        var explosionStripEffect = StripEffect.CreateExplosion(
             new FakeDead(bounds),
             Direction8.Left,
             Clip);
 
-        var strips = Strips(explosion);
+        var strips = Strips(explosionStripEffect);
 
         Assert.Equal(HeightRows, strips.Count);
         Assert.Equal(SpriteLeft + 1, strips[0].X);
@@ -165,11 +165,11 @@ public sealed class StripEffectTests
     {
         // ROM WRITE: YSIZER += $100 a frame, so the gap between neighbouring segments
         // is 1, 2, 3, ... — the ROM's curve, not a guess.
-        var explosion = NewExplosion(Direction8.Left);
+        var explosionStripEffect = NewExplosion(Direction8.Left);
 
         for (var spacing = 1; spacing <= 8; spacing++)
         {
-            var strips = Strips(explosion, spacing == 1 ? 0 : 1);
+            var strips = Strips(explosionStripEffect, spacing == 1 ? 0 : 1);
 
             Assert.Equal(HeightRows, strips.Count);
             Assert.Equal(spacing, strips[1].Y - strips[0].Y);
@@ -214,9 +214,9 @@ public sealed class StripEffectTests
     [Fact]
     public void AStraightHorizontalShot_DoesNotLeanAtAll()
     {
-        var explosion = NewExplosion(Direction8.Left);
+        var explosionStripEffect = NewExplosion(Direction8.Left);
 
-        Assert.All(Strips(explosion, 3), s => Assert.Equal(SpriteLeft, s.X));
+        Assert.All(Strips(explosionStripEffect, 3), s => Assert.Equal(SpriteLeft, s.X));
     }
 
     [Fact]
@@ -228,9 +228,9 @@ public sealed class StripEffectTests
             ScreenSize.ToPortPixelsFromArcadePixels(SpriteLeft), ScreenSize.ToPortPixelsFromArcadePixels(20),
             ScreenSize.ToPortPixelsFromArcadePixels(WidthArcadePixels),
             ScreenSize.ToPortPixelsFromArcadePixels(HeightRows));
-        var explosion = NewExplosion(Direction8.Left, onTheWall);
+        var explosionStripEffect = NewExplosion(Direction8.Left, onTheWall);
 
-        var strips = Strips(explosion, 2); // spacing 3
+        var strips = Strips(explosionStripEffect, 2); // spacing 3
 
         Assert.True(strips.Count < HeightRows, "the strips above the wall should be gone");
         Assert.All(strips, s => Assert.True(s.Y >= Clip.MinY, $"strip {s.Y} is above the playfield"));
@@ -244,10 +244,10 @@ public sealed class StripEffectTests
         // the base COLUMN is `XCENT − XSIZE*XOF + XSIZE/2` and the segments step RIGHT
         // by the spacing, so the base moves left while they march right — the fan opens
         // left AND right, and every strip keeps the sprite's own row.
-        var explosion = NewExplosion(Direction8.Up);
+        var explosionStripEffect = NewExplosion(Direction8.Up);
         var collisionColumn = SpriteLeft + 4; // the sprite's middle (notes §73)
 
-        var strips = Strips(explosion, 1); // spacing 2
+        var strips = Strips(explosionStripEffect, 1); // spacing 2
 
         Assert.Equal(WidthArcadePixels, strips.Count);
         Assert.All(strips, s => Assert.Equal(SpriteTop, s.Y)); // no vertical displacement
@@ -272,9 +272,9 @@ public sealed class StripEffectTests
         // twice the sprite's width, and the author saw the fan leave the playfield far
         // too early ("the vertical explosion works sometimes, but doesn't last very
         // long").
-        var explosion = NewExplosion(Direction8.Up);
+        var explosionStripEffect = NewExplosion(Direction8.Up);
 
-        var strips = Strips(explosion);
+        var strips = Strips(explosionStripEffect);
 
         Assert.Equal(WidthArcadePixels, strips.Count);
         for (var column = 0; column < WidthArcadePixels; column++)
@@ -322,11 +322,11 @@ public sealed class StripEffectTests
     }
 
     /// <summary>Runs an effect on to the tick a fiftieth of a second falls on, counted from when the effect was made.</summary>
-    private static void UpdateToArcadeFrame(StripEffect effect, ref int ticks, int arcadeFrame)
+    private static void UpdateToArcadeFrame(StripEffect stripEffect, ref int ticks, int arcadeFrame)
     {
         while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
         {
-            effect.Update(new GameTime());
+            stripEffect.Update(new GameTime());
             ticks++;
         }
     }
@@ -425,11 +425,11 @@ public sealed class StripEffectTests
     [Fact]
     public void CreateExplosion_TakesTheRomsDispatch()
     {
-        var dead = new FakeDead(new Rectangle(100, 200, 16, 24));
+        var deadFakeDead = new FakeDead(new Rectangle(100, 200, 16, 24));
 
-        var diagonal = StripEffect.CreateExplosion(dead, Direction8.DownRight, Clip);
-        var vertical = StripEffect.CreateExplosion(dead, Direction8.Up, Clip);
-        var horizontal = StripEffect.CreateExplosion(dead, Direction8.Left, Clip);
+        var diagonal = StripEffect.CreateExplosion(deadFakeDead, Direction8.DownRight, Clip);
+        var vertical = StripEffect.CreateExplosion(deadFakeDead, Direction8.Up, Clip);
+        var horizontal = StripEffect.CreateExplosion(deadFakeDead, Direction8.Left, Clip);
 
         Assert.Equal(StripEffectKind.Explode, diagonal.Kind);
         Assert.Equal((StripFanAxis.Rows, -1), (diagonal.Axis, diagonal.Slope));
@@ -452,19 +452,19 @@ public sealed class StripEffectTests
         // used to play a 2-second blink; the author reported it on 2026-09-16
         // ("enforcers shouldn't flash when hit"), the same defect class as the
         // grunt in §44.
-        var field = CreateEmptyField();
-        field.SkipWaveStart();
-        IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
-        field.SpawnEnforcer(spot);
-        var enforcer = field.Entities.Enforcers[0];
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
+        playField.SpawnEnforcer(spot);
+        var enforcer = playField.FieldEntities.Enforcers[0];
 
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
-        field.PlayerLasers.Fire(laserOrigin, Direction8.Down);
-        field.Update(new GameTime());
+        playField.PlayerLaserSlots.Fire(laserOrigin, Direction8.Down);
+        playField.Update(new GameTime());
 
         Assert.Equal(EntityLifeState.Dead, enforcer.LifeState); // no Dying state at all
-        Assert.Single(field.Entities.Explosions);
-        Assert.Equal(0, field.Entities.Enforcers.Count(entity => !entity.IsDead()));
+        Assert.Single(playField.FieldEntities.Explosions);
+        Assert.Equal(0, playField.FieldEntities.Enforcers.Count(entity => !entity.IsDead()));
     }
 
     [Fact]
@@ -474,17 +474,17 @@ public sealed class StripEffectTests
         // PKPROC` — the post's 3-frame SHRIVEL, with NO `EXST` call, so nothing
         // bursts. The author reported the port's shatter explosion on 2026-09-16:
         // "electrodes shouldn't explode when hit, they shrivel."
-        var field = CreateEmptyField();
-        field.SkipWaveStart();
-        IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(TestSprites.Shared, spot);
-        field.Entities.Electrodes.Add(electrode);
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
+        var electrode = new Electrode(TestSprites.SharedSpriteSet, spot);
+        playField.FieldEntities.Electrodes.Add(electrode);
 
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
-        field.PlayerLasers.Fire(laserOrigin, Direction8.Down);
-        field.Update(new GameTime());
+        playField.PlayerLaserSlots.Fire(laserOrigin, Direction8.Down);
+        playField.Update(new GameTime());
 
-        Assert.Empty(field.Entities.Explosions);
+        Assert.Empty(playField.FieldEntities.Explosions);
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState); // the shrivel is running
     }
 
@@ -493,18 +493,18 @@ public sealed class StripEffectTests
     {
         // RRP8 ROBKIL explodes the grunt (`JSR EXST`); the post it walked into
         // shrivels instead (PSTKIL, above) — one explosion, not two.
-        var field = CreateEmptyField();
-        field.SkipWaveStart();
-        IntVector2 spot = new(field.Wall.PlayfieldBounds.X + 100, field.Wall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(TestSprites.Shared, spot);
-        field.Entities.Electrodes.Add(electrode);
-        field.Entities.Grunts.Add(new Grunt(TestSprites.Shared, spot)); // standing on the electrode
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
+        var electrode = new Electrode(TestSprites.SharedSpriteSet, spot);
+        playField.FieldEntities.Electrodes.Add(electrode);
+        playField.FieldEntities.Grunts.Add(new Grunt(TestSprites.SharedSpriteSet, spot)); // standing on the electrode
 
-        field.Update(new GameTime());
+        playField.Update(new GameTime());
 
-        Assert.Single(field.Entities.Explosions); // the grunt only
-        Assert.Equal(StripFanAxis.Rows, field.Entities.Explosions[0].Axis);
-        Assert.Equal(0, field.Entities.Explosions[0].Slope); // non-directional shatter (notes §35)
+        Assert.Single(playField.FieldEntities.Explosions); // the grunt only
+        Assert.Equal(StripFanAxis.Rows, playField.FieldEntities.Explosions[0].Axis);
+        Assert.Equal(0, playField.FieldEntities.Explosions[0].Slope); // non-directional shatter (notes §35)
         Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
     }
 
@@ -517,42 +517,42 @@ public sealed class StripEffectTests
     {
         // Each routine has its own records, and one more explosion than it has records is refused outright (the
         // caller's kill still stands).
-        var field = CreateEmptyField();
-        field.SkipWaveStart();
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
 
-        for (var i = 0; i < records + 4; i++) field.SpawnExplosion(new FakeDead(Sprite), shot);
+        for (var i = 0; i < records + 4; i++) playField.SpawnExplosion(new FakeDead(Sprite), shot);
 
-        Assert.Equal(records, field.Entities.Explosions.Count);
+        Assert.Equal(records, playField.FieldEntities.Explosions.Count);
     }
 
     [Fact]
     public void TheVerticalRoutine_TakesItsRecordsFromTheArcadesObjectList_WhichThePortDoesNotKeep()
     {
         // RRX7 GETBLK: `LDU OFREE` ($5B6E). The port has no object list to run out of, so every one is made.
-        var field = CreateEmptyField();
-        field.SkipWaveStart();
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
 
-        for (var i = 0; i < 20; i++) field.SpawnExplosion(new FakeDead(Sprite), Direction8.Left);
+        for (var i = 0; i < 20; i++) playField.SpawnExplosion(new FakeDead(Sprite), Direction8.Left);
 
-        Assert.Equal(20, field.Entities.Explosions.Count);
+        Assert.Equal(20, playField.FieldEntities.Explosions.Count);
     }
 
     [Fact]
     public void AFullHorizontalRoutine_DoesNotStopADiagonalExplosion()
     {
-        var field = CreateEmptyField();
-        field.SkipWaveStart();
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
         for (var i = 0; i < StripExplosionTuning.HorizontalPoolSize; i++)
-            field.SpawnExplosion(new FakeDead(Sprite), Direction8.Up);
+            playField.SpawnExplosion(new FakeDead(Sprite), Direction8.Up);
 
-        field.SpawnExplosion(new FakeDead(Sprite), Direction8.DownLeft);
+        playField.SpawnExplosion(new FakeDead(Sprite), Direction8.DownLeft);
 
-        Assert.Equal(StripExplosionTuning.HorizontalPoolSize + 1, field.Entities.Explosions.Count);
+        Assert.Equal(StripExplosionTuning.HorizontalPoolSize + 1, playField.FieldEntities.Explosions.Count);
     }
 
     private static PlayField CreateEmptyField()
     {
-        var parameters = new WaveParameters(
+        var waveParameters = new WaveParameters(
             1,
             HulkCount: 0,
             SpheroidCount: 0,
@@ -562,7 +562,7 @@ public sealed class StripEffectTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayFieldBuilder().WithParameters(parameters).WithSeed(99).Build();
+        return new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(99).Build();
     }
 
     private sealed class FakeDead : IExplodable
@@ -583,7 +583,7 @@ public sealed class StripEffectTests
 
         public EntityLifeState LifeState => EntityLifeState.Dead;
 
-        public void Update(GameTime gameTime, PlayField field)
+        public void Update(GameTime gameTime, PlayField playField)
         {
         }
 

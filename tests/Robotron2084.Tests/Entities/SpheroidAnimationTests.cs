@@ -53,17 +53,17 @@ public sealed class SpheroidAnimationTests
     ///     and on into its escape phase. Dropped enforcers are never updated, so they cannot
     ///     kill the standing player and freeze the field.
     /// </summary>
-    private static (PlayField Field, Spheroid Spheroid) DriveToEscape(int seed)
+    private static (PlayField PlayField, Spheroid Spheroid) DriveToEscape(int seed)
     {
-        var field = CreateField(seed);
-        var spheroid = field.Entities.Spheroids[0];
+        var playField = CreateField(seed);
+        var spheroid = playField.FieldEntities.Spheroids[0];
 
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
 
-        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(OneTick(), field);
+        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(OneTick(), playField);
 
         Assert.True(spheroid.IsEscaping, "the spheroid never reached its escape phase");
-        return (field, spheroid);
+        return (playField, spheroid);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public sealed class SpheroidAnimationTests
         // hide in the short escapes.
         for (var seed = 1; seed <= 40; seed++)
         {
-            var (field, spheroid) = DriveToEscape(seed);
+            var (playField, spheroid) = DriveToEscape(seed);
 
             var previous = spheroid.AnimationFrameIndex;
             var lastChangeTick = 0;
@@ -85,7 +85,7 @@ public sealed class SpheroidAnimationTests
 
             for (var tick = 1; tick <= 600 && !spheroid.IsDead(); tick++)
             {
-                spheroid.Update(OneTick(), field);
+                spheroid.Update(OneTick(), playField);
 
                 if (spheroid.AnimationFrameIndex == previous) continue;
 
@@ -127,8 +127,8 @@ public sealed class SpheroidAnimationTests
         // The same drive, watching the phases as they go: the idle spin (CIRCLE) is
         // limited to CIRP0..CIRP4, and CIRP5 is the first animation frame only the drop phase
         // (CIRC2L) can show — which is also how this test tells the phases apart.
-        var field = CreateField(3);
-        var spheroid = field.Entities.Spheroids[0];
+        var playField = CreateField(3);
+        var spheroid = playField.FieldEntities.Spheroids[0];
 
         var spinAnimationFrames = new HashSet<int>();
         var dropAnimationFrames = new HashSet<int>();
@@ -136,10 +136,10 @@ public sealed class SpheroidAnimationTests
 
         for (var tick = 1; tick <= 4000 && !spheroid.IsEscaping; tick++)
         {
-            if (tick <= WaveStartTicks.UntilLive(field))
-                field.Update(OneTick()); // run through the start of the wave
+            if (tick <= WaveStartTicks.UntilLive(playField))
+                playField.Update(OneTick()); // run through the start of the wave
             else
-                spheroid.Update(OneTick(), field);
+                spheroid.Update(OneTick(), playField);
 
             if (spheroid.AnimationFrameIndex > 4) dropping = true;
 
@@ -158,8 +158,8 @@ public sealed class SpheroidAnimationTests
         // MPROB: `LDD ,U++ / STD OLDPIC,X / STD OPICT,X` — the animation frame argument of
         // `MKPROB CIRCLE,CIRP4,CIRKIL` becomes the new object's OPICT, so the very
         // first animation frame on screen is the medium ring, not the dot.
-        var field = CreateField(11);
+        var playField = CreateField(11);
 
-        Assert.Equal(4, field.Entities.Spheroids[0].AnimationFrameIndex);
+        Assert.Equal(4, playField.FieldEntities.Spheroids[0].AnimationFrameIndex);
     }
 }

@@ -14,13 +14,13 @@ public sealed class ProgExplosionBoundsTests
     [Fact]
     public void AwayFromTheWalls_TheExplosionStartsAtTheProgsOwnCorner()
     {
-        var field = new PlayFieldBuilder().Build();
-        field.SkipWaveStart();
-        var bounds = field.GetPlayfieldBounds();
+        var playField = new PlayFieldBuilder().Build();
+        playField.SkipWaveStart();
+        var bounds = playField.GetPlayfieldBounds();
         var spot = new IntVector2(bounds.X + 100, bounds.Y + 100);
-        var prog = new Prog(TestSprites.Shared, spot, HumanKind.Mikey, new Random(3));
-        field.Entities.Progs.Add(prog);
-        field.Update(new GameTime());
+        var prog = new Prog(TestSprites.SharedSpriteSet, spot, HumanKind.Mikey, new Random(3));
+        playField.FieldEntities.Progs.Add(prog);
+        playField.Update(new GameTime());
 
         var explosion = prog.GetExplosionBounds();
 
@@ -31,15 +31,15 @@ public sealed class ProgExplosionBoundsTests
     [Fact]
     public void InTheBottomRightCorner_TheExplosionIsMovedLeftAndUp()
     {
-        var field = new PlayFieldBuilder().Build();
-        field.SkipWaveStart();
-        var bounds = field.GetPlayfieldBounds();
-        var mikey = new Human(TestSprites.Shared, IntVector2.Zero, HumanKind.Mikey, new Random(1)).GetBounds();
-        var corner = new IntVector2(bounds.Right - mikey.Width, bounds.Bottom - mikey.Height);
-        var prog = new Prog(TestSprites.Shared, corner, HumanKind.Mikey, new Random(3));
-        field.Entities.Progs.Add(prog);
-        field.Player.TeleportTo(new IntVector2(bounds.X + 4, bounds.Y + 4));
-        field.Update(new GameTime());
+        var playField = new PlayFieldBuilder().Build();
+        playField.SkipWaveStart();
+        var bounds = playField.GetPlayfieldBounds();
+        var mikeyHuman = new Human(TestSprites.SharedSpriteSet, IntVector2.Zero, HumanKind.Mikey, new Random(1)).GetBounds();
+        var corner = new IntVector2(bounds.Right - mikeyHuman.Width, bounds.Bottom - mikeyHuman.Height);
+        var prog = new Prog(TestSprites.SharedSpriteSet, corner, HumanKind.Mikey, new Random(3));
+        playField.FieldEntities.Progs.Add(prog);
+        playField.Player.TeleportTo(new IntVector2(bounds.X + 4, bounds.Y + 4));
+        playField.Update(new GameTime());
 
         var explosion = prog.GetExplosionBounds();
 

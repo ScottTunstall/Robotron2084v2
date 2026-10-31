@@ -37,21 +37,21 @@ public sealed class QuarkDropTimerTests
         // random number) the first tank is therefore due six beats after the quark starts running —
         // never on the next beat, which is what counting beats did and why the author saw
         // "the Quarks are dropping tanks WAY too quickly".
-        var field = CreateField(2);
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = CreateField(2);
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestSprites.Shared,
+        var quark = new Quark(TestSprites.SharedSpriteSet,
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(4),
             10, 1);
-        field.Entities.Quarks.Add(quark);
+        playField.FieldEntities.Quarks.Add(quark);
 
         var tick = 0;
-        for (; tick < 800 && field.Entities.Tanks.Count(entity => !entity.IsDead()) == 0; tick++) field.Update(OneTick());
+        for (; tick < 800 && playField.FieldEntities.Tanks.Count(entity => !entity.IsDead()) == 0; tick++) playField.Update(OneTick());
 
         var beatTicks = (int)Math.Ceiling(QuarkTuning.BeatIntervalArcadeFrames * 1.2); // 6/5 a frame
         var oneCycle = (QuarkTuning.TravelAnimationFrames + 1) * beatTicks;
 
-        Assert.True(field.Entities.Tanks.Count(entity => !entity.IsDead()) > 0, "the quark must eventually drop a tank");
+        Assert.True(playField.FieldEntities.Tanks.Count(entity => !entity.IsDead()) > 0, "the quark must eventually drop a tank");
         Assert.True(tick > oneCycle,
             $"the first tank came {tick} ticks after spawn; one idle cycle is {oneCycle}");
     }
@@ -63,18 +63,18 @@ public sealed class QuarkDropTimerTests
         // quark can idle for a long time. Measured over five seeds before §87 the FIRST drop
         // landed within 0-47 ticks; it now needs whole cycles of six beats, so a quark that
         // spawns mid-field cannot have dropped a tank after its first beat.
-        var field = CreateField(1);
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = CreateField(1);
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestSprites.Shared,
+        var quark = new Quark(TestSprites.SharedSpriteSet,
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(11),
             10, 16);
-        field.Entities.Quarks.Add(quark);
+        playField.FieldEntities.Quarks.Add(quark);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(QuarkTuning.BeatIntervalArcadeFrames) + 2; tick++)
-            field.Update(OneTick());
+            playField.Update(OneTick());
 
-        Assert.Equal(0, field.Entities.Tanks.Count(entity => !entity.IsDead()));
+        Assert.Equal(0, playField.FieldEntities.Tanks.Count(entity => !entity.IsDead()));
         Assert.Equal(EntityLifeState.Alive, quark.LifeState);
     }
 }

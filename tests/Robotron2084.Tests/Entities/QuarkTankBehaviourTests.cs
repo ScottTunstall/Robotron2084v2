@@ -39,11 +39,11 @@ public sealed class QuarkTankBehaviourTests
     [Fact]
     public void Quark_DriftsSlowly_WithinTheField()
     {
-        var field = CreateField(1);
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = CreateField(1);
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestSprites.Shared, new IntVector2(bounds.X + 20, bounds.Y + 8), new Random(4), 10, 60);
-        field.Entities.Quarks.Add(quark);
+        var quark = new Quark(TestSprites.SharedSpriteSet, new IntVector2(bounds.X + 20, bounds.Y + 8), new Random(4), 10, 60);
+        playField.FieldEntities.Quarks.Add(quark);
 
         var prev = quark.Position;
         var maxAxisSeen = 0;
@@ -53,7 +53,7 @@ public sealed class QuarkTankBehaviourTests
 
         for (var tick = 0; tick < 400; tick++)
         {
-            field.Update(OneTick());
+            playField.Update(OneTick());
             if (!quark.IsAlive()) break;
 
             aliveTicksSampled++;
@@ -97,17 +97,17 @@ public sealed class QuarkTankBehaviourTests
     [Fact]
     public void Quark_DropsTank_AtQuarkPositionPlusBirthOffset()
     {
-        var field = CreateField(1);
+        var playField = CreateField(1);
 
         // Random(10): first Next(2) == 1 → exactly one tank to drop.
-        var quark = new Quark(TestSprites.Shared, new IntVector2(300, 200), new Random(10), 1, 1);
-        field.Entities.Quarks.Add(quark);
+        var quark = new Quark(TestSprites.SharedSpriteSet, new IntVector2(300, 200), new Random(10), 1, 1);
+        playField.FieldEntities.Quarks.Add(quark);
 
         // Robots are frozen until the game goes live at the start of the wave; the
         // first drop is due within 2 ticks after it ends.
-        for (var tick = 0; tick < 200 && field.Entities.Tanks.Count(entity => !entity.IsDead()) == 0; tick++) field.Update(OneTick());
+        for (var tick = 0; tick < 200 && playField.FieldEntities.Tanks.Count(entity => !entity.IsDead()) == 0; tick++) playField.Update(OneTick());
 
-        var tank = Assert.Single(field.Entities.Tanks);
+        var tank = Assert.Single(playField.FieldEntities.Tanks);
         // The drop happens after the quark's own move in the same Update, so at
         // loop exit quark.Position IS the position at the moment of the drop.
         // The dropped tank is then BORN in place (MTANK) and does not move while
@@ -124,14 +124,14 @@ public sealed class QuarkTankBehaviourTests
     [Fact]
     public void Tank_IsBornBeforeItMoves()
     {
-        var field = CreateField(1);
+        var playField = CreateField(1);
 
         // Robots are frozen until the game goes live at the start of the wave — run through it so
         // the tank's birth runs unfrozen.
-        for (var tick = 0; tick < 130; tick++) field.Update(OneTick());
+        for (var tick = 0; tick < 130; tick++) playField.Update(OneTick());
 
-        field.SpawnTank(new IntVector2(400, 200)); // 80 px right of the player start
-        var tank = Assert.Single(field.Entities.Tanks);
+        playField.SpawnTank(new IntVector2(400, 200)); // 80 px right of the player start
+        var tank = Assert.Single(playField.FieldEntities.Tanks);
         var start = tank.Position;
 
         // ROM MTANK ("MINI TANK GROW"): a dropped tank plays four mini-tank
@@ -144,12 +144,12 @@ public sealed class QuarkTankBehaviourTests
 
         for (var tick = 0; tick < bornTicks - 1; tick++)
         {
-            field.Update(OneTick());
+            playField.Update(OneTick());
             Assert.True(tank.IsGrowing(), $"tick {tick + 1}: the birth ended early");
         }
 
         // It finishes growing.
-        while (tank.IsGrowing()) field.Update(OneTick());
+        while (tank.IsGrowing()) playField.Update(OneTick());
 
         // MTANK walks the mini tank up-left as it grows: the four animation frames' own
         // (dx,dy) come to -2 columns and -6 rows (notes §53), so the full 14x16
@@ -165,7 +165,7 @@ public sealed class QuarkTankBehaviourTests
         // (TNKSPD 2 + 1 = 3 fiftieths of a second ≈ 4 ticks) — not every tick like the port
         // used to.
         var beforeStep = tank.Position;
-        for (var tick = 0; tick < 8 && tank.Position == beforeStep; tick++) field.Update(OneTick());
+        for (var tick = 0; tick < 8 && tank.Position == beforeStep; tick++) playField.Update(OneTick());
 
         Assert.NotEqual(beforeStep, tank.Position);
     }
@@ -173,12 +173,12 @@ public sealed class QuarkTankBehaviourTests
     [Fact]
     public void Tank_BirthIsClampedInsideThePlayfield()
     {
-        var field = CreateField(1);
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = CreateField(1);
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        field.SpawnTank(new IntVector2(bounds.Right + 100, bounds.Bottom + 100));
+        playField.SpawnTank(new IntVector2(bounds.Right + 100, bounds.Bottom + 100));
 
-        var tank = Assert.Single(field.Entities.Tanks);
+        var tank = Assert.Single(playField.FieldEntities.Tanks);
         Assert.True(tank.GetBounds().X >= bounds.X && tank.GetBounds().Right <= bounds.Right,
             "tank not inside horizontally");
         Assert.True(tank.GetBounds().Y >= bounds.Y && tank.GetBounds().Bottom <= bounds.Bottom,
@@ -188,17 +188,17 @@ public sealed class QuarkTankBehaviourTests
     [Fact]
     public void Tank_TreadAdvancesOnABeatAndNeverOtherwise()
     {
-        var field = CreateField(1);
+        var playField = CreateField(1);
 
         // Spawned before the game is live, so the tank is frozen: no robot
         // can beat while frozen, so the tread cannot move.
-        field.SpawnTank(new IntVector2(400, 200));
-        var tank = Assert.Single(field.Entities.Tanks);
+        playField.SpawnTank(new IntVector2(400, 200));
+        var tank = Assert.Single(playField.FieldEntities.Tanks);
 
         var treadAtSpawn = tank.TreadFrameIndex;
         for (var tick = 0; tick < 20; tick++)
         {
-            field.Update(OneTick());
+            playField.Update(OneTick());
             Assert.Equal(treadAtSpawn, tank.TreadFrameIndex);
         }
 
@@ -206,7 +206,7 @@ public sealed class QuarkTankBehaviourTests
         // fire, so no beat happens while it is being born either.
         while (tank.IsGrowing())
         {
-            field.Update(OneTick());
+            playField.Update(OneTick());
             Assert.Equal(treadAtSpawn, tank.TreadFrameIndex);
         }
 
@@ -219,7 +219,7 @@ public sealed class QuarkTankBehaviourTests
         var advanced = false;
         for (var tick = 0; tick < 20 && !advanced; tick++)
         {
-            field.Update(OneTick());
+            playField.Update(OneTick());
             advanced = tank.TreadFrameIndex != treadAtSpawn;
         }
 
@@ -234,14 +234,14 @@ public sealed class QuarkTankBehaviourTests
         // inside that margin, but outside a margin of 5 arcade pixels.
         for (var seed = 0; seed < 40; seed++)
         {
-            var field = CreateField(seed);
-            var bounds = field.Wall.PlayfieldBounds;
-            var quark = new Quark(TestSprites.Shared, new IntVector2(bounds.X + 15, bounds.Y + 200), new Random(seed),
+            var playField = CreateField(seed);
+            var bounds = playField.PlayfieldWall.PlayfieldBounds;
+            var quark = new Quark(TestSprites.SharedSpriteSet, new IntVector2(bounds.X + 15, bounds.Y + 200), new Random(seed),
                 10, 60);
-            field.Entities.Quarks.Add(quark);
+            playField.FieldEntities.Quarks.Add(quark);
             var startX = quark.Position.X;
 
-            for (var tick = 0; tick < 12; tick++) field.Update(OneTick());
+            for (var tick = 0; tick < 12; tick++) playField.Update(OneTick());
 
             Assert.True(quark.Position.X >= startX,
                 $"seed {seed}: the quark drifted left from {startX} to {quark.Position.X}");

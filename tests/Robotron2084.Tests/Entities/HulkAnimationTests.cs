@@ -32,17 +32,17 @@ public sealed class HulkAnimationTests
     [Fact]
     public void Hulk_WalksTheArcadeFrameSequence_AndRestartsOnEveryDirectionChange()
     {
-        var field = CreateField();
-        var bounds = field.Wall.PlayfieldBounds;
+        var playField = CreateField();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
         // Hunt the playfield center from the right side: the first aim is
         // LEFT; re-aims (RND 1..31 steps or wall contact) flip the axis.
         IntVector2 center = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 120, bounds.Y + 120);
-        var hulk = new Hulk(TestSprites.Shared, spot, new Random(19), 2, () => center);
-        field.Entities.Hulks.Add(hulk);
+        var hulk = new Hulk(TestSprites.SharedSpriteSet, spot, new Random(19), 2, () => center);
+        playField.FieldEntities.Hulks.Add(hulk);
 
-        field.SkipWaveStart();
-        field.Update(new GameTime()); // the first live update = the spawn aim
+        playField.SkipWaveStart();
+        playField.Update(new GameTime()); // the first live update = the spawn aim
 
         // ROM state after the spawn aim: entry 0 of the aimed block.
         var lastDirection = hulk.Direction;
@@ -54,7 +54,7 @@ public sealed class HulkAnimationTests
         var turned = false;
         for (var i = 0; i < 400; i++)
         {
-            field.Update(new GameTime());
+            playField.Update(new GameTime());
             Assert.True(IsFullyInside(hulk.GetBounds(), bounds), $"hulk left the playfield at update {i}");
 
             var moved = hulk.Position != lastPosition;
@@ -113,7 +113,7 @@ public sealed class HulkAnimationTests
 
     private static PlayField CreateField()
     {
-        var parameters = new WaveParameters(
+        var waveParameters = new WaveParameters(
             1,
             HulkCount: 0,
             SpheroidCount: 0,
@@ -122,6 +122,6 @@ public sealed class HulkAnimationTests
             MaxEnforcersPerSpheroid: 1,
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
-        return new PlayFieldBuilder().WithParameters(parameters).WithSeed(1).Build();
+        return new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(1).Build();
     }
 }

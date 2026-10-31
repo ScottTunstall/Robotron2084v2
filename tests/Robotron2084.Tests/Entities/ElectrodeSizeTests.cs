@@ -21,7 +21,7 @@ public sealed class ElectrodeSizeTests
     [InlineData(20, 18, 7)]
     public void AnElectrodesBox_IsTheSizeOfItsWavesShape(int wave, int arcadeWidth, int arcadeHeight)
     {
-        var electrode = new Electrode(TestSprites.Shared, new IntVector2(100, 100), wave);
+        var electrode = new Electrode(TestSprites.SharedSpriteSet, new IntVector2(100, 100), wave);
 
         var bounds = electrode.GetBounds();
 
@@ -40,12 +40,12 @@ public sealed class ElectrodeSizeTests
     [Fact]
     public void TheWide2084Electrodes_AreAllPutInsideTheWall()
     {
-        var field = new PlayFieldBuilder()
+        var playField = new PlayFieldBuilder()
             .WithParameters(new WaveParameters(10, ElectrodeCount: 60))
             .Build();
-        var bounds = field.GetPlayfieldBounds();
+        var bounds = playField.GetPlayfieldBounds();
 
-        Assert.All(field.Entities.Electrodes, electrode =>
+        Assert.All(playField.FieldEntities.Electrodes, electrode =>
         {
             var box = electrode.GetBounds();
             Assert.True(box.X >= bounds.X && box.Right <= bounds.Right, $"electrode at x {box.X} to {box.Right}");

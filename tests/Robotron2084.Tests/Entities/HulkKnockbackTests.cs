@@ -18,9 +18,9 @@ namespace Robotron2084.Tests.Entities;
 public sealed class HulkKnockbackTests
 {
     /// <summary>The field center — far enough from every wall that clamping never interferes.</summary>
-    private static IntVector2 Center(PlayField field)
+    private static IntVector2 Center(PlayField playField)
     {
-        var b = field.Wall.PlayfieldBounds;
+        var b = playField.PlayfieldWall.PlayfieldBounds;
         var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width);
         var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height);
         return new IntVector2(b.X + b.Width / 2 - width / 2, b.Y + b.Height / 2 - height / 2);
@@ -28,7 +28,7 @@ public sealed class HulkKnockbackTests
 
     private static PlayField CreateField()
     {
-        var parameters = new WaveParameters(
+        var waveParameters = new WaveParameters(
             1,
             HulkCount: 0,
             SpheroidCount: 0,
@@ -37,21 +37,21 @@ public sealed class HulkKnockbackTests
             MaxEnforcersPerSpheroid: 1,
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
-        return new PlayFieldBuilder().WithParameters(parameters).WithSeed(1).Build();
+        return new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(1).Build();
     }
 
     [Fact]
     public void Hulk_Knockback_UsesOnlyTheArcadePerAxisMagnitudes_OnAllEightDirections()
     {
-        var field = CreateField();
-        var spot = Center(field);
+        var playField = CreateField();
+        var spot = Center(playField);
 
         foreach (var direction in Enum.GetValues<Direction8>())
         {
-            var hulk = new Hulk(TestSprites.Shared, spot, new Random(1000 + (int)direction), 2, () => spot);
-            field.Entities.Hulks.Add(hulk);
-            field.SkipWaveStart();
-            field.Update(new GameTime()); // caches the playfield bounds
+            var hulk = new Hulk(TestSprites.SharedSpriteSet, spot, new Random(1000 + (int)direction), 2, () => spot);
+            playField.FieldEntities.Hulks.Add(hulk);
+            playField.SkipWaveStart();
+            playField.Update(new GameTime()); // caches the playfield bounds
 
             var unit = direction.ToIntVector();
             var observed = new HashSet<IntVector2>();
@@ -103,18 +103,18 @@ public sealed class HulkKnockbackTests
     [Fact]
     public void Hulk_Knockback_IsClampedAtTheWall()
     {
-        var field = CreateField();
-        var b = field.Wall.PlayfieldBounds;
+        var playField = CreateField();
+        var b = playField.PlayfieldWall.PlayfieldBounds;
         var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width);
         var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height);
 
         // Top-left corner, pushed outward (up-left): the hulk may sit on the
         // wall (spec: "pushed back into the WALL") but never leave the field.
-        var hulk = new Hulk(TestSprites.Shared, new IntVector2(b.X, b.Y), new Random(7), 2,
+        var hulk = new Hulk(TestSprites.SharedSpriteSet, new IntVector2(b.X, b.Y), new Random(7), 2,
             () => new IntVector2(b.X, b.Y));
-        field.Entities.Hulks.Add(hulk);
-        field.SkipWaveStart();
-        field.Update(new GameTime());
+        playField.FieldEntities.Hulks.Add(hulk);
+        playField.SkipWaveStart();
+        playField.Update(new GameTime());
 
         for (var i = 0; i < 50; i++)
         {

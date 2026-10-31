@@ -22,11 +22,11 @@ namespace Robotron2084.Tests;
 /// </summary>
 public sealed class PlayerDeathTests
 {
-    private static readonly GameTime Tick = new(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16));
+    private static readonly GameTime TickGameTime = new(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16));
 
-    private static (PlayField Field, GamePalette Palette) CreateField()
+    private static (PlayField PlayField, GamePalette GamePalette) CreateField()
     {
-        var parameters = new WaveParameters(
+        var waveParameters = new WaveParameters(
             1,
             0,
             HulkCount: 0,
@@ -37,16 +37,16 @@ public sealed class PlayerDeathTests
             MaxTanksPerQuark: 0,
             EnemySpeedBonus: 0);
 
-        var palette = new GamePalette();
-        var field = new PlayFieldBuilder().WithParameters(parameters).WithSeed(5).WithPalette(palette).Build();
-        return (field, palette);
+        var gamePalette = new GamePalette();
+        var playField = new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(5).WithPalette(gamePalette).Build();
+        return (playField, gamePalette);
     }
 
     [Fact]
     public void TheFlashStartsInPaletteIndexNine_AndThenUsesOnlyPdctabColours()
     {
-        var (field, _) = CreateField();
-        var player = field.Player;
+        var (playField, _) = CreateField();
+        var player = playField.Player;
         player.StartDeathForTesting();
 
         // PDTH0: `LDA #$99 / JSR OPON` — the first thing on screen is the player
@@ -62,7 +62,7 @@ public sealed class PlayerDeathTests
         var sawColour = false;
         for (var tick = 0; tick < 95; tick++)
         {
-            field.Update(Tick);
+            playField.Update(TickGameTime);
             var paletteIndex = player.GetDeathSolidPaletteIndex();
             Assert.Contains(paletteIndex, allowed);
             sawWhite |= paletteIndex == PlayerTuning.PlayerDeathWhitePaletteIndex;
@@ -76,31 +76,31 @@ public sealed class PlayerDeathTests
     [Fact]
     public void TheFadeWritesTheArcadeTableIntoPaletteIndexTwelve_AndStopsTheDecayProcess()
     {
-        var (field, palette) = CreateField();
-        var player = field.Player;
+        var (playField, gamePalette) = CreateField();
+        var player = playField.Player;
         player.StartDeathForTesting();
 
         // The flash ends on tick 96, where the fade's FIRST byte goes in.
-        for (var tick = 0; tick < 96; tick++) field.Update(Tick);
+        for (var tick = 0; tick < 96; tick++) playField.Update(TickGameTime);
 
         Assert.Equal(EntityLifeState.Dying, player.LifeState);
         Assert.Equal(PlayerTuning.PlayerDeathFadePaletteIndex, player.GetDeathSolidPaletteIndex());
-        Assert.True(palette.IsPaletteIndexSuspended(12), "the ROM kills the DECAY process off before the fade");
-        Assert.Equal(PlayerTuning.PlayerDeathFadeValues[0], palette.GetPaletteIndexValue(12));
+        Assert.True(gamePalette.IsPaletteIndexSuspended(12), "the ROM kills the DECAY process off before the fade");
+        Assert.Equal(PlayerTuning.PlayerDeathFadeValues[0], gamePalette.GetPaletteIndexValue(12));
 
         // The remaining writes are 4 fiftieths of a second apart, which the clock-unit clock puts
         // on ticks 101/106/111/116/120/125/130 — gaps of 5,5,5,5,4,5,5.
         int[] gaps = [5, 5, 5, 5, 4, 5, 5];
         for (var i = 0; i < gaps.Length; i++)
         {
-            for (var tick = 0; tick < gaps[i]; tick++) field.Update(Tick);
+            for (var tick = 0; tick < gaps[i]; tick++) playField.Update(TickGameTime);
 
             // The last write is the trailing $00 — the death ends with it.
-            Assert.Equal(PlayerTuning.PlayerDeathFadeValues[i + 1], palette.GetPaletteIndexValue(12));
+            Assert.Equal(PlayerTuning.PlayerDeathFadeValues[i + 1], gamePalette.GetPaletteIndexValue(12));
         }
 
         Assert.Equal(EntityLifeState.Dead, player.LifeState);
-        Assert.False(palette.IsPaletteIndexSuspended(12), "the colour processes restart when the fade is done");
+        Assert.False(gamePalette.IsPaletteIndexSuspended(12), "the colour processes restart when the fade is done");
         Assert.Equal(2, player.Lives); // one life spent
     }
 
@@ -109,17 +109,17 @@ public sealed class PlayerDeathTests
     {
         // The death is on the TICK clock now, not a TimeSpan: an Update with a
         // huge elapsed time must not shorten it.
-        var (field, _) = CreateField();
-        var player = field.Player;
+        var (playField, _) = CreateField();
+        var player = playField.Player;
         player.StartDeathForTesting();
 
         for (var tick = 0; tick < 129; tick++)
         {
-            field.Update(new GameTime(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1)));
+            playField.Update(new GameTime(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1)));
             Assert.Equal(EntityLifeState.Dying, player.LifeState);
         }
 
-        field.Update(Tick);
+        playField.Update(TickGameTime);
         Assert.Equal(EntityLifeState.Dead, player.LifeState);
     }
 }

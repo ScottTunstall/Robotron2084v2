@@ -42,18 +42,18 @@ public sealed class SparkTests
     [Fact]
     public void Spark_ClampsAtTheWall_AndDiesOnItsLife_NotAtTheWall()
     {
-        var field = CreateField(1);
-        var inner = field.Wall.PlayfieldBounds;
+        var playField = CreateField(1);
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
 
         // ~265 screen px right of the left wall, aimed hard at the wall
         // (vx ≈ -265/53 + jitter = -4..-6 px/tick).
         IntVector2 origin = new(inner.X + 280, inner.Y + 50);
-        field.SpawnSpark(origin, new IntVector2(inner.X + 15, inner.Y + 50));
-        var spark = Assert.Single(field.Entities.Sparks);
+        playField.SpawnSpark(origin, new IntVector2(inner.X + 15, inner.Y + 50));
+        var spark = Assert.Single(playField.FieldEntities.Sparks);
 
         for (var tick = 1; tick <= 250; tick++)
         {
-            field.Update(OneTick());
+            playField.Update(OneTick());
             if (spark.IsDead()) break;
 
             // Never leaves the playfield, even pinned against the wall.
@@ -69,19 +69,19 @@ public sealed class SparkTests
     [Fact]
     public void Spark_Life_Is80To140ArcadeFrames()
     {
-        var field = CreateField(2);
-        var inner = field.Wall.PlayfieldBounds;
+        var playField = CreateField(2);
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 centre = new(inner.X + inner.Width / 2, inner.Y + inner.Height / 2);
 
         for (var seed = 1; seed <= 16; seed++)
         {
-            field.SpawnSpark(centre, new IntVector2(centre.X + 1, centre.Y)); // +1 keeps vx non-zero
-            var spark = field.Entities.Sparks[^1];
+            playField.SpawnSpark(centre, new IntVector2(centre.X + 1, centre.Y)); // +1 keeps vx non-zero
+            var spark = playField.FieldEntities.Sparks[^1];
 
             var diedAt = -1;
             for (var tick = 1; tick <= 400; tick++)
             {
-                field.Update(OneTick());
+                playField.Update(OneTick());
                 if (spark.IsDead())
                 {
                     diedAt = tick;
@@ -101,11 +101,11 @@ public sealed class SparkTests
     {
         // Notes 32: the ROM SPARK process advances OPICT one SPKP entry per
         // beat pass, re-running every 4 arcade frames (NAP 4) → 4-animation-frame flash.
-        var field = CreateField(4);
-        var inner = field.Wall.PlayfieldBounds;
+        var playField = CreateField(4);
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 centre = new(inner.X + inner.Width / 2, inner.Y + inner.Height / 2);
-        field.SpawnSpark(centre, new IntVector2(centre.X + 1, centre.Y));
-        var spark = field.Entities.Sparks[^1];
+        playField.SpawnSpark(centre, new IntVector2(centre.X + 1, centre.Y));
+        var spark = playField.FieldEntities.Sparks[^1];
 
         // 4 fiftieths of a second = 4.8 ticks, so the frame boundary lands on tick 5 of each
         // period on the clock-unit clock (notes §52, §65).
@@ -117,11 +117,11 @@ public sealed class SparkTests
         {
             for (var tick = 1; tick < period; tick++)
             {
-                field.Update(OneTick());
+                playField.Update(OneTick());
                 Assert.Equal(frame - 1, spark.GetAnimationFrameIndex()); // stable within a period
             }
 
-            field.Update(OneTick());
+            playField.Update(OneTick());
             var expected = frame % SpriteSet.SparkAnimationFrameCount;
             Assert.Equal(expected, spark.GetAnimationFrameIndex());
         }
@@ -130,8 +130,8 @@ public sealed class SparkTests
     [Fact]
     public void Spark_AimsAtThePlayer_WithDistanceProportionalSpeed()
     {
-        var field = CreateField(3);
-        var inner = field.Wall.PlayfieldBounds;
+        var playField = CreateField(3);
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
 
         // GOSPEL (RRC11.ASM ENFSHT + the generic mover RRS22.ASM OPB80):
         // OXV = 4 x delta and the mover adds the FULL 16-bit velocity to the
@@ -141,10 +141,10 @@ public sealed class SparkTests
         // px folded into the delta: after 4 frames the X has moved delta/16 for
         // delta ∈ [-(300+64), -(300-60)] → about -15 to -23 px.
         IntVector2 origin = new(inner.X + 300, inner.Y + 100);
-        field.SpawnSpark(origin, new IntVector2(inner.X, inner.Y + 100));
-        var spark = field.Entities.Sparks[^1];
+        playField.SpawnSpark(origin, new IntVector2(inner.X, inner.Y + 100));
+        var spark = playField.FieldEntities.Sparks[^1];
 
-        for (var tick = 0; tick < 4; tick++) field.Update(OneTick());
+        for (var tick = 0; tick < 4; tick++) playField.Update(OneTick());
 
         Assert.InRange(spark.Position.X - origin.X, -24, -13);
         // Y had zero aim distance: only the jitter (±64 port px → ±1 px per
@@ -162,14 +162,14 @@ public sealed class SparkTests
     [Fact]
     public void Spark_VelocityChangesByAConstantAcceleration_EveryMove()
     {
-        var field = CreateField(3);
-        var inner = field.Wall.PlayfieldBounds;
+        var playField = CreateField(3);
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
 
         // Well away from the left wall so the X jitter is NOT suppressed, and
         // far enough that the aim dominates the jitter.
         IntVector2 origin = new(inner.X + 320, inner.Y + 200);
-        field.SpawnSpark(origin, new IntVector2(inner.X + 40, inner.Y + 120));
-        var spark = field.Entities.Sparks[^1];
+        playField.SpawnSpark(origin, new IntVector2(inner.X + 40, inner.Y + 120));
+        var spark = playField.FieldEntities.Sparks[^1];
 
         var beatInterval = ArcadeClock.ToPortTicksRoundedUp(SparkTuning.BeatIntervalArcadeFrames);
         var changes = new List<IntVector2>();
@@ -177,7 +177,7 @@ public sealed class SparkTests
 
         for (var move = 0; move < 6; move++)
         {
-            for (var tick = 0; tick < beatInterval; tick++) field.Update(OneTick());
+            for (var tick = 0; tick < beatInterval; tick++) playField.Update(OneTick());
 
             changes.Add(new IntVector2(spark.VelocitySubpixels.X - previous.X, spark.VelocitySubpixels.Y - previous.Y));
             previous = spark.VelocitySubpixels;
@@ -207,7 +207,7 @@ public sealed class SparkTests
 
         for (var seed = 0; seed < 200; seed++)
         {
-            var spark = new Spark(TestSprites.Shared, new IntVector2(300, 200), new IntVector2(100, 100),
+            var spark = new Spark(TestSprites.SharedSpriteSet, new IntVector2(300, 200), new IntVector2(100, 100),
                 new Random(seed));
             Assert.InRange(spark.AccelerationSubpixels.Y, -upAndDownLimit, upAndDownLimit);
             sidewaysUsedMoreThanTheUpAndDownRange |= Math.Abs(spark.AccelerationSubpixels.X) > upAndDownLimit;

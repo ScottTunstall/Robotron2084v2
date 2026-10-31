@@ -49,10 +49,10 @@ public sealed class SpheroidEscapeTests
         // bounds.X + 532 = 572. It does not endorse the line, only freezes it.
         for (var seed = 1; seed <= 40; seed++)
         {
-            var field = CreateField(seed);
-            var spheroid = field.Entities.Spheroids[0];
+            var playField = CreateField(seed);
+            var spheroid = playField.FieldEntities.Spheroids[0];
 
-            if (!StartEscape(field, spheroid) || FollowRightwardEscape(field, spheroid) is not { } escape) continue;
+            if (!StartEscape(playField, spheroid) || FollowRightwardEscape(playField, spheroid) is not { } escape) continue;
 
             // The line sits between the last wrap beat that did not trigger the exit and
             // the one that did.
@@ -70,18 +70,18 @@ public sealed class SpheroidEscapeTests
 
     /// <summary>Runs through the start of the wave, then runs the spheroid until it starts escaping.</summary>
     /// <returns>True when the spheroid is escaping.</returns>
-    private static bool StartEscape(PlayField field, Spheroid spheroid)
+    private static bool StartEscape(PlayField playField, Spheroid spheroid)
     {
-        for (var tick = 0; tick < WaveStartTicks.UntilLive(field); tick++) field.Update(OneTick());
+        for (var tick = 0; tick < WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
 
-        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(OneTick(), field);
+        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(OneTick(), playField);
 
         return spheroid.IsEscaping;
     }
 
     /// <summary>Follows an escape to its end, recording the last animation-frame wrap beat and where the spheroid left.</summary>
     /// <returns>The two X positions, or null when the spheroid went left or never left the field.</returns>
-    private static (int LastWrapBeatX, int DeathX)? FollowRightwardEscape(PlayField field, Spheroid spheroid)
+    private static (int LastWrapBeatX, int DeathX)? FollowRightwardEscape(PlayField playField, Spheroid spheroid)
     {
         var startX = spheroid.Position.X;
         var lastWrapBeatX = startX;
@@ -89,7 +89,7 @@ public sealed class SpheroidEscapeTests
 
         for (var tick = 0; tick < 900; tick++)
         {
-            spheroid.Update(OneTick(), field);
+            spheroid.Update(OneTick(), playField);
 
             if (spheroid.Position.X < startX) return null; // this seed escaped leftwards
 
