@@ -225,10 +225,10 @@ public sealed class GameSettings
     ///     Whether the attract sequence should be silent (notes §131): true while an attract screen is
     ///     showing and ATTRACT MODE SOUND is off. The shell hands this to <c>Sound.AttractMuted</c>.
     /// </summary>
-    /// <param name="isAttractShowing">True while an attract screen is on screen.</param>
-    public bool IsAttractSilent(bool isAttractShowing)
+    /// <param name="isAttractVisible">True while an attract screen is on screen.</param>
+    public bool IsAttractSilent(bool isAttractVisible)
     {
-        return isAttractShowing && !AttractModeSoundEnabled;
+        return isAttractVisible && !AttractModeSoundEnabled;
     }
 
     /// <summary>Restores every setting to its factory value.</summary>
