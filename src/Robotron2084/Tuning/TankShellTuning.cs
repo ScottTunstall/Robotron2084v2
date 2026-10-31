@@ -4,64 +4,6 @@ namespace Robotron2084.Tuning;
 public static class TankShellTuning
 {
     /// <summary>
-    ///     The fewest <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a shell gets before it fizzles out. A <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> comes every <see cref="BeatIntervalArcadeFrames" />
-    ///     <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>.
-    /// </summary>
-    /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFX1</c>, <c>ADDA #$30</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (
-    ///     <c>$4E46</c>) at <c>$4F88</c>.
-    /// </remarks>
-    public const int LifeBaseBeats = 48;
-
-    /// <summary>Extra random <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> on top of <see cref="LifeBaseBeats" />: from none up to one less than this.</summary>
-    /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFX1</c>, <c>ANDA #$1F</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (
-    ///     <c>$4E46</c>) at <c>$4F86</c>.
-    /// </remarks>
-    public const int LifeExtraBeatsMaxExclusive = 32;
-
-    /// <summary>How many <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see> pass between one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> of a shell and the next.</summary>
-    /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>SHELLP</c>, <c>NAP 2</c>. Disassembly:
-    ///     <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>) at <c>$4FB3</c>.
-    /// </remarks>
-    public const int BeatIntervalArcadeFrames = 2;
-
-    /// <summary>How far to the right of the tank's top-left corner a shell starts, in columns.</summary>
-    /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>ADDD #$0100</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (
-    ///     <c>$4E46</c>) at <c>$4E70</c>.
-    /// </remarks>
-    public const int StartOffsetColumns = 1;
-
-    /// <summary>A shot is a rebound shot, aimed at a wall, when a random number from 0 to 255 is at or above this.</summary>
-    /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>LDB #$80 / CMPB SEED / BLS TNKFRB</c>. Disassembly:
-    ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4E79</c>.
-    /// </remarks>
-    public const int ReboundRandomAtOrAbove = 0x80;
-
-    /// <summary>How many different random numbers there are for the shot type, 0 to 255.</summary>
-    public const int ShotTypeRandomRange = 256;
-
-    /// <summary>
-    ///     How far an aimed shot can miss its target on either axis: from minus this to one less than this, in columns
-    ///     sideways and rows up and down.
-    /// </summary>
-    /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>TNKF1</c> and <c>TNKF5</c>, <c>ANDB #$1F / ADDB #-$10</c>. Disassembly:
-    ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4E81</c> and <c>$4EAD</c>.
-    /// </remarks>
-    public const int AimMissRange = 16;
-
-    /// <summary>The player is too near the left wall for a sideways miss when they are fewer than this many columns from it.</summary>
-    /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>CMPA #$11</c> with the wall at column 7, so 10 columns.
-    ///     Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4E87</c>.
-    /// </remarks>
-    public const int NoSidewaysMissColumnsFromLeftWall = 10;
-
-    /// <summary>
     ///     How the speed of an aimed shot is scaled: the gap to the target times the wave's shell setting, divided by
     ///     this, then times <see cref="AimedSpeedMultiplier" />.
     /// </summary>
@@ -79,31 +21,45 @@ public static class TankShellTuning
     public const int AimedSpeedMultiplier = 8;
 
     /// <summary>
-    ///     The widest up-and-down miss of a rebound shot aimed at a side wall, from minus this to one less than this, in
-    ///     rows.
+    ///     How far an aimed shot can miss its target on either axis: from minus this to one less than this, in columns
+    ///     sideways and rows up and down.
     /// </summary>
     /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFRB</c>, <c>ANDB #$1F / ADDB #-$10</c>. Disassembly:
-    ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4EDD</c>.
+    ///     Original source: <c>RRTK4.ASM</c> <c>TNKF1</c> and <c>TNKF5</c>, <c>ANDB #$1F / ADDB #-$10</c>. Disassembly:
+    ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4E81</c> and <c>$4EAD</c>.
     /// </remarks>
-    public const int ReboundHeightMissRange = 16;
+    public const int AimMissRange = 16;
+
+    /// <summary>How many <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see> pass between one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> of a shell and the next.</summary>
+    /// <remarks>
+    ///     Original source: <c>RRTK4.ASM</c> <c>SHELLP</c>, <c>NAP 2</c>. Disassembly:
+    ///     <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>) at <c>$4FB3</c>.
+    /// </remarks>
+    public const int BeatIntervalArcadeFrames = 2;
 
     /// <summary>
-    ///     The widest sideways miss of a rebound shot aimed at the top or bottom wall, from minus this to one less than
-    ///     this, in columns.
+    ///     The fewest <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a shell gets before it fizzles out. A <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> comes every <see cref="BeatIntervalArcadeFrames" />
+    ///     <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>.
     /// </summary>
     /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>TRBY</c>, <c>ANDB #$F / ADDB #-8</c>. Disassembly:
-    ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4F06</c>.
+    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFX1</c>, <c>ADDA #$30</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (
+    ///     <c>$4E46</c>) at <c>$4F88</c>.
     /// </remarks>
-    public const int ReboundWidthMissRange = 8;
+    public const int LifeBaseBeats = 48;
 
-    /// <summary>How many different random numbers decide whether a rebound shot goes for the player's own side, 0 to 7.</summary>
+    /// <summary>Extra random <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> on top of <see cref="LifeBaseBeats" />: from none up to one less than this.</summary>
     /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFRB</c> and <c>TRBY</c>, <c>ANDA #7</c>. Disassembly:
-    ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4EEB</c> and <c>$4F14</c>.
+    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFX1</c>, <c>ANDA #$1F</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (
+    ///     <c>$4E46</c>) at <c>$4F86</c>.
     /// </remarks>
-    public const int ReboundSideRandomRange = 8;
+    public const int LifeExtraBeatsMaxExclusive = 32;
+
+    /// <summary>The player is too near the left wall for a sideways miss when they are fewer than this many columns from it.</summary>
+    /// <remarks>
+    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>CMPA #$11</c> with the wall at column 7, so 10 columns.
+    ///     Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4E87</c>.
+    /// </remarks>
+    public const int NoSidewaysMissColumnsFromLeftWall = 10;
 
     /// <summary>The random number that sends a rebound shot to the wall on the far side from the player instead of the near side.</summary>
     public const int ReboundFarSideRandom = 0;
@@ -128,12 +84,15 @@ public static class TankShellTuning
     /// </remarks>
     public const int ReboundFloorMultiplier = 4;
 
-    /// <summary>A rebound shot's up-and-down speed floor is this many times its sideways one.</summary>
+    /// <summary>
+    ///     The widest up-and-down miss of a rebound shot aimed at a side wall, from minus this to one less than this, in
+    ///     rows.
+    /// </summary>
     /// <remarks>
-    ///     Original source: <c>RRTK4.ASM</c> <c>TRBXY</c>, the extra <c>ASLB / ROLA</c> before the second pair of limits.
-    ///     Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4F52</c>.
+    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFRB</c>, <c>ANDB #$1F / ADDB #-$10</c>. Disassembly:
+    ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4EDD</c>.
     /// </remarks>
-    public const int ReboundUpAndDownFloorFactor = 2;
+    public const int ReboundHeightMissRange = 16;
 
     /// <summary>The most times a rebound shot's speed is doubled while it is brought up to the speed floor.</summary>
     /// <remarks>
@@ -141,4 +100,45 @@ public static class TankShellTuning
     ///     stops that.
     /// </remarks>
     public const int ReboundMaxDoublings = 16;
+
+    /// <summary>A shot is a rebound shot, aimed at a wall, when a random number from 0 to 255 is at or above this.</summary>
+    /// <remarks>
+    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>LDB #$80 / CMPB SEED / BLS TNKFRB</c>. Disassembly:
+    ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4E79</c>.
+    /// </remarks>
+    public const int ReboundRandomAtOrAbove = 0x80;
+
+    /// <summary>How many different random numbers decide whether a rebound shot goes for the player's own side, 0 to 7.</summary>
+    /// <remarks>
+    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFRB</c> and <c>TRBY</c>, <c>ANDA #7</c>. Disassembly:
+    ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4EEB</c> and <c>$4F14</c>.
+    /// </remarks>
+    public const int ReboundSideRandomRange = 8;
+
+    /// <summary>A rebound shot's up-and-down speed floor is this many times its sideways one.</summary>
+    /// <remarks>
+    ///     Original source: <c>RRTK4.ASM</c> <c>TRBXY</c>, the extra <c>ASLB / ROLA</c> before the second pair of limits.
+    ///     Disassembly: <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4F52</c>.
+    /// </remarks>
+    public const int ReboundUpAndDownFloorFactor = 2;
+
+    /// <summary>
+    ///     The widest sideways miss of a rebound shot aimed at the top or bottom wall, from minus this to one less than
+    ///     this, in columns.
+    /// </summary>
+    /// <remarks>
+    ///     Original source: <c>RRTK4.ASM</c> <c>TRBY</c>, <c>ANDB #$F / ADDB #-8</c>. Disassembly:
+    ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4F06</c>.
+    /// </remarks>
+    public const int ReboundWidthMissRange = 8;
+
+    /// <summary>How many different random numbers there are for the shot type, 0 to 255.</summary>
+    public const int ShotTypeRandomRange = 256;
+
+    /// <summary>How far to the right of the tank's top-left corner a shell starts, in columns.</summary>
+    /// <remarks>
+    ///     Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>ADDD #$0100</c>. Disassembly: <c>CREATE_TANK_SHELL</c> (
+    ///     <c>$4E46</c>) at <c>$4E70</c>.
+    /// </remarks>
+    public const int StartOffsetColumns = 1;
 }

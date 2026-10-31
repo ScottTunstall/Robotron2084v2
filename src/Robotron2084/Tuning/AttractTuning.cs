@@ -38,8 +38,6 @@ public static class AttractTuning
     /// </summary>
     public const int StoryTitleRow = 36;
 
-    public const int TitleIdleSeconds = 12;
-
     // AI: 1-in-N ticks of deliberate pause (feels alive, not robotic)
     /// <summary>
     ///     How long the presentation page's ARCADE text pane (PRESENTED BY, DESIGNED BY VID KIDZ, FOR WILLIAMS) is shown
@@ -51,6 +49,8 @@ public static class AttractTuning
     ///     gets the whole band to itself. Notes §107.
     /// </summary>
     public const int TitleArcadeTextSeconds = 6;
+
+    public const int TitleIdleSeconds = 12;
 
     /// <summary>
     ///     How long the presentation page's PORT text pane (the port's credit line and the F-key menu) is shown before it

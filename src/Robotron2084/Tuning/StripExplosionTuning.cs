@@ -25,6 +25,13 @@ public static class StripExplosionTuning
     /// </remarks>
     public const int AppearStartSizer = 0x1000;
 
+    /// <summary>How many records the diagonal routine has, for its explosions and its appears together.</summary>
+    /// <remarks>
+    ///     Original source: <c>RRDX2.ASM</c>, <c>RMB ((10-1)*EXSIZE)</c> after the first record at <c>DXTAB</c>.
+    ///     Disassembly: <c>$468C</c> to <c>$46A3</c>.
+    /// </remarks>
+    public const int DiagonalPoolSize = 10;
+
     /// <summary>
     ///     How many <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see> an explosion lasts. It is counted down once each <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieth of a second</see>, and the
     ///     explosion is gone when it reaches nothing.
@@ -41,6 +48,19 @@ public static class StripExplosionTuning
     ///     onwards.
     /// </remarks>
     public const int ExplosionStartSizer = 0x0100;
+
+    /// <summary>
+    ///     How many records the horizontal routine has, for its explosions and its appears together. When they are all in
+    ///     use, an effect that needs one is not made.
+    /// </summary>
+    /// <remarks>
+    ///     Original source: <c>RRHX4.ASM</c> <c>HXINV</c>. The source asks for more, but the branch that would loop round to
+    ///     link the rest of them is on the same line as the compare before it,
+    ///     where the assembler took it for a comment (<c>CMPX #EXEND-EXSIZE       BLO    EXIN0</c>). So the loop runs once and
+    ///     links this many.
+    ///     Disassembly: <c>$F01D</c> to <c>$F038</c>, where there is no branch after the compare at <c>$F02C</c>.
+    /// </remarks>
+    public const int HorizontalPoolSize = 2;
 
     /// <summary>
     ///     How much the gap changes each <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieth of a second</see> for an explosion, and for an appear run by the diagonal
@@ -83,26 +103,6 @@ public static class StripExplosionTuning
     ///     <c>LDA #1</c> ("FORCE SIZE OF 1") for the attract mode. Disassembly: <c>$5D83</c> for the attract mode.
     /// </remarks>
     public const int SmallestClosedAppearSpacing = 1;
-
-    /// <summary>
-    ///     How many records the horizontal routine has, for its explosions and its appears together. When they are all in
-    ///     use, an effect that needs one is not made.
-    /// </summary>
-    /// <remarks>
-    ///     Original source: <c>RRHX4.ASM</c> <c>HXINV</c>. The source asks for more, but the branch that would loop round to
-    ///     link the rest of them is on the same line as the compare before it,
-    ///     where the assembler took it for a comment (<c>CMPX #EXEND-EXSIZE       BLO    EXIN0</c>). So the loop runs once and
-    ///     links this many.
-    ///     Disassembly: <c>$F01D</c> to <c>$F038</c>, where there is no branch after the compare at <c>$F02C</c>.
-    /// </remarks>
-    public const int HorizontalPoolSize = 2;
-
-    /// <summary>How many records the diagonal routine has, for its explosions and its appears together.</summary>
-    /// <remarks>
-    ///     Original source: <c>RRDX2.ASM</c>, <c>RMB ((10-1)*EXSIZE)</c> after the first record at <c>DXTAB</c>.
-    ///     Disassembly: <c>$468C</c> to <c>$46A3</c>.
-    /// </remarks>
-    public const int DiagonalPoolSize = 10;
 
     /// <summary>Gets how many effects a strip routine can run at once.</summary>
     /// <param name="engine">The strip routine.</param>

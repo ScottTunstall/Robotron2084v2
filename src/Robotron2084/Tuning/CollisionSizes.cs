@@ -22,6 +22,9 @@ public static class CollisionSizes
 
     public const int WallThicknessArcadePixels = 4;
 
+    /// <summary>The BerzerkRobot's animation frame canvas, in arcade px (a new entity: no ROM source).</summary>
+    public static readonly (int Width, int Height) BerzerkRobotCollisionSize = (8, 12);
+
     // Brain sprite (notes (18) RRB10 decode): 7 bytes x 16 rows =
     // 14x16 px; a prog re-draws its converted human's animation frames and keeps that
     // human's per-kind box (see HumanKindExtensions.ArcadeCollisionSize); cruise missile =
@@ -55,14 +58,10 @@ public static class CollisionSizes
 
     public static readonly (int Width, int Height) EnforcerCollisionSize = (10, 11);
 
-    public static readonly (int Width, int Height) GruntCollisionSize = (10, 13);
-
     /// <summary>Gorf's animation frame, in arcade px (a new entity: no ROM source).</summary>
     public static readonly (int Width, int Height) GorfCollisionSize = (15, 20);
 
-    /// <summary>The BerzerkRobot's animation frame canvas, in arcade px (a new entity: no ROM source).</summary>
-    public static readonly (int Width, int Height) BerzerkRobotCollisionSize = (8, 12);
-
+    public static readonly (int Width, int Height) GruntCollisionSize = (10, 13);
     public static readonly (int Width, int Height) HulkCollisionSize = (14, 16);
 
     public static readonly (int Width, int Height) MikeyCollisionSize = (6, 11);

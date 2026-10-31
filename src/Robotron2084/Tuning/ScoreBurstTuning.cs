@@ -17,8 +17,6 @@ public static class ScoreBurstTuning
 
     public const int QuarkPointsSlot = 0x0D;
 
-    public const int StepIntervalArcadeFrames = 2;
-
     public const int SpheroidBurstSlot = 0x0A;
 
     // Spheroid / quark DEATH BURST (notes §64) — the spheroid's `CIRKP`
@@ -30,7 +28,11 @@ public static class ScoreBurstTuning
     // as "the same colour as the player score"; each is a PALETTE SLOT in the
     // doubled-nibble form, so both effects shimmer, because all the slots used
     // here (10, 13, 15) are colour-CYCLING ones.
-    public const int SpheroidCount = 7; // `LDA #7` — = the LAST animation frame's index
+    public const int SpheroidCount = 7;
+
+    public const int SpheroidPointsSlot = 0x0F;
+    public const int StepIntervalArcadeFrames = 2;
+    // `LDA #7` — = the LAST animation frame's index
 
     // `LDA #8`
 
@@ -40,7 +42,7 @@ public static class ScoreBurstTuning
 
     // $AA = slot 10
 
-    public const int SpheroidPointsSlot = 0x0F; // $FF = slot 15
+    // $FF = slot 15
 
     // $DD = slot 13
 

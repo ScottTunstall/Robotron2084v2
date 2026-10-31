@@ -43,13 +43,13 @@ public static class QuarkTuning
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQVEL</c>, <c>XMIN+5</c> (columns, so 10 arcade pixels).</remarks>
     public const int WallMarginLeftColumns = 5;
 
-    /// <summary>How close to the top edge, in rows, a quark must be before it is turned back down.</summary>
-    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQVEL</c>, <c>YMIN+5</c>.</remarks>
-    public const int WallMarginTopRows = 5;
-
     /// <summary>How close to the right edge, in columns, a quark must be before it is turned back left.</summary>
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQVEL</c>, <c>XMAX-12</c> (columns, so 24 arcade pixels).</remarks>
     public const int WallMarginRightColumns = 12;
+
+    /// <summary>How close to the top edge, in rows, a quark must be before it is turned back down.</summary>
+    /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SQVEL</c>, <c>YMIN+5</c>.</remarks>
+    public const int WallMarginTopRows = 5;
 
     // SQ3: OXV = 0, OYV = ±$200 per frame
 
