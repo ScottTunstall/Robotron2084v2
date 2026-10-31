@@ -1,6 +1,6 @@
 namespace Robotron2084.Tuning;
 
-/// <summary>The spark's ballistic movement and lifetime, and the cap on sparks in play.</summary>
+/// <summary>The spark's ballistic movement and lifetime, and the most sparks allowed in play.</summary>
 public static class SparkTuning
 {
     // Spark — arcade-faithful per the GOSPEL (ref/original-source/
@@ -32,7 +32,7 @@ public static class SparkTuning
     public const int BeatIntervalArcadeFrames = 4;
 
     // Enforcer (R5 retune, notes §17)
-    public const int GlobalActiveSparkCap = 20; // R5 $1412: $14 (20) sparks max
+    public const int MaxActiveSparks = 20; // R5 $1412: $14 (20) sparks max
 
     public const int SparkAccelArcadeRange = 16;
 

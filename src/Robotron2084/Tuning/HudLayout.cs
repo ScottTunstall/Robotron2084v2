@@ -16,27 +16,27 @@ public static class HudLayout
 
     public const int GameOverMessageRow = 128;
 
-    public const int HudMaxMen = 7;
+    public const int HudMaxSpareLives = 7;
 
-    // The arcade's columns were 46 and 110, right behind a seven-digit score. An eight-digit score is 7 pixels longer, so the port moves both rows of men 4 columns (8 pixels) to the right (notes §139).
-    public const int HudMenOriginColumnP1 = 50;
+    // The arcade's columns were 46 and 110, right behind a seven-digit score. An eight-digit score is 7 pixels longer, so the port moves both rows of spare-life icons 4 columns (8 pixels) to the right (notes §139).
+    public const int HudLivesOriginColumnP1 = 50;
 
-    public const int HudMenOriginColumnP2 = 114;
+    public const int HudLivesOriginColumnP2 = 114;
 
-    public const int HudMenPitchPixels = 8;
+    public const int HudLivesPitchPixels = 8;
 
-    public const int HudMiniManHeightPixels = 8;
+    public const int HudSpareLifeHeightPixels = 8;
 
-    public const int HudMiniManWidthPixels = 6;
+    public const int HudSpareLifeWidthPixels = 6;
 
     /// <summary>
     ///     The ROM draws the whole HUD on row 14 (<c>col*256 + 14</c>) while the top wall
-    ///     sits on row 22, i.e. EIGHT rows above the wall — and the 8-row-tall mini men
+    ///     sits on row 22, i.e. EIGHT rows above the wall — and the 8-row-tall spare-life icons
     ///     therefore finish on row 21, exactly adjacent to the wall. The port derives its
     ///     HUD row the same way (wall top minus this many arcade pixels) instead of using
     ///     <see cref="ToPortY" />'s screen proportion, because the port's wall comes from
     ///     spec.txt's margin and is not at the arcade's 22/256 height: at ArcadeY(14) = 21
-    ///     the 12-px score glyphs and 16-px men ran through the 32..40 wall band, which is
+    ///     the 12-px score glyphs and 16-px icons ran through the 32..40 wall band, which is
     ///     exactly the round-8 complaint ("the score also overlaps the border wall").
     /// </summary>
     public const int HudRowAboveWallPixels = 8;
@@ -54,8 +54,8 @@ public static class HudLayout
     //           10M (masked off by the arcade; the port draws it), 1M, 100k, 10k, 1k, 100, 10, 1
     //           a drawn glyph advances width+1 = 7 px; a suppressed leading
     //           zero advances 6 px ($6128: 4 px, then +2 for the large font)
-    //   men     P1 col 46 (x 92), P2 col 110 (x 220) in the arcade; the port: 50 and 114. Row 14, 8 px apart,
-    //           the 6x8 mini man sprite ($3592/$3596), capped at SEVEN
+    //   lives   P1 col 46 (x 92), P2 col 110 (x 220) in the arcade; the port: 50 and 114. Row 14, 8 px apart,
+    //           the 6x8 spare-life sprite ($3592/$3596), capped at SEVEN
     //   colour  the CURRENT player's score blits in slot 10 ($AA — a CYCLING
     //           slot: the LF process); everyone else's in slot 1 ($11)
     //   wave    "<n>  WAVE" at col 62 / row 238 (the BOTTOM), string 104,

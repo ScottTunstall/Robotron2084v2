@@ -5,7 +5,7 @@ public static class TankTuning
 {
     /// <summary>
     ///     ROM `TNKSPD` = **2**, and it is a CONSTANT, not a wave value: `LDA #2 / STA
-    ///     TNKSPD` in the per-level reset (RRG23:677). `TANK6` does `LDA TNKSPD / LDX
+    ///     TNKSPD` in the per-wave reset (RRG23:677). `TANK6` does `LDA TNKSPD / LDX
     ///     #TANKL / JMP SLEEP`, so the tank's process re-runs every TNKSPD <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">vblanks</see> — a
     ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> of 2 <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">vblanks</see> plus the frame it runs in = **3 <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>**.
     /// </summary>

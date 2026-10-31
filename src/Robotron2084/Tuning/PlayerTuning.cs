@@ -63,7 +63,7 @@ public static class PlayerTuning
 
     // $CC = slot 12 (the DECAY slot)
 
-    public const int StartingLevelNumber = 1;
+    public const int StartingWaveNumber = 1;
 
     // Session / geometry values taken from spec.txt
     public const int StartingLives = 3;

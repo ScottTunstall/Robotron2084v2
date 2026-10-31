@@ -1,15 +1,15 @@
 namespace Robotron2084.Tuning;
 
-/// <summary>Where the wave places its entities and how the level generator scales them.</summary>
+/// <summary>Where the wave places its entities and how the wave generator scales them.</summary>
 public static class SpawnTuning
 {
     public const int ElectrodeMinDistanceFromPlayer = 40;
 
-    // Level generation
-    public const int EnemySpeedBonusCapPerLevel = 5;
+    // Wave generation
+    public const int EnemySpeedBonusMaxPerWave = 5;
 
     /// <summary>ROM `ENFCNT`: at most this many spheroid-dropped enforcers live at once (notes §11).</summary>
-    public const int EnforcerCap = 8;
+    public const int MaxEnforcers = 8;
 
     // Grunt
     public const int GruntMinDistanceFromPlayer = 20;
@@ -30,7 +30,7 @@ public static class SpawnTuning
     ///     Original source: <c>RRTK4.ASM</c> <c>TNKFIR</c>, <c>CMPA #20 / LBHI TNKFX</c>. Disassembly:
     ///     <c>CREATE_TANK_SHELL</c> (<c>$4E46</c>) at <c>$4E59</c>.
     /// </remarks>
-    public const int ShellCountLimit = 20;
+    public const int MaxShellCount = 20;
 
     public const int SpawnPlacementMaxAttempts = 100;
 
@@ -40,5 +40,5 @@ public static class SpawnTuning
 
     // arcade pixels (spec gives a 30–40 range; 35 = midpoint)
     /// <summary>ROM `TNKCNT`: at most this many quark-dropped tanks live at once (notes §11).</summary>
-    public const int TankCap = 20;
+    public const int MaxTanks = 20;
 }

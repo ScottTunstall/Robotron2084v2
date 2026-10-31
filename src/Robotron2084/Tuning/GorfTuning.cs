@@ -31,10 +31,10 @@ public static class GorfTuning
     public const int MaxGruntsPerDrop = 6;
 
     /// <summary>
-    ///     The fewest grunts a level may hold, whatever the wave brings, so that a Gorf in a wave with no grunts can
+    ///     The fewest grunts a wave may hold, whatever the wave brings, so that a Gorf in a wave with no grunts can
     ///     still drop some.
     /// </summary>
-    public const int MinimumGruntCap = 6;
+    public const int MinGruntCount = 6;
 
     /// <summary>How far Gorf goes sideways each step, in columns (2 arcade pixels each).</summary>
     public const int StepColumns = 1;
