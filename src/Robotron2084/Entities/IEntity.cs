@@ -18,12 +18,12 @@ public interface IEntity
     /// <summary>Where the entity's top-left corner is on the screen.</summary>
     IntVector2 Position { get; }
 
-    /// <summary>The box used to tell what the entity touches.</summary>
-    Rectangle GetBounds();
-
     /// <summary>Draws the entity where it is now.</summary>
     /// <param name="spriteBatch">What the entity is drawn with.</param>
     void Draw(SpriteBatch spriteBatch);
+
+    /// <summary>The box used to tell what the entity touches.</summary>
+    Rectangle GetBounds();
 
     /// <summary>Moves the entity on by one <see cref="ArcadeClock.PortTicksPerSecond">tick</see>.</summary>
     /// <param name="gameTime">The game's own clock for this <see cref="ArcadeClock.PortTicksPerSecond">tick</see>.</param>

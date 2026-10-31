@@ -70,13 +70,15 @@ public sealed class StripEffect : IEntity
     /// <summary>The smallest gap at which an appear is still drawn.</summary>
     private readonly int _smallestAppearSpacing;
 
+    private readonly ArcadeFrameTimer _stepTimer;
+
+    // notes §52, §67.4
+    private int _arcadeFramesRemaining;
+
     private Rectangle _bounds;
 
     /// <summary>True once an appear has taken its first step. The arcade draws nothing for an appear until then.</summary>
     private bool _hasAppearBeenDrawn;
-
-    private readonly ArcadeFrameTimer _stepTimer; // notes §52, §67.4
-    private int _arcadeFramesRemaining;
 
     private int
         _spacingAccumulator; // 256 times the gap between the strips, so that the gap can change by less than a whole pixel at a time (ROM: YSIZER).
@@ -137,6 +139,15 @@ public sealed class StripEffect : IEntity
     }
 
     /// <summary>
+    ///     Alive while the effect runs. An explosion runs for a set number of steps. An appear runs until its strips have
+    ///     closed up.
+    /// </summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Where the top-left corner of the effect's box is.</summary>
+    public IntVector2 Position => new(_bounds.X, _bounds.Y);
+
+    /// <summary>
     ///     Which way the sprite is cut: into rows, which move up and down, or into columns, which move left and right.
     /// </summary>
     /// <remarks>The ROM calls the code for rows "vertical" and the code for columns "horizontal".</remarks>
@@ -147,86 +158,6 @@ public sealed class StripEffect : IEntity
 
     /// <summary>How the strips lean: -1, 0 or +1 (see <see cref="GetFanForShot" />).</summary>
     internal int Slope { get; }
-
-    /// <summary>The box of the thing that is exploding or appearing.</summary>
-    public Rectangle GetBounds()
-    {
-        return _bounds;
-    }
-
-    /// <summary>
-    ///     Alive while the effect runs. An explosion runs for a set number of steps. An appear runs until its strips have
-    ///     closed up.
-    /// </summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
-
-    /// <summary>Where the top-left corner of the effect's box is.</summary>
-    public IntVector2 Position => new(_bounds.X, _bounds.Y);
-
-    /// <summary>Draws the strips. Each strip is one row or one column of the sprite.</summary>
-    /// <param name="spriteBatch">What the strips are drawn with.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (!this.IsAlive() || !IsDrawn()) return;
-
-        var animationFrame = _getAnimationFrame();
-
-        // GetStrips works in the sprite's own pixels, so it is given the sprite's own width and height.
-        var spriteWidth = animationFrame.Width;
-        var spriteRows = animationFrame.Height;
-
-        foreach (var strip in GetStrips(spriteWidth, spriteRows))
-        {
-            // Each strip is one row or one column of the sprite, drawn PortPixelsPerArcadePixel times bigger on the screen.
-            var scale = ScreenSize.PortPixelsPerArcadePixel;
-            var left = strip.X * scale;
-            var top = strip.Y * scale;
-            var source = new Rectangle(strip.SourceIndex, 0, 1, spriteRows);
-            var destination = new Rectangle(left, top, scale, spriteRows * scale);
-            var isOneRow = Axis == StripFanAxis.Rows;
-            if (isOneRow)
-            {
-                source = new Rectangle(0, strip.SourceIndex, spriteWidth, 1);
-                destination = new Rectangle(left, top, spriteWidth * scale, scale);
-            }
-
-            spriteBatch.Draw(animationFrame, destination, source, Color.White);
-        }
-    }
-
-    /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. When a step is due, an explosion's strips move further apart and an appear's strips move closer
-    ///     together.
-    /// </summary>
-    /// <param name="gameTime">Not used. The effect counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">Not used.</param>
-    public void Update(GameTime gameTime, PlayField? field = null)
-    {
-        if (!this.IsAlive()) return;
-
-        if (!_stepTimer.Tick(StepIntervalArcadeFrames)) return;
-
-        if (Kind == StripEffectKind.Explode)
-        {
-            // When the explosion's time runs out, it is over. Until then, the strips move further apart on each step.
-            if (--_arcadeFramesRemaining <= 0)
-            {
-                LifeState = EntityLifeState.Dead;
-                return;
-            }
-
-            _spacingAccumulator += StripExplosionTuning.SizerStep;
-            return;
-        }
-
-        StepAppear();
-    }
-
-    /// <summary>The gap between the strips now, in the sprite's own pixels. It is never less than 1.</summary>
-    internal int GetSpacing()
-    {
-        return Math.Max(1, _spacingAccumulator >> 8);
-    }
 
     /// <summary>Makes an appear for an entity. The strips start far apart and close up to make the sprite.</summary>
     /// <param name="source">The thing that is appearing. The animation frame it is showing is used.</param>
@@ -265,6 +196,26 @@ public sealed class StripEffect : IEntity
     }
 
     /// <summary>
+    ///     Makes the explosion for something that has been killed. The way the killing laser was going decides how the
+    ///     sprite is cut and how the strips lean.
+    /// </summary>
+    /// <param name="dead">The thing that was killed. Its explosion sprite and its explosion box are used.</param>
+    /// <param name="direction">The way the killing laser was going, or null if it was not killed by a laser.</param>
+    /// <param name="clip">The inside of the playfield. A strip outside it is not drawn.</param>
+    /// <returns>The new explosion.</returns>
+    /// <remarks>
+    ///     ROM: the "make an enemy explode" routine, which goes on to the code for a straight explosion or for a
+    ///     leaning one. The box is at the object's position and is the size of the sprite the object shows, which can be
+    ///     bigger than the object's <see cref="IEntity.GetBounds" />.
+    /// </remarks>
+    public static StripEffect CreateExplosion(IExplodable dead, Direction8? direction, StripClip clip)
+    {
+        var (axis, slope) = GetFanForShot(direction);
+        return new StripEffect(() => dead.GetExplosionAnimationFrame(), dead.GetExplosionBounds(),
+            StripEffectKind.Explode, axis, slope, clip);
+    }
+
+    /// <summary>
     ///     Makes an appear that stays with the thing that is appearing as that thing moves. The player's appear does
     ///     this, because it is still running when the game goes live and the player can walk.
     /// </summary>
@@ -298,6 +249,71 @@ public sealed class StripEffect : IEntity
             clip, _ => centreStripIndex, startClockUnits, getFollowedBounds: () => source.GetBounds());
     }
 
+    /// <summary>Draws the strips. Each strip is one row or one column of the sprite.</summary>
+    /// <param name="spriteBatch">What the strips are drawn with.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (!this.IsAlive() || !IsDrawn()) return;
+
+        var animationFrame = _getAnimationFrame();
+
+        // GetStrips works in the sprite's own pixels, so it is given the sprite's own width and height.
+        var spriteWidth = animationFrame.Width;
+        var spriteRows = animationFrame.Height;
+
+        foreach (var strip in GetStrips(spriteWidth, spriteRows))
+        {
+            // Each strip is one row or one column of the sprite, drawn PortPixelsPerArcadePixel times bigger on the screen.
+            var scale = ScreenSize.PortPixelsPerArcadePixel;
+            var left = strip.X * scale;
+            var top = strip.Y * scale;
+            var source = new Rectangle(strip.SourceIndex, 0, 1, spriteRows);
+            var destination = new Rectangle(left, top, scale, spriteRows * scale);
+            var isOneRow = Axis == StripFanAxis.Rows;
+            if (isOneRow)
+            {
+                source = new Rectangle(0, strip.SourceIndex, spriteWidth, 1);
+                destination = new Rectangle(left, top, spriteWidth * scale, scale);
+            }
+
+            spriteBatch.Draw(animationFrame, destination, source, Color.White);
+        }
+    }
+
+    /// <summary>The box of the thing that is exploding or appearing.</summary>
+    public Rectangle GetBounds()
+    {
+        return _bounds;
+    }
+
+    /// <summary>
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. When a step is due, an explosion's strips move further apart and an appear's strips move closer
+    ///     together.
+    /// </summary>
+    /// <param name="gameTime">Not used. The effect counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
+    /// <param name="field">Not used.</param>
+    public void Update(GameTime gameTime, PlayField? field = null)
+    {
+        if (!this.IsAlive()) return;
+
+        if (!_stepTimer.Tick(StepIntervalArcadeFrames)) return;
+
+        if (Kind == StripEffectKind.Explode)
+        {
+            // When the explosion's time runs out, it is over. Until then, the strips move further apart on each step.
+            if (--_arcadeFramesRemaining <= 0)
+            {
+                LifeState = EntityLifeState.Dead;
+                return;
+            }
+
+            _spacingAccumulator += StripExplosionTuning.SizerStep;
+            return;
+        }
+
+        StepAppear();
+    }
+
     /// <summary>Makes an appear for a sprite that is not an entity. The letters of the logo on the attract pages use it.</summary>
     /// <param name="animationFrame">The sprite that is appearing.</param>
     /// <param name="bounds">The box the sprite is drawn in.</param>
@@ -319,88 +335,6 @@ public sealed class StripEffect : IEntity
     {
         return new StripEffect(() => animationFrame, bounds, StripEffectKind.Appear, axis, 0, clip,
             isClosedUpAtTheEnd: true);
-    }
-
-    /// <summary>
-    ///     Makes the explosion for something that has been killed. The way the killing laser was going decides how the
-    ///     sprite is cut and how the strips lean.
-    /// </summary>
-    /// <param name="dead">The thing that was killed. Its explosion sprite and its explosion box are used.</param>
-    /// <param name="direction">The way the killing laser was going, or null if it was not killed by a laser.</param>
-    /// <param name="clip">The inside of the playfield. A strip outside it is not drawn.</param>
-    /// <returns>The new explosion.</returns>
-    /// <remarks>
-    ///     ROM: the "make an enemy explode" routine, which goes on to the code for a straight explosion or for a
-    ///     leaning one. The box is at the object's position and is the size of the sprite the object shows, which can be
-    ///     bigger than the object's <see cref="IEntity.GetBounds" />.
-    /// </remarks>
-    public static StripEffect CreateExplosion(IExplodable dead, Direction8? direction, StripClip clip)
-    {
-        var (axis, slope) = GetFanForShot(direction);
-        return new StripEffect(() => dead.GetExplosionAnimationFrame(), dead.GetExplosionBounds(),
-            StripEffectKind.Explode, axis, slope, clip);
-    }
-
-    /// <summary>Says which of the arcade's three strip routines runs this effect.</summary>
-    /// <returns>
-    ///     The horizontal routine when the sprite is cut into columns. The diagonal routine when it is cut into rows that
-    ///     lean. The vertical routine when it is cut into rows that do not lean.
-    /// </returns>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRX7.ASM</c> <c>EXSTV</c>, which picks the routine from the laser's
-    ///             direction.
-    ///         </item>
-    ///         <item>Disassembly: <c>$5C1F</c>.</item>
-    ///     </list>
-    /// </remarks>
-    internal StripEngine GetEngine()
-    {
-        if (Axis == StripFanAxis.Columns) return StripEngine.Horizontal;
-
-        return Slope == 0 ? StripEngine.Vertical : StripEngine.Diagonal;
-    }
-
-    /// <summary>Says whether the effect has anything on the screen. An appear has nothing until its first step.</summary>
-    internal bool IsDrawn()
-    {
-        return Kind == StripEffectKind.Explode || _hasAppearBeenDrawn;
-    }
-
-    /// <summary>
-    ///     Takes one step of an appear, which makes the gap between the strips a little smaller. The strips are only
-    ///     redrawn when the gap has shrunk by a whole pixel. The appear is over when the gap would be smaller than the
-    ///     smallest its routine draws.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>AWRITE</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>:
-    ///             <c>CMPA YSIZER,Y</c> ("CHANGE?") skips the step when the whole number of rows has not changed, and the
-    ///             tests after <c>AWRIT1</c> end the appear
-    ///         </item>
-    ///         <item>Disassembly: <c>$5D48</c> to <c>$5D85</c> for the vertical routine</item>
-    ///     </list>
-    /// </remarks>
-    private void StepAppear()
-    {
-        var next = _spacingAccumulator - _appearSizerStep;
-        if (next >> 8 == _spacingAccumulator >> 8)
-        {
-            _spacingAccumulator = next;
-            return;
-        }
-
-        if (next >> 8 < _smallestAppearSpacing)
-        {
-            LifeState = EntityLifeState.Dead;
-            return;
-        }
-
-        _spacingAccumulator = next;
-        _hasAppearBeenDrawn = true;
-        if (_getFollowedBounds is not null) _bounds = _getFollowedBounds();
     }
 
     /// <summary>Works out how a sprite is cut and how its strips lean, from the way the killing laser was going.</summary>
@@ -443,6 +377,33 @@ public sealed class StripEffect : IEntity
         return (
             bounds.X / ScreenSize.PortPixelsPerArcadePixel + (boundsWidth - spriteWidth) / 2,
             bounds.Y / ScreenSize.PortPixelsPerArcadePixel + (boundsRows - spriteRows) / 2);
+    }
+
+    /// <summary>Says which of the arcade's three strip routines runs this effect.</summary>
+    /// <returns>
+    ///     The horizontal routine when the sprite is cut into columns. The diagonal routine when it is cut into rows that
+    ///     lean. The vertical routine when it is cut into rows that do not lean.
+    /// </returns>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRX7.ASM</c> <c>EXSTV</c>, which picks the routine from the laser's
+    ///             direction.
+    ///         </item>
+    ///         <item>Disassembly: <c>$5C1F</c>.</item>
+    ///     </list>
+    /// </remarks>
+    internal StripEngine GetEngine()
+    {
+        if (Axis == StripFanAxis.Columns) return StripEngine.Horizontal;
+
+        return Slope == 0 ? StripEngine.Vertical : StripEngine.Diagonal;
+    }
+
+    /// <summary>The gap between the strips now, in the sprite's own pixels. It is never less than 1.</summary>
+    internal int GetSpacing()
+    {
+        return Math.Max(1, _spacingAccumulator >> 8);
     }
 
     /// <summary>Works out where every strip goes on this step. It changes nothing, so tests can check the shape.</summary>
@@ -519,6 +480,12 @@ public sealed class StripEffect : IEntity
         return strips;
     }
 
+    /// <summary>Says whether the effect has anything on the screen. An appear has nothing until its first step.</summary>
+    internal bool IsDrawn()
+    {
+        return Kind == StripEffectKind.Explode || _hasAppearBeenDrawn;
+    }
+
     /// <summary>Gets which strip the others close in on or fly away from.</summary>
     /// <param name="extent">How many strips the sprite is cut into.</param>
     /// <returns>The strip the effect was given, or the middle one when it was given none.</returns>
@@ -539,5 +506,40 @@ public sealed class StripEffect : IEntity
             return x >= _clip.MinX && x + spriteWidth <= _clip.MaxX && y >= _clip.MinY && y < _clip.MaxY;
 
         return y >= _clip.MinY && y + spriteRows <= _clip.MaxY && x >= _clip.MinX && x < _clip.MaxX;
+    }
+
+    /// <summary>
+    ///     Takes one step of an appear, which makes the gap between the strips a little smaller. The strips are only
+    ///     redrawn when the gap has shrunk by a whole pixel. The appear is over when the gap would be smaller than the
+    ///     smallest its routine draws.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>AWRITE</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>:
+    ///             <c>CMPA YSIZER,Y</c> ("CHANGE?") skips the step when the whole number of rows has not changed, and the
+    ///             tests after <c>AWRIT1</c> end the appear
+    ///         </item>
+    ///         <item>Disassembly: <c>$5D48</c> to <c>$5D85</c> for the vertical routine</item>
+    ///     </list>
+    /// </remarks>
+    private void StepAppear()
+    {
+        var next = _spacingAccumulator - _appearSizerStep;
+        if (next >> 8 == _spacingAccumulator >> 8)
+        {
+            _spacingAccumulator = next;
+            return;
+        }
+
+        if (next >> 8 < _smallestAppearSpacing)
+        {
+            LifeState = EntityLifeState.Dead;
+            return;
+        }
+
+        _spacingAccumulator = next;
+        _hasAppearBeenDrawn = true;
+        if (_getFollowedBounds is not null) _bounds = _getFollowedBounds();
     }
 }

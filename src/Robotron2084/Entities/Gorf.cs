@@ -36,12 +36,14 @@ public sealed class Gorf : IExplodable, IRemovable
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height));
 
-    /// <summary>How far Gorf goes sideways on each step, in port pixels.</summary>
-    private static readonly int StepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
-
     /// <summary>How high every hop goes, in port pixels.</summary>
     private static readonly int HopPixels = ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows);
 
+    /// <summary>How far Gorf goes sideways on each step, in port pixels.</summary>
+    private static readonly int StepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
+
+    private readonly ArcadeFrameTimer _animationTimer = new();
+    private readonly ArcadeFrameTimer _beatTimer = new();
     private readonly int _directionSignX;
     private readonly Queue<int> _dropSteps = new();
     private readonly int _groundY;
@@ -50,8 +52,6 @@ public sealed class Gorf : IExplodable, IRemovable
     private readonly Random _random;
     private readonly SpriteSet _sprites;
     private readonly int _totalSteps;
-    private readonly ArcadeFrameTimer _animationTimer = new();
-    private readonly ArcadeFrameTimer _beatTimer = new();
     private IntVector2 _position;
     private int _stepCount;
     private int _stepInHop;
@@ -90,29 +90,6 @@ public sealed class Gorf : IExplodable, IRemovable
             _dropSteps.Enqueue(stop * _totalSteps / (GorfTuning.DropStops + 1));
     }
 
-    /// <summary>Which of the two animation frames is showing, 0 or 1.</summary>
-    internal int AnimationFrameIndex { get; private set; }
-
-    /// <summary>The box Gorf takes up on the screen.</summary>
-    public Rectangle GetBounds()
-    {
-        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
-    }
-
-    /// <inheritdoc />
-    /// <remarks>It is the same box as <see cref="GetBounds" />.</remarks>
-    public Rectangle GetExplosionBounds()
-    {
-        return GetBounds();
-    }
-
-    /// <inheritdoc />
-    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
-    public Texture2D GetExplosionAnimationFrame()
-    {
-        return GetCurrentAnimationFrame();
-    }
-
     /// <summary>
     ///     Alive until it is shot or gets across the screen. It is never Dying, because it has no death animation (see
     ///     <see cref="Kill" />).
@@ -122,12 +99,8 @@ public sealed class Gorf : IExplodable, IRemovable
     /// <summary>Where Gorf's top-left corner is.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>Gets the animation frame Gorf is showing.</summary>
-    /// <returns>The animation frame that is showing.</returns>
-    public Texture2D GetCurrentAnimationFrame()
-    {
-        return _sprites.GorfAnimationFrames[AnimationFrameIndex];
-    }
+    /// <summary>Which of the two animation frames is showing, 0 or 1.</summary>
+    internal int AnimationFrameIndex { get; private set; }
 
     /// <summary>Draws the part of the current animation frame that is inside the wall, so Gorf comes in from off the screen.</summary>
     /// <param name="spriteBatch">What Gorf is drawn with.</param>
@@ -147,6 +120,41 @@ public sealed class Gorf : IExplodable, IRemovable
         spriteBatch.Draw(animationFrame, visible, source, Color.White);
     }
 
+    /// <summary>The box Gorf takes up on the screen.</summary>
+    public Rectangle GetBounds()
+    {
+        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    }
+
+    /// <summary>Gets the animation frame Gorf is showing.</summary>
+    /// <returns>The animation frame that is showing.</returns>
+    public Texture2D GetCurrentAnimationFrame()
+    {
+        return _sprites.GorfAnimationFrames[AnimationFrameIndex];
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
+    public Texture2D GetExplosionAnimationFrame()
+    {
+        return GetCurrentAnimationFrame();
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the same box as <see cref="GetBounds" />.</remarks>
+    public Rectangle GetExplosionBounds()
+    {
+        return GetBounds();
+    }
+
+    /// <summary>Kills Gorf at once, with no flash and no death animation.</summary>
+    public void Kill()
+    {
+        if (!this.IsAlive()) return;
+
+        LifeState = EntityLifeState.Dead;
+    }
+
     /// <summary>
     ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. Gorf animates. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> it takes a step along its hop, and drops grunts if it has reached a
     ///     drop point.
@@ -161,24 +169,10 @@ public sealed class Gorf : IExplodable, IRemovable
         if (_beatTimer.Tick(GorfTuning.BeatIntervalArcadeFrames)) ActOnBeat(field);
     }
 
-    /// <summary>Kills Gorf at once, with no flash and no death animation.</summary>
-    public void Kill()
-    {
-        if (!this.IsAlive()) return;
-
-        LifeState = EntityLifeState.Dead;
-    }
-
     /// <summary>How many more times it will drop grunts.</summary>
     internal int GetDropStopsRemaining()
     {
         return _dropSteps.Count;
-    }
-
-    /// <summary>Shows the next animation frame.</summary>
-    private void ShowNextAnimationFrame()
-    {
-        AnimationFrameIndex = (AnimationFrameIndex + 1) % _sprites.GorfAnimationFrames.Length;
     }
 
     /// <summary>
@@ -224,5 +218,11 @@ public sealed class Gorf : IExplodable, IRemovable
             var sideways = (2 * index - (count - 1)) * spacing / 2;
             field.SpawnGrunt(new IntVector2(centreX + sideways, bodyY), new IntVector2(centreX + sideways, groundY));
         }
+    }
+
+    /// <summary>Shows the next animation frame.</summary>
+    private void ShowNextAnimationFrame()
+    {
+        AnimationFrameIndex = (AnimationFrameIndex + 1) % _sprites.GorfAnimationFrames.Length;
     }
 }

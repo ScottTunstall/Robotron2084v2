@@ -33,9 +33,9 @@ public sealed class RescueScoreMarker : IEntity
     /// </summary>
     private readonly int _displayIndex;
 
+    private readonly ArcadeFrameTimer _lifeTimer = new();
     private readonly IntVector2 _position;
     private readonly SpriteSet _sprites;
-    private readonly ArcadeFrameTimer _lifeTimer = new();
 
     /// <summary>Makes the number for one rescue.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -51,12 +51,6 @@ public sealed class RescueScoreMarker : IEntity
         _displayIndex = Math.Clamp(rescuesThisLife, 1, ScoreValues.RescueBonusMaxCount) - 1;
     }
 
-    /// <summary>The box the number is drawn in.</summary>
-    public Rectangle GetBounds()
-    {
-        return new Rectangle(_position.X, _position.Y, Size, Size);
-    }
-
     /// <summary>Alive until its time on the field runs out.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
@@ -70,6 +64,12 @@ public sealed class RescueScoreMarker : IEntity
         if (!this.IsAlive()) return;
 
         _sprites.Blitter.DrawSprite(spriteBatch, _sprites.RescueScoreDisplays[_displayIndex], GetBounds(), Color.White);
+    }
+
+    /// <summary>The box the number is drawn in.</summary>
+    public Rectangle GetBounds()
+    {
+        return new Rectangle(_position.X, _position.Y, Size, Size);
     }
 
     /// <summary>Counts down the time the number has left on the field.</summary>

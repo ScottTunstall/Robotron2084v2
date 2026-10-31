@@ -37,27 +37,11 @@ public sealed class LaserSlots
     /// <summary>Every slot in order. An empty slot is null. Tests and debugging tools use this.</summary>
     public IReadOnlyList<PlayerLaser?> Slots => _slots;
 
-    /// <summary>The lasers that are in flight now. There are never more than <see cref="Capacity" />.</summary>
-    public IEnumerable<PlayerLaser> GetActiveLasers()
-    {
-        return _slots.OfType<PlayerLaser>().Where(laser => laser.IsAlive());
-    }
-
     /// <summary>Draws every laser that is in flight.</summary>
     /// <param name="spriteBatch">What the lasers are drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         foreach (var laser in _slots) laser?.Draw(spriteBatch);
-    }
-
-    /// <summary>Says whether a slot is free, so that <see cref="Fire" /> can put a laser into it.</summary>
-    public bool HasFreeSlot()
-    {
-        for (var i = 0; i < Capacity; i++)
-            if (_slots[i] is not { } existing || !existing.IsAlive())
-                return true;
-
-        return false;
     }
 
     /// <summary>Fires a laser into the first empty slot. Call <see cref="HasFreeSlot" /> first.</summary>
@@ -74,6 +58,22 @@ public sealed class LaserSlots
             }
 
         throw new InvalidOperationException("Every laser slot is in use.");
+    }
+
+    /// <summary>The lasers that are in flight now. There are never more than <see cref="Capacity" />.</summary>
+    public IEnumerable<PlayerLaser> GetActiveLasers()
+    {
+        return _slots.OfType<PlayerLaser>().Where(laser => laser.IsAlive());
+    }
+
+    /// <summary>Says whether a slot is free, so that <see cref="Fire" /> can put a laser into it.</summary>
+    public bool HasFreeSlot()
+    {
+        for (var i = 0; i < Capacity; i++)
+            if (_slots[i] is not { } existing || !existing.IsAlive())
+                return true;
+
+        return false;
     }
 
     /// <summary>Moves every laser that is in flight on by one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</summary>

@@ -29,11 +29,11 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     /// </summary>
     private readonly (int Width, int Height) _collisionSize;
 
+    private readonly IntVector2 _position;
+    private readonly ArcadeFrameTimer _shrivelTimer = new();
     private readonly SpriteSet _sprites;
     private readonly int _wave;
-    private readonly IntVector2 _position;
     private int _shrivelStep;
-    private readonly ArcadeFrameTimer _shrivelTimer = new();
 
     /// <summary>Makes an electrode for the given wave.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -45,22 +45,6 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         _position = position;
         _wave = wave;
         _collisionSize = GetCollisionSize(wave);
-    }
-
-    /// <summary>The animation frame the electrode is showing: its normal one, or one of the shrivel ones while it is dying.</summary>
-    public Texture2D GetCurrentAnimationFrame()
-    {
-        var baseFrame = GetVariantIndex() * WavePaletteTables.ElectrodeAnimationFramesPerVariant;
-        var frame = baseFrame;
-        if (this.IsDying()) frame = baseFrame + _shrivelStep;
-
-        return _sprites.ElectrodeAnimationFrames[frame];
-    }
-
-    /// <summary>The box the electrode takes up on the screen.</summary>
-    public Rectangle GetBounds()
-    {
-        return new Rectangle(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
     }
 
     /// <summary>Alive until something kills it, then Dying while it shrivels.</summary>
@@ -79,6 +63,32 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
             _sprites.Blitter.GetSlotColour(GetTintSlot()));
     }
 
+    /// <summary>The box the electrode takes up on the screen.</summary>
+    public Rectangle GetBounds()
+    {
+        return new Rectangle(_position.X, _position.Y, _collisionSize.Width, _collisionSize.Height);
+    }
+
+    /// <summary>The animation frame the electrode is showing: its normal one, or one of the shrivel ones while it is dying.</summary>
+    public Texture2D GetCurrentAnimationFrame()
+    {
+        var baseFrame = GetVariantIndex() * WavePaletteTables.ElectrodeAnimationFramesPerVariant;
+        var frame = baseFrame;
+        if (this.IsDying()) frame = baseFrame + _shrivelStep;
+
+        return _sprites.ElectrodeAnimationFrames[frame];
+    }
+
+    /// <summary>Starts the electrode shrivelling. It does nothing if the electrode is not alive.</summary>
+    public void Kill()
+    {
+        if (!this.IsAlive()) return;
+
+        LifeState = EntityLifeState.Dying;
+        _shrivelStep = 0;
+        _shrivelTimer.Restart(); // The first shrivel animation frame is shown for its full time (notes §52).
+    }
+
     /// <summary>
     ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the shrivelling. Each shrivel animation frame is shown for its own length of time, and after
     ///     the last one the electrode is gone.
@@ -95,16 +105,6 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         if (_shrivelStep >= ShrivelIntervalArcadeFrames.Length) LifeState = EntityLifeState.Dead;
     }
 
-    /// <summary>Starts the electrode shrivelling. It does nothing if the electrode is not alive.</summary>
-    public void Kill()
-    {
-        if (!this.IsAlive()) return;
-
-        LifeState = EntityLifeState.Dying;
-        _shrivelStep = 0;
-        _shrivelTimer.Restart(); // The first shrivel animation frame is shown for its full time (notes §52).
-    }
-
     /// <summary>Works out how big a wave's electrodes are, in port pixels. Each shape of electrode has its own size.</summary>
     /// <param name="wave">The wave number, which decides the shape.</param>
     /// <returns>The width and the height, in port pixels.</returns>
@@ -119,16 +119,16 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         return (ScreenSize.ToPortPixelsFromArcadePixels(width), ScreenSize.ToPortPixelsFromArcadePixels(height));
     }
 
+    /// <summary>The palette slot the electrode is drawn in on this wave. It may be a slot whose colour keeps changing.</summary>
+    internal int GetTintSlot()
+    {
+        return WavePaletteTables.GetElectrodeSlot(_wave);
+    }
+
     /// <summary>Which shape of electrode is drawn. The wave number decides it.</summary>
     /// <remarks>The arcade gives names to only the first four shapes. Its own table goes through 9 shapes in every 10 waves.</remarks>
     internal int GetVariantIndex()
     {
         return WavePaletteTables.GetElectrodeVariant(_wave);
-    }
-
-    /// <summary>The palette slot the electrode is drawn in on this wave. It may be a slot whose colour keeps changing.</summary>
-    internal int GetTintSlot()
-    {
-        return WavePaletteTables.GetElectrodeSlot(_wave);
     }
 }

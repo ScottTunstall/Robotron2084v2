@@ -26,6 +26,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
     // How much the spark's speed changes by each time it changes: one amount for sideways and one for up or down, in 256ths of a pixel (ROM: PD2/PD4).
     private readonly IntVector2 _accelerationSubpixels;
+
     private readonly ArcadeFrameTimer _beatTimer = new();
 
     // How long the spark lasts.
@@ -99,6 +100,12 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _lifeArcadeFrames = _random.Next(SparkTuning.SparkLifeMinArcadeFrames, SparkTuning.SparkLifeMaxArcadeFrames + 1);
     }
 
+    /// <summary>Alive until it is shot or its time runs out. Then it is Dead at once, with no death animation.</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Where the top-left corner of the spark's box is.</summary>
+    public IntVector2 Position => _position;
+
     /// <summary>
     ///     How much the spark's speed changes by each time it changes: one amount for sideways and one for up or down,
     ///     in 256ths of a pixel.
@@ -108,10 +115,12 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>How far the spark goes on each move, sideways and up or down, in 256ths of a pixel.</summary>
     internal IntVector2 VelocitySubpixels => _velocitySubpixels;
 
-    /// <summary>The flicker animation frame the spark is showing.</summary>
-    public Texture2D GetCurrentAnimationFrame()
+    /// <summary>Draws the flicker animation frame that is showing.</summary>
+    /// <param name="spriteBatch">What the spark is drawn with.</param>
+    public void Draw(SpriteBatch spriteBatch)
     {
-        return _sprites.SparkAnimationFrames[GetAnimationFrameIndex()];
+        if (this.IsAlive())
+            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the spark takes up on the screen.</summary>
@@ -120,18 +129,18 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         return new Rectangle(_position.X, _position.Y, Size, Size);
     }
 
-    /// <summary>Alive until it is shot or its time runs out. Then it is Dead at once, with no death animation.</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
-
-    /// <summary>Where the top-left corner of the spark's box is.</summary>
-    public IntVector2 Position => _position;
-
-    /// <summary>Draws the flicker animation frame that is showing.</summary>
-    /// <param name="spriteBatch">What the spark is drawn with.</param>
-    public void Draw(SpriteBatch spriteBatch)
+    /// <summary>The flicker animation frame the spark is showing.</summary>
+    public Texture2D GetCurrentAnimationFrame()
     {
-        if (this.IsAlive())
-            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        return _sprites.SparkAnimationFrames[GetAnimationFrameIndex()];
+    }
+
+    /// <summary>Kills the spark at once.</summary>
+    public void Kill()
+    {
+        if (!this.IsAlive()) return;
+
+        LifeState = EntityLifeState.Dead;
     }
 
     /// <summary>
@@ -154,14 +163,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         if (_moveTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce(field);
     }
 
-    /// <summary>Kills the spark at once.</summary>
-    public void Kill()
-    {
-        if (!this.IsAlive()) return;
-
-        LifeState = EntityLifeState.Dead;
-    }
-
     /// <summary>Which of the flicker animation frames is showing, counting from 0.</summary>
     /// <remarks>ROM: there are 4 flicker animation frames, and the spark shows the next one on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</remarks>
     internal int GetAnimationFrameIndex()
@@ -180,23 +181,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
             _velocitySubpixels.X + _accelerationSubpixels.X,
             _velocitySubpixels.Y + _accelerationSubpixels.Y);
         _animationFrameIndex = (_animationFrameIndex + 1) % SpriteSet.SparkAnimationFrameCount;
-    }
-
-    /// <summary>Makes one move, by whole pixels. The fraction of a pixel left over is kept for the next move.</summary>
-    /// <param name="field">The playfield, whose walls the spark stays inside.</param>
-    private void MoveOnce(PlayField field)
-    {
-        _positionRemainderSubpixels = new IntVector2(
-            _positionRemainderSubpixels.X + _velocitySubpixels.X,
-            _positionRemainderSubpixels.Y + _velocitySubpixels.Y);
-
-        var stepX = _positionRemainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
-        var stepY = _positionRemainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
-        _positionRemainderSubpixels = new IntVector2(
-            _positionRemainderSubpixels.X - stepX * ScreenSize.SubpixelsPerPixel,
-            _positionRemainderSubpixels.Y - stepY * ScreenSize.SubpixelsPerPixel);
-
-        MoveBy(field, stepX, stepY);
     }
 
     /// <summary>
@@ -221,5 +205,22 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         if (_position.Y + stepY >= inner.Y && _position.Y + stepY + Size <= inner.Bottom) y += stepY;
 
         _position = new IntVector2(x, y);
+    }
+
+    /// <summary>Makes one move, by whole pixels. The fraction of a pixel left over is kept for the next move.</summary>
+    /// <param name="field">The playfield, whose walls the spark stays inside.</param>
+    private void MoveOnce(PlayField field)
+    {
+        _positionRemainderSubpixels = new IntVector2(
+            _positionRemainderSubpixels.X + _velocitySubpixels.X,
+            _positionRemainderSubpixels.Y + _velocitySubpixels.Y);
+
+        var stepX = _positionRemainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
+        var stepY = _positionRemainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
+        _positionRemainderSubpixels = new IntVector2(
+            _positionRemainderSubpixels.X - stepX * ScreenSize.SubpixelsPerPixel,
+            _positionRemainderSubpixels.Y - stepY * ScreenSize.SubpixelsPerPixel);
+
+        MoveBy(field, stepX, stepY);
     }
 }

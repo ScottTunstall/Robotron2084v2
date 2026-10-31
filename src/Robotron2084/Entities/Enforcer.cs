@@ -30,6 +30,15 @@ namespace Robotron2084.Entities;
 public sealed class Enforcer : IEntity, IExplodable, IRemovable
 {
     /// <summary>
+    ///     How much slower the enforcer goes than the gap to the spot it is heading for. The bigger this is, the slower it
+    ///     goes.
+    /// </summary>
+    private const int ApproachDivisor = 2;
+
+    /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> an enforcer waits between shots, when it is not told a number.</summary>
+    private const int DefaultFireIntervalBeats = 24;
+
+    /// <summary>
     ///     The enforcer heads for a random spot in an area below and to the right of the player. This is how many columns
     ///     wide that area is.
     /// </summary>
@@ -39,15 +48,6 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <summary>How many rows tall the area the enforcer heads for is (see <see cref="DestinationZoneColumns" />).</summary>
     /// <remarks>ROM: <c>ENFR1</c>.</remarks>
     private const int DestinationZoneRows = 32;
-
-    /// <summary>
-    ///     How much slower the enforcer goes than the gap to the spot it is heading for. The bigger this is, the slower it
-    ///     goes.
-    /// </summary>
-    private const int ApproachDivisor = 2;
-
-    /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> an enforcer waits between shots, when it is not told a number.</summary>
-    private const int DefaultFireIntervalBeats = 24;
 
     /// <summary>
     ///     One more than the most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the enforcer waits before it
@@ -63,24 +63,22 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EnforcerCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EnforcerCollisionSize.Height));
 
-    private readonly int _fireIntervalBeats;
-    private readonly Random _random;
-    private readonly SpriteSet _sprites;
     private readonly ArcadeFrameTimer _beatTimer = new();
-    private int _fireBeatsRemaining;
-
-    /// <summary>Which of the growing animation frames is showing, counting from 0.</summary>
-    private int _growStep;
-
+    private readonly int _fireIntervalBeats;
     private readonly ArcadeFrameTimer _growTimer = new();
 
     /// <summary>Times the enforcer's moves.</summary>
     private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
-    private IntVector2 _position;
+    private readonly Random _random;
+    private readonly SpriteSet _sprites;
+    private int _fireBeatsRemaining;
+
+    /// <summary>Which of the growing animation frames is showing, counting from 0.</summary>
+    private int _growStep;
 
     private int _newDestinationBeatsRemaining;
-
+    private IntVector2 _position;
     private IntVector2 _remainderSubpixels;
 
     /// <summary>
@@ -116,26 +114,6 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         _fireBeatsRemaining = ArcadeRandom.PickUpTo(random, _fireIntervalBeats);
     }
 
-    /// <summary>The box the enforcer takes up on the screen.</summary>
-    public Rectangle GetBounds()
-    {
-        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
-    }
-
-    /// <inheritdoc />
-    /// <remarks>It is the same box as <see cref="GetBounds" />.</remarks>
-    public Rectangle GetExplosionBounds()
-    {
-        return GetBounds();
-    }
-
-    /// <inheritdoc />
-    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
-    public Texture2D GetExplosionAnimationFrame()
-    {
-        return GetCurrentAnimationFrame();
-    }
-
     /// <summary>Alive until it is killed. It is never Dying, because it has no death animation.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
@@ -150,6 +128,50 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         if (!this.IsAlive()) return;
 
         _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+    }
+
+    /// <summary>The box the enforcer takes up on the screen.</summary>
+    public Rectangle GetBounds()
+    {
+        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    }
+
+    /// <summary>
+    ///     The animation frame the enforcer is showing: one of the growing ones while it grows, and the full-size one
+    ///     after that.
+    /// </summary>
+    /// <remarks>
+    ///     The growing animation frames are the ROM's <c>ENGD1</c> to <c>ENGD5</c>. They are the second to the sixth in
+    ///     the set.
+    /// </remarks>
+    public Texture2D GetCurrentAnimationFrame()
+    {
+        if (!this.IsAlive() || !IsGrowing()) return _sprites.EnforcerSprite;
+
+        var frame = Math.Clamp(GetGrowAnimationFrameIndex(), 0, _sprites.EnforcerAnimationFrames.Length - 2);
+        return _sprites.EnforcerAnimationFrames[1 + frame];
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
+    public Texture2D GetExplosionAnimationFrame()
+    {
+        return GetCurrentAnimationFrame();
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the same box as <see cref="GetBounds" />.</remarks>
+    public Rectangle GetExplosionBounds()
+    {
+        return GetBounds();
+    }
+
+    /// <summary>Kills the enforcer at once. It has no death animation (ROM: <c>ENFKIL</c>).</summary>
+    public void Kill()
+    {
+        if (!this.IsAlive()) return;
+
+        LifeState = EntityLifeState.Dead;
     }
 
     /// <summary>
@@ -172,30 +194,6 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         if (_beatTimer.Tick(EnforcerTuning.BeatIntervalArcadeFrames)) ActOnBeat(field);
     }
 
-    /// <summary>
-    ///     The animation frame the enforcer is showing: one of the growing ones while it grows, and the full-size one
-    ///     after that.
-    /// </summary>
-    /// <remarks>
-    ///     The growing animation frames are the ROM's <c>ENGD1</c> to <c>ENGD5</c>. They are the second to the sixth in
-    ///     the set.
-    /// </remarks>
-    public Texture2D GetCurrentAnimationFrame()
-    {
-        if (!this.IsAlive() || !IsGrowing()) return _sprites.EnforcerSprite;
-
-        var frame = Math.Clamp(GetGrowAnimationFrameIndex(), 0, _sprites.EnforcerAnimationFrames.Length - 2);
-        return _sprites.EnforcerAnimationFrames[1 + frame];
-    }
-
-    /// <summary>Kills the enforcer at once. It has no death animation (ROM: <c>ENFKIL</c>).</summary>
-    public void Kill()
-    {
-        if (!this.IsAlive()) return;
-
-        LifeState = EntityLifeState.Dead;
-    }
-
     /// <summary>Which of the growing animation frames is showing, counting from 0, or -1 once the enforcer has grown.</summary>
     internal int GetGrowAnimationFrameIndex()
     {
@@ -206,43 +204,6 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private static int GetRandomNewDestinationBeats(Random random)
     {
         return random.Next(0, NewDestinationBeatsMaxExclusive);
-    }
-
-    /// <summary>True while the enforcer is still growing, when it must not move or shoot.</summary>
-    private bool IsGrowing()
-    {
-        return _growStep < EnforcerTuning.GrowSteps;
-    }
-
-    /// <summary>Shows the next growing animation frame.</summary>
-    /// <remarks>ROM: <c>ENFR0</c> and <c>ENFRCE</c>.</remarks>
-    private void TakeGrowStep()
-    {
-        _growStep++;
-    }
-
-    /// <summary>
-    ///     Makes one move. The sideways part of the move is made only if it keeps the enforcer inside the playfield, and
-    ///     the same goes for the up-and-down part.
-    /// </summary>
-    /// <param name="field">The playfield, whose walls the enforcer stays inside.</param>
-    /// <remarks>ROM: the routine that moves every moving object (RRS22.ASM's <c>OPB80</c>).</remarks>
-    private void MoveOnce(PlayField field)
-    {
-        var bounds = field.Wall.PlayfieldBounds;
-        _remainderSubpixels += _velocitySubpixels;
-        var stepX = _remainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
-        var stepY = _remainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
-        _remainderSubpixels -=
-            new IntVector2(stepX * ScreenSize.SubpixelsPerPixel, stepY * ScreenSize.SubpixelsPerPixel);
-
-        var x = _position.X + stepX;
-        if (stepX != 0 && x >= bounds.X && x + CollisionSize.Width <= bounds.Right)
-            _position = _position with { X = x };
-
-        var y = _position.Y + stepY;
-        if (stepY != 0 && y >= bounds.Y && y + CollisionSize.Height <= bounds.Bottom)
-            _position = _position with { Y = y };
     }
 
     /// <summary>
@@ -275,6 +236,36 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         return ArcadeRandom.PickUpTo(random, _fireIntervalBeats);
     }
 
+    /// <summary>True while the enforcer is still growing, when it must not move or shoot.</summary>
+    private bool IsGrowing()
+    {
+        return _growStep < EnforcerTuning.GrowSteps;
+    }
+
+    /// <summary>
+    ///     Makes one move. The sideways part of the move is made only if it keeps the enforcer inside the playfield, and
+    ///     the same goes for the up-and-down part.
+    /// </summary>
+    /// <param name="field">The playfield, whose walls the enforcer stays inside.</param>
+    /// <remarks>ROM: the routine that moves every moving object (RRS22.ASM's <c>OPB80</c>).</remarks>
+    private void MoveOnce(PlayField field)
+    {
+        var bounds = field.Wall.PlayfieldBounds;
+        _remainderSubpixels += _velocitySubpixels;
+        var stepX = _remainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
+        var stepY = _remainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
+        _remainderSubpixels -=
+            new IntVector2(stepX * ScreenSize.SubpixelsPerPixel, stepY * ScreenSize.SubpixelsPerPixel);
+
+        var x = _position.X + stepX;
+        if (stepX != 0 && x >= bounds.X && x + CollisionSize.Width <= bounds.Right)
+            _position = _position with { X = x };
+
+        var y = _position.Y + stepY;
+        if (stepY != 0 && y >= bounds.Y && y + CollisionSize.Height <= bounds.Bottom)
+            _position = _position with { Y = y };
+    }
+
     /// <summary>
     ///     Picks the next spot to head for, which is a random distance below and to the right of the player, and sets the
     ///     enforcer's speed to get there.
@@ -293,5 +284,12 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
 
         // The further the enforcer is from the spot it is heading for, the faster it goes.
         _velocitySubpixels = new IntVector2(delta.X / ApproachDivisor, delta.Y / ApproachDivisor);
+    }
+
+    /// <summary>Shows the next growing animation frame.</summary>
+    /// <remarks>ROM: <c>ENFR0</c> and <c>ENFRCE</c>.</remarks>
+    private void TakeGrowStep()
+    {
+        _growStep++;
     }
 }

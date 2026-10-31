@@ -22,14 +22,11 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRP8.ASM</c> <c>ROBOT</c>, <c>BITA #$7F / BEQ ROB0A / NAP 2,ROBOT</c>.</item>
-    ///         <item>Disassembly: <c>$39B7</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int LivePollArcadeFrames = 2;
+    /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
+    private const int BeatIntervalArcadeFrames = 4;
+
+    /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a grunt waits between steps, when it is not told a number.</summary>
+    private const int DefaultMoveLimitBeats = 15;
 
     /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
     /// <remarks>
@@ -40,11 +37,14 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int FirstBeatNapArcadeFrames = 10;
 
-    /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
-    private const int BeatIntervalArcadeFrames = 4;
-
-    /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a grunt waits between steps, when it is not told a number.</summary>
-    private const int DefaultMoveLimitBeats = 15;
+    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRP8.ASM</c> <c>ROBOT</c>, <c>BITA #$7F / BEQ ROB0A / NAP 2,ROBOT</c>.</item>
+    ///         <item>Disassembly: <c>$39B7</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int LivePollArcadeFrames = 2;
 
     /// <summary>How many walk animation frames a grunt has.</summary>
     private const int WalkAnimationFrameCount = 4;
@@ -94,8 +94,15 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
     }
 
+    /// <summary>Alive until it is killed. It is never Dying, because it has no death animation (see <see cref="Kill" />).</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
     /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the grunt waits between steps, as it stands now. It gets smaller as the wave goes on.</summary>
     public int MoveDelayBeats { get; private set; }
+
+    /// <summary>Where the grunt's top-left corner is.</summary>
+    /// <remarks>The ROM's OBJX/OBJY.</remarks>
+    public IntVector2 Position => _position;
 
     /// <summary>True when the grunt took a step during the last update.</summary>
     public bool SteppedThisUpdate { get; private set; }
@@ -103,77 +110,6 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>Which walk animation frame is showing, counting from 1.</summary>
     /// <remarks>ROM: the <c>RWDP</c> animation frames.</remarks>
     internal int WalkAnimationFrameNumber => _walkAnimationFrameNumber;
-
-    /// <summary>The box the grunt takes up on the screen.</summary>
-    public Rectangle GetBounds()
-    {
-        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
-    }
-
-    /// <inheritdoc />
-    /// <remarks>It is the same box as <see cref="GetBounds" />.</remarks>
-    public Rectangle GetExplosionBounds()
-    {
-        return GetBounds();
-    }
-
-    /// <inheritdoc />
-    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
-    public Texture2D GetExplosionAnimationFrame()
-    {
-        return GetCurrentAnimationFrame();
-    }
-
-    /// <summary>This grunt's current walk animation frame.</summary>
-    /// <returns>The animation frame that is showing.</returns>
-    public Texture2D GetCurrentAnimationFrame()
-    {
-        return _sprites.GruntAnimationFrames[GetAnimationFrameIndex(_walkAnimationFrameNumber)];
-    }
-
-    /// <summary>Alive until it is killed. It is never Dying, because it has no death animation (see <see cref="Kill" />).</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
-
-    /// <summary>Where the grunt's top-left corner is.</summary>
-    /// <remarks>The ROM's OBJX/OBJY.</remarks>
-    public IntVector2 Position => _position;
-
-    /// <summary>Draws the current walk animation frame in its own colours.</summary>
-    /// <param name="spriteBatch">What the grunt is drawn with.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (!this.IsAlive()) return;
-
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
-    }
-
-    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the grunt. When its wait is over it takes a step towards the player and picks a new wait.</summary>
-    /// <param name="gameTime">Not used. The grunt counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
-    {
-        SteppedThisUpdate = false;
-        if (!this.IsAlive()) return;
-
-        if (field.RobotsFrozen()) return;
-
-        if (IsFalling())
-        {
-            _position = _position with { Y = Math.Min(_landingY, _position.Y + GorfTuning.FallPixelsPerTick) };
-            return;
-        }
-
-        if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);
-    }
-
-    /// <summary>Kills the grunt at once, with no flash and no death animation.</summary>
-    /// <remarks>ROM: RRP8.ASM's <c>ROBKIL</c>, which just explodes it.</remarks>
-    public void Kill()
-    {
-        if (!this.IsAlive()) return;
-
-        LifeState = EntityLifeState.Dead;
-    }
 
     /// <summary>
     ///     Sets the time of the grunt's first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> timer is set so that it
@@ -185,18 +121,55 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         _beatTimer = field.CreateFirstBeatTimer(LivePollArcadeFrames, FirstBeatNapArcadeFrames, BeatIntervalArcadeFrames);
     }
 
+    /// <summary>Draws the current walk animation frame in its own colours.</summary>
+    /// <param name="spriteBatch">What the grunt is drawn with.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (!this.IsAlive()) return;
+
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+    }
+
+    /// <summary>The box the grunt takes up on the screen.</summary>
+    public Rectangle GetBounds()
+    {
+        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    }
+
+    /// <summary>This grunt's current walk animation frame.</summary>
+    /// <returns>The animation frame that is showing.</returns>
+    public Texture2D GetCurrentAnimationFrame()
+    {
+        return _sprites.GruntAnimationFrames[GetAnimationFrameIndex(_walkAnimationFrameNumber)];
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
+    public Texture2D GetExplosionAnimationFrame()
+    {
+        return GetCurrentAnimationFrame();
+    }
+
+    /// <inheritdoc />
+    /// <remarks>It is the same box as <see cref="GetBounds" />.</remarks>
+    public Rectangle GetExplosionBounds()
+    {
+        return GetBounds();
+    }
+
     /// <summary>True while the grunt is still falling. It does not move on until it lands.</summary>
     public bool IsFalling()
     {
         return _position.Y < _landingY;
     }
 
-    /// <summary>Lets the grunt fall from where it is to the ground. It waits there until it lands.</summary>
-    /// <param name="landingY">The top of the grunt when it is standing on the ground, in port pixels.</param>
-    /// <remarks>This fall is not in the arcade game. It is the author's own (notes §138.2).</remarks>
-    internal void BeginFall(int landingY)
+    /// <summary>Kills the grunt at once, with no flash and no death animation.</summary>
+    /// <remarks>ROM: RRP8.ASM's <c>ROBKIL</c>, which just explodes it.</remarks>
+    public void Kill()
     {
-        _landingY = landingY;
+        if (!this.IsAlive()) return;
+
+        LifeState = EntityLifeState.Dead;
     }
 
     /// <summary>
@@ -229,6 +202,25 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         MoveDelayBeats = Math.Max(floorBeats, MoveDelayBeats - stepBeats);
     }
 
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the grunt. When its wait is over it takes a step towards the player and picks a new wait.</summary>
+    /// <param name="gameTime">Not used. The grunt counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
+    /// <param name="field">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField field)
+    {
+        SteppedThisUpdate = false;
+        if (!this.IsAlive()) return;
+
+        if (field.RobotsFrozen()) return;
+
+        if (IsFalling())
+        {
+            _position = _position with { Y = Math.Min(_landingY, _position.Y + GorfTuning.FallPixelsPerTick) };
+            return;
+        }
+
+        if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);
+    }
+
     /// <summary>Works out which of the grunt's animation frames to draw, from the arcade's walk number.</summary>
     /// <param name="arcadeAnimationFrameNumber">The arcade's walk number, from 1 to 4.</param>
     /// <returns>The place of the animation frame in <see cref="SpriteSet.GruntAnimationFrames" />.</returns>
@@ -244,6 +236,14 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
             4 => 2,
             _ => 0
         };
+    }
+
+    /// <summary>Lets the grunt fall from where it is to the ground. It waits there until it lands.</summary>
+    /// <param name="landingY">The top of the grunt when it is standing on the ground, in port pixels.</param>
+    /// <remarks>This fall is not in the arcade game. It is the author's own (notes §138.2).</remarks>
+    internal void BeginFall(int landingY)
+    {
+        _landingY = landingY;
     }
 
     /// <summary>What the grunt does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It only takes a step when <see cref="_moveBeatsRemaining" /> runs out.</summary>

@@ -50,7 +50,14 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Width),
         ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.QuarkCollisionSize.Height));
 
+    /// <summary>Times the quark's <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>.</summary>
+    private readonly ArcadeFrameTimer _beatTimer = ArcadeFrameTimer.CreateDue(QuarkTuning.BeatIntervalArcadeFrames);
+
     private readonly int _dropDelayBeats;
+
+    /// <summary>Times the quark's moves.</summary>
+    private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
+
     private readonly Random _random;
     private readonly int _speedCap;
     private readonly SpriteSet _sprites;
@@ -63,9 +70,6 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     </list>
     /// </remarks>
     private int _animationFrameIndex;
-
-    /// <summary>Times the quark's <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>.</summary>
-    private readonly ArcadeFrameTimer _beatTimer = ArcadeFrameTimer.CreateDue(QuarkTuning.BeatIntervalArcadeFrames);
 
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the next tank drop is due.</summary>
     /// <remarks>
@@ -82,11 +86,6 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True once the quark is fleeing up or down to the edge of the playfield, where it vanishes.</summary>
     private bool _isFleeing;
 
-    /// <summary>Times the quark's moves.</summary>
-    private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
-
-    private IntVector2 _position;
-
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the quark picks a new direction to drift in.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -95,6 +94,8 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     </list>
     /// </remarks>
     private int _newDirectionBeatsRemaining;
+
+    private IntVector2 _position;
 
     /// <summary>The fraction of a pixel left over from the last move, in 256ths of a pixel.</summary>
     private IntVector2 _remainderSubpixels;
@@ -150,22 +151,6 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _dropBeatsRemaining = ArcadeRandom.PickUpTo(random, dropDelayBeats);
     }
 
-    /// <summary>
-    ///     The animation frame the quark is showing. The death burst is drawn from it (see
-    ///     <see cref="IAnimationFrameSource" />).
-    /// </summary>
-    /// <returns>The animation frame that is showing.</returns>
-    public Texture2D GetCurrentAnimationFrame()
-    {
-        return _sprites.QuarkAnimationFrames[_animationFrameIndex];
-    }
-
-    /// <summary>The box the quark takes up on the screen.</summary>
-    public Rectangle GetBounds()
-    {
-        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
-    }
-
     /// <summary>Alive until it is shot or flees off the field. It is never Dying (see <see cref="Kill" />).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
@@ -187,20 +172,20 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
-    /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The quark moves when it is time to. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> it shows its next animation frame, may pick a new
-    ///     way to drift, and may drop a tank.
-    /// </summary>
-    /// <param name="gameTime">Not used. The quark counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <summary>The box the quark takes up on the screen.</summary>
+    public Rectangle GetBounds()
     {
-        if (!this.IsAlive()) return;
+        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    }
 
-        // The quark does not move while the robots are frozen: before the wave has started, and while the Player is dying (ROM: RRS22.ASM OPRC80; STATUS bit 3).
-        if (!field.RobotsFrozen() && _moveTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce(field);
-
-        if (_beatTimer.Tick(QuarkTuning.BeatIntervalArcadeFrames)) ActOnBeat(field);
+    /// <summary>
+    ///     The animation frame the quark is showing. The death burst is drawn from it (see
+    ///     <see cref="IAnimationFrameSource" />).
+    /// </summary>
+    /// <returns>The animation frame that is showing.</returns>
+    public Texture2D GetCurrentAnimationFrame()
+    {
+        return _sprites.QuarkAnimationFrames[_animationFrameIndex];
     }
 
     /// <summary>Kills the quark at once.</summary>
@@ -215,6 +200,22 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+    }
+
+    /// <summary>
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The quark moves when it is time to. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> it shows its next animation frame, may pick a new
+    ///     way to drift, and may drop a tank.
+    /// </summary>
+    /// <param name="gameTime">Not used. The quark counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
+    /// <param name="field">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField field)
+    {
+        if (!this.IsAlive()) return;
+
+        // The quark does not move while the robots are frozen: before the wave has started, and while the Player is dying (ROM: RRS22.ASM OPRC80; STATUS bit 3).
+        if (!field.RobotsFrozen() && _moveTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce(field);
+
+        if (_beatTimer.Tick(QuarkTuning.BeatIntervalArcadeFrames)) ActOnBeat(field);
     }
 
     /// <summary>Picks where a quark starts a wave: anywhere along the top wall or the bottom wall.</summary>
@@ -297,29 +298,6 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         if (isOnLastFrame) nextFrameIndex = 0;
 
         _animationFrameIndex = nextFrameIndex;
-    }
-
-    /// <summary>
-    ///     Makes one move, by whole pixels. The fraction of a pixel left over is kept for the next move. The sideways
-    ///     part is made only if it keeps the quark inside the playfield, and the same goes for the up-or-down part.
-    /// </summary>
-    /// <param name="field">The playfield, whose walls the quark stays inside.</param>
-    private void MoveOnce(PlayField field)
-    {
-        var bounds = field.GetPlayfieldBounds();
-
-        _remainderSubpixels += _velocitySubpixels;
-        var stepX = _remainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
-        var stepY = _remainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
-        _remainderSubpixels -= new IntVector2(
-            stepX * ScreenSize.SubpixelsPerPixel,
-            stepY * ScreenSize.SubpixelsPerPixel);
-
-        if (stepX != 0 && IsInsideX(bounds, _position.X + stepX))
-            _position = _position with { X = _position.X + stepX };
-
-        if (stepY != 0 && IsInsideY(bounds, _position.Y + stepY))
-            _position = _position with { Y = _position.Y + stepY };
     }
 
     /// <summary>Counts down to the next tank drop. When the count runs out, it drops a tank if the playfield has room for one.</summary>
@@ -416,6 +394,29 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         var bottomExitY = field.GetPlayfieldBounds().Bottom -
                           ScreenSize.ToPortPixelsFromArcadePixels(QuarkTuning.FleeExitHighRows);
         if (_position.Y <= topExitY || _position.Y >= bottomExitY) LifeState = EntityLifeState.Dead;
+    }
+
+    /// <summary>
+    ///     Makes one move, by whole pixels. The fraction of a pixel left over is kept for the next move. The sideways
+    ///     part is made only if it keeps the quark inside the playfield, and the same goes for the up-or-down part.
+    /// </summary>
+    /// <param name="field">The playfield, whose walls the quark stays inside.</param>
+    private void MoveOnce(PlayField field)
+    {
+        var bounds = field.GetPlayfieldBounds();
+
+        _remainderSubpixels += _velocitySubpixels;
+        var stepX = _remainderSubpixels.X / ScreenSize.SubpixelsPerPixel;
+        var stepY = _remainderSubpixels.Y / ScreenSize.SubpixelsPerPixel;
+        _remainderSubpixels -= new IntVector2(
+            stepX * ScreenSize.SubpixelsPerPixel,
+            stepY * ScreenSize.SubpixelsPerPixel);
+
+        if (stepX != 0 && IsInsideX(bounds, _position.X + stepX))
+            _position = _position with { X = _position.X + stepX };
+
+        if (stepY != 0 && IsInsideY(bounds, _position.Y + stepY))
+            _position = _position with { Y = _position.Y + stepY };
     }
 
     /// <summary>

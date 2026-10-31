@@ -41,6 +41,14 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     private const int BeatIntervalArcadeFrames = 3;
 
+    /// <summary>The nearest to the right wall, in columns, that the top-left corner of a prog's explosion may be.</summary>
+    /// <remarks>Disassembly: <c>$1F45</c>, <c>LDA #$8A / CMPA $0004,X</c>. The right wall is at column <c>$8F</c>.</remarks>
+    private const int ExplosionColumnsFromRightWallMin = 0x8F - 0x8A;
+
+    /// <summary>The nearest to the bottom wall, in rows, that the top-left corner of a prog's explosion may be.</summary>
+    /// <remarks>Disassembly: <c>$1F4D</c>, <c>LDA #$DB / CMPA $0005,X</c>. The bottom wall is at row <c>$EA</c>.</remarks>
+    private const int ExplosionRowsFromBottomWallMin = 0xEA - 0xDB;
+
     /// <summary>
     ///     A prog heads for a spot a little to the left or right of the player. This, with <see cref="OffsetXRandomMax" />, sets how far
     ///     off it can be, in steps of <see cref="OffsetXStepColumns" />.
@@ -147,14 +155,6 @@ public sealed class Prog : IExplodable, IRemovable
     /// </summary>
     private const int WrapMarginYRows = 18;
 
-    /// <summary>The nearest to the right wall, in columns, that the top-left corner of a prog's explosion may be.</summary>
-    /// <remarks>Disassembly: <c>$1F45</c>, <c>LDA #$8A / CMPA $0004,X</c>. The right wall is at column <c>$8F</c>.</remarks>
-    private const int ExplosionColumnsFromRightWallMin = 0x8F - 0x8A;
-
-    /// <summary>The nearest to the bottom wall, in rows, that the top-left corner of a prog's explosion may be.</summary>
-    /// <remarks>Disassembly: <c>$1F4D</c>, <c>LDA #$DB / CMPA $0005,X</c>. The bottom wall is at row <c>$EA</c>.</remarks>
-    private const int ExplosionRowsFromBottomWallMin = 0xEA - 0xDB;
-
     // The order the walk animation frames are shown in. Family members walk in the same order.
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
@@ -207,6 +207,47 @@ public sealed class Prog : IExplodable, IRemovable
 
     /// <summary>Which family member this prog used to be. This decides its animation frames and its size.</summary>
     public HumanKind Kind { get; }
+
+    /// <summary>Alive until it is shot. It is never Dying, because it is blown apart at once (see <see cref="Kill" />).</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Where the prog's top-left corner is.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRB10.ASM</c> the OBJX/OBJY registers.</item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
+    ///     </list>
+    /// </remarks>
+    public IntVector2 Position => _position;
+
+    /// <summary>Draws the ghosts, oldest first, and then the prog. Each is drawn as a one-colour shape on a one-colour box.</summary>
+    /// <param name="spriteBatch">What the prog is drawn with.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (!this.IsAlive()) return;
+
+        var frames = Kind.GetAnimationFrames(_sprites);
+        var animationFrame = frames[GetWalkAnimationFrameIndex()];
+
+        // The oldest ghost is drawn first, so that newer ghosts cover older ones. Each ghost keeps the animation frame the prog had when it left the ghost behind.
+        for (var i = _ghosts.Count - 1; i >= 0; i--)
+        {
+            var ghost = _ghosts[i];
+            _sprites.Blitter.DrawSpriteSolidWithBackground(
+                spriteBatch,
+                frames[ghost.AnimationFrameIndex],
+                GetBoundsAt(ghost.Position),
+                _sprites.Blitter.GetSlotColour(ProgTuning.GhostBackgroundSlot),
+                _sprites.Blitter.GetSlotColour(ProgTuning.GhostShapeSlot));
+        }
+
+        _sprites.Blitter.DrawSpriteSolidWithBackground(
+            spriteBatch,
+            animationFrame,
+            GetBounds(),
+            _sprites.Blitter.GetSlotColour(ProgTuning.BackgroundSlot),
+            _sprites.Blitter.GetSlotColour(ProgTuning.ShapeSlot));
+    }
 
     /// <summary>
     ///     The box the prog takes up on the screen. It is the size of the family member the prog used to be.
@@ -279,45 +320,19 @@ public sealed class Prog : IExplodable, IRemovable
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.ProgBurstSize.Height));
     }
 
-    /// <summary>Alive until it is shot. It is never Dying, because it is blown apart at once (see <see cref="Kill" />).</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
-
-    /// <summary>Where the prog's top-left corner is.</summary>
+    /// <summary>Kills the prog at once. All that is seen is the strip explosion.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRB10.ASM</c> the OBJX/OBJY registers.</item>
+    ///         <item>
+    ///             Original source: <c>RRB10.ASM</c> <c>PRGKIL</c>. The object is gone at once, and only the strip
+    ///             explosion is left.
+    ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     ///     </list>
     /// </remarks>
-    public IntVector2 Position => _position;
-
-    /// <summary>Draws the ghosts, oldest first, and then the prog. Each is drawn as a one-colour shape on a one-colour box.</summary>
-    /// <param name="spriteBatch">What the prog is drawn with.</param>
-    public void Draw(SpriteBatch spriteBatch)
+    public void Kill()
     {
-        if (!this.IsAlive()) return;
-
-        var frames = Kind.GetAnimationFrames(_sprites);
-        var animationFrame = frames[GetWalkAnimationFrameIndex()];
-
-        // The oldest ghost is drawn first, so that newer ghosts cover older ones. Each ghost keeps the animation frame the prog had when it left the ghost behind.
-        for (var i = _ghosts.Count - 1; i >= 0; i--)
-        {
-            var ghost = _ghosts[i];
-            _sprites.Blitter.DrawSpriteSolidWithBackground(
-                spriteBatch,
-                frames[ghost.AnimationFrameIndex],
-                GetBoundsAt(ghost.Position),
-                _sprites.Blitter.GetSlotColour(ProgTuning.GhostBackgroundSlot),
-                _sprites.Blitter.GetSlotColour(ProgTuning.GhostShapeSlot));
-        }
-
-        _sprites.Blitter.DrawSpriteSolidWithBackground(
-            spriteBatch,
-            animationFrame,
-            GetBounds(),
-            _sprites.Blitter.GetSlotColour(ProgTuning.BackgroundSlot),
-            _sprites.Blitter.GetSlotColour(ProgTuning.ShapeSlot));
+        if (this.IsAlive()) LifeState = EntityLifeState.Dead;
     }
 
     /// <summary>
@@ -334,21 +349,6 @@ public sealed class Prog : IExplodable, IRemovable
         if (field.RobotsFrozen()) return;
 
         if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);
-    }
-
-    /// <summary>Kills the prog at once. All that is seen is the strip explosion.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRB10.ASM</c> <c>PRGKIL</c>. The object is gone at once, and only the strip
-    ///             explosion is left.
-    ///         </item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
-    ///     </list>
-    /// </remarks>
-    public void Kill()
-    {
-        if (this.IsAlive()) LifeState = EntityLifeState.Dead;
     }
 
     /// <summary>The animation frame each ghost shows, newest first.</summary>

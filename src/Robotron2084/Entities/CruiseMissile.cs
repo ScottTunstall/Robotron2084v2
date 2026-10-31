@@ -25,6 +25,10 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class CruiseMissile : IEntity, IRemovable
 {
+    /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
+    /// <remarks>ROM: <c>NAP 2</c>, plus the one the routine runs in.</remarks>
+    private const int BeatIntervalArcadeFrames = 3;
+
     /// <summary>
     ///     How far to the left of the player, or above the player, the spot the missile heads for can be moved, in port pixels.
     /// </summary>
@@ -32,10 +36,6 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     /// <summary>How wide the range is that the spot the missile heads for can be moved across, in port pixels.</summary>
     private const int DirectionNoiseRange = 16;
-
-    /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
-    /// <remarks>ROM: <c>NAP 2</c>, plus the one the routine runs in.</remarks>
-    private const int BeatIntervalArcadeFrames = 3;
 
     /// <summary>How many moves the missile makes on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
     private const int MovesPerBeat = 2;
@@ -64,6 +64,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <summary>How far the missile goes up or down on each move, in port pixels. It is one row.</summary>
     private static readonly int StepYPortPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
+    private readonly ArcadeFrameTimer _beatTimer = new();
     private readonly Random _random;
     private readonly SpriteSet _sprites;
 
@@ -73,12 +74,8 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// </summary>
     private readonly List<IntVector2> _trail = new();
 
-    private readonly ArcadeFrameTimer _beatTimer = new();
-
-    private IntVector2 _position;
-
     private int _newDirectionBeatsRemaining;
-
+    private IntVector2 _position;
     private IntVector2 _velocity; // How many pixels the missile goes left or right, and how many up or down, each time it moves.
 
     /// <summary>Makes a missile and sends it towards the player.</summary>
@@ -98,31 +95,17 @@ public sealed class CruiseMissile : IEntity, IRemovable
         _newDirectionBeatsRemaining = ArcadeRandom.PickUpTo(_random, NewDirectionMaxBeats);
     }
 
-    /// <summary>The places the missile has just been, oldest first.</summary>
-    internal IReadOnlyList<IntVector2> Trail => _trail;
-
-    /// <summary>How many pixels the missile goes left or right, and how many up or down, each time it moves.</summary>
-    internal IntVector2 Velocity => _velocity;
-
-    /// <summary>
-    ///     The box the missile takes up on the screen. It starts a little up and to the left of the missile's own
-    ///     position.
-    /// </summary>
-    /// <remarks>ROM: the "FAT PHONY GUY" box, which sits up and to the left of the missile's own position.</remarks>
-    public Rectangle GetBounds()
-    {
-        return new Rectangle(
-            _position.X + ScreenSize.ToPortPixelsFromColumns(CollisionSizes.CruiseMissileBoxOffsetColumns),
-            _position.Y + ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.CruiseMissileBoxOffsetRows),
-            CollisionSize.Width,
-            CollisionSize.Height);
-    }
-
     /// <summary>Alive until something hits it. It does not run out of time by itself.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Where the missile is. Its box is worked out from this (see <see cref="GetBounds" />).</summary>
     public IntVector2 Position => _position;
+
+    /// <summary>The places the missile has just been, oldest first.</summary>
+    internal IReadOnlyList<IntVector2> Trail => _trail;
+
+    /// <summary>How many pixels the missile goes left or right, and how many up or down, each time it moves.</summary>
+    internal IntVector2 Velocity => _velocity;
 
     /// <summary>Draws the trail marks and the missile's head.</summary>
     /// <param name="spriteBatch">What the missile is drawn with.</param>
@@ -150,14 +133,18 @@ public sealed class CruiseMissile : IEntity, IRemovable
             _sprites.Blitter.GetSlotColour(CruiseMissileTuning.HeadSlot));
     }
 
-    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, the missile turns towards the player again if it is time to, and then moves.</summary>
-    /// <param name="gameTime">Not used. The missile counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <summary>
+    ///     The box the missile takes up on the screen. It starts a little up and to the left of the missile's own
+    ///     position.
+    /// </summary>
+    /// <remarks>ROM: the "FAT PHONY GUY" box, which sits up and to the left of the missile's own position.</remarks>
+    public Rectangle GetBounds()
     {
-        if (!this.IsAlive()) return;
-
-        if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);
+        return new Rectangle(
+            _position.X + ScreenSize.ToPortPixelsFromColumns(CollisionSizes.CruiseMissileBoxOffsetColumns),
+            _position.Y + ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.CruiseMissileBoxOffsetRows),
+            CollisionSize.Width,
+            CollisionSize.Height);
     }
 
     /// <summary>Kills the missile at once. Its trail goes with it.</summary>
@@ -168,6 +155,16 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
         LifeState = EntityLifeState.Dead;
         _trail.Clear();
+    }
+
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, the missile turns towards the player again if it is time to, and then moves.</summary>
+    /// <param name="gameTime">Not used. The missile counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
+    /// <param name="field">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField field)
+    {
+        if (!this.IsAlive()) return;
+
+        if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);
     }
 
     /// <summary>
@@ -184,19 +181,6 @@ public sealed class CruiseMissile : IEntity, IRemovable
         }
 
         for (var move = 0; move < MovesPerBeat; move++) MoveOnce(field);
-    }
-
-    /// <summary>
-    ///     Works out which way to go to get nearer the player, either sideways or up-and-down. The spot it heads for is
-    ///     moved a little at random.
-    /// </summary>
-    /// <param name="target">Where the player is, measured sideways or up-and-down.</param>
-    /// <param name="mine">Where the missile is, measured the same way.</param>
-    /// <returns>1 to go right or down, or -1 to go left or up.</returns>
-    private int GetRandomDirectionSign(int target, int mine)
-    {
-        var noisyTargetCoordinate = target + _random.Next(DirectionNoiseRange) - DirectionNoiseBase;
-        return noisyTargetCoordinate >= mine ? 1 : -1;
     }
 
     /// <summary>
@@ -219,6 +203,19 @@ public sealed class CruiseMissile : IEntity, IRemovable
         if (isMovingDiagonally) dy = GetRandomDirectionSign(playerPosition.Y, _position.Y) * StepYPortPixels;
 
         return new IntVector2(dx, dy);
+    }
+
+    /// <summary>
+    ///     Works out which way to go to get nearer the player, either sideways or up-and-down. The spot it heads for is
+    ///     moved a little at random.
+    /// </summary>
+    /// <param name="target">Where the player is, measured sideways or up-and-down.</param>
+    /// <param name="mine">Where the missile is, measured the same way.</param>
+    /// <returns>1 to go right or down, or -1 to go left or up.</returns>
+    private int GetRandomDirectionSign(int target, int mine)
+    {
+        var noisyTargetCoordinate = target + _random.Next(DirectionNoiseRange) - DirectionNoiseBase;
+        return noisyTargetCoordinate >= mine ? 1 : -1;
     }
 
     /// <summary>Makes one move, bouncing off the walls, and leaves a trail mark where the missile was.</summary>

@@ -32,9 +32,9 @@ public sealed class ScoreBurst : IEntity
 
     private readonly Texture2D _pointsSprite;
     private readonly SpriteSet _sprites;
+    private readonly ArcadeFrameTimer _stepTimer = new();
     private int _animationFrameIndex = FirstBurstAnimationFrameIndex;
     private int _burstStepsRemaining;
-    private readonly ArcadeFrameTimer _stepTimer = new();
 
     /// <summary>Makes one burst. <see cref="CreateForQuark" /> and <see cref="CreateForSpheroid" /> both use it.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -69,6 +69,12 @@ public sealed class ScoreBurst : IEntity
             bounds.Height);
     }
 
+    /// <summary>Alive while the burst, and then the points, are shown. Dead after that.</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Where the dead enemy's top-left corner was. The burst is drawn there, at the enemy's size.</summary>
+    public IntVector2 Position => new(_bounds.X, _bounds.Y);
+
     /// <summary>
     ///     Which animation frame the burst is showing. It only means something until the points are shown (see
     ///     <see cref="ShowingPoints" />).
@@ -89,65 +95,6 @@ public sealed class ScoreBurst : IEntity
 
     /// <summary>True once the burst is over and the points are showing.</summary>
     internal bool ShowingPoints { get; private set; }
-
-    /// <summary>The box the dead enemy took up, which is also the box the burst is drawn in.</summary>
-    public Rectangle GetBounds()
-    {
-        return _bounds;
-    }
-
-    /// <summary>Alive while the burst, and then the points, are shown. Dead after that.</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
-
-    /// <summary>Where the dead enemy's top-left corner was. The burst is drawn there, at the enemy's size.</summary>
-    public IntVector2 Position => new(_bounds.X, _bounds.Y);
-
-    /// <summary>Draws the burst as a shape filled with one colour. Once the burst is over, it draws the points the same way.</summary>
-    /// <param name="spriteBatch">What the burst is drawn with.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        if (!this.IsAlive()) return;
-
-        if (ShowingPoints)
-        {
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _pointsSprite, PointsBounds,
-                _sprites.Blitter.GetSlotColour(PointsSlot));
-            return;
-        }
-
-        if (_animationFrameIndex < _animationFrames.Length)
-            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds,
-                _sprites.Blitter.GetSlotColour(BurstSlot));
-    }
-
-    /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On each step the burst shows its next animation frame. When the burst is over the points are
-    ///     shown, and then the whole thing is gone.
-    /// </summary>
-    /// <param name="gameTime">Not used. The burst counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">Not used.</param>
-    public void Update(GameTime gameTime, PlayField field)
-    {
-        if (!this.IsAlive()) return;
-
-        if (!_stepTimer.Tick(ScoreBurstTuning.StepIntervalArcadeFrames)) return;
-
-        if (!ShowingPoints)
-        {
-            // When the burst's steps run out, the burst goes and the points are shown in its place.
-            if (--_burstStepsRemaining <= 0)
-            {
-                ShowingPoints = true;
-                PointsStepsRemaining = ScoreBurstTuning.PointsSteps;
-                return;
-            }
-
-            _animationFrameIndex++;
-            return;
-        }
-
-        if (--PointsStepsRemaining <= 0) LifeState = EntityLifeState.Dead;
-    }
 
     /// <summary>Makes the burst that a killed quark leaves. The burst and the points are drawn in the same palette slot.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -180,5 +127,58 @@ public sealed class ScoreBurst : IEntity
             ScoreBurstTuning.SpheroidBurstSlot,
             ScoreBurstTuning.SpheroidPointsSlot,
             bounds);
+    }
+
+    /// <summary>Draws the burst as a shape filled with one colour. Once the burst is over, it draws the points the same way.</summary>
+    /// <param name="spriteBatch">What the burst is drawn with.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        if (!this.IsAlive()) return;
+
+        if (ShowingPoints)
+        {
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _pointsSprite, PointsBounds,
+                _sprites.Blitter.GetSlotColour(PointsSlot));
+            return;
+        }
+
+        if (_animationFrameIndex < _animationFrames.Length)
+            _sprites.Blitter.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds,
+                _sprites.Blitter.GetSlotColour(BurstSlot));
+    }
+
+    /// <summary>The box the dead enemy took up, which is also the box the burst is drawn in.</summary>
+    public Rectangle GetBounds()
+    {
+        return _bounds;
+    }
+
+    /// <summary>
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On each step the burst shows its next animation frame. When the burst is over the points are
+    ///     shown, and then the whole thing is gone.
+    /// </summary>
+    /// <param name="gameTime">Not used. The burst counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
+    /// <param name="field">Not used.</param>
+    public void Update(GameTime gameTime, PlayField field)
+    {
+        if (!this.IsAlive()) return;
+
+        if (!_stepTimer.Tick(ScoreBurstTuning.StepIntervalArcadeFrames)) return;
+
+        if (!ShowingPoints)
+        {
+            // When the burst's steps run out, the burst goes and the points are shown in its place.
+            if (--_burstStepsRemaining <= 0)
+            {
+                ShowingPoints = true;
+                PointsStepsRemaining = ScoreBurstTuning.PointsSteps;
+                return;
+            }
+
+            _animationFrameIndex++;
+            return;
+        }
+
+        if (--PointsStepsRemaining <= 0) LifeState = EntityLifeState.Dead;
     }
 }

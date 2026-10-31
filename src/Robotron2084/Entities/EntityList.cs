@@ -30,33 +30,28 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
 {
     private readonly List<T> _items = [];
 
+    /// <inheritdoc />
+    public int Count => _items.Count;
+
     /// <summary>Every entity in the list, whatever kind it is.</summary>
     public IEnumerable<IEntity> Entities => _items;
+
+    /// <summary>The entity at <paramref name="index" />.</summary>
+    /// <param name="index">Its place in the list, counting from 0.</param>
+    public T this[int index] => _items[index];
+
+    /// <summary>Adds an entity to the list.</summary>
+    /// <param name="entity">The entity to add.</param>
+    public void Add(T entity)
+    {
+        _items.Add(entity);
+    }
 
     /// <inheritdoc />
     public void DrawAll(SpriteBatch spriteBatch, PlayField field)
     {
         foreach (var entity in _items) field.DrawEntity(entity, spriteBatch);
     }
-
-    /// <inheritdoc />
-    public void PruneDead()
-    {
-        _items.RemoveAll(entity => entity.IsDead());
-    }
-
-    /// <inheritdoc />
-    public void UpdateAll(GameTime gameTime, PlayField field)
-    {
-        foreach (var entity in _items) field.UpdateEntity(entity, gameTime);
-    }
-
-    /// <inheritdoc />
-    public int Count => _items.Count;
-
-    /// <summary>The entity at <paramref name="index" />.</summary>
-    /// <param name="index">Its place in the list, counting from 0.</param>
-    public T this[int index] => _items[index];
 
     /// <summary>Goes through the list in order.</summary>
     public IEnumerator<T> GetEnumerator()
@@ -69,10 +64,15 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
         return GetEnumerator();
     }
 
-    /// <summary>Adds an entity to the list.</summary>
-    /// <param name="entity">The entity to add.</param>
-    public void Add(T entity)
+    /// <inheritdoc />
+    public void PruneDead()
     {
-        _items.Add(entity);
+        _items.RemoveAll(entity => entity.IsDead());
+    }
+
+    /// <inheritdoc />
+    public void UpdateAll(GameTime gameTime, PlayField field)
+    {
+        foreach (var entity in _items) field.UpdateEntity(entity, gameTime);
     }
 }

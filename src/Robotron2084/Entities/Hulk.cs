@@ -30,50 +30,6 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 {
-    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRH11.ASM</c> <c>HULK</c> ("WAIT FOR STATUS TO GO"),
-    ///             <c>
-    ///                 BITA #$7F / BEQ
-    ///                 HULKL / NAP 8,HULK
-    ///             </c>
-    ///             , which runs on into its first step with no more sleep.
-    ///         </item>
-    ///         <item>Disassembly: <c>$0030</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int LivePollArcadeFrames = 8;
-
-    /// <summary>
-    ///     The hulk does not head exactly for its target. The spot it heads for can be off to the right or below by up to one less than
-    ///     this many columns or rows.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
-    ///         <item>
-    ///             Disassembly: <c>HULK_MOVE_HORIZONTALLY</c> (<c>$0125</c>) and <c>MAKE_HULK_MOVE_VERTICALLY</c> (
-    ///             <c>$0145</c>),
-    ///             <c>ANDA #$1F / ADDA #$F0</c>, added to the column or the row of the target's top-left corner.
-    ///         </item>
-    ///     </list>
-    /// </remarks>
-    private const int TargetOffsetMaxExclusive = 16;
-
-    /// <summary>
-    ///     The furthest to the left or above its target that the spot the hulk heads for can be, in columns or rows (see
-    ///     <see cref="TargetOffsetMaxExclusive" />). It is negative.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
-    ///         <item>Disassembly: <c>$0125</c> and <c>$0145</c>, <c>ADDA #$F0</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int TargetOffsetMin = -16;
-
     /// <summary>
     ///     How far past the right wall, in columns, the spot a hulk heads for can be before it wraps round to the left wall.
     /// </summary>
@@ -104,6 +60,28 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </remarks>
     private const int DestinationWrapRowsAboveTopWall = 0x18 - 0x06;
 
+    /// <summary>How long the arcade's routine sleeps between one look at whether the game is live and the next.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRH11.ASM</c> <c>HULK</c> ("WAIT FOR STATUS TO GO"),
+    ///             <c>
+    ///                 BITA #$7F / BEQ
+    ///                 HULKL / NAP 8,HULK
+    ///             </c>
+    ///             , which runs on into its first step with no more sleep.
+    ///         </item>
+    ///         <item>Disassembly: <c>$0030</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int LivePollArcadeFrames = 8;
+
+    /// <summary>One more than the most steps a hulk may take before it picks a new direction.</summary>
+    private const int NewDirectionStepsMaxExclusive = 33;
+
+    /// <summary>The fewest steps a hulk takes before it picks a new direction.</summary>
+    private const int NewDirectionStepsMin = 1;
+
     /// <summary>How many columns past the right wall the phantom target is (see <see cref="GetPhantomTargetPosition" />).</summary>
     /// <remarks>Disassembly: the byte <c>$C8</c> at <c>$7E05</c>, read as a column. The right wall is at column <c>$8F</c>.</remarks>
     private const int PhantomColumnsPastRightWall = 0xC8 - 0x8F;
@@ -111,12 +89,6 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <summary>How many rows above the top wall the phantom target is (see <see cref="GetPhantomTargetPosition" />).</summary>
     /// <remarks>Disassembly: the byte <c>$13</c> at <c>$7E06</c>, read as a row. The top wall is at row <c>$18</c>.</remarks>
     private const int PhantomRowsAboveTopWall = 0x18 - 0x13;
-
-    /// <summary>One more than the most steps a hulk may take before it picks a new direction.</summary>
-    private const int NewDirectionStepsMaxExclusive = 33;
-
-    /// <summary>The fewest steps a hulk takes before it picks a new direction.</summary>
-    private const int NewDirectionStepsMin = 1;
 
     /// <summary>
     ///     A laser shoves a hulk sideways by one arcade pixel. Some shoves are this many times bigger (see
@@ -181,6 +153,34 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </remarks>
     private const int SidewaysShortStepArcadePixels = 3;
 
+    /// <summary>
+    ///     The hulk does not head exactly for its target. The spot it heads for can be off to the right or below by up to one less than
+    ///     this many columns or rows.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
+    ///         <item>
+    ///             Disassembly: <c>HULK_MOVE_HORIZONTALLY</c> (<c>$0125</c>) and <c>MAKE_HULK_MOVE_VERTICALLY</c> (
+    ///             <c>$0145</c>),
+    ///             <c>ANDA #$1F / ADDA #$F0</c>, added to the column or the row of the target's top-left corner.
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    private const int TargetOffsetMaxExclusive = 16;
+
+    /// <summary>
+    ///     The furthest to the left or above its target that the spot the hulk heads for can be, in columns or rows (see
+    ///     <see cref="TargetOffsetMaxExclusive" />). It is negative.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
+    ///         <item>Disassembly: <c>$0125</c> and <c>$0145</c>, <c>ADDA #$F0</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int TargetOffsetMin = -16;
+
     /// <summary>How far every step up or down goes, in arcade pixels.</summary>
     private const int VerticalStepArcadePixels = 2;
 
@@ -230,11 +230,12 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private bool _hasPickedFirstDirection;
     private bool _isMovingHorizontally;
 
+    private int _newDirectionStepsRemaining;
+
     /// <summary>The inside of the wall as it was on the last update, for keeping the hulk inside it.</summary>
     private Rectangle? _playfieldBounds;
 
     private IntVector2 _position;
-    private int _newDirectionStepsRemaining;
 
     /// <summary>Which step of the walk pattern comes next.</summary>
     private int _walkCycleStep;
@@ -281,25 +282,6 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         _animationFrameIndex = VerticalAnimationFrames[0];
     }
 
-    /// <summary>Which animation frame is showing, as a place in <see cref="SpriteSet.HulkAnimationFrames" />.</summary>
-    internal int AnimationFrameIndex => _animationFrameIndex;
-
-    /// <summary>Which way the hulk is walking.</summary>
-    internal Direction8 Direction { get; private set; }
-
-    /// <summary>The walk animation frame the hulk is showing. The appear effect needs it.</summary>
-    /// <remarks>A hulk is never blown apart, but it does appear at the start of a wave.</remarks>
-    public Texture2D GetCurrentAnimationFrame()
-    {
-        return _sprites.HulkAnimationFrames[_animationFrameIndex];
-    }
-
-    /// <summary>The box the hulk takes up on the screen.</summary>
-    public Rectangle GetBounds()
-    {
-        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
-    }
-
     /// <summary>Always Alive. A hulk cannot be killed, so it is never Dying or Dead.</summary>
     public EntityLifeState LifeState => EntityLifeState.Alive;
 
@@ -312,51 +294,11 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </remarks>
     public IntVector2 Position => _position;
 
-    /// <summary>Draws the walk animation frame that is showing.</summary>
-    /// <param name="spriteBatch">What the hulk is drawn with.</param>
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
-    }
+    /// <summary>Which animation frame is showing, as a place in <see cref="SpriteSet.HulkAnimationFrames" />.</summary>
+    internal int AnimationFrameIndex => _animationFrameIndex;
 
-    /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the hulk takes a step. If the wall is in the way, it does not step and picks a new
-    ///     direction.
-    /// </summary>
-    /// <param name="gameTime">Not used. The hulk counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
-    {
-        _playfieldBounds = field.Wall.PlayfieldBounds;
-        if (field.RobotsFrozen()) return;
-
-        if (!_hasPickedFirstDirection)
-        {
-            SetFirstDirection(field);
-            return;
-        }
-
-        if (_beatTimer.Tick(_beatIntervalArcadeFrames)) ActOnBeat(field);
-    }
-
-    /// <summary>
-    ///     Picks the hulk's first direction and sets the time of its first step, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> timer is set so
-    ///     that it comes due when that time has gone by.
-    /// </summary>
-    /// <param name="field">The playfield, which works out how long the wait is.</param>
-    public void BeginPlay(PlayField field)
-    {
-        SetFirstDirection(field);
-        _beatTimer = field.CreateFirstBeatTimer(LivePollArcadeFrames, 0, _beatIntervalArcadeFrames);
-    }
-
-    /// <summary>
-    ///     Where the hulk is heading for now: the player, a family member, or the spot off the corner of the playfield.
-    /// </summary>
-    internal IntVector2 GetTargetPosition()
-    {
-        return _getTargetPosition();
-    }
+    /// <summary>Which way the hulk is walking.</summary>
+    internal Direction8 Direction { get; private set; }
 
     /// <summary>Shoves the hulk the way the laser that hit it was going. The hulk stops at the wall.</summary>
     /// <param name="direction">The way the laser was going: left, right or neither, and up, down or neither.</param>
@@ -390,11 +332,110 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         }
     }
 
+    /// <summary>
+    ///     Picks the hulk's first direction and sets the time of its first step, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game goes live. The <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> timer is set so
+    ///     that it comes due when that time has gone by.
+    /// </summary>
+    /// <param name="field">The playfield, which works out how long the wait is.</param>
+    public void BeginPlay(PlayField field)
+    {
+        SetFirstDirection(field);
+        _beatTimer = field.CreateFirstBeatTimer(LivePollArcadeFrames, 0, _beatIntervalArcadeFrames);
+    }
+
+    /// <summary>Draws the walk animation frame that is showing.</summary>
+    /// <param name="spriteBatch">What the hulk is drawn with.</param>
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+    }
+
+    /// <summary>The box the hulk takes up on the screen.</summary>
+    public Rectangle GetBounds()
+    {
+        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    }
+
+    /// <summary>The walk animation frame the hulk is showing. The appear effect needs it.</summary>
+    /// <remarks>A hulk is never blown apart, but it does appear at the start of a wave.</remarks>
+    public Texture2D GetCurrentAnimationFrame()
+    {
+        return _sprites.HulkAnimationFrames[_animationFrameIndex];
+    }
+
+    /// <summary>
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the hulk takes a step. If the wall is in the way, it does not step and picks a new
+    ///     direction.
+    /// </summary>
+    /// <param name="gameTime">Not used. The hulk counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
+    /// <param name="field">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField field)
+    {
+        _playfieldBounds = field.Wall.PlayfieldBounds;
+        if (field.RobotsFrozen()) return;
+
+        if (!_hasPickedFirstDirection)
+        {
+            SetFirstDirection(field);
+            return;
+        }
+
+        if (_beatTimer.Tick(_beatIntervalArcadeFrames)) ActOnBeat(field);
+    }
+
+    /// <summary>
+    ///     Works out where a hulk with nothing real to stalk heads for: a fixed spot off the top-right corner of the
+    ///     playfield. Such a hulk drifts to that corner and stays near it.
+    /// </summary>
+    /// <param name="playfieldBounds">The inside of the playfield wall, in port pixels.</param>
+    /// <returns>The spot, in port pixels. It is outside the wall.</returns>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRH11.ASM</c> <c>HULKND</c>, which follows the hulk's target pointer without checking
+    ///             it.
+    ///         </item>
+    ///         <item>
+    ///             Disassembly: <c>$010D</c>, <c>LDY [$09,U]</c>. A hulk whose search of the family list found nobody holds a
+    ///             target of 0, so this reads the two bytes at <c>$0000</c> and gets <c>$7E01</c>, which is not an object. The
+    ///             hulk
+    ///             takes the bytes at <c>$7E05</c> and <c>$7E06</c> (<c>$C8</c> and <c>$13</c>) as that object's column and
+    ///             row.
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    internal static IntVector2 GetPhantomTargetPosition(Rectangle playfieldBounds)
+    {
+        return new IntVector2(
+            playfieldBounds.Right + ScreenSize.ToPortPixelsFromColumns(PhantomColumnsPastRightWall),
+            playfieldBounds.Y - ScreenSize.ToPortPixelsFromArcadePixels(PhantomRowsAboveTopWall));
+    }
+
+    /// <summary>
+    ///     Where the hulk is heading for now: the player, a family member, or the spot off the corner of the playfield.
+    /// </summary>
+    internal IntVector2 GetTargetPosition()
+    {
+        return _getTargetPosition();
+    }
+
     /// <summary>Puts the hulk at <paramref name="position" />.</summary>
     /// <param name="position">Where to put the hulk's top-left corner.</param>
     internal void TeleportTo(IntVector2 position)
     {
         _position = position;
+    }
+
+    /// <summary>Gets the walk animation frames for a direction, in the order they are shown.</summary>
+    /// <param name="direction">The way the hulk is walking.</param>
+    private static int[] GetFrames(Direction8 direction)
+    {
+        return direction switch
+        {
+            Direction8.Left => LeftAnimationFrames,
+            Direction8.Right => RightAnimationFrames,
+            _ => VerticalAnimationFrames // Walking up and walking down use the same animation frames, as in the arcade.
+        };
     }
 
     /// <summary>
@@ -428,57 +469,16 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         if (--_newDirectionStepsRemaining <= 0) TurnToNewDirection(field);
     }
 
-    /// <summary>Gets the walk animation frames for a direction, in the order they are shown.</summary>
-    /// <param name="direction">The way the hulk is walking.</param>
-    private static int[] GetFrames(Direction8 direction)
-    {
-        return direction switch
-        {
-            Direction8.Left => LeftAnimationFrames,
-            Direction8.Right => RightAnimationFrames,
-            _ => VerticalAnimationFrames // Walking up and walking down use the same animation frames, as in the arcade.
-        };
-    }
-
-    /// <summary>
-    ///     Picks the hulk's first direction, which is always left or right, and starts its walk from its first animation
-    ///     frame.
-    /// </summary>
-    /// <param name="field">The playfield.</param>
-    private void SetFirstDirection(PlayField field)
-    {
-        _hasPickedFirstDirection = true;
-        _isMovingHorizontally = true;
-        PickDirection(field);
-        _animationFrameIndex = GetFrames(Direction)[0];
-    }
-
-    /// <summary>
-    ///     Works out where a hulk with nothing real to stalk heads for: a fixed spot off the top-right corner of the
-    ///     playfield. Such a hulk drifts to that corner and stays near it.
-    /// </summary>
-    /// <param name="playfieldBounds">The inside of the playfield wall, in port pixels.</param>
-    /// <returns>The spot, in port pixels. It is outside the wall.</returns>
+    /// <summary>Picks at random how many steps the hulk takes before its next turn.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRH11.ASM</c> <c>HULKND</c>, which follows the hulk's target pointer without checking
-    ///             it.
-    ///         </item>
-    ///         <item>
-    ///             Disassembly: <c>$010D</c>, <c>LDY [$09,U]</c>. A hulk whose search of the family list found nobody holds a
-    ///             target of 0, so this reads the two bytes at <c>$0000</c> and gets <c>$7E01</c>, which is not an object. The
-    ///             hulk
-    ///             takes the bytes at <c>$7E05</c> and <c>$7E06</c> (<c>$C8</c> and <c>$13</c>) as that object's column and
-    ///             row.
-    ///         </item>
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKND</c>.</item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
     ///     </list>
     /// </remarks>
-    internal static IntVector2 GetPhantomTargetPosition(Rectangle playfieldBounds)
+    private int GetRandomNewDirectionSteps()
     {
-        return new IntVector2(
-            playfieldBounds.Right + ScreenSize.ToPortPixelsFromColumns(PhantomColumnsPastRightWall),
-            playfieldBounds.Y - ScreenSize.ToPortPixelsFromArcadePixels(PhantomRowsAboveTopWall));
+        return _random.Next(NewDirectionStepsMin, NewDirectionStepsMaxExclusive);
     }
 
     /// <summary>
@@ -525,6 +525,19 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     }
 
     /// <summary>
+    ///     Picks the hulk's first direction, which is always left or right, and starts its walk from its first animation
+    ///     frame.
+    /// </summary>
+    /// <param name="field">The playfield.</param>
+    private void SetFirstDirection(PlayField field)
+    {
+        _hasPickedFirstDirection = true;
+        _isMovingHorizontally = true;
+        PickDirection(field);
+        _animationFrameIndex = GetFrames(Direction)[0];
+    }
+
+    /// <summary>
     ///     Turns the hulk. A hulk that was walking sideways now walks up or down, and the other way about. It also picks
     ///     at random how many steps it takes before its next turn.
     /// </summary>
@@ -545,17 +558,5 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         PickDirection(field);
         _walkCycleStep = 0;
         _animationFrameIndex = GetFrames(Direction)[0];
-    }
-
-    /// <summary>Picks at random how many steps the hulk takes before its next turn.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKND</c>.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private int GetRandomNewDirectionSteps()
-    {
-        return _random.Next(NewDirectionStepsMin, NewDirectionStepsMaxExclusive);
     }
 }

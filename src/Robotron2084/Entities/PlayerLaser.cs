@@ -39,25 +39,6 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>The way the laser flies. It never changes.</summary>
     public Direction8 Direction { get; }
 
-    /// <summary>The sprite for the way this laser is flying. The arcade has four laser sprites (<c>LTAB</c>, notes §19).</summary>
-    public Texture2D GetCurrentAnimationFrame()
-    {
-        return Direction switch
-        {
-            Direction8.Left or Direction8.Right => _sprites.LaserBarSprite,
-            Direction8.Up or Direction8.Down => _sprites.LaserColumnSprite,
-            Direction8.UpLeft or Direction8.DownRight => _sprites.LaserDiagonalMainSprite,
-            Direction8.DownLeft or Direction8.UpRight => _sprites.LaserDiagonalAntiSprite,
-            _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}")
-        };
-    }
-
-    /// <summary>The box the laser takes up on the screen.</summary>
-    public Rectangle GetBounds()
-    {
-        return new Rectangle(_position.X, _position.Y, Size, Size);
-    }
-
     /// <summary>Alive until it reaches the wall or hits something. Then it is dead at once.</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
@@ -73,6 +54,33 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
         // The laser's palette slot keeps changing colour, so the whole laser flashes.
         _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
             _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
+    }
+
+    /// <summary>The box the laser takes up on the screen.</summary>
+    public Rectangle GetBounds()
+    {
+        return new Rectangle(_position.X, _position.Y, Size, Size);
+    }
+
+    /// <summary>The sprite for the way this laser is flying. The arcade has four laser sprites (<c>LTAB</c>, notes §19).</summary>
+    public Texture2D GetCurrentAnimationFrame()
+    {
+        return Direction switch
+        {
+            Direction8.Left or Direction8.Right => _sprites.LaserBarSprite,
+            Direction8.Up or Direction8.Down => _sprites.LaserColumnSprite,
+            Direction8.UpLeft or Direction8.DownRight => _sprites.LaserDiagonalMainSprite,
+            Direction8.DownLeft or Direction8.UpRight => _sprites.LaserDiagonalAntiSprite,
+            _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}")
+        };
+    }
+
+    /// <summary>Kills the laser at once, which frees its slot for a new laser.</summary>
+    public void Kill()
+    {
+        if (!this.IsAlive()) return;
+
+        LifeState = EntityLifeState.Dead;
     }
 
     /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The laser flies one step the way it is going, and dies if it reaches the wall.</summary>
@@ -92,13 +100,5 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
             field.SpawnLaserWallFlare(GetBounds(), Direction);
             Kill();
         }
-    }
-
-    /// <summary>Kills the laser at once, which frees its slot for a new laser.</summary>
-    public void Kill()
-    {
-        if (!this.IsAlive()) return;
-
-        LifeState = EntityLifeState.Dead;
     }
 }

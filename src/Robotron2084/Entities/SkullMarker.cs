@@ -30,9 +30,9 @@ public sealed class SkullMarker : IEntity
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SkullCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SkullCollisionSize.Height));
 
+    private readonly ArcadeFrameTimer _lifeTimer = new();
     private readonly IntVector2 _position;
     private readonly SpriteSet _sprites;
-    private readonly ArcadeFrameTimer _lifeTimer = new();
 
     /// <summary>Leaves a skull where a family member was killed.</summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -41,12 +41,6 @@ public sealed class SkullMarker : IEntity
     {
         _sprites = sprites;
         _position = position;
-    }
-
-    /// <summary>The box the skull is drawn in.</summary>
-    public Rectangle GetBounds()
-    {
-        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
     }
 
     /// <summary>Alive until its time on the field runs out.</summary>
@@ -64,12 +58,18 @@ public sealed class SkullMarker : IEntity
         _sprites.Blitter.DrawSprite(spriteBatch, _sprites.SkullSprite, GetBounds(), Color.White);
     }
 
+    /// <summary>The box the skull is drawn in.</summary>
+    public Rectangle GetBounds()
+    {
+        return new Rectangle(_position.X, _position.Y, CollisionSize.Width, CollisionSize.Height);
+    }
+
     /// <summary>Counts down the time the skull has left on the field.</summary>
     /// <param name="gameTime">Not used. The time is counted in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="field">Not used.</param>
     public void Update(GameTime gameTime, PlayField field)
     {
-        if (_lifeTimer.Tick(LifeArcadeFrames)) 
+        if (_lifeTimer.Tick(LifeArcadeFrames))
             LifeState = EntityLifeState.Dead;
     }
 }

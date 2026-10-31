@@ -26,18 +26,6 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>How many animation frames are in each of a family member's walk sets.</summary>
     private const int AnimationFramesPerSet = 3;
 
-    /// <summary>How many direction blocks the walk table has, one for each way a family member can walk.</summary>
-    private const int PossibleDirections = 8;
-
-    /// <summary>The most steps a family member takes before it picks a new direction.</summary>
-    private const int NewDirectionMaxSteps = 128;
-
-    /// <summary>
-    ///     The most <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> a family member waits before
-    ///     its first step, so that a group of family members does not all start together.
-    /// </summary>
-    private const int FirstStepMaxTicks = 8;
-
     /// <summary>
     ///     How long a family member waits between steps. This number is different from the arcade's on purpose. Do not
     ///     change it back.
@@ -49,6 +37,18 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     ///     </list>
     /// </remarks>
     private const int BeatIntervalArcadeFrames = 16;
+
+    /// <summary>
+    ///     The most <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> a family member waits before
+    ///     its first step, so that a group of family members does not all start together.
+    /// </summary>
+    private const int FirstStepMaxTicks = 8;
+
+    /// <summary>The most steps a family member takes before it picks a new direction.</summary>
+    private const int NewDirectionMaxSteps = 128;
+
+    /// <summary>How many direction blocks the walk table has, one for each way a family member can walk.</summary>
+    private const int PossibleDirections = 8;
 
     /// <summary>How many steps each direction block of the walk table has.</summary>
     private const int SubStepsPerDirection = 4;
@@ -92,6 +92,9 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         (-2, 1, 0), (-1, 1, 1), (-2, 1, 0), (-1, 1, 1)
     };
 
+    /// <summary>Times the family member's <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>.</summary>
+    private readonly ArcadeFrameTimer _beatTimer = new();
+
     private readonly Random _random;
 
     private readonly SpriteSet _sprites;
@@ -99,13 +102,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Which walk animation frame is showing, counted through this family member's own animation frames.</summary>
     private int _animationFrameIndex;
 
-    /// <summary>Times the family member's <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>.</summary>
-    private readonly ArcadeFrameTimer _beatTimer = new();
-
     /// <summary>Which direction block of the walk table (see <see cref="Steps" />) the family member is using.</summary>
     private int _directionBlock;
-
-    private IntVector2 _position;
 
     /// <summary>
     ///     <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">Ticks</see> left before the family member takes its first step. Each family member gets its own number, so a group
@@ -115,6 +113,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Steps left before the family member picks a new direction.</summary>
     private int _newDirectionStepsRemaining;
+
+    private IntVector2 _position;
 
     /// <summary>Which step of the direction block comes next.</summary>
     private int _subStep;
@@ -159,6 +159,18 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Which family member this is: Mikey, Mommy or Daddy. This decides its animation frames and its size.</summary>
     public HumanKind Kind { get; }
 
+    /// <summary>Alive until it is killed, rescued or reprogrammed.</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Where the family member's top-left corner is.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HUMAN</c>, the OBJX/OBJY registers.</item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
+    ///     </list>
+    /// </remarks>
+    public IntVector2 Position => _position;
+
     /// <summary>This family member's place in the family list.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -172,32 +184,6 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>How many steps the family member has taken.</summary>
     internal int StepCount { get; private set; }
-
-    /// <summary>The walk animation frame the family member is showing.</summary>
-    public Texture2D GetCurrentAnimationFrame()
-    {
-        return Kind.GetAnimationFrames(_sprites)[_animationFrameIndex];
-    }
-
-    /// <summary>The box the family member takes up on the screen.</summary>
-    public Rectangle GetBounds()
-    {
-        var (w, h) = Kind.GetArcadeCollisionSize();
-        return new Rectangle(_position.X, _position.Y, ScreenSize.ToPortPixelsFromArcadePixels(w),
-            ScreenSize.ToPortPixelsFromArcadePixels(h));
-    }
-
-    /// <summary>Alive until it is killed, rescued or reprogrammed.</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
-
-    /// <summary>Where the family member's top-left corner is.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRH11.ASM</c> <c>HUMAN</c>, the OBJX/OBJY registers.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
-    ///     </list>
-    /// </remarks>
-    public IntVector2 Position => _position;
 
     /// <summary>
     ///     Draws the walk animation frame. While the family member is being reprogrammed, it is drawn as a flashing
@@ -225,28 +211,18 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _sprites.Blitter.DrawSprite(spriteBatch, frames[_animationFrameIndex], GetBounds(), Color.White);
     }
 
-    /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the family member takes the next step of its walk. If the step is blocked, it picks a
-    ///     new direction.
-    /// </summary>
-    /// <param name="gameTime">Not used. The family member counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
-    /// <param name="field">The playfield.</param>
-    public void Update(GameTime gameTime, PlayField field)
+    /// <summary>The box the family member takes up on the screen.</summary>
+    public Rectangle GetBounds()
     {
-        // Unlike the robots, family members do not wait for the wave to start. They walk about while the robots are still appearing.
-        if (!this.IsAlive() || IsBeingReprogrammed) return;
+        var (w, h) = Kind.GetArcadeCollisionSize();
+        return new Rectangle(_position.X, _position.Y, ScreenSize.ToPortPixelsFromArcadePixels(w),
+            ScreenSize.ToPortPixelsFromArcadePixels(h));
+    }
 
-        if (_firstStepTicksRemaining > 0)
-        {
-            // When this wait is over, the family member has its first beat on this tick.
-            if (--_firstStepTicksRemaining > 0) return;
-        }
-        else if (!_beatTimer.Tick(BeatIntervalArcadeFrames))
-        {
-            return;
-        }
-
-        ActOnBeat(field);
+    /// <summary>The walk animation frame the family member is showing.</summary>
+    public Texture2D GetCurrentAnimationFrame()
+    {
+        return Kind.GetAnimationFrames(_sprites)[_animationFrameIndex];
     }
 
     /// <summary>Kills the family member. It is gone at once, with no death animation.</summary>
@@ -272,6 +248,30 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the family member takes the next step of its walk. If the step is blocked, it picks a
+    ///     new direction.
+    /// </summary>
+    /// <param name="gameTime">Not used. The family member counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
+    /// <param name="field">The playfield.</param>
+    public void Update(GameTime gameTime, PlayField field)
+    {
+        // Unlike the robots, family members do not wait for the wave to start. They walk about while the robots are still appearing.
+        if (!this.IsAlive() || IsBeingReprogrammed) return;
+
+        if (_firstStepTicksRemaining > 0)
+        {
+            // When this wait is over, the family member has its first beat on this tick.
+            if (--_firstStepTicksRemaining > 0) return;
+        }
+        else if (!_beatTimer.Tick(BeatIntervalArcadeFrames))
+        {
+            return;
+        }
+
+        ActOnBeat(field);
+    }
+
+    /// <summary>
     ///     The longer side of the family member's box, in port pixels. When a family member is put on the field, a square
     ///     this big is kept clear for it.
     /// </summary>
@@ -281,16 +281,6 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     {
         var (width, height) = kind.GetArcadeCollisionSize();
         return ScreenSize.ToPortPixelsFromArcadePixels(Math.Max(width, height));
-    }
-
-    /// <summary>Says whether this family member is on the field and free: alive, and not being held by a brain.</summary>
-    /// <remarks>
-    ///     Original source: a family member that is dead or being reprogrammed is off the family list (<c>RRH11.ASM</c>
-    ///     <c>HTAB</c>), so nothing can chase, catch, kill or rescue it.
-    /// </remarks>
-    internal bool IsGraspable()
-    {
-        return this.IsAlive() && !IsBeingReprogrammed;
     }
 
     /// <summary>Starts the reprogramming. The family member stops walking and starts flashing.</summary>
@@ -312,6 +302,16 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dead;
     }
 
+    /// <summary>Says whether this family member is on the field and free: alive, and not being held by a brain.</summary>
+    /// <remarks>
+    ///     Original source: a family member that is dead or being reprogrammed is off the family list (<c>RRH11.ASM</c>
+    ///     <c>HTAB</c>), so nothing can chase, catch, kill or rescue it.
+    /// </remarks>
+    internal bool IsGraspable()
+    {
+        return this.IsAlive() && !IsBeingReprogrammed;
+    }
+
     /// <summary>Puts the family member somewhere without walking it there.</summary>
     /// <param name="position">Where to put the family member.</param>
     /// <remarks>
@@ -323,6 +323,18 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     internal void MoveTo(IntVector2 position)
     {
         _position = position;
+    }
+
+    /// <summary>True when the family member's next step would touch an electrode that is still standing.</summary>
+    /// <param name="next">The box the family member would take up after the step.</param>
+    /// <param name="field">The playfield, which holds the electrodes.</param>
+    private static bool IsOverlappingLivingElectrode(Rectangle next, PlayField field)
+    {
+        foreach (var electrode in field.GetElectrodes())
+            if (electrode.IsAlive() && electrode.GetBounds().Intersects(next))
+                return true;
+
+        return false;
     }
 
     /// <summary>
@@ -350,18 +362,6 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
         _position = possibleNextPosition;
         _subStep = (_subStep + 1) % SubStepsPerDirection;
         if (--_newDirectionStepsRemaining <= 0) PickNewDirection();
-    }
-
-    /// <summary>True when the family member's next step would touch an electrode that is still standing.</summary>
-    /// <param name="next">The box the family member would take up after the step.</param>
-    /// <param name="field">The playfield, which holds the electrodes.</param>
-    private static bool IsOverlappingLivingElectrode(Rectangle next, PlayField field)
-    {
-        foreach (var electrode in field.GetElectrodes())
-            if (electrode.IsAlive() && electrode.GetBounds().Intersects(next))
-                return true;
-
-        return false;
     }
 
     /// <summary>Picks a new direction at random, and picks at random how many steps to take before the next change.</summary>

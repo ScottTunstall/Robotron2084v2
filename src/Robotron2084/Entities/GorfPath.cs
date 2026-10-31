@@ -1,4 +1,4 @@
-﻿namespace Robotron2084.Entities;
+namespace Robotron2084.Entities;
 
 /// <summary>Works out the curve Gorf follows through the air on each hop, using whole numbers only.</summary>
 /// <remarks>

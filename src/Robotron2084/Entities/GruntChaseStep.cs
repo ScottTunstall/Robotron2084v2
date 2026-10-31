@@ -16,6 +16,18 @@ namespace Robotron2084.Entities;
 /// </remarks>
 internal static class GruntChaseStep
 {
+    /// <summary>How many rows above or below the player a robot is when it makes no step up or down.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRP8.ASM</c> <c>ROB2</c> and the <c>CMPB #$FE</c> before <c>ROB2A</c>: a
+    ///             robot only 1 row above or below the player does not move up or down.
+    ///         </item>
+    ///         <item>Disassembly: <c>MOVE_GRUNT</c> (<c>$39E6</c>) at <c>$39F5</c> and <c>$39FD</c>.</item>
+    ///     </list>
+    /// </remarks>
+    private const int StayPutGapRows = 1;
+
     /// <summary>How far a step goes sideways towards the player, in columns.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -33,18 +45,6 @@ internal static class GruntChaseStep
     ///     </list>
     /// </remarks>
     private const int StepRows = 4;
-
-    /// <summary>How many rows above or below the player a robot is when it makes no step up or down.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRP8.ASM</c> <c>ROB2</c> and the <c>CMPB #$FE</c> before <c>ROB2A</c>: a
-    ///             robot only 1 row above or below the player does not move up or down.
-    ///         </item>
-    ///         <item>Disassembly: <c>MOVE_GRUNT</c> (<c>$39E6</c>) at <c>$39F5</c> and <c>$39FD</c>.</item>
-    ///     </list>
-    /// </remarks>
-    private const int StayPutGapRows = 1;
 
     /// <summary>One column, in port pixels.</summary>
     private static readonly int ColumnPixels = ScreenSize.ToPortPixelsFromColumns(1);

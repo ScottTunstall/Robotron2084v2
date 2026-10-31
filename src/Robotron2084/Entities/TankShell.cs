@@ -93,16 +93,24 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>True when this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>'s <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> bounced the shell off a wall, so the bounce sound can be played.</summary>
     public bool BouncedThisUpdate { get; private set; }
 
+    /// <summary>Alive until it fizzles out or is shot, then dead at once. A shell has no death animation.</summary>
+    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
+
+    /// <summary>Where the shell's top-left corner is.</summary>
+    public IntVector2 Position => _position;
+
     /// <summary>How far the shell goes sideways on each move, in 256ths of a column.</summary>
     internal int VelocityX => _velocity.X;
 
     /// <summary>How far the shell goes up or down on each move, in 256ths of a row.</summary>
     internal int VelocityY => _velocity.Y;
 
-    /// <summary>The shell's one animation frame. It never flashes.</summary>
-    public Texture2D GetCurrentAnimationFrame()
+    /// <summary>Draws the shell. It is drawn at its own size and never flashes.</summary>
+    /// <param name="spriteBatch">What the shell is drawn with.</param>
+    public void Draw(SpriteBatch spriteBatch)
     {
-        return _sprites.TankShellSprite;
+        if (this.IsAlive())
+            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the shell takes up on the screen.</summary>
@@ -111,18 +119,24 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         return new Rectangle(_position.X, _position.Y, BoxWidth, BoxHeight);
     }
 
-    /// <summary>Alive until it fizzles out or is shot, then dead at once. A shell has no death animation.</summary>
-    public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
-
-    /// <summary>Where the shell's top-left corner is.</summary>
-    public IntVector2 Position => _position;
-
-    /// <summary>Draws the shell. It is drawn at its own size and never flashes.</summary>
-    /// <param name="spriteBatch">What the shell is drawn with.</param>
-    public void Draw(SpriteBatch spriteBatch)
+    /// <summary>The shell's one animation frame. It never flashes.</summary>
+    public Texture2D GetCurrentAnimationFrame()
     {
-        if (this.IsAlive())
-            _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        return _sprites.TankShellSprite;
+    }
+
+    /// <summary>Takes the shell off the field at once.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRTK4.ASM</c> <c>SHLKIL</c>.</item>
+    ///         <item>Disassembly: <c>SHELL_COLLISION_HANDLER</c> (<c>$4FD5</c>).</item>
+    ///     </list>
+    /// </remarks>
+    public void Kill()
+    {
+        if (!this.IsAlive()) return;
+
+        LifeState = EntityLifeState.Dead;
     }
 
     /// <summary>
@@ -148,20 +162,6 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 
         if (_moveTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) MoveOnce();
         if (_beatTimer.Tick(TankShellTuning.BeatIntervalArcadeFrames)) ActOnBeat();
-    }
-
-    /// <summary>Takes the shell off the field at once.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRTK4.ASM</c> <c>SHLKIL</c>.</item>
-    ///         <item>Disassembly: <c>SHELL_COLLISION_HANDLER</c> (<c>$4FD5</c>).</item>
-    ///     </list>
-    /// </remarks>
-    public void Kill()
-    {
-        if (!this.IsAlive()) return;
-
-        LifeState = EntityLifeState.Dead;
     }
 
     /// <summary>
@@ -238,6 +238,38 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         return (int)Math.Floor(value / (double)divisor);
     }
 
+    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. The shell bounces if its next move would hit a wall. Otherwise it counts down its life.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, <c>XVNEG</c> and <c>YVNEG</c>.</item>
+    ///         <item>
+    ///             Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>),
+    ///             <c>TANK_SHELL_BOUNCE_HORIZONTAL</c> (<c>$4FC1</c>) and <c>TANK_SHELL_BOUNCE_VERTICAL</c>
+    ///             (<c>$4FC7</c>). A <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> that bounces the shell does not count down its life, and a sideways
+    ///             bounce skips the up-and-down check.
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    private void ActOnBeat()
+    {
+        var next = GetNextPosition();
+        if (!IsInsideX(next.X))
+        {
+            _velocity = new IntVector2(~_velocity.X, _velocity.Y);
+            BouncedThisUpdate = true;
+            return;
+        }
+
+        if (!IsInsideY(next.Y))
+        {
+            _velocity = new IntVector2(_velocity.X, ~_velocity.Y);
+            BouncedThisUpdate = true;
+            return;
+        }
+
+        if (--_lifeBeatsRemaining <= 0) LifeState = EntityLifeState.Dead;
+    }
+
     /// <summary>Works out the starting speed of a shot aimed at the player, give or take a miss.</summary>
     /// <param name="playerPosition">The top-left corner of the player, in port pixels.</param>
     /// <param name="shellSpeed">The wave's shell setting.</param>
@@ -261,6 +293,29 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         var gapColumns = playerColumn + missColumns - GetQuotientRoundedDown(_position.X, ColumnPixels);
         var gapRows = playerRow + missRows - GetQuotientRoundedDown(_position.Y, RowPixels);
         return new IntVector2(GetAimedSpeed(gapColumns, shellSpeed), GetAimedSpeed(gapRows, shellSpeed));
+    }
+
+    /// <summary>
+    ///     Works out how far the shell goes on its next move, in 256ths of a pixel, counting the fraction left over from
+    ///     the last move.
+    /// </summary>
+    private IntVector2 GetNextMoveSubpixels()
+    {
+        return new IntVector2(
+            _remainderSubpixels.X + _velocity.X * ColumnPixels,
+            _remainderSubpixels.Y + _velocity.Y * RowPixels);
+    }
+
+    /// <summary>
+    ///     Works out where the shell will be after its next move, from its speed and the fraction left over from the last
+    ///     move.
+    /// </summary>
+    private IntVector2 GetNextPosition()
+    {
+        var subpixels = GetNextMoveSubpixels();
+        return new IntVector2(
+            _position.X + GetQuotientRoundedDown(subpixels.X, ScreenSize.SubpixelsPerPixel),
+            _position.Y + GetQuotientRoundedDown(subpixels.Y, ScreenSize.SubpixelsPerPixel));
     }
 
     /// <summary>Works out the starting speed of a shot aimed at a wall, so that it bounces back across the field.</summary>
@@ -316,6 +371,20 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         return GetBoostedVelocity(new IntVector2(targetColumn - shellColumn, targetRow - shellRow), shellSpeed);
     }
 
+    /// <summary>Says whether the shell, put at this sideways position, would be inside the playfield.</summary>
+    /// <param name="x">The sideways position of the shell's left side.</param>
+    private bool IsInsideX(int x)
+    {
+        return x >= _playfieldBounds.X && x + BoxWidth <= _playfieldBounds.Right;
+    }
+
+    /// <summary>Says whether the shell, put at this up-and-down position, would be inside the playfield.</summary>
+    /// <param name="y">The up-and-down position of the shell's top.</param>
+    private bool IsInsideY(int y)
+    {
+        return y >= _playfieldBounds.Y && y + BoxHeight <= _playfieldBounds.Bottom;
+    }
+
     /// <summary>Makes one move. A move that would take the shell out of the playfield is not made.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -348,74 +417,5 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 
         _position = new IntVector2(x, y);
         _remainderSubpixels = new IntVector2(remainderX, remainderY);
-    }
-
-    /// <summary>Says whether the shell, put at this sideways position, would be inside the playfield.</summary>
-    /// <param name="x">The sideways position of the shell's left side.</param>
-    private bool IsInsideX(int x)
-    {
-        return x >= _playfieldBounds.X && x + BoxWidth <= _playfieldBounds.Right;
-    }
-
-    /// <summary>Says whether the shell, put at this up-and-down position, would be inside the playfield.</summary>
-    /// <param name="y">The up-and-down position of the shell's top.</param>
-    private bool IsInsideY(int y)
-    {
-        return y >= _playfieldBounds.Y && y + BoxHeight <= _playfieldBounds.Bottom;
-    }
-
-    /// <summary>
-    ///     Works out how far the shell goes on its next move, in 256ths of a pixel, counting the fraction left over from
-    ///     the last move.
-    /// </summary>
-    private IntVector2 GetNextMoveSubpixels()
-    {
-        return new IntVector2(
-            _remainderSubpixels.X + _velocity.X * ColumnPixels,
-            _remainderSubpixels.Y + _velocity.Y * RowPixels);
-    }
-
-    /// <summary>
-    ///     Works out where the shell will be after its next move, from its speed and the fraction left over from the last
-    ///     move.
-    /// </summary>
-    private IntVector2 GetNextPosition()
-    {
-        var subpixels = GetNextMoveSubpixels();
-        return new IntVector2(
-            _position.X + GetQuotientRoundedDown(subpixels.X, ScreenSize.SubpixelsPerPixel),
-            _position.Y + GetQuotientRoundedDown(subpixels.Y, ScreenSize.SubpixelsPerPixel));
-    }
-
-    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. The shell bounces if its next move would hit a wall. Otherwise it counts down its life.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, <c>XVNEG</c> and <c>YVNEG</c>.</item>
-    ///         <item>
-    ///             Disassembly: <c>MAKE_TANK_SHELL_BOUNCE_IF_HITS_BORDER_WALL</c> (<c>$4F94</c>),
-    ///             <c>TANK_SHELL_BOUNCE_HORIZONTAL</c> (<c>$4FC1</c>) and <c>TANK_SHELL_BOUNCE_VERTICAL</c>
-    ///             (<c>$4FC7</c>). A <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> that bounces the shell does not count down its life, and a sideways
-    ///             bounce skips the up-and-down check.
-    ///         </item>
-    ///     </list>
-    /// </remarks>
-    private void ActOnBeat()
-    {
-        var next = GetNextPosition();
-        if (!IsInsideX(next.X))
-        {
-            _velocity = new IntVector2(~_velocity.X, _velocity.Y);
-            BouncedThisUpdate = true;
-            return;
-        }
-
-        if (!IsInsideY(next.Y))
-        {
-            _velocity = new IntVector2(_velocity.X, ~_velocity.Y);
-            BouncedThisUpdate = true;
-            return;
-        }
-
-        if (--_lifeBeatsRemaining <= 0) LifeState = EntityLifeState.Dead;
     }
 }
