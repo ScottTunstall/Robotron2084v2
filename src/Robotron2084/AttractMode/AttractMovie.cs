@@ -19,23 +19,23 @@ public sealed class AttractMovie
 
     public AttractMovie(byte[] script, Random random)
     {
-        ObjectMachine = new AttractObjectMachine(random);
-        PageMachine = new AttractPageMachine(script, ObjectMachine, random);
+        AttractObjectMachine = new AttractObjectMachine(random);
+        AttractPageMachine = new AttractPageMachine(script, AttractObjectMachine, random);
     }
 
     /// <summary>Movie time played so far, in fiftieths of a second (a test hook).</summary>
     public int ArcadeFrames { get; private set; }
 
     /// <summary>The characters the movie has walking about.</summary>
-    public AttractObjectMachine ObjectMachine { get; }
+    public AttractObjectMachine AttractObjectMachine { get; }
 
     /// <summary>The text/action interpreter that drives them.</summary>
-    public AttractPageMachine PageMachine { get; }
+    public AttractPageMachine AttractPageMachine { get; }
 
     /// <summary>The script reached DONE / DONE2.</summary>
     public bool IsFinished()
     {
-        return PageMachine.IsFinished;
+        return AttractPageMachine.IsFinished;
     }
 
     /// <summary>Advances the movie by one port tick (0 or 1 fiftieths of a second of work).</summary>
@@ -46,7 +46,7 @@ public sealed class AttractMovie
 
         _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
         ArcadeFrames++;
-        PageMachine.StepFrame();
-        ObjectMachine.StepFrame();
+        AttractPageMachine.StepFrame();
+        AttractObjectMachine.StepFrame();
     }
 }

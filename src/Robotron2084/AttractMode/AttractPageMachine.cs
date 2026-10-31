@@ -45,7 +45,7 @@ public sealed class AttractPageMachine
     /// <summary>The ROM's `GSTRTS`: the four grunt personalities.</summary>
     private static readonly int[] GruntScripts = [0x84F5, 0x8517, 0x8540, 0x8567];
 
-    private readonly AttractObjectMachine _objectMachine;
+    private readonly AttractObjectMachine _attractObjectMachine;
     private readonly Random _random;
     private readonly byte[] _scriptBytes;
     private readonly List<MovieTextCell> _textCells = [];
@@ -56,10 +56,10 @@ public sealed class AttractPageMachine
     private int _scriptIndex;
     private int _waitArcadeFrames;
 
-    public AttractPageMachine(byte[] scriptBytes, AttractObjectMachine objectMachine, Random random)
+    public AttractPageMachine(byte[] scriptBytes, AttractObjectMachine attractObjectMachine, Random random)
     {
         _scriptBytes = scriptBytes;
-        _objectMachine = objectMachine;
+        _attractObjectMachine = attractObjectMachine;
         _random = random;
     }
 
@@ -192,7 +192,7 @@ public sealed class AttractPageMachine
         switch (opcode)
         {
             case 3: // SCRPT — start an object script.
-                _objectMachine.StartScript(NextWord());
+                _attractObjectMachine.StartScript(NextWord());
                 return;
 
             case 4: // SNOOZE
@@ -267,6 +267,6 @@ public sealed class AttractPageMachine
 
         _gruntTimer = 16;
         _gruntsLeft--;
-        _objectMachine.StartScript(GruntScripts[_random.Next(GruntScripts.Length)]);
+        _attractObjectMachine.StartScript(GruntScripts[_random.Next(GruntScripts.Length)]);
     }
 }
