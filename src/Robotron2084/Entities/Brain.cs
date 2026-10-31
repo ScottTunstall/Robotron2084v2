@@ -342,7 +342,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 
         if (IsReprogramming())
             _sprites.Blitter.DrawSolidRectangle(spriteBatch, GetBounds(),
-                _sprites.Blitter.GetSlotColour(ReprogramTuning.ShapeSlot));
+                _sprites.Blitter.GetPaletteIndexColour(ReprogramTuning.ShapePaletteIndex));
 
         _sprites.Blitter.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
     }

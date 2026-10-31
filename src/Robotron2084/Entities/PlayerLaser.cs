@@ -51,9 +51,9 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     {
         if (!this.IsAlive()) return;
 
-        // The laser's palette slot keeps changing colour, so the whole laser flashes.
+        // The laser's palette index keeps changing colour, so the whole laser flashes.
         _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
-            _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
+            _sprites.Blitter.GetPaletteIndexColour(PlayerTuning.LaserPaletteIndex));
     }
 
     /// <summary>The box the laser takes up on the screen.</summary>

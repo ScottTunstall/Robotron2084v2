@@ -269,7 +269,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     internal bool IsEscaping => _isEscaping;
 
     /// <summary>
-    ///     Draws the animation frame that is showing. The spheroid shimmers because it is drawn in palette slots whose
+    ///     Draws the animation frame that is showing. The spheroid shimmers because it is drawn in palette indices whose
     ///     colours keep changing.
     /// </summary>
     /// <param name="spriteBatch">What the spheroid is drawn with.</param>

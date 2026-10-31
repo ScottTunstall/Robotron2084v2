@@ -41,23 +41,23 @@ public sealed class ScoreBurst : IEntity
     /// <param name="frames">The dead enemy's animation frames, which the burst is drawn from.</param>
     /// <param name="pointsSprite">The sprite of the points number.</param>
     /// <param name="count">How many steps the burst takes, counting the one that ends it.</param>
-    /// <param name="burstSlot">The palette slot the burst is drawn in.</param>
-    /// <param name="pointsSlot">The palette slot the points are drawn in.</param>
+    /// <param name="burstPaletteIndex">The palette index the burst is drawn in.</param>
+    /// <param name="pointsPaletteIndex">The palette index the points are drawn in.</param>
     /// <param name="bounds">The box the enemy took up when it died.</param>
     private ScoreBurst(
         SpriteSet sprites,
         Texture2D[] frames,
         Texture2D pointsSprite,
         int count,
-        int burstSlot,
-        int pointsSlot,
+        int burstPaletteIndex,
+        int pointsPaletteIndex,
         Rectangle bounds)
     {
         _sprites = sprites;
         _animationFrames = frames;
         _pointsSprite = pointsSprite;
-        BurstSlot = burstSlot;
-        PointsSlot = pointsSlot;
+        BurstPaletteIndex = burstPaletteIndex;
+        PointsPaletteIndex = pointsPaletteIndex;
         _bounds = bounds;
 
         // The first burst animation frame is already showing, so there is one step fewer left to take.
@@ -81,14 +81,14 @@ public sealed class ScoreBurst : IEntity
     /// </summary>
     internal int AnimationFrameIndex => _animationFrameIndex;
 
-    /// <summary>The palette slot the burst is drawn in. Its colour keeps changing, so the burst shimmers.</summary>
-    internal int BurstSlot { get; }
+    /// <summary>The palette index the burst is drawn in. Its colour keeps changing, so the burst shimmers.</summary>
+    internal int BurstPaletteIndex { get; }
 
     /// <summary>Where the points are drawn: a little to the right of the dead enemy and below it.</summary>
     internal Rectangle PointsBounds { get; }
 
-    /// <summary>The palette slot the points are drawn in.</summary>
-    internal int PointsSlot { get; }
+    /// <summary>The palette index the points are drawn in.</summary>
+    internal int PointsPaletteIndex { get; }
 
     /// <summary>How many more steps the points are shown for.</summary>
     internal int PointsStepsRemaining { get; private set; }
@@ -96,7 +96,7 @@ public sealed class ScoreBurst : IEntity
     /// <summary>True once the burst is over and the points are showing.</summary>
     internal bool ShowingPoints { get; private set; }
 
-    /// <summary>Makes the burst that a killed quark leaves. The burst and the points are drawn in the same palette slot.</summary>
+    /// <summary>Makes the burst that a killed quark leaves. The burst and the points are drawn in the same palette index.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="bounds">Where the quark was drawn when it died.</param>
     public static ScoreBurst CreateForQuark(SpriteSet sprites, Rectangle bounds)
@@ -106,13 +106,13 @@ public sealed class ScoreBurst : IEntity
             sprites.QuarkAnimationFrames,
             sprites.RescueScoreDisplays[0],
             ScoreBurstTuning.QuarkCount,
-            ScoreBurstTuning.QuarkBurstSlot,
-            ScoreBurstTuning.QuarkPointsSlot,
+            ScoreBurstTuning.QuarkBurstPaletteIndex,
+            ScoreBurstTuning.QuarkPointsPaletteIndex,
             bounds);
     }
 
     /// <summary>
-    ///     Makes the burst that a killed spheroid leaves. The burst is drawn in one palette slot and the points in
+    ///     Makes the burst that a killed spheroid leaves. The burst is drawn in one palette index and the points in
     ///     another.
     /// </summary>
     /// <param name="sprites">The shared sprite set.</param>
@@ -124,8 +124,8 @@ public sealed class ScoreBurst : IEntity
             sprites.SpheroidAnimationFrames,
             sprites.RescueScoreDisplays[0],
             ScoreBurstTuning.SpheroidCount,
-            ScoreBurstTuning.SpheroidBurstSlot,
-            ScoreBurstTuning.SpheroidPointsSlot,
+            ScoreBurstTuning.SpheroidBurstPaletteIndex,
+            ScoreBurstTuning.SpheroidPointsPaletteIndex,
             bounds);
     }
 
@@ -138,13 +138,13 @@ public sealed class ScoreBurst : IEntity
         if (ShowingPoints)
         {
             _sprites.Blitter.DrawSpriteSolid(spriteBatch, _pointsSprite, PointsBounds,
-                _sprites.Blitter.GetSlotColour(PointsSlot));
+                _sprites.Blitter.GetPaletteIndexColour(PointsPaletteIndex));
             return;
         }
 
         if (_animationFrameIndex < _animationFrames.Length)
             _sprites.Blitter.DrawSpriteSolid(spriteBatch, _animationFrames[_animationFrameIndex], _bounds,
-                _sprites.Blitter.GetSlotColour(BurstSlot));
+                _sprites.Blitter.GetPaletteIndexColour(BurstPaletteIndex));
     }
 
     /// <summary>The box the dead enemy took up, which is also the box the burst is drawn in.</summary>

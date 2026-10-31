@@ -112,7 +112,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
     /// <remarks>
     ///     Each mark is <see cref="CruiseMissileTuning.MarkArcadeWidth" /> by
     ///     <see cref="CruiseMissileTuning.MarkArcadeHeight" /> arcade pixels, as it was on the arcade screen.
-    ///     The trail is drawn in one palette slot and the head in another.
+    ///     The trail is drawn in one palette index and the head in another.
     /// </remarks>
     public void Draw(SpriteBatch spriteBatch)
     {
@@ -121,7 +121,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
         var markWidth = ScreenSize.ToPortPixelsFromArcadePixels(CruiseMissileTuning.MarkArcadeWidth);
         var markHeight = ScreenSize.ToPortPixelsFromArcadePixels(CruiseMissileTuning.MarkArcadeHeight);
 
-        var trailColor = _sprites.Blitter.GetSlotColour(CruiseMissileTuning.TrailSlot);
+        var trailColor = _sprites.Blitter.GetPaletteIndexColour(CruiseMissileTuning.TrailPaletteIndex);
         foreach (var mark in _trail)
             _sprites.Blitter.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight),
                 trailColor);
@@ -130,7 +130,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
         _sprites.Blitter.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(_position.X, _position.Y, markWidth, markHeight),
-            _sprites.Blitter.GetSlotColour(CruiseMissileTuning.HeadSlot));
+            _sprites.Blitter.GetPaletteIndexColour(CruiseMissileTuning.HeadPaletteIndex));
     }
 
     /// <summary>

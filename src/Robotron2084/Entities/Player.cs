@@ -62,7 +62,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     private int _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
 
-    private int _deathFlashSlot = PlayerTuning.PlayerDeathWhiteSlot;
+    private int _deathFlashPaletteIndex = PlayerTuning.PlayerDeathWhitePaletteIndex;
 
     // Which stage of the death animation is playing: a white flash, a coloured flash, or the fade to black (ROM: RRX7.ASM).
     private DeathStage _deathStage = DeathStage.White;
@@ -106,7 +106,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
     ///     </list>
     ///     The white flash and the coloured flash are repeated several times before the fade. The fade is made by changing
-    ///     the colour of one palette slot (<see cref="PlayerTuning.PlayerDeathFadeSlot" />).
+    ///     the colour of one palette index (<see cref="PlayerTuning.PlayerDeathFadePaletteIndex" />).
     /// </remarks>
     private enum DeathStage
     {
@@ -176,7 +176,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         if (this.IsDying())
         {
             _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
-                _sprites.Blitter.GetSlotColour(GetDeathSolidSlot()));
+                _sprites.Blitter.GetPaletteIndexColour(GetDeathSolidPaletteIndex()));
             return;
         }
 
@@ -271,20 +271,20 @@ public sealed class Player : IEntity, IAnimationFrameSource
         };
     }
 
-    /// <summary>The palette slot that the dying player is filled with.</summary>
+    /// <summary>The palette index that the dying player is filled with.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>PDEATH</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
     ///     </list>
-    ///     It is the white slot, then a slot picked at random, then the slot that fades to black.
+    ///     It is the white palette index, then a palette index picked at random, then the palette index that fades to black.
     /// </remarks>
-    internal int GetDeathSolidSlot()
+    internal int GetDeathSolidPaletteIndex()
     {
         var isFading = _deathStage == DeathStage.Fade;
-        if (isFading) return PlayerTuning.PlayerDeathFadeSlot;
+        if (isFading) return PlayerTuning.PlayerDeathFadePaletteIndex;
 
-        return _deathFlashSlot;
+        return _deathFlashPaletteIndex;
     }
 
     /// <summary>
@@ -355,7 +355,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///         <item>Original source: <c>RRX7.ASM</c> the death routine.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
     ///     </list>
-    ///     The fade takes over one palette slot. That slot's own colour changes are stopped while the fade runs,
+    ///     The fade takes over one palette index. That palette index's own colour changes are stopped while the fade runs,
     ///     and are started again when it is over.
     /// </remarks>
     private void AdvanceDeath(PlayField field)
@@ -372,9 +372,9 @@ public sealed class Player : IEntity, IAnimationFrameSource
         switch (_deathStage)
         {
             case DeathStage.White:
-                // After the white flash, pick a random palette slot for the coloured flash.
-                _deathFlashSlot =
-                    PlayerTuning.PlayerDeathFlashSlots[_random.Next(PlayerTuning.PlayerDeathFlashSlots.Length)];
+                // After the white flash, pick a random palette index for the coloured flash.
+                _deathFlashPaletteIndex =
+                    PlayerTuning.PlayerDeathFlashPaletteIndices[_random.Next(PlayerTuning.PlayerDeathFlashPaletteIndices.Length)];
                 _deathStage = DeathStage.Colour;
                 break;
 
@@ -392,7 +392,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
                 WriteDeathFade(field);
                 if (_deathFadeIndex >= PlayerTuning.PlayerDeathFadeValues.Length - 1)
                 {
-                    field.Palette?.ResumeSlot(PlayerTuning.PlayerDeathFadeSlot);
+                    field.Palette?.ResumePaletteIndex(PlayerTuning.PlayerDeathFadePaletteIndex);
                     LifeState = EntityLifeState.Dead;
                 }
 
@@ -436,7 +436,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     /// <summary>
-    ///     Starts the fade. It stops the fade slot's own colour changes, and sets the slot to the first colour of the
+    ///     Starts the fade. It stops the fade palette index's own colour changes, and sets the palette index to the first colour of the
     ///     fade.
     /// </summary>
     /// <param name="field">The playfield, whose palette is used for the fade.</param>
@@ -448,13 +448,13 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
     ///     </list>
-    ///     The other colour changes carry on as normal. Only the fade slot's own changes are stopped.
+    ///     The other colour changes carry on as normal. Only the fade palette index's own changes are stopped.
     /// </remarks>
     private void BeginDeathFade(PlayField field)
     {
         _deathStage = DeathStage.Fade;
         _deathFadeIndex = 0;
-        field.Palette?.SuspendSlot(PlayerTuning.PlayerDeathFadeSlot);
+        field.Palette?.SuspendPaletteIndex(PlayerTuning.PlayerDeathFadePaletteIndex);
         WriteDeathFade(field);
     }
 
@@ -487,7 +487,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         _deathStage = DeathStage.White;
         _deathTimer.Restart();
         _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
-        _deathFlashSlot = PlayerTuning.PlayerDeathWhiteSlot;
+        _deathFlashPaletteIndex = PlayerTuning.PlayerDeathWhitePaletteIndex;
         _deathFadeIndex = 0;
     }
 
@@ -531,10 +531,10 @@ public sealed class Player : IEntity, IAnimationFrameSource
         _wasFiring = isFireHeld;
     }
 
-    /// <summary>Sets the fade slot to the next colour of the fade.</summary>
-    /// <param name="field">The playfield, whose palette holds the fade slot.</param>
+    /// <summary>Sets the fade palette index to the next colour of the fade.</summary>
+    /// <param name="field">The playfield, whose palette holds the fade palette index.</param>
     private void WriteDeathFade(PlayField field)
     {
-        field.Palette?.SetSlot(PlayerTuning.PlayerDeathFadeSlot, PlayerTuning.PlayerDeathFadeValues[_deathFadeIndex]);
+        field.Palette?.SetPaletteIndexValue(PlayerTuning.PlayerDeathFadePaletteIndex, PlayerTuning.PlayerDeathFadeValues[_deathFadeIndex]);
     }
 }

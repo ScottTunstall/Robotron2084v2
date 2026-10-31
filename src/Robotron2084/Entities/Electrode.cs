@@ -38,7 +38,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Makes an electrode for the given wave.</summary>
     /// <param name="sprites">The shared sprite set.</param>
     /// <param name="position">Where the electrode's top-left corner is.</param>
-    /// <param name="wave">The wave number. It decides which shape of electrode is drawn, and in which palette slot.</param>
+    /// <param name="wave">The wave number. It decides which shape of electrode is drawn, and in which palette index.</param>
     public Electrode(SpriteSet sprites, IntVector2 position, int wave = 1)
     {
         _sprites = sprites;
@@ -53,14 +53,14 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Where the electrode's top-left corner is. An electrode never moves.</summary>
     public IntVector2 Position => _position;
 
-    /// <summary>Draws the electrode's animation frame as a shape filled with one colour, from this wave's palette slot.</summary>
+    /// <summary>Draws the electrode's animation frame as a shape filled with one colour, from this wave's palette index.</summary>
     /// <param name="spriteBatch">What the electrode is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (this.IsDead()) return;
 
         _sprites.Blitter.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
-            _sprites.Blitter.GetSlotColour(GetTintSlot()));
+            _sprites.Blitter.GetPaletteIndexColour(GetTintPaletteIndex()));
     }
 
     /// <summary>The box the electrode takes up on the screen.</summary>
@@ -119,10 +119,10 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         return (ScreenSize.ToPortPixelsFromArcadePixels(width), ScreenSize.ToPortPixelsFromArcadePixels(height));
     }
 
-    /// <summary>The palette slot the electrode is drawn in on this wave. It may be a slot whose colour keeps changing.</summary>
-    internal int GetTintSlot()
+    /// <summary>The palette index the electrode is drawn in on this wave. It may be a palette index whose colour keeps changing.</summary>
+    internal int GetTintPaletteIndex()
     {
-        return WavePaletteTables.GetElectrodeSlot(_wave);
+        return WavePaletteTables.GetElectrodePaletteIndex(_wave);
     }
 
     /// <summary>Which shape of electrode is drawn. The wave number decides it.</summary>

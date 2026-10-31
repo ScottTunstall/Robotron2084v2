@@ -203,8 +203,8 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
                 spriteBatch,
                 frames[_animationFrameIndex],
                 GetBounds(),
-                _sprites.Blitter.GetSlotColour(ReprogramTuning.BackgroundSlot),
-                _sprites.Blitter.GetSlotColour(ReprogramTuning.ShapeSlot));
+                _sprites.Blitter.GetPaletteIndexColour(ReprogramTuning.BackgroundPaletteIndex),
+                _sprites.Blitter.GetPaletteIndexColour(ReprogramTuning.ShapePaletteIndex));
             return;
         }
 

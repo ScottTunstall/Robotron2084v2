@@ -237,16 +237,16 @@ public sealed class Prog : IExplodable, IRemovable
                 spriteBatch,
                 frames[ghost.AnimationFrameIndex],
                 GetBoundsAt(ghost.Position),
-                _sprites.Blitter.GetSlotColour(ProgTuning.GhostBackgroundSlot),
-                _sprites.Blitter.GetSlotColour(ProgTuning.GhostShapeSlot));
+                _sprites.Blitter.GetPaletteIndexColour(ProgTuning.GhostBackgroundPaletteIndex),
+                _sprites.Blitter.GetPaletteIndexColour(ProgTuning.GhostShapePaletteIndex));
         }
 
         _sprites.Blitter.DrawSpriteSolidWithBackground(
             spriteBatch,
             animationFrame,
             GetBounds(),
-            _sprites.Blitter.GetSlotColour(ProgTuning.BackgroundSlot),
-            _sprites.Blitter.GetSlotColour(ProgTuning.ShapeSlot));
+            _sprites.Blitter.GetPaletteIndexColour(ProgTuning.BackgroundPaletteIndex),
+            _sprites.Blitter.GetPaletteIndexColour(ProgTuning.ShapePaletteIndex));
     }
 
     /// <summary>
