@@ -111,13 +111,13 @@ public sealed class AttractObjectMachine
     }
 
     /// <summary>MONOP: hide the object, then every third frame move it in whole columns and box it.</summary>
-    private static void BeginMono(MovieObject movieObject, int boxPaletteIndex, int imagePaletteIndex, bool showsBrain)
+    private static void BeginMono(MovieObject movieObject, int boxPaletteIndex, int imagePaletteIndex, bool isBrainVisible)
     {
         movieObject.IsOnList = false;
         movieObject.IsMonoActive = true;
         movieObject.MonoBoxPaletteIndex = boxPaletteIndex;
         movieObject.MonoSilhouettePaletteIndex = imagePaletteIndex;
-        movieObject.ShowsMonoBrain = showsBrain;
+        movieObject.BrainVisible = isBrainVisible;
     }
 
     /// <summary>Integrates every live object's velocity for one frame; laser bolts stop at the walls and age.</summary>
@@ -201,7 +201,7 @@ public sealed class AttractObjectMachine
 
         public int WalkIndex { get; set; }
 
-        public int WalkCycleStep { get; set; }
+        public int WalkCycleIndex { get; set; }
 
         public int CycleAdvancesLeft { get; set; }
 
@@ -460,8 +460,8 @@ public sealed class AttractObjectMachine
                         var boxPaletteIndex = attractObjectMachine.Read(this) >> 4;
                         var silhouettePaletteIndex = attractObjectMachine.Read(this) >> 4;
                         MonoStepsLeft = attractObjectMachine.Read(this);
-                        var showsBrain = attractObjectMachine.Read(this) != 0;
-                        BeginMono(MovieObject, boxPaletteIndex, silhouettePaletteIndex, showsBrain);
+                        var isBrainVisible = attractObjectMachine.Read(this) != 0;
+                        BeginMono(MovieObject, boxPaletteIndex, silhouettePaletteIndex, isBrainVisible);
                         Action = MovieAction.Mono;
                         WaitArcadeFrames = 3;
                         return false;
@@ -505,7 +505,7 @@ public sealed class AttractObjectMachine
             if (descriptor.Walk == MovieWalk.BrainStep)
             {
                 WalkIndex = (int)walkSequence;
-                WalkCycleStep = 0;
+                WalkCycleIndex = 0;
                 WaitArcadeFrames = descriptor.StepNap;
             }
             else
@@ -657,8 +657,8 @@ public sealed class AttractObjectMachine
             };
             ApplyStep(dx, dy);
 
-            SetImage((int)walkSequence * 3 + AttractMovieData.AnimationFrameCycleTable[WalkCycleStep]);
-            WalkCycleStep = (WalkCycleStep + 1) % AttractMovieData.AnimationFrameCycleTable.Length;
+            SetImage((int)walkSequence * 3 + AttractMovieData.AnimationFrameCycleTable[WalkCycleIndex]);
+            WalkCycleIndex = (WalkCycleIndex + 1) % AttractMovieData.AnimationFrameCycleTable.Length;
         }
 
         /// <summary>The ROM's `DYDX`: dx counts arcade PIXELS, and a column is two of them.</summary>

@@ -24,7 +24,7 @@ public sealed record MovieObject
         YSubpixels = ySubpixels;
     }
 
-    /// <summary>The sprite set. Null for the movie's laser bolts (see <see cref="IsLaser" />).</summary>
+    /// <summary>The texture set. Null for the movie's laser bolts (see <see cref="IsLaser" />).</summary>
     public MovieDescriptor? Descriptor { get; set; }
 
     /// <summary>A left/right laser bolt fired by LFIRE/RFIRE — drawn as the laser, killed on its timer.</summary>
@@ -65,7 +65,7 @@ public sealed record MovieObject
     public int MonoSilhouettePaletteIndex { get; set; }
 
     /// <summary>MONO: draw the BRAIN inside the box too (the ROM's `DMAON` "brain in the square").</summary>
-    public bool ShowsMonoBrain { get; set; }
+    public bool BrainVisible { get; set; }
 
     /// <summary>MONO is running (the renderer draws the box + solid silhouette).</summary>
     public bool IsMonoActive { get; set; }

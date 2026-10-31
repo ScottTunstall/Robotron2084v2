@@ -37,14 +37,14 @@ public static class MovieAnimationFrames
     private static readonly int[] HulkAnimationFrameOrder = [0, 1, 2, 6, 7, 8, 3, 4, 5];
 
     /// <summary>The texture a movie object draws, or null when there is none.</summary>
-    public static Texture2D? Resolve(SpriteSet spriteSet, MovieAnimation animation, int animationFrameIndex)
+    public static Texture2D? Resolve(TextureSet textureSet, MovieAnimation animation, int animationFrameIndex)
     {
-        var frames = GetAnimationFrames(spriteSet, animation);
+        var frames = GetAnimationFrames(textureSet, animation);
         if (frames is null || frames.Length == 0)
             return animation switch
             {
-                MovieAnimation.Skull => spriteSet.SkullSprite,
-                MovieAnimation.Cruise => spriteSet.AttractCruiseSprite,
+                MovieAnimation.Skull => textureSet.SkullTexture,
+                MovieAnimation.Cruise => textureSet.AttractCruiseTexture,
                 _ => null
             };
 
@@ -67,24 +67,24 @@ public static class MovieAnimationFrames
         return frames[index % frames.Length];
     }
 
-    private static Texture2D[]? GetAnimationFrames(SpriteSet spriteSet, MovieAnimation animation)
+    private static Texture2D[]? GetAnimationFrames(TextureSet textureSet, MovieAnimation animation)
     {
         return animation switch
         {
-            MovieAnimation.Mommy => spriteSet.MommyAnimationFrames,
-            MovieAnimation.Daddy => spriteSet.DaddyAnimationFrames,
-            MovieAnimation.Mikey => spriteSet.MikeyAnimationFrames,
-            MovieAnimation.Hulk => spriteSet.HulkAnimationFrames,
-            MovieAnimation.Brain => spriteSet.BrainAnimationFrames,
-            MovieAnimation.Grunt => spriteSet.GruntAnimationFrames,
-            MovieAnimation.Enforcer => spriteSet.EnforcerAnimationFrames,
-            MovieAnimation.Player => spriteSet.PlayerAnimationFrames,
-            MovieAnimation.Quark => spriteSet.QuarkAnimationFrames,
-            MovieAnimation.Spheroid => spriteSet.SpheroidAnimationFrames,
-            MovieAnimation.TankGrow => spriteSet.TankGrowAnimationFrames,
-            MovieAnimation.Tank => spriteSet.TankAnimationFrames,
-            MovieAnimation.Points => spriteSet.RescueScoreDisplays,
-            MovieAnimation.Electrodes => spriteSet.AttractElectrodeAnimationFrames,
+            MovieAnimation.Mommy => textureSet.MommyAnimationFrameTextures,
+            MovieAnimation.Daddy => textureSet.DaddyAnimationFrameTextures,
+            MovieAnimation.Mikey => textureSet.MikeyAnimationFrameTextures,
+            MovieAnimation.Hulk => textureSet.HulkAnimationFrameTextures,
+            MovieAnimation.Brain => textureSet.BrainAnimationFrameTextures,
+            MovieAnimation.Grunt => textureSet.GruntAnimationFrameTextures,
+            MovieAnimation.Enforcer => textureSet.EnforcerAnimationFrameTextures,
+            MovieAnimation.Player => textureSet.PlayerAnimationFrameTextures,
+            MovieAnimation.Quark => textureSet.QuarkAnimationFrameTextures,
+            MovieAnimation.Spheroid => textureSet.SpheroidAnimationFrameTextures,
+            MovieAnimation.TankGrow => textureSet.TankGrowAnimationFrameTextures,
+            MovieAnimation.Tank => textureSet.TankAnimationFrameTextures,
+            MovieAnimation.Points => textureSet.RescueBonusAnimationFrameTextures,
+            MovieAnimation.Electrodes => textureSet.AttractElectrodeAnimationFrameTextures,
             _ => null
         };
     }
