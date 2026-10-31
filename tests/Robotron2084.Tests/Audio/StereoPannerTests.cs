@@ -10,9 +10,9 @@ public class StereoPannerTests
     [Fact]
     public void ASoundInTheMiddle_IsEquallyLoudInBothSpeakers_AtAboutSeventyOnePercent()
     {
-        var panner = new StereoPanner();
+        var stereoPanner = new StereoPanner();
 
-        var (left, right) = LastFrame(panner, 10);
+        var (left, right) = LastFrame(stereoPanner, 10);
 
         Assert.Equal(left, right);
         Assert.InRange(left, 23000, 23400);
@@ -21,10 +21,10 @@ public class StereoPannerTests
     [Fact]
     public void ASoundPannedFullyLeft_EndsUpOnlyInTheLeftSpeaker()
     {
-        var panner = new StereoPanner();
+        var stereoPanner = new StereoPanner();
 
-        panner.PanTo(-1f);
-        var (left, right) = LastFrame(panner, GlideSettledSamples);
+        stereoPanner.PanTo(-1f);
+        var (left, right) = LastFrame(stereoPanner, GlideSettledSamples);
 
         Assert.InRange(left, 32000, short.MaxValue);
         Assert.InRange(right, (short)0, (short)100);
@@ -33,10 +33,10 @@ public class StereoPannerTests
     [Fact]
     public void MovingTheSound_GlidesRatherThanJumping()
     {
-        var panner = new StereoPanner();
+        var stereoPanner = new StereoPanner();
 
-        panner.PanTo(1f);
-        var (left, right) = LastFrame(panner, 1);
+        stereoPanner.PanTo(1f);
+        var (left, right) = LastFrame(stereoPanner, 1);
 
         Assert.InRange(left, 23000, 23400);
         Assert.InRange(right, 23000, 23400);
@@ -45,20 +45,20 @@ public class StereoPannerTests
     [Fact]
     public void ALoudSample_IsClippedRatherThanWrappingAround()
     {
-        var panner = new StereoPanner();
+        var stereoPanner = new StereoPanner();
         float[] samples = [4f];
         var stereo = new short[2];
 
-        panner.Spread(samples, 1f, stereo);
+        stereoPanner.Spread(samples, 1f, stereo);
 
         Assert.Equal(short.MaxValue, stereo[0]);
     }
 
-    private static (short Left, short Right) LastFrame(StereoPanner panner, int samples)
+    private static (short Left, short Right) LastFrame(StereoPanner stereoPanner, int samples)
     {
         var full = Enumerable.Repeat(1f, samples).ToArray();
         var stereo = new short[samples * 2];
-        panner.Spread(full, 1f, stereo);
+        stereoPanner.Spread(full, 1f, stereo);
         return (stereo[^2], stereo[^1]);
     }
 }

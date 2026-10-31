@@ -12,62 +12,62 @@ public class TransporterSoundTests
     [Fact]
     public void ItClearsTheSystemFirst()
     {
-        var (sink, _) = Run(1);
+        var (recordingSink, _) = Run(1);
 
-        Assert.Contains(sink.Sends, send => send.SoundNumber == ClearTheSystem && send.Tick == 1);
+        Assert.Contains(recordingSink.Sends, send => send.SoundNumber == ClearTheSystem && send.Tick == 1);
     }
 
     [Fact]
     public void ItSendsTheWarpIn108Times_OnTheROMsSchedule()
     {
-        var (sink, transporter) = Run(200);
+        var (recordingSink, transporterSound) = Run(200);
 
-        List<int> ticks = [.. sink.Sends.Where(send => send.SoundNumber == WarpIn).Select(send => send.Tick)];
+        List<int> ticks = [.. recordingSink.Sends.Where(send => send.SoundNumber == WarpIn).Select(send => send.Tick)];
         Assert.Equal(108, ticks.Count);
         Assert.Equal(Enumerable.Range(1, 72), ticks.Take(72));
         Assert.Equal(72, ticks[72]); // TRSPR1 sends its first spaced one in the same vblank
         Assert.Equal(74, ticks[73]);
         Assert.Equal(142, ticks[^1]);
-        Assert.False(transporter.IsRunning());
+        Assert.False(transporterSound.IsRunning());
     }
 
     [Fact]
     public void Stop_EndsTheSends_SoTheyDoNotCutAcrossTheNextSound()
     {
-        var sink = new RecordingSink();
-        var engine = new SoundEngine(sink);
-        var transporter = new TransporterSound();
-        transporter.Start(engine);
+        var recordingSink = new RecordingSink();
+        var soundEngine = new SoundEngine(recordingSink);
+        var transporterSound = new TransporterSound();
+        transporterSound.Start(soundEngine);
         for (var i = 0; i < 10; i++)
         {
-            engine.Tick();
-            transporter.Tick(engine);
+            soundEngine.Tick();
+            transporterSound.Tick(soundEngine);
         }
 
-        var sentBeforeStop = sink.Sends.Count(send => send.SoundNumber == WarpIn);
-        transporter.Stop();
+        var sentBeforeStop = recordingSink.Sends.Count(send => send.SoundNumber == WarpIn);
+        transporterSound.Stop();
         for (var i = 0; i < 200; i++)
         {
-            engine.Tick();
-            transporter.Tick(engine);
+            soundEngine.Tick();
+            transporterSound.Tick(soundEngine);
         }
 
-        Assert.False(transporter.IsRunning());
-        Assert.Equal(sentBeforeStop, sink.Sends.Count(send => send.SoundNumber == WarpIn));
+        Assert.False(transporterSound.IsRunning());
+        Assert.Equal(sentBeforeStop, recordingSink.Sends.Count(send => send.SoundNumber == WarpIn));
     }
 
-    private static (RecordingSink Sink, TransporterSound Transporter) Run(int ticks)
+    private static (RecordingSink RecordingSink, TransporterSound TransporterSound) Run(int ticks)
     {
-        var sink = new RecordingSink();
-        var engine = new SoundEngine(sink);
-        var transporter = new TransporterSound();
-        transporter.Start(engine);
+        var recordingSink = new RecordingSink();
+        var soundEngine = new SoundEngine(recordingSink);
+        var transporterSound = new TransporterSound();
+        transporterSound.Start(soundEngine);
         for (var i = 0; i < ticks; i++)
         {
-            engine.Tick();
-            transporter.Tick(engine);
+            soundEngine.Tick();
+            transporterSound.Tick(soundEngine);
         }
 
-        return (sink, transporter);
+        return (recordingSink, transporterSound);
     }
 }

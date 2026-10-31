@@ -18,54 +18,54 @@ public sealed class SoundTests : IDisposable
     [Fact]
     public void WithTheSwitchOff_NothingReachesTheSink()
     {
-        var sink = new RecordingSink();
-        Sound.Initialize(sink);
+        var recordingSink = new RecordingSink();
+        Sound.Initialize(recordingSink);
         Sound.Enabled = false;
 
-        Sound.Play(SoundTables.Laser);
+        Sound.Play(SoundTables.PlayerLaser);
         for (var i = 0; i < 20; i++) Sound.Tick();
 
-        Assert.Empty(sink.Sends);
+        Assert.Empty(recordingSink.Sends);
     }
 
     [Fact]
     public void WithTheSwitchOn_ASoundIsSentToTheSink()
     {
-        var sink = new RecordingSink();
-        Sound.Initialize(sink);
+        var recordingSink = new RecordingSink();
+        Sound.Initialize(recordingSink);
         Sound.Enabled = true;
         Sound.AttractMuted = false;
 
-        Sound.Play(SoundTables.Laser);
+        Sound.Play(SoundTables.PlayerLaser);
         for (var i = 0; i < 20; i++) Sound.Tick();
 
-        Assert.Single(sink.Sends);
+        Assert.Single(recordingSink.Sends);
     }
 
     [Fact]
     public void WhileTheAttractIsMuted_NothingReachesTheSink()
     {
-        var sink = new RecordingSink();
-        Sound.Initialize(sink);
+        var recordingSink = new RecordingSink();
+        Sound.Initialize(recordingSink);
         Sound.Enabled = true;
         Sound.AttractMuted = true;
 
-        Sound.Play(SoundTables.Laser);
+        Sound.Play(SoundTables.PlayerLaser);
         for (var i = 0; i < 20; i++) Sound.Tick();
 
-        Assert.Empty(sink.Sends);
+        Assert.Empty(recordingSink.Sends);
     }
 
     [Fact]
     public void ASoundAskedForWithoutAPlaceIsHeardInTheMiddle()
     {
-        var sink = new RecordingSink();
-        Sound.Initialize(sink);
+        var recordingSink = new RecordingSink();
+        Sound.Initialize(recordingSink);
         Sound.Enabled = true;
 
-        Sound.Play(SoundTables.Laser);
+        Sound.Play(SoundTables.PlayerLaser);
         Sound.Tick();
 
-        Assert.Equal(0f, sink.Sends[0].Pan);
+        Assert.Equal(0f, recordingSink.Sends[0].Pan);
     }
 }

@@ -28,8 +28,8 @@ public class SoundTablesTests
     public void TheLaserIsLASSND_NotTheTwoPlayerStartSound()
     {
         // RRG23: LASSND FCB $D0,$01,$08,1,0 and ST2SND FCB $F0,$01,$10,$25,0.
-        Assert.Equal(0xD0, SoundTables.Laser.Priority);
-        Assert.Equal([new SoundEntry(1, 8, 0x01)], SoundTables.Laser.Entries);
+        Assert.Equal(0xD0, SoundTables.PlayerLaser.Priority);
+        Assert.Equal([new SoundEntry(1, 8, 0x01)], SoundTables.PlayerLaser.Entries);
         Assert.Equal([new SoundEntry(1, 16, 0x25)], SoundTables.StartTwoPlayers.Entries);
     }
 

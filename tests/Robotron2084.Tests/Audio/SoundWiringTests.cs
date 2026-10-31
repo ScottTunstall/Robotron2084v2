@@ -12,7 +12,7 @@ namespace Robotron2084.Tests.Audio;
 [Collection("SoundFacade")]
 public sealed class SoundWiringTests : IDisposable
 {
-    private readonly RecordingSink _sink = new();
+    private readonly RecordingSink _recordingSink = new();
     private readonly bool _wasAttractMuted = Sound.AttractMuted;
     private readonly bool _wasEnabled = Sound.Enabled;
 
@@ -20,7 +20,7 @@ public sealed class SoundWiringTests : IDisposable
     {
         Sound.AttractMuted = false;
         Sound.Enabled = true;
-        Sound.Initialize(_sink);
+        Sound.Initialize(_recordingSink);
     }
 
     public void Dispose()
@@ -32,45 +32,45 @@ public sealed class SoundWiringTests : IDisposable
     [Fact]
     public void FiringTheLaser_SendsLASSND_SoundNumber01_NotTheTwoPlayerStartSound()
     {
-        var firing = new FakeInputSource(new PlayerInputState(IntVector2.Zero, new IntVector2(1, 0), true));
-        var field = new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithInput(firing).WithSeed(1).Build();
+        var firingFakeInputSource = new FakeInputSource(new PlayerInputState(IntVector2.Zero, new IntVector2(1, 0), true));
+        var playField = new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithInput(firingFakeInputSource).WithSeed(1).Build();
 
-        for (var tick = 0; tick < 200 && _sink.Sends.Count == 0; tick++)
+        for (var tick = 0; tick < 200 && _recordingSink.Sends.Count == 0; tick++)
         {
-            field.Update(new GameTime());
+            playField.Update(new GameTime());
             Sound.Tick();
         }
 
-        Assert.Equal(0x01, _sink.Sends[0].SoundNumber);
+        Assert.Equal(0x01, _recordingSink.Sends[0].SoundNumber);
     }
 
     [Fact]
     public void ShootingACruiseMissile_SendsCMKSND()
     {
-        var field = new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithSeed(99).Build();
-        field.SkipWaveStart();
-        var inner = field.Wall.PlayfieldBounds;
+        var playField = new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithSeed(99).Build();
+        playField.SkipWaveStart();
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 250, inner.Y + 120);
-        field.Entities.CruiseMissiles.Add(new CruiseMissile(TestSprites.Shared, spot, field.Player.Position,
+        playField.FieldEntities.CruiseMissiles.Add(new CruiseMissile(TestSprites.SharedSpriteSet, spot, playField.Player.Position,
             new Random(8)));
 
-        field.PlayerLasers.Fire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down);
-        field.Update(new GameTime());
+        playField.PlayerLaserSlots.Fire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down);
+        playField.Update(new GameTime());
         Sound.Tick();
 
-        Assert.Equal(SoundTables.CruiseMissileKill.Entries[0].SoundNumber, _sink.Sends[0].SoundNumber);
+        Assert.Equal(SoundTables.CruiseMissileKill.Entries[0].SoundNumber, _recordingSink.Sends[0].SoundNumber);
     }
 
     [Fact]
     public void ASoundFromTheLeftOfThePlayfield_IsHeardOnTheLeft()
     {
-        var field = new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithSeed(99).Build();
-        var inner = field.Wall.PlayfieldBounds;
+        var playField = new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithSeed(99).Build();
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
 
-        field.PlaySoundFrom(SoundTables.TankFire, new Rectangle(inner.X, inner.Center.Y, 8, 8));
+        playField.PlaySoundFrom(SoundTables.TankFire, new Rectangle(inner.X, inner.Center.Y, 8, 8));
         Sound.Tick();
 
-        Assert.True(_sink.Sends[0].Pan < 0f);
+        Assert.True(_recordingSink.Sends[0].Pan < 0f);
     }
 
     [Fact]
@@ -79,6 +79,6 @@ public sealed class SoundWiringTests : IDisposable
         Sound.Play(SoundTables.StartOnePlayer);
         Sound.Tick();
 
-        Assert.Equal(0x28, _sink.Sends[0].SoundNumber);
+        Assert.Equal(0x28, _recordingSink.Sends[0].SoundNumber);
     }
 }
