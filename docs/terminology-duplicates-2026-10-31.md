@@ -15,7 +15,7 @@ ours. This list only compares our own words with each other.
 > because they are the record of what was found. Their status:
 > D01 **done** (the namespace `Robotron2084.Level` was left), D02 **done** (`TurnsPerPlayer` and the arcade's on-screen words were left),
 > D03 **done** (`Floor`, and the positions called `…Limit`, were left), R02 **done** (the author does not like "roll" for random numbers; it is in NAM-24), D12 **no change needed** (the summary now says the names are
-> the ROM's on purpose). D07 is partly done: the colour meaning is now `PaletteIndex` everywhere, which removes the `LaserSlot` and `LaserSlots` clash; the player record, the family place and the key and pad halves are still open. R07 is **done** (258 files; see the refactoring ledger). Every other item is still open.
+> the ROM's on purpose). D07 is partly done: the colour meaning is now `PaletteIndex` everywhere, which removes the `LaserSlot` and `LaserSlots` clash; the player record, the family place and the key and pad halves are still open. R01, R03, R04, R05 and R06 Part A are **done**. R07 is **done** (258 files; see the refactoring ledger). Every other item is still open.
 
 ## How this list was made
 
@@ -88,19 +88,19 @@ for the author to read.
 
 | ID | One idea, many words | Status | Size |
 |---|---|---|---|
-| R01 | `Color` / `Centered` / `Initialize` against `colour` / `centre` / `initialise` | READY | ~20 files |
-| R02 | The retired word "roll" (a random number) | READY | 4 files |
-| R03 | `Dev…` against `Developer…` | READY | 2 files |
-| R04 | `_walkCycleStep` is an index and is not named as one | READY | 5 files |
-| R05 | A rectangle called `box`, `rect` or `Rect` | READY | 6 files |
-| R06 | The gap between beats called delay or limit | READY (Part A) / DECIDE (Part B) | ~12 files |
+| R01 | `Color` / `Centered` / `Initialize` against `colour` / `centre` / `initialise` | **DONE** | ~20 files |
+| R02 | The retired word "roll" (a random number) | **DONE** | 4 files |
+| R03 | `Dev…` against `Developer…` | **DONE** | 2 files |
+| R04 | `_walkCycleStep` is an index and is not named as one | **DONE** | 5 files |
+| R05 | A rectangle called `box`, `rect` or `Rect` | **DONE** | 6 files |
+| R06 | The gap between beats called delay or limit | Part A **DONE** / Part B DECIDE | ~12 files |
 | R07 | Vague parameter names: `PlayField field`, `SpriteSet sprites`, `GamePalette palette` and others (NAM-26) | **DONE** | about 270 declarations in about 85 files |
 | D01 | **Wave** and **level** | DECIDE | 36 files + 53 test files |
 | D02 | **Lives**, **men**, **ships**, **turns**, **extra man**, **extra life**, **mini man** | DECIDE | 18 files |
 | D03 | **Max**, **Maximum**, **Cap**, **Limit** (and **Min**, **Minimum**, **Floor**) | DECIDE | ~25 files |
 | D04 | **Remaining** and **Left** | DECIDE | ~25 files |
 | D05 | **Explosion**, **explode**, **strip effect**, **appear**, **materialise** | DECIDE | ~25 files |
-| D06 | **Rescue score**, **rescue bonus**, **points**, **award**, **note**, **show** | DECIDE | 8 files |
+| D06 | **Rescue score**, **rescue bonus**, **points**, **award**, **note**, **show** | Rescue part **DONE**; other "points" names open | 8 files |
 | D07 | **Slot** means five different things | DECIDE | the three non-palette meanings: 21 files + 16 test files |
 | D08 | **Step** means many different things | DECIDE | 68 files + 30 test files carry the word |
 | D09 | **Control**, **input**, **binding**, **action**, **pad**, **game pad** | DECIDE | ~25 files |

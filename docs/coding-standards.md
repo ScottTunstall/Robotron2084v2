@@ -55,7 +55,7 @@ glossary to be understood unless it links there (CMT-11).
 
 **STR-1. One reason to change per class.** If a class summary needs "and" to describe what it does, split it.
 Warning signs: more than ~15 fields, or `// ---- section ----` comments that divide it into jobs.
-`SpriteSet` is the counter-example.
+`TextureSet` is the counter-example.
 
 **STR-1a. A class longer than 500 lines is doing too much.** Count every line of the file, blank lines and
 comments included. This is a hard cap, not a guideline: past it, find the second job the class has taken on and
@@ -136,7 +136,7 @@ what it needs as arguments and let it work. A query is fine when the answer is t
 
 **STR-11. Law of Demeter: one dot.** A method talks to its own members, its parameters, the objects it makes, and
 the things it is directly given. It does not reach through one object to another: `playField.FieldEntities.GetList(kind).Entities`,
-`playField.PlayfieldWall.Intersects(box)` and `spriteSet.BlitterDraw.DrawSprite(...)` all call a method on something got from something
+`playField.PlayfieldWall.Intersects(box)` and `textureSet.BlitterDraw.DrawSprite(...)` all call a method on something got from something
 else. If a statement has a second dot after a property or a call, it is a smell. More than one dot means the class knows too much about
 the inside of another object, and will break when that inside changes. Fix it one of two ways: give the
 near object a method that does the whole job (`field.HitsWall(box)`, `field.GetEntities(kind)`), or pass the
@@ -179,6 +179,14 @@ a defect: `StepColumns` holding port pixels, `...ArcadeTicks` holding beats.
 **NAM-4. Booleans read as predicates**: `IsHitStopActive`, `HasLives`. A method that returns a `bool` starts with
 `Is` or `Has`: `IsInsideX`, `IsOverlappingLivingElectrode`, `HasFreeSlot`. Never `Can…`, `Try…`, `Fits…` or
 `Overlaps…`. A state that is true *while held* is `...Held`, not `...Pressed`.
+A bool **property that code outside the class can set** is named as C# WinForms names its own (`Visible`, `Enabled`, `Checked`,
+`ReadOnly`): no `Is` (`Sound.Enabled`, `MovieObject.BrainVisible`; NAM-27). A bool that cannot be set from outside (no setter or a
+private setter), a method, a parameter and a local is a predicate and keeps `Is` or `Has`. So `IsEnabled` is `Enabled` if it is settable, and
+stays `IsEnabled` if it is read-only.
+**Existing exceptions, left as they are by the author's decision:** ten public settable bools that start with `Is` are not renamed. They are
+`MovieObject.IsLaser`, `IsDead`, `IsOnList` and `IsMonoActive`; `AttractObjectMachine.IsShakingUp` and `IsAlive`;
+`BoardMemory.IsBackground1On`, `IsLaserBallBonusRepeating` and `IsOrganTuneNext`; and `Mc6800Cpu.IsInterruptRequested`. Do not rename them
+to match this rule, and do not copy the form for a new property: a new settable bool follows the rule.
 
 **NAM-5. No abbreviations** except `X`/`Y`, `Rom`, well-known ones (`Id`, `Hud`), and ROM labels quoted as ROM
 labels. `Len`, `Dur`, `Pc`, `Rprog`, `gw`/`gh` and `reDir` are not allowed.
@@ -198,6 +206,10 @@ version of this rule; this is the whole-codebase version). A reader who has seen
 predict what a same-named member elsewhere does, and a method should do what its name leads a reader to expect
 and nothing more surprising than that. When the codebase already has a word for a concept (this document's
 glossary, or the terminology ledger for ROM concepts), use that word rather than a fresh synonym.
+**The author's two tests for this rule:** a reader must be able to **guess the type of a parameter from its name** (NAM-19,
+NAM-26) and to **guess what a method does from its name** (NAM-1, NAM-13, NAM-18, NAM-23). If the guess would be wrong, or
+would need IntelliSense, the xmldoc or a look at the body, the name is wrong and is to be changed; the comment does not
+make up for it. Most of the naming rules in this section are this one rule applied to a particular case.
 
 **NAM-10. A property is a stored value; a computation is a method. This follows Microsoft's member design
 guidelines and is not optional.** A property getter does one thing: it returns a value that is stored in a field, or in an auto-property.
@@ -305,8 +317,11 @@ method does and gives back. A field called `_facing` that holds a `WalkSequence`
   `...Remaining` or `...Left`, and anything with a unit takes the unit (NAM-2). `_animationFrameIndex`, not
   `_animationFrame` or `_rotation`; `_stepCount`, not `_step`. A direction held as -1 or +1 says so (`_directionSignX`),
   because `_direction` is a `Direction8`.
-- **A texture ends in `Sprite`, `AnimationFrame` or `AnimationFrames`** (CMT-13): `EnforcerSprite`, `_pointsSprite`. A bare
-  `Enforcer` is an enforcer.
+- **Anything of type `Texture2D` ends in `Texture`, and an array or list of them in `Textures`**: `EnforcerTexture`,
+  `_pointsTexture`, `animationFrameTexture`, `GruntAnimationFrameTextures`, `BerzerkRobotWalkLeftAnimationFrameTextures` (never a bare `Frames`: that is an arcade frame), `GetCurrentAnimationFrameTexture()`. A bare
+  `Enforcer` is an enforcer, and a bare `animationFrame` is not obviously a texture. The word before `Texture` still says what is
+  drawn on it (CMT-13: an animation frame, a glyph, the laser bar). A method that makes or loads one is a `Create…` or
+  `Load…` (NAM-13) and is exempt. This is the author's rule of least surprise.
 - **A rectangle ends in `Bounds`** and a point does not: `_playfieldBounds`, `_canvasBounds`.
 - **A delegate starts with a verb**, as the method it stands for would: `_getTargetPosition`, not `_target`.
 - **A boolean is a predicate** (NAM-4) in every kind of name, locals and parameters included: `isFireHeld`, `fansByRows`,
@@ -409,7 +424,7 @@ and the sound tables' `NoiseSettings`. Name it for what it is: `gameSettings`, `
 pull request, with no tooltip and no go-to-definition. For every parameter, local, field, property and record component,
 the reader must be able to say what type it is from the name alone, and must not need the xmldoc to do so.
 - **An object is named with its whole type name.** Lower camel case for a parameter, local or field: `PlayField playField`,
-  `SpriteSet spriteSet`, `GamePalette gamePalette`, `GameSession gameSession`, `ICollisionScene collisionScene`,
+  `TextureSet textureSet`, `GamePalette gamePalette`, `GameSession gameSession`, `ICollisionScene collisionScene`,
   `IPlayerInputSource playerInputSource` (an interface drops its `I`), `WaveSpawnContext waveSpawnContext`. Pascal case for a
   property or record component: `PlayField PlayField`. A shortened form (`field`, `sprites`, `palette`, `session`, `context`,
   `scene`, `input`) is an abbreviation (NAM-5), and two different types can share it, so it is not allowed.
@@ -419,8 +434,8 @@ the reader must be able to say what type it is from the name alone, and must not
   since C# 14 it is a keyword inside a property accessor (it means the backing field), so a parameter called `field` is a
   trap as well as vague. The others are `value`, `record`, `file`, `init`, `required` and `scoped`. Say `playField`.
 - **A name another rule already fixes is fine**, because the type can be told from it: `...Bounds` (a `Rectangle`, NAM-19),
-  `...Position` (an `IntVector2`), `...Count`, `...Index`, a unit suffix (NAM-2), a predicate (NAM-4), `...Sprite` and
-  `...AnimationFrame` (a texture, NAM-19), `random` (a `Random`) and `spriteBatch` (a `SpriteBatch`). A single-letter lambda
+  `...Position` (an `IntVector2`), `...Count`, `...Index`, a unit suffix (NAM-2), a predicate (NAM-4), `...Texture` and
+  `...Textures` (a `Texture2D`, NAM-19), `random` (a `Random`) and `spriteBatch` (a `SpriteBatch`). A single-letter lambda
   parameter in a one-line LINQ call stays allowed (NAM-6).
 - **Also fine:** a collection named for what it holds (`grunts` for an `IReadOnlyList<Grunt>`), and the `SoundTables` fields, which
   are the ROM labels' own names by the author's decision.
@@ -435,8 +450,11 @@ gave one. They are here so that a developer who finds a rule odd can see the pai
 without reading it. Where the author gave a decision but no reason, it says so: that is a gap for the author to fill, not a
 sign that there was no reason.
 
+Most of the decisions below are one principle applied to a particular name, so it comes first.
+
 | Decision | The author's reason | Rule or record |
 |---|---|---|
+| **The code follows the principle of least surprise.** A reader can guess the type of a parameter from its name, and can guess what a method does from its name. | "The code should use principle of least surprise. I need to be able to guess the type of the parameter by its name. I need to be able to guess what a method does by its name too." | NAM-9 (the two tests are written there); NAM-26, NAM-19, NAM-13, NAM-27 |
 | **Name every object with its whole type name** (`PlayField playField`, never `field`). | "In WaveSpawnContext there is a parameter named \"Field\" - but what field? Field is a reserved word when in lower case. It should be called PlayField so that its completely unambiguous. I should be able to work out the type of the parameter without looking at the xmldocs. This will aid me in code review where I may not have intellisense." | NAM-26 |
 | **A palette entry is a palette index**, not a slot, in every name (`LaserPaletteIndex`, `GetPaletteIndexColour`). | Asked whether `LaserSlot` was the palette index; if so, "use PaletteIndex throughout system, e.g. LaserPaletteIndex". (The audit found `Slot` meant five things, and that `LaserSlot`, a colour, sat beside `LaserSlots`, the store of three lasers.) | Glossary; refactoring ledger 2026-10-31 |
 | **No "Colour" next to "PaletteIndex"**: `GetWordmarkPaletteIndex`, not `GetWordmarkColourPaletteIndex`. | "As a Palette is colour oriented anyway." | Glossary |
@@ -446,9 +464,33 @@ sign that there was no reason.
 | **Lives, not men, ships, turns or mini man**, for what a player may lose. | The author decided and did not give a reason. (The audit found `BozoMode` passing `StartingLives` as `shipsPerGame` and `GetSpareMen()` as `spareMen` in one call.) | Glossary; refactoring ledger 2026-10-31 |
 | **Max and Min, not Cap, Limit or Maximum**, for the biggest and smallest a number may be. | The author decided and did not give a reason. | Glossary; refactoring ledger 2026-10-31 |
 | **The sound tables keep the ROM's names** (`CircleKill`, `SquareKill`, `PostKill`). | The author decided and did not give a reason. (They were already the ROM labels' own comments, so nothing was renamed.) | `SoundTables` summary; glossary |
+| **Say "strip explosion" for the strips flying apart, and "strip effect" only for both kinds together** (`StripEffectTuning`, not `StripExplosionTuning`). | "Strip Explosion should be used - not strip effect, if it means the same thing." (They do not mean the same: `StripEffect` also does the appear, so the class keeps its name and the tuning class, which held both, took it.) | Glossary; refactoring ledger 2026-10-31 |
+| **Rescue bonus** is the amount earned for saving a family member (`RescueBonusMarker`), not rescue score or points. | "D06 should be \"RescueBonus\" as Points may infer a 2D point on screen." | Glossary; refactoring ledger 2026-10-31 |
+| **A bool that says whether something is visible is `IsVisible`** (or `IsPlayerVisible`, `isBrainVisible` when there is more than one thing to see). | "ShowingPoints should be IsVisible. Its a bool and so should follow standards ... Any bool that determines if something is visible or not should be named IsVisible." (The same message asked whether `Points` needs to be in the property names of `ScoreBurst`, since the class name already says it is about points. That question is open: see the refactoring ledger.) | NAM-27 |
+| **The flash and number left by a spheroid or quark is a `ScoreBurst`**, not a death burst or a `PointsBurst`. | "Keep ScoreBurst." The author gave no reason. (Considered: `DeathBurst`, which the glossary had pencilled in, and `PointsBurst`, which reads like a burst at a 2D point.) | Glossary |
+| **Anything of type `Texture2D` is named `{something}Texture`** (`_pointsTexture`, not `_pointsSprite`; arrays and lists end `Textures`). | "Can we have anything of type Texture2D named as {xyz}Texture? Texture2D _pointsSprite should be _pointsTexture. Again this is the principle of least surprise." | NAM-19; refactoring ledger 2026-10-31 |
+| **`SpriteSet` becomes `TextureSet`** (with `ISpriteSource` becoming `ITextureSource`). | "I think SpriteSet isn't the right name, given it deals with Animation Frames." The author did not name a replacement; after seeing that about 20 of its 45 members are not animation frames (fonts, laser bars, logos) and that the names are all `…Texture(s)` now, they agreed to `TextureSet`. | NAM-19; refactoring ledger 2026-10-31 |
+| **Sprite data comes from the ROM through the sprite extractor, never from bytes typed into the code.** The spare-life icon is the asset `Sprites/SpareLife.png`. | "Why do we have BuildSpareLifeTexture() - can't we extract the sprite data from the ROM like the rest?" (The extractor already had: the PNG was called `PlayerExtra.png` and nothing loaded it.) | Refactoring ledger 2026-10-31 |
+| **`SpriteFactory` is `TextureFactory` and `SpriteContentPaths` is `TexturePaths`.** | "Yes, rename SpriteFactory and SpriteContentPaths to TextureFactory and TexturePaths." The author gave no further reason: it follows `TextureSet` and the `…Texture` rule. | Refactoring ledger 2026-10-31 |
+| **A settable visibility flag is `Visible`; a read-only one is `IsVisible`** (the C# WinForms convention). | "If IsVisible is mutable it should be called Visible, in keeping with C# Winforms convention." | NAM-27; refactoring ledger 2026-10-31 |
+| **Bool property names are consistent with C# WinForms**: settable is `Enabled` or `Visible`, never `IsEnabled`; read-only is `Is…` or `Has…`. | "If there's an IsEnabled property which is mutable, rename it to Enabled. Keep the property naming consistent with Winforms." (There is no `IsEnabled` in the code; the existing settable switches already say `Enabled`.) | NAM-4; NAM-27 |
+| **Ten existing settable `Is…` bools are left alone** (the attract movie's objects, the sound board's memory, the CPU emulator). | "No leave them alone". The author gave no reason. (Several would read badly in the WinForms form: `IsLaser` as `Laser` looks like a laser object.) | NAM-4 |
+| **Each fact is documented once, by its owner**: interfaces are contracts and never explain a concrete implementation; implementations say what they do and what they talk to, not who calls them (unless that is critical to use) and not how the objects they hold behave. | "Interfaces are contracts - they MUST NOT explain how the concrete implementation behaves. On the other hand, implementations are concerned ONLY with what they do and what they talk to (ie: what they are composed of or aggregated with), NOT who calls them (unless that is critical to use). Implementations should not talk about how contained/aggregated objects behave though, if the implementations change the comments will rot." | CMT-17 (draws together CMT-12, CMT-15 and CMT-16) |
 | **Every text file is CRLF on disk**; the repository still stores LF. | "I need all files to be in windows format - CR LF". | `.gitattributes` (`eol=crlf`), `.editorconfig` |
 
 If you are the author and want to add the story behind any row, add it in the second column in your own words.
+
+**NAM-27. A bool that says whether something is visible is called `Visible` when code outside the class can set it, and `IsVisible` when it cannot.**
+Not `Showing…`, `Shows…`, `…Shown`, `…Drawn` or `show…`.
+- **A property with a setter that other classes can use is `Visible`**, with no `Is`, as C# WinForms names `Control.Visible` and
+  `Control.Enabled` (`MovieObject.BrainVisible`). The code already names its other settable switches this way (`Sound.Enabled`,
+  `GameSettings.BozoModeEnabled`).
+- **Everything that is a question is `IsVisible`** (NAM-4): a property with no setter or a private setter (`ScoreBurst.IsVisible`), a method
+  (`StripEffect.IsVisible()`, `PlayField.IsPlayerVisible()`), a parameter and a local (`isSpareLivesVisible`, `isAttractVisible`).
+- **When there is more than one thing to see, the thing goes in front**: `IsPlayerVisible`, `BrainVisible`. Every visibility flag then ends in
+  `Visible`, so a reader can find them all with one search.
+- **Not covered:** a bool that picks *which* of two things is shown (`_isShowingArcadeText` chooses between the arcade's text and the
+  port's), and a bool that says something has *happened* (`HasPlayerAppeared`).
 
 ## 4. Numbers and units (§112, §113)
 
@@ -596,7 +638,20 @@ bug. Never label a column count as arcade pixels.
 
 **CMT-15. A field's docs say what it is for, never how it is used.** The `<summary>` of a field or constant states its purpose (what the value is, and its unit) and, in the `<remarks>`, its relation to the original source or the disassembly (routine, address, instruction). It never says which code reads or changes it, or how: not "is added to", "is taken off", "counts up to this", "is compared with", "decides how long", "is picked at random when". Saying how a field is used lets the field dictate to the method that uses it, and the doc goes stale when that method changes. A reader finds the use with the IDE. This replaces the old rule that a constant's docs must name the field it is added to or compared with.
 
-**CMT-16. An orchestrator's docs say what it does, not how the things it runs work inside.** A class that drives other objects (the playfield driving the entities, a state driving the playfield, a list driving its items) documents its own part: what it calls, when, in what order, and when it does not. It must not describe how the called object works inside: its fields, its timers, its counting, its private steps. Write "on each tick the playfield calls each character's `Update`", not "each character keeps a timer and adds to it". How an object works is documented on that object, once, where it cannot go stale. This is CMT-12 seen from the caller's side: the interface says what is promised, the orchestrator says what it asks for, and only the implementer says how.
+**CMT-16. An orchestrator's docs say what it does, not how the things it runs work inside.** A class that drives other objects (the playfield driving the entities, a state driving the playfield, a list driving its items) documents its own part: what it calls, when, in what order, and when it does not. It must not describe how the called object works inside: its fields, its timers, its counting, its private steps. Write "on each tick the playfield calls each character's `Update`", not "each character keeps a timer and adds to it". How an object works is documented on that object, once, where it cannot go stale. This is CMT-12 seen from the caller's side: the interface says what is promised, the orchestrator says what it asks for, and only the implementer says how.
+
+**CMT-17. Documentation has one owner for each fact: the interface owns the contract, the implementation owns what it does and what it talks to.**
+- **An interface says what, never how** (CMT-12). It must not explain how any concrete implementation behaves.
+- **An implementation says what it does and what it is built from.** It documents its own behaviour, and the things it talks to: what it is
+  composed of or holds a reference to (`ArcadeFrameTimer`, `PlayField`, a list of strips), and what it asks of them.
+- **An implementation does not say who calls it,** or when or how often, unless that is critical to using it correctly. "Call this once to start
+  the reprogramming" is guidance and stays; "the playfield calls this on every tick" is a fact about someone else's code, and goes stale when that
+  code changes (see CMT-15 for fields and CMT-16 for a class that drives others).
+- **An implementation does not say how the objects it holds behave inside.** It says what it asks of them, not how they work. If the contained
+  object changes, a comment that described its insides is now wrong, and nobody knows it is wrong.
+
+The test: if a class you only *use* changed how it works, would this comment become false? If so, the comment is in the wrong place. Move the
+sentence to the class that owns the fact, or delete it.
 
 **SOLID-S.** See STR-1 and STR-2.
 
@@ -620,7 +675,7 @@ neither argument, or whose `Position`/`Bounds` mean nothing, is in the wrong int
 as "Unused (kept for the uniform shape)" are not allowed. Delete them.
 
 **SOLID-D. Depend on the narrowest thing that works.** Do not add new static mutable state or service
-locators (`Sound`, `DevKeys.AttractFastForward` are the existing ones to shrink, not grow). Pass
+locators (`Sound`, `DeveloperKeys.AttractFastForward` are the existing ones to shrink, not grow). Pass
 collaborators in through the constructor. Read hardware input only through `IPlayerInputSource` or an
 injected snapshot, not `Keyboard.GetState()` inside a state.
 
@@ -830,9 +885,16 @@ grep -rnwE --include=*.cs 'settings' src | grep -v '///'
 
 # A shortened name for an object (NAM-26): each should print nothing. The list is the usual offenders; the rule is the
 # test, so also read the parameter list of every method you add.
-grep -rnE --include=*.cs '\b(PlayField (field|_field)|SpriteSet (sprites|_sprites)|GamePalette (palette|_palette)|GameSession (session|_session)|FieldEntities entities|WaveSpawnContext context|IPlayerInputSource input|ICollisionScene scene)\b' src tests tools
+grep -rnE --include=*.cs '\b(PlayField (field|_field)|TextureSet (sprites|_sprites)|GamePalette (palette|_palette)|GameSession (session|_session)|FieldEntities entities|WaveSpawnContext context|IPlayerInputSource input|ICollisionScene scene)\b' src tests tools
 # ...and a parameter called field, which is a keyword inside a property accessor since C# 14
 grep -rnE --include=*.cs '\b[A-Z]\w*(<[^>]+>)? field\b[,)]' src tests tools | grep -v '///'
+
+# A Texture2D (or an array of them) whose name does not end in Texture or Textures (NAM-19): each should print nothing.
+# A method that makes or loads one (Create..., Load...) is exempt.
+grep -rnE --include=*.cs '\bTexture2D(\[\])?\??\s+_?\w*\s*[=;,){]' src tests tools | grep -vE 'Textures?\s*[=;,){]' | grep -vE '\(.*Texture2D'
+
+# A visibility flag that is not called IsVisible (NAM-27): each should print nothing, except `_isShowingArcadeText`, which chooses between two sets of text
+grep -rnE --include=*.cs '\bbool\??\s+_?(show|shows|showing|is(Showing|Drawn|Shown)|\w*Showing|\w*Shown)\w*\b|\bIsDrawn\b|\bShowing[A-Z]' src tests tools
 
 # A ternary anywhere but the whole value of a return (FMT-2): each hit is a violation to rewrite with named bools
 # and ifs. A return line that is left out of this list still needs a look: its condition and branches must be plain.

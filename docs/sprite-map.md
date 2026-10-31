@@ -235,6 +235,6 @@ Palette per WmsGfxSpriteEditor RobotronPaletteService (seanriddle.com ripper con
 | ProgBurst | rom chase | source data | 12×16 | ProgBurst.png | pass C solid blit |
 | CMPIC | source RRB10 | $110D | 6×4 | MissileSmall_0.png | pass B (ROM-verified)  |
 | CMP1 | source RRB10 | $206F | 6×4 | MissileSmall_1.png | pass B (ROM-verified)  |
-| MNPIC | source RRG23 | $3596 | 6×8 | PlayerExtra.png | pass B (ROM-verified)  |
+| MNPIC | source RRG23 | $3596 | 6×8 | SpareLife.png | pass B (ROM-verified)  |
 | NULLP | source RRH11 | $045D | 4×2 | Dot.png | pass B (ROM-verified)  |
 | CRUSB | source RRSCRIPT | $86BA | 18×2 | AttractCruise.png | pass B (ROM-verified)  |

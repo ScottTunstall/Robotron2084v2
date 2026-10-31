@@ -26,6 +26,311 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 
 ---
 
+## 2026-10-31: SpriteFactory and SpriteContentPaths become TextureFactory and TexturePaths
+
+### What was wrong
+
+After `SpriteSet` became `TextureSet` and every `Texture2D` was named `…Texture`, these two classes still used "sprite" for what they hold:
+`SpriteFactory` builds textures at run time, and `SpriteContentPaths` is the list of texture files in the content folder. The author named
+the replacements.
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| `SpriteFactory` (class and file), `_spriteFactory`, `SpriteFactoryPatternTests` (class and file) | `TextureFactory`, `_textureFactory`, `TextureFactoryPatternTests` |
+| `SpriteContentPaths` (class and file) | `TexturePaths` |
+| `tools/generate-mgcb.py`, which writes that file, and a comment in `tools/extract-fonts.py` | write `TexturePaths.cs` with the class `TexturePaths` |
+
+### What was left alone, and why
+
+- **`Content/Sprites/` and the `"Sprites/..."` asset names**: they are the content folder and every asset's name; renaming them would touch
+  `Content.mgcb` and 260 PNG paths. Not asked for.
+- **`tools/SpriteExtractor`, `SpriteBatch`, `SpriteMask`, `SpriteShape`, `SpriteCollision`**: the extractor is a tool name, the rest are about
+  sprites as drawn objects or are MonoGame's own name.
+- **`generate-mgcb.py` was not run**: it writes LF line endings and a different layout, so running it would have rewritten `Content.mgcb`
+  and the file in another style. Only its names were changed, so the next run writes the new name.
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors; tests unchanged.
+
+---
+
+## 2026-10-31: SpriteSet becomes TextureSet
+
+### What was wrong
+
+The author said `SpriteSet` was the wrong name because it "deals with Animation Frames". It holds about 45 textures: roughly 26 arrays of
+animation frames, and about 20 others (the font glyphs, the laser bars, the skull, the title wordmark, the Williams logo, the cursor, the
+spare-life icon, the wall pixel). `AnimationFrameSet` would have been wrong for those. After the textures were all renamed `…Texture(s)`,
+`TextureSet` is the name that is true of everything in it.
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| `SpriteSet` (class and file), `spriteSet`, `_spriteSet`, `PlayField.SpriteSet` | `TextureSet`, `textureSet`, `_textureSet`, `PlayField.TextureSet` |
+| `ISpriteSource` (interface and file), `spriteSource` | `ITextureSource`, `textureSource` |
+| `ContentSpriteSource` (class and file) | `ContentTextureSource` |
+| tests: `NoSpriteSource`, `TestSprites`, `SharedSpriteSet` | `NoTextureSource`, `TestTextures`, `SharedTextureSet` |
+
+The comments that said "sprite set" now say "texture set".
+
+### What was left alone, and why
+
+- **`SpriteBatch`, `SpriteMask`, `SpriteShape`, `SpriteCollision`, `SpriteFactory`, `SpriteContentPaths`, `SpriteExtractor`**: they are about
+  sprites as drawn objects, or are MonoGame's own name, not about this set. `SpriteFactory` and `SpriteContentPaths` were renamed in the entry above.
+- **`BlitterDraw` and `ArcadeText` inside `TextureSet`**: they are drawing helpers, not textures (135 uses reach through the set for them).
+  Taking them out is a design change, and was not asked for.
+- **`docs/sprite-map.md` and the extractor's "definitive sprite source"**: that is the ROM listing, a different thing.
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors; tests unchanged.
+
+---
+
+## 2026-10-31: the spare-life icon is loaded from the ROM extract, not typed in
+
+### What was wrong
+
+`SpriteSet.BuildSpareLifeTexture` held the icon as 24 hand-typed bytes (the nibbles of the ROM's `MNPIC`) and built the texture at run time,
+with its own `GetPaletteColour` to colour it. Every other sprite is extracted from the ROM into a PNG by `tools/SpriteExtractor`, so this was
+the one place where art lived in code. The author asked why.
+
+### How it got in
+
+The extractor had already cut `MNPIC` (ROM `$3596`, 3 bytes by 8 rows) into `Sprites/PlayerExtra.png`, but under a name from an early guess
+("player dead/carry pose? verify", notes line 353), and nothing loaded it. The notes (section 58.4) then decoded the same bytes by hand "so the
+port can build it without a PNG", and the builder was written from that.
+
+### What was changed
+
+| Old | New |
+|---|---|
+| `SpriteSet.BuildSpareLifeTexture` (24 hand-typed bytes) and `SpriteSet.GetPaletteColour` | removed; `SpareLifeTexture = spriteSource.Load("Sprites/SpareLife")` |
+| `Content/Sprites/PlayerExtra.png`, its `Content.mgcb` entry, its entry in `SpriteContentPaths`, and the extractor's `"MNPIC" => "PlayerExtra"` | `SpareLife.png`, `Sprites/SpareLife`, `"MNPIC" => "SpareLife"` (and `docs/sprite-map.md`) |
+
+Before removing the builder the PNG was compared with it: the same 6 by 8 shape, and the four colours are identical (palette index 2 is
+(240,64,0), the cycling marker for index 11 is (144,208,240), index 8 is (144,144,160), index 3 is (240,0,240)). The mgcb colour key is
+(255,0,255), so nothing in the icon turns transparent.
+
+### What was left alone, and why
+
+- **`docs/arcade-fidelity-notes.md` section 58.4**, which describes building it at run time: it is a dated record and keeps what it said then.
+- **`HudLayout.HudSpareLifeWidthPixels` and `HudSpareLifeHeightPixels`**: the HUD still uses them to place the icons.
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors; the content pipeline produced `SpareLife.xnb`; 808 and 121 tests, unchanged. No test
+reads the icon's pixels (the tests use a stand-in sprite source), so the picture itself was checked by comparing the PNG with the old bytes, not
+by running the game.
+
+---
+
+## 2026-10-31: anything of type Texture2D is named ...Texture (NAM-19)
+
+### What was wrong
+
+Textures were named four different ways: `...Sprite` (`_pointsSprite`, `EnforcerSprite`), `...AnimationFrame` and `...AnimationFrames`
+(`animationFrame`, `GruntAnimationFrames`), `...Frames` (`BerzerkRobotIdleFrames`), and bare nouns (`glyph`, `FontLarge`). A reader
+of `_pointsSprite` could not tell it was a `Texture2D`. The author's rule is that the type shows in the name, so every `Texture2D`
+ends in `Texture` (and every array of them in `Textures`).
+
+### What was changed
+
+62 distinct names (80 declarations) in 40 files, plus three methods that return a `Texture2D`.
+
+| Old name | New name |
+|---|---|
+| `…Sprite` (`EnforcerSprite`, `SkullSprite`, `LaserBarSprite`, `TankShellSprite`, `_pointsSprite`, `rimSprite`, `coreSprite`, `wallPixelSprite` ...) | `…Texture` (`EnforcerTexture`, `SkullTexture`, `LaserBarTexture`, `TankShellTexture`, `_pointsTexture`, `rimTexture` ...) |
+| `…AnimationFrames` (`GruntAnimationFrames`, `BrainAnimationFrames`, `RescueBonusAnimationFrames` ...) | `…AnimationFrameTextures` |
+| `BerzerkRobotWalkLeftFrames` and the other four `BerzerkRobot…Frames`, and a local `frames` | `BerzerkRobotWalkLeftAnimationFrameTextures` and so on, `animationFrameTextures`. A bare "frame" means an arcade frame, so a texture of a drawing says "animation frame" (the author's correction) |
+| `animationFrame`, `_animationFrame` (a `Texture2D`) | `animationFrameTexture`, `_animationFrameTexture` |
+| `glyph`, `glyphs`, `FontLarge`, `FontSmall`, `_fontLarge`, `fontLarge` | `glyphTexture`, `glyphTextures`, `FontLargeTextures`, `FontSmallTextures`, `_fontLargeTextures`, `fontLargeTextures` |
+| `GetCurrentAnimationFrame()` (19 entities), `GetExplosionAnimationFrame()`, `BuildSpareLifeSprite()` | `GetCurrentAnimationFrameTexture()`, `GetExplosionAnimationFrameTexture()`, `BuildSpareLifeTexture()` |
+
+### What was left alone, and why
+
+- **`SpriteSet` and the other "sprite" types** (`SpriteFactory`, `SpriteMask`, `ISpriteSource`, `SpriteCollision`, `SpriteBatch`): they are
+  types, not `Texture2D`s. The author says `SpriteSet` is the wrong name because it "deals with Animation Frames", but has not chosen a new
+  one. It also holds the fonts, the laser bars, the HUD icons and the blitter, which are not animation frames. Options: `AnimationFrameSet`
+  (the author's lean, but it leaves the fonts out), `TextureSet` (it matches the new rule) or `GraphicsSet`. Decided later the same day: `TextureSet` (see the entry above this one).
+- **`Create…`, `CreateSolid` and `Load…`** on `ISpriteSource`: they are factory methods (NAM-13), not names of textures.
+- **A lowercase `texture`** (a parameter in a handful of methods): it already ends in `texture`.
+- **The glossary's words** "sprite" and "animation frame": they are still the words for the thing; only the C# names changed.
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors; 808 and 121 tests, unchanged.
+
+---
+
+## 2026-10-31: Visible when settable, IsVisible when read-only (NAM-27)
+
+### What was wrong
+
+NAM-27 said every visibility flag is `IsVisible`. The author pointed out that C# WinForms names a settable property `Visible` (and
+`Enabled`), and keeps `Is…` for read-only questions.
+
+### What was changed
+
+| Old name | New name | Why |
+|---|---|---|
+| `MovieObject.IsBrainVisible { get; set; }` | `BrainVisible` | the attract machine sets it from outside the class |
+
+### What was left alone, and why
+
+- **`ScoreBurst.IsVisible { get; private set; }`**: only `ScoreBurst` sets it, so to every other class it is read-only.
+- **`StripEffect.IsVisible()`, `PlayField.IsPlayerVisible()`, and the parameters `isBrainVisible`, `isSpareLivesVisible`, `isAttractVisible`**: methods and
+  parameters are questions or values, not settable properties.
+- **The other public settable bools that start with `Is`** are not visibility flags, so this rule does not cover them: `MovieObject.IsLaser`,
+  `IsDead`, `IsOnList`, `IsMonoActive`, `AttractObjectMachine.IsShakingUp`, `IsAlive`, `BoardMemory.IsBackground1On`, `IsLaserBallBonusRepeating`,
+  `IsOrganTuneNext`, and `Mc6800Cpu.IsInterruptRequested`. The same WinForms convention would rename them. The author decided to leave them alone (see NAM-4).
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors; tests unchanged.
+
+---
+
+## 2026-10-31: IsVisible for every visibility flag (NAM-27)
+
+### What was wrong
+
+`ScoreBurst.ShowingPoints` was a bool that says whether something is visible, and the author said it should be `IsVisible` and follow the
+standards. The same idea had five more names in the code, so the rule was written once (NAM-27) and applied to all of them.
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| `ScoreBurst.ShowingPoints` | `IsVisible` |
+| `StripEffect.IsDrawn()` | `IsVisible()` |
+| `PlayField.IsPlayerDrawn()` | `IsPlayerVisible()` |
+| `MovieObject.ShowsMonoBrain`, `BeginMono(... showsBrain)` | `IsBrainVisible`, `isBrainVisible` |
+| `ArcadeHud` parameter `showSpareLives` | `isSpareLivesVisible` |
+| `GameSettings.IsAttractSilent(isAttractShowing)` and its test parameter | `isAttractVisible` |
+
+### What was left alone, and why
+
+- **`TitleScreenState._isShowingArcadeText`**: it chooses between two sets of text, it does not say whether something is visible.
+- **`HasPlayerAppeared`, `HasPlayerDiagonalAppearStarted`, `StripEffect._hasAppearBeenDrawn`**: they say something has happened.
+- **The `Points…` names in `ScoreBurst`** (`PointsBounds`, `PointsPaletteIndex`, `PointsStepsRemaining`, `_pointsSprite`): the author asked whether
+  they need "Points" at all. The class draws two things, the burst shape and the number, so a word is needed to tell the two apart
+  (`BurstPaletteIndex` against `PointsPaletteIndex`). Waiting for the author to choose that word.
+- **A wrinkle in `ScoreBurst.IsVisible`**: it is true only once the burst shape is over and the number is showing. The burst shape is also
+  visible before that. The summary says so.
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors; tests unchanged.
+
+---
+
+## 2026-10-31: rescue bonus, not rescue score or points (audit D06)
+
+### What was wrong
+
+The points for saving a family member were called a rescue score (`RescueScoreMarker`, `RescueScores`, `ShowRescueScore`), a rescue bonus
+(`ScoreValues.RescueBonus`, `AwardRescueBonus`) and "points". The author chose **rescue bonus**, because "Points may infer a 2D point on
+screen".
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| `RescueScoreMarker` (class and file) | `RescueBonusMarker` |
+| `FieldEntities.RescueScores` | `RescueBonusMarkers` |
+| `SpriteSet.RescueScoreDisplays` (the five "1000".."5000" textures) | `RescueBonusAnimationFrames` |
+| `PlayField.ShowRescueScore` | `ShowRescueBonus` |
+| test `Rescue_LeavesScoreDisplay_AtTheRescueSpot_ThatExpires` | `Rescue_LeavesBonusMarker_AtTheRescueSpot_ThatExpires` |
+
+### What was left alone, and why
+
+- **`AwardScore`, `NoteScore`, `ScoreBoard`**: they are about the score in general, not the rescue amount.
+- **The ROM label `RESCUE_FAMILY_POINTS_TABLE`**, quoted in a summary.
+- **The other "points" names, which have the same problem and were not part of this decision:** the death burst's numbers
+  (`ScoreBurst.PointsPaletteIndex`, `PointsBounds`, `PointsSteps`, `ShowingPoints`, `PointsOffsetXArcadePixels`, `_pointsSprite`) and the
+  score amount in `ExtraLifeEveryPoints`, `GetExtraLifeEveryPoints`, `FactoryExtraLifeEveryPoints`. Asked of the author in the audit (D06).
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors; tests unchanged.
+
+---
+
+## 2026-10-31: strip explosion and strip effect (audit D05, in part)
+
+### What was wrong
+
+The author asked that "strip explosion" be used rather than "strip effect" where they mean the same thing. They do not: `StripEffect` is
+the class for two things, an explosion (the strips fly apart) and an appear (the strips close up), so "strip explosion" is only the first.
+The prose already used the two words that way. One name had it backwards: `StripExplosionTuning` held the numbers for both kinds.
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| `StripExplosionTuning` (class and file) | `StripEffectTuning` |
+
+The glossary now defines **strip effect** (both kinds) beside **strip explosion** (the strips flying apart).
+
+### What was left alone, and why
+
+- **`StripEffect`, `StripEffectKind`, `HasRoomForStripEffect`**: they cover the explosion and the appear, so "effect" is the right word.
+- **The bare "explosion" names** (`IExplodable.GetExplosionAnimationFrame`, `SpawnExplosion`, `CreateExplosion`, `MovieExplosion`,
+  `ExplosionStartSizer`): the glossary says a bare "explosion" should be "strip explosion". They are not renamed yet because the author
+  has not said whether to; the audit lists them under D05.
+
+### How it was checked
+
+Debug build with 0 warnings and 0 errors; tests unchanged.
+
+---
+
+## 2026-10-31: British spelling, Developer, index, bounds and interval (audit R01, R03, R04, R05, R06 Part A)
+
+### What was wrong
+
+Five items from [terminology-duplicates-2026-10-31.md](terminology-duplicates-2026-10-31.md) where a standard already decided the word
+(NAM-12, NAM-5, NAM-19, NAM-16), so no new decision was needed.
+
+### What was changed
+
+| Rule | Old name | New name |
+|---|---|---|
+| NAM-12 | `WallColorCycle` (class and file), `RobotronColor` (class and file), `ColorCycleEffect`, `ColorCycle`, `Content/Effects/ColorCycle.fx` (and its `Content.mgcb` entry and `Load` call) | `WallColourCycle`, `RobotronColour`, `ColourCycleEffect`, `ColourCycle`, `Content/Effects/ColourCycle.fx` |
+| NAM-12 | `SolidColorParameter`, `UpdateEffectColors`, `PageColors`, `CurrentColor`, `ChaseColor`, `StepColor`, `ColorOperand`, `StartColorOperand`, `ColorOperandStep`, `ColorValues`, `FromColorValue`, `CreateFromColorValue`, `trailColor`, `flareColor`, `colorOverride`, `markerColors`, `fixedColor`, and every `color` parameter of our own | the same with `Colour` / `colour` |
+| NAM-12 | `GetCenteredX`, `DrawCenteredLargeText`, `DrawCenteredSmallText`; "centered", "centers", "center" in our comments | `GetCentredX`, `DrawCentredLargeText`, `DrawCentredSmallText`; "centred", "centres", "centre" |
+| NAM-12 | `Sound.Initialize` | `Sound.Initialise` |
+| NAM-5 | `DevKeys` (class and file), `HandleAttractDevKeys` | `DeveloperKeys`, `HandleAttractDeveloperKeys` |
+| NAM-19 | `_walkCycleStep` (`Brain`, `Hulk`, `Player`, `Prog`), `WalkCycleStep` (attract machine) | `_walkCycleIndex`, `WalkCycleIndex` |
+| NAM-19 | `BlitterDraw.DrawnRect`, `SpriteFactory.FillRect`, `SpriteMask.GetSharedScreenRect` | `GetDrawnBounds`, `FillRectangle`, `GetSharedScreenEdges` |
+| NAM-19 | a `Rectangle` called `box` or `rect`: `PlayField.HitsWall`, `IsClearOfElectrodes`, `Player`, `SpawnPlacement`, `TunnelEffect.DrawEdge`, `Prog.IsInside`, three test helpers | `bounds`, `steppedBounds`, `candidateBounds`, `edgeBounds`, `outerBounds` / `innerBounds`, `electrodeBounds`, `drawnBounds` |
+| NAM-16 | `Grunt` and `BerzerkRobot`: `MoveDelayBeats`, `moveLimitBeats`, `DefaultMoveLimitBeats` | `MoveIntervalMaxBeats`, `moveIntervalMaxBeats`, `DefaultMoveIntervalMaxBeats` |
+| NAM-16 | `Quark`: `_dropDelayBeats`, `dropDelayBeats`, `DefaultDropDelayBeats`; `Quark` and `Spheroid`: `RepeatDropDelayDivisor` | `_dropIntervalMaxBeats`, `dropIntervalMaxBeats`, `DefaultDropIntervalMaxBeats`; `RepeatDropIntervalDivisor` |
+
+Two names are the fixer's own choice and are open to the author: `MoveIntervalMaxBeats` (the number is the most beats a robot waits,
+picked at random each time, so it is an interval and a maximum), and `GetSharedScreenEdges` (the method returns the four edges of the
+overlap as ints, not a rectangle).
+
+### What was left alone, and why
+
+- **The shader's own parameter names** `"RemapColor"` and `"SlotId"`: they are names inside the compiled shader, not C# names.
+- **`DisplayInfo.Rect`**: it mirrors the Windows `RECT` structure for a native call.
+- **The wave-table column names** (`GruntMoveDelay`, `SpheroidDropDelay` ...): audit item R06 Part B, which needs the author.
+- **The `DropDelayRotations` of the spheroid**: audit item D13.
+- **Comments that quote the ROM** (`COLOR $44`) and the `Color` type of MonoGame.
+
+### How it was checked
+
+Debug and Release builds with 0 warnings and 0 errors; the content pipeline produced `ColourCycle.xnb`; 808 and 121 tests, unchanged.
+The shader is loaded only when the game runs, so the renamed `Effects/ColourCycle` load has not been exercised by a test.
+
+---
+
 ## 2026-10-31: every object is named with its whole type name (NAM-26)
 
 ### What was wrong
