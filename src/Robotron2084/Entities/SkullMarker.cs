@@ -11,7 +11,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Human" />
 /// <remarks>
 ///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
-///     <see cref="_lifeTimer" /> says when it is time for it to go.
+///     <see cref="_lifeArcadeFrameTimer" /> says when it is time for it to go.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRH11.ASM</c>, routine <c>HUMKIL</c> (draws <c>SKULP</c> and plays
@@ -32,14 +32,14 @@ public sealed class SkullMarker : IEntity
 
     private readonly ArcadeFrameTimer _lifeArcadeFrameTimer = new();
     private readonly IntVector2 _position;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     /// <summary>Leaves a skull where a family member was killed.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the family member was killed.</param>
-    public SkullMarker(SpriteSet spriteSet, IntVector2 position)
+    public SkullMarker(TextureSet textureSet, IntVector2 position)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
     }
 
@@ -55,7 +55,7 @@ public sealed class SkullMarker : IEntity
     {
         if (!this.IsAlive()) return;
 
-        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, _spriteSet.SkullSprite, GetBounds(), Color.White);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, _textureSet.SkullTexture, GetBounds(), Color.White);
     }
 
     /// <summary>The box the skull is drawn in.</summary>

@@ -14,7 +14,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Human" />
 /// <seealso cref="StripEffect" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRB10.ASM</c>, routine <c>PROG</c> (with
@@ -101,8 +101,8 @@ public sealed class Prog : IExplodable, IRemovable
     private const int ReDirectionThreshold256 = 0xE4;
 
     /// <summary>
-    ///     How often a prog picks again how far off the player the spot it heads for is: about 3
-    ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> in 100.
+    ///     The cut-off for how often a prog picks again how far off the player the spot it heads for is. The higher it is,
+    ///     the less often it happens.
     /// </summary>
     private const int ReOffsetThreshold256 = 0xF8;
 
@@ -166,7 +166,7 @@ public sealed class Prog : IExplodable, IRemovable
 
     private readonly Random _random;
 
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     // The way the prog is walking: up, down, left or right. A new prog walks down until it picks a direction.
     private Direction8 _direction = Direction8.Down;
@@ -186,16 +186,16 @@ public sealed class Prog : IExplodable, IRemovable
     private IntVector2 _position;
 
     // Which place in WalkCycle the prog has reached.
-    private int _walkCycleStep;
+    private int _walkCycleIndex;
 
     /// <summary>Makes a prog where the family member was. It has that family member's animation frames and size.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the prog's top-left corner is.</param>
     /// <param name="kind">Which family member it used to be. This decides its animation frames and its size.</param>
     /// <param name="random">Where its random numbers come from. They pick how far off the player the spot it heads for is, and when it turns.</param>
-    public Prog(SpriteSet spriteSet, IntVector2 position, HumanKind kind, Random random)
+    public Prog(TextureSet textureSet, IntVector2 position, HumanKind kind, Random random)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
         Kind = kind;
         _random = random;
@@ -226,27 +226,27 @@ public sealed class Prog : IExplodable, IRemovable
     {
         if (!this.IsAlive()) return;
 
-        var frames = Kind.GetAnimationFrames(_spriteSet);
+        var frames = Kind.GetAnimationFrames(_textureSet);
         var animationFrame = frames[GetWalkAnimationFrameIndex()];
 
         // The oldest ghost is drawn first, so that newer ghosts cover older ones. Each ghost keeps the animation frame the prog had when it left the ghost behind.
         for (var i = _ghosts.Count - 1; i >= 0; i--)
         {
             var ghost = _ghosts[i];
-            _spriteSet.BlitterDraw.DrawSpriteSolidWithBackground(
+            _textureSet.BlitterDraw.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[ghost.AnimationFrameIndex],
                 GetBoundsAt(ghost.Position),
-                _spriteSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.GhostBackgroundPaletteIndex),
-                _spriteSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.GhostShapePaletteIndex));
+                _textureSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.GhostBackgroundPaletteIndex),
+                _textureSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.GhostShapePaletteIndex));
         }
 
-        _spriteSet.BlitterDraw.DrawSpriteSolidWithBackground(
+        _textureSet.BlitterDraw.DrawSpriteSolidWithBackground(
             spriteBatch,
             animationFrame,
             GetBounds(),
-            _spriteSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.BackgroundPaletteIndex),
-            _spriteSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.ShapePaletteIndex));
+            _textureSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.BackgroundPaletteIndex),
+            _textureSet.BlitterDraw.GetPaletteIndexColour(ProgTuning.ShapePaletteIndex));
     }
 
     /// <summary>
@@ -263,9 +263,9 @@ public sealed class Prog : IExplodable, IRemovable
     ///     Disassembly: the prog's animation frame pointer at <c>$0002,X</c>, which stays on the family member's walk
     ///     animation frame until the prog is killed.
     /// </remarks>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        return Kind.GetAnimationFrames(_spriteSet)[GetWalkAnimationFrameIndex()];
+        return Kind.GetAnimationFrames(_textureSet)[GetWalkAnimationFrameIndex()];
     }
 
     /// <summary>
@@ -279,9 +279,9 @@ public sealed class Prog : IExplodable, IRemovable
     ///         <item>Disassembly: <c>PROG_COLLISION_DETECTION</c>, <c>$1F40</c>, <c>LDD #$1F68 / STD $0002,X</c>.</item>
     ///     </list>
     /// </remarks>
-    public Texture2D GetExplosionAnimationFrame()
+    public Texture2D GetExplosionAnimationFrameTexture()
     {
-        return _spriteSet.ProgBurstSprite;
+        return _textureSet.ProgBurstTexture;
     }
 
     /// <summary>
@@ -382,27 +382,27 @@ public sealed class Prog : IExplodable, IRemovable
             Direction8.Down => WalkSequence.Down,
             _ => WalkSequence.Up
         };
-        return (int)walkSequence * 3 + WalkCycle[_walkCycleStep];
+        return (int)walkSequence * 3 + WalkCycle[_walkCycleIndex];
     }
 
     /// <summary>
     ///     Says whether a box is wholly inside the playfield. If the prog's next step would not be, the prog does not
     ///     take it.
     /// </summary>
-    /// <param name="bounds">The inside of the playfield wall.</param>
-    /// <param name="box">The box to check.</param>
+    /// <param name="outerBounds">The inside of the playfield wall.</param>
+    /// <param name="innerBounds">The box to check.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>CKLIMV</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     ///     </list>
     /// </remarks>
-    private static bool IsInside(Rectangle bounds, Rectangle box)
+    private static bool IsInside(Rectangle outerBounds, Rectangle innerBounds)
     {
-        return box.X >= bounds.X
-               && box.Y >= bounds.Y
-               && box.Right <= bounds.Right
-               && box.Bottom <= bounds.Bottom;
+        return innerBounds.X >= outerBounds.X
+               && innerBounds.Y >= outerBounds.Y
+               && innerBounds.Right <= outerBounds.Right
+               && innerBounds.Bottom <= outerBounds.Bottom;
     }
 
     /// <summary>
@@ -413,7 +413,7 @@ public sealed class Prog : IExplodable, IRemovable
     private void ActOnBeat(PlayField playField)
     {
         // The walk animation moves on at every beat, even when the prog cannot take its step.
-        _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
+        _walkCycleIndex = (_walkCycleIndex + 1) % WalkCycle.Length;
 
         // Now and then the prog changes how far off the Player the spot is that it heads for. This comes before picking a direction, because the direction depends on it.
         if (_random.Next(ThresholdRandomRange) > ReOffsetThreshold256) SetRandomOffsets();
@@ -421,7 +421,7 @@ public sealed class Prog : IExplodable, IRemovable
         if (_random.Next(ThresholdRandomRange) > ReDirectionThreshold256)
         {
             _direction = GetRandomDirection(playField);
-            _walkCycleStep = 0;
+            _walkCycleIndex = 0;
         }
 
         // Leave a ghost where the prog is standing, even if it then cannot take its step. Only the newest ghosts are kept (ROM: PROG3).
@@ -449,7 +449,7 @@ public sealed class Prog : IExplodable, IRemovable
         {
             // The step would leave the playfield, so it is not taken and the prog picks a new direction (ROM: CKLIM fails, then GPDIR).
             _direction = GetRandomDirection(playField);
-            _walkCycleStep = 0;
+            _walkCycleIndex = 0;
         }
     }
 
@@ -462,11 +462,12 @@ public sealed class Prog : IExplodable, IRemovable
 
     /// <summary>
     ///     Picks which way the prog walks next. Half the time it picks left or right, and half the time up or down, so it
-    ///     never walks diagonally. It picks the way that leads towards the spot it is heading for.
+    ///     never walks diagonally.
     /// </summary>
     /// <param name="playField">The playfield, which says where the player and the walls are.</param>
     /// <returns>The way to walk: left, right, up or down.</returns>
     /// <remarks>
+    ///     It picks the way that leads towards the spot it is heading for.
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRB10.ASM</c> <c>GPDIR</c>. When the prog is already level with the spot it is

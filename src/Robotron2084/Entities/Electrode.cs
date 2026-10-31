@@ -13,7 +13,7 @@ namespace Robotron2084.Entities;
 /// </summary>
 /// <seealso cref="PlayField" />
 /// <remarks>
-///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_shrivelTimer" /> times each stage of its shrivelling.
+///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_shrivelArcadeFrameTimer" /> times each stage of its shrivelling.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRP8.ASM</c>, routine <c>PSTKIL</c> (hands off to <c>PKPROC</c>)</item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$3AE0</c> (<c>ELECTRODE_DEATH</c>)</item>
@@ -31,17 +31,17 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 
     private readonly IntVector2 _position;
     private readonly ArcadeFrameTimer _shrivelArcadeFrameTimer = new();
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private readonly int _wave;
     private int _shrivelStep;
 
     /// <summary>Makes an electrode for the given wave.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the electrode's top-left corner is.</param>
     /// <param name="wave">The wave number. It decides which shape of electrode is drawn, and in which palette index.</param>
-    public Electrode(SpriteSet spriteSet, IntVector2 position, int wave = 1)
+    public Electrode(TextureSet textureSet, IntVector2 position, int wave = 1)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
         _wave = wave;
         _collisionSize = GetCollisionSize(wave);
@@ -59,8 +59,8 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     {
         if (this.IsDead()) return;
 
-        _spriteSet.BlitterDraw.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
-            _spriteSet.BlitterDraw.GetPaletteIndexColour(GetTintPaletteIndex()));
+        _textureSet.BlitterDraw.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(),
+            _textureSet.BlitterDraw.GetPaletteIndexColour(GetTintPaletteIndex()));
     }
 
     /// <summary>The box the electrode takes up on the screen.</summary>
@@ -70,13 +70,13 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The animation frame the electrode is showing: its normal one, or one of the shrivel ones while it is dying.</summary>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
         var baseFrame = GetVariantIndex() * WavePaletteTables.ElectrodeAnimationFramesPerVariant;
         var frame = baseFrame;
         if (this.IsDying()) frame = baseFrame + _shrivelStep;
 
-        return _spriteSet.ElectrodeAnimationFrames[frame];
+        return _textureSet.ElectrodeAnimationFrameTextures[frame];
     }
 
     /// <summary>Starts the electrode shrivelling. It does nothing if the electrode is not alive.</summary>

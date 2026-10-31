@@ -25,16 +25,16 @@ public sealed class LaserSlots
     public const int Capacity = 3;
 
     private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     /// <summary>Makes the empty slots, and keeps the sprites that new lasers are drawn with.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
-    public LaserSlots(SpriteSet spriteSet)
+    /// <param name="textureSet">The shared texture set.</param>
+    public LaserSlots(TextureSet textureSet)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
     }
 
-    /// <summary>Every slot in order. An empty slot is null. Tests and debugging tools use this.</summary>
+    /// <summary>The lasers in flight, one for each place, in order. A place with no laser holds null.</summary>
     public IReadOnlyList<PlayerLaser?> Slots => _slots;
 
     /// <summary>Draws every laser that is in flight.</summary>
@@ -53,7 +53,7 @@ public sealed class LaserSlots
         for (var i = 0; i < Capacity; i++)
             if (_slots[i] is not { } existing || !existing.IsAlive())
             {
-                _slots[i] = new PlayerLaser(_spriteSet, position, direction);
+                _slots[i] = new PlayerLaser(_textureSet, position, direction);
                 return;
             }
 

@@ -11,7 +11,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="PlayField" />
 /// <remarks>
 ///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
-///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRP8.ASM</c>, routine <c>ROBOT</c> (with <c>ROB0</c>..<c>ROB11</c> sub-blocks)</item>
 ///         <item>
@@ -26,7 +26,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     private const int BeatIntervalArcadeFrames = 4;
 
     /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a grunt waits between steps, when it is not told a number.</summary>
-    private const int DefaultMoveLimitBeats = 15;
+    private const int DefaultMoveIntervalMaxBeats = 15;
 
     /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
     /// <remarks>
@@ -57,7 +57,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height));
 
     private readonly Random _random;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
     private int _landingY;
@@ -72,33 +72,33 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
             1; // Which walk animation frame is showing. The first one is number 1, as in the arcade.
 
     /// <summary>Makes a grunt, and picks at random how long it waits before its first step.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the grunt's top-left corner is.</param>
-    /// <param name="moveLimitBeats">
+    /// <param name="moveIntervalMaxBeats">
     ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a grunt waits between steps on this wave. Each wait is a random number of
     ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> from 1 up to this.
     /// </param>
     /// <param name="random">Where its random numbers come from. If this is null, the grunt makes its own.</param>
     /// <remarks>ROM: <c>ROBSPD</c>.</remarks>
     public Grunt(
-        SpriteSet spriteSet,
+        TextureSet textureSet,
         IntVector2 position,
-        int moveLimitBeats = DefaultMoveLimitBeats,
+        int moveIntervalMaxBeats = DefaultMoveIntervalMaxBeats,
         Random? random = null)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
-        MoveDelayBeats = moveLimitBeats;
+        MoveIntervalMaxBeats = moveIntervalMaxBeats;
         _random = random ?? new Random();
         // The grunt waits a random number of beats before its first step.
-        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
+        _moveBeatsRemaining = _random.Next(1, MoveIntervalMaxBeats + 1);
     }
 
     /// <summary>Alive until it is killed. It is never Dying, because it has no death animation (see <see cref="Kill" />).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the grunt waits between steps, as it stands now. It gets smaller as the wave goes on.</summary>
-    public int MoveDelayBeats { get; private set; }
+    public int MoveIntervalMaxBeats { get; private set; }
 
     /// <summary>Where the grunt's top-left corner is.</summary>
     /// <remarks>The ROM's OBJX/OBJY.</remarks>
@@ -127,7 +127,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     {
         if (!this.IsAlive()) return;
 
-        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the grunt takes up on the screen.</summary>
@@ -138,16 +138,16 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>This grunt's current walk animation frame.</summary>
     /// <returns>The animation frame that is showing.</returns>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        return _spriteSet.GruntAnimationFrames[GetAnimationFrameIndex(_walkAnimationFrameNumber)];
+        return _textureSet.GruntAnimationFrameTextures[GetAnimationFrameIndex(_walkAnimationFrameNumber)];
     }
 
     /// <inheritdoc />
-    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
-    public Texture2D GetExplosionAnimationFrame()
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrameTexture" />).</remarks>
+    public Texture2D GetExplosionAnimationFrameTexture()
     {
-        return GetCurrentAnimationFrame();
+        return GetCurrentAnimationFrameTexture();
     }
 
     /// <inheritdoc />
@@ -164,7 +164,12 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>Kills the grunt at once, with no flash and no death animation.</summary>
-    /// <remarks>ROM: RRP8.ASM's <c>ROBKIL</c>, which just explodes it.</remarks>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRP8.ASM</c>, routine <c>ROBKIL</c>, which just explodes it</item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>GRUNT_COLLISION_HANDLER</c> (<c>$3A76</c>)</item>
+    ///     </list>
+    /// </remarks>
     public void Kill()
     {
         if (!this.IsAlive()) return;
@@ -185,8 +190,8 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     public void SpeedUp(int floorBeats)
     {
-        var next = MoveDelayBeats * 7 / 8;
-        if (next >= floorBeats) MoveDelayBeats = next;
+        var next = MoveIntervalMaxBeats * 7 / 8;
+        if (next >= floorBeats) MoveIntervalMaxBeats = next;
     }
 
     /// <summary>Speeds the grunt up as the wave goes on, by taking some <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> off the most it waits between steps.</summary>
@@ -199,7 +204,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     public void SpeedUpAsWaveGoesOn(int floorBeats, int stepBeats = 4)
     {
-        MoveDelayBeats = Math.Max(floorBeats, MoveDelayBeats - stepBeats);
+        MoveIntervalMaxBeats = Math.Max(floorBeats, MoveIntervalMaxBeats - stepBeats);
     }
 
     /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the grunt. When its wait is over it takes a step towards the player and picks a new wait.</summary>
@@ -223,7 +228,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>Works out which of the grunt's animation frames to draw, from the arcade's walk number.</summary>
     /// <param name="arcadeAnimationFrameNumber">The arcade's walk number, from 1 to 4.</param>
-    /// <returns>The place of the animation frame in <see cref="SpriteSet.GruntAnimationFrames" />.</returns>
+    /// <returns>The place of the animation frame in <see cref="TextureSet.GruntAnimationFrameTextures" />.</returns>
     /// <remarks>
     ///     Walk numbers 1, 2, 3 and 4 show the first, second, first and third animation frames, so there are only three
     ///     different ones.
@@ -252,7 +257,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     {
         if (--_moveBeatsRemaining > 0) return;
 
-        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
+        _moveBeatsRemaining = _random.Next(1, MoveIntervalMaxBeats + 1);
         SteppedThisUpdate = true;
         _walkAnimationFrameNumber =
             _walkAnimationFrameNumber % WalkAnimationFrameCount +

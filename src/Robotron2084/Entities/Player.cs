@@ -15,7 +15,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="PlayField" />
 /// <seealso cref="PlayerLaser" />
 /// <remarks>
-///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_deathTimer" /> times the stages of its death,
+///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_deathArcadeFrameTimer" /> times the stages of its death,
 ///     <see cref="_walkAnimationTicks" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> each animation frame is shown, and
 ///     <see cref="_invincibilityFlickerTicks" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> of its blinking.
 ///     <list type="bullet">
@@ -54,7 +54,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     private readonly ArcadeFrameTimer _deathArcadeFrameTimer = new();
     private readonly Random _random;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     private int _autoFireTicksRemaining;
 
@@ -76,7 +76,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private int
                                         _walkAnimationTicks = 1; // How many ticks of walking the current walk animation frame has been shown for.
 
-    private int _walkCycleStep;
+    private int _walkCycleIndex;
 
     // The Player starts on the first animation frame for walking down.
     private WalkSequence _walkSequence = GetWalkSequence(Direction8.Down);
@@ -84,16 +84,16 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private bool _wasFiring;
 
     /// <summary>Makes the player at <paramref name="startPosition" />, with <paramref name="lives" /> lives.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="startPosition">Where the player's top-left corner is.</param>
     /// <param name="lives">How many lives the player starts with. Each death takes one off.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick the colours of the death animation. If this is null,
     ///     the player makes its own.
     /// </param>
-    public Player(SpriteSet spriteSet, IntVector2 startPosition, int lives, Random? random = null)
+    public Player(TextureSet textureSet, IntVector2 startPosition, int lives, Random? random = null)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = startPosition;
         _random = random ?? new Random();
         Lives = lives;
@@ -175,12 +175,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
         // A dying Player is drawn as a shape filled with one colour.
         if (this.IsDying())
         {
-            _spriteSet.BlitterDraw.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
-                _spriteSet.BlitterDraw.GetPaletteIndexColour(GetDeathSolidPaletteIndex()));
+            _textureSet.BlitterDraw.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(),
+                _textureSet.BlitterDraw.GetPaletteIndexColour(GetDeathSolidPaletteIndex()));
             return;
         }
 
-        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the player takes up on the screen.</summary>
@@ -199,9 +199,9 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     /// <summary>The walk animation frame the player is showing. A dying player is the same shape, filled with one colour.</summary>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        return _spriteSet.PlayerAnimationFrames[GetWalkAnimationFrameIndex()];
+        return _textureSet.PlayerAnimationFrameTextures[GetWalkAnimationFrameIndex()];
     }
 
     /// <summary>
@@ -224,11 +224,14 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. A dying player plays the death animation. A living player moves, fires and animates. Before the
-    ///     game is live the player does nothing.
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. A dying player plays the death
+    ///     animation, and a living player moves, fires and animates.
     /// </summary>
     /// <param name="gameTime">Not used. The player counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="playField">The playfield.</param>
+    /// <remarks>
+    ///     Before the game is live the player does nothing.
+    /// </remarks>
     public void Update(GameTime gameTime, PlayField playField)
     {
         if (this.IsDead()) return;
@@ -288,13 +291,13 @@ public sealed class Player : IEntity, IAnimationFrameSource
     }
 
     /// <summary>
-    ///     Which animation frame is showing, as a place in <see cref="SpriteSet.PlayerAnimationFrames" />, counting from
+    ///     Which animation frame is showing, as a place in <see cref="TextureSet.PlayerAnimationFrameTextures" />, counting from
     ///     0.
     /// </summary>
     /// <remarks>The arcade numbers its animation frames from 1 to 12, so the arcade's number is one more than this.</remarks>
     internal int GetWalkAnimationFrameIndex()
     {
-        return (int)_walkSequence * 3 + WalkCycle[_walkCycleStep];
+        return (int)_walkSequence * 3 + WalkCycle[_walkCycleIndex];
     }
 
     /// <summary>Starts the death animation, even when <see cref="InvincibleForTesting" /> is on.</summary>
@@ -344,8 +347,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private static IntVector2 GetPositionAfterStep(IntVector2 from, IntVector2 delta, PlayfieldWall playfieldWall)
     {
         var stepped = from + delta;
-        Rectangle box = new(stepped.X, stepped.Y, CollisionSize.Width, CollisionSize.Height);
-        return playfieldWall.Intersects(box) ? from : stepped;
+        Rectangle steppedBounds = new(stepped.X, stepped.Y, CollisionSize.Width, CollisionSize.Height);
+        return playfieldWall.Intersects(steppedBounds) ? from : stepped;
     }
 
     /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the death animation: the flashes, then the fade.</summary>
@@ -421,13 +424,13 @@ public sealed class Player : IEntity, IAnimationFrameSource
         {
             // The Player has turned, so the walk starts again from the first animation frame for the new direction.
             _walkSequence = walkSequence;
-            _walkCycleStep = 0;
+            _walkCycleIndex = 0;
             _walkAnimationTicks = 1;
         }
         else if (_walkAnimationTicks >= WalkAnimationIntervalTicks)
         {
             _walkAnimationTicks = 1;
-            _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
+            _walkCycleIndex = (_walkCycleIndex + 1) % WalkCycle.Length;
         }
         else
         {
@@ -502,14 +505,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
         Lives -= 1;
     }
 
-    /// <summary>
-    ///     Fires a laser when the fire control is used. A new press fires at once. Holding it down keeps firing, with a
-    ///     set wait between shots.
-    /// </summary>
+    /// <summary>Fires a laser when the fire control is used. A new press fires at once.</summary>
     /// <param name="playerInputState">The controls as they are on this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</param>
     /// <param name="aimDirection">The way the shoot stick is pushed, or null when it is not pushed.</param>
     /// <param name="playField">The playfield, which holds the lasers.</param>
     /// <remarks>
+    ///     Holding it down keeps firing, with a set wait between shots.
     ///     A held control fires again every <see cref="PlayerTuning.PlayerAutoFireTicks" /> <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>. No laser is fired
     ///     when the player already has as many lasers in flight as are allowed.
     /// </remarks>

@@ -6,12 +6,10 @@ using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
 
-/// <summary>
-///     The effect where a sprite is cut into strips. When something is killed, the strips fly apart. When something
-///     appears, the strips start far apart and close up to make the sprite.
-/// </summary>
+/// <summary>The effect where a sprite is cut into strips. When something is killed, the strips fly apart.</summary>
 /// <remarks>
-///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_stepTimer" /> says when it is time for the effect's
+///     When something appears, the strips start far apart and close up to make the sprite.
+///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_stepArcadeFrameTimer" /> says when it is time for the effect's
 ///     next step.
 ///     <list type="bullet">
 ///         <item>
@@ -41,10 +39,11 @@ public sealed class StripEffect : IEntity
     private readonly Func<Texture2D> _getAnimationFrame;
 
     /// <summary>
-    ///     Works out which strip the other strips close in on or fly away from. It is given how many strips the sprite
-    ///     has, and gives back a strip counted from the top or the left. If it is null, the middle strip is used.
+    ///     Works out which strip the other strips close in on or fly away from. It is given how many strips the sprite has,
+    ///     and gives back a strip counted from the top or the left.
     /// </summary>
     /// <remarks>
+    ///     If it is null, the middle strip is used.
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRX7.ASM</c> <c>YOF</c>, and <c>RRHX4.ASM</c> <c>XOF</c>.</item>
     ///         <item>Disassembly: the byte 5 bytes from the start of a record, as at <c>$5BEF</c>.</item>
@@ -83,7 +82,7 @@ public sealed class StripEffect : IEntity
     private int
         _spacingAccumulator; // 256 times the gap between the strips, so that the gap can change by less than a whole pixel at a time (ROM: YSIZER).
 
-    /// <summary>Makes one effect. Only the <c>Create</c> methods below use it.</summary>
+    /// <summary>Makes one effect. Get one from the Create methods.</summary>
     /// <param name="getAnimationFrame">Gets the animation frame the strips are cut from.</param>
     /// <param name="bounds">The box the sprite is drawn in.</param>
     /// <param name="kind">Whether it is an explosion or an appear.</param>
@@ -124,24 +123,24 @@ public sealed class StripEffect : IEntity
 
         // How fast an appear closes up. The diagonal routine closes it twice as fast as the other two routines.
         var stripEngine = GetEngine();
-        _appearSizerStep = StripExplosionTuning.SlowAppearSizerStep;
-        if (stripEngine == StripEngine.Diagonal) _appearSizerStep = StripExplosionTuning.SizerStep;
+        _appearSizerStep = StripEffectTuning.SlowAppearSizerStep;
+        if (stripEngine == StripEngine.Diagonal) _appearSizerStep = StripEffectTuning.SizerStep;
 
-        _smallestAppearSpacing = StripExplosionTuning.SmallestAppearSpacing;
+        _smallestAppearSpacing = StripEffectTuning.SmallestAppearSpacing;
         var closesUpFully = isClosedUpAtTheEnd || stripEngine == StripEngine.Horizontal;
-        if (closesUpFully) _smallestAppearSpacing = StripExplosionTuning.SmallestClosedAppearSpacing;
+        if (closesUpFully) _smallestAppearSpacing = StripEffectTuning.SmallestClosedAppearSpacing;
 
         // The gap between the strips starts small for an explosion, which then spreads out. It starts large for an appear, which then closes up.
-        _spacingAccumulator = StripExplosionTuning.AppearStartSizer;
-        if (kind == StripEffectKind.Explode) _spacingAccumulator = StripExplosionTuning.ExplosionStartSizer;
+        _spacingAccumulator = StripEffectTuning.AppearStartSizer;
+        if (kind == StripEffectKind.Explode) _spacingAccumulator = StripEffectTuning.ExplosionStartSizer;
 
-        _arcadeFramesRemaining = StripExplosionTuning.ExplosionFrames;
+        _arcadeFramesRemaining = StripEffectTuning.ExplosionFrames;
     }
 
-    /// <summary>
-    ///     Alive while the effect runs. An explosion runs for a set number of steps. An appear runs until its strips have
-    ///     closed up.
-    /// </summary>
+    /// <summary>Alive while the effect runs. An explosion runs for a set number of steps.</summary>
+    /// <remarks>
+    ///     An appear runs until its strips have closed up.
+    /// </remarks>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>Where the top-left corner of the effect's box is.</summary>
@@ -190,7 +189,7 @@ public sealed class StripEffect : IEntity
     public static StripEffect CreateAppear(IAnimationFrameSource animationFrameSource, Rectangle bounds, StripFanAxis axis, int slope,
         StripClip clip, Func<int, int>? getCentreStripIndex = null, int startClockUnits = 0)
     {
-        return new StripEffect(() => animationFrameSource.GetCurrentAnimationFrame(), bounds, StripEffectKind.Appear, axis, slope,
+        return new StripEffect(() => animationFrameSource.GetCurrentAnimationFrameTexture(), bounds, StripEffectKind.Appear, axis, slope,
             clip,
             getCentreStripIndex, startClockUnits);
     }
@@ -211,7 +210,7 @@ public sealed class StripEffect : IEntity
     public static StripEffect CreateExplosion(IExplodable deadExplodable, Direction8? direction, StripClip clip)
     {
         var (axis, slope) = GetFanForShot(direction);
-        return new StripEffect(() => deadExplodable.GetExplosionAnimationFrame(), deadExplodable.GetExplosionBounds(),
+        return new StripEffect(() => deadExplodable.GetExplosionAnimationFrameTexture(), deadExplodable.GetExplosionBounds(),
             StripEffectKind.Explode, axis, slope, clip);
     }
 
@@ -244,7 +243,7 @@ public sealed class StripEffect : IEntity
         int centreStripIndex, int startClockUnits)
         where T : IEntity, IAnimationFrameSource
     {
-        return new StripEffect(() => source.GetCurrentAnimationFrame(), source.GetBounds(), StripEffectKind.Appear,
+        return new StripEffect(() => source.GetCurrentAnimationFrameTexture(), source.GetBounds(), StripEffectKind.Appear,
             axis, slope,
             clip, _ => centreStripIndex, startClockUnits, getFollowedBounds: () => source.GetBounds());
     }
@@ -253,13 +252,13 @@ public sealed class StripEffect : IEntity
     /// <param name="spriteBatch">What the strips are drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (!this.IsAlive() || !IsDrawn()) return;
+        if (!this.IsAlive() || !IsVisible()) return;
 
-        var animationFrame = _getAnimationFrame();
+        var animationFrameTexture = _getAnimationFrame();
 
         // GetStrips works in the sprite's own pixels, so it is given the sprite's own width and height.
-        var spriteWidth = animationFrame.Width;
-        var spriteRows = animationFrame.Height;
+        var spriteWidth = animationFrameTexture.Width;
+        var spriteRows = animationFrameTexture.Height;
 
         foreach (var strip in GetStrips(spriteWidth, spriteRows))
         {
@@ -276,7 +275,7 @@ public sealed class StripEffect : IEntity
                 destination = new Rectangle(left, top, spriteWidth * scale, scale);
             }
 
-            spriteBatch.Draw(animationFrame, destination, source, Color.White);
+            spriteBatch.Draw(animationFrameTexture, destination, source, Color.White);
         }
     }
 
@@ -307,7 +306,7 @@ public sealed class StripEffect : IEntity
                 return;
             }
 
-            _spacingAccumulator += StripExplosionTuning.SizerStep;
+            _spacingAccumulator += StripEffectTuning.SizerStep;
             return;
         }
 
@@ -315,7 +314,7 @@ public sealed class StripEffect : IEntity
     }
 
     /// <summary>Makes an appear for a sprite that is not an entity. The letters of the logo on the attract pages use it.</summary>
-    /// <param name="animationFrame">The sprite that is appearing.</param>
+    /// <param name="animationFrameTexture">The sprite that is appearing.</param>
     /// <param name="bounds">The box the sprite is drawn in.</param>
     /// <param name="axis">Which way the sprite is cut: into rows or into columns.</param>
     /// <param name="clip">The area strips may be drawn in. A strip outside it is not drawn.</param>
@@ -330,10 +329,10 @@ public sealed class StripEffect : IEntity
     ///         <item>Disassembly: <c>$5B98</c> and <c>$5D7C</c> to <c>$5D85</c>.</item>
     ///     </list>
     /// </remarks>
-    internal static StripEffect CreateAppear(Texture2D animationFrame, Rectangle bounds, StripFanAxis axis,
+    internal static StripEffect CreateAppear(Texture2D animationFrameTexture, Rectangle bounds, StripFanAxis axis,
         StripClip clip)
     {
-        return new StripEffect(() => animationFrame, bounds, StripEffectKind.Appear, axis, 0, clip,
+        return new StripEffect(() => animationFrameTexture, bounds, StripEffectKind.Appear, axis, 0, clip,
             isClosedUpAtTheEnd: true);
     }
 
@@ -341,10 +340,20 @@ public sealed class StripEffect : IEntity
     /// <param name="direction">The way the killing laser was going, or null if it was not killed by a laser.</param>
     /// <returns>Which way the sprite is cut, and how the strips lean: -1, 0 or +1.</returns>
     /// <remarks>
-    ///     ROM: RRX7.ASM's routine that picks the kind of explosion. The strips fly apart across the path of the
-    ///     laser, not along it. A laser going straight up or down cuts the sprite into columns, which fly apart sideways.
-    ///     A laser going straight left or right, or a kill with no laser, cuts it into rows, which fly apart up and down.
-    ///     A diagonal laser cuts it into rows that lean. It is easy to get the first two the wrong way round.
+    ///     The strips fly apart across the path of the laser, not along it. A laser going straight up or down cuts the
+    ///     sprite into columns, which fly apart sideways. A laser going straight left or right, or a kill with no laser,
+    ///     cuts it into rows, which fly apart up and down. A diagonal laser cuts it into rows that lean. It is easy to get
+    ///     the first two the wrong way round.
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRX7.ASM</c> <c>EXSTV</c>, which picks the kind of explosion from the laser's
+    ///             direction
+    ///         </item>
+    ///         <item>
+    ///             Disassembly: <c>asm/robomame.asm</c> at <c>$5C1F</c>, the routine behind the jump at <c>$5B43</c> that
+    ///             creates an explosion
+    ///         </item>
+    ///     </list>
     /// </remarks>
     internal static (StripFanAxis Axis, int Slope) GetFanForShot(Direction8? direction)
     {
@@ -411,7 +420,7 @@ public sealed class StripEffect : IEntity
     /// <param name="spriteRows">How tall the sprite is, in its own rows.</param>
     /// <returns>The strips to draw on this step, in the order they are drawn.</returns>
     /// <remarks>
-    ///     ROM: how RRX7.ASM, RRHX4.ASM and RRDX2.ASM place the strips:
+    ///     This is how the arcade places the strips:
     ///     <code>
     /// YSIZE  = YSIZER >> 8                     ; the gap on this step (1, 2, 3, …)
     /// base   = YCENT − YSIZE*YOF + YSIZE/2     ; the screen row of the first strip
@@ -425,6 +434,16 @@ public sealed class StripEffect : IEntity
     ///     it uses the sprite's top plus half its height. Spreading from the point the laser hit would look lopsided,
     ///     because a laser hits the near edge of the sprite. A strip outside the playfield is left out. It is not moved
     ///     back inside.
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>, which each place the strips for
+    ///             their own way of cutting a sprite
+    ///         </item>
+    ///         <item>
+    ///             Disassembly: the three routines whose entry tables are at <c>$5B40</c>, <c>$F000</c> and <c>$4680</c>
+    ///             (see <see cref="StripEngine" />)
+    ///         </item>
+    ///     </list>
     /// </remarks>
     internal IReadOnlyList<Strip> GetStrips(int spriteWidth, int spriteRows)
     {
@@ -481,7 +500,7 @@ public sealed class StripEffect : IEntity
     }
 
     /// <summary>Says whether the effect has anything on the screen. An appear has nothing until its first step.</summary>
-    internal bool IsDrawn()
+    internal bool IsVisible()
     {
         return Kind == StripEffectKind.Explode || _hasAppearBeenDrawn;
     }
@@ -510,10 +529,10 @@ public sealed class StripEffect : IEntity
 
     /// <summary>
     ///     Takes one step of an appear, which makes the gap between the strips a little smaller. The strips are only
-    ///     redrawn when the gap has shrunk by a whole pixel. The appear is over when the gap would be smaller than the
-    ///     smallest its routine draws.
+    ///     redrawn when the gap has shrunk by a whole pixel.
     /// </summary>
     /// <remarks>
+    ///     The appear is over when the gap would be smaller than the smallest its routine draws.
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>AWRITE</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>:

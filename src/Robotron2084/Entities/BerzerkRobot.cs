@@ -11,7 +11,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Grunt" />
 /// <remarks>
 ///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
-///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     This robot is the author's own. It is not in the arcade game (notes §138). It moves as a grunt does (
 ///     <see cref="GruntChaseStep" />),
 ///     with the same time between <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> and the same wait between steps. It dies as a grunt does, to a laser or by walking
@@ -27,7 +27,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     private const int BeatIntervalArcadeFrames = 4;
 
     /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the robot waits between steps, when it is not told a number. It is the same as a grunt's.</summary>
-    private const int DefaultMoveLimitBeats = 15;
+    private const int DefaultMoveIntervalMaxBeats = 15;
 
     /// <summary>How long the robot waits after the look that finds the game live, before its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
     /// <remarks>
@@ -55,7 +55,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     private static readonly int[] UpAndDownWalkOrder = [0, 1, 2, 1];
 
     private readonly Random _random;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private int _animationStep;
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private bool _hasMoved;
@@ -66,31 +66,31 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     private IntVector2 _position;
 
     /// <summary>Makes a robot, and picks at random how long it waits before its first step.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the robot's top-left corner is.</param>
-    /// <param name="moveLimitBeats">
+    /// <param name="moveIntervalMaxBeats">
     ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the robot waits between steps. Each wait is a random number of <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> from 1
     ///     up to this, as a grunt's is.
     /// </param>
     /// <param name="random">Where its random numbers come from. If this is null, the robot makes its own.</param>
     public BerzerkRobot(
-        SpriteSet spriteSet,
+        TextureSet textureSet,
         IntVector2 position,
-        int moveLimitBeats = DefaultMoveLimitBeats,
+        int moveIntervalMaxBeats = DefaultMoveIntervalMaxBeats,
         Random? random = null)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
-        MoveDelayBeats = moveLimitBeats;
+        MoveIntervalMaxBeats = moveIntervalMaxBeats;
         _random = random ?? new Random();
-        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
+        _moveBeatsRemaining = _random.Next(1, MoveIntervalMaxBeats + 1);
     }
 
     /// <summary>Alive until it is killed. It is never Dying, because it has no death animation (see <see cref="Kill" />).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the robot waits between steps.</summary>
-    public int MoveDelayBeats { get; }
+    public int MoveIntervalMaxBeats { get; }
 
     /// <summary>Where the robot's top-left corner is.</summary>
     public IntVector2 Position => _position;
@@ -117,7 +117,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     {
         if (!this.IsAlive()) return;
 
-        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the robot takes up on the screen.</summary>
@@ -128,19 +128,19 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>Gets the animation frame the robot is showing.</summary>
     /// <returns>The animation frame that is showing.</returns>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        if (!_hasMoved) return _spriteSet.BerzerkRobotIdleFrames[_animationStep % _spriteSet.BerzerkRobotIdleFrames.Length];
+        if (!_hasMoved) return _textureSet.BerzerkRobotIdleAnimationFrameTextures[_animationStep % _textureSet.BerzerkRobotIdleAnimationFrameTextures.Length];
 
         var frames = GetWalkFrames(WalkSequence);
         return frames[GetWalkFrameIndex(WalkSequence, _animationStep)];
     }
 
     /// <inheritdoc />
-    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
-    public Texture2D GetExplosionAnimationFrame()
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrameTexture" />).</remarks>
+    public Texture2D GetExplosionAnimationFrameTexture()
     {
-        return GetCurrentAnimationFrame();
+        return GetCurrentAnimationFrameTexture();
     }
 
     /// <inheritdoc />
@@ -188,11 +188,14 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>
     ///     Works out which way the robot faces. It faces sideways if the player is at least as far away sideways as up or
-    ///     down. Otherwise it faces up or down.
+    ///     down.
     /// </summary>
     /// <param name="from">The robot's top-left corner.</param>
     /// <param name="playerPosition">The player's top-left corner.</param>
     /// <returns>The walk for the way the robot faces.</returns>
+    /// <remarks>
+    ///     Otherwise it faces up or down.
+    /// </remarks>
     internal static WalkSequence GetWalkSequenceTowards(IntVector2 from, IntVector2 playerPosition)
     {
         var gapX = playerPosition.X - from.X;
@@ -209,17 +212,20 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     What the robot does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. Until it first moves, it plays its standing animation. It only takes a step
-    ///     when <see cref="_moveBeatsRemaining" /> runs out.
+    ///     What the robot does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It takes a step when its
+    ///     move countdown runs out.
     /// </summary>
     /// <param name="playField">The playfield.</param>
+    /// <remarks>
+    ///     Until it first moves, it plays its standing animation.
+    /// </remarks>
     private void ActOnBeat(PlayField playField)
     {
         if (!_hasMoved) _animationStep++;
 
         if (--_moveBeatsRemaining > 0) return;
 
-        _moveBeatsRemaining = _random.Next(1, MoveDelayBeats + 1);
+        _moveBeatsRemaining = _random.Next(1, MoveIntervalMaxBeats + 1);
         Step(playField);
     }
 
@@ -229,10 +235,10 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     {
         return walkSequence switch
         {
-            WalkSequence.Right => _spriteSet.BerzerkRobotWalkRightFrames,
-            WalkSequence.Left => _spriteSet.BerzerkRobotWalkLeftFrames,
-            WalkSequence.Up => _spriteSet.BerzerkRobotWalkUpFrames,
-            _ => _spriteSet.BerzerkRobotWalkDownFrames
+            WalkSequence.Right => _textureSet.BerzerkRobotWalkRightAnimationFrameTextures,
+            WalkSequence.Left => _textureSet.BerzerkRobotWalkLeftAnimationFrameTextures,
+            WalkSequence.Up => _textureSet.BerzerkRobotWalkUpAnimationFrameTextures,
+            _ => _textureSet.BerzerkRobotWalkDownAnimationFrameTextures
         };
     }
 

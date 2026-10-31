@@ -13,7 +13,7 @@ namespace Robotron2084.Entities;
 /// </summary>
 /// <remarks>
 ///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, and takes one step on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
-///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, and <see cref="_animationTimer" /> when it is
+///     <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, and <see cref="_animationArcadeFrameTimer" /> when it is
 ///     time for the next animation frame.
 ///     Gorf is the author's own robot. It is not in the arcade game (notes §138.2). It starts off the screen, on a random
 ///     side and
@@ -50,7 +50,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private readonly int _maxDropsX2;
     private readonly Rectangle _playfieldBounds;
     private readonly Random _random;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private readonly int _totalSteps;
     private IntVector2 _position;
     private int _stepCount;
@@ -60,16 +60,16 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     Makes a Gorf just off the screen, on a random side and at a random height, and works out where on its way it
     ///     will drop grunts.
     /// </summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="random">Where its random numbers come from. They pick the side, the height and how many grunts it drops.</param>
     /// <param name="playfieldBounds">The inside of the wall, in port pixels. Gorf starts and ends outside it.</param>
     /// <param name="maxDropsX2">
     ///     This wave's limit on how many grunts it drops at once. The number is picked the way a spheroid
     ///     picks its enforcers.
     /// </param>
-    public Gorf(SpriteSet spriteSet, Random random, Rectangle playfieldBounds, int maxDropsX2)
+    public Gorf(TextureSet textureSet, Random random, Rectangle playfieldBounds, int maxDropsX2)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _playfieldBounds = playfieldBounds;
         _random = random;
         _maxDropsX2 = maxDropsX2;
@@ -108,15 +108,15 @@ public sealed class Gorf : IExplodable, IRemovable
     {
         if (!this.IsAlive()) return;
 
-        var animationFrame = GetCurrentAnimationFrame();
-        var drawn = BlitterDraw.DrawnRect(GetBounds(), animationFrame);
+        var animationFrame = GetCurrentAnimationFrameTexture();
+        var drawn = BlitterDraw.GetDrawnBounds(GetBounds(), animationFrame);
         var visible = Rectangle.Intersect(drawn, _playfieldBounds);
         if (visible.IsEmpty) return;
 
         var pixel = ScreenSize.ToPortPixelsFromArcadePixels(1);
         var source = new Rectangle((visible.X - drawn.X) / pixel, (visible.Y - drawn.Y) / pixel, visible.Width / pixel,
             visible.Height / pixel);
-        _spriteSet.BlitterDraw.UsePassThrough();
+        _textureSet.BlitterDraw.UsePassThrough();
         spriteBatch.Draw(animationFrame, visible, source, Color.White);
     }
 
@@ -128,16 +128,16 @@ public sealed class Gorf : IExplodable, IRemovable
 
     /// <summary>Gets the animation frame Gorf is showing.</summary>
     /// <returns>The animation frame that is showing.</returns>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        return _spriteSet.GorfAnimationFrames[AnimationFrameIndex];
+        return _textureSet.GorfAnimationFrameTextures[AnimationFrameIndex];
     }
 
     /// <inheritdoc />
-    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
-    public Texture2D GetExplosionAnimationFrame()
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrameTexture" />).</remarks>
+    public Texture2D GetExplosionAnimationFrameTexture()
     {
-        return GetCurrentAnimationFrame();
+        return GetCurrentAnimationFrameTexture();
     }
 
     /// <inheritdoc />
@@ -156,8 +156,9 @@ public sealed class Gorf : IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. Gorf animates. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> it takes a step along its hop, and drops grunts if it has reached a
-    ///     drop point.
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a
+    ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> Gorf animates, takes a step along its hop, and drops
+    ///     grunts if it has reached a drop point.
     /// </summary>
     /// <param name="gameTime">Not used. Gorf counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="playField">The playfield, which the dropped grunts are put on.</param>
@@ -197,12 +198,12 @@ public sealed class Gorf : IExplodable, IRemovable
         if (_stepCount >= _totalSteps) Kill();
     }
 
-    /// <summary>
-    ///     Drops some grunts side by side from Gorf's body. How many is picked the way a spheroid picks its enforcers: a
-    ///     random number from 1 up to the wave's limit, halved and rounded up. It is never more than
-    ///     <see cref="GorfTuning.MaxGruntsPerDrop" />.
-    /// </summary>
+    /// <summary>Drops some grunts side by side from Gorf's body.</summary>
     /// <param name="playField">The playfield, which puts the grunts on the field and holds them back when the wave is full.</param>
+    /// <remarks>
+    ///     How many is picked the way a spheroid picks its enforcers: a random number from 1 up to the wave's limit, halved
+    ///     and rounded up. It is never more than <see cref="GorfTuning.MaxGruntsPerDrop" />.
+    /// </remarks>
     private void DropGrunts(PlayField playField)
     {
         var count = Math.Min(GorfTuning.MaxGruntsPerDrop, (_random.Next(_maxDropsX2) + 2) / 2);
@@ -220,9 +221,9 @@ public sealed class Gorf : IExplodable, IRemovable
         }
     }
 
-    /// <summary>Shows the next animation frame.</summary>
+    /// <summary>Moves on to the next of Gorf's animation frames, and goes back to the first after the last one.</summary>
     private void ShowNextAnimationFrame()
     {
-        AnimationFrameIndex = (AnimationFrameIndex + 1) % _spriteSet.GorfAnimationFrames.Length;
+        AnimationFrameIndex = (AnimationFrameIndex + 1) % _textureSet.GorfAnimationFrameTextures.Length;
     }
 }

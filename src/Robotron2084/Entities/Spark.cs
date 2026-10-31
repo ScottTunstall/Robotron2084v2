@@ -10,8 +10,8 @@ namespace Robotron2084.Entities;
 /// <summary>A shot fired by an enforcer. Its path curves, and it stops at a wall and does not bounce.</summary>
 /// <seealso cref="Enforcer" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>,
-///     <see cref="_moveTimer" /> times its moves, and <see cref="_lifeTimer" /> times how long it lasts.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>,
+///     <see cref="_moveArcadeFrameTimer" /> times its moves, and <see cref="_lifeArcadeFrameTimer" /> times how long it lasts.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRC11.ASM</c>, routine <c>SPARK</c> (fired by <c>ENFSHT</c>. Its flicker animation
@@ -38,7 +38,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     // Which flicker animation frame is showing.
     private int _animationFrameIndex;
@@ -52,7 +52,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _velocitySubpixels; // How far the spark goes on each move, sideways and up or down, in 256ths of a pixel (ROM: OXV/OYV).
 
     /// <summary>Makes a spark and aims it near the player. It is aimed only this once.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where it starts, which is where the enforcer that fired it is.</param>
     /// <param name="playerPosition">Where the player is, which the spark is aimed at.</param>
     /// <param name="random">
@@ -64,13 +64,13 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     ///     moved sideways. If this is null, that rule is not used.
     /// </param>
     public Spark(
-        SpriteSet spriteSet,
+        TextureSet textureSet,
         IntVector2 position,
         IntVector2 playerPosition,
         Random random,
         Rectangle? playfieldBounds = null)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
         _random = random;
 
@@ -120,7 +120,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     public void Draw(SpriteBatch spriteBatch)
     {
         if (this.IsAlive())
-            _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+            _textureSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the spark takes up on the screen.</summary>
@@ -130,9 +130,9 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The flicker animation frame the spark is showing.</summary>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        return _spriteSet.SparkAnimationFrames[GetAnimationFrameIndex()];
+        return _textureSet.SparkAnimationFrameTextures[GetAnimationFrameIndex()];
     }
 
     /// <summary>Kills the spark at once.</summary>
@@ -144,8 +144,9 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. When its time is up the spark is gone. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> its speed changes and it flickers, and it
-    ///     moves when it is time to.
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The spark moves when it is
+    ///     time to, and on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> its speed changes and it flickers;
+    ///     when its time is up it is gone.
     /// </summary>
     /// <param name="gameTime">Not used. The spark counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="playField">The playfield, whose walls the spark stays inside.</param>
@@ -180,7 +181,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _velocitySubpixels = new IntVector2(
             _velocitySubpixels.X + _accelerationSubpixels.X,
             _velocitySubpixels.Y + _accelerationSubpixels.Y);
-        _animationFrameIndex = (_animationFrameIndex + 1) % SpriteSet.SparkAnimationFrameCount;
+        _animationFrameIndex = (_animationFrameIndex + 1) % TextureSet.SparkAnimationFrameCount;
     }
 
     /// <summary>

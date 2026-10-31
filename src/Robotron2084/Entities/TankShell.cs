@@ -11,7 +11,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Tank" />
 /// <seealso cref="Level.PlayField" />
 /// <remarks>
-///     It moves steadily, and has a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> every few moves. <see cref="_moveTimer" /> says when it is time for the next move, and <see cref="_beatTimer" /> when
+///     It moves steadily, and has a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> every few moves. <see cref="_moveArcadeFrameTimer" /> says when it is time for the next move, and <see cref="_beatArcadeFrameTimer" /> when
 ///     it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>
@@ -47,7 +47,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = new();
     private readonly Rectangle _playfieldBounds;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the shell fizzles out.</summary>
     private int _lifeBeatsRemaining;
@@ -67,7 +67,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes a shell. It starts a column to the right of the given position and is aimed once, at the player or at a
     ///     wall.
     /// </summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">The top-left corner of the tank that fired it, in port pixels.</param>
     /// <param name="playerPosition">The top-left corner of the player, in port pixels.</param>
     /// <param name="shellSpeed">The wave's shell setting. A bigger number is a faster shell.</param>
@@ -76,10 +76,10 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///     Where its random numbers come from. They pick what the shell is aimed at, how far the aim is off,
     ///     and how long the shell lasts.
     /// </param>
-    public TankShell(SpriteSet spriteSet, IntVector2 position, IntVector2 playerPosition, int shellSpeed,
+    public TankShell(TextureSet textureSet, IntVector2 position, IntVector2 playerPosition, int shellSpeed,
         Rectangle playfieldBounds, Random random)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _playfieldBounds = playfieldBounds;
         _position = position +
                     new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
@@ -110,7 +110,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     public void Draw(SpriteBatch spriteBatch)
     {
         if (this.IsAlive())
-            _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+            _textureSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the shell takes up on the screen.</summary>
@@ -120,9 +120,9 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The shell's one animation frame. It never flashes.</summary>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        return _spriteSet.TankShellSprite;
+        return _textureSet.TankShellTexture;
     }
 
     /// <summary>Takes the shell off the field at once.</summary>
@@ -140,12 +140,14 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the shell. It moves steadily, separately from its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. Every few moves it has a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, when
-    ///     it bounces off a wall or counts down its life.
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> of the shell. It moves
+    ///     steadily, separately from its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
     /// </summary>
     /// <param name="gameTime">Not used. The shell counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="playField">Not used.</param>
     /// <remarks>
+    ///     Every few moves it has a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, when it bounces off a wall
+    ///     or counts down its life.
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRTK4.ASM</c> <c>SHELL</c>. The moving is done by the routine that moves
@@ -238,8 +240,12 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         return (int)Math.Floor(value / (double)divisor);
     }
 
-    /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. The shell bounces if its next move would hit a wall. Otherwise it counts down its life.</summary>
+    /// <summary>
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. The shell bounces if its next move would hit
+    ///     a wall.
+    /// </summary>
     /// <remarks>
+    ///     Otherwise it counts down its life.
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, <c>XVNEG</c> and <c>YVNEG</c>.</item>
     ///         <item>

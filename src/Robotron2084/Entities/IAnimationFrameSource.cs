@@ -6,5 +6,5 @@ namespace Robotron2084.Entities;
 public interface IAnimationFrameSource
 {
     /// <summary>The animation frame this entity is showing right now.</summary>
-    Texture2D GetCurrentAnimationFrame();
+    Texture2D GetCurrentAnimationFrameTexture();
 }

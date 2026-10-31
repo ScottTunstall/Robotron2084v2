@@ -3,12 +3,12 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Robotron2084.Entities;
 
-/// <summary>An entity that can be blown apart: it gives the box and the sprite to cut into strips.</summary>
+/// <summary>An entity that can be blown apart: it gives the bounds and the animation frame to cut into strips.</summary>
 public interface IExplodable : IEntity, IAnimationFrameSource
 {
-    /// <summary>The sprite that is cut into strips when the entity is blown apart.</summary>
-    Texture2D GetExplosionAnimationFrame();
+    /// <summary>The animation frame that is cut into strips when the entity is blown apart.</summary>
+    Texture2D GetExplosionAnimationFrameTexture();
 
-    /// <summary>The box the explosion starts in.</summary>
+    /// <summary>The bounds the explosion starts in.</summary>
     Rectangle GetExplosionBounds();
 }

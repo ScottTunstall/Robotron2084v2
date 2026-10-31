@@ -12,7 +12,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="TankShell" />
 /// <remarks>
 ///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
-///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, and <see cref="_growTimer" /> times the stages
+///     <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, and <see cref="_growArcadeFrameTimer" /> times the stages
 ///     of its growing.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRTK4.ASM</c>, routine <c>TANK</c></item>
@@ -114,7 +114,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     private readonly int _fireIntervalBeats;
     private readonly ArcadeFrameTimer _growArcadeFrameTimer = new();
     private readonly Random _random;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
     private IntVector2 _destination;
@@ -148,7 +148,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     Makes a tank at <paramref name="position" />. Unless it starts fully grown, it has to grow before it can move
     ///     or fire.
     /// </summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the tank's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick where it goes, how long before it picks again, and
@@ -167,7 +167,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Tank(
-        SpriteSet spriteSet,
+        TextureSet textureSet,
         IntVector2 position,
         Random random,
         int fireIntervalBeats = DefaultFireIntervalBeats,
@@ -176,7 +176,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         _growStep = 0;
         if (startFullyGrown) _growStep = TankTuning.GrowSteps;
 
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
@@ -199,7 +199,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     public IntVector2 Position => _position;
 
-    /// <summary>Which tread animation frame is showing, as a place in <see cref="SpriteSet.TankAnimationFrames" />.</summary>
+    /// <summary>Which tread animation frame is showing, as a place in <see cref="TextureSet.TankAnimationFrameTextures" />.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -213,7 +213,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     {
         get
         {
-            var animationFrameCount = _spriteSet.TankAnimationFrames.Length;
+            var animationFrameCount = _textureSet.TankAnimationFrameTextures.Length;
             var forward = _treadAnimationFrameCounter % animationFrameCount;
             return _stepDirection.X < 0 ? animationFrameCount - 1 - forward : forward;
         }
@@ -244,12 +244,12 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
                 _position.Y,
                 ScreenSize.ToPortPixelsFromArcadePixels(growWidth),
                 ScreenSize.ToPortPixelsFromArcadePixels(growHeight));
-            _spriteSet.BlitterDraw.DrawSprite(spriteBatch, _spriteSet.TankGrowAnimationFrames[_growStep], growBounds,
+            _textureSet.BlitterDraw.DrawSprite(spriteBatch, _textureSet.TankGrowAnimationFrameTextures[_growStep], growBounds,
                 Color.White);
             return;
         }
 
-        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(), Color.White);
     }
 
     /// <summary>
@@ -281,18 +281,18 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        if (_growStep < TankTuning.GrowSteps) return _spriteSet.TankGrowAnimationFrames[_growStep];
+        if (_growStep < TankTuning.GrowSteps) return _textureSet.TankGrowAnimationFrameTextures[_growStep];
 
-        return _spriteSet.TankAnimationFrames[TreadFrameIndex];
+        return _textureSet.TankAnimationFrameTextures[TreadFrameIndex];
     }
 
     /// <inheritdoc />
-    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
-    public Texture2D GetExplosionAnimationFrame()
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrameTexture" />).</remarks>
+    public Texture2D GetExplosionAnimationFrameTexture()
     {
-        return GetCurrentAnimationFrame();
+        return GetCurrentAnimationFrameTexture();
     }
 
     /// <inheritdoc />
@@ -317,7 +317,8 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. A growing tank only grows. After that, on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, the tank fires if it is time to, takes a
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. A growing tank only grows;
+    ///     after that, on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, it fires if it is time to, takes a
     ///     step, and may pick a new place to go.
     /// </summary>
     /// <param name="gameTime">Not used. The tank counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
@@ -365,10 +366,16 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     What the tank does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It fires, if it is time to, then steps or bounces, and may pick a new place to
-    ///     go (ROM: the <c>TANK</c> process).
+    ///     What the tank does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It fires, if it is time to,
+    ///     then steps or bounces, and may pick a new place to go.
     /// </summary>
     /// <param name="playField">The playfield.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRTK4.ASM</c>, the <c>TANK</c> process</item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>ANIMATE_TANK</c> (<c>$4D99</c>)</item>
+    ///     </list>
+    /// </remarks>
     private void ActOnBeat(PlayField playField)
     {
         FireIfDue(playField);
@@ -409,12 +416,10 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
             _random.Next(bounds.Y + CollisionSize.Height, bounds.Bottom - CollisionSize.Height + 1));
     }
 
-    /// <summary>
-    ///     Picks the place the tank goes next. About 38 times in 100 it is where the player is. Otherwise it is a random
-    ///     place.
-    /// </summary>
+    /// <summary>Picks the place the tank goes next: sometimes where the player is, and otherwise a random place.</summary>
     /// <param name="playField">The playfield, which says where the player and the walls are.</param>
     /// <remarks>
+    ///     How often it is where the player is, is set by <see cref="PlayerDestinationRandomAtMost" />.
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRTK4.ASM</c> <c>ANIMATE_TANK</c>.</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
@@ -435,11 +440,11 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Takes one step. If the step would hit the wall, the tank does not take it and turns round instead. A wall to
-    ///     its left or right turns it round sideways, and a wall above or below it turns it round up-and-down.
+    ///     Takes one step. If the step would hit the wall, the tank does not take it and turns round instead.
     /// </summary>
     /// <param name="playField">The playfield.</param>
     /// <remarks>
+    ///     A wall to its left or right turns it round sideways, and a wall above or below it turns it round up-and-down.
     ///     <list type="bullet">
     ///         <item>
     ///             Original source: <c>RRTK4.ASM</c>, the <c>TANK1</c> step. On each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the tank goes one arcade pixel

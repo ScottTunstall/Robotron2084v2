@@ -14,8 +14,8 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Spheroid" />
 /// <seealso cref="Spark" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
-///     It also moves steadily, timed by <see cref="_moveTimer" />, and <see cref="_growTimer" /> times its growing.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     It also moves steadily, timed by <see cref="_moveArcadeFrameTimer" />, and <see cref="_growArcadeFrameTimer" /> times its growing.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRC11.ASM</c>, routine <c>ENFR1</c> (with <c>ENFNV</c>, <c>ENFDRP</c>
@@ -71,7 +71,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private int _fireBeatsRemaining;
 
     /// <summary>Which of the growing animation frames is showing, counting from 0.</summary>
@@ -88,7 +88,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private IntVector2 _velocitySubpixels;
 
     /// <summary>Makes an enforcer. It cannot move until it has grown.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the enforcer's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick where it heads for and how long it waits between
@@ -100,12 +100,12 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// </param>
     /// <remarks>ROM: <c>ENSTIM</c>.</remarks>
     public Enforcer(
-        SpriteSet spriteSet,
+        TextureSet textureSet,
         IntVector2 position,
         Random random,
         int fireIntervalBeats = DefaultFireIntervalBeats)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
@@ -127,7 +127,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     {
         if (!this.IsAlive()) return;
 
-        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the enforcer takes up on the screen.</summary>
@@ -144,19 +144,19 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     ///     The growing animation frames are the ROM's <c>ENGD1</c> to <c>ENGD5</c>. They are the second to the sixth in
     ///     the set.
     /// </remarks>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        if (!this.IsAlive() || !IsGrowing()) return _spriteSet.EnforcerSprite;
+        if (!this.IsAlive() || !IsGrowing()) return _textureSet.EnforcerTexture;
 
-        var frame = Math.Clamp(GetGrowAnimationFrameIndex(), 0, _spriteSet.EnforcerAnimationFrames.Length - 2);
-        return _spriteSet.EnforcerAnimationFrames[1 + frame];
+        var frame = Math.Clamp(GetGrowAnimationFrameIndex(), 0, _textureSet.EnforcerAnimationFrameTextures.Length - 2);
+        return _textureSet.EnforcerAnimationFrameTextures[1 + frame];
     }
 
     /// <inheritdoc />
-    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
-    public Texture2D GetExplosionAnimationFrame()
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrameTexture" />).</remarks>
+    public Texture2D GetExplosionAnimationFrameTexture()
     {
-        return GetCurrentAnimationFrame();
+        return GetCurrentAnimationFrameTexture();
     }
 
     /// <inheritdoc />
@@ -166,7 +166,13 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         return GetBounds();
     }
 
-    /// <summary>Kills the enforcer at once. It has no death animation (ROM: <c>ENFKIL</c>).</summary>
+    /// <summary>Kills the enforcer at once. It has no death animation.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRC11.ASM</c>, routine <c>ENFKIL</c></item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>ENFORCER_COLLISION_HANDLER</c> (<c>$1483</c>)</item>
+    ///     </list>
+    /// </remarks>
     public void Kill()
     {
         if (!this.IsAlive()) return;
@@ -207,9 +213,16 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     What the enforcer does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It counts down to picking a new spot to head for and to its next shot (ROM: <c>ENFR1</c>).
+    ///     What the enforcer does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It counts down to
+    ///     picking a new spot to head for and to its next shot.
     /// </summary>
     /// <param name="playField">The playfield.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRC11.ASM</c>, routine <c>ENFR1</c></item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>ENFORCER_AI</c> (<c>$139D</c>)</item>
+    ///     </list>
+    /// </remarks>
     private void ActOnBeat(PlayField playField)
     {
         if (--_newDestinationBeatsRemaining <= 0)
@@ -247,7 +260,17 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     ///     the same goes for the up-and-down part.
     /// </summary>
     /// <param name="playField">The playfield, whose walls the enforcer stays inside.</param>
-    /// <remarks>ROM: the routine that moves every moving object (RRS22.ASM's <c>OPB80</c>).</remarks>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRS22.ASM</c>, routine <c>OPB80</c>, which moves every moving object</item>
+    ///         <item>
+    ///             Disassembly: <c>asm/robomame.asm</c> at
+    ///             <c>MOVE_ALL_SPHEROIDS_ENFORCERS_SPARKS_AND_DRAW_IF_ABOVE_RASTER_BEAM</c> (<c>$DCFF</c>), and its twin
+    ///             for the lower half of the screen,
+    ///             <c>MOVE_ALL_SPHEROIDS_ENFORCERS_SPARKS_AND_DRAW_IF_BELOW_RASTER_BEAM</c> (<c>$DD90</c>)
+    ///         </item>
+    ///     </list>
+    /// </remarks>
     private void MoveOnce(PlayField playField)
     {
         var bounds = playField.PlayfieldWall.PlayfieldBounds;

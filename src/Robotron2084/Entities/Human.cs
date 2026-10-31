@@ -14,7 +14,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Brain" />
 /// <seealso cref="SkullMarker" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <see cref="_firstStepTicksRemaining" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> before its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMAN</c> (with the <c>HUMATB</c> walk table)</item>
@@ -60,7 +60,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     private static readonly int[] AnimationFrameGroupByDirection = [0, 1, 2, 3, 0, 1, 1, 0];
 
     /// <summary>
-    ///     The walk table. It has 4 steps for each of the 8 ways a family member can walk. Each step says how far to go
+    ///     The walk table: for each way a family member can walk, the steps of its walk. Each step says how far to go
     ///     sideways and how far up or down, in arcade pixels, and which animation frame to show.
     /// </summary>
     /// <remarks>
@@ -71,7 +71,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
     ///     </list>
-    ///  </remarks>
+    /// </remarks>
     private static readonly (int Dx, int Dy, int Frame)[] Steps =
     {
         // Walking left.
@@ -97,7 +97,7 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
     private readonly Random _random;
 
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     /// <summary>Which walk animation frame is showing, counted through this family member's own animation frames.</summary>
     private int _animationFrameIndex;
@@ -123,16 +123,16 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes one family member. It picks at random which way it walks first, and how long it waits before its first
     ///     step.
     /// </summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the family member's top-left corner is.</param>
     /// <param name="kind">Which family member it is. This decides its animation frames and its size.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick its direction, how many steps it takes before it
     ///     turns, and its wait before the first step.
     /// </param>
-    public Human(SpriteSet spriteSet, IntVector2 position, HumanKind kind, Random random)
+    public Human(TextureSet textureSet, IntVector2 position, HumanKind kind, Random random)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
         Kind = kind;
         _random = random;
@@ -194,21 +194,21 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     {
         if (!this.IsAlive()) return;
 
-        var frames = Kind.GetAnimationFrames(_spriteSet);
+        var frames = Kind.GetAnimationFrames(_textureSet);
 
         if (IsBeingReprogrammed)
         {
             // A family member being reprogrammed is drawn as a one-colour shape on a one-colour box. Both colours keep changing.
-            _spriteSet.BlitterDraw.DrawSpriteSolidWithBackground(
+            _textureSet.BlitterDraw.DrawSpriteSolidWithBackground(
                 spriteBatch,
                 frames[_animationFrameIndex],
                 GetBounds(),
-                _spriteSet.BlitterDraw.GetPaletteIndexColour(ReprogramTuning.BackgroundPaletteIndex),
-                _spriteSet.BlitterDraw.GetPaletteIndexColour(ReprogramTuning.ShapePaletteIndex));
+                _textureSet.BlitterDraw.GetPaletteIndexColour(ReprogramTuning.BackgroundPaletteIndex),
+                _textureSet.BlitterDraw.GetPaletteIndexColour(ReprogramTuning.ShapePaletteIndex));
             return;
         }
 
-        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, frames[_animationFrameIndex], GetBounds(), Color.White);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, frames[_animationFrameIndex], GetBounds(), Color.White);
     }
 
     /// <summary>The box the family member takes up on the screen.</summary>
@@ -220,9 +220,9 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The walk animation frame the family member is showing.</summary>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        return Kind.GetAnimationFrames(_spriteSet)[_animationFrameIndex];
+        return Kind.GetAnimationFrames(_textureSet)[_animationFrameIndex];
     }
 
     /// <summary>Kills the family member. It is gone at once, with no death animation.</summary>
@@ -248,11 +248,14 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the family member takes the next step of its walk. If the step is blocked, it picks a
-    ///     new direction.
+    ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a
+    ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> the family member takes the next step of its walk.
     /// </summary>
     /// <param name="gameTime">Not used. The family member counts <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.</param>
     /// <param name="playField">The playfield.</param>
+    /// <remarks>
+    ///     If the step is blocked, it picks a new direction.
+    /// </remarks>
     public void Update(GameTime gameTime, PlayField playField)
     {
         // Unlike the robots, family members do not wait for the wave to start. They walk about while the robots are still appearing.
@@ -304,8 +307,15 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Says whether this family member is on the field and free: alive, and not being held by a brain.</summary>
     /// <remarks>
-    ///     Original source: a family member that is dead or being reprogrammed is off the family list (<c>RRH11.ASM</c>
-    ///     <c>HTAB</c>), so nothing can chase, catch, kill or rescue it.
+    ///     A family member that is dead or being reprogrammed is off the family list, so nothing can chase, catch, kill or
+    ///     rescue it.
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HTAB</c></item>
+    ///         <item>
+    ///             Disassembly: <c>asm/robomame.asm</c> at <c>REMOVE_FAMILY_LIST_ENTRY</c> (<c>$021C</c>), which
+    ///             <c>FAMILY_MEMBER_SAVED_KILLED_OR_PROGGED</c> (<c>$033D</c>) calls first
+    ///         </item>
+    ///     </list>
     /// </remarks>
     internal bool IsGraspable()
     {
@@ -338,10 +348,13 @@ public sealed class Human : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>
-    ///     What the family member does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It takes the next step of its walk. If the step is blocked, it picks a
-    ///     new direction.
+    ///     What the family member does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It takes the next
+    ///     step of its walk.
     /// </summary>
     /// <param name="playField">The playfield.</param>
+    /// <remarks>
+    ///     If the step is blocked, it picks a new direction.
+    /// </remarks>
     private void ActOnBeat(PlayField playField)
     {
         StepCount++;

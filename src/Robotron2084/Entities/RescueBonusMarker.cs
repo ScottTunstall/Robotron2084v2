@@ -8,19 +8,19 @@ using Robotron2084.Tuning;
 namespace Robotron2084.Entities;
 
 /// <summary>
-///     The "1000" to "5000" number that pops up where you just rescued a family member, showing the points you
+///     The "1000" to "5000" number that pops up where you just rescued a family member, showing the rescue bonus you
 ///     earned.
 /// </summary>
 /// <seealso cref="Human" />
 /// <remarks>
 ///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
-///     <see cref="_lifeTimer" /> says when it is time for it to go.
+///     <see cref="_lifeArcadeFrameTimer" /> says when it is time for it to go.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMKIL</c> (the <c>PCFLG</c> path)</item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$03C5</c> (<c>RESCUE_FAMILY_POINTS_TABLE</c>)</item>
 ///     </list>
 /// </remarks>
-public sealed class RescueScoreMarker : IEntity
+public sealed class RescueBonusMarker : IEntity
 {
     /// <summary>How long the number stays on the field.</summary>
     private const int LifeArcadeFrames = 60;
@@ -28,25 +28,25 @@ public sealed class RescueScoreMarker : IEntity
     private static readonly int Size = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EntitySizeArcadePixels);
 
     /// <summary>
-    ///     Which number is shown, as a place in <see cref="SpriteSet.RescueScoreDisplays" />. The first place is the 1000
+    ///     Which number is shown, as a place in <see cref="TextureSet.RescueBonusAnimationFrameTextures" />. The first place is the 1000
     ///     and the last is the 5000.
     /// </summary>
     private readonly int _displayIndex;
 
     private readonly ArcadeFrameTimer _lifeArcadeFrameTimer = new();
     private readonly IntVector2 _position;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     /// <summary>Makes the number for one rescue.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the family member was rescued.</param>
     /// <param name="rescuesThisLife">
     ///     How many family members have been rescued in this life, counting this one. The number
     ///     shown never goes above 5000.
     /// </param>
-    public RescueScoreMarker(SpriteSet spriteSet, IntVector2 position, int rescuesThisLife)
+    public RescueBonusMarker(TextureSet textureSet, IntVector2 position, int rescuesThisLife)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
         _displayIndex = Math.Clamp(rescuesThisLife, 1, ScoreValues.RescueBonusMaxCount) - 1;
     }
@@ -63,7 +63,7 @@ public sealed class RescueScoreMarker : IEntity
     {
         if (!this.IsAlive()) return;
 
-        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, _spriteSet.RescueScoreDisplays[_displayIndex], GetBounds(), Color.White);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, _textureSet.RescueBonusAnimationFrameTextures[_displayIndex], GetBounds(), Color.White);
     }
 
     /// <summary>The box the number is drawn in.</summary>

@@ -16,8 +16,8 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Human" />
 /// <remarks>
 ///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
-///     <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
-///     <see cref="_reprogramTimer" /> times the steps of reprogramming a family member.
+///     <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     <see cref="_reprogramArcadeFrameTimer" /> times the steps of reprogramming a family member.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRB10.ASM</c>: <c>BRNSTV</c> (start the brains),
@@ -207,7 +207,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private readonly int _fireIntervalBeats;
 
     private readonly Random _random;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
@@ -235,13 +235,13 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private int _victimRestingY;
 
     /// <summary>Where the brain is in its four-step walking pattern, from 0 to 3.</summary>
-    private int _walkCycleStep;
+    private int _walkCycleIndex;
 
     /// <summary>Which walk the brain is showing. A new brain shows the one for walking down.</summary>
     private WalkSequence _walkSequence = WalkSequence.Down;
 
     /// <summary>Makes a brain. It takes its first step on its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the brain's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick the waits between missiles and the shaking during
@@ -268,14 +268,14 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Brain(
-        SpriteSet spriteSet,
+        TextureSet textureSet,
         IntVector2 position,
         Random random,
         int beatWaitArcadeFrames,
         int fireIntervalBeats,
         int targetFamilySlot)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
@@ -341,10 +341,10 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         if (!this.IsAlive()) return;
 
         if (IsReprogramming())
-            _spriteSet.BlitterDraw.DrawSolidRectangle(spriteBatch, GetBounds(),
-                _spriteSet.BlitterDraw.GetPaletteIndexColour(ReprogramTuning.ShapePaletteIndex));
+            _textureSet.BlitterDraw.DrawSolidRectangle(spriteBatch, GetBounds(),
+                _textureSet.BlitterDraw.GetPaletteIndexColour(ReprogramTuning.ShapePaletteIndex));
 
-        _spriteSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrame(), GetBounds(), Color.White);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(), Color.White);
     }
 
     /// <summary>The box the brain takes up on the screen.</summary>
@@ -354,16 +354,16 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>The animation frame the brain is showing now. The explosion copies this when the brain is shot.</summary>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
-        return _spriteSet.BrainAnimationFrames[GetWalkAnimationFrameIndex()];
+        return _textureSet.BrainAnimationFrameTextures[GetWalkAnimationFrameIndex()];
     }
 
     /// <inheritdoc />
-    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrame" />).</remarks>
-    public Texture2D GetExplosionAnimationFrame()
+    /// <remarks>It is the animation frame showing now (<see cref="GetCurrentAnimationFrameTexture" />).</remarks>
+    public Texture2D GetExplosionAnimationFrameTexture()
     {
-        return GetCurrentAnimationFrame();
+        return GetCurrentAnimationFrameTexture();
     }
 
     /// <inheritdoc />
@@ -470,7 +470,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         }
 
         _walkSequence = walkSequence;
-        _walkCycleStep = 0;
+        _walkCycleIndex = 0;
 
         _victimRestingY = _position.Y + ScreenSize.ToPortPixelsFromArcadePixels(VictimDropRows);
         human.MoveTo(new IntVector2(x, _victimRestingY));
@@ -509,11 +509,11 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 
     /// <summary>
     ///     Which of the brain's animation frames is showing, counting from 0 in
-    ///     <see cref="SpriteSet.BrainAnimationFrames" />.
+    ///     <see cref="TextureSet.BrainAnimationFrameTextures" />.
     /// </summary>
     internal int GetWalkAnimationFrameIndex()
     {
-        return (int)_walkSequence * 3 + WalkCycle[_walkCycleStep];
+        return (int)_walkSequence * 3 + WalkCycle[_walkCycleIndex];
     }
 
     /// <summary>
@@ -618,12 +618,12 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 
         if (nextWalkSequence == _walkSequence)
         {
-            _walkCycleStep = (_walkCycleStep + 1) % WalkCycle.Length;
+            _walkCycleIndex = (_walkCycleIndex + 1) % WalkCycle.Length;
         }
         else
         {
             _walkSequence = nextWalkSequence;
-            _walkCycleStep = 0;
+            _walkCycleIndex = 0;
         }
     }
 

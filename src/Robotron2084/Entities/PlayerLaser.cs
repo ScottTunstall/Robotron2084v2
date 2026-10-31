@@ -22,16 +22,16 @@ namespace Robotron2084.Entities;
 public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
 {
     private static readonly int Size = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.MissileSizeArcadePixels);
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
     private IntVector2 _position;
 
     /// <summary>Makes a laser that flies in the given direction.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where it starts. The player works this out from the way it is fired.</param>
     /// <param name="direction">The way it flies. This never changes.</param>
-    public PlayerLaser(SpriteSet spriteSet, IntVector2 position, Direction8 direction)
+    public PlayerLaser(TextureSet textureSet, IntVector2 position, Direction8 direction)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = position;
         Direction = direction;
     }
@@ -52,8 +52,8 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
         if (!this.IsAlive()) return;
 
         // The laser's palette index keeps changing colour, so the whole laser flashes.
-        _spriteSet.BlitterDraw.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrame(), GetBounds(),
-            _spriteSet.BlitterDraw.GetPaletteIndexColour(PlayerTuning.LaserPaletteIndex));
+        _textureSet.BlitterDraw.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(),
+            _textureSet.BlitterDraw.GetPaletteIndexColour(PlayerTuning.LaserPaletteIndex));
     }
 
     /// <summary>The box the laser takes up on the screen.</summary>
@@ -63,14 +63,14 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     }
 
     /// <summary>The sprite for the way this laser is flying. The arcade has four laser sprites (<c>LTAB</c>, notes §19).</summary>
-    public Texture2D GetCurrentAnimationFrame()
+    public Texture2D GetCurrentAnimationFrameTexture()
     {
         return Direction switch
         {
-            Direction8.Left or Direction8.Right => _spriteSet.LaserBarSprite,
-            Direction8.Up or Direction8.Down => _spriteSet.LaserColumnSprite,
-            Direction8.UpLeft or Direction8.DownRight => _spriteSet.LaserDiagonalMainSprite,
-            Direction8.DownLeft or Direction8.UpRight => _spriteSet.LaserDiagonalAntiSprite,
+            Direction8.Left or Direction8.Right => _textureSet.LaserBarTexture,
+            Direction8.Up or Direction8.Down => _textureSet.LaserColumnTexture,
+            Direction8.UpLeft or Direction8.DownRight => _textureSet.LaserDiagonalMainTexture,
+            Direction8.DownLeft or Direction8.UpRight => _textureSet.LaserDiagonalAntiTexture,
             _ => throw new InvalidOperationException($"Unexpected laser direction {Direction}")
         };
     }
@@ -86,7 +86,12 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The laser flies one step the way it is going, and dies if it reaches the wall.</summary>
     /// <param name="gameTime">Not used. The laser goes the same distance on every <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</param>
     /// <param name="playField">The playfield. It tells the laser when it has reached the wall, and makes the flash there.</param>
-    /// <remarks>ROM: RRG23.ASM's <c>LASDIE</c>.</remarks>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRG23.ASM</c>, routine <c>LASDIE</c>, where a laser dies at the wall</item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>LASER_HIT_WALL</c> (<c>$3389</c>)</item>
+    ///     </list>
+    /// </remarks>
     public void Update(GameTime gameTime, PlayField playField)
     {
         if (!this.IsAlive()) return;

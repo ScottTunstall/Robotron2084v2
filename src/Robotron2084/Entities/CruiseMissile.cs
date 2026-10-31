@@ -14,7 +14,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="Brain" />
 /// <seealso cref="PlayerLaser" />
 /// <remarks>
-///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
+///     It acts on a <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_beatArcadeFrameTimer" /> says when it is time for the next <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: <c>RRB10.ASM</c>, routine <c>CMISL</c> (fired via <c>BRNSHT</c>, steered by
@@ -66,7 +66,7 @@ public sealed class CruiseMissile : IEntity, IRemovable
 
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly Random _random;
-    private readonly SpriteSet _spriteSet;
+    private readonly TextureSet _textureSet;
 
     /// <summary>
     ///     The places the missile has just been, oldest first. There are never more than
@@ -79,16 +79,16 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private IntVector2 _velocity; // How many pixels the missile goes left or right, and how many up or down, each time it moves.
 
     /// <summary>Makes a missile and sends it towards the player.</summary>
-    /// <param name="spriteSet">The shared sprite set.</param>
+    /// <param name="textureSet">The shared texture set.</param>
     /// <param name="origin">Where it appears.</param>
     /// <param name="playerPosition">Where the player is, which the missile heads for first.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick which way it goes, and how long it goes before it picks a new direction.
     /// </param>
     /// <remarks>ROM: it starts 3 columns to the right of the brain's top-left corner and 4 rows below it.</remarks>
-    public CruiseMissile(SpriteSet spriteSet, IntVector2 origin, IntVector2 playerPosition, Random random)
+    public CruiseMissile(TextureSet textureSet, IntVector2 origin, IntVector2 playerPosition, Random random)
     {
-        _spriteSet = spriteSet;
+        _textureSet = textureSet;
         _position = origin;
         _random = random;
         _velocity = GetRandomDirection(playerPosition);
@@ -121,16 +121,16 @@ public sealed class CruiseMissile : IEntity, IRemovable
         var markWidth = ScreenSize.ToPortPixelsFromArcadePixels(CruiseMissileTuning.MarkArcadeWidth);
         var markHeight = ScreenSize.ToPortPixelsFromArcadePixels(CruiseMissileTuning.MarkArcadeHeight);
 
-        var trailColor = _spriteSet.BlitterDraw.GetPaletteIndexColour(CruiseMissileTuning.TrailPaletteIndex);
+        var trailColour = _textureSet.BlitterDraw.GetPaletteIndexColour(CruiseMissileTuning.TrailPaletteIndex);
         foreach (var mark in _trail)
-            _spriteSet.BlitterDraw.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight),
-                trailColor);
+            _textureSet.BlitterDraw.DrawSolidRectangle(spriteBatch, new Rectangle(mark.X, mark.Y, markWidth, markHeight),
+                trailColour);
 
         // The missile's head is drawn as a plain dot, as in the arcade. The arcade's missile sprite is only used for its size, to tell when the missile hits something.
-        _spriteSet.BlitterDraw.DrawSolidRectangle(
+        _textureSet.BlitterDraw.DrawSolidRectangle(
             spriteBatch,
             new Rectangle(_position.X, _position.Y, markWidth, markHeight),
-            _spriteSet.BlitterDraw.GetPaletteIndexColour(CruiseMissileTuning.HeadPaletteIndex));
+            _textureSet.BlitterDraw.GetPaletteIndexColour(CruiseMissileTuning.HeadPaletteIndex));
     }
 
     /// <summary>
@@ -168,10 +168,16 @@ public sealed class CruiseMissile : IEntity, IRemovable
     }
 
     /// <summary>
-    ///     What the missile does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It first turns towards the player again, if it is time to, and then moves
-    ///     (ROM: <c>CMISL</c>).
+    ///     What the missile does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It first turns towards
+    ///     the player again, if it is time to, and then moves.
     /// </summary>
     /// <param name="playField">The playfield.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRB10.ASM</c>, routine <c>CMISL</c></item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>ANIMATE_CRUISE_MISSILE</c> (<c>$20B0</c>)</item>
+    ///     </list>
+    /// </remarks>
     private void ActOnBeat(PlayField playField)
     {
         if (--_newDirectionBeatsRemaining <= 0)
