@@ -7,8 +7,8 @@ namespace RobotronSoundPlayer.Tests;
 ///     Stands where the game's audio sink stands: each port tick it runs a board for one tick's worth of
 ///     cycles, carrying any overrun into the next tick as the renderer does, and records what the board held.
 /// </summary>
-/// <param name="board">The board.</param>
-internal sealed class TickedBoardRecorder(ISoundBoard board) : IAudioSink
+/// <param name="soundBoard">The board.</param>
+internal sealed class TickedBoardRecorder(ISoundBoard soundBoard) : IAudioSink
 {
     /// <summary>The game's fixed update rate: port ticks a second.</summary>
     private const double PortTicksPerSecond = 60;
@@ -29,7 +29,7 @@ internal sealed class TickedBoardRecorder(ISoundBoard board) : IAudioSink
     /// <param name="pan">Not used.</param>
     public void SendSoundNumber(int soundNumber, float pan)
     {
-        board.SendSoundNumber(soundNumber);
+        soundBoard.SendSoundNumber(soundNumber);
     }
 
     /// <summary>Runs the board for one port tick and records it.</summary>
@@ -37,8 +37,8 @@ internal sealed class TickedBoardRecorder(ISoundBoard board) : IAudioSink
     {
         while (_overrunCycles < CyclesPerPortTick)
         {
-            var level = board.OutputLevel;
-            var ran = board.Run((int)Math.Ceiling(CyclesPerPortTick - _overrunCycles));
+            var level = soundBoard.OutputLevel;
+            var ran = soundBoard.Run((int)Math.Ceiling(CyclesPerPortTick - _overrunCycles));
             _overrunCycles += ran;
             Add(level, ran);
         }

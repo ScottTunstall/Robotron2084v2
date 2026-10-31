@@ -44,11 +44,11 @@ public class NativeBoardFidelityTests
     [MemberData(nameof(GameSoundNumbers))]
     public void EachSoundNumber_ChangesToTheSameLevels_AtTheSameMoments_AsTheRealRom(int soundNumber)
     {
-        var emulated = new EmulatedSoundBoard(RomFiles.ReadOrSkip(RomFiles.SoundRom));
-        var native = new SoundBoard();
+        var emulatedSoundBoard = new EmulatedSoundBoard(RomFiles.ReadOrSkip(RomFiles.SoundRom));
+        var nativeSoundBoard = new SoundBoard();
 
-        var expected = PlayFromCold(emulated, soundNumber);
-        var actual = PlayFromCold(native, soundNumber);
+        var expected = PlayFromCold(emulatedSoundBoard, soundNumber);
+        var actual = PlayFromCold(nativeSoundBoard, soundNumber);
 
         // The last run is cut wherever the recording stops, which an emulated instruction can overrun.
         Assert.Equal(expected.SkipLast(1), actual.SkipLast(1));
@@ -68,26 +68,26 @@ public class NativeBoardFidelityTests
         Assert.InRange(disagreement.Share, 0, MostDisagreement);
     }
 
-    private static List<LevelRun> PlayFromCold(ISoundBoard board, int soundNumber)
+    private static List<LevelRun> PlayFromCold(ISoundBoard soundBoard, int soundNumber)
     {
-        LevelRecorder.Skip(board, WarmUpCycles);
-        board.SendSoundNumber(soundNumber);
-        return LevelRecorder.Record(board, SoundNumberCycles);
+        LevelRecorder.Skip(soundBoard, WarmUpCycles);
+        soundBoard.SendSoundNumber(soundNumber);
+        return LevelRecorder.Record(soundBoard, SoundNumberCycles);
     }
 
-    private static List<LevelRun> PlayThroughSequencer(ISoundBoard board, string name)
+    private static List<LevelRun> PlayThroughSequencer(ISoundBoard soundBoard, string name)
     {
-        LevelRecorder.Skip(board, WarmUpCycles);
-        var recorder = new TickedBoardRecorder(board);
-        var engine = new SoundEngine(recorder);
+        LevelRecorder.Skip(soundBoard, WarmUpCycles);
+        var tickedBoardRecorder = new TickedBoardRecorder(soundBoard);
+        var soundEngine = new SoundEngine(tickedBoardRecorder);
         var request = new SoundCatalog().Find(name)!;
-        request.Start(engine);
+        request.Start(soundEngine);
         for (var tick = 0; tick < GameSoundTicks; tick++)
         {
-            engine.Tick();
-            request.Tick(engine);
+            soundEngine.Tick();
+            request.Tick(soundEngine);
         }
 
-        return recorder.Runs;
+        return tickedBoardRecorder.Runs;
     }
 }
