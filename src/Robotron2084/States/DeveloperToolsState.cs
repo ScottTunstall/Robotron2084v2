@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
-using Robotron2084.Hud;
 using Robotron2084.Input;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
@@ -30,18 +29,24 @@ namespace Robotron2084.States;
 public sealed class DeveloperToolsState : IGameState
 {
     private const string ChooseLine = "UP DOWN - SELECT AN OPTION   ENTER - CHOOSE IT";
-    private const string DirectLine = "1 TO 7 - CHOOSE AN OPTION DIRECTLY";
 
     // The cursor sits just left of the label column, exactly where the arcade's GAME ADJUSTMENT page
     // prints its cursor (column $0C), and it is that page's own cursor glyph — the small font's "->".
     private const int CursorColumn = 57;
 
+    private const string DirectLine = "1 TO 7 - CHOOSE AN OPTION DIRECTLY";
     private const string ExitLine = "F10 - CLOSE THIS PAGE";
     private const int ExitRow = 342;
     private const int FirstLineRow = 90;
 
     /// <summary>It is one of the palette slots in <see cref="OwnedSlots" />.</summary>
     private const int HeadingSlot = 9;
+
+    private const int InstructionsRow = 294;
+
+    private const int LabelColumn = 75;
+
+    private const int LineStep = 26;
 
     // The page's own colours (notes §108) are the GAME ADJUSTMENT page's: WHITE (slot 9) for the
     // heading, the instructions and the exit line, GREEN (slot 6) for the options themselves. No slot
@@ -50,20 +55,16 @@ public sealed class DeveloperToolsState : IGameState
     /// <summary>It is one of the palette slots in <see cref="OwnedSlots" />.</summary>
     private const int OptionSlot = 6;
 
-    private const int InstructionsRow = 294;
-    private const int LabelColumn = 75;
-    private const int LineStep = 26;
     private const int SecondInstructionRow = 312;
 
     private const string Title = "DEVELOPER TOOLS";
     private const int TitleRow = 12;
 
-    /// <summary>
-    ///     The two entries this page draws with STATICALLY, written on entry. The highlighted option's
-    ///     label sits in <see cref="DefineInputsHighlight.Slot" />, which that process itself puts on
-    ///     its GREEN (notes §115). Slots 10-15 are left alone: the in-game animator owns those.
-    /// </summary>
-    private static readonly int[] OwnedSlots = [OptionSlot, HeadingSlot];
+    /// <summary>The number keys that choose a line directly, in list order.</summary>
+    private static readonly Keys[] DirectKeys =
+    [
+        Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7
+    ];
 
     /// <summary>
     ///     The page's options in list order: the attract cycle's own screens in the order the cycle
@@ -81,15 +82,16 @@ public sealed class DeveloperToolsState : IGameState
         "GAME ADJUSTMENT"
     ];
 
-    /// <summary>The number keys that choose a line directly, in list order.</summary>
-    private static readonly Keys[] DirectKeys =
-    [
-        Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7
-    ];
+    /// <summary>
+    ///     The two entries this page draws with STATICALLY, written on entry. The highlighted option's
+    ///     label sits in <see cref="DefineInputsHighlight.Slot" />, which that process itself puts on
+    ///     its GREEN (notes §115). Slots 10-15 are left alone: the in-game animator owns those.
+    /// </summary>
+    private static readonly int[] OwnedSlots = [OptionSlot, HeadingSlot];
 
     private readonly ControlSettingsStore _controlSettingsStore;
-    private readonly DefineInputsHighlight _highlight = new();
     private readonly GameSettingsStore _gameSettingsStore;
+    private readonly DefineInputsHighlight _highlight = new();
     private readonly GameServices _services;
     private readonly SpriteSet _sprites;
 
@@ -166,6 +168,13 @@ public sealed class DeveloperToolsState : IGameState
         _previousSnapshot = now;
     }
 
+    /// <summary>Moves the cursor, wrapping at either end of the list.</summary>
+    private static int Move(int line, int step)
+    {
+        var count = Options.Length;
+        return (line % count + count + step) % count;
+    }
+
     /// <summary>Leaves the page for the screen the highlighted option names.</summary>
     private void Choose(int line, GameStateManager manager)
     {
@@ -175,44 +184,33 @@ public sealed class DeveloperToolsState : IGameState
                 // The title page as the cabinet prints it: its own pane, held open (notes §107).
                 manager.TransitionTo(new TitleScreenState(_services, TitleTextPane.Arcade));
                 break;
+
             case 1:
                 // The title page on the pane that carries the port's credit.
                 manager.TransitionTo(new TitleScreenState(_services, TitleTextPane.Port));
                 break;
+
             case 2:
                 manager.TransitionTo(new StorylineState(_services, new Random()));
                 break;
+
             case 3:
                 manager.TransitionTo(new AttractState(_services));
                 break;
+
             case 4:
                 manager.TransitionTo(new HighScoreTableState(_services));
                 break;
+
             case 5:
                 manager.TransitionTo(new DefineInputsState(_services, _controlSettingsStore));
                 break;
+
             case 6:
                 // The arcade's service-mode settings: the gameplay adjustments (notes §131).
                 manager.TransitionTo(new SettingsState(_services, _gameSettingsStore));
                 break;
         }
-    }
-
-    /// <summary>Moves the cursor, wrapping at either end of the list.</summary>
-    private static int Move(int line, int step)
-    {
-        var count = Options.Length;
-        return (line % count + count + step) % count;
-    }
-
-    /// <summary>The X that centres a line of the given font on the canvas.</summary>
-    private int GetCenteredX(string text, bool isLarge = false)
-    {
-        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
-        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
-
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
-        return (ScreenSize.Width - width) / 2;
     }
 
     /// <summary>
@@ -255,21 +253,14 @@ public sealed class DeveloperToolsState : IGameState
         return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, slot);
     }
 
-    private bool WasKeyboardPressed(InputSnapshot now, Keys key)
+    /// <summary>The X that centres a line of the given font on the canvas.</summary>
+    private int GetCenteredX(string text, bool isLarge = false)
     {
-        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
-    }
+        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
+        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
 
-    /// <summary>True on the tick the key or the pad button (either pad) goes down.</summary>
-    private bool WasPressed(InputSnapshot now, Keys key, Buttons button)
-    {
-        return WasKeyboardPressed(now, key) || WasPadPressed(now, button);
-    }
-
-    private bool WasPadPressed(InputSnapshot now, Buttons button)
-    {
-        return (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
-               || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
+        return (ScreenSize.Width - width) / 2;
     }
 
     /// <summary>
@@ -281,5 +272,22 @@ public sealed class DeveloperToolsState : IGameState
         if (_sprites.Blitter.Palette is not { } palette) return;
 
         foreach (var slot in OwnedSlots) palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
+    }
+
+    private bool WasKeyboardPressed(InputSnapshot now, Keys key)
+    {
+        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
+    }
+
+    private bool WasPadPressed(InputSnapshot now, Buttons button)
+    {
+        return (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
+               || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
+    }
+
+    /// <summary>True on the tick the key or the pad button (either pad) goes down.</summary>
+    private bool WasPressed(InputSnapshot now, Keys key, Buttons button)
+    {
+        return WasKeyboardPressed(now, key) || WasPadPressed(now, button);
     }
 }

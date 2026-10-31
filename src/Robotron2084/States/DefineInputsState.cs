@@ -149,13 +149,6 @@ public sealed class DefineInputsState : IGameState
         return $"P{DefineInputsModel.PlayerOf(line) + 1} {DefineInputsModel.GetAction(line)!.Value.GetLabel()}";
     }
 
-    private ActionBinding GetBinding(int line)
-    {
-        if (line == DefineInputsModel.PauseLine) return new ActionBinding(_controlSettings.Pause, InputBinding.None);
-
-        return _controlSettings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.GetAction(line)!.Value];
-    }
-
     /// <summary>The armed half of the page: the next input pressed becomes the binding.</summary>
     private void CaptureInput(InputSnapshot now)
     {
@@ -168,16 +161,6 @@ public sealed class DefineInputsState : IGameState
         var captured = ControlCapture.GetNewlyPressed(_previousSnapshot, now);
         if (captured.Kind != InputBindingKind.None && _model.Assign(_controlSettings, captured))
             _controlSettingsStore.Save(_controlSettings);
-    }
-
-    /// <summary>The X that centres a line of the given font on the canvas.</summary>
-    private int GetCenteredX(string text, bool isLarge = false)
-    {
-        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
-        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
-
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
-        return (ScreenSize.Width - width) / 2;
     }
 
     /// <summary>
@@ -266,9 +249,21 @@ public sealed class DefineInputsState : IGameState
         if (hasPadBinding) DrawText(spriteBatch, binding.PadBinding.GetDisplayName(), x, y, slot);
     }
 
-    private bool WasKeyboardPressed(InputSnapshot now, Keys key)
+    private ActionBinding GetBinding(int line)
     {
-        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
+        if (line == DefineInputsModel.PauseLine) return new ActionBinding(_controlSettings.Pause, InputBinding.None);
+
+        return _controlSettings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.GetAction(line)!.Value];
+    }
+
+    /// <summary>The X that centres a line of the given font on the canvas.</summary>
+    private int GetCenteredX(string text, bool isLarge = false)
+    {
+        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
+        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
+        return (ScreenSize.Width - width) / 2;
     }
 
     /// <summary>The idle half: scrolling, arming, clearing, defaults, and leaving.</summary>
@@ -295,22 +290,6 @@ public sealed class DefineInputsState : IGameState
         }
     }
 
-    /// <summary>Moves the highlight up or down, or arms the highlighted row for a new binding.</summary>
-    private void ScrollOrArm(InputSnapshot now)
-    {
-        if (WasKeyboardPressed(now, Keys.Up) || WasPadPressed(now, Buttons.DPadUp)) _model.MoveUp();
-
-        if (WasKeyboardPressed(now, Keys.Down) || WasPadPressed(now, Buttons.DPadDown)) _model.MoveDown();
-
-        if (WasKeyboardPressed(now, Keys.Enter) || WasPadPressed(now, Buttons.A)) _model.Arm();
-    }
-
-    private bool WasPadPressed(InputSnapshot now, Buttons button)
-    {
-        return (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
-               || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
-    }
-
     /// <summary>
     ///     Puts this page's three entries back on their CRTAB values (notes §108). They are what the page
     ///     draws with, and the screen it came from may have left them holding anything at all — see
@@ -321,5 +300,26 @@ public sealed class DefineInputsState : IGameState
         if (_sprites.Blitter.Palette is not { } palette) return;
 
         foreach (var slot in OwnedSlots) palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
+    }
+
+    /// <summary>Moves the highlight up or down, or arms the highlighted row for a new binding.</summary>
+    private void ScrollOrArm(InputSnapshot now)
+    {
+        if (WasKeyboardPressed(now, Keys.Up) || WasPadPressed(now, Buttons.DPadUp)) _model.MoveUp();
+
+        if (WasKeyboardPressed(now, Keys.Down) || WasPadPressed(now, Buttons.DPadDown)) _model.MoveDown();
+
+        if (WasKeyboardPressed(now, Keys.Enter) || WasPadPressed(now, Buttons.A)) _model.Arm();
+    }
+
+    private bool WasKeyboardPressed(InputSnapshot now, Keys key)
+    {
+        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
+    }
+
+    private bool WasPadPressed(InputSnapshot now, Buttons button)
+    {
+        return (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
+               || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
     }
 }

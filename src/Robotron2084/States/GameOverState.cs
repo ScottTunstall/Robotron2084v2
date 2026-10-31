@@ -48,6 +48,19 @@ public sealed class GameOverState : IGameState
         _scores = scores;
     }
 
+    /// <summary>Builds the screen from a session that has just ended.</summary>
+    /// <param name="input">Player 1's input.</param>
+    /// <param name="sprites">The shared sprite set.</param>
+    /// <param name="highScoreStore">The high score store.</param>
+    /// <param name="session">The finished game, which supplies the final scores, the controls and the settings.</param>
+    public static GameOverState CreateFromSession(IPlayerInputSource input, SpriteSet sprites,
+        HighScoreStore highScoreStore, GameSession session)
+    {
+        return new GameOverState(input, sprites, highScoreStore, session.GetFinalScoresHighestFirst(),
+            session.ControlSettings,
+            session.GameSettings);
+    }
+
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         // ROM string 40 (GOMP): "GAME OVER" in the LARGE font, colour $AA, at (62, 128).
@@ -67,18 +80,5 @@ public sealed class GameOverState : IGameState
         // ENDPRC → ENDGAM → GOV: the scores are offered to the table in turn, and the table itself is
         // the end of the ceremony (notes §98).
         manager.TransitionTo(new ScoreEntryCeremony(_services, _scores).NextScreen());
-    }
-
-    /// <summary>Builds the screen from a session that has just ended.</summary>
-    /// <param name="input">Player 1's input.</param>
-    /// <param name="sprites">The shared sprite set.</param>
-    /// <param name="highScoreStore">The high score store.</param>
-    /// <param name="session">The finished game, which supplies the final scores, the controls and the settings.</param>
-    public static GameOverState CreateFromSession(IPlayerInputSource input, SpriteSet sprites,
-        HighScoreStore highScoreStore, GameSession session)
-    {
-        return new GameOverState(input, sprites, highScoreStore, session.GetFinalScoresHighestFirst(),
-            session.ControlSettings,
-            session.GameSettings);
     }
 }

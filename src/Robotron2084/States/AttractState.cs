@@ -39,9 +39,9 @@ public sealed class AttractState : IGameState, IAttractState
     private readonly IPlayerInputSource _humanInput;
     private readonly Random _random = new();
     private readonly GameServices _services;
+    private readonly GameSession _session;
     private readonly SpriteSet _sprites;
     private PlayField _field;
-    private readonly GameSession _session;
 
     public AttractState(GameServices services)
     {

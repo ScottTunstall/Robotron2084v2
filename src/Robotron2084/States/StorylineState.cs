@@ -150,6 +150,31 @@ public sealed class StorylineState : IGameState, IAttractState
         return new StripClip(bounds.Left, bounds.Right, bounds.Top, bounds.Bottom);
     }
 
+    /// <summary>Draws a laser bolt: <c>LASPIC</c>, the rotating laser table's horizontal bar.</summary>
+    private void DrawLaser(SpriteBatch spriteBatch, MovieObject item)
+    {
+        var x = HudLayout.ToPortX(item.GetArcadeX());
+        var y = HudLayout.ToPortY(item.GetArcadeY());
+        var bolt = new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_sprites.LaserBarSprite.Width),
+            ScreenSize.ToPortPixelsFromArcadePixels(_sprites.LaserBarSprite.Height));
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBarSprite, bolt,
+            _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
+    }
+
+    /// <summary>
+    ///     ROM <c>OPON</c>: the box in the first colour, the object's SHAPE in the second, and — for the
+    ///     brain's box — the brain's own sprite over the top (the ROM's second blit, <c>JMP $D018</c>, notes §72.1).
+    /// </summary>
+    private void DrawMonoBox(SpriteBatch spriteBatch, MovieObject item, Texture2D animationFrame, Rectangle bounds)
+    {
+        if (item.MonoBoxSlot != 0)
+            _sprites.Blitter.DrawSolidRectangle(spriteBatch, bounds, _sprites.Blitter.GetSlotColour(item.MonoBoxSlot));
+
+        _sprites.Blitter.DrawSpriteSolid(spriteBatch, animationFrame, bounds,
+            _sprites.Blitter.GetSlotColour(item.MonoSilhouetteSlot));
+        if (item.ShowsMonoBrain) _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
+    }
+
     private void DrawObjects(SpriteBatch spriteBatch)
     {
         foreach (var item in _movie.ObjectMachine.Objects)
@@ -183,31 +208,6 @@ public sealed class StorylineState : IGameState, IAttractState
         }
     }
 
-    /// <summary>Draws a laser bolt: <c>LASPIC</c>, the rotating laser table's horizontal bar.</summary>
-    private void DrawLaser(SpriteBatch spriteBatch, MovieObject item)
-    {
-        var x = HudLayout.ToPortX(item.GetArcadeX());
-        var y = HudLayout.ToPortY(item.GetArcadeY());
-        var bolt = new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_sprites.LaserBarSprite.Width),
-            ScreenSize.ToPortPixelsFromArcadePixels(_sprites.LaserBarSprite.Height));
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, _sprites.LaserBarSprite, bolt,
-            _sprites.Blitter.GetSlotColour(PlayerTuning.LaserSlot));
-    }
-
-    /// <summary>
-    ///     ROM <c>OPON</c>: the box in the first colour, the object's SHAPE in the second, and — for the
-    ///     brain's box — the brain's own sprite over the top (the ROM's second blit, <c>JMP $D018</c>, notes §72.1).
-    /// </summary>
-    private void DrawMonoBox(SpriteBatch spriteBatch, MovieObject item, Texture2D animationFrame, Rectangle bounds)
-    {
-        if (item.MonoBoxSlot != 0)
-            _sprites.Blitter.DrawSolidRectangle(spriteBatch, bounds, _sprites.Blitter.GetSlotColour(item.MonoBoxSlot));
-
-        _sprites.Blitter.DrawSpriteSolid(spriteBatch, animationFrame, bounds,
-            _sprites.Blitter.GetSlotColour(item.MonoSilhouetteSlot));
-        if (item.ShowsMonoBrain) _sprites.Blitter.DrawSprite(spriteBatch, animationFrame, bounds, Color.White);
-    }
-
     /// <summary>
     ///     The EXP opcode's dead object: the ROM's `KILLOF` leaves the object's sprite
     ///     in place and `EXPP` sets the explosion's row to ACTHIT+6, so the fan's rect is
@@ -224,6 +224,14 @@ public sealed class StorylineState : IGameState, IAttractState
             _bounds = bounds;
         }
 
+        public EntityLifeState LifeState => EntityLifeState.Dead;
+
+        public IntVector2 Position => new(_bounds.X, _bounds.Y);
+
+        public void Draw(SpriteBatch spriteBatch)
+        {
+        }
+
         public Rectangle GetBounds()
         {
             return _bounds;
@@ -234,21 +242,14 @@ public sealed class StorylineState : IGameState, IAttractState
             return _animationFrame;
         }
 
-        public Rectangle GetExplosionBounds()
-        {
-            return _bounds;
-        }
-
         public Texture2D GetExplosionAnimationFrame()
         {
             return _animationFrame;
         }
 
-        public EntityLifeState LifeState => EntityLifeState.Dead;
-        public IntVector2 Position => new(_bounds.X, _bounds.Y);
-
-        public void Draw(SpriteBatch spriteBatch)
+        public Rectangle GetExplosionBounds()
         {
+            return _bounds;
         }
 
         public void Update(GameTime gameTime, PlayField field)

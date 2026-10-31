@@ -348,14 +348,6 @@ public sealed class HighScoreTableState : IGameState, IAttractState
             x + ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudSmallFontBlankAdvancePixels), y, slot);
     }
 
-    private void Leave(GameStateManager manager)
-    {
-        if (_sprites.Blitter.Palette is { } palette) _highScorePalette.Stop(palette);
-
-        manager.TransitionTo(new TitleScreenState(new GameServices(_sprites, _highScoreStore,
-            ControlSettings.CreateDefaults(), _input, _gameSettings)));
-    }
-
     /// <summary>
     ///     ROM `CLSET`: a row holding a score the current players posted is drawn in
     ///     the second colour — but only when the NEXT table entry is not the same
@@ -372,5 +364,13 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         if (isPostedScore) return highlightSlot;
 
         return normalSlot;
+    }
+
+    private void Leave(GameStateManager manager)
+    {
+        if (_sprites.Blitter.Palette is { } palette) _highScorePalette.Stop(palette);
+
+        manager.TransitionTo(new TitleScreenState(new GameServices(_sprites, _highScoreStore,
+            ControlSettings.CreateDefaults(), _input, _gameSettings)));
     }
 }

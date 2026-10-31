@@ -52,21 +52,21 @@ public sealed class WaveClearState : IGameState
 
     private int _ticksRemaining = ScreenTuning.WaveClearDisplayTicks;
 
-    /// <summary>
-    ///     True while this tunnel belongs to the ATTRACT demo. The shell's attract-cycle sound
-    ///     switch (notes §131) treats the demo's tunnel as part of the attract sequence, so the
-    ///     wave-end music it asks for obeys ATTRACT MODE SOUND like every other attract sound.
-    /// </summary>
-    public bool IsAttractMode => _isAttractMode;
-
     public WaveClearState(SpriteSet sprites, HighScoreStore highScoreStore, GameSession session,
-        bool isAttractMode = false)
+            bool isAttractMode = false)
     {
         _sprites = sprites;
         _highScoreStore = highScoreStore;
         _session = session;
         _isAttractMode = isAttractMode;
     }
+
+    /// <summary>
+    ///     True while this tunnel belongs to the ATTRACT demo. The shell's attract-cycle sound
+    ///     switch (notes §131) treats the demo's tunnel as part of the attract sequence, so the
+    ///     wave-end music it asks for obeys ATTRACT MODE SOUND like every other attract sound.
+    /// </summary>
+    public bool IsAttractMode => _isAttractMode;
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {

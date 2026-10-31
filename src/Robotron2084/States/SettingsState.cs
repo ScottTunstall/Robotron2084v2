@@ -57,6 +57,7 @@ public sealed class SettingsState : IGameState
     // The value column clears the longest label ("RESTORE FACTORY SETTINGS", 24 small-font glyphs
     // ≈ 240 px from LabelColumn), and the descriptive word column clears the longest value.
     private const int NoteColumn = 440;
+
     private const int SecondInstructionRow = 312;
 
     private const string Title = "GAME ADJUSTMENT";
@@ -72,9 +73,8 @@ public sealed class SettingsState : IGameState
 
     private readonly GameSettings _gameSettings;
     private readonly GameSettingsStore _gameSettingsStore;
-    private readonly HighScoreStore _highScoreStore;
-
     private readonly DefineInputsHighlight _highlight = new();
+    private readonly HighScoreStore _highScoreStore;
     private readonly SettingsModel _model = new();
     private readonly GameServices _services;
     private readonly SpriteSet _sprites;
@@ -130,14 +130,26 @@ public sealed class SettingsState : IGameState
         _previousSnapshot = now;
     }
 
-    /// <summary>The X that centres a line of the given font on the canvas.</summary>
-    private int GetCenteredX(string text, bool isLarge = false)
+    /// <summary>Performs the highlighted action row, if it reads YES.</summary>
+    private void Activate()
     {
-        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
-        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+        switch (_model.Activate(_gameSettings))
+        {
+            case SettingsAction.RestoreFactorySettings:
+                _gameSettingsStore.Save(_gameSettings);
+                break;
 
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
-        return (ScreenSize.Width - width) / 2;
+            case SettingsAction.ResetHighScores:
+                _highScoreStore.Save(HighScoreTable.CreateWithFactoryScores());
+                break;
+        }
+    }
+
+    /// <summary>Steps the highlighted row, writing the change straight to the file.</summary>
+    private void Change(int direction)
+    {
+        _model.Change(_gameSettings, direction);
+        _gameSettingsStore.Save(_gameSettings);
     }
 
     /// <summary>
@@ -188,42 +200,14 @@ public sealed class SettingsState : IGameState
         return _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, x, y, slot);
     }
 
-    private bool WasKeyboardPressed(InputSnapshot now, Keys key)
+    /// <summary>The X that centres a line of the given font on the canvas.</summary>
+    private int GetCenteredX(string text, bool isLarge = false)
     {
-        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
-    }
+        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
+        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
 
-    /// <summary>True on the tick the key or the pad button (either pad) goes down.</summary>
-    private bool WasPressed(InputSnapshot now, Keys key, Buttons button)
-    {
-        return WasKeyboardPressed(now, key) || WasPadPressed(now, button);
-    }
-
-    private bool WasPadPressed(InputSnapshot now, Buttons button)
-    {
-        return (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
-               || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
-    }
-
-    /// <summary>Steps the highlighted row, writing the change straight to the file.</summary>
-    private void Change(int direction)
-    {
-        _model.Change(_gameSettings, direction);
-        _gameSettingsStore.Save(_gameSettings);
-    }
-
-    /// <summary>Performs the highlighted action row, if it reads YES.</summary>
-    private void Activate()
-    {
-        switch (_model.Activate(_gameSettings))
-        {
-            case SettingsAction.RestoreFactorySettings:
-                _gameSettingsStore.Save(_gameSettings);
-                break;
-            case SettingsAction.ResetHighScores:
-                _highScoreStore.Save(HighScoreTable.CreateWithFactoryScores());
-                break;
-        }
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
+        return (ScreenSize.Width - width) / 2;
     }
 
     /// <summary>
@@ -235,5 +219,22 @@ public sealed class SettingsState : IGameState
         if (_sprites.Blitter.Palette is not { } palette) return;
 
         foreach (var slot in OwnedSlots) palette.SetSlot(slot, GamePalette.DefaultSlotValues[slot]);
+    }
+
+    private bool WasKeyboardPressed(InputSnapshot now, Keys key)
+    {
+        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
+    }
+
+    private bool WasPadPressed(InputSnapshot now, Buttons button)
+    {
+        return (now.PadOne.IsButtonDown(button) && !_previousSnapshot.PadOne.IsButtonDown(button))
+               || (now.PadTwo.IsButtonDown(button) && !_previousSnapshot.PadTwo.IsButtonDown(button));
+    }
+
+    /// <summary>True on the tick the key or the pad button (either pad) goes down.</summary>
+    private bool WasPressed(InputSnapshot now, Keys key, Buttons button)
+    {
+        return WasKeyboardPressed(now, key) || WasPadPressed(now, button);
     }
 }

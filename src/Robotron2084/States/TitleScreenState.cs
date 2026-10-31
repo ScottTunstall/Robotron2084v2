@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
@@ -66,6 +66,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     // The credit's two lines sit on the arcade pane's message rows (LARGE font, an empty
     // row apart) so the panes swap in the same slot.
     private const int CreditRowOne = WelcomeRowOne;
+
     private const int CreditRowTwo = WelcomeRowTwo;
 
     /// <summary>
@@ -119,6 +120,12 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     private readonly WilliamsLogoBorder _logoBorder;
     private readonly PresentationPagePalette _pagePalette = new();
+
+    /// <summary>
+    ///     The pane the page HOLDS, or null to alternate the two as the attract cycle does (notes §107).
+    /// </summary>
+    private readonly TitleTextPane? _pinnedPane;
+
     private readonly TimeSpan _portTextDuration = TimeSpan.FromSeconds(AttractTuning.TitlePortTextSeconds);
     private readonly GameServices _services;
     private readonly SpriteSet _sprites;
@@ -128,11 +135,6 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     /// <summary>True while the ARCADE's text pane is up; it alternates with the port's (notes §107).</summary>
     private bool _isShowingArcadeText = true;
-
-    /// <summary>
-    ///     The pane the page HOLDS, or null to alternate the two as the attract cycle does (notes §107).
-    /// </summary>
-    private readonly TitleTextPane? _pinnedPane;
 
     private TimeSpan _textElapsed;
 
@@ -273,20 +275,6 @@ public sealed class TitleScreenState : IGameState, IAttractState
     }
 
     /// <summary>
-    ///     The X that centres a line on the canvas, measured with the font's own glyph widths
-    ///     (<see cref="ArcadeText.MeasureSmallText" />/<see cref="ArcadeText.MeasureLargeText" />) — the two
-    ///     fonts advance differently, so a fixed per-character width would mis-centre one of them.
-    /// </summary>
-    private int GetCenteredX(string text, bool isLarge)
-    {
-        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
-        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
-
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
-        return (ScreenSize.Width - width) / 2;
-    }
-
-    /// <summary>
     ///     Pane 1 — the arcade's own lines: the operator's welcome message and the credit strings, all
     ///     in the page's text colour (the ROM's `$66` — notes §106) except the copyright, which gets an
     ///     entry of its own. The two message lines are ONE EMPTY ROW apart, as the arcade prints them,
@@ -331,6 +319,20 @@ public sealed class TitleScreenState : IGameState, IAttractState
     {
         DrawCenteredLargeText(spriteBatch, CreditLineOne, CreditRowOne, TextSlot);
         DrawCenteredLargeText(spriteBatch, CreditLineTwo, CreditRowTwo, TextSlot);
+    }
+
+    /// <summary>
+    ///     The X that centres a line on the canvas, measured with the font's own glyph widths
+    ///     (<see cref="ArcadeText.MeasureSmallText" />/<see cref="ArcadeText.MeasureLargeText" />) — the two
+    ///     fonts advance differently, so a fixed per-character width would mis-centre one of them.
+    /// </summary>
+    private int GetCenteredX(string text, bool isLarge)
+    {
+        var textWidth = _sprites.TextRenderer.MeasureSmallText(text);
+        if (isLarge) textWidth = _sprites.TextRenderer.MeasureLargeText(text);
+
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
+        return (ScreenSize.Width - width) / 2;
     }
 
     /// <summary>Draws an arcade-small-font line centred on the canvas.</summary>

@@ -76,6 +76,32 @@ public sealed class PlayingState : IGameState
         if (isStartOfTurn) AnnounceTurn();
     }
 
+    /// <summary>
+    ///     Starts a game in one of the port's three modes (notes §101), giving each player
+    ///     their OWN input source — which is the point of the DEFINITIONS page, since player
+    ///     2 no longer has to share player 1's controls. The mode is what F1/F2/F3 select on
+    ///     the title and from anywhere in the attract cycle; TWO PLAYER SIMULTANEOUS is
+    ///     carried as far as this call and the second input (the simultaneous field itself is not built yet).
+    /// </summary>
+    /// <param name="controlSettings">The keys and buttons the players have chosen.</param>
+    /// <param name="gameSettings">
+    ///     The GAME ADJUSTMENT settings (notes §131): TURNS PER PLAYER is the men each player starts
+    ///     with, EXTRA MAN EVERY the score that earns a spare man, and DIFFICULTY OF PLAY nudges every
+    ///     wave's tuning.
+    /// </param>
+    /// <param name="mode">How many people are playing, and whether two of them take turns.</param>
+    /// <param name="sprites">The sprite set that everything is drawn with.</param>
+    /// <param name="highScoreStore">The high score table, which is offered the scores when the game ends.</param>
+    public static PlayingState CreateNewGame(ControlSettings controlSettings, GameSettings gameSettings, GameMode mode,
+        SpriteSet sprites, HighScoreStore highScoreStore)
+    {
+        var playerOne = new BoundPlayerInputSource(controlSettings, 0);
+        var playerTwo = new BoundPlayerInputSource(controlSettings, 1);
+        Sound.Play(StartSoundFor(mode));
+        return new PlayingState(sprites, highScoreStore,
+            GameSession.CreateNewGame(mode, playerOne, playerTwo, controlSettings, gameSettings), true);
+    }
+
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         // While the arcade shows whose turn it is, the wave has not been set up: only the wall and the scores are on the screen.
@@ -171,57 +197,10 @@ public sealed class PlayingState : IGameState
         }
     }
 
-    /// <summary>
-    ///     Starts a game in one of the port's three modes (notes §101), giving each player
-    ///     their OWN input source — which is the point of the DEFINITIONS page, since player
-    ///     2 no longer has to share player 1's controls. The mode is what F1/F2/F3 select on
-    ///     the title and from anywhere in the attract cycle; TWO PLAYER SIMULTANEOUS is
-    ///     carried as far as this call and the second input (the simultaneous field itself is not built yet).
-    /// </summary>
-    /// <param name="controlSettings">The keys and buttons the players have chosen.</param>
-    /// <param name="gameSettings">
-    ///     The GAME ADJUSTMENT settings (notes §131): TURNS PER PLAYER is the men each player starts
-    ///     with, EXTRA MAN EVERY the score that earns a spare man, and DIFFICULTY OF PLAY nudges every
-    ///     wave's tuning.
-    /// </param>
-    /// <param name="mode">How many people are playing, and whether two of them take turns.</param>
-    /// <param name="sprites">The sprite set that everything is drawn with.</param>
-    /// <param name="highScoreStore">The high score table, which is offered the scores when the game ends.</param>
-    public static PlayingState CreateNewGame(ControlSettings controlSettings, GameSettings gameSettings, GameMode mode,
-        SpriteSet sprites, HighScoreStore highScoreStore)
+    /// <summary>Says whether the "PLAYER n" message is on the screen. The wave is not set up until it has gone.</summary>
+    internal bool IsAnnouncingTurn()
     {
-        var playerOne = new BoundPlayerInputSource(controlSettings, 0);
-        var playerTwo = new BoundPlayerInputSource(controlSettings, 1);
-        Sound.Play(StartSoundFor(mode));
-        return new PlayingState(sprites, highScoreStore,
-            GameSession.CreateNewGame(mode, playerOne, playerTwo, controlSettings, gameSettings), true);
-    }
-
-    /// <summary>Gets the wave a player is about to play: what was left after their last death, or a fresh wave.</summary>
-    /// <param name="slot">The player whose turn it is.</param>
-    /// <remarks>
-    ///     Original source: <c>RRG23.ASM</c> <c>PLRES</c> brings back what <c>PLSAV</c> kept, then eases the first waves for a
-    ///     player on
-    ///     their last men (Bozo). The difficulty setting is applied once, when the wave is first made (<c>GETWV</c>), so a
-    ///     life after a death does not apply it again.
-    /// </remarks>
-    private LevelParameters GetWaveToPlay(PlayerSlot slot)
-    {
-        if (slot.SavedWaveParameters is { } saved) return ApplyBozoMode(saved, slot);
-
-        // Bozo mercy first, then the difficulty adjustment — the ROM's own order ($2B26 before $2B7C).
-        var parameters = ApplyBozoMode(_generator.Generate(slot.Wave), slot);
-        return DifficultyTuning.Apply(parameters, _gameSettings.Difficulty, slot.Lives);
-    }
-
-    /// <summary>Eases the wave for a player losing ships early, unless BOZO MODE is switched off on the GAME ADJUSTMENT page.</summary>
-    /// <param name="parameters">The wave's parameters.</param>
-    /// <param name="slot">The player whose turn it is.</param>
-    private LevelParameters ApplyBozoMode(LevelParameters parameters, PlayerSlot slot)
-    {
-        if (!_gameSettings.BozoModeEnabled) return parameters;
-
-        return BozoMode.Apply(parameters, slot.GetSpareMen(), _gameSettings.TurnsPerPlayer);
+        return _turnMessageTicks > 0;
     }
 
     /// <summary>
@@ -231,12 +210,6 @@ public sealed class PlayingState : IGameState
     private static SoundSequence StartSoundFor(GameMode mode)
     {
         return mode == GameMode.OnePlayer ? SoundTables.StartOnePlayer : SoundTables.StartTwoPlayers;
-    }
-
-    /// <summary>Says whether the "PLAYER n" message is on the screen. The wave is not set up until it has gone.</summary>
-    internal bool IsAnnouncingTurn()
-    {
-        return _turnMessageTicks > 0;
     }
 
     /// <summary>
@@ -252,6 +225,16 @@ public sealed class PlayingState : IGameState
     {
         _turnMessageTicks = 0;
         if (_session.IsTwoPlayer()) _turnMessageTicks = ArcadeClock.ToPortTicks(ScreenTuning.PlayerTurnMessageArcadeFrames);
+    }
+
+    /// <summary>Eases the wave for a player losing ships early, unless BOZO MODE is switched off on the GAME ADJUSTMENT page.</summary>
+    /// <param name="parameters">The wave's parameters.</param>
+    /// <param name="slot">The player whose turn it is.</param>
+    private LevelParameters ApplyBozoMode(LevelParameters parameters, PlayerSlot slot)
+    {
+        if (!_gameSettings.BozoModeEnabled) return parameters;
+
+        return BozoMode.Apply(parameters, slot.GetSpareMen(), _gameSettings.TurnsPerPlayer);
     }
 
     /// <summary>Builds the playfield for whoever's turn it is, from their own state.</summary>
@@ -277,6 +260,23 @@ public sealed class PlayingState : IGameState
             tankShellBugEnabled: _gameSettings.TankShellBugEnabled,
             brainsChaseMikeyBugEnabled: _gameSettings.BrainsChaseMikeyBugEnabled,
             familySlotsLeftOver: _session.FamilySlotsLeftOver);
+    }
+
+    /// <summary>Gets the wave a player is about to play: what was left after their last death, or a fresh wave.</summary>
+    /// <param name="slot">The player whose turn it is.</param>
+    /// <remarks>
+    ///     Original source: <c>RRG23.ASM</c> <c>PLRES</c> brings back what <c>PLSAV</c> kept, then eases the first waves for a
+    ///     player on
+    ///     their last men (Bozo). The difficulty setting is applied once, when the wave is first made (<c>GETWV</c>), so a
+    ///     life after a death does not apply it again.
+    /// </remarks>
+    private LevelParameters GetWaveToPlay(PlayerSlot slot)
+    {
+        if (slot.SavedWaveParameters is { } saved) return ApplyBozoMode(saved, slot);
+
+        // Bozo mercy first, then the difficulty adjustment — the ROM's own order ($2B26 before $2B7C).
+        var parameters = ApplyBozoMode(_generator.Generate(slot.Wave), slot);
+        return DifficultyTuning.Apply(parameters, _gameSettings.Difficulty, slot.Lives);
     }
 
     /// <summary>
@@ -336,12 +336,6 @@ public sealed class PlayingState : IGameState
         manager.TransitionTo(new WaveClearState(_sprites, _highScoreStore, _session));
     }
 
-    /// <summary>Copies the live field's counters back into the current player's slot.</summary>
-    private void SyncSlotFromField()
-    {
-        _field.SyncInto(_session.GetCurrent());
-    }
-
     /// <summary>
     ///     Notes which places in the family list still hold a family member, now that this field is over. The next
     ///     field's hulks pick what to stalk from them.
@@ -353,5 +347,11 @@ public sealed class PlayingState : IGameState
     private void NoteFamilySlotsLeftOver()
     {
         _session.FamilySlotsLeftOver = _field.GetOccupiedFamilySlots();
+    }
+
+    /// <summary>Copies the live field's counters back into the current player's slot.</summary>
+    private void SyncSlotFromField()
+    {
+        _field.SyncInto(_session.GetCurrent());
     }
 }

@@ -39,20 +39,40 @@ namespace Robotron2084.States;
 /// </remarks>
 public sealed class SoundTestState : IGameState
 {
-    /// <summary>The vblanks a sound is left alone before it is started again (<c>LDA #$40</c>).</summary>
-    private const int RepeatTicks = 0x40;
+    private const string AdvanceLine = "ENTER SPACE RIGHT DOWN - ADVANCE   LEFT UP - BACK";
 
-    /// <summary>
-    ///     The vblanks the board is given to settle between stopping it and sending the number (<c>NAP 1</c> three
-    ///     times).
-    /// </summary>
-    private const int SettleTicks = 3;
+    private const string AutoLine = "A - AUTO UP";
+
+    private const int DescriptionRow = 170;
+
+    private const string ExitLine = "F10 - DEVELOPER TOOLS";
+
+    private const int ExitRow = 342;
+
+    private const int InstructionsRow = 294;
+
+    private const int NameRow = 120;
+
+    private const int NumberRow = 70;
+
+    private const int PositionRow = 200;
 
     /// <summary>
     ///     The ticks the board must have been finished for before the sound is started again: the audio already queued
     ///     for the speakers is still playing out.
     /// </summary>
     private const int QuietTicksNeeded = 6;
+
+    /// <summary>The vblanks a sound is left alone before it is started again (<c>LDA #$40</c>).</summary>
+    private const int RepeatTicks = 0x40;
+
+    private const int SecondInstructionRow = 312;
+
+    /// <summary>
+    ///     The vblanks the board is given to settle between stopping it and sending the number (<c>NAP 1</c> three
+    ///     times).
+    /// </summary>
+    private const int SettleTicks = 3;
 
     /// <summary>
     ///     The sound number that silences the board (<c>BGEND</c>, the arcade's <c>$2C</c> sent through the inverting
@@ -65,18 +85,6 @@ public sealed class SoundTestState : IGameState
     ///     pages).
     /// </summary>
     private const int TextSlot = 9;
-
-    private const int NumberRow = 70;
-    private const int NameRow = 120;
-    private const int DescriptionRow = 170;
-    private const int PositionRow = 200;
-    private const int InstructionsRow = 294;
-    private const int SecondInstructionRow = 312;
-    private const int ExitRow = 342;
-
-    private const string AdvanceLine = "ENTER SPACE RIGHT DOWN - ADVANCE   LEFT UP - BACK";
-    private const string AutoLine = "A - AUTO UP";
-    private const string ExitLine = "F10 - DEVELOPER TOOLS";
 
     /// <summary>
     ///     The page's list: the board's 63 sounds in sound-number order, then the transporter.
@@ -154,6 +162,54 @@ public sealed class SoundTestState : IGameState
         _previousSnapshot = now;
     }
 
+    /// <summary>
+    ///     The source's words as the fonts can print them: <c>$</c> as <c>S</c>, and nothing for the marks the fonts
+    ///     lack.
+    /// </summary>
+    /// <param name="text">The source's words.</param>
+    /// <returns>Words in the fonts' characters.</returns>
+    internal static string ToDisplay(string text)
+    {
+        return new string([
+            .. text.Replace('$', 'S').Where(character => ArcadeText.GetGlyphIndex(character) >= 0 || character == ' ')
+        ]);
+    }
+
+    /// <summary>Starts an entry: sends its sound number, or starts the transporter when it has none.</summary>
+    /// <param name="entry">The entry.</param>
+    private static void Play(SoundTestEntry entry)
+    {
+        if (entry.SoundNumber is { } soundNumber)
+            Sound.SendDirect(soundNumber);
+        else
+            Sound.PlayTransporter();
+    }
+
+    /// <summary>Stops whatever is playing: the transporter's sends, and the sound on the board.</summary>
+    private static void Silence()
+    {
+        Sound.StopTransporter();
+        Sound.SendDirect(SilenceNumber);
+    }
+
+    private void DrawLarge(SpriteBatch spriteBatch, string text, int y)
+    {
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(_sprites.TextRenderer.MeasureLargeText(text));
+        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextSlot);
+    }
+
+    private void DrawSmall(SpriteBatch spriteBatch, string text, int y)
+    {
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(_sprites.TextRenderer.MeasureSmallText(text));
+        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextSlot);
+    }
+
+    /// <summary>True on the tick a key goes down.</summary>
+    private bool IsPressed(InputSnapshot now, Keys key)
+    {
+        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
+    }
+
     /// <summary>Moves to a sound, wrapping at either end, and starts it.</summary>
     /// <param name="index">The place in <see cref="Entries" />.</param>
     private void MoveTo(int index)
@@ -161,15 +217,6 @@ public sealed class SoundTestState : IGameState
         var count = Entries.Count;
         _index = (index % count + count) % count;
         StartSound();
-    }
-
-    /// <summary>Silences the board; the sound itself is sent <see cref="SettleTicks" /> vblanks later (<c>SNDCYC</c>).</summary>
-    private void StartSound()
-    {
-        Silence();
-        _settleTicksLeft = SettleTicks;
-        _repeatTicksLeft = 0;
-        _quietTicks = 0;
     }
 
     /// <summary>
@@ -203,51 +250,12 @@ public sealed class SoundTestState : IGameState
             StartSound();
     }
 
-    /// <summary>Stops whatever is playing: the transporter's sends, and the sound on the board.</summary>
-    private static void Silence()
+    /// <summary>Silences the board; the sound itself is sent <see cref="SettleTicks" /> vblanks later (<c>SNDCYC</c>).</summary>
+    private void StartSound()
     {
-        Sound.StopTransporter();
-        Sound.SendDirect(SilenceNumber);
-    }
-
-    /// <summary>Starts an entry: sends its sound number, or starts the transporter when it has none.</summary>
-    /// <param name="entry">The entry.</param>
-    private static void Play(SoundTestEntry entry)
-    {
-        if (entry.SoundNumber is { } soundNumber)
-            Sound.SendDirect(soundNumber);
-        else
-            Sound.PlayTransporter();
-    }
-
-    /// <summary>True on the tick a key goes down.</summary>
-    private bool IsPressed(InputSnapshot now, Keys key)
-    {
-        return now.KeyboardState.IsKeyDown(key) && !_previousSnapshot.KeyboardState.IsKeyDown(key);
-    }
-
-    /// <summary>
-    ///     The source's words as the fonts can print them: <c>$</c> as <c>S</c>, and nothing for the marks the fonts
-    ///     lack.
-    /// </summary>
-    /// <param name="text">The source's words.</param>
-    /// <returns>Words in the fonts' characters.</returns>
-    internal static string ToDisplay(string text)
-    {
-        return new string([
-            .. text.Replace('$', 'S').Where(character => ArcadeText.GetGlyphIndex(character) >= 0 || character == ' ')
-        ]);
-    }
-
-    private void DrawLarge(SpriteBatch spriteBatch, string text, int y)
-    {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(_sprites.TextRenderer.MeasureLargeText(text));
-        _sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextSlot);
-    }
-
-    private void DrawSmall(SpriteBatch spriteBatch, string text, int y)
-    {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(_sprites.TextRenderer.MeasureSmallText(text));
-        _sprites.TextRenderer.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextSlot);
+        Silence();
+        _settleTicksLeft = SettleTicks;
+        _repeatTicksLeft = 0;
+        _quietTicks = 0;
     }
 }
