@@ -6,10 +6,6 @@ using Robotron2084.Level;
 namespace Robotron2084.Entities;
 
 /// <summary>Something on the playfield that has a place and a size, can be drawn, and can be moved on in time.</summary>
-/// <remarks>
-///     The names of source files and labels come from the 1982 Williams listing in <c>ref/original-source/</c>.
-///     "notes §NN" points at a section of <c>docs/arcade-fidelity-notes.md</c>.
-/// </remarks>
 public interface IEntity
 {
     /// <summary>Where the entity is in its life (see <see cref="EntityLifeState" />).</summary>
