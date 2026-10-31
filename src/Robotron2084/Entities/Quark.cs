@@ -38,7 +38,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private const int DefaultMaxDropsX2 = 10;
 
     /// <summary>The quark's top drifting speed, when it is not told a number.</summary>
-    private const int DefaultSpeedCap = 50;
+    private const int DefaultMaxSpeed = 50;
 
     /// <summary>How many times shorter a quark's wait between tank drops is once it has dropped its first tank.</summary>
     private const int RepeatDropDelayDivisor = 2;
@@ -59,7 +59,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     private readonly ArcadeFrameTimer _moveTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
-    private readonly int _speedCap;
+    private readonly int _maxSpeed;
     private readonly SpriteSet _sprites;
 
     /// <summary>Which animation frame of the quark's spin is showing.</summary>
@@ -121,7 +121,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     this.
     /// </param>
     /// <param name="dropDelayBeats">The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> this wave's quark waits between tank drops.</param>
-    /// <param name="speedCap">The quark's top drifting speed on this wave (ROM: <c>SQSPD</c>).</param>
+    /// <param name="maxSpeed">The quark's top drifting speed on this wave (ROM: <c>SQSPD</c>).</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -137,13 +137,13 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         Random random,
         int maxDropsX2 = DefaultMaxDropsX2,
         int dropDelayBeats = DefaultDropDelayBeats,
-        int speedCap = DefaultSpeedCap)
+        int maxSpeed = DefaultMaxSpeed)
     {
         _sprites = sprites;
         _position = position;
         _random = random;
         _dropDelayBeats = dropDelayBeats;
-        _speedCap = speedCap;
+        _maxSpeed = maxSpeed;
         // How many tanks the quark may drop: a random number up to this wave's limit, halved and rounded up (ROM: PD3).
         var randomDrops = ArcadeRandom.PickUpTo(random, maxDropsX2);
         _tanksRemaining = (randomDrops + 1) / 2;
@@ -358,7 +358,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private int GetAxisVelocitySubpixels(int scale, bool isPositive, int coordinateUnitArcadePixels)
     {
-        var randomSpeed = ArcadeRandom.PickUpTo(_random, _speedCap);
+        var randomSpeed = ArcadeRandom.PickUpTo(_random, _maxSpeed);
         var subpixels = randomSpeed * scale * ScreenSize.ToPortPixelsFromArcadePixels(coordinateUnitArcadePixels);
         return isPositive ? subpixels : -subpixels;
     }

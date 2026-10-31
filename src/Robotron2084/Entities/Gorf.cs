@@ -24,9 +24,9 @@ namespace Robotron2084.Entities;
 ///     the ground.
 ///     How many it drops is picked at random, the way a spheroid picks how many enforcers to drop, from the wave's
 ///     <c>ENFNUM</c>
-///     (<see cref="LevelParameters.MaxDropsX2" />). So later waves and harder settings drop more. A level can only hold so
+///     (<see cref="WaveParameters.MaxDropsX2" />). So later waves and harder settings drop more. A wave can only hold so
 ///     many
-///     grunts, so Gorf drops fewer, or none, when the level is full.
+///     grunts, so Gorf drops fewer, or none, when the wave is full.
 ///     A Gorf that gets across scores nothing. A Gorf that is shot scores the same as a grunt.
 /// </remarks>
 public sealed class Gorf : IExplodable, IRemovable
@@ -202,7 +202,7 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     random number from 1 up to the wave's limit, halved and rounded up. It is never more than
     ///     <see cref="GorfTuning.MaxGruntsPerDrop" />.
     /// </summary>
-    /// <param name="field">The playfield, which puts the grunts on the field and holds them back when the level is full.</param>
+    /// <param name="field">The playfield, which puts the grunts on the field and holds them back when the wave is full.</param>
     private void DropGrunts(PlayField field)
     {
         var count = Math.Min(GorfTuning.MaxGruntsPerDrop, (_random.Next(_maxDropsX2) + 2) / 2);
