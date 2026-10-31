@@ -159,18 +159,18 @@ public sealed class TunnelPalette
     ///     Writes the window into palette indices 1-15 as the ROM's write loop does — fifteen values, in
     ///     palette index order, wrapping at the ramp's zero terminator — and then blacks the three palette indices.
     /// </summary>
-    public void Apply(GamePalette palette)
+    public void Apply(GamePalette gamePalette)
     {
         var ramp = Ramps[RampIndex];
         var index = _windowStartIndex;
         for (var paletteIndex = 0; paletteIndex < PaletteIndexCount; paletteIndex++)
         {
-            palette.SetPaletteIndexValue(FirstPaletteIndex + paletteIndex, ramp[index]);
+            gamePalette.SetPaletteIndexValue(FirstPaletteIndex + paletteIndex, ramp[index]);
             index++;
             if (index >= ramp.Length) index = 0; // $59E4: a zero wraps to the table start
         }
 
-        foreach (var offset in BlackPaletteIndices) palette.SetPaletteIndexValue(FirstPaletteIndex + offset + BlackOffset, 0x00); // $5A00: `STB A,X`
+        foreach (var offset in BlackPaletteIndices) gamePalette.SetPaletteIndexValue(FirstPaletteIndex + offset + BlackOffset, 0x00); // $5A00: `STB A,X`
     }
 
     /// <summary>

@@ -100,22 +100,22 @@ public sealed class PresentationPagePalette
     ///     chase task exists, and that task (`$8A4F`) advances to the next entry before whitening it —
     ///     so the first white lands on entry 2.
     /// </summary>
-    public void Start(GamePalette palette)
+    public void Start(GamePalette gamePalette)
     {
-        for (var paletteIndex = FirstPaletteIndex; paletteIndex <= LastPaletteIndex; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, PageColors[paletteIndex - FirstPaletteIndex]);
+        for (var paletteIndex = FirstPaletteIndex; paletteIndex <= LastPaletteIndex; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, PageColors[paletteIndex - FirstPaletteIndex]);
     }
 
     /// <summary>
     ///     The page's palette indices go back to the ROM's CRTAB defaults as it leaves — the colour processes die
     ///     with the page and the page after it (<c>FAMPAG</c>) sets its own (notes §103.3).
     /// </summary>
-    public void Stop(GamePalette palette)
+    public void Stop(GamePalette gamePalette)
     {
-        for (var paletteIndex = FirstPaletteIndex; paletteIndex <= LastPaletteIndex; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
+        for (var paletteIndex = FirstPaletteIndex; paletteIndex <= LastPaletteIndex; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
     }
 
     /// <summary>Advances both clocks by one port tick (call once per Update).</summary>
-    public void Update(GamePalette palette)
+    public void Update(GamePalette gamePalette)
     {
         _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
         if (IsStepDue(ref _chaseClockUnits, ChaseArcadeFramesPerStep))
@@ -124,8 +124,8 @@ public sealed class PresentationPagePalette
             if (isOnLastPaletteIndex) _chasePaletteIndex = FirstPaletteIndex;
             else _chasePaletteIndex++;
 
-            Start(palette); // the ROM re-copies the table on every step...
-            palette.SetPaletteIndexValue(_chasePaletteIndex, ChaseColor); // ...and then whitens the current entry
+            Start(gamePalette); // the ROM re-copies the table on every step...
+            gamePalette.SetPaletteIndexValue(_chasePaletteIndex, ChaseColor); // ...and then whitens the current entry
         }
 
         _wordmarkClockUnits += ArcadeClock.UnitsPerPortTick;

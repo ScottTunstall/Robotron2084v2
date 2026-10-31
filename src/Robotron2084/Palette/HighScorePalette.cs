@@ -90,13 +90,13 @@ public sealed class HighScorePalette
     ///     palette comes up black (FRAMER zeroes all sixteen palette indices). The four ramps the
     ///     text uses do not exist yet — see <see cref="StartRamps" />.
     /// </summary>
-    public void Start(GamePalette palette)
+    public void Start(GamePalette gamePalette)
     {
-        for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, 0x00);
+        for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, 0x00);
 
-        foreach (var paletteIndex in OwnedPaletteIndices) palette.SuspendPaletteIndex(paletteIndex);
+        foreach (var paletteIndex in OwnedPaletteIndices) gamePalette.SuspendPaletteIndex(paletteIndex);
 
-        Apply(palette, _processes[0], _processes[0].ColourTable[_processes[0].ColourIndex]);
+        Apply(gamePalette, _processes[0], _processes[0].ColourTable[_processes[0].ColourIndex]);
     }
 
     /// <summary>
@@ -105,13 +105,13 @@ public sealed class HighScorePalette
     ///     this runs, palette indices 9/10/12/13 are the zeroes FRAMER left behind, which is why the
     ///     printed rows are invisible for their first few frames.
     /// </summary>
-    public void StartRamps(GamePalette palette)
+    public void StartRamps(GamePalette gamePalette)
     {
         if (RampsStarted) return;
 
         RampsStarted = true;
         for (var i = RampProcessStart; i < _processes.Length; i++)
-            Apply(palette, _processes[i], _processes[i].ColourTable[_processes[i].ColourIndex]);
+            Apply(gamePalette, _processes[i], _processes[i].ColourTable[_processes[i].ColourIndex]);
     }
 
     /// <summary>
@@ -119,15 +119,15 @@ public sealed class HighScorePalette
     ///     its own palette indices. The port stands the ROM's default CRTAB values back up and lets the
     ///     in-game animator have palette indices 10-15 again.
     /// </summary>
-    public void Stop(GamePalette palette)
+    public void Stop(GamePalette gamePalette)
     {
-        for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
+        for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
 
-        foreach (var paletteIndex in OwnedPaletteIndices) palette.ResumePaletteIndex(paletteIndex);
+        foreach (var paletteIndex in OwnedPaletteIndices) gamePalette.ResumePaletteIndex(paletteIndex);
     }
 
     /// <summary>Advances every process by one port tick (call once per Update).</summary>
-    public void Update(GamePalette palette)
+    public void Update(GamePalette gamePalette)
     {
         for (var i = 0; i < _processes.Length; i++)
         {
@@ -141,7 +141,7 @@ public sealed class HighScorePalette
 
             process.ClockUnits -= period;
             process.ColourIndex = Advance(process.ColourTable, process.ColourIndex);
-            Apply(palette, process, process.ColourTable[process.ColourIndex]);
+            Apply(gamePalette, process, process.ColourTable[process.ColourIndex]);
         }
     }
 
@@ -157,19 +157,19 @@ public sealed class HighScorePalette
         return next;
     }
 
-    private static void Apply(GamePalette palette, Process process, byte value)
+    private static void Apply(GamePalette gamePalette, Process process, byte value)
     {
         if (process.PaletteIndex != LoopPaletteIndex)
         {
-            palette.SetPaletteIndexValue(process.PaletteIndex, value);
+            gamePalette.SetPaletteIndexValue(process.PaletteIndex, value);
             return;
         }
 
         // OUTCOL: PCRAM+1 ← +2, +2 ← +3 … +7 ← +8, then the new byte lands in +8 — a
         // shift register, so the wall's colour history walks down palette indices 7…1 behind it.
-        for (var paletteIndex = 1; paletteIndex <= 7; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, (byte)palette.GetPaletteIndexValue(paletteIndex + 1));
+        for (var paletteIndex = 1; paletteIndex <= 7; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, (byte)gamePalette.GetPaletteIndexValue(paletteIndex + 1));
 
-        palette.SetPaletteIndexValue(8, value);
+        gamePalette.SetPaletteIndexValue(8, value);
     }
 
     private sealed class Process

@@ -40,7 +40,7 @@ public sealed class PaletteAnimator
     /// <summary>The ROM's LF flash period in fiftieths of a second (every 3rd flash is the random hue).</summary>
     private const int LaserFlashArcadeFrames = 2;
 
-    private readonly GamePalette _palette;
+    private readonly GamePalette _gamePalette;
 
     private readonly Process[] _processes;
 
@@ -50,9 +50,9 @@ public sealed class PaletteAnimator
 
     private int _laserFlashStep;
 
-    public PaletteAnimator(GamePalette palette, Random? random = null)
+    public PaletteAnimator(GamePalette gamePalette, Random? random = null)
     {
-        _palette = palette;
+        _gamePalette = gamePalette;
         _random = random ?? new Random();
         _processes =
         [
@@ -93,26 +93,26 @@ public sealed class PaletteAnimator
         {
             _laserFlashClockUnits -= flashInterval;
             _laserFlashStep++;
-            if (_palette.IsPaletteIndexSuspended(10)) continue; // the death fade or a caller owns palette index 10
+            if (_gamePalette.IsPaletteIndexSuspended(10)) continue; // the death fade or a caller owns palette index 10
 
             byte flashColour = 0xFF;
             var isFlashLit = _laserFlashStep % 3 == 0;
             if (isFlashLit) flashColour = LaserTab[_random.Next(LaserTab.Length)];
 
-            _palette.SetPaletteIndexValue(10, flashColour);
+            _gamePalette.SetPaletteIndexValue(10, flashColour);
         }
 
         foreach (var process in _processes)
         {
             // A suspended palette index is a KILLED process in the ROM: it does not even
             // advance, so resuming restarts it where it left off.
-            if (_palette.IsPaletteIndexSuspended(process.PaletteIndex)) continue;
+            if (_gamePalette.IsPaletteIndexSuspended(process.PaletteIndex)) continue;
 
             process.ClockUnits += ArcadeClock.UnitsPerPortTick;
             if (process.ClockUnits < ArcadeClock.ToClockUnits(process.ArcadeFramesPerStep)) continue;
 
             process.ClockUnits -= ArcadeClock.ToClockUnits(process.ArcadeFramesPerStep);
-            _palette.SetPaletteIndexValue(process.PaletteIndex, process.ColourTable[process.ColourIndex]);
+            _gamePalette.SetPaletteIndexValue(process.PaletteIndex, process.ColourTable[process.ColourIndex]);
             process.ColourIndex = (process.ColourIndex + 1) % process.ColourTable.Length;
         }
     }
