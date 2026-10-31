@@ -12,9 +12,9 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public sealed class DifficultyTuningTests
 {
-    private static LevelParameters Wave(int number)
+    private static WaveParameters Wave(int number)
     {
-        return LevelParameters.CreateFromWave(number, WaveTable.GetParameters(number));
+        return WaveParameters.CreateFromWave(number, WaveTable.GetParameters(number));
     }
 
     [Fact]
@@ -44,13 +44,13 @@ public sealed class DifficultyTuningTests
         Assert.Equal(27, adjusted.TankFireDelay); // 32 − 5
         Assert.Equal(205, adjusted.ShellSpeed); // 176 + 29
         Assert.Equal(13, adjusted.QuarkDropDelay); // 16 − 3
-        Assert.Equal(58, adjusted.QuarkSpeedCap); // 50 + 8
+        Assert.Equal(58, adjusted.QuarkMaxSpeed); // 50 + 8
     }
 
     [Fact]
     public void EasierThanRecommendedGoesTheOtherWay()
     {
-        // Wave 6 at difficulty 2, two men left so the mercy does not quietly step it back to 5.
+        // Wave 6 at difficulty 2, two lives left so the mercy does not quietly step it back to 5.
         var adjusted = DifficultyTuning.Apply(Wave(6), 2, 2);
 
         Assert.Equal(17, adjusted.GruntMoveDelay); // 15 + 2
@@ -61,7 +61,7 @@ public sealed class DifficultyTuningTests
         Assert.Equal(47, adjusted.BrainFireDelay); // 40 + 7
         Assert.Equal(160, adjusted.ShellSpeed); // 176 − 29, clamped to the record's floor
         Assert.Equal(19, adjusted.QuarkDropDelay); // 16 + 3
-        Assert.Equal(42, adjusted.QuarkSpeedCap); // 50 − 8
+        Assert.Equal(42, adjusted.QuarkMaxSpeed); // 50 − 8
     }
 
     [Fact]

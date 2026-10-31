@@ -3,14 +3,14 @@ using Xunit;
 
 namespace Robotron2084.Tests;
 
-public sealed class LevelParameterGeneratorTests
+public sealed class WaveParameterGeneratorTests
 {
     [Fact]
     public void Generate_UsesArcadeWaveTable_ExactValues()
     {
-        var p = new LevelParameterGenerator().Generate(1);
+        var p = new WaveParameterGenerator().Generate(1);
 
-        Assert.Equal(1, p.LevelNumber);
+        Assert.Equal(1, p.WaveNumber);
         // ROM $2E24 wave 1 (arcade-fidelity-notes §11.1).
         Assert.Equal(15, p.GruntCount);
         Assert.Equal(5, p.ElectrodeCount);
@@ -25,13 +25,13 @@ public sealed class LevelParameterGeneratorTests
         Assert.Equal(20, p.GruntMoveDelay);
         Assert.Equal(9, p.GruntSpeedFloor);
         Assert.Equal(10, p.MaxDropsX2);
-        Assert.Equal(0, p.EnemySpeedBonus); // no per-level bonus in the ROM
+        Assert.Equal(0, p.EnemySpeedBonus); // no per-wave bonus in the ROM
     }
 
     [Fact]
     public void Generate_Wave5_BrainAndSpheroidWave()
     {
-        var p = new LevelParameterGenerator().Generate(5);
+        var p = new WaveParameterGenerator().Generate(5);
 
         Assert.Equal(20, p.GruntCount);
         Assert.Equal(20, p.ElectrodeCount);
@@ -46,7 +46,7 @@ public sealed class LevelParameterGeneratorTests
     [Fact]
     public void Generate_Wave9_HeavyGruntWave()
     {
-        var p = new LevelParameterGenerator().Generate(9);
+        var p = new WaveParameterGenerator().Generate(9);
 
         Assert.Equal(60, p.GruntCount);
         Assert.Equal(0, p.ElectrodeCount);
@@ -54,9 +54,9 @@ public sealed class LevelParameterGeneratorTests
     }
 
     [Fact]
-    public void Generate_LevelsAbove40_RepeatWaves21To40()
+    public void Generate_WavesAbove40_RepeatWaves21To40()
     {
-        LevelParameterGenerator generator = new();
+        WaveParameterGenerator generator = new();
 
         var w41 = generator.Generate(41);
         var w21 = generator.Generate(21);
@@ -70,17 +70,17 @@ public sealed class LevelParameterGeneratorTests
     }
 
     [Fact]
-    public void Generate_WithLevelTable_UsesExactRowsAndWrapsPastTheEnd()
+    public void Generate_WithCustomWaveTable_UsesExactRowsAndWrapsPastTheEnd()
     {
         var path = Path.Combine(Path.GetTempPath(), $"robotron-table-{Guid.NewGuid():N}.csv");
         File.WriteAllText(
             path,
-            "Level,GruntCount,HulkCount,SpheroidCount,QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark\n" +
+            "Wave,GruntCount,HulkCount,SpheroidCount,QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark\n" +
             "1,5,2,1,1,10,3,2\n" +
             "2,9,3,2,2,12,4,3\n");
         try
         {
-            var generator = new LevelParameterGenerator(path);
+            var generator = new WaveParameterGenerator(path);
 
             var level1 = generator.Generate(1);
             Assert.Equal(5, level1.GruntCount);
@@ -95,7 +95,7 @@ public sealed class LevelParameterGeneratorTests
             var level2 = generator.Generate(2);
             Assert.Equal(9, level2.GruntCount);
             Assert.Equal(4, level2.MaxEnforcersPerSpheroid);
-            Assert.Equal(1, level2.EnemySpeedBonus); // still computed from the level number
+            Assert.Equal(1, level2.EnemySpeedBonus); // still computed from the wave number
 
             var level3 = generator.Generate(3); // wraps back to row 1
             Assert.Equal(5, level3.GruntCount);
@@ -111,7 +111,7 @@ public sealed class LevelParameterGeneratorTests
     public void Generate_MissingTable_FallsBackToArcadeWaveTable()
     {
         var path = Path.Combine(Path.GetTempPath(), $"robotron-missing-{Guid.NewGuid():N}.csv");
-        var generator = new LevelParameterGenerator(path);
+        var generator = new WaveParameterGenerator(path);
 
         var p = generator.Generate(1);
 
@@ -125,11 +125,11 @@ public sealed class LevelParameterGeneratorTests
         var path = Path.Combine(Path.GetTempPath(), $"robotron-bad-{Guid.NewGuid():N}.csv");
         File.WriteAllText(
             path,
-            "Level,GruntCount,HulkCount,SpheroidCount,QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark\n" +
+            "Wave,GruntCount,HulkCount,SpheroidCount,QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark\n" +
             "1,notanumber,2,1,1,10,3,2\n");
         try
         {
-            var generator = new LevelParameterGenerator(path);
+            var generator = new WaveParameterGenerator(path);
             var p = generator.Generate(1);
 
             Assert.Equal(15, p.GruntCount);

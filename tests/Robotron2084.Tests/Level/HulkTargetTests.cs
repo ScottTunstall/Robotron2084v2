@@ -91,7 +91,7 @@ public sealed class HulkTargetTests
     public void TheField_ReportsThePlacesThatStillHoldAFamilyMember()
     {
         var field = new PlayFieldBuilder()
-            .WithParameters(new LevelParameters(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1))
+            .WithParameters(new WaveParameters(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1))
             .Build();
         Assert.Equal([0, 1, 2], field.GetOccupiedFamilySlots());
 
@@ -150,7 +150,7 @@ public sealed class HulkTargetTests
     private static PlayField CreateField(int mikeys, int mommies, int daddies, params int[] familySlotsLeftOver)
     {
         return new PlayFieldBuilder()
-            .WithParameters(new LevelParameters(1, MikeyCount: mikeys, MommyCount: mommies, DaddyCount: daddies,
+            .WithParameters(new WaveParameters(1, MikeyCount: mikeys, MommyCount: mommies, DaddyCount: daddies,
                 HulkCount: ManyHulks))
             .WithFamilySlotsLeftOver(familySlotsLeftOver)
             .Build();

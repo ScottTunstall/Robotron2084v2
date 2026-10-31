@@ -310,7 +310,7 @@ public sealed class PlayFieldCollisionTests
 
     private static PlayField CreateEmptyField(bool playerInvincibleForTesting = true)
     {
-        var parameters = new LevelParameters(
+        var parameters = new WaveParameters(
             1,
             HulkCount: 0,
             SpheroidCount: 0,

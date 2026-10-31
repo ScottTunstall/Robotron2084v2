@@ -21,10 +21,10 @@ public sealed class HumanSpawnTests
     }
 
     /// <summary>The ROM's own wave table, so the family, electrodes and robots are the arcade's.</summary>
-    private static PlayField CreateField(int seed, int level)
+    private static PlayField CreateField(int seed, int wave)
     {
         return new PlayFieldBuilder()
-            .WithParameters(LevelParameters.CreateFromWave(level, WaveTable.GetParameters(level)))
+            .WithParameters(WaveParameters.CreateFromWave(wave, WaveTable.GetParameters(wave)))
             .WithRandom(new Random(seed)).Build();
     }
 
@@ -34,16 +34,16 @@ public sealed class HumanSpawnTests
         // A human refuses to step into a live electrode, so one placed inside stands there for
         // the whole wave (the author's report). The placement predicate has to hold for every
         // wave — including the fallback paths, which used to return an unchecked point.
-        foreach (var level in new[] { 1, 5, 6, 7, 12, 20, 33 })
+        foreach (var wave in new[] { 1, 5, 6, 7, 12, 20, 33 })
             for (var seed = 1; seed <= 120; seed++)
             {
-                var field = CreateField(seed, level);
+                var field = CreateField(seed, wave);
 
                 foreach (var human in field.Entities.Family.Members)
                 foreach (var electrode in field.Entities.Electrodes)
                     Assert.False(
                         electrode.GetBounds().Intersects(human.GetBounds()),
-                        $"level {level} seed {seed}: {human.Kind} at {human.GetBounds()} spawns on an "
+                        $"wave {wave} seed {seed}: {human.Kind} at {human.GetBounds()} spawns on an "
                         + $"electrode at {electrode.GetBounds()}");
             }
     }

@@ -14,9 +14,9 @@ namespace Robotron2084.Tests;
 /// </summary>
 public sealed class PlayFieldHumanTests
 {
-    private static LevelParameters HumanWave(int mom, int daddy, int mikey, int hulks = 0)
+    private static WaveParameters HumanWave(int mom, int daddy, int mikey, int hulks = 0)
     {
-        return new LevelParameters(
+        return new WaveParameters(
             1,
             0,
             0,
@@ -26,7 +26,7 @@ public sealed class PlayFieldHumanTests
             hulks);
     }
 
-    private static PlayField CreateField(LevelParameters parameters)
+    private static PlayField CreateField(WaveParameters parameters)
     {
         return new PlayFieldBuilder().WithParameters(parameters).WithSeed(99).Build();
     }
@@ -160,7 +160,7 @@ public sealed class PlayFieldHumanTests
     [Fact]
     public void SyncInto_HandsLiveScoreAndLivesToThePlayersSlot()
     {
-        // The HUD draws the SESSION's slots, and the ROM reads the score, the men
+        // The HUD draws the SESSION's slots, and the ROM reads the score, the lives
         // out of the player's data block every time it draws — so the
         // hand-over happens every tick (notes §97). Syncing only at a wave clear
         // left the displayed score stale for the rest of the wave, which is what
@@ -177,7 +177,7 @@ public sealed class PlayFieldHumanTests
         var human = field.Entities.Family.Members[0];
         human.MoveTo(field.Player.Position);
         field.Update(new GameTime());
-        field.Player.AddLife(); // an earned spare man must reach the HUD too
+        field.Player.AddLife(); // an earned spare life must reach the HUD too
         field.SyncInto(slot);
 
         Assert.Equal(ScoreValues.RescueBonus(1), slot.Score);
@@ -257,7 +257,7 @@ public sealed class PlayFieldHumanTests
     {
         var field = CreateField(HumanWave(1, 1, 1));
 
-        Assert.True(field.IsLevelCleared()); // no robots → cleared even with humans alive (ROM WVCHEK)
+        Assert.True(field.IsWaveCleared()); // no robots → cleared even with humans alive (ROM WVCHEK)
     }
 
     [Fact]

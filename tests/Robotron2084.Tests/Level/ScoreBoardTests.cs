@@ -44,8 +44,8 @@ public sealed class ScoreBoardTests
     }
 
     [Fact]
-    public void TheFactoryExtraManValueIsTheArcardsRecommendedStop()
+    public void TheFactoryExtraLifeValueIsTheArcardsRecommendedStop()
     {
-        Assert.Equal(25_000, GameSettings.FactoryExtraManEveryPoints);
+        Assert.Equal(25_000, GameSettings.FactoryExtraLifeEveryPoints);
     }
 }

@@ -23,7 +23,7 @@ public sealed class PlayFieldRobotRegistryTests
     ///     The kinds the wave table brings, and the count each row must read.
     ///     Every other kind is made by another robot, so it has no wave count.
     /// </summary>
-    private static readonly (RobotKind Kind, Func<LevelParameters, int> Count)[] WaveBrought =
+    private static readonly (RobotKind Kind, Func<WaveParameters, int> Count)[] WaveBrought =
     [
         (RobotKind.Electrode, static parameters => parameters.ElectrodeCount),
         (RobotKind.Grunt, static parameters => parameters.GruntCount),
@@ -97,9 +97,9 @@ public sealed class PlayFieldRobotRegistryTests
         (RobotKind.Gorf, typeof(Gorf))
     ];
 
-    private static LevelParameters OneOfEverything()
+    private static WaveParameters OneOfEverything()
     {
-        return new LevelParameters(
+        return new WaveParameters(
             1,
             2,
             3,
@@ -114,7 +114,7 @@ public sealed class PlayFieldRobotRegistryTests
 
     private static PlayField CreateField()
     {
-        return new PlayFieldBuilder().WithParameters(new LevelParameters(1)).WithSeed(99).Build();
+        return new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithSeed(99).Build();
     }
 
     [Fact]

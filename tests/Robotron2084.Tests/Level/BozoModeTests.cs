@@ -7,22 +7,22 @@ namespace Robotron2084.Tests.Level;
 public sealed class BozoModeTests
 {
     [Theory]
-    [InlineData(1, 2, false)] // a fresh game: two spare men, doing fine
-    [InlineData(1, 1, true)] // down a ship on wave 1
+    [InlineData(1, 2, false)] // a fresh game: two spare lives, doing fine
+    [InlineData(1, 1, true)] // down a life on wave 1
     [InlineData(2, 1, true)] // ...and on wave 2
     [InlineData(3, 1, false)] // ...but not on wave 3
-    [InlineData(3, 0, true)] // no spare men left: waves 1-4 all get it
+    [InlineData(3, 0, true)] // no spare lives left: waves 1-4 all get it
     [InlineData(4, 0, true)]
     [InlineData(5, 0, false)] // never past wave 4
-    public void TheMercyAppliesToWavesOneToFourForAPlayerLosingShips(int wave, int spareMen, bool expected)
+    public void TheMercyAppliesToWavesOneToFourForAPlayerLosingShips(int wave, int spareLives, bool expected)
     {
-        Assert.Equal(expected, BozoMode.AppliesTo(wave, spareMen));
+        Assert.Equal(expected, BozoMode.AppliesTo(wave, spareLives));
     }
 
     [Fact]
     public void WaveOneGetsTheFirstRowOfTheTable()
     {
-        var eased = BozoMode.Apply(new LevelParameters(1), 0);
+        var eased = BozoMode.Apply(new WaveParameters(1), 0);
 
         Assert.Equal(38, eased.SpheroidDropDelay);
         Assert.Equal(96, eased.EnforcerFireDelay);
@@ -33,7 +33,7 @@ public sealed class BozoModeTests
     [Fact]
     public void ParametersAreUntouchedWhenTheMercyDoesNotApply()
     {
-        var parameters = new LevelParameters(3);
+        var parameters = new WaveParameters(3);
 
         Assert.Same(parameters, BozoMode.Apply(parameters, 2));
     }

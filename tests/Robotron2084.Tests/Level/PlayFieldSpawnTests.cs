@@ -77,7 +77,7 @@ public sealed class PlayFieldSpawnTests
 
     private static PlayField CreateField(int grunts, int hulks, int spheroids, int quarks, int electrodes)
     {
-        var parameters = new LevelParameters(
+        var parameters = new WaveParameters(
             1,
             grunts,
             HulkCount: hulks,

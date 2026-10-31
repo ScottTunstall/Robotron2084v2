@@ -38,7 +38,7 @@ public sealed class WaveStartSequenceTests
         for (var tick = 0; tick < ticks; tick++) field.Update(OneTick());
     }
 
-    private static PlayField CreateField(LevelParameters parameters, IPlayerInputSource? input = null,
+    private static PlayField CreateField(WaveParameters parameters, IPlayerInputSource? input = null,
         bool playerInvincible = true)
     {
         return new PlayFieldBuilder().WithParameters(parameters).WithInput(input ?? new FakeInputSource())
@@ -112,7 +112,7 @@ public sealed class WaveStartSequenceTests
     {
         // GETROB: grunts (RRP8), hulks (RRH11) and tanks (RRTK4). Spheroids and quarks are on the object
         // list instead, so APPEAR never walks them and they do not lengthen the start.
-        var field = CreateField(new LevelParameters(1, 3, HulkCount: 2, SpheroidCount: 4, QuarkCount: 1, TankCount: 1));
+        var field = CreateField(new WaveParameters(1, 3, HulkCount: 2, SpheroidCount: 4, QuarkCount: 1, TankCount: 1));
 
         Assert.Equal(6 + 43, field.GetPlayerAppearArcadeFrames());
         Assert.Equal(6 + 53, field.GetLiveArcadeFrames());
@@ -121,7 +121,7 @@ public sealed class WaveStartSequenceTests
     [Fact]
     public void ThePlayer_IsNotOnTheScreen_UntilItAppears()
     {
-        var field = CreateField(new LevelParameters(1, 15));
+        var field = CreateField(new WaveParameters(1, 15));
 
         Tick(field, WaveStartTicks.UntilPlayerAppears(field) - 1);
         Assert.False(field.HasPlayerAppeared());
@@ -135,7 +135,7 @@ public sealed class WaveStartSequenceTests
     public void ThePlayer_CannotMoveOrFire_UntilTheGameIsLive()
     {
         var input = new FakeInputSource(new PlayerInputState(new IntVector2(1, 0), new IntVector2(1, 0), true));
-        var field = CreateField(new LevelParameters(1, 15), input);
+        var field = CreateField(new WaveParameters(1, 15), input);
         var start = field.Player.Position;
 
         Tick(field, WaveStartTicks.UntilLive(field) - 1);
@@ -156,7 +156,7 @@ public sealed class WaveStartSequenceTests
     {
         // The collision process is made at PLS2 (`MAKP COLCHK`, $2895), so a family member that walks into
         // the player before then is not rescued.
-        var field = CreateField(new LevelParameters(1, MikeyCount: 1));
+        var field = CreateField(new WaveParameters(1, MikeyCount: 1));
         var mikey = field.Entities.Family.Members[0];
 
         for (var tick = 1; tick < WaveStartTicks.UntilLive(field); tick++)
@@ -176,7 +176,7 @@ public sealed class WaveStartSequenceTests
     [Fact]
     public void ARobotOnThePlayer_DoesNotKill_UntilTheGameIsLive()
     {
-        var field = CreateField(new LevelParameters(1), playerInvincible: false);
+        var field = CreateField(new WaveParameters(1), playerInvincible: false);
         field.Entities.Grunts.Add(new Grunt(TestSprites.Shared, field.Player.Position));
 
         Tick(field, WaveStartTicks.UntilLive(field) - 1);
@@ -189,7 +189,7 @@ public sealed class WaveStartSequenceTests
     [Fact]
     public void TheRobots_StandStill_UntilTheGameIsLive()
     {
-        var field = CreateField(new LevelParameters(1, 15));
+        var field = CreateField(new WaveParameters(1, 15));
         IntVector2[] starts = [.. field.Entities.Grunts.Select(grunt => grunt.Position)];
 
         Tick(field, WaveStartTicks.UntilLive(field) - 1);

@@ -32,9 +32,9 @@ public sealed class PlayfieldLayoutTests
     [Fact]
     public void ScoresAndMenRow_IsOnScreen()
     {
-        var row = ArcadeHud.GetScoresAndMenRowY(PlayfieldLayout.GetInnerBounds());
+        var row = ArcadeHud.GetScoresAndLivesRowY(PlayfieldLayout.GetInnerBounds());
 
-        Assert.True(row >= 0, $"the score and spare-men row ({row}) must be on the canvas");
+        Assert.True(row >= 0, $"the score and spare-lives row ({row}) must be on the canvas");
     }
 
     [Fact]

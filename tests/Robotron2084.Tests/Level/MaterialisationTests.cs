@@ -21,7 +21,7 @@ public class MaterialisationTests
 
     private static PlayField CreateField(int grunts, int hulks = 0, int spheroids = 0, int quarks = 0, int tanks = 0)
     {
-        var parameters = new LevelParameters(
+        var parameters = new WaveParameters(
             1,
             grunts,
             HulkCount: hulks,
