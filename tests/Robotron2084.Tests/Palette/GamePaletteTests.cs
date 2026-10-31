@@ -6,7 +6,7 @@ using Xunit;
 namespace Robotron2084.Tests.Rendering;
 
 /// <summary>
-///     The 16-slot live palette: CRTAB defaults, slot writes, and the
+///     The 16-index live palette: CRTAB defaults, palette index writes, and the
 ///     seanriddle.com byte→RGB conversion (RobotronPaletteService port).
 /// </summary>
 public sealed class GamePaletteTests
@@ -15,26 +15,26 @@ public sealed class GamePaletteTests
     public void DefaultsAreTheCrtabPalette()
     {
         GamePalette palette = new();
-        Assert.Equal(0x00, palette.GetSlotValue(0));
-        Assert.Equal(0x07, palette.GetSlotValue(1));
-        Assert.Equal(0x17, palette.GetSlotValue(2));
-        Assert.Equal(0xC7, palette.GetSlotValue(3));
-        Assert.Equal(0x1F, palette.GetSlotValue(4));
-        Assert.Equal(0x3F, palette.GetSlotValue(5));
-        Assert.Equal(0x38, palette.GetSlotValue(6));
-        Assert.Equal(0xC0, palette.GetSlotValue(7));
-        Assert.Equal(0xA4, palette.GetSlotValue(8));
-        Assert.Equal(0xFF, palette.GetSlotValue(9));
+        Assert.Equal(0x00, palette.GetPaletteIndexValue(0));
+        Assert.Equal(0x07, palette.GetPaletteIndexValue(1));
+        Assert.Equal(0x17, palette.GetPaletteIndexValue(2));
+        Assert.Equal(0xC7, palette.GetPaletteIndexValue(3));
+        Assert.Equal(0x1F, palette.GetPaletteIndexValue(4));
+        Assert.Equal(0x3F, palette.GetPaletteIndexValue(5));
+        Assert.Equal(0x38, palette.GetPaletteIndexValue(6));
+        Assert.Equal(0xC0, palette.GetPaletteIndexValue(7));
+        Assert.Equal(0xA4, palette.GetPaletteIndexValue(8));
+        Assert.Equal(0xFF, palette.GetPaletteIndexValue(9));
     }
 
     [Fact]
-    public void SetSlotChangesTheLiveColour()
+    public void SetPaletteIndexValueChangesTheLiveColour()
     {
         GamePalette palette = new();
         Assert.NotEqual(palette.GetColour(11), palette.GetColour(0));
 
-        palette.SetSlot(11, 0x00);
-        Assert.Equal(0x00, palette.GetSlotValue(11));
+        palette.SetPaletteIndexValue(11, 0x00);
+        Assert.Equal(0x00, palette.GetPaletteIndexValue(11));
         Assert.Equal(new Color(0, 0, 0), palette.GetColour(11));
     }
 
@@ -53,17 +53,17 @@ public sealed class GamePaletteTests
     }
 
     [Fact]
-    public void AllSixCyclingMarkersAreDistinctFromTheFixedSlots()
+    public void AllSixCyclingMarkersAreDistinctFromTheFixedPaletteIndices()
     {
-        // A marker texel must identify its slot unambiguously: no marker RGB
-        // may equal any fixed-slot (0-9) RGB, and all six markers differ.
-        var markerColors = GamePalette.CyclingSlotMarkers
+        // A marker texel must identify its palette index unambiguously: no marker RGB
+        // may equal any fixed palette index (0-9) RGB, and all six markers differ.
+        var markerColors = GamePalette.CyclingPaletteIndexMarkers
             .Select(v => RobotronColor.CreateFromByte(v))
             .ToArray();
 
-        for (var slot = 0; slot < 10; slot++)
+        for (var paletteIndex = 0; paletteIndex < 10; paletteIndex++)
         {
-            var fixedColor = RobotronColor.CreateFromByte(GamePalette.DefaultSlotValues[slot]);
+            var fixedColor = RobotronColor.CreateFromByte(GamePalette.DefaultPaletteValues[paletteIndex]);
             Assert.DoesNotContain(fixedColor, markerColors);
         }
 

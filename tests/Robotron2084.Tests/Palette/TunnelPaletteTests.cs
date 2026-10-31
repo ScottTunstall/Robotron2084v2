@@ -6,7 +6,7 @@ namespace Robotron2084.Tests;
 /// <summary>
 ///     The ROM's colour-cycling palette for the wave-complete tunnel (notes §86): twelve ramp
 ///     tables that live beside the walker's task data at $576D, fifteen values of one written
-///     into palette slots 1-15, one slot blacked in each group of five, and the window slid on
+///     into palette indices 1-15, one palette index blacked in each group of five, and the window slid on
 ///     one value a pass. This is what makes the arcade's tunnel read as thick bars with dark
 ///     seams instead of fifteen thin stripes.
 /// </summary>
@@ -24,7 +24,7 @@ public sealed class TunnelPaletteTests
         {
             // A ramp runs to its zero terminator ($59E2 skips a zero and wraps), so a ramp the
             // port stores never CONTAINS one, and the fifteen-value window always fits.
-            Assert.True(ramp.Length >= TunnelPalette.SlotCount, $"ramp of {ramp.Length} is too short");
+            Assert.True(ramp.Length >= TunnelPalette.PaletteIndexCount, $"ramp of {ramp.Length} is too short");
             Assert.DoesNotContain((byte)0x00, ramp);
         }
 
@@ -33,11 +33,11 @@ public sealed class TunnelPaletteTests
     }
 
     [Fact]
-    public void FillingThePaletteBlacksExactlyOneSlotInEachGroupOfFive()
+    public void FillingThePaletteBlacksExactlyOnePaletteIndexInEachGroupOfFive()
     {
         // $59F0-$5A07: `LDB #$00` then `STB A,X` at $9801+A, $9806+A, $980B+A with `LEAX $0005,X`
-        // — one black slot per five, which is the dark seam the arcade reference shows every
-        // five rows (the walk leaves one palette slot per row).
+        // — one black palette index per five, which is the dark seam the arcade reference shows every
+        // five rows (the walk leaves one palette index per row).
         var palette = new GamePalette();
         var tunnel = new TunnelPalette(new Random(1));
         tunnel.Start();
@@ -45,24 +45,24 @@ public sealed class TunnelPaletteTests
 
         for (var group = 0; group < 3; group++)
         {
-            var first = TunnelPalette.FirstSlot + group * 5;
+            var first = TunnelPalette.FirstPaletteIndex + group * 5;
             var blacks = 0;
-            for (var slot = first; slot < first + 5; slot++)
-                if (palette.GetSlotValue(slot) == 0x00)
+            for (var paletteIndex = first; paletteIndex < first + 5; paletteIndex++)
+                if (palette.GetPaletteIndexValue(paletteIndex) == 0x00)
                     blacks++;
 
             Assert.Equal(1, blacks);
         }
 
-        // Slot 0 is not part of the ramp (the ROM starts at $9801) and is left alone.
-        Assert.Equal(GamePalette.DefaultSlotValues[0], palette.GetSlotValue(0));
+        // Palette index 0 is not part of the ramp (the ROM starts at $9801) and is left alone.
+        Assert.Equal(GamePalette.DefaultPaletteValues[0], palette.GetPaletteIndexValue(0));
     }
 
     [Fact]
-    public void TheLitSlotsAreConsecutiveRampValuesSoTheyReadAsAGradient()
+    public void TheLitPaletteIndicesAreConsecutiveRampValuesSoTheyReadAsAGradient()
     {
-        // $59E0: `LDA ,X+ / STA ,Y+` — fifteen CONSECUTIVE ramp values, in slot order. The walk
-        // gives one slot per ROW, so consecutive rows differ by one value of the ramp: that is
+        // $59E0: `LDA ,X+ / STA ,Y+` — fifteen CONSECUTIVE ramp values, in palette index order. The walk
+        // gives one palette index per ROW, so consecutive rows differ by one value of the ramp: that is
         // the smooth gradient inside each bar, and why a bar is not fifteen stripes.
         var palette = new GamePalette();
         var tunnel = new TunnelPalette(new Random(7));
@@ -73,27 +73,27 @@ public sealed class TunnelPaletteTests
 
         tunnel.Apply(palette);
 
-        for (var slot = 0; slot < TunnelPalette.SlotCount; slot++)
+        for (var paletteIndex = 0; paletteIndex < TunnelPalette.PaletteIndexCount; paletteIndex++)
         {
             var expected = ramp[index % ramp.Length];
             index++;
 
-            if (BlackedSlots(tunnel).Contains(TunnelPalette.FirstSlot + slot)) continue;
+            if (BlackedPaletteIndices(tunnel).Contains(TunnelPalette.FirstPaletteIndex + paletteIndex)) continue;
 
-            Assert.Equal(expected, palette.GetSlotValue(TunnelPalette.FirstSlot + slot));
+            Assert.Equal(expected, palette.GetPaletteIndexValue(TunnelPalette.FirstPaletteIndex + paletteIndex));
         }
     }
 
-    /// <summary>The three slots this pass blits black — `$9801+A`, `$9806+A`, `$980B+A`.</summary>
-    private static int[] BlackedSlots(TunnelPalette tunnel)
+    /// <summary>The three palette indices this pass blits black — `$9801+A`, `$9806+A`, `$980B+A`.</summary>
+    private static int[] BlackedPaletteIndices(TunnelPalette tunnel)
     {
-        return TunnelPalette.BlackSlots
-            .Select(offset => TunnelPalette.FirstSlot + offset + tunnel.BlackOffset)
+        return TunnelPalette.BlackPaletteIndices
+            .Select(offset => TunnelPalette.FirstPaletteIndex + offset + tunnel.BlackOffset)
             .ToArray();
     }
 
     [Fact]
-    public void EachPassSlidesTheWindowOneValueAndWalksTheBlackSlotDown()
+    public void EachPassSlidesTheWindowOneValueAndWalksTheBlackPaletteIndexDown()
     {
         // $59D2: the stored pointer — the window's first value — goes up ONE a pass, and
         // $59F2's `DECA / CMPA #$05 / BCS` walks the black offset 4,3,2,1,0,4...
