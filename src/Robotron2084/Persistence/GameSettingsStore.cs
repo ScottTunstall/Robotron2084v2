@@ -102,7 +102,7 @@ public sealed class GameSettingsStore
         text.AppendLine("; tankshellbug, brainschasemikeybug and bozomode are 1 (as the arcade) or 0.");
         text.AppendLine();
         text.AppendLine($"[{Section}]");
-        text.AppendLine($"extramanevery={gameSettings.ExtraManEvery}");
+        text.AppendLine($"extramanevery={gameSettings.ExtraLifeEvery}");
         text.AppendLine($"turnsperplayer={gameSettings.TurnsPerPlayer}");
         text.AppendLine($"difficulty={gameSettings.Difficulty}");
         text.AppendLine($"attractsound={GetFlag(gameSettings.AttractModeSoundEnabled)}");
@@ -129,16 +129,16 @@ public sealed class GameSettingsStore
     {
         switch (name)
         {
-            case "extramanevery" when GameSettings.IsExtraManEveryValue(value):
-                gameSettings.ExtraManEvery = value;
+            case "extramanevery" when GameSettings.IsExtraLifeEveryValue(value):
+                gameSettings.ExtraLifeEvery = value;
                 break;
 
             case "turnsperplayer"
-                when value is >= GameSettings.MinimumTurnsPerPlayer and <= GameSettings.MaximumTurnsPerPlayer:
+                when value is >= GameSettings.MinTurnsPerPlayer and <= GameSettings.MaxTurnsPerPlayer:
                 gameSettings.TurnsPerPlayer = value;
                 break;
 
-            case "difficulty" when value is >= GameSettings.MinimumDifficulty and <= GameSettings.MaximumDifficulty:
+            case "difficulty" when value is >= GameSettings.MinimumDifficulty and <= GameSettings.MaxDifficulty:
                 gameSettings.Difficulty = value;
                 break;
 

@@ -13,7 +13,7 @@ namespace Robotron2084.Persistence;
 ///     Scores are offered by <see cref="Submit" /> with the initials their player typed on the CONG
 ///     screen (notes §116), which follows <c>EGSUB</c>: <c>GODCHK</c> (beat the top → the new top, the
 ///     old one drops into the all-time list) → else <c>TODCHK</c> AND <c>ALLCHK</c> (each list takes the
-///     score when it beats that list's lowest entry). The all-time list additionally caps how many
+///     score when it beats that list's lowest entry). The all-time list additionally limits how many
 ///     entries may share one set of initials (<c>SETBOT</c>).
 /// </summary>
 public sealed class HighScoreTable
@@ -25,14 +25,14 @@ public sealed class HighScoreTable
     public const int AllTimeCapacity = 36;
 
     /// <summary>
-    ///     ROM `SETBOT`'s cap: the all-time list keeps at most this many entries sharing one set of
+    ///     ROM `SETBOT`'s maximum: the all-time list keeps at most this many entries sharing one set of
     ///     initials, and a score that beats the lowest of a full set replaces it (`ONLY5P` explains the
-    ///     replacement). TODAY's list has no such cap — it keeps the day's ten best.
+    ///     replacement). TODAY's list has no such maximum — it keeps the day's ten best.
     /// </summary>
-    public const int AllTimeInitialsCap = 5;
+    public const int MaxAllTimeInitials = 5;
 
-    /// <summary>ROM `SETBOT`'s `LDA #4` — the cap when the initials are the top entry's own.</summary>
-    public const int AllTimeTopInitialsCap = 4;
+    /// <summary>ROM `SETBOT`'s `LDA #4` — the maximum when the initials are the top entry's own.</summary>
+    public const int MaxAllTimeTopInitials = 4;
 
     /// <summary>ROM: three initials per entry (`NULSCR` is three spaces).</summary>
     public const int InitialsLength = 3;
@@ -179,14 +179,14 @@ public sealed class HighScoreTable
                 true,
                 topEnteredToday,
                 false,
-                EnforceAllTimeInitialsCap(initials));
+                EnforceMaxAllTimeInitials(initials));
         }
 
-        var initialsCap = AllTimeInitialsCap;
-        if (TopCarriesInitials(initials)) initialsCap = AllTimeTopInitialsCap;
+        var maxInitials = MaxAllTimeInitials;
+        if (TopCarriesInitials(initials)) maxInitials = MaxAllTimeTopInitials;
 
         var enteredToday = Insert(_today, new HighScoreEntry(initials, score), TodayCapacity);
-        var (enteredAllTime, reachedMaximum) = InsertAllTime(score, initials, initialsCap);
+        var (enteredAllTime, reachedMaximum) = InsertAllTime(score, initials, maxInitials);
         return new SubmitResult(
             false,
             enteredToday,
@@ -265,11 +265,11 @@ public sealed class HighScoreTable
 
     /// <summary>
     ///     ROM `GETHM3`'s top-entry branch (`LDA #5 / BSR SETBZZ`): the initials a score has just put on
-    ///     the top entry are capped in the list beneath it, and the fifth match is removed.
+    ///     the top entry are limited in the list beneath it, and the fifth match is removed.
     /// </summary>
-    private bool EnforceAllTimeInitialsCap(string initials)
+    private bool EnforceMaxAllTimeInitials(string initials)
     {
-        if (CountInitials(_allTime, initials) < AllTimeInitialsCap) return false;
+        if (CountInitials(_allTime, initials) < MaxAllTimeInitials) return false;
 
         _allTime.RemoveAt(FindLowestInitialsIndex(_allTime, initials));
         return true;
@@ -277,15 +277,15 @@ public sealed class HighScoreTable
 
     /// <summary>
     ///     ROM `ALLCHK` → `SETBOT` → `SCTRNS`: inserts when the score beats the list's lowest entry,
-    ///     having first applied the per-initials cap — a full set of initials can only be beaten from
+    ///     having first applied the per-initials maximum — a full set of initials can only be beaten from
     ///     inside, by outscoring the lowest of them, which is the entry the score replaces.
     /// </summary>
-    private (bool Entered, bool Maximum) InsertAllTime(int score, string initials, int initialsCap)
+    private (bool Entered, bool Maximum) InsertAllTime(int score, string initials, int maxInitials)
     {
         if (!Beats(_allTime, score)) return (false, false);
 
-        var atCap = CountInitials(_allTime, initials) >= initialsCap;
-        if (atCap)
+        var isAtMaxInitials = CountInitials(_allTime, initials) >= maxInitials;
+        if (isAtMaxInitials)
         {
             var lowest = FindLowestInitialsIndex(_allTime, initials);
             if (score <= _allTime[lowest].Score) return (false, true);
@@ -293,7 +293,7 @@ public sealed class HighScoreTable
             _allTime.RemoveAt(lowest);
         }
 
-        return (Insert(_allTime, new HighScoreEntry(initials, score), AllTimeCapacity), atCap);
+        return (Insert(_allTime, new HighScoreEntry(initials, score), AllTimeCapacity), isAtMaxInitials);
     }
 
     /// <summary>

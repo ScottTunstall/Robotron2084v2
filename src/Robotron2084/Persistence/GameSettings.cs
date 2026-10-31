@@ -8,11 +8,11 @@ namespace Robotron2084.Persistence;
 ///     message and the highest-score name). The rows that remain are:
 ///     <list type="bullet">
 ///         <item>
-///             <b>EXTRA MAN EVERY</b> (ROM <c>extra_man_every</c> $CC00) — the score that earns a spare man,
+///             <b>EXTRA MAN EVERY</b> (ROM <c>extra_man_every</c> $CC00) — the score that earns a spare life,
 ///             one of the five stops the ROM's own list allows (<c>$71DB</c>: 0, 20, 25, 30, 50 thousand);
 ///         </item>
 ///         <item>
-///             <b>TURNS PER PLAYER</b> (ROM <c>turns_per_player</c> $CC02) — the men a player starts with
+///             <b>TURNS PER PLAYER</b> (ROM <c>turns_per_player</c> $CC02) — the lives a player starts with
 ///             (ROM <c>NSHIP</c>, loaded into <c>PLAS</c> by <c>START1</c>);
 ///         </item>
 ///         <item>
@@ -63,13 +63,13 @@ public sealed class GameSettings
     public const int FactoryDifficulty = RecommendedDifficulty;
 
     /// <summary>The factory EXTRA MAN EVERY in points, as the game compares scores.</summary>
-    public const int FactoryExtraManEveryPoints = FactoryExtraManEveryThousands * 1000;
+    public const int FactoryExtraLifeEveryPoints = FactoryExtraLifeEveryThousands * 1000;
 
     /// <summary>
     ///     The factory EXTRA MAN EVERY: 25 (25000 points), the ROM's "RECOMMENDED" stop. It is the starting value of
-    ///     <see cref="ExtraManEvery" />, and the value it is set back to when the settings are restored.
+    ///     <see cref="ExtraLifeEvery" />, and the value it is set back to when the settings are restored.
     /// </summary>
-    public const int FactoryExtraManEveryThousands = 25;
+    public const int FactoryExtraLifeEveryThousands = 25;
 
     /// <summary>
     ///     Factory TANK SHELL BUG: on, as the arcade is. It is the starting value of <see cref="TankShellBugEnabled" />,
@@ -87,13 +87,13 @@ public sealed class GameSettings
     ///     DIFFICULTY OF PLAY's ceiling — "EXTRA CONSERVATIVE" (ROM metadata $7079: 10). It is the biggest value
     ///     <see cref="Difficulty" /> may have.
     /// </summary>
-    public const int MaximumDifficulty = 10;
+    public const int MaxDifficulty = 10;
 
     /// <summary>
     ///     TURNS PER PLAYER's ceiling (ROM metadata $704C: 20). It is the biggest value <see cref="TurnsPerPlayer" /> may
     ///     have.
     /// </summary>
-    public const int MaximumTurnsPerPlayer = 20;
+    public const int MaxTurnsPerPlayer = 20;
 
     /// <summary>
     ///     DIFFICULTY OF PLAY's floor — "EXTRA LIBERAL" (ROM metadata $7079: 00). It is the smallest value
@@ -105,13 +105,13 @@ public sealed class GameSettings
     ///     TURNS PER PLAYER's floor (ROM metadata $704C: 01). It is the smallest value <see cref="TurnsPerPlayer" /> may
     ///     have.
     /// </summary>
-    public const int MinimumTurnsPerPlayer = 1;
+    public const int MinTurnsPerPlayer = 1;
 
     /// <summary>The recommended difficulty: 5 — no wave-table adjustment at all (the ROM's "RECOMMENDED").</summary>
     public const int RecommendedDifficulty = 5;
 
     /// <summary>The EXTRA MAN EVERY stops the ROM allows (its <c>$71DB</c> list), in thousands of points.</summary>
-    public static readonly int[] ExtraManEveryValues = [0, 20, 25, 30, 50];
+    public static readonly int[] ExtraLifeEveryValues = [0, 20, 25, 30, 50];
 
     /// <summary>
     ///     Whether the attract sequence plays its sounds (port-only; the arcade has no such row). Off
@@ -120,7 +120,7 @@ public sealed class GameSettings
     public bool AttractModeSoundEnabled { get; set; } = FactoryAttractModeSoundEnabled;
 
     /// <summary>
-    ///     Whether the arcade's mercy for a player losing ships early is given (port-only switch; see
+    ///     Whether the arcade's mercy for a player losing lives early is given (port-only switch; see
     ///     <see cref="Level.BozoMode" />).
     /// </summary>
     public bool BozoModeEnabled { get; set; } = FactoryBozoModeEnabled;
@@ -139,10 +139,10 @@ public sealed class GameSettings
     public int Difficulty { get; set; } = FactoryDifficulty;
 
     /// <summary>
-    ///     The score that earns a spare man, in thousands — 0 turns extra men off. One of
-    ///     <see cref="ExtraManEveryValues" />; 25 by default, the arcade's factory "RECOMMENDED".
+    ///     The score that earns a spare life, in thousands — 0 turns extra lives off. One of
+    ///     <see cref="ExtraLifeEveryValues" />; 25 by default, the arcade's factory "RECOMMENDED".
     /// </summary>
-    public int ExtraManEvery { get; set; } = FactoryExtraManEveryThousands;
+    public int ExtraLifeEvery { get; set; } = FactoryExtraLifeEveryThousands;
 
     /// <summary>
     ///     Whether the arcade's tank shell bug is kept (port-only switch). On, a shell that fizzles out is never taken
@@ -152,7 +152,7 @@ public sealed class GameSettings
     /// <remarks>Original source: <c>RRTK4.ASM</c> <c>SHELL</c>, which has no <c>DEC SHLCNT</c>.</remarks>
     public bool TankShellBugEnabled { get; set; } = FactoryTankShellBugEnabled;
 
-    /// <summary>How many men a player starts with (ROM <c>NSHIP</c>/<c>PLAS</c>), 1-20.</summary>
+    /// <summary>How many lives a player starts with (ROM <c>NSHIP</c>/<c>PLAS</c>), 1-20.</summary>
     public int TurnsPerPlayer { get; set; } = FactoryTurnsPerPlayer;
 
     /// <summary>A fresh cabinet's settings.</summary>
@@ -162,9 +162,9 @@ public sealed class GameSettings
     }
 
     /// <summary>True for one of the five EXTRA MAN EVERY stops (ROM <c>$71DB</c>).</summary>
-    public static bool IsExtraManEveryValue(int value)
+    public static bool IsExtraLifeEveryValue(int value)
     {
-        return Array.IndexOf(ExtraManEveryValues, value) >= 0;
+        return Array.IndexOf(ExtraLifeEveryValues, value) >= 0;
     }
 
     /// <summary>Turns ATTRACT MODE SOUND on (right) or off (left).</summary>
@@ -188,19 +188,19 @@ public sealed class GameSettings
     /// <summary>Moves DIFFICULTY OF PLAY one step, clamped to the ROM's 0-10 range.</summary>
     public void BumpDifficulty(int direction)
     {
-        Difficulty = Math.Clamp(Difficulty + direction, MinimumDifficulty, MaximumDifficulty);
+        Difficulty = Math.Clamp(Difficulty + direction, MinimumDifficulty, MaxDifficulty);
     }
 
     /// <summary>
     ///     Moves EXTRA MAN EVERY up (<paramref name="direction" /> 1) or down (-1) one stop of the ROM's
     ///     five-stop progression (0 → 20000 → 25000 → 30000 → 50000), stopping at the ends.
     /// </summary>
-    public void BumpExtraManEvery(int direction)
+    public void BumpExtraLifeEvery(int direction)
     {
-        var index = Array.IndexOf(ExtraManEveryValues, ExtraManEvery);
-        if (index < 0) index = Array.IndexOf(ExtraManEveryValues, FactoryExtraManEveryThousands);
+        var index = Array.IndexOf(ExtraLifeEveryValues, ExtraLifeEvery);
+        if (index < 0) index = Array.IndexOf(ExtraLifeEveryValues, FactoryExtraLifeEveryThousands);
 
-        ExtraManEvery = ExtraManEveryValues[Math.Clamp(index + direction, 0, ExtraManEveryValues.Length - 1)];
+        ExtraLifeEvery = ExtraLifeEveryValues[Math.Clamp(index + direction, 0, ExtraLifeEveryValues.Length - 1)];
     }
 
     /// <summary>Turns TANK SHELL BUG on (right) or off (left).</summary>
@@ -212,13 +212,13 @@ public sealed class GameSettings
     /// <summary>Moves TURNS PER PLAYER one step, clamped to the ROM's 1-20 range.</summary>
     public void BumpTurnsPerPlayer(int direction)
     {
-        TurnsPerPlayer = Math.Clamp(TurnsPerPlayer + direction, MinimumTurnsPerPlayer, MaximumTurnsPerPlayer);
+        TurnsPerPlayer = Math.Clamp(TurnsPerPlayer + direction, MinTurnsPerPlayer, MaxTurnsPerPlayer);
     }
 
     /// <summary>The EXTRA MAN EVERY score in points, as the game compares scores (<c>0</c> = never).</summary>
-    public int GetExtraManEveryPoints()
+    public int GetExtraLifeEveryPoints()
     {
-        return ExtraManEvery * 1000;
+        return ExtraLifeEvery * 1000;
     }
 
     /// <summary>
@@ -234,7 +234,7 @@ public sealed class GameSettings
     /// <summary>Restores every setting to its factory value.</summary>
     public void ResetToFactory()
     {
-        ExtraManEvery = FactoryExtraManEveryThousands;
+        ExtraLifeEvery = FactoryExtraLifeEveryThousands;
         TurnsPerPlayer = FactoryTurnsPerPlayer;
         Difficulty = FactoryDifficulty;
         AttractModeSoundEnabled = FactoryAttractModeSoundEnabled;
