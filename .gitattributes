@@ -1,15 +1,11 @@
-# Line endings: LF in the index AND LF on checkout, for every text file.
+# Line endings: LF in the index, Windows CRLF in the working copy, for every text file.
 #
-# Why the explicit eol=lf: this machine's global Git config sets core.autocrlf=true
-# (Git for Windows default), which made checkout hand back CRLF for every text file.
-# That contradicted .editorconfig (`end_of_line = lf`) and made Git announce
-# "LF will be replaced by CRLF the next time Git touches it" on every touched file,
-# so ordinary edits churned line endings into unrelated diffs. A text attribute with
-# an explicit eol wins over core.autocrlf, which makes the repo self-describing on
-# any machine - Windows or Linux (the sound board targets both).
-#
-# The index is already all-LF, so this file changes checkout only: no history rewrite.
-* text=auto eol=lf
+# The author works on Windows and wants every file on disk in Windows format. An explicit eol
+# attribute wins over each machine's core.autocrlf, so the repo says so itself and Git does not
+# show a working copy of CRLF files as modified. The index stays LF (it always has been), so
+# this changes checkout only: no history rewrite and no line-ending churn in diffs.
+# .editorconfig says end_of_line = crlf to match, so editors save the same way.
+* text=auto eol=crlf
 
 # Real binary assets: never line-ending converted, never diffed as text.
 # Of these, only .png is tracked today (265 sprite sheets); the rest guard assets
