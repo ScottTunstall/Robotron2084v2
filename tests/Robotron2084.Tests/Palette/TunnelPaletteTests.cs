@@ -38,24 +38,24 @@ public sealed class TunnelPaletteTests
         // $59F0-$5A07: `LDB #$00` then `STB A,X` at $9801+A, $9806+A, $980B+A with `LEAX $0005,X`
         // — one black palette index per five, which is the dark seam the arcade reference shows every
         // five rows (the walk leaves one palette index per row).
-        var palette = new GamePalette();
-        var tunnel = new TunnelPalette(new Random(1));
-        tunnel.Start();
-        tunnel.Apply(palette);
+        var gamePalette = new GamePalette();
+        var tunnelPalette = new TunnelPalette(new Random(1));
+        tunnelPalette.Start();
+        tunnelPalette.Apply(gamePalette);
 
         for (var group = 0; group < 3; group++)
         {
             var first = TunnelPalette.FirstPaletteIndex + group * 5;
             var blacks = 0;
             for (var paletteIndex = first; paletteIndex < first + 5; paletteIndex++)
-                if (palette.GetPaletteIndexValue(paletteIndex) == 0x00)
+                if (gamePalette.GetPaletteIndexValue(paletteIndex) == 0x00)
                     blacks++;
 
             Assert.Equal(1, blacks);
         }
 
         // Palette index 0 is not part of the ramp (the ROM starts at $9801) and is left alone.
-        Assert.Equal(GamePalette.DefaultPaletteValues[0], palette.GetPaletteIndexValue(0));
+        Assert.Equal(GamePalette.DefaultPaletteValues[0], gamePalette.GetPaletteIndexValue(0));
     }
 
     [Fact]
@@ -64,31 +64,31 @@ public sealed class TunnelPaletteTests
         // $59E0: `LDA ,X+ / STA ,Y+` — fifteen CONSECUTIVE ramp values, in palette index order. The walk
         // gives one palette index per ROW, so consecutive rows differ by one value of the ramp: that is
         // the smooth gradient inside each bar, and why a bar is not fifteen stripes.
-        var palette = new GamePalette();
-        var tunnel = new TunnelPalette(new Random(7));
-        tunnel.Start();
+        var gamePalette = new GamePalette();
+        var tunnelPalette = new TunnelPalette(new Random(7));
+        tunnelPalette.Start();
 
-        var ramp = TunnelPalette.Ramps[tunnel.RampIndex];
-        var index = tunnel.WindowStartIndex;
+        var ramp = TunnelPalette.Ramps[tunnelPalette.RampIndex];
+        var index = tunnelPalette.WindowStartIndex;
 
-        tunnel.Apply(palette);
+        tunnelPalette.Apply(gamePalette);
 
         for (var paletteIndex = 0; paletteIndex < TunnelPalette.PaletteIndexCount; paletteIndex++)
         {
             var expected = ramp[index % ramp.Length];
             index++;
 
-            if (BlackedPaletteIndices(tunnel).Contains(TunnelPalette.FirstPaletteIndex + paletteIndex)) continue;
+            if (BlackedPaletteIndices(tunnelPalette).Contains(TunnelPalette.FirstPaletteIndex + paletteIndex)) continue;
 
-            Assert.Equal(expected, palette.GetPaletteIndexValue(TunnelPalette.FirstPaletteIndex + paletteIndex));
+            Assert.Equal(expected, gamePalette.GetPaletteIndexValue(TunnelPalette.FirstPaletteIndex + paletteIndex));
         }
     }
 
     /// <summary>The three palette indices this pass blits black — `$9801+A`, `$9806+A`, `$980B+A`.</summary>
-    private static int[] BlackedPaletteIndices(TunnelPalette tunnel)
+    private static int[] BlackedPaletteIndices(TunnelPalette tunnelPalette)
     {
         return TunnelPalette.BlackPaletteIndices
-            .Select(offset => TunnelPalette.FirstPaletteIndex + offset + tunnel.BlackOffset)
+            .Select(offset => TunnelPalette.FirstPaletteIndex + offset + tunnelPalette.BlackOffset)
             .ToArray();
     }
 
@@ -97,23 +97,23 @@ public sealed class TunnelPaletteTests
     {
         // $59D2: the stored pointer — the window's first value — goes up ONE a pass, and
         // $59F2's `DECA / CMPA #$05 / BCS` walks the black offset 4,3,2,1,0,4...
-        var tunnel = new TunnelPalette(new Random(3));
-        tunnel.Start();
+        var tunnelPalette = new TunnelPalette(new Random(3));
+        tunnelPalette.Start();
 
-        var pointer = tunnel.WindowStartIndex;
-        Assert.Equal(4, tunnel.BlackOffset);
+        var pointer = tunnelPalette.WindowStartIndex;
+        Assert.Equal(4, tunnelPalette.BlackOffset);
 
-        tunnel.Advance();
-        Assert.Equal(pointer + 1, tunnel.WindowStartIndex);
-        Assert.Equal(3, tunnel.BlackOffset);
+        tunnelPalette.Advance();
+        Assert.Equal(pointer + 1, tunnelPalette.WindowStartIndex);
+        Assert.Equal(3, tunnelPalette.BlackOffset);
 
-        for (var i = 0; i < 3; i++) tunnel.Advance();
+        for (var i = 0; i < 3; i++) tunnelPalette.Advance();
 
-        Assert.Equal(0, tunnel.BlackOffset);
+        Assert.Equal(0, tunnelPalette.BlackOffset);
 
-        tunnel.Advance();
-        Assert.Equal(4, tunnel.BlackOffset); // 0 wraps back to 4, never to 5
-        Assert.Equal(pointer + 5, tunnel.WindowStartIndex);
+        tunnelPalette.Advance();
+        Assert.Equal(4, tunnelPalette.BlackOffset); // 0 wraps back to 4, never to 5
+        Assert.Equal(pointer + 5, tunnelPalette.WindowStartIndex);
     }
 
     [Fact]
@@ -121,15 +121,15 @@ public sealed class TunnelPaletteTests
     {
         // The window is fifteen values and wraps at the ramp's close ($59E4), so a pass can never
         // read past the table however long the walk runs.
-        var tunnel = new TunnelPalette(new Random(5));
-        tunnel.Start();
+        var tunnelPalette = new TunnelPalette(new Random(5));
+        tunnelPalette.Start();
 
-        var ramp = TunnelPalette.Ramps[tunnel.RampIndex];
+        var ramp = TunnelPalette.Ramps[tunnelPalette.RampIndex];
 
         for (var pass = 0; pass < 1000; pass++)
         {
-            Assert.InRange(tunnel.WindowStartIndex, 0, ramp.Length - 1);
-            tunnel.Advance();
+            Assert.InRange(tunnelPalette.WindowStartIndex, 0, ramp.Length - 1);
+            tunnelPalette.Advance();
         }
     }
 }

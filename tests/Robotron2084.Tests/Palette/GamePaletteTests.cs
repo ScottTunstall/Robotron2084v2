@@ -14,28 +14,28 @@ public sealed class GamePaletteTests
     [Fact]
     public void DefaultsAreTheCrtabPalette()
     {
-        GamePalette palette = new();
-        Assert.Equal(0x00, palette.GetPaletteIndexValue(0));
-        Assert.Equal(0x07, palette.GetPaletteIndexValue(1));
-        Assert.Equal(0x17, palette.GetPaletteIndexValue(2));
-        Assert.Equal(0xC7, palette.GetPaletteIndexValue(3));
-        Assert.Equal(0x1F, palette.GetPaletteIndexValue(4));
-        Assert.Equal(0x3F, palette.GetPaletteIndexValue(5));
-        Assert.Equal(0x38, palette.GetPaletteIndexValue(6));
-        Assert.Equal(0xC0, palette.GetPaletteIndexValue(7));
-        Assert.Equal(0xA4, palette.GetPaletteIndexValue(8));
-        Assert.Equal(0xFF, palette.GetPaletteIndexValue(9));
+        GamePalette gamePalette = new();
+        Assert.Equal(0x00, gamePalette.GetPaletteIndexValue(0));
+        Assert.Equal(0x07, gamePalette.GetPaletteIndexValue(1));
+        Assert.Equal(0x17, gamePalette.GetPaletteIndexValue(2));
+        Assert.Equal(0xC7, gamePalette.GetPaletteIndexValue(3));
+        Assert.Equal(0x1F, gamePalette.GetPaletteIndexValue(4));
+        Assert.Equal(0x3F, gamePalette.GetPaletteIndexValue(5));
+        Assert.Equal(0x38, gamePalette.GetPaletteIndexValue(6));
+        Assert.Equal(0xC0, gamePalette.GetPaletteIndexValue(7));
+        Assert.Equal(0xA4, gamePalette.GetPaletteIndexValue(8));
+        Assert.Equal(0xFF, gamePalette.GetPaletteIndexValue(9));
     }
 
     [Fact]
     public void SetPaletteIndexValueChangesTheLiveColour()
     {
-        GamePalette palette = new();
-        Assert.NotEqual(palette.GetColour(11), palette.GetColour(0));
+        GamePalette gamePalette = new();
+        Assert.NotEqual(gamePalette.GetColour(11), gamePalette.GetColour(0));
 
-        palette.SetPaletteIndexValue(11, 0x00);
-        Assert.Equal(0x00, palette.GetPaletteIndexValue(11));
-        Assert.Equal(new Color(0, 0, 0), palette.GetColour(11));
+        gamePalette.SetPaletteIndexValue(11, 0x00);
+        Assert.Equal(0x00, gamePalette.GetPaletteIndexValue(11));
+        Assert.Equal(new Color(0, 0, 0), gamePalette.GetColour(11));
     }
 
     [Theory]

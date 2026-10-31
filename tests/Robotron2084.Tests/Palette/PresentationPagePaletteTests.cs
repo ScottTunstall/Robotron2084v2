@@ -17,55 +17,55 @@ public sealed class PresentationPagePaletteTests
         return (int)Math.Ceiling(arcadeFrames * 6.0 / 5.0);
     }
 
-    private static (GamePalette Palette, PresentationPagePalette Page) Started()
+    private static (GamePalette GamePalette, PresentationPagePalette PresentationPagePalette) Started()
     {
-        var palette = new GamePalette();
-        var page = new PresentationPagePalette();
-        page.Start(palette);
-        return (palette, page);
+        var gamePalette = new GamePalette();
+        var presentationPagePalette = new PresentationPagePalette();
+        presentationPagePalette.Start(gamePalette);
+        return (gamePalette, presentationPagePalette);
     }
 
     /// <summary>The single entry the chase is whitening, or 0 when no entry is white.</summary>
-    private static int WhitePaletteIndex(GamePalette palette)
+    private static int WhitePaletteIndex(GamePalette gamePalette)
     {
         return Enumerable.Range(PresentationPagePalette.FirstPaletteIndex, 7)
-            .SingleOrDefault(paletteIndex => palette.GetPaletteIndexValue(paletteIndex) == 0xFF);
+            .SingleOrDefault(paletteIndex => gamePalette.GetPaletteIndexValue(paletteIndex) == 0xFF);
     }
 
     [Fact]
     public void Start_WritesThePagesSevenColoursAndLeavesTheRestOnCrtab()
     {
-        var (palette, _) = Started();
+        var (gamePalette, _) = Started();
 
         for (var paletteIndex = PresentationPagePalette.FirstPaletteIndex; paletteIndex <= PresentationPagePalette.LastPaletteIndex; paletteIndex++)
-            Assert.Equal(PresentationPagePalette.PageColors[paletteIndex - 1], palette.GetPaletteIndexValue(paletteIndex));
+            Assert.Equal(PresentationPagePalette.PageColors[paletteIndex - 1], gamePalette.GetPaletteIndexValue(paletteIndex));
 
         // The other nine entries are untouched — this page owns palette indices 1-7 and nothing else.
         foreach (var paletteIndex in new[] { 0, 8, 9, 10, 11, 12, 13, 14, 15 })
-            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], palette.GetPaletteIndexValue(paletteIndex));
+            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], gamePalette.GetPaletteIndexValue(paletteIndex));
 
         // The text palette index is ORANGE in the page's own table — the colour the author sees.
-        Assert.Equal(0x1F, palette.GetPaletteIndexValue(PresentationPagePalette.TextPaletteIndex));
+        Assert.Equal(0x1F, gamePalette.GetPaletteIndexValue(PresentationPagePalette.TextPaletteIndex));
 
         // $8A3A runs before the chase task exists, and $8A4F advances BEFORE it whitens: the page
         // comes up with no white on it at all.
-        Assert.Equal(0, WhitePaletteIndex(palette));
+        Assert.Equal(0, WhitePaletteIndex(gamePalette));
     }
 
     [Fact]
     public void TheWhiteFlash_StepsOnePaletteIndexEveryThreeArcadeFrames_StartingAtTwo()
     {
-        var (palette, page) = Started();
+        var (gamePalette, presentationPagePalette) = Started();
         var moves = new List<(int PaletteIndex, int Tick)>();
         var current = 0;
 
         for (var tick = 1; tick <= 200 && moves.Count < 9; tick++)
         {
-            page.Update(palette);
+            presentationPagePalette.Update(gamePalette);
 
             // Once the chase has started, exactly one entry is white at a time — and it walks
             // 2,3,…,7,1 and round.
-            var white = WhitePaletteIndex(palette);
+            var white = WhitePaletteIndex(gamePalette);
             if (current != 0) Assert.NotEqual(0, white);
 
             if (white != current && white != 0)
@@ -87,31 +87,31 @@ public sealed class PresentationPagePaletteTests
     [Fact]
     public void EveryOtherEntryIsBackOnTheTableOnEachStep()
     {
-        var (palette, page) = Started();
+        var (gamePalette, presentationPagePalette) = Started();
 
         for (var step = 0; step < 15; step++)
         {
-            for (var tick = 0; tick < 4; tick++) page.Update(palette);
+            for (var tick = 0; tick < 4; tick++) presentationPagePalette.Update(gamePalette);
 
-            var white = WhitePaletteIndex(palette);
+            var white = WhitePaletteIndex(gamePalette);
             for (var paletteIndex = PresentationPagePalette.FirstPaletteIndex; paletteIndex <= PresentationPagePalette.LastPaletteIndex; paletteIndex++)
                 if (paletteIndex != white)
-                    Assert.Equal(PresentationPagePalette.PageColors[paletteIndex - 1], palette.GetPaletteIndexValue(paletteIndex));
+                    Assert.Equal(PresentationPagePalette.PageColors[paletteIndex - 1], gamePalette.GetPaletteIndexValue(paletteIndex));
         }
     }
 
     [Fact]
     public void TheTextPaletteIndexIsWhiteForOneFrameInEverySeven()
     {
-        var (palette, page) = Started();
+        var (gamePalette, presentationPagePalette) = Started();
         const int Ticks = 7 * 100; // a hundred chase laps' worth
         var white = 0;
 
         for (var tick = 0; tick < Ticks; tick++)
         {
-            if (palette.GetPaletteIndexValue(PresentationPagePalette.TextPaletteIndex) == 0xFF) white++;
+            if (gamePalette.GetPaletteIndexValue(PresentationPagePalette.TextPaletteIndex) == 0xFF) white++;
 
-            page.Update(palette);
+            presentationPagePalette.Update(gamePalette);
         }
 
         // One step in seven whitens entry 6, so the text flashes for a seventh of the time — the
@@ -122,7 +122,7 @@ public sealed class PresentationPagePaletteTests
     [Fact]
     public void TheWordmarkColourStepsDownTheSevenEntriesOnceEveryTwentyEightFrames()
     {
-        var (palette, page) = Started();
+        var (gamePalette, presentationPagePalette) = Started();
 
         // $89DA's SUBA #$11 walks the operand $77 → $66 → … → $11 and then resets to $77, so the
         // palette index walks 7 → 6 → … → 1 → 7, and the rim is the entry one step behind it.
@@ -131,30 +131,30 @@ public sealed class PresentationPagePaletteTests
             (7, 6), (6, 5), (5, 4), (4, 3), (3, 2), (2, 1), (1, 7)
         ];
 
-        Assert.Equal(expected[0].PaletteIndex, page.GetWordmarkPaletteIndex());
-        Assert.Equal(expected[0].Rim, page.GetWordmarkRimPaletteIndex());
+        Assert.Equal(expected[0].PaletteIndex, presentationPagePalette.GetWordmarkPaletteIndex());
+        Assert.Equal(expected[0].Rim, presentationPagePalette.GetWordmarkRimPaletteIndex());
 
         for (var step = 1; step < expected.Length; step++)
         {
-            for (var tick = 0; tick < Ticks(28); tick++) page.Update(palette);
+            for (var tick = 0; tick < Ticks(28); tick++) presentationPagePalette.Update(gamePalette);
 
-            Assert.Equal(expected[step].PaletteIndex, page.GetWordmarkPaletteIndex());
-            Assert.Equal(expected[step].Rim, page.GetWordmarkRimPaletteIndex());
+            Assert.Equal(expected[step].PaletteIndex, presentationPagePalette.GetWordmarkPaletteIndex());
+            Assert.Equal(expected[step].Rim, presentationPagePalette.GetWordmarkRimPaletteIndex());
         }
 
         // At the wrap the pair is the reference screenshot's own: a red body (palette index 1, $07) on a
         // yellow rim (palette index 7, $3F).
-        Assert.Equal(0x07, PresentationPagePalette.PageColors[page.GetWordmarkPaletteIndex() - 1]);
-        Assert.Equal(0x3F, PresentationPagePalette.PageColors[page.GetWordmarkRimPaletteIndex() - 1]);
+        Assert.Equal(0x07, PresentationPagePalette.PageColors[presentationPagePalette.GetWordmarkPaletteIndex() - 1]);
+        Assert.Equal(0x3F, PresentationPagePalette.PageColors[presentationPagePalette.GetWordmarkRimPaletteIndex() - 1]);
     }
 
     [Fact]
     public void Stop_StandsCrtabBackUpOverThePagesSevenEntries()
     {
-        var (palette, page) = Started();
-        page.Stop(palette);
+        var (gamePalette, presentationPagePalette) = Started();
+        presentationPagePalette.Stop(gamePalette);
 
         for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++)
-            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], palette.GetPaletteIndexValue(paletteIndex));
+            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], gamePalette.GetPaletteIndexValue(paletteIndex));
     }
 }
