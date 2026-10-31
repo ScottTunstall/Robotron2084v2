@@ -112,11 +112,11 @@ public sealed class GameSettingsTests
     [InlineData(false, false, false)] // ...and a real game is never silenced
     [InlineData(true, true, true)] // attract sound off + an attract screen: silence
     [InlineData(false, true, false)] // ...but a real game still has sound
-    public void OnlyAnAttractScreenWithTheSoundSettingOffIsSilent(bool attractShowing, bool soundOff, bool expected)
+    public void OnlyAnAttractScreenWithTheSoundSettingOffIsSilent(bool isAttractVisible, bool soundOff, bool expected)
     {
         var gameSettings = new GameSettings { AttractModeSoundEnabled = !soundOff };
 
-        Assert.Equal(expected, gameSettings.IsAttractSilent(attractShowing));
+        Assert.Equal(expected, gameSettings.IsAttractSilent(isAttractVisible));
     }
 
     [Theory]
