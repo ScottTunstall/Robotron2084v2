@@ -19,42 +19,42 @@ public sealed class PauseToggleTests
     [Fact]
     public void ItTogglesOnThePress_NotWhileTheKeyIsHeld()
     {
-        var pause = new PauseToggle();
+        var pauseToggle = new PauseToggle();
 
-        pause.Tick(true);
-        Assert.True(pause.IsPaused);
+        pauseToggle.Tick(true);
+        Assert.True(pauseToggle.IsPaused);
 
-        for (var tick = 0; tick < 100; tick++) pause.Tick(true);
+        for (var tick = 0; tick < 100; tick++) pauseToggle.Tick(true);
 
-        Assert.True(pause.IsPaused); // still one pause, however long the key is down
+        Assert.True(pauseToggle.IsPaused); // still one pause, however long the key is down
     }
 
     [Fact]
     public void PressingAgainUnpauses()
     {
-        var pause = new PauseToggle();
+        var pauseToggle = new PauseToggle();
 
-        pause.Tick(true);
-        pause.Tick(false);
-        pause.Tick(true);
+        pauseToggle.Tick(true);
+        pauseToggle.Tick(false);
+        pauseToggle.Tick(true);
 
-        Assert.False(pause.IsPaused);
+        Assert.False(pauseToggle.IsPaused);
     }
 
     [Fact]
     public void Reset_LeavesItRunning_AndSwallowsTheKeyThatWasHeld()
     {
-        var pause = new PauseToggle();
-        pause.Tick(true);
+        var pauseToggle = new PauseToggle();
+        pauseToggle.Tick(true);
 
-        pause.Reset();
+        pauseToggle.Reset();
 
-        Assert.False(pause.IsPaused);
-        pause.Tick(true); // the key that was down when the game ended must not re-pause it
-        Assert.False(pause.IsPaused);
+        Assert.False(pauseToggle.IsPaused);
+        pauseToggle.Tick(true); // the key that was down when the game ended must not re-pause it
+        Assert.False(pauseToggle.IsPaused);
 
-        pause.Tick(false);
-        pause.Tick(true);
-        Assert.True(pause.IsPaused);
+        pauseToggle.Tick(false);
+        pauseToggle.Tick(true);
+        Assert.True(pauseToggle.IsPaused);
     }
 }

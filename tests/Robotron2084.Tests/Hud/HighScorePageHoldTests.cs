@@ -15,45 +15,45 @@ public sealed class HighScorePageHoldTests
     [Fact]
     public void NothingShortensTheHold_NotEvenASwitchHeldDownThroughIt()
     {
-        var hold = new HighScorePageHold();
+        var highScorePageHold = new HighScorePageHold();
 
         // 600 fiftieths of a second = 720 port ticks.
         for (var tick = 0; tick < 719; tick++)
         {
-            Assert.False(hold.Tick(true), $"the page left during the hold (tick {tick})");
-            Assert.False(hold.HoldIsOver);
+            Assert.False(highScorePageHold.Tick(true), $"the page left during the hold (tick {tick})");
+            Assert.False(highScorePageHold.HoldIsOver);
         }
 
-        Assert.False(hold.Tick(true));
-        Assert.True(hold.HoldIsOver); // the 600 frames ran out on this tick
+        Assert.False(highScorePageHold.Tick(true));
+        Assert.True(highScorePageHold.HoldIsOver); // the 600 frames ran out on this tick
     }
 
     [Fact]
     public void WithNothingHeld_ThePageLeavesOneNapFourAfterTheHold()
     {
-        var hold = new HighScorePageHold();
-        for (var tick = 0; tick < 720; tick++) hold.Tick(false);
+        var highScorePageHold = new HighScorePageHold();
+        for (var tick = 0; tick < 720; tick++) highScorePageHold.Tick(false);
 
         // TAB777's NAP 4 — 4 fiftieths of a second ≈ 4.8 ticks — is the first switch read.
         var ticks = 0;
-        while (!hold.Tick(false))
+        while (!highScorePageHold.Tick(false))
         {
             ticks++;
             Assert.True(ticks < 8, "the page never left an idle cabinet");
         }
 
         Assert.InRange(ticks, 3, 5);
-        Assert.Equal(0, hold.ChecksWithSwitchDown);
+        Assert.Equal(0, highScorePageHold.ChecksWithSwitchDown);
     }
 
     [Fact]
     public void AHeldSwitchDelaysTheExit_ForTheRoms255Checks()
     {
-        var hold = new HighScorePageHold();
-        for (var tick = 0; tick < 720; tick++) hold.Tick(true);
+        var highScorePageHold = new HighScorePageHold();
+        for (var tick = 0; tick < 720; tick++) highScorePageHold.Tick(true);
 
         var ticks = 0;
-        while (!hold.Tick(true))
+        while (!highScorePageHold.Tick(true))
         {
             ticks++;
             Assert.True(ticks < 2000, "a held switch never let the page go");
@@ -61,25 +61,25 @@ public sealed class HighScorePageHoldTests
 
         // 255 checks of four frames each ≈ 1224 ticks, plus the hold.
         Assert.InRange(ticks, 1200, 1250);
-        Assert.Equal(255, hold.ChecksWithSwitchDown);
+        Assert.Equal(255, highScorePageHold.ChecksWithSwitchDown);
     }
 
     [Fact]
     public void ReleasingTheSwitchesLeavesAtTheNextCheck()
     {
-        var hold = new HighScorePageHold();
-        for (var tick = 0; tick < 720; tick++) hold.Tick(false);
+        var highScorePageHold = new HighScorePageHold();
+        for (var tick = 0; tick < 720; tick++) highScorePageHold.Tick(false);
 
         // Hold a switch through five checks, then let go.
-        while (hold.ChecksWithSwitchDown < 5) Assert.False(hold.Tick(true));
+        while (highScorePageHold.ChecksWithSwitchDown < 5) Assert.False(highScorePageHold.Tick(true));
 
         var ticks = 0;
-        while (!hold.Tick(false))
+        while (!highScorePageHold.Tick(false))
         {
             ticks++;
             Assert.True(ticks < 8, "the page did not leave after the switches cleared");
         }
 
-        Assert.Equal(5, hold.ChecksWithSwitchDown);
+        Assert.Equal(5, highScorePageHold.ChecksWithSwitchDown);
     }
 }

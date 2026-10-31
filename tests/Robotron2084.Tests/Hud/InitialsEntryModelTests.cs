@@ -20,236 +20,236 @@ public sealed class InitialsEntryModelTests
     [Fact]
     public void TheEntryWaitsForFireToBeReleasedBeforeItReadsAnythingElse()
     {
-        var model = new InitialsEntryModel();
+        var initialsEntryModel = new InitialsEntryModel();
 
         // GETLZZ: the screen comes up under a held fire, and until it is up the entry looks at
         // nothing else at all.
-        Tick(model, Fire, 30);
+        Tick(initialsEntryModel, Fire, 30);
 
-        Assert.Equal(' ', model.GetPreview());
-        Assert.Equal(0, model.LetterIndex);
-        Assert.False(model.IsComplete);
+        Assert.Equal(' ', initialsEntryModel.GetPreview());
+        Assert.Equal(0, initialsEntryModel.LetterIndex);
+        Assert.False(initialsEntryModel.IsComplete);
 
-        Tick(model, Idle, 5);
-        Press(model, Up);
-        Assert.Equal('A', model.GetPreview());
+        Tick(initialsEntryModel, Idle, 5);
+        Press(initialsEntryModel, Up);
+        Assert.Equal('A', initialsEntryModel.GetPreview());
     }
 
     [Fact]
     public void UpCyclesForwardThroughTheRingAndDownCyclesBack()
     {
-        var model = Started();
+        var initialsEntryModel = Started();
 
-        Press(model, Up);
-        Assert.Equal('A', model.GetPreview());
+        Press(initialsEntryModel, Up);
+        Assert.Equal('A', initialsEntryModel.GetPreview());
 
-        Press(model, Up);
-        Assert.Equal('B', model.GetPreview());
+        Press(initialsEntryModel, Up);
+        Assert.Equal('B', initialsEntryModel.GetPreview());
 
-        Press(model, Down);
-        Assert.Equal('A', model.GetPreview());
+        Press(initialsEntryModel, Down);
+        Assert.Equal('A', initialsEntryModel.GetPreview());
 
         // Down from a blank is Z, because the rub marker needs a committed letter first (GETLST).
-        Press(model, Down);
-        Assert.Equal(' ', model.GetPreview());
+        Press(initialsEntryModel, Down);
+        Assert.Equal(' ', initialsEntryModel.GetPreview());
 
-        Press(model, Down);
-        Assert.Equal('Z', model.GetPreview());
+        Press(initialsEntryModel, Down);
+        Assert.Equal('Z', initialsEntryModel.GetPreview());
     }
 
     [Fact]
     public void TheRubMarkerIsOnlyInTheRingOnceALetterHasBeenCommitted()
     {
-        var model = Started();
+        var initialsEntryModel = Started();
 
         // Z wraps to a blank before anything is committed...
-        Press(model, Up);
-        Assert.Equal('A', model.GetPreview());
+        Press(initialsEntryModel, Up);
+        Assert.Equal('A', initialsEntryModel.GetPreview());
 
         // ...but after a commit the ring goes Z, then the rub marker (LUPP1/LDN1's GETLST test).
-        PressFire(model);
-        Assert.Equal(1, model.LetterIndex);
+        PressFire(initialsEntryModel);
+        Assert.Equal(1, initialsEntryModel.LetterIndex);
 
-        Press(model, Down);
-        Assert.Equal(InitialsEntryModel.RubLetter, model.GetPreview());
-        Assert.True(model.IsPreviewRub());
+        Press(initialsEntryModel, Down);
+        Assert.Equal(InitialsEntryModel.RubLetter, initialsEntryModel.GetPreview());
+        Assert.True(initialsEntryModel.IsPreviewRub());
     }
 
     [Fact]
     public void FireCommitsTheLetterAndMovesTheCursorOn()
     {
-        var model = Started();
+        var initialsEntryModel = Started();
 
-        Press(model, Up);
-        PressFire(model);
+        Press(initialsEntryModel, Up);
+        PressFire(initialsEntryModel);
 
-        Assert.Equal("A  ", model.GetInitials());
-        Assert.Equal(1, model.LetterIndex);
-        Assert.Equal(' ', model.GetPreview());
-        Assert.False(model.IsComplete);
+        Assert.Equal("A  ", initialsEntryModel.GetInitials());
+        Assert.Equal(1, initialsEntryModel.LetterIndex);
+        Assert.Equal(' ', initialsEntryModel.GetPreview());
+        Assert.False(initialsEntryModel.IsComplete);
     }
 
     [Fact]
     public void ThreeCommittedLettersFinishTheEntry()
     {
-        var model = Started();
+        var initialsEntryModel = Started();
 
-        CommitLetter(model, Up); // A
-        CommitLetter(model, 2, Up); // B
-        CommitLetter(model, 3, Up); // C
+        CommitLetter(initialsEntryModel, Up); // A
+        CommitLetter(initialsEntryModel, 2, Up); // B
+        CommitLetter(initialsEntryModel, 3, Up); // C
 
-        Assert.True(model.IsComplete);
-        Assert.Equal("ABC", model.GetInitials());
-        Assert.Equal(InitialsEntryModel.LetterCount, model.LetterIndex);
+        Assert.True(initialsEntryModel.IsComplete);
+        Assert.Equal("ABC", initialsEntryModel.GetInitials());
+        Assert.Equal(InitialsEntryModel.LetterCount, initialsEntryModel.LetterIndex);
     }
 
     [Fact]
     public void TheRubMarkerDeletesTheLetterBeforeTheCursor()
     {
-        var model = Started();
+        var initialsEntryModel = Started();
 
-        CommitLetter(model, 2, Up); // B
-        CommitLetter(model, 3, Up); // C
-        Assert.Equal("BC ", model.GetInitials());
+        CommitLetter(initialsEntryModel, 2, Up); // B
+        CommitLetter(initialsEntryModel, 3, Up); // C
+        Assert.Equal("BC ", initialsEntryModel.GetInitials());
 
         // Down from the blank cell reaches the rub marker, and fire there takes the C away.
-        Press(model, Down);
-        Assert.Equal(InitialsEntryModel.RubLetter, model.GetPreview());
-        PressFire(model);
+        Press(initialsEntryModel, Down);
+        Assert.Equal(InitialsEntryModel.RubLetter, initialsEntryModel.GetPreview());
+        PressFire(initialsEntryModel);
 
-        Assert.False(model.IsComplete);
-        Assert.Equal(1, model.LetterIndex);
-        Assert.Equal("B  ", model.GetInitials());
+        Assert.False(initialsEntryModel.IsComplete);
+        Assert.Equal(1, initialsEntryModel.LetterIndex);
+        Assert.Equal("B  ", initialsEntryModel.GetInitials());
 
         // And the letter the player rejected can be typed again.
-        CommitLetter(model, 2, Up);
-        Assert.Equal("BB ", model.GetInitials());
+        CommitLetter(initialsEntryModel, 2, Up);
+        Assert.Equal("BB ", initialsEntryModel.GetInitials());
     }
 
     [Fact]
     public void HoldingFireTypesTheNextLetterItself_ButTheLastOneStillHasToBePressed()
     {
-        var model = Started();
-        Press(model, Up); // A
+        var initialsEntryModel = Started();
+        Press(initialsEntryModel, Up); // A
 
         var ticks = 0;
-        while (model.LetterIndex < 2 && ticks < 400)
+        while (initialsEntryModel.LetterIndex < 2 && ticks < 400)
         {
-            model.Tick(Fire);
+            initialsEntryModel.Tick(Fire);
             ticks++;
         }
 
         // GETLT3/GETLT4: the first auto-commit waits 32 counts of two frames (64 fiftieths of a second,
         // under two seconds) and types the second letter with a blank of its own.
-        Assert.Equal("A  ", model.GetInitials());
-        Assert.Equal(2, model.LetterIndex);
-        Assert.False(model.IsComplete);
+        Assert.Equal("A  ", initialsEntryModel.GetInitials());
+        Assert.Equal(2, initialsEntryModel.LetterIndex);
+        Assert.False(initialsEntryModel.IsComplete);
         Assert.InRange(ticks, 60, 110);
 
         // The LAST letter is never typed for the player: it sleeps until the fire comes up.
-        Tick(model, Fire, 100);
-        Assert.False(model.IsComplete);
+        Tick(initialsEntryModel, Fire, 100);
+        Assert.False(initialsEntryModel.IsComplete);
 
         // Releasing and pressing fire again commits it (G1LET from the main loop).
-        Tick(model, Idle, 5);
-        PressFire(model);
+        Tick(initialsEntryModel, Idle, 5);
+        PressFire(initialsEntryModel);
 
-        Assert.True(model.IsComplete);
-        Assert.Equal("A  ", model.GetInitials());
+        Assert.True(initialsEntryModel.IsComplete);
+        Assert.Equal("A  ", initialsEntryModel.GetInitials());
     }
 
     [Fact]
     public void AHeldDirectionRepeatsTheArcadeWay_ALateFirstRepeatThenEverySeventyMilliseconds()
     {
-        var model = Started();
+        var initialsEntryModel = Started();
 
         // The cycle happens the moment the switch is seen (LUP's first LUPP1)...
-        Tick(model, Up, 3);
-        Assert.Equal('A', model.GetPreview());
+        Tick(initialsEntryModel, Up, 3);
+        Assert.Equal('A', initialsEntryModel.GetPreview());
 
         // ...and then LUP/LDOWN hold their ten DELAY1 turns before the repeat: half a second in
         // which the letter does not move at all.
-        Tick(model, Up, 25);
-        Assert.Equal('A', model.GetPreview());
+        Tick(initialsEntryModel, Up, 25);
+        Assert.Equal('A', initialsEntryModel.GetPreview());
 
         // The first repeat lands about 0.5 s in, and after that a repeat costs DELAY1 plus LUP's
         // NAP 1 — about 70 ms, so nine more are typed inside the next second.
-        Tick(model, Up, 5);
-        Assert.Equal('B', model.GetPreview());
+        Tick(initialsEntryModel, Up, 5);
+        Assert.Equal('B', initialsEntryModel.GetPreview());
 
-        Tick(model, Up, 40);
-        Assert.True(model.GetPreview() >= 'F', $"expected several fast repeats, the preview was {model.GetPreview()}");
+        Tick(initialsEntryModel, Up, 40);
+        Assert.True(initialsEntryModel.GetPreview() >= 'F', $"expected several fast repeats, the preview was {initialsEntryModel.GetPreview()}");
     }
 
     [Fact]
     public void ALetterNoOneTypesTimesOutAfterSixHundredAndFortyFrames()
     {
-        var model = Started();
+        var initialsEntryModel = Started();
 
         // TIMPRC gives each remaining letter 640 fiftieths of a second (768 port ticks), and the entry ends
         // when the last of them runs out — three deadlines for three letters.
-        Tick(model, Idle, TicksForArcadeFrames(2 * 640));
-        Assert.False(model.IsComplete);
+        Tick(initialsEntryModel, Idle, TicksForArcadeFrames(2 * 640));
+        Assert.False(initialsEntryModel.IsComplete);
 
-        Tick(model, Idle, TicksForArcadeFrames(640) + 10);
-        Assert.True(model.IsComplete);
-        Assert.Equal("   ", model.GetInitials());
+        Tick(initialsEntryModel, Idle, TicksForArcadeFrames(640) + 10);
+        Assert.True(initialsEntryModel.IsComplete);
+        Assert.Equal("   ", initialsEntryModel.GetInitials());
     }
 
     [Fact]
     public void ALetterLeftOnTheRubMarkerTimesOutAsABlank()
     {
-        var model = Started();
+        var initialsEntryModel = Started();
 
-        CommitLetter(model, Up); // A, and the rub marker joins the ring
-        Press(model, Down); // the preview is the rub marker
-        Assert.True(model.IsPreviewRub());
+        CommitLetter(initialsEntryModel, Up); // A, and the rub marker joins the ring
+        Press(initialsEntryModel, Down); // the preview is the rub marker
+        Assert.True(initialsEntryModel.IsPreviewRub());
 
         // TIMPR2 stores a space rather than let a timed-out name end on the marker.
-        Tick(model, Idle, TicksForArcadeFrames(2 * 640) + 10);
+        Tick(initialsEntryModel, Idle, TicksForArcadeFrames(2 * 640) + 10);
 
-        Assert.True(model.IsComplete);
-        Assert.Equal("A  ", model.GetInitials());
+        Assert.True(initialsEntryModel.IsComplete);
+        Assert.Equal("A  ", initialsEntryModel.GetInitials());
     }
 
     /// <summary>A fresh entry, past GETLZZ's wait for the fire switch to come up.</summary>
     private static InitialsEntryModel Started()
     {
-        var model = new InitialsEntryModel();
-        Tick(model, Idle, 5);
-        return model;
+        var initialsEntryModel = new InitialsEntryModel();
+        Tick(initialsEntryModel, Idle, 5);
+        return initialsEntryModel;
     }
 
     /// <summary>One press of a direction: the cycle happens the moment the main loop sees it.</summary>
-    private static void Press(InitialsEntryModel model, PlayerInputState direction)
+    private static void Press(InitialsEntryModel initialsEntryModel, PlayerInputState direction)
     {
-        Tick(model, direction, 3);
-        Tick(model, Idle, 3);
+        Tick(initialsEntryModel, direction, 3);
+        Tick(initialsEntryModel, Idle, 3);
     }
 
     /// <summary>Types a letter: <paramref name="steps" /> presses of up, then fire.</summary>
-    private static void CommitLetter(InitialsEntryModel model, int steps, PlayerInputState direction)
+    private static void CommitLetter(InitialsEntryModel initialsEntryModel, int steps, PlayerInputState direction)
     {
-        for (var step = 0; step < steps; step++) Press(model, direction);
+        for (var step = 0; step < steps; step++) Press(initialsEntryModel, direction);
 
-        PressFire(model);
+        PressFire(initialsEntryModel);
     }
 
-    private static void CommitLetter(InitialsEntryModel model, PlayerInputState direction)
+    private static void CommitLetter(InitialsEntryModel initialsEntryModel, PlayerInputState direction)
     {
-        CommitLetter(model, 1, direction);
+        CommitLetter(initialsEntryModel, 1, direction);
     }
 
     /// <summary>One press of fire, released again before the typematic could take over.</summary>
-    private static void PressFire(InitialsEntryModel model)
+    private static void PressFire(InitialsEntryModel initialsEntryModel)
     {
-        Tick(model, Fire, 3);
-        Tick(model, Idle, 3);
+        Tick(initialsEntryModel, Fire, 3);
+        Tick(initialsEntryModel, Idle, 3);
     }
 
-    private static void Tick(InitialsEntryModel model, PlayerInputState input, int ticks)
+    private static void Tick(InitialsEntryModel initialsEntryModel, PlayerInputState input, int ticks)
     {
-        for (var tick = 0; tick < ticks; tick++) model.Tick(input);
+        for (var tick = 0; tick < ticks; tick++) initialsEntryModel.Tick(input);
     }
 
     /// <summary>A port tick is five clock units, and a fiftieth of a second is six, so N frames are (N x 6 + 4) / 5 ticks.</summary>
