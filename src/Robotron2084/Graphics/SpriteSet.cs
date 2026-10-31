@@ -164,12 +164,12 @@ public sealed class SpriteSet
             "Sprites/AttractElectrode_4"
         ]);
         WallPixelSprite = source.CreateSolid(1, 1, Color.White);
-        MiniManSprite = BuildMiniMan(source);
+        SpareLifeSprite = BuildSpareLifeSprite(source);
         FontLarge = source.LoadAll(GetGlyphNames("Sprites/Font_L", GlyphSuffixes.Length));
         FontSmall = source.LoadAll(GetGlyphNames("Sprites/Font_S", SmallFontGlyphCount));
         CursorArrowSprite = source.Load("Sprites/Font_S_cursorright");
         Blitter = new BlitterDraw(WallPixelSprite);
-        TextRenderer = new ArcadeText(Blitter, FontLarge, FontSmall, MiniManSprite);
+        TextRenderer = new ArcadeText(Blitter, FontLarge, FontSmall, SpareLifeSprite);
     }
 
     /// <summary>
@@ -275,13 +275,13 @@ public sealed class SpriteSet
     public Texture2D[] MikeyAnimationFrames { get; }
 
     /// <summary>
-    ///     The arcade's mini man sprite — the LIVES icon (notes §58.2). ROM MNPIC
+    ///     The arcade's spare-life icon sprite — the LIVES icon (notes §58.2). ROM MNPIC
     ///     (`$3592` metadata, `$3596` pixels): 3 bytes x 8 rows = 6x8 px, one icon per
-    ///     spare man, 8 px apart, next to that player's score. It is NOT the 8x12
+    ///     spare life, 8 px apart, next to that player's score. It is NOT the 8x12
     ///     player sprite. Built at runtime from the ROM nibbles; its slot-11 body
     ///     pixels carry the slot-11 cycling marker.
     /// </summary>
-    public Texture2D MiniManSprite { get; }
+    public Texture2D SpareLifeSprite { get; }
 
     public Texture2D[] MommyAnimationFrames { get; }
 
@@ -350,13 +350,13 @@ public sealed class SpriteSet
 
     /// <summary>
     ///     ROM MNPIC (RRG23; R5 `$3596`, metadata `$3592` = 3 bytes x 8 rows): the
-    ///     6x8 mini man drawn once per spare life (notes §58.4). Each nibble is a
+    ///     6x8 spare-life icon drawn once per spare life (notes §58.4). Each nibble is a
     ///     PALETTE INDEX, and the ROM blits it with op `$02` (no transparency, mask
     ///     unused) — so the icon keeps its own colours: head slot 2, body/arms slot
     ///     11 (a CYCLING slot — the RGB process, which is why the little man's body
     ///     shimmers), legs slot 8, feet slot 3.
     /// </summary>
-    private static Texture2D BuildMiniMan(ISpriteSource source)
+    private static Texture2D BuildSpareLifeSprite(ISpriteSource source)
     {
         byte[] nibbles =
         [
@@ -370,8 +370,8 @@ public sealed class SpriteSet
             0x88, 0x08, 0x80 // 88.88.
         ];
 
-        const int widthBytes = HudLayout.HudMiniManWidthPixels / 2;
-        const int height = HudLayout.HudMiniManHeightPixels;
+        const int widthBytes = HudLayout.HudSpareLifeWidthPixels / 2;
+        const int height = HudLayout.HudSpareLifeHeightPixels;
         var pixels = new Color[widthBytes * 2 * height];
 
         for (var row = 0; row < height; row++)

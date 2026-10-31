@@ -8,7 +8,7 @@ namespace Robotron2084.Graphics;
 
 /// <summary>
 ///     The arcade's text: its two fonts, printed and measured a glyph at a time, the high score table's number
-///     printer, the rub marker and the mini man lives icon.
+///     printer, the rub marker and the spare-life icon.
 /// </summary>
 public sealed class ArcadeText
 {
@@ -23,19 +23,19 @@ public sealed class ArcadeText
     private readonly BlitterDraw _blitter;
     private readonly Texture2D[] _fontLarge;
     private readonly Texture2D[] _fontSmall;
-    private readonly Texture2D _miniManSprite;
+    private readonly Texture2D _spareLifeSprite;
 
     /// <summary>Prints with these fonts through this blitter.</summary>
     /// <param name="blitter">The blitter that draws each glyph.</param>
     /// <param name="fontLarge">The large font's glyphs.</param>
     /// <param name="fontSmall">The small font's glyphs.</param>
-    /// <param name="miniManSprite">The lives icon.</param>
-    public ArcadeText(BlitterDraw blitter, Texture2D[] fontLarge, Texture2D[] fontSmall, Texture2D miniManSprite)
+    /// <param name="spareLifeSprite">The lives icon.</param>
+    public ArcadeText(BlitterDraw blitter, Texture2D[] fontLarge, Texture2D[] fontSmall, Texture2D spareLifeSprite)
     {
         _blitter = blitter;
         _fontLarge = fontLarge;
         _fontSmall = fontSmall;
-        _miniManSprite = miniManSprite;
+        _spareLifeSprite = spareLifeSprite;
     }
 
     /// <summary>
@@ -99,17 +99,17 @@ public sealed class ArcadeText
     }
 
     /// <summary>
-    ///     Draws the mini man LIVES icon (notes §58.2) at (x, y), PortPixelsPerArcadePixel x its
+    ///     Draws the spare-life (LIVES) icon (notes §58.2) at (x, y), PortPixelsPerArcadePixel x its
     ///     6x8 arcade-pixel size, through the colour-cycle effect so its slot-11
     ///     body/arms cycle like the arcade's.
     /// </summary>
-    public void DrawMiniMan(SpriteBatch spriteBatch, int x, int y)
+    public void DrawSpareLife(SpriteBatch spriteBatch, int x, int y)
     {
         _blitter.UsePassThrough();
         spriteBatch.Draw(
-            _miniManSprite,
-            new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_miniManSprite.Width),
-                ScreenSize.ToPortPixelsFromArcadePixels(_miniManSprite.Height)),
+            _spareLifeSprite,
+            new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeSprite.Width),
+                ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeSprite.Height)),
             Color.White);
     }
 
