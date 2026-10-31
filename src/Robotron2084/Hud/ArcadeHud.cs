@@ -20,10 +20,10 @@ public static class ArcadeHud
     /// <summary>
     ///     The ROM's title string (128, TITLEM: "ROBOTRON 2084") and its tagline
     ///     (129, FAMMM: "SAVE THE LAST HUMAN FAMILY"), both in the LARGE font in
-    ///     slot $AA. The caller places them; the title screen and the attract
+    ///     palette index $AA. The caller places them; the title screen and the attract
     ///     movie's story band each use their own rows (notes §94.1, §96.3).
     /// </summary>
-    public static void DrawCenteredLargeText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int y, int slot)
+    public static void DrawCenteredLargeText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int y, int paletteIndex)
     {
         var width = 0;
         foreach (var character in text)
@@ -41,19 +41,19 @@ public static class ArcadeHud
                                                              HudLayout.HudSmallFontGlyphGapPixels);
         }
 
-        sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, slot);
+        sprites.TextRenderer.DrawLargeFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, paletteIndex);
     }
 
     /// <summary>Draws one of the ROM's message strings at its own cursor column/row.</summary>
     public static void DrawMessageText(SpriteBatch spriteBatch, SpriteSet sprites, string text, int arcadeColumn,
-        int arcadeRow, int slot)
+        int arcadeRow, int paletteIndex)
     {
         sprites.TextRenderer.DrawSmallFontText(
             spriteBatch,
             text,
             HudLayout.ToPortX(arcadeColumn * 2),
             HudLayout.ToPortY(arcadeRow),
-            slot);
+            paletteIndex);
     }
 
     /// <summary>Draws each player's score and spare lives along the top of the screen, just above the wall.</summary>
@@ -86,13 +86,13 @@ public static class ArcadeHud
             }
 
             // ROM $DC13/$DC19: the player whose turn it is blits their score with
-            // $AA (slot 10 — one of the colour-CYCLING slots); an idle player's
-            // uses $11 (slot 1).
-            var slot = HudLayout.HudScoreSlotIdle;
+            // $AA (palette index 10 — one of the colour-CYCLING palette indices); an idle player's
+            // uses $11 (palette index 1).
+            var paletteIndex = HudLayout.HudScorePaletteIndexIdle;
             var isCurrentPlayer = ReferenceEquals(playerSlot, session.GetCurrent());
-            if (isCurrentPlayer) slot = HudLayout.HudScoreSlotCurrent;
+            if (isCurrentPlayer) paletteIndex = HudLayout.HudScorePaletteIndexCurrent;
 
-            DrawScore(spriteBatch, sprites, playerSlot.Score, HudLayout.ToPortX(scoreColumn * 2), hudY, slot);
+            DrawScore(spriteBatch, sprites, playerSlot.Score, HudLayout.ToPortX(scoreColumn * 2), hudY, paletteIndex);
             if (showSpareLives)
                 DrawSpareLives(spriteBatch, sprites, playerSlot.GetDisplayedSpareLives(), HudLayout.ToPortX(livesColumn * 2), hudY);
         }
@@ -107,18 +107,18 @@ public static class ArcadeHud
     {
         var x = HudLayout.ToPortX(HudLayout.HudWaveTextColumn * 2);
         var y = HudLayout.ToPortY(HudLayout.HudWaveTextRow);
-        const int numberSlot = HudLayout.HudScoreSlotCurrent;
+        const int numberPaletteIndex = HudLayout.HudScorePaletteIndexCurrent;
 
         if (wave >= 10)
-            x = sprites.TextRenderer.DrawSmallFontText(spriteBatch, (wave / 10 % 10).ToString(), x, y, numberSlot);
+            x = sprites.TextRenderer.DrawSmallFontText(spriteBatch, (wave / 10 % 10).ToString(), x, y, numberPaletteIndex);
         else
             // PRINT_BCD_NUMBER with $D1 = 2 (string 104's $15 op): a leading zero
             // advances without drawing — 4 px in the small font.
             x += ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudSmallFontBlankAdvancePixels);
 
-        x = sprites.TextRenderer.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberSlot);
+        x = sprites.TextRenderer.DrawSmallFontText(spriteBatch, (wave % 10).ToString(), x, y, numberPaletteIndex);
         x += ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudWaveNumberGapPixels);
-        sprites.TextRenderer.DrawSmallFontText(spriteBatch, " WAVE", x, y, HudLayout.HudWaveTextSlot);
+        sprites.TextRenderer.DrawSmallFontText(spriteBatch, " WAVE", x, y, HudLayout.HudWaveTextPaletteIndex);
     }
 
     /// <summary>
@@ -136,14 +136,14 @@ public static class ArcadeHud
     ///     ROM $DC13 → $6096: the score as seven large-font glyphs at the cursor, a
     ///     drawn digit advancing 7 px and a suppressed leading zero 6 px.
     /// </summary>
-    private static void DrawScore(SpriteBatch spriteBatch, SpriteSet sprites, int score, int originX, int y, int slot)
+    private static void DrawScore(SpriteBatch spriteBatch, SpriteSet sprites, int score, int originX, int y, int paletteIndex)
     {
         foreach (var glyph in ScoreFormatter.LayOutGlyphs(
                      score,
                      originX,
                      ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudScoreDigitAdvancePixels),
                      ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudScoreBlankAdvancePixels)))
-            sprites.Blitter.DrawGlyphSlot(spriteBatch, sprites.FontLarge, glyph.Digit, glyph.X, y, slot);
+            sprites.Blitter.DrawGlyphPaletteIndex(spriteBatch, sprites.FontLarge, glyph.Digit, glyph.X, y, paletteIndex);
     }
 
     /// <summary>ROM $34E0: the spare-life icons, 8 px apart.</summary>

@@ -116,16 +116,16 @@ public static class HighScoreTableLayout
     }
 
     /// <summary>
-    ///     The palette slot stroke <paramref name="stroke" /> is drawn in. MARQ's flavour is a
-    ///     packed byte whose nibbles are the outer and inner pixel's slot, and FRAMER walks it
+    ///     The palette index stroke <paramref name="stroke" /> is drawn in. MARQ's flavour is a
+    ///     packed byte whose nibbles are the outer and inner pixel's palette index, and FRAMER walks it
     ///     DOWN a stroke at a time: `GETA`'s <c>SUBA #$11</c> subtracts IN PLACE (the `$88` is
     ///     only reloaded once that subtraction reaches zero), so the growing pass lays down
     ///     <c>$11, $88, $77, $66, $55, $44, $33, $22, $11 …</c> — A SLOT PER STROKE, eight of
-    ///     them repeating. That is why <c>LOOPP</c> shifts a register of exactly EIGHT slots, and
-    ///     why the arcade's wall reads as several colours at once: the eight visible strokes are slots
+    ///     them repeating. That is why <c>LOOPP</c> shifts a register of exactly EIGHT palette indices, and
+    ///     why the arcade's wall reads as several colours at once: the eight visible strokes are palette indices
     ///     eight to one, each showing a COLTAB colour three frames apart in the walk.
     /// </summary>
-    public static int GetFrameStrokeSlot(int stroke)
+    public static int GetFrameStrokePaletteIndex(int stroke)
     {
         if (stroke <= 0) return 1;
 

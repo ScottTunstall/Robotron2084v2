@@ -11,8 +11,8 @@ namespace Robotron2084.Hud;
 ///             the growing pass: two strokes a fiftieth of a second, out from the smallest rectangle,
 ///             (62,125)-(89,127), to the terminal point (col 6, row 13)-(col 145, row 239); its flavour
 ///             starts at `$88` and `GETA` walks it DOWN by `$11` a stroke, so each stroke takes its own
-///             palette slot (see <see cref="HighScoreTableLayout.GetFrameStrokeSlot" />) and the eight visible
-///             ones are slots 8…1;
+///             palette index (see <see cref="HighScoreTableLayout.GetFrameStrokePaletteIndex" />) and the eight visible
+///             ones are palette indices 8…1;
 ///         </item>
 ///         <item>
 ///             the erase pass: the same walk again in flavour 0 (BLACK) — <c>FRCOND</c> does

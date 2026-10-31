@@ -11,7 +11,7 @@ namespace Robotron2084.Hud;
 /// <remarks>
 ///     <c>CONGP</c> prints "PLAYER n" at <c>CURSAB $40,$10</c> = (64, 16), "YOU ARE A ROBOTRON HERO" at
 ///     (41, 48), and "ENTER YOUR INITIALS:" at (45, 88) — all in the LARGE font (the <c>WRD7V</c>
-///     default) in <c>COLOR $44</c> = slot 4. <c>TELSUB</c> then switches to the SMALL font and white
+///     default) in <c>COLOR $44</c> = palette index 4. <c>TELSUB</c> then switches to the SMALL font and white
 ///     (<c>SFONT,COLOR $99</c>) for the two instructions at (47, 192) and (50, 204). The letters are typed
 ///     into the echo region <c>$4680</c> = (column 70, row 128), the screen's centre, and <c>G0SUB</c>'s
 ///     "frob" markers — the raw video byte <c>$99</c>, a two-pixel dash — sit eight rows below the echo
@@ -34,11 +34,11 @@ public static class InitialsEntryLayout
 
     public const int HeroRow = 48;
 
-    /// <summary>CONGP's <c>COLOR $44</c>: the page's ink, slot 4 for the large-font lines.</summary>
-    public const int InkSlot = 4;
+    /// <summary>CONGP's <c>COLOR $44</c>: the page's ink, palette index 4 for the large-font lines.</summary>
+    public const int InkPaletteIndex = 4;
 
     /// <summary>TELSUB's <c>COLOR $99</c>: white for the instructions and the frob markers.</summary>
-    public const int InstructionSlot = 9;
+    public const int InstructionPaletteIndex = 9;
 
     /// <summary>Rows below the echo cursor of <c>G0SUB</c>'s frob marker (`STA 8,X`).</summary>
     public const int MarkerRowOffset = 8;

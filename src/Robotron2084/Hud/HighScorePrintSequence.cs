@@ -28,7 +28,7 @@ namespace Robotron2084.Hud;
 ///             (<c>MAKP DECAZ/COLA/COLC/COLD</c>) and begin its 600-frame hold.
 ///         </item>
 ///     </list>
-///     The printed rows are already in palette slots 9/10, and those slots are BLACK until
+///     The printed rows are already in palette indices 9/10, and those palette indices are BLACK until
 ///     the ramps start (FRAMER zeroed the palette), so the text is drawn invisibly for the
 ///     few frames it takes to print and then comes up dark red as DECAZ/COLA write their
 ///     first byte — see <see cref="HighScorePalette" />.
