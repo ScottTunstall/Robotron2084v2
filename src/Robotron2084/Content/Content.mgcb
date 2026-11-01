@@ -3118,7 +3118,7 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Title_2084.png
 
-#begin Sprites/Title_Wordmark_Core.png
+#begin Sprites/Title_LargeTitleLetters_Core.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -3128,9 +3128,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Title_Wordmark_Core.png
+/build:Sprites/Title_LargeTitleLetters_Core.png
 
-#begin Sprites/Title_Wordmark_Rim.png
+#begin Sprites/Title_LargeTitleLetters_Rim.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -3140,7 +3140,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Title_Wordmark_Rim.png
+/build:Sprites/Title_LargeTitleLetters_Rim.png
 
 #begin Sprites/WilliamsLogo.png
 /importer:TextureImporter
