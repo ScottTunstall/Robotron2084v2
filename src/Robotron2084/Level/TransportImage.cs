@@ -27,13 +27,13 @@ namespace Robotron2084.Level;
 public sealed class TransportImage
 {
     /// <summary>
-    ///     The value stored in <see cref="_pixels" /> for a pixel that is not showing. <see cref="GetPixel" /> returns it
+    ///     The value stored in <see cref="_pixelStates" /> for a pixel that is not showing. <see cref="GetPixel" /> returns it
     ///     for such a pixel.
     /// </summary>
     public const int PixelOff = -1;
 
     /// <summary>
-    ///     The value stored in <see cref="_pixels" /> for a pixel that is showing its own colour. <see cref="GetPixel" />
+    ///     The value stored in <see cref="_pixelStates" /> for a pixel that is showing its own colour. <see cref="GetPixel" />
     ///     returns it for such a pixel.
     /// </summary>
     public const int PixelOwnColour = -2;
@@ -45,7 +45,7 @@ public sealed class TransportImage
     ///     What each pixel is showing, a row at a time: <see cref="PixelOff" />, <see cref="PixelOwnColour" />, or a
     ///     sparkle's palette number.
     /// </summary>
-    private readonly int[] _pixels;
+    private readonly int[] _pixelStates;
 
     /// <summary>Where in the sparkle colours this image's own set of them starts.</summary>
     private readonly int _sparkleSetStart;
@@ -63,8 +63,8 @@ public sealed class TransportImage
         Template = template;
         Width = width;
         Height = height;
-        _pixels = new int[width * height];
-        Array.Fill(_pixels, PixelOff);
+        _pixelStates = new int[width * height];
+        Array.Fill(_pixelStates, PixelOff);
         _drawnInTemplate = [.. template.Select(pixel => pixel.A > 0)];
         _sparkleSetStart = TransporterTuning.SparkleSetByPick[sparkleSetPick] * TransporterTuning.SparkleColoursPerSet;
     }
@@ -84,7 +84,7 @@ public sealed class TransportImage
     /// <returns><see cref="PixelOff" />, <see cref="PixelOwnColour" />, or a palette number from 0 to 15 for a sparkle.</returns>
     public int GetPixel(int x, int y)
     {
-        return _pixels[y * Width + x];
+        return _pixelStates[y * Width + x];
     }
 
     /// <summary>Says whether the sequence has run out: nothing more will change.</summary>
@@ -141,7 +141,7 @@ public sealed class TransportImage
         {
             if (!TryGetPixelIndex(byteIndex, half, out var pixel)) return;
 
-            _pixels[pixel] = PixelOff;
+            _pixelStates[pixel] = PixelOff;
         }
     }
 
@@ -153,7 +153,7 @@ public sealed class TransportImage
         {
             if (!TryGetPixelIndex(byteIndex, half, out var pixel)) return;
 
-            if (_drawnInTemplate[pixel]) _pixels[pixel] = PixelOwnColour;
+            if (_drawnInTemplate[pixel]) _pixelStates[pixel] = PixelOwnColour;
         }
     }
 
@@ -171,8 +171,8 @@ public sealed class TransportImage
 
             var colourPair = TransporterTuning.SparkleColours[sparkle++ % TransporterTuning.SparkleColours.Length];
             var isLeftPixel = half == 0xF0;
-            _pixels[pixel] = colourPair & 0x0F;
-            if (isLeftPixel) _pixels[pixel] = colourPair >> 4;
+            _pixelStates[pixel] = colourPair & 0x0F;
+            if (isLeftPixel) _pixelStates[pixel] = colourPair >> 4;
         }
     }
 }
