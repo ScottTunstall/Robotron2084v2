@@ -104,7 +104,7 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     public byte OutputLevel => _pia6821.PortAPins;
 
     /// <summary>Always false: the emulated board cannot tell when a sound has ended.</summary>
-    public bool IsPlaying => false;
+    public bool IsPlaying() => false;
 
     /// <summary>Runs the board's processor for one instruction, however many cycles were asked for.</summary>
     /// <param name="maxCycles">Not used: an instruction cannot be split.</param>
