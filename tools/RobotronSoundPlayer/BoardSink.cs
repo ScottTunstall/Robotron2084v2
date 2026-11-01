@@ -11,7 +11,7 @@ internal sealed class BoardSink(ISoundBoard soundBoard, SoundBoardRenderer sound
     public float[] LastPortTick { get; } = new float[PlayerAudio.SamplesPerPortTick];
 
     /// <summary>Always false: the player does not ask whether a sound is still playing.</summary>
-    public bool IsPlaying => false;
+    public bool IsPlaying() => false;
 
     /// <summary>Sends a sound number to the board. The player is mono, so where it is heard is ignored.</summary>
     /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>), 0 to 63.</param>
