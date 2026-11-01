@@ -4,7 +4,10 @@ namespace Robotron2084.Entities;
 /// <remarks>
 ///     This version of the game calls them Mikey, Mommy and Daddy.
 ///     <list type="bullet">
-///         <item>Original source: <c>RRH11.ASM</c>, where they are <c>KID</c>, <c>MOM</c> and <c>DAD</c></item>
+///         <item>
+///             Original source: <c>RRH11.ASM</c> <c>HUMSTV</c>, which starts the family from <c>KIDCNT</c>, <c>MOMCNT</c> and
+///             <c>DADCNT</c> (kept in <c>RRF.ASM</c>). Their walk pictures are <c>KIDLP1</c>, <c>MLP1</c> and <c>DLP1</c>.
+///         </item>
 ///         <item>
 ///             Disassembly: <c>asm/robomame.asm</c> at <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>), which gives Mikey,
 ///             Mommy and Daddy their handlers at <c>$0330</c>, <c>$0335</c> and <c>$033A</c>

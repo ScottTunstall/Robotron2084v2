@@ -30,7 +30,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>The range of the random number behind where a tank goes: from 0 up to one less than this.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRTK4.ASM</c> <c>ANIMATE_TANK</c>.</item>
+    ///         <item>Original source: <c>RRTK4.ASM</c> <c>TNKND</c>, <c>CMPA #$60 / BLS TNKND0</c> (a seed up to <c>$60</c> seeks the player).</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
@@ -84,7 +84,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>How often a tank goes for the player when it picks where to go: about 38 times in 100.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRTK4.ASM</c> <c>ANIMATE_TANK</c>.</item>
+    ///         <item>Original source: <c>RRTK4.ASM</c> <c>TNKND</c>, <c>CMPA #$60 / BLS TNKND0</c> (a seed up to <c>$60</c> seeks the player).</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
@@ -421,7 +421,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// <remarks>
     ///     How often it is where the player is, is set by <see cref="PlayerDestinationRandomAtMost" />.
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRTK4.ASM</c> <c>ANIMATE_TANK</c>.</item>
+    ///         <item>Original source: <c>RRTK4.ASM</c> <c>TNKND</c>, <c>CMPA #$60 / BLS TNKND0</c> (a seed up to <c>$60</c> seeks the player).</item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>

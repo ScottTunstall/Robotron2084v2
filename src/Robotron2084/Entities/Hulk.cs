@@ -33,7 +33,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>.</item>
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HNDX1</c>, <c>CMPA #XMAX / CMPA #XMAX+$40 / LDA #XMIN</c>.</item>
     ///         <item>
     ///             Disassembly: <c>$012D</c> to <c>$0135</c>, <c>CMPA #$8F / BLS / CMPA #$CF / BLS / LDA #$07</c>. <c>$8F</c>
     ///             is the
@@ -81,11 +81,21 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private const int NewDirectionStepsMin = 1;
 
     /// <summary>How many columns past the right wall the phantom target is (see <see cref="GetPhantomTargetPosition" />).</summary>
-    /// <remarks>Disassembly: the byte <c>$C8</c> at <c>$7E05</c>, read as a column. The right wall is at column <c>$8F</c>.</remarks>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKND</c>, which follows the hulk's target pointer without checking it.</item>
+    ///         <item>Disassembly: the byte <c>$C8</c> at <c>$7E05</c>, read as a column. The right wall is at column <c>$8F</c>.</item>
+    ///     </list>
+    /// </remarks>
     private const int PhantomColumnsPastRightWall = 0xC8 - 0x8F;
 
     /// <summary>How many rows above the top wall the phantom target is (see <see cref="GetPhantomTargetPosition" />).</summary>
-    /// <remarks>Disassembly: the byte <c>$13</c> at <c>$7E06</c>, read as a row. The top wall is at row <c>$18</c>.</remarks>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKND</c>, which follows the hulk's target pointer without checking it.</item>
+    ///         <item>Disassembly: the byte <c>$13</c> at <c>$7E06</c>, read as a row. The top wall is at row <c>$18</c>.</item>
+    ///     </list>
+    /// </remarks>
     private const int PhantomRowsAboveTopWall = 0x18 - 0x13;
 
     /// <summary>
@@ -157,7 +167,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HND0</c> (sideways) and <c>HNDY</c> (up and down), <c>ANDA #$1F / ADDA #-$10</c>.</item>
     ///         <item>
     ///             Disassembly: <c>HULK_MOVE_HORIZONTALLY</c> (<c>$0125</c>) and <c>MAKE_HULK_MOVE_VERTICALLY</c> (
     ///             <c>$0145</c>),
@@ -173,7 +183,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HND0</c> (sideways) and <c>HNDY</c> (up and down), <c>ANDA #$1F / ADDA #-$10</c>.</item>
     ///         <item>Disassembly: <c>$0125</c> and <c>$0145</c>, <c>ADDA #$F0</c>.</item>
     ///     </list>
     /// </remarks>
@@ -494,7 +504,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>
     ///     It picks the way that leads to a spot a random distance from its target.
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRH11.ASM</c> <c>HNDX</c>/<c>HNDY</c>.</item>
+    ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKND</c>: <c>HND0</c> to <c>HNDX3</c> for sideways, <c>HNDY</c> to <c>HNDY2</c> for up and down.</item>
     ///         <item>
     ///             Disassembly: <c>HULK_MOVE_HORIZONTALLY</c> (<c>$0125</c>) and <c>MAKE_HULK_MOVE_VERTICALLY</c> (
     ///             <c>$0145</c>). The

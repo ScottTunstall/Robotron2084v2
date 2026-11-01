@@ -52,11 +52,11 @@ public sealed class HulkWaveSpawner : IWaveSpawner
         var nextSlotToSearch = FamilyList.FirstSlot;
         for (var i = 0; i < playField.WaveParameters.HulkCount; i++)
         {
-            var position =
-                waveSpawnContext.SpawnPlacement.FindSpawnPointAwayFrom(waveSpawnContext.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
+            var position = waveSpawnContext.SpawnPlacement.FindSpawnPointAwayFrom(waveSpawnContext.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
             int? slot = FamilyList.LastSlot;
             var isSearchingFamilyList = waveSpawnContext.Random.Next(TargetMaxExclusive) <= SearchFamilyListThreshold;
-            if (isSearchingFamilyList) slot = TakeNextLeftOverSlot(waveSpawnContext.FamilySlotsLeftOver, ref nextSlotToSearch);
+            if (isSearchingFamilyList)
+                (slot, nextSlotToSearch) = FindNextLeftOverSlot(waveSpawnContext.FamilySlotsLeftOver, nextSlotToSearch);
 
             Func<IntVector2> getTargetPosition = () => phantomTargetPosition;
             if (slot is { } stalkedSlot)
@@ -72,24 +72,20 @@ public sealed class HulkWaveSpawner : IWaveSpawner
     ///     the last search stopped.
     /// </summary>
     /// <param name="familySlotsLeftOver">The places that still held a family member when the last wave or life ended.</param>
-    /// <param name="nextSlotToSearch">
-    ///     The place to start looking from. It is moved on to the place after the one that is
-    ///     found.
-    /// </param>
-    /// <returns>The place, or null when no place held anyone.</returns>
+    /// <param name="nextSlotToSearch">The place to start looking from.</param>
+    /// <returns>
+    ///     <c>Slot</c> is the place found, or null when no place held anyone. <c>NextSlotToSearch</c> is the place
+    ///     to start looking from next time: the place after the one found, or the same place when none was found.
+    /// </returns>
     /// <remarks>Disassembly: <c>GET_FAMILY_MEMBER_FROM_LIST</c> (<c>$0237</c>), whose cursor is kept at <c>$9849</c>.</remarks>
-    private static int? TakeNextLeftOverSlot(IReadOnlyList<int> familySlotsLeftOver, ref int nextSlotToSearch)
+    private static (int? Slot, int NextSlotToSearch) FindNextLeftOverSlot(IReadOnlyList<int> familySlotsLeftOver, int nextSlotToSearch)
     {
         for (var searched = 0; searched < FamilyList.SlotCount; searched++)
         {
             var slot = (nextSlotToSearch + searched) % FamilyList.SlotCount;
-            if (familySlotsLeftOver.Contains(slot))
-            {
-                nextSlotToSearch = slot + 1;
-                return slot;
-            }
+            if (familySlotsLeftOver.Contains(slot)) return (slot, slot + 1);
         }
 
-        return null;
+        return (null, nextSlotToSearch);
     }
 }

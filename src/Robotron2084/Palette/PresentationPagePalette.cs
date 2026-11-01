@@ -3,90 +3,148 @@ using Robotron2084.Core;
 namespace Robotron2084.Palette;
 
 /// <summary>
-///     The Williams presentation page's OWN colour set (notes §106) — the seven colours and the two
-///     clocks the page runs. Every call site here is the
-///     ROM's, on the page that prints the welcome message (`$87A6` onward):
-///     | ROM | what it does |
-///     |-----|--------------|
-///     | `$8A3A` | copies the seven bytes at `$8A70` into the RAM palette's entries **1..7**, leaving the other nine on
-///     their CRTAB defaults |
-///     | `$8A4F` | re-copies that table and sets ONE entry to `$FF` — WHITE — every **3 fiftieths of a second**, stepping
-///     2,3,…,7,1 and round: a white flash running through the seven |
-///     | `$884E` | the text colour operand `$66` — the welcome message and the page's credit strings are drawn in entry
-///     **6** |
-///     | `$89DA` | the border "W" logos step their colour operand `$77 → $66 → … → $11 → $77`, i.e. one entry per step
-///     down through 7…1 |
-///     The seven entries are red, blue, red-orange, green, magenta, ORANGE and yellow, so the page's
-///     text is ORANGE with a white flash sweeping through it, and the border logos
-///     around it cycle through the seven.
-///     **Two clocks, both on notes §52's clock-unit accumulator** (a fiftieth of a second is 6/5 of a port tick):
-///     the WHITE CHASE steps every 3 fiftieths of a second, and the border logos' colour operand steps every 28 frames —
-///     the border ring's own rate, which comes out of the animation loop at `$88EF` waiting on
-///     <c>vidctrs</c> and moving six logos a frame over a ring of 28 (`$87D9`'s `LDA #$1C`), so a given
-///     logo is re-coloured once every 28 frames.
+///     The colours of the presentation page that shows the welcome message, and the timers that change them. A white
+///     flash runs through the page's seven colours, and the border logos change colour as well.
 /// </summary>
+/// <remarks>
+///     <para>
+///         The page uses seven colours of its own, in palette entries 1 to 7: red, blue, red-orange, green, magenta, orange
+///         and yellow. The other entries keep their usual colours. The page's text is drawn in entry 6, which is orange.
+///     </para>
+///     <para>Two timers change the colours while the page is showing:</para>
+///     <list type="bullet">
+///         <item>
+///             <description>
+///                 The white flash turns one entry white every 3 fiftieths of a second. It moves on to the next entry each time,
+///                 in the order 2, 3, 4, 5, 6, 7, 1 and then round again.
+///             </description>
+///         </item>
+///         <item>
+///             <description>
+///                 The border logos change colour every 28 fiftieths of a second. They go down the entries in the order
+///                 7, 6, 5, 4, 3, 2, 1 and then round again.
+///             </description>
+///         </item>
+///     </list>
+///     <para>
+///         Both timers count in clock units (notes §52), where a fiftieth of a second is 6/5 of a port tick. The 28 is the
+///         border ring's own rate: the ring has 28 logos and the page handles one each frame, so a given logo is painted
+///         once every 28 frames.
+///     </para>
+///     <para>
+///         <b>Why it is called the white flash.</b> The original source calls this the white process: <c>COL1</c> starts it,
+///         and <c>COLL</c> keeps a white pointer that it kicks up to the next entry. The project's notes called it the
+///         chase. Here it is called the white flash, because that is what you see: one entry at a time turns white, and the
+///         white moves on through the seven.
+///     </para>
+///     <list type="bullet">
+///         <item>
+///             <description>
+///                 Original source: <c>RRLOG.ASM</c>. <c>LOGG2</c> builds the page, <c>CSET</c> copies the colour table
+///                 <c>LCTAB</c>, <c>COL1</c> and <c>COLL</c> run the white flash, <c>LINOUT</c> prints the welcome message,
+///                 <c>FORMX</c> changes the border logos' colour, and <c>DOBALL</c> and <c>WILL55</c> run the ring of logos.
+///             </description>
+///         </item>
+///         <item>
+///             <description>
+///                 Disassembly: <c>asm/robomame.asm</c> at <c>$87A6</c> (<c>LOGG2</c>), <c>$8A3A</c> (<c>CSET</c>),
+///                 <c>$8A4F</c> (<c>COL1</c>), <c>$884E</c> (<c>LINOUT</c>), <c>$89DA</c> (<c>FORMX</c>), <c>$87D9</c>
+///                 (<c>DOBALL</c>), <c>$88EF</c> (<c>WILL55</c>) and <c>$8A70</c> (<c>LCTAB</c>). The disassembly gives no
+///                 label for these routines, only addresses.
+///             </description>
+///         </item>
+///     </list>
+/// </remarks>
 public sealed class PresentationPagePalette
 {
-    /// <summary>
-    ///     The first entry the page writes. It is subtracted from <see cref="LastPaletteIndex" />, with one added, to give
-    ///     <see cref="_paletteIndexCount" />.
-    /// </summary>
+    /// <summary>The first of the seven palette entries the page writes.</summary>
     public const int FirstPaletteIndex = 1;
 
-    /// <summary>
-    ///     The last entry the page writes (seven of them). It has <see cref="FirstPaletteIndex" /> subtracted from it, with one
-    ///     added, to give <see cref="_paletteIndexCount" />.
-    /// </summary>
+    /// <summary>The last of the seven palette entries the page writes.</summary>
     public const int LastPaletteIndex = 7;
 
-    /// <summary>
-    ///     The entry the page's own text is drawn in — the ROM's text colour operand `$66`: entry 6,
-    ///     which the page's table makes ORANGE (`$1F`).
-    /// </summary>
+    /// <summary>The palette entry the page's text is drawn in. The page's colours make it orange.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRLOG.ASM</c> <c>LINOUT</c>, <c>LDA #$66</c> ("COLOR OF OPERATOR MESSAGE").</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$884E</c>.</description></item>
+    ///     </list>
+    /// </remarks>
     public const int TextPaletteIndex = 6;
 
     /// <summary>
-    ///     The seven entries the page's own code writes (ROM `$8A70`), in palette index order: red, blue,
-    ///     red-orange, green, magenta, orange, yellow. Palette indices 1..7 are the page's; 8..15 keep CRTAB.
+    ///     The seven colours the page writes into its palette entries, in order: red, blue, red-orange, green, magenta, orange
+    ///     and yellow.
     /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRLOG.ASM</c> <c>LCTAB</c>, which <c>CSET</c> copies.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$8A70</c>.</description></item>
+    ///     </list>
+    /// </remarks>
     public static readonly byte[] PageColours = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
 
-    /// <summary>
-    ///     `$8A68`'s `LDA #$03` — the chase takes a step every three fiftieths of a second. It is how many fiftieths of a
-    ///     second are gathered in <see cref="_chaseClockUnits" /> before the chase takes a step.
-    /// </summary>
-    private const int ChaseArcadeFramesPerStep = 3;
+    /// <summary>How many fiftieths of a second pass between one cycle of the white flash and the next.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRLOG.ASM</c> <c>COLL</c>, <c>NAP 3,COLL</c>.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$8A68</c>, <c>LDA #$03</c>.</description></item>
+    ///     </list>
+    /// </remarks>
+    private const int WhiteFlashArcadeFramesPerCycle = 3;
 
-    /// <summary>The colour the chase writes (`$8A64`'s `LDA #$FF`).</summary>
-    private const byte ChaseColour = 0xFF;
+    /// <summary>The colour the white flash paints on an entry.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRLOG.ASM</c> <c>COLL8</c>, <c>LDA #$FF / STA ,X</c>.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$8A64</c>, <c>LDA #$FF</c>.</description></item>
+    ///     </list>
+    /// </remarks>
+    private const byte WhiteFlashColour = 0xFF;
 
-    /// <summary>
-    ///     One step per logo-handling, and the ring is 28 logos of one frame each. It is how many fiftieths of a second
-    ///     are gathered in <see cref="_wordmarkClockUnits" /> before the wordmark takes a step.
-    /// </summary>
-    private const int WordmarkArcadeFramesPerStep = 28;
+    /// <summary>How many fiftieths of a second pass between one colour change of the border logos and the next.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRLOG.ASM</c> <c>DOBALL</c>, <c>LDA #28</c> ("WE'LL DO 28"), with the wait in <c>WILL55</c>.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$87D9</c>, <c>LDA #$1C</c>, and <c>$88EF</c>.</description></item>
+    ///     </list>
+    /// </remarks>
+    private const int WordmarkArcadeFramesPerCycle = 28;
 
     private readonly int _paletteIndexCount = LastPaletteIndex - FirstPaletteIndex + 1;
 
-    private int _chaseClockUnits;
-    private int _chasePaletteIndex = FirstPaletteIndex;
+    private int _whiteFlashClockUnits;
+    private int _whiteFlashPaletteIndex = FirstPaletteIndex;
     private int _wordmarkClockUnits;
-    private int _wordmarkStep;
+    private int _wordmarkCyclePosition;
 
     /// <summary>
-    ///     The palette entry the page's wordmark is drawn in on this step: palette index 7, 6, 5, …, 1 and round
-    ///     (the ROM's `$77 → $66 → … → $11 → $77`).
+    ///     The palette entry the wordmark is drawn in right now. It goes 7, 6, 5, 4, 3, 2, 1 and then back to 7.
     /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>
+    ///                 Original source: <c>RRLOG.ASM</c> <c>FORMX</c> (<c>SIDEX</c>, <c>SIDE8</c>): <c>BALCOL</c> goes down
+    ///                 by <c>SUBA #$11</c> each time, from <c>$77</c> to <c>$11</c> and then back to <c>$77</c>.
+    ///             </description>
+    ///         </item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$89DA</c>, <c>SUBA #$11</c>.</description></item>
+    ///     </list>
+    /// </remarks>
     public int GetWordmarkPaletteIndex()
     {
-        return LastPaletteIndex - _wordmarkStep;
+        return LastPaletteIndex - _wordmarkCyclePosition;
     }
 
     /// <summary>
-    ///     The entry one step BEHIND <see cref="GetWordmarkPaletteIndex()" /> (palette index 1 wraps to 7). The port's traced
-    ///     wordmark draws its rim here so the reference screenshot's two-tone survives the cycle — and
-    ///     at the wrap the pair is the reference's own red body on a yellow rim.
+    ///     The palette entry the wordmark's rim is drawn in: the one just before the wordmark's own entry, or entry 7 when
+    ///     the wordmark is in entry 1.
     /// </summary>
+    /// <remarks>
+    ///     The port's traced wordmark draws its rim here, so that the two-tone look of the reference screenshot stays as the
+    ///     colours cycle. At the wrap-round the pair is the reference's own red body on a yellow rim.
+    /// </remarks>
     public int GetWordmarkRimPaletteIndex()
     {
         var wordmarkPaletteIndex = GetWordmarkPaletteIndex();
@@ -95,51 +153,78 @@ public sealed class PresentationPagePalette
         return wordmarkPaletteIndex - 1;
     }
 
-    /// <summary>
-    ///     The page's seven colours, and NO white yet: the ROM copies the table at `$8A3A` before its
-    ///     chase task exists, and that task (`$8A4F`) advances to the next entry before whitening it —
-    ///     so the first white lands on entry 2.
-    /// </summary>
+    /// <summary>Gives the page its seven colours, with no white on it yet.</summary>
+    /// <param name="gamePalette">The palette to write the seven colours into.</param>
+    /// <remarks>
+    ///     <para>
+    ///         The page starts with no white because the colours are copied before the white flash starts, and the white flash
+    ///         moves on to the next entry before it turns anything white. So the first white lands on entry 2.
+    ///     </para>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>
+    ///                 Original source: <c>RRLOG.ASM</c> <c>LOGG2</c> calls <c>CSET</c> before it starts <c>COL1</c>, and
+    ///                 <c>COLL5</c> kicks the white pointer up before <c>COLL8</c> turns that entry white.
+    ///             </description>
+    ///         </item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$8A3A</c> (<c>CSET</c>) and <c>$8A4F</c> (<c>COL1</c>).</description></item>
+    ///     </list>
+    /// </remarks>
     public void Start(GamePalette gamePalette)
     {
         for (var paletteIndex = FirstPaletteIndex; paletteIndex <= LastPaletteIndex; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, PageColours[paletteIndex - FirstPaletteIndex]);
     }
 
-    /// <summary>
-    ///     The page's palette indices go back to the ROM's CRTAB defaults as it leaves — the colour processes die
-    ///     with the page and the page after it (<c>FAMPAG</c>) sets its own (notes §103.3).
-    /// </summary>
+    /// <summary>Puts the page's seven palette entries back to their usual colours when the page is left.</summary>
+    /// <param name="gamePalette">The palette to put the usual colours back in.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>
+    ///                 Original source: the colour processes end with the page, and the page after it, <c>FAMPAG</c> in
+    ///                 <c>RRSCRIPT.ASM</c>, sets its own colours (notes §103.3).
+    ///             </description>
+    ///         </item>
+    ///         <item><description>Disassembly: not separately labelled.</description></item>
+    ///     </list>
+    /// </remarks>
     public void Stop(GamePalette gamePalette)
     {
         for (var paletteIndex = FirstPaletteIndex; paletteIndex <= LastPaletteIndex; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
     }
 
-    /// <summary>Advances both clocks by one port tick (call once per Update).</summary>
+    /// <summary>Moves both timers on by one port tick, and changes the colours when a cycle is due.</summary>
+    /// <param name="gamePalette">The palette to change.</param>
     public void Update(GamePalette gamePalette)
     {
-        _chaseClockUnits += ArcadeClock.UnitsPerPortTick;
-        if (IsStepDue(ref _chaseClockUnits, ChaseArcadeFramesPerStep))
+        _whiteFlashClockUnits += ArcadeClock.UnitsPerPortTick;
+        (var isWhiteFlashCycleDue, _whiteFlashClockUnits) = TakeCycleIfDue(_whiteFlashClockUnits, WhiteFlashArcadeFramesPerCycle);
+        if (isWhiteFlashCycleDue)
         {
-            var isOnLastPaletteIndex = _chasePaletteIndex >= LastPaletteIndex;
-            if (isOnLastPaletteIndex) _chasePaletteIndex = FirstPaletteIndex;
-            else _chasePaletteIndex++;
+            var isOnLastPaletteIndex = _whiteFlashPaletteIndex >= LastPaletteIndex;
+            if (isOnLastPaletteIndex) _whiteFlashPaletteIndex = FirstPaletteIndex;
+            else _whiteFlashPaletteIndex++;
 
-            Start(gamePalette); // the ROM re-copies the table on every step...
-            gamePalette.SetPaletteIndexValue(_chasePaletteIndex, ChaseColour); // ...and then whitens the current entry
+            // Like the original, copy all seven colours again first, then turn the current entry white.
+            Start(gamePalette);
+            gamePalette.SetPaletteIndexValue(_whiteFlashPaletteIndex, WhiteFlashColour);
         }
 
         _wordmarkClockUnits += ArcadeClock.UnitsPerPortTick;
-        if (IsStepDue(ref _wordmarkClockUnits, WordmarkArcadeFramesPerStep))
-            _wordmarkStep = (_wordmarkStep + 1) % _paletteIndexCount;
+        (var isWordmarkCycleDue, _wordmarkClockUnits) = TakeCycleIfDue(_wordmarkClockUnits, WordmarkArcadeFramesPerCycle);
+        if (isWordmarkCycleDue)
+            _wordmarkCyclePosition = (_wordmarkCyclePosition + 1) % _paletteIndexCount;
     }
 
-    /// <summary>True when a clock's accumulator has reached <paramref name="arcadeFrames" /> frames.</summary>
-    private static bool IsStepDue(ref int clockUnits, int arcadeFrames)
+    /// <summary>Takes one cycle off a timer, if the timer has gathered at least that many frames.</summary>
+    /// <param name="clockUnits">What the timer has gathered, before the cycle is taken.</param>
+    /// <param name="arcadeFrames">How many fiftieths of a second make one cycle.</param>
+    /// <returns><c>IsDue</c> is true when a cycle was taken, and <c>ClockUnits</c> is what the timer has gathered after it.</returns>
+    private static (bool IsDue, int ClockUnits) TakeCycleIfDue(int clockUnits, int arcadeFrames)
     {
         var period = ArcadeClock.ToClockUnits(arcadeFrames);
-        if (clockUnits < period) return false;
+        if (clockUnits < period) return (false, clockUnits);
 
-        clockUnits -= period;
-        return true;
+        return (true, clockUnits - period);
     }
 }

@@ -11,15 +11,16 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>
-///     INTRO2 (notes §123): the arcade's Williams PRESENTATION page (notes §103; builder at ROM $87A6 onward): the
+///     INTRO2 (notes §123): the arcade's Williams PRESENTATION page (notes §103; built by <c>LOGG2</c> in <c>RRLOG.ASM</c>, <c>$87A6</c> in the disassembly): the
 ///     "ROBOTRON:" wordmark and the "2084" mark over the operator's attract-mode welcome message
-///     (<c>$8822</c>-<c>$8836</c> prints two 25-character lines in the LARGE font, an empty row apart),
+///     (<c>MESSER</c> and <c>LINOUT</c> in <c>RRLOG.ASM</c>, <c>$8822</c>-<c>$8836</c> in the disassembly, print two
+///     25-character lines in the LARGE font, an empty row apart),
 ///     then the Vid Kidz / Williams credit strings in the SMALL font.
 ///     The big ROBOTRON letters come into view one after another, each pulled together from strips like an explosion run
 ///     backwards (<see cref="WordmarkAppear" />, notes §135), and the "2084" mark goes up once the last has settled.
-///     COLOUR — the page's OWN decoded set (notes §106): the ROM writes seven colours into palette
-///     entries 1-7 (`$8A3A` copying the table at `$8A70`) and chases a WHITE flash through them every
-///     three frames (`$8A4F`). The message and the page's credit strings are drawn in entry 6 (the
+///     COLOUR — the page's OWN decoded set (notes §106): the original writes seven colours into palette
+///     entries 1-7 (<c>CSET</c> copying <c>LCTAB</c>, `$8A3A` and `$8A70` in the disassembly) and runs a WHITE flash
+///     through them every three frames (<c>COL1</c>/<c>COLL</c>, `$8A4F`). The message and the page's credit strings are drawn in entry 6 (the
 ///     text operand `$66`), so they are ORANGE with a white sweep, and the
 ///     traced wordmark cycles through the same seven (notes §104). The ROM's OTHER attract page (the wall
 ///     + "ROBOTRON 2084" + "SAVE THE LAST HUMAN FAMILY", notes §94.1) is a different screen and is not
@@ -48,7 +49,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     ///     The copyright line's OWN colour. Palette index 2 is the page's own BLUE (`$C0`) — the
     ///     colour the ROM's string script writes for a credit line (`04 22` in front of "CREDITS: n" at
     ///     `$6D95`), which is the blue an arcade reference screenshot shows on that very line. It is
-    ///     one of the seven entries the page writes, so it cycles with everything else: the white chase
+    ///     one of the seven entries the page writes, so it cycles with everything else: the white flash
     ///     sweeps through it, exactly as it sweeps through the orange above (notes §106).
     /// </summary>
     private const int CopyrightPaletteIndex = 2;
@@ -83,9 +84,9 @@ public sealed class TitleScreenState : IGameState, IAttractState
 
     /// <summary>
     ///     The palette entry the page's text is drawn in: the ROM's text colour operand (notes §106) —
-    ///     `$884E`'s `LDA #$66` for the two welcome lines, and the same `$66` in front of "DESIGNED BY
-    ///     VID KIDZ" in the string table at `$6D75`. The page's own table makes entry 6 ORANGE, and the
-    ///     page's white chase sweeps through it — so the text reads as "cycling
+    ///     <c>LINOUT</c>'s <c>LDA #$66</c> for the two welcome lines (`$884E` in the disassembly), and the same `$66` in front
+    ///     of "DESIGNED BY VID KIDZ" in the string table <c>CPYM1</c> in <c>RRET.ASM</c> (`$6D75` in the disassembly). The page's own table makes entry 6 ORANGE, and the
+    ///     page's white flash sweeps through it — so the text reads as "cycling
     ///     between orange and white". The port's OWN lines use it too, so the whole
     ///     page's text flashes together.
     /// </summary>
@@ -165,9 +166,9 @@ public sealed class TitleScreenState : IGameState, IAttractState
                 WordmarkRow));
 
         // The presentation page runs its OWN decoded colour set (notes §106): entries 1-7 come
-        // from the ROM's seven-byte table ($8A70) with a white flash chasing through them every
+        // from the original's seven-byte table (LCTAB, $8A70 in the disassembly) with a white flash running through them every
         // 3 frames, and the message sits in entry 6. The message reads as "cycling between orange
-        // and white", which is what this chase does (notes §106).
+        // and white", which is what this white flash does (notes §106).
         if (_textureSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Start(palette);
     }
 

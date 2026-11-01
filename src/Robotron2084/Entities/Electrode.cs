@@ -109,8 +109,16 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="wave">The wave number, which decides the shape.</param>
     /// <returns>The width and the height, in port pixels.</returns>
     /// <remarks>
-    ///     Disassembly: the arcade takes the size from the shape's own animation frame (<c>$3B05</c> onwards), so the
-    ///     "2084" electrode of every tenth wave is wider and shorter than the rest.
+    ///     The "2084" electrode of every tenth wave is wider and shorter than the rest.
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRP8.ASM</c>, the images from <c>PSTP1V</c> on (the source calls electrodes posts), where
+    ///             each image starts with its width and height, for example <c>PSP1A</c>.
+    ///         </item>
+    ///         <item>
+    ///             Disassembly: the arcade takes the size from the shape's own animation frame (<c>$3B05</c> onwards).
+    ///         </item>
+    ///     </list>
     /// </remarks>
     internal static (int Width, int Height) GetCollisionSize(int wave)
     {

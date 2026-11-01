@@ -3,42 +3,95 @@ using Robotron2084.Core;
 namespace Robotron2084.Palette;
 
 /// <summary>
-///     The five colour processes the high score page starts for itself — RRTABLE's
-///     <c>MAKP LOOPP</c> / <c>MAKP DECAZ</c> / <c>MAKP COLA</c> / <c>MAKP COLC</c> /
-///     <c>MAKP COLD</c> (notes §98.5). This is why the arcade's page is never still:
-///     | process | palette index | table | step | what it does on screen |
-///     |---------|------|-------|------|------------------------|
-///     | LOOPP   | 1-8  | COLTAB `$E2FE` | 3 fiftieths of a second | shifts the wall's next colour into palette index 8 and pushes
-///     the old one down a palette index — palette index 7 is the headers ("ROBOTRON HEROES"), so they trail the wall by one step |
-///     | DECAZ   | 9    | CATAB `$E2C2` from index 7 | 4 fiftieths of a second | today's list, out of phase: `$07` to
-///     white and back |
-///     | COLA    | 10   | CATAB from index 0 | 4 fiftieths of a second | the top entry `( WILLY ELKTRIX )`, in phase |
-///     | COLC    | 12   | CCTAB `$E2D1` from index 7 | 4 fiftieths of a second | the "you are here" highlight, out of
-///     phase |
-///     | COLD    | 13   | CCTAB from index 0 | 4 fiftieths of a second | the top entry's highlight, in phase |
-///     The two tables that ramp end in a `$00` terminator that sends the process back to
-///     the table's START (the ROM's <c>COLA3</c>/<c>RCS3</c> reload), which is what makes
-///     them pulse rather than stop; `LOOPP` simply starts COLTAB again at its end.
-///     **Timing.** The steps above are fiftieths of a second and a fiftieth of a second is 6/5 of a port tick, so
-///     these run on the clock-unit accumulator the entity bodies use (notes §52): a
-///     3-frame process steps every 3.6 ticks, a 4-frame one every 4.8. Until notes §65 the
-///     in-game processes were counted in port ticks, which ran them 20% fast — this one is
-///     exact from the start.
-///     The page also CLEARS the palette (RRTABLE's <c>FRAMER</c> zeroes `PCRAM`..`PCRAM+15`)
-///     before the processes fill their palette indices, so the arcade's page comes up from black; and
-///     palette indices 10, 12 and 13 are taken over from the in-game animator, which the ROM does by
-///     killing its colour processes with the game (notes §4.12).
+///     The colours of the high score page, and the five timers that keep them moving. Colours run round the wall, and the
+///     lists and highlights pulse between a dark colour and white.
 /// </summary>
+/// <remarks>
+///     <para>The page starts five colour processes (notes §98.5). Together they are why the page is never still:</para>
+///     <list type="bullet">
+///         <item>
+///             <description>
+///                 The wall, in palette entries 1 to 8: every 3 fiftieths of a second the next colour of the wall's table goes
+///                 into entry 8, and every older colour moves down one entry. Entry 7 is the headers ("ROBOTRON HEROES"), so
+///                 they trail the wall by one cycle.
+///             </description>
+///         </item>
+///         <item>
+///             <description>
+///                 Today's list, in entry 9: every 4 fiftieths of a second it pulses from red to white and back, out of step
+///                 with the top entry.
+///             </description>
+///         </item>
+///         <item>
+///             <description>
+///                 The top entry, "( WILLY ELKTRIX )", in entry 10: the same pulse as today's list, but in step.
+///             </description>
+///         </item>
+///         <item>
+///             <description>
+///                 The "you are here" highlight, in entry 12: every 4 fiftieths of a second it pulses from white to blue and
+///                 back, out of step with the top entry's highlight.
+///             </description>
+///         </item>
+///         <item>
+///             <description>The top entry's highlight, in entry 13: the same pulse, but in step.</description>
+///         </item>
+///     </list>
+///     <para>
+///         The two pulsing tables end in a zero that sends the process back to the start of the table, which is why they pulse
+///         instead of stopping. The wall's table simply starts again at its end.
+///     </para>
+///     <para>
+///         The cycles are counted in fiftieths of a second, and a fiftieth of a second is 6/5 of a port tick. So the timers
+///         use the clock-unit counter that the entities use (notes §52): a 3-frame cycle comes round every 3.6 ticks, and a
+///         4-frame one every 4.8.
+///     </para>
+///     <para>
+///         The page also clears the palette first, so it comes up from black. And entries 10, 12 and 13 are taken over from
+///         the in-game animator, which the original does by ending the animator's colour processes with the game
+///         (notes §4.12).
+///     </para>
+///     <list type="bullet">
+///         <item>
+///             <description>
+///                 Original source: <c>RRTABLE.ASM</c>. <c>TABLE</c> starts <c>LOOPP</c> (the wall) and then <c>DECAZ</c>,
+///                 <c>COLA</c>, <c>COLC</c> and <c>COLD</c>. <c>OUTCOL</c> shifts the wall's colours, <c>COLA3</c> sends a
+///                 pulsing table back to its start, <c>FRAMER</c> clears the palette, and the tables are <c>COLTAB</c>,
+///                 <c>CATAB</c> and <c>CCTAB</c>.
+///             </description>
+///         </item>
+///         <item>
+///             <description>
+///                 Disassembly: <c>asm/robomame.asm</c> at <c>$E26F</c> (<c>LOOPP</c>), <c>$E289</c> (<c>OUTCOL</c>),
+///                 <c>$E29A</c> (<c>COLA</c>), <c>$E2AB</c> (<c>COLA3</c>), <c>$E2DF</c> (<c>DECAZ</c>), <c>$E2E9</c>
+///                 (<c>COLC</c>), <c>$E2F5</c> (<c>COLD</c>), <c>$E2FE</c> (<c>COLTAB</c>), <c>$E2C2</c> (<c>CATAB</c>) and
+///                 <c>$E2D1</c> (<c>CCTAB</c>). The disassembly gives no label for these, only addresses.
+///             </description>
+///         </item>
+///     </list>
+/// </remarks>
 public sealed class HighScorePalette
 {
-    /// <summary>`CCTAB` (RRTABLE `$E2D1`): the highlight ramp — white, down to `$C0` and back.</summary>
+    /// <summary>The colours of the highlights: white, down to blue and back.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRTABLE.ASM</c> <c>CCTAB</c>.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E2D1</c>.</description></item>
+    ///     </list>
+    /// </remarks>
     public static readonly byte[] AccentTable =
     [
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xE4,
         0xD2, 0xC0, 0xC0, 0xC0, 0xD2, 0xE4, 0x00
     ];
 
-    /// <summary>`COLTAB` (RRTABLE `$E2FE`): the wall's colour walk, 21 steps then round again.</summary>
+    /// <summary>The colours the wall goes through, one after another, and then round again.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRTABLE.ASM</c> <c>COLTAB</c>.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E2FE</c>.</description></item>
+    ///     </list>
+    /// </remarks>
     public static readonly byte[] CycleTable =
     [
         0x37, 0x2F, 0x27, 0x1F, 0x17, 0x47, 0x47, 0x87,
@@ -46,50 +99,75 @@ public sealed class HighScorePalette
         0xC0, 0xD0, 0x98, 0x38, 0x33
     ];
 
-    /// <summary>The palette indices the page takes over from the in-game colour animator.</summary>
+    /// <summary>The palette entries the page takes over from the in-game colour animator.</summary>
     public static readonly int[] OwnedPaletteIndices = [10, 12, 13];
 
-    /// <summary>`CATAB` (RRTABLE `$E2C2`): the two list ramps — dark red, to white, and back.</summary>
+    /// <summary>The colours of the two lists: red, up to white, and back.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRTABLE.ASM</c> <c>CATAB</c>.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E2C2</c>.</description></item>
+    ///     </list>
+    /// </remarks>
     public static readonly byte[] RampTable =
     [
         0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
         0x57, 0xA7, 0xFF, 0xFF, 0xA7, 0x57, 0x00
     ];
 
-    /// <summary>The palette index <c>LOOPP</c> shifts through — its value is the wall's own palette index.</summary>
+    /// <summary>
+    ///     Stands for the wall's process in the list of processes. The wall's process does not set one palette entry: it
+    ///     shifts the colours down through entries 1 to 8.
+    /// </summary>
     private const int LoopPaletteIndex = 0;
 
     /// <summary>
-    ///     The first of the four processes the ROM starts AFTER the page is printed
-    ///     (<c>MAKP DECAZ/COLA/COLC/COLD</c>); everything before it comes up with the frame.
+    ///     Where the four pulsing processes begin in the list of processes. Everything before it (the wall) comes up with the
+    ///     page.
     /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRTABLE.ASM</c> <c>TABLE</c>, which starts <c>DECAZ</c>, <c>COLA</c>, <c>COLC</c> and <c>COLD</c> after the page is printed.</description></item>
+    ///         <item><description>Disassembly: not separately labelled.</description></item>
+    ///     </list>
+    /// </remarks>
     private const int RampProcessStart = 1;
 
     private readonly Process[] _processes;
 
     public HighScorePalette()
     {
-        // The ROM's DECAZ and COLC are started with an out-of-phase table pointer
-        // (`LDX #CATAB+7` "OUT OF PHASE PLEASE", `LDX #CCTAB+7").
+        // The original starts DECAZ and COLC part-way through their tables, so that they pulse out of step with COLA and COLD.
         _processes =
         [
-            new Process { PaletteIndex = LoopPaletteIndex, ColourTable = CycleTable, ArcadeFramesPerStep = 3 },
-            new Process { PaletteIndex = 9, ColourTable = RampTable, ColourIndex = 7, ArcadeFramesPerStep = 4 },
-            new Process { PaletteIndex = 10, ColourTable = RampTable, ArcadeFramesPerStep = 4 },
-            new Process { PaletteIndex = 12, ColourTable = AccentTable, ColourIndex = 7, ArcadeFramesPerStep = 4 },
-            new Process { PaletteIndex = 13, ColourTable = AccentTable, ArcadeFramesPerStep = 4 }
+            new Process { PaletteIndex = LoopPaletteIndex, ColourTable = CycleTable, ArcadeFramesPerCycle = 3 },
+            new Process { PaletteIndex = 9, ColourTable = RampTable, ColourIndex = 7, ArcadeFramesPerCycle = 4 },
+            new Process { PaletteIndex = 10, ColourTable = RampTable, ArcadeFramesPerCycle = 4 },
+            new Process { PaletteIndex = 12, ColourTable = AccentTable, ColourIndex = 7, ArcadeFramesPerCycle = 4 },
+            new Process { PaletteIndex = 13, ColourTable = AccentTable, ArcadeFramesPerCycle = 4 }
         ];
     }
 
-    /// <summary>True once the four ramp processes have been started (the ROM's second MAKP group).</summary>
+    /// <summary>True once the four pulsing processes have started.</summary>
     public bool RampsStarted { get; private set; }
 
-    /// <summary>
-    ///     The page's <c>FRAMER</c> clear plus the wall's cycle: the ROM starts
-    ///     <c>MAKP LOOPP</c> BEFORE it draws the frame, so palette indices 1-8 come alive first and the
-    ///     palette comes up black (FRAMER zeroes all sixteen palette indices). The four ramps the
-    ///     text uses do not exist yet — see <see cref="StartRamps" />.
-    /// </summary>
+    /// <summary>Clears the palette to black and starts the wall's colours.</summary>
+    /// <param name="gamePalette">The palette to clear and write to.</param>
+    /// <remarks>
+    ///     <para>
+    ///         The wall starts before the frame is drawn, so entries 1 to 8 come alive first and the page comes up black. The
+    ///         four pulsing processes do not exist yet; see <see cref="StartRamps" />.
+    ///     </para>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>
+    ///                 Original source: <c>RRTABLE.ASM</c> <c>TABLE</c> starts <c>LOOPP</c> before <c>FRAMER</c> draws the
+    ///                 frame and clears the sixteen palette entries.
+    ///             </description>
+    ///         </item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E26F</c> (<c>LOOPP</c>).</description></item>
+    ///     </list>
+    /// </remarks>
     public void Start(GamePalette gamePalette)
     {
         for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, 0x00);
@@ -99,12 +177,18 @@ public sealed class HighScorePalette
         Apply(gamePalette, _processes[0], _processes[0].ColourTable[_processes[0].ColourIndex]);
     }
 
-    /// <summary>
-    ///     The ROM's second <c>MAKP</c> group — <c>DECAZ</c>/<c>COLA</c>/<c>COLC</c>/<c>COLD</c>,
-    ///     started once the page has finished printing and before the 600-frame hold. Until
-    ///     this runs, palette indices 9/10/12/13 are the zeroes FRAMER left behind, which is why the
-    ///     printed rows are invisible for their first few frames.
-    /// </summary>
+    /// <summary>Starts the four pulsing processes, once the page has finished printing.</summary>
+    /// <param name="gamePalette">The palette to write to.</param>
+    /// <remarks>
+    ///     <para>
+    ///         Until this runs, entries 9, 10, 12 and 13 are the zeroes the clear left behind, which is why the printed rows are
+    ///         invisible for their first few frames. The original starts the processes just before the long hold on this page.
+    ///     </para>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRTABLE.ASM</c> <c>TABLE</c>, <c>MAKP DECAZ</c>, <c>MAKP COLA</c>, <c>MAKP COLC</c> and <c>MAKP COLD</c>.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E2DF</c>, <c>$E29A</c>, <c>$E2E9</c> and <c>$E2F5</c>.</description></item>
+    ///     </list>
+    /// </remarks>
     public void StartRamps(GamePalette gamePalette)
     {
         if (RampsStarted) return;
@@ -114,11 +198,19 @@ public sealed class HighScorePalette
             Apply(gamePalette, _processes[i], _processes[i].ColourTable[_processes[i].ColourIndex]);
     }
 
-    /// <summary>
-    ///     The ROM's processes die with the page, and the page after it (<c>FAMPAG</c>) sets
-    ///     its own palette indices. The port stands the ROM's default CRTAB values back up and lets the
-    ///     in-game animator have palette indices 10-15 again.
-    /// </summary>
+    /// <summary>Puts the palette back to its usual colours when the page is left, and gives entries 10, 12 and 13 back to the in-game animator.</summary>
+    /// <param name="gamePalette">The palette to put the usual colours back in.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>
+    ///                 Original source: the colour processes end with the page, and the page after it, <c>FAMPAG</c> in
+    ///                 <c>RRSCRIPT.ASM</c>, sets its own colours.
+    ///             </description>
+    ///         </item>
+    ///         <item><description>Disassembly: not separately labelled.</description></item>
+    ///     </list>
+    /// </remarks>
     public void Stop(GamePalette gamePalette)
     {
         for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
@@ -126,17 +218,19 @@ public sealed class HighScorePalette
         foreach (var paletteIndex in OwnedPaletteIndices) gamePalette.ResumePaletteIndex(paletteIndex);
     }
 
-    /// <summary>Advances every process by one port tick (call once per Update).</summary>
+    /// <summary>Moves every process on by one port tick, and changes a colour when a process's cycle is due.</summary>
+    /// <param name="gamePalette">The palette to change.</param>
     public void Update(GamePalette gamePalette)
     {
         for (var i = 0; i < _processes.Length; i++)
         {
+            // The pulsing processes do not exist until the page has finished printing.
             if (i >= RampProcessStart &&
-                !RampsStarted) continue; // the ramps do not exist until the page has finished printing
+                !RampsStarted) continue;
 
             var process = _processes[i];
             process.ClockUnits += ArcadeClock.UnitsPerPortTick;
-            var period = ArcadeClock.ToClockUnits(process.ArcadeFramesPerStep);
+            var period = ArcadeClock.ToClockUnits(process.ArcadeFramesPerCycle);
             if (process.ClockUnits < period) continue;
 
             process.ClockUnits -= period;
@@ -145,10 +239,16 @@ public sealed class HighScorePalette
         }
     }
 
-    /// <summary>
-    ///     The ROM's table walk: take the next byte, but a `$00` terminator sends the process
-    ///     back to the START of the table (never forward past it).
-    /// </summary>
+    /// <summary>Finds the next colour in a table. A zero in the table is skipped, so the process goes back to the start.</summary>
+    /// <param name="table">The colour table.</param>
+    /// <param name="index">The place in the table the process is at now.</param>
+    /// <returns>The place in the table of the next colour.</returns>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRTABLE.ASM</c> <c>COLA3</c>, which sends the process back to the start of the table at a zero.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E2AB</c>.</description></item>
+    ///     </list>
+    /// </remarks>
     private static int Advance(byte[] table, int index)
     {
         var next = (index + 1) % table.Length;
@@ -157,6 +257,22 @@ public sealed class HighScorePalette
         return next;
     }
 
+    /// <summary>Writes a process's colour into the palette. The wall's process shifts the colours down instead.</summary>
+    /// <param name="gamePalette">The palette to write to.</param>
+    /// <param name="process">The process the colour is for.</param>
+    /// <param name="value">The colour to write.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>
+    ///                 Original source: <c>RRTABLE.ASM</c> <c>OUTCOL</c>: entry 2 moves to entry 1, entry 3 to entry 2, and so
+    ///                 on up to entry 8 to entry 7, and then the new colour lands in entry 8. The wall's colours walk down
+    ///                 through entries 7 to 1 behind it.
+    ///             </description>
+    ///         </item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E289</c>.</description></item>
+    ///     </list>
+    /// </remarks>
     private static void Apply(GamePalette gamePalette, Process process, byte value)
     {
         if (process.PaletteIndex != LoopPaletteIndex)
@@ -165,19 +281,27 @@ public sealed class HighScorePalette
             return;
         }
 
-        // OUTCOL: PCRAM+1 ← +2, +2 ← +3 … +7 ← +8, then the new byte lands in +8 — a
-        // shift register, so the wall's colour history walks down palette indices 7…1 behind it.
         for (var paletteIndex = 1; paletteIndex <= 7; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, (byte)gamePalette.GetPaletteIndexValue(paletteIndex + 1));
 
         gamePalette.SetPaletteIndexValue(8, value);
     }
 
+    /// <summary>One of the page's colour processes.</summary>
     private sealed class Process
     {
-        public int ArcadeFramesPerStep;
+        /// <summary>How many fiftieths of a second pass between one cycle of the process and the next.</summary>
+        public int ArcadeFramesPerCycle;
+
+        /// <summary>What the process's timer has gathered so far, in clock units.</summary>
         public int ClockUnits;
+
+        /// <summary>The place in the colour table the process is at.</summary>
         public int ColourIndex;
+
+        /// <summary>The colours the process goes through.</summary>
         public byte[] ColourTable = [];
+
+        /// <summary>The palette entry the process writes, or <see cref="LoopPaletteIndex" /> for the wall's process.</summary>
         public int PaletteIndex;
     }
 }

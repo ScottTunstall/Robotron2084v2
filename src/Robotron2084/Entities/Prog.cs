@@ -42,11 +42,21 @@ public sealed class Prog : IExplodable, IRemovable
     private const int BeatIntervalArcadeFrames = 3;
 
     /// <summary>The nearest to the right wall, in columns, that the top-left corner of a prog's explosion may be.</summary>
-    /// <remarks>Disassembly: <c>$1F45</c>, <c>LDA #$8A / CMPA $0004,X</c>. The right wall is at column <c>$8F</c>.</remarks>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRB10.ASM</c> <c>PRGKIL</c>, <c>LDA #XMAX-5 / CMPA OBJX,X</c> ("CHECK YOUR LIMITS").</item>
+    ///         <item>Disassembly: <c>$1F45</c>, <c>LDA #$8A / CMPA $0004,X</c>. The right wall is at column <c>$8F</c>.</item>
+    ///     </list>
+    /// </remarks>
     private const int ExplosionColumnsFromRightWallMin = 0x8F - 0x8A;
 
     /// <summary>The nearest to the bottom wall, in rows, that the top-left corner of a prog's explosion may be.</summary>
-    /// <remarks>Disassembly: <c>$1F4D</c>, <c>LDA #$DB / CMPA $0005,X</c>. The bottom wall is at row <c>$EA</c>.</remarks>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRB10.ASM</c> <c>PRGKIL</c>, <c>LDA #YMAX-15 / CMPA OBJY,X</c>.</item>
+    ///         <item>Disassembly: <c>$1F4D</c>, <c>LDA #$DB / CMPA $0005,X</c>. The bottom wall is at row <c>$EA</c>.</item>
+    ///     </list>
+    /// </remarks>
     private const int ExplosionRowsFromBottomWallMin = 0xEA - 0xDB;
 
     /// <summary>
@@ -260,8 +270,16 @@ public sealed class Prog : IExplodable, IRemovable
     /// <summary>The walk animation frame the prog is showing.</summary>
     /// <returns>The animation frame that is showing.</returns>
     /// <remarks>
-    ///     Disassembly: the prog's animation frame pointer at <c>$0002,X</c>, which stays on the family member's walk
-    ///     animation frame until the prog is killed.
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRB10.ASM</c> <c>PROG</c>, which sets the picture pointer <c>OPICT</c> from the family
+    ///             member's walk pictures.
+    ///         </item>
+    ///         <item>
+    ///             Disassembly: the prog's animation frame pointer at <c>$0002,X</c>, which stays on the family member's walk
+    ///             animation frame until the prog is killed.
+    ///         </item>
+    ///     </list>
     /// </remarks>
     public Texture2D GetCurrentAnimationFrameTexture()
     {
@@ -291,8 +309,8 @@ public sealed class Prog : IExplodable, IRemovable
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRB10.ASM</c> <c>PRGKIL</c>/<c>EXSTV</c> swap the sprite without moving
-    ///             the object.
+    ///             Original source: <c>RRB10.ASM</c> <c>PRGKIL</c>, which calls <c>EXST</c> (a jump to <c>EXSTV</c> in
+    ///             <c>RRX7.ASM</c>) and swaps the sprite without moving the object.
     ///         </item>
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     ///     </list>

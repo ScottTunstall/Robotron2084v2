@@ -12,4 +12,13 @@ namespace Robotron2084.Entities;
 /// </param>
 /// <param name="X">How far across the screen the left edge of the strip goes, in arcade pixels from the left side of the screen.</param>
 /// <param name="Y">How far down the screen the top edge of the strip goes, in arcade pixels from the top of the screen.</param>
+/// <remarks>
+///     <list type="bullet">
+///         <item>
+///             Original source: <c>AWRITE</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>, which draw each strip
+///             of a sprite as it comes apart or comes together
+///         </item>
+///         <item>Disassembly: see <see cref="StripEngine" /> for the addresses of the three routines</item>
+///     </list>
+/// </remarks>
 public readonly record struct Strip(int SourceIndex, int X, int Y);
