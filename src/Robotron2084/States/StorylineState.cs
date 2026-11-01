@@ -33,7 +33,7 @@ public sealed class StorylineState : IGameState, IAttractState
     internal const string TitleText = "ROBOTRON 2084";
 
     private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
-    private readonly List<StripEffect> _explosions = [];
+    private readonly List<StripEffect> _stripEffects = [];
     private readonly IPlayerInputSource _humanPlayerInputSource;
     private readonly AttractMovie _attractMovie;
     private readonly GameServices _gameServices;
@@ -66,7 +66,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         DrawObjects(spriteBatch);
 
-        foreach (var explosion in _explosions) explosion.Draw(spriteBatch);
+        foreach (var explosion in _stripEffects) explosion.Draw(spriteBatch);
 
         foreach (var cell in _attractMovie.AttractPageMachine.TextCells)
         {
@@ -120,7 +120,7 @@ public sealed class StorylineState : IGameState, IAttractState
                 MovieAnimationFrames.Resolve(_textureSet, exploded.Animation, exploded.AnimationFrameIndex);
             if (animationFrameTexture is null) continue;
 
-            _explosions.Add(StripEffect.CreateExplosion(
+            _stripEffects.Add(StripEffect.CreateExplosion(
                 new MovieExplosionSource(
                     animationFrameTexture,
                     new Rectangle(
@@ -132,10 +132,10 @@ public sealed class StorylineState : IGameState, IAttractState
                 GetClip()));
         }
 
-        for (var i = _explosions.Count - 1; i >= 0; i--)
+        for (var i = _stripEffects.Count - 1; i >= 0; i--)
         {
-            _explosions[i].Update(gameTime);
-            if (!_explosions[i].IsAlive()) _explosions.RemoveAt(i);
+            _stripEffects[i].Update(gameTime);
+            if (!_stripEffects[i].IsAlive()) _stripEffects.RemoveAt(i);
         }
 
         // HISTO ends with DONE2, which the ROM answers with RUNIT: the machine
