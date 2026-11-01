@@ -109,17 +109,17 @@ public sealed class PresentationPagePalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$87D9</c>, <c>LDA #$1C</c>, and <c>$88EF</c>.</description></item>
     ///     </list>
     /// </remarks>
-    private const int WordmarkArcadeFramesPerCycle = 28;
+    private const int LargeTitleLettersArcadeFramesPerCycle = 28;
 
     private readonly int _paletteIndexCount = LastPaletteIndex - FirstPaletteIndex + 1;
 
     private int _whiteFlashClockUnits;
     private int _whiteFlashPaletteIndex = FirstPaletteIndex;
-    private int _wordmarkClockUnits;
-    private int _wordmarkCyclePosition;
+    private int _largeTitleLettersClockUnits;
+    private int _largeTitleLettersCyclePosition;
 
     /// <summary>
-    ///     The palette entry the wordmark is drawn in right now. It goes 7, 6, 5, 4, 3, 2, 1 and then back to 7.
+    ///     The palette entry the large title letters is drawn in right now. It goes 7, 6, 5, 4, 3, 2, 1 and then back to 7.
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -132,25 +132,25 @@ public sealed class PresentationPagePalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$89DA</c>, <c>SUBA #$11</c>.</description></item>
     ///     </list>
     /// </remarks>
-    public int GetWordmarkPaletteIndex()
+    public int GetLargeTitleLettersPaletteIndex()
     {
-        return LastPaletteIndex - _wordmarkCyclePosition;
+        return LastPaletteIndex - _largeTitleLettersCyclePosition;
     }
 
     /// <summary>
-    ///     The palette entry the wordmark's rim is drawn in: the one just before the wordmark's own entry, or entry 7 when
-    ///     the wordmark is in entry 1.
+    ///     The palette entry the large title letters' rim is drawn in: the one just before the large title letters' own entry, or entry 7 when
+    ///     the large title letters is in entry 1.
     /// </summary>
     /// <remarks>
-    ///     The port's traced wordmark draws its rim here, so that the two-tone look of the reference screenshot stays as the
+    ///     The port's traced large title letters draws its rim here, so that the two-tone look of the reference screenshot stays as the
     ///     colours cycle. At the wrap-round the pair is the reference's own red body on a yellow rim.
     /// </remarks>
-    public int GetWordmarkRimPaletteIndex()
+    public int GetLargeTitleLettersRimPaletteIndex()
     {
-        var wordmarkPaletteIndex = GetWordmarkPaletteIndex();
-        if (wordmarkPaletteIndex == FirstPaletteIndex) return LastPaletteIndex;
+        var largeTitleLettersPaletteIndex = GetLargeTitleLettersPaletteIndex();
+        if (largeTitleLettersPaletteIndex == FirstPaletteIndex) return LastPaletteIndex;
 
-        return wordmarkPaletteIndex - 1;
+        return largeTitleLettersPaletteIndex - 1;
     }
 
     /// <summary>Gives the page its seven colours, with no white on it yet.</summary>
@@ -210,10 +210,10 @@ public sealed class PresentationPagePalette
             gamePalette.SetPaletteIndexValue(_whiteFlashPaletteIndex, WhiteFlashColour);
         }
 
-        _wordmarkClockUnits += ArcadeClock.UnitsPerPortTick;
-        (var isWordmarkCycleDue, _wordmarkClockUnits) = TakeCycleIfDue(_wordmarkClockUnits, WordmarkArcadeFramesPerCycle);
-        if (isWordmarkCycleDue)
-            _wordmarkCyclePosition = (_wordmarkCyclePosition + 1) % _paletteIndexCount;
+        _largeTitleLettersClockUnits += ArcadeClock.UnitsPerPortTick;
+        (var isLargeTitleLettersCycleDue, _largeTitleLettersClockUnits) = TakeCycleIfDue(_largeTitleLettersClockUnits, LargeTitleLettersArcadeFramesPerCycle);
+        if (isLargeTitleLettersCycleDue)
+            _largeTitleLettersCyclePosition = (_largeTitleLettersCyclePosition + 1) % _paletteIndexCount;
     }
 
     /// <summary>Takes one cycle off a timer, if the timer has gathered at least that many frames.</summary>
