@@ -22,7 +22,7 @@ internal sealed class TickedBoardRecorder(ISoundBoard soundBoard) : IAudioSink
     public List<LevelRun> Runs { get; } = [];
 
     /// <summary>Always false: these tests read <see cref="Runs" />, not whether a sound is still playing.</summary>
-    public bool IsPlaying => false;
+    public bool IsPlaying() => false;
 
     /// <summary>Sends a sound number to the board; where it is heard does not matter here.</summary>
     /// <param name="soundNumber">The sound number.</param>
