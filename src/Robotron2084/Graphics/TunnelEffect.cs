@@ -99,7 +99,7 @@ public sealed class TunnelEffect
     private const float ArcadePixelToScreenY = ScreenSize.Height / (float)HudLayout.ArcadeScreenHeight;
 
     /// <summary>The erase pass's rings, drawn ON TOP of the coloured ones in black.</summary>
-    private readonly List<Ring> _blackRings = new();
+    private readonly List<TunnelRing> _blackRings = new();
 
     /// <summary>
     ///     Every ring drawn so far. **The ROM never erases the rings it has passed** — each pass
@@ -107,7 +107,7 @@ public sealed class TunnelEffect
     ///     the end the whole area is a filled hatched field. Drawing only the CURRENT ring leaves a
     ///     handful of small rectangles instead.
     /// </summary>
-    private readonly List<Ring> _rings = new();
+    private readonly List<TunnelRing> _rings = new();
 
     private int _bottomRow = StartBottomRow;
 
@@ -260,7 +260,7 @@ public sealed class TunnelEffect
         var ringsToRecordIn = _rings;
         if (_packedColourPair == 0) ringsToRecordIn = _blackRings;
 
-        ringsToRecordIn.Add(new Ring(_leftColumn, _topRow, _rightColumn, _bottomRow, _packedColourPair));
+        ringsToRecordIn.Add(new TunnelRing(_leftColumn, _topRow, _rightColumn, _bottomRow, _packedColourPair));
         RingsDrawn++;
 
         // 5734: `TSTA / BEQ $5751` — a black pass does not touch the colours.
@@ -322,7 +322,7 @@ public sealed class TunnelEffect
     ///     `LDA #$05`/`#$05` height/width fields XOR 4 are 1 byte), so successive rows and
     ///     columns tile instead of leaving seams (see the class comment).
     /// </summary>
-    private void DrawRing(SpriteBatch spriteBatch, TextureSet textureSet, Ring ring)
+    private void DrawRing(SpriteBatch spriteBatch, TextureSet textureSet, TunnelRing ring)
     {
         var (paletteIndex0, paletteIndex1) = GetColourPaletteIndices(ring.PackedColourPair); // $5A13 / $5A19
         var colour0 = textureSet.BlitterDraw.GetPaletteIndexColour(paletteIndex0);
@@ -374,7 +374,4 @@ public sealed class TunnelEffect
         DrawEdge(spriteBatch, textureSet, new Rectangle(leftX, y, Math.Max(1, middleX - leftX), height), first);
         DrawEdge(spriteBatch, textureSet, new Rectangle(middleX, y, Math.Max(1, rightX - middleX), height), second);
     }
-
-    /// <summary>One ring as drawn: its corners in ROM screen coordinates and the pair it used.</summary>
-    private readonly record struct Ring(int Left, int Top, int Right, int Bottom, int PackedColourPair);
 }
