@@ -8,7 +8,6 @@ namespace Robotron2084.AttractMode;
 public static class MovieDescriptors
 {
     public const int Brain = 0x7E7D;
-    public const int Circle = 0x7EA9;
     public const int Cruise = 0x86B0;
     public const int Daddy = 0x7E53;
     public const int Electrodes = 0x7E8F;
@@ -18,8 +17,9 @@ public static class MovieDescriptors
     public const int Mikey = 0x7E61;
     public const int Mommy = 0x7E41;
     public const int Points = 0x7EB5;
+    public const int Quark = 0x7EA5;
     public const int Skull = 0x7EB9;
-    public const int Square = 0x7EA5;
+    public const int Spheroid = 0x7EA9;
     public const int Tank = 0x7EB1;
     public const int TankGrow = 0x7EAD;
     public const int You = 0x7E97;
@@ -36,8 +36,8 @@ public static class MovieDescriptors
         (Electrodes, new MovieDescriptor(MovieAnimation.Electrodes, 36)),
         (Enforcer, new MovieDescriptor(MovieAnimation.Enforcer, 6)),
         (You, new MovieDescriptor(MovieAnimation.Player, 12, MovieWalk.BrainStep, 1, 2)),
-        (Square, new MovieDescriptor(MovieAnimation.Quark, 9)),
-        (Circle, new MovieDescriptor(MovieAnimation.Spheroid, 8)),
+        (Quark, new MovieDescriptor(MovieAnimation.Quark, 9)),
+        (Spheroid, new MovieDescriptor(MovieAnimation.Spheroid, 8)),
         (TankGrow, new MovieDescriptor(MovieAnimation.TankGrow, 5)),
         (Tank, new MovieDescriptor(MovieAnimation.Tank, 4)),
         (Points, new MovieDescriptor(MovieAnimation.Points, 5)),
