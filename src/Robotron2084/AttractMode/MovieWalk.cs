@@ -11,7 +11,7 @@ namespace Robotron2084.AttractMode;
 public enum MovieWalk
 {
     None,
-    Human,
+    FamilyMember,
     Hulk,
     BrainStep
 }

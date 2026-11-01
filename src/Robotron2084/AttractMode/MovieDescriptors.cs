@@ -27,9 +27,9 @@ public static class MovieDescriptors
     /// <summary>Every descriptor the movie's scripts reference, by ROM address.</summary>
     public static readonly (int Address, MovieDescriptor Descriptor)[] All =
     [
-        (Mommy, new MovieDescriptor(MovieAnimation.Mommy, 12, MovieWalk.Human)),
-        (Daddy, new MovieDescriptor(MovieAnimation.Daddy, 12, MovieWalk.Human)),
-        (Mikey, new MovieDescriptor(MovieAnimation.Mikey, 12, MovieWalk.Human)),
+        (Mommy, new MovieDescriptor(MovieAnimation.Mommy, 12, MovieWalk.FamilyMember)),
+        (Daddy, new MovieDescriptor(MovieAnimation.Daddy, 12, MovieWalk.FamilyMember)),
+        (Mikey, new MovieDescriptor(MovieAnimation.Mikey, 12, MovieWalk.FamilyMember)),
         (Hulk, new MovieDescriptor(MovieAnimation.Hulk, 12, MovieWalk.Hulk)),
         (Brain, new MovieDescriptor(MovieAnimation.Brain, 12, MovieWalk.BrainStep, 2, 8)),
         (Grunt, new MovieDescriptor(MovieAnimation.Grunt, 3)),
