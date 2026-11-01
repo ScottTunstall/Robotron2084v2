@@ -28,13 +28,13 @@ public sealed class WilliamsLogoBorder
 {
     /// <summary>
     ///     The screen's height in arcade pixels. It is multiplied by <see cref="Width" /> to give the size of
-    ///     <see cref="_pixels" />.
+    ///     <see cref="_paletteIndices" />.
     /// </summary>
     public const int Height = HudLayout.ArcadeScreenHeight;
 
     /// <summary>
     ///     The screen the W is blitted into, in arcade pixels: the ROM's 304x256. It is multiplied by
-    ///     <see cref="Height" /> to give the size of <see cref="_pixels" />.
+    ///     <see cref="Height" /> to give the size of <see cref="_paletteIndices" />.
     /// </summary>
     public const int Width = HudLayout.ArcadeScreenWidth;
 
@@ -74,7 +74,7 @@ public sealed class WilliamsLogoBorder
     private readonly SpriteMask _logoSpriteMask;
     private readonly (int Column, int Row)[] _logoPositions = new (int, int)[LogoCount];
     private readonly WilliamsLogoPath _williamsLogoPath = new();
-    private readonly byte[] _pixels = new byte[Width * Height];
+    private readonly byte[] _paletteIndices = new byte[Width * Height];
     private int _clockUnits;
     private int _drawnLogoCount;
     private bool _isFirstMove;
@@ -91,7 +91,7 @@ public sealed class WilliamsLogoBorder
     }
 
     /// <summary>Which palette index each arcade pixel of the screen holds; 0 is empty.</summary>
-    public IReadOnlyList<byte> Pixels => _pixels;
+    public IReadOnlyList<byte> Pixels => _paletteIndices;
 
     /// <summary>Draws the ring in each pixel's palette index, the screen's arcade pixels mapped to the canvas as the HUD's are.</summary>
     /// <param name="spriteBatch">The batch to draw into.</param>
@@ -105,9 +105,9 @@ public sealed class WilliamsLogoBorder
             var x = 0;
             while (x < Width)
             {
-                var paletteIndex = _pixels[y * Width + x];
+                var paletteIndex = _paletteIndices[y * Width + x];
                 var runEnd = x + 1;
-                while (runEnd < Width && _pixels[y * Width + runEnd] == paletteIndex) runEnd++;
+                while (runEnd < Width && _paletteIndices[y * Width + runEnd] == paletteIndex) runEnd++;
 
                 if (paletteIndex != 0)
                 {
@@ -161,7 +161,7 @@ public sealed class WilliamsLogoBorder
                 var screenX = left + x;
                 var screenY = row + y;
                 if (_logoSpriteMask.IsOpaque(x, y) && screenX < Width && screenY < Height)
-                    _pixels[screenY * Width + screenX] = (byte)paletteIndex;
+                    _paletteIndices[screenY * Width + screenX] = (byte)paletteIndex;
             }
     }
 
