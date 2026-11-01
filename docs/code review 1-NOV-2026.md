@@ -40,7 +40,7 @@ Ignore.
 (Checked and cleared as false positives from the rough awk scan: `InputBinding.ExpandDirection` (17 lines),
 `PlayerSlot.GetDisplayedSpareLives` (45).)
 
-### M-04 — [Major] STR-3 — one type per file, no nested types
+### M-04 — [Major] STR-3 — one type per file, no nested types — DONE
 Files holding two top-level types:
 - `src/Robotron2084/Audio/BoardSounds.cs:7` + `:28` — `BoardSound` record beside `BoardSounds` class.
 - `src/Robotron2084/Hud/SettingsModel.cs:6` + `:47` — `SettingsAction` enum beside `SettingsModel`.
@@ -176,7 +176,7 @@ Stored-value bool properties (`ScoreBurst.IsVisible` etc.) are fine per NAM-27.
 Also: `src/Robotron2084/States/SoundTestState.cs:122` — `CurrentSoundTestEntry => Entries[_index]` is a lookup
 (NAM-10 "looks something up") → `GetCurrentSoundTestEntry()`.
 
-### M-11 — [Major] NAM-15 — "Circle"/"Square" name forbidden for cast members
+### M-11 — [Major] NAM-15 — "Circle"/"Square" name forbidden for cast members — DONE
 `src/Robotron2084/AttractMode/MovieDescriptors.cs:11` (`const int Circle`), `:22` (`const int Square`), used at
 `:39,40`. These are the Spheroid and Quark movie descriptors. Rename to `Spheroid`/`Quark` (NAM-8: the old words
 gone everywhere).
@@ -315,7 +315,7 @@ Each violates "every method that returns something other than a bool starts with
 `src/Robotron2084/Core/Direction8Extensions.cs:42` — "NOT normalized" → "normalised". (The `behavior` grep hits
 are all under `obj/` — generated, ignore.)
 
-### m-05 — [Minor] NAM-19 — one name, several types
+### m-05 — [Minor] NAM-19 — one name, several types — DONE
 - `_explosions`: `AttractMode/AttractObjectMachine.cs:41` (`List<MovieExplosion>`) vs
   `States/StorylineState.cs:36` (`List<StripEffect>`).
 - `_letters`: `Graphics/WordmarkAppear.cs:42` (`IReadOnlyList<LetterSpan>`) vs `Hud/InitialsEntryModel.cs:106`
