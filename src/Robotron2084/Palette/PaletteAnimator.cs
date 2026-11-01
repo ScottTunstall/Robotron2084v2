@@ -105,7 +105,7 @@ public sealed class PaletteAnimator
 
     private readonly GamePalette _gamePalette;
 
-    private readonly Process[] _colourProcesses;
+    private readonly PaletteColourProcess[] _colourProcesses;
 
     private readonly Random _random;
 
@@ -127,8 +127,8 @@ public sealed class PaletteAnimator
         _random = random;
         _colourProcesses =
         [
-            new Process { PaletteIndex = 11, ColourTable = [0x38, 0x07, 0xC0], ArcadeFramesPerCycle = 8 }, // RGB
-            new Process
+            new PaletteColourProcess { PaletteIndex = 11, ColourTable = [0x38, 0x07, 0xC0], ArcadeFramesPerCycle = 8 }, // RGB
+            new PaletteColourProcess
             {
                 PaletteIndex = 12,
                 ColourTable =
@@ -138,7 +138,7 @@ public sealed class PaletteAnimator
                 ],
                 ArcadeFramesPerCycle = 2
             }, // DECAY
-            new Process
+            new PaletteColourProcess
             {
                 PaletteIndex = 14,
                 ColourTable =
@@ -148,8 +148,8 @@ public sealed class PaletteAnimator
                 ],
                 ArcadeFramesPerCycle = 1
             }, // BPR (blue, purple, red)
-            new Process { PaletteIndex = 15, ColourTable = [0x07, 0x07, 0x2F], ArcadeFramesPerCycle = 6 }, // RGOLD (red, gold)
-            new Process { PaletteIndex = 13, ColourTable = LaserTab, ArcadeFramesPerCycle = 2 } // LASER
+            new PaletteColourProcess { PaletteIndex = 15, ColourTable = [0x07, 0x07, 0x2F], ArcadeFramesPerCycle = 6 }, // RGOLD (red, gold)
+            new PaletteColourProcess { PaletteIndex = 13, ColourTable = LaserTab, ArcadeFramesPerCycle = 2 } // LASER
         ];
 
         // Like the original, each process writes its first colour straight away and only then waits for its first cycle.
@@ -197,24 +197,5 @@ public sealed class PaletteAnimator
             _gamePalette.SetPaletteIndexValue(process.PaletteIndex, process.ColourTable[process.ColourIndex]);
             process.ColourIndex = (process.ColourIndex + 1) % process.ColourTable.Length;
         }
-    }
-
-    /// <summary>One of the six colour processes.</summary>
-    private sealed class Process
-    {
-        /// <summary>How many fiftieths of a second pass between one cycle of the process and the next.</summary>
-        public int ArcadeFramesPerCycle = 1;
-
-        /// <summary>What the process's timer has gathered so far, in clock units.</summary>
-        public int ClockUnits;
-
-        /// <summary>The place in the colour table the process is at.</summary>
-        public int ColourIndex;
-
-        /// <summary>The colours the process goes through.</summary>
-        public byte[] ColourTable = [];
-
-        /// <summary>The palette entry the process writes.</summary>
-        public int PaletteIndex;
     }
 }

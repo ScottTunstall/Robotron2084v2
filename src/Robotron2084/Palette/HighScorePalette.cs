@@ -133,18 +133,18 @@ public sealed class HighScorePalette
     /// </remarks>
     private const int RampProcessStart = 1;
 
-    private readonly Process[] _colourProcesses;
+    private readonly HighScoreColourProcess[] _colourProcesses;
 
     public HighScorePalette()
     {
         // The original starts DECAZ and COLC part-way through their tables, so that they pulse out of step with COLA and COLD.
         _colourProcesses =
         [
-            new Process { PaletteIndex = LoopPaletteIndex, ColourTable = CycleTable, ArcadeFramesPerCycle = 3 },
-            new Process { PaletteIndex = 9, ColourTable = RampTable, ColourIndex = 7, ArcadeFramesPerCycle = 4 },
-            new Process { PaletteIndex = 10, ColourTable = RampTable, ArcadeFramesPerCycle = 4 },
-            new Process { PaletteIndex = 12, ColourTable = AccentTable, ColourIndex = 7, ArcadeFramesPerCycle = 4 },
-            new Process { PaletteIndex = 13, ColourTable = AccentTable, ArcadeFramesPerCycle = 4 }
+            new HighScoreColourProcess { PaletteIndex = LoopPaletteIndex, ColourTable = CycleTable, ArcadeFramesPerCycle = 3 },
+            new HighScoreColourProcess { PaletteIndex = 9, ColourTable = RampTable, ColourIndex = 7, ArcadeFramesPerCycle = 4 },
+            new HighScoreColourProcess { PaletteIndex = 10, ColourTable = RampTable, ArcadeFramesPerCycle = 4 },
+            new HighScoreColourProcess { PaletteIndex = 12, ColourTable = AccentTable, ColourIndex = 7, ArcadeFramesPerCycle = 4 },
+            new HighScoreColourProcess { PaletteIndex = 13, ColourTable = AccentTable, ArcadeFramesPerCycle = 4 }
         ];
     }
 
@@ -273,7 +273,7 @@ public sealed class HighScorePalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E289</c>.</description></item>
     ///     </list>
     /// </remarks>
-    private static void Apply(GamePalette gamePalette, Process process, byte value)
+    private static void Apply(GamePalette gamePalette, HighScoreColourProcess process, byte value)
     {
         if (process.PaletteIndex != LoopPaletteIndex)
         {
@@ -284,24 +284,5 @@ public sealed class HighScorePalette
         for (var paletteIndex = 1; paletteIndex <= 7; paletteIndex++) gamePalette.SetPaletteIndexValue(paletteIndex, (byte)gamePalette.GetPaletteIndexValue(paletteIndex + 1));
 
         gamePalette.SetPaletteIndexValue(8, value);
-    }
-
-    /// <summary>One of the page's colour processes.</summary>
-    private sealed class Process
-    {
-        /// <summary>How many fiftieths of a second pass between one cycle of the process and the next.</summary>
-        public int ArcadeFramesPerCycle;
-
-        /// <summary>What the process's timer has gathered so far, in clock units.</summary>
-        public int ClockUnits;
-
-        /// <summary>The place in the colour table the process is at.</summary>
-        public int ColourIndex;
-
-        /// <summary>The colours the process goes through.</summary>
-        public byte[] ColourTable = [];
-
-        /// <summary>The palette entry the process writes, or <see cref="LoopPaletteIndex" /> for the wall's process.</summary>
-        public int PaletteIndex;
     }
 }
