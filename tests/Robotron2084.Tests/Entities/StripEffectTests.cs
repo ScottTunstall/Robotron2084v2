@@ -500,7 +500,7 @@ public sealed class StripEffectTests
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
         var electrode = new Electrode(TestTextures.SharedTextureSet, spot);
         playField.FieldEntities.Electrodes.Add(electrode);
-        playField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, spot)); // standing on the electrode
+        playField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, spot, new Random(1))); // standing on the electrode
 
         playField.Update(new GameTime());
 

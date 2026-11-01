@@ -36,8 +36,8 @@ public sealed class BerzerkRobotTests
     {
         var playField = CreateFieldInPlay();
         IntVector2 start = new(playField.Player.Position.X + 120, playField.Player.Position.Y - 90);
-        var grunt = new Grunt(TestTextures.SharedTextureSet, start, 6, new Random(11));
-        var berzerkRobot = new BerzerkRobot(TestTextures.SharedTextureSet, start, 6, new Random(11));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, start, new Random(11), 6);
+        var berzerkRobot = new BerzerkRobot(TestTextures.SharedTextureSet, start, new Random(11), 6);
 
         for (var tick = 0; tick < 200; tick++)
         {
@@ -55,7 +55,7 @@ public sealed class BerzerkRobotTests
     {
         var playField = CreateFieldInPlay();
         var berzerkRobot = new BerzerkRobot(TestTextures.SharedTextureSet,
-            new IntVector2(playField.Player.Position.X + 100, playField.Player.Position.Y), 3, new Random(2));
+            new IntVector2(playField.Player.Position.X + 100, playField.Player.Position.Y), new Random(2), 3);
         var start = berzerkRobot.Position;
 
         Tick(playField, 1, berzerkRobot);

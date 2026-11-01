@@ -122,7 +122,7 @@ public sealed class EntityOwnRulesTests
         Assert.True(electrode.IsDying());
         Assert.False(electrode.IsDead());
 
-        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(50, 50));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(50, 50), new Random(1));
         grunt.Kill();
         Assert.True(grunt.IsDead());
         Assert.False(grunt.IsAlive());

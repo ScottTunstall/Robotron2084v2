@@ -227,7 +227,7 @@ public sealed class GorfTests
     public void AFallingGruntDoesNotWalkUntilItHasLanded()
     {
         var playField = CreateFieldInPlay();
-        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(300, 100), 1, new Random(1));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(300, 100), new Random(1), 1);
         grunt.BeginFall(100 + 40);
 
         for (var tick = 0; tick < 4; tick++) grunt.Update(OneTickGameTime, playField);
