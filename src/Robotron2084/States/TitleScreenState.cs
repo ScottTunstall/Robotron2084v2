@@ -12,17 +12,17 @@ namespace Robotron2084.States;
 
 /// <summary>
 ///     INTRO2 (notes §123): the arcade's Williams PRESENTATION page (notes §103; built by <c>LOGG2</c> in <c>RRLOG.ASM</c>, <c>$87A6</c> in the disassembly): the
-///     "ROBOTRON:" wordmark and the "2084" mark over the operator's attract-mode welcome message
+///     "ROBOTRON:" large title letters and the "2084" mark over the operator's attract-mode welcome message
 ///     (<c>MESSER</c> and <c>LINOUT</c> in <c>RRLOG.ASM</c>, <c>$8822</c>-<c>$8836</c> in the disassembly, print two
 ///     25-character lines in the LARGE font, an empty row apart),
 ///     then the Vid Kidz / Williams credit strings in the SMALL font.
 ///     The big ROBOTRON letters come into view one after another, each pulled together from strips like an explosion run
-///     backwards (<see cref="WordmarkAppear" />, notes §135), and the "2084" mark goes up once the last has settled.
+///     backwards (<see cref="LargeTitleLetterAppear" />, notes §135), and the "2084" mark goes up once the last has settled.
 ///     COLOUR — the page's OWN decoded set (notes §106): the original writes seven colours into palette
 ///     entries 1-7 (<c>CSET</c> copying <c>LCTAB</c>, `$8A3A` and `$8A70` in the disassembly) and runs a WHITE flash
 ///     through them every three frames (<c>COL1</c>/<c>COLL</c>, `$8A4F`). The message and the page's credit strings are drawn in entry 6 (the
 ///     text operand `$66`), so they are ORANGE with a white sweep, and the
-///     traced wordmark cycles through the same seven (notes §104). The ROM's OTHER attract page (the wall
+///     traced large title letters cycles through the same seven (notes §104). The ROM's OTHER attract page (the wall
 ///     + "ROBOTRON 2084" + "SAVE THE LAST HUMAN FAMILY", notes §94.1) is a different screen and is not
 ///     drawn here.
 ///     Port conventions kept on top: **1** starts a one-player game and **2** a two-player game (the
@@ -103,13 +103,13 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private const int WelcomeRowTwo = 244;
 
     // Layout of the presentation page (notes §103/§107). It sits inside the border of moving W logos, between
-    // the top row's bottom edge (canvas row 66) and the bottom row's top edge (row 323). The wordmark is drawn at the port's 2x sprite
-    // scale, which is why the wordmark is 58 canvas px tall. The page's TEXT alternates between two
+    // the top row's bottom edge (canvas row 66) and the bottom row's top edge (row 323). The large title letters is drawn at the port's 2x sprite
+    // scale, which is why the large title letters is 58 canvas px tall. The page's TEXT alternates between two
     // panes, swapping after TitleArcadeTextSeconds and TitlePortTextSeconds: there is no room for both at
     // once — and that is exactly what lets the arcade's two message lines have an EMPTY ROW between
     // them (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
     // an 8-row line grid, i.e. one blank line).
-    private const int WordmarkRow = 72;
+    private const int LargeTitleLettersRow = 72;
 
     private readonly TimeSpan _arcadeTextDuration = TimeSpan.FromSeconds(AttractTuning.TitleArcadeTextSeconds);
     private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
@@ -130,7 +130,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
     private readonly TimeSpan _portTextDuration = TimeSpan.FromSeconds(AttractTuning.TitlePortTextSeconds);
     private readonly GameServices _gameServices;
     private readonly TextureSet _textureSet;
-    private readonly WordmarkAppear _wordmarkAppear;
+    private readonly LargeTitleLetterAppear _largeTitleLetterAppear;
 
     private TimeSpan _idleElapsed;
 
@@ -158,12 +158,12 @@ public sealed class TitleScreenState : IGameState, IAttractState
         _controlSettings = gameServices.ControlSettings;
         _gameSettings = gameServices.GameSettings;
         _williamsLogoBorder = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_textureSet.WilliamsLogoTexture));
-        _wordmarkAppear = WordmarkAppear.CreateFromMasks(
-            _textureSet.TitleWordmarkRimTexture,
-            _textureSet.TitleWordmarkCoreTexture,
+        _largeTitleLetterAppear = LargeTitleLetterAppear.CreateFromMasks(
+            _textureSet.LargeTitleLettersRimTexture,
+            _textureSet.LargeTitleLettersCoreTexture,
             new Point(
-                (ScreenSize.Width - _textureSet.TitleWordmarkRimTexture.Width * ScreenSize.PortPixelsPerArcadePixel) / 2,
-                WordmarkRow));
+                (ScreenSize.Width - _textureSet.LargeTitleLettersRimTexture.Width * ScreenSize.PortPixelsPerArcadePixel) / 2,
+                LargeTitleLettersRow));
 
         // The presentation page runs its OWN decoded colour set (notes §106): entries 1-7 come
         // from the original's seven-byte table (LCTAB, $8A70 in the disassembly) with a white flash running through them every
@@ -182,14 +182,14 @@ public sealed class TitleScreenState : IGameState, IAttractState
         _williamsLogoBorder.Draw(spriteBatch, _textureSet.BlitterDraw);
 
         // The two logos, traced from an arcade screenshot (notes §103.4) — the R5 CPU
-        // ROM we hold has no attract wordmark (§103.2). The wordmark's masks are drawn in the two
-        // entries the page's wordmark cycle is on this step, so it colour-cycles through the page's own
+        // ROM we hold has no attract large title letters (§103.2). The large title letters' masks are drawn in the two
+        // entries the page's large title letters cycle is on this step, so it colour-cycles through the page's own
         // seven COLOURS (§104/§106) — and it starts on the reference screenshot's own pair, a red
         // body on a yellow rim. The "2084" mark keeps its traced colours. Both at the port's 2x
         // sprite scale.
-        _wordmarkAppear.Draw(spriteBatch, _textureSet.BlitterDraw, _presentationPagePalette.GetWordmarkRimPaletteIndex(),
-            _presentationPagePalette.GetWordmarkPaletteIndex());
-        if (_wordmarkAppear.IsFinished()) DrawCentredLogo(spriteBatch, _textureSet.Title2084Texture, Logo2084Row);
+        _largeTitleLetterAppear.Draw(spriteBatch, _textureSet.BlitterDraw, _presentationPagePalette.GetLargeTitleLettersRimPaletteIndex(),
+            _presentationPagePalette.GetLargeTitleLettersPaletteIndex());
+        if (_largeTitleLetterAppear.IsFinished()) DrawCentredLogo(spriteBatch, _textureSet.Title2084Texture, Logo2084Row);
 
         // The page's text: ONE of its two panes, alternating (the arcade pane for TitleArcadeTextSeconds, the port's for TitlePortTextSeconds)
         // (notes §107). Both are drawn in the page's own text palette index — the ROM's operand `$66`, entry
@@ -206,7 +206,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         if (_textureSet.BlitterDraw.GamePalette is { } live) _presentationPagePalette.Update(live);
 
         _williamsLogoBorder.Tick();
-        _wordmarkAppear.Update();
+        _largeTitleLetterAppear.Update();
 
         var playerInputState = _playerInputSource.Poll();
 
