@@ -35,15 +35,6 @@ public sealed class SpawnPlacement
         _playfieldBounds = playfieldBounds;
     }
 
-    /// <summary>The four sides of the play area that a spheroid may be put against.</summary>
-    private enum Edge
-    {
-        Top,
-        Bottom,
-        Left,
-        Right
-    }
-
     /// <summary>Finds a random spot that a standard-sized thing could be put on.</summary>
     /// <param name="isAcceptable">Says whether a spot's box is acceptable.</param>
     public IntVector2 FindSpawnPoint(Func<Rectangle, bool> isAcceptable)
@@ -139,17 +130,17 @@ public sealed class SpawnPlacement
         var inner = _playfieldBounds;
         var x = _random.Next(inner.X, inner.Right - EntitySize);
         var y = _random.Next(inner.Y, inner.Bottom - EntitySize);
-        switch ((Edge)_random.Next(Enum.GetValues<Edge>().Length))
+        switch ((PlayfieldEdge)_random.Next(Enum.GetValues<PlayfieldEdge>().Length))
         {
-            case Edge.Top:
+            case PlayfieldEdge.Top:
                 y = _random.Next(inner.Y, inner.Y + bias);
                 break;
 
-            case Edge.Bottom:
+            case PlayfieldEdge.Bottom:
                 y = _random.Next(inner.Bottom - bias - EntitySize, inner.Bottom - EntitySize);
                 break;
 
-            case Edge.Left:
+            case PlayfieldEdge.Left:
                 x = _random.Next(inner.X, inner.X + bias);
                 break;
 
