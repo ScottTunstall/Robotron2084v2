@@ -20,6 +20,7 @@ public sealed class PlayingStateTurnMessageTests
             TestTextures.SharedTextureSet,
             null!,
             GameSession.CreateNewGame(new FakeInputSource(), playerCount, new FakeInputSource()),
+            new Random(1),
             isStartOfTurn);
     }
 
