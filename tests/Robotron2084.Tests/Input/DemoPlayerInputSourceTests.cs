@@ -36,7 +36,7 @@ public sealed class DemoPlayerInputSourceTests
     [Fact]
     public void Poll_WithoutABoundField_IsIdle()
     {
-        var demoPlayerInputSource = new DemoPlayerInputSource();
+        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
 
         var playerInputState = demoPlayerInputSource.Poll();
 
