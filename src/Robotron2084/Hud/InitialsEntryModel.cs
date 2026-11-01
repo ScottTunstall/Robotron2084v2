@@ -25,7 +25,7 @@ public sealed class InitialsEntryModel
 {
     /// <summary>
     ///     How many letters the entry asks for — the ROM's <c>LDD #$300</c>, and the width of a table entry. It is the
-    ///     size of <see cref="_letters" />.
+    ///     size of <see cref="_initials" />.
     /// </summary>
     public const int LetterCount = HighScoreTable.InitialsLength;
 
@@ -103,7 +103,7 @@ public sealed class InitialsEntryModel
     /// <summary>The at-rest move stick's up (GETLT2's <c>RORA / LBCS LUP</c>): cycles the letter forward.</summary>
     private const int UpDirection = -1;
 
-    private readonly char[] _letters = new string(BlankHighScoreEntry, LetterCount).ToCharArray();
+    private readonly char[] _initials = new string(BlankHighScoreEntry, LetterCount).ToCharArray();
 
     private int _clockUnits;
 
@@ -140,13 +140,13 @@ public sealed class InitialsEntryModel
     /// <summary>The letters entered so far — three characters, a space for every cell left blank.</summary>
     public string GetInitials()
     {
-        return new string(_letters);
+        return new string(_initials);
     }
 
     /// <summary>The letter shown in the cursor's cell — the ROM's preview, which cycling rewrites in place.</summary>
     public char GetPreview()
     {
-        return LetterIndex < LetterCount ? _letters[LetterIndex] : BlankHighScoreEntry;
+        return LetterIndex < LetterCount ? _initials[LetterIndex] : BlankHighScoreEntry;
     }
 
     /// <summary>True while the preview is the rub marker, which the page draws with the ROM's own sprite.</summary>
@@ -186,7 +186,7 @@ public sealed class InitialsEntryModel
         _timeoutClockUnits -= LetterTimeoutClockUnits;
         if (--_lettersLeft > 0) return;
 
-        if (LetterIndex < LetterCount && IsPreviewRub()) _letters[LetterIndex] = BlankHighScoreEntry;
+        if (LetterIndex < LetterCount && IsPreviewRub()) _initials[LetterIndex] = BlankHighScoreEntry;
 
         IsComplete = true;
     }
@@ -241,8 +241,8 @@ public sealed class InitialsEntryModel
     {
         var preview = GetPreview();
         var isGoingUp = direction == UpDirection;
-        if (isGoingUp) _letters[LetterIndex] = NextLetter(preview);
-        else _letters[LetterIndex] = GetPreviousLetter(preview);
+        if (isGoingUp) _initials[LetterIndex] = NextLetter(preview);
+        else _initials[LetterIndex] = GetPreviousLetter(preview);
     }
 
     /// <summary>GETLT1: back to reading the switches every two frames.</summary>
@@ -330,7 +330,7 @@ public sealed class InitialsEntryModel
     /// <summary>GETRUB: the rub marker clears its own cell, steps back one and asks for that letter again.</summary>
     private void RubOut()
     {
-        _letters[LetterIndex] = BlankHighScoreEntry;
+        _initials[LetterIndex] = BlankHighScoreEntry;
         LetterIndex--;
         _lettersLeft++;
 
@@ -346,7 +346,7 @@ public sealed class InitialsEntryModel
     /// <summary>G0SUB: puts a blank in the cell the cursor is on, so it is always a valid letter position.</summary>
     private void SeedCell()
     {
-        _letters[LetterIndex] = BlankHighScoreEntry;
+        _initials[LetterIndex] = BlankHighScoreEntry;
     }
 
     /// <summary>Runs the current phase once its own period has elapsed.</summary>
