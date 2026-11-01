@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Trace the attract page's two logos out of the author's reference screenshot.
 
-The R5 CPU ROM we hold does not contain the attract wordmark (notes §103.2): RENDER_GRAPHIC's
+The R5 CPU ROM we hold does not contain the attract large title letters (notes §103.2): RENDER_GRAPHIC's
 only call sites are the "W", the attract page's task chain is fully mapped, and the Williams
 blitter can only source CPU-addressable memory — so the artwork is not in `robotron64k.bin` and
 the screenshot the author supplied is a different release. He sanctioned tracing it instead.
@@ -9,7 +9,7 @@ the screenshot the author supplied is a different release. He sanctioned tracing
 Source: ref/title-reference.png (1250x1025, a capture of the 304x256 screen, so about 4.11 px
 per arcade column and 4.00 px per row). Bands were measured off the image:
 
-    wordmark "ROBOTRON:"    x 178-1053, y 218-335   -> 213 x 29 arcade pixels
+    large title letters "ROBOTRON:"    x 178-1053, y 218-335   -> 213 x 29 arcade pixels
     logo "2084"             x 461- 783, y 364-497   ->  79 x 34 arcade pixels
 
 Each output texel samples the CENTRE of its source block (the capture is scaled and slightly
@@ -17,10 +17,10 @@ blurred, so a point sample beats an average), with the black background left tra
 "2084" mark is then snapped to the nearest colour of the arcade's own 16-entry palette — its
 colour is fixed art.
 
-The WORDMARK is emitted differently: as two WHITE MASKS, `Title_Wordmark_Core` (the letters'
-body) and `Title_Wordmark_Rim` (the one-pixel rim round them). Its colours are not art, because
+The LARGE TITLE LETTERS are emitted differently: as two WHITE MASKS, `Title_LargeTitleLetters_Core` (the letters'
+body) and `Title_LargeTitleLetters_Rim` (the one-pixel rim round them). Its colours are not art, because
 the arcade blits a shape in a colour taken from the LIVE palette — so the page draws the core and
-the rim each in a palette slot and the wordmark colour-cycles with the page's own colour
+the rim each in a palette slot and the large title letters colour-cycles with the page's own colour
 processes (notes §104). The two masks are split from the traced SHAPE alone: the capture is too
 blurred to classify per texel (it renders the art's one-pixel rim as two or three blended pixels,
 which is exactly the orange the first trace had to snap somewhere), while "the rim is the shape's
@@ -34,8 +34,8 @@ OUT = "src/Robotron2084/Content/Sprites"
 # (name, x0, y0, x1, y1, target width, target height) — x1/y1 exclusive.
 MARK = ("Title_2084", 461, 364, 784, 498, 79, 34)
 
-# The wordmark band: the same measurement, but traced into two masks (module docstring).
-WORDMARK = (178, 218, 1054, 336, 213, 29)
+# The large title letters band: the same measurement, but traced into two masks (module docstring).
+LARGE_TITLE_LETTERS = (178, 218, 1054, 336, 213, 29)
 
 # The arcade's CRTAB defaults (notes §4.12) — the palette the page's own live colours come from.
 CRTAB = [0x00, 0x07, 0x17, 0xC7, 0x1F, 0x3F, 0x38, 0xC0, 0xA4, 0xFF, 0x38, 0x17, 0xCC, 0x81, 0x81, 0x07]
@@ -137,14 +137,14 @@ def main():
     opaque = sum(1 for p in out.getdata() if p[3])
     print(f"  {name}.png {width}x{height} arcade px, {opaque} opaque ({100 * opaque / (width * height):.0f}%)")
 
-    x0, y0, x1, y1, width, height = WORDMARK
+    x0, y0, x1, y1, width, height = LARGE_TITLE_LETTERS
     shape = [[sum(pixel) >= ART_THRESHOLD
               for pixel in row]
              for row in sampled(image, (x0, y0, x1, y1), width, height)]
     core = erode(shape, width, height)
     rim = [[shape[ty][tx] and not core[ty][tx] for tx in range(width)] for ty in range(height)]
-    write_mask(f"{OUT}/Title_Wordmark_Core.png", core, width, height)
-    write_mask(f"{OUT}/Title_Wordmark_Rim.png", rim, width, height)
+    write_mask(f"{OUT}/Title_LargeTitleLetters_Core.png", core, width, height)
+    write_mask(f"{OUT}/Title_LargeTitleLetters_Rim.png", rim, width, height)
 
 
 if __name__ == "__main__":

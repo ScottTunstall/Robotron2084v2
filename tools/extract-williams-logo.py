@@ -21,7 +21,7 @@ Colour 2 = 0") and copied to RAM at $B426 ($8945: 14 bytes wide, $1B rows). It i
 `$1E` = transparency + solid mode ($8A33), so ONLY the colour-1 pixels are drawn (in the colour of
 the palette slot the caller supplies) and the colour-2 pixels are the transparent gaps between the
 strokes. The PNG therefore holds the colour-1 pixels as an opaque WHITE MASK on a transparent
-background, tinted at draw time like the wordmark masks.
+background, tinted at draw time like the large title letters masks.
 
 The instruction bytes are read from ref/rom/robotron64k.bin (the ROM image the rest of the port's
 extraction tools use) and cross-checked against the size the ROM itself copies ($0E1B).
