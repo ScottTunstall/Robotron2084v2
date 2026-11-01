@@ -62,7 +62,7 @@ Nested types to pull out into their own files (each with `internal`/`private`-eq
 | `Persistence/HighScoreStore.cs:77` | `private sealed record SavedTable` |
 | `States/StorylineState.cs:216` | `private sealed class MovieExplosionSource : IExplodable` |
 
-### M-05 — [Major] TIME-3 — hidden randomness
+### M-05 — [Major] TIME-3 — hidden randomness — DONE
 Gameplay classes must take a `Random` with no fallback; call sites must not build one ad hoc.
 `?? new Random()` defaults:
 - `src/Robotron2084/Entities/BerzerkRobot.cs:85`
@@ -163,7 +163,7 @@ Framework `Enum.TryParse`, `int.TryParse`, `Dictionary.TryGetValue` are exempt (
 pattern-matching with an `InvalidOperationException` naming the type, or a type-guaranteed dispatch
 (e.g. generic `Dictionary<Type, Action<T>>` behind a `Respond<T>(T result)`).
 
-### M-10 — [Major] NAM-10 — computed bool properties (must be methods)
+### M-10 — [Major] NAM-10 — computed bool properties (must be methods) — DONE
 A getter that compares or combines members is a method, per the rule's bullet list ("works a value out … with a
 comparison"), and the family propagates through the interfaces:
 - `src/Robotron2084/Audio/ISoundBoard.cs:13` and `IAudioSink.cs:7` — `bool IsPlaying { get; }` declarations.
@@ -181,7 +181,7 @@ Also: `src/Robotron2084/States/SoundTestState.cs:122` — `CurrentSoundTestEntry
 `:39,40`. These are the Spheroid and Quark movie descriptors. Rename to `Spheroid`/`Quark` (NAM-8: the old words
 gone everywhere).
 
-### M-12 — [Major] NAM-8 / rename decision — retired identifier "Human" still in use
+### M-12 — [Major] NAM-8 / rename decision — retired identifier "Human" still in use — DONE
 The 2026-10-31 decision renamed `Human` → `FamilyMember`. Survivors:
 - `src/Robotron2084/AttractMode/MovieWalk.cs:14` — enum value `Human` (the family's walk table).
 - `src/Robotron2084/AttractMode/MovieDescriptors.cs:30,31,32` — `MovieWalk.Human` used for Mommy/Daddy/Mikey.
@@ -201,7 +201,7 @@ Arcade-pixel → port-pixel as multiplication by the constant instead of `Screen
 **Fix:** named helpers, e.g. `ScreenSize.ToColumnsFromSubpixels(...)`, `ToSubpixelsFromColumns(...)`, and
 `ScreenSize.ToPortPixelsFromArcadePixels(...)` at the use sites.
 
-### M-14 — [Major] NUM-3 — the column written as 2
+### M-14 — [Major] NUM-3 — the column written as 2 — DONE
 `src/Robotron2084/Level/LaserWallFlares.cs:29` — `ScreenSize.ToPortPixelsFromArcadePixels(2)`; 2 arcade pixels
 is one column → `ScreenSize.Columns(1)`. (Also check the comment at `Tuning/SparkTuning.cs:29` which quotes
 `ToPortPixelsFromArcadePixels(2)` — CMT-4: name the constant, not its arithmetic.)
