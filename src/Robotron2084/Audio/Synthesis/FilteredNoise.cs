@@ -15,7 +15,7 @@ namespace Robotron2084.Audio.Synthesis;
 ///         <item>Disassembly: none in this repo; ROM <c>$F780</c> (<c>CANNON</c>, from the jump table <c>JMPTBL</c>).</item>
 ///     </list>
 ///     The cannon, the hyperspace bomb, the thrust and the first background sound share this routine; their tables
-///     (<c>CANTB</c>, <c>HBMBTB</c>, <c>THTB</c>, <c>BG1TB</c>) differ in the numbers in <see cref="NoiseSettings" />. The
+///     (<c>CANTB</c>, <c>HBMBTB</c>, <c>THTB</c>, <c>BG1TB</c>) differ in the numbers in <see cref="FilteredNoiseSettings" />. The
 ///     thrust and the background neither distort nor shrink, so they play until another sound number arrives.
 /// </remarks>
 internal sealed class FilteredNoise
@@ -99,7 +99,7 @@ internal sealed class FilteredNoise
     private const int WordMask = 0xFFFF;
 
     private readonly BoardMemory _boardMemory;
-    private readonly NoiseSettings _noiseSettings;
+    private readonly FilteredNoiseSettings _noiseSettings;
     private readonly BoardOutput _boardOutput;
     private bool _isFirstStretch = true;
     private byte _level;
@@ -110,7 +110,7 @@ internal sealed class FilteredNoise
     /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
     /// <param name="boardOutput">The board's output port.</param>
     /// <param name="noiseSettings">The settings table's numbers.</param>
-    private FilteredNoise(BoardMemory boardMemory, BoardOutput boardOutput, NoiseSettings noiseSettings)
+    private FilteredNoise(BoardMemory boardMemory, BoardOutput boardOutput, FilteredNoiseSettings noiseSettings)
     {
         _boardMemory = boardMemory;
         _boardOutput = boardOutput;
@@ -128,7 +128,7 @@ internal sealed class FilteredNoise
     public static IEnumerable<OutputChange> PlayBackground1(BoardMemory boardMemory, BoardOutput boardOutput)
     {
         return Start(boardMemory, boardOutput,
-            new NoiseSettings(Background1FirstLimit, 0, 0, Immediate + StoreDirect + CannonSetUpCycles, false, false));
+            new FilteredNoiseSettings(Background1FirstLimit, 0, 0, Immediate + StoreDirect + CannonSetUpCycles, false, false));
     }
 
     /// <summary>Plays the hyperspace bomb sound (sound <c>HBOMB</c>, settings <c>HBMBTB</c>).</summary>
@@ -138,7 +138,7 @@ internal sealed class FilteredNoise
     public static IEnumerable<OutputChange> PlayBomb(BoardMemory boardMemory, BoardOutput boardOutput)
     {
         return Start(boardMemory, boardOutput,
-            new NoiseSettings(BombFirstLimit, BombLevelsPerShrink, BombSmallestSlope, CannonSetUpCycles - Branch));
+            new FilteredNoiseSettings(BombFirstLimit, BombLevelsPerShrink, BombSmallestSlope, CannonSetUpCycles - Branch));
     }
 
     /// <summary>Plays the cannon sound (sound <c>CANNON</c>).</summary>
@@ -148,7 +148,7 @@ internal sealed class FilteredNoise
     public static IEnumerable<OutputChange> PlayCannon(BoardMemory boardMemory, BoardOutput boardOutput)
     {
         return Start(boardMemory, boardOutput,
-            new NoiseSettings(CannonFirstLimit, CannonLevelsPerShrink, CannonSmallestSlope, CannonSetUpCycles));
+            new FilteredNoiseSettings(CannonFirstLimit, CannonLevelsPerShrink, CannonSmallestSlope, CannonSetUpCycles));
     }
 
     /// <summary>
@@ -160,10 +160,10 @@ internal sealed class FilteredNoise
     /// <returns>The sound's output changes.</returns>
     public static IEnumerable<OutputChange> PlayThrust(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(boardMemory, boardOutput, new NoiseSettings(ThrustFirstLimit, 0, 0, CannonSetUpCycles, false, false));
+        return Start(boardMemory, boardOutput, new FilteredNoiseSettings(ThrustFirstLimit, 0, 0, CannonSetUpCycles, false, false));
     }
 
-    private static IEnumerable<OutputChange> Start(BoardMemory boardMemory, BoardOutput boardOutput, NoiseSettings noiseSettings)
+    private static IEnumerable<OutputChange> Start(BoardMemory boardMemory, BoardOutput boardOutput, FilteredNoiseSettings noiseSettings)
     {
         boardOutput.Wait(noiseSettings.SetUpCycles);
         return new FilteredNoise(boardMemory, boardOutput, noiseSettings).Play();
@@ -270,28 +270,4 @@ internal sealed class FilteredNoise
         yield return _boardOutput.Store(_level);
         _boardOutput.Wait(Branch);
     }
-
-    /// <summary>What a settings table (<c>CANTB</c>, <c>HBMBTB</c>) gives <c>FNLOAD</c> besides the two flags.</summary>
-    /// <param name="FirstLimit">
-    ///     The first slope limit, high byte (<c>FMAX</c>). It is shifted up by <see cref="ByteBits" /> to
-    ///     give the starting value of <see cref="_limit" />.
-    /// </param>
-    /// <param name="LevelsPerShrink">The levels between each shrink of the limit (<c>SAMPC</c>).</param>
-    /// <param name="SmallestSlope">The smallest slope (<c>LOFRQ</c>), added after the random distortion.</param>
-    /// <param name="SetUpCycles">The time from the sound's first instruction to <c>FNOIS0</c>.</param>
-    /// <param name="IsDistorted">
-    ///     Whether the random high byte distorts the slope (<c>DSFLG</c>); it does for every sound that
-    ///     shrinks.
-    /// </param>
-    /// <param name="Shrinks">
-    ///     Whether the limit shrinks, so the sound dies away (<c>FDFLG</c>); the thrust and the background
-    ///     never do.
-    /// </param>
-    private readonly record struct NoiseSettings(
-        byte FirstLimit,
-        ushort LevelsPerShrink,
-        byte SmallestSlope,
-        int SetUpCycles,
-        bool IsDistorted = true,
-        bool Shrinks = true);
 }
