@@ -26,7 +26,7 @@ namespace Robotron2084.Level;
 internal sealed class LaserWallFlares
 {
     /// <summary>The height of each coloured band in a flash on the top or bottom wall, in port pixels.</summary>
-    private static readonly int DitherBandHeight = ScreenSize.ToPortPixelsFromArcadePixels(2);
+    private static readonly int DitherBandHeight = ScreenSize.ToPortPixelsFromColumns(1);
 
     /// <summary>How long a flash is, along the wall, in port pixels.</summary>
     /// <remarks>It is two bytes of the arcade's video memory.</remarks>

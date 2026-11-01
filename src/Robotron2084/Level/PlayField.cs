@@ -127,7 +127,7 @@ public sealed class PlayField : ICollisionScene
         PlayfieldWall = new PlayfieldWall(innerBounds, wallColourCycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
-        Player = new Player(TextureSet, playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
+        Player = new Player(TextureSet, playerStart, startingLives, random) { InvincibleForTesting = playerInvincibleForTesting };
         PlayerLaserSlots = new LaserSlots(TextureSet);
 
         // Each kind's spawner is in its registry row, so a new kind needs no edit here (notes §119).
