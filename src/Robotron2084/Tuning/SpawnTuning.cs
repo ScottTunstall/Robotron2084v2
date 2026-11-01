@@ -1,25 +1,32 @@
 namespace Robotron2084.Tuning;
 
-/// <summary>Where the wave places its entities and how the wave generator scales them.</summary>
+/// <summary>Where the wave places its entities, how the wave generator scales them, and how many may exist at once.</summary>
 public static class SpawnTuning
 {
+    /// <summary>How far from the player an electrode must start, in arcade pixels.</summary>
+    /// <remarks>The distance comes from the arcade spec, not from a ROM instruction the port has traced.</remarks>
     public const int ElectrodeMinDistanceFromPlayer = 40;
 
-    // Wave generation
+    /// <summary>The most speed bonus that wave numbers can add to the robots of a wave.</summary>
+    /// <remarks>Port only: the wave generator's own limit.</remarks>
     public const int EnemySpeedBonusMaxPerWave = 5;
 
-    /// <summary>ROM `ENFCNT`: at most this many spheroid-dropped enforcers live at once (notes §11).</summary>
+    /// <summary>The most enforcers dropped by spheroids that may be alive at once.</summary>
+    /// <remarks>
+    ///     Original source: the ROM counter <c>ENFCNT</c> (notes §11; the notes do not record its <c>.ASM</c> file). Disassembly: <c>asm/robomame.asm</c> <c>DROP_ENFORCER</c>
+    ///     (<c>$11DB</c>), <c>CMPA #$08</c> at <c>$11F8</c>.
+    /// </remarks>
     public const int MaxEnforcers = 8;
 
-    // Grunt
+    /// <summary>How far from the player a grunt must start, in arcade pixels.</summary>
+    /// <remarks>The distance comes from the arcade spec, not from a ROM instruction the port has traced.</remarks>
     public const int GruntMinDistanceFromPlayer = 20;
 
-    // Hulk — ROM RRH11: beat interval comes from the
-    // wave table (HLKSPD, in ROM ticks); step sizes are fixed by the ROM
-    // animation table (horizontal 3/4 arcade px alternating, vertical 2).
-    // Laser knockback is the ROM RRH11 HULKIL per-axis random
-    // push — X ±1/±2 arcade px (50/50), Y ±1/±4 (25/75); see
-    // Hulk.ApplyKnockback (the magnitudes are ROM-intrinsic, no constant).
+    /// <summary>How far from the player a hulk must start, in arcade pixels.</summary>
+    /// <remarks>
+    ///     The arcade spec gives a range of 30 to 40, and this is the middle of it. It is not from a ROM instruction the
+    ///     port has traced.
+    /// </remarks>
     public const int HulkMinDistanceFromPlayer = 35;
 
     /// <summary>
@@ -32,13 +39,14 @@ public static class SpawnTuning
     /// </remarks>
     public const int MaxShellCount = 20;
 
+    /// <summary>How many random spots are tried for one entity before the whole playfield is searched for a free one.</summary>
+    /// <remarks>Port only: the arcade has no such search.</remarks>
     public const int SpawnPlacementMaxAttempts = 100;
 
-    // arcade pixels (apply ScreenSize.ToPortPixelsFromArcadePixels at the use site)
-
-    // arcade pixels, spec-stated
-
-    // arcade pixels (spec gives a 30–40 range; 35 = midpoint)
-    /// <summary>ROM `TNKCNT`: at most this many quark-dropped tanks live at once (notes §11).</summary>
+    /// <summary>The most tanks dropped by quarks that may be alive at once.</summary>
+    /// <remarks>
+    ///     Original source: the ROM counter <c>TNKCNT</c> (notes §11; the notes do not record its <c>.ASM</c> file). Disassembly: <c>asm/robomame.asm</c>
+    ///     <c>SET_TANK_SPAWN_COUNTDOWN</c> (<c>$4C24</c>), <c>CMPA #$14</c> at <c>$4C43</c>.
+    /// </remarks>
     public const int MaxTanks = 20;
 }

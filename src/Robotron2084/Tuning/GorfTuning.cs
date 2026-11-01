@@ -21,7 +21,7 @@ public static class GorfTuning
     /// <summary>How far a dropped grunt falls each <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, in port pixels.</summary>
     public const int FallPixelsPerTick = 4;
 
-    /// <summary>How high every hop goes, in rows (one arcade pixel each). They are all the same height, 16 for now.</summary>
+    /// <summary>How high every hop goes, in rows (one arcade pixel each). They are all the same height.</summary>
     public const int HopRows = 16;
 
     /// <summary>How many steps one hop takes, from leaving the ground to landing.</summary>

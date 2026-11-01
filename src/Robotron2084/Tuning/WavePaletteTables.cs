@@ -3,18 +3,37 @@ using Microsoft.Xna.Framework;
 namespace Robotron2084.Tuning;
 
 /// <summary>
-///     The ROM's per-wave colour and sprite tables (RRG23 `GTWCOL`), each repeating every ten waves, and the fallback
-///     wall palette.
+///     The per-wave colour and sprite tables from the arcade, each repeating every ten waves, and the fallback wall
+///     palette.
 /// </summary>
+/// <remarks>
+///     <list type="bullet">
+///         <item>
+///             Original source: <c>RRG23.ASM</c> <c>GTWCOL</c> ("GET WALL COLOR"), which sets all four per-wave values:
+///             <c>LDU #WCTAB / LDA PWAV,X / DECA</c>, then wraps the wave into 1 to 10 (<c>GTWL CMPA #9 / BLS / SUBA #10</c>)
+///         </item>
+///         <item>
+///             Disassembly: <c>asm/robomame.asm</c> <c>SET_BORDER_WALL_COLOUR</c> (<c>$2A21</c>), with the tables
+///             <c>BORDER_WALL_COLOUR_TABLE</c> (<c>$2A4B</c>), <c>ELECTRODE_COLOUR_TABLE</c> (<c>$2A55</c>),
+///             <c>ELECTRODE_ANIMATION_FRAME_METADATA_OFFSET_TABLE</c> (<c>$2A5F</c>) and
+///             <c>LASER_SPLASH_DAMAGE_COLOUR_TABLE</c> (<c>$2A69</c>)
+///         </item>
+///     </list>
+///     The colour values are palette slots in the arcade's doubled-nibble form: <c>$XX</c> is two pixels of palette index
+///     X, because the video is 4 bits a pixel with two pixels in each byte, and a solid fill needs both nibbles equal. The
+///     low nibble of a value is therefore the palette index.
+/// </remarks>
 public static class WavePaletteTables
 {
-    /// <summary>How many animation frames make up one electrode variant (alive + 2 shrivel frames).</summary>
+    /// <summary>How many animation frames make up one electrode variant: the electrode alive, and two shrivel frames.</summary>
     public const int ElectrodeAnimationFramesPerVariant = 3;
 
-    // Wall
+    /// <summary>How long the wall stays on each colour of its palette, in milliseconds.</summary>
+    /// <remarks>Port only: used with <see cref="DefaultWallPalette" />.</remarks>
     public const int WallStepDurationMilliseconds = 150;
 
-    /// <summary>Default 4-colour cyan cycle, dim to bright — never fully dark (spec-stated rule).</summary>
+    /// <summary>The wall's cycle of four colours, from dim to bright, that is used when no wave palette applies.</summary>
+    /// <remarks>The arcade spec's rule is that the wall is never fully dark.</remarks>
     public static readonly Color[] DefaultWallPalette =
     {
         new(0, 80, 80),
@@ -23,102 +42,90 @@ public static class WavePaletteTables
         new(0, 255, 255)
     };
 
-    /// <summary>
-    ///     The POST COLOUR per wave — the SECOND of RRG23.ASM's four per-wave tables
-    ///     (`GTWCOL`: `LDA 10,U / STA PSTCOL`), indexed by (wave-1) mod 10 like the
-    ///     rest. These are PALETTE SLOTS written in the arcade's doubled-nibble form
-    ///     ($XX = two pixels of palette index X, because the video is 4bpp with 2 pixels per
-    ///     byte and a SOLID fill needs both nibbles equal) — so the value's LOW NIBBLE
-    ///     is the palette index. Use <see cref="GetElectrodePaletteIndex" />.
-    ///     Decoded: wave 1 = $FF = palette index 15, 2 = $EE = 14, 3 = $BB = 11, 4 = $DD = 13,
-    ///     7 = $11 = palette index 1 = RED (the ROM's own CRTAB: palette index 1 = $07), 10 = $AA = 10.
-    ///     The ROM makes the electrode a SOLID silhouette in this palette index's live colour
-    ///     (`PSTKON` → `OPON1` → `MPCTON`, blitter op $1A), so palette indices 10-15 — the
-    ///     colour-cycling ones — make that wave's posts cycle (notes §47).
-    /// </summary>
+    /// <summary>The electrode's colour for each wave, counting from wave 1 and repeating every ten waves.</summary>
+    /// <remarks>
+    ///     The second of the four per-wave tables (<c>LDA 10,U / STA PSTCOL</c>). Use
+    ///     <see cref="GetElectrodePaletteIndex" />. Decoded: wave 1 is <c>$FF</c>, palette index 15; wave 2 is <c>$EE</c>,
+    ///     14; wave 3 is <c>$BB</c>, 11; wave 4 is <c>$DD</c>, 13; wave 7 is <c>$11</c>, palette index 1, which is red
+    ///     (the ROM's own <c>CRTAB</c> has palette index 1 as <c>$07</c>); wave 10 is <c>$AA</c>, 10. The ROM makes the
+    ///     electrode a solid silhouette in the live colour of this palette index (<c>PSTKON</c>, <c>OPON1</c> and
+    ///     <c>MPCTON</c>, blitter op <c>$1A</c>), so palette indices 10 to 15, the colour-cycling ones, make that wave's
+    ///     posts cycle (notes §47).
+    /// </remarks>
     public static readonly byte[] ElectrodePaletteIndexByWaveMod10 =
     [
         0xFF, 0xEE, 0xBB, 0xDD, 0xEE, 0xFF, 0x11, 0xBB, 0xDD, 0xAA
     ];
 
-    // Electrode
-    // Electrode animation frames per wave — RRG23.ASM `GTWCOL` ("GET WALL COLOR",
-    // which sets all four per-wave values): `LDU #WCTAB / LDA PWAV,X / DECA`,
-    // wrap the wave into 1..10 (`GTWL CMPA #9 / BLS / SUBA #10`), then
-    // `LDB 20,U / LDX PSTP1 / ABX / STX PSTANI` — the POST IMAGE offset table
-    // (the third of the wave colour tables) with $10 bytes per variant of
-    // 3 animation frames. So the electrode's variant is WAVE-DEPENDENT and repeats
-    // every 10 waves: offsets $00,$10,$20,$30,$40,$50,$70,$80,$00,$60 →
-    // families 0,1,2,3,4,5,7,8,0,6.
-    // The 27 electrode animation frames in sprite-list order are 9 families x 3 frames
-    // — frame 0 = alive, frames 1-2 = the shrivel steps (RRP8 `PKPROC`).
+    /// <summary>The electrode shape for each wave, counting from wave 1 and repeating every ten waves.</summary>
+    /// <remarks>
+    ///     The third of the four per-wave tables, the post image offset table: <c>LDB 20,U / LDX PSTP1 / ABX / STX
+    ///     PSTANI</c>, with <c>$10</c> bytes for each variant of three animation frames. So the offsets are <c>$00</c>,
+    ///     <c>$10</c>, <c>$20</c>, <c>$30</c>, <c>$40</c>, <c>$50</c>, <c>$70</c>, <c>$80</c>, <c>$00</c> and <c>$60</c>,
+    ///     which are the families 0, 1, 2, 3, 4, 5, 7, 8, 0 and 6. The 27 electrode animation frames in sprite-list order
+    ///     are nine families of three: frame 0 is alive and frames 1 and 2 are the shrivel steps (<c>RRP8.ASM</c>
+    ///     <c>PKPROC</c>).
+    /// </remarks>
     public static readonly int[] ElectrodeVariantByWaveMod10 = [0, 1, 2, 3, 4, 5, 7, 8, 0, 6];
 
-    /// <summary>
-    ///     The LASER-WALL COLLIDE colour per wave — the FOURTH of RRG23.ASM's per-wave
-    ///     tables (`GTWCOL`: `LDA 30,U / STA LASCOL`), indexed by (wave-1) mod 10.
-    ///     RRF.ASM names the variable: `LASCOL RMB 1 LASER WALL COLLIDE COLOR` — it is
-    ///     NOT the laser's own colour; it is the FLARE painted where a laser runs off
-    ///     the playfield. `LASDIH`/`LASDIV` paint the end pixel(s) in LASCOL for 2
-    ///     frames, then in WALCOL for 1 frame, then leave the wall colour.
-    ///     Use <see cref="GetLaserWallPaletteIndex" />.
-    ///     Decoded: wave 1/3/5/6/7/10 = $99 = palette index 9 = $FF = WHITE, 2 = $00 = palette index 0 =
-    ///     BLACK (that wave's flare is invisible — faithful), 4 = $66 = palette index 6 = $38 =
-    ///     GREEN, 8 = $11 = palette index 1 = $07 = RED, 9 = $AA = palette index 10 = a CYCLING palette index.
-    /// </summary>
+    /// <summary>The colour of the flash where a laser runs off the playfield, for each wave, counting from wave 1 and repeating every ten waves.</summary>
+    /// <remarks>
+    ///     The fourth of the four per-wave tables (<c>LDA 30,U / STA LASCOL</c>). <c>RRF.ASM</c> names the variable:
+    ///     <c>LASCOL RMB 1 LASER WALL COLLIDE COLOR</c>. It is not the laser's own colour. <c>LASDIH</c> and <c>LASDIV</c>
+    ///     paint the end pixels in <c>LASCOL</c> for two frames, then in <c>WALCOL</c> for one frame, and then leave the
+    ///     wall colour. Use <see cref="GetLaserWallPaletteIndex" />. Decoded: waves 1, 3, 5, 6, 7 and 10 are <c>$99</c>,
+    ///     palette index 9, which is <c>$FF</c> white; wave 2 is <c>$00</c>, palette index 0, black, so that wave's flash
+    ///     is invisible, as in the arcade; wave 4 is <c>$66</c>, palette index 6, which is <c>$38</c> green; wave 8 is
+    ///     <c>$11</c>, palette index 1, which is <c>$07</c> red; wave 9 is <c>$AA</c>, palette index 10, a colour-cycling
+    ///     one.
+    /// </remarks>
     public static readonly byte[] LaserWallPaletteIndexByWaveMod10 =
     [
         0x99, 0x00, 0x99, 0x66, 0x99, 0x99, 0x99, 0x11, 0xAA, 0x99
     ];
 
-    /// <summary>
-    ///     The WALL/BORDER colour per wave — the FIRST of RRG23.ASM's four per-wave
-    ///     tables (`GTWCOL`: `LDA ,U / STA WALCOL`), indexed by (wave-1) mod 10. Same
-    ///     doubled-nibble form as <see cref="ElectrodePaletteIndexByWaveMod10" /> ($XX = two pixels
-    ///     of palette index X, because the video is 4bpp and the ROM's `BORDER` fills the
-    ///     border by storing ONE byte per step, which must be solid) — so the value's
-    ///     LOW NIBBLE is the palette index. Use <see cref="GetWallPaletteIndex" />.
-    ///     Decoded against the ROM's CRTAB defaults (see <c>GamePalette.DefaultPaletteValues</c>):
-    ///     wave 1 = $22 = palette index 2 = $17 = ORANGE, 2 = $55 = palette index 5 = $3F = YELLOW,
-    ///     3 = $11 = palette index 1 = $07 = RED, 4 = $EE = palette index 14 = a CYCLING palette index,
-    ///     5 = $77 = palette index 7 = $C0 = BLUE, 6 = $33 = palette index 3 = $C7 = MAGENTA,
-    ///     7 = $44 = palette index 4 = $1F = YELLOW (dimmer), 8 = $88 = palette index 8 = $A4 = PURPLE,
-    ///     9 = $00 = palette index 0 = $00 = **BLACK** (the wave-9 border is genuinely
-    ///     invisible — the ROM means it), 10 = $CC = palette index 12 = a CYCLING palette index.
-    ///     VERIFIED 2026-09-17 against `ref/original-source/RRG23.ASM` `BORDER`
-    ///     (`LDA WALCOL` → `STA ,X+` … `STA (XMAX-XMIN)*$100+$200,X`, one byte per
-    ///     step, so the border is a SOLID fill of that palette index's live colour).
-    ///     CAVEAT: the ROM's colour processes also re-write palette indices during play, so the
-    ///     border may shift shade within a wave — that machinery is NOT modelled yet
-    ///     (see notes §63).
-    /// </summary>
+    /// <summary>The wall's colour for each wave, counting from wave 1 and repeating every ten waves.</summary>
+    /// <remarks>
+    ///     The first of the four per-wave tables (<c>LDA ,U / STA WALCOL</c>). Use <see cref="GetWallPaletteIndex" />.
+    ///     It is in the same form as <see cref="ElectrodePaletteIndexByWaveMod10" />. The ROM's <c>BORDER</c> (checked
+    ///     against <c>RRG23.ASM</c>: <c>LDA WALCOL</c> then <c>STA ,X+</c> up to <c>STA (XMAX-XMIN)*$100+$200,X</c>)
+    ///     stores one byte for each step, so the border is a solid fill of the live colour of that palette index.
+    ///     Decoded against the ROM's <c>CRTAB</c> defaults (see <c>GamePalette.DefaultPaletteValues</c>): wave 1 is
+    ///     <c>$22</c>, palette index 2, which is <c>$17</c> orange; wave 2 is <c>$55</c>, 5, <c>$3F</c> yellow; wave 3
+    ///     is <c>$11</c>, 1, <c>$07</c> red; wave 4 is <c>$EE</c>, 14, a colour-cycling one; wave 5 is <c>$77</c>, 7,
+    ///     <c>$C0</c> blue; wave 6 is <c>$33</c>, 3, <c>$C7</c> magenta; wave 7 is <c>$44</c>, 4, <c>$1F</c> a dimmer
+    ///     yellow; wave 8 is <c>$88</c>, 8, <c>$A4</c> purple; wave 9 is <c>$00</c>, 0, <c>$00</c> black, so the wave-9
+    ///     border is invisible, as the ROM means it; wave 10 is <c>$CC</c>, 12, a colour-cycling one. The ROM's colour
+    ///     processes also write palette indices during play, so the border may change shade within a wave (notes §63).
+    /// </remarks>
     public static readonly byte[] WallPaletteIndexByWaveMod10 =
     [
         0x22, 0x55, 0x11, 0xEE, 0x77, 0x33, 0x44, 0x88, 0x00, 0xCC
     ];
 
-    /// <summary>The electrode palette index for a wave (RRG23 `GTWCOL`; wraps every 10 waves).</summary>
+    /// <summary>Gets the electrode's palette index for a wave. The table repeats every ten waves.</summary>
+    /// <param name="wave">The wave number, counting from 1.</param>
     public static int GetElectrodePaletteIndex(int wave)
     {
         return ElectrodePaletteIndexByWaveMod10[(wave - 1) % ElectrodePaletteIndexByWaveMod10.Length] & 0x0F;
     }
 
-    /// <summary>
-    ///     The electrode variant for a wave (RRG23 `GTWCOL`; the ROM
-    ///     wraps the wave into 1..10, so the pattern repeats every 10 waves).
-    /// </summary>
+    /// <summary>Gets the electrode shape for a wave. The table repeats every ten waves.</summary>
+    /// <param name="wave">The wave number, counting from 1.</param>
     public static int GetElectrodeVariant(int wave)
     {
         return ElectrodeVariantByWaveMod10[(wave - 1) % ElectrodeVariantByWaveMod10.Length];
     }
 
-    /// <summary>The laser-vs-wall flare palette index for a wave (RRG23 `LASCOL`; wraps every 10 waves).</summary>
+    /// <summary>Gets the palette index of the flash where a laser meets the wall, for a wave. The table repeats every ten waves.</summary>
+    /// <param name="wave">The wave number, counting from 1.</param>
     public static int GetLaserWallPaletteIndex(int wave)
     {
         return LaserWallPaletteIndexByWaveMod10[(wave - 1) % LaserWallPaletteIndexByWaveMod10.Length] & 0x0F;
     }
 
-    /// <summary>The wall/border palette index for a wave (RRG23 `WALCOL`; wraps every 10 waves).</summary>
+    /// <summary>Gets the wall's palette index for a wave. The table repeats every ten waves.</summary>
+    /// <param name="wave">The wave number, counting from 1.</param>
     public static int GetWallPaletteIndex(int wave)
     {
         return WallPaletteIndexByWaveMod10[(wave - 1) % WallPaletteIndexByWaveMod10.Length] & 0x0F;

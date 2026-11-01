@@ -16,12 +16,14 @@ public static class SoundTuning
     public const float StereoWidth = 0.8f;
 
     /// <summary>
-    ///     How long the voice is held for the wave-end music, in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">port ticks</see> from the moment it is asked for
-    ///     (notes §128). The board LOOPS sound $0E: its phrase is 183 <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> and the ROM's table asks for it
-    ///     29 times at 4 <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> apart, so the last ask lands at <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> 113 and the phrase that follows it plays
-    ///     out to about 296. That is the longest a hold can usefully be and <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> 113 is the shortest, and the
-    ///     author dialled the value in by ear — the full play-out was *"a little too long"*, so it is a second
-    ///     under it (notes §128).
+    ///     How long the voice is held for the wave-end music, in
+    ///     <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">port ticks</see> from the moment the music is asked for.
     /// </summary>
+    /// <remarks>
+    ///     Notes §128. The board loops sound <c>$0E</c>. Its phrase lasts 183 ticks, and the ROM's table asks for it 29
+    ///     times, 4 ticks apart, so the last ask lands on tick 113 and the phrase that follows it plays out to about tick
+    ///     296. Tick 113 is the shortest a hold can usefully be and the play-out is the longest. The value is tuned by ear
+    ///     and sits a little under the full play-out, which was too long.
+    /// </remarks>
     public const int WaveEndMusicTicks = 236;
 }
