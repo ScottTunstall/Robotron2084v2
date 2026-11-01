@@ -54,6 +54,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
     private readonly HighScoreStore _highScoreStore;
     private readonly HighScoreTable _highScoreTable;
     private readonly IPlayerInputSource _playerInputSource;
+    private readonly Random _random;
     private readonly HighScorePageHold _highScorePageHold = new();
     private readonly int[] _postedScores;
     private readonly HighScorePrintSequence _highScorePrintSequence = new();
@@ -80,6 +81,7 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         _textureSet = gameServices.TextureSet;
         _highScoreStore = gameServices.HighScoreStore;
         _gameSettings = gameServices.GameSettings;
+        _random = gameServices.Random;
         _postedScores = [.. postedScores ?? []];
         _highScoreTable = highScoreTable ?? _highScoreStore.Load();
 
@@ -371,6 +373,6 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         if (_textureSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Stop(palette);
 
         gameStateManager.TransitionTo(new TitleScreenState(new GameServices(_textureSet, _highScoreStore,
-            ControlSettings.CreateDefaults(), _playerInputSource, _gameSettings)));
+            ControlSettings.CreateDefaults(), _playerInputSource, _gameSettings, _random)));
     }
 }

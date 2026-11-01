@@ -119,12 +119,12 @@ public sealed class SoundTestState : IGameState
     }
 
     /// <summary>The entry the page is on.</summary>
-    internal SoundTestEntry CurrentSoundTestEntry => Entries[_index];
+    internal SoundTestEntry GetCurrentSoundTestEntry() => Entries[_index];
 
     /// <inheritdoc />
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        var soundTestEntry = CurrentSoundTestEntry;
+        var soundTestEntry = GetCurrentSoundTestEntry();
         DrawLarge(spriteBatch, soundTestEntry.Heading, NumberRow);
         DrawLarge(spriteBatch, ToDisplay(soundTestEntry.Name), NameRow);
         DrawSmall(spriteBatch, ToDisplay(soundTestEntry.Description), DescriptionRow);
@@ -230,7 +230,7 @@ public sealed class SoundTestState : IGameState
             _settleTicksLeft--;
             if (_settleTicksLeft == 0)
             {
-                Play(CurrentSoundTestEntry);
+                Play(GetCurrentSoundTestEntry());
                 _repeatTicksLeft = RepeatTicks;
             }
 
@@ -238,7 +238,7 @@ public sealed class SoundTestState : IGameState
         }
 
         _repeatTicksLeft--;
-        var isSoundActive = Sound.IsPlaying || Sound.IsTransporterRunning();
+        var isSoundActive = Sound.IsPlaying() || Sound.IsTransporterRunning();
         if (isSoundActive) _quietTicks = 0;
         else _quietTicks++;
 

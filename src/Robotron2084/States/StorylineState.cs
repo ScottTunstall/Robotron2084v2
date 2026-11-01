@@ -41,7 +41,7 @@ public sealed class StorylineState : IGameState, IAttractState
     private readonly TextureSet _textureSet;
     private readonly PlayfieldWall _playfieldWall;
 
-    public StorylineState(GameServices gameServices, Random random)
+    public StorylineState(GameServices gameServices)
     {
         _gameServices = gameServices;
         _textureSet = gameServices.TextureSet;
@@ -49,7 +49,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         _playfieldWall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColourCycle());
         _gameSession = GameSession.CreateNewGame(_humanPlayerInputSource, 1);
-        _attractMovie = new AttractMovie(AttractMovieData.Histo, random);
+        _attractMovie = new AttractMovie(AttractMovieData.Histo, gameServices.Random);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)

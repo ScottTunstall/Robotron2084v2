@@ -191,7 +191,7 @@ public sealed class DeveloperToolsState : IGameState
                 break;
 
             case 2:
-                gameStateManager.TransitionTo(new StorylineState(_gameServices, new Random()));
+                gameStateManager.TransitionTo(new StorylineState(_gameServices));
                 break;
 
             case 3:

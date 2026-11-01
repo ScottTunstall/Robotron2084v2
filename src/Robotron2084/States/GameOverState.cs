@@ -33,6 +33,7 @@ public sealed class GameOverState : IGameState
     /// <param name="textureSet">The shared texture set.</param>
     /// <param name="highScoreStore">The high score store the ceremony writes to.</param>
     /// <param name="scores">Every player's final score, highest first — the ROM's <c>EGSUB</c> runs once per player.</param>
+    /// <param name="random">The game's shared source of random numbers, which the screens that follow use.</param>
     /// <param name="controlSettings">The port's control definitions.</param>
     /// <param name="gameSettings">The GAME ADJUSTMENT settings (notes §131).</param>
     public GameOverState(
@@ -40,11 +41,12 @@ public sealed class GameOverState : IGameState
         TextureSet textureSet,
         HighScoreStore highScoreStore,
         IReadOnlyList<FinalScore> scores,
+        Random random,
         ControlSettings? controlSettings = null,
         GameSettings? gameSettings = null)
     {
         _gameServices = new GameServices(textureSet, highScoreStore, controlSettings ?? ControlSettings.CreateDefaults(),
-            playerInputSource, gameSettings ?? GameSettings.CreateFactoryDefaults());
+            playerInputSource, gameSettings ?? GameSettings.CreateFactoryDefaults(), random);
         _scores = scores;
     }
 
@@ -53,10 +55,12 @@ public sealed class GameOverState : IGameState
     /// <param name="textureSet">The shared texture set.</param>
     /// <param name="highScoreStore">The high score store.</param>
     /// <param name="gameSession">The finished game, which supplies the final scores, the controls and the settings.</param>
+    /// <param name="random">The game's shared source of random numbers, which the screens that follow use.</param>
     public static GameOverState CreateFromSession(IPlayerInputSource playerInputSource, TextureSet textureSet,
-        HighScoreStore highScoreStore, GameSession gameSession)
+        HighScoreStore highScoreStore, GameSession gameSession, Random random)
     {
         return new GameOverState(playerInputSource, textureSet, highScoreStore, gameSession.GetFinalScoresHighestFirst(),
+            random,
             gameSession.ControlSettings,
             gameSession.GameSettings);
     }

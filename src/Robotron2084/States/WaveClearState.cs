@@ -44,7 +44,9 @@ public sealed class WaveClearState : IGameState
     ///     1-15 from a ramp table that lives beside the walker's own task data, blacks one palette index in each
     ///     group of five, and slides the whole window on every pass.
     /// </summary>
-    private readonly TunnelPalette _tunnelPalette = new();
+    private readonly TunnelPalette _tunnelPalette;
+
+    private readonly Random _random;
 
     private bool _hasAskedForWaveEndSound;
     private bool _paletteStarted;
@@ -52,12 +54,22 @@ public sealed class WaveClearState : IGameState
 
     private int _ticksRemaining = ScreenTuning.WaveClearDisplayTicks;
 
-    public WaveClearState(TextureSet textureSet, HighScoreStore highScoreStore, GameSession gameSession,
+    /// <summary>Makes the tunnel for the wave that has just been cleared.</summary>
+    /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="highScoreStore">The high score store.</param>
+    /// <param name="gameSession">The game in progress.</param>
+    /// <param name="random">
+    ///     The game's shared source of random numbers. The tunnel's palette uses it, and so do the screens that follow.
+    /// </param>
+    /// <param name="isAttractMode">True when the tunnel belongs to the attract demo.</param>
+    public WaveClearState(TextureSet textureSet, HighScoreStore highScoreStore, GameSession gameSession, Random random,
             bool isAttractMode = false)
     {
         _textureSet = textureSet;
         _highScoreStore = highScoreStore;
         _gameSession = gameSession;
+        _random = random;
+        _tunnelPalette = new TunnelPalette(random);
         _isAttractMode = isAttractMode;
     }
 
@@ -98,10 +110,10 @@ public sealed class WaveClearState : IGameState
         if (--_ticksRemaining <= 0 && _tunnelEffect.IsFinished)
         {
             RestorePalette();
-            IGameState nextGameState = new PlayingState(_textureSet, _highScoreStore, _gameSession);
+            IGameState nextGameState = new PlayingState(_textureSet, _highScoreStore, _gameSession, _random);
             if (_isAttractMode)
                 nextGameState = new AttractState(GameServices.CreateFrom(_gameSession, _textureSet, _highScoreStore,
-                    _gameSession.GetCurrent().PlayerInputSource));
+                    _gameSession.GetCurrent().PlayerInputSource, _random));
 
             gameStateManager.TransitionTo(nextGameState);
         }

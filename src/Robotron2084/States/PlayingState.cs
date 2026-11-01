@@ -41,7 +41,7 @@ public sealed class PlayingState : IGameState
     private readonly WaveParameterGenerator _waveParameterGenerator = new();
     private readonly HighScoreStore _highScoreStore;
     private readonly PauseToggle _pauseToggle = new();
-    private readonly Random _random = new();
+    private readonly Random _random;
     private readonly GameSession _gameSession;
     private readonly TextureSet _textureSet;
     private PlayField _playField;
@@ -57,6 +57,7 @@ public sealed class PlayingState : IGameState
     /// <param name="textureSet">The texture set that everything is drawn with.</param>
     /// <param name="highScoreStore">The high score table, which is offered the scores when the game ends.</param>
     /// <param name="gameSession">The game in progress: its players, and whose turn it is.</param>
+    /// <param name="random">The game's shared source of random numbers.</param>
     /// <param name="isStartOfTurn">
     ///     True when a turn is starting, which is at the start of the game. The arcade shows whose
     ///     turn it is then, and after a death, but not when a player goes on from one wave to the next.
@@ -65,12 +66,13 @@ public sealed class PlayingState : IGameState
     ///     Original source: <c>RRG23.ASM</c> <c>PLS000</c>, <c>LDA PCFLG / BNE PLS00C</c> ("NO DEATH.. NO MESSIE POOH");
     ///     <c>PCFLG</c> is set when a game starts and is left set when the player dies. Disassembly: <c>$27E7</c>.
     /// </remarks>
-    public PlayingState(TextureSet textureSet, HighScoreStore highScoreStore, GameSession gameSession,
+    public PlayingState(TextureSet textureSet, HighScoreStore highScoreStore, GameSession gameSession, Random random,
         bool isStartOfTurn = false)
     {
         _textureSet = textureSet;
         _highScoreStore = highScoreStore;
         _gameSession = gameSession;
+        _random = random;
         _gameSettings = gameSession.GameSettings;
         _playField = BuildField();
         if (isStartOfTurn) AnnounceTurn();
@@ -92,14 +94,15 @@ public sealed class PlayingState : IGameState
     /// <param name="mode">How many people are playing, and whether two of them take turns.</param>
     /// <param name="textureSet">The texture set that everything is drawn with.</param>
     /// <param name="highScoreStore">The high score table, which is offered the scores when the game ends.</param>
+    /// <param name="random">The game's shared source of random numbers.</param>
     public static PlayingState CreateNewGame(ControlSettings controlSettings, GameSettings gameSettings, GameMode mode,
-        TextureSet textureSet, HighScoreStore highScoreStore)
+        TextureSet textureSet, HighScoreStore highScoreStore, Random random)
     {
         var playerOneBoundPlayerInputSource = new BoundPlayerInputSource(controlSettings, 0);
         var playerTwoBoundPlayerInputSource = new BoundPlayerInputSource(controlSettings, 1);
         Sound.Play(StartSoundFor(mode));
         return new PlayingState(textureSet, highScoreStore,
-            GameSession.CreateNewGame(mode, playerOneBoundPlayerInputSource, playerTwoBoundPlayerInputSource, controlSettings, gameSettings), true);
+            GameSession.CreateNewGame(mode, playerOneBoundPlayerInputSource, playerTwoBoundPlayerInputSource, controlSettings, gameSettings), random, true);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -301,7 +304,7 @@ public sealed class PlayingState : IGameState
             // game offers both scores to the high-score table (RRTESTC checks
             // ZP1SCR and ZP2SCR), so the session hands over all of them.
             gameStateManager.TransitionTo(GameOverState.CreateFromSession(_gameSession.GetCurrent().PlayerInputSource, _textureSet, _highScoreStore,
-                _gameSession));
+                _gameSession, _random));
             return;
         }
 
@@ -333,7 +336,7 @@ public sealed class PlayingState : IGameState
         playerSlot.Wave = playerSlot.Wave % WaveCounterWrap + 1;
         playerSlot.SavedWaveParameters = null;
 
-        gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession));
+        gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession, _random));
     }
 
     /// <summary>

@@ -220,7 +220,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         {
             StopColours();
             gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _textureSet,
-                _highScoreStore));
+                _highScoreStore, _gameServices.Random));
             return;
         }
 
@@ -261,7 +261,7 @@ public sealed class TitleScreenState : IGameState, IAttractState
         {
             _idleElapsed = TimeSpan.Zero;
             StopColours();
-            gameStateManager.TransitionTo(new StorylineState(_gameServices, new Random()));
+            gameStateManager.TransitionTo(new StorylineState(_gameServices));
         }
     }
 

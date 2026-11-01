@@ -33,11 +33,11 @@ namespace Robotron2084.States;
 public sealed class AttractState : IGameState, IAttractState
 {
     private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
-    private readonly DemoPlayerInputSource _demoPlayerInputSource = new();
+    private readonly DemoPlayerInputSource _demoPlayerInputSource;
     private readonly WaveParameterGenerator _waveParameterGenerator = new();
     private readonly HighScoreStore _highScoreStore;
     private readonly IPlayerInputSource _humanPlayerInputSource;
-    private readonly Random _random = new();
+    private readonly Random _random;
     private readonly GameServices _gameServices;
     private readonly GameSession _gameSession;
     private readonly TextureSet _textureSet;
@@ -46,6 +46,8 @@ public sealed class AttractState : IGameState, IAttractState
     public AttractState(GameServices gameServices)
     {
         _gameServices = gameServices;
+        _random = gameServices.Random;
+        _demoPlayerInputSource = new DemoPlayerInputSource(_random);
         _textureSet = gameServices.TextureSet;
         _highScoreStore = gameServices.HighScoreStore;
         _humanPlayerInputSource = gameServices.PlayerInputSource;
@@ -88,7 +90,7 @@ public sealed class AttractState : IGameState, IAttractState
             SyncSlotFromField();
             playerSlot.Wave = playerSlot.Wave % 255 + 1; // ROM GEXX: skip 0
             playerSlot.SavedWaveParameters = null;
-            gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession, true));
+            gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession, _random, true));
             return;
         }
 
