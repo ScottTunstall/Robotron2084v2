@@ -72,7 +72,7 @@ public static class ArcadeHud
         Rectangle innerBounds,
         bool isSpareLivesVisible = true)
     {
-        var hudY = GetScoresAndLivesRowY(innerBounds);
+        var hudY = GetScoresAndLivesY(innerBounds);
 
         foreach (var playerSlot in gameSession.PlayerSlots)
         {
@@ -126,7 +126,7 @@ public static class ArcadeHud
     ///     eight arcade pixels. It is negative — and the whole HUD invisible — when
     ///     <paramref name="innerBounds" /> runs to the top of the canvas.
     /// </summary>
-    internal static int GetScoresAndLivesRowY(Rectangle innerBounds)
+    internal static int GetScoresAndLivesY(Rectangle innerBounds)
     {
         return innerBounds.Top - ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.WallThicknessArcadePixels) -
                ScreenSize.ToPortPixelsFromArcadePixels(HudLayout.HudRowAboveWallPixels);
