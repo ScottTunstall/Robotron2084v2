@@ -171,8 +171,8 @@ public sealed class Prog : IExplodable, IRemovable
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly (int Width, int Height) _collisionSize;
 
-    /// <summary>The ghosts the prog has left behind it, newest first (see <see cref="Ghost" />).</summary>
-    private readonly List<Ghost> _ghosts = new();
+    /// <summary>The ghosts the prog has left behind it, newest first (see <see cref="ProgGhost" />).</summary>
+    private readonly List<ProgGhost> _ghosts = new();
 
     private readonly Random _random;
 
@@ -443,7 +443,7 @@ public sealed class Prog : IExplodable, IRemovable
         }
 
         // Leave a ghost where the prog is standing, even if it then cannot take its step. Only the newest ghosts are kept (ROM: PROG3).
-        _ghosts.Insert(0, new Ghost(_position, GetWalkAnimationFrameIndex()));
+        _ghosts.Insert(0, new ProgGhost(_position, GetWalkAnimationFrameIndex()));
         if (_ghosts.Count > ProgTuning.GhostCount) _ghosts.RemoveAt(_ghosts.Count - 1);
 
         // A step goes left, right, up or down. It never goes diagonally.
@@ -533,8 +533,4 @@ public sealed class Prog : IExplodable, IRemovable
                    OffsetXStepColumns;
         _offsetY = (OffsetYCentre - ArcadeRandom.PickUpTo(_random, OffsetYSteps)) * OffsetYStepRows - OffsetYSteps;
     }
-
-    /// <summary>One ghost: a place the prog has left, and the animation frame the prog was showing there.</summary>
-    /// <remarks>The arcade draws a ghost once and never draws it again, so a ghost keeps the animation frame it started with.</remarks>
-    private readonly record struct Ghost(IntVector2 Position, int AnimationFrameIndex);
 }
