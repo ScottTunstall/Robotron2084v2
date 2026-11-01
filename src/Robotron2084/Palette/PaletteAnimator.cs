@@ -105,7 +105,7 @@ public sealed class PaletteAnimator
 
     private readonly GamePalette _gamePalette;
 
-    private readonly Process[] _processes;
+    private readonly Process[] _colourProcesses;
 
     private readonly Random _random;
 
@@ -125,7 +125,7 @@ public sealed class PaletteAnimator
     {
         _gamePalette = gamePalette;
         _random = random;
-        _processes =
+        _colourProcesses =
         [
             new Process { PaletteIndex = 11, ColourTable = [0x38, 0x07, 0xC0], ArcadeFramesPerCycle = 8 }, // RGB
             new Process
@@ -153,7 +153,7 @@ public sealed class PaletteAnimator
         ];
 
         // Like the original, each process writes its first colour straight away and only then waits for its first cycle.
-        foreach (var process in _processes) process.ClockUnits = ArcadeClock.ToClockUnits(process.ArcadeFramesPerCycle);
+        foreach (var process in _colourProcesses) process.ClockUnits = ArcadeClock.ToClockUnits(process.ArcadeFramesPerCycle);
     }
 
     /// <summary>Moves every process on by one game tick, and changes a colour when a process's cycle is due.</summary>
@@ -184,7 +184,7 @@ public sealed class PaletteAnimator
             _gamePalette.SetPaletteIndexValue(10, flashColour);
         }
 
-        foreach (var process in _processes)
+        foreach (var process in _colourProcesses)
         {
             // A suspended entry is a process the original has ended: it does not advance either, so resuming picks it up
             // where it left off.

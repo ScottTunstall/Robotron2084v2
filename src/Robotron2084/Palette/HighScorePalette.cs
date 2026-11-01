@@ -133,12 +133,12 @@ public sealed class HighScorePalette
     /// </remarks>
     private const int RampProcessStart = 1;
 
-    private readonly Process[] _processes;
+    private readonly Process[] _colourProcesses;
 
     public HighScorePalette()
     {
         // The original starts DECAZ and COLC part-way through their tables, so that they pulse out of step with COLA and COLD.
-        _processes =
+        _colourProcesses =
         [
             new Process { PaletteIndex = LoopPaletteIndex, ColourTable = CycleTable, ArcadeFramesPerCycle = 3 },
             new Process { PaletteIndex = 9, ColourTable = RampTable, ColourIndex = 7, ArcadeFramesPerCycle = 4 },
@@ -174,7 +174,7 @@ public sealed class HighScorePalette
 
         foreach (var paletteIndex in OwnedPaletteIndices) gamePalette.SuspendPaletteIndex(paletteIndex);
 
-        Apply(gamePalette, _processes[0], _processes[0].ColourTable[_processes[0].ColourIndex]);
+        Apply(gamePalette, _colourProcesses[0], _colourProcesses[0].ColourTable[_colourProcesses[0].ColourIndex]);
     }
 
     /// <summary>Starts the four pulsing processes, once the page has finished printing.</summary>
@@ -194,8 +194,8 @@ public sealed class HighScorePalette
         if (RampsStarted) return;
 
         RampsStarted = true;
-        for (var i = RampProcessStart; i < _processes.Length; i++)
-            Apply(gamePalette, _processes[i], _processes[i].ColourTable[_processes[i].ColourIndex]);
+        for (var i = RampProcessStart; i < _colourProcesses.Length; i++)
+            Apply(gamePalette, _colourProcesses[i], _colourProcesses[i].ColourTable[_colourProcesses[i].ColourIndex]);
     }
 
     /// <summary>Puts the palette back to its usual colours when the page is left, and gives entries 10, 12 and 13 back to the in-game animator.</summary>
@@ -222,13 +222,13 @@ public sealed class HighScorePalette
     /// <param name="gamePalette">The palette to change.</param>
     public void Update(GamePalette gamePalette)
     {
-        for (var i = 0; i < _processes.Length; i++)
+        for (var i = 0; i < _colourProcesses.Length; i++)
         {
             // The pulsing processes do not exist until the page has finished printing.
             if (i >= RampProcessStart &&
                 !RampsStarted) continue;
 
-            var process = _processes[i];
+            var process = _colourProcesses[i];
             process.ClockUnits += ArcadeClock.UnitsPerPortTick;
             var period = ArcadeClock.ToClockUnits(process.ArcadeFramesPerCycle);
             if (process.ClockUnits < period) continue;
