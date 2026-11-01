@@ -24,7 +24,7 @@ namespace Robotron2084.Graphics;
 ///     close in on
 ///     the same seam, which is the same picture as one fan that closes in on the letter's middle.
 /// </remarks>
-public sealed class WordmarkAppear
+public sealed class LargeTitleLetterAppear
 {
     /// <summary>
     ///     fiftieths of a second the last letter is left to finish before whatever comes next (<c>NAP $20,LOGG2</c>). It
@@ -50,7 +50,7 @@ public sealed class WordmarkAppear
     /// <param name="spriteSize">The size of each mask, in its own pixels.</param>
     /// <param name="letters">Where each letter sits across the masks.</param>
     /// <param name="origin">Where the whole picture is drawn, in port pixels.</param>
-    public WordmarkAppear(Texture2D rimTexture, Texture2D coreTexture, Point spriteSize,
+    public LargeTitleLetterAppear(Texture2D rimTexture, Texture2D coreTexture, Point spriteSize,
         IReadOnlyList<LetterSpan> letters, Point origin)
     {
         _rimTexture = rimTexture;
@@ -71,7 +71,7 @@ public sealed class WordmarkAppear
     /// <param name="rimTexture">The white mask of the letters' outline.</param>
     /// <param name="coreTexture">The white mask of the letters' body, the same size as the outline.</param>
     /// <param name="origin">Where the whole picture is drawn, in port pixels.</param>
-    public static WordmarkAppear CreateFromMasks(Texture2D rimTexture, Texture2D coreTexture, Point origin)
+    public static LargeTitleLetterAppear CreateFromMasks(Texture2D rimTexture, Texture2D coreTexture, Point origin)
     {
         var pixels = new Color[rimTexture.Width * rimTexture.Height];
         rimTexture.GetData(pixels);
@@ -79,7 +79,7 @@ public sealed class WordmarkAppear
         for (var index = 0; index < pixels.Length; index++)
             columnHasPixel[index % rimTexture.Width] |= pixels[index].A > 0;
 
-        return new WordmarkAppear(rimTexture, coreTexture, new Point(rimTexture.Width, rimTexture.Height),
+        return new LargeTitleLetterAppear(rimTexture, coreTexture, new Point(rimTexture.Width, rimTexture.Height),
             FindLetters(columnHasPixel), origin);
     }
 

@@ -145,8 +145,8 @@ public sealed class TextureSet
         DaddyAnimationFrameTextures = textureSource.LoadAll(GetNumberedNames("Sprites/Daddy", WalkCycleAnimationFrameCount));
         BrainAnimationFrameTextures = textureSource.LoadAll(GetNumberedNames("Sprites/Brain", WalkCycleAnimationFrameCount));
         ProgBurstTexture = textureSource.Load("Sprites/ProgBurst");
-        TitleWordmarkCoreTexture = textureSource.Load("Sprites/Title_Wordmark_Core");
-        TitleWordmarkRimTexture = textureSource.Load("Sprites/Title_Wordmark_Rim");
+        LargeTitleLettersCoreTexture = textureSource.Load("Sprites/Title_LargeTitleLetters_Core");
+        LargeTitleLettersRimTexture = textureSource.Load("Sprites/Title_LargeTitleLetters_Rim");
         Title2084Texture = textureSource.Load("Sprites/Title_2084");
         WilliamsLogoTexture = textureSource.Load("Sprites/WilliamsLogo");
 
@@ -319,25 +319,25 @@ public sealed class TextureSet
     public ArcadeText ArcadeText { get; }
 
     /// <summary>
-    ///     The "2084" mark beneath the wordmark — COLOUR sprite, traced the same way and snapped to the
-    ///     arcade's own palette (notes §103.4). Unlike the wordmark it keeps its own colours: only the
-    ///     wordmark cycles.
+    ///     The "2084" mark beneath the large title letters — COLOUR sprite, traced the same way and snapped to the
+    ///     arcade's own palette (notes §103.4). Unlike the large title letters it keeps its own colours: only the
+    ///     large title letters cycles.
     /// </summary>
     public Texture2D Title2084Texture { get; }
 
     /// <summary>
-    ///     The attract page's wordmark — "ROBOTRON:" — as two WHITE MASKS at 1x arcade pixels,
+    ///     The attract page's large title letters — "ROBOTRON:" — as two WHITE MASKS at 1x arcade pixels,
     ///     TRACED from an arcade screenshot by <c>tools/extract-title-logos.py</c> (notes
-    ///     §103.4): the R5 CPU ROM we hold does not contain these sprites. <see cref="TitleWordmarkCoreTexture" />
-    ///     is the letters' body and <see cref="TitleWordmarkRimTexture" /> the one-pixel rim round them,
+    ///     §103.4): the R5 CPU ROM we hold does not contain these sprites. <see cref="LargeTitleLettersCoreTexture" />
+    ///     is the letters' body and <see cref="LargeTitleLettersRimTexture" /> the one-pixel rim round them,
     ///     because the arcade blits a shape in a colour taken from the LIVE palette — so the page
-    ///     draws each mask in a palette index and the wordmark colour-cycles with the page's own
+    ///     draws each mask in a palette index and the large title letters colour-cycles with the page's own
     ///     colour processes (notes §104).
     /// </summary>
-    public Texture2D TitleWordmarkCoreTexture { get; }
+    public Texture2D LargeTitleLettersCoreTexture { get; }
 
-    /// <summary>The one-pixel rim round the wordmark's letters (see <see cref="TitleWordmarkCoreTexture" />).</summary>
-    public Texture2D TitleWordmarkRimTexture { get; }
+    /// <summary>The one-pixel rim round the large title letters' letters (see <see cref="LargeTitleLettersCoreTexture" />).</summary>
+    public Texture2D LargeTitleLettersRimTexture { get; }
 
     /// <summary>1x1 white pixel for the wall ring (tinted per draw call).</summary>
     public Texture2D WallPixelTexture { get; }

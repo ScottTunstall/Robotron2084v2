@@ -267,8 +267,8 @@ public static class TexturePaths
         "Sprites/Tank_3",
         "Sprites/Tank_4",
         "Sprites/Title_2084",
-        "Sprites/Title_Wordmark_Core",
-        "Sprites/Title_Wordmark_Rim",
+        "Sprites/Title_LargeTitleLetters_Core",
+        "Sprites/Title_LargeTitleLetters_Rim",
         "Sprites/WilliamsLogo"
     ];
 }
