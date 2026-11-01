@@ -87,15 +87,12 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <param name="textureSet">The shared texture set.</param>
     /// <param name="startPosition">Where the player's top-left corner is.</param>
     /// <param name="lives">How many lives the player starts with. Each death takes one off.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. They pick the colours of the death animation. If this is null,
-    ///     the player makes its own.
-    /// </param>
-    public Player(TextureSet textureSet, IntVector2 startPosition, int lives, Random? random = null)
+    /// <param name="random">Where its random numbers come from. They pick the colours of the death animation.</param>
+    public Player(TextureSet textureSet, IntVector2 startPosition, int lives, Random random)
     {
         _textureSet = textureSet;
         _position = startPosition;
-        _random = random ?? new Random();
+        _random = random;
         Lives = lives;
     }
 

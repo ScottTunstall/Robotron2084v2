@@ -74,22 +74,22 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>Makes a grunt, and picks at random how long it waits before its first step.</summary>
     /// <param name="textureSet">The shared texture set.</param>
     /// <param name="position">Where the grunt's top-left corner is.</param>
+    /// <param name="random">Where its random numbers come from.</param>
     /// <param name="moveIntervalMaxBeats">
     ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a grunt waits between steps on this wave. Each wait is a random number of
     ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> from 1 up to this.
     /// </param>
-    /// <param name="random">Where its random numbers come from. If this is null, the grunt makes its own.</param>
     /// <remarks>ROM: <c>ROBSPD</c>.</remarks>
     public Grunt(
         TextureSet textureSet,
         IntVector2 position,
-        int moveIntervalMaxBeats = DefaultMoveIntervalMaxBeats,
-        Random? random = null)
+        Random random,
+        int moveIntervalMaxBeats = DefaultMoveIntervalMaxBeats)
     {
         _textureSet = textureSet;
         _position = position;
         MoveIntervalMaxBeats = moveIntervalMaxBeats;
-        _random = random ?? new Random();
+        _random = random;
         // The grunt waits a random number of beats before its first step.
         _moveBeatsRemaining = _random.Next(1, MoveIntervalMaxBeats + 1);
     }
