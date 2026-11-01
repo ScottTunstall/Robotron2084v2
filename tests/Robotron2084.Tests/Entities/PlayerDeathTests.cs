@@ -5,7 +5,7 @@ using Robotron2084.Palette;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     The player's DEATH — RRX7.ASM's `PDTHV` (notes §66), which replaced the port's

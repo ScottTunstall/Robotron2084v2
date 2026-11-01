@@ -4,7 +4,7 @@ using Robotron2084.Entities;
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     R5 grunt stagger (notes §29): beat every 4 arcade frames; the moves-remaining count

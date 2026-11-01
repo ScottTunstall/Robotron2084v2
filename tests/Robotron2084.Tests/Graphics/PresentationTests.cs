@@ -3,7 +3,7 @@ using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Graphics;
 
 /// <summary>
 ///     The window fit: the canvas is drawn at ONE scale for both axes, centred with black bars, at any

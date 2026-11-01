@@ -5,7 +5,7 @@ using Robotron2084.Input;
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 ///     The start of a wave (notes §142), from `RRG23.ASM` `PLS0A` to `PLS2` (R5 $2831 to $289A).

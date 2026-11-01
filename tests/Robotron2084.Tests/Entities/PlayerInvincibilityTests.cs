@@ -3,7 +3,7 @@ using Robotron2084.Entities;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     Round 7 playtest aid: the player is invincible for testing

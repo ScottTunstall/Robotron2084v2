@@ -5,7 +5,7 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     R5 spheroid/enforcer tempo (notes §17/§29, playtest 2026-09-12

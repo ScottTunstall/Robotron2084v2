@@ -3,7 +3,7 @@ using Robotron2084.Entities;
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>What a death keeps (ROM <c>PLEND</c>, <c>PLSAV</c>, <c>PLRES</c>, notes §134).</summary>
 public sealed class WaveSurvivorsTests

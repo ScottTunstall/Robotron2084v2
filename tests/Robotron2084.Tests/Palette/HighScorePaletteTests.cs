@@ -1,7 +1,7 @@
 using Robotron2084.Palette;
 using Xunit;
 
-namespace Robotron2084.Tests.Rendering;
+namespace Robotron2084.Tests.Palette;
 
 /// <summary>
 ///     The high score page's own colour processes — RRTABLE's <c>MAKP LOOPP</c> /

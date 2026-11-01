@@ -1,7 +1,7 @@
 using Robotron2084.Palette;
 using Xunit;
 
-namespace Robotron2084.Tests.Rendering;
+namespace Robotron2084.Tests.Palette;
 
 /// <summary>
 ///     The six ROM colour processes (arcade-fidelity-notes §4.12, §65) replayed over a <see cref="GamePalette" />: exact

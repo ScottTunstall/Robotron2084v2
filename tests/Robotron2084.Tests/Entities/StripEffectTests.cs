@@ -6,7 +6,7 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     The ROM's explosion engine (notes §35.5, §61, §67, §69, §71) — the sources'

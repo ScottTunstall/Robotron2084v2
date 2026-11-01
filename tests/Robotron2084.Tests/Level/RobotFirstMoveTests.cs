@@ -3,7 +3,7 @@ using Robotron2084.Core;
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 ///     When each kind of robot makes its first move after the game goes live (notes §143). No robot sees `CLR STATUS` at

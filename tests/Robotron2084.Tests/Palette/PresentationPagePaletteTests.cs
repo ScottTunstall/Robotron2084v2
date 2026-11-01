@@ -1,7 +1,7 @@
 using Robotron2084.Palette;
 using Xunit;
 
-namespace Robotron2084.Tests.Rendering;
+namespace Robotron2084.Tests.Palette;
 
 /// <summary>
 ///     The Williams presentation page's own colour set (notes §106): the seven entries of <c>LCTAB</c> (`$8A70` in the

@@ -4,7 +4,7 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     Each shape of electrode is its own size, as in the arcade (disassembly <c>$3B05</c> onwards). The "2084" electrode

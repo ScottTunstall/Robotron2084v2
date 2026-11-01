@@ -5,7 +5,7 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     Pins where the spheroid's escape gives up (ROM <c>CIRC3L</c>: <c>CMPA #XMIN+3</c> /

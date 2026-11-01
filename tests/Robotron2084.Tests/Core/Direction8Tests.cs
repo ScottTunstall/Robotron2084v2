@@ -1,7 +1,7 @@
 using Robotron2084.Core;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Core;
 
 public sealed class Direction8Tests
 {

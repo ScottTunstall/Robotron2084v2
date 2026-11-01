@@ -6,7 +6,7 @@ using Robotron2084.Palette;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 ///     The playfield's geometry: the inner rectangle is the canvas inset by the playfield margin, the wall
@@ -32,7 +32,7 @@ public sealed class PlayfieldLayoutTests
     [Fact]
     public void ScoresAndMenRow_IsOnScreen()
     {
-        var row = ArcadeHud.GetScoresAndLivesRowY(PlayfieldLayout.GetInnerBounds());
+        var row = ArcadeHud.GetScoresAndLivesY(PlayfieldLayout.GetInnerBounds());
 
         Assert.True(row >= 0, $"the score and spare-lives row ({row}) must be on the canvas");
     }

@@ -3,7 +3,7 @@ using Robotron2084.AttractMode;
 using Robotron2084.Level.Attract;
 using Xunit;
 
-namespace Robotron2084.Tests.Level;
+namespace Robotron2084.Tests.AttractMode;
 
 /// <summary>
 ///     The attract movie (notes §95/§96): the ROM's HISTO page script and its object

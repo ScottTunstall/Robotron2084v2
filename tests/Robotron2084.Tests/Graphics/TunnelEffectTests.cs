@@ -2,7 +2,7 @@ using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Graphics;
 
 /// <summary>
 ///     The ROM's wave-complete tunnel (`DRAW_COLOUR_CYCLING_TUNNEL_EFFECT` $5703 and

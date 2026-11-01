@@ -1,7 +1,7 @@
 using Robotron2084.Graphics;
 using Xunit;
 
-namespace Robotron2084.Tests.Rendering;
+namespace Robotron2084.Tests.Graphics;
 
 /// <summary>The walk of the Williams "W"s round the attract page's border (ROM <c>$896C</c>).</summary>
 public sealed class WilliamsLogoPathTests

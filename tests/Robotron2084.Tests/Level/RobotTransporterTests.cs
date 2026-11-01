@@ -3,7 +3,7 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>The brain-wave transporter (ROM <c>RRT2.ASM</c>, notes §136).</summary>
 public sealed class RobotTransporterTests

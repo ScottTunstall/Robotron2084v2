@@ -3,7 +3,7 @@ using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Graphics;
 
 /// <summary>The big ROBOTRON letters coming into view one at a time (ROM <c>RRLOG.ASM</c> <c>WDONE</c>).</summary>
 public sealed class WordmarkAppearTests

@@ -5,7 +5,7 @@ using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 ///     The playfield's contact test (notes §118): with an <see cref="IPixelCollision" /> the sprites' pixels

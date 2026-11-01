@@ -4,7 +4,7 @@ using Robotron2084.Entities;
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     Grunt speed progression (notes §31, §67). Three ROM mechanisms:

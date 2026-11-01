@@ -3,7 +3,7 @@ using Robotron2084.Graphics;
 using Robotron2084.Palette;
 using Xunit;
 
-namespace Robotron2084.Tests.Rendering;
+namespace Robotron2084.Tests.Palette;
 
 /// <summary>
 ///     The 16-index live palette: CRTAB defaults, palette index writes, and the

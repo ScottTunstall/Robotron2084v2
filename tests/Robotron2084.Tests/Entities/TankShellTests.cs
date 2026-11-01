@@ -4,7 +4,7 @@ using Robotron2084.Entities;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     How a tank shell is aimed, how fast it goes, how it bounces and when it fizzles out (RRTK4 <c>TNKFIR</c> and

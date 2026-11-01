@@ -3,7 +3,7 @@ using Robotron2084.Core;
 using Robotron2084.Entities;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     Where a prog's explosion starts. The arcade moves it left or up when the prog is close to the right wall or the

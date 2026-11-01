@@ -6,7 +6,7 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 ///     The player's appear effect at the start of a wave (notes §143), from `RRG23.ASM` `PAPPR` (R5 $29F5) and `PDAPPR`

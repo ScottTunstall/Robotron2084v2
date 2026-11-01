@@ -2,7 +2,7 @@ using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Xunit;
 
-namespace Robotron2084.Tests.Rendering;
+namespace Robotron2084.Tests.Graphics;
 
 /// <summary>The attract page's border of Williams "W"s (ROM <c>$87D6</c> onward).</summary>
 public sealed class WilliamsLogoBorderTests

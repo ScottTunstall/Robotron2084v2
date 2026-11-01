@@ -4,7 +4,7 @@ using Robotron2084.Entities;
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 ///     PHASE D family members (ROM RRH11): wave spawn (Mikeys/mommies/daddies counts), bounded

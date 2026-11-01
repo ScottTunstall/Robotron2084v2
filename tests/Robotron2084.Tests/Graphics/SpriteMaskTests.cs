@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Robotron2084.Graphics;
 using Xunit;
 
-namespace Robotron2084.Tests.Core;
+namespace Robotron2084.Tests.Graphics;
 
 /// <summary>
 ///     The opaque-pixel masks and the contact test they drive (notes §118): a sprite's shape, and the

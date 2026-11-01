@@ -5,7 +5,7 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     The spheroid's and the quark's DEATH BURST (notes §64) — the ROM's

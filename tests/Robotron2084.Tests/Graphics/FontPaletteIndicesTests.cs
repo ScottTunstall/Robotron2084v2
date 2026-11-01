@@ -1,7 +1,7 @@
 using Robotron2084.Graphics;
 using Xunit;
 
-namespace Robotron2084.Tests.Rendering;
+namespace Robotron2084.Tests.Graphics;
 
 /// <summary>Blitter-remap palette index classification (notes §39).</summary>
 public class FontPaletteIndicesTests

@@ -1,7 +1,7 @@
 using Robotron2084.AttractMode;
 using Xunit;
 
-namespace Robotron2084.Tests.Level;
+namespace Robotron2084.Tests.AttractMode;
 
 /// <summary>The story movie's laser bolts stop at the wall, as the ROM's object mover makes them (RRS22 <c>OPRC80</c>).</summary>
 public sealed class MovieLaserWallTests

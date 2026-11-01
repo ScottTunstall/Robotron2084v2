@@ -5,7 +5,7 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     R5 player walk animation (MOVE_PLAYER $2FD0) + two-stick IJKL aim

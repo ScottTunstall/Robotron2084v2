@@ -4,7 +4,7 @@ using Robotron2084.Entities;
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 ///     What a hulk heads for, as the arcade decides it (notes §144; disassembly <c>HULK_INITIALISE</c> at <c>$017C</c>):

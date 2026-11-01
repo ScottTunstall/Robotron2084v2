@@ -3,7 +3,7 @@ using Robotron2084.Core;
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 ///     (notes §94) The nearest-living-robot accessor the attract demo's

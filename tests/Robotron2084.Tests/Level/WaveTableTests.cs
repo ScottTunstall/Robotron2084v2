@@ -1,7 +1,7 @@
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 public sealed class WaveTableTests
 {

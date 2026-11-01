@@ -5,7 +5,7 @@ using Robotron2084.Level;
 using Robotron2084.Level.Collisions;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 ///     The classes the playfield hands its jobs to: the wave spawners, the collision rules and their order, the contact

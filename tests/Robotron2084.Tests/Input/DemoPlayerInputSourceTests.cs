@@ -5,7 +5,7 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Input;
 
 /// <summary>
 ///     (notes §94.3) The attract demo's phony player. The arcade's

@@ -2,7 +2,7 @@ using Robotron2084.Core;
 using Robotron2084.Entities;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 public sealed class LaserSlotsTests
 {

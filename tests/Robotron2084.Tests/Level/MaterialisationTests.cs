@@ -5,7 +5,7 @@ using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Level;
 
 /// <summary>
 ///     How the robots are brought on at the start of a wave (notes §62, §143), from `RRG23.ASM` `APPEAR` (R5 $28FE to

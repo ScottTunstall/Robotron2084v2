@@ -1,7 +1,7 @@
 using Robotron2084.Core;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Core;
 
 /// <summary>The arcade's pick up to a limit, which halves a random byte until it fits (disassembly <c>$D6B6</c>).</summary>
 public sealed class ArcadeRandomTests

@@ -3,7 +3,7 @@ using Robotron2084.Entities;
 using Robotron2084.Level;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities;
 
 /// <summary>
 ///     The spheroid's sprite CHAIN (notes §56.2 as corrected by §90) — `OPICT += 4` once

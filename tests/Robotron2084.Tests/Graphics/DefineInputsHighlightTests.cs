@@ -2,7 +2,7 @@ using Robotron2084.Graphics;
 using Robotron2084.Palette;
 using Xunit;
 
-namespace Robotron2084.Tests.Rendering;
+namespace Robotron2084.Tests.Graphics;
 
 /// <summary>
 ///     The DEFINE INPUTS page's selected-line colour cycle (notes §115): palette index 8 on the page's

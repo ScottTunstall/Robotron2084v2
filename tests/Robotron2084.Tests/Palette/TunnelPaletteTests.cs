@@ -1,7 +1,7 @@
 using Robotron2084.Palette;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Palette;
 
 /// <summary>
 ///     The ROM's colour-cycling palette for the wave-complete tunnel (notes §86): twelve ramp

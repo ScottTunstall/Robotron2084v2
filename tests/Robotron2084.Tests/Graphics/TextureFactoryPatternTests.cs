@@ -4,7 +4,7 @@ using Robotron2084.Graphics;
 using Robotron2084.Tuning;
 using Xunit;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Graphics;
 
 /// <summary>
 ///     The hand-authored patterns must stay correct at ANY PortPixelsPerArcadePixel: each Build*
