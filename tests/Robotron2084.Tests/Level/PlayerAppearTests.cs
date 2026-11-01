@@ -40,13 +40,15 @@ public sealed class PlayerAppearTests
             .WithSeed(7).Build();
     }
 
-    private static void TickToArcadeFrame(PlayField playField, ref int ticks, int arcadeFrame)
+    private static int TickToArcadeFrame(PlayField playField, int ticks, int arcadeFrame)
     {
         while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
         {
             playField.Update(OneTick());
             ticks++;
         }
+
+        return ticks;
     }
 
     private static int Count(PlayField playField, StripEngine engine)
@@ -60,10 +62,10 @@ public sealed class PlayerAppearTests
         var playField = CreateEmptyField();
         var ticks = 0;
 
-        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame - 1);
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame - 1);
         Assert.Empty(playField.FieldEntities.Explosions);
 
-        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame);
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame);
 
         // The vertical routine takes its records from the object list, so all 12 are made. The sprite is 4 columns
         // wide, but the horizontal routine has 2 records, so only the first 2 asked for are made.
@@ -80,10 +82,10 @@ public sealed class PlayerAppearTests
         var playField = CreateEmptyField();
         var ticks = 0;
 
-        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 5);
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 5);
         Assert.Equal(0, Count(playField, StripEngine.Diagonal));
 
-        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 6);
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 6);
 
         // The count runs 12, 9, 6, 3, 0 (`SUBA #3 / BPL DPAPP1`), and each one makes two fans (`CLRA`, then `COMA`):
         // ten, which is every record the diagonal routine has.
@@ -98,11 +100,11 @@ public sealed class PlayerAppearTests
         var playField = CreateEmptyField();
         var ticks = 0;
 
-        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 9);
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 9);
         Assert.True(playField.HasPlayerAppeared());
         Assert.False(playField.IsPlayerVisible());
 
-        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 10); // PLS2: CLR STATUS
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 10); // PLS2: CLR STATUS
         Assert.True(playField.IsLive());
         Assert.True(playField.IsPlayerVisible());
         Assert.NotEmpty(playField.FieldEntities.Explosions); // the appear is still running
@@ -115,7 +117,7 @@ public sealed class PlayerAppearTests
         var playerInputSource = new FakeInputSource(new PlayerInputState(new IntVector2(1, 0), IntVector2.Zero, false));
         var playField = CreateEmptyField(playerInputSource);
         var ticks = 0;
-        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 10);
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 10);
         var start = playField.Player.GetBounds();
 
         for (var tick = 0; tick < 12; tick++)
@@ -139,14 +141,14 @@ public sealed class PlayerAppearTests
         var playField = CreateEmptyField();
         var ticks = 0;
 
-        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 6 + 15);
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 6 + 15);
         Assert.Equal(0, Count(playField, StripEngine.Diagonal));
 
-        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 29);
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 29);
         Assert.Equal(0, Count(playField, StripEngine.Vertical));
         Assert.Equal(StripEffectTuning.HorizontalPoolSize, Count(playField, StripEngine.Horizontal));
 
-        TickToArcadeFrame(playField, ref ticks, PlayerAppearArcadeFrame + 31);
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 31);
         Assert.Empty(playField.FieldEntities.Explosions);
     }
 

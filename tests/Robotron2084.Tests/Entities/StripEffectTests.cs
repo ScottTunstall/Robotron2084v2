@@ -322,13 +322,15 @@ public sealed class StripEffectTests
     }
 
     /// <summary>Runs an effect on to the tick a fiftieth of a second falls on, counted from when the effect was made.</summary>
-    private static void UpdateToArcadeFrame(StripEffect stripEffect, ref int ticks, int arcadeFrame)
+    private static int UpdateToArcadeFrame(StripEffect stripEffect, int ticks, int arcadeFrame)
     {
         while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
         {
             stripEffect.Update(new GameTime());
             ticks++;
         }
+
+        return ticks;
     }
 
     [Theory]
@@ -343,10 +345,10 @@ public sealed class StripEffectTests
         Assert.Equal(StripEffectKind.Appear, appear.Kind);
 
         var ticks = 0;
-        UpdateToArcadeFrame(appear, ref ticks, arcadeFrames - 1);
+        ticks = UpdateToArcadeFrame(appear, ticks, arcadeFrames - 1);
         Assert.True(appear.IsAlive());
 
-        UpdateToArcadeFrame(appear, ref ticks, arcadeFrames);
+        ticks = UpdateToArcadeFrame(appear, ticks, arcadeFrames);
         Assert.Equal(EntityLifeState.Dead, appear.LifeState);
     }
 
@@ -359,17 +361,17 @@ public sealed class StripEffectTests
         var ticks = 0;
         Assert.False(appear.IsVisible());
 
-        UpdateToArcadeFrame(appear, ref ticks, 1);
+        ticks = UpdateToArcadeFrame(appear, ticks, 1);
         Assert.True(appear.IsVisible());
         Assert.Equal(15, appear.GetSpacing());
 
-        UpdateToArcadeFrame(appear, ref ticks, 2);
+        ticks = UpdateToArcadeFrame(appear, ticks, 2);
         Assert.Equal(15, appear.GetSpacing());
 
-        UpdateToArcadeFrame(appear, ref ticks, 3);
+        ticks = UpdateToArcadeFrame(appear, ticks, 3);
         Assert.Equal(14, appear.GetSpacing());
 
-        UpdateToArcadeFrame(appear, ref ticks, 28);
+        ticks = UpdateToArcadeFrame(appear, ticks, 28);
         Assert.Equal(2, appear.GetSpacing());
         Assert.True(appear.IsAlive());
     }
@@ -380,10 +382,10 @@ public sealed class StripEffectTests
         var appear = NewAppear(StripFanAxis.Columns, 0);
         var ticks = 0;
 
-        UpdateToArcadeFrame(appear, ref ticks, 28);
+        ticks = UpdateToArcadeFrame(appear, ticks, 28);
         Assert.Equal(2, appear.GetSpacing());
 
-        UpdateToArcadeFrame(appear, ref ticks, 30);
+        ticks = UpdateToArcadeFrame(appear, ticks, 30);
         Assert.Equal(1, appear.GetSpacing());
         Assert.True(appear.IsAlive());
     }
@@ -396,7 +398,7 @@ public sealed class StripEffectTests
         var sprite = new Rectangle(100, 200, 16, 24);
         var appear = StripEffect.CreateAppear(new FakeDead(sprite), sprite, StripFanAxis.Rows, 0, Clip, _ => 0);
         var ticks = 0;
-        UpdateToArcadeFrame(appear, ref ticks, 1);
+        ticks = UpdateToArcadeFrame(appear, ticks, 1);
 
         var strips = appear.GetStrips(8, 12);
 
@@ -412,13 +414,13 @@ public sealed class StripEffectTests
         var player = new FakeDead(new Rectangle(100, 200, 16, 24));
         var appear = StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, 0, Clip, 3, 0);
         var ticks = 0;
-        UpdateToArcadeFrame(appear, ref ticks, 1);
+        ticks = UpdateToArcadeFrame(appear, ticks, 1);
 
         player.MoveTo(new Rectangle(140, 200, 16, 24));
-        UpdateToArcadeFrame(appear, ref ticks, 2); // the gap is the same, so nothing is redrawn
+        ticks = UpdateToArcadeFrame(appear, ticks, 2); // the gap is the same, so nothing is redrawn
         Assert.Equal(100, appear.GetBounds().X);
 
-        UpdateToArcadeFrame(appear, ref ticks, 3);
+        ticks = UpdateToArcadeFrame(appear, ticks, 3);
         Assert.Equal(140, appear.GetBounds().X);
     }
 

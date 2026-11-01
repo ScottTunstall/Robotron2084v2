@@ -30,13 +30,15 @@ public sealed class RobotFirstMoveTests
         return new PlayFieldBuilder().WithParameters(waveParameters).WithInput(new FakeInputSource()).WithSeed(7).Build();
     }
 
-    private static void TickToArcadeFrame(PlayField playField, ref int ticks, int arcadeFrame)
+    private static int TickToArcadeFrame(PlayField playField, int ticks, int arcadeFrame)
     {
         while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
         {
             playField.Update(OneTick());
             ticks++;
         }
+
+        return ticks;
     }
 
     [Theory]
@@ -74,7 +76,7 @@ public sealed class RobotFirstMoveTests
         IntVector2[] starts = [.. playField.FieldEntities.Grunts.Select(grunt => grunt.Position)];
         var ticks = 0;
 
-        TickToArcadeFrame(playField, ref ticks, firstStepArcadeFrame - 1);
+        ticks = TickToArcadeFrame(playField, ticks, firstStepArcadeFrame - 1);
         while (ticks < ArcadeClock.ToPortTicksRoundedUp(firstStepArcadeFrame) - 1)
         {
             playField.Update(OneTick());
@@ -97,11 +99,11 @@ public sealed class RobotFirstMoveTests
         var start = hulk.Position;
         var ticks = 0;
 
-        TickToArcadeFrame(playField, ref ticks, 55);
+        ticks = TickToArcadeFrame(playField, ticks, 55);
         Assert.True(playField.IsLive());
         Assert.Equal(start, hulk.Position);
 
-        TickToArcadeFrame(playField, ref ticks, 56);
+        ticks = TickToArcadeFrame(playField, ticks, 56);
         Assert.NotEqual(start, hulk.Position);
     }
 
@@ -114,11 +116,11 @@ public sealed class RobotFirstMoveTests
         var brain = playField.FieldEntities.Brains[0];
         var ticks = 0;
 
-        TickToArcadeFrame(playField, ref ticks, 171);
+        ticks = TickToArcadeFrame(playField, ticks, 171);
         Assert.True(playField.IsLive());
         Assert.Null(brain.TargetFamilyMember);
 
-        TickToArcadeFrame(playField, ref ticks, 172);
+        ticks = TickToArcadeFrame(playField, ticks, 172);
         Assert.NotNull(brain.TargetFamilyMember);
     }
 
@@ -132,11 +134,11 @@ public sealed class RobotFirstMoveTests
         var treadAtStart = tank.TreadFrameIndex;
         var ticks = 0;
 
-        TickToArcadeFrame(playField, ref ticks, 59);
+        ticks = TickToArcadeFrame(playField, ticks, 59);
         Assert.True(playField.IsLive());
         Assert.Equal(treadAtStart, tank.TreadFrameIndex);
 
-        TickToArcadeFrame(playField, ref ticks, 60);
+        ticks = TickToArcadeFrame(playField, ticks, 60);
         Assert.NotEqual(treadAtStart, tank.TreadFrameIndex);
     }
 }
