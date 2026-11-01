@@ -45,10 +45,10 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
     private int _holdTicks;
 
     /// <summary>Creates the phony player.</summary>
-    /// <param name="random">Optional seedable RNG (tests); the demo uses the default.</param>
-    public DemoPlayerInputSource(Random? random = null)
+    /// <param name="random">Where its random numbers come from.</param>
+    public DemoPlayerInputSource(Random random)
     {
-        _random = random ?? new Random();
+        _random = random;
     }
 
     /// <summary>Attaches the field this poll will reason about (the demo state calls it every tick).</summary>
