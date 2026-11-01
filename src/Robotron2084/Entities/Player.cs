@@ -65,7 +65,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private int _deathFlashPaletteIndex = PlayerTuning.PlayerDeathWhitePaletteIndex;
 
     // Which stage of the death animation is playing: a white flash, a coloured flash, or the fade to black (ROM: RRX7.ASM).
-    private DeathStage _deathStage = DeathStage.White;
+    private PlayerDeathStage _deathStage = PlayerDeathStage.White;
 
     private int _invincibilityFlickerTicks;
 
@@ -94,27 +94,6 @@ public sealed class Player : IEntity, IAnimationFrameSource
         _position = startPosition;
         _random = random;
         Lives = lives;
-    }
-
-    /// <summary>The stages of the death animation: a white flash, a coloured flash, then the fade to black.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRF.ASM</c> <c>PDEATH</c>.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
-    ///     </list>
-    ///     The white flash and the coloured flash are repeated several times before the fade. The fade is made by changing
-    ///     the colour of one palette index (<see cref="PlayerTuning.PlayerDeathFadePaletteIndex" />).
-    /// </remarks>
-    private enum DeathStage
-    {
-        /// <summary>The white flash.</summary>
-        White,
-
-        /// <summary>A flash in a colour picked at random.</summary>
-        Colour,
-
-        /// <summary>The fade to black.</summary>
-        Fade
     }
 
     /// <summary>The way the player faces. It is the last way the player moved, not the way the player is shooting.</summary>
@@ -281,7 +260,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// </remarks>
     internal int GetDeathSolidPaletteIndex()
     {
-        var isFading = _deathStage == DeathStage.Fade;
+        var isFading = _deathStage == PlayerDeathStage.Fade;
         if (isFading) return PlayerTuning.PlayerDeathFadePaletteIndex;
 
         return _deathFlashPaletteIndex;
@@ -362,8 +341,8 @@ public sealed class Player : IEntity, IAnimationFrameSource
     {
         var intervalArcadeFrames = _deathStage switch
         {
-            DeathStage.White => PlayerTuning.PlayerDeathWhiteArcadeFrames,
-            DeathStage.Colour => PlayerTuning.PlayerDeathColourArcadeFrames,
+            PlayerDeathStage.White => PlayerTuning.PlayerDeathWhiteArcadeFrames,
+            PlayerDeathStage.Colour => PlayerTuning.PlayerDeathColourArcadeFrames,
             _ => PlayerTuning.PlayerDeathFadeArcadeFrames
         };
 
@@ -371,18 +350,18 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
         switch (_deathStage)
         {
-            case DeathStage.White:
+            case PlayerDeathStage.White:
                 // After the white flash, pick a random palette index for the coloured flash.
                 _deathFlashPaletteIndex =
                     PlayerTuning.PlayerDeathFlashPaletteIndices[_random.Next(PlayerTuning.PlayerDeathFlashPaletteIndices.Length)];
-                _deathStage = DeathStage.Colour;
+                _deathStage = PlayerDeathStage.Colour;
                 break;
 
-            case DeathStage.Colour:
+            case PlayerDeathStage.Colour:
                 if (--_deathFlashIterationsRemaining <= 0)
                     BeginDeathFade(playField);
                 else
-                    _deathStage = DeathStage.White;
+                    _deathStage = PlayerDeathStage.White;
 
                 break;
 
@@ -452,7 +431,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// </remarks>
     private void BeginDeathFade(PlayField playField)
     {
-        _deathStage = DeathStage.Fade;
+        _deathStage = PlayerDeathStage.Fade;
         _deathFadeIndex = 0;
         playField.GamePalette?.SuspendPaletteIndex(PlayerTuning.PlayerDeathFadePaletteIndex);
         WriteDeathFade(playField);
@@ -484,7 +463,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Puts the death animation back at its first white flash.</summary>
     private void ResetDeathAnimation()
     {
-        _deathStage = DeathStage.White;
+        _deathStage = PlayerDeathStage.White;
         _deathArcadeFrameTimer.Restart();
         _deathFlashIterationsRemaining = PlayerTuning.PlayerDeathFlashIterations;
         _deathFlashPaletteIndex = PlayerTuning.PlayerDeathWhitePaletteIndex;
