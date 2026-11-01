@@ -120,7 +120,7 @@ public sealed class PresentationPagePaletteTests
     }
 
     [Fact]
-    public void TheWordmarkColourCyclesDownTheSevenEntriesOnceEveryTwentyEightFrames()
+    public void TheLargeTitleLettersColourCyclesDownTheSevenEntriesOnceEveryTwentyEightFrames()
     {
         var (gamePalette, presentationPagePalette) = Started();
 
@@ -131,21 +131,21 @@ public sealed class PresentationPagePaletteTests
             (7, 6), (6, 5), (5, 4), (4, 3), (3, 2), (2, 1), (1, 7)
         ];
 
-        Assert.Equal(expected[0].PaletteIndex, presentationPagePalette.GetWordmarkPaletteIndex());
-        Assert.Equal(expected[0].Rim, presentationPagePalette.GetWordmarkRimPaletteIndex());
+        Assert.Equal(expected[0].PaletteIndex, presentationPagePalette.GetLargeTitleLettersPaletteIndex());
+        Assert.Equal(expected[0].Rim, presentationPagePalette.GetLargeTitleLettersRimPaletteIndex());
 
         for (var cycle = 1; cycle < expected.Length; cycle++)
         {
             for (var tick = 0; tick < Ticks(28); tick++) presentationPagePalette.Update(gamePalette);
 
-            Assert.Equal(expected[cycle].PaletteIndex, presentationPagePalette.GetWordmarkPaletteIndex());
-            Assert.Equal(expected[cycle].Rim, presentationPagePalette.GetWordmarkRimPaletteIndex());
+            Assert.Equal(expected[cycle].PaletteIndex, presentationPagePalette.GetLargeTitleLettersPaletteIndex());
+            Assert.Equal(expected[cycle].Rim, presentationPagePalette.GetLargeTitleLettersRimPaletteIndex());
         }
 
         // At the wrap the pair is the reference screenshot's own: a red body (palette index 1, $07) on a
         // yellow rim (palette index 7, $3F).
-        Assert.Equal(0x07, PresentationPagePalette.PageColours[presentationPagePalette.GetWordmarkPaletteIndex() - 1]);
-        Assert.Equal(0x3F, PresentationPagePalette.PageColours[presentationPagePalette.GetWordmarkRimPaletteIndex() - 1]);
+        Assert.Equal(0x07, PresentationPagePalette.PageColours[presentationPagePalette.GetLargeTitleLettersPaletteIndex() - 1]);
+        Assert.Equal(0x3F, PresentationPagePalette.PageColours[presentationPagePalette.GetLargeTitleLettersRimPaletteIndex() - 1]);
     }
 
     [Fact]
