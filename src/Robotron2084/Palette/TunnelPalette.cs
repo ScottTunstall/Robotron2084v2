@@ -179,10 +179,10 @@ public sealed class TunnelPalette
     private int _windowStartIndex;
 
     /// <summary>Makes the tunnel palette.</summary>
-    /// <param name="random">Where the ramp and the starting place come from. When it is not given, a new one is made.</param>
-    public TunnelPalette(Random? random = null)
+    /// <param name="random">Where the ramp and the starting place come from.</param>
+    public TunnelPalette(Random random)
     {
-        _random = random ?? new Random();
+        _random = random;
     }
 
     /// <summary>Which entry of each group of five is black (test hook).</summary>

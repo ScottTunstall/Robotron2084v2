@@ -120,11 +120,11 @@ public sealed class PaletteAnimator
 
     /// <summary>Makes the six processes. Each writes the first colour of its table as soon as it is updated.</summary>
     /// <param name="gamePalette">The palette the processes write to.</param>
-    /// <param name="random">Where the laser flash's random colours come from. When it is not given, a new one is made.</param>
-    public PaletteAnimator(GamePalette gamePalette, Random? random = null)
+    /// <param name="random">Where the laser flash's random colours come from.</param>
+    public PaletteAnimator(GamePalette gamePalette, Random random)
     {
         _gamePalette = gamePalette;
-        _random = random ?? new Random();
+        _random = random;
         _processes =
         [
             new Process { PaletteIndex = 11, ColourTable = [0x38, 0x07, 0xC0], ArcadeFramesPerCycle = 8 }, // RGB
