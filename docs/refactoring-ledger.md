@@ -26,6 +26,56 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 
 ---
 
+## 2026-11-01: the palette code says "cycle" and "white flash", cites the original source, and matches the arcade
+
+### What was wrong
+
+- The palette code used "step" for one change of colour, which is also the word for a walker's step. The presentation page's white
+  colour run was called the "chase", which sounds like something chasing something.
+- The palette docs mixed markdown (pipe tables, backticks, asterisks) into XML, and quoted bare addresses such as `$8A4F` instead
+  of the original source's file and routine. One class summary said the tunnel window slides by sixteen when the code (and the
+  original, `PCSUB`) slide it by one.
+- Checking the docs against the original source found two places where `PaletteAnimator` did not match the arcade: the laser flash
+  timing, and the DECAY table's end marker.
+
+### What was changed
+
+| Old name | New name |
+|---|---|
+| `ChaseArcadeFramesPerStep`, `ChaseColour`, `_chaseClockUnits`, `_chasePaletteIndex`, `isChaseCycleDue` (`PresentationPagePalette`) | `WhiteFlashArcadeFramesPerCycle`, `WhiteFlashColour`, `_whiteFlashClockUnits`, `_whiteFlashPaletteIndex`, `isWhiteFlashCycleDue` |
+| `WordmarkArcadeFramesPerStep`, `_wordmarkStep`, `TakeStepIfDue` | `WordmarkArcadeFramesPerCycle`, `_wordmarkCyclePosition`, `TakeCycleIfDue` |
+| `ArcadeFramesPerStep` (private `Process`, in `HighScorePalette` and `PaletteAnimator`) | `ArcadeFramesPerCycle` |
+| `LaserFlashArcadeFrames`, `_laserFlashStep` | `LaserFlashWhiteArcadeFrames`, with `LaserFlashRandomArcadeFrames` and `LaserFlashRandomColourCount` added; `_laserFlashStep` is replaced by `_isLaserFlashWhiteNext` and `_laserFlashWaitArcadeFrames` |
+| the `PresentationPagePaletteTests` test names that said "Steps" | "Cycles" |
+
+All six palette files (`GamePalette`, `HighScorePalette`, `PaletteAnimator`, `PresentationPagePalette`, `TunnelPalette`, `WallColourCycle`) have
+their docs rewritten in plain English. Each routine and table now cites the original file and label first (for example `RRLOG.ASM`
+`CSET`, `RRTABLE.ASM` `LOOPP`, `RRM1.ASM` `WCPROC`), then its disassembly address. The ramps in `TunnelPalette` name their original
+tables. The "why it is called the white flash" note is in the `PresentationPagePalette` remarks.
+
+Behaviour changes, to match the original (`RRS22.ASM`):
+
+- **Laser flash (`LF`)**: white for 2 arcade frames, then a random colour for 6, repeating every 8, starting white at once. It was a flash
+  every 2 frames with every third one random.
+- **Laser flash colour**: picked from the first 32 entries of the table (`ANDA #$1F`), not all of them.
+- **DECAY**: the table's `0x00` end marker is no longer written as a colour (`TABDRI` sends the process back to the start at a zero).
+- **First colour**: the table-driven processes (`RGB`, `DECAY`, `BPR`, `RGOLD`, `LASER`) write their first colour at once, then wait
+  a cycle for each next one, as `TABDRI` does. They used to wait a whole cycle before the first write. A process that comes back
+  from being stopped also writes its first colour at once, as `COLST` restarting it does.
+
+### What was left alone, and why
+
+- **`DefineInputsHighlight.ArcadeFramesPerStep` and `WallColourCycle.stepDuration`**: outside the palette processes, and the second is
+  public. Not asked for.
+
+### How it was checked
+
+Every routine named in an "Original source" bullet in `Entities` and `Palette` was looked up in the original source files, and each is
+there. Debug and Release builds with 0 warnings and 0 errors. The main tests pass (809 passed, 1 skipped); the new tests failed on the
+old code first. The sound tests pass.
+
+---
+
 ## 2026-10-31: TeleportTo becomes MoveTo
 
 ### What was wrong

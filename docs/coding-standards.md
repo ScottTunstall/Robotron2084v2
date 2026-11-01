@@ -483,6 +483,10 @@ Most of the decisions below are one principle applied to a particular name, so i
 | **No magic numbers, including `-1` and `1` as a direction's sign.** A sign is `DirectionSigns.Left`, `Right`, `Up` or `Down`. | "I don't like code like `_escapeDirectionSignX = -1`. It uses magic numbers. I want you to create a class with constants called DirectionSigns, where Left = -1, Right = 1, Up = -1, Down = 1. Also record in coding standards not to use magic numbers." The author gave no further reason. | NUM-1 |
 | **A variable is declared as close to its first use as possible** (STR-14). | "Make it a coding rule that variables should always be declared as close to first use as possible." The author gave no reason. | STR-14 |
 | **A method that only sets a position is `MoveTo`, not `TeleportTo`.** | "I do not like the name TeleportTo if all it does it set the position. Change it to MoveTo throughout codebase". The author gave no further reason. (`FamilyMember` already used `MoveTo`.) | Refactoring ledger, 2026-10-31 |
+| **In the palette code, a change to the next colour is a "cycle", not a "step".** | "I think Cycle is the commonly used term in the system so use that if possible". The author gave no further reason. | Refactoring ledger, 2026-11-01 |
+| **The presentation page's white colour run is the "white flash", not the "chase", and the reason for the name is written in the code.** | "Call it white flash. Make sure its documented why its named so". The author gave no further reason. | Refactoring ledger, 2026-11-01 |
+| **Source references lead with the original `.ASM` file and routine label; the disassembly address or label comes second. Never a URL or a bare address.** | "the rules are that you add a xmldoc referencing the FILE NAME and FUNCTION NAME in the original source code", and "any comments should primarily reference the original asm code's label, and the equivalent memory address or label in my disassembly. This isn't usable ... because its not referencing the original source code". | CMT-11 |
+| **xmldocs are plain English in proper XML, with no markdown tables, backticks or asterisks.** | "I do not like the xmldocs here. They look gibberish." The author gave no further reason. | CMT-10, CMT-11 |
 
 If you are the author and want to add the story behind any row, add it in the second column in your own words.
 
@@ -614,7 +618,8 @@ thing does in everyday words — no jargon, no ROM terminology, no code identifi
 If a glossary word cannot be avoided, the summary says what it means in passing and links to
 `docs/glossary.md`; it never leaves the reader to look it up on their own.
 Where the member maps to a ROM routine, its `<remarks>` gives BOTH sources, each on its own bullet or line:
-- the original arcade source: the `.ASM` filename and the routine's label (`ref/original-source`);
+- the original arcade source: the `.ASM` filename and the routine's label, from github.com/historicalsource/robotron
+  (it is not in this repo). The label comes first. A URL, or a bare address such as `$8A4F`, is not a reference;
 - this repo's own disassembly: the label or memory address in `asm/robomame.asm`, or a plain "not separately
   labelled" if it searched and found none — never guessed.
 Verify both by searching the actual files; do not copy a label forward without checking it still exists. This
