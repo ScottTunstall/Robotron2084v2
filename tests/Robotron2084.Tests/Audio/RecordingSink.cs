@@ -11,7 +11,7 @@ internal sealed class RecordingSink : IAudioSink
     public List<(int SoundNumber, float Pan, int Tick)> Sends { get; } = [];
 
     /// <summary>Always false: this sink only records, and plays nothing.</summary>
-    public bool IsPlaying => false;
+    public bool IsPlaying() => false;
 
     public void SendSoundNumber(int soundNumber, float pan)
     {
