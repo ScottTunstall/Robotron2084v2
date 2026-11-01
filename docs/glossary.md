@@ -46,6 +46,7 @@ A table's layout column ("5 per column") must be named something else, such as `
 | **transporter**, **transport** | warp-in, teleport | The arcade's own name for the way the robots arrive at the start of a brain wave: they are beamed in, sparkling, instead of forming out of strips. Any name in the code with `Transport` or `Transporter` in it is about this and nothing else. The word comes from the original source, `RRT2.ASM`, which is titled `TRANSPORTER`. |
 | **score burst** | death burst | The flash and the floating score number left when a spheroid or quark dies (`ScoreBurst`, `ScoreBurstTuning`, `KillWithScoreBurst`). Decided by the author: the class keeps the name `ScoreBurst`. |
 | **electrode** | post | The spiky obstacle you must not touch. The original game calls it a "post"; this project calls it an electrode. |
+| **large title letters** | wordmark, logo (for these letters) | The big ROBOTRON letters on the title page, drawn in two masks, a core and a rim. Names use `LargeTitleLetters` (`LargeTitleLetterAppear`, `LargeTitleLettersCoreTexture`). The "2084" beneath them is a separate mark and is not part of this. |
 | **reprogramming** | conversion, mutation | A brain turning a family member into a prog. |
 | **family member** | human, civilian, humanoid | Mikey, Mommy and Daddy. The word for the group is **family member**, in names, comments and docs alike. Always call each one by the name the attract screen uses (never Mom, Dad, Mum or Mummy). The class `Human` and its `HumanKind` still carry the old word until the author decides on the rename (refactoring ledger). |
 | **rescue bonus** | rescue score, rescue points, points | The amount the player earns for saving a family member, 1000 up to 5000 (`ScoreValues.RescueBonus`, `AwardRescueBonus`). The number that pops up where it was earned is the **rescue bonus marker** (`RescueBonusMarker`, shown by `ShowRescueBonus`). Say "bonus" for the amount, never "points": "point" also means a place on the screen. |
@@ -68,6 +69,7 @@ Words that used to be used here and must not come back. Do not use them in a nam
 |---|---|---|
 | spec pixel, `...SpecPixels`, "spec-px" | arcade pixel, `...ArcadePixels` | Nothing is driven by a spec. `spec.txt` is not in the repo. |
 | `SpecScale` | `PortPixelsPerArcadePixel` | It is how many port pixels one arcade pixel is drawn as. |
+| wordmark, `...Wordmark...` | large title letters, `...LargeTitleLetters...` | "Wordmark" is design jargon, not a word the arcade source uses, and it was never agreed. |
 | `SpecWidth`, `SpecHeight` | `WidthInArcadePixels`, `HeightInArcadePixels` | The size of the game's screen, in arcade pixels. |
 | `ArcadePixelsPerColumn` | `ArcadePixelsPerByte` | A pixel takes 4 bits, so a byte holds two; a column is one byte across. |
 | reaim, re-aim, `Reaim…`, and "aim" for a robot heading for a point (`AimZone…`, `AimOffsetFromTarget`) | new direction (`NewDirection…`) or new destination (`NewDestination…`); "heads for" | A robot does not aim, it heads for a spot. Only a shot is aimed (a spark, a tank shell, the player's lasers), so "aim" stays for those. |

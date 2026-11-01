@@ -459,7 +459,7 @@ Most of the decisions below are one principle applied to a particular name, so i
 | **The code follows the principle of least surprise.** A reader can guess the type of a parameter from its name, and can guess what a method does from its name. | "The code should use principle of least surprise. I need to be able to guess the type of the parameter by its name. I need to be able to guess what a method does by its name too." | NAM-9 (the two tests are written there); NAM-26, NAM-19, NAM-13, NAM-27 |
 | **Name every object with its whole type name** (`PlayField playField`, never `field`). | "In WaveSpawnContext there is a parameter named \"Field\" - but what field? Field is a reserved word when in lower case. It should be called PlayField so that its completely unambiguous. I should be able to work out the type of the parameter without looking at the xmldocs. This will aid me in code review where I may not have intellisense." | NAM-26 |
 | **A palette entry is a palette index**, not a slot, in every name (`LaserPaletteIndex`, `GetPaletteIndexColour`). | Asked whether `LaserSlot` was the palette index; if so, "use PaletteIndex throughout system, e.g. LaserPaletteIndex". (The audit found `Slot` meant five things, and that `LaserSlot`, a colour, sat beside `LaserSlots`, the store of three lasers.) | Glossary; refactoring ledger 2026-10-31 |
-| **No "Colour" next to "PaletteIndex"**: `GetWordmarkPaletteIndex`, not `GetWordmarkColourPaletteIndex`. | "As a Palette is colour oriented anyway." | Glossary |
+| **No "Colour" next to "PaletteIndex"**: `GetLargeTitleLettersPaletteIndex`, not `GetLargeTitleLettersColourPaletteIndex`. | "As a Palette is colour oriented anyway." | Glossary |
 | **No "roll" for a random number**, anywhere (`SearchFamilyListThreshold`, not `SearchFamilyListRollAtMost`). | "I do not like the term \"Roll\" for random numbers." | NAM-24; refactoring ledger 2026-10-31 |
 | **A name says what the number is**: a `…MaxExclusive` or a `…Threshold`, not a `…RandomRange`. | "TargetRandomRange isn't a range though - its a maximum or a threshold. Pick either Max or Threshold (depending on what is better suited)." | NAM-24 |
 | **Wave, not level**, for one round of the game. | The author decided and did not give a reason. (The audit found `LevelParameters`' own summary said "wave", and the arcade and the screen say WAVE.) | Glossary; refactoring ledger 2026-10-31 |
@@ -649,20 +649,20 @@ bug. Never label a column count as arcade pixels.
 
 **CMT-15. A field's docs say what it is for, never how it is used.** The `<summary>` of a field or constant states its purpose (what the value is, and its unit) and, in the `<remarks>`, its relation to the original source or the disassembly (routine, address, instruction). It never says which code reads or changes it, or how: not "is added to", "is taken off", "counts up to this", "is compared with", "decides how long", "is picked at random when". Saying how a field is used lets the field dictate to the method that uses it, and the doc goes stale when that method changes. A reader finds the use with the IDE. This replaces the old rule that a constant's docs must name the field it is added to or compared with.
 
-**CMT-16. An orchestrator's docs say what it does, not how the things it runs work inside.** A class that drives other objects (the playfield driving the entities, a state driving the playfield, a list driving its items) documents its own part: what it calls, when, in what order, and when it does not. It must not describe how the called object works inside: its fields, its timers, its counting, its private steps. Write "on each tick the playfield calls each character's `Update`", not "each character keeps a timer and adds to it". How an object works is documented on that object, once, where it cannot go stale. This is CMT-12 seen from the caller's side: the interface says what is promised, the orchestrator says what it asks for, and only the implementer says how.
+**CMT-16. An orchestrator's docs say what it does, not how the things it runs work inside.** A class that drives other objects (the playfield driving the entities, a state driving the playfield, a list driving its items) documents its own part: what it calls, when, in what order, and when it does not. It must not describe how the called object works inside: its fields, its timers, its counting, its private steps. Write "on each tick the playfield calls each character's `Update`", not "each character keeps a timer and adds to it". How an object works is documented on that object, once, where it cannot go stale. This is CMT-12 seen from the caller's side: the interface says what is promised, the orchestrator says what it asks for, and only the implementer says how.
 
-**CMT-17. Documentation has one owner for each fact: the interface owns the contract, the implementation owns what it does and what it talks to.**
-- **An interface says what, never how** (CMT-12). It must not explain how any concrete implementation behaves.
-- **An implementation says what it does and what it is built from.** It documents its own behaviour, and the things it talks to: what it is
-  composed of or holds a reference to (`ArcadeFrameTimer`, `PlayField`, a list of strips), and what it asks of them.
-- **An implementation does not say who calls it,** or when or how often, unless that is critical to using it correctly. "Call this once to start
-  the reprogramming" is guidance and stays; "the playfield calls this on every tick" is a fact about someone else's code, and goes stale when that
-  code changes (see CMT-15 for fields and CMT-16 for a class that drives others).
-- **An implementation does not say how the objects it holds behave inside.** It says what it asks of them, not how they work. If the contained
-  object changes, a comment that described its insides is now wrong, and nobody knows it is wrong.
-
-The test: if a class you only *use* changed how it works, would this comment become false? If so, the comment is in the wrong place. Move the
-sentence to the class that owns the fact, or delete it.
+**CMT-17. Documentation has one owner for each fact: the interface owns the contract, the implementation owns what it does and what it talks to.**
+- **An interface says what, never how** (CMT-12). It must not explain how any concrete implementation behaves.
+- **An implementation says what it does and what it is built from.** It documents its own behaviour, and the things it talks to: what it is
+  composed of or holds a reference to (`ArcadeFrameTimer`, `PlayField`, a list of strips), and what it asks of them.
+- **An implementation does not say who calls it,** or when or how often, unless that is critical to using it correctly. "Call this once to start
+  the reprogramming" is guidance and stays; "the playfield calls this on every tick" is a fact about someone else's code, and goes stale when that
+  code changes (see CMT-15 for fields and CMT-16 for a class that drives others).
+- **An implementation does not say how the objects it holds behave inside.** It says what it asks of them, not how they work. If the contained
+  object changes, a comment that described its insides is now wrong, and nobody knows it is wrong.
+
+The test: if a class you only *use* changed how it works, would this comment become false? If so, the comment is in the wrong place. Move the
+sentence to the class that owns the fact, or delete it.
 
 **SOLID-S.** See STR-1 and STR-2.
 
