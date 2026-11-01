@@ -38,9 +38,9 @@ public sealed class AttractObjectMachine
     /// <summary>RRF.ASM <c>XMIN</c>: the leftmost column an object may occupy (the inside of the left wall).</summary>
     private const int PlayfieldMinColumn = 7;
 
-    private readonly List<MovieExplosion> _explosions = [];
+    private readonly List<MovieExplosion> _movieExplosions = [];
     private readonly List<MovieObject> _objects = [];
-    private readonly List<MovieProcess> _processes = [];
+    private readonly List<MovieProcess> _movieProcesses = [];
     private readonly Random _random;
     private readonly byte[] _scriptBytes = AttractMovieData.Scripts;
 
@@ -64,8 +64,8 @@ public sealed class AttractObjectMachine
     /// <summary>Explosions the movie asked for since the last drain (the EXP opcode).</summary>
     public List<MovieExplosion> DrainExplosions()
     {
-        var drained = new List<MovieExplosion>(_explosions);
-        _explosions.Clear();
+        var drained = new List<MovieExplosion>(_movieExplosions);
+        _movieExplosions.Clear();
         return drained;
     }
 
@@ -78,7 +78,7 @@ public sealed class AttractObjectMachine
             ScriptIndex = scriptAddress - AttractMovieData.ScriptBase
         };
         _objects.Add(movieProcess.MovieObject);
-        _processes.Add(movieProcess);
+        _movieProcesses.Add(movieProcess);
     }
 
     /// <summary>Runs one fiftieth of a second: move what moves, then advance every process.</summary>
@@ -89,13 +89,13 @@ public sealed class AttractObjectMachine
         // A script can FORK/GHOST while it runs, which appends to the process
         // list: walk only what existed when the frame started (a new process
         // begins on the next frame — one frame is invisible in the movie).
-        var processCount = _processes.Count;
+        var processCount = _movieProcesses.Count;
         for (var i = 0; i < processCount; i++)
-            if (_processes[i].IsAlive)
-                _processes[i].Step(this);
+            if (_movieProcesses[i].IsAlive)
+                _movieProcesses[i].Step(this);
 
         _objects.RemoveAll(movieObject => movieObject.IsDead || (movieObject.IsLaser && movieObject.LaserArcadeFramesLeft <= 0));
-        _processes.RemoveAll(p => !p.IsAlive);
+        _movieProcesses.RemoveAll(p => !p.IsAlive);
     }
 
     /// <summary>
@@ -343,7 +343,7 @@ public sealed class AttractObjectMachine
                     return false;
 
                 case 13: // EXP — remove the object and explode where it stood.
-                    attractObjectMachine._explosions.Add(new MovieExplosion(
+                    attractObjectMachine._movieExplosions.Add(new MovieExplosion(
                         MovieObject.Descriptor?.Animation ?? MovieAnimation.Grunt,
                         MovieObject.AnimationFrameIndex,
                         MovieObject.GetColumn(),
@@ -417,7 +417,7 @@ public sealed class AttractObjectMachine
                 case 21: // GHOST — another process on the SAME object.
                     {
                         var scriptAddress = attractObjectMachine.ReadWord(this);
-                        attractObjectMachine._processes.Add(new MovieProcess
+                        attractObjectMachine._movieProcesses.Add(new MovieProcess
                         {
                             MovieObject = MovieObject,
                             ScriptIndex = scriptAddress - AttractMovieData.ScriptBase
