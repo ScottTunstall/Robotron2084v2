@@ -37,7 +37,7 @@ public static class Sound
     public static bool Enabled { get; set; } = true;
 
     /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying" />).</summary>
-    public static bool IsPlaying => _soundEngine?.IsBoardPlaying ?? false;
+    public static bool IsPlaying() => _soundEngine?.IsBoardPlaying() ?? false;
 
     /// <summary>Sets up the sound service with the sink that will play the sound numbers.</summary>
     /// <param name="audioSink">Where the sound numbers go.</param>

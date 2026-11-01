@@ -43,7 +43,7 @@ public sealed class SoundEngine
     public int CurrentPriority { get; private set; }
 
     /// <summary>True while the board is still playing the last number sent to it.</summary>
-    public bool IsBoardPlaying => _audioSink.IsPlaying;
+    public bool IsBoardPlaying() => _audioSink.IsPlaying();
 
     /// <summary>
     ///     Keeps the voice for <paramref name="ticks" /> more port ticks. A table's end normally frees the

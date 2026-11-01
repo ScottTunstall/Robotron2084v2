@@ -10,7 +10,7 @@ public interface ISoundBoard
     ///     True while a sound is waiting to start or still running; false once it has played to its end (a sound that
     ///     never ends stays true).
     /// </summary>
-    bool IsPlaying { get; }
+    bool IsPlaying();
 
     /// <summary>The board's output level right now, 0 to 255.</summary>
     byte OutputLevel { get; }

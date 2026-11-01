@@ -65,7 +65,7 @@ public sealed class SoundBoardAudioSink : IAudioSink
     }
 
     /// <inheritdoc />
-    public bool IsPlaying => _soundBoard.IsPlaying;
+    public bool IsPlaying() => _soundBoard.IsPlaying();
 
     /// <summary>Sends a sound number to the board and moves the sound to where it is heard.</summary>
     /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>), 0 to 63.</param>

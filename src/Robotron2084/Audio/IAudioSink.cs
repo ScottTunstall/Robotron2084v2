@@ -4,7 +4,7 @@ namespace Robotron2084.Audio;
 public interface IAudioSink
 {
     /// <summary>True while a sound is still being played: sent and not yet over.</summary>
-    bool IsPlaying { get; }
+    bool IsPlaying();
 
     /// <summary>Starts the sound with this number, heard from this place between the speakers.</summary>
     /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>), 0 to 63.</param>
