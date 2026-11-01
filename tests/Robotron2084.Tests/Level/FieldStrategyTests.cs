@@ -103,7 +103,7 @@ public sealed class FieldStrategyTests
             new Hulk(TestTextures.SharedTextureSet, new IntVector2(50, 50), new Random(1), 8, () => IntVector2.Zero));
         Assert.True(fieldEntities.AreEnemiesGone());
 
-        fieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, new IntVector2(90, 90)));
+        fieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, new IntVector2(90, 90), new Random(1)));
         Assert.False(fieldEntities.AreEnemiesGone());
     }
 
@@ -111,7 +111,7 @@ public sealed class FieldStrategyTests
     public void TheField_AnswersWithoutLettingCallersReachThroughIt()
     {
         var playField = new PlayFieldBuilder().Build();
-        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(90, 90));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(90, 90), new Random(1));
         playField.FieldEntities.Add(grunt);
 
         Assert.Contains(grunt, playField.FieldEntities.GetEntities(RobotKind.Grunt));
@@ -151,8 +151,8 @@ public sealed class FieldStrategyTests
         var playField = new PlayFieldBuilder().Build();
         var bounds = playField.GetPlayfieldBounds();
         IntVector2 spot = new(bounds.X + 200, bounds.Y + 200);
-        playField.FieldEntities.Add(new Grunt(TestTextures.SharedTextureSet, spot));
-        playField.FieldEntities.Add(new Grunt(TestTextures.SharedTextureSet, spot));
+        playField.FieldEntities.Add(new Grunt(TestTextures.SharedTextureSet, spot, new Random(1)));
+        playField.FieldEntities.Add(new Grunt(TestTextures.SharedTextureSet, spot, new Random(1)));
         playField.PlayerLaserSlots.Fire(spot, Direction8.Up);
         var collisionResponder = new CollisionResponder(playField);
 

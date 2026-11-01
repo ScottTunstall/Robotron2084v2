@@ -255,13 +255,13 @@ public sealed class PlayFieldCollisionTests
         // it (`AttractState`), so contact kills there and only there (notes §97.5).
         var aided = CreateEmptyField();
         aided.SkipWaveStart();
-        aided.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, aided.Player.Position));
+        aided.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, aided.Player.Position, new Random(1)));
         aided.Update(new GameTime());
         Assert.Equal(EntityLifeState.Alive, aided.Player.LifeState);
 
         var demoPlayField = CreateEmptyField(false);
         demoPlayField.SkipWaveStart();
-        demoPlayField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, demoPlayField.Player.Position));
+        demoPlayField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, demoPlayField.Player.Position, new Random(1)));
         demoPlayField.Update(new GameTime());
         Assert.Equal(EntityLifeState.Dying, demoPlayField.Player.LifeState);
     }
@@ -272,7 +272,7 @@ public sealed class PlayFieldCollisionTests
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 200, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        var grunt = new Grunt(TestTextures.SharedTextureSet, spot);
+        var grunt = new Grunt(TestTextures.SharedTextureSet, spot, new Random(1));
         playField.FieldEntities.Grunts.Add(grunt);
 
         var laser = playField.PlayerLaserSlots.FireAndGet(spot, Direction8.Down);
