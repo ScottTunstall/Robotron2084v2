@@ -35,24 +35,5 @@ public static class DisplayInfo
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SystemParametersInfo(int uiAction, int uiParam, out Rect pvParam, int fWinIni);
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Rect
-    {
-        public int Left;
-        public int Top;
-        public int Right;
-        public int Bottom;
-
-        public int GetWidth()
-        {
-            return Right - Left;
-        }
-
-        public int GetHeight()
-        {
-            return Bottom - Top;
-        }
-    }
+    private static extern bool SystemParametersInfo(int uiAction, int uiParam, out Win32Rect pvParam, int fWinIni);
 }
