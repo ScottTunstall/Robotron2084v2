@@ -74,7 +74,7 @@ internal sealed class MidWaveSpawner
         var x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
         var startY = Math.Clamp(from.Y, bounds.Y, bounds.Bottom - height);
         var landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);
-        var grunt = new Grunt(_playField.TextureSet, new IntVector2(x, startY), _playField.WaveParameters.GruntMoveDelay, _random);
+        var grunt = new Grunt(_playField.TextureSet, new IntVector2(x, startY), _random, _playField.WaveParameters.GruntMoveDelay);
         grunt.BeginFall(landingY);
         _fieldEntities.Add(grunt);
     }
