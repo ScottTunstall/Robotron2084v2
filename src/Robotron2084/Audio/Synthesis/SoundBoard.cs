@@ -144,7 +144,7 @@ public sealed class SoundBoard : ISoundBoard
     }
 
     /// <inheritdoc />
-    public bool IsPlaying =>
+    public bool IsPlaying() =>
         _waitingSoundNumber != NoSoundNumber || _outputChanges is not null || _cyclesLeftInChange > 0;
 
     /// <summary>The level the board is sending to the loudspeaker circuit right now, 0 to 255.</summary>
