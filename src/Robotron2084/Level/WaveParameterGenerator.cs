@@ -115,14 +115,4 @@ public sealed class WaveParameterGenerator
         customWaveTableRow = new CustomWaveTableRow(counts[0], counts[1], counts[2], counts[3], counts[4], counts[5], counts[6]);
         return true;
     }
-
-    /// <summary>One row of the replacement table. The wave number is not kept, because a row's place in the table is its wave.</summary>
-    private sealed record CustomWaveTableRow(
-        int GruntCount,
-        int HulkCount,
-        int SpheroidCount,
-        int QuarkCount,
-        int ElectrodeCount,
-        int MaxEnforcersPerSpheroid,
-        int MaxTanksPerQuark);
 }

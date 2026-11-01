@@ -47,7 +47,7 @@ public static class BozoMode
     ///         <item>Disassembly: <c>$2B59</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Row[] Table =
+    private static readonly BozoModeRow[] Table =
     [
         new(38, 96, 30, 15),
         new(38, 96, 25, 12),
@@ -86,11 +86,4 @@ public static class BozoMode
             GruntSpeedFloor = row.GruntSpeedFloor
         };
     }
-
-    /// <summary>One row of the table: the four settings for a wave, in the table's own order.</summary>
-    /// <param name="SpheroidDropDelay">How long a spheroid waits before dropping an enforcer.</param>
-    /// <param name="EnforcerFireDelay">How long an enforcer waits between sparks.</param>
-    /// <param name="GruntMoveDelay">The longest a grunt waits between moves, in beats.</param>
-    /// <param name="GruntSpeedFloor">The fewest beats the grunts' speed-ups may bring a grunt's longest wait down to.</param>
-    private sealed record Row(int SpheroidDropDelay, int EnforcerFireDelay, int GruntMoveDelay, int GruntSpeedFloor);
 }

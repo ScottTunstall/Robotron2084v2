@@ -69,7 +69,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2D4D</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header BrainBeatWaitHeader = new(0x8E, 6, 10);
+    private static readonly DifficultyTableHeader BrainBeatWaitHeader = new(0x8E, 6, 10);
 
     /// <summary>The settings for how long a brain waits between cruise missiles.</summary>
     /// <remarks>
@@ -78,7 +78,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2D22</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header BrainFireDelayHeader = new(0x8E, 25, 80);
+    private static readonly DifficultyTableHeader BrainFireDelayHeader = new(0x8E, 25, 80);
 
     /// <summary>The settings for how long an enforcer waits between sparks.</summary>
     /// <remarks>
@@ -87,7 +87,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2CA1</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header EnforcerFireDelayHeader = new(0x8E, 13, 40);
+    private static readonly DifficultyTableHeader EnforcerFireDelayHeader = new(0x8E, 13, 40);
 
     /// <summary>The settings for the longest a grunt waits between moves, in beats. A smaller number is a faster grunt.</summary>
     /// <remarks>
@@ -96,7 +96,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2C20</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header GruntMoveDelayHeader = new(0x8E, 10, 20);
+    private static readonly DifficultyTableHeader GruntMoveDelayHeader = new(0x8E, 10, 20);
 
     /// <summary>The settings for the fewest beats that the grunts' speed-ups may bring a grunt's longest wait down to.</summary>
     /// <remarks>
@@ -105,7 +105,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2C4B</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header GruntSpeedFloorHeader = new(0x8E, 3, 10);
+    private static readonly DifficultyTableHeader GruntSpeedFloorHeader = new(0x8E, 3, 10);
 
     /// <summary>The settings for how long a hulk waits between beats. A smaller number is a faster hulk.</summary>
     /// <remarks>
@@ -114,7 +114,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2CF7</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header HulkBeatIntervalHeader = new(0x8E, 5, 9);
+    private static readonly DifficultyTableHeader HulkBeatIntervalHeader = new(0x8E, 5, 9);
 
     /// <summary>The settings for how much a spheroid or quark may drop. A bigger number is more.</summary>
     /// <remarks>
@@ -123,7 +123,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2C76</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header MaxDropsX2Header = new(0x0E, 8, 12);
+    private static readonly DifficultyTableHeader MaxDropsX2Header = new(0x0E, 8, 12);
 
     /// <summary>The settings for how long a quark waits before dropping a tank.</summary>
     /// <remarks>
@@ -132,7 +132,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2DCE</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header QuarkDropDelayHeader = new(0x8E, 12, 48);
+    private static readonly DifficultyTableHeader QuarkDropDelayHeader = new(0x8E, 12, 48);
 
     /// <summary>The settings for how fast a quark may drift. A bigger number is faster.</summary>
     /// <remarks>
@@ -141,7 +141,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2DF9</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header QuarkMaxSpeedHeader = new(0x0E, 40, 68);
+    private static readonly DifficultyTableHeader QuarkMaxSpeedHeader = new(0x0E, 40, 68);
 
     /// <summary>The settings for how fast a tank shell flies and how well it is aimed. A bigger number is harder.</summary>
     /// <remarks>
@@ -150,7 +150,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2DA3</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header ShellSpeedHeader = new(0x0E, 160, 255);
+    private static readonly DifficultyTableHeader ShellSpeedHeader = new(0x0E, 160, 255);
 
     /// <summary>The settings for how long a spheroid waits before dropping an enforcer.</summary>
     /// <remarks>
@@ -159,7 +159,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2CCC</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header SpheroidDropDelayHeader = new(0x8E, 12, 40);
+    private static readonly DifficultyTableHeader SpheroidDropDelayHeader = new(0x8E, 12, 40);
 
     /// <summary>The settings for how long a tank waits between shells.</summary>
     /// <remarks>
@@ -168,7 +168,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: the record at <c>$2D78</c>.</item>
     ///     </list>
     /// </remarks>
-    private static readonly Header TankFireDelayHeader = new(0x8E, 20, 40);
+    private static readonly DifficultyTableHeader TankFireDelayHeader = new(0x8E, 20, 40);
 
     /// <summary>
     ///     Works out what a wave is like at the chosen difficulty. At the recommended setting the wave is returned as it
@@ -231,7 +231,7 @@ public static class DifficultyTuning
     ///         <item>Disassembly: <c>$2BC4</c>.</item>
     ///     </list>
     /// </remarks>
-    private static int Adjust(int value, Header header, int delta, int magnitude)
+    private static int Adjust(int value, DifficultyTableHeader header, int delta, int magnitude)
     {
         var fraction = (magnitude * (header.Multiplier & MultiplierMask)) & 0xFF;
         var product = value * fraction;
@@ -270,14 +270,4 @@ public static class DifficultyTuning
 
         return effective;
     }
-
-    /// <summary>The start of one record in the table of settings.</summary>
-    /// <remarks>Disassembly: the records at <c>$2C20</c>.</remarks>
-    /// <param name="Multiplier">
-    ///     The byte that says how big a step to take, and whether the value falls as the difficulty
-    ///     rises.
-    /// </param>
-    /// <param name="Min">The smallest value the setting may have.</param>
-    /// <param name="Max">The biggest value the setting may have.</param>
-    private readonly record struct Header(int Multiplier, int Min, int Max);
 }
