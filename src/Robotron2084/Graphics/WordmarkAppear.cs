@@ -39,7 +39,7 @@ public sealed class WordmarkAppear
     private readonly Texture2D _coreTexture;
 
     private readonly StripEffect[] _effects;
-    private readonly IReadOnlyList<LetterSpan> _letters;
+    private readonly IReadOnlyList<LetterSpan> _letterSpans;
     private readonly Texture2D _rimTexture;
     private readonly int _spriteHeight;
     private int _clockUnits;
@@ -55,7 +55,7 @@ public sealed class WordmarkAppear
     {
         _rimTexture = rimTexture;
         _coreTexture = coreTexture;
-        _letters = letters;
+        _letterSpans = letters;
         _spriteHeight = spriteSize.Y;
         _bounds = new Rectangle(origin.X, origin.Y, spriteSize.X * ScreenSize.PortPixelsPerArcadePixel,
             spriteSize.Y * ScreenSize.PortPixelsPerArcadePixel);
@@ -122,14 +122,14 @@ public sealed class WordmarkAppear
             if (_effects[index].IsAlive())
                 DrawStrips(spriteBatch, blitterDraw, index, rimPaletteIndex, corePaletteIndex);
             else
-                DrawWhole(spriteBatch, blitterDraw, _letters[index], rimPaletteIndex, corePaletteIndex);
+                DrawWhole(spriteBatch, blitterDraw, _letterSpans[index], rimPaletteIndex, corePaletteIndex);
         }
     }
 
     /// <summary>Says whether every letter has finished coming in and been left to settle, so the next thing can go up.</summary>
     public bool IsFinished()
     {
-        return _letters.Count == 0 || GetArcadeFrames() >= GetStartFrame(_letters.Count - 1) + ArcadeFramesAfterLastLetter;
+        return _letterSpans.Count == 0 || GetArcadeFrames() >= GetStartFrame(_letterSpans.Count - 1) + ArcadeFramesAfterLastLetter;
     }
 
     /// <summary>Moves on by one port tick.</summary>
@@ -145,7 +145,7 @@ public sealed class WordmarkAppear
     /// <summary>How many letters have started to appear (test hook).</summary>
     internal int GetStartedLetterCount()
     {
-        return Enumerable.Range(0, _letters.Count).Count(index => GetArcadeFrames() >= GetStartFrame(index));
+        return Enumerable.Range(0, _letterSpans.Count).Count(index => GetArcadeFrames() >= GetStartFrame(index));
     }
 
     private static int GetStartFrame(int index)
@@ -155,7 +155,7 @@ public sealed class WordmarkAppear
 
     private void DrawStrips(SpriteBatch spriteBatch, BlitterDraw blitterDraw, int index, int rimPaletteIndex, int corePaletteIndex)
     {
-        var letter = _letters[index];
+        var letter = _letterSpans[index];
         foreach (var strip in _effects[index].GetStrips(letter.Width, _spriteHeight))
         {
             Rectangle source = new(letter.Start, strip.SourceIndex, letter.Width, 1);
