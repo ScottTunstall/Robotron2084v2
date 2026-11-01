@@ -24,10 +24,10 @@ namespace Robotron2084.Level;
 public sealed class GameSession
 {
     /// <summary>Makes a game with these players.</summary>
-    /// <param name="players">The players, with player 1 first.</param>
-    private GameSession(PlayerSlot[] players)
+    /// <param name="playerSlots">The players, with player 1 first.</param>
+    private GameSession(PlayerSlot[] playerSlots)
     {
-        Players = players;
+        PlayerSlots = playerSlots;
     }
 
     /// <summary>
@@ -36,7 +36,7 @@ public sealed class GameSession
     /// </summary>
     public ControlSettings ControlSettings { get; private init; } = ControlSettings.CreateDefaults();
 
-    /// <summary>The place in <see cref="Players" /> of the player whose turn it is.</summary>
+    /// <summary>The place in <see cref="PlayerSlots" /> of the player whose turn it is.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>CURPLR</c>.</item>
@@ -74,7 +74,7 @@ public sealed class GameSession
     ///         <item>Disassembly: <c>num_players</c>.</item>
     ///     </list>
     /// </remarks>
-    public IReadOnlyList<PlayerSlot> Players { get; }
+    public IReadOnlyList<PlayerSlot> PlayerSlots { get; }
 
     /// <summary>Starts a new game for one or two players, as the arcade's two start buttons do.</summary>
     /// <param name="playerInputSource">The first player's controls.</param>
@@ -124,15 +124,15 @@ public sealed class GameSession
         var playerCount = 2;
         if (mode == GameMode.OnePlayer) playerCount = 1;
 
-        var players = new PlayerSlot[playerCount];
+        var playerSlots = new PlayerSlot[playerCount];
         for (var i = 0; i < playerCount; i++)
-            players[i] = new PlayerSlot(
+            playerSlots[i] = new PlayerSlot(
                 i + 1,
                 i == 0 ? firstPlayerInputSource : secondPlayerInputSource ?? firstPlayerInputSource,
                 gameSettings?.TurnsPerPlayer ?? PlayerTuning.StartingLives,
                 PlayerTuning.StartingWaveNumber);
 
-        return new GameSession(players)
+        return new GameSession(playerSlots)
         {
             ControlSettings = controlSettings ?? ControlSettings.CreateDefaults(),
             GameSettings = chosenGameSettings
@@ -148,13 +148,13 @@ public sealed class GameSession
     /// </remarks>
     public bool AnyPlayerSlotHasLives()
     {
-        return Players.Any(p => p.HasLives());
+        return PlayerSlots.Any(p => p.HasLives());
     }
 
     /// <summary>The player whose turn it is.</summary>
     public PlayerSlot GetCurrent()
     {
-        return Players[CurrentIndex];
+        return PlayerSlots[CurrentIndex];
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class GameSession
     {
         return
         [
-            .. Players.Select(playerSlot => new FinalScore(playerSlot.Number, playerSlot.Score))
+            .. PlayerSlots.Select(playerSlot => new FinalScore(playerSlot.Number, playerSlot.Score))
                 .OrderByDescending(score => score.Score)
         ];
     }
@@ -179,7 +179,7 @@ public sealed class GameSession
     /// <summary>Says whether two people are playing.</summary>
     public bool IsTwoPlayer()
     {
-        return Players.Count > 1;
+        return PlayerSlots.Count > 1;
     }
 
     /// <summary>Passes the turn to the other player after a death, if they have lives. Otherwise the turn stays where it is.</summary>
@@ -192,11 +192,11 @@ public sealed class GameSession
     /// </remarks>
     public bool SwitchToPlayerWithLives()
     {
-        if (Players.Count < 2) return false;
+        if (PlayerSlots.Count < 2) return false;
 
-        var otherIndex = (CurrentIndex + 1) % Players.Count;
-        if (!Players[otherIndex]
-                .HasLives()) return false; // ROM: PLE1, EORA #3 / PLDX / LDB PLAS,X / BEQ PLE1 (toggles back)
+        var otherIndex = (CurrentIndex + 1) % PlayerSlots.Count;
+        if (!PlayerSlots[otherIndex]
+                .HasLives()) return false; 
 
         CurrentIndex = otherIndex;
         return true;

@@ -23,7 +23,7 @@ public class GameSessionTests
         var gameSession = GameSession.CreateNewGame(new FakeInputSource(), 1);
 
         Assert.False(gameSession.IsTwoPlayer());
-        Assert.Single(gameSession.Players);
+        Assert.Single(gameSession.PlayerSlots);
         Assert.Equal(1, gameSession.GetCurrent().Number);
         Assert.Equal(PlayerTuning.StartingLives, gameSession.GetCurrent().Lives);
         Assert.Equal(PlayerTuning.StartingWaveNumber, gameSession.GetCurrent().Wave);
@@ -35,13 +35,13 @@ public class GameSessionTests
         var gameSession = NewTwoPlayerGame();
 
         Assert.True(gameSession.IsTwoPlayer());
-        Assert.Equal(2, gameSession.Players.Count);
+        Assert.Equal(2, gameSession.PlayerSlots.Count);
         Assert.Equal(1, gameSession.GetCurrent().Number);
 
-        gameSession.Players[1].Score = 4200;
-        gameSession.Players[1].Wave = 7;
-        Assert.Equal(0, gameSession.Players[0].Score);
-        Assert.Equal(PlayerTuning.StartingWaveNumber, gameSession.Players[0].Wave);
+        gameSession.PlayerSlots[1].Score = 4200;
+        gameSession.PlayerSlots[1].Wave = 7;
+        Assert.Equal(0, gameSession.PlayerSlots[0].Score);
+        Assert.Equal(PlayerTuning.StartingWaveNumber, gameSession.PlayerSlots[0].Wave);
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public class GameSessionTests
         // ROM PLE1: EORA #3 / PLDX / LDB PLAS,X / BEQ PLE1 — an out player is
         // skipped, and if nobody else has lives the turn does not move.
         var gameSession = NewTwoPlayerGame();
-        gameSession.Players[1].Lives = 0;
+        gameSession.PlayerSlots[1].Lives = 0;
 
         Assert.False(gameSession.SwitchToPlayerWithLives());
         Assert.Equal(1, gameSession.GetCurrent().Number);
@@ -115,10 +115,10 @@ public class GameSessionTests
 
         Assert.True(gameSession.AnyPlayerSlotHasLives());
 
-        gameSession.Players[0].Lives = 0;
+        gameSession.PlayerSlots[0].Lives = 0;
         Assert.True(gameSession.AnyPlayerSlotHasLives());
 
-        gameSession.Players[1].Lives = 0;
+        gameSession.PlayerSlots[1].Lives = 0;
         Assert.False(gameSession.AnyPlayerSlotHasLives());
     }
 
@@ -126,8 +126,8 @@ public class GameSessionTests
     public void ScoresHighestFirst_OrdersBothPlayers()
     {
         var gameSession = NewTwoPlayerGame();
-        gameSession.Players[0].Score = 1500;
-        gameSession.Players[1].Score = 9800;
+        gameSession.PlayerSlots[0].Score = 1500;
+        gameSession.PlayerSlots[1].Score = 9800;
 
         Assert.Equal([9800, 1500], gameSession.GetScoresHighestFirst());
     }

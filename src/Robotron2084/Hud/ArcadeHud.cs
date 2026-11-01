@@ -74,7 +74,7 @@ public static class ArcadeHud
     {
         var hudY = GetScoresAndLivesRowY(innerBounds);
 
-        foreach (var playerSlot in gameSession.Players)
+        foreach (var playerSlot in gameSession.PlayerSlots)
         {
             var isPlayerOne = playerSlot.Number == 1;
             var scoreColumn = HudLayout.HudScoreOriginColumnP2;
