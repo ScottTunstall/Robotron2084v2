@@ -43,6 +43,9 @@ public sealed class RobotronGame : Game
     private RenderTarget2D _renderTarget2D = null!;
     private ScaleMode _scaleMode = ScaleMode.Integer;
     private GameServices _gameServices = null!;
+
+    /// <summary>The one source of random numbers the whole game shares.</summary>
+    private readonly Random _random = new();
     private SpriteBatch _spriteBatch = null!;
     private TextureSet _textureSet = null!;
     private GameStateManager _gameStateManager = null!;
@@ -110,7 +113,7 @@ public sealed class RobotronGame : Game
         // palette index 11 (RGB process); sprites cycle through the colour-cycle shader
         // (Content/Effects/ColourCycle.fx — notes §3.3, §34).
         GamePalette gamePalette = new();
-        _paletteAnimator = new PaletteAnimator(gamePalette);
+        _paletteAnimator = new PaletteAnimator(gamePalette, _random);
         _textureSet = new TextureSet(new ContentTextureSource(GraphicsDevice, Content))
         {
             BlitterDraw =
@@ -132,7 +135,8 @@ public sealed class RobotronGame : Game
         _gameSettings = _gameSettingsStore.Load();
         _playerInputSource = new BoundPlayerInputSource(_controlSettings, 0);
         _highScoreStore = new HighScoreStore();
-        _gameServices = new GameServices(_textureSet, _highScoreStore, _controlSettings, _playerInputSource, _gameSettings);
+        _gameServices = new GameServices(_textureSet, _highScoreStore, _controlSettings, _playerInputSource, _gameSettings,
+            _random);
         _gameStateManager = new GameStateManager(new TitleScreenState(_gameServices));
 
         StartSound();
@@ -218,7 +222,7 @@ public sealed class RobotronGame : Game
         if (!onAttractScreen) return;
 
         if (WasPressed(keyboardState, Keys.End))
-            _gameStateManager.TransitionTo(new StorylineState(_gameServices, new Random()));
+            _gameStateManager.TransitionTo(new StorylineState(_gameServices));
         else if (WasPressed(keyboardState, Keys.Home))
             _gameStateManager.TransitionTo(new AttractState(_gameServices));
         else if (WasPressed(keyboardState, Keys.Insert))
@@ -296,7 +300,7 @@ public sealed class RobotronGame : Game
 
         if (mode is { } chosen)
             _gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _textureSet,
-                _highScoreStore));
+                _highScoreStore, _random));
         else if (WasPressed(keyboardState, Keys.F4))
             _gameStateManager.TransitionTo(new SoundTestState(_gameServices));
         else if (WasPressed(keyboardState, Keys.F5))
@@ -313,7 +317,8 @@ public sealed class RobotronGame : Game
         var gameSession = GameSession.CreateNewGame(GameMode.OnePlayer, _playerInputSource, controlSettings: _controlSettings,
             gameSettings: _gameSettings);
         gameSession.GetCurrent().Score = DeveloperKeys.QualifyingScore;
-        _gameStateManager.TransitionTo(GameOverState.CreateFromSession(_playerInputSource, _textureSet, _highScoreStore, gameSession));
+        _gameStateManager.TransitionTo(GameOverState.CreateFromSession(_playerInputSource, _textureSet, _highScoreStore, gameSession,
+            _random));
     }
 
     /// <summary>Switches between the windowed window and borderless full screen at the desktop's own mode.</summary>
