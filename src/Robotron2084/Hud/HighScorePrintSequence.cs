@@ -43,17 +43,7 @@ public sealed class HighScorePrintSequence
 
     private int _clockUnits;
 
-    private Phase _phase = Phase.Waiting;
-
-    private enum Phase
-    {
-        Waiting,
-        Today,
-        Top,
-        AllTime,
-        Headers,
-        Done
-    }
+    private HighScorePrintPhase _phase = HighScorePrintPhase.Waiting;
 
     /// <summary>All-time rows printed so far.</summary>
     public int AllTimeRows { get; private set; }
@@ -70,13 +60,13 @@ public sealed class HighScorePrintSequence
     /// <summary>True when the page has finished printing.</summary>
     public bool IsDone()
     {
-        return _phase == Phase.Done;
+        return _phase == HighScorePrintPhase.Done;
     }
 
     /// <summary>True while the page is still being printed (nothing is drawn before it starts).</summary>
     public bool IsPrinting()
     {
-        return _phase is not (Phase.Waiting or Phase.Done);
+        return _phase is not (HighScorePrintPhase.Waiting or HighScorePrintPhase.Done);
     }
 
     /// <summary>
@@ -85,18 +75,18 @@ public sealed class HighScorePrintSequence
     /// </summary>
     public void Tick(bool frameFinished, int todayCount, int allTimeCount)
     {
-        if (_phase == Phase.Waiting)
+        if (_phase == HighScorePrintPhase.Waiting)
         {
             if (!frameFinished) return;
 
             // PRJNK's first group prints the moment it is called (TOD44 falls straight
             // into TOD33), so the first four rows appear with the frame's last stroke.
-            _phase = Phase.Today;
+            _phase = HighScorePrintPhase.Today;
             Advance(todayCount, allTimeCount);
             return;
         }
 
-        if (_phase == Phase.Done) return;
+        if (_phase == HighScorePrintPhase.Done) return;
 
         _clockUnits += ArcadeClock.UnitsPerPortTick;
         while (_clockUnits >= ArcadeClock.UnitsPerArcadeFrame)
@@ -112,31 +102,31 @@ public sealed class HighScorePrintSequence
         while (true)
             switch (_phase)
             {
-                case Phase.Today:
+                case HighScorePrintPhase.Today:
                     TodayRows = Math.Min(todayCount, TodayRows + RowsPerGroup);
                     if (TodayRows < todayCount) return;
 
-                    _phase = Phase.Top;
+                    _phase = HighScorePrintPhase.Top;
                     continue;
 
-                case Phase.Top:
+                case HighScorePrintPhase.Top:
                     // TABLE prints "( NAME ) SCORE" itself, between the two lists.
                     TopPrinted = true;
-                    _phase = Phase.AllTime;
+                    _phase = HighScorePrintPhase.AllTime;
                     continue;
 
-                case Phase.AllTime:
+                case HighScorePrintPhase.AllTime:
                     AllTimeRows = Math.Min(allTimeCount, AllTimeRows + RowsPerGroup);
                     if (AllTimeRows < allTimeCount) return;
 
-                    _phase = Phase.Headers;
+                    _phase = HighScorePrintPhase.Headers;
                     continue;
 
-                case Phase.Headers:
+                case HighScorePrintPhase.Headers:
                     // SCRMES/WRD7V: the two "ROBOTRON HEROES" / "ALL TIME HEROES" lines
                     // are the very last thing the ROM prints on this page.
                     HeadersPrinted = true;
-                    _phase = Phase.Done;
+                    _phase = HighScorePrintPhase.Done;
                     return;
 
                 default:

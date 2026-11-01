@@ -115,21 +115,13 @@ public sealed class InitialsEntryModel
 
     private int _periodClockUnits = FireReleaseCheckClockUnits;
 
-    private Phase _phase = Phase.AwaitingFireRelease;
+    private InitialsEntryPhase _phase = InitialsEntryPhase.AwaitingFireRelease;
 
     private int _repeatClockUnits;
 
     private int _timeoutClockUnits;
 
     private int _typematicCounts;
-
-    private enum Phase
-    {
-        AwaitingFireRelease,
-        AwaitingInput,
-        Cycling,
-        Typematic
-    }
 
     /// <summary>True once every letter has been committed or timed out (the ROM's G2LET).</summary>
     public bool IsComplete { get; private set; }
@@ -197,7 +189,7 @@ public sealed class InitialsEntryModel
         _cycleDirection = direction;
         Cycle(direction);
         _repeatClockUnits = FirstCycleIntervalClockUnits;
-        _phase = Phase.Cycling;
+        _phase = InitialsEntryPhase.Cycling;
         _periodClockUnits = CyclePollClockUnits;
         _clockUnits = 0;
     }
@@ -231,7 +223,7 @@ public sealed class InitialsEntryModel
         // G0SUB seeds the cell the cursor has just reached so a letter left alone is a valid blank.
         SeedCell();
         _typematicCounts = typematicCounts;
-        _phase = Phase.Typematic;
+        _phase = InitialsEntryPhase.Typematic;
         _periodClockUnits = TypematicStepClockUnits;
         _clockUnits = 0;
     }
@@ -248,7 +240,7 @@ public sealed class InitialsEntryModel
     /// <summary>GETLT1: back to reading the switches every two frames.</summary>
     private void EnterMainLoop()
     {
-        _phase = Phase.AwaitingInput;
+        _phase = InitialsEntryPhase.AwaitingInput;
         _periodClockUnits = MainLoopClockUnits;
         _clockUnits = 0;
     }
@@ -338,7 +330,7 @@ public sealed class InitialsEntryModel
         // to: that is why the letter the player rejected is gone and can be typed afresh.
         SeedCell();
         _isRubAllowed = false;
-        _phase = Phase.AwaitingFireRelease;
+        _phase = InitialsEntryPhase.AwaitingFireRelease;
         _periodClockUnits = FireReleaseCheckClockUnits;
         _clockUnits = 0;
     }
@@ -358,15 +350,15 @@ public sealed class InitialsEntryModel
         _clockUnits -= _periodClockUnits;
         switch (_phase)
         {
-            case Phase.AwaitingFireRelease:
+            case InitialsEntryPhase.AwaitingFireRelease:
                 CheckFireReleased(input);
                 break;
 
-            case Phase.AwaitingInput:
+            case InitialsEntryPhase.AwaitingInput:
                 ReadSwitches(input);
                 break;
 
-            case Phase.Cycling:
+            case InitialsEntryPhase.Cycling:
                 RepeatCycle(input);
                 break;
 
