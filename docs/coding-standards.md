@@ -631,6 +631,22 @@ Verify both by searching the actual files; do not copy a label forward without c
 does not replace CMT-1's inline ROM cross-reference comment on ordinary (non-doc) code — where both apply,
 follow this rule for the `<summary>`/`<remarks>` block and CMT-1 for any inline comment elsewhere in the body.
 
+**CMT-11a. Where the original source is, and which file holds what.** The original arcade source (not this repo's
+disassembly) is at https://github.com/historicalsource/robotron. Clone it to a scratch folder and search it; never cite
+a label from memory. A reference is the `.ASM` filename and the label (CMT-11), so look the label up. The files, and the
+labels found in each so far (verified 2026-11-07):
+
+| File | What is in it |
+|---|---|
+| `RRSCRIPT.ASM` | The attract movie. The page script `HISTO` and its reader `SPWAKE` (with `SCMTAB`, `CURSAP`, `CLRMP`, `NEWLNP`, `SCRPP`, `SLEPP`, `MESSP`, `ENDP`, `COLORP`, `GRNTME`, `DONE2P`); `GRPROC`, `GSTRTS`, `GS1`; the page-script actions `CURSAB` to `DONE2` and the constants `LEFT`, `TOP`, `TOPLEF`, `MESHIT`; the object-script opcodes (`SETXV` to `PDEAD`, table `SCTABL`); the process fields (`SCPTR`, `ODESC`, `OBJ`, `IMAG`, `LEV1`, `LEV2`, `LOOP`, `USER`); `OSTART`, `RIGFIR`, `LEFFIR`, `EXPP`, `MONOP`, `DYDX`, `ANATAB`, `ANA1`, the walkers `BRL`/`BRR`/`BRD`/`BRU`/`BRWALK`; `ACTHIT`; the descriptors (`MOMMY`, `BRAIN`, `SQUARE` and the rest) and the object scripts (`PLAYRR`, `FAMSCR`, `SCHULK`, `SCSC`, `SQP`, `TKP`, `ENP`, `DADD2`, `PSHAKE`, `POSTER`, `HELPME`) |
+| `RRF.ASM` | The shared variables and constants: `XMIN`, `XMAX`, `KILLOF`, `BLKCLR`, `DMAON`, `TEXCOL`, `HUMANA`, `HLKANA`, `LASPIC`, `PR57V`, and the object fields `OBJX`, `OBJY`, `OX16`, `OY16`, `OXV`, `OYV` |
+| `RRFRED.ASM` | The message numbers (`MMOM` 115 to `NULMES` 126) |
+| `RRET.ASM` | The message text (`PMOM` "MOMMY", `PHULK` "INDESTRUCTABLE HULK" and the rest) |
+| `RRS22.ASM` | The object mover `OPB80` and `OPRC80` |
+| `RRB10.ASM`, `RRH11.ASM`, `RRG23.ASM` | The brain, the hulk and the grunt/wave code (see the entity docs) |
+
+Add a row or a label here the first time you verify a new one, so that no one has to ask again.
+
 **CMT-12. An interface is a contract: its docs say what, never how.** A member's `<summary>` on an interface
 or an abstract member describes what the caller gets and can rely on — the inputs, the outputs, the
 guarantees — and nothing about any one implementer's internals. Do not write "counts down a beat timer and
