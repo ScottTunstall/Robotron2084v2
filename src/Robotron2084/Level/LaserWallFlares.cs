@@ -16,7 +16,7 @@ namespace Robotron2084.Level;
 ///             Original source: <c>RRG23.ASM</c> <c>LASDIE</c>, which calls
 ///             <c>LASDIH</c> for the side walls and <c>LASDIV</c> for the top and bottom
 ///         </item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: <c>LASER_HIT_WALL</c> ($3389), with <c>RESTORE_WALL_VERTICAL</c> ($331C) and <c>RESTORE_WALL_HORIZONTAL</c> ($337A)</item>
 ///     </list>
 ///     Where a laser runs off the field, the arcade
 ///     paints the last pixels in the wave's laser wall colour (<c>LASCOL</c>) for two fiftieths of a second, then

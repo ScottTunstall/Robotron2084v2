@@ -11,11 +11,11 @@ namespace Robotron2084.Level;
 /// <remarks>
 ///     <list type="bullet">
 ///         <item>
-///             Original source: <c>RRG23.ASM</c> <c>PLRCNT</c> for the number of
+///             Original source: <c>RRF.ASM</c> <c>PLRCNT</c> for the number of
 ///             players and <c>CURPLR</c> for whose turn it is; the turn passes in <c>PLEND</c>, <c>PLEND3</c> and
 ///             <c>PLE1B</c>
 ///         </item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: <c>num_players</c> ($9840), <c>current_player</c> ($983F) and <c>SWAP_CURRENT_PLAYER</c> ($3189)</item>
 ///     </list>
 ///     When a life is lost, the turn passes to the
 ///     other player if they still have lives. Otherwise the same player carries on, and when nobody has any
@@ -39,7 +39,7 @@ public sealed class GameSession
     /// <summary>The place in <see cref="PlayerSlots" /> of the player whose turn it is.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>CURPLR</c>.</item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>CURPLR</c>.</item>
     ///         <item>Disassembly: <c>current_player</c>.</item>
     ///     </list>
     /// </remarks>
@@ -70,7 +70,7 @@ public sealed class GameSession
     /// <summary>The players, with player 1 first. There are one or two.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>PLRCNT</c>.</item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>PLRCNT</c>.</item>
     ///         <item>Disassembly: <c>num_players</c>.</item>
     ///     </list>
     /// </remarks>
@@ -111,10 +111,10 @@ public sealed class GameSession
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRG23.ASM</c> <c>NSHIP</c>, the lives each player starts with, which is
+    ///             Original source: <c>RRF.ASM</c> <c>NSHIP</c>, the lives each player starts with, which is
     ///             loaded into <c>PLAS</c>.
     ///         </item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: the unlabelled game start code at $2756 to $2769, which reads the turns-per-player setting from CMOS ($CC02) and stores it in <c>p1_men</c> ($BDEC).</item>
     ///     </list>
     /// </remarks>
     public static GameSession CreateNewGame(GameMode mode, IPlayerInputSource firstPlayerInputSource,
@@ -143,7 +143,7 @@ public sealed class GameSession
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>ZP1LAS</c> and <c>ZP2LAS</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: <c>p1_men</c> ($BDEC) and <c>p2_men</c> ($BE28), tested at $310A and $310D in <c>KILL_PLAYER</c> ($30EF).</item>
     ///     </list>
     /// </remarks>
     public bool AnyPlayerSlotHasLives()
@@ -187,7 +187,7 @@ public sealed class GameSession
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>PLE1B</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: <c>SWAP_CURRENT_PLAYER</c> ($3189).</item>
     ///     </list>
     /// </remarks>
     public bool SwitchToPlayerWithLives()

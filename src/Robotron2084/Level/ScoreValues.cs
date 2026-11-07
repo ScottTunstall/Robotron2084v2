@@ -53,7 +53,7 @@ public static class ScoreValues
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>SVITAB</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: <c>RESCUE_FAMILY_POINTS_TABLE</c> ($03C5).</item>
     ///     </list>
     /// </remarks>
     public const int RescueBonusMaxCount = 5;
@@ -65,7 +65,7 @@ public static class ScoreValues
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>SVITAB</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: <c>RESCUE_FAMILY_POINTS_TABLE</c> ($03C5).</item>
     ///     </list>
     /// </remarks>
     public const int RescueBonusMin = 1000;

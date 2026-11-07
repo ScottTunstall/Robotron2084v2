@@ -15,7 +15,7 @@ namespace Robotron2084.Level;
 ///             Original source: each kind's own routines, such as <c>RRP8.ASM</c> for
 ///             the grunt and <c>RRH11.ASM</c> for the hulk; this record gathers what they decide
 ///         </item>
-///         <item>Disassembly: not separately labelled, since it is the port's own registry of them</item>
+///         <item>Disassembly: no address in the disassembly: this record is the port's own gathering of them</item>
 ///     </list>
 ///     The wave counts come from <see cref="WaveParameters" />, the scores from <see cref="ScoreValues" />
 ///     (notes §11.3), and <see cref="LaserHit" /> from the part of each kind's routine that handles a

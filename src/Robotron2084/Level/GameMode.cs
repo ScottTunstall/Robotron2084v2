@@ -19,7 +19,7 @@ public enum GameMode
     ///             Original source: <c>RRG23.ASM</c> <c>PLEND</c>, which passes the
     ///             turn on when a life is lost
     ///         </item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: <c>POST_PLAYER_DEATH_WAVE_ADJUST</c> ($3130) and <c>SWAP_CURRENT_PLAYER</c> ($3189)</item>
     ///     </list>
     /// </remarks>
     TwoPlayerAlternate,

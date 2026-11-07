@@ -10,7 +10,7 @@ namespace Robotron2084.Level;
 ///             Original source: <c>RRG23.ASM</c> <c>LASDIE</c>, which draws it in
 ///             <c>LASCOL</c> and waits with <c>NAP 2</c>
 ///         </item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: <c>LASER_HIT_WALL</c> ($3389)</item>
 ///     </list>
 ///     A flash on a side wall is solid. A flash on
 ///     the top or bottom wall is dithered, so the wall shows through every other row.</item>

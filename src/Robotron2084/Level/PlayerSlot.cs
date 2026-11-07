@@ -10,10 +10,10 @@ namespace Robotron2084.Level;
 /// <remarks>
 ///     <list type="bullet">
 ///         <item>
-///             Original source: <c>RRG23.ASM</c> <c>PLDATA</c> (player 1's block) and
+///             Original source: <c>RRF.ASM</c> <c>PLDATA</c> (player 1's block) and
 ///             <c>ZP2SCR</c> (player 2's), chosen by <c>PLINDX</c>
 ///         </item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: the player 1 block starting at <c>p1_score</c> ($BDE4) and the player 2 block starting at <c>p2_score</c> ($BE20)</item>
 ///     </list>
 ///     In a two-player game each player keeps their
 ///     own score, lives and wave while the other plays. When a life is lost the turn passes to the other
@@ -33,8 +33,8 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource
     /// <summary>The wave the player is on. Only they move it on.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>PWAV</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>PWAV</c>.</item>
+    ///         <item>Disassembly: <c>p1_wave</c> ($BDED) and <c>p2_wave</c> ($BE29).</item>
     ///     </list>
     /// </remarks>
     public int Wave { get; set; } = Wave;
@@ -51,8 +51,8 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource
     /// <summary>The lives the player has, counting the one in play.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>RRG23.ASM</c> <c>PLAS</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>PLAS</c>.</item>
+    ///         <item>Disassembly: <c>p1_men</c> ($BDEC) and <c>p2_men</c> ($BE28).</item>
     ///     </list>
     /// </remarks>
     public int Lives { get; set; } = Lives;
@@ -64,10 +64,10 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             Original source: <c>RRG23.ASM</c> <c>PENEMY</c>, the list that <c>PLSAV</c> keeps and
+    ///             Original source: <c>RRF.ASM</c> <c>PENEMY</c>, the list that <c>PLSAV</c> keeps and
     ///             <c>PLRES</c> brings back.
     ///         </item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: the unlabelled routine at $2B69, which copies the wave into the player's own snapshot (called from <c>POST_PLAYER_DEATH_WAVE_ADJUST</c> at $3163), and <c>LOAD_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE</c> ($2B0B), which brings it back.</item>
     ///     </list>
     /// </remarks>
     public WaveParameters? SavedWaveParameters { get; set; }
@@ -97,7 +97,7 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>MANDSV</c>, which stops at <c>#$07</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: <c>DRAW_LIVES_REMAINING</c> ($34E0), which stops at 7 (the <c>CMPA #$07</c> at $34F8).</item>
     ///     </list>
     /// </remarks>
     public int GetDisplayedSpareLives()

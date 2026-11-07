@@ -26,7 +26,7 @@ public static class BozoMode
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, <c>CMPA #4 / BHI</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: <c>LOAD_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE</c> ($2B0B), the <c>CMPA #$04</c> at $2B22.</item>
     ///     </list>
     /// </remarks>
     private const int LastWave = 4;
@@ -35,7 +35,7 @@ public static class BozoMode
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRG23.ASM</c> <c>PLRES</c>, <c>CMPA #2 / BHI</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: <c>LOAD_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE</c> ($2B0B), the <c>CMPA #$02</c> at $2B2D.</item>
     ///     </list>
     /// </remarks>
     private const int LastWaveForBehindPlayer = 2;

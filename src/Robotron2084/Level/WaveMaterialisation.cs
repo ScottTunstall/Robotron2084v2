@@ -45,7 +45,7 @@ public sealed class WaveMaterialisation
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>YMAX</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only).</item>
     ///     </list>
     /// </remarks>
     private const int ArcadeBottomRow = 234;
@@ -58,7 +58,7 @@ public sealed class WaveMaterialisation
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>XMIN</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only).</item>
     ///     </list>
     /// </remarks>
     private const int ArcadeLeftColumn = 7;
@@ -67,7 +67,7 @@ public sealed class WaveMaterialisation
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>XMAX</c>.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only).</item>
     ///     </list>
     /// </remarks>
     private const int ArcadeRightColumn = 0x8F;

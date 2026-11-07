@@ -10,7 +10,7 @@ namespace Robotron2084.Level;
 ///             Original source: <c>RRTESTC.ASM</c> <c>ENDGAM</c>, which reads
 ///             <c>ZP1SCR</c> and <c>ZP2SCR</c> and passes the number in <c>CURPLR</c>
 ///         </item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: <c>KILL_PLAYER</c> ($30EF), which prints GAME OVER when <c>p1_men</c> and <c>p2_men</c> are both 0 and then runs <c>GET_INITIALS1</c> ($E3D3) from $312A</item>
 ///     </list>
 ///     The arcade offers player 1 and then player 2.
 ///     The port offers the highest score first (notes §98).

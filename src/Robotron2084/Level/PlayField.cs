@@ -169,7 +169,7 @@ public sealed class PlayField : ICollisionScene
     ///             Original source: <c>RRG23.ASM</c> <c>PLINIT</c>, which clears <c>SAVCNT</c> as each wave
     ///             starts.
     ///         </item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: <c>number_of_family_members_saved</c> ($988D).</item>
     ///     </list>
     /// </remarks>
     public int RescuesThisLife { get; private set; }
@@ -268,7 +268,7 @@ public sealed class PlayField : ICollisionScene
     ///             (<c>WALCOL</c>), and <c>BORDER</c>, which <c>TDISP</c> calls.
     ///         </item>
     ///         <item>
-    ///             Disassembly: not separately labelled. The placeholder <see cref="WallColourCycle" /> is only
+    ///             Disassembly: <c>SET_BORDER_WALL_COLOUR</c> ($2A21), which sets <c>current_wall_colour</c> ($988F), and <c>DRAW_BORDER_WALLS</c> ($3526). The placeholder <see cref="WallColourCycle" /> is only
     ///             used when there is no live palette, which is in a test.
     ///         </item>
     ///     </list>
@@ -694,7 +694,7 @@ public sealed class PlayField : ICollisionScene
     ///             Original source: <c>RRDX2.ASM</c> <c>NWCENT</c>, which puts the explosion at the sprite's
     ///             middle (notes §73).
     ///         </item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: <c>MAKE_ENEMY_EXPLODE</c> ($5C1F).</item>
     ///     </list>
     /// </remarks>
     /// <param name="targetEntity">The robot being killed.</param>
