@@ -11233,3 +11233,4 @@ This is the port's own. The arcade's walls never open.
 - **The wave is not won** until the doors have let all their grunts in and shut. The doors, like the robots, are held until the game is live and while the player is dying.
 - **After a death** the flag is off for the next life: what came through the doors is on the field and is kept as survivors.
 - **Not done:** a laser that reaches an open door still flares as if it hit the wall, and the player and the robots cannot leave through an opening.
+- **Door grunts start at their slowest** (author, 2026-11-07: *"robots that appear at the open door, they must start at their slowest state"*). A grunt through a door is made with the wave's starting wait between steps (`WaveParameters.GruntMoveDelay`), whatever the grunts already on the field have been speeded up to, and a test pins it. After that it is speeded up like any grunt: every grunt killed cuts all the living grunts' waits, a newcomer's included.
