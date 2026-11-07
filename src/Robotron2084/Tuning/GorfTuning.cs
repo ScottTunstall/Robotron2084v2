@@ -30,6 +30,22 @@ public static class GorfTuning
     /// <summary>The gap left between Gorf's whole body and the player's box when it is to keep clear of the player, in port pixels.</summary>
     public const int PlayerClearancePixels = 12;
 
+    /// <summary>
+    ///     The speech lines Gorf says, one of them picked by chance, when it first appears in the first wave: "Long live
+    ///     Gorf", "I am the Gorfian Empire", "Gorfian robots... attack! attack!", "You cannot escape the Gorfian robots",
+    ///     "Gorfians take no prisoners!" and "You will meet a Gorfian doom".
+    /// </summary>
+    /// <remarks>Each is the name of a file in <c>Content/Speech/</c> (notes §149), without the extension and in capitals.</remarks>
+    public static readonly IReadOnlyList<string> IntroAppearanceLines =
+    [
+        "LONGLIVEGORF",
+        "IAMTHEGORFIANEMPIRE",
+        "GORFIANROBOTSATTACK",
+        "CANNOTESCAPEGORF",
+        "GORFIANSTAKENOPRISONERS",
+        "GORFIANDOOM"
+    ];
+
     /// <summary>How many electrodes the first wave, which introduces Gorf, has.</summary>
     public const int IntroWaveElectrodeCount = 10;
 
