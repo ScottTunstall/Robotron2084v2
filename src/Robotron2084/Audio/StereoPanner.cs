@@ -5,8 +5,10 @@ namespace Robotron2084.Audio;
 ///     changes so the move makes no click.
 /// </summary>
 /// <remarks>
-///     The volumes follow the "constant power" rule: a sound in the middle is played at about 71% in each
-///     speaker, so it sounds as loud as the same sound placed wholly in one.
+///     The volumes follow the "constant power" rule: the two volumes, each squared, always add up to 1, so a sound
+///     sounds as loud wherever it is placed. A sound in the middle is played at about 71% in each speaker.
+///     The volumes are square roots, not <c>Sin</c> and <c>Cos</c>: the author does not allow <c>Sin</c> or
+///     <c>Cos</c> anywhere in the code.
 /// </remarks>
 public sealed class StereoPanner
 {
@@ -19,9 +21,6 @@ public sealed class StereoPanner
     ///     result is added to <see cref="_leftVolume" /> at every sample. The right side works the same way.
     /// </summary>
     private const float GlidePerSample = 0.005f;
-
-    /// <summary>A quarter turn, in radians: the angle between "all left" and "all right".</summary>
-    private const float QuarterTurn = MathF.PI / 2;
 
     private float _leftVolume;
     private float _rightVolume;
@@ -41,9 +40,8 @@ public sealed class StereoPanner
     public void PanTo(float pan)
     {
         var leftToRight = (Math.Clamp(pan, -1f, 1f) + 1f) / 2;
-        var angle = leftToRight * QuarterTurn;
-        _targetLeftVolume = MathF.Cos(angle);
-        _targetRightVolume = MathF.Sin(angle);
+        _targetLeftVolume = MathF.Sqrt(1f - leftToRight);
+        _targetRightVolume = MathF.Sqrt(leftToRight);
     }
 
     /// <summary>Writes each sample to both speakers at their current volumes, as 16-bit left-right pairs.</summary>
