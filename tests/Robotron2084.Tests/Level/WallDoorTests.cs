@@ -126,7 +126,7 @@ public sealed class WallDoorTests
     }
 
     [Fact]
-    public void TheGruntsComeInRows_AllInsideThePlayfield()
+    public void TheGruntsAllComeInsideThePlayfield()
     {
         var grunts = new List<IntVector2>();
         var doors = new WallDoors(Playfield, new Random(3), grunts.Add);
@@ -141,8 +141,6 @@ public sealed class WallDoorTests
             Assert.InRange(grunt.Y, Playfield.Y, Playfield.Bottom - gruntHeight);
         });
         Assert.True(grunts.Count > 1);
-        Assert.True(grunts.Select(grunt => (grunt.X, grunt.Y)).Distinct().Count() < grunts.Count,
-            "grunts through one opening should come in rows that share places");
     }
 
     [Fact]
@@ -179,5 +177,32 @@ public sealed class WallDoorTests
 
         var newcomer = Assert.Single(playField.FieldEntities.Grunts.Except(knownGrunts));
         Assert.Equal(waveParameters.GruntMoveDelay, newcomer.MoveIntervalMaxBeats);
+    }
+
+    [Fact]
+    public void NoTwoGruntsThroughTheSameOpeningComeInOnTopOfEachOther()
+    {
+        for (var seed = 1; seed <= 20; seed++)
+        {
+            var grunts = new List<IntVector2>();
+            var openings = new List<List<IntVector2>>();
+            var doors = new WallDoors(Playfield, new Random(seed), grunt =>
+            {
+                grunts.Add(grunt);
+            });
+            var previousDoorCount = 0;
+            for (var tick = 0; tick < TicksLimit && doors.IsBusy(); tick++)
+            {
+                doors.Update();
+                if (doors.Doors.Count > previousDoorCount) openings.Add([]);
+
+                previousDoorCount = doors.Doors.Count;
+                if (openings.Count > 0) openings[^1].AddRange(grunts);
+
+                grunts.Clear();
+            }
+
+            Assert.All(openings, opening => Assert.Equal(opening.Count, opening.Distinct().Count()));
+        }
     }
 }
