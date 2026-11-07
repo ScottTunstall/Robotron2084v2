@@ -12,7 +12,7 @@ namespace Robotron2084.Entities;
 ///             <c>KIDLP1</c> to <c>KIDUP1</c> for Mikey, and <c>HLKAL</c>, <c>HLKAR</c>, <c>HLKAD</c> and <c>HLKAU</c> for
 ///             the hulk
 ///         </item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: the unlabelled animation frame metadata lists for Mommy ($052F), Daddy ($07FF), Mikey ($0B3B) and the hulk ($0CF9)</item>
 ///     </list>
 /// </remarks>
 public enum WalkSequence

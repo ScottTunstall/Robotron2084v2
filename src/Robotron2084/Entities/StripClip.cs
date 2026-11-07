@@ -24,7 +24,7 @@ namespace Robotron2084.Entities;
 ///     It is never squeezed to fit.
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRF.ASM</c>, the constants that mark the edges of the playfield</item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: no address in the disassembly (a name of the original source only); the limits appear only as comments on <c>player_x</c> ($9864) and <c>player_y</c> ($9866)</item>
 ///     </list>
 /// </remarks>
 public readonly record struct StripClip(int MinX, int MaxX, int MinY, int MaxY)

@@ -17,8 +17,8 @@ namespace Robotron2084.Entities;
 ///             holds a pointer to the next one (see <c>RRDX2.ASM</c>'s <c>NEXT</c>/<c>NEXTZ</c> field)
 ///         </item>
 ///         <item>
-///             Disassembly: not separately labelled in <c>asm/robomame.asm</c>, though it describes the same
-///             habit (for example <c>spheroids_enforcers_quarks_sparks_shells</c>,
+///             Disassembly: no single matching routine, though it describes the same
+///             habit (for example <c>spheroids_enforcers_quarks_sparks_shells</c> ($9817),
 ///             <c>family_list_pointer</c> and <c>electrode_list_pointer</c>, each described as a "linked list
 ///             of..." its own kind of object).
 ///         </item>

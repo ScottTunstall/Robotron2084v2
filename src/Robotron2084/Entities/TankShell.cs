@@ -395,7 +395,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRS22.ASM</c> <c>OPB80</c>, the routine that moves every moving object.</item>
-    ///         <item>Disassembly: not separately labelled.</item>
+    ///         <item>Disassembly: the object lists are moved and drawn by <c>MOVE_ALL_SPHEROIDS_ENFORCERS_SPARKS_AND_DRAW_IF_BELOW_RASTER_BEAM</c> ($DD90) and by the unlabelled copy of it at $DCFF.</item>
     ///     </list>
     /// </remarks>
     private void MoveOnce()
