@@ -118,7 +118,7 @@ public sealed class AttractState : IGameState, IAttractState
     {
         var slot = _gameSession.GetCurrent();
         // The demo is the same game, so a death keeps the survivors here too (notes §134).
-        var waveParameters = BozoMode.Apply(slot.SavedWaveParameters ?? _waveParameterGenerator.Generate(slot.Wave), slot.GetSpareLives());
+        var waveParameters = BozoMode.Apply(slot.SavedWaveParameters ?? _waveParameterGenerator.GenerateArcadeWave(slot.Wave), slot.GetSpareLives());
         WallColourCycle wallColourCycle = new();
         return new PlayField(_textureSet, waveParameters, _demoPlayerInputSource, PlayfieldLayout.GetInnerBounds(), wallColourCycle, _random,
             slot.Lives, slot.Score, _textureSet.BlitterDraw.GamePalette, false, new PixelContactTest(new SpriteCollision()));
