@@ -40,7 +40,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private static readonly int HopPixels = ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows);
 
     /// <summary>How far Gorf goes sideways on each step, in port pixels.</summary>
-    private static readonly int StepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
+    private const int StepPixels = GorfTuning.StepPixels;
 
     private readonly ArcadeFrameTimer _animationArcadeFrameTimer = new();
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();

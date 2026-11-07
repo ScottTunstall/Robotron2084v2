@@ -25,7 +25,7 @@ public static class GorfTuning
     public const int HopRows = 16;
 
     /// <summary>How many steps one hop takes, from leaving the ground to landing.</summary>
-    public const int HopSteps = 16;
+    public const int HopSteps = 14;
 
     /// <summary>The most grunts Gorf drops at one stop.</summary>
     public const int MaxGruntsPerDrop = 6;
@@ -36,6 +36,6 @@ public static class GorfTuning
     /// </summary>
     public const int MinGruntCount = 6;
 
-    /// <summary>How far Gorf goes sideways each step, in columns (2 arcade pixels each).</summary>
-    public const int StepColumns = 1;
+    /// <summary>How far Gorf goes sideways each step, in port pixels.</summary>
+    public const int StepPixels = 5;
 }
