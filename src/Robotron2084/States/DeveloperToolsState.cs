@@ -20,9 +20,9 @@ namespace Robotron2084.States;
 ///     The options jump straight to the screens the attract cycle passes through in the order the cycle
 ///     shows them: the title page on its arcade pane (the ROBOTRON 2084 presentation page as the cabinet
 ///     prints it), the title page on the pane that carries the port's credit, the STORY movie, the
-///     machine playing itself, the HIGH SCORE table, the DEFINE INPUTS page, and the GAME ADJUSTMENT
-///     page with the gameplay settings (notes §131).
-///     Keys: Up/Down (or the stick) moves the cursor, Enter (or A) chooses, and 1 to 7 choose a line
+///     machine playing itself, the HIGH SCORE table, the DEFINE INPUTS page, the GAME ADJUSTMENT
+///     page with the gameplay settings (notes §131), the SOUND TEST page and the SPEECH TEST page (notes §149).
+///     Keys: Up/Down (or the stick) moves the cursor, Enter (or A) chooses, and 1 to 9 choose a line
 ///     directly. F10 closes the page — back to the title, the one attract screen this page's options
 ///     do not already reach — which is why the shell's F10 switch leaves this page to the page itself.
 /// </summary>
@@ -34,7 +34,7 @@ public sealed class DeveloperToolsState : IGameState
     // prints its cursor (column $0C), and it is that page's own cursor glyph — the small font's "->".
     private const int CursorColumn = 57;
 
-    private const string DirectLine = "1 TO 7 - CHOOSE AN OPTION DIRECTLY";
+    private const string DirectLine = "1 TO 9 - CHOOSE AN OPTION DIRECTLY";
     private const string ExitLine = "F10 - CLOSE THIS PAGE";
     private const int ExitRow = 342;
     private const int FirstLineRow = 90;
@@ -63,13 +63,14 @@ public sealed class DeveloperToolsState : IGameState
     /// <summary>The number keys that choose a line directly, in list order.</summary>
     private static readonly Keys[] DirectKeys =
     [
-        Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7
+        Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9
     ];
 
     /// <summary>
     ///     The page's options in list order: the attract cycle's own screens in the order the cycle
     ///     shows them (notes §94/§95), then the two service pages — the port's control definitions
-    ///     and the arcade's GAME ADJUSTMENT settings (notes §131).
+    ///     and the arcade's GAME ADJUSTMENT settings (notes §131) — then the SOUND TEST page and the SPEECH TEST
+    ///     page (notes §149).
     /// </summary>
     private static readonly string[] Options =
     [
@@ -79,7 +80,9 @@ public sealed class DeveloperToolsState : IGameState
         "DEMO",
         "HIGH SCORES",
         "DEFINE INPUTS",
-        "GAME ADJUSTMENT"
+        "GAME ADJUSTMENT",
+        "SOUND TEST",
+        "SPEECH TEST"
     ];
 
     /// <summary>
@@ -209,6 +212,15 @@ public sealed class DeveloperToolsState : IGameState
             case 6:
                 // The arcade's service-mode settings: the gameplay adjustments (notes §131).
                 gameStateManager.TransitionTo(new SettingsState(_gameServices, _gameSettingsStore));
+                break;
+
+            case 7:
+                gameStateManager.TransitionTo(new SoundTestState(_gameServices));
+                break;
+
+            case 8:
+                // Port only: the speech lines, one at a time (notes §149).
+                gameStateManager.TransitionTo(new SpeechTestState(_gameServices));
                 break;
         }
     }

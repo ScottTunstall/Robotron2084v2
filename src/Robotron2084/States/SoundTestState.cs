@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -35,8 +36,6 @@ namespace Robotron2084.States;
 ///     The port's keys: Enter, Space, Right or Down is ADVANCE, Left or Up goes back one, A is AUTO UP.
 ///     The fonts have no <c>$</c>, so it is shown as <c>S</c>; apostrophes and <c>#</c> in the source's words are left
 ///     out.
-///     After the transporter the page lists the speech lines (port only, <see cref="SoundTestEntries" />). A speech line
-///     is spoken on its own voice, so moving on to another entry never cuts it off; the next line waits its turn.
 /// </remarks>
 public sealed class SoundTestState : IGameState
 {
@@ -87,8 +86,16 @@ public sealed class SoundTestState : IGameState
     /// </summary>
     private const int TextPaletteIndex = 9;
 
-    /// <summary>The page's list: the board's 63 sounds in sound-number order, then the transporter, then the speech lines.</summary>
-    private static readonly IReadOnlyList<SoundTestEntry> Entries = SoundTestEntries.All;
+    /// <summary>
+    ///     The page's list: the board's 63 sounds in sound-number order, then the transporter.
+    /// </summary>
+    private static readonly IReadOnlyList<SoundTestEntry> Entries =
+    [
+        .. BoardSounds.All.Select(boardSound => new SoundTestEntry(
+            "SOUND " + boardSound.Number.ToString("X2", CultureInfo.InvariantCulture), boardSound.Name, boardSound.Description,
+            boardSound.Number)),
+        new("TRANSPORTER", "TRSPRC", "BRAIN WAVE", null)
+    ];
 
     private readonly GameServices _gameServices;
     private readonly TextureSet _textureSet;
@@ -168,23 +175,17 @@ public sealed class SoundTestState : IGameState
         ]);
     }
 
-    /// <summary>
-    ///     Starts an entry: speaks its line, sends its sound number, or starts the transporter when it has neither.
-    /// </summary>
+    /// <summary>Starts an entry: sends its sound number, or starts the transporter when it has none.</summary>
     /// <param name="soundTestEntry">The entry.</param>
     private static void Play(SoundTestEntry soundTestEntry)
     {
-        if (soundTestEntry.SpeechLineName is { } lineName)
-            Speech.Say(lineName);
-        else if (soundTestEntry.SoundNumber is { } soundNumber)
+        if (soundTestEntry.SoundNumber is { } soundNumber)
             Sound.SendDirect(soundNumber);
         else
             Sound.PlayTransporter();
     }
 
-    /// <summary>
-    ///     Stops the transporter's sends and the sound on the board. It never stops the speech: a line plays out.
-    /// </summary>
+    /// <summary>Stops whatever is playing: the transporter's sends, and the sound on the board.</summary>
     private static void Silence()
     {
         Sound.StopTransporter();
@@ -237,7 +238,7 @@ public sealed class SoundTestState : IGameState
         }
 
         _repeatTicksLeft--;
-        var isSoundActive = Sound.IsPlaying() || Sound.IsTransporterRunning() || Speech.IsBusy();
+        var isSoundActive = Sound.IsPlaying() || Sound.IsTransporterRunning();
         if (isSoundActive) _quietTicks = 0;
         else _quietTicks++;
 
