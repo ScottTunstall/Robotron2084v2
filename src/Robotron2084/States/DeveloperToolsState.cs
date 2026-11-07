@@ -37,7 +37,7 @@ public sealed class DeveloperToolsState : IGameState
     private const string DirectLine = "1 TO 9 - CHOOSE AN OPTION DIRECTLY";
     private const string ExitLine = "F10 - CLOSE THIS PAGE";
     private const int ExitRow = 342;
-    private const int FirstLineRow = 90;
+    private const int FirstLineRow = 58;
 
     /// <summary>It is one of the palette indices in <see cref="OwnedPaletteIndices" />.</summary>
     private const int HeadingPaletteIndex = 9;
