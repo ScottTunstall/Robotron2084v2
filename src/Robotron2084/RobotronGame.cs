@@ -186,12 +186,11 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>Switches the speech voice on. It is separate from the sound board, so nothing the board plays can stop it.</summary>
-    private static void StartSpeech()
+    private void StartSpeech()
     {
         try
         {
-            var speechFolderPath = Path.Combine(AppContext.BaseDirectory, SoundEffectSpeechVoice.SpeechFolderName);
-            Speech.Initialise(new SoundEffectSpeechVoice(speechFolderPath));
+            Speech.Initialise(new SoundEffectSpeechVoice(Content));
         }
         catch (NoAudioHardwareException exception)
         {
