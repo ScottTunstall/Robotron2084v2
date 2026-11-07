@@ -237,18 +237,77 @@ public sealed class GorfTests
     }
 
     [Fact]
-    public void AGorfThatIsShotBeforeItHasDroppedThemAll_DropsTheRestWhereItDies()
+    public void AGorfThatIsShotBeforeItHasDroppedThemAll_IsFollowedByAnotherThatDropsTheRest_Faster()
     {
         var playField = CreateFieldInPlay(new WaveParameters(1, 0, GorfGruntDropCount: 15));
-        var gorf = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 4, 15);
-        playField.FieldEntities.Add(gorf);
+        var first = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 4, 15);
+        playField.FieldEntities.Add(first);
         for (var tick = 0; tick < 5000 && playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()) < 3; tick++)
             playField.Update(OneTickGameTime);
-        Assert.True(gorf.IsAlive());
+        var droppedSoFar = playField.FieldEntities.Grunts.Count(entity => !entity.IsDead());
 
-        gorf.Kill();
+        first.Kill();
 
+        Assert.Equal(droppedSoFar, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead())); // none fall at once
+        Assert.False(playField.IsWaveCleared()); // a Gorf is still to come
+        Assert.DoesNotContain(playField.FieldEntities.Gorfs, gorf => gorf.IsAlive());
+
+        Gorf? second = null;
+        for (var tick = 0; tick < GorfTuning.ReturnDelayTicks + 5 && second is null; tick++)
+        {
+            playField.Update(OneTickGameTime);
+            second = playField.FieldEntities.Gorfs.FirstOrDefault(gorf => gorf.IsAlive());
+        }
+
+        Assert.NotNull(second);
+        Assert.True(second.DropIntervalSteps < first.DropIntervalSteps, "the Gorf that comes back drops faster");
+        for (var tick = 0; tick < 5000 && second.IsAlive(); tick++) playField.Update(OneTickGameTime);
         Assert.Equal(15, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
+    }
+
+    [Fact]
+    public void ThePlayersBoxIsAvoided_SoGorfIsNeverOnACollisionCourseWithThePlayerWhenItAppears()
+    {
+        var playField = CreateFieldInPlay();
+        var bounds = playField.GetPlayfieldBounds();
+        var playerBox = playField.Player.GetBounds();
+        var bodyHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height);
+        var hop = ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows);
+
+        for (var seed = 0; seed < 300; seed++)
+        {
+            var gorf = new Gorf(TestTextures.SharedTextureSet, new Random(seed), bounds, 10, 0, 0, playerBox);
+
+            var top = gorf.Position.Y - hop;
+            var bottom = gorf.Position.Y + bodyHeight;
+            Assert.True(bottom < playerBox.Y || top > playerBox.Bottom, $"seed {seed}: Gorf's level meets the player's");
+        }
+    }
+
+    [Fact]
+    public void WithoutAPlayerToAvoid_GorfCanAppearOnThePlayersLevel()
+    {
+        var playField = CreateFieldInPlay();
+        var bounds = playField.GetPlayfieldBounds();
+        var playerBox = playField.Player.GetBounds();
+        var bodyHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height);
+        var hop = ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows);
+
+        var meetsThePlayer = Enumerable.Range(0, 300)
+            .Select(seed => new Gorf(TestTextures.SharedTextureSet, new Random(seed), bounds, 10))
+            .Any(gorf => gorf.Position.Y + bodyHeight >= playerBox.Y && gorf.Position.Y - hop <= playerBox.Bottom);
+
+        Assert.True(meetsThePlayer);
+    }
+
+    [Fact]
+    public void OnWaveOne_GorfAvoidsThePlayer_AndAnyOtherWaveLeavesItToChance()
+    {
+        var generator = new WaveParameterGenerator();
+
+        Assert.True(generator.Generate(1).GorfAvoidsPlayer);
+        Assert.False(generator.Generate(2).GorfAvoidsPlayer);
+        Assert.False(new WaveParameters(1).GorfAvoidsPlayer);
     }
 
     [Fact]
