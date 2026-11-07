@@ -21,9 +21,9 @@ namespace Robotron2084.Input;
 ///             out the text crawl;
 ///         </item>
 ///         <item>
-///             <b>Right</b> and <b>Left</b> (the cursor keys) — on the STORYLINE movie, go on to the start of the next page
-///             or back to the start of the one before, so each page can be looked at in turn without waiting for the
-///             one before it;
+///             <b>Right</b> and <b>Left</b> (the cursor keys) — on any attract screen, go on to the next screen of the
+///             sequence or back to the one before (<c>AttractNavigation</c>), through the title page's two panes, the
+///             pages of the story, the demo game and the high score table;
 ///         </item>
 ///         <item><b>Insert</b> — jump straight to the high score TABLE (notes §98);</item>
 ///         <item>
@@ -52,10 +52,4 @@ public static class DeveloperKeys
 
     /// <summary>True while the attract fast-forward key is held (set by the app shell every tick).</summary>
     public static bool AttractFastForward { get; set; }
-
-    /// <summary>True on the one tick the go-to-the-next-page key goes down (set by the app shell every tick).</summary>
-    public static bool AttractNextPage { get; set; }
-
-    /// <summary>True on the one tick the go-to-the-previous-page key goes down (set by the app shell every tick).</summary>
-    public static bool AttractPreviousPage { get; set; }
 }
