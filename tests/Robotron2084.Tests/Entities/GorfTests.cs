@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Level;
@@ -456,5 +457,61 @@ public sealed class GorfTests
         Assert.Equal(GorfTuning.IntroWaveElectrodeCount, waveParameters.ElectrodeCount);
         Assert.True(waveParameters.ElectrodeCount > 0);
         Assert.Equal(0, waveParameters.GruntCount);
+    }
+
+    [Fact]
+    public void TheSpeechLinesGorfCanSayInTheFirstWave_AreAllRealLinesOfTheSpeechVoice()
+    {
+        Assert.Equal(6, GorfTuning.IntroAppearanceLines.Count);
+        Assert.All(GorfTuning.IntroAppearanceLines, line =>
+            Assert.Contains(SpeechLinePaths.All, path => Path.GetFileName(path).ToUpperInvariant() == line));
+    }
+
+    [Fact]
+    public void AGorfGivenALine_SaysItOnceWhenItFirstAppears_AndNeverAgain()
+    {
+        var playField = CreateFieldInPlay();
+        var lines = new List<string>();
+        playField.SetLineSayer(lines.Add);
+        var gorf = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 10, 0, 0, null,
+            "GORFIANDOOM");
+        playField.FieldEntities.Add(gorf);
+        Assert.Empty(lines); // not before it appears
+
+        for (var tick = 0; tick < 200; tick++) playField.Update(OneTickGameTime);
+
+        Assert.Equal(["GORFIANDOOM"], lines);
+    }
+
+    [Fact]
+    public void AGorfGivenNoLine_SaysNothing()
+    {
+        var playField = CreateFieldInPlay();
+        var lines = new List<string>();
+        playField.SetLineSayer(lines.Add);
+        playField.FieldEntities.Add(CreateRandomGorf(playField, 4));
+
+        for (var tick = 0; tick < 200; tick++) playField.Update(OneTickGameTime);
+
+        Assert.Empty(lines);
+    }
+
+    [Fact]
+    public void WaveOnesGorf_SaysOneOfTheSixLinesWhenItFirstAppears_AndAGorfThatReturnsSaysNothing()
+    {
+        var waveParameters = new WaveParameterGenerator().Generate(1);
+        var playField = new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(5).Build();
+        var lines = new List<string>();
+        playField.SetLineSayer(lines.Add);
+
+        for (var tick = 0; tick < 1500 && (lines.Count == 0 || playField.FieldEntities.Grunts.Count == 0); tick++)
+            playField.Update(OneTickGameTime);
+        var firstGorf = playField.FieldEntities.Gorfs.First(gorf => gorf.IsAlive());
+        firstGorf.Kill(); // shot with grunts still to drop: another Gorf comes back
+        for (var tick = 0; tick < GorfTuning.ReturnDelayTicks + 40; tick++) playField.Update(OneTickGameTime);
+
+        Assert.Single(lines);
+        Assert.Contains(lines[0], GorfTuning.IntroAppearanceLines);
+        Assert.True(playField.FieldEntities.Gorfs.Count(gorf => gorf.IsAlive()) >= 1, "a Gorf should have come back");
     }
 }
