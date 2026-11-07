@@ -185,7 +185,7 @@ public sealed class PresentationPagePalette
     ///                 <c>RRSCRIPT.ASM</c>, sets its own colours (notes §103.3).
     ///             </description>
     ///         </item>
-    ///         <item><description>Disassembly: not separately labelled.</description></item>
+    ///         <item><description>Disassembly: the unlabelled attract screen code at $79AF.</description></item>
     ///     </list>
     /// </remarks>
     public void Stop(GamePalette gamePalette)

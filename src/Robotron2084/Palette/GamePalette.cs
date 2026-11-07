@@ -86,7 +86,7 @@ public sealed class GamePalette
     ///                 <c>COLSTV</c> in <c>RRS22.ASM</c>), which starts the colour processes again.
     ///             </description>
     ///         </item>
-    ///         <item><description>Disassembly: not separately labelled.</description></item>
+    ///         <item><description>Disassembly: <c>CREATE_TASKS_TO_UPDATE_COLOUR_PALETTE</c> ($D89E), called from <c>KILL_PLAYER</c> ($30EF) at $3101.</description></item>
     ///     </list>
     /// </remarks>
     public void ResumePaletteIndex(int paletteIndex)
@@ -115,7 +115,7 @@ public sealed class GamePalette
     ///                 Original source: <c>RRX7.ASM</c> <c>PDTH2</c>, the line <c>JSR KILL OFF DECAY</c>.
     ///             </description>
     ///         </item>
-    ///         <item><description>Disassembly: not separately labelled.</description></item>
+    ///         <item><description>Disassembly: <c>KILL_PLAYER</c> ($30EF).</description></item>
     ///     </list>
     /// </remarks>
     public void SuspendPaletteIndex(int paletteIndex)

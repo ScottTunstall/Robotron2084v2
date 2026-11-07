@@ -128,7 +128,7 @@ public sealed class HighScorePalette
     /// <remarks>
     ///     <list type="bullet">
     ///         <item><description>Original source: <c>RRTABLE.ASM</c> <c>TABLE</c>, which starts <c>DECAZ</c>, <c>COLA</c>, <c>COLC</c> and <c>COLD</c> after the page is printed.</description></item>
-    ///         <item><description>Disassembly: not separately labelled.</description></item>
+    ///         <item><description>Disassembly: the high score table page, which is not disassembled yet (its text data starts at $E46C).</description></item>
     ///     </list>
     /// </remarks>
     private const int RampProcessStart = 1;
@@ -208,7 +208,7 @@ public sealed class HighScorePalette
     ///                 <c>RRSCRIPT.ASM</c>, sets its own colours.
     ///             </description>
     ///         </item>
-    ///         <item><description>Disassembly: not separately labelled.</description></item>
+    ///         <item><description>Disassembly: the unlabelled attract screen code at $79AF.</description></item>
     ///     </list>
     /// </remarks>
     public void Stop(GamePalette gamePalette)
