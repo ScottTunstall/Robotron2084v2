@@ -55,6 +55,21 @@ public sealed class WaveNumberingTests
     }
 
     [Fact]
+    public void WaveOnesGrunts_MoveAsTheWaveAfterItsDo()
+    {
+        var generator = new WaveParameterGenerator();
+
+        var intro = generator.Generate(WaveNumbering.GorfIntroWave);
+        var nextWave = generator.Generate(WaveNumbering.FirstArcadeWave);
+
+        Assert.Equal(nextWave.GruntMoveDelay, intro.GruntMoveDelay);
+        Assert.Equal(nextWave.GruntSpeedFloor, intro.GruntSpeedFloor);
+        Assert.Equal(nextWave.EnemySpeedBonus, intro.EnemySpeedBonus);
+        Assert.Equal(20, intro.GruntMoveDelay);
+        Assert.Equal(9, intro.GruntSpeedFloor);
+    }
+
+    [Fact]
     public void WaveOne_HasAsManyFamilyMembersAsTheWaveAfterIt()
     {
         var generator = new WaveParameterGenerator();
