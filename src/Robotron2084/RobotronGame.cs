@@ -227,13 +227,15 @@ public sealed class RobotronGame : Game
     ///     sitting out the title's 12-second idle, and Page Up is how the hulk's walk (movie frame ~2574) is reached
     ///     in seconds rather than after the text crawl. They are live on the attract screens only: Insert is also
     ///     the skip-a-wave key and Delete clears a line on the DEFINE INPUTS page, so they must not act anywhere else.
-    ///     The function keys are left to the game's own start and settings keys (F1/F2/F3, F5, F10) and the display
-    ///     keys (F8, F11).
+    ///     Page Down skips the STORYLINE movie on to its next page.
+    ///     The function keys are left to the game's own start, test and settings keys (F1/F2/F3, F4, F5, F6, F10) and
+    ///     the display keys (F8, F11).
     /// </remarks>
     private void HandleAttractDeveloperKeys(KeyboardState keyboardState)
     {
         var onAttractScreen = _gameStateManager.CurrentGameState is IAttractState;
         DeveloperKeys.AttractFastForward = onAttractScreen && keyboardState.IsKeyDown(Keys.PageUp);
+        DeveloperKeys.AttractSkipPage = onAttractScreen && WasPressed(keyboardState, Keys.PageDown);
         if (!onAttractScreen) return;
 
         if (WasPressed(keyboardState, Keys.End))
@@ -320,6 +322,8 @@ public sealed class RobotronGame : Game
             _gameStateManager.TransitionTo(new SoundTestState(_gameServices));
         else if (WasPressed(keyboardState, Keys.F5))
             _gameStateManager.TransitionTo(new SettingsState(_gameServices, _gameSettingsStore));
+        else if (WasPressed(keyboardState, Keys.F6))
+            _gameStateManager.TransitionTo(new SpeechTestState(_gameServices));
     }
 
     /// <summary>Drops straight into the end of a game, with a score that has to qualify (notes §116).</summary>
