@@ -55,6 +55,20 @@ public sealed class WaveNumberingTests
     }
 
     [Fact]
+    public void WaveOne_HasAsManyFamilyMembersAsTheWaveAfterIt()
+    {
+        var generator = new WaveParameterGenerator();
+
+        var intro = generator.Generate(WaveNumbering.GorfIntroWave);
+        var nextWave = generator.Generate(WaveNumbering.FirstArcadeWave);
+
+        Assert.Equal(nextWave.MommyCount, intro.MommyCount);
+        Assert.Equal(nextWave.DaddyCount, intro.DaddyCount);
+        Assert.Equal(nextWave.MikeyCount, intro.MikeyCount);
+        Assert.True(intro.MommyCount + intro.DaddyCount + intro.MikeyCount > 0);
+    }
+
+    [Fact]
     public void TheBrainWave_IsWaveSeven_AndWaveSixIsTheArcadesWaveSix()
     {
         var generator = new WaveParameterGenerator();
