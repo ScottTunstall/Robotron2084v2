@@ -12,6 +12,10 @@ namespace Robotron2084.AttractMode;
 ///             a byte below 10 is an action — CURSAB, CLEARM, NEWLIN, SCRPT, SNOOZE,
 ///             MESS, DONE, COLOR, GRUNTS, DONE2;
 ///         </item>
+///         <item>
+///             10 is the port's own action: wait until a part of the movie is done, however long it takes
+///             (<see cref="PageScriptOpcodes.WaitUntilDone" />);
+///         </item>
 ///         <item>a byte of $5F or more is a sleep that many fiftieths of a second;</item>
 ///         <item>
 ///             anything else is a character to blit in the LARGE font — one every
@@ -41,6 +45,9 @@ public sealed class AttractPageMachine
     ///     <see cref="_cursorX" />.
     /// </summary>
     public const int TextLeft = 40;
+
+    /// <summary>How many bytes <see cref="PageScriptOpcodes.WaitUntilDone" /> takes with its operand.</summary>
+    private const int WaitUntilDoneLength = 2;
 
     /// <summary>The ROM's `GSTRTS`: the four grunt personalities.</summary>
     private static readonly int[] GruntScripts = [0x84F5, 0x8517, 0x8540, 0x8567];
@@ -91,7 +98,7 @@ public sealed class AttractPageMachine
             }
 
             var opcode = _scriptBytes[_scriptIndex++];
-            if (opcode <= 9)
+            if (opcode <= PageScriptOpcodes.WaitUntilDone)
             {
                 RunAction(opcode);
                 if (_waitArcadeFrames > 0 || IsFinished) return;
@@ -191,22 +198,26 @@ public sealed class AttractPageMachine
     {
         switch (opcode)
         {
-            case 3: // SCRPT — start an object script.
+            case PageScriptOpcodes.StartScript:
                 _attractObjectMachine.StartScript(NextWord());
                 return;
 
-            case 4: // SNOOZE
+            case PageScriptOpcodes.Pause:
                 _waitArcadeFrames = NextByte();
                 return;
 
-            case 6: // DONE
-            case 9: // DONE2
+            case PageScriptOpcodes.Done:
+            case PageScriptOpcodes.Done2:
                 IsFinished = true;
                 return;
 
-            case 8: // GRUNTS — 14 of them, one every 16 frames (the ROM's GRPROC).
+            case PageScriptOpcodes.Grunts: // 14 of them, one every 16 frames (the ROM's GRPROC).
                 _gruntsLeft = 14;
                 _gruntTimer = 16;
+                return;
+
+            case PageScriptOpcodes.WaitUntilDone:
+                WaitUntilDone();
                 return;
 
             default:
@@ -220,12 +231,12 @@ public sealed class AttractPageMachine
     {
         switch (opcode)
         {
-            case 0: // CURSAB — set the text cursor (column, row).
+            case PageScriptOpcodes.Cursor:
                 _cursorX = NextByte() * ScreenSize.ArcadePixelsPerByte;
                 _cursorY = NextByte();
                 return;
 
-            case 1: // CLEARM — cursor to the left margin on the given row, clear the block.
+            case PageScriptOpcodes.Clear:
                 {
                     int row = NextByte();
                     int range = NextByte();
@@ -235,12 +246,12 @@ public sealed class AttractPageMachine
                     return;
                 }
 
-            case 2: // NEWLIN
+            case PageScriptOpcodes.NewLine:
                 _cursorX = TextLeft;
                 _cursorY += 11;
                 return;
 
-            case 5: // MESS — a name popup in the score row.
+            case PageScriptOpcodes.Message: // a name popup
                 {
                     var x = NextByte() * ScreenSize.ArcadePixelsPerByte;
                     int number = NextByte();
@@ -253,10 +264,23 @@ public sealed class AttractPageMachine
                     return;
                 }
 
-            case 7: // COLOR — the text's palette index (a doubled nibble like $AA).
+            case PageScriptOpcodes.Colour:
                 TextPaletteIndex = NextByte() >> 4;
                 return;
         }
+    }
+
+    /// <summary>
+    ///     The port's own action, which the arcade's page script does not have (notes §147): the script goes on when the
+    ///     part of the movie named by the operand is done. Until then this action is read again in the next 50th of a
+    ///     second.
+    /// </summary>
+    private void WaitUntilDone()
+    {
+        if (AttractSequenceDoneRules.IsDone((AttractSequence)NextByte(), _attractObjectMachine)) return;
+
+        _scriptIndex -= WaitUntilDoneLength;
+        _waitArcadeFrames = 1;
     }
 
     private void SpawnQueuedGrunts()

@@ -60,6 +60,22 @@ public sealed class AttractObjectMachine
         return drained;
     }
 
+    /// <summary>Gets the first object that is on the screen and drawing the given animation.</summary>
+    /// <param name="animation">The animation to look for.</param>
+    /// <returns>The object, or null when no object on the screen is drawing that animation.</returns>
+    public MovieObject? GetFirstObjectShowing(MovieAnimation animation)
+    {
+        return _objects.FirstOrDefault(movieObject =>
+            !movieObject.IsDead && movieObject.IsOnList && movieObject.Descriptor?.Animation == animation);
+    }
+
+    /// <summary>Gets whether any object that is still alive draws the given animation, shown or hidden.</summary>
+    /// <param name="animation">The animation to look for.</param>
+    public bool HasLiveObjectWith(MovieAnimation animation)
+    {
+        return _objects.Any(movieObject => !movieObject.IsDead && movieObject.Descriptor?.Animation == animation);
+    }
+
     /// <summary>Starts a script: creates its object and its process (the ROM's `OSTART`).</summary>
     public void StartScript(int scriptAddress)
     {
