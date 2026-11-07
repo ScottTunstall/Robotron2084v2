@@ -812,6 +812,30 @@ if (isSidewaysFurther)
 stop and work out what a line does, rewrite it with explanatory variables (NAM-11) and one step per line (STR-7).
 This applies to ternaries, chained `&&`/`||`, nested calls, and `switch` expressions that hide logic in their arms.
 
+**FMT-2b. Complex expressions are forbidden: name every piece.** An expression that slices, spreads, indexes or does
+arithmetic inside another expression is complex, and is not allowed in a `return`, an argument or an initialiser. This
+includes collection expressions that mix spreads and slices, index arithmetic inside a slice, and a call whose argument
+is itself a call or an expression with an operator. Give each piece a local variable whose name says what it is, one per
+line (STR-7, NAM-11), and then combine the named pieces.
+
+Not allowed:
+
+```csharp
+return [..script[..index], ..replacement, ..script[(index + marker.Length)..]];
+```
+
+Allowed:
+
+```csharp
+var endOfMarker = index + marker.Length;
+var bytesBeforeMarker = script[..index];
+var bytesAfterMarker = script[endOfMarker..];
+return [..bytesBeforeMarker, ..replacement, ..bytesAfterMarker];
+```
+
+A bare identifier, a constant or a single member access may stay inline. If you are unsure whether an expression is
+complex, it is: name the pieces.
+
 **FMT-3. Early returns, not `else`.** When one branch of an `if` finishes the method's work, return from it and
 let the other path carry on unindented. Do not write `if (x) { ...; return; } else { ... }`, or
 `if (x) { A } else { B }` where `A` could end with `return`. Guard clauses go at the top of the method.
