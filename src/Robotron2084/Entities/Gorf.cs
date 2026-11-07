@@ -56,6 +56,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private IntVector2 _position;
     private PlayField? _playField;
     private readonly int _dropIntervalSteps;
+    private int _pendingDropCount;
     private int _stepCount;
     private int _stepInHop;
 
@@ -180,9 +181,10 @@ public sealed class Gorf : IExplodable, IRemovable
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        if (_playField is null || _dropCounts.Count == 0) return;
+        if (_playField is null || (_dropCounts.Count == 0 && _pendingDropCount == 0)) return;
 
-        var gruntsOwed = _dropCounts.Sum();
+        var gruntsOwed = _dropCounts.Sum() + _pendingDropCount;
+        _pendingDropCount = 0;
         _dropCounts.Clear();
         _dropSteps.Clear();
         var fasterInterval = Math.Max(1, _dropIntervalSteps * GorfTuning.ReturnDropIntervalFifths / 5);
@@ -227,8 +229,15 @@ public sealed class Gorf : IExplodable, IRemovable
 
         while (_dropSteps.Count > 0 && _stepCount >= _dropSteps.Peek())
         {
+            if (_pendingDropCount == 0) _pendingDropCount = GetDropCount();
+
+            // A drop never lands on an electrode: it waits until Gorf has moved on to somewhere clear.
+            if (!playField.IsClearOfElectrodes(GetDropColumn(_pendingDropCount))) break;
+
             _dropSteps.Dequeue();
-            DropGrunts(playField, GetDropCount());
+            var count = _pendingDropCount;
+            _pendingDropCount = 0;
+            DropGrunts(playField, count);
         }
 
         if (_stepCount >= _totalSteps) Kill();
@@ -286,6 +295,23 @@ public sealed class Gorf : IExplodable, IRemovable
         if (_dropCounts.Count > 0) return _dropCounts.Dequeue();
 
         return Math.Min(GorfTuning.MaxGruntsPerDrop, (_random.Next(_maxDropsX2) + 2) / 2);
+    }
+
+    /// <summary>
+    ///     Gets the box the grunts of a drop pass through on their way down: from Gorf's body to the ground, as wide as the
+    ///     row of grunts.
+    /// </summary>
+    /// <param name="count">How many grunts the drop has, standing side by side.</param>
+    private Rectangle GetDropColumn(int count)
+    {
+        var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
+        var gruntHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
+        var spacing = gruntWidth + GorfTuning.DropGapPixels;
+        var rowWidth = gruntWidth + (count - 1) * spacing;
+        var left = _position.X + (CollisionSize.Width - rowWidth) / 2;
+        var top = _position.Y + (CollisionSize.Height - gruntHeight) / 2;
+        var bottom = _groundY + CollisionSize.Height;
+        return new Rectangle(left, top, rowWidth, Math.Max(gruntHeight, bottom - top));
     }
 
     /// <summary>Drops some grunts side by side from Gorf's body.</summary>
