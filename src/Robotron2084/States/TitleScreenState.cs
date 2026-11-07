@@ -172,6 +172,14 @@ public sealed class TitleScreenState : IGameState, IAttractState
         if (_textureSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Start(palette);
     }
 
+    /// <summary>Gets which of the two text panes is up now.</summary>
+    internal TitleTextPane GetShownPane()
+    {
+        if (_isShowingArcadeText) return TitleTextPane.Arcade;
+
+        return TitleTextPane.Port;
+    }
+
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         // The caller clears to black. This is the ROM's Williams PRESENTATION page (notes §103):
