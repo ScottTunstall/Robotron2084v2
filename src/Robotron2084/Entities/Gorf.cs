@@ -55,6 +55,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private readonly int _totalSteps;
     private IntVector2 _position;
     private PlayField? _playField;
+    private readonly int _dropIntervalSteps;
     private int _stepCount;
     private int _stepInHop;
 
@@ -71,10 +72,19 @@ public sealed class Gorf : IExplodable, IRemovable
     /// </param>
     /// <param name="gruntDropCount">
     ///     How many grunts it drops in all, one at a time, evenly spaced along its way across, so they come gradually. It
-    ///     drops any it has not dropped yet if it is killed first. 0 leaves its three stops to chance
-    ///     (<paramref name="maxDropsX2" />).
+    ///     hands any it has not dropped yet to a Gorf that comes back if it is killed first. 0 leaves its three stops to
+    ///     chance (<paramref name="maxDropsX2" />).
     /// </param>
-    public Gorf(TextureSet textureSet, Random random, Rectangle playfieldBounds, int maxDropsX2, int gruntDropCount = 0)
+    /// <param name="dropIntervalSteps">
+    ///     How many steps pass between one drop and the next, or 0 to spread the drops evenly over its way across. A Gorf
+    ///     that comes back is given a shorter one than the Gorf it follows.
+    /// </param>
+    /// <param name="playerBoxToAvoid">
+    ///     Where the player is, or null. Gorf is put at a height where its whole body, hops included, stays clear of this
+    ///     box, so it does not appear on a collision course with the player.
+    /// </param>
+    public Gorf(TextureSet textureSet, Random random, Rectangle playfieldBounds, int maxDropsX2, int gruntDropCount = 0,
+        int dropIntervalSteps = 0, Rectangle? playerBoxToAvoid = null)
     {
         _textureSet = textureSet;
         _playfieldBounds = playfieldBounds;
@@ -86,12 +96,15 @@ public sealed class Gorf : IExplodable, IRemovable
 
         var highest = playfieldBounds.Y + HopPixels;
         var lowest = Math.Max(highest, playfieldBounds.Bottom - CollisionSize.Height);
-        _groundY = highest + random.Next(lowest - highest + 1);
+        _groundY = ChooseGroundY(highest, lowest, playerBoxToAvoid);
         var startX = playfieldBounds.Right;
         if (isEnteringFromLeft) startX = playfieldBounds.X - CollisionSize.Width;
 
         _position = new IntVector2(startX, _groundY);
         _totalSteps = (playfieldBounds.Width + CollisionSize.Width) / StepPixels;
+
+        _dropIntervalSteps = dropIntervalSteps;
+        if (_dropIntervalSteps <= 0 && gruntDropCount > 0) _dropIntervalSteps = _totalSteps / (gruntDropCount + 1);
 
         if (gruntDropCount > 0) PlanGradualDrops(gruntDropCount);
         else PlanDropStops();
@@ -108,6 +121,9 @@ public sealed class Gorf : IExplodable, IRemovable
 
     /// <summary>Which of the two animation frames is showing, 0 or 1.</summary>
     internal int AnimationFrameIndex { get; private set; }
+
+    /// <summary>How many steps there are between one drop and the next, or 0 when it drops at its three stops by chance.</summary>
+    internal int DropIntervalSteps => _dropIntervalSteps;
 
     /// <summary>Draws the part of the current animation frame that is inside the wall, so Gorf comes in from off the screen.</summary>
     /// <param name="spriteBatch">What Gorf is drawn with.</param>
@@ -155,8 +171,9 @@ public sealed class Gorf : IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     Kills Gorf at once, with no flash and no death animation. Any grunts it was to drop and has not dropped yet fall
-    ///     from where it was, so a wave that is owed a number of grunts still gets them all.
+    ///     Kills Gorf at once, with no flash and no death animation. If it still has grunts to drop, a new Gorf comes on a
+    ///     little later to drop them, a little faster (<see cref="GorfTuning.ReturnDelayTicks" />), so a wave that is owed
+    ///     a number of grunts still gets them all.
     /// </summary>
     public void Kill()
     {
@@ -168,7 +185,8 @@ public sealed class Gorf : IExplodable, IRemovable
         var gruntsOwed = _dropCounts.Sum();
         _dropCounts.Clear();
         _dropSteps.Clear();
-        DropGrunts(_playField, gruntsOwed);
+        var fasterInterval = Math.Max(1, _dropIntervalSteps * GorfTuning.ReturnDropIntervalFifths / 5);
+        _playField.ScheduleGorfReturn(gruntsOwed, fasterInterval);
     }
 
     /// <summary>
@@ -223,15 +241,39 @@ public sealed class Gorf : IExplodable, IRemovable
             _dropSteps.Enqueue(stop * _totalSteps / (GorfTuning.DropStops + 1));
     }
 
-    /// <summary>Plans an exact number of drops: one grunt at a time, evenly spaced along the way across.</summary>
+    /// <summary>Plans an exact number of drops: one grunt at a time, the same number of steps apart.</summary>
     /// <param name="gruntDropCount">How many grunts to drop in all.</param>
     private void PlanGradualDrops(int gruntDropCount)
     {
         for (var drop = 1; drop <= gruntDropCount; drop++)
         {
-            _dropSteps.Enqueue(drop * _totalSteps / (gruntDropCount + 1));
+            _dropSteps.Enqueue(drop * _dropIntervalSteps);
             _dropCounts.Enqueue(1);
         }
+    }
+
+    /// <summary>
+    ///     Chooses the height of the ground Gorf hops along. It is by chance anywhere the whole of Gorf, hops included, is
+    ///     inside the wall, and, when there is a player to avoid, anywhere its whole body stays clear of the player's box.
+    /// </summary>
+    /// <param name="highest">The highest ground there is, in port pixels from the top.</param>
+    /// <param name="lowest">The lowest ground there is.</param>
+    /// <param name="playerBoxToAvoid">Where the player is, or null.</param>
+    private int ChooseGroundY(int highest, int lowest, Rectangle? playerBoxToAvoid)
+    {
+        if (playerBoxToAvoid is not { } playerBox) return highest + _random.Next(lowest - highest + 1);
+
+        // Gorf's body runs from HopPixels above the ground to its own height below it.
+        var lowestGroundAbovePlayer = Math.Min(lowest, playerBox.Y - CollisionSize.Height - GorfTuning.PlayerClearancePixels);
+        var highestGroundBelowPlayer = Math.Max(highest, playerBox.Bottom + HopPixels + GorfTuning.PlayerClearancePixels);
+        var roomAbove = Math.Max(0, lowestGroundAbovePlayer - highest + 1);
+        var roomBelow = Math.Max(0, lowest - highestGroundBelowPlayer + 1);
+        if (roomAbove + roomBelow == 0) return highest + _random.Next(lowest - highest + 1);
+
+        var pick = _random.Next(roomAbove + roomBelow);
+        if (pick < roomAbove) return highest + pick;
+
+        return highestGroundBelowPlayer + (pick - roomAbove);
     }
 
     /// <summary>
