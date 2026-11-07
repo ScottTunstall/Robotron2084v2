@@ -14,7 +14,7 @@ namespace Robotron2084.Tuning;
 ///     axis. On every beat <c>SPARK</c> adds the acceleration to the speed, so the path is a parabola. That is the
 ///     arcade spark's habit of going off course, and it is why a spark can start out moving away from the player.
 ///     <para>
-///         The arcade's object mover (<c>RRS22.ASM</c> <c>OPB80</c>, not separately labelled in the disassembly) adds
+///         The arcade's object mover (<c>RRS22.ASM</c> <c>OPB80</c>; in the disassembly the unlabelled copy at $DCFF and <c>MOVE_ALL_SPHEROIDS_ENFORCERS_SPARKS_AND_DRAW_IF_BELOW_RASTER_BEAM</c> at $DD90) adds
 ///         the whole 16-bit speed to the 16-bit position once per frame. A speed of four times the gap therefore
 ///         covers a sixty-fourth of the gap per frame. A move that would leave the playfield is rejected, not clamped:
 ///         the spark keeps its last valid coordinate on that axis while the other axis still moves.

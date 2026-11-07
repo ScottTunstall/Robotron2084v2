@@ -54,7 +54,7 @@ public static class AttractTuning
     ///     Original source: <c>SPGSUB</c> prints string 128 at the cursor (54, 36), which is column 54 and row 36, and
     ///     every attract-movie screen keeps it. The page script's <c>CLEARM</c> clears only from row 48 down, so the story
     ///     text scrolls under the title. The movie's story band therefore uses the ROM's own row (notes §96.3), while the
-    ///     title screen keeps the port's own placement of the pair. Disassembly: <c>$79AF</c>, not separately labelled.
+    ///     title screen keeps the port's own placement of the pair. Disassembly: the unlabelled attract screen code at <c>$79AF</c>, which prints it.
     /// </remarks>
     public const int StoryTitleRow = 36;
 
@@ -84,7 +84,7 @@ public static class AttractTuning
     /// <summary>The palette index of the wall on the title screen.</summary>
     /// <remarks>
     ///     Original source: the title screen routine at ROM <c>$79C8</c>, <c>LDA #$CC / STA $8F</c>, which makes the wall
-    ///     one solid palette index. Disassembly: <c>asm/robomame.asm</c>, <c>$79C8</c>, not separately labelled.
+    ///     one solid palette index. Disassembly: the unlabelled attract screen code at <c>$79C8</c>.
     /// </remarks>
     public const int TitleWallPaletteIndex = 12;
 }
