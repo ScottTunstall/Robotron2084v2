@@ -20,6 +20,10 @@ namespace Robotron2084.Input;
 ///             scene (the hulk's walk, at fiftieth of a second ~2574) can be reached without waiting
 ///             out the text crawl;
 ///         </item>
+///         <item>
+///             <b>Page Down</b> — on the STORYLINE movie, skip on to the start of the next page, so each page can be
+///             looked at in turn without waiting for the one before it;
+///         </item>
 ///         <item><b>Insert</b> — jump straight to the high score TABLE (notes §98);</item>
 ///         <item>
 ///             <b>Delete</b> — jump straight to the END OF A GAME: the GAME OVER page and
@@ -28,8 +32,8 @@ namespace Robotron2084.Input;
 ///         </item>
 ///     </list>
 ///     The function keys belong to the game: F1/F2/F3 start a game (ONE PLAYER / TWO PLAYER ALTERNATE / TWO PLAYER
-///     SIMULTANEOUS) on every attract screen, F5 opens the GAME ADJUSTMENT page there, and F10 opens the
-///     DEVELOPER TOOLS page from EVERY screen. Page Down is free.
+///     SIMULTANEOUS) on every attract screen, F4 opens the SOUND TEST page and F5 the GAME ADJUSTMENT page there, F6
+///     opens the SPEECH TEST page (port only, notes §149), and F10 opens the DEVELOPER TOOLS page from EVERY screen.
 /// </summary>
 public static class DeveloperKeys
 {
@@ -47,4 +51,7 @@ public static class DeveloperKeys
 
     /// <summary>True while the attract fast-forward key is held (set by the app shell every tick).</summary>
     public static bool AttractFastForward { get; set; }
+
+    /// <summary>True on the one tick the skip-to-the-next-page key goes down (set by the app shell every tick).</summary>
+    public static bool AttractSkipPage { get; set; }
 }
