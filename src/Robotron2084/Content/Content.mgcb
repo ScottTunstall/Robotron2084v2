@@ -2506,18 +2506,6 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/PlayerBig.png
 
-#begin Sprites/SpareLife.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/SpareLife.png
-
 #begin Sprites/Player_1.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -2854,6 +2842,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Skull.png
 
+#begin Sprites/SpareLife.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/SpareLife.png
+
 #begin Sprites/Spark_1.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -3153,3 +3153,63 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/WilliamsLogo.png
+
+#begin Speech/cannotescapegorf.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/cannotescapegorf.ogg
+
+#begin Speech/gorfiandoom.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/gorfiandoom.ogg
+
+#begin Speech/gorfianrobotsattack.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/gorfianrobotsattack.ogg
+
+#begin Speech/gorfiansconquer.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/gorfiansconquer.ogg
+
+#begin Speech/gorfianstakenoprisoners.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/gorfianstakenoprisoners.ogg
+
+#begin Speech/gotyou.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/gotyou.ogg
+
+#begin Speech/hahahaha.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/hahahaha.ogg
+
+#begin Speech/iamthegorfianempire.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/iamthegorfianempire.ogg
+
+#begin Speech/longlivegorf.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/longlivegorf.ogg
+
+#begin Speech/prepareyourself.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/prepareyourself.ogg
