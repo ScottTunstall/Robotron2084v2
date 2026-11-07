@@ -15,6 +15,21 @@ public static class GorfTuning
     /// <summary>The gap left between grunts dropped side by side, in port pixels.</summary>
     public const int DropGapPixels = 4;
 
+    /// <summary>
+    ///     How many <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> pass between Gorf being shot, with
+    ///     grunts still to drop, and a new Gorf coming on to drop them.
+    /// </summary>
+    public const int ReturnDelayTicks = 120;
+
+    /// <summary>
+    ///     How much faster each Gorf that comes back drops its grunts, as a fraction: the steps between drops are this many
+    ///     fifths of what they were (<see cref="ReturnDropIntervalFifths" /> out of 5).
+    /// </summary>
+    public const int ReturnDropIntervalFifths = 4;
+
+    /// <summary>The gap left between Gorf's whole body and the player's box when it is to keep clear of the player, in port pixels.</summary>
+    public const int PlayerClearancePixels = 12;
+
     /// <summary>How many places on its way across Gorf stops to drop grunts, evenly spaced.</summary>
     public const int DropStops = 3;
 
