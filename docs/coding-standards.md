@@ -528,6 +528,11 @@ be computed from other constants must be.
 `IReadOnlyList<T>` or `ImmutableArray<T>`, because a `static readonly int[]` can still be written to by any
 caller.
 
+**NUM-8. No trigonometry, and movement is worked out in integers.** `Sin`, `Cos`, `Tan` and their inverses
+(`Math`, `MathF` or `MathHelper`) are banned from the whole code base, tests and tools included. The author: *"BAN SIN
+AND COS FROM THIS SOURCE CODE ENTIRELY. Everything should be done in integers."* A curve such as Gorf's hop is
+whole-number arithmetic (`GorfPath.GetHopHeight`), as the arcade's own code is. `tools/lint-conventions.ps1` checks it.
+
 ## 5. Time and state
 
 **TIME-1. One timer idiom.** Anything that happens every so many fiftieths of a second is timed by a
@@ -954,6 +959,9 @@ grep -rnP '^s+(public|internal|private|protected) (static |override )*[w<>[]?,.(
 
 # Law of Demeter (STR-11): a call made through another object's property
 grep -rnoP '(?<![\w.])_?[a-z]\w*\.[A-Z]\w*\.[A-Z]\w*(?=\()' src --include=*.cs
+
+# No trigonometry (NUM-8): there must be no hits
+grep -rnE '\b(Math|MathF|MathHelper)\.(Sin|Cos|Tan|Asin|Acos|Atan2?|SinCos)\b' src tests tools --include=*.cs
 
 # Untracked leftovers
 git status --porcelain | grep '^??'

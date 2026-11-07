@@ -10795,6 +10795,8 @@ the sheet's scale reproduces the sheet exactly.
 
 Everything not stated by the author is the port's choice and is in `GorfTuning` or marked in the code.
 
+**No attract page** (author, 2026-11-07). A page introducing Gorf was added to the attract movie after the brain page and then taken out again. The author: *"Undo the gorf sequence but keep the "done" flags that were added. I don't like the GORF sequence. So, the attract sequence should be as before, but still use the "done" flags. GORF will be a surprise in the game"*. Gorf is not in the attract movie, and is not to be added to it without asking. Its score is still to be decided (the author: *"GORF's score is TBD, but he's a commander so would be worth FAR more than 100 points"*); it scores 100 for now.
+
 
 ## §139 — EIGHT-DIGIT SCORES, BEYOND THE ARCADE (author, 2026-10-03)
 
@@ -11160,3 +11162,32 @@ The Y offset matches the arcade's sum exactly (`$1E65`: `2 × (19 − r) − 18`
 
 **Not checked on screen.** These changes alter how often spheroids, quarks, tanks, brains and cruise missiles act, so
 the difficulty should be judged in play.
+
+
+## §147 — THE ATTRACT MOVIE'S PAGES WAIT UNTIL THE PAGE BEFORE IS DONE (author, 2026-11-07)
+
+**Author:** *"Can you make it so its not timing dependent, so that it doesn't depend on the length of time one intro sequence takes before the next starts? I want it so that an intro sequence can take any length of time and the next intro sequence won't prematurely start. Maybe some flag that says "this part of the intro is done" ?"* — then — *"Can you make sure the GRUNTs intro and the spheroid intro works the same way."* — *"Do the family and hulk pages."* — and, when Gorf's attract page was taken out (§138.2), *"the attract sequence should be as before, but still use the "done" flags"*.
+
+**The arcade.** HISTO (§95) moves from page to page by time alone: each page's text is followed by fixed sleeps, and the characters' object scripts run on their own clock. Nothing checks that a page's characters have finished.
+
+**The port.** A new page-script action, `PageScriptOpcodes.WaitUntilDone` (10), has one operand naming a part of the movie (`AttractSequence`). The script stops there, checking once every 50th of a second, until that part is done (`AttractSequenceDoneRules`). The arcade's own bytes never use 10 as an action or a character. `AttractStoryline.Create` copies HISTO and adds the waits, each placed by the arcade's bytes around it; `StorylineState` plays the copy, and `AttractMovieData.Histo` is untouched.
+
+| Wait | Done when | Placed before | Arcade timing |
+|---|---|---|---|
+| Family | no family member is in view: they have walked across and gone (they come back for the hulk's part) | the grunts page | gone just as the grunts page starts, frame 2058 |
+| Grunts | no grunt is left | the hulk page | last grunt shot at 2447; hulk page at 2574 |
+| Hulk | no family member and no skull is left: the hulk has caught Daddy and Mikey | the spheroid page | Daddy's skull gone at 3121; spheroid page at 3140 |
+| Spheroids and quarks | no spheroid, quark, tank or enforcer is left | the brain page | last robot gone at 3440; brain page at 3552 |
+| Electrodes | the hero has blown up | the end of the movie | replaces the two fixed sleeps (208 and 173) with the wait and a 30-frame pause |
+
+- **The arcade's timing is unchanged.** Every wait is already satisfied when the arcade's own pause ends, so it never holds the script. On the family page that is by a hair: Daddy reappears for the hulk's part on the very frame the grunts page starts, but the page script runs before the characters in each 50th of a second, so the wait sees him still gone. The ending's pause is chosen to end on the arcade's own frame. A test plays the port's storyline against the arcade's, 50th by 50th, and every frame matches.
+- **What the waits guard against.** If a page's characters ever take longer (a change to a script, a slower machine, a new page put in), the next page waits for them instead of starting over the top of them.
+- **Not waited for.** Some characters carry on into the next page in the arcade, and still do: the hulk walks off during the spheroid page, and the brain is shot and the progs walk off during the electrodes page. Waiting for them would hold the next page back several seconds, and the hero, whose one script runs through the whole movie, would no longer fire on cue.
+
+## §148 — NO SIN OR COS (author, 2026-11-07)
+
+**Author:** *"I don't want GORF to hop using Sin and Cos - BAN SIN AND COS FROM THIS SOURCE CODE ENTIRELY. Everything should be done in integers"* (coding standards NUM-8).
+
+- Gorf's hop never used them: `GorfPath.GetHopHeight` is whole-number arithmetic (§138.2).
+- The only use in the code was `StereoPanner`, which placed a sound between the speakers with `Cos` and `Sin`. It now uses square roots, which keep the same rule: the two volumes, each squared, add up to 1, so a sound is about 71% in each speaker in the middle and wholly in one at either end. The sound code still works in floating point; only the trigonometry is gone.
+- `tools/lint-conventions.ps1` reports any `Sin`, `Cos`, `Tan` or their inverses (`Math`, `MathF` or `MathHelper`).
