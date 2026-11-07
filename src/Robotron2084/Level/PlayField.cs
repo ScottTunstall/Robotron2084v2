@@ -55,6 +55,7 @@ public sealed class PlayField : ICollisionScene
     private readonly LaserWallFlares _laserWallFlares = new();
     private readonly WaveMaterialisation _waveMaterialisation;
     private readonly MidWaveSpawner _midWaveSpawner;
+    private readonly WallDoors? _wallDoors;
     private readonly PlayerAppear _playerAppear = new();
 
     /// <summary>True when a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
@@ -125,6 +126,7 @@ public sealed class PlayField : ICollisionScene
         _midWaveSpawner = new MidWaveSpawner(this, FieldEntities, random);
         _collisionResponder = new CollisionResponder(this);
         PlayfieldWall = new PlayfieldWall(innerBounds, wallColourCycle);
+        if (waveParameters.PlayfieldWallsOpen) _wallDoors = new WallDoors(innerBounds, random, SpawnDoorwayGrunt);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
         Player = new Player(TextureSet, playerStart, startingLives, random) { InvincibleForTesting = playerInvincibleForTesting };
@@ -276,7 +278,8 @@ public sealed class PlayField : ICollisionScene
     public void DrawWall(SpriteBatch spriteBatch)
     {
         PlayfieldWall.Draw(spriteBatch, TextureSet.WallPixelTexture,
-            GamePalette?.GetColour(WavePaletteTables.GetWallPaletteIndex(WaveParameters.WaveNumber)));
+            GamePalette?.GetColour(WavePaletteTables.GetWallPaletteIndex(WaveParameters.WaveNumber)),
+            _wallDoors?.Doors);
     }
 
     /// <summary>Lists the player's lasers that are in flight.</summary>
@@ -326,10 +329,14 @@ public sealed class PlayField : ICollisionScene
         return PlayfieldWall.Intersects(bounds);
     }
 
-    /// <summary>Says whether the wave is won: every enemy that can be killed is gone. Hulks and electrodes do not count.</summary>
+    /// <summary>
+    ///     Says whether the wave is won: every enemy that can be killed is gone. Hulks and electrodes do not count. A wave
+    ///     with doors in its walls is not won until they have let all their grunts in and shut.
+    /// </summary>
     public bool IsWaveCleared()
     {
-        return FieldEntities.AreEnemiesGone();
+        var areDoorsDone = !(_wallDoors?.IsBusy() ?? false);
+        return FieldEntities.AreEnemiesGone() && areDoorsDone;
     }
 
     /// <summary>
@@ -403,6 +410,13 @@ public sealed class PlayField : ICollisionScene
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
         _midWaveSpawner.SpawnGrunt(from, landing);
+    }
+
+    /// <summary>A grunt comes through a door in the wall (port only, notes §151).</summary>
+    /// <param name="position">Where the grunt's top-left corner is.</param>
+    public void SpawnDoorwayGrunt(IntVector2 position)
+    {
+        _midWaveSpawner.SpawnDoorwayGrunt(position);
     }
 
     /// <summary>A brain's touch turns a family member into a prog where they stand.</summary>
@@ -484,6 +498,7 @@ public sealed class PlayField : ICollisionScene
         _laserWallFlares.Update();
 
         PlayfieldWall.Update(gameTime);
+        if (!RobotsFrozen()) _wallDoors?.Update();
 
         Player.Update(gameTime, this);
         // RRG23 LSPROC asks for LASSND as each laser starts (R5 $3221).

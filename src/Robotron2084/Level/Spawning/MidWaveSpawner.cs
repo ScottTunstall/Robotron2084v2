@@ -81,6 +81,22 @@ internal sealed class MidWaveSpawner
         _fieldEntities.Add(grunt);
     }
 
+    /// <summary>A grunt comes through a door in the wall: it appears just inside the wall, in the opening.</summary>
+    /// <param name="position">Where the grunt's top-left corner is.</param>
+    /// <remarks>
+    ///     Port only: the arcade has no doors (notes §151). The grunt is kept inside the playfield, and the wave's limit
+    ///     on grunts does not hold it back, since the wave's flag asked for it.
+    /// </remarks>
+    public void SpawnDoorwayGrunt(IntVector2 position)
+    {
+        var bounds = _playField.GetPlayfieldBounds();
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
+        var x = Math.Clamp(position.X, bounds.X, bounds.Right - width);
+        var y = Math.Clamp(position.Y, bounds.Y, bounds.Bottom - height);
+        _fieldEntities.Add(new Grunt(_playField.TextureSet, new IntVector2(x, y), _random, _playField.WaveParameters.GruntMoveDelay));
+    }
+
     /// <summary>A brain's touch turns a family member into a prog where they stand.</summary>
     /// <param name="position">Where the family member stood.</param>
     /// <param name="kind">Which family member it was, since the prog keeps their look.</param>
