@@ -8,7 +8,7 @@ namespace Robotron2084.AttractMode;
 ///             counts and the walk tables.
 ///         </item>
 ///         <item>Original source: <c>RRSCRIPT.ASM</c> descriptors, found by the address the scripts pass to <c>SETOB</c> (notes §95.6)</item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: the descriptors from $7E41 (not separately labelled)</item>
 ///     </list>
 /// </remarks>
 public static class MovieDescriptors

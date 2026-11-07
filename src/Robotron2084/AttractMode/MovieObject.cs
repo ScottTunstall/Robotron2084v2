@@ -72,7 +72,7 @@ public sealed record MovieObject
     ///             REBORN puts it back. MONO takes its object off the list too.
     ///         </item>
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HIB</c>, <c>REBORN</c> and <c>MONO</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: the opcode routines at $7C54 (HIB), $7C5C (REBORN) and $7B90 (MONO)</item>
     ///     </list>
     /// </remarks>
     public bool IsOnList { get; set; } = true;
@@ -90,7 +90,7 @@ public sealed record MovieObject
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>DMAON</c>, called by <c>RRSCRIPT.ASM</c> <c>MONOP</c> ("brain in the square")</item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: the <c>MONO</c> opcode routine at $7B90</item>
     ///     </list>
     /// </remarks>
     public bool BrainVisible { get; set; }
@@ -103,7 +103,7 @@ public sealed record MovieObject
     ///     <list type="bullet">
     ///         <item>The arcade changes <c>OBJY</c> directly to do this.</item>
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>RPROG</c>, with <c>RRF.ASM</c> <c>OBJY</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: the <c>RPROG</c> opcode routine at $7CD9</item>
     ///     </list>
     /// </remarks>
     public int ShakeRowOffset { get; set; }

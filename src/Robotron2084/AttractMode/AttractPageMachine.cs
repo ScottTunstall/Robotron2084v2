@@ -32,7 +32,7 @@ namespace Robotron2084.AttractMode;
 ///         </item>
 ///         <item>It runs one <see cref="StepFrame" /> for each 50th of a second.</item>
 ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>SPWAKE</c> (notes §95.2)</item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: the unlabelled loop at $79DD, started from $79D4</item>
 ///     </list>
 /// </remarks>
 public sealed class AttractPageMachine
@@ -41,7 +41,7 @@ public sealed class AttractPageMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>CLRMP</c>, which clears from <c>TOPLEF</c> plus $10</item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: <c>CLEAR_AREA_READY_FOR_TEXT_PRINTING</c> ($7A9C)</item>
     ///     </list>
     /// </remarks>
     public const int ClearTopRow = 48;
@@ -50,7 +50,7 @@ public sealed class AttractPageMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>CLRMP</c>, which clears $74 columns</item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: <c>CLEAR_AREA_READY_FOR_TEXT_PRINTING</c> ($7A9C)</item>
     ///     </list>
     /// </remarks>
     public const int ClearWidth = 232;
@@ -59,7 +59,7 @@ public sealed class AttractPageMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>MESSP</c>, which clears a block $74 wide and 6 tall</item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: <c>PRINT_CHARACTER_NAME_FROM_SCRIPT</c> ($7A60)</item>
     ///     </list>
     /// </remarks>
     public const int MessageHeight = 6;
@@ -68,7 +68,7 @@ public sealed class AttractPageMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>MESHIT</c>, row $D8</item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: <c>PRINT_CHARACTER_NAME_FROM_SCRIPT</c> ($7A60)</item>
     ///     </list>
     /// </remarks>
     public const int MessageRow = 216;
@@ -77,7 +77,7 @@ public sealed class AttractPageMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>LEFT</c>, $14 columns</item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: <c>SET_X_COORD_TO_20_AND_ADD_11_PIXELS_TO_Y_COORD</c> ($7AB6)</item>
     ///     </list>
     /// </remarks>
     public const int TextLeft = 40;
@@ -89,7 +89,7 @@ public sealed class AttractPageMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>GSTRTS</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: <c>CREATE_14_GRUNTS_FOR_DEMO</c> ($7A29)</item>
     ///     </list>
     /// </remarks>
     private static readonly int[] GruntScripts = [0x84F5, 0x8517, 0x8540, 0x8567];
@@ -125,7 +125,7 @@ public sealed class AttractPageMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>TEXCOL</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: <c>SET_TEXT_COLOUR_FROM_SCRIPT</c> ($7A5A)</item>
     ///     </list>
     /// </remarks>
     public int TextPaletteIndex { get; private set; } = 10;

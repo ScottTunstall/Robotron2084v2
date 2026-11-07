@@ -16,7 +16,7 @@ namespace Robotron2084.AttractMode;
 ///             <see cref="ArcadeClock.UnitsPerArcadeFrame" /> of them.
 ///         </item>
 ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HISTO</c> and its reader <c>SPWAKE</c>; see notes §95, §52 and §93</item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: <c>STORYLINE_SCRIPT</c> ($7FA3), read by the unlabelled loop at $79DD</item>
 ///     </list>
 /// </remarks>
 public sealed class AttractMovie

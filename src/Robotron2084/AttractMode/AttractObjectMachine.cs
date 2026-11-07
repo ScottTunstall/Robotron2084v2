@@ -20,7 +20,7 @@ namespace Robotron2084.AttractMode;
 ///             object by whole columns, because <c>HIB</c> has taken that object off the list.
 ///         </item>
 ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>SCTABL</c>, the object-script opcodes and their routines; see notes §95.3</item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: <c>INVOKE_ACTION_FROM_CHARACTER_INTRO_SCRIPT</c> ($7B39), with the opcode routines listed from $7B58</item>
 ///     </list>
 /// </remarks>
 public sealed class AttractObjectMachine
@@ -29,7 +29,7 @@ public sealed class AttractObjectMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>ANA1</c>, <c>NAP 8</c> (notes §95.7)</item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: the unlabelled family walker at $7E00, whose wait of 8 is loaded at $7E0F</item>
     ///     </list>
     /// </remarks>
     public const int WalkStepArcadeFrames = 8;
@@ -38,7 +38,7 @@ public sealed class AttractObjectMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>EXPP</c>, which stores <c>ACTHIT</c> plus 6 as the row</item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: the <c>EXP</c> opcode routine at $7C6F, which loads $A6 at $7C72</item>
     ///     </list>
     /// </remarks>
     internal const int ExplosionRow = 0xA0 + 6;
@@ -106,7 +106,7 @@ public sealed class AttractObjectMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>OSTART</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: <c>INTRODUCE_GAME_CHARACTER_FROM_SCRIPT</c> ($7B0F)</item>
     ///     </list>
     /// </remarks>
     public void StartScript(int scriptAddress)
@@ -231,7 +231,7 @@ public sealed class AttractObjectMachine
     ///         </item>
     ///         <item>The bolt moves at the speed the movie's shots always have, and lasts as long as the LFIRE or RFIRE operand says.</item>
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>RIGFIR</c> and <c>LEFFIR</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: the <c>LFIRE</c> and <c>RFIRE</c> opcode routines at $7C1F and $7C26</item>
     ///     </list>
     /// </remarks>
     internal void SpawnLaser(MovieObject sourceMovieObject, int lifetime, bool firesRight)

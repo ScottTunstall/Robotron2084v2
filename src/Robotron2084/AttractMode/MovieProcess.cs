@@ -68,7 +68,7 @@ internal sealed record MovieProcess
     ///             belong to, so that no one method is a wall of cases.
     ///         </item>
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>SCTABL</c> and <c>JMP [LEV2,U]</c> (notes §95.3)</item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: <c>INVOKE_ACTION_FROM_CHARACTER_INTRO_SCRIPT</c> ($7B39), whose <c>JMP [$0E,U]</c> at $7B55 is the <c>JMP [LEV2,U]</c></item>
     ///     </list>
     /// </remarks>
     private bool ReadOp(AttractObjectMachine attractObjectMachine)
@@ -420,7 +420,7 @@ internal sealed record MovieProcess
     ///         </item>
     ///         <item>After the number of passes the opcode asked for, the object is REBORN.</item>
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>MONOP</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: the <c>MONO</c> opcode routine at $7B90</item>
     ///     </list>
     /// </remarks>
     private void StepMono()
@@ -466,7 +466,7 @@ internal sealed record MovieProcess
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>ANA1</c> to <c>ANASUB</c>, with <c>RRF.ASM</c> <c>HUMANA</c> and <c>HLKANA</c> (notes §95.7)</item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: the unlabelled family and hulk walker at $7E00 to $7E40, with the tables at $03CF and $01CC</item>
     ///     </list>
     /// </remarks>
     private void TableStep(MovieWalk walk)
@@ -507,7 +507,7 @@ internal sealed record MovieProcess
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>DYDX</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: the unlabelled routine at $7DDF</item>
     ///     </list>
     /// </remarks>
     private void ApplyStep(int dx, int dy)

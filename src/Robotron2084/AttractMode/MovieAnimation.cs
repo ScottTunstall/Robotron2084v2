@@ -10,7 +10,7 @@ namespace Robotron2084.AttractMode;
 ///         </item>
 ///         <item><see cref="Player" /> is the arcade's <c>YOU</c>, and <see cref="Cruise" /> is its <c>CRUSM</c>.</item>
 ///         <item>Original source: <c>RRSCRIPT.ASM</c> descriptors such as <c>MOMMY</c> and <c>BRAIN</c> (notes §95.6)</item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: the descriptors from $7E41 (not separately labelled)</item>
 ///     </list>
 /// </remarks>
 public enum MovieAnimation

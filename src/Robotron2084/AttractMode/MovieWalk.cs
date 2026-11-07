@@ -13,7 +13,7 @@ namespace Robotron2084.AttractMode;
 ///             character's descriptor, cycling the four-entry animation frame table ANATAB.
 ///         </item>
 ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>ANAL</c> to <c>ANASUB</c>, <c>BRL</c> to <c>BRWALK</c>, <c>ANATAB</c> and <c>DYDX</c>, with <c>RRF.ASM</c> <c>HUMANA</c> and <c>HLKANA</c> (notes §95.3 and §95.7)</item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: the unlabelled walkers at $7D76 (the brain's four walks) and $7DF2 (the family's and hulk's), the animation frame table <c>ANATAB</c> at $7DEF, and the unlabelled routine at $7DDF</item>
 ///     </list>
 /// </remarks>
 public enum MovieWalk
