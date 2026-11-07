@@ -686,7 +686,7 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>Says whether a box touches no electrode, so that something can be put there.</summary>
     /// <param name="bounds">The box to test, in port pixels.</param>
-    internal bool IsClearOfElectrodes(Rectangle bounds)
+    public bool IsClearOfElectrodes(Rectangle bounds)
     {
         return FieldEntities.IsClearOfElectrodes(bounds);
     }
