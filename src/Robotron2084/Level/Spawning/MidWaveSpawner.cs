@@ -61,12 +61,14 @@ internal sealed class MidWaveSpawner
     ///     A new robot's drop (notes §138.2): there is no arcade routine for it. The grunt is kept inside the playfield, and
     ///     is not dropped at all when the wave
     ///     already holds as many grunts as it is allowed: the wave's own number (which the difficulty moves), or
-    ///     <see cref="GorfTuning.MinGruntCount" /> if that is fewer.
+    ///     <see cref="GorfTuning.MinGruntCount" /> if that is fewer, or the number Gorf is to drop in all when that is more.
     /// </remarks>
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
-        if (_fieldEntities.Grunts.Count(entity => !entity.IsDead()) >=
-            Math.Max(_playField.WaveParameters.GruntCount, GorfTuning.MinGruntCount)) return;
+        var waveParameters = _playField.WaveParameters;
+        var gruntLimit = Math.Max(waveParameters.GruntCount, GorfTuning.MinGruntCount);
+        gruntLimit = Math.Max(gruntLimit, waveParameters.GorfGruntDropCount);
+        if (_fieldEntities.Grunts.Count(entity => !entity.IsDead()) >= gruntLimit) return;
 
         var bounds = _playField.GetPlayfieldBounds();
         var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);

@@ -51,7 +51,7 @@ public sealed class WaveParameterGenerator
     ///     <list type="bullet">
     ///         <item>
     ///             Wave 1 is the introduction to Gorf. It is a placeholder until the author specifies it: Gorf alone,
-    ///             and none of the arcade's robots (notes §150).
+    ///             and none of the arcade's robots, which drops as many grunts as the wave after it has (notes §150).
     ///         </item>
     ///         <item>Every other wave is the arcade's wave one number lower.</item>
     ///     </list>
@@ -86,12 +86,16 @@ public sealed class WaveParameterGenerator
     }
 
     /// <summary>
-    ///     Makes the wave that introduces Gorf: a placeholder with Gorf alone. It looks like the arcade's first wave (its
-    ///     wall and electrode colours).
+    ///     Makes the wave that introduces Gorf: a placeholder with Gorf alone, which drops as many grunts in all as the
+    ///     wave after it has (the arcade's first wave). It looks like that wave too (its wall and electrode colours).
     /// </summary>
-    private static WaveParameters CreateGorfIntroWave()
+    private WaveParameters CreateGorfIntroWave()
     {
-        return new WaveParameters(WaveNumbering.ToArcadeWave(WaveNumbering.GorfIntroWave), GorfCount: 1);
+        var gruntsOfTheNextWave = GenerateArcadeWave(WaveNumbering.ToArcadeWave(WaveNumbering.FirstArcadeWave)).GruntCount;
+        return new WaveParameters(
+            WaveNumbering.ToArcadeWave(WaveNumbering.GorfIntroWave),
+            GorfCount: 1,
+            GorfGruntDropCount: gruntsOfTheNextWave);
     }
 
     /// <summary>Reads the replacement table.</summary>
