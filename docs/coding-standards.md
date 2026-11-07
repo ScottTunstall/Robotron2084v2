@@ -625,8 +625,8 @@ If a glossary word cannot be avoided, the summary says what it means in passing 
 Where the member maps to a ROM routine, its `<remarks>` gives BOTH sources, each on its own bullet or line:
 - the original arcade source: the `.ASM` filename and the routine's label, from github.com/historicalsource/robotron
   (it is not in this repo). The label comes first. A URL, or a bare address such as `$8A4F`, is not a reference;
-- this repo's own disassembly: the label or memory address in `asm/robomame.asm`, or a plain "not separately
-  labelled" if it searched and found none — never guessed.
+- this repo's own disassembly: the label and memory address in `asm/robomame.asm`. The disassembly is NOT complete
+  and is allowed to miss a label (see CMT-11b); then cite the memory address alone — never guessed.
 Verify both by searching the actual files; do not copy a label forward without checking it still exists. This
 does not replace CMT-1's inline ROM cross-reference comment on ordinary (non-doc) code — where both apply,
 follow this rule for the `<summary>`/`<remarks>` block and CMT-1 for any inline comment elsewhere in the body.
@@ -645,9 +645,15 @@ labels found in each so far (verified 2026-11-07):
 | `RRS22.ASM` | The object mover `OPB80` and `OPRC80` |
 | `RRB10.ASM`, `RRH11.ASM`, `RRG23.ASM` | The brain, the hulk and the grunt/wave code (see the entity docs) |
 
-**Both sources are always cited (CMT-11).** Every `Original source:` bullet has a `Disassembly:` bullet next to it, and
-the disassembly bullet is never left as "not separately labelled" without searching `asm/robomame.asm` by address as
-well as by name: the disassembly names its routines differently from the original (for example the original's
+**CMT-11b. The original source is complete; the disassembly is not.** The author's disassembly (`asm/robomame.asm`) is
+unfinished, and it is fine for it to lack a label. When a routine or table has no label there, cite its memory address
+(for example "the unlabelled loop at `$79DD`") — do not write "not separately labelled", and do not leave the bullet
+out. Only a name that is not in the ROM at all (a constant or field that exists only in the original's header files, such
+as `XMIN` or `OXV`) has no address; say "no address in the disassembly (a name of the original source only)". The original
+source is the authority for names and meaning; the disassembly only adds the address.
+
+**Both sources are always cited (CMT-11).** Every `Original source:` bullet has a `Disassembly:` bullet next to it. Search
+`asm/robomame.asm` by address as well as by name before you decide a routine is missing from it: the disassembly names its routines differently from the original (for example the original's
 `SPWAKE` is the unlabelled loop at `$79DD`, and its `PR57V` is `BLIT_LARGE_CHARACTER` at `$6023`). The attract movie in
 the disassembly (verified 2026-11-07):
 
