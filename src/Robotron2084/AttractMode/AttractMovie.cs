@@ -15,7 +15,7 @@ namespace Robotron2084.AttractMode;
 ///             every tick (<see cref="ArcadeClock.UnitsPerPortTick" />) and runs one arcade frame each time it has
 ///             <see cref="ArcadeClock.UnitsPerArcadeFrame" /> of them.
 ///         </item>
-///         <item>Original source: the page script <c>HISTO</c> and its readers; see notes §95, §52 and §93.</item>
+///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HISTO</c> and its reader <c>SPWAKE</c>; see notes §95, §52 and §93</item>
 ///         <item>Disassembly: not separately labelled</item>
 ///     </list>
 /// </remarks>

@@ -25,7 +25,7 @@ namespace Robotron2084.AttractMode;
 ///             (the port ships a third distinct grunt sprite at $40F5, which the movie's
 ///             table does not use).
 ///         </item>
-///         <item>Original source: the movie's object descriptors and their animation frame tables (notes §96.4)</item>
+///         <item>Original source: <c>RRSCRIPT.ASM</c> descriptors such as <c>MOMMY</c> and <c>BRAIN</c>, and their animation frame tables (notes §96.4)</item>
 ///         <item>Disassembly: not separately labelled</item>
 ///     </list>
 /// </remarks>

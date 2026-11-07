@@ -19,7 +19,7 @@ namespace Robotron2084.AttractMode;
 ///             moved by it each frame (the same <c>OPB80</c> mover the playfield uses, notes §93). MONO moves its own
 ///             object by whole columns, because <c>HIB</c> has taken that object off the list.
 ///         </item>
-///         <item>Original source: the object scripts and opcode table; see notes §95.3.</item>
+///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>SCTABL</c>, the object-script opcodes and their routines; see notes §95.3</item>
 ///         <item>Disassembly: not separately labelled</item>
 ///     </list>
 /// </remarks>
@@ -28,7 +28,7 @@ public sealed class AttractObjectMachine
     /// <summary>How many 50ths of a second a walking character waits between one step and the next.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: the walker's <c>NAP 8</c> (notes §95.7)</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>ANA1</c>, <c>NAP 8</c> (notes §95.7)</item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -37,7 +37,7 @@ public sealed class AttractObjectMachine
     /// <summary>The row an explosion in the movie is centred on.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>EXPP</c>, which stores <c>ACTHIT</c> plus 6 as the row</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>EXPP</c>, which stores <c>ACTHIT</c> plus 6 as the row</item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -105,7 +105,7 @@ public sealed class AttractObjectMachine
     /// <summary>Starts a script, which makes its object and the program that moves it.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>OSTART</c></item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>OSTART</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -158,7 +158,7 @@ public sealed class AttractObjectMachine
     ///             A step is refused when it would put the bolt left of the left wall or past the right wall. So a bolt
     ///             stops at the wall and waits there until its time is up.
     ///         </item>
-    ///         <item>Original source: <c>RRS22.ASM</c> <c>OPRC80</c> and <c>OPB80</c>, with <c>XMIN</c> and <c>XMAX</c></item>
+    ///         <item>Original source: <c>RRS22.ASM</c> <c>OPRC80</c> and <c>OPB80</c>, with <c>RRF.ASM</c> <c>XMIN</c> and <c>XMAX</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -230,7 +230,7 @@ public sealed class AttractObjectMachine
     ///             Both start six rows down.
     ///         </item>
     ///         <item>The bolt moves at the speed the movie's shots always have, and lasts as long as the LFIRE or RFIRE operand says.</item>
-    ///         <item>Original source: <c>RIGFIR</c> and <c>LEFFIR</c></item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>RIGFIR</c> and <c>LEFFIR</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>

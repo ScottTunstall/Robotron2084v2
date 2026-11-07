@@ -7,7 +7,7 @@ namespace Robotron2084.AttractMode;
 ///             Every entry was read out of the arcade's R5 ROM image: the sprite-table pointers, the animation frame
 ///             counts and the walk tables.
 ///         </item>
-///         <item>Original source: the movie's object descriptors, found by the address the scripts pass to SETOB (notes §95.6)</item>
+///         <item>Original source: <c>RRSCRIPT.ASM</c> descriptors, found by the address the scripts pass to <c>SETOB</c> (notes §95.6)</item>
 ///         <item>Disassembly: not separately labelled</item>
 ///     </list>
 /// </remarks>

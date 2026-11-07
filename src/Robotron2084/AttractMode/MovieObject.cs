@@ -13,7 +13,7 @@ namespace Robotron2084.AttractMode;
 ///             column is 2 arcade pixels) and the whole row is <c>YSubpixels / 256</c>. The arcade packs the two into its
 ///             screen address as <c>column * 256 + row</c>.
 ///         </item>
-///         <item>Original source: the <c>OBJ</c> blocks, with <c>OX16</c> and <c>OY16</c> (notes §95.3)</item>
+///         <item>Original source: <c>RRF.ASM</c> the object fields <c>OX16</c> and <c>OY16</c> (notes §95.3)</item>
 ///         <item>Disassembly: not separately labelled</item>
 ///     </list>
 /// </remarks>
@@ -49,7 +49,7 @@ public sealed record MovieObject
     /// <summary>The sideways speed, in 1/256ths of a column in each 50th of a second.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>OXV</c></item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>OXV</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -58,7 +58,7 @@ public sealed record MovieObject
     /// <summary>The up-and-down speed, in 1/256ths of a row in each 50th of a second.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>OYV</c></item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>OYV</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -71,7 +71,7 @@ public sealed record MovieObject
     ///             HIB takes the object off the list. It is still the same object, but it is neither drawn nor moved.
     ///             REBORN puts it back. MONO takes its object off the list too.
     ///         </item>
-    ///         <item>Original source: the object list, with <c>HIB</c>, <c>REBORN</c> and <c>MONO</c></item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HIB</c>, <c>REBORN</c> and <c>MONO</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -89,7 +89,7 @@ public sealed record MovieObject
     /// <summary>MONO: whether the brain is also drawn inside the box.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>DMAON</c>, the "brain in the square"</item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>DMAON</c>, called by <c>RRSCRIPT.ASM</c> <c>MONOP</c> ("brain in the square")</item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -102,7 +102,7 @@ public sealed record MovieObject
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>The arcade changes <c>OBJY</c> directly to do this.</item>
-    ///         <item>Original source: <c>RPROG</c> and <c>OBJY</c></item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>RPROG</c>, with <c>RRF.ASM</c> <c>OBJY</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -111,7 +111,7 @@ public sealed record MovieObject
     /// <summary>Gets the whole column the object is in.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>OBJX</c></item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>OBJX</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -123,7 +123,7 @@ public sealed record MovieObject
     /// <summary>Gets the whole row the object is in, with the shake added.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>OBJY</c></item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>OBJY</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>

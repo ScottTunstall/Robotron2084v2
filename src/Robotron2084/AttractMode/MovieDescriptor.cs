@@ -7,7 +7,7 @@ namespace Robotron2084.AttractMode;
 ///             The arcade stores it as: an animation frame table, the animation frame count, a 4, and for the walkers the
 ///             four walks (left, right, down, up) and a walk table.
 ///         </item>
-///         <item>Original source: the movie's object descriptors (notes §95.6)</item>
+///         <item>Original source: <c>RRSCRIPT.ASM</c> descriptors such as <c>MOMMY</c> and <c>BRAIN</c> (notes §95.6)</item>
 ///         <item>Disassembly: not separately labelled</item>
 ///     </list>
 /// </remarks>

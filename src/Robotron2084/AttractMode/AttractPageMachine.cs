@@ -31,7 +31,7 @@ namespace Robotron2084.AttractMode;
 ///             drawn.
 ///         </item>
 ///         <item>It runs one <see cref="StepFrame" /> for each 50th of a second.</item>
-///         <item>Original source: the page-script loop <c>SPWAKE</c> (notes §95.2)</item>
+///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>SPWAKE</c> (notes §95.2)</item>
 ///         <item>Disassembly: not separately labelled</item>
 ///     </list>
 /// </remarks>
@@ -40,7 +40,7 @@ public sealed class AttractPageMachine
     /// <summary>The row where clearing the text starts: row 48.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>TOPLEF</c> plus $10</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>CLRMP</c>, which clears from <c>TOPLEF</c> plus $10</item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -49,7 +49,7 @@ public sealed class AttractPageMachine
     /// <summary>How wide the cleared block of text is, in arcade pixels.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: the clear width of $74 columns</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>CLRMP</c>, which clears $74 columns</item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -58,7 +58,7 @@ public sealed class AttractPageMachine
     /// <summary>How tall the score row's message is, in rows.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: the message row of six rows</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>MESSP</c>, which clears a block $74 wide and 6 tall</item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -67,7 +67,7 @@ public sealed class AttractPageMachine
     /// <summary>The row of the score row, where the name popups are shown: row 216.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>MESHIT</c>, row $D8</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>MESHIT</c>, row $D8</item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -76,7 +76,7 @@ public sealed class AttractPageMachine
     /// <summary>How far in from the left edge the text starts, in arcade pixels.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>LEFT</c>, $14 columns</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>LEFT</c>, $14 columns</item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -88,7 +88,7 @@ public sealed class AttractPageMachine
     /// <summary>The start of each of the four programs a grunt can follow.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>GSTRTS</c></item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>GSTRTS</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -124,7 +124,7 @@ public sealed class AttractPageMachine
     /// <summary>The palette index the text is printed in now.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>TEXCOL</c></item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>TEXCOL</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -170,7 +170,7 @@ public sealed class AttractPageMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>The codes are in the order of the arcade's font table.</item>
-    ///         <item>Original source: the large font table</item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>PR57V</c>, which prints a character</item>
     ///         <item>Disassembly: <c>BLIT_LARGE_CHARACTER</c> ($6023)</item>
     ///     </list>
     /// </remarks>
@@ -204,7 +204,7 @@ public sealed class AttractPageMachine
     /// <summary>Takes away every character inside a block that is cleared.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>BLKCLR</c></item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>BLKCLR</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -236,7 +236,7 @@ public sealed class AttractPageMachine
     ///         <item>The pen moves along by the character's width plus 1 pixel.</item>
     ///         <item>A code outside $30 to $5E draws nothing and does not move the pen.</item>
     ///         <item>A space arrives as $20, and is swapped for the table's blank character, $3A, first.</item>
-    ///         <item>Original source: <c>BLIT_LARGE_CHARACTER</c></item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>PR57V</c>, which prints a character</item>
     ///         <item>Disassembly: <c>BLIT_LARGE_CHARACTER</c> ($6023)</item>
     ///     </list>
     /// </remarks>

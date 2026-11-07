@@ -67,7 +67,7 @@ internal sealed record MovieProcess
     ///             The arcade's table is a list of 28 jumps. Here the opcodes are split into the groups they already
     ///             belong to, so that no one method is a wall of cases.
     ///         </item>
-    ///         <item>Original source: the object opcode table and <c>JMP [LEV2,U]</c> (notes §95.3)</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>SCTABL</c> and <c>JMP [LEV2,U]</c> (notes §95.3)</item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -419,7 +419,7 @@ internal sealed record MovieProcess
     ///             packed column and row address.
     ///         </item>
     ///         <item>After the number of passes the opcode asked for, the object is REBORN.</item>
-    ///         <item>Original source: <c>MONOP</c></item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>MONOP</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -465,7 +465,7 @@ internal sealed record MovieProcess
     /// <summary>Takes one walking step from the family member's or the hulk's walk table.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: the ANA* walker, with <c>HUMANA</c> and <c>HLKANA</c> (notes §95.7)</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>ANA1</c> to <c>ANASUB</c>, with <c>RRF.ASM</c> <c>HUMANA</c> and <c>HLKANA</c> (notes §95.7)</item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>
@@ -506,7 +506,7 @@ internal sealed record MovieProcess
     /// <summary>Moves the object one step. The sideways distance is in arcade pixels, and a column is two of them.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>DYDX</c></item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>DYDX</c></item>
     ///         <item>Disassembly: not separately labelled</item>
     ///     </list>
     /// </remarks>

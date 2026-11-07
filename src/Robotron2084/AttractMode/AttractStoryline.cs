@@ -41,7 +41,7 @@ public static class AttractStoryline
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>They are CLEARM row 88, COLOR palette index 15, then the "B" of "BEWARE".</item>
-    ///         <item>Original source: the page script <c>HISTO</c> (notes §95.4)</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HISTO</c> (notes §95.4)</item>
     ///         <item>Disassembly: not separately labelled (the page script starts at $7FA3)</item>
     ///     </list>
     /// </remarks>
@@ -51,7 +51,7 @@ public static class AttractStoryline
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>They are a sleep of 208 50ths of a second, one of 173, then DONE.</item>
-    ///         <item>Original source: the page script <c>HISTO</c> (notes §95.4)</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HISTO</c> (notes §95.4)</item>
     ///         <item>Disassembly: not separately labelled (the page script starts at $7FA3)</item>
     ///     </list>
     /// </remarks>
@@ -61,7 +61,7 @@ public static class AttractStoryline
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>They are CLEARM row 88, COLOR palette index 3, then GRUNTS.</item>
-    ///         <item>Original source: the page script <c>HISTO</c> (notes §95.4)</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HISTO</c> (notes §95.4)</item>
     ///         <item>Disassembly: not separately labelled (the page script starts at $7FA3)</item>
     ///     </list>
     /// </remarks>
@@ -72,7 +72,7 @@ public static class AttractStoryline
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>They are CLEARM row 88, COLOR palette index 5, then <c>SCRPT SCHULK</c> (<c>$85A1</c>).</item>
-    ///         <item>Original source: the page script <c>HISTO</c>, and the object script <c>SCHULK</c> (notes §95.4 and §95.5)</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HISTO</c> and <c>SCHULK</c> (notes §95.4 and §95.5)</item>
     ///         <item>Disassembly: not separately labelled (the page script starts at $7FA3)</item>
     ///     </list>
     /// </remarks>
@@ -83,7 +83,7 @@ public static class AttractStoryline
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>They are CLEARM row 112, COLOR palette index 13, then <c>SCRPT SCSC</c> (<c>$85BD</c>).</item>
-    ///         <item>Original source: the page script <c>HISTO</c>, and the object script <c>SCSC</c> (notes §95.4 and §95.5)</item>
+    ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HISTO</c> and <c>SCSC</c> (notes §95.4 and §95.5)</item>
     ///         <item>Disassembly: not separately labelled (the page script starts at $7FA3)</item>
     ///     </list>
     /// </remarks>
