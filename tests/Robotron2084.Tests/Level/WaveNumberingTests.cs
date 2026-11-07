@@ -11,6 +11,7 @@ public sealed class WaveNumberingTests
     {
         var waveParameters = new WaveParameterGenerator().Generate(1);
 
+        Assert.True(waveParameters.HasGorf());
         Assert.Equal(1, waveParameters.GorfCount);
         Assert.Equal(0, waveParameters.GruntCount);
         Assert.Equal(0, waveParameters.HulkCount);
@@ -34,6 +35,7 @@ public sealed class WaveNumberingTests
         var arcade = generator.GenerateArcadeWave(arcadeWave);
 
         Assert.Equal(arcade, shifted);
+        Assert.False(shifted.HasGorf());
         Assert.Equal(0, shifted.GorfCount);
     }
 

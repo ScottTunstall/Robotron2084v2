@@ -78,7 +78,7 @@ public sealed class GorfTests
         var gorf = CreateRandomGorf(playField, 21);
         var groundY = gorf.Position.Y;
         var startX = gorf.Position.X;
-        var stepPixels = ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns);
+        var stepPixels = GorfTuning.StepPixels;
         var highestSeen = 0;
         var peaks = new List<int>();
         var peakOfThisHop = 0;
@@ -139,7 +139,7 @@ public sealed class GorfTests
         Assert.False(gorf.IsAlive());
         Assert.InRange(ticks, 1, 2999);
         Assert.True(gorf.Position.X >= playField.GetPlayfieldBounds().Right -
-            ScreenSize.ToPortPixelsFromColumns(GorfTuning.StepColumns));
+            GorfTuning.StepPixels);
         Assert.Equal(scoreBefore, playField.ScoreBoard.Score);
     }
 
