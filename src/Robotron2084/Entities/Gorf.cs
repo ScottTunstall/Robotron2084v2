@@ -57,6 +57,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private PlayField? _playField;
     private readonly int _dropIntervalSteps;
     private int _pendingDropCount;
+    private string? _lineToSay;
     private int _stepCount;
     private int _stepInHop;
 
@@ -84,9 +85,14 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     Where the player is, or null. Gorf is put at a height where its whole body, hops included, stays clear of this
     ///     box, so it does not appear on a collision course with the player.
     /// </param>
+    /// <param name="lineToSay">
+    ///     The name of a speech line (<c>Content/Speech/</c>) to say the first time it appears, or null to say nothing.
+    ///     It is said once.
+    /// </param>
     public Gorf(TextureSet textureSet, Random random, Rectangle playfieldBounds, int maxDropsX2, int gruntDropCount = 0,
-        int dropIntervalSteps = 0, Rectangle? playerBoxToAvoid = null)
+        int dropIntervalSteps = 0, Rectangle? playerBoxToAvoid = null, string? lineToSay = null)
     {
+        _lineToSay = lineToSay;
         _textureSet = textureSet;
         _playfieldBounds = playfieldBounds;
         _random = random;
@@ -203,9 +209,20 @@ public sealed class Gorf : IExplodable, IRemovable
         if (!this.IsAlive() || playField.RobotsFrozen()) return;
 
         _playField = playField;
+        SayTheAppearanceLine(playField);
 
         if (_animationArcadeFrameTimer.Tick(GorfTuning.AnimationIntervalArcadeFrames)) ShowNextAnimationFrame();
         if (_beatArcadeFrameTimer.Tick(GorfTuning.BeatIntervalArcadeFrames)) ActOnBeat(playField);
+    }
+
+    /// <summary>Says the line Gorf was given to say when it first appears, once, and then has none left to say.</summary>
+    /// <param name="playField">The playfield, which has the line said.</param>
+    private void SayTheAppearanceLine(PlayField playField)
+    {
+        if (_lineToSay is not { } lineName) return;
+
+        _lineToSay = null;
+        playField.SayLine(lineName);
     }
 
     /// <summary>How many more times it will drop grunts.</summary>
