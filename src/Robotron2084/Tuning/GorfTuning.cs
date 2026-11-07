@@ -30,6 +30,9 @@ public static class GorfTuning
     /// <summary>The gap left between Gorf's whole body and the player's box when it is to keep clear of the player, in port pixels.</summary>
     public const int PlayerClearancePixels = 12;
 
+    /// <summary>How many electrodes the first wave, which introduces Gorf, has.</summary>
+    public const int IntroWaveElectrodeCount = 10;
+
     /// <summary>How many places on its way across Gorf stops to drop grunts, evenly spaced.</summary>
     public const int DropStops = 3;
 
