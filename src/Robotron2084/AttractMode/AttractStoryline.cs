@@ -99,12 +99,10 @@ public static class AttractStoryline
         script = InsertBefore(script, HulkPageStart, CreateWait(AttractSequence.Grunts));
         script = InsertBefore(script, SpheroidPageStart, CreateWait(AttractSequence.Hulk));
         script = InsertBefore(script, BrainPageStart, CreateWait(AttractSequence.SpheroidsAndQuarks));
-        return Replace(script, ElectrodesPageEnd,
-        [
-            ..CreateWait(AttractSequence.Electrodes),
-            PageScriptOpcodes.Pause, EndPauseArcadeFrames,
-            PageScriptOpcodes.Done
-        ]);
+        var waitForHeroToBlowUp = CreateWait(AttractSequence.Electrodes);
+        byte[] pauseThenEnd = [PageScriptOpcodes.Pause, EndPauseArcadeFrames, PageScriptOpcodes.Done];
+        byte[] newEnding = [..waitForHeroToBlowUp, ..pauseThenEnd];
+        return Replace(script, ElectrodesPageEnd, newEnding);
     }
 
     /// <summary>Creates the page-script bytes that wait until a part of the movie is done.</summary>
@@ -119,7 +117,9 @@ public static class AttractStoryline
         var index = script.AsSpan().IndexOf(marker);
         if (index < 0) return [..script];
 
-        return [..script[..index], ..inserted, ..script[index..]];
+        var bytesBeforeMarker = script[..index];
+        var bytesFromMarker = script[index..];
+        return [..bytesBeforeMarker, ..inserted, ..bytesFromMarker];
     }
 
     /// <summary>Creates a copy of a script with the first place the marker bytes are replaced by other bytes.</summary>
@@ -128,6 +128,9 @@ public static class AttractStoryline
         var index = script.AsSpan().IndexOf(marker);
         if (index < 0) return [..script];
 
-        return [..script[..index], ..replacement, ..script[(index + marker.Length)..]];
+        var endOfMarker = index + marker.Length;
+        var bytesBeforeMarker = script[..index];
+        var bytesAfterMarker = script[endOfMarker..];
+        return [..bytesBeforeMarker, ..replacement, ..bytesAfterMarker];
     }
 }
