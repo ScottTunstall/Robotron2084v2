@@ -49,6 +49,19 @@ public sealed class AttractMovie
         return AttractPageMachine.IsFinished;
     }
 
+    /// <summary>Makes a movie that has run on to the start of a page of the story.</summary>
+    /// <param name="script">The page script.</param>
+    /// <param name="random">Where the movie's random numbers come from.</param>
+    /// <param name="page">The page to start at, counted from 1. The first page is the first the movie starts.</param>
+    /// <returns>A movie at the start of that page, or at its end when the story has fewer pages.</returns>
+    public static AttractMovie CreateAtPage(byte[] script, Random random, int page)
+    {
+        var attractMovie = new AttractMovie(script, random);
+        for (var pagesSkipped = 0; pagesSkipped < page; pagesSkipped++) attractMovie.SkipToNextPage();
+
+        return attractMovie;
+    }
+
     /// <summary>Advances the movie by one port tick (0 or 1 fiftieths of a second of work).</summary>
     public void Update(GameTime gameTime)
     {
