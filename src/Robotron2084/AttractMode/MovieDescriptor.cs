@@ -8,7 +8,7 @@ namespace Robotron2084.AttractMode;
 ///             four walks (left, right, down, up) and a walk table.
 ///         </item>
 ///         <item>Original source: <c>RRSCRIPT.ASM</c> descriptors such as <c>MOMMY</c> and <c>BRAIN</c> (notes §95.6)</item>
-///         <item>Disassembly: the descriptors from $7E41 (not separately labelled)</item>
+///         <item>Disassembly: the unlabelled descriptors from $7E41</item>
 ///     </list>
 /// </remarks>
 /// <param name="Animation">Which animation the object draws.</param>

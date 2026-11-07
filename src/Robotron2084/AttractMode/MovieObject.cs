@@ -14,7 +14,7 @@ namespace Robotron2084.AttractMode;
 ///             screen address as <c>column * 256 + row</c>.
 ///         </item>
 ///         <item>Original source: <c>RRF.ASM</c> the object fields <c>OX16</c> and <c>OY16</c> (notes §95.3)</item>
-///         <item>Disassembly: not separately labelled</item>
+///         <item>Disassembly: no address in the disassembly (a name of the original source only)</item>
 ///     </list>
 /// </remarks>
 public sealed record MovieObject
@@ -50,7 +50,7 @@ public sealed record MovieObject
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>OXV</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only)</item>
     ///     </list>
     /// </remarks>
     public int XVelocitySubpixels { get; set; }
@@ -59,7 +59,7 @@ public sealed record MovieObject
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>OYV</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only)</item>
     ///     </list>
     /// </remarks>
     public int YVelocitySubpixels { get; set; }
@@ -112,7 +112,7 @@ public sealed record MovieObject
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>OBJX</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only)</item>
     ///     </list>
     /// </remarks>
     public int GetColumn()
@@ -124,7 +124,7 @@ public sealed record MovieObject
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>OBJY</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only)</item>
     ///     </list>
     /// </remarks>
     public int GetRow()

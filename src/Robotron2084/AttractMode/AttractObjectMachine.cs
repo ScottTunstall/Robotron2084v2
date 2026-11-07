@@ -50,7 +50,7 @@ public sealed class AttractObjectMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>XMAX</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only)</item>
     ///     </list>
     /// </remarks>
     private const int PlayfieldMaxColumn = 0x8F;
@@ -59,7 +59,7 @@ public sealed class AttractObjectMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>XMIN</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only)</item>
     ///     </list>
     /// </remarks>
     private const int PlayfieldMinColumn = 7;
@@ -159,7 +159,7 @@ public sealed class AttractObjectMachine
     ///             stops at the wall and waits there until its time is up.
     ///         </item>
     ///         <item>Original source: <c>RRS22.ASM</c> <c>OPRC80</c> and <c>OPB80</c>, with <c>RRF.ASM</c> <c>XMIN</c> and <c>XMAX</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only)</item>
     ///     </list>
     /// </remarks>
     internal static void MoveLaserWithinTheWalls(MovieObject laserMovieObject)

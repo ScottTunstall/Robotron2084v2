@@ -26,7 +26,7 @@ namespace Robotron2084.AttractMode;
 ///             table does not use).
 ///         </item>
 ///         <item>Original source: <c>RRSCRIPT.ASM</c> descriptors such as <c>MOMMY</c> and <c>BRAIN</c>, and their animation frame tables (notes §96.4)</item>
-///         <item>Disassembly: the descriptors from $7E41 (not separately labelled), and the animation frame tables they point to</item>
+///         <item>Disassembly: the unlabelled descriptors from $7E41, and the animation frame tables they point to</item>
 ///     </list>
 /// </remarks>
 public static class MovieAnimationFrames

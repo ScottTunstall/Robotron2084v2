@@ -205,7 +205,7 @@ public sealed class AttractPageMachine
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>BLKCLR</c></item>
-    ///         <item>Disassembly: not separately labelled</item>
+    ///         <item>Disassembly: no address in the disassembly (a name of the original source only)</item>
     ///     </list>
     /// </remarks>
     private void ClearTextCells(int x, int y, int width, int height)

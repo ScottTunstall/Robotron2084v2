@@ -73,7 +73,7 @@ public static class AttractStoryline
     ///     <list type="bullet">
     ///         <item>They are CLEARM row 88, COLOR palette index 5, then <c>SCRPT SCHULK</c> (<c>$85A1</c>).</item>
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HISTO</c> and <c>SCHULK</c> (notes §95.4 and §95.5)</item>
-    ///         <item>Disassembly: <c>STORYLINE_SCRIPT</c> ($7FA3), with the hulk's object script at $85A1 (not separately labelled)</item>
+    ///         <item>Disassembly: <c>STORYLINE_SCRIPT</c> ($7FA3), with the hulk's unlabelled object script at $85A1</item>
     ///     </list>
     /// </remarks>
     private static readonly byte[] HulkPageStart =
@@ -84,7 +84,7 @@ public static class AttractStoryline
     ///     <list type="bullet">
     ///         <item>They are CLEARM row 112, COLOR palette index 13, then <c>SCRPT SCSC</c> (<c>$85BD</c>).</item>
     ///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>HISTO</c> and <c>SCSC</c> (notes §95.4 and §95.5)</item>
-    ///         <item>Disassembly: <c>STORYLINE_SCRIPT</c> ($7FA3), with the spheroids' object script at $85BD (not separately labelled)</item>
+    ///         <item>Disassembly: <c>STORYLINE_SCRIPT</c> ($7FA3), with the spheroids' unlabelled object script at $85BD</item>
     ///     </list>
     /// </remarks>
     private static readonly byte[] SpheroidPageStart =
