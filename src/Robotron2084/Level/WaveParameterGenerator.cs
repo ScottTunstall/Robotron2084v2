@@ -45,15 +45,33 @@ public sealed class WaveParameterGenerator
         _customWaveTable = LoadTable(customWaveTablePath);
     }
 
-    /// <summary>Works out what a wave contains.</summary>
-    /// <param name="waveNumber">The wave number, starting at 1.</param>
+    /// <summary>Works out what a wave of the port's numbering contains (<see cref="WaveNumbering" />).</summary>
+    /// <param name="waveNumber">The port's wave number, starting at 1.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Wave 1 is the introduction to Gorf. It is a placeholder until the author specifies it: Gorf alone,
+    ///             and none of the arcade's robots (notes §150).
+    ///         </item>
+    ///         <item>Every other wave is the arcade's wave one number lower.</item>
+    ///     </list>
+    /// </remarks>
     public WaveParameters Generate(int waveNumber)
+    {
+        if (WaveNumbering.IsGorfIntroWave(waveNumber)) return CreateGorfIntroWave();
+
+        return GenerateArcadeWave(WaveNumbering.ToArcadeWave(waveNumber));
+    }
+
+    /// <summary>Works out what one of the arcade's waves contains.</summary>
+    /// <param name="arcadeWave">The arcade's wave number, starting at 1.</param>
+    public WaveParameters GenerateArcadeWave(int arcadeWave)
     {
         if (_customWaveTable is { Length: > 0 } table)
         {
-            var customWaveTableRow = table[(waveNumber - 1) % table.Length];
+            var customWaveTableRow = table[(arcadeWave - 1) % table.Length];
             return new WaveParameters(
-                waveNumber,
+                arcadeWave,
                 customWaveTableRow.GruntCount,
                 HulkCount: customWaveTableRow.HulkCount,
                 SpheroidCount: customWaveTableRow.SpheroidCount,
@@ -61,10 +79,19 @@ public sealed class WaveParameterGenerator
                 ElectrodeCount: customWaveTableRow.ElectrodeCount,
                 MaxEnforcersPerSpheroid: customWaveTableRow.MaxEnforcersPerSpheroid,
                 MaxTanksPerQuark: customWaveTableRow.MaxTanksPerQuark,
-                EnemySpeedBonus: Math.Min(waveNumber - 1, SpawnTuning.EnemySpeedBonusMaxPerWave));
+                EnemySpeedBonus: Math.Min(arcadeWave - 1, SpawnTuning.EnemySpeedBonusMaxPerWave));
         }
 
-        return WaveParameters.CreateFromWave(waveNumber, WaveTable.GetParameters(waveNumber));
+        return WaveParameters.CreateFromWave(arcadeWave, WaveTable.GetParameters(arcadeWave));
+    }
+
+    /// <summary>
+    ///     Makes the wave that introduces Gorf: a placeholder with Gorf alone. It looks like the arcade's first wave (its
+    ///     wall and electrode colours).
+    /// </summary>
+    private static WaveParameters CreateGorfIntroWave()
+    {
+        return new WaveParameters(WaveNumbering.ToArcadeWave(WaveNumbering.GorfIntroWave), GorfCount: 1);
     }
 
     /// <summary>Reads the replacement table.</summary>
