@@ -31,6 +31,9 @@ public sealed class AttractMovie
         AttractPageMachine = new AttractPageMachine(script, AttractObjectMachine, random);
     }
 
+    /// <summary>The most arcade frames <see cref="SkipToNextPage" /> will run, so a script that never reaches a page cannot hang the game.</summary>
+    public const int SkipFrameLimit = 20_000;
+
     /// <summary>Movie time played so far, in fiftieths of a second (a test hook).</summary>
     public int ArcadeFrames { get; private set; }
 
@@ -53,6 +56,42 @@ public sealed class AttractMovie
         if (_clockUnits < ArcadeClock.UnitsPerArcadeFrame) return;
 
         _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
+        RunArcadeFrame();
+    }
+
+    /// <summary>
+    ///     Runs the movie on, without waiting, until the next page of the story starts or the movie ends. Port only: a
+    ///     development key uses it to look at each page in turn (notes §97).
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             The pages before the one it reaches are played at once, so the characters and text on the screen are the
+    ///             ones the movie would have at that moment.
+    ///         </item>
+    ///         <item>It stops after <see cref="SkipFrameLimit" /> arcade frames, whatever happens.</item>
+    ///         <item>
+    ///             The explosions the skipped frames asked for are thrown away: they happened in pages that were not
+    ///             watched.
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    public void SkipToNextPage()
+    {
+        var pageToReach = AttractPageMachine.PagesStarted + 1;
+        var framesRun = 0;
+        while (framesRun < SkipFrameLimit && !IsFinished() && AttractPageMachine.PagesStarted < pageToReach)
+        {
+            RunArcadeFrame();
+            framesRun++;
+        }
+
+        AttractObjectMachine.DrainExplosions();
+    }
+
+    /// <summary>Runs one 50th of a second of the movie.</summary>
+    private void RunArcadeFrame()
+    {
         ArcadeFrames++;
         AttractPageMachine.StepFrame();
         AttractObjectMachine.StepFrame();

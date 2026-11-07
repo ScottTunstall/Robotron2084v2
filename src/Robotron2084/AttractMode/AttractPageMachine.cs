@@ -115,6 +115,9 @@ public sealed class AttractPageMachine
     /// <summary>The script reached DONE / DONE2.</summary>
     public bool IsFinished { get; private set; }
 
+    /// <summary>How many pages of the story have started. Each page starts by clearing the text of the page before it.</summary>
+    public int PagesStarted { get; private set; }
+
     /// <summary>The name popup currently in the score row, if any.</summary>
     public MovieMessage? Message { get; private set; }
 
@@ -303,6 +306,7 @@ public sealed class AttractPageMachine
 
             case PageScriptOpcodes.Clear:
                 {
+                    PagesStarted++;
                     int row = NextByte();
                     int range = NextByte();
                     _cursorX = TextLeft;
