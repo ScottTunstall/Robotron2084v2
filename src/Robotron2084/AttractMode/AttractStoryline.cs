@@ -1,12 +1,15 @@
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-///     The port's storyline: a copy of the arcade's page script in which each page waits until the page before it is
-///     done (<see cref="PageScriptOpcodes.WaitUntilDone" />), however long that takes, as well as for the arcade's own
-///     pause. Port only (notes §147).
+///     Makes the port's storyline: the arcade's page script, with each page held back until the page before it is done.
 /// </summary>
 /// <remarks>
 ///     <list type="bullet">
+///         <item>
+///             Each page waits (<see cref="PageScriptOpcodes.WaitUntilDone" />) however long the page before it takes, as
+///             well as for the arcade's own pause.
+///         </item>
+///         <item>Port only (notes §147).</item>
 ///         <item>
 ///             The pages after the family, grunts, hulk and spheroid pages wait for those pages to be done
 ///             (<see cref="AttractSequenceDoneRules" />). In the arcade each is always done by the end of its pause,
@@ -48,17 +51,21 @@ public static class AttractStoryline
     private static readonly byte[] GruntsPageStart =
         [PageScriptOpcodes.Clear, 0x58, 0x80, PageScriptOpcodes.Colour, 0x33, PageScriptOpcodes.Grunts];
 
-    /// <summary>
-    ///     The start of the hulk page: CLEARM row 88, COLOR palette index 5, then <c>SCRPT SCHULK</c> (<c>$85A1</c>).
-    ///     The grunts page's wait goes in front of it.
-    /// </summary>
+    /// <summary>The bytes that start the hulk page. The grunts page's wait goes in front of them.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>They are CLEARM row 88, COLOR palette index 5, then <c>SCRPT SCHULK</c> (<c>$85A1</c>).</item>
+    ///     </list>
+    /// </remarks>
     private static readonly byte[] HulkPageStart =
         [PageScriptOpcodes.Clear, 0x58, 0x80, PageScriptOpcodes.Colour, 0x55, PageScriptOpcodes.StartScript, 0x85, 0xA1];
 
-    /// <summary>
-    ///     The start of the spheroid page: CLEARM row 112, COLOR palette index 13, then <c>SCRPT SCSC</c>
-    ///     (<c>$85BD</c>). The hulk page's wait goes in front of it.
-    /// </summary>
+    /// <summary>The bytes that start the spheroid page. The hulk page's wait goes in front of them.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>They are CLEARM row 112, COLOR palette index 13, then <c>SCRPT SCSC</c> (<c>$85BD</c>).</item>
+    ///     </list>
+    /// </remarks>
     private static readonly byte[] SpheroidPageStart =
         [PageScriptOpcodes.Clear, 0x70, 0x80, PageScriptOpcodes.Colour, 0xDD, PageScriptOpcodes.StartScript, 0x85, 0xBD];
 

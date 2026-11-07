@@ -4,9 +4,11 @@ using Robotron2084.Level.Attract;
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-///     The attract movie's PAGE-script interpreter (notes §95.2): the ROM's SPWAKE
-///     loop, which walks a byte stream that is one third text, one third actions and
-///     one third sleeps:
+///     Reads the attract movie's page script, which says what to print and when to start each little program, and
+///     keeps the text that is on the screen.
+/// </summary>
+/// <remarks>
+///     It reads a stream of bytes that is part text, part actions and part sleeps:
 ///     <list type="bullet">
 ///         <item>
 ///             a byte below 10 is an action — CURSAB, CLEARM, NEWLIN, SCRPT, SNOOZE,
@@ -22,34 +24,74 @@ namespace Robotron2084.AttractMode;
 ///             three frames, exactly the ROM's `NAP 3`.
 ///         </item>
 ///     </list>
-///     It drives the object machine (SCRPT/FORK/GRUNTS) and builds the text layer the
-///     renderer draws. Timing is the ROM's frame clock: one <see cref="StepFrame" />
-///     per fiftieth of a second.
-/// </summary>
+///     Besides reading the bytes:
+///     <list type="bullet">
+///         <item>
+///             It starts the object machine's programs (SCRPT, FORK, GRUNTS) and builds the layer of text that is
+///             drawn.
+///         </item>
+///         <item>It runs one <see cref="StepFrame" /> for each 50th of a second.</item>
+///         <item>Original source: the page-script loop <c>SPWAKE</c> (notes §95.2)</item>
+///         <item>Disassembly: not separately labelled</item>
+///     </list>
+/// </remarks>
 public sealed class AttractPageMachine
 {
-    /// <summary>The ROM's `TOPLEF+$10` = row 48: where CLEARM starts clearing.</summary>
+    /// <summary>The row where clearing the text starts: row 48.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>TOPLEF</c> plus $10</item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     public const int ClearTopRow = 48;
 
-    /// <summary>The ROM's clear width: $74 columns = 232 arcade pixels.</summary>
+    /// <summary>How wide the cleared block of text is, in arcade pixels.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: the clear width of $74 columns</item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     public const int ClearWidth = 232;
 
-    /// <summary>The ROM's message row is six rows tall.</summary>
+    /// <summary>How tall the score row's message is, in rows.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: the message row of six rows</item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     public const int MessageHeight = 6;
 
-    /// <summary>The ROM's `MESHIT` = row $D8: the score row the name popups use.</summary>
+    /// <summary>The row of the score row, where the name popups are shown: row 216.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>MESHIT</c>, row $D8</item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     public const int MessageRow = 216;
 
-    /// <summary>
-    ///     The ROM's `LEFT` = $14 columns = 40 arcade pixels — the text margin. It is the starting value of
-    ///     <see cref="_cursorX" />.
-    /// </summary>
+    /// <summary>How far in from the left edge the text starts, in arcade pixels.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>LEFT</c>, $14 columns</item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     public const int TextLeft = 40;
 
     /// <summary>How many bytes <see cref="PageScriptOpcodes.WaitUntilDone" /> takes with its operand.</summary>
     private const int WaitUntilDoneLength = 2;
 
-    /// <summary>The ROM's `GSTRTS`: the four grunt personalities.</summary>
+    /// <summary>The start of each of the four programs a grunt can follow.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>GSTRTS</c></item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     private static readonly int[] GruntScripts = [0x84F5, 0x8517, 0x8540, 0x8567];
 
     private readonly AttractObjectMachine _attractObjectMachine;
@@ -79,7 +121,13 @@ public sealed class AttractPageMachine
     /// <summary>Every character currently on the story screen.</summary>
     public IReadOnlyList<MovieTextCell> TextCells => _textCells;
 
-    /// <summary>The current text colour palette index (the ROM's `TEXCOL`).</summary>
+    /// <summary>The palette index the text is printed in now.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>TEXCOL</c></item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     public int TextPaletteIndex { get; private set; } = 10;
 
     /// <summary>Runs one fiftieth of a second of the page script.</summary>
@@ -118,7 +166,14 @@ public sealed class AttractPageMachine
         }
     }
 
-    /// <summary>The ROM's font codes to the port's characters (the font table's order).</summary>
+    /// <summary>Turns one of the arcade font's codes into the character it draws.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>The codes are in the order of the arcade's font table.</item>
+    ///         <item>Original source: the large font table</item>
+    ///         <item>Disassembly: <c>BLIT_LARGE_CHARACTER</c> ($6023)</item>
+    ///     </list>
+    /// </remarks>
     private static char? DecodeCharacter(byte code)
     {
         return code switch
@@ -146,7 +201,13 @@ public sealed class AttractPageMachine
         return AttractMovieData.Messages[index];
     }
 
-    /// <summary>Drops every character inside a cleared block (the ROM's `BLKCLR`).</summary>
+    /// <summary>Takes away every character inside a block that is cleared.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>BLKCLR</c></item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     private void ClearTextCells(int x, int y, int width, int height)
     {
         _textCells.RemoveAll(cell =>
@@ -169,12 +230,16 @@ public sealed class AttractPageMachine
         return (NextByte() << 8) | NextByte();
     }
 
-    /// <summary>
-    ///     ROM `BLIT_LARGE_CHARACTER`: the pen advances (width + 1) pixels, and a code
-    ///     outside $30..$5E draws nothing at all (the routine returns before its
-    ///     `LEAX`). A space arrives as $20 and is substituted with the table's blank
-    ///     glyph at $3A first.
-    /// </summary>
+    /// <summary>Prints one character at the pen, and moves the pen along.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>The pen moves along by the character's width plus 1 pixel.</item>
+    ///         <item>A code outside $30 to $5E draws nothing and does not move the pen.</item>
+    ///         <item>A space arrives as $20, and is swapped for the table's blank character, $3A, first.</item>
+    ///         <item>Original source: <c>BLIT_LARGE_CHARACTER</c></item>
+    ///         <item>Disassembly: <c>BLIT_LARGE_CHARACTER</c> ($6023)</item>
+    ///     </list>
+    /// </remarks>
     private void PrintCharacter(byte code)
     {
         if (code == 0x20) code = 0x3A;
@@ -270,11 +335,13 @@ public sealed class AttractPageMachine
         }
     }
 
-    /// <summary>
-    ///     The port's own action, which the arcade's page script does not have (notes §147): the script goes on when the
-    ///     part of the movie named by the operand is done. Until then this action is read again in the next 50th of a
-    ///     second.
-    /// </summary>
+    /// <summary>Holds the script back until the part of the movie named by the action's operand is done.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Until then the action is read again in the next 50th of a second.</item>
+    ///         <item>Port only: the arcade's page script has no such action (notes §147).</item>
+    ///     </list>
+    /// </remarks>
     private void WaitUntilDone()
     {
         if (AttractSequenceDoneRules.IsDone((AttractSequence)NextByte(), _attractObjectMachine)) return;

@@ -3,13 +3,10 @@ using Robotron2084.Graphics;
 
 namespace Robotron2084.AttractMode;
 
-/// <summary>
-///     Maps a movie object's (animation, ROM animation frame index) to the port's texture, including
-///     the three animation frames whose ROM table lists them in a different order to the
-///     port's files (notes §96.4).
-///     The port's sprite PNGs are stored in ROM-ADDRESS order, and for most of the
-///     movie's descriptors the ROM's animation frame table is in that same order — so the
-///     animation frame index is the file index. Three are not:
+/// <summary>Finds the sprite picture a character in the attract movie is showing.</summary>
+/// <remarks>
+///     The port's sprite files are kept in the order of the arcade's memory addresses. For most characters the arcade's
+///     animation frame table is in that same order, so the animation frame number is the file number. Three are not:
 ///     <list type="bullet">
 ///         <item>
 ///             <b>hulk</b> — the table at $0CF9 runs hulk1,hulk2,hulk3,hulk7,hulk8,hulk9,
@@ -28,8 +25,10 @@ namespace Robotron2084.AttractMode;
 ///             (the port ships a third distinct grunt sprite at $40F5, which the movie's
 ///             table does not use).
 ///         </item>
+///         <item>Original source: the movie's object descriptors and their animation frame tables (notes §96.4)</item>
+///         <item>Disassembly: not separately labelled</item>
 ///     </list>
-/// </summary>
+/// </remarks>
 public static class MovieAnimationFrames
 {
     private static readonly int[] EnforcerAnimationFrameOrder = [1, 2, 3, 4, 5, 0];

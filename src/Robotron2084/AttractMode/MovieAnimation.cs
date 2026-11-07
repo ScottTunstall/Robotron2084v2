@@ -1,11 +1,18 @@
 namespace Robotron2084.AttractMode;
 
-/// <summary>
-///     The sprite a movie object draws (notes §95.6). The names are the ROM's own
-///     descriptor labels where they exist; <see cref="Quark" /> is the ROM's
-///     <c>SQUARE</c> ($7EA5 — its animation frame table at $50C2 is the quark's SQP animation frames),
-///     <see cref="Player" /> is <c>YOU</c>, and <see cref="Cruise" /> is <c>CRUSM</c>.
-/// </summary>
+/// <summary>Which sprite a character in the attract movie is drawn with.</summary>
+/// <remarks>
+///     <list type="bullet">
+///         <item>The names are the arcade's own labels where there are any.</item>
+///         <item>
+///             <see cref="Quark" /> is the arcade's <c>SQUARE</c> ($7EA5). Its animation frame table, at $50C2, is the
+///             quark's SQP animation frames.
+///         </item>
+///         <item><see cref="Player" /> is the arcade's <c>YOU</c>, and <see cref="Cruise" /> is its <c>CRUSM</c>.</item>
+///         <item>Original source: the movie's object descriptors (notes §95.6)</item>
+///         <item>Disassembly: not separately labelled</item>
+///     </list>
+/// </remarks>
 public enum MovieAnimation
 {
     Mommy,

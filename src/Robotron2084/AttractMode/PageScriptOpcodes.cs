@@ -1,9 +1,7 @@
 namespace Robotron2084.AttractMode;
 
-/// <summary>
-///     The actions of the attract movie's page script: the byte that starts each one. 0 to 9 are the arcade's own
-///     (notes §95.2); 10 is the port's (notes §147).
-/// </summary>
+/// <summary>The actions of the attract movie's page script: the byte that starts each one.</summary>
+/// <remarks>0 to 9 are the arcade's own (notes §95.2). 10 is the port's (notes §147).</remarks>
 public static class PageScriptOpcodes
 {
     /// <summary>CURSAB: move the text cursor to a column and row (two operands).</summary>

@@ -4,13 +4,21 @@ using Robotron2084.Core;
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-///     The arcade's attract MOVIE (notes §95): the scripted storyline that plays
-///     between the title screen and the machine's phony-player game. It owns the
-///     page-script interpreter and the object-script interpreter and runs them on the
-///     ROM's frame clock — a 50 Hz frame is 6/5 of a 60 Hz tick, so the movie is
-///     driven by the same clock-unit accumulator the entities use (notes §52/§93):
-///     five clock units a tick, a fiftieth of a second every time the accumulator reaches six.
+///     The attract movie: the story that plays between the title screen and the demo game, as text and little
+///     characters walking about.
 /// </summary>
+/// <remarks>
+///     <list type="bullet">
+///         <item>It owns the page-script reader and the object-script reader, and runs both of them.</item>
+///         <item>
+///             It runs them on the arcade's clock. An arcade frame is 6/5 of a port tick, so it adds clock units on
+///             every tick (<see cref="ArcadeClock.UnitsPerPortTick" />) and runs one arcade frame each time it has
+///             <see cref="ArcadeClock.UnitsPerArcadeFrame" /> of them.
+///         </item>
+///         <item>Original source: the page script <c>HISTO</c> and its readers; see notes §95, §52 and §93.</item>
+///         <item>Disassembly: not separately labelled</item>
+///     </list>
+/// </remarks>
 public sealed class AttractMovie
 {
     private int

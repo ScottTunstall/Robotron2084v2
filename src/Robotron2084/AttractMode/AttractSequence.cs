@@ -3,9 +3,9 @@ namespace Robotron2084.AttractMode;
 /// <summary>
 ///     A part of the attract movie that the page script can wait for, however long it takes, so that the next part
 ///     never starts before it is done (<see cref="PageScriptOpcodes.WaitUntilDone" />). What "done" means for each is
-///     in <see cref="AttractSequenceDoneRules" />. Port only: the arcade's page script waits by time alone (notes
-///     §147).
+///     in <see cref="AttractSequenceDoneRules" />.
 /// </summary>
+/// <remarks>Port only: the arcade's page script waits by time alone (notes §147).</remarks>
 public enum AttractSequence
 {
     /// <summary>The family page: Mommy, Daddy and Mikey walk on.</summary>

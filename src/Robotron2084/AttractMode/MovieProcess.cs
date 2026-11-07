@@ -7,7 +7,8 @@ internal sealed record MovieProcess
 {
     public required MovieObject MovieObject { get; init; }
 
-    /// <summary>Index into <see cref="AttractMovieData.Scripts" /> (scripts address it by ROM address).</summary>
+    /// <summary>Where the program has got to in <see cref="AttractMovieData.Scripts" />.</summary>
+    /// <remarks>The scripts name places by the arcade's memory addresses, which are turned into this index.</remarks>
     public int ScriptIndex { get; set; }
 
     public int WaitArcadeFrames { get; set; }
@@ -53,15 +54,23 @@ internal sealed record MovieProcess
         }
     }
 
-    // ---- the ROM's object opcodes (notes §95.3, the R5 $7B58 table) -----
+    // ---- the arcade's object opcodes (notes §95.3, the R5 $7B58 table) -----
 
-    /// <summary>
-    ///     Runs the opcode at the script cursor (notes §95.3) and returns true while the
-    ///     process should keep reading — the ROM's <c>JMP [LEV2,U]</c> — or false when the
-    ///     opcode has slept it or ended it. The ROM's table is a 28-entry vector list; here
-    ///     it is split into the families it already reads as, so that no one method is a
-    ///     wall of cases.
-    /// </summary>
+    /// <summary>Runs the opcode the script has reached.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             It gets true while the program should keep reading, and false when the opcode has put it to sleep or
+    ///             ended it.
+    ///         </item>
+    ///         <item>
+    ///             The arcade's table is a list of 28 jumps. Here the opcodes are split into the groups they already
+    ///             belong to, so that no one method is a wall of cases.
+    ///         </item>
+    ///         <item>Original source: the object opcode table and <c>JMP [LEV2,U]</c> (notes §95.3)</item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     private bool ReadOp(AttractObjectMachine attractObjectMachine)
     {
         int opcode = attractObjectMachine.Read(this);
@@ -303,10 +312,13 @@ internal sealed record MovieProcess
         }
     }
 
-    /// <summary>
-    ///     Not an opcode the ROM's table has: stop rather than run off the end of the script
-    ///     block (the same end state as GDIE/PDEAD).
-    /// </summary>
+    /// <summary>Ends the program, because it has reached something that is not an opcode.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Stopping is better than running off the end of the script block. It is the same end as GDIE and PDEAD.</item>
+    ///         <item>The arcade's table has no such opcode.</item>
+    ///     </list>
+    /// </remarks>
     private bool HaltOnUnknownOpcode()
     {
         IsAlive = false;
@@ -398,12 +410,19 @@ internal sealed record MovieProcess
         if (StepsLeft <= 0) Action = MovieAction.None;
     }
 
-    /// <summary>
-    ///     MONOP: the object is already off the list (HIB), so this is what moves
-    ///     it — `ADDA OXV,X` adds the velocity's HIGH byte to the packed
-    ///     (column, row) address, i.e. whole columns, every third frame — and the
-    ///     box is redrawn each pass. After `frames` passes it is REBORN.
-    /// </summary>
+    /// <summary>Moves the boxed object along, and redraws its box.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>The object is already off the object list (HIB), so nothing else moves it.</item>
+    ///         <item>
+    ///             It moves by whole columns, every third frame: <c>ADDA OXV,X</c> adds the high byte of the speed to the
+    ///             packed column and row address.
+    ///         </item>
+    ///         <item>After the number of passes the opcode asked for, the object is REBORN.</item>
+    ///         <item>Original source: <c>MONOP</c></item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     private void StepMono()
     {
         MovieObject.XSubpixels += MovieObject.XVelocitySubpixels & ~0xFF;
@@ -443,7 +462,13 @@ internal sealed record MovieProcess
         WaitArcadeFrames = 1;
     }
 
-    /// <summary>ANA* — one walk step out of HUMANA / HLKANA (notes §95.7).</summary>
+    /// <summary>Takes one walking step from the family member's or the hulk's walk table.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: the ANA* walker, with <c>HUMANA</c> and <c>HLKANA</c> (notes §95.7)</item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     private void TableStep(MovieWalk walk)
     {
         var table = AttractMovieData.WalkFamilyMember;
@@ -478,7 +503,13 @@ internal sealed record MovieProcess
         WalkCycleIndex = (WalkCycleIndex + 1) % AttractMovieData.AnimationFrameCycleTable.Length;
     }
 
-    /// <summary>The ROM's `DYDX`: dx counts arcade PIXELS, and a column is two of them.</summary>
+    /// <summary>Moves the object one step. The sideways distance is in arcade pixels, and a column is two of them.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>DYDX</c></item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     private void ApplyStep(int dx, int dy)
     {
         MovieObject.XSubpixels += dx * 128;

@@ -1,10 +1,8 @@
 namespace Robotron2084.AttractMode;
 
-/// <summary>
-///     What "done" means for each part of the attract movie (<see cref="AttractSequence" />). Port only: the arcade's
-///     page script waits by time alone (notes §147).
-/// </summary>
+/// <summary>Says when each part of the attract movie (<see cref="AttractSequence" />) is done.</summary>
 /// <remarks>
+///     Port only: the arcade's page script waits by time alone (notes §147).
 ///     <list type="bullet">
 ///         <item>
 ///             <see cref="AttractSequence.Family" />: no family member is in view. They have walked across and gone,

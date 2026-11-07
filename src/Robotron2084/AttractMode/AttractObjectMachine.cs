@@ -4,38 +4,64 @@ using Robotron2084.Level.Attract;
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-///     The attract movie's OBJECT-script interpreter (notes §95.3): the ROM's second
-///     scripting level — the one that animates every character in the storyline:
-///     the family walking on, the hero's stroll and gunfire, the grunts, the hulk's
-///     bounce, the spheroid/tank/enforcer scene, the brain's reprogramming box and
-///     the score electrodes.
-///     It runs the ROM's own bytes (<see cref="AttractMovieData.Scripts" />) with the
-///     ROM's own opcodes at the ROM's own frame clock: one <see cref="StepFrame" />
-///     call per fiftieth of a second. The one thing the ROM's listings leave implicit here is
-///     the per-frame velocity integrator — the movie's `SETXV`/`SETYV` are read by
-///     the object refresh (the same `OPB80` mover the playfield uses, notes §93),
-///     and MONO moves its OWN hidden object explicitly because `HIB` has taken that
-///     object off the list. So: every object that is ON the list integrates its
-///     velocity each frame, and MONO integrates in whole columns on its own.
+///     Runs the little programs that make each character in the attract movie move: the family walking on, the hero
+///     walking and shooting, the grunts, the hulk, the robots that make other robots, the brain and the score posts.
 /// </summary>
+/// <remarks>
+///     <list type="bullet">
+///         <item>
+///             It runs the arcade's own program bytes (<see cref="AttractMovieData.Scripts" />) and opcodes, one
+///             <see cref="StepFrame" /> for each arcade frame.
+///         </item>
+///         <item>
+///             The arcade's listings leave one thing unwritten here: moving each object by its speed on every frame.
+///             The movie's <c>SETXV</c> and <c>SETYV</c> only set a speed. An object that is on the object list is
+///             moved by it each frame (the same <c>OPB80</c> mover the playfield uses, notes §93). MONO moves its own
+///             object by whole columns, because <c>HIB</c> has taken that object off the list.
+///         </item>
+///         <item>Original source: the object scripts and opcode table; see notes §95.3.</item>
+///         <item>Disassembly: not separately labelled</item>
+///     </list>
+/// </remarks>
 public sealed class AttractObjectMachine
 {
-    /// <summary>
-    ///     The ANA* walker's `NAP 8` (notes §95.7) — fiftieths of a second per walk step. It is the value the machine's
-    ///     <see cref="MovieProcess.WaitArcadeFrames" /> is set to between walk steps.
-    /// </summary>
+    /// <summary>How many 50ths of a second a walking character waits between one step and the next.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: the walker's <c>NAP 8</c> (notes §95.7)</item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     public const int WalkStepArcadeFrames = 8;
 
-    /// <summary>ROM `EXPP` stores ACTHIT+6 into the explosion's centre row.</summary>
+    /// <summary>The row an explosion in the movie is centred on.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>EXPP</c>, which stores <c>ACTHIT</c> plus 6 as the row</item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     internal const int ExplosionRow = 0xA0 + 6;
 
     /// <summary>The laser bolt's sprite (<c>LASPIC</c>, the 6-pixel bar) is three columns wide.</summary>
     private const int LaserWidthColumns = 3;
 
-    /// <summary>RRF.ASM <c>XMAX</c>: the rightmost column an object's right edge may reach.</summary>
+    /// <summary>The rightmost column an object's right edge may reach.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRF.ASM</c> <c>XMAX</c></item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     private const int PlayfieldMaxColumn = 0x8F;
 
-    /// <summary>RRF.ASM <c>XMIN</c>: the leftmost column an object may occupy (the inside of the left wall).</summary>
+    /// <summary>The leftmost column an object may occupy: the inside of the left wall.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRF.ASM</c> <c>XMIN</c></item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     private const int PlayfieldMinColumn = 7;
 
     private readonly List<MovieExplosion> _movieExplosions = [];
@@ -76,7 +102,13 @@ public sealed class AttractObjectMachine
         return _objects.Any(movieObject => !movieObject.IsDead && movieObject.Descriptor?.Animation == animation);
     }
 
-    /// <summary>Starts a script: creates its object and its process (the ROM's `OSTART`).</summary>
+    /// <summary>Starts a script, which makes its object and the program that moves it.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>OSTART</c></item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     public void StartScript(int scriptAddress)
     {
         var movieProcess = new MovieProcess
@@ -119,10 +151,17 @@ public sealed class AttractObjectMachine
         _movieProcesses.RemoveAll(p => !p.IsAlive);
     }
 
-    /// <summary>
-    ///     The ROM's object mover (RRS22 <c>OPRC80</c>/<c>OPB80</c>): a step whose new column is left of <c>XMIN</c>, or whose
-    ///     right edge would pass <c>XMAX</c>, is refused, so a bolt stops at the wall and waits there for its timer.
-    /// </summary>
+    /// <summary>Moves a laser bolt along, but never through a wall.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             A step is refused when it would put the bolt left of the left wall or past the right wall. So a bolt
+    ///             stops at the wall and waits there until its time is up.
+    ///         </item>
+    ///         <item>Original source: <c>RRS22.ASM</c> <c>OPRC80</c> and <c>OPB80</c>, with <c>XMIN</c> and <c>XMAX</c></item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     internal static void MoveLaserWithinTheWalls(MovieObject laserMovieObject)
     {
         var next = laserMovieObject.XSubpixels + laserMovieObject.XVelocitySubpixels;
@@ -183,11 +222,18 @@ public sealed class AttractObjectMachine
         return _random.Next(exclusive);
     }
 
-    /// <summary>
-    ///     The ROM's `RIGFIR`/`LEFFIR`: a bolt two columns ahead of the muzzle (right)
-    ///     or one column behind it (left), six rows down, moving ±$0280 a frame, and
-    ///     living the LFIRE/RFIRE operand's frame count.
-    /// </summary>
+    /// <summary>Fires a laser bolt from a character, to the left or to the right.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             A bolt fired right starts two columns ahead of the gun. A bolt fired left starts one column behind it.
+    ///             Both start six rows down.
+    ///         </item>
+    ///         <item>The bolt moves at the speed the movie's shots always have, and lasts as long as the LFIRE or RFIRE operand says.</item>
+    ///         <item>Original source: <c>RIGFIR</c> and <c>LEFFIR</c></item>
+    ///         <item>Disassembly: not separately labelled</item>
+    ///     </list>
+    /// </remarks>
     internal void SpawnLaser(MovieObject sourceMovieObject, int lifetime, bool firesRight)
     {
         var columnOffset = -1;

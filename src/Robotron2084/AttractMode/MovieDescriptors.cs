@@ -1,10 +1,16 @@
 namespace Robotron2084.AttractMode;
 
-/// <summary>
-///     The ROM's movie descriptors, keyed by the address the scripts pass to SETOB
-///     (notes §95.6). Every entry was read out of the R5 image: the sprite-table
-///     pointers, the animation frame counts and the walk tables.
-/// </summary>
+/// <summary>The kinds of character in the attract movie, found by the address the scripts name them with.</summary>
+/// <remarks>
+///     <list type="bullet">
+///         <item>
+///             Every entry was read out of the arcade's R5 ROM image: the sprite-table pointers, the animation frame
+///             counts and the walk tables.
+///         </item>
+///         <item>Original source: the movie's object descriptors, found by the address the scripts pass to SETOB (notes §95.6)</item>
+///         <item>Disassembly: not separately labelled</item>
+///     </list>
+/// </remarks>
 public static class MovieDescriptors
 {
     public const int Brain = 0x7E7D;
@@ -24,7 +30,7 @@ public static class MovieDescriptors
     public const int TankGrow = 0x7EAD;
     public const int You = 0x7E97;
 
-    /// <summary>Every descriptor the movie's scripts reference, by ROM address.</summary>
+    /// <summary>Every kind of character the movie's scripts name, with the address each is named by.</summary>
     public static readonly (int Address, MovieDescriptor Descriptor)[] All =
     [
         (Mommy, new MovieDescriptor(MovieAnimation.Mommy, 12, MovieWalk.FamilyMember)),
