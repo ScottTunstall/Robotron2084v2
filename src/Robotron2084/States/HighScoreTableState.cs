@@ -46,7 +46,7 @@ namespace Robotron2084.States;
 ///     for any switch/start press — up to another 255 × 4 frames — before handing
 ///     back to the title page (<c>FAMPAG</c>).
 /// </summary>
-public sealed class HighScoreTableState : IGameState, IAttractState
+public sealed class HighScoreTableState : IClosableGameState, IAttractState
 {
     private readonly HighScoreFrameAnimation _highScoreFrameAnimation = new();
     private readonly GameSettings _gameSettings;
@@ -368,10 +368,14 @@ public sealed class HighScoreTableState : IGameState, IAttractState
         return normalPaletteIndex;
     }
 
-    private void Leave(GameStateManager gameStateManager)
+    /// <summary>Puts the palette entries the table's pulsing colours took over back on the game's usual colours.</summary>
+    public void Close()
     {
         if (_textureSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Stop(palette);
+    }
 
+    private void Leave(GameStateManager gameStateManager)
+    {
         gameStateManager.TransitionTo(new TitleScreenState(new GameServices(_textureSet, _highScoreStore,
             ControlSettings.CreateDefaults(), _playerInputSource, _gameSettings, _random)));
     }

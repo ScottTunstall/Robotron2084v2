@@ -40,7 +40,7 @@ namespace Robotron2084.States;
 ///     room for both at once, and the
 ///     port's lines are drawn in the page's text palette index so they flash orange and white like the arcade's.
 /// </summary>
-public sealed class TitleScreenState : IGameState, IAttractState
+public sealed class TitleScreenState : IClosableGameState, IAttractState
 {
     private const string CopyrightLine = "COPYRIGHT 1982 WILLIAMS ELECTRONICS INC.";
     private const int CopyrightRow = 308;
@@ -226,7 +226,6 @@ public sealed class TitleScreenState : IGameState, IAttractState
         // every attract screen, this one included.
         if (ChooseMode(_buttonEdgeDetector.Advance(playerInputState)) is { } chosen)
         {
-            StopColours();
             gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _textureSet,
                 _highScoreStore, _gameServices.Random));
             return;
@@ -268,7 +267,6 @@ public sealed class TitleScreenState : IGameState, IAttractState
         if (_idleElapsed >= _idleDuration)
         {
             _idleElapsed = TimeSpan.Zero;
-            StopColours();
             gameStateManager.TransitionTo(new StorylineState(_gameServices));
         }
     }
@@ -349,7 +347,8 @@ public sealed class TitleScreenState : IGameState, IAttractState
     ///     The page's colour set dies with the page (notes §103.3/§106): both ways off this screen
     ///     stand the ROM's CRTAB values back up over the seven entries the page had taken.
     /// </summary>
-    private void StopColours()
+    /// <summary>Puts the palette entries the page's own colours took over back on the game's usual colours.</summary>
+    public void Close()
     {
         if (_textureSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Stop(palette);
     }

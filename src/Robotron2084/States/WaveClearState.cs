@@ -16,7 +16,7 @@ namespace Robotron2084.States;
 ///     arcade (RRG23 GEXEC0 only advances the CURRENT player's PWAV), so a 2-player
 ///     game stays with whoever cleared the wave.
 /// </summary>
-public sealed class WaveClearState : IGameState
+public sealed class WaveClearState : IClosableGameState
 {
     private readonly HighScoreStore _highScoreStore;
 
@@ -109,7 +109,6 @@ public sealed class WaveClearState : IGameState
 
         if (--_ticksRemaining <= 0 && _tunnelEffect.IsFinished)
         {
-            RestorePalette();
             IGameState nextGameState = new PlayingState(_textureSet, _highScoreStore, _gameSession, _random);
             if (_isAttractMode)
                 nextGameState = new AttractState(GameServices.CreateFrom(_gameSession, _textureSet, _highScoreStore,
@@ -145,9 +144,9 @@ public sealed class WaveClearState : IGameState
 
     /// <summary>
     ///     Puts the game palette back the way the next wave wants it — the ROM's per-wave
-    ///     `LOAD_DA51_PALETTE` (notes §86).
+    ///     `LOAD_DA51_PALETTE` (notes §86) — and lets the colour processes run again, however the screen is left.
     /// </summary>
-    private void RestorePalette()
+    public void Close()
     {
         if (_textureSet.BlitterDraw.GamePalette is not { } palette) return;
 
