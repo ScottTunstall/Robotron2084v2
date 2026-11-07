@@ -11256,3 +11256,5 @@ This is the port's own. The arcade's walls never open.
 - **The wave record** has `GorfAppearanceLines`: speech lines, one of which, picked by chance, the wave's first Gorf says when it first appears. Null says nothing. Wave 1 sets it to `GorfTuning.IntroAppearanceLines`: `LONGLIVEGORF`, `IAMTHEGORFIANEMPIRE`, `GORFIANROBOTSATTACK`, `CANNOTESCAPEGORF`, `GORFIANSTAKENOPRISONERS` and `GORFIANDOOM` (the files in `Content/Speech/`, §149).
 - **When.** The line is picked when the wave is set up and said the first time the Gorf runs, which is when the game goes live, so it is said once. The Gorf that comes back after one is shot, and a Gorf that starts again after the player dies, say nothing.
 - **How.** `PlayField.SayLine` hands the line to the speech service, whose voice the sound board never cuts off and which never cuts a line off (§149), so the line plays right through.
+
+**Wave 1 has family members** (author, 2026-11-07: *"Can you add family members - as many as level 2"*). Wave 1 has as many Mommies, Daddies and Mikeys as wave 2 (the arcade's first wave), taken from the wave table when the wave is made. They are placed as in any wave.
