@@ -51,7 +51,8 @@ public sealed class WaveParameterGenerator
     ///     <list type="bullet">
     ///         <item>
     ///             Wave 1 is the introduction to Gorf. It is a placeholder until the author specifies it: Gorf alone,
-    ///             and none of the arcade's robots but some electrodes, which drops as many grunts as the wave after it
+    ///             and none of the arcade's robots but some electrodes and as many family members as the wave after it
+    ///             has, which drops as many grunts as the wave after it
     ///             has (notes §150). Its
     ///             walls stay shut: the doors (notes §151) are for other waves.
     ///         </item>
@@ -93,10 +94,14 @@ public sealed class WaveParameterGenerator
     /// </summary>
     private WaveParameters CreateGorfIntroWave()
     {
-        var gruntsOfTheNextWave = GenerateArcadeWave(WaveNumbering.ToArcadeWave(WaveNumbering.FirstArcadeWave)).GruntCount;
+        var nextWave = GenerateArcadeWave(WaveNumbering.ToArcadeWave(WaveNumbering.FirstArcadeWave));
+        var gruntsOfTheNextWave = nextWave.GruntCount;
         return new WaveParameters(
             WaveNumbering.ToArcadeWave(WaveNumbering.GorfIntroWave),
             ElectrodeCount: GorfTuning.IntroWaveElectrodeCount,
+            MommyCount: nextWave.MommyCount,
+            DaddyCount: nextWave.DaddyCount,
+            MikeyCount: nextWave.MikeyCount,
             GorfCount: 1,
             GorfGruntDropCount: gruntsOfTheNextWave,
             GorfAvoidsPlayer: true,
