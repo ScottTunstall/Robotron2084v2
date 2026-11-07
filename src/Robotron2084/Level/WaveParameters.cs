@@ -54,6 +54,18 @@ public sealed record WaveParameters(
     int BerzerkRobotCount = 0,
     int GorfCount = 0)
 {
+    /// <summary>Gets whether the wave has Gorf: the author's own robot, which the arcade's waves never have.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Port only.</item>
+    ///         <item>It is true when <see cref="GorfCount" /> is more than 0, so the flag and the count cannot disagree.</item>
+    ///     </list>
+    /// </remarks>
+    public bool HasGorf()
+    {
+        return GorfCount > 0;
+    }
+
     /// <summary>Makes the parameters for a wave from the arcade's wave table.</summary>
     /// <param name="waveNumber">The wave number.</param>
     /// <param name="waveTableRow">The wave table's row for it.</param>
