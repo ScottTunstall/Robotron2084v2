@@ -9,6 +9,11 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
+  <!-- Speech lines: WAV files in the Speech folder, copied beside the game (see SoundEffectSpeechVoice). -->
+  <ItemGroup>
+    <None Include="Speech\**\*.wav" CopyToOutputDirectory="PreserveNewest" LinkBase="Speech" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.5.1" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.5.1" PrivateAssets="all" />

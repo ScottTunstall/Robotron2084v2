@@ -140,6 +140,7 @@ public sealed class RobotronGame : Game
         _gameStateManager = new GameStateManager(new TitleScreenState(_gameServices));
 
         StartSound();
+        StartSpeech();
     }
 
     protected override void Update(GameTime gameTime)
@@ -165,6 +166,7 @@ public sealed class RobotronGame : Game
         _paletteAnimator.Update();
         _gameStateManager.Update(gameTime);
         Sound.Tick();
+        Speech.Tick();
         base.Update(gameTime);
     }
 
@@ -180,6 +182,20 @@ public sealed class RobotronGame : Game
         catch (NoAudioHardwareException exception)
         {
             Debug.WriteLine($"No sound: {exception.Message}");
+        }
+    }
+
+    /// <summary>Switches the speech voice on. It is separate from the sound board, so nothing the board plays can stop it.</summary>
+    private static void StartSpeech()
+    {
+        try
+        {
+            var speechFolderPath = Path.Combine(AppContext.BaseDirectory, SoundEffectSpeechVoice.SpeechFolderName);
+            Speech.Initialise(new SoundEffectSpeechVoice(speechFolderPath));
+        }
+        catch (NoAudioHardwareException exception)
+        {
+            Debug.WriteLine($"No speech: {exception.Message}");
         }
     }
 
